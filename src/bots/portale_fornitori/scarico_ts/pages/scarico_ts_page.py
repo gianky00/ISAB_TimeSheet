@@ -4,8 +4,9 @@ Page Object Model for the Scarico TS section.
 """
 
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Any
 
 from selenium.common.exceptions import (
     TimeoutException,
@@ -23,19 +24,17 @@ from src.core.constants import Timeouts
 class ScaricoTSPage:
     """Encapsulates interactions with the Scarico TS page."""
 
-    def __init__(
-        self, driver: WebDriver, log_callback: Optional[Callable[[str], None]] = None
-    ):
+    def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None):
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)
-        self._log = log_callback or print
+        self._log: Callable[[str], Any] = log_callback or print
 
-    def log(self, msg: str):
+    def log(self, msg: str) -> None:
         """Inoltra il messaggio di log alla callback configurata."""
         self._log(msg)
 
-    def _wait_for_overlay(self):
+    def _wait_for_overlay(self) -> None:
         """Waits for loading overlay to disappear."""
         try:
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
@@ -51,22 +50,14 @@ class ScaricoTSPage:
             self.log("Navigazione menu Report -> Timesheet...")
 
             # Click Report
-            self.wait.until(
-                EC.element_to_be_clickable(ScaricoTSLocators.REPORT_MENU)
-            ).click()
+            self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.REPORT_MENU)).click()
             self._wait_for_overlay()
 
             # Click Timesheet
-            self.wait.until(
-                EC.element_to_be_clickable(ScaricoTSLocators.TIMESHEET_MENU)
-            ).click()
+            self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.TIMESHEET_MENU)).click()
 
             # Wait for page load (check for supplier arrow)
-            self.wait.until(
-                EC.visibility_of_element_located(
-                    ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW
-                )
-            )
+            self.wait.until(EC.visibility_of_element_located(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW))
             self._wait_for_overlay()
             return True
 
@@ -79,27 +70,19 @@ class ScaricoTSPage:
         try:
             # Select Supplier
             self.log(f"  Selezione fornitore: '{supplier}'...")
-            arrow = self.wait.until(
-                EC.element_to_be_clickable(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW)
-            )
+            arrow = self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW))
             ActionChains(self.driver).move_to_element(arrow).click().perform()
 
             # Click Option
             option_xpath = f"//li[normalize-space(text())='{supplier}']"
-            option = self.long_wait.until(
-                EC.presence_of_element_located((By.XPATH, option_xpath))
-            )
-            self.driver.execute_script(
-                "arguments[0].scrollIntoView({block: 'nearest'});", option
-            )
+            option = self.long_wait.until(EC.presence_of_element_located((By.XPATH, option_xpath)))
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
             self.driver.execute_script("arguments[0].click();", option)
             self._wait_for_overlay()
 
             # Set Date
             self.log(f"  Inserimento data '{date_from}'...")
-            date_field = self.wait.until(
-                EC.visibility_of_element_located(ScaricoTSLocators.DATE_FROM_FIELD)
-            )
+            date_field = self.wait.until(EC.visibility_of_element_located(ScaricoTSLocators.DATE_FROM_FIELD))
             date_field.clear()
             date_field.send_keys(date_from)
 
@@ -108,9 +91,7 @@ class ScaricoTSPage:
             self.log(f"✗ Errore impostazione filtri: {e}")
             return False
 
-    def search_and_download(
-        self, oda_number: str, oda_position: str, download_dir: Path
-    ) -> bool:
+    def search_and_download(self, oda_number: str, oda_position: str, download_dir: Path) -> bool:
         """Performs search for specific OdA and downloads the Excel."""
         try:
             # JS for events
@@ -121,28 +102,18 @@ class ScaricoTSPage:
             """
 
             # Input OdA
-            field_oda = self.wait.until(
-                EC.presence_of_element_located(ScaricoTSLocators.ODA_NUMBER_FIELD)
-            )
-            self.driver.execute_script(
-                "arguments[0].value = arguments[1];", field_oda, oda_number
-            )
+            field_oda = self.wait.until(EC.presence_of_element_located(ScaricoTSLocators.ODA_NUMBER_FIELD))
+            self.driver.execute_script("arguments[0].value = arguments[1];", field_oda, oda_number)
             self.driver.execute_script(js_dispatch_events, field_oda)
 
             # Input Position
-            field_pos = self.wait.until(
-                EC.presence_of_element_located(ScaricoTSLocators.ODA_POSITION_FIELD)
-            )
+            field_pos = self.wait.until(EC.presence_of_element_located(ScaricoTSLocators.ODA_POSITION_FIELD))
             self.driver.execute_script("arguments[0].value = '';", field_pos)
-            self.driver.execute_script(
-                "arguments[0].value = arguments[1];", field_pos, oda_position
-            )
+            self.driver.execute_script("arguments[0].value = arguments[1];", field_pos, oda_position)
             self.driver.execute_script(js_dispatch_events, field_pos)
 
             # Search
-            self.wait.until(
-                EC.element_to_be_clickable(ScaricoTSLocators.SEARCH_BUTTON)
-            ).click()
+            self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.SEARCH_BUTTON)).click()
             self.log("  Pulsante 'Cerca' cliccato. Attesa risultati...")
             self._wait_for_overlay()  # Wait for loading
 
@@ -153,19 +124,11 @@ class ScaricoTSPage:
             self.log(f"  ✗ Errore ricerca/download: {e}")
             return False
 
-    def _download_excel(
-        self, download_dir: Path, oda_number: str, oda_position: str
-    ) -> bool:
+    def _download_excel(self, download_dir: Path, oda_number: str, oda_position: str) -> bool:
         """Handles the file download logic."""
         try:
-            files_before = {
-                f
-                for f in download_dir.iterdir()
-                if f.is_file() and f.suffix.lower() == ".xlsx"
-            }
-            self.wait.until(
-                EC.element_to_be_clickable(ScaricoTSLocators.EXPORT_EXCEL_BUTTON)
-            ).click()
+            files_before = {f for f in download_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
+            self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.EXPORT_EXCEL_BUTTON)).click()
 
             downloaded_file = self._wait_for_download(download_dir, files_before)
             if not downloaded_file:
@@ -173,9 +136,7 @@ class ScaricoTSPage:
                 return False
 
             # Rename logic
-            new_path = self._resolve_unique_path(
-                download_dir, oda_number, oda_position, downloaded_file
-            )
+            new_path = self._resolve_unique_path(download_dir, oda_number, oda_position, downloaded_file)
             downloaded_file.rename(new_path)
             self.log(f"  ✓ File scaricato: {new_path.name}")
             return True
@@ -184,24 +145,16 @@ class ScaricoTSPage:
             self.log(f"  ✗ Errore click download: {e}")
             return False
 
-    def _wait_for_download(
-        self, download_dir: Path, files_before: set
-    ) -> Optional[Path]:
+    def _wait_for_download(self, download_dir: Path, files_before: set[Path]) -> Path | None:
         """Polls for new .xlsx file."""
         start_time = time.time()
         while time.time() - start_time < Timeouts.DOWNLOAD:
-            current_files = {
-                f
-                for f in download_dir.iterdir()
-                if f.is_file() and f.suffix.lower() == ".xlsx"
-            }
+            current_files = {f for f in download_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
             if new_files := current_files - files_before:
                 return max(list(new_files), key=lambda f: f.stat().st_mtime)
         return None
 
-    def _resolve_unique_path(
-        self, download_dir: Path, oda: str, pos: str, current_file: Path
-    ) -> Path:
+    def _resolve_unique_path(self, download_dir: Path, oda: str, pos: str, current_file: Path) -> Path:
         """Ensures a non-colliding filename."""
         pos_suffix = f"-{pos}" if pos else ""
         new_name = f"{oda}{pos_suffix}.xlsx"

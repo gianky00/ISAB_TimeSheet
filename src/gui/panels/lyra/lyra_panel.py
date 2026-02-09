@@ -115,9 +115,7 @@ class LyraPanel(QWidget):
             btn.setStyleSheet(
                 "border: 1px solid #6f42c1; border-radius: 15px; padding: 5px 15px; font-size: 11px;"
             )
-            btn.clicked.connect(
-                lambda _, p=prompt: self.input_bar.input_field.setText(p)
-            )
+            btn.clicked.connect(lambda _, p=prompt: self.input_bar.input_field.setText(p))
             layout.addWidget(btn)
         layout.addStretch()
         w.setFixedHeight(40)
@@ -150,9 +148,7 @@ class LyraPanel(QWidget):
         self.table_toolbar.setVisible(True)
 
     def _attach_file(self):
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Allega PDF", "", "Documenti (*.pdf)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, "Allega PDF", "", "Documenti (*.pdf)")
         if file_path:
             self._handle_file(file_path)
 
@@ -172,9 +168,7 @@ class LyraPanel(QWidget):
     def ask_lyra(self, question: str):
         self.chat_area.append_message("Tu", question)
         context = ""
-        if self.attached_file and DocumentProcessor.is_pdf_searchable(
-            self.attached_file
-        ):
+        if self.attached_file and DocumentProcessor.is_pdf_searchable(self.attached_file):
             context = DocumentProcessor.extract_text(self.attached_file)
 
         self.input_bar.set_enabled(False)
@@ -210,11 +204,9 @@ class LyraPanel(QWidget):
             table_lines = [line for line in lines if "|" in line and "---" not in line]
             data = StringIO("\n".join(table_lines))
             df = pd.read_csv(data, sep="|", engine="python").dropna(axis=1, how="all")
-            filename, _ = QFileDialog.getSaveFileName(
-                self, "Salva Excel", "analisi.xlsx", "Excel (*.xlsx)"
-            )
+            filename, _ = QFileDialog.getSaveFileName(self, "Salva Excel", "analisi.xlsx", "Excel (*.xlsx)")
             if filename:
                 df.to_excel(filename, index=False)
-                os.startfile(filename)
+                os.startfile(filename)  # noqa: S606
         except Exception as e:
             QMessageBox.warning(self, "Errore", str(e))

@@ -45,9 +45,7 @@ def service_controller(mock_main_window, mock_services):
     # Patch QTimer nel costruttore se usato
     with patch("src.gui.controllers.service_controller.QTimer"):
         # Patch NotificationManager instance per evitare side effects
-        with patch(
-            "src.gui.controllers.service_controller.NotificationManager.instance"
-        ):
+        with patch("src.gui.controllers.service_controller.NotificationManager.instance"):
             ctrl = ServiceController(mock_main_window, *mock_services)
             return ctrl
 
@@ -72,9 +70,7 @@ class TestServiceControllerRobust:
         panel.start_btn.isEnabled.return_value = True
         site = "portale_fornitori"
 
-        service_controller._schedule_bot_with_parallelism(
-            bot_id, panel, site, "Log msg"
-        )
+        service_controller._schedule_bot_with_parallelism(bot_id, panel, site, "Log msg")
 
         # Deve essere avviato e aggiunto a running
         assert bot_id in service_controller.running_bots_by_site[site]
@@ -93,9 +89,7 @@ class TestServiceControllerRobust:
         service_controller.running_bots_by_site[site].append(bot_id_1)
 
         # Prova a schedulare bot_2
-        service_controller._schedule_bot_with_parallelism(
-            bot_id_2, panel, site, "Log msg"
-        )
+        service_controller._schedule_bot_with_parallelism(bot_id_2, panel, site, "Log msg")
 
         # Deve essere in pending, non running
         assert bot_id_2 not in service_controller.running_bots_by_site[site]
@@ -128,9 +122,7 @@ class TestServiceControllerRobust:
 
     @patch("src.gui.controllers.service_controller.config_manager.load_config")
     @patch("src.gui.controllers.service_controller.datetime")
-    def test_check_scheduled_tasks_timbrature(
-        self, mock_datetime, mock_config, service_controller
-    ):
+    def test_check_scheduled_tasks_timbrature(self, mock_datetime, mock_config, service_controller):
         """Test trigger task timbrature schedulato."""
         # Config
         mock_config.return_value = {
@@ -148,15 +140,11 @@ class TestServiceControllerRobust:
         # Deve avviare timbrature
         panel = service_controller.mw.timbrature_bot_panel
         assert panel._on_start.called
-        assert (
-            "timbrature" in service_controller.running_bots_by_site["portale_fornitori"]
-        )
+        assert "timbrature" in service_controller.running_bots_by_site["portale_fornitori"]
 
     @patch("src.gui.controllers.service_controller.config_manager.load_config")
     @patch("src.gui.controllers.service_controller.datetime")
-    def test_check_report_email_schedule_interval(
-        self, mock_datetime, mock_config, service_controller
-    ):
+    def test_check_report_email_schedule_interval(self, mock_datetime, mock_config, service_controller):
         """Test logica intervallo invio email."""
         # Config: abilitato, ore 08:00, intervallo 7gg, inviato 8gg fa
         mock_config.return_value = {
@@ -183,7 +171,6 @@ class TestServiceControllerRobust:
         # Ma mock_now è un MagicMock.
 
         # Alternativa: testare _check_report_email_schedule isolato con mock più semplici o logica interna
-        pass
 
     def test_prepare_scarico_oda(self, service_controller):
         """Test callback preparazione scarico oda."""

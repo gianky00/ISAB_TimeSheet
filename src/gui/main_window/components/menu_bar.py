@@ -1,6 +1,7 @@
 import os
 import sys
 from datetime import datetime
+from pathlib import Path
 
 from PyQt6.QtCore import QObject, Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut
@@ -17,7 +18,7 @@ class MenuBarComponent(QObject):
         super().__init__(main_window)
         self.main_window = main_window
         self.command_palette = None
-        self._last_palette_toggle = 0
+        self._last_palette_toggle: float = 0
         self._bug_dialog = None
         self._setup_shortcuts()
 
@@ -29,9 +30,7 @@ class MenuBarComponent(QObject):
         except Exception as e:
             print(f"Error opening bug report dialog: {e}")
             if hasattr(self.main_window, "show_toast"):
-                self.main_window.show_toast(
-                    f"Errore apertura segnalazione: {e}", "error"
-                )
+                self.main_window.show_toast(f"Errore apertura segnalazione: {e}", "error")
 
     def _setup_shortcuts(self):
         # Shortcut per Command Palette (Spotlight)
@@ -40,9 +39,7 @@ class MenuBarComponent(QObject):
         self.shortcut_palette.activated.connect(self.open_command_palette)
 
         # Fallback Shortcut (Ctrl+Shift+P) per conflitti
-        self.shortcut_palette_sec = QShortcut(
-            QKeySequence("Ctrl+Shift+P"), self.main_window
-        )
+        self.shortcut_palette_sec = QShortcut(QKeySequence("Ctrl+Shift+P"), self.main_window)
         self.shortcut_palette_sec.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self.shortcut_palette_sec.activated.connect(self.open_command_palette)
 
@@ -86,10 +83,10 @@ class MenuBarComponent(QObject):
             from PyQt6.QtWidgets import QApplication
 
             QApplication.quit()
-            os.execl(sys.executable, sys.executable, *sys.argv)
+            os.execl(sys.executable, sys.executable, *sys.argv)  # noqa: S606
 
         def open_folder_path(path):
-            if os.path.exists(path):
+            if Path(path).exists():
                 QDesktopServices.openUrl(QUrl.fromLocalFile(path))
 
         mw = self.main_window
@@ -147,9 +144,7 @@ class MenuBarComponent(QObject):
                             "Processa le righe salvate nel pannello",
                             Icons.PLAY,
                             action=lambda: (
-                                mw.scarico_panel.run_externally({})
-                                if hasattr(mw, "scarico_panel")
-                                else None
+                                mw.scarico_panel.run_externally({}) if hasattr(mw, "scarico_panel") else None
                             ),
                         ),
                     ],

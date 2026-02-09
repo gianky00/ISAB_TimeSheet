@@ -7,9 +7,10 @@ import logging
 import sqlite3
 import threading
 import time
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator, List
+from typing import Any, ClassVar, Optional
 
 from src.core.config_manager import CONFIG_DIR
 from src.core.database.migrations.contabilita import (
@@ -43,48 +44,54 @@ class DatabaseManager:
     Implements a write lock to prevent contention.
     """
 
-    _instance = None
+    _instance: Optional["DatabaseManager"] = None
     _write_lock = threading.Lock()
 
     # Predefined Paths
-    DB_CONTABILITA = CONFIG_DIR / "data" / "contabilita.db"
-    DB_TIMBRATURE = CONFIG_DIR / "data" / "timbrature_Isab.db"
-    DB_PDL = CONFIG_DIR / "data" / "pdl.db"
-    DB_STORICO_ODA = CONFIG_DIR / "data" / "storico_oda.db"
-    DB_DIPENDENTI = CONFIG_DIR / "data" / "anagrafica_dipendenti.db"
+    DB_CONTABILITA: ClassVar[Path] = CONFIG_DIR / "data" / "contabilita.db"
+    DB_TIMBRATURE: ClassVar[Path] = CONFIG_DIR / "data" / "timbrature_Isab.db"
+    DB_PDL: ClassVar[Path] = CONFIG_DIR / "data" / "pdl.db"
+    DB_STORICO_ODA: ClassVar[Path] = CONFIG_DIR / "data" / "storico_oda.db"
+    DB_DIPENDENTI: ClassVar[Path] = CONFIG_DIR / "data" / "anagrafica_dipendenti.db"
 
     # Dizionari di Migrazione
-    MIGRATIONS_CONTABILITA = {
+    MIGRATIONS_CONTABILITA: ClassVar[dict[int, Callable[[sqlite3.Connection], None]]] = {
         1: mig_contabilita_v1,
         2: mig_contabilita_v2,
         3: mig_contabilita_v3,
     }
 
-    MIGRATIONS_TIMBRATURE = {
+    MIGRATIONS_TIMBRATURE: ClassVar[dict[int, Callable[[sqlite3.Connection], None]]] = {
         1: mig_timbrature_v1,
         2: mig_timbrature_v2,
         3: mig_timbrature_v3,
         4: mig_timbrature_v4,
     }
 
-    MIGRATIONS_PDL = {1: mig_pdl_v1, 2: mig_pdl_v2}
+    MIGRATIONS_PDL: ClassVar[dict[int, Callable[[sqlite3.Connection], None]]] = {
+        1: mig_pdl_v1,
+        2: mig_pdl_v2,
+    }
 
-    MIGRATIONS_STORICO_ODA = {1: mig_storico_oda_v1, 2: mig_storico_oda_v2}
+    MIGRATIONS_STORICO_ODA: ClassVar[dict[int, Callable[[sqlite3.Connection], None]]] = {
+        1: mig_storico_oda_v1,
+        2: mig_storico_oda_v2,
+    }
 
-    MIGRATIONS_DIPENDENTI = {
+    MIGRATIONS_DIPENDENTI: ClassVar[dict[int, Callable[[sqlite3.Connection], None]]] = {
         1: mig_dipendenti_v1,
         2: mig_dipendenti_v2,
         3: mig_dipendenti_v3,
     }
 
-    def __new__(cls):
+    def __new__(cls) -> "DatabaseManager":
         """Pattern Singleton per il gestore database."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._ensure_dirs()
         return cls._instance
 
-    def _ensure_dirs(self):
+    def _ensure_dirs(self) -> None:
         """Ensures the data directory exists."""
         (CONFIG_DIR / "data").mkdir(parents=True, exist_ok=True)
 
@@ -105,9 +112,7 @@ class DatabaseManager:
         conn = None
         try:
             # check_same_thread=False is safe when using one connection per context/thread
-            conn = sqlite3.connect(
-                uri, uri=True, timeout=timeout, check_same_thread=False
-            )
+            conn = sqlite3.connect(uri, uri=True, timeout=timeout, check_same_thread=False)
 
             # Performance & Concurrency Optimizations
             if not read_only:
@@ -138,8 +143,8 @@ class DatabaseManager:
                 conn.close()
 
     def execute_query(
-        self, db_path: Path, query: str, params: tuple = (), retry_count: int = 3
-    ) -> List[Any]:
+        self, db_path: Path, query: str, params: tuple[Any, ...] = (), retry_count: int = 3
+    ) -> list[Any]:
         """Executes a query with automatic retries and write synchronization."""
         is_write = not query.strip().upper().startswith("SELECT")
 
@@ -155,7 +160,7 @@ class DatabaseManager:
                         cursor = conn.cursor()
                         cursor.execute(query, params)
                         if not is_write:
-                            return cursor.fetchall()
+                            return list(cursor.fetchall())
                         return []
                 finally:
                     if is_write:
@@ -168,41 +173,32 @@ class DatabaseManager:
                     continue
                 raise
 
-        logger.error(
-            f"Failed to execute query after {retry_count} retries: {last_error}"
-        )
+        logger.error(f"Failed to execute query after {retry_count} retries: {last_error}")
         if last_error:
             raise last_error
-        raise sqlite3.OperationalError(
-            f"Failed to execute query after {retry_count} retries"
-        )
+        raise sqlite3.OperationalError(f"Failed to execute query after {retry_count} retries")
 
-    def init_db(self):
+    def init_db(self) -> None:
         """Initializes schema for all databases using the migration system."""
-        self._run_migrations(
-            self.DB_CONTABILITA, self.MIGRATIONS_CONTABILITA, "Contabilita"
-        )
-        self._run_migrations(
-            self.DB_TIMBRATURE, self.MIGRATIONS_TIMBRATURE, "Timbrature"
-        )
+        self._run_migrations(self.DB_CONTABILITA, self.MIGRATIONS_CONTABILITA, "Contabilita")
+        self._run_migrations(self.DB_TIMBRATURE, self.MIGRATIONS_TIMBRATURE, "Timbrature")
         self._run_migrations(self.DB_PDL, self.MIGRATIONS_PDL, "PDL")
-        self._run_migrations(
-            self.DB_STORICO_ODA, self.MIGRATIONS_STORICO_ODA, "Storico OdA"
-        )
-        self._run_migrations(
-            self.DB_DIPENDENTI, self.MIGRATIONS_DIPENDENTI, "Dipendenti"
-        )
+        self._run_migrations(self.DB_STORICO_ODA, self.MIGRATIONS_STORICO_ODA, "Storico OdA")
+        self._run_migrations(self.DB_DIPENDENTI, self.MIGRATIONS_DIPENDENTI, "Dipendenti")
 
     def _get_db_version(self, conn: sqlite3.Connection) -> int:
         try:
-            return conn.execute("PRAGMA user_version").fetchone()[0]
+            res = conn.execute("PRAGMA user_version").fetchone()
+            return int(res[0]) if res else 0
         except Exception:
             return 0
 
-    def _set_db_version(self, conn: sqlite3.Connection, version: int):
+    def _set_db_version(self, conn: sqlite3.Connection, version: int) -> None:
         conn.execute(f"PRAGMA user_version = {version}")
 
-    def _run_migrations(self, db_path: Path, migrations: dict, db_name: str):
+    def _run_migrations(
+        self, db_path: Path, migrations: dict[int, Callable[[sqlite3.Connection], None]], db_name: str
+    ) -> None:
         """
         Executes pending migrations for a specific database.
         """
@@ -211,9 +207,7 @@ class DatabaseManager:
             target_ver = max(migrations.keys()) if migrations else 0
 
             if current_ver < target_ver:
-                logger.info(
-                    f"[{db_name}] Database outdated (v{current_ver}). Migrating to v{target_ver}..."
-                )
+                logger.info(f"[{db_name}] Database outdated (v{current_ver}). Migrating to v{target_ver}...")
 
                 try:
                     # Apply migrations sequentially

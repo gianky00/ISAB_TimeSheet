@@ -5,8 +5,8 @@ Pannello completo per visualizzare health status, anomalie e analytics.
 Design con tema chiaro coerente con il resto dell'applicazione.
 """
 
+from contextlib import suppress
 from datetime import datetime
-from typing import Optional
 
 from PyQt6.QtCore import QRectF, Qt, QTimer
 from PyQt6.QtGui import QColor, QFont, QPainter, QPen
@@ -45,22 +45,20 @@ class HealthScoreBadge(QWidget):
     def _get_color(self) -> QColor:
         if self._score >= 80:
             return QColor("#28a745")  # Verde
-        elif self._score >= 60:
+        if self._score >= 60:
             return QColor("#ffc107")  # Giallo
-        elif self._score >= 40:
+        if self._score >= 40:
             return QColor("#fd7e14")  # Arancio
-        else:
-            return QColor("#dc3545")  # Rosso
+        return QColor("#dc3545")  # Rosso
 
     def _get_status_text(self) -> str:
         if self._score >= 80:
             return "OTTIMO"
-        elif self._score >= 60:
+        if self._score >= 60:
             return "DISCRETO"
-        elif self._score >= 40:
+        if self._score >= 40:
             return "ATTENZIONE"
-        else:
-            return "CRITICO"
+        return "CRITICO"
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -75,16 +73,12 @@ class HealthScoreBadge(QWidget):
 
         # Background track (grigio chiaro)
         track_color = QColor("#e9ecef")
-        painter.setPen(
-            QPen(track_color, arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
-        )
+        painter.setPen(QPen(track_color, arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawEllipse(rect)
 
         # Progress arc
-        painter.setPen(
-            QPen(color, arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
-        )
+        painter.setPen(QPen(color, arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
         span_angle = int(360 * 16 * self._score / 100)
         painter.drawArc(rect, 90 * 16, -span_angle)
 
@@ -113,7 +107,7 @@ class StatCard(QFrame):
         parent=None,
     ):
         super().__init__(parent)
-        self._value_label: Optional[QLabel] = None
+        self._value_label: QLabel | None = None
         self._color = color
         self._setup_ui(title, value, icon, color)
 
@@ -148,18 +142,14 @@ class StatCard(QFrame):
             header.addWidget(icon_label)
 
         title_label = QLabel(title)
-        title_label.setStyleSheet(
-            "color: #6c757d; font-size: 12px; font-weight: 500; border: none;"
-        )
+        title_label.setStyleSheet("color: #6c757d; font-size: 12px; font-weight: 500; border: none;")
         header.addWidget(title_label)
         header.addStretch()
         layout.addLayout(header)
 
         # Value
         self._value_label = QLabel(value)
-        self._value_label.setStyleSheet(
-            f"color: {color}; font-size: 28px; font-weight: bold; border: none;"
-        )
+        self._value_label.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: bold; border: none;")
         layout.addWidget(self._value_label)
 
     def set_value(self, value: str):
@@ -197,9 +187,7 @@ class AnomalyCard(QFrame):
         # Header row
         header = QHBoxLayout()
 
-        emoji = {"low": "ℹ️", "medium": "⚠️", "high": "🔴", "critical": "🚨"}.get(
-            anomaly.severity, "📢"
-        )
+        emoji = {"low": "ℹ️", "medium": "⚠️", "high": "🔴", "critical": "🚨"}.get(anomaly.severity, "📢")
 
         title = QLabel(f"{emoji}  {anomaly.message}")
         title.setStyleSheet("color: #343a40; font-weight: 600; font-size: 14px;")
@@ -226,9 +214,7 @@ class AnomalyCard(QFrame):
         # Suggestion
         if anomaly.suggestion:
             suggestion = QLabel(f"💡 {anomaly.suggestion}")
-            suggestion.setStyleSheet(
-                "color: #495057; font-size: 12px; padding-left: 24px;"
-            )
+            suggestion.setStyleSheet("color: #495057; font-size: 12px; padding-left: 24px;")
             suggestion.setWordWrap(True)
             layout.addWidget(suggestion)
 
@@ -295,9 +281,7 @@ class HealthPanel(QWidget):
         header.addStretch()
 
         # Buttons
-        self._alert_btn = ModernButton(
-            "📢 Invia Alert", variant=ModernButton.Variant.SECONDARY
-        )
+        self._alert_btn = ModernButton("📢 Invia Alert", variant=ModernButton.Variant.SECONDARY)
         self._alert_btn.setToolTip("Invia alert Telegram per anomalie rilevate")
         self._alert_btn.clicked.connect(self._send_telegram_alert)
         header.addWidget(self._alert_btn)
@@ -337,9 +321,7 @@ class HealthPanel(QWidget):
 
         # Badge
         self._score_badge = HealthScoreBadge(size=160)
-        score_layout.addWidget(
-            self._score_badge, alignment=Qt.AlignmentFlag.AlignCenter
-        )
+        score_layout.addWidget(self._score_badge, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # Status label
         self._status_label = QLabel("OTTIMO")
@@ -357,9 +339,7 @@ class HealthPanel(QWidget):
 
         # Ultimo aggiornamento
         self._last_update = QLabel("Ultimo aggiornamento: --")
-        self._last_update.setStyleSheet(
-            "color: #6c757d; font-size: 11px; border: none;"
-        )
+        self._last_update.setStyleSheet("color: #6c757d; font-size: 11px; border: none;")
         self._last_update.setAlignment(Qt.AlignmentFlag.AlignCenter)
         score_layout.addWidget(self._last_update)
 
@@ -367,9 +347,7 @@ class HealthPanel(QWidget):
 
         # Stats title
         stats_title = QLabel("📈 Statistiche Ultime 24h")
-        stats_title.setStyleSheet(
-            "color: #495057; font-size: 14px; font-weight: 600; border: none;"
-        )
+        stats_title.setStyleSheet("color: #495057; font-size: 14px; font-weight: 600; border: none;")
         left_panel.addWidget(stats_title)
 
         # Stats Grid
@@ -399,16 +377,12 @@ class HealthPanel(QWidget):
 
         anomalies_header = QHBoxLayout()
         anomalies_title = QLabel("⚠️ Anomalie Rilevate")
-        anomalies_title.setStyleSheet(
-            "font-size: 18px; font-weight: bold; color: #343a40; border: none;"
-        )
+        anomalies_title.setStyleSheet("font-size: 18px; font-weight: bold; color: #343a40; border: none;")
         anomalies_header.addWidget(anomalies_title)
         anomalies_header.addStretch()
 
         self._anomaly_count_label = QLabel("0 problemi")
-        self._anomaly_count_label.setStyleSheet(
-            "color: #6c757d; font-size: 12px; border: none;"
-        )
+        self._anomaly_count_label.setStyleSheet("color: #6c757d; font-size: 12px; border: none;")
         anomalies_header.addWidget(self._anomaly_count_label)
 
         right_panel.addLayout(anomalies_header)
@@ -492,9 +466,7 @@ class HealthPanel(QWidget):
             self._stat_anomalies.set_value(str(len(report.anomalies)))
 
             # Aggiorna timestamp
-            self._last_update.setText(
-                f"Ultimo aggiornamento: {datetime.now().strftime('%H:%M:%S')}"
-            )
+            self._last_update.setText(f"Ultimo aggiornamento: {datetime.now().strftime('%H:%M:%S')}")
 
             # Aggiorna lista anomalie
             self._update_anomalies(report.anomalies)
@@ -507,14 +479,14 @@ class HealthPanel(QWidget):
         # Clear existing
         while self._anomalies_layout.count() > 1:
             item = self._anomalies_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            if item is not None:
+                w = item.widget()
+                if w is not None:
+                    w.deleteLater()
 
         # Update count
         count = len(anomalies)
-        self._anomaly_count_label.setText(
-            f"{count} problema{'i' if count != 1 else ''}"
-        )
+        self._anomaly_count_label.setText(f"{count} problema{'i' if count != 1 else ''}")
 
         if not anomalies:
             # Empty state card
@@ -537,9 +509,7 @@ class HealthPanel(QWidget):
             empty_layout.addWidget(emoji)
 
             text = QLabel("Nessuna anomalia rilevata")
-            text.setStyleSheet(
-                "color: #2e7d32; font-size: 16px; font-weight: 600; border: none;"
-            )
+            text.setStyleSheet("color: #2e7d32; font-size: 16px; font-weight: 600; border: none;")
             text.setAlignment(Qt.AlignmentFlag.AlignCenter)
             empty_layout.addWidget(text)
 
@@ -552,9 +522,7 @@ class HealthPanel(QWidget):
         else:
             for anomaly in anomalies:
                 card = AnomalyCard(anomaly)
-                self._anomalies_layout.insertWidget(
-                    self._anomalies_layout.count() - 1, card
-                )
+                self._anomalies_layout.insertWidget(self._anomalies_layout.count() - 1, card)
 
     def _send_telegram_alert(self):
         """Invia alert Telegram manuale."""
@@ -579,9 +547,7 @@ class HealthPanel(QWidget):
             summary += f"<b>Anomalie:</b> {len(report.anomalies)}\n\n"
 
             for a in report.anomalies[:5]:
-                emoji = {"low": "ℹ️", "medium": "⚠️", "high": "🔴", "critical": "🚨"}.get(
-                    a.severity, "📢"
-                )
+                emoji = {"low": "ℹ️", "medium": "⚠️", "high": "🔴", "critical": "🚨"}.get(a.severity, "📢")
                 summary += f"{emoji} {a.message}\n"
 
             alert_manager.send_alert("Health Report", summary, "info")
@@ -592,22 +558,18 @@ class HealthPanel(QWidget):
 
     def _auto_check_alerts(self):
         """Check automatico anomalie."""
-        try:
+        with suppress(Exception):
             from src.core.logging.alert_manager import get_alert_manager
 
             alerts_sent = get_alert_manager().check_and_alert(hours=24)
             if alerts_sent > 0:
                 self._last_update.setText(f"🔔 {alerts_sent} alert inviati")
-        except Exception:
-            pass
 
     def _show_toast(self, message: str, level: str = "info"):
         """Mostra toast notification."""
-        try:
+        with suppress(Exception):
             from src.core.notification_manager import NotificationManager
 
-            NotificationManager.instance().add(
+            NotificationManager.instance().add_notification(
                 title="Health Panel", message=message, level=level
             )
-        except Exception:
-            pass

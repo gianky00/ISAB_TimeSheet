@@ -1,6 +1,8 @@
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
+from typing import Any
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QTableWidgetItem
 
 
@@ -10,7 +12,7 @@ class SortableTableWidgetItem(QTableWidgetItem):
     per numeri (int, float) e date (formati comuni), con fallback alfabetico.
     """
 
-    def __init__(self, value, alignment=None):
+    def __init__(self, value: Any, alignment: Qt.AlignmentFlag | None = None) -> None:
         """
         Inizializza l'item.
         :param value: Il valore (str, int, float, datetime, o None).
@@ -23,7 +25,7 @@ class SortableTableWidgetItem(QTableWidgetItem):
         if alignment:
             self.setTextAlignment(alignment)
 
-    def __lt__(self, other):
+    def __lt__(self, other: Any) -> bool:
         """Override dell'operatore < per ordinamento personalizzato."""
         if not isinstance(other, QTableWidgetItem):
             return super().__lt__(other)
@@ -41,26 +43,25 @@ class SortableTableWidgetItem(QTableWidgetItem):
             return False
 
         # 2. Tentativo Numerico
-        with suppress(ValueError):
-            # Rimuove separatori migliaia (.,) e converte virgola decimale se necessario
-            # Supporta 1.000,50 (IT) o 1,000.50 (US)
-            # Logica semplice: se c'è virgola e non punto, replace , con .
-            # Se ci sono punti e virgola, rimuovi punto e replace , con .
-
+        try:
             n1 = self._parse_number(val1)
             n2 = self._parse_number(val2)
             return n1 < n2
+        except ValueError:
+            pass
 
         # 3. Tentativo Data
-        with suppress(ValueError):
+        try:
             d1 = self._parse_date(val1)
             d2 = self._parse_date(val2)
             return d1 < d2
+        except ValueError:
+            pass
 
         # 4. Fallback Stringa (Lexicographical)
         return val1.lower() < val2.lower()
 
-    def _parse_number(self, text):
+    def _parse_number(self, text: str) -> float:
         """Tenta di convertire testo in float gestendo formati IT/US."""
         # Rimuovi simboli valuta
         text = text.replace("€", "").replace("$", "").strip()
@@ -78,7 +79,7 @@ class SortableTableWidgetItem(QTableWidgetItem):
 
         return float(text)
 
-    def _parse_date(self, text):
+    def _parse_date(self, text: str) -> datetime:
         """Tenta di convertire testo in datetime."""
         formats = [
             "%d/%m/%Y",
@@ -92,5 +93,5 @@ class SortableTableWidgetItem(QTableWidgetItem):
             with suppress(ValueError):
                 # Gestisce anche date parziali troncando il testo se necessario?
                 # Meglio match esatto per evitare falsi positivi
-                return datetime.strptime(text, fmt)
+                return datetime.strptime(text, fmt).replace(tzinfo=UTC)
         raise ValueError("Not a date")

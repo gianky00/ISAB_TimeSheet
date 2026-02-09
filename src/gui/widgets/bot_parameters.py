@@ -3,7 +3,7 @@ SyncroJob - Bot Parameters Widget
 Widget riutilizzabile per i parametri comuni dei bot (Fornitore, Date, Percorso).
 """
 
-from typing import Optional
+from contextlib import suppress
 
 from PyQt6.QtCore import QDate, QSize, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -36,15 +36,15 @@ class BotParametersWidget(QWidget):
     changed = pyqtSignal()
 
     def __init__(
-        self, show_date_range: bool = False, show_dest_path: bool = True, parent=None
-    ):
+        self, show_date_range: bool = False, show_dest_path: bool = True, parent: QWidget | None = None
+    ) -> None:
         super().__init__(parent)
         self.show_date_range = show_date_range
         self.show_dest_path = show_dest_path
         self._setup_ui()
         self.refresh_fornitori()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
@@ -56,17 +56,13 @@ class BotParametersWidget(QWidget):
         self.main_row_layout.addWidget(QLabel("Fornitore:"))
         self.fornitore_combo = QComboBox()
         self.fornitore_combo.setMinimumHeight(40)
-        self.fornitore_combo.setSizeAdjustPolicy(
-            QComboBox.SizeAdjustPolicy.AdjustToContents
-        )
+        self.fornitore_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.fornitore_combo.currentIndexChanged.connect(self.changed.emit)
         self.main_row_layout.addWidget(self.fornitore_combo)
 
         # Pulsante Settings
         self.settings_btn = QPushButton()
-        self.settings_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#000000")
-        )
+        self.settings_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#000000"))
         self.settings_btn.setIconSize(QSize(24, 24))
         self.settings_btn.setFixedSize(40, 40)
         self.settings_btn.setToolTip("Gestisci fornitori")
@@ -103,9 +99,7 @@ class BotParametersWidget(QWidget):
             self.main_row_layout.addWidget(self.dest_path_edit)
 
             self.browse_btn = QPushButton()
-            self.browse_btn.setIcon(
-                get_colored_icon(get_asset_path(Icons.FOLDER), "#000000")
-            )
+            self.browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#000000"))
             self.browse_btn.setIconSize(QSize(24, 24))
             self.browse_btn.setFixedSize(40, 40)
             self.browse_btn.clicked.connect(self._browse_path)
@@ -115,7 +109,7 @@ class BotParametersWidget(QWidget):
         self.main_row_layout.addStretch()
         layout.addLayout(self.main_row_layout)
 
-    def add_widget_to_row(self, widget):
+    def add_widget_to_row(self, widget: QWidget) -> None:
         """
         Aggiunge un widget personalizzato alla riga dei parametri (prima dello stretch).
 
@@ -148,20 +142,18 @@ class BotParametersWidget(QWidget):
             }
         """
 
-    def _update_dest_width(self):
+    def _update_dest_width(self) -> None:
         """Metodo placeholder per l'aggiornamento della larghezza (non più necessario)."""
-        pass
 
-    def _browse_path(self):
+    def _browse_path(self) -> None:
         """Apre il dialogo di selezione cartella per il percorso di destinazione."""
         path = QFileDialog.getExistingDirectory(self, "Seleziona cartella destinazione")
         if path:
             self.dest_path_edit.setText(path)
 
-    def refresh_fornitori(self):
+    def refresh_fornitori(self) -> None:
         """Ricarica l'elenco dei fornitori dalla configurazione globale."""
-        config = config_manager.load_config()
-        fornitori = config.get("fornitori", [])
+        fornitori = config_manager.load_config().get("fornitori", [])
         current = self.fornitore_combo.currentText()
 
         self.fornitore_combo.clear()
@@ -176,21 +168,19 @@ class BotParametersWidget(QWidget):
         """Restituisce il fornitore attualmente selezionato."""
         return self.fornitore_combo.currentText()
 
-    def set_fornitore(self, fornitore: str):
+    def set_fornitore(self, fornitore: str) -> None:
         """Imposta il fornitore selezionato."""
         index = self.fornitore_combo.findText(fornitore)
         if index >= 0:
             self.fornitore_combo.setCurrentIndex(index)
 
-    def get_dates(self) -> tuple[str, Optional[str]]:
+    def get_dates(self) -> tuple[str, str | None]:
         """Restituisce le date selezionate come tuple di stringhe dd.mm.yyyy."""
         date_da = self.date_da.date().toString("dd.MM.yyyy")
-        date_a = (
-            self.date_a.date().toString("dd.MM.yyyy") if self.show_date_range else None
-        )
+        date_a = self.date_a.date().toString("dd.MM.yyyy") if self.show_date_range else None
         return date_da, date_a
 
-    def set_dates(self, date_da_str: str, date_a_str: Optional[str] = None):
+    def set_dates(self, date_da_str: str, date_a_str: str | None = None) -> None:
         """
         Imposta le date del widget.
 
@@ -198,20 +188,18 @@ class BotParametersWidget(QWidget):
             date_da_str: Stringa data inizio (dd.mm.yyyy)
             date_a_str: Stringa data fine opzionale (dd.mm.yyyy)
         """
-        try:
+        with suppress(Exception):
             d, m, y = map(int, date_da_str.split("."))
             self.date_da.setDate(QDate(y, m, d))
             if self.show_date_range and date_a_str:
                 d, m, y = map(int, date_a_str.split("."))
                 self.date_a.setDate(QDate(y, m, d))
-        except Exception:
-            pass
 
     def get_dest_path(self) -> str:
         """Restituisce il percorso di destinazione selezionato."""
         return self.dest_path_edit.text() if self.show_dest_path else ""
 
-    def set_dest_path(self, path: str):
+    def set_dest_path(self, path: str) -> None:
         """Imposta il percorso di destinazione."""
         if self.show_dest_path:
             self.dest_path_edit.setText(path)

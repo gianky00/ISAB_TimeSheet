@@ -4,7 +4,7 @@ Indicatore di stato circolare animato.
 """
 
 from PyQt6.QtCore import QAbstractAnimation, QPropertyAnimation, Qt
-from PyQt6.QtGui import QBrush, QColor, QPainter
+from PyQt6.QtGui import QBrush, QColor, QPainter, QPaintEvent
 from PyQt6.QtWidgets import QGraphicsOpacityEffect, QWidget
 
 
@@ -14,7 +14,7 @@ class StatusIndicator(QWidget):
     Stati supportati: 'idle', 'running', 'success', 'error'.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setFixedSize(20, 20)
 
@@ -31,7 +31,7 @@ class StatusIndicator(QWidget):
         self.current_color = QColor("#6c757d")
         self.setToolTip("Pronto")
 
-    def set_status(self, status: str, message: str = ""):
+    def set_status(self, status: str, message: str = "") -> None:
         """
         Aggiorna il colore e l'animazione dell'indicatore.
 
@@ -58,7 +58,7 @@ class StatusIndicator(QWidget):
             self.opacity_effect.setOpacity(1.0)
         self.update()
 
-    def paintEvent(self, event):
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         """Disegna il cerchio colorato dell'indicatore."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -66,3 +66,4 @@ class StatusIndicator(QWidget):
         painter.setPen(Qt.PenStyle.NoPen)
         rect = self.rect().adjusted(2, 2, -2, -2)
         painter.drawEllipse(rect)
+        painter.end()

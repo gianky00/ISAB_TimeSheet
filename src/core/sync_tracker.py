@@ -2,7 +2,8 @@ import json
 import logging
 import time
 from datetime import datetime
-from typing import Dict
+from pathlib import Path
+from typing import Any, ClassVar
 
 from src.core.config_manager import CONFIG_DIR
 
@@ -15,42 +16,39 @@ class SyncTracker:
     Salva i dati in un file JSON per persistenza tra riavvii.
     """
 
-    STATE_FILE = CONFIG_DIR / "data" / "sync_state.json"
-    _cache: Dict = {}
+    STATE_FILE: ClassVar[Path] = CONFIG_DIR / "data" / "sync_state.json"
+    _cache: ClassVar[dict[str, Any]] = {}
     _loaded = False
 
     @classmethod
-    def _load(cls):
+    def _load(cls) -> None:
         """Carica lo stato dal file JSON."""
         if cls._loaded:
             return
 
         if cls.STATE_FILE.exists():
             try:
-                with open(cls.STATE_FILE, "r", encoding="utf-8") as f:
-                    cls._cache = json.load(f)
+                cls._cache = json.loads(cls.STATE_FILE.read_text(encoding="utf-8"))
             except Exception as e:
                 logger.error(f"Errore caricamento sync state: {e}")
                 cls._cache = {}
         else:
-            cls._cache = {}
+            cls._cache, cls._loaded = {}, True
+            return
 
         cls._loaded = True
 
     @classmethod
-    def _save(cls):
+    def _save(cls) -> None:
         """Salva lo stato su file JSON."""
         try:
             cls.STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-            with open(cls.STATE_FILE, "w", encoding="utf-8") as f:
-                json.dump(cls._cache, f, indent=4)
+            cls.STATE_FILE.write_text(json.dumps(cls._cache, indent=4), encoding="utf-8")
         except Exception as e:
             logger.error(f"Errore salvataggio sync state: {e}")
 
     @classmethod
-    def update_status(
-        cls, module: str, added: int, removed: int, duration: float = 0.0
-    ):
+    def update_status(cls, module: str, added: int, removed: int, duration: float = 0.0) -> None:
         """
         Aggiorna lo stato di sincronizzazione per un modulo.
 
@@ -62,8 +60,7 @@ class SyncTracker:
         """
         cls._load()
 
-        now = datetime.now()
-        timestamp_str = now.strftime("%d/%m/%Y %H:%M")
+        timestamp_str = datetime.now().strftime("%d/%m/%Y %H:%M")
 
         cls._cache[module] = {
             "timestamp": timestamp_str,
@@ -76,10 +73,10 @@ class SyncTracker:
         cls._save()
 
     @classmethod
-    def get_status(cls, module: str) -> Dict:
+    def get_status(cls, module: str) -> dict[str, Any]:
         """Restituisce lo stato salvato per il modulo, o un dict vuoto se assente."""
         cls._load()
-        return cls._cache.get(module, {})
+        return cls._cache.get(module, {})  # type: ignore[no-any-return]
 
     @classmethod
     def get_formatted_status(cls, module: str) -> str:

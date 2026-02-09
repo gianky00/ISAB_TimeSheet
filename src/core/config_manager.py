@@ -8,9 +8,9 @@ import json
 import os
 import threading
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from platformdirs import user_data_dir
 
@@ -26,7 +26,7 @@ CONFIG_DIR = Path(user_data_dir(APP_NAME, appauthor=False))
 CONFIG_FILE = CONFIG_DIR / "config.json"
 # Root del progetto (assumendo src/core/config_manager.py)
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-_config_cache: Optional[Dict[str, Any]] = None
+_config_cache: dict[str, Any] | None = None
 _config_lock = threading.RLock()  # Lock per accesso thread-safe
 
 
@@ -36,7 +36,7 @@ def get_version() -> str:
 
 
 # Configurazione di default
-DEFAULT_CONFIG: Dict[str, Any] = {
+DEFAULT_CONFIG: dict[str, Any] = {
     "accounts": [],
     "safework_accounts": [],
     "contracts": [],
@@ -62,12 +62,12 @@ DEFAULT_CONFIG: Dict[str, Any] = {
 }
 
 
-def ensure_config_dir():
+def ensure_config_dir() -> None:
     """Assicura che la directory di configurazione esista."""
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def load_config() -> Dict[str, Any]:
+def load_config() -> dict[str, Any]:
     """
     Carica la configurazione dal file, la decripta e la mette in cache.
     """
@@ -90,16 +90,12 @@ def load_config() -> Dict[str, Any]:
         return config
 
 
-def _load_base_config() -> Dict[str, Any]:
+def _load_base_config() -> dict[str, Any]:
     """Carica il file JSON base o restituisce i default, con override da Env Vars."""
     config = copy.deepcopy(DEFAULT_CONFIG)
     if CONFIG_FILE.exists():
-        try:
-            with CONFIG_FILE.open("r", encoding="utf-8") as f:
-                loaded_config = json.load(f)
-            config.update(loaded_config)
-        except (json.JSONDecodeError, IOError):
-            pass
+        with suppress(OSError, json.JSONDecodeError):
+            config.update(json.loads(CONFIG_FILE.read_text(encoding="utf-8")))
 
     # 12-Factor App: Override with Environment Variables
     # Format: SYNCROJOB_KEY (es. SYNCROJOB_BROWSER_HEADLESS=true)
@@ -121,13 +117,13 @@ def _load_base_config() -> Dict[str, Any]:
     return config
 
 
-def _decrypt_all_credentials(config: Dict[str, Any]):
+def _decrypt_all_credentials(config: dict[str, Any]) -> None:
     """Decripta le credenziali per Isab e SafeWork."""
     _decrypt_account_list(config.get("accounts", []), "isab_portal")
     _decrypt_account_list(config.get("safework_accounts", []), "safework_portal")
 
 
-def _decrypt_account_list(accounts: List[Dict[str, Any]], service_name: str):
+def _decrypt_account_list(accounts: list[dict[str, Any]], service_name: str) -> None:
     """Decripta una lista di account usando keyring o fallback locale."""
     if not accounts:
         return
@@ -152,7 +148,7 @@ def _decrypt_account_list(accounts: List[Dict[str, Any]], service_name: str):
                 acc["password"] = password_manager.decrypt(pw_file)
 
 
-def _migrate_legacy_config(config: Dict[str, Any]) -> bool:
+def _migrate_legacy_config(config: dict[str, Any]) -> bool:
     """Migra le vecchie chiavi 'isab_username' nel nuovo formato accounts."""
     if "isab_username" not in config or not config.get("isab_username"):
         return False
@@ -174,7 +170,7 @@ def _migrate_legacy_config(config: Dict[str, Any]) -> bool:
     return True
 
 
-def _reset_configuration_for_testing():
+def _reset_configuration_for_testing() -> None:
     """
     Resetta la cache di configurazione per i test.
     DA USARE SOLO NEI TEST!
@@ -184,7 +180,7 @@ def _reset_configuration_for_testing():
         _config_cache = None
 
 
-def save_config(config: Dict[str, Any]):
+def save_config(config: dict[str, Any]) -> None:
     """
     Salva la configurazione in modo atomico.
     """
@@ -204,13 +200,13 @@ def save_config(config: Dict[str, Any]):
             print(f"Errore critico durante il salvataggio: {e}")
 
 
-def _encrypt_all_credentials(config: Dict[str, Any]):
+def _encrypt_all_credentials(config: dict[str, Any]) -> None:
     """Gestisce la protezione delle credenziali prima del salvataggio."""
     _encrypt_account_list(config.get("accounts", []), "isab_portal")
     _encrypt_account_list(config.get("safework_accounts", []), "safework_portal")
 
 
-def _encrypt_account_list(accounts: List[Dict[str, Any]], service_name: str):
+def _encrypt_account_list(accounts: list[dict[str, Any]], service_name: str) -> None:
     """Sposta in keyring o cripta localmente le password di una lista di account."""
     if not accounts:
         return
@@ -236,7 +232,7 @@ def _encrypt_account_list(accounts: List[Dict[str, Any]], service_name: str):
         acc["password"] = password_manager.encrypt(password)
 
 
-def _atomic_write_json(data: Dict[str, Any], target_path: Path):
+def _atomic_write_json(data: dict[str, Any], target_path: Path) -> None:
     """Scrittura atomica del file JSON."""
     temp_file = target_path.with_suffix(".tmp")
     try:
@@ -244,32 +240,31 @@ def _atomic_write_json(data: Dict[str, Any], target_path: Path):
             json.dump(data, f, indent=2, ensure_ascii=False)
             f.flush()
             os.fsync(f.fileno())
-        os.replace(temp_file, target_path)
+        temp_file.replace(target_path)
     finally:
-        if temp_file.exists():
-            with suppress(Exception):
+        with suppress(Exception):
+            if temp_file.exists():
                 temp_file.unlink()
 
 
 def get_config_value(key: str, default: Any = None) -> Any:
     """Ottiene un valore dalla configurazione."""
-    config = load_config()
-    return config.get(key, default)
+    return load_config().get(key, default)
 
 
-def set_config_value(key: str, value: Any):
+def set_config_value(key: str, value: Any) -> None:
     """Imposta un valore nella configurazione."""
     config = load_config()
     config[key] = value
     save_config(config)
 
 
-def get_accounts() -> List[Dict[str, Any]]:
+def get_accounts() -> list[dict[str, Any]]:
     """Restituisce la lista degli account configurati."""
-    return get_config_value("accounts", [])
+    return get_config_value("accounts", [])  # type: ignore[no-any-return]
 
 
-def add_account(username: str, password: str, is_default: bool = False):
+def add_account(username: str, password: str, is_default: bool = False) -> None:
     """Aggiunge o aggiorna un account."""
     config = load_config()
     accounts = config.get("accounts", [])
@@ -289,7 +284,7 @@ def add_account(username: str, password: str, is_default: bool = False):
     save_config(config)
 
 
-def remove_account(username: str):
+def remove_account(username: str) -> None:
     """Rimuove un account e le credenziali associate."""
     config = load_config()
     accounts = config.get("accounts", [])
@@ -307,7 +302,7 @@ def remove_account(username: str):
     save_config(config)
 
 
-def set_default_account(username: str):
+def set_default_account(username: str) -> None:
     """Imposta un account come default."""
     config = load_config()
     accounts = config.get("accounts", [])
@@ -322,7 +317,7 @@ def set_default_account(username: str):
         save_config(config)
 
 
-def switch_default_account(service_type: str = "isab") -> tuple[bool, Optional[str]]:
+def switch_default_account(service_type: str = "isab") -> tuple[bool, str | None]:
     """
     Switcha l'account di default in modo circolare.
     service_type: 'isab' o 'safework'
@@ -358,7 +353,7 @@ def switch_default_account(service_type: str = "isab") -> tuple[bool, Optional[s
     return True, accounts[next_idx].get("username")
 
 
-def get_default_account() -> Optional[Dict[str, str]]:
+def get_default_account() -> dict[str, str] | None:
     """Restituisce l'account di default."""
     accounts = get_accounts()
     if not accounts:
@@ -383,12 +378,16 @@ def get_logs_path() -> str:
 
 def get_download_path() -> str:
     """Restituisce il path di download configurato."""
-    path = get_config_value("download_path", "")
-    if path and os.path.isdir(path):
-        return path
+    path_str: str = get_config_value("download_path", "")
+    if path_str:
+        path = Path(path_str)
+        if path.is_dir():
+            return str(path)
 
     default_download = Path.home() / "Downloads"
-    return str(default_download) if default_download.exists() else str(Path.home())
+    if default_download.exists():
+        return str(default_download)
+    return str(Path.home())
 
 
 def export_configuration(export_path: str) -> tuple[bool, str]:
@@ -406,17 +405,16 @@ def export_configuration(export_path: str) -> tuple[bool, str]:
 
         # Aggiungiamo metadati
         export_data["_meta"] = {
-            "exported_at": str(datetime.now()),
-            "app_version": "1.0",  # TODO: Recuperare versione reale
+            "exported_at": str(datetime.now(UTC)),
+            "app_version": __version__,
             "type": "syncrojob_config_backup",
         }
 
-        with open(export_path, "w", encoding="utf-8") as f:
-            json.dump(export_data, f, indent=4, ensure_ascii=False)
+        Path(export_path).write_text(json.dumps(export_data, indent=4, ensure_ascii=False), encoding="utf-8")
 
         return True, "Esportazione completata con successo."
     except Exception as e:
-        return False, f"Errore durante l'esportazione: {str(e)}"
+        return False, f"Errore durante l'esportazione: {e}"
 
 
 def import_configuration(import_path: str) -> tuple[bool, str]:
@@ -430,8 +428,7 @@ def import_configuration(import_path: str) -> tuple[bool, str]:
         if not path.exists():
             return False, "File di importazione non trovato."
 
-        with path.open("r", encoding="utf-8") as f:
-            new_config = json.load(f)
+        new_config = json.loads(path.read_text(encoding="utf-8"))
 
         # Validazione base: controlliamo se sembra una config valida
         # Es. controlliamo chiavi critiche
@@ -446,14 +443,10 @@ def import_configuration(import_path: str) -> tuple[bool, str]:
         new_config.pop("_meta", None)
 
         # 2. Backup Configurazione Corrente
-        backup_file = (
-            CONFIG_DIR
-            / f"config_backup_pre_import_{int(datetime.now().timestamp())}.json"
-        )
+        backup_file = CONFIG_DIR / f"config_backup_pre_import_{int(datetime.now(UTC).timestamp())}.json"
 
         current_config = load_config()
-        with backup_file.open("w", encoding="utf-8") as f:
-            json.dump(current_config, f, indent=2)
+        backup_file.write_text(json.dumps(current_config, indent=2), encoding="utf-8")
 
         # 3. Sovrascrittura
         # Uniamo i default con la nuova config per garantire che nuove chiavi aggiunte in versioni recenti non manchino
@@ -470,4 +463,4 @@ def import_configuration(import_path: str) -> tuple[bool, str]:
     except json.JSONDecodeError:
         return False, "Il file non è un JSON valido."
     except Exception as e:
-        return False, f"Errore critico importazione: {str(e)}"
+        return False, f"Errore critico importazione: {e}"

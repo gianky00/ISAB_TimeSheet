@@ -13,9 +13,7 @@ class TestAppInitializerCoverage:
     def mock_core_deps(self, mocker):
         """Mock per le dipendenze pesanti di initialize_core."""
         return {
-            "get_status": mocker.patch(
-                "src.core.license_validator.get_detailed_license_status"
-            ),
+            "get_status": mocker.patch("src.core.license_validator.get_detailed_license_status"),
             "run_update": mocker.patch("src.core.license_updater.run_update"),
             "db_init": mocker.patch("src.core.database.db_manager.init_db"),
             "setup_logging": mocker.patch.object(AppInitializer, "_setup_logging"),
@@ -76,9 +74,7 @@ class TestAppInitializerCoverage:
         """Test: Il generatore produce gli step attesi."""
         mock_mw = MagicMock()
         # Mock per evitare caricamento pannelli reali
-        mocker.patch.object(
-            mock_mw.navigation_controller, "get_panel", return_value=MagicMock()
-        )
+        mocker.patch.object(mock_mw.navigation_controller, "get_panel", return_value=MagicMock())
         mocker.patch("src.core.config_manager.load_config", return_value={})
 
         gen = AppInitializer.init_generator(mock_mw)

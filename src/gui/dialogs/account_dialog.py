@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QPushButton,
     QVBoxLayout,
+    QWidget,
 )
 
 from src.core.constants import Icons
@@ -16,13 +17,11 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class AccountDialog(QDialog):
     """Dialog per aggiungere/modificare un account."""
 
-    def __init__(self, parent=None, username="", password=""):
+    def __init__(self, parent: QWidget | None = None, username: str = "", password: str = "") -> None:
         super().__init__(parent)
         self.setWindowTitle("Account")
         self.setFixedWidth(350)
-        self.setWindowFlags(
-            self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
-        )
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
 
         # Main Layout (Vertical) instead of Form for better control
         main_layout = QVBoxLayout(self)
@@ -48,9 +47,7 @@ class AccountDialog(QDialog):
         pass_layout.addWidget(self.password_edit)
 
         self.toggle_pass_btn = QPushButton()
-        self.toggle_pass_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.EYE), "#555555")
-        )
+        self.toggle_pass_btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), "#555555"))
         self.toggle_pass_btn.setIconSize(QSize(20, 20))
         self.toggle_pass_btn.setToolTip("Mostra/Nascondi password")
         self.toggle_pass_btn.setFixedSize(35, 35)
@@ -90,19 +87,15 @@ class AccountDialog(QDialog):
 
         main_layout.addLayout(btns)
 
-    def _toggle_password_visibility(self):
+    def _toggle_password_visibility(self) -> None:
         if self.password_edit.echoMode() == QLineEdit.EchoMode.Password:
             self.password_edit.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.toggle_pass_btn.setIcon(
-                get_colored_icon(get_asset_path(Icons.LOCK), "#555555")
-            )
+            self.toggle_pass_btn.setIcon(get_colored_icon(get_asset_path(Icons.LOCK), "#555555"))
             self.toggle_pass_btn.setToolTip("Nascondi password")
         else:
             self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
-            self.toggle_pass_btn.setIcon(
-                get_colored_icon(get_asset_path(Icons.EYE), "#555555")
-            )
+            self.toggle_pass_btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), "#555555"))
             self.toggle_pass_btn.setToolTip("Mostra password")
 
-    def get_data(self):
+    def get_data(self) -> tuple[str, str]:
         return self.username_edit.text(), self.password_edit.text()

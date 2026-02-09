@@ -2,9 +2,11 @@ import os
 import platform
 import socket
 import time
+from contextlib import suppress
 
 import psutil
 from PyQt6.QtCore import QTimer
+from PyQt6.QtGui import QHideEvent, QShowEvent
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 
@@ -13,7 +15,7 @@ class BootTelemetryWidget(QWidget):
 
     TEXT_COLOR = "#000000"
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 2, 10, 2)
@@ -22,7 +24,7 @@ class BootTelemetryWidget(QWidget):
         self.process = psutil.Process(os.getpid())
         self.last_net = psutil.net_io_counters()
         self.last_time = time.time()
-        self.session_id = hex(int(time.time()))[2:].upper()
+        self.session_id = f"{int(time.time()):x}".upper()
         self.font_style = f"font-family: 'Consolas', monospace; font-size: 13px; color: {self.TEXT_COLOR};"
 
         self.lbl_os = QLabel()
@@ -48,20 +50,20 @@ class BootTelemetryWidget(QWidget):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._update_stats)
 
-    def showEvent(self, event):
-        super().showEvent(event)
+    def showEvent(self, event: QShowEvent | None) -> None:
+        if event is not None:
+            super().showEvent(event)
         self.timer.start(1000)
         self._update_stats()
 
-    def hideEvent(self, event):
-        super().hideEvent(event)
+    def hideEvent(self, event: QHideEvent | None) -> None:
+        if event is not None:
+            super().hideEvent(event)
         self.timer.stop()
 
-    def _update_stats(self):
-        try:
+    def _update_stats(self) -> None:
+        with suppress(Exception):
             self.lbl_os.setText(f"OS: {platform.system()}")
             self.lbl_host.setText(f"HOST: {socket.gethostname()}")
             self.lbl_cpu.setText(f"CPU: {psutil.cpu_percent()}%")
             self.lbl_ram.setText(f"RAM: {psutil.virtual_memory().percent}%")
-        except Exception:
-            pass

@@ -59,14 +59,10 @@ class TestBaseBotRobust:
 
     # --- Driver Init Tests ---
 
-    def test_init_driver_success(
-        self, bot, mock_driver_cls, mock_service, mock_chrome_manager, mock_options
-    ):
+    def test_init_driver_success(self, bot, mock_driver_cls, mock_service, mock_chrome_manager, mock_options):
         """Test inizializzazione driver con successo."""
         # Mock chromedriver path
-        mock_chrome_manager.return_value.install.return_value = (
-            "C:/drivers/chromedriver.exe"
-        )
+        mock_chrome_manager.return_value.install.return_value = "C:/drivers/chromedriver.exe"
 
         # Call
         bot._init_driver()
@@ -85,25 +81,19 @@ class TestBaseBotRobust:
         # Verifica anti-detection script
         bot.driver.execute_cdp_cmd.assert_called_with(
             "Page.addScriptToEvaluateOnNewDocument",
-            {
-                "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-            },
+            {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"},
         )
         assert bot.status == BotStatus.INITIALIZING
 
-    def test_init_driver_headless_config(
-        self, mock_driver_cls, mock_service, mock_chrome_manager
-    ):
+    def test_init_driver_headless_config(self, mock_driver_cls, mock_service, mock_chrome_manager):
         """Test configurazione headless."""
         bot = ConcreteBot("user", "pass", headless=True)
 
-        with patch(
-            "src.bots.base.base_bot.config_manager.load_config", return_value={}
-        ):
+        with patch("src.bots.base.base_bot.config_manager.load_config", return_value={}):
             bot._init_driver()
 
             # Recupera options passate al driver
-            _, kwargs = mock_driver_cls.call_args
+            _, _kwargs = mock_driver_cls.call_args
             # options = kwargs["options"]  # Unused variable removed
 
             # Verifica che --headless=new sia stato aggiunto
@@ -111,15 +101,12 @@ class TestBaseBotRobust:
             # Ma qui Options è istanziato dentro _init_driver -> _get_chrome_options
             # Dobbiamo intercettare l'istanza di Options creata dentro.
             # Siccome non ho mockato Options in questo test specifico, uso un altro approccio
-            pass
             # (Il test precedente copriva le chiamate generiche, per headless specifico meglio mockare Options)
 
     def test_get_chrome_options_headless(self, bot):
         """Test _get_chrome_options logica headless."""
         bot.headless = True
-        with patch(
-            "src.bots.base.base_bot.config_manager.load_config", return_value={}
-        ):
+        with patch("src.bots.base.base_bot.config_manager.load_config", return_value={}):
             # Mock Options class inside the method context or assume it returns a mock if patched globally
             # Qui Options è reale (non mockato nella fixture globale di questo test method)
             # ma selenium.webdriver.chrome.options.Options è una classe reale.
@@ -134,9 +121,7 @@ class TestBaseBotRobust:
 
     def test_driver_error_handling(self, bot, mock_chrome_manager):
         """Test gestione errore init driver."""
-        mock_chrome_manager.return_value.install.side_effect = Exception(
-            "Download failed"
-        )
+        mock_chrome_manager.return_value.install.side_effect = Exception("Download failed")
 
         # Dovrebbe catturare l'eccezione interna, fallire il download e poi fallire init service
         # perché non trova neanche driver locale (assumendo default mock environment)

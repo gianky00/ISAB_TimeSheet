@@ -3,13 +3,13 @@ SyncroJob - Time Manager
 Gestisce il recupero dell'orario da fonti attendibili (Network Time).
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 
 import requests
 
 
-def get_network_time(timeout=2):
+def get_network_time(timeout: int = 2) -> datetime | None:
     """
     Ottiene l'orario corrente da una fonte online affidabile (es. Google).
     Restituisce un oggetto datetime con timezone UTC.
@@ -27,7 +27,7 @@ def get_network_time(timeout=2):
             network_time = parsedate_to_datetime(response.headers["Date"])
             # Assicura che sia timezone-aware (UTC)
             if network_time.tzinfo is None:
-                network_time = network_time.replace(tzinfo=timezone.utc)
+                network_time = network_time.replace(tzinfo=UTC)
             return network_time
 
     except Exception as e:
@@ -36,7 +36,7 @@ def get_network_time(timeout=2):
     return None
 
 
-def get_trusted_time():
+def get_trusted_time() -> tuple[datetime, bool]:
     """
     Restituisce l'orario più affidabile disponibile.
     Priorità:
@@ -52,4 +52,4 @@ def get_trusted_time():
         return net_time, True
 
     # Fallback su orario locale UTC
-    return datetime.now(timezone.utc), False
+    return datetime.now(UTC), False

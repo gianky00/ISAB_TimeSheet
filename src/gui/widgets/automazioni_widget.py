@@ -20,11 +20,10 @@ class AutomazioniWidget(QTabWidget):
         super().__init__()
         self.mw = main_window
         # Nascondiamo la barra dei tab superiore perché la navigazione è ora nella Sidebar
-        self.tabBar().hide()
+        if tab_bar := self.tabBar():
+            tab_bar.hide()
         self.setDocumentMode(True)  # Rimuove i bordi extra del frame
-        self.setStyleSheet(
-            "QTabWidget::pane { border: none; }"
-        )  # Pulizia visuale totale
+        self.setStyleSheet("QTabWidget::pane { border: none; }")  # Pulizia visuale totale
 
         # --- TAB 1: Portale Fornitori ---
         self.tab_fornitori = QTabWidget()

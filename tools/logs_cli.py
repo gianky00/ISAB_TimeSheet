@@ -16,7 +16,7 @@ import json
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 # Aggiungi il path del progetto per gli import
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -28,13 +28,13 @@ from src.core.logging import health_report, query_logs, view_trace  # noqa: E402
 def format_timestamp(ts: str) -> str:
     """Formatta timestamp ISO in formato leggibile."""
     try:
-        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(ts)
         return dt.strftime("%Y-%m-%d %H:%M:%S")
     except Exception:
         return ts
 
 
-def print_log_entry(entry: Dict[str, Any], verbose: bool = False):
+def print_log_entry(entry: dict[str, Any], verbose: bool = False):
     """Stampa una singola entry di log formattata."""
     ts = format_timestamp(entry.get("timestamp", ""))
     level = entry.get("level", "INFO")
@@ -264,15 +264,9 @@ Esempi:
         nargs="+",
         help="Filtra per livello (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
     )
-    query_parser.add_argument(
-        "--bot", "-b", help="Filtra per bot type (es. scarico_ts, carico_ts)"
-    )
-    query_parser.add_argument(
-        "--message", "-m", help="Cerca nel messaggio (case-insensitive)"
-    )
-    query_parser.add_argument(
-        "--hours", "-H", type=int, default=24, help="Filtra ultime N ore (default: 24)"
-    )
+    query_parser.add_argument("--bot", "-b", help="Filtra per bot type (es. scarico_ts, carico_ts)")
+    query_parser.add_argument("--message", "-m", help="Cerca nel messaggio (case-insensitive)")
+    query_parser.add_argument("--hours", "-H", type=int, default=24, help="Filtra ultime N ore (default: 24)")
     query_parser.add_argument(
         "--limit",
         "-n",

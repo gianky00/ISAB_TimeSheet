@@ -1,4 +1,7 @@
 import os
+from contextlib import suppress
+from pathlib import Path
+from typing import ClassVar
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QFont
@@ -23,7 +26,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class GiornaliereYearTab(QWidget):
     """Tab per un singolo anno (Giornaliere)."""
 
-    COLUMNS = [
+    COLUMNS: ClassVar[list[str]] = [
         "DATA",
         "PERSONALE",
         "TCL",
@@ -56,9 +59,7 @@ class GiornaliereYearTab(QWidget):
 
         # --- Ottimizzazione Layout ---
         self.table.setWordWrap(True)  # Abilita testo a capo
-        self.table.setTextElideMode(
-            Qt.TextElideMode.ElideNone
-        )  # Evita i puntini di sospensione
+        self.table.setTextElideMode(Qt.TextElideMode.ElideNone)  # Evita i puntini di sospensione
 
         # --- Configurazione Selezione (Single row, come richiesto) ---
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -67,8 +68,8 @@ class GiornaliereYearTab(QWidget):
 
         # Remove hardcoded stylesheet (uses global light.qss)
         self.table.auto_copy_headers = True
-        header = self.table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        if header := self.table.horizontalHeader():
+            header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
         # Impostazione larghezze
         self.table.setColumnWidth(0, 95)  # Data
@@ -83,12 +84,14 @@ class GiornaliereYearTab(QWidget):
         self.table.setColumnWidth(9, 80)  # Ore
 
         # La descrizione si espande ma permette il wrap
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+        if header:
+            header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
 
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.table.verticalHeader().setVisible(False)
+        if v_header := self.table.verticalHeader():
+            v_header.setVisible(False)
         layout.addWidget(self.table)
 
     def refresh_data(self):
@@ -114,10 +117,8 @@ class GiornaliereYearTab(QWidget):
 
                     self.table.setItem(row_idx, col_idx, item)
 
-                if len(row_data) > self.IDX_NOMEFILE and self.table.item(row_idx, 0):
-                    self.table.item(row_idx, 0).setData(
-                        Qt.ItemDataRole.UserRole, row_data[self.IDX_NOMEFILE]
-                    )
+                if len(row_data) > self.IDX_NOMEFILE and (item_0 := self.table.item(row_idx, 0)):
+                    item_0.setData(Qt.ItemDataRole.UserRole, row_data[self.IDX_NOMEFILE])
 
             # Cruciale per il WordWrap: ridimensiona altezze righe dopo il popolamento
             self.table.resizeRowsToContents()
@@ -142,11 +143,12 @@ class GiornaliereYearTab(QWidget):
         return format_number_smart(val)
 
     def _add_totals_row(self):
-        if (
-            self.table.rowCount() > 0
-            and self.table.item(self.table.rowCount() - 1, 0).text() == "TOTALI"
-        ):
-            return
+        rows = self.table.rowCount()
+        if rows > 0:
+            last_item = self.table.item(rows - 1, 0)
+            if last_item and last_item.text() == "TOTALI":
+                return
+
         row_idx = self.table.rowCount()
         self.table.insertRow(row_idx)
         item = SortableTableWidgetItem("TOTALI")
@@ -160,18 +162,17 @@ class GiornaliereYearTab(QWidget):
             it.setFont(QFont("Arial", 10, QFont.Weight.Bold))
             it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
             if c == self.COL_ORE:
-                it.setTextAlignment(
-                    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-                )
+                it.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             self.table.setItem(row_idx, c, it)
 
     def _update_totals(self):
-        total_row_idx = (
-            self.table.rowCount() - 1
-            if self.table.rowCount() > 0
-            and self.table.item(self.table.rowCount() - 1, 0).text() == "TOTALI"
-            else -1
-        )
+        rows = self.table.rowCount()
+        total_row_idx = -1
+        if rows > 0:
+            last_item = self.table.item(rows - 1, 0)
+            if last_item and last_item.text() == "TOTALI":
+                total_row_idx = rows - 1
+
         if total_row_idx == -1:
             return
         sum_ore = 0.0
@@ -179,47 +180,46 @@ class GiornaliereYearTab(QWidget):
             if not self.table.isRowHidden(r):
                 item = self.table.item(r, self.COL_ORE)
                 if item and item.text():
-                    try:
+                    with suppress(Exception):
                         # Pulisce la stringa formattata per fare la somma
                         clean_val = item.text().replace(".", "").replace(",", ".")
                         sum_ore += float(clean_val)
-                    except Exception:
-                        pass
-        self.table.item(total_row_idx, self.COL_ORE).setText(
-            self._format_number(sum_ore)
-        )
+
+        if total_item := self.table.item(total_row_idx, self.COL_ORE):
+            total_item.setText(self._format_number(sum_ore))
 
     def filter_data(self, text):
         """Filtra i dati dell'anno corrente in base alla ricerca testuale."""
         rows = self.table.rowCount()
-        data_rows = (
-            rows - 1
-            if rows > 0 and self.table.item(rows - 1, 0).text() == "TOTALI"
-            else rows
-        )
+        total_row_found = False
+        if rows > 0:
+            last_item = self.table.item(rows - 1, 0)
+            if last_item and last_item.text() == "TOTALI":
+                total_row_found = True
+
+        data_rows = rows - 1 if total_row_found else rows
         search_terms = text.lower().split()
         cols = self.table.columnCount()
         for r in range(data_rows):
             if not text:
                 self.table.setRowHidden(r, False)
                 continue
-            row_text = " ".join(
-                [
-                    self.table.item(r, c).text().lower()
-                    for c in range(cols)
-                    if self.table.item(r, c)
-                ]
-            )
-            self.table.setRowHidden(
-                r, not all(term in row_text for term in search_terms)
-            )
+
+            row_vals = [it.text().lower() for c in range(cols) if (it := self.table.item(r, c))]
+
+            row_text = " ".join(row_vals)
+            self.table.setRowHidden(r, not all(term in row_text for term in search_terms))
         self._update_totals()
 
     def _show_context_menu(self, pos):
         item = self.table.itemAt(pos)
-        if not item or item.text() == "TOTALI":
+        if not item or (item and item.text() == "TOTALI"):
             return
-        filename = self.table.item(item.row(), 0).data(Qt.ItemDataRole.UserRole)
+
+        row_idx = item.row()
+        item_0 = self.table.item(row_idx, 0)
+        filename = item_0.data(Qt.ItemDataRole.UserRole) if item_0 else None
+
         menu = QMenu(self)
         lyra_action = QAction("Analizza riga con Lyra", self)
         lyra_action.setIcon(get_colored_icon(get_asset_path(Icons.SPARKLES), "#000000"))
@@ -228,14 +228,16 @@ class GiornaliereYearTab(QWidget):
         menu.addSeparator()
         if filename:
             action = QAction(f"Apri {filename}", self)
-            action.setIcon(
-                get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#000000")
-            )
+            action.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#000000"))
             action.triggered.connect(lambda: self._open_giornaliera(filename))
             menu.addAction(action)
         else:
-            menu.addAction(QAction("Nessun file associato", self)).setEnabled(False)
-        menu.exec(self.table.viewport().mapToGlobal(pos))
+            no_file_action = QAction("Nessun file associato", self)
+            no_file_action.setEnabled(False)
+            menu.addAction(no_file_action)
+
+        if viewport := self.table.viewport():
+            menu.exec(viewport.mapToGlobal(pos))
 
     def _open_giornaliera(self, filename):
         config = config_manager.load_config()
@@ -244,7 +246,7 @@ class GiornaliereYearTab(QWidget):
             return
         found = None
         year_folder = os.path.join(root, f"Giornaliere {self.year}")
-        if os.path.exists(os.path.join(year_folder, filename)):
+        if Path(year_folder).joinpath(filename).exists():
             found = os.path.join(year_folder, filename)
         if not found:
             for r, _d, files in os.walk(root):
@@ -252,6 +254,6 @@ class GiornaliereYearTab(QWidget):
                     found = os.path.join(r, filename)
                     break
         if found:
-            os.startfile(os.path.normpath(found))
+            os.startfile(os.path.normpath(found))  # noqa: S606
         else:
             QMessageBox.warning(self, "File non trovato", f"Non trovo '{filename}'.")

@@ -67,7 +67,7 @@ class LoggingAdapter:
         # Ottieni exception corrente
         exc = sys.exc_info()[1] if exc_info else None
 
-        if exc:
+        if isinstance(exc, Exception):
             self._structured_logger.exception(formatted_msg, exc=exc, **extra)
         else:
             self._structured_logger.error(formatted_msg, **extra)
@@ -97,7 +97,7 @@ def migrate_logging_call(old_code: str) -> str:
         Codice convertito
 
     Example:
-        >>> old = 'logging.getLogger(__name__)'
+        >>> old = "logging.getLogger(__name__)"
         >>> new = migrate_logging_call(old)
         >>> print(new)
         'get_logger(__name__)'

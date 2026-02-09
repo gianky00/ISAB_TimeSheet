@@ -1,5 +1,7 @@
 import json
 import pickle
+from pathlib import Path
+from typing import Any
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
@@ -18,12 +20,12 @@ class CacheWorker(QThread):
     )  # display_data, search_index, float_totals, style_cache, date_keys
     progress = pyqtSignal(str)
 
-    def __init__(self, cache_path, data_source=None):
+    def __init__(self, cache_path: Path, data_source: list[tuple[Any, ...]] | None = None) -> None:
         super().__init__()
         self.cache_path = cache_path
         self.data_source = data_source  # If provided, we build cache from this data.
 
-    def run(self):
+    def run(self) -> None:
         """Esegue l'operazione di caricamento o generazione della cache in background."""
         if self.data_source:
             self.progress.emit("Elaborazione dati...")
@@ -35,12 +37,8 @@ class CacheWorker(QThread):
                 date_keys,
             ) = self._build_caches(self.data_source)
             self.progress.emit("Salvataggio cache...")
-            self._save_cache(
-                display_data, search_index, float_totals, style_cache, date_keys
-            )
-            self.finished.emit(
-                display_data, search_index, float_totals, style_cache, date_keys
-            )
+            self._save_cache(display_data, search_index, float_totals, style_cache, date_keys)
+            self.finished.emit(display_data, search_index, float_totals, style_cache, date_keys)
         else:
             if not self.cache_path.exists():
                 self.finished.emit([], [], [], [], [])
@@ -49,7 +47,7 @@ class CacheWorker(QThread):
             try:
                 self.progress.emit("Caricamento cache...")
                 with open(self.cache_path, "rb") as f:
-                    loaded = pickle.load(f)  # nosec B301
+                    loaded = pickle.load(f)  # noqa: S301 # nosec B301
                     if len(loaded) == 3:
                         raw_data = loaded[0]
                         (
@@ -100,15 +98,13 @@ class CacheWorker(QThread):
                             date_keys,
                         ) = ([], [], [], [], [])
 
-                self.finished.emit(
-                    display_data, search_index, float_totals, style_cache, date_keys
-                )
+                self.finished.emit(display_data, search_index, float_totals, style_cache, date_keys)
             except Exception as e:
                 print(f"Error loading cache: {e}")
                 self.finished.emit([], [], [], [], [])
 
-    def _build_style_cache_only(self, data):
-        style_cache = []
+    def _build_style_cache_only(self, data: list[tuple[Any, ...]]) -> list[dict[str, Any] | None]:
+        style_cache: list[dict[str, Any] | None] = []
         append_style = style_cache.append
 
         for row in data:
@@ -125,14 +121,14 @@ class CacheWorker(QThread):
                 append_style(None)
         return style_cache
 
-    def _build_caches(self, data):
-        display_data, search_index, float_totals, style_cache, date_keys = (
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
+    def _build_caches(
+        self, data: list[tuple[Any, ...]]
+    ) -> tuple[list[list[str]], list[str], list[float], list[dict[str, Any] | None], list[str]]:
+        display_data: list[list[str]] = []
+        search_index: list[str] = []
+        float_totals: list[float] = []
+        style_cache: list[dict[str, Any] | None] = []
+        date_keys: list[str] = []
 
         for row in data:
             date_str = self._format_date_for_display(row[0])
@@ -146,7 +142,7 @@ class CacheWorker(QThread):
 
         return display_data, search_index, float_totals, style_cache, date_keys
 
-    def _format_date_for_display(self, val) -> str:
+    def _format_date_for_display(self, val: Any) -> str:
         if not val:
             return ""
         s_val = str(val)
@@ -154,14 +150,14 @@ class CacheWorker(QThread):
             return s_val
 
         try:
-            if len(s_val) >= 10 and s_val[4] == "-" and s_val[7] == "-":
+            if len(s_val) >= 10 and s_val[4] == s_val[7] == "-":
                 return f"{s_val[8:10]}/{s_val[5:7]}/{s_val[0:4]}"
             parts = s_val.split(" ")[0].split("-")
             return f"{parts[2]}/{parts[1]}/{parts[0]}" if len(parts) == 3 else s_val
         except Exception:
             return s_val
 
-    def _process_row_fields(self, row, date_str) -> tuple[list[str], list[str]]:
+    def _process_row_fields(self, row: tuple[Any, ...], date_str: str) -> tuple[list[str], list[str]]:
         disp_row = [date_str]
         search_parts = [date_str]
         for i in range(1, 11):
@@ -172,7 +168,7 @@ class CacheWorker(QThread):
                 search_parts.append(d_val)
         return disp_row, search_parts
 
-    def _parse_row_total(self, val) -> float:
+    def _parse_row_total(self, val: Any) -> float:
         try:
             if isinstance(val, (int, float)):
                 return float(val)
@@ -180,18 +176,25 @@ class CacheWorker(QThread):
         except Exception:
             return 0.0
 
-    def _parse_row_style(self, row):
+    def _parse_row_style(self, row: tuple[Any, ...]) -> dict[str, Any] | None:
         if len(row) <= 11 or not row[11]:
             return None
         try:
-            return json.loads(row[11])
+            return json.loads(row[11])  # type: ignore[no-any-return]
         except Exception:
             return None
 
-    def _save_cache(self, data, search, totals, style_cache, date_keys):
+    def _save_cache(
+        self,
+        data: list[list[str]],
+        search: list[str],
+        totals: list[float],
+        style_cache: list[dict[str, Any] | None],
+        date_keys: list[str],
+    ) -> None:
         try:
             self.cache_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.cache_path, "wb") as f:
-                pickle.dump((data, search, totals, style_cache, date_keys), f)
+                pickle.dump((data, search, totals, style_cache, date_keys), f)  # nosec B403
         except Exception as e:
             print(f"Error saving cache: {e}")

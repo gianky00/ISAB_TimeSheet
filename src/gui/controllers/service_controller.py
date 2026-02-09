@@ -3,10 +3,12 @@ Controller per il coordinamento dei servizi di background (Telegram, Lyra, Updat
 """
 
 import logging
+import operator
 import os
 import re
 from contextlib import suppress
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QObject, QTimer
 
@@ -17,6 +19,9 @@ from src.core.notification_manager import NotificationManager
 from src.core.report_history import ReportHistory
 from src.core.version import __version__
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 class ServiceController(QObject):
     """
@@ -24,25 +29,26 @@ class ServiceController(QObject):
     il coordinamento delle notifiche.
     """
 
-    def __init__(self, main_window, telegram_service, lyra_sentinel):
+    def __init__(self, main_window: Any, telegram_service: Any, lyra_sentinel: Any) -> None:
         super().__init__(main_window)
         self.mw = main_window
         self.telegram = telegram_service
         self.sentinel = lyra_sentinel
 
         # Tracking bot in esecuzione per sito (per parallelismo intelligente)
-        self.running_bots_by_site = {
+        self.running_bots_by_site: dict[str, list[str]] = {
             "portale_fornitori": [],  # Lista di bot_id in esecuzione
             "safework": [],
         }
 
         # Coda bot in attesa per sito (quando un sito è occupato)
-        self.pending_bots_by_site = {
-            "portale_fornitori": [],  # Lista di (bot_id, panel, callback)
+        self.pending_bots_by_site: dict[str, list[tuple[str, Any, str]]] = {
+            "portale_fornitori": [],  # Lista di (bot_id, panel, log_message)
             "safework": [],
         }
+        self.scheduler_timer: QTimer | None = None
 
-    def start_all(self):
+    def start_all(self) -> None:
         """Avvia tutti i servizi in background con i relativi ritardi."""
         # Lyra Sentinel
         self.sentinel.anomalies_found.connect(self.mw._on_anomalies_found)
@@ -55,16 +61,14 @@ class ServiceController(QObject):
         QTimer.singleShot(3000, self._check_updates)
 
         # Collegamento notifiche globali -> Telegram
-        NotificationManager.instance().notification_added.connect(
-            self._forward_notification_to_telegram
-        )
+        NotificationManager.instance().notification_added.connect(self._forward_notification_to_telegram)
 
         # Scheduler (ogni 60s) per task pianificati
         self.scheduler_timer = QTimer(self)
         self.scheduler_timer.timeout.connect(self._check_scheduled_tasks)
         self.scheduler_timer.start(60000)  # 1 minuto
 
-    def _check_scheduled_tasks(self):
+    def _check_scheduled_tasks(self) -> None:
         """
         Controlla se ci sono task pianificati da eseguire ora.
         Implementa parallelismo intelligente: bot su siti diversi possono
@@ -73,30 +77,30 @@ class ServiceController(QObject):
         config = config_manager.load_config()
         now = datetime.now().strftime("%H:%M")
 
-        # Lista di bot da schedulare (bot_id, panel_attr, site, target_time)
-        scheduled_bots = [
+        # Lista di bot da schedulare (bot_id, panel_attr, site, target_time, enabled, prepare_callback)
+        scheduled_bots: list[tuple[str, str, str, str, bool, Callable[[Any], None] | None]] = [
             (
                 "timbrature",
                 "timbrature_bot_panel",
                 "portale_fornitori",
-                config.get("timbrature_autopilot_time", "09:00"),
-                config.get("timbrature_autopilot_enabled", False),
+                str(config.get("timbrature_autopilot_time", "09:00")),
+                bool(config.get("timbrature_autopilot_enabled", False)),
                 None,  # Nessuna preparazione speciale
             ),
             (
                 "scarico_oda_generale",
                 "dettagli_oda_bot_panel",
                 "portale_fornitori",
-                config.get("scarico_oda_generale_autopilot_time", "09:00"),
-                config.get("scarico_oda_generale_autopilot_enabled", False),
+                str(config.get("scarico_oda_generale_autopilot_time", "09:00")),
+                bool(config.get("scarico_oda_generale_autopilot_enabled", False)),
                 self._prepare_scarico_oda_generale,  # Callback di preparazione
             ),
             (
                 "ricerca_pdl",
                 "ricerca_pdl_bot_panel",
                 "safework",
-                config.get("ricerca_pdl_autopilot_time", "09:00"),
-                config.get("ricerca_pdl_autopilot_enabled", False),
+                str(config.get("ricerca_pdl_autopilot_time", "09:00")),
+                bool(config.get("ricerca_pdl_autopilot_enabled", False)),
                 None,  # Nessuna preparazione speciale
             ),
         ]
@@ -110,27 +114,22 @@ class ServiceController(QObject):
             enabled,
             prepare_callback,
         ) in scheduled_bots:
-            if not enabled:
-                continue
+            if enabled and now == target_time and hasattr(self.mw, panel_attr):
+                panel = getattr(self.mw, panel_attr)
 
-            if now == target_time:
-                # Verifica che il pannello sia disponibile
-                if hasattr(self.mw, panel_attr):
-                    panel = getattr(self.mw, panel_attr)
+                # Esegui preparazione specifica se richiesta
+                if prepare_callback:
+                    prepare_callback(panel)
 
-                    # Esegui preparazione specifica se richiesta
-                    if prepare_callback:
-                        prepare_callback(panel)
-
-                    # Schedula con logica di parallelismo
-                    self._schedule_bot_with_parallelism(
-                        bot_id, panel, site, f"Avvio pianificato automatico ({now})..."
-                    )
+                # Schedula con logica di parallelismo
+                self._schedule_bot_with_parallelism(
+                    bot_id, panel, site, f"Avvio pianificato automatico ({now})..."
+                )
 
         # === REPORT EMAIL SCHEDULATO (con intervallo giorni) ===
         self._check_report_email_schedule(config, now)
 
-    def _check_report_email_schedule(self, config, now_time):
+    def _check_report_email_schedule(self, config: dict[str, Any], now_time: str) -> None:
         """
         Controlla e gestisce l'invio schedulato del report email.
         Questo task usa un intervallo in giorni invece di essere giornaliero.
@@ -138,14 +137,14 @@ class ServiceController(QObject):
         if not config.get("report_email_autopilot_enabled", False):
             return
 
-        target_time = config.get("report_email_autopilot_time", "08:00")
+        target_time = str(config.get("report_email_autopilot_time", "08:00"))
 
         # Verifica prima l'orario
         if now_time != target_time:
             return
 
         # Verifica intervallo giorni
-        interval_days = config.get("report_email_autopilot_interval_days", 7)
+        interval_days = int(config.get("report_email_autopilot_interval_days", 7))
         last_sent_str = config.get("report_email_autopilot_last_sent")
 
         should_send = False
@@ -154,7 +153,7 @@ class ServiceController(QObject):
             should_send = True
         else:
             try:
-                last_dt = datetime.fromisoformat(last_sent_str)
+                last_dt = datetime.fromisoformat(str(last_sent_str))
                 days_passed = (datetime.now() - last_dt).days
                 if days_passed >= interval_days:
                     should_send = True
@@ -165,7 +164,7 @@ class ServiceController(QObject):
         if should_send:
             self._send_scheduled_report_email()
 
-    def _send_scheduled_report_email(self):
+    def _send_scheduled_report_email(self) -> None:
         """Genera e invia il report email automaticamente (senza UI)."""
         logger = logging.getLogger(__name__)
 
@@ -173,15 +172,21 @@ class ServiceController(QObject):
             # Importa funzione helper per costruire le mappe timbrature
             # (la logica è duplicata per evitare dipendenze circolari)
 
-            def normalize(t):
+            def normalize(t: Any) -> str:
                 return re.sub(r"\s+", " ", str(t).strip().upper())
 
-            def build_timbrature_maps(accessi):
-                today = datetime.now()
-                last_by_cf = {}
-                last_by_name = {}
+            def build_timbrature_maps(
+                accessi: list[tuple[Any, ...]],
+            ) -> tuple[dict[str, int], dict[tuple[str, str], int]]:
+                today = datetime.now(UTC)
+                last_by_cf: dict[str, int] = {}
+                last_by_name: dict[tuple[str, str], int] = {}
 
-                for cog, nom, cf, d_str in accessi:
+                for row in accessi:
+                    cog = str(row[0])
+                    nom = str(row[1])
+                    cf = str(row[2])
+                    d_str = str(row[3])
                     if d_str:
                         norm_key = (normalize(cog), normalize(nom))
                         norm_cf = cf.strip().upper() if cf and cf.strip() else None
@@ -190,22 +195,15 @@ class ServiceController(QObject):
                             d_dt = None
                             for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
                                 try:
-                                    d_dt = datetime.strptime(date_part, fmt)
+                                    d_dt = datetime.strptime(date_part, fmt).replace(tzinfo=UTC)
                                     break
                                 except ValueError:
                                     continue
                             if d_dt:
                                 diff = (today - d_dt).days
-                                if norm_cf:
-                                    if (
-                                        norm_cf not in last_by_cf
-                                        or diff < last_by_cf[norm_cf]
-                                    ):
-                                        last_by_cf[norm_cf] = diff
-                                if (
-                                    norm_key not in last_by_name
-                                    or diff < last_by_name[norm_key]
-                                ):
+                                if norm_cf and (norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]):
+                                    last_by_cf[norm_cf] = diff
+                                if norm_key not in last_by_name or diff < last_by_name[norm_key]:
                                     last_by_name[norm_key] = diff
                 return last_by_cf, last_by_name
 
@@ -223,11 +221,11 @@ class ServiceController(QObject):
             accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
             last_by_cf, last_by_name = build_timbrature_maps(accessi)
 
-            warning_list = []
-            expired_list = []
+            warning_list: list[dict[str, Any]] = []
+            expired_list: list[dict[str, Any]] = []
 
             for dip in dipendenti:
-                id_ris, cog, nom, cf, badge, data_ass = dip
+                id_ris, cog, nom, cf, badge, _data_ass = dip
                 cf_norm = normalize(cf or "")
                 name_key = (normalize(cog or ""), normalize(nom or ""))
 
@@ -242,7 +240,7 @@ class ServiceController(QObject):
                     "id": id_ris,
                     "cognome": cog,
                     "nome": nom,
-                    "badge": badge if badge else "-",
+                    "badge": badge or "-",
                     "giorni": diff_days,
                     "data": formatted_date,
                 }
@@ -258,15 +256,15 @@ class ServiceController(QObject):
                 return
 
             # Ordina per urgenza
-            warning_list.sort(key=lambda x: x["giorni"], reverse=True)
-            expired_list.sort(key=lambda x: x["giorni"], reverse=True)
+            warning_list.sort(key=operator.itemgetter("giorni"), reverse=True)
+            expired_list.sort(key=operator.itemgetter("giorni"), reverse=True)
 
             # Invia report via Outlook
             if os.name != "nt":
                 logger.warning("Report email schedulato disponibile solo su Windows")
                 return
 
-            import win32com.client
+            import win32com.client  # type: ignore
 
             # Costruisci HTML semplificato per invio automatico
             current_date = datetime.now().strftime("%d/%m/%Y %H:%M")
@@ -317,9 +315,7 @@ class ServiceController(QObject):
             ReportHistory.save_report(warning_list, expired_list)
 
             # Aggiorna timestamp ultimo invio
-            config_manager.set_config_value(
-                "report_email_autopilot_last_sent", datetime.now().isoformat()
-            )
+            config_manager.set_config_value("report_email_autopilot_last_sent", datetime.now().isoformat())
 
             # Notifica
             NotificationManager.instance().add_notification(
@@ -340,7 +336,7 @@ class ServiceController(QObject):
                 level="error",
             )
 
-    def _prepare_scarico_oda_generale(self, panel):
+    def _prepare_scarico_oda_generale(self, panel: Any) -> None:
         """
         Prepara il pannello Scarico OdA Generale:
         - Pulisce la tabella (rimuove tutti i dati)
@@ -349,11 +345,9 @@ class ServiceController(QObject):
         if hasattr(panel, "table"):
             # Pulisci la tabella completamente
             panel.table.setRowCount(0)
-            panel.log_widget.append(
-                "🧹 Tabella pulita per scarico generale (senza filtro OdA)"
-            )
+            panel.log_widget.append("🧹 Tabella pulita per scarico generale (senza filtro OdA)")
 
-    def _schedule_bot_with_parallelism(self, bot_id, panel, site, log_message):
+    def _schedule_bot_with_parallelism(self, bot_id: str, panel: Any, site: str, log_message: str) -> None:
         """
         Schedula un bot con logica di parallelismo intelligente.
 
@@ -378,7 +372,7 @@ class ServiceController(QObject):
             # Sito libero: avvia immediatamente
             self._start_bot(bot_id, panel, site, log_message)
 
-    def _start_bot(self, bot_id, panel, site, log_message):
+    def _start_bot(self, bot_id: str, panel: Any, site: str, log_message: str) -> None:
         """
         Avvia un bot e traccia la sua esecuzione.
 
@@ -407,20 +401,18 @@ class ServiceController(QObject):
             # Rimuovi eventuali callback precedenti di ServiceController per questo pannello
             # per evitare esecuzioni multiple, senza disconnettere altri listener (es. BotController)
             if hasattr(panel, "_service_callback") and panel._service_callback:
-                try:
+                with suppress(Exception):
                     panel.status_changed.disconnect(panel._service_callback)
-                except Exception:
-                    pass
 
             # Crea una funzione di callback che cattura bot_id e site
-            def on_bot_finished(status, message):
+            def on_bot_finished(status: str, message: str) -> None:
                 # Note: status is the color code from BaseBotPanel
                 # #2E7D32 = Success, #C62828 = Error, #ffc107 = Stopped/Pending
-                is_finished = status in ["completed", "error", "stopped"] or status in [
+                is_finished = status in ("completed", "error", "stopped") or status in (
                     "#2E7D32",
                     "#C62828",
                     "#ffc107",
-                ]
+                )
 
                 if is_finished:
                     self._on_bot_completed(bot_id, site, panel)
@@ -432,7 +424,7 @@ class ServiceController(QObject):
         # Avvia il bot
         panel._on_start()
 
-    def _on_bot_completed(self, bot_id, site, panel):
+    def _on_bot_completed(self, bot_id: str, site: str, panel: Any) -> None:
         """
         Gestisce il completamento di un bot: rimuove dal tracking e
         avvia il prossimo bot in coda per lo stesso sito.
@@ -448,40 +440,30 @@ class ServiceController(QObject):
 
         # Disconnetti solo la callback specifica di questo controller
         if hasattr(panel, "_service_callback") and panel._service_callback:
-            try:
+            with suppress(Exception):
                 panel.status_changed.disconnect(panel._service_callback)
                 panel._service_callback = None
-            except Exception:
-                pass
 
         # Controlla se ci sono bot in coda per questo sito
         if self.pending_bots_by_site[site]:
             # Avvia il prossimo bot in coda
-            next_bot_id, next_panel, next_log_message = self.pending_bots_by_site[
-                site
-            ].pop(0)
-            next_panel.log_widget.append(
-                "▶️ Bot precedente completato. Avvio da coda..."
-            )
+            next_bot_id, next_panel, next_log_message = self.pending_bots_by_site[site].pop(0)
+            next_panel.log_widget.append("▶️ Bot precedente completato. Avvio da coda...")
             self._start_bot(next_bot_id, next_panel, site, next_log_message)
 
-    def _check_updates(self):
+    def _check_updates(self) -> None:
         """Controlla gli aggiornamenti in background."""
-        check_for_updates(
-            parent=self.mw, silent=True, callback=self.mw._show_update_banner
-        )
+        check_for_updates(parent=self.mw, silent=True, callback=self.mw._show_update_banner)
 
-    def _forward_notification_to_telegram(self, notification):
+    def _forward_notification_to_telegram(self, notification: dict[str, Any]) -> None:
         """Inoltra notifiche importanti al bot Telegram."""
         if notification.get("title") == "Telegram":
             return
 
         level = notification.get("level", "info")
-        if level in ["success", "error", "warning"]:
+        if level in ("success", "error", "warning"):
             title = notification.get("title", "Notifica")
             msg = notification.get("message", "")
-            icon = (
-                "[OK]" if level == "success" else "[ERR]" if level == "error" else "[!]"
-            )
+            icon = "[OK]" if level == "success" else "[ERR]" if level == "error" else "[!]"
             text = f"{icon} *{title}*\n{msg}"
             self.telegram.send_message_sync(text)

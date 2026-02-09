@@ -1,4 +1,6 @@
-from PyQt6.QtCore import Qt, QTimer
+from typing import ClassVar
+
+from PyQt6.QtCore import QSortFilterProxyModel, Qt, QTimer
 from PyQt6.QtWidgets import (
     QHeaderView,
     QTableView,
@@ -16,10 +18,43 @@ from src.gui.formatters import (
 )
 
 
+class MultiColumnFilterProxyModel(QSortFilterProxyModel):
+    """Proxy model che filtra su tutte le colonne con supporto multi-termine."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._filter_text = ""
+
+    def set_filter_text(self, text: str):
+        """Imposta il testo di filtro (supporta termini multipli separati da spazio)."""
+        self._filter_text = text.lower().strip()
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, source_row: int, _source_parent) -> bool:
+        if not self._filter_text:
+            return True
+
+        search_terms = self._filter_text.split()
+        model = self.sourceModel()
+        if not model:
+            return False
+
+        # Concatena tutte le colonne della riga
+        row_text = ""
+        for col in range(model.columnCount()):
+            index = model.index(source_row, col)
+            value = model.data(index, Qt.ItemDataRole.DisplayRole)
+            if value:
+                row_text += str(value).lower() + " "
+
+        # Tutti i termini devono essere presenti
+        return all(term in row_text for term in search_terms)
+
+
 class ContabilitaYearTab(QWidget):
     """Tab per un singolo anno ottimizzato per massima reattività."""
 
-    COLUMNS = [
+    COLUMNS: ClassVar[list[str]] = [
         "DATA\nPREV.",
         "MESE",
         "N°\nPREV.",
@@ -49,6 +84,10 @@ class ContabilitaYearTab(QWidget):
         # Col 10: RESA -> Smart Number
         self.model.set_column_formatter(10, format_number_smart)
 
+        # Proxy model per filtraggio
+        self.proxy_model = MultiColumnFilterProxyModel(self)
+        self.proxy_model.setSourceModel(self.model)
+
         self._setup_ui()
         # Defer data loading for better responsiveness
         QTimer.singleShot(10, self._load_data)
@@ -58,7 +97,7 @@ class ContabilitaYearTab(QWidget):
         layout.setContentsMargins(0, 10, 0, 0)
 
         self.table = QTableView()
-        self.table.setModel(self.model)
+        self.table.setModel(self.proxy_model)
         self.table.setAlternatingRowColors(True)
 
         # --- Configurazione Selezione (Single row, come richiesto) ---
@@ -67,10 +106,13 @@ class ContabilitaYearTab(QWidget):
         self.table.setEditTriggers(QTableView.EditTrigger.NoEditTriggers)
 
         self.table.setSortingEnabled(True)
-        self.table.verticalHeader().setVisible(False)
+        if v_header := self.table.verticalHeader():
+            v_header.setVisible(False)
         self.table.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         header = self.table.horizontalHeader()
+        if header is None:
+            raise RuntimeError("Table horizontal header is None - table not properly initialized")
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
         # Inizialmente usa Interactive per tutte le colonne
@@ -113,7 +155,7 @@ class ContabilitaYearTab(QWidget):
             # Nota: ContabilitaQueries restituisce tutto. Dobbiamo assicurarci di prendere solo le colonne che servono
             # se la query ritorna più colonne di self.COLUMNS.
             # Slice per sicurezza
-            display_rows = [row[: len(self.COLUMNS)] for row in db_data]
+            display_rows = [list(row[: len(self.COLUMNS)]) for row in db_data]
 
             self.model.update_data(display_rows)
 
@@ -126,6 +168,8 @@ class ContabilitaYearTab(QWidget):
     def _adjust_column_widths(self):
         """Adatta le larghezze delle colonne al contenuto, mantenendo un minimo leggibile."""
         header = self.table.horizontalHeader()
+        if header is None:
+            raise RuntimeError("Table horizontal header is None - cannot adjust column widths")
 
         # Ridimensiona tutte le colonne al contenuto
         self.table.resizeColumnsToContents()
@@ -157,5 +201,9 @@ class ContabilitaYearTab(QWidget):
         header.setSectionResizeMode(11, QHeaderView.ResizeMode.Stretch)  # ANNOTAZIONI
 
     def set_search_query(self, query):
-        """Placeholder per la ricerca (da implementare nel modello se necessario)."""
-        pass
+        """Applica il filtro di ricerca."""
+        self.filter_data(query)
+
+    def filter_data(self, text):
+        """Filtra i dati in base al testo di ricerca."""
+        self.proxy_model.set_filter_text(text)

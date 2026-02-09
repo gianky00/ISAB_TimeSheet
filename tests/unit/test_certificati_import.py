@@ -25,9 +25,7 @@ class TestCertificatiImport(unittest.TestCase):
         # Mock read_sql for existing rows (return empty)
         mock_read_sql.return_value = pd.DataFrame()
 
-        with patch(
-            "src.core.data_synchronizer.DataSynchronizer.sync_certificati_campione"
-        ) as mock_sync:
+        with patch("src.core.data_synchronizer.DataSynchronizer.sync_certificati_campione") as mock_sync:
             mock_sync.return_value = (1, 0)
 
             # 1. Preview DataFrame (simulate header at row 5)
@@ -86,7 +84,7 @@ class TestCertificatiImport(unittest.TestCase):
                 result,
                 msg,
                 added,
-                removed,
+                _removed,
             ) = ContabilitaManager.import_certificati_campione("dummy.xlsx")
 
             # Assertions
@@ -96,7 +94,7 @@ class TestCertificatiImport(unittest.TestCase):
             # Verify that it picked the correct sheet
             # mock_read_excel.call_args_list[0] is preview
             # mock_read_excel.call_args_list[1] is real read
-            args, kwargs = mock_read_excel.call_args_list[1]
+            _args, kwargs = mock_read_excel.call_args_list[1]
             self.assertEqual(kwargs["sheet_name"], "Strumenti Campione ISAB SUD")
             self.assertEqual(kwargs["header"], 5)
 

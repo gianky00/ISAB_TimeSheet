@@ -49,12 +49,8 @@ def audit_widget(qtbot, mocker):
     dummy_pixmap.fill(0)
     dummy_icon = QIcon(dummy_pixmap)
 
-    mocker.patch(
-        "src.gui.widgets.audit_log_widget.get_asset_path", return_value="dummy.svg"
-    )
-    mocker.patch(
-        "src.gui.widgets.audit_log_widget.get_colored_icon", return_value=dummy_icon
-    )
+    mocker.patch("src.gui.widgets.audit_log_widget.get_asset_path", return_value="dummy.svg")
+    mocker.patch("src.gui.widgets.audit_log_widget.get_colored_icon", return_value=dummy_icon)
     mocker.patch("src.gui.models.audit_model.get_asset_path", return_value="dummy.svg")
     mocker.patch("src.gui.models.audit_model.get_colored_icon", return_value=dummy_icon)
 
@@ -77,9 +73,7 @@ def audit_widget(qtbot, mocker):
         return widget
 
 
-@pytest.mark.skipif(
-    os.environ.get("CI") == "true", reason="Skipping Qt heavy test in CI"
-)
+@pytest.mark.skipif(os.environ.get("CI") == "true", reason="Skipping Qt heavy test in CI")
 def test_audit_refresh_population(audit_widget):
     """Test that logs are correctly populated in the table."""
     audit_widget.refresh()
@@ -93,9 +87,7 @@ def test_audit_refresh_population(audit_widget):
     assert model.data(idx_action, 0) == "LOGIN"
 
 
-@pytest.mark.skipif(
-    os.environ.get("CI") == "true", reason="Skipping Qt heavy test in CI"
-)
+@pytest.mark.skipif(os.environ.get("CI") == "true", reason="Skipping Qt heavy test in CI")
 def test_integrity_display(audit_widget, mocker):
     """Test integrity label updates."""
     # Test valid

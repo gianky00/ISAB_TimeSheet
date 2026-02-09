@@ -43,12 +43,8 @@ class SecretsManager:
             return key
 
         # 4. Fallback Hardcoded (Embedded for Distribution)
-        try:
-            return base64.urlsafe_b64decode(
-                "8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek="
-            )
-        except Exception:
-            pass
+        with suppress(Exception):
+            return base64.urlsafe_b64decode("8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek=")
 
         return None
 
@@ -69,7 +65,7 @@ class SecretsManager:
                     for line in f:
                         if line.startswith("SYNCROJOB_LICENSE_KEY="):
                             key_str = line.split("=", 1)[1].strip()
-                            key_str = key_str.strip('"').strip("'")
+                            key_str = key_str.strip("\"'")
                             with suppress(Exception):
                                 return base64.urlsafe_b64decode(key_str)
         return None
@@ -109,7 +105,7 @@ class SecretsManager:
         return False
 
     @classmethod
-    def store_credential(cls, service: str, username: str, password: str):
+    def store_credential(cls, service: str, username: str, password: str) -> None:
         """Salva credenziali nel keyring di sistema."""
         try:
             keyring.set_password(f"{cls.APP_NAME}_{service}", username, password)
@@ -128,7 +124,7 @@ class SecretsManager:
             return None
 
     @classmethod
-    def delete_credential(cls, service: str, username: str):
+    def delete_credential(cls, service: str, username: str) -> None:
         """Elimina credenziali dal keyring."""
         try:
             keyring.delete_password(f"{cls.APP_NAME}_{service}", username)

@@ -67,9 +67,7 @@ class TestBackupManagerRobust:
                 files = z.namelist()
                 assert "data.db" in files
                 assert "settings.json" in files
-                assert (
-                    "ignored.txt" not in files
-                )  # Estensione non inclusa in INCLUDE_EXT
+                assert "ignored.txt" not in files  # Estensione non inclusa in INCLUDE_EXT
 
             mock_audit.log_action.assert_called_with(
                 action="Backup Creato",
@@ -84,14 +82,16 @@ class TestBackupManagerRobust:
         empty_conf = tmp_path / "empty_conf"
         empty_conf.mkdir()
 
-        with patch("src.core.backup_manager.CONFIG_DIR", empty_conf):
-            with patch(
+        with (
+            patch("src.core.backup_manager.CONFIG_DIR", empty_conf),
+            patch(
                 "src.core.backup_manager.BackupManager.get_backup_dir",
                 return_value=tmp_path,
-            ):
-                success, msg = BackupManager.create_backup()
-                assert success is False
-                assert "Nessun file" in msg
+            ),
+        ):
+            success, msg = BackupManager.create_backup()
+            assert success is False
+            assert "Nessun file" in msg
 
     def test_cleanup_old_backups(self, tmp_path):
         """Test rotazione backup (keep=5)."""
@@ -121,7 +121,7 @@ class TestBackupManagerRobust:
             z.writestr("restored_file.db", "Restored Content")
 
         # 2. Esegui restore
-        success, msg = BackupManager.restore_backup(str(zip_path))
+        success, _msg = BackupManager.restore_backup(str(zip_path))
 
         assert success is True
         assert (mock_config_dir / "restored_file.db").exists()

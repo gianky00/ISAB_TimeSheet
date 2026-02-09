@@ -5,7 +5,7 @@ Pannello per la visualizzazione del Database PDL SafeWork.
 
 import os
 from datetime import datetime
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 import pandas as pd
 from PyQt6.QtCore import Qt, QTimer
@@ -40,9 +40,18 @@ from .pdl_filter_widget import PDLFilterWidget
 class PDLDBPanel(QWidget):
     """Pannello per la visualizzazione del Database PDL SafeWork con architettura Master-Detail."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
+
+        # Member declarations
+        self.filters: PDLFilterWidget
+        self.splitter: QSplitter
+        self.table: QTableView
+        self.detail_view: PDLDetailView
+        self.model: FastTableModel
+
         # Nuove Colonne della Tabella (Vista Master)
+        self._raw_full_data: list[tuple[Any, ...]] = []  # Buffer per i dati completi
         self.master_headers = [
             "Data Creazione",
             "Richiedente",
@@ -80,11 +89,12 @@ class PDLDBPanel(QWidget):
 
         self.model = FastTableModel([], self.master_headers)
         self._raw_full_data = []  # Buffer per i dati completi
-        self._cache = {}  # Cache per le query
+        self._cache: dict[str, list[tuple[Any, ...]]] = {}  # Cache per le query
 
         # Stato Ordinamento
-        self.current_sort_col = None
+        self.current_sort_col: int | None = None
         self.current_sort_order = "DESC"
+        self.worker: BotWorker | None = None
 
         # Timer per ricerca ritardata (Debounce)
         self.search_timer = QTimer()
@@ -110,9 +120,7 @@ class PDLDBPanel(QWidget):
         self.filters.update_clicked.connect(self._on_update_bot_clicked)
         self.filters.reset_clicked.connect(self._reset_filters)
         self.filters.export_clicked.connect(self._export_to_excel)
-        self.filters.search_input.textChanged.connect(
-            lambda: self.search_timer.start(500)
-        )
+        self.filters.search_input.textChanged.connect(lambda: self.search_timer.start(500))
 
         main_layout.addWidget(self.filters)
 
@@ -125,19 +133,20 @@ class PDLDBPanel(QWidget):
         self.table.setAlternatingRowColors(True)
         self.table.setSortingEnabled(True)
         self.table.setWordWrap(True)
-        self.table.verticalHeader().setVisible(False)
+        if v_header := self.table.verticalHeader():
+            v_header.setVisible(False)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
-        self.table.setItemDelegate(
-            PDLDelegate([0], self.table)
-        )  # Data Creazione è indice 0
+        self.table.setItemDelegate(PDLDelegate([0], self.table))  # Data Creazione è indice 0
 
-        self.table.selectionModel().selectionChanged.connect(self._on_selection_changed)
-        header = self.table.horizontalHeader()
-        header.setSectionsClickable(True)
-        header.sectionClicked.connect(self._on_header_clicked)
+        if sel_model := self.table.selectionModel():
+            sel_model.selectionChanged.connect(self._on_selection_changed)
+
+        if header := self.table.horizontalHeader():
+            header.setSectionsClickable(True)
+            header.sectionClicked.connect(self._on_header_clicked)
 
         self.splitter.addWidget(self.table)
 
@@ -213,6 +222,13 @@ class PDLDBPanel(QWidget):
         if success:
             ToastManager.instance().show("PDL Aggiornati!", "success")
             self.refresh_data()
+
+            # Notifica pannello caricamento se esiste
+            win = self.window()
+            if win:
+                scarico_pdl = getattr(win, "scarico_pdl_panel", None)
+                if scarico_pdl and hasattr(scarico_pdl, "_on_log"):
+                    scarico_pdl._on_log("✅ Bot Ricerca PDL completato.")
         else:
             self.filters.lbl_sync_status.setText("❌ Errore Bot")
             QMessageBox.warning(self, "Errore", "Bot terminato con errori.")
@@ -223,9 +239,7 @@ class PDLDBPanel(QWidget):
             dlg = QDialog(self)
             dlg.setWindowTitle(title)
             dlg.setMinimumWidth(350)
-            dlg.setWindowFlags(
-                dlg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
-            )
+            dlg.setWindowFlags(dlg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
 
             layout = QVBoxLayout(dlg)
             layout.setSpacing(20)
@@ -359,7 +373,11 @@ class PDLDBPanel(QWidget):
 
     def _on_selection_changed(self, selected, _deselected):
         """Aggiorna il pannello dettaglio quando si seleziona una riga."""
-        indexes = self.table.selectionModel().selectedRows()
+        sel_model = self.table.selectionModel()
+        if not sel_model:
+            return
+
+        indexes = sel_model.selectedRows()
         if not indexes:
             self.detail_view.clear()
             return
@@ -371,9 +389,7 @@ class PDLDBPanel(QWidget):
     def _on_header_clicked(self, logical_index):
         """Gestisce il toggle dell'ordinamento."""
         if self.current_sort_col == logical_index:
-            self.current_sort_order = (
-                "DESC" if self.current_sort_order == "ASC" else "ASC"
-            )
+            self.current_sort_order = "DESC" if self.current_sort_order == "ASC" else "ASC"
         else:
             self.current_sort_col = logical_index
             self.current_sort_order = "ASC"
@@ -382,20 +398,17 @@ class PDLDBPanel(QWidget):
 
     def refresh_data(self, sort_col=None):
         """Aggiorna i dati della tabella PDL con sistema di cache."""
-        self.filters.lbl_sync_status.setText(
-            f"Ultimo Sync: {SyncTracker.get_formatted_status('pdl')}"
-        )
+        self.filters.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('pdl')}")
 
         query, params = self._build_pdl_query(sort_col)
         cache_key = f"{query}_{params}"
 
+        full_rows: list[tuple[Any, ...]]
         if cache_key in self._cache:
             full_rows = self._cache[cache_key]
         else:
             try:
-                full_rows = db_manager.execute_query(
-                    db_manager.DB_PDL, query, tuple(params)
-                )
+                full_rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
                 self._cache[cache_key] = full_rows
             except Exception as e:
                 print(f"Errore caricamento PDL: {e}")
@@ -406,7 +419,7 @@ class PDLDBPanel(QWidget):
         self.model.update_data(master_rows)
         self._update_pdl_ui(len(master_rows))
 
-    def _build_pdl_query(self, sort_col: Optional[int]) -> Tuple[str, List[Any]]:
+    def _build_pdl_query(self, sort_col: int | None) -> tuple[str, list[Any]]:
         """Costruisce la query SQL per i PDL."""
         f = self.filters.get_filters()
         search_text = f["search"]
@@ -482,19 +495,20 @@ class PDLDBPanel(QWidget):
         query += " LIMIT 2000"
         return query, params
 
-    def _process_pdl_rows(self, full_rows: List[Tuple]) -> List[List[Any]]:
+    def _process_pdl_rows(self, full_rows: list[tuple[Any, ...]]) -> list[list[Any]]:
         """Pulisce e formatta le righe per la visualizzazione Master."""
         master_rows = []
         for r in full_rows:
             row = [r[2], r[10], r[1], r[3], r[4], r[8], r[6]]
-            master_rows.append(
-                [("" if str(val).lower() in ["nan", "none"] else val) for val in row]
-            )
+            master_rows.append([("" if str(val).lower() in ("nan", "none") else val) for val in row])
         return master_rows
 
     def _update_pdl_ui(self, count: int):
         """Ottimizza il layout della tabella."""
         header = self.table.horizontalHeader()
+        if not header:
+            return
+
         for i in range(len(self.master_headers)):
             header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
 
@@ -503,9 +517,7 @@ class PDLDBPanel(QWidget):
             if i != 6 and header.sectionSize(i) > 200:
                 header.resizeSection(i, 200)
 
-        QTimer.singleShot(
-            10, lambda: header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
-        )
+        QTimer.singleShot(10, lambda: header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch))
         if count < 500:
             QTimer.singleShot(100, self.table.resizeRowsToContents)
 
@@ -548,23 +560,22 @@ class PDLDBPanel(QWidget):
             if not rows:
                 return
 
-            export_data = []
-            for r in rows:
-                export_data.append(
-                    {
-                        "N° PDL": r[1],
-                        "Data Creazione": r[2],
-                        "Area": r[3],
-                        "Unità": r[4],
-                        "Descrizione": r[6],
-                        "Stato": r[8],
-                        "Apparecchiatura": r[9],
-                        "Richiedente": r[10],
-                        "Contratto": r[17],
-                        "Ordine": r[18],
-                        "Sito": r[19],
-                    }
-                )
+            export_data = [
+                {
+                    "N° PDL": r[1],
+                    "Data Creazione": r[2],
+                    "Area": r[3],
+                    "Unità": r[4],
+                    "Descrizione": r[6],
+                    "Stato": r[8],
+                    "Apparecchiatura": r[9],
+                    "Richiedente": r[10],
+                    "Contratto": r[17],
+                    "Ordine": r[18],
+                    "Sito": r[19],
+                }
+                for r in rows
+            ]
 
             df = pd.DataFrame(export_data)
             filename, _ = QFileDialog.getSaveFileName(
@@ -578,7 +589,7 @@ class PDLDBPanel(QWidget):
                 if not filename.endswith(".xlsx"):
                     filename += ".xlsx"
                 df.to_excel(filename, index=False, engine="openpyxl")
-                os.startfile(filename)
+                os.startfile(filename)  # noqa: S606
 
         except Exception as e:
             print(f"Errore Export Excel: {e}")

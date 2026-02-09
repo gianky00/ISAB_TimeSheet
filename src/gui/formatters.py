@@ -1,33 +1,34 @@
+from collections.abc import Callable
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
+from typing import Any
 
 from PyQt6.QtCore import QAbstractTableModel, Qt
 
 
 # --- FORMATTERS ---
-def format_date_it(value):
+def format_date_it(value: Any) -> str:
     """
     Converte stringa ISO YYYY-MM-DD o datetime in DD/MM/YYYY.
     """
     if not value:
         return ""
-    try:
+    with suppress(Exception):
         if isinstance(value, str):
             # Tenta vari formati comuni
             for fmt in ("%Y-%m-%d", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d"):
                 with suppress(ValueError):
-                    dt = datetime.strptime(value.split(" ")[0], fmt)
+                    dt = datetime.strptime(value.split(" ")[0], fmt).replace(tzinfo=UTC)
                     return dt.strftime("%d/%m/%Y")
             return value  # Fallback se non è una data riconosciuta
-        elif isinstance(value, (datetime, float, int)):
-            # Se è già datetime o timestamp (non supportato qui ma per sicurezza)
+        if isinstance(value, datetime):
             return value.strftime("%d/%m/%Y")
-    except Exception:
-        pass
+        if isinstance(value, (float, int)):
+            return datetime.fromtimestamp(value, tz=UTC).strftime("%d/%m/%Y")
     return str(value)
 
 
-def format_currency_smart(value):
+def format_currency_smart(value: Any) -> str:
     """
     Formatta numeri in stile Euro contabile:
     - 1200.00 -> 1.200
@@ -60,15 +61,14 @@ def format_currency_smart(value):
         # 3. Logica Visualizzazione: Se intero, niente decimali.
         if f_val.is_integer():
             return f"{int(f_val):,}".replace(",", ".")
-        else:
-            # 2 decimali fissi con separatori IT
-            return f"{f_val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        # 2 decimali fissi con separatori IT
+        return f"{f_val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
     except (ValueError, TypeError):
         return str(value)
 
 
-def format_number_smart(value):
+def format_number_smart(value: Any) -> str:
     """Identico a currency_smart, usato per ORE SP e RESA."""
     return format_currency_smart(value)
 
@@ -81,35 +81,38 @@ class FastTableModel(QAbstractTableModel):
     - Allineamento intelligente (Numeri a destra).
     """
 
-    def __init__(self, data=None, headers=None, metadata=None):
+    def __init__(
+        self,
+        data: list[list[Any]] | None = None,
+        headers: list[str] | None = None,
+        metadata: list[Any] | None = None,
+    ) -> None:
         super().__init__()
-        self._data = data or []
-        self._headers = headers or []
+        self._data: list[list[Any]] = data or []
+        self._headers: list[str] = headers or []
         # Support for parallel metadata list (e.g. valid DB IDs)
-        self._metadata = metadata or ([None] * len(self._data))
-        self._formatters = {}
-        self._alignments = {}
+        self._metadata: list[Any] = metadata or ([None] * len(self._data))
+        self._formatters: dict[int, Callable[[Any], str]] = {}
+        self._alignments: dict[int, Qt.AlignmentFlag] = {}
 
-    def set_column_formatter(self, col_idx, formatter_func):
+    def set_column_formatter(self, col_idx: int, formatter_func: Callable[[Any], str]) -> None:
         """Imposta una funzione di formattazione per una colonna."""
         self._formatters[col_idx] = formatter_func
         # Default: se formattiamo numeri/valuta, allineiamo a destra
         if formatter_func in (format_currency_smart, format_number_smart):
-            self._alignments[col_idx] = (
-                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-            )
+            self._alignments[col_idx] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 
-    def set_column_alignment(self, col_idx, alignment):
+    def set_column_alignment(self, col_idx: int, alignment: Qt.AlignmentFlag) -> None:
         """Forza allineamento per una colonna."""
         self._alignments[col_idx] = alignment
 
-    def rowCount(self, parent=None):
+    def rowCount(self, parent: Any = None) -> int:
         return len(self._data)
 
-    def columnCount(self, parent=None):
+    def columnCount(self, parent: Any = None) -> int:
         return len(self._headers)
 
-    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+    def data(self, index: Any, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
 
@@ -129,9 +132,7 @@ class FastTableModel(QAbstractTableModel):
             return str(raw_value) if raw_value is not None else ""
 
         if role == Qt.ItemDataRole.TextAlignmentRole:
-            return self._alignments.get(
-                col, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
-            )
+            return self._alignments.get(col, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         # Per ordinamento standard se la view non usa sort() del modello (ma QTableView lo fa)
         if role == Qt.ItemDataRole.EditRole:
@@ -139,31 +140,30 @@ class FastTableModel(QAbstractTableModel):
 
         return None
 
-    def headerData(self, section, orientation, role):
-        if (
-            orientation == Qt.Orientation.Horizontal
-            and role == Qt.ItemDataRole.DisplayRole
-        ):
+    def headerData(
+        self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
+    ) -> Any:
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return self._headers[section]
         return None
 
-    def update_data(self, new_data, new_metadata=None):
+    def update_data(self, new_data: list[list[Any]], new_metadata: list[Any] | None = None) -> None:
         self.beginResetModel()
         self._data = new_data
         self._metadata = new_metadata or ([None] * len(new_data))
         self.endResetModel()
 
-    def sort(self, column, order):
+    def sort(self, column: int, order: Qt.SortOrder = Qt.SortOrder.AscendingOrder) -> None:
         """Ordinamento personalizzato basato sui dati GREZZI (non stringhe formattate)."""
         self.layoutAboutToBeChanged.emit()
         try:
             # Funzione chiave per gestire None e tipi misti ed evitare TypeError (int < str)
-            # Restituisce una tupla (priorità, valore)
-            # Priorità: 0 = None/Vuoto, 1 = Numeri/Date, 2 = Stringhe
-            def sort_key(row_tuple):
+            # Restituisce una tupla (prioritÃ , valore)
+            # PrioritÃ : 0 = None/Vuoto, 1 = Numeri/Date, 2 = Stringhe
+            def sort_key(row_tuple: tuple[list[Any], Any]) -> tuple[int, Any]:
                 # row_tuple is (data_row, metadata_row)
-                row = row_tuple[0]
-                val = row[column]
+                row_data = row_tuple[0]
+                val = row_data[column]
 
                 # 0. Gestione None
                 if val is None:
@@ -191,7 +191,7 @@ class FastTableModel(QAbstractTableModel):
                             clean_val = clean_val.replace(",", ".")
                         return (1, float(clean_val))
 
-                    # Tentativo Data -> Timestamp (così confrontiamo come numeri)
+                    # Tentativo Data -> Timestamp (cosÃ¬ confrontiamo come numeri)
                     date_formats = (
                         "%d/%m/%Y",
                         "%Y-%m-%d",
@@ -202,7 +202,7 @@ class FastTableModel(QAbstractTableModel):
                     )
                     for fmt in date_formats:
                         try:
-                            dt = datetime.strptime(val_str, fmt)
+                            dt = datetime.strptime(val_str, fmt).replace(tzinfo=UTC)
                             return (1, dt.timestamp())
                         except ValueError:
                             continue
@@ -212,7 +212,7 @@ class FastTableModel(QAbstractTableModel):
 
                 # 3. Altri tipi (es. datetime oggetti)
                 if isinstance(val, datetime):
-                    return (1, val.timestamp())
+                    return (1, val.replace(tzinfo=UTC).timestamp())
 
                 return (2, str(val))
 
@@ -224,9 +224,9 @@ class FastTableModel(QAbstractTableModel):
 
             # Unzip
             if combined:
-                self._data, self._metadata = zip(*combined, strict=False)
-                self._data = list(self._data)
-                self._metadata = list(self._metadata)
+                unzipped = list(zip(*combined, strict=False))
+                self._data = list(unzipped[0])
+                self._metadata = list(unzipped[1])
             else:
                 self._data = []
                 self._metadata = []

@@ -1,6 +1,8 @@
-from typing import Optional
+from collections.abc import Sequence
+from typing import Any
 
 from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
@@ -11,25 +13,23 @@ from src.utils.helpers import get_asset_path
 class SidebarChildButton(SidebarButton):
     """Pulsante figlio indentato per i sottomenu."""
 
-    def _update_style(self):
+    def _update_style(self) -> None:
         super()._update_style()
         if not self._collapsed:
             # Sovrascriviamo per aggiungere indentazione extra
             current_style = self.styleSheet()
-            new_style = current_style.replace(
-                "padding: 12px 15px;", "padding: 10px 10px 10px 35px;"
-            )
+            new_style = current_style.replace("padding: 12px 15px;", "padding: 10px 10px 10px 35px;")
             self.setStyleSheet(new_style)
 
 
 class SidebarGroup(QWidget):
     """Gruppo espandibile per la sidebar con freccia animata."""
 
-    def __init__(self, title, icon_path, parent=None):
+    def __init__(self, title: str, icon_path: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(0)
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
 
         # Container per header (pulsante + freccia)
         header_container = QWidget()
@@ -48,7 +48,7 @@ class SidebarGroup(QWidget):
         self._set_arrow_icon(expanded=False)
         header_layout.addWidget(self.arrow_label)
 
-        self.layout.addWidget(header_container)
+        self.main_layout.addWidget(header_container)
 
         self.content_area = QWidget()
         self.content_layout = QVBoxLayout(self.content_area)
@@ -56,13 +56,13 @@ class SidebarGroup(QWidget):
         self.content_layout.setSpacing(2)
 
         self.content_area.setVisible(False)  # Default chiuso
-        self.layout.addWidget(self.content_area)
+        self.main_layout.addWidget(self.content_area)
 
         self.header_btn.clicked.connect(self.toggle_group)
-        self.children_btns = []
+        self.children_btns: list[SidebarButton] = []
         self._was_expanded = False  # Memorizza stato apertura prima del collasso
 
-    def _set_arrow_icon(self, expanded: bool):
+    def _set_arrow_icon(self, expanded: bool) -> None:
         """Imposta l'icona della freccia."""
         from src.utils.helpers import get_colored_icon
 
@@ -70,22 +70,22 @@ class SidebarGroup(QWidget):
         icon = get_colored_icon(get_asset_path(icon_enum), "#FFFFFF")
         self.arrow_label.setPixmap(icon.pixmap(14, 14))
 
-    def _update_arrow(self):
+    def _update_arrow(self) -> None:
         """Aggiorna l'icona della freccia in base allo stato."""
         self._set_arrow_icon(self.content_area.isVisible())
 
-    def add_child(self, btn: SidebarButton):
+    def add_child(self, btn: SidebarButton) -> None:
         self.content_layout.addWidget(btn)
         self.children_btns.append(btn)
 
-    def toggle_group(self):
+    def toggle_group(self) -> None:
         is_visible = self.content_area.isVisible()
         self.content_area.setVisible(not is_visible)
         # Aggiorna anche lo stato memorizzato
         self._was_expanded = not is_visible
         self._update_arrow()
 
-    def set_collapsed(self, collapsed):
+    def set_collapsed(self, collapsed: bool) -> None:
         self.header_btn.set_collapsed(collapsed)
         self.arrow_label.setVisible(not collapsed)
         for btn in self.children_btns:
@@ -100,7 +100,7 @@ class SidebarGroup(QWidget):
             self.content_area.setVisible(self._was_expanded)
         self._update_arrow()
 
-    def set_active_index(self, index, group_indices):
+    def set_active_index(self, index: int, group_indices: Sequence[int]) -> None:
         """Gestisce lo stato attivo del gruppo e dei figli."""
         is_child_active = index in group_indices
         self.header_btn.setChecked(is_child_active)
@@ -121,7 +121,7 @@ class SidebarWidget(QFrame):
     notifications_tab_requested = pyqtSignal(int)  # 0: Notifiche, 1: Audit
     palette_requested = pyqtSignal()  # Richiesta apertura Command Palette
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setObjectName("sidebarFrame")
         self._is_collapsed = True  # Partenza collassata
@@ -149,26 +149,26 @@ class SidebarWidget(QFrame):
         # Stato iniziale visuale
         self._update_ui_state()
 
-    def enterEvent(self, event):
+    def enterEvent(self, event: Any) -> None:
         """Espande la sidebar al passaggio del mouse."""
         if self._is_collapsed:
             self._set_collapsed(False)
         super().enterEvent(event)
 
-    def leaveEvent(self, event):
+    def leaveEvent(self, event: Any) -> None:
         """Collassa la sidebar all'uscita del mouse."""
         if not self._is_collapsed:
             self._set_collapsed(True)
         super().leaveEvent(event)
 
-    def _set_collapsed(self, collapsed):
+    def _set_collapsed(self, collapsed: bool) -> None:
         """Imposta lo stato ed esegue l'animazione/update."""
         self._is_collapsed = collapsed
         target_width = self.collapsed_width if collapsed else self.expanded_width
         self.setFixedWidth(target_width)
         self._update_ui_state()
 
-    def _update_ui_state(self):
+    def _update_ui_state(self) -> None:
         """Aggiorna visibilità elementi in base allo stato."""
         self.logo_icon.setVisible(not self._is_collapsed)
         self.logo_label.setVisible(not self._is_collapsed)
@@ -217,7 +217,7 @@ class SidebarWidget(QFrame):
         )
         return sep
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 20, 5, 20)
         layout.setSpacing(8)
@@ -230,7 +230,6 @@ class SidebarWidget(QFrame):
 
         # Icona App
         from PyQt6.QtCore import Qt as QtCore
-        from PyQt6.QtGui import QPixmap
 
         self.logo_icon = QLabel()
         logo_pixmap = QPixmap(get_asset_path("assets/app.ico"))
@@ -267,11 +266,9 @@ class SidebarWidget(QFrame):
         layout.addSpacing(10)
 
         # Pulsante Apri Palette (sotto header)
-        self.btn_palette = SidebarButton(
-            "Apri Palette", get_asset_path(Icons.COMMAND_PALETTE)
-        )
+        self.btn_palette = SidebarButton("Apri Palette", get_asset_path(Icons.COMMAND_PALETTE))
         self.btn_palette.setToolTip("Apri Command Palette (Ctrl+K)")
-        self.btn_palette.clicked.connect(self._on_palette_click)
+        self.btn_palette.clicked.connect(lambda: self._on_palette_click())
         layout.addWidget(self.btn_palette)
 
         layout.addSpacing(10)
@@ -288,9 +285,7 @@ class SidebarWidget(QFrame):
         layout.addWidget(self.group_automazioni)
 
         # Figlio: Portale Fornitori
-        self.btn_fornitori = SidebarChildButton(
-            "Portale Fornitori", get_asset_path(Icons.GLOBE)
-        )
+        self.btn_fornitori = SidebarChildButton("Portale Fornitori", get_asset_path(Icons.GLOBE))
         self.btn_fornitori.clicked.connect(lambda: self._handle_automazione_click(0))
         self.group_automazioni.add_child(self.btn_fornitori)
 
@@ -307,23 +302,17 @@ class SidebarWidget(QFrame):
         layout.addWidget(self.group_db)
 
         # 3: Timbrature (Clock)
-        self.btn_timbrature = SidebarChildButton(
-            "Timbrature", get_asset_path(Icons.CLOCK)
-        )
+        self.btn_timbrature = SidebarChildButton("Timbrature", get_asset_path(Icons.CLOCK))
         self.btn_timbrature.clicked.connect(lambda: self._handle_child_click(3))
         self.group_db.add_child(self.btn_timbrature)
 
         # 4: Strumentale (Folder)
-        self.btn_strumentale = SidebarChildButton(
-            "Strumentale", get_asset_path(Icons.FOLDER)
-        )
+        self.btn_strumentale = SidebarChildButton("Strumentale", get_asset_path(Icons.FOLDER))
         self.btn_strumentale.clicked.connect(lambda: self._handle_child_click(4))
         self.group_db.add_child(self.btn_strumentale)
 
         # 5: DataEase (Cloud Download)
-        self.btn_dataease = SidebarChildButton(
-            "DataEase", get_asset_path(Icons.DOWNLOAD)
-        )
+        self.btn_dataease = SidebarChildButton("DataEase", get_asset_path(Icons.DOWNLOAD))
         self.btn_dataease.clicked.connect(lambda: self._handle_child_click(5))
         self.group_db.add_child(self.btn_dataease)
 
@@ -333,16 +322,12 @@ class SidebarWidget(QFrame):
         self.group_db.add_child(self.btn_pdl)
 
         # 11: Dipendenti (Users)
-        self.btn_dipendenti = SidebarChildButton(
-            "Dipendenti", get_asset_path(Icons.DIPENDENTI)
-        )
+        self.btn_dipendenti = SidebarChildButton("Dipendenti", get_asset_path(Icons.DIPENDENTI))
         self.btn_dipendenti.clicked.connect(lambda: self._handle_child_click(11))
         self.group_db.add_child(self.btn_dipendenti)
 
         # 10: Storico OdA
-        self.btn_storico_oda = SidebarChildButton(
-            "Storico OdA", get_asset_path(Icons.FILE_TEXT)
-        )
+        self.btn_storico_oda = SidebarChildButton("Storico OdA", get_asset_path(Icons.FILE_TEXT))
         self.btn_storico_oda.clicked.connect(lambda: self._handle_child_click(10))
         self.group_db.add_child(self.btn_storico_oda)
 
@@ -358,9 +343,7 @@ class SidebarWidget(QFrame):
         layout.addWidget(self.btn_lyra)
 
         # -- GRUPPO MONITORAGGIO (Livello 1) --
-        self.group_notifiche = SidebarGroup(
-            "Monitoraggio", get_asset_path(Icons.ACTIVITY)
-        )
+        self.group_notifiche = SidebarGroup("Monitoraggio", get_asset_path(Icons.ACTIVITY))
         layout.addWidget(self.group_notifiche)
 
         self.btn_notifiche = SidebarChildButton("Notifiche", get_asset_path(Icons.BELL))
@@ -383,37 +366,33 @@ class SidebarWidget(QFrame):
         layout.addSpacing(10)
 
         # 7: Impostazioni
-        self.btn_settings = SidebarButton(
-            "Impostazioni", get_asset_path(Icons.SETTINGS)
-        )
+        self.btn_settings = SidebarButton("Impostazioni", get_asset_path(Icons.SETTINGS))
         self.btn_settings.clicked.connect(lambda: self._handle_click(7))
         layout.addWidget(self.btn_settings)
 
-    def _handle_click(self, index):
+    def _handle_click(self, index: int) -> None:
         """Gestisce il click sui pulsanti standard."""
         self.navigation_requested.emit(index)
 
-    def _on_palette_click(self):
+    def _on_palette_click(self) -> None:
         """Emette segnale per aprire la Command Palette."""
         self.palette_requested.emit()
 
-    def _handle_child_click(self, index):
+    def _handle_child_click(self, index: int) -> None:
         """Gestisce il click sui figli diretti (Database)."""
         self.navigation_requested.emit(index)
 
-    def _handle_automazione_click(self, tab_index):
+    def _handle_automazione_click(self, tab_index: int) -> None:
         """Gestisce il click sui figli di Automazione (indice pagina 1 fissa)."""
         self.navigation_requested.emit(1)  # Vai a Pagina Automazioni
         self.automation_tab_requested.emit(tab_index)  # Cambia tab interno
 
-    def _handle_notifications_click(self, tab_index):
+    def _handle_notifications_click(self, tab_index: int) -> None:
         """Gestisce il click sui figli di Notifiche (indice pagina 9 fissa)."""
         self.navigation_requested.emit(9)  # Vai a Pagina Notifiche
-        self.notifications_tab_requested.emit(
-            tab_index
-        )  # Cambia tab interno (0: Notifiche, 1: Audit)
+        self.notifications_tab_requested.emit(tab_index)  # Cambia tab interno (0: Notifiche, 1: Audit)
 
-    def set_active_button(self, index: int, sub_index: Optional[int] = None):
+    def set_active_button(self, index: int, sub_index: int | None = None) -> None:
         """Aggiorna lo stato checked dei pulsanti."""
 
         # Mappa diretta per pulsanti semplici

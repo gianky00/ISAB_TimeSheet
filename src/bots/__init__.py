@@ -3,7 +3,7 @@ SyncroJob - Bots Module
 Registry e factory per tutti i bot disponibili.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from src.bots.base import BaseBot, BotStatus
 from src.bots.portale_fornitori.carico_ts import CaricoTSBot
@@ -15,7 +15,7 @@ from src.bots.safework.pdl.bot import SafeWorkPDLBot
 from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
 
 # Registry dei bot disponibili
-BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
+BOT_REGISTRY: dict[str, dict[str, Any]] = {
     "scarico_ts": {
         "class": ScaricaTSBot,
         "name": "Scarico TS",
@@ -103,12 +103,12 @@ BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
 }
 
 
-def get_available_bots() -> Dict[str, Dict[str, Any]]:
+def get_available_bots() -> dict[str, dict[str, Any]]:
     """Restituisce tutti i bot disponibili."""
     return BOT_REGISTRY
 
 
-def get_bot_info(bot_id: str) -> Optional[Dict[str, Any]]:
+def get_bot_info(bot_id: str) -> dict[str, Any] | None:
     """
     Restituisce le informazioni di un bot specifico.
 
@@ -121,7 +121,7 @@ def get_bot_info(bot_id: str) -> Optional[Dict[str, Any]]:
     return BOT_REGISTRY.get(bot_id)
 
 
-def create_bot(bot_id: str, **kwargs) -> Optional[BaseBot]:
+def create_bot(bot_id: str, **kwargs) -> BaseBot | None:
     """
     Crea un'istanza di un bot.
 
@@ -134,21 +134,23 @@ def create_bot(bot_id: str, **kwargs) -> Optional[BaseBot]:
     """
     bot_info = BOT_REGISTRY.get(bot_id)
     if bot_info:
+        from typing import cast
+
         bot_class = bot_info["class"]
-        return bot_class(**kwargs)
+        return cast("BaseBot", bot_class(**kwargs))
     return None
 
 
 __all__ = [
+    "BOT_REGISTRY",
     "BaseBot",
     "BotStatus",
-    "ScaricaTSBot",
     "CaricoTSBot",
     "DettagliOdABot",
-    "TimbratureBot",
     "SafeWorkPDLBot",
-    "BOT_REGISTRY",
+    "ScaricaTSBot",
+    "TimbratureBot",
+    "create_bot",
     "get_available_bots",
     "get_bot_info",
-    "create_bot",
 ]

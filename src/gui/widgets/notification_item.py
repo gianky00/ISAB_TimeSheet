@@ -1,7 +1,9 @@
 from datetime import datetime
+from typing import Any
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.core.notification_manager import NotificationManager
@@ -15,14 +17,14 @@ class NotificationItem(QFrame):
     Supporta diversi livelli di severità (info, success, warning, error).
     """
 
-    def __init__(self, notification):
+    def __init__(self, notification: dict[str, Any], parent: QWidget | None = None) -> None:
         """Inizializza l'item con i dati della notifica."""
-        super().__init__()
+        super().__init__(parent)
         self.notification = notification
         self.manager = NotificationManager.instance()
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         self.setFrameShape(QFrame.Shape.StyledPanel)
 
         # Determine colors based on level
@@ -77,24 +79,20 @@ class NotificationItem(QFrame):
         header_layout.addWidget(icon_lbl)
 
         title_lbl = QLabel(self.notification.get("title", "Notifica"))
-        title_lbl.setStyleSheet(
-            "font-weight: bold; font-size: 14px; border: none; background: transparent;"
-        )
+        title_lbl.setStyleSheet("font-weight: bold; font-size: 14px; border: none; background: transparent;")
         header_layout.addWidget(title_lbl)
 
         header_layout.addStretch()
 
         # Timestamp
         try:
-            ts = datetime.fromisoformat(self.notification.get("timestamp"))
+            ts = datetime.fromisoformat(self.notification.get("timestamp") or "")
             time_str = ts.strftime("%d/%m %H:%M")
         except Exception:
             time_str = ""
 
         time_lbl = QLabel(time_str)
-        time_lbl.setStyleSheet(
-            "color: #6c757d; font-size: 12px; border: none; background: transparent;"
-        )
+        time_lbl.setStyleSheet("color: #6c757d; font-size: 12px; border: none; background: transparent;")
         header_layout.addWidget(time_lbl)
 
         # Delete Button
@@ -123,16 +121,14 @@ class NotificationItem(QFrame):
         # Message
         msg_lbl = QLabel(self.notification.get("message", ""))
         msg_lbl.setWordWrap(True)
-        msg_lbl.setStyleSheet(
-            "color: #212529; border: none; margin-top: 5px; background: transparent;"
-        )
+        msg_lbl.setStyleSheet("color: #212529; border: none; margin-top: 5px; background: transparent;")
         layout.addWidget(msg_lbl)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Segna la notifica come letta quando l'utente ci clicca sopra."""
         if not self.notification.get("read", False):
             self.manager.mark_as_read(self.notification["id"])
         super().mousePressEvent(event)
 
-    def _delete(self):
+    def _delete(self) -> None:
         self.manager.delete_notification(self.notification["id"])

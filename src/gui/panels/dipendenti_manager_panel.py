@@ -31,7 +31,8 @@ class EmployeeEditorDialog(QDialog):
         self.data = employee_data or {}
         self.mode = "edit" if employee_data else "add"
 
-        self.layout = QVBoxLayout(self)
+        main_layout = QVBoxLayout(self)
+        self.main_layout = main_layout  # User custom member
 
         form = QFormLayout()
         self.inputs = {}
@@ -52,7 +53,7 @@ class EmployeeEditorDialog(QDialog):
             self.inputs[key] = le
             form.addRow(label, le)
 
-        self.layout.addLayout(form)
+        main_layout.addLayout(form)
 
         # Bottoni Custom con stile ModernButton
         btn_layout = QHBoxLayout()
@@ -67,7 +68,7 @@ class EmployeeEditorDialog(QDialog):
         self.btn_save.clicked.connect(self.accept)
         btn_layout.addWidget(self.btn_save)
 
-        self.layout.addLayout(btn_layout)
+        main_layout.addLayout(btn_layout)
 
     def get_data(self):
         return {k: v.text().strip().upper() for k, v in self.inputs.items()}
@@ -83,6 +84,14 @@ class DipendentiManagerPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("DipendentiManagerPanel")
+
+        # Widget members (Strict Typing - Option D)
+        self.lbl_count: QLabel
+        self.search_bar: QLineEdit
+        self.lbl_sync_status: QLabel
+        self.btn_sync: ModernButton
+        self.btn_add: ModernButton
+        self.table: QTableWidget
 
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(20, 20, 20, 20)
@@ -144,21 +153,15 @@ class DipendentiManagerPanel(QWidget):
 
         # Sync Status
         self.lbl_sync_status = QLabel("")
-        self.lbl_sync_status.setStyleSheet(
-            "color: #555; font-size: 11px; margin-right: 15px;"
-        )
+        self.lbl_sync_status.setStyleSheet("color: #555; font-size: 11px; margin-right: 15px;")
         toolbar.addWidget(self.lbl_sync_status)
 
         # Bottoni
-        self.btn_sync = ModernButton(
-            "Sync da CSV", variant=ModernButton.Variant.SECONDARY
-        )
+        self.btn_sync = ModernButton("Sync da CSV", variant=ModernButton.Variant.SECONDARY)
         self.btn_sync.clicked.connect(self._sync_from_csv)
         toolbar.addWidget(self.btn_sync)
 
-        self.btn_add = ModernButton(
-            "Nuovo Dipendente", variant=ModernButton.Variant.SUCCESS
-        )
+        self.btn_add = ModernButton("Nuovo Dipendente", variant=ModernButton.Variant.SUCCESS)
         self.btn_add.clicked.connect(self._add_employee)
         toolbar.addWidget(self.btn_add)
 
@@ -175,16 +178,16 @@ class DipendentiManagerPanel(QWidget):
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.table.verticalHeader().setVisible(False)
-        self.table.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.Stretch
-        )
-        self.table.horizontalHeader().setSectionResizeMode(
-            0, QHeaderView.ResizeMode.ResizeToContents
-        )  # ID stretto
-        self.table.horizontalHeader().setSectionResizeMode(
-            3, QHeaderView.ResizeMode.ResizeToContents
-        )  # Badge stretto
+        v_header = self.table.verticalHeader()
+        if v_header is None:
+            raise RuntimeError("Table vertical header is None")
+        v_header.setVisible(False)
+        h_header = self.table.horizontalHeader()
+        if h_header is None:
+            raise RuntimeError("Table horizontal header is None")
+        h_header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # ID stretto
+        h_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # Badge stretto
 
         self.table.setStyleSheet(
             """
@@ -202,9 +205,7 @@ class DipendentiManagerPanel(QWidget):
     def refresh_data(self):
         """Ricarica i dati dal DB."""
         try:
-            self.lbl_sync_status.setText(
-                f"Ultimo Sync: {SyncTracker.get_formatted_status('dipendenti')}"
-            )
+            self.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('dipendenti')}")
             employees = employee_manager.get_all_employees()
             self.table.setRowCount(0)
 
@@ -245,11 +246,12 @@ class DipendentiManagerPanel(QWidget):
 
         for i in range(self.table.rowCount()):
             # Costruiamo una stringa unica con tutto il contenuto della riga
-            row_content = " ".join(
-                self.table.item(i, j).text().lower()
-                for j in range(self.table.columnCount())
-                if self.table.item(i, j)
-            )
+            row_vals = []
+            for j in range(self.table.columnCount()):
+                item = self.table.item(i, j)
+                if item:
+                    row_vals.append(item.text().lower())
+            row_content = " ".join(row_vals)
 
             # Verifichiamo che TUTTI i termini cercati siano presenti nella riga
             match = all(term in row_content for term in search_terms)
@@ -269,31 +271,30 @@ class DipendentiManagerPanel(QWidget):
 
         try:
             count = employee_manager.import_from_csv(file_path)
-            QMessageBox.information(
-                self, "Sync Completato", f"Importati/Aggiornati {count} dipendenti."
-            )
+            QMessageBox.information(self, "Sync Completato", f"Importati/Aggiornati {count} dipendenti.")
             self.refresh_data()
             self.data_changed.emit()
             AuditManager.instance().log_action(
                 "Sync CSV", "dipendenti", "Manuale", {"file": file_path, "count": count}
             )
         except Exception as e:
-            QMessageBox.warning(
-                self, "Errore Sync", f"Errore durante l'importazione:\n{e}"
-            )
+            QMessageBox.warning(self, "Errore Sync", f"Errore durante l'importazione:\n{e}")
 
     def _add_employee(self):
-        dlg = EmployeeEditorDialog(self)
-        if dlg.exec():
-            data = dlg.get_data()
+        dialog = EmployeeEditorDialog(self)
+        result = dialog.exec()
+        if result == QDialog.DialogCode.Accepted:
+            data = dialog.get_data()
             if employee_manager.add_employee(data):
+                AuditManager.instance().log_action(
+                    action="ADD_EMPLOYEE",
+                    category="dipendenti",
+                    entity=data.get("badge", "-"),
+                    status="SUCCESS",
+                    params=str(data),
+                )
                 self.refresh_data()
                 self.data_changed.emit()
-                AuditManager.instance().log_action(
-                    "Aggiunta Dipendente",
-                    "dipendenti",
-                    f"{data['cognome']} {data['nome']}",
-                )
             else:
                 QMessageBox.warning(
                     self,
@@ -302,33 +303,39 @@ class DipendentiManagerPanel(QWidget):
                 )
 
     def _edit_selected(self):
-        rows = self.table.selectionModel().selectedRows()
+        selection_model = self.table.selectionModel()
+        if selection_model is None:
+            raise RuntimeError("Table selection model is None")
+        rows = selection_model.selectedRows()
         if not rows:
             return
 
         row_idx = rows[0].row()
-        id_risorsa = self.table.item(row_idx, 0).text()
+        id_item = self.table.item(row_idx, 0)
+        if id_item is None:
+            raise RuntimeError(f"Table item at row {row_idx}, column 0 is None")
+        id_risorsa = id_item.text()
 
         # Recuperiamo dati completi
-        # Qui facciamo un trucco: prendiamo i dati dalla tabella per velocità,
-        # ma l'ideale sarebbe rileggere dal DB se ci sono campi nascosti.
+        def get_item_text(r, c):
+            it = self.table.item(r, c)
+            return it.text() if it else ""
+
         current_data = {
             "id_risorsa": id_risorsa,
-            "cognome": self.table.item(row_idx, 1).text(),
-            "nome": self.table.item(row_idx, 2).text(),
-            "badge": self.table.item(row_idx, 3).text(),
-            "codice_fiscale": self.table.item(row_idx, 4).text(),
-            "data_assunzione": self.table.item(row_idx, 5).text(),
+            "cognome": get_item_text(row_idx, 1),
+            "nome": get_item_text(row_idx, 2),
+            "badge": get_item_text(row_idx, 3),
+            "codice_fiscale": get_item_text(row_idx, 4),
+            "data_assunzione": get_item_text(row_idx, 5),
         }
 
         dlg = EmployeeEditorDialog(self, current_data)
         if dlg.exec():
             new_data = dlg.get_data()
-            if employee_manager.update_employee(id_risorsa, new_data):
+            if employee_manager.update_employee(int(id_risorsa), new_data):
                 self.refresh_data()
                 self.data_changed.emit()
-                AuditManager.instance().log_action(
-                    "Modifica Dipendente", "dipendenti", id_risorsa
-                )
+                AuditManager.instance().log_action("Modifica Dipendente", "dipendenti", id_risorsa)
             else:
                 QMessageBox.warning(self, "Errore", "Impossibile aggiornare i dati.")

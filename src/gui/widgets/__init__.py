@@ -24,6 +24,7 @@ from .toast import Toast, ToastManager
 __all__ = [
     "BotParametersWidget",
     "CalendarDateEdit",
+    "DataTable",
     "DetailedInfoDialog",
     "EditableDataTable",
     "ExcelTableWidget",
@@ -32,13 +33,12 @@ __all__ = [
     "HorizontalTimelineWidget",
     "InfoLabel",
     "KPIBigCard",
-    "TimelineWidget",
     "MissionReportCard",
-    "StatusIndicator",
-    "DataTable",
     "ModernButton",
     "NotificationItem",
     "StatusCard",
+    "StatusIndicator",
+    "TimelineWidget",
     "Toast",
     "ToastManager",
 ]

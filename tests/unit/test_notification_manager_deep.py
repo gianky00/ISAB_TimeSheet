@@ -10,13 +10,13 @@ class TestNotificationManagerDeep:
     @pytest.fixture
     def manager(self, tmp_path):
         """Crea istanza con file temporaneo per i test."""
-        with patch.object(NotificationManager, "_instance", None):
-            with patch(
-                "src.core.notification_manager.config_manager.CONFIG_DIR", tmp_path
-            ):
-                nm = NotificationManager()
-                nm.notifications_file = tmp_path / "notifications.json"
-                yield nm
+        with (
+            patch.object(NotificationManager, "_instance", None),
+            patch("src.core.notification_manager.config_manager.CONFIG_DIR", tmp_path),
+        ):
+            nm = NotificationManager()
+            nm.notifications_file = tmp_path / "notifications.json"
+            yield nm
 
     def test_add_notification_signals(self, manager, qtbot):
         with qtbot.waitSignal(manager.notification_added, timeout=1000):

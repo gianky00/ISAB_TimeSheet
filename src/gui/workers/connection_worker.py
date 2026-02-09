@@ -7,12 +7,12 @@ class ConnectionTestWorker(QThread):
 
     result_ready = pyqtSignal(bool, str, str)  # success, title, message
 
-    def __init__(self, test_type, token_or_key):
+    def __init__(self, test_type: str, token_or_key: str) -> None:
         super().__init__()
         self.test_type = test_type  # 'telegram' or 'gemini'
         self.token_or_key = token_or_key
 
-    def run(self):
+    def run(self) -> None:
         try:
             if self.test_type == "telegram":
                 self._test_telegram()
@@ -21,7 +21,7 @@ class ConnectionTestWorker(QThread):
         except Exception as e:
             self.result_ready.emit(False, "Eccezione", f"Errore durante il test: {e}")
 
-    def _test_telegram(self):
+    def _test_telegram(self) -> None:
         url = f"https://api.telegram.org/bot{self.token_or_key}/getMe"
         resp = requests.get(url, timeout=10)
 
@@ -30,27 +30,19 @@ class ConnectionTestWorker(QThread):
             if data.get("ok"):
                 bot_name = data["result"]["first_name"]
                 username = data["result"]["username"]
-                self.result_ready.emit(
-                    True, "Successo", f"Connesso a: {bot_name} (@{username})"
-                )
+                self.result_ready.emit(True, "Successo", f"Connesso a: {bot_name} (@{username})")
             else:
-                self.result_ready.emit(
-                    False, "Errore API", f"Risposta negativa: {data}"
-                )
+                self.result_ready.emit(False, "Errore API", f"Risposta negativa: {data}")
         else:
-            self.result_ready.emit(
-                False, "Errore HTTP", f"Status Code: {resp.status_code}"
-            )
+            self.result_ready.emit(False, "Errore HTTP", f"Status Code: {resp.status_code}")
 
-    def _test_gemini(self):
+    def _test_gemini(self) -> None:
         # Simple list models check
         url = f"https://generativelanguage.googleapis.com/v1beta/models?key={self.token_or_key}"
         resp = requests.get(url, timeout=10)
 
         if resp.status_code == 200:
-            self.result_ready.emit(
-                True, "Successo", "API Key valida! Connessione stabilita."
-            )
+            self.result_ready.emit(True, "Successo", "API Key valida! Connessione stabilita.")
         else:
             self.result_ready.emit(
                 False,

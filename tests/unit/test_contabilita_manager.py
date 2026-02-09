@@ -17,9 +17,7 @@ class TestContabilitaManager:
         result = ContabilitaManager.scan_scarico_ore_rows("test.xlsx")
         assert result == 500
 
-    @patch(
-        "src.core.contabilita_manager.ExcelImporter.scan_workload", return_value=(10, 5)
-    )
+    @patch("src.core.contabilita_manager.ExcelImporter.scan_workload", return_value=(10, 5))
     def test_scan_workload(self, mock_scan):
         sheets, files = ContabilitaManager.scan_workload("dati.xlsx", "giornaliere/")
         assert sheets == 10
@@ -33,9 +31,7 @@ class TestContabilitaManager:
     def test_import_data_from_excel_success(self, mock_import, mock_sync):
         mock_import.return_value = (True, "OK", [{"row": 1}], [2024])
 
-        success, msg, added, removed = ContabilitaManager.import_data_from_excel(
-            "test.xlsx"
-        )
+        success, _msg, added, removed = ContabilitaManager.import_data_from_excel("test.xlsx")
 
         assert success is True
         assert added == 100
@@ -45,9 +41,7 @@ class TestContabilitaManager:
     def test_import_data_from_excel_failure(self, mock_import):
         mock_import.return_value = (False, "File not found", [], [])
 
-        success, msg, added, removed = ContabilitaManager.import_data_from_excel(
-            "missing.xlsx"
-        )
+        success, msg, added, _removed = ContabilitaManager.import_data_from_excel("missing.xlsx")
 
         assert success is False
         assert "File not found" in msg
@@ -61,7 +55,7 @@ class TestContabilitaManager:
     def test_import_scarico_ore_success(self, mock_import, mock_sync):
         mock_import.return_value = (True, "OK", [{"data": "test"}])
 
-        success, msg, added, removed = ContabilitaManager.import_scarico_ore("ore.xlsx")
+        success, _msg, added, _removed = ContabilitaManager.import_scarico_ore("ore.xlsx")
 
         assert success is True
         assert added == 50

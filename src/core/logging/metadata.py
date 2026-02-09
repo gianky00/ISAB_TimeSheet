@@ -5,7 +5,8 @@ Enhanced metadata enrichment per log entries.
 import os
 import platform
 import socket
-from typing import Any, Dict, Optional
+from pathlib import Path
+from typing import Any, Optional
 
 try:
     from src.core.version import __version__ as VERSION
@@ -25,18 +26,18 @@ class MetadataEnricher:
     """
 
     _instance: Optional["MetadataEnricher"] = None
-    _cache: Optional[Dict[str, Any]] = None
+    _cache: dict[str, Any] | None = None
 
-    def __new__(cls):
+    def __new__(cls) -> "MetadataEnricher":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         if MetadataEnricher._cache is None:
             MetadataEnricher._cache = self._build_static_metadata()
 
-    def _build_static_metadata(self) -> Dict[str, Any]:
+    def _build_static_metadata(self) -> dict[str, Any]:
         """
         Costruisce metadata statici (calcolati una volta sola).
 
@@ -66,9 +67,7 @@ class MetadataEnricher:
         try:
             metadata["user"] = os.getlogin()
         except Exception:
-            metadata["user"] = (
-                os.environ.get("USERNAME") or os.environ.get("USER") or "unknown"
-            )
+            metadata["user"] = os.environ.get("USERNAME") or os.environ.get("USER") or "unknown"
 
         return metadata
 
@@ -83,9 +82,9 @@ class MetadataEnricher:
         env = os.environ.get("SYNCROJOB_ENV", "").lower()
         if env in ("dev", "development"):
             return "development"
-        elif env in ("prod", "production"):
+        if env in ("prod", "production"):
             return "production"
-        elif env in ("test", "testing"):
+        if env in ("test", "testing"):
             return "test"
 
         # Euristica: se eseguito da pytest o unittest, è test
@@ -95,9 +94,7 @@ class MetadataEnricher:
             return "test"
 
         # Euristica: se eseguito da IDE (pycharm, vscode), è development
-        if any(
-            ide in str(sys.executable).lower() for ide in ["pycharm", "vscode", "code"]
-        ):
+        if any(ide in sys.executable.lower() for ide in ("pycharm", "vscode", "code")):
             return "development"
 
         # Euristica: se eseguito da .exe compilato, è production
@@ -107,7 +104,7 @@ class MetadataEnricher:
         # Default: development
         return "development"
 
-    def get_static_metadata(self) -> Dict[str, Any]:
+    def get_static_metadata(self) -> dict[str, Any]:
         """
         Restituisce metadata statici (cached).
 
@@ -118,14 +115,14 @@ class MetadataEnricher:
             return {}
         return self._cache.copy()
 
-    def get_dynamic_metadata(self) -> Dict[str, Any]:
+    def get_dynamic_metadata(self) -> dict[str, Any]:
         """
         Restituisce metadata dinamici (calcolati ogni volta).
 
         Returns:
             Dict con metadata dinamici
         """
-        metadata: Dict[str, Any] = {}
+        metadata: dict[str, Any] = {}
 
         # Process info (può cambiare tra fork/spawn)
         metadata["process_id"] = os.getpid()
@@ -133,13 +130,13 @@ class MetadataEnricher:
 
         # Working directory
         try:
-            metadata["working_directory"] = os.getcwd()
+            metadata["working_directory"] = str(Path.cwd())
         except Exception:
             metadata["working_directory"] = "unknown"
 
         return metadata
 
-    def get_full_metadata(self) -> Dict[str, Any]:
+    def get_full_metadata(self) -> dict[str, Any]:
         """
         Restituisce tutti i metadata (statici + dinamici).
 
@@ -150,7 +147,7 @@ class MetadataEnricher:
         metadata.update(self.get_dynamic_metadata())
         return metadata
 
-    def enrich_log_entry(self, entry: Dict[str, Any]) -> Dict[str, Any]:
+    def enrich_log_entry(self, entry: dict[str, Any]) -> dict[str, Any]:
         """
         Arricchisce log entry con metadata.
 
@@ -189,7 +186,7 @@ def get_enricher() -> MetadataEnricher:
     return _enricher
 
 
-def enrich_entry(entry: Dict[str, Any]) -> Dict[str, Any]:
+def enrich_entry(entry: dict[str, Any]) -> dict[str, Any]:
     """
     Helper function per arricchire log entry.
 

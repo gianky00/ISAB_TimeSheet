@@ -106,7 +106,7 @@ class TestSanitizeSQLString:
     def test_removes_control_chars(self):
         result = InputValidator.sanitize_sql_string("Hello\x00World")
         assert "\x00" not in result
-        assert "HelloWorld" == result
+        assert result == "HelloWorld"
 
     def test_keeps_newlines(self):
         result = InputValidator.sanitize_sql_string("Hello\nWorld")

@@ -64,9 +64,7 @@ class TestAnomalyDetector:
             assert "python" not in anomaly.suggestion.lower()
             assert "logs_cli" not in anomaly.suggestion.lower()
             # Verifica che sia user-friendly
-            assert (
-                "Audit" in anomaly.suggestion or "sezione" in anomaly.suggestion.lower()
-            )
+            assert "Audit" in anomaly.suggestion or "sezione" in anomaly.suggestion.lower()
 
     @patch("src.core.logging.analytics.LogViewer")
     def test_detect_slow_operations_user_friendly_suggestion(self, mock_viewer):
@@ -79,9 +77,7 @@ class TestAnomalyDetector:
             "level_distribution": {},
         }
         # Mock query_slow_operations se esiste
-        mock_instance.query_slow_operations.return_value = [
-            {"operation": "login", "duration_ms": 15000}
-        ]
+        mock_instance.query_slow_operations.return_value = [{"operation": "login", "duration_ms": 15000}]
         mock_viewer.return_value = mock_instance
 
         detector = AnomalyDetector()

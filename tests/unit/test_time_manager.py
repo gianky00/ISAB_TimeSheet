@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 from src.core.time_manager import get_network_time, get_trusted_time
@@ -26,7 +26,7 @@ class TestTimeManager:
 
     @patch("src.core.time_manager.get_network_time")
     def test_get_trusted_time_trusted(self, mock_net):
-        mock_net.return_value = datetime(2026, 2, 1, 12, 0, tzinfo=timezone.utc)
+        mock_net.return_value = datetime(2026, 2, 1, 12, 0, tzinfo=UTC)
         dt, is_trusted = get_trusted_time()
         assert is_trusted is True
         assert dt.year == 2026

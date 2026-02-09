@@ -3,8 +3,7 @@ SyncroJob - Utility per Date
 Funzioni centralizzate per parsing, formattazione e calcoli su date.
 """
 
-from datetime import date, datetime, timedelta
-from typing import Optional, Tuple
+from datetime import UTC, date, datetime, timedelta
 
 # Formati di data comunemente usati nell'applicazione
 DATE_FORMATS = [
@@ -16,9 +15,7 @@ DATE_FORMATS = [
 ]
 
 
-def parse_date_flexible(
-    date_str: Optional[str], formats: Optional[list[str]] = None
-) -> Optional[date]:
+def parse_date_flexible(date_str: str | None, formats: list[str] | None = None) -> date | None:
     """
     Tenta di parsare una stringa data usando più formati.
 
@@ -36,16 +33,14 @@ def parse_date_flexible(
 
     for fmt in formats:
         try:
-            return datetime.strptime(date_str.strip(), fmt).date()
+            return datetime.strptime(date_str.strip(), fmt).replace(tzinfo=UTC).date()
         except ValueError:
             continue
 
     return None
 
 
-def parse_datetime_flexible(
-    date_str: Optional[str], formats: Optional[list[str]] = None
-) -> Optional[datetime]:
+def parse_datetime_flexible(date_str: str | None, formats: list[str] | None = None) -> datetime | None:
     """
     Tenta di parsare una stringa datetime usando più formati.
 
@@ -63,14 +58,14 @@ def parse_datetime_flexible(
 
     for fmt in formats:
         try:
-            return datetime.strptime(date_str.strip(), fmt)
+            return datetime.strptime(date_str.strip(), fmt).replace(tzinfo=UTC)
         except ValueError:
             continue
 
     return None
 
 
-def format_date_it(date_obj: Optional[date], include_time: bool = False) -> str:
+def format_date_it(date_obj: date | None, include_time: bool = False) -> str:
     """
     Formatta una data nel formato italiano.
 
@@ -90,7 +85,7 @@ def format_date_it(date_obj: Optional[date], include_time: bool = False) -> str:
     return date_obj.strftime("%d/%m/%Y")
 
 
-def format_date_iso(date_obj: Optional[date]) -> str:
+def format_date_iso(date_obj: date | None) -> str:
     """
     Formatta una data nel formato ISO (YYYY-MM-DD).
 
@@ -106,9 +101,7 @@ def format_date_iso(date_obj: Optional[date]) -> str:
     return date_obj.strftime("%Y-%m-%d")
 
 
-def calculate_days_diff(
-    date_obj: Optional[date], from_date: Optional[date] = None
-) -> Optional[int]:
+def calculate_days_diff(date_obj: date | None, from_date: date | None = None) -> int | None:
     """
     Calcola la differenza in giorni tra due date.
 
@@ -122,13 +115,13 @@ def calculate_days_diff(
     if date_obj is None:
         return None
 
-    from_date = from_date or date.today()
+    # Use aware datetime for calculation
+    now = datetime.now(UTC).date()
+    from_date = from_date or now
     return (from_date - date_obj).days
 
 
-def get_status_by_days(
-    days: Optional[int], thresholds: Tuple[int, int] = (20, 30)
-) -> Tuple[str, str]:
+def get_status_by_days(days: int | None, thresholds: tuple[int, int] = (20, 30)) -> tuple[str, str]:
     """
     Determina lo status e il colore in base ai giorni trascorsi.
 
@@ -146,13 +139,12 @@ def get_status_by_days(
 
     if days <= warning_threshold:
         return ("ok", "#198754")
-    elif days <= expired_threshold:
+    if days <= expired_threshold:
         return ("warning", "#fd7e14")
-    else:
-        return ("expired", "#dc3545")
+    return ("expired", "#dc3545")
 
 
-def format_days_ago(days: Optional[int]) -> str:
+def format_days_ago(days: int | None) -> str:
     """
     Formatta il numero di giorni in una stringa leggibile.
 
@@ -167,15 +159,12 @@ def format_days_ago(days: Optional[int]) -> str:
 
     if days == 0:
         return "Oggi"
-    elif days == 1:
+    if days == 1:
         return "Ieri"
-    else:
-        return f"{days} giorni fa"
+    return f"{days} giorni fa"
 
 
-def get_date_range(
-    days_back: int, from_date: Optional[date] = None
-) -> Tuple[date, date]:
+def get_date_range(days_back: int, from_date: date | None = None) -> tuple[date, date]:
     """
     Calcola un range di date.
 
@@ -186,12 +175,13 @@ def get_date_range(
     Returns:
         Tuple (start_date, end_date)
     """
-    end_date = from_date or date.today()
+    now = datetime.now(UTC).date()
+    end_date = from_date or now
     start_date = end_date - timedelta(days=days_back)
     return (start_date, end_date)
 
 
-def format_datetime_for_filename(dt: Optional[datetime] = None) -> str:
+def format_datetime_for_filename(dt: datetime | None = None) -> str:
     """
     Formatta datetime per uso in nomi file (senza caratteri speciali).
 
@@ -201,8 +191,7 @@ def format_datetime_for_filename(dt: Optional[datetime] = None) -> str:
     Returns:
         Stringa tipo "15-01-2024_14-30"
     """
-    dt = dt or datetime.now()
-    return dt.strftime("%d-%m-%Y_%H-%M")
+    return (dt or datetime.now(UTC)).strftime("%d-%m-%Y_%H-%M")
 
 
 def is_same_day(dt1: datetime, dt2: datetime) -> bool:
@@ -235,4 +224,5 @@ def get_month_name_it(month: int, full: bool = False) -> str:
     if not 1 <= month <= 12:
         return ""
 
-    return MONTHS_IT_FULL[month - 1] if full else MONTHS_IT[month - 1]
+    months = MONTHS_IT_FULL if full else MONTHS_IT
+    return months[month - 1]

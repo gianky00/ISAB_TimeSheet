@@ -9,8 +9,8 @@ Dialog per segnalazione bug con opzioni avanzate:
 
 import logging
 import os
+from contextlib import suppress
 from pathlib import Path
-from typing import List, Optional
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -46,7 +46,7 @@ class ReportWorker(QThread):
         include_logs: bool,
         include_analytics: bool,
         include_audit: bool,
-        trace_id: Optional[str] = None,
+        trace_id: str | None = None,
     ):
         super().__init__()
         self.include_logs = include_logs
@@ -59,7 +59,7 @@ class ReportWorker(QThread):
             include_enterprise_logs=self.include_logs,
             include_analytics=self.include_analytics,
             include_audit=self.include_audit,
-            trace_id=self.trace_id if self.trace_id else None,
+            trace_id=self.trace_id or None,
         )
         if path:
             self.finished.emit(True, msg, str(path), files)
@@ -111,8 +111,7 @@ class BugReportDialog(QDialog):
         # Text Area
         self.txt_description = QTextEdit()
         self.txt_description.setPlaceholderText(
-            "Es: Ho cliccato su Scarica PDL e l'app si è chiusa... "
-            "Stavo lavorando sul cantiere X..."
+            "Es: Ho cliccato su Scarica PDL e l'app si è chiusa... Stavo lavorando sul cantiere X..."
         )
         self.txt_description.setStyleSheet(
             "background-color: white; border: 1px solid #BDBDBD; "
@@ -123,9 +122,7 @@ class BugReportDialog(QDialog):
 
         # Options Group
         options_group = QGroupBox("Contenuto Report")
-        options_group.setStyleSheet(
-            "QGroupBox { font-weight: 600; color: #424242; margin-top: 10px; }"
-        )
+        options_group.setStyleSheet("QGroupBox { font-weight: 600; color: #424242; margin-top: 10px; }")
         options_layout = QVBoxLayout(options_group)
         options_layout.setSpacing(8)
 
@@ -134,9 +131,7 @@ class BugReportDialog(QDialog):
         self.chk_include_logs.toggled.connect(self._update_size_estimate)
         options_layout.addWidget(self.chk_include_logs)
 
-        self.chk_include_analytics = QCheckBox(
-            "Includi Analytics Report (anomalie, health score)"
-        )
+        self.chk_include_analytics = QCheckBox("Includi Analytics Report (anomalie, health score)")
         self.chk_include_analytics.setChecked(True)
         self.chk_include_analytics.toggled.connect(self._update_size_estimate)
         options_layout.addWidget(self.chk_include_analytics)
@@ -173,14 +168,12 @@ class BugReportDialog(QDialog):
         # Privacy Warning
         warning_frame = QFrame()
         warning_frame.setStyleSheet(
-            "background-color: #FFF3E0; border: 1px solid #FFB74D; "
-            "border-radius: 6px; padding: 8px;"
+            "background-color: #FFF3E0; border: 1px solid #FFB74D; border-radius: 6px; padding: 8px;"
         )
         warning_layout = QHBoxLayout(warning_frame)
         warning_layout.setContentsMargins(8, 8, 8, 8)
         lbl_warning = QLabel(
-            "⚠️ Il report potrebbe contenere informazioni sensibili. "
-            "Verifica il contenuto prima di inviare."
+            "⚠️ Il report potrebbe contenere informazioni sensibili. Verifica il contenuto prima di inviare."
         )
         lbl_warning.setStyleSheet("color: #E65100; font-size: 12px;")
         lbl_warning.setWordWrap(True)
@@ -205,9 +198,7 @@ class BugReportDialog(QDialog):
         self.preview_scroll.setWidgetResizable(True)
         self.preview_scroll.setMaximumHeight(100)
         self.preview_content = QLabel()
-        self.preview_content.setStyleSheet(
-            "font-family: monospace; font-size: 11px; color: #555;"
-        )
+        self.preview_content.setStyleSheet("font-family: monospace; font-size: 11px; color: #555;")
         self.preview_content.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.preview_scroll.setWidget(self.preview_content)
         preview_layout.addWidget(self.preview_scroll)
@@ -219,8 +210,7 @@ class BugReportDialog(QDialog):
 
         self.btn_cancel = QPushButton("Annulla")
         self.btn_cancel.setStyleSheet(
-            "background-color: #757575; color: white; "
-            "border-radius: 6px; padding: 10px 20px;"
+            "background-color: #757575; color: white; border-radius: 6px; padding: 10px 20px;"
         )
         self.btn_cancel.clicked.connect(self.reject)
 
@@ -277,9 +267,7 @@ class BugReportDialog(QDialog):
         self.worker.finished.connect(self.on_report_generated)
         self.worker.start()
 
-    def on_report_generated(
-        self, success: bool, msg: str, file_path: str, files: List[str]
-    ):
+    def on_report_generated(self, success: bool, msg: str, file_path: str, files: list[str]):
         self.progress.setVisible(False)
         self._enable_ui()
 
@@ -323,10 +311,9 @@ class BugReportDialog(QDialog):
         try:
             import getpass
             import platform
-            import random
             from datetime import datetime
 
-            import win32com.client as win32
+            import win32com.client as win32  # type: ignore[import-untyped]
 
             from src.core import config_manager
 
@@ -340,7 +327,9 @@ class BugReportDialog(QDialog):
             now = datetime.now()
             date_display = now.strftime("%d/%m/%Y %H:%M")
             date_file = now.strftime("%d-%m-%Y_%H-%M")
-            rand_hex = f"{random.randint(0, 0xFFFF):04X}"
+            import secrets
+
+            rand_hex = f"{secrets.randbelow(0x10000):04X}"
             ticket_id_suffix = f"TKT-{rand_hex}"
 
             email_subject_suffix = f"{date_display} {ticket_id_suffix}"
@@ -352,12 +341,10 @@ class BugReportDialog(QDialog):
 
             # Recupero Info Hardware
             hw_id = "UNKNOWN"
-            try:
+            with suppress(Exception):
                 import uuid
 
                 hw_id = str(uuid.getnode())
-            except Exception:
-                pass
 
             # Recupero Cliente
             cliente_info = "ISAB S.R.L."
@@ -373,9 +360,7 @@ class BugReportDialog(QDialog):
 
             mail = outlook.CreateItem(0)
             mail.To = "gianky.allegretti@gmail.com"
-            mail.Subject = (
-                f"[Segnalazione Bug] SyncroJob v{current_ver} - {email_subject_suffix}"
-            )
+            mail.Subject = f"[Segnalazione Bug] SyncroJob v{current_ver} - {email_subject_suffix}"
 
             # Rename ZIP
             final_zip_path = attachment_path
@@ -383,17 +368,15 @@ class BugReportDialog(QDialog):
                 dir_name = os.path.dirname(attachment_path)
                 new_name = f"{full_ticket_file}.zip"
                 new_path = os.path.join(dir_name, new_name)
-                if os.path.exists(new_path):
-                    os.remove(new_path)
+                if Path(new_path).exists():
+                    Path(new_path).unlink()
                 os.rename(attachment_path, new_path)
                 final_zip_path = new_path
             except Exception as e:
                 logger.error(f"Errore rinomina ZIP: {e}")
 
             # Costruzione Body HTML
-            css_cell = (
-                "padding: 8px 12px; border-bottom: 1px solid #e0e0e0; color: #333;"
-            )
+            css_cell = "padding: 8px 12px; border-bottom: 1px solid #e0e0e0; color: #333;"
             css_header = (
                 "padding: 8px 12px; border-bottom: 2px solid #009688; "
                 "font-weight: 600; color: #009688; text-align: left;"
@@ -463,8 +446,8 @@ class BugReportDialog(QDialog):
 
             mail.HTMLBody = html_body
 
-            if os.path.exists(final_zip_path):
-                mail.Attachments.Add(str(final_zip_path))
+            if Path(final_zip_path).exists():
+                mail.Attachments.Add(final_zip_path)
 
             mail.Display()
             return True
@@ -487,8 +470,7 @@ class BugReportDialog(QDialog):
                 QMessageBox.information(
                     self,
                     "Salvato",
-                    f"Report salvato in:\n{dest_path}\n\n"
-                    "Invia questo file a gianky.allegretti@gmail.com",
+                    f"Report salvato in:\n{dest_path}\n\nInvia questo file a gianky.allegretti@gmail.com",
                 )
                 self.accept()
             except Exception as e:

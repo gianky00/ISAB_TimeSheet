@@ -6,8 +6,8 @@ from src.gui.components.scarico_ore.model import ScaricoOreTableModel
 
 __all__ = [
     "CacheWorker",
-    "FilterHeaderView",
     "DateFilterPopupWidget",
+    "FilterHeaderView",
     "ListFilterPopupWidget",
     "ScaricoOreTableModel",
 ]

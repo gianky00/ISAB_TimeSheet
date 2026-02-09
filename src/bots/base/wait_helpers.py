@@ -13,8 +13,9 @@ Autore: Refactoring Sprint 2026-01
 
 import logging
 import time
+from collections.abc import Callable, Iterable
+from contextlib import suppress
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -32,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 def wait_for_overlay_to_disappear(
     driver: WebDriver,
-    locator: Tuple[str, str],
+    locator: tuple[str, str],
     timeout: int = 30,
 ) -> bool:
     """
@@ -47,9 +48,7 @@ def wait_for_overlay_to_disappear(
         True se l'overlay è scomparso, False se timeout.
     """
     try:
-        WebDriverWait(driver, timeout).until(
-            EC.invisibility_of_element_located(locator)
-        )
+        WebDriverWait(driver, timeout).until(EC.invisibility_of_element_located(locator))
         return True
     except TimeoutException:
         logger.warning(f"Timeout waiting for overlay: {locator}")
@@ -84,9 +83,9 @@ def wait_for_element_staleness(
 
 def wait_for_element_clickable(
     driver: WebDriver,
-    locator: Tuple[str, str],
+    locator: tuple[str, str],
     timeout: int = 10,
-) -> Optional[WebElement]:
+) -> WebElement | None:
     """
     Attende che un elemento sia cliccabile.
 
@@ -115,9 +114,9 @@ def poll_for_file(
     pattern: str = "*",
     timeout: int = 60,
     poll_interval: float = 0.5,
-    min_age: Optional[float] = None,
-    exclude_patterns: Optional[List[str]] = None,
-) -> Optional[str]:
+    min_age: float | None = None,
+    exclude_patterns: list[str] | None = None,
+) -> str | None:
     """
     Attende che un file appaia in una directory usando polling.
     Approccio PERMISSIVO: ritorna il file più recente che soddisfa i criteri.
@@ -133,9 +132,9 @@ def poll_for_file(
     Returns:
         Path assoluto del file più recente, o None se timeout.
     """
-    directory = Path(directory)
-    if not directory.exists():
-        logger.error(f"Directory does not exist: {directory}")
+    directory_path = Path(directory)
+    if not directory_path.exists():
+        logger.error(f"Directory does not exist: {directory_path}")
         return None
 
     exclude_patterns = exclude_patterns or []
@@ -143,36 +142,29 @@ def poll_for_file(
 
     while time.time() - start_time < timeout:
         # Check se ci sono download in corso (crdownload, tmp, part)
-        in_progress = any(
-            directory.glob(f"*{ext}") for ext in [".crdownload", ".tmp", ".part"]
-        )
+        in_progress = any(any(directory_path.glob(f"*{ext}")) for ext in (".crdownload", ".tmp", ".part"))
 
         if in_progress:
             time.sleep(poll_interval)
             continue
 
         # Trova tutti i file matching
-        files = list(directory.glob(pattern))
+        files = list(directory_path.glob(pattern))
 
         # DEBUG AGGRESSIVO (Richiesto da User per Troubleshooting)
-        if (
-            time.time() - start_time < 5
-        ):  # Logga solo nei primi 5 secondi per non spammare
-            all_files_in_dir = list(directory.glob("*"))
+        if time.time() - start_time < 5:  # Logga solo nei primi 5 secondi per non spammare
+            all_files_in_dir = list(directory_path.glob("*"))
             logger.debug(
-                f"[DEBUG-POLL] Scanning '{directory}'. Total files: {len(all_files_in_dir)}. Matching '{pattern}': {len(files)}"
+                f"[DEBUG-POLL] Scanning '{directory_path}'. Total files: {len(all_files_in_dir)}. Matching '{pattern}': {len(files)}"
             )
             if len(all_files_in_dir) < 20:
-                logger.debug(
-                    f"[DEBUG-POLL] Files: {[f.name for f in all_files_in_dir]}"
-                )
+                logger.debug(f"[DEBUG-POLL] Files: {[f.name for f in all_files_in_dir]}")
 
         # Filtra per esclusioni
         files = [
             f
             for f in files
-            if f.is_file()
-            and not any(f.suffix == ext or ext in f.name for ext in exclude_patterns)
+            if f.is_file() and not any(f.suffix == ext or ext in f.name for ext in exclude_patterns)
         ]
 
         # Filtra per età minima se specificata (con tolleranza per clock skew)
@@ -202,9 +194,7 @@ def poll_for_file(
 
         time.sleep(poll_interval)
 
-    logger.warning(
-        f"Timeout polling for file in {directory} with pattern {pattern} (min_age={min_age})"
-    )
+    logger.warning(f"Timeout polling for file in {directory_path} with pattern {pattern} (min_age={min_age})")
     return None
 
 
@@ -213,7 +203,7 @@ def poll_for_download_complete(
     pattern: str,
     timeout: int = 120,
     poll_interval: float = 1.0,
-) -> Optional[str]:
+) -> str | None:
     """
     Attende che un download sia completato (no .crdownload/.tmp).
 
@@ -239,11 +229,11 @@ def poll_for_download_complete(
 
 def poll_for_new_file(
     directory: Path | str,
-    files_before: set,
+    files_before: Iterable[Path | str],
     pattern: str = "*.xlsx",
     timeout: int = 120,
     poll_interval: float = 1.0,
-) -> Optional[str]:
+) -> str | None:
     """
     Attende che appaia un NUOVO file rispetto a uno snapshot precedente.
     Strategia ROBUSTA: immune a timestamp errati del server.
@@ -257,37 +247,33 @@ def poll_for_new_file(
     Returns:
         Path del nuovo file o None.
     """
-    directory = Path(directory)
+    directory_path = Path(directory)
     # Crea dizionario {path: mtime} per lo snapshot
     # Questo permette di rilevare sia NUOVI file che FILE AGGIORNATI (overwrite)
-    snapshot_map = {}
+    snapshot_map: dict[Path, float] = {}
     for f_path in files_before:
-        try:
+        with suppress(Exception):
             p = Path(f_path).resolve()
             if p.exists():
                 snapshot_map[p] = p.stat().st_mtime
-        except Exception:
-            pass
 
     start_time = time.time()
-    logger.info(
-        f"Monitoraggio files in {directory} (Snapshot: {len(snapshot_map)} files)..."
-    )
+    logger.info(f"Monitoraggio files in {directory_path} (Snapshot: {len(snapshot_map)} files)...")
 
     while time.time() - start_time < timeout:
         # 1. Check download in corso
-        if any(directory.glob("*.crdownload")) or any(directory.glob("*.tmp")):
+        if any(directory_path.glob("*.crdownload")) or any(directory_path.glob("*.tmp")):
             time.sleep(poll_interval)
             continue
 
         # 2. Get current files matching pattern
-        current_files = list(directory.glob(pattern))
+        current_files = list(directory_path.glob(pattern))
 
         # 3. Check for New or Modified files
         detected_file = None
 
         for f in current_files:
-            try:
+            with suppress(Exception):
                 f_res = f.resolve()
                 if not f_res.is_file():
                     continue
@@ -304,8 +290,6 @@ def poll_for_new_file(
                     detected_file = f_res
                     logger.info(f"✅ FILE AGGIORNATO RILEVATO: {f_res.name}")
                     break
-            except Exception:
-                continue
 
         if detected_file:
             return str(detected_file)
@@ -336,7 +320,7 @@ class element_text_changes:
         >>> wait.until(element_text_changes((By.ID, "counter"), "0"))
     """
 
-    def __init__(self, locator: Tuple[str, str], initial_text: str):
+    def __init__(self, locator: tuple[str, str], initial_text: str):
         self.locator = locator
         self.initial_text = initial_text
 
@@ -382,10 +366,10 @@ class element_count_is:
 
     def __init__(
         self,
-        locator: Tuple[str, str],
-        exact_count: Optional[int] = None,
-        min_count: Optional[int] = None,
-        max_count: Optional[int] = None,
+        locator: tuple[str, str],
+        exact_count: int | None = None,
+        min_count: int | None = None,
+        max_count: int | None = None,
     ):
         self.locator = locator
         self.exact_count = exact_count
@@ -401,9 +385,7 @@ class element_count_is:
                 return count == self.exact_count
             if self.min_count is not None and count < self.min_count:
                 return False
-            if self.max_count is not None and count > self.max_count:
-                return False
-            return True
+            return not (self.max_count is not None and count > self.max_count)
         except Exception:
             return False
 
@@ -415,7 +397,7 @@ class element_count_is:
 
 def safe_click_with_retry(
     driver: WebDriver,
-    locator: Tuple[str, str],
+    locator: tuple[str, str],
     timeout: int = 10,
     retries: int = 3,
     retry_delay: float = 0.5,
@@ -457,7 +439,7 @@ def safe_click_with_retry(
 def execute_with_wait(
     action: Callable[[], None],
     driver: WebDriver,
-    wait_locator: Optional[Tuple[str, str]] = None,
+    wait_locator: tuple[str, str] | None = None,
     wait_timeout: int = 10,
 ) -> bool:
     """
@@ -478,7 +460,7 @@ def execute_with_wait(
         >>> execute_with_wait(
         ...     action=lambda: driver.find_element(By.ID, "submit").click(),
         ...     driver=driver,
-        ...     wait_locator=(By.CLASS_NAME, "loading-overlay")
+        ...     wait_locator=(By.CLASS_NAME, "loading-overlay"),
         ... )
     """
     try:

@@ -48,9 +48,7 @@ class TestConfigManagerAdvanced:
     @patch("src.core.config_manager.SecretsManager.is_available", return_value=True)
     @patch("src.core.config_manager.SecretsManager.store_credential")
     @patch("src.core.config_manager._atomic_write_json")
-    def test_save_config_credential_protection(
-        self, mock_atomic, mock_store, mock_is_avail, mock_file
-    ):
+    def test_save_config_credential_protection(self, mock_atomic, mock_store, mock_is_avail, mock_file):
         config = {"accounts": [{"username": "user1", "password": "clear_password"}]}
         save_config(config)
 
@@ -72,12 +70,10 @@ class TestConfigManagerAdvanced:
         assert legacy["accounts"][0]["username"] == "old_user"
 
     @patch("src.core.config_manager.CONFIG_FILE")
-    def test_load_base_config_malformed_json_fallback(self, mock_file, tmp_path):
-        bad_json = tmp_path / "bad.json"
-        bad_json.write_text("{ incomplete json")
+    def test_load_base_config_malformed_json_fallback(self, mock_file):
         mock_file.exists.return_value = True
-        mock_file.open.return_value = bad_json.open()
+        mock_file.read_text.return_value = "{ incomplete json"
 
         config = _load_base_config()
-        # Should return defaults
+        # Should return defaults due to suppress(json.JSONDecodeError)
         assert config["browser_timeout"] == 30

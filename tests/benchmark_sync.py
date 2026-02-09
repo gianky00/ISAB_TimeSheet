@@ -33,7 +33,6 @@ def setup_test_db(db_path, num_rows=10000):
         )
 
         # Populate with some dummy data
-        # target_columns = ["year"] + [data_prev, mese, n_prev, totale_prev, attivita, tcl, odc, stato_attivita, tipologia, ore_sp, resa, annotazioni, indirizzo_consuntivo, nome_file]
         data = [
             (
                 2024,
@@ -54,9 +53,7 @@ def setup_test_db(db_path, num_rows=10000):
             )
             for i in range(num_rows)
         ]
-        conn.executemany(
-            "INSERT INTO contabilita VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data
-        )
+        conn.executemany("INSERT INTO contabilita VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
         conn.commit()
     return data
 
@@ -94,10 +91,6 @@ def run_benchmark():
     print(f"Benchmarking with {num_rows} rows...")
 
     start_time = time.time()
-    # In this scenario:
-    # - 1000 rows were in existing but not in new_data -> removed
-    # - 1000 rows are in new_data but were not in existing -> added
-    # - 9000 rows are identical
     added, removed = DataSynchronizer.sync_contabilita_dati(db_path, new_data, [2024])
     end_time = time.time()
 

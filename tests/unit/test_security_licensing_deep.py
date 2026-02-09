@@ -99,9 +99,7 @@ class TestLicenseIntegrity:
     @patch("src.core.license_validator.get_license_info")
     @patch("src.core.license_validator.get_hardware_id")
     @patch("src.core.license_validator._check_integrity_with_manifest")
-    def test_detailed_status_hw_mismatch(
-        self, mock_integrity, mock_hw, mock_info, mock_paths
-    ):
+    def test_detailed_status_hw_mismatch(self, mock_integrity, mock_hw, mock_info, mock_paths):
         mock_paths.return_value = {
             "config": MagicMock(exists=lambda: True),
             "manifest": MagicMock(exists=lambda: True),

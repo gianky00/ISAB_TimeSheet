@@ -5,6 +5,7 @@ Gestisce l'applicazione di temi, palette e fogli di stile (QSS).
 
 import logging
 from pathlib import Path
+from typing import Optional
 
 from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import QApplication
@@ -18,9 +19,9 @@ logger = logging.getLogger(__name__)
 class ThemeManager:
     """Manager centralizzato per l'aspetto visivo dell'applicazione."""
 
-    _instance = None
+    _instance: Optional["ThemeManager"] = None
 
-    def __new__(cls):
+    def __new__(cls) -> "ThemeManager":
         """Pattern Singleton per il gestore dello stile."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -32,7 +33,7 @@ class ThemeManager:
         """Restituisce la palette del tema corrente (FORZATA A LIGHT)."""
         return LIGHT
 
-    def apply_theme(self, app: QApplication, theme_name: str = "light"):
+    def apply_theme(self, app: QApplication, theme_name: str = "light") -> None:
         """
         Applica il tema completo all'applicazione.
         Configura la QPalette e carica i file QSS necessari.
@@ -49,7 +50,7 @@ class ThemeManager:
         # 2. Applica QSS Principale (Livello Branding)
         self._apply_stylesheet(app, theme_name)
 
-    def _apply_palette(self, app: QApplication):
+    def _apply_palette(self, app: QApplication) -> None:
         """Traduce la ColorPalette in una QPalette Qt (STRICT MODE)."""
         p = self.palette
         palette = QPalette()
@@ -69,18 +70,12 @@ class ThemeManager:
             # Backgrounds
             palette.setColor(group, QPalette.ColorRole.Window, q(p.background))
             palette.setColor(group, QPalette.ColorRole.Base, q(p.surface))
-            palette.setColor(
-                group, QPalette.ColorRole.AlternateBase, q(p.surface_variant)
-            )
+            palette.setColor(group, QPalette.ColorRole.AlternateBase, q(p.surface_variant))
             palette.setColor(group, QPalette.ColorRole.ToolTipBase, q(p.surface))
             palette.setColor(group, QPalette.ColorRole.Button, q(p.surface))
 
             # Text / Foreground
-            if group == QPalette.ColorGroup.Disabled:
-                # Dimmed text for disabled
-                txt_col = q(p.disabled)
-            else:
-                txt_col = q(p.on_background)
+            txt_col = q(p.disabled) if group == QPalette.ColorGroup.Disabled else q(p.on_background)
 
             palette.setColor(group, QPalette.ColorRole.WindowText, txt_col)
             palette.setColor(group, QPalette.ColorRole.Text, txt_col)
@@ -96,30 +91,26 @@ class ThemeManager:
 
         app.setPalette(palette)
 
-    def _apply_stylesheet(self, app: QApplication, theme_name: str):
+    def _apply_stylesheet(self, app: QApplication, theme_name: str) -> None:
         """Carica e applica il file QSS principale e gli overrides."""
         # 1. Carica QSS del tema specifico
         qss_path = Path(get_asset_path(f"assets/styles/{theme_name}.qss"))
         qss_content = ""
         if qss_path.exists():
             try:
-                with open(qss_path, "r", encoding="utf-8") as f:
-                    qss_content = f.read()
+                qss_content = qss_path.read_text(encoding="utf-8")
             except Exception as e:
                 logger.error(f"Errore lettura QSS {qss_path}: {e}")
 
         if not qss_content:
-            qss_content = (
-                f"QMainWindow {{ background-color: {self.palette.background}; }}"
-            )
+            qss_content = f"QMainWindow {{ background-color: {self.palette.background}; }}"
 
         # 2. Carica QSS degli Overrides globali (estratto in file esterno)
         overrides_path = Path(get_asset_path("assets/styles/overrides.qss"))
         overrides_content = ""
         if overrides_path.exists():
             try:
-                with open(overrides_path, "r", encoding="utf-8") as f:
-                    overrides_content = f.read()
+                overrides_content = overrides_path.read_text(encoding="utf-8")
             except Exception as e:
                 logger.error(f"Errore lettura Overrides QSS: {e}")
 
@@ -127,6 +118,6 @@ class ThemeManager:
         app.setStyleSheet(qss_content + overrides_content)
 
 
-def apply_theme(app: QApplication, theme_name: str = "light"):
+def apply_theme(app: QApplication, theme_name: str = "light") -> None:
     """Wrapper per compatibilità con il codice esistente."""
     ThemeManager().apply_theme(app, theme_name)

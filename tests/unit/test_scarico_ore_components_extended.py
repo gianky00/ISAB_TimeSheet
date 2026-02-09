@@ -36,7 +36,7 @@ class TestScaricoOreComponentsExtended:
             worker.start()
 
         # Verify that display cache was built (now returns 5 values)
-        display, search, totals, styles, dkeys = worker._build_caches(data)
+        display, _search, totals, _styles, _dkeys = worker._build_caches(data)
         assert len(display) == 1
         assert display[0][0] == "01/01/2024"  # Date formatted
         assert totals[0] == 8.0

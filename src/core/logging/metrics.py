@@ -4,9 +4,10 @@ Performance metrics tracking e storage.
 
 import json
 from collections import defaultdict
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from .config import get_config
 
@@ -18,14 +19,14 @@ class PerformanceMetric:
         self,
         operation: str,
         duration_ms: float,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ):
         self.operation = operation
         self.duration_ms = duration_ms
         self.timestamp = datetime.now()
         self.metadata = metadata or {}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Converte metrica in dizionario."""
         return {
             "operation": self.operation,
@@ -42,31 +43,28 @@ class MetricsSink:
     Scrive metriche in file JSONL (newline-delimited JSON).
     """
 
-    def __init__(self, config=None):
+    def __init__(self, config: Any = None) -> None:
         self.config = config or get_config()
         self.metrics_file = self.config.metrics_dir / "performance.jsonl"
 
         # Assicura che directory esista
         self.config.metrics_dir.mkdir(parents=True, exist_ok=True)
 
-    def write_metric(self, metric: PerformanceMetric):
+    def write_metric(self, metric: PerformanceMetric) -> None:
         """
         Scrive metrica su file.
 
         Args:
             metric: Metrica da scrivere
         """
-        try:
-            with open(self.metrics_file, "a", encoding="utf-8") as f:
-                f.write(json.dumps(metric.to_dict(), ensure_ascii=False) + "\n")
-        except Exception as e:
-            print(f"[METRICS ERROR] Failed to write metric: {e}")
+        with suppress(Exception), self.metrics_file.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(metric.to_dict(), ensure_ascii=False) + "\n")
 
     def read_metrics(
         self,
-        operation: Optional[str] = None,
-        limit: Optional[int] = None,
-    ) -> List[PerformanceMetric]:
+        operation: str | None = None,
+        limit: int | None = None,
+    ) -> list[PerformanceMetric]:
         """
         Legge metriche da file.
 
@@ -83,32 +81,26 @@ class MetricsSink:
         metrics = []
         count = 0
 
-        try:
-            with open(self.metrics_file, "r", encoding="utf-8") as f:
-                for line in f:
-                    if limit and count >= limit:
-                        break
+        with suppress(Exception), self.metrics_file.open("r", encoding="utf-8") as f:
+            for line in f:
+                if limit and count >= limit:
+                    break
 
-                    data = json.loads(line)
+                data = json.loads(line)
 
-                    # Filtra per operation se specificato
-                    if operation and data.get("operation") != operation:
-                        continue
+                # Filtra per operation se specificato
+                if operation and data.get("operation") != operation:
+                    continue
 
-                    metric = PerformanceMetric(
-                        operation=data["operation"],
-                        duration_ms=data["duration_ms"],
-                        metadata=data.get("metadata", {}),
-                    )
-                    metric.timestamp = datetime.fromisoformat(
-                        data["timestamp"].replace("Z", "")
-                    )
+                metric = PerformanceMetric(
+                    operation=data["operation"],
+                    duration_ms=data["duration_ms"],
+                    metadata=data.get("metadata", {}),
+                )
+                metric.timestamp = datetime.fromisoformat(data["timestamp"].replace("Z", ""))
 
-                    metrics.append(metric)
-                    count += 1
-
-        except Exception as e:
-            print(f"[METRICS ERROR] Failed to read metrics: {e}")
+                metrics.append(metric)
+                count += 1
 
         return metrics
 
@@ -123,26 +115,26 @@ class PerformanceTracker:
     - Rileva anomalie (operazioni lente)
     """
 
-    _instance = None
+    _instance: Optional["PerformanceTracker"] = None
 
     @classmethod
-    def instance(cls):
+    def instance(cls) -> "PerformanceTracker":
         """Restituisce istanza singleton."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.sink = MetricsSink()
-        self._in_memory_metrics = defaultdict(list)  # operation -> [durations]
-        self._baselines = {}  # operation -> baseline_ms
+        self._in_memory_metrics: dict[str, list[float]] = defaultdict(list)  # operation -> [durations]
+        self._baselines: dict[str, float] = {}  # operation -> baseline_ms
 
     def track(
         self,
         operation: str,
         duration_ms: float,
-        metadata: Optional[Dict[str, Any]] = None,
-    ):
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
         """
         Registra metrica di performance.
 
@@ -162,11 +154,9 @@ class PerformanceTracker:
 
         # Mantieni solo ultimi 1000 valori in memory
         if len(self._in_memory_metrics[operation]) > 1000:
-            self._in_memory_metrics[operation] = self._in_memory_metrics[operation][
-                -1000:
-            ]
+            self._in_memory_metrics[operation] = self._in_memory_metrics[operation][-1000:]
 
-    def get_statistics(self, operation: str) -> Optional[Dict[str, float]]:
+    def get_statistics(self, operation: str) -> dict[str, float] | None:
         """
         Calcola statistiche per operazione.
 
@@ -184,7 +174,7 @@ class PerformanceTracker:
         count = len(sorted_durations)
 
         stats = {
-            "count": count,
+            "count": float(count),
             "avg": sum(sorted_durations) / count,
             "min": sorted_durations[0],
             "max": sorted_durations[-1],
@@ -195,7 +185,7 @@ class PerformanceTracker:
 
         return stats
 
-    def set_baseline(self, operation: str, baseline_ms: float):
+    def set_baseline(self, operation: str, baseline_ms: float) -> None:
         """
         Imposta baseline per operazione.
 
@@ -205,7 +195,7 @@ class PerformanceTracker:
         """
         self._baselines[operation] = baseline_ms
 
-    def get_baseline(self, operation: str) -> Optional[float]:
+    def get_baseline(self, operation: str) -> float | None:
         """
         Restituisce baseline per operazione.
 
@@ -246,56 +236,50 @@ class PerformanceTracker:
 
         return duration_ms > (baseline * threshold_multiplier)
 
-    def load_baselines_from_file(self, file_path: Path):
+    def load_baselines_from_file(self, file_path: Path) -> None:
         """
         Carica baselines da file JSON.
 
         Args:
             file_path: Path al file JSON
         """
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                self._baselines = json.load(f)
-        except Exception as e:
-            print(f"[METRICS ERROR] Failed to load baselines: {e}")
+        with suppress(Exception), file_path.open("r", encoding="utf-8") as f:
+            self._baselines = json.load(f)
 
-    def save_baselines_to_file(self, file_path: Path):
+    def save_baselines_to_file(self, file_path: Path) -> None:
         """
         Salva baselines su file JSON.
 
         Args:
             file_path: Path al file JSON
         """
-        try:
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(self._baselines, f, indent=2)
-        except Exception as e:
-            print(f"[METRICS ERROR] Failed to save baselines: {e}")
+        with suppress(Exception), file_path.open("w", encoding="utf-8") as f:
+            json.dump(self._baselines, f, indent=2)
 
-    def auto_learn_baselines(self):
+    def auto_learn_baselines(self) -> None:
         """
         Auto-learn baselines dalle metriche correnti.
 
         Calcola p95 per ogni operazione e lo imposta come baseline.
         """
-        for operation in self._in_memory_metrics.keys():
+        for operation in self._in_memory_metrics:
             stats = self.get_statistics(operation)
             if stats and stats["count"] >= 10:  # Minimo 10 campioni
                 self.set_baseline(operation, stats["p95"])
 
-    def generate_report(self) -> Dict[str, Any]:
+    def generate_report(self) -> dict[str, Any]:
         """
         Genera report performance completo.
 
         Returns:
             Dict con report
         """
-        report: Dict[str, Any] = {
+        report: dict[str, Any] = {
             "timestamp": datetime.now().isoformat() + "Z",
             "operations": {},
         }
 
-        for operation in self._in_memory_metrics.keys():
+        for operation in self._in_memory_metrics:
             stats = self.get_statistics(operation)
             baseline = self.get_baseline(operation)
 

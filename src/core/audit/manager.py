@@ -2,7 +2,8 @@ import json
 import os
 import traceback
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Any, Optional
 
 from src.core.audit.database import AuditDatabase
 from src.core.audit.integrity import AuditIntegrity
@@ -19,21 +20,21 @@ class AuditManager:
     Implementazione rifattorizzata e modulare.
     """
 
-    _instance = None
+    _instance: Optional["AuditManager"] = None
     Severity = Severity
     Status = Status
 
     @classmethod
-    def instance(cls):
+    def instance(cls) -> "AuditManager":
         return cls()
 
-    def __new__(cls):
+    def __new__(cls) -> "AuditManager":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         if getattr(self, "_initialized", False):
             return
         self.db = AuditDatabase()
@@ -41,12 +42,12 @@ class AuditManager:
         self._initialized = True
 
     @property
-    def DB_PATH(self):
+    def DB_PATH(self) -> Path:
         """Compatibilità Legacy per test."""
         return self.db.DB_PATH
 
     @DB_PATH.setter
-    def DB_PATH(self, value):
+    def DB_PATH(self, value: Path) -> None:
         self.db.DB_PATH = value
 
     def _get_current_user(self) -> str:
@@ -72,10 +73,10 @@ class AuditManager:
         severity: Any = Severity.LOW,
         duration_ms: int = 0,
         module: str = "",
-        error_code: Optional[str] = None,
+        error_code: str | None = None,
         notify: bool = False,
-        trace_id: Optional[str] = None,
-    ) -> Optional[int]:
+        trace_id: str | None = None,
+    ) -> int | None:
         """
         Registra un'azione dettagliata nell'audit log.
 
@@ -104,14 +105,11 @@ class AuditManager:
 
             # Normalizzazione
             status_val = status.value if isinstance(status, Status) else str(status)
-            severity_val = (
-                severity.value if isinstance(severity, Severity) else str(severity)
-            )
+            severity_val = severity.value if isinstance(severity, Severity) else str(severity)
 
             # Defaults
             entity = entity or "-"
             category = category or "general"
-            module = module or ""
             error_code = error_code or ""
             params_json = json.dumps(params, ensure_ascii=False) if params else "{}"
             timestamp = datetime.now().isoformat()
@@ -170,9 +168,7 @@ class AuditManager:
             self.signals.logs_updated.emit()
 
             if notify:
-                self._generate_notification(
-                    action, entity, status_val, severity_val, params
-                )
+                self._generate_notification(action, entity, status_val, severity_val, params)
 
             return audit_id
 
@@ -183,7 +179,7 @@ class AuditManager:
 
     def _generate_notification(
         self, action: str, entity: str, status_val: str, severity_val: str, params: Any
-    ):
+    ) -> None:
         """Genera una notifica utente basata sull'esito dell'azione auditata."""
         try:
             from src.core.notification_manager import NotificationManager
@@ -200,9 +196,7 @@ class AuditManager:
             if params and isinstance(params, dict) and "error_details" in params:
                 msg = params["error_details"]
 
-            NotificationManager.instance().add_notification(
-                f"{action}: {entity}", msg, level=level
-            )
+            NotificationManager.instance().add_notification(f"{action}: {entity}", msg, level=level)
         except Exception as e:
             logger.error(f"Notification error in Audit: {e}")
 
@@ -213,9 +207,7 @@ class AuditManager:
 
             with self.db.get_connection() as conn:
                 conn.row_factory = sqlite3.Row
-                rows = conn.execute(
-                    "SELECT * FROM audit_logs ORDER BY id ASC"
-                ).fetchall()
+                rows = conn.execute("SELECT * FROM audit_logs ORDER BY id ASC").fetchall()
 
                 prev_hash = "0" * 64
                 for row in rows:
@@ -229,9 +221,7 @@ class AuditManager:
                     if row["row_hash"] != calc_hash:
                         # Tentativo 2: Hash Legacy
                         data_legacy = AuditIntegrity.build_hash_string_legacy(row)
-                        calc_hash_legacy = AuditIntegrity.calculate_hash(
-                            data_legacy, prev_hash
-                        )
+                        calc_hash_legacy = AuditIntegrity.calculate_hash(data_legacy, prev_hash)
 
                         if row["row_hash"] != calc_hash_legacy:
                             return False
@@ -241,17 +231,17 @@ class AuditManager:
         except Exception:
             return False
 
-    def get_logs(self, limit: int = 200) -> List[Dict[str, Any]]:
+    def get_logs(self, limit: int = 200) -> list[dict[str, Any]]:
         logs, _ = self.get_filtered_logs(limit=limit)
         return logs
 
-    def get_filtered_logs(self, **kwargs) -> Tuple[List[Dict[str, Any]], int]:
+    def get_filtered_logs(self, **kwargs: Any) -> tuple[list[dict[str, Any]], int]:
         return self.db.fetch_filtered(**kwargs)
 
-    def get_categories(self) -> List[str]:
+    def get_categories(self) -> list[str]:
         return self.db.get_categories()
 
-    def run_retention_policy(self, days: int = 90):
+    def run_retention_policy(self, days: int = 90) -> None:
         cutoff = (datetime.now() - timedelta(days=days)).isoformat()
         deleted_count = self.db.delete_older_than(cutoff)
         if deleted_count > 0:
@@ -262,9 +252,9 @@ class AuditManager:
                 severity=Severity.LOW,
             )
 
-    def get_stats_by_day(self, days=30) -> Dict[str, Dict[str, int]]:
+    def get_stats_by_day(self, days: int = 30) -> dict[str, dict[str, int]]:
         cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
-        stats = {
+        stats: dict[str, dict[str, int]] = {
             (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d"): {
                 "success": 0,
                 "error": 0,

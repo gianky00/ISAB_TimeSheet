@@ -1,7 +1,7 @@
 import sqlite3
 
 
-def mig_storico_oda_v1(conn: sqlite3.Connection):
+def mig_storico_oda_v1(conn: sqlite3.Connection) -> None:
     """Schema Iniziale Storico OdA (v1)"""
     cursor = conn.cursor()
     cursor.execute(
@@ -44,18 +44,12 @@ def mig_storico_oda_v1(conn: sqlite3.Connection):
         )
     """
     )
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_oda_data_oda ON storico_oda(data_oda)"
-    )
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_oda_fornitore ON storico_oda(codice_fornitore)"
-    )
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_oda_contratto ON storico_oda(contratto)"
-    )
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_oda_data_oda ON storico_oda(data_oda)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_oda_fornitore ON storico_oda(codice_fornitore)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_oda_contratto ON storico_oda(contratto)")
 
 
-def mig_storico_oda_v2(conn: sqlite3.Connection):
+def mig_storico_oda_v2(conn: sqlite3.Connection) -> None:
     """Fix tipi colonne per evitare overflow (v2)"""
     # Poiché SQLite non supporta ALTER COLUMN facilmente, e i dati sono corrotti/cache,
     # ricreiamo la tabella.

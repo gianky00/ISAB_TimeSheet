@@ -14,24 +14,12 @@ class TestContabilitaExtra:
 
         # We mock EVERYTHING inside the panel to isolate the container logic
         with (
-            patch(
-                "src.gui.panels.contabilita_panel.ContabilitaManager"
-            ) as mock_manager,
-            patch(
-                "src.gui.panels.contabilita_panel.ContabilitaYearTab"
-            ) as mock_year_tab,
-            patch(
-                "src.gui.panels.contabilita_panel.GiornaliereYearTab"
-            ) as mock_giorn_tab,
-            patch(
-                "src.gui.panels.contabilita_kpi.ContabilitaKPIPanel"
-            ) as mock_kpi_class,
-            patch(
-                "src.gui.panels.contabilita_panel.AttivitaProgrammateTab"
-            ) as mock_att_tab,
-            patch(
-                "src.gui.panels.contabilita_panel.CertificatiCampioneTab"
-            ) as mock_cert_tab,
+            patch("src.gui.panels.contabilita_panel.ContabilitaManager") as mock_manager,
+            patch("src.gui.panels.contabilita_panel.ContabilitaYearTab") as mock_year_tab,
+            patch("src.gui.panels.contabilita_panel.GiornaliereYearTab") as mock_giorn_tab,
+            patch("src.gui.panels.contabilita_kpi.ContabilitaKPIPanel") as mock_kpi_class,
+            patch("src.gui.panels.contabilita_panel.AttivitaProgrammateTab") as mock_att_tab,
+            patch("src.gui.panels.contabilita_panel.CertificatiCampioneTab") as mock_cert_tab,
         ):
             # Setup Mocks to behave like QWidgets without strictly being fully initialized ones
             # We use a real simple QWidget as base for the return value to satisfy addTab types
@@ -75,24 +63,12 @@ class TestContabilitaExtra:
         from src.gui.panels.contabilita_panel import ContabilitaPanel
 
         with (
-            patch(
-                "src.gui.panels.contabilita_panel.ContabilitaManager"
-            ) as mock_manager,
-            patch(
-                "src.gui.panels.contabilita_panel.ContabilitaYearTab"
-            ) as mock_year_tab,
-            patch(
-                "src.gui.panels.contabilita_panel.GiornaliereYearTab"
-            ) as mock_giorn_tab,
-            patch(
-                "src.gui.panels.contabilita_kpi.ContabilitaKPIPanel"
-            ) as mock_kpi_class,
-            patch(
-                "src.gui.panels.contabilita_panel.AttivitaProgrammateTab"
-            ) as mock_att_tab,
-            patch(
-                "src.gui.panels.contabilita_panel.CertificatiCampioneTab"
-            ) as mock_cert_tab,
+            patch("src.gui.panels.contabilita_panel.ContabilitaManager") as mock_manager,
+            patch("src.gui.panels.contabilita_panel.ContabilitaYearTab") as mock_year_tab,
+            patch("src.gui.panels.contabilita_panel.GiornaliereYearTab") as mock_giorn_tab,
+            patch("src.gui.panels.contabilita_kpi.ContabilitaKPIPanel") as mock_kpi_class,
+            patch("src.gui.panels.contabilita_panel.AttivitaProgrammateTab") as mock_att_tab,
+            patch("src.gui.panels.contabilita_panel.CertificatiCampioneTab") as mock_cert_tab,
         ):
 
             def create_mock_widget(*args, **kwargs):
@@ -108,9 +84,7 @@ class TestContabilitaExtra:
             mock_att_tab.return_value = create_mock_widget()
             mock_cert_tab.return_value = create_mock_widget()
 
-            mock_manager.get_available_years.return_value = [
-                2024
-            ]  # Single year for simplicity
+            mock_manager.get_available_years.return_value = [2024]  # Single year for simplicity
 
             panel = ContabilitaPanel()
             # panel.show()

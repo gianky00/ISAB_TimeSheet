@@ -1,4 +1,6 @@
-from PyQt6.QtCore import QSize, Qt, pyqtSignal
+from typing import Any
+
+from PyQt6.QtCore import QPoint, QSize, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QGridLayout,
     QLabel,
@@ -18,7 +20,7 @@ class ActionChip(QPushButton):
     Pulsante 'Chip' per azione rapida.
     """
 
-    def __init__(self, text, icon_path, color, parent=None):
+    def __init__(self, text: str, icon_path: str, color: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setText(f"  {text}")  # Spazio per icona
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -54,7 +56,7 @@ class ActionChip(QPushButton):
 # Registry of all available actions with 3-level hierarchy
 # Path format: [Level1, Level2] - excludes the action text itself
 # Level 1 & 2 are non-selectable groups, Level 3 items are selectable
-AVAILABLE_ACTIONS = {
+AVAILABLE_ACTIONS: dict[str, dict[str, Any]] = {
     # ============================================================
     # PRIMO LIVELLO: Automazioni > SECONDO LIVELLO: Portale Fornitori
     # ============================================================
@@ -230,34 +232,26 @@ class QuickActions(QWidget):
 
     action_clicked = pyqtSignal(str)  # Emits action key
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)  # Spazio minimo tra titolo e pulsanti
 
         title = QLabel("Azioni Rapide")
-        title.setStyleSheet(
-            "font-size: 16px; font-weight: bold; color: #495057; margin-bottom: 0px;"
-        )
+        title.setStyleSheet("font-size: 16px; font-weight: bold; color: #495057; margin-bottom: 0px;")
         layout.addWidget(title)
 
         # Grid Layout per 2 righe (no scroll)
         self.chips_widget = QWidget()
-        self.chips_widget.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
+        self.chips_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.chips_layout = QGridLayout(self.chips_widget)
-        self.chips_layout.setContentsMargins(
-            0, 4, 0, 0
-        )  # Margine minimo sopra i pulsanti
+        self.chips_layout.setContentsMargins(0, 4, 0, 0)  # Margine minimo sopra i pulsanti
         self.chips_layout.setSpacing(8)  # Spazio tra i pulsanti
-        self.chips_layout.setAlignment(
-            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
-        )
+        self.chips_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
         layout.addWidget(self.chips_widget)
         layout.addStretch()
@@ -268,7 +262,7 @@ class QuickActions(QWidget):
 
         self.refresh_actions()
 
-    def _show_context_menu(self, pos):
+    def _show_context_menu(self, pos: QPoint) -> None:
         """Mostra menu contestuale per personalizzare."""
         from PyQt6.QtWidgets import QMenu
 
@@ -313,13 +307,15 @@ class QuickActions(QWidget):
             if dlg.exec():
                 self.refresh_actions()
 
-    def refresh_actions(self):
+    def refresh_actions(self) -> None:
         """Ricarica le azioni dalla configurazione e le dispone su max 2 righe."""
         # Clean existing chips
         while self.chips_layout.count() > 0:
             item = self.chips_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            if item is not None:
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
 
         # Load from config or USE DEFAULT if empty
         saved_keys = get_config_value("quick_actions", [])
@@ -336,12 +332,7 @@ class QuickActions(QWidget):
         num_actions = len(saved_keys)
         MAX_BUTTONS_PER_ROW = 5  # Limite per evitare scroll orizzontale
 
-        if num_actions <= MAX_BUTTONS_PER_ROW:
-            # Se ci sono 5 o meno, una riga sola
-            buttons_per_row = num_actions
-        else:
-            # Più di 5, distribuisci su righe multiple, max 5 per riga
-            buttons_per_row = MAX_BUTTONS_PER_ROW
+        buttons_per_row = min(num_actions, MAX_BUTTONS_PER_ROW)
 
         row = 0
         col = 0
@@ -349,7 +340,7 @@ class QuickActions(QWidget):
         for key in saved_keys:
             if key in AVAILABLE_ACTIONS:
                 meta = AVAILABLE_ACTIONS[key]
-                btn = ActionChip(meta["text"], meta["icon"], meta["color"], self)
+                btn = ActionChip(str(meta["text"]), str(meta["icon"]), str(meta["color"]), self)
                 # Usa una closure corretta per catturare il valore di key
                 btn.clicked.connect(self._create_action_handler(key))
 
@@ -362,6 +353,6 @@ class QuickActions(QWidget):
                     row += 1
                     # Nessun limite di righe, l'utente può vedere tutte le azioni configurate
 
-    def _create_action_handler(self, key):
+    def _create_action_handler(self, key: str) -> Any:
         """Crea un handler per il click che cattura correttamente il valore di key."""
         return lambda: self.action_clicked.emit(key)

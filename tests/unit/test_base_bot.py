@@ -22,6 +22,10 @@ class TestBaseBot:
                     def description(self):
                         return "Test bot for unit testing"
 
+                    @staticmethod
+                    def get_columns():
+                        return []
+
                     def run(self, data):
                         return True
 

@@ -66,10 +66,7 @@ class AuditDetailDialog(QDialog):
 
         try:
             params_str = data.get("params", "{}")
-            if isinstance(params_str, str):
-                params_json = json.loads(params_str)
-            else:
-                params_json = params_str
+            params_json = json.loads(params_str) if isinstance(params_str, str) else params_str
 
             pretty_json = json.dumps(params_json, indent=4, ensure_ascii=False)
             self.text_edit.setText(pretty_json)
@@ -116,5 +113,8 @@ class AuditDetailDialog(QDialog):
 
     def _copy_to_clipboard(self):
         cb = QGuiApplication.clipboard()
-        cb.setText(self.text_edit.toPlainText())
-        QMessageBox.information(self, "Copiato", "Dettagli copiati negli appunti!")
+        if cb:
+            cb.setText(self.text_edit.toPlainText())
+            QMessageBox.information(self, "Copiato", "Dettagli copiati negli appunti!")
+        else:
+            QMessageBox.warning(self, "Errore", "Impossibile accedere agli appunti.")

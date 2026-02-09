@@ -1,7 +1,8 @@
 import logging
+from typing import Any
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QPainter
+from PyQt6.QtCore import QModelIndex, Qt, pyqtSignal
+from PyQt6.QtGui import QColor, QEnterEvent, QFont, QMouseEvent, QPainter
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
@@ -9,6 +10,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QStyle,
     QStyledItemDelegate,
+    QStyleOptionViewItem,
     QVBoxLayout,
     QWidget,
 )
@@ -19,9 +21,9 @@ logger = logging.getLogger(__name__)
 class ColoredDotDelegate(QStyledItemDelegate):
     """Delegate personalizzato per colorare i pallini nella colonna SCAD. ISAB."""
 
-    def paint(self, painter, option, index):
+    def paint(self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         """Disegna il pallino colorato con il numero di giorni."""
-        if index.column() != 0:  # Solo per la prima colonna
+        if not painter or index.column() != 0:  # Solo per la prima colonna
             super().paint(painter, option, index)
             return
 
@@ -76,7 +78,15 @@ class InteractiveStatusCard(QFrame):
 
     clicked = pyqtSignal(str)
 
-    def __init__(self, label, color, icon_path, description, filter_type, parent=None):
+    def __init__(
+        self,
+        label: str,
+        color: str,
+        icon_path: str,
+        description: str,
+        filter_type: str,
+        parent: QWidget | None = None,
+    ) -> None:
         super().__init__(parent)
         self.base_color = color
         self.filter_type = filter_type
@@ -127,9 +137,7 @@ class InteractiveStatusCard(QFrame):
         left_layout.addWidget(emoji_label)
 
         self.val_text = QLabel("0")
-        self.val_text.setStyleSheet(
-            f"font-size: 30px; font-weight: 900; color: {color};"
-        )
+        self.val_text.setStyleSheet(f"font-size: 30px; font-weight: 900; color: {color};")
         self.val_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         left_layout.addWidget(self.val_text)
 
@@ -146,44 +154,40 @@ class InteractiveStatusCard(QFrame):
         right_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         lbl_title = QLabel(label.upper())
-        lbl_title.setStyleSheet(
-            "font-size: 14px; font-weight: 800; color: #495057; letter-spacing: 0.8px;"
-        )
+        lbl_title.setStyleSheet("font-size: 14px; font-weight: 800; color: #495057; letter-spacing: 0.8px;")
 
         lbl_desc = QLabel(description)
         lbl_desc.setStyleSheet(
             "font-size: 13px; color: #6c757d; font-weight: 600;"  # Aumentato a 13px e font-weight 600
         )
         lbl_desc.setWordWrap(False)  # Disabilita word wrap per evitare a capo
-        lbl_desc.setAlignment(
-            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
-        )
+        lbl_desc.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         right_layout.addWidget(lbl_title)
         right_layout.addWidget(lbl_desc)
 
         layout.addLayout(right_layout)
 
-    def enterEvent(self, event):
+    def enterEvent(self, event: QEnterEvent | None) -> None:
         self.shadow.setBlurRadius(15)
         self.shadow.setYOffset(4)
         super().enterEvent(event)
 
-    def leaveEvent(self, event):
+    def leaveEvent(self, event: Any | None) -> None:
         self.shadow.setBlurRadius(10)
         self.shadow.setYOffset(2)
         super().leaveEvent(event)
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+        if event and event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self.filter_type)
         super().mousePressEvent(event)
 
-    def setValue(self, val):
+    def setValue(self, val: Any) -> None:
         self.val_text.setText(str(val))
 
 
-def create_info_card(title):
+def create_info_card(title: str) -> tuple[QFrame, QVBoxLayout]:
     """Crea una card informativa con ombra e stile moderno."""
     card = QFrame()
     card_shadow = QGraphicsDropShadowEffect()
@@ -229,7 +233,7 @@ def create_info_card(title):
     return card, content_layout
 
 
-def create_field_row(label_text):
+def create_field_row(label_text: str) -> QWidget:
     """Crea una riga di campo con label e valore stilizzati."""
     container = QWidget()
     container.setStyleSheet("background-color: transparent;")
@@ -262,19 +266,6 @@ def create_field_row(label_text):
 
     layout.addWidget(label)
     layout.addWidget(value_label)
-
-    # Restituisce il container (widget da aggiungere al layout) e la label del valore (da aggiornare)
-    # Monkey-patching per compatibilità con il codice esistente che si aspetta 'value_label' come attributo?
-    # No, nel codice originale:
-    # widget = self._create_field_row(...)
-    # self.detail_labels["ID Risorsa"] = widget
-    # E poi in _update_detail:
-    # widget = self.detail_labels[...]
-    # value_lbl = widget.findChild(QLabel, "") ... no, come recuperava il valore?
-
-    # Devo controllare come _update_detail usa questi widget.
-    # Nel codice originale non ho letto _update_detail.
-    # Leggo un attimo per essere sicuro.
 
     # Assegno un objectName alla value_label per ritrovarla
     value_label.setObjectName("value_label")

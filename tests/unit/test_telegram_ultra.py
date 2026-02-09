@@ -12,6 +12,8 @@ class TestTelegramServiceUltraFixed:
 
     @pytest.mark.asyncio
     async def test_handle_text_input_states(self, service):
+        from src.core.telegram.handlers.messages import handle_text_input
+
         # Create a proper Update mock with effective_user
         mock_update = MagicMock()
         mock_user = MagicMock()
@@ -21,13 +23,15 @@ class TestTelegramServiceUltraFixed:
         mock_update.message.text = "123456/S"
         mock_update.message.reply_text = AsyncMock()
 
+        mock_context = MagicMock()
+
         # Bypass check_auth for simplicity or mock it
         with patch.object(service, "_check_auth", return_value=True):
             service.user_states[123] = "WAITING_PDL"
             mock_signal = MagicMock()
             service.data_received = mock_signal
 
-            await service._handle_text_input(mock_update, None)
+            await handle_text_input(service, mock_update, mock_context)
             mock_signal.emit.assert_called_with("pdl", ["123456/S"])
 
     @pytest.mark.asyncio

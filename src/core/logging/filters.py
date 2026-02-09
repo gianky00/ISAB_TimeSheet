@@ -3,7 +3,9 @@ Filtri per sicurezza e privacy.
 """
 
 import re
-from typing import Any, Dict, List, Pattern, Sequence, Tuple
+from collections.abc import Sequence
+from re import Pattern
+from typing import Any, ClassVar
 
 
 class SensitiveDataFilter:
@@ -19,12 +21,10 @@ class SensitiveDataFilter:
     - IBAN
     """
 
-    PATTERNS: List[Tuple[Pattern, str]] = [
+    PATTERNS: ClassVar[list[tuple[Pattern[str], str]]] = [
         # Password in vari formati
         (
-            re.compile(
-                r'(password|passwd|pwd)["\s:=]+["\']?[\w@#$%^&*!]+["\']?', re.IGNORECASE
-            ),
+            re.compile(r'(password|passwd|pwd)["\s:=]+["\']?[\w@#$%^&*!]+["\']?', re.IGNORECASE),
             r"\1=***MASKED***",
         ),
         # Token/API keys
@@ -62,7 +62,7 @@ class SensitiveDataFilter:
         ),
     ]
 
-    SENSITIVE_KEYS = {
+    SENSITIVE_KEYS: ClassVar[set[str]] = {
         "password",
         "passwd",
         "pwd",
@@ -88,8 +88,6 @@ class SensitiveDataFilter:
         Returns:
             Stringa con dati sensibili mascherati
         """
-        if not isinstance(text, str):
-            return text
 
         masked = text
         for pattern, replacement in cls.PATTERNS:
@@ -98,7 +96,7 @@ class SensitiveDataFilter:
         return masked
 
     @classmethod
-    def mask_dict(cls, data: Dict[str, Any]) -> Dict[str, Any]:
+    def mask_dict(cls, data: dict[str, Any]) -> dict[str, Any]:
         """
         Maschera dati sensibili in un dizionario (ricorsivo).
 
@@ -108,15 +106,11 @@ class SensitiveDataFilter:
         Returns:
             Nuovo dizionario con dati sensibili mascherati
         """
-        if not isinstance(data, dict):
-            return data
 
-        masked: Dict[str, Any] = {}
+        masked: dict[str, Any] = {}
         for key, value in data.items():
             # Se la chiave è sensibile, maschera il valore
-            if any(
-                sensitive_key in key.lower() for sensitive_key in cls.SENSITIVE_KEYS
-            ):
+            if any(sensitive_key in key.lower() for sensitive_key in cls.SENSITIVE_KEYS):
                 masked[key] = "***MASKED***"
             # Altrimenti processa il valore ricorsivamente
             elif isinstance(value, dict):
@@ -131,7 +125,7 @@ class SensitiveDataFilter:
         return masked
 
     @classmethod
-    def mask_list(cls, data: Sequence[Any]) -> List[Any]:
+    def mask_list(cls, data: Sequence[Any]) -> list[Any]:
         """
         Maschera dati sensibili in una lista (ricorsivo).
 
@@ -141,10 +135,8 @@ class SensitiveDataFilter:
         Returns:
             Nuova lista con dati sensibili mascherati
         """
-        if not isinstance(data, (list, tuple)):
-            return list(data) if isinstance(data, (list, tuple)) else [data]
 
-        masked: List[Any] = []
+        masked: list[Any] = []
         for item in data:
             if isinstance(item, dict):
                 masked.append(cls.mask_dict(item))
@@ -170,12 +162,11 @@ class SensitiveDataFilter:
         """
         if isinstance(data, str):
             return cls.mask_string(data)
-        elif isinstance(data, dict):
+        if isinstance(data, dict):
             return cls.mask_dict(data)
-        elif isinstance(data, (list, tuple)):
+        if isinstance(data, (list, tuple)):
             return cls.mask_list(data)
-        else:
-            return data
+        return data
 
 
 class SamplingFilter:

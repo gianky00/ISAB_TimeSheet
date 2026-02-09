@@ -5,7 +5,7 @@ Pannello per il bot Dettagli OdA.
 
 import traceback
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from PyQt6.QtCore import QDate, QTimer
 from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QVBoxLayout
@@ -48,9 +48,7 @@ class DettagliOdAPanel(BaseBotPanel):
         params_layout.setSpacing(10)
 
         # Widget atomico per i parametri
-        self.params_widget = BotParametersWidget(
-            show_date_range=True, show_dest_path=True
-        )
+        self.params_widget = BotParametersWidget(show_date_range=True, show_dest_path=True)
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
@@ -93,7 +91,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
     def _open_settings(self):
         main_window = self.window()
-        if hasattr(main_window, "show_settings"):
+        if main_window and hasattr(main_window, "show_settings"):
             main_window.show_settings()
 
     def refresh_fornitori(self):
@@ -123,14 +121,10 @@ class DettagliOdAPanel(BaseBotPanel):
         date_da, date_a = self.params_widget.get_dates()
 
         config_manager.set_config_value("last_oda_data", data)
-        config_manager.set_config_value(
-            "last_oda_fornitore", self.params_widget.get_fornitore()
-        )
+        config_manager.set_config_value("last_oda_fornitore", self.params_widget.get_fornitore())
         config_manager.set_config_value("last_oda_date_da", date_da)
         config_manager.set_config_value("last_oda_date_a", date_a)
-        config_manager.set_config_value(
-            "path_dettagli_oda", self.params_widget.get_dest_path()
-        )
+        config_manager.set_config_value("path_dettagli_oda", self.params_widget.get_dest_path())
 
     def _clear_table(self):
         if ConfirmationDialog.confirm(self, "Conferma", "Svuotare la tabella?"):
@@ -147,15 +141,13 @@ class DettagliOdAPanel(BaseBotPanel):
 
         return True, ""
 
-    def _on_start(self, params_override: Optional[Dict[str, Any]] = None):
+    def _on_start(self, params_override: dict[str, Any] | None = None):
         super()._on_start(params_override)
 
         username, password = self.get_credentials()
         fornitore = self.params_widget.get_fornitore()
         data_da, data_a = self.params_widget.get_dates()
-        download_path = self.params_widget.get_dest_path() or str(
-            Path.home() / "Downloads"
-        )
+        download_path = self.params_widget.get_dest_path() or str(Path.home() / "Downloads")
 
         rows = self.data_table.get_data()
 
@@ -171,9 +163,7 @@ class DettagliOdAPanel(BaseBotPanel):
                 item = params_override["single_item"]
                 if item:
                     rows = [item]
-                    self.log_widget.append(
-                        f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}"
-                    )
+                    self.log_widget.append(f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}")
 
         self.log_widget.append(f"[DEBUG] Rows retrieved: {len(rows)}")
 
@@ -236,6 +226,8 @@ class DettagliOdAPanel(BaseBotPanel):
 
         if success:
             win = self.window()
-            if win and hasattr(win, "storico_oda_panel"):
-                win.storico_oda_panel.refresh_data()
-                self._on_log("🔄 Aggiornamento Storico OdA avviato.")
+            if win:
+                storico_panel = getattr(win, "storico_oda_panel", None)
+                if storico_panel and hasattr(storico_panel, "refresh_data"):
+                    storico_panel.refresh_data()
+                    self._on_log("🔄 Aggiornamento Storico OdA avviato.")

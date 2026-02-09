@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
@@ -19,15 +20,15 @@ logger = logging.getLogger(__name__)
 class EmployeeDetailView(QWidget):
     """Pannello laterale per la visualizzazione dei dettagli del dipendente."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setFixedWidth(360)
         self.setStyleSheet("QWidget { background-color: #f8f9fa; }")
 
-        self.detail_labels = {}
+        self.detail_labels: dict[str, QLabel] = {}
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(8)
@@ -52,13 +53,9 @@ class EmployeeDetailView(QWidget):
         header_layout.setContentsMargins(18, 12, 18, 12)
 
         title_label = QLabel("📋 SCHEDA DIPENDENTE")
-        title_label.setStyleSheet(
-            "font-size: 20px; font-weight: bold; color: white; letter-spacing: 1px;"
-        )
+        title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: white; letter-spacing: 1px;")
         subtitle_label = QLabel("Dettagli anagrafica e accessi")
-        subtitle_label.setStyleSheet(
-            "font-size: 14px; color: rgba(255, 255, 255, 0.90); margin-top: 2px;"
-        )
+        subtitle_label.setStyleSheet("font-size: 14px; color: rgba(255, 255, 255, 0.90); margin-top: 2px;")
         header_layout.addWidget(title_label)
         header_layout.addWidget(subtitle_label)
         layout.addWidget(header_card)
@@ -124,9 +121,7 @@ class EmployeeDetailView(QWidget):
         )
         self.last_access_label = QLabel("-")
         self.last_access_label.setWordWrap(True)
-        self.last_access_label.setTextInteractionFlags(
-            Qt.TextInteractionFlag.TextSelectableByMouse
-        )
+        self.last_access_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.last_access_label.setStyleSheet(
             "font-size: 16px; font-weight: bold; color: #2c3e50; padding: 5px 0;"
         )
@@ -139,13 +134,14 @@ class EmployeeDetailView(QWidget):
         layout.addWidget(detail_content)
         layout.addStretch()
 
-    def _create_detail_field(self, label):
+    def _create_detail_field(self, label: str) -> QWidget:
         container = create_field_row(label)
         value_lbl = container.findChild(QLabel, "value_label")
-        self.detail_labels[label] = value_lbl
+        if value_lbl is not None:
+            self.detail_labels[label] = value_lbl
         return container
 
-    def update_data(self, data_dict, access_info=None):
+    def update_data(self, data_dict: dict[str, Any], access_info: tuple[str, int, str] | None = None) -> None:
         """
         Aggiorna i campi visualizzati.
         :param data_dict: Dizionario {NomeCampo: Valore}
@@ -167,7 +163,7 @@ class EmployeeDetailView(QWidget):
                 "color: #2c3e50; font-weight: bold; font-size: 14px; padding: 5px 0;"
             )
 
-    def reset(self):
+    def reset(self) -> None:
         """Resetta tutti i campi."""
         for widget in self.detail_labels.values():
             widget.setText("-")

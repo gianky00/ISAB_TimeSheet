@@ -70,7 +70,7 @@ class TestBackupManager:
         with zipfile.ZipFile(zip_path, "w") as z:
             z.writestr("restored.json", "{}")
 
-        success, msg = manager.restore_backup(str(zip_path))
+        success, _msg = manager.restore_backup(str(zip_path))
         assert success is True
         assert (tmp_path / "restored.json").exists()
 

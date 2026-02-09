@@ -42,9 +42,7 @@ class TestLyraClient:
         assert "embedding" not in models
 
     @patch("src.core.lyra_client.requests.post")
-    @patch(
-        "src.core.lyra_client.LyraClient._get_system_context", return_value="CONTEXT"
-    )
+    @patch("src.core.lyra_client.LyraClient._get_system_context", return_value="CONTEXT")
     def test_ask_success(self, mock_ctx, mock_post, client):
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = {

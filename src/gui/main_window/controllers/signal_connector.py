@@ -18,17 +18,12 @@ class SignalConnector(QObject):
 
         # Notification Badge on Sidebar
         # Accessing sidebar via tool_bar_component
-        if (
-            hasattr(self.main_window, "tool_bar_component")
-            and self.main_window.tool_bar_component.sidebar
-        ):
+        if hasattr(self.main_window, "tool_bar_component") and self.main_window.tool_bar_component.sidebar:
             sidebar = self.main_window.tool_bar_component.sidebar
             NotificationManager.instance().unread_count_changed.connect(
                 sidebar.group_notifiche.header_btn.set_badge
             )
-            sidebar.group_notifiche.header_btn.set_badge(
-                NotificationManager.instance().get_unread_count()
-            )
+            sidebar.group_notifiche.header_btn.set_badge(NotificationManager.instance().get_unread_count())
 
     def connect_sidebar_signals(self):
         """Connects sidebar navigation signals."""
@@ -40,13 +35,7 @@ class SignalConnector(QObject):
 
         sidebar = self.main_window.tool_bar_component.sidebar
 
-        sidebar.navigation_requested.connect(
-            self.main_window.navigation_controller.navigate_to
-        )
-        sidebar.automation_tab_requested.connect(
-            self.main_window._handle_automation_tab_change
-        )
-        sidebar.notifications_tab_requested.connect(
-            self.main_window._handle_notifications_tab_change
-        )
+        sidebar.navigation_requested.connect(self.main_window.navigation_controller.navigate_to)
+        sidebar.automation_tab_requested.connect(self.main_window._handle_automation_tab_change)
+        sidebar.notifications_tab_requested.connect(self.main_window._handle_notifications_tab_change)
         sidebar.palette_requested.connect(self.main_window._open_command_palette)

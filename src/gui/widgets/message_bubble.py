@@ -34,12 +34,12 @@ class MessageBubble(QFrame):
         parent: Widget parent opzionale
     """
 
-    def __init__(self, sender: str, text: str, is_lyra: bool = True, parent=None):
+    def __init__(self, sender: str, text: str, is_lyra: bool = True, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.is_lyra = is_lyra
         self._setup_ui(sender, text)
 
-    def _setup_ui(self, sender: str, text: str):
+    def _setup_ui(self, sender: str, text: str) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
@@ -72,9 +72,7 @@ class MessageBubble(QFrame):
             text_color = "#ffffff"
             sender_color = "#e9ecef"
             bubble.setStyleSheet(
-                f"background-color: {bg_color}; "
-                f"border-radius: 15px; "
-                f"border-bottom-right-radius: 2px;"
+                f"background-color: {bg_color}; border-radius: 15px; border-bottom-right-radius: 2px;"
             )
             container_layout.addStretch()
             container_layout.addWidget(bubble)
@@ -117,9 +115,7 @@ class MessageBubble(QFrame):
             html_text = html_text.replace("<table>", f"<table {style_table}>")
 
         lbl_msg.setText(
-            f"<div style='color: {text_color}; font-size: 14px; line-height: 1.4;'>"
-            f"{html_text}"
-            f"</div>"
+            f"<div style='color: {text_color}; font-size: 14px; line-height: 1.4;'>{html_text}</div>"
         )
         lbl_msg.setStyleSheet("background: transparent; border: none;")
         bubble_layout.addWidget(lbl_msg)

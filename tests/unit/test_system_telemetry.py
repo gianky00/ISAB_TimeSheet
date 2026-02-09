@@ -7,9 +7,7 @@ class TestSystemTelemetry:
     @patch("src.utils.system_telemetry.ctypes")
     @patch("src.utils.system_telemetry.sizeof")
     @patch("src.utils.system_telemetry.byref")
-    def test_get_current_process_ram_mb_success(
-        self, mock_byref, mock_sizeof, mock_ctypes
-    ):
+    def test_get_current_process_ram_mb_success(self, mock_byref, mock_sizeof, mock_ctypes):
         # Setup mocks
         mock_psapi = MagicMock()
         mock_kernel32 = MagicMock()
@@ -17,9 +15,7 @@ class TestSystemTelemetry:
         mock_ctypes.windll.kernel32 = mock_kernel32
 
         # Mocking the structure class
-        with patch(
-            "src.utils.system_telemetry.PROCESS_MEMORY_COUNTERS_EX"
-        ) as mock_struct_cls:
+        with patch("src.utils.system_telemetry.PROCESS_MEMORY_COUNTERS_EX") as mock_struct_cls:
             instance = mock_struct_cls.return_value
             # Use a PropertyMock for WorkingSetSize
             type(instance).WorkingSetSize = PropertyMock(return_value=100 * 1024 * 1024)

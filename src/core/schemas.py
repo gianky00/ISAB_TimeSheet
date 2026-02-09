@@ -1,5 +1,3 @@
-from typing import List
-
 import pandas as pd
 import pandera.pandas as pa
 from pandera.typing import Series
@@ -72,7 +70,7 @@ def get_excel_column_letter(n: int) -> str:
     return string
 
 
-def _group_ranges(numbers: List[int]) -> str:
+def _group_ranges(numbers: list[int]) -> str:
     """Raggruppa numeri consecutivi in range (es. 1, 2, 3, 5 -> 1-3, 5)."""
     if not numbers:
         return ""
@@ -82,7 +80,7 @@ def _group_ranges(numbers: List[int]) -> str:
     for i in range(1, len(numbers) + 1):
         if i == len(numbers) or numbers[i] != numbers[i - 1] + 1:
             end = numbers[i - 1]
-            ranges.append(f"{start}-{end}" if start != end else f"{start}")
+            ranges.append(f"{start}-{end}" if start != end else str(start))
             if i < len(numbers):
                 start = numbers[i]
     return ", ".join(ranges)

@@ -25,12 +25,8 @@ class TestNavigationControllerCoverage(unittest.TestCase):
         res = self.controller.get_panel(0)
         self.assertEqual(res, mock_widget)
 
-    @patch(
-        "src.gui.controllers.navigation_controller.NavigationController._create_panel_by_index"
-    )
-    @patch(
-        "src.gui.controllers.navigation_controller.NavigationController._initialize_new_panel"
-    )
+    @patch("src.gui.controllers.navigation_controller.NavigationController._create_panel_by_index")
+    @patch("src.gui.controllers.navigation_controller.NavigationController._initialize_new_panel")
     def test_get_panel_lazy_loading(self, mock_init, mock_create):
         self.mock_mw._panel_initialized_0 = False
         new_widget = MagicMock()

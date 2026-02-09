@@ -5,7 +5,6 @@ Gestisce la validazione della licenza software.
 
 import hashlib
 import json
-import os
 import platform
 import shutil
 import subprocess
@@ -15,7 +14,7 @@ from contextlib import suppress
 from datetime import date
 from enum import Enum
 from pathlib import Path
-from typing import Tuple
+from typing import Any
 
 from cryptography.fernet import Fernet
 
@@ -36,7 +35,7 @@ class LicenseStatus(Enum):
 def _calculate_sha256(filepath):
     """Calcola l'hash SHA256 di un file."""
     sha256_hash = hashlib.sha256()
-    with open(filepath, "rb") as f:
+    with Path(filepath).open("rb") as f:
         for byte_block in iter(lambda: f.read(4096), b""):
             sha256_hash.update(byte_block)
     return sha256_hash.hexdigest()
@@ -48,7 +47,7 @@ def get_hardware_id():
     """
     if platform.system() == "Windows":
         return _get_windows_hardware_id()
-    elif platform.system() == "Linux":
+    if platform.system() == "Linux":
         return _get_linux_hardware_id()
 
     # Fallback universale: UUID basato su MAC address
@@ -81,13 +80,10 @@ def _get_windows_hardware_id():
             "powershell",
             "-NoProfile",
             "-Command",
-            "Get-CimInstance -Class Win32_DiskDrive | "
-            "Select-Object -ExpandProperty SerialNumber",
+            "Get-CimInstance -Class Win32_DiskDrive | Select-Object -ExpandProperty SerialNumber",
         ]
         output = (
-            subprocess.check_output(
-                cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW
-            )
+            subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW)
             .decode()
             .strip()
         )
@@ -101,13 +97,10 @@ def _get_windows_hardware_id():
             "powershell",
             "-NoProfile",
             "-Command",
-            "Get-CimInstance -Class Win32_ComputerSystemProduct | "
-            "Select-Object -ExpandProperty UUID",
+            "Get-CimInstance -Class Win32_ComputerSystemProduct | Select-Object -ExpandProperty UUID",
         ]
         output = (
-            subprocess.check_output(
-                cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW
-            )
+            subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW)
             .decode()
             .strip()
         )
@@ -123,11 +116,7 @@ def _get_linux_hardware_id():
     with suppress(Exception):
         # Avoid complex pipes with shell=True, execute basic lsblk and parse in python
         cmd = ["lsblk", "--nodeps", "-o", "serial", "-n"]
-        output = (
-            subprocess.check_output(cmd, shell=False, stderr=subprocess.DEVNULL)
-            .decode()
-            .strip()
-        )
+        output = subprocess.check_output(cmd, shell=False, stderr=subprocess.DEVNULL).decode().strip()
 
         # Take the first line if multiple disks
         first_line = output.split("\n")[0].strip()
@@ -143,7 +132,7 @@ def _get_linux_hardware_id():
     return None
 
 
-def _get_license_paths():
+def _get_license_paths() -> dict[str, Path]:
     """Restituisce i percorsi dei file di licenza."""
     from src.core import config_manager
 
@@ -159,7 +148,7 @@ def _get_license_paths():
     }
 
 
-def _check_and_migrate_local_license(target_paths: dict):
+def _check_and_migrate_local_license(target_paths: dict[str, Any]):
     """
     Check if license files exist in the application directory (e.g. where .exe is).
     If found, copy them to the standard AppData location.
@@ -167,11 +156,10 @@ def _check_and_migrate_local_license(target_paths: dict):
     """
     # Determine app root
     if getattr(sys, "frozen", False):
-        app_dir = Path(os.path.dirname(sys.executable))
+        app_dir = Path(sys.executable).parent
     else:
         # In dev mode, look in project root (2 levels up from src/core)
-        current_dir = Path(__file__).parent
-        app_dir = (current_dir / ".." / "..").resolve()
+        app_dir = Path(__file__).parent.parent.parent.resolve()
 
     # Potential locations in app dir: ./Licenza/ or ./
     potential_dirs = [
@@ -274,11 +262,10 @@ def get_detailed_license_status():
     return validation_status, validation_msg
 
 
-def _check_integrity_with_manifest(paths: dict) -> Tuple[LicenseStatus, str]:
+def _check_integrity_with_manifest(paths: dict[str, Any]) -> tuple[LicenseStatus, str]:
     """Helper to check license file integrity using manifest."""
     try:
-        with open(paths["manifest"], "r") as f:
-            manifest = json.load(f)
+        manifest = json.loads(Path(paths["manifest"]).read_text(encoding="utf-8"))
 
         # Verifica hash config.dat
         if _calculate_sha256(paths["config"]) != manifest.get("config.dat"):
@@ -297,7 +284,7 @@ def _check_integrity_with_manifest(paths: dict) -> Tuple[LicenseStatus, str]:
     return LicenseStatus.VALID, ""
 
 
-def _validate_license_data(paths: dict) -> Tuple[LicenseStatus, str]:
+def _validate_license_data(paths: dict[str, Any]) -> tuple[LicenseStatus, str]:
     """Helper to decrypt and validate license data."""
     try:
         payload = get_license_info()

@@ -3,8 +3,8 @@ from .event_card import AutopilotEventCard
 from .main_widget import AutopilotWidget
 
 __all__ = [
-    "AutopilotWidget",
-    "AutopilotEventCard",
     "AutopilotConfigCard",
     "AutopilotConfigCardWithInterval",
+    "AutopilotEventCard",
+    "AutopilotWidget",
 ]

@@ -127,7 +127,7 @@ class TestSprintAAuditBackup:
     def test_restore_error_handling(self, tmp_path):
         """Verifica che il ripristino fallisca correttamente con file invalidi."""
         # Caso 1: File inesistente
-        s1, m1 = BackupManager.restore_backup("missing.zip")
+        s1, _m1 = BackupManager.restore_backup("missing.zip")
         assert s1 is False
 
         # Caso 2: File non ZIP

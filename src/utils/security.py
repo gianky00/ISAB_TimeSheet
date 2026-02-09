@@ -27,14 +27,14 @@ class PasswordManager:
     _KEY_FILE = _KEY_DIR / "secret.key"
     _SALT_FILE = _KEY_DIR / "encryption.salt"
 
-    def __new__(cls):
+    def __new__(cls) -> "PasswordManager":
         """Pattern Singleton per il gestore delle password."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialize()
         return cls._instance
 
-    def _initialize(self):
+    def _initialize(self) -> None:
         """Inizializza chiave e cipher."""
         self._KEY_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -65,8 +65,7 @@ class PasswordManager:
         kdf = Scrypt(
             salt=salt,
             length=32,
-            n=2
-            ** 14,  # Ridotto per performance su macchine lente, aumentare a 2**17 se possibile
+            n=2**14,  # Ridotto per performance su macchine lente, aumentare a 2**17 se possibile
             r=8,
             p=1,
         )

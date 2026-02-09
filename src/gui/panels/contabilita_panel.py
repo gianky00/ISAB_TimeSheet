@@ -3,8 +3,9 @@ Bot TS - Contabilita Panel
 Pannello per la visualizzazione della Contabilità Strumentale.
 """
 
-import os
+from contextlib import suppress
 from datetime import datetime
+from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -36,9 +37,9 @@ class ContabilitaPanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.worker = None
-        self.status_labels = []
-        self.update_buttons = []
+        self.worker: ContabilitaWorker | None = None
+        self.status_labels: list[QLabel] = []
+        self.update_buttons: list[ModernButton] = []
         self._last_status_html = "Pronto"
         self._setup_ui()
         # Defer heavy loading
@@ -71,13 +72,9 @@ class ContabilitaPanel(QWidget):
 
         # Totali Selezione
         self.selection_count_label = QLabel("Righe: 0")
-        self.selection_count_label.setStyleSheet(
-            "color: #607D8B; font-weight: 600; font-size: 12px;"
-        )
+        self.selection_count_label.setStyleSheet("color: #607D8B; font-weight: 600; font-size: 12px;")
         self.selection_sum_label = QLabel("Totale ORE: 0")
-        self.selection_sum_label.setStyleSheet(
-            "color: #009688; font-weight: 700; font-size: 12px;"
-        )
+        self.selection_sum_label.setStyleSheet("color: #009688; font-weight: 700; font-size: 12px;")
 
         # Search Input
         self.search_input = QLineEdit()
@@ -170,7 +167,7 @@ class ContabilitaPanel(QWidget):
         if isinstance(current_widget, QTabWidget):
             current_widget = current_widget.currentWidget()
 
-        if hasattr(current_widget, "filter_data"):
+        if current_widget and hasattr(current_widget, "filter_data"):
             current_widget.filter_data(text)
 
     def _proxy_filter(self, widget, text):
@@ -202,11 +199,6 @@ class ContabilitaPanel(QWidget):
 
     def _on_main_tab_changed(self, index):
         """Gestisce il cambio del tab principale."""
-        # Pulisci ricerca al cambio tab per evitare confusione
-        self.search_input.blockSignals(True)
-        self.search_input.clear()
-        self.search_input.blockSignals(False)
-
         if "Analisi KPI" in self.main_tabs.tabText(index):
             self.selection_count_label.hide()
             self.selection_sum_label.hide()
@@ -216,6 +208,11 @@ class ContabilitaPanel(QWidget):
             self.selection_sum_label.show()
             self.search_input.show()
             self._connect_selection_signal()
+
+            # Applica il filtro corrente al nuovo tab (se presente)
+            current_text = self.search_input.text()
+            if current_text:
+                self._on_search_changed(current_text)
 
         # Refocus ricerca
         if self.search_input.isVisible():
@@ -274,6 +271,7 @@ class ContabilitaPanel(QWidget):
             else:
                 # Nuovo anno, aggiungi tab
                 tab_widget.addTab(tab_class(year), str(year))
+        return None
 
     def set_search_query(self, query):
         """Imposta il testo di ricerca nel tab corrente."""
@@ -303,45 +301,36 @@ class ContabilitaPanel(QWidget):
 
         if target:
             if hasattr(target, "table"):
-                try:
-                    target.table.selectionModel().selectionChanged.disconnect()
-                except Exception:
-                    pass
-                target.table.selectionModel().selectionChanged.connect(
-                    lambda s, d: self._update_selection_total(target.table)
-                )
+                if model := target.table.selectionModel():
+                    with suppress(Exception):
+                        model.selectionChanged.disconnect()
+                    model.selectionChanged.connect(lambda s, d: self._update_selection_total(target.table))
             elif hasattr(target, "tree"):
-                try:
+                with suppress(Exception):
                     target.tree.itemSelectionChanged.disconnect()
-                except Exception:
-                    pass
-                target.tree.itemSelectionChanged.connect(
-                    lambda: self._update_selection_total(target.tree)
-                )
+                target.tree.itemSelectionChanged.connect(lambda: self._update_selection_total(target.tree))
 
     def _update_selection_total(self, widget):
         """Calcola e visualizza i totali per le righe selezionate (Table o Tree)."""
-        try:
+        with suppress(Exception):
             if isinstance(widget, QTreeWidget):
                 self._handle_tree_selection(widget)
                 return
 
-            indexes = widget.selectionModel().selectedIndexes()
+            if not (model := widget.selectionModel()):
+                return
+            indexes = model.selectedIndexes()
             if not indexes:
                 self.selection_count_label.setText("Righe: 0")
                 self.selection_sum_label.setText("Totale ORE: 0")
                 return
 
             target_col = self._find_ore_column(widget)
-            selected_rows, total_ore = self._calculate_selection_stats(
-                widget, indexes, target_col
-            )
+            selected_rows, total_ore = self._calculate_selection_stats(widget, indexes, target_col)
 
             fmt_ore = self._format_ore_display(total_ore)
             self.selection_count_label.setText(f"Righe: {len(selected_rows)}")
             self.selection_sum_label.setText(f"Totale ORE: {fmt_ore}")
-        except Exception:
-            pass
 
     def _handle_tree_selection(self, tree: QTreeWidget):
         self.selection_count_label.setText(f"Selezionati: {len(tree.selectedItems())}")
@@ -354,15 +343,11 @@ class ContabilitaPanel(QWidget):
                 return c
         return -1
 
-    def _calculate_selection_stats(
-        self, widget, indexes, target_col
-    ) -> tuple[set[int], float]:
+    def _calculate_selection_stats(self, widget, indexes, target_col) -> tuple[set[int], float]:
         selected_rows, total_ore = set(), 0.0
         for idx in indexes:
             row = idx.row()
-            if widget.isRowHidden(row) or (
-                widget.item(row, 0) and widget.item(row, 0).text() == "TOTALI"
-            ):
+            if widget.isRowHidden(row) or (widget.item(row, 0) and widget.item(row, 0).text() == "TOTALI"):
                 continue
             selected_rows.add(row)
 
@@ -370,14 +355,10 @@ class ContabilitaPanel(QWidget):
             for row in selected_rows:
                 it = widget.item(row, target_col)
                 if it:
-                    try:
-                        clean = (
-                            str(it.text()).replace(".", "").replace(",", ".").strip()
-                        )
+                    with suppress(Exception):
+                        clean = str(it.text()).replace(".", "").replace(",", ".").strip()
                         if clean:
                             total_ore += float(clean)
-                    except Exception:
-                        pass
         return selected_rows, total_ore
 
     def _format_ore_display(self, total: float) -> str:
@@ -388,7 +369,7 @@ class ContabilitaPanel(QWidget):
     def start_import_process(self):
         config = config_manager.load_config()
         path = config.get("contabilita_file_path", "")
-        if not path or not os.path.exists(path):
+        if not path or not Path(path).exists():
             self.status_lbl.setText("File non trovato.")
             return
 

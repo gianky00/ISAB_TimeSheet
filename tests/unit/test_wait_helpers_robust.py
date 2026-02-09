@@ -18,9 +18,7 @@ class TestWaitHelpersRobust:
         mock_driver = MagicMock()
         with patch("src.bots.base.wait_helpers.WebDriverWait") as mock_wait:
             mock_wait.return_value.until.return_value = True
-            res = wait_helpers.wait_for_overlay_to_disappear(
-                mock_driver, (By.ID, "overlay")
-            )
+            res = wait_helpers.wait_for_overlay_to_disappear(mock_driver, (By.ID, "overlay"))
             assert res is True
 
     def test_wait_for_overlay_timeout(self):
@@ -28,9 +26,7 @@ class TestWaitHelpersRobust:
         mock_driver = MagicMock()
         with patch("src.bots.base.wait_helpers.WebDriverWait") as mock_wait:
             mock_wait.return_value.until.side_effect = TimeoutException()
-            res = wait_helpers.wait_for_overlay_to_disappear(
-                mock_driver, (By.ID, "overlay")
-            )
+            res = wait_helpers.wait_for_overlay_to_disappear(mock_driver, (By.ID, "overlay"))
             assert res is False
 
     def test_wait_for_element_staleness(self):
@@ -39,9 +35,7 @@ class TestWaitHelpersRobust:
         mock_driver = MagicMock()
         with patch("src.bots.base.wait_helpers.WebDriverWait") as mock_wait:
             mock_wait.return_value.until.return_value = True
-            assert (
-                wait_helpers.wait_for_element_staleness(mock_driver, mock_elem) is True
-            )
+            assert wait_helpers.wait_for_element_staleness(mock_driver, mock_elem) is True
 
     def test_wait_for_element_clickable(self):
         """Test elemento cliccabile."""
@@ -77,9 +71,7 @@ class TestWaitHelpersRobust:
         mock_glob.side_effect = glob_side_effect
 
         # Poll
-        found = wait_helpers.poll_for_file(
-            directory=tmp_path, pattern="*.xlsx", timeout=1, poll_interval=0.1
-        )
+        found = wait_helpers.poll_for_file(directory=tmp_path, pattern="*.xlsx", timeout=1, poll_interval=0.1)
         assert found == expected_path
 
     @patch("src.bots.base.wait_helpers.Path.glob")
@@ -235,9 +227,7 @@ class TestWaitHelpersRobust:
             "src.bots.base.wait_helpers.wait_for_element_clickable",
             return_value=mock_elem,
         ):
-            res = wait_helpers.safe_click_with_retry(
-                mock_driver, (By.ID, "btn"), retry_delay=0.01
-            )
+            res = wait_helpers.safe_click_with_retry(mock_driver, (By.ID, "btn"), retry_delay=0.01)
 
             assert res is True
             assert mock_elem.click.call_count == 2

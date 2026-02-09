@@ -17,9 +17,7 @@ class TestContabilitaQueries:
         # Create table 'contabilita' using actual mapping values
         cols = list(ExcelImporter.COLUMNS_MAPPING.values())
         # Add 'id' and 'year' which are always present in DB
-        schema = "id INTEGER PRIMARY KEY, year INTEGER, " + ", ".join(
-            [f"{c} TEXT" for c in cols]
-        )
+        schema = "id INTEGER PRIMARY KEY, year INTEGER, " + ", ".join([f"{c} TEXT" for c in cols])
         cursor.execute(f"CREATE TABLE contabilita ({schema})")
 
         # Create table 'giornaliere'
@@ -36,9 +34,7 @@ class TestContabilitaQueries:
             "ore",
             "nome_file",
         ]
-        g_schema = "id INTEGER PRIMARY KEY, year INTEGER, " + ", ".join(
-            [f"{c} TEXT" for c in g_cols]
-        )
+        g_schema = "id INTEGER PRIMARY KEY, year INTEGER, " + ", ".join([f"{c} TEXT" for c in g_cols])
         cursor.execute(f"CREATE TABLE giornaliere ({g_schema})")
 
         # Other tables
@@ -64,9 +60,7 @@ class TestContabilitaQueries:
             "avviso",
             "styles",
         ]
-        schema_ap = "id INTEGER PRIMARY KEY, " + ", ".join(
-            [f"{c} TEXT" for c in ap_cols]
-        )
+        schema_ap = "id INTEGER PRIMARY KEY, " + ", ".join([f"{c} TEXT" for c in ap_cols])
         cursor.execute(f"CREATE TABLE attivita_programmate ({schema_ap})")
 
         # Certificati Campione: modello, costruttore, matricola, range_strumento, errore_max, certificato, scadenza, emissione, id_coemi, stato
@@ -82,9 +76,7 @@ class TestContabilitaQueries:
             "id_coemi",
             "stato",
         ]
-        schema_cc = "id INTEGER PRIMARY KEY, " + ", ".join(
-            [f"{c} TEXT" for c in cc_cols]
-        )
+        schema_cc = "id INTEGER PRIMARY KEY, " + ", ".join([f"{c} TEXT" for c in cc_cols])
         cursor.execute(f"CREATE TABLE certificati_campione ({schema_cc})")
 
         # Scarico Ore: data, pers1, pers2, odc, pos, dalle, alle, totale_ore, descrizione, finito, commessa, styles
@@ -102,19 +94,13 @@ class TestContabilitaQueries:
             "commessa",
             "styles",
         ]
-        schema_so = "id INTEGER PRIMARY KEY, " + ", ".join(
-            [f"{c} TEXT" for c in so_cols]
-        )
+        schema_so = "id INTEGER PRIMARY KEY, " + ", ".join([f"{c} TEXT" for c in so_cols])
         cursor.execute(f"CREATE TABLE scarico_ore ({schema_so})")
 
         # Insert sample data
         # Index of 'n_prev' in cols is 2 (Data, Mese, N Prev)
-        cursor.execute(
-            "INSERT INTO contabilita (year, n_prev) VALUES (2024, 'P1'), (2023, 'P2')"
-        )
-        cursor.execute(
-            "INSERT INTO giornaliere (year, n_prev) VALUES (2024, 'P1'), (2022, 'P3')"
-        )
+        cursor.execute("INSERT INTO contabilita (year, n_prev) VALUES (2024, 'P1'), (2023, 'P2')")
+        cursor.execute("INSERT INTO giornaliere (year, n_prev) VALUES (2024, 'P1'), (2022, 'P3')")
 
         # Insert sample data for other tables
         cursor.execute(
@@ -123,9 +109,7 @@ class TestContabilitaQueries:
         cursor.execute(
             "INSERT INTO certificati_campione (modello, scadenza) VALUES ('Modello1', '01/01/2024')"
         )
-        cursor.execute(
-            "INSERT INTO scarico_ore (data, styles) VALUES ('2024-01-01', 'style2')"
-        )
+        cursor.execute("INSERT INTO scarico_ore (data, styles) VALUES ('2024-01-01', 'style2')")
 
         conn.commit()
         conn.close()

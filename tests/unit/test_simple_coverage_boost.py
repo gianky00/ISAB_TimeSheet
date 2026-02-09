@@ -24,7 +24,7 @@ class TestDesignSystem:
 class TestLogHumanizer:
     def test_humanize_categories(self):
         # Start
-        h, t, c = SmartLogTranslator.humanize("Avvio bot")
+        h, _, c = SmartLogTranslator.humanize("Avvio bot")
         assert c == "start"
         assert h in SmartLogTranslator.TEMPLATES["start"]
 
@@ -45,7 +45,7 @@ class TestLogHumanizer:
         assert c == "success"
 
         # Error
-        h, t, c = SmartLogTranslator.humanize("Errore fatale")
+        h, _t, c = SmartLogTranslator.humanize("Errore fatale")
         assert c == "error"
 
         # Wait
@@ -53,7 +53,7 @@ class TestLogHumanizer:
         assert c == "wait"
 
     def test_fixit_tag_injection(self):
-        h, t, c = SmartLogTranslator.humanize("login fallito per credenziali errate")
+        _h, t, _c = SmartLogTranslator.humanize("login fallito per credenziali errate")
         assert "[FIXIT:ACCOUNT]" in t
 
 
@@ -69,7 +69,4 @@ class TestFastTableModelExtended:
         assert model.data(model.index(0, 0), role=Qt.ItemDataRole.ToolTipRole) is None
 
         # Vertical header
-        assert (
-            model.headerData(0, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole)
-            is None
-        )
+        assert model.headerData(0, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole) is None

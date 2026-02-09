@@ -35,51 +35,51 @@ from .sinks import get_aggregated_sink, get_bot_sink, get_metrics_sink
 from .viewer import LogViewer, health_report, query_logs, view_trace
 
 __all__ = [
-    # Core
-    "get_logger",
-    "configure_logging",
-    "set_level",
-    # Context
-    "with_context",
-    "LoggingContext",
-    "generate_trace_id",
-    "generate_span_id",
-    "get_context",
-    "get_current_trace_id",
-    "get_current_span_id",
-    "set_audit_id",
-    "get_current_audit_id",
-    # Decorators
-    "measure_time",
-    "log_entry_exit",
-    # Metrics
-    "get_tracker",
-    "PerformanceTracker",
-    # Sampling
-    "get_sampler",
-    "ContextAwareSampler",
-    # Viewer
-    "LogViewer",
-    "query_logs",
-    "view_trace",
-    "health_report",
-    # Sinks
-    "get_bot_sink",
-    "get_metrics_sink",
-    "get_aggregated_sink",
-    # Analytics
-    "AnomalyDetector",
-    "PatternDetector",
-    "HealthScorer",
-    "Anomaly",
-    "Pattern",
-    "AnalyticsReport",
-    "generate_analytics_report",
-    "get_health_score",
-    "get_anomalies",
-    "get_patterns",
+    "AlertConfig",
     # Alerts
     "AlertManager",
-    "AlertConfig",
+    "AnalyticsReport",
+    "Anomaly",
+    # Analytics
+    "AnomalyDetector",
+    "ContextAwareSampler",
+    "HealthScorer",
+    # Viewer
+    "LogViewer",
+    "LoggingContext",
+    "Pattern",
+    "PatternDetector",
+    "PerformanceTracker",
+    "configure_logging",
+    "generate_analytics_report",
+    "generate_span_id",
+    "generate_trace_id",
+    "get_aggregated_sink",
     "get_alert_manager",
+    "get_anomalies",
+    # Sinks
+    "get_bot_sink",
+    "get_context",
+    "get_current_audit_id",
+    "get_current_span_id",
+    "get_current_trace_id",
+    "get_health_score",
+    # Core
+    "get_logger",
+    "get_metrics_sink",
+    "get_patterns",
+    # Sampling
+    "get_sampler",
+    # Metrics
+    "get_tracker",
+    "health_report",
+    "log_entry_exit",
+    # Decorators
+    "measure_time",
+    "query_logs",
+    "set_audit_id",
+    "set_level",
+    "view_trace",
+    # Context
+    "with_context",
 ]

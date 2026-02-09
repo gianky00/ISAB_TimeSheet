@@ -42,9 +42,7 @@ class TestNotificationManager:
         assert manager.get_unread_count() == 2
 
         # Mark one as read
-        manager.mark_as_read(
-            manager.notifications[0]["id"]
-        )  # notifications[0] is most recent (T3)
+        manager.mark_as_read(manager.notifications[0]["id"])  # notifications[0] is most recent (T3)
         assert manager.get_unread_count() == 1
 
     def test_mark_all_as_read(self, manager):

@@ -3,7 +3,7 @@ SyncroJob - Calendar Widgets
 QDateEdit personalizzato con popup calendario.
 """
 
-from PyQt6.QtWidgets import QCalendarWidget, QDateEdit
+from PyQt6.QtWidgets import QCalendarWidget, QDateEdit, QWidget
 
 from src.core.constants import Icons
 from src.utils.helpers import get_asset_path
@@ -12,7 +12,7 @@ from src.utils.helpers import get_asset_path
 class CalendarDateEdit(QDateEdit):
     """QDateEdit con popup calendario e stile personalizzato."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setCalendarPopup(True)
         self.setDisplayFormat("dd.MM.yyyy")
@@ -20,16 +20,13 @@ class CalendarDateEdit(QDateEdit):
 
         # Configura il widget calendario interno per evitare i "..."
         calendar = self.calendarWidget()
-        calendar.setMinimumWidth(450)  # Ancora più largo
-        calendar.setHorizontalHeaderFormat(
-            QCalendarWidget.HorizontalHeaderFormat.ShortDayNames
-        )
-        calendar.setVerticalHeaderFormat(
-            QCalendarWidget.VerticalHeaderFormat.NoVerticalHeader
-        )
+        if calendar:
+            calendar.setMinimumWidth(450)  # Ancora più largo
+            calendar.setHorizontalHeaderFormat(QCalendarWidget.HorizontalHeaderFormat.ShortDayNames)
+            calendar.setVerticalHeaderFormat(QCalendarWidget.VerticalHeaderFormat.NoVerticalHeader)
 
-        calendar.setStyleSheet(
-            """
+            calendar.setStyleSheet(
+                """
             QCalendarWidget QWidget {
                 alternate-background-color: #f8f9fa;
                 color: black;
@@ -72,7 +69,7 @@ class CalendarDateEdit(QDateEdit):
                 selection-color: white;
             }
             """
-        )
+            )
 
         icon_path = get_asset_path(Icons.CALENDAR).replace("\\", "/")
 

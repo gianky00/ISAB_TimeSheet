@@ -4,7 +4,8 @@ Main logger implementation con multi-sink support.
 
 import inspect
 import sys
-from typing import Any, Dict, Optional
+from contextlib import suppress
+from typing import Any
 
 from .config import get_config
 from .context import get_context
@@ -13,7 +14,7 @@ from .sampling import get_sampler
 from .sinks import get_bot_sink
 
 # Registry di logger
-_loggers: Dict[str, "StructuredLogger"] = {}
+_loggers: dict[str, "StructuredLogger"] = {}
 _initialized = False
 
 
@@ -30,7 +31,7 @@ class StructuredLogger:
     - PII masking
     """
 
-    def __init__(self, name: str, config=None):
+    def __init__(self, name: str, config: Any = None) -> None:
         """
         Inizializza logger.
 
@@ -55,23 +56,22 @@ class StructuredLogger:
 
     def _parse_level(self, level_str: str) -> int:
         """Converte stringa livello a valore numerico."""
-        levels = {
+        return {
             "DEBUG": 10,
             "INFO": 20,
             "WARNING": 30,
             "ERROR": 40,
             "CRITICAL": 50,
-        }
-        return levels.get(level_str.upper(), 20)
+        }.get(level_str.upper(), 20)
 
-    def _get_source_info(self) -> Dict[str, Any]:
+    def _get_source_info(self) -> dict[str, Any]:
         """
         Estrae informazioni sulla sorgente del log (file, funzione, linea).
 
         Returns:
             Dict con file, function, line
         """
-        try:
+        with suppress(Exception):
             # Risali nello stack per trovare il caller reale
             # (salta frames interni del logger)
             frame = inspect.currentframe()
@@ -92,8 +92,6 @@ class StructuredLogger:
                     "function": caller_frame.f_code.co_name,
                     "line": caller_frame.f_lineno,
                 }
-        except Exception:
-            pass
 
         return {}
 
@@ -106,9 +104,9 @@ class StructuredLogger:
         self,
         level: str,
         message: str,
-        extra: Optional[Dict[str, Any]] = None,
-        exception: Optional[Exception] = None,
-    ):
+        extra: dict[str, Any] | None = None,
+        exception: Exception | None = None,
+    ) -> None:
         """
         Scrive log in tutti i sink configurati.
 
@@ -142,11 +140,9 @@ class StructuredLogger:
 
         # JSON file output
         if self.config.json_log_file:
-            json_line = self.json_formatter.format(
-                level, self.name, message, extra, exception, source_info
-            )
+            json_line = self.json_formatter.format(level, self.name, message, extra, exception, source_info)
             try:
-                with open(self.config.json_log_file, "a", encoding="utf-8") as f:
+                with self.config.json_log_file.open("a", encoding="utf-8") as f:
                     f.write(json_line + "\n")
             except Exception as e:
                 print(f"[LOGGER ERROR] Failed to write JSON log: {e}", file=sys.stderr)
@@ -155,11 +151,9 @@ class StructuredLogger:
         if self.config.human_log_file:
             # Usa formatter senza colori per file
             file_formatter = HumanFormatter(colorize=False, show_context=True)
-            human_line = file_formatter.format(
-                level, self.name, message, extra, exception, source_info
-            )
+            human_line = file_formatter.format(level, self.name, message, extra, exception, source_info)
             try:
-                with open(self.config.human_log_file, "a", encoding="utf-8") as f:
+                with self.config.human_log_file.open("a", encoding="utf-8") as f:
                     f.write(human_line + "\n")
 
                     # Stack trace separato
@@ -172,32 +166,26 @@ class StructuredLogger:
 
         # Errors file (solo ERROR e CRITICAL)
         if level in ("ERROR", "CRITICAL") and self.config.errors_log_file:
-            json_line = self.json_formatter.format(
-                level, self.name, message, extra, exception, source_info
-            )
+            json_line = self.json_formatter.format(level, self.name, message, extra, exception, source_info)
             try:
-                with open(self.config.errors_log_file, "a", encoding="utf-8") as f:
+                with self.config.errors_log_file.open("a", encoding="utf-8") as f:
                     f.write(json_line + "\n")
             except Exception as e:
-                print(
-                    f"[LOGGER ERROR] Failed to write errors log: {e}", file=sys.stderr
-                )
+                print(f"[LOGGER ERROR] Failed to write errors log: {e}", file=sys.stderr)
 
         # Bot-specific log file (se ha trace_id e bot_type)
         context = get_context().to_dict()
         if context.get("trace_id") and context.get("bot_type"):
             bot_sink = get_bot_sink()
-            bot_sink.write(
-                level, self.name, message, context, extra, exception, source_info
-            )
+            bot_sink.write(level, self.name, message, context, extra, exception, source_info)
 
     def log(
         self,
         level: str,
         message: str,
-        extra: Optional[Dict[str, Any]] = None,
-        exception: Optional[Exception] = None,
-    ):
+        extra: dict[str, Any] | None = None,
+        exception: Exception | None = None,
+    ) -> None:
         """
         Log generico.
 
@@ -212,27 +200,27 @@ class StructuredLogger:
 
         self._write_to_sinks(level, message, extra, exception)
 
-    def debug(self, message: str, **extra):
+    def debug(self, message: str, **extra: Any) -> None:
         """Log a livello DEBUG."""
-        self.log("DEBUG", message, extra=extra if extra else None)
+        self.log("DEBUG", message, extra=extra or None)
 
-    def info(self, message: str, **extra):
+    def info(self, message: str, **extra: Any) -> None:
         """Log a livello INFO."""
-        self.log("INFO", message, extra=extra if extra else None)
+        self.log("INFO", message, extra=extra or None)
 
-    def warning(self, message: str, **extra):
+    def warning(self, message: str, **extra: Any) -> None:
         """Log a livello WARNING."""
-        self.log("WARNING", message, extra=extra if extra else None)
+        self.log("WARNING", message, extra=extra or None)
 
-    def error(self, message: str, **extra):
+    def error(self, message: str, **extra: Any) -> None:
         """Log a livello ERROR."""
-        self.log("ERROR", message, extra=extra if extra else None)
+        self.log("ERROR", message, extra=extra or None)
 
-    def critical(self, message: str, **extra):
+    def critical(self, message: str, **extra: Any) -> None:
         """Log a livello CRITICAL."""
-        self.log("CRITICAL", message, extra=extra if extra else None)
+        self.log("CRITICAL", message, extra=extra or None)
 
-    def exception(self, message: str, exc: Exception, **extra):
+    def exception(self, message: str, exc: Exception, **extra: Any) -> None:
         """
         Log exception con stack trace completo.
 
@@ -241,10 +229,10 @@ class StructuredLogger:
             exc: Eccezione da loggare
             **extra: Dati extra
         """
-        self.log("ERROR", message, extra=extra if extra else None, exception=exc)
+        self.log("ERROR", message, extra=extra or None, exception=exc)
 
 
-def configure_logging(config=None):
+def configure_logging(config: Any = None) -> None:
     """
     Configura il sistema di logging globale.
 
@@ -266,14 +254,10 @@ def configure_logging(config=None):
     # Assicurati che le directory esistano
     cfg.ensure_directories()
 
-    # Disabilita logging standard di Python per evitare duplicati
-    # (opzionale, se vuoi continuare a usare logging standard)
-    # logging.basicConfig(level=logging.WARNING)
-
     _initialized = True
 
 
-def get_logger(name: str, config=None) -> StructuredLogger:
+def get_logger(name: str, config: Any = None) -> StructuredLogger:
     """
     Factory per ottenere logger.
 
@@ -299,7 +283,7 @@ def get_logger(name: str, config=None) -> StructuredLogger:
     return _loggers[name]
 
 
-def set_level(level: str):
+def set_level(level: str) -> None:
     """
     Imposta livello minimo di logging per tutti i logger.
 
@@ -310,5 +294,5 @@ def set_level(level: str):
     config.default_level = level.upper()
 
     # Aggiorna logger esistenti
-    for logger in _loggers.values():
-        logger.min_level = logger._parse_level(level)
+    for logger_obj in _loggers.values():
+        logger_obj.min_level = logger_obj._parse_level(level)

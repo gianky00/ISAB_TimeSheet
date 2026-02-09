@@ -3,6 +3,7 @@ Tests for src.core managers.
 """
 
 import json
+from datetime import UTC
 from unittest.mock import patch
 
 import pytest
@@ -40,7 +41,7 @@ def test_config_manager_defaults(mock_config):
     assert config_manager.get_config_value("theme") == "dark"
 
     # Verify persistence
-    with open(mock_config, "r") as f:
+    with open(mock_config) as f:
         data = json.load(f)
         assert data["theme"] == "dark"
 
@@ -88,7 +89,7 @@ def test_database_manager_connection(tmp_path):
 # --- TIME MANAGER ---
 def test_time_manager():
     # Helper to create datetime
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from src.core import time_manager
 
@@ -102,9 +103,9 @@ def test_time_manager():
 
     # Mock network time
     with patch("src.core.time_manager.get_network_time") as mock_net:
-        mock_net.return_value = datetime(2025, 1, 1, tzinfo=timezone.utc)
+        mock_net.return_value = datetime(2025, 1, 1, tzinfo=UTC)
         dt, trusted = time_manager.get_trusted_time()
-        assert dt == datetime(2025, 1, 1, tzinfo=timezone.utc)
+        assert dt == datetime(2025, 1, 1, tzinfo=UTC)
         assert trusted is True
 
     with patch("src.core.time_manager.get_network_time") as mock_net:

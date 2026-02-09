@@ -4,7 +4,8 @@ import os
 import subprocess
 import threading
 from datetime import datetime
-from typing import Any
+from pathlib import Path
+from typing import Any, cast
 
 from PyQt6.QtCore import QBuffer, QDate, QIODevice, QObject, QRect, Qt
 from PyQt6.QtGui import QGuiApplication, QPainter, QPixmap
@@ -71,25 +72,19 @@ class TelegramUIBridge(QObject):
         elif obj == "oda":
             self._add_oda_from_telegram(items)
 
-    def _add_pdl_from_telegram(self, items: list):
+    def _add_pdl_from_telegram(self, items: list[Any]) -> None:
         """Helper per aggiungere PDL."""
         valid = [i for i in items if InputValidator.validate_pdl(i).valid]
         if valid:
-            rows = [
-                {"numero_pdl": InputValidator.validate_pdl(v).sanitized_value}
-                for v in valid
-            ]
+            rows = [{"numero_pdl": InputValidator.validate_pdl(v).sanitized_value} for v in valid]
             self.mw.pdl_panel.add_rows_simple(rows)
             self.mw.show_toast(f"Telegram: aggiunti {len(valid)} PDL")
 
-    def _add_oda_from_telegram(self, items: list):
+    def _add_oda_from_telegram(self, items: list[Any]) -> None:
         """Helper per aggiungere OdA."""
         valid = [i for i in items if InputValidator.validate_oda(i).valid]
         if valid:
-            rows = [
-                {"numero_oda": InputValidator.validate_oda(v).sanitized_value}
-                for v in valid
-            ]
+            rows = [{"numero_oda": InputValidator.validate_oda(v).sanitized_value} for v in valid]
             self.mw.scarico_panel.add_rows_simple(rows)
             self.mw.show_toast(f"Telegram: aggiunti {len(valid)} OdA")
 
@@ -97,17 +92,10 @@ class TelegramUIBridge(QObject):
         self.telegram.pending_data[int(chat_id)] = {"action": "print", "items": items}
         printers = get_installed_printers()[:6]
         keyboard = [
-            [
-                InlineKeyboardButton(
-                    f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}"
-                )
-            ]
-            for p in printers
+            [InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}")] for p in printers
         ]
 
-        self.telegram.send_message_sync(
-            "✅ Ho aggiunto i PDL. **Quale stampante utilizzo?**"
-        )
+        self.telegram.send_message_sync("✅ Ho aggiunto i PDL. **Quale stampante utilizzo?**")
         coro = self.telegram.app.bot.send_message(
             chat_id=chat_id,
             text=f"✅ PDL {', '.join(items)} pronti. **Quale stampante uso?**",
@@ -126,12 +114,8 @@ class TelegramUIBridge(QObject):
     def _handle_intent_download_pdl(self, chat_id):
         keyboard = [
             [
-                InlineKeyboardButton(
-                    "✅ Sì, stampa", callback_data="confirm_print_yes"
-                ),
-                InlineKeyboardButton(
-                    "❌ No, solo download", callback_data="confirm_print_no"
-                ),
+                InlineKeyboardButton("✅ Sì, stampa", callback_data="confirm_print_yes"),
+                InlineKeyboardButton("❌ No, solo download", callback_data="confirm_print_no"),
             ]
         ]
         coro = self.telegram.app.bot.send_message(
@@ -160,42 +144,33 @@ class TelegramUIBridge(QObject):
     def _handle_command(self, command, params):
         """Gestisce i comandi testuali da Telegram tramite dispatch map."""
         cmd_map = {
-            "search_db_pdf": lambda p: self._handle_search_db_pdf(p),
-            "run_pdl": lambda p: self._handle_run_pdl(p),
+            "search_db_pdf": self._handle_search_db_pdf,
+            "run_pdl": self._handle_run_pdl,
             "list_pdl": lambda _: self._handle_list_pdl(),
             "clear_pdl": lambda _: self._handle_clear_pdl(),
             "run_ts": lambda _: self._handle_run_ts(),
             "run_carico": lambda _: self._handle_run_carico(),
             "run_prenota_bp": lambda _: self._handle_run_prenota_bp(),
-            "run_timbrature": lambda p: self._handle_run_timbrature(p),
+            "run_timbrature": self._handle_run_timbrature,
             "restart_app": lambda _: self._handle_restart_app(),
             "stop_all": lambda _: self._handle_stop_all(),
         }
 
-        handler = cmd_map.get(command)
-        if handler:
+        if handler := cmd_map.get(command):
             handler(params)
 
     def _handle_run_pdl(self, params):
         self.mw.navigate_to_panel(self.mw.pdl_panel.bot_id)
         print_enabled = params.get("print", False)
         self.mw.pdl_panel.print_check.setChecked(print_enabled)
-        self.mw.pdl_panel.merge_and_send_from_telegram = params.get(
-            "merge_and_send", False
-        )
-        self.mw.pdl_panel.merge_all_session_from_telegram = params.get(
-            "merge_all", False
-        )
+        self.mw.pdl_panel.merge_and_send_from_telegram = params.get("merge_and_send", False)
+        self.mw.pdl_panel.merge_all_session_from_telegram = params.get("merge_all", False)
         ready, msg = self.mw.pdl_panel.validate_ready()
         if not ready:
-            self.telegram.send_message_sync(
-                f"⚠️ Impossibile avviare Scarico PDL.\nMotivo: {msg}"
-            )
+            self.telegram.send_message_sync(f"⚠️ Impossibile avviare Scarico PDL.\nMotivo: {msg}")
             return
         self.mw.pdl_panel.start_btn.click()
-        self.telegram.send_message_sync(
-            f"✅ Avvio Scarico PDL (Stampa={print_enabled})"
-        )
+        self.telegram.send_message_sync(f"✅ Avvio Scarico PDL (Stampa={print_enabled})")
 
     def _handle_list_pdl(self):
         data = self.mw.pdl_panel.data_table.get_data()
@@ -211,9 +186,7 @@ class TelegramUIBridge(QObject):
         self.mw.navigate_to_panel("scarico_ts")
         ready, msg = self.mw.scarico_panel.validate_ready()
         if not ready:
-            self.telegram.send_message_sync(
-                f"⚠️ Impossibile avviare Scarico TS.\nMotivo: {msg}"
-            )
+            self.telegram.send_message_sync(f"⚠️ Impossibile avviare Scarico TS.\nMotivo: {msg}")
             return
         self.mw.scarico_panel.start_btn.click()
         self.telegram.send_message_sync("✅ Avvio Scarico Timesheet.")
@@ -222,9 +195,7 @@ class TelegramUIBridge(QObject):
         self.mw.navigate_to_panel("carico_ts")
         ready, msg = self.mw.carico_panel.validate_ready()
         if not ready:
-            self.telegram.send_message_sync(
-                f"⚠️ Impossibile avviare Carico TS.\nMotivo: {msg}"
-            )
+            self.telegram.send_message_sync(f"⚠️ Impossibile avviare Carico TS.\nMotivo: {msg}")
             return
         self.mw.carico_panel.start_btn.click()
         self.telegram.send_message_sync("✅ Avvio Carico Timesheet.")
@@ -243,16 +214,12 @@ class TelegramUIBridge(QObject):
         panel = self.mw.tab_fornitori.widget(3)  # Index 3 as per map
 
         if not panel:
-            self.telegram.send_message_sync(
-                "⚠️ Errore interno: Pannello Prenota BP non trovato."
-            )
+            self.telegram.send_message_sync("⚠️ Errore interno: Pannello Prenota BP non trovato.")
             return
 
         ready, msg = panel.validate_ready()
         if not ready:
-            self.telegram.send_message_sync(
-                f"⚠️ Impossibile avviare Prenota BP.\nMotivo: {msg}"
-            )
+            self.telegram.send_message_sync(f"⚠️ Impossibile avviare Prenota BP.\nMotivo: {msg}")
             return
         panel.start_btn.click()
         self.telegram.send_message_sync("✅ Avvio Prenotazione BP.")
@@ -277,9 +244,7 @@ class TelegramUIBridge(QObject):
 
         ready, msg = panel.validate_ready()
         if not ready:
-            self.telegram.send_message_sync(
-                f"⚠️ Impossibile avviare Timbrature.\nMotivo: {msg}"
-            )
+            self.telegram.send_message_sync(f"⚠️ Impossibile avviare Timbrature.\nMotivo: {msg}")
             return
 
         panel.start_btn.click()
@@ -307,9 +272,7 @@ class TelegramUIBridge(QObject):
         query_text = params.get("query", "")
         year_filter = params.get("year")
 
-        self.telegram.send_message_sync(
-            f"🔍 Ricerca in corso in **{db_type}** per: `{query_text}`..."
-        )
+        self.telegram.send_message_sync(f"🔍 Ricerca in corso in **{db_type}** per: `{query_text}`...")
 
         try:
             report_data = self._fetch_report_data(db_type, query_text, year_filter)
@@ -328,9 +291,7 @@ class TelegramUIBridge(QObject):
                 limit=500, filter_text=query
             )
         if db_type == "strumentale":
-            return ContabilitaManager.search_extended(
-                query, year=(int(year) if year else None), limit=500
-            )
+            return ContabilitaManager.search_extended(query, year=(int(year) if year else None), limit=500)
         return None
 
     def _generate_report_html(self, db_type, data) -> str:
@@ -360,7 +321,7 @@ class TelegramUIBridge(QObject):
         path = str(temp_dir / filename)
 
         generate_pdf_from_html(html, path)
-        if os.path.exists(path):
+        if Path(path).exists():
             self.telegram.send_document_sync(path, caption=f"📄 Report {db_type}")
         else:
             self.telegram.send_message_sync("❌ Errore generazione PDF.")
@@ -390,9 +351,7 @@ class TelegramUIBridge(QObject):
             items, "numero_oda", InputValidator.validate_oda, self.mw.scarico_panel
         )
         if valid_items:
-            self.mw.scarico_panel.add_rows_simple(
-                [{"numero_oda": v} for v in valid_items]
-            )
+            self.mw.scarico_panel.add_rows_simple([{"numero_oda": v} for v in valid_items])
             self.mw.navigate_to_panel("scarico_ts")
         self._send_data_feedback(len(valid_items), duplicates, errors)
 
@@ -403,7 +362,8 @@ class TelegramUIBridge(QObject):
         if not panel:
             return
 
-        valid_items, duplicates = [], 0
+        valid_items: list[dict[str, Any]] = []
+        duplicates = 0
 
         for item in items:
             item = item.strip()
@@ -452,9 +412,7 @@ class TelegramUIBridge(QObject):
             feedback.append(f"ℹ️ {duplicates} duplicati ignorati")
         if errors:
             feedback.append("⚠️ Errori:\n" + "\n".join(errors[:5]))
-        self.telegram.send_message_sync(
-            "\n".join(feedback) if feedback else "⚠️ Nessun dato valido."
-        )
+        self.telegram.send_message_sync("\n".join(feedback) if feedback else "⚠️ Nessun dato valido.")
 
     def _handle_status(self, chat_id):
         panel = self.mw._get_active_bot_panel()
@@ -479,9 +437,7 @@ class TelegramUIBridge(QObject):
                 combined.fill(Qt.GlobalColor.black)
                 p = QPainter(combined)
                 for s in screens:
-                    p.drawPixmap(
-                        s.geometry().topLeft() - total_rect.topLeft(), s.grabWindow(0)
-                    )
+                    p.drawPixmap(s.geometry().topLeft() - total_rect.topLeft(), s.grabWindow(cast("Any", 0)))
                 p.end()
                 pixmap = combined
                 caption = f"Desktop ({len(screens)} monitor)"
@@ -489,9 +445,7 @@ class TelegramUIBridge(QObject):
             buf = QBuffer()
             buf.open(QIODevice.OpenModeFlag.WriteOnly)
             pixmap.save(buf, "PNG")
-            self.telegram.send_photo_sync(
-                buf.data().data(), caption=f"📸 **Screenshot: {caption}**"
-            )
+            self.telegram.send_photo_sync(buf.data().data(), caption=f"📸 **Screenshot: {caption}**")
         except Exception as e:
             self.telegram.send_message_sync(f"❌ Errore screenshot: {e}")
 

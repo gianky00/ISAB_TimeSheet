@@ -39,9 +39,7 @@ class TestLyraClientAdvanced:
             conn.execute(
                 "CREATE TABLE timbrature (data TEXT, nome TEXT, cognome TEXT, ingresso TEXT, uscita TEXT)"
             )
-            conn.execute(
-                "INSERT INTO timbrature VALUES ('2026-01-01', 'Mario', 'Rossi', '08:00', '17:00')"
-            )
+            conn.execute("INSERT INTO timbrature VALUES ('2026-01-01', 'Mario', 'Rossi', '08:00', '17:00')")
 
         context = client._get_system_context()
 
@@ -65,16 +63,14 @@ class TestLyraClientAdvanced:
         mock_post.return_value = mock_resp
 
         # Mock context e audit
-        mocker.patch.object(
-            client, "_get_system_context", return_value="System Context"
-        )
+        mocker.patch.object(client, "_get_system_context", return_value="System Context")
         mock_audit = mocker.patch("src.core.lyra_client.AuditManager")
 
         response = client.ask("Ciao Lyra", extra_context="Contesto Utente")
 
         assert response == "Risposta AI di test"
         # Verifica che il payload contenga i contesti
-        args, kwargs = mock_post.call_args
+        _args, kwargs = mock_post.call_args
         payload = kwargs["json"]
         prompt = payload["contents"][0]["parts"][0]["text"]
         assert "System Context" in prompt

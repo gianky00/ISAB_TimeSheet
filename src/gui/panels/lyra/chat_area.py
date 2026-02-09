@@ -16,41 +16,42 @@ class ChatArea(QScrollArea):
 
     table_detected = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWidgetResizable(True)
         self.setFrameShape(QFrame.Shape.NoFrame)
-        self.setStyleSheet(
-            "background-color: white; border: 1px solid #dee2e6; border-radius: 8px;"
-        )
+        self.setStyleSheet("background-color: white; border: 1px solid #dee2e6; border-radius: 8px;")
 
         self.container = QWidget()
         self.container.setStyleSheet("background-color: white;")
-        self.layout = QVBoxLayout(self.container)
-        self.layout.setContentsMargins(5, 10, 5, 10)
-        self.layout.setSpacing(5)
-        self.layout.addStretch()
+        self.chat_layout = QVBoxLayout(self.container)
+        self.chat_layout.setContentsMargins(5, 10, 5, 10)
+        self.chat_layout.setSpacing(5)
+        self.chat_layout.addStretch()
 
         self.setWidget(self.container)
 
-    def append_message(self, sender, text):
+    def append_message(self, sender: str, text: str) -> None:
         """Aggiunge una bolla di messaggio alla chat."""
         is_lyra = sender == "Lyra"
         bubble = MessageBubble(sender, text, is_lyra=is_lyra)
-        self.layout.insertWidget(self.layout.count() - 1, bubble)
+        self.chat_layout.insertWidget(self.chat_layout.count() - 1, bubble)
 
         # Scroll to bottom
         QApplication.processEvents()
         sb = self.verticalScrollBar()
-        sb.setValue(sb.maximum())
+        if sb is not None:
+            sb.setValue(sb.maximum())
 
         # Rilevamento tabelle per l'esportazione Excel
         if "<table>" in markdown.markdown(text, extensions=["tables"]):
             self.table_detected.emit(text)
 
-    def clear(self):
+    def clear(self) -> None:
         """Rimuove tutti i messaggi dalla chat."""
-        while self.layout.count() > 1:
-            item = self.layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+        while self.chat_layout.count() > 1:
+            item = self.chat_layout.takeAt(0)
+            if item is not None:
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()

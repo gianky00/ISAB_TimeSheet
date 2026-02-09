@@ -8,15 +8,17 @@ from src.gui.panels.settings.main_panel import SettingsPanel
 class TestSettingsPanelComplete:
     @pytest.fixture
     def panel(self, qapp):
-        with patch(
-            "src.gui.panels.settings.main_panel.config_manager.load_config",
-            return_value={},
-        ):
-            with patch(
+        with (
+            patch(
+                "src.gui.panels.settings.main_panel.config_manager.load_config",
+                return_value={},
+            ),
+            patch(
                 "src.gui.panels.settings.tabs.telegram_tab.SecretsManager.get_gemini_api_key",
                 return_value="",
-            ):
-                return SettingsPanel()
+            ),
+        ):
+            return SettingsPanel()
 
     def test_settings_navigation(self, panel, qtbot):
         qtbot.addWidget(panel)
@@ -41,12 +43,12 @@ class TestSettingsPanelComplete:
                 "src.gui.panels.settings.pages.lists_page.AccountDialog.get_data",
                 return_value=("new_user", "pw"),
             ),
+            patch.object(panel, "_save_settings") as mock_save,
         ):
-            with patch.object(panel, "_save_settings") as mock_save:
-                panel.config_tab.lists_page._add_account()
-                # La logica usa un timer, chiamiamo manualmente o attendiamo
-                panel._save_settings()
-                mock_save.assert_called()
+            panel.config_tab.lists_page._add_account()
+            # La logica usa un timer, chiamiamo manualmente o attendiamo
+            panel._save_settings()
+            mock_save.assert_called()
 
     def test_telegram_settings_change(self, panel, qtbot):
         qtbot.addWidget(panel)

@@ -1,3 +1,5 @@
+from contextlib import suppress
+
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -15,8 +17,10 @@ class SafeworkBaseBot(BaseBot):
     SAFEWORK_URL = "https://safework.isab.com/"
     ISAB_URL = SAFEWORK_URL
 
-    def _attendi_scomparsa_overlay(self, timeout_secondi: int = 120) -> bool:
+    def _attendi_scomparsa_overlay(self, timeout_secondi: int | None = 120) -> bool:
         """Logica di attesa fedele allo script originale."""
+        if timeout_secondi is None:
+            timeout_secondi = 120
         if not self.driver:
             return False
         try:
@@ -28,7 +32,7 @@ class SafeworkBaseBot(BaseBot):
             self.log("⏳ Overlay ancora presente (proseguo...)")
 
         # Gestione modale OK/Annulla se appare
-        try:
+        with suppress(Exception):
             modale = WebDriverWait(self.driver, 3).until(
                 EC.visibility_of_element_located(
                     (
@@ -41,8 +45,6 @@ class SafeworkBaseBot(BaseBot):
                 By.XPATH, ".//button[contains(text(), 'OK') or @data-dismiss='modal']"
             ).click()
             self.log("ℹ️ Modale gestita (OK/Annulla).")
-        except Exception:
-            pass
 
         # No sleep needed: invisibility check is sufficient
         return True

@@ -8,8 +8,8 @@ from src.bots.portale_fornitori.common.locators import LoginLocators
 class ConcreteBot(BaseBot):
     """Sottoclasse concreta per testare BaseBot."""
 
-    def __init__(self, username="user", password="pw", **kwargs):
-        super().__init__(username=username, password=password, **kwargs)
+    def __init__(self, username="user", password=None, **kwargs):
+        super().__init__(username=username, password=password or "*", **kwargs)
 
     @property
     def name(self):

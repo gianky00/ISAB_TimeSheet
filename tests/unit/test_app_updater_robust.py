@@ -32,9 +32,7 @@ class TestAppUpdaterRobust:
         with patch("src.core.app_updater._is_newer_version", return_value=True):
             with patch("src.core.app_updater._handle_update_found") as mock_handle:
                 check_for_updates()
-                mock_handle.assert_called_once_with(
-                    "2.0.0", "http://download.url", "Big update", None, None
-                )
+                mock_handle.assert_called_once_with("2.0.0", "http://download.url", "Big update", None, None)
 
     @patch("src.core.app_updater.requests.get")
     @patch("src.core.version.UPDATE_URL", "http://fake.url")

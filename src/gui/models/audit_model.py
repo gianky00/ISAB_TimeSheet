@@ -1,8 +1,9 @@
 import json
 from datetime import datetime
+from typing import Any, ClassVar
 
-from PyQt6.QtCore import QAbstractTableModel, Qt
-from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt
+from PyQt6.QtGui import QColor, QFont, QIcon
 
 from src.core.constants import Icons
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -13,7 +14,7 @@ class AuditTableModel(QAbstractTableModel):
     Modello dati avanzato per la tabella Audit V2.
     """
 
-    COLUMNS = [
+    COLUMNS: ClassVar[list[str]] = [
         "",
         "Data/Ora",
         "Durata",
@@ -24,34 +25,30 @@ class AuditTableModel(QAbstractTableModel):
         "Dettagli",
     ]
 
-    def __init__(self, logs=None):
+    def __init__(self, logs: list[dict[str, Any]] | None = None) -> None:
         super().__init__()
         self._logs = logs or []
         # Pre-load icons
         self._icons = {
             "high": get_colored_icon(get_asset_path(Icons.STATUS_DOT_RED), "#dc3545"),
-            "medium": get_colored_icon(
-                get_asset_path(Icons.STATUS_DOT_ORANGE), "#fd7e14"
-            ),
+            "medium": get_colored_icon(get_asset_path(Icons.STATUS_DOT_ORANGE), "#fd7e14"),
             "low": get_colored_icon(get_asset_path(Icons.STATUS_DOT_GREEN), "#198754"),
-            "success": get_colored_icon(
-                get_asset_path(Icons.STATUS_DOT_GREEN), "#198754"
-            ),
+            "success": get_colored_icon(get_asset_path(Icons.STATUS_DOT_GREEN), "#198754"),
             "error": get_colored_icon(get_asset_path(Icons.STATUS_DOT_RED), "#dc3545"),
         }
 
-    def update_data(self, logs):
+    def update_data(self, logs: list[dict[str, Any]]) -> None:
         self.beginResetModel()
         self._logs = logs
         self.endResetModel()
 
-    def rowCount(self, parent=None):
+    def rowCount(self, parent: QModelIndex | None = None) -> int:
         return len(self._logs)
 
-    def columnCount(self, parent=None):
+    def columnCount(self, parent: QModelIndex | None = None) -> int:
         return len(self.COLUMNS)
 
-    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
 
@@ -78,7 +75,7 @@ class AuditTableModel(QAbstractTableModel):
 
         return None
 
-    def _get_display_data(self, log, col):
+    def _get_display_data(self, log: dict[str, Any], col: int) -> str | None:
         """Restituisce il testo da mostrare per ogni colonna."""
         if col == 0:
             return ""
@@ -100,7 +97,7 @@ class AuditTableModel(QAbstractTableModel):
             return self._extract_message(log)
         return None
 
-    def _get_decoration_data(self, log, col):
+    def _get_decoration_data(self, log: dict[str, Any], col: int) -> QIcon | None:
         """Restituisce l'icona per la colonna di stato."""
         if col != 0:
             return None
@@ -114,7 +111,7 @@ class AuditTableModel(QAbstractTableModel):
         severity = str(log.get("severity", "low")).lower()
         return self._icons.get(severity, self._icons["low"])
 
-    def _get_background_data(self, log):
+    def _get_background_data(self, log: dict[str, Any]) -> QColor | None:
         """Restituisce il colore di sfondo della riga."""
         status = str(log.get("status", "success")).lower()
         if status == "error":
@@ -125,7 +122,7 @@ class AuditTableModel(QAbstractTableModel):
             return QColor("#fff9f0")  # Orange tint
         return None
 
-    def _get_foreground_data(self, log, col):
+    def _get_foreground_data(self, log: dict[str, Any], col: int) -> QColor | None:
         """Restituisce il colore del testo."""
         if col == 6 and log.get("error_code"):  # Error Code Red
             return QColor("#dc3545")
@@ -133,7 +130,7 @@ class AuditTableModel(QAbstractTableModel):
             return QColor("#fd7e14")
         return None
 
-    def _get_font_data(self, log, col):
+    def _get_font_data(self, log: dict[str, Any], col: int) -> QFont | None:
         """Restituisce il font (es. grassetto)."""
         if col == 5:  # Action Bold
             f = QFont()
@@ -145,52 +142,52 @@ class AuditTableModel(QAbstractTableModel):
             return f
         return None
 
-    def _get_alignment_data(self, col):
+    def _get_alignment_data(self, col: int) -> Qt.AlignmentFlag:
         """Restituisce l'allineamento della cella."""
-        if col in [0, 2]:
+        if col in (0, 2):
             return Qt.AlignmentFlag.AlignCenter
         return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
-    def headerData(self, section, orientation, role):
-        if (
-            role == Qt.ItemDataRole.DisplayRole
-            and orientation == Qt.Orientation.Horizontal
-        ):
+    def headerData(
+        self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
+    ) -> Any:
+        if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal:
             return self.COLUMNS[section]
         return None
 
-    def _format_timestamp(self, ts):
+    def _format_timestamp(self, ts: Any) -> str:
         try:
             # Formato completo con secondi per debug
-            dt = datetime.fromisoformat(ts)
+            dt = datetime.fromisoformat(str(ts))
             return dt.strftime("%d/%m %H:%M:%S")
         except Exception:
             return str(ts)
 
-    def _format_duration(self, ms):
+    def _format_duration(self, ms: Any) -> str:
         if not ms:
             return "-"
-        if ms < 1000:
-            return f"{ms}ms"
-        return f"{ms / 1000:.1f}s"
+        f_ms = float(ms)
+        if f_ms < 1000:
+            return f"{f_ms:.0f}ms"
+        return f"{f_ms / 1000.0:.1f}s"
 
-    def _extract_message(self, log):
+    def _extract_message(self, log: dict[str, Any]) -> str:
         # Cerca il messaggio più utile nel JSON params
         p_str = log.get("params", "{}")
         try:
             p = json.loads(p_str) if isinstance(p_str, str) else p_str
             if "error_details" in p:
-                return p["error_details"]
+                return str(p["error_details"])
             if "dettagli" in p:
-                return p["dettagli"]
+                return str(p["dettagli"])
             if "messaggio" in p:
-                return p["messaggio"]
+                return str(p["messaggio"])
             # Fallback: primi 50 caratteri del json
             return str(p_str)[:50]
         except Exception:
             return str(p_str)
 
-    def get_log_at(self, row):
+    def get_log_at(self, row: int) -> dict[str, Any] | None:
         if 0 <= row < len(self._logs):
             return self._logs[row]
         return None

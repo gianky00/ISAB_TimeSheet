@@ -1,23 +1,26 @@
 import logging
 import re
 import zipfile
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple
+from typing import Any, ClassVar
 
 import pandas as pd
 
 from src.core.importers.base import BaseImporter
 from src.core.schemas import validate_contabilita
 
+logger = logging.getLogger(__name__)
+
 
 class ContabilitaImporter(BaseImporter):
-    """Importer specifico per i dati di Contabilità."""
+    """Importer specifico per i dati di ContabilitÃ ."""
 
     # Mapping colonne Excel -> DB
-    COLUMNS_MAPPING = {
+    COLUMNS_MAPPING: ClassVar[dict[str, str]] = {
         "DATA PREV.": "data_prev",
         "MESE": "mese",
-        "N° PREV.": "n_prev",
+        "NÂ° PREV.": "n_prev",
         "TOTALE PREV.": "totale_prev",
         "ATTIVITA'": "attivita",
         "TCL": "tcl",
@@ -50,15 +53,15 @@ class ContabilitaImporter(BaseImporter):
                 sheet_names = re.findall(r'name="([^"]+)"', wb_xml)
                 return len([s for s in sheet_names if re.search(r"(\d{4})", s)])
         except Exception as e:
-            logging.debug(f"Scan excel sheets error: {e}")
+            logger.debug(f"Scan excel sheets error: {e}")
             return 1
 
     @classmethod
     def import_contabilita_dati(
         cls,
         file_path: str,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> Tuple[bool, str, list, list]:
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> tuple[bool, str, list[tuple[Any, ...]], list[int]]:
         """
         Importa i dati dal file Excel specificato (Tabella Dati).
         """
@@ -70,9 +73,7 @@ class ContabilitaImporter(BaseImporter):
             file_obj, _ = cls._decrypt_if_encrypted(path)
             xls = cls._get_excel_file(file_obj)
 
-            valid_sheets = [
-                str(s) for s in xls.sheet_names if cls._identify_sheet_year(str(s))
-            ]
+            valid_sheets = [str(s) for s in xls.sheet_names if cls._identify_sheet_year(str(s))]
             if not valid_sheets:
                 return (
                     False,
@@ -81,9 +82,7 @@ class ContabilitaImporter(BaseImporter):
                     [],
                 )
 
-            all_rows, imported_years = cls._process_all_sheets(
-                xls, valid_sheets, progress_callback
-            )
+            all_rows, imported_years = cls._process_all_sheets(xls, valid_sheets, progress_callback)
 
             if not imported_years:
                 return (
@@ -101,16 +100,16 @@ class ContabilitaImporter(BaseImporter):
             )
 
         except Exception as e:
-            logging.error(f"Errore importazione Excel: {e}")
+            logger.error(f"Errore importazione Excel: {e}")
             return False, f"Errore critico importazione: {e}", [], []
 
     @classmethod
     def _process_all_sheets(
-        cls, xls, sheet_names: List[str], progress_callback: Optional[Callable]
-    ) -> Tuple[List[Tuple], List[int]]:
+        cls, xls: Any, sheet_names: list[str], progress_callback: Callable[[int, int], None] | None
+    ) -> tuple[list[tuple[Any, ...]], list[int]]:
         """Cicla sui fogli e aggrega i risultati."""
-        all_rows = []
-        imported_years = []
+        all_rows: list[tuple[Any, ...]] = []
+        imported_years: list[int] = []
         total_sheets = len(sheet_names)
 
         for i, sheet_name in enumerate(sheet_names):
@@ -129,19 +128,17 @@ class ContabilitaImporter(BaseImporter):
         return all_rows, imported_years
 
     @classmethod
-    def _process_single_sheet(cls, xls, sheet_name: str, year: int) -> List[Tuple]:
-        """Processa un singolo foglio del file Excel di contabilità."""
+    def _process_single_sheet(cls, xls: Any, sheet_name: str, year: int) -> list[tuple[Any, ...]]:
+        """Processa un singolo foglio del file Excel di contabilitÃ ."""
         try:
-            pd = cls._get_pd()
+            pd_obj = cls._get_pd()
             header_row_idx = cls._find_header_row(xls, sheet_name)
             try:
-                df = pd.read_excel(
-                    xls, sheet_name=sheet_name, header=header_row_idx, usecols="A:AZ"
-                )
+                df = pd_obj.read_excel(xls, sheet_name=sheet_name, header=header_row_idx, usecols="A:AZ")
             except Exception:
-                df = pd.read_excel(xls, sheet_name=sheet_name, header=header_row_idx)
+                df = pd_obj.read_excel(xls, sheet_name=sheet_name, header=header_row_idx)
 
-            df.columns = [str(c).strip().upper() for c in df.columns]
+            df.columns = df.columns.astype(str).str.strip().str.upper()
 
             if not df.empty:
                 df = df.iloc[:-1]  # Rimuovi riga dei totali solitamente presente
@@ -151,11 +148,10 @@ class ContabilitaImporter(BaseImporter):
                 return []
 
             df["year"] = year
-            df = cls._normalize_columns(df)
-            df = cls._ensure_required_columns(df)
+            df = cls._ensure_required_columns(cls._normalize_columns(df))
 
             # Preparazione finale dati
-            target_columns = ["year"] + list(cls.COLUMNS_MAPPING.values())
+            target_columns = ["year", *list(cls.COLUMNS_MAPPING.values())]
             df = df[target_columns].copy()
 
             # --- Gestione Tipi Intelligente ---
@@ -163,60 +159,57 @@ class ContabilitaImporter(BaseImporter):
                 if col == "year":
                     continue
 
-                if col in ["totale_prev", "ore_sp"]:
-                    df[col] = pd.to_numeric(df[col], errors="coerce")
+                if col in ("totale_prev", "ore_sp"):
+                    df[col] = pd_obj.to_numeric(df[col], errors="coerce").fillna(0.0).astype(float)
                     df[col] = df[col].round(2)
 
                 elif col == "data_prev":
-                    df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime(
-                        "%Y-%m-%d"
-                    )
+                    df[col] = pd_obj.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m-%d").fillna("")
 
                 elif col == "resa":
                     df[col] = df[col].apply(
                         lambda x: (
                             str(round(float(x), 2))
-                            if pd.notna(x)
-                            and str(x)
-                            .replace(".", "")
-                            .replace(",", "")
-                            .replace("-", "")
-                            .isdigit()
+                            if pd_obj.notna(x)
+                            and str(x).replace(".", "").replace(",", "").replace("-", "").isdigit()
                             else str(x).strip()
-                            if pd.notna(x)
+                            if pd_obj.notna(x)
                             else ""
                         )
                     )
                 else:
-                    df[col] = (
-                        df[col]
-                        .astype(str)
-                        .str.strip()
-                        .replace(r"(?i)^nan$", "", regex=True)
-                    )
+                    df[col] = df[col].astype(str).str.strip().replace(r"(?i)^nan$", "", regex=True).fillna("")
 
-            df = df.fillna("")
+            # Validazione Pandera finale su dati puliti
+            try:
+                df = validate_contabilita(df)
+            except Exception as e:
+                logger.warning(f"Validazione Pandera ContabilitÃ  fallita (uso fallback): {e}")
+
             return list(df.itertuples(index=False, name=None))
         except Exception as e:
-            logging.warning(f"Errore processamento foglio {sheet_name}: {e}")
+            logger.warning(f"Errore processamento foglio {sheet_name}: {e}")
             return []
 
     @classmethod
-    def _find_header_row(cls, xls, sheet_name) -> int:
+    def _find_header_row(cls, xls: Any, sheet_name: str) -> int:
         """Cerca l'indice della riga di intestazione basandosi su colonne chiave."""
-        pd = cls._get_pd()
-        preview_df = pd.read_excel(xls, sheet_name=sheet_name, header=None, nrows=15)
+        preview_df = cls._get_pd().read_excel(xls, sheet_name=sheet_name, header=None, nrows=15)
         key_cols_norm = ["DATAPREV", "MESE", "NPREV", "TOTALEPREV", "ATTIVITA", "ODC"]
 
         for i_raw, row in preview_df.iterrows():
-            row_norm = []
-            for val in row.values:
-                s = str(val).strip().upper()
-                s = s.replace(" ", "").replace(".", "").replace("°", "")
-                row_norm.append(s)
-
-            matches = sum(1 for k in key_cols_norm if k in row_norm)
-            if matches >= 2:
+            if (
+                sum(
+                    1
+                    for k in key_cols_norm
+                    if k
+                    in (
+                        str(val).strip().upper().replace(" ", "").replace(".", "").replace("Â°", "")
+                        for val in row.values
+                    )
+                )
+                >= 2
+            ):
                 return int(i_raw)
         return 0
 
@@ -230,7 +223,7 @@ class ContabilitaImporter(BaseImporter):
 
         rename_map = {}
         for col in df.columns:
-            col_str = str(col).strip().upper()
+            col_str = col.strip().upper()
             norm_col = col_str.replace(" ", "").replace(".", "").replace("°", "")
 
             if norm_col in normalized_map:
@@ -241,14 +234,6 @@ class ContabilitaImporter(BaseImporter):
                 elif "PREV" in norm_col and ("NUM" in norm_col or "N." in norm_col):
                     rename_map[col] = "n_prev"
         df.rename(columns=rename_map, inplace=True)
-
-        try:
-            df = validate_contabilita(df)
-        except Exception as e:
-            logging.warning(
-                f"Validazione Pandera Contabilità fallita (uso fallback): {e})"
-            )
-
         return df
 
     @classmethod

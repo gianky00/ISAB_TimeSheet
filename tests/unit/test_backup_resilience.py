@@ -84,7 +84,7 @@ class TestBackupResilience:
         mocker.patch("src.core.backup_manager.CONFIG_DIR", source_dir)
         mocker.patch("src.core.backup_manager.AuditManager")
 
-        success, msg = BackupManager.restore_backup(str(zip_path))
+        success, _msg = BackupManager.restore_backup(str(zip_path))
 
         assert success is True
         assert (source_dir / "database.db").read_text() == "restored_data"

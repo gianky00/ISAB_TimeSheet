@@ -1,3 +1,5 @@
+from typing import Any
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -16,11 +18,11 @@ class GeneralPage(QWidget):
 
     settings_changed = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setSpacing(20)
 
@@ -35,7 +37,7 @@ class GeneralPage(QWidget):
         self.headless_check.setStyleSheet(
             "QCheckBox { padding: 5px; font-size: 15px; font-weight: bold; color: #d63384; }"
         )
-        self.headless_check.stateChanged.connect(self.settings_changed.emit)
+        self.headless_check.stateChanged.connect(lambda: self.settings_changed.emit())
         gen_layout.addWidget(self.headless_check)
         layout.addWidget(self.general_group)
 
@@ -54,7 +56,7 @@ class GeneralPage(QWidget):
         self.timeout_spin.setMinimumHeight(40)
         self.timeout_spin.setMinimumWidth(100)
         style_input(self.timeout_spin)
-        self.timeout_spin.valueChanged.connect(self.settings_changed.emit)
+        self.timeout_spin.valueChanged.connect(lambda: self.settings_changed.emit())
 
         timeout_layout.addWidget(self.timeout_spin)
         timeout_layout.addStretch()
@@ -63,14 +65,12 @@ class GeneralPage(QWidget):
 
         layout.addStretch()
 
-    def load_from_config(self, config: dict):
+    def load_from_config(self, config: dict[str, Any]) -> None:
         """Carica i valori dalla configurazione."""
-        self.headless_check.setChecked(config.get("browser_headless", False))
-        self.timeout_spin.setValue(config.get("browser_timeout", 30))
+        self.headless_check.setChecked(bool(config.get("browser_headless", False)))
+        self.timeout_spin.setValue(int(config.get("browser_timeout", 30)))
 
-    def save_to_config(self, config_manager):
+    def save_to_config(self, config_manager: Any) -> None:
         """Salva i valori nella configurazione."""
-        config_manager.set_config_value(
-            "browser_headless", self.headless_check.isChecked()
-        )
+        config_manager.set_config_value("browser_headless", self.headless_check.isChecked())
         config_manager.set_config_value("browser_timeout", self.timeout_spin.value())

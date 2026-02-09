@@ -3,9 +3,9 @@ SyncroJob - Timbrature Bot
 Bot for accessing Timbrature section using Page Object Model.
 """
 
-import os
+from contextlib import suppress
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any
 
 from src.bots.base import BaseBot
 from src.bots.portale_fornitori.timbrature.pages.timbrature_page import TimbraturePage
@@ -35,51 +35,53 @@ class TimbratureBot(BaseBot):
         """Metodo statico che restituisce la descrizione del bot."""
         return "Scarica e archivia le timbrature dal portale ISAB"
 
-    def __init__(
-        self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs
-    ):
+    def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs):
         super().__init__(**kwargs)
         self.data_da = data_da
         self.data_a = data_a
         self.fornitore = fornitore
         self.storage = TimbratureStorage()
 
-    def validate_data(self, data: List[Dict[str, Any]]) -> Tuple[bool, str]:
+    def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """Validazione specifica per Timbrature."""
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:
             return False, base_msg
 
-        if not self.fornitore:
-            if isinstance(data, dict) and not data.get("fornitore"):
-                return False, "Fornitore non specificato."
-            elif not isinstance(data, dict):
-                return False, "Fornitore non specificato."
+        # Extract rows from dict if needed
+        rows: list[dict[str, Any]]
+        if isinstance(data, dict):
+            rows = data.get("rows", [])
+            if data.get("fornitore"):
+                self.fornitore = str(data.get("fornitore"))
+        else:
+            rows = data
+
+        if not self.fornitore and not any("fornitore" in row for row in rows):
+            return False, "Fornitore non specificato."
 
         if not self.data_da:
-            if isinstance(data, dict) and data.get("data_da"):
-                self.data_da = data.get("data_da")
+            if rows and rows[0].get("data_da"):
+                self.data_da = str(rows[0].get("data_da"))
             else:
                 return False, "Data Inizio non specificata."
 
         return True, ""
 
-    def run(self, data: Union[List[Dict[str, Any]], Dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]]) -> bool:
         """
         Executes the Timbrature workflow: Navigate -> Filter -> Download -> Import.
         """
-        if isinstance(data, dict):
-            self.data_da = data.get("data_da", self.data_da)
-            self.data_a = data.get("data_a", self.data_a)
-            self.fornitore = data.get("fornitore", self.fornitore)
+        if data and isinstance(data, list):
+            row = data[0]
+            self.data_da = row.get("data_da", self.data_da)
+            self.data_a = row.get("data_a", self.data_a)
+            self.fornitore = row.get("fornitore", self.fornitore)
 
-        self.log(
-            f"🚀 Inizio recupero timbrature per {self.fornitore} ({self.data_da} - {self.data_a})..."
-        )
+        self.log(f"🚀 Inizio recupero timbrature per {self.fornitore} ({self.data_da} - {self.data_a})...")
 
         if not self.driver:
             return False
-        assert self.driver
 
         page = TimbraturePage(self.driver, self.log, self.download_path)
 
@@ -105,11 +107,10 @@ class TimbratureBot(BaseBot):
                 self.log(f"❌ Errore durante il salvataggio: {e}")
             finally:
                 # Cleanup
-                if os.path.exists(excel_path):
-                    try:
-                        os.remove(excel_path)
-                    except Exception:
-                        pass
+                p = Path(excel_path)
+                if p.exists():
+                    with suppress(Exception):
+                        p.unlink()
         else:
             self.log("⚠️ Non ho trovato dati o il download non è partito.")
 
@@ -121,5 +122,4 @@ class TimbratureBot(BaseBot):
         """
         Static method for manual import (GUI).
         """
-        storage = TimbratureStorage(db_path)
-        return storage.import_excel(excel_path, log_callback)
+        return TimbratureStorage(db_path).import_excel(excel_path, log_callback)

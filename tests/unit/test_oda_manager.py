@@ -65,15 +65,13 @@ class TestOdaManager:
         assert len(params) == 32
         assert "%fornitore%" in params
 
-    @patch(
-        "src.core.oda_manager.DataSynchronizer.sync_storico_oda", return_value=(50, 5)
-    )
+    @patch("src.core.oda_manager.DataSynchronizer.sync_storico_oda", return_value=(50, 5))
     @patch("src.core.oda_manager.ExcelImporter.import_storico_oda")
     @patch("src.core.sync_tracker.SyncTracker.update_status")
     def test_import_oda_from_excel_success(self, mock_tracker, mock_import, mock_sync):
         mock_import.return_value = (True, "OK", [{"oda": "123"}])
 
-        success, msg, added, removed = OdaManager.import_oda_from_excel("test.xlsx")
+        success, _msg, added, removed = OdaManager.import_oda_from_excel("test.xlsx")
 
         assert success is True
         assert added == 50
@@ -84,7 +82,7 @@ class TestOdaManager:
     def test_import_oda_from_excel_failure(self, mock_import):
         mock_import.return_value = (False, "File corrupted", [])
 
-        success, msg, added, removed = OdaManager.import_oda_from_excel("bad.xlsx")
+        success, msg, added, _removed = OdaManager.import_oda_from_excel("bad.xlsx")
 
         assert success is False
         assert "corrupted" in msg

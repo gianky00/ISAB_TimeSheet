@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Set
+from contextlib import suppress
+from typing import Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
@@ -15,13 +16,11 @@ from PyQt6.QtWidgets import (
 class DateFilterPopupWidget(QWidget):
     """Widget filtro gerarchico per date (Anno -> Mese -> Giorno)."""
 
-    def __init__(
-        self, values: List[str], selected_values: Optional[List[str]] = None
-    ) -> None:
+    def __init__(self, values: list[str], selected_values: list[str] | None = None) -> None:
         super().__init__()
         self.values = values
         self.applied = False
-        self.raw_dates: Set[str] = set()
+        self.raw_dates: set[str] = set()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
@@ -30,7 +29,7 @@ class DateFilterPopupWidget(QWidget):
         btn_all = QPushButton("Tutti")
         btn_none = QPushButton("Nessuno")
         btn_ok = QPushButton("OK")
-        for btn in [btn_all, btn_none, btn_ok]:
+        for btn in (btn_all, btn_none, btn_ok):
             btn.setStyleSheet("font-size: 11px; padding: 2px;")
 
         btn_all.clicked.connect(self.select_all)
@@ -54,49 +53,38 @@ class DateFilterPopupWidget(QWidget):
         layout.addWidget(self.tree)
         self._build_tree(values, selected_values)
 
-    def _build_tree(
-        self, values: List[str], selected_values: Optional[List[str]]
-    ) -> None:
+    def _build_tree(self, values: list[str], selected_values: list[str] | None) -> None:
         self.raw_dates = set(values)
-        structure: Dict[str, Dict[str, List[str]]] = self._group_dates_by_hierarchy(
-            values
-        )
+        structure: dict[str, dict[str, list[str]]] = self._group_dates_by_hierarchy(values)
 
         is_all_selected = selected_values is None
         selected_set = set(selected_values) if selected_values else set()
 
         for y in sorted(structure.keys(), reverse=True):
-            y_item = self._create_year_item(
-                y, structure[y], selected_set, is_all_selected
-            )
+            y_item = self._create_year_item(y, structure[y], selected_set, is_all_selected)
             self.model.appendRow(y_item)
 
-    def _group_dates_by_hierarchy(
-        self, values: List[str]
-    ) -> Dict[str, Dict[str, List[str]]]:
-        structure: Dict[str, Dict[str, List[str]]] = {}
+    def _group_dates_by_hierarchy(self, values: list[str]) -> dict[str, dict[str, list[str]]]:
+        structure: dict[str, dict[str, list[str]]] = {}
         for v in values:
             if not v:
                 continue
-            try:
+            with suppress(Exception):
                 parts = v.split("/")
-                if len(parts) != 3:
-                    continue
-                _, m, y = parts
-                if y not in structure:
-                    structure[y] = {}
-                if m not in structure[y]:
-                    structure[y][m] = []
-                structure[y][m].append(v)
-            except Exception:
-                continue
+                if len(parts) == 3:
+                    _, m, y = parts
+                    if y not in structure:
+                        structure[y] = {}
+                    if m not in structure[y]:
+                        structure[y][m] = []
+                    structure[y][m].append(v)
         return structure
 
     def _create_year_item(
         self,
         year: str,
-        months_map: Dict[str, List[str]],
-        selected_set: Set[str],
+        months_map: dict[str, list[str]],
+        selected_set: set[str],
         is_all: bool,
     ) -> QStandardItem:
         y_item = QStandardItem(year)
@@ -122,8 +110,8 @@ class DateFilterPopupWidget(QWidget):
     def _create_month_item(
         self,
         month_code: str,
-        days: List[str],
-        selected_set: Set[str],
+        days: list[str],
+        selected_set: set[str],
         is_all: bool,
     ) -> QStandardItem:
         m_name = self._get_month_name(month_code)
@@ -139,11 +127,7 @@ class DateFilterPopupWidget(QWidget):
             d_item.setEditable(False)
             d_item.setData(date_str, Qt.ItemDataRole.UserRole)
 
-            state = (
-                Qt.CheckState.Checked
-                if (is_all or date_str in selected_set)
-                else Qt.CheckState.Unchecked
-            )
+            state = Qt.CheckState.Checked if (is_all or date_str in selected_set) else Qt.CheckState.Unchecked
             d_item.setCheckState(state)
             if state == Qt.CheckState.Checked:
                 checked_days += 1
@@ -165,7 +149,7 @@ class DateFilterPopupWidget(QWidget):
         return False
 
     def _get_month_name(self, m_str: str) -> str:
-        names = {
+        return {
             "01": "Gennaio",
             "02": "Febbraio",
             "03": "Marzo",
@@ -178,8 +162,7 @@ class DateFilterPopupWidget(QWidget):
             "10": "Ottobre",
             "11": "Novembre",
             "12": "Dicembre",
-        }
-        return names.get(m_str, m_str)
+        }.get(m_str, m_str)
 
     def _on_item_changed(self, item: QStandardItem) -> None:
         self.model.blockSignals(True)
@@ -244,8 +227,8 @@ class DateFilterPopupWidget(QWidget):
         self.applied = True
         self._close_menu()
 
-    def get_selected_values(self) -> Optional[List[str]]:
-        selected: List[str] = []
+    def get_selected_values(self) -> list[str] | None:
+        selected: list[str] = []
         root = self.model.invisibleRootItem()
         if not root:
             return None

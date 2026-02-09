@@ -3,9 +3,8 @@ NotificationGroupHeader - Header collapsible per raggruppamenti di notifiche.
 Supporta time-based, category-based e priority-based grouping.
 """
 
-from typing import Optional
-
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QWidget
 
 
@@ -29,7 +28,7 @@ class NotificationGroupHeader(QFrame):
         group_key: str,
         count: int = 0,
         icon: str = "📁",
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ):
         super().__init__(parent)
         self.group_key = group_key
@@ -39,7 +38,7 @@ class NotificationGroupHeader(QFrame):
         self._title = title
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Setup layout e componenti."""
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -124,14 +123,14 @@ class NotificationGroupHeader(QFrame):
 
         layout.addStretch()
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Toggle expanded state on click."""
         self._is_expanded = not self._is_expanded
         self.arrow_btn.setText("▼" if self._is_expanded else "▶")
         self.toggled.emit(self.group_key, self._is_expanded)
         super().mousePressEvent(event)
 
-    def set_count(self, count: int):
+    def set_count(self, count: int) -> None:
         """Update count badge."""
         self._count = count
         self.count_lbl.setText(f"({count})")
@@ -140,7 +139,7 @@ class NotificationGroupHeader(QFrame):
         """Check if group is expanded."""
         return self._is_expanded
 
-    def set_expanded(self, expanded: bool):
+    def set_expanded(self, expanded: bool) -> None:
         """Set expanded state programmatically."""
         self._is_expanded = expanded
         self.arrow_btn.setText("▼" if expanded else "▶")

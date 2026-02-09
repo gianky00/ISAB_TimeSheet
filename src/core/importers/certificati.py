@@ -1,6 +1,7 @@
 import warnings
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, ClassVar
 
 import pandas as pd
 
@@ -10,7 +11,7 @@ from src.core.importers.base import BaseImporter
 class CertificatiImporter(BaseImporter):
     """Importer per i Certificati Campione."""
 
-    CERTIFICATI_CAMPIONE_MAPPING = {
+    CERTIFICATI_CAMPIONE_MAPPING: ClassVar[dict[str, str]] = {
         "Modello / Tipo": "modello",
         "Costruttore": "costruttore",
         "Matricola": "matricola",
@@ -23,24 +24,24 @@ class CertificatiImporter(BaseImporter):
         "Stato Certificato": "stato",
     }
 
-    CERTIFICATI_CAMPIONE_COLS = list(CERTIFICATI_CAMPIONE_MAPPING.values())
+    CERTIFICATI_CAMPIONE_COLS: ClassVar[list[str]] = list(CERTIFICATI_CAMPIONE_MAPPING.values())
 
     @classmethod
     def import_certificati_campione(
         cls,
         file_path: str,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> Tuple[bool, str, List[Tuple]]:
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> tuple[bool, str, list[tuple[Any, ...]]]:
         """Importa il file Certificati Campione e restituisce le righe."""
         path = Path(file_path)
         if not path.exists():
             return False, f"File non trovato: {file_path}", []
 
         try:
-            pd = cls._get_pd()
+            pd_obj = cls._get_pd()
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                xls = pd.ExcelFile(path)
+                xls = pd_obj.ExcelFile(path)
                 sheet_name = cls._find_certificati_sheet(xls)
                 if not sheet_name:
                     return False, "Nessun foglio trovato.", []
@@ -54,7 +55,7 @@ class CertificatiImporter(BaseImporter):
             return False, f"Errore importazione Certificati: {e}", []
 
     @classmethod
-    def _find_certificati_sheet(cls, xls: pd.ExcelFile) -> Optional[str]:
+    def _find_certificati_sheet(cls, xls: pd.ExcelFile) -> str | None:
         """Trova il foglio corretto per i certificati."""
         for name in xls.sheet_names:
             n_low = str(name).lower()
@@ -63,14 +64,12 @@ class CertificatiImporter(BaseImporter):
         return str(xls.sheet_names[0]) if xls.sheet_names else None
 
     @classmethod
-    def _read_certificati_data(
-        cls, path: Path, sheet_name: str
-    ) -> Tuple[pd.DataFrame, int]:
+    def _read_certificati_data(cls, path: Path, sheet_name: str) -> tuple[pd.DataFrame, int]:
         """Legge i dati individuando l'intestazione."""
-        pd = cls._get_pd()
-        df_preview = pd.read_excel(path, sheet_name=sheet_name, header=None, nrows=20)
+        pd_obj = cls._get_pd()
+        df_preview = pd_obj.read_excel(path, sheet_name=sheet_name, header=None, nrows=20)
         header_idx = cls._detect_certificati_header(df_preview)
-        df = pd.read_excel(path, sheet_name=sheet_name, header=header_idx)
+        df = pd_obj.read_excel(path, sheet_name=sheet_name, header=header_idx)
         return df, header_idx
 
     @classmethod
@@ -80,14 +79,13 @@ class CertificatiImporter(BaseImporter):
         max_matches = 0
         target_columns = set(cls.CERTIFICATI_CAMPIONE_MAPPING.keys())
 
-        for i_raw, row in df_preview.iterrows():
-            i = int(str(i_raw))
+        for i, row in df_preview.iterrows():
             row_values = [str(val).strip() for val in row.values]
             matches = sum(1 for col in target_columns if col in row_values)
 
             if matches > max_matches:
                 max_matches = matches
-                header_row_idx = i
+                header_row_idx = int(str(i))
 
         if header_row_idx == -1 or max_matches < 3:
             header_row_idx = 5
@@ -97,9 +95,9 @@ class CertificatiImporter(BaseImporter):
     @classmethod
     def _process_certificati_df(
         cls, df: pd.DataFrame, sheet_name: str, header_row_idx: int
-    ) -> Tuple[bool, str, List[Tuple]]:
+    ) -> tuple[bool, str, list[tuple[Any, ...]]]:
         """Processes the Certificati DataFrame and returns formatted rows."""
-        df.columns = [str(c).strip() for c in df.columns]
+        df.columns = df.columns.astype(str).str.strip()
 
         # 1. Mapping e Validazione Colonne
         rename_map = cls._build_certificati_rename_map(df.columns.tolist())
@@ -113,24 +111,26 @@ class CertificatiImporter(BaseImporter):
 
         df.rename(columns=rename_map, inplace=True)
 
-        # 2. Preparazione Schema
-        df = cls._normalize_certificati_schema(df)
+        # 2. Schema, 3. Formatting, 4. Cleanup
+        df = (
+            cls._apply_certificati_formatting(cls._normalize_certificati_schema(df))
+            .fillna("")
+            .astype(str)
+            .apply(lambda x: x.str.strip())
+        )
 
-        # 3. Formattazione Dati (Date e Stati)
-        df = cls._apply_certificati_formatting(df)
-
-        # 4. Pulizia Finale
-        df = df.fillna("").astype(str).apply(lambda x: x.str.strip())
-        rows = list(df.itertuples(index=False, name=None))
-
-        return True, f"Importate {len(rows)} righe in Certificati Campione.", rows
+        return (
+            True,
+            f"Importate {len(df)} righe in Certificati Campione.",
+            list(df.itertuples(index=False, name=None)),
+        )
 
     @classmethod
-    def _build_certificati_rename_map(cls, columns: List[str]) -> Dict[str, str]:
+    def _build_certificati_rename_map(cls, columns: list[str]) -> dict[str, str]:
         """Costruisce la mappa di rinomina colonne basata sul mapping definito."""
         rename_map = {}
         for col in columns:
-            col_clean = str(col).strip()
+            col_clean = col.strip()
             # Cerca match esatto o parziale nel mapping
             for schema_col, db_col in cls.CERTIFICATI_CAMPIONE_MAPPING.items():
                 if schema_col.lower() == col_clean.lower():
@@ -155,26 +155,26 @@ class CertificatiImporter(BaseImporter):
     @classmethod
     def _apply_certificati_formatting(cls, df: pd.DataFrame) -> pd.DataFrame:
         """Applica formattazione date e calcolo giorni scadenza."""
-        pd = cls._get_pd()
+        pd_obj = cls._get_pd()
 
-        def format_date_it(val):
-            if pd.isna(val) or val == "":
+        def format_date_it(val: Any) -> str:
+            if pd_obj.isna(val) or val == "":
                 return ""
             try:
-                dt = pd.to_datetime(val)
-                return dt.strftime("%d/%m/%Y")
+                dt = pd_obj.to_datetime(val)
+                return str(dt.strftime("%d/%m/%Y"))
             except Exception:
                 return str(val)
 
-        def format_stato(val):
-            if pd.isna(val) or val == "":
+        def format_stato(val: Any) -> str:
+            if pd_obj.isna(val) or val == "":
                 return ""
             try:
                 num = float(val)
-                days = int(round(num))
+                days = round(num)
                 if days > 0:
                     return f"Scade tra {days} giorni"
-                elif days < 0:
+                if days < 0:
                     return f"Scaduto da {abs(days)} giorni"
                 return "Scade oggi"
             except (ValueError, TypeError):

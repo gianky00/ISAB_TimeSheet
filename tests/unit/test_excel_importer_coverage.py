@@ -16,9 +16,7 @@ def importer():
 def test_import_contabilita_file_not_found(importer):
     """Test gestione file inesistente."""
     with patch("src.core.importers.contabilita.Path.exists", return_value=False):
-        success, msg, rows, years = importer.import_contabilita_dati(
-            "non_existent.xlsx"
-        )
+        success, msg, rows, _years = importer.import_contabilita_dati("non_existent.xlsx")
         assert success is False
         assert "non trovato" in msg
         assert rows == []
@@ -106,7 +104,7 @@ def test_import_giornaliere_collection(importer, tmp_path):
     """Test logica raccolta file giornaliere."""
     root = tmp_path / "Giornaliere"
 
-    past_year = root / "Giornaliere 2024"
+    past_year = root / "Giornaliere 2025"
     past_year.mkdir(parents=True)
     (past_year / "valid.xls").touch()
     (past_year / "~$lock.xls").touch()

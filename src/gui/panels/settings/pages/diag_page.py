@@ -1,3 +1,5 @@
+from typing import Any
+
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from src.core import config_manager
@@ -9,11 +11,11 @@ from src.utils.helpers import get_asset_path, get_colored_icon, open_folder
 class DiagPage(QWidget):
     """Pagina Diagnostica e Licenza."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
 
         diag_group = create_group_box("Diagnostica & Licenza")
@@ -27,9 +29,7 @@ class DiagPage(QWidget):
         diag_layout.addStretch()
 
         open_folder_btn = QPushButton("  Apri Cartella Dati")
-        open_folder_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.FOLDER), "#000000")
-        )
+        open_folder_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#000000"))
         open_folder_btn.clicked.connect(self._open_data_folder)
         style_button(open_folder_btn)
         diag_layout.addWidget(open_folder_btn)
@@ -37,13 +37,13 @@ class DiagPage(QWidget):
         layout.addWidget(diag_group)
         layout.addStretch()
 
-    def _open_data_folder(self):
+    def _open_data_folder(self) -> None:
         """Apre la cartella dei dati dell'applicazione."""
         path = config_manager.CONFIG_DIR
         open_folder(str(path))
 
-    def load_from_config(self, config: dict):
+    def load_from_config(self, config: dict[str, Any]) -> None:
         pass  # Nulla da caricare per ora
 
-    def save_to_config(self, config_manager):
+    def save_to_config(self, config_manager: Any) -> None:
         pass  # Nulla da salvare

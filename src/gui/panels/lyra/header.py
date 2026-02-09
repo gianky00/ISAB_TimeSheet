@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QWidget,
 )
 
 from src.core.constants import Icons
@@ -18,14 +19,12 @@ class LyraHeader(QFrame):
     export_chat_clicked = pyqtSignal()
     model_changed = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setStyleSheet(
-            "background-color: #6f42c1; border-radius: 8px; padding: 10px 15px;"
-        )
+        self.setStyleSheet("background-color: #6f42c1; border-radius: 8px; padding: 10px 15px;")
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
@@ -35,7 +34,7 @@ class LyraHeader(QFrame):
 
         self.model_combo = QComboBox()
         self.model_combo.setMinimumWidth(180)
-        self.model_combo.currentTextChanged.connect(self.model_changed.emit)
+        self.model_combo.currentTextChanged.connect(lambda text: self.model_changed.emit(text))
         self.model_combo.setStyleSheet(
             """
             QComboBox {
@@ -51,23 +50,16 @@ class LyraHeader(QFrame):
         layout.addWidget(self.model_combo)
 
         self.refresh_btn = QPushButton()
-        self.refresh_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.REFRESH), "#000000")
-        )
+        self.refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
         self.refresh_btn.setFixedSize(32, 32)
         self.refresh_btn.setIconSize(QSize(18, 18))
-        self.refresh_btn.setStyleSheet(
-            "QPushButton { background-color: transparent; border: none; }"
-        )
-        self.refresh_btn.clicked.connect(self.refresh_models_clicked.emit)
+        self.refresh_btn.setStyleSheet("QPushButton { background-color: transparent; border: none; }")
+        self.refresh_btn.clicked.connect(lambda: self.refresh_models_clicked.emit())
         layout.addWidget(self.refresh_btn)
 
-        layout.addWidget(
-            QLabel(
-                "Esperta Contabile",
-                styleSheet="color: rgba(255,255,255,0.8); margin-left: 10px;",
-            )
-        )
+        subtitle = QLabel("Esperta Contabile")
+        subtitle.setStyleSheet("color: rgba(255,255,255,0.8); margin-left: 10px;")
+        layout.addWidget(subtitle)
         layout.addStretch()
 
         self.export_btn = QPushButton("Esporta Chat")
@@ -84,5 +76,5 @@ class LyraHeader(QFrame):
             QPushButton:hover { background-color: rgba(255,255,255,0.3); }
         """
         )
-        self.export_btn.clicked.connect(self.export_chat_clicked.emit)
+        self.export_btn.clicked.connect(lambda: self.export_chat_clicked.emit())
         layout.addWidget(self.export_btn)

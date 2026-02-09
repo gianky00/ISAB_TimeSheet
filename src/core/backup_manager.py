@@ -9,7 +9,7 @@ import zipfile
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import ClassVar
 
 from src.core.audit_manager import AuditManager
 from src.core.config_manager import CONFIG_DIR, load_config
@@ -24,13 +24,13 @@ class BackupManager:
     """
 
     # Cartelle da escludere dal backup
-    EXCLUDE_DIRS = ["chrome_profile", "logs", "cache"]
+    EXCLUDE_DIRS: ClassVar[list[str]] = ["chrome_profile", "logs", "cache"]
 
     # Estensioni file critici
-    INCLUDE_EXT = [".db", ".json", ".dat"]
+    INCLUDE_EXT: ClassVar[list[str]] = [".db", ".json", ".dat"]
 
     @staticmethod
-    def detect_cloud_paths() -> Dict[str, Path]:
+    def detect_cloud_paths() -> dict[str, Path]:
         """Rileva le cartelle dei servizi cloud installati."""
         paths = {}
 
@@ -50,10 +50,10 @@ class BackupManager:
         return paths
 
     @staticmethod
-    def _detect_onedrive() -> Optional[Path]:
+    def _detect_onedrive() -> Path | None:
         """Rileva percorso OneDrive."""
         user_home = Path.home()
-        onedrive_env = os.environ.get("OneDrive")
+        onedrive_env = os.environ.get("ONEDRIVE")
         if onedrive_env and Path(onedrive_env).is_dir():
             return Path(onedrive_env)
         if (user_home / "OneDrive").is_dir():
@@ -61,7 +61,7 @@ class BackupManager:
         return None
 
     @staticmethod
-    def _detect_gdrive() -> Optional[Path]:
+    def _detect_gdrive() -> Path | None:
         """Rileva percorso Google Drive."""
         for drive in ("G:/Il mio Drive", "G:/My Drive", "G:/"):
             if Path(drive).exists():
@@ -72,7 +72,7 @@ class BackupManager:
         return None
 
     @staticmethod
-    def _detect_dropbox() -> Optional[Path]:
+    def _detect_dropbox() -> Path | None:
         """Rileva percorso Dropbox."""
         user_home = Path.home()
         for db_path in (
@@ -85,7 +85,7 @@ class BackupManager:
         return None
 
     @staticmethod
-    def _detect_mega() -> Optional[Path]:
+    def _detect_mega() -> Path | None:
         """Rileva percorso MEGA."""
         user_home = Path.home()
         mega_path = user_home / "MEGAsync"
@@ -102,9 +102,7 @@ class BackupManager:
         clouds = BackupManager.detect_cloud_paths()
 
         # 1. Check user preference first
-        preferred = config.get(
-            "backup_cloud_provider"
-        )  # e.g. "OneDrive", "Google Drive", "Local"
+        preferred = config.get("backup_cloud_provider")  # e.g. "OneDrive", "Google Drive", "Local"
 
         if preferred and preferred in clouds:
             target = clouds[preferred] / "SyncroJob_Backups"
@@ -121,7 +119,7 @@ class BackupManager:
             target = clouds["OneDrive"] / "SyncroJob_Backups"
         elif clouds:
             # Get the first available cloud provider
-            target = list(clouds.values())[0] / "SyncroJob_Backups"
+            target = next(iter(clouds.values())) / "SyncroJob_Backups"
         else:
             # Fallback to local documents if no cloud provider found
             target = Path.home() / "Documents" / "SyncroJob_Backups"
@@ -131,7 +129,7 @@ class BackupManager:
         return target
 
     @staticmethod
-    def create_backup() -> Tuple[bool, str]:
+    def create_backup() -> tuple[bool, str]:
         """Crea un backup completo dei dati."""
         try:
             source_dir = CONFIG_DIR
@@ -144,8 +142,9 @@ class BackupManager:
             file_count = 0
 
             with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+                # Usiamo os.walk per massima compatibilità con filesystem simulati e reali
                 for root, dirs, files in os.walk(source_dir):
-                    # Escludi cartelle non necessarie
+                    # Filtra directory escluse
                     dirs[:] = [d for d in dirs if d not in BackupManager.EXCLUDE_DIRS]
 
                     for file in files:
@@ -172,10 +171,10 @@ class BackupManager:
                 BackupManager._cleanup_old_backups(target_dir)
 
                 return True, str(zip_path)
-            else:
-                if zip_path.exists():
-                    zip_path.unlink()
-                return False, "Nessun file da backuppare trovato."
+
+            if zip_path.exists():
+                zip_path.unlink()
+            return False, "Nessun file da backuppare trovato."
 
         except Exception as e:
             logger.error(f"Backup Error: {e}")
@@ -200,7 +199,7 @@ class BackupManager:
         with suppress(Exception):
             backups = sorted(
                 target_dir.glob("SyncroJob_Backup_*.zip"),
-                key=os.path.getmtime,
+                key=lambda p: p.stat().st_mtime,
                 reverse=True,
             )
             for old_backup in backups[keep:]:
@@ -208,7 +207,7 @@ class BackupManager:
                     old_backup.unlink()
 
     @staticmethod
-    def list_backups() -> List[Path]:
+    def list_backups() -> list[Path]:
         """Restituisce la lista dei backup disponibili ordinati per data (più recente prima)."""
         try:
             target_dir = BackupManager.get_backup_dir()
@@ -216,7 +215,7 @@ class BackupManager:
                 return []
             return sorted(
                 target_dir.glob("SyncroJob_Backup_*.zip"),
-                key=os.path.getmtime,
+                key=lambda p: p.stat().st_mtime,
                 reverse=True,
             )
         except Exception as e:
@@ -224,24 +223,25 @@ class BackupManager:
             return []
 
     @staticmethod
-    def restore_backup(zip_path: str) -> Tuple[bool, str]:
+    def restore_backup(zip_path: str) -> tuple[bool, str]:
         """Ripristina un backup sovrascrivendo i dati attuali."""
         try:
-            if not Path(zip_path).exists():
+            zip_p = Path(zip_path)
+            if not zip_p.exists():
                 return False, "File di backup non trovato."
 
             # Verifica validità zip
-            if not zipfile.is_zipfile(zip_path):
+            if not zipfile.is_zipfile(zip_p):
                 return False, "File non valido o corrotto."
 
             # Estrazione sicura
-            with zipfile.ZipFile(zip_path, "r") as zipf:
+            with zipfile.ZipFile(zip_p, "r") as zipf:
                 zipf.extractall(CONFIG_DIR)
 
             AuditManager.instance().log_action(
                 "Ripristino Backup",
                 category="sistema",
-                params={"file": Path(zip_path).name},
+                params={"file": zip_p.name},
                 severity="high",
             )
             return True, "Ripristino completato. Riavviare l'applicazione."

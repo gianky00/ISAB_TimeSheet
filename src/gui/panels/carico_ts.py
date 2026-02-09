@@ -4,7 +4,7 @@ Pannello per il bot Carico TS.
 """
 
 import traceback
-from typing import Any, Dict, Optional
+from typing import Any
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QVBoxLayout
@@ -94,16 +94,13 @@ class CaricoTSPanel(BaseBotPanel):
 
     def _load_saved_data(self):
         """Carica i dati salvati."""
-        config = config_manager.load_config()
-        saved_data = config.get("last_carico_ts_data", [])
+        saved_data = config_manager.load_config().get("last_carico_ts_data", [])
         if saved_data:
             self.data_table.set_data(saved_data)
 
     def _clear_table(self):
         """Pulisce la tabella."""
-        if ConfirmationDialog.confirm(
-            self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?"
-        ):
+        if ConfirmationDialog.confirm(self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?"):
             self.data_table.set_data([])
             self._save_data()
 
@@ -124,15 +121,13 @@ class CaricoTSPanel(BaseBotPanel):
         data = self.data_table.get_data()
         config_manager.set_config_value("last_carico_ts_data", data)
 
-    def _on_start(self, params_override: Optional[Dict[str, Any]] = None):
+    def _on_start(self, params_override: dict[str, Any] | None = None):
         """Avvia il bot Carico TS."""
         super()._on_start(params_override)
         username, password = self.get_credentials()
 
         if not username or not password:
-            ToastManager.instance().show(
-                "Configura le credenziali ISAB nelle Impostazioni.", "warning"
-            )
+            ToastManager.instance().show("Configura le credenziali ISAB nelle Impostazioni.", "warning")
             self._update_status("#C62828", "Credenziali mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)

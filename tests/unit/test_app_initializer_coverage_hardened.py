@@ -13,9 +13,7 @@ class TestAppInitializerHardened:
     def mock_deps(self, mocker):
         return {
             "db_manager": mocker.patch("src.core.database.db_manager"),
-            "get_status": mocker.patch(
-                "src.core.license_validator.get_detailed_license_status"
-            ),
+            "get_status": mocker.patch("src.core.license_validator.get_detailed_license_status"),
             "run_update": mocker.patch("src.core.license_updater.run_update"),
             "setup_logging": mocker.patch.object(AppInitializer, "_setup_logging"),
             "exit": mocker.patch("sys.exit"),

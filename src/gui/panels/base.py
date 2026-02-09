@@ -6,7 +6,7 @@ Classi base e worker per i pannelli dei bot.
 import threading
 import traceback
 from datetime import datetime
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -86,7 +86,7 @@ class BotWorker(QThread):
         Returns:
             str: Il valore inserito dall'utente.
         """
-        result_container: Dict[str, str] = {}
+        result_container: dict[str, str] = {}
         event = threading.Event()
         self.request_input_signal.emit(prompt, result_container, event)
         event.wait()
@@ -108,9 +108,7 @@ class BaseBotPanel(QWidget):
     bot_started = pyqtSignal()
     bot_stopped = pyqtSignal()
     bot_finished = pyqtSignal(bool)
-    bot_results_ready = pyqtSignal(
-        str, list
-    )  # bot_id, list of results (e.g. file paths)
+    bot_results_ready = pyqtSignal(str, list)  # bot_id, list of results (e.g. file paths)
     status_changed = pyqtSignal(str, str)  # status, message
 
     def __init__(self, bot_id: str, bot_name: str, bot_description: str, parent=None):
@@ -128,17 +126,15 @@ class BaseBotPanel(QWidget):
         self.bot_name = bot_name
         self.bot_description = bot_description
 
-        self.worker: Optional[BotWorker] = None
-        self.start_time: Optional[datetime] = None
+        self.worker: BotWorker | None = None
+        self.start_time: datetime | None = None
         self._setup_ui()
         self._connect_signals()
 
     def _setup_base_ui(self):
         """Inizializza l'interfaccia utente di base comune a tutti i pannelli bot."""
         self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(
-            Spacing.md, Spacing.md, Spacing.md, Spacing.md
-        )
+        self.main_layout.setContentsMargins(Spacing.md, Spacing.md, Spacing.md, Spacing.md)
         self.main_layout.setSpacing(Spacing.md)
 
         # Status Card (Model only, not in layout)
@@ -207,13 +203,11 @@ class BaseBotPanel(QWidget):
 
     def _connect_signals(self):
         """Connette i segnali comuni ai callback del pannello."""
-        pass
 
     def get_bot_instance(self):
         """Restituisce un'istanza del bot. Da implementare nelle sottoclassi."""
-        return None
 
-    def get_current_status(self) -> Tuple[str, str]:
+    def get_current_status(self) -> tuple[str, str]:
         """Restituisce lo stato attuale della card (id, messaggio)."""
         return self.status_card._status, self.status_card._status_label.text()
 
@@ -225,7 +219,7 @@ class BaseBotPanel(QWidget):
         """
         return True, ""
 
-    def run_externally(self, params: Optional[Dict[str, Any]] = None):
+    def run_externally(self, params: dict[str, Any] | None = None):
         """
         Avvia il bot programmaticamente con parametri opzionali che sovrascrivono quelli UI.
 
@@ -234,7 +228,7 @@ class BaseBotPanel(QWidget):
         """
         self._on_start(params_override=params)
 
-    def add_rows_simple(self, new_rows: list):
+    def add_rows_simple(self, new_rows: list[Any]):
         """Aggiunge righe alla tabella dati esistente (se presente)."""
         if hasattr(self, "data_table"):
             current_data = self.data_table.get_data()
@@ -256,7 +250,7 @@ class BaseBotPanel(QWidget):
             return len(self.data_table.get_data())
         return 0
 
-    def _on_start(self, params_override: Optional[Dict[str, Any]] = None):
+    def _on_start(self, params_override: dict[str, Any] | None = None):
         """Gestisce l'avvio del bot. Da implementare nelle sottoclassi."""
         self.start_time = datetime.now()
         self.log_widget.timeline.set_mood("running")
@@ -311,11 +305,7 @@ class BaseBotPanel(QWidget):
         report = MissionReportCard(duration, success)
         self.log_widget.timeline.add_widget(report)
 
-        dettagli = (
-            "Esecuzione completata correttamente"
-            if success
-            else "Esecuzione fallita o interrotta"
-        )
+        dettagli = "Esecuzione completata correttamente" if success else "Esecuzione fallita o interrotta"
 
         AuditManager.instance().log_action(
             action="Completamento Automazione",
@@ -327,11 +317,8 @@ class BaseBotPanel(QWidget):
 
     def _handle_worker_completion_signals(self, success: bool):
         """Invia segnali e gestisce risultati per Telegram."""
-        if self.worker and hasattr(self.worker.bot, "downloaded_files"):
-            if self.worker.bot.downloaded_files:
-                self.bot_results_ready.emit(
-                    self.bot_id, self.worker.bot.downloaded_files
-                )
+        if self.worker and hasattr(self.worker.bot, "downloaded_files") and self.worker.bot.downloaded_files:
+            self.bot_results_ready.emit(self.bot_id, self.worker.bot.downloaded_files)
         self.bot_finished.emit(success)
 
     def _notify_completion(self, success: bool):
@@ -384,9 +371,7 @@ class BaseBotPanel(QWidget):
         # Using current status enum, but updating message
         self.status_changed.emit(self.status_card._status, status)
 
-    def _ask_user_input(
-        self, prompt: str, result_container: dict, event: threading.Event
-    ):
+    def _ask_user_input(self, prompt: str, result_container: dict[str, Any], event: threading.Event):
         """Callback per input utente dal worker (thread-safe via signal)."""
         text, ok = StandardInputDialog.get_input(self, "Richiesta Input", prompt)
         if ok:
@@ -395,7 +380,7 @@ class BaseBotPanel(QWidget):
             result_container["value"] = ""
         event.set()
 
-    def get_credentials(self) -> tuple:
+    def get_credentials(self) -> tuple[str, str]:
         """Ottiene le credenziali dall'account di default."""
         account = config_manager.get_default_account()
         if account:

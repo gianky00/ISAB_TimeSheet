@@ -1,31 +1,36 @@
 import io
 import json
+import logging
 import re
 import warnings
 import zipfile
+from collections.abc import Callable
+from contextlib import suppress
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, ClassVar
 
 try:
-    import msoffcrypto  # type: ignore
+    import msoffcrypto
 except ImportError:
     msoffcrypto = None
 
 try:
-    import openpyxl  # type: ignore
+    import openpyxl  # type: ignore[import-untyped]
 
     HAS_OPENPYXL = True
 except ImportError:
-    openpyxl = None  # type: ignore
+    openpyxl = None
     HAS_OPENPYXL = False
 
 from src.core.importers.base import BaseImporter
+
+logger = logging.getLogger(__name__)
 
 
 class ScaricoOreImporter(BaseImporter):
     """Importer per lo Scarico Ore Cantiere (con OpenPyXL per stili)."""
 
-    SCARICO_ORE_COLS = [
+    SCARICO_ORE_COLS: ClassVar[list[str]] = [
         "data",
         "pers1",
         "pers2",
@@ -46,7 +51,7 @@ class ScaricoOreImporter(BaseImporter):
         if not path.exists():
             return 0
 
-        def _scan_zip(zip_file_obj):
+        def _scan_zip(zip_file_obj: Any) -> int:
             try:
                 cnt = 0
                 with zipfile.ZipFile(zip_file_obj, "r") as z:
@@ -54,9 +59,7 @@ class ScaricoOreImporter(BaseImporter):
                         if name.startswith("xl/worksheets/sheet"):
                             with z.open(name) as f:
                                 head = f.read(32768).decode("utf-8", errors="ignore")
-                                match = re.search(
-                                    r'<dimension ref="[A-Z]+[0-9]+:[A-Z]+(\d+)"', head
-                                )
+                                match = re.search(r'<dimension ref="[A-Z]+[0-9]+:[A-Z]+(\d+)"', head)
                                 if match:
                                     r = int(match.group(1))
                                     if r > cnt:
@@ -69,20 +72,18 @@ class ScaricoOreImporter(BaseImporter):
             res = _scan_zip(path)
             if res > 0:
                 return res
-        except (zipfile.BadZipFile, Exception):
-            pass
+        except (zipfile.BadZipFile, Exception) as e:
+            logger.debug(f"Scan excel rows error: {e}")
 
         if msoffcrypto:
-            try:
+            with suppress(Exception):
                 decrypted = io.BytesIO()
-                with open(path, "rb") as f:
+                with path.open("rb") as f:
                     office_file = msoffcrypto.OfficeFile(f)
-                    office_file.load_key(password="coemi")
+                    office_file.load_key(password="coemi")  # noqa: S106 # nosec: B106
                     office_file.decrypt(decrypted)
                 decrypted.seek(0)
                 return _scan_zip(decrypted)
-            except Exception:
-                return 0
 
         return 0
 
@@ -90,8 +91,8 @@ class ScaricoOreImporter(BaseImporter):
     def import_scarico_ore(
         cls,
         file_path: str,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> Tuple[bool, str, List[Tuple]]:
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> tuple[bool, str, list[tuple[Any, ...]]]:
         path = Path(file_path)
         if not path.exists():
             return False, f"File Scarico Ore non trovato: {file_path}", []
@@ -118,17 +119,14 @@ class ScaricoOreImporter(BaseImporter):
         is_encrypted = False
 
         if msoffcrypto:
-            try:
-                with open(path, "rb") as f:
-                    office_file = msoffcrypto.OfficeFile(f)
-                    office_file.load_key(password="coemi")
-                    office_file.decrypt(wb_file)
-                    is_encrypted = True
-            except Exception:
-                pass
+            with suppress(Exception), path.open("rb") as f:
+                office_file = msoffcrypto.OfficeFile(f)
+                office_file.load_key(password="coemi")  # noqa: S106 # nosec: B106
+                office_file.decrypt(wb_file)
+                is_encrypted = True
 
         if not is_encrypted:
-            with open(path, "rb") as f:
+            with path.open("rb") as f:
                 wb_file.write(f.read())
 
         wb_file.seek(0)
@@ -145,9 +143,9 @@ class ScaricoOreImporter(BaseImporter):
     @classmethod
     def _process_all_scarico_rows(
         cls,
-        ws,
-        progress_callback: Optional[Callable],
-    ) -> List[Tuple]:
+        ws: Any,
+        progress_callback: Callable[[int, int], None] | None,
+    ) -> list[tuple[Any, ...]]:
         start_row = 6
         col_keys = [
             "data",
@@ -162,9 +160,9 @@ class ScaricoOreImporter(BaseImporter):
             "finito",
             "commessa",
         ]
-        total_rows = ws.max_row
+        total_rows: int = ws.max_row
 
-        rows_to_insert: List[Tuple] = []
+        rows_to_insert: list[tuple[Any, ...]] = []
         rows_to_insert_append = rows_to_insert.append
 
         progress_interval = 5000
@@ -182,7 +180,7 @@ class ScaricoOreImporter(BaseImporter):
         return rows_to_insert
 
     @classmethod
-    def _extract_row_values(cls, row) -> Optional[List[str]]:
+    def _extract_row_values(cls, row: Any) -> list[str] | None:
         (
             c_data,
             c_p1,
@@ -200,10 +198,10 @@ class ScaricoOreImporter(BaseImporter):
         v_odc = c_odc.value
         v_pos = c_pos.value
 
-        if v_odc is None and v_pos is None:
+        if v_odc is v_pos is None:
             return None
 
-        def _fmt(val):
+        def _fmt(val: Any) -> str:
             if val is None:
                 return ""
             s = str(val).strip()
@@ -222,35 +220,38 @@ class ScaricoOreImporter(BaseImporter):
                 s_data = s
         vals.append(s_data)
 
-        vals.append(_fmt(c_p1.value))
-        vals.append(_fmt(c_p2.value))
+        vals.extend((_fmt(c_p1.value), _fmt(c_p2.value)))
 
         s_odc = _fmt(v_odc)
-        if s_odc == "0" or s_odc == "0.0":
+        if s_odc in ("0", "0.0"):
             s_odc = ""
         vals.append(s_odc)
 
         s_pos = _fmt(v_pos)
-        if s_pos == "0" or s_pos == "0.0":
+        if s_pos in ("0", "0.0"):
             s_pos = ""
         vals.append(s_pos)
 
-        vals.append(_fmt(c_dalle.value))
-        vals.append(_fmt(c_alle.value))
-        vals.append(_fmt(c_tot.value))
-        vals.append(_fmt(c_desc.value))
-        vals.append(_fmt(c_fin.value))
+        vals.extend(
+            (
+                _fmt(c_dalle.value),
+                _fmt(c_alle.value),
+                _fmt(c_tot.value),
+                _fmt(c_desc.value),
+                _fmt(c_fin.value),
+            )
+        )
 
         v_comm = c_comm.value
         s_comm = _fmt(v_comm)
-        if s_comm == "0" or s_comm == "0.0":
+        if s_comm in ("0", "0.0"):
             s_comm = ""
         vals.append(s_comm)
 
         return vals
 
     @classmethod
-    def _process_scarico_ore_row(cls, row, col_keys) -> Optional[Tuple]:
+    def _process_scarico_ore_row(cls, row: Any, col_keys: list[str]) -> tuple[Any, ...] | None:
         vals = cls._extract_row_values(row)
         if not vals:
             return None
@@ -276,32 +277,28 @@ class ScaricoOreImporter(BaseImporter):
         )
 
     @staticmethod
-    def _validate_scarico_row(vals) -> bool:
+    def _validate_scarico_row(vals: list[str]) -> bool:
         if not vals[3] or not vals[4] or not vals[7]:
             return False
-        if not vals[1] and not vals[2]:
-            return False
-        return True
+        return bool(vals[1] or vals[2])
 
     @staticmethod
-    def _extract_row_styles(row, col_keys, vals) -> str:
-        row_styles: Dict[str, Dict[str, str]] = {}
+    def _extract_row_styles(row: Any, col_keys: list[str], vals: list[str]) -> str:
+        row_styles: dict[str, dict[str, str]] = {}
         for i, key in enumerate(col_keys):
             if vals[i] == "":
                 continue
 
             cell = row[i]
-            try:
+            with suppress(AttributeError, TypeError):
                 font = cell.font
                 if font and font.color and font.color.type == "rgb":
                     rgb = str(font.color.rgb)
                     hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
                     if hex_code != "#000000":
                         row_styles.setdefault(key, {})["fg"] = hex_code
-            except (AttributeError, TypeError):
-                pass
 
-            try:
+            with suppress(AttributeError, TypeError):
                 fill = cell.fill
                 if fill and fill.patternType == "solid":
                     start_color = fill.start_color
@@ -310,7 +307,5 @@ class ScaricoOreImporter(BaseImporter):
                         hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
                         if hex_code != "#000000" and hex_code != "#FFFFFF":
                             row_styles.setdefault(key, {})["bg"] = hex_code
-            except (AttributeError, TypeError):
-                pass
 
         return json.dumps(row_styles) if row_styles else ""

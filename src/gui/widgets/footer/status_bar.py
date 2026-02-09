@@ -7,7 +7,9 @@ from src.gui.widgets.animated_progress_bar import AnimatedProgressBar
 class FooterRightWidget(QWidget):
     """Parte destra del footer: contiene Progress Bar e Status Cards Bot."""
 
-    def __init__(self, status_portale, status_safework, parent=None):
+    def __init__(
+        self, status_portale: QWidget, status_safework: QWidget, parent: QWidget | None = None
+    ) -> None:
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 15, 0)
@@ -30,18 +32,18 @@ class FooterRightWidget(QWidget):
         layout.addWidget(status_portale)
         layout.addWidget(status_safework)
 
-    def set_global_progress(self, value: int):
+    def set_global_progress(self, value: int) -> None:
         value = max(0, min(value, 100))
         self.progress_bar.setValue(value)
         self.progress_label.setText(f"{value}%")
 
-    def show_loading(self):
+    def show_loading(self) -> None:
         self.progress_bar.setVisible(True)
         self.progress_label.setVisible(True)
         self.status_portale.setVisible(False)
         self.status_safework.setVisible(False)
 
-    def show_operational(self):
+    def show_operational(self) -> None:
         self.progress_bar.setVisible(False)
         self.progress_label.setVisible(False)
         self.status_portale.setVisible(True)

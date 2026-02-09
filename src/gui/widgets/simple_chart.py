@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QRectF, Qt
-from PyQt6.QtGui import QColor, QFont, QPainter, QPen
+from PyQt6.QtGui import QColor, QFont, QPainter, QPaintEvent, QPen
 from PyQt6.QtWidgets import (
     QLabel,
     QVBoxLayout,
@@ -12,18 +12,18 @@ class DonutChart(QWidget):
     Grafico a ciambella leggero disegnato con QPainter.
     """
 
-    def __init__(self, title="Success Rate", parent=None):
+    def __init__(self, title: str = "Success Rate", parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.title = title
         self.values = [0, 0]  # [Success, Error]
         self.colors = [QColor("#198754"), QColor("#dc3545")]  # Green, Red
         self.setMinimumSize(200, 200)
 
-    def set_data(self, success_count, error_count):
+    def set_data(self, success_count: int, error_count: int) -> None:
         self.values = [success_count, error_count]
         self.update()  # Trigger repaint
 
-    def paintEvent(self, event):
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
@@ -32,11 +32,11 @@ class DonutChart(QWidget):
         height = rect.height()
 
         # Center coordinates
-        center_x = width / 2
-        center_y = height / 2 + 10  # Offset for title
+        center_x = width / 2.0
+        center_y = height / 2.0 + 10.0  # Offset for title
 
         size = min(width, height) * 0.7
-        rect_f = QRectF(center_x - size / 2, center_y - size / 2, size, size)
+        rect_f = QRectF(center_x - size / 2.0, center_y - size / 2.0, size, size)
 
         total = sum(self.values)
         if total == 0:
@@ -50,17 +50,18 @@ class DonutChart(QWidget):
             painter.setPen(QColor("#adb5bd"))
             painter.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
             painter.drawText(rect_f, Qt.AlignmentFlag.AlignCenter, "N/A")
+            painter.end()
             return
 
         start_angle = 90 * 16  # Start at 12 o'clock, units in 1/16th of degree
 
         # Draw segments
-        current_angle = start_angle
+        current_angle = float(start_angle)
         for i, val in enumerate(self.values):
             if val == 0:
                 continue
 
-            span_angle = -(val / total) * 360 * 16
+            span_angle = -(val / total) * 360.0 * 16.0
 
             pen = QPen(self.colors[i])
             pen.setWidth(15)
@@ -78,10 +79,11 @@ class DonutChart(QWidget):
 
         # Draw Subtext
         sub_rect = QRectF(rect_f)
-        sub_rect.moveTop(rect_f.top() + 40)
+        sub_rect.moveTop(rect_f.top() + 40.0)
         painter.setPen(QColor("#6c757d"))
         painter.setFont(QFont("Segoe UI", 10))
         painter.drawText(sub_rect, Qt.AlignmentFlag.AlignCenter, "Successo")
+        painter.end()
 
         # Draw Legend below
         # (Simplified: just relying on colors matching existing UI semantics)
@@ -90,7 +92,7 @@ class DonutChart(QWidget):
 class StatCard(QWidget):
     """Container per il grafico con titolo."""
 
-    def __init__(self, title, parent=None):
+    def __init__(self, title: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)

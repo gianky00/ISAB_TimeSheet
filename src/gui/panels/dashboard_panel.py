@@ -1,6 +1,7 @@
 import os
+from contextlib import suppress
 
-from PyQt6.QtCore import (  # type: ignore
+from PyQt6.QtCore import (
     Qt,
     QTimer,
 )
@@ -23,9 +24,19 @@ class DashboardPanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(0)
+        # Widget members (Strict Typing - Option D)
+        self.main_container: QFrame
+        self.container_layout: QVBoxLayout
+        self.scroll_area: QScrollArea
+        self.content_widget: QWidget
+        self.content_layout: QVBoxLayout
+        self.quick_actions: QuickActions
+        self.autopilot_widget: AutopilotWidget
+        self.activity_feed: ActivityFeed
+
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
 
         # Main Floating Container
         self.main_container = QFrame()
@@ -66,10 +77,9 @@ class DashboardPanel(QWidget):
         self.scroll_area.setWidget(self.content_widget)
         self.container_layout.addWidget(self.scroll_area)
 
-        self.layout.addWidget(self.main_container)
+        self.main_layout.addWidget(self.main_container)
 
         # SubWidgets references
-        self.activity_feed = None
         self.chart = None
 
         self._setup_ui()
@@ -116,9 +126,7 @@ class DashboardPanel(QWidget):
 
         # 2. Activity Feed (Bottom)
         subtitle = QLabel("Feed Attività")
-        subtitle.setStyleSheet(
-            "font-size: 16px; font-weight: 700; color: #6c757d; margin-top: 20px;"
-        )
+        subtitle.setStyleSheet("font-size: 16px; font-weight: 700; color: #6c757d; margin-top: 20px;")
         self.content_layout.addWidget(subtitle)
 
         self.activity_feed = ActivityFeed()
@@ -130,8 +138,8 @@ class DashboardPanel(QWidget):
     def _navigate_to(self, key):
         """Naviga alla tab specificata."""
         main_window = self.window()
-        if hasattr(main_window, "navigate_to_panel"):
-            main_window.navigate_to_panel(key)
+        if main_window is not None and hasattr(main_window, "navigate_to_panel"):
+            main_window.navigate_to_panel(key)  # dynamic dispatch via hasattr
 
     def _handle_quick_action(self, key):
         """Gestisce i click delle azioni rapide con navigazione completa."""
@@ -152,13 +160,13 @@ class DashboardPanel(QWidget):
         if key == "cmd_sync":
             self.refresh_data()
             return True
-        elif key == "cmd_open_folder":
+        if key == "cmd_open_folder":
             from src.core.config_manager import BASE_DIR
 
             output_dir = BASE_DIR / "output"
             output_dir.mkdir(exist_ok=True)
             if os.name == "nt":
-                os.startfile(output_dir)
+                os.startfile(output_dir)  # noqa: S606
             else:
                 import subprocess
 
@@ -198,7 +206,7 @@ class DashboardPanel(QWidget):
         if key.startswith("nav_sub_strumentale_"):
             return self._handle_strumentale_subtabs(key, main_window)
 
-        if key == "nav_page_2" or key == "nav_lyra_ask":
+        if key in ("nav_page_2", "nav_lyra_ask"):
             if hasattr(main_window, "_navigate_to"):
                 main_window._navigate_to(2)
 
@@ -211,8 +219,7 @@ class DashboardPanel(QWidget):
 
     def _handle_strumentale_subtabs(self, key, main_window) -> bool:
         """Helper per tab strumentale."""
-
-        try:
+        with suppress(ValueError):
             tab_idx = int(key.split("_")[-1])
 
             if hasattr(main_window, "_navigate_to"):
@@ -220,27 +227,18 @@ class DashboardPanel(QWidget):
 
                 QTimer.singleShot(
                     100,
-                    lambda: self._switch_tab_safe(
-                        main_window, "contabilita_panel", tab_idx
-                    ),
+                    lambda: self._switch_tab_safe(main_window, "contabilita_panel", tab_idx),
                 )
-
-        except ValueError:
-            pass
 
         return True
 
     def _handle_notifications_subtabs(self, key, main_window) -> bool:
         """Helper per tab notifiche."""
-
-        try:
+        with suppress(ValueError):
             tab_idx = int(key.split("_")[-1])
 
             if hasattr(main_window, "_handle_notifications_tab_change"):
                 main_window._handle_notifications_tab_change(tab_idx)
-
-        except ValueError:
-            pass
 
         return True
 
@@ -258,9 +256,7 @@ class DashboardPanel(QWidget):
                 main_window._navigate_to(7)
                 QTimer.singleShot(
                     100,
-                    lambda: self._switch_tab_safe(
-                        main_window, "settings_panel", tab_idx
-                    ),
+                    lambda: self._switch_tab_safe(main_window, "settings_panel", tab_idx),
                 )
             return True
         return False
@@ -268,36 +264,28 @@ class DashboardPanel(QWidget):
     def _handle_navigation_fallback(self, key, main_window):
         """Gestisce navigazione generica di fallback."""
         if key.startswith("nav_page_"):
-            try:
+            with suppress(ValueError):
                 page_idx = int(key.split("_")[-1])
                 if hasattr(main_window, "_navigate_to"):
                     main_window._navigate_to(page_idx)
-            except ValueError:
-                pass
 
         elif key.startswith("nav_sub_timbrature_"):
             # Timbrature Sub-Tabs
-            try:
+            with suppress(ValueError):
                 tab_idx = int(key.split("_")[-1])
                 if hasattr(main_window, "_navigate_to"):
                     main_window._navigate_to(3)  # Timbrature Page
                     QTimer.singleShot(
                         100,
-                        lambda: self._switch_tab_safe(
-                            main_window, "timbrature_db_panel", tab_idx
-                        ),
+                        lambda: self._switch_tab_safe(main_window, "timbrature_db_panel", tab_idx),
                     )
-            except ValueError:
-                pass
 
         elif key.startswith("nav_sub_automazioni_"):
             # Automazioni Sub-tabs (legacy)
-            try:
+            with suppress(ValueError):
                 tab_idx = int(key.split("_")[-1])
                 if hasattr(main_window, "_handle_automation_tab_change"):
                     main_window._handle_automation_tab_change(tab_idx)
-            except ValueError:
-                pass
 
     def _switch_tab_safe(self, main_window, panel_attr, tab_idx):
         """Helper to switch tabs on a target panel if it exists."""

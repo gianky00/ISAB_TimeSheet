@@ -3,7 +3,7 @@ SyncroJob - Carico TS Bot
 Bot for Carico TS using POM.
 """
 
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from src.bots.base import BaseBot
 from src.bots.portale_fornitori.carico_ts.pages.carico_ts_page import CaricoTSPage
@@ -25,7 +25,7 @@ class CaricoTSBot(BaseBot):
         return "Caricamento automatico timesheet"
 
     @staticmethod
-    def get_columns() -> list:
+    def get_columns() -> list[dict[str, Any]]:
         """Definisce le colonne richieste per l'input dei dati."""
         # Full list from original code
         return [
@@ -55,7 +55,7 @@ class CaricoTSBot(BaseBot):
     def description(self) -> str:
         return "Caricamento automatico timesheet"
 
-    def validate_data(self, data: List[Dict[str, Any]]) -> Tuple[bool, str]:
+    def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """Validazione specifica per Carico TS."""
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:
@@ -71,7 +71,7 @@ class CaricoTSBot(BaseBot):
 
         return True, ""
 
-    def run(self, data: List[Dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]]) -> bool:
         """Esegue il processo di caricamento dei Timesheet per ogni riga di dati."""
         # Il driver è garantito da execute()
         rows = data if isinstance(data, list) else data.get("rows", [])
@@ -84,7 +84,6 @@ class CaricoTSBot(BaseBot):
 
         if not self.driver:
             return False
-        assert self.driver
 
         page = CaricoTSPage(self.driver, self.log)
 

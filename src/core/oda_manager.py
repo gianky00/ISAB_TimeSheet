@@ -3,7 +3,8 @@ SyncroJob - Oda Manager
 Gestione dell'importazione e archiviazione Storico OdA.
 """
 
-from typing import Any, Callable, List, Optional, Tuple
+from collections.abc import Callable
+from typing import Any
 
 from src.core.config_manager import CONFIG_DIR
 from src.core.data_synchronizer import DataSynchronizer
@@ -22,7 +23,7 @@ class OdaManager:
         db_manager.init_db()
 
     @classmethod
-    def get_all_oda(cls, search_text: Optional[str] = None) -> List[Tuple[Any, ...]]:
+    def get_all_oda(cls, search_text: str | None = None) -> list[tuple[Any, ...]]:
         """
         Recupera tutti gli OdA dal database, opzionalmente filtrati.
         L'ordine delle colonne restituito corrisponde a quello originale del branch main.
@@ -93,8 +94,8 @@ class OdaManager:
     def import_oda_from_excel(
         cls,
         file_path: str,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> Tuple[bool, str, int, int]:
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> tuple[bool, str, int, int]:
         """Importa i dati dal file Excel Storico OdA."""
         import time
 
@@ -102,15 +103,11 @@ class OdaManager:
 
         start_time = time.time()
 
-        success, message, imported_rows = ExcelImporter.import_storico_oda(
-            file_path, progress_callback
-        )
+        success, message, imported_rows = ExcelImporter.import_storico_oda(file_path, progress_callback)
         if not success:
             return False, message, 0, 0
 
-        total_added, total_removed = DataSynchronizer.sync_storico_oda(
-            cls.DB_PATH, imported_rows
-        )
+        total_added, total_removed = DataSynchronizer.sync_storico_oda(cls.DB_PATH, imported_rows)
 
         duration = time.time() - start_time
         SyncTracker.update_status("storico_oda", total_added, total_removed, duration)

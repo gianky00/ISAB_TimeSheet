@@ -68,7 +68,7 @@ class TestTimesheetProcessorRobust:
         wb.save(file_path)
         wb.close()
 
-        success, msg = TimesheetProcessor.process_and_move(file_path, dest_dir)
+        success, _msg = TimesheetProcessor.process_and_move(file_path, dest_dir)
 
         assert success is True
         expected_file = dest_dir / "ODC999_TS.xlsx"
@@ -76,9 +76,7 @@ class TestTimesheetProcessorRobust:
 
     def test_file_not_found(self, dest_dir):
         """Test file inesistente."""
-        success, msg = TimesheetProcessor.process_and_move(
-            Path("non_existent.xlsx"), dest_dir
-        )
+        success, msg = TimesheetProcessor.process_and_move(Path("non_existent.xlsx"), dest_dir)
         assert success is False
         assert "non trovato" in msg
 
@@ -141,9 +139,7 @@ class TestTimesheetProcessorRobust:
 
         # Esegue processo (dovrebbe creare file con timestamp)
         with patch("time.strftime", return_value="20230101-120000"):
-            success, msg = TimesheetProcessor.process_and_move(
-                sample_workbook, dest_dir
-            )
+            success, _msg = TimesheetProcessor.process_and_move(sample_workbook, dest_dir)
 
         assert success is True
         expected_file = dest_dir / "ODC123_10_TS_20230101-120000.xlsx"
@@ -153,9 +149,7 @@ class TestTimesheetProcessorRobust:
         """Test errore permessi creazione directory."""
         # Usiamo un path che sicuramente fallisce o mockiamo mkdir
         with patch("pathlib.Path.mkdir", side_effect=PermissionError("Access Denied")):
-            success, msg = TimesheetProcessor.process_and_move(
-                sample_workbook, Path("/root/protected")
-            )
+            success, msg = TimesheetProcessor.process_and_move(sample_workbook, Path("/root/protected"))
             assert success is False
             assert "Impossibile creare dest_dir" in msg
 

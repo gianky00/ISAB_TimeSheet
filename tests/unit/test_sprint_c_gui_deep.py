@@ -4,8 +4,8 @@ from PyQt6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
 )
-from src.gui.panels.contabilita_kpi.kpi_panel import ContabilitaKPIPanel
 
+from src.gui.panels.contabilita_kpi.kpi_panel import ContabilitaKPIPanel
 from src.gui.panels.contabilita_panel import ContabilitaPanel
 
 
@@ -80,12 +80,14 @@ class TestSprintCGUIDeep:
             },
         )
 
-        # Mock plotting
-        mocker.patch.object(ContabilitaKPIPanel, "_plot_stato_attivita")
-        mocker.patch.object(ContabilitaKPIPanel, "_plot_prev_ore_mese")
-        mocker.patch.object(ContabilitaKPIPanel, "_plot_margine_tipologia")
-        mocker.patch.object(ContabilitaKPIPanel, "_plot_andamento_resa")
-        mocker.patch.object(ContabilitaKPIPanel, "_plot_completamento")
+        # Mock plotting (ora in KPIChartsManager tramite charts_manager)
+        from src.gui.panels.contabilita_kpi.charts import KPIChartsManager
+
+        mocker.patch.object(KPIChartsManager, "_plot_stato_attivita")
+        mocker.patch.object(KPIChartsManager, "_plot_prev_ore_mese")
+        mocker.patch.object(KPIChartsManager, "_plot_margine_tipologia")
+        mocker.patch.object(KPIChartsManager, "_plot_andamento_resa")
+        mocker.patch.object(KPIChartsManager, "_plot_completamento")
 
         kpi = ContabilitaKPIPanel()
         QApplication.processEvents()

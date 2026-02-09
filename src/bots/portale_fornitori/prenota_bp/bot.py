@@ -3,7 +3,8 @@ Bot per la prenotazione automatica dei Badge Provvisori (BP) sul Portale Fornito
 """
 
 import traceback
-from typing import Any, Dict, List
+from contextlib import suppress
+from typing import Any
 
 from src.bots.base.base_bot import BaseBot
 
@@ -14,7 +15,7 @@ class PrenotaBPBot(BaseBot):
     """Bot per la prenotazione massiva di Badge Provvisori (BP) sul Portale Fornitori."""
 
     @staticmethod
-    def get_columns() -> list:
+    def get_columns() -> list[dict[str, Any]]:
         """Definisce le colonne richieste per l'input dei dati (Numero BP, Note)."""
         return [
             {"name": "Numero BP", "type": "text"},
@@ -48,9 +49,9 @@ class PrenotaBPBot(BaseBot):
         self.data_da = data_da
         self.data_a = data_a
         self.fornitore = fornitore
-        self.results: List[Dict[str, Any]] = []
+        self.results: list[dict[str, Any]] = []
 
-    def _get_row_value(self, row: dict, target_key: str) -> str:
+    def _get_row_value(self, row: dict[str, Any], target_key: str) -> str:
         """Estrae un valore dalla riga in modo robusto (ignora case, spazi e underscore)."""
 
         def normalize(s):
@@ -83,27 +84,26 @@ class PrenotaBPBot(BaseBot):
                 if self._process_single_bp(page, i, row):
                     processed_count += 1
 
-            self.log(
-                f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati."
-            )
+            self.log(f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
             return True
         except Exception as e:
-            self.log(f"❗ Errore fatale durante l'esecuzione: {str(e)}")
+            self.log(f"❗ Errore fatale durante l'esecuzione: {e}")
             traceback.print_exc()
             return False
         finally:
             self.log("Fine sessione Prenota BP.")
 
-    def _init_run_data(self, data: Any) -> List[dict]:
+    def _init_run_data(self, data: Any) -> list[dict[str, Any]]:
         """Inizializza i parametri della sessione."""
         if isinstance(data, dict):
             self.data_da = data.get("data_da") or self.data_da
             self.data_a = data.get("data_a") or self.data_a
             self.fornitore = data.get("fornitore") or self.fornitore
-            return data.get("rows", [])
-        return data
+            result: list[dict[str, Any]] = data.get("rows", [])
+            return result
+        return list(data)
 
-    def _process_single_bp(self, page: PrenotaBPPage, index: int, row: dict) -> bool:
+    def _process_single_bp(self, page: PrenotaBPPage, index: int, row: dict[str, Any]) -> bool:
         """Elabora un singolo buono prelievo."""
         num_bp = self._get_row_value(row, "Numero BP").strip()
         note = self._get_row_value(row, "Note di Ritiro").strip()
@@ -113,23 +113,17 @@ class PrenotaBPBot(BaseBot):
             return False
 
         try:
-            page.filtra_buoni_prelievo(
-                self.fornitore, num_bp, self.data_da, self.data_a
-            )
+            page.filtra_buoni_prelievo(self.fornitore, num_bp, self.data_da, self.data_a)
             page.apri_dettagli_bp()
             page.gestisci_creazione_richiesta(note)
-            try:
+            with suppress(Exception):
                 page.chiudi_dettagli_bp()
-            except Exception:
-                pass
 
             self.results.append({"NUMERO BP": num_bp, "STATO": "OK"})
             return True
         except Exception as e:
-            self.log(f"✗ Errore su BP {num_bp}: {str(e)}")
-            try:
+            self.log(f"✗ Errore su BP {num_bp}: {e}")
+            with suppress(Exception):
                 page.chiudi_dettagli_bp()
-            except Exception:
-                pass
             self.results.append({"NUMERO BP": num_bp, "STATO": "ERRORE", "MSG": str(e)})
             return False

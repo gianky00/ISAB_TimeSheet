@@ -195,6 +195,4 @@ class TestTelegramManagerLogic:
         # We can just test the effect of handle_button
         await callbacks.handle_button(telegram_service, mock_update, MagicMock())
         mock_query.edit_message_text.assert_called()
-        assert "SafeWork" in str(
-            mock_query.edit_message_text.call_args[1]["reply_markup"]
-        )
+        assert "SafeWork" in str(mock_query.edit_message_text.call_args[1]["reply_markup"])

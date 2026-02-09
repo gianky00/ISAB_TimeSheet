@@ -23,9 +23,7 @@ class UpdateBanner(QFrame):
         layout.setSpacing(10)
 
         self.icon_label = QLabel()
-        self.icon_label.setPixmap(
-            get_colored_icon(get_asset_path(Icons.ROCKET), "#000000").pixmap(20, 20)
-        )
+        self.icon_label.setPixmap(get_colored_icon(get_asset_path(Icons.ROCKET), "#000000").pixmap(20, 20))
         layout.addWidget(self.icon_label)
 
         self.update_label = QLabel("Nuova versione disponibile!")
@@ -42,9 +40,7 @@ class UpdateBanner(QFrame):
         """Mostra il banner con le informazioni dell'aggiornamento."""
         self._download_url = download_url
         self.update_label.setText(f"Nuova versione disponibile: v{version}")
-        self.update_label.setToolTip(
-            f"Novità:\n{changelog}" if changelog else "Clicca per scaricare"
-        )
+        self.update_label.setToolTip(f"Novità:\n{changelog}" if changelog else "Clicca per scaricare")
         self.setVisible(True)
 
     def _on_download_clicked(self):

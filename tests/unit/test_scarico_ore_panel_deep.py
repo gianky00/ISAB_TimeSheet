@@ -99,9 +99,7 @@ class TestScaricoOrePanelDeep:
 
         # Mocking QApplication.clipboard().setText()
         mock_clipboard = mocker.MagicMock()
-        mocker.patch(
-            "PyQt6.QtWidgets.QApplication.clipboard", return_value=mock_clipboard
-        )
+        mocker.patch("PyQt6.QtWidgets.QApplication.clipboard", return_value=mock_clipboard)
 
         panel._copy_selection()
 

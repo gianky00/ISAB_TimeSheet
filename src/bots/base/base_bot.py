@@ -3,10 +3,12 @@ Bot TS - Base Bot
 Classe base astratta per tutti i bot di automazione con State Machine e Validazione.
 """
 
+import re
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from contextlib import suppress
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -36,7 +38,7 @@ class BaseBot(ABC):
         headless: bool = False,
         timeout: int = Timeouts.DEFAULT,
         download_path: str = "",
-    ):
+    ) -> None:
         """
         Inizializza il bot base con credenziali e configurazioni driver.
 
@@ -53,16 +55,16 @@ class BaseBot(ABC):
         self.timeout = timeout
         self.download_path = download_path
 
-        self.driver: Optional[webdriver.Chrome] = None
-        self.wait: Optional[WebDriverWait] = None
-        self.popup_wait: Optional[WebDriverWait] = None
-        self.long_wait: Optional[WebDriverWait] = None
+        self.driver: webdriver.Chrome | None = None
+        self.wait: WebDriverWait[webdriver.Chrome] | None = None
+        self.popup_wait: WebDriverWait[webdriver.Chrome] | None = None
+        self.long_wait: WebDriverWait[webdriver.Chrome] | None = None
 
         self._status = BotStatus.IDLE
         self._stop_requested = False
-        self._log_callback: Optional[Callable[[str], None]] = None
-        self._input_callback: Optional[Callable[[str], str]] = None
-        self.login_page: Optional[LoginPage] = None
+        self._log_callback: Callable[[str], None] | None = None
+        self._input_callback: Callable[[str], str] | None = None
+        self.login_page: LoginPage | None = None
         self._telegram_service: Any = None
 
         # Enterprise logging
@@ -73,13 +75,16 @@ class BaseBot(ABC):
     @abstractmethod
     def name(self) -> str:
         """Restituisce il nome identificativo del bot."""
-        pass
 
     @property
     @abstractmethod
     def description(self) -> str:
         """Restituisce una descrizione testuale delle funzionalità del bot."""
-        pass
+
+    @staticmethod
+    @abstractmethod
+    def get_columns() -> list[dict[str, Any]]:
+        """Definisce le colonne richieste per l'input dei dati."""
 
     @property
     def status(self) -> BotStatus:
@@ -87,19 +92,19 @@ class BaseBot(ABC):
         return self._status
 
     @status.setter
-    def status(self, value: BotStatus):
+    def status(self, value: BotStatus) -> None:
         """Aggiorna lo stato del bot e logga il cambiamento."""
         if self._status != value:
             self._status = value
             self.log(f"Stato: {value.name}")
 
-    def validate_data(self, data: List[Dict[str, Any]]) -> Tuple[bool, str]:
+    def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """
         Esegue una validazione preventiva dei dati (Dry Run).
         Deve essere implementata dai bot derivati.
 
         Args:
-            data: Lista di dizionari contenenti i dati da processare.
+            data: Lista di dizionari o dizionario contenente i dati da processare.
         Returns:
             tuple: (Successo, Messaggio di errore)
         """
@@ -109,7 +114,7 @@ class BaseBot(ABC):
             return False, "Credenziali mancanti nelle impostazioni."
         return True, ""
 
-    def log(self, message: str, level: str = "INFO"):
+    def log(self, message: str, level: str = "INFO") -> None:
         """
         Logga un messaggio in console, nel widget log e via Telegram se configurato.
 
@@ -132,48 +137,38 @@ class BaseBot(ABC):
 
         # Telegram notification
         if self._telegram_service:
-            try:
-                import re
+            with suppress(Exception):
+                clean_msg = re.sub(r"^\[\d{2}:\d{2}:\d{2}\]\s*", "", message.strip())
+                self._telegram_service.send_message_sync(f"🔹 *{self.name}*\n{clean_msg}")
 
-                clean_msg = re.sub(
-                    r"^[\\\\[]\\d{2}:\\d{2}:\\d{2}[\\\\]]\\s*", "", message.strip()
-                )
-                self._telegram_service.send_message_sync(
-                    f"🔹 *{self.name}*\n{clean_msg}"
-                )
-            except Exception:
-                pass
-
-    def set_log_callback(self, callback: Callable[[str], None]):
+    def set_log_callback(self, callback: Callable[[str], None]) -> None:
         """Imposta la callback per inoltrare i log all'interfaccia utente."""
         self._log_callback = callback
 
-    def set_telegram_service(self, service: Any):
+    def set_telegram_service(self, service: Any) -> None:
         """Imposta il servizio Telegram per l'invio di notifiche."""
         self._telegram_service = service
 
-    def set_input_callback(self, callback: Callable[[str], str]):
+    def set_input_callback(self, callback: Callable[[str], str]) -> None:
         """Imposta la callback per richiedere input interattivo all'utente."""
         self._input_callback = callback
 
-    def request_stop(self):
+    def request_stop(self) -> None:
         """Segnala al bot di interrompere l'esecuzione alla prima occasione sicura."""
         self._stop_requested = True
         self.log("⚠️ Interruzione richiesta...")
 
-    def _check_stop(self):
+    def _check_stop(self) -> None:
         """Verifica se è stata richiesta l'interruzione e solleva InterruptedError."""
         if self._stop_requested:
             raise InterruptedError("Bot interrotto dall'utente")
 
     @measure_time(threshold_ms=10000)
-    def _init_driver(self):
+    def _init_driver(self) -> None:
         """Inizializzazione del driver Chrome con opzioni e configurazioni specifiche."""
         self.log("Inizializzazione browser...")
         self.status = BotStatus.INITIALIZING
-        self._logger.debug(
-            "Starting Chrome driver initialization", headless=self.headless
-        )
+        self._logger.debug("Starting Chrome driver initialization", headless=self.headless)
 
         options = self._get_chrome_options()
         driver_path = self._get_chromedriver_path()
@@ -224,23 +219,31 @@ class BaseBot(ABC):
         profile_dir = config_manager.CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
         options.add_argument(f"user-data-dir={profile_dir}")
 
-        prefs: Dict[str, Any] = {
+        prefs: dict[str, Any] = {
             "profile.default_content_setting_values.automatic_downloads": 1,
             "plugins.always_open_pdf_externally": True,
             "download.prompt_for_download": False,
         }
 
         if self.download_path:
-            import os
-
-            prefs["download.default_directory"] = os.path.abspath(self.download_path)
+            prefs["download.default_directory"] = str(Path(self.download_path).resolve())
 
         options.add_experimental_option("prefs", prefs)
         return options
 
-    def _get_chromedriver_path(self) -> Optional[str]:
+    def _get_chromedriver_path(self) -> str | None:
         """Tenta di ottenere il path di chromedriver scaricandolo automaticamente o via fallback locale."""
-        # 1. Automatico
+        from src.utils.resource_manager import ResourceManager
+
+        # 1. Locale Bundled (Priorità massima per EXE e Parità)
+        # Cerca in PROJECT_ROOT/drivers/chromedriver.exe
+        bundled_driver = Path(ResourceManager.PROJECT_ROOT) / "drivers" / "chromedriver.exe"
+        if bundled_driver.exists():
+            path = str(bundled_driver.resolve())
+            self.log(f"Usando driver integrato: {path}")
+            return path
+
+        # 2. Automatico (Online)
         try:
             self.log("Verifica aggiornamenti driver...")
             path = ChromeDriverManager().install()
@@ -252,26 +255,18 @@ class BaseBot(ABC):
         except Exception as e:
             self.log(f"⚠️ Impossibile scaricare driver automatico: {e}")
 
-        # 2. Locale Fallback
-        local_driver = Path("drivers") / "chromedriver.exe"
-        if local_driver.exists():
-            path = str(local_driver.absolute())
-            self.log(f"Usando driver locale: {path}")
-            return path
         return None
 
-    def _setup_driver_instance(self, service: Service, options: Options):
+    def _setup_driver_instance(self, service: Service, options: Options) -> None:
         """Crea l'istanza di webdriver.Chrome applicando tecniche anti-detection."""
         self.driver = webdriver.Chrome(service=service, options=options)
         # Anti-detection
         self.driver.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",
-            {
-                "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-            },
+            {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"},
         )
 
-    def _configure_waits_and_pages(self):
+    def _configure_waits_and_pages(self) -> None:
         """Inizializza gli oggetti WebDriverWait per diverse durate e la LoginPage."""
         if not self.driver:
             return
@@ -280,7 +275,7 @@ class BaseBot(ABC):
         self.long_wait = WebDriverWait(self.driver, Timeouts.PAGE_LOAD)
         self.login_page = LoginPage(self.driver, self.wait, self.log, self.ISAB_URL)
 
-    def _handle_driver_error(self, e: Exception):
+    def _handle_driver_error(self, e: Exception) -> None:
         """Gestisce gli errori critici di avvio del driver Chrome."""
         err_str = str(e).lower()
         error_type = "unknown"
@@ -304,19 +299,15 @@ class BaseBot(ABC):
                 suggestion="Update Chrome or download compatible chromedriver",
             )
             self.log("❌ ERRORE CRITICO DRIVER: Versione incompatibile", "ERROR")
-            self.log(
-                "💡 SUGGERIMENTO: Aggiorna Chrome o scarica chromedriver compatibile."
-            )
+            self.log("💡 SUGGERIMENTO: Aggiorna Chrome o scarica chromedriver compatibile.")
         else:
-            self._logger.exception(
-                "Chrome driver initialization failed", exc=e, error_type=error_type
-            )
+            self._logger.exception("Chrome driver initialization failed", exc=e, error_type=error_type)
             self.log(f"❌ ERRORE CRITICO DRIVER: {e}", "ERROR")
 
         raise e
 
     @measure_time(threshold_ms=5000)
-    def execute(self, data: List[Dict[str, Any]]) -> bool:
+    def execute(self, data: list[dict[str, Any]]) -> bool:
         """
         Esegue il workflow completo del bot: Validazione -> Accesso -> Esecuzione -> Cleanup.
 
@@ -376,7 +367,7 @@ class BaseBot(ABC):
             finally:
                 self.cleanup()
 
-    def _save_error_state(self, error_msg: str):
+    def _save_error_state(self, error_msg: str) -> None:
         """Salva uno screenshot e il sorgente HTML corrente per il debug post-mortem."""
         if not self.driver:
             return
@@ -426,7 +417,7 @@ class BaseBot(ABC):
         self._logger.error("Login page not initialized")
         return False
 
-    def _attendi_scomparsa_overlay(self, timeout=None):
+    def _attendi_scomparsa_overlay(self, timeout: int | None = None) -> bool:
         """Attende che gli overlay di caricamento del portale ISAB scompaiano."""
         if self.login_page:
             if timeout:
@@ -444,13 +435,11 @@ class BaseBot(ABC):
         """Alias per _verify_login compatibile con i test legacy."""
         return self._verify_login()
 
-    def _handle_session_popup(self):
+    def _handle_session_popup(self) -> bool:
         """Gestisce il popup di sessione multipla cliccando su 'SI'."""
         with suppress(Exception):
             if self.popup_wait:
-                btn = self.popup_wait.until(
-                    EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES)
-                )
+                btn = self.popup_wait.until(EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES))
                 btn.click()
                 self.log("✅ Popup sessione gestito (SI).")
                 return True
@@ -479,17 +468,15 @@ class BaseBot(ABC):
                 # No sleep needed: cleanup() is synchronous
         return False
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Chiude il browser e pulisce le risorse del driver."""
         if self.driver:
-            try:
+            with suppress(Exception):
                 self.driver.quit()
-            except Exception:
-                pass
             self.driver = None
 
     @abstractmethod
-    def run(self, data: List[Dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]]) -> bool:
         """
         Logica principale dell'automazione da implementare nelle sottoclassi.
 
@@ -498,4 +485,3 @@ class BaseBot(ABC):
         Returns:
             bool: True se l'esecuzione è completata correttamente.
         """
-        pass

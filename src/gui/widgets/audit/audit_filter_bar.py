@@ -1,3 +1,6 @@
+from collections.abc import Sequence
+from typing import Any
+
 from PyQt6.QtCore import QDate, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -6,6 +9,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
+    QWidget,
 )
 
 from src.core.constants import Icons
@@ -18,14 +22,12 @@ class AuditFilterBar(QFrame):
 
     filters_applied = pyqtSignal(dict)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setStyleSheet(
-            "background-color: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6;"
-        )
+        self.setStyleSheet("background-color: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6;")
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QHBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(10)
@@ -56,18 +58,14 @@ class AuditFilterBar(QFrame):
 
         # Livello
         self.level_combo = QComboBox()
-        self.level_combo.addItems(
-            ["Tutti", "Info (Low)", "Warning (Med)", "Error (High)"]
-        )
+        self.level_combo.addItems(["Tutti", "Info (Low)", "Warning (Med)", "Error (High)"])
         self.level_combo.setFixedWidth(130)
         layout.addWidget(self.level_combo)
 
         # Search
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("Cerca nei log...")
-        self.search_edit.setStyleSheet(
-            "border: 1px solid #ced4da; border-radius: 4px; padding: 4px;"
-        )
+        self.search_edit.setStyleSheet("border: 1px solid #ced4da; border-radius: 4px; padding: 4px;")
         layout.addWidget(self.search_edit)
 
         # Btn Applica
@@ -85,12 +83,12 @@ class AuditFilterBar(QFrame):
         apply_btn.clicked.connect(self._emit_filters)
         layout.addWidget(apply_btn)
 
-    def set_categories(self, categories):
+    def set_categories(self, categories: Sequence[str]) -> None:
         self.cat_combo.clear()
         self.cat_combo.addItem("Tutte")
         self.cat_combo.addItems(categories)
 
-    def _emit_filters(self):
+    def _emit_filters(self) -> None:
         lvl_idx = self.level_combo.currentIndex()
         levels = None
         if lvl_idx == 1:
@@ -110,16 +108,14 @@ class AuditFilterBar(QFrame):
             }
         )
 
-    def set_enabled_dates(self, enabled):
+    def set_enabled_dates(self, enabled: bool) -> None:
         self.date_from.setEnabled(enabled)
         self.date_to.setEnabled(enabled)
 
-    def get_filters(self):
+    def get_filters(self) -> dict[str, Any]:
         from datetime import datetime
 
-        start_dt = datetime.combine(
-            self.date_from.date().toPyDate(), datetime.min.time()
-        )
+        start_dt = datetime.combine(self.date_from.date().toPyDate(), datetime.min.time())
         end_dt = datetime.combine(self.date_to.date().toPyDate(), datetime.max.time())
         lvl_idx = self.level_combo.currentIndex()
         levels = None

@@ -5,32 +5,32 @@ Converte messaggi di log tecnici in frasi umane e colloquiali.
 
 import random
 from datetime import datetime
+from typing import ClassVar
 
 
-def friendly_time_delta(dt):
+def friendly_time_delta(dt: datetime) -> str:
     """Restituisce una stringa amichevole per il delta temporale (es. '5 min fa')."""
     now = datetime.now()
     diff = now - dt
 
     if diff.days > 0:
-        return dt.strftime("%d/%m")
+        return str(dt.strftime("%d/%m"))
 
     seconds = diff.total_seconds()
     if seconds < 60:
         return "Adesso"
-    elif seconds < 3600:
+    if seconds < 3600:
         minutes = int(seconds / 60)
         return f"{minutes} min fa"
-    else:
-        hours = int(seconds / 3600)
-        return f"{hours}h fa"
+    hours = int(seconds / 3600)
+    return f"{hours}h fa"
 
 
 class SmartLogTranslator:
     """Traduce i log tecnici in frasi 'umane'."""
 
     # Dizionario di template per categoria
-    TEMPLATES = {
+    TEMPLATES: ClassVar[dict[str, list[str]]] = {
         "start": [
             "Si parte! Avvio i motori...",
             "Ciao! Iniziamo subito a lavorare.",
@@ -81,7 +81,7 @@ class SmartLogTranslator:
         category = SmartLogTranslator._detect_category(message)
 
         if category in SmartLogTranslator.TEMPLATES:
-            human_msg = random.choice(SmartLogTranslator.TEMPLATES[category])
+            human_msg = random.choice(SmartLogTranslator.TEMPLATES[category])  # noqa: S311
         else:
             human_msg = message
 
@@ -106,9 +106,7 @@ class SmartLogTranslator:
             if any(kw in lower_msg for kw in keywords):
                 return cat
             # Check case-sensitive icons for success/error
-            if cat in ("error", "success") and any(
-                kw in message for kw in ("✗", "✓") if kw in keywords
-            ):
+            if cat in ("error", "success") and any(kw in message for kw in ("✗", "✓") if kw in keywords):
                 return cat
         return "info"
 

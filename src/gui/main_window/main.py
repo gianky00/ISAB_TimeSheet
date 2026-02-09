@@ -1,5 +1,7 @@
 import webbrowser
 from contextlib import suppress
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -35,6 +37,9 @@ from .controllers.app_event_handler import AppEventHandler
 from .controllers.signal_connector import SignalConnector
 from .page_index import PageIndex
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 class MainWindow(QMainWindow):
     """
@@ -42,14 +47,15 @@ class MainWindow(QMainWindow):
     Coordina i componenti modulari e i controller.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle(f"SyncroJob v{VERSION}")
         self.setMinimumSize(1200, 800)
 
         # Configurazione Stili
         self._load_styles()
-        apply_theme(QApplication.instance(), "light")
+        if app := QApplication.instance():
+            apply_theme(app, "light")  # type: ignore[arg-type]
         self.setAcceptDrops(True)
 
         self._current_page_index = -1
@@ -94,7 +100,7 @@ class MainWindow(QMainWindow):
         # Navigazione iniziale (Dashboard)
         self.navigation_controller.navigate_to(PageIndex.DASHBOARD)
 
-    def finalize_init(self):
+    def finalize_init(self) -> None:
         """Metodo chiamato dopo che lo splash screen ha finito il caricamento."""
         import logging
 
@@ -127,9 +133,7 @@ class MainWindow(QMainWindow):
         # Connect Autopilot real-time updates
         if hasattr(self, "timbrature_bot_panel"):
             with suppress(Exception):
-                self.timbrature_bot_panel.autopilot_changed.connect(
-                    self._update_autopilot_status_ui
-                )
+                self.timbrature_bot_panel.autopilot_changed.connect(self._update_autopilot_status_ui)
 
         # Show success toast
         QTimer.singleShot(
@@ -143,15 +147,13 @@ class MainWindow(QMainWindow):
             ),
         )
 
-    def _load_styles(self):
-        from pathlib import Path
-
-        for qss in ["main_window.qss", "message_box.qss"]:
-            path = Path(f"assets/styles/{qss}")
+    def _load_styles(self) -> None:
+        for qss in ("main_window.qss", "message_box.qss"):
+            path = Path("assets") / "styles" / qss
             if path.exists():
                 self.setStyleSheet(self.styleSheet() + path.read_text(encoding="utf-8"))
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QHBoxLayout(central_widget)
@@ -178,98 +180,95 @@ class MainWindow(QMainWindow):
         content_layout.addWidget(self.page_stack)
         main_layout.addWidget(content_area)
 
-    def _setup_shortcuts(self):
+    def _setup_shortcuts(self) -> None:
         from PyQt6.QtGui import QKeySequence, QShortcut
 
         self.shortcut_f5 = QShortcut(QKeySequence(Qt.Key.Key_F5), self)
         self.shortcut_f5.activated.connect(self.app_event_handler.handle_f5)
         self.shortcut_search = QShortcut(QKeySequence("Ctrl+F"), self)
         self.shortcut_search.activated.connect(self.app_event_handler.handle_ctrl_f)
-        QApplication.instance().installEventFilter(self)
+        if app := QApplication.instance():
+            app.installEventFilter(self)
 
     # --- FACADE METHODS ---
-    def _toggle_footer_stats(self):
+    def _toggle_footer_stats(self) -> None:
         self.status_bar_component._toggle_footer_stats()
 
-    def _quit_application(self):
+    def _quit_application(self) -> None:
         self.app_event_handler.quit_application()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: Any) -> None:
         self.app_event_handler.handle_close_event(event)
 
-    def show_toast(self, message: str, duration: int = 3000):
+    def show_toast(self, message: str, duration: int = 3000) -> None:
         ToastManager.instance().show(message, "info", duration)
 
-    def _open_command_palette(self):
+    def _open_command_palette(self) -> None:
         self.menu_bar_component.open_command_palette()
 
-    def _update_autopilot_status_ui(self):
+    def _update_autopilot_status_ui(self) -> None:
         self.status_bar_component.update_autopilot_ui()
 
-    def _on_download_update_clicked(self, url):
+    def _on_download_update_clicked(self, url: str) -> None:
         webbrowser.open(url)
 
-    def _navigate_to(self, index: int):
+    def _navigate_to(self, index: int) -> None:
         self.navigation_controller.navigate_to(index)
 
-    def _handle_f5_action(self):
+    def _handle_f5_action(self) -> None:
         """Logic for F5 refresh."""
         idx = self.page_stack.currentIndex()
-        refresh_actions = {
+        refresh_actions: dict[int, Callable[[], Any]] = {
             PageIndex.DASHBOARD: lambda: (
-                self.dashboard_panel.refresh_data()
-                if hasattr(self, "dashboard_panel")
+                p.refresh_data()
+                if (p := getattr(self, "dashboard_panel", None)) and hasattr(p, "refresh_data")
                 else None
             ),
             PageIndex.TIMBRATURE: lambda: (
-                self.timbrature_db_panel.refresh_data()
-                if hasattr(self, "timbrature_db_panel")
+                p.refresh_data()
+                if (p := getattr(self, "timbrature_db_panel", None)) and hasattr(p, "refresh_data")
                 else None
             ),
             PageIndex.STRUMENTALE: lambda: (
-                self.contabilita_panel.refresh_tabs()
-                if hasattr(self, "contabilita_panel")
+                p.refresh_tabs()
+                if (p := getattr(self, "contabilita_panel", None)) and hasattr(p, "refresh_tabs")
                 else None
             ),
             PageIndex.DATAEASE: lambda: (
-                self.scarico_ore_panel._start_update()
-                if hasattr(self, "scarico_ore_panel")
+                p._start_update()
+                if (p := getattr(self, "scarico_ore_panel", None)) and hasattr(p, "_start_update")
                 else None
             ),
             PageIndex.ANAGRAFICHE: lambda: (
-                self.pdl_db_panel.refresh_data()
-                if hasattr(self, "pdl_db_panel")
+                p.refresh_data()
+                if (p := getattr(self, "pdl_db_panel", None)) and hasattr(p, "refresh_data")
                 else None
             ),
             PageIndex.STORICO_ODA: lambda: (
-                self.storico_oda_panel.refresh_data()
-                if hasattr(self, "storico_oda_panel")
+                p.refresh_data()
+                if (p := getattr(self, "storico_oda_panel", None)) and hasattr(p, "refresh_data")
                 else None
             ),
             PageIndex.DIPENDENTI: lambda: (
-                self.dipendenti_panel.refresh_data()
-                if hasattr(self, "dipendenti_panel")
+                p.refresh_data()
+                if (p := getattr(self, "dipendenti_panel", None)) and hasattr(p, "refresh_data")
                 else None
             ),
         }
-        action = refresh_actions.get(idx)
-        if action:
+        if action := refresh_actions.get(idx):
             action()
 
-    def _handle_f5(self):
+    def _handle_f5(self) -> None:
         self._handle_f5_action()
 
-    def _run_timbrature_bot(self, mode: str):
+    def _run_timbrature_bot(self, mode: str) -> None:
         if not hasattr(self, "timbrature_bot_panel"):
             self.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
         if hasattr(self, "timbrature_bot_panel"):
             if not getattr(self.timbrature_bot_panel, "_mw_signals_connected", False):
                 with suppress(Exception):
                     self.timbrature_bot_panel.status_changed.connect(
-                        lambda color,
-                        msg: self.status_bar_component.status_portale.setStatus(
-                            msg, color
-                        )
+                        lambda color, msg: self.status_bar_component.status_portale.setStatus(msg, color)
                     )
                     self.timbrature_bot_panel._mw_signals_connected = True
             from PyQt6.QtCore import QDate
@@ -282,11 +281,9 @@ class MainWindow(QMainWindow):
             elif mode == "mese":
                 data_da = QDate.currentDate().toString("01.MM.yyyy")
             ToastManager.instance().show(f"🚀 Avvio Timbrature ({mode})...", "info")
-            self.timbrature_bot_panel.run_externally(
-                {"data_da": data_da, "data_a": data_a}
-            )
+            self.timbrature_bot_panel.run_externally({"data_da": data_da, "data_a": data_a})
 
-    def _on_scarico_ts_input(self, args: list):
+    def _on_scarico_ts_input(self, args: list[Any]) -> None:
         if not args or not args[0]:
             return
         self.navigation_controller.navigate_to_panel("scarico_ts")
@@ -298,7 +295,7 @@ class MainWindow(QMainWindow):
                 ),
             )
 
-    def _on_dettagli_oda_input(self, args: list):
+    def _on_dettagli_oda_input(self, args: list[Any]) -> None:
         if not args or not args[0]:
             return
         self.navigation_controller.navigate_to_panel("dettagli_oda")
@@ -310,74 +307,64 @@ class MainWindow(QMainWindow):
                 ),
             )
 
-    def _on_pdl_input(self, args: list):
+    def _on_pdl_input(self, args: list[Any]) -> None:
         if not args or not args[0]:
             return
         self.navigation_controller.navigate_to_panel("scarico_pdl")
         if hasattr(self, "pdl_panel"):
             QTimer.singleShot(
                 200,
-                lambda: self.pdl_panel.run_externally(
-                    {"single_item": {"numero_pdl": args[0]}}
-                ),
+                lambda: self.pdl_panel.run_externally({"single_item": {"numero_pdl": args[0]}}),
             )
 
-    def _on_prenota_bp_input(self, args: list):
+    def _on_prenota_bp_input(self, args: list[Any]) -> None:
         if not args or not args[0]:
             return
         self.navigation_controller.navigate_to_panel("prenota_bp")
         if hasattr(self, "prenota_panel"):
             QTimer.singleShot(
                 200,
-                lambda: self.prenota_panel.run_externally(
-                    {"single_item": {"numero_bp": args[0]}}
-                ),
+                lambda: self.prenota_panel.run_externally({"single_item": {"numero_bp": args[0]}}),
             )
 
-    def _run_carico_ts(self):
+    def _run_carico_ts(self) -> None:
         self.navigation_controller.navigate_to_panel("carico_ts")
         if hasattr(self, "carico_panel"):
             QTimer.singleShot(200, lambda: self.carico_panel.run_externally({}))
 
-    def _run_sync_dataease(self):
+    def _run_sync_dataease(self) -> None:
         self._navigate_to(PageIndex.DATAEASE)
         if hasattr(self, "scarico_ore_panel"):
             QTimer.singleShot(500, self.scarico_ore_panel._start_update)
 
-    def _run_sync_strumentale(self):
+    def _run_sync_strumentale(self) -> None:
         self._navigate_to(PageIndex.STRUMENTALE)
         if hasattr(self, "contabilita_panel"):
             QTimer.singleShot(500, self.contabilita_panel.start_import_process)
 
-    def _handle_automation_tab_change(self, tab_index: int):
-        self.navigation_controller.navigate_to(
-            PageIndex.AUTOMAZIONI, sub_index=tab_index
-        )
+    def _handle_automation_tab_change(self, tab_index: int) -> None:
+        self.navigation_controller.navigate_to(PageIndex.AUTOMAZIONI, sub_index=tab_index)
         if hasattr(self, "automazioni_widget"):
             self.automazioni_widget.setCurrentIndex(tab_index)
 
-    def _handle_notifications_tab_change(self, tab_index: int):
-        self.navigation_controller.navigate_to(
-            PageIndex.NOTIFICATIONS, sub_index=tab_index
-        )
+    def _handle_notifications_tab_change(self, tab_index: int) -> None:
+        self.navigation_controller.navigate_to(PageIndex.NOTIFICATIONS, sub_index=tab_index)
         if hasattr(self, "notifications_panel"):
             self.notifications_panel.tabs.setCurrentIndex(tab_index)
 
-    def _check_and_start_contabilita_update(self):
+    def _check_and_start_contabilita_update(self) -> None:
         config = config_manager.load_config()
         if config.get("enable_auto_update_contabilita", False):
             self.navigation_controller.get_panel(PageIndex.STRUMENTALE)
             if hasattr(self, "contabilita_panel"):
                 self.contabilita_panel.start_import_process()
 
-    def _switch_account(self, service_type: str):
+    def _switch_account(self, service_type: str) -> None:
         success, new_user = config_manager.switch_default_account(service_type)
         if success:
             self.status_bar_component.footer_left.refresh_accounts()
             portal_name = "Portale Fornitori" if service_type == "isab" else "SafeWork"
-            ToastManager.instance().show(
-                f"Account {portal_name} cambiato in: {new_user}", "info"
-            )
+            ToastManager.instance().show(f"Account {portal_name} cambiato in: {new_user}", "info")
             if hasattr(self, "settings_panel") and self.settings_panel:
                 self.settings_panel.load_settings()
             AuditManager.instance().log_action(
@@ -386,12 +373,12 @@ class MainWindow(QMainWindow):
         else:
             self._navigate_to_settings_config()
 
-    def _navigate_to_settings_config(self):
+    def _navigate_to_settings_config(self) -> None:
         self.navigation_controller.navigate_to(PageIndex.SETTINGS)
         if hasattr(self, "settings_panel") and self.settings_panel:
             QTimer.singleShot(50, lambda: self.settings_panel.tabs.setCurrentIndex(0))
 
-    def _check_isab_authorizations(self):
+    def _check_isab_authorizations(self) -> None:
         try:
             expiring = check_expiring_isab_authorizations()
             if hasattr(self, "sidebar") and hasattr(self.sidebar, "btn_dipendenti"):
@@ -402,87 +389,75 @@ class MainWindow(QMainWindow):
             in_scadenza = [d for d in expiring if d["stato"] == "IN SCADENZA"]
             msg = "<b>Monitoraggio Abilitazioni ISAB</b><br/>"
             if scaduti:
-                msg += f"🔴 {len(scaduti)} Abilitazioni SCADUTE (>30 gg)<br/>"
+                msg += f"ðŸ”´ {len(scaduti)} Abilitazioni SCADUTE (>30 gg)<br/>"
             if in_scadenza:
-                msg += f"🟠 {len(in_scadenza)} In scadenza (20-30 gg)<br/>"
-            msg += (
-                "<br/><small>Controlla la tabella 'Dipendenti' per i dettagli.</small>"
-            )
-            ToastManager.instance().show(
-                msg, "warning" if in_scadenza or scaduti else "info", 8000
-            )
+                msg += f"ðŸŸ  {len(in_scadenza)} In scadenza (20-30 gg)<br/>"
+            msg += "<br/><small>Controlla la tabella 'Dipendenti' per i dettagli.</small>"
+            ToastManager.instance().show(msg, "warning" if in_scadenza or scaduti else "info", 8000)
         except Exception as e:
             print(f"Errore monitoraggio autorizzazioni: {e}")
 
-    def _on_anomalies_found(self, count):
+    def _on_anomalies_found(self, count: int) -> None:
         if hasattr(self, "sidebar"):
             self.sidebar.btn_lyra.set_badge(count)
         if count > 0:
-            ToastManager.instance().show(
-                f"⚠️ Lyra ha rilevato {count} anomalie", "warning"
-            )
+            ToastManager.instance().show(f"âš ï¸  Lyra ha rilevato {count} anomalie", "warning")
 
-    def _show_update_banner(self, new_version, download_url, changelog):
+    def _show_update_banner(self, new_version: str, download_url: str, changelog: str) -> None:
         if hasattr(self, "update_banner"):
             self.update_banner.show_update(new_version, download_url, changelog)
         if hasattr(self, "tray_icon_component"):
             self.tray_icon_component.show_update_message(new_version)
 
-    def _on_settings_saved(self):
+    def _on_settings_saved(self) -> None:
         self.telegram.start_service()
         self._update_autopilot_status_ui()
-        if hasattr(self, "status_bar_component") and hasattr(
-            self.status_bar_component, "footer_left"
-        ):
+        if hasattr(self, "status_bar_component") and hasattr(self.status_bar_component, "footer_left"):
             self.status_bar_component.footer_left.refresh_accounts()
         ToastManager.instance().show("Impostazioni salvate!", "success")
 
-    def _on_help_requested(self, section_title):
+    def _on_help_requested(self, section_title: str) -> None:
         self.navigation_controller.navigate_to(PageIndex.HELP)
         if hasattr(self, "help_panel"):
             self.help_panel.open_section(section_title)
 
-    def open_bug_report_dialog(self):
+    def open_bug_report_dialog(self) -> None:
         from src.gui.dialogs.bug_report_dialog import BugReportDialog
 
         dlg = BugReportDialog(self)
         dlg.exec()
 
-    def analyze_with_lyra(self, context_text: str):
+    def analyze_with_lyra(self, context_text: str) -> None:
         pass
 
-    def show_settings(self):
+    def show_settings(self) -> None:
         self.navigation_controller.navigate_to(PageIndex.SETTINGS)
 
-    def show_background_notification(
-        self, title: str, message: str, is_error: bool = False
-    ):
+    def show_background_notification(self, title: str, message: str, is_error: bool = False) -> None:
         if hasattr(self, "tray_icon_component"):
-            self.tray_icon_component.show_background_notification(
-                title, message, is_error
-            )
+            self.tray_icon_component.show_background_notification(title, message, is_error)
 
-    # --- Properties per compatibilità ---
+    # --- Properties per compatibilitÃ  ---
     @property
-    def footer_left(self):
+    def footer_left(self) -> Any:
         return self.status_bar_component.footer_left
 
     @property
-    def footer_right(self):
+    def footer_right(self) -> Any:
         return self.status_bar_component.footer_right
 
     @property
-    def status_portale(self):
+    def status_portale(self) -> Any:
         return self.status_bar_component.status_portale
 
     @property
-    def status_safework(self):
+    def status_safework(self) -> Any:
         return self.status_bar_component.status_safework
 
     @property
-    def startup_console(self):
+    def startup_console(self) -> Any:
         return self.status_bar_component.startup_console
 
     @property
-    def boot_telemetry(self):
+    def boot_telemetry(self) -> Any:
         return self.status_bar_component.boot_telemetry

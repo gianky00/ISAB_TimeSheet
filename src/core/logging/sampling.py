@@ -2,7 +2,7 @@
 Context-aware sampling per ridurre volume log.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class ContextAwareSampler:
@@ -35,19 +35,19 @@ class ContextAwareSampler:
         self.slow_operation_rate = self._validate_rate(slow_operation_rate)
 
         # Override rates per operazione specifica
-        self.operation_rates: Dict[str, float] = {}
+        self.operation_rates: dict[str, float] = {}
 
         # Trace IDs da loggare sempre
-        self.always_log_traces: set = set()
+        self.always_log_traces: set[str] = set()
 
         # Counter per sampling deterministico
-        self._counters: Dict[str, int] = {}
+        self._counters: dict[str, int] = {}
 
     def _validate_rate(self, rate: float) -> float:
         """Valida e normalizza rate."""
         return max(0.0, min(1.0, rate))
 
-    def set_operation_rate(self, operation: str, rate: float):
+    def set_operation_rate(self, operation: str, rate: float) -> None:
         """
         Imposta rate custom per operazione specifica.
 
@@ -57,7 +57,7 @@ class ContextAwareSampler:
         """
         self.operation_rates[operation] = self._validate_rate(rate)
 
-    def add_trace_to_always_log(self, trace_id: str):
+    def add_trace_to_always_log(self, trace_id: str) -> None:
         """
         Marca trace_id da loggare sempre.
 
@@ -69,8 +69,8 @@ class ContextAwareSampler:
     def should_log(
         self,
         level: str,
-        context: Optional[Dict[str, Any]] = None,
-        extra: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
+        extra: dict[str, Any] | None = None,
     ) -> bool:
         """
         Decide se loggare evento.
@@ -107,7 +107,7 @@ class ContextAwareSampler:
         # Rule 5: Default rate
         return self._sample(self.default_rate, "default")
 
-    def _is_slow_operation(self, extra: Dict[str, Any]) -> bool:
+    def _is_slow_operation(self, extra: dict[str, Any]) -> bool:
         """
         Verifica se operazione è lenta.
 
@@ -125,10 +125,7 @@ class ContextAwareSampler:
         duration = extra.get("duration_ms")
         threshold = extra.get("threshold_ms")
 
-        if duration and threshold and duration > threshold:
-            return True
-
-        return False
+        return bool(duration and threshold and duration > threshold)
 
     def _sample(self, rate: float, key: str) -> bool:
         """
@@ -156,7 +153,7 @@ class ContextAwareSampler:
 
         return (self._counters[key] % threshold) == 0
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Restituisce statistiche sampling.
 
@@ -187,8 +184,8 @@ def get_sampler() -> ContextAwareSampler:
 
 def should_log(
     level: str,
-    context: Optional[Dict[str, Any]] = None,
-    extra: Optional[Dict[str, Any]] = None,
+    context: dict[str, Any] | None = None,
+    extra: dict[str, Any] | None = None,
 ) -> bool:
     """
     Helper function per sampling check.

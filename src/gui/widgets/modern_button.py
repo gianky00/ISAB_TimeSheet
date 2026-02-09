@@ -2,10 +2,11 @@
 Pulsante moderno con varianti e stati.
 """
 
-from typing import Optional
+from typing import Any
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtProperty  # type: ignore
-from PyQt6.QtWidgets import QPushButton
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtProperty  # type: ignore[attr-defined]
+from PyQt6.QtGui import QEnterEvent
+from PyQt6.QtWidgets import QPushButton, QWidget
 
 from src.utils.helpers import get_colored_icon
 
@@ -36,9 +37,9 @@ class ModernButton(QPushButton):
         text: str = "",
         variant: str = Variant.PRIMARY,
         size: str = Size.MEDIUM,
-        icon: Optional[str] = None,
-        parent: Optional[QPushButton] = None,
-    ):
+        icon: str | None = None,
+        parent: QWidget | None = None,
+    ) -> None:
         super().__init__(text, parent)
         self._variant = variant
         self._size = size
@@ -51,12 +52,9 @@ class ModernButton(QPushButton):
         if icon:
             self.setIcon(get_colored_icon(icon, "#000000"))
             # Increase padding for icon
-            self.setStyleSheet(
-                self.styleSheet()
-                + "QPushButton { padding-left: 32px; text-align: left; }"
-            )
+            self.setStyleSheet(self.styleSheet() + "QPushButton { padding-left: 32px; text-align: left; }")
 
-    def _setup_animation(self):
+    def _setup_animation(self) -> None:
         """Inizializza l'animazione di opacità per l'effetto hover."""
         self._anim = QPropertyAnimation(self, b"hoverOpacity")
         self._anim.setDuration(150)
@@ -66,28 +64,28 @@ class ModernButton(QPushButton):
         """Restituisce il valore corrente dell'opacità hover."""
         return self._hover_opacity
 
-    def set_hover_opacity(self, value: float):
+    def set_hover_opacity(self, value: float) -> None:
         """Imposta il valore dell'opacità hover e aggiorna lo stile."""
         self._hover_opacity = value
         self._apply_style()
 
     hoverOpacity = pyqtProperty(float, fget=get_hover_opacity, fset=set_hover_opacity)
 
-    def enterEvent(self, event):
+    def enterEvent(self, event: QEnterEvent | None) -> None:
         """Avvia l'animazione hover all'ingresso del mouse."""
         self._anim.setStartValue(0.0)
         self._anim.setEndValue(0.1)
         self._anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event):
+    def leaveEvent(self, event: Any | None) -> None:
         """Avvia l'animazione di uscita al movimento del mouse."""
         self._anim.setStartValue(0.1)
         self._anim.setEndValue(0.0)
         self._anim.start()
         super().leaveEvent(event)
 
-    def _get_colors(self):
+    def _get_colors(self) -> tuple[str, str]:
         """Restituisce la coppia di colori (sfondo, testo) in base alla variante."""
         p = self._palette
         return {
@@ -98,7 +96,7 @@ class ModernButton(QPushButton):
             self.Variant.GHOST: ("transparent", p.primary),
         }.get(self._variant, (p.primary, p.on_primary))
 
-    def _get_size_styles(self):
+    def _get_size_styles(self) -> tuple[str, str]:
         """Restituisce il padding e la dimensione del font in base alla taglia."""
         sizes = {
             self.Size.SMALL: ("8px 12px", "12px"),
@@ -107,7 +105,7 @@ class ModernButton(QPushButton):
         }
         return sizes.get(self._size, sizes[self.Size.MEDIUM])
 
-    def _apply_style(self):
+    def _apply_style(self) -> None:
         """Genera e applica il foglio di stile QSS dinamico."""
         bg_color, text_color = self._get_colors()
         padding, font_size = self._get_size_styles()

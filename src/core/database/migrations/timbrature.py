@@ -1,7 +1,7 @@
 import sqlite3
 
 
-def mig_timbrature_v1(conn: sqlite3.Connection):
+def mig_timbrature_v1(conn: sqlite3.Connection) -> None:
     """Schema Iniziale Timbrature (v1)"""
     cursor = conn.cursor()
     cursor.execute(
@@ -25,18 +25,14 @@ def mig_timbrature_v1(conn: sqlite3.Connection):
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")
 
 
-def mig_timbrature_v2(conn: sqlite3.Connection):
+def mig_timbrature_v2(conn: sqlite3.Connection) -> None:
     """Ottimizzazione indici Timbrature (v2)"""
     cursor = conn.cursor()
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_timb_nome_cognome ON timbrature(cognome, nome)"
-    )
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_dip_nome_cognome ON dipendenti(cognome, nome)"
-    )
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_nome_cognome ON timbrature(cognome, nome)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_dip_nome_cognome ON dipendenti(cognome, nome)")
 
 
-def mig_timbrature_v3(conn: sqlite3.Connection):
+def mig_timbrature_v3(conn: sqlite3.Connection) -> None:
     """Aggiunge colonne codice_fiscale e ore_effettive (v3)"""
     cursor = conn.cursor()
     # Verifichiamo se le colonne esistono già per evitare errori
@@ -48,12 +44,10 @@ def mig_timbrature_v3(conn: sqlite3.Connection):
     if "ore_effettive" not in columns:
         cursor.execute("ALTER TABLE timbrature ADD COLUMN ore_effettive TEXT")
 
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_timb_cf ON timbrature(codice_fiscale)"
-    )
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_cf ON timbrature(codice_fiscale)")
 
 
-def mig_timbrature_v4(conn: sqlite3.Connection):
+def mig_timbrature_v4(conn: sqlite3.Connection) -> None:
     """Aggiunge tutte le colonne mancanti rilevate dal file Excel reale (v4)"""
     cursor = conn.cursor()
     cursor.execute("PRAGMA table_info(timbrature)")

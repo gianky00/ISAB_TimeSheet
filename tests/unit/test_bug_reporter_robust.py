@@ -24,9 +24,7 @@ class TestBugReporterRobust:
     @patch("src.core.bug_reporter.zipfile.ZipFile")
     @patch("src.core.bug_reporter.datetime")
     @patch("src.core.bug_reporter.BugReporter._collect_system_info")
-    def test_collect_diagnostics_success(
-        self, mock_sys_info, mock_datetime, mock_zip, mock_config_dir
-    ):
+    def test_collect_diagnostics_success(self, mock_sys_info, mock_datetime, mock_zip, mock_config_dir):
         """Test creazione report con successo."""
         mock_datetime.now.return_value.strftime.return_value = "20230101_120000"
         mock_zip_instance = mock_zip.return_value.__enter__.return_value
@@ -80,9 +78,7 @@ class TestBugReporterRobust:
         mock_manager = mock_audit_cls.instance.return_value
         mock_manager.get_recent_actions.return_value = [{"action": "Test"}]
 
-        with patch.dict(
-            "sys.modules", {"src.core.audit": MagicMock(AuditManager=mock_audit_cls)}
-        ):
+        with patch.dict("sys.modules", {"src.core.audit": MagicMock(AuditManager=mock_audit_cls)}):
             files = BugReporter._add_audit_trail(mock_zip_instance)
 
         assert "audit_trail.json" in files
@@ -122,7 +118,7 @@ class TestBugReporterRobust:
         """Test gestione errore durante creazione ZIP."""
         mock_zip.side_effect = Exception("Disk Full")
 
-        path, msg, files = BugReporter.collect_diagnostics()
+        path, msg, _files = BugReporter.collect_diagnostics()
 
         assert path is None
         assert "Errore creazione report" in msg

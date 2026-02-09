@@ -6,7 +6,6 @@ Widget per la visualizzazione cronologica dei log e dei report di missione.
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from PyQt6.QtCore import (
     QPropertyAnimation,
@@ -17,6 +16,7 @@ from PyQt6.QtGui import (
     QColor,
     QDesktopServices,
     QPainter,
+    QPaintEvent,
     QPen,
 )
 from PyQt6.QtWidgets import (
@@ -40,7 +40,9 @@ from src.utils.log_humanizer import SmartLogTranslator
 class HorizontalLogItem(QWidget):
     """Widget per singolo elemento della timeline log orizzontale."""
 
-    def __init__(self, human_msg, tech_msg, category, timestamp, parent=None):
+    def __init__(
+        self, human_msg: str, tech_msg: str, category: str, timestamp: str, parent: QWidget | None = None
+    ) -> None:
         super().__init__(parent)
         self.setFixedSize(180, 150)
         self.setStyleSheet(
@@ -59,22 +61,16 @@ class HorizontalLogItem(QWidget):
 
         # 3. Content
         self.lbl_human = QLabel(human_msg)
-        self.lbl_human.setStyleSheet(
-            "font-weight: bold; font-size: 13px; color: #212529;"
-        )
+        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 13px; color: #212529;")
         self.lbl_human.setWordWrap(True)
-        self.lbl_human.setAlignment(
-            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
-        )
+        self.lbl_human.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         layout.addWidget(self.lbl_human)
         layout.addStretch()
 
         # 4. Actions
         self._setup_actions(layout, tech_msg, snap_path, fixit_act)
 
-    def _parse_metadata(
-        self, tech_msg: str
-    ) -> tuple[Optional[str], Optional[str], str]:
+    def _parse_metadata(self, tech_msg: str) -> tuple[str | None, str | None, str]:
         snap, fixit = None, None
         if m := re.search(r"\[IMG:(.*?)\]", tech_msg):
             snap = m.group(1)
@@ -111,32 +107,26 @@ class HorizontalLogItem(QWidget):
         row.setSpacing(5)
         icon_lbl = QLabel()
         icon_lbl.setPixmap(
-            get_colored_icon(
-                get_asset_path(icons.get(category, Icons.HELP)), "#000000"
-            ).pixmap(24, 24)
+            get_colored_icon(get_asset_path(icons.get(category, Icons.HELP)), "#000000").pixmap(24, 24)
         )
         row.addWidget(icon_lbl)
         time_lbl = QLabel(timestamp)
-        time_lbl.setStyleSheet(
-            "color: #adb5bd; font-size: 12px; font-family: monospace;"
-        )
+        time_lbl.setStyleSheet("color: #adb5bd; font-size: 12px; font-family: monospace;")
         row.addWidget(time_lbl)
         row.addStretch()
         return row
 
-    def _setup_actions(self, layout, tech_msg, snap_path, fixit_act):
+    def _setup_actions(
+        self, layout: QVBoxLayout, tech_msg: str, snap_path: str | None, fixit_act: str | None
+    ) -> None:
         action_row = QHBoxLayout()
         action_row.setSpacing(5)
         if snap_path:
             btn = self._create_btn(Icons.EYE, "#dc3545", "Apri Screenshot")
-            btn.clicked.connect(
-                lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snap_path))
-            )
+            btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snap_path)))
             action_row.addWidget(btn)
         if fixit_act == "ACCOUNT":
-            btn = self._create_btn(
-                Icons.SETTINGS, "#ffc107", "Configura Account", "black"
-            )
+            btn = self._create_btn(Icons.SETTINGS, "#ffc107", "Configura Account", "black")
             btn.clicked.connect(self._open_settings)
             action_row.addWidget(btn)
         self._add_path_btns(action_row, tech_msg)
@@ -144,7 +134,7 @@ class HorizontalLogItem(QWidget):
         if action_row.count() > 1:
             layout.addLayout(action_row)
 
-    def _create_btn(self, icon, bg, tip, fg="white"):
+    def _create_btn(self, icon: str, bg: str, tip: str, fg: str = "white") -> QPushButton:
         btn = QPushButton()
         btn.setIcon(get_colored_icon(get_asset_path(icon), "#000000"))
         btn.setFixedSize(30, 24)
@@ -152,7 +142,7 @@ class HorizontalLogItem(QWidget):
         btn.setStyleSheet(f"background-color: {bg}; color: {fg}; border-radius: 4px;")
         return btn
 
-    def _add_path_btns(self, layout, msg):
+    def _add_path_btns(self, layout: QHBoxLayout, msg: str) -> None:
         matches = re.findall(
             r'([a-zA-Z]:\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)',
             msg,
@@ -160,26 +150,22 @@ class HorizontalLogItem(QWidget):
         for p in set(matches):
             p = p.rstrip(".,';)]}").strip()
             if len(p) > 4 and "http" not in p:
-                btn = self._create_btn(
-                    Icons.FOLDER_OPEN, "#17a2b8", f"Apri: {Path(p).name}"
-                )
-                btn.clicked.connect(
-                    lambda c, path=p: QDesktopServices.openUrl(QUrl.fromLocalFile(path))
-                )
+                btn = self._create_btn(Icons.FOLDER_OPEN, "#17a2b8", f"Apri: {Path(p).name}")
+                btn.clicked.connect(lambda c, path=p: QDesktopServices.openUrl(QUrl.fromLocalFile(path)))
                 layout.addWidget(btn)
 
-    def set_count(self, count):
+    def set_count(self, count: int) -> None:
         base = self.lbl_human.text().split(" (x")[0]
         self.lbl_human.setText(f"{base} (x{count})")
 
-    def _open_settings(self):
+    def _open_settings(self) -> None:
         win = self.window()
-        if hasattr(win, "show_settings"):
+        if win and hasattr(win, "show_settings"):
             win.show_settings()
 
 
 class HorizontalTimelineContainer(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.main_layout = QHBoxLayout(self)
         self.main_layout.setContentsMargins(10, 5, 10, 5)
@@ -187,18 +173,17 @@ class HorizontalTimelineContainer(QWidget):
         self.main_layout.addStretch()
         self.setMinimumHeight(160)
 
-    def paintEvent(self, event):
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         pen = QPen(QColor("#dee2e6"))
         pen.setWidth(2)
         painter.setPen(pen)
-        widgets = [
-            self.main_layout.itemAt(i).widget()
-            for i in range(self.main_layout.count())
-            if self.main_layout.itemAt(i).widget()
-            and not self.main_layout.itemAt(i).widget().isHidden()
-        ]
+        widgets = []
+        for i in range(self.main_layout.count()):
+            item = self.main_layout.itemAt(i)
+            if item and (w := item.widget()) and not w.isHidden():
+                widgets.append(w)
         if len(widgets) >= 2:
             start_x = widgets[0].geometry().center().x()
             end_x = widgets[-1].geometry().center().x()
@@ -206,21 +191,20 @@ class HorizontalTimelineContainer(QWidget):
 
 
 class HorizontalTimelineWidget(QScrollArea):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWidgetResizable(True)
         self.setFixedHeight(220)
         self.setStyleSheet("border: none; background-color: transparent;")
         self.container = HorizontalTimelineContainer()
         self.setWidget(self.container)
-        self.last_category = None
+        self.last_category: str | None = None
         self.consecutive_count = 0
 
-    def set_mood(self, _mood: str):
+    def set_mood(self, _mood: str) -> None:
         """Imposta il mood della timeline (es. running, error, success)."""
-        pass
 
-    def add_widget(self, widget: QWidget):
+    def add_widget(self, widget: QWidget) -> None:
         effect = QGraphicsOpacityEffect(widget)
         widget.setGraphicsEffect(effect)
         idx = self.container.main_layout.count() - 1
@@ -233,39 +217,38 @@ class HorizontalTimelineWidget(QScrollArea):
         QApplication.processEvents()
         self._scroll_to_end()
 
-    def add_log(self, message: str):
+    def add_log(self, message: str) -> None:
         human, tech, cat = SmartLogTranslator.humanize(message)
         if cat == self.last_category and cat in ("download", "search"):
             self.consecutive_count += 1
-            items = [
-                self.container.main_layout.itemAt(i).widget()
-                for i in range(self.container.main_layout.count())
-                if isinstance(
-                    self.container.main_layout.itemAt(i).widget(), HorizontalLogItem
-                )
-            ]
+            items = []
+            for i in range(self.container.main_layout.count()):
+                item = self.container.main_layout.itemAt(i)
+                if item and (w := item.widget()) and isinstance(w, HorizontalLogItem):
+                    items.append(w)
             if items:
-                items[-1].set_count(self.consecutive_count)
+                last_item = items[-1]
+                last_item.set_count(self.consecutive_count)
                 return
         self.consecutive_count = 1
         self.last_category = cat
-        self.add_widget(
-            HorizontalLogItem(human, tech, cat, datetime.now().strftime("%H:%M"))
-        )
+        self.add_widget(HorizontalLogItem(human, tech, cat, datetime.now().strftime("%H:%M")))
 
-    def _scroll_to_end(self):
+    def _scroll_to_end(self) -> None:
         sb = self.horizontalScrollBar()
-        self.scroll_anim = QPropertyAnimation(sb, b"value")
-        self.scroll_anim.setDuration(400)
-        self.scroll_anim.setStartValue(sb.value())
-        self.scroll_anim.setEndValue(sb.maximum())
-        self.scroll_anim.start()
+        if sb:
+            self.scroll_anim = QPropertyAnimation(sb, b"value")
+            self.scroll_anim.setDuration(400)
+            self.scroll_anim.setStartValue(sb.value())
+            self.scroll_anim.setEndValue(sb.maximum())
+            self.scroll_anim.start()
 
-    def clear(self):
+    def clear(self) -> None:
         while self.container.main_layout.count():
             item = self.container.main_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            if item and (w := item.widget()):
+                w.deleteLater()
+                # takeAt(0) already removed the item from layout, no need for else
         self.container.main_layout.addStretch()
 
 
@@ -275,13 +258,13 @@ class TimelineWidget(QWidget):
     Each event supports title, description, timestamp, and metadata.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the timeline widget."""
         super().__init__(parent)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         header = QHBoxLayout()
-        header.addWidget(QLabel("<b>Timeline Attività</b>"))
+        header.addWidget(QLabel("<b>Timeline AttivitÃ </b>"))
         header.addStretch()
         btn = ModernButton(
             "Pulisci Log",
@@ -295,15 +278,15 @@ class TimelineWidget(QWidget):
         self.timeline = HorizontalTimelineWidget()
         layout.addWidget(self.timeline)
 
-    def append(self, message: str):
+    def append(self, message: str) -> None:
         self.timeline.add_log(message)
 
-    def clear(self):
+    def clear(self) -> None:
         self.timeline.clear()
 
 
 class MissionReportCard(QFrame):
-    def __init__(self, duration_str, status, parent=None):
+    def __init__(self, duration_str: str, status: bool, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setFixedSize(260, 150)
         self.setStyleSheet(
@@ -311,9 +294,7 @@ class MissionReportCard(QFrame):
         )
         layout = QVBoxLayout(self)
         title = "Missione Compiuta!" if status else "Missione Terminata"
-        lbl = QLabel(
-            f"<b style='color:{'#198754' if status else '#dc3545'}; font-size:18px;'>{title}</b>"
-        )
+        lbl = QLabel(f"<b style='color:{'#198754' if status else '#dc3545'}; font-size:18px;'>{title}</b>")
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(lbl)
         stats = QHBoxLayout()
@@ -323,12 +304,11 @@ class MissionReportCard(QFrame):
         ):
             cont = QWidget()
             vl = QVBoxLayout(cont)
-            vl.addWidget(
-                QLabel(
-                    f"<span style='color:#6c757d;'>{k}</span>",
-                    alignment=Qt.AlignmentFlag.AlignCenter,
-                )
-            )
-            vl.addWidget(QLabel(f"<b>{v}</b>", alignment=Qt.AlignmentFlag.AlignCenter))
+            lbl_k = QLabel(f"<span style='color:#6c757d;'>{k}</span>")
+            lbl_k.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            vl.addWidget(lbl_k)
+            lbl_v = QLabel(f"<b>{v}</b>")
+            lbl_v.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            vl.addWidget(lbl_v)
             stats.addWidget(cont)
         layout.addLayout(stats)

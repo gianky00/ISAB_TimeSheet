@@ -3,17 +3,16 @@ Bot TS - Test Configuration
 Shared fixtures and configuration.
 """
 
-import os
-import shutil
+import contextlib
 import sys
-import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
+ROOT_DIR = Path(__file__).parent.parent.resolve()
+sys.path.insert(0, str(ROOT_DIR / "src"))
 
 
 # Set matplotlib backend to 'Agg' to avoid GUI issues during tests
@@ -21,12 +20,10 @@ def pytest_sessionstart(session):
     """
     Called after the Session object has been created and before performing collection and entering the run test loop.
     """
-    try:
+    with contextlib.suppress(ImportError):
         import matplotlib
 
         matplotlib.use("Agg")
-    except ImportError:
-        pass
 
 
 def pytest_configure(config):
@@ -55,18 +52,15 @@ def pytest_configure(config):
 
 
 @pytest.fixture
-def temp_dir():
-    """Create a temporary directory for tests."""
-    path = Path(tempfile.mkdtemp())
-    yield path
-    shutil.rmtree(path, ignore_errors=True)
+def temp_dir(tmp_path):
+    """Create a temporary directory for tests using pytest built-in tmp_path."""
+    return tmp_path
 
 
 @pytest.fixture
 def mock_config(temp_dir):
     """Create a mock configuration file."""
-    config_file = temp_dir / "config.json"
-    return config_file
+    return temp_dir / "config.json"
 
 
 @pytest.fixture
@@ -81,7 +75,7 @@ def setup_clean_config(tmp_path):
     original_file = config_manager.CONFIG_FILE
 
     test_dir = tmp_path / "test_config"
-    test_dir.mkdir()
+    test_dir.mkdir(parents=True, exist_ok=True)
     test_file = test_dir / "config.json"
 
     # Patch the constants
@@ -146,23 +140,19 @@ def cleanup_widgets():
         return
 
     # Try to import sip for explicit C++ deletion
-    try:
-        from PyQt6 import sip
-    except ImportError:
-        sip = None
+    with contextlib.suppress(ImportError):
+        pass
 
     # Close all top-level widgets
     for widget in QApplication.topLevelWidgets():
-        try:
+        with contextlib.suppress(Exception):
             if widget.isVisible():
                 widget.close()
             widget.deleteLater()
-            if sip and not sip.isdeleted(widget):
-                # Dangerous but necessary for GDI leak prevention in massive suites
-                # sip.delete(widget)
-                pass
-        except Exception:
-            pass
+            # if sip and not sip.isdeleted(widget):
+            #     # Dangerous but necessary for GDI leak prevention in massive suites
+            #     # sip.delete(widget)
+            #     pass
 
     # Process deferred delete events
     QApplication.processEvents()
@@ -183,9 +173,7 @@ def mock_ui_dependencies(mocker):
     mocker.patch("src.core.database.db_manager", mock_db)
 
     # Mock ContabilitaManager (Class Mock)
-    mock_contabilita_class = mocker.patch(
-        "src.core.contabilita_manager.ContabilitaManager"
-    )
+    mock_contabilita_class = mocker.patch("src.core.contabilita_manager.ContabilitaManager")
 
     # Configure Class Methods and Attributes
     mock_contabilita_class.DB_PATH = MagicMock()

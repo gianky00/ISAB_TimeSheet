@@ -72,9 +72,7 @@ class TestPrintPDFWithMocking:
     @patch("src.utils.printing.fitz.open")
     @patch("src.utils.printing._set_printer_duplex_powershell")
     @patch("src.utils.printing.win32print.GetDefaultPrinter")
-    def test_print_pdf_fallback(
-        self, mock_default, mock_duplex, mock_fitz, mock_startfile, tmp_path
-    ):
+    def test_print_pdf_fallback(self, mock_default, mock_duplex, mock_fitz, mock_startfile, tmp_path):
         # Create dummy PDF file
         pdf_file = tmp_path / "test.pdf"
         pdf_file.write_bytes(b"dummy pdf content")

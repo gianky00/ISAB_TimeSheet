@@ -1,6 +1,6 @@
 import base64
 import sqlite3
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -54,56 +54,85 @@ class TestAISentinelHardened:
         dummy_pdf = tmp_path / "test.pdf"
         dummy_pdf.write_text("fake pdf content")
 
-        # Mock PyMuPDF (fitz)
+        # Mock fitz module as non-None
+        mock_fitz = MagicMock()
+        mocker.patch("src.utils.document_processor.fitz", mock_fitz)
+
+        # Setup mock objects
         mock_doc = MagicMock()
         mock_page = MagicMock()
         mock_pix = MagicMock()
         mock_pix.tobytes.return_value = b"fake_png_data"
         mock_page.get_pixmap.return_value = mock_pix
+
+        # Setup mock doc
         mock_doc.__len__.return_value = 1
         mock_doc.__getitem__.return_value = mock_page
+        mock_doc.__enter__.return_value = mock_doc
+        mock_doc.__exit__.return_value = None
 
-        with patch("src.utils.document_processor.fitz.open", return_value=mock_doc):
-            images = DocumentProcessor.get_pages_as_images(dummy_pdf)
+        mock_fitz.open.return_value = mock_doc
+        mock_fitz.Matrix.return_value = "mock_matrix"
 
-            assert len(images) == 1
-            # Verifica che sia base64 valido
-            decoded = base64.b64decode(images[0])
-            assert decoded == b"fake_png_data"
-            # Verifica zoom
-            mock_page.get_pixmap.assert_called()
-            args = mock_page.get_pixmap.call_args[1]
-            assert "matrix" in args
+        images = DocumentProcessor.get_pages_as_images(dummy_pdf)
+
+        assert len(images) == 1
+        # Verifica che sia base64 valido
+        decoded = base64.b64decode(images[0])
+        assert decoded == b"fake_png_data"
+        # Verifica zoom
+        mock_page.get_pixmap.assert_called()
+        mock_fitz.open.assert_called_once_with(dummy_pdf)
 
     def test_document_processor_searchable_check(self, mocker, tmp_path):
         """Verifica se il processore distingue correttamente PDF testo da PDF immagine."""
         dummy_pdf = tmp_path / "test.pdf"
         dummy_pdf.write_text("fake")
 
+        # Mock fitz module as non-None
+        mock_fitz = MagicMock()
+        mocker.patch("src.utils.document_processor.fitz", mock_fitz)
+
         mock_doc = MagicMock()
         mock_page = MagicMock()
         mock_doc.__iter__.return_value = [mock_page]
+        mock_doc.__enter__.return_value = mock_doc
+        mock_doc.__exit__.return_value = None
 
-        with patch("src.utils.document_processor.fitz.open", return_value=mock_doc):
-            # Caso 1: Ha testo
-            mock_page.get_text.return_value = "Contenuto testuale"
-            assert DocumentProcessor.is_pdf_searchable(dummy_pdf) is True
+        mock_fitz.open.return_value = mock_doc
 
-            # Caso 2: Vuoto (solo immagine)
-            mock_page.get_text.return_value = "  "
-            assert DocumentProcessor.is_pdf_searchable(dummy_pdf) is False
+        # Caso 1: Ha testo
+        mock_page.get_text.return_value = "Contenuto testuale"
+        assert DocumentProcessor.is_pdf_searchable(dummy_pdf) is True
+
+        # Caso 2: Vuoto (solo immagine)
+        mock_page.get_text.return_value = "  "
+        assert DocumentProcessor.is_pdf_searchable(dummy_pdf) is False
 
     def test_document_processor_merge_logic(self, mocker, tmp_path):
         """Verifica l'unione fisica dei PDF."""
         out_pdf = str(tmp_path / "merged.pdf")
 
-        mock_res = MagicMock()
-        with patch(
-            "src.utils.document_processor.fitz.open",
-            side_effect=[mock_res, MagicMock(), MagicMock()],
-        ):
-            success = DocumentProcessor.merge_pdfs(["p1.pdf", "p2.pdf"], out_pdf)
+        # Mock fitz module as non-None
+        mock_fitz = MagicMock()
+        mocker.patch("src.utils.document_processor.fitz", mock_fitz)
 
-            assert success is True
-            assert mock_res.insert_pdf.called
-            assert mock_res.save.assert_called_with(out_pdf) or mock_res.save.called
+        mock_res = MagicMock()
+        mock_res.__enter__.return_value = mock_res
+        mock_res.__exit__.return_value = None
+
+        mock_doc1 = MagicMock()
+        mock_doc1.__enter__.return_value = mock_doc1
+        mock_doc1.__exit__.return_value = None
+
+        mock_doc2 = MagicMock()
+        mock_doc2.__enter__.return_value = mock_doc2
+        mock_doc2.__exit__.return_value = None
+
+        mock_fitz.open.side_effect = [mock_res, mock_doc1, mock_doc2]
+
+        success = DocumentProcessor.merge_pdfs(["p1.pdf", "p2.pdf"], out_pdf)
+
+        assert success is True
+        assert mock_res.insert_pdf.called
+        assert mock_res.save.called

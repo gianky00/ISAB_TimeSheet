@@ -13,22 +13,22 @@ class TestLogHumanizerCoverage:
         assert tech == "Avvio sistema"
 
     def test_humanize_login(self):
-        human, tech, cat = SmartLogTranslator.humanize("Tentativo di accesso")
+        human, _tech, cat = SmartLogTranslator.humanize("Tentativo di accesso")
         assert cat == "login"
         assert human in SmartLogTranslator.TEMPLATES["login"]
 
     def test_humanize_search(self):
-        human, tech, cat = SmartLogTranslator.humanize("Ricerca dati in corso")
+        human, _tech, cat = SmartLogTranslator.humanize("Ricerca dati in corso")
         assert cat == "search"
         assert human in SmartLogTranslator.TEMPLATES["search"]
 
     def test_humanize_download(self):
-        human, tech, cat = SmartLogTranslator.humanize("Scarico file excel")
+        human, _tech, cat = SmartLogTranslator.humanize("Scarico file excel")
         assert cat == "download"
         assert human in SmartLogTranslator.TEMPLATES["download"]
 
     def test_humanize_success(self):
-        human, tech, cat = SmartLogTranslator.humanize("Operazione completata")
+        human, _tech, cat = SmartLogTranslator.humanize("Operazione completata")
         assert cat == "success"
         assert human in SmartLogTranslator.TEMPLATES["success"]
 
@@ -37,7 +37,7 @@ class TestLogHumanizerCoverage:
         assert cat2 == "success"
 
     def test_humanize_error(self):
-        human, tech, cat = SmartLogTranslator.humanize("Errore imprevisto")
+        human, _tech, cat = SmartLogTranslator.humanize("Errore imprevisto")
         assert cat == "error"
         assert human in SmartLogTranslator.TEMPLATES["error"]
 
@@ -46,7 +46,7 @@ class TestLogHumanizerCoverage:
         assert cat2 == "error"
 
     def test_humanize_wait(self):
-        human, tech, cat = SmartLogTranslator.humanize("In attesa del server")
+        human, _tech, cat = SmartLogTranslator.humanize("In attesa del server")
         assert cat == "wait"
         assert human in SmartLogTranslator.TEMPLATES["wait"]
 

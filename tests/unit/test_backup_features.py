@@ -49,9 +49,7 @@ class TestBackupFeatures:
         """Verifica che il backup contenga solo i file corretti."""
         source, target = mock_dirs
         mocker.patch("src.core.backup_manager.CONFIG_DIR", source)
-        mocker.patch(
-            "src.core.backup_manager.BackupManager.get_backup_dir", return_value=target
-        )
+        mocker.patch("src.core.backup_manager.BackupManager.get_backup_dir", return_value=target)
 
         # Esegui backup
         success, zip_path = BackupManager.create_backup()
@@ -93,7 +91,7 @@ class TestBackupFeatures:
         with zipfile.ZipFile(zip_path, "w") as z:
             z.writestr("new_data.db", "restored content")
 
-        success, msg = BackupManager.restore_backup(str(zip_path))
+        success, _msg = BackupManager.restore_backup(str(zip_path))
 
         assert success is True
         assert (source / "new_data.db").exists()

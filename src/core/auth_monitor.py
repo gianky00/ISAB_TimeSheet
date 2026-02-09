@@ -5,8 +5,9 @@ Monitoraggio proattivo delle abilitazioni ISAB basato sulle timbrature.
 
 import logging
 import re
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from contextlib import suppress
+from datetime import UTC, datetime
+from typing import Any
 
 from src.core.database import db_manager
 
@@ -18,47 +19,45 @@ def _normalize(t: Any) -> str:
 
 
 def _build_access_maps(
-    accessi_raw: List[Tuple[Any, ...]],
-) -> Tuple[Dict[str, Tuple[int, str]], Dict[Tuple[str, str], Tuple[int, str]]]:
+    accessi_raw: list[tuple[Any, ...]],
+) -> tuple[dict[str, tuple[int, str]], dict[tuple[str, str], tuple[int, str]]]:
     """Costruisce le mappe di ultimo accesso: per CF e per (Cognome, Nome)."""
-    last_by_cf: Dict[str, Tuple[int, str]] = {}
-    last_by_name: Dict[Tuple[str, str], Tuple[int, str]] = {}
-    today = datetime.now()
+    last_by_cf: dict[str, tuple[int, str]] = {}
+    last_by_name: dict[tuple[str, str], tuple[int, str]] = {}
+    today = datetime.now(UTC)
 
     for cog, nom, cf, last_date_str in accessi_raw:
-        try:
-            date_part = str(last_date_str).split(" ")[0]
-            last_date = None
-            for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
-                try:
-                    last_date = datetime.strptime(date_part, fmt)
-                    break
-                except ValueError:
-                    continue
-
-            if not last_date:
+        date_part = str(last_date_str).split(" ")[0]
+        last_date = None
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+            try:
+                last_date = datetime.strptime(date_part, fmt).replace(tzinfo=UTC)
+                break
+            except ValueError:
                 continue
 
-            delta = (today - last_date).days
-            formatted_date = last_date.strftime("%d/%m/%Y")
+        if not last_date:
+            continue
 
-            # Salva per CF
-            if cf and cf.strip():
-                norm_cf = cf.strip().upper()
-                if norm_cf not in last_by_cf or delta < last_by_cf[norm_cf][0]:
-                    last_by_cf[norm_cf] = (delta, formatted_date)
+        delta = (today - last_date).days
+        formatted_date = last_date.strftime("%d/%m/%Y")
 
-            # Salva per Nome/Cognome (sempre, come fallback)
+        # Salva per CF
+        if cf and cf.strip():
+            norm_cf = cf.strip().upper()
+            if norm_cf not in last_by_cf or delta < last_by_cf[norm_cf][0]:
+                last_by_cf[norm_cf] = (delta, formatted_date)
+
+        # Salva per Nome/Cognome (sempre, come fallback)
+        with suppress(Exception):
             norm_key = (_normalize(cog), _normalize(nom))
             if norm_key not in last_by_name or delta < last_by_name[norm_key][0]:
                 last_by_name[norm_key] = (delta, formatted_date)
-        except Exception:
-            continue
 
     return last_by_cf, last_by_name
 
 
-def check_expiring_isab_authorizations() -> List[Dict[str, Any]]:
+def check_expiring_isab_authorizations() -> list[dict[str, Any]]:
     """
     Scansiona tutti i dipendenti per identificare chi ha l'abilitazione ISAB in scadenza.
     Priorità:
@@ -72,19 +71,19 @@ def check_expiring_isab_authorizations() -> List[Dict[str, Any]]:
 
         # 2. Recupera tutte le timbrature
         query_timb = (
-            "SELECT cognome, nome, codice_fiscale, data FROM timbrature "
-            "WHERE data IS NOT NULL AND data != ''"
+            "SELECT cognome, nome, codice_fiscale, data FROM timbrature WHERE data IS NOT NULL AND data != ''"
         )
         accessi_raw = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
 
         # 3. Costruisci mappe
-        last_by_cf, last_by_name = _build_access_maps(accessi_raw)
+        last_by_cf, _last_by_name = _build_access_maps(accessi_raw)
+        _, last_by_name = _build_access_maps(accessi_raw)
 
         results = []
         for cog, nom, cf in dipendenti:
             match_found = False
-            delta: Optional[int] = None
-            f_date: Optional[str] = None
+            delta: int | None = None
+            f_date: str | None = None
             missing_cf_flag = False
 
             # Tenta Match primario: CF

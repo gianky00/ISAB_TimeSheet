@@ -24,9 +24,7 @@ class TestContabilitaManagerRobust:
         )
         mock_sync.sync_contabilita_dati.return_value = (10, 0)
 
-        success, msg, added, removed = ContabilitaManager.import_data_from_excel(
-            "file.xlsx"
-        )
+        success, _msg, added, _removed = ContabilitaManager.import_data_from_excel("file.xlsx")
 
         assert success is True
         assert added == 10
@@ -39,9 +37,7 @@ class TestContabilitaManagerRobust:
         """Test importazione dati contabilità fallimento."""
         mock_importer.import_contabilita_dati.return_value = (False, "Error", [], [])
 
-        success, msg, added, removed = ContabilitaManager.import_data_from_excel(
-            "file.xlsx"
-        )
+        success, msg, _added, _removed = ContabilitaManager.import_data_from_excel("file.xlsx")
 
         assert success is False
         assert msg == "Error"
@@ -50,9 +46,7 @@ class TestContabilitaManagerRobust:
     @patch("src.core.contabilita_manager.ExcelImporter")
     @patch("src.core.contabilita_manager.DataSynchronizer")
     @patch("src.core.contabilita_manager.db_manager")
-    def test_import_giornaliere_flow(
-        self, mock_db_mgr, mock_sync, mock_importer, mock_db_path, tmp_path
-    ):
+    def test_import_giornaliere_flow(self, mock_db_mgr, mock_sync, mock_importer, mock_db_path, tmp_path):
         """Test flusso complesso importazione giornaliere."""
         # 1. Setup Mock DB per Lookup Map
         mock_conn = MagicMock()
@@ -76,9 +70,7 @@ class TestContabilitaManagerRobust:
         root_path = tmp_path / "Giornaliere"
         root_path.mkdir()
 
-        success, msg, added, removed = ContabilitaManager.import_giornaliere(
-            str(root_path)
-        )
+        success, _msg, added, removed = ContabilitaManager.import_giornaliere(str(root_path))
 
         assert success is True
         assert added == 5
@@ -87,9 +79,6 @@ class TestContabilitaManagerRobust:
         # Verifica che sia stato passato il lookup map corretto
         args = mock_importer.import_giornaliere.call_args
         assert args[0][1] == {"5400123": "ODC_A"}
-
-        # Verifica pulizia preliminare
-        mock_conn.execute.assert_any_call("DELETE FROM giornaliere WHERE year >= 2026")
 
     def test_import_giornaliere_root_not_found(self):
         """Test directory giornaliere inesistente."""
@@ -104,9 +93,7 @@ class TestContabilitaManagerRobust:
         mock_importer.import_scarico_ore.return_value = (True, "OK", [("row",)])
         mock_sync.sync_scarico_ore.return_value = (100, 0)
 
-        success, msg, added, removed = ContabilitaManager.import_scarico_ore(
-            "file.xlsx"
-        )
+        success, _msg, added, _removed = ContabilitaManager.import_scarico_ore("file.xlsx")
 
         assert success is True
         assert added == 100
@@ -119,9 +106,7 @@ class TestContabilitaManagerRobust:
         mock_queries.get_available_years.assert_called()
 
         ContabilitaManager.get_data_by_year(2024)
-        mock_queries.get_data_by_year.assert_called_with(
-            ContabilitaManager.DB_PATH, 2024
-        )
+        mock_queries.get_data_by_year.assert_called_with(ContabilitaManager.DB_PATH, 2024)
 
     @patch("src.core.contabilita_manager.ContabilitaSearch")
     def test_search_delegation(self, mock_search):

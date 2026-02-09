@@ -43,46 +43,46 @@ from src.gui.styles.widget_styles import (
 )
 
 __all__ = [
-    # Theme Management
-    "ThemeManager",
-    "apply_theme",
-    # Constants
-    "COLORS",
-    "STATUS_COLORS",
     "ANIMATION_TIMINGS",
-    "MONTHS_IT",
-    "MONTHS_IT_FULL",
-    "UI_SIZES",
-    "FONT_SIZES",
+    "BUTTON_DANGER",
+    "BUTTON_ICON_ONLY",
     # Widget Styles - Buttons
     "BUTTON_PRIMARY",
-    "BUTTON_SUCCESS",
-    "BUTTON_DANGER",
     "BUTTON_SECONDARY",
+    "BUTTON_SUCCESS",
     "BUTTON_TRANSPARENT",
-    "BUTTON_ICON_ONLY",
-    # Widget Styles - Inputs
-    "COMBOBOX_STYLE",
-    "COMBOBOX_LIGHT_ON_DARK",
-    "LINEEDIT_STYLE",
-    "TIMEEDIT_STYLE",
-    "TIMEEDIT_SMALL",
-    "SPINBOX_STYLE",
-    "CHECKBOX_STYLE",
-    "CHECKBOX_TOGGLE",
     # Widget Styles - Cards & Containers
     "CARD_STYLE_SIMPLE",
-    "SCROLL_AREA_TRANSPARENT",
-    "SCROLL_AREA_BORDERED",
+    "CHECKBOX_STYLE",
+    "CHECKBOX_TOGGLE",
+    # Constants
+    "COLORS",
+    "COMBOBOX_LIGHT_ON_DARK",
+    # Widget Styles - Inputs
+    "COMBOBOX_STYLE",
+    "EMPTY_STATE_LABEL",
+    "FONT_SIZES",
     "FRAME_HEADER",
     # Widget Styles - Labels
     "LABEL_MUTED",
-    "EMPTY_STATE_LABEL",
+    "LINEEDIT_STYLE",
     "LIVE_DOT",
+    "MONTHS_IT",
+    "MONTHS_IT_FULL",
+    "SCROLL_AREA_BORDERED",
+    "SCROLL_AREA_TRANSPARENT",
+    "SPINBOX_STYLE",
+    "STATUS_COLORS",
+    "TIMEEDIT_SMALL",
+    "TIMEEDIT_STYLE",
+    "UI_SIZES",
+    # Theme Management
+    "ThemeManager",
+    "apply_theme",
     # Widget Styles - Functions
     "card_style",
-    "label_title",
-    "label_subtitle",
     "icon_badge",
+    "label_subtitle",
+    "label_title",
     "status_dot",
 ]

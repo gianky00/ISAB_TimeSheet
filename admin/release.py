@@ -4,6 +4,7 @@ Sostituisce i vecchi script .bat con un processo robusto e cross-platform.
 """
 
 import argparse
+import contextlib
 import io
 import json
 import subprocess
@@ -23,17 +24,25 @@ VENV_PYTHON = (
 def run_command(cmd, description, exit_on_fail=True, capture=False):
     """Executes a subprocess command with error handling and optional output capture."""
     print(f"\n[STEP] {description}...")
+    sys.stdout.flush()
     try:
         if capture:
-            result = subprocess.run(
-                cmd, cwd=ROOT_DIR, capture_output=True, text=True, check=True
-            )
+            result = subprocess.run(cmd, cwd=ROOT_DIR, capture_output=True, text=True, check=True)
             return result.stdout.strip()
 
         result = subprocess.run(cmd, cwd=ROOT_DIR, check=exit_on_fail)
         return True
+    except subprocess.CalledProcessError as e:
+        print(f"[ERROR] Comando fallito: {description}")
+        print(f"        Exit code: {e.returncode}")
+        sys.stdout.flush()
+        if exit_on_fail:
+            sys.exit(1)
+        return False
     except Exception as e:
-        print(f"❌ Error during: {description}\n{e}")
+        print(f"[ERROR] Errore durante: {description}")
+        print(f"        Dettaglio: {e}")
+        sys.stdout.flush()
         if exit_on_fail:
             sys.exit(1)
         return False
@@ -42,7 +51,7 @@ def run_command(cmd, description, exit_on_fail=True, capture=False):
 def get_current_version():
     """Extracts the current version string from src/core/version.py."""
     version_file = ROOT_DIR / "src" / "core" / "version.py"
-    content = version_file.read_text()
+    content = version_file.read_text(encoding="utf-8")
     import re
 
     match = re.search(r'__version__\s*=\s*"(.*?)"', content)
@@ -55,7 +64,7 @@ def notify_telegram(message):
         config_path = ROOT_DIR / "config.json"
         if not config_path.exists():
             return
-        with open(config_path, "r") as f:
+        with config_path.open(encoding="utf-8") as f:
             config = json.load(f)
 
         token = config.get("telegram_token")
@@ -67,6 +76,7 @@ def notify_telegram(message):
             requests.post(
                 url,
                 json={"chat_id": chat_id, "text": message, "parse_mode": "Markdown"},
+                timeout=10,
             )
             print("📲 Notifica Telegram inviata.")
     except Exception as e:
@@ -83,6 +93,7 @@ def detect_bump_type():
                 cwd=ROOT_DIR,
                 capture_output=True,
                 text=True,
+                check=False,
             )
             .stdout.strip()
             .lower()
@@ -94,6 +105,7 @@ def detect_bump_type():
             cwd=ROOT_DIR,
             capture_output=True,
             text=True,
+            check=False,
         ).stdout.strip()
 
         # Default se non ci sono tag
@@ -106,6 +118,7 @@ def detect_bump_type():
             cwd=ROOT_DIR,
             capture_output=True,
             text=True,
+            check=False,
         ).stdout.lower()
 
         # LOGICA DI RILEVAZIONE (Priorità: Major -> Minor -> Patch)
@@ -116,8 +129,7 @@ def detect_bump_type():
 
         # Check MINOR (Branch feature o commit feat)
         if (
-            current_branch.startswith("feature/")
-            or current_branch.startswith("feat/")
+            current_branch.startswith(("feature/", "feat/"))
             or "feat:" in logs
             or "feat(" in logs
             or "add:" in logs
@@ -134,8 +146,11 @@ def main():
     """Entry point for the release process, handling arguments and workflow execution."""
     # Fix encoding for Windows console to support emoji
     if sys.platform == "win32":
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
+        with contextlib.suppress(Exception):
+            if hasattr(sys.stdout, "buffer"):
+                sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+            if hasattr(sys.stderr, "buffer"):
+                sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
     parser = argparse.ArgumentParser(description="SyncroJob Automated Release Tool")
     parser.add_argument(
@@ -151,13 +166,9 @@ def main():
         action="store_true",
         help="Skip test execution during pre-flight",
     )
-    parser.add_argument(
-        "--force", action="store_true", help="Force release even if checks fail"
-    )
+    parser.add_argument("--force", action="store_true", help="Force release even if checks fail")
     parser.add_argument("--no-git", action="store_true", help="Skip Git operations")
-    parser.add_argument(
-        "--push", action="store_true", help="Push to remote after release"
-    )
+    parser.add_argument("--push", action="store_true", help="Push to remote after release")
     args = parser.parse_args()
 
     start_time = time.time()
@@ -172,9 +183,7 @@ def main():
     run_command(pre_flight_cmd, "Pre-Flight Safety Check")
 
     # 2. Sync Requirements
-    run_command(
-        [str(VENV_PYTHON), "admin/sync_requirements.py"], "Syncing Requirements"
-    )
+    run_command([str(VENV_PYTHON), "admin/sync_requirements.py"], "Syncing Requirements")
 
     # 3. Resolve Bump Type
     bump_type = args.type
@@ -183,9 +192,7 @@ def main():
         print(f"🔍 Detected bump type: {bump_type}")
 
     # 4. Version Bump
-    run_command(
-        [str(VENV_PYTHON), "admin/bump_version.py", bump_type], f"Bumping {bump_type}"
-    )
+    run_command([str(VENV_PYTHON), "admin/bump_version.py", bump_type], f"Bumping {bump_type}")
     new_version = get_current_version()
 
     # 5. Git Operations
@@ -200,12 +207,11 @@ def main():
             f"Tagging v{new_version}",
         )
         if args.push:
-            run_command(
-                ["git", "push", "origin", "main", "--tags"], "Pushing to remote"
-            )
+            run_command(["git", "push", "origin", "main", "--tags"], "Pushing to remote")
 
     # 5. Build
-    build_cmd = [str(VENV_PYTHON), "admin/Crea Setup/build_dist.py"]
+    build_script = ROOT_DIR / "admin" / "Crea Setup" / "build_dist.py"
+    build_cmd = [str(VENV_PYTHON), str(build_script)]
     if not args.deploy:
         build_cmd.append("--no-deploy")
     run_command(build_cmd, "Building Distribution")
@@ -221,4 +227,15 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n[INFO] Operazione annullata dall'utente.")
+        sys.exit(0)
+    except Exception as e:
+        print(f"\n[FATAL ERROR] Errore non gestito: {e}")
+        import traceback
+
+        traceback.print_exc()
+        sys.stdout.flush()
+        sys.exit(1)

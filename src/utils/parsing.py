@@ -4,9 +4,10 @@ Utility per il parsing robusto di valute e numeri.
 """
 
 import re
+from typing import Any
 
 
-def parse_currency(value) -> float:
+def parse_currency(value: Any) -> float:
     """
     Converte una stringa o numero in float, gestendo formati Italiani e Internazionali.
     """
@@ -58,9 +59,9 @@ def _process_separators(s: str) -> str:
 
     if has_comma and has_dot:
         return _handle_mixed_separators(s)
-    elif has_comma:
+    if has_comma:
         return s.replace(",", ".")
-    elif has_dot:
+    if has_dot:
         return _handle_single_dot(s)
 
     return s
@@ -116,6 +117,4 @@ if __name__ == "__main__":
     ]
     for i, o in tests:
         res = parse_currency(i)
-        print(
-            f"In: {i!r} -> Out: {res} ({'OK' if res == o else 'FAIL expected ' + str(o)})"
-        )
+        print(f"In: {i!r} -> Out: {res} ({'OK' if res == o else 'FAIL expected ' + str(o)})")

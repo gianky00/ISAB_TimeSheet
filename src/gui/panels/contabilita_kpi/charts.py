@@ -49,9 +49,7 @@ class ChartContainer(QWidget):
 
         if title:
             lbl = QLabel(title)
-            lbl.setStyleSheet(
-                "font-weight: bold; color: #495057; font-size: 14px; border: none;"
-            )
+            lbl.setStyleSheet("font-weight: bold; color: #495057; font-size: 14px; border: none;")
             header_layout.addWidget(lbl)
 
         header_layout.addStretch()
@@ -98,9 +96,7 @@ class KPIChartsManager:
             self.canvas1.draw()
             return
 
-        df_filtered = df[
-            ~df["stato_attivita"].str.contains("FORNITURA", case=False, na=False)
-        ]
+        df_filtered = df[~df["stato_attivita"].str.contains("FORNITURA", case=False, na=False)]
         counts = df_filtered["stato_attivita"].value_counts()
         if counts.empty:
             ax.text(0.5, 0.5, "Nessun dato", ha="center", va="center")
@@ -108,7 +104,7 @@ class KPIChartsManager:
             return
 
         colors = ["#4b6cb7", "#198754", "#ffc107", "#dc3545", "#6f42c1", "#0dcaf0"]
-        wedges, texts = ax.pie(
+        wedges, _texts = ax.pie(
             counts,
             labels=None,
             startangle=90,
@@ -130,6 +126,8 @@ class KPIChartsManager:
         self.annot.set_visible(False)
 
         def update_annot(wedge, idx):
+            if not self.annot:
+                return
             ang = (wedge.theta2 - wedge.theta1) / 2.0 + wedge.theta1
             y = np.sin(np.deg2rad(ang))
             x = np.cos(np.deg2rad(ang))
@@ -145,11 +143,12 @@ class KPIChartsManager:
                     contains, _ = wedge.contains(event)
                     if contains:
                         update_annot(wedge, i)
-                        self.annot.set_visible(True)
+                        if self.annot:
+                            self.annot.set_visible(True)
                         self.fig1.canvas.draw_idle()
                         found = True
                         break
-                if not found and self.annot.get_visible():
+                if not found and self.annot and self.annot.get_visible():
                     self.annot.set_visible(False)
                     self.fig1.canvas.draw_idle()
 
@@ -181,9 +180,7 @@ class KPIChartsManager:
             "dicembre",
         ]
         df["mese_lower"] = df["mese"].str.lower().str.strip()
-        df["mese_cat"] = pd.Categorical(
-            df["mese_lower"], categories=months_order, ordered=True
-        )
+        df["mese_cat"] = pd.Categorical(df["mese_lower"], categories=months_order, ordered=True)
         grouped = df.groupby("mese_cat", observed=True)[["totale_prev", "ore_sp"]].sum()
 
         if grouped.empty:
@@ -232,9 +229,7 @@ class KPIChartsManager:
             self.canvas3.draw()
             return
 
-        grouped = filtered_df.groupby("tipologia_upper")[
-            ["totale_prev", "ore_sp"]
-        ].sum()
+        grouped = filtered_df.groupby("tipologia_upper")[["totale_prev", "ore_sp"]].sum()
         grouped["Costo"] = grouped["ore_sp"] * self.HOURLY_COST_STD
         grouped["Margine"] = grouped["totale_prev"] - grouped["Costo"]
         grouped = grouped.sort_values(by="totale_prev", ascending=True)
@@ -307,9 +302,7 @@ class KPIChartsManager:
             "dicembre",
         ]
         df["mese_lower"] = df["mese"].str.lower().str.strip()
-        df["mese_cat"] = pd.Categorical(
-            df["mese_lower"], categories=months_order, ordered=True
-        )
+        df["mese_cat"] = pd.Categorical(df["mese_lower"], categories=months_order, ordered=True)
         df_resa = df[df["resa"] > 0]
         grouped = df_resa.groupby("mese_cat", observed=True)["resa"].mean()
 
@@ -335,19 +328,9 @@ class KPIChartsManager:
             return
 
         total = len(df)
-        completed = len(
-            df[
-                df["stato_attivita"].str.contains(
-                    "CONTABILIZZA|CHIUSA", case=False, na=False
-                )
-            ]
-        )
-        pending_tcl = len(
-            df[df["stato_attivita"].str.contains("IN ATTESA TCL", case=False, na=False)]
-        )
-        to_complete = len(
-            df[df["stato_attivita"].str.contains("DA COMPLETARE", case=False, na=False)]
-        )
+        completed = len(df[df["stato_attivita"].str.contains("CONTABILIZZA|CHIUSA", case=False, na=False)])
+        pending_tcl = len(df[df["stato_attivita"].str.contains("IN ATTESA TCL", case=False, na=False)])
+        to_complete = len(df[df["stato_attivita"].str.contains("DA COMPLETARE", case=False, na=False)])
         other = total - completed - pending_tcl - to_complete
 
         p_comp = (completed / total) * 100
@@ -356,9 +339,7 @@ class KPIChartsManager:
         p_other = (other / total) * 100
 
         ax.barh(0, p_comp, height=0.6, color="#198754", label="Contabilizzate")
-        ax.barh(
-            0, p_tcl, left=p_comp, height=0.6, color="#ffc107", label="In Attesa TCL"
-        )
+        ax.barh(0, p_tcl, left=p_comp, height=0.6, color="#ffc107", label="In Attesa TCL")
         ax.barh(
             0,
             p_todo,

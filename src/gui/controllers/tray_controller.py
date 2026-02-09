@@ -2,6 +2,8 @@
 Controller per la gestione della System Tray Icon.
 """
 
+from typing import Any
+
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
@@ -12,12 +14,12 @@ from src.utils.helpers import get_app_icon_path, get_asset_path, get_colored_ico
 class TrayController:
     """Gestisce l'icona e il menu della system tray."""
 
-    def __init__(self, main_window):
+    def __init__(self, main_window: Any) -> None:
         self.mw = main_window
         self.tray_icon = QSystemTrayIcon(self.mw)
         self._setup_tray_icon()
 
-    def _setup_tray_icon(self):
+    def _setup_tray_icon(self) -> None:
         """Configura l'icona nella system tray."""
         icon_path = get_app_icon_path()
         if icon_path:
@@ -33,9 +35,11 @@ class TrayController:
 
         tray_menu.addSeparator()
 
-        def force_quit_app():
+        def force_quit_app() -> None:
             self.mw._force_quit = True
-            QApplication.instance().quit()
+            app = QApplication.instance()
+            if app is not None:
+                app.quit()
 
         quit_action = QAction("Esci", self.mw)
         quit_action.setIcon(get_colored_icon(get_asset_path(Icons.X_CIRCLE), "#000000"))
@@ -46,7 +50,7 @@ class TrayController:
         self.tray_icon.activated.connect(self._handle_tray_activation)
         self.tray_icon.show()
 
-    def _handle_tray_activation(self, reason):
+    def _handle_tray_activation(self, reason: QSystemTrayIcon.ActivationReason) -> None:
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
             if self.mw.isVisible():
                 self.mw.hide()
@@ -55,7 +59,11 @@ class TrayController:
                 self.mw.activateWindow()
 
     def show_message(
-        self, title, message, icon=QSystemTrayIcon.MessageIcon.Information, timeout=5000
-    ):
+        self,
+        title: str,
+        message: str,
+        icon: QSystemTrayIcon.MessageIcon = QSystemTrayIcon.MessageIcon.Information,
+        timeout: int = 5000,
+    ) -> None:
         """Mostra una notifica tray."""
         self.tray_icon.showMessage(title, message, icon, timeout)

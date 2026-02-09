@@ -7,11 +7,11 @@ class AuditPaginationBar(QWidget):
 
     page_changed = pyqtSignal(int)  # offset (1 per next, -1 per prev)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
@@ -32,7 +32,7 @@ class AuditPaginationBar(QWidget):
         layout.addStretch()
         layout.addWidget(self.next_btn)
 
-    def update_state(self, current_page, total_logs, page_size):
+    def update_state(self, current_page: int, total_logs: int, page_size: int) -> None:
         total_pages = (total_logs + page_size - 1) // page_size
         if total_pages < 1:
             total_pages = 1
@@ -42,6 +42,6 @@ class AuditPaginationBar(QWidget):
         self.prev_btn.setEnabled(current_page > 0)
         self.next_btn.setEnabled(disp < total_pages)
 
-    def set_enabled(self, enabled):
+    def set_enabled(self, enabled: bool) -> None:
         self.prev_btn.setEnabled(enabled)
         self.next_btn.setEnabled(enabled)

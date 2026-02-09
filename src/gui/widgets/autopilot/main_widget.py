@@ -4,6 +4,7 @@ Widget coordinatore per la visualizzazione e configurazione dei bot programmati.
 """
 
 from contextlib import suppress
+from typing import Any
 
 from PyQt6.QtCore import (
     QEasingCurve,
@@ -40,24 +41,26 @@ class AutopilotWidget(QWidget):
     Widget che mostra e configura gli eventi programmati dei bot (Autopilot).
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._config_mode = False
-        self.footer_left_widget = None
-        self.status_bar = None
+        self.footer_left_widget: Any = None
+        self.status_bar: Any = None
+        self._animating = False
+        self._gear_animation: QParallelAnimationGroup | None = None
         self._setup_ui()
 
         self.refresh_timer = QTimer(self)
         self.refresh_timer.timeout.connect(self.refresh_events)
         self.refresh_timer.start(60000)
 
-    def set_footer_widget(self, footer_left_widget):
+    def set_footer_widget(self, footer_left_widget: Any) -> None:
         self.footer_left_widget = footer_left_widget
 
-    def set_status_bar(self, status_bar):
+    def set_status_bar(self, status_bar: Any) -> None:
         self.status_bar = status_bar
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
         self.setMinimumWidth(600)
         self.setMaximumWidth(600)
@@ -106,9 +109,7 @@ class AutopilotWidget(QWidget):
 
         # Pulsante configurazione
         self.config_btn = QPushButton()
-        self.config_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.SETTINGS), "#6c757d")
-        )
+        self.config_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS), "#6c757d"))
         self.config_btn.setIconSize(QSize(20, 20))
         self.config_btn.setFixedSize(32, 32)
         self.config_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -147,8 +148,8 @@ class AutopilotWidget(QWidget):
         self.refresh_events()
         self._refresh_config()
 
-    def _toggle_mode(self):
-        if getattr(self, "_animating", False):
+    def _toggle_mode(self) -> None:
+        if self._animating:
             return
         self._animating = True
         self._config_mode = not self._config_mode
@@ -169,19 +170,19 @@ class AutopilotWidget(QWidget):
 
         QTimer.singleShot(800, self._restart_live_animations)
 
-    def _stop_all_card_animations(self, layout):
+    def _stop_all_card_animations(self, layout: QGridLayout) -> None:
         for i in range(layout.count()):
             item = layout.itemAt(i)
-            if item and item.widget():
+            if item is not None and item.widget():
                 w = item.widget()
-                if hasattr(w, "pulse_anim") and w.pulse_anim:
+                if hasattr(w, "pulse_anim") and w.pulse_anim:  # type: ignore
                     with suppress(RuntimeError):
-                        w.pulse_anim.stop()
-                if hasattr(w, "timer") and w.timer:
+                        w.pulse_anim.stop()  # type: ignore
+                if hasattr(w, "timer") and w.timer:  # type: ignore
                     with suppress(RuntimeError):
-                        w.timer.stop()
+                        w.timer.stop()  # type: ignore
 
-    def _animate_gear_button(self):
+    def _animate_gear_button(self) -> None:
         self._cleanup_gear_animations()
         original_pos = self.config_btn.pos()
         parallel_group = QParallelAnimationGroup(self)
@@ -212,38 +213,40 @@ class AutopilotWidget(QWidget):
         parallel_group.start()
         self._gear_animation = parallel_group
 
-    def _cleanup_gear_animations(self):
-        if hasattr(self, "_gear_animation") and self._gear_animation:
+    def _cleanup_gear_animations(self) -> None:
+        if self._gear_animation:
             with suppress(RuntimeError):
                 self._gear_animation.stop()
 
-    def _animate_transition(self, from_widget, to_widget):
+    def _animate_transition(self, from_widget: QWidget, to_widget: QWidget) -> None:
         to_widget.setVisible(True)
         to_widget.hide()
 
-        def do_transition():
+        def do_transition() -> None:
             from_widget.hide()
             to_widget.show()
 
         QTimer.singleShot(150, do_transition)
 
-    def _restart_live_animations(self):
+    def _restart_live_animations(self) -> None:
         if hasattr(self, "dot_anim") and self.dot_anim:
             with suppress(RuntimeError):
                 self.dot_anim.start()
         self._animating = False
 
-    def refresh_events(self):
+    def refresh_events(self) -> None:
         while self.view_layout.count() > 0:
             item = self.view_layout.takeAt(0)
-            if item.widget():
-                if hasattr(item.widget(), "cleanup"):
-                    item.widget().cleanup()
-                item.widget().deleteLater()
+            if item is not None:
+                widget = item.widget()
+                if widget is not None:
+                    if hasattr(widget, "cleanup"):
+                        widget.cleanup()
+                    widget.deleteLater()
         QApplication.processEvents()
 
         config = config_manager.load_config()
-        events = []
+        events: list[dict[str, Any]] = []
         if config.get("timbrature_autopilot_enabled", False):
             events.append(
                 {
@@ -292,17 +295,19 @@ class AutopilotWidget(QWidget):
 
         for idx, event in enumerate(events):
             card = AutopilotEventCard(
-                event["name"], event["time"], event["icon"], event["color"], self
+                str(event["name"]), str(event["time"]), str(event["icon"]), str(event["color"]), self
             )
             self.view_layout.addWidget(card, idx // 2, idx % 2)
 
-    def _refresh_config(self):
+    def _refresh_config(self) -> None:
         while self.config_layout.count() > 0:
             item = self.config_layout.takeAt(0)
-            if item.widget():
-                if hasattr(item.widget(), "cleanup"):
-                    item.widget().cleanup()
-                item.widget().deleteLater()
+            if item is not None:
+                widget = item.widget()
+                if widget is not None:
+                    if hasattr(widget, "cleanup"):
+                        widget.cleanup()
+                    widget.deleteLater()
         QApplication.processEvents()
 
         bots = [
@@ -337,13 +342,13 @@ class AutopilotWidget(QWidget):
         idx = 0
         for bot in bots:
             card = AutopilotConfigCard(
-                bot["id"], bot["name"], bot["icon"], bot["color"], self
+                str(bot["id"]), str(bot["name"]), str(bot["icon"]), str(bot["color"]), self
             )
             self.config_layout.addWidget(card, idx // 2, idx % 2)
             idx += 1
         for task in interval_tasks:
-            card = AutopilotConfigCardWithInterval(
-                task["id"], task["name"], task["icon"], task["color"], self
+            card_with_interval = AutopilotConfigCardWithInterval(
+                str(task["id"]), str(task["name"]), str(task["icon"]), str(task["color"]), self
             )
-            self.config_layout.addWidget(card, idx // 2, idx % 2)
+            self.config_layout.addWidget(card_with_interval, idx // 2, idx % 2)
             idx += 1

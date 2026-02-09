@@ -1,20 +1,24 @@
 import re
+from collections.abc import Callable
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
+from typing import Any
 
 
-def normalize_name(text):
+def normalize_name(text: Any) -> str:
     if not text:
         return ""
     return re.sub(r"\s+", " ", str(text).strip().upper())
 
 
-def build_timbrature_maps(accessi):
-    today = datetime.now()
-    last_by_cf = {}
-    last_by_name = {}
+def build_timbrature_maps(
+    accessi: list[tuple[str, str, str, str]],
+) -> tuple[dict[str, int], dict[tuple[str, str], int], Callable[[Any], str]]:
+    today = datetime.now(UTC)
+    last_by_cf: dict[str, int] = {}
+    last_by_name: dict[tuple[str, str], int] = {}
 
-    def normalize(t):
+    def normalize(t: Any) -> str:
         return normalize_name(t)
 
     for cog, nom, cf, d_str in accessi:
@@ -26,21 +30,26 @@ def build_timbrature_maps(accessi):
                 d_dt = None
                 for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
                     try:
-                        d_dt = datetime.strptime(date_part, fmt)
+                        d_dt = datetime.strptime(date_part, fmt).replace(tzinfo=UTC)
                         break
                     except ValueError:
                         continue
                 if d_dt:
                     diff = (today - d_dt).days
-                    if norm_cf:
-                        if norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]:
-                            last_by_cf[norm_cf] = diff
+                    if norm_cf and (norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]):
+                        last_by_cf[norm_cf] = diff
+
                     if norm_key not in last_by_name or diff < last_by_name[norm_key]:
                         last_by_name[norm_key] = diff
     return last_by_cf, last_by_name, normalize
 
 
-def compute_employee_status(r, last_by_cf, last_by_name, normalize):
+def compute_employee_status(
+    r: tuple[Any, ...],
+    last_by_cf: dict[str, int],
+    last_by_name: dict[tuple[str, str], int],
+    normalize: Callable[[Any], str],
+) -> tuple[int | None, bool, str, str, str]:
     """Calcola lo stato del dipendente basandosi su timbrature e anagrafica."""
     # r indexes: 1=Cognome, 2=Nome, 7=CodiceFiscale
     cf_val = str(r[7]).strip().upper() if r[7] else ""
@@ -58,12 +67,12 @@ def compute_employee_status(r, last_by_cf, last_by_name, normalize):
     return diff_days, cf_warning, cog_val, nom_val, cf_val
 
 
-def format_db_date(date_str):
+def format_db_date(date_str: str | None) -> str:
     if not date_str or date_str == "None":
         return "-"
     try:
-        return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").strftime(
-            "%d/%m/%Y %H:%M:%S"
+        return (
+            datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=UTC).strftime("%d/%m/%Y %H:%M:%S")
         )
     except Exception:
         return date_str

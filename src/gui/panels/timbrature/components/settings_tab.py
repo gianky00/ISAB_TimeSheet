@@ -1,3 +1,5 @@
+from typing import Any
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -22,15 +24,15 @@ class TimbratureSettingsTab(QWidget):
 
     settings_changed = pyqtSignal()  # Emesso quando cambiano le liste o i dati
 
-    def __init__(self, storage, parent=None):
+    def __init__(self, storage: Any, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.storage = storage
         self.lists = self.storage.get_lists()
-        self.reparti = self.lists.get("reparti", [])
-        self.cantieri = self.lists.get("cantieri", [])
+        self.reparti: list[str] = self.lists.get("reparti", [])
+        self.cantieri: list[str] = self.lists.get("cantieri", [])
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
 
         # Header Controls
@@ -51,9 +53,7 @@ class TimbratureSettingsTab(QWidget):
         header_layout.addWidget(open_settings_btn)
         layout.addLayout(header_layout)
 
-        sub = QLabel(
-            "Assegna Reparto e Cantiere ai dipendenti. Modifiche salvate automaticamente."
-        )
+        sub = QLabel("Assegna Reparto e Cantiere ai dipendenti. Modifiche salvate automaticamente.")
         sub.setStyleSheet("color: #6c757d; margin-bottom: 5px;")
         layout.addWidget(sub)
 
@@ -61,27 +61,25 @@ class TimbratureSettingsTab(QWidget):
         filter_layout = QHBoxLayout()
         self.filter_empty_cb = QCheckBox("Mostra solo dati mancanti (Vuoti)")
         config = config_manager.load_config()
-        self.filter_empty_cb.setChecked(
-            config.get("timbrature_filter_empty_only", False)
-        )
-        self.filter_empty_cb.stateChanged.connect(self._on_filter_empty_changed)
+        self.filter_empty_cb.setChecked(bool(config.get("timbrature_filter_empty_only", False)))
+        self.filter_empty_cb.stateChanged.connect(lambda: self._on_filter_empty_changed())
         filter_layout.addWidget(self.filter_empty_cb)
         filter_layout.addStretch()
         layout.addLayout(filter_layout)
 
         # Table
         self.settings_table = QTableWidget()
-        self.settings_table.verticalHeader().setVisible(False)
+        v_header = self.settings_table.verticalHeader()
+        if v_header is not None:
+            v_header.setVisible(False)
         self.settings_table.setColumnCount(4)
-        self.settings_table.setHorizontalHeaderLabels(
-            ["Nome", "Cognome", "Reparto", "Cantiere"]
-        )
-        self.settings_table.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.Stretch
-        )
+        self.settings_table.setHorizontalHeaderLabels(["Nome", "Cognome", "Reparto", "Cantiere"])
+        h_header = self.settings_table.horizontalHeader()
+        if h_header is not None:
+            h_header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         layout.addWidget(self.settings_table)
 
-    def load_data(self):
+    def load_data(self) -> None:
         """Carica i dati dei dipendenti nella tabella."""
         employees = self.storage.get_employees()
         show_empty_only = self.filter_empty_cb.isChecked()
@@ -106,25 +104,25 @@ class TimbratureSettingsTab(QWidget):
 
         self.settings_table.blockSignals(False)
 
-    def _create_row(self, row_idx, emp):
+    def _create_row(self, row_idx: int, emp: dict[str, Any]) -> None:
         # Nome/Cognome Readonly
-        item_nome = QTableWidgetItem(emp["nome"])
+        item_nome = QTableWidgetItem(str(emp["nome"]))
         item_nome.setFlags(item_nome.flags() & ~Qt.ItemFlag.ItemIsEditable)
         self.settings_table.setItem(row_idx, 0, item_nome)
 
-        item_cognome = QTableWidgetItem(emp["cognome"])
+        item_cognome = QTableWidgetItem(str(emp["cognome"]))
         item_cognome.setFlags(item_cognome.flags() & ~Qt.ItemFlag.ItemIsEditable)
         self.settings_table.setItem(row_idx, 1, item_cognome)
 
         # Combos
         combo_rep = QComboBox()
-        combo_rep.addItems([""] + self.reparti)
-        combo_rep.setCurrentText(emp["reparto"])
+        combo_rep.addItems(["", *self.reparti])
+        combo_rep.setCurrentText(str(emp["reparto"]))
         combo_rep.setStyleSheet("QComboBox { border: none; background: transparent; }")
 
         combo_cant = QComboBox()
-        combo_cant.addItems([""] + self.cantieri)
-        combo_cant.setCurrentText(emp["cantiere"])
+        combo_cant.addItems(["", *self.cantieri])
+        combo_cant.setCurrentText(str(emp["cantiere"]))
         combo_cant.setStyleSheet("QComboBox { border: none; background: transparent; }")
 
         # Connect signals
@@ -139,8 +137,10 @@ class TimbratureSettingsTab(QWidget):
         self.settings_table.setCellWidget(row_idx, 2, combo_rep)
         self.settings_table.setCellWidget(row_idx, 3, combo_cant)
 
-    def _update_details(self, nome, cognome, reparto=None, cantiere=None):
-        kwargs = {}
+    def _update_details(
+        self, nome: str, cognome: str, reparto: str | None = None, cantiere: str | None = None
+    ) -> None:
+        kwargs: dict[str, Any] = {}
         if reparto is not None:
             kwargs["reparto"] = reparto
         if cantiere is not None:
@@ -149,15 +149,13 @@ class TimbratureSettingsTab(QWidget):
         self.storage.update_employee_details(nome, cognome, **kwargs)
         self.settings_changed.emit()
 
-    def _on_filter_empty_changed(self):
-        config_manager.set_config_value(
-            "timbrature_filter_empty_only", self.filter_empty_cb.isChecked()
-        )
+    def _on_filter_empty_changed(self) -> None:
+        config_manager.set_config_value("timbrature_filter_empty_only", self.filter_empty_cb.isChecked())
         self.load_data()
 
-    def _open_settings_request(self):
+    def _open_settings_request(self) -> None:
         """Richiede l'apertura delle impostazioni generali alla main window."""
         # This needs to be handled by the parent
         main_window = self.window()
         if hasattr(main_window, "show_settings"):
-            main_window.show_settings()
+            main_window.show_settings()  # type: ignore

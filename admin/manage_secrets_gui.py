@@ -41,16 +41,16 @@ class SecretItem(QFrame):
         layout.addWidget(QLabel(f"🔑 {service_label}"))
 
         row = QHBoxLayout()
-        self.input = QLineEdit()
-        self.input.setEchoMode(QLineEdit.EchoMode.Password)
-        self.input.setPlaceholderText("Chiave API...")
-        self.input.setMinimumHeight(35)
+        self.input_field = QLineEdit()
+        self.input_field.setEchoMode(QLineEdit.EchoMode.Password)
+        self.input_field.setPlaceholderText("Chiave API...")
+        self.input_field.setMinimumHeight(35)
 
         current_val = keyring.get_password(self.app_name, self.secret_key)
         if current_val:
-            self.input.setText(current_val)
+            self.input_field.setText(current_val)
 
-        row.addWidget(self.input)
+        row.addWidget(self.input_field)
 
         self.toggle_btn = QPushButton("👁️")
         self.toggle_btn.setFixedSize(35, 35)
@@ -59,23 +59,21 @@ class SecretItem(QFrame):
 
         self.save_btn = QPushButton("Salva")
         self.save_btn.setMinimumHeight(35)
-        self.save_btn.setStyleSheet(
-            "font-weight: bold; border: 1px solid black; background: white;"
-        )
+        self.save_btn.setStyleSheet("font-weight: bold; border: 1px solid black; background: white;")
         self.save_btn.clicked.connect(self._save)
         row.addWidget(self.save_btn)
 
         layout.addLayout(row)
 
     def _toggle(self):
-        self.input.setEchoMode(
+        self.input_field.setEchoMode(
             QLineEdit.EchoMode.Normal
-            if self.input.echoMode() == QLineEdit.EchoMode.Password
+            if self.input_field.echoMode() == QLineEdit.EchoMode.Password
             else QLineEdit.EchoMode.Password
         )
 
     def _save(self):
-        val = self.input.text().strip()
+        val = self.input_field.text().strip()
         try:
             if val:
                 keyring.set_password(self.app_name, self.secret_key, val)
@@ -103,15 +101,9 @@ class AdminSecretsGUI(QWidget):
         self.secrets_layout = QVBoxLayout(container)
 
         # Aggiungi qui le chiavi necessarie
-        self.secrets_layout.addWidget(
-            SecretItem(self.APP_NAME, "Exa API Key", "exa_api_key")
-        )
-        self.secrets_layout.addWidget(
-            SecretItem(self.APP_NAME, "GitHub API Token", "github_api_key")
-        )
-        self.secrets_layout.addWidget(
-            SecretItem(self.APP_NAME, "OpenAI API Key", "openai_api_key")
-        )
+        self.secrets_layout.addWidget(SecretItem(self.APP_NAME, "Exa API Key", "exa_api_key"))
+        self.secrets_layout.addWidget(SecretItem(self.APP_NAME, "GitHub API Token", "github_api_key"))
+        self.secrets_layout.addWidget(SecretItem(self.APP_NAME, "OpenAI API Key", "openai_api_key"))
 
         self.secrets_layout.addStretch()
         layout.addWidget(container)

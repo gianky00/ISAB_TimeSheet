@@ -100,9 +100,7 @@ class TestLicenseValidatorDeep:
             "src.core.license_validator._check_integrity_with_manifest",
             return_value=(LicenseStatus.VALID, ""),
         )
-        def test_detailed_status_hardware_mismatch(
-            self, mock_integrity, mock_hwid, mock_info
-        ):
+        def test_detailed_status_hardware_mismatch(self, mock_integrity, mock_hwid, mock_info):
             from pathlib import Path
 
             mock_info.return_value = {"Hardware ID": "OTHER-HW", "Cliente": "C1"}
@@ -121,9 +119,7 @@ class TestLicenseValidatorDeep:
             return_value=(LicenseStatus.VALID, ""),
         )
         @patch("src.core.license_validator.get_trusted_time")
-        def test_detailed_status_expired(
-            self, mock_trusted_time, mock_integrity, mock_hwid, mock_info
-        ):
+        def test_detailed_status_expired(self, mock_trusted_time, mock_integrity, mock_hwid, mock_info):
             from datetime import datetime
             from pathlib import Path
 
@@ -151,9 +147,7 @@ class TestLicenseValidatorDeep:
             # Fail lsblk, fallback to machine-id
 
             with patch("subprocess.check_output", side_effect=Exception("no lsblk")):
-                with patch.object(
-                    Path, "exists", side_effect=lambda p: str(p) == "/etc/machine-id"
-                ):
+                with patch.object(Path, "exists", side_effect=lambda p: str(p) == "/etc/machine-id"):
                     with patch.object(Path, "read_text", return_value="MACHINE-ID-123"):
                         hwid = get_hardware_id()
 

@@ -1,4 +1,7 @@
-from datetime import datetime
+from collections.abc import Sequence
+from contextlib import suppress
+from datetime import UTC, datetime
+from typing import Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QFormLayout, QLabel, QScrollArea, QVBoxLayout, QWidget
@@ -9,9 +12,9 @@ class TimbratureDetailView(QWidget):
     Componente per la visualizzazione dei dettagli di una timbratura.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.detail_labels = {}
+        self.detail_labels: dict[str, QLabel] = {}
         # Mapping completo per il Dettaglio (Tutte le 18 colonne rilevate)
         self.full_headers = [
             "Data",
@@ -35,14 +38,12 @@ class TimbratureDetailView(QWidget):
         ]
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         detail_layout = QVBoxLayout(self)
         detail_layout.setContentsMargins(10, 0, 5, 0)
 
         detail_title = QLabel("Dettaglio Timbratura")
-        detail_title.setStyleSheet(
-            "font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;"
-        )
+        detail_title.setStyleSheet("font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;")
         detail_layout.addWidget(detail_title)
 
         scroll = QScrollArea()
@@ -55,16 +56,14 @@ class TimbratureDetailView(QWidget):
         for h in self.full_headers:
             val_label = QLabel("-")
             val_label.setWordWrap(True)
-            val_label.setTextInteractionFlags(
-                Qt.TextInteractionFlag.TextSelectableByMouse
-            )
+            val_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             self.detail_labels[h] = val_label
             self.form_layout.addRow(f"<b>{h}:</b>", val_label)
 
         scroll.setWidget(scroll_content)
         detail_layout.addWidget(scroll)
 
-    def display_data(self, data):
+    def display_data(self, data: Sequence[Any] | None) -> None:
         """
         Visualizza i dati passati.
         Args:
@@ -98,13 +97,9 @@ class TimbratureDetailView(QWidget):
 
         for h in self.full_headers:
             idx = mapping.get(h)
-            val = (
-                str(data[idx])
-                if idx is not None and idx < len(data) and data[idx] is not None
-                else ""
-            )
+            val = str(data[idx]) if idx is not None and idx < len(data) and data[idx] is not None else ""
 
-            if val.lower() in ["nan", "none"]:
+            if val.lower() in ("nan", "none"):
                 val = ""
 
             # Formattazione
@@ -116,30 +111,26 @@ class TimbratureDetailView(QWidget):
 
             self.detail_labels[h].setText(val)
 
-    def _format_date(self, val_str, strict=True):
+    def _format_date(self, val_str: str, strict: bool = True) -> str:
         """Helper per formattazione date."""
         _ = strict
-        try:
+        with suppress(Exception):
             # Try ISO format first
-            dt = datetime.strptime(val_str, "%Y-%m-%d")
+            dt = datetime.strptime(val_str, "%Y-%m-%d").replace(tzinfo=UTC)
             return dt.strftime("%d/%m/%Y")
-        except Exception:
-            try:
-                # Try handling datetime string or other formats
-                date_part = val_str.split(" ")[0]
-                # If strict, we expect only date part to be valid iso or similar?
-                # Original code tried flexible parsing
-                for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
-                    try:
-                        dt = datetime.strptime(date_part, fmt)
-                        return dt.strftime("%d/%m/%Y")
-                    except ValueError:
-                        continue
-            except Exception:
-                pass
+
+        with suppress(Exception):
+            # Try handling datetime string or other formats
+            date_part = val_str.split(" ")[0]
+            # If strict, we expect only date part to be valid iso or similar?
+            # Original code tried flexible parsing
+            for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+                with suppress(ValueError):
+                    dt = datetime.strptime(date_part, fmt).replace(tzinfo=UTC)
+                    return dt.strftime("%d/%m/%Y")
         return val_str
 
-    def clear_fields(self):
+    def clear_fields(self) -> None:
         """Pulisce tutti i campi."""
         for label in self.detail_labels.values():
             label.setText("-")
