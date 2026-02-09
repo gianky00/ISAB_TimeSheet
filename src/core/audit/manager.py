@@ -2,7 +2,8 @@ import json
 import os
 import traceback
 from datetime import datetime, timedelta
-from typing import Any
+from pathlib import Path
+from typing import Any, Optional
 
 from src.core.audit.database import AuditDatabase
 from src.core.audit.integrity import AuditIntegrity
@@ -19,21 +20,21 @@ class AuditManager:
     Implementazione rifattorizzata e modulare.
     """
 
-    _instance = None
+    _instance: Optional["AuditManager"] = None
     Severity = Severity
     Status = Status
 
     @classmethod
-    def instance(cls):
+    def instance(cls) -> "AuditManager":
         return cls()
 
-    def __new__(cls):
+    def __new__(cls) -> "AuditManager":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         if getattr(self, "_initialized", False):
             return
         self.db = AuditDatabase()
@@ -41,12 +42,12 @@ class AuditManager:
         self._initialized = True
 
     @property
-    def DB_PATH(self):
+    def DB_PATH(self) -> Path:
         """Compatibilità Legacy per test."""
         return self.db.DB_PATH
 
     @DB_PATH.setter
-    def DB_PATH(self, value):
+    def DB_PATH(self, value: Path) -> None:
         self.db.DB_PATH = value
 
     def _get_current_user(self) -> str:
@@ -178,7 +179,7 @@ class AuditManager:
 
     def _generate_notification(
         self, action: str, entity: str, status_val: str, severity_val: str, params: Any
-    ):
+    ) -> None:
         """Genera una notifica utente basata sull'esito dell'azione auditata."""
         try:
             from src.core.notification_manager import NotificationManager
@@ -234,13 +235,13 @@ class AuditManager:
         logs, _ = self.get_filtered_logs(limit=limit)
         return logs
 
-    def get_filtered_logs(self, **kwargs) -> tuple[list[dict[str, Any]], int]:
+    def get_filtered_logs(self, **kwargs: Any) -> tuple[list[dict[str, Any]], int]:
         return self.db.fetch_filtered(**kwargs)
 
     def get_categories(self) -> list[str]:
         return self.db.get_categories()
 
-    def run_retention_policy(self, days: int = 90):
+    def run_retention_policy(self, days: int = 90) -> None:
         cutoff = (datetime.now() - timedelta(days=days)).isoformat()
         deleted_count = self.db.delete_older_than(cutoff)
         if deleted_count > 0:
@@ -251,9 +252,9 @@ class AuditManager:
                 severity=Severity.LOW,
             )
 
-    def get_stats_by_day(self, days=30) -> dict[str, dict[str, int]]:
+    def get_stats_by_day(self, days: int = 30) -> dict[str, dict[str, int]]:
         cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
-        stats = {
+        stats: dict[str, dict[str, int]] = {
             (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d"): {
                 "success": 0,
                 "error": 0,

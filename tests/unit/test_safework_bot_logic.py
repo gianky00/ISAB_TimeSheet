@@ -83,9 +83,7 @@ class TestSafeWorkPDLBotLogic(unittest.TestCase):
         item = {"print_enabled": False}
         all_paths = []
 
-        success = self.bot._unisci_e_stampa_pdl(
-            "123456/S", "p1.pdf", "p2.pdf", item, all_paths
-        )
+        success = self.bot._unisci_e_stampa_pdl("123456/S", "p1.pdf", "p2.pdf", item, all_paths)
 
         self.assertTrue(success)
         self.assertEqual(len(self.bot.downloaded_files), 1)

@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QSizePolicy,
     QWidget,
 )
 
@@ -19,34 +20,28 @@ class OdaFilterWidget(QWidget):
     import_clicked = pyqtSignal()
     export_clicked = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._setup_ui()
         # Force compact height
-        from PyQt6.QtWidgets import QSizePolicy
-
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
 
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText(
-            "Cerca per OdA, Fornitore o Descrizione..."
-        )
+        self.search_input.setPlaceholderText("Cerca per OdA, Fornitore o Descrizione...")
         self.search_input.setMinimumWidth(300)
-        self.search_input.textChanged.connect(self.search_changed.emit)
+        self.search_input.textChanged.connect(lambda text: self.search_changed.emit(text))
         layout.addWidget(self.search_input)
 
         layout.addStretch()
 
         # Sync Status
         self.lbl_sync_status = QLabel("")
-        self.lbl_sync_status.setStyleSheet(
-            "color: #555; font-size: 11px; margin-right: 15px;"
-        )
+        self.lbl_sync_status.setStyleSheet("color: #555; font-size: 11px; margin-right: 15px;")
         layout.addWidget(self.lbl_sync_status)
 
         # Update Bot Button
@@ -55,7 +50,7 @@ class OdaFilterWidget(QWidget):
             variant=ModernButton.Variant.PRIMARY,
             icon=get_asset_path(Icons.REFRESH),
         )
-        self.btn_bot_update.clicked.connect(self.update_clicked.emit)
+        self.btn_bot_update.clicked.connect(lambda: self.update_clicked.emit())
         layout.addWidget(self.btn_bot_update)
 
         # Import Excel Button
@@ -64,7 +59,7 @@ class OdaFilterWidget(QWidget):
             variant=ModernButton.Variant.GHOST,
             icon=get_asset_path(Icons.UPLOAD),
         )
-        self.btn_import.clicked.connect(self.import_clicked.emit)
+        self.btn_import.clicked.connect(lambda: self.import_clicked.emit())
         layout.addWidget(self.btn_import)
 
         # Export Excel
@@ -75,8 +70,8 @@ class OdaFilterWidget(QWidget):
         )
         self.export_btn.setIcon(get_colored_icon(get_asset_path(Icons.EXCEL), "#555"))
         self.export_btn.setToolTip("Esporta Excel")
-        self.export_btn.clicked.connect(self.export_clicked.emit)
+        self.export_btn.clicked.connect(lambda: self.export_clicked.emit())
         layout.addWidget(self.export_btn)
 
-    def set_sync_status(self, status: str):
+    def set_sync_status(self, status: str) -> None:
         self.lbl_sync_status.setText(status)

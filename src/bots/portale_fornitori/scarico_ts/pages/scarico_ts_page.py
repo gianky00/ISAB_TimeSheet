@@ -6,6 +6,7 @@ Page Object Model for the Scarico TS section.
 import time
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from selenium.common.exceptions import (
     TimeoutException,
@@ -27,13 +28,13 @@ class ScaricoTSPage:
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)
-        self._log = log_callback or print
+        self._log: Callable[[str], Any] = log_callback or print
 
-    def log(self, msg: str):
+    def log(self, msg: str) -> None:
         """Inoltra il messaggio di log alla callback configurata."""
         self._log(msg)
 
-    def _wait_for_overlay(self):
+    def _wait_for_overlay(self) -> None:
         """Waits for loading overlay to disappear."""
         try:
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
@@ -144,7 +145,7 @@ class ScaricoTSPage:
             self.log(f"  ✗ Errore click download: {e}")
             return False
 
-    def _wait_for_download(self, download_dir: Path, files_before: set) -> Path | None:
+    def _wait_for_download(self, download_dir: Path, files_before: set[Path]) -> Path | None:
         """Polls for new .xlsx file."""
         start_time = time.time()
         while time.time() - start_time < Timeouts.DOWNLOAD:

@@ -28,10 +28,10 @@ class LoginPage:
     def __init__(
         self,
         driver: WebDriver,
-        wait: WebDriverWait,
+        wait: WebDriverWait[WebDriver],
         logger: Callable[[str], None] | None = None,
         isab_url: str = "",
-    ):
+    ) -> None:
         self.driver = driver
         self.wait = wait
         self.log = logger or print
@@ -42,7 +42,7 @@ class LoginPage:
         Waits for Ext JS loading overlays to disappear.
         """
         try:
-            overlay_wait = WebDriverWait(self.driver, timeout_secondi)
+            overlay_wait: WebDriverWait[WebDriver] = WebDriverWait(self.driver, timeout_secondi)
             xpath_combined = f"{CommonLocators.LOADING_MASK[1]} | {CommonLocators.LOADING_TEXT[1]}"
 
             overlay_wait.until(EC.invisibility_of_element_located((By.XPATH, xpath_combined)))
@@ -53,7 +53,7 @@ class LoginPage:
             self.log(f"⚠ Timeout ({timeout_secondi}s) attesa overlay. Proseguo con cautela.")
             return False
 
-    def _perform_login_form_action(self, username: str, password: str):
+    def _perform_login_form_action(self, username: str, password: str) -> None:
         """Fills login form and clicks Enter."""
         username_field = self.wait.until(EC.element_to_be_clickable(LoginLocators.USERNAME_FIELD))
         username_field.clear()
@@ -77,11 +77,11 @@ class LoginPage:
         self.log("Login effettuato. Attendo scomparsa overlay...")
         self._attendi_scomparsa_overlay(Timeouts.LONG)
 
-    def _check_and_handle_session_popup(self):
+    def _check_and_handle_session_popup(self) -> None:
         """Controlla se appare il popup 'Sessione attiva' e clicca su Si."""
         try:
             # Breve attesa per il popup (non bloccante per il flusso normale)
-            wait_popup = WebDriverWait(self.driver, 3)
+            wait_popup: WebDriverWait[WebDriver] = WebDriverWait(self.driver, 3)
             # Cerchiamo il bottone "Si" se appare un popup di attenzione
             yes_btn = wait_popup.until(EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES))
             self.log("⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.")

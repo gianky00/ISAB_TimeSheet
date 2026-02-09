@@ -67,9 +67,7 @@ class AuditLogWidget(QWidget):
         top_bar.addWidget(self.integrity_icon)
 
         self.integrity_lbl = QLabel("Verifica...")
-        self.integrity_lbl.setStyleSheet(
-            "color: #6c757d; font-size: 13px; font-weight: 600;"
-        )
+        self.integrity_lbl.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: 600;")
         top_bar.addWidget(self.integrity_lbl)
 
         top_bar.addStretch()
@@ -88,12 +86,12 @@ class AuditLogWidget(QWidget):
         # --- DATA GRID ---
         self.table_view = QTableView()
         self.table_view.setAlternatingRowColors(True)
-        self.table_view.setSelectionBehavior(
-            QAbstractItemView.SelectionBehavior.SelectRows
-        )
+        self.table_view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table_view.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.table_view.verticalHeader().setVisible(False)
-        self.table_view.horizontalHeader().setStretchLastSection(True)
+        if v_header := self.table_view.verticalHeader():
+            v_header.setVisible(False)
+        if header := self.table_view.horizontalHeader():
+            header.setStretchLastSection(True)
         self.table_view.setStyleSheet(
             """
             QTableView {
@@ -155,9 +153,7 @@ class AuditLogWidget(QWidget):
         self.total_logs = total
         self.model.update_data(logs)
         self.table_view.resizeColumnsToContents()
-        self.pagination_bar.update_state(
-            self.current_page, self.total_logs, self.PAGE_SIZE
-        )
+        self.pagination_bar.update_state(self.current_page, self.total_logs, self.PAGE_SIZE)
 
         if self.current_page == 0:
             self._check_integrity()
@@ -168,9 +164,7 @@ class AuditLogWidget(QWidget):
         text = "Integro" if valid else "Legacy/Manomesso"
         icon = Icons.SHIELD if valid else Icons.ALERT_TRIANGLE
 
-        self.integrity_icon.setPixmap(
-            get_colored_icon(get_asset_path(icon), color).pixmap(18, 18)
-        )
+        self.integrity_icon.setPixmap(get_colored_icon(get_asset_path(icon), color).pixmap(18, 18))
         self.integrity_lbl.setText(text)
         self.integrity_lbl.setStyleSheet(f"color: {color}; font-weight: bold;")
 

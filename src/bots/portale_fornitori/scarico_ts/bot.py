@@ -45,7 +45,7 @@ class ScaricaTSBot(BaseBot):
         return "Scarica i timesheet dal portale ISAB"
 
     @staticmethod
-    def get_columns() -> list:
+    def get_columns() -> list[dict[str, Any]]:
         """Restituisce la configurazione delle colonne per l'input dati."""
         return [
             {"name": "Numero OdA", "type": "text"},
@@ -81,24 +81,26 @@ class ScaricaTSBot(BaseBot):
             return self._input_callback(prompt)
         return ""
 
-    def validate_data(self, data: list[dict[str, Any]]) -> tuple[bool, str]:
+    def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """Validazione specifica per Scarico TS."""
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:
             return False, base_msg
 
-        if not self.fornitore and (
-            (isinstance(data, dict) and not data.get("fornitore")) or isinstance(data, list)
-        ):
-            return False, "Fornitore non specificato."
+        if not self.fornitore:
+            if isinstance(data, dict):
+                if not data.get("fornitore"):
+                    return False, "Fornitore non specificato."
+            else:
+                return False, "Fornitore non specificato."
 
-        rows = data if isinstance(data, list) else data.get("rows", [])
+        rows = data.get("rows", []) if isinstance(data, dict) else data
         if not rows:
             return False, "Nessun OdA da scaricare."
 
         return True, ""
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue il download dei timesheet."""
         rows, dest_dir = self._prepare_run_environment(data)
 
@@ -119,8 +121,9 @@ class ScaricaTSBot(BaseBot):
             self.log(f"❌ Errore imprevisto: {e}")
             return False
 
-    def _prepare_run_environment(self, data: Any) -> tuple[list[dict], Path]:
+    def _prepare_run_environment(self, data: Any) -> tuple[list[dict[str, Any]], Path]:
         """Estrae i dati e prepara la directory di destinazione."""
+        rows: list[dict[str, Any]]
         if isinstance(data, dict):
             rows = data.get("rows", [])
             self.data_da = data.get("data_da", self.data_da)
@@ -129,7 +132,7 @@ class ScaricaTSBot(BaseBot):
                 self.fornitore = str(forn)
             self.elabora_ts = data.get("elabora_ts", self.elabora_ts)
         else:
-            rows = data
+            rows = list(data)
 
         self.log(f"🚀 Inizio scarico TS per {len(rows)} OdA (Fornitore: {self.fornitore})...")
 
@@ -138,7 +141,7 @@ class ScaricaTSBot(BaseBot):
         dest_dir = source_dir
         return rows, dest_dir
 
-    def _process_oda_rows(self, rows: list[dict], dest_dir: Path) -> tuple[int, list[str]]:
+    def _process_oda_rows(self, rows: list[dict[str, Any]], dest_dir: Path) -> tuple[int, list[str]]:
         """Cicla sugli OdA ed esegue la ricerca e il download."""
         success_count = 0
         downloaded_files = []
@@ -321,7 +324,7 @@ class ScaricaTSBot(BaseBot):
             self.log(f"⚠️ Impossibile cliccare esportazione Excel: {e}")
             return False
 
-    def _wait_for_new_file(self, source_dir: Path, files_before: set, timeout: int = 25) -> Path | None:
+    def _wait_for_new_file(self, source_dir: Path, files_before: set[Path], timeout: int = 25) -> Path | None:
         """Attende la comparsa di un nuovo file .xlsx nella directory sorgente."""
         start_time = time.time()
         while time.time() - start_time < timeout:

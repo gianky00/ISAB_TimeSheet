@@ -11,17 +11,17 @@ _pd = None
 
 # Tentativo di importare msoffcrypto
 try:
-    import msoffcrypto  # type: ignore
+    import msoffcrypto
 except ImportError:
     msoffcrypto = None
 
 # Tentativo di importare openpyxl
 try:
-    import openpyxl  # type: ignore
+    import openpyxl  # type: ignore[import-untyped]
 
     HAS_OPENPYXL = True
 except ImportError:
-    openpyxl = None  # type: ignore
+    openpyxl = None
     HAS_OPENPYXL = False
 
 
@@ -29,7 +29,7 @@ class BaseImporter:
     """Classe base per tutti gli importer Excel."""
 
     @staticmethod
-    def _get_pd():
+    def _get_pd() -> Any:
         """Lazy load di pandas"""
         global _pd
         if _pd is None:
@@ -57,7 +57,7 @@ class BaseImporter:
         return file_path, False
 
     @classmethod
-    def _get_excel_file(cls, file_obj) -> Any:
+    def _get_excel_file(cls, file_obj: Any) -> Any:
         """Tenta di aprire il file Excel con motore ottimizzato (calamine > default > openpyxl)."""
         pd = cls._get_pd()
         with warnings.catch_warnings():

@@ -8,7 +8,7 @@ import threading
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Literal
+from typing import Any, Literal
 
 from .analytics import Anomaly, get_anomalies
 
@@ -55,7 +55,7 @@ class AlertManager:
     def __init__(self, config: AlertConfig | None = None):
         self.config = config or AlertConfig()
         self._last_alerts: dict[str, datetime] = {}
-        self._telegram_service = None
+        self._telegram_service: Any = None
         self._lock = threading.Lock()
 
     @property
@@ -236,4 +236,5 @@ class AlertManager:
 # Singleton helper
 def get_alert_manager() -> AlertManager:
     """Restituisce istanza singleton AlertManager."""
-    return AlertManager.instance()
+    result: AlertManager = AlertManager.instance()
+    return result

@@ -16,7 +16,7 @@ class EmployeeManager:
     Sostituisce la gestione diretta dei file CSV.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.db = db_manager
 
     def get_all_employees(self, active_only: bool = True) -> list[dict[str, Any]]:

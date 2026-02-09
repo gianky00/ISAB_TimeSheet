@@ -1,5 +1,6 @@
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
+from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.gui.design.colors import LIGHT
@@ -15,13 +16,11 @@ class StatusCard(QFrame):
 
     clicked = pyqtSignal()
 
-    def __init__(self, title, status="In attesa", parent=None):
+    def __init__(self, title: str, status: str = "In attesa", parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setFrameShape(QFrame.Shape.StyledPanel)
         self.setFrameShadow(QFrame.Shadow.Raised)
-        self.setCursor(
-            Qt.CursorShape.PointingHandCursor
-        )  # Cursore pointer per indicare cliccabilità
+        self.setCursor(Qt.CursorShape.PointingHandCursor)  # Cursore pointer per indicare cliccabilità
         self.setStyleSheet(
             """
             StatusCard {
@@ -44,18 +43,14 @@ class StatusCard(QFrame):
         # 1. Icona colorata (Barra verticale decorativa)
         self._icon_bar = QFrame()
         self._icon_bar.setFixedWidth(4)
-        self._icon_bar.setStyleSheet(
-            f"background-color: {self._palette.primary}; border-radius: 2px;"
-        )
+        self._icon_bar.setStyleSheet(f"background-color: {self._palette.primary}; border-radius: 2px;")
         layout.addWidget(self._icon_bar)
 
         icon_lbl = QLabel()
         icon_lbl.setFixedSize(20, 20)
         icon_lbl.setScaledContents(True)
         icon_lbl.setPixmap(
-            get_colored_icon(
-                get_asset_path(Icons.CLOCK), self._palette.on_surface
-            ).pixmap(20, 20)
+            get_colored_icon(get_asset_path(Icons.CLOCK), self._palette.on_surface).pixmap(20, 20)
         )
         layout.addWidget(icon_lbl)
 
@@ -89,7 +84,7 @@ class StatusCard(QFrame):
         self._meta_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self._meta_label)
 
-    def setStatus(self, message: str, status_id: str | None = None):
+    def setStatus(self, message: str, status_id: str | None = None) -> None:
         """Imposta il testo di stato e opzionalmente il colore dell'indicatore."""
         self._status_label.setText(message)
         if status_id:
@@ -98,7 +93,7 @@ class StatusCard(QFrame):
                 f"background-color: {status_id if status_id.startswith('#') else self._palette.primary}; border-radius: 2px;"
             )
 
-    def setAutopilot(self, active: bool, text: str = ""):
+    def setAutopilot(self, active: bool, text: str = "") -> None:
         """
         Imposta l'indicatore dell'autopilot.
         Ora il badge è posizionato a destra e occupa visivamente più spazio verticale.
@@ -121,11 +116,11 @@ class StatusCard(QFrame):
         else:
             self._meta_label.setVisible(False)
 
-    def _update_status_display(self, message: str):
+    def _update_status_display(self, message: str) -> None:
         """Aggiorna solo il testo dello stato (per compatibilità)."""
         self._status_label.setText(message)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Emette il segnale clicked quando la card viene cliccata."""
         self.clicked.emit()
         super().mousePressEvent(event)

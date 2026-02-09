@@ -8,13 +8,13 @@ from datetime import datetime
 from typing import ClassVar
 
 
-def friendly_time_delta(dt):
+def friendly_time_delta(dt: datetime) -> str:
     """Restituisce una stringa amichevole per il delta temporale (es. '5 min fa')."""
     now = datetime.now()
     diff = now - dt
 
     if diff.days > 0:
-        return dt.strftime("%d/%m")
+        return str(dt.strftime("%d/%m"))
 
     seconds = diff.total_seconds()
     if seconds < 60:

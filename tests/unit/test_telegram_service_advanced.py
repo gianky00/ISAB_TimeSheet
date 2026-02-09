@@ -58,9 +58,7 @@ class TestTelegramServiceAdvanced:
             mock_set.assert_any_call("telegram_chat_id", "123456")
 
             # Verifica che tra i messaggi inviati ci sia quello di associazione
-            all_messages = [
-                call.args[0] for call in mock_update.message.reply_text.call_args_list
-            ]
+            all_messages = [call.args[0] for call in mock_update.message.reply_text.call_args_list]
             assert any("Dispositivo associato" in msg for msg in all_messages)
             assert any("SyncroJob Command Center" in msg for msg in all_messages)
 
@@ -97,9 +95,7 @@ class TestTelegramServiceAdvanced:
         await messages.handle_text_input(service, mock_update, mock_context)
 
         # Dovrebbe aver emesso il segnale con la lista pulita
-        service.data_received.emit.assert_called_with(
-            "pdl", ["123456/C", "654321/S", "111222"]
-        )
+        service.data_received.emit.assert_called_with("pdl", ["123456/C", "654321/S", "111222"])
         assert service.user_states[123456] is None
 
     @pytest.mark.asyncio
@@ -118,9 +114,7 @@ class TestTelegramServiceAdvanced:
             "chat_id": "123456",
             "year": "2025",
         }
-        service.command_received.emit.assert_called_with(
-            "search_db_pdf", expected_params
-        )
+        service.command_received.emit.assert_called_with("search_db_pdf", expected_params)
 
     @patch(
         "src.core.secrets_manager.SecretsManager.get_gemini_api_key",
@@ -131,9 +125,7 @@ class TestTelegramServiceAdvanced:
         """Verifica che Lyra AI venga invocata e l'intento riconosciuto emetta il segnale."""
         mock_lyra = mock_lyra_cls.return_value
         # Simula risposta JSON da Lyra
-        mock_lyra.ask.return_value = (
-            '```json\n{"action": "download", "object": "pdl", "items": ["123"]}\n```'
-        )
+        mock_lyra.ask.return_value = '```json\n{"action": "download", "object": "pdl", "items": ["123"]}\n```'
 
         # Eseguiamo in modo sincrono per il test (sovrascrivendo l'executor)
         with patch.object(service.ai_executor, "submit", side_effect=lambda f: f()):

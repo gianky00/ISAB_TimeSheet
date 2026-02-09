@@ -9,7 +9,7 @@ from email.utils import parsedate_to_datetime
 import requests
 
 
-def get_network_time(timeout=2):
+def get_network_time(timeout: int = 2) -> datetime | None:
     """
     Ottiene l'orario corrente da una fonte online affidabile (es. Google).
     Restituisce un oggetto datetime con timezone UTC.
@@ -36,7 +36,7 @@ def get_network_time(timeout=2):
     return None
 
 
-def get_trusted_time():
+def get_trusted_time() -> tuple[datetime, bool]:
     """
     Restituisce l'orario più affidabile disponibile.
     Priorità:

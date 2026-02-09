@@ -1,3 +1,6 @@
+from collections.abc import Sequence
+from typing import Any
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
@@ -17,7 +20,7 @@ class ListFilterPopupWidget(QWidget):
     Include una barra di ricerca e opzioni di selezione rapida.
     """
 
-    def __init__(self, values, selected_values=None):
+    def __init__(self, values: Sequence[Any], selected_values: Sequence[str] | None = None) -> None:
         super().__init__()
         self.values = values
         self.all_values = {str(v).lower() for v in values}
@@ -72,54 +75,60 @@ class ListFilterPopupWidget(QWidget):
 
         self.original_rows = [self.model.item(i) for i in range(self.model.rowCount())]
 
-    def _filter_list(self, text):
+    def _filter_list(self, text: str) -> None:
         text = text.lower()
         for i in range(self.model.rowCount()):
             item = self.model.item(i)
-            if text in item.text().lower():
-                self.list_view.setRowHidden(i, False)
-            else:
-                self.list_view.setRowHidden(i, True)
+            if item is not None:
+                if text in item.text().lower():
+                    self.list_view.setRowHidden(i, False)
+                else:
+                    self.list_view.setRowHidden(i, True)
 
-    def select_all(self):
+    def select_all(self) -> None:
         self.model.blockSignals(True)
         for i in range(self.model.rowCount()):
             if not self.list_view.isRowHidden(i):
-                self.model.item(i).setCheckState(Qt.CheckState.Checked)
+                item = self.model.item(i)
+                if item is not None:
+                    item.setCheckState(Qt.CheckState.Checked)
         self.model.blockSignals(False)
         self.model.layoutChanged.emit()
 
-    def select_none(self):
+    def select_none(self) -> None:
         self.model.blockSignals(True)
         for i in range(self.model.rowCount()):
             if not self.list_view.isRowHidden(i):
-                self.model.item(i).setCheckState(Qt.CheckState.Unchecked)
+                item = self.model.item(i)
+                if item is not None:
+                    item.setCheckState(Qt.CheckState.Unchecked)
         self.model.blockSignals(False)
         self.model.layoutChanged.emit()
 
-    def _on_item_changed(self, item):
+    def _on_item_changed(self, item: QStandardItem) -> None:
         pass
 
-    def apply_filter(self):
+    def apply_filter(self) -> None:
         self.applied = True
         self._close_menu()
 
-    def get_selected_values(self):
-        selected = []
+    def get_selected_values(self) -> list[str] | None:
+        selected: list[str] = []
         all_checked = True
 
         for i in range(self.model.rowCount()):
             item = self.model.item(i)
-            if item.checkState() == Qt.CheckState.Checked:
-                selected.append(item.text())
-            else:
-                all_checked = False
+            if item is not None:
+                if item.checkState() == Qt.CheckState.Checked:
+                    selected.append(item.text())
+                else:
+                    all_checked = False
 
         if all_checked:
             return None
         return selected
 
-    def _close_menu(self):
+    def _close_menu(self) -> None:
         parent = self.parent()
         while parent:
             if isinstance(parent, QMenu):

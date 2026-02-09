@@ -24,6 +24,14 @@ class SecurityDashboard(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.audit_manager = AuditManager.instance()
+
+        # Widget members (Strict Typing - Option D)
+        self.kpi_layout: QHBoxLayout
+        self.chart_container: QHBoxLayout
+        self.log_area: QScrollArea
+        self.log_content: QWidget
+        self.log_layout: QVBoxLayout
+
         self._setup_ui()
 
         # Auto-refresh ogni minuto
@@ -68,9 +76,7 @@ class SecurityDashboard(QWidget):
 
         # 2. Daily Stats Chart (Simplified CSS Bars)
         chart_frame = QFrame()
-        chart_frame.setStyleSheet(
-            "background: white; border-radius: 10px; border: 1px solid #dee2e6;"
-        )
+        chart_frame.setStyleSheet("background: white; border-radius: 10px; border: 1px solid #dee2e6;")
         chart_layout = QVBoxLayout(chart_frame)
 
         chart_title = QLabel("Ultimi 7 Giorni")
@@ -121,18 +127,14 @@ class SecurityDashboard(QWidget):
         # Clear layout
         while self.kpi_layout.count():
             item = self.kpi_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            if item:
+                w = item.widget()
+                if w is not None:
+                    w.deleteLater()
 
-        self.kpi_layout.addWidget(
-            self._create_kpi_card("Success Rate", f"{rate:.1f}%", "#198754")
-        )
-        self.kpi_layout.addWidget(
-            self._create_kpi_card("Errori (7gg)", str(total_err), "#dc3545")
-        )
-        self.kpi_layout.addWidget(
-            self._create_kpi_card("Warning (7gg)", str(total_warn), "#ffc107")
-        )
+        self.kpi_layout.addWidget(self._create_kpi_card("Success Rate", f"{rate:.1f}%", "#198754"))
+        self.kpi_layout.addWidget(self._create_kpi_card("Errori (7gg)", str(total_err), "#dc3545"))
+        self.kpi_layout.addWidget(self._create_kpi_card("Warning (7gg)", str(total_warn), "#ffc107"))
 
     def _create_kpi_card(self, title, value, color):
         card = QFrame()
@@ -154,8 +156,10 @@ class SecurityDashboard(QWidget):
     def _update_chart(self, stats):
         while self.chart_container.count():
             item = self.chart_container.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            if item:
+                w = item.widget()
+                if w is not None:
+                    w.deleteLater()
 
         max_val = 0
         for d in stats.values():
@@ -212,8 +216,10 @@ class SecurityDashboard(QWidget):
 
         while self.log_layout.count():
             item = self.log_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            if item:
+                w = item.widget()
+                if w is not None:
+                    w.deleteLater()
 
         if not logs:
             self.log_layout.addWidget(QLabel("Nessun evento critico recente."))

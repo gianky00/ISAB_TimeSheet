@@ -126,6 +126,8 @@ class KPIChartsManager:
         self.annot.set_visible(False)
 
         def update_annot(wedge, idx):
+            if not self.annot:
+                return
             ang = (wedge.theta2 - wedge.theta1) / 2.0 + wedge.theta1
             y = np.sin(np.deg2rad(ang))
             x = np.cos(np.deg2rad(ang))
@@ -141,11 +143,12 @@ class KPIChartsManager:
                     contains, _ = wedge.contains(event)
                     if contains:
                         update_annot(wedge, i)
-                        self.annot.set_visible(True)
+                        if self.annot:
+                            self.annot.set_visible(True)
                         self.fig1.canvas.draw_idle()
                         found = True
                         break
-                if not found and self.annot.get_visible():
+                if not found and self.annot and self.annot.get_visible():
                     self.annot.set_visible(False)
                     self.fig1.canvas.draw_idle()
 

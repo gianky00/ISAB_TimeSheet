@@ -34,8 +34,22 @@ class TimbratureDBPanel(QWidget):
     Refactored: usa componenti modulari.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
+
+        # Member declarations
+        self.main_layout: QVBoxLayout
+        self.tabs: QTabWidget
+        self.toolbar_container: QWidget
+        self.search_input: QLineEdit
+        self.reparto_filter: QComboBox
+        self.cantiere_filter: QComboBox
+        self.tab_database: QWidget
+        self.model: FastTableModel
+        self.db_table: QTableView
+        self.detail_view: TimbratureDetailView
+        self.settings_tab: TimbratureSettingsTab
+
         self.db_path = config_manager.CONFIG_DIR / "data" / "timbrature_Isab.db"
         self.storage = TimbratureStorage(self.db_path)
 
@@ -130,24 +144,24 @@ class TimbratureDBPanel(QWidget):
 
         self.db_table = QTableView()
         self.db_table.setModel(self.model)
-        self.db_table.verticalHeader().setVisible(False)
+        if v_header := self.db_table.verticalHeader():
+            v_header.setVisible(False)
         self.db_table.setAlternatingRowColors(True)
-        self.db_table.setSelectionBehavior(
-            QAbstractItemView.SelectionBehavior.SelectRows
-        )
+        self.db_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.db_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.db_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.db_table.setSortingEnabled(True)
 
         header = self.db_table.horizontalHeader()
+        if header is None:
+            raise RuntimeError("Table horizontal header is None")
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setStretchLastSection(True)
 
         # Connessione protetta del selectionModel
-        if self.db_table.selectionModel():
-            self.db_table.selectionModel().selectionChanged.connect(
-                self._on_selection_changed
-            )
+        selection_model = self.db_table.selectionModel()
+        if selection_model:
+            selection_model.selectionChanged.connect(self._on_selection_changed)
 
         splitter.addWidget(self.db_table)
 

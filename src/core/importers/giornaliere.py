@@ -7,7 +7,7 @@ from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import pandas as pd
 
@@ -66,9 +66,9 @@ class GiornaliereImporter(BaseImporter):
     def import_giornaliere(
         cls,
         root_path: str,
-        lookup_map: dict,
+        lookup_map: dict[str, str],
         progress_callback: Callable[[int, int], None] | None = None,
-    ) -> tuple[bool, str, list[tuple], list[int]]:
+    ) -> tuple[bool, str, list[tuple[Any, ...]], list[int]]:
         """Importa i dati dalle cartelle Giornaliere."""
         root = Path(root_path)
         if not root.exists():
@@ -96,9 +96,11 @@ class GiornaliereImporter(BaseImporter):
         )
 
     @classmethod
-    def _collect_giornaliere_tasks(cls, root: Path, lookup_map: dict) -> list[tuple]:
+    def _collect_giornaliere_tasks(
+        cls, root: Path, lookup_map: dict[str, str]
+    ) -> list[tuple[int, Path, dict[str, str]]]:
         """Raccoglie i task di importazione (solo anni >= MIN_IMPORT_YEAR con foglio RIASSUNTO)."""
-        tasks = []
+        tasks: list[tuple[int, Path, dict[str, str]]] = []
         current_year = datetime.now().year
         for folder in root.iterdir():
             if not folder.is_dir():
@@ -121,10 +123,12 @@ class GiornaliereImporter(BaseImporter):
 
     @classmethod
     def _run_parallel_import(
-        cls, tasks: list[tuple], progress_callback: Callable | None
-    ) -> tuple[list[tuple], list[int]]:
-        all_rows = []
-        years_encountered = set()
+        cls,
+        tasks: list[tuple[int, Path, dict[str, str]]],
+        progress_callback: Callable[[int, int], None] | None,
+    ) -> tuple[list[tuple[Any, ...]], list[int]]:
+        all_rows: list[tuple[Any, ...]] = []
+        years_encountered: set[int] = set()
         total_tasks = len(tasks)
         processed_count = 0
 
@@ -145,7 +149,9 @@ class GiornaliereImporter(BaseImporter):
         return all_rows, list(years_encountered)
 
     @classmethod
-    def _process_single_giornaliera(cls, args: tuple[int, Path, dict]) -> tuple[int, list[tuple], str | None]:
+    def _process_single_giornaliera(
+        cls, args: tuple[int, Path, dict[str, str]]
+    ) -> tuple[int, list[tuple[Any, ...]], str | None]:
         year, file_path, lookup_map = args
         try:
             file_obj, _ = cls._decrypt_if_encrypted(file_path)
@@ -187,19 +193,19 @@ class GiornaliereImporter(BaseImporter):
             return (year, [], str(e))
 
     @classmethod
-    def _read_giornaliera_sheet(cls, file_path) -> pd.DataFrame | None:
+    def _read_giornaliera_sheet(cls, file_path: Any) -> pd.DataFrame | None:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             pd_obj = cls._get_pd()
             try:
-                return pd_obj.read_excel(file_path, sheet_name="RIASSUNTO")
+                return pd_obj.read_excel(file_path, sheet_name="RIASSUNTO")  # type: ignore[no-any-return]
             except ValueError:
                 return None
             except zipfile.BadZipFile:
                 return None
             except Exception:
                 try:
-                    return pd_obj.read_excel(file_path, sheet_name="RIASSUNTO", engine="openpyxl")
+                    return pd_obj.read_excel(file_path, sheet_name="RIASSUNTO", engine="openpyxl")  # type: ignore[no-any-return]
                 except zipfile.BadZipFile:
                     return None
                 except Exception as e:
@@ -261,34 +267,10 @@ class GiornaliereImporter(BaseImporter):
         if critical_cols:
             df.dropna(subset=critical_cols, how="any", inplace=True)
 
-        if df.empty:
-            return df
-
-        for db_col in cls.GIORNALIERE_MAPPING.values():
-            if db_col not in df.columns:
-                df[db_col] = ""
-
-        cols_to_clean = [
-            "odc",
-            "n_prev",
-            "data",
-            "personale",
-            "descrizione",
-            "tcl",
-            "pdl",
-            "inizio",
-            "fine",
-            "ore",
-        ]
-        # Check existence before accessing
-        cols_to_clean = [c for c in cols_to_clean if c in df.columns]
-
-        df[cols_to_clean] = df[cols_to_clean].astype(str).apply(lambda x: x.str.strip())
-        df[cols_to_clean] = df[cols_to_clean].replace(r"(?i)^nan$", "", regex=True)
         return df
 
     @classmethod
-    def _enrich_giornaliera_odc(cls, df: pd.DataFrame, lookup_map: dict):
+    def _enrich_giornaliera_odc(cls, df: pd.DataFrame, lookup_map: dict[str, str]) -> None:
         mask_empty = df["odc"] == ""
         if mask_empty.any() and lookup_map:
             mapped = df.loc[mask_empty, "n_prev"].map(lookup_map)

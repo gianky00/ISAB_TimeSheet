@@ -192,7 +192,7 @@ class LyraClient:
                         )
 
                     try:
-                        return result["candidates"][0]["content"]["parts"][0]["text"]
+                        return str(result["candidates"][0]["content"]["parts"][0]["text"])
                     except (KeyError, IndexError):
                         return f"Errore elaborazione risposta AI: {json.dumps(result)}"
                 else:
@@ -246,7 +246,7 @@ class LyraClient:
                         params=usage,
                     )
 
-                return result["candidates"][0]["content"]["parts"][0]["text"]
+                return str(result["candidates"][0]["content"]["parts"][0]["text"])
             return f"Errore API Media: {response.status_code}"
         except Exception as e:
             return f"Errore analisi media: {e}"

@@ -1,7 +1,7 @@
 import warnings
 from collections.abc import Callable
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import pandas as pd
 
@@ -31,7 +31,7 @@ class CertificatiImporter(BaseImporter):
         cls,
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
-    ) -> tuple[bool, str, list[tuple]]:
+    ) -> tuple[bool, str, list[tuple[Any, ...]]]:
         """Importa il file Certificati Campione e restituisce le righe."""
         path = Path(file_path)
         if not path.exists():
@@ -95,7 +95,7 @@ class CertificatiImporter(BaseImporter):
     @classmethod
     def _process_certificati_df(
         cls, df: pd.DataFrame, sheet_name: str, header_row_idx: int
-    ) -> tuple[bool, str, list[tuple]]:
+    ) -> tuple[bool, str, list[tuple[Any, ...]]]:
         """Processes the Certificati DataFrame and returns formatted rows."""
         df.columns = df.columns.astype(str).str.strip()
 
@@ -157,16 +157,16 @@ class CertificatiImporter(BaseImporter):
         """Applica formattazione date e calcolo giorni scadenza."""
         pd_obj = cls._get_pd()
 
-        def format_date_it(val):
+        def format_date_it(val: Any) -> str:
             if pd_obj.isna(val) or val == "":
                 return ""
             try:
                 dt = pd_obj.to_datetime(val)
-                return dt.strftime("%d/%m/%Y")
+                return str(dt.strftime("%d/%m/%Y"))
             except Exception:
                 return str(val)
 
-        def format_stato(val):
+        def format_stato(val: Any) -> str:
             if pd_obj.isna(val) or val == "":
                 return ""
             try:

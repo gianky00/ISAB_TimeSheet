@@ -1,8 +1,6 @@
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Optional
-
-from src.core.constants import Icons
+from typing import Any, Optional
 
 
 @dataclass
@@ -14,11 +12,11 @@ class CommandNode:
 
     label: str
     description: str = ""
-    icon: str = Icons.INFO  # Default icon
+    icon: str = "info"  # Default icon string
     shortcut: str = ""
 
     # Se definito, questo nodo è un'azione eseguibile
-    action: Callable | None = None
+    action: Callable[[], Any] | None = None
 
     # Se definito, questo nodo è un menu con figli statici
     children: list["CommandNode"] = field(default_factory=list)
@@ -55,19 +53,19 @@ class CommandRegistry:
     Singleton per definire e recuperare l'albero dei comandi.
     """
 
-    _instance = None
+    _instance: Optional["CommandRegistry"] = None
     _root: Optional["CommandNode"] = None
 
     @classmethod
-    def instance(cls):
+    def instance(cls) -> "CommandRegistry":
         if cls._instance is None:
             cls._instance = CommandRegistry()
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._root = CommandNode("ROOT", children=[])
 
-    def register_root(self, node: CommandNode):
+    def register_root(self, node: CommandNode) -> None:
         if self._root:
             self._root.children.append(node)
 

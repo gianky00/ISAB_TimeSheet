@@ -25,7 +25,7 @@ class CaricoTSBot(BaseBot):
         return "Caricamento automatico timesheet"
 
     @staticmethod
-    def get_columns() -> list:
+    def get_columns() -> list[dict[str, Any]]:
         """Definisce le colonne richieste per l'input dei dati."""
         # Full list from original code
         return [
@@ -55,7 +55,7 @@ class CaricoTSBot(BaseBot):
     def description(self) -> str:
         return "Caricamento automatico timesheet"
 
-    def validate_data(self, data: list[dict[str, Any]]) -> tuple[bool, str]:
+    def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """Validazione specifica per Carico TS."""
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:

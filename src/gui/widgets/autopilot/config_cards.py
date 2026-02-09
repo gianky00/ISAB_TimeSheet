@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (
     QSpinBox,
     QTimeEdit,
     QVBoxLayout,
+    QWidget,
 )
 
 from src.core import config_manager
@@ -18,7 +19,9 @@ class AutopilotConfigCard(QFrame):
     Card per configurare un bot programmato.
     """
 
-    def __init__(self, bot_id, bot_name, icon_path, color, parent=None):
+    def __init__(
+        self, bot_id: str, bot_name: str, icon_path: str, color: str, parent: QWidget | None = None
+    ) -> None:
         super().__init__(parent)
         self.bot_id = bot_id
         self.bot_name = bot_name
@@ -50,9 +53,7 @@ class AutopilotConfigCard(QFrame):
 
         icon_label = QLabel()
         icon_label.setFixedSize(28, 28)
-        icon_label.setPixmap(
-            get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18)
-        )
+        icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18))
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_label.setStyleSheet(
             f"""
@@ -107,7 +108,7 @@ class AutopilotConfigCard(QFrame):
             }
         """
         )
-        self.enable_check.stateChanged.connect(self._on_config_changed)
+        self.enable_check.stateChanged.connect(lambda: self._on_config_changed())
         layout.addWidget(self.enable_check)
 
         # Time picker
@@ -143,7 +144,7 @@ class AutopilotConfigCard(QFrame):
             }
         """
         )
-        self.time_edit.timeChanged.connect(self._on_config_changed)
+        self.time_edit.timeChanged.connect(lambda: self._on_config_changed())
         time_layout.addWidget(self.time_edit)
         time_layout.addStretch()
 
@@ -152,23 +153,21 @@ class AutopilotConfigCard(QFrame):
         # Carica configurazione salvata
         self._load_config()
 
-    def _load_config(self):
+    def _load_config(self) -> None:
         """Carica la configurazione salvata per questo bot."""
         config = config_manager.load_config()
         enabled_key = f"{self.bot_id}_autopilot_enabled"
         time_key = f"{self.bot_id}_autopilot_time"
 
-        is_enabled = config.get(enabled_key, False)
+        is_enabled = bool(config.get(enabled_key, False))
         self.enable_check.setChecked(is_enabled)
 
-        saved_time = config.get(time_key, "09:00")
+        saved_time = str(config.get(time_key, "09:00"))
         self.time_edit.setTime(QTime.fromString(saved_time, "HH:mm"))
 
-    def _on_config_changed(self):
+    def _on_config_changed(self) -> None:
         """Salva la configurazione quando viene modificata."""
-        config_manager.set_config_value(
-            f"{self.bot_id}_autopilot_enabled", self.enable_check.isChecked()
-        )
+        config_manager.set_config_value(f"{self.bot_id}_autopilot_enabled", self.enable_check.isChecked())
         config_manager.set_config_value(
             f"{self.bot_id}_autopilot_time", self.time_edit.time().toString("HH:mm")
         )
@@ -180,21 +179,11 @@ class AutopilotConfigCard(QFrame):
 
         # Aggiorna anche il footer (Account & Status Cards)
         if self.parent_widget:
-            if (
-                hasattr(self.parent_widget, "footer_left_widget")
-                and self.parent_widget.footer_left_widget
-            ):
-                QTimer.singleShot(
-                    100, self.parent_widget.footer_left_widget.refresh_accounts
-                )
+            if hasattr(self.parent_widget, "footer_left_widget") and self.parent_widget.footer_left_widget:
+                QTimer.singleShot(100, self.parent_widget.footer_left_widget.refresh_accounts)
 
-            if (
-                hasattr(self.parent_widget, "status_bar")
-                and self.parent_widget.status_bar
-            ):
-                QTimer.singleShot(
-                    100, self.parent_widget.status_bar.update_autopilot_ui
-                )
+            if hasattr(self.parent_widget, "status_bar") and self.parent_widget.status_bar:
+                QTimer.singleShot(100, self.parent_widget.status_bar.update_autopilot_ui)
 
 
 class AutopilotConfigCardWithInterval(QFrame):
@@ -203,7 +192,9 @@ class AutopilotConfigCardWithInterval(QFrame):
     Usato per report email e altri task non giornalieri.
     """
 
-    def __init__(self, bot_id, bot_name, icon_path, color, parent=None):
+    def __init__(
+        self, bot_id: str, bot_name: str, icon_path: str, color: str, parent: QWidget | None = None
+    ) -> None:
         super().__init__(parent)
         self.bot_id = bot_id
         self.bot_name = bot_name
@@ -235,9 +226,7 @@ class AutopilotConfigCardWithInterval(QFrame):
 
         icon_label = QLabel()
         icon_label.setFixedSize(28, 28)
-        icon_label.setPixmap(
-            get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18)
-        )
+        icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18))
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_label.setStyleSheet(
             f"""
@@ -292,7 +281,7 @@ class AutopilotConfigCardWithInterval(QFrame):
             }
         """
         )
-        self.enable_check.stateChanged.connect(self._on_config_changed)
+        self.enable_check.stateChanged.connect(lambda: self._on_config_changed())
         layout.addWidget(self.enable_check)
 
         # Riga: Orario + Intervallo giorni
@@ -323,7 +312,7 @@ class AutopilotConfigCardWithInterval(QFrame):
             }
         """
         )
-        self.time_edit.timeChanged.connect(self._on_config_changed)
+        self.time_edit.timeChanged.connect(lambda: self._on_config_changed())
         settings_layout.addWidget(self.time_edit)
 
         # Intervallo giorni
@@ -351,7 +340,7 @@ class AutopilotConfigCardWithInterval(QFrame):
             }
         """
         )
-        self.interval_spin.valueChanged.connect(self._on_config_changed)
+        self.interval_spin.valueChanged.connect(lambda: self._on_config_changed())
         settings_layout.addWidget(self.interval_spin)
         settings_layout.addStretch()
 
@@ -360,30 +349,26 @@ class AutopilotConfigCardWithInterval(QFrame):
         # Carica configurazione salvata
         self._load_config()
 
-    def _load_config(self):
+    def _load_config(self) -> None:
         """Carica la configurazione salvata per questo task."""
         config = config_manager.load_config()
 
-        is_enabled = config.get(f"{self.bot_id}_autopilot_enabled", False)
+        is_enabled = bool(config.get(f"{self.bot_id}_autopilot_enabled", False))
         self.enable_check.setChecked(is_enabled)
 
-        saved_time = config.get(f"{self.bot_id}_autopilot_time", "08:00")
+        saved_time = str(config.get(f"{self.bot_id}_autopilot_time", "08:00"))
         self.time_edit.setTime(QTime.fromString(saved_time, "HH:mm"))
 
-        interval_days = config.get(f"{self.bot_id}_autopilot_interval_days", 7)
+        interval_days = int(config.get(f"{self.bot_id}_autopilot_interval_days", 7))
         self.interval_spin.setValue(interval_days)
 
-    def _on_config_changed(self):
+    def _on_config_changed(self) -> None:
         """Salva la configurazione quando viene modificata."""
-        config_manager.set_config_value(
-            f"{self.bot_id}_autopilot_enabled", self.enable_check.isChecked()
-        )
+        config_manager.set_config_value(f"{self.bot_id}_autopilot_enabled", self.enable_check.isChecked())
         config_manager.set_config_value(
             f"{self.bot_id}_autopilot_time", self.time_edit.time().toString("HH:mm")
         )
-        config_manager.set_config_value(
-            f"{self.bot_id}_autopilot_interval_days", self.interval_spin.value()
-        )
+        config_manager.set_config_value(f"{self.bot_id}_autopilot_interval_days", self.interval_spin.value())
 
         # Notifica il parent widget per refresh
         if self.parent_widget and hasattr(self.parent_widget, "refresh_events"):
@@ -391,18 +376,8 @@ class AutopilotConfigCardWithInterval(QFrame):
 
         # Aggiorna anche il footer (Account & Status Cards)
         if self.parent_widget:
-            if (
-                hasattr(self.parent_widget, "footer_left_widget")
-                and self.parent_widget.footer_left_widget
-            ):
-                QTimer.singleShot(
-                    100, self.parent_widget.footer_left_widget.refresh_accounts
-                )
+            if hasattr(self.parent_widget, "footer_left_widget") and self.parent_widget.footer_left_widget:
+                QTimer.singleShot(100, self.parent_widget.footer_left_widget.refresh_accounts)
 
-            if (
-                hasattr(self.parent_widget, "status_bar")
-                and self.parent_widget.status_bar
-            ):
-                QTimer.singleShot(
-                    100, self.parent_widget.status_bar.update_autopilot_ui
-                )
+            if hasattr(self.parent_widget, "status_bar") and self.parent_widget.status_bar:
+                QTimer.singleShot(100, self.parent_widget.status_bar.update_autopilot_ui)

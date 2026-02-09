@@ -53,7 +53,20 @@ class AnagraficaPage(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.worker = None
+
+        # Widget members (Strict Typing - Option D)
+        self.search_input: QLineEdit
+        self.lbl_sync_status: QLabel
+        self.btn_bot_update: ModernButton
+        self.cards_container: QWidget
+        self.card_ok: InteractiveStatusCard
+        self.card_warning: InteractiveStatusCard
+        self.card_expired: InteractiveStatusCard
+        self.card_excluded: InteractiveStatusCard
+        self.table: QTableView
+        self.detail_view: EmployeeDetailView
+
+        self.worker: BotWorker | None = None
         self.master_headers = [
             "SCAD.\nISAB",
             "ID\nRISORSA",
@@ -182,7 +195,10 @@ class AnagraficaPage(QWidget):
         self.table.setModel(self.model)
         self.table.setAlternatingRowColors(True)
         self.table.setSortingEnabled(True)
-        self.table.verticalHeader().setVisible(False)
+        v_header = self.table.verticalHeader()
+        if v_header is None:
+            raise RuntimeError("Table vertical header is None")
+        v_header.setVisible(False)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
@@ -194,7 +210,12 @@ class AnagraficaPage(QWidget):
         self.table.customContextMenuRequested.connect(self._show_context_menu)
 
         header = self.table.horizontalHeader()
-        self.table.selectionModel().selectionChanged.connect(self._on_selection_changed)
+        if header is None:
+            raise RuntimeError("Table horizontal header is None")
+        selection_model = self.table.selectionModel()
+        if selection_model is None:
+            raise RuntimeError("Table selection model is None")
+        selection_model.selectionChanged.connect(self._on_selection_changed)
         self.table.setItemDelegateForColumn(0, ColoredDotDelegate(self.table))
 
         # Larghezze colonne
@@ -220,7 +241,10 @@ class AnagraficaPage(QWidget):
 
     def _show_context_menu(self, position):
         """Mostra menu contestuale per gestione monitoraggio dipendente."""
-        indexes = self.table.selectionModel().selectedRows()
+        selection_model = self.table.selectionModel()
+        if selection_model is None:
+            raise RuntimeError("Table selection model is None")
+        indexes = selection_model.selectedRows()
         if not indexes:
             return
 
@@ -254,7 +278,10 @@ class AnagraficaPage(QWidget):
             action.triggered.connect(lambda: self._toggle_monitoring(id_risorsa, True))
 
         menu.addAction(action)
-        menu.exec(self.table.viewport().mapToGlobal(position))
+        viewport = self.table.viewport()
+        if viewport is None:
+            raise RuntimeError("Table viewport is None")
+        menu.exec(viewport.mapToGlobal(position))
 
     def _toggle_monitoring(self, id_risorsa, enable):
         """Attiva o disattiva il monitoraggio per un dipendente."""
@@ -291,9 +318,10 @@ class AnagraficaPage(QWidget):
 
         query += " ORDER BY cognome ASC, nome ASC"
 
-        self.table.horizontalHeader().setDefaultAlignment(
-            Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter
-        )
+        header = self.table.horizontalHeader()
+        if header is None:
+            raise RuntimeError("Table horizontal header is None")
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
 
         try:
             full_rows = db_manager.execute_query(db_manager.DB_DIPENDENTI, query, tuple(params))
@@ -427,7 +455,10 @@ class AnagraficaPage(QWidget):
         self.refresh_data()
 
     def _on_selection_changed(self, selected, _deselected):
-        indexes = self.table.selectionModel().selectedRows()
+        selection_model = self.table.selectionModel()
+        if selection_model is None:
+            raise RuntimeError("Table selection model is None")
+        indexes = selection_model.selectedRows()
         if not indexes:
             self.detail_view.reset()
             return

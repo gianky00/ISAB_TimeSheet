@@ -51,6 +51,14 @@ class AttivitaProgrammateTab(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        # Widget members (Strict Typing - Option D)
+        self.chk_ps: QCheckBox
+        self.chk_po: QCheckBox
+        self.combo_area: QComboBox
+        self.combo_stato: QComboBox
+        self.btn_reset: QPushButton
+        self.table: ExcelTableWidget
+
         self._setup_ui()
         self._load_data()
 
@@ -104,6 +112,8 @@ class AttivitaProgrammateTab(QWidget):
 
         self.table.auto_copy_headers = True
         header = self.table.horizontalHeader()
+        if header is None:
+            raise RuntimeError("Table horizontal header is None")
         # Inizialmente usa Interactive per permettere ridimensionamento automatico
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.table.setColumnHidden(0, True)
@@ -125,7 +135,10 @@ class AttivitaProgrammateTab(QWidget):
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.table.verticalHeader().setVisible(False)
+        v_header = self.table.verticalHeader()
+        if v_header is None:
+            raise RuntimeError("Table vertical header is None")
+        v_header.setVisible(False)
         layout.addWidget(self.table)
 
     def refresh_data(self):
@@ -152,6 +165,8 @@ class AttivitaProgrammateTab(QWidget):
     def _adjust_column_widths(self):
         """Adatta le larghezze delle colonne al contenuto, mantenendo un minimo leggibile."""
         header = self.table.horizontalHeader()
+        if header is None:
+            raise RuntimeError("Table horizontal header is None - cannot adjust column widths")
 
         # Ridimensiona colonne specifiche al contenuto
         columns_to_resize = [1, 2, 3, 10, 11, 12, 13]  # Escludi quelle con stretch
@@ -167,7 +182,7 @@ class AttivitaProgrammateTab(QWidget):
         header.setSectionResizeMode(11, QHeaderView.ResizeMode.Stretch)  # STATO ATTIVITA'
         header.setSectionResizeMode(15, QHeaderView.ResizeMode.Stretch)  # AVVISO
 
-    def _populate_table_row(self, row_idx: int, row_data: tuple, db_keys: list):
+    def _populate_table_row(self, row_idx: int, row_data: tuple[Any, ...], db_keys: list[str]):
         styles_idx = len(self.COLUMNS)
         row_styles = (
             json.loads(row_data[styles_idx]) if len(row_data) > styles_idx and row_data[styles_idx] else {}
@@ -190,7 +205,7 @@ class AttivitaProgrammateTab(QWidget):
                 return datetime.strptime(s.split(" ")[0], "%Y-%m-%d").replace(tzinfo=UTC).strftime("%d/%m/%Y")
         return s
 
-    def _apply_item_style(self, item: QTableWidgetItem, style: dict | None):
+    def _apply_item_style(self, item: QTableWidgetItem, style: dict[str, Any] | None):
         if not style:
             return
         if "fg" in style:
@@ -233,7 +248,7 @@ class AttivitaProgrammateTab(QWidget):
             return True
         if self._is_area_mismatch(row, f_area):
             return True
-        return bool(self._is_stato_mismatch(row, f_stato))
+        return self._is_stato_mismatch(row, f_stato)
 
     def _is_ps_missing(self, row: int, active: bool) -> bool:
         if not active:
@@ -275,7 +290,7 @@ class AttivitaProgrammateTab(QWidget):
                 continue
             if text:
                 row_text = " ".join(
-                    [self.table.item(r, c).text().lower() for c in range(cols) if self.table.item(r, c)]
+                    [cell.text().lower() for c in range(cols) if (cell := self.table.item(r, c)) is not None]
                 )
                 if not all(term in row_text for term in search_terms):
                     self.table.setRowHidden(r, True)
@@ -286,4 +301,8 @@ class AttivitaProgrammateTab(QWidget):
         lyra_action.setIcon(get_colored_icon(get_asset_path(Icons.SPARKLES), "#000000"))
         lyra_action.triggered.connect(lambda: self.table._analyze_row_at(pos))
         menu.addAction(lyra_action)
-        menu.exec(self.table.viewport().mapToGlobal(pos))
+
+        viewport = self.table.viewport()
+        if viewport is None:
+            raise RuntimeError("Table viewport is None")
+        menu.exec(viewport.mapToGlobal(pos))

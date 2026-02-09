@@ -33,9 +33,7 @@ class TestBotTimingSequences:
     def mock_safework_bot(self):
         with (
             patch("src.bots.safework.base.SafeworkBaseBot._init_driver"),
-            patch(
-                "src.bots.safework.pdl.bot.SafeWorkPDLBot.__init__", return_value=None
-            ),
+            patch("src.bots.safework.pdl.bot.SafeWorkPDLBot.__init__", return_value=None),
         ):
             bot = SafeWorkPDLBot("u", "p")
             bot.driver = MagicMock()
@@ -62,9 +60,7 @@ class TestBotTimingSequences:
 
         with (
             patch("time.sleep"),
-            patch.object(
-                ScaricaTSBot, "_attendi_scomparsa_overlay"
-            ) as mock_wait_overlay,
+            patch.object(ScaricaTSBot, "_attendi_scomparsa_overlay") as mock_wait_overlay,
         ):
             with patch("src.bots.portale_fornitori.scarico_ts.bot.ActionChains"):
                 mock_scarico_bot._setup_filters()
@@ -101,9 +97,7 @@ class TestBotTimingSequences:
             page.wait = MagicMock()
             page.wait.until.return_value = mock_el
 
-            with patch(
-                "src.bots.portale_fornitori.timbrature.pages.timbrature_page.ActionChains"
-            ):
+            with patch("src.bots.portale_fornitori.timbrature.pages.timbrature_page.ActionChains"):
                 page.navigate_to_timbrature()
 
             # Verifichiamo che _wait_for_overlay sia stato chiamato invece di time.sleep espliciti

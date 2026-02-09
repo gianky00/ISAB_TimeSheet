@@ -23,6 +23,10 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
     def get_name() -> str:
         return "Ricerca PDL"
 
+    @staticmethod
+    def get_columns() -> list[dict[str, Any]]:
+        return []
+
     @property
     def name(self) -> str:
         return "Ricerca PDL"
@@ -144,7 +148,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         except Exception as e:
             self.log(f"⚠️ Errore gestione checkbox: {e}")
 
-    def _processa_siti(self, site_selection: str):
+    def _processa_siti(self, site_selection: str) -> None:
         """Cicla sui siti e importa i dati."""
         sites = self.sites if site_selection == "Seleziona tutto" else [site_selection]
         for site in sites:
@@ -158,7 +162,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             else:
                 self.log(f"❌ Errore ricerca per sito {site}")
 
-    def _cleanup_temp_file(self, file_path: str):
+    def _cleanup_temp_file(self, file_path: str) -> None:
         """Rimuove file temporaneo."""
         try:
             p = Path(file_path)

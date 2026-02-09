@@ -2,9 +2,9 @@
 Tabella dati con sorting, filtering e row styling, basata su ExcelTableWidget.
 """
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QModelIndex, Qt, pyqtSignal
 from PyQt6.QtGui import QBrush, QColor
 from PyQt6.QtWidgets import (
     QHBoxLayout,
@@ -40,18 +40,18 @@ class DataTable(QWidget):
         "da_processare": "#FFFFFF",  # White
     }
 
-    def __init__(self, columns: list[dict], parent=None):
+    def __init__(self, columns: list[dict[str, Any]], parent: QWidget | None = None) -> None:
         """
         Args:
             columns: Lista di dict con keys: 'name', 'key', 'width', 'editable'
         """
         super().__init__(parent)
         self._columns = columns
-        self._data: list[dict] = []
+        self._data: list[dict[str, Any]] = []
         self._palette = get_palette()
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(Spacing.xs)
@@ -105,7 +105,7 @@ class DataTable(QWidget):
 
         self._table = ExcelTableWidget()
         self._table.setColumnCount(len(self._columns))
-        self._table.setHorizontalHeaderLabels([c["name"] for c in self._columns])
+        self._table.setHorizontalHeaderLabels([str(c["name"]) for c in self._columns])
         # ExcelTableWidget handles SelectionBehavior and SelectionMode already
         self._table.setAlternatingRowColors(True)
         self._table.setSortingEnabled(True)
@@ -113,26 +113,27 @@ class DataTable(QWidget):
 
         # Header sizing
         header = self._table.horizontalHeader()
-        header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+        if header is not None:
+            header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
 
         for i, col in enumerate(self._columns):
             if "width" in col:
-                self._table.setColumnWidth(i, col["width"])
-            else:
+                self._table.setColumnWidth(i, int(col["width"]))
+            elif header is not None:
                 header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
 
         # Remove redundant _apply_table_style call or keep it empty for future needs
         layout.addWidget(self._table)
 
-    def _apply_table_style(self):
+    def _apply_table_style(self) -> None:
         """Redundant with global QSS. Can be used for very specific overrides if needed."""
 
-    def setData(self, data: list[dict]):
+    def setData(self, data: list[dict[str, Any]]) -> None:
         """Popola la tabella con dati."""
         self._data = data
         self._populate_table(data)
 
-    def _populate_table(self, data: list[dict]):
+    def _populate_table(self, data: list[dict[str, Any]]) -> None:
         self._table.setSortingEnabled(False)  # Optimization
         self._table.setRowCount(len(data))
 
@@ -142,7 +143,7 @@ class DataTable(QWidget):
             row_color = self._get_row_color(status)
 
             for col_idx, col in enumerate(self._columns):
-                key = col.get("key", col["name"].lower())
+                key = col.get("key", str(col["name"]).lower())
                 value = str(row_data.get(key, ""))
 
                 item = SortableTableWidgetItem(value)
@@ -169,7 +170,7 @@ class DataTable(QWidget):
                 return color
         return None
 
-    def _filter_rows(self, text: str):
+    def _filter_rows(self, text: str) -> None:
         """Filtra righe in base al testo di ricerca."""
         text = text.lower()
         for row in range(self._table.rowCount()):
@@ -181,12 +182,12 @@ class DataTable(QWidget):
                     break
             self._table.setRowHidden(row, not match)
 
-    def _on_double_click(self, index):
+    def _on_double_click(self, index: QModelIndex) -> None:
         row = index.row()
         if 0 <= row < len(self._data):
             self.rowDoubleClicked.emit(row, self._data[row])
 
-    def getSelectedRows(self) -> list[dict]:
+    def getSelectedRows(self) -> list[dict[str, Any]]:
         """Ritorna i dati delle righe selezionate."""
         rows = {item.row() for item in self._table.selectedItems()}
         # Map table row back to data index?
@@ -196,18 +197,18 @@ class DataTable(QWidget):
 
         selected_data = []
         for r in rows:
-            row_dict = {}
+            row_dict: dict[str, Any] = {}
             for c, col in enumerate(self._columns):
                 item = self._table.item(r, c)
-                key = col.get("key", col["name"].lower())
+                key = col.get("key", str(col["name"]).lower())
                 row_dict[key] = item.text() if item else ""
             selected_data.append(row_dict)
 
         return selected_data
 
-    def refresh(self):
+    def refresh(self) -> None:
         """Ricarica dati (da sovrascrivere o connettere)."""
 
-    def get_table_widget(self):
+    def get_table_widget(self) -> ExcelTableWidget:
         """Returns the internal ExcelTableWidget."""
         return self._table

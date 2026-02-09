@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import Any
 
 from PyQt6.QtWidgets import QTreeWidgetItem
 
@@ -6,8 +7,12 @@ from PyQt6.QtWidgets import QTreeWidgetItem
 class SortableTreeWidgetItem(QTreeWidgetItem):
     """Custom QTreeWidgetItem che implementa l'ordinamento numerico e per data."""
 
-    def __lt__(self, other):
-        column = self.treeWidget().sortColumn()
+    def __lt__(self, other: Any) -> bool:
+        tw = self.treeWidget()
+        if tw is None or not isinstance(other, QTreeWidgetItem):
+            return super().__lt__(other)
+
+        column = tw.sortColumn()
         t1, t2 = self.text(column).strip(), other.text(column).strip()
 
         # 1. Date

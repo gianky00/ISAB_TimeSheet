@@ -28,13 +28,13 @@ class HelpPanel(QWidget):
     Implementa documentazione strutturata con ricerca e navigazione veloce.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.sections = []
+        self.sections: list[tuple[str, str, str]] = []
         self._setup_ui()
         self._load_documentation()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -72,18 +72,14 @@ class HelpPanel(QWidget):
 
         # Icona Decorativa
         icon_lbl = QLabel()
-        icon_lbl.setPixmap(
-            get_colored_icon(get_asset_path(Icons.HELP), "#009688").pixmap(48, 48)
-        )
+        icon_lbl.setPixmap(get_colored_icon(get_asset_path(Icons.HELP), "#009688").pixmap(48, 48))
         header_layout.addWidget(icon_lbl)
 
         layout.addWidget(header)
 
         # Splitter per Indice e Contenuto
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
-        self.splitter.setStyleSheet(
-            "QSplitter::handle { background-color: #ECEFF1; width: 1px; }"
-        )
+        self.splitter.setStyleSheet("QSplitter::handle { background-color: #ECEFF1; width: 1px; }")
 
         # Sidebar Sinistra
         sidebar = QWidget()
@@ -170,7 +166,7 @@ class HelpPanel(QWidget):
 
         layout.addWidget(self.splitter)
 
-    def _load_documentation(self):
+    def _load_documentation(self) -> None:
         """Inizializza le sezioni della documentazione."""
         self.sections = [
             ("Benvenuto", self._get_intro_md(), Icons.HOME),
@@ -187,14 +183,14 @@ class HelpPanel(QWidget):
             ("Supporto & Contatti", self._get_contacts_md(), Icons.USER),
         ]
 
+        self.index_list.blockSignals(True)
         for title, _content, icon_key in self.sections:
             item = QListWidgetItem(title)
             item.setIcon(get_colored_icon(get_asset_path(icon_key), "#546E7A"))
             self.index_list.addItem(item)
+        self.index_list.blockSignals(False)
 
-        self.index_list.currentRowChanged.connect(self._on_index_changed)
-
-    def _on_index_changed(self, row):
+    def _on_index_changed(self, row: int) -> None:
         if row < 0:
             return
         item = self.index_list.item(row)
@@ -206,7 +202,7 @@ class HelpPanel(QWidget):
                 self.browser.setMarkdown(content)
                 break
 
-    def _filter_index(self, text):
+    def _filter_index(self, text: str) -> None:
         text = text.lower()
         self.index_list.clear()
         for title, _content, icon_key in self.sections:
@@ -217,13 +213,14 @@ class HelpPanel(QWidget):
         if self.index_list.count() > 0:
             self.index_list.setCurrentRow(0)
 
-    def open_section(self, section_title: str):
+    def open_section(self, section_title: str) -> None:
         for i in range(self.index_list.count()):
-            if section_title.lower() in self.index_list.item(i).text().lower():
+            item = self.index_list.item(i)
+            if item is not None and section_title.lower() in item.text().lower():
                 self.index_list.setCurrentRow(i)
                 break
 
-    def _get_intro_md(self):
+    def _get_intro_md(self) -> str:
         return f"""
 # Benvenuto in SyncroJob v{VERSION}
 
@@ -243,7 +240,7 @@ L'interfaccia è stata ridisegnata per massimizzare la produttività:
 5. **PDL**: Ricerca e gestione Permessi di Lavoro.
 """
 
-    def _get_news_md(self):
+    def _get_news_md(self) -> str:
         return f"""
 # 🆕 Novità Versione {VERSION}
 
@@ -263,7 +260,7 @@ Il modulo PDL è ora potenziato:
 * Stampa diretta senza aprire il browser.
 """
 
-    def _get_telegram_md(self):
+    def _get_telegram_md(self) -> str:
         return """
 # 📱 Controllo Remoto Telegram
 
@@ -275,7 +272,7 @@ Gestisci SyncroJob dal tuo smartphone. Ricevi notifiche in tempo reale e invia c
 3. Invia `/start` al tuo bot dallo smartphone.
 """
 
-    def _get_scarico_md(self):
+    def _get_scarico_md(self) -> str:
         return """
 # 📥 Scarico & Carico TS
 
@@ -289,7 +286,7 @@ Automatizza il recupero dei file Excel dal portale.
 Carica massivamente i dati sul portale compilerà il form web riga per riga.
 """
 
-    def _get_oda_md(self):
+    def _get_oda_md(self) -> str:
         return """
 # 📋 Dettagli OdA & Prenotazioni
 
@@ -300,7 +297,7 @@ Scarica i dettagli completi (descrizioni, quantità residue, scadenze) per alime
 Prenota massivamente i Badge Provvisori inserendo nomi e date direttamente nell'app.
 """
 
-    def _get_timbrature_md(self):
+    def _get_timbrature_md(self) -> str:
         return """
 # ⏱️ Timbrature
 
@@ -313,7 +310,7 @@ Visualizza tutte le timbrature storicizzate con filtri per Reparto o Cantiere.
 Il sistema può scaricare le timbrature ogni mattina in autonomia all'orario desiderato.
 """
 
-    def _get_contabilita_md(self):
+    def _get_contabilita_md(self) -> str:
         return """
 # 📊 Strumentale (Contabilità)
 
@@ -325,7 +322,7 @@ Visione economica completa dell'appalto.
 * **KPI**: Grafici interattivi per monitorare l'andamento mensile.
 """
 
-    def _get_lyra_md(self):
+    def _get_lyra_md(self) -> str:
         return """
 # ✨ Lyra AI
 
@@ -336,7 +333,7 @@ Il tuo assistente analista personale basato su intelligenza artificiale.
 * **Ricerca Intelligente**: Interroga i tuoi database in linguaggio naturale.
 """
 
-    def _get_shortcuts_md(self):
+    def _get_shortcuts_md(self) -> str:
         return """
 # ⚡ Scorciatoie
 
@@ -346,7 +343,7 @@ Il tuo assistente analista personale basato su intelligenza artificiale.
 * **Tasto Destro**: Menu contestuale esteso.
 """
 
-    def _get_troubleshooting_md(self):
+    def _get_troubleshooting_md(self) -> str:
         return """
 # 🛠️ Risoluzione Problemi
 
@@ -356,7 +353,7 @@ Il tuo assistente analista personale basato su intelligenza artificiale.
 3. Controlla le credenziali in Impostazioni.
 """
 
-    def _get_license_md(self):
+    def _get_license_md(self) -> str:
         return """
 # 🔑 Licenza
 
@@ -364,7 +361,7 @@ SyncroJob è protetto da licenza digitale legata all'hardware.
 Il rinnovo avviene automaticamente alla scadenza.
 """
 
-    def _get_contacts_md(self):
+    def _get_contacts_md(self) -> str:
         return """
 # 📞 Contatti & Supporto
 

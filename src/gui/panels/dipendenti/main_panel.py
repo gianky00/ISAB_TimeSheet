@@ -53,12 +53,10 @@ class DipendentiPanel(QWidget):
         """Metodo pubblico chiamato dal controller per aggiornare i dati."""
         # Aggiorna il tab attivo
         current = self.tabs.currentWidget()
-        if hasattr(current, "refresh_data"):
+        if current and hasattr(current, "refresh_data"):
             current.refresh_data()
 
         # Opzionale: aggiorna anche l'altro in background se necessario
-        if current == self.anagrafica_page and hasattr(
-            self.manager_page, "refresh_data"
-        ):
+        if current == self.anagrafica_page and hasattr(self.manager_page, "refresh_data"):
             # Non forziamo il refresh grafico se non visibile, ma magari ricarica dati
             pass

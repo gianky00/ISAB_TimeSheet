@@ -239,8 +239,7 @@ def main():
             log_dir.mkdir(exist_ok=True, parents=True)
             crash_file = log_dir / f"crash_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
             report = []
-            report.append("=== TRACEBACK ===\n")
-            report.append(traceback.format_exc())
+            report.extend(("=== TRACEBACK ===\n", traceback.format_exc()))
 
             crash_file.write_text(
                 f"=== CRASH REPORT ===\n"
@@ -255,7 +254,7 @@ def main():
         QMessageBox.critical(
             None,
             "Errore",
-            f"Errore fatale:\n{e}\n\nDettagli salvati in: {crash_file if crash_file else 'logs'}",
+            f"Errore fatale:\n{e}\n\nDettagli salvati in: {crash_file or 'logs'}",
         )
         server.close()
         sys.exit(1)

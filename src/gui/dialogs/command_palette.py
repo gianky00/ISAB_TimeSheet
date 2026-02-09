@@ -1,4 +1,5 @@
 from contextlib import suppress
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import (
     QEasingCurve,
@@ -9,7 +10,7 @@ from PyQt6.QtCore import (
     QTimer,
     pyqtSignal,
 )
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QKeyEvent
 from PyQt6.QtWidgets import (
     QDialog,
     QGraphicsDropShadowEffect,
@@ -25,6 +26,9 @@ from PyQt6.QtWidgets import (
 from src.gui.controllers.command_registry import CommandNode
 from src.utils.helpers import get_asset_path, get_colored_icon
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 class CommandPaletteDialog(QDialog):
     """
@@ -37,7 +41,7 @@ class CommandPaletteDialog(QDialog):
     # Segnale emesso quando il dialogo è completamente chiuso
     closed = pyqtSignal()
 
-    def __init__(self, parent=None, root_nodes=None):
+    def __init__(self, parent: QWidget | None = None, root_nodes: list[CommandNode] | None = None) -> None:
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -50,14 +54,16 @@ class CommandPaletteDialog(QDialog):
         # Stato Navigazione
         self.root_nodes = root_nodes or []
         self.current_nodes = self.root_nodes  # Lista corrente visualizzata
-        self.navigation_stack = []  # Stack di (Label, Nodes) per tornare indietro
-        self.breadcrumb_path = []  # Lista stringhe breadcrumb
+        self.navigation_stack: list[
+            tuple[list[CommandNode], int]
+        ] = []  # Stack di (Nodes, RowIndex) per tornare indietro
+        self.breadcrumb_path: list[str] = []  # Lista stringhe breadcrumb
 
         # Input Mode State
         self._input_mode = False
-        self._input_prompts = []
-        self._input_callback = None
-        self._input_answers = []
+        self._input_prompts: list[str] = []
+        self._input_callback: Callable[[list[str]], None] | None = None
+        self._input_answers: list[str] = []
         self._input_index = 0
 
         self._setup_ui()
@@ -68,8 +74,9 @@ class CommandPaletteDialog(QDialog):
         self.anim.setDuration(250)
         self.anim.setEasingCurve(QEasingCurve.Type.OutCubic)
         self.is_closing = False
+        self._can_close_via_shortcut = True
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         # Container Principale
         self.container = QWidget(self)
         self.container.setGeometry(10, 10, self.target_width - 20, self.target_height - 20)
@@ -184,9 +191,10 @@ class CommandPaletteDialog(QDialog):
         self.list_widget.clicked.connect(self._execute_selected)
         layout.addWidget(self.list_widget)
 
-    def show_animated(self):
+    def show_animated(self) -> None:
         """Mostra il dialogo con reset dello stato."""
-        if not self.parent():
+        parent = self.parent()
+        if not parent or not hasattr(parent, "geometry"):
             return
 
         # Debounce
@@ -202,7 +210,7 @@ class CommandPaletteDialog(QDialog):
         self.search_bar.setText("")
         self.search_bar.setFocus()
 
-        parent_geo = self.parent().geometry()
+        parent_geo = parent.geometry()
         x = parent_geo.x() + (parent_geo.width() - self.width()) // 2
         start_y = parent_geo.y() + 30
 
@@ -214,7 +222,7 @@ class CommandPaletteDialog(QDialog):
         self.anim.setEndValue(QRect(x, start_y, self.width(), self.target_height))
         self.anim.start()
 
-    def hide_animated(self):
+    def hide_animated(self) -> None:
         if self.is_closing:
             return
         self.is_closing = True
@@ -225,14 +233,16 @@ class CommandPaletteDialog(QDialog):
         self.anim.finished.connect(self._finish_close)
         self.anim.start()
 
-    def _finish_close(self):
+    def _finish_close(self) -> None:
         self.hide()
         self.is_closing = False
         with suppress(Exception):
             self.anim.finished.disconnect(self._finish_close)
         self.closed.emit()
 
-    def eventFilter(self, obj, event):
+    def eventFilter(self, obj: Any | None, event: Any | None) -> bool:
+        if event is None:
+            return False
         if obj == self.search_bar and event.type() == event.Type.KeyPress:
             if self._input_mode:
                 return self._handle_input_mode_key(event)
@@ -240,7 +250,7 @@ class CommandPaletteDialog(QDialog):
 
         return super().eventFilter(obj, event)
 
-    def _handle_input_mode_key(self, event):
+    def _handle_input_mode_key(self, event: QKeyEvent) -> bool:
         key = event.key()
         if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self._submit_input_step()
@@ -250,7 +260,7 @@ class CommandPaletteDialog(QDialog):
             return True
         return False
 
-    def _handle_standard_key(self, event):
+    def _handle_standard_key(self, event: QKeyEvent) -> bool:
         key = event.key()
 
         if key == Qt.Key.Key_Down:
@@ -288,7 +298,7 @@ class CommandPaletteDialog(QDialog):
 
         return False
 
-    def _start_input_mode(self, node: CommandNode):
+    def _start_input_mode(self, node: CommandNode) -> None:
         """Avvia la modalità input per il nodo selezionato."""
         self._input_mode = True
         self._input_prompts = node.input_prompts
@@ -301,7 +311,7 @@ class CommandPaletteDialog(QDialog):
         self.breadcrumb_lbl.setText(f"> {node.label}")  # Show Context
         self._show_next_prompt()
 
-    def _show_next_prompt(self):
+    def _show_next_prompt(self) -> None:
         if self._input_index < len(self._input_prompts):
             prompt = self._input_prompts[self._input_index]
             self.search_bar.setText("")
@@ -311,7 +321,7 @@ class CommandPaletteDialog(QDialog):
             # Finished
             self._finish_input_mode()
 
-    def _submit_input_step(self):
+    def _submit_input_step(self) -> None:
         val = self.search_bar.text().strip()
         if not val:
             return  # Block empty? Or allow empty? Let's block empty for now.
@@ -320,7 +330,7 @@ class CommandPaletteDialog(QDialog):
         self._input_index += 1
         self._show_next_prompt()
 
-    def _finish_input_mode(self):
+    def _finish_input_mode(self) -> None:
         if self._input_callback:
             try:
                 self._input_callback(self._input_answers)
@@ -329,7 +339,7 @@ class CommandPaletteDialog(QDialog):
 
         self.hide_animated()
 
-    def _cancel_input_mode(self):
+    def _cancel_input_mode(self) -> None:
         """Esce dalla modalità input e torna alla lista."""
         self._input_mode = False
         self.list_widget.setVisible(True)
@@ -337,7 +347,7 @@ class CommandPaletteDialog(QDialog):
         self._update_breadcrumb_ui()
         self.search_bar.setFocus()
 
-    def _navigate_down(self, node: CommandNode):
+    def _navigate_down(self, node: CommandNode) -> None:
         """Entra in un sottomenu."""
         children = node.get_children()
         if not children:
@@ -353,7 +363,7 @@ class CommandPaletteDialog(QDialog):
         self._update_breadcrumb_ui()
         self.search_bar.setText("")  # Reset ricerca
 
-    def _navigate_up(self):
+    def _navigate_up(self) -> None:
         """Torna al livello superiore."""
         if not self.navigation_stack:
             return
@@ -368,7 +378,7 @@ class CommandPaletteDialog(QDialog):
         self.list_widget.setCurrentRow(prev_row)
         self.search_bar.setText("")
 
-    def _update_breadcrumb_ui(self):
+    def _update_breadcrumb_ui(self) -> None:
         if not self.breadcrumb_path:
             self.breadcrumb_lbl.setVisible(False)
             self.search_bar.setPlaceholderText("> Cerca...")
@@ -378,14 +388,14 @@ class CommandPaletteDialog(QDialog):
             self.breadcrumb_lbl.setText(f"> {path_str}")
             self.search_bar.setPlaceholderText(f"Cerca dentro {self.breadcrumb_path[-1]}...")
 
-    def _populate_list(self, nodes: list[CommandNode]):
+    def _populate_list(self, nodes: list[CommandNode]) -> None:
         self.list_widget.clear()
         for node in nodes:
             self._add_item(node)
         if self.list_widget.count() > 0:
             self.list_widget.setCurrentRow(0)
 
-    def _add_item(self, node: CommandNode):
+    def _add_item(self, node: CommandNode) -> None:
         item = QListWidgetItem(self.list_widget)
         item.setSizeHint(QSize(0, 50))
 
@@ -432,7 +442,7 @@ class CommandPaletteDialog(QDialog):
         self.list_widget.addItem(item)
         self.list_widget.setItemWidget(item, widget)
 
-    def _filter_list(self, text):
+    def _filter_list(self, text: str) -> None:
         try:
             if self._input_mode:
                 return
@@ -453,7 +463,7 @@ class CommandPaletteDialog(QDialog):
             self.breadcrumb_lbl.setVisible(False)
 
             # Se c'è testo, cerca ricorsivamente in TUTTO l'albero (vista piatta)
-            results = []
+            results: list[CommandNode] = []
             self._collect_all_nodes(self.root_nodes, search, results)
             print(f"DEBUG PALETTE: Found {len(results)} matches for '{search}'")
 
@@ -471,7 +481,7 @@ class CommandPaletteDialog(QDialog):
 
             traceback.print_exc()
 
-    def _collect_all_nodes(self, nodes, search, results):
+    def _collect_all_nodes(self, nodes: list[CommandNode], search: str, results: list[CommandNode]) -> None:
         """Raccoglie ricorsivamente tutti i nodi che matchano la ricerca."""
         for node in nodes:
             # Check match su label o description
@@ -491,7 +501,7 @@ class CommandPaletteDialog(QDialog):
             if children:
                 self._collect_all_nodes(children, search, results)
 
-    def _execute_selected(self):
+    def _execute_selected(self) -> None:
         item = self.list_widget.currentItem()
         if not item:
             return
@@ -505,7 +515,7 @@ class CommandPaletteDialog(QDialog):
         if node.is_leaf:
             # Esegui Azione
             if node.close_on_execute:
-                self.hide()
+                self.hide_animated()
             QTimer.singleShot(50, lambda: node.action() if node.action else None)
         else:
             # Naviga Sottomenu

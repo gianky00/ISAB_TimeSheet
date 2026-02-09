@@ -28,9 +28,7 @@ class TestAppInitializer:
     @patch("src.core.license_updater.run_update")
     @patch("src.core.license_validator.get_detailed_license_status")
     @patch("src.core.database.db_manager.init_db")
-    def test_initialize_core_license_update(
-        self, mock_db_init, mock_license, mock_update
-    ):
+    def test_initialize_core_license_update(self, mock_db_init, mock_license, mock_update):
         from src.core.license_validator import LicenseStatus
 
         mock_license.return_value = (LicenseStatus.EXPIRED, "License expired")
@@ -49,9 +47,7 @@ class TestAppInitializer:
         assert result is True
 
     def test_initialize_core_failure(self):
-        with patch.object(
-            AppInitializer, "_setup_logging", side_effect=Exception("Critical")
-        ):
+        with patch.object(AppInitializer, "_setup_logging", side_effect=Exception("Critical")):
             result = AppInitializer.initialize_core()
 
         assert result is False

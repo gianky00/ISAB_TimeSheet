@@ -5,7 +5,16 @@ Estratto da footer_stats.py per riutilizzabilità.
 """
 
 from PyQt6.QtCore import QPointF, QRectF, Qt, QTimer
-from PyQt6.QtGui import QColor, QLinearGradient, QPainter, QPen, QPolygonF
+from PyQt6.QtGui import (
+    QColor,
+    QHideEvent,
+    QLinearGradient,
+    QPainter,
+    QPaintEvent,
+    QPen,
+    QPolygonF,
+    QShowEvent,
+)
 from PyQt6.QtWidgets import QWidget
 
 
@@ -25,7 +34,7 @@ class AnimatedProgressBar(QWidget):
         bar.setValue(50)  # 0-100
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setFixedSize(220, 18)
 
@@ -40,7 +49,7 @@ class AnimatedProgressBar(QWidget):
         self._anim_timer.timeout.connect(self._animate)
         self._anim_timer.setInterval(33)  # ~30 FPS
 
-    def setValue(self, value: int):
+    def setValue(self, value: int) -> None:
         """Imposta il valore della progress bar (0-100)."""
         self._value = max(0, min(value, 100))
         self.update()
@@ -49,17 +58,17 @@ class AnimatedProgressBar(QWidget):
         """Restituisce il valore corrente."""
         return self._value
 
-    def showEvent(self, event):
+    def showEvent(self, event: QShowEvent | None) -> None:
         """Avvia le animazioni quando il widget diventa visibile."""
         super().showEvent(event)
         self._anim_timer.start()
 
-    def hideEvent(self, event):
+    def hideEvent(self, event: QHideEvent | None) -> None:
         """Ferma le animazioni quando il widget viene nascosto."""
         super().hideEvent(event)
         self._anim_timer.stop()
 
-    def _animate(self):
+    def _animate(self) -> None:
         """Aggiorna le animazioni."""
         # Striature che scorrono
         self._stripe_offset = (self._stripe_offset + 2) % 20
@@ -78,23 +87,23 @@ class AnimatedProgressBar(QWidget):
 
         self.update()
 
-    def paintEvent(self, event):
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         """Disegna la progress bar con tutti gli effetti."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         w, h = self.width(), self.height()
-        radius = 4
+        radius = 4.0
 
         # 1. Sfondo
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor(224, 224, 224))  # #E0E0E0
-        painter.drawRoundedRect(QRectF(0, 0, w, h), radius, radius)
+        painter.drawRoundedRect(QRectF(0, 0, float(w), float(h)), radius, radius)
 
         # 2. Chunk (parte riempita)
-        chunk_width = int((self._value / 100) * (w - 4))
+        chunk_width = int((self._value / 100.0) * (w - 4))
         if chunk_width > 0:
-            chunk_rect = QRectF(2, 2, chunk_width, h - 4)
+            chunk_rect = QRectF(2, 2, float(chunk_width), float(h - 4))
 
             # Gradiente base nero
             painter.setBrush(QColor(0, 0, 0))
@@ -107,12 +116,12 @@ class AnimatedProgressBar(QWidget):
             painter.setPen(Qt.PenStyle.NoPen)
 
             stripe_width = 10
-            for x in range(-20 + self._stripe_offset, int(chunk_width) + 20, 20):
+            for x in range(-20 + self._stripe_offset, chunk_width + 20, 20):
                 points = [
-                    (x, h),
-                    (x + stripe_width, h),
-                    (x + stripe_width + 15, 0),
-                    (x + 15, 0),
+                    (float(x), float(h)),
+                    (float(x + stripe_width), float(h)),
+                    (float(x + stripe_width + 15), 0.0),
+                    (float(x + 15), 0.0),
                 ]
                 polygon = QPolygonF([QPointF(p[0] + 2, p[1]) for p in points])
                 painter.drawPolygon(polygon)
@@ -120,7 +129,7 @@ class AnimatedProgressBar(QWidget):
             # 4. Shimmer (riflesso luminoso)
             painter.setClipRect(chunk_rect)
             shimmer_gradient = QLinearGradient(
-                self._shimmer_pos, 0, self._shimmer_pos + 50, 0
+                float(self._shimmer_pos), 0.0, float(self._shimmer_pos + 50), 0.0
             )
             shimmer_gradient.setColorAt(0.0, QColor(255, 255, 255, 0))
             shimmer_gradient.setColorAt(0.5, QColor(255, 255, 255, 80))
@@ -136,6 +145,6 @@ class AnimatedProgressBar(QWidget):
         pen = QPen(border_color, 2)
         painter.setPen(pen)
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawRoundedRect(QRectF(1, 1, w - 2, h - 2), radius, radius)
+        painter.drawRoundedRect(QRectF(1, 1, float(w - 2), float(h - 2)), radius, radius)
 
         painter.end()

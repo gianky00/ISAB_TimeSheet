@@ -31,7 +31,7 @@ class StructuredLogger:
     - PII masking
     """
 
-    def __init__(self, name: str, config=None):
+    def __init__(self, name: str, config: Any = None) -> None:
         """
         Inizializza logger.
 
@@ -106,7 +106,7 @@ class StructuredLogger:
         message: str,
         extra: dict[str, Any] | None = None,
         exception: Exception | None = None,
-    ):
+    ) -> None:
         """
         Scrive log in tutti i sink configurati.
 
@@ -185,7 +185,7 @@ class StructuredLogger:
         message: str,
         extra: dict[str, Any] | None = None,
         exception: Exception | None = None,
-    ):
+    ) -> None:
         """
         Log generico.
 
@@ -200,27 +200,27 @@ class StructuredLogger:
 
         self._write_to_sinks(level, message, extra, exception)
 
-    def debug(self, message: str, **extra):
+    def debug(self, message: str, **extra: Any) -> None:
         """Log a livello DEBUG."""
         self.log("DEBUG", message, extra=extra or None)
 
-    def info(self, message: str, **extra):
+    def info(self, message: str, **extra: Any) -> None:
         """Log a livello INFO."""
         self.log("INFO", message, extra=extra or None)
 
-    def warning(self, message: str, **extra):
+    def warning(self, message: str, **extra: Any) -> None:
         """Log a livello WARNING."""
         self.log("WARNING", message, extra=extra or None)
 
-    def error(self, message: str, **extra):
+    def error(self, message: str, **extra: Any) -> None:
         """Log a livello ERROR."""
         self.log("ERROR", message, extra=extra or None)
 
-    def critical(self, message: str, **extra):
+    def critical(self, message: str, **extra: Any) -> None:
         """Log a livello CRITICAL."""
         self.log("CRITICAL", message, extra=extra or None)
 
-    def exception(self, message: str, exc: Exception, **extra):
+    def exception(self, message: str, exc: Exception, **extra: Any) -> None:
         """
         Log exception con stack trace completo.
 
@@ -232,7 +232,7 @@ class StructuredLogger:
         self.log("ERROR", message, extra=extra or None, exception=exc)
 
 
-def configure_logging(config=None):
+def configure_logging(config: Any = None) -> None:
     """
     Configura il sistema di logging globale.
 
@@ -257,7 +257,7 @@ def configure_logging(config=None):
     _initialized = True
 
 
-def get_logger(name: str, config=None) -> StructuredLogger:
+def get_logger(name: str, config: Any = None) -> StructuredLogger:
     """
     Factory per ottenere logger.
 
@@ -283,7 +283,7 @@ def get_logger(name: str, config=None) -> StructuredLogger:
     return _loggers[name]
 
 
-def set_level(level: str):
+def set_level(level: str) -> None:
     """
     Imposta livello minimo di logging per tutti i logger.
 

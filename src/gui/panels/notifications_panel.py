@@ -113,17 +113,17 @@ class NotificationsPanel(QWidget):
         nl.addLayout(actions_layout)
 
         # Scroll area per notifiche
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll_area.setStyleSheet("QScrollArea { background: transparent; border: none; }")
         self.scroll_content = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_layout.setSpacing(12)
         self.scroll_layout.setContentsMargins(0, 0, 0, 0)
         self.scroll_layout.addStretch()
-        self.scroll.setWidget(self.scroll_content)
-        nl.addWidget(self.scroll)
+        self.scroll_area.setWidget(self.scroll_content)
+        nl.addWidget(self.scroll_area)
 
         self.tabs.addTab(
             self.notif_tab,
@@ -304,17 +304,18 @@ class NotificationsPanel(QWidget):
         # Remove all widgets except stretch
         while self.scroll_layout.count() > 1:
             item = self.scroll_layout.takeAt(0)
-            if item and item.widget():
+            if item:
                 widget = item.widget()
-                widget.setParent(None)
-                widget.deleteLater()
+                if widget is not None:
+                    widget.setParent(None)
+                    widget.deleteLater()
 
     def _invalidate_and_refresh(self):
         """Invalidate cache and schedule refresh."""
         self._invalidate_cache()
         self._schedule_refresh()
 
-    def _sort_notifications(self, notifs: list) -> list:
+    def _sort_notifications(self, notifs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Sort notifications based on current_sort."""
         if self.current_sort == "date_desc":
             return sorted(notifs, key=lambda n: n.get("timestamp", ""), reverse=True)
@@ -336,7 +337,7 @@ class NotificationsPanel(QWidget):
             )
         return notifs
 
-    def _group_notifications_by_time(self, notifs: list) -> dict[str, dict[str, Any]]:
+    def _group_notifications_by_time(self, notifs: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
         """Group notifications by time buckets."""
         now = datetime.now()
         # Initialize with explicit types to satisfy mypy

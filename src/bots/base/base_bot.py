@@ -38,7 +38,7 @@ class BaseBot(ABC):
         headless: bool = False,
         timeout: int = Timeouts.DEFAULT,
         download_path: str = "",
-    ):
+    ) -> None:
         """
         Inizializza il bot base con credenziali e configurazioni driver.
 
@@ -56,9 +56,9 @@ class BaseBot(ABC):
         self.download_path = download_path
 
         self.driver: webdriver.Chrome | None = None
-        self.wait: WebDriverWait | None = None
-        self.popup_wait: WebDriverWait | None = None
-        self.long_wait: WebDriverWait | None = None
+        self.wait: WebDriverWait[webdriver.Chrome] | None = None
+        self.popup_wait: WebDriverWait[webdriver.Chrome] | None = None
+        self.long_wait: WebDriverWait[webdriver.Chrome] | None = None
 
         self._status = BotStatus.IDLE
         self._stop_requested = False
@@ -81,25 +81,30 @@ class BaseBot(ABC):
     def description(self) -> str:
         """Restituisce una descrizione testuale delle funzionalità del bot."""
 
+    @staticmethod
+    @abstractmethod
+    def get_columns() -> list[dict[str, Any]]:
+        """Definisce le colonne richieste per l'input dei dati."""
+
     @property
     def status(self) -> BotStatus:
         """Restituisce lo stato attuale della State Machine del bot."""
         return self._status
 
     @status.setter
-    def status(self, value: BotStatus):
+    def status(self, value: BotStatus) -> None:
         """Aggiorna lo stato del bot e logga il cambiamento."""
         if self._status != value:
             self._status = value
             self.log(f"Stato: {value.name}")
 
-    def validate_data(self, data: list[dict[str, Any]]) -> tuple[bool, str]:
+    def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """
         Esegue una validazione preventiva dei dati (Dry Run).
         Deve essere implementata dai bot derivati.
 
         Args:
-            data: Lista di dizionari contenenti i dati da processare.
+            data: Lista di dizionari o dizionario contenente i dati da processare.
         Returns:
             tuple: (Successo, Messaggio di errore)
         """
@@ -109,7 +114,7 @@ class BaseBot(ABC):
             return False, "Credenziali mancanti nelle impostazioni."
         return True, ""
 
-    def log(self, message: str, level: str = "INFO"):
+    def log(self, message: str, level: str = "INFO") -> None:
         """
         Logga un messaggio in console, nel widget log e via Telegram se configurato.
 
@@ -136,30 +141,30 @@ class BaseBot(ABC):
                 clean_msg = re.sub(r"^\[\d{2}:\d{2}:\d{2}\]\s*", "", message.strip())
                 self._telegram_service.send_message_sync(f"🔹 *{self.name}*\n{clean_msg}")
 
-    def set_log_callback(self, callback: Callable[[str], None]):
+    def set_log_callback(self, callback: Callable[[str], None]) -> None:
         """Imposta la callback per inoltrare i log all'interfaccia utente."""
         self._log_callback = callback
 
-    def set_telegram_service(self, service: Any):
+    def set_telegram_service(self, service: Any) -> None:
         """Imposta il servizio Telegram per l'invio di notifiche."""
         self._telegram_service = service
 
-    def set_input_callback(self, callback: Callable[[str], str]):
+    def set_input_callback(self, callback: Callable[[str], str]) -> None:
         """Imposta la callback per richiedere input interattivo all'utente."""
         self._input_callback = callback
 
-    def request_stop(self):
+    def request_stop(self) -> None:
         """Segnala al bot di interrompere l'esecuzione alla prima occasione sicura."""
         self._stop_requested = True
         self.log("⚠️ Interruzione richiesta...")
 
-    def _check_stop(self):
+    def _check_stop(self) -> None:
         """Verifica se è stata richiesta l'interruzione e solleva InterruptedError."""
         if self._stop_requested:
             raise InterruptedError("Bot interrotto dall'utente")
 
     @measure_time(threshold_ms=10000)
-    def _init_driver(self):
+    def _init_driver(self) -> None:
         """Inizializzazione del driver Chrome con opzioni e configurazioni specifiche."""
         self.log("Inizializzazione browser...")
         self.status = BotStatus.INITIALIZING
@@ -252,7 +257,7 @@ class BaseBot(ABC):
 
         return None
 
-    def _setup_driver_instance(self, service: Service, options: Options):
+    def _setup_driver_instance(self, service: Service, options: Options) -> None:
         """Crea l'istanza di webdriver.Chrome applicando tecniche anti-detection."""
         self.driver = webdriver.Chrome(service=service, options=options)
         # Anti-detection
@@ -261,7 +266,7 @@ class BaseBot(ABC):
             {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"},
         )
 
-    def _configure_waits_and_pages(self):
+    def _configure_waits_and_pages(self) -> None:
         """Inizializza gli oggetti WebDriverWait per diverse durate e la LoginPage."""
         if not self.driver:
             return
@@ -270,7 +275,7 @@ class BaseBot(ABC):
         self.long_wait = WebDriverWait(self.driver, Timeouts.PAGE_LOAD)
         self.login_page = LoginPage(self.driver, self.wait, self.log, self.ISAB_URL)
 
-    def _handle_driver_error(self, e: Exception):
+    def _handle_driver_error(self, e: Exception) -> None:
         """Gestisce gli errori critici di avvio del driver Chrome."""
         err_str = str(e).lower()
         error_type = "unknown"
@@ -362,7 +367,7 @@ class BaseBot(ABC):
             finally:
                 self.cleanup()
 
-    def _save_error_state(self, error_msg: str):
+    def _save_error_state(self, error_msg: str) -> None:
         """Salva uno screenshot e il sorgente HTML corrente per il debug post-mortem."""
         if not self.driver:
             return
@@ -412,7 +417,7 @@ class BaseBot(ABC):
         self._logger.error("Login page not initialized")
         return False
 
-    def _attendi_scomparsa_overlay(self, timeout=None):
+    def _attendi_scomparsa_overlay(self, timeout: int | None = None) -> bool:
         """Attende che gli overlay di caricamento del portale ISAB scompaiano."""
         if self.login_page:
             if timeout:
@@ -430,7 +435,7 @@ class BaseBot(ABC):
         """Alias per _verify_login compatibile con i test legacy."""
         return self._verify_login()
 
-    def _handle_session_popup(self):
+    def _handle_session_popup(self) -> bool:
         """Gestisce il popup di sessione multipla cliccando su 'SI'."""
         with suppress(Exception):
             if self.popup_wait:
@@ -463,7 +468,7 @@ class BaseBot(ABC):
                 # No sleep needed: cleanup() is synchronous
         return False
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Chiude il browser e pulisce le risorse del driver."""
         if self.driver:
             with suppress(Exception):

@@ -228,7 +228,7 @@ def stop_layout_animations(layout: QLayout) -> None:
 
 def create_animation_timer(
     parent: QWidget,
-    callback: Callable,
+    callback: Callable[[], None],
     interval: int = ANIMATION_TIMINGS["fps_60"],
     single_shot: bool = False,
 ) -> QTimer:
@@ -252,7 +252,7 @@ def create_animation_timer(
     return timer
 
 
-def delayed_call(callback: Callable, delay: int = 100, parent: QWidget | None = None) -> None:
+def delayed_call(callback: Callable[[], None], delay: int = 100, parent: QWidget | None = None) -> None:
     """
     Esegue una funzione dopo un ritardo.
 

@@ -50,9 +50,7 @@ class TestDatabaseMigrations:
 
         # Check FTS table
         cursor = db_conn.cursor()
-        cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='contabilita_fts'"
-        )
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='contabilita_fts'")
         assert cursor.fetchone() is not None
 
         # Check Triggers
@@ -62,9 +60,7 @@ class TestDatabaseMigrations:
         db_conn.commit()
 
         # Verify FTS is populated via trigger
-        cursor.execute(
-            "SELECT * FROM contabilita_fts WHERE contabilita_fts MATCH 'Att1'"
-        )
+        cursor.execute("SELECT * FROM contabilita_fts WHERE contabilita_fts MATCH 'Att1'")
         assert cursor.fetchone() is not None
 
     def test_basic_crud_operations(self, db_conn):
@@ -72,9 +68,7 @@ class TestDatabaseMigrations:
         cursor = db_conn.cursor()
 
         # INSERT
-        cursor.execute(
-            "INSERT INTO giornaliere (year, data, personale) VALUES (2024, '2024-01-01', 'Mario')"
-        )
+        cursor.execute("INSERT INTO giornaliere (year, data, personale) VALUES (2024, '2024-01-01', 'Mario')")
         last_id = cursor.lastrowid
         assert last_id == 1
 
@@ -83,9 +77,7 @@ class TestDatabaseMigrations:
         assert cursor.fetchone()[0] == "Mario"
 
         # UPDATE
-        cursor.execute(
-            "UPDATE giornaliere SET personale='Luigi' WHERE id=?", (last_id,)
-        )
+        cursor.execute("UPDATE giornaliere SET personale='Luigi' WHERE id=?", (last_id,))
         cursor.execute("SELECT personale FROM giornaliere WHERE id=?", (last_id,))
         assert cursor.fetchone()[0] == "Luigi"
 

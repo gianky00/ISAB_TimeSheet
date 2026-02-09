@@ -113,7 +113,7 @@ class JSONFormatter:
         message: str,
         context: dict[str, Any],
         extra: dict[str, Any] | None,
-    ) -> list:
+    ) -> list[str]:
         """Genera tags automatici per ricerca."""
         tags = [level.lower()]
 
@@ -160,12 +160,11 @@ class HumanFormatter:
 
     def _supports_color(self) -> bool:
         """Verifica se il terminale supporta colori."""
-        # Windows: verifica ANSICON o WT_SESSION (Windows Terminal)
-        if sys.platform == "win32":
-            return "ANSICON" in os.environ or "WT_SESSION" in os.environ
+        if sys.platform != "win32":
+            isatty = getattr(sys.stdout, "isatty", None)
+            return bool(isatty and isatty())
 
-        # Unix: verifica se stdout è un tty
-        return hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
+        return "ANSICON" in os.environ or "WT_SESSION" in os.environ
 
     def format(
         self,

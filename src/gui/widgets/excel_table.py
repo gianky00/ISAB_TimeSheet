@@ -3,7 +3,10 @@ SyncroJob - Excel Table Widgets
 Tabella potenziata con funzionalità stile Excel.
 """
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from collections.abc import Sequence
+from typing import Any
+
+from PyQt6.QtCore import QPoint, Qt, pyqtSignal
 from PyQt6.QtGui import QAction, QBrush, QColor, QCursor, QKeySequence
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -12,6 +15,7 @@ from PyQt6.QtWidgets import (
     QHeaderView,
     QMenu,
     QTableWidget,
+    QTableWidgetItem,
     QToolTip,
     QVBoxLayout,
     QWidget,
@@ -25,7 +29,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class ExcelTableWidget(QTableWidget):
     """QTableWidget potenziato con funzionalità copia stile Excel."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.auto_copy_headers = False  # Flag per copiare automaticamente le intestazioni
 
@@ -37,7 +41,7 @@ class ExcelTableWidget(QTableWidget):
             | QAbstractItemView.EditTrigger.AnyKeyPressed
         )
 
-    def set_row_status(self, row, status):
+    def set_row_status(self, row: int, status: str) -> None:
         """
         Imposta il colore di sfondo della riga in base allo stato.
         Status: 'completato', 'errore', 'in_corso', 'da_processare'
@@ -56,7 +60,7 @@ class ExcelTableWidget(QTableWidget):
                 # Restore black text for contrast
                 item.setForeground(QBrush(QColor("black")))
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: Any) -> None:
         """Gestisce la pressione dei tasti (Copia/Incolla/Cancella)."""
         if event.matches(QKeySequence.StandardKey.Copy):
             self.copy_selection()
@@ -67,7 +71,7 @@ class ExcelTableWidget(QTableWidget):
         else:
             super().keyPressEvent(event)
 
-    def clear_selection(self):
+    def clear_selection(self) -> None:
         """Cancella il contenuto delle celle selezionate (incluso reset ComboBox)."""
         ranges = self.selectedRanges()
         for r in ranges:
@@ -88,7 +92,7 @@ class ExcelTableWidget(QTableWidget):
                         if item and (item.flags() & Qt.ItemFlag.ItemIsEditable):
                             item.setText("")
 
-    def paste_selection(self):
+    def paste_selection(self) -> None:
         """Incolla il contenuto degli appunti nella tabella."""
         text = self._get_clipboard_text()
         if not text:
@@ -120,7 +124,7 @@ class ExcelTableWidget(QTableWidget):
         r, c = self.currentRow(), self.currentColumn()
         return (max(0, r), max(0, c))
 
-    def _paste_cell_data(self, row: int, col: int, text: str):
+    def _paste_cell_data(self, row: int, col: int, text: str) -> None:
         """Aggiorna una cella specifica con il testo fornito."""
         widget = self.cellWidget(row, col)
         if isinstance(widget, QComboBox):
@@ -135,7 +139,7 @@ class ExcelTableWidget(QTableWidget):
             else:
                 item.setText(text)
 
-    def contextMenuEvent(self, event):
+    def contextMenuEvent(self, event: Any) -> None:
         """Menu contestuale predefinito per copia veloce (per tabelle read-only)."""
         menu = QMenu(self)
 
@@ -161,17 +165,18 @@ class ExcelTableWidget(QTableWidget):
         menu.addAction(copy_action)
         menu.exec(event.globalPos())
 
-    def _analyze_row_at(self, pos):
+    def _analyze_row_at(self, pos: QPoint) -> None:
         """Analizza la riga specifica sotto il cursore."""
         item = self.itemAt(pos)
         if not item:
             return
         row = item.row()
 
-        row_data = []
+        row_data: list[str] = []
         for c in range(self.columnCount()):
             if not self.isColumnHidden(c):
-                header = self.horizontalHeaderItem(c).text() if self.horizontalHeaderItem(c) else f"Col {c}"
+                header_item = self.horizontalHeaderItem(c)
+                header = header_item.text() if header_item else f"Col {c}"
                 widget = self.cellWidget(row, c)
                 if isinstance(widget, QComboBox):
                     text = widget.currentText()
@@ -185,30 +190,32 @@ class ExcelTableWidget(QTableWidget):
 
         win = self.window()
         if hasattr(win, "analyze_with_lyra"):
-            win.analyze_with_lyra(context)
+            win.analyze_with_lyra(context)  # type: ignore
 
-    def _analyze_selection(self):
+    def _analyze_selection(self) -> None:
         """Invia la selezione a Lyra."""
         selection = self.selectedRanges()
         if not selection:
             return
 
-        rows_text = []
+        rows_text: list[str] = []
         for r in range(selection[0].topRow(), selection[0].bottomRow() + 1):
             row_data = []
             for c in range(self.columnCount()):
                 item = self.item(r, c)
                 if item and not self.isColumnHidden(c):
-                    row_data.append(f"{self.horizontalHeaderItem(c).text()}: {item.text()}")
+                    header_item = self.horizontalHeaderItem(c)
+                    header_text = header_item.text() if header_item else f"Col {c}"
+                    row_data.append(f"{header_text}: {item.text()}")
             rows_text.append(" | ".join(row_data))
 
         context = "\n".join(rows_text)
 
         win = self.window()
         if hasattr(win, "analyze_with_lyra"):
-            win.analyze_with_lyra(context)
+            win.analyze_with_lyra(context)  # type: ignore
 
-    def copy_selection(self):
+    def copy_selection(self) -> None:
         """Copia le celle selezionate negli appunti."""
         selection = self.selectedIndexes()
         if not selection:
@@ -218,7 +225,7 @@ class ExcelTableWidget(QTableWidget):
         if not rows or not cols:
             return
 
-        tsv_rows = []
+        tsv_rows: list[str] = []
         # 1. Header (se abilitato)
         if self.auto_copy_headers and len(self.selectedItems()) > 1:
             tsv_rows.append(self._build_header_tsv(cols))
@@ -227,10 +234,12 @@ class ExcelTableWidget(QTableWidget):
         tsv_rows.extend(self._get_row_as_tsv(r, cols) for r in rows if not self.isRowHidden(r))
 
         if tsv_rows:
-            QApplication.clipboard().setText("\n".join(tsv_rows))
+            clipboard = QApplication.clipboard()
+            if clipboard:
+                clipboard.setText("\n".join(tsv_rows))
             QToolTip.showText(QCursor.pos(), "Copiato!", self)
 
-    def _get_selected_rows_cols(self, ranges) -> tuple[list[int], list[int]]:
+    def _get_selected_rows_cols(self, ranges: Sequence[Any]) -> tuple[list[int], list[int]]:
         """Estrae gli indici unici di riga e colonna dalla selezione."""
         rows: set[int] = set()
         cols: set[int] = set()
@@ -244,7 +253,7 @@ class ExcelTableWidget(QTableWidget):
         return sorted(rows), sorted(cols)
 
     def _build_header_tsv(self, cols: list[int]) -> str:
-        headers = []
+        headers: list[str] = []
         for c in cols:
             if not self.isColumnHidden(c):
                 it = self.horizontalHeaderItem(c)
@@ -252,7 +261,7 @@ class ExcelTableWidget(QTableWidget):
         return "\t".join(headers)
 
     def _get_row_as_tsv(self, row: int, cols: list[int]) -> str:
-        data = []
+        data: list[str] = []
         for c in cols:
             val = self._get_cell_value(row, c)
             data.append(val.replace("\t", " ").replace("\n", " "))
@@ -271,25 +280,26 @@ class EditableDataTable(QWidget):
 
     data_changed = pyqtSignal()
 
-    def __init__(self, columns: list, parent=None):
+    def __init__(self, columns: list[dict[str, Any]], parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.columns = columns
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.table = ExcelTableWidget()
         self.table.setColumnCount(len(self.columns))
-        self.table.setHorizontalHeaderLabels([c["name"] for c in self.columns])
+        self.table.setHorizontalHeaderLabels([str(c["name"]) for c in self.columns])
 
         # Removed hardcoded stylesheet to rely on global light.qss
         # This ensures selection colors and borders are consistent app-wide
 
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        if header is not None:
+            header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+            header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
@@ -300,7 +310,7 @@ class EditableDataTable(QWidget):
 
         layout.addWidget(self.table)
 
-    def _show_context_menu(self, position):
+    def _show_context_menu(self, position: QPoint) -> None:
         menu = QMenu()
 
         lyra_action = QAction(
@@ -356,15 +366,17 @@ class EditableDataTable(QWidget):
         clear_action.triggered.connect(self._clear_all)
         menu.addAction(clear_action)
 
-        menu.exec(self.table.viewport().mapToGlobal(position))
+        viewport = self.table.viewport()
+        if viewport is not None:
+            menu.exec(viewport.mapToGlobal(position))
 
-    def _add_row(self):
+    def _add_row(self) -> None:
         row = self.table.rowCount()
         self.table.insertRow(row)
         self._populate_row(row)
         self.data_changed.emit()
 
-    def _add_row_above(self):
+    def _add_row_above(self) -> None:
         current_row = self.table.currentRow()
         if current_row < 0:
             current_row = 0
@@ -373,7 +385,7 @@ class EditableDataTable(QWidget):
         self._populate_row(current_row)
         self.data_changed.emit()
 
-    def _populate_row(self, row: int):
+    def _populate_row(self, row: int) -> None:
         for col, column in enumerate(self.columns):
             col_type = column.get("type", "text")
 
@@ -400,7 +412,7 @@ class EditableDataTable(QWidget):
                 combo.addItems(options)
                 default_val = column.get("default", "")
                 if default_val and default_val in options:
-                    combo.setCurrentText(default_val)
+                    combo.setCurrentText(str(default_val))
                 combo.currentTextChanged.connect(lambda text: self.data_changed.emit())
                 self.table.setCellWidget(row, col, combo)
             else:
@@ -408,28 +420,28 @@ class EditableDataTable(QWidget):
                 item = SortableTableWidgetItem(default_val)
                 self.table.setItem(row, col, item)
 
-    def _remove_row(self):
+    def _remove_row(self) -> None:
         current_row = self.table.currentRow()
         if current_row >= 0:
             self.table.removeRow(current_row)
             self.data_changed.emit()
 
-    def _clear_all(self):
+    def _clear_all(self) -> None:
         self.table.setRowCount(0)
         self._add_row()
         self.data_changed.emit()
 
-    def _on_item_changed(self, item):
+    def _on_item_changed(self, item: QTableWidgetItem) -> None:
         self.data_changed.emit()
 
-    def get_data(self) -> list:
+    def get_data(self) -> list[dict[str, Any]]:
         """Estrae tutti i dati dalla tabella come lista di dizionari."""
-        data = []
+        data: list[dict[str, Any]] = []
         for row in range(self.table.rowCount()):
-            row_data = {}
+            row_data: dict[str, Any] = {}
             has_data = False
             for col, column in enumerate(self.columns):
-                key = column["name"].lower().replace(" ", "_")
+                key = str(column["name"]).lower().replace(" ", "_")
                 widget = self.table.cellWidget(row, col)
                 if isinstance(widget, QComboBox):
                     value = widget.currentText()
@@ -443,7 +455,7 @@ class EditableDataTable(QWidget):
                 data.append(row_data)
         return data
 
-    def set_data(self, data: list):
+    def set_data(self, data: list[dict[str, Any]]) -> None:
         """
         Popola la tabella con i dati forniti.
 
@@ -462,11 +474,11 @@ class EditableDataTable(QWidget):
                 self._add_row()
         self.table.blockSignals(False)
 
-    def _populate_row_from_data(self, row: int, row_data: dict):
+    def _populate_row_from_data(self, row: int, row_data: dict[str, Any]) -> None:
         """Popola una riga con dati specifici, senza applicare valori di default."""
         for col, column in enumerate(self.columns):
             col_type = column.get("type", "text")
-            key = column["name"].lower().replace(" ", "_")
+            key = str(column["name"]).lower().replace(" ", "_")
             value = row_data.get(key, "")
 
             if col_type == "combo":
@@ -506,7 +518,7 @@ class EditableDataTable(QWidget):
                 item = SortableTableWidgetItem(str(value))
                 self.table.setItem(row, col, item)
 
-    def update_column_options(self, column_name: str, new_options: list):
+    def update_column_options(self, column_name: str, new_options: list[str]) -> None:
         """Aggiorna le opzioni per una colonna di tipo combo."""
         # 1. Aggiorna definizione colonna
         target_col_idx = -1

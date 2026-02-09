@@ -81,7 +81,7 @@ class ScaricaTSPanel(BaseBotPanel):
     def _open_settings(self):
         """Apre le impostazioni."""
         main_window = self.window()
-        if hasattr(main_window, "show_settings"):
+        if main_window and hasattr(main_window, "show_settings"):
             main_window.show_settings()
 
     def refresh_fornitori(self):

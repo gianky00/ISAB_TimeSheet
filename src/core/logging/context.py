@@ -4,6 +4,7 @@ Context management per correlation e tracing.
 
 import threading
 import uuid
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
 
@@ -15,30 +16,31 @@ class LoggingContext:
     Ogni thread ha il proprio context isolato.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._local = threading.local()
 
     def _get_context(self) -> dict[str, Any]:
         """Restituisce context del thread corrente."""
         if not hasattr(self._local, "context"):
-            self._local.context = {}
-        return self._local.context
+            ctx: dict[str, Any] = {}
+            self._local.context = ctx
+        return self._local.context  # type: ignore[no-any-return]
 
-    def set(self, key: str, value: Any):
+    def set(self, key: str, value: Any) -> None:
         """Imposta un valore nel context."""
         context = self._get_context()
         context[key] = value
 
-    def get(self, key: str, default=None):
+    def get(self, key: str, default: Any = None) -> Any:
         """Ottiene un valore dal context."""
         return self._get_context().get(key, default)
 
-    def update(self, **kwargs):
+    def update(self, **kwargs: Any) -> None:
         """Aggiorna context con multipli valori."""
         context = self._get_context()
         context.update(kwargs)
 
-    def clear(self):
+    def clear(self) -> None:
         """Pulisce il context del thread corrente."""
         if hasattr(self._local, "context"):
             self._local.context = {}
@@ -62,7 +64,7 @@ def get_context() -> LoggingContext:
 
 
 @contextmanager
-def with_context(**context_data):
+def with_context(**context_data: Any) -> Generator[None, None, None]:
     """
     Context manager per aggiungere metadata temporanei ai log.
 
@@ -123,7 +125,8 @@ def get_current_trace_id() -> str | None:
     Returns:
         Trace ID corrente o None
     """
-    return get_context().get("trace_id")
+    val = get_context().get("trace_id")
+    return str(val) if val is not None else None
 
 
 def get_current_span_id() -> str | None:
@@ -133,10 +136,11 @@ def get_current_span_id() -> str | None:
     Returns:
         Span ID corrente o None
     """
-    return get_context().get("span_id")
+    val = get_context().get("span_id")
+    return str(val) if val is not None else None
 
 
-def set_audit_id(audit_id: int):
+def set_audit_id(audit_id: int) -> None:
     """
     Imposta l'audit_id nel context corrente.
 
@@ -153,4 +157,5 @@ def get_current_audit_id() -> int | None:
     Returns:
         Audit ID corrente o None
     """
-    return get_context().get("audit_id")
+    val = get_context().get("audit_id")
+    return int(val) if val is not None else None

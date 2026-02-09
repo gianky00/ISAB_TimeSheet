@@ -1,3 +1,5 @@
+from typing import Any
+
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtSignal
 from PyQt6.QtWidgets import (
     QFrame,
@@ -20,7 +22,7 @@ class FooterLeftWidget(QWidget):
     safework_clicked = pyqtSignal()
     TEXT_COLOR = "#000000"
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 2, 0, 2)
@@ -66,10 +68,10 @@ class FooterLeftWidget(QWidget):
         v3.setSpacing(2)
         self.portale_item = ClickableLabel()
         self.portale_item.setBaseStyle(f"color: {self.TEXT_COLOR}; font-size: 13px;")
-        self.portale_item.mousePressEvent = lambda e: self.portale_clicked.emit()
+        self.portale_item.clicked.connect(self.portale_clicked.emit)
         self.safe_item = ClickableLabel()
         self.safe_item.setBaseStyle(f"color: {self.TEXT_COLOR}; font-size: 13px;")
-        self.safe_item.mousePressEvent = lambda e: self.safework_clicked.emit()
+        self.safe_item.clicked.connect(self.safework_clicked.emit)
         v3.addWidget(self.portale_item)
         v3.addWidget(self.safe_item)
         layout.addWidget(col3)
@@ -77,7 +79,7 @@ class FooterLeftWidget(QWidget):
         layout.addStretch()
         self.refresh_accounts()
 
-    def _add_separator(self, layout):
+    def _add_separator(self, layout: QHBoxLayout) -> None:
         line = QFrame()
         line.setFrameShape(QFrame.Shape.VLine)
         line.setFixedHeight(32)
@@ -87,7 +89,7 @@ class FooterLeftWidget(QWidget):
         )
         layout.addWidget(line)
 
-    def update_info(self, client: str, expiry: str, last_login: str = "", hw_id: str = ""):
+    def update_info(self, client: str, expiry: str, last_login: str = "", hw_id: str = "") -> None:
         self.client_item.setText(f"<b>Cliente:</b> {client}")
         self.expiry_item.setText(f"<b>Scadenza:</b> {expiry}")
         if hw_id:
@@ -95,20 +97,20 @@ class FooterLeftWidget(QWidget):
         if last_login:
             self.last_login_item.setText(f"<b>Ultimo Accesso:</b> {last_login}")
 
-    def refresh_accounts(self):
+    def refresh_accounts(self) -> None:
         config = config_manager.load_config()
         portale = self._get_def(config.get("accounts", []))
         safe = self._get_def(config.get("safework_accounts", []))
         self.portale_item.setText(f"<b>🌐 Portale:</b> {portale or 'N.C.'}")
         self.safe_item.setText(f"<b>🛡️ SafeWork:</b> {safe or 'N.C.'}")
 
-    def _get_def(self, accounts: list) -> str | None:
+    def _get_def(self, accounts: list[dict[str, Any]]) -> str | None:
         for a in accounts:
             if a.get("default"):
-                return a.get("username")
-        return accounts[0].get("username") if accounts else None
+                return str(a.get("username"))
+        return str(accounts[0].get("username")) if accounts else None
 
-    def fade_in(self, duration: int = 400):
+    def fade_in(self, duration: int = 400) -> None:
         """Animazione di comparsa graduale."""
         self.setVisible(True)
         self.anim = QPropertyAnimation(self._opacity_effect, b"opacity")

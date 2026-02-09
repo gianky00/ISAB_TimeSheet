@@ -57,9 +57,7 @@ class StartupDialog(QDialog):
     def _init_window(self):
         """Configura le proprietà base della finestra."""
         self.setObjectName("StartupDialog")
-        self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
-        )
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.setFixedSize(self.WIDTH, self.HEIGHT)
@@ -81,9 +79,7 @@ class StartupDialog(QDialog):
         self.container = QFrame()
         self.container.setObjectName("Container")
         self.container.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.container.setStyleSheet(
-            "#Container { background: transparent; border: none; }"
-        )
+        self.container.setStyleSheet("#Container { background: transparent; border: none; }")
 
         # Particle background (Estratto)
         self.particles = ParticleBackground(self.container)
@@ -112,9 +108,7 @@ class StartupDialog(QDialog):
     def _setup_content(self):
         """Configura il contenuto principale (header, console, progress, footer)."""
         content_layout = QVBoxLayout(self.content)
-        content_layout.setContentsMargins(
-            30, 45, 30, 45
-        )  # Ridotti margini laterali per logs
+        content_layout.setContentsMargins(30, 45, 30, 45)  # Ridotti margini laterali per logs
         content_layout.setSpacing(20)
 
         self._setup_header(content_layout)
@@ -176,9 +170,7 @@ class StartupDialog(QDialog):
 
         license_box = QVBoxLayout()
         license_box.setSpacing(2)
-        license_box.setAlignment(
-            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop
-        )
+        license_box.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
 
         license_box.addLayout(self._create_info_row("CLIENTE:", client_name))
         license_box.addLayout(self._create_info_row("HW-ID:", hw_id))
@@ -193,9 +185,7 @@ class StartupDialog(QDialog):
         row.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         lbl = QLabel(label_text)
-        lbl.setStyleSheet(
-            "color: rgba(255, 255, 255, 0.5); font-size: 10px; font-weight: 600;"
-        )
+        lbl.setStyleSheet("color: rgba(255, 255, 255, 0.5); font-size: 10px; font-weight: 600;")
 
         val = QLabel(value_text)
         val.setStyleSheet(
@@ -265,9 +255,7 @@ class StartupDialog(QDialog):
         footer.addWidget(self.status)
 
         self.dots = QLabel("")
-        self.dots.setStyleSheet(
-            "font-size:11px; color:rgba(52,152,219,0.8); font-weight:600;"
-        )
+        self.dots.setStyleSheet("font-size:11px; color:rgba(52,152,219,0.8); font-weight:600;")
         footer.addWidget(self.dots)
 
         footer.addStretch()
@@ -299,9 +287,7 @@ class StartupDialog(QDialog):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            self._drag_pos = (
-                event.globalPosition().toPoint() - self.frameGeometry().topLeft()
-            )
+            self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
             event.accept()
 
     def mouseMoveEvent(self, event):

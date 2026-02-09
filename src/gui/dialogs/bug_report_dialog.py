@@ -313,7 +313,7 @@ class BugReportDialog(QDialog):
             import platform
             from datetime import datetime
 
-            import win32com.client as win32
+            import win32com.client as win32  # type: ignore[import-untyped]
 
             from src.core import config_manager
 

@@ -479,8 +479,10 @@ class HealthPanel(QWidget):
         # Clear existing
         while self._anomalies_layout.count() > 1:
             item = self._anomalies_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            if item is not None:
+                w = item.widget()
+                if w is not None:
+                    w.deleteLater()
 
         # Update count
         count = len(anomalies)
@@ -568,4 +570,6 @@ class HealthPanel(QWidget):
         with suppress(Exception):
             from src.core.notification_manager import NotificationManager
 
-            NotificationManager.instance().add(title="Health Panel", message=message, level=level)
+            NotificationManager.instance().add_notification(
+                title="Health Panel", message=message, level=level
+            )

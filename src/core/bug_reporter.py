@@ -191,7 +191,7 @@ class BugReporter:
             from src.core.audit import AuditManager
 
             manager = AuditManager.instance()
-            actions = manager.get_recent_actions(limit=limit)
+            actions = manager.get_logs(limit=limit)
 
             audit_data = {
                 "generated_at": datetime.now().isoformat(),

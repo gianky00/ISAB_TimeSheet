@@ -113,5 +113,8 @@ class AuditDetailDialog(QDialog):
 
     def _copy_to_clipboard(self):
         cb = QGuiApplication.clipboard()
-        cb.setText(self.text_edit.toPlainText())
-        QMessageBox.information(self, "Copiato", "Dettagli copiati negli appunti!")
+        if cb:
+            cb.setText(self.text_edit.toPlainText())
+            QMessageBox.information(self, "Copiato", "Dettagli copiati negli appunti!")
+        else:
+            QMessageBox.warning(self, "Errore", "Impossibile accedere agli appunti.")

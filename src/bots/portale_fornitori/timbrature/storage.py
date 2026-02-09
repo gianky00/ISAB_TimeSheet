@@ -7,7 +7,7 @@ import sqlite3
 from collections.abc import Callable
 from contextlib import suppress
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar, cast
 
 import pandas as pd
 
@@ -83,7 +83,7 @@ class TimbratureStorage:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_schema()
 
-    def search_employees(self, query: str) -> list[dict]:
+    def search_employees(self, query: str) -> list[dict[str, str]]:
         """
         Cerca dipendenti per nome/cognome.
         Returns: Lista di dizionari con info dipendente.
@@ -92,8 +92,9 @@ class TimbratureStorage:
         if len(query) < 2:
             return []
 
-        results = []
+        results: list[dict[str, str]] = []
         with suppress(Exception), db_manager.get_connection(self.db_path, read_only=True) as conn:
+            conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             # Cerca dipendenti unici
             sql = """
@@ -106,7 +107,14 @@ class TimbratureStorage:
             cursor.execute(sql, (like_query, like_query, like_query))
 
             rows = cursor.fetchall()
-            results.extend({"nome": row[0], "cognome": row[1], "codice_fiscale": row[2]} for row in rows)
+            results.extend(
+                {
+                    "nome": str(row["nome"]),
+                    "cognome": str(row["cognome"]),
+                    "codice_fiscale": str(row["codice_fiscale"]),
+                }
+                for row in rows
+            )
         return results
 
     def get_employees(self) -> list[dict[str, str]]:
@@ -171,9 +179,9 @@ class TimbratureStorage:
         filter_text: str | None = None,
         filter_reparto: str | None = None,
         filter_cantiere: str | None = None,
-    ) -> list[tuple]:
+    ) -> list[tuple[Any, ...]]:
         """Recupera le timbrature e le arricchisce con i dati da config.json."""
-        mappings = config_manager.load_config().get("employee_mappings", {})
+        mappings: dict[str, dict[str, str]] = config_manager.load_config().get("employee_mappings", {})
 
         with db_manager.get_connection(self.db_path) as conn:
             cursor = conn.cursor()
@@ -182,7 +190,7 @@ class TimbratureStorage:
 
             return self._enrich_and_filter_timb(raw_rows, mappings, filter_reparto, filter_cantiere, limit)
 
-    def _build_timb_query(self, filter_text, limit) -> tuple[str, list]:
+    def _build_timb_query(self, filter_text: str | None, limit: int) -> tuple[str, list[Any]]:
         query = """
             SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura,
                    codice_fiscale, id_dipendente, fornitore, codice_rilpres, numero_badge,
@@ -256,8 +264,15 @@ class TimbratureStorage:
 
         return term
 
-    def _enrich_and_filter_timb(self, rows, mappings, f_rep, f_cant, limit) -> list[tuple]:
-        final = []
+    def _enrich_and_filter_timb(
+        self,
+        rows: list[tuple[Any, ...]],
+        mappings: dict[str, dict[str, str]],
+        f_rep: str | None,
+        f_cant: str | None,
+        limit: int,
+    ) -> list[tuple[Any, ...]]:
+        final: list[tuple[Any, ...]] = []
         for r in rows:
             # Indices: 0:data, 1:ingresso, 2:uscita, 3:nome, 4:cognome, ...
             nome, cognome = r[3], r[4]
@@ -324,9 +339,11 @@ class TimbratureStorage:
             # Data Normalization
             data_val = row.get("data")
             if pd.notna(data_val):
-                if isinstance(data_val, (pd.Timestamp, pd.DatetimeIndex)):
+                if hasattr(data_val, "date") and callable(getattr(data_val, "date", None)):
                     # Explicitly strip time
-                    row["data"] = data_val.date().isoformat()
+                    with suppress(Exception):
+                        date_func = data_val.date
+                        row["data"] = date_func().isoformat()
                 else:
                     with suppress(Exception):
                         # Attempt to parse and standardise with Italian format preference
@@ -369,9 +386,10 @@ class TimbratureStorage:
                     import json
 
                     old_data = json.loads(old_path.read_text(encoding="utf-8"))
-                    if old_data:
+                    if isinstance(old_data, dict):
+                        # Migrazione sicura
                         self.save_lists(old_data)
-                        return old_data
+                        return cast("dict[str, list[str]]", old_data)
 
         return {
             "reparti": config.get("reparti", ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]),

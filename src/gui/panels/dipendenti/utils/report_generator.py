@@ -3,6 +3,7 @@ import operator
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 from PyQt6.QtWidgets import QMessageBox
@@ -211,7 +212,7 @@ class ReportGenerator:
     @staticmethod
     def _create_report_excel(warning_list, expired_list):
         """Crea il file Excel temporaneo con i dati del report."""
-        excel_data = []
+        excel_data: list[dict[str, Any]] = []
         for items, label in ((warning_list, "In Scadenza"), (expired_list, "Scaduto")):
             excel_data.extend(
                 {
@@ -242,8 +243,8 @@ class ReportGenerator:
 
         if os.name == "nt":
             try:
-                import pythoncom
-                import win32com.client
+                import pythoncom  # type: ignore[import-untyped]
+                import win32com.client  # type: ignore[import-untyped]
 
                 # Inizializza COM per il thread corrente (essenziale in app compilate)
                 pythoncom.CoInitialize()

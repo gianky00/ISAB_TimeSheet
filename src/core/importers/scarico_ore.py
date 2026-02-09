@@ -10,16 +10,16 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 try:
-    import msoffcrypto  # type: ignore
+    import msoffcrypto
 except ImportError:
     msoffcrypto = None
 
 try:
-    import openpyxl  # type: ignore
+    import openpyxl  # type: ignore[import-untyped]
 
     HAS_OPENPYXL = True
 except ImportError:
-    openpyxl = None  # type: ignore
+    openpyxl = None
     HAS_OPENPYXL = False
 
 from src.core.importers.base import BaseImporter
@@ -51,7 +51,7 @@ class ScaricoOreImporter(BaseImporter):
         if not path.exists():
             return 0
 
-        def _scan_zip(zip_file_obj):
+        def _scan_zip(zip_file_obj: Any) -> int:
             try:
                 cnt = 0
                 with zipfile.ZipFile(zip_file_obj, "r") as z:
@@ -92,7 +92,7 @@ class ScaricoOreImporter(BaseImporter):
         cls,
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
-    ) -> tuple[bool, str, list[tuple]]:
+    ) -> tuple[bool, str, list[tuple[Any, ...]]]:
         path = Path(file_path)
         if not path.exists():
             return False, f"File Scarico Ore non trovato: {file_path}", []
@@ -143,9 +143,9 @@ class ScaricoOreImporter(BaseImporter):
     @classmethod
     def _process_all_scarico_rows(
         cls,
-        ws,
-        progress_callback: Callable | None,
-    ) -> list[tuple]:
+        ws: Any,
+        progress_callback: Callable[[int, int], None] | None,
+    ) -> list[tuple[Any, ...]]:
         start_row = 6
         col_keys = [
             "data",
@@ -160,9 +160,9 @@ class ScaricoOreImporter(BaseImporter):
             "finito",
             "commessa",
         ]
-        total_rows = ws.max_row
+        total_rows: int = ws.max_row
 
-        rows_to_insert: list[tuple] = []
+        rows_to_insert: list[tuple[Any, ...]] = []
         rows_to_insert_append = rows_to_insert.append
 
         progress_interval = 5000
@@ -180,7 +180,7 @@ class ScaricoOreImporter(BaseImporter):
         return rows_to_insert
 
     @classmethod
-    def _extract_row_values(cls, row) -> list[str] | None:
+    def _extract_row_values(cls, row: Any) -> list[str] | None:
         (
             c_data,
             c_p1,
@@ -198,10 +198,10 @@ class ScaricoOreImporter(BaseImporter):
         v_odc = c_odc.value
         v_pos = c_pos.value
 
-        if v_odc is None and v_pos is None:
+        if v_odc is v_pos is None:
             return None
 
-        def _fmt(val):
+        def _fmt(val: Any) -> str:
             if val is None:
                 return ""
             s = str(val).strip()
@@ -251,7 +251,7 @@ class ScaricoOreImporter(BaseImporter):
         return vals
 
     @classmethod
-    def _process_scarico_ore_row(cls, row, col_keys) -> tuple | None:
+    def _process_scarico_ore_row(cls, row: Any, col_keys: list[str]) -> tuple[Any, ...] | None:
         vals = cls._extract_row_values(row)
         if not vals:
             return None
@@ -277,13 +277,13 @@ class ScaricoOreImporter(BaseImporter):
         )
 
     @staticmethod
-    def _validate_scarico_row(vals) -> bool:
+    def _validate_scarico_row(vals: list[str]) -> bool:
         if not vals[3] or not vals[4] or not vals[7]:
             return False
         return bool(vals[1] or vals[2])
 
     @staticmethod
-    def _extract_row_styles(row, col_keys, vals) -> str:
+    def _extract_row_styles(row: Any, col_keys: list[str], vals: list[str]) -> str:
         row_styles: dict[str, dict[str, str]] = {}
         for i, key in enumerate(col_keys):
             if vals[i] == "":

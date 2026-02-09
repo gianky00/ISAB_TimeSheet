@@ -4,9 +4,10 @@ Utility per il parsing robusto di valute e numeri.
 """
 
 import re
+from typing import Any
 
 
-def parse_currency(value) -> float:
+def parse_currency(value: Any) -> float:
     """
     Converte una stringa o numero in float, gestendo formati Italiani e Internazionali.
     """

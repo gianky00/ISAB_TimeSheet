@@ -14,6 +14,7 @@ from contextlib import suppress
 from datetime import date
 from enum import Enum
 from pathlib import Path
+from typing import Any
 
 from cryptography.fernet import Fernet
 
@@ -131,7 +132,7 @@ def _get_linux_hardware_id():
     return None
 
 
-def _get_license_paths():
+def _get_license_paths() -> dict[str, Path]:
     """Restituisce i percorsi dei file di licenza."""
     from src.core import config_manager
 
@@ -147,7 +148,7 @@ def _get_license_paths():
     }
 
 
-def _check_and_migrate_local_license(target_paths: dict):
+def _check_and_migrate_local_license(target_paths: dict[str, Any]):
     """
     Check if license files exist in the application directory (e.g. where .exe is).
     If found, copy them to the standard AppData location.
@@ -261,7 +262,7 @@ def get_detailed_license_status():
     return validation_status, validation_msg
 
 
-def _check_integrity_with_manifest(paths: dict) -> tuple[LicenseStatus, str]:
+def _check_integrity_with_manifest(paths: dict[str, Any]) -> tuple[LicenseStatus, str]:
     """Helper to check license file integrity using manifest."""
     try:
         manifest = json.loads(Path(paths["manifest"]).read_text(encoding="utf-8"))
@@ -283,7 +284,7 @@ def _check_integrity_with_manifest(paths: dict) -> tuple[LicenseStatus, str]:
     return LicenseStatus.VALID, ""
 
 
-def _validate_license_data(paths: dict) -> tuple[LicenseStatus, str]:
+def _validate_license_data(paths: dict[str, Any]) -> tuple[LicenseStatus, str]:
     """Helper to decrypt and validate license data."""
     try:
         payload = get_license_info()

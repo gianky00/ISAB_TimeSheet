@@ -11,12 +11,8 @@ class TestSecurity:
         # Mock class-level attributes to use tmp_path
         key_dir = tmp_path / "security"
         mocker.patch("src.utils.security.PasswordManager._KEY_DIR", key_dir)
-        mocker.patch(
-            "src.utils.security.PasswordManager._KEY_FILE", key_dir / "secret.key"
-        )
-        mocker.patch(
-            "src.utils.security.PasswordManager._SALT_FILE", key_dir / "encryption.salt"
-        )
+        mocker.patch("src.utils.security.PasswordManager._KEY_FILE", key_dir / "secret.key")
+        mocker.patch("src.utils.security.PasswordManager._SALT_FILE", key_dir / "encryption.salt")
 
         # Reset singleton
         PasswordManager._instance = None

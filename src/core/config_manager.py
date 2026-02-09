@@ -62,7 +62,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
 }
 
 
-def ensure_config_dir():
+def ensure_config_dir() -> None:
     """Assicura che la directory di configurazione esista."""
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -117,13 +117,13 @@ def _load_base_config() -> dict[str, Any]:
     return config
 
 
-def _decrypt_all_credentials(config: dict[str, Any]):
+def _decrypt_all_credentials(config: dict[str, Any]) -> None:
     """Decripta le credenziali per Isab e SafeWork."""
     _decrypt_account_list(config.get("accounts", []), "isab_portal")
     _decrypt_account_list(config.get("safework_accounts", []), "safework_portal")
 
 
-def _decrypt_account_list(accounts: list[dict[str, Any]], service_name: str):
+def _decrypt_account_list(accounts: list[dict[str, Any]], service_name: str) -> None:
     """Decripta una lista di account usando keyring o fallback locale."""
     if not accounts:
         return
@@ -170,7 +170,7 @@ def _migrate_legacy_config(config: dict[str, Any]) -> bool:
     return True
 
 
-def _reset_configuration_for_testing():
+def _reset_configuration_for_testing() -> None:
     """
     Resetta la cache di configurazione per i test.
     DA USARE SOLO NEI TEST!
@@ -180,7 +180,7 @@ def _reset_configuration_for_testing():
         _config_cache = None
 
 
-def save_config(config: dict[str, Any]):
+def save_config(config: dict[str, Any]) -> None:
     """
     Salva la configurazione in modo atomico.
     """
@@ -200,13 +200,13 @@ def save_config(config: dict[str, Any]):
             print(f"Errore critico durante il salvataggio: {e}")
 
 
-def _encrypt_all_credentials(config: dict[str, Any]):
+def _encrypt_all_credentials(config: dict[str, Any]) -> None:
     """Gestisce la protezione delle credenziali prima del salvataggio."""
     _encrypt_account_list(config.get("accounts", []), "isab_portal")
     _encrypt_account_list(config.get("safework_accounts", []), "safework_portal")
 
 
-def _encrypt_account_list(accounts: list[dict[str, Any]], service_name: str):
+def _encrypt_account_list(accounts: list[dict[str, Any]], service_name: str) -> None:
     """Sposta in keyring o cripta localmente le password di una lista di account."""
     if not accounts:
         return
@@ -232,7 +232,7 @@ def _encrypt_account_list(accounts: list[dict[str, Any]], service_name: str):
         acc["password"] = password_manager.encrypt(password)
 
 
-def _atomic_write_json(data: dict[str, Any], target_path: Path):
+def _atomic_write_json(data: dict[str, Any], target_path: Path) -> None:
     """Scrittura atomica del file JSON."""
     temp_file = target_path.with_suffix(".tmp")
     try:
@@ -252,7 +252,7 @@ def get_config_value(key: str, default: Any = None) -> Any:
     return load_config().get(key, default)
 
 
-def set_config_value(key: str, value: Any):
+def set_config_value(key: str, value: Any) -> None:
     """Imposta un valore nella configurazione."""
     config = load_config()
     config[key] = value
@@ -261,10 +261,10 @@ def set_config_value(key: str, value: Any):
 
 def get_accounts() -> list[dict[str, Any]]:
     """Restituisce la lista degli account configurati."""
-    return get_config_value("accounts", [])
+    return get_config_value("accounts", [])  # type: ignore[no-any-return]
 
 
-def add_account(username: str, password: str, is_default: bool = False):
+def add_account(username: str, password: str, is_default: bool = False) -> None:
     """Aggiunge o aggiorna un account."""
     config = load_config()
     accounts = config.get("accounts", [])
@@ -284,7 +284,7 @@ def add_account(username: str, password: str, is_default: bool = False):
     save_config(config)
 
 
-def remove_account(username: str):
+def remove_account(username: str) -> None:
     """Rimuove un account e le credenziali associate."""
     config = load_config()
     accounts = config.get("accounts", [])
@@ -302,7 +302,7 @@ def remove_account(username: str):
     save_config(config)
 
 
-def set_default_account(username: str):
+def set_default_account(username: str) -> None:
     """Imposta un account come default."""
     config = load_config()
     accounts = config.get("accounts", [])
@@ -378,7 +378,7 @@ def get_logs_path() -> str:
 
 def get_download_path() -> str:
     """Restituisce il path di download configurato."""
-    path_str = get_config_value("download_path", "")
+    path_str: str = get_config_value("download_path", "")
     if path_str:
         path = Path(path_str)
         if path.is_dir():

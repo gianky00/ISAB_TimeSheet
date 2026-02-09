@@ -35,14 +35,16 @@ class BotParametersWidget(QWidget):
     settings_requested = pyqtSignal()
     changed = pyqtSignal()
 
-    def __init__(self, show_date_range: bool = False, show_dest_path: bool = True, parent=None):
+    def __init__(
+        self, show_date_range: bool = False, show_dest_path: bool = True, parent: QWidget | None = None
+    ) -> None:
         super().__init__(parent)
         self.show_date_range = show_date_range
         self.show_dest_path = show_dest_path
         self._setup_ui()
         self.refresh_fornitori()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
@@ -107,7 +109,7 @@ class BotParametersWidget(QWidget):
         self.main_row_layout.addStretch()
         layout.addLayout(self.main_row_layout)
 
-    def add_widget_to_row(self, widget):
+    def add_widget_to_row(self, widget: QWidget) -> None:
         """
         Aggiunge un widget personalizzato alla riga dei parametri (prima dello stretch).
 
@@ -140,16 +142,16 @@ class BotParametersWidget(QWidget):
             }
         """
 
-    def _update_dest_width(self):
+    def _update_dest_width(self) -> None:
         """Metodo placeholder per l'aggiornamento della larghezza (non più necessario)."""
 
-    def _browse_path(self):
+    def _browse_path(self) -> None:
         """Apre il dialogo di selezione cartella per il percorso di destinazione."""
         path = QFileDialog.getExistingDirectory(self, "Seleziona cartella destinazione")
         if path:
             self.dest_path_edit.setText(path)
 
-    def refresh_fornitori(self):
+    def refresh_fornitori(self) -> None:
         """Ricarica l'elenco dei fornitori dalla configurazione globale."""
         fornitori = config_manager.load_config().get("fornitori", [])
         current = self.fornitore_combo.currentText()
@@ -166,7 +168,7 @@ class BotParametersWidget(QWidget):
         """Restituisce il fornitore attualmente selezionato."""
         return self.fornitore_combo.currentText()
 
-    def set_fornitore(self, fornitore: str):
+    def set_fornitore(self, fornitore: str) -> None:
         """Imposta il fornitore selezionato."""
         index = self.fornitore_combo.findText(fornitore)
         if index >= 0:
@@ -178,7 +180,7 @@ class BotParametersWidget(QWidget):
         date_a = self.date_a.date().toString("dd.MM.yyyy") if self.show_date_range else None
         return date_da, date_a
 
-    def set_dates(self, date_da_str: str, date_a_str: str | None = None):
+    def set_dates(self, date_da_str: str, date_a_str: str | None = None) -> None:
         """
         Imposta le date del widget.
 
@@ -197,7 +199,7 @@ class BotParametersWidget(QWidget):
         """Restituisce il percorso di destinazione selezionato."""
         return self.dest_path_edit.text() if self.show_dest_path else ""
 
-    def set_dest_path(self, path: str):
+    def set_dest_path(self, path: str) -> None:
         """Imposta il percorso di destinazione."""
         if self.show_dest_path:
             self.dest_path_edit.setText(path)

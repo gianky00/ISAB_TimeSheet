@@ -8,6 +8,7 @@ import os
 import re
 from contextlib import suppress
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QObject, QTimer
 
@@ -18,6 +19,9 @@ from src.core.notification_manager import NotificationManager
 from src.core.report_history import ReportHistory
 from src.core.version import __version__
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 class ServiceController(QObject):
     """
@@ -25,25 +29,26 @@ class ServiceController(QObject):
     il coordinamento delle notifiche.
     """
 
-    def __init__(self, main_window, telegram_service, lyra_sentinel):
+    def __init__(self, main_window: Any, telegram_service: Any, lyra_sentinel: Any) -> None:
         super().__init__(main_window)
         self.mw = main_window
         self.telegram = telegram_service
         self.sentinel = lyra_sentinel
 
         # Tracking bot in esecuzione per sito (per parallelismo intelligente)
-        self.running_bots_by_site = {
+        self.running_bots_by_site: dict[str, list[str]] = {
             "portale_fornitori": [],  # Lista di bot_id in esecuzione
             "safework": [],
         }
 
         # Coda bot in attesa per sito (quando un sito è occupato)
-        self.pending_bots_by_site = {
-            "portale_fornitori": [],  # Lista di (bot_id, panel, callback)
+        self.pending_bots_by_site: dict[str, list[tuple[str, Any, str]]] = {
+            "portale_fornitori": [],  # Lista di (bot_id, panel, log_message)
             "safework": [],
         }
+        self.scheduler_timer: QTimer | None = None
 
-    def start_all(self):
+    def start_all(self) -> None:
         """Avvia tutti i servizi in background con i relativi ritardi."""
         # Lyra Sentinel
         self.sentinel.anomalies_found.connect(self.mw._on_anomalies_found)
@@ -63,7 +68,7 @@ class ServiceController(QObject):
         self.scheduler_timer.timeout.connect(self._check_scheduled_tasks)
         self.scheduler_timer.start(60000)  # 1 minuto
 
-    def _check_scheduled_tasks(self):
+    def _check_scheduled_tasks(self) -> None:
         """
         Controlla se ci sono task pianificati da eseguire ora.
         Implementa parallelismo intelligente: bot su siti diversi possono
@@ -72,30 +77,30 @@ class ServiceController(QObject):
         config = config_manager.load_config()
         now = datetime.now().strftime("%H:%M")
 
-        # Lista di bot da schedulare (bot_id, panel_attr, site, target_time)
-        scheduled_bots = [
+        # Lista di bot da schedulare (bot_id, panel_attr, site, target_time, enabled, prepare_callback)
+        scheduled_bots: list[tuple[str, str, str, str, bool, Callable[[Any], None] | None]] = [
             (
                 "timbrature",
                 "timbrature_bot_panel",
                 "portale_fornitori",
-                config.get("timbrature_autopilot_time", "09:00"),
-                config.get("timbrature_autopilot_enabled", False),
+                str(config.get("timbrature_autopilot_time", "09:00")),
+                bool(config.get("timbrature_autopilot_enabled", False)),
                 None,  # Nessuna preparazione speciale
             ),
             (
                 "scarico_oda_generale",
                 "dettagli_oda_bot_panel",
                 "portale_fornitori",
-                config.get("scarico_oda_generale_autopilot_time", "09:00"),
-                config.get("scarico_oda_generale_autopilot_enabled", False),
+                str(config.get("scarico_oda_generale_autopilot_time", "09:00")),
+                bool(config.get("scarico_oda_generale_autopilot_enabled", False)),
                 self._prepare_scarico_oda_generale,  # Callback di preparazione
             ),
             (
                 "ricerca_pdl",
                 "ricerca_pdl_bot_panel",
                 "safework",
-                config.get("ricerca_pdl_autopilot_time", "09:00"),
-                config.get("ricerca_pdl_autopilot_enabled", False),
+                str(config.get("ricerca_pdl_autopilot_time", "09:00")),
+                bool(config.get("ricerca_pdl_autopilot_enabled", False)),
                 None,  # Nessuna preparazione speciale
             ),
         ]
@@ -124,7 +129,7 @@ class ServiceController(QObject):
         # === REPORT EMAIL SCHEDULATO (con intervallo giorni) ===
         self._check_report_email_schedule(config, now)
 
-    def _check_report_email_schedule(self, config, now_time):
+    def _check_report_email_schedule(self, config: dict[str, Any], now_time: str) -> None:
         """
         Controlla e gestisce l'invio schedulato del report email.
         Questo task usa un intervallo in giorni invece di essere giornaliero.
@@ -132,14 +137,14 @@ class ServiceController(QObject):
         if not config.get("report_email_autopilot_enabled", False):
             return
 
-        target_time = config.get("report_email_autopilot_time", "08:00")
+        target_time = str(config.get("report_email_autopilot_time", "08:00"))
 
         # Verifica prima l'orario
         if now_time != target_time:
             return
 
         # Verifica intervallo giorni
-        interval_days = config.get("report_email_autopilot_interval_days", 7)
+        interval_days = int(config.get("report_email_autopilot_interval_days", 7))
         last_sent_str = config.get("report_email_autopilot_last_sent")
 
         should_send = False
@@ -148,7 +153,7 @@ class ServiceController(QObject):
             should_send = True
         else:
             try:
-                last_dt = datetime.fromisoformat(last_sent_str)
+                last_dt = datetime.fromisoformat(str(last_sent_str))
                 days_passed = (datetime.now() - last_dt).days
                 if days_passed >= interval_days:
                     should_send = True
@@ -159,7 +164,7 @@ class ServiceController(QObject):
         if should_send:
             self._send_scheduled_report_email()
 
-    def _send_scheduled_report_email(self):
+    def _send_scheduled_report_email(self) -> None:
         """Genera e invia il report email automaticamente (senza UI)."""
         logger = logging.getLogger(__name__)
 
@@ -167,15 +172,21 @@ class ServiceController(QObject):
             # Importa funzione helper per costruire le mappe timbrature
             # (la logica è duplicata per evitare dipendenze circolari)
 
-            def normalize(t):
+            def normalize(t: Any) -> str:
                 return re.sub(r"\s+", " ", str(t).strip().upper())
 
-            def build_timbrature_maps(accessi):
+            def build_timbrature_maps(
+                accessi: list[tuple[Any, ...]],
+            ) -> tuple[dict[str, int], dict[tuple[str, str], int]]:
                 today = datetime.now(UTC)
-                last_by_cf = {}
-                last_by_name = {}
+                last_by_cf: dict[str, int] = {}
+                last_by_name: dict[tuple[str, str], int] = {}
 
-                for cog, nom, cf, d_str in accessi:
+                for row in accessi:
+                    cog = str(row[0])
+                    nom = str(row[1])
+                    cf = str(row[2])
+                    d_str = str(row[3])
                     if d_str:
                         norm_key = (normalize(cog), normalize(nom))
                         norm_cf = cf.strip().upper() if cf and cf.strip() else None
@@ -210,8 +221,8 @@ class ServiceController(QObject):
             accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
             last_by_cf, last_by_name = build_timbrature_maps(accessi)
 
-            warning_list = []
-            expired_list = []
+            warning_list: list[dict[str, Any]] = []
+            expired_list: list[dict[str, Any]] = []
 
             for dip in dipendenti:
                 id_ris, cog, nom, cf, badge, _data_ass = dip
@@ -253,7 +264,7 @@ class ServiceController(QObject):
                 logger.warning("Report email schedulato disponibile solo su Windows")
                 return
 
-            import win32com.client
+            import win32com.client  # type: ignore
 
             # Costruisci HTML semplificato per invio automatico
             current_date = datetime.now().strftime("%d/%m/%Y %H:%M")
@@ -325,7 +336,7 @@ class ServiceController(QObject):
                 level="error",
             )
 
-    def _prepare_scarico_oda_generale(self, panel):
+    def _prepare_scarico_oda_generale(self, panel: Any) -> None:
         """
         Prepara il pannello Scarico OdA Generale:
         - Pulisce la tabella (rimuove tutti i dati)
@@ -336,7 +347,7 @@ class ServiceController(QObject):
             panel.table.setRowCount(0)
             panel.log_widget.append("🧹 Tabella pulita per scarico generale (senza filtro OdA)")
 
-    def _schedule_bot_with_parallelism(self, bot_id, panel, site, log_message):
+    def _schedule_bot_with_parallelism(self, bot_id: str, panel: Any, site: str, log_message: str) -> None:
         """
         Schedula un bot con logica di parallelismo intelligente.
 
@@ -361,7 +372,7 @@ class ServiceController(QObject):
             # Sito libero: avvia immediatamente
             self._start_bot(bot_id, panel, site, log_message)
 
-    def _start_bot(self, bot_id, panel, site, log_message):
+    def _start_bot(self, bot_id: str, panel: Any, site: str, log_message: str) -> None:
         """
         Avvia un bot e traccia la sua esecuzione.
 
@@ -394,7 +405,7 @@ class ServiceController(QObject):
                     panel.status_changed.disconnect(panel._service_callback)
 
             # Crea una funzione di callback che cattura bot_id e site
-            def on_bot_finished(status, message):
+            def on_bot_finished(status: str, message: str) -> None:
                 # Note: status is the color code from BaseBotPanel
                 # #2E7D32 = Success, #C62828 = Error, #ffc107 = Stopped/Pending
                 is_finished = status in ("completed", "error", "stopped") or status in (
@@ -413,7 +424,7 @@ class ServiceController(QObject):
         # Avvia il bot
         panel._on_start()
 
-    def _on_bot_completed(self, bot_id, site, panel):
+    def _on_bot_completed(self, bot_id: str, site: str, panel: Any) -> None:
         """
         Gestisce il completamento di un bot: rimuove dal tracking e
         avvia il prossimo bot in coda per lo stesso sito.
@@ -440,11 +451,11 @@ class ServiceController(QObject):
             next_panel.log_widget.append("▶️ Bot precedente completato. Avvio da coda...")
             self._start_bot(next_bot_id, next_panel, site, next_log_message)
 
-    def _check_updates(self):
+    def _check_updates(self) -> None:
         """Controlla gli aggiornamenti in background."""
         check_for_updates(parent=self.mw, silent=True, callback=self.mw._show_update_banner)
 
-    def _forward_notification_to_telegram(self, notification):
+    def _forward_notification_to_telegram(self, notification: dict[str, Any]) -> None:
         """Inoltra notifiche importanti al bot Telegram."""
         if notification.get("title") == "Telegram":
             return

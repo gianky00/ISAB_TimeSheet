@@ -10,7 +10,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 try:
-    import fitz  # type: ignore
+    import fitz
 except ImportError:
     fitz = None
 
@@ -21,6 +21,8 @@ class DocumentProcessor:
     @staticmethod
     def extract_text(file_path: Path) -> str:
         """Estrae tutto il testo da un PDF."""
+        if not fitz:
+            return ""
         try:
             with fitz.open(file_path) as doc:
                 full_text = "".join(page.get_text() for page in doc)
@@ -32,6 +34,8 @@ class DocumentProcessor:
     @staticmethod
     def get_pages_as_images(file_path: Path, max_pages: int = 5) -> list[str]:
         """Converte le pagine del PDF in immagini base64 per Gemini Vision."""
+        if not fitz:
+            return []
         images_base64 = []
         try:
             with fitz.open(file_path) as doc:
@@ -51,6 +55,8 @@ class DocumentProcessor:
     @staticmethod
     def is_pdf_searchable(file_path: Path) -> bool:
         """Verifica se il PDF contiene testo selezionabile o è solo un'immagine."""
+        if not fitz:
+            return False
         try:
             with fitz.open(file_path) as doc:
                 return any(page.get_text().strip() for page in doc)

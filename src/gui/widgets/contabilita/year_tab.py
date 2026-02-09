@@ -106,10 +106,13 @@ class ContabilitaYearTab(QWidget):
         self.table.setEditTriggers(QTableView.EditTrigger.NoEditTriggers)
 
         self.table.setSortingEnabled(True)
-        self.table.verticalHeader().setVisible(False)
+        if v_header := self.table.verticalHeader():
+            v_header.setVisible(False)
         self.table.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         header = self.table.horizontalHeader()
+        if header is None:
+            raise RuntimeError("Table horizontal header is None - table not properly initialized")
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
         # Inizialmente usa Interactive per tutte le colonne
@@ -152,7 +155,7 @@ class ContabilitaYearTab(QWidget):
             # Nota: ContabilitaQueries restituisce tutto. Dobbiamo assicurarci di prendere solo le colonne che servono
             # se la query ritorna più colonne di self.COLUMNS.
             # Slice per sicurezza
-            display_rows = [row[: len(self.COLUMNS)] for row in db_data]
+            display_rows = [list(row[: len(self.COLUMNS)]) for row in db_data]
 
             self.model.update_data(display_rows)
 
@@ -165,6 +168,8 @@ class ContabilitaYearTab(QWidget):
     def _adjust_column_widths(self):
         """Adatta le larghezze delle colonne al contenuto, mantenendo un minimo leggibile."""
         header = self.table.horizontalHeader()
+        if header is None:
+            raise RuntimeError("Table horizontal header is None - cannot adjust column widths")
 
         # Ridimensiona tutte le colonne al contenuto
         self.table.resizeColumnsToContents()

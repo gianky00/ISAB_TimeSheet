@@ -40,9 +40,18 @@ from .pdl_filter_widget import PDLFilterWidget
 class PDLDBPanel(QWidget):
     """Pannello per la visualizzazione del Database PDL SafeWork con architettura Master-Detail."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
+
+        # Member declarations
+        self.filters: PDLFilterWidget
+        self.splitter: QSplitter
+        self.table: QTableView
+        self.detail_view: PDLDetailView
+        self.model: FastTableModel
+
         # Nuove Colonne della Tabella (Vista Master)
+        self._raw_full_data: list[tuple[Any, ...]] = []  # Buffer per i dati completi
         self.master_headers = [
             "Data Creazione",
             "Richiedente",
@@ -80,11 +89,12 @@ class PDLDBPanel(QWidget):
 
         self.model = FastTableModel([], self.master_headers)
         self._raw_full_data = []  # Buffer per i dati completi
-        self._cache = {}  # Cache per le query
+        self._cache: dict[str, list[tuple[Any, ...]]] = {}  # Cache per le query
 
         # Stato Ordinamento
-        self.current_sort_col = None
+        self.current_sort_col: int | None = None
         self.current_sort_order = "DESC"
+        self.worker: BotWorker | None = None
 
         # Timer per ricerca ritardata (Debounce)
         self.search_timer = QTimer()
@@ -123,17 +133,20 @@ class PDLDBPanel(QWidget):
         self.table.setAlternatingRowColors(True)
         self.table.setSortingEnabled(True)
         self.table.setWordWrap(True)
-        self.table.verticalHeader().setVisible(False)
+        if v_header := self.table.verticalHeader():
+            v_header.setVisible(False)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setItemDelegate(PDLDelegate([0], self.table))  # Data Creazione è indice 0
 
-        self.table.selectionModel().selectionChanged.connect(self._on_selection_changed)
-        header = self.table.horizontalHeader()
-        header.setSectionsClickable(True)
-        header.sectionClicked.connect(self._on_header_clicked)
+        if sel_model := self.table.selectionModel():
+            sel_model.selectionChanged.connect(self._on_selection_changed)
+
+        if header := self.table.horizontalHeader():
+            header.setSectionsClickable(True)
+            header.sectionClicked.connect(self._on_header_clicked)
 
         self.splitter.addWidget(self.table)
 
@@ -209,6 +222,13 @@ class PDLDBPanel(QWidget):
         if success:
             ToastManager.instance().show("PDL Aggiornati!", "success")
             self.refresh_data()
+
+            # Notifica pannello caricamento se esiste
+            win = self.window()
+            if win:
+                scarico_pdl = getattr(win, "scarico_pdl_panel", None)
+                if scarico_pdl and hasattr(scarico_pdl, "_on_log"):
+                    scarico_pdl._on_log("✅ Bot Ricerca PDL completato.")
         else:
             self.filters.lbl_sync_status.setText("❌ Errore Bot")
             QMessageBox.warning(self, "Errore", "Bot terminato con errori.")
@@ -353,7 +373,11 @@ class PDLDBPanel(QWidget):
 
     def _on_selection_changed(self, selected, _deselected):
         """Aggiorna il pannello dettaglio quando si seleziona una riga."""
-        indexes = self.table.selectionModel().selectedRows()
+        sel_model = self.table.selectionModel()
+        if not sel_model:
+            return
+
+        indexes = sel_model.selectedRows()
         if not indexes:
             self.detail_view.clear()
             return
@@ -379,6 +403,7 @@ class PDLDBPanel(QWidget):
         query, params = self._build_pdl_query(sort_col)
         cache_key = f"{query}_{params}"
 
+        full_rows: list[tuple[Any, ...]]
         if cache_key in self._cache:
             full_rows = self._cache[cache_key]
         else:
@@ -470,7 +495,7 @@ class PDLDBPanel(QWidget):
         query += " LIMIT 2000"
         return query, params
 
-    def _process_pdl_rows(self, full_rows: list[tuple]) -> list[list[Any]]:
+    def _process_pdl_rows(self, full_rows: list[tuple[Any, ...]]) -> list[list[Any]]:
         """Pulisce e formatta le righe per la visualizzazione Master."""
         master_rows = []
         for r in full_rows:
@@ -481,6 +506,9 @@ class PDLDBPanel(QWidget):
     def _update_pdl_ui(self, count: int):
         """Ottimizza il layout della tabella."""
         header = self.table.horizontalHeader()
+        if not header:
+            return
+
         for i in range(len(self.master_headers)):
             header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
 

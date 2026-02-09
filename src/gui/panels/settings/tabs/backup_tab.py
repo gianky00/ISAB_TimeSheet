@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import Any
 
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -144,7 +145,7 @@ class BackupTab(QWidget):
 
         layout.addStretch()
 
-    def load_from_config(self, config: dict):
+    def load_from_config(self, config: dict[str, Any]):
         saved_cloud = config.get("backup_cloud_provider")
         if saved_cloud:
             index = self.cloud_combo.findData(saved_cloud)

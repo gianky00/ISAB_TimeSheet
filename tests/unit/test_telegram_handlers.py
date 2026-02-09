@@ -62,9 +62,7 @@ class TestTelegramHandlers:
     @patch("src.core.config_manager.load_config")
     @patch("src.core.config_manager.set_config_value")
     @pytest.mark.asyncio
-    async def test_cmd_start_new_pairing(
-        self, mock_set, mock_load, mock_service, mock_update, mock_context
-    ):
+    async def test_cmd_start_new_pairing(self, mock_set, mock_load, mock_service, mock_update, mock_context):
         # Case: No saved ID, pairing code matches
         mock_load.return_value = {
             "telegram_chat_id": "",
@@ -79,9 +77,7 @@ class TestTelegramHandlers:
 
     @patch("src.core.config_manager.load_config")
     @pytest.mark.asyncio
-    async def test_cmd_start_already_paired(
-        self, mock_load, mock_service, mock_update, mock_context
-    ):
+    async def test_cmd_start_already_paired(self, mock_load, mock_service, mock_update, mock_context):
         # Case: Saved ID matches
         mock_load.return_value = {"telegram_chat_id": "67890"}
 
@@ -103,9 +99,7 @@ class TestTelegramHandlers:
 
     # --- Messages ---
     @pytest.mark.asyncio
-    async def test_handle_text_input_simple_query(
-        self, mock_service, mock_update, mock_context
-    ):
+    async def test_handle_text_input_simple_query(self, mock_service, mock_update, mock_context):
         mock_update.message.text = "Hello world"
         # Mock user state None
         mock_service.user_states = {"67890": None}
@@ -116,9 +110,7 @@ class TestTelegramHandlers:
         mock_service.query_received.emit.assert_called_with("67890", "Hello world")
 
     @pytest.mark.asyncio
-    async def test_handle_text_input_pdl_state(
-        self, mock_service, mock_update, mock_context
-    ):
+    async def test_handle_text_input_pdl_state(self, mock_service, mock_update, mock_context):
         mock_update.message.text = "123456"
         mock_service.user_states = {67890: "WAITING_PDL"}
 
@@ -129,9 +121,7 @@ class TestTelegramHandlers:
 
     @patch("src.core.telegram.handlers.messages.process_with_ai")
     @pytest.mark.asyncio
-    async def test_handle_voice(
-        self, mock_process_ai, mock_service, mock_update, mock_context
-    ):
+    async def test_handle_voice(self, mock_process_ai, mock_service, mock_update, mock_context):
         mock_update.message.voice = MagicMock()
         mock_update.message.voice.file_id = "voice_id"
 
@@ -155,9 +145,7 @@ class TestTelegramHandlers:
 
         await handle_photo(mock_service, mock_update, mock_context)
 
-        mock_service.photo_received.emit.assert_called_with(
-            "67890", b"photo bytes", "Test caption"
-        )
+        mock_service.photo_received.emit.assert_called_with("67890", b"photo bytes", "Test caption")
 
     # --- Callbacks ---
     @pytest.mark.asyncio
@@ -180,9 +168,7 @@ class TestTelegramHandlers:
         assert "Command Center" in args
 
     @pytest.mark.asyncio
-    async def test_handle_button_direct_command(
-        self, mock_service, mock_update, mock_context
-    ):
+    async def test_handle_button_direct_command(self, mock_service, mock_update, mock_context):
         query = MagicMock(spec=CallbackQuery)
         query.data = "run_ts"
         query.answer = AsyncMock()

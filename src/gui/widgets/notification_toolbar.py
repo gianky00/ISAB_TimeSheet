@@ -3,6 +3,8 @@ NotificationToolbar - Barra degli strumenti per filtrare, cercare e ordinare not
 Include filter chips, search bar, sort dropdown e bulk actions menu.
 """
 
+from typing import Any
+
 from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -30,7 +32,7 @@ class FilterChip(QPushButton):
         icon: str | None = None,
         count: int = 0,
         parent: QWidget | None = None,
-    ):
+    ) -> None:
         super().__init__(parent)
         self.key = key
         self._count = count
@@ -45,7 +47,7 @@ class FilterChip(QPushButton):
         # Connect to update style on toggle
         self.toggled.connect(self._on_toggled)
 
-    def _update_text(self, label: str):
+    def _update_text(self, label: str) -> None:
         """Update button text with count badge."""
         text = f"{label} ({self._count})" if self._count > 0 else label
 
@@ -61,13 +63,13 @@ class FilterChip(QPushButton):
             )
             self.setIconSize(QSize(16, 16))
 
-    def set_count(self, count: int):
+    def set_count(self, count: int) -> None:
         """Update count and refresh text."""
         self._count = count
         label = self.text().split(" (")[0]  # Extract label without count
         self._update_text(label)
 
-    def _on_toggled(self, checked: bool):
+    def _on_toggled(self, checked: bool) -> None:
         """Handle toggle state change."""
         self._is_active = checked
         self._apply_style()
@@ -75,7 +77,7 @@ class FilterChip(QPushButton):
         label = self.text().split(" (")[0]
         self._update_text(label)
 
-    def _apply_style(self):
+    def _apply_style(self) -> None:
         """Apply style based on active state."""
         if self._is_active:
             # Active: filled with accent color
@@ -127,7 +129,7 @@ class NotificationToolbar(QWidget):
     sort_changed = pyqtSignal(str)  # sort_key
     bulk_action_triggered = pyqtSignal(str)  # action_key
 
-    def __init__(self, parent: QWidget | None = None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._filter_chips: dict[str, FilterChip] = {}
         self._current_filter = "all"
@@ -136,7 +138,7 @@ class NotificationToolbar(QWidget):
         self._debounce_timer.timeout.connect(self._emit_search_query)
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Setup layout e componenti."""
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -165,7 +167,7 @@ class NotificationToolbar(QWidget):
         layout.addWidget(self.search_input)
 
         # === FILTER CHIPS ===
-        filter_configs = [
+        filter_configs: list[dict[str, Any]] = [
             {"label": "Tutti", "key": "all", "icon": None},
             {"label": "Da leggere", "key": "unread", "icon": Icons.BELL},
             {"label": "Errori", "key": "error", "icon": Icons.X_CIRCLE},
@@ -175,13 +177,13 @@ class NotificationToolbar(QWidget):
 
         for config in filter_configs:
             chip = FilterChip(
-                label=config["label"],
-                key=config["key"],
+                label=str(config["label"]),
+                key=str(config["key"]),
                 icon=config["icon"],
                 count=0,  # Will be updated dynamically
             )
-            chip.clicked.connect(lambda checked, k=config["key"]: self._on_filter_clicked(k))
-            self._filter_chips[config["key"]] = chip
+            chip.clicked.connect(lambda checked, k=str(config["key"]): self._on_filter_clicked(k))
+            self._filter_chips[str(config["key"])] = chip
             layout.addWidget(chip)
 
         # Set "Tutti" as default active
@@ -225,18 +227,18 @@ class NotificationToolbar(QWidget):
         self.sort_combo.currentIndexChanged.connect(self._on_sort_changed)
         layout.addWidget(self.sort_combo)
 
-    def _on_search_text_changed(self, text: str):
+    def _on_search_text_changed(self, text: str) -> None:
         """Handle search input change with debounce."""
         # Debounce: wait 300ms before emitting signal
         self._debounce_timer.stop()
         self._debounce_timer.start(300)
 
-    def _emit_search_query(self):
+    def _emit_search_query(self) -> None:
         """Emit search query signal after debounce."""
         query = self.search_input.text().strip()
         self.search_query_changed.emit(query)
 
-    def _on_filter_clicked(self, key: str):
+    def _on_filter_clicked(self, key: str) -> None:
         """Handle filter chip click."""
         # Deactivate all other chips
         for chip_key, chip in self._filter_chips.items():
@@ -248,12 +250,12 @@ class NotificationToolbar(QWidget):
         self._current_filter = key
         self.filter_changed.emit(key)
 
-    def _on_sort_changed(self):
+    def _on_sort_changed(self) -> None:
         """Handle sort dropdown change."""
-        sort_key = self.sort_combo.currentData()
+        sort_key = str(self.sort_combo.currentData())
         self.sort_changed.emit(sort_key)
 
-    def update_filter_counts(self, counts: dict):
+    def update_filter_counts(self, counts: dict[str, int]) -> None:
         """
         Update count badges on filter chips.
 
@@ -274,4 +276,4 @@ class NotificationToolbar(QWidget):
 
     def get_sort_key(self) -> str:
         """Get current sort key."""
-        return self.sort_combo.currentData()
+        return str(self.sort_combo.currentData())

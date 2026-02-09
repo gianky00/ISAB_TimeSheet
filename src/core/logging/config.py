@@ -10,7 +10,7 @@ from src.core import config_manager
 class LoggingConfig:
     """Configurazione centralizzata per il sistema di logging."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Base directory: C:\Users\gianc\AppData\Local\SyncroJob\logs
         self.base_dir = config_manager.CONFIG_DIR / "logs"
 
@@ -45,7 +45,7 @@ class LoggingConfig:
         self.file_level = "DEBUG"
         self.errors_level = "ERROR"
 
-    def ensure_directories(self):
+    def ensure_directories(self) -> None:
         """Crea tutte le directory necessarie."""
         for directory in (
             self.base_dir,
@@ -73,7 +73,7 @@ class LoggingConfig:
 
 
 # Istanza singleton
-_config = None
+_config: LoggingConfig | None = None
 
 
 def get_config() -> LoggingConfig:

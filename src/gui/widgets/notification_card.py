@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any, ClassVar
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QContextMenuEvent, QMouseEvent, QShowEvent
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
@@ -79,19 +79,29 @@ class NotificationCard(QFrame):
 
     def __init__(
         self,
-        notification: dict,
+        notification: dict[str, Any],
         parent: QWidget | None = None,
         disable_animations: bool = False,
-    ):
+    ) -> None:
         super().__init__(parent)
         self.notification = notification
         self.manager = NotificationManager.instance()
         self._disable_animations = disable_animations
+
+        # Widget members (Strict Typing - Option D)
+        self.pin_btn: QPushButton
+        self.title_lbl: QLabel
+        self.time_lbl: QLabel
+        self.del_btn: QPushButton
+        self.message_widget: QLabel | QTextBrowser
+        self.opacity_effect: QGraphicsOpacityEffect
+        self.fade_in_animation: QPropertyAnimation
+
         self._setup_ui()
         if not disable_animations:
             self._setup_animations()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Setup del layout e componenti della card."""
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -209,8 +219,12 @@ class NotificationCard(QFrame):
 
         # Timestamp
         try:
-            ts = datetime.fromisoformat(self.notification.get("timestamp"))
-            time_str = self._format_time(ts)
+            raw_ts = self.notification.get("timestamp")
+            if isinstance(raw_ts, str):
+                ts = datetime.fromisoformat(raw_ts)
+                time_str = self._format_time(ts)
+            else:
+                time_str = ""
         except Exception:
             time_str = ""
 
@@ -255,7 +269,7 @@ class NotificationCard(QFrame):
         main_layout.addLayout(header_layout)
 
         # === BODY === (with markdown support, optimized)
-        message = self.notification.get("message", "")
+        message = str(self.notification.get("message", ""))
 
         # Use lightweight QLabel for simple text, QTextBrowser only for rich content
         has_markdown = any(char in message for char in ("*", "`", "[", "]", "\n"))
@@ -263,17 +277,19 @@ class NotificationCard(QFrame):
         if has_markdown or len(message) > 200:
             # Use QTextBrowser for rich content or long text
             html_message = self._markdown_to_html(message)
-            self.message_widget = QTextBrowser()
-            self.message_widget.setHtml(html_message)
-            self.message_widget.setOpenExternalLinks(True)
-            self.message_widget.setFrameShape(QFrame.Shape.NoFrame)
-            self.message_widget.setMaximumHeight(150)  # Reduced from 200
+            browser = QTextBrowser()
+            browser.setHtml(html_message)
+            browser.setOpenExternalLinks(True)
+            browser.setFrameShape(QFrame.Shape.NoFrame)
+            browser.setMaximumHeight(150)  # Reduced from 200
+            self.message_widget = browser
         else:
             # Use lightweight QLabel for simple short text
-            self.message_widget = QLabel(message)
-            self.message_widget.setWordWrap(True)
-            self.message_widget.setTextFormat(Qt.TextFormat.PlainText)
-            self.message_widget.setMaximumHeight(100)
+            lbl = QLabel(message)
+            lbl.setWordWrap(True)
+            lbl.setTextFormat(Qt.TextFormat.PlainText)
+            lbl.setMaximumHeight(100)
+            self.message_widget = lbl
 
         self.message_widget.setStyleSheet(
             """
@@ -337,7 +353,7 @@ class NotificationCard(QFrame):
         if footer_layout.count() > 1 or actions:  # >1 because of stretch
             main_layout.addLayout(footer_layout)
 
-    def _setup_animations(self):
+    def _setup_animations(self) -> None:
         """Setup fade-in animation."""
         self.opacity_effect = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self.opacity_effect)
@@ -351,11 +367,11 @@ class NotificationCard(QFrame):
         # Remove effect after animation to avoid hover issues
         self.fade_in_animation.finished.connect(self._remove_opacity_effect)
 
-    def _remove_opacity_effect(self):
+    def _remove_opacity_effect(self) -> None:
         """Rimuove opacity effect dopo animazione."""
         self.setGraphicsEffect(None)
 
-    def showEvent(self, event):
+    def showEvent(self, event: QShowEvent | None) -> None:
         """Avvia animazione quando widget mostrato."""
         super().showEvent(event)
         if not self._disable_animations and hasattr(self, "fade_in_animation"):
@@ -426,35 +442,39 @@ class NotificationCard(QFrame):
             return f"{diff.days} giorni fa"
         return dt.strftime("%d/%m/%Y")
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Mark as read when clicked."""
         if not self.notification.get("read", False):
             self.manager.mark_as_read(self.notification["id"])
             # Emit signal
             self.card_clicked.emit(self.notification["id"])
-        super().mousePressEvent(event)
+        if event:
+            super().mousePressEvent(event)
 
-    def _on_action_clicked(self, action: dict):
+    def _on_action_clicked(self, action: dict[str, Any]) -> None:
         """Handle action button click."""
         action_key = action.get("key", "")
         if action_key:
             self.action_triggered.emit(self.notification["id"], action_key)
 
-    def _delete(self):
+    def _delete(self) -> None:
         """Delete notification."""
         self.manager.delete_notification(self.notification["id"])
         self.card_deleted.emit(self.notification["id"])
 
-    def _toggle_pin(self):
+    def _toggle_pin(self) -> None:
         """Toggle pin status."""
         current_pinned = self.notification.get("pinned", False)
         new_pinned = not current_pinned
         # Update via manager
-        self.manager.pin_notification(self.notification["id"], new_pinned)
+        if hasattr(self.manager, "pin_notification"):
+            self.manager.pin_notification(self.notification["id"], new_pinned)
         self.pin_toggled.emit(self.notification["id"], new_pinned)
 
-    def contextMenuEvent(self, event):
+    def contextMenuEvent(self, event: QContextMenuEvent | None) -> None:
         """Show context menu on right-click (lazy creation)."""
+        if event is None:
+            return
         # Create menu on-demand for better performance
         menu = self._create_context_menu()
         menu.exec(event.globalPos())
@@ -468,9 +488,10 @@ class NotificationCard(QFrame):
         mark_text = "Segna come non letta" if is_read else "Segna come letta"
         mark_action = QAction(mark_text, self)
         if is_read:
-            mark_action.triggered.connect(
-                lambda: self.manager.update_notification(self.notification["id"], {"read": False})
-            )
+            if hasattr(self.manager, "update_notification"):
+                mark_action.triggered.connect(
+                    lambda: self.manager.update_notification(self.notification["id"], {"read": False})
+                )
         else:
             mark_action.triggered.connect(lambda: self.manager.mark_as_read(self.notification["id"]))
         menu.addAction(mark_action)
@@ -479,9 +500,10 @@ class NotificationCard(QFrame):
         is_pinned = self.notification.get("pinned", False)
         pin_text = "Rimuovi pin" if is_pinned else "Fissa"
         pin_action = QAction(pin_text, self)
-        pin_action.triggered.connect(
-            lambda: self.manager.pin_notification(self.notification["id"], not is_pinned)
-        )
+        if hasattr(self.manager, "pin_notification"):
+            pin_action.triggered.connect(
+                lambda: self.manager.pin_notification(self.notification["id"], not is_pinned)
+            )
         menu.addAction(pin_action)
 
         menu.addSeparator()
@@ -498,19 +520,23 @@ class NotificationCard(QFrame):
 
         return menu
 
-    def _copy_link(self):
+    def _copy_link(self) -> None:
         """Copy related link to clipboard."""
         from PyQt6.QtGui import QGuiApplication
 
         related_id = self.notification.get("related_id", "")
         link = f"syncrojob://audit/{related_id}"  # Custom URL scheme
-        QGuiApplication.clipboard().setText(link)
+        clipboard = QGuiApplication.clipboard()
+        if clipboard is not None:
+            clipboard.setText(link)
 
-    def _copy_text(self):
+    def _copy_text(self) -> None:
         """Copy notification text to clipboard."""
         from PyQt6.QtGui import QGuiApplication
 
         title = self.notification.get("title", "")
         message = self.notification.get("message", "")
         text = f"{title}\n\n{message}"
-        QGuiApplication.clipboard().setText(text)
+        clipboard = QGuiApplication.clipboard()
+        if clipboard is not None:
+            clipboard.setText(text)

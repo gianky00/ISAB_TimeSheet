@@ -1,5 +1,7 @@
+from collections.abc import Sequence
 from contextlib import suppress
 from datetime import UTC, datetime
+from typing import Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QFormLayout, QLabel, QScrollArea, QVBoxLayout, QWidget
@@ -10,9 +12,9 @@ class TimbratureDetailView(QWidget):
     Componente per la visualizzazione dei dettagli di una timbratura.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.detail_labels = {}
+        self.detail_labels: dict[str, QLabel] = {}
         # Mapping completo per il Dettaglio (Tutte le 18 colonne rilevate)
         self.full_headers = [
             "Data",
@@ -36,7 +38,7 @@ class TimbratureDetailView(QWidget):
         ]
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         detail_layout = QVBoxLayout(self)
         detail_layout.setContentsMargins(10, 0, 5, 0)
 
@@ -61,7 +63,7 @@ class TimbratureDetailView(QWidget):
         scroll.setWidget(scroll_content)
         detail_layout.addWidget(scroll)
 
-    def display_data(self, data):
+    def display_data(self, data: Sequence[Any] | None) -> None:
         """
         Visualizza i dati passati.
         Args:
@@ -109,7 +111,7 @@ class TimbratureDetailView(QWidget):
 
             self.detail_labels[h].setText(val)
 
-    def _format_date(self, val_str, strict=True):
+    def _format_date(self, val_str: str, strict: bool = True) -> str:
         """Helper per formattazione date."""
         _ = strict
         with suppress(Exception):
@@ -128,7 +130,7 @@ class TimbratureDetailView(QWidget):
                     return dt.strftime("%d/%m/%Y")
         return val_str
 
-    def clear_fields(self):
+    def clear_fields(self) -> None:
         """Pulisce tutti i campi."""
         for label in self.detail_labels.values():
             label.setText("-")

@@ -15,7 +15,7 @@ class PrenotaBPBot(BaseBot):
     """Bot per la prenotazione massiva di Badge Provvisori (BP) sul Portale Fornitori."""
 
     @staticmethod
-    def get_columns() -> list:
+    def get_columns() -> list[dict[str, Any]]:
         """Definisce le colonne richieste per l'input dei dati (Numero BP, Note)."""
         return [
             {"name": "Numero BP", "type": "text"},
@@ -51,7 +51,7 @@ class PrenotaBPBot(BaseBot):
         self.fornitore = fornitore
         self.results: list[dict[str, Any]] = []
 
-    def _get_row_value(self, row: dict, target_key: str) -> str:
+    def _get_row_value(self, row: dict[str, Any], target_key: str) -> str:
         """Estrae un valore dalla riga in modo robusto (ignora case, spazi e underscore)."""
 
         def normalize(s):
@@ -93,16 +93,17 @@ class PrenotaBPBot(BaseBot):
         finally:
             self.log("Fine sessione Prenota BP.")
 
-    def _init_run_data(self, data: Any) -> list[dict]:
+    def _init_run_data(self, data: Any) -> list[dict[str, Any]]:
         """Inizializza i parametri della sessione."""
         if isinstance(data, dict):
             self.data_da = data.get("data_da") or self.data_da
             self.data_a = data.get("data_a") or self.data_a
             self.fornitore = data.get("fornitore") or self.fornitore
-            return data.get("rows", [])
-        return data
+            result: list[dict[str, Any]] = data.get("rows", [])
+            return result
+        return list(data)
 
-    def _process_single_bp(self, page: PrenotaBPPage, index: int, row: dict) -> bool:
+    def _process_single_bp(self, page: PrenotaBPPage, index: int, row: dict[str, Any]) -> bool:
         """Elabora un singolo buono prelievo."""
         num_bp = self._get_row_value(row, "Numero BP").strip()
         note = self._get_row_value(row, "Note di Ritiro").strip()

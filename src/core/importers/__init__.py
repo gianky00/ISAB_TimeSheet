@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Optional
+from typing import Any, Optional
 
 from src.core.importers.attivita import AttivitaImporter
 from src.core.importers.certificati import CertificatiImporter
@@ -13,19 +13,19 @@ class ExcelImporter:
     """
     Facade per l'importazione di dati da file Excel.
     Delega ai moduli specifici in src/core/importers/.
-    Mantiene la compatibilità con il codice esistente.
+    Mantiene la compatibilitÃ  con il codice esistente.
     """
 
-    # --- Contabilità ---
+    # --- ContabilitÃ  ---
     COLUMNS_MAPPING = ContabilitaImporter.COLUMNS_MAPPING
 
     @staticmethod
     def import_contabilita_dati(
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
-    ) -> tuple[bool, str, list, list]:
+    ) -> tuple[bool, str, list[tuple[Any, ...]], list[int]]:
         """
-        Importa i dati di contabilità dal file specificato.
+        Importa i dati di contabilitÃ  dal file specificato.
 
         Returns:
             Tuple: (success, message, data_rows, years_found)
@@ -38,9 +38,9 @@ class ExcelImporter:
     @staticmethod
     def import_giornaliere(
         root_path: str,
-        lookup_map: dict,
+        lookup_map: dict[str, str],
         progress_callback: Callable[[int, int], None] | None = None,
-    ) -> tuple[bool, str, list[tuple], list[int]]:
+    ) -> tuple[bool, str, list[tuple[Any, ...]], list[int]]:
         """
         Importa le giornaliere ricorsivamente dalla root path.
 
@@ -49,7 +49,7 @@ class ExcelImporter:
         """
         return GiornaliereImporter.import_giornaliere(root_path, lookup_map, progress_callback)
 
-    # --- Attività Programmate ---
+    # --- AttivitÃ  Programmate ---
     ATTIVITA_PROGRAMMATE_MAPPING = AttivitaImporter.ATTIVITA_PROGRAMMATE_MAPPING
     ATTIVITA_PROGRAMMATE_COLS = AttivitaImporter.ATTIVITA_PROGRAMMATE_COLS
 
@@ -57,8 +57,8 @@ class ExcelImporter:
     def import_attivita_programmate(
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
-    ) -> tuple[bool, str, list[tuple]]:
-        """Importa la programmazione attività."""
+    ) -> tuple[bool, str, list[tuple[Any, ...]]]:
+        """Importa la programmazione attivitÃ ."""
         return AttivitaImporter.import_attivita_programmate(file_path, progress_callback)
 
     # --- Scarico Ore ---
@@ -68,7 +68,7 @@ class ExcelImporter:
     def import_scarico_ore(
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
-    ) -> tuple[bool, str, list[tuple]]:
+    ) -> tuple[bool, str, list[tuple[Any, ...]]]:
         """Importa il file di scarico ore massivo."""
         return ScaricoOreImporter.import_scarico_ore(file_path, progress_callback)
 
@@ -84,7 +84,7 @@ class ExcelImporter:
     def import_certificati_campione(
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
-    ) -> tuple[bool, str, list[tuple]]:
+    ) -> tuple[bool, str, list[tuple[Any, ...]]]:
         return CertificatiImporter.import_certificati_campione(file_path, progress_callback)
 
     # --- Storico OdA ---
@@ -95,7 +95,7 @@ class ExcelImporter:
     def import_storico_oda(
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
-    ) -> tuple[bool, str, list[tuple]]:
+    ) -> tuple[bool, str, list[tuple[Any, ...]]]:
         return StoricoOdaImporter.import_storico_oda(file_path, progress_callback)
 
     # --- Helpers Vari ---

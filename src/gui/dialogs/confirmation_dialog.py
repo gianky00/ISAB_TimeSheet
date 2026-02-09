@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QVBoxLayout,
+    QWidget,
 )
 
 from src.core.constants import Icons
@@ -23,7 +24,13 @@ class ConfirmationDialog(QDialog):
         ERROR = "error"
         QUESTION = "question"
 
-    def __init__(self, parent=None, title="", message="", variant=Variant.QUESTION):
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        title: str = "",
+        message: str = "",
+        variant: str = Variant.QUESTION,
+    ) -> None:
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setMinimumWidth(380)
@@ -75,7 +82,7 @@ class ConfirmationDialog(QDialog):
 
         layout.addLayout(btn_layout)
 
-    def _get_icon_path(self, variant):
+    def _get_icon_path(self, variant: str) -> str | None:
         if variant == self.Variant.INFO:
             return get_asset_path(Icons.INFO)
         if variant == self.Variant.WARNING:
@@ -83,10 +90,10 @@ class ConfirmationDialog(QDialog):
         if variant == self.Variant.ERROR:
             return get_asset_path(Icons.X_CIRCLE)
         if variant == self.Variant.QUESTION:
-            return get_asset_path(Icons.HELP_CIRCLE)
+            return get_asset_path(Icons.HELP)
         return None
 
-    def _get_icon_color(self, variant):
+    def _get_icon_color(self, variant: str) -> str:
         if variant == self.Variant.INFO:
             return "#0d6efd"
         if variant == self.Variant.WARNING:
@@ -98,22 +105,22 @@ class ConfirmationDialog(QDialog):
         return "#333"
 
     @staticmethod
-    def confirm(parent, title, message) -> bool:
+    def confirm(parent: QWidget | None, title: str, message: str) -> bool:
         """Helper statico per conferme."""
         dlg = ConfirmationDialog(parent, title, message, variant=ConfirmationDialog.Variant.QUESTION)
         return dlg.exec() == QDialog.DialogCode.Accepted
 
     @staticmethod
-    def show_info(parent, title, message):
+    def show_info(parent: QWidget | None, title: str, message: str) -> None:
         dlg = ConfirmationDialog(parent, title, message, variant=ConfirmationDialog.Variant.INFO)
         dlg.exec()
 
     @staticmethod
-    def show_warning(parent, title, message):
+    def show_warning(parent: QWidget | None, title: str, message: str) -> None:
         dlg = ConfirmationDialog(parent, title, message, variant=ConfirmationDialog.Variant.WARNING)
         dlg.exec()
 
     @staticmethod
-    def show_error(parent, title, message):
+    def show_error(parent: QWidget | None, title: str, message: str) -> None:
         dlg = ConfirmationDialog(parent, title, message, variant=ConfirmationDialog.Variant.ERROR)
         dlg.exec()

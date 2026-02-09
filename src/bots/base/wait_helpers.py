@@ -13,7 +13,7 @@ Autore: Refactoring Sprint 2026-01
 
 import logging
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from contextlib import suppress
 from pathlib import Path
 
@@ -132,9 +132,9 @@ def poll_for_file(
     Returns:
         Path assoluto del file più recente, o None se timeout.
     """
-    directory = Path(directory)
-    if not directory.exists():
-        logger.error(f"Directory does not exist: {directory}")
+    directory_path = Path(directory)
+    if not directory_path.exists():
+        logger.error(f"Directory does not exist: {directory_path}")
         return None
 
     exclude_patterns = exclude_patterns or []
@@ -142,20 +142,20 @@ def poll_for_file(
 
     while time.time() - start_time < timeout:
         # Check se ci sono download in corso (crdownload, tmp, part)
-        in_progress = any(any(directory.glob(f"*{ext}")) for ext in (".crdownload", ".tmp", ".part"))
+        in_progress = any(any(directory_path.glob(f"*{ext}")) for ext in (".crdownload", ".tmp", ".part"))
 
         if in_progress:
             time.sleep(poll_interval)
             continue
 
         # Trova tutti i file matching
-        files = list(directory.glob(pattern))
+        files = list(directory_path.glob(pattern))
 
         # DEBUG AGGRESSIVO (Richiesto da User per Troubleshooting)
         if time.time() - start_time < 5:  # Logga solo nei primi 5 secondi per non spammare
-            all_files_in_dir = list(directory.glob("*"))
+            all_files_in_dir = list(directory_path.glob("*"))
             logger.debug(
-                f"[DEBUG-POLL] Scanning '{directory}'. Total files: {len(all_files_in_dir)}. Matching '{pattern}': {len(files)}"
+                f"[DEBUG-POLL] Scanning '{directory_path}'. Total files: {len(all_files_in_dir)}. Matching '{pattern}': {len(files)}"
             )
             if len(all_files_in_dir) < 20:
                 logger.debug(f"[DEBUG-POLL] Files: {[f.name for f in all_files_in_dir]}")
@@ -194,7 +194,7 @@ def poll_for_file(
 
         time.sleep(poll_interval)
 
-    logger.warning(f"Timeout polling for file in {directory} with pattern {pattern} (min_age={min_age})")
+    logger.warning(f"Timeout polling for file in {directory_path} with pattern {pattern} (min_age={min_age})")
     return None
 
 
@@ -229,7 +229,7 @@ def poll_for_download_complete(
 
 def poll_for_new_file(
     directory: Path | str,
-    files_before: set,
+    files_before: Iterable[Path | str],
     pattern: str = "*.xlsx",
     timeout: int = 120,
     poll_interval: float = 1.0,
@@ -247,10 +247,10 @@ def poll_for_new_file(
     Returns:
         Path del nuovo file o None.
     """
-    directory = Path(directory)
+    directory_path = Path(directory)
     # Crea dizionario {path: mtime} per lo snapshot
     # Questo permette di rilevare sia NUOVI file che FILE AGGIORNATI (overwrite)
-    snapshot_map = {}
+    snapshot_map: dict[Path, float] = {}
     for f_path in files_before:
         with suppress(Exception):
             p = Path(f_path).resolve()
@@ -258,16 +258,16 @@ def poll_for_new_file(
                 snapshot_map[p] = p.stat().st_mtime
 
     start_time = time.time()
-    logger.info(f"Monitoraggio files in {directory} (Snapshot: {len(snapshot_map)} files)...")
+    logger.info(f"Monitoraggio files in {directory_path} (Snapshot: {len(snapshot_map)} files)...")
 
     while time.time() - start_time < timeout:
         # 1. Check download in corso
-        if any(directory.glob("*.crdownload")) or any(directory.glob("*.tmp")):
+        if any(directory_path.glob("*.crdownload")) or any(directory_path.glob("*.tmp")):
             time.sleep(poll_interval)
             continue
 
         # 2. Get current files matching pattern
-        current_files = list(directory.glob(pattern))
+        current_files = list(directory_path.glob(pattern))
 
         # 3. Check for New or Modified files
         detected_file = None

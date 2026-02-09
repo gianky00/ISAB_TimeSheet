@@ -3,7 +3,7 @@ import logging
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from src.core.config_manager import CONFIG_DIR
 
@@ -17,11 +17,11 @@ class SyncTracker:
     """
 
     STATE_FILE: ClassVar[Path] = CONFIG_DIR / "data" / "sync_state.json"
-    _cache: ClassVar[dict] = {}
+    _cache: ClassVar[dict[str, Any]] = {}
     _loaded = False
 
     @classmethod
-    def _load(cls):
+    def _load(cls) -> None:
         """Carica lo stato dal file JSON."""
         if cls._loaded:
             return
@@ -39,7 +39,7 @@ class SyncTracker:
         cls._loaded = True
 
     @classmethod
-    def _save(cls):
+    def _save(cls) -> None:
         """Salva lo stato su file JSON."""
         try:
             cls.STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -48,7 +48,7 @@ class SyncTracker:
             logger.error(f"Errore salvataggio sync state: {e}")
 
     @classmethod
-    def update_status(cls, module: str, added: int, removed: int, duration: float = 0.0):
+    def update_status(cls, module: str, added: int, removed: int, duration: float = 0.0) -> None:
         """
         Aggiorna lo stato di sincronizzazione per un modulo.
 
@@ -73,10 +73,10 @@ class SyncTracker:
         cls._save()
 
     @classmethod
-    def get_status(cls, module: str) -> dict:
+    def get_status(cls, module: str) -> dict[str, Any]:
         """Restituisce lo stato salvato per il modulo, o un dict vuoto se assente."""
         cls._load()
-        return cls._cache.get(module, {})
+        return cls._cache.get(module, {})  # type: ignore[no-any-return]
 
     @classmethod
     def get_formatted_status(cls, module: str) -> str:

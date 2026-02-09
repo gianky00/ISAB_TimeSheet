@@ -9,15 +9,11 @@ from src.gui.panels import TimbratureDBPanel
 @pytest.fixture
 def timbrature_db_panel(qtbot, mocker):
     # Mock dependencies BEFORE creating the panel
-    mock_storage_class = mocker.patch(
-        "src.gui.panels.timbrature.panel.TimbratureStorage"
-    )
+    mock_storage_class = mocker.patch("src.gui.panels.timbrature.panel.TimbratureStorage")
     mock_storage_instance = mock_storage_class.return_value
     mock_storage_instance.get_lists.return_value = {"reparti": [], "cantieri": []}
 
-    mocker.patch(
-        "src.gui.panels.timbrature.panel.config_manager.load_config", return_value={}
-    )
+    mocker.patch("src.gui.panels.timbrature.panel.config_manager.load_config", return_value={})
     mocker.patch("src.gui.panels.timbrature.panel.get_asset_path", return_value="")
 
     panel = TimbratureDBPanel()
@@ -67,9 +63,7 @@ def test_employee_detail_update(timbrature_db_panel, qtbot):
         combo_rep.setCurrentText("NUOVO_REPARTO")
 
     # Verify call
-    panel.storage.update_employee_details.assert_called_with(
-        "Mario", "Rossi", reparto="NUOVO_REPARTO"
-    )
+    panel.storage.update_employee_details.assert_called_with("Mario", "Rossi", reparto="NUOVO_REPARTO")
 
 
 def test_import_excel_manually_success(timbrature_db_panel, qtbot, mocker):

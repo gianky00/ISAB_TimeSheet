@@ -18,7 +18,7 @@ class MenuBarComponent(QObject):
         super().__init__(main_window)
         self.main_window = main_window
         self.command_palette = None
-        self._last_palette_toggle = 0
+        self._last_palette_toggle: float = 0
         self._bug_dialog = None
         self._setup_shortcuts()
 

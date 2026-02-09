@@ -1,7 +1,7 @@
 import warnings
 from collections.abc import Callable
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import pandas as pd
 
@@ -53,7 +53,7 @@ class StoricoOdaImporter(BaseImporter):
         cls,
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
-    ) -> tuple[bool, str, list[tuple]]:
+    ) -> tuple[bool, str, list[tuple[Any, ...]]]:
         """Importa il file Storico OdA."""
         path = Path(file_path)
         if not path.exists():
@@ -91,12 +91,12 @@ class StoricoOdaImporter(BaseImporter):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             try:
-                return pd_obj.read_excel(path, sheet_name="Formato PF")
+                return pd_obj.read_excel(path, sheet_name="Formato PF")  # type: ignore[no-any-return]
             except ValueError:
-                return pd_obj.read_excel(path, sheet_name=0)
+                return pd_obj.read_excel(path, sheet_name=0)  # type: ignore[no-any-return]
 
     @classmethod
-    def _map_storico_oda_columns(cls, df: pd.DataFrame) -> dict:
+    def _map_storico_oda_columns(cls, df: pd.DataFrame) -> dict[str, str]:
         """Mappa le colonne dell'Excel a quelle del DB con precisione."""
         df.columns = df.columns.astype(str).str.strip()
 
@@ -122,7 +122,7 @@ class StoricoOdaImporter(BaseImporter):
         return df.reindex(columns=cls.STORICO_ODA_COLS).fillna("")
 
     @classmethod
-    def _clean_storico_oda_data(cls, df: pd.DataFrame):
+    def _clean_storico_oda_data(cls, df: pd.DataFrame) -> None:
         """Pulisce date, numeri e ID."""
         pd_obj = cls._get_pd()
 
@@ -159,11 +159,11 @@ class StoricoOdaImporter(BaseImporter):
 
         # Altre stringhe
         for col in df.columns:
-            if col not in [*num_cols, "data_oda", "data_consegna", *id_cols]:
+            if col not in (*num_cols, "data_oda", "data_consegna", *id_cols):
                 df[col] = df[col].fillna("").astype(str).str.strip()
 
     @staticmethod
-    def _clean_euro_num(x):
+    def _clean_euro_num(x: Any) -> float:
         """Helper for European numbers (1.234,56 -> 1234.56).
 
         Always returns float to match SQLite REAL column behavior (5.0 -> '5.0').

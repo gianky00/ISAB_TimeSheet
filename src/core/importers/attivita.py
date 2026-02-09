@@ -1,7 +1,7 @@
 import warnings
 from collections.abc import Callable
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import pandas as pd
 
@@ -37,7 +37,7 @@ class AttivitaImporter(BaseImporter):
         cls,
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
-    ) -> tuple[bool, str, list[tuple]]:
+    ) -> tuple[bool, str, list[tuple[Any, ...]]]:
         """Importa il file Attività Programmate (veloce, senza colori)."""
         path = Path(file_path)
         if not path.exists():
@@ -64,15 +64,17 @@ class AttivitaImporter(BaseImporter):
             warnings.simplefilter("ignore")
             pd_obj = cls._get_pd()
             try:
-                return pd_obj.read_excel(path, sheet_name="Riepilogo", header=2)
+                res = pd_obj.read_excel(path, sheet_name="Riepilogo", header=2)
+                return res if isinstance(res, pd.DataFrame) else None
             except (ValueError, Exception):
                 try:
-                    return pd_obj.read_excel(
+                    res = pd_obj.read_excel(
                         path,
                         sheet_name="Riepilogo",
                         header=2,
                         engine="openpyxl",
                     )
+                    return res if isinstance(res, pd.DataFrame) else None
                 except Exception:
                     return None
 
@@ -97,7 +99,7 @@ class AttivitaImporter(BaseImporter):
         return df
 
     @classmethod
-    def _prepare_attivita_rows(cls, df: pd.DataFrame) -> list[tuple]:
+    def _prepare_attivita_rows(cls, df: pd.DataFrame) -> list[tuple[Any, ...]]:
         for db_col in cls.ATTIVITA_PROGRAMMATE_MAPPING.values():
             if db_col not in df.columns:
                 df[db_col] = ""

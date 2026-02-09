@@ -12,7 +12,7 @@ class ToastOverlay(QWidget):
     Overlay per mostrare notifiche temporanee (Toast).
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.SubWindow)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
@@ -60,7 +60,7 @@ class ToastOverlay(QWidget):
 
         self.hide()
 
-    def show_toast(self, message: str, duration: int = 3000):
+    def show_toast(self, message: str, duration: int = 3000) -> None:
         """Mostra il toast con il messaggio specificato."""
         self.label.setText(message)
         self.adjustSize()
@@ -82,9 +82,10 @@ class ToastOverlay(QWidget):
 
         self.timer.start(duration)
 
-    def hide_toast(self):
+    def hide_toast(self) -> None:
         """Nasconde il toast con dissolvenza."""
         self.anim.setStartValue(1)
         self.anim.setEndValue(0)
         self.anim.start()
+        # In PyQt6, connect returns a connection object, but we just need to ensure the slot is called
         self.anim.finished.connect(self.hide)

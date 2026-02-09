@@ -42,18 +42,27 @@ class TimbratureBot(BaseBot):
         self.fornitore = fornitore
         self.storage = TimbratureStorage()
 
-    def validate_data(self, data: list[dict[str, Any]]) -> tuple[bool, str]:
+    def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """Validazione specifica per Timbrature."""
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:
             return False, base_msg
 
-        if not self.fornitore and (not data or not any("fornitore" in row for row in data)):
+        # Extract rows from dict if needed
+        rows: list[dict[str, Any]]
+        if isinstance(data, dict):
+            rows = data.get("rows", [])
+            if data.get("fornitore"):
+                self.fornitore = str(data.get("fornitore"))
+        else:
+            rows = data
+
+        if not self.fornitore and not any("fornitore" in row for row in rows):
             return False, "Fornitore non specificato."
 
         if not self.data_da:
-            if data and data[0].get("data_da"):
-                self.data_da = str(data[0].get("data_da"))
+            if rows and rows[0].get("data_da"):
+                self.data_da = str(rows[0].get("data_da"))
             else:
                 return False, "Data Inizio non specificata."
 

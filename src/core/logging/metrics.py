@@ -7,7 +7,7 @@ from collections import defaultdict
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from .config import get_config
 
@@ -43,14 +43,14 @@ class MetricsSink:
     Scrive metriche in file JSONL (newline-delimited JSON).
     """
 
-    def __init__(self, config=None):
+    def __init__(self, config: Any = None) -> None:
         self.config = config or get_config()
         self.metrics_file = self.config.metrics_dir / "performance.jsonl"
 
         # Assicura che directory esista
         self.config.metrics_dir.mkdir(parents=True, exist_ok=True)
 
-    def write_metric(self, metric: PerformanceMetric):
+    def write_metric(self, metric: PerformanceMetric) -> None:
         """
         Scrive metrica su file.
 
@@ -115,26 +115,26 @@ class PerformanceTracker:
     - Rileva anomalie (operazioni lente)
     """
 
-    _instance = None
+    _instance: Optional["PerformanceTracker"] = None
 
     @classmethod
-    def instance(cls):
+    def instance(cls) -> "PerformanceTracker":
         """Restituisce istanza singleton."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.sink = MetricsSink()
-        self._in_memory_metrics = defaultdict(list)  # operation -> [durations]
-        self._baselines = {}  # operation -> baseline_ms
+        self._in_memory_metrics: dict[str, list[float]] = defaultdict(list)  # operation -> [durations]
+        self._baselines: dict[str, float] = {}  # operation -> baseline_ms
 
     def track(
         self,
         operation: str,
         duration_ms: float,
         metadata: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """
         Registra metrica di performance.
 
@@ -174,7 +174,7 @@ class PerformanceTracker:
         count = len(sorted_durations)
 
         stats = {
-            "count": count,
+            "count": float(count),
             "avg": sum(sorted_durations) / count,
             "min": sorted_durations[0],
             "max": sorted_durations[-1],
@@ -185,7 +185,7 @@ class PerformanceTracker:
 
         return stats
 
-    def set_baseline(self, operation: str, baseline_ms: float):
+    def set_baseline(self, operation: str, baseline_ms: float) -> None:
         """
         Imposta baseline per operazione.
 
@@ -236,7 +236,7 @@ class PerformanceTracker:
 
         return duration_ms > (baseline * threshold_multiplier)
 
-    def load_baselines_from_file(self, file_path: Path):
+    def load_baselines_from_file(self, file_path: Path) -> None:
         """
         Carica baselines da file JSON.
 
@@ -246,7 +246,7 @@ class PerformanceTracker:
         with suppress(Exception), file_path.open("r", encoding="utf-8") as f:
             self._baselines = json.load(f)
 
-    def save_baselines_to_file(self, file_path: Path):
+    def save_baselines_to_file(self, file_path: Path) -> None:
         """
         Salva baselines su file JSON.
 
@@ -256,7 +256,7 @@ class PerformanceTracker:
         with suppress(Exception), file_path.open("w", encoding="utf-8") as f:
             json.dump(self._baselines, f, indent=2)
 
-    def auto_learn_baselines(self):
+    def auto_learn_baselines(self) -> None:
         """
         Auto-learn baselines dalle metriche correnti.
 

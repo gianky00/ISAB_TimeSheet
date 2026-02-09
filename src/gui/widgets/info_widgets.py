@@ -3,8 +3,10 @@ SyncroJob - Info Widgets
 Dialoghi e card informative.
 """
 
+from collections.abc import Callable
+
 from PyQt6.QtCore import QPoint, QRect, QSize, Qt
-from PyQt6.QtGui import QCursor
+from PyQt6.QtGui import QCursor, QMouseEvent
 from PyQt6.QtWidgets import (
     QApplication,
     QDialog,
@@ -13,6 +15,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
     QVBoxLayout,
+    QWidget,
 )
 
 from src.core.constants import Icons
@@ -22,7 +25,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class DetailedInfoDialog(QDialog):
     """Dialogo modale per spiegazioni dettagliate KPI."""
 
-    def __init__(self, title, content, parent=None):
+    def __init__(self, title: str, content: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Dettaglio KPI")
         self.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
@@ -43,9 +46,7 @@ class DetailedInfoDialog(QDialog):
 
         layout = QVBoxLayout(self)
         lbl_title = QLabel(title)
-        lbl_title.setStyleSheet(
-            "font-weight: bold; font-size: 16px; color: #0d6efd; margin-bottom: 10px;"
-        )
+        lbl_title.setStyleSheet("font-weight: bold; font-size: 16px; color: #0d6efd; margin-bottom: 10px;")
         layout.addWidget(lbl_title)
 
         lbl_content = QLabel(content)
@@ -58,14 +59,16 @@ class DetailedInfoDialog(QDialog):
         lbl_close.setStyleSheet("color: #adb5bd; font-size: 11px;")
         layout.addWidget(lbl_close)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         self.accept()
 
 
 class InfoLabel(QPushButton):
     """Bottone informativo accessibile (icona SVG)."""
 
-    def __init__(self, title, get_text_callback, parent=None):
+    def __init__(
+        self, title: str, get_text_callback: str | Callable[[], str], parent: QWidget | None = None
+    ) -> None:
         super().__init__("", parent)
         self.setIcon(get_colored_icon(get_asset_path(Icons.HELP), "#000000"))
         self.setIconSize(QSize(18, 18))
@@ -78,19 +81,15 @@ class InfoLabel(QPushButton):
             "QPushButton { color: #6c757d; font-weight: bold; font-size: 16px; background: transparent; border: none; padding: 0px 5px; } QPushButton:hover { color: #0d6efd; }"
         )
 
-    def _show_info(self):
+    def _show_info(self) -> None:
         content = (
-            self.get_text_callback()
-            if callable(self.get_text_callback)
-            else str(self.get_text_callback)
+            self.get_text_callback() if callable(self.get_text_callback) else str(self.get_text_callback)
         )
         dlg = DetailedInfoDialog(self.title, content, self.window())
         cursor_pos = QCursor.pos()
         top_left = self.mapToGlobal(QPoint(0, 0))
         widget_rect = QRect(top_left, self.size())
-        target_pos = (
-            cursor_pos if widget_rect.contains(cursor_pos) else widget_rect.center()
-        )
+        target_pos = cursor_pos if widget_rect.contains(cursor_pos) else widget_rect.center()
         screen = QApplication.screenAt(target_pos)
         if screen:
             dlg.adjustSize()
@@ -113,9 +112,16 @@ class InfoLabel(QPushButton):
 class KPIBigCard(QFrame):
     """Card per mostrare un KPI numerico principale."""
 
-    def __init__(self, title, value, color="#0d6efd", parent=None, subtitle=None):
+    def __init__(
+        self,
+        title: str,
+        value: str,
+        color: str = "#0d6efd",
+        parent: QWidget | None = None,
+        subtitle: str | None = None,
+    ) -> None:
         super().__init__(parent)
-        self.info_content_callback = lambda: "Nessuna informazione disponibile."
+        self.info_content_callback: Callable[[], str] = lambda: "Nessuna informazione disponibile."
         self.setStyleSheet(
             f"""
             QFrame {{
@@ -128,15 +134,6 @@ class KPIBigCard(QFrame):
         )
         self.setMinimumWidth(200)
         self.setMinimumHeight(120)
-
-        # REMOVED: QGraphicsDropShadowEffect causes QPainter warnings
-        # Use CSS box-shadow instead (not fully supported but better than warnings)
-        # shadow = QGraphicsDropShadowEffect(self)
-        # shadow.setBlurRadius(20)
-        # shadow.setXOffset(0)
-        # shadow.setYOffset(5)
-        # shadow.setColor(QColor(0, 0, 0, 20))
-        # self.setGraphicsEffect(shadow)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -162,14 +159,12 @@ class KPIBigCard(QFrame):
 
         if subtitle:
             lbl_sub = QLabel(subtitle)
-            lbl_sub.setStyleSheet(
-                "color: #adb5bd; font-size: 11px; border: none; background: transparent;"
-            )
+            lbl_sub.setStyleSheet("color: #adb5bd; font-size: 11px; border: none; background: transparent;")
             lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(lbl_sub)
 
-    def set_info_callback(self, callback):
+    def set_info_callback(self, callback: Callable[[], str]) -> None:
         self.info_content_callback = callback
 
-    def _get_info_content(self):
+    def _get_info_content(self) -> str:
         return self.info_content_callback()

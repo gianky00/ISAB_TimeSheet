@@ -9,9 +9,7 @@ from src.gui.widgets.audit_log_widget import AuditLogWidget
 
 class TestNotificationsPanelDeep:
     def test_refresh_notifications_with_data(self, qapp, qtbot):
-        with patch(
-            "src.core.notification_manager.NotificationManager.instance"
-        ) as mock_manager:
+        with patch("src.core.notification_manager.NotificationManager.instance") as mock_manager:
             mock_inst = mock_manager.return_value
             mock_inst.get_notifications.return_value = [
                 {
@@ -51,9 +49,7 @@ class TestNotificationsPanelDeep:
         assert panel.toolbar._filter_chips["error"].isChecked() is True
 
     def test_filter_errors_logic(self, qapp, qtbot):
-        with patch(
-            "src.core.notification_manager.NotificationManager.instance"
-        ) as mock_manager:
+        with patch("src.core.notification_manager.NotificationManager.instance") as mock_manager:
             mock_inst = mock_manager.return_value
             now_iso = datetime.now().isoformat()
             data = [
@@ -96,19 +92,14 @@ class TestNotificationsPanelDeep:
                     for i in range(layout.count()):
                         w = layout.itemAt(i).widget()
                         # NotificationCard usa 'notification'
-                        if (
-                            hasattr(w, "notification")
-                            and w.notification.get("level") == "error"
-                        ):
+                        if hasattr(w, "notification") and w.notification.get("level") == "error":
                             return True
                 return False
 
             qtbot.waitUntil(check_found, timeout=3000)
 
     def test_clear_notifications_confirm(self, qapp, qtbot):
-        with patch(
-            "src.core.notification_manager.NotificationManager.instance"
-        ) as mock_manager:
+        with patch("src.core.notification_manager.NotificationManager.instance") as mock_manager:
             mock_inst = mock_manager.return_value
             panel = NotificationsPanel()
             qtbot.addWidget(panel)
@@ -122,9 +113,7 @@ class TestNotificationsPanelDeep:
 
     def test_audit_log_widget_refresh(self, qapp, qtbot):
         # Patch AuditManager in the correct module where AuditLogWidget is defined
-        with patch(
-            "src.gui.widgets.audit_log_widget.AuditManager.instance"
-        ) as mock_audit:
+        with patch("src.gui.widgets.audit_log_widget.AuditManager.instance") as mock_audit:
             mock_inst = mock_audit.return_value
             mock_inst.verify_integrity.return_value = True
             mock_inst.get_categories.return_value = ["C1"]

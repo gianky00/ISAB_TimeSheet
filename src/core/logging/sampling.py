@@ -38,7 +38,7 @@ class ContextAwareSampler:
         self.operation_rates: dict[str, float] = {}
 
         # Trace IDs da loggare sempre
-        self.always_log_traces: set = set()
+        self.always_log_traces: set[str] = set()
 
         # Counter per sampling deterministico
         self._counters: dict[str, int] = {}
@@ -47,7 +47,7 @@ class ContextAwareSampler:
         """Valida e normalizza rate."""
         return max(0.0, min(1.0, rate))
 
-    def set_operation_rate(self, operation: str, rate: float):
+    def set_operation_rate(self, operation: str, rate: float) -> None:
         """
         Imposta rate custom per operazione specifica.
 
@@ -57,7 +57,7 @@ class ContextAwareSampler:
         """
         self.operation_rates[operation] = self._validate_rate(rate)
 
-    def add_trace_to_always_log(self, trace_id: str):
+    def add_trace_to_always_log(self, trace_id: str) -> None:
         """
         Marca trace_id da loggare sempre.
 

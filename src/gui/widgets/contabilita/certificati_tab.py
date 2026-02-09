@@ -5,7 +5,7 @@ from collections import defaultdict
 from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QBrush, QColor, QIcon, QPainter, QPixmap
@@ -39,9 +39,16 @@ from src.utils.helpers import get_asset_path
 class ScadenzeAnalysisDialog(QDialog):
     """Finestra di analisi scadenze certificati - Design professionale."""
 
-    def __init__(self, certificates_data: list, parent=None):
+    def __init__(self, certificates_data: list[Any], parent=None):
         super().__init__(parent)
         self.certificates_data = certificates_data
+
+        # Widget members (Strict Typing - Option D)
+        self.header: QFrame
+        self.stats_frame: QFrame
+        self.content_widget: QWidget
+        self.footer: QFrame
+
         self._setup_ui()
 
     def _setup_ui(self):
@@ -113,7 +120,7 @@ class ScadenzeAnalysisDialog(QDialog):
         urgenti = [c for c in self.certificates_data if c["days"] is not None and 0 <= c["days"] <= 15]
         attenzione = [c for c in self.certificates_data if c["days"] is not None and 16 <= c["days"] <= 30]
         attivi = [c for c in self.certificates_data if c["days"] is not None and c["days"] > 30]
-        nd = [c for c in self.certificates_data if c["days"] is None]
+        non_disp = [c for c in self.certificates_data if c["days"] is None]
 
         stats_layout.addWidget(
             self._create_stat_card("Totale Monitorati", len(self.certificates_data), "#3b82f6")
@@ -159,8 +166,10 @@ class ScadenzeAnalysisDialog(QDialog):
             content_layout.addWidget(
                 self._create_section("ATTIVI (oltre 30 giorni)", attivi, "#16a34a", "#f0fdf4")
             )
-        if nd:
-            content_layout.addWidget(self._create_section("DATA NON DISPONIBILE", nd, "#6b7280", "#f9fafb"))
+        if non_disp:
+            content_layout.addWidget(
+                self._create_section("DATA NON DISPONIBILE", non_disp, "#6b7280", "#f9fafb")
+            )
 
         if not self.certificates_data:
             empty_label = QLabel("Nessun certificato in monitoraggio.")
@@ -266,7 +275,7 @@ class ScadenzeAnalysisDialog(QDialog):
 
         return card
 
-    def _create_section(self, title: str, items: list, color: str, bg_color: str) -> QFrame:
+    def _create_section(self, title: str, items: list[Any], color: str, bg_color: str) -> QFrame:
         """Crea una sezione con elenco certificati."""
         section = QFrame()
         section.setStyleSheet(
@@ -360,7 +369,7 @@ class ScadenzeAnalysisDialog(QDialog):
 
             total_height = header_height + stats_height + content_height + footer_height + 40
 
-            # Limite di sicurezza per evitare allocazioni pixmap eccessive (es. report infiniti)
+            # Limite di sicurezza per evitare allocazioni pixmap troppo grandi (es. report infiniti)
             total_height = min(total_height, 15000)
             total_width = max(900, self.width())
 
@@ -501,6 +510,13 @@ class CertificatiCampioneTab(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        # Widget members (Strict Typing - Option D)
+        self.tree: QTreeWidget
+        self.show_excluded_check: QCheckBox
+        self.excluded_count_label: QLabel
+        self.btn_analyze: QPushButton
+
         self._exclusions: set[str] = set()  # Set di matricole escluse
         self._show_excluded = False  # Flag per mostrare/nascondere esclusi
         self._load_exclusions()
@@ -543,6 +559,8 @@ class CertificatiCampioneTab(QWidget):
 
         # Header configuration con larghezza dinamica per evitare troncamenti
         h = self.tree.header()
+        if h is None:
+            raise RuntimeError("Tree header is None")
         # Imposta tutte le colonne a ResizeToContents per adattarsi al contenuto
         for col in range(10):
             h.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
@@ -705,6 +723,8 @@ class CertificatiCampioneTab(QWidget):
         """Applica la visibilità agli elementi in base allo stato di esclusione."""
         for i in range(self.tree.topLevelItemCount()):
             parent = self.tree.topLevelItem(i)
+            if parent is None:
+                raise RuntimeError(f"Tree topLevelItem({i}) is None")
             matricola = self._extract_matricola_from_parent(parent)
             is_excluded = matricola in self._exclusions
 
@@ -717,10 +737,10 @@ class CertificatiCampioneTab(QWidget):
     def _extract_matricola_from_parent(self, parent_item) -> str:
         """Estrae la matricola dal testo del nodo padre."""
         # Il formato è: "matricola  •  costruttore  •  modello  •  days_text"
-        text = parent_item.text(0)
+        text = str(parent_item.text(0))
         parts = text.split("  •  ")
         if parts:
-            return parts[0].strip()
+            return str(parts[0].strip())
         return ""
 
     def _update_excluded_count_label(self):
@@ -995,9 +1015,13 @@ class CertificatiCampioneTab(QWidget):
         query = text.lower()
         for i in range(self.tree.topLevelItemCount()):
             parent = self.tree.topLevelItem(i)
+            if parent is None:
+                raise RuntimeError(f"Tree topLevelItem({i}) is None")
             parent_visible = False
             for j in range(parent.childCount()):
                 child = parent.child(j)
+                if child is None:
+                    raise RuntimeError(f"Parent child({j}) is None")
                 match = any(query in child.text(c).lower() for c in range(self.tree.columnCount()))
                 child.setHidden(not match)
                 if match:
@@ -1074,10 +1098,11 @@ class CertificatiCampioneTab(QWidget):
                     exclude_action.triggered.connect(lambda: self._exclude_matricola(matricola))
                     menu.addAction(exclude_action)
 
-        menu.exec(self.tree.viewport().mapToGlobal(pos))
+        if viewport := self.tree.viewport():
+            menu.exec(viewport.mapToGlobal(pos))
 
     def _exclude_matricola(self, matricola: str):
-        """Esclude una matricola dal monitoraggio."""
+        """Rimuove una matricola dal monitoraggio."""
         self._exclusions.add(matricola)
         self._save_exclusions()
         self._load_data()  # Ricarica per aggiornare lo styling
@@ -1147,6 +1172,8 @@ class CertificatiCampioneTab(QWidget):
 
         for i in range(self.tree.topLevelItemCount()):
             parent = self.tree.topLevelItem(i)
+            if parent is None:
+                raise RuntimeError(f"Tree topLevelItem({i}) is None")
             matricola = self._extract_matricola_from_parent(parent)
 
             # Salta gli esclusi
@@ -1154,7 +1181,8 @@ class CertificatiCampioneTab(QWidget):
                 continue
 
             # Estrai i dati dal UserRole
-            days = (user_data := parent.data(0, Qt.ItemDataRole.UserRole)) and user_data.get("days")
+            user_data = parent.data(0, Qt.ItemDataRole.UserRole)
+            days = user_data.get("days") if user_data else None
 
             # Estrai altri dati dal testo del nodo padre
             # Formato: "matricola  •  costruttore  •  modello  •  [range  •]  days_text"

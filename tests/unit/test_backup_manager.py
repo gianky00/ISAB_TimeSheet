@@ -173,7 +173,7 @@ class TestBackupManager:
 
     def test_restore_backup_non_existent(self, mock_fs):
         """Test ripristino con file mancante."""
-        success, _ = BackupManager.restore_backup("/non/existent.zip")
+        success, message = BackupManager.restore_backup("/non/existent.zip")
         assert success is False
         assert "non trovato" in message
 
@@ -182,6 +182,6 @@ class TestBackupManager:
         bad_zip = Path("/tmp/bad.zip")
         mock_fs.create_file(bad_zip, contents="not a zip")
 
-        success, _ = BackupManager.restore_backup(str(bad_zip))
+        success, message = BackupManager.restore_backup(str(bad_zip))
         assert success is False
         assert "non valido" in message

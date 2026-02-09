@@ -6,6 +6,7 @@ Gestisce le funzionalità di ricerca per i dati della Contabilità Strumentale.
 import logging
 import sqlite3
 from pathlib import Path
+from typing import Any
 
 from src.core.database import db_manager
 
@@ -16,7 +17,7 @@ class ContabilitaSearch:
     """Gestore per le funzionalità di ricerca nel database della Contabilità Strumentale."""
 
     @classmethod
-    def search_oda(cls, db_path: Path, query: str) -> list[dict]:
+    def search_oda(cls, db_path: Path, query: str) -> list[dict[str, Any]]:
         """
         Cerca OdA per codice, descrizione o ODC.
         Returns:
@@ -30,7 +31,7 @@ class ContabilitaSearch:
         if len(query) < 2:
             return []  # Minimo 2 caratteri
 
-        results = []
+        results: list[dict[str, Any]] = []
         try:
             with db_manager.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
@@ -83,13 +84,13 @@ class ContabilitaSearch:
     @classmethod
     def search_extended(
         cls, db_path: Path, query: str, year: int | None = None, limit: int = 100
-    ) -> dict[str, list[dict]]:
+    ) -> dict[str, list[dict[str, Any]]]:
         """Ricerca estesa in tutti i moduli (Giornaliere, Scarico Ore, Certificati)."""
         if not db_path.exists() or len(query.strip()) < 2:
             return {}
 
         query = query.strip().lower()
-        out: dict[str, list[dict]] = {
+        out: dict[str, list[dict[str, Any]]] = {
             "GIORNALIERE": [],
             "CANTIERE": [],
             "CERTIFICATI": [],
@@ -112,8 +113,8 @@ class ContabilitaSearch:
         return out
 
     @staticmethod
-    def _fmt_date(val):
-        """Helper per formattare date ISO in IT."""
+    def _fmt_date(val: Any) -> str:
+        """Helper per formattazione date ISO in IT."""
         try:
             if not val:
                 return ""
@@ -126,10 +127,12 @@ class ContabilitaSearch:
             return str(val)
 
     @classmethod
-    def _search_giornaliere(cls, cursor, query, year, limit) -> list[dict]:
+    def _search_giornaliere(
+        cls, cursor: sqlite3.Cursor, query: str, year: int | None, limit: int
+    ) -> list[dict[str, Any]]:
         """Esegue la ricerca specifica nelle timbrature giornaliere."""
         like = f"%{query}%"
-        params = [like, like]
+        params: list[Any] = [like, like]
         where = ""
         if year:
             where = " AND data LIKE ?"
@@ -145,10 +148,12 @@ class ContabilitaSearch:
         ]
 
     @classmethod
-    def _search_scarico_ore(cls, cursor, query, year, limit) -> list[dict]:
+    def _search_scarico_ore(
+        cls, cursor: sqlite3.Cursor, query: str, year: int | None, limit: int
+    ) -> list[dict[str, Any]]:
         """Esegue la ricerca specifica nello scarico ore (cantiere)."""
         like = f"%{query}%"
-        params = [like, like, like]
+        params: list[Any] = [like, like, like]
         where = ""
         if year:
             where = " AND data LIKE ?"
@@ -171,7 +176,7 @@ class ContabilitaSearch:
         ]
 
     @classmethod
-    def _search_certificati(cls, cursor, query, limit) -> list[dict]:
+    def _search_certificati(cls, cursor: sqlite3.Cursor, query: str, limit: int) -> list[dict[str, Any]]:
         """Esegue la ricerca specifica nei certificati campione."""
         like = f"%{query}%"
         sql = """SELECT modello, costruttore, matricola FROM certificati_campione

@@ -40,9 +40,7 @@ class TestValidatorsRobust:
 
     def test_validate_oda_invalid_chars(self):
         """Test caratteri non permessi in OdA."""
-        assert (
-            InputValidator.validate_oda("ODA-123").valid is False
-        )  # trattino non in regex base
+        assert InputValidator.validate_oda("ODA-123").valid is False  # trattino non in regex base
         assert InputValidator.validate_oda("ODA 123").valid is False
 
     def test_validate_oda_too_long(self):
@@ -65,9 +63,7 @@ class TestValidatorsRobust:
     def test_validate_cf_format_error(self):
         """Test CF formato errato (regex)."""
         assert InputValidator.validate_codice_fiscale("123").valid is False
-        assert (
-            InputValidator.validate_codice_fiscale("RSSMRA80A01H5011").valid is False
-        )  # Ultimo char numero
+        assert InputValidator.validate_codice_fiscale("RSSMRA80A01H5011").valid is False  # Ultimo char numero
 
     # --- Date Tests ---
     def test_validate_date_it_valid(self):
@@ -82,9 +78,7 @@ class TestValidatorsRobust:
 
     def test_validate_date_it_invalid_value(self):
         """Test data impossibile."""
-        res = InputValidator.validate_date_italian(
-            "30.02.2023"
-        )  # Febbraio non ha 30 giorni
+        res = InputValidator.validate_date_italian("30.02.2023")  # Febbraio non ha 30 giorni
         assert res.valid is False
         assert "non esistente" in res.error
 

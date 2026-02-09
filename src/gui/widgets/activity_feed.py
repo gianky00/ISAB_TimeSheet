@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt
 from PyQt6.QtWidgets import (
@@ -24,7 +25,7 @@ class ActivityItem(QFrame):
     opacity_effect: QGraphicsOpacityEffect | None
     fade_in_animation: QPropertyAnimation | None
 
-    def __init__(self, log_entry: dict, parent=None, animate=True):
+    def __init__(self, log_entry: dict[str, Any], parent: QWidget | None = None, animate: bool = True):
         super().__init__(parent)
         self.log_entry = log_entry
         self.setFrameShape(QFrame.Shape.NoFrame)
@@ -256,7 +257,7 @@ class ActivityFeed(QWidget):
 
         self.refresh_feed()
 
-    def _on_new_log_added(self, log_entry: dict):
+    def _on_new_log_added(self, log_entry: dict[str, Any]):
         """Chiamato quando viene aggiunto un nuovo log all'AuditManager."""
         # Refresh della feed per mostrare il nuovo log
         self.refresh_feed()
@@ -271,15 +272,15 @@ class ActivityFeed(QWidget):
         try:
             # Pulisci: remove all but stretch (last item)
             while self.feed_layout.count() > 1:
-                item = self.feed_layout.takeAt(0)
-                if item.widget():
-                    widget = item.widget()
-                    # Ferma animazioni e rimuovi effetti prima di eliminare
-                    if hasattr(widget, "fade_in_animation") and widget.fade_in_animation is not None:
-                        widget.fade_in_animation.stop()
-                    if widget.graphicsEffect():
-                        widget.setGraphicsEffect(None)
-                    widget.deleteLater()
+                layout_item = self.feed_layout.takeAt(0)
+                if layout_item:
+                    widget = layout_item.widget()
+                    if widget is not None:
+                        if isinstance(widget, ActivityItem) and widget.fade_in_animation is not None:
+                            widget.fade_in_animation.stop()
+                        if widget.graphicsEffect():
+                            widget.setGraphicsEffect(None)
+                        widget.deleteLater()
 
             # Limit to 10 latest
             from src.core.audit_manager import AuditManager
@@ -306,8 +307,8 @@ class ActivityFeed(QWidget):
                 return
 
             for log in logs:
-                item = ActivityItem(log, animate=False)  # Disabilita animazione
+                activity = ActivityItem(log, animate=False)
                 # Insert at beginning (left)
-                self.feed_layout.insertWidget(self.feed_layout.count() - 1, item)
+                self.feed_layout.insertWidget(self.feed_layout.count() - 1, activity)
         finally:
             self._refreshing = False

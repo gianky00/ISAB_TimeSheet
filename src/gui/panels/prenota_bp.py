@@ -79,8 +79,8 @@ class PrenotaBPPanel(BaseBotPanel):
     def _open_settings(self):
         """Apre le impostazioni."""
         main_window = self.window()
-        if hasattr(main_window, "show_settings"):
-            main_window.show_settings()
+        if main_window is not None and hasattr(main_window, "show_settings"):
+            main_window.show_settings()  # dynamic dispatch via hasattr
 
     def _load_saved_data(self):
         config = config_manager.load_config()
@@ -152,8 +152,8 @@ class PrenotaBPPanel(BaseBotPanel):
             headless=config.get("browser_headless", False),
             timeout=config.get("browser_timeout", 30),
             fornitore=fornitore,
-            data_da=date_da,
-            data_a=date_a,
+            data_da=date_da or "",
+            data_a=date_a or "",
         )
 
         bot_data = {

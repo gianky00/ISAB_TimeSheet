@@ -3,7 +3,7 @@ PriorityBadge - Badge component per visualizzare la priorità di una notifica.
 Supporta High (con pulse animation), Medium e Low.
 """
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from PyQt6.QtCore import QVariantAnimation, pyqtProperty  # type: ignore[attr-defined]
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
@@ -26,7 +26,7 @@ class PriorityBadge(QWidget):
         "low": "#4CAF50",  # Green
     }
 
-    def __init__(self, priority: str = "low", parent: QWidget | None = None):
+    def __init__(self, priority: str = "low", parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.priority = priority.lower()
         self._pulse_scale = 1.0
@@ -36,7 +36,7 @@ class PriorityBadge(QWidget):
         if self.priority == "high":
             self._setup_pulse_animation()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Setup layout and components."""
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -77,7 +77,7 @@ class PriorityBadge(QWidget):
             )
             layout.addWidget(self.label)
 
-    def _setup_pulse_animation(self):
+    def _setup_pulse_animation(self) -> None:
         """Setup pulse animation for high priority badge."""
         self.pulse_anim = QVariantAnimation(self)
         self.pulse_anim.setStartValue(1.0)
@@ -89,18 +89,19 @@ class PriorityBadge(QWidget):
         self.pulse_anim.valueChanged.connect(self._on_pulse_value_changed)
         self.pulse_anim.start()
 
-    def _on_pulse_value_changed(self, value: float):
+    def _on_pulse_value_changed(self, value: Any) -> None:
         """Apply pulse scale to dot."""
-        self._pulse_scale = value
+        f_value = float(value)
+        self._pulse_scale = f_value
         # Apply scale transformation to dot
-        size = int(8 * value)
+        size = int(8 * f_value)
         self.dot.setFixedSize(size, size)
 
     def get_pulse_scale(self) -> float:
         """Get current pulse scale value."""
         return self._pulse_scale
 
-    def set_pulse_scale(self, value: float):
+    def set_pulse_scale(self, value: float) -> None:
         """Set pulse scale value."""
         self._pulse_scale = value
         size = int(8 * value)

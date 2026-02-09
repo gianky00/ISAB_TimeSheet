@@ -1,3 +1,5 @@
+from typing import Any
+
 from PyQt6.QtCore import QObject, QPoint
 from PyQt6.QtWidgets import QMenu
 
@@ -81,7 +83,7 @@ class SearchController(QObject):
         except Exception:
             return 0
 
-    def _add_giornaliere_matches(self, query: str, menu: QMenu, matches: list | None) -> int:
+    def _add_giornaliere_matches(self, query: str, menu: QMenu, matches: list[dict[str, Any]] | None) -> int:
         """Aggiunge i risultati delle Giornaliere al menu."""
         if not matches:
             return 0
@@ -94,7 +96,7 @@ class SearchController(QObject):
         menu.addSeparator()
         return len(matches[:20])
 
-    def _add_cantiere_matches(self, query: str, menu: QMenu, matches: list | None) -> int:
+    def _add_cantiere_matches(self, query: str, menu: QMenu, matches: list[dict[str, Any]] | None) -> int:
         """Aggiunge i risultati del Cantiere al menu."""
         if not matches:
             return 0
@@ -107,7 +109,7 @@ class SearchController(QObject):
         menu.addSeparator()
         return len(matches[:20])
 
-    def _add_certificati_matches(self, query: str, menu: QMenu, matches: list | None) -> int:
+    def _add_certificati_matches(self, query: str, menu: QMenu, matches: list[dict[str, Any]] | None) -> int:
         """Aggiunge i risultati dei Certificati al menu."""
         if not matches:
             return 0

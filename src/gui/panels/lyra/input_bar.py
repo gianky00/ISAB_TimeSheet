@@ -16,11 +16,11 @@ class ChatInputBar(QWidget):
     send_clicked = pyqtSignal(str)
     attach_clicked = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
@@ -39,7 +39,7 @@ class ChatInputBar(QWidget):
             QPushButton:hover { border-color: #6f42c1; }
         """
         )
-        self.attach_btn.clicked.connect(self.attach_clicked.emit)
+        self.attach_btn.clicked.connect(lambda: self.attach_clicked.emit())
         layout.addWidget(self.attach_btn)
 
         self.input_field = QLineEdit()
@@ -76,13 +76,13 @@ class ChatInputBar(QWidget):
         self.send_btn.clicked.connect(self._on_send)
         layout.addWidget(self.send_btn)
 
-    def _on_send(self):
+    def _on_send(self) -> None:
         text = self.input_field.text().strip()
         if text:
             self.send_clicked.emit(text)
             self.input_field.clear()
 
-    def set_enabled(self, enabled: bool):
+    def set_enabled(self, enabled: bool) -> None:
         self.input_field.setEnabled(enabled)
         self.attach_btn.setEnabled(enabled)
         self.send_btn.setEnabled(enabled)

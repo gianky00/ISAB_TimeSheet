@@ -68,7 +68,7 @@ def get_current_process_ram_mb() -> float:
         counters.cb = sizeof(PROCESS_MEMORY_COUNTERS_EX)
 
         if psapi.GetProcessMemoryInfo(process, byref(counters), sizeof(counters)):
-            return counters.WorkingSetSize / 1024 / 1024
+            return float(counters.WorkingSetSize) / 1024 / 1024
     except Exception as e:
         logger.debug(f"Errore recupero RAM: {e}")
     return 0.0

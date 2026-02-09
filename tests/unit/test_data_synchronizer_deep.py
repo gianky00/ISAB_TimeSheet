@@ -80,18 +80,14 @@ class TestDataSynchronizerDeep:
             ),
         ]
 
-        added, removed = DataSynchronizer.sync_contabilita_dati(
-            db_path, new_data, [2024]
-        )
+        added, removed = DataSynchronizer.sync_contabilita_dati(db_path, new_data, [2024])
 
         assert added == 2
         assert removed == 1
 
         # Verifica persistenza
         with DatabaseManager().get_connection(db_path) as conn:
-            count = conn.execute(
-                "SELECT COUNT(*) FROM contabilita WHERE year = 2024"
-            ).fetchone()[0]
+            count = conn.execute("SELECT COUNT(*) FROM contabilita WHERE year = 2024").fetchone()[0]
             assert count == 2
 
     def test_sync_giornaliere_by_year_isolation(self, db_path):
@@ -151,18 +147,14 @@ class TestDataSynchronizerDeep:
         ]
 
         # Passiamo solo 2024 come anno da pulire/sincronizzare
-        added, removed = DataSynchronizer.sync_giornaliere(
-            db_path, new_data_2024, [2024]
-        )
+        added, removed = DataSynchronizer.sync_giornaliere(db_path, new_data_2024, [2024])
 
         assert removed == 1  # La riga del 2024 originale
         assert added == 1  # La nuova riga del 2024
 
         # Verifica che il 2023 sia intatto
         with DatabaseManager().get_connection(db_path) as conn:
-            count_23 = conn.execute(
-                "SELECT COUNT(*) FROM giornaliere WHERE year = 2023"
-            ).fetchone()[0]
+            count_23 = conn.execute("SELECT COUNT(*) FROM giornaliere WHERE year = 2023").fetchone()[0]
             assert count_23 == 1
 
     def test_sync_generic_scarico_ore(self, db_path):

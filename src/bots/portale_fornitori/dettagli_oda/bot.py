@@ -26,7 +26,7 @@ class DettagliOdABot(BaseBot):
         return "Scarica dettaglio OdA (o lista generale se OdA vuoto)"
 
     @staticmethod
-    def get_columns() -> list:
+    def get_columns() -> list[dict[str, Any]]:
         """Definisce le colonne richieste per l'input dei dati."""
         return [
             {"name": "Numero OdA", "type": "text"},
@@ -53,7 +53,7 @@ class DettagliOdABot(BaseBot):
         self.data_a = data_a
         self.fornitore = fornitore
 
-    def validate_data(self, data: list[dict[str, Any]]) -> tuple[bool, str]:
+    def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """Validazione specifica per Dettagli OdA."""
         # Non chiamiamo super().validate_data(data) perché bloccherebbe se data è vuoto.
         # Verifichiamo manualmente le credenziali e il fornitore.
@@ -103,12 +103,13 @@ class DettagliOdABot(BaseBot):
         if not rows:
             self.log("ℹ️ Nessun OdA specificato. Avvio ricerca per lista generale.")
             return [{"numero_oda": "", "numero_contratto": ""}]
-        return rows
+        result: list[dict[str, Any]] = rows
+        return result
 
     def _process_single_oda(
         self,
         page: DettagliOdAPage,
-        row: dict,
+        row: dict[str, Any],
         index: int,
         source_dir: Path,
         dest_dir: Path,

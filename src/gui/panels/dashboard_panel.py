@@ -1,7 +1,7 @@
 import os
 from contextlib import suppress
 
-from PyQt6.QtCore import (  # type: ignore
+from PyQt6.QtCore import (
     Qt,
     QTimer,
 )
@@ -24,9 +24,19 @@ class DashboardPanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(0)
+        # Widget members (Strict Typing - Option D)
+        self.main_container: QFrame
+        self.container_layout: QVBoxLayout
+        self.scroll_area: QScrollArea
+        self.content_widget: QWidget
+        self.content_layout: QVBoxLayout
+        self.quick_actions: QuickActions
+        self.autopilot_widget: AutopilotWidget
+        self.activity_feed: ActivityFeed
+
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
 
         # Main Floating Container
         self.main_container = QFrame()
@@ -67,10 +77,9 @@ class DashboardPanel(QWidget):
         self.scroll_area.setWidget(self.content_widget)
         self.container_layout.addWidget(self.scroll_area)
 
-        self.layout.addWidget(self.main_container)
+        self.main_layout.addWidget(self.main_container)
 
         # SubWidgets references
-        self.activity_feed = None
         self.chart = None
 
         self._setup_ui()
@@ -129,8 +138,8 @@ class DashboardPanel(QWidget):
     def _navigate_to(self, key):
         """Naviga alla tab specificata."""
         main_window = self.window()
-        if hasattr(main_window, "navigate_to_panel"):
-            main_window.navigate_to_panel(key)
+        if main_window is not None and hasattr(main_window, "navigate_to_panel"):
+            main_window.navigate_to_panel(key)  # dynamic dispatch via hasattr
 
     def _handle_quick_action(self, key):
         """Gestisce i click delle azioni rapide con navigazione completa."""

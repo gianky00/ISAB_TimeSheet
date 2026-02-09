@@ -303,7 +303,7 @@ class DettagliOdAPage:
         source_dir: Path,
         dest_dir: Path,
         target_filename: str,
-        button_locator: tuple,
+        button_locator: tuple[str, str],
     ) -> Path | None:
         """Esegue il download, attende il file e lo sposta nella cartella finale."""
         try:
@@ -334,7 +334,7 @@ class DettagliOdAPage:
             self.log(f"  ✗ Errore download: {e}")
             return None
 
-    def _click_export_button(self, locator: tuple) -> bool:
+    def _click_export_button(self, locator: tuple[str, str]) -> bool:
         """Tenta di cliccare il pulsante di esportazione Excel gestendo intercettazioni."""
         try:
             btn = self.wait.until(EC.presence_of_element_located(locator))
@@ -347,7 +347,7 @@ class DettagliOdAPage:
         except Exception:
             return False
 
-    def _wait_for_download(self, source_dir: Path, files_before: set) -> Path | None:
+    def _wait_for_download(self, source_dir: Path, files_before: set[Path]) -> Path | None:
         """Attende il completamento del download monitorando la directory sorgente."""
         start = time.time()
         while time.time() - start < Timeouts.DOWNLOAD:

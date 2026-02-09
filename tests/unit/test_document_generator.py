@@ -30,9 +30,7 @@ class TestDocumentGenerator:
     @patch("src.utils.document_generator.QPrinter")
     @patch("src.utils.document_generator.QTextDocument")
     @patch("src.utils.document_generator.QPageLayout")
-    def test_generate_pdf_orientation_portrait(
-        self, mock_layout, mock_doc_class, mock_printer_class
-    ):
+    def test_generate_pdf_orientation_portrait(self, mock_layout, mock_doc_class, mock_printer_class):
         mock_printer = MagicMock()
         mock_printer_class.return_value = mock_printer
 

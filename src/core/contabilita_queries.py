@@ -4,6 +4,7 @@ Gestisce tutte le query di lettura per i dati della Contabilità Strumentale.
 """
 
 from pathlib import Path
+from typing import Any
 
 from src.core.database import db_manager
 from src.core.excel_importer import ExcelImporter  # Per accedere ai COLUMNS_MAPPING
@@ -29,7 +30,7 @@ class ContabilitaQueries:
             return []
 
     @classmethod
-    def get_data_by_year(cls, db_path: Path, year: int) -> list[tuple]:
+    def get_data_by_year(cls, db_path: Path, year: int) -> list[tuple[Any, ...]]:
         """Restituisce i dati tabella Dati per un anno specifico."""
         if not db_path.exists():
             return []
@@ -47,7 +48,7 @@ class ContabilitaQueries:
             return []
 
     @classmethod
-    def get_giornaliere_by_year(cls, db_path: Path, year: int) -> list[tuple]:
+    def get_giornaliere_by_year(cls, db_path: Path, year: int) -> list[tuple[Any, ...]]:
         """Restituisce i dati Giornaliere per un anno specifico."""
         if not db_path.exists():
             return []
@@ -77,7 +78,7 @@ class ContabilitaQueries:
             return []
 
     @classmethod
-    def get_attivita_programmate_data(cls, db_path: Path) -> list[tuple]:
+    def get_attivita_programmate_data(cls, db_path: Path) -> list[tuple[Any, ...]]:
         """Restituisce i dati Attività Programmate (inclusi stili)."""
         if not db_path.exists():
             return []
@@ -93,7 +94,7 @@ class ContabilitaQueries:
             return []
 
     @classmethod
-    def get_certificati_campione_data(cls, db_path: Path) -> list[tuple]:
+    def get_certificati_campione_data(cls, db_path: Path) -> list[tuple[Any, ...]]:
         """Restituisce i dati Certificati Campione."""
         if not db_path.exists():
             return []
@@ -109,7 +110,7 @@ class ContabilitaQueries:
             return []
 
     @classmethod
-    def get_scarico_ore_data(cls, db_path: Path) -> list[tuple]:
+    def get_scarico_ore_data(cls, db_path: Path) -> list[tuple[Any, ...]]:
         """Restituisce tutti i dati della tabella scarico_ore inclusi gli stili."""
         if not db_path.exists():
             return []

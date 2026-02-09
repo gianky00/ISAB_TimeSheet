@@ -4,15 +4,21 @@ Gestisce il controllo e la notifica di aggiornamenti dell'applicazione.
 """
 
 import webbrowser
+from collections.abc import Callable
+from typing import Any
 
 import requests
 from packaging import version as pkg_version
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QMessageBox, QWidget
 
 from . import version
 
 
-def check_for_updates(parent=None, silent=True, callback=None):
+def check_for_updates(
+    parent: QWidget | None = None,
+    silent: bool = True,
+    callback: Callable[[str, str, str], Any] | None = None,
+) -> None:
     """Controlla se è disponibile una nuova versione dell'applicazione."""
     url = version.UPDATE_URL
     if not url:
@@ -32,9 +38,7 @@ def check_for_updates(parent=None, silent=True, callback=None):
             return
 
         if _is_newer_version(remote_ver_str):
-            _handle_update_found(
-                remote_ver_str, download_url, changelog, parent, callback
-            )
+            _handle_update_found(remote_ver_str, download_url, changelog, parent, callback)
         elif not silent:
             QMessageBox.information(
                 parent,
@@ -57,7 +61,13 @@ def _is_newer_version(remote_ver_str: str) -> bool:
         return False
 
 
-def _handle_update_found(remote_ver, download_url, changelog, parent, callback):
+def _handle_update_found(
+    remote_ver: str,
+    download_url: str,
+    changelog: str,
+    parent: QWidget | None,
+    callback: Callable[[str, str, str], Any] | None,
+) -> None:
     """Notifica l'utente o esegue il callback per l'aggiornamento trovato."""
     if callback:
         callback(remote_ver, download_url, changelog)

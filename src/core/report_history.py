@@ -7,6 +7,7 @@ Salva snapshot di ogni report inviato e permette il confronto con il precedente.
 import json
 import logging
 from datetime import datetime
+from typing import Any
 
 from src.core.config_manager import CONFIG_DIR
 
@@ -30,17 +31,18 @@ class ReportHistory:
             )
 
     @classmethod
-    def _load_data(cls) -> dict:
+    def _load_data(cls) -> dict[str, Any]:
         """Carica i dati dallo storico."""
         cls._ensure_file()
         try:
-            return json.loads(cls.HISTORY_FILE.read_text(encoding="utf-8"))
+            data: dict[str, Any] = json.loads(cls.HISTORY_FILE.read_text(encoding="utf-8"))
+            return data
         except (json.JSONDecodeError, FileNotFoundError) as e:
             logger.warning(f"Errore caricamento storico report: {e}")
             return {"last_report": None, "history": []}
 
     @classmethod
-    def _save_data(cls, data: dict) -> None:
+    def _save_data(cls, data: dict[str, Any]) -> None:
         """Salva i dati nello storico."""
         cls._ensure_file()
         try:
@@ -49,7 +51,7 @@ class ReportHistory:
             logger.error(f"Errore salvataggio storico report: {e}")
 
     @classmethod
-    def save_report(cls, warning_list: list[dict], expired_list: list[dict]) -> None:
+    def save_report(cls, warning_list: list[dict[str, Any]], expired_list: list[dict[str, Any]]) -> None:
         """
         Salva snapshot del report corrente.
 
@@ -84,7 +86,7 @@ class ReportHistory:
         logger.info(f"Report salvato: {len(warning_list)} warning, {len(expired_list)} expired")
 
     @classmethod
-    def get_last_report(cls) -> dict | None:
+    def get_last_report(cls) -> dict[str, Any] | None:
         """
         Recupera l'ultimo report salvato.
 
@@ -94,7 +96,7 @@ class ReportHistory:
         return cls._load_data().get("last_report")
 
     @classmethod
-    def calculate_trend(cls, current_warning: int, current_expired: int) -> dict | None:
+    def calculate_trend(cls, current_warning: int, current_expired: int) -> dict[str, Any] | None:
         """
         Calcola la differenza con il report precedente.
 
@@ -132,7 +134,7 @@ class ReportHistory:
             return None
 
     @classmethod
-    def get_history(cls, limit: int = 10) -> list[dict]:
+    def get_history(cls, limit: int = 10) -> list[dict[str, Any]]:
         """
         Recupera lo storico degli ultimi N report.
 
@@ -143,7 +145,7 @@ class ReportHistory:
             Lista di report storici ordinati per data (dal più recente)
         """
         data = cls._load_data()
-        history = []
+        history: list[dict[str, Any]] = []
 
         # Aggiungi last_report se esiste
         if data.get("last_report"):

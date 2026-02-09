@@ -3,6 +3,8 @@ SyncroJob - Ricerca PDL Panel
 Pannello per il bot Ricerca PDL (SafeWork).
 """
 
+from typing import Any
+
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -44,9 +46,7 @@ class RicercaPDLPanel(BaseBotPanel):
         top_row = QHBoxLayout()
 
         # 1. Flag Escludi Chiusi
-        self.exclude_closed_check = QCheckBox(
-            "Escludi permessi chiusi, scaduti o eliminati"
-        )
+        self.exclude_closed_check = QCheckBox("Escludi permessi chiusi, scaduti o eliminati")
         self.exclude_closed_check.setChecked(True)
         self.exclude_closed_check.stateChanged.connect(self._save_data)
         top_row.addWidget(self.exclude_closed_check)
@@ -69,19 +69,13 @@ class RicercaPDLPanel(BaseBotPanel):
 
     def _load_saved_data(self):
         config = config_manager.load_config()
-        self.exclude_closed_check.setChecked(
-            config.get("pdl_search_exclude_closed", True)
-        )
+        self.exclude_closed_check.setChecked(config.get("pdl_search_exclude_closed", True))
         saved_site = config.get("pdl_search_site", "Seleziona tutto")
         self.site_combo.setCurrentText(saved_site)
 
     def _save_data(self):
-        config_manager.set_config_value(
-            "pdl_search_exclude_closed", self.exclude_closed_check.isChecked()
-        )
-        config_manager.set_config_value(
-            "pdl_search_site", self.site_combo.currentText()
-        )
+        config_manager.set_config_value("pdl_search_exclude_closed", self.exclude_closed_check.isChecked())
+        config_manager.set_config_value("pdl_search_site", self.site_combo.currentText())
 
     def get_bot_instance(self):
         from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
@@ -97,15 +91,21 @@ class RicercaPDLPanel(BaseBotPanel):
             download_path=config_manager.get_download_path(),
         )
 
-    def _on_start(self):
+    def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
         """Avvia il bot Ricerca PDL."""
-        super()._on_start()
+        super()._on_start(params_override)
         username, password = self.get_credentials()
 
+        # Ensure UI elements are available
+        if self.start_btn is None:
+            raise RuntimeError("Start button is None")
+        if self.stop_btn is None:
+            raise RuntimeError("Stop button is None")
+        if self.log_widget is None:
+            raise RuntimeError("Log widget is None")
+
         if not username or not password:
-            ToastManager.instance().show(
-                "Configura le credenziali SafeWork nelle Impostazioni.", "warning"
-            )
+            ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
             self._update_status("#C62828", "Credenziali mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
@@ -135,7 +135,7 @@ class RicercaPDLPanel(BaseBotPanel):
         self.worker.start()
         self.bot_started.emit()
 
-    def get_credentials(self) -> tuple:
+    def get_credentials(self) -> tuple[str, str]:
         """Override: Recupera credenziali SafeWork."""
         # Prende il default da safework_accounts
         accounts = config_manager.load_config().get("safework_accounts", [])

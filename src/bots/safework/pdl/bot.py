@@ -2,9 +2,9 @@ import logging
 import time
 from contextlib import suppress
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import fitz  # type: ignore # PyMuPDF
+import fitz  # PyMuPDF
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -12,6 +12,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.safework.base import SafeworkBaseBot
 from src.utils.printing import print_pdf
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +33,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         return "Scarica e stampa PDL da SafeWork"
 
     @staticmethod
-    def get_columns() -> list:
+    def get_columns() -> list[dict[str, Any]]:
         """Definisce le colonne richieste per l'input dei dati (Numero PDL)."""
         return [{"name": "Numero PDL", "type": "text"}]
 
@@ -57,7 +60,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self.merged_pdf_path: Path | None = None
         self.downloaded_files: list[str] = []
         self.missing_pdls: list[str] = []
-        self.progress_callback = None
+        self.progress_callback: Callable[[int, bool], None] | None = None
 
     def set_progress_callback(self, callback):
         """Imposta una callback per notificare il progresso (index, status)."""
@@ -67,7 +70,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         """Logga un errore dettagliato con stack trace."""
         logger.error(f"❌ ERRORE CRITICO in {context}: {exception}")
 
-    def validate_data(self, data: list[dict[str, Any]]) -> tuple[bool, str]:
+    def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """Validazione specifica per SafeWork PDL."""
         self.log("🔍 Avvio validazione dati...")
         base_valid, base_msg = super().validate_data(data)
@@ -79,9 +82,16 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self.log("❌ Lista dati vuota.")
             return False, "Nessun dato da elaborare."
 
+        # Extract rows from dict if needed
+        rows: list[dict[str, Any]] = data.get("rows", []) if isinstance(data, dict) else data
+
+        if not rows:
+            self.log("❌ Lista dati vuota.")
+            return False, "Nessun dato da elaborare."
+
         # Verifica che almeno una riga abbia un PDL
         found_pdl = False
-        for i, item in enumerate(data):
+        for i, item in enumerate(rows):
             pdl = item.get("pdl_number") or item.get("numero_pdl")
             if pdl:
                 found_pdl = True
@@ -199,7 +209,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self.log(f"✨ FINE ESECUZIONE: {success_count}/{total} PDL completati.")
         return success_count == total
 
-    def _process_single_pdl_row(self, index, total, item, all_paths) -> bool:
+    def _process_single_pdl_row(
+        self, index: int, total: int, item: dict[str, Any], all_paths: list[str]
+    ) -> bool:
         """Gestisce l'intera pipeline per un singolo PDL."""
         pdl_raw = item.get("pdl_number") or item.get("numero_pdl")
         if not pdl_raw:
@@ -445,7 +457,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self.log(f"❌ Fallimento unione PDF per PdL {pdl_num}.")
         return False
 
-    def _handle_session_merge(self, data, all_paths):
+    def _handle_session_merge(self, data: list[dict[str, Any]], all_paths: list[str]) -> None:
         """Crea un unico PDF con tutti i PDL se richiesto."""
         if any(i.get("merge_all_session") for i in data) and all_paths:
             try:

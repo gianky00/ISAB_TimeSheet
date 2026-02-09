@@ -88,8 +88,9 @@ class PrenotaBPPage:
             timeout: Tempo massimo di attesa.
         """
         self._wait_for_overlay()
-        wait = WebDriverWait(self.driver, timeout) if timeout else self.wait
-        el = wait.until(EC.visibility_of_element_located(locator))
+        el = (WebDriverWait(self.driver, timeout) if timeout else self.wait).until(
+            EC.visibility_of_element_located(locator)
+        )
         el.clear()
         el.send_keys(text)
         return el

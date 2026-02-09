@@ -206,7 +206,6 @@ class BaseBotPanel(QWidget):
 
     def get_bot_instance(self):
         """Restituisce un'istanza del bot. Da implementare nelle sottoclassi."""
-        return
 
     def get_current_status(self) -> tuple[str, str]:
         """Restituisce lo stato attuale della card (id, messaggio)."""
@@ -229,7 +228,7 @@ class BaseBotPanel(QWidget):
         """
         self._on_start(params_override=params)
 
-    def add_rows_simple(self, new_rows: list):
+    def add_rows_simple(self, new_rows: list[Any]):
         """Aggiunge righe alla tabella dati esistente (se presente)."""
         if hasattr(self, "data_table"):
             current_data = self.data_table.get_data()
@@ -372,7 +371,7 @@ class BaseBotPanel(QWidget):
         # Using current status enum, but updating message
         self.status_changed.emit(self.status_card._status, status)
 
-    def _ask_user_input(self, prompt: str, result_container: dict, event: threading.Event):
+    def _ask_user_input(self, prompt: str, result_container: dict[str, Any], event: threading.Event):
         """Callback per input utente dal worker (thread-safe via signal)."""
         text, ok = StandardInputDialog.get_input(self, "Richiesta Input", prompt)
         if ok:
@@ -381,7 +380,7 @@ class BaseBotPanel(QWidget):
             result_container["value"] = ""
         event.set()
 
-    def get_credentials(self) -> tuple:
+    def get_credentials(self) -> tuple[str, str]:
         """Ottiene le credenziali dall'account di default."""
         account = config_manager.get_default_account()
         if account:

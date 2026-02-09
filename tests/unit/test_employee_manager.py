@@ -40,9 +40,7 @@ class TestEmployeeManager:
         assert employees[0]["monitoraggio_attivo"] == 1  # Default value
 
     def test_get_employee_by_badge(self, manager):
-        manager.db.execute_query.return_value = [
-            (1, "ROSSI", "MARIO", "001", "CF123", "2020-01-01", 1)
-        ]
+        manager.db.execute_query.return_value = [(1, "ROSSI", "MARIO", "001", "CF123", "2020-01-01", 1)]
 
         result = manager.get_employee_by_badge("001")
 
@@ -73,9 +71,7 @@ class TestEmployeeManager:
     def test_add_employee_integrity_error(self, manager):
         import sqlite3
 
-        manager.db.execute_query.side_effect = sqlite3.IntegrityError(
-            "UNIQUE constraint"
-        )
+        manager.db.execute_query.side_effect = sqlite3.IntegrityError("UNIQUE constraint")
 
         data = {"cognome": "Duplicate", "nome": "User"}
 
@@ -86,16 +82,16 @@ class TestEmployeeManager:
     def test_update_employee(self, manager):
         manager.db.execute_query.return_value = None
 
-        result = manager.update_employee(
-            1, {"cognome": "ROSSI UPDATED", "nome": "MARIO"}
-        )
+        result = manager.update_employee(1, {"cognome": "ROSSI UPDATED", "nome": "MARIO"})
 
         assert result is True
 
     @patch("builtins.open")
     @patch("src.core.sync_tracker.SyncTracker.update_status")
     def test_import_from_csv(self, mock_tracker, mock_open, manager, tmp_path):
-        csv_content = "id_risorsa;Cognome;Nome;Badge;Codice_fiscale;Data_assunzione\n1;ROSSI;MARIO;001;CF001;2020-01-01"
+        csv_content = (
+            "id_risorsa;Cognome;Nome;Badge;Codice_fiscale;Data_assunzione\n1;ROSSI;MARIO;001;CF001;2020-01-01"
+        )
 
         csv_file = tmp_path / "dipendenti.csv"
         csv_file.write_text(csv_content, encoding="utf-8-sig")

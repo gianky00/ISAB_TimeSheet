@@ -181,7 +181,7 @@ class LogViewer:
             level = entry.get("level", "UNKNOWN")
             stats[level] += 1
 
-        return dict(stats)
+        return stats.copy()
 
     def get_error_summary(self, limit: int = 10) -> list[dict[str, Any]]:
         """
@@ -368,7 +368,7 @@ class LogViewer:
             "timestamp": datetime.now().isoformat() + "Z",
             "period_hours": 24,
             "total_events": total,
-            "level_distribution": dict(level_stats),
+            "level_distribution": level_stats.copy(),
             "error_rate_percent": round(error_rate, 2),
             "bot_runs": {
                 "total": len(bot_runs),

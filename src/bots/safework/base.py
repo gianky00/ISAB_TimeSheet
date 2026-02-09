@@ -17,8 +17,10 @@ class SafeworkBaseBot(BaseBot):
     SAFEWORK_URL = "https://safework.isab.com/"
     ISAB_URL = SAFEWORK_URL
 
-    def _attendi_scomparsa_overlay(self, timeout_secondi: int = 120) -> bool:
+    def _attendi_scomparsa_overlay(self, timeout_secondi: int | None = 120) -> bool:
         """Logica di attesa fedele allo script originale."""
+        if timeout_secondi is None:
+            timeout_secondi = 120
         if not self.driver:
             return False
         try:

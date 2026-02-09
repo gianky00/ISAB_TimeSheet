@@ -1,5 +1,6 @@
 import hashlib
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -16,11 +17,11 @@ class AuditIntegrity:
         return hashlib.sha256(payload.encode()).hexdigest()
 
     @classmethod
-    def build_hash_string_v2(cls, row: dict) -> str:
+    def build_hash_string_v2(cls, row: dict[str, Any]) -> str:
         """Costruisce la stringa di input per l'hash V2 (include tutti i campi)."""
         return f"{row['timestamp']}|{row['user_id']}|{row['action']}|{row['category']}|{row['entity']}|{row['params']}|{row['status']}|{row['severity']}|{row['duration_ms']}|{row['module']}|{row['error_code']}"
 
     @classmethod
-    def build_hash_string_legacy(cls, row: dict) -> str:
+    def build_hash_string_legacy(cls, row: dict[str, Any]) -> str:
         """Costruisce la stringa di input per l'hash Legacy."""
         return f"{row['timestamp']}|{row['user_id']}|{row['action']}|{row['category']}|{row['entity']}|{row['params']}|{row['status']}|{row['severity']}"

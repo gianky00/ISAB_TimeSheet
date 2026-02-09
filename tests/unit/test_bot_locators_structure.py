@@ -8,9 +8,7 @@ class TestBotLocators:
     def _check_locators(self, locator_class):
         """Helper to check all attributes of a locator class."""
         for attr_name in dir(locator_class):
-            if attr_name.startswith("__") or callable(
-                getattr(locator_class, attr_name)
-            ):
+            if attr_name.startswith("__") or callable(getattr(locator_class, attr_name)):
                 continue
 
             locator = getattr(locator_class, attr_name)
@@ -26,9 +24,7 @@ class TestBotLocators:
                 By.CLASS_NAME,
                 By.CSS_SELECTOR,
             ], f"{attr_name} invalid By type"
-            assert isinstance(locator[1], str), (
-                f"{attr_name} selector should be a string"
-            )
+            assert isinstance(locator[1], str), f"{attr_name} selector should be a string"
 
     def test_login_locators_structure(self):
         self._check_locators(LoginLocators)

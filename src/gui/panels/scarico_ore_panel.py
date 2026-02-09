@@ -9,7 +9,7 @@ import time
 from contextlib import suppress
 from datetime import datetime
 
-from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
+from PyQt6.QtCore import QItemSelection, Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QKeySequence
 from PyQt6.QtWidgets import (
     QApplication,
@@ -35,16 +35,14 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class ScaricoOreWorker(QThread):
     """Worker per l'importazione in background dei dati di Scarico Ore Cantiere."""
 
-    finished_signal = pyqtSignal(
-        bool, str, int, int, float
-    )  # Successo, Messaggio, Aggiunti, Rimossi, Durata
+    finished_signal = pyqtSignal(bool, str, int, int, float)  # Successo, Messaggio, Aggiunti, Rimossi, Durata
     progress_signal = pyqtSignal(str)
 
     def __init__(self, file_path: str):
         """Inizializza il worker con il percorso del file sorgente."""
         super().__init__()
         self.file_path = file_path
-        self.start_time = 0
+        self.start_time: float = 0.0
 
     def run(self):
         """Esegue l'importazione dei dati, calcolando progressi ed ETA."""
@@ -85,6 +83,12 @@ class ScaricoOreWorker(QThread):
         total_duration = time.time() - self.start_time
         self.finished_signal.emit(success, msg, added, removed, total_duration)
 
+    def stop(self) -> None:
+        """Ferma il worker."""
+        self.requestInterruption()
+        self.quit()
+        self.wait()
+
 
 class ScaricoOrePanel(QWidget):
     """
@@ -95,10 +99,23 @@ class ScaricoOrePanel(QWidget):
     def __init__(self, parent=None):
         """Inizializza l'interfaccia e avvia il caricamento asincrono della cache."""
         super().__init__(parent)
-        self.worker = None
-        self._last_update_status = (
-            None  # Store the status string to persist after reload
-        )
+
+        # Widget members (Strict Typing - Option D)
+        self.tabs: QTabWidget
+        self.toolbar_container: QWidget
+        self.lbl_count: QLabel
+        self.lbl_selection_total: QLabel
+        self.lbl_total_hours: QLabel
+        self.search_input: QLineEdit
+        self.status_label: QLabel
+        self.update_btn: ModernButton
+        self.scarico_tab: QWidget
+        self.table_view: QTableView
+        self.source_model: ScaricoOreTableModel
+
+        self.worker: ScaricoOreWorker | None = None
+        self._current_col_filters: dict[int, set[str]] = {}
+        self._last_update_status: str | None = None  # Store the status string to persist after reload
         self._setup_ui()
         # Delay load to allow UI to show up first (optimization)
         self.search_input.setPlaceholderText("Inizializzazione dati... attendere")
@@ -122,19 +139,13 @@ class ScaricoOrePanel(QWidget):
 
         # Totals Labels
         self.lbl_count = QLabel("Righe: 0")
-        self.lbl_count.setStyleSheet(
-            "color: #607D8B; font-weight: 600; font-size: 12px;"
-        )
+        self.lbl_count.setStyleSheet("color: #607D8B; font-weight: 600; font-size: 12px;")
 
         self.lbl_selection_total = QLabel("Selezionato: 0")
-        self.lbl_selection_total.setStyleSheet(
-            "color: #009688; font-weight: 600; font-size: 12px;"
-        )
+        self.lbl_selection_total.setStyleSheet("color: #009688; font-weight: 600; font-size: 12px;")
 
         self.lbl_total_hours = QLabel("Totale Ore: 0")
-        self.lbl_total_hours.setStyleSheet(
-            "color: #455A64; font-weight: 700; font-size: 12px;"
-        )
+        self.lbl_total_hours.setStyleSheet("color: #455A64; font-weight: 700; font-size: 12px;")
 
         # Search Bar
         self.search_input = QLineEdit()
@@ -174,9 +185,7 @@ class ScaricoOrePanel(QWidget):
         # 2. "Scarico Ore" Tab Content (Only Table)
         self.scarico_tab = QWidget()
         scarico_layout = QVBoxLayout(self.scarico_tab)
-        scarico_layout.setContentsMargins(
-            0, 10, 0, 0
-        )  # Top margin for spacing from tabs
+        scarico_layout.setContentsMargins(0, 10, 0, 0)  # Top margin for spacing from tabs
 
         # --- Virtual Table View ---
         self.table_view = QTableView()
@@ -186,7 +195,9 @@ class ScaricoOrePanel(QWidget):
 
         # Style Fix
         self.table_view.setAlternatingRowColors(True)
-        self.table_view.verticalHeader().setVisible(False)
+        v_header = self.table_view.verticalHeader()
+        if v_header:
+            v_header.setVisible(False)
 
         # Models
         self.source_model = ScaricoOreTableModel([])
@@ -199,9 +210,7 @@ class ScaricoOrePanel(QWidget):
         header = FilterHeaderView(Qt.Orientation.Horizontal, self.table_view)
         self.table_view.setHorizontalHeader(header)
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        header.setDefaultAlignment(
-            Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap
-        )
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap)
 
         # Connect Header Filters
         header.filterChanged.connect(self._on_header_filter_changed)
@@ -216,9 +225,10 @@ class ScaricoOrePanel(QWidget):
         )
 
         # Connect selection changes
-        self.table_view.selectionModel().selectionChanged.connect(
-            self._update_selection_totals
-        )
+        selection_model = self.table_view.selectionModel()
+        if selection_model is None:
+            raise RuntimeError("SelectionModel should exist after setModel")
+        selection_model.selectionChanged.connect(self._update_selection_totals)
 
         # Enable Sorting
         self.table_view.setSortingEnabled(True)
@@ -233,7 +243,7 @@ class ScaricoOrePanel(QWidget):
         """Salva gli ID reali (indici sorgente) delle righe selezionate prima di un cambio layout (sort/filter)."""
         self._saved_selection_real_ids.clear()
         selection = self.table_view.selectionModel()
-        if not selection.hasSelection():
+        if selection is None or not selection.hasSelection():
             return
 
         # Get selected visual rows
@@ -256,12 +266,11 @@ class ScaricoOrePanel(QWidget):
         model = self.source_model
         # Build map: Real ID -> New Visual Row
         # Optimization: Only build for visible rows
-        real_to_visual = {
-            real_id: vis_row for vis_row, real_id in enumerate(model._visible_indices)
-        }
+        real_to_visual = {real_id: vis_row for vis_row, real_id in enumerate(model._visible_indices)}
 
         new_selection = self.table_view.selectionModel()
-        from PyQt6.QtCore import QItemSelection
+        if new_selection is None:
+            raise RuntimeError("SelectionModel should exist for restoration")
 
         selection_batch = QItemSelection()
         col_count = model.columnCount() - 1
@@ -277,8 +286,7 @@ class ScaricoOrePanel(QWidget):
         if not selection_batch.isEmpty():
             new_selection.select(
                 selection_batch,
-                new_selection.SelectionFlag.ClearAndSelect
-                | new_selection.SelectionFlag.Rows,
+                new_selection.SelectionFlag.ClearAndSelect | new_selection.SelectionFlag.Rows,
             )
             # Update totals
             self._update_selection_totals()
@@ -304,7 +312,10 @@ class ScaricoOrePanel(QWidget):
     def _update_selection_totals(self):
         """Calcola la somma dei valori 'TOTALE ORE' nelle celle selezionate."""
         try:
-            indexes = self.table_view.selectionModel().selectedIndexes()
+            selection_model = self.table_view.selectionModel()
+            if selection_model is None:
+                raise RuntimeError("Table view selection model is None")
+            indexes = selection_model.selectedIndexes()
             if not indexes:
                 self.lbl_selection_total.setText("Totale selezionato: 0")
                 return
@@ -326,7 +337,7 @@ class ScaricoOrePanel(QWidget):
         except Exception as e:
             print(f"Errore selezione: {e}")
 
-    def set_search_query(self, text):
+    def set_search_query(self, text: str):
         """Imposta il testo della ricerca globale e sposta il focus."""
         self.search_input.setText(text)
         self.search_input.setFocus()
@@ -348,10 +359,11 @@ class ScaricoOrePanel(QWidget):
         self.update_btn.setEnabled(False)
         self.table_view.setEnabled(False)
 
-        self.worker = ScaricoOreWorker(path)
-        self.worker.finished_signal.connect(self._on_update_finished)
-        self.worker.progress_signal.connect(self.status_label.setText)
-        self.worker.start()
+        worker = ScaricoOreWorker(path)
+        self.worker = worker
+        worker.finished_signal.connect(self._on_update_finished)
+        worker.progress_signal.connect(self.status_label.setText)
+        worker.start()
 
     def _on_update_finished(
         self,
@@ -391,19 +403,22 @@ class ScaricoOrePanel(QWidget):
             self.status_label.setText("Errore")
             QMessageBox.critical(self, "Errore Aggiornamento", msg)
 
+    def _on_stop(self):
+        """Gestisce lo stop del bot."""
+        if self.worker:
+            if self.worker is None:
+                raise RuntimeError("Worker unexpectedly became None")
+            self.worker.stop()
+            self.status_label.setText("Arresto richiesto...")
+
     def _perform_search(self):
         """Esegue il filtraggio testuale globale basato sull'input utente."""
         text = self.search_input.text()
-        if not hasattr(self, "_current_col_filters"):
-            self._current_col_filters = {}
-
         self.source_model.set_filter(text, self._current_col_filters)
         self._update_totals()
 
-    def _on_header_filter_changed(self, col, values):
+    def _on_header_filter_changed(self, col: int, values: list[str]):
         """Gestisce il cambiamento dei filtri per colonna provenienti dall'header."""
-        if not hasattr(self, "_current_col_filters"):
-            self._current_col_filters = {}
 
         if not values:
             if col in self._current_col_filters:
@@ -426,12 +441,10 @@ class ScaricoOrePanel(QWidget):
             self.table_view.setDisabled(True)
             QApplication.processEvents()
         else:
-            self.search_input.setPlaceholderText(
-                "Filtra dati (es. scavullo 4041)... (Premi Invio)"
-            )
+            self.search_input.setPlaceholderText("Filtra dati (es. scavullo 4041)... (Premi Invio)")
             self.table_view.setDisabled(False)
 
-    def _on_loading_progress(self, msg):
+    def _on_loading_progress(self, msg: str):
         """Aggiorna la label di stato con i messaggi di progresso del worker."""
         self.status_label.setText(str(msg))
         QApplication.processEvents()
@@ -469,6 +482,8 @@ class ScaricoOrePanel(QWidget):
     def _resize_columns(self):
         """Imposta le larghezze ottimali per le colonne della tabella virtuale."""
         header = self.table_view.horizontalHeader()
+        if header is None:
+            raise RuntimeError("Table horizontal header is None")
         header.setMinimumHeight(80)
         header.setStretchLastSection(False)
 
@@ -498,16 +513,21 @@ class ScaricoOrePanel(QWidget):
 
     def _copy_selection(self):
         """Copia le celle selezionate negli appunti in formato TSV."""
-        if not (indexes := self.table_view.selectionModel().selectedIndexes()):
+        selection_model = self.table_view.selectionModel()
+        if selection_model is None:
+            raise RuntimeError("Table view selection model is None")
+        if not (indexes := selection_model.selectedIndexes()):
             return
 
         indexes.sort(key=lambda x: (x.row(), x.column()))
-
-        rows_text = {}
+        rows_text: dict[int, list[tuple[int, str]]] = {}
         for idx in indexes:
             r = idx.row()
             c = idx.column()
-            data = self.table_view.model().data(idx)
+            model = self.table_view.model()
+            if model is None:
+                raise RuntimeError("Table view model is None")
+            data = model.data(idx, Qt.ItemDataRole.DisplayRole)
             if r not in rows_text:
                 rows_text[r] = []
             rows_text[r].append((c, str(data)))
@@ -517,4 +537,7 @@ class ScaricoOrePanel(QWidget):
             line = "\t".join([x[1] for x in sorted(rows_text[r], key=operator.itemgetter(0))])
             tsv_lines.append(line)
 
-        QApplication.clipboard().setText("\n".join(tsv_lines))
+        clipboard = QApplication.clipboard()
+        if clipboard is None:
+            raise RuntimeError("System clipboard is None")
+        clipboard.setText("\n".join(tsv_lines))

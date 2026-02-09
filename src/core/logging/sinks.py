@@ -17,7 +17,7 @@ class BotLogSink:
     Ogni bot run (identificato da trace_id) ha il proprio file JSON.
     """
 
-    def __init__(self, config=None):
+    def __init__(self, config: Any = None) -> None:
         self.config = config or get_config()
         self.formatter = JSONFormatter(mask_sensitive=True)
 
@@ -33,7 +33,7 @@ class BotLogSink:
         extra: dict[str, Any] | None = None,
         exception: Exception | None = None,
         source_info: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """
         Scrive log nel file specifico del bot run.
 
@@ -70,14 +70,14 @@ class BotLogSink:
         except Exception as e:
             print(f"[BOT SINK ERROR] Failed to write: {e}")
 
-    def close_all(self):
+    def close_all(self) -> None:
         """Chiude tutti i file aperti."""
         for handle in self._open_files.values():
             with suppress(Exception):
                 handle.close()
         self._open_files.clear()
 
-    def get_bot_run_logs(self, bot_type: str, trace_id: str) -> list:
+    def get_bot_run_logs(self, bot_type: str, trace_id: str) -> list[dict[str, Any]]:
         """
         Legge tutti i log di un bot run.
 
@@ -93,7 +93,7 @@ class BotLogSink:
         if not file_path.exists():
             return []
 
-        logs = []
+        logs: list[dict[str, Any]] = []
         try:
             with file_path.open(encoding="utf-8") as f:
                 logs.extend(json.loads(line) for line in f)
@@ -110,7 +110,7 @@ class MetricsRotatingSink:
     Ruota file metrics quando raggiunge dimensione massima.
     """
 
-    def __init__(self, config=None, max_size_mb: float = 10.0):
+    def __init__(self, config: Any = None, max_size_mb: float = 10.0) -> None:
         self.config = config or get_config()
         self.max_size_bytes = max_size_mb * 1024 * 1024
         self.metrics_file = self.config.metrics_dir / "performance.jsonl"
@@ -118,7 +118,7 @@ class MetricsRotatingSink:
         # Assicura directory
         self.config.metrics_dir.mkdir(parents=True, exist_ok=True)
 
-    def write(self, metric_dict: dict[str, Any]):
+    def write(self, metric_dict: dict[str, Any]) -> None:
         """
         Scrive metrica su file.
 
@@ -135,7 +135,7 @@ class MetricsRotatingSink:
         except Exception as e:
             print(f"[METRICS SINK ERROR] Failed to write: {e}")
 
-    def _rotate_if_needed(self):
+    def _rotate_if_needed(self) -> None:
         """Ruota file se necessario."""
         if not self.metrics_file.exists():
             return
@@ -163,12 +163,12 @@ class AggregatedMetricsSink:
     Calcola statistiche aggregate e le salva in file separato.
     """
 
-    def __init__(self, config=None):
+    def __init__(self, config: Any = None) -> None:
         self.config = config or get_config()
         self.aggregated_dir = self.config.metrics_dir / "aggregated"
         self.aggregated_dir.mkdir(parents=True, exist_ok=True)
 
-    def write_daily_summary(self, date: str, summary: dict[str, Any]):
+    def write_daily_summary(self, date: str, summary: dict[str, Any]) -> None:
         """
         Scrive summary giornaliero.
 
@@ -199,16 +199,17 @@ class AggregatedMetricsSink:
             return None
 
         try:
-            return json.loads(file_path.read_text(encoding="utf-8"))
+            data: dict[str, Any] = json.loads(file_path.read_text(encoding="utf-8"))
+            return data
         except Exception as e:
             print(f"[AGGREGATED SINK ERROR] Failed to read: {e}")
             return None
 
 
 # Singleton instances
-_bot_sink = None
-_metrics_sink = None
-_aggregated_sink = None
+_bot_sink: BotLogSink | None = None
+_metrics_sink: MetricsRotatingSink | None = None
+_aggregated_sink: AggregatedMetricsSink | None = None
 
 
 def get_bot_sink() -> BotLogSink:

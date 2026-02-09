@@ -7,6 +7,7 @@ from collections.abc import Callable
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from src.core.config_manager import CONFIG_DIR
 from src.core.contabilita_queries import ContabilitaQueries
@@ -175,32 +176,32 @@ class ContabilitaManager:
         return ContabilitaQueries.get_available_years(cls.DB_PATH)
 
     @classmethod
-    def get_data_by_year(cls, year: int) -> list[tuple]:
+    def get_data_by_year(cls, year: int) -> list[tuple[Any, ...]]:
         """Restituisce i dati tabella Dati per un anno specifico."""
         return ContabilitaQueries.get_data_by_year(cls.DB_PATH, year)
 
     @classmethod
-    def get_giornaliere_by_year(cls, year: int) -> list[tuple]:
+    def get_giornaliere_by_year(cls, year: int) -> list[tuple[Any, ...]]:
         """Restituisce i dati Giornaliere per un anno specifico."""
         return ContabilitaQueries.get_giornaliere_by_year(cls.DB_PATH, year)
 
     @classmethod
-    def get_attivita_programmate_data(cls) -> list[tuple]:
+    def get_attivita_programmate_data(cls) -> list[tuple[Any, ...]]:
         """Restituisce i dati Attività Programmate (inclusi stili)."""
         return ContabilitaQueries.get_attivita_programmate_data(cls.DB_PATH)
 
     @classmethod
-    def get_certificati_campione_data(cls) -> list[tuple]:
+    def get_certificati_campione_data(cls) -> list[tuple[Any, ...]]:
         """Restituisce i dati Certificati Campione."""
         return ContabilitaQueries.get_certificati_campione_data(cls.DB_PATH)
 
     @classmethod
-    def get_scarico_ore_data(cls) -> list[tuple]:
+    def get_scarico_ore_data(cls) -> list[tuple[Any, ...]]:
         """Restituisce tutti i dati della tabella scarico_ore inclusi gli stili."""
         return ContabilitaQueries.get_scarico_ore_data(cls.DB_PATH)
 
     @classmethod
-    def search_oda(cls, query: str) -> list[dict]:
+    def search_oda(cls, query: str) -> list[dict[str, Any]]:
         """
         Cerca OdA per codice, descrizione o ODC.
         Returns:
@@ -209,7 +210,9 @@ class ContabilitaManager:
         return ContabilitaSearch.search_oda(cls.DB_PATH, query)
 
     @classmethod
-    def search_extended(cls, query: str, year: int | None = None, limit: int = 100) -> dict[str, list[dict]]:
+    def search_extended(
+        cls, query: str, year: int | None = None, limit: int = 100
+    ) -> dict[str, list[dict[str, Any]]]:
         """
         Ricerca estesa in tutti i moduli (Giornaliere, Scarico Ore, Certificati).
         Returns: Dict con liste di risultati per categoria.

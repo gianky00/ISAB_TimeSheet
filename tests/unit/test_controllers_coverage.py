@@ -38,9 +38,7 @@ class TestControllersCoverage:
         mock_telegram = MagicMock()
         ctrl = BotController(mw, mock_telegram)
 
-        mocker.patch(
-            "src.gui.controllers.bot_controller.Path.exists", return_value=True
-        )
+        mocker.patch("src.gui.controllers.bot_controller.Path.exists", return_value=True)
 
         ctrl._handle_bot_results("scarico_pdl", ["/pdl.pdf"])
         mock_telegram.send_document_sync.assert_called_once()

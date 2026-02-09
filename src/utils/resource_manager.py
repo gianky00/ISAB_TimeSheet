@@ -80,7 +80,7 @@ class ResourceManager:
         return cls.TEMP_DIR / filename
 
     @classmethod
-    def ensure_structure(cls):
+    def ensure_structure(cls) -> None:
         """Assicura che tutte le cartelle necessarie esistano."""
         config_dir = cls._get_config_dir()
         for d in (cls.TEMP_DIR, config_dir / "logs", config_dir / "data"):

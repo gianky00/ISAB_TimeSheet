@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QVBoxLayout,
+    QWidget,
 )
 
 from src.gui.widgets.modern_button import ModernButton
@@ -16,14 +17,14 @@ class StandardInputDialog(QDialog):
     Sostituisce QInputDialog per mantenere coerenza stilistica.
     """
 
-    def __init__(self, parent=None, title="", label="", text=""):
+    def __init__(
+        self, parent: QWidget | None = None, title: str = "", label: str = "", text: str = ""
+    ) -> None:
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setFixedWidth(350)
         # Rimuovi pulsante aiuto
-        self.setWindowFlags(
-            self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
-        )
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
 
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
@@ -67,12 +68,12 @@ class StandardInputDialog(QDialog):
 
         layout.addLayout(btn_layout)
 
-    def get_text(self):
+    def get_text(self) -> str:
         """Restituisce il testo inserito."""
         return self.input_field.text().strip()
 
     @staticmethod
-    def get_input(parent, title, label, text="") -> tuple[str, bool]:
+    def get_input(parent: QWidget | None, title: str, label: str, text: str = "") -> tuple[str, bool]:
         """Metodo statico di utilità simile a QInputDialog.getText."""
         dlg = StandardInputDialog(parent, title, label, text)
         result = dlg.exec()

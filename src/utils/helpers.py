@@ -9,6 +9,7 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from PyQt6.QtGui import QColor, QIcon, QImage, QPainter, QPixmap
 
@@ -150,7 +151,7 @@ def open_folder(path: str) -> bool:
         return False
 
 
-def safe_str(value, default: str = "") -> str:
+def safe_str(value: Any, default: str = "") -> str:
     """
     Conversione sicura a stringa.
 

@@ -3,7 +3,7 @@ import re
 import zipfile
 from collections.abc import Callable
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import pandas as pd
 
@@ -14,13 +14,13 @@ logger = logging.getLogger(__name__)
 
 
 class ContabilitaImporter(BaseImporter):
-    """Importer specifico per i dati di Contabilità."""
+    """Importer specifico per i dati di ContabilitÃ ."""
 
     # Mapping colonne Excel -> DB
     COLUMNS_MAPPING: ClassVar[dict[str, str]] = {
         "DATA PREV.": "data_prev",
         "MESE": "mese",
-        "N° PREV.": "n_prev",
+        "NÂ° PREV.": "n_prev",
         "TOTALE PREV.": "totale_prev",
         "ATTIVITA'": "attivita",
         "TCL": "tcl",
@@ -61,7 +61,7 @@ class ContabilitaImporter(BaseImporter):
         cls,
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
-    ) -> tuple[bool, str, list, list]:
+    ) -> tuple[bool, str, list[tuple[Any, ...]], list[int]]:
         """
         Importa i dati dal file Excel specificato (Tabella Dati).
         """
@@ -105,11 +105,11 @@ class ContabilitaImporter(BaseImporter):
 
     @classmethod
     def _process_all_sheets(
-        cls, xls, sheet_names: list[str], progress_callback: Callable | None
-    ) -> tuple[list[tuple], list[int]]:
+        cls, xls: Any, sheet_names: list[str], progress_callback: Callable[[int, int], None] | None
+    ) -> tuple[list[tuple[Any, ...]], list[int]]:
         """Cicla sui fogli e aggrega i risultati."""
-        all_rows = []
-        imported_years = []
+        all_rows: list[tuple[Any, ...]] = []
+        imported_years: list[int] = []
         total_sheets = len(sheet_names)
 
         for i, sheet_name in enumerate(sheet_names):
@@ -128,8 +128,8 @@ class ContabilitaImporter(BaseImporter):
         return all_rows, imported_years
 
     @classmethod
-    def _process_single_sheet(cls, xls, sheet_name: str, year: int) -> list[tuple]:
-        """Processa un singolo foglio del file Excel di contabilità."""
+    def _process_single_sheet(cls, xls: Any, sheet_name: str, year: int) -> list[tuple[Any, ...]]:
+        """Processa un singolo foglio del file Excel di contabilitÃ ."""
         try:
             pd_obj = cls._get_pd()
             header_row_idx = cls._find_header_row(xls, sheet_name)
@@ -184,7 +184,7 @@ class ContabilitaImporter(BaseImporter):
             try:
                 df = validate_contabilita(df)
             except Exception as e:
-                logger.warning(f"Validazione Pandera Contabilità fallita (uso fallback): {e}")
+                logger.warning(f"Validazione Pandera ContabilitÃ  fallita (uso fallback): {e}")
 
             return list(df.itertuples(index=False, name=None))
         except Exception as e:
@@ -192,10 +192,9 @@ class ContabilitaImporter(BaseImporter):
             return []
 
     @classmethod
-    def _find_header_row(cls, xls, sheet_name) -> int:
+    def _find_header_row(cls, xls: Any, sheet_name: str) -> int:
         """Cerca l'indice della riga di intestazione basandosi su colonne chiave."""
-        pd_obj = cls._get_pd()
-        preview_df = pd_obj.read_excel(xls, sheet_name=sheet_name, header=None, nrows=15)
+        preview_df = cls._get_pd().read_excel(xls, sheet_name=sheet_name, header=None, nrows=15)
         key_cols_norm = ["DATAPREV", "MESE", "NPREV", "TOTALEPREV", "ATTIVITA", "ODC"]
 
         for i_raw, row in preview_df.iterrows():
@@ -205,7 +204,7 @@ class ContabilitaImporter(BaseImporter):
                     for k in key_cols_norm
                     if k
                     in (
-                        str(val).strip().upper().replace(" ", "").replace(".", "").replace("°", "")
+                        str(val).strip().upper().replace(" ", "").replace(".", "").replace("Â°", "")
                         for val in row.values
                     )
                 )

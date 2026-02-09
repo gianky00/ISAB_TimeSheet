@@ -6,7 +6,7 @@ Gestisce il calcolo delle statistiche per i dati della Contabilità Strumentale.
 import operator
 from contextlib import suppress
 from pathlib import Path
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from src.core.contabilita_queries import ContabilitaQueries  # Per accedere ai dati
 from src.utils.parsing import parse_currency
@@ -17,7 +17,7 @@ class YearStats(TypedDict):
     total_ore: float
     count_total: int
     status_counts: dict[str, int]
-    top_commesse: list[tuple]
+    top_commesse: list[tuple[str, float]]
     ore_dirette: float
     ore_indirette: float
 
@@ -51,9 +51,9 @@ class ContabilitaStats:
         return stats
 
     @classmethod
-    def _process_main_data(cls, data, stats) -> list[tuple]:
+    def _process_main_data(cls, data: list[Any], stats: YearStats) -> list[tuple[str, float]]:
         """Processa i dati OdA principali per calcolare totali e status."""
-        commesse: list[tuple] = []
+        commesse: list[tuple[str, float]] = []
         if not data:
             return commesse
 
@@ -80,7 +80,7 @@ class ContabilitaStats:
         return commesse
 
     @classmethod
-    def _process_giornaliere_stats(cls, giornaliere, stats):
+    def _process_giornaliere_stats(cls, giornaliere: list[Any], stats: YearStats) -> None:
         """Processa le timbrature giornaliere per distinguere ore dirette/indirette."""
         if not giornaliere:
             return

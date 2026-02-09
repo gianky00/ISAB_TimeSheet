@@ -28,12 +28,12 @@ class MetadataEnricher:
     _instance: Optional["MetadataEnricher"] = None
     _cache: dict[str, Any] | None = None
 
-    def __new__(cls):
+    def __new__(cls) -> "MetadataEnricher":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         if MetadataEnricher._cache is None:
             MetadataEnricher._cache = self._build_static_metadata()
 

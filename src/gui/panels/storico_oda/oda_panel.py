@@ -4,6 +4,7 @@ Pannello per la visualizzazione del Database Storico OdA con architettura Master
 """
 
 from datetime import datetime
+from typing import Any
 
 from PyQt6.QtCore import QDate, Qt, QTimer
 from PyQt6.QtGui import QFont, QStandardItem, QStandardItemModel
@@ -133,21 +134,22 @@ class StoricoOdaPanel(QWidget):
         self.tree.setItemDelegate(ChildDescriptionDelegate(self.tree))
 
         # Selection & Interaction
-        self.tree.selectionModel().selectionChanged.connect(self._on_selection_changed)
+        if sel_model := self.tree.selectionModel():
+            sel_model.selectionChanged.connect(self._on_selection_changed)
         self.tree.expanded.connect(self._on_item_expanded)
         self.tree.collapsed.connect(self._on_item_collapsed)
         self.tree.doubleClicked.connect(self._on_tree_double_clicked)
 
         # Header Styling
-        header = self.tree.header()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # Data OdA
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)  # OdA
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Pos
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)  # CREATO DA
-        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # Descrizione
-        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Valore Netto
-        header.setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)  # Stato
-        header.setSectionResizeMode(7, QHeaderView.ResizeMode.ResizeToContents)  # Ind. Rilascio
+        if header := self.tree.header():
+            header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # Data OdA
+            header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)  # OdA
+            header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Pos
+            header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)  # CREATO DA
+            header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # Descrizione
+            header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Valore Netto
+            header.setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)  # Stato
+            header.setSectionResizeMode(7, QHeaderView.ResizeMode.ResizeToContents)  # Ind. Rilascio
 
         self.tree.setColumnWidth(0, 100)
         self.tree.setColumnWidth(1, 90)
@@ -178,7 +180,7 @@ class StoricoOdaPanel(QWidget):
         except Exception as e:
             print(f"Errore caricamento Storico OdA: {e}")
 
-    def _populate_tree(self, full_rows: list[tuple]):
+    def _populate_tree(self, full_rows: list[tuple[Any, ...]]):
         """Popola il modello ad albero raggruppando per ODA + POS."""
         self.model.removeRows(0, self.model.rowCount())
 
@@ -282,7 +284,11 @@ class StoricoOdaPanel(QWidget):
             self.tree.expandAll()
 
     def _on_selection_changed(self, selected, _deselected):
-        indexes = self.tree.selectionModel().selectedRows()
+        sel_model = self.tree.selectionModel()
+        if not sel_model:
+            self.detail_view.clear()
+            return
+        indexes = sel_model.selectedRows()
         if not indexes:
             self.detail_view.clear()
             return

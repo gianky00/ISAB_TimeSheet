@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QSize
-from PyQt6.QtWidgets import QPushButton
+from PyQt6.QtWidgets import QPushButton, QWidget
 
 from src.utils.helpers import get_colored_icon
 
@@ -7,7 +7,7 @@ from src.utils.helpers import get_colored_icon
 class SidebarButton(QPushButton):
     """Pulsante personalizzato per la sidebar con supporto modalità compatta e icone SVG."""
 
-    def __init__(self, text: str, icon_path: str = "", parent=None):
+    def __init__(self, text: str, icon_path: str = "", parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.label_text = text
         self.icon_path = icon_path
@@ -23,13 +23,13 @@ class SidebarButton(QPushButton):
         self._update_style()
         self.toggled.connect(self._update_style)
 
-    def set_collapsed(self, collapsed: bool):
-        """Attiva o disattiva la modalità solo icona."""
+    def set_collapsed(self, collapsed: bool) -> None:
+        """Attiva o disattiva la modalitÃ  solo icona."""
         self._collapsed = collapsed
         self._refresh_state()
         self._update_style()
 
-    def _refresh_state(self):
+    def _refresh_state(self) -> None:
         """Aggiorna testo e dimensione icona in base allo stato."""
         if self._collapsed:
             self.setText("")
@@ -40,7 +40,7 @@ class SidebarButton(QPushButton):
             self.setIconSize(QSize(18, 18))
             self.setToolTip("")
 
-    def set_badge(self, count: int):
+    def set_badge(self, count: int) -> None:
         """Imposta un badge di notifica."""
         # TODO: Implementare un badge grafico (pallino rosso) sovrapposto all'icona
         if not self._collapsed:
@@ -50,7 +50,7 @@ class SidebarButton(QPushButton):
             else:
                 self.setText(base)
 
-    def _update_style(self):
+    def _update_style(self) -> None:
         """Aggiorna lo stile in base allo stato."""
         align = "center" if self._collapsed else "left"
         # Padding ottimizzato per centrare l'icona quando collassato

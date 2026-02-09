@@ -4,6 +4,7 @@ Gestisce la sincronizzazione dei dati importati con il database.
 """
 
 from pathlib import Path
+from typing import Any
 
 from src.core.database import db_manager
 from src.core.excel_importer import ExcelImporter
@@ -13,7 +14,7 @@ class DataSynchronizer:
     """Gestore per la sincronizzazione dei dati con il database ottimizzato tramite SQL."""
 
     @staticmethod
-    def _validate_identifier(name: str):
+    def _validate_identifier(name: str) -> str:
         """Valida che un identificatore SQL (tabella o colonna) sia sicuro."""
         import re
 
@@ -22,7 +23,7 @@ class DataSynchronizer:
         return name
 
     @classmethod
-    def _create_temp_table(cls, cursor, table_name: str, columns: list[str]):
+    def _create_temp_table(cls, cursor: Any, table_name: str, columns: list[str]) -> None:
         """Crea una tabella temporanea validata."""
         safe_name = cls._validate_identifier(table_name)
         cursor.execute(f"DROP TABLE IF EXISTS temp_{safe_name}")  # nosec B608
@@ -31,7 +32,7 @@ class DataSynchronizer:
 
     @classmethod
     def _get_diff_count(
-        cls, cursor, table_name: str, columns: list[str], year: int | None = None
+        cls, cursor: Any, table_name: str, columns: list[str], year: int | None = None
     ) -> tuple[int, int]:
         """Calcola record aggiunti e rimossi tramite EXCEPT SQL."""
         safe_table = cls._validate_identifier(table_name)
@@ -54,7 +55,7 @@ class DataSynchronizer:
         return added, removed
 
     @classmethod
-    def _replace_data(cls, cursor, table_name: str, columns: list[str], year: int | None = None):
+    def _replace_data(cls, cursor: Any, table_name: str, columns: list[str], year: int | None = None) -> None:
         """Esegue la sostituzione atomica dei dati."""
         safe_table = cls._validate_identifier(table_name)
         safe_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in columns])
@@ -70,7 +71,7 @@ class DataSynchronizer:
 
     @classmethod
     def sync_contabilita_dati(
-        cls, db_path: Path, imported_data: list[tuple], imported_years: list[int]
+        cls, db_path: Path, imported_data: list[tuple[Any, ...]], imported_years: list[int]
     ) -> tuple[int, int]:
         if not imported_data:
             return 0, 0
@@ -103,7 +104,7 @@ class DataSynchronizer:
 
     @classmethod
     def sync_giornaliere(
-        cls, db_path: Path, all_new_rows: list[tuple], years_to_clear: list[int]
+        cls, db_path: Path, all_new_rows: list[tuple[Any, ...]], years_to_clear: list[int]
     ) -> tuple[int, int]:
         if not all_new_rows and not years_to_clear:
             return 0, 0
@@ -146,7 +147,9 @@ class DataSynchronizer:
         return total_added, total_removed
 
     @classmethod
-    def sync_attivita_programmate(cls, db_path: Path, rows_to_insert: list[tuple]) -> tuple[int, int]:
+    def sync_attivita_programmate(
+        cls, db_path: Path, rows_to_insert: list[tuple[Any, ...]]
+    ) -> tuple[int, int]:
         """
         Sincronizzazione per Attività Programmate.
         Usa DELETE ALL + INSERT per evitare duplicati (sostituzione completa).
@@ -191,7 +194,7 @@ class DataSynchronizer:
             return added, removed
 
     @classmethod
-    def sync_scarico_ore(cls, db_path: Path, rows_to_insert: list[tuple]) -> tuple[int, int]:
+    def sync_scarico_ore(cls, db_path: Path, rows_to_insert: list[tuple[Any, ...]]) -> tuple[int, int]:
         """
         Sincronizzazione ULTRA-OTTIMIZZATA per Scarico Ore (130k+ righe).
         Usa aggressive PRAGMA + batch insert + DELETE ALL per massime prestazioni.
@@ -234,7 +237,9 @@ class DataSynchronizer:
             return added, removed
 
     @classmethod
-    def sync_certificati_campione(cls, db_path: Path, rows_to_insert: list[tuple]) -> tuple[int, int]:
+    def sync_certificati_campione(
+        cls, db_path: Path, rows_to_insert: list[tuple[Any, ...]]
+    ) -> tuple[int, int]:
         return cls._sync_upsert_smart(
             db_path,
             "certificati_campione",
@@ -243,7 +248,7 @@ class DataSynchronizer:
         )
 
     @classmethod
-    def sync_storico_oda(cls, db_path: Path, rows_to_insert: list[tuple]) -> tuple[int, int]:
+    def sync_storico_oda(cls, db_path: Path, rows_to_insert: list[tuple[Any, ...]]) -> tuple[int, int]:
         """Sincronizza i dati Storico OdA in modalità Upsert con calcolo diff intelligente."""
         return cls._sync_upsert_smart(
             db_path,
@@ -254,7 +259,7 @@ class DataSynchronizer:
 
     @classmethod
     def _sync_upsert_smart(
-        cls, db_path: Path, table_name: str, columns: list[str], new_data: list[tuple]
+        cls, db_path: Path, table_name: str, columns: list[str], new_data: list[tuple[Any, ...]]
     ) -> tuple[int, int]:
         """
         Esegue Upsert (Insert or Replace) calcolando esattamente le righe modificate o aggiunte.

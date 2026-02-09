@@ -58,7 +58,7 @@ class TimbratureBotPanel(BaseBotPanel):
 
     def _open_settings(self):
         main_window = self.window()
-        if hasattr(main_window, "show_settings"):
+        if main_window and hasattr(main_window, "show_settings"):
             main_window.show_settings()
 
     def refresh_fornitori(self):

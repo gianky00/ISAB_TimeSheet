@@ -21,7 +21,7 @@ class SensitiveDataFilter:
     - IBAN
     """
 
-    PATTERNS: ClassVar[list[tuple[Pattern, str]]] = [
+    PATTERNS: ClassVar[list[tuple[Pattern[str], str]]] = [
         # Password in vari formati
         (
             re.compile(r'(password|passwd|pwd)["\s:=]+["\']?[\w@#$%^&*!]+["\']?', re.IGNORECASE),
@@ -88,8 +88,6 @@ class SensitiveDataFilter:
         Returns:
             Stringa con dati sensibili mascherati
         """
-        if not isinstance(text, str):
-            return text
 
         masked = text
         for pattern, replacement in cls.PATTERNS:
@@ -108,8 +106,6 @@ class SensitiveDataFilter:
         Returns:
             Nuovo dizionario con dati sensibili mascherati
         """
-        if not isinstance(data, dict):
-            return data
 
         masked: dict[str, Any] = {}
         for key, value in data.items():
@@ -139,8 +135,6 @@ class SensitiveDataFilter:
         Returns:
             Nuova lista con dati sensibili mascherati
         """
-        if not isinstance(data, (list, tuple)):
-            return list(data) if isinstance(data, (list, tuple)) else [data]
 
         masked: list[Any] = []
         for item in data:

@@ -29,7 +29,7 @@ class ScaricaTSBot(BaseBot):
         return "Scarica i timesheet dal portale ISAB"
 
     @staticmethod
-    def get_columns() -> list:
+    def get_columns() -> list[dict[str, Any]]:
         """Restituisce le colonne richieste per l'input dati."""
         return [
             {"name": "Numero OdA", "type": "text"},
@@ -51,12 +51,13 @@ class ScaricaTSBot(BaseBot):
         super().__init__(**kwargs)
         self.data_da = data_da
 
-    def run(self, data: list[dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """
         Executes the download workflow.
         """
         if not self.driver:
             return False
+        rows: list[dict[str, Any]]
         if isinstance(data, dict):
             rows = data.get("rows", [])
             self.data_da = data.get("data_da", self.data_da)

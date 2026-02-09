@@ -1,7 +1,7 @@
 import sqlite3
 
 
-def mig_contabilita_v1(conn: sqlite3.Connection):
+def mig_contabilita_v1(conn: sqlite3.Connection) -> None:
     """Schema Iniziale Contabilità (v1)"""
     cursor = conn.cursor()
     cursor.execute(
@@ -67,7 +67,7 @@ def mig_contabilita_v1(conn: sqlite3.Connection):
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_giorn_data ON giornaliere(data)")
 
 
-def mig_contabilita_v2(conn: sqlite3.Connection):
+def mig_contabilita_v2(conn: sqlite3.Connection) -> None:
     """Ottimizzazione indici Contabilità (v2)"""
     cursor = conn.cursor()
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_cont_n_prev ON contabilita(n_prev)")
@@ -76,7 +76,7 @@ def mig_contabilita_v2(conn: sqlite3.Connection):
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_giorn_odc ON giornaliere(odc)")
 
 
-def mig_contabilita_v3(conn: sqlite3.Connection):
+def mig_contabilita_v3(conn: sqlite3.Connection) -> None:
     """Implementazione FTS5 per ricerche veloci (v3)"""
     cursor = conn.cursor()
     # Tabella virtuale per Contabilità

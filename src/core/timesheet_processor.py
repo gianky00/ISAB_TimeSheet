@@ -6,9 +6,10 @@ Replica fedelmente la logica VBA "ProcessTimesheetFiles" per elaborazione, puliz
 import time
 from contextlib import suppress
 from pathlib import Path
+from typing import Any
 
-import openpyxl
-from openpyxl.utils import column_index_from_string, get_column_letter
+import openpyxl  # type: ignore[import-untyped]
+from openpyxl.utils import column_index_from_string, get_column_letter  # type: ignore[import-untyped]
 
 from src.utils.secure_logger import get_secure_logger
 
@@ -37,7 +38,7 @@ class TimesheetProcessor:
                 wb.close()
                 return False, "Foglio 'Timesheet' non trovato."
 
-            ws = wb["Timesheet"]
+            ws: Any = wb["Timesheet"]
 
             # 1. Estrazione Metadata (ODC, POS)
             odc = str(ws["A2"].value).strip() if ws["A2"].value else ""
@@ -66,9 +67,9 @@ class TimesheetProcessor:
             return False, str(e)
 
     @staticmethod
-    def _analyze_pos_column(ws) -> tuple[set[str], str]:
+    def _analyze_pos_column(ws: Any) -> tuple[set[str], str]:
         """Analizza la colonna B per contare i POS univoci e pulire il primo valore."""
-        pos_values = set()
+        pos_values: set[str] = set()
         first_pos_cleaned = ""
 
         for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=2, max_col=2):
@@ -103,7 +104,7 @@ class TimesheetProcessor:
         return dest_path
 
     @staticmethod
-    def _apply_transformations(ws):
+    def _apply_transformations(ws: Any) -> None:
         """Applica tutte le modifiche strutturali al foglio di lavoro."""
         # 1. Rinomina Intestazioni
         headers = {
@@ -143,7 +144,7 @@ class TimesheetProcessor:
         TimesheetProcessor._autofit_columns(ws)
 
     @staticmethod
-    def _autofit_columns(ws):
+    def _autofit_columns(ws: Any) -> None:
         """Regola la larghezza delle colonne in base al contenuto."""
         for col in ws.columns:
             max_len = 0
@@ -156,7 +157,7 @@ class TimesheetProcessor:
             ws.column_dimensions[col_letter].width = (max_len + 2) * 1.2
 
     @staticmethod
-    def _cleanup_source(src: Path, dest: Path):
+    def _cleanup_source(src: Path, dest: Path) -> None:
         """Rimuove il file sorgente se diverso dalla destinazione."""
         with suppress(Exception):
             if src.resolve() != dest.resolve():

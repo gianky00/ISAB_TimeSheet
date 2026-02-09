@@ -105,10 +105,7 @@ def test_data_table_double_click(qtbot, columns, sample_data):
 def test_data_table_get_row_color_prefix(qtbot, columns):
     table = DataTable(columns)
     # Testing prefix match logic
-    assert (
-        table._get_row_color("completato_con_successo")
-        == table.STATUS_COLORS["completato"]
-    )
+    assert table._get_row_color("completato_con_successo") == table.STATUS_COLORS["completato"]
     assert table._get_row_color("unknown") is None
 
 

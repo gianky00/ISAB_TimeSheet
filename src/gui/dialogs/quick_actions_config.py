@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (
     QTreeWidgetItem,
     QTreeWidgetItemIterator,
     QVBoxLayout,
+    QWidget,
 )
 
 from src.core.config_manager import get_config_value, set_config_value
@@ -16,7 +17,7 @@ from src.gui.widgets.quick_actions import AVAILABLE_ACTIONS
 class QuickActionsConfigDialog(QDialog):
     """Dialogo per configurare quali azioni rapide mostrare (ad Albero)."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Configura Azioni Rapide")
         self.setFixedSize(450, 500)  # Dimensioni più compatte e fisse
@@ -56,11 +57,11 @@ class QuickActionsConfigDialog(QDialog):
         )
 
         # Load current config
-        self.current_selection = get_config_value("quick_actions", [])
+        self.current_selection: list[str] = get_config_value("quick_actions", [])
 
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
 
@@ -101,52 +102,58 @@ class QuickActionsConfigDialog(QDialog):
         )
         # Traduci i pulsanti in italiano
         ok_btn = buttons.button(QDialogButtonBox.StandardButton.Ok)
-        ok_btn.setText("Salva")
-        ok_btn.setMinimumHeight(36)
+        if ok_btn is not None:
+            ok_btn.setText("Salva")
+            ok_btn.setMinimumHeight(36)
 
         cancel_btn = buttons.button(QDialogButtonBox.StandardButton.Cancel)
-        cancel_btn.setText("Annulla")
-        cancel_btn.setMinimumHeight(36)
-        cancel_btn.setStyleSheet(
+        if cancel_btn is not None:
+            cancel_btn.setText("Annulla")
+            cancel_btn.setMinimumHeight(36)
+            cancel_btn.setStyleSheet(
+                """
+                QPushButton {
+                    background-color: #6c757d;
+                    color: #ffffff;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 8px 20px;
+                    font-weight: 600;
+                    font-size: 13px;
+                }
+                QPushButton:hover {
+                    background-color: #5c636a;
+                }
+                QPushButton:pressed {
+                    background-color: #565e64;
+                }
             """
-            QPushButton {
-                background-color: #6c757d;
-                color: #ffffff;
-                border: none;
-                border-radius: 6px;
-                padding: 8px 20px;
-                font-weight: 600;
-                font-size: 13px;
-            }
-            QPushButton:hover {
-                background-color: #5c636a;
-            }
-            QPushButton:pressed {
-                background-color: #565e64;
-            }
-        """
-        )
+            )
 
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
-    def _populate_tree(self):
+    def _populate_tree(self) -> None:
         """Costruisce l'albero basandosi sulla struttura 'path'."""
 
         # 1. Build a simplified node structure
         # nodes = { "root_name": { "child_name": { ... "leaves": [(key, text)] } } }
 
         # Helper to find or create a node item
-        items_map = {}  # path_tuple -> QTreeWidgetItem
+        items_map: dict[tuple[str, ...], QTreeWidgetItem] = {}  # path_tuple -> QTreeWidgetItem
 
-        def get_or_create_parent(path_tuple):
+        def get_or_create_parent(path_tuple: tuple[str, ...]) -> QTreeWidgetItem:
             if path_tuple in items_map:
                 return items_map[path_tuple]
 
             # Create it
             if len(path_tuple) == 0:
-                return self.tree.invisibleRootItem()
+                root = self.tree.invisibleRootItem()
+                if root is None:
+                    # Should not happen
+                    raise RuntimeError("Invisible root item is None")
+                return root
 
             parent_path = path_tuple[:-1]
             parent_item = get_or_create_parent(parent_path)
@@ -175,7 +182,7 @@ class QuickActionsConfigDialog(QDialog):
             parent_item = get_or_create_parent(path_tuple)
 
             leaf = QTreeWidgetItem(parent_item)
-            leaf.setText(0, meta["text"])
+            leaf.setText(0, str(meta["text"]))
             leaf.setData(0, Qt.ItemDataRole.UserRole, key)
             leaf.setFlags(leaf.flags() | Qt.ItemFlag.ItemIsUserCheckable)
 
@@ -184,22 +191,23 @@ class QuickActionsConfigDialog(QDialog):
             else:
                 leaf.setCheckState(0, Qt.CheckState.Unchecked)
 
-    def get_selected_actions(self):
+    def get_selected_actions(self) -> list[str]:
         """Ritorna la lista delle chiavi selezionate (solo foglie)."""
-        selected = []
+        selected: list[str] = []
 
         # Recursive check
         iterator = QTreeWidgetItemIterator(self.tree)
         while iterator.value():
             item = iterator.value()
-            key = item.data(0, Qt.ItemDataRole.UserRole)
-            if key and item.checkState(0) == Qt.CheckState.Checked:
-                selected.append(key)
+            if item is not None:
+                key = item.data(0, Qt.ItemDataRole.UserRole)
+                if key and item.checkState(0) == Qt.CheckState.Checked:
+                    selected.append(str(key))
             iterator += 1
 
         return selected
 
-    def accept(self):
+    def accept(self) -> None:
         """Salva la configurazione e chiude."""
         new_selection = self.get_selected_actions()
         set_config_value("quick_actions", new_selection)

@@ -91,7 +91,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
     def _open_settings(self):
         main_window = self.window()
-        if hasattr(main_window, "show_settings"):
+        if main_window and hasattr(main_window, "show_settings"):
             main_window.show_settings()
 
     def refresh_fornitori(self):
@@ -226,6 +226,8 @@ class DettagliOdAPanel(BaseBotPanel):
 
         if success:
             win = self.window()
-            if win and hasattr(win, "storico_oda_panel"):
-                win.storico_oda_panel.refresh_data()
-                self._on_log("🔄 Aggiornamento Storico OdA avviato.")
+            if win:
+                storico_panel = getattr(win, "storico_oda_panel", None)
+                if storico_panel and hasattr(storico_panel, "refresh_data"):
+                    storico_panel.refresh_data()
+                    self._on_log("🔄 Aggiornamento Storico OdA avviato.")

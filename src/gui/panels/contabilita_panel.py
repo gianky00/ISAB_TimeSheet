@@ -37,9 +37,9 @@ class ContabilitaPanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.worker = None
-        self.status_labels = []
-        self.update_buttons = []
+        self.worker: ContabilitaWorker | None = None
+        self.status_labels: list[QLabel] = []
+        self.update_buttons: list[ModernButton] = []
         self._last_status_html = "Pronto"
         self._setup_ui()
         # Defer heavy loading
@@ -167,7 +167,7 @@ class ContabilitaPanel(QWidget):
         if isinstance(current_widget, QTabWidget):
             current_widget = current_widget.currentWidget()
 
-        if hasattr(current_widget, "filter_data"):
+        if current_widget and hasattr(current_widget, "filter_data"):
             current_widget.filter_data(text)
 
     def _proxy_filter(self, widget, text):
@@ -301,11 +301,10 @@ class ContabilitaPanel(QWidget):
 
         if target:
             if hasattr(target, "table"):
-                with suppress(Exception):
-                    target.table.selectionModel().selectionChanged.disconnect()
-                target.table.selectionModel().selectionChanged.connect(
-                    lambda s, d: self._update_selection_total(target.table)
-                )
+                if model := target.table.selectionModel():
+                    with suppress(Exception):
+                        model.selectionChanged.disconnect()
+                    model.selectionChanged.connect(lambda s, d: self._update_selection_total(target.table))
             elif hasattr(target, "tree"):
                 with suppress(Exception):
                     target.tree.itemSelectionChanged.disconnect()
@@ -318,7 +317,9 @@ class ContabilitaPanel(QWidget):
                 self._handle_tree_selection(widget)
                 return
 
-            indexes = widget.selectionModel().selectedIndexes()
+            if not (model := widget.selectionModel()):
+                return
+            indexes = model.selectedIndexes()
             if not indexes:
                 self.selection_count_label.setText("Righe: 0")
                 self.selection_sum_label.setText("Totale ORE: 0")

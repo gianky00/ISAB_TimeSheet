@@ -1,7 +1,7 @@
 import sqlite3
 
 
-def mig_pdl_v1(conn: sqlite3.Connection):
+def mig_pdl_v1(conn: sqlite3.Connection) -> None:
     """Schema Iniziale PDL (v1) basato su Ricerca.xlsx"""
     cursor = conn.cursor()
     cursor.execute(
@@ -37,7 +37,7 @@ def mig_pdl_v1(conn: sqlite3.Connection):
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_pdl_stato ON pdl(stato)")
 
 
-def mig_pdl_v2(conn: sqlite3.Connection):
+def mig_pdl_v2(conn: sqlite3.Connection) -> None:
     """Aggiunge vincolo UNIQUE su n_pdl e pulisce duplicati (v2)"""
     cursor = conn.cursor()
     # 1. Rimuovi duplicati mantenendo il più recente (o ID più alto)

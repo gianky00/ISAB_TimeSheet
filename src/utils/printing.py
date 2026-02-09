@@ -3,27 +3,28 @@ import os
 import subprocess
 import time
 from pathlib import Path
+from typing import Any
 
-import fitz  # type: ignore
+import fitz
 import win32con
 import win32print
 import win32ui
-from PIL import Image, ImageWin  # type: ignore
+from PIL import Image, ImageWin
 
 logger = logging.getLogger(__name__)
 
 
-def get_installed_printers():
+def get_installed_printers() -> list[str]:
     """Restituisce una lista di nomi delle stampanti installate."""
     try:
-        printers = [printer[2] for printer in win32print.EnumPrinters(2)]
+        printers = [str(printer[2]) for printer in win32print.EnumPrinters(2)]
         return printers
     except Exception as e:
         logger.error(f"Errore nel recupero stampanti: {e}")
         return []
 
 
-def _run_powershell(command):
+def _run_powershell(command: str) -> Any:
     """Esegue un comando PowerShell e restituisce l'output."""
     try:
         creation_flags = 0x08000000  # CREATE_NO_WINDOW
@@ -39,7 +40,7 @@ def _run_powershell(command):
         return None
 
 
-def _set_printer_duplex_powershell(printer_name, mode="OneSided"):
+def _set_printer_duplex_powershell(printer_name: str, mode: str = "OneSided") -> bool:
     """
     Tenta di forzare la modalità via PowerShell.
     Non è critico se fallisce, poiché la strategia 'Split Jobs' garantirà comunque fogli separati.
@@ -47,11 +48,13 @@ def _set_printer_duplex_powershell(printer_name, mode="OneSided"):
     try:
         cmd_set = f"Set-PrintConfiguration -PrinterName '{printer_name}' -DuplexingMode {mode}"
         _run_powershell(cmd_set)
+        return True
     except Exception as e:
         logger.warning(f"Warning configurazione PS: {e}")
+        return False
 
 
-def print_pdf(file_path, printer_name):
+def print_pdf(file_path: str, printer_name: str) -> bool:
     """
     Stampa un PDF usando la stampante specificata.
     STRATEGIA 'NUCLEAR' PER SIMPLEX:
@@ -102,7 +105,7 @@ def print_pdf(file_path, printer_name):
 
                     # Conversione PIL
                     mode = "RGBA" if pix.alpha else "RGB"
-                    img = Image.frombytes(mode, [pix.width, pix.height], pix.samples)
+                    img = Image.frombytes(mode, (pix.width, pix.height), pix.samples)
                     if mode == "RGBA":
                         img = img.convert("RGB")
 

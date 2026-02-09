@@ -31,8 +31,25 @@ HOURLY_COST_STD = 28.50
 
 
 class ContabilitaKPIPanel(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
+
+        # Member declarations
+        self.year_combo: QComboBox
+        self.scroll_area_area: QScrollArea
+        self.content_layout: QVBoxLayout
+        self.row1: KPICardsRow
+        self.row2: KPICardsRow
+
+        self.container1: ChartContainer
+        self.container2: ChartContainer
+        self.container3: ChartContainer
+        self.container4: ChartContainer
+        self.container5: ChartContainer
+
+        self.all_widgets: list[QWidget] = []
+        self.anim_group: QParallelAnimationGroup | None = None
+
         with suppress(Exception):
             plt.style.use("seaborn-v0_8-darkgrid")
 
@@ -48,9 +65,7 @@ class ContabilitaKPIPanel(QWidget):
         # --- Toolbar (Year Selector) ---
         toolbar = QHBoxLayout()
         cal_icon = QLabel()
-        cal_icon.setPixmap(
-            get_colored_icon(get_asset_path(Icons.CALENDAR), "#000000").pixmap(18, 18)
-        )
+        cal_icon.setPixmap(get_colored_icon(get_asset_path(Icons.CALENDAR), "#000000").pixmap(18, 18))
         toolbar.addWidget(cal_icon)
         toolbar.addWidget(QLabel("Analisi per Anno:"))
 
@@ -66,10 +81,10 @@ class ContabilitaKPIPanel(QWidget):
         main_layout.addLayout(toolbar)
 
         # --- Scroll Area ---
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.scroll.setStyleSheet("background-color: #f8f9fa;")
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll_area.setStyleSheet("background-color: #f8f9fa;")
 
         content = QWidget()
         content.setStyleSheet("background-color: #f8f9fa;")
@@ -80,9 +95,7 @@ class ContabilitaKPIPanel(QWidget):
         # ROW 1: General Scorecards
         self._add_section_title("METRICHE GENERALI")
         self.row1 = KPICardsRow()
-        self.card_totale = self.row1.add_card(
-            "TOTALE PREVENTIVATO", "€ 0,00", "#198754"
-        )
+        self.card_totale = self.row1.add_card("TOTALE PREVENTIVATO", "€ 0,00", "#198754")
         self.card_ore = self.row1.add_card("ORE SPESE TOTALI", "0", "#0d6efd")
         self.card_resa = self.row1.add_card("RESA MEDIA", "0", "#fd7e14")
         self.card_count = self.row1.add_card("N° COMMESSE", "0", "#6f42c1")
@@ -155,8 +168,8 @@ class ContabilitaKPIPanel(QWidget):
         self.content_layout.addLayout(charts_grid)
         self.content_layout.addStretch()
 
-        self.scroll.setWidget(content)
-        main_layout.addWidget(self.scroll)
+        self.scroll_area.setWidget(content)
+        main_layout.addWidget(self.scroll_area)
 
         # Animazione widgets
         self.all_widgets = (
@@ -171,14 +184,14 @@ class ContabilitaKPIPanel(QWidget):
             ]
         )
 
-    def _add_section_title(self, text):
+    def _add_section_title(self, text: str) -> None:
         lbl = QLabel(text)
         lbl.setStyleSheet(
             "color: #495057; font-weight: bold; font-size: 16px; margin-top: 10px; margin-bottom: 10px;"
         )
         self.content_layout.addWidget(lbl)
 
-    def refresh_years(self):
+    def refresh_years(self) -> None:
         years = ContabilitaManager.get_available_years()
         current = self.year_combo.currentText()
         self.year_combo.blockSignals(True)
@@ -191,10 +204,10 @@ class ContabilitaKPIPanel(QWidget):
             else:
                 self.year_combo.setCurrentIndex(0)
         self.year_combo.blockSignals(False)
-        self._load_kpi_data()
+        self._load_kpi_data(self.year_combo.currentText())
         self._animate_entry()
 
-    def _animate_entry(self):
+    def _animate_entry(self) -> None:
         self.anim_group = QParallelAnimationGroup()
         for i, widget in enumerate(self.all_widgets):
             effect = QGraphicsOpacityEffect(widget)
@@ -207,19 +220,15 @@ class ContabilitaKPIPanel(QWidget):
             self.anim_group.addAnimation(anim)
         self.anim_group.start(QAbstractAnimation.DeletionPolicy.DeleteWhenStopped)
 
-    def _format_currency(self, value):
+    def _format_currency(self, value: float) -> str:
         return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-    def _load_kpi_data(self):
-        year_text = self.year_combo.currentText()
+    def _load_kpi_data(self, year_text: str) -> None:
         if not year_text:
             return
         try:
             year = int(year_text)
             stats = ContabilitaManager.get_year_stats(year)
-            if not stats:
-                return
-
             tot_prev = stats.get("total_prev", 0.0)
             tot_ore = stats.get("total_ore", 0.0)
             count = stats.get("count_total", 0)
@@ -261,9 +270,7 @@ class ContabilitaKPIPanel(QWidget):
                 "nome_file",
             ]
             df = pd.DataFrame(data, columns=cols)
-            df["totale_prev"] = pd.to_numeric(
-                df["totale_prev"], errors="coerce"
-            ).fillna(0)
+            df["totale_prev"] = pd.to_numeric(df["totale_prev"], errors="coerce").fillna(0)
             df["ore_sp"] = pd.to_numeric(df["ore_sp"], errors="coerce").fillna(0)
             df["resa"] = pd.to_numeric(df["resa"], errors="coerce")
 
@@ -276,21 +283,15 @@ class ContabilitaKPIPanel(QWidget):
             self.card_margine.lbl_value.setStyleSheet(
                 f"color: {'#20c997' if margine >= 0 else '#dc3545'}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
             )
-            self.card_margine_perc.lbl_value.setText(
-                f"{marg_perc:.1f} %".replace(".", ",")
-            )
+            self.card_margine_perc.lbl_value.setText(f"{marg_perc:.1f} %".replace(".", ","))
             self.card_margine_perc.lbl_value.setStyleSheet(
                 f"color: {'#20c997' if marg_perc >= 0 else '#dc3545'}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
             )
-            self.card_eff_resa.lbl_value.setText(
-                f"€ {self._format_currency(utile_ora)} / h"
-            )
+            self.card_eff_resa.lbl_value.setText(f"€ {self._format_currency(utile_ora)} / h")
             self.card_eff_resa.lbl_value.setStyleSheet(
                 f"color: {'#20c997' if utile_ora >= 0 else '#dc3545'}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
             )
-            self.card_val_ora.lbl_value.setText(
-                f"€ {self._format_currency(val_ora)} / h"
-            )
+            self.card_val_ora.lbl_value.setText(f"€ {self._format_currency(val_ora)} / h")
 
             self.charts_manager.plot_all(df)
         except Exception as e:

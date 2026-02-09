@@ -5,18 +5,39 @@ Decorators per logging automatico.
 import functools
 import time
 from collections.abc import Callable
+from typing import Any, TypeVar, cast, overload
 
 from .context import generate_span_id, get_context, with_context
 from .logger import get_logger
 from .metrics import get_tracker
 
+F = TypeVar("F", bound=Callable[..., Any])
 
-def measure_time(
-    func: Callable | None = None,
+
+@overload
+def measure_time[F: Callable[..., Any]](
+    func: F,
     *,
     threshold_ms: float | None = None,
     logger_name: str | None = None,
-):
+) -> F: ...
+
+
+@overload
+def measure_time(
+    func: None = None,
+    *,
+    threshold_ms: float | None = None,
+    logger_name: str | None = None,
+) -> Callable[[F], F]: ...
+
+
+def measure_time[F: Callable[..., Any]](
+    func: F | None = None,
+    *,
+    threshold_ms: float | None = None,
+    logger_name: str | None = None,
+) -> F | Callable[[F], F]:
     """
     Decorator per misurare tempo esecuzione e loggarlo automaticamente.
 
@@ -41,9 +62,9 @@ def measure_time(
         logger_name: Nome logger custom (default: nome modulo funzione)
     """
 
-    def decorator(f: Callable) -> Callable:
+    def decorator(f: F) -> F:
         @functools.wraps(f)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Determina logger
             if logger_name:
                 logger = get_logger(logger_name)
@@ -110,21 +131,41 @@ def measure_time(
                     )
                     raise
 
-        return wrapper
+        return cast("F", wrapper)
 
     # Support both @measure_time and @measure_time(threshold_ms=X)
     if func is None:
-        return decorator
+        return cast("Callable[[F], F]", decorator)
     return decorator(func)
 
 
-def log_entry_exit(
-    func: Callable | None = None,
+@overload
+def log_entry_exit[F: Callable[..., Any]](
+    func: F,
     *,
     logger_name: str | None = None,
     log_args: bool = False,
     log_result: bool = False,
-):
+) -> F: ...
+
+
+@overload
+def log_entry_exit(
+    func: None = None,
+    *,
+    logger_name: str | None = None,
+    log_args: bool = False,
+    log_result: bool = False,
+) -> Callable[[F], F]: ...
+
+
+def log_entry_exit[F: Callable[..., Any]](
+    func: F | None = None,
+    *,
+    logger_name: str | None = None,
+    log_args: bool = False,
+    log_result: bool = False,
+) -> F | Callable[[F], F]:
     """
     Decorator per loggare ingresso e uscita da funzione.
 
@@ -144,9 +185,9 @@ def log_entry_exit(
         log_result: Se True, logga il risultato della funzione
     """
 
-    def decorator(f: Callable) -> Callable:
+    def decorator(f: F) -> F:
         @functools.wraps(f)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Determina logger
             if logger_name:
                 logger = get_logger(logger_name)
@@ -176,9 +217,9 @@ def log_entry_exit(
                 logger.error(f"Exception in {f.__name__}: {e}")
                 raise
 
-        return wrapper
+        return cast("F", wrapper)
 
     # Support both @log_entry_exit and @log_entry_exit(log_args=True)
     if func is None:
-        return decorator
+        return cast("Callable[[F], F]", decorator)
     return decorator(func)
