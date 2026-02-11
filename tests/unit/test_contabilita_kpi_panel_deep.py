@@ -46,7 +46,7 @@ class TestContabilitaKPIPanelDeep:
 
         # Trigger data load for 2024
         panel.year_combo.setCurrentText("2024")
-        panel._load_kpi_data()
+        panel._load_kpi_data("2024")
 
         # Verify cards updated
         assert "10.000,00" in panel.card_totale.lbl_value.text()

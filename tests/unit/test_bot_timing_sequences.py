@@ -8,6 +8,49 @@ from src.bots.portale_fornitori.timbrature.bot import TimbratureBot
 from src.bots.safework.pdl.bot import SafeWorkPDLBot
 
 
+# Classi concrete per i test per evitare TypeError su metodi astratti
+class ConcreteScaricaTSBot(ScaricaTSBot):
+    @property
+    def name(self):
+        return "ScaricaTSBot"
+
+    @property
+    def description(self):
+        return "Desc"
+
+    @staticmethod
+    def get_columns():
+        return []
+
+
+class ConcreteTimbratureBot(TimbratureBot):
+    @property
+    def name(self):
+        return "TimbratureBot"
+
+    @property
+    def description(self):
+        return "Desc"
+
+    @staticmethod
+    def get_columns():
+        return []
+
+
+class ConcreteSafeWorkPDLBot(SafeWorkPDLBot):
+    @property
+    def name(self):
+        return "SafeWorkPDLBot"
+
+    @property
+    def description(self):
+        return "Desc"
+
+    @staticmethod
+    def get_columns():
+        return []
+
+
 class TestBotTimingSequences:
     """
     Questa suite di test verifica che le pause (time.sleep) critiche siano
@@ -23,7 +66,7 @@ class TestBotTimingSequences:
     @pytest.fixture
     def mock_scarico_bot(self):
         with patch("src.bots.base.base_bot.BaseBot._init_driver"):
-            bot = ScaricaTSBot(username="u", password="p", fornitore="F1")
+            bot = ConcreteScaricaTSBot(username="u", password="p", fornitore="F1")
             bot.driver = MagicMock()
             bot.wait = MagicMock()
             bot.long_wait = MagicMock()
@@ -35,7 +78,7 @@ class TestBotTimingSequences:
             patch("src.bots.safework.base.SafeworkBaseBot._init_driver"),
             patch("src.bots.safework.pdl.bot.SafeWorkPDLBot.__init__", return_value=None),
         ):
-            bot = SafeWorkPDLBot("u", "p")
+            bot = ConcreteSafeWorkPDLBot("u", "p")
             bot.driver = MagicMock()
             bot.wait = MagicMock()
             bot.log = MagicMock()
@@ -46,7 +89,7 @@ class TestBotTimingSequences:
     @pytest.fixture
     def mock_timbrature_bot(self):
         with patch("src.bots.base.base_bot.BaseBot._init_driver"):
-            bot = TimbratureBot(username="u", password="p", fornitore="F1")
+            bot = ConcreteTimbratureBot(username="u", password="p", fornitore="F1")
             bot.driver = MagicMock()
             bot.wait = MagicMock()
             bot.long_wait = MagicMock()

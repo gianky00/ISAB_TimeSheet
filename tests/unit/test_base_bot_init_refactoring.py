@@ -4,6 +4,7 @@ Ensures 100% coverage and parity before refactoring.
 """
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest

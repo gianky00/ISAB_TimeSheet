@@ -85,7 +85,14 @@ class TestE2EWorkflowsHardened:
 
         # Inserimento della prima riga importata
         # Assicuriamoci che la tupla abbia la lunghezza corretta (15 colonne)
-        data_row = list(rows[0])
+        # Convertiamo Timestamp in stringa per SQLite
+        data_row = []
+        for val in rows[0]:
+            if hasattr(val, "isoformat"):
+                data_row.append(val.strftime("%Y-%m-%d %H:%M:%S"))
+            else:
+                data_row.append(val)
+
         while len(data_row) < len(cols):
             data_row.append("")
 

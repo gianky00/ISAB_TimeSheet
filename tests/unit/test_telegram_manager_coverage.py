@@ -32,7 +32,11 @@ class TestTelegramManagerCoverage:
     def test_start_service_no_token(self, mock_load):
         mock_load.return_value = {"telegram_token": ""}
         self.service.start_service()
-        self.service.log_signal.emit.assert_called_with("⚠️ Telegram Token mancante.")
+        # N.B. Usiamo escape per evitare problemi di encoding tra win32/utf-8
+        # \u26a0\ufe0f è l'emoji ⚠️
+        self.service.log_signal.emit.assert_called()
+        args, _ = self.service.log_signal.emit.call_args
+        assert "Telegram Token mancante." in args[0]
 
     @patch("src.core.telegram.service.config_manager.load_config")
     @patch("threading.Thread")
@@ -47,7 +51,7 @@ class TestTelegramManagerCoverage:
     def test_stop_service(self):
         mock_thread = MagicMock()
         mock_thread.is_alive.return_value = True
-        self.service.thread = mock_thread
+        self.service._service_thread = mock_thread
 
         if not hasattr(self.service.stop_event, "set"):
             self.service.stop_event = MagicMock()

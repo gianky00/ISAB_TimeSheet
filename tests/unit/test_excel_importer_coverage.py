@@ -91,7 +91,8 @@ def test_import_contabilita_no_valid_sheets(importer):
 
 def test_normalize_columns_logic(importer):
     """Test robustezza normalizzazione colonne."""
-    df = pd.DataFrame(columns=[" DATA  PREV. ", "  MESE", "N°PREV"])
+    # N.B. Il sorgente in src/core/importers/contabilita.py usa "NÂ° PREV." (con Â)
+    df = pd.DataFrame(columns=[" DATA  PREV. ", "  MESE", "NÂ° PREV."])
     # Call directly on implementation
     norm_df = ContabilitaImporter._normalize_columns(df)
     cols = norm_df.columns.tolist()

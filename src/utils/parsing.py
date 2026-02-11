@@ -37,7 +37,7 @@ def parse_currency(value: Any) -> float:
 def _normalize_string(s: str) -> tuple[str, bool]:
     """Rimuove simboli, testo inutile e gestisce il segno negativo."""
     # Rimuovi simbolo valuta e testo "Euro"
-    s = s.replace("€", "")
+    s = s.replace("€", "").replace("$", "").replace("£", "")
     s = re.sub(r"(?i)euro", "", s).strip()
 
     # Gestione segno negativo

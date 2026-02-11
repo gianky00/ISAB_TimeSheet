@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """
 SyncroJob - Zero-Lag Startup Architecture
 Animazioni fluide a 60fps garantite tramite thread separato per il caricamento.
@@ -8,6 +9,10 @@ import sys
 import traceback
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.gui.main_window.main import MainWindow
 
 # Setup path FIRST (before any other imports)
 ROOT_DIR = Path(__file__).parent.resolve()
@@ -76,18 +81,19 @@ def main():
 
     server = QLocalServer()
     server.listen(server_name)
-    main_window_instance = None
+    main_window_instance: MainWindow | None = None
 
     def handle_new_connection():
         """Handle incoming connection from another instance to activate window."""
         client_socket = server.nextPendingConnection()
-        if client_socket.waitForReadyRead(500):
+        if client_socket and client_socket.waitForReadyRead(500):
             msg = client_socket.readAll().data().decode()
             if msg == "ACTIVATE" and main_window_instance:
                 main_window_instance.show()
                 main_window_instance.raise_()
                 main_window_instance.activateWindow()
-        client_socket.disconnectFromServer()
+        if client_socket:
+            client_socket.disconnectFromServer()
 
     server.newConnection.connect(handle_new_connection)
 
@@ -238,7 +244,7 @@ def main():
             log_dir = CONFIG_DIR / "logs" / "errors"
             log_dir.mkdir(exist_ok=True, parents=True)
             crash_file = log_dir / f"crash_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-            report = []
+            report: list[str] = []
             report.extend(("=== TRACEBACK ===\n", traceback.format_exc()))
 
             crash_file.write_text(

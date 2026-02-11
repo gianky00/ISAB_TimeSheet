@@ -19,6 +19,10 @@ class MockBot(BaseBot):
     def run(self, data):
         return True
 
+    @staticmethod
+    def get_columns():
+        return []
+
     def _handle_unsaved_changes_popup(self):
         pass
 

@@ -45,7 +45,7 @@ class TestTelegramService:
         assert service.connected_chat_id == "999"
 
     def test_stop_service_no_thread(self, service):
-        service.thread = None
+        service._service_thread = None
 
         # Should not raise
         service.stop_service()
@@ -53,7 +53,7 @@ class TestTelegramService:
     def test_stop_service_with_thread(self, service):
         mock_thread = MagicMock()
         mock_thread.is_alive.return_value = True
-        service.thread = mock_thread
+        service._service_thread = mock_thread
 
         service.stop_service()
 

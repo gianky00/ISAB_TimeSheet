@@ -69,7 +69,9 @@ class TestImportersRobust:
 
     def test_giornaliera_clean_data(self, mock_giornaliera_df):
         """Test pulizia dati (rimozione totali)."""
-        clean_df = GiornaliereImporter._clean_giornaliera_data(mock_giornaliera_df)
+        # Necessaria normalizzazione prima della pulizia (che si aspetta colonne minuscole)
+        norm_df = GiornaliereImporter._normalize_giornaliera_columns(mock_giornaliera_df)
+        clean_df = GiornaliereImporter._clean_giornaliera_data(norm_df)
 
         assert len(clean_df) == 2
         assert "Totale" not in clean_df["data"].values

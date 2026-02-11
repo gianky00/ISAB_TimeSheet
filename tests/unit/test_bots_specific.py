@@ -30,7 +30,7 @@ class TestSpecificBots:
 
     @patch("src.bots.base.base_bot.BaseBot._init_driver")
     def test_timbrature_bot_init(self, mock_init):
-        bot = TimbratureBot(username="u", password="p")
+        bot = TimbratureBot(username="u", password="p", fornitore="FORN")
         assert bot.name == "Timbrature"
 
     @patch("src.bots.base.base_bot.BaseBot._init_driver")

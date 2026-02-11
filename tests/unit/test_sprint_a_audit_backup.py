@@ -41,33 +41,29 @@ class TestSprintAAuditBackup:
 
     def test_audit_retention_policy(self, audit_mgr, mocker):
         """Verifica la pulizia dei log obsoleti."""
+        # 1. Inserimento manuale log VECCHIO (direttamente nel DB per bypassare integrità/segnali)
         with sqlite3.connect(audit_mgr.DB_PATH) as conn:
-            # 100 giorni fa (ISO format per coerenza)
             past_date = "2020-01-01T10:00:00.000000"
             conn.execute(
                 "INSERT INTO audit_logs (timestamp, action, severity, status, category, user_id, params, row_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (past_date, "Old", "low", "success", "gen", "u", "{}", "fakehash"),
             )
-            # Oggi
-            conn.execute(
-                "INSERT INTO audit_logs (timestamp, action, severity, status, category, user_id, params, row_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (
-                    "2026-01-12T10:00:00.000000",
-                    "New",
-                    "low",
-                    "success",
-                    "gen",
-                    "u",
-                    "{}",
-                    "fakehash2",
-                ),
-            )
             conn.commit()
 
+        # 2. Inserimento log NUOVO tramite manager (così appare in get_logs())
+        # Usiamo un'azione specifica per il test
+        audit_mgr.log_action("NewAction", category="test")
+
+        # 3. Esegui pulizia
         audit_mgr.run_retention_policy(days=30)
+
+        # 4. Verifica
         logs = audit_mgr.get_logs()
         actions = [log["action"] for log in logs]
-        assert "New" in actions
+
+        # 'NewAction' deve esserci, 'Old' no.
+        # N.B. run_retention_policy aggiunge anche un log "Pulizia Log"
+        assert "NewAction" in actions
         assert "Old" not in actions
 
     def test_backup_creation_and_filtering(self, tmp_path, mocker):

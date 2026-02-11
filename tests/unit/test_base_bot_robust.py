@@ -16,6 +16,10 @@ class ConcreteBot(BaseBot):
     def description(self) -> str:
         return "A bot for testing BaseBot"
 
+    @staticmethod
+    def get_columns():
+        return []
+
     def run(self, data):
         return True
 

@@ -35,3 +35,9 @@ class TestUtilsDeep:
 
         with patch("src.utils.document_processor.fitz.open", return_value=mock_doc):
             assert DocumentProcessor.is_pdf_searchable(pdf_path) is True
+
+    def test_document_processor_no_fitz(self, tmp_path):
+        """Test: Ritorna stringa vuota se fitz non è installato."""
+        with patch("src.utils.document_processor.fitz", None):
+            text = DocumentProcessor.extract_text(tmp_path / "any.pdf")
+            assert text == ""

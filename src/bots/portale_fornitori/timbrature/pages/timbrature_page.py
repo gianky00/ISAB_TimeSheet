@@ -14,6 +14,7 @@ from selenium.common.exceptions import (
     TimeoutException,
 )
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
@@ -45,8 +46,6 @@ class TimbraturePage:
         """Waits for loading overlay to disappear."""
         try:
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
-            # Fix: EC does not contain By. Use By directly.
-            from selenium.webdriver.common.by import By
 
             WebDriverWait(self.driver, Timeouts.OVERLAY).until(
                 EC.invisibility_of_element_located((By.XPATH, xpath))
@@ -54,14 +53,6 @@ class TimbraturePage:
             # No sleep needed: invisibility check is sufficient
         except TimeoutException:
             self.log("⚠️ Timeout attesa overlay.")
-        except AttributeError:
-            # Fallback if EC.By is not available (Selenium version differences or mixup)
-            from selenium.webdriver.common.by import By
-
-            WebDriverWait(self.driver, Timeouts.OVERLAY).until(
-                EC.invisibility_of_element_located((By.XPATH, xpath))
-            )
-            # No sleep needed: invisibility check is sufficient
 
     def navigate_to_timbrature(self) -> bool:
         """Navigates to Report -> Timbrature."""
@@ -184,8 +175,6 @@ class TimbraturePage:
             # No sleep needed: wait for option presence is next
 
             # Select option with retry
-            from selenium.webdriver.common.by import By
-
             option_xpath = f"//li[contains(text(), '{fornitore}')]"
 
             # Wait specifically for the option to be visible

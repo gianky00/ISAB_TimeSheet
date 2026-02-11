@@ -35,6 +35,15 @@ class TimbratureBot(BaseBot):
         """Metodo statico che restituisce la descrizione del bot."""
         return "Scarica e archivia le timbrature dal portale ISAB"
 
+    @staticmethod
+    def get_columns() -> list[dict[str, Any]]:
+        """Restituisce le colonne per la visualizzazione dei dati."""
+        return [
+            {"name": "fornitore", "label": "Fornitore", "width": 150},
+            {"name": "data_da", "label": "Data Da", "width": 100},
+            {"name": "data_a", "label": "Data A", "width": 100},
+        ]
+
     def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs):
         super().__init__(**kwargs)
         self.data_da = data_da
