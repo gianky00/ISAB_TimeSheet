@@ -1,0 +1,10 @@
+<svg width="120" height="60" viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradGreen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#66BB6A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E7D32;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="120" height="60" rx="30" fill="url(#gradGreen)" />
+  <text x="50%" y="54%" text-anchor="middle" fill="white" font-family="Segoe UI, Roboto, Arial, sans-serif" font-weight="800" font-size="34">TCL</text>
+</svg>

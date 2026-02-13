@@ -13,6 +13,7 @@ from src.bots.portale_fornitori.scarico_ts import ScaricaTSBot
 from src.bots.portale_fornitori.timbrature import TimbratureBot
 from src.bots.safework.pdl.bot import SafeWorkPDLBot
 from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
+from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
 
 # Registry dei bot disponibili
 BOT_REGISTRY: dict[str, dict[str, Any]] = {
@@ -99,6 +100,14 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
         "icon": "🔍",
         "columns": [],
         "config_key": "last_pdl_search_data",
+    },
+    "programmazione_pdl": {
+        "class": SafeWorkProgrammazioneBot,
+        "name": "Programmazione PDL",
+        "description": "Monitoraggio programmazione settimanale SafeWork",
+        "icon": "📅",
+        "columns": [],
+        "config_key": "last_pdl_prog_data",
     },
 }
 

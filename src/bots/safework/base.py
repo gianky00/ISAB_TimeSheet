@@ -71,7 +71,7 @@ class SafeworkBaseBot(BaseBot):
 
     @property
     def name(self) -> str:
-        return "SafeWorkBot"
+        return "safework_base"
 
     @property
     def description(self) -> str:

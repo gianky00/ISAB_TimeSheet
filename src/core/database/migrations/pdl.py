@@ -88,3 +88,28 @@ def mig_pdl_v2(conn: sqlite3.Connection) -> None:
 
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_pdl_n_pdl ON pdl(n_pdl)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_pdl_sito ON pdl(sito)")
+
+
+def mig_pdl_v3(conn: sqlite3.Connection) -> None:
+    """Crea la tabella per la persistenza della programmazione settimanale (v3)"""
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pdl_programmazione (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            richiedente TEXT,
+            n_pdl TEXT,
+            area TEXT,
+            descrizione TEXT,
+            lun_tcl BOOLEAN, lun_tgo BOOLEAN,
+            mar_tcl BOOLEAN, mar_tgo BOOLEAN,
+            mer_tcl BOOLEAN, mer_tgo BOOLEAN,
+            gio_tcl BOOLEAN, gio_tgo BOOLEAN,
+            ven_tcl BOOLEAN, ven_tgo BOOLEAN,
+            sab_tcl BOOLEAN, sab_tgo BOOLEAN,
+            dom_tcl BOOLEAN, dom_tgo BOOLEAN,
+            ultimo_aggiornamento TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """
+    )
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_prog_pdl ON pdl_programmazione(n_pdl)")

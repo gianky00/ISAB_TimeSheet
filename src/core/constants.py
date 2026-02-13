@@ -135,3 +135,7 @@ class Icons:
 
     # UI Elements
     SEPARATOR_DOT = "assets/icons/separator_dot.svg"
+    FLAG_TCL_ON = "assets/icons/flag_tcl_on.svg"
+    FLAG_TCL_OFF = "assets/icons/flag_tcl_off.svg"
+    FLAG_TGO_ON = "assets/icons/flag_tgo_on.svg"
+    FLAG_TGO_OFF = "assets/icons/flag_tgo_off.svg"
