@@ -389,10 +389,10 @@ class MainWindow(QMainWindow):
                 return
             scaduti = [d for d in expiring if d["stato"] == "SCADUTA"]
             in_scadenza = [d for d in expiring if d["stato"] == "IN SCADENZA"]
-            
+
             red_dot = get_asset_path(Icons.STATUS_DOT_RED)
             yellow_dot = get_asset_path(Icons.STATUS_DOT_YELLOW)
-            
+
             msg = "<b>Monitoraggio Abilitazioni ISAB</b><br/>"
             if scaduti:
                 msg += f"<img src='{red_dot}' width='14' height='14'> {len(scaduti)} Abilitazioni SCADUTE (>30 gg)<br/>"
@@ -408,7 +408,10 @@ class MainWindow(QMainWindow):
             self.sidebar.btn_lyra.set_badge(count)
         if count > 0:
             alert_icon = get_asset_path(Icons.ALERT)
-            ToastManager.instance().show(f"<img src='{alert_icon}' width='14' height='14'> Lyra ha rilevato {count} anomalie", "warning")
+            ToastManager.instance().show(
+                f"<img src='{alert_icon}' width='14' height='14'> Lyra ha rilevato {count} anomalie",
+                "warning",
+            )
 
     def _show_update_banner(self, new_version: str, download_url: str, changelog: str) -> None:
         if hasattr(self, "update_banner"):

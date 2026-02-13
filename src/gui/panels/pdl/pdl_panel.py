@@ -112,10 +112,10 @@ class PDLDBPanel(QWidget):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        
+
         self.tabs = QTabWidget()
         self.tabs.setProperty("class", "Level2Tabs")
-        
+
         # --- TAB 1: DATABASE PDL ---
         self.db_tab = QWidget()
         db_layout = QVBoxLayout(self.db_tab)
@@ -168,14 +168,14 @@ class PDLDBPanel(QWidget):
         self.splitter.setStretchFactor(1, 1)
 
         db_layout.addWidget(self.splitter)
-        
+
         # --- TAB 2: PROGRAMMAZIONE ---
         self.prog_tab = ProgrammazioneTab()
-        
+
         # Aggiunta Tab
         self.tabs.addTab(self.db_tab, "Database PDL")
         self.tabs.addTab(self.prog_tab, "Programmazione")
-        
+
         layout.addWidget(self.tabs)
 
     def _on_update_bot_clicked(self):
@@ -241,7 +241,7 @@ class PDLDBPanel(QWidget):
         if success:
             ToastManager.instance().show("PDL Aggiornati!", "success")
             self.refresh_data()
-            
+
             # Aggiorna anche i richiedenti nel tab programmazione
             if hasattr(self, "prog_tab"):
                 self.prog_tab._load_requesters()

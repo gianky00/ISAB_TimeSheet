@@ -15,11 +15,12 @@ except ImportError:
     msoffcrypto = None
 
 try:
-    import openpyxl  # type: ignore[import-untyped]
+    import openpyxl
 
+    openpyxl_mod: Any = openpyxl
     HAS_OPENPYXL = True
 except ImportError:
-    openpyxl = None
+    openpyxl_mod = None
     HAS_OPENPYXL = False
 
 from src.core.importers.base import BaseImporter

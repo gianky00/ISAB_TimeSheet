@@ -8,8 +8,8 @@ from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
-import openpyxl  # type: ignore[import-untyped]
-from openpyxl.utils import column_index_from_string, get_column_letter  # type: ignore[import-untyped]
+import openpyxl
+from openpyxl.utils import column_index_from_string, get_column_letter
 
 from src.utils.secure_logger import get_secure_logger
 

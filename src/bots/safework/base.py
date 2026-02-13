@@ -1,71 +1,95 @@
 from contextlib import suppress
 
 from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.base.base_bot import BaseBot
+from src.bots.safework.common.locators import SafeWorkLocators
+from src.bots.safework.pages.login_page import SafeWorkLoginPage
+from src.bots.safework.pages.ricerca_pdl_page import RicercaPDLPage
+from src.bots.safework.pages.visualizza_attivita_page import VisualizzaAttivitaPage
 
 
 class SafeworkBaseBot(BaseBot):
     """
-    Classe base specifica per SafeWork.
-    Isola le logiche SafeWork da quelle del Portale Fornitori.
+    Classe base specifica per SafeWork modulare.
     """
 
     SAFEWORK_URL = "https://safework.isab.com/"
     ISAB_URL = SAFEWORK_URL
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.login_page_sw: SafeWorkLoginPage | None = None
+        self.attivita_page: VisualizzaAttivitaPage | None = None
+        self.ricerca_pdl_page: RicercaPDLPage | None = None
+
+    def _init_pages(self):
+        """Inizializza le Page Objects dopo la creazione del driver."""
+        if self.driver and self.wait:
+            self.login_page_sw = SafeWorkLoginPage(self.driver, self.wait, self.log)
+            self.attivita_page = VisualizzaAttivitaPage(self.driver, self.wait, self.log)
+            self.ricerca_pdl_page = RicercaPDLPage(self.driver, self.wait, self.log)
+
+    def _login(self) -> bool:
+        """Login SafeWork con gestione TCL/COEMI."""
+        if not self.driver or not self.wait:
+            return False
+
+        self._init_pages()
+        self.log("🌐 Navigazione verso SafeWork...")
+        try:
+            self.driver.get(self.SAFEWORK_URL)
+        except Exception as e:
+            self.log(f"❌ Errore apertura URL: {e}")
+            return False
+
+        assert self.login_page_sw is not None
+        if self.login_page_sw.login(self.username, self.password):
+            if "fcaldarella" in self.username.lower():
+                self.log("⏳ Account TCL rilevato: attendo solo overlay...")
+                self._attendi_scomparsa_overlay(timeout_secondi=60)
+            else:
+                self.log("⏳ Account standard rilevato: attendo caricamento sistema...")
+                self._attendi_caricamento_sistema()
+            return True
+        return False
+
     def _attendi_scomparsa_overlay(self, timeout_secondi: int | None = 120) -> bool:
-        """Logica di attesa fedele allo script originale."""
-        if timeout_secondi is None:
-            timeout_secondi = 120
+        """Attesa overlay SafeWork."""
         if not self.driver:
             return False
+
+        timeout = timeout_secondi if timeout_secondi is not None else 120
+
         try:
-            # Attende la scomparsa dell'overlay grigio
-            WebDriverWait(self.driver, timeout_secondi).until(
-                EC.invisibility_of_element_located((By.ID, "GISWaitOverlay"))
+            WebDriverWait(self.driver, timeout).until(
+                EC.invisibility_of_element_located(SafeWorkLocators.OVERLAY)
             )
         except TimeoutException:
             self.log("⏳ Overlay ancora presente (proseguo...)")
 
-        # Gestione modale OK/Annulla se appare
         with suppress(Exception):
-            modale = WebDriverWait(self.driver, 3).until(
-                EC.visibility_of_element_located(
-                    (
-                        By.XPATH,
-                        "//div[contains(@class, 'modal') and contains(@style, 'display: block')]",
-                    )
-                )
-            )
-            modale.find_element(
-                By.XPATH, ".//button[contains(text(), 'OK') or @data-dismiss='modal']"
-            ).click()
-            self.log("ℹ️ Modale gestita (OK/Annulla).")
-
-        # No sleep needed: invisibility check is sufficient
+            modali = self.driver.find_elements(*SafeWorkLocators.MODAL_DIALOG)
+            if modali and modali[0].is_displayed():
+                btn = modali[0].find_element(*SafeWorkLocators.MODAL_OK_BUTTON)
+                btn.click()
+                self.log("ℹ️ Popup modale gestito.")
         return True
 
     def _attendi_caricamento_sistema(self):
-        """Implementa l'attesa specifica: compare e poi scompare."""
+        """Attesa specifica per account COEMI."""
         if not self.driver:
             return
-        xpath_caricamento = "//span[contains(text(), 'Caricamento...')]"
-        try:
-            self.log("⏳ Attesa comparsa caricamento...")
-            WebDriverWait(self.driver, 120).until(
-                EC.visibility_of_element_located((By.XPATH, xpath_caricamento))
+
+        with suppress(TimeoutException):
+            WebDriverWait(self.driver, 60).until(
+                EC.visibility_of_element_located(SafeWorkLocators.CARICAMENTO_SPAN)
             )
-            self.log("⏳ Sistema in caricamento, attesa completamento...")
-            WebDriverWait(self.driver, 420).until(
-                EC.invisibility_of_element_located((By.XPATH, xpath_caricamento))
+            WebDriverWait(self.driver, 300).until(
+                EC.invisibility_of_element_located(SafeWorkLocators.CARICAMENTO_SPAN)
             )
-            self.log("✅ Caricamento sistema completato.")
-        except TimeoutException:
-            self.log("⚠️ Timeout attesa caricamento (proseguo...)")
 
         self._attendi_scomparsa_overlay()
 
@@ -75,4 +99,4 @@ class SafeworkBaseBot(BaseBot):
 
     @property
     def description(self) -> str:
-        return "Bot Base SafeWork"
+        return "Bot Base SafeWork Modulare"

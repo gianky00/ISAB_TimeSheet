@@ -17,11 +17,12 @@ except ImportError:
 
 # Tentativo di importare openpyxl
 try:
-    import openpyxl  # type: ignore[import-untyped]
+    import openpyxl
 
+    openpyxl_mod: Any = openpyxl
     HAS_OPENPYXL = True
 except ImportError:
-    openpyxl = None
+    openpyxl_mod = None
     HAS_OPENPYXL = False
 
 
