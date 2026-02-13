@@ -134,3 +134,4 @@ class Icons:
     STATUS_DOT_GRAY = "assets/icons/status_dot_gray.svg"
 
     # UI Elements
+    SEPARATOR_DOT = "assets/icons/separator_dot.svg"

@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 from src.core import config_manager
 from src.core.audit_manager import AuditManager
 from src.core.auth_monitor import check_expiring_isab_authorizations
+from src.core.constants import Icons
 from src.core.lyra_sentinel import LyraSentinel
 from src.core.telegram_bridge import TelegramUIBridge
 from src.core.telegram_manager import TelegramService
@@ -26,6 +27,7 @@ from src.gui.controllers.search_controller import SearchController
 from src.gui.controllers.service_controller import ServiceController
 from src.gui.styles import apply_theme
 from src.gui.widgets.toast import ToastManager
+from src.utils.helpers import get_asset_path
 
 from .components.menu_bar import MenuBarComponent
 
@@ -387,11 +389,15 @@ class MainWindow(QMainWindow):
                 return
             scaduti = [d for d in expiring if d["stato"] == "SCADUTA"]
             in_scadenza = [d for d in expiring if d["stato"] == "IN SCADENZA"]
+            
+            red_dot = get_asset_path(Icons.STATUS_DOT_RED)
+            yellow_dot = get_asset_path(Icons.STATUS_DOT_YELLOW)
+            
             msg = "<b>Monitoraggio Abilitazioni ISAB</b><br/>"
             if scaduti:
-                msg += f"ðŸ”´ {len(scaduti)} Abilitazioni SCADUTE (>30 gg)<br/>"
+                msg += f"<img src='{red_dot}' width='14' height='14'> {len(scaduti)} Abilitazioni SCADUTE (>30 gg)<br/>"
             if in_scadenza:
-                msg += f"ðŸŸ  {len(in_scadenza)} In scadenza (20-30 gg)<br/>"
+                msg += f"<img src='{yellow_dot}' width='14' height='14'> {len(in_scadenza)} In scadenza (20-30 gg)<br/>"
             msg += "<br/><small>Controlla la tabella 'Dipendenti' per i dettagli.</small>"
             ToastManager.instance().show(msg, "warning" if in_scadenza or scaduti else "info", 8000)
         except Exception as e:
@@ -401,7 +407,8 @@ class MainWindow(QMainWindow):
         if hasattr(self, "sidebar"):
             self.sidebar.btn_lyra.set_badge(count)
         if count > 0:
-            ToastManager.instance().show(f"âš ï¸  Lyra ha rilevato {count} anomalie", "warning")
+            alert_icon = get_asset_path(Icons.ALERT)
+            ToastManager.instance().show(f"<img src='{alert_icon}' width='14' height='14'> Lyra ha rilevato {count} anomalie", "warning")
 
     def _show_update_banner(self, new_version: str, download_url: str, changelog: str) -> None:
         if hasattr(self, "update_banner"):

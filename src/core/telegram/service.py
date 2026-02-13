@@ -18,7 +18,9 @@ from telegram.ext import (
 )
 
 from src.core import config_manager
+from src.core.constants import Icons
 from src.core.telegram.handlers import callbacks, commands, messages
+from src.utils.helpers import get_asset_path
 
 
 class TelegramService(QObject):
@@ -62,7 +64,8 @@ class TelegramService(QObject):
             token = config.get("telegram_token", "")
             self.connected_chat_id = config.get("telegram_chat_id", "")
             if not token:
-                self.log_signal.emit("âš ï¸  Telegram Token mancante.")
+                icon = get_asset_path(Icons.ALERT)
+                self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Telegram Token mancante.")
                 return
 
             self.stop_event.clear()
@@ -72,11 +75,13 @@ class TelegramService(QObject):
     def stop_service(self) -> None:
         """Ferma il servizio e attende la sua terminazione (metodo bloccante)."""
         if self._service_thread and self._service_thread.is_alive():
-            self.log_signal.emit("â ³ Arresto servizio Telegram in corso...")
+            icon = get_asset_path(Icons.CLOCK)
+            self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Arresto servizio Telegram in corso...")
             self.stop_event.set()
             self._service_thread.join(timeout=12)
             if self._service_thread.is_alive():
-                self.log_signal.emit("âš ï¸  Timeout: il thread di Telegram non si Ã¨ fermato correttamente.")
+                icon = get_asset_path(Icons.ALERT)
+                self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Timeout: il thread di Telegram non si è fermato correttamente.")
             else:
                 self.log_signal.emit("Servizio Telegram fermato.")
 
@@ -85,10 +90,11 @@ class TelegramService(QObject):
         self._execute_loop(lambda: self._main_loop_logic(token))
 
     async def _main_loop_logic(self, token: str) -> None:
-        """Logica interna del loop asincrono (separata per testabilitÃ )."""
+        """Logica interna del loop asincrono (separata per testabilità)."""
         self.app = self._build_application(token)
         self._add_handlers()
-        self.log_signal.emit("âœ… Servizio Telegram Attivo")
+        icon = get_asset_path(Icons.CHECK_CIRCLE)
+        self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Servizio Telegram Attivo")
 
         try:
             await self.app.initialize()
@@ -149,7 +155,8 @@ class TelegramService(QObject):
             await asyncio.wait_for(sequence(), timeout=5.0)
             self.log_signal.emit("Bot Telegram spento.")
         except Exception as e:
-            self.log_signal.emit(f"âš ï¸  Errore spegnimento: {e}")
+            icon = get_asset_path(Icons.ALERT)
+            self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Errore spegnimento: {e}")
 
     def _execute_loop(self, main_coro_func: Callable[[], Coroutine[Any, Any, None]]) -> None:
         """Esegue una coroutine nel loop del thread dedicato."""
@@ -159,7 +166,8 @@ class TelegramService(QObject):
             self.loop.run_until_complete(main_coro_func())
         except Exception as e:
             if not self.stop_event.is_set():
-                self.log_signal.emit(f"â Œ Errore critico loop: {e}")
+                icon = get_asset_path(Icons.X_CIRCLE)
+                self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Errore critico loop: {e}")
         finally:
             self.log_signal.emit("Thread Telegram terminato.")
             if self.loop and self.loop.is_running():
@@ -172,12 +180,15 @@ class TelegramService(QObject):
     ) -> None:
         """Gestisce gli errori globali del bot."""
         if isinstance(context.error, telegram.error.Conflict):
-            self.log_signal.emit("🔴 CONFLITTO TELEGRAM: Rilevata altra istanza attiva. Arresto servizio.")
+            icon = get_asset_path(Icons.STATUS_DOT_RED)
+            self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> <b>CONFLITTO TELEGRAM:</b> Rilevata altra istanza attiva. Arresto servizio.")
             self.stop_event.set()
         elif isinstance(context.error, telegram.error.NetworkError):
-            self.log_signal.emit(f"⚠️ Errore Rete Telegram: {context.error}")
+            icon = get_asset_path(Icons.ALERT)
+            self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Errore Rete Telegram: {context.error}")
         else:
-            self.log_signal.emit(f"❌ Errore Telegram Imprevisto: {context.error}")
+            icon = get_asset_path(Icons.X_CIRCLE)
+            self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Errore Telegram Imprevisto: {context.error}")
 
     async def _check_auth(self, update: object) -> bool:
         """Helper per verificare l'autenticazione (usato anche internamente)."""
@@ -208,7 +219,8 @@ class TelegramService(QObject):
                     self._send_message_async(self.connected_chat_id, message), self.loop
                 )
             except Exception as e:
-                self.log_signal.emit(f"❌ Errore invio Telegram: {e}")
+                icon = get_asset_path(Icons.X_CIRCLE)
+                self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Errore invio Telegram: {e}")
 
     def send_photo_sync(self, photo_bytes: bytes, caption: str = "") -> None:
         if not self.connected_chat_id:
@@ -222,7 +234,8 @@ class TelegramService(QObject):
                     self.loop,
                 )
             except Exception as e:
-                self.log_signal.emit(f"❌ Errore invio foto: {e}")
+                icon = get_asset_path(Icons.X_CIRCLE)
+                self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Errore invio foto: {e}")
 
     def send_document_sync(self, file_path: str, caption: str = "") -> None:
         if not self.connected_chat_id:
@@ -236,7 +249,8 @@ class TelegramService(QObject):
                     self.loop,
                 )
             except Exception as e:
-                self.log_signal.emit(f"❌ Errore invio documento: {e}")
+                icon = get_asset_path(Icons.X_CIRCLE)
+                self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Errore invio documento: {e}")
 
     async def _send_message_async(self, chat_id: str | int, text: str) -> None:
         try:
@@ -252,7 +266,8 @@ class TelegramService(QObject):
                 parse_mode=telegram.constants.ParseMode.MARKDOWN if "*" in text else None,
             )
         except Exception as e:
-            self.log_signal.emit(f"❌ Fallito invio messaggio a Telegram: {e}")
+            icon = get_asset_path(Icons.X_CIRCLE)
+            self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Fallito invio messaggio a Telegram: {e}")
 
     async def _send_photo_async(self, chat_id: str | int, photo_bytes: bytes, caption: str) -> None:
         try:
@@ -269,7 +284,8 @@ class TelegramService(QObject):
                 parse_mode=telegram.constants.ParseMode.MARKDOWN if caption else None,
             )
         except Exception as e:
-            self.log_signal.emit(f"❌ Fallito invio foto a Telegram: {e}")
+            icon = get_asset_path(Icons.X_CIRCLE)
+            self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Fallito invio foto a Telegram: {e}")
 
     async def _send_document_async(self, chat_id: str | int, file_path: str, caption: str) -> None:
         try:
@@ -287,4 +303,5 @@ class TelegramService(QObject):
                     parse_mode=telegram.constants.ParseMode.MARKDOWN if caption else None,
                 )
         except Exception as e:
-            self.log_signal.emit(f"❌ Fallito invio documento a Telegram: {e}")
+            icon = get_asset_path(Icons.X_CIRCLE)
+            self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Fallito invio documento a Telegram: {e}")
