@@ -49,7 +49,10 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             return False
 
         # 2. Configurazione Filtri
-        assert self.ricerca_pdl_page is not None
+        if not self.ricerca_pdl_page:
+            self.log("❌ Pagina Ricerca PDL non inizializzata.")
+            return False
+        
         self.ricerca_pdl_page.configura_filtro_chiusi(params.get("exclude_closed", True))
 
         # 3. Elaborazione per ogni Sito
@@ -68,7 +71,10 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         return True
 
     def _naviga_a_ricerca(self) -> bool:
-        assert self.wait is not None
+        if not self.wait:
+            self.log("❌ Wait non inizializzato.")
+            return False
+            
         try:
             self.log("🏠 Clic su Home Page...")
             self.wait.until(lambda d: d.find_element(*SafeWorkLocators.HOME_BUTTON)).click()
@@ -87,7 +93,11 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*") if f.is_file()}
 
         self.log(f"📥 Esportazione Excel per {site_name}...")
-        assert self.ricerca_pdl_page is not None
+        
+        if not self.ricerca_pdl_page:
+            self.log("❌ Pagina Ricerca PDL non inizializzata per export.")
+            return None
+            
         if self.ricerca_pdl_page.esporta_excel():
             return poll_for_new_file(
                 directory=self.download_path, files_before=files_before, pattern="Ricerca*.xlsx", timeout=600

@@ -80,8 +80,9 @@ class ProgrammingSyncManager:
             if not self._get_excel_workbook():
                 return
 
-        assert self.wb_master is not None
-        assert self.excel_app is not None
+        if not self.wb_master or not self.excel_app:
+             logger.error("Master Excel o App non inizializzati.")
+             return
 
         try:
             # 1. Preparazione Excel (Ottimizzazione)
@@ -122,7 +123,11 @@ class ProgrammingSyncManager:
                 warnings.simplefilter("ignore")
                 wb_in = openpyxl.load_workbook(downloaded_path, read_only=True, data_only=True)
                 ws_in = wb_in.active
-                assert ws_in is not None
+                
+                if ws_in is None:
+                    logger.error("Foglio Excel di input non trovato.")
+                    wb_in.close()
+                    return
 
                 for row in ws_in.iter_rows(min_row=2, values_only=True):
                     if not row or not row[0]:

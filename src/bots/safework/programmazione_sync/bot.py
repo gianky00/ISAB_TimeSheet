@@ -44,14 +44,19 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         # 1. Navigazione
         self.log("📋 Navigazione in 'Visualizza Attività'...")
         self._attendi_scomparsa_overlay()
-        assert self.driver is not None
+        if not self.driver:
+            self.log("❌ Driver non inizializzato.")
+            return False
+            
         self.driver.find_element(By.ID, "topIcon-actHomePage").click()
         self._attendi_scomparsa_overlay()
         self.driver.find_element(By.ID, "sideBar-actVisualizzaAttivita").click()
         self._attendi_scomparsa_overlay()
 
         # 2. Setup Filtri
-        assert self.attivita_page is not None
+        if not self.attivita_page:
+            self.log("❌ Pagina Attività non inizializzata.")
+            return False
         self.attivita_page.pulisci_pdl()
         self.attivita_page.imposta_date(date_start, date_end)
         self.attivita_page.seleziona_ditta("CO.EMI SRL")
