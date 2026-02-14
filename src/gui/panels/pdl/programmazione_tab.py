@@ -8,8 +8,9 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QColor, QFont, QIcon
 from PyQt6.QtWidgets import (
+    QComboBox,
     QHBoxLayout,
     QHeaderView,
     QLabel,
@@ -73,6 +74,13 @@ class ProgrammazioneTab(QWidget):
         self.week_label.setStyleSheet("font-size: 13px;")
         filter_area.addWidget(self.week_label)
 
+        # Selettore Settimana
+        self.week_selector = QComboBox()
+        self.week_selector.addItems(["Settimana Corrente", "Settimana Prossima"])
+        self.week_selector.setFixedWidth(200)
+        self.week_selector.currentIndexChanged.connect(self._update_ui_dates)
+        filter_area.addWidget(self.week_selector)
+
         # Nuovo Selettore Richiedenti
         self.req_filter = MultiSelectFilter("Richiedenti", "Seleziona Richiedenti...")
         self.req_filter.setFixedWidth(300)
@@ -120,34 +128,17 @@ class ProgrammazioneTab(QWidget):
             }
             QTableWidget::item { padding: 5px; }
             QHeaderView::section {
-                background-color: #f8f9fa;
                 padding: 8px;
                 border: none;
                 border-bottom: 2px solid #dee2e6;
                 font-weight: bold;
                 color: #495057;
+                background-color: #f8f9fa;
             }
         """)
 
-        # Calcolo date per Header
-        today = datetime.now()
-        current_weekday = today.weekday()  # 0 = Lun
-        start_dt = today - timedelta(days=current_weekday)
-        d = [(start_dt + timedelta(days=i)).strftime("%d/%m") for i in range(7)]
-
-        headers = [
-            "Richiedente",
-            "N° PDL",
-            "Descrizione",
-            f"LUN {d[0]}",
-            f"MAR {d[1]}",
-            f"MER {d[2]}",
-            f"GIO {d[3]}",
-            f"VEN {d[4]}",
-            f"SAB {d[5]}",
-            f"DOM {d[6]}",
-        ]
-        self.results_table.setHorizontalHeaderLabels(headers)
+        # Calcolo date per Header (Iniziale)
+        self._update_ui_dates()
         self.results_table.setAlternatingRowColors(True)
 
         if v_header := self.results_table.verticalHeader():
@@ -164,18 +155,82 @@ class ProgrammazioneTab(QWidget):
                 h_header.setSectionResizeMode(i, QHeaderView.ResizeMode.Fixed)
                 self.results_table.setColumnWidth(i, 85)
 
-                # Evidenzia giorno corrente
-                if i - 3 == current_weekday:
-                    headers[i] = f"➤ {headers[i]}"
-                    self.results_table.setHorizontalHeaderLabels(headers)
-
         layout.addWidget(self.results_table)
 
-    def _get_current_week_range(self) -> tuple[str, str]:
+    def _get_selected_week_range(self) -> tuple[str, str, datetime]:
+        """Restituisce start_str, end_str e start_dt in base alla selezione."""
         today = datetime.now()
-        start = today - timedelta(days=today.weekday())
-        end = start + timedelta(days=6)
-        return start.strftime("%d/%m/%Y"), end.strftime("%d/%m/%Y")
+        current_weekday = today.weekday()
+        start_current = today - timedelta(days=current_weekday)
+
+        # 0 = Current, 1 = Next
+        offset = self.week_selector.currentIndex() if hasattr(self, "week_selector") else 0
+
+        start_target = start_current + timedelta(weeks=offset)
+        end_target = start_target + timedelta(days=6)
+
+        return start_target.strftime("%d/%m/%Y"), end_target.strftime("%d/%m/%Y"), start_target
+
+    def _get_current_week_range(self) -> tuple[str, str]:
+        # Mantenuto per compatibilità o uso interno iniziale
+        s, e, _ = self._get_selected_week_range()
+        return s, e
+
+    def _update_ui_dates(self):
+        """Aggiorna label e header tabella in base alla settimana selezionata."""
+        start_str, end_str, start_dt = self._get_selected_week_range()
+
+        # Update Label
+        if hasattr(self, "week_label"):
+            self.week_label.setText(
+                f"<span style='color: #6c757d;'>Monitoraggio Settimana:</span> "
+                f"<b style='color: #212529;'>{start_str} - {end_str}</b>"
+            )
+
+        # Update Table Headers
+        d = [(start_dt + timedelta(days=i)).strftime("%d/%m") for i in range(7)]
+        headers = [
+            "Richiedente", "N° PDL", "Descrizione",
+            f"LUN {d[0]}", f"MAR {d[1]}", f"MER {d[2]}", f"GIO {d[3]}",
+            f"VEN {d[4]}", f"SAB {d[5]}", f"DOM {d[6]}",
+        ]
+
+        # Evidenzia giorno corrente con stile moderno (Background + Colore)
+        is_current_week = (getattr(self, "week_selector", None) and self.week_selector.currentIndex() == 0)
+        current_weekday = datetime.now().weekday()
+
+        if hasattr(self, "results_table"):
+            self.results_table.setHorizontalHeaderLabels(headers)
+
+            # Applica stili agli header
+            for i in range(3, 10):
+                item = self.results_table.horizontalHeaderItem(i)
+                if not item:
+                    continue
+
+                # Reset base style
+                # Nota: Il background base è gestito dallo stylesheet, qui sovrascriviamo se necessario
+                # Per sovrascrivere il background dello stylesheet su specifici item,
+                # a volte è necessario rimuovere il background dallo stylesheet generale o usare delegate.
+                # Tuttavia, proviamo a impostare il background role.
+
+                if is_current_week and (i - 3 == current_weekday):
+                    # Giorno Corrente: Azzurro chiaro sfondo, Blu scuro testo
+                    item.setBackground(QColor("#e7f1ff"))
+                    item.setForeground(QColor("#0d6efd"))
+                    font = QFont()
+                    font.setBold(True)
+                    font.setPointSize(10) # Leggermente più grande
+                    item.setFont(font)
+                    item.setToolTip("Oggi")
+                else:
+                    # Reset (usa defaults o null per ereditare stylesheet)
+                    item.setBackground(QColor("#f8f9fa"))
+                    item.setForeground(QColor("#495057"))
+                    font = QFont()
+                    font.setBold(True)
+                    item.setFont(font)
+                    item.setToolTip("")
 
     def _load_requesters(self):
         try:
@@ -210,7 +265,7 @@ class ProgrammazioneTab(QWidget):
             ToastManager.instance().show("Credenziali SafeWork non configurate.", "error")
             return
 
-        start_date, end_date = self._get_current_week_range()
+        start_date, end_date, _ = self._get_selected_week_range()
         bot = create_bot(
             "programmazione_pdl",
             username=account["username"],
@@ -305,7 +360,7 @@ class ProgrammazioneTab(QWidget):
 
             outlook = win32com.client.Dispatch("Outlook.Application")
             mail = outlook.CreateItem(0)
-            start_date, end_date = self._get_current_week_range()
+            start_date, end_date, _ = self._get_selected_week_range()
             mail.Subject = f"Monitoraggio Programmazione Settimanale {start_date} - {end_date}"
 
             unique_reqs = {r["richiedente"] for r in self.last_results}
