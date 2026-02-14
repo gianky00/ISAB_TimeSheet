@@ -9,6 +9,7 @@ from .data_table import DataTable
 from .excel_table import EditableDataTable, ExcelTableWidget
 from .info_widgets import DetailedInfoDialog, InfoLabel, KPIBigCard
 from .modern_button import ModernButton
+from .multi_select_filter import MultiSelectFilter
 from .notification_item import NotificationItem
 from .status_card import StatusCard
 from .status_indicator import StatusIndicator

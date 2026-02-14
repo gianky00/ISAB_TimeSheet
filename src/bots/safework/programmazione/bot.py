@@ -9,6 +9,7 @@ from typing import Any
 from selenium.webdriver.common.by import By
 
 from src.bots.safework.base import SafeworkBaseBot
+from src.bots.safework.common.locators import SafeWorkLocators
 
 logger = logging.getLogger(__name__)
 
@@ -44,14 +45,21 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
 
         # 1. Navigazione
         self.log("📋 Navigazione in 'Visualizza Attività'...")
-        assert self.wait is not None
-        self.wait.until(lambda d: d.find_element(By.ID, "topIcon-actHomePage")).click()
+        if not self.driver:
+            self.log("❌ Driver non inizializzato.")
+            return False
+
+        # Uso click_robusto per evitare ElementClickInterceptedException
+        self.click_robusto(SafeWorkLocators.HOME_BUTTON)
         self._attendi_scomparsa_overlay()
-        self.wait.until(lambda d: d.find_element(By.ID, "sideBar-actVisualizzaAttivita")).click()
+
+        self.click_robusto(SafeWorkLocators.VISUALIZZA_ATTIVITA_BUTTON)
         self._attendi_scomparsa_overlay()
 
         # 2. Setup Filtri
-        assert self.attivita_page is not None
+        if not self.attivita_page:
+             self.log("❌ Pagina Attività non inizializzata.")
+             return False
         self.attivita_page.pulisci_pdl()
         self.attivita_page.imposta_date(str(date_start), str(date_end))
         self.attivita_page.seleziona_ditta("CO.EMI SRL")
@@ -71,7 +79,9 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
 
     def _scrap_risultati(self, req_input: str):
         """Logica di scraping specifica del bot."""
-        assert self.attivita_page is not None
+        if not self.attivita_page:
+             self.log("❌ Pagina Attività non inizializzata per lo scraping.")
+             return
         rows = self.attivita_page.get_rows()
         if not rows:
             return

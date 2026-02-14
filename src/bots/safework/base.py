@@ -45,7 +45,9 @@ class SafeworkBaseBot(BaseBot):
             self.log(f"❌ Errore apertura URL: {e}")
             return False
 
-        assert self.login_page_sw is not None
+        if self.login_page_sw is None:
+            self.log("❌ Login Page non inizializzata.")
+            return False
         if self.login_page_sw.login(self.username, self.password):
             if "fcaldarella" in self.username.lower():
                 self.log("⏳ Account TCL rilevato: attendo solo overlay...")
@@ -57,18 +59,26 @@ class SafeworkBaseBot(BaseBot):
         return False
 
     def _attendi_scomparsa_overlay(self, timeout_secondi: int | None = 120) -> bool:
-        """Attesa overlay SafeWork."""
+        """Attesa overlay SafeWork con gestione race condition."""
         if not self.driver:
             return False
+
+        import time
+
+        # Piccola pausa per permettere agli script di attivare l'overlay
+        time.sleep(0.8)
 
         timeout = timeout_secondi if timeout_secondi is not None else 120
 
         try:
+            # Attendiamo che l'overlay sia effettivamente invisibile o assente
             WebDriverWait(self.driver, timeout).until(
                 EC.invisibility_of_element_located(SafeWorkLocators.OVERLAY)
             )
+            # Ulteriore mini-pausa per stabilità DOM dopo la scomparsa
+            time.sleep(0.3)
         except TimeoutException:
-            self.log("⏳ Overlay ancora presente (proseguo...)")
+            self.log("⏳ Overlay ancora presente dopo il timeout (proseguo con cautela...)")
 
         with suppress(Exception):
             modali = self.driver.find_elements(*SafeWorkLocators.MODAL_DIALOG)
@@ -77,6 +87,30 @@ class SafeworkBaseBot(BaseBot):
                 btn.click()
                 self.log("ℹ️ Popup modale gestito.")
         return True
+
+    def click_robusto(self, locator: tuple[str, str], timeout: int = 20):
+        """Esegue un click gestendo eventuali intercettazioni da overlay."""
+        import time
+
+        from selenium.common.exceptions import ElementClickInterceptedException
+
+        end_time = time.time() + timeout
+        while time.time() < end_time:
+            try:
+                el = self.wait.until(EC.element_to_be_clickable(locator))
+                el.click()
+                return
+            except ElementClickInterceptedException:
+                self.log("⏳ Click intercettato, attendo scomparsa overlay...")
+                self._attendi_scomparsa_overlay(timeout_secondi=10)
+            except Exception as e:
+                self.log(f"⚠️ Errore durante il click robusto: {e}")
+                raise e
+
+        # Ultimo tentativo via JS se bloccato
+        self.log("🚀 Fallback: Click via JavaScript")
+        el = self.driver.find_element(*locator)
+        self.driver.execute_script("arguments[0].click();", el)
 
     def _attendi_caricamento_sistema(self):
         """Attesa specifica per account COEMI."""

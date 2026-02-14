@@ -13,10 +13,6 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
-    QLineEdit,
-    QListWidget,
-    QListWidgetItem,
-    QMessageBox,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -28,7 +24,7 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.core.database.pdl_queries import PDLQueries
 from src.gui.panels.base import BotWorker
-from src.gui.widgets import TimelineWidget
+from src.gui.widgets import MultiSelectFilter, TimelineWidget
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path
@@ -43,6 +39,7 @@ class ProgrammazioneTab(QWidget):
         super().__init__(parent)
         self.worker: BotWorker | None = None
         self.last_results: list[dict[str, Any]] = []
+        self.requesters: list[str] = []
         self._setup_ui()
         self._load_requesters()
         # Carica dati persistenti
@@ -58,63 +55,84 @@ class ProgrammazioneTab(QWidget):
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(10)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(15)
 
-        # --- BARRA SUPERIORE COMPATTA ---
+        # --- BARRA SUPERIORE MODERNA ---
         top_bar = QHBoxLayout()
 
-        # 1. Settimana e Ricerca
-        filter_box = QVBoxLayout()
+        # Area Filtri
+        filter_area = QVBoxLayout()
+
+        # Info Settimana
         start_date, end_date = self._get_current_week_range()
-        self.week_label = QLabel(f"<b>Settimana:</b> {start_date} - {end_date}")
-        self.week_label.setStyleSheet("font-size: 11px; color: #666;")
-        filter_box.addWidget(self.week_label)
+        self.week_label = QLabel(
+            f"<span style='color: #6c757d;'>Monitoraggio Settimana:</span> "
+            f"<b style='color: #212529;'>{start_date} - {end_date}</b>"
+        )
+        self.week_label.setStyleSheet("font-size: 13px;")
+        filter_area.addWidget(self.week_label)
 
-        self.req_search = QLineEdit()
-        self.req_search.setPlaceholderText("Filtra richiedenti...")
-        self.req_search.setClearButtonEnabled(True)
-        self.req_search.setFixedWidth(180)
-        self.req_search.textChanged.connect(self._filter_requesters)
-        filter_box.addWidget(self.req_search)
-        top_bar.addLayout(filter_box)
+        # Nuovo Selettore Richiedenti
+        self.req_filter = MultiSelectFilter("Richiedenti", "Seleziona Richiedenti...")
+        self.req_filter.setFixedWidth(300)
+        # Carica selezione salvata
+        saved_reqs = config_manager.get_config_value("selected_programming_requesters", [])
+        self.req_filter.set_selected(saved_reqs)
+        self.req_filter.changed.connect(self._on_requesters_changed)
 
-        # 2. Lista Richiedenti (Molto compatta)
-        self.req_list = QListWidget()
-        self.req_list.setFixedHeight(60)
-        self.req_list.setStyleSheet("border: 1px solid #DDD; border-radius: 4px; font-size: 11px;")
-        top_bar.addWidget(self.req_list, 1)
+        filter_area.addWidget(self.req_filter)
+        top_bar.addLayout(filter_area)
 
-        # 3. Azioni
-        actions_layout = QHBoxLayout()
+        top_bar.addStretch()
+
+        # Azioni
         self.btn_run = ModernButton(
-            "Controlla", variant=ModernButton.Variant.PRIMARY, icon=get_asset_path(Icons.PLAY)
+            "Esegui Controllo", variant=ModernButton.Variant.PRIMARY, icon=get_asset_path(Icons.PLAY)
         )
         self.btn_email = ModernButton(
-            "Email", variant=ModernButton.Variant.SUCCESS, icon=get_asset_path(Icons.SEND)
+            "Report Outlook", variant=ModernButton.Variant.GHOST, icon=get_asset_path(Icons.SEND)
         )
         self.btn_email.setEnabled(False)
         self.btn_run.clicked.connect(self._on_run_clicked)
         self.btn_email.clicked.connect(self._on_email_clicked)
-        actions_layout.addWidget(self.btn_run)
-        actions_layout.addWidget(self.btn_email)
-        top_bar.addLayout(actions_layout)
+
+        top_bar.addWidget(self.btn_email)
+        top_bar.addWidget(self.btn_run)
 
         layout.addLayout(top_bar)
 
         # --- LOG (Dinamico) ---
         self.log_widget = TimelineWidget()
-        self.log_widget.setFixedHeight(150)
+        self.log_widget.setFixedHeight(180)
         self.log_widget.setVisible(False)
         layout.addWidget(self.log_widget)
 
         # --- TABELLA AGGREGATA ---
         self.results_table = QTableWidget()
         self.results_table.setColumnCount(10)  # Richiedente, PDL, Descrizione, 7 Giorni
+        self.results_table.setStyleSheet("""
+            QTableWidget {
+                border: 1px solid #e9ecef;
+                border-radius: 8px;
+                gridline-color: #f8f9fa;
+                background-color: white;
+            }
+            QTableWidget::item { padding: 5px; }
+            QHeaderView::section {
+                background-color: #f8f9fa;
+                padding: 8px;
+                border: none;
+                border-bottom: 2px solid #dee2e6;
+                font-weight: bold;
+                color: #495057;
+            }
+        """)
 
         # Calcolo date per Header
         today = datetime.now()
-        start_dt = today - timedelta(days=today.weekday())
+        current_weekday = today.weekday()  # 0 = Lun
+        start_dt = today - timedelta(days=current_weekday)
         d = [(start_dt + timedelta(days=i)).strftime("%d/%m") for i in range(7)]
 
         headers = [
@@ -134,7 +152,7 @@ class ProgrammazioneTab(QWidget):
 
         if v_header := self.results_table.verticalHeader():
             v_header.setVisible(False)
-            v_header.setDefaultSectionSize(35)
+            v_header.setDefaultSectionSize(40)
 
         if h_header := self.results_table.horizontalHeader():
             h_header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
@@ -146,14 +164,12 @@ class ProgrammazioneTab(QWidget):
                 h_header.setSectionResizeMode(i, QHeaderView.ResizeMode.Fixed)
                 self.results_table.setColumnWidth(i, 85)
 
-        layout.addWidget(self.results_table)
+                # Evidenzia giorno corrente
+                if i - 3 == current_weekday:
+                    headers[i] = f"➤ {headers[i]}"
+                    self.results_table.setHorizontalHeaderLabels(headers)
 
-    def _filter_requesters(self, text: str):
-        """Filtra gli elementi della lista richiedenti in base al testo inserito."""
-        search_text = text.lower()
-        for i in range(self.req_list.count()):
-            if item := self.req_list.item(i):
-                item.setHidden(search_text not in item.text().lower())
+        layout.addWidget(self.results_table)
 
     def _get_current_week_range(self) -> tuple[str, str]:
         today = datetime.now()
@@ -163,15 +179,14 @@ class ProgrammazioneTab(QWidget):
 
     def _load_requesters(self):
         try:
-            requesters = PDLQueries.get_unique_requesters()
-            self.req_list.clear()
-            for req in requesters:
-                item = QListWidgetItem(req)
-                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-                item.setCheckState(Qt.CheckState.Unchecked)
-                self.req_list.addItem(item)
+            self.requesters = PDLQueries.get_unique_requesters()
+            self.req_filter.set_items(self.requesters)
         except Exception as e:
             logger.error(f"Errore caricamento richiedenti: {e}")
+
+    def _on_requesters_changed(self, selected: list[str]):
+        """Salva i richiedenti selezionati nella configurazione."""
+        config_manager.set_config_value("selected_programming_requesters", selected)
 
     def _on_log(self, message: str):
         """Aggiunge un messaggio alla console di log."""
@@ -179,14 +194,10 @@ class ProgrammazioneTab(QWidget):
             self.log_widget.append(message)
 
     def _on_run_clicked(self):
-        selected_reqs = []
-        for i in range(self.req_list.count()):
-            item = self.req_list.item(i)
-            if item and item.checkState() == Qt.CheckState.Checked:
-                selected_reqs.append(item.text())
+        selected_reqs = self.req_filter.selected
 
         if not selected_reqs:
-            QMessageBox.warning(self, "Attenzione", "Seleziona almeno un richiedente.")
+            ToastManager.instance().show("Seleziona almeno un richiedente.", "warning")
             return
 
         config = config_manager.load_config()
@@ -196,7 +207,7 @@ class ProgrammazioneTab(QWidget):
             account = next((a for a in safework_accounts if a.get("default")), safework_accounts[0])
 
         if not account:
-            QMessageBox.warning(self, "Attenzione", "Credenziali SafeWork non configurate.")
+            ToastManager.instance().show("Credenziali SafeWork non configurate.", "error")
             return
 
         start_date, end_date = self._get_current_week_range()
@@ -225,7 +236,7 @@ class ProgrammazioneTab(QWidget):
         self.worker.log_signal.connect(self._on_log)
         self.worker.finished_signal.connect(self._on_bot_finished)
         self.worker.start()
-        ToastManager.instance().show("Avvio monitoraggio...", "info")
+        ToastManager.instance().show("Avvio monitoraggio SafeWork...", "info")
 
     def _on_bot_finished(self, success: bool):
         self.btn_run.setEnabled(True)
@@ -244,7 +255,7 @@ class ProgrammazioneTab(QWidget):
             )
             ToastManager.instance().show(msg, "success" if self.last_results else "info")
         else:
-            ToastManager.instance().show("Errore controllo.", "error")
+            ToastManager.instance().show("Errore durante il controllo SafeWork.", "error")
 
     def _update_table(self, results: list[dict[str, Any]]):
         self.results_table.setRowCount(0)
@@ -252,6 +263,8 @@ class ProgrammazioneTab(QWidget):
         icon_tcl_off = QIcon(get_asset_path(Icons.FLAG_TCL_OFF))
         icon_tgo_on = QIcon(get_asset_path(Icons.FLAG_TGO_ON))
         icon_tgo_off = QIcon(get_asset_path(Icons.FLAG_TGO_OFF))
+
+        today_idx = datetime.now().weekday()
 
         for row_idx, res in enumerate(results):
             self.results_table.insertRow(row_idx)
@@ -262,22 +275,27 @@ class ProgrammazioneTab(QWidget):
             for i, prog in enumerate(res["programmazione"]):
                 cell_widget = QWidget()
                 cell_layout = QHBoxLayout(cell_widget)
-                cell_layout.setContentsMargins(2, 0, 2, 0)
-                cell_layout.setSpacing(4)
+                cell_layout.setContentsMargins(4, 2, 4, 2)
+                cell_layout.setSpacing(6)
                 cell_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+                # TCL
                 lbl_tcl = QLabel()
                 lbl_tcl.setPixmap((icon_tcl_on if prog["tcl"] else icon_tcl_off).pixmap(32, 18))
+                lbl_tcl.setToolTip(f"TCL: {'Programmato' if prog['tcl'] else 'Assente'}")
                 cell_layout.addWidget(lbl_tcl)
 
+                # TGO
                 lbl_tgo = QLabel()
                 lbl_tgo.setPixmap((icon_tgo_on if prog["tgo"] else icon_tgo_off).pixmap(32, 18))
+                lbl_tgo.setToolTip(f"TGO: {'Programmato' if prog['tgo'] else 'Assente'}")
                 cell_layout.addWidget(lbl_tgo)
 
-                self.results_table.setCellWidget(row_idx, 3 + i, cell_widget)
+                # Evidenzia giorno oggi
+                if i == today_idx:
+                    cell_widget.setStyleSheet("background-color: rgba(13, 110, 253, 0.05);")
 
-    def _idx_to_day(self, idx: int) -> str:
-        return ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"][idx - 1]
+                self.results_table.setCellWidget(row_idx, 3 + i, cell_widget)
 
     def _on_email_clicked(self):
         if not self.last_results:
@@ -295,28 +313,34 @@ class ProgrammazioneTab(QWidget):
             for r in unique_reqs:
                 if r and len(r.split()) >= 2:
                     parts = r.split()
+                    # Fallback logic per email richiedente
                     recipients.append(f"{parts[1][0].lower()}.{parts[0].lower()}@isab.com")
 
             mail.To = "; ".join(recipients)
             mail.CC = "francesco.millo@coemi.it; ciro.scaravelli@coemi.it"
 
-            html = "<h3>Report Programmazione Settimanale SafeWork</h3>"
-            html += "<table border='1' style='border-collapse: collapse; font-family: Calibri; width: 100%;'>"
-            html += "<tr style='background-color: #f2f2f2;'><th>Richiedente</th><th>PdL</th><th>Descrizione</th><th>Lun</th><th>Mar</th><th>Mer</th><th>Gio</th><th>Ven</th><th>Sab</th><th>Dom</th></tr>"
+            html = "<h2 style='color: #0d6efd; font-family: Segoe UI, sans-serif;'>Report Programmazione Settimanale</h2>"
+            html += (
+                f"<p style='font-family: Segoe UI, sans-serif;'>Periodo: <b>{start_date} - {end_date}</b></p>"
+            )
+            html += "<table border='1' style='border-collapse: collapse; font-family: Segoe UI, sans-serif; width: 100%; font-size: 13px;'>"
+            html += "<tr style='background-color: #f8f9fa;'><th>Richiedente</th><th>PdL</th><th>Descrizione</th><th>Lun</th><th>Mar</th><th>Mer</th><th>Gio</th><th>Ven</th><th>Sab</th><th>Dom</th></tr>"
 
             for res in self.last_results:
-                html += f"<tr><td>{res['richiedente']}</td><td>{res['pdl']}</td><td>{res.get('descrizione', '')}</td>"
+                html += f"<tr><td style='padding: 5px;'>{res['richiedente']}</td>"
+                html += f"<td style='padding: 5px; text-align: center;'><b>{res['pdl']}</b></td>"
+                html += f"<td style='padding: 5px;'>{res.get('descrizione', '')}</td>"
                 for prog in res["programmazione"]:
                     tcl_val = prog["tcl"]
                     tgo_val = prog["tgo"]
-                    tcl_html = f"<b style='color:{'#2E7D32' if tcl_val else '#C62828'};'>TCL</b>"
-                    tgo_html = f"<b style='color:{'#2E7D32' if tgo_val else '#C62828'};'>TGO</b>"
-                    html += f"<td align='center'>{tcl_html}/{tgo_html}</td>"
+                    tcl_html = f"<span style='color:{'#2E7D32' if tcl_val else '#C62828'}; font-weight: bold;'>TCL</span>"
+                    tgo_html = f"<span style='color:{'#2E7D32' if tgo_val else '#C62828'}; font-weight: bold;'>TGO</span>"
+                    html += f"<td align='center' style='padding: 5px; background-color: {'#e8f5e9' if (tcl_val or tgo_val) else 'transparent'};'>{tcl_html}/{tgo_html}</td>"
                 html += "</tr>"
 
-            html += "</table><p><small>Generato da SyncroJob Enterprise</small></p>"
+            html += "</table><p style='color: #6c757d; font-size: 11px; font-family: Segoe UI, sans-serif;'>Generato automaticamente da SyncroJob Enterprise</p>"
             mail.HTMLBody = html + mail.HTMLBody
             mail.Display()
             ToastManager.instance().show("Bozza Outlook creata!", "success")
         except Exception as e:
-            QMessageBox.critical(self, "Errore Outlook", f"Errore: {e}")
+            ToastManager.instance().show(f"Errore Outlook: {e}", "error")
