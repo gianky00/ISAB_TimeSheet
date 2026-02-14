@@ -81,19 +81,20 @@ class MultiSelectDialog(QDialog):
         search_text = text.lower()
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
-            item.setHidden(search_text not in item.text().lower())
+            if item:
+                item.setHidden(search_text not in item.text().lower())
 
     def _set_all_checks(self, state: Qt.CheckState):
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
-            if not item.isHidden():
+            if item and not item.isHidden():
                 item.setCheckState(state)
 
     def get_selected(self) -> list[str]:
         selected = []
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
-            if item.checkState() == Qt.CheckState.Checked:
+            if item and item.checkState() == Qt.CheckState.Checked:
                 selected.append(item.text())
         return selected
 

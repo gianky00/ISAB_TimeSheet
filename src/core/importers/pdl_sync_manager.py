@@ -11,12 +11,12 @@ from typing import Any
 import openpyxl
 
 try:
-    import win32com.client
+    import win32com.client  # type: ignore
 
     xlCalculationManual = -4135
     xlCalculationAutomatic = -4105
 except ImportError:
-    win32com = None  # type: ignore
+    win32com = None
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +112,7 @@ class ProgrammingSyncManager:
             # 3. Elaborazione Report Scaricato (OpenPyXL per velocità)
             logger.info(f"Analisi report scaricato: {os.path.basename(downloaded_path)}")
             nuovi_pdl = {}
-            modifiche_X = {}
+            modifiche_X: dict[str, dict[int, str]] = {}
             modifiche_stato = {}
 
             # Mapping colonne: H(8)->Lun, I(9)->Mar, J(10)->Mer, K(11)->Gio, L(12)->Ven
@@ -180,7 +180,7 @@ class ProgrammingSyncManager:
                         if not r[0]:
                             riga_libera = i + 3
                             break
-                
+
                 rows_data = list(nuovi_pdl.values())
                 target = sh_new.Range(
                     sh_new.Cells(riga_libera, 1),
@@ -203,7 +203,7 @@ class ProgrammingSyncManager:
             self.excel_app.ScreenUpdating = True
             self.excel_app.EnableEvents = True
             if self._original_calc_mode is not None:
-                self.excel_app.Calculation = self._original_calc_mode
+                self.excel_app.Calculation = self._original_calc_mode  # type: ignore[unreachable]
 
     def cleanup(self):
         """Chiude Excel se aperto dal manager."""

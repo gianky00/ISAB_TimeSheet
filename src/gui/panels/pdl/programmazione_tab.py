@@ -301,7 +301,7 @@ class ProgrammazioneTab(QWidget):
         if not self.last_results:
             return
         try:
-            import win32com.client
+            import win32com.client  # type: ignore
 
             outlook = win32com.client.Dispatch("Outlook.Application")
             mail = outlook.CreateItem(0)

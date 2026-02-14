@@ -116,7 +116,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def _esegui_ricerca_pdl(self, pdl_num: str) -> bool:
         """Esegue ricerca PDL gestendo popup."""
-        assert self.wait is not None
+        if not self.wait:
+            self.log("❌ Wait non inizializzato.")
+            return False
         try:
             campo = self.wait.until(EC.visibility_of_element_located((By.ID, "fldRicercaPdLVeloce")))
             campo.clear()
@@ -136,7 +138,10 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         ts = time.time()
         files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*.pdf")}
 
-        assert self.wait is not None
+        if not self.wait:
+             self.log("❌ Wait non inizializzato.")
+             return None
+
         try:
             self.wait.until(EC.element_to_be_clickable((By.ID, "topIcon-acticonAnteprimaStampaMenu"))).click()
             self.wait.until(EC.element_to_be_clickable((By.ID, "appItaliano"))).click()
@@ -157,8 +162,10 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         ts = time.time()
         files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*.pdf")}
 
-        assert self.driver is not None
-        assert self.wait is not None
+        if not self.driver or not self.wait:
+            self.log("❌ Driver/Wait non inizializzato.")
+            return None
+
         try:
             # Espandi accordion
             with suppress(Exception):

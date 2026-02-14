@@ -161,7 +161,7 @@ class DatabaseManager:
                         cursor = conn.cursor()
                         cursor.execute(query, params)
                         if not is_write:
-                            return list(cursor.fetchall())
+                            return cursor.fetchall()
                         return []
                 finally:
                     if is_write:

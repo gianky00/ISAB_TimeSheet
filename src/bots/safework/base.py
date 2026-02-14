@@ -95,6 +95,9 @@ class SafeworkBaseBot(BaseBot):
         from selenium.common.exceptions import ElementClickInterceptedException
 
         end_time = time.time() + timeout
+        if not self.wait or not self.driver:
+            return
+
         while time.time() < end_time:
             try:
                 el = self.wait.until(EC.element_to_be_clickable(locator))
