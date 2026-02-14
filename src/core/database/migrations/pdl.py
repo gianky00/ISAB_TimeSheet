@@ -113,3 +113,17 @@ def mig_pdl_v3(conn: sqlite3.Connection) -> None:
     """
     )
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_prog_pdl ON pdl_programmazione(n_pdl)")
+
+
+def mig_pdl_v4(conn: sqlite3.Connection) -> None:
+    """Aggiunge colonne per il range settimanale alla tabella programmazione (v4)"""
+    cursor = conn.cursor()
+    try:
+        cursor.execute("ALTER TABLE pdl_programmazione ADD COLUMN settimana_start TEXT")
+        cursor.execute("ALTER TABLE pdl_programmazione ADD COLUMN settimana_end TEXT")
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_prog_dates ON pdl_programmazione(settimana_start, settimana_end)"
+        )
+    except sqlite3.OperationalError:
+        # Colonne già esistenti (idempotenza)
+        pass

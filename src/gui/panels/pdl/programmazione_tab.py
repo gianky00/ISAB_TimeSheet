@@ -47,12 +47,23 @@ class ProgrammazioneTab(QWidget):
         self._load_persisted_data()
 
     def _load_persisted_data(self):
-        """Carica l'ultimo controllo salvato dal database."""
-        self.last_results = PDLQueries.get_last_programming_results()
-        if self.last_results:
+        """Carica dati per la settimana selezionata."""
+        try:
+            start_date, end_date, _ = self._get_selected_week_range()
+            self.last_results = PDLQueries.get_programming_results_by_week(start_date, end_date)
+
             self._update_table(self.last_results)
-            self.btn_email.setEnabled(True)
-            self._on_log("ℹ️ Caricati risultati dell'ultimo controllo salvato.")
+            self.btn_email.setEnabled(len(self.last_results) > 0)
+
+            if self.last_results:
+                self._on_log(
+                    f"ℹ️ Caricati {len(self.last_results)} risultati per la settimana {start_date} - {end_date}."
+                )
+            else:
+                self._on_log(f"ℹ️ Nessun dato salvato per la settimana {start_date} - {end_date}.")
+        except Exception as e:
+            logger.error(f"Errore caricamento dati: {e}")
+            self._on_log(f"⚠️ Errore caricamento dati: {e}")
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -71,15 +82,19 @@ class ProgrammazioneTab(QWidget):
             f"<span style='color: #6c757d;'>Monitoraggio Settimana:</span> "
             f"<b style='color: #212529;'>{start_date} - {end_date}</b>"
         )
-        self.week_label.setStyleSheet("font-size: 13px;")
+        self.week_label.setStyleSheet("font-size: 13px; margin-bottom: 5px;")
         filter_area.addWidget(self.week_label)
+
+        # Controlli in linea (Settimana + Richiedenti)
+        controls_layout = QHBoxLayout()
+        controls_layout.setSpacing(10)
 
         # Selettore Settimana
         self.week_selector = QComboBox()
         self.week_selector.addItems(["Settimana Corrente", "Settimana Prossima"])
         self.week_selector.setFixedWidth(200)
         self.week_selector.currentIndexChanged.connect(self._update_ui_dates)
-        filter_area.addWidget(self.week_selector)
+        controls_layout.addWidget(self.week_selector)
 
         # Nuovo Selettore Richiedenti
         self.req_filter = MultiSelectFilter("Richiedenti", "Seleziona Richiedenti...")
@@ -88,8 +103,11 @@ class ProgrammazioneTab(QWidget):
         saved_reqs = config_manager.get_config_value("selected_programming_requesters", [])
         self.req_filter.set_selected(saved_reqs)
         self.req_filter.changed.connect(self._on_requesters_changed)
+        controls_layout.addWidget(self.req_filter)
 
-        filter_area.addWidget(self.req_filter)
+        controls_layout.addStretch()
+        filter_area.addLayout(controls_layout)
+
         top_bar.addLayout(filter_area)
 
         top_bar.addStretch()
@@ -127,14 +145,6 @@ class ProgrammazioneTab(QWidget):
                 background-color: white;
             }
             QTableWidget::item { padding: 5px; }
-            QHeaderView::section {
-                padding: 8px;
-                border: none;
-                border-bottom: 2px solid #dee2e6;
-                font-weight: bold;
-                color: #495057;
-                background-color: #f8f9fa;
-            }
         """)
 
         # Calcolo date per Header (Iniziale)
@@ -177,7 +187,7 @@ class ProgrammazioneTab(QWidget):
         return s, e
 
     def _update_ui_dates(self):
-        """Aggiorna label e header tabella in base alla settimana selezionata."""
+        """Aggiorna label, header tabella e carcia i dati per la settimana selezionata."""
         start_str, end_str, start_dt = self._get_selected_week_range()
 
         # Update Label
@@ -190,13 +200,20 @@ class ProgrammazioneTab(QWidget):
         # Update Table Headers
         d = [(start_dt + timedelta(days=i)).strftime("%d/%m") for i in range(7)]
         headers = [
-            "Richiedente", "N° PDL", "Descrizione",
-            f"LUN {d[0]}", f"MAR {d[1]}", f"MER {d[2]}", f"GIO {d[3]}",
-            f"VEN {d[4]}", f"SAB {d[5]}", f"DOM {d[6]}",
+            "Richiedente",
+            "N° PDL",
+            "Descrizione",
+            f"LUN {d[0]}",
+            f"MAR {d[1]}",
+            f"MER {d[2]}",
+            f"GIO {d[3]}",
+            f"VEN {d[4]}",
+            f"SAB {d[5]}",
+            f"DOM {d[6]}",
         ]
 
         # Evidenzia giorno corrente con stile moderno (Background + Colore)
-        is_current_week = (getattr(self, "week_selector", None) and self.week_selector.currentIndex() == 0)
+        is_current_week = getattr(self, "week_selector", None) and self.week_selector.currentIndex() == 0
         current_weekday = datetime.now().weekday()
 
         if hasattr(self, "results_table"):
@@ -208,29 +225,35 @@ class ProgrammazioneTab(QWidget):
                 if not item:
                     continue
 
-                # Reset base style
-                # Nota: Il background base è gestito dallo stylesheet, qui sovrascriviamo se necessario
-                # Per sovrascrivere il background dello stylesheet su specifici item,
-                # a volte è necessario rimuovere il background dallo stylesheet generale o usare delegate.
-                # Tuttavia, proviamo a impostare il background role.
+                is_today = is_current_week and (i - 3 == current_weekday)
 
-                if is_current_week and (i - 3 == current_weekday):
-                    # Giorno Corrente: Azzurro chiaro sfondo, Blu scuro testo
+                if is_today:
+                    # Giorno Corrente: Azzurro chiaro sfondo, Blu scuro testo e indicatore testuale
                     item.setBackground(QColor("#e7f1ff"))
                     item.setForeground(QColor("#0d6efd"))
+
+                    # Aggiungiamo un pallino visibile nel testo dell'header
+                    header_text = headers[i]
+                    if " ●" not in header_text:
+                        item.setText(f"{header_text} ●")
+
                     font = QFont()
                     font.setBold(True)
-                    font.setPointSize(10) # Leggermente più grande
+                    font.setPointSize(11)  # Più grande per visibilità
                     item.setFont(font)
                     item.setToolTip("Oggi")
                 else:
                     # Reset (usa defaults o null per ereditare stylesheet)
                     item.setBackground(QColor("#f8f9fa"))
                     item.setForeground(QColor("#495057"))
+                    item.setText(headers[i])
                     font = QFont()
                     font.setBold(True)
                     item.setFont(font)
                     item.setToolTip("")
+
+        # Ricarica i dati per la nuova settimana
+        self._load_persisted_data()
 
     def _load_requesters(self):
         try:
@@ -299,8 +322,11 @@ class ProgrammazioneTab(QWidget):
         if success and self.worker:
             self.log_widget.setVisible(False)
             self.last_results = getattr(self.worker.bot, "results", [])
+
+            start_date, end_date, _ = self._get_selected_week_range()
             if self.last_results:
-                PDLQueries.save_programming_results(self.last_results)
+                PDLQueries.save_programming_results(self.last_results, start_date, end_date)
+
             self._update_table(self.last_results)
             self.btn_email.setEnabled(len(self.last_results) > 0)
             msg = (
@@ -309,6 +335,9 @@ class ProgrammazioneTab(QWidget):
                 else "Nessun dato trovato."
             )
             ToastManager.instance().show(msg, "success" if self.last_results else "info")
+
+            # Refresh logs per confermare salvataggio
+            self._on_log(f"✅ Dati salvati per la settimana {start_date} - {end_date}")
         else:
             ToastManager.instance().show("Errore durante il controllo SafeWork.", "error")
 
@@ -360,40 +389,95 @@ class ProgrammazioneTab(QWidget):
 
             outlook = win32com.client.Dispatch("Outlook.Application")
             mail = outlook.CreateItem(0)
-            start_date, end_date, _ = self._get_selected_week_range()
-            mail.Subject = f"Monitoraggio Programmazione Settimanale {start_date} - {end_date}"
+            start_date, end_date, start_dt = self._get_selected_week_range()
+
+            # Calcolo numero settimana
+            week_num = start_dt.isocalendar()[1]
+            mail.Subject = f"Programmazione Settimanale - Settimana {week_num} ({start_date} - {end_date})"
 
             unique_reqs = {r["richiedente"] for r in self.last_results}
             recipients = []
             for r in unique_reqs:
                 if r and len(r.split()) >= 2:
                     parts = r.split()
-                    # Fallback logic per email richiedente
-                    recipients.append(f"{parts[1][0].lower()}.{parts[0].lower()}@isab.com")
+                    # Destinatari: rimuovi punti (fcaldarella invece di f.caldarella)
+                    email_prefix = f"{parts[1][0].lower()}{parts[0].lower()}"
+                    recipients.append(f"{email_prefix}@isab.com")
 
             mail.To = "; ".join(recipients)
             mail.CC = "francesco.millo@coemi.it; ciro.scaravelli@coemi.it"
 
-            html = "<h2 style='color: #0d6efd; font-family: Segoe UI, sans-serif;'>Report Programmazione Settimanale</h2>"
-            html += (
-                f"<p style='font-family: Segoe UI, sans-serif;'>Periodo: <b>{start_date} - {end_date}</b></p>"
+            # Check se siamo nella settimana corrente per evidenziazione oggi
+            is_current_week = getattr(self, "week_selector", None) and self.week_selector.currentIndex() == 0
+            today_idx = datetime.now().weekday() if is_current_week else -1
+
+            # Template HTML Moderno e Professionale (Larghezza Dinamica)
+            html = """
+            <div style='font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: #212529; padding: 20px; line-height: 1.5;'>
+                <h2 style='color: #0d6efd; border-bottom: 2px solid #e9ecef; padding-bottom: 15px; font-size: 24px; margin-top: 0;'>
+                    Programmazione Settimanale
+                </h2>
+                <p style='font-size: 16px; margin-bottom: 20px;'>
+                    Periodo: <span style='color: #0d6efd; font-weight: bold;'>{start_date} - {end_date}</span>
+                    <span style='color: #6c757d; margin-left: 10px;'>(Settimana {week_num})</span>
+                </p>
+
+                <table style='border-collapse: collapse; min-width: 600px; width: auto; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #dee2e6;'>
+                    <thead>
+                        <tr style='background-color: #f8f9fa; color: #495057; text-align: left;'>
+                            <th style='padding: 12px 15px; border: 1px solid #dee2e6;'>Richiedente</th>
+                            <th style='padding: 12px 15px; border: 1px solid #dee2e6; text-align: center;'>PdL</th>
+                            <th style='padding: 12px 15px; border: 1px solid #dee2e6;'>Descrizione</th>
+                            {headers_html}
+                        </tr>
+                    </thead>
+                    <tbody>
+            """
+
+            day_names = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"]
+            headers_html = ""
+            for i, day in enumerate(day_names):
+                style = "padding: 12px 10px; border: 1px solid #dee2e6; text-align: center; min-width: 65px;"
+                if i == today_idx:
+                    style += " background-color: #e7f1ff; color: #0d6efd; font-weight: bold; border-bottom: 3px solid #0d6efd;"
+                    day += " ●"
+                headers_html += f"<th style='{style}'>{day}</th>"
+
+            html = html.format(
+                start_date=start_date, end_date=end_date, week_num=week_num, headers_html=headers_html
             )
-            html += "<table border='1' style='border-collapse: collapse; font-family: Segoe UI, sans-serif; width: 100%; font-size: 13px;'>"
-            html += "<tr style='background-color: #f8f9fa;'><th>Richiedente</th><th>PdL</th><th>Descrizione</th><th>Lun</th><th>Mar</th><th>Mer</th><th>Gio</th><th>Ven</th><th>Sab</th><th>Dom</th></tr>"
 
             for res in self.last_results:
-                html += f"<tr><td style='padding: 5px;'>{res['richiedente']}</td>"
-                html += f"<td style='padding: 5px; text-align: center;'><b>{res['pdl']}</b></td>"
-                html += f"<td style='padding: 5px;'>{res.get('descrizione', '')}</td>"
-                for prog in res["programmazione"]:
+                html += "<tr>"
+                html += f"<td style='padding: 12px 15px; border: 1px solid #dee2e6; white-space: nowrap;'>{res['richiedente']}</td>"
+                html += f"<td style='padding: 12px; border: 1px solid #dee2e6; text-align: center;'><b>{res['pdl']}</b></td>"
+                html += f"<td style='padding: 12px 15px; border: 1px solid #dee2e6; color: #495057;'>{res.get('descrizione', '')}</td>"
+
+                for i, prog in enumerate(res["programmazione"]):
                     tcl_val = prog["tcl"]
                     tgo_val = prog["tgo"]
-                    tcl_html = f"<span style='color:{'#2E7D32' if tcl_val else '#C62828'}; font-weight: bold;'>TCL</span>"
-                    tgo_html = f"<span style='color:{'#2E7D32' if tgo_val else '#C62828'}; font-weight: bold;'>TGO</span>"
-                    html += f"<td align='center' style='padding: 5px; background-color: {'#e8f5e9' if (tcl_val or tgo_val) else 'transparent'};'>{tcl_html}/{tgo_html}</td>"
+
+                    bg_color = "#ffffff"
+                    if tcl_val or tgo_val:
+                        bg_color = "#f8fff9"  # Verde chiarissimo attività
+
+                    if i == today_idx:
+                        bg_color = "#f0f7ff"  # Azzurro oggi
+
+                    tcl_style = f"color: {'#198754' if tcl_val else '#dc3545'}; font-weight: {'bold' if tcl_val else 'normal'};"
+                    tgo_style = f"color: {'#198754' if tgo_val else '#dc3545'}; font-weight: {'bold' if tgo_val else 'normal'};"
+
+                    html += f"<td align='center' style='padding: 10px; border: 1px solid #dee2e6; background-color: {bg_color}; font-size: 13px;'>"
+                    html += f"<span style='{tcl_style}'>TCL</span><br><span style='{tgo_style}'>TGO</span>"
+                    html += "</td>"
                 html += "</tr>"
 
-            html += "</table><p style='color: #6c757d; font-size: 11px; font-family: Segoe UI, sans-serif;'>Generato automaticamente da SyncroJob Enterprise</p>"
+            html += """
+                    </tbody>
+                </table>
+            </div>
+            """
+
             mail.HTMLBody = html + mail.HTMLBody
             mail.Display()
             ToastManager.instance().show("Bozza Outlook creata!", "success")

@@ -6,7 +6,7 @@ Gestisce l'elaborazione dei file Excel di programmazione e il file Master aziend
 import logging
 import os
 import warnings
-from typing import Any
+from typing import Any, ClassVar
 
 import openpyxl
 
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class ProgrammingSyncManager:
     """Manager per la sincronizzazione dei dati di programmazione su Excel tramite Win32com."""
 
-    FOGLI_PDL = ["A1", "A2", "A3", "CTE", "BLENDING", "TAS", "IGCC"]
+    FOGLI_PDL: ClassVar[list[str]] = ["A1", "A2", "A3", "CTE", "BLENDING", "TAS", "IGCC"]
 
     def __init__(self, master_path: str):
         self.master_path = master_path
@@ -76,13 +76,12 @@ class ProgrammingSyncManager:
 
     def process_downloaded_report(self, downloaded_path: str):
         """Aggrega le modifiche dal report scaricato al file Master."""
-        if not self.wb_master or not self.excel_app:
-            if not self._get_excel_workbook():
-                return
+        if (not self.wb_master or not self.excel_app) and not self._get_excel_workbook():
+            return
 
         if not self.wb_master or not self.excel_app:
-             logger.error("Master Excel o App non inizializzati.")
-             return
+            logger.error("Master Excel o App non inizializzati.")
+            return
 
         try:
             # 1. Preparazione Excel (Ottimizzazione)
@@ -123,7 +122,7 @@ class ProgrammingSyncManager:
                 warnings.simplefilter("ignore")
                 wb_in = openpyxl.load_workbook(downloaded_path, read_only=True, data_only=True)
                 ws_in = wb_in.active
-                
+
                 if ws_in is None:
                     logger.error("Foglio Excel di input non trovato.")
                     wb_in.close()
@@ -137,7 +136,14 @@ class ProgrammingSyncManager:
                     if pdl_str not in mappa_pdl:
                         # Nuovo PDL
                         nuovi_pdl[pdl_str] = [
-                            row[0], row[1], row[14], row[16], row[18], row[19], row[20], row[13]
+                            row[0],
+                            row[1],
+                            row[14],
+                            row[16],
+                            row[18],
+                            row[19],
+                            row[20],
+                            row[13],
                         ]
                     else:
                         # PDL Esistente -> Controlla X
@@ -188,8 +194,7 @@ class ProgrammingSyncManager:
 
                 rows_data = list(nuovi_pdl.values())
                 target = sh_new.Range(
-                    sh_new.Cells(riga_libera, 1),
-                    sh_new.Cells(riga_libera + len(rows_data) - 1, 8)
+                    sh_new.Cells(riga_libera, 1), sh_new.Cells(riga_libera + len(rows_data) - 1, 8)
                 )
                 target.Value = rows_data
                 logger.info(f"Inseriti {len(rows_data)} nuovi PDL nel foglio dedicato.")

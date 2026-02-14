@@ -23,7 +23,7 @@ from src.core.database.migrations.dipendenti import (
     mig_dipendenti_v2,
     mig_dipendenti_v3,
 )
-from src.core.database.migrations.pdl import mig_pdl_v1, mig_pdl_v2, mig_pdl_v3
+from src.core.database.migrations.pdl import mig_pdl_v1, mig_pdl_v2, mig_pdl_v3, mig_pdl_v4
 from src.core.database.migrations.storico_oda import (
     mig_storico_oda_v1,
     mig_storico_oda_v2,
@@ -72,6 +72,7 @@ class DatabaseManager:
         1: mig_pdl_v1,
         2: mig_pdl_v2,
         3: mig_pdl_v3,
+        4: mig_pdl_v4,
     }
 
     MIGRATIONS_STORICO_ODA: ClassVar[dict[int, Callable[[sqlite3.Connection], None]]] = {

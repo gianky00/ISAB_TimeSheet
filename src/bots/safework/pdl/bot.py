@@ -139,8 +139,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*.pdf")}
 
         if not self.wait:
-             self.log("❌ Wait non inizializzato.")
-             return None
+            self.log("❌ Wait non inizializzato.")
+            return None
 
         try:
             self.wait.until(EC.element_to_be_clickable((By.ID, "topIcon-acticonAnteprimaStampaMenu"))).click()

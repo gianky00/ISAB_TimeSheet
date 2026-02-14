@@ -47,7 +47,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         if not self.driver:
             self.log("❌ Driver non inizializzato.")
             return False
-            
+
         self.driver.find_element(By.ID, "topIcon-actHomePage").click()
         self._attendi_scomparsa_overlay()
         self.driver.find_element(By.ID, "sideBar-actVisualizzaAttivita").click()

@@ -58,8 +58,8 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
 
         # 2. Setup Filtri
         if not self.attivita_page:
-             self.log("❌ Pagina Attività non inizializzata.")
-             return False
+            self.log("❌ Pagina Attività non inizializzata.")
+            return False
         self.attivita_page.pulisci_pdl()
         self.attivita_page.imposta_date(str(date_start), str(date_end))
         self.attivita_page.seleziona_ditta("CO.EMI SRL")
@@ -80,8 +80,8 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
     def _scrap_risultati(self, req_input: str):
         """Logica di scraping specifica del bot."""
         if not self.attivita_page:
-             self.log("❌ Pagina Attività non inizializzata per lo scraping.")
-             return
+            self.log("❌ Pagina Attività non inizializzata per lo scraping.")
+            return
         rows = self.attivita_page.get_rows()
         if not rows:
             return

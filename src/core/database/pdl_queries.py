@@ -74,22 +74,32 @@ class PDLQueries:
             return []
 
     @classmethod
-    def save_programming_results(cls, results: list[dict[str, Any]]) -> bool:
-        """Salva i risultati della programmazione settimanale nel DB."""
+    def save_programming_results(cls, results: list[dict[str, Any]], start_date: str, end_date: str) -> bool:
+        """Salva i risultati della programmazione settimanale nel DB per la settimana specificata."""
+        # Nota: start_date ed end_date sono stringhe DD/MM/YYYY
         if not results:
-            return True
+            # Se lista vuota, potremmo voler cancellare i dati vecchi di quella settimana?
+            # Per ora manteniamo logica esistente ma cancelliamo la settimana
+            try:
+                query_del = "DELETE FROM pdl_programmazione WHERE settimana_start = ? AND settimana_end = ?"
+                db_manager.execute_query(db_manager.DB_PDL, query_del, (start_date, end_date))
+                return True
+            except Exception as e:
+                logger.error(f"Errore pulizia programmazione vuota: {e}")
+                return False
 
         try:
-            # Svuotiamo la tabella precedente prima di salvare i nuovi risultati
-            # (Per mantenere solo l'ultimo controllo fresco)
-            db_manager.execute_query(db_manager.DB_PDL, "DELETE FROM pdl_programmazione")
+            # 1. Cancelliamo solo la settimana corrente
+            query_del = "DELETE FROM pdl_programmazione WHERE settimana_start = ? AND settimana_end = ?"
+            db_manager.execute_query(db_manager.DB_PDL, query_del, (start_date, end_date))
 
             query = """
                 INSERT INTO pdl_programmazione (
                     richiedente, n_pdl, area, descrizione,
                     lun_tcl, lun_tgo, mar_tcl, mar_tgo, mer_tcl, mer_tgo,
-                    gio_tcl, gio_tgo, ven_tcl, ven_tgo, sab_tcl, sab_tgo, dom_tcl, dom_tgo
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    gio_tcl, gio_tgo, ven_tcl, ven_tgo, sab_tcl, sab_tgo, dom_tcl, dom_tgo,
+                    settimana_start, settimana_end
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
 
             data_to_insert = []
@@ -105,6 +115,9 @@ class PDLQueries:
                 while len(row) < 18:
                     row.append(False)
 
+                # Aggiungi date
+                row.extend([start_date, end_date])
+
                 data_to_insert.append(tuple(row))
 
             with db_manager.get_connection(db_manager.DB_PDL) as conn:
@@ -115,11 +128,13 @@ class PDLQueries:
             return False
 
     @classmethod
-    def get_last_programming_results(cls) -> list[dict[str, Any]]:
-        """Recupera l'ultimo controllo di programmazione salvato."""
-        query = "SELECT * FROM pdl_programmazione ORDER BY id ASC"
+    def get_programming_results_by_week(cls, start_date: str, end_date: str) -> list[dict[str, Any]]:
+        """Recupera il controllo di programmazione per la settimana specifica."""
+        query = (
+            "SELECT * FROM pdl_programmazione WHERE settimana_start = ? AND settimana_end = ? ORDER BY id ASC"
+        )
         try:
-            rows = db_manager.execute_query(db_manager.DB_PDL, query)
+            rows = db_manager.execute_query(db_manager.DB_PDL, query, (start_date, end_date))
             return [
                 {
                     "richiedente": r[1],
