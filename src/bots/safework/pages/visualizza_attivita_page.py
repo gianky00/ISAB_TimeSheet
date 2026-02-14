@@ -1,26 +1,20 @@
 """
 SyncroJob - SafeWork Visualizza Attività Page
-Encapsulamento delle interazioni con la pagina di visualizzazione attività.
+Gestione della pagina Visualizza Attività per la programmazione.
 """
 
-import logging
-import time
 from collections.abc import Callable
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.safework.common.locators import SafeWorkLocators
 
-logger = logging.getLogger(__name__)
-
 
 class VisualizzaAttivitaPage:
-    """Gestisce l'interfaccia di 'Visualizza Attività' su SafeWork."""
+    """Gestisce le interazioni con la pagina Visualizza Attività."""
 
     def __init__(
         self, driver: webdriver.Chrome, wait: WebDriverWait[webdriver.Chrome], log_func: Callable[[str], None]
@@ -29,99 +23,65 @@ class VisualizzaAttivitaPage:
         self.wait = wait
         self.log = log_func
 
-    def imposta_date(self, start: str, end: str):
-        """Imposta il range di date programmazione."""
-        self.log(f"📅 Impostazione date: {start} - {end}")
-        for loc, val in ((SafeWorkLocators.DATA_DAL, start), (SafeWorkLocators.DATA_AL, end)):
-            el = self.wait.until(EC.presence_of_element_located(loc))
-            self.driver.execute_script("arguments[0].value = '';", el)
-            self.driver.execute_script("arguments[0].value = arguments[1];", el, val)
-            self.driver.execute_script(
-                "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", el
-            )
-
-    def seleziona_ditta(self, nome_ditta: str = "CO.EMI SRL"):
-        """Seleziona la ditta dal dropdown."""
-        try:
-            self.log(f"🏢 Selezione Ditta: {nome_ditta}")
-            btn = self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.DITTA_BUTTON))
-            btn.click()
-            time.sleep(0.5)
-            xpath = f"//div[contains(@class,'ms-drop')]//span[normalize-space()='{nome_ditta}']"
-            opt = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
-            opt.click()
-            btn.click()  # Chiudi
-        except Exception as e:
-            self.log(f"⚠️ Errore selezione ditta: {e}")
-
     def pulisci_pdl(self):
-        """Pulisce il campo Numero PDL."""
+        """Pulisce il campo PDL/Permesso se necessario."""
         try:
-            el = self.driver.find_element(*SafeWorkLocators.NUM_PERMESSO_FIELD)
-            el.clear()
-            el.send_keys(Keys.CONTROL + "a" + Keys.BACKSPACE)
+            fld = self.wait.until(EC.visibility_of_element_located(SafeWorkLocators.NUM_PERMESSO_FIELD))
+            fld.clear()
         except Exception:
-            logger.debug("Campo Numero PDL non trovato o già vuoto.")
+            pass
 
-    def seleziona_richiedente(self, nome: str) -> bool:
-        """Seleziona un richiedente tramite la ricerca nel dropdown."""
+    def imposta_date(self, data_dal: str, data_al: str):
+        """Imposta il range date."""
         try:
-            btn = self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.RICHIEDENTE_BUTTON))
-            btn.click()
-            time.sleep(0.5)
-
-            dropdown = self.wait.until(EC.visibility_of_element_located(SafeWorkLocators.DROPDOWN_OPEN))
-            search = dropdown.find_element(*SafeWorkLocators.SEARCH_INPUT_IN_DROPDOWN)
-            search.clear()
-            search.send_keys(nome)
-            time.sleep(1)
-
-            xpath = f".//label//span[contains(normalize-space(), '{nome}')]"
-            opzioni = dropdown.find_elements(By.XPATH, xpath)
-
-            if not opzioni:
-                # Fallback cognome
-                nome_short = nome.split()[0]
-                xpath_short = f".//label//span[contains(normalize-space(), '{nome_short}')]"
-                opzioni = dropdown.find_elements(By.XPATH, xpath_short)
-
-            if opzioni:
-                self.driver.execute_script("arguments[0].click();", opzioni[0])
-                time.sleep(0.5)
-                btn.click()
-                return True
-
-            self.log(f"❌ Richiedente '{nome}' non trovato.")
-            btn.click()
-            return False
+            self.driver.execute_script(f"document.getElementById('programmazioneDal').value = '{data_dal}';")
+            self.driver.execute_script(f"document.getElementById('programmazioneAl').value = '{data_al}';")
         except Exception as e:
-            self.log(f"⚠️ Errore selezione richiedente: {e}")
-            return False
+            self.log(f"⚠️ Errore impostazione date JS: {e}")
+
+    def seleziona_ditta(self, nome_ditta: str):
+        """Seleziona la ditta dal dropdown custom."""
+        self._seleziona_da_dropdown(SafeWorkLocators.DITTA_BUTTON, nome_ditta)
+
+    def seleziona_richiedente(self, nome_richiedente: str) -> bool:
+        """Seleziona il richiedente."""
+        return self._seleziona_da_dropdown(SafeWorkLocators.RICHIEDENTE_BUTTON, nome_richiedente)
 
     def esegui_ricerca(self):
-        """Clicca Cerca e attende la scomparsa dell'overlay."""
-        btn = self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.SEARCH_START_BUTTON))
-        btn.click()
-        # Nota: l'attesa overlay è gestita esternamente dal bot base o helper
+        """Clicca 'Avvia Ricerca'."""
+        self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.SEARCH_START_BUTTON)).click()
 
-    def esporta_excel(self) -> bool:
-        """Clicca su Esporta."""
+    def get_rows(self):
+        """Restituisce le righe della tabella risultati."""
         try:
-            btn = self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.EXPORT_BUTTON))
-            btn.click()
-            return True
-        except Exception:
-            return False
-
-    def get_rows(self) -> list[WebElement]:
-        """Restituisce le righe della tabella se presenti."""
-        try:
-            # Check 'Nessun dato'
-            msg = self.driver.find_elements(*SafeWorkLocators.NO_DATA_MSG)
-            if msg and msg[0].is_displayed():
-                return []
-
-            table = self.wait.until(EC.presence_of_element_located(SafeWorkLocators.RESULTS_TABLE))
-            return table.find_elements(*SafeWorkLocators.ROWS)
+            return self.driver.find_elements(*SafeWorkLocators.ROWS)
         except Exception:
             return []
+
+    def _seleziona_da_dropdown(self, button_locator, search_text: str) -> bool:
+        """Helper per i dropdown ms-choice di SafeWork."""
+        try:
+            # 1. Apri Dropdown
+            self.wait.until(EC.element_to_be_clickable(button_locator)).click()
+            
+            # 2. Attendi apertura
+            dropdown = self.wait.until(EC.visibility_of_element_located(SafeWorkLocators.DROPDOWN_OPEN))
+            
+            # 3. Cerca
+            inp = dropdown.find_element(*SafeWorkLocators.SEARCH_INPUT_IN_DROPDOWN)
+            inp.clear()
+            inp.send_keys(search_text)
+            
+            # 4. Seleziona Opzione (Select All o specifica)
+            # Qui semplifichiamo selezionando la prima opzione visibile che non sia "Select all" se specifica
+            # Oppure premiamo invio. SafeWork spesso filtra e basta premere invio o cliccare l'opzione.
+            # Assumiamo click su checkbox visibile
+            opt = dropdown.find_element(By.XPATH, f".//span[contains(text(), '{search_text}')]")
+            opt.click()
+            
+            # 5. Chiudi (spesso cliccando fuori o sul bottone)
+            self.driver.find_element(By.TAG_NAME, "body").click()
+            return True
+        except Exception as e:
+            self.log(f"❌ Errore selezione '{search_text}': {e}")
+            return False

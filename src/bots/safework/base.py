@@ -6,6 +6,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.base.base_bot import BaseBot
+from src.bots.safework.pages.login_page import SafeWorkLoginPage
+from src.bots.safework.pages.ricerca_pdl_page import RicercaPDLPage
+from src.bots.safework.pages.visualizza_attivita_page import VisualizzaAttivitaPage
 
 
 class SafeworkBaseBot(BaseBot):
@@ -16,6 +19,44 @@ class SafeworkBaseBot(BaseBot):
 
     SAFEWORK_URL = "https://safework.isab.com/"
     ISAB_URL = SAFEWORK_URL
+
+    def __init__(self, username, password, headless=False, timeout=30, download_path=""):
+        super().__init__(username, password, headless, timeout, download_path)
+        self.safework_login_page: SafeWorkLoginPage | None = None
+        self.ricerca_pdl_page: RicercaPDLPage | None = None
+        self.attivita_page: VisualizzaAttivitaPage | None = None
+
+    def _configure_waits_and_pages(self):
+        """Inizializza le Page Objects specifiche di SafeWork."""
+        super()._configure_waits_and_pages()
+        if self.driver and self.wait:
+            self.safework_login_page = SafeWorkLoginPage(self.driver, self.wait, self.log)
+            self.ricerca_pdl_page = RicercaPDLPage(self.driver, self.wait, self.log)
+            self.attivita_page = VisualizzaAttivitaPage(self.driver, self.wait, self.log)
+
+    def _login(self) -> bool:
+        """Override del login per usare SafeWorkLoginPage."""
+        if self.safework_login_page:
+            self.driver.get(self.ISAB_URL)
+            return self.safework_login_page.login(self.username, self.password)
+        return False
+
+    def click_robusto(self, locator: tuple[str, str], timeout: int = 10):
+        """
+        Tenta di cliccare un elemento gestendo overlay e intercettazioni.
+        """
+        try:
+            self._attendi_scomparsa_overlay()
+            el = WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable(locator))
+            el.click()
+        except Exception:
+            # Fallback JS click
+            try:
+                el = self.driver.find_element(*locator)
+                self.driver.execute_script("arguments[0].click();", el)
+            except Exception as e:
+                self.log(f"❌ Errore click robusto su {locator}: {e}")
+                raise
 
     def _attendi_scomparsa_overlay(self, timeout_secondi: int | None = 120) -> bool:
         """Logica di attesa fedele allo script originale."""
