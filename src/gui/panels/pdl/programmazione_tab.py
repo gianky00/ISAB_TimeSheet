@@ -3,17 +3,23 @@ SyncroJob - PDL Programmazione Tab
 Scheda per il monitoraggio della programmazione settimanale SafeWork.
 """
 
+import base64
 import logging
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QFont, QIcon
+from PyQt6.QtCore import QRectF, Qt
+from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath
 from PyQt6.QtWidgets import (
     QComboBox,
+    QFrame,
+    QGroupBox,
     QHBoxLayout,
     QHeaderView,
     QLabel,
+    QScrollArea,
+    QSizePolicy,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -33,6 +39,139 @@ from src.utils.helpers import get_asset_path
 logger = logging.getLogger(__name__)
 
 
+class ProgrammingStatusWidget(QWidget):
+    """Widget elegante che mostra una barra di stato verde/arancione per TCL e TGO."""
+
+    def __init__(
+        self,
+        tcl: bool,
+        tgo: bool,
+        connect_left: bool = False,
+        connect_right: bool = False,
+        is_today: bool = False,
+        parent=None,
+    ):
+        super().__init__(parent)
+        self.tcl = tcl
+        self.tgo = tgo
+        self.connect_left = connect_left
+        self.connect_right = connect_right
+        self.is_today = is_today
+        # Espansione orizzontale completa per coprire l'intera cella (effetto colonna)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.setMinimumHeight(16)
+        self._setup_tooltip()
+
+    def _get_icon_base64(self, icon_path: str) -> str:
+        """Converte un'icona SVG in base64 per l'uso nel tooltip HTML."""
+        try:
+            path = Path(icon_path)
+            if path.exists():
+                with open(path, "rb") as f:
+                    encoded = base64.b64encode(f.read()).decode("utf-8")
+                    return f"data:image/svg+xml;base64,{encoded}"
+        except Exception as e:
+            logger.error(f"Errore caricamento icona base64: {e}")
+        return ""
+
+    def _setup_tooltip(self):
+        """Crea un tooltip puramente grafico con solo le icone originali."""
+        tcl_icon_path = get_asset_path(Icons.FLAG_TCL_ON if self.tcl else Icons.FLAG_TCL_OFF)
+        tgo_icon_path = get_asset_path(Icons.FLAG_TGO_ON if self.tgo else Icons.FLAG_TGO_OFF)
+
+        tcl_b64 = self._get_icon_base64(tcl_icon_path)
+        tgo_b64 = self._get_icon_base64(tgo_icon_path)
+
+        html = f"""
+        <div style='padding: 5px; background-color: white;'>
+            <img src='{tcl_b64}' width='32' height='18'>
+            <img src='{tgo_b64}' width='32' height='18' style='margin-left: 5px;'>
+        </div>
+        """
+        self.setToolTip(html)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        w = float(self.width())
+        h = float(self.height())
+
+        # 0. Evidenziazione Giorno Corrente (Background TOTALE della cella)
+        if self.is_today:
+            # Opacità marcata (~16%) per un effetto colonna pieno e professionale
+            painter.fillRect(self.rect(), QColor(13, 110, 253, 40))
+
+        # Configurazione Barra di Progresso
+        bar_w = 80.0  # Larghezza fissa centrata
+        bar_h = 10.0  # Altezza barra
+        x = (w - bar_w) / 2.0
+        y = (h - bar_h) / 2.0
+        radius = 5.0
+
+        # Percorso per bordi arrotondati selettivi (Gantt-style)
+        path = QPainterPath()
+
+        tl = 0.0 if self.connect_left else radius
+        bl = 0.0 if self.connect_left else radius
+        tr = 0.0 if self.connect_right else radius
+        br = 0.0 if self.connect_right else radius
+
+        # Disegno manuale del rettangolo centrato con angoli variabili
+        path.moveTo(x + bar_w - tr, y)
+        if tr > 0:
+            path.arcTo(x + bar_w - 2 * tr, y, 2 * tr, 2 * tr, 90, -90)
+        else:
+            path.lineTo(x + bar_w, y)
+
+        path.lineTo(x + bar_w, y + bar_h - br)
+        if br > 0:
+            path.arcTo(x + bar_w - 2 * br, y + bar_h - 2 * br, 2 * br, 2 * br, 0, -90)
+        else:
+            path.lineTo(x + bar_w, y + bar_h)
+
+        path.lineTo(x + bl, y + bar_h)
+        if bl > 0:
+            path.arcTo(x, y + bar_h - 2 * bl, 2 * bl, 2 * bl, 270, -90)
+        else:
+            path.lineTo(x, y + bar_h)
+
+        path.lineTo(x, y + tl)
+        if tl > 0:
+            path.arcTo(x, y, 2 * tl, 2 * tl, 180, -90)
+        else:
+            path.lineTo(x, y)
+        path.closeSubpath()
+
+        # 1. Tracciato di sfondo (Grigio visibile)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor("#e9ecef"))
+        painter.drawPath(path)
+
+        # 2. Colori
+        green_color = QColor("#198754")
+        orange_color = QColor("#f39c12")
+
+        # 3. Disegno contenuto
+        if self.tcl and self.tgo:
+            painter.setBrush(green_color)
+            painter.drawPath(path)
+        elif self.tcl:
+            # Solo TCL - Arancione (Sinistra)
+            tcl_rect = QRectF(x, y, bar_w / 2.0 + 2.0, bar_h)
+            tcl_path = QPainterPath()
+            tcl_path.addRoundedRect(tcl_rect, radius, radius)
+            painter.setBrush(orange_color)
+            painter.drawPath(tcl_path)
+        elif self.tgo:
+            # Solo TGO - Arancione (Destra)
+            tgo_rect = QRectF(x + bar_w / 2.0 - 2.0, y, bar_w / 2.0 + 2.0, bar_h)
+            tgo_path = QPainterPath()
+            tgo_path.addRoundedRect(tgo_rect, radius, radius)
+            painter.setBrush(orange_color)
+            painter.drawPath(tgo_path)
+
+
 class ProgrammazioneTab(QWidget):
     """Sottoscheda per il controllo della programmazione settimanale con vista PDL aggregata."""
 
@@ -41,6 +180,7 @@ class ProgrammazioneTab(QWidget):
         self.worker: BotWorker | None = None
         self.last_results: list[dict[str, Any]] = []
         self.requesters: list[str] = []
+        self.tables: list[QTableWidget] = []
         self._setup_ui()
         self._load_requesters()
         # Carica dati persistenti
@@ -52,15 +192,16 @@ class ProgrammazioneTab(QWidget):
             start_date, end_date, _ = self._get_selected_week_range()
             self.last_results = PDLQueries.get_programming_results_by_week(start_date, end_date)
 
-            self._update_table(self.last_results)
-            self.btn_email.setEnabled(len(self.last_results) > 0)
-
             if self.last_results:
+                last_upd = self.last_results[0].get("ultimo_aggiornamento", "N/D")
                 self._on_log(
-                    f"ℹ️ Caricati {len(self.last_results)} risultati per la settimana {start_date} - {end_date}."
+                    f"ℹ️ Caricati {len(self.last_results)} risultati (Aggiornati al: {last_upd}) per la settimana {start_date} - {end_date}."
                 )
             else:
                 self._on_log(f"ℹ️ Nessun dato salvato per la settimana {start_date} - {end_date}.")
+
+            self._update_table(self.last_results)
+            self.btn_email.setEnabled(len(self.last_results) > 0)
         except Exception as e:
             logger.error(f"Errore caricamento dati: {e}")
             self._on_log(f"⚠️ Errore caricamento dati: {e}")
@@ -86,24 +227,80 @@ class ProgrammazioneTab(QWidget):
         filter_area.addWidget(self.week_label)
 
         controls_layout = QHBoxLayout()
-        controls_layout.setSpacing(10)
+        controls_layout.setSpacing(20)
+
+        # --- SEZIONE 1: IMPORTAZIONE (A sinistra) ---
+        import_group = QWidget()
+        import_layout = QHBoxLayout(import_group)
+        import_layout.setContentsMargins(0, 0, 0, 0)
+        import_layout.setSpacing(8)
+
+        import_label = QLabel("IMPORTA:")
+        import_label.setStyleSheet("color: #198754; font-weight: bold; font-size: 11px;")
+        import_layout.addWidget(import_label)
 
         # Selettore Settimana
         self.week_selector = QComboBox()
         self.week_selector.addItems(["Settimana Corrente", "Settimana Prossima"])
-        self.week_selector.setFixedWidth(200)
-        self.week_selector.currentIndexChanged.connect(self._update_ui_dates)
-        controls_layout.addWidget(self.week_selector)
+        self.week_selector.setFixedWidth(160)
+        saved_week = config_manager.get_config_value("programming_selected_week", 0)
+        self.week_selector.setCurrentIndex(saved_week)
+        self.week_selector.currentIndexChanged.connect(self._on_week_changed)
+        import_layout.addWidget(self.week_selector)
 
-        # Nuovo Selettore Richiedenti
-        self.req_filter = MultiSelectFilter("Richiedenti", "Seleziona Richiedenti...")
-        self.req_filter.setFixedWidth(300)
-        # Carica selezione salvata
+        # Filtro Richiedenti (Bot)
+        self.req_filter = MultiSelectFilter("Richiedenti", "Seleziona Bot...")
+        self.req_filter.setFixedWidth(220)
         saved_reqs = config_manager.get_config_value("selected_programming_requesters", [])
         self.req_filter.set_selected(saved_reqs)
         self.req_filter.changed.connect(self._on_requesters_changed)
-        controls_layout.addWidget(self.req_filter)
+        # Stile Hover per Importazione
+        self.req_filter.setStyleSheet("""
+            MultiSelectFilter QPushButton { border: 1px solid transparent; background: transparent; color: #198754; }
+            MultiSelectFilter QPushButton:hover { border: 1px solid #198754; background: #f8fff9; border-radius: 6px; }
+        """)
+        import_layout.addWidget(self.req_filter)
 
+        controls_layout.addWidget(import_group)
+
+        # Separatore verticale
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.VLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
+        line.setStyleSheet("color: #dee2e6;")
+        controls_layout.addWidget(line)
+
+        # --- SEZIONE 2: VISUALIZZAZIONE (A destra) ---
+        view_group = QWidget()
+        view_layout = QHBoxLayout(view_group)
+        view_layout.setContentsMargins(0, 0, 0, 0)
+        view_layout.setSpacing(8)
+
+        view_label = QLabel("FILTRA:")
+        view_label.setStyleSheet("color: #0d6efd; font-weight: bold; font-size: 11px;")
+        view_layout.addWidget(view_label)
+
+        # Filtro Visualizzazione (Locale)
+        self.view_filter = MultiSelectFilter("Mostra", "Filtra Risultati...")
+        self.view_filter.setFixedWidth(220)
+        self.view_filter.changed.connect(self._apply_view_filter)
+        # Stile Hover per Visualizzazione
+        self.view_filter.setStyleSheet("""
+            MultiSelectFilter QPushButton { border: 1px solid transparent; background: transparent; color: #0d6efd; }
+            MultiSelectFilter QPushButton:hover { border: 1px solid #0d6efd; background: #f0f7ff; border-radius: 6px; }
+        """)
+        view_layout.addWidget(self.view_filter)
+
+        # Selettore Raggruppamento
+        self.group_selector = QComboBox()
+        self.group_selector.addItems(["Tabella Unica", "Area", "Richiedente"])
+        self.group_selector.setFixedWidth(140)
+        saved_group = config_manager.get_config_value("programming_group_mode", "Tabella Unica")
+        self.group_selector.setCurrentText(saved_group)
+        self.group_selector.currentTextChanged.connect(self._on_group_mode_changed)
+        view_layout.addWidget(self.group_selector)
+
+        controls_layout.addWidget(view_group)
         controls_layout.addStretch()
         filter_area.addLayout(controls_layout)
 
@@ -133,39 +330,22 @@ class ProgrammazioneTab(QWidget):
         self.log_widget.setVisible(False)
         layout.addWidget(self.log_widget)
 
-        # --- TABELLA AGGREGATA ---
-        self.results_table = QTableWidget()
-        self.results_table.setColumnCount(11)  # Richiedente, Area, PDL, Descrizione, 7 Giorni
-        self.results_table.setStyleSheet("""
-            QTableWidget {
-                border: 1px solid #e9ecef;
-                border-radius: 8px;
-                gridline-color: #f8f9fa;
-                background-color: white;
-            }
-            QTableWidget::item { padding: 5px; }
-        """)
+        # --- CONTENITORE TABELLE SCROLLABILE ---
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
 
-        # Calcolo date per Header (Iniziale)
+        self.tables_container = QWidget()
+        self.tables_layout = QVBoxLayout(self.tables_container)
+        self.tables_layout.setContentsMargins(0, 0, 0, 0)
+        self.tables_layout.setSpacing(25)
+        self.tables_layout.addStretch()
+
+        self.scroll_area.setWidget(self.tables_container)
+        layout.addWidget(self.scroll_area)
+
+        # Calcolo date iniziale
         self._update_ui_dates()
-        self.results_table.setAlternatingRowColors(True)
-
-        if v_header := self.results_table.verticalHeader():
-            v_header.setVisible(False)
-            v_header.setDefaultSectionSize(40)
-
-        if h_header := self.results_table.horizontalHeader():
-            h_header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-            h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # Richiedente
-            h_header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)  # Area
-            h_header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # PDL
-            h_header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)  # Descrizione
-
-            for i in range(4, 11):
-                h_header.setSectionResizeMode(i, QHeaderView.ResizeMode.Fixed)
-                self.results_table.setColumnWidth(i, 85)
-
-        layout.addWidget(self.results_table)
 
     def _get_selected_week_range(self) -> tuple[str, str, datetime]:
         """Restituisce start_str, end_str e start_dt in base alla selezione."""
@@ -187,21 +367,20 @@ class ProgrammazioneTab(QWidget):
         return s, e
 
     def _update_ui_dates(self):
-        """Aggiorna label, header tabella e carcia i dati per la settimana selezionata."""
+        """Aggiorna label e header di tutte le tabelle attive."""
         start_str, end_str, start_dt = self._get_selected_week_range()
 
-        # Update Label
         if hasattr(self, "week_label"):
             self.week_label.setText(
                 f"<span style='color: #6c757d;'>Monitoraggio Settimana:</span> "
                 f"<b style='color: #212529;'>{start_str} - {end_str}</b>"
             )
 
-        # Update Table Headers
         d = [(start_dt + timedelta(days=i)).strftime("%d/%m") for i in range(7)]
         headers = [
             "Richiedente",
             "Area",
+            "Unità",
             "N° PDL",
             "Descrizione",
             f"LUN {d[0]}",
@@ -213,47 +392,35 @@ class ProgrammazioneTab(QWidget):
             f"DOM {d[6]}",
         ]
 
-        # Evidenzia giorno corrente con stile moderno (Background + Colore)
         is_current_week = getattr(self, "week_selector", None) and self.week_selector.currentIndex() == 0
         current_weekday = datetime.now().weekday()
 
-        if hasattr(self, "results_table"):
-            self.results_table.setHorizontalHeaderLabels(headers)
-
-            # Applica stili agli header
-            for i in range(4, 11):
-                item = self.results_table.horizontalHeaderItem(i)
+        for table in self.tables:
+            table.setHorizontalHeaderLabels(headers)
+            table.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+            for i in range(5, 12):
+                item = table.horizontalHeaderItem(i)
                 if not item:
                     continue
-
-                is_today = is_current_week and (i - 4 == current_weekday)
-
+                is_today = is_current_week and (i - 5 == current_weekday)
                 if is_today:
-                    # Giorno Corrente: Azzurro chiaro sfondo, Blu scuro testo e indicatore testuale
-                    item.setBackground(QColor("#e7f1ff"))
-                    item.setForeground(QColor("#0d6efd"))
-
-                    # Aggiungiamo un pallino visibile nel testo dell'header
-                    header_text = headers[i]
-                    if " ●" not in header_text:
-                        item.setText(f"{header_text} ●")
-
+                    # Header più scuro per abbinarsi alla colonna marcata
+                    item.setBackground(QColor("#cfe2ff"))
+                    item.setForeground(QColor("#084298"))
+                    item.setText(headers[i])
                     font = QFont()
                     font.setBold(True)
-                    font.setPointSize(11)  # Più grande per visibilità
+                    font.setPointSize(11)
                     item.setFont(font)
-                    item.setToolTip("Oggi")
                 else:
-                    # Reset (usa defaults o null per ereditare stylesheet)
                     item.setBackground(QColor("#f8f9fa"))
                     item.setForeground(QColor("#495057"))
                     item.setText(headers[i])
                     font = QFont()
                     font.setBold(True)
                     item.setFont(font)
-                    item.setToolTip("")
 
-        # Ricarica i dati per la nuova settimana
+        # Ricarica sempre i dati dal DB per la settimana selezionata
         self._load_persisted_data()
 
     def _load_requesters(self):
@@ -267,10 +434,35 @@ class ProgrammazioneTab(QWidget):
         """Salva i richiedenti selezionati nella configurazione."""
         config_manager.set_config_value("selected_programming_requesters", selected)
 
+    def _on_week_changed(self, index: int):
+        """Gestisce il cambio settimana salvando la preferenza e aggiornando i dati."""
+        config_manager.set_config_value("programming_selected_week", index)
+        self._update_ui_dates()
+
+    def _apply_view_filter(self, selected_reqs: list[str] | None = None):
+        """Nasconde o mostra le righe delle tabelle in base ai richiedenti selezionati."""
+        if selected_reqs is None:
+            selected_reqs = self.view_filter.selected
+
+        # Se non c'è nulla di selezionato, mostriamo tutto (comportamento standard)
+        show_all = not selected_reqs
+
+        for table in self.tables:
+            for row in range(table.rowCount()):
+                req_item = table.item(row, 0)
+                if req_item:
+                    is_visible = show_all or req_item.text() in selected_reqs
+                    table.setRowHidden(row, not is_visible)
+
     def _on_log(self, message: str):
         """Aggiunge un messaggio alla console di log."""
         if hasattr(self, "log_widget"):
             self.log_widget.append(message)
+
+    def _on_group_mode_changed(self, mode: str):
+        config_manager.set_config_value("programming_group_mode", mode)
+        if self.last_results:
+            self._update_table(self.last_results)
 
     def _on_run_clicked(self):
         selected_reqs = self.req_filter.selected
@@ -309,7 +501,14 @@ class ProgrammazioneTab(QWidget):
 
         self.btn_run.setEnabled(False)
         self.btn_email.setEnabled(False)
-        self.results_table.setRowCount(0)
+
+        # Pulisci tabelle esistenti
+        while self.tables_layout.count() > 1:
+            item = self.tables_layout.takeAt(0)
+            if widget := item.widget():
+                widget.deleteLater()
+        self.tables.clear()
+
         self.log_widget.clear()
         self.log_widget.setVisible(True)
         self.log_widget.timeline.set_mood("running")
@@ -332,61 +531,193 @@ class ProgrammazioneTab(QWidget):
             start_date, end_date, _ = self._get_selected_week_range()
             if self.last_results:
                 PDLQueries.save_programming_results(self.last_results, start_date, end_date)
+                self._on_log(f"✅ Dati salvati per la settimana {start_date} - {end_date}")
+            else:
+                # Carica i vecchi dati se i nuovi sono vuoti (opzionale, ma garantisce 'permanenza')
+                self.last_results = PDLQueries.get_programming_results_by_week(start_date, end_date)
+                self._on_log(
+                    f"ℹ️ Nessun nuovo dato trovato. Mantengo dati precedenti per {start_date} - {end_date}"
+                )
 
             self._update_table(self.last_results)
-            self.btn_email.setEnabled(len(self.last_results) > 0)
-            msg = (
-                f"Completato! Trovati {len(self.last_results)} PDL."
-                if self.last_results
-                else "Nessun dato trovato."
-            )
-            ToastManager.instance().show(msg, "success" if self.last_results else "info")
-
-            # Refresh logs per confermare salvataggio
-            self._on_log(f"✅ Dati salvati per la settimana {start_date} - {end_date}")
         else:
             ToastManager.instance().show("Errore durante il controllo SafeWork.", "error")
 
     def _update_table(self, results: list[dict[str, Any]]):
-        self.results_table.setRowCount(0)
-        icon_tcl_on = QIcon(get_asset_path(Icons.FLAG_TCL_ON))
-        icon_tcl_off = QIcon(get_asset_path(Icons.FLAG_TCL_OFF))
-        icon_tgo_on = QIcon(get_asset_path(Icons.FLAG_TGO_ON))
-        icon_tgo_off = QIcon(get_asset_path(Icons.FLAG_TGO_OFF))
+        """Crea e popola le tabelle in base alla modalità di raggruppamento selezionata."""
+        # Pulisci layout esistente
+        while self.tables_layout.count() > 1:
+            item = self.tables_layout.takeAt(0)
+            if widget := item.widget():
+                widget.deleteLater()
 
+        self.tables.clear()
+        if not results:
+            # Pulisci anche il filtro se non ci sono dati
+            self.view_filter.set_items([])
+            return
+
+        # Aggiorna gli elementi del filtro visualizzazione con i richiedenti presenti nei risultati
+        available_reqs = sorted({r["richiedente"] for r in results})
+        self.view_filter.set_items(available_reqs)
+
+        group_mode = self.group_selector.currentText()
+
+        # Raggruppamento dati
+        grouped_data: dict[str, list[dict[str, Any]]] = {}
+        if group_mode == "Tabella Unica":
+            grouped_data = {"Programmazione Globale": results}
+        elif group_mode == "Area":
+            for r in results:
+                area = r.get("area") or "Area Non Definita"
+                if area not in grouped_data:
+                    grouped_data[area] = []
+                grouped_data[area].append(r)
+        else:  # Richiedente
+            for r in results:
+                req = r.get("richiedente") or "Richiedente Ignoto"
+                if req not in grouped_data:
+                    grouped_data[req] = []
+                grouped_data[req].append(r)
+
+        # Creazione tabelle per ogni gruppo
         today_idx = datetime.now().weekday()
 
-        for row_idx, res in enumerate(results):
-            self.results_table.insertRow(row_idx)
-            self.results_table.setItem(row_idx, 0, QTableWidgetItem(res["richiedente"]))
-            self.results_table.setItem(row_idx, 1, QTableWidgetItem(res.get("area", "")))
-            self.results_table.setItem(row_idx, 2, QTableWidgetItem(res["pdl"]))
-            self.results_table.setItem(row_idx, 3, QTableWidgetItem(res.get("descrizione", "")))
+        for group_name, group_results in sorted(grouped_data.items()):
+            group_box = QGroupBox(group_name)
+            group_box.setStyleSheet(
+                """
+                QGroupBox {
+                    font-weight: bold; font-size: 14px; color: #1e3a5f;
+                    border: 1px solid #dee2e6; border-radius: 10px;
+                    margin-top: 20px; padding-top: 25px; background-color: #fcfcfc;
+                }
+                QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top center; padding: 0 10px; }
+            """
+            )
+            group_layout = QVBoxLayout(group_box)
 
-            for i, prog in enumerate(res["programmazione"]):
-                cell_widget = QWidget()
-                cell_layout = QHBoxLayout(cell_widget)
-                cell_layout.setContentsMargins(4, 2, 4, 2)
-                cell_layout.setSpacing(6)
-                cell_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            table = QTableWidget()
+            table.setColumnCount(12)
+            table.setAlternatingRowColors(True)
+            table.setRowCount(len(group_results))
+            # Padding 0 e Margini 0 per permettere al widget di toccare i bordi cella
+            table.setStyleSheet(
+                """
+                QTableWidget { border: none; background-color: white; }
+                QTableWidget::item { padding: 0px; margin: 0px; }
+            """
+            )
+            table.verticalHeader().setVisible(False)
+            table.verticalHeader().setDefaultSectionSize(42)
 
-                # TCL
-                lbl_tcl = QLabel()
-                lbl_tcl.setPixmap((icon_tcl_on if prog["tcl"] else icon_tcl_off).pixmap(32, 18))
-                lbl_tcl.setToolTip(f"TCL: {'Programmato' if prog['tcl'] else 'Assente'}")
-                cell_layout.addWidget(lbl_tcl)
+            h_header = table.horizontalHeader()
+            h_header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+            h_header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
 
-                # TGO
-                lbl_tgo = QLabel()
-                lbl_tgo.setPixmap((icon_tgo_on if prog["tgo"] else icon_tgo_off).pixmap(32, 18))
-                lbl_tgo.setToolTip(f"TGO: {'Programmato' if prog['tgo'] else 'Assente'}")
-                cell_layout.addWidget(lbl_tgo)
+            h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+            h_header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+            h_header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+            h_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+            h_header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
+            for i in range(5, 12):
+                h_header.setSectionResizeMode(i, QHeaderView.ResizeMode.Fixed)
+                table.setColumnWidth(i, 85)
 
-                # Evidenzia giorno oggi
-                if i == today_idx:
-                    cell_widget.setStyleSheet("background-color: rgba(13, 110, 253, 0.05);")
+            # Popolamento Righe
+            for row_idx, res in enumerate(group_results):
+                table.setItem(row_idx, 0, QTableWidgetItem(res["richiedente"]))
+                table.setItem(row_idx, 1, QTableWidgetItem(res.get("area", "")))
+                table.setItem(row_idx, 2, QTableWidgetItem(res.get("unita", "")))
+                table.setItem(row_idx, 3, QTableWidgetItem(res["pdl"]))
+                table.setItem(row_idx, 4, QTableWidgetItem(res.get("descrizione", "")))
 
-                self.results_table.setCellWidget(row_idx, 4 + i, cell_widget)
+                prog_list = res["programmazione"]
+                for i, prog in enumerate(prog_list):
+                    is_full = prog["tcl"] and prog["tgo"]
+
+                    conn_left = False
+                    if i > 0 and is_full:
+                        prev = prog_list[i - 1]
+                        if prev["tcl"] and prev["tgo"]:
+                            conn_left = True
+
+                    conn_right = False
+                    if i < len(prog_list) - 1 and is_full:
+                        nxt = prog_list[i + 1]
+                        if nxt["tcl"] and nxt["tgo"]:
+                            conn_right = True
+
+                    status_widget = ProgrammingStatusWidget(
+                        prog["tcl"],
+                        prog["tgo"],
+                        connect_left=conn_left,
+                        connect_right=conn_right,
+                        is_today=(i == today_idx),
+                    )
+                    table.setCellWidget(row_idx, 5 + i, status_widget)
+
+            self.tables.append(table)
+            group_layout.addWidget(table)
+
+            # Imposta altezza dinamica
+            header_h = 45
+            row_h = 42
+            table_height = header_h + (table.rowCount() * row_h) + 15
+            table.setMinimumHeight(table_height)
+            table.setMaximumHeight(table_height)
+
+            self.tables_layout.insertWidget(self.tables_layout.count() - 1, group_box)
+
+        # Applica header dates
+        self._update_ui_dates_internal()
+
+        # Riapplica il filtro visualizzazione corrente
+        self._apply_view_filter()
+
+    def _update_ui_dates_internal(self):
+        """Versione interna di update_ui_dates che non ricarica i dati per evitare loop."""
+        _, _, start_dt = self._get_selected_week_range()
+        d = [(start_dt + timedelta(days=i)).strftime("%d/%m") for i in range(7)]
+        headers = [
+            "Richiedente",
+            "Area",
+            "Unità",
+            "N° PDL",
+            "Descrizione",
+            f"LUN {d[0]}",
+            f"MAR {d[1]}",
+            f"MER {d[2]}",
+            f"GIO {d[3]}",
+            f"VEN {d[4]}",
+            f"SAB {d[5]}",
+            f"DOM {d[6]}",
+        ]
+        is_current_week = getattr(self, "week_selector", None) and self.week_selector.currentIndex() == 0
+        current_weekday = datetime.now().weekday()
+
+        for table in self.tables:
+            table.setHorizontalHeaderLabels(headers)
+            table.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+            for i in range(5, 12):
+                item = table.horizontalHeaderItem(i)
+                if not item:
+                    continue
+                if is_current_week and (i - 5 == current_weekday):
+                    item.setBackground(QColor("#cfe2ff"))
+                    item.setForeground(QColor("#084298"))
+                    item.setText(headers[i])
+                    f = QFont()
+                    f.setBold(True)
+                    f.setPointSize(11)
+                    item.setFont(f)
+                else:
+                    item.setBackground(QColor("#f8f9fa"))
+                    item.setForeground(QColor("#495057"))
+                    item.setText(headers[i])
+                    f = QFont()
+                    f.setBold(True)
+                    item.setFont(f)
 
     def _on_email_clicked(self):
         if not self.last_results:
@@ -431,9 +762,10 @@ class ProgrammazioneTab(QWidget):
 
                 <table style='border-collapse: collapse; min-width: 600px; width: auto; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #dee2e6;'>
                     <thead>
-                        <tr style='background-color: #f8f9fa; color: #495057; text-align: left;'>
+                        <tr style='background-color: #f8f9fa; color: #495057; text-align: center;'>
                             <th style='padding: 12px 15px; border: 1px solid #dee2e6;'>Richiedente</th>
                             <th style='padding: 12px 15px; border: 1px solid #dee2e6;'>Area</th>
+                            <th style='padding: 12px 15px; border: 1px solid #dee2e6;'>Unità</th>
                             <th style='padding: 12px 15px; border: 1px solid #dee2e6; text-align: center;'>PdL</th>
                             <th style='padding: 12px 15px; border: 1px solid #dee2e6;'>Descrizione</th>
                             {headers_html}
@@ -448,17 +780,20 @@ class ProgrammazioneTab(QWidget):
                 style = "padding: 12px 10px; border: 1px solid #dee2e6; text-align: center; min-width: 65px;"
                 if i == today_idx:
                     style += " background-color: #e7f1ff; color: #0d6efd; font-weight: bold; border-bottom: 3px solid #0d6efd;"
-                    day += " ●"
                 headers_html += f"<th style='{style}'>{day}</th>"
 
             html = html.format(
-                start_date=start_date, end_date=end_date, week_num=week_num, headers_html=headers_html
+                start_date=start_date,
+                end_date=end_date,
+                week_num=week_num,
+                headers_html=headers_html,
             )
 
             for res in self.last_results:
                 html += "<tr>"
                 html += f"<td style='padding: 12px 15px; border: 1px solid #dee2e6; white-space: nowrap;'>{res['richiedente']}</td>"
                 html += f"<td style='padding: 12px 15px; border: 1px solid #dee2e6; color: #495057;'>{res.get('area', '')}</td>"
+                html += f"<td style='padding: 12px 15px; border: 1px solid #dee2e6; color: #495057;'>{res.get('unita', '')}</td>"
                 html += f"<td style='padding: 12px; border: 1px solid #dee2e6; text-align: center;'><b>{res['pdl']}</b></td>"
                 html += f"<td style='padding: 12px 15px; border: 1px solid #dee2e6; color: #495057;'>{res.get('descrizione', '')}</td>"
 
@@ -474,7 +809,7 @@ class ProgrammazioneTab(QWidget):
                         bg_color = "#f0f7ff"  # Azzurro oggi
 
                     tcl_style = f"color: {'#198754' if tcl_val else '#dc3545'}; font-weight: {'bold' if tcl_val else 'normal'};"
-                    tgo_style = f"color: {'#198754' if tgo_val else '#dc3545'}; font-weight: {'bold' if tgo_val else 'normal'};"
+                    tgo_style = f"color: {'#198754' if tcl_val else '#dc3545'}; font-weight: {'bold' if tcl_val else 'normal'};"
 
                     html += f"<td align='center' style='padding: 10px; border: 1px solid #dee2e6; background-color: {bg_color}; font-size: 13px;'>"
                     html += f"<span style='{tcl_style}'>TCL</span><br><span style='{tgo_style}'>TGO</span>"

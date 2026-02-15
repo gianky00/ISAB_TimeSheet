@@ -4,6 +4,7 @@ Query SQL centralizzate per il database PDL.
 """
 
 import logging
+import sqlite3
 from typing import Any
 
 from src.core.database import db_manager
@@ -95,24 +96,30 @@ class PDLQueries:
 
             query = """
                 INSERT INTO pdl_programmazione (
-                    richiedente, n_pdl, area, descrizione,
+                    richiedente, n_pdl, area, unita, descrizione,
                     lun_tcl, lun_tgo, mar_tcl, mar_tgo, mer_tcl, mer_tgo,
                     gio_tcl, gio_tgo, ven_tcl, ven_tgo, sab_tcl, sab_tgo, dom_tcl, dom_tgo,
                     settimana_start, settimana_end
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
 
             data_to_insert = []
             for r in results:
                 prog = r.get("programmazione", [])
                 # Mapping giorni (assumiamo siano ordinati 1-7)
-                row = [r.get("richiedente"), r.get("pdl"), r.get("area"), r.get("descrizione")]
+                row = [
+                    r.get("richiedente"),
+                    r.get("pdl"),
+                    r.get("area"),
+                    r.get("unita"),
+                    r.get("descrizione"),
+                ]
                 # Aggiungiamo i 14 flag (TCL/TGO per 7 giorni)
                 for day in prog:
                     row.extend([day["tcl"], day["tgo"]])
 
                 # Riempimento se mancano giorni (safety)
-                while len(row) < 18:
+                while len(row) < 19:
                     row.append(False)
 
                 # Aggiungi date
@@ -134,25 +141,36 @@ class PDLQueries:
             "SELECT * FROM pdl_programmazione WHERE settimana_start = ? AND settimana_end = ? ORDER BY id ASC"
         )
         try:
-            rows = db_manager.execute_query(db_manager.DB_PDL, query, (start_date, end_date))
-            return [
-                {
-                    "richiedente": r[1],
-                    "pdl": r[2],
-                    "area": r[3],
-                    "descrizione": r[4],
-                    "programmazione": [
-                        {"giorno": 1, "tcl": bool(r[5]), "tgo": bool(r[6])},
-                        {"giorno": 2, "tcl": bool(r[7]), "tgo": bool(r[8])},
-                        {"giorno": 3, "tcl": bool(r[9]), "tgo": bool(r[10])},
-                        {"giorno": 4, "tcl": bool(r[11]), "tgo": bool(r[12])},
-                        {"giorno": 5, "tcl": bool(r[13]), "tgo": bool(r[14])},
-                        {"giorno": 6, "tcl": bool(r[15]), "tgo": bool(r[16])},
-                        {"giorno": 7, "tcl": bool(r[17]), "tgo": bool(r[18])},
-                    ],
-                }
-                for r in rows
-            ]
+            # Recuperiamo nomi colonne per sicurezza visto l'evoluzione dello schema
+            with db_manager.get_connection(db_manager.DB_PDL) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute(query, (start_date, end_date))
+                rows = cursor.fetchall()
+
+            results = []
+            for r in rows:
+                row_dict = dict(r)
+                results.append(
+                    {
+                        "richiedente": row_dict["richiedente"],
+                        "pdl": row_dict["n_pdl"],
+                        "area": row_dict["area"],
+                        "unita": row_dict.get("unita", ""),  # Ora sicuro grazie a dict()
+                        "descrizione": row_dict["descrizione"],
+                        "ultimo_aggiornamento": row_dict["ultimo_aggiornamento"],
+                        "programmazione": [
+                            {"giorno": 1, "tcl": bool(row_dict["lun_tcl"]), "tgo": bool(row_dict["lun_tgo"])},
+                            {"giorno": 2, "tcl": bool(row_dict["mar_tcl"]), "tgo": bool(row_dict["mar_tgo"])},
+                            {"giorno": 3, "tcl": bool(row_dict["mer_tcl"]), "tgo": bool(row_dict["mer_tgo"])},
+                            {"giorno": 4, "tcl": bool(row_dict["gio_tcl"]), "tgo": bool(row_dict["gio_tgo"])},
+                            {"giorno": 5, "tcl": bool(row_dict["ven_tcl"]), "tgo": bool(row_dict["ven_tgo"])},
+                            {"giorno": 6, "tcl": bool(row_dict["sab_tcl"]), "tgo": bool(row_dict["sab_tgo"])},
+                            {"giorno": 7, "tcl": bool(row_dict["dom_tcl"]), "tgo": bool(row_dict["dom_tgo"])},
+                        ],
+                    }
+                )
+            return results
         except Exception as e:
             logger.error(f"Errore recupero programmazione: {e}")
             return []

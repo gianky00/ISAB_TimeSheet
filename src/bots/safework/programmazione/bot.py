@@ -133,15 +133,18 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
                     # A (0) = N° PDL
                     # B (1) = Descrizione
                     # R (17) = Richiedente
+                    # X (23) = Unità
                     # Y (24) = Area
                     pdl = str(row.iloc[0]).strip() if len(row) > 0 else "N/D"
                     desc = str(row.iloc[1]).strip() if len(row) > 1 else ""
                     richiedente = str(row.iloc[17]).strip() if len(row) > 17 else "N/D"
+                    unita = str(row.iloc[23]).strip() if len(row) > 23 else ""
                     area = str(row.iloc[24]).strip() if len(row) > 24 else ""
 
                     self.results.append(
                         {
                             "pdl": pdl,
+                            "unita": unita,
                             "area": area,
                             "descrizione": desc,
                             "richiedente": richiedente,

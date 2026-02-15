@@ -1,3 +1,4 @@
+import contextlib
 import sqlite3
 
 
@@ -118,12 +119,16 @@ def mig_pdl_v3(conn: sqlite3.Connection) -> None:
 def mig_pdl_v4(conn: sqlite3.Connection) -> None:
     """Aggiunge colonne per il range settimanale alla tabella programmazione (v4)"""
     cursor = conn.cursor()
-    try:
+    with contextlib.suppress(sqlite3.OperationalError):
         cursor.execute("ALTER TABLE pdl_programmazione ADD COLUMN settimana_start TEXT")
         cursor.execute("ALTER TABLE pdl_programmazione ADD COLUMN settimana_end TEXT")
         cursor.execute(
             "CREATE INDEX IF NOT EXISTS idx_prog_dates ON pdl_programmazione(settimana_start, settimana_end)"
         )
-    except sqlite3.OperationalError:
-        # Colonne già esistenti (idempotenza)
-        pass
+
+
+def mig_pdl_v5(conn: sqlite3.Connection) -> None:
+    """Aggiunge colonna 'unita' alla tabella programmazione (v5)"""
+    cursor = conn.cursor()
+    with contextlib.suppress(sqlite3.OperationalError):
+        cursor.execute("ALTER TABLE pdl_programmazione ADD COLUMN unita TEXT")

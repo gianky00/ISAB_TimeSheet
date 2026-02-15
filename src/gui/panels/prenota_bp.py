@@ -146,14 +146,18 @@ class PrenotaBPPanel(BaseBotPanel):
                     rows = [item]
                     self.log_widget.append(f"ℹ️ Esecuzione singola per BP: {item.get('numero_bp', 'N/D')}")
 
+        # Get dates from widget
+        date_da, date_a_opt = self.params_widget.get_dates()
+        date_a = date_a_opt or ""
+
         bot = PrenotaBPBot(
             username=username,
             password=password,
             headless=config.get("browser_headless", False),
             timeout=config.get("browser_timeout", 30),
             fornitore=fornitore,
-            data_da=date_da or "",
-            data_a=date_a or "",
+            data_da=date_da,
+            data_a=date_a,
         )
 
         bot_data = {
