@@ -446,7 +446,7 @@ $xl.Quit()
                     )
                 except Exception:
                     # Fallback: apri il file
-                    os.startfile(temp_path)
+                    os.startfile(temp_path)  # noqa: S606
                     QMessageBox.information(
                         self,
                         "Screenshot salvato",
@@ -455,7 +455,7 @@ $xl.Quit()
                     )
             else:
                 # Apri il file direttamente
-                os.startfile(temp_path)
+                os.startfile(temp_path)  # noqa: S606
                 QMessageBox.information(
                     self,
                     "Screenshot salvato",
@@ -1149,7 +1149,7 @@ class CertificatiCampioneTab(QWidget):
                 break
 
         if found_path:
-            os.startfile(found_path)
+            os.startfile(found_path)  # noqa: S606
         else:
             QMessageBox.warning(
                 self,

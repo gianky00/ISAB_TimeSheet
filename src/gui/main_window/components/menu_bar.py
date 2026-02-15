@@ -82,7 +82,7 @@ class MenuBarComponent(QObject):
             from PyQt6.QtWidgets import QApplication
 
             QApplication.quit()
-            os.execl(sys.executable, sys.executable, *sys.argv)
+            os.execl(sys.executable, sys.executable, *sys.argv)  # noqa: S606
 
         def open_folder_path(path):
             if Path(path).exists():

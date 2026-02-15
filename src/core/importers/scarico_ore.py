@@ -81,7 +81,7 @@ class ScaricoOreImporter(BaseImporter):
                 decrypted = io.BytesIO()
                 with path.open("rb") as f:
                     office_file = msoffcrypto.OfficeFile(f)
-                    office_file.load_key(password="coemi")  # nosec: B106
+                    office_file.load_key(password="coemi")  # nosec: B106 # noqa: S106
                     office_file.decrypt(decrypted)
                 decrypted.seek(0)
                 return _scan_zip(decrypted)
@@ -122,7 +122,7 @@ class ScaricoOreImporter(BaseImporter):
         if msoffcrypto:
             with suppress(Exception), path.open("rb") as f:
                 office_file = msoffcrypto.OfficeFile(f)
-                office_file.load_key(password="coemi")  # nosec: B106
+                office_file.load_key(password="coemi")  # nosec: B106 # noqa: S106
                 office_file.decrypt(wb_file)
                 is_encrypted = True
 
