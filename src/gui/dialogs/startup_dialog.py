@@ -28,8 +28,6 @@ from PyQt6.QtWidgets import (
 
 # Import widget specializzati
 from src.gui.widgets.startup.particle_background import ParticleBackground
-
-# from src.gui.widgets.startup.resource_monitor import ResourceMonitor
 from src.gui.widgets.startup.startup_widgets import (
     AnimatedBorder,
     GlowingProgressBar,
@@ -314,7 +312,6 @@ class StartupDialog(QDialog):
     def _on_progress(self, message: str, prog: int):
         """Aggiorna UI - chiamato dal thread principale via signal."""
         self.status.setText(message.upper())
-        # self.resource_mon.trigger_activity()
 
         if prog >= 90:
             self.indicator.setStyleSheet("background:#2ecc71; border-radius:4px;")
@@ -367,7 +364,6 @@ class StartupDialog(QDialog):
             self.logo.timer.stop()
             self._dot_timer.stop()
             self._pulse_timer.stop()
-            # self.resource_mon.timer.stop()
             for lbl in self.log_labels:
                 lbl._timer.stop()
             if self._thread and self._thread.isRunning():

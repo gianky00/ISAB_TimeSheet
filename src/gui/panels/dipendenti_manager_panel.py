@@ -228,7 +228,6 @@ class DipendentiManagerPanel(QWidget):
 
                 # Colorazione se inattivo (opzionale, se avessimo il campo stato)
                 # if not row['monitoraggio_attivo']:
-                #    for i in range(6): self.table.item(idx, i).setForeground(QBrush(QColor("gray")))
 
             self.lbl_count.setText(f"{len(employees)} Dipendenti")
             self._filter_table(self.search_bar.text())  # Riapplica filtro se presente

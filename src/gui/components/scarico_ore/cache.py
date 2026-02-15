@@ -47,7 +47,7 @@ class CacheWorker(QThread):
             try:
                 self.progress.emit("Caricamento cache...")
                 with self.cache_path.open("rb") as f:
-                    loaded = pickle.load(f)  # noqa: S301 # nosec B301
+                    loaded = pickle.load(f)  # nosec B301
                     if len(loaded) == 3:
                         raw_data = loaded[0]
                         (

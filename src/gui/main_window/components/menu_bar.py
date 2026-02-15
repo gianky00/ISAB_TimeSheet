@@ -63,7 +63,6 @@ class MenuBarComponent(QObject):
         elif self.command_palette:
             self.command_palette.show_animated()
             # Optional: Toast per confermare l'apertura se in debug mode, ma meglio evitare spam
-            # self.main_window.show_toast("Palette Aperta", "info", 1000)
 
     def _init_palette(self):
         try:
@@ -83,7 +82,7 @@ class MenuBarComponent(QObject):
             from PyQt6.QtWidgets import QApplication
 
             QApplication.quit()
-            os.execl(sys.executable, sys.executable, *sys.argv)  # noqa: S606
+            os.execl(sys.executable, sys.executable, *sys.argv)
 
         def open_folder_path(path):
             if Path(path).exists():

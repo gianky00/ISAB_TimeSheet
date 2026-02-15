@@ -85,7 +85,6 @@ class ProgrammazioneTab(QWidget):
         self.week_label.setStyleSheet("font-size: 13px; margin-bottom: 5px;")
         filter_area.addWidget(self.week_label)
 
-        # Controlli in linea (Settimana + Richiedenti)
         controls_layout = QHBoxLayout()
         controls_layout.setSpacing(10)
 

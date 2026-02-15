@@ -281,7 +281,6 @@ class NavigationController(QObject):
             "timbrature": (0, 2),
             "prenota_bp": (0, 3),
             "carico_ts": (0, 4),
-            # SafeWork (main_idx=1)
             "scarico_pdl": (1, 0),
             "ricerca_pdl": (1, 1),
         }

@@ -99,7 +99,6 @@ class CommandPaletteDialog(QDialog):
         """
         )
 
-        # Shadow (Subtler, deeper)
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(40)
         shadow.setXOffset(0)

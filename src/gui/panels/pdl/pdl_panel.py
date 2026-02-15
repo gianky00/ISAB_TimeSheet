@@ -612,7 +612,7 @@ class PDLDBPanel(QWidget):
                 if not filename.endswith(".xlsx"):
                     filename += ".xlsx"
                 df.to_excel(filename, index=False, engine="openpyxl")
-                os.startfile(filename)  # noqa: S606
+                os.startfile(filename)
 
         except Exception as e:
             print(f"Errore Export Excel: {e}")

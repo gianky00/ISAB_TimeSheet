@@ -35,16 +35,16 @@ class Particle:
         self.w: int = w
         self.h: int = h
         self.reset(w, h)
-        self.y = random.uniform(0, h)  # noqa: S311 # Posizione iniziale casuale
+        self.y = random.uniform(0, h)  # Posizione iniziale casuale
 
     def reset(self, w: int, h: int) -> None:
         """Reset particle to bottom with random properties."""
-        self.x = random.uniform(0, w)  # noqa: S311
+        self.x = random.uniform(0, w)
         self.y = float(h + 10)
-        self.size = random.uniform(1.5, 3.5)  # noqa: S311
-        self.speed = random.uniform(0.3, 0.8)  # noqa: S311
-        self.opacity = random.uniform(0.2, 0.5)  # noqa: S311
-        self.phase = random.uniform(0, math.pi * 2)  # noqa: S311
+        self.size = random.uniform(1.5, 3.5)
+        self.speed = random.uniform(0.3, 0.8)
+        self.opacity = random.uniform(0.2, 0.5)
+        self.phase = random.uniform(0, math.pi * 2)
         self.w, self.h = w, h
 
     def update(self) -> None:

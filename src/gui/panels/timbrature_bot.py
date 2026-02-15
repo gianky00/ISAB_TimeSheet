@@ -104,7 +104,6 @@ class TimbratureBotPanel(BaseBotPanel):
 
     def _on_start(self, params_override: dict[str, Any] | None = None):
         """Avvia il bot Timbrature."""
-        # print(f"[DEBUG] TimbratureBotPanel._on_start called. params_override={params_override}")
         self.log_widget.append(f"DEBUG: Start requested. Override={params_override}")
         super()._on_start(params_override)
 
@@ -114,15 +113,12 @@ class TimbratureBotPanel(BaseBotPanel):
             self._load_saved_data()
 
         username, password = self.get_credentials()
-        # print(f"[DEBUG] Credentials: user={username}, pwd={'*' if password else 'None'}")
 
         fornitore = self.params_widget.get_fornitore()
-        # print(f"[DEBUG] Fornitore from widget: {fornitore}")
         data_da, data_a = self.params_widget.get_dates()
 
         # OVERRIDES
         if params_override:
-            # print("[DEBUG] Applying overrides...")
             if "fornitore" in params_override:
                 fornitore = params_override["fornitore"]
             if "data_da" in params_override:
@@ -173,8 +169,6 @@ class TimbratureBotPanel(BaseBotPanel):
             ToastManager.instance().show("Errore creazione bot.", "error")
             return
 
-        # print("[DEBUG] Bot created successfully. Starting worker...")
-
         bot_data = {"fornitore": fornitore, "data_da": data_da, "data_a": data_a}
 
         # Get telegram service safely
@@ -191,7 +185,6 @@ class TimbratureBotPanel(BaseBotPanel):
         self.log_widget.clear()
         self.log_widget.append(f"Avvio bot Timbrature ({fornitore})")
         self.worker.start()
-        # print("[DEBUG] Worker started.")
         self.bot_started.emit()
 
     def _on_worker_finished_custom(self, success: bool):

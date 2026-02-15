@@ -76,7 +76,6 @@ ANIMATION_TIMINGS: Final[dict[str, int]] = {
     # Frame rates
     "fps_60": 16,  # ~60 FPS (1000ms / 60)
     "fps_30": 33,  # ~30 FPS
-    # Durations (ms)
     "fade_fast": 150,
     "fade_normal": 300,
     "fade_slow": 500,
