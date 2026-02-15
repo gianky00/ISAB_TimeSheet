@@ -336,16 +336,19 @@ class LogViewer:
 
         return summaries
 
-    def generate_health_report(self) -> dict[str, Any]:
+    def generate_health_report(self, hours: int = 24) -> dict[str, Any]:
         """
         Genera report salute sistema.
+
+        Args:
+            hours: Ore di lookback
 
         Returns:
             Dict con health report
         """
-        # Analizza ultime 24h
+        # Analizza ultime N ore
         end = datetime.now()
-        start = end - timedelta(hours=24)
+        start = end - timedelta(hours=hours)
 
         results = self.query().time_range(start, end).execute()
 
@@ -360,13 +363,13 @@ class LogViewer:
         error_rate = (errors / total * 100) if total > 0 else 0
 
         # Bot runs
-        bot_runs = self.get_bot_runs_summary(hours=24)
+        bot_runs = self.get_bot_runs_summary(hours=hours)
         successful_runs = sum(1 for run in bot_runs if run["success"])
         failed_runs = sum(1 for run in bot_runs if not run["success"])
 
         report = {
             "timestamp": datetime.now().isoformat() + "Z",
-            "period_hours": 24,
+            "period_hours": hours,
             "total_events": total,
             "level_distribution": level_stats.copy(),
             "error_rate_percent": round(error_rate, 2),
@@ -410,11 +413,14 @@ def view_trace(trace_id: str) -> list[dict[str, Any]]:
     return LogViewer().reconstruct_trace(trace_id)
 
 
-def health_report() -> dict[str, Any]:
+def health_report(hours: int = 24) -> dict[str, Any]:
     """
     Genera health report del sistema.
+
+    Args:
+        hours: Ore di lookback
 
     Returns:
         Health report
     """
-    return LogViewer().generate_health_report()
+    return LogViewer().generate_health_report(hours=hours)

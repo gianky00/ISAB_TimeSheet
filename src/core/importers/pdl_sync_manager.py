@@ -11,12 +11,12 @@ from typing import Any, ClassVar
 import openpyxl
 
 try:
-    import win32com.client  # type: ignore
+    import win32com.client
 
     xlCalculationManual = -4135
     xlCalculationAutomatic = -4105
 except ImportError:
-    win32com = None
+    win32com: Any = None
 
 logger = logging.getLogger(__name__)
 

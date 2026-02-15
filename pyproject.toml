@@ -253,6 +253,7 @@ module = [
     "icecream.*",
     "email_validator.*",
     "jaraco.*",
+    "diagrams.*",
 ]
 ignore_missing_imports = true
 

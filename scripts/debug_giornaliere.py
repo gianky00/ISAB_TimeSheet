@@ -165,7 +165,7 @@ def debug_import_simulation():
     print(f"    Task raccolti: {len(tasks)}")
 
     # Raggruppa per anno
-    by_year = {}
+    by_year: dict[int, list[str]] = {}
     for year, path, _ in tasks:
         by_year.setdefault(year, []).append(path.name)
 

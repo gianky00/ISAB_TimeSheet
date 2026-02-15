@@ -236,7 +236,7 @@ class LyraClient:
             if ctx:
                 messages.append({"role": "system", "content": ctx})
 
-            user_msg = {"role": "user", "content": question}
+            user_msg: dict[str, Any] = {"role": "user", "content": question}
             if images:
                 user_msg["images"] = images
 

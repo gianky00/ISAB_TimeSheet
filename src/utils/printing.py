@@ -83,7 +83,7 @@ def print_pdf(file_path: str, printer_name: str) -> bool:
                 logger.debug(f"Invio pagina {page_num + 1} di {total_pages}...")
 
                 # 1. Crea un NUOVO contesto di stampa per ogni pagina
-                hdc = win32ui.CreateDC()
+                hdc: Any = win32ui.CreateDC()
                 hdc.CreatePrinterDC(target_printer)
 
                 # 2. Avvia un NUOVO documento (Job)

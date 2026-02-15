@@ -264,7 +264,7 @@ class ServiceController(QObject):
                 logger.warning("Report email schedulato disponibile solo su Windows")
                 return
 
-            import win32com.client  # type: ignore
+            import win32com.client
 
             # Costruisci HTML semplificato per invio automatico
             current_date = datetime.now().strftime("%d/%m/%Y %H:%M")

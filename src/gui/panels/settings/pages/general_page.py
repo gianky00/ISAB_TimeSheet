@@ -25,7 +25,7 @@ class GeneralPage(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.model_worker = None
+        self.model_worker: ModelListWorker | None = None
         self._setup_ui()
 
     def _setup_ui(self) -> None:

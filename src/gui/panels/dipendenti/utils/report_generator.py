@@ -243,8 +243,8 @@ class ReportGenerator:
 
         if os.name == "nt":
             try:
-                import pythoncom  # type: ignore[import-untyped]
-                import win32com.client  # type: ignore[import-untyped]
+                import pythoncom
+                import win32com.client
 
                 # Inizializza COM per il thread corrente (essenziale in app compilate)
                 pythoncom.CoInitialize()
