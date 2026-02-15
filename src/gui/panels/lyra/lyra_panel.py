@@ -127,12 +127,13 @@ class LyraPanel(QWidget):
 
         provider = config_manager.get_config_value("ai_provider", "gemini")
         api_key = SecretsManager.get_gemini_api_key()
+        ollama_url = config_manager.get_config_value("ollama_url", "http://localhost:11434")
 
         # Se è gemini e manca la chiave, non possiamo fare nulla
         if provider == "gemini" and not api_key:
             return
 
-        self.model_worker = ModelListWorker(api_key)
+        self.model_worker = ModelListWorker(api_key, provider=provider, ollama_url=ollama_url)
         self.model_worker.finished.connect(self._populate_models)
         self.model_worker.start()
 

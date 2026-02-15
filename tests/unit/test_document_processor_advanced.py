@@ -79,19 +79,33 @@ class TestDocumentProcessorAdvanced:
 
         assert DocumentProcessor.is_pdf_searchable(Path("scanned.pdf")) is False
 
-    def test_merge_pdfs_logic(self, mock_fitz):
+    def test_merge_pdfs_logic(self, mock_fitz, mocker):
         """Test: Logica di unione PDF."""
+        # Mock Path.exists() e Path.stat() per simulare file esistenti
+        mock_path = mocker.patch("src.utils.document_processor.Path", wraps=Path)
+        mock_instance = MagicMock()
+        mock_instance.exists.return_value = True
+        mock_stat = MagicMock()
+        mock_stat.st_size = 1024
+        mock_instance.stat.return_value = mock_stat
+        mock_path.return_value = mock_instance
+
         mock_out_doc = MagicMock()
         mock_out_doc.__enter__.return_value = mock_out_doc
         mock_out_doc.__exit__.return_value = None
+        mock_out_doc.__len__ = lambda self: 2  # Simula pagine nel risultato
 
         mock_in_doc1 = MagicMock()
         mock_in_doc1.__enter__.return_value = mock_in_doc1
         mock_in_doc1.__exit__.return_value = None
+        mock_in_doc1.is_closed = False
+        mock_in_doc1.page_count = 2
 
         mock_in_doc2 = MagicMock()
         mock_in_doc2.__enter__.return_value = mock_in_doc2
         mock_in_doc2.__exit__.return_value = None
+        mock_in_doc2.is_closed = False
+        mock_in_doc2.page_count = 2
 
         mock_fitz.open.side_effect = [
             mock_out_doc,  # Primo call per output
