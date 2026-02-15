@@ -10,6 +10,7 @@ jobs:
   test:
     name: Test & Quality Check
     runs-on: windows-latest
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
