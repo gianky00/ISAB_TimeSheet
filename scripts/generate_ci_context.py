@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SyncroJob - CI Context Generator
+SyncroJob - CI Context Generator (Secure Encoding Edition)
 Aggrega l'output di Ruff, Mypy e dei Test in un unico file CI_CONTEXT.md
 nella root del progetto per facilitare l'analisi da parte dell'IA.
 """
@@ -10,6 +10,11 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
+
+# Forza UTF-8 per stdout/stderr se possibile
+if sys.stdout.encoding != 'utf-8':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 OUTPUT_FILE = PROJECT_ROOT / "CI_CONTEXT.md"
@@ -25,7 +30,7 @@ def run_command(cmd, label):
             cwd=PROJECT_ROOT,
             check=False,
             encoding="utf-8",
-            errors="ignore"
+            errors="replace"
         )
         return result.stdout, result.stderr, result.returncode
     except Exception as e:
@@ -40,7 +45,7 @@ def main():
         
         try:
             branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], 
-                                           text=True, cwd=PROJECT_ROOT).strip()
+                                           text=True, cwd=PROJECT_ROOT, encoding="utf-8").strip()
             f.write(f"**Branch:** {branch}\n\n")
         except Exception:
             f.write("**Branch:** Unknown\n\n")
@@ -75,16 +80,15 @@ def main():
         
         # Eseguiamo il runner robusto
         test_cmd = [sys.executable, "tests/run_robust_tests.py"]
-        # Passiamo eventuali argomenti extra (eccetto il nome dello script stesso)
         if len(sys.argv) > 1:
             test_cmd.extend(sys.argv[1:])
             
-        print("Running Robust Tests...")
+        print("Running Robust Tests (this may take a while)...")
         subprocess.run(test_cmd, cwd=PROJECT_ROOT, check=False)
         
         if TEMP_REPORT.exists():
-            test_content = TEMP_REPORT.read_text(encoding="utf-8")
-            # Rimuoviamo il titolo duplicato se presente nel report dei test
+            test_content = TEMP_REPORT.read_text(encoding="utf-8", errors="replace")
+            # Pulizia titoli
             clean_content = test_content.replace("# Test Execution Report", "").replace("# 📊 Test Execution Report", "")
             f.write(clean_content)
             try:
@@ -94,7 +98,7 @@ def main():
         else:
             f.write("Error: Test report not generated.\n")
 
-    print(f"\n✅ CI_CONTEXT.md generato con successo nella root del progetto.")
+    print("\nCI_CONTEXT.md generated successfully in the project root.")
 
 if __name__ == "__main__":
     main()
