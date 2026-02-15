@@ -29,6 +29,8 @@ class LyraPanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.model_worker: ModelListWorker | None = None
+        self.worker: LyraWorker | None = None
         self.last_table_data = None
         self.attached_file = None
         self.attached_images = []
@@ -122,7 +124,7 @@ class LyraPanel(QWidget):
         return w
 
     def _fetch_models(self):
-        if hasattr(self, "model_worker") and self.model_worker and self.model_worker.isRunning():
+        if self.model_worker and self.model_worker.isRunning():
             return
 
         provider = config_manager.get_config_value("ai_provider", "gemini")
@@ -174,7 +176,7 @@ class LyraPanel(QWidget):
         self.attachment_frame.setVisible(False)
 
     def ask_lyra(self, question: str):
-        if hasattr(self, "worker") and self.worker and self.worker.isRunning():
+        if self.worker and self.worker.isRunning():
             return
 
         self.chat_area.append_message("Tu", question)

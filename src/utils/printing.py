@@ -8,7 +8,12 @@ from typing import Any
 import fitz
 import win32con
 import win32print
-import win32ui
+
+try:
+    import win32ui
+except ImportError:
+    win32ui = None  # type: ignore
+
 from PIL import Image, ImageWin
 
 logger = logging.getLogger(__name__)
@@ -83,7 +88,8 @@ def print_pdf(file_path: str, printer_name: str) -> bool:
                 logger.debug(f"Invio pagina {page_num + 1} di {total_pages}...")
 
                 # 1. Crea un NUOVO contesto di stampa per ogni pagina
-                hdc: Any = win32ui.CreateDC()
+                from typing import cast
+                hdc = cast(Any, win32ui).CreateDC()
                 hdc.CreatePrinterDC(target_printer)
 
                 # 2. Avvia un NUOVO documento (Job)

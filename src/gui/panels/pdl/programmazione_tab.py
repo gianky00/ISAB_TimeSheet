@@ -420,7 +420,9 @@ class ProgrammazioneTab(QWidget):
 
         for table in self.tables:
             table.setHorizontalHeaderLabels(headers)
-            table.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+            h_header = table.horizontalHeader()
+            if h_header is not None:
+                h_header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
             for i in range(5, 12):
                 item = table.horizontalHeaderItem(i)
                 if not item:
@@ -600,7 +602,7 @@ class ProgrammazioneTab(QWidget):
         # Pulisci tabelle esistenti
         while self.tables_layout.count() > 1:
             item = self.tables_layout.takeAt(0)
-            if widget := item.widget():
+            if item is not None and (widget := item.widget()):
                 widget.deleteLater()
         self.tables.clear()
 
@@ -643,7 +645,7 @@ class ProgrammazioneTab(QWidget):
         # Pulisci layout esistente
         while self.tables_layout.count() > 1:
             item = self.tables_layout.takeAt(0)
-            if widget := item.widget():
+            if item is not None and (widget := item.widget()):
                 widget.deleteLater()
 
         self.tables.clear()
@@ -703,21 +705,24 @@ class ProgrammazioneTab(QWidget):
                 QTableWidget::item { padding: 0px; margin: 0px; }
             """
             )
-            table.verticalHeader().setVisible(False)
-            table.verticalHeader().setDefaultSectionSize(42)
+            v_header = table.verticalHeader()
+            if v_header is not None:
+                v_header.setVisible(False)
+                v_header.setDefaultSectionSize(42)
 
             h_header = table.horizontalHeader()
-            h_header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-            h_header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+            if h_header is not None:
+                h_header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+                h_header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
 
-            h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-            h_header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-            h_header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-            h_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-            h_header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
-            for i in range(5, 12):
-                h_header.setSectionResizeMode(i, QHeaderView.ResizeMode.Fixed)
-                table.setColumnWidth(i, 85)
+                h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+                h_header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+                h_header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+                h_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+                h_header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
+                for i in range(5, 12):
+                    h_header.setSectionResizeMode(i, QHeaderView.ResizeMode.Fixed)
+                    table.setColumnWidth(i, 85)
 
             # Popolamento Righe
             for row_idx, res in enumerate(group_results):
@@ -787,7 +792,9 @@ class ProgrammazioneTab(QWidget):
 
         for table in self.tables:
             table.setHorizontalHeaderLabels(headers)
-            table.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+            h_header = table.horizontalHeader()
+            if h_header is not None:
+                h_header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
             for i in range(5, 12):
                 item = table.horizontalHeaderItem(i)
                 if not item:
@@ -812,7 +819,7 @@ class ProgrammazioneTab(QWidget):
         if not self.last_results:
             return
         try:
-            import win32com.client  # type: ignore
+            import win32com.client
 
             outlook = win32com.client.Dispatch("Outlook.Application")
             mail = outlook.CreateItem(0)

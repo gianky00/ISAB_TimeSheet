@@ -15,8 +15,9 @@ try:
 
     xlCalculationManual = -4135
     xlCalculationAutomatic = -4105
+    _win32com_found = True
 except ImportError:
-    win32com: Any = None
+    _win32com_found = False
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ class ProgrammingSyncManager:
 
     def _get_excel_workbook(self) -> bool:
         """Tenta di agganciarsi a Excel o ne apre una nuova istanza."""
-        if not win32com:
+        if not _win32com_found:
             return False
 
         file_name = os.path.basename(self.master_path)
