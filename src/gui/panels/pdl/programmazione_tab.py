@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from PyQt6.QtCore import QRectF, Qt
-from PyQt6.QtGui import QColor, QFont, QPainter
+from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath
 from PyQt6.QtWidgets import (
     QComboBox,
     QGroupBox,
@@ -40,11 +40,15 @@ logger = logging.getLogger(__name__)
 class ProgrammingStatusWidget(QWidget):
     """Widget elegante che mostra una barra di stato verde/arancione per TCL e TGO."""
 
-    def __init__(self, tcl: bool, tgo: bool, parent=None):
+    def __init__(
+        self, tcl: bool, tgo: bool, connect_left: bool = False, connect_right: bool = False, parent=None
+    ):
         super().__init__(parent)
         self.tcl = tcl
         self.tgo = tgo
-        self.setFixedSize(80, 16)  # Dimensione fissa garantita
+        self.connect_left = connect_left
+        self.connect_right = connect_right
+        self.setFixedSize(85, 16)  # Aumentato leggermente per coprire lo spazio cella
         self._setup_tooltip()
 
     def _get_icon_base64(self, icon_path: str) -> str:
@@ -83,32 +87,57 @@ class ProgrammingStatusWidget(QWidget):
         h = float(self.height())
         bar_h = 10.0
         y = (h - bar_h) / 2.0
+        radius = 5.0
+
+        # Percorso per bordi arrotondati selettivi
+        path = QPainterPath()
+
+        # Calcolo angoli: se connette a sinistra/destra, raggio = 0 su quel lato
+        tl = 0.0 if self.connect_left else radius
+        bl = 0.0 if self.connect_left else radius
+        tr = 0.0 if self.connect_right else radius
+        br = 0.0 if self.connect_right else radius
+
+        # Disegno manuale del rettangolo con angoli variabili
+        path.moveTo(w - tr, y)
+        path.arcTo(w - 2 * tr, y, 2 * tr, 2 * tr, 90, -90) if tr > 0 else path.lineTo(w, y)
+        path.lineTo(w, y + bar_h - br)
+        path.arcTo(w - 2 * br, y + bar_h - 2 * br, 2 * br, 2 * br, 0, -90) if br > 0 else path.lineTo(
+            w, y + bar_h
+        )
+        path.lineTo(bl, y + bar_h)
+        path.arcTo(0, y + bar_h - 2 * bl, 2 * bl, 2 * bl, 270, -90) if bl > 0 else path.lineTo(0, y + bar_h)
+        path.lineTo(0, y + tl)
+        path.arcTo(0, y, 2 * tl, 2 * tl, 180, -90) if tl > 0 else path.lineTo(0, y)
+        path.closeSubpath()
 
         # 1. Tracciato di sfondo (Grigio visibile)
-        rect = QRectF(0, y, w, bar_h)
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor("#e9ecef"))
-        painter.drawRoundedRect(rect, 5, 5)
+        painter.drawPath(path)
 
         # 2. Colori
         green_color = QColor("#198754")
         orange_color = QColor("#f39c12")
 
-        # 3. Disegno contenuto
+        # 3. Disegno contenuto (Solo se c'è attività)
         if self.tcl and self.tgo:
-            # Full - VERDE
             painter.setBrush(green_color)
-            painter.drawRoundedRect(rect, 5, 5)
+            painter.drawPath(path)
         elif self.tcl:
-            # Solo TCL - ARANCIONE (Sinistra)
+            # Solo TCL - Arancione (Sinistra) - Non connette mai se non è Full
             tcl_rect = QRectF(0, y, w / 2.0 + 2.0, bar_h)
+            tcl_path = QPainterPath()
+            tcl_path.addRoundedRect(tcl_rect, radius, radius)
             painter.setBrush(orange_color)
-            painter.drawRoundedRect(tcl_rect, 5, 5)
+            painter.drawPath(tcl_path)
         elif self.tgo:
-            # Solo TGO - ARANCIONE (Destra)
+            # Solo TGO - Arancione (Destra) - Non connette mai se non è Full
             tgo_rect = QRectF(w / 2.0 - 2.0, y, w / 2.0 + 2.0, bar_h)
+            tgo_path = QPainterPath()
+            tgo_path.addRoundedRect(tgo_rect, radius, radius)
             painter.setBrush(orange_color)
-            painter.drawRoundedRect(tgo_rect, 5, 5)
+            painter.drawPath(tgo_path)
 
 
 class ProgrammazioneTab(QWidget):
@@ -479,7 +508,10 @@ class ProgrammazioneTab(QWidget):
             table.setColumnCount(12)
             table.setAlternatingRowColors(True)
             table.setRowCount(len(group_results))
-            table.setStyleSheet("QTableWidget { border: none; background-color: white; }")
+            table.setStyleSheet("""
+                QTableWidget { border: none; background-color: white; }
+                QTableWidget::item { padding: 0px; margin: 0px; }
+            """)
             table.verticalHeader().setVisible(False)
             table.verticalHeader().setDefaultSectionSize(42)
 
@@ -504,9 +536,27 @@ class ProgrammazioneTab(QWidget):
                 table.setItem(row_idx, 3, QTableWidgetItem(res["pdl"]))
                 table.setItem(row_idx, 4, QTableWidgetItem(res.get("descrizione", "")))
 
-                for i, prog in enumerate(res["programmazione"]):
-                    # Usiamo il nuovo widget elegante a barra di progresso
-                    status_widget = ProgrammingStatusWidget(prog["tcl"], prog["tgo"])
+                prog_list = res["programmazione"]
+                for i, prog in enumerate(prog_list):
+                    # Logica di connessione: una barra è continua se il giorno corrente
+                    # e quello adiacente sono entrambi "FULL" (TCL e TGO presenti)
+                    is_full = prog["tcl"] and prog["tgo"]
+
+                    conn_left = False
+                    if i > 0 and is_full:
+                        prev = prog_list[i - 1]
+                        if prev["tcl"] and prev["tgo"]:
+                            conn_left = True
+
+                    conn_right = False
+                    if i < len(prog_list) - 1 and is_full:
+                        nxt = prog_list[i + 1]
+                        if nxt["tcl"] and nxt["tgo"]:
+                            conn_right = True
+
+                    status_widget = ProgrammingStatusWidget(
+                        prog["tcl"], prog["tgo"], connect_left=conn_left, connect_right=conn_right
+                    )
 
                     if i == today_idx:
                         # Evidenziazione azzurra semi-trasparente più marcata per la colonna di oggi
