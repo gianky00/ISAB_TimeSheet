@@ -125,13 +125,15 @@ class TestRunner:
         with contextlib.suppress(Exception):
             STATE_FILE.write_text(json.dumps(state, indent=2), encoding="utf-8")
 
-    def discover_tests(self, targets=None):
+    def discover_tests(self, targets=None, mark=None):
         Console.info("🔍 Rilevamento test in corso (pytest --collect-only)...")
 
         if targets is None:
             targets = ["tests"]
 
         cmd = [sys.executable, "-m", "pytest", "--collect-only", "-qq"]
+        if mark:
+            cmd.extend(["-m", mark])
         if targets:
             if isinstance(targets, list):
                 cmd.extend(targets)
@@ -178,7 +180,7 @@ class TestRunner:
 
         return files_map
 
-    def run_process(self, target, isolate=False, timeout=None):
+    def run_process(self, target, isolate=False, timeout=None, mark=None):
         # Aggiungiamo --cov=src --cov-append per accumulare la copertura
         cmd = [
             sys.executable,
@@ -191,6 +193,8 @@ class TestRunner:
             "--cov=src",
             "--cov-append",
         ]
+        if mark:
+            cmd.extend(["-m", mark])
 
         start = time.time()
         try:
@@ -307,6 +311,12 @@ class TestRunner:
             help="Calcola e mostra solo la copertura totale.",
         )
         parser.add_argument(
+            "-m",
+            "--mark",
+            type=str,
+            help="Esegui solo test con questo marker (es. unit).",
+        )
+        parser.add_argument(
             "-x",
             "--exitfirst",
             action="store_true",
@@ -337,7 +347,7 @@ class TestRunner:
             with contextlib.suppress(Exception):
                 subprocess.run([sys.executable, "-m", "coverage", "erase"], cwd=ROOT_DIR, check=False)
 
-            self.files_map = self.discover_tests(targets)
+            self.files_map = self.discover_tests(targets, mark=args.mark)
             self.total_tests = sum(len(ids) for ids in self.files_map.values())
             self.queue_files = sorted(self.files_map.keys())
             Console.info(f"Nuova sessione: {self.total_tests} test in {len(self.files_map)} file.")
@@ -359,7 +369,7 @@ class TestRunner:
 
             # Ricalcola totale se la mappa esiste, altrimenti rifà discovery
             if not self.files_map:
-                self.files_map = self.discover_tests()
+                self.files_map = self.discover_tests(mark=args.mark)
 
             self.total_tests = sum(len(ids) for ids in self.files_map.values())
             Console.warning(f"Ripresa sessione: {len(self.queue_files)} file rimanenti.")
@@ -388,7 +398,7 @@ class TestRunner:
             )
 
             # Tentativo esecuzione veloce (Intero File)
-            res, dur, is_timeout = self.run_process(current_file, timeout=args.timeout)
+            res, dur, is_timeout = self.run_process(current_file, timeout=args.timeout, mark=args.mark)
 
             if not is_timeout and res.returncode == 0:
                 Console.success(f"PASS ({dur:.2f}s)")
@@ -400,20 +410,20 @@ class TestRunner:
                 Console.warning(f"{reason} ({dur:.2f}s) -> Attivazione ISOLATION MODE")
 
                 # Fallback: Esecuzione Isolata
-                self.run_isolated_tests(node_ids, retry_count=args.retry)
+                self.run_isolated_tests(node_ids, retry_count=args.retry, mark=args.mark)
                 self.queue_files.pop(0)
                 self.save_state()
 
         self.finish()
 
-    def run_isolated_tests(self, node_ids, retry_count=0):
+    def run_isolated_tests(self, node_ids, retry_count=0, mark=None):
         """Esegue i test uno alla volta per isolare i fallimenti."""
         for nid in node_ids:
             if self.interrupted:
                 break
 
             print(f"    👉 {nid.split('::')[-1]} ... ", end="", flush=True)
-            success, res = self._execute_test_with_retries(nid, retry_count)
+            success, res = self._execute_test_with_retries(nid, retry_count, mark=mark)
 
             if success:
                 Console.print("PASS", Console.GREEN)
@@ -421,12 +431,12 @@ class TestRunner:
             else:
                 self._handle_isolated_failure(nid, res)
 
-    def _execute_test_with_retries(self, nid, retry_count):
+    def _execute_test_with_retries(self, nid, retry_count, mark=None):
         """Tenta l'esecuzione di un test singolo con logica di retry."""
         success = False
         res = None
         for attempt in range(retry_count + 1):
-            res, _dur, is_timeout = self.run_process(nid, isolate=True, timeout=60)
+            res, _dur, is_timeout = self.run_process(nid, isolate=True, timeout=60, mark=mark)
             if not is_timeout and res.returncode == 0:
                 success = True
                 break
