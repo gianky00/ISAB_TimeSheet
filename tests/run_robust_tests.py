@@ -33,7 +33,8 @@ if sys.platform == "win32":
 
 # --- CONFIGURAZIONE ---
 STATE_FILE = Path(__file__).parent / ".test_session_state.json"
-REPORT_FILE = Path(__file__).parent / "test_report.md"
+# Permette di sovrascrivere il path del report tramite variabile d'ambiente
+REPORT_FILE = Path(os.getenv("TEST_REPORT_PATH", str(Path(__file__).parent / "test_report.md")))
 DEFAULT_TIMEOUT = 60  # Secondi per file prima di considerare timeout
 # ----------------------
 
