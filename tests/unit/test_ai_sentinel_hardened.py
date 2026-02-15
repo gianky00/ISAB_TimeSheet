@@ -131,7 +131,12 @@ class TestAISentinelHardened:
 
         mock_fitz.open.side_effect = [mock_res, mock_doc1, mock_doc2]
 
-        success = DocumentProcessor.merge_pdfs(["p1.pdf", "p2.pdf"], out_pdf)
+        p1 = tmp_path / "p1.pdf"
+        p1.write_text("content1")
+        p2 = tmp_path / "p2.pdf"
+        p2.write_text("content2")
+
+        success = DocumentProcessor.merge_pdfs([str(p1), str(p2)], out_pdf)
 
         assert success is True
         assert mock_res.insert_pdf.called

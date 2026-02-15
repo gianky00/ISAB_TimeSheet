@@ -43,26 +43,20 @@ class TestSafeWorkPDLBotLogic(unittest.TestCase):
         # Non standard -> invariato (strip/upper)
         self.assertEqual(self.bot._sanitizza_pdl_number(" abc 123 "), "ABC123")
 
-    @patch("src.bots.safework.pdl.bot.WebDriverWait")
-    def test_login_flow(self, mock_wait_cls):
-        """Verifica i passaggi principali del login."""
-        # Mock per l'istanza creata con WebDriverWait(self.driver, 10)
-        mock_wait_local = mock_wait_cls.return_value
-        mock_el = MagicMock()
-        mock_wait_local.until.return_value = mock_el
+    @patch("src.bots.safework.base.SafeWorkLoginPage")
+    def test_login_flow(self, mock_login_class):
+        """Verifica il flusso di login delegato alla page object."""
+        mock_page = mock_login_class.return_value
+        mock_page.login.return_value = True
 
-        # Mock per self.bot.wait (già MagicMock da setUp)
-        self.bot.wait.until.return_value = mock_el
-
-        # Mock metodo interno
-        self.bot._attendi_caricamento_sistema = MagicMock()
+        # Inseriamo il mock nell'istanza del bot
+        self.bot.safework_login_page = mock_page
 
         success = self.bot._login()
 
         self.assertTrue(success)
         self.assertTrue(self.bot.driver.get.called)
-        # Dovrebbe aver inserito username e password (2 chiamate a send_keys)
-        self.assertGreaterEqual(mock_el.send_keys.call_count, 2)
+        mock_page.login.assert_called_with(self.bot.username, self.bot.password)
 
     def test_safe_remove_resilience(self):
         """Verifica che _safe_remove non esploda se il file non esiste o è bloccato."""
@@ -77,13 +71,13 @@ class TestSafeWorkPDLBotLogic(unittest.TestCase):
             self.bot._safe_remove("locked.pdf")  # Deve gestire l'errore internamente
 
     @patch("src.utils.document_processor.DocumentProcessor.merge_pdfs")
-    def test_unisci_e_stampa_pdl_logic(self, mock_merge):
+    def test_unisci_e_stampa_logic(self, mock_merge):
         """Verifica la logica di unione PDF e tracking file scaricati."""
         mock_merge.return_value = True
         item = {"print_enabled": False}
         all_paths = []
 
-        success = self.bot._unisci_e_stampa_pdl("123456/S", "p1.pdf", "p2.pdf", item, all_paths)
+        success = self.bot._unisci_e_stampa("123456/S", "p1.pdf", "p2.pdf", item, all_paths)
 
         self.assertTrue(success)
         self.assertEqual(len(self.bot.downloaded_files), 1)

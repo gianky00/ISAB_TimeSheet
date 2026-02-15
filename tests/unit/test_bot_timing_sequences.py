@@ -114,15 +114,18 @@ class TestBotTimingSequences:
 
     def test_safework_pdl_search_timing(self, mock_safework_bot):
         """Verifica la pausa critica dopo la ricerca di un PDL."""
-        with patch("time.sleep") as mock_sleep:
+        with (
+            patch("time.sleep"),
+            patch.object(SafeWorkPDLBot, "_attendi_scomparsa_overlay") as mock_wait_overlay,
+        ):
             # Setup driver/wait mock per arrivare allo sleep
             mock_safework_bot.wait.until.return_value = MagicMock()
 
-            # Eseguiamo solo il metodo di ricerca che contiene lo sleep di 0.5s
+            # Eseguiamo solo il metodo di ricerca
             mock_safework_bot._esegui_ricerca_pdl("123456/S")
 
-            calls = [c.args[0] for c in mock_sleep.call_args_list]
-            assert 0.5 in calls
+            # Verifichiamo che venga chiamato il metodo corretto di attesa overlay invece dello sleep fisso
+            assert mock_wait_overlay.called
 
     def test_timbrature_navigation_timing(self, mock_timbrature_bot):
         """Verifica le attese durante la navigazione nel bot Timbrature."""

@@ -268,3 +268,39 @@ class TestScaricaTSBotRobust(unittest.TestCase):
 
         self.assertFalse(success)  # Should be False because not all rows succeeded
         self.assertEqual(bot._search_oda.call_count, 2)  # Tried both
+
+    def test_run_vba_processing(self):
+        """Test VBA processing trigger."""
+        bot = ScaricaTSBot(username="u", password="p")
+        file_list = ["test1.xlsx", "test2.xlsx"]
+        dest_dir = Path("/tmp")
+
+        self.mock_processor.process_and_move.return_value = (True, "Processed")
+
+        bot._run_vba_processing(file_list, dest_dir)
+
+        self.assertEqual(self.mock_processor.process_and_move.call_count, 2)
+
+    @patch("src.bots.portale_fornitori.scarico_ts.bot.shutil")
+    def test_move_to_destination_retry(self, mock_shutil):
+        """Test file move retry logic on failure."""
+        bot = ScaricaTSBot(username="u", password="p")
+        src = Path("src.xlsx")
+        dest = Path("dest.xlsx")
+
+        # Fail twice, succeed third time
+        mock_shutil.move.side_effect = [Exception("Locked"), Exception("Locked"), True]
+
+        result = bot._move_to_destination(src, dest)
+
+        self.assertIsNotNone(result)
+        self.assertEqual(mock_shutil.move.call_count, 3)
+
+    def test_prepare_run_environment_list(self):
+        """Test environment preparation with list data."""
+        bot = ScaricaTSBot(username="u", password="p")
+        data = [{"numero_oda": "123"}]
+
+        rows, _ = bot._prepare_run_environment(data)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["numero_oda"], "123")

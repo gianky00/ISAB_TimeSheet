@@ -56,7 +56,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "reparti": ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"],
     "cantieri": [],
     "employee_mappings": {},
+    "ai_provider": "gemini",
     "ai_model": "gemini-1.5-pro",
+    "ollama_url": "http://localhost:11434",
     "quick_actions": ["nav_scarico_ts", "nav_lyra", "cmd_sync", "cmd_open_folder"],
     "statistics": {},
 }

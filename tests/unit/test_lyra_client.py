@@ -14,10 +14,6 @@ class TestLyraClient:
         ):
             return LyraClient(api_key="test_api_key")
 
-    def test_init_requires_api_key(self):
-        with pytest.raises(ValueError, match="API Key"):
-            LyraClient(api_key="")
-
     def test_init_model_from_config(self, client):
         assert client.model == "gemini-1.5-flash"
 
