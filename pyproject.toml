@@ -78,6 +78,7 @@ refurb = "^2.2.0"
 mutatest = "^3.1.0"
 eradicate = "^3.0.1"
 yesqa = "^1.5.0"
+pyfakefs = "^6.1.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

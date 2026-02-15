@@ -106,6 +106,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
                 if self.progress_callback:
                     self.progress_callback(index, True)
+            except InterruptedError:
+                raise
             except Exception as e:
                 self.log(f"❌ Errore critico PDL {pdl_raw}: {e}")
 

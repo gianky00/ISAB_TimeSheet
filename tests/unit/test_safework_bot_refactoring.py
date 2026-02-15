@@ -87,8 +87,9 @@ def test_run_success_full_workflow(mock_bot, mocker, tmp_path):
     p2 = tmp_path / "downloads" / "p2.pdf"
     p2.write_bytes(b"p2")
 
-    # Mock download return paths
-    mock_bot._attendi_e_ritorna_nuovo_pdf = MagicMock(side_effect=[str(p1), str(p2)])
+    # Mock download return paths (metodi corretti del bot)
+    mocker.patch.object(mock_bot, "_scarica_parte_prima", return_value=str(p1))
+    mocker.patch.object(mock_bot, "_scarica_parte_seconda", return_value=str(p2))
 
     mock_doc = MagicMock()
     mock_doc.page_count = 1
@@ -105,10 +106,12 @@ def test_run_success_full_workflow(mock_bot, mocker, tmp_path):
 def test_run_pdl_not_found(mock_bot, mocker):
     """Test caso PDL non trovato (ricerca estesa fallita)."""
     data = [{"pdl_number": "999999"}]
-    mocker.patch.object(mock_bot, "_gestisci_ricerca_estesa", return_value=True)
+    # Se la ricerca fallisce, _esegui_ricerca_pdl ritorna False
+    mocker.patch.object(mock_bot, "_esegui_ricerca_pdl", return_value=False)
+
     success = mock_bot.run(data)
-    assert success is True
-    assert "999999/C" in mock_bot.missing_pdls
+    # Se anche solo un PDL fallisce, run() ritorna False (success_count != total)
+    assert success is False
 
 
 def test_run_download_timeout_p1(mock_bot, mocker):
@@ -116,7 +119,7 @@ def test_run_download_timeout_p1(mock_bot, mocker):
     data = [{"pdl_number": "123456"}]
     mocker.patch.object(mock_bot, "_gestisci_ricerca_estesa", return_value=False)
     mocker.patch.object(mock_bot, "_gestisci_alert_ricerca", return_value=False)
-    mock_bot._attendi_e_ritorna_nuovo_pdf = MagicMock(return_value=None)
+    mocker.patch.object(mock_bot, "_scarica_parte_prima", return_value=None)
 
     success = mock_bot.run(data)
     assert success is False
@@ -134,7 +137,8 @@ def test_run_alert_handled(mock_bot, mocker, tmp_path):
     p1.write_bytes(b"p1")
     p2 = tmp_path / "downloads" / "p2.pdf"
     p2.write_bytes(b"p2")
-    mock_bot._attendi_e_ritorna_nuovo_pdf = MagicMock(side_effect=[str(p1), str(p2)])
+    mocker.patch.object(mock_bot, "_scarica_parte_prima", return_value=str(p1))
+    mocker.patch.object(mock_bot, "_scarica_parte_seconda", return_value=str(p2))
 
     mocker.patch("src.bots.safework.pdl.bot.fitz.open")
     mocker.patch("src.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True)
@@ -152,7 +156,8 @@ def test_run_p2_expand_error(mock_bot, mocker, tmp_path):
 
     p1 = tmp_path / "downloads" / "p1.pdf"
     p1.write_bytes(b"p1")
-    mock_bot._attendi_e_ritorna_nuovo_pdf = MagicMock(side_effect=[str(p1), None])
+    mocker.patch.object(mock_bot, "_scarica_parte_prima", return_value=str(p1))
+    mocker.patch.object(mock_bot, "_scarica_parte_seconda", return_value=None)
 
     success = mock_bot.run(data)
     assert success is False
@@ -166,7 +171,8 @@ def test_run_merge_session_failure(mock_bot, mocker, tmp_path):
     p1.write_bytes(b"p1")
     p2 = tmp_path / "downloads" / "p2.pdf"
     p2.write_bytes(b"p2")
-    mock_bot._attendi_e_ritorna_nuovo_pdf = MagicMock(side_effect=[str(p1), str(p2)])
+    mocker.patch.object(mock_bot, "_scarica_parte_prima", return_value=str(p1))
+    mocker.patch.object(mock_bot, "_scarica_parte_seconda", return_value=str(p2))
 
     m_merge = mocker.patch("src.utils.document_processor.DocumentProcessor.merge_pdfs")
     m_merge.side_effect = [True, False]  # Success individual, Fail session
