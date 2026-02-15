@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
     QScrollArea,
+    QSizePolicy,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -41,14 +42,23 @@ class ProgrammingStatusWidget(QWidget):
     """Widget elegante che mostra una barra di stato verde/arancione per TCL e TGO."""
 
     def __init__(
-        self, tcl: bool, tgo: bool, connect_left: bool = False, connect_right: bool = False, parent=None
+        self,
+        tcl: bool,
+        tgo: bool,
+        connect_left: bool = False,
+        connect_right: bool = False,
+        is_today: bool = False,
+        parent=None,
     ):
         super().__init__(parent)
         self.tcl = tcl
         self.tgo = tgo
         self.connect_left = connect_left
         self.connect_right = connect_right
-        self.setFixedSize(85, 16)  # Aumentato leggermente per coprire lo spazio cella
+        self.is_today = is_today
+        # Espansione orizzontale completa per coprire l'intera cella (effetto colonna)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.setMinimumHeight(16)
         self._setup_tooltip()
 
     def _get_icon_base64(self, icon_path: str) -> str:
@@ -85,30 +95,51 @@ class ProgrammingStatusWidget(QWidget):
 
         w = float(self.width())
         h = float(self.height())
-        bar_h = 10.0
+
+        # 0. Evidenziazione Giorno Corrente (Background TOTALE della cella)
+        if self.is_today:
+            # Opacità marcata (~16%) per un effetto colonna pieno e professionale
+            painter.fillRect(self.rect(), QColor(13, 110, 253, 40))
+
+        # Configurazione Barra di Progresso
+        bar_w = 80.0  # Larghezza fissa centrata
+        bar_h = 10.0  # Altezza barra
+        x = (w - bar_w) / 2.0
         y = (h - bar_h) / 2.0
         radius = 5.0
 
-        # Percorso per bordi arrotondati selettivi
+        # Percorso per bordi arrotondati selettivi (Gantt-style)
         path = QPainterPath()
 
-        # Calcolo angoli: se connette a sinistra/destra, raggio = 0 su quel lato
         tl = 0.0 if self.connect_left else radius
         bl = 0.0 if self.connect_left else radius
         tr = 0.0 if self.connect_right else radius
         br = 0.0 if self.connect_right else radius
 
-        # Disegno manuale del rettangolo con angoli variabili
-        path.moveTo(w - tr, y)
-        path.arcTo(w - 2 * tr, y, 2 * tr, 2 * tr, 90, -90) if tr > 0 else path.lineTo(w, y)
-        path.lineTo(w, y + bar_h - br)
-        path.arcTo(w - 2 * br, y + bar_h - 2 * br, 2 * br, 2 * br, 0, -90) if br > 0 else path.lineTo(
-            w, y + bar_h
-        )
-        path.lineTo(bl, y + bar_h)
-        path.arcTo(0, y + bar_h - 2 * bl, 2 * bl, 2 * bl, 270, -90) if bl > 0 else path.lineTo(0, y + bar_h)
-        path.lineTo(0, y + tl)
-        path.arcTo(0, y, 2 * tl, 2 * tl, 180, -90) if tl > 0 else path.lineTo(0, y)
+        # Disegno manuale del rettangolo centrato con angoli variabili
+        path.moveTo(x + bar_w - tr, y)
+        if tr > 0:
+            path.arcTo(x + bar_w - 2 * tr, y, 2 * tr, 2 * tr, 90, -90)
+        else:
+            path.lineTo(x + bar_w, y)
+
+        path.lineTo(x + bar_w, y + bar_h - br)
+        if br > 0:
+            path.arcTo(x + bar_w - 2 * br, y + bar_h - 2 * br, 2 * br, 2 * br, 0, -90)
+        else:
+            path.lineTo(x + bar_w, y + bar_h)
+
+        path.lineTo(x + bl, y + bar_h)
+        if bl > 0:
+            path.arcTo(x, y + bar_h - 2 * bl, 2 * bl, 2 * bl, 270, -90)
+        else:
+            path.lineTo(x, y + bar_h)
+
+        path.lineTo(x, y + tl)
+        if tl > 0:
+            path.arcTo(x, y, 2 * tl, 2 * tl, 180, -90)
+        else:
+            path.lineTo(x, y)
         path.closeSubpath()
 
         # 1. Tracciato di sfondo (Grigio visibile)
@@ -120,20 +151,20 @@ class ProgrammingStatusWidget(QWidget):
         green_color = QColor("#198754")
         orange_color = QColor("#f39c12")
 
-        # 3. Disegno contenuto (Solo se c'è attività)
+        # 3. Disegno contenuto
         if self.tcl and self.tgo:
             painter.setBrush(green_color)
             painter.drawPath(path)
         elif self.tcl:
-            # Solo TCL - Arancione (Sinistra) - Non connette mai se non è Full
-            tcl_rect = QRectF(0, y, w / 2.0 + 2.0, bar_h)
+            # Solo TCL - Arancione (Sinistra)
+            tcl_rect = QRectF(x, y, bar_w / 2.0 + 2.0, bar_h)
             tcl_path = QPainterPath()
             tcl_path.addRoundedRect(tcl_rect, radius, radius)
             painter.setBrush(orange_color)
             painter.drawPath(tcl_path)
         elif self.tgo:
-            # Solo TGO - Arancione (Destra) - Non connette mai se non è Full
-            tgo_rect = QRectF(w / 2.0 - 2.0, y, w / 2.0 + 2.0, bar_h)
+            # Solo TGO - Arancione (Destra)
+            tgo_rect = QRectF(x + bar_w / 2.0 - 2.0, y, bar_w / 2.0 + 2.0, bar_h)
             tgo_path = QPainterPath()
             tgo_path.addRoundedRect(tgo_rect, radius, radius)
             painter.setBrush(orange_color)
@@ -332,10 +363,10 @@ class ProgrammazioneTab(QWidget):
                     continue
                 is_today = is_current_week and (i - 5 == current_weekday)
                 if is_today:
-                    item.setBackground(QColor("#e7f1ff"))
-                    item.setForeground(QColor("#0d6efd"))
-                    if " ●" not in headers[i]:
-                        item.setText(f"{headers[i]} ●")
+                    # Header più scuro per abbinarsi alla colonna marcata
+                    item.setBackground(QColor("#cfe2ff"))
+                    item.setForeground(QColor("#084298"))
+                    item.setText(headers[i])
                     font = QFont()
                     font.setBold(True)
                     font.setPointSize(11)
@@ -508,10 +539,13 @@ class ProgrammazioneTab(QWidget):
             table.setColumnCount(12)
             table.setAlternatingRowColors(True)
             table.setRowCount(len(group_results))
-            table.setStyleSheet("""
+            # Padding 0 e Margini 0 per permettere al widget di toccare i bordi cella
+            table.setStyleSheet(
+                """
                 QTableWidget { border: none; background-color: white; }
                 QTableWidget::item { padding: 0px; margin: 0px; }
-            """)
+            """
+            )
             table.verticalHeader().setVisible(False)
             table.verticalHeader().setDefaultSectionSize(42)
 
@@ -519,11 +553,11 @@ class ProgrammazioneTab(QWidget):
             h_header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
             h_header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
 
-            h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # Richiedente
-            h_header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)  # Area
-            h_header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Unità
-            h_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # PDL
-            h_header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # Descrizione
+            h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+            h_header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+            h_header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+            h_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+            h_header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
             for i in range(5, 12):
                 h_header.setSectionResizeMode(i, QHeaderView.ResizeMode.Fixed)
                 table.setColumnWidth(i, 85)
@@ -538,8 +572,6 @@ class ProgrammazioneTab(QWidget):
 
                 prog_list = res["programmazione"]
                 for i, prog in enumerate(prog_list):
-                    # Logica di connessione: una barra è continua se il giorno corrente
-                    # e quello adiacente sono entrambi "FULL" (TCL e TGO presenti)
                     is_full = prog["tcl"] and prog["tgo"]
 
                     conn_left = False
@@ -555,18 +587,18 @@ class ProgrammazioneTab(QWidget):
                             conn_right = True
 
                     status_widget = ProgrammingStatusWidget(
-                        prog["tcl"], prog["tgo"], connect_left=conn_left, connect_right=conn_right
+                        prog["tcl"],
+                        prog["tgo"],
+                        connect_left=conn_left,
+                        connect_right=conn_right,
+                        is_today=(i == today_idx),
                     )
-
-                    if i == today_idx:
-                        # Evidenziazione azzurra semi-trasparente più marcata per la colonna di oggi
-                        status_widget.setStyleSheet("background-color: rgba(13, 110, 253, 0.12);")
                     table.setCellWidget(row_idx, 5 + i, status_widget)
 
             self.tables.append(table)
             group_layout.addWidget(table)
 
-            # Imposta altezza dinamica per la tabella per evitare scroll annidati
+            # Imposta altezza dinamica
             header_h = 45
             row_h = 42
             table_height = header_h + (table.rowCount() * row_h) + 15
@@ -607,9 +639,9 @@ class ProgrammazioneTab(QWidget):
                 if not item:
                     continue
                 if is_current_week and (i - 5 == current_weekday):
-                    item.setBackground(QColor("#e7f1ff"))
-                    item.setForeground(QColor("#0d6efd"))
-                    item.setText(f"{headers[i]} ●")
+                    item.setBackground(QColor("#cfe2ff"))
+                    item.setForeground(QColor("#084298"))
+                    item.setText(headers[i])
                     f = QFont()
                     f.setBold(True)
                     f.setPointSize(11)
@@ -683,7 +715,6 @@ class ProgrammazioneTab(QWidget):
                 style = "padding: 12px 10px; border: 1px solid #dee2e6; text-align: center; min-width: 65px;"
                 if i == today_idx:
                     style += " background-color: #e7f1ff; color: #0d6efd; font-weight: bold; border-bottom: 3px solid #0d6efd;"
-                    day += " ●"
                 headers_html += f"<th style='{style}'>{day}</th>"
 
             html = html.format(
@@ -713,7 +744,7 @@ class ProgrammazioneTab(QWidget):
                         bg_color = "#f0f7ff"  # Azzurro oggi
 
                     tcl_style = f"color: {'#198754' if tcl_val else '#dc3545'}; font-weight: {'bold' if tcl_val else 'normal'};"
-                    tgo_style = f"color: {'#198754' if tcl_val else '#dc3545'}; font-weight: {'bold' if tgo_val else 'normal'};"
+                    tgo_style = f"color: {'#198754' if tcl_val else '#dc3545'}; font-weight: {'bold' if tcl_val else 'normal'};"
 
                     html += f"<td align='center' style='padding: 10px; border: 1px solid #dee2e6; background-color: {bg_color}; font-size: 13px;'>"
                     html += f"<span style='{tcl_style}'>TCL</span><br><span style='{tgo_style}'>TGO</span>"
