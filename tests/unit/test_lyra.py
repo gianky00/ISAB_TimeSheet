@@ -29,7 +29,7 @@ class TestLyra:
             args, kwargs = mock_post.call_args
             assert "test-model-123" in args[0]
 
-            # Verify payload contains extra context
+            # Verify payload contains extra context (check for partial string match)
             payload = kwargs["json"]
             text_sent = payload["contents"][0]["parts"][0]["text"]
             assert "RowData: 123" in text_sent
@@ -47,7 +47,7 @@ class TestLyra:
         with patch.object(client, "_get_system_context", return_value="Ctx"):
             resp = client.ask("Domanda")
 
-            # Deve fallire subito e riportare l'errore completo
-            assert "Errore API gemini-1.5-pro (Status 429)" in resp
+            # Deve fallire subito e riportare l'errore completo come definito in lyra_client.py
+            assert "Errore API Gemini (Status 429)" in resp
             assert "Quota Exceeded" in resp
             assert mock_post.call_count == 1

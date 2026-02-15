@@ -1,41 +1,44 @@
 """
 Lyra AI Client
-Gestisce l'interazione con l'intelligenza artificiale (Google Gemini).
+Gestisce l'interazione con l'intelligenza artificiale (Google Gemini o Ollama locale).
 """
 
-import json
 import sqlite3
 from typing import Any
 
 import requests
 
+from src.core import config_manager
 from src.core.audit_manager import AuditManager
 from src.core.config_manager import CONFIG_DIR
 from src.core.contabilita_manager import ContabilitaManager
 
 
 class LyraClient:
-    """Client per interagire con l'API di Google Gemini (Lyra)."""
+    """Client per interagire con l'AI (Gemini o Ollama)."""
 
-    def __init__(self, api_key: str, model_name: str | None = None):
-        if not api_key:
-            raise ValueError("API Key for Gemini is required.")
+    def __init__(
+        self,
+        api_key: str | None = None,
+        model_name: str | None = None,
+        provider: str | None = None,
+        ollama_url: str | None = None,
+    ):
+        config = config_manager.load_config()
+        self.provider = provider or config.get("ai_provider", "gemini")
         self._api_key = api_key
 
-        # Carica modello preferito esclusivamente da config se non specificato
-        from src.core import config_manager
+        # Validazione minima per Gemini
+        if self.provider == "gemini" and not self._api_key:
+            # Non solleviamo errore qui per permettere il listing se la chiave verrà passata dopo
+            pass
 
-        config = config_manager.load_config()
         self.model = model_name or config.get("ai_model", "gemini-1.5-pro")
+        self.ollama_url = ollama_url or config.get("ollama_url", "http://localhost:11434")
 
-        # Nessun fallback: usa solo il modello scelto
-        self.models = [self.model]
-
-        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models"
-        self.url = f"{self.base_url}/{self.model}:generateContent?key={self._api_key}"
-
+        # Prompt di sistema unificato
         self.context_prompt = """
-        Sei Lyra, un motore di estrazione dati ultra-professionale basato su Gemini.
+        Sei Lyra, un motore di estrazione dati ultra-professionale.
         La tua missione è la digitalizzazione integrale dei Rapportini Giornalieri ISAB.
 
         REGOLE MANDATORIE PER ESTRAZIONE (PDF/IMMAGINI):
@@ -51,19 +54,36 @@ class LyraClient:
         """
 
     def list_models(self) -> list[str]:
-        """Recupera la lista di modelli che supportano 'generateContent'."""
+        """Recupera la lista di modelli disponibili dal provider corrente."""
+        if self.provider == "ollama":
+            return self._list_ollama_models()
+        return self._list_gemini_models()
+
+    def _list_gemini_models(self) -> list[str]:
+        """Recupera la lista di modelli Gemini."""
         try:
-            url = f"{self.base_url}?key={self._api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models?key={self._api_key}"
             response = requests.get(url, timeout=10)
             if response.status_code == 200:
                 models = response.json().get("models", [])
-                # Filtra per i modelli che sono effettivamente utilizzabili per la chat/analisi
                 compatible_models = [
                     m.get("name").replace("models/", "")
                     for m in models
                     if "generateContent" in m.get("supportedGenerationMethods", [])
                 ]
                 return compatible_models
+            return []
+        except Exception:
+            return []
+
+    def _list_ollama_models(self) -> list[str]:
+        """Recupera la lista di modelli installati su Ollama."""
+        try:
+            url = f"{self.ollama_url}/api/tags"
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                models_data = response.json().get("models", [])
+                return [m.get("name") for m in models_data]
             return []
         except Exception:
             return []
@@ -146,63 +166,116 @@ class LyraClient:
         extra_context: str = "",
         images: list[Any] | None = None,
     ) -> str:
-        """Invia una domanda a Gemini con il contesto ed eventuali immagini."""
+        """Invia una domanda al provider scelto."""
+        if self.provider == "ollama":
+            return self._ask_ollama(question, extra_context, images)
+        return self._ask_gemini(question, extra_context, images)
+
+    def _ask_gemini(
+        self,
+        question: str,
+        extra_context: str = "",
+        images: list[Any] | None = None,
+    ) -> str:
+        """Invia una domanda a Google Gemini."""
         try:
             system_data = self._get_system_context()
-
-            ctx = ""
-            if extra_context:
-                ctx = f"\n\n[CONTESTO SPECIFICO FORNITO DALL'UTENTE (ANALIZZA QUESTO RECORD)]:\n{extra_context}\n"
-
+            ctx = (
+                f"\n\n[CONTESTO SPECIFICO FORNITO DALL'UTENTE (ANALIZZA QUESTO RECORD)]:\n{extra_context}\n"
+                if extra_context
+                else ""
+            )
             full_prompt = f"{self.context_prompt}\n{system_data}{ctx}\n\nUtente: {question}\nLyra:"
 
-            # Costruzione parti del messaggio
             parts: list[dict[str, Any]] = [{"text": full_prompt}]
-
             if images:
                 parts.extend(
                     {"inline_data": {"mime_type": "image/png", "data": img_b64}} for img_b64 in images
                 )
 
             payload = {"contents": [{"parts": parts}]}
-
             headers = {"Content-Type": "application/json"}
-
-            # Nessun loop di retry: usa solo il modello impostato
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self._api_key}"
 
-            try:
-                response = requests.post(url, json=payload, headers=headers, timeout=60)
-
-                if response.status_code == 200:
-                    result = response.json()
-
-                    # Audit Token Usage
-                    usage = result.get("usageMetadata", {})
-                    if usage:
-                        AuditManager.instance().log_action(
-                            "Consumo Token AI",
-                            category="lyra",
-                            entity=self.model,
-                            params={
-                                "prompt": usage.get("promptTokenCount", 0),
-                                "response": usage.get("candidatesTokenCount", 0),
-                                "total": usage.get("totalTokenCount", 0),
-                            },
-                        )
-
-                    try:
-                        return str(result["candidates"][0]["content"]["parts"][0]["text"])
-                    except (KeyError, IndexError):
-                        return f"Errore elaborazione risposta AI: {json.dumps(result)}"
-                else:
-                    return f"Errore API {self.model} (Status {response.status_code}): {response.text}"
-
-            except Exception as e:
-                return f"Errore connessione AI ({self.model}): {e}"
-
+            response = requests.post(url, json=payload, headers=headers, timeout=60)
+            if response.status_code == 200:
+                result = response.json()
+                usage = result.get("usageMetadata", {})
+                if usage:
+                    AuditManager.instance().log_action(
+                        "Consumo Token AI",
+                        category="lyra",
+                        entity=f"gemini:{self.model}",
+                        params=usage,
+                    )
+                return str(result["candidates"][0]["content"]["parts"][0]["text"])
+            return f"Errore API Gemini (Status {response.status_code}): {response.text}"
         except Exception as e:
-            return f"Si è verificato un errore critico: {e}"
+            return f"Errore connessione Gemini ({self.model}): {e}"
+
+    def _ask_ollama(
+        self,
+        question: str,
+        extra_context: str = "",
+        images: list[Any] | None = None,
+    ) -> str:
+        """Invia una domanda a Ollama locale usando l'endpoint chat."""
+        try:
+            system_data = self._get_system_context()
+            ctx = (
+                f"\n\n[CONTESTO SPECIFICO FORNITO DALL'UTENTE (ANALIZZA QUESTO RECORD)]:\n{extra_context}\n"
+                if extra_context
+                else ""
+            )
+
+            messages = [
+                {"role": "system", "content": self.context_prompt},
+                {"role": "system", "content": f"Dati di sistema attuali:\n{system_data}"},
+            ]
+
+            if ctx:
+                messages.append({"role": "system", "content": ctx})
+
+            user_msg = {"role": "user", "content": question}
+            if images:
+                user_msg["images"] = images
+
+            messages.append(user_msg)
+
+            payload = {
+                "model": self.model,
+                "messages": messages,
+                "stream": False,
+                "options": {"num_ctx": 4096},
+            }
+
+            url = f"{self.ollama_url}/api/chat"
+            response = requests.post(url, json=payload, timeout=120)
+
+            if response.status_code == 200:
+                result = response.json()
+                AuditManager.instance().log_action(
+                    "Interazione AI Locale",
+                    category="lyra",
+                    entity=f"ollama:{self.model}",
+                    params={"prompt_len": len(question)},
+                )
+                return str(result.get("message", {}).get("content", ""))
+
+            # Gestione errori strutturata
+            error_msg = f"Errore Ollama (Status {response.status_code})"
+            try:
+                error_json = response.json()
+                if "error" in error_json:
+                    error_msg += f": {error_json['error']}"
+            except Exception:
+                error_msg += f": {response.text[:200]}"
+            return error_msg
+
+        except requests.exceptions.ConnectionError:
+            return f"Impossibile connettersi a Ollama su {self.ollama_url}. Assicurati che il servizio sia attivo."
+        except Exception as e:
+            return f"Errore connessione Ollama ({self.model}): {e}"
 
     def analyze_media(
         self,
@@ -210,11 +283,17 @@ class LyraClient:
         prompt: str,
         mime_type: str = "image/png",
     ) -> str:
-        """Invia un file multimediale (audio/immagine) a Gemini per analisi."""
+        """Analisi media (principalmente via Gemini, Ollama supporta solo immagini)."""
+        if self.provider == "ollama":
+            import base64
+
+            media_b64 = base64.b64encode(media_bytes).decode("utf-8")
+            return self._ask_ollama(prompt, images=[media_b64])
+
+        # Fallback Gemini
         import base64
 
         media_b64 = base64.b64encode(media_bytes).decode("utf-8")
-
         payload = {
             "contents": [
                 {
@@ -225,28 +304,13 @@ class LyraClient:
                 }
             ]
         }
-
         headers = {"Content-Type": "application/json"}
-
-        # Usa il modello scelto dall'utente
-        model = self.model
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={self._api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self._api_key}"
 
         try:
             response = requests.post(url, json=payload, headers=headers, timeout=30)
             if response.status_code == 200:
-                result = response.json()
-                # Audit usage
-                usage = result.get("usageMetadata", {})
-                if usage:
-                    AuditManager.instance().log_action(
-                        "Consumo Token Media AI",
-                        category="lyra",
-                        entity=model,
-                        params=usage,
-                    )
-
-                return str(result["candidates"][0]["content"]["parts"][0]["text"])
+                return str(response.json()["candidates"][0]["content"]["parts"][0]["text"])
             return f"Errore API Media: {response.status_code}"
         except Exception as e:
             return f"Errore analisi media: {e}"

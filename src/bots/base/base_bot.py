@@ -258,8 +258,17 @@ class BaseBot(ABC):
         return None
 
     def _setup_driver_instance(self, service: Service, options: Options) -> None:
-        """Crea l'istanza di webdriver.Chrome applicando tecniche anti-detection."""
+        """Crea l'istanza di webdriver.Chrome applicando tecniche anti-detection e forzando il download path."""
         self.driver = webdriver.Chrome(service=service, options=options)
+
+        # Forza il percorso di download tramite CDP (più robusto delle prefs)
+        if self.download_path:
+            path_str = str(Path(self.download_path).resolve())
+            self.log(f"Cartella monitorata: {path_str}")
+            self.driver.execute_cdp_cmd(
+                "Page.setDownloadBehavior", {"behavior": "allow", "downloadPath": path_str}
+            )
+
         # Anti-detection
         self.driver.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",

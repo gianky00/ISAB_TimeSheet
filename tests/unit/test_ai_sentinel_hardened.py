@@ -120,18 +120,28 @@ class TestAISentinelHardened:
         mock_res = MagicMock()
         mock_res.__enter__.return_value = mock_res
         mock_res.__exit__.return_value = None
+        mock_res.__len__.return_value = 2
 
         mock_doc1 = MagicMock()
+        mock_doc1.page_count = 1
         mock_doc1.__enter__.return_value = mock_doc1
         mock_doc1.__exit__.return_value = None
+        mock_doc1.is_closed = False
 
         mock_doc2 = MagicMock()
+        mock_doc2.page_count = 1
         mock_doc2.__enter__.return_value = mock_doc2
         mock_doc2.__exit__.return_value = None
+        mock_doc2.is_closed = False
 
         mock_fitz.open.side_effect = [mock_res, mock_doc1, mock_doc2]
 
-        success = DocumentProcessor.merge_pdfs(["p1.pdf", "p2.pdf"], out_pdf)
+        p1 = tmp_path / "p1.pdf"
+        p1.write_text("content1")
+        p2 = tmp_path / "p2.pdf"
+        p2.write_text("content2")
+
+        success = DocumentProcessor.merge_pdfs([str(p1), str(p2)], out_pdf)
 
         assert success is True
         assert mock_res.insert_pdf.called

@@ -122,10 +122,18 @@ class LyraPanel(QWidget):
         return w
 
     def _fetch_models(self):
-        api_key = SecretsManager.get_gemini_api_key()
-        if not api_key:
+        if hasattr(self, "model_worker") and self.model_worker and self.model_worker.isRunning():
             return
-        self.model_worker = ModelListWorker(api_key)
+
+        provider = config_manager.get_config_value("ai_provider", "gemini")
+        api_key = SecretsManager.get_gemini_api_key()
+        ollama_url = config_manager.get_config_value("ollama_url", "http://localhost:11434")
+
+        # Se è gemini e manca la chiave, non possiamo fare nulla
+        if provider == "gemini" and not api_key:
+            return
+
+        self.model_worker = ModelListWorker(api_key, provider=provider, ollama_url=ollama_url)
         self.model_worker.finished.connect(self._populate_models)
         self.model_worker.start()
 
@@ -166,18 +174,46 @@ class LyraPanel(QWidget):
         self.attachment_frame.setVisible(False)
 
     def ask_lyra(self, question: str):
+        if hasattr(self, "worker") and self.worker and self.worker.isRunning():
+            return
+
         self.chat_area.append_message("Tu", question)
+
+        # Feedback visivo immediato
+        self.chat_area.append_message("Lyra", "<i>Lyra sta pensando...</i>")
+
         context = ""
         if self.attached_file and DocumentProcessor.is_pdf_searchable(self.attached_file):
             context = DocumentProcessor.extract_text(self.attached_file)
 
         self.input_bar.set_enabled(False)
+
+        provider = config_manager.get_config_value("ai_provider", "gemini")
         api_key = SecretsManager.get_gemini_api_key()
-        self.worker = LyraWorker(api_key, question, context, self.attached_images)
+        ollama_url = config_manager.get_config_value("ollama_url", "http://localhost:11434")
+        model = config_manager.get_config_value("ai_model", "")
+
+        if provider == "gemini" and not api_key:
+            self.chat_area.append_message(
+                "Lyra", "⚠️ Errore: Chiave API Gemini non configurata nelle impostazioni."
+            )
+            self.input_bar.set_enabled(True)
+            return
+
+        self.worker = LyraWorker(
+            api_key=api_key,
+            question=question,
+            context=context,
+            images=self.attached_images,
+            provider=provider,
+            model_name=model,
+            ollama_url=ollama_url,
+        )
         self.worker.finished.connect(self._on_answer)
         self.worker.start()
 
     def _on_answer(self, text):
+        self.chat_area.remove_last_message()  # Rimuovi "Lyra sta pensando..."
         self.chat_area.append_message("Lyra", text)
         self.input_bar.set_enabled(True)
 

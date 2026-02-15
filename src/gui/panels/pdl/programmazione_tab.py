@@ -255,10 +255,12 @@ class ProgrammazioneTab(QWidget):
         self.req_filter.set_selected(saved_reqs)
         self.req_filter.changed.connect(self._on_requesters_changed)
         # Stile Hover per Importazione
-        self.req_filter.setStyleSheet("""
+        self.req_filter.setStyleSheet(
+            """
             MultiSelectFilter QPushButton { border: 1px solid transparent; background: transparent; color: #198754; }
             MultiSelectFilter QPushButton:hover { border: 1px solid #198754; background: #f8fff9; border-radius: 6px; }
-        """)
+        """
+        )
         import_layout.addWidget(self.req_filter)
 
         controls_layout.addWidget(import_group)
@@ -282,14 +284,35 @@ class ProgrammazioneTab(QWidget):
 
         # Filtro Visualizzazione (Locale)
         self.view_filter = MultiSelectFilter("Mostra", "Filtra Risultati...")
-        self.view_filter.setFixedWidth(220)
+        self.view_filter.setFixedWidth(200)
         self.view_filter.changed.connect(self._apply_view_filter)
         # Stile Hover per Visualizzazione
-        self.view_filter.setStyleSheet("""
+        self.view_filter.setStyleSheet(
+            """
             MultiSelectFilter QPushButton { border: 1px solid transparent; background: transparent; color: #0d6efd; }
             MultiSelectFilter QPushButton:hover { border: 1px solid #0d6efd; background: #f0f7ff; border-radius: 6px; }
-        """)
+        """
+        )
         view_layout.addWidget(self.view_filter)
+
+        # Selettore Giorno (Compattazione)
+        self.day_selector = QComboBox()
+        self.day_selector.addItems(
+            [
+                "Settimana Intera",
+                "Oggi",
+                "Lunedì",
+                "Martedì",
+                "Mercoledì",
+                "Giovedì",
+                "Venerdì",
+                "Sabato",
+                "Domenica",
+            ]
+        )
+        self.day_selector.setFixedWidth(130)
+        self.day_selector.currentTextChanged.connect(self._on_day_filter_changed)
+        view_layout.addWidget(self.day_selector)
 
         # Selettore Raggruppamento
         self.group_selector = QComboBox()
@@ -453,6 +476,78 @@ class ProgrammazioneTab(QWidget):
                 if req_item:
                     is_visible = show_all or req_item.text() in selected_reqs
                     table.setRowHidden(row, not is_visible)
+
+        self._refresh_tables_visibility()
+
+    def _on_day_filter_changed(self, choice: str):
+        """Nasconde le colonne e le righe non programmate per il giorno selezionato."""
+        day_map = {
+            "Lunedì": 0,
+            "Martedì": 1,
+            "Mercoledì": 2,
+            "Giovedì": 3,
+            "Venerdì": 4,
+            "Sabato": 5,
+            "Domenica": 6,
+        }
+
+        target_idx = -1
+        if choice == "Oggi":
+            target_idx = datetime.now().weekday()
+        elif choice in day_map:
+            target_idx = day_map[choice]
+
+        for table in self.tables:
+            # 1. Gestione Colonne
+            for i in range(7):
+                col_idx = 5 + i
+                table.setColumnHidden(col_idx, target_idx != -1 and i != target_idx)
+
+            # 2. Gestione Righe (Solo se un giorno è selezionato)
+            for row in range(table.rowCount()):
+                if target_idx == -1:
+                    # Ripristina visibilità righe (il filtro 'Mostra' verrà riapplicato dopo)
+                    table.setRowHidden(row, False)
+                else:
+                    # Verifica se c'è programmazione in quel giorno
+                    widget = table.cellWidget(row, 5 + target_idx)
+                    is_programmed = False
+                    if isinstance(widget, ProgrammingStatusWidget):
+                        is_programmed = widget.tcl or widget.tgo
+
+                    # Nascondi se non programmato
+                    table.setRowHidden(row, not is_programmed)
+
+        # 3. Riapplica sempre il filtro richiedenti e aggiorna visibilità gruppi
+        if target_idx == -1:
+            self._apply_view_filter()
+        else:
+            self._refresh_tables_visibility()
+
+    def _refresh_tables_visibility(self):
+        """Aggiorna la visibilità dei QGroupBox e l'altezza delle tabelle in base alle righe visibili."""
+        header_h = 45
+        row_h = 42
+
+        for table in self.tables:
+            visible_rows = 0
+            for row in range(table.rowCount()):
+                if not table.isRowHidden(row):
+                    visible_rows += 1
+
+            # Nascondi il GroupBox se non ci sono righe visibili
+            group_box = table.parentWidget()
+            if isinstance(group_box, QGroupBox):
+                group_box.setVisible(visible_rows > 0)
+
+            # Compatta l'altezza della tabella (Header + Righe Visibili + Margine)
+            if visible_rows > 0:
+                new_height = header_h + (visible_rows * row_h) + 15
+                table.setMinimumHeight(new_height)
+                table.setMaximumHeight(new_height)
+            else:
+                table.setMinimumHeight(0)
+                table.setMaximumHeight(0)
 
     def _on_log(self, message: str):
         """Aggiunge un messaggio alla console di log."""
@@ -659,21 +754,15 @@ class ProgrammazioneTab(QWidget):
 
             self.tables.append(table)
             group_layout.addWidget(table)
-
-            # Imposta altezza dinamica
-            header_h = 45
-            row_h = 42
-            table_height = header_h + (table.rowCount() * row_h) + 15
-            table.setMinimumHeight(table_height)
-            table.setMaximumHeight(table_height)
-
             self.tables_layout.insertWidget(self.tables_layout.count() - 1, group_box)
 
         # Applica header dates
         self._update_ui_dates_internal()
 
-        # Riapplica il filtro visualizzazione corrente
+        # Riapplica i filtri visualizzazione correnti e compatta
         self._apply_view_filter()
+        self._on_day_filter_changed(self.day_selector.currentText())
+        self._refresh_tables_visibility()
 
     def _update_ui_dates_internal(self):
         """Versione interna di update_ui_dates che non ricarica i dati per evitare loop."""

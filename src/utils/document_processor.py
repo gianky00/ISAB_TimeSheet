@@ -65,19 +65,47 @@ class DocumentProcessor:
 
     @staticmethod
     def merge_pdfs(file_paths: list[str], output_path: str) -> bool:
-        """Unisce più file PDF in uno solo usando PyMuPDF (fitz)."""
+        """Unisce più file PDF in uno solo in modo robusto."""
         try:
             if not fitz:
                 logger.error("Errore: PyMuPDF (fitz) non è installato.")
                 return False
 
-            with fitz.open() as result:
-                for pdf_path in file_paths:
-                    with fitz.open(pdf_path) as pdf_doc:
-                        result.insert_pdf(pdf_doc)
-                result.save(output_path)
+            valid_paths = []
+            for p in file_paths:
+                path = Path(p)
+                if not path.exists():
+                    logger.warning("File non trovato per il merge: %s", p)
+                    continue
+                if path.stat().st_size == 0:
+                    logger.warning("File vuoto ignorato nel merge: %s", p)
+                    continue
+                valid_paths.append(p)
 
-            return True
+            if not valid_paths:
+                logger.error("Nessun file valido fornito per l'unione.")
+                return False
+
+            with fitz.open() as result:
+                for pdf_path in valid_paths:
+                    try:
+                        with fitz.open(pdf_path) as pdf_doc:
+                            # Verifica minima che sia un PDF valido apribile
+                            if pdf_doc.is_closed or pdf_doc.page_count == 0:
+                                logger.warning("File PDF non valido o senza pagine: %s", pdf_path)
+                                continue
+                            result.insert_pdf(pdf_doc)
+                    except Exception as e:
+                        logger.error("Impossibile inserire il PDF %s nel merge: %s", pdf_path, e)
+                        continue
+
+                if len(result) > 0:
+                    result.save(output_path)
+                    return True
+
+                logger.error("Risultato del merge vuoto per %s", output_path)
+                return False
+
         except Exception:
-            logger.error("Errore durante l'unione dei PDF con fitz", exc_info=True)
+            logger.error("Errore critico durante l'unione dei PDF in %s", output_path, exc_info=True)
             return False

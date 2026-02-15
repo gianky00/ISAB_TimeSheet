@@ -47,6 +47,16 @@ class ChatArea(QScrollArea):
         if "<table>" in markdown.markdown(text, extensions=["tables"]):
             self.table_detected.emit(text)
 
+    def remove_last_message(self) -> None:
+        """Rimuove l'ultima bolla inserita (prima dello stretch)."""
+        if self.chat_layout.count() > 1:
+            # L'ultimo item (count-1) è lo stretch, quindi prendiamo count-2
+            item = self.chat_layout.takeAt(self.chat_layout.count() - 2)
+            if item is not None:
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+
     def clear(self) -> None:
         """Rimuove tutti i messaggi dalla chat."""
         while self.chat_layout.count() > 1:

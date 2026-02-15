@@ -50,20 +50,28 @@ class TestGUIHeadlessHardened:
 
     def test_settings_account_addition_flow(self, settings_panel, mocker):
         """Verifica il flusso di aggiunta account tramite dialog."""
-        # Mock Dialog
+        # Mock Dialog - Returns (user, pass, type)
         mock_dlg = MagicMock()
         mock_dlg.exec.return_value = True
-        mock_dlg.get_data.return_value = ("new_user", "new_pass")
+        mock_dlg.get_data.return_value = ("new_user", "new_pass", "default")
         mocker.patch(
             "src.gui.panels.settings.pages.lists_page.AccountDialog",
             return_value=mock_dlg,
         )
 
-        initial_count = settings_panel.config_tab.lists_page.account_list.count()
-        settings_panel.config_tab.lists_page._add_account()
+        lists_page = settings_panel.config_tab.lists_page
+        initial_count = lists_page.account_list.count()
+        lists_page._add_account()
 
-        assert settings_panel.config_tab.lists_page.account_list.count() == initial_count + 1
-        assert "new_user" in settings_panel.config_tab.lists_page.account_list.item(0).text()
+        assert lists_page.account_list.count() == initial_count + 1
+
+        # Cerca l'utente in tutta la lista per robustezza
+        found = False
+        for i in range(lists_page.account_list.count()):
+            if "new_user" in lists_page.account_list.item(i).text():
+                found = True
+                break
+        assert found
 
     def test_settings_tab_change_refresh(self, settings_panel, mocker):
         """Verifica che il cambio tab aggiorni le statistiche."""

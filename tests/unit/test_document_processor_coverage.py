@@ -75,15 +75,27 @@ class TestDocumentProcessorCoverage:
 
         assert DocumentProcessor.is_pdf_searchable(Path("test.pdf")) is False
 
-    def test_merge_pdfs_logic(self, mock_fitz):
+    def test_merge_pdfs_logic(self, mock_fitz, mocker):
         """Verifica la sequenza di unione dei file."""
+        # Mock Path.exists() e Path.stat() per simulare file esistenti
+        mock_path = mocker.patch("src.utils.document_processor.Path", wraps=Path)
+        mock_instance = MagicMock()
+        mock_instance.exists.return_value = True
+        mock_stat = MagicMock()
+        mock_stat.st_size = 1024
+        mock_instance.stat.return_value = mock_stat
+        mock_path.return_value = mock_instance
+
         mock_result_doc = MagicMock()
         mock_result_doc.__enter__.return_value = mock_result_doc
         mock_result_doc.__exit__.return_value = None
+        mock_result_doc.__len__ = lambda self: 2
 
         mock_source_doc = MagicMock()
         mock_source_doc.__enter__.return_value = mock_source_doc
         mock_source_doc.__exit__.return_value = None
+        mock_source_doc.is_closed = False
+        mock_source_doc.page_count = 2
 
         # fitz.open() senza argomenti crea il doc di destinazione
         # fitz.open(path) apre il sorgente
