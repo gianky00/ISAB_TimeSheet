@@ -56,12 +56,13 @@ jobs:
     # 2. We explicitly use 'headless' mode for any Selenium logic.
     # 3. We use pytest-qt's off-screen rendering capabilities where possible.
 
-    - name: Run Tests (Unit)
+    - name: Run Tests (Robust)
       env:
         CI: "true"
         QT_QPA_PLATFORM: "offscreen" # Crucial for Qt on CI/Headless
+        PYTEST_ADDOPTS: "-m 'not slow and not integration'"
       run: |
-        poetry run pytest -m "not slow and not integration" --cov=src --cov-report=xml
+        poetry run python tests/run_robust_tests.py
 
     # Optional: Upload coverage
     - name: Upload coverage to Codecov

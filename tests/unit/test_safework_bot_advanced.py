@@ -21,11 +21,10 @@ class TestSafeWorkPDLBotAdvanced:
         mocker.patch("src.bots.safework.pdl.bot.Path.exists", return_value=True)
         return bot
 
-    def test_gestisci_ricerca_estesa_true(self, bot):
+    def test_gestisci_ricerca_estesa_true(self, bot, mocker):
         """Testa quando il PdL non esiste e viene chiesta la ricerca estesa."""
-        # 1. Trova il messaggio di "estendere ricerca"
-        # 2. Clicca SI
-        # 3. Verifica numPermessiTrovati == "0"
+        # Mock attesa overlay per evitare timeout su mock driver
+        mocker.patch.object(bot, "_attendi_scomparsa_overlay")
 
         mock_msg = MagicMock()
         mock_msg.is_displayed.return_value = True

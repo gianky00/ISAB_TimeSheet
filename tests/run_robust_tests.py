@@ -507,6 +507,9 @@ class TestRunner:
         with contextlib.suppress(Exception):
             subprocess.run([sys.executable, "-m", "coverage", "report", "-m"], cwd=ROOT_DIR, check=False)
             subprocess.run(
+                [sys.executable, "-m", "coverage", "xml"], cwd=ROOT_DIR, check=False
+            )  # Genera XML per CI
+            subprocess.run(
                 [sys.executable, "-m", "coverage", "html"], cwd=ROOT_DIR, check=False
             )  # Genera anche HTML
             Console.info("Report HTML generato in htmlcov/index.html")
