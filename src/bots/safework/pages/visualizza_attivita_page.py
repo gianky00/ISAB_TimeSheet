@@ -3,6 +3,8 @@ SyncroJob - SafeWork Visualizza Attività Page
 Gestione della pagina Visualizza Attività per la programmazione.
 """
 
+import contextlib
+import time
 from collections.abc import Callable
 
 from selenium import webdriver
@@ -25,11 +27,9 @@ class VisualizzaAttivitaPage:
 
     def pulisci_pdl(self):
         """Pulisce il campo PDL/Permesso se necessario."""
-        try:
+        with contextlib.suppress(Exception):
             fld = self.wait.until(EC.visibility_of_element_located(SafeWorkLocators.NUM_PERMESSO_FIELD))
             fld.clear()
-        except Exception:
-            pass
 
     def imposta_date(self, data_dal: str, data_al: str):
         """Imposta il range date."""
@@ -43,13 +43,23 @@ class VisualizzaAttivitaPage:
         """Seleziona la ditta dal dropdown custom."""
         self._seleziona_da_dropdown(SafeWorkLocators.DITTA_BUTTON, nome_ditta)
 
-    def seleziona_richiedente(self, nome_richiedente: str) -> bool:
-        """Seleziona il richiedente."""
-        return self._seleziona_da_dropdown(SafeWorkLocators.RICHIEDENTE_BUTTON, nome_richiedente)
+    def seleziona_richiedente(self, items: str | list[str]) -> bool:
+        """Seleziona uno o più richiedenti nel dropdown."""
+        return self._seleziona_da_dropdown(SafeWorkLocators.RICHIEDENTE_BUTTON, items)
 
     def esegui_ricerca(self):
         """Clicca 'Avvia Ricerca'."""
         self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.SEARCH_START_BUTTON)).click()
+
+    def esporta_excel(self) -> bool:
+        """Clicca il pulsante di esportazione Excel."""
+        try:
+            btn = self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.EXPORT_BUTTON))
+            btn.click()
+            return True
+        except Exception as e:
+            self.log(f"❌ Errore clic export: {e}")
+            return False
 
     def get_rows(self):
         """Restituisce le righe della tabella risultati."""
@@ -58,30 +68,37 @@ class VisualizzaAttivitaPage:
         except Exception:
             return []
 
-    def _seleziona_da_dropdown(self, button_locator, search_text: str) -> bool:
-        """Helper per i dropdown ms-choice di SafeWork."""
+    def _seleziona_da_dropdown(self, button_locator, items: str | list[str]) -> bool:
+        """Helper per i dropdown ms-choice di SafeWork con supporto selezione multipla."""
+        if isinstance(items, str):
+            items = [items]
+
         try:
             # 1. Apri Dropdown
             self.wait.until(EC.element_to_be_clickable(button_locator)).click()
-            
+
             # 2. Attendi apertura
             dropdown = self.wait.until(EC.visibility_of_element_located(SafeWorkLocators.DROPDOWN_OPEN))
-            
-            # 3. Cerca
             inp = dropdown.find_element(*SafeWorkLocators.SEARCH_INPUT_IN_DROPDOWN)
-            inp.clear()
-            inp.send_keys(search_text)
-            
-            # 4. Seleziona Opzione (Select All o specifica)
-            # Qui semplifichiamo selezionando la prima opzione visibile che non sia "Select all" se specifica
-            # Oppure premiamo invio. SafeWork spesso filtra e basta premere invio o cliccare l'opzione.
-            # Assumiamo click su checkbox visibile
-            opt = dropdown.find_element(By.XPATH, f".//span[contains(text(), '{search_text}')]")
-            opt.click()
-            
-            # 5. Chiudi (spesso cliccando fuori o sul bottone)
+
+            for item in items:
+                # 3. Cerca e seleziona ogni elemento
+                inp.clear()
+                inp.send_keys(item)
+                time.sleep(0.5)  # Attesa filtro dinamico
+
+                try:
+                    opt = dropdown.find_element(
+                        By.XPATH,
+                        f".//li[not(contains(@class, 'ms-no-results'))]//span[contains(text(), '{item}')]",
+                    )
+                    opt.click()
+                except Exception:
+                    self.log(f"⚠️ Elemento '{item}' non trovato nel dropdown.")
+
+            # 4. Chiudi cliccando fuori
             self.driver.find_element(By.TAG_NAME, "body").click()
             return True
         except Exception as e:
-            self.log(f"❌ Errore selezione '{search_text}': {e}")
+            self.log(f"❌ Errore selezione dropdown: {e}")
             return False

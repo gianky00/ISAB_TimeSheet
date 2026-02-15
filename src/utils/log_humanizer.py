@@ -14,7 +14,7 @@ def friendly_time_delta(dt: datetime) -> str:
     diff = now - dt
 
     if diff.days > 0:
-        return str(dt.strftime("%d/%m"))
+        return dt.strftime("%d/%m")
 
     seconds = diff.total_seconds()
     if seconds < 60:

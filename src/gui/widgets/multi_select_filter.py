@@ -116,7 +116,7 @@ class MultiSelectFilter(QWidget):
         layout.setSpacing(8)
 
         self.btn_select = ModernButton(
-            f"{placeholder}", variant=ModernButton.Variant.GHOST, icon=get_asset_path(Icons.LIST)
+            str(placeholder), variant=ModernButton.Variant.GHOST, icon=get_asset_path(Icons.LIST)
         )
         self.btn_select.setStyleSheet("text-align: left; padding-left: 10px; border: 1px solid #ced4da;")
         self.btn_select.clicked.connect(self._open_dialog)

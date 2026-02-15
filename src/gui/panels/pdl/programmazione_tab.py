@@ -136,7 +136,7 @@ class ProgrammazioneTab(QWidget):
 
         # --- TABELLA AGGREGATA ---
         self.results_table = QTableWidget()
-        self.results_table.setColumnCount(10)  # Richiedente, PDL, Descrizione, 7 Giorni
+        self.results_table.setColumnCount(11)  # Richiedente, Area, PDL, Descrizione, 7 Giorni
         self.results_table.setStyleSheet("""
             QTableWidget {
                 border: 1px solid #e9ecef;
@@ -157,11 +157,12 @@ class ProgrammazioneTab(QWidget):
 
         if h_header := self.results_table.horizontalHeader():
             h_header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-            h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-            h_header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-            h_header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+            h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # Richiedente
+            h_header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)  # Area
+            h_header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # PDL
+            h_header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)  # Descrizione
 
-            for i in range(3, 10):
+            for i in range(4, 11):
                 h_header.setSectionResizeMode(i, QHeaderView.ResizeMode.Fixed)
                 self.results_table.setColumnWidth(i, 85)
 
@@ -201,6 +202,7 @@ class ProgrammazioneTab(QWidget):
         d = [(start_dt + timedelta(days=i)).strftime("%d/%m") for i in range(7)]
         headers = [
             "Richiedente",
+            "Area",
             "N° PDL",
             "Descrizione",
             f"LUN {d[0]}",
@@ -220,12 +222,12 @@ class ProgrammazioneTab(QWidget):
             self.results_table.setHorizontalHeaderLabels(headers)
 
             # Applica stili agli header
-            for i in range(3, 10):
+            for i in range(4, 11):
                 item = self.results_table.horizontalHeaderItem(i)
                 if not item:
                     continue
 
-                is_today = is_current_week and (i - 3 == current_weekday)
+                is_today = is_current_week and (i - 4 == current_weekday)
 
                 if is_today:
                     # Giorno Corrente: Azzurro chiaro sfondo, Blu scuro testo e indicatore testuale
@@ -289,13 +291,18 @@ class ProgrammazioneTab(QWidget):
             return
 
         start_date, end_date, _ = self._get_selected_week_range()
+
+        # Assicura che la cartella temp esista
+        temp_dir = config_manager.CONFIG_DIR / "temp"
+        temp_dir.mkdir(parents=True, exist_ok=True)
+
         bot = create_bot(
             "programmazione_pdl",
             username=account["username"],
             password=account["password"],
             headless=config.get("browser_headless", False),
             timeout=config.get("browser_timeout", 30),
-            download_path=str(config_manager.CONFIG_DIR / "temp"),
+            download_path=str(temp_dir),
         )
 
         if not bot:
@@ -353,8 +360,9 @@ class ProgrammazioneTab(QWidget):
         for row_idx, res in enumerate(results):
             self.results_table.insertRow(row_idx)
             self.results_table.setItem(row_idx, 0, QTableWidgetItem(res["richiedente"]))
-            self.results_table.setItem(row_idx, 1, QTableWidgetItem(res["pdl"]))
-            self.results_table.setItem(row_idx, 2, QTableWidgetItem(res.get("descrizione", "")))
+            self.results_table.setItem(row_idx, 1, QTableWidgetItem(res.get("area", "")))
+            self.results_table.setItem(row_idx, 2, QTableWidgetItem(res["pdl"]))
+            self.results_table.setItem(row_idx, 3, QTableWidgetItem(res.get("descrizione", "")))
 
             for i, prog in enumerate(res["programmazione"]):
                 cell_widget = QWidget()
@@ -379,7 +387,7 @@ class ProgrammazioneTab(QWidget):
                 if i == today_idx:
                     cell_widget.setStyleSheet("background-color: rgba(13, 110, 253, 0.05);")
 
-                self.results_table.setCellWidget(row_idx, 3 + i, cell_widget)
+                self.results_table.setCellWidget(row_idx, 4 + i, cell_widget)
 
     def _on_email_clicked(self):
         if not self.last_results:
@@ -426,6 +434,7 @@ class ProgrammazioneTab(QWidget):
                     <thead>
                         <tr style='background-color: #f8f9fa; color: #495057; text-align: left;'>
                             <th style='padding: 12px 15px; border: 1px solid #dee2e6;'>Richiedente</th>
+                            <th style='padding: 12px 15px; border: 1px solid #dee2e6;'>Area</th>
                             <th style='padding: 12px 15px; border: 1px solid #dee2e6; text-align: center;'>PdL</th>
                             <th style='padding: 12px 15px; border: 1px solid #dee2e6;'>Descrizione</th>
                             {headers_html}
@@ -450,6 +459,7 @@ class ProgrammazioneTab(QWidget):
             for res in self.last_results:
                 html += "<tr>"
                 html += f"<td style='padding: 12px 15px; border: 1px solid #dee2e6; white-space: nowrap;'>{res['richiedente']}</td>"
+                html += f"<td style='padding: 12px 15px; border: 1px solid #dee2e6; color: #495057;'>{res.get('area', '')}</td>"
                 html += f"<td style='padding: 12px; border: 1px solid #dee2e6; text-align: center;'><b>{res['pdl']}</b></td>"
                 html += f"<td style='padding: 12px 15px; border: 1px solid #dee2e6; color: #495057;'>{res.get('descrizione', '')}</td>"
 

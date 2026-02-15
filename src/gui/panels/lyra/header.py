@@ -34,7 +34,7 @@ class LyraHeader(QFrame):
 
         self.model_combo = QComboBox()
         self.model_combo.setMinimumWidth(180)
-        self.model_combo.currentTextChanged.connect(lambda text: self.model_changed.emit(text))
+        self.model_combo.currentTextChanged.connect(self.model_changed.emit)
         self.model_combo.setStyleSheet(
             """
             QComboBox {
@@ -54,7 +54,7 @@ class LyraHeader(QFrame):
         self.refresh_btn.setFixedSize(32, 32)
         self.refresh_btn.setIconSize(QSize(18, 18))
         self.refresh_btn.setStyleSheet("QPushButton { background-color: transparent; border: none; }")
-        self.refresh_btn.clicked.connect(lambda: self.refresh_models_clicked.emit())
+        self.refresh_btn.clicked.connect(self.refresh_models_clicked.emit)
         layout.addWidget(self.refresh_btn)
 
         subtitle = QLabel("Esperta Contabile")
@@ -76,5 +76,5 @@ class LyraHeader(QFrame):
             QPushButton:hover { background-color: rgba(255,255,255,0.3); }
         """
         )
-        self.export_btn.clicked.connect(lambda: self.export_chat_clicked.emit())
+        self.export_btn.clicked.connect(self.export_chat_clicked.emit)
         layout.addWidget(self.export_btn)

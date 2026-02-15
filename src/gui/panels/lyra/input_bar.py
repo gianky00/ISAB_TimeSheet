@@ -39,7 +39,7 @@ class ChatInputBar(QWidget):
             QPushButton:hover { border-color: #6f42c1; }
         """
         )
-        self.attach_btn.clicked.connect(lambda: self.attach_clicked.emit())
+        self.attach_btn.clicked.connect(self.attach_clicked.emit)
         layout.addWidget(self.attach_btn)
 
         self.input_field = QLineEdit()

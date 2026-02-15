@@ -740,7 +740,7 @@ class CertificatiCampioneTab(QWidget):
         text = str(parent_item.text(0))
         parts = text.split("  •  ")
         if parts:
-            return str(parts[0].strip())
+            return parts[0].strip()
         return ""
 
     def _update_excluded_count_label(self):

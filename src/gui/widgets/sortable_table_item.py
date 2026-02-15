@@ -43,20 +43,16 @@ class SortableTableWidgetItem(QTableWidgetItem):
             return False
 
         # 2. Tentativo Numerico
-        try:
+        with suppress(ValueError):
             n1 = self._parse_number(val1)
             n2 = self._parse_number(val2)
             return n1 < n2
-        except ValueError:
-            pass
 
         # 3. Tentativo Data
-        try:
+        with suppress(ValueError):
             d1 = self._parse_date(val1)
             d2 = self._parse_date(val2)
             return d1 < d2
-        except ValueError:
-            pass
 
         # 4. Fallback Stringa (Lexicographical)
         return val1.lower() < val2.lower()

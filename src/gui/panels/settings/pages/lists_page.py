@@ -298,7 +298,11 @@ class ListsPage(QWidget):
     def _render_accounts(self, list_widget: QListWidget, accounts: Sequence[dict[str, Any]]) -> None:
         list_widget.clear()
         for acc in accounts:
-            label = str(acc["username"]) + (" (Default)" if acc.get("default") else "")
+            label = str(acc["username"])
+            if acc.get("type"):
+                label += f" ({acc['type']})"
+            label += " (Default)" if acc.get("default") else ""
+
             item = QListWidgetItem(label)
             if acc.get("default"):
                 item.setIcon(get_colored_icon(get_asset_path(Icons.STAR), "#000000"))
@@ -308,7 +312,7 @@ class ListsPage(QWidget):
     def _add_account(self) -> None:
         dlg = AccountDialog(self)
         if dlg.exec():
-            u, p = dlg.get_data()
+            u, p, _ = dlg.get_data()
             if u:
                 accs = self._get_accounts(self.account_list)
                 is_def = len(accs) == 0
@@ -328,7 +332,7 @@ class ListsPage(QWidget):
 
         dlg = AccountDialog(self, target_acc["username"], target_acc["password"])
         if dlg.exec():
-            u, p = dlg.get_data()
+            u, p, _ = dlg.get_data()
             if u:
                 target_acc["username"] = u
                 target_acc["password"] = p
@@ -357,14 +361,14 @@ class ListsPage(QWidget):
     # --- LOGICA ACCOUNT SAFEWORK (Simile a ISAB ma su sw_account_list) ---
     # Per brevità potrei unificare ma per ora copio adattando
     def _add_sw_account(self) -> None:
-        dlg = AccountDialog(self)
+        dlg = AccountDialog(self, show_type=True)
         dlg.setWindowTitle("Account SafeWork")
         if dlg.exec():
-            u, p = dlg.get_data()
+            u, p, t = dlg.get_data()
             if u:
                 accs = self._get_accounts(self.sw_account_list)
                 is_def = len(accs) == 0
-                accs.append({"username": u, "password": p, "default": is_def})
+                accs.append({"username": u, "password": p, "type": t, "default": is_def})
                 self._render_accounts(self.sw_account_list, accs)
                 self.settings_changed.emit()
 
@@ -376,12 +380,19 @@ class ListsPage(QWidget):
         accs = self._get_accounts(self.sw_account_list)
         target_acc = accs[row]
 
-        dlg = AccountDialog(self, target_acc["username"], target_acc["password"])
+        dlg = AccountDialog(
+            self,
+            target_acc["username"],
+            target_acc["password"],
+            account_type=target_acc.get("type", ""),
+            show_type=True,
+        )
         if dlg.exec():
-            u, p = dlg.get_data()
+            u, p, t = dlg.get_data()
             if u:
                 target_acc["username"] = u
                 target_acc["password"] = p
+                target_acc["type"] = t
                 self._render_accounts(self.sw_account_list, accs)
                 self.settings_changed.emit()
 

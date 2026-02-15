@@ -155,7 +155,7 @@ class ProgrammingSyncManager:
 
                         # Check Stato (Richiesto/Emesso)
                         col_O_val = str(row[14] or "").strip()
-                        is_richiesto = col_O_val in ["Richiesto", "Richiesto (Ese ok)"]
+                        is_richiesto = col_O_val in ("Richiesto", "Richiesto (Ese ok)")
                         if is_richiesto and info["stato"] != "RICHIESTO":
                             modifiche_stato[pdl_str] = "RICHIESTO"
                         elif not is_richiesto and info["stato"] == "RICHIESTO":

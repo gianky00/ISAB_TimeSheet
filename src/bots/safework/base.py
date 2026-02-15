@@ -36,7 +36,7 @@ class SafeworkBaseBot(BaseBot):
 
     def _login(self) -> bool:
         """Override del login per usare SafeWorkLoginPage."""
-        if self.safework_login_page:
+        if self.safework_login_page and self.driver:
             self.driver.get(self.ISAB_URL)
             return self.safework_login_page.login(self.username, self.password)
         return False
@@ -45,6 +45,10 @@ class SafeworkBaseBot(BaseBot):
         """
         Tenta di cliccare un elemento gestendo overlay e intercettazioni.
         """
+        if not self.driver:
+            self.log("❌ Driver non inizializzato.")
+            return
+
         try:
             self._attendi_scomparsa_overlay()
             el = WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable(locator))

@@ -294,9 +294,7 @@ class AutopilotWidget(QWidget):
             return
 
         for idx, event in enumerate(events):
-            card = AutopilotEventCard(
-                str(event["name"]), str(event["time"]), str(event["icon"]), str(event["color"]), self
-            )
+            card = AutopilotEventCard(event["name"], event["time"], event["icon"], event["color"], self)
             self.view_layout.addWidget(card, idx // 2, idx % 2)
 
     def _refresh_config(self) -> None:
@@ -341,14 +339,12 @@ class AutopilotWidget(QWidget):
 
         idx = 0
         for bot in bots:
-            card = AutopilotConfigCard(
-                str(bot["id"]), str(bot["name"]), str(bot["icon"]), str(bot["color"]), self
-            )
+            card = AutopilotConfigCard(bot["id"], bot["name"], bot["icon"], bot["color"], self)
             self.config_layout.addWidget(card, idx // 2, idx % 2)
             idx += 1
         for task in interval_tasks:
             card_with_interval = AutopilotConfigCardWithInterval(
-                str(task["id"]), str(task["name"]), str(task["icon"]), str(task["color"]), self
+                task["id"], task["name"], task["icon"], task["color"], self
             )
             self.config_layout.addWidget(card_with_interval, idx // 2, idx % 2)
             idx += 1

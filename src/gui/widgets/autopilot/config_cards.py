@@ -108,7 +108,7 @@ class AutopilotConfigCard(QFrame):
             }
         """
         )
-        self.enable_check.stateChanged.connect(lambda: self._on_config_changed())
+        self.enable_check.stateChanged.connect(self._on_config_changed)
         layout.addWidget(self.enable_check)
 
         # Time picker
@@ -144,7 +144,7 @@ class AutopilotConfigCard(QFrame):
             }
         """
         )
-        self.time_edit.timeChanged.connect(lambda: self._on_config_changed())
+        self.time_edit.timeChanged.connect(self._on_config_changed)
         time_layout.addWidget(self.time_edit)
         time_layout.addStretch()
 
@@ -281,7 +281,7 @@ class AutopilotConfigCardWithInterval(QFrame):
             }
         """
         )
-        self.enable_check.stateChanged.connect(lambda: self._on_config_changed())
+        self.enable_check.stateChanged.connect(self._on_config_changed)
         layout.addWidget(self.enable_check)
 
         # Riga: Orario + Intervallo giorni
@@ -312,7 +312,7 @@ class AutopilotConfigCardWithInterval(QFrame):
             }
         """
         )
-        self.time_edit.timeChanged.connect(lambda: self._on_config_changed())
+        self.time_edit.timeChanged.connect(self._on_config_changed)
         settings_layout.addWidget(self.time_edit)
 
         # Intervallo giorni
@@ -340,7 +340,7 @@ class AutopilotConfigCardWithInterval(QFrame):
             }
         """
         )
-        self.interval_spin.valueChanged.connect(lambda: self._on_config_changed())
+        self.interval_spin.valueChanged.connect(self._on_config_changed)
         settings_layout.addWidget(self.interval_spin)
         settings_layout.addStretch()
 

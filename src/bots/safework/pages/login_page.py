@@ -35,9 +35,8 @@ class SafeWorkLoginPage:
             if "gallegretti" in username.lower():
                 self.log(f"🔄 Account COEMI ({username}): Avvio procedura di attesa COMPLETA.")
                 return self._login_flow_coemi()
-            else:
-                self.log(f"⚡ Account TCL/Standard ({username}): Avvio procedura VELOCE.")
-                return self._login_flow_tcl()
+            self.log(f"⚡ Account TCL/Standard ({username}): Avvio procedura VELOCE.")
+            return self._login_flow_tcl()
 
         except Exception as e:
             self.log(f"❌ Errore critico durante il login: {e}")
@@ -74,11 +73,10 @@ class SafeWorkLoginPage:
             except (TimeoutException, Exception) as e:
                 if "stale" in str(e).lower() and tentativa < MAX_RETRIES - 1:
                     self.log(f"⚠️ Rilevato elemento stale. Riprovo la procedura di login... ({e})")
-                    self.driver.refresh() # Resettiamo lo stato per sicurezza
+                    self.driver.refresh()  # Resettiamo lo stato per sicurezza
                     continue
-                else:
-                    self.log(f"❌ Errore irreversibile fase preliminare login: {e}")
-                    raise
+                self.log(f"❌ Errore irreversibile fase preliminare login: {e}")
+                raise
 
     def _login_flow_coemi(self) -> bool:
         """
@@ -121,9 +119,7 @@ class SafeWorkLoginPage:
         """Verifica finale comune."""
         self.log("⏳ Verifica finale accesso Dashboard...")
         try:
-            WebDriverWait(self.driver, 30).until(
-                EC.element_to_be_clickable(SafeWorkLocators.HOME_BUTTON)
-            )
+            WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable(SafeWorkLocators.HOME_BUTTON))
             self.log("✅ Dashboard raggiunta correttamente.")
             return True
         except TimeoutException:

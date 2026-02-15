@@ -1,13 +1,16 @@
 """
 SyncroJob - SafeWork Programmazione Bot
-Bot modulare per il monitoraggio della programmazione settimanale.
+Bot modulare per il monitoraggio della programmazione settimanale tramite Export Excel (Ricerca Massiva).
 """
 
+import contextlib
 import logging
+from pathlib import Path
 from typing import Any
 
-from selenium.webdriver.common.by import By
+import pandas as pd
 
+from src.bots.base.wait_helpers import poll_for_new_file
 from src.bots.safework.base import SafeworkBaseBot
 from src.bots.safework.common.locators import SafeWorkLocators
 
@@ -15,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class SafeWorkProgrammazioneBot(SafeworkBaseBot):
-    """Bot per monitorare i flag TCL/TGO della settimana."""
+    """Bot per monitorare i flag TCL/TGO della settimana tramite Export Excel."""
 
     def __init__(self, username, password, headless=False, timeout=30, download_path=""):
         super().__init__(username, password, headless, timeout, download_path)
@@ -34,7 +37,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         return "programmazione_pdl"
 
     def run(self, data: list[dict[str, Any]]) -> bool:
-        """Esecuzione principale delegata alle Page Objects."""
+        """Esecuzione tramite export Excel massivo."""
         params = data[0] if data else {}
         requesters = params.get("requesters", [])
         date_start = params.get("date_start")
@@ -49,85 +52,110 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
             self.log("❌ Driver non inizializzato.")
             return False
 
-        # Uso click_robusto per evitare ElementClickInterceptedException
         self.click_robusto(SafeWorkLocators.HOME_BUTTON)
         self._attendi_scomparsa_overlay()
 
         self.click_robusto(SafeWorkLocators.VISUALIZZA_ATTIVITA_BUTTON)
         self._attendi_scomparsa_overlay()
 
-        # 2. Setup Filtri
+        # 2. Setup Filtri Generali
         if not self.attivita_page:
             self.log("❌ Pagina Attività non inizializzata.")
             return False
+
         self.attivita_page.pulisci_pdl()
         self.attivita_page.imposta_date(str(date_start), str(date_end))
         self.attivita_page.seleziona_ditta("CO.EMI SRL")
 
-        # 3. Ciclo Richiedenti
-        self.results = []
-        for req in requesters:
-            self._check_stop()
-            self.log(f"👤 Elaborazione: {req}...")
-            if self.attivita_page.seleziona_richiedente(req):
-                self.attivita_page.esegui_ricerca()
-                self._attendi_scomparsa_overlay()
-                self._scrap_risultati(req)
+        # 3. Selezione Massiva Richiedenti
+        self.log(f"👥 Selezione di {len(requesters)} richiedenti...")
+        if not self.attivita_page.seleziona_richiedente(requesters):
+            self.log("⚠️ Problemi nella selezione dei richiedenti.")
+            # Proseguiamo comunque, magari ne ha selezionati alcuni
+
+        # 4. Ricerca ed Export Unico
+        self.log("🔍 Avvio ricerca massiva...")
+        self.attivita_page.esegui_ricerca()
+        self._attendi_scomparsa_overlay()
+
+        excel_file = self._scarica_excel()
+        if excel_file:
+            self.results = []
+            self._parse_excel_results(excel_file)
+            self._cleanup_temp_file(excel_file)
+        else:
+            self.log("❌ Impossibile scaricare il file Excel dei risultati.")
+            return False
 
         self.log(f"✨ FINE: Trovati {len(self.results)} PDL con programmazione.")
         return True
 
-    def _scrap_risultati(self, req_input: str):
-        """Logica di scraping specifica del bot."""
-        if not self.attivita_page:
-            self.log("❌ Pagina Attività non inizializzata per lo scraping.")
-            return
-        rows = self.attivita_page.get_rows()
-        if not rows:
-            return
+    def _scarica_excel(self) -> str | None:
+        """Esegue il download dell'Excel e attende il completamento."""
+        files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*") if f.is_file()}
 
-        for row in rows:
-            cells = row.find_elements(By.TAG_NAME, "td")
-            if len(cells) < 19:
-                continue
+        self.log("📥 Esportazione Excel massiva...")
+        if self.attivita_page and self.attivita_page.esporta_excel():
+            return poll_for_new_file(
+                directory=self.download_path, files_before=files_before, pattern="*.xlsx", timeout=300
+            )
+        return None
 
-            pdl = cells[1].text.strip()
-            area = cells[2].text.strip()
-            desc = cells[3].text.strip()
-            richiedente = cells[18].text.strip()
+    def _parse_excel_results(self, file_path: str):
+        """Legge i dati dall'Excel scaricato per tutti i richiedenti."""
+        try:
+            self.log("📄 Analisi risultati Excel...")
+            df = pd.read_excel(file_path, header=0)
 
-            # Normalizzazione Richiedente se slittato
-            if richiedente.lower() in ("si", "no"):
-                for c in cells:
-                    if any(n in c.text for n in req_input.split()):
-                        richiedente = c.text
+            count_pdl = 0
+            for _, row in df.iterrows():
+                # Estrazione flag C-P (indici 2-15)
+                prog_settimanale = []
+                has_prog = False
+
+                for i in range(7):
+                    idx_tcl = 2 + (i * 2)
+                    idx_tgo = 3 + (i * 2)
+
+                    if idx_tgo >= len(row):
                         break
 
-            prog_settimanale = []
-            found = False
-            for i in range(7):
-                idx_tcl = 4 + (i * 2)
-                idx_tgo = 5 + (i * 2)
-                tcl = self._check_flag(cells[idx_tcl], "_TCL")
-                tgo = self._check_flag(cells[idx_tgo], "_TGO")
-                if tcl or tgo:
-                    found = True
-                prog_settimanale.append({"giorno": i + 1, "tcl": tcl, "tgo": tgo})
+                    tcl = str(row.iloc[idx_tcl]).strip().lower() == "si"
+                    tgo = str(row.iloc[idx_tgo]).strip().lower() == "si"
 
-            if found:
-                self.results.append(
-                    {
-                        "pdl": pdl,
-                        "area": area,
-                        "descrizione": desc,
-                        "richiedente": richiedente,
-                        "programmazione": prog_settimanale,
-                    }
-                )
+                    if tcl or tgo:
+                        has_prog = True
 
-    def _check_flag(self, cell, pattern: str) -> bool:
-        try:
-            inp = cell.find_element(By.XPATH, f".//input[contains(@id, '{pattern}')]")
-            return bool(inp.get_attribute("title") and str(inp.get_attribute("title")).strip())
-        except Exception:
-            return False
+                    prog_settimanale.append({"giorno": i + 1, "tcl": tcl, "tgo": tgo})
+
+                if has_prog:
+                    # Mapping Colonne Ricevuto:
+                    # A (0) = N° PDL
+                    # B (1) = Descrizione
+                    # R (17) = Richiedente
+                    # Y (24) = Area
+                    pdl = str(row.iloc[0]).strip() if len(row) > 0 else "N/D"
+                    desc = str(row.iloc[1]).strip() if len(row) > 1 else ""
+                    richiedente = str(row.iloc[17]).strip() if len(row) > 17 else "N/D"
+                    area = str(row.iloc[24]).strip() if len(row) > 24 else ""
+
+                    self.results.append(
+                        {
+                            "pdl": pdl,
+                            "area": area,
+                            "descrizione": desc,
+                            "richiedente": richiedente,
+                            "programmazione": prog_settimanale,
+                        }
+                    )
+                    count_pdl += 1
+
+            self.log(f"✅ Trovati {count_pdl} record programmati nel file Excel.")
+
+        except Exception as e:
+            self.log(f"⚠️ Errore parsing Excel: {e}")
+
+    def _cleanup_temp_file(self, file_path: str) -> None:
+        with contextlib.suppress(Exception):
+            Path(file_path).unlink()
+            self.log("🗑️ File temporaneo rimosso.")

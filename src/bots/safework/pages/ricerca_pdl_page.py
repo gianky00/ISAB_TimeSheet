@@ -4,11 +4,11 @@ Gestisce le interazioni con la pagina di ricerca PDL.
 Logica allineata al branch Main per massima stabilità.
 """
 
-import time
-from typing import Callable
+from collections.abc import Callable
+from contextlib import suppress
 
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -29,7 +29,9 @@ class RicercaPDLPage:
     def configura_filtro_chiusi(self, exclude_closed: bool):
         """Imposta il filtro 'Escludi chiusi'."""
         try:
-            checkbox = self.wait.until(EC.presence_of_element_located(SafeWorkLocators.ESCLUDI_CHIUSI_CHECKBOX))
+            checkbox = self.wait.until(
+                EC.presence_of_element_located(SafeWorkLocators.ESCLUDI_CHIUSI_CHECKBOX)
+            )
             if checkbox.is_selected() != exclude_closed:
                 self.log(f"🖱️ Impostazione 'Escludi chiusi': {exclude_closed}")
                 # Uso JS click come nel branch main per evitare problemi di intercettazione
@@ -44,7 +46,7 @@ class RicercaPDLPage:
         """
         try:
             self.log(f"🏢 Selezione sito: {site_name}")
-            
+
             # 1. Clic Dropdown (Locator Main)
             site_dropdown = self.wait.until(
                 EC.element_to_be_clickable(
@@ -65,10 +67,10 @@ class RicercaPDLPage:
             # 3. Clic Cerca (Directly after option, no waits, no body clicks)
             self.log("🖱️ Clic su Cerca...")
             self.wait.until(EC.element_to_be_clickable((By.ID, "btnCerca"))).click()
-            
+
             # 4. Attesa Overlay (Post-Search)
             self._attendi_scomparsa_overlay(timeout_secondi=300)
-            
+
             return True
         except Exception as e:
             self.log(f"❌ Errore selezione/ricerca (Main Logic): {e}")
@@ -76,17 +78,13 @@ class RicercaPDLPage:
 
     def _attendi_scomparsa_overlay(self, timeout_secondi=300):
         """Attende la scomparsa dell'overlay di caricamento (GISWaitOverlay)."""
-        try:
+        with suppress(TimeoutException):
             # Verifica preliminare se l'overlay è visibile
-            WebDriverWait(self.driver, 2).until(
-                EC.visibility_of_element_located(SafeWorkLocators.OVERLAY)
-            )
+            WebDriverWait(self.driver, 2).until(EC.visibility_of_element_located(SafeWorkLocators.OVERLAY))
             # Attesa lunga per la scomparsa
             WebDriverWait(self.driver, timeout_secondi).until(
                 EC.invisibility_of_element_located(SafeWorkLocators.OVERLAY)
             )
-        except TimeoutException:
-            pass # Overlay non apparso o già sparito
 
     def esporta_excel(self) -> bool:
         """Clicca sul pulsante Esporta."""
@@ -96,4 +94,3 @@ class RicercaPDLPage:
         except Exception as e:
             self.log(f"❌ Errore click export: {e}")
             return False
-
