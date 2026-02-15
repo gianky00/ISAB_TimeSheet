@@ -13,6 +13,7 @@ from PyQt6.QtCore import QRectF, Qt
 from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath
 from PyQt6.QtWidgets import (
     QComboBox,
+    QFrame,
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
@@ -226,40 +227,80 @@ class ProgrammazioneTab(QWidget):
         filter_area.addWidget(self.week_label)
 
         controls_layout = QHBoxLayout()
-        controls_layout.setSpacing(10)
+        controls_layout.setSpacing(20)
+
+        # --- SEZIONE 1: IMPORTAZIONE (A sinistra) ---
+        import_group = QWidget()
+        import_layout = QHBoxLayout(import_group)
+        import_layout.setContentsMargins(0, 0, 0, 0)
+        import_layout.setSpacing(8)
+
+        import_label = QLabel("IMPORTA:")
+        import_label.setStyleSheet("color: #198754; font-weight: bold; font-size: 11px;")
+        import_layout.addWidget(import_label)
 
         # Selettore Settimana
         self.week_selector = QComboBox()
         self.week_selector.addItems(["Settimana Corrente", "Settimana Prossima"])
-        self.week_selector.setFixedWidth(200)
-        # Carica settimana salvata
+        self.week_selector.setFixedWidth(160)
         saved_week = config_manager.get_config_value("programming_selected_week", 0)
         self.week_selector.setCurrentIndex(saved_week)
         self.week_selector.currentIndexChanged.connect(self._on_week_changed)
-        controls_layout.addWidget(self.week_selector)
+        import_layout.addWidget(self.week_selector)
 
-        # Nuovo Selettore Richiedenti
-        self.req_filter = MultiSelectFilter("Richiedenti", "Seleziona Richiedenti...")
-        self.req_filter.setFixedWidth(250)
-        # Carica selezione salvata
+        # Filtro Richiedenti (Bot)
+        self.req_filter = MultiSelectFilter("Richiedenti", "Seleziona Bot...")
+        self.req_filter.setFixedWidth(220)
         saved_reqs = config_manager.get_config_value("selected_programming_requesters", [])
         self.req_filter.set_selected(saved_reqs)
         self.req_filter.changed.connect(self._on_requesters_changed)
-        controls_layout.addWidget(self.req_filter)
+        # Stile Hover per Importazione
+        self.req_filter.setStyleSheet("""
+            MultiSelectFilter QPushButton { border: 1px solid transparent; background: transparent; color: #198754; }
+            MultiSelectFilter QPushButton:hover { border: 1px solid #198754; background: #f8fff9; border-radius: 6px; }
+        """)
+        import_layout.addWidget(self.req_filter)
+
+        controls_layout.addWidget(import_group)
+
+        # Separatore verticale
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.VLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
+        line.setStyleSheet("color: #dee2e6;")
+        controls_layout.addWidget(line)
+
+        # --- SEZIONE 2: VISUALIZZAZIONE (A destra) ---
+        view_group = QWidget()
+        view_layout = QHBoxLayout(view_group)
+        view_layout.setContentsMargins(0, 0, 0, 0)
+        view_layout.setSpacing(8)
+
+        view_label = QLabel("FILTRA:")
+        view_label.setStyleSheet("color: #0d6efd; font-weight: bold; font-size: 11px;")
+        view_layout.addWidget(view_label)
+
+        # Filtro Visualizzazione (Locale)
+        self.view_filter = MultiSelectFilter("Mostra", "Filtra Risultati...")
+        self.view_filter.setFixedWidth(220)
+        self.view_filter.changed.connect(self._apply_view_filter)
+        # Stile Hover per Visualizzazione
+        self.view_filter.setStyleSheet("""
+            MultiSelectFilter QPushButton { border: 1px solid transparent; background: transparent; color: #0d6efd; }
+            MultiSelectFilter QPushButton:hover { border: 1px solid #0d6efd; background: #f0f7ff; border-radius: 6px; }
+        """)
+        view_layout.addWidget(self.view_filter)
 
         # Selettore Raggruppamento
-        group_label = QLabel("Suddividi per:")
-        group_label.setStyleSheet("color: #6c757d; font-size: 12px; margin-left: 10px;")
-        controls_layout.addWidget(group_label)
-
         self.group_selector = QComboBox()
         self.group_selector.addItems(["Tabella Unica", "Area", "Richiedente"])
-        self.group_selector.setFixedWidth(150)
+        self.group_selector.setFixedWidth(140)
         saved_group = config_manager.get_config_value("programming_group_mode", "Tabella Unica")
         self.group_selector.setCurrentText(saved_group)
         self.group_selector.currentTextChanged.connect(self._on_group_mode_changed)
-        controls_layout.addWidget(self.group_selector)
+        view_layout.addWidget(self.group_selector)
 
+        controls_layout.addWidget(view_group)
         controls_layout.addStretch()
         filter_area.addLayout(controls_layout)
 
@@ -398,6 +439,21 @@ class ProgrammazioneTab(QWidget):
         config_manager.set_config_value("programming_selected_week", index)
         self._update_ui_dates()
 
+    def _apply_view_filter(self, selected_reqs: list[str] | None = None):
+        """Nasconde o mostra le righe delle tabelle in base ai richiedenti selezionati."""
+        if selected_reqs is None:
+            selected_reqs = self.view_filter.selected
+
+        # Se non c'è nulla di selezionato, mostriamo tutto (comportamento standard)
+        show_all = not selected_reqs
+
+        for table in self.tables:
+            for row in range(table.rowCount()):
+                req_item = table.item(row, 0)
+                if req_item:
+                    is_visible = show_all or req_item.text() in selected_reqs
+                    table.setRowHidden(row, not is_visible)
+
     def _on_log(self, message: str):
         """Aggiunge un messaggio alla console di log."""
         if hasattr(self, "log_widget"):
@@ -497,7 +553,13 @@ class ProgrammazioneTab(QWidget):
 
         self.tables.clear()
         if not results:
+            # Pulisci anche il filtro se non ci sono dati
+            self.view_filter.set_items([])
             return
+
+        # Aggiorna gli elementi del filtro visualizzazione con i richiedenti presenti nei risultati
+        available_reqs = sorted({r["richiedente"] for r in results})
+        self.view_filter.set_items(available_reqs)
 
         group_mode = self.group_selector.currentText()
 
@@ -609,6 +671,9 @@ class ProgrammazioneTab(QWidget):
 
         # Applica header dates
         self._update_ui_dates_internal()
+
+        # Riapplica il filtro visualizzazione corrente
+        self._apply_view_filter()
 
     def _update_ui_dates_internal(self):
         """Versione interna di update_ui_dates che non ricarica i dati per evitare loop."""
