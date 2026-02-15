@@ -23,7 +23,9 @@ def run_command(cmd, label):
             capture_output=True,
             text=True,
             cwd=PROJECT_ROOT,
-            check=False
+            check=False,
+            encoding="utf-8",
+            errors="ignore"
         )
         return result.stdout, result.stderr, result.returncode
     except Exception as e:
@@ -33,79 +35,66 @@ def main():
     start_time = datetime.now()
     
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write(f"# 🤖 CI/CD Context Report
-
-")
-        f.write(f"**Generated:** {start_time.strftime('%Y-%m-%d %H:%M:%S')}
-")
-        f.write(f"**Branch:** {subprocess.getoutput('git rev-parse --abbrev-ref HEAD')}
-
-")
+        f.write("# CI/CD Context Report\n\n")
+        f.write(f"**Generated:** {start_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+        
+        try:
+            branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], 
+                                           text=True, cwd=PROJECT_ROOT).strip()
+            f.write(f"**Branch:** {branch}\n\n")
+        except Exception:
+            f.write("**Branch:** Unknown\n\n")
         
         # 1. RUFF
-        f.write("## 🧹 Ruff Analysis
-")
+        f.write("## Ruff Analysis\n")
         stdout, stderr, code = run_command([sys.executable, "-m", "ruff", "check", "."], "Ruff")
         if code == 0 and not stdout:
-            f.write("✅ Ruff: No issues found.
-
-")
+            f.write("Ruff: No issues found.\n\n")
         else:
-            f.write("```text
-")
-            f.write(stdout or "No output")
-            if stderr: f.write("
-STDERR:
-" + stderr)
-            f.write("
-```
-
-")
+            f.write("```text\n")
+            if stdout: f.write(stdout)
+            if stderr: f.write("\nSTDERR:\n" + stderr)
+            if not stdout and not stderr: f.write("No output captured (Exit code: " + str(code) + ")")
+            f.write("\n```\n\n")
             
         # 2. MYPY
-        f.write("## 📝 Mypy Type Checking
-")
+        f.write("## Mypy Type Checking\n")
         stdout, stderr, code = run_command([sys.executable, "-m", "mypy", "src"], "Mypy")
         if code == 0:
-            f.write("✅ Mypy: No type issues found.
-
-")
+            f.write("Mypy: No type issues found.\n\n")
         else:
-            f.write("```text
-")
-            f.write(stdout or "No output")
-            if stderr: f.write("
-STDERR:
-" + stderr)
-            f.write("
-```
-
-")
+            f.write("```text\n")
+            if stdout: f.write(stdout)
+            if stderr: f.write("\nSTDERR:\n" + stderr)
+            if not stdout and not stderr: f.write("No output captured (Exit code: " + str(code) + ")")
+            f.write("\n```\n\n")
             
         # 3. ROBUST TESTS
-        f.write("## 🧪 Robust Test Results
-")
+        f.write("## Robust Test Results\n")
         os.environ["TEST_REPORT_PATH"] = str(TEMP_REPORT)
         
         # Eseguiamo il runner robusto
-        # Nota: usiamo pass-through per gli argomenti (es. -m 'not slow')
         test_cmd = [sys.executable, "tests/run_robust_tests.py"]
+        # Passiamo eventuali argomenti extra (eccetto il nome dello script stesso)
         if len(sys.argv) > 1:
             test_cmd.extend(sys.argv[1:])
             
+        print("Running Robust Tests...")
         subprocess.run(test_cmd, cwd=PROJECT_ROOT, check=False)
         
         if TEMP_REPORT.exists():
             test_content = TEMP_REPORT.read_text(encoding="utf-8")
             # Rimuoviamo il titolo duplicato se presente nel report dei test
-            f.write(test_content.replace("# 📊 Test Execution Report", ""))
-            TEMP_REPORT.unlink()
+            clean_content = test_content.replace("# Test Execution Report", "").replace("# 📊 Test Execution Report", "")
+            f.write(clean_content)
+            try:
+                TEMP_REPORT.unlink()
+            except Exception:
+                pass
         else:
-            f.write("❌ Error: Test report not generated.
-")
+            f.write("Error: Test report not generated.\n")
 
-    print(f"
-✅ CI_CONTEXT.md generato con successo nella root del progetto.")
+    print(f"\n✅ CI_CONTEXT.md generato con successo nella root del progetto.")
 
 if __name__ == "__main__":
     main()
