@@ -10,6 +10,9 @@ jobs:
   test:
     name: Test & Quality Check
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
     strategy:
       matrix:
         python-version: ["3.12"]
