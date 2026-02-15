@@ -1,5 +1,6 @@
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import (
+    QComboBox,
     QDialog,
     QFormLayout,
     QHBoxLayout,
@@ -17,7 +18,14 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class AccountDialog(QDialog):
     """Dialog per aggiungere/modificare un account."""
 
-    def __init__(self, parent: QWidget | None = None, username: str = "", password: str = "") -> None:
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        username: str = "",
+        password: str = "",
+        account_type: str = "",
+        show_type: bool = False,
+    ) -> None:
         super().__init__(parent)
         self.setWindowTitle("Account")
         self.setFixedWidth(350)
@@ -31,10 +39,12 @@ class AccountDialog(QDialog):
         form = QFormLayout()
         form.setSpacing(10)
 
+        # Username
         self.username_edit = QLineEdit(username)
         self.username_edit.setMinimumHeight(35)
         form.addRow("Username:", self.username_edit)
 
+        # Password
         self.password_edit = QLineEdit(password)
         self.password_edit.setMinimumHeight(35)
         self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
@@ -69,6 +79,20 @@ class AccountDialog(QDialog):
         pass_layout.addWidget(self.toggle_pass_btn)
 
         form.addRow("Password:", pass_layout)
+
+        # Account Type (Optional, shown for SafeWork)
+        self.type_combo = QComboBox()
+        self.type_combo.addItems(["Esecutore", "ISAB"])
+        self.type_combo.setMinimumHeight(35)
+        if account_type:
+            self.type_combo.setCurrentText(account_type)
+
+        self.type_label = "Tipo Account:"
+        if not show_type:
+            self.type_combo.hide()
+        else:
+            form.addRow(self.type_label, self.type_combo)
+
         main_layout.addLayout(form)
 
         # Buttons
@@ -97,5 +121,10 @@ class AccountDialog(QDialog):
             self.toggle_pass_btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), "#555555"))
             self.toggle_pass_btn.setToolTip("Mostra password")
 
-    def get_data(self) -> tuple[str, str]:
-        return self.username_edit.text(), self.password_edit.text()
+    def get_data(self) -> tuple[str, str, str]:
+        """Restituisce (username, password, type)."""
+        return (
+            self.username_edit.text(),
+            self.password_edit.text(),
+            self.type_combo.currentText(),
+        )

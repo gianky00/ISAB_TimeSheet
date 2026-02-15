@@ -52,12 +52,6 @@ class DashboardPanel(QWidget):
         )
 
         # REMOVED: QGraphicsDropShadowEffect causes QPainter warnings
-        # container_shadow = QGraphicsDropShadowEffect()
-        # container_shadow.setBlurRadius(30)
-        # container_shadow.setXOffset(0)
-        # container_shadow.setYOffset(10)
-        # container_shadow.setColor(QColor(0, 0, 0, 20))
-        # self.main_container.setGraphicsEffect(container_shadow)
 
         self.container_layout = QVBoxLayout(self.main_container)
         self.container_layout.setContentsMargins(25, 25, 25, 25)
@@ -166,7 +160,7 @@ class DashboardPanel(QWidget):
             output_dir = BASE_DIR / "output"
             output_dir.mkdir(exist_ok=True)
             if os.name == "nt":
-                os.startfile(output_dir)  # noqa: S606
+                os.startfile(output_dir)
             else:
                 import subprocess
 

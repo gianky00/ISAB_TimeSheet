@@ -76,12 +76,16 @@ class TelegramService(QObject):
         """Ferma il servizio e attende la sua terminazione (metodo bloccante)."""
         if self._service_thread and self._service_thread.is_alive():
             icon = get_asset_path(Icons.CLOCK)
-            self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Arresto servizio Telegram in corso...")
+            self.log_signal.emit(
+                f"<img src='{icon}' width='14' height='14'> Arresto servizio Telegram in corso..."
+            )
             self.stop_event.set()
             self._service_thread.join(timeout=12)
             if self._service_thread.is_alive():
                 icon = get_asset_path(Icons.ALERT)
-                self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Timeout: il thread di Telegram non si è fermato correttamente.")
+                self.log_signal.emit(
+                    f"<img src='{icon}' width='14' height='14'> Timeout: il thread di Telegram non si è fermato correttamente."
+                )
             else:
                 self.log_signal.emit("Servizio Telegram fermato.")
 
@@ -181,14 +185,20 @@ class TelegramService(QObject):
         """Gestisce gli errori globali del bot."""
         if isinstance(context.error, telegram.error.Conflict):
             icon = get_asset_path(Icons.STATUS_DOT_RED)
-            self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> <b>CONFLITTO TELEGRAM:</b> Rilevata altra istanza attiva. Arresto servizio.")
+            self.log_signal.emit(
+                f"<img src='{icon}' width='14' height='14'> <b>CONFLITTO TELEGRAM:</b> Rilevata altra istanza attiva. Arresto servizio."
+            )
             self.stop_event.set()
         elif isinstance(context.error, telegram.error.NetworkError):
             icon = get_asset_path(Icons.ALERT)
-            self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Errore Rete Telegram: {context.error}")
+            self.log_signal.emit(
+                f"<img src='{icon}' width='14' height='14'> Errore Rete Telegram: {context.error}"
+            )
         else:
             icon = get_asset_path(Icons.X_CIRCLE)
-            self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Errore Telegram Imprevisto: {context.error}")
+            self.log_signal.emit(
+                f"<img src='{icon}' width='14' height='14'> Errore Telegram Imprevisto: {context.error}"
+            )
 
     async def _check_auth(self, update: object) -> bool:
         """Helper per verificare l'autenticazione (usato anche internamente)."""
@@ -267,7 +277,9 @@ class TelegramService(QObject):
             )
         except Exception as e:
             icon = get_asset_path(Icons.X_CIRCLE)
-            self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Fallito invio messaggio a Telegram: {e}")
+            self.log_signal.emit(
+                f"<img src='{icon}' width='14' height='14'> Fallito invio messaggio a Telegram: {e}"
+            )
 
     async def _send_photo_async(self, chat_id: str | int, photo_bytes: bytes, caption: str) -> None:
         try:
@@ -285,7 +297,9 @@ class TelegramService(QObject):
             )
         except Exception as e:
             icon = get_asset_path(Icons.X_CIRCLE)
-            self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Fallito invio foto a Telegram: {e}")
+            self.log_signal.emit(
+                f"<img src='{icon}' width='14' height='14'> Fallito invio foto a Telegram: {e}"
+            )
 
     async def _send_document_async(self, chat_id: str | int, file_path: str, caption: str) -> None:
         try:
@@ -304,4 +318,6 @@ class TelegramService(QObject):
                 )
         except Exception as e:
             icon = get_asset_path(Icons.X_CIRCLE)
-            self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Fallito invio documento a Telegram: {e}")
+            self.log_signal.emit(
+                f"<img src='{icon}' width='14' height='14'> Fallito invio documento a Telegram: {e}"
+            )

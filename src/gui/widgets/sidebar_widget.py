@@ -268,7 +268,7 @@ class SidebarWidget(QFrame):
         # Pulsante Apri Palette (sotto header)
         self.btn_palette = SidebarButton("Apri Palette", get_asset_path(Icons.COMMAND_PALETTE))
         self.btn_palette.setToolTip("Apri Command Palette (Ctrl+K)")
-        self.btn_palette.clicked.connect(lambda: self._on_palette_click())
+        self.btn_palette.clicked.connect(self._on_palette_click)
         layout.addWidget(self.btn_palette)
 
         layout.addSpacing(10)

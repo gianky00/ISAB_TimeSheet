@@ -191,7 +191,7 @@ class ServiceController(QObject):
                         norm_key = (normalize(cog), normalize(nom))
                         norm_cf = cf.strip().upper() if cf and cf.strip() else None
                         with suppress(Exception):
-                            date_part = str(d_str).split(" ")[0]
+                            date_part = d_str.split(" ")[0]
                             d_dt = None
                             for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
                                 try:

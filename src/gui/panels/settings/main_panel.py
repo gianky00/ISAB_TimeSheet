@@ -125,7 +125,6 @@ class SettingsPanel(QWidget):
             self.settings_saved.emit()
 
             # Optional: Show unobtrusive toast?
-            # ToastManager.instance().show("Salvataggio automatico...", "info", 1000)
 
         except Exception as e:
             print(f"Errore salvataggio impostazioni: {e}")

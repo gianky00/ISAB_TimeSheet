@@ -101,7 +101,7 @@ class ResourceMonitor(QWidget):
         # Update CPU
         try:
             current_proc = self._get_cpu_time()
-            current_time = float(time.time())
+            current_time = time.time()
 
             if self.last_time > 0:
                 delta_proc = current_proc - self.last_proc_time

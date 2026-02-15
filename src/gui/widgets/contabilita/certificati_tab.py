@@ -446,7 +446,7 @@ $xl.Quit()
                     )
                 except Exception:
                     # Fallback: apri il file
-                    os.startfile(temp_path)  # noqa: S606
+                    os.startfile(temp_path)
                     QMessageBox.information(
                         self,
                         "Screenshot salvato",
@@ -455,7 +455,7 @@ $xl.Quit()
                     )
             else:
                 # Apri il file direttamente
-                os.startfile(temp_path)  # noqa: S606
+                os.startfile(temp_path)
                 QMessageBox.information(
                     self,
                     "Screenshot salvato",
@@ -740,7 +740,7 @@ class CertificatiCampioneTab(QWidget):
         text = str(parent_item.text(0))
         parts = text.split("  •  ")
         if parts:
-            return str(parts[0].strip())
+            return parts[0].strip()
         return ""
 
     def _update_excluded_count_label(self):
@@ -1149,7 +1149,7 @@ class CertificatiCampioneTab(QWidget):
                 break
 
         if found_path:
-            os.startfile(found_path)  # noqa: S606
+            os.startfile(found_path)
         else:
             QMessageBox.warning(
                 self,
@@ -1185,7 +1185,6 @@ class CertificatiCampioneTab(QWidget):
             days = user_data.get("days") if user_data else None
 
             # Estrai altri dati dal testo del nodo padre
-            # Formato: "matricola  •  costruttore  •  modello  •  [range  •]  days_text"
             parts = parent.text(0).split("  •  ")
 
             costruttore = parts[1].strip() if len(parts) > 1 else "N/D"

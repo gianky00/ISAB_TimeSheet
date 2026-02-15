@@ -14,7 +14,7 @@ def friendly_time_delta(dt: datetime) -> str:
     diff = now - dt
 
     if diff.days > 0:
-        return str(dt.strftime("%d/%m"))
+        return dt.strftime("%d/%m")
 
     seconds = diff.total_seconds()
     if seconds < 60:
@@ -81,7 +81,7 @@ class SmartLogTranslator:
         category = SmartLogTranslator._detect_category(message)
 
         if category in SmartLogTranslator.TEMPLATES:
-            human_msg = random.choice(SmartLogTranslator.TEMPLATES[category])  # noqa: S311
+            human_msg = random.choice(SmartLogTranslator.TEMPLATES[category])
         else:
             human_msg = message
 

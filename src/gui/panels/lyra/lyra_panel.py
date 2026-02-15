@@ -207,6 +207,6 @@ class LyraPanel(QWidget):
             filename, _ = QFileDialog.getSaveFileName(self, "Salva Excel", "analisi.xlsx", "Excel (*.xlsx)")
             if filename:
                 df.to_excel(filename, index=False)
-                os.startfile(filename)  # noqa: S606
+                os.startfile(filename)
         except Exception as e:
             QMessageBox.warning(self, "Errore", str(e))

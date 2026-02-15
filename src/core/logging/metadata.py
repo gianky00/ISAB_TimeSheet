@@ -101,7 +101,6 @@ class MetadataEnricher:
         if getattr(sys, "frozen", False):
             return "production"
 
-        # Default: development
         return "development"
 
     def get_static_metadata(self) -> dict[str, Any]:

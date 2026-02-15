@@ -406,8 +406,6 @@ class ScaricoOrePanel(QWidget):
     def _on_stop(self):
         """Gestisce lo stop del bot."""
         if self.worker:
-            if self.worker is None:
-                raise RuntimeError("Worker unexpectedly became None")
             self.worker.stop()
             self.status_label.setText("Arresto richiesto...")
 

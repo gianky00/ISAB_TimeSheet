@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+
 """
 SyncroJob - Zero-Lag Startup Architecture
 Animazioni fluide a 60fps garantite tramite thread separato per il caricamento.

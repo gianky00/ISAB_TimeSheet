@@ -148,7 +148,7 @@ class QuickActionsConfigDialog(QDialog):
                 return items_map[path_tuple]
 
             # Create it
-            if len(path_tuple) == 0:
+            if not path_tuple:
                 root = self.tree.invisibleRootItem()
                 if root is None:
                     # Should not happen

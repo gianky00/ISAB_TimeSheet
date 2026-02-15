@@ -161,7 +161,6 @@ class FastTableModel(QAbstractTableModel):
             # Restituisce una tupla (prioritÃ , valore)
             # PrioritÃ : 0 = None/Vuoto, 1 = Numeri/Date, 2 = Stringhe
             def sort_key(row_tuple: tuple[list[Any], Any]) -> tuple[int, Any]:
-                # row_tuple is (data_row, metadata_row)
                 row_data = row_tuple[0]
                 val = row_data[column]
 

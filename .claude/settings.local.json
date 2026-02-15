@@ -71,7 +71,9 @@
       "Bash(where:*)",
       "Bash(pre-commit install:*)",
       "Bash(cargo --version:*)",
-      "Bash(git -C \"C:\\\\Users\\\\gianc\\\\Desktop\\\\SCRIPT\\\\ISAB_TimeSheet\" diff)"
+      "Bash(git -C \"C:\\\\Users\\\\gianc\\\\Desktop\\\\SCRIPT\\\\ISAB_TimeSheet\" diff)",
+      "Bash(sort:*)",
+      "Bash(git reset:*)"
     ]
   }
 }

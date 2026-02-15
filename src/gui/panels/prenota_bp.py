@@ -108,7 +108,7 @@ class PrenotaBPPanel(BaseBotPanel):
             self._save_data()
 
     def _on_start(self, params_override: dict[str, Any] | None = None):
-        """Override: Prepara e avvia il worker specifico."""
+        """Override: Prepara e avvia le worker specifico."""
         super()._on_start(params_override)  # Call base to handle logs/status logic
 
         # Validazione form

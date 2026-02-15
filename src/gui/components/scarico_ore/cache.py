@@ -46,8 +46,8 @@ class CacheWorker(QThread):
 
             try:
                 self.progress.emit("Caricamento cache...")
-                with open(self.cache_path, "rb") as f:
-                    loaded = pickle.load(f)  # noqa: S301 # nosec B301
+                with self.cache_path.open("rb") as f:
+                    loaded = pickle.load(f)  # nosec B301
                     if len(loaded) == 3:
                         raw_data = loaded[0]
                         (
@@ -194,7 +194,7 @@ class CacheWorker(QThread):
     ) -> None:
         try:
             self.cache_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.cache_path, "wb") as f:
+            with self.cache_path.open("wb") as f:
                 pickle.dump((data, search, totals, style_cache, date_keys), f)  # nosec B403
         except Exception as e:
             print(f"Error saving cache: {e}")

@@ -35,16 +35,16 @@ class Particle:
         self.w: int = w
         self.h: int = h
         self.reset(w, h)
-        self.y = float(random.uniform(0, h))  # noqa: S311 # Posizione iniziale casuale
+        self.y = random.uniform(0, h)  # Posizione iniziale casuale
 
     def reset(self, w: int, h: int) -> None:
         """Reset particle to bottom with random properties."""
-        self.x = float(random.uniform(0, w))  # noqa: S311
+        self.x = random.uniform(0, w)
         self.y = float(h + 10)
-        self.size = float(random.uniform(1.5, 3.5))  # noqa: S311
-        self.speed = float(random.uniform(0.3, 0.8))  # noqa: S311
-        self.opacity = float(random.uniform(0.2, 0.5))  # noqa: S311
-        self.phase = float(random.uniform(0, math.pi * 2))  # noqa: S311
+        self.size = random.uniform(1.5, 3.5)
+        self.speed = random.uniform(0.3, 0.8)
+        self.opacity = random.uniform(0.2, 0.5)
+        self.phase = random.uniform(0, math.pi * 2)
         self.w, self.h = w, h
 
     def update(self) -> None:
@@ -68,7 +68,7 @@ class Particle:
 
     def get_opacity(self) -> float:
         """Calculate current opacity with pulsing effect."""
-        return float(self.opacity * (0.6 + 0.4 * math.sin(self.phase * 2)))
+        return self.opacity * (0.6 + 0.4 * math.sin(self.phase * 2))
 
 
 class ParticleBackground(QWidget):

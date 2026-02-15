@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QSplitter,
     QTableView,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -35,6 +36,7 @@ from src.gui.widgets.toast import ToastManager
 from .pdl_delegate import PDLDelegate
 from .pdl_detail_view import PDLDetailView
 from .pdl_filter_widget import PDLFilterWidget
+from .programmazione_tab import ProgrammazioneTab
 
 
 class PDLDBPanel(QWidget):
@@ -108,9 +110,17 @@ class PDLDBPanel(QWidget):
         QTimer.singleShot(200, self._update_units)
 
     def _setup_ui(self):
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(10, 0, 10, 10)
-        main_layout.setSpacing(5)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.tabs = QTabWidget()
+        self.tabs.setProperty("class", "Level2Tabs")
+
+        # --- TAB 1: DATABASE PDL ---
+        self.db_tab = QWidget()
+        db_layout = QVBoxLayout(self.db_tab)
+        db_layout.setContentsMargins(10, 10, 10, 10)
+        db_layout.setSpacing(5)
 
         # 1. Filtri
         self.filters = PDLFilterWidget()
@@ -122,7 +132,7 @@ class PDLDBPanel(QWidget):
         self.filters.export_clicked.connect(self._export_to_excel)
         self.filters.search_input.textChanged.connect(lambda: self.search_timer.start(500))
 
-        main_layout.addWidget(self.filters)
+        db_layout.addWidget(self.filters)
 
         # 2. Contenitore Splitter (Tabella | Dettaglio)
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -157,7 +167,16 @@ class PDLDBPanel(QWidget):
         self.splitter.setStretchFactor(0, 3)
         self.splitter.setStretchFactor(1, 1)
 
-        main_layout.addWidget(self.splitter)
+        db_layout.addWidget(self.splitter)
+
+        # --- TAB 2: PROGRAMMAZIONE ---
+        self.prog_tab = ProgrammazioneTab()
+
+        # Aggiunta Tab
+        self.tabs.addTab(self.db_tab, "Database PDL")
+        self.tabs.addTab(self.prog_tab, "Programmazione")
+
+        layout.addWidget(self.tabs)
 
     def _on_update_bot_clicked(self):
         """Avvia il bot Ricerca PDL per aggiornare i dati."""
@@ -222,6 +241,10 @@ class PDLDBPanel(QWidget):
         if success:
             ToastManager.instance().show("PDL Aggiornati!", "success")
             self.refresh_data()
+
+            # Aggiorna anche i richiedenti nel tab programmazione
+            if hasattr(self, "prog_tab"):
+                self.prog_tab._load_requesters()
 
             # Notifica pannello caricamento se esiste
             win = self.window()
@@ -589,7 +612,7 @@ class PDLDBPanel(QWidget):
                 if not filename.endswith(".xlsx"):
                     filename += ".xlsx"
                 df.to_excel(filename, index=False, engine="openpyxl")
-                os.startfile(filename)  # noqa: S606
+                os.startfile(filename)
 
         except Exception as e:
             print(f"Errore Export Excel: {e}")
