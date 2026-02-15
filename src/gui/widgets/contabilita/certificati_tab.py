@@ -67,8 +67,7 @@ class ScadenzeAnalysisDialog(QDialog):
         layout.setSpacing(0)
 
         # === HEADER ===
-        self.header = QFrame()
-        header = self.header
+        header = self.header = QFrame()
         header.setStyleSheet(
             """
             QFrame {
@@ -101,8 +100,7 @@ class ScadenzeAnalysisDialog(QDialog):
         layout.addWidget(header)
 
         # === STATISTICHE ===
-        self.stats_frame = QFrame()
-        stats_frame = self.stats_frame
+        stats_frame = self.stats_frame = QFrame()
         stats_frame.setStyleSheet(
             """
             QFrame {
@@ -145,8 +143,7 @@ class ScadenzeAnalysisDialog(QDialog):
             """
         )
 
-        self.content_widget = QWidget()
-        content = self.content_widget
+        content = self.content_widget = QWidget()
         content_layout = QVBoxLayout(content)
         content_layout.setContentsMargins(30, 20, 30, 20)
         content_layout.setSpacing(20)
@@ -182,8 +179,7 @@ class ScadenzeAnalysisDialog(QDialog):
         layout.addWidget(scroll)
 
         # === FOOTER ===
-        self.footer = QFrame()
-        footer = self.footer
+        footer = self.footer = QFrame()
         footer.setStyleSheet(
             """
             QFrame {
@@ -737,9 +733,7 @@ class CertificatiCampioneTab(QWidget):
     def _extract_matricola_from_parent(self, parent_item) -> str:
         """Estrae la matricola dal testo del nodo padre."""
         # Il formato è: "matricola  •  costruttore  •  modello  •  days_text"
-        text = str(parent_item.text(0))
-        parts = text.split("  •  ")
-        if parts:
+        if parts := str(parent_item.text(0)).split("  •  "):
             return parts[0].strip()
         return ""
 

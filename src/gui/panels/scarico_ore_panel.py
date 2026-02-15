@@ -422,7 +422,7 @@ class ScaricoOrePanel(QWidget):
             if col in self._current_col_filters:
                 del self._current_col_filters[col]
         else:
-            self._current_col_filters[col] = {str(v).lower() for v in values}
+            self._current_col_filters[col] = {v.lower() for v in values}
 
         # Re-apply filters
         text = self.search_input.text()
@@ -444,7 +444,7 @@ class ScaricoOrePanel(QWidget):
 
     def _on_loading_progress(self, msg: str):
         """Aggiorna la label di stato con i messaggi di progresso del worker."""
-        self.status_label.setText(str(msg))
+        self.status_label.setText(msg)
         QApplication.processEvents()
 
     def _on_cache_loaded(self):
