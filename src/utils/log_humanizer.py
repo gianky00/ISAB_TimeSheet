@@ -81,7 +81,7 @@ class SmartLogTranslator:
         category = SmartLogTranslator._detect_category(message)
 
         if category in SmartLogTranslator.TEMPLATES:
-            human_msg = random.choice(SmartLogTranslator.TEMPLATES[category])
+            human_msg = random.choice(SmartLogTranslator.TEMPLATES[category])  # noqa: S311
         else:
             human_msg = message
 

@@ -141,7 +141,7 @@ def open_folder(path: str) -> bool:
 
     try:
         if is_windows():
-            os.startfile(str(path_obj))
+            os.startfile(str(path_obj))  # noqa: S606
         elif sys.platform == "darwin":
             subprocess.run(["open", str(path_obj)], check=False)
         else:

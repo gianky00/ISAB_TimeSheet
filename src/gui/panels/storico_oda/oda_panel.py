@@ -458,6 +458,6 @@ class StoricoOdaPanel(QWidget):
             ToastManager.instance().show("Esportazione completata!", "success")
             import os
 
-            os.startfile(filename)
+            os.startfile(filename)  # noqa: S606
         except Exception as e:
             QMessageBox.critical(self, "Errore Export", f"Impossibile esportare: {e}")

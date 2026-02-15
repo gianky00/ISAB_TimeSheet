@@ -138,7 +138,7 @@ def print_pdf(file_path: str, printer_name: str) -> bool:
         logger.error(f"Errore critico stampa: {e}")
         # Fallback disperato
         try:
-            os.startfile(file_path, "print")
+            os.startfile(file_path, "print")  # noqa: S606
             return True
         except Exception:
             return False
