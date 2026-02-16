@@ -729,7 +729,22 @@ class ProgrammazioneTab(QWidget):
                 table.setItem(row_idx, 0, QTableWidgetItem(res["richiedente"]))
                 table.setItem(row_idx, 1, QTableWidgetItem(res.get("area", "")))
                 table.setItem(row_idx, 2, QTableWidgetItem(res.get("unita", "")))
-                table.setItem(row_idx, 3, QTableWidgetItem(res["pdl"]))
+                
+                # Cella PDL con Tooltip Cronologia
+                pdl_item = QTableWidgetItem(res["pdl"])
+                pdl_item.setData(Qt.ItemDataRole.UserRole, res["pdl"])
+                
+                # Recupero al volo degli ultimi 3 interventi per il tooltip
+                invs = PDLQueries.get_pdl_interventions(res["pdl"])[:3]
+                if invs:
+                    tip = "<b>Ultimi Interventi:</b><br>"
+                    for i in invs:
+                        tip += f"• {i['data']} - {i['tecnico']} ({i['ore_lavoro']}h)<br>"
+                    pdl_item.setToolTip(tip)
+                else:
+                    pdl_item.setToolTip("Nessun intervento registrato nello schedario.")
+                
+                table.setItem(row_idx, 3, pdl_item)
                 table.setItem(row_idx, 4, QTableWidgetItem(res.get("descrizione", "")))
 
                 prog_list = res["programmazione"]

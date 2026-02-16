@@ -407,7 +407,13 @@ class PDLDBPanel(QWidget):
 
         row_idx = indexes[0].row()
         if row_idx < len(self._raw_full_data):
-            self.detail_view.update_details(self._raw_full_data[row_idx])
+            full_data = self._raw_full_data[row_idx]
+            n_pdl = str(full_data[1])  # N° PDL è all'indice 1
+            
+            # Recupera interventi dallo schedario esterno
+            interventions = PDLQueries.get_pdl_interventions(n_pdl)
+            
+            self.detail_view.update_details(full_data, interventions)
 
     def _on_header_clicked(self, logical_index):
         """Gestisce il toggle dell'ordinamento."""

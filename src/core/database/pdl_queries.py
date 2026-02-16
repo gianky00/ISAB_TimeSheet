@@ -174,3 +174,64 @@ class PDLQueries:
         except Exception as e:
             logger.error(f"Errore recupero programmazione: {e}")
             return []
+
+    @classmethod
+    def get_pdl_interventions(cls, n_pdl: str) -> list[dict[str, Any]]:
+        """
+        Recupera la cronologia degli interventi per un determinato PDL
+        dal database esterno schedario.db.
+        """
+        ext_db_path = "C:/Users/Coemi/Desktop/SCRIPT/report-attivita-app/schedario.db"
+        if not Path(ext_db_path).exists():
+            logger.warning(f"Database esterno non trovato: {ext_db_path}")
+            return []
+
+        query = """
+            SELECT 
+                'Report (Validato)' as fonte,
+                data_riferimento_attivita as data,
+                nome || ' ' || cognome as tecnico,
+                team,
+                ore_lavoro,
+                testo_report as descrizione
+            FROM report_interventi
+            WHERE pdl = ?
+            
+            UNION ALL
+            
+            SELECT 
+                'Report (In Attesa)' as fonte,
+                data_riferimento_attivita as data,
+                nome || ' ' || cognome as tecnico,
+                team,
+                ore_lavoro,
+                testo_report as descrizione
+            FROM report_da_validare
+            WHERE pdl = ?
+            
+            UNION ALL
+            
+            SELECT 
+                'Relazione' as fonte,
+                data_intervento as data,
+                nome_compilatore || ' ' || cognome_compilatore as tecnico,
+                team,
+                ore_lavoro,
+                corpo_relazione as descrizione
+            FROM relazioni
+            WHERE pdl = ?
+            
+            ORDER BY data DESC
+        """
+
+        try:
+            with sqlite3.connect(f"file:{ext_db_path}?mode=ro", uri=True) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute(query, (n_pdl, n_pdl, n_pdl))
+                rows = cursor.fetchall()
+
+            return [dict(r) for r in rows]
+        except Exception as e:
+            logger.error(f"Errore recupero cronologia interventi per PDL {n_pdl}: {e}")
+            return []
