@@ -107,16 +107,16 @@ QTableWidget, QTableView {
 }
 
 QTableWidget::item, QTableView::item {
-    padding: 10px 12px;
+    padding: 6px 8px;
     border-bottom: 1px solid #F5F5F5;
 }
 
 /* Clear Selection: Visible background + Solid Border */
 QTableWidget::item:selected, QTableView::item:selected {
-    background-color: #00968850; /* Matches selection-background-color */
-    color: #212121;
-    border: 1px solid #009688; /* Full border to clearly mark selection */
-    border-left: 4px solid #009688; /* Thicker left accent */
+    background-color: #E0F2F1; /* Very Light Teal */
+    color: #000000;
+    border: none;
+    border-left: 3px solid #009688; /* Elegant accent */
 }
 
 /* Indicator for focused selection */

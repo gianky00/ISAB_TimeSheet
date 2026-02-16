@@ -787,17 +787,12 @@ class ProgrammazioneTab(QWidget):
             table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
             table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
 
-            # Connetti click
-            table.cellClicked.connect(self._toggle_row_expansion)
+            # Connetti click (Doppio click per espandere, singolo per selezionare)
+            table.cellDoubleClicked.connect(self._toggle_row_expansion)
 
             # Padding 0 e Margini 0 per permettere al widget di toccare i bordi cella
-            table.setStyleSheet(
-                """
-                QTableWidget { border: none; background-color: white; }
-                QTableWidget::item { padding: 0px; margin: 0px; }
-                QTableWidget::item:selected { background-color: #e7f1ff; color: #000000; }
-            """
-            )
+            # Stile minimale per integrarsi con il GroupBox
+            table.setStyleSheet("QTableWidget { border: none; background-color: white; }")
             v_header = table.verticalHeader()
             if v_header is not None:
                 v_header.setVisible(False)
