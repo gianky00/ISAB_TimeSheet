@@ -157,15 +157,21 @@ class ApexAudit:
                 for key in [
                     r"HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon",
                     r"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Google Chrome",
-                    r"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Google Chrome"
+                    r"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Google Chrome",
                 ]:
-                    res = subprocess.run(["reg", "query", key, "/v", "version"], capture_output=True, text=True, check=False)
-                    match = re.search(r"(?:version|DisplayVersion)\s+REG_SZ\s+([\d\.]+)", res.stdout, re.IGNORECASE)
+                    res = subprocess.run(
+                        ["reg", "query", key, "/v", "version"], capture_output=True, text=True, check=False
+                    )
+                    match = re.search(
+                        r"(?:version|DisplayVersion)\s+REG_SZ\s+([\d\.]+)", res.stdout, re.IGNORECASE
+                    )
                     if match:
                         c_ver = match.group(1)
                         break
             else:
-                res = subprocess.run(["google-chrome", "--version"], capture_output=True, text=True, check=False)
+                res = subprocess.run(
+                    ["google-chrome", "--version"], capture_output=True, text=True, check=False
+                )
                 if res.returncode == 0:
                     match = re.search(r"([\d\.]+)", res.stdout)
                     if match:
@@ -180,7 +186,7 @@ class ApexAudit:
                     if d_match:
                         d_ver = d_match.group(1)
 
-            status = (c_ver != "N/A")
+            status = c_ver != "N/A"
             msg = f"Chrome:{c_ver} Driver:{d_ver}"
             if d_ver == "N/A":
                 msg += " (Driver missing)"
@@ -328,12 +334,18 @@ class ApexAudit:
             ("Deps (Deptry)", cmd("deptry", [get_bin("deptry"), "."]), "deptry", False),
             (
                 "Vulnerabilities",
-                cmd("pip_audit", [
-                    get_bin("pip-audit"),
-                    "--desc", "off",
-                    "--ignore-vuln", "CVE-2025-69872",  # diskcache: no fix version yet
-                    "--ignore-vuln", "PYSEC-2022-42969" # py: legacy dev dependency
-                ]),
+                cmd(
+                    "pip_audit",
+                    [
+                        get_bin("pip-audit"),
+                        "--desc",
+                        "off",
+                        "--ignore-vuln",
+                        "CVE-2025-69872",  # diskcache: no fix version yet
+                        "--ignore-vuln",
+                        "PYSEC-2022-42969",  # py: legacy dev dependency
+                    ],
+                ),
                 "pip_audit",
                 False,
             ),
@@ -416,9 +428,7 @@ class ApexAudit:
             if self.fast:
                 excluded.append("pytest")
 
-            selected_checks = [
-                c for c in all_checks if c[2] not in excluded
-            ]
+            selected_checks = [c for c in all_checks if c[2] not in excluded]
 
         if not selected_checks and self.target:
             console.print(f"[bold red][X] Nessun check trovato per target: {self.target}[/bold red]")

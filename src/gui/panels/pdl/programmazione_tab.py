@@ -479,6 +479,16 @@ class ProgrammazioneTab(QWidget):
                     is_visible = show_all or req_item.text() in selected_reqs
                     table.setRowHidden(row, not is_visible)
 
+            # Gestione righe espanse: se nascondo una riga padre, nascondo anche la figlia
+            for row in range(table.rowCount()):
+                if table.isRowHidden(row) and row + 1 < table.rowCount():
+                    # Se la riga successiva è un'espansione, nascondila
+                    widget = table.cellWidget(row + 1, 0)
+                    from src.gui.widgets.pdl_timeline import PDLTimelineWidget
+
+                    if isinstance(widget, PDLTimelineWidget):
+                        table.setRowHidden(row + 1, True)
+
         self._refresh_tables_visibility()
 
     def _on_day_filter_changed(self, choice: str):
@@ -507,6 +517,13 @@ class ProgrammazioneTab(QWidget):
 
             # 2. Gestione Righe (Solo se un giorno è selezionato)
             for row in range(table.rowCount()):
+                # Salta le righe di espansione (Timeline)
+                widget_0 = table.cellWidget(row, 0)
+                from src.gui.widgets.pdl_timeline import PDLTimelineWidget
+
+                if isinstance(widget_0, PDLTimelineWidget):
+                    continue
+
                 if target_idx == -1:
                     # Ripristina visibilità righe (il filtro 'Mostra' verrà riapplicato dopo)
                     table.setRowHidden(row, False)
@@ -528,23 +545,26 @@ class ProgrammazioneTab(QWidget):
 
     def _refresh_tables_visibility(self):
         """Aggiorna la visibilità dei QGroupBox e l'altezza delle tabelle in base alle righe visibili."""
-        header_h = 45
-        row_h = 42
+        # header_h = 45 # Header nascosti
+        header_h = 25  # Margine headers
 
         for table in self.tables:
             visible_rows = 0
+            total_height = header_h
+
             for row in range(table.rowCount()):
                 if not table.isRowHidden(row):
                     visible_rows += 1
+                    total_height += table.rowHeight(row)
 
             # Nascondi il GroupBox se non ci sono righe visibili
             group_box = table.parentWidget()
             if isinstance(group_box, QGroupBox):
                 group_box.setVisible(visible_rows > 0)
 
-            # Compatta l'altezza della tabella (Header + Righe Visibili + Margine)
+            # Compatta l'altezza della tabella
             if visible_rows > 0:
-                new_height = header_h + (visible_rows * row_h) + 15
+                new_height = total_height + 20  # Padding extra
                 table.setMinimumHeight(new_height)
                 table.setMaximumHeight(new_height)
             else:
@@ -560,6 +580,69 @@ class ProgrammazioneTab(QWidget):
         config_manager.set_config_value("programming_group_mode", mode)
         if self.last_results:
             self._update_table(self.last_results)
+
+    def _toggle_row_expansion(self, row: int, column: int):
+        """Gestisce l'espansione/collasso della riga per mostrare la timeline."""
+        sender_table = self.sender()
+        if not isinstance(sender_table, QTableWidget):
+            return
+
+        # Ignora click sulle righe già espanse (Timeline)
+        widget = sender_table.cellWidget(row, 0)
+        from src.gui.widgets.pdl_timeline import PDLTimelineWidget
+
+        if isinstance(widget, PDLTimelineWidget):
+            return
+
+        # Verifica se la riga successiva è già un'espansione di QUESTA riga
+        # Usiamo un UserRole sulla riga successiva per tracciarlo?
+        # Più semplice: controlliamo se la riga sotto è una TimelineWidget
+
+        next_row = row + 1
+        is_expanded = False
+        if next_row < sender_table.rowCount():
+            next_widget = sender_table.cellWidget(next_row, 0)
+            if isinstance(next_widget, PDLTimelineWidget):
+                is_expanded = True
+
+        # Se espansa, chiudi
+        if is_expanded:
+            sender_table.removeRow(next_row)
+            # Ripristina altezza riga originale (opzionale, già standard)
+        else:
+            # Apri espansione
+            # 1. Recupera PDL
+            pdl_item = sender_table.item(row, 3)
+            if not pdl_item:
+                return
+
+            pdl_code = pdl_item.text()
+
+            # 2. Inserisci riga sotto
+            sender_table.insertRow(next_row)
+
+            # 3. Recupera dati interveti
+            try:
+                interventions = PDLQueries.get_pdl_interventions(pdl_code)
+            except Exception as e:
+                logger.error(f"Errore recupero timeline PDL {pdl_code}: {e}")
+                interventions = []
+
+            # 4. Crea Widget Timeline
+            timeline = PDLTimelineWidget(interventions)
+
+            # 5. Imposta widget che spanna tutte le colonne
+            # Nota: setCellWidget funziona su una cella. Dobbiamo fare span.
+            sender_table.setSpan(next_row, 0, 1, sender_table.columnCount())
+            sender_table.setCellWidget(next_row, 0, timeline)
+
+            # 6. Adatta altezza riga al contenuto
+            sender_table.setRowHeight(next_row, timeline.sizeHint().height())
+
+            # Connetti resize event del widget per aggiornare altezza riga se cambia?
+            # Per ora fix height
+
+        self._refresh_tables_visibility()
 
     def _on_run_clicked(self):
         selected_reqs = self.req_filter.selected
@@ -659,6 +742,7 @@ class ProgrammazioneTab(QWidget):
         self.view_filter.set_items(available_reqs)
 
         group_mode = self.group_selector.currentText()
+        row_h = 42
 
         # Raggruppamento dati
         grouped_data: dict[str, list[dict[str, Any]]] = {}
@@ -698,17 +782,26 @@ class ProgrammazioneTab(QWidget):
             table.setColumnCount(12)
             table.setAlternatingRowColors(True)
             table.setRowCount(len(group_results))
+            # Disabilita editing per permettere click su riga
+            table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+            table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+            table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+
+            # Connetti click
+            table.cellClicked.connect(self._toggle_row_expansion)
+
             # Padding 0 e Margini 0 per permettere al widget di toccare i bordi cella
             table.setStyleSheet(
                 """
                 QTableWidget { border: none; background-color: white; }
                 QTableWidget::item { padding: 0px; margin: 0px; }
+                QTableWidget::item:selected { background-color: #e7f1ff; color: #000000; }
             """
             )
             v_header = table.verticalHeader()
             if v_header is not None:
                 v_header.setVisible(False)
-                v_header.setDefaultSectionSize(42)
+                v_header.setDefaultSectionSize(row_h)  # Use standard row height
 
             h_header = table.horizontalHeader()
             if h_header is not None:
@@ -729,22 +822,13 @@ class ProgrammazioneTab(QWidget):
                 table.setItem(row_idx, 0, QTableWidgetItem(res["richiedente"]))
                 table.setItem(row_idx, 1, QTableWidgetItem(res.get("area", "")))
                 table.setItem(row_idx, 2, QTableWidgetItem(res.get("unita", "")))
-                
-                # Cella PDL con Tooltip Cronologia
+
+                # Cella PDL
                 pdl_item = QTableWidgetItem(res["pdl"])
                 pdl_item.setData(Qt.ItemDataRole.UserRole, res["pdl"])
-                
-                # Recupero al volo degli ultimi 3 interventi per il tooltip
-                invs = PDLQueries.get_pdl_interventions(res["pdl"])[:3]
-                if invs:
-                    tip = "<b>Ultimi Interventi:</b><br>"
-                    for i in invs:
-                        tip += f"• {i['data']} - {i['tecnico']} ({i['ore_lavoro']}h)<br>"
-                    pdl_item.setToolTip(tip)
-                else:
-                    pdl_item.setToolTip("Nessun intervento registrato nello schedario.")
-                
+                pdl_item.setToolTip("Clicca per vedere la cronologia interventi")
                 table.setItem(row_idx, 3, pdl_item)
+
                 table.setItem(row_idx, 4, QTableWidgetItem(res.get("descrizione", "")))
 
                 prog_list = res["programmazione"]

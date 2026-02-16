@@ -5,6 +5,7 @@ Query SQL centralizzate per il database PDL.
 
 import logging
 import sqlite3
+from pathlib import Path
 from typing import Any
 
 from src.core.database import db_manager
@@ -181,46 +182,58 @@ class PDLQueries:
         Recupera la cronologia degli interventi per un determinato PDL
         dal database esterno schedario.db.
         """
-        ext_db_path = "C:/Users/Coemi/Desktop/SCRIPT/report-attivita-app/schedario.db"
-        if not Path(ext_db_path).exists():
-            logger.warning(f"Database esterno non trovato: {ext_db_path}")
-            return []
+        from src.core import config_manager
+
+        config = config_manager.load_config()
+        # Path di default storico
+        default_path = "C:/Users/Coemi/Desktop/SCRIPT/report-attivita-app/schedario.db"
+        ext_db_path = config.get("activity_db_path", default_path)
+
+        if not ext_db_path or not Path(ext_db_path).exists():
+            # Fallback/Retry logic or just logging
+            if ext_db_path != default_path and Path(default_path).exists():
+                logger.warning(f"DB configurato non trovato ({ext_db_path}). Tento default: {default_path}")
+                ext_db_path = default_path
+
+            if not Path(ext_db_path).exists():
+                logger.warning(f"Database esterno non trovato: {ext_db_path}")
+                return []
 
         query = """
-            SELECT 
+            SELECT
                 'Report (Validato)' as fonte,
                 data_riferimento_attivita as data,
-                nome || ' ' || cognome as tecnico,
-                team,
-                ore_lavoro,
+                nome_tecnico as tecnico,
+                '' as team,
+                '' as ore_lavoro,
                 testo_report as descrizione
             FROM report_interventi
             WHERE pdl = ?
-            
+
             UNION ALL
-            
-            SELECT 
+
+            SELECT
                 'Report (In Attesa)' as fonte,
                 data_riferimento_attivita as data,
-                nome || ' ' || cognome as tecnico,
-                team,
-                ore_lavoro,
+                nome_tecnico as tecnico,
+                '' as team,
+                '' as ore_lavoro,
                 testo_report as descrizione
             FROM report_da_validare
             WHERE pdl = ?
-            
+
             UNION ALL
-            
-            SELECT 
+
+            SELECT
                 'Relazione' as fonte,
                 data_intervento as data,
                 nome_compilatore || ' ' || cognome_compilatore as tecnico,
-                team,
-                ore_lavoro,
+                '' as team,
+                '' as ore_lavoro,
                 corpo_relazione as descrizione
             FROM relazioni
             WHERE pdl = ?
-            
+
             ORDER BY data DESC
         """
 

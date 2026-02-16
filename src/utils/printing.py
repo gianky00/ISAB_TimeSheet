@@ -89,6 +89,7 @@ def print_pdf(file_path: str, printer_name: str) -> bool:
 
                 # 1. Crea un NUOVO contesto di stampa per ogni pagina
                 from typing import cast
+
                 hdc = cast("Any", win32ui).CreateDC()
                 hdc.CreatePrinterDC(target_printer)
 

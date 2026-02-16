@@ -54,6 +54,10 @@ class PathsPage(QWidget):
         cont_layout.addWidget(QLabel("File Attività Programmate (Riepilogo):"))
         self.attivita_path_edit = self._create_path_row(cont_layout, self._browse_attivita)
 
+        # Database Report Attività (Schedario)
+        cont_layout.addWidget(QLabel("Database Report Attività (Schedario.db):"))
+        self.activity_db_path_edit = self._create_path_row(cont_layout, self._browse_activity_db)
+
         # Certificati Excel
         cont_layout.addWidget(QLabel("File Certificati Campione (Excel):"))
         self.certificati_path_edit = self._create_path_row(cont_layout, self._browse_certificati)
@@ -162,6 +166,11 @@ class PathsPage(QWidget):
         if p:
             self.attivita_path_edit.setText(p)
 
+    def _browse_activity_db(self) -> None:
+        p = self._browse_file("Seleziona Database Report Attività", "SQLite DB (*.db *.sqlite)")
+        if p:
+            self.activity_db_path_edit.setText(p)
+
     def _browse_certificati(self) -> None:
         p = self._browse_file("Seleziona File Certificati", "Excel Files (*.xlsx *.xlsm)")
         if p:
@@ -191,6 +200,9 @@ class PathsPage(QWidget):
         self.attivita_path_edit.setText(str(config.get("attivita_programmate_path", "")))
         self._validate_path(self.attivita_path_edit)
 
+        self.activity_db_path_edit.setText(str(config.get("activity_db_path", "")))
+        self._validate_path(self.activity_db_path_edit)
+
         self.certificati_path_edit.setText(str(config.get("certificati_campione_path", "")))
         self._validate_path(self.certificati_path_edit)
 
@@ -205,6 +217,7 @@ class PathsPage(QWidget):
         config_manager.set_config_value("enable_auto_update_contabilita", self.auto_update_check.isChecked())
         config_manager.set_config_value("giornaliere_path", self.giornaliere_path_edit.text())
         config_manager.set_config_value("attivita_programmate_path", self.attivita_path_edit.text())
+        config_manager.set_config_value("activity_db_path", self.activity_db_path_edit.text())
         config_manager.set_config_value("certificati_campione_path", self.certificati_path_edit.text())
         config_manager.set_config_value("certificati_root_path", self.certificati_root_edit.text())
         config_manager.set_config_value("dataease_db_path", self.dataease_path_edit.text())

@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QFormLayout,
     QHeaderView,
@@ -67,7 +68,7 @@ class PDLDetailView(QWidget):
         layout.addWidget(self.cron_table, 1)  # Stretch factor 1
 
     def update_details(self, data: Sequence[Any], interventions: list[dict[str, Any]] | None = None) -> None:
-        """ Aggiorna le label con i dati forniti e popola la cronologia. """
+        """Aggiorna le label con i dati forniti e popola la cronologia."""
         for i, h in enumerate(self.headers):
             if i >= len(data):
                 break
@@ -89,14 +90,14 @@ class PDLDetailView(QWidget):
             self.cron_table.setRowCount(len(interventions))
             for row_idx, inv in enumerate(interventions):
                 self.cron_table.setItem(row_idx, 0, QTableWidgetItem(inv.get("data", "")))
-                
+
                 fonte_item = QTableWidgetItem(inv.get("fonte", ""))
                 # Colora in base alla fonte per visibilità
                 if "In Attesa" in inv.get("fonte", ""):
-                    fonte_item.setForeground(QColor("#f39c12")) # Arancione
+                    fonte_item.setForeground(QColor("#f39c12"))  # Arancione
                 elif "Validato" in inv.get("fonte", ""):
-                    fonte_item.setForeground(QColor("#198754")) # Verde
-                
+                    fonte_item.setForeground(QColor("#198754"))  # Verde
+
                 self.cron_table.setItem(row_idx, 1, fonte_item)
                 self.cron_table.setItem(row_idx, 2, QTableWidgetItem(inv.get("tecnico", "")))
                 self.cron_table.setItem(row_idx, 3, QTableWidgetItem(str(inv.get("ore_lavoro", ""))))

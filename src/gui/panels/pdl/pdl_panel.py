@@ -26,7 +26,7 @@ from PyQt6.QtWidgets import (
 
 from src.bots import create_bot
 from src.core import config_manager
-from src.core.database import db_manager
+from src.core.database import db_manager, pdl_queries
 from src.core.sync_tracker import SyncTracker
 from src.gui.formatters import FastTableModel
 from src.gui.panels.base import BotWorker
@@ -409,11 +409,18 @@ class PDLDBPanel(QWidget):
         if row_idx < len(self._raw_full_data):
             full_data = self._raw_full_data[row_idx]
             n_pdl = str(full_data[1])  # N° PDL è all'indice 1
-            
+
             # Recupera interventi dallo schedario esterno
-            interventions = PDLQueries.get_pdl_interventions(n_pdl)
-            
+            try:
+                # Usa fully qualified name o alias se importato
+                interventions = pdl_queries.PDLQueries.get_pdl_interventions(n_pdl)
+            except Exception as e:
+                print(f"Errore recupero interventi PDL {n_pdl}: {e}")
+                interventions = []
+
             self.detail_view.update_details(full_data, interventions)
+        else:
+            self.detail_view.clear()
 
     def _on_header_clicked(self, logical_index):
         """Gestisce il toggle dell'ordinamento."""
