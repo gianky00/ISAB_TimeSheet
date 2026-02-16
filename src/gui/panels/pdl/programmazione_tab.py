@@ -581,6 +581,13 @@ class ProgrammazioneTab(QWidget):
         if self.last_results:
             self._update_table(self.last_results)
 
+    def _deselect_other_tables(self):
+        """Deseleziona tutte le tabelle tranne quella che ha emesso il segnale."""
+        sender_table = self.sender()
+        for t in self.tables:
+            if t is not sender_table:
+                t.clearSelection()
+
     def _toggle_row_expansion(self, row: int, column: int):
         """Gestisce l'espansione/collasso della riga per mostrare la timeline."""
         sender_table = self.sender()
@@ -789,6 +796,8 @@ class ProgrammazioneTab(QWidget):
 
             # Connetti click (Doppio click per espandere, singolo per selezionare)
             table.cellDoubleClicked.connect(self._toggle_row_expansion)
+            # Selezione esclusiva tra tabelle: click su una deseleziona le altre
+            table.cellClicked.connect(self._deselect_other_tables)
 
             # Padding 0 e Margini 0 per permettere al widget di toccare i bordi cella
             # Stile minimale per integrarsi con il GroupBox

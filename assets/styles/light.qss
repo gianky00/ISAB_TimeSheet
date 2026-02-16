@@ -101,8 +101,8 @@ QTableWidget, QTableView {
     gridline-color: #EEEEEE;
     border: 1px solid #E0E0E0;
     border-radius: 8px;
-    selection-background-color: #00968850; /* Stronger Teal (30% opacity) for visibility */
-    selection-color: #212121; /* Keep text black for readability over colors */
+    selection-background-color: #E0F2F1; /* Light Teal */
+    selection-color: #000000;
     outline: none;
 }
 
@@ -111,17 +111,16 @@ QTableWidget::item, QTableView::item {
     border-bottom: 1px solid #F5F5F5;
 }
 
-/* Clear Selection: Visible background + Solid Border */
+/* Clean Selection: Soft Teal background, no borders */
 QTableWidget::item:selected, QTableView::item:selected {
-    background-color: #E0F2F1; /* Very Light Teal */
+    background-color: #E0F2F1;
     color: #000000;
     border: none;
-    border-left: 3px solid #009688; /* Elegant accent */
 }
 
-/* Indicator for focused selection */
+/* Current cell indicator */
 QTableWidget::item:focus, QTableView::item:focus {
-    background-color: #00968860; /* Slightly darker on focus */
+    background-color: #B2DFDB; /* Slightly stronger Teal for current cell */
 }
 
 QHeaderView::section {
