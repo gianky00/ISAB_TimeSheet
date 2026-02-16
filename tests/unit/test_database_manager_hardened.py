@@ -50,7 +50,7 @@ class TestDatabaseManagerHardened:
         # 2. Tenta di scrivere tramite manager
         # Usiamo un timeout brevissimo per get_connection altrimenti attende 30s per ogni tentativo
         original_get_conn = manager.get_connection
-        
+
         def mock_get_conn(path, read_only=False, timeout=0.1):
             return original_get_conn(path, read_only=read_only, timeout=timeout)
 

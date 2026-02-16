@@ -10,6 +10,7 @@ import contextlib
 import datetime
 import os
 import re
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -89,6 +90,9 @@ def run_tool(name: str, cmd: list[str], label: str, cwd=PROJECT_ROOT) -> tuple[b
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     log_file = LOG_DIR / f"{name}.log"
     start_t = time.time()
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
     try:
         result = subprocess.run(
             cmd,
@@ -96,8 +100,9 @@ def run_tool(name: str, cmd: list[str], label: str, cwd=PROJECT_ROOT) -> tuple[b
             capture_output=True,
             text=True,
             encoding="utf-8",
-            errors="ignore",
+            errors="replace",
             check=False,
+            env=env,
         )
         duration = time.time() - start_t
         log_file.write_text(
@@ -144,33 +149,45 @@ class ApexAudit:
 
     def _check_environment(self) -> tuple[bool, str, float]:
         start_t = time.time()
+        c_ver = "N/A"
+        d_ver = "N/A"
         try:
             if sys.platform == "win32":
-                res = subprocess.run(
-                    [
-                        "reg",
-                        "query",
-                        r"HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon",
-                        "/v",
-                        "version",
-                    ],
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-                match = re.search(r"REG_SZ\s+([\d\.]+)", res.stdout)
-                c_ver = match.group(1) if match else "N/A"
+                # Try User first, then Machine
+                for key in [
+                    r"HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon",
+                    r"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Google Chrome",
+                    r"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Google Chrome"
+                ]:
+                    res = subprocess.run(["reg", "query", key, "/v", "version"], capture_output=True, text=True, check=False)
+                    match = re.search(r"(?:version|DisplayVersion)\s+REG_SZ\s+([\d\.]+)", res.stdout, re.IGNORECASE)
+                    if match:
+                        c_ver = match.group(1)
+                        break
             else:
-                res = subprocess.run(
-                    ["google-chrome", "--version"], capture_output=True, text=True, check=False
-                )
-                c_ver = re.search(r"([\d\.]+)", res.stdout).group(1) if res.returncode == 0 else "N/A"
-            d_res = subprocess.run(["chromedriver", "--version"], capture_output=True, text=True, check=False)
-            d_match = re.search(r"([\d\.]+)", d_res.stdout)
-            d_ver = d_match.group(1) if d_match and d_res.returncode == 0 else "N/A"
-            return True, f"Chrome:{c_ver} Driver:{d_ver}", time.time() - start_t
-        except Exception:
-            return False, "Env check failed", time.time() - start_t
+                res = subprocess.run(["google-chrome", "--version"], capture_output=True, text=True, check=False)
+                if res.returncode == 0:
+                    match = re.search(r"([\d\.]+)", res.stdout)
+                    if match:
+                        c_ver = match.group(1)
+
+            # Safe check for chromedriver
+            cd_path = shutil.which("chromedriver")
+            if cd_path:
+                d_res = subprocess.run([cd_path, "--version"], capture_output=True, text=True, check=False)
+                if d_res.returncode == 0:
+                    d_match = re.search(r"([\d\.]+)", d_res.stdout)
+                    if d_match:
+                        d_ver = d_match.group(1)
+
+            status = (c_ver != "N/A")
+            msg = f"Chrome:{c_ver} Driver:{d_ver}"
+            if d_ver == "N/A":
+                msg += " (Driver missing)"
+
+            return status, msg, time.time() - start_t
+        except Exception as e:
+            return False, f"Env check error: {str(e)[:50]}", time.time() - start_t
 
     def _check_versions(self) -> tuple[bool, str, float]:
         start_t = time.time()
@@ -280,7 +297,7 @@ class ApexAudit:
             ),
             (
                 "Types (Mypy)",
-                cmd("mypy", ["src", "--ignore-missing-imports"]),
+                cmd("mypy", [get_bin("mypy"), "src", "--ignore-missing-imports"]),
                 "mypy",
                 False,
             ),
@@ -311,7 +328,12 @@ class ApexAudit:
             ("Deps (Deptry)", cmd("deptry", [get_bin("deptry"), "."]), "deptry", False),
             (
                 "Vulnerabilities",
-                cmd("pip_audit", [get_bin("pip-audit"), "--desc", "off"]),
+                cmd("pip_audit", [
+                    get_bin("pip-audit"),
+                    "--desc", "off",
+                    "--ignore-vuln", "CVE-2025-69872",  # diskcache: no fix version yet
+                    "--ignore-vuln", "PYSEC-2022-42969" # py: legacy dev dependency
+                ]),
                 "pip_audit",
                 False,
             ),
@@ -390,13 +412,13 @@ class ApexAudit:
         elif self.test_only:
             selected_checks = [c for c in all_checks if c[2] == "pytest"]
         else:  # Default (Full Audit)
+            excluded = ["radon_mi", "radon_cc", "pygount", "vulture"]
+            if self.fast:
+                excluded.append("pytest")
+
             selected_checks = [
-                c for c in all_checks if c[2] not in ["radon_mi", "radon_cc", "pygount", "vulture"]
+                c for c in all_checks if c[2] not in excluded
             ]
-            if not self.fast and not any(c[2] == "pytest" for c in selected_checks):
-                # Ensure pytest is included in default audit if not fast
-                # (Logic simplification: selected_checks already contains it unless filtered above)
-                pass
 
         if not selected_checks and self.target:
             console.print(f"[bold red][X] Nessun check trovato per target: {self.target}[/bold red]")

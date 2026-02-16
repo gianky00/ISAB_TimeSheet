@@ -67,7 +67,7 @@ class ProgrammingStatusWidget(QWidget):
         try:
             path = Path(icon_path)
             if path.exists():
-                with open(path, "rb") as f:
+                with path.open("rb") as f:
                     encoded = base64.b64encode(f.read()).decode("utf-8")
                     return f"data:image/svg+xml;base64,{encoded}"
         except Exception as e:

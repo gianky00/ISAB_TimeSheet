@@ -43,6 +43,7 @@ pandera==0.28.1
 pefile==2024.8.26
 pillow==10.3.0
 platformdirs==4.5.1
+psutil==7.2.1
 pyarrow==22.0.0
 pycparser==2.23
 pydantic-core==2.41.5
