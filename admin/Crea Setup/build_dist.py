@@ -120,6 +120,36 @@ def clean_build():
                 log(f"  Error removing {folder}: {e}")
 
 
+def ensure_drivers():
+    """Ensure chromedriver is present in drivers folder."""
+    log("[BUILD] Ensuring drivers are present...")
+    drivers_dir = os.path.join(ROOT_DIR, "drivers")
+    if not os.path.exists(drivers_dir):
+        os.makedirs(drivers_dir)
+
+    # Use webdriver-manager to get the path
+    try:
+        from webdriver_manager.chrome import ChromeDriverManager
+
+        driver_path = ChromeDriverManager().install()
+        # webdriver-manager might return a path to a file inside a folder (e.g. chromedriver-win32/chromedriver.exe)
+        # or just the executable. We want the executable.
+        if not driver_path.endswith(".exe"):
+            parent = os.path.dirname(driver_path)
+            potential_exe = os.path.join(parent, "chromedriver.exe")
+            if os.path.exists(potential_exe):
+                driver_path = potential_exe
+
+        dest_path = os.path.join(drivers_dir, "chromedriver.exe")
+        shutil.copy2(driver_path, dest_path)
+        log(f"  Driver updated: {dest_path}")
+    except Exception as e:
+        log(f"  [WARNING] Could not automatically update driver: {e}")
+        if not os.path.exists(os.path.join(drivers_dir, "chromedriver.exe")):
+            log("  [ERROR] Driver missing and auto-download failed!")
+            sys.exit(1)
+
+
 def run_pyarmor():
     """Obfuscate scripts using PyArmor."""
     log("[BUILD] Running PyArmor obfuscation...")
@@ -490,6 +520,7 @@ def main():
     log(f"  SYNCROJOB BUILD SCRIPT - v{get_version()}")
     log("=" * 60)
 
+    ensure_drivers()
     clean_build()
 
     is_obfuscated = not args.debug_no_obfuscate
