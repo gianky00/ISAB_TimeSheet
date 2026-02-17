@@ -480,6 +480,12 @@ class BaseBot(ABC):
 
     def cleanup(self) -> None:
         """Chiude il browser e pulisce le risorse del driver."""
+        # Pulizia residui download GUID
+        if self.download_path:
+            from src.utils.helpers import cleanup_chrome_temp_files
+            with suppress(Exception):
+                cleanup_chrome_temp_files(self.download_path)
+
         if self.driver:
             with suppress(Exception):
                 self.driver.quit()

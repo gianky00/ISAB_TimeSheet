@@ -131,7 +131,15 @@ class ScaricoTSPage:
             self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.EXPORT_EXCEL_BUTTON)).click()
 
             downloaded_file = self._wait_for_download(download_dir, files_before)
+            
+            # Pulizia residui Chromium (file 0 KB con nomi GUID)
+            from src.utils.helpers import cleanup_chrome_temp_files
+            removed = cleanup_chrome_temp_files(download_dir)
+            for f_name in removed:
+                self.log(f"  [DEBUG] Rimosso residuo download: {f_name}")
+
             if not downloaded_file:
+
                 self.log("  ✗ Download fallito o file non trovato.")
                 return False
 

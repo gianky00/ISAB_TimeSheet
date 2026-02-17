@@ -29,13 +29,7 @@ class DettagliOdAPage:
     """
 
     def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None):
-        """
-        Inizializza la pagina con il driver Selenium e la callback di log.
-
-        Args:
-            driver: Istanza di WebDriver.
-            log_callback: Callback opzionale per l'output dei log.
-        """
+        """Inizializza la pagina con il driver Selenium e la callback di log."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)
@@ -54,30 +48,19 @@ class DettagliOdAPage:
             )
 
     def navigate_to_dettagli(self, is_first_row: bool = True) -> bool:
-        """
-        Naviga nel menu del portale fino alla pagina dei Dettagli OdA.
-
-        Args:
-            is_first_row: Se True, esegue un click singolo, altrimenti tenta il doppio click per robustezza.
-        Returns:
-            bool: True se la navigazione ha avuto successo.
-        """
+        """Naviga nel menu del portale fino alla pagina dei Dettagli OdA."""
         try:
             self.expand_sidebar_if_collapsed()
             self.log("Navigazione menu Report -> Oda...")
 
-            # Click Report (using JS to avoid interception/crash)
-            # Dalla seconda riga in poi, a volte è necessario cliccare due volte
             report_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.REPORT_MENU))
             self.driver.execute_script("arguments[0].click();", report_btn)
 
             if not is_first_row:
-                # Strategia robustezza: piccolo sleep e secondo click se necessario
                 self.driver.execute_script("arguments[0].click();", report_btn)
 
             self._wait_for_overlay()
 
-            # Click Oda
             oda_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.DETTAGLI_MENU))
             self.driver.execute_script("arguments[0].click();", oda_btn)
 
@@ -86,18 +69,10 @@ class DettagliOdAPage:
             return True
         except Exception as e:
             self.log(f"✗ Navigazione fallita: {e}")
-            self.log(f"Stacktrace: {traceback.format_exc()}")
             return False
 
     def setup_supplier(self, supplier: str) -> bool:
-        """
-        Seleziona il fornitore dal menu a discesa della pagina.
-
-        Args:
-            supplier: Nome del fornitore da selezionare.
-        Returns:
-            bool: True se la selezione ha avuto successo.
-        """
+        """Seleziona il fornitore dal menu a discesa della pagina."""
         try:
             self.log(f"Selezione fornitore: {supplier}")
             arrow = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.SUPPLIER_ARROW))
@@ -117,7 +92,6 @@ class DettagliOdAPage:
         """Esegue la procedura di logout specifica per questa area del portale."""
         try:
             self.log("Esecuzione logout...")
-            # 1. Click Settings (using specific ID provided)
             settings_btn = self.wait.until(
                 EC.element_to_be_clickable(DettagliOdALocators.LOGOUT_SETTINGS_BUTTON)
             )
@@ -129,18 +103,13 @@ class DettagliOdAPage:
                 self.log("  ✗ Opzione Logout non apparsa nel menu.")
                 return
 
-            # 3. Handle Confirmation Popup "Si" (using specific locator provided)
             try:
                 self.log("  Attesa conferma logout...")
-                # Click "Si" directly if visible
                 yes_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.LOGOUT_CONFIRM_YES))
                 self.driver.execute_script("arguments[0].click();", yes_btn)
                 self.log("  Conferma cliccata.")
-
-                # Wait for Login Screen (logout complete)
                 self.wait.until(EC.visibility_of_element_located(LoginLocators.USERNAME_FIELD))
                 self.log("✓ Logout completato con successo.")
-
             except TimeoutException:
                 self.log("⚠️ Popup conferma non apparso o timeout.")
         except Exception as e:
@@ -149,11 +118,9 @@ class DettagliOdAPage:
     def expand_sidebar_if_collapsed(self):
         """Espande la sidebar se collassata per rendere visibile il menu Report."""
         with suppress(Exception):
-            # Cerca l'elemento di espansione
             expand_btn = self.driver.find_element(*DettagliOdALocators.SIDEBAR_EXPAND_BUTTON)
             if expand_btn.is_displayed():
                 self.log("  Menu laterale collassato, espansione in corso...")
-                # Usa JS click per robustezza
                 self.driver.execute_script("arguments[0].click();", expand_btn)
                 self.log("  Menu espanso.")
 
@@ -166,21 +133,8 @@ class DettagliOdAPage:
         source_dir: Path,
         dest_dir: Path,
     ) -> Path | None:
-        """
-        Compila il form di ricerca per un OdA e avvia l'esportazione dei dati.
-
-        Args:
-            oda: Numero OdA (opzionale).
-            contract: Numero contratto.
-            date_da: Data inizio (gg.mm.aaaa).
-            date_a: Data fine (gg.mm.aaaa).
-            source_dir: Directory di download del browser.
-            dest_dir: Directory di destinazione finale.
-        Returns:
-            Optional[Path]: Il percorso del file scaricato se successo, altrimenti None.
-        """
+        """Compila il form di ricerca per un OdA e avvia l'esportazione dei dati."""
         try:
-            # 1. Fill Form
             js_set_value = """
                 var el = arguments[0];
                 el.value = arguments[1];
@@ -189,30 +143,25 @@ class DettagliOdAPage:
                 el.blur();
             """
 
-            # ODA - Only fill if provided
             if oda:
                 field_oda = self.wait.until(
                     EC.presence_of_element_located(DettagliOdALocators.ODA_NUMBER_FIELD)
                 )
                 self.driver.execute_script(js_set_value, field_oda, oda)
 
-            # Date From (Clear first by setting value)
             field_date_da = self.wait.until(
                 EC.presence_of_element_located(DettagliOdALocators.DATE_FROM_FIELD)
             )
             self.driver.execute_script(js_set_value, field_date_da, date_da)
 
-            # Date To
             field_date_a = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.DATE_A_FIELD))
             self.driver.execute_script(js_set_value, field_date_a, date_a)
 
-            # Contract
             field_contract = self.wait.until(
                 EC.presence_of_element_located(DettagliOdALocators.CONTRACT_FIELD)
             )
             self.driver.execute_script(js_set_value, field_contract, contract)
 
-            # Checkbox
             checkbox = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.CHECKBOX_FIELD))
             if not checkbox.is_selected():
                 self.driver.execute_script("arguments[0].click();", checkbox)
@@ -220,58 +169,41 @@ class DettagliOdAPage:
             self.log("  Cerca cliccato...")
             self._wait_for_overlay()
 
-            # Check Results Count
             try:
                 count_label = self.wait.until(
                     EC.visibility_of_element_located(DettagliOdALocators.RESULTS_COUNT_LABEL)
                 )
-                count_text = count_label.text.strip()  # "Trovati : 676"
+                count_text = count_label.text.strip()
                 if ":" in count_text:
                     count = int(count_text.split(":")[-1].strip())
                     self.log(f"  Risultati trovati: {count}")
                     if count == 0:
                         self.log("  Nessun risultato. Salto esportazione.")
                         self._close_all_tabs()
-                        # Return dummy True or None? Logic expects Path or False.
-                        # If no results, we technically finished "processing" but no file.
                         return None
-                else:
-                    self.log(f"  ⚠️ Impossibile parsare risultati: {count_text}")
             except Exception as e:
                 self.log(f"  ⚠️ Errore lettura conteggio: {e}")
 
-            # Decide Export Method based on ODA presence
             target_filename = ""
             if oda:
-                # ODA Present: Details Export
                 self.log("  Apertura dettagli (OdA specifico)...")
                 details_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.DETAILS_ICON))
                 self.driver.execute_script("arguments[0].click();", details_btn)
                 self._wait_for_overlay()
-
-                # Wait for Inner Export button
                 export_btn_locator = DettagliOdALocators.EXPORT_EXCEL_TEXT
-                safe_oda = sanitize_filename(oda)
-                target_filename = f"dettaglio_oda_{safe_oda}.xlsx"
+                target_filename = f"dettaglio_oda_{sanitize_filename(oda)}.xlsx"
             else:
-                # ODA Empty: General List Export
                 self.log("  Esportazione lista generale...")
                 export_btn_locator = DettagliOdALocators.GENERAL_EXPORT_BUTTON
-                # Normalizza la data per il filename: GG.MM.AAAA -> GG-MM-AAAA
                 safe_date_a = date_a.replace(".", "-").replace("/", "-")
                 target_filename = f"ODA_Generale_al_{safe_date_a}.xlsx"
 
-            # Export and Download (using source and dest dirs)
             final_path = self._download(source_dir, dest_dir, target_filename, export_btn_locator)
-
-            # Cleanup
             self._close_all_tabs()
             return final_path
 
         except Exception as e:
             self.log(f"  ✗ Errore processamento: {e}")
-            self.log(f"Stacktrace: {traceback.format_exc()}")
-            # Ensure tabs are closed even on error
             with suppress(Exception):
                 self._close_all_tabs()
             return None
@@ -279,21 +211,14 @@ class DettagliOdAPage:
     def _close_all_tabs(self):
         """Chiude tutte le schede aperte nel portale cliccando sull'icona X."""
         try:
-            # Find all close buttons. We might need to iterate or they might be dynamic.
-            # Usually ExtJS tabs have a close tool.
-            # We assume clicking them one by one works.
-            # Warning: clicking one might change the DOM for others.
-            # It's safer to find one, click, wait, repeat until none found.
             while True:
                 try:
-                    # Find *visible* close buttons only
                     close_btn = self.driver.find_element(*DettagliOdALocators.TAB_CLOSE_BTN)
                     if close_btn.is_displayed():
                         self.driver.execute_script("arguments[0].click();", close_btn)
                     else:
                         break
                 except Exception:
-                    # No more close buttons found
                     break
         except Exception as e:
             self.log(f"  ⚠️ Errore chiusura tab: {e}")
@@ -307,29 +232,31 @@ class DettagliOdAPage:
     ) -> Path | None:
         """Esegue il download, attende il file e lo sposta nella cartella finale."""
         try:
-            # Normalize path to handle forward/backward slashes
             source_dir = Path(source_dir).resolve()
-            self.log(f"  [DEBUG] Cerco file in: {source_dir}")
-
             if not source_dir.exists():
                 self.log(f"  ✗ Cartella non esiste: {source_dir}")
                 return None
 
             files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
-            self.log(f"  [DEBUG] File .xlsx prima del download: {len(files_before)}")
-
+            
             if not self._click_export_button(button_locator):
                 return None
 
             downloaded_file = self._wait_for_download(source_dir, files_before)
             if not downloaded_file:
-                # Debug: lista file attuali
-                current_files = list(source_dir.iterdir()) if source_dir.exists() else []
-                self.log(f"  [DEBUG] File attuali nella cartella: {[f.name for f in current_files[:10]]}")
                 self.log("  ✗ File non trovato nella cartella Download.")
                 return None
 
-            return self._finalize_download(downloaded_file, dest_dir, target_filename)
+            final_path = self._finalize_download(downloaded_file, dest_dir, target_filename)
+            
+            # Pulizia aggressiva residui 0 KB (post-download)
+            time.sleep(0.5)
+            from src.utils.helpers import cleanup_chrome_temp_files
+            removed = cleanup_chrome_temp_files(source_dir)
+            for f_name in removed:
+                self.log(f"  [DEBUG] Rimosso residuo download: {f_name}")
+
+            return final_path
         except Exception as e:
             self.log(f"  ✗ Errore download: {e}")
             return None
@@ -353,7 +280,6 @@ class DettagliOdAPage:
         while time.time() - start < Timeouts.DOWNLOAD:
             if any(f.suffix == ".crdownload" for f in source_dir.iterdir()):
                 continue
-
             current = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
             new_files = current - files_before
             if new_files:
@@ -363,14 +289,11 @@ class DettagliOdAPage:
     def _finalize_download(self, src: Path, dest_dir: Path, target_name: str) -> Path | None:
         """Sposta il file scaricato nella destinazione finale rinominandolo."""
         import shutil
-
         dest_dir.mkdir(parents=True, exist_ok=True)
         target_path = dest_dir / target_name
-
         if target_path.exists():
             with suppress(Exception):
                 target_path.unlink()
-
         shutil.move(str(src), str(target_path))
         self.log(f"  ✓ Scaricato: {target_path.name}")
         return target_path

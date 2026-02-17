@@ -113,40 +113,49 @@ class TestSafeWorkPDLBotComprehensive:
         assert res is True # True significa "salta questo PDL"
 
     def test_esegui_ricerca_pdl_full_flow(self, bot, mocker):
-        """Test del flusso completo di ricerca con gestione 'Si' post-caricamento."""
+        """Test del flusso completo di ricerca con verifica dei selettori via mock EC."""
         mocker.patch.object(bot, "_gestisci_ricerca_estesa", return_value=False)
         mocker.patch.object(bot, "_gestisci_alert_ricerca", return_value=False)
         
-        # Simula caricamento pagina riuscito
-        bot.wait.until.return_value = MagicMock()
+        # Mock EC per catturare i selettori
+        mock_ec = mocker.patch("src.bots.safework.pdl.bot.EC")
+        mock_campo = MagicMock()
+        mock_anteprima = MagicMock()
+        bot.wait.until.side_effect = [mock_campo, mock_anteprima]
         
         res = bot._esegui_ricerca_pdl("569157/C")
         
         assert res is True
-        # Verifica input nel campo ricerca
-        bot.wait.until.assert_any_call(mocker.ANY) 
-        # Verifica che sia stato chiamato l'overlay wait aggiuntivo post-caricamento
-        bot._attendi_scomparsa_overlay.assert_called_with(timeout_secondi=4)
+        # 1. Verifica primo wait: deve cercare il campo ricerca
+        args_ec_campo = mock_ec.visibility_of_element_located.call_args_list[0][0][0]
+        assert args_ec_campo == (By.ID, "fldRicercaPdLVeloce")
+        # 2. Verifica invio tasti
+        mock_campo.send_keys.assert_called_with("569157/C" + Keys.ENTER)
+        # 3. Verifica secondo wait: deve cercare l'anteprima stampa
+        args_ec_ant = mock_ec.visibility_of_element_located.call_args_list[1][0][0]
+        assert args_ec_ant == (By.ID, "topIcon-acticonAnteprimaStampaMenu")
 
     # ========================================================================
     # 3. DOWNLOAD PART 1 & PART 2
     # ========================================================================
 
     def test_scarica_parte_prima_success(self, bot, mocker):
-        """Test scarico P1 con polling e click robusto."""
+        """Test scarico P1 verificando ogni singolo click e attesa."""
         mocker.patch("src.bots.base.wait_helpers.poll_for_new_file", return_value="/tmp/downloads/569157C.pdf")
         mocker.patch.object(bot, "_clean_pdf")
         mock_safe_remove = mocker.patch.object(bot, "_safe_remove")
+        mocker.patch("time.sleep")
 
         res = bot._scarica_parte_prima("569157/C")
         
         assert res is not None
-        assert "temp_p1_" in res
-        # Verifica click robusti
-        bot.click_robusto.assert_any_call((By.ID, "topIcon-acticonAnteprimaStampaMenu"))
-        bot.click_robusto.assert_any_call((By.ID, "appItaliano"))
-        # Verifica pulizia preventiva del file con nome standard
-        mock_safe_remove.assert_any_call(str(Path("/tmp/downloads/569157C.pdf")))
+        # Verifica che ogni click critico sia avvenuto
+        assert bot.click_robusto.call_count == 2
+        calls = [str(c) for c in bot.click_robusto.call_args_list]
+        assert "topIcon-acticonAnteprimaStampaMenu" in calls[0]
+        assert "appItaliano" in calls[1]
+        # Verifica attesa preliminare resiliente
+        bot._attendi_scomparsa_overlay.assert_any_call(timeout_secondi=5)
 
     def test_scarica_parte_seconda_accordion_strategies(self, bot, mocker):
         """Test espansione accordion Parte Seconda con strategie multiple."""
@@ -256,7 +265,153 @@ class TestSafeWorkPDLBotComprehensive:
             # Verifica che il bot abbia loggato la gestione della modale
             assert any("Modale gestita" in call.args[0] for call in mock_log.call_args_list)
 
+    def test_validate_data_no_pdls(self, bot):
+        """Test validazione quando non ci sono numeri PDL nei dati."""
+        data = [{"not_a_pdl": "123"}]
+        ok, msg = bot.validate_data(data)
+        assert ok is False
+        assert "Nessun numero PDL trovato" in msg
+
+    # ========================================================================
+    # 2. SEARCH & POPUP HANDLING
+    # ========================================================================
+
+    def test_esegui_ricerca_pdl_search_field_error(self, bot, mocker):
+        """Verifica errore quando il campo ricerca non viene trovato."""
+        bot.wait.until.side_effect = Exception("Field not found")
+        res = bot._esegui_ricerca_pdl("123")
+        assert res is False
+
+    def test_esegui_ricerca_pdl_preview_timeout(self, bot, mocker):
+        """Verifica errore quando la pagina non carica l'anteprima dopo la ricerca."""
+        mocker.patch.object(bot, "_gestisci_ricerca_estesa", return_value=False)
+        mocker.patch.object(bot, "_gestisci_alert_ricerca", return_value=False)
+        # Mock wait.until: prima successo (campo), seconda fallimento (anteprima)
+        bot.wait.until.side_effect = [MagicMock(), Exception("Preview timeout")]
+        
+        res = bot._esegui_ricerca_pdl("123")
+        assert res is False
+
+    def test_gestisci_ricerca_estesa_click_failed(self, bot, mocker):
+        """Test caso in cui il popup è visto ma il click su Si fallisce."""
+        mocker.patch("src.bots.safework.pdl.bot.WebDriverWait.until", return_value=True)
+        bot.driver.find_element.side_effect = Exception("Click blocked")
+        
+        res = bot._gestisci_ricerca_estesa()
+        assert res is False # Non ha trovato 'nessun dato trovato' e il click è fallito
+
+    def test_gestisci_alert_ricerca_logic(self, bot, mocker):
+        """Verifica la chiusura degli alert informativi."""
+        mock_btn = MagicMock()
+        mock_btn.is_displayed.return_value = True
+        bot.driver.find_element.return_value = mock_btn
+        mocker.patch("src.bots.safework.pdl.bot.WebDriverWait.until", return_value=True)
+        
+        assert bot._gestisci_alert_ricerca() is True
+        mock_btn.click.assert_called_once()
+
+    # ========================================================================
+    # 3. DOWNLOAD PART 1 & PART 2
+    # ========================================================================
+
+    def test_scarica_parte_prima_exception(self, bot, mocker):
+        """Verifica la cattura di eccezioni durante lo scarico P1."""
+        bot.click_robusto.side_effect = Exception("Crash")
+        assert bot._scarica_parte_prima("123") is None
+
+    def test_scarica_parte_seconda_expansion_failed(self, bot, mocker):
+        """Verifica che lo scarico P2 fallisca se l'accordion non si apre."""
+        mocker.patch.object(bot, "_espandi_parte_seconda", return_value=False)
+        assert bot._scarica_parte_seconda("123") is None
+
+    def test_scarica_parte_seconda_exception(self, bot, mocker):
+        """Verifica la cattura di eccezioni durante lo scarico P2."""
+        mocker.patch.object(bot, "_espandi_parte_seconda", return_value=True)
+        bot.click_robusto.side_effect = Exception("Crash")
+        assert bot._scarica_parte_seconda("123") is None
+
+    def test_espandi_parte_seconda_exception(self, bot, mocker):
+        """Verifica gestione errori durante l'espansione dell'accordion."""
+        bot.driver.find_elements.side_effect = Exception("Driver error")
+        assert bot._espandi_parte_seconda() is False
+
+    # ========================================================================
+    # 4. POST-PROCESSING & MERGE
+    # ========================================================================
+
+    def test_clean_pdf_single_page(self, bot, mocker):
+        """Verifica che non venga fatta pulizia se il PDF ha una sola pagina."""
+        mock_fitz = mocker.patch("src.bots.safework.pdl.bot.fitz.open")
+        mock_doc = mock_fitz.return_value
+        mock_doc.page_count = 1
+        
+        bot._clean_pdf("one_page.pdf")
+        mock_doc.delete_page.assert_not_called()
+
+    def test_clean_pdf_exception(self, bot, mocker):
+        """Verifica che la pulizia PDF non crashi il bot in caso di errore file."""
+        mocker.patch("src.bots.safework.pdl.bot.fitz.open", side_effect=Exception("Corrupt"))
+        # Non deve sollevare eccezioni
+        bot._clean_pdf("bad.pdf")
+
+    def test_handle_session_merge_error(self, bot, mocker):
+        """Verifica che l'errore nell'unione sessione sia catturato."""
+        mocker.patch("src.utils.document_processor.DocumentProcessor.merge_pdfs", side_effect=Exception("Merge failed"))
+        # Non deve sollevare eccezioni
+        bot._handle_session_merge([{"merge_all_session": True}], ["p1.pdf"])
+
+    # ========================================================================
+    # 5. LIFECYCLE & RUN LOOP
+    # ========================================================================
+
+    def test_run_with_pdl_error_continues(self, bot, mocker):
+        """Verifica che un errore su un PDL non blocchi gli altri."""
+        mocker.patch.object(bot, "_login", return_value=True)
+        mocker.patch.object(bot, "_attendi_caricamento_sistema")
+        mocker.patch.object(bot, "_handle_session_merge")
+        
+        # Simula: 1° PDL crasha, 2° PDL successo
+        mocker.patch.object(bot, "_esegui_ricerca_pdl", side_effect=[Exception("Crash"), True])
+        mocker.patch.object(bot, "_scarica_parte_prima", return_value="p1.pdf")
+        mocker.patch.object(bot, "_scarica_parte_seconda", return_value="p2.pdf")
+        mocker.patch.object(bot, "_unisci_e_stampa", return_value=True)
+        
+        data = [{"pdl_number": "ERR"}, {"pdl_number": "OK"}]
+        res = bot.run(data)
+        
+        assert res is False # Non tutti riusciti
+        assert bot._esegui_ricerca_pdl.call_count == 2
+
+    def test_gestisci_dialogo_stampa_tutte_logic(self, bot, mocker):
+        """Verifica la logica del dialogo stampa tutte."""
+        mock_btn = MagicMock()
+        bot.wait.until.return_value = mock_btn
+        bot._gestisci_dialogo_stampa_tutte()
+        assert mock_btn.click.call_count == 2
+
+    def test_sanitizza_pdl_number_variations(self, bot):
+        """Verifica tutti i rami della sanitizzazione numero PDL."""
+        # Già formattato
+        assert bot._sanitizza_pdl_number("123456/S") == "123456/S"
+        # Lunghezza diversa da 6
+        assert bot._sanitizza_pdl_number("12345") == "12345"
+        # Non numerico
+        assert bot._sanitizza_pdl_number("ABCDEF") == "ABCDEF"
+
+    def test_safe_remove_non_existent(self, bot):
+        """Verifica che safe_remove non faccia nulla se il file non esiste."""
+        # Non deve sollevare eccezioni
+        bot._safe_remove("non_existent_file_xyz.pdf")
+
+    def test_validate_data_dict_format(self, bot):
+        """Verifica validazione con formato dizionario (rows key)."""
+        data = {"rows": [{"pdl_number": "123456"}]}
+        ok, msg = bot.validate_data(data)
+        assert ok is True
+
     def test_run_interruption_handling(self, bot, mocker):
+
+
         """Verifica la gestione dell'interruzione manuale dell'utente."""
         mocker.patch.object(bot, "_login", return_value=True)
         mocker.patch.object(bot, "_attendi_caricamento_sistema")

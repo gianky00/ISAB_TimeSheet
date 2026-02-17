@@ -224,6 +224,33 @@ def sanitize_filename(filename: str) -> str:
     return safe_filename
 
 
+def cleanup_chrome_temp_files(directory: Path | str) -> list[str]:
+    """
+    Rimuove tutti i file da 0 KB (residui di download o placeholder) nella directory.
+
+    Returns:
+        Lista dei nomi dei file rimossi.
+    """
+    dir_path = Path(directory)
+    if not dir_path.exists():
+        return []
+
+    removed = []
+    try:
+        for f in dir_path.iterdir():
+            if f.is_file() and f.stat().st_size == 0:
+                try:
+                    f.unlink()
+                    removed.append(f.name)
+                except Exception:
+                    continue
+    except Exception:
+        pass
+    return removed
+
+
+
+
 def get_colored_icon(icon_path: str, color: str = "#000000") -> QIcon:
     """
     Carica un'icona SVG e ne cambia il colore in modo sicuro.

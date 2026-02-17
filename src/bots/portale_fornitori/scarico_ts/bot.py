@@ -172,31 +172,35 @@ class ScaricaTSBot(BaseBot):
         if not self.wait or not self.driver:
             return False
 
-        js_dispatch = """
-            var el = arguments[0];
-            var ev_in = new Event('input', {bubbles:true}); el.dispatchEvent(ev_in);
-            var ev_ch = new Event('change', {bubbles:true}); el.dispatchEvent(ev_ch);
-        """
-        # Numero OdA
-        campo_num = self.wait.until(EC.presence_of_element_located((By.NAME, "NumeroOda")))
-        self.driver.execute_script("arguments[0].value = arguments[1];", campo_num, numero_oda)
-        self.driver.execute_script(js_dispatch, campo_num)
+        try:
+            js_dispatch = """
+                var el = arguments[0];
+                var ev_in = new Event('input', {bubbles:true}); el.dispatchEvent(ev_in);
+                var ev_ch = new Event('change', {bubbles:true}); el.dispatchEvent(ev_ch);
+            """
+            # Numero OdA
+            campo_num = self.wait.until(EC.presence_of_element_located((By.NAME, "NumeroOda")))
+            self.driver.execute_script("arguments[0].value = arguments[1];", campo_num, numero_oda)
+            self.driver.execute_script(js_dispatch, campo_num)
 
-        # Posizione OdA
-        campo_pos = self.wait.until(EC.presence_of_element_located((By.NAME, "PosizioneOda")))
-        self.driver.execute_script(
-            "arguments[0].value = ''; arguments[0].value = arguments[1];",
-            campo_pos,
-            posizione_oda,
-        )
-        self.driver.execute_script(js_dispatch, campo_pos)
+            # Posizione OdA
+            campo_pos = self.wait.until(EC.presence_of_element_located((By.NAME, "PosizioneOda")))
+            self.driver.execute_script(
+                "arguments[0].value = ''; arguments[0].value = arguments[1];",
+                campo_pos,
+                posizione_oda,
+            )
+            self.driver.execute_script(js_dispatch, campo_pos)
 
-        # Click Cerca
-        xpath_cerca = "//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Cerca']]"
-        self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_cerca))).click()
+            # Click Cerca
+            xpath_cerca = "//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Cerca']]"
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_cerca))).click()
 
-        self._attendi_scomparsa_overlay(90)
-        return True
+            self._attendi_scomparsa_overlay(90)
+            return True
+        except Exception as e:
+            self.log(f"⚠️ Errore durante l'inserimento ricerca OdA {numero_oda}: {e}")
+            return False
 
     def _run_vba_processing(self, file_list: list[str], dest_dir: Path):
         """Esegue il post-processing stile VBA (TimesheetProcessor)."""
