@@ -32,11 +32,8 @@ class TestSafeWorkPDLBotDeep:
             patch.object(bot, "_attendi_caricamento_sistema"),
             patch.object(bot, "_gestisci_alert_ricerca", return_value=False),
             patch.object(bot, "_attendi_scomparsa_overlay"),
-            patch.object(
-                bot,
-                "_attendi_e_ritorna_nuovo_pdf",
-                side_effect=[Path("p1.pdf"), Path("p2.pdf")],
-            ),
+            patch.object(bot, "_scarica_parte_prima", return_value="p1.pdf"),
+            patch.object(bot, "_scarica_parte_seconda", return_value="p2.pdf"),
             patch(
                 "src.utils.document_processor.DocumentProcessor.merge_pdfs",
                 return_value=True,

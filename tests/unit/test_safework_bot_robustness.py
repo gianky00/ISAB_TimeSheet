@@ -22,6 +22,8 @@ class TestSafeWorkPDLBotRobustness:
         mocker.patch("src.bots.safework.pdl.bot.Path.rename")
         mocker.patch("src.bots.safework.pdl.bot.Path.unlink")
         mocker.patch("src.bots.safework.pdl.bot.Path.exists", return_value=True)
+        # Mock overlay wait to avoid hangs with MagicMock driver
+        mocker.patch.object(bot, "_attendi_scomparsa_overlay", return_value=True)
         return bot
 
     def test_preventive_cleanup_part1(self, bot, mocker):
@@ -29,7 +31,6 @@ class TestSafeWorkPDLBotRobustness:
         mock_remove = mocker.patch.object(bot, "_safe_remove")
         mocker.patch("src.bots.base.wait_helpers.poll_for_new_file", return_value="/tmp/new.pdf")
         mocker.patch.object(bot, "_clean_pdf")
-        mocker.patch.object(bot, "_attendi_scomparsa_overlay")
 
         # Simula click riusciti
         bot.wait.until.return_value = MagicMock()
@@ -45,7 +46,6 @@ class TestSafeWorkPDLBotRobustness:
         mock_remove = mocker.patch.object(bot, "_safe_remove")
         mocker.patch("src.bots.base.wait_helpers.poll_for_new_file", return_value="/tmp/new.pdf")
         mocker.patch.object(bot, "_espandi_parte_seconda", return_value=True)
-        mocker.patch.object(bot, "_attendi_scomparsa_overlay")
 
         bot.wait.until.return_value = MagicMock()
 
@@ -59,15 +59,8 @@ class TestSafeWorkPDLBotRobustness:
         # Simula elemento non visibile all'inizio
         mock_el_hidden = MagicMock()
         mock_el_hidden.is_displayed.return_value = False
-        bot.driver.find_element.return_value = mock_el_hidden
-
-        # Strategia 1 (ID) fallisce, Strategia 2 (XPATH) fallisce, Strategia 3 (IDTXT) riesce
-        # find_element viene chiamato molte volte:
-        # 1. check visibility (ID lblPAFoglio) -> False
-        # 2. click Strategia 1 (ID lblTitoloParteSeconda) -> Exception
-        # 3. click Strategia 2 (XPATH) -> Exception
-        # 4. click Strategia 3 (CSS idtxt) -> Success
-
+        
+        # Gestisce sia find_element che find_elements
         def find_side_effect(by, value):
             if value == "lblPAFoglio":
                 return mock_el_hidden
@@ -80,10 +73,12 @@ class TestSafeWorkPDLBotRobustness:
             return MagicMock()
 
         bot.driver.find_element.side_effect = find_side_effect
+        # find_elements deve restituire una lista per il controllo "if not elementi or not elementi[0].is_displayed()"
+        bot.driver.find_elements.side_effect = lambda by, val: [mock_el_hidden] if val == "lblPAFoglio" else []
 
         success = bot._espandi_parte_seconda()
         assert success is True
-        # Verifichiamo che abbia provato a cliccare l'idtxt
+        # Verifichiamo che abbia provato a cliccare l'idtxt (Strategia 3)
         bot.driver.find_element.assert_any_call(By.CSS_SELECTOR, "span[idtxt='2E20B56F']")
 
     def test_gestisci_alert_ricerca_resilience(self, bot):

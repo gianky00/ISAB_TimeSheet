@@ -86,10 +86,16 @@ class SafeworkBaseBot(BaseBot):
                     )
                 )
             )
-            modale.find_element(
-                By.XPATH, ".//button[contains(text(), 'OK') or @data-dismiss='modal']"
-            ).click()
-            self.log("ℹ️ Modale gestita (OK/Annulla).")
+            # Supporta OK, Annulla, Si, Yes (anche in span/div)
+            try:
+                modale.find_element(
+                    By.XPATH, ".//*[self::button or self::span or self::a][contains(text(), 'OK') or contains(text(), 'Si') or contains(text(), 'Yes') or @data-dismiss='modal']"
+                ).click()
+                self.log("ℹ️ Modale gestita (OK/Annulla/Si/Yes).")
+            except Exception:
+                # Fallback per idtxt E421C594 (Si della ricerca estesa che a volte riappare)
+                modale.find_element(By.CSS_SELECTOR, "*[idtxt='E421C594']").click()
+                self.log("ℹ️ Modale gestita via idtxt (Si).")
 
         # No sleep needed: invisibility check is sufficient
         return True

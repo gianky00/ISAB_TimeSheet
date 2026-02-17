@@ -199,13 +199,14 @@ class BaseBot(ABC):
             "--no-restore-session-state",
             "--disable-dev-shm-usage",
             "--disable-gpu",
-            "--remote-debugging-port=9222",
             "--disable-software-rasterizer",
+            "--log-level=3",
+            "--silent",
         ]
         for arg in args:
             options.add_argument(arg)
 
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
         options.add_experimental_option("useAutomationExtension", False)
 
         # Gestione Headless
