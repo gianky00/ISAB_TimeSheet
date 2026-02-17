@@ -92,7 +92,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 # Pipeline per singolo PDL
                 if self._esegui_ricerca_pdl(pdl_num):
                     path_p1 = self._scarica_parte_prima(pdl_num)
-                    
+
                     path_p2 = None
                     if path_p1:
                         path_p2 = self._scarica_parte_seconda(pdl_num)
@@ -161,11 +161,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self.log("🔍 Verifica finale caricamento pagina PdL...")
         try:
             self.wait.until(EC.visibility_of_element_located((By.ID, "topIcon-acticonAnteprimaStampaMenu")))
-            
+
             # NUOVO: Check per popup residui 'Si'/'Yes' che appaiono in differita
             self.log("⏳ Verifica popup conferma post-caricamento...")
-            self._attendi_scomparsa_overlay(timeout_secondi=4) 
-            
+            self._attendi_scomparsa_overlay(timeout_secondi=4)
+
             self.log(f"✅ PdL {pdl_num} caricato correttamente.")
             return True
         except Exception as e:
@@ -180,14 +180,14 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             return None
 
         self.log(f"⬇️ Avvio scarico Parte Prima per PdL {pdl_num}...")
-        
+
         # Gestione popup in differita (es. 'Si') che bloccano il menu stampa
         self._attendi_scomparsa_overlay(timeout_secondi=5)
-        
+
         try:
             self.driver.execute_script("window.scrollTo(0, 0);")
             self.log("🔍 Verifica visibilità icona Anteprima Stampa...")
-            
+
             # Pulizia preventiva
             clean_name = pdl_num.replace("/", "") + ".pdf"
             target_path = Path(self.download_path) / clean_name
@@ -199,10 +199,10 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             # Clicca su Anteprima Stampa usando click_robusto
             self.log("🖱️ Click su 'topIcon-acticonAnteprimaStampaMenu'...")
             self.click_robusto((By.ID, "topIcon-acticonAnteprimaStampaMenu"))
-            
+
             self.log("⏳ Attesa comparsa pulsante 'Italiano'...")
             time.sleep(0.8) # Breve pausa per animazione menu
-            
+
             self.log("🖱️ Click su 'appItaliano'...")
             self.click_robusto((By.ID, "appItaliano"))
 
@@ -215,8 +215,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 Path(f).rename(dest)
                 self._clean_pdf(str(dest))
                 return str(dest)
-            else:
-                self.log("❌ Timeout: nessun nuovo PDF generato per la Parte Prima.", "ERROR")
+            self.log("❌ Timeout: nessun nuovo PDF generato per la Parte Prima.", "ERROR")
         except Exception as e:
             self.log(f"❌ Errore durante scarico Parte Prima: {e}", "ERROR")
             logger.exception("Dettaglio crash Parte Prima:")
@@ -237,7 +236,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         self.log(f"⬇️ Avvio scarico Parte Seconda per PdL {pdl_num}...")
         self._attendi_scomparsa_overlay()
-        
+
         try:
             self.driver.execute_script("window.scrollTo(0, 0);")
 
@@ -249,7 +248,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
             self.log("🖱️ Click su 'btnPrintPS' (Stampa Parte Seconda)...")
             self.click_robusto((By.ID, "btnPrintPS"))
-            
+
             self.log("⏳ Gestione eventuale dialogo 'Stampa Tutte'...")
             self._gestisci_dialogo_stampa_tutte()
 
@@ -260,8 +259,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 dest = Path(self.download_path) / f"temp_p2_{int(ts)}.pdf"
                 Path(f).rename(dest)
                 return str(dest)
-            else:
-                self.log("❌ Timeout: nessun nuovo PDF generato per la Parte Seconda.", "ERROR")
+            self.log("❌ Timeout: nessun nuovo PDF generato per la Parte Seconda.", "ERROR")
         except Exception as e:
             self.log(f"❌ Errore durante scarico Parte Seconda: {e}", "ERROR")
             logger.exception("Dettaglio crash Parte Seconda:")
@@ -271,9 +269,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         """Tenta di rendere visibile la sezione Parte Seconda con strategie multiple."""
         if not self.driver or not self.wait:
             return False
-        
+
         self._attendi_scomparsa_overlay()
-        
+
         try:
             # Verifica visibilità senza lanciare eccezioni se l'elemento non esiste ancora
             elementi = self.driver.find_elements(By.ID, "lblPAFoglio")
@@ -330,7 +328,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             # Click robusto su 'Si' (cerca span o button con classe btn-ok)
             clicked = False
             self.log("🖱️ Tentativo click su 'Si' per estensione ricerca...")
-            for selector in ["span[idtxt='E421C594']", "//button[contains(@class, 'btn-ok') and contains(., 'Si')]", "//button[contains(., 'Si')]"]:
+            for selector in ("span[idtxt='E421C594']", "//button[contains(@class, 'btn-ok') and contains(., 'Si')]", "//button[contains(., 'Si')]"):
                 try:
                     by = By.XPATH if selector.startswith("/") else By.CSS_SELECTOR
                     el = self.driver.find_element(by, selector)
@@ -339,6 +337,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     clicked = True
                     break
                 except Exception:
+                    # Strategia di click multipla: ignoriamo l'errore e proviamo il selettore successivo
                     continue
 
             if clicked:
@@ -348,23 +347,19 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 self.log("⚠️ Popup ricerca estesa rilevato ma impossibile cliccare 'Si'.", "WARNING")
 
             # Verifica Risultati (se 0, PdL inesistente)
-            try:
+            with suppress(Exception):
                 self.log("🔍 Verifica se PdL inesistente dopo estensione...")
                 msg = self.driver.find_element(By.XPATH, "//div[contains(text(), 'nessun dato trovato')]")
                 if msg.is_displayed():
                     self.log("ℹ️ PdL non trovato nemmeno con ricerca estesa.")
                     return True
-            except Exception:
-                pass
             # Se siamo finiti direttamente nella pagina dettaglio, numPermessiTrovati non ci sarà
-            try:
+            with suppress(Exception):
                 num_res_el = self.driver.find_elements(By.ID, "numPermessiTrovati")
                 if num_res_el:
                     num_res = num_res_el[0].text.strip()
                     return num_res == "0"
-            except Exception:
-                pass
-            
+
             return False # Proseguiamo comunque, la verifica finale la fa _esegui_ricerca_pdl
         except Exception:
             return False

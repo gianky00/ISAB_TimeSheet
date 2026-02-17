@@ -1,5 +1,5 @@
-import sqlite3
 import os
+import sqlite3
 
 db_path = r"C:/Users/Coemi/Desktop/SCRIPT/report-attivita-app/report-attivita.db"
 print(f"Verifica esistenza file: {os.path.exists(db_path)}")
@@ -9,7 +9,7 @@ try:
     cursor = conn.cursor()
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
     tables = cursor.fetchall()
-    
+
     print("\nTABELLE TROVATE:")
     for table in tables:
         t_name = table[0]
@@ -18,7 +18,7 @@ try:
         cols = cursor.fetchall()
         for col in cols:
             print(f"  {col[1]} ({col[2]})")
-            
+
 except Exception as e:
     print(f"Errore: {e}")
 finally:

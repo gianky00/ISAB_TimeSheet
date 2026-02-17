@@ -1,10 +1,11 @@
 
 import unittest
-from unittest.mock import MagicMock, patch, call
-from pathlib import Path
+from unittest.mock import MagicMock, patch
+
 from selenium.webdriver.common.by import By
 
 from src.bots.safework.programmazione_sync.bot import SafeWorkProgrammazioneSyncBot
+
 
 class TestSafeWorkProgrammazioneSyncComprehensive(unittest.TestCase):
     def setUp(self):
@@ -36,21 +37,21 @@ class TestSafeWorkProgrammazioneSyncComprehensive(unittest.TestCase):
         }]
         mock_poll.return_value = "C:/fake/downloads/Programmazione_2026.xlsx"
         self.bot.attivita_page.esporta_excel.return_value = True
-        
+
         # Mock find_element per navigazione ID
         mock_home = MagicMock()
         mock_visualizza = MagicMock()
         self.mock_driver.find_element.side_effect = [mock_home, mock_visualizza]
-        
+
         result = self.bot.run(data)
-        
+
         self.assertTrue(result)
         self.assertEqual(self.bot.downloaded_file, "C:/fake/downloads/Programmazione_2026.xlsx")
-        
+
         # Verifica navigazione
         self.mock_driver.find_element.assert_any_call(By.ID, "topIcon-actHomePage")
         self.mock_driver.find_element.assert_any_call(By.ID, "sideBar-actVisualizzaAttivita")
-        
+
         # Verifica filtri
         self.bot.attivita_page.imposta_date.assert_called_with("01/01/2026", "07/01/2026")
         self.bot.attivita_page.seleziona_richiedente.assert_called_with("R1")

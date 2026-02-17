@@ -61,8 +61,9 @@ class PDLDetailView(QWidget):
         self.cron_table = QTableWidget()
         self.cron_table.setColumnCount(5)
         self.cron_table.setHorizontalHeaderLabels(["Data", "Fonte", "Tecnico", "Ore", "Descrizione"])
-        self.cron_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
-        self.cron_table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
+        if header := self.cron_table.horizontalHeader():
+            header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+            header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
         self.cron_table.setAlternatingRowColors(True)
         self.cron_table.setStyleSheet("QTableWidget { font-size: 11px; }")
         layout.addWidget(self.cron_table, 1)  # Stretch factor 1

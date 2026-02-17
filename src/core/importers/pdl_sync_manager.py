@@ -10,6 +10,8 @@ from typing import Any, ClassVar
 
 import openpyxl
 
+from src.core.logging import get_logger
+
 try:
     import win32com.client
 
@@ -19,7 +21,7 @@ try:
 except ImportError:
     _win32com_found = False
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ProgrammingSyncManager:
@@ -85,120 +87,20 @@ class ProgrammingSyncManager:
             return
 
         try:
-            # 1. Preparazione Excel (Ottimizzazione)
-            self._original_calc_mode = self.excel_app.Calculation
-            self.excel_app.Calculation = xlCalculationManual
-            self.excel_app.ScreenUpdating = False
-            self.excel_app.EnableEvents = False
+            self._prepare_excel_state(True)
 
-            # 2. Lettura Stato Master (Mappa PDL esistenti)
-            mappa_pdl = {}
-            for nome_foglio in self.FOGLI_PDL:
-                sheet = self.wb_master.Sheets(nome_foglio)
-                last_row = sheet.Cells(sheet.Rows.Count, 5).End(-4162).Row  # xlUp col E
-                if last_row >= 4:
-                    data = sheet.Range(sheet.Cells(4, 1), sheet.Cells(last_row, 13)).Value
-                    if data:
-                        if not isinstance(data, tuple):
-                            data = ((data,),)
-                        for i, row in enumerate(data):
-                            pdl_val = row[4]  # Col E
-                            if pdl_val:
-                                mappa_pdl[str(pdl_val).strip()] = {
-                                    "foglio": nome_foglio,
-                                    "riga": i + 4,
-                                    "stato": str(row[12] or "").strip().upper(),
-                                }
+            # 1. Mappatura stato Master
+            mappa_pdl = self._map_master_pdls()
 
-            # 3. Elaborazione Report Scaricato (OpenPyXL per velocità)
-            logger.info(f"Analisi report scaricato: {os.path.basename(downloaded_path)}")
-            nuovi_pdl = {}
-            modifiche_X: dict[str, dict[int, str]] = {}
-            modifiche_stato = {}
+            # 2. Analisi report scaricato
+            nuovi_pdl, modif_x, modif_stato = self._analyze_downloaded_file(downloaded_path, mappa_pdl)
 
-            # Mapping colonne: H(8)->Lun, I(9)->Mar, J(10)->Mer, K(11)->Gio, L(12)->Ven
-            mappa_giorni = {8: 3, 9: 5, 10: 7, 11: 9, 12: 11}
+            # 3. Applicazione modifiche
+            self._apply_modifications_to_master(mappa_pdl, modif_x, modif_stato)
 
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                wb_in = openpyxl.load_workbook(downloaded_path, read_only=True, data_only=True)
-                ws_in = wb_in.active
-
-                if ws_in is None:
-                    logger.error("Foglio Excel di input non trovato.")
-                    wb_in.close()
-                    return
-
-                for row in ws_in.iter_rows(min_row=2, values_only=True):
-                    if not row or not row[0]:
-                        continue
-                    pdl_str = str(row[0]).strip()
-
-                    if pdl_str not in mappa_pdl:
-                        # Nuovo PDL
-                        nuovi_pdl[pdl_str] = [
-                            row[0],
-                            row[1],
-                            row[14],
-                            row[16],
-                            row[18],
-                            row[19],
-                            row[20],
-                            row[13],
-                        ]
-                    else:
-                        # PDL Esistente -> Controlla X
-                        info = mappa_pdl[pdl_str]
-                        for idx_excel, idx_report in mappa_giorni.items():
-                            val_report = str(row[idx_report] or "").strip().lower()
-                            if val_report == "si":
-                                modifiche_X.setdefault(pdl_str, {})[idx_excel] = "X"
-
-                        # Check Stato (Richiesto/Emesso)
-                        col_O_val = str(row[14] or "").strip()
-                        is_richiesto = col_O_val in ("Richiesto", "Richiesto (Ese ok)")
-                        if is_richiesto and info["stato"] != "RICHIESTO":
-                            modifiche_stato[pdl_str] = "RICHIESTO"
-                        elif not is_richiesto and info["stato"] == "RICHIESTO":
-                            modifiche_stato[pdl_str] = "EMESSO"
-                wb_in.close()
-
-            # 4. Applicazione Reset e Modifiche sul Master
-            logger.info("Esecuzione macro 'reset_programmazione'...")
-            self.excel_app.Run(f"'{self.wb_master.Name}'!reset_programmazione")
-
-            # Applicazione X
-            for pdl, giorni in modifiche_X.items():
-                info = mappa_pdl[pdl]
-                sh = self.wb_master.Sheets(info["foglio"])
-                for col, val in giorni.items():
-                    sh.Cells(info["riga"], col).Value = val
-
-            # Applicazione Stati
-            for pdl, stato in modifiche_stato.items():
-                info = mappa_pdl[pdl]
-                self.wb_master.Sheets(info["foglio"]).Cells(info["riga"], 13).Value = stato
-
-            # Scrittura Nuovi PDL
+            # 4. Inserimento nuovi PDL
             if nuovi_pdl:
-                sh_new = self.wb_master.Sheets("nuovi PdL rilevati")
-                # Trova prima riga libera tra 3 e 23
-                riga_libera = 24
-                check_vals = sh_new.Range("A3:A23").Value
-                if check_vals:
-                    if not isinstance(check_vals, tuple):
-                        check_vals = ((check_vals,),)
-                    for i, r in enumerate(check_vals):
-                        if not r[0]:
-                            riga_libera = i + 3
-                            break
-
-                rows_data = list(nuovi_pdl.values())
-                target = sh_new.Range(
-                    sh_new.Cells(riga_libera, 1), sh_new.Cells(riga_libera + len(rows_data) - 1, 8)
-                )
-                target.Value = rows_data
-                logger.info(f"Inseriti {len(rows_data)} nuovi PDL nel foglio dedicato.")
+                self._insert_new_pdls(nuovi_pdl)
 
             self.wb_master.Save()
             logger.info("✅ Sincronizzazione Master Excel completata.")
@@ -206,15 +108,121 @@ class ProgrammingSyncManager:
         except Exception as e:
             logger.error(f"❌ Errore durante l'elaborazione Excel: {e}", exc_info=True)
         finally:
-            self._restore_settings()
+            self._prepare_excel_state(False)
 
-    def _restore_settings(self):
-        """Ripristina le impostazioni originali di Excel."""
-        if self.excel_app:
+    def _prepare_excel_state(self, optimize: bool):
+        """Imposta o ripristina lo stato di ottimizzazione di Excel."""
+        if not self.excel_app:
+            return
+
+        if optimize:
+            self._original_calc_mode = self.excel_app.Calculation
+            self.excel_app.Calculation = xlCalculationManual
+            self.excel_app.ScreenUpdating = False
+            self.excel_app.EnableEvents = False
+        else:
             self.excel_app.ScreenUpdating = True
             self.excel_app.EnableEvents = True
             if self._original_calc_mode is not None:
-                self.excel_app.Calculation = self._original_calc_mode  # type: ignore[unreachable]
+                self.excel_app.Calculation = self._original_calc_mode
+
+    def _map_master_pdls(self) -> dict[str, dict[str, Any]]:
+        """Crea una mappa dei PDL esistenti nel file Master."""
+        mappa_pdl = {}
+        for nome_foglio in self.FOGLI_PDL:
+            sheet = self.wb_master.Sheets(nome_foglio)
+            last_row = sheet.Cells(sheet.Rows.Count, 5).End(-4162).Row  # xlUp col E
+            if last_row < 4:
+                continue
+
+            data = sheet.Range(sheet.Cells(4, 1), sheet.Cells(last_row, 13)).Value
+            if not data:
+                continue
+
+            if not isinstance(data, tuple):
+                data = ((data,),)
+
+            for i, row in enumerate(data):
+                pdl_val = row[4]  # Col E
+                if pdl_val:
+                    mappa_pdl[str(pdl_val).strip()] = {
+                        "foglio": nome_foglio,
+                        "riga": i + 4,
+                        "stato": str(row[12] or "").strip().upper(),
+                    }
+        return mappa_pdl
+
+    def _analyze_downloaded_file(self, path: str, mappa_pdl: dict) -> tuple[dict, dict, dict]:
+        """Analizza il file scaricato e identifica differenze e nuovi record."""
+        logger.info(f"Analisi report scaricato: {os.path.basename(path)}")
+        nuovi_pdl = {}
+        modif_x: dict[str, dict[int, str]] = {}
+        modif_stato = {}
+        mappa_giorni = {8: 3, 9: 5, 10: 7, 11: 9, 12: 11}
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            wb_in = openpyxl.load_workbook(path, read_only=True, data_only=True)
+            ws_in = wb_in.active
+            if ws_in is None:
+                return {}, {}, {}
+
+            for row in ws_in.iter_rows(min_row=2, values_only=True):
+                if not row or not row[0]:
+                    continue
+                pdl_str = str(row[0]).strip()
+
+                if pdl_str not in mappa_pdl:
+                    nuovi_pdl[pdl_str] = [row[0], row[1], row[14], row[16], row[18], row[19], row[20], row[13]]
+                else:
+                    info = mappa_pdl[pdl_str]
+                    # Check X giorni
+                    for idx_excel, idx_report in mappa_giorni.items():
+                        if str(row[idx_report] or "").strip().lower() == "si":
+                            modif_x.setdefault(pdl_str, {})[idx_excel] = "X"
+                    # Check Stato
+                    is_richiesto = str(row[14] or "").strip() in ("Richiesto", "Richiesto (Ese ok)")
+                    if is_richiesto and info["stato"] != "RICHIESTO":
+                        modif_stato[pdl_str] = "RICHIESTO"
+                    elif not is_richiesto and info["stato"] == "RICHIESTO":
+                        modif_stato[pdl_str] = "EMESSO"
+            wb_in.close()
+        return nuovi_pdl, modif_x, modif_stato
+
+    def _apply_modifications_to_master(self, mappa_pdl: dict, modif_x: dict, modif_stato: dict):
+        """Applica le X dei giorni e i cambi di stato sul file Master."""
+        logger.info("Esecuzione macro 'reset_programmazione'...")
+        self.excel_app.Run(f"'{self.wb_master.Name}'!reset_programmazione")
+
+        # Applicazione X
+        for pdl, giorni in modif_x.items():
+            info = mappa_pdl[pdl]
+            sh = self.wb_master.Sheets(info["foglio"])
+            for col, val in giorni.items():
+                sh.Cells(info["riga"], col).Value = val
+
+        # Applicazione Stati
+        for pdl, stato in modif_stato.items():
+            info = mappa_pdl[pdl]
+            self.wb_master.Sheets(info["foglio"]).Cells(info["riga"], 13).Value = stato
+
+    def _insert_new_pdls(self, nuovi_pdl: dict):
+        """Inserisce i nuovi PDL nel foglio dedicato."""
+        sh_new = self.wb_master.Sheets("nuovi PdL rilevati")
+        riga_libera = 24
+        check_vals = sh_new.Range("A3:A23").Value
+        if check_vals:
+            if not isinstance(check_vals, tuple):
+                check_vals = ((check_vals,),)
+            for i, r in enumerate(check_vals):
+                if not r[0]:
+                    riga_libera = i + 3
+                    break
+
+        rows_data = list(nuovi_pdl.values())
+        target = sh_new.Range(sh_new.Cells(riga_libera, 1), sh_new.Cells(riga_libera + len(rows_data) - 1, 8))
+        target.Value = rows_data
+        logger.info(f"Inseriti {len(rows_data)} nuovi PDL nel foglio dedicato.")
 
     def cleanup(self):
         """Chiude Excel se aperto dal manager."""

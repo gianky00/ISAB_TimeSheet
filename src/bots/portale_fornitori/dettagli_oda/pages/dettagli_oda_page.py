@@ -4,7 +4,6 @@ Page Object Model for Dettagli OdA.
 """
 
 import time
-import traceback
 from collections.abc import Callable
 from contextlib import suppress
 from pathlib import Path
@@ -238,7 +237,7 @@ class DettagliOdAPage:
                 return None
 
             files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
-            
+
             if not self._click_export_button(button_locator):
                 return None
 
@@ -248,7 +247,7 @@ class DettagliOdAPage:
                 return None
 
             final_path = self._finalize_download(downloaded_file, dest_dir, target_filename)
-            
+
             # Pulizia aggressiva residui 0 KB (post-download)
             time.sleep(0.5)
             from src.utils.helpers import cleanup_chrome_temp_files

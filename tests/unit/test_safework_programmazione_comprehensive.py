@@ -1,13 +1,11 @@
-
 import unittest
-from unittest.mock import MagicMock, patch, call
-from pathlib import Path
-import pandas as pd
+from unittest.mock import MagicMock, patch
+
 from selenium.webdriver.common.by import By
 
-from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
 from src.bots.safework.pages.visualizza_attivita_page import VisualizzaAttivitaPage
-from src.bots.safework.common.locators import SafeWorkLocators
+from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
+
 
 class TestSafeWorkProgrammazioneComprehensive(unittest.TestCase):
     def setUp(self):
@@ -20,7 +18,7 @@ class TestSafeWorkProgrammazioneComprehensive(unittest.TestCase):
             self.bot._trace_id = "test-trace"
             self.bot._status = MagicMock()
             self.bot._status.name = "RUNNING"
-            self.bot._telegram_service = None # Fix AttributeError
+            self.bot._telegram_service = None
             self.bot.download_path = "C:/fake/downloads"
             self.bot.attivita_page = MagicMock()
 
@@ -39,10 +37,10 @@ class TestSafeWorkProgrammazioneComprehensive(unittest.TestCase):
             "date_end": "07/01/2026"
         }]
         mock_poll.return_value = "fake_report.xlsx"
-        
+
         # DataFrame columns: A(0):PDL, B(1):Desc, C(2):TCL1, D(3):TGO1... R(17):Req, X(23):Unit, Y(24):Area
-        cols = [i for i in range(25)]
-        row_data = ["PDL001", "TEST DESC", "Si", "No", "No", "Si"] + ["No"]*11 + ["RICH1"] + [""]*5 + ["U1", "A1"]
+        cols = list(range(25))  # Fix C416
+        row_data = ["PDL001", "TEST DESC", "Si", "No", "No", "Si"] + ["No"] * 11 + ["RICH1"] + [""] * 5 + ["U1", "A1"]
         # Mocking pandas row access (iloc used in bot)
         mock_df = MagicMock()
         mock_row = MagicMock()
@@ -50,14 +48,15 @@ class TestSafeWorkProgrammazioneComprehensive(unittest.TestCase):
         mock_row.__len__.return_value = 25
         mock_df.iterrows.return_value = [(0, mock_row)]
         mock_read_excel.return_value = mock_df
-        
+
         with patch("src.bots.safework.programmazione.bot.Path.unlink"):
             result = self.bot.run(data)
-            
+
             self.assertTrue(result)
             self.assertEqual(len(self.bot.results), 1)
             res = self.bot.results[0]
             self.assertEqual(res["pdl"], "PDL001")
+
 
 class TestVisualizzaAttivitaPageComprehensive(unittest.TestCase):
     def setUp(self):
@@ -76,18 +75,23 @@ class TestVisualizzaAttivitaPageComprehensive(unittest.TestCase):
         mock_dropdown = MagicMock()
         mock_input = MagicMock()
         mock_opt = MagicMock()
-        
+
         self.mock_wait.until.side_effect = [mock_btn, mock_dropdown]
         mock_dropdown.find_element.side_effect = [mock_input, mock_opt, mock_opt]
-        
-        # Import By correctly
-        from selenium.webdriver.common.by import By
-        
+
         result = self.page.seleziona_richiedente(["REQ1", "REQ2"])
-        
+
         self.assertTrue(result)
         mock_input.send_keys.assert_any_call("REQ1")
         self.mock_driver.find_element.assert_called_with(By.TAG_NAME, "body")
+
+    def test_esporta_excel_success(self):
+        mock_btn = MagicMock()
+        self.mock_wait.until.return_value = mock_btn
+        result = self.page.esporta_excel()
+        self.assertTrue(result)
+        mock_btn.click.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

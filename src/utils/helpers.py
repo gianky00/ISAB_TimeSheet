@@ -243,9 +243,12 @@ def cleanup_chrome_temp_files(directory: Path | str) -> list[str]:
                     f.unlink()
                     removed.append(f.name)
                 except Exception:
+                    # Se non riusciamo a cancellare un file specifico (es. locked), passiamo al prossimo
                     continue
     except Exception:
-        pass
+        # Se la directory non è leggibile o iterabile, ritorniamo quello che abbiamo trovato finora
+        with suppress(Exception):
+            pass
     return removed
 
 

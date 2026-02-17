@@ -1,15 +1,15 @@
 
-import unittest
-from unittest.mock import MagicMock, patch, PropertyMock
-from pathlib import Path
-from itertools import count
 import shutil
 import tempfile
-import os
+import unittest
+from itertools import count
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 from src.bots.portale_fornitori.timbrature.bot import TimbratureBot
 from src.bots.portale_fornitori.timbrature.pages.timbrature_page import TimbraturePage
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
+
 
 class TestTimbratureBotComprehensive(unittest.TestCase):
     def setUp(self):
@@ -37,7 +37,7 @@ class TestTimbratureBotComprehensive(unittest.TestCase):
         mock_page.navigate_to_timbrature.return_value = True
         mock_page.set_filters.return_value = True
         mock_page.download_excel.return_value = "fake_path.xlsx"
-        
+
         with patch("src.bots.portale_fornitori.timbrature.bot.Path.exists", return_value=True):
             with patch("src.bots.portale_fornitori.timbrature.bot.Path.unlink"):
                 result = self.bot.run([{"data_da": "01/01/2026", "fornitore": "V"}])
@@ -50,7 +50,7 @@ class TestTimbraturePageComprehensive(unittest.TestCase):
         self.test_dir = Path(tempfile.mkdtemp())
         self.download_dir = self.test_dir / "downloads"
         self.download_dir.mkdir()
-        
+
         # Patching WebDriverWait
         with patch("src.bots.portale_fornitori.timbrature.pages.timbrature_page.WebDriverWait") as mock_wait_class:
             self.mock_wait = MagicMock()
@@ -68,17 +68,17 @@ class TestTimbraturePageComprehensive(unittest.TestCase):
         # 1. Crea un file finto nella cartella download
         fake_file = self.download_dir / "report.xlsx"
         fake_file.write_text("dummy content")
-        
+
         # 2. Mock tempo: start=1000, current=1001
         # Il bot fa time.time() all'inizio, poi nel loop.
         mock_time.side_effect = count(start=1000)
-        
+
         # 3. Patch CONFIG_DIR per puntare alla nostra cartella temporanea
         # Il bot fa: from src.core.config_manager import CONFIG_DIR; dest_dir = CONFIG_DIR / "temp"
         with patch("src.bots.portale_fornitori.timbrature.pages.timbrature_page.Timeouts.DOWNLOAD", 5):
             with patch("src.core.config_manager.CONFIG_DIR", self.test_dir):
                 result = self.page._rename_latest_download("test_timb")
-                
+
                 # Verifica
                 self.assertTrue(result)
                 self.assertIn("test_timb_", result)

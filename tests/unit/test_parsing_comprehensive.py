@@ -7,7 +7,6 @@ di valute, numeri e stringhe sporche.
 Matches source code: src/utils/parsing.py
 """
 
-import pytest
 from src.utils.parsing import parse_currency
 
 

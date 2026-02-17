@@ -1,12 +1,10 @@
 
 import unittest
-from unittest.mock import MagicMock, patch, call
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.common.by import By
+from unittest.mock import MagicMock, patch
 
 from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot
 from src.bots.portale_fornitori.carico_ts.pages.carico_ts_page import CaricoTSPage
-from src.bots.portale_fornitori.carico_ts.locators import CaricoTSLocators
+
 
 class TestCaricoTSBotComprehensive(unittest.TestCase):
     def setUp(self):
@@ -32,7 +30,7 @@ class TestCaricoTSBotComprehensive(unittest.TestCase):
             valid, msg = self.bot.validate_data({"rows": [{"nome": "M"}]})
             self.assertFalse(valid)
             self.assertIn("Numero OdA mancante", msg)
-            
+
             # Valid
             valid, msg = self.bot.validate_data({"rows": [{"numero_oda": "123"}]})
             self.assertTrue(valid)
@@ -43,9 +41,9 @@ class TestCaricoTSBotComprehensive(unittest.TestCase):
         mock_page.navigate.return_value = True
         mock_page.select_supplier.return_value = True
         mock_page.process_oda.return_value = True
-        
+
         result = self.bot.run([{"numero_oda": "123"}])
-        
+
         self.assertTrue(result)
         mock_page.navigate.assert_called_once()
         mock_page.process_oda.assert_called_with("123")
@@ -63,7 +61,7 @@ class TestCaricoTSPageComprehensive(unittest.TestCase):
     def test_navigate_success(self, mock_ec):
         mock_btn = MagicMock()
         self.mock_wait.until.return_value = mock_btn
-        
+
         # _wait_overlay internal call
         with patch("src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.WebDriverWait") as mock_wait_overlay:
             result = self.page.navigate()
@@ -75,19 +73,19 @@ class TestCaricoTSPageComprehensive(unittest.TestCase):
     def test_select_supplier_flow(self, mock_ec, mock_action_class):
         mock_arrow = MagicMock()
         mock_opt = MagicMock()
-        
+
         # 1. wait.until per arrow (navigate)
         # 2. wait.until per arrow (select_supplier)
         self.mock_wait.until.side_effect = [mock_arrow]
-        
+
         # New WebDriverWait(driver, 5) for option
         with patch("src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.WebDriverWait") as mock_local_wait_class:
             mock_local_wait = MagicMock()
             mock_local_wait_class.return_value = mock_local_wait
             mock_local_wait.until.return_value = mock_opt
-            
+
             result = self.page.select_supplier("VENDOR")
-            
+
             self.assertTrue(result)
             mock_action_class.return_value.move_to_element.assert_called_with(mock_arrow)
             self.mock_driver.execute_script.assert_any_call("arguments[0].click();", mock_opt)
@@ -97,9 +95,9 @@ class TestCaricoTSPageComprehensive(unittest.TestCase):
         mock_inp = MagicMock()
         mock_btn = MagicMock()
         self.mock_wait.until.side_effect = [mock_inp, mock_btn]
-        
+
         result = self.page.process_oda("ODA123")
-        
+
         self.assertTrue(result)
         # Verifica iniezione JS complessa per input
         calls = self.mock_driver.execute_script.call_args_list
