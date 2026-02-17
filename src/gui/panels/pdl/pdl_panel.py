@@ -410,7 +410,7 @@ class PDLDBPanel(QWidget):
             full_data = self._raw_full_data[row_idx]
             n_pdl = str(full_data[1])  # N° PDL è all'indice 1
 
-            # Recupera interventi dallo schedario esterno
+            # Recupera interventi dai Report Attività
             try:
                 # Usa fully qualified name o alias se importato
                 interventions = pdl_queries.PDLQueries.get_pdl_interventions(n_pdl)

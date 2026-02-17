@@ -180,13 +180,13 @@ class PDLQueries:
     def get_pdl_interventions(cls, n_pdl: str) -> list[dict[str, Any]]:
         """
         Recupera la cronologia degli interventi per un determinato PDL
-        dal database esterno schedario.db.
+        dal database dei Report Attività.
         """
         from src.core import config_manager
 
         config = config_manager.load_config()
         # Path di default storico
-        default_path = "C:/Users/Coemi/Desktop/SCRIPT/report-attivita-app/schedario.db"
+        default_path = "C:/Users/Coemi/Desktop/SCRIPT/report-attivita-app/report_attivita.db"
         ext_db_path = config.get("activity_db_path", default_path)
 
         if not ext_db_path or not Path(ext_db_path).exists():

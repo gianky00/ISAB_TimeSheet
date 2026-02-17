@@ -54,7 +54,7 @@ class PDLDetailView(QWidget):
         layout.addWidget(scroll, 2)  # Stretch factor 2
 
         # Sezione Cronologia Interventi
-        cron_label = QLabel("Cronologia Interventi (Schedario)")
+        cron_label = QLabel("Cronologia Interventi (Report Attività)")
         cron_label.setStyleSheet("font-weight: bold; font-size: 13px; color: #4CAF50; margin-top: 10px;")
         layout.addWidget(cron_label)
 

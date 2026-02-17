@@ -54,8 +54,8 @@ class PathsPage(QWidget):
         cont_layout.addWidget(QLabel("File Attività Programmate (Riepilogo):"))
         self.attivita_path_edit = self._create_path_row(cont_layout, self._browse_attivita)
 
-        # Database Report Attività (Schedario)
-        cont_layout.addWidget(QLabel("Database Report Attività (Schedario.db):"))
+        # Database Report Attività
+        cont_layout.addWidget(QLabel("Database Report Attività:"))
         self.activity_db_path_edit = self._create_path_row(cont_layout, self._browse_activity_db)
 
         # Certificati Excel

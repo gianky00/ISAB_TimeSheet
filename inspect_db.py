@@ -1,6 +1,6 @@
 import sqlite3
 
-db_path = r"C:/Users/gianc/Desktop/SCRIPT/report-attivita-app/schedario.db"
+db_path = r"C:/Users/gianc/Desktop/SCRIPT/report-attivita-app/report_attivita.db"
 try:
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
