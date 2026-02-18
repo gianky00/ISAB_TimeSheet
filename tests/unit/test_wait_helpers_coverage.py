@@ -51,11 +51,12 @@ class TestWaitHelpersCoverageFinal:
 
         # Mock tempo incrementale
         timer = AutoIncrementalTime(start=1000)
-        with patch("time.time", side_effect=timer):
-            with patch("time.sleep"):
-                # Aggiorna mtime per simulare nuovo download/sovrascrittura
-                os.utime(str(f1), (5000, 5000))
 
+        def update_file_on_sleep(*args, **kwargs):
+            os.utime(str(f1), (5000, 5000))
+
+        with patch("time.time", side_effect=timer):
+            with patch("time.sleep", side_effect=update_file_on_sleep):
                 res = poll_for_new_file(dir_path, files_before, pattern="*.xlsx", timeout=100)
                 assert res is not None
                 assert "report.xlsx" in res

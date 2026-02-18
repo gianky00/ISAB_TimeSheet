@@ -15,9 +15,8 @@ class TestParsingSuite:
 
     def test_parse_currency_ambiguous_dot(self):
         """Verifica gestione del punto ambiguo."""
-        # Un punto solo con 3 cifre dopo: 1.000 -> 1.0 (float standard)
-        # o 1000? La logica attuale lascia il punto se ambiguo.
-        assert parse_currency("1.000") == 1.0
+        # Un punto solo con 3 cifre dopo viene trattato come migliaia (formato IT)
+        assert parse_currency("1.000") == 1000.0
         # Più di un punto -> migliaia sicure
         assert parse_currency("1.234.567") == 1234567.0
 

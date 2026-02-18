@@ -132,5 +132,3 @@ class TestParsingComprehensive:
         assert parse_currency("1..234") == 1234.0
         assert parse_currency(",,50") == 0.5
         assert parse_currency("..50") == 0.5
-
-

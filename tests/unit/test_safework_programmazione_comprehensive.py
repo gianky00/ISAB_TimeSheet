@@ -31,16 +31,18 @@ class TestSafeWorkProgrammazioneComprehensive(unittest.TestCase):
     @patch.object(SafeWorkProgrammazioneBot, "click_robusto")
     @patch.object(SafeWorkProgrammazioneBot, "_attendi_scomparsa_overlay")
     def test_run_success_flow(self, mock_overlay, mock_click, mock_poll, mock_read_excel):
-        data = [{
-            "requesters": ["RICH1"],
-            "date_start": "01/01/2026",
-            "date_end": "07/01/2026"
-        }]
+        data = [{"requesters": ["RICH1"], "date_start": "01/01/2026", "date_end": "07/01/2026"}]
         mock_poll.return_value = "fake_report.xlsx"
 
         # DataFrame columns: A(0):PDL, B(1):Desc, C(2):TCL1, D(3):TGO1... R(17):Req, X(23):Unit, Y(24):Area
         cols = list(range(25))  # Fix C416
-        row_data = ["PDL001", "TEST DESC", "Si", "No", "No", "Si"] + ["No"] * 11 + ["RICH1"] + [""] * 5 + ["U1", "A1"]
+        row_data = (
+            ["PDL001", "TEST DESC", "Si", "No", "No", "Si"]
+            + ["No"] * 11
+            + ["RICH1"]
+            + [""] * 5
+            + ["U1", "A1"]
+        )
         # Mocking pandas row access (iloc used in bot)
         mock_df = MagicMock()
         mock_row = MagicMock()

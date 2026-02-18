@@ -212,7 +212,7 @@ def cmd_export(args):
     output_path = Path(args.output)
 
     if args.format == "json":
-        with open(output_path, "w", encoding="utf-8") as f:
+        with output_path.open("w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
 
     elif args.format == "csv":
@@ -222,7 +222,7 @@ def cmd_export(args):
         if results:
             fieldnames = ["timestamp", "level", "message", "trace_id", "bot_type"]
 
-            with open(output_path, "w", newline="", encoding="utf-8") as f:
+            with output_path.open("w", newline="", encoding="utf-8") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
                 writer.writeheader()
 

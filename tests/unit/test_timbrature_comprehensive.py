@@ -1,4 +1,3 @@
-
 import shutil
 import tempfile
 import unittest
@@ -43,6 +42,7 @@ class TestTimbratureBotComprehensive(unittest.TestCase):
                 result = self.bot.run([{"data_da": "01/01/2026", "fornitore": "V"}])
                 self.assertTrue(result)
 
+
 class TestTimbraturePageComprehensive(unittest.TestCase):
     def setUp(self):
         self.mock_driver = MagicMock()
@@ -52,7 +52,9 @@ class TestTimbraturePageComprehensive(unittest.TestCase):
         self.download_dir.mkdir()
 
         # Patching WebDriverWait
-        with patch("src.bots.portale_fornitori.timbrature.pages.timbrature_page.WebDriverWait") as mock_wait_class:
+        with patch(
+            "src.bots.portale_fornitori.timbrature.pages.timbrature_page.WebDriverWait"
+        ) as mock_wait_class:
             self.mock_wait = MagicMock()
             self.mock_long_wait = MagicMock()
             mock_wait_class.side_effect = [self.mock_wait, self.mock_long_wait]
@@ -83,7 +85,8 @@ class TestTimbraturePageComprehensive(unittest.TestCase):
                 self.assertTrue(result)
                 self.assertIn("test_timb_", result)
                 self.assertTrue(Path(result).exists())
-                self.assertFalse(fake_file.exists()) # Deve essere stato rimosso/mosso
+                self.assertFalse(fake_file.exists())  # Deve essere stato rimosso/mosso
+
 
 class TestTimbratureStorageComprehensive(unittest.TestCase):
     def setUp(self):
@@ -96,20 +99,24 @@ class TestTimbratureStorageComprehensive(unittest.TestCase):
     @patch("src.core.sync_tracker.SyncTracker.update_status")
     def test_import_excel_data_flow(self, mock_sync, mock_get_conn, mock_read_excel):
         import pandas as pd
-        mock_read_excel.return_value = pd.DataFrame({
-            "Id Dipendente": ["1"],
-            "Data Timbratura": ["2026-01-01"],
-            "Ora Ingresso": ["08:00"],
-            "Ora Uscita": ["17:00"],
-            "Nome Risorsa": ["M"],
-            "Cognome Risorsa": ["R"],
-            "Fornitore": ["V"],
-            "Codice Fiscale": ["CF"]
-        })
+
+        mock_read_excel.return_value = pd.DataFrame(
+            {
+                "Id Dipendente": ["1"],
+                "Data Timbratura": ["2026-01-01"],
+                "Ora Ingresso": ["08:00"],
+                "Ora Uscita": ["17:00"],
+                "Nome Risorsa": ["M"],
+                "Cognome Risorsa": ["R"],
+                "Fornitore": ["V"],
+                "Codice Fiscale": ["CF"],
+            }
+        )
         mock_conn = MagicMock()
         mock_get_conn.return_value.__enter__.return_value = mock_conn
         result = self.storage.import_excel("path.xlsx")
         self.assertTrue(result)
+
 
 if __name__ == "__main__":
     unittest.main()

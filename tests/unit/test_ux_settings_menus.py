@@ -8,8 +8,10 @@ from src.gui.panels.settings.main_panel import SettingsPanel
 
 
 @pytest.fixture
-def panel(qapp):
+def panel(qapp, mocker):
     """Fixture to create a SettingsPanel instance for each test."""
+    # Mock refresh_models to avoid background thread starting during tests
+    mocker.patch("src.gui.panels.settings.pages.general_page.GeneralPage.refresh_models")
     return SettingsPanel()
 
 

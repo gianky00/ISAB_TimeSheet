@@ -1,8 +1,8 @@
-import os
 import sqlite3
+from pathlib import Path
 
 db_path = r"C:/Users/Coemi/Desktop/SCRIPT/report-attivita-app/report-attivita.db"
-print(f"Verifica esistenza file: {os.path.exists(db_path)}")
+print(f"Verifica esistenza file: {Path(db_path).exists()}")
 
 try:
     conn = sqlite3.connect(db_path)
@@ -22,5 +22,5 @@ try:
 except Exception as e:
     print(f"Errore: {e}")
 finally:
-    if 'conn' in locals():
+    if "conn" in locals():
         conn.close()

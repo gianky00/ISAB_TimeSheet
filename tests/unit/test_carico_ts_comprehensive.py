@@ -1,4 +1,3 @@
-
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -48,11 +47,14 @@ class TestCaricoTSBotComprehensive(unittest.TestCase):
         mock_page.navigate.assert_called_once()
         mock_page.process_oda.assert_called_with("123")
 
+
 class TestCaricoTSPageComprehensive(unittest.TestCase):
     def setUp(self):
         self.mock_driver = MagicMock()
         self.mock_log = MagicMock()
-        with patch("src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.WebDriverWait") as mock_wait_class:
+        with patch(
+            "src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.WebDriverWait"
+        ) as mock_wait_class:
             self.mock_wait = MagicMock()
             mock_wait_class.return_value = self.mock_wait
             self.page = CaricoTSPage(self.mock_driver, self.mock_log)
@@ -63,7 +65,9 @@ class TestCaricoTSPageComprehensive(unittest.TestCase):
         self.mock_wait.until.return_value = mock_btn
 
         # _wait_overlay internal call
-        with patch("src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.WebDriverWait") as mock_wait_overlay:
+        with patch(
+            "src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.WebDriverWait"
+        ) as mock_wait_overlay:
             result = self.page.navigate()
             self.assertTrue(result)
             mock_btn.click.assert_called_once()
@@ -79,7 +83,9 @@ class TestCaricoTSPageComprehensive(unittest.TestCase):
         self.mock_wait.until.side_effect = [mock_arrow]
 
         # New WebDriverWait(driver, 5) for option
-        with patch("src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.WebDriverWait") as mock_local_wait_class:
+        with patch(
+            "src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.WebDriverWait"
+        ) as mock_local_wait_class:
             mock_local_wait = MagicMock()
             mock_local_wait_class.return_value = mock_local_wait
             mock_local_wait.until.return_value = mock_opt
@@ -104,6 +110,7 @@ class TestCaricoTSPageComprehensive(unittest.TestCase):
         self.assertTrue(any("el.dispatchEvent" in c[0][0] for c in calls))
         self.assertTrue(any("ODA123" in str(c[0][2]) for c in calls if len(c[0]) > 2))
         mock_btn.click.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

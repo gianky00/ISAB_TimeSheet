@@ -6,15 +6,12 @@ import pytest
 
 
 def run_coverage_for_bot(test_file, source_file, bot_name):
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print(f"ANALISI COVERAGE PER: {bot_name}")
-    print("="*50)
+    print("=" * 50)
 
     # Configuriamo coverage per il file sorgente specifico
-    cov = coverage.Coverage(
-        source=[str(source_file)],
-        branch=True
-    )
+    cov = coverage.Coverage(source=[str(source_file)], branch=True)
     cov.erase()
     cov.start()
 
@@ -31,22 +28,29 @@ def run_coverage_for_bot(test_file, source_file, bot_name):
     # Restituisce la percentuale per controllo finale
     return cov.report()
 
+
 if __name__ == "__main__":
     root = Path.cwd()
     sys.path.insert(0, str(root))
 
     bots = [
         ("tests/unit/test_safework_pdl_bot_comprehensive.py", "src/bots/safework/pdl/bot.py", "SafeWork PDL"),
-        ("tests/unit/test_dettagli_oda_comprehensive.py", "src/bots/portale_fornitori/dettagli_oda/bot.py", "Dettagli OdA"),
-        ("tests/unit/test_scarico_ts_comprehensive.py", "src/bots/portale_fornitori/scarico_ts/bot.py", "Scarico TS")
+        (
+            "tests/unit/test_dettagli_oda_comprehensive.py",
+            "src/bots/portale_fornitori/dettagli_oda/bot.py",
+            "Dettagli OdA",
+        ),
+        (
+            "tests/unit/test_scarico_ts_comprehensive.py",
+            "src/bots/portale_fornitori/scarico_ts/bot.py",
+            "Scarico TS",
+        ),
     ]
 
-    results = []
-    for t, s, n in bots:
-        results.append(run_coverage_for_bot(root / t, root / s, n))
+    results = [run_coverage_for_bot(root / t, root / s, n) for t, s, n in bots]
 
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("RIEPILOGO FINALE COVERAGE BOT")
-    print("="*50)
+    print("=" * 50)
     for i, res in enumerate(results):
         print(f"{bots[i][2]}: {res:.2f}%")

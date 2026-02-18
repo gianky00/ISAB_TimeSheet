@@ -137,9 +137,12 @@ class DettagliOdABot(BaseBot):
 
     def _import_oda_to_db(self, downloaded_path: Path):
         """Helper per l'importazione nel database."""
-        self.log(f"📥 Avvio importazione in Storico OdA da {downloaded_path.name}...")
-        ok, msg, added, _ = OdaManager.import_oda_from_excel(str(downloaded_path))
-        if ok:
-            self.log(f"✅ Importazione completata: {msg} (Upd/Ins: {added})")
-        else:
-            self.log(f"⚠️ Errore importazione: {msg}")
+        try:
+            self.log(f"📥 Avvio importazione in Storico OdA da {downloaded_path.name}...")
+            ok, msg, added, _ = OdaManager.import_oda_from_excel(str(downloaded_path))
+            if ok:
+                self.log(f"✅ Importazione completata: {msg} (Upd/Ins: {added})")
+            else:
+                self.log(f"⚠️ Errore importazione: {msg}")
+        except Exception as e:
+            self.log(f"❌ Errore critico durante l'importazione database: {e}")

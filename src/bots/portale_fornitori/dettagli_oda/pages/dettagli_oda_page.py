@@ -87,7 +87,7 @@ class DettagliOdAPage:
             self.log(f"✗ Selezione fornitore fallita: {e}")
             return False
 
-    def logout(self):
+    def logout(self) -> bool:
         """Esegue la procedura di logout specifica per questa area del portale."""
         try:
             self.log("Esecuzione logout...")
@@ -100,7 +100,7 @@ class DettagliOdAPage:
                 self.driver.execute_script("arguments[0].click();", logout_btn)
             except TimeoutException:
                 self.log("  ✗ Opzione Logout non apparsa nel menu.")
-                return
+                return False
 
             try:
                 self.log("  Attesa conferma logout...")
@@ -109,10 +109,13 @@ class DettagliOdAPage:
                 self.log("  Conferma cliccata.")
                 self.wait.until(EC.visibility_of_element_located(LoginLocators.USERNAME_FIELD))
                 self.log("✓ Logout completato con successo.")
+                return True
             except TimeoutException:
                 self.log("⚠️ Popup conferma non apparso o timeout.")
+                return False
         except Exception as e:
             self.log(f"⚠️ Errore durante logout: {e}")
+            return False
 
     def expand_sidebar_if_collapsed(self):
         """Espande la sidebar se collassata per rendere visibile il menu Report."""
@@ -251,6 +254,7 @@ class DettagliOdAPage:
             # Pulizia aggressiva residui 0 KB (post-download)
             time.sleep(0.5)
             from src.utils.helpers import cleanup_chrome_temp_files
+
             removed = cleanup_chrome_temp_files(source_dir)
             for f_name in removed:
                 self.log(f"  [DEBUG] Rimosso residuo download: {f_name}")
@@ -288,6 +292,7 @@ class DettagliOdAPage:
     def _finalize_download(self, src: Path, dest_dir: Path, target_name: str) -> Path | None:
         """Sposta il file scaricato nella destinazione finale rinominandolo."""
         import shutil
+
         dest_dir.mkdir(parents=True, exist_ok=True)
         target_path = dest_dir / target_name
         if target_path.exists():

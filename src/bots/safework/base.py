@@ -89,7 +89,8 @@ class SafeworkBaseBot(BaseBot):
             # Supporta OK, Annulla, Si, Yes (anche in span/div)
             try:
                 modale.find_element(
-                    By.XPATH, ".//*[self::button or self::span or self::a][contains(text(), 'OK') or contains(text(), 'Si') or contains(text(), 'Yes') or @data-dismiss='modal']"
+                    By.XPATH,
+                    ".//*[self::button or self::span or self::a][contains(text(), 'OK') or contains(text(), 'Si') or contains(text(), 'Yes') or @data-dismiss='modal']",
                 ).click()
                 self.log("ℹ️ Modale gestita (OK/Annulla/Si/Yes).")
             except Exception:

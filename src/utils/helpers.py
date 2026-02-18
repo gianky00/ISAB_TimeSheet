@@ -7,6 +7,7 @@ import logging
 import os
 import re
 import sys
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -242,16 +243,17 @@ def cleanup_chrome_temp_files(directory: Path | str) -> list[str]:
                 try:
                     f.unlink()
                     removed.append(f.name)
-                except Exception:
+                except Exception as e:
                     # Se non riusciamo a cancellare un file specifico (es. locked), passiamo al prossimo
+                    import logging
+
+                    logging.getLogger(__name__).warning(f"Impossibile eliminare {f}: {e}")
                     continue
     except Exception:
         # Se la directory non è leggibile o iterabile, ritorniamo quello che abbiamo trovato finora
         with suppress(Exception):
             pass
     return removed
-
-
 
 
 def get_colored_icon(icon_path: str, color: str = "#000000") -> QIcon:

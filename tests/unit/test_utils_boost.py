@@ -39,8 +39,8 @@ class TestValidatorsAndParsingDeep:
         assert parse_currency("1,234,567.89") == 1234567.89
 
         # Casi ambigui (punto singolo)
-        # Se ha 3 cifre dopo, per ora la logica lo lascia come decimale (1.234 -> 1.234)
-        assert parse_currency("1.234") == 1.234
+        # Se ha esattamente 3 cifre dopo, la logica italiana lo tratta come migliaia (1.234 -> 1234.0)
+        assert parse_currency("1.234") == 1234.0
         assert parse_currency("1.23") == 1.23
 
         # Null/Invalid

@@ -7,7 +7,10 @@ from src.gui.panels.settings.main_panel import SettingsPanel
 
 class TestSettingsPanelComplete:
     @pytest.fixture
-    def panel(self, qapp):
+    def panel(self, qapp, mocker):
+        # Mock refresh_models to avoid background thread starting during tests
+        mocker.patch("src.gui.panels.settings.pages.general_page.GeneralPage.refresh_models")
+
         with (
             patch(
                 "src.gui.panels.settings.main_panel.config_manager.load_config",
@@ -41,7 +44,7 @@ class TestSettingsPanelComplete:
             ),
             patch(
                 "src.gui.panels.settings.pages.lists_page.AccountDialog.get_data",
-                return_value=("new_user", "pw"),
+                return_value=("new_user", "pw", "Esecutore"),
             ),
             patch.object(panel, "_save_settings") as mock_save,
         ):

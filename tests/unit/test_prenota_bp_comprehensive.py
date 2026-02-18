@@ -1,4 +1,3 @@
-
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -39,9 +38,7 @@ class TestPrenotaBPBotComprehensive(unittest.TestCase):
     def test_run_success(self, mock_page_class):
         """Test di esecuzione completata con successo."""
         mock_page = mock_page_class.return_value
-        data = {
-            "rows": [{"Numero BP": "BP001", "Note di Ritiro": "Nota 1"}]
-        }
+        data = {"rows": [{"Numero BP": "BP001", "Note di Ritiro": "Nota 1"}]}
 
         result = self.bot.run(data)
 
@@ -65,13 +62,16 @@ class TestPrenotaBPBotComprehensive(unittest.TestCase):
         mock_page_class.return_value.navigate_to_gestione_bp.assert_called_once()
         mock_page_class.return_value.filtra_buoni_prelievo.assert_not_called()
 
+
 class TestPrenotaBPPageComprehensive(unittest.TestCase):
     def setUp(self):
         self.mock_driver = MagicMock()
         self.mock_log = MagicMock()
 
         # Patch WebDriverWait in __init__
-        with patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait") as mock_wait_class:
+        with patch(
+            "src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait"
+        ) as mock_wait_class:
             self.mock_wait = MagicMock()
             self.mock_short_wait = MagicMock()
             # self.wait, self.short_wait
@@ -81,7 +81,9 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
     @patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
     def test_wait_and_click_retry_logic(self, mock_ec):
         """Verifica la logica di retry di wait_and_click."""
-        with patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait") as mock_local_wait_class:
+        with patch(
+            "src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait"
+        ) as mock_local_wait_class:
             mock_local_wait = MagicMock()
             mock_local_wait_class.return_value = mock_local_wait
 
@@ -102,7 +104,9 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
     @patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
     def test_wait_and_click_js_fallback(self, mock_ec):
         """Verifica il fallback JS se il click standard fallisce."""
-        with patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait") as mock_local_wait_class:
+        with patch(
+            "src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait"
+        ) as mock_local_wait_class:
             mock_local_wait = MagicMock()
             mock_local_wait_class.return_value = mock_local_wait
             mock_el = MagicMock()
@@ -158,7 +162,9 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
         # 4. FILTER_DATA_A (visibility_of_element_located in wait_and_fill)
         self.mock_wait.until.side_effect = [mock_arrow, mock_input, mock_input, mock_input]
 
-        with patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait") as mock_local_wait_class:
+        with patch(
+            "src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait"
+        ) as mock_local_wait_class:
             mock_local_wait = MagicMock()
             mock_local_wait_class.return_value = mock_local_wait
 
@@ -167,7 +173,9 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
             # 2. BT_CERCA (visibility_of_element_located in wait_and_click)
             mock_local_wait.until.side_effect = [mock_option, MagicMock()]
 
-            self.page.filtra_buoni_prelievo(fornitore="VENDOR", numero_bp="123", data_da="01/01", data_a="02/01")
+            self.page.filtra_buoni_prelievo(
+                fornitore="VENDOR", numero_bp="123", data_da="01/01", data_a="02/01"
+            )
 
         mock_action_class.return_value.move_to_element.assert_called_with(mock_arrow)
         self.mock_driver.execute_script.assert_any_call("arguments[0].click();", mock_option)
@@ -178,7 +186,7 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
         """Test del flusso di creazione richiesta con selezione 'Tutti i materiali'."""
         mock_row = MagicMock()
         mock_row.find_element.return_value = MagicMock()
-        self.mock_driver.find_elements.side_effect = [[mock_row]] # data_rows
+        self.mock_driver.find_elements.side_effect = [[mock_row]]  # data_rows
 
         self.mock_wait.until.return_value = True
         self.mock_short_wait.until.return_value = True
@@ -203,8 +211,8 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
 
         # In _analizza_disponibilita e _esegui_selezione
         self.mock_driver.find_elements.side_effect = [
-            [mock_row_ok, mock_row_err], # data_rows
-            [mock_checker_ok, mock_checker_err] # checkers
+            [mock_row_ok, mock_row_err],  # data_rows
+            [mock_checker_ok, mock_checker_err],  # checkers
         ]
 
         self.mock_wait.until.return_value = True
@@ -215,11 +223,14 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
                 self.page.gestisci_creazione_richiesta("Partial Note")
 
         # Verifica scroll e click standard tramite _click_safe
-        self.mock_driver.execute_script.assert_any_call("arguments[0].scrollIntoView({block: 'center'});", mock_checker_ok)
+        self.mock_driver.execute_script.assert_any_call(
+            "arguments[0].scrollIntoView({block: 'center'});", mock_checker_ok
+        )
         mock_checker_ok.click.assert_called_once()
 
         # Non deve aver toccato il secondo checker
         mock_checker_err.click.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

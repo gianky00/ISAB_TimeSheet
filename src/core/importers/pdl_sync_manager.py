@@ -3,7 +3,6 @@ SyncroJob - PDL Programming Sync Manager
 Gestisce l'elaborazione dei file Excel di programmazione e il file Master aziendale.
 """
 
-import logging
 import os
 import warnings
 from typing import Any, ClassVar
@@ -34,7 +33,7 @@ class ProgrammingSyncManager:
         self.excel_app: Any = None
         self.wb_master: Any = None
         self._is_already_open = False
-        self._original_calc_mode = None
+        self._original_calc_mode: Any = None
 
     def _get_excel_workbook(self) -> bool:
         """Tenta di agganciarsi a Excel o ne apre una nuova istanza."""
@@ -152,12 +151,14 @@ class ProgrammingSyncManager:
                     }
         return mappa_pdl
 
-    def _analyze_downloaded_file(self, path: str, mappa_pdl: dict) -> tuple[dict, dict, dict]:
+    def _analyze_downloaded_file(
+        self, path: str, mappa_pdl: dict[str, Any]
+    ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
         """Analizza il file scaricato e identifica differenze e nuovi record."""
         logger.info(f"Analisi report scaricato: {os.path.basename(path)}")
-        nuovi_pdl = {}
+        nuovi_pdl: dict[str, Any] = {}
         modif_x: dict[str, dict[int, str]] = {}
-        modif_stato = {}
+        modif_stato: dict[str, Any] = {}
         mappa_giorni = {8: 3, 9: 5, 10: 7, 11: 9, 12: 11}
 
         with warnings.catch_warnings():
@@ -173,7 +174,16 @@ class ProgrammingSyncManager:
                 pdl_str = str(row[0]).strip()
 
                 if pdl_str not in mappa_pdl:
-                    nuovi_pdl[pdl_str] = [row[0], row[1], row[14], row[16], row[18], row[19], row[20], row[13]]
+                    nuovi_pdl[pdl_str] = [
+                        row[0],
+                        row[1],
+                        row[14],
+                        row[16],
+                        row[18],
+                        row[19],
+                        row[20],
+                        row[13],
+                    ]
                 else:
                     info = mappa_pdl[pdl_str]
                     # Check X giorni
@@ -189,7 +199,9 @@ class ProgrammingSyncManager:
             wb_in.close()
         return nuovi_pdl, modif_x, modif_stato
 
-    def _apply_modifications_to_master(self, mappa_pdl: dict, modif_x: dict, modif_stato: dict):
+    def _apply_modifications_to_master(
+        self, mappa_pdl: dict[str, Any], modif_x: dict[str, Any], modif_stato: dict[str, Any]
+    ):
         """Applica le X dei giorni e i cambi di stato sul file Master."""
         logger.info("Esecuzione macro 'reset_programmazione'...")
         self.excel_app.Run(f"'{self.wb_master.Name}'!reset_programmazione")
@@ -206,7 +218,7 @@ class ProgrammingSyncManager:
             info = mappa_pdl[pdl]
             self.wb_master.Sheets(info["foglio"]).Cells(info["riga"], 13).Value = stato
 
-    def _insert_new_pdls(self, nuovi_pdl: dict):
+    def _insert_new_pdls(self, nuovi_pdl: dict[str, Any]):
         """Inserisce i nuovi PDL nel foglio dedicato."""
         sh_new = self.wb_master.Sheets("nuovi PdL rilevati")
         riga_libera = 24

@@ -96,4 +96,3 @@ def _handle_single_dot(s: str) -> str:
         return s.replace(".", "")
 
     return s
-

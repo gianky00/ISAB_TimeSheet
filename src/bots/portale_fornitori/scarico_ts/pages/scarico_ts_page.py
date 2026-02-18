@@ -134,12 +134,12 @@ class ScaricoTSPage:
 
             # Pulizia residui Chromium (file 0 KB con nomi GUID)
             from src.utils.helpers import cleanup_chrome_temp_files
+
             removed = cleanup_chrome_temp_files(download_dir)
             for f_name in removed:
                 self.log(f"  [DEBUG] Rimosso residuo download: {f_name}")
 
             if not downloaded_file:
-
                 self.log("  ✗ Download fallito o file non trovato.")
                 return False
 

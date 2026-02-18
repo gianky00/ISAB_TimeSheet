@@ -116,8 +116,8 @@ class TestUtilsParsing:
         assert parse_currency(None) == 0.0
         assert parse_currency("") == 0.0
         assert parse_currency("abc") == 0.0  # Error case
-        # Printable chars only
-        assert parse_currency("€ 1.000\u200b") == 1.0
+        # Printable chars only - In formato IT 1.000 è mille
+        assert parse_currency("€ 1.000\u200b") == 1000.0
 
 
 class TestUtilsValidators:

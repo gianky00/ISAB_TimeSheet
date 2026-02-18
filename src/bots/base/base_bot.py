@@ -483,6 +483,7 @@ class BaseBot(ABC):
         # Pulizia residui download GUID
         if self.download_path:
             from src.utils.helpers import cleanup_chrome_temp_files
+
             with suppress(Exception):
                 cleanup_chrome_temp_files(self.download_path)
 

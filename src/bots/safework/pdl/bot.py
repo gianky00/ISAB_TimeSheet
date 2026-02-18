@@ -6,6 +6,7 @@ Bot modulare per lo scarico e la stampa dei PDL.
 import contextlib
 import logging
 import time
+from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -80,9 +81,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self.log(f"🚀 Inizio scarico di {total} PDL...")
 
         for index, item in enumerate(data):
+            pdl_raw = "N/A"
             try:
                 self._check_stop()
-                pdl_raw = item.get("pdl_number") or item.get("numero_pdl")
+                val = item.get("pdl_number") or item.get("numero_pdl")
+                pdl_raw = str(val) if val else "N/A"
                 if not pdl_raw:
                     continue
 
@@ -201,7 +204,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self.click_robusto((By.ID, "topIcon-acticonAnteprimaStampaMenu"))
 
             self.log("⏳ Attesa comparsa pulsante 'Italiano'...")
-            time.sleep(0.8) # Breve pausa per animazione menu
+            time.sleep(0.8)  # Breve pausa per animazione menu
 
             self.log("🖱️ Click su 'appItaliano'...")
             self.click_robusto((By.ID, "appItaliano"))
@@ -328,7 +331,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             # Click robusto su 'Si' (cerca span o button con classe btn-ok)
             clicked = False
             self.log("🖱️ Tentativo click su 'Si' per estensione ricerca...")
-            for selector in ("span[idtxt='E421C594']", "//button[contains(@class, 'btn-ok') and contains(., 'Si')]", "//button[contains(., 'Si')]"):
+            for selector in (
+                "span[idtxt='E421C594']",
+                "//button[contains(@class, 'btn-ok') and contains(., 'Si')]",
+                "//button[contains(., 'Si')]",
+            ):
                 try:
                     by = By.XPATH if selector.startswith("/") else By.CSS_SELECTOR
                     el = self.driver.find_element(by, selector)
@@ -336,8 +343,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     self.log(f"✅ Click su 'Si' riuscito (selector: {selector})")
                     clicked = True
                     break
-                except Exception:
+                except Exception as e:
                     # Strategia di click multipla: ignoriamo l'errore e proviamo il selettore successivo
+                    self.log(f"DEBUG: Fallito click su {selector}: {e}")
                     continue
 
             if clicked:
@@ -360,7 +368,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     num_res = num_res_el[0].text.strip()
                     return num_res == "0"
 
-            return False # Proseguiamo comunque, la verifica finale la fa _esegui_ricerca_pdl
+            return False  # Proseguiamo comunque, la verifica finale la fa _esegui_ricerca_pdl
         except Exception:
             return False
 

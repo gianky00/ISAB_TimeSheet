@@ -1,4 +1,3 @@
-
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -30,11 +29,7 @@ class TestSafeWorkProgrammazioneSyncComprehensive(unittest.TestCase):
     @patch.object(SafeWorkProgrammazioneSyncBot, "_attendi_scomparsa_overlay")
     def test_run_success_flow(self, mock_overlay, mock_poll):
         """Test del flusso di sincronizzazione (download excel)."""
-        data = [{
-            "date_start": "01/01/2026",
-            "date_end": "07/01/2026",
-            "requesters": ["R1"]
-        }]
+        data = [{"date_start": "01/01/2026", "date_end": "07/01/2026", "requesters": ["R1"]}]
         mock_poll.return_value = "C:/fake/downloads/Programmazione_2026.xlsx"
         self.bot.attivita_page.esporta_excel.return_value = True
 
@@ -61,6 +56,7 @@ class TestSafeWorkProgrammazioneSyncComprehensive(unittest.TestCase):
         """Verifica che il bot ritorni False se mancano le date."""
         result = self.bot.run([{"requesters": ["R1"]}])
         self.assertFalse(result)
+
 
 if __name__ == "__main__":
     unittest.main()

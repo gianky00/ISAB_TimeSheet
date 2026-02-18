@@ -34,7 +34,7 @@ def run_migration():
         rows = employee_manager.get_all_employees()
         print(f"Verifica DB: Trovati {len(rows)} record nella tabella 'dipendenti'.")
         if rows:
-            print(f"Esempio primo record: {dict(rows[0])}")
+            print(f"Esempio primo record: {rows[0].copy()}")
 
     except Exception as e:
         print(f"ERRORE CRITICO: {e}")

@@ -45,11 +45,17 @@ class TestSettingsPanelCoverage:
         return sm
 
     @pytest.fixture
-    def panel(self, qapp, qtbot, mock_config, mock_secrets):
+    def panel(self, qapp, qtbot, mock_config, mock_secrets, mocker):
         # Create panel with mocked dependencies
+        # Mock refresh_models to avoid background thread starting during tests
+        mocker.patch("src.gui.panels.settings.pages.general_page.GeneralPage.refresh_models")
+
         p = SettingsPanel()
         qtbot.addWidget(p)
-        return p
+        yield p
+        # Cleanup
+        if hasattr(p, "save_timer"):
+            p.save_timer.stop()
 
     def test_init_ui(self, panel):
         """Test that UI elements are initialized."""
