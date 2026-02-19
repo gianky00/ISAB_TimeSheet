@@ -19,20 +19,20 @@ def get_all_imports(script_path, src_path):
     # Questo trova importazioni anche in file non direttamente toccati da main.py
     # È molto più robusto di ModuleFinder su Python 3.12+
     print("[ANALYZER] 🔍 Scansione AST ricorsiva su tutto il progetto...")
-    
+
     # Includiamo anche main.py e altri script in root
     root_dir = Path(script_path).parent
     search_dirs = [root_dir / "src", root_dir]
-    
+
     for s_dir in search_dirs:
         if not s_dir.exists():
             continue
-            
+
         for path in s_dir.rglob("*.py"):
             # Saltiamo cartelle di sistema o cache
             if any(part in str(path) for part in [".venv", "node_modules", ".git", "__pycache__"]):
                 continue
-                
+
             try:
                 with path.open(encoding="utf-8") as f:
                     tree = ast.parse(f.read())
@@ -102,7 +102,7 @@ def get_all_imports(script_path, src_path):
     # Clean up
     cleaned_imports = set()
     excluded_roots = {"src", "tests", "admin", "scripts", "drivers"}
-    
+
     for imp in final_imports:
         root_mod = imp.split(".")[0]
         if root_mod in excluded_roots:
@@ -115,19 +115,6 @@ def get_all_imports(script_path, src_path):
 
     print(f"[ANALYZER] ✅ Identificati {len(cleaned_imports)} moduli univoci.")
     return sorted(cleaned_imports)
-
-
-if __name__ == "__main__":
-    # Test run
-    root = Path(__file__).parent.parent.resolve()
-    main_py_file = root / "main.py"
-    src_dir_path = root / "src"
-
-    imports_list = get_all_imports(main_py_file, src_dir_path)
-    print("\n[ANALYZER] LISTA FINALE Hidden Imports:")
-    for i in imports_list:
-        print(f"  --hidden-import {i}")
-
 
 
 if __name__ == "__main__":
