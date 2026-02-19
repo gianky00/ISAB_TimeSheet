@@ -3,7 +3,9 @@ Bot TS - Base Bot
 Classe base astratta per tutti i bot di automazione con State Machine e Validazione.
 """
 
+import os
 import re
+import sys
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from contextlib import suppress
@@ -233,26 +235,57 @@ class BaseBot(ABC):
         return options
 
     def _get_chromedriver_path(self) -> str | None:
-        """Tenta di ottenere il path di chromedriver scaricandolo automaticamente o via fallback locale."""
+        """Tenta di ottenere il path di chromedriver con logica di persistenza e auto-healing."""
+        import shutil
+
         from src.utils.resource_manager import ResourceManager
 
-        # 1. Locale Bundled (Priorità massima per EXE e Parità)
-        # Cerca in PROJECT_ROOT/drivers/chromedriver.exe
+        # 1. Driver Persistente (Aggiornato dall'app stessa in precedenza)
+        persistent_dir = ResourceManager.get_writable_drivers_dir()
+        persistent_driver = persistent_dir / "chromedriver.exe"
+        if persistent_driver.exists():
+            path = str(persistent_driver.resolve())
+            self._logger.debug(f"Usando driver persistente (auto-aggiornato): {path}")
+            return path
+
+        # 2. Driver Esterno (Priorità massima per l'assistenza tecnica o lo sviluppatore)
+        if getattr(sys, "frozen", False):
+            exe_dir = Path(sys.executable).parent
+            external_driver = exe_dir / "drivers" / "chromedriver.exe"
+            if external_driver.exists():
+                path = str(external_driver.resolve())
+                self.log(f"Usando driver esterno (override): {path}")
+                return path
+
+        # 3. Locale Bundled o Dev Root (PROJECT_ROOT/drivers/chromedriver.exe)
         bundled_driver = Path(ResourceManager.PROJECT_ROOT) / "drivers" / "chromedriver.exe"
         if bundled_driver.exists():
             path = str(bundled_driver.resolve())
-            self.log(f"Usando driver integrato: {path}")
+            self._logger.debug(f"Usando driver locale/integrato: {path}")
             return path
 
-        # 2. Automatico (Online)
+        # 4. Automatico (Online) + Salvataggio Persistente
         try:
             self.log("Verifica aggiornamenti driver...")
-            path = ChromeDriverManager().install()
-            if not path.lower().endswith(".exe"):
-                potential = list(Path(path).parent.rglob("chromedriver.exe"))
+            downloaded_path = ChromeDriverManager().install()
+
+            # Estrai l'eseguibile se necessario (webdriver-manager a volte scarica folder)
+            if not downloaded_path.lower().endswith(".exe"):
+                potential = list(Path(downloaded_path).parent.rglob("chromedriver.exe"))
                 if potential:
-                    path = str(potential[0])
-            return path
+                    downloaded_path = str(potential[0])
+
+            # PERSISTENZA: Copia il driver scaricato nella cartella persistente per il futuro
+            if os.path.exists(downloaded_path):
+                dest_path = persistent_dir / "chromedriver.exe"
+                try:
+                    shutil.copy2(downloaded_path, dest_path)
+                    self._logger.info(f"Driver scaricato e salvato permanentemente in: {dest_path}")
+                    return str(dest_path.resolve())
+                except Exception as copy_err:
+                    self._logger.warning(f"Impossibile salvare il driver in modo persistente: {copy_err}")
+
+            return downloaded_path
         except Exception as e:
             self.log(f"⚠️ Impossibile scaricare driver automatico: {e}")
 

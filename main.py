@@ -6,6 +6,7 @@ SyncroJob - Zero-Lag Startup Architecture
 Animazioni fluide a 60fps garantite tramite thread separato per il caricamento.
 """
 
+import os
 import sys
 import traceback
 from datetime import datetime
@@ -66,6 +67,12 @@ def main():
     # Application trace ID per questa sessione
     app_trace_id = generate_trace_id()
     logger.info("Application starting", app_trace_id=app_trace_id)
+
+    # CRITICAL: Redirect stdout/stderr to devnull in frozen/noconsole mode
+    # This prevents crashes when libraries try to print to a non-existent console
+    if getattr(sys, "frozen", False) and getattr(sys, "stderr", None) is None:
+        sys.stdout = open(os.devnull, "w")
+        sys.stderr = open(os.devnull, "w")
 
     warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
     app = QApplication(sys.argv)

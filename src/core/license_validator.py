@@ -5,6 +5,7 @@ Gestisce la validazione della licenza software.
 
 import hashlib
 import json
+import os
 import platform
 import shutil
 import subprocess
@@ -161,8 +162,9 @@ def _check_and_migrate_local_license(target_paths: dict[str, Any]):
         app_dir = Path(__file__).parent.parent.parent.resolve()
 
     # 2. Potential legacy locations (including Roaming and old names)
-    from src.core.config_manager import APP_NAME
     from platformdirs import user_data_dir
+
+    from src.core.config_manager import APP_NAME
 
     local_appdata = Path(os.environ.get("LOCALAPPDATA", ""))
     legacy_app_names = ["BotTS", "Bot TS", "SyncroJob"]

@@ -16,12 +16,13 @@ class ResourceManager:
         exe_path = Path(sys.executable).parent
         meipass_path = Path(getattr(sys, "_MEIPASS", exe_path))
 
-        if (exe_path / "_internal" / "assets").exists():
-            PROJECT_ROOT = exe_path / "_internal"
-        elif (meipass_path / "assets").exists():
-            PROJECT_ROOT = meipass_path
-        elif (exe_path / "assets").exists():
+        # Priorità 1: Cartelle esterne (SVILUPPATORE/ADMIN OVERRIDE)
+        # Se esistono 'assets' o 'drivers' accanto all'exe, usiamo quella come root
+        if (exe_path / "assets").exists() or (exe_path / "drivers").exists():
             PROJECT_ROOT = exe_path
+        # Priorità 2: Cartelle interne (DEFAULT PYINSTALLER)
+        elif (exe_path / "_internal" / "assets").exists():
+            PROJECT_ROOT = exe_path / "_internal"
         else:
             PROJECT_ROOT = meipass_path
     else:
@@ -47,6 +48,13 @@ class ResourceManager:
     @classmethod
     def get_data_dir(cls) -> Path:
         return cls._get_config_dir() / "data"
+
+    @classmethod
+    def get_writable_drivers_dir(cls) -> Path:
+        """Restituisce il path della cartella drivers nella directory dati utente (sempre scrivibile)."""
+        path = cls._get_config_dir() / "drivers"
+        path.mkdir(parents=True, exist_ok=True)
+        return path
 
     @classmethod
     def get_asset_path(cls, relative_path: str) -> str:

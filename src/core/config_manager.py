@@ -78,26 +78,23 @@ def _deep_update_paths(data: Any, old_path: str, new_path: str) -> Any:
         updated = data.replace(old_path.replace("/", "\\"), new_path.replace("/", "\\"))
         updated = updated.replace(old_path.replace("\\", "/"), new_path.replace("\\", "/"))
         return updated
-    elif isinstance(data, dict):
+    if isinstance(data, dict):
         return {k: _deep_update_paths(v, old_path, new_path) for k, v in data.items()}
-    elif isinstance(data, list):
+    if isinstance(data, list):
         return [_deep_update_paths(i, old_path, new_path) for i in data]
     return data
 
 
 def _check_and_migrate_local_config() -> bool:
-    """
+    r"""
     Cerca file config.json fuori dalla cartella standard (AppData\Local).
     Se trovato (es. in root progetto o AppData\Roaming), lo migra in Local.
     """
     # Trigger migration if file doesn't exist OR if it's a fresh (empty) installation
     # This check is now handled in load_config() to allow re-checking if accounts are missing
-    
+
     # 1. Determine app root (where the .exe or main.py is)
-    if getattr(sys, "frozen", False):
-        app_dir = Path(sys.executable).parent
-    else:
-        app_dir = BASE_DIR
+    app_dir = Path(sys.executable).parent if getattr(sys, "frozen", False) else BASE_DIR
 
     # 2. Potential legacy directory locations (not just the files)
     legacy_app_names = ["BotTS", "Bot TS", "SyncroJob"]
@@ -117,8 +114,7 @@ def _check_and_migrate_local_config() -> bool:
 
     roaming_appdata = Path(os.environ.get("APPDATA", ""))
     if roaming_appdata:
-        for old_name in legacy_app_names:
-            potential_dirs.append(roaming_appdata / old_name)
+        potential_dirs.extend(roaming_appdata / old_name for old_name in legacy_app_names)
 
     migrated = False
     for legacy_dir in potential_dirs:
@@ -127,7 +123,7 @@ def _check_and_migrate_local_config() -> bool:
         if legacy_config_file.exists() and legacy_dir.resolve() != CONFIG_DIR.resolve():
             try:
                 ensure_config_dir()
-                
+
                 # Carica vecchia configurazione
                 with legacy_config_file.open("r", encoding="utf-8") as f:
                     old_config = json.load(f)
@@ -143,7 +139,7 @@ def _check_and_migrate_local_config() -> bool:
                 for key, value in migrated_config.items():
                     if key not in current_config or not current_config[key]:
                         current_config[key] = value
-                
+
                 # Salva configurazione migrata
                 _atomic_write_json(current_config, CONFIG_FILE)
                 print(f"[MIGRATION] Config merged and paths updated from {legacy_dir}")
@@ -180,13 +176,12 @@ def load_config() -> dict[str, Any]:
         # 0. Check for legacy configuration to migrate
         # Trigger migration if file doesn't exist OR if it's a fresh (empty) installation
         config = _load_base_config()
-        if not CONFIG_FILE.exists() or (not config.get("accounts") and not config.get("safework_accounts")):
-            if _check_and_migrate_local_config():
-                # Re-load if migration happened
-                config = _load_base_config()
+        if (not CONFIG_FILE.exists() or (not config.get("accounts") and not config.get("safework_accounts"))) and _check_and_migrate_local_config():
+            # Re-load if migration happened
+            config = _load_base_config()
 
         ensure_config_dir()
-        
+
         # Decripta password per tutti i tipi di account
         _decrypt_all_credentials(config)
 
