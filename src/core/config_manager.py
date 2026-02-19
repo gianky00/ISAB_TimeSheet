@@ -6,6 +6,8 @@ Gestione della configurazione dell'applicazione.
 import copy
 import json
 import os
+import shutil
+import sys
 import threading
 from contextlib import suppress
 from datetime import UTC, datetime
@@ -69,6 +71,103 @@ def ensure_config_dir() -> None:
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def _deep_update_paths(data: Any, old_path: str, new_path: str) -> Any:
+    """Sostituisce ricorsivamente i puntamenti ai vecchi percorsi nelle stringhe."""
+    if isinstance(data, str):
+        # Gestione sia backslash che forward slash
+        updated = data.replace(old_path.replace("/", "\\"), new_path.replace("/", "\\"))
+        updated = updated.replace(old_path.replace("\\", "/"), new_path.replace("\\", "/"))
+        return updated
+    elif isinstance(data, dict):
+        return {k: _deep_update_paths(v, old_path, new_path) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [_deep_update_paths(i, old_path, new_path) for i in data]
+    return data
+
+
+def _check_and_migrate_local_config() -> bool:
+    """
+    Cerca file config.json fuori dalla cartella standard (AppData\Local).
+    Se trovato (es. in root progetto o AppData\Roaming), lo migra in Local.
+    """
+    # Trigger migration if file doesn't exist OR if it's a fresh (empty) installation
+    # This check is now handled in load_config() to allow re-checking if accounts are missing
+    
+    # 1. Determine app root (where the .exe or main.py is)
+    if getattr(sys, "frozen", False):
+        app_dir = Path(sys.executable).parent
+    else:
+        app_dir = BASE_DIR
+
+    # 2. Potential legacy directory locations (not just the files)
+    legacy_app_names = ["BotTS", "Bot TS", "SyncroJob"]
+    potential_dirs = [
+        app_dir,  # Portable mode
+        Path(user_data_dir(APP_NAME, appauthor=False, roaming=True)),  # Legacy Roaming
+    ]
+
+    # Add variant folders in Local AppData
+    local_appdata = Path(os.environ.get("LOCALAPPDATA", ""))
+    if local_appdata:
+        for old_name in legacy_app_names:
+            if old_name != APP_NAME:
+                potential_dirs.append(local_appdata / old_name)
+                # Check also with author subfolder (common in some installs)
+                potential_dirs.append(local_appdata / "GiancarloAllegretti" / old_name)
+
+    roaming_appdata = Path(os.environ.get("APPDATA", ""))
+    if roaming_appdata:
+        for old_name in legacy_app_names:
+            potential_dirs.append(roaming_appdata / old_name)
+
+    migrated = False
+    for legacy_dir in potential_dirs:
+        legacy_config_file = legacy_dir / "config.json"
+        # Avoid migrating from self
+        if legacy_config_file.exists() and legacy_dir.resolve() != CONFIG_DIR.resolve():
+            try:
+                ensure_config_dir()
+                
+                # Carica vecchia configurazione
+                with legacy_config_file.open("r", encoding="utf-8") as f:
+                    old_config = json.load(f)
+
+                # AGGIORNAMENTO PUNTAMENTI (Nessuna eccezione)
+                # Sostituisce il vecchio path del folder con quello nuovo in tutte le stringhe
+                old_path_str = str(legacy_dir)
+                new_path_str = str(CONFIG_DIR)
+                migrated_config = _deep_update_paths(old_config, old_path_str, new_path_str)
+
+                # MERGE: Inserisce solo dove mancano (o se config attuale è vuota)
+                current_config = _load_base_config()
+                for key, value in migrated_config.items():
+                    if key not in current_config or not current_config[key]:
+                        current_config[key] = value
+                
+                # Salva configurazione migrata
+                _atomic_write_json(current_config, CONFIG_FILE)
+                print(f"[MIGRATION] Config merged and paths updated from {legacy_dir}")
+
+                # Migrazione Cartella Data (Database) se presente
+                legacy_data = legacy_dir / "data"
+                target_data = CONFIG_DIR / "data"
+                if legacy_data.exists():
+                    try:
+                        # Copy tree with merge capabilities
+                        shutil.copytree(legacy_data, target_data, dirs_exist_ok=True)
+                        print(f"[MIGRATION] Data folder merged from {legacy_dir}")
+                    except Exception as de:
+                        print(f"[MIGRATION] Warning: Partial data migration for {legacy_dir}: {de}")
+
+                migrated = True
+                # Una volta migrata una valida, ci fermiamo per evitare sovrascritture da versioni ancora più vecchie
+                break
+            except Exception as e:
+                print(f"[MIGRATION] Error during migration from {legacy_dir}: {e}")
+
+    return migrated
+
+
 def load_config() -> dict[str, Any]:
     """
     Carica la configurazione dal file, la decripta e la mette in cache.
@@ -78,9 +177,16 @@ def load_config() -> dict[str, Any]:
         if _config_cache is not None:
             return copy.deepcopy(_config_cache)
 
-        ensure_config_dir()
+        # 0. Check for legacy configuration to migrate
+        # Trigger migration if file doesn't exist OR if it's a fresh (empty) installation
         config = _load_base_config()
+        if not CONFIG_FILE.exists() or (not config.get("accounts") and not config.get("safework_accounts")):
+            if _check_and_migrate_local_config():
+                # Re-load if migration happened
+                config = _load_base_config()
 
+        ensure_config_dir()
+        
         # Decripta password per tutti i tipi di account
         _decrypt_all_credentials(config)
 

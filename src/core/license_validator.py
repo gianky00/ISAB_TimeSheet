@@ -150,22 +150,40 @@ def _get_license_paths() -> dict[str, Path]:
 
 def _check_and_migrate_local_license(target_paths: dict[str, Any]):
     """
-    Check if license files exist in the application directory (e.g. where .exe is).
-    If found, copy them to the standard AppData location.
-    This fixes issues where users place license files next to the executable.
+    Check if license files exist in the application directory (e.g. where .exe is)
+    or in legacy Roaming AppData. If found, copy them to the standard AppData location.
     """
-    # Determine app root
+    # 1. Determine app root
     if getattr(sys, "frozen", False):
         app_dir = Path(sys.executable).parent
     else:
         # In dev mode, look in project root (2 levels up from src/core)
         app_dir = Path(__file__).parent.parent.parent.resolve()
 
-    # Potential locations in app dir: ./Licenza/ or ./
+    # 2. Potential legacy locations (including Roaming and old names)
+    from src.core.config_manager import APP_NAME
+    from platformdirs import user_data_dir
+
+    local_appdata = Path(os.environ.get("LOCALAPPDATA", ""))
+    legacy_app_names = ["BotTS", "Bot TS", "SyncroJob"]
+
     potential_dirs = [
-        app_dir / "Licenza",
-        app_dir,
+        app_dir / "Licenza",  # Standard portable
+        app_dir,              # Flat portable
+        Path(user_data_dir(APP_NAME, appauthor=False, roaming=True)) / "Licenza", # Legacy Roaming
     ]
+
+    # Add variant folders in Local AppData
+    if local_appdata:
+        for old_name in legacy_app_names:
+            # Check with and without data subfolder as structure varied
+            base_dir = local_appdata / old_name
+            potential_dirs.append(base_dir / "Licenza")
+            potential_dirs.append(base_dir / "data" / "Licenza")
+            # Author folder
+            base_author = local_appdata / "GiancarloAllegretti" / old_name
+            potential_dirs.append(base_author / "Licenza")
+            potential_dirs.append(base_author / "data" / "Licenza")
 
     for source_dir in potential_dirs:
         config_src = source_dir / "config.dat"
@@ -176,6 +194,7 @@ def _check_and_migrate_local_license(target_paths: dict[str, Any]):
                 target_paths["dir"].mkdir(parents=True, exist_ok=True)
                 shutil.copy2(config_src, target_paths["config"])
                 shutil.copy2(manifest_src, target_paths["manifest"])
+                print(f"[MIGRATION] License migrated from {source_dir}")
                 return True
 
     return False
