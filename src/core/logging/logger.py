@@ -130,13 +130,24 @@ class StructuredLogger:
             console_line = self.human_formatter.format(
                 level, self.name, message, extra, exception, source_info
             )
-            print(console_line)
+            try:
+                print(console_line)
+            except UnicodeEncodeError:
+                # Fallback per console Windows legacy che non supporta UTF-8
+                safe_line = console_line.encode("ascii", "replace").decode("ascii")
+                print(safe_line)
+            except Exception:
+                # Ignora errori di scrittura su stdout (es. broken pipe o null handle)
+                pass
 
             # Se c'è exception, stampa anche lo stack trace
             if exception:
                 import traceback
 
-                print(traceback.format_exc())
+                try:
+                    print(traceback.format_exc())
+                except Exception:
+                    pass
 
         # JSON file output
         if self.config.json_log_file:
