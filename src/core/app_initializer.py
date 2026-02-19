@@ -7,7 +7,9 @@ import logging
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication
 
-logger = logging.getLogger("AppInitializer")
+from src.core.logging import get_logger
+
+logger = get_logger("AppInitializer")
 
 
 def _yield():
@@ -34,37 +36,65 @@ class AppInitializer:
                 return True
 
             step("Inizializzazione Nucleo Sistema")
-            AppInitializer._setup_logging()
+            try:
+                AppInitializer._setup_logging()
+            except Exception as e:
+                logger.error(f"Failed to setup logging: {e}")
+                # Continue with fallback logging
 
             step("Caricamento Motori Analisi Dati")
-            import pandas  # noqa
-            import numpy  # noqa
+            try:
+                import numpy  # noqa
+                import pandas  # noqa
+                logger.info("Pandas/Numpy loaded successfully")
+            except ImportError as e:
+                logger.critical(f"CRITICAL: Missing data analysis libraries: {e}")
+                return False
+            except Exception as e:
+                logger.critical(f"Error loading data engines: {e}")
+                return False
 
             step("Configurazione Driver Automazione")
-            import selenium  # noqa
+            try:
+                import selenium  # noqa
+                logger.info("Selenium loaded successfully")
+            except ImportError as e:
+                logger.critical(f"CRITICAL: Missing selenium library: {e}")
+                return False
 
             step("Verifica Integrità Hardware")
-            from src.core.license_updater import run_update
-            from src.core.license_validator import (
-                LicenseStatus,
-                get_detailed_license_status,
-            )
+            try:
+                from src.core.license_updater import run_update
+                from src.core.license_validator import (
+                    LicenseStatus,
+                    get_detailed_license_status,
+                )
 
-            status, _msg = get_detailed_license_status()
-            if status != LicenseStatus.VALID:
-                step("Sincronizzazione Licenza Cloud")
-                run_update()
+                status, _msg = get_detailed_license_status()
+                logger.info(f"License status: {status}")
+                if status != LicenseStatus.VALID:
+                    step("Sincronizzazione Licenza Cloud")
+                    run_update()
+            except Exception as e:
+                logger.error(f"License check failed: {e}")
+                # We might want to continue or stop here depending on business rules
+                # For now, let's keep going if it's not a critical import error
 
             step("Connessione Database Sistema")
-            from src.core.database import db_manager
-
-            db_manager.init_db()
+            try:
+                from src.core.database import db_manager
+                db_manager.init_db()
+                logger.info("Database initialized successfully")
+            except Exception as e:
+                logger.critical(f"Database initialization failed: {e}")
+                return False
 
             AppInitializer._core_initialized = True
+            logger.info("Core initialization completed successfully")
             return True
 
         except Exception as e:
-            logger.critical(f"Startup error: {e}")
+            logger.critical(f"Unexpected startup error: {e}", exc_info=True)
             return False
 
     @staticmethod

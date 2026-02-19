@@ -9,7 +9,11 @@ from pathlib import Path
 import requests
 from cryptography.fernet import Fernet
 
+from src.core.logging import get_logger
+
 from . import config_manager, license_validator, time_manager
+
+logger = get_logger(__name__)
 
 # Chiave per cifratura token grace period
 GRACE_PERIOD_KEY = b"8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek="
@@ -97,7 +101,7 @@ def update_grace_timestamp():
             emergency_token.unlink()
 
     except Exception as e:
-        print(f"[AVVISO] Errore aggiornamento timestamp: {e}")
+        logger.warning(f"Errore aggiornamento timestamp: {e}")
 
 
 def check_grace_period():
@@ -210,12 +214,11 @@ def is_license_folder_empty() -> bool:
 
 def run_update() -> bool:
     """Controlla e scarica aggiornamenti licenza da GitHub."""
-    print("[LICENZA] ═══════════════════════════════════════════════")
-    print("[LICENZA] Tentativo aggiornamento licenza...")
+    logger.info("Tentativo aggiornamento licenza...")
 
     hw_id = license_validator.get_hardware_id().strip().rstrip(".")
     license_dir = get_license_dir()
-    print(f"[LICENZA] Hardware ID: {hw_id[:20]}...")
+    logger.info(f"Hardware ID: {hw_id[:20]}...")
 
     if not _ensure_license_dir(license_dir):
         return False
@@ -225,11 +228,10 @@ def run_update() -> bool:
 
     success = False
     if error:
-        print(f"[LICENZA] {error}")
+        logger.error(error)
     elif downloaded:
         success = _save_license_files(license_dir, downloaded)
 
-    print("[LICENZA] ═══════════════════════════════════════════════")
     return success
 
 
@@ -239,9 +241,9 @@ def _ensure_license_dir(path: str | Path) -> bool:
     if not path_obj.exists():
         try:
             path_obj.mkdir(parents=True)
-            print("[LICENZA] Cartella licenza creata")
+            logger.info("Cartella licenza creata")
         except OSError as e:
-            print(f"[ERRORE] Creazione cartella licenza: {e}")
+            logger.error(f"Errore creazione cartella licenza: {e}")
             return False
     return True
 
@@ -261,7 +263,7 @@ def _download_license_files(base_url: str) -> tuple[dict[str, bytes], str | None
             res = requests.get(f"{base_url}/{remote}", headers=headers, timeout=10)
             if res.status_code == 200:
                 downloaded[local] = res.content
-                print(f"[LICENZA] ✓ {remote} scaricato")
+                logger.info(f"✓ {remote} scaricato")
             else:
                 return {}, f"File {remote} non trovato o errore HTTP {res.status_code}"
         except requests.RequestException:
@@ -275,11 +277,11 @@ def _save_license_files(license_dir: str | Path, files: dict[str, bytes]) -> boo
         dir_path = Path(license_dir)
         for name, content in files.items():
             (dir_path / name).write_bytes(content)
-        print("[LICENZA] ✓ Aggiornamento completato")
+        logger.info("✓ Aggiornamento completato")
         update_grace_timestamp()
         return True
     except OSError as e:
-        print(f"[ERRORE] Scrittura file licenza: {e}")
+        logger.error(f"Errore scrittura file licenza: {e}")
         return False
 
 

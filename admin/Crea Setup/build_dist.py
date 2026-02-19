@@ -299,6 +299,8 @@ def run_pyinstaller(obfuscated=False):
         cmd.extend(["--collect-submodules", pkg])
 
     force_collect = [
+        "pandas",
+        "numpy",
         "pandera",
         "telegram",
         "markdown",
