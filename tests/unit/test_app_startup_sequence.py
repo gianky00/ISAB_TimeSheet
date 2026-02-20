@@ -50,11 +50,13 @@ class TestAppInitializer:
         # Verifica che il navigation controller sia stato chiamato per caricare i pannelli
         assert mock_mw.navigation_controller.get_panel.called
 
-    def test_initialize_core_failure_handling(self, mocker):
+    @patch("src.core.database.db_manager.init_db", side_effect=Exception("DB Error"))
+    def test_initialize_core_failure_handling(self, mock_db_init, mocker):
         """Verifica che un errore nel core ritorni False."""
         AppInitializer._core_initialized = False
+        mocker.patch("src.core.app_initializer.AppInitializer._setup_logging")
         mocker.patch(
-            "src.core.app_initializer.AppInitializer._setup_logging", side_effect=Exception("Log Fail")
+            "src.core.license_validator.get_detailed_license_status", return_value=(MagicMock(), "OK")
         )
 
         success = AppInitializer.initialize_core()
