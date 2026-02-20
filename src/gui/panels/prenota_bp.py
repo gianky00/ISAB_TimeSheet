@@ -6,7 +6,7 @@ Pannello per il bot Prenota BP.
 from typing import Any
 
 from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QVBoxLayout
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.core.constants import Icons
@@ -43,9 +43,11 @@ class PrenotaBPPanel(BaseBotPanel):
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
-        params_group = QGroupBox("Parametri Prenotazione")
-        params_layout = QVBoxLayout(params_group)
-        params_layout.setSpacing(10)
+        # Sezione Parametri (Senza QGroupBox per favorire il design Floating Card)
+        params_container = QWidget()
+        params_layout = QVBoxLayout(params_container)
+        params_layout.setContentsMargins(0, 0, 0, 0)
+        params_layout.setSpacing(5)
 
         # Widget atomico per i parametri - Abilitato date range
         self.params_widget = BotParametersWidget(show_date_range=True, show_dest_path=False)
@@ -53,9 +55,9 @@ class PrenotaBPPanel(BaseBotPanel):
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
 
-        params_layout.addSpacing(10)
-
+        # Tabella Toolbar
         table_toolbar = QHBoxLayout()
+        table_toolbar.setContentsMargins(10, 0, 10, 0)
         table_toolbar.addStretch()
         self.clear_btn = ModernButton(
             "Pulisci Tabella",
@@ -78,7 +80,7 @@ class PrenotaBPPanel(BaseBotPanel):
         self.data_table.data_changed.connect(self._save_data)
         params_layout.addWidget(self.data_table)
 
-        self.content_layout.addWidget(params_group)
+        self.content_layout.addWidget(params_container)
 
     def _open_settings(self):
         """Apre le impostazioni."""

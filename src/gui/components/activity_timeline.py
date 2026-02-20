@@ -188,9 +188,22 @@ class ActivityTimelineWidget(QWidget):
             self._draw_empty(painter)
             return
 
+        # CALCOLO DINAMICO SPAZIATURA
+        num_nodes = len(self.nodes)
         x_axis = 55
-        y_start = 60
-        spacing = 70
+        
+        # Margini interni alla card
+        margin_y = 40 
+        available_h = rect.height() - (margin_y * 2)
+        
+        if num_nodes > 1:
+            spacing = min(75, available_h / (num_nodes - 1))
+        else:
+            spacing = 0
+            
+        # Centra verticalmente se c'è spazio in eccesso
+        total_timeline_h = (num_nodes - 1) * spacing
+        y_start = rect.top() + (rect.height() - total_timeline_h) / 2
 
         # 2. DISEGNO CONNETTORI
         for i in range(len(self.nodes) - 1):
@@ -198,16 +211,20 @@ class ActivityTimelineWidget(QWidget):
 
         # 3. DISEGNO NODI
         for i, node in enumerate(self.nodes):
-            self._draw_node_v5(painter, x_axis, y_start + i*spacing, node)
+            self._draw_node_v5(painter, x_axis, y_start + i*spacing, node, rect)
 
     def _draw_grid(self, painter, rect):
         """Disegna la griglia tattica animata sullo sfondo."""
         painter.setPen(QPen(self.COLORS["grid"], 0.5))
         step = 25
-        for x in range(int(rect.left()), int(rect.right() + step), step):
-            painter.drawLine(int(x + self._grid_offset), int(rect.top()), int(x + self._grid_offset), int(rect.bottom()))
-        for y in range(int(rect.top()), int(rect.bottom() + step), step):
-            painter.drawLine(int(rect.left()), int(y + self._grid_offset), int(rect.right()), int(y + self._grid_offset))
+        # Forza i limiti per evitare di disegnare fuori
+        left, top = int(rect.left()), int(rect.top())
+        right, bottom = int(rect.right()), int(rect.bottom())
+        
+        for x in range(left, right + step, step):
+            painter.drawLine(int(x + self._grid_offset), top, int(x + self._grid_offset), bottom)
+        for y in range(top, bottom + step, step):
+            painter.drawLine(left, int(y + self._grid_offset), right, int(y + self._grid_offset))
 
     def _draw_connector_v5(self, painter, x, y1, y2, n1, n2):
         """Disegna la linea di connessione tra due nodi con effetti di flusso dati."""
@@ -224,7 +241,7 @@ class ActivityTimelineWidget(QWidget):
             painter.setPen(Qt.PenStyle.NoPen)
             painter.drawEllipse(QRectF(x-2, dy-2, 4, 4))
 
-    def _draw_node_v5(self, painter, x, y, node):
+    def _draw_node_v5(self, painter, x, y, node, container_rect):
         """Disegna un singolo nodo della timeline con i relativi effetti di stato."""
         color = self.COLORS[node.status]
 
@@ -255,13 +272,25 @@ class ActivityTimelineWidget(QWidget):
         # Testo
         is_active = node.status == StepStatus.RUNNING
         painter.setPen(self.COLORS["text_active"] if node.status != StepStatus.PENDING else self.COLORS["text_dim"])
-        painter.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold if is_active else QFont.Weight.Normal))
-        painter.drawText(int(x+30), int(y+5), node.name.upper())
+        
+        font_main = QFont("Segoe UI", 9, QFont.Weight.DemiBold if is_active else QFont.Weight.Normal)
+        painter.setFont(font_main)
+        
+        # Calcolo area testo per evitare overflow orizzontale
+        text_x = int(x + 30)
+        available_w = int(container_rect.right() - text_x - 10)
+        
+        from PyQt6.QtGui import QFontMetrics
+        fm = QFontMetrics(font_main)
+        display_name = fm.elidedText(node.name.upper(), Qt.TextElideMode.ElideRight, available_w)
+        
+        painter.drawText(text_x, int(y + 4), display_name)
 
         if is_active or node.duration_str:
-            painter.setFont(QFont("Consolas", 8))
+            font_sub = QFont("Consolas", 8)
+            painter.setFont(font_sub)
             msg = "> ACTIVE" if is_active else f"> {node.duration_str}"
-            painter.drawText(int(x+30), int(y+18), msg)
+            painter.drawText(text_x, int(y + 16), msg)
 
     def _draw_empty(self, painter):
         """Disegna lo stato vuoto del widget quando non ci sono step."""

@@ -9,7 +9,7 @@ import traceback
 from typing import Any
 
 from PyQt6.QtCore import QDate, QTimer, pyqtSignal
-from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.gui.panels.base import BaseBotPanel, BotWorker
@@ -66,15 +66,21 @@ class TimbratureBotPanel(BaseBotPanel):
 
     def _setup_content(self) -> None:
         """Costruisce il layout dei parametri con supporto al range di date."""
-        params_group = QGroupBox("Parametri")
-        params_layout = QVBoxLayout(params_group)
+        # Sezione Parametri (Senza QGroupBox per favorire il design Floating Card)
+        params_container = QWidget()
+        params_layout = QVBoxLayout(params_container)
+        params_layout.setContentsMargins(0, 0, 0, 0)
 
         self.params_widget = BotParametersWidget(show_date_range=True, show_dest_path=False)
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
 
-        self.content_layout.addWidget(params_group)
+        self.content_layout.addWidget(params_container)
+        
+        # Aggiungiamo uno stretch per "spingere" i parametri in alto e creare 
+        # lo spazio bianco richiesto dove normalmente risiede la tabella.
+        self.content_layout.addStretch()
 
     def _open_settings(self) -> None:
         """Richiede l'apertura del pannello impostazioni generale."""

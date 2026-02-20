@@ -13,6 +13,8 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QWidget,
+    QFrame,
+    QGraphicsDropShadowEffect,
 )
 
 from src.core.constants import Icons
@@ -74,7 +76,7 @@ class DataTable(QWidget):
                 background: {self._palette.surface};
             }}
             QLineEdit:focus {{
-                border: 2px solid {self._palette.primary};
+                border: 2px solid #00E5FF;
             }}
         """
         )
@@ -103,6 +105,45 @@ class DataTable(QWidget):
 
         layout.addLayout(toolbar)
 
+        # --- CONTAINER PRINCIPALE (Card con ombra e neon cyan) ---
+        self.container = QFrame()
+        self.container.setObjectName("tableContainer")
+        self.container.setStyleSheet("""
+            QFrame#tableContainer {
+                background-color: #ffffff;
+                border: 1px solid #e0e0e0;
+                border-bottom: 3px solid #00E5FF; /* Cyan Neon */
+                border-radius: 12px;
+            }
+            QTableWidget {
+                background-color: transparent;
+                border: none;
+                gridline-color: #f1f3f5;
+                selection-background-color: #E0F7FA;
+                selection-color: #000000;
+                outline: none;
+            }
+            QHeaderView::section {
+                background-color: #f8f9fa;
+                color: #424242;
+                padding: 10px;
+                font-weight: bold;
+                border: none;
+                border-bottom: 1px solid #dee2e6;
+            }
+        """)
+
+        # Shadow Effect
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(25)
+        shadow.setXOffset(0)
+        shadow.setYOffset(8)
+        shadow.setColor(QColor(0, 0, 0, 40))
+        self.container.setGraphicsEffect(shadow)
+
+        container_layout = QVBoxLayout(self.container)
+        container_layout.setContentsMargins(5, 5, 5, 5)
+
         self._table = ExcelTableWidget()
         self._table.setColumnCount(len(self._columns))
         self._table.setHorizontalHeaderLabels([str(c["name"]) for c in self._columns])
@@ -123,7 +164,8 @@ class DataTable(QWidget):
                 header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
 
         # Remove redundant _apply_table_style call or keep it empty for future needs
-        layout.addWidget(self._table)
+        container_layout.addWidget(self._table)
+        layout.addWidget(self.container)
 
     def _apply_table_style(self) -> None:
         """Redundant with global QSS. Can be used for very specific overrides if needed."""

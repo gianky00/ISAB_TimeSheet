@@ -12,6 +12,9 @@ from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
     QComboBox,
+    QFileDialog,
+    QFrame,
+    QGraphicsDropShadowEffect,
     QHeaderView,
     QMenu,
     QTableWidget,
@@ -308,9 +311,49 @@ class EditableDataTable(QWidget):
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        """Configura il layout e la tabella interna."""
+        """Configura il layout e la tabella interna con design Neon & Shadow."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(10, 10, 10, 15)
+        layout.setSpacing(0)
+
+        # --- CONTAINER PRINCIPALE (Card con ombra e neon cyan) ---
+        self.container = QFrame()
+        self.container.setObjectName("tableContainer")
+        self.container.setStyleSheet("""
+            QFrame#tableContainer {
+                background-color: #ffffff;
+                border: 1px solid #e0e0e0;
+                border-bottom: 3px solid #00E5FF; /* Cyan Neon */
+                border-radius: 12px;
+            }
+            QTableWidget {
+                background-color: transparent;
+                border: none;
+                gridline-color: #f1f3f5;
+                selection-background-color: #E0F7FA;
+                selection-color: #000000;
+                outline: none;
+            }
+            QHeaderView::section {
+                background-color: #f8f9fa;
+                color: #424242;
+                padding: 10px;
+                font-weight: bold;
+                border: none;
+                border-bottom: 1px solid #dee2e6;
+            }
+        """)
+
+        # Shadow Effect
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(25)
+        shadow.setXOffset(0)
+        shadow.setYOffset(8)
+        shadow.setColor(QColor(0, 0, 0, 40))
+        self.container.setGraphicsEffect(shadow)
+
+        container_layout = QVBoxLayout(self.container)
+        container_layout.setContentsMargins(5, 5, 5, 5)
 
         self.table = ExcelTableWidget()
         self.table.setColumnCount(len(self.columns))
@@ -328,7 +371,8 @@ class EditableDataTable(QWidget):
         for _ in range(5):
             self._add_row()
 
-        layout.addWidget(self.table)
+        container_layout.addWidget(self.table)
+        layout.addWidget(self.container)
 
     def _show_context_menu(self, position: QPoint) -> None:
         """Visualizza il menu contestuale per la gestione delle righe e dei dati."""

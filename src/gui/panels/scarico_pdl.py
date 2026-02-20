@@ -13,7 +13,6 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QFileDialog,
     QFrame,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -172,8 +171,36 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _setup_content(self):
         """Configura l'interfaccia utente del pannello (Parametri, Tabella, Status)."""
-        params_group = QGroupBox("Parametri")
-        params_layout = QVBoxLayout(params_group)
+        # --- 1. CARD PARAMETRI (Floating Card) ---
+        self.params_container = QFrame()
+        self.params_container.setObjectName("paramsContainer")
+        self.params_container.setStyleSheet("""
+            QFrame#paramsContainer {
+                background-color: #ffffff;
+                border: 1px solid #e0e0e0;
+                border-bottom: 3px solid #00E5FF;
+                border-radius: 12px;
+            }
+            QLabel {
+                color: #424242;
+                font-weight: bold;
+                font-size: 13px;
+                background: transparent;
+            }
+        """)
+        
+        # Applica Ombra (Shadow Effect)
+        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+        from PyQt6.QtGui import QColor
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(25)
+        shadow.setXOffset(0)
+        shadow.setYOffset(8)
+        shadow.setColor(QColor(0, 0, 0, 40))
+        self.params_container.setGraphicsEffect(shadow)
+
+        params_layout = QVBoxLayout(self.params_container)
+        params_layout.setContentsMargins(15, 15, 15, 15)
         params_layout.setSpacing(10)
 
         # Riga unica per tutte le opzioni
@@ -181,23 +208,27 @@ class ScaricoPDLPanel(BaseBotPanel):
         options_layout.setSpacing(15)
 
         # 1. Stampa
-        self.print_check = QCheckBox("Al termine stampa con")
+        vbox_print = QVBoxLayout()
+        vbox_print.addWidget(QLabel("Opzioni Stampa"))
+        
+        hbox_print = QHBoxLayout()
+        self.print_check = QCheckBox("Stampa con:")
         self.print_check.stateChanged.connect(self._save_data)
-        options_layout.addWidget(self.print_check)
+        hbox_print.addWidget(self.print_check)
 
         self.printer_combo = QComboBox()
-        self.printer_combo.setMinimumHeight(35)
-        self.printer_combo.setMinimumWidth(150)
+        self.printer_combo.setMinimumHeight(38)
+        self.printer_combo.setMinimumWidth(180)
         self.printer_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.printer_combo.setStyleSheet(
             """
             QComboBox {
-                border: 1px solid black;
-                border-radius: 4px;
-                padding: 5px;
-                background-color: white;
-                color: black;
+                border: 1px solid #cfd8dc;
+                border-radius: 6px;
+                padding: 5px 10px;
+                background-color: #f8f9fa;
             }
+            QComboBox:focus { border: 2px solid #00E5FF; background-color: #ffffff; }
         """
         )
         # Popola stampanti
@@ -207,59 +238,60 @@ class ScaricoPDLPanel(BaseBotPanel):
         else:
             self.printer_combo.addItem("Nessuna stampante trovata")
         self.printer_combo.currentTextChanged.connect(self._save_data)
-        options_layout.addWidget(self.printer_combo)
+        hbox_print.addWidget(self.printer_combo)
+        vbox_print.addLayout(hbox_print)
+        options_layout.addLayout(vbox_print)
 
         # 2. Merge
-        self.merge_all_check = QCheckBox("e unisci tutti in un unico PDF")
+        vbox_merge = QVBoxLayout()
+        vbox_merge.addWidget(QLabel("Unione PDF"))
+        self.merge_all_check = QCheckBox("Unisci in unico file")
         self.merge_all_check.setToolTip(
             "Se attivo, alla fine scaricherà un unico file PDF contenente tutti i PDL."
         )
         self.merge_all_check.stateChanged.connect(self._save_data)
-        options_layout.addWidget(self.merge_all_check)
+        vbox_merge.addWidget(self.merge_all_check)
+        options_layout.addLayout(vbox_merge)
 
         # 3. Destinazione
-        dest_label = QLabel("Destinazione:")
-        options_layout.addWidget(dest_label)
-
+        vbox_dest = QVBoxLayout()
+        vbox_dest.addWidget(QLabel("Destinazione"))
+        
+        hbox_dest = QHBoxLayout()
         self.dest_path_edit = QLineEdit()
         self.dest_path_edit.setPlaceholderText("Download utente (default)")
         self.dest_path_edit.setReadOnly(True)
-        self.dest_path_edit.setMinimumWidth(200)  # Ridotto per stare in riga
-
-        # Dynamic Width logic simplified/removed as we are in HBox with stretch
-
-        options_layout.addWidget(self.dest_path_edit)
+        self.dest_path_edit.setMinimumWidth(200)
+        self.dest_path_edit.setMinimumHeight(38)
+        self.dest_path_edit.setStyleSheet("border: 1px solid #cfd8dc; border-radius: 6px; padding: 5px; background-color: #f8f9fa;")
+        hbox_dest.addWidget(self.dest_path_edit)
 
         browse_btn = QPushButton()
-        browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#000000"))
+        browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#00E5FF"))
         browse_btn.setIconSize(QSize(20, 20))
-        browse_btn.setFixedSize(35, 35)
+        browse_btn.setFixedSize(38, 38)
         browse_btn.clicked.connect(self._browse_dest_path)
-        browse_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #f8f9fa;
-                color: #212529;
-                border: 1px solid #dee2e6;
-                border-radius: 4px;
-                padding-bottom: 2px;
-            }
-            QPushButton:hover {
-                background-color: #e9ecef;
-                border-color: #ced4da;
-            }
-        """
-        )
-        options_layout.addWidget(browse_btn)
+        browse_btn.setStyleSheet("""
+            QPushButton { background-color: #ffffff; border: 1px solid #cfd8dc; border-radius: 6px; }
+            QPushButton:hover { background-color: #E0F7FA; border-color: #00E5FF; }
+        """)
+        hbox_dest.addWidget(browse_btn)
+        vbox_dest.addLayout(hbox_dest)
+        options_layout.addLayout(vbox_dest)
 
         options_layout.addStretch()
         params_layout.addLayout(options_layout)
 
-        # 3. Tabella Input
-        self.content_layout.addWidget(params_group)
+        # Aggiunta Card Parametri al layout principale
+        params_wrapper = QWidget()
+        wrapper_layout = QVBoxLayout(params_wrapper)
+        wrapper_layout.setContentsMargins(10, 10, 10, 5) # Margine inferiore ridotto per avvicinare la tabella
+        wrapper_layout.addWidget(self.params_container)
+        self.content_layout.addWidget(params_wrapper)
 
-        # 3. Tabella Input e Status
+        # --- 2. TOOLBAR TABELLA (Pulisci Tabella) ---
         table_toolbar = QHBoxLayout()
+        table_toolbar.setContentsMargins(15, 0, 15, 5)
         table_toolbar.addStretch()
         self.clear_btn = ModernButton(
             "Pulisci Tabella",
@@ -269,13 +301,14 @@ class ScaricoPDLPanel(BaseBotPanel):
         )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
-        params_layout.addLayout(table_toolbar)
+        self.content_layout.addLayout(table_toolbar)
 
-        # Area di Lavoro (Tabella | Status)
+        # --- 3. AREA DI LAVORO (Tabella e Status) ---
         work_area = QHBoxLayout()
         work_area.setSpacing(10)
+        work_area.setContentsMargins(0, 0, 0, 0)
 
-        # Sinistra: Tabella Input
+        # Sinistra: Card Tabella (già implementata come card neon cyan via EditableDataTable)
         self.data_table = EditableDataTable([{"name": "NUMERO PDL", "type": "text"}])
         self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
@@ -297,7 +330,7 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         work_area.addLayout(status_container, stretch=1)
 
-        params_layout.addLayout(work_area)
+        self.content_layout.addLayout(work_area)
 
     def _refresh_printers(self):
         """Aggiorna la lista delle stampanti di sistema disponibili."""

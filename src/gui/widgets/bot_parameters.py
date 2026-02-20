@@ -5,7 +5,7 @@ Widget riutilizzabile per la configurazione dei parametri comuni a tutti i bot (
 
 from contextlib import suppress
 
-from PyQt6.QtCore import QDate, QSize, pyqtSignal
+from PyQt6.QtCore import QDate, QSize, pyqtSignal, Qt
 from PyQt6.QtWidgets import (
     QComboBox,
     QFileDialog,
@@ -15,6 +15,8 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QWidget,
+    QFrame,
+    QGraphicsDropShadowEffect,
 )
 
 from src.core import config_manager
@@ -30,6 +32,8 @@ class BotParametersWidget(QWidget):
     - Selezione Fornitore (con pulsante gestione rapida)
     - Selezione Data (singola o range temporale)
     - Percorso di destinazione per i file scaricati
+    
+    Implementa un design Neon & Shadow standard per tutte le viste.
     """
 
     settings_requested = pyqtSignal()
@@ -56,70 +60,142 @@ class BotParametersWidget(QWidget):
         self.refresh_fornitori()
 
     def _setup_ui(self) -> None:
-        """Configura il layout orizzontale e i componenti interni."""
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(10)
+        """Configura il layout orizzontale e i componenti interni con stile Neon & Shadow."""
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(10, 10, 10, 15)
+        main_layout.setSpacing(0)
+
+        # --- CONTAINER PRINCIPALE (La "Card" con ombra e neon) ---
+        self.container = QFrame()
+        self.container.setObjectName("paramsContainer")
+        self.container.setStyleSheet("""
+            QFrame#paramsContainer {
+                background-color: #ffffff;
+                border: 1px solid #e0e0e0;
+                border-bottom: 3px solid #00E5FF; /* Neon Accent Bottom */
+                border-radius: 12px;
+            }
+            QLabel {
+                color: #424242;
+                font-weight: bold;
+                font-size: 13px;
+                background: transparent;
+            }
+            QComboBox, QLineEdit, QDateEdit {
+                border: 1px solid #cfd8dc;
+                border-radius: 6px;
+                padding: 5px 10px;
+                background-color: #f8f9fa;
+                min-height: 32px;
+            }
+            QComboBox:focus, QLineEdit:focus, QDateEdit:focus {
+                border: 2px solid #00E5FF;
+                background-color: #ffffff;
+            }
+        """)
+
+        # Applica Ombra (Shadow Effect)
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(25)
+        shadow.setXOffset(0)
+        shadow.setYOffset(8)
+        shadow.setColor(Qt.GlobalColor.black if Qt.GlobalColor.black else "#000000")
+        # Nota: Qt.GlobalColor.black non accetta opacità direttamente qui, 
+        # meglio usare un colore con alpha se possibile o un valore hex per QColor.
+        from PyQt6.QtGui import QColor
+        shadow.setColor(QColor(0, 0, 0, 40)) # 40/255 opacità (molto morbida)
+        self.container.setGraphicsEffect(shadow)
+
+        container_layout = QVBoxLayout(self.container)
+        container_layout.setContentsMargins(15, 15, 15, 15)
 
         # --- Riga Unica: Fornitore, Date, Destinazione ---
         self.main_row_layout = QHBoxLayout()
+        self.main_row_layout.setSpacing(15)
 
         # Fornitore
-        self.main_row_layout.addWidget(QLabel("Fornitore:"))
+        vbox_forn = QVBoxLayout()
+        vbox_forn.addWidget(QLabel("Fornitore"))
+        
+        hbox_forn = QHBoxLayout()
         self.fornitore_combo = QComboBox()
-        self.fornitore_combo.setMinimumHeight(40)
+        self.fornitore_combo.setMinimumHeight(38)
+        self.fornitore_combo.setMinimumWidth(180)
         self.fornitore_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.fornitore_combo.currentIndexChanged.connect(self.changed.emit)
-        self.main_row_layout.addWidget(self.fornitore_combo)
+        hbox_forn.addWidget(self.fornitore_combo)
 
         # Pulsante Settings
         self.settings_btn = QPushButton()
-        self.settings_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#000000"))
-        self.settings_btn.setIconSize(QSize(24, 24))
-        self.settings_btn.setFixedSize(40, 40)
+        self.settings_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#00E5FF"))
+        self.settings_btn.setIconSize(QSize(20, 20))
+        self.settings_btn.setFixedSize(38, 38)
         self.settings_btn.setToolTip("Gestisci fornitori")
         self.settings_btn.clicked.connect(self.settings_requested.emit)
         self.settings_btn.setStyleSheet(self._get_icon_btn_style())
-        self.main_row_layout.addWidget(self.settings_btn)
+        hbox_forn.addWidget(self.settings_btn)
+        
+        vbox_forn.addLayout(hbox_forn)
+        self.main_row_layout.addLayout(vbox_forn)
 
-        self.main_row_layout.addSpacing(20)
+        # Separatore Neon Verticale (Opzionale)
+        # self.main_row_layout.addWidget(self._create_separator())
 
         # Data Da
-        self.main_row_layout.addWidget(QLabel("Data Da:"))
+        vbox_da = QVBoxLayout()
+        vbox_da.addWidget(QLabel("Data Da"))
         self.date_da = CalendarDateEdit()
+        self.date_da.setMinimumHeight(38)
         self.date_da.dateChanged.connect(self.changed.emit)
-        self.main_row_layout.addWidget(self.date_da)
+        vbox_da.addWidget(self.date_da)
+        self.main_row_layout.addLayout(vbox_da)
 
         # Data A (opzionale)
         if self.show_date_range:
-            self.main_row_layout.addSpacing(15)
-            self.main_row_layout.addWidget(QLabel("Data A:"))
+            vbox_a = QVBoxLayout()
+            vbox_a.addWidget(QLabel("Data A"))
             self.date_a = CalendarDateEdit()
+            self.date_a.setMinimumHeight(38)
             self.date_a.dateChanged.connect(self.changed.emit)
-            self.main_row_layout.addWidget(self.date_a)
+            vbox_a.addWidget(self.date_a)
+            self.main_row_layout.addLayout(vbox_a)
 
-        # Destinazione (opzionale) - Ora nella stessa riga
+        # Destinazione (opzionale)
         if self.show_dest_path:
-            self.main_row_layout.addSpacing(20)
-            self.main_row_layout.addWidget(QLabel("Destinazione:"))
-
+            vbox_dest = QVBoxLayout()
+            vbox_dest.addWidget(QLabel("Destinazione"))
+            
+            hbox_dest = QHBoxLayout()
             self.dest_path_edit = QLineEdit()
             self.dest_path_edit.setPlaceholderText("Download utente (default)")
             self.dest_path_edit.setReadOnly(True)
-            self.dest_path_edit.setMinimumWidth(200)  # Ridotto un po' per stare in riga
+            self.dest_path_edit.setMinimumWidth(180)
+            self.dest_path_edit.setMinimumHeight(38)
             self.dest_path_edit.textChanged.connect(self.changed.emit)
-            self.main_row_layout.addWidget(self.dest_path_edit)
+            hbox_dest.addWidget(self.dest_path_edit)
 
             self.browse_btn = QPushButton()
-            self.browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#000000"))
-            self.browse_btn.setIconSize(QSize(24, 24))
-            self.browse_btn.setFixedSize(40, 40)
+            self.browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#00E5FF"))
+            self.browse_btn.setIconSize(QSize(20, 20))
+            self.browse_btn.setFixedSize(38, 38)
             self.browse_btn.clicked.connect(self._browse_path)
             self.browse_btn.setStyleSheet(self._get_icon_btn_style())
-            self.main_row_layout.addWidget(self.browse_btn)
+            hbox_dest.addWidget(self.browse_btn)
+            
+            vbox_dest.addLayout(hbox_dest)
+            self.main_row_layout.addLayout(vbox_dest)
 
         self.main_row_layout.addStretch()
-        layout.addLayout(self.main_row_layout)
+        container_layout.addLayout(self.main_row_layout)
+        
+        main_layout.addWidget(self.container)
+
+    def _create_separator(self) -> QFrame:
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.VLine)
+        line.setFrameShadow(QFrame.Shadow.Plain)
+        line.setStyleSheet("background-color: #e0e0e0; max-width: 1px; margin: 5px 0;")
+        return line
 
     def add_widget_to_row(self, widget: QWidget) -> None:
         """
@@ -128,29 +204,38 @@ class BotParametersWidget(QWidget):
         Args:
             widget: Il widget QWidget da aggiungere.
         """
+        # Raggiungiamo il layout della riga
         # Rimuovi lo stretch finale temporaneamente
         item = self.main_row_layout.takeAt(self.main_row_layout.count() - 1)
 
-        self.main_row_layout.addSpacing(15)
-        self.main_row_layout.addWidget(widget)
+        # Se il widget è un checkbox o simile, lo mettiamo in un vbox per allineamento
+        container = QVBoxLayout()
+        container.addWidget(QLabel("Opzioni"))
+        container.addWidget(widget)
+        
+        self.main_row_layout.addSpacing(5)
+        self.main_row_layout.addLayout(container)
 
         # Rimetti lo stretch
         if item:
             self.main_row_layout.addItem(item)
 
     def _get_icon_btn_style(self) -> str:
-        """Restituisce lo stile QSS standard per i pulsanti icona."""
+        """Restituisce lo stile QSS standard per i pulsanti icona con accento neon."""
         return """
             QPushButton {
-                background-color: #f8f9fa;
-                color: #212529;
-                border: 1px solid #dee2e6;
-                border-radius: 4px;
+                background-color: #ffffff;
+                color: #00E5FF;
+                border: 1px solid #cfd8dc;
+                border-radius: 6px;
                 padding: 2px;
             }
             QPushButton:hover {
-                background-color: #e9ecef;
-                border-color: #ced4da;
+                background-color: #E0F7FA;
+                border-color: #00E5FF;
+            }
+            QPushButton:pressed {
+                background-color: #e1bee7;
             }
         """
 

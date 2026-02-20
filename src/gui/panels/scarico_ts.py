@@ -7,7 +7,7 @@ import traceback
 from typing import Any
 
 from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QCheckBox, QGroupBox, QHBoxLayout, QVBoxLayout
+from PyQt6.QtWidgets import QCheckBox, QHBoxLayout, QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.core.constants import Icons
@@ -59,9 +59,11 @@ class ScaricaTSPanel(BaseBotPanel):
 
     def _setup_content(self):
         """Inizializza e posiziona i componenti UI specifici del pannello."""
-        params_group = QGroupBox("Parametri")
-        params_layout = QVBoxLayout(params_group)
-        params_layout.setSpacing(10)
+        # Sezione Parametri (Senza QGroupBox per favorire il design Floating Card)
+        params_container = QWidget()
+        params_layout = QVBoxLayout(params_container)
+        params_layout.setContentsMargins(0, 0, 0, 0)
+        params_layout.setSpacing(5)
 
         # Usiamo il widget atomico per i parametri comuni
         self.params_widget = BotParametersWidget(show_date_range=False, show_dest_path=True)
@@ -74,16 +76,15 @@ class ScaricaTSPanel(BaseBotPanel):
         self.elabora_ts_check.stateChanged.connect(self._save_data)
         self.params_widget.add_widget_to_row(self.elabora_ts_check)
 
-        params_layout.addSpacing(10)
-
-        # Tabella
+        # Tabella Toolbar
         table_toolbar = QHBoxLayout()
+        table_toolbar.setContentsMargins(10, 0, 10, 0)
         table_toolbar.addStretch()
         self.clear_btn = ModernButton(
             "Pulisci Tabella",
             variant=ModernButton.Variant.DANGER,
             size=ModernButton.Size.SMALL,
-            icon=get_asset_path(Icons.TRASH),  # ModernButton handles coloring now
+            icon=get_asset_path(Icons.TRASH),
         )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
@@ -94,7 +95,7 @@ class ScaricaTSPanel(BaseBotPanel):
         self.data_table.data_changed.connect(self._save_data)
         params_layout.addWidget(self.data_table)
 
-        self.content_layout.addWidget(params_group)
+        self.content_layout.addWidget(params_container)
 
     def _open_settings(self):
         """Apre il dialogo delle impostazioni globali."""

@@ -173,10 +173,44 @@ class BaseBotPanel(QWidget):
     def _setup_base_ui(self):
         """Inizializza l'interfaccia utente di base comune a tutti i pannelli bot."""
         self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(Spacing.md, Spacing.md, Spacing.md, Spacing.md)
+        self.main_layout.setContentsMargins(Spacing.md, Spacing.xs, Spacing.md, Spacing.md)
         self.main_layout.setSpacing(Spacing.md)
 
-        # Status Card (Model only, not in layout)
+        # Widget per le azioni (esposto per permettere ad AutomazioniWidget di spostarlo nel cornerWidget)
+        self.controls_widget = QWidget()
+        self.controls_layout = QHBoxLayout(self.controls_widget)
+        self.controls_layout.setContentsMargins(0, 0, 0, 0)
+        self.controls_layout.setSpacing(Spacing.sm)
+
+        self.start_btn = ModernButton(
+            "Avvia",
+            variant=ModernButton.Variant.SUCCESS,
+            size=ModernButton.Size.MEDIUM,
+            icon=get_asset_path(Icons.PLAY),
+        )
+        self.start_btn.setMinimumWidth(110)
+        self.start_btn.clicked.connect(self._on_start)
+        self.controls_layout.addWidget(self.start_btn)
+
+        self.stop_btn = ModernButton(
+            "Stop",
+            variant=ModernButton.Variant.DANGER,
+            size=ModernButton.Size.MEDIUM,
+            icon=get_asset_path(Icons.STOP),
+        )
+        self.stop_btn.setMinimumWidth(90)
+        self.stop_btn.setEnabled(False)
+        self.stop_btn.clicked.connect(self._on_stop)
+        self.controls_layout.addWidget(self.stop_btn)
+
+        # Di default, se non siamo in un QTabWidget che "ruba" i controlli, 
+        # li mettiamo in un header layout interno al pannello
+        self.header_layout = QHBoxLayout()
+        self.header_layout.addStretch()
+        self.header_layout.addWidget(self.controls_widget)
+        self.main_layout.addLayout(self.header_layout)
+
+        # Status Card (Model only, not in layout by default)
         self.status_card = StatusCard("Stato Attività")
 
         # Top Area: Content + Activity Rail
@@ -201,33 +235,6 @@ class BaseBotPanel(QWidget):
         self.log_widget = TimelineWidget()
         self.main_layout.addWidget(self.log_widget, stretch=2)
 
-        # Buttons
-        btn_layout = QHBoxLayout()
-        btn_layout.setSpacing(Spacing.sm)
-        btn_layout.addStretch()
-
-        self.start_btn = ModernButton(
-            "Avvia",
-            variant=ModernButton.Variant.SUCCESS,
-            size=ModernButton.Size.LARGE,
-            icon=get_asset_path(Icons.PLAY),
-        )
-        self.start_btn.setMinimumWidth(120)
-        self.start_btn.clicked.connect(self._on_start)
-        btn_layout.addWidget(self.start_btn)
-
-        self.stop_btn = ModernButton(
-            "Stop",
-            variant=ModernButton.Variant.DANGER,
-            size=ModernButton.Size.LARGE,
-            icon=get_asset_path(Icons.STOP),
-        )
-        self.stop_btn.setMinimumWidth(100)
-        self.stop_btn.setEnabled(False)
-        self.stop_btn.clicked.connect(self._on_stop)
-        btn_layout.addWidget(self.stop_btn)
-
-        self.main_layout.addLayout(btn_layout)
 
     def _setup_ui(self):
         """

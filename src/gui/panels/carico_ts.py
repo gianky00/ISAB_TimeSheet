@@ -7,7 +7,7 @@ import traceback
 from typing import Any
 
 from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QVBoxLayout
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.core.constants import Icons
@@ -57,12 +57,15 @@ class CaricoTSPanel(BaseBotPanel):
 
     def _setup_content(self):
         """Inizializza e posiziona i componenti UI del pannello (Tabella e Parametri)."""
-        # Tabella dati
-        group = QGroupBox("Parametri")
-        group_layout = QVBoxLayout(group)
+        # Sezione Parametri (Senza QGroupBox per favorire il design Floating Card)
+        params_container = QWidget()
+        params_layout = QVBoxLayout(params_container)
+        params_layout.setContentsMargins(0, 0, 0, 0)
+        params_layout.setSpacing(5)
 
         # Toolbar per la tabella
         table_toolbar = QHBoxLayout()
+        table_toolbar.setContentsMargins(10, 0, 10, 0)
         table_toolbar.addStretch()
 
         self.clear_btn = ModernButton(
@@ -74,7 +77,7 @@ class CaricoTSPanel(BaseBotPanel):
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
 
-        group_layout.addLayout(table_toolbar)
+        params_layout.addLayout(table_toolbar)
 
         # Tabella con tutte le colonne del database Carico TS
         self.data_table = EditableDataTable(
@@ -100,9 +103,9 @@ class CaricoTSPanel(BaseBotPanel):
         )
         self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
-        group_layout.addWidget(self.data_table)
+        params_layout.addWidget(self.data_table)
 
-        self.content_layout.addWidget(group)
+        self.content_layout.addWidget(params_container)
 
     def _load_saved_data(self):
         """Carica l'ultima tabella TS salvata nella configurazione."""
