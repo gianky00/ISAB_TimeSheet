@@ -30,14 +30,14 @@ class ScaricaTSPanel(BaseBotPanel):
         )
         self._setup_content()
         # Forza inizializzazione timeline immediata per Scarico TS
-        from src.bots.portale_fornitori.scarico_ts.scarico_ts_bot import ScaricaTSBot
+        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
         self.activity_timeline.set_steps(ScaricaTSBot.STEPS)
         
         # Defer data loading to speed up startup
         QTimer.singleShot(10, self._safe_load_data)
 
     def get_bot_class(self):
-        from src.bots.portale_fornitori.scarico_ts.scarico_ts_bot import ScaricaTSBot
+        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
         return ScaricaTSBot
 
     def _safe_load_data(self):

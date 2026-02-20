@@ -8,13 +8,13 @@ import shutil
 import time
 from contextlib import suppress
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
-from src.bots.base import BaseBot
+from src.bots.base.base_bot import BaseBot, StepStatus
 from src.core.timesheet_processor import TimesheetProcessor
 from src.utils.helpers import sanitize_filename
 
@@ -22,17 +22,16 @@ from src.utils.helpers import sanitize_filename
 class ScaricaTSBot(BaseBot):
     """
     Bot per lo scarico automatico dei timesheet.
-
-    Funzionalità:
-    - Login al portale ISAB
-    - Navigazione a Report -> Timesheet
-    - Selezione fornitore (da configurazione)
-    - Impostazione data iniziale
-    - Ricerca per Numero OdA / Posizione OdA
-    - Download del file Excel
-    - Rinomina file scaricato
-    - Logout e chiusura browser
     """
+
+    STEPS: ClassVar[list[tuple[str, str]]] = [
+        ("login", "Login Portale ISAB"),
+        ("nav", "Navigazione Portale"),
+        ("filters", "Impostazione Filtri"),
+        ("download", "Download Timesheet"),
+        ("process", "Elaborazione VBA"),
+        ("cleanup", "Chiusura Sessione")
+    ]
 
     @staticmethod
     def get_name() -> str:
@@ -102,19 +101,36 @@ class ScaricaTSBot(BaseBot):
 
     def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue il download dei timesheet."""
+        self.update_step("login", StepStatus.COMPLETED)
+        
         rows, dest_dir = self._prepare_run_environment(data)
 
         try:
-            if not self._navigate_to_timesheet() or not self._setup_filters():
+            self.update_step("nav", StepStatus.RUNNING)
+            if not self._navigate_to_timesheet():
+                self.update_step("nav", StepStatus.ERROR)
                 return False
+            self.update_step("nav", StepStatus.COMPLETED)
 
+            self.update_step("filters", StepStatus.RUNNING)
+            if not self._setup_filters():
+                self.update_step("filters", StepStatus.ERROR)
+                return False
+            self.update_step("filters", StepStatus.COMPLETED)
+
+            self.update_step("download", StepStatus.RUNNING)
             success_count, downloaded_files = self._process_oda_rows(rows, dest_dir)
 
             self.log(f"✨ Download completati: {success_count}/{len(rows)}.")
+            self.update_step("download", StepStatus.COMPLETED if success_count == len(rows) else StepStatus.ERROR)
 
             if self.elabora_ts and downloaded_files:
+                self.update_step("process", StepStatus.RUNNING)
                 self._run_vba_processing(downloaded_files, dest_dir)
+                self.update_step("process", StepStatus.COMPLETED)
 
+            self.update_step("cleanup", StepStatus.RUNNING)
+            self.update_step("cleanup", StepStatus.COMPLETED)
             return success_count == len(rows)
 
         except Exception as e:
