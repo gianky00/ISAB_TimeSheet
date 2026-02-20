@@ -7,7 +7,7 @@ il download automatico dei documenti dal portale fornitori.
 
 import traceback
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from PyQt6.QtCore import QDate, QTimer
 from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QVBoxLayout, QWidget
@@ -29,7 +29,7 @@ class DettagliOdAPanel(BaseBotPanel):
     Include una tabella editabile per l'input dei numeri d'ordine e dei relativi contratti.
     """
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il pannello configurando l'ID e la descrizione del bot.
 
@@ -137,7 +137,7 @@ class DettagliOdAPanel(BaseBotPanel):
         if not self.params_widget.get_fornitore(): return False, "Fornitore mancante."
         return True, ""
 
-    def _on_start(self, params_override: Optional[dict[str, Any]] = None) -> None:
+    def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
         """Inizializza il bot e avvia il thread di esecuzione (Worker)."""
         super()._on_start(params_override)
         username, password = self.get_credentials()
@@ -161,7 +161,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
         from src.bots import create_bot
         config = config_manager.load_config()
-        bot = create_bot("dettagli_oda", username=username, password=password, headless=config.get("browser_headless", False), 
+        bot = create_bot("dettagli_oda", username=username, password=password, headless=config.get("browser_headless", False),
                          timeout=config.get("browser_timeout", 30), download_path=download_path, fornitore=fornitore, data_da=data_da, data_a=data_a)
 
         if not bot:

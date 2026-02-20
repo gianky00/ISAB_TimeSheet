@@ -6,7 +6,7 @@ Supporta modalità collassata/espansa e integrazione con il sistema di notifiche
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
@@ -377,7 +377,7 @@ class SidebarWidget(QFrame):
         self.navigation_requested.emit(9)
         self.notifications_tab_requested.emit(tab_index)
 
-    def set_active_button(self, index: int, sub_index: Optional[int] = None) -> None:
+    def set_active_button(self, index: int, sub_index: int | None = None) -> None:
         """Aggiorna lo stato visivo (checked) dei pulsanti basandosi sulla pagina attiva."""
         buttons_map = {
             0: self.btn_home,

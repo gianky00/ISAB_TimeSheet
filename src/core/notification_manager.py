@@ -30,13 +30,13 @@ class NotificationManager(QObject):
     # Segnali
     notification_added = pyqtSignal(dict)
     """Segnale emesso quando viene aggiunta una nuova notifica."""
-    
+
     notifications_updated = pyqtSignal()
     """Segnale emesso a seguito di qualsiasi modifica alla lista delle notifiche."""
-    
+
     unread_count_changed = pyqtSignal(int)
     """Segnale emesso quando cambia il numero di errori non letti."""
-    
+
     request_toast = pyqtSignal(str, str, int)
     """Segnale emesso per richiedere la visualizzazione di un toast (msg, livello, ms)."""
 

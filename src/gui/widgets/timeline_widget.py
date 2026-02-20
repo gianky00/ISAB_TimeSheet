@@ -1,27 +1,36 @@
 """
-SyncroJob - Timeline Widgets
-Widget per la visualizzazione cronologica orizzontale dei log e dei report di missione.
-Fornisce una vista a 'nodi' per monitorare l'avanzamento delle attività del bot.
+SyncroJob - Cyber Log Console (V5 Edition)
+Visualizzatore di log testuali verticali con estetica Cyber-Rail Ultra.
+Combina la leggibilità della console classica con il design d'élite HUD.
 """
 
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Optional
 
 from PyQt6.QtCore import (
+    QEasingCurve,
     QPropertyAnimation,
+    QRectF,
+    Qt,
+    QTimer,
     QUrl,
+    pyqtProperty,
 )
 from PyQt6.QtGui import (
     QColor,
     QDesktopServices,
+    QFont,
     QPainter,
+    QPainterPath,
     QPaintEvent,
     QPen,
 )
 from PyQt6.QtWidgets import (
     QApplication,
     QFrame,
+    QGraphicsDropShadowEffect,
     QGraphicsOpacityEffect,
     QHBoxLayout,
     QLabel,
@@ -39,296 +48,246 @@ from src.utils.log_humanizer import SmartLogTranslator
 
 class HorizontalLogItem(QWidget):
     """
-    Rappresenta un singolo elemento di log all'interno della timeline orizzontale.
-    Include l'icona della categoria, il timestamp e il messaggio tradotto.
+    Singola riga di log testuale con timestamp e supporto per link ai file.
+    Mantiene il nome originale per compatibilità con gli import globali.
     """
-
-    def __init__(
-        self, human_msg: str, tech_msg: str, category: str, timestamp: str, parent: QWidget | None = None
-    ) -> None:
-        """
-        Inizializza un elemento di log orizzontale.
-
-        Args:
-            human_msg: Messaggio leggibile per l'utente.
-            tech_msg: Messaggio tecnico dettagliato.
-            category: Categoria del log (es. login, download, error).
-            timestamp: Orario del log.
-            parent: Widget genitore.
-        """
+    def __init__(self, human_msg: str, tech_msg: str, category: str, timestamp: str, parent=None):
         super().__init__(parent)
-        self.setFixedSize(180, 150)
-        self.setStyleSheet(
-            "QWidget { background-color: white; border: 1px solid #dee2e6; border-radius: 8px; } QLabel { background-color: transparent; border: none; }"
-        )
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(5)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(10, 2, 10, 2)
+        layout.setSpacing(10)
 
-        # Header con Icona e Tempo
-        header = self._setup_header(category, timestamp)
-        layout.addLayout(header)
-
-        # Messaggio Human
-        self.lbl_human = QLabel(human_msg)
-        self.lbl_human.setWordWrap(True)
-        self.lbl_human.setStyleSheet("font-weight: bold; color: #212529; font-size: 13px;")
-        layout.addWidget(self.lbl_human)
-
-        # Azioni rapide (Screenshot, ecc.)
-        self._setup_actions(layout, tech_msg, None, None)
-
-        layout.addStretch()
-
-    def _setup_header(self, category: str, timestamp: str) -> QHBoxLayout:
-        """Configura l'header dell'item con icona e orario."""
-        icons = {
-            "start": Icons.ACTIVITY,
-            "login": Icons.USER,
-            "search": Icons.SEARCH,
-            "download": Icons.DOWNLOAD,
-            "success": Icons.CHECK_CIRCLE,
-            "error": Icons.ALERT,
-            "wait": Icons.CLOCK,
-            "info": Icons.HELP,
-        }
+        # Colori categoria (Neon) coordinati con ActivityTimeline
         colors = {
-            "start": "#0d6efd",
-            "login": "#6f42c1",
-            "search": "#fd7e14",
-            "download": "#0dcaf0",
-            "success": "#198754",
-            "error": "#dc3545",
-            "wait": "#ffc107",
-            "info": "#6c757d",
+            "start": "#00E5FF",      # Cyan
+            "login": "#CF94FF",      # Purple
+            "search": "#FFAB40",     # Orange
+            "download": "#40C4FF",   # Info
+            "success": "#00E676",    # Green
+            "error": "#FF1744",      # Red
+            "wait": "#FFD600",       # Yellow
+            "info": "#90A4AE"        # Gray
         }
-        self.category_color = colors.get(category, "#6c757d")
+        color = colors.get(category, "#B0BEC5")
 
-        row = QHBoxLayout()
-        row.setSpacing(5)
-        icon_lbl = QLabel()
-        icon_lbl.setPixmap(
-            get_colored_icon(get_asset_path(icons.get(category, Icons.HELP)), "#000000").pixmap(24, 24)
-        )
-        row.addWidget(icon_lbl)
-        time_lbl = QLabel(timestamp)
-        time_lbl.setStyleSheet("color: #adb5bd; font-size: 12px; font-family: monospace;")
-        row.addWidget(time_lbl)
-        row.addStretch()
-        return row
+        # Timestamp [HH:MM:SS]
+        self.lbl_time = QLabel(f"[{timestamp}]")
+        self.lbl_time.setStyleSheet("color: rgba(255, 255, 255, 0.3); font-family: 'Consolas'; font-size: 10px;")
+        layout.addWidget(self.lbl_time)
 
-    def _setup_actions(
-        self, layout: QVBoxLayout, tech_msg: str, snap_path: str | None, fixit_act: str | None
-    ) -> None:
-        """Aggiunge pulsanti di azione in base al contenuto del log."""
-        action_row = QHBoxLayout()
-        action_row.setSpacing(5)
-        if snap_path:
-            btn = self._create_btn(Icons.EYE, "#dc3545", "Apri Screenshot")
-            btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snap_path)))
-            action_row.addWidget(btn)
-        if fixit_act == "ACCOUNT":
-            btn = self._create_btn(Icons.SETTINGS, "#ffc107", "Configura Account", "black")
-            btn.clicked.connect(self._open_settings)
-            action_row.addWidget(btn)
-        self._add_path_btns(action_row, tech_msg)
-        action_row.addStretch()
-        if action_row.count() > 1:
-            layout.addLayout(action_row)
+        # Messaggio
+        self.lbl_msg = QLabel(human_msg)
+        self.lbl_msg.setWordWrap(True)
+        self.lbl_msg.setStyleSheet(f"color: {color}; font-family: 'Segoe UI'; font-weight: 500; font-size: 11px;")
+        layout.addWidget(self.lbl_msg, stretch=1)
 
-    def _create_btn(self, icon: str, bg: str, tip: str, fg: str = "white") -> QPushButton:
-        """Helper per la creazione di mini-pulsanti di azione."""
-        btn = QPushButton()
-        btn.setIcon(get_colored_icon(get_asset_path(icon), "#000000"))
-        btn.setFixedSize(30, 24)
-        btn.setToolTip(tip)
-        btn.setStyleSheet(f"background-color: {bg}; color: {fg}; border-radius: 4px;")
-        return btn
+        # Rilevamento percorsi per azione rapida
+        self._add_actions(layout, tech_msg)
 
-    def _add_path_btns(self, layout: QHBoxLayout, msg: str) -> None:
-        """Analizza il messaggio tecnico per trovare percorsi file e aggiungere pulsanti 'Apri'."""
-        matches = re.findall(
-            r'([a-zA-Z]:\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)',
-            msg,
-        )
+    def _add_actions(self, layout: QHBoxLayout, tech_msg: str):
+        """Aggiunge pulsanti di apertura file se vengono rilevati percorsi nel log tecnico."""
+        matches = re.findall(r'([a-zA-Z]:\\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)', tech_msg)
         for p in set(matches):
             p = p.rstrip(".,';)]}").strip()
             if len(p) > 4 and "http" not in p:
-                btn = self._create_btn(Icons.FOLDER_OPEN, "#17a2b8", f"Apri: {Path(p).name}")
+                btn = QPushButton()
+                btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#00E5FF"))
+                btn.setFixedSize(20, 20)
+                btn.setToolTip(f"Apri: {Path(p).name}")
+                btn.setStyleSheet("QPushButton { background: rgba(0, 229, 255, 0.1); border: none; border-radius: 3px; } QPushButton:hover { background: rgba(0, 229, 255, 0.3); }")
                 btn.clicked.connect(lambda c, path=p: QDesktopServices.openUrl(QUrl.fromLocalFile(path)))
                 layout.addWidget(btn)
 
-    def set_count(self, count: int) -> None:
-        """Aggiorna il contatore di ripetizioni per log identici (es. download x5)."""
-        base = self.lbl_human.text().split(" (x")[0]
-        self.lbl_human.setText(f"{base} (x{count})")
 
-    def _open_settings(self) -> None:
-        """Naviga alla pagina impostazioni della MainWindow."""
-        win = self.window()
-        if win and hasattr(win, "show_settings"):
-            win.show_settings()
+class CyberTimelineFrame(QFrame):
+    """
+    Guscio estetico Cyber-Rail Ultra V5 per la console log.
+    Disegna bordo neon, griglia e ombra.
+    """
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self._pulse_value = 1.0
+        self._grid_offset = 0.0
+        
+        # Ombra HUD pesante per profondità
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(30)
+        shadow.setColor(QColor(0, 0, 0, 220))
+        shadow.setOffset(0, 8)
+        self.setGraphicsEffect(shadow)
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        """Disegna lo sfondo, la griglia tattica e il bordo neon pulsante."""
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        # Rettangolo corretto per lasciare spazio all'ombra
+        rect = QRectF(self.rect()).adjusted(10, 10, -10, -10)
+        path = QPainterPath()
+        path.addRoundedRect(rect, 15, 15)
+
+        # 1. SFONDO DARK (Coordinato con ActivityTimeline)
+        painter.fillPath(path, QColor(10, 12, 18, 245))
+
+        # 2. GRIGLIA TATTICA ANIMATA
+        painter.save()
+        painter.setClipPath(path)
+        painter.setPen(QPen(QColor(0, 229, 255, 12), 0.5))
+        step = 25
+        for x in range(int(rect.left()), int(rect.right() + step), step):
+            painter.drawLine(int(x + self._grid_offset), int(rect.top()), int(x + self._grid_offset), int(rect.bottom()))
+        for y in range(int(rect.top()), int(rect.bottom() + step), step):
+            painter.drawLine(int(rect.left()), int(y + self._grid_offset), int(rect.right()), int(y + self._grid_offset))
+        painter.restore()
+
+        # 3. BORDO NEON PULSANTE (Cyan Elite)
+        alpha = int(100 + (self._pulse_value * 155))
+        painter.setPen(QPen(QColor(0, 229, 255, alpha), 1.5))
+        painter.drawPath(path)
 
 
 class HorizontalTimelineContainer(QWidget):
     """
-    Contenitore interno per la timeline che gestisce il disegno della linea di collegamento.
+    Contenitore trasparente per i log testuali.
     """
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il contenitore con layout orizzontale."""
         super().__init__(parent)
-        self.main_layout = QHBoxLayout(self)
-        self.main_layout.setContentsMargins(10, 5, 10, 5)
-        self.main_layout.setSpacing(10)
-        self.main_layout.addStretch()
-        self.setMinimumHeight(160)
-
-    def paintEvent(self, event: QPaintEvent | None) -> None:
-        """Disegna la linea grigia di fondo che unisce i nodi."""
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        pen = QPen(QColor("#dee2e6"))
-        pen.setWidth(2)
-        painter.setPen(pen)
-        widgets = []
-        for i in range(self.main_layout.count()):
-            item = self.main_layout.itemAt(i)
-            if item and (w := item.widget()) and not w.isHidden():
-                widgets.append(w)
-        if len(widgets) >= 2:
-            start_x = widgets[0].geometry().center().x()
-            end_x = widgets[-1].geometry().center().x()
-            painter.drawLine(start_x, 30, end_x, 30)
+        self.setStyleSheet("background: transparent;")
+        self.log_layout = QVBoxLayout(self)
+        self.log_layout.setContentsMargins(15, 10, 15, 10)
+        self.log_layout.setSpacing(4)
+        self.log_layout.addStretch()
 
 
 class HorizontalTimelineWidget(QScrollArea):
     """
-    Widget scrollabile che ospita la timeline orizzontale dei log.
-    Fornisce metodi per aggiungere log dinamici con animazioni di dissolvenza.
+    Console di log a scorrimento verticale interna al frame Cyber.
     """
-
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza la scroll area per la timeline."""
         super().__init__(parent)
-        self.setFixedHeight(220)
-        self.setStyleSheet("border: none; background-color: transparent;")
+        self.setWidgetResizable(True)
+        self.setFrameShape(QFrame.Shape.NoFrame)
+        self.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        self.viewport().setStyleSheet("background: transparent;")
+
         self.container = HorizontalTimelineContainer()
         self.setWidget(self.container)
-        self.last_category: str | None = None
-        self.consecutive_count = 0
 
-    def set_mood(self, _mood: str) -> None:
-        """Metodo placeholder per il cambio mood visivo."""
-
-    def add_widget(self, widget: QWidget) -> None:
-        """Aggiunge un widget alla timeline con animazione di opacità."""
-        effect = QGraphicsOpacityEffect(widget)
-        widget.setGraphicsEffect(effect)
-        idx = self.container.main_layout.count() - 1
-        self.container.main_layout.insertWidget(max(0, idx), widget)
-        self.anim = QPropertyAnimation(effect, b"opacity")
-        self.anim.setDuration(500)
-        self.anim.setStartValue(0)
-        self.anim.setEndValue(1)
-        self.anim.start()
-        QApplication.processEvents()
+    def add_log(self, message: str):
+        """Aggiunge una riga di log in verticale con autoscroll."""
+        human, tech, cat = SmartLogTranslator.humanize(message)
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        
+        item = HorizontalLogItem(human, tech, cat, timestamp)
+        # Inserisci sopra lo stretch finale
+        self.container.log_layout.insertWidget(self.container.log_layout.count() - 1, item)
         self._scroll_to_end()
 
-    def add_log(self, message: str) -> None:
-        """
-        Traduce un messaggio tecnico e lo aggiunge come nodo alla timeline.
-        Raggruppa log consecutivi della stessa categoria (es. download).
-        """
-        human, tech, cat = SmartLogTranslator.humanize(message)
-        if cat == self.last_category and cat in ("download", "search"):
-            self.consecutive_count += 1
-            items = []
-            for i in range(self.container.main_layout.count()):
-                item = self.container.main_layout.itemAt(i)
-                if item and (w := item.widget()) and isinstance(w, HorizontalLogItem):
-                    items.append(w)
-            if items:
-                last_item = items[-1]
-                last_item.set_count(self.consecutive_count)
-                return
-        self.consecutive_count = 1
-        self.last_category = cat
-        self.add_widget(HorizontalLogItem(human, tech, cat, datetime.now().strftime("%H:%M")))
-
-    def _scroll_to_end(self) -> None:
-        """Esegue lo scroll fluido verso l'ultimo elemento aggiunto."""
-        sb = self.horizontalScrollBar()
+    def _scroll_to_end(self):
+        """Esegue lo scroll fluido verso il basso."""
+        sb = self.verticalScrollBar()
         if sb:
-            self.scroll_anim = QPropertyAnimation(sb, b"value")
-            self.scroll_anim.setDuration(400)
-            self.scroll_anim.setStartValue(sb.value())
-            self.scroll_anim.setEndValue(sb.maximum())
-            self.scroll_anim.start()
+            sb.setValue(sb.maximum())
 
-    def clear(self) -> None:
-        """Rimuove tutti gli elementi dalla timeline e resetta il layout."""
-        while self.container.main_layout.count():
-            item = self.container.main_layout.takeAt(0)
+    def clear(self):
+        """Rimuove tutti i log dalla console."""
+        while self.container.log_layout.count() > 1:
+            item = self.container.log_layout.takeAt(0)
             if item and (w := item.widget()):
                 w.deleteLater()
-        self.container.main_layout.addStretch()
+
+    def set_mood(self, mood: str):
+        """Proxy per il mood del parent."""
+        if hasattr(self.parent(), "set_mood"):
+            self.parent().set_mood(mood)
 
 
 class TimelineWidget(QWidget):
     """
-    Contenitore principale per la timeline dei log con header e pulsante di pulizia.
+    Widget Log Attività principale (Versione Orrizzontale HUD).
+    Implementa l'estetica Cyber-Rail Ultra V5 con log testuali verticali.
     """
-
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza l'interfaccia della timeline."""
         super().__init__(parent)
+        self.setMinimumHeight(220)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+
+        # Header HUD
         header = QHBoxLayout()
-        header.addWidget(QLabel("<b>Timeline Attività</b>"))
+        header.setContentsMargins(15, 0, 15, 0)
+        lbl = QLabel("MISSION LOG STREAM")
+        lbl.setStyleSheet("font-weight: 900; color: #607D8B; letter-spacing: 2px; font-size: 9px;")
+        header.addWidget(lbl)
         header.addStretch()
-        btn = ModernButton(
-            "Pulisci Log",
-            variant=ModernButton.Variant.DANGER,
-            size=ModernButton.Size.SMALL,
-            icon=get_asset_path(Icons.TRASH),
-        )
+        
+        btn = ModernButton("PURGE", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL, icon=get_asset_path(Icons.TRASH))
         btn.clicked.connect(self.clear)
         header.addWidget(btn)
         layout.addLayout(header)
-        self.timeline = HorizontalTimelineWidget()
-        layout.addWidget(self.timeline)
 
-    def append(self, message: str) -> None:
-        """Aggiunge un messaggio alla timeline interna."""
-        self.timeline.add_log(message)
+        # Cyber Frame (Il guscio estetico)
+        self.frame = CyberTimelineFrame()
+        self.frame_layout = QVBoxLayout(self.frame)
+        self.frame_layout.setContentsMargins(12, 12, 12, 12)
 
-    def clear(self) -> None:
-        """Svuota la timeline interna."""
+        # La console reale
+        self.timeline = HorizontalTimelineWidget(self)
+        self.frame_layout.addWidget(self.timeline)
+        layout.addWidget(self.frame)
+
+        # Timer Animazioni (Griglia e Battito)
+        self._pulse_val = 1.0
+        self._grid_off = 0.0
+        self.anim_timer = QTimer(self)
+        self.anim_timer.timeout.connect(self._update_anim)
+        self.anim_timer.start(16) # 60 FPS
+
+        self.pulse_anim = QPropertyAnimation(self, b"pulse_value")
+        self.pulse_anim.setDuration(1500)
+        self.pulse_anim.setStartValue(0.4)
+        self.pulse_anim.setEndValue(1.0)
+        self.pulse_anim.setLoopCount(-1)
+        self.pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
+        self.pulse_anim.start()
+
+    @pyqtProperty(float)
+    def pulse_value(self) -> float: 
+        """Restituisce il valore di pulsazione neon."""
+        return self._pulse_val
+        
+    @pulse_value.setter  # type: ignore
+    def pulse_value(self, v: float):
+        """Aggiorna il bordo neon."""
+        self._pulse_val = v
+        self.frame._pulse_value = v
+        self.frame.update()
+
+    def _update_anim(self):
+        """Muove la griglia tattica."""
+        self._grid_off = (self._grid_off + 0.3) % 25.0
+        self.frame._grid_offset = self._grid_off
+        self.frame.update()
+
+    def append(self, msg: str, level: str = "INFO"): 
+        """Aggiunge un messaggio al feed log."""
+        self.timeline.add_log(msg)
+        
+    def clear(self): 
+        """Pulisce la console."""
         self.timeline.clear()
-
+        
+    def set_mood(self, mood: str):
+        """Regola l'intensità in base allo stato del bot."""
+        if mood == "running": 
+            self.pulse_anim.setDuration(800)
+        else: 
+            self.pulse_anim.setDuration(1500)
 
 class MissionReportCard(QFrame):
-    """
-    Card di riepilogo visualizzata al termine di una sessione bot.
-    """
-    def __init__(self, duration_str: str, status: bool, parent: QWidget | None = None) -> None:
-        """
-        Inizializza la card di report missione.
-
-        Args:
-            duration_str: Testo della durata.
-            status: Successo o errore.
-            parent: Widget genitore.
-        """
+    """Placeholder per compatibilità (non mostrata nel flusso testuale)."""
+    def __init__(self, dur: str, status: bool, parent=None):
         super().__init__(parent)
-        self.setFixedSize(260, 150)
-        self.setStyleSheet(
-            "QFrame { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #e9ecef); border: 1px solid #dee2e6; border-radius: 8px; margin: 10px 5px; }"
-        )
-        layout = QVBoxLayout(self)
-        title = "Missione Compiuta!" if status else "Missione Terminata"
-        lbl_title = QLabel(f"<b>{title}</b>")
-        lbl_title.setStyleSheet(f"color: {'#198754' if status else '#dc3545'}; font-size: 16px;")
-        layout.addWidget(lbl_title)
-        layout.addWidget(QLabel(f"Durata: {duration_str}"))
+        self.hide()

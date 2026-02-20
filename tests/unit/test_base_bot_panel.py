@@ -25,7 +25,7 @@ class TestBaseBotPanel:
             patch("src.gui.panels.base.AuditManager"),
             patch("src.gui.panels.base.StatsManager"),
             patch("src.gui.panels.base.StatusCard"),
-            patch("src.gui.panels.base.TimelineWidget"),
+            patch("src.gui.panels.base.ActivityTimelineWidget"),
             patch("src.gui.panels.base.ModernButton") as mock_btn_class,
             patch("src.gui.panels.base.get_asset_path", return_value="mock.svg"),
             patch("src.gui.panels.base.config_manager"),
@@ -89,13 +89,14 @@ class TestBaseBotPanel:
     @patch("src.gui.panels.base.datetime")
     def test_on_start(self, mock_dt):
         mock_dt.now.return_value = datetime(2025, 1, 1)
-        self.panel.log_widget = MagicMock()
+        self.panel.activity_timeline = MagicMock()
         self.panel._update_status = MagicMock()
+        self.panel.get_bot_class = MagicMock(return_value=MagicMock(STEPS=[("1", "Step 1")]))
 
         self.panel._on_start()
 
         assert self.panel.start_time == datetime(2025, 1, 1)
-        self.panel.log_widget.timeline.set_mood.assert_called_with("running")
+        self.panel.activity_timeline.set_steps.assert_called_with([("1", "Step 1")])
 
     def test_on_stop(self):
         self.panel.worker = MagicMock()

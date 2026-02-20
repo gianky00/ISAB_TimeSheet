@@ -26,10 +26,10 @@ class SyncTracker:
 
     STATE_FILE: ClassVar[Path] = CONFIG_DIR / "data" / "sync_state.json"
     """Percorso del file JSON contenente lo stato di sincronizzazione."""
-    
+
     _cache: ClassVar[dict[str, Any]] = {}
     """Cache interna per evitare letture ridondanti da disco."""
-    
+
     _loaded = False
     """Flag per indicare se lo stato è già stato caricato in memoria."""
 

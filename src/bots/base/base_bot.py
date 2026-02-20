@@ -30,6 +30,8 @@ from src.core import config_manager
 from src.core.constants import BotStatus, BrowserConfig, Timeouts, URLs
 from src.core.logging import generate_trace_id, get_logger, measure_time, with_context
 
+logger = get_logger(__name__)
+
 
 class StepStatus(Enum):
     """Enumerazione degli stati possibili per un singolo step della timeline operativa."""
@@ -138,14 +140,15 @@ class BaseBot(ABC):
         else:
             index = step_id
 
-        if not self._steps_state:
+        if not hasattr(self, "_steps_state") or not self._steps_state:
             self._initialize_steps()
 
         if 0 <= index < len(self._steps_state):
             self._steps_state[index] = status
             self._current_step_index = index
             step_name = self.STEPS[index][1]
-            self.signals.step_changed.emit(index, step_name, status)
+            if hasattr(self, "signals"):
+                self.signals.step_changed.emit(index, step_name, status)
 
             if message:
                 self.log(f"[{step_name}] {message}", current_step=step_name, step_index=index)
@@ -208,20 +211,27 @@ class BaseBot(ABC):
             current_step: Etichetta dello step operativo attuale.
             step_index: Indice dello step operativo attuale.
         """
-        self.signals.log_emitted.emit(message, level)
+        if hasattr(self, "signals"):
+            self.signals.log_emitted.emit(message, level)
         if self._log_callback:
             self._log_callback(message)
 
-        if current_step is None and 0 <= self._current_step_index < len(self.STEPS):
+        if current_step is None and hasattr(self, "_current_step_index") and 0 <= self._current_step_index < len(self.STEPS):
             current_step = self.STEPS[self._current_step_index][1]
 
-        getattr(self._logger, level.lower(), self._logger.info)(
+        # Robustness for mocked __init__ in tests
+        logger_obj = getattr(self, "_logger", logger)
+        trace_id = getattr(self, "_trace_id", "no-trace")
+        status_name = self._status.name if hasattr(self, "_status") and hasattr(self._status, "name") else "IDLE"
+        step_idx = step_index if step_index is not None else getattr(self, "_current_step_index", -1)
+
+        getattr(logger_obj, level.lower(), logger_obj.info)(
             message,
-            trace_id=self._trace_id,
+            trace_id=trace_id,
             bot_type=self.name.lower().replace(" ", "_"),
-            bot_status=self._status.name,
+            bot_status=status_name,
             current_step=current_step or "",
-            step_index=step_index or self._current_step_index,
+            step_index=step_idx,
         )
 
         if self._telegram_service:
@@ -265,7 +275,7 @@ class BaseBot(ABC):
             except Exception as e:
                 self._handle_driver_error(e)
         else:
-            raise RuntimeError("Chromedriver non trovato.")
+            raise RuntimeError("Chromedriver service non disponibile.")
 
     def _get_chrome_options(self) -> Options:
         """Configura le opzioni tecniche per Chrome (Sandboxing, Headless, Profile, Prefs)."""
@@ -281,14 +291,13 @@ class BaseBot(ABC):
             "--no-restore-session-state",
             "--disable-dev-shm-usage",
             "--disable-gpu",
+            "--remote-debugging-port=9222",
             "--disable-software-rasterizer",
-            "--log-level=3",
-            "--silent",
         ]
         for a in args:
             opt.add_argument(a)
 
-        opt.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
+        opt.add_experimental_option("excludeSwitches", ["enable-automation"])
         opt.add_experimental_option("useAutomationExtension", False)
 
         cfg = config_manager.load_config()
@@ -346,11 +355,22 @@ class BaseBot(ABC):
     def _setup_driver_instance(self, service: Service, options: Options) -> None:
         """Crea l'istanza webdriver ed applica patch runtime per l'evasione dei controlli bot."""
         self.driver = webdriver.Chrome(service=service, options=options)
-        if self.download_path:
-            self.driver.execute_cdp_cmd(
-                "Page.setDownloadBehavior",
-                {"behavior": "allow", "downloadPath": str(Path(self.download_path).resolve())},
-            )
+        
+        # Forza SEMPRE il percorso di download per evitare fallback su cartelle temp
+        # Se self.download_path è vuoto, usa la cartella Downloads dell'utente
+        target_download = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
+        
+        if not target_download.exists():
+            with suppress(Exception):
+                target_download.mkdir(parents=True, exist_ok=True)
+        
+        self.log(f"📁 Cartella download forzata: {target_download}")
+        
+        self.driver.execute_cdp_cmd(
+            "Page.setDownloadBehavior",
+            {"behavior": "allow", "downloadPath": str(target_download)},
+        )
+        
         self.driver.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",
             {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"},
@@ -370,8 +390,10 @@ class BaseBot(ABC):
         msg = str(e).lower()
         if "chrome instance exited" in msg:
             self.log("❌ CRASH: Chrome si è chiuso all'avvio", "ERROR")
-        elif "version" in msg:
-            self.log("❌ MISMATCH: Versione driver non compatibile", "ERROR")
+            self.log("💡 SUGGERIMENTO: Assicurati che Chrome sia aggiornato e non ci siano istanze appese.")
+        elif "version" in msg or "sessionnotcreated" in msg:
+            self.log("❌ ERRORE CRITICO DRIVER: Versione incompatibile", "ERROR")
+            self.log("💡 SUGGERIMENTO: Aggiorna Chrome o scarica chromedriver compatibile.")
         else:
             self.log(f"❌ ERRORE DRIVER: {e}", "ERROR")
         raise e

@@ -22,9 +22,9 @@ from src.core.constants import Icons
 from src.core.logging import get_logger
 from src.core.stats_manager import StatsManager
 from src.gui.components.activity_timeline import ActivityTimelineWidget
-from src.gui.components.terminal_log import TerminalLogWidget
 from src.gui.design.spacing import Spacing
 from src.gui.dialogs.standard_input_dialog import StandardInputDialog
+from src.gui.widgets import TimelineWidget
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.status_card import StatusCard
 from src.utils.helpers import get_asset_path
@@ -197,8 +197,8 @@ class BaseBotPanel(QWidget):
 
         self.main_layout.addLayout(top_h_layout)
 
-        # Bottom Area: Terminal Log (Full Width)
-        self.log_widget = TerminalLogWidget()
+        # Bottom Area: Activity Log (Cyber Console)
+        self.log_widget = TimelineWidget()
         self.main_layout.addWidget(self.log_widget, stretch=2)
 
         # Buttons
@@ -305,6 +305,10 @@ class BaseBotPanel(QWidget):
         self.start_time = datetime.now()
         self._update_status("#0d6efd")
 
+        # Attiva Cyber-Mood per il log
+        if hasattr(self.log_widget, "set_mood"):
+            self.log_widget.set_mood("running")
+
         # Inizializza timeline attività se il bot ha gli steps (doppio controllo)
         bot_class = self.get_bot_class()
         if bot_class and hasattr(bot_class, "STEPS") and bot_class.STEPS:
@@ -330,6 +334,10 @@ class BaseBotPanel(QWidget):
         """Gestisce il completamento del worker."""
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
+
+        # Ripristina Cyber-Mood
+        if hasattr(self.log_widget, "set_mood"):
+            self.log_widget.set_mood("idle")
 
         duration = self._calculate_duration_str()
         self._log_mission_report(duration, success)
@@ -399,23 +407,9 @@ class BaseBotPanel(QWidget):
         self._on_worker_finished(success)
 
     def _on_log(self, message: str):
-        """Aggiunge un messaggio al log e lo inoltra a Telegram se importante."""
-        self.log_widget.append(message)
-
-        win = self.window()
-        if win and hasattr(win, "telegram"):
-            # Formattiamo il log per Telegram aggiungendo il nome del bot
-            clean_msg = message.strip()
-            # Rimuoviamo eventuali timestamp se presenti all'inizio (stile [HH:mm:ss])
-            import re
-
-            clean_msg = re.sub(r"^[\\[\\]\d{2}:\d{2}:\d{2}[\\]]s*", "", clean_msg)
-
-            tg_text = f"\U0001f539 *{self.bot_name}*\n{clean_msg}"
-            from typing import Any
-
-            cast_win: Any = win
-            cast_win.telegram.send_message_sync(tg_text)
+        """Aggiunge un messaggio al log."""
+        if hasattr(self, "log_widget") and self.log_widget:
+            self.log_widget.append(message)
 
     def _on_status(self, status: str):
         """Aggiorna lo stato (messaggio custom)."""

@@ -7,13 +7,18 @@ e un elenco dettagliato di anomalie rilevate, con integrazione diretta per gli a
 
 from contextlib import suppress
 from datetime import datetime
-from typing import Optional
 
 from PyQt6.QtCore import QRectF, Qt, QTimer
 from PyQt6.QtGui import QColor, QFont, QPainter, QPen
 from PyQt6.QtWidgets import (
-    QFrame, QGridLayout, QHBoxLayout, QLabel, QScrollArea,
-    QSizePolicy, QVBoxLayout, QWidget,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QScrollArea,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
 )
 
 from src.gui.widgets.modern_button import ModernButton
@@ -25,7 +30,7 @@ class HealthScoreBadge(QWidget):
     Cambia colore (verde, giallo, arancio, rosso) in base al punteggio percentuale.
     """
 
-    def __init__(self, parent: Optional[QWidget] = None, size: int = 160) -> None:
+    def __init__(self, parent: QWidget | None = None, size: int = 160) -> None:
         """
         Inizializza il badge del punteggio salute.
 
@@ -86,7 +91,7 @@ class HealthScoreBadge(QWidget):
 class StatCard(QFrame):
     """Card informativa minimalista per visualizzare singole metriche (es. Bot Run, Error Rate)."""
 
-    def __init__(self, title: str, value: str = "0", icon: str = "", color: str = "#007bff", parent: Optional[QWidget] = None) -> None:
+    def __init__(self, title: str, value: str = "0", icon: str = "", color: str = "#007bff", parent: QWidget | None = None) -> None:
         """
         Inizializza la card statistica.
 
@@ -98,7 +103,7 @@ class StatCard(QFrame):
             parent: Widget genitore.
         """
         super().__init__(parent)
-        self._value_label: Optional[QLabel] = None
+        self._value_label: QLabel | None = None
         self._color = color
         self._setup_ui(title, value, icon, color)
 
@@ -107,7 +112,7 @@ class StatCard(QFrame):
         self.setStyleSheet(f"QFrame {{ background-color: #ffffff; border-radius: 12px; border: 1px solid #dee2e6; border-left: 4px solid {color}; }}")
         self.setMinimumSize(140, 95); self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         layout = QVBoxLayout(self)
-        
+
         header = QHBoxLayout()
         if icon:
             lbl_icon = QLabel(icon); lbl_icon.setStyleSheet("font-size: 18px; border: none;"); header.addWidget(lbl_icon)
@@ -126,7 +131,7 @@ class StatCard(QFrame):
 class AnomalyCard(QFrame):
     """Widget per la visualizzazione di un'anomalia specifica rilevata dal sistema di monitoraggio."""
 
-    def __init__(self, anomaly, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, anomaly, parent: QWidget | None = None) -> None:
         """
         Inizializza la card anomalia.
 
@@ -142,7 +147,7 @@ class AnomalyCard(QFrame):
         color, bg = self._get_severity_color(anomaly.severity), self._get_bg_color(anomaly.severity)
         self.setStyleSheet(f"QFrame {{ background-color: {bg}; border-radius: 10px; border: 1px solid {color}40; border-left: 5px solid {color}; }}")
         layout = QVBoxLayout(self)
-        
+
         header = QHBoxLayout()
         emoji = {"low": "ℹ️", "medium": "⚠️", "high": "🔴", "critical": "🚨"}.get(anomaly.severity, "📢")
         lbl_title = QLabel(f"{emoji}  {anomaly.message}"); lbl_title.setStyleSheet("color: #343a40; font-weight: 600; font-size: 14px;"); lbl_title.setWordWrap(True)
@@ -171,7 +176,7 @@ class HealthPanel(QWidget):
     Integra timer di auto-refresh per mantenere i dati sempre aggiornati.
     """
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Inizializza l'interfaccia e avvia gli scheduler di monitoraggio."""
         super().__init__(parent)
         self._setup_ui()
@@ -227,7 +232,7 @@ class HealthPanel(QWidget):
             report = generate_analytics_report(hours=24)
             self._score_badge.score = report.health_score
             self._status_label.setText(self._score_badge._get_status_text())
-            
+
             health = LogViewer().generate_health_report()
             self._stat_runs_ok.set_value(str(health.get("bot_runs", {}).get("successful", 0)))
             self._stat_runs_fail.set_value(str(health.get("bot_runs", {}).get("failed", 0)))
@@ -258,7 +263,7 @@ class HealthPanel(QWidget):
             report = generate_analytics_report(hours=24)
             if not report.anomalies:
                 self._show_toast("ℹ️ Nessuna anomalia da segnalare", "info"); return
-            
+
             am = get_alert_manager()
             summary = f"🏥 <b>Health Report</b>\nScore: {report.health_score}%\nAnomalie: {len(report.anomalies)}\n\n"
             for a in report.anomalies[:5]: summary += f"• {a.message}\n"

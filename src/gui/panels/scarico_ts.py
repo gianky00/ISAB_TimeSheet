@@ -150,13 +150,17 @@ class ScaricaTSPanel(BaseBotPanel):
         username, password = self.get_credentials()
         data_da, _ = self.params_widget.get_dates()
         config = config_manager.load_config()
+        
+        # Forza un percorso di download valido per evitare fallback su cartelle temp
+        path = self.params_widget.get_dest_path() or config_manager.get_download_path()
+        
         return create_bot(
             "scarico_ts",
             username=username,
             password=password,
             headless=config.get("browser_headless", False),
             timeout=config.get("browser_timeout", 30),
-            download_path=self.params_widget.get_dest_path(),
+            download_path=path,
             data_da=data_da,
             fornitore=self.params_widget.get_fornitore(),
             elabora_ts=self.elabora_ts_check.isChecked(),

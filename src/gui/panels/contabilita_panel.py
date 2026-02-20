@@ -8,7 +8,6 @@ Include un motore di ricerca unificato e l'accesso al pannello di analisi KPI.
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -264,13 +263,13 @@ class ContabilitaPanel(QWidget):
 
         if target:
             if hasattr(target, "table"):
-                table = getattr(target, "table")
+                table = target.table
                 if model := table.selectionModel():
                     with suppress(Exception):
                         model.selectionChanged.disconnect()
                     model.selectionChanged.connect(lambda s, d: self._update_selection_total(table))
             elif hasattr(target, "tree"):
-                tree = getattr(target, "tree")
+                tree = target.tree
                 with suppress(Exception):
                     tree.itemSelectionChanged.disconnect()
                 tree.itemSelectionChanged.connect(lambda: self._update_selection_total(tree))
