@@ -415,6 +415,20 @@ class BaseBotPanel(QWidget):
             result_container["value"] = ""
         event.set()
 
+    def _setup_worker_connections(self, worker: BotWorker):
+        """Connette tutti i segnali standard del worker ai callback del pannello."""
+        worker.log_signal.connect(self._on_log)
+        worker.status_signal.connect(self._on_status)
+        worker.finished_signal.connect(self._on_worker_finished)
+
+        # Connessione automatica timeline
+        if hasattr(self, "activity_timeline"):
+            worker.step_changed_signal.connect(self.activity_timeline.on_step_changed)
+
+        # Connessione input interattivo
+        if hasattr(self, "_ask_user_input"):
+            worker.request_input_signal.connect(self._ask_user_input)
+
     def get_credentials(self) -> tuple[str, str]:
         """Ottiene le credenziali dall'account di default."""
         account = config_manager.get_default_account()

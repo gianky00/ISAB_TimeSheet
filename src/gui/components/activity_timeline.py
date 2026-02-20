@@ -3,11 +3,12 @@ Timeline Widget Professionale - Standard Cyber-Stepper V2.
 Design ultra-moderno con sfondi integrati, neon glow e animazioni fluide.
 """
 
+from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QRectF, Qt, pyqtProperty, pyqtSlot
+from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath, QPen, QRadialGradient
 from PyQt6.QtWidgets import QWidget
-from PyQt6.QtCore import Qt, pyqtProperty, QPropertyAnimation, QEasingCurve, pyqtSlot, QRectF, QPointF
-from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QFont, QRadialGradient, QPainterPath, QLinearGradient
 
 from src.bots.base.base_bot import StepStatus
+
 
 class TimelineNode:
     def __init__(self, name: str):
@@ -21,7 +22,7 @@ class ActivityTimelineWidget(QWidget):
         self._pulse_value = 0.0
         self._pulse_anim = QPropertyAnimation(self, b"pulse_value")
         self._setup_animation()
-        
+
         # Palette Cyber-Tech V2 (High Contrast)
         self.COLORS = {
             "bg": QColor("#0F111A"),           # Sfondo scuro profondo
@@ -33,7 +34,7 @@ class ActivityTimelineWidget(QWidget):
             "text_active": QColor("#FFFFFF"),
             "text_dim": QColor("#90A4AE")
         }
-        
+
         self.setMinimumWidth(260)
         self.setMinimumHeight(300)
 
@@ -71,13 +72,13 @@ class ActivityTimelineWidget(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        
+
         # 0. Sfondo del Widget (Cyber Panel)
         rect = QRectF(0, 0, self.width(), self.height())
         path = QPainterPath()
         path.addRoundedRect(rect, 8, 8)
         painter.fillPath(path, self.COLORS["bg"])
-        
+
         if not self.nodes:
             self._draw_empty_state(painter)
             return
@@ -99,7 +100,7 @@ class ActivityTimelineWidget(QWidget):
 
     def _draw_node(self, painter, x, y, node):
         color = self.COLORS[node.status]
-        
+
         if node.status == StepStatus.RUNNING:
             # Effetto GLOW pulsante
             glow_size = 15 * self._pulse_value
@@ -109,12 +110,12 @@ class ActivityTimelineWidget(QWidget):
             painter.setBrush(grad)
             painter.setPen(Qt.PenStyle.NoPen)
             painter.drawEllipse(QRectF(x - glow_size, y - glow_size, glow_size * 2, glow_size * 2))
-            
+
             # Centro Neon
             painter.setBrush(color)
             painter.setPen(QPen(Qt.GlobalColor.white, 2))
             painter.drawEllipse(QRectF(x - 7, y - 7, 14, 14))
-            
+
         elif node.status == StepStatus.COMPLETED:
             # Cerchio solido con spunta
             painter.setBrush(color)
@@ -123,13 +124,13 @@ class ActivityTimelineWidget(QWidget):
             painter.setPen(QPen(Qt.GlobalColor.white, 2))
             painter.drawLine(int(x-4), int(y), int(x-1), int(y+4))
             painter.drawLine(int(x-1), int(y+4), int(x+5), int(y-3))
-            
+
         elif node.status == StepStatus.ERROR:
             painter.setBrush(self.COLORS[StepStatus.ERROR])
             painter.setPen(QPen(Qt.GlobalColor.white, 2))
             painter.drawEllipse(QRectF(x - 10, y - 10, 20, 20))
             painter.drawText(QRectF(x-10, y-10, 20, 20), Qt.AlignmentFlag.AlignCenter, "!")
-            
+
         else: # PENDING
             painter.setBrush(self.COLORS[StepStatus.PENDING])
             painter.setPen(Qt.PenStyle.NoPen)
@@ -138,17 +139,17 @@ class ActivityTimelineWidget(QWidget):
     def _draw_text(self, painter, x, y, node):
         is_active = node.status in (StepStatus.RUNNING, StepStatus.COMPLETED)
         painter.setPen(self.COLORS["text_active"] if is_active else self.COLORS["text_dim"])
-        
+
         font = QFont("Segoe UI", 10)
         font.setBold(is_active)
         painter.setFont(font)
-        
+
         # Testo con leggera ombra se attivo
         if is_active:
             painter.setPen(QColor(0, 0, 0, 150))
             painter.drawText(int(x+1), int(y + 6), node.name)
             painter.setPen(self.COLORS["text_active"])
-            
+
         painter.drawText(int(x), int(y + 5), node.name)
 
     def _draw_empty_state(self, painter):

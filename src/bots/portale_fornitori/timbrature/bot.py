@@ -5,15 +5,23 @@ Bot for accessing Timbrature section using Page Object Model.
 
 from contextlib import suppress
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
-from src.bots.base import BaseBot
+from src.bots.base.base_bot import BaseBot, StepStatus
 from src.bots.portale_fornitori.timbrature.pages.timbrature_page import TimbraturePage
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
 
 class TimbratureBot(BaseBot):
     """Bot per lo scarico e l'archiviazione automatica delle timbrature dal Portale Fornitori."""
+
+    STEPS: ClassVar[list[tuple[str, str]]] = [
+        ("login", "Login Portale ISAB"),
+        ("nav", "Navigazione Timbrature"),
+        ("filter", "Filtraggio Dati"),
+        ("download", "Download Report"),
+        ("import", "Importazione Database")
+    ]
 
     @property
     def name(self) -> str:
@@ -81,6 +89,8 @@ class TimbratureBot(BaseBot):
         """
         Executes the Timbrature workflow: Navigate -> Filter -> Download -> Import.
         """
+        self.update_step("login", StepStatus.COMPLETED)
+
         if data and isinstance(data, list):
             row = data[0]
             self.data_da = row.get("data_da", self.data_da)
@@ -95,25 +105,36 @@ class TimbratureBot(BaseBot):
         page = TimbraturePage(self.driver, self.log, self.download_path)
 
         # 1. Navigation
+        self.update_step("nav", StepStatus.RUNNING)
         if not page.navigate_to_timbrature():
             self.log("❌ Non riesco a raggiungere la sezione Timbrature.")
+            self.update_step("nav", StepStatus.ERROR)
             return False
+        self.update_step("nav", StepStatus.COMPLETED)
 
         # 2. Filter & Download
+        self.update_step("filter", StepStatus.RUNNING)
         if not page.set_filters(self.fornitore, self.data_da, self.data_a):
             self.log("❌ Filtri non applicati correttamente.")
+            self.update_step("filter", StepStatus.ERROR)
             return False
+        self.update_step("filter", StepStatus.COMPLETED)
 
+        self.update_step("download", StepStatus.RUNNING)
         excel_path = page.download_excel()
 
         # 3. Process File
         if excel_path:
+            self.update_step("download", StepStatus.COMPLETED)
+            self.update_step("import", StepStatus.RUNNING)
             self.log("✅ Report scaricato! Sto analizzando i dati...")
             try:
                 self.storage.import_excel(excel_path, self.log)
                 self.log("💾 Dati salvati nel database con successo.")
+                self.update_step("import", StepStatus.COMPLETED)
             except Exception as e:
                 self.log(f"❌ Errore durante il salvataggio: {e}")
+                self.update_step("import", StepStatus.ERROR)
             finally:
                 # Cleanup
                 p = Path(excel_path)
@@ -122,6 +143,7 @@ class TimbratureBot(BaseBot):
                         p.unlink()
         else:
             self.log("⚠️ Non ho trovato dati o il download non è partito.")
+            self.update_step("download", StepStatus.ERROR)
 
         self.log("✨ Procedura conclusa.")
         return True

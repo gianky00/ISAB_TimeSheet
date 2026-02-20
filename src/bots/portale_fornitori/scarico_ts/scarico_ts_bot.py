@@ -4,7 +4,7 @@ Bot for downloading timesheets using Page Object Model.
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from src.bots.base.base_bot import BaseBot, StepStatus
 from src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page import ScaricoTSPage
@@ -18,7 +18,7 @@ class ScaricaTSBot(BaseBot):
     # Default supplier
     FORNITORE = "KK10608 - COEMI S.R.L."
 
-    STEPS = [
+    STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login Portale ISAB"),
         ("nav", "Navigazione Portale"),
         ("filters", "Impostazione Filtri"),

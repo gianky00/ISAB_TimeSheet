@@ -8,7 +8,7 @@ import logging
 import time
 from contextlib import suppress
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import fitz
 from selenium.webdriver.common.by import By
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class SafeWorkPDLBot(SafeworkBaseBot):
     """Bot per lo scarico e la stampa automatizzata dei PDL."""
 
-    STEPS = [
+    STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
         ("search", "Ricerca PdL"),
         ("download_p1", "Scarico Parte Prima"),
@@ -84,7 +84,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     def run(self, data: list[dict[str, Any]]) -> bool:
         """Ciclo principale di scarico PDL con gestione sessione."""
         self.update_step("login", StepStatus.COMPLETED)
-        
+
         success_count = 0
         total = len(data)
         self.downloaded_files = []
@@ -108,10 +108,10 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 self.update_step("search", StepStatus.RUNNING)
                 if self._esegui_ricerca_pdl(pdl_num):
                     self.update_step("search", StepStatus.COMPLETED)
-                    
+
                     self.update_step("download_p1", StepStatus.RUNNING)
                     path_p1 = self._scarica_parte_prima(pdl_num)
-                    
+
                     path_p2 = None
                     if path_p1:
                         self.update_step("download_p1", StepStatus.COMPLETED)
@@ -127,8 +127,10 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                         else:
                             self.update_step("merge", StepStatus.ERROR)
                     else:
-                        if not path_p1: self.update_step("download_p1", StepStatus.ERROR)
-                        if not path_p2: self.update_step("download_p2", StepStatus.ERROR)
+                        if not path_p1:
+                            self.update_step("download_p1", StepStatus.ERROR)
+                        if not path_p2:
+                            self.update_step("download_p2", StepStatus.ERROR)
 
                     self._safe_remove(path_p1)
                     self._safe_remove(path_p2)

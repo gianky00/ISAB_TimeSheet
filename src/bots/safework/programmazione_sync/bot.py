@@ -4,16 +4,24 @@ Bot per il download massivo del report di programmazione Excel.
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from selenium.webdriver.common.by import By
 
+from src.bots.base.base_bot import StepStatus
 from src.bots.base.wait_helpers import poll_for_new_file
 from src.bots.safework.base import SafeworkBaseBot
 
 
 class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
     """Bot per scaricare il report Excel delle attività da SafeWork."""
+
+    STEPS: ClassVar[list[tuple[str, str]]] = [
+        ("login", "Login SafeWork"),
+        ("nav", "Navigazione Attività"),
+        ("filter", "Configurazione Filtri"),
+        ("search", "Ricerca ed Esportazione")
+    ]
 
     def __init__(self, username, password, headless=False, timeout=30, download_path=""):
         super().__init__(username, password, headless, timeout, download_path)
@@ -33,6 +41,8 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
 
     def run(self, data: list[dict[str, Any]]) -> bool:
         """Esegue il download del report Excel."""
+        self.update_step("login", StepStatus.COMPLETED)
+
         params = data[0] if data else {}
         requesters = params.get("requesters", [])
         date_start = params.get("date_start")
@@ -42,24 +52,30 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
             return False
 
         # 1. Navigazione
+        self.update_step("nav", StepStatus.RUNNING)
         self.log("📋 Navigazione in 'Visualizza Attività'...")
         self._attendi_scomparsa_overlay()
         if not self.driver:
             self.log("❌ Driver non inizializzato.")
+            self.update_step("nav", StepStatus.ERROR)
             return False
 
         self.driver.find_element(By.ID, "topIcon-actHomePage").click()
         self._attendi_scomparsa_overlay()
         self.driver.find_element(By.ID, "sideBar-actVisualizzaAttivita").click()
         self._attendi_scomparsa_overlay()
+        self.update_step("nav", StepStatus.COMPLETED)
 
         # 2. Setup Filtri
+        self.update_step("filter", StepStatus.RUNNING)
         if not self.attivita_page:
             self.log("❌ Pagina Attività non inizializzata.")
+            self.update_step("filter", StepStatus.ERROR)
             return False
         self.attivita_page.pulisci_pdl()
         self.attivita_page.imposta_date(date_start, date_end)
         self.attivita_page.seleziona_ditta("CO.EMI SRL")
+        self.update_step("filter", StepStatus.COMPLETED)
 
         # 3. Selezione Richiedenti Multipli
         if requesters:
@@ -70,6 +86,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
                 self.attivita_page.seleziona_richiedente(req)
 
         # 4. Ricerca ed Esportazione
+        self.update_step("search", StepStatus.RUNNING)
         self.log("🔍 Esecuzione ricerca...")
         self.attivita_page.esegui_ricerca()
         self._attendi_scomparsa_overlay(timeout_secondi=300)
@@ -86,6 +103,8 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
             )
             if self.downloaded_file:
                 self.log(f"✅ Report scaricato: {Path(self.downloaded_file).name}")
+                self.update_step("search", StepStatus.COMPLETED)
                 return True
 
+        self.update_step("search", StepStatus.ERROR)
         return False

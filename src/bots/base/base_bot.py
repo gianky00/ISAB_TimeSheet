@@ -10,7 +10,7 @@ from collections.abc import Callable
 from contextlib import suppress
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from PyQt6.QtCore import QObject, pyqtSignal
 from selenium import webdriver
@@ -100,7 +100,7 @@ class BaseBot(ABC):
         """Restituisce il nome identificativo del bot."""
 
     # Lista degli step per la timeline (da sovrascrivere nelle sottoclassi)
-    STEPS: list[tuple[str, str]] = []
+    STEPS: ClassVar[list[tuple[str, str]]] = []
 
     def _initialize_steps(self) -> None:
         """Inizializza lo stato degli step a PENDING."""
@@ -124,15 +124,15 @@ class BaseBot(ABC):
 
         if 0 <= index < len(self._steps_state):
             self._steps_state[index] = status
-            
+
             # Aggiorna sempre l'indice corrente per i log contestuali
             self._current_step_index = index
-            
+
             step_name = self.STEPS[index][1]
-            
+
             # Emit signal for GUI
             self.signals.step_changed.emit(index, step_name, status)
-            
+
             # Log automatically with explicit step context
             if message:
                 self.log(f"[{step_name}] {message}", current_step=step_name, step_index=index)
@@ -204,7 +204,7 @@ class BaseBot(ABC):
         # Contextual info for logging
         if current_step is None and 0 <= self._current_step_index < len(self.STEPS):
             current_step = self.STEPS[self._current_step_index][1]
-        
+
         if step_index is None:
             step_index = self._current_step_index
 
@@ -437,7 +437,7 @@ class BaseBot(ABC):
         Esegue il workflow completo del bot: Validazione -> Accesso -> Esecuzione -> Cleanup.
         """
         self._stop_requested = False
-        
+
         # Inizializza lo stato degli step ORA che la sottoclasse è pronta
         self._initialize_steps()
 
@@ -495,11 +495,11 @@ class BaseBot(ABC):
                 self.log(f"✗ Errore fatale: {e}", "ERROR")
                 self._save_error_state(str(e))
                 self.status = BotStatus.ERROR
-                
+
                 # Aggiorna timeline se c'è uno step attivo
                 if 0 <= self._current_step_index < len(self.steps):
                     self.update_step(self._current_step_index, StepStatus.ERROR)
-                
+
                 return False
             finally:
                 self.cleanup()

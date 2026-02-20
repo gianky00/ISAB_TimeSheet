@@ -6,10 +6,11 @@ Bot modulare per il monitoraggio della programmazione settimanale tramite Export
 import contextlib
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import pandas as pd
 
+from src.bots.base.base_bot import StepStatus
 from src.bots.base.wait_helpers import poll_for_new_file
 from src.bots.safework.base import SafeworkBaseBot
 from src.bots.safework.common.locators import SafeWorkLocators
@@ -19,6 +20,14 @@ logger = logging.getLogger(__name__)
 
 class SafeWorkProgrammazioneBot(SafeworkBaseBot):
     """Bot per monitorare i flag TCL/TGO della settimana tramite Export Excel."""
+
+    STEPS: ClassVar[list[tuple[str, str]]] = [
+        ("login", "Login SafeWork"),
+        ("nav", "Navigazione Attività"),
+        ("filter", "Configurazione Filtri"),
+        ("search", "Ricerca ed Export"),
+        ("parse", "Analisi Risultati")
+    ]
 
     def __init__(self, username, password, headless=False, timeout=30, download_path=""):
         super().__init__(username, password, headless, timeout, download_path)
@@ -38,6 +47,8 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
 
     def run(self, data: list[dict[str, Any]]) -> bool:
         """Esecuzione tramite export Excel massivo."""
+        self.update_step("login", StepStatus.COMPLETED)
+
         params = data[0] if data else {}
         requesters = params.get("requesters", [])
         date_start = params.get("date_start")
@@ -47,9 +58,11 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
             return False
 
         # 1. Navigazione
+        self.update_step("nav", StepStatus.RUNNING)
         self.log("📋 Navigazione in 'Visualizza Attività'...")
         if not self.driver:
             self.log("❌ Driver non inizializzato.")
+            self.update_step("nav", StepStatus.ERROR)
             return False
 
         self.click_robusto(SafeWorkLocators.HOME_BUTTON)
@@ -57,15 +70,19 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
 
         self.click_robusto(SafeWorkLocators.VISUALIZZA_ATTIVITA_BUTTON)
         self._attendi_scomparsa_overlay()
+        self.update_step("nav", StepStatus.COMPLETED)
 
         # 2. Setup Filtri Generali
+        self.update_step("filter", StepStatus.RUNNING)
         if not self.attivita_page:
             self.log("❌ Pagina Attività non inizializzata.")
+            self.update_step("filter", StepStatus.ERROR)
             return False
 
         self.attivita_page.pulisci_pdl()
         self.attivita_page.imposta_date(str(date_start), str(date_end))
         self.attivita_page.seleziona_ditta("CO.EMI SRL")
+        self.update_step("filter", StepStatus.COMPLETED)
 
         # 3. Selezione Massiva Richiedenti
         self.log(f"👥 Selezione di {len(requesters)} richiedenti...")
@@ -74,17 +91,22 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
             # Proseguiamo comunque, magari ne ha selezionati alcuni
 
         # 4. Ricerca ed Export Unico
+        self.update_step("search", StepStatus.RUNNING)
         self.log("🔍 Avvio ricerca massiva...")
         self.attivita_page.esegui_ricerca()
         self._attendi_scomparsa_overlay()
 
         excel_file = self._scarica_excel()
         if excel_file:
+            self.update_step("search", StepStatus.COMPLETED)
+            self.update_step("parse", StepStatus.RUNNING)
             self.results = []
             self._parse_excel_results(excel_file)
+            self.update_step("parse", StepStatus.COMPLETED)
             self._cleanup_temp_file(excel_file)
         else:
             self.log("❌ Impossibile scaricare il file Excel dei risultati.")
+            self.update_step("search", StepStatus.ERROR)
             return False
 
         self.log(f"✨ FINE: Trovati {len(self.results)} PDL con programmazione.")

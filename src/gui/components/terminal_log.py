@@ -3,9 +3,10 @@ Standard Terminal Log Widget per SyncroJob.
 Sostituisce la vecchia timeline orizzontale con un visualizzatore testuale pulito e moderno.
 """
 
-from PyQt6.QtWidgets import QPlainTextEdit, QVBoxLayout, QWidget, QHBoxLayout, QLabel
-from PyQt6.QtCore import Qt, pyqtSlot
-from PyQt6.QtGui import QFont, QTextCharFormat, QColor, QTextCursor
+from PyQt6.QtCore import pyqtSlot
+from PyQt6.QtGui import QColor, QFont, QTextCharFormat, QTextCursor
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPlainTextEdit, QVBoxLayout, QWidget
+
 
 class TerminalLogWidget(QWidget):
     """
@@ -29,7 +30,7 @@ class TerminalLogWidget(QWidget):
         self.editor = QPlainTextEdit()
         self.editor.setReadOnly(True)
         self.editor.setMaximumBlockCount(1000)  # Limite per performance
-        
+
         # Styling Cyber-Console
         self.editor.setStyleSheet("""
             QPlainTextEdit {
@@ -40,12 +41,12 @@ class TerminalLogWidget(QWidget):
                 padding: 5px;
             }
         """)
-        
+
         font = QFont("Consolas", 10)
         if not font.exactMatch():
             font = QFont("Courier New", 10)
         self.editor.setFont(font)
-        
+
         self.layout.addWidget(self.editor)
 
     @pyqtSlot(str)
@@ -54,12 +55,12 @@ class TerminalLogWidget(QWidget):
         """Aggiunge un messaggio colorato in base al livello."""
         from datetime import datetime
         timestamp = datetime.now().strftime("%H:%M:%S")
-        
+
         self.editor.moveCursor(QTextCursor.MoveOperation.End)
-        
+
         # Formattazione per livello
         color = "#D4D4D4"
-        
+
         level_upper = level.upper()
         if "ERROR" in level_upper or "❌" in message:
             color = "#F44336"
@@ -71,17 +72,17 @@ class TerminalLogWidget(QWidget):
         # Costruisce la riga
         fmt = QTextCharFormat()
         fmt.setForeground(QColor(color))
-        
+
         # Inserisce timestamp grigio
         ts_fmt = QTextCharFormat()
         ts_fmt.setForeground(QColor("#606060"))
         self.editor.setCurrentCharFormat(ts_fmt)
         self.editor.insertPlainText(f"[{timestamp}] ")
-        
+
         # Inserisce il resto con il colore del livello
         self.editor.setCurrentCharFormat(fmt)
         self.editor.insertPlainText(f"{message}\n")
-        
+
         # Auto-scroll
         self.editor.verticalScrollBar().setValue(self.editor.verticalScrollBar().maximum())
 

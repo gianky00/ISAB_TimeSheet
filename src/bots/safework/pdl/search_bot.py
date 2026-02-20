@@ -6,10 +6,11 @@ Bot modulare per la ricerca massiva ed esportazione Excel dei PDL.
 import logging
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import pandas as pd
 
+from src.bots.base.base_bot import StepStatus
 from src.bots.safework.base import SafeworkBaseBot
 from src.bots.safework.common.locators import SafeWorkLocators
 from src.core.database import db_manager
@@ -20,6 +21,14 @@ logger = logging.getLogger(__name__)
 
 class SafeWorkPDLSearchBot(SafeworkBaseBot):
     """Bot per la ricerca massiva ed esportazione Excel dei PDL da SafeWork."""
+
+    STEPS: ClassVar[list[tuple[str, str]]] = [
+        ("login", "Login SafeWork"),
+        ("nav", "Navigazione Ricerca"),
+        ("filter", "Configurazione Filtri"),
+        ("search", "Ricerca e Export"),
+        ("db", "Importazione Database")
+    ]
 
     def __init__(self, username, password, headless=False, timeout=30, download_path=""):
         super().__init__(username, password, headless, timeout, download_path)
@@ -39,23 +48,31 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
 
     def run(self, data: list[dict[str, Any]]) -> bool:
         """Esegue la ricerca e l'esportazione dei PDL delegando alle Page Objects."""
+        self.update_step("login", StepStatus.COMPLETED)
+
         if not self.driver or not self.wait:
             return False
 
         params = data[0] if data else {}
 
         # 1. Navigazione a Ricerca
+        self.update_step("nav", StepStatus.RUNNING)
         if not self._naviga_a_ricerca():
+            self.update_step("nav", StepStatus.ERROR)
             return False
+        self.update_step("nav", StepStatus.COMPLETED)
 
         # 2. Configurazione Filtri
         if not self.ricerca_pdl_page:
             self.log("❌ Pagina Ricerca PDL non inizializzata.")
             return False
 
+        self.update_step("filter", StepStatus.RUNNING)
         self.ricerca_pdl_page.configura_filtro_chiusi(params.get("exclude_closed", True))
+        self.update_step("filter", StepStatus.COMPLETED)
 
         # 3. Elaborazione per ogni Sito
+        self.update_step("search", StepStatus.RUNNING)
         site_selection = params.get("site_selection", "Seleziona tutto")
         sites = self.sites if site_selection == "Seleziona tutto" else [site_selection]
 
@@ -65,9 +82,12 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
                 self._attendi_scomparsa_overlay(timeout_secondi=300)
                 excel_file = self._esegui_export(site)
                 if excel_file:
+                    self.update_step("db", StepStatus.RUNNING)
                     self._import_to_db(excel_file)
+                    self.update_step("db", StepStatus.COMPLETED)
                     self._cleanup_temp_file(excel_file)
 
+        self.update_step("search", StepStatus.COMPLETED)
         return True
 
     def _naviga_a_ricerca(self) -> bool:
