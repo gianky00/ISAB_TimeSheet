@@ -136,7 +136,7 @@ class StructuredLogger:
                 # Fallback per console Windows legacy che non supporta UTF-8
                 safe_line = console_line.encode("ascii", "replace").decode("ascii")
                 print(safe_line)
-            except Exception:
+            except Exception:  # noqa: S110
                 # Ignora errori di scrittura su stdout (es. broken pipe o null handle)
                 pass
 
@@ -144,10 +144,8 @@ class StructuredLogger:
             if exception:
                 import traceback
 
-                try:
+                with suppress(Exception):
                     print(traceback.format_exc())
-                except Exception:
-                    pass
 
         # JSON file output
         if self.config.json_log_file:

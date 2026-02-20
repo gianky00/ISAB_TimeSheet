@@ -42,7 +42,8 @@ def get_all_imports(script_path, src_path):
                             found_modules.add(alias.name.split(".")[0])
                     elif isinstance(node, ast.ImportFrom) and node.module:
                         found_modules.add(node.module.split(".")[0])
-            except Exception:
+            except Exception as e:
+                print(f"[ANALYZER] ⚠️  Errore nel parsing di {path}: {e}")
                 continue
 
     # 2. Inclusione Forzata di Famiglie Critiche (Deep Expansion)

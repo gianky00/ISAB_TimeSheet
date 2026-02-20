@@ -180,12 +180,14 @@ def _check_and_migrate_local_license(target_paths: dict[str, Any]):
         for old_name in legacy_app_names:
             # Check with and without data subfolder as structure varied
             base_dir = local_appdata / old_name
-            potential_dirs.append(base_dir / "Licenza")
-            potential_dirs.append(base_dir / "data" / "Licenza")
-            # Author folder
             base_author = local_appdata / "GiancarloAllegretti" / old_name
-            potential_dirs.append(base_author / "Licenza")
-            potential_dirs.append(base_author / "data" / "Licenza")
+            
+            potential_dirs.extend((
+                base_dir / "Licenza",
+                base_dir / "data" / "Licenza",
+                base_author / "Licenza",
+                base_author / "data" / "Licenza"
+            ))
 
     for source_dir in potential_dirs:
         config_src = source_dir / "config.dat"

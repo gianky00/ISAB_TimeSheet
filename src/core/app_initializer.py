@@ -2,7 +2,6 @@
 App Initializer con yield frequenti per animazioni fluide.
 """
 
-import logging
 
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication

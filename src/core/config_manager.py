@@ -108,9 +108,10 @@ def _check_and_migrate_local_config() -> bool:
     if local_appdata:
         for old_name in legacy_app_names:
             if old_name != APP_NAME:
-                potential_dirs.append(local_appdata / old_name)
-                # Check also with author subfolder (common in some installs)
-                potential_dirs.append(local_appdata / "GiancarloAllegretti" / old_name)
+                potential_dirs.extend((
+                    local_appdata / old_name,
+                    local_appdata / "GiancarloAllegretti" / old_name
+                ))
 
     roaming_appdata = Path(os.environ.get("APPDATA", ""))
     if roaming_appdata:

@@ -276,7 +276,7 @@ class BaseBot(ABC):
                     downloaded_path = str(potential[0])
 
             # PERSISTENZA: Copia il driver scaricato nella cartella persistente per il futuro
-            if os.path.exists(downloaded_path):
+            if Path(downloaded_path).exists():
                 dest_path = persistent_dir / "chromedriver.exe"
                 try:
                     shutil.copy2(downloaded_path, dest_path)
