@@ -3,7 +3,7 @@ SyncroJob - Toast Notifications
 Widget per la visualizzazione di notifiche a scomparsa stile Android/Material.
 """
 
-from PyQt6.QtCore import QPropertyAnimation, QRectF, Qt, QTimer, pyqtProperty
+from PyQt6.QtCore import QPropertyAnimation, QRectF, Qt, QTimer, pyqtProperty  # type: ignore
 from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath
 from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
 
@@ -49,7 +49,7 @@ class Toast(QWidget):
 
         self.adjustSize()
 
-    @pyqtProperty(float)  # type: ignore
+    @pyqtProperty(float)
     def opacity(self) -> float:
         """Restituisce l'opacità corrente del toast."""
         return self._opacity_val

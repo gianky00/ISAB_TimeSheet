@@ -20,7 +20,10 @@ from PyQt6.QtWidgets import (
 
 
 class SecretItem(QFrame):
+    """Widget che rappresenta una singola voce di segreto (API Key) con azioni di salvataggio/visibilità."""
+
     def __init__(self, app_name, service_label, secret_key, parent=None):
+        """Inizializza l'elemento del segreto caricando il valore esistente dal keyring."""
         super().__init__(parent)
         self.app_name = app_name
         self.service_label = service_label
@@ -86,7 +89,10 @@ class SecretItem(QFrame):
 
 
 class AdminSecretsGUI(QWidget):
+    """Finestra principale per la gestione delle API Key utilizzate dagli script di amministrazione."""
+
     def __init__(self):
+        """Configura l'interfaccia e carica i segreti predefiniti."""
         super().__init__()
         self.setWindowTitle("Admin Secrets - SyncroJob")
         self.setFixedWidth(500)

@@ -111,6 +111,7 @@ def _isolate_config(tmp_path):
     with (
         patch("src.core.config_manager.CONFIG_DIR", fake_dir),
         patch("src.core.config_manager.CONFIG_FILE", fake_file),
+        patch("src.core.config_manager._check_and_migrate_local_config", return_value=False),
     ):
         yield fake_file
 

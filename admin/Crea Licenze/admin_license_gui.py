@@ -78,7 +78,10 @@ def save_clients(clients):
 
 
 class LicenseAdminApp:
-    def __init__(self, root):
+    """Applicazione GUI per la generazione e gestione delle licenze software SyncroJob."""
+
+    def __init__(self, root: tk.Tk):
+        """Inizializza l'interfaccia grafica e carica il database clienti locale."""
         self.root = root
         self.root.title("SyncroJob - Gestore Licenze (Admin)")
         self.root.geometry("700x720")
@@ -491,7 +494,8 @@ class LicenseAdminApp:
             messagebox.showerror("Errore", f"Generazione fallita:\n{e!s}")
 
 
-def main():
+def main() -> None:
+    """Entry point per l'applicazione di gestione licenze."""
     root = tk.Tk()
     _app = LicenseAdminApp(root)
     root.mainloop()

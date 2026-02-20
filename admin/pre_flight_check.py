@@ -54,7 +54,10 @@ console = Console(
 
 
 class CheckResult:
+    """Rappresenta l'esito di un singolo controllo di integrità o qualità."""
+
     def __init__(self, label: str, success: bool, msg: str, duration: float, name: str):
+        """Inizializza il risultato con metadati e timestamp."""
         self.label = label
         self.success = success
         self.msg = msg
@@ -66,8 +69,16 @@ class CheckResult:
         return self.__dict__
 
 
-def get_bin(name):
-    """Recupera il percorso dell'eseguibile nel venv o nei path standard di Python."""
+def get_bin(name: str) -> str:
+    """
+    Recupera il percorso dell'eseguibile nel venv o nei path standard di Python.
+
+    Args:
+        name: Nome dell'eseguibile (senza estensione).
+
+    Returns:
+        str: Percorso completo dell'eseguibile o il nome originale se non trovato.
+    """
     ext = ".exe" if sys.platform == "win32" else ""
 
     # 1. Prova nel VENV
@@ -86,7 +97,19 @@ def get_bin(name):
     return name
 
 
-def run_tool(name: str, cmd: list[str], label: str, cwd=PROJECT_ROOT) -> tuple[bool, str, float]:
+def run_tool(name: str, cmd: list[str], label: str, cwd: Path = PROJECT_ROOT) -> tuple[bool, str, float]:
+    """
+    Esegue uno strumento esterno registrando l'output in un file di log dedicato.
+
+    Args:
+        name: Identificativo dello strumento.
+        cmd: Lista di argomenti del comando.
+        label: Etichetta per la visualizzazione.
+        cwd: Directory di lavoro.
+
+    Returns:
+        tuple: (successo, output_errore, durata).
+    """
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     log_file = LOG_DIR / f"{name}.log"
     start_t = time.time()
@@ -122,6 +145,8 @@ def run_tool(name: str, cmd: list[str], label: str, cwd=PROJECT_ROOT) -> tuple[b
 
 
 class ApexAudit:
+    """Motore di audit principale che esegue una suite completa di test e controlli statici."""
+
     def __init__(
         self,
         fix=False,
@@ -130,6 +155,7 @@ class ApexAudit:
         test_only=False,
         target: str | None = None,
     ):
+        """Inizializza l'audit configurando le modalità di esecuzione."""
         self.fix = fix
         self.fast = fast
         self.incremental = incremental
@@ -450,7 +476,8 @@ class ApexAudit:
             console.print(f"[bold green]i {label} Result ({dur:.2f}s)[/bold green]")
             console.print(Panel(msg.strip(), border_style="green", title=label))
 
-    def summary(self):
+    def summary(self) -> None:
+        """Calcola lo score finale e visualizza il riepilogo tabellare dell'audit."""
         score = self._get_score()
         table = Table(title="Apex Project Health Summary", border_style="cyan")
         table.add_column("Audit Task", style="cyan")

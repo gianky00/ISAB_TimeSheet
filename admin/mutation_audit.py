@@ -19,6 +19,7 @@ REPORTS_DIR = ROOT_DIR / "reports" / "mutation"
 
 
 class Colors:
+    """Costanti ANSI per la colorazione dell'output in console."""
     HEADER = "\033[95m"
     BLUE = "\033[94m"
     CYAN = "\033[96m"
@@ -29,7 +30,8 @@ class Colors:
     BOLD = "\033[1m"
 
 
-def print_banner():
+def print_banner() -> None:
+    """Stampa il banner decorativo del tool."""
     print(f"{Colors.HEADER}{Colors.BOLD}")
     print("╔══════════════════════════════════════════════════════════════╗")
     print("║        🧬 SyncroJob Mutation Audit Tool (Mutatest)           ║")
@@ -198,7 +200,8 @@ def generate_final_report(results: list):
     return report_path
 
 
-def main():
+def main() -> None:
+    """Entry point CLI per l'esecuzione dei test di mutazione."""
     parser = argparse.ArgumentParser(description="SyncroJob Mutation Audit Tool")
     parser.add_argument("--target", help="Modulo specifico da analizzare (es: core, bots, gui)")
     parser.add_argument("--trials", type=int, default=20, help="Numero di mutazioni per modulo (default: 20)")

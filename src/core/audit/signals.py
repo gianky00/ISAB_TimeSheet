@@ -29,17 +29,14 @@ class AuditSignals:
                     """Mock per i segnali in assenza di ambiente GUI."""
                     def emit(self, *args: Any, **kwargs: Any) -> None:
                         """Simula l'emissione di un segnale."""
-                        pass
 
                     class _Signal:
                         """Simula un singolo segnale Qt."""
                         def connect(self, *args: Any, **kwargs: Any) -> None:
                             """Simula la connessione di uno slot."""
-                            pass
 
                         def emit(self, *args: Any, **kwargs: Any) -> None:
                             """Simula l'emissione del segnale."""
-                            pass
 
                     log_added = _Signal()
                     logs_updated = _Signal()

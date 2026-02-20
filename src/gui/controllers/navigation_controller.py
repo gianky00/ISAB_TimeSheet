@@ -236,10 +236,14 @@ class NavigationController:
             self.mw.sidebar.set_active_button(index)
             return
 
-        if self.mw._current_page_index == 7 and hasattr(self.mw, "settings_panel"):
-            if self.mw.settings_panel.has_unsaved_changes() and not self.mw.settings_panel.prompt_save_if_needed():
-                self.mw.sidebar.set_active_button(self.mw._current_page_index)
-                return
+        if (
+            self.mw._current_page_index == 7
+            and hasattr(self.mw, "settings_panel")
+            and self.mw.settings_panel.has_unsaved_changes()
+            and not self.mw.settings_panel.prompt_save_if_needed()
+        ):
+            self.mw.sidebar.set_active_button(self.mw._current_page_index)
+            return
 
         self.get_panel(index)
         self.mw._current_page_index = index

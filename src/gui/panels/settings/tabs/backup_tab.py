@@ -200,7 +200,8 @@ class BackupTab(QWidget):
     def _restore_selected_backup(self):
         """Ripristina i dati dal file selezionato previa conferma dell'utente."""
         path = self.restore_combo.currentData()
-        if not path: return
+        if not path:
+            return
 
         res = QMessageBox.question(self, "Conferma Ripristino", "ATTENZIONE: Il ripristino sovrascriverà i dati attuali.\nProcedere?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if res == QMessageBox.StandardButton.Yes:

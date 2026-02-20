@@ -23,7 +23,7 @@ GRACE_PERIOD_KEY = b"8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek="
 def get_github_token() -> str:
     """
     Ricostruisce dinamicamente il token GitHub offuscato utilizzato per l'accesso ai file di licenza.
-    
+
     Returns:
         str: Il token di autenticazione GitHub.
     """
@@ -34,7 +34,7 @@ def get_github_token() -> str:
 def get_license_dir() -> Path:
     """
     Restituisce il percorso assoluto della cartella Licenza all'interno dei dati utente.
-    
+
     Returns:
         Path: Oggetto Path della directory licenza.
     """
@@ -108,7 +108,8 @@ def check_grace_period() -> bool:
 
         return True
     except Exception as e:
-        if any(x in str(e) for x in ("SCADUTO", "incoerenza", "Nessuna validazione")): raise
+        if any(x in str(e) for x in ("SCADUTO", "incoerenza", "Nessuna validazione")):
+            raise
         raise Exception(f"Errore verifica periodo di grazia: {e}") from e
 
 
@@ -164,7 +165,8 @@ def is_running_from_source() -> bool:
 def is_license_folder_empty() -> bool:
     """Verifica la presenza dei file vitali di licenza (config.dat e manifest.json)."""
     license_dir = get_license_dir()
-    if not license_dir.exists(): return True
+    if not license_dir.exists():
+        return True
     config_dat = license_dir / "config.dat"
     manifest_json = license_dir / "manifest.json"
     return not (config_dat.exists() and manifest_json.exists())
@@ -182,7 +184,8 @@ def run_update() -> bool:
     hw_id = license_validator.get_hardware_id().strip().rstrip(".")
     license_dir = get_license_dir()
 
-    if not _ensure_license_dir(license_dir): return False
+    if not _ensure_license_dir(license_dir):
+        return False
 
     base_url = f"https://api.github.com/repos/gianky00/intelleo-licenses/contents/licenses/{hw_id}"
     downloaded, error = _download_license_files(base_url)
@@ -190,7 +193,7 @@ def run_update() -> bool:
     if error:
         logger.error(error)
         return False
-    elif downloaded:
+    if downloaded:
         return _save_license_files(license_dir, downloaded)
     return False
 

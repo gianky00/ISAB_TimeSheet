@@ -28,10 +28,10 @@ class SettingsPanel(QWidget):
 
     unsaved_changes = pyqtSignal(bool)
     """Segnale emesso quando lo stato delle modifiche cambia (True se ci sono modifiche pendenti)."""
-    
+
     settings_saved = pyqtSignal()
     """Segnale emesso a conferma del completamento del salvataggio su disco."""
-    
+
     request_help_section = pyqtSignal(str)
     """Segnale emesso per richiedere l'apertura di una specifica sezione della guida."""
 
@@ -151,8 +151,10 @@ class SettingsPanel(QWidget):
         path, _ = QFileDialog.getSaveFileName(self, "Esporta Configurazione", "SyncroJob_Config.json", "JSON Files (*.json)")
         if path:
             success, msg = config_manager.export_configuration(path)
-            if success: ToastManager.instance().show("Configurazione esportata!", "success")
-            else: ToastManager.instance().show(f"Errore export: {msg}", "error")
+            if success:
+                ToastManager.instance().show("Configurazione esportata!", "success")
+            else:
+                ToastManager.instance().show(f"Errore export: {msg}", "error")
 
     def _import_settings(self):
         """Importa una configurazione JSON da file, sovrascrivendo quella attuale previa conferma."""

@@ -88,7 +88,6 @@ class ConfigTab(QWidget):
 
     def _filter_settings(self, text):
         """Metodo placeholder per il filtraggio futuro dei widget all'interno del toolbox."""
-        pass
 
     def load_from_config(self, config):
         """

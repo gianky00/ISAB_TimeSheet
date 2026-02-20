@@ -300,10 +300,14 @@ class NotificationsPanel(QWidget):
             try:
                 ts = datetime.fromisoformat(notif.get("timestamp", ""))
                 diff = now - ts
-                if diff.days == 0: groups["today"]["notifications"].append(notif)
-                elif diff.days == 1: groups["yesterday"]["notifications"].append(notif)
-                elif diff.days <= 7: groups["week"]["notifications"].append(notif)
-                else: groups["older"]["notifications"].append(notif)
+                if diff.days == 0:
+                    groups["today"]["notifications"].append(notif)
+                elif diff.days == 1:
+                    groups["yesterday"]["notifications"].append(notif)
+                elif diff.days <= 7:
+                    groups["week"]["notifications"].append(notif)
+                else:
+                    groups["older"]["notifications"].append(notif)
             except Exception:
                 groups["older"]["notifications"].append(notif)
         return groups
@@ -318,9 +322,11 @@ class NotificationsPanel(QWidget):
         all_notifs = self.manager.notifications
         counts = {"all": len(all_notifs), "unread": 0, "error": 0, "warning": 0, "info": 0}
         for n in all_notifs:
-            if not n.get("read", False): counts["unread"] += 1
+            if not n.get("read", False):
+                counts["unread"] += 1
             level = n.get("level", "info")
-            if level in counts: counts[level] += 1
+            if level in counts:
+                counts[level] += 1
         self.toolbar.update_filter_counts(counts)
 
     def _show_empty_state(self):

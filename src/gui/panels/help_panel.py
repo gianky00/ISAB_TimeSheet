@@ -134,9 +134,11 @@ class HelpPanel(QWidget):
 
     def _on_index_changed(self, row: int) -> None:
         """Visualizza il contenuto Markdown corrispondente alla sezione selezionata."""
-        if row < 0: return
+        if row < 0:
+            return
         item = self.index_list.item(row)
-        if not item: return
+        if not item:
+            return
         title = item.text()
         for section_title, content, _ in self.sections:
             if section_title == title:

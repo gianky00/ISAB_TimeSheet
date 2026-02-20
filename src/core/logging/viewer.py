@@ -111,7 +111,8 @@ class LogQuery:
                 timestamp = datetime.fromisoformat(timestamp_str.replace("Z", ""))
             except Exception:
                 return False
-            if start and timestamp < start: return False
+            if start and timestamp < start:
+                return False
             return not (end and timestamp > end)
 
         self.filters.append(filter_fn)
@@ -135,11 +136,12 @@ class LogQuery:
     def execute(self) -> list[dict[str, Any]]:
         """
         Esegue la query leggendo il file riga per riga e applicando i filtri.
-        
+
         Returns:
             list: Lista di dizionari log che soddisfano tutti i criteri.
         """
-        if not self.log_file.exists(): return []
+        if not self.log_file.exists():
+            return []
         results = []
         skipped = 0
         with suppress(Exception), self.log_file.open("r", encoding="utf-8") as f:
@@ -150,17 +152,19 @@ class LogQuery:
                         skipped += 1
                         continue
                     results.append(entry)
-                    if self._limit and len(results) >= self._limit: break
+                    if self._limit and len(results) >= self._limit:
+                        break
         return results
 
     def count(self) -> int:
         """
         Conta il numero totale di log che matchano la query senza caricarli in memoria.
-        
+
         Returns:
             int: Numero di occorrenze.
         """
-        if not self.log_file.exists(): return 0
+        if not self.log_file.exists():
+            return 0
         count = 0
         with suppress(Exception), self.log_file.open("r", encoding="utf-8") as f:
             for line in f:
@@ -190,9 +194,12 @@ class LogViewer:
         Returns:
             LogQuery: Istanza del builder configurata sul file corretto.
         """
-        if log_type == "application": log_file = self.config.json_log_file
-        elif log_type == "errors": log_file = self.config.errors_log_file
-        else: raise ValueError(f"Unknown log_type: {log_type}")
+        if log_type == "application":
+            log_file = self.config.json_log_file
+        elif log_type == "errors":
+            log_file = self.config.errors_log_file
+        else:
+            raise ValueError(f"Unknown log_type: {log_type}")
         return LogQuery(log_file)
 
     def get_level_stats(self) -> dict[str, int]:
@@ -247,13 +254,15 @@ class LogViewer:
         end = datetime.now()
         start = end - timedelta(hours=hours)
         query = self.query().time_range(start, end)
-        if bot_type: query = query.bot_type(bot_type)
+        if bot_type:
+            query = query.bot_type(bot_type)
         results = query.execute()
 
         traces = defaultdict(list)
         for entry in results:
             trace_id = entry.get("context", {}).get("trace_id")
-            if trace_id: traces[trace_id].append(entry)
+            if trace_id:
+                traces[trace_id].append(entry)
 
         summaries = []
         for trace_id, entries in traces.items():
@@ -262,7 +271,8 @@ class LogViewer:
                 start_time = datetime.fromisoformat(entries[0].get("timestamp", "").replace("Z", ""))
                 end_time = datetime.fromisoformat(entries[-1].get("timestamp", "").replace("Z", ""))
                 duration_sec = (end_time - start_time).total_seconds()
-            except Exception: duration_sec = 0
+            except Exception:
+                duration_sec = 0
             has_error = any(e.get("level") == "ERROR" for e in entries)
             summaries.append({
                 "trace_id": trace_id, "bot_type": entries[0].get("context", {}).get("bot_type", "unknown"),
@@ -280,7 +290,8 @@ class LogViewer:
         results = self.query().time_range(start, end).execute()
 
         level_stats: dict[str, int] = defaultdict(int)
-        for entry in results: level_stats[entry.get("level", "UNKNOWN")] += 1
+        for entry in results:
+            level_stats[entry.get("level", "UNKNOWN")] += 1
 
         total = len(results)
         errors = level_stats.get("ERROR", 0) + level_stats.get("CRITICAL", 0)

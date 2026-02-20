@@ -12,7 +12,7 @@ import os
 import re
 from contextlib import suppress
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from PyQt6.QtCore import QObject, QTimer
 
@@ -21,10 +21,6 @@ from src.core.app_updater import check_for_updates
 from src.core.database import db_manager
 from src.core.notification_manager import NotificationManager
 from src.core.report_history import ReportHistory
-from src.core.version import __version__
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 

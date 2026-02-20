@@ -44,8 +44,8 @@ class DiagPage(QWidget):
 
     def load_from_config(self, config: dict[str, Any]) -> None:
         """Carica le impostazioni diagnostiche dalla configurazione (non implementato)."""
-        pass  # Nulla da caricare per ora
+        # Nulla da caricare per ora
 
     def save_to_config(self, config_manager: Any) -> None:
         """Salva le impostazioni diagnostiche nella configurazione (non implementato)."""
-        pass  # Nulla da salvare
+        # Nulla da salvare

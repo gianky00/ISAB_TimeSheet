@@ -37,7 +37,7 @@ class TelegramTab(QWidget):
 
     request_help = pyqtSignal(str)
     """Segnale emesso per richiedere l'apertura della guida alla configurazione."""
-    
+
     settings_changed = pyqtSignal()
     """Segnale emesso quando i campi token o key vengono modificati."""
 
@@ -152,7 +152,8 @@ class TelegramTab(QWidget):
 
     def _reset_telegram_pairing(self):
         """Rimuove l'ID della chat autorizzata previa conferma dell'utente."""
-        if not self.tg_chat_id_edit.text(): return
+        if not self.tg_chat_id_edit.text():
+            return
         res = QMessageBox.question(self, "Scollega Telegram", "Scollegare il dispositivo?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if res == QMessageBox.StandardButton.Yes:
             self.tg_chat_id_edit.clear()

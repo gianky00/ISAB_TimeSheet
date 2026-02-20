@@ -109,7 +109,6 @@ class ListFilterPopupWidget(QWidget):
 
     def _on_item_changed(self, item: QStandardItem) -> None:
         """Gestore eventi per il cambio di stato di un elemento (placeholder)."""
-        pass
 
     def apply_filter(self) -> None:
         """Marca il filtro come applicato e chiude il menu."""

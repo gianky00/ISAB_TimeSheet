@@ -46,9 +46,12 @@ class TestAppInitializer:
 
         assert result is True
 
-    def test_initialize_core_failure(self):
-        with patch.object(AppInitializer, "_setup_logging", side_effect=Exception("Critical")):
-            result = AppInitializer.initialize_core()
+    @patch("src.core.database.db_manager.init_db", side_effect=Exception("DB Error"))
+    def test_initialize_core_failure(self, mock_db_init):
+        # Patch license check to avoid other side effects
+        with patch("src.core.license_validator.get_detailed_license_status", return_value=(MagicMock(), "OK")):
+            with patch.object(AppInitializer, "_setup_logging"):
+                result = AppInitializer.initialize_core()
 
         assert result is False
 

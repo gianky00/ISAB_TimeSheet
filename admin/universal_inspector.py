@@ -55,8 +55,8 @@ class BotArchitect:
         INSPECTOR_DIR.mkdir(parents=True, exist_ok=True)
         self.log_to_console("🚀 ISPETTORE PRONTO. Cartella log_inspector inizializzata.")
 
-    def log_to_console(self, text):
-        """Logs message to console with timestamp."""
+    def log_to_console(self, text: str) -> None:
+        """Visualizza un messaggio nel terminale con timestamp e formattazione standard."""
         print(f"[{datetime.now().strftime('%H:%M:%S')}] {text}")
 
     def get_user_choice(self):
@@ -206,8 +206,13 @@ class BotArchitect:
         self.last_state_folder = folder_name
         self._record_entry("STATE_CHANGE", state_name, folder_name)
 
-    def record_action(self, action_desc):
-        """Records a user action (text description) into the workflow manifest."""
+    def record_action(self, action_desc: str) -> None:
+        """
+        Registra una descrizione testuale di un'azione utente nel manifest del workflow.
+
+        Args:
+            action_desc: Descrizione dell'azione compiuta (es. 'Click su Login').
+        """
         self.action_counter += 1
         self.log_to_console(f"📝 AZIONE {self.action_counter}: {action_desc}")
         self._record_entry("ACTION", action_desc, self.last_state_folder)
@@ -301,6 +306,7 @@ class BotArchitect:
                 self.driver.quit()
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Entry point per l'avvio dell'Universal Inspector con gestione dell'interruzione da tastiera."""
     with contextlib.suppress(KeyboardInterrupt):
         BotArchitect().run()

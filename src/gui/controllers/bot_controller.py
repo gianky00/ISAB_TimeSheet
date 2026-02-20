@@ -7,7 +7,7 @@ e le card di stato globali presenti nel footer della MainWindow.
 
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from PyQt6.QtCore import QObject
 from PyQt6.QtWidgets import QWidget
@@ -38,7 +38,7 @@ class BotController(QObject):
     def register_panels(self, panels: list[Any]) -> None:
         """
         Sottoscrive il controller ai segnali di ogni pannello bot registrato.
-        
+
         Args:
             panels: Lista di widget bot (che ereditano tipicamente da BaseBotPanel).
         """
@@ -85,10 +85,10 @@ class BotController(QObject):
             if hasattr(self.mw, "status_portale"):
                 self.mw.status_portale.setStatus(message, status)
 
-    def _get_active_bot_panel(self) -> Optional[QWidget]:
+    def _get_active_bot_panel(self) -> QWidget | None:
         """
         Individua il pannello bot attualmente visualizzato dall'utente navigando tra i tab.
-        
+
         Returns:
             Optional[QWidget]: Il pannello attivo o None se non identificato.
         """
@@ -97,7 +97,7 @@ class BotController(QObject):
 
         auto_widget = self.mw.automazioni_widget
         main_idx = auto_widget.currentIndex()
-        
+
         if main_idx == 0 and hasattr(auto_widget, "tab_fornitori"):
             panel = auto_widget.tab_fornitori.currentWidget()
             return panel if isinstance(panel, QWidget) else None

@@ -519,7 +519,8 @@ def deploy_netlify(netlify_dir):
     return True
 
 
-def main():
+def main() -> None:
+    """Configura gli argomenti e avvia la pipeline di build completa (PyInstaller + Inno Setup)."""
     parser = argparse.ArgumentParser(description="Bot TS Build Script")
     parser.add_argument("--no-deploy", action="store_true", help="Skip Netlify deployment")
     parser.add_argument("--skip-installer", action="store_true", help="Skip Inno Setup")

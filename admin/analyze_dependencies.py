@@ -8,7 +8,18 @@ import sys
 from pathlib import Path
 
 
-def get_all_imports(script_path, src_path):
+def get_all_imports(script_path: str, src_path: str) -> list[str]:
+    """
+    Scansiona ricorsivamente il codice sorgente per identificare tutte le importazioni effettive.
+    Utilizza l'analisi AST per trovare dipendenze anche in percorsi di codice non eseguiti.
+
+    Args:
+        script_path: Percorso dello script principale (main.py).
+        src_path: Percorso della cartella sorgente (src).
+
+    Returns:
+        list[str]: Lista ordinata dei moduli identificati come dipendenze esterne.
+    """
     print("[ANALYZER] ☢️  Avvio Analisi Totale Dipendenze (AST Optimized)...")
     print(f"[ANALYZER] Script: {script_path}")
     print(f"[ANALYZER] Src: {src_path}")
