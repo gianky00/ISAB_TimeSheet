@@ -7,9 +7,8 @@ Combina la leggibilità della console classica con il design d'élite HUD.
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
 
-from PyQt6.QtCore import (
+from PyQt6.QtCore import (  # type: ignore[attr-defined]
     QEasingCurve,
     QPropertyAnimation,
     QRectF,
@@ -21,17 +20,14 @@ from PyQt6.QtCore import (
 from PyQt6.QtGui import (
     QColor,
     QDesktopServices,
-    QFont,
     QPainter,
     QPainterPath,
     QPaintEvent,
     QPen,
 )
 from PyQt6.QtWidgets import (
-    QApplication,
     QFrame,
     QGraphicsDropShadowEffect,
-    QGraphicsOpacityEffect,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -58,7 +54,7 @@ class HorizontalLogItem(QWidget):
         layout.setSpacing(10)
 
         # Colori categoria (Neon) coordinati con ActivityTimeline
-        colors = {
+        color = {
             "start": "#00E5FF",      # Cyan
             "login": "#CF94FF",      # Purple
             "search": "#FFAB40",     # Orange
@@ -67,8 +63,7 @@ class HorizontalLogItem(QWidget):
             "error": "#FF1744",      # Red
             "wait": "#FFD600",       # Yellow
             "info": "#90A4AE"        # Gray
-        }
-        color = colors.get(category, "#B0BEC5")
+        }.get(category, "#B0BEC5")
 
         # Timestamp [HH:MM:SS]
         self.lbl_time = QLabel(f"[{timestamp}]")
@@ -109,7 +104,7 @@ class CyberTimelineFrame(QFrame):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self._pulse_value = 1.0
         self._grid_offset = 0.0
-        
+
         # Ombra HUD pesante per profondità
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(30)
@@ -169,7 +164,8 @@ class HorizontalTimelineWidget(QScrollArea):
         self.setWidgetResizable(True)
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setStyleSheet("QScrollArea { background: transparent; border: none; }")
-        self.viewport().setStyleSheet("background: transparent;")
+        if vp := self.viewport():
+            vp.setStyleSheet("background: transparent;")
 
         self.container = HorizontalTimelineContainer()
         self.setWidget(self.container)
@@ -178,7 +174,7 @@ class HorizontalTimelineWidget(QScrollArea):
         """Aggiunge una riga di log in verticale con autoscroll."""
         human, tech, cat = SmartLogTranslator.humanize(message)
         timestamp = datetime.now().strftime("%H:%M:%S")
-        
+
         item = HorizontalLogItem(human, tech, cat, timestamp)
         # Inserisci sopra lo stretch finale
         self.container.log_layout.insertWidget(self.container.log_layout.count() - 1, item)
@@ -199,8 +195,11 @@ class HorizontalTimelineWidget(QScrollArea):
 
     def set_mood(self, mood: str):
         """Proxy per il mood del parent."""
-        if hasattr(self.parent(), "set_mood"):
-            self.parent().set_mood(mood)
+        p = self.parent()
+        from typing import Any
+        if p and hasattr(p, "set_mood"):
+            cast_p: Any = p
+            cast_p.set_mood(mood)
 
 
 class TimelineWidget(QWidget):
@@ -222,7 +221,7 @@ class TimelineWidget(QWidget):
         lbl.setStyleSheet("font-weight: 900; color: #607D8B; letter-spacing: 2px; font-size: 9px;")
         header.addWidget(lbl)
         header.addStretch()
-        
+
         btn = ModernButton("PURGE", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL, icon=get_asset_path(Icons.TRASH))
         btn.clicked.connect(self.clear)
         header.addWidget(btn)
@@ -254,10 +253,10 @@ class TimelineWidget(QWidget):
         self.pulse_anim.start()
 
     @pyqtProperty(float)
-    def pulse_value(self) -> float: 
+    def pulse_value(self) -> float:
         """Restituisce il valore di pulsazione neon."""
         return self._pulse_val
-        
+
     @pulse_value.setter  # type: ignore
     def pulse_value(self, v: float):
         """Aggiorna il bordo neon."""
@@ -271,19 +270,19 @@ class TimelineWidget(QWidget):
         self.frame._grid_offset = self._grid_off
         self.frame.update()
 
-    def append(self, msg: str, level: str = "INFO"): 
+    def append(self, msg: str, level: str = "INFO"):
         """Aggiunge un messaggio al feed log."""
         self.timeline.add_log(msg)
-        
-    def clear(self): 
+
+    def clear(self):
         """Pulisce la console."""
         self.timeline.clear()
-        
+
     def set_mood(self, mood: str):
         """Regola l'intensità in base allo stato del bot."""
-        if mood == "running": 
+        if mood == "running":
             self.pulse_anim.setDuration(800)
-        else: 
+        else:
             self.pulse_anim.setDuration(1500)
 
 class MissionReportCard(QFrame):

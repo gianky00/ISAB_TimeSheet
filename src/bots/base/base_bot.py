@@ -355,22 +355,22 @@ class BaseBot(ABC):
     def _setup_driver_instance(self, service: Service, options: Options) -> None:
         """Crea l'istanza webdriver ed applica patch runtime per l'evasione dei controlli bot."""
         self.driver = webdriver.Chrome(service=service, options=options)
-        
+
         # Forza SEMPRE il percorso di download per evitare fallback su cartelle temp
         # Se self.download_path è vuoto, usa la cartella Downloads dell'utente
         target_download = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
-        
+
         if not target_download.exists():
             with suppress(Exception):
                 target_download.mkdir(parents=True, exist_ok=True)
-        
+
         self.log(f"📁 Cartella download forzata: {target_download}")
-        
+
         self.driver.execute_cdp_cmd(
             "Page.setDownloadBehavior",
             {"behavior": "allow", "downloadPath": str(target_download)},
         )
-        
+
         self.driver.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",
             {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"},

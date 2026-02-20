@@ -56,17 +56,17 @@ class OdaManager:
         if search_text:
             search_text = search_text.lower().strip()
             query += """ AND (
-                CAST(oda AS TEXT) LIKE ? OR descrizione LIKE ? OR descrizione_fornitore LIKE ? OR 
-                CAST(contratto AS TEXT) LIKE ? OR codice_fornitore LIKE ? OR CAST(pos_oda AS TEXT) LIKE ? OR 
-                stato LIKE ? OR cat_contab LIKE ? OR testo_breve LIKE ? OR org_acq LIKE ? OR 
-                CAST(data_oda AS TEXT) LIKE ? OR CAST(qta AS TEXT) LIKE ? OR uom LIKE ? OR 
-                CAST(data_consegna AS TEXT) LIKE ? OR CAST(valore_netto_pos AS TEXT) LIKE ? OR 
-                CAST(valore_residuo AS TEXT) LIKE ? OR CAST(valore_netto_oda AS TEXT) LIKE ? OR 
-                divisione LIKE ? OR destinatario LIKE ? OR nome_destinatario LIKE ? OR 
-                emittente_fattura LIKE ? OR desc_emittente_fattura LIKE ? OR contract_card LIKE ? OR 
-                CAST(posizione_contratto AS TEXT) LIKE ? OR gruppo_acquisti LIKE ? OR 
-                indicatore_rilascio LIKE ? OR stato_rilascio LIKE ? OR attivita LIKE ? OR 
-                CAST(num_riga AS TEXT) LIKE ? OR CAST(quantita AS TEXT) LIKE ? OR 
+                CAST(oda AS TEXT) LIKE ? OR descrizione LIKE ? OR descrizione_fornitore LIKE ? OR
+                CAST(contratto AS TEXT) LIKE ? OR codice_fornitore LIKE ? OR CAST(pos_oda AS TEXT) LIKE ? OR
+                stato LIKE ? OR cat_contab LIKE ? OR testo_breve LIKE ? OR org_acq LIKE ? OR
+                CAST(data_oda AS TEXT) LIKE ? OR CAST(qta AS TEXT) LIKE ? OR uom LIKE ? OR
+                CAST(data_consegna AS TEXT) LIKE ? OR CAST(valore_netto_pos AS TEXT) LIKE ? OR
+                CAST(valore_residuo AS TEXT) LIKE ? OR CAST(valore_netto_oda AS TEXT) LIKE ? OR
+                divisione LIKE ? OR destinatario LIKE ? OR nome_destinatario LIKE ? OR
+                emittente_fattura LIKE ? OR desc_emittente_fattura LIKE ? OR contract_card LIKE ? OR
+                CAST(posizione_contratto AS TEXT) LIKE ? OR gruppo_acquisti LIKE ? OR
+                indicatore_rilascio LIKE ? OR stato_rilascio LIKE ? OR attivita LIKE ? OR
+                CAST(num_riga AS TEXT) LIKE ? OR CAST(quantita AS TEXT) LIKE ? OR
                 unita_mis LIKE ? OR CAST(prezzo_lordo AS TEXT) LIKE ?
             )"""
             params.extend([f"%{search_text}%"] * 32)
@@ -80,7 +80,7 @@ class OdaManager:
     ) -> tuple[bool, str, int, int]:
         """
         Importa dati da un file Excel (.xlsx) e sincronizza il database locale.
-        La sincronizzazione avviene tramite un'operazione di merge che inserisce i nuovi record 
+        La sincronizzazione avviene tramite un'operazione di merge che inserisce i nuovi record
         e rimuove quelli obsoleti.
 
         Args:
@@ -96,7 +96,8 @@ class OdaManager:
 
         start_time = time.time()
         success, message, imported_rows = ExcelImporter.import_storico_oda(file_path, progress_callback)
-        if not success: return False, message, 0, 0
+        if not success:
+            return False, message, 0, 0
 
         total_added, total_removed = DataSynchronizer.sync_storico_oda(cls.DB_PATH, imported_rows)
         duration = time.time() - start_time

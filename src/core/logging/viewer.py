@@ -303,7 +303,7 @@ class LogViewer:
 
         return {
             "timestamp": datetime.now().isoformat() + "Z", "period_hours": hours,
-            "total_events": total, "level_distribution": dict(level_stats),
+            "total_events": total, "level_distribution": level_stats.copy(),
             "error_rate_percent": round(error_rate, 2),
             "bot_runs": {
                 "total": len(bot_runs), "successful": successful_runs, "failed": failed_runs,

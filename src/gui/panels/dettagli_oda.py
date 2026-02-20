@@ -1,7 +1,7 @@
 """
 SyncroJob - Dettagli OdA Panel
 Pannello di controllo dedicato al bot per l'estrazione massiva dei dettagli degli Ordini d'Acquisto (OdA).
-Permette di configurare un elenco di OdA e contratti, impostare range temporali e monitorare 
+Permette di configurare un elenco di OdA e contratti, impostare range temporali e monitorare
 il download automatico dei documenti dal portale fornitori.
 """
 
@@ -73,7 +73,12 @@ class DettagliOdAPanel(BaseBotPanel):
 
         table_toolbar = QHBoxLayout()
         table_toolbar.addStretch()
-        self.clear_btn = ModernButton("Pulisci Tabella", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL, icon=get_asset_path(Icons.TRASH))
+        self.clear_btn = ModernButton(
+            "Pulisci Tabella",
+            variant=ModernButton.Variant.DANGER,
+            size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.TRASH)
+        )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
         params_layout.addLayout(table_toolbar)
@@ -104,14 +109,18 @@ class DettagliOdAPanel(BaseBotPanel):
         config = config_manager.load_config()
         self.refresh_fornitori()
         self.params_widget.set_fornitore(config.get("last_oda_fornitore", ""))
-        self.params_widget.set_dates(config.get("last_oda_date_da", "01.01.2025"), config.get("last_oda_date_a", QDate.currentDate().toString("dd.MM.yyyy")))
+        self.params_widget.set_dates(
+            config.get("last_oda_date_da", "01.01.2025"),
+            config.get("last_oda_date_a", QDate.currentDate().toString("dd.MM.yyyy"))
+        )
         self.params_widget.set_dest_path(config.get("path_dettagli_oda", ""))
         if saved_data := config.get("last_oda_data", []):
             self.data_table.set_data(saved_data)
 
     def _save_data(self) -> None:
         """Persiste i parametri attuali nella configurazione globale."""
-        if not hasattr(self, "params_widget"): return
+        if not hasattr(self, "params_widget"):
+            return
         date_da, date_a = self.params_widget.get_dates()
         config_manager.set_config_value("last_oda_data", self.data_table.get_data())
         config_manager.set_config_value("last_oda_fornitore", self.params_widget.get_fornitore())
@@ -128,13 +137,15 @@ class DettagliOdAPanel(BaseBotPanel):
     def validate_ready(self) -> tuple[bool, str]:
         """
         Valida i requisiti minimi per l'avvio del bot.
-        
+
         Returns:
             tuple: (bool pronto, messaggio errore).
         """
         username, password = self.get_credentials()
-        if not username or not password: return False, "Credenziali ISAB mancanti."
-        if not self.params_widget.get_fornitore(): return False, "Fornitore mancante."
+        if not username or not password:
+            return False, "Credenziali ISAB mancanti."
+        if not self.params_widget.get_fornitore():
+            return False, "Fornitore mancante."
         return True, ""
 
     def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
@@ -155,25 +166,44 @@ class DettagliOdAPanel(BaseBotPanel):
         if not all([username, password, fornitore]):
             ToastManager.instance().show("Verifica i parametri.", "warning")
             self._update_status("#C62828", "Parametri incompleti")
-            self.start_btn.setEnabled(True); self.stop_btn.setEnabled(False); return
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
+            return
 
-        if not params_override: self._save_data()
+        if not params_override:
+            self._save_data()
 
         from src.bots import create_bot
         config = config_manager.load_config()
-        bot = create_bot("dettagli_oda", username=username, password=password, headless=config.get("browser_headless", False),
-                         timeout=config.get("browser_timeout", 30), download_path=download_path, fornitore=fornitore, data_da=data_da, data_a=data_a)
+        bot = create_bot(
+            "dettagli_oda",
+            username=username,
+            password=password,
+            headless=config.get("browser_headless", False),
+            timeout=config.get("browser_timeout", 30),
+            download_path=download_path,
+            fornitore=fornitore,
+            data_da=data_da,
+            data_a=data_a
+        )
 
         if not bot:
-            ToastManager.instance().show("Errore creazione bot.", "error"); return
+            ToastManager.instance().show("Errore creazione bot.", "error")
+            return
 
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
-        worker = BotWorker(bot, {"rows": rows, "fornitore": fornitore, "data_da": data_da, "data_a": data_a}, telegram_service=tg_service)
+        worker = BotWorker(
+            bot,
+            {"rows": rows, "fornitore": fornitore, "data_da": data_da, "data_a": data_a},
+            telegram_service=tg_service
+        )
         self.worker = worker
         self._setup_worker_connections(worker)
 
-        self.start_btn.setEnabled(False); self.stop_btn.setEnabled(True); self.log_widget.clear()
+        self.start_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.log_widget.clear()
         self.log_widget.append(f"Avvio bot Dettagli OdA ({fornitore})")
         self.log_widget.append(f"  Periodo: {data_da} - {data_a}")
         worker.start()
@@ -182,8 +212,6 @@ class DettagliOdAPanel(BaseBotPanel):
     def _on_worker_finished(self, success: bool) -> None:
         """Gestisce la pulizia post-esecuzione e tenta di aggiornare il pannello storico."""
         super()._on_worker_finished(success)
-        if success and (win := self.window()):
-            if storico := getattr(win, "storico_oda_panel", None):
-                if hasattr(storico, "refresh_data"):
-                    storico.refresh_data()
-                    self._on_log("🔄 Aggiornamento Storico OdA avviato.")
+        if success and (win := self.window()) and (storico := getattr(win, "storico_oda_panel", None)) and hasattr(storico, "refresh_data"):
+            storico.refresh_data()
+            self._on_log("🔄 Aggiornamento Storico OdA avviato.")

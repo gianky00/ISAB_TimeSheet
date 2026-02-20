@@ -44,7 +44,7 @@ class NotificationManager(QObject):
     def instance(cls) -> "NotificationManager":
         """
         Restituisce l'istanza singleton della classe, creandola se necessario (Thread-Safe).
-        
+
         Returns:
             NotificationManager: L'istanza unica globale.
         """
@@ -135,7 +135,8 @@ class NotificationManager(QObject):
             duration_map = {"success": 2000, "warning": 10000, "error": 10000, "info": 3000}
             duration = duration_map.get(level, 3000)
             clean_msg = message.replace("<b>", "").replace("</b>", "").replace("<br>", " ")
-            if len(clean_msg) > 120: clean_msg = clean_msg[:117] + "..."
+            if len(clean_msg) > 120:
+                clean_msg = clean_msg[:117] + "..."
             self.request_toast.emit(f"{title}: {clean_msg}", level, duration)
 
     def get_notifications(self, filter_unread: bool = False) -> list[dict[str, Any]]:
@@ -155,7 +156,7 @@ class NotificationManager(QObject):
     def get_unread_count(self) -> int:
         """
         Restituisce il conteggio degli errori (level=error) non ancora letti.
-        
+
         Returns:
             int: Numero di errori pendenti.
         """

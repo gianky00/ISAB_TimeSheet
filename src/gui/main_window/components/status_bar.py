@@ -155,7 +155,8 @@ class StatusBarComponent(QObject):
             def hide_and_reset_telemetry():
                 self.boot_telemetry.setVisible(False)
                 self.boot_telemetry.setGraphicsEffect(None)
-                if self.boot_telemetry.timer.isActive(): self.boot_telemetry.timer.stop()
+                if self.boot_telemetry.timer.isActive():
+                    self.boot_telemetry.timer.stop()
 
             telemetry_anim.finished.connect(hide_and_reset_telemetry)
             telemetry_anim.start()
@@ -192,11 +193,14 @@ class StatusBarComponent(QObject):
         for site, name, enabled_key, time_key in tasks:
             if config.get(enabled_key, False):
                 target_time = QTime.fromString(config.get(time_key, "09:00"), "HH:mm")
-                if not target_time.isValid(): target_time = QTime.fromString(config.get(time_key, "09:00"), "H:mm")
-                if not target_time.isValid(): continue
+                if not target_time.isValid():
+                    target_time = QTime.fromString(config.get(time_key, "09:00"), "H:mm")
+                if not target_time.isValid():
+                    continue
 
                 secs_to = now.secsTo(target_time)
-                if secs_to < 0: secs_to += 24 * 3600
+                if secs_to < 0:
+                    secs_to += 24 * 3600
 
                 if site == "PF" and secs_to < min_secs_pf:
                     min_secs_pf, imminent_pf = secs_to, (name, secs_to)

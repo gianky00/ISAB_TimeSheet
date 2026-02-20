@@ -12,7 +12,7 @@ from src.core.backup_manager import BackupManager
 class AppEventHandler(QObject):
     """
     Gestisce la logica di alto livello per gli eventi della MainWindow.
-    Include la gestione della chiusura (nascondi vs esci), il trigger del backup automatico 
+    Include la gestione della chiusura (nascondi vs esci), il trigger del backup automatico
     e l'intercettazione delle scorciatoie da tastiera globali.
     """
 

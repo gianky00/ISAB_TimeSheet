@@ -122,12 +122,12 @@ class ScaricaTSBot(BaseBot):
             success_count, downloaded_files = self._process_oda_rows(rows, dest_dir)
 
             self.log(f"✨ Download completati: {success_count}/{len(rows)}.")
-            
+
             # Se almeno uno è stato scaricato, consideriamo lo step riuscito (o parziale)
             status_download = StepStatus.COMPLETED if success_count == len(rows) else StepStatus.ERROR
             if success_count > 0 and success_count < len(rows):
                 self.log(f"⚠️ Scarico parziale: {success_count} su {len(rows)}")
-            
+
             self.update_step("download", status_download)
 
             if self.elabora_ts and downloaded_files:
@@ -162,10 +162,10 @@ class ScaricaTSBot(BaseBot):
         # Forza la risoluzione del path per coerenza con BaseBot
         source_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
         dest_dir = source_dir
-        
+
         # Aggiorna download_path per garantire che i metodi successivi usino lo stesso folder
         self.download_path = str(source_dir)
-        
+
         return rows, dest_dir
 
     def _process_oda_rows(self, rows: list[dict[str, Any]], dest_dir: Path) -> tuple[int, list[str]]:

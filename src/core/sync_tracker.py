@@ -36,7 +36,8 @@ class SyncTracker:
     @classmethod
     def _load(cls) -> None:
         """Carica lo stato dal file JSON se non già presente nella cache interna."""
-        if cls._loaded: return
+        if cls._loaded:
+            return
         if cls.STATE_FILE.exists():
             try:
                 cls._cache = json.loads(cls.STATE_FILE.read_text(encoding="utf-8"))
@@ -71,8 +72,11 @@ class SyncTracker:
         cls._load()
         timestamp_str = datetime.now().strftime("%d/%m/%Y %H:%M")
         cls._cache[module] = {
-            "timestamp": timestamp_str, "added": added, "removed": removed,
-            "duration": duration, "last_ts": time.time(),
+            "timestamp": timestamp_str,
+            "added": added,
+            "removed": removed,
+            "duration": duration,
+            "last_ts": time.time(),
         }
         cls._save()
 
@@ -88,7 +92,8 @@ class SyncTracker:
             dict: Dizionario con timestamp, record aggiunti, rimossi e durata.
         """
         cls._load()
-        return cls._cache.get(module, {})
+        from typing import cast
+        return cast("dict[str, Any]", cls._cache.get(module, {}))
 
     @classmethod
     def get_formatted_status(cls, module: str) -> str:
@@ -103,7 +108,8 @@ class SyncTracker:
             str: Stringa formattata pronta per essere visualizzata in un QLabel.
         """
         data = cls.get_status(module)
-        if not data: return "Mai sincronizzato"
+        if not data:
+            return "Mai sincronizzato"
 
         timestamp = data.get("timestamp", "N/A")
         added, removed = data.get("added", 0), data.get("removed", 0)

@@ -16,7 +16,7 @@ from src.core import config_manager
 class StatsManager:
     """
     Gestore singleton per le metriche di utilizzo delle automazioni.
-    Permette di registrare eventi di successo e fallimento, fornendo una visione d'insieme 
+    Permette di registrare eventi di successo e fallimento, fornendo una visione d'insieme
     sull'affidabilità e l'intensità d'uso di ciascun bot.
     """
 
@@ -37,7 +37,7 @@ class StatsManager:
         """
         Carica le statistiche dal gestore di configurazione.
         Include un meccanismo di migrazione per recuperare dati da versioni legacy (statistics.json).
-        
+
         Returns:
             dict: Dizionario contenente le statistiche raggruppate per ID bot.
         """
@@ -51,7 +51,8 @@ class StatsManager:
                         config_manager.set_config_value("statistics", old_stats)
                         return old_stats
             return {}
-        return config.get("statistics", {})
+        from typing import cast
+        return cast("dict[str, Any]", config.get("statistics", {}))
 
     def _save_stats(self) -> None:
         """Sincronizza lo stato in memoria con il file di configurazione su disco."""
@@ -67,8 +68,10 @@ class StatsManager:
         """
         if bot_id not in self.stats:
             self.stats[bot_id] = {"runs": 0, "errors": 0, "last_run": None}
-        if "runs" not in self.stats[bot_id]: self.stats[bot_id]["runs"] = 0
-        if "errors" not in self.stats[bot_id]: self.stats[bot_id]["errors"] = 0
+        if "runs" not in self.stats[bot_id]:
+            self.stats[bot_id]["runs"] = 0
+        if "errors" not in self.stats[bot_id]:
+            self.stats[bot_id]["errors"] = 0
 
         self.stats[bot_id]["runs"] += 1
         self.stats[bot_id]["last_run"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -83,7 +86,8 @@ class StatsManager:
         """
         if bot_id not in self.stats:
             self.stats[bot_id] = {"runs": 0, "errors": 0, "last_run": None}
-        if "errors" not in self.stats[bot_id]: self.stats[bot_id]["errors"] = 0
+        if "errors" not in self.stats[bot_id]:
+            self.stats[bot_id]["errors"] = 0
 
         self.stats[bot_id]["errors"] += 1
         self._save_stats()
@@ -91,7 +95,7 @@ class StatsManager:
     def get_all_stats(self) -> dict[str, Any]:
         """
         Restituisce l'intero dataset delle statistiche di utilizzo.
-        
+
         Returns:
             dict: Mappa bot_id -> {runs, errors, last_run}.
         """

@@ -362,13 +362,11 @@ class BugReportDialog(QDialog):
                 str(uuid.getnode())
 
             cliente_info = "ISAB S.R.L."
-            try:
+            with suppress(Exception):
                 from src.core.license_validator import get_license_info
                 lic_data = get_license_info()
                 if lic_data and "Cliente" in lic_data:
                     cliente_info = lic_data["Cliente"]
-            except Exception:
-                pass
 
             mail = outlook.CreateItem(0)
             mail.To = "gianky.allegretti@gmail.com"

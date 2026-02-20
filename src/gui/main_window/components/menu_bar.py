@@ -91,7 +91,7 @@ class MenuBarComponent(QObject):
         """
         Costruisce dinamicamente la struttura gerarchica dei comandi disponibili nell'applicazione.
         Definisce azioni per esecuzione bot, navigazione pagine e manutenzione sistema.
-        
+
         Returns:
             list[CommandNode]: Lista dei nodi comando radice.
         """

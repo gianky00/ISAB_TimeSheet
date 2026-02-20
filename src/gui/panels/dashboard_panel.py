@@ -171,7 +171,7 @@ class DashboardPanel(QWidget):
             output_dir = BASE_DIR / "output"
             output_dir.mkdir(exist_ok=True)
             if os.name == "nt":
-                os.startfile(output_dir)
+                os.startfile(output_dir)  # noqa: S606
             else:
                 import subprocess
                 subprocess.run(["xdg-open", str(output_dir)])

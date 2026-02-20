@@ -5,14 +5,14 @@ Design d'élite con trasparenze reali, bordi neon e ombre portate.
 
 import time
 
-from PyQt6.QtCore import (
+from PyQt6.QtCore import (  # type: ignore[attr-defined]
     QEasingCurve,
     QPointF,
     QPropertyAnimation,
     QRectF,
     Qt,
     QTimer,
-    pyqtProperty,  # type: ignore
+    pyqtProperty,
     pyqtSlot,
 )
 from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath, QPen, QRadialGradient
