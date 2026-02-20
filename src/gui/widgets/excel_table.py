@@ -6,13 +6,19 @@ Widget tabellari avanzati con funzionalità di editing, copia/incolla e integraz
 from collections.abc import Sequence
 from typing import Any
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSignal, QPropertyAnimation, pyqtProperty, QEasingCurve
+from PyQt6.QtCore import (  # type: ignore[attr-defined]
+    QEasingCurve,
+    QPoint,
+    QPropertyAnimation,
+    Qt,
+    pyqtProperty,
+    pyqtSignal,
+)
 from PyQt6.QtGui import QAction, QBrush, QColor, QCursor, QKeySequence, QPainter, QPen
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
     QComboBox,
-    QFileDialog,
     QFrame,
     QGraphicsDropShadowEffect,
     QHeaderView,
@@ -28,15 +34,17 @@ from src.core.constants import Icons
 from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
+
 class HoverPulseFrame(QFrame):
     """
     Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
     """
+
     def __init__(self, accent_color: str = "#212121", parent=None):
         super().__init__(parent)
         self._accent_color = QColor(accent_color)
         self._pulse_val = 1.0
-        
+
         self._anim = QPropertyAnimation(self, b"pulse_value")
         self._anim.setDuration(1500)
         self._anim.setStartValue(0.4)
@@ -45,11 +53,11 @@ class HoverPulseFrame(QFrame):
         self._anim.setEasingCurve(QEasingCurve.Type.InOutSine)
 
     @pyqtProperty(float)
-    def pulse_value(self):
+    def pulse_value(self) -> float:
         return self._pulse_val
 
-    @pulse_value.setter
-    def pulse_value(self, v):
+    @pulse_value.setter  # type: ignore[no-redef]
+    def pulse_value(self, v: float):
         self._pulse_val = v
         self.update()
 
@@ -59,20 +67,22 @@ class HoverPulseFrame(QFrame):
 
     def leaveEvent(self, event):
         self._anim.stop()
-        self.pulse_value = 1.0
+        self.pulse_value = 1.0  # type: ignore[method-assign]
         super().leaveEvent(event)
 
     def paintEvent(self, event):
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        
+
         # Disegna solo il bordo inferiore con l'alpha pulsante
         alpha = int(100 + (self._pulse_val * 155))
-        pen = QPen(QColor(self._accent_color.red(), self._accent_color.green(), self._accent_color.blue(), alpha))
+        pen = QPen(
+            QColor(self._accent_color.red(), self._accent_color.green(), self._accent_color.blue(), alpha)
+        )
         pen.setWidth(3)
         painter.setPen(pen)
-        
+
         # Linea in basso
         rect = self.rect()
         painter.drawLine(12, rect.height() - 2, rect.width() - 12, rect.height() - 2)
@@ -517,14 +527,14 @@ class EditableDataTable(QWidget):
                 )
                 options = ["", *column.get("options", [])]
                 combo.addItems(options)
-                
+
                 if use_defaults:
                     default_val = column.get("default", "")
                     if default_val and default_val in options:
                         combo.setCurrentText(str(default_val))
                 else:
-                    combo.setCurrentIndex(0) # Forza cella vuota
-                    
+                    combo.setCurrentIndex(0)  # Forza cella vuota
+
                 combo.currentTextChanged.connect(lambda text: self.data_changed.emit())
                 self.table.setCellWidget(row, col, combo)
             else:

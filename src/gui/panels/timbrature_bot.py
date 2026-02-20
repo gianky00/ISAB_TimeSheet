@@ -77,8 +77,8 @@ class TimbratureBotPanel(BaseBotPanel):
         params_layout.addWidget(self.params_widget)
 
         self.content_layout.addWidget(params_container)
-        
-        # Aggiungiamo uno stretch per "spingere" i parametri in alto e creare 
+
+        # Aggiungiamo uno stretch per "spingere" i parametri in alto e creare
         # lo spazio bianco richiesto dove normalmente risiede la tabella.
         self.content_layout.addStretch()
 

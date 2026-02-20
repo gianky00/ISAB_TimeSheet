@@ -154,6 +154,7 @@ class BaseBotPanel(QWidget):
             # 2. Fallback al registro se la classe non è fornita
             if not bot_class:
                 from src.bots import BOT_REGISTRY
+
                 bot_info = BOT_REGISTRY.get(self.bot_id)
                 if bot_info:
                     bot_class = bot_info["class"]
@@ -203,7 +204,7 @@ class BaseBotPanel(QWidget):
         self.stop_btn.clicked.connect(self._on_stop)
         self.controls_layout.addWidget(self.stop_btn)
 
-        # Di default, se non siamo in un QTabWidget che "ruba" i controlli, 
+        # Di default, se non siamo in un QTabWidget che "ruba" i controlli,
         # li mettiamo in un header layout interno al pannello
         self.header_layout = QHBoxLayout()
         self.header_layout.addStretch()
@@ -234,7 +235,6 @@ class BaseBotPanel(QWidget):
         # Bottom Area: Activity Log (Cyber Console)
         self.log_widget = TimelineWidget()
         self.main_layout.addWidget(self.log_widget, stretch=2)
-
 
     def _setup_ui(self):
         """

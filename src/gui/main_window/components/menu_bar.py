@@ -4,7 +4,6 @@ Componente responsabile della gestione delle scorciatoie globali e della Command
 Implementa il sistema di navigazione gerarchica 'Spotlight' per l'accesso rapido a tutte le funzioni.
 """
 
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -95,10 +94,15 @@ class MenuBarComponent(QObject):
         Returns:
             list[CommandNode]: Lista dei nodi comando radice.
         """
+
         def restart_app():
+            import subprocess
+
             from PyQt6.QtWidgets import QApplication
+
             QApplication.quit()
-            os.execl(sys.executable, sys.executable, *sys.argv)
+            subprocess.Popen([sys.executable, *sys.argv])
+            sys.exit()
 
         def open_folder_path(path):
             if Path(path).exists():
@@ -108,29 +112,88 @@ class MenuBarComponent(QObject):
 
         # 1. ESEGUI (Execution Flow)
         menu_run = CommandNode(
-            "Esegui...", "Avvia bot e task automatici", Icons.PLAY,
+            "Esegui...",
+            "Avvia bot e task automatici",
+            Icons.PLAY,
             children=[
                 CommandNode(
-                    "Scarica Timbrature", "Portale Fornitori: Presenze", Icons.CLOCK,
+                    "Scarica Timbrature",
+                    "Portale Fornitori: Presenze",
+                    Icons.CLOCK,
                     children=[
-                        CommandNode("Oggi", "Scarica solo oggi", Icons.CALENDAR, action=lambda: mw._run_timbrature_bot("oggi")),
-                        CommandNode("Ieri", "Scarica giornata di ieri", Icons.CLOCK, action=lambda: mw._run_timbrature_bot("ieri")),
-                        CommandNode("Mese Corrente", "Dal 1° del mese ad oggi", Icons.CALENDAR, action=lambda: mw._run_timbrature_bot("mese")),
+                        CommandNode(
+                            "Oggi",
+                            "Scarica solo oggi",
+                            Icons.CALENDAR,
+                            action=lambda: mw._run_timbrature_bot("oggi"),
+                        ),
+                        CommandNode(
+                            "Ieri",
+                            "Scarica giornata di ieri",
+                            Icons.CLOCK,
+                            action=lambda: mw._run_timbrature_bot("ieri"),
+                        ),
+                        CommandNode(
+                            "Mese Corrente",
+                            "Dal 1° del mese ad oggi",
+                            Icons.CALENDAR,
+                            action=lambda: mw._run_timbrature_bot("mese"),
+                        ),
                     ],
                 ),
                 CommandNode(
-                    "Scarico TS", "Portale Fornitori: Download Timesheets", Icons.DOWNLOAD,
+                    "Scarico TS",
+                    "Portale Fornitori: Download Timesheets",
+                    Icons.DOWNLOAD,
                     children=[
-                        CommandNode("Scarica singola OdA", "Inserisci numero OdA manualmente", Icons.EDIT, input_prompts=["Inserisci Numero OdA"], on_input_complete=mw._on_scarico_ts_input),
-                        CommandNode("Esegui lista pannello", "Processa le righe salvate nel pannello", Icons.PLAY, action=lambda: (mw.scarico_panel.run_externally({}) if hasattr(mw, "scarico_panel") else None)),
+                        CommandNode(
+                            "Scarica singola OdA",
+                            "Inserisci numero OdA manualmente",
+                            Icons.EDIT,
+                            input_prompts=["Inserisci Numero OdA"],
+                            on_input_complete=mw._on_scarico_ts_input,
+                        ),
+                        CommandNode(
+                            "Esegui lista pannello",
+                            "Processa le righe salvate nel pannello",
+                            Icons.PLAY,
+                            action=lambda: (
+                                mw.scarico_panel.run_externally({}) if hasattr(mw, "scarico_panel") else None
+                            ),
+                        ),
                     ],
                 ),
-                CommandNode("Dettagli OdA", "Portale Fornitori", Icons.LIST, input_prompts=["Inserisci Numero OdA"], on_input_complete=mw._on_dettagli_oda_input),
-                CommandNode("Prenota BP", "Portale Fornitori", Icons.TICKET, input_prompts=["Inserisci Numero BP"], on_input_complete=mw._on_prenota_bp_input),
+                CommandNode(
+                    "Dettagli OdA",
+                    "Portale Fornitori",
+                    Icons.LIST,
+                    input_prompts=["Inserisci Numero OdA"],
+                    on_input_complete=mw._on_dettagli_oda_input,
+                ),
+                CommandNode(
+                    "Prenota BP",
+                    "Portale Fornitori",
+                    Icons.TICKET,
+                    input_prompts=["Inserisci Numero BP"],
+                    on_input_complete=mw._on_prenota_bp_input,
+                ),
                 CommandNode("Carico TS", "Portale Fornitori", Icons.UPLOAD, action=mw._run_carico_ts),
-                CommandNode("Scarico PDL", "SafeWork", Icons.SHIELD, input_prompts=["Inserisci Numero PDL"], on_input_complete=mw._on_pdl_input),
-                CommandNode("Sincronizza DataEase", "Scarico ore cantiere", Icons.DATABASE, action=mw._run_sync_dataease),
-                CommandNode("Sincronizza Strumentale", "Contabilità", Icons.FOLDER, action=mw._run_sync_strumentale),
+                CommandNode(
+                    "Scarico PDL",
+                    "SafeWork",
+                    Icons.SHIELD,
+                    input_prompts=["Inserisci Numero PDL"],
+                    on_input_complete=mw._on_pdl_input,
+                ),
+                CommandNode(
+                    "Sincronizza DataEase",
+                    "Scarico ore cantiere",
+                    Icons.DATABASE,
+                    action=mw._run_sync_dataease,
+                ),
+                CommandNode(
+                    "Sincronizza Strumentale", "Contabilità", Icons.FOLDER, action=mw._run_sync_strumentale
+                ),
             ],
         )
 
@@ -138,55 +201,154 @@ class MenuBarComponent(QObject):
 
         # 2. GO (Navigation Flow)
         menu_go = CommandNode(
-            "Vai a...", "Navigazione rapida pannelli", Icons.GLOBE,
+            "Vai a...",
+            "Navigazione rapida pannelli",
+            Icons.GLOBE,
             children=[
-                CommandNode("Dashboard", "KPI e Stato", Icons.ACTIVITY, action=lambda: mw._navigate_to(PageIndex.DASHBOARD)),
-                CommandNode("Notifiche & Audit", "Log sistema", Icons.BELL, action=lambda: mw._navigate_to(PageIndex.NOTIFICATIONS)),
-                CommandNode("Timbrature", "Gestione Presenze", Icons.CLOCK, action=lambda: mw._navigate_to(PageIndex.TIMBRATURE)),
-                CommandNode("Strumentale", "Contabilità & OdA", Icons.FOLDER, action=lambda: mw._navigate_to(PageIndex.STRUMENTALE)),
-                CommandNode("DataEase", "Importazione Dati", Icons.DATABASE, action=lambda: mw._navigate_to(PageIndex.DATAEASE)),
-                CommandNode("Dipendenti", "Anagrafica Risorse", Icons.USERS, action=lambda: mw._navigate_to(PageIndex.DIPENDENTI)),
-                CommandNode("Storico OdA", "Database Ordini", Icons.ARCHIVE, action=lambda: mw._navigate_to(PageIndex.STORICO_ODA)),
-                CommandNode("Impostazioni", "Configurazione", Icons.SETTINGS_DARK, action=lambda: mw._navigate_to(PageIndex.SETTINGS)),
-                CommandNode("Automazioni", "Scheduler", Icons.SMART_TOY, action=lambda: mw._navigate_to(PageIndex.AUTOMAZIONI)),
+                CommandNode(
+                    "Dashboard",
+                    "KPI e Stato",
+                    Icons.ACTIVITY,
+                    action=lambda: mw._navigate_to(PageIndex.DASHBOARD),
+                ),
+                CommandNode(
+                    "Notifiche & Audit",
+                    "Log sistema",
+                    Icons.BELL,
+                    action=lambda: mw._navigate_to(PageIndex.NOTIFICATIONS),
+                ),
+                CommandNode(
+                    "Timbrature",
+                    "Gestione Presenze",
+                    Icons.CLOCK,
+                    action=lambda: mw._navigate_to(PageIndex.TIMBRATURE),
+                ),
+                CommandNode(
+                    "Strumentale",
+                    "Contabilità & OdA",
+                    Icons.FOLDER,
+                    action=lambda: mw._navigate_to(PageIndex.STRUMENTALE),
+                ),
+                CommandNode(
+                    "DataEase",
+                    "Importazione Dati",
+                    Icons.DATABASE,
+                    action=lambda: mw._navigate_to(PageIndex.DATAEASE),
+                ),
+                CommandNode(
+                    "Dipendenti",
+                    "Anagrafica Risorse",
+                    Icons.USERS,
+                    action=lambda: mw._navigate_to(PageIndex.DIPENDENTI),
+                ),
+                CommandNode(
+                    "Storico OdA",
+                    "Database Ordini",
+                    Icons.ARCHIVE,
+                    action=lambda: mw._navigate_to(PageIndex.STORICO_ODA),
+                ),
+                CommandNode(
+                    "Impostazioni",
+                    "Configurazione",
+                    Icons.SETTINGS_DARK,
+                    action=lambda: mw._navigate_to(PageIndex.SETTINGS),
+                ),
+                CommandNode(
+                    "Automazioni",
+                    "Scheduler",
+                    Icons.SMART_TOY,
+                    action=lambda: mw._navigate_to(PageIndex.AUTOMAZIONI),
+                ),
             ],
         )
 
         # 3. SET (Settings)
         menu_set = CommandNode(
-            "Sistema...", "Strumenti tecnici e opzioni", Icons.TERMINAL,
+            "Sistema...",
+            "Strumenti tecnici e opzioni",
+            Icons.TERMINAL,
             children=[
                 CommandNode(
                     "Cartelle",
                     children=[
-                        CommandNode("Dati Applicazione", "Apri cartella config", Icons.FOLDER_OPEN, action=lambda: open_folder_path(get_data_path())),
-                        CommandNode("Log Files", "Apri cartella log", Icons.FILE_TEXT, action=lambda: open_folder_path(get_logs_path())),
+                        CommandNode(
+                            "Dati Applicazione",
+                            "Apri cartella config",
+                            Icons.FOLDER_OPEN,
+                            action=lambda: open_folder_path(get_data_path()),
+                        ),
+                        CommandNode(
+                            "Log Files",
+                            "Apri cartella log",
+                            Icons.FILE_TEXT,
+                            action=lambda: open_folder_path(get_logs_path()),
+                        ),
                     ],
                 ),
                 CommandNode(
                     "Manutenzione",
                     children=[
                         CommandNode("Riavvia Applicazione", "Soft Reboot", Icons.REFRESH, action=restart_app),
-                        CommandNode("Toggle Stats", "Mostra telemetria", Icons.TERMINAL, action=mw._toggle_footer_stats, close_on_execute=False),
-                        CommandNode("Aggiorna Dati (F5)", "Refresh view", Icons.REFRESH, action=mw._handle_f5),
+                        CommandNode(
+                            "Toggle Stats",
+                            "Mostra telemetria",
+                            Icons.TERMINAL,
+                            action=mw._toggle_footer_stats,
+                            close_on_execute=False,
+                        ),
+                        CommandNode(
+                            "Aggiorna Dati (F5)", "Refresh view", Icons.REFRESH, action=mw._handle_f5
+                        ),
                     ],
                 ),
             ],
         )
 
         menu_help = CommandNode(
-            "Help...", "Supporto", Icons.HELP,
+            "Help...",
+            "Supporto",
+            Icons.HELP,
             children=[
-                CommandNode("Guida utente", "Manuale operativo", Icons.HELP, action=lambda: mw._navigate_to(PageIndex.HELP)),
-                CommandNode("Segnala Bug", "Invia Report con Outlook", Icons.ALERT_TRIANGLE, action=self.open_bug_report_dialog),
+                CommandNode(
+                    "Guida utente",
+                    "Manuale operativo",
+                    Icons.HELP,
+                    action=lambda: mw._navigate_to(PageIndex.HELP),
+                ),
+                CommandNode(
+                    "Segnala Bug",
+                    "Invia Report con Outlook",
+                    Icons.ALERT_TRIANGLE,
+                    action=self.open_bug_report_dialog,
+                ),
             ],
         )
 
         return [
-            menu_run, menu_go, menu_help,
-            CommandNode("Vai a Timbrature", "Nav", Icons.CLOCK, shortcut="Alt+2", action=lambda: mw._navigate_to(PageIndex.TIMBRATURE)),
-            CommandNode("Vai a Strumentale", "Nav", Icons.FOLDER, shortcut="Alt+3", action=lambda: mw._navigate_to(PageIndex.STRUMENTALE)),
-            CommandNode("Vai a DataEase", "Nav", Icons.DATABASE, shortcut="Alt+4", action=lambda: mw._navigate_to(PageIndex.DATAEASE)),
+            menu_run,
+            menu_go,
+            menu_help,
+            CommandNode(
+                "Vai a Timbrature",
+                "Nav",
+                Icons.CLOCK,
+                shortcut="Alt+2",
+                action=lambda: mw._navigate_to(PageIndex.TIMBRATURE),
+            ),
+            CommandNode(
+                "Vai a Strumentale",
+                "Nav",
+                Icons.FOLDER,
+                shortcut="Alt+3",
+                action=lambda: mw._navigate_to(PageIndex.STRUMENTALE),
+            ),
+            CommandNode(
+                "Vai a DataEase",
+                "Nav",
+                Icons.DATABASE,
+                shortcut="Alt+4",
+                action=lambda: mw._navigate_to(PageIndex.DATAEASE),
+            ),
             menu_set,
             CommandNode("Esci", "Chiudi applicazione", Icons.LOG_OUT, action=mw._quit_application),
         ]

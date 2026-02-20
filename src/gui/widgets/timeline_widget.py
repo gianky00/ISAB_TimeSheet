@@ -47,6 +47,7 @@ class HorizontalLogItem(QWidget):
     Singola riga di log testuale con timestamp e supporto per link ai file.
     Mantiene il nome originale per compatibilità con gli import globali.
     """
+
     def __init__(self, human_msg: str, tech_msg: str, category: str, timestamp: str, parent=None):
         super().__init__(parent)
         layout = QHBoxLayout(self)
@@ -55,14 +56,14 @@ class HorizontalLogItem(QWidget):
 
         # Colori categoria: Nero (default), Arancione (wait/warning), Rosso (error)
         color = {
-            "start": "#212121",      # Black
-            "login": "#212121",      # Black
-            "search": "#212121",     # Black
-            "download": "#212121",   # Black
-            "success": "#212121",    # Black
-            "error": "#C62828",      # Red
-            "wait": "#EF6C00",       # Orange
-            "info": "#212121"        # Black
+            "start": "#212121",  # Black
+            "login": "#212121",  # Black
+            "search": "#212121",  # Black
+            "download": "#212121",  # Black
+            "success": "#212121",  # Black
+            "error": "#C62828",  # Red
+            "wait": "#EF6C00",  # Orange
+            "info": "#212121",  # Black
         }.get(category, "#212121")
 
         # Timestamp [HH:MM:SS] (Grigio scuro su bianco)
@@ -73,7 +74,9 @@ class HorizontalLogItem(QWidget):
         # Messaggio (Scuro per contrasto, 13px)
         self.lbl_msg = QLabel(human_msg)
         self.lbl_msg.setWordWrap(True)
-        self.lbl_msg.setStyleSheet(f"color: {color}; font-family: 'Segoe UI'; font-weight: 500; font-size: 13px;")
+        self.lbl_msg.setStyleSheet(
+            f"color: {color}; font-family: 'Segoe UI'; font-weight: 500; font-size: 13px;"
+        )
         layout.addWidget(self.lbl_msg, stretch=1)
 
         # Rilevamento percorsi per azione rapida
@@ -81,7 +84,9 @@ class HorizontalLogItem(QWidget):
 
     def _add_actions(self, layout: QHBoxLayout, tech_msg: str):
         """Aggiunge pulsanti di apertura file se vengono rilevati percorsi nel log tecnico."""
-        matches = re.findall(r'([a-zA-Z]:\\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)', tech_msg)
+        matches = re.findall(
+            r'([a-zA-Z]:\\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)', tech_msg
+        )
         for p in set(matches):
             p = p.rstrip(".,';)]}").strip()
             if len(p) > 4 and "http" not in p:
@@ -89,7 +94,9 @@ class HorizontalLogItem(QWidget):
                 btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#212121"))
                 btn.setFixedSize(22, 22)
                 btn.setToolTip(f"Apri: {Path(p).name}")
-                btn.setStyleSheet("QPushButton { background: rgba(33, 33, 33, 0.05); border: none; border-radius: 3px; } QPushButton:hover { background: rgba(33, 33, 33, 0.1); }")
+                btn.setStyleSheet(
+                    "QPushButton { background: rgba(33, 33, 33, 0.05); border: none; border-radius: 3px; } QPushButton:hover { background: rgba(33, 33, 33, 0.1); }"
+                )
                 btn.clicked.connect(lambda c, path=p: QDesktopServices.openUrl(QUrl.fromLocalFile(path)))
                 layout.addWidget(btn)
 
@@ -99,6 +106,7 @@ class CyberTimelineFrame(QFrame):
     Guscio estetico Cyber-Rail Ultra V5 per la console log.
     Disegna bordo neon, griglia e ombra.
     """
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -131,9 +139,13 @@ class CyberTimelineFrame(QFrame):
         painter.setPen(QPen(QColor(0, 0, 0, 10), 0.5))
         step = 25
         for x in range(int(rect.left()), int(rect.right() + step), step):
-            painter.drawLine(int(x + self._grid_offset), int(rect.top()), int(x + self._grid_offset), int(rect.bottom()))
+            painter.drawLine(
+                int(x + self._grid_offset), int(rect.top()), int(x + self._grid_offset), int(rect.bottom())
+            )
         for y in range(int(rect.top()), int(rect.bottom() + step), step):
-            painter.drawLine(int(rect.left()), int(y + self._grid_offset), int(rect.right()), int(y + self._grid_offset))
+            painter.drawLine(
+                int(rect.left()), int(y + self._grid_offset), int(rect.right()), int(y + self._grid_offset)
+            )
         painter.restore()
 
         # 3. BORDO ACCENTO (Scuro professionale)
@@ -146,6 +158,7 @@ class HorizontalTimelineContainer(QWidget):
     """
     Contenitore trasparente per i log testuali.
     """
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setStyleSheet("background: transparent;")
@@ -159,6 +172,7 @@ class HorizontalTimelineWidget(QScrollArea):
     """
     Console di log a scorrimento verticale interna al frame Cyber.
     """
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWidgetResizable(True)
@@ -197,6 +211,7 @@ class HorizontalTimelineWidget(QScrollArea):
         """Proxy per il mood del parent."""
         p = self.parent()
         from typing import Any
+
         if p and hasattr(p, "set_mood"):
             cast_p: Any = p
             cast_p.set_mood(mood)
@@ -207,6 +222,7 @@ class TimelineWidget(QWidget):
     Widget Log Attività principale (Versione Orrizzontale HUD).
     Implementa l'estetica Cyber-Rail Ultra V5 con log testuali verticali.
     """
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setMinimumHeight(220)
@@ -222,7 +238,12 @@ class TimelineWidget(QWidget):
         header.addWidget(lbl)
         header.addStretch()
 
-        btn = ModernButton("PULISCI LOG", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL, icon=get_asset_path(Icons.TRASH))
+        btn = ModernButton(
+            "PULISCI LOG",
+            variant=ModernButton.Variant.GHOST,
+            size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.TRASH),
+        )
         btn.clicked.connect(self.clear)
         header.addWidget(btn)
         layout.addLayout(header)
@@ -242,7 +263,7 @@ class TimelineWidget(QWidget):
         self._grid_off = 0.0
         self.anim_timer = QTimer(self)
         self.anim_timer.timeout.connect(self._update_anim)
-        self.anim_timer.start(16) # 60 FPS
+        self.anim_timer.start(16)  # 60 FPS
 
         self.pulse_anim = QPropertyAnimation(self, b"pulse_value")
         self.pulse_anim.setDuration(1500)
@@ -260,7 +281,7 @@ class TimelineWidget(QWidget):
     def leaveEvent(self, event):
         """Ferma la pulsazione e ripristina il bordo solido quando il mouse esce."""
         self.pulse_anim.stop()
-        self.pulse_value = 1.0
+        self.pulse_value = 1.0  # type: ignore[method-assign]
         super().leaveEvent(event)
 
     @pyqtProperty(float)
@@ -268,7 +289,7 @@ class TimelineWidget(QWidget):
         """Restituisce il valore di pulsazione neon."""
         return self._pulse_val
 
-    @pulse_value.setter  # type: ignore
+    @pulse_value.setter  # type: ignore[no-redef]
     def pulse_value(self, v: float):
         """Aggiorna il bordo neon."""
         self._pulse_val = v
@@ -296,8 +317,10 @@ class TimelineWidget(QWidget):
         else:
             self.pulse_anim.setDuration(1500)
 
+
 class MissionReportCard(QFrame):
     """Placeholder per compatibilità (non mostrata nel flusso testuale)."""
+
     def __init__(self, dur: str, status: bool, parent=None):
         super().__init__(parent)
         self.hide()
