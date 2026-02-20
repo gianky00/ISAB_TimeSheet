@@ -16,6 +16,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from src.bots.base.base_bot import StepStatus
 from src.bots.safework.base import SafeworkBaseBot
 from src.utils.printing import print_pdf
 
@@ -27,6 +28,15 @@ logger = logging.getLogger(__name__)
 
 class SafeWorkPDLBot(SafeworkBaseBot):
     """Bot per lo scarico e la stampa automatizzata dei PDL."""
+
+    STEPS = [
+        ("login", "Login SafeWork"),
+        ("search", "Ricerca PdL"),
+        ("download_p1", "Scarico Parte Prima"),
+        ("download_p2", "Scarico Parte Seconda"),
+        ("merge", "Unione e Stampa"),
+        ("session", "Chiusura Sessione")
+    ]
 
     def __init__(self, username, password, headless=False, timeout=30, download_path=""):
         super().__init__(username, password, headless, timeout, download_path)
@@ -73,6 +83,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def run(self, data: list[dict[str, Any]]) -> bool:
         """Ciclo principale di scarico PDL con gestione sessione."""
+        self.update_step("login", StepStatus.COMPLETED)
+        
         success_count = 0
         total = len(data)
         self.downloaded_files = []
@@ -93,22 +105,35 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 self.log(f"--- PDL {index + 1}/{total}: {pdl_num} ---")
 
                 # Pipeline per singolo PDL
+                self.update_step("search", StepStatus.RUNNING)
                 if self._esegui_ricerca_pdl(pdl_num):
+                    self.update_step("search", StepStatus.COMPLETED)
+                    
+                    self.update_step("download_p1", StepStatus.RUNNING)
                     path_p1 = self._scarica_parte_prima(pdl_num)
-
+                    
                     path_p2 = None
                     if path_p1:
+                        self.update_step("download_p1", StepStatus.COMPLETED)
+                        self.update_step("download_p2", StepStatus.RUNNING)
                         path_p2 = self._scarica_parte_seconda(pdl_num)
 
-                    if (
-                        path_p1
-                        and path_p2
-                        and self._unisci_e_stampa(pdl_num, path_p1, path_p2, item, all_pdl_paths)
-                    ):
-                        success_count += 1
+                    if path_p1 and path_p2:
+                        self.update_step("download_p2", StepStatus.COMPLETED)
+                        self.update_step("merge", StepStatus.RUNNING)
+                        if self._unisci_e_stampa(pdl_num, path_p1, path_p2, item, all_pdl_paths):
+                            self.update_step("merge", StepStatus.COMPLETED)
+                            success_count += 1
+                        else:
+                            self.update_step("merge", StepStatus.ERROR)
+                    else:
+                        if not path_p1: self.update_step("download_p1", StepStatus.ERROR)
+                        if not path_p2: self.update_step("download_p2", StepStatus.ERROR)
 
                     self._safe_remove(path_p1)
                     self._safe_remove(path_p2)
+                else:
+                    self.update_step("search", StepStatus.ERROR)
 
                 if self.progress_callback:
                     self.progress_callback(index, True)
@@ -118,7 +143,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 self.log(f"❌ Errore critico PDL {pdl_raw}: {e}")
 
         # Unione finale di sessione se richiesto
+        self.update_step("session", StepStatus.RUNNING)
         self._handle_session_merge(data, all_pdl_paths)
+        self.update_step("session", StepStatus.COMPLETED)
 
         self.log(f"✨ Completato: {success_count}/{total} PDL.")
         return success_count == total

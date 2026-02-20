@@ -8,7 +8,7 @@ import traceback
 from datetime import datetime
 from typing import Any
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -20,9 +20,10 @@ from src.core import config_manager
 from src.core.audit_manager import AuditManager
 from src.core.constants import Icons
 from src.core.stats_manager import StatsManager
+from src.gui.components.activity_timeline import ActivityTimelineWidget
+from src.gui.components.terminal_log import TerminalLogWidget
 from src.gui.design.spacing import Spacing
 from src.gui.dialogs.standard_input_dialog import StandardInputDialog
-from src.gui.widgets import MissionReportCard, TimelineWidget
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.status_card import StatusCard
 from src.utils.helpers import get_asset_path
@@ -39,6 +40,7 @@ class BotWorker(QThread):
     finished_signal = pyqtSignal(bool)
     request_input_signal = pyqtSignal(str, dict, threading.Event)
     row_status_signal = pyqtSignal(int, bool)  # New signal for row updates
+    step_changed_signal = pyqtSignal(int, str, object)  # Bridge for timeline
 
     def __init__(self, bot, data, telegram_service=None):
         """
@@ -60,6 +62,9 @@ class BotWorker(QThread):
         try:
             # Collega i callback
             self.bot.set_log_callback(self.log_signal.emit)
+
+            # Bridge per Timeline Step signals (Bot -> Worker Signal -> GUI)
+            self.bot.signals.step_changed.connect(self.step_changed_signal.emit)
 
             # Setup input callback se supportato dal bot
             if hasattr(self.bot, "set_input_callback"):
@@ -126,10 +131,25 @@ class BaseBotPanel(QWidget):
         self.bot_name = bot_name
         self.bot_description = bot_description
 
-        self.worker: BotWorker | None = None
         self.start_time: datetime | None = None
         self._setup_ui()
         self._connect_signals()
+
+        # Inizializza timeline attività in modo differito (Ghost Mode)
+        # Usiamo un timer per assicurarci che la sottoclasse abbia completato l'init
+        QTimer.singleShot(50, self._init_ghost_timeline)
+
+    def _init_ghost_timeline(self):
+        """Inizializza gli step della timeline senza avviare il bot utilizzando i metadati statici."""
+        try:
+            from src.bots import BOT_REGISTRY
+            bot_info = BOT_REGISTRY.get(self.bot_id)
+            if bot_info:
+                bot_class = bot_info["class"]
+                if hasattr(bot_class, "STEPS") and bot_class.STEPS:
+                    self.activity_timeline.set_steps(bot_class.STEPS)
+        except Exception as e:
+            self._logger.warning(f"Impossibile inizializzare timeline ghost per {self.bot_id}: {e}")
 
     def _setup_base_ui(self):
         """Inizializza l'interfaccia utente di base comune a tutti i pannelli bot."""
@@ -140,16 +160,27 @@ class BaseBotPanel(QWidget):
         # Status Card (Model only, not in layout)
         self.status_card = StatusCard("Stato Attività")
 
+        # Top Area: Content + Activity Rail
+        top_h_layout = QHBoxLayout()
+        top_h_layout.setSpacing(Spacing.md)
+
         # Content area (da sovrascrivere nelle sottoclassi)
         self.content_widget = QWidget()
         self.content_layout = QVBoxLayout(self.content_widget)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
         self.content_layout.setSpacing(Spacing.md)
-        self.main_layout.addWidget(self.content_widget)
+        top_h_layout.addWidget(self.content_widget, stretch=4)
 
-        # Log
-        self.log_widget = TimelineWidget()
-        self.main_layout.addWidget(self.log_widget)
+        # Activity Timeline (Cyber-Stepper Rail)
+        self.activity_timeline = ActivityTimelineWidget()
+        self.activity_timeline.setContentsMargins(10, 10, 10, 10)
+        top_h_layout.addWidget(self.activity_timeline, stretch=1)
+
+        self.main_layout.addLayout(top_h_layout)
+
+        # Bottom Area: Terminal Log (Full Width)
+        self.log_widget = TerminalLogWidget()
+        self.main_layout.addWidget(self.log_widget, stretch=2)
 
         # Buttons
         btn_layout = QHBoxLayout()
@@ -253,8 +284,12 @@ class BaseBotPanel(QWidget):
     def _on_start(self, params_override: dict[str, Any] | None = None):
         """Gestisce l'avvio del bot. Da implementare nelle sottoclassi."""
         self.start_time = datetime.now()
-        self.log_widget.timeline.set_mood("running")
         self._update_status("#0d6efd")
+
+        # Inizializza timeline attività se il bot ha gli steps
+        bot_instance = self.get_bot_instance()
+        if bot_instance and hasattr(bot_instance, "STEPS") and bot_instance.STEPS:
+            self.activity_timeline.set_steps(bot_instance.STEPS)
 
         # Audit & Stats
         AuditManager.instance().log_action(
@@ -302,8 +337,8 @@ class BaseBotPanel(QWidget):
 
     def _log_mission_report(self, duration: str, success: bool):
         """Gestisce la UI del report e l'audit."""
-        report = MissionReportCard(duration, success)
-        self.log_widget.timeline.add_widget(report)
+        status_text = "SUCCESS" if success else "ERROR"
+        self.log_widget.append(f"MISSION REPORT: Duration {duration} | Status: {status_text}", status_text)
 
         dettagli = "Esecuzione completata correttamente" if success else "Esecuzione fallita o interrotta"
 

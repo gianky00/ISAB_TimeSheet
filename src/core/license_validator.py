@@ -181,7 +181,7 @@ def _check_and_migrate_local_license(target_paths: dict[str, Any]):
             # Check with and without data subfolder as structure varied
             base_dir = local_appdata / old_name
             base_author = local_appdata / "GiancarloAllegretti" / old_name
-            
+
             potential_dirs.extend((
                 base_dir / "Licenza",
                 base_dir / "data" / "Licenza",

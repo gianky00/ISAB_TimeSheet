@@ -200,6 +200,7 @@ class ScaricaTSPanel(BaseBotPanel):
         self.worker = BotWorker(bot, bot_data, telegram_service=tg_service)
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
+        self.worker.step_changed_signal.connect(self.activity_timeline.on_step_changed)
         self.worker.finished_signal.connect(self._on_worker_finished)
         self.worker.request_input_signal.connect(self._ask_user_input)
 

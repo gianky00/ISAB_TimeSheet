@@ -3,15 +3,16 @@ Bot TS - Base Bot
 Classe base astratta per tutti i bot di automazione con State Machine e Validazione.
 """
 
-import os
 import re
 import sys
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from contextlib import suppress
+from enum import Enum, auto
 from pathlib import Path
 from typing import Any
 
+from PyQt6.QtCore import QObject, pyqtSignal
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -24,6 +25,21 @@ from src.bots.portale_fornitori.common.locators import CommonLocators
 from src.core import config_manager
 from src.core.constants import BotStatus, BrowserConfig, Timeouts, URLs
 from src.core.logging import generate_trace_id, get_logger, measure_time, with_context
+
+
+class StepStatus(Enum):
+    """Stati possibili per uno step della timeline."""
+    PENDING = auto()
+    RUNNING = auto()
+    COMPLETED = auto()
+    ERROR = auto()
+
+
+class BotSignals(QObject):
+    """Segnali PyQt6 per la comunicazione bot -> GUI."""
+    step_changed = pyqtSignal(int, str, object)  # index, name, status (StepStatus)
+    status_changed = pyqtSignal(object)         # BotStatus
+    log_emitted = pyqtSignal(str, str)          # message, level
 
 
 class BaseBot(ABC):
@@ -69,6 +85,11 @@ class BaseBot(ABC):
         self.login_page: LoginPage | None = None
         self._telegram_service: Any = None
 
+        # Nuova gestione Step
+        self.signals = BotSignals()
+        self._current_step_index = -1
+        self._steps_state: list[StepStatus] = []
+
         # Enterprise logging
         self._trace_id = generate_trace_id()
         self._logger = get_logger(f"bot.{self.__class__.__name__}")
@@ -77,6 +98,52 @@ class BaseBot(ABC):
     @abstractmethod
     def name(self) -> str:
         """Restituisce il nome identificativo del bot."""
+
+    # Lista degli step per la timeline (da sovrascrivere nelle sottoclassi)
+    STEPS: list[tuple[str, str]] = []
+
+    def _initialize_steps(self) -> None:
+        """Inizializza lo stato degli step a PENDING."""
+        self._steps_state = [StepStatus.PENDING for _ in self.STEPS]
+
+    def update_step(self, step_id: str | int, status: StepStatus, message: str | None = None) -> None:
+        """
+        Aggiorna lo stato di uno step nella timeline.
+        """
+        if isinstance(step_id, str):
+            try:
+                index = [s[0] for s in self.STEPS].index(step_id)
+            except ValueError:
+                self._logger.warning(f"Step ID '{step_id}' non trovato in {self.name}. Steps disponibili: {[s[0] for s in self.STEPS]}")
+                return
+        else:
+            index = step_id
+
+        if not self._steps_state:
+            self._initialize_steps()
+
+        if 0 <= index < len(self._steps_state):
+            self._steps_state[index] = status
+            
+            # Aggiorna sempre l'indice corrente per i log contestuali
+            self._current_step_index = index
+            
+            step_name = self.STEPS[index][1]
+            
+            # Emit signal for GUI
+            self.signals.step_changed.emit(index, step_name, status)
+            
+            # Log automatically with explicit step context
+            if message:
+                self.log(f"[{step_name}] {message}", current_step=step_name, step_index=index)
+            elif status == StepStatus.RUNNING:
+                self.log(f"Inizio operazione: {step_name}", current_step=step_name, step_index=index)
+            elif status == StepStatus.COMPLETED:
+                self.log(f"Completato: {step_name}", current_step=step_name, step_index=index)
+            elif status == StepStatus.ERROR:
+                self.log(f"❌ ERRORE in {step_name}", "ERROR", current_step=step_name, step_index=index)
+        else:
+            self._logger.error(f"Indice step {index} fuori range (Max: {len(self._steps_state)-1})")
 
     @property
     @abstractmethod
@@ -98,6 +165,7 @@ class BaseBot(ABC):
         """Aggiorna lo stato del bot e logga il cambiamento."""
         if self._status != value:
             self._status = value
+            self.signals.status_changed.emit(value)
             self.log(f"Stato: {value.name}")
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
@@ -116,17 +184,29 @@ class BaseBot(ABC):
             return False, "Credenziali mancanti nelle impostazioni."
         return True, ""
 
-    def log(self, message: str, level: str = "INFO") -> None:
+    def log(self, message: str, level: str = "INFO", current_step: str | None = None, step_index: int | None = None) -> None:
         """
         Logga un messaggio in console, nel widget log e via Telegram se configurato.
 
         Args:
             message: Testo del messaggio da loggare.
             level: Livello log (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+            current_step: Nome dello step corrente (opzionale).
+            step_index: Indice dello step corrente (opzionale).
         """
+        # Send to UI signal
+        self.signals.log_emitted.emit(message, level)
+
         # Send to UI callback
         if self._log_callback:
             self._log_callback(message)
+
+        # Contextual info for logging
+        if current_step is None and 0 <= self._current_step_index < len(self.STEPS):
+            current_step = self.STEPS[self._current_step_index][1]
+        
+        if step_index is None:
+            step_index = self._current_step_index
 
         # Structured logging with bot context
         log_method = getattr(self._logger, level.lower(), self._logger.info)
@@ -135,6 +215,8 @@ class BaseBot(ABC):
             trace_id=self._trace_id,
             bot_type=self.name.lower().replace(" ", "_"),
             bot_status=self._status.name,
+            current_step=current_step or "",
+            step_index=step_index
         )
 
         # Telegram notification
@@ -353,13 +435,11 @@ class BaseBot(ABC):
     def execute(self, data: list[dict[str, Any]]) -> bool:
         """
         Esegue il workflow completo del bot: Validazione -> Accesso -> Esecuzione -> Cleanup.
-
-        Args:
-            data: Lista di dati da elaborare.
-        Returns:
-            bool: True se l'intera esecuzione ha avuto successo.
         """
         self._stop_requested = False
+        
+        # Inizializza lo stato degli step ORA che la sottoclasse è pronta
+        self._initialize_steps()
 
         # Set up logging context for this bot execution
         bot_type = self.name.lower().replace(" ", "_")
@@ -383,9 +463,17 @@ class BaseBot(ABC):
                 return False
 
             try:
-                # 2. Inizializzazione Browser
+                # 2. Inizializzazione Browser & Login
+                # Attiviamo il primo step (tipicamente login) subito
+                if self.STEPS:
+                    self.update_step(self.STEPS[0][0], StepStatus.RUNNING)
+                    # Forziamo l'indice per il logger iniziale
+                    self._current_step_index = 0
+
                 if not self._safe_login_with_retry():
                     self.status = BotStatus.ERROR
+                    if self.STEPS:
+                        self.update_step(self.STEPS[0][0], StepStatus.ERROR)
                     return False
 
                 # 3. Esecuzione
@@ -394,6 +482,7 @@ class BaseBot(ABC):
 
                 self.status = BotStatus.COMPLETED if result else BotStatus.ERROR
                 self._logger.info("Bot execution completed", success=result)
+                self._current_step_index = -1  # Reset step context
                 return result
 
             except InterruptedError:
@@ -406,6 +495,11 @@ class BaseBot(ABC):
                 self.log(f"✗ Errore fatale: {e}", "ERROR")
                 self._save_error_state(str(e))
                 self.status = BotStatus.ERROR
+                
+                # Aggiorna timeline se c'è uno step attivo
+                if 0 <= self._current_step_index < len(self.steps):
+                    self.update_step(self._current_step_index, StepStatus.ERROR)
+                
                 return False
             finally:
                 self.cleanup()

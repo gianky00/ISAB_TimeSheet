@@ -6,7 +6,7 @@ Bot for downloading timesheets using Page Object Model.
 from pathlib import Path
 from typing import Any
 
-from src.bots.base import BaseBot
+from src.bots.base.base_bot import BaseBot, StepStatus
 from src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page import ScaricoTSPage
 
 
@@ -17,6 +17,14 @@ class ScaricaTSBot(BaseBot):
 
     # Default supplier
     FORNITORE = "KK10608 - COEMI S.R.L."
+
+    STEPS = [
+        ("login", "Login Portale ISAB"),
+        ("nav", "Navigazione Portale"),
+        ("filters", "Impostazione Filtri"),
+        ("download", "Download Timesheet"),
+        ("cleanup", "Chiusura Sessione")
+    ]
 
     @staticmethod
     def get_name() -> str:
@@ -57,6 +65,10 @@ class ScaricaTSBot(BaseBot):
         """
         if not self.driver:
             return False
+
+        # Login is already marked as COMPLETED by BaseBot if we reach here
+        self.update_step("login", StepStatus.COMPLETED)
+
         rows: list[dict[str, Any]]
         if isinstance(data, dict):
             rows = data.get("rows", [])
@@ -68,20 +80,24 @@ class ScaricaTSBot(BaseBot):
             self.log("Nessun dato da processare")
             return True
 
-        self.log(f"Processamento {len(rows)} righe...")
-        self.log(f"Data inizio: {self.data_da}")
-
+        self.update_step("nav", StepStatus.RUNNING)
         page = ScaricoTSPage(self.driver, self.log)
 
         # 1. Navigation
         if not page.navigate_to_timesheet():
+            self.update_step("nav", StepStatus.ERROR)
             return False
+        self.update_step("nav", StepStatus.COMPLETED)
 
         # 2. Setup Filters
+        self.update_step("filters", StepStatus.RUNNING)
         if not page.setup_filters(self.FORNITORE, self.data_da):
+            self.update_step("filters", StepStatus.ERROR)
             return False
+        self.update_step("filters", StepStatus.COMPLETED)
 
         # 3. Process Rows
+        self.update_step("download", StepStatus.RUNNING)
         success_count = 0
         # Chrome downloads directly to download_path (if configured)
         download_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
@@ -96,13 +112,16 @@ class ScaricaTSBot(BaseBot):
                 self.log(f"Riga {i}: Numero OdA mancante, saltata")
                 continue
 
-            self.log("-" * 40)
             self.log(f"Riga {i}/{len(rows)}: OdA='{numero_oda}', Pos='{posizione_oda}'")
 
             if page.search_and_download(numero_oda, posizione_oda, download_dir):
                 success_count += 1
+
+        self.update_step("download", StepStatus.COMPLETED)
         self.log("-" * 40)
         self.log(f"Completato: {success_count}/{len(rows)} download riusciti")
 
+        self.update_step("cleanup", StepStatus.RUNNING)
         # Logout is handled by execute() in BaseBot or orchestrator
+        self.update_step("cleanup", StepStatus.COMPLETED)
         return success_count == len(rows)
