@@ -116,7 +116,7 @@ class CaricoTSPanel(BaseBotPanel):
     def _clear_table(self):
         """Svuota la tabella dei dati previa conferma."""
         if ConfirmationDialog.confirm(self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?"):
-            self.data_table.set_data([])
+            self.data_table.clear()
             self._save_data()
 
     def validate_ready(self) -> tuple[bool, str]:

@@ -323,7 +323,7 @@ class EditableDataTable(QWidget):
             QFrame#tableContainer {
                 background-color: #ffffff;
                 border: 1px solid #e0e0e0;
-                border-bottom: 3px solid #00E5FF; /* Cyan Neon */
+                border-bottom: 3px solid #212121; /* Dark Accent */
                 border-radius: 12px;
             }
             QTableWidget {
@@ -435,11 +435,11 @@ class EditableDataTable(QWidget):
         if viewport is not None:
             menu.exec(viewport.mapToGlobal(position))
 
-    def _add_row(self) -> None:
+    def _add_row(self, use_defaults: bool = True) -> None:
         """Aggiunge una riga vuota alla fine della tabella."""
         row = self.table.rowCount()
         self.table.insertRow(row)
-        self._populate_row(row)
+        self._populate_row(row, use_defaults=use_defaults)
         self.data_changed.emit()
 
     def _add_row_above(self) -> None:
@@ -449,10 +449,10 @@ class EditableDataTable(QWidget):
             current_row = 0
 
         self.table.insertRow(current_row)
-        self._populate_row(current_row)
+        self._populate_row(current_row, use_defaults=True)
         self.data_changed.emit()
 
-    def _populate_row(self, row: int) -> None:
+    def _populate_row(self, row: int, use_defaults: bool = True) -> None:
         """Inizializza le celle di una riga con i widget appropriati (testo o combo)."""
         for col, column in enumerate(self.columns):
             col_type = column.get("type", "text")
@@ -468,15 +468,29 @@ class EditableDataTable(QWidget):
                 )
                 options = ["", *column.get("options", [])]
                 combo.addItems(options)
-                default_val = column.get("default", "")
-                if default_val and default_val in options:
-                    combo.setCurrentText(str(default_val))
+                
+                if use_defaults:
+                    default_val = column.get("default", "")
+                    if default_val and default_val in options:
+                        combo.setCurrentText(str(default_val))
+                else:
+                    combo.setCurrentIndex(0) # Forza cella vuota
+                    
                 combo.currentTextChanged.connect(lambda text: self.data_changed.emit())
                 self.table.setCellWidget(row, col, combo)
             else:
-                default_val = column.get("default", "")
-                item = SortableTableWidgetItem(default_val)
+                default_val = column.get("default", "") if use_defaults else ""
+                item = SortableTableWidgetItem(str(default_val))
                 self.table.setItem(row, col, item)
+
+    def clear(self) -> None:
+        """Svuota completamente la tabella e ripristina righe vuote senza valori di default."""
+        self.table.blockSignals(True)
+        self.table.setRowCount(0)
+        for _ in range(5):
+            self._add_row(use_defaults=False)
+        self.table.blockSignals(False)
+        self.data_changed.emit()
 
     def _remove_row(self) -> None:
         """Rimuove la riga attualmente selezionata."""

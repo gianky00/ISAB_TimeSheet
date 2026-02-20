@@ -178,7 +178,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             QFrame#paramsContainer {
                 background-color: #ffffff;
                 border: 1px solid #e0e0e0;
-                border-bottom: 3px solid #00E5FF;
+                border-bottom: 3px solid #212121;
                 border-radius: 12px;
             }
             QLabel {
@@ -228,7 +228,7 @@ class ScaricoPDLPanel(BaseBotPanel):
                 padding: 5px 10px;
                 background-color: #f8f9fa;
             }
-            QComboBox:focus { border: 2px solid #00E5FF; background-color: #ffffff; }
+            QComboBox:focus { border: 2px solid #212121; background-color: #ffffff; }
         """
         )
         # Popola stampanti
@@ -267,13 +267,13 @@ class ScaricoPDLPanel(BaseBotPanel):
         hbox_dest.addWidget(self.dest_path_edit)
 
         browse_btn = QPushButton()
-        browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#00E5FF"))
+        browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#212121"))
         browse_btn.setIconSize(QSize(20, 20))
         browse_btn.setFixedSize(38, 38)
         browse_btn.clicked.connect(self._browse_dest_path)
         browse_btn.setStyleSheet("""
             QPushButton { background-color: #ffffff; border: 1px solid #cfd8dc; border-radius: 6px; }
-            QPushButton:hover { background-color: #E0F7FA; border-color: #00E5FF; }
+            QPushButton:hover { background-color: #E0F7FA; border-color: #212121; }
         """)
         hbox_dest.addWidget(browse_btn)
         vbox_dest.addLayout(hbox_dest)
@@ -384,7 +384,7 @@ class ScaricoPDLPanel(BaseBotPanel):
     def _clear_table(self):
         """Svuota la tabella dei PDL previa conferma."""
         if ConfirmationDialog.confirm(self, "Conferma", "Cancellare tutti i PDL?"):
-            self.data_table.set_data([])
+            self.data_table.clear()
             self._save_data()
 
     def validate_ready(self) -> tuple[bool, str]:

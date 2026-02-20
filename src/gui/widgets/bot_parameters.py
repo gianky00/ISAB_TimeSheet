@@ -72,7 +72,7 @@ class BotParametersWidget(QWidget):
             QFrame#paramsContainer {
                 background-color: #ffffff;
                 border: 1px solid #e0e0e0;
-                border-bottom: 3px solid #00E5FF; /* Neon Accent Bottom */
+                border-bottom: 3px solid #212121; /* Neon Accent Bottom */
                 border-radius: 12px;
             }
             QLabel {
@@ -89,7 +89,7 @@ class BotParametersWidget(QWidget):
                 min-height: 32px;
             }
             QComboBox:focus, QLineEdit:focus, QDateEdit:focus {
-                border: 2px solid #00E5FF;
+                border: 2px solid #212121;
                 background-color: #ffffff;
             }
         """)
@@ -127,7 +127,7 @@ class BotParametersWidget(QWidget):
 
         # Pulsante Settings
         self.settings_btn = QPushButton()
-        self.settings_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#00E5FF"))
+        self.settings_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#212121"))
         self.settings_btn.setIconSize(QSize(20, 20))
         self.settings_btn.setFixedSize(38, 38)
         self.settings_btn.setToolTip("Gestisci fornitori")
@@ -175,7 +175,7 @@ class BotParametersWidget(QWidget):
             hbox_dest.addWidget(self.dest_path_edit)
 
             self.browse_btn = QPushButton()
-            self.browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#00E5FF"))
+            self.browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#212121"))
             self.browse_btn.setIconSize(QSize(20, 20))
             self.browse_btn.setFixedSize(38, 38)
             self.browse_btn.clicked.connect(self._browse_path)
@@ -225,14 +225,14 @@ class BotParametersWidget(QWidget):
         return """
             QPushButton {
                 background-color: #ffffff;
-                color: #00E5FF;
+                color: #212121;
                 border: 1px solid #cfd8dc;
                 border-radius: 6px;
                 padding: 2px;
             }
             QPushButton:hover {
                 background-color: #E0F7FA;
-                border-color: #00E5FF;
+                border-color: #212121;
             }
             QPushButton:pressed {
                 background-color: #e1bee7;

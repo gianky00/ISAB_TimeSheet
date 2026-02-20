@@ -110,7 +110,7 @@ class PrenotaBPPanel(BaseBotPanel):
 
     def _clear_table(self):
         if ConfirmationDialog.confirm(self, "Conferma", "Cancellare tutti i dati dalla lista?"):
-            self.data_table.set_data([])
+            self.data_table.clear()
             self._save_data()
 
     def _on_start(self, params_override: dict[str, Any] | None = None):

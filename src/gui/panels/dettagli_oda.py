@@ -133,7 +133,7 @@ class DettagliOdAPanel(BaseBotPanel):
     def _clear_table(self) -> None:
         """Svuota l'elenco OdA previa conferma dell'utente."""
         if ConfirmationDialog.confirm(self, "Conferma", "Svuotare la tabella?"):
-            self.data_table.set_data([])
+            self.data_table.clear()
             self._save_data()
 
     def validate_ready(self) -> tuple[bool, str]:

@@ -60,7 +60,7 @@ class RicercaPDLPanel(BaseBotPanel):
             QFrame#paramsContainer {
                 background-color: #ffffff;
                 border: 1px solid #e0e0e0;
-                border-bottom: 3px solid #00E5FF; /* Cyan Neon */
+                border-bottom: 3px solid #212121; /* Cyan Neon */
                 border-radius: 12px;
             }
             QLabel {
@@ -114,7 +114,7 @@ class RicercaPDLPanel(BaseBotPanel):
                 padding: 5px 10px;
                 background-color: #f8f9fa;
             }
-            QComboBox:focus { border: 2px solid #00E5FF; background-color: #ffffff; }
+            QComboBox:focus { border: 2px solid #212121; background-color: #ffffff; }
         """)
         self.site_combo.currentTextChanged.connect(self._save_data)
         vbox_site.addWidget(self.site_combo)

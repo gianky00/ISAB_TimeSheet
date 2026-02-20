@@ -70,26 +70,26 @@ class ActivityTimelineWidget(QWidget):
         self._ui_timer.timeout.connect(self._tick)
         self._ui_timer.start(16)
 
-        # Palette Cyber-Rail
+        # Palette Cyber-Rail LIGHT MODE
         self.COLORS = {
-            "bg": QColor(10, 12, 18, 240),      # Sfondo scuro semi-trasparente
-            "grid": QColor(0, 229, 255, 15),   # Griglia tattica
-            "border": QColor("#00E5FF"),       # Bordo Neon
-            StepStatus.PENDING: QColor("#263238"),
-            StepStatus.RUNNING: QColor("#00E5FF"),
-            StepStatus.COMPLETED: QColor("#00E676"),
-            StepStatus.ERROR: QColor("#FF1744"),
-            "line_dim": QColor(30, 33, 50, 100),
-            "text_active": QColor("#FFFFFF"),
-            "text_dim": QColor("#78909C"),
-            "dash": QColor("#FFFFFF")
+            "bg": QColor(255, 255, 255, 250),   # Sfondo Bianco quasi opaco
+            "grid": QColor(0, 0, 0, 10),        # Griglia scura molto soft
+            "border": QColor("#212121"),        # Bordo Scuro Accent
+            StepStatus.PENDING: QColor("#CFD8DC"), # Grigio chiaro per attesa
+            StepStatus.RUNNING: QColor("#212121"), # Scuro per esecuzione
+            StepStatus.COMPLETED: QColor("#00E676"), # Green
+            StepStatus.ERROR: QColor("#FF1744"),    # Red
+            "line_dim": QColor(236, 239, 241),  # Linee di connessione chiare
+            "text_active": QColor("#212121"),   # Testo scuro per contrasto
+            "text_dim": QColor("#90A4AE"),      # Testo spento
+            "dash": QColor("#212121")           # Particelle scure
         }
 
-        # Effetto Ombra per profondità
+        # Effetto Ombra più delicato per il tema light
         shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(20)
-        shadow.setColor(QColor(0, 0, 0, 180))
-        shadow.setOffset(0, 5)
+        shadow.setBlurRadius(25)
+        shadow.setColor(QColor(0, 0, 0, 40))
+        shadow.setOffset(0, 8)
         self.setGraphicsEffect(shadow)
 
         self.setMinimumWidth(280)

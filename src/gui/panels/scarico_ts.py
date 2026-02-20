@@ -139,7 +139,7 @@ class ScaricaTSPanel(BaseBotPanel):
     def _clear_table(self):
         """Svuota la tabella dei dati OdA previa conferma."""
         if ConfirmationDialog.confirm(self, "Conferma", "Svuotare la tabella?"):
-            self.data_table.set_data([])
+            self.data_table.clear()
             self._save_data()
 
     def get_bot_instance(self):

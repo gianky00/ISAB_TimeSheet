@@ -53,27 +53,27 @@ class HorizontalLogItem(QWidget):
         layout.setContentsMargins(10, 2, 10, 2)
         layout.setSpacing(10)
 
-        # Colori categoria (Neon) coordinati con ActivityTimeline
+        # Colori categoria: Nero (default), Arancione (wait/warning), Rosso (error)
         color = {
-            "start": "#00E5FF",      # Cyan
-            "login": "#CF94FF",      # Purple
-            "search": "#FFAB40",     # Orange
-            "download": "#40C4FF",   # Info
-            "success": "#00E676",    # Green
-            "error": "#FF1744",      # Red
-            "wait": "#FFD600",       # Yellow
-            "info": "#90A4AE"        # Gray
-        }.get(category, "#B0BEC5")
+            "start": "#212121",      # Black
+            "login": "#212121",      # Black
+            "search": "#212121",     # Black
+            "download": "#212121",   # Black
+            "success": "#212121",    # Black
+            "error": "#C62828",      # Red
+            "wait": "#EF6C00",       # Orange
+            "info": "#212121"        # Black
+        }.get(category, "#212121")
 
-        # Timestamp [HH:MM:SS]
+        # Timestamp [HH:MM:SS] (Grigio scuro su bianco)
         self.lbl_time = QLabel(f"[{timestamp}]")
-        self.lbl_time.setStyleSheet("color: rgba(255, 255, 255, 0.3); font-family: 'Consolas'; font-size: 10px;")
+        self.lbl_time.setStyleSheet("color: #90A4AE; font-family: 'Consolas'; font-size: 11px;")
         layout.addWidget(self.lbl_time)
 
-        # Messaggio
+        # Messaggio (Scuro per contrasto, 13px)
         self.lbl_msg = QLabel(human_msg)
         self.lbl_msg.setWordWrap(True)
-        self.lbl_msg.setStyleSheet(f"color: {color}; font-family: 'Segoe UI'; font-weight: 500; font-size: 11px;")
+        self.lbl_msg.setStyleSheet(f"color: {color}; font-family: 'Segoe UI'; font-weight: 500; font-size: 13px;")
         layout.addWidget(self.lbl_msg, stretch=1)
 
         # Rilevamento percorsi per azione rapida
@@ -86,10 +86,10 @@ class HorizontalLogItem(QWidget):
             p = p.rstrip(".,';)]}").strip()
             if len(p) > 4 and "http" not in p:
                 btn = QPushButton()
-                btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#00E5FF"))
-                btn.setFixedSize(20, 20)
+                btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#212121"))
+                btn.setFixedSize(22, 22)
                 btn.setToolTip(f"Apri: {Path(p).name}")
-                btn.setStyleSheet("QPushButton { background: rgba(0, 229, 255, 0.1); border: none; border-radius: 3px; } QPushButton:hover { background: rgba(0, 229, 255, 0.3); }")
+                btn.setStyleSheet("QPushButton { background: rgba(33, 33, 33, 0.05); border: none; border-radius: 3px; } QPushButton:hover { background: rgba(33, 33, 33, 0.1); }")
                 btn.clicked.connect(lambda c, path=p: QDesktopServices.openUrl(QUrl.fromLocalFile(path)))
                 layout.addWidget(btn)
 
@@ -105,10 +105,10 @@ class CyberTimelineFrame(QFrame):
         self._pulse_value = 1.0
         self._grid_offset = 0.0
 
-        # Ombra HUD pesante per profondità
+        # Ombra HUD più leggera per tema light
         shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(30)
-        shadow.setColor(QColor(0, 0, 0, 220))
+        shadow.setBlurRadius(25)
+        shadow.setColor(QColor(0, 0, 0, 40))
         shadow.setOffset(0, 8)
         self.setGraphicsEffect(shadow)
 
@@ -122,13 +122,13 @@ class CyberTimelineFrame(QFrame):
         path = QPainterPath()
         path.addRoundedRect(rect, 15, 15)
 
-        # 1. SFONDO DARK (Coordinato con ActivityTimeline)
-        painter.fillPath(path, QColor(10, 12, 18, 245))
+        # 1. SFONDO LIGHT (Bianco pulito)
+        painter.fillPath(path, QColor(255, 255, 255, 250))
 
-        # 2. GRIGLIA TATTICA ANIMATA
+        # 2. GRIGLIA TATTICA ANIMATA (Sottilissima e scura)
         painter.save()
         painter.setClipPath(path)
-        painter.setPen(QPen(QColor(0, 229, 255, 12), 0.5))
+        painter.setPen(QPen(QColor(0, 0, 0, 10), 0.5))
         step = 25
         for x in range(int(rect.left()), int(rect.right() + step), step):
             painter.drawLine(int(x + self._grid_offset), int(rect.top()), int(x + self._grid_offset), int(rect.bottom()))
@@ -136,9 +136,9 @@ class CyberTimelineFrame(QFrame):
             painter.drawLine(int(rect.left()), int(y + self._grid_offset), int(rect.right()), int(y + self._grid_offset))
         painter.restore()
 
-        # 3. BORDO NEON PULSANTE (Cyan Elite)
+        # 3. BORDO ACCENTO (Scuro professionale)
         alpha = int(100 + (self._pulse_value * 155))
-        painter.setPen(QPen(QColor(0, 229, 255, alpha), 1.5))
+        painter.setPen(QPen(QColor(33, 33, 33, alpha), 1.5))
         painter.drawPath(path)
 
 
@@ -222,7 +222,7 @@ class TimelineWidget(QWidget):
         header.addWidget(lbl)
         header.addStretch()
 
-        btn = ModernButton("PURGE", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL, icon=get_asset_path(Icons.TRASH))
+        btn = ModernButton("PULISCI LOG", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL, icon=get_asset_path(Icons.TRASH))
         btn.clicked.connect(self.clear)
         header.addWidget(btn)
         layout.addLayout(header)

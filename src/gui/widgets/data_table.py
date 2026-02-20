@@ -76,7 +76,7 @@ class DataTable(QWidget):
                 background: {self._palette.surface};
             }}
             QLineEdit:focus {{
-                border: 2px solid #00E5FF;
+                border: 2px solid #212121;
             }}
         """
         )
@@ -112,7 +112,7 @@ class DataTable(QWidget):
             QFrame#tableContainer {
                 background-color: #ffffff;
                 border: 1px solid #e0e0e0;
-                border-bottom: 3px solid #00E5FF; /* Cyan Neon */
+                border-bottom: 3px solid #212121; /* Dark Accent */
                 border-radius: 12px;
             }
             QTableWidget {
