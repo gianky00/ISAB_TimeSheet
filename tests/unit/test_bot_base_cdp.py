@@ -53,7 +53,7 @@ class TestBaseBotCDP:
         mock_driver.execute_cdp_cmd.assert_any_call("Page.addScriptToEvaluateOnNewDocument", mocker.ANY)
 
     def test_setup_driver_no_download_path(self, mocker):
-        """Verifica che CDP non venga chiamato se non c'è download_path."""
+        """Verifica che venga usato il fallback Downloads se non c'è download_path."""
         mock_driver = MagicMock()
         mocker.patch("selenium.webdriver.Chrome", return_value=mock_driver)
 
@@ -61,6 +61,8 @@ class TestBaseBotCDP:
 
         bot._setup_driver_instance(MagicMock(), MagicMock())
 
-        # Non deve aver chiamato Page.setDownloadBehavior
-        calls = [c.args[0] for c in mock_driver.execute_cdp_cmd.call_args_list]
-        assert "Page.setDownloadBehavior" not in calls
+        # Ora viene chiamato SEMPRE, usando il fallback Home/Downloads
+        expected_fallback = str(Path.home() / "Downloads")
+        mock_driver.execute_cdp_cmd.assert_any_call(
+            "Page.setDownloadBehavior", {"behavior": "allow", "downloadPath": expected_fallback}
+        )

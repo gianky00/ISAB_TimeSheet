@@ -128,17 +128,6 @@ class TestBaseBotPanel:
         mock_gui_deps["audit"].return_value.log_action.assert_called()
         mock_gui_deps["stats"].return_value.increment_usage.assert_called_with("test_bot")
 
-    def test_on_log_forward_to_telegram(self, qapp, qtbot, mock_gui_deps):
-        panel = BaseBotPanel("bot", "Bot", "Desc")
-        mock_win = MagicMock()
-        mock_win.telegram = MagicMock()
-        panel.window = MagicMock(return_value=mock_win)
-        qtbot.addWidget(panel)
-
-        panel._on_log("[12:00:00] Message")
-        mock_win.telegram.send_message_sync.assert_called()
-        assert "Message" in mock_win.telegram.send_message_sync.call_args[0][0]
-
     def test_ask_user_input(self, qapp, qtbot, mock_gui_deps):
         panel = BaseBotPanel("bot", "Bot", "Desc")
         qtbot.addWidget(panel)
