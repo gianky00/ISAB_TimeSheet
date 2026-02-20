@@ -71,6 +71,7 @@ class EmployeeEditorDialog(QDialog):
         main_layout.addLayout(btn_layout)
 
     def get_data(self):
+        """Estrae i dati inseriti nei campi di input e li normalizza in maiuscolo."""
         return {k: v.text().strip().upper() for k, v in self.inputs.items()}
 
 

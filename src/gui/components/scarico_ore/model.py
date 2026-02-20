@@ -1,3 +1,8 @@
+"""
+SyncroJob - Scarico Ore Data Model
+Modello tabellare ottimizzato per la gestione di grandi volumi di dati (130k+ righe).
+"""
+
 from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,8 +17,8 @@ from src.gui.components.scarico_ore.cache import CacheWorker
 @dataclass
 class ScaricoOreRow:
     """
-    Data model representing a single row in the 'Scarico Ore' table.
-    Contains employee info, hours worked, and job order details.
+    Modello dati che rappresenta una singola riga nella tabella 'Scarico Ore'.
+    Contiene le informazioni sui dipendenti, le ore lavorate e i dettagli della commessa.
     """
 
     id: str
@@ -56,6 +61,12 @@ class ScaricoOreTableModel(QAbstractTableModel):
     loading_progress = pyqtSignal(str)
 
     def __init__(self, data: list[tuple[Any, ...]] | None = None) -> None:
+        """
+        Inizializza il modello e carica i dati dalla cache globale se disponibili.
+
+        Args:
+            data: Dati iniziali opzionali.
+        """
         super().__init__()
         self._display_data: list[list[str]] = []
         self._search_index: list[str] = []
@@ -85,6 +96,12 @@ class ScaricoOreTableModel(QAbstractTableModel):
             self.update_data(data)
 
     def load_data_async(self, raw_data: list[tuple[Any, ...]] | None = None) -> None:
+        """
+        Avvia il caricamento asincrono dei dati tramite CacheWorker.
+
+        Args:
+            raw_data: Dati grezzi da processare o None per caricare da cache pkl.
+        """
         if self._global_cache["loaded"] and raw_data is None:
             self.cache_loaded.emit()
             return
@@ -108,6 +125,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         style_cache: list[dict[str, Any] | None],
         date_keys: list[str],
     ) -> None:
+        """Slot chiamato al termine del worker per aggiornare il modello."""
         self.beginResetModel()
         self._display_data = display_data
         self._search_index = search
@@ -132,14 +150,28 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self.cache_loaded.emit()
 
     def update_data(self, new_data: list[tuple[Any, ...]]) -> None:
+        """Aggiorna i dati del modello (triggera caricamento asincrono)."""
         self.load_data_async(new_data)
 
     def set_data(self, data: list[tuple[Any, ...]]) -> None:
+        """
+        Imposta i dati in modo sincrono (usato principalmente nei test o piccoli dataset).
+
+        Args:
+            data: Lista di tuple di dati grezzi.
+        """
         worker = CacheWorker(self.CACHE_PATH)
         display_data, search, totals, style_cache, date_keys = worker._build_caches(data)
         self._on_worker_finished(display_data, search, totals, style_cache, date_keys)
 
     def set_filter(self, text: str, col_filters: dict[int, set[str]] | None = None) -> None:
+        """
+        Applica filtri globali e per colonna al modello.
+
+        Args:
+            text: Testo per la ricerca globale.
+            col_filters: Dizionario {colonna: set di valori ammessi}.
+        """
         text = text.lower().strip()
         search_terms = text.split() if text else []
 
@@ -157,12 +189,14 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self.endResetModel()
 
     def _apply_global_search(self, indices: list[int], terms: list[str]) -> list[int]:
+        """Esegue la ricerca testuale su tutte le colonne."""
         if not terms:
             return indices
         s_idx = self._search_index
         return [i for i in indices if all(t in s_idx[i] for t in terms)]
 
     def _apply_column_filters(self, indices: list[int], col_filters: dict[int, set[str]] | None) -> list[int]:
+        """Esegue il filtraggio specifico sulle singole colonne."""
         if not col_filters:
             return indices
 
@@ -173,22 +207,26 @@ class ScaricoOreTableModel(QAbstractTableModel):
         return filtered
 
     def get_float_total_for_visible(self) -> float:
+        """Calcola la somma delle ore per le sole righe visibili."""
         if not self._float_totals:
             return 0.0
         total = sum(self._float_totals[i] for i in self._visible_indices)
         return total
 
     def rowCount(self, parent: QModelIndex | None = None) -> int:
+        """Restituisce il numero di righe filtrate."""
         if parent is None:
             parent = QModelIndex()
         return self._filtered_count
 
     def columnCount(self, parent: QModelIndex | None = None) -> int:
+        """Restituisce il numero di colonne del modello."""
         if parent is None:
             parent = QModelIndex()
         return len(self.COLUMNS)
 
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+        """Restituisce i dati per una specifica cella e ruolo."""
         if not index.isValid():
             return None
 
@@ -218,11 +256,13 @@ class ScaricoOreTableModel(QAbstractTableModel):
         return None
 
     def sort(self, column: int, order: Qt.SortOrder = Qt.SortOrder.AscendingOrder) -> None:
+        """Ordina i dati per la colonna specificata."""
         self.layoutAboutToBeChanged.emit()
 
         reverse = order == Qt.SortOrder.DescendingOrder
 
         def get_key(idx: int) -> Any:
+            """Estrae la chiave di ordinamento per una riga e colonna specifica."""
             try:
                 if column == 0:
                     return self._date_keys[idx]
@@ -239,11 +279,13 @@ class ScaricoOreTableModel(QAbstractTableModel):
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
     ) -> Any:
+        """Restituisce l'header per le colonne."""
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return self.COLUMNS[section]
         return None
 
     def _get_style(self, real_row: int, col: int, style_type: str) -> QColor | None:
+        """Recupera il colore di sfondo o testo dalla cache degli stili."""
         with suppress(Exception):
             if real_row >= len(self._styles_cache):
                 return None

@@ -11,12 +11,19 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPlainTextEdit, QVBoxLayout, QW
 class TerminalLogWidget(QWidget):
     """
     Console di log in stile terminale con evidenziazione dei livelli.
+    Fornisce una visualizzazione testuale moderna e pulita delle attività del bot.
     """
     def __init__(self, parent=None):
+        """
+        Inizializza il widget del terminale e configura l'editor di testo.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(parent)
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(5)
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(5)
 
         # Header opzionale
         header_layout = QHBoxLayout()
@@ -24,7 +31,7 @@ class TerminalLogWidget(QWidget):
         self.title_label.setStyleSheet("font-weight: bold; color: #808080; font-size: 10px;")
         header_layout.addWidget(self.title_label)
         header_layout.addStretch()
-        self.layout.addLayout(header_layout)
+        self.main_layout.addLayout(header_layout)
 
         # Area di testo
         self.editor = QPlainTextEdit()
@@ -47,12 +54,18 @@ class TerminalLogWidget(QWidget):
             font = QFont("Courier New", 10)
         self.editor.setFont(font)
 
-        self.layout.addWidget(self.editor)
+        self.main_layout.addWidget(self.editor)
 
     @pyqtSlot(str)
     @pyqtSlot(str, str)
     def append(self, message: str, level: str = "INFO"):
-        """Aggiunge un messaggio colorato in base al livello."""
+        """
+        Aggiunge un messaggio colorato alla console in base al livello di logging.
+
+        Args:
+            message: Testo del messaggio da loggare.
+            level: Livello del log (es. INFO, ERROR, WARN, SUCCESS).
+        """
         from datetime import datetime
         timestamp = datetime.now().strftime("%H:%M:%S")
 
@@ -84,7 +97,9 @@ class TerminalLogWidget(QWidget):
         self.editor.insertPlainText(f"{message}\n")
 
         # Auto-scroll
-        self.editor.verticalScrollBar().setValue(self.editor.verticalScrollBar().maximum())
-
+        v_scroll = self.editor.verticalScrollBar()
+        if v_scroll:
+            v_scroll.setValue(v_scroll.maximum())
     def clear(self):
+        """Pulisce tutto il contenuto della console di log."""
         self.editor.clear()

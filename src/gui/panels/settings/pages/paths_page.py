@@ -189,6 +189,7 @@ class PathsPage(QWidget):
     # --- LOAD & SAVE ---
 
     def load_from_config(self, config: dict[str, Any]) -> None:
+        """Carica i percorsi dei file e delle cartelle dalla configurazione e li valida visivamente."""
         self.contabilita_path_edit.setText(str(config.get("contabilita_file_path", "")))
         self._validate_path(self.contabilita_path_edit)
 
@@ -213,6 +214,7 @@ class PathsPage(QWidget):
         self._validate_path(self.dataease_path_edit)
 
     def save_to_config(self, config_manager: Any) -> None:
+        """Salva i percorsi attualmente impostati nella configurazione globale."""
         config_manager.set_config_value("contabilita_file_path", self.contabilita_path_edit.text())
         config_manager.set_config_value("enable_auto_update_contabilita", self.auto_update_check.isChecked())
         config_manager.set_config_value("giornaliere_path", self.giornaliere_path_edit.text())

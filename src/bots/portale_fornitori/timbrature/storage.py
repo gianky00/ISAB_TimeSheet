@@ -42,6 +42,7 @@ class TimbratureStorage:
     }
 
     def __init__(self, db_path: Path = DB_PATH):
+        """Inizializza il database delle timbrature configurando il percorso e lo schema."""
         self.db_path = Path(db_path)
         self._ensure_db_exists()
 
@@ -188,7 +189,16 @@ class TimbratureStorage:
         reparto: str | None = None,
         cantiere: str | None = None,
     ):
-        """Salva l'assegnazione reparto/cantiere direttamente in config.json."""
+        """
+        Aggiorna le informazioni di reparto e cantiere per un dipendente specifico.
+        I dati vengono salvati nel file di configurazione globale.
+
+        Args:
+            nome: Nome del dipendente.
+            cognome: Cognome del dipendente.
+            reparto: Nome del reparto opzionale.
+            cantiere: Nome del cantiere opzionale.
+        """
         mappings = config_manager.load_config().get("employee_mappings", {})
 
         key = f"{nome}|{cognome}"

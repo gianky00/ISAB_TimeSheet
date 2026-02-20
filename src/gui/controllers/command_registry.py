@@ -58,16 +58,20 @@ class CommandRegistry:
 
     @classmethod
     def instance(cls) -> "CommandRegistry":
+        """Restituisce l'istanza singleton del registro comandi."""
         if cls._instance is None:
             cls._instance = CommandRegistry()
         return cls._instance
 
     def __init__(self) -> None:
+        """Inizializza il registro con un nodo ROOT."""
         self._root = CommandNode("ROOT", children=[])
 
     def register_root(self, node: CommandNode) -> None:
+        """Aggiunge un nodo alla radice dell'albero dei comandi."""
         if self._root:
             self._root.children.append(node)
 
     def get_root_nodes(self) -> list[CommandNode]:
+        """Restituisce la lista dei nodi principali registrati."""
         return self._root.children if self._root else []

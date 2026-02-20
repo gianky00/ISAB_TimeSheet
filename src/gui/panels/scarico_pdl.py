@@ -36,9 +36,10 @@ from src.utils.printing import get_installed_printers
 
 
 class StatusListWidget(QListWidget):
-    """Widget per visualizzare lo stato di elaborazione riga per riga."""
+    """Widget per visualizzare lo stato di elaborazione riga per riga della tabella PDL."""
 
     def __init__(self, parent=None):
+        """Inizializza la lista degli stati."""
         super().__init__(parent)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.setStyleSheet(
@@ -59,7 +60,13 @@ class StatusListWidget(QListWidget):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
     def initialize_rows(self, count: int, row_height: int = 30):
-        """Prepara n righe con stato 'Pending'."""
+        """
+        Prepara n righe con stato 'Pending' (pallino grigio).
+
+        Args:
+            count: Numero di righe da inizializzare.
+            row_height: Altezza di ogni riga in pixel.
+        """
         self.clear()
         for _ in range(count):
             item = QListWidgetItem()
@@ -84,7 +91,13 @@ class StatusListWidget(QListWidget):
             self.setItemWidget(item, container)
 
     def update_status(self, index: int, success: bool):
-        """Aggiorna l'icona della riga specificata."""
+        """
+        Aggiorna l'icona della riga specificata (Verde se successo, Rosso se errore).
+
+        Args:
+            index: Indice della riga.
+            success: Esito dell'operazione.
+        """
         if index < 0 or index >= self.count():
             return
 
@@ -124,10 +137,16 @@ class StatusListWidget(QListWidget):
 class ScaricoPDLPanel(BaseBotPanel):
     """
     Pannello per lo scarico massivo delle PDL da SafeWork.
-    Permette di inserire una lista di numeri PDL da processare.
+    Permette di inserire una lista di numeri PDL da processare, stamparli e unirli in PDF.
     """
 
     def __init__(self, parent=None):
+        """
+        Inizializza il pannello Scarico PDL.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(
             bot_id="scarico_pdl",
             bot_name="Scarico PDL",
@@ -139,10 +158,12 @@ class ScaricoPDLPanel(BaseBotPanel):
         QTimer.singleShot(10, self._safe_load_data)
 
     def get_bot_class(self):
+        """Restituisce la classe SafeWorkPDLBot associata."""
         from src.bots.safework.pdl.bot import SafeWorkPDLBot
         return SafeWorkPDLBot
 
     def _safe_load_data(self):
+        """Carica i dati di configurazione in modo sicuro."""
         try:
             self._load_saved_data()
         except Exception as e:
@@ -150,7 +171,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             traceback.print_exc()
 
     def _setup_content(self):
-        """Configura il contenuto specifico del pannello."""
+        """Configura l'interfaccia utente del pannello (Parametri, Tabella, Status)."""
         params_group = QGroupBox("Parametri")
         params_layout = QVBoxLayout(params_group)
         params_layout.setSpacing(10)
@@ -279,6 +300,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         params_layout.addLayout(work_area)
 
     def _refresh_printers(self):
+        """Aggiorna la lista delle stampanti di sistema disponibili."""
         current = self.printer_combo.currentText()
         self.printer_combo.clear()
         printers = get_installed_printers()
@@ -290,12 +312,14 @@ class ScaricoPDLPanel(BaseBotPanel):
             self.printer_combo.addItem("Nessuna stampante trovata")
 
     def _browse_dest_path(self):
+        """Apre un dialogo per selezionare la cartella di destinazione dei PDF."""
         path = QFileDialog.getExistingDirectory(self, "Seleziona cartella destinazione")
         if path:
             self.dest_path_edit.setText(path)
             self._save_data()
 
     def _load_saved_data(self):
+        """Carica le ultime impostazioni e i dati PDL salvati."""
         config = config_manager.load_config()
         saved_data = config.get("last_pdl_data", [])
         if saved_data:
@@ -312,6 +336,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.dest_path_edit.setText(config.get("path_scarico_pdl", ""))
 
     def _save_data(self):
+        """Salva le impostazioni correnti nel file di configurazione."""
         data = self.data_table.get_data()
         config_manager.set_config_value("last_pdl_data", data)
         config_manager.set_config_value("pdl_print_enabled", self.print_check.isChecked())
@@ -320,16 +345,22 @@ class ScaricoPDLPanel(BaseBotPanel):
         config_manager.set_config_value("path_scarico_pdl", self.dest_path_edit.text())
 
     def _reset_status_list(self):
-        """Resetta la lista degli stati quando la tabella viene modificata."""
+        """Resetta la lista degli stati visivi quando la tabella viene modificata."""
         self.status_list.clear()
 
     def _clear_table(self):
+        """Svuota la tabella dei PDL previa conferma."""
         if ConfirmationDialog.confirm(self, "Conferma", "Cancellare tutti i PDL?"):
             self.data_table.set_data([])
             self._save_data()
 
     def validate_ready(self) -> tuple[bool, str]:
-        """Verifica se il pannello è pronto per l'avvio del bot."""
+        """
+        Verifica la validità delle credenziali e la presenza di dati in tabella.
+
+        Returns:
+            tuple: (bool successo, str messaggio errore)
+        """
         username, password = self.get_credentials()
         if not username or not password:
             return False, "Credenziali SafeWork mancanti."
@@ -341,7 +372,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         return True, ""
 
     def get_credentials(self) -> tuple[str, str]:
-        """Override: Recupera credenziali SafeWork."""
+        """Recupera le credenziali SafeWork configurate."""
         # Prende il default da safework_accounts
         accounts = config_manager.load_config().get("safework_accounts", [])
         if not accounts:
@@ -358,6 +389,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         return frame
 
     def _on_start(self, params_override: dict[str, Any] | None = None):
+        """Avvia il bot Scarico PDL configurando worker e segnali."""
         super()._on_start(params_override)
         username, password = self.get_credentials()
 
@@ -382,18 +414,19 @@ class ScaricoPDLPanel(BaseBotPanel):
         # Worker initialization
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
-        self.worker = BotWorker(bot, bot_data, telegram_service=tg_service)
-        self._setup_worker_connections(self.worker)
-        self.worker.row_status_signal.connect(self._on_row_status)
+        worker = BotWorker(bot, bot_data, telegram_service=tg_service)
+        self.worker = worker
+        self._setup_worker_connections(worker)
+        worker.row_status_signal.connect(self._on_row_status)
 
         self.status_list.initialize_rows(len(bot_data))
 
         self._finalize_start_ui()
-        self.worker.start()
+        worker.start()
         self.bot_started.emit()
 
     def _validate_pdl_start(self, username, password) -> bool:
-        """Verifica che i requisiti per l'avvio siano soddisfatti."""
+        """Esegue validazioni pre-avvio specifiche per PDL."""
         if not username or not password:
             ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
             self._update_status("#C62828", "Credenziali SafeWork mancanti")
@@ -409,7 +442,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         return True
 
     def _prepare_bot_data(self, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Prepara il payload per il bot."""
+        """Prepara il dizionario dei dati per l'esecuzione del bot."""
         print_enabled = self.print_check.isChecked()
         printer_name = self.printer_combo.currentText()
         merge_and_send = getattr(self, "merge_and_send_from_telegram", False)
@@ -435,7 +468,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         return bot_data
 
     def _create_pdl_bot(self, username, password):
-        """Crea l'istanza del bot scarico PDL."""
+        """Istanzia il bot scarico_pdl con i parametri correnti."""
         from src.bots import create_bot
 
         config = config_manager.load_config()
@@ -453,7 +486,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         return bot
 
     def _finalize_start_ui(self):
-        """Aggiorna l'interfaccia all'avvio."""
+        """Aggiorna lo stato dei pulsanti e del log all'avvio."""
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
@@ -464,18 +497,17 @@ class ScaricoPDLPanel(BaseBotPanel):
             self.log_widget.append("Unione PDF per Telegram attiva")
 
     def _on_worker_finished(self, success: bool):
-        """Gestione custom per invio file unito e segnalazione PdL inesistenti."""
+        """Gestisce il post-processing (Telegram, Refresh DB) dopo il worker."""
         merge_and_send = getattr(self, "merge_and_send_from_telegram", False)
 
-        # Recupero dati prima di chiamare super (che pulisce il worker)
-        missing_list: list[str] = (
-            self.worker.bot.missing_pdls if self.worker and hasattr(self.worker.bot, "missing_pdls") else []
-        )
-        files_to_send: list[str] = (
-            self.worker.bot.downloaded_files
-            if self.worker and hasattr(self.worker.bot, "downloaded_files")
-            else []
-        )
+        missing_list: list[str] = []
+        files_to_send: list[str] = []
+
+        if self.worker:
+            if hasattr(self.worker.bot, "missing_pdls"):
+                missing_list = getattr(self.worker.bot, "missing_pdls", [])
+            if hasattr(self.worker.bot, "downloaded_files"):
+                files_to_send = getattr(self.worker.bot, "downloaded_files", [])
 
         super()._on_worker_finished(success)
 
@@ -500,17 +532,17 @@ class ScaricoPDLPanel(BaseBotPanel):
                     self._on_log("🔄 Aggiornamento Database PDL avviato.")
 
     def _handle_missing_pdls(self, missing_list: list[str]):
-        """Segnala PdL non trovati sulla card di stato."""
+        """Segnala i PDL non trovati all'utente."""
         if missing_list:
             missing_str = ", ".join(missing_list)
             self._update_status("#2E7D32", f"Completato (Inesistenti: {missing_str})")
 
     def _on_row_status(self, index: int, success: bool):
-        """Callback per aggiornamento stato riga."""
+        """Aggiorna lo stato visivo di una specifica riga PDL."""
         self.status_list.update_status(index, success)
 
     def _send_pdl_to_telegram(self, files: list[str]):
-        """Invia i file PDF prodotti al bot Telegram."""
+        """Invia i PDF scaricati al bot Telegram configurato."""
         if not files:
             return
 
@@ -528,7 +560,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             self._on_log("PDF inviati con successo.")
 
     def _cleanup_telegram_flags(self):
-        """Pulisce i flag di stato temporanei."""
+        """Pulisce i flag temporanei per le notifiche Telegram."""
         for attr in ("merge_and_send_from_telegram", "merge_all_session_from_telegram"):
             if hasattr(self, attr):
                 delattr(self, attr)

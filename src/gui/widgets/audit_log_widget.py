@@ -140,6 +140,12 @@ class AuditLogWidget(QWidget):
         self.refresh()
 
     def refresh(self, reset_page=False):
+        """
+        Rinfresca i dati visualizzati applicando i filtri correnti.
+
+        Args:
+            reset_page: Se True, torna alla prima pagina.
+        """
         if reset_page:
             self.current_page = 0
 

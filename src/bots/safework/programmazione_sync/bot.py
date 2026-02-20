@@ -14,7 +14,10 @@ from src.bots.safework.base import SafeworkBaseBot
 
 
 class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
-    """Bot per scaricare il report Excel delle attività da SafeWork."""
+    """
+    Bot per scaricare il report Excel delle attività da SafeWork.
+    Automatizza la navigazione alla sezione 'Visualizza Attività' ed esporta il report periodico.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
@@ -24,23 +27,44 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
     ]
 
     def __init__(self, username, password, headless=False, timeout=30, download_path=""):
+        """
+        Inizializza il bot di sincronizzazione programmazione.
+
+        Args:
+            username: Nome utente SafeWork.
+            password: Password SafeWork.
+            headless: Se avviare il browser in modalità nascosta.
+            timeout: Tempo di attesa per Selenium.
+            download_path: Cartella per il download degli Excel.
+        """
         super().__init__(username, password, headless, timeout, download_path)
         self.downloaded_file: str | None = None
 
     @staticmethod
     def get_name() -> str:
+        """Restituisce il nome identificativo del bot."""
         return "Sincronizzazione Programmazione"
 
     @property
     def name(self) -> str:
+        """Restituisce l'ID del bot."""
         return "programmazione_sync"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
+        """Definisce le colonne richieste (nessuna per questo bot)."""
         return []
 
     def run(self, data: list[dict[str, Any]]) -> bool:
-        """Esegue il download del report Excel."""
+        """
+        Esegue il download del report Excel.
+
+        Args:
+            data: Parametri della sessione (richiedenti, date).
+
+        Returns:
+            bool: True se il report è stato scaricato correttamente.
+        """
         self.update_step("login", StepStatus.COMPLETED)
 
         params = data[0] if data else {}
@@ -80,8 +104,6 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         # 3. Selezione Richiedenti Multipli
         if requesters:
             self.log(f"👥 Selezione di {len(requesters)} richiedenti...")
-            # Qui servirebbe una logica di multiselezione nel dropdown
-            # Per semplicità usiamo quella della pagina ma ripetuta
             for req in requesters:
                 self.attivita_page.seleziona_richiedente(req)
 

@@ -110,6 +110,7 @@ class SecurityDashboard(QWidget):
         layout.addWidget(self.log_area)
 
     def refresh(self):
+        """Aggiorna tutti i componenti della dashboard (KPI, Grafico, Log)."""
         stats = self.audit_manager.get_stats_by_day(days=7)
         self._update_kpi(stats)
         self._update_chart(stats)

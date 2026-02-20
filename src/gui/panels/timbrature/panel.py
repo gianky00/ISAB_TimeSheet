@@ -265,6 +265,7 @@ class TimbratureDBPanel(QWidget):
             self.settings_tab.load_data()
 
     def _on_settings_changed(self):
+        """Reagisce al cambio di impostazioni aggiornando i filtri di reparto e cantiere."""
         # Settings updated (data storage updated), we might need to refresh options
         self._update_filter_combos()
 

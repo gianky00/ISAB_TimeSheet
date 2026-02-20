@@ -1,3 +1,9 @@
+"""
+SyncroJob - PDL Detail View
+Widget specializzato per la visualizzazione analitica di un singolo Permesso di Lavoro (PDL).
+Include i dati anagrafici e la cronologia degli interventi correlati.
+"""
+
 from collections.abc import Sequence
 from contextlib import suppress
 from datetime import UTC, datetime
@@ -18,15 +24,26 @@ from PyQt6.QtWidgets import (
 
 
 class PDLDetailView(QWidget):
-    """Widget per la visualizzazione del dettaglio completo di un PDL."""
+    """
+    Widget per la visualizzazione del dettaglio completo di un PDL.
+    Visualizza i campi del database in un form scrollabile e una tabella con gli interventi estratti dai report.
+    """
 
     def __init__(self, headers: list[str], parent: QWidget | None = None) -> None:
+        """
+        Inizializza la vista dettaglio PDL.
+
+        Args:
+            headers: Lista dei nomi delle colonne del database da visualizzare.
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self.headers = headers
         self.detail_labels: dict[str, QLabel] = {}
         self._setup_ui()
 
     def _setup_ui(self) -> None:
+        """Configura il layout del form e della tabella cronologia."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 0, 5, 0)
         layout.setSpacing(10)
@@ -69,7 +86,13 @@ class PDLDetailView(QWidget):
         layout.addWidget(self.cron_table, 1)  # Stretch factor 1
 
     def update_details(self, data: Sequence[Any], interventions: list[dict[str, Any]] | None = None) -> None:
-        """Aggiorna le label con i dati forniti e popola la cronologia."""
+        """
+        Aggiorna le label con i dati forniti e popola la cronologia degli interventi.
+
+        Args:
+            data: Sequenza di valori corrispondenti agli headers inizializzati.
+            interventions: Lista di dizionari contenenti i dati degli interventi (data, tecnico, ore, ecc.).
+        """
         for i, h in enumerate(self.headers):
             if i >= len(data):
                 break
@@ -107,7 +130,7 @@ class PDLDetailView(QWidget):
                 self.cron_table.setItem(row_idx, 4, desc_item)
 
     def clear(self) -> None:
-        """Resetta i campi del dettaglio e la cronologia."""
+        """Resetta tutti i campi del dettaglio e svuota la tabella della cronologia."""
         for label in self.detail_labels.values():
             label.setText("-")
         self.cron_table.setRowCount(0)

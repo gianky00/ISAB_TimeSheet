@@ -8,6 +8,13 @@ class ConnectionTestWorker(QThread):
     result_ready = pyqtSignal(bool, str, str)  # success, title, message
 
     def __init__(self, test_type: str, token_or_key: str) -> None:
+        """
+        Inizializza il worker per il test di connessione.
+
+        Args:
+            test_type: Tipo di test ('telegram' o 'gemini').
+            token_or_key: Credenziale da verificare.
+        """
         super().__init__()
         self.test_type = test_type  # 'telegram' or 'gemini'
         self.token_or_key = token_or_key

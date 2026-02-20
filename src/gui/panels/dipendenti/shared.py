@@ -1,3 +1,8 @@
+"""
+SyncroJob - Employee Shared Components
+Widget, delegate e componenti UI condivisi utilizzati nei pannelli della gestione personale.
+"""
+
 import logging
 from typing import Any
 
@@ -19,10 +24,20 @@ logger = logging.getLogger(__name__)
 
 
 class ColoredDotDelegate(QStyledItemDelegate):
-    """Delegate personalizzato per colorare i pallini nella colonna SCAD. ISAB."""
+    """
+    Delegate personalizzato per colorare i pallini nella colonna SCAD. ISAB.
+    Visualizza un cerchio colorato (Verde, Arancio, Rosso) in base ai giorni rimanenti.
+    """
 
     def paint(self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex) -> None:
-        """Disegna il pallino colorato con il numero di giorni."""
+        """
+        Disegna il pallino colorato con il numero di giorni.
+
+        Args:
+            painter: Oggetto per il disegno.
+            option: Opzioni di visualizzazione.
+            index: Indice del modello.
+        """
         if not painter or index.column() != 0:  # Solo per la prima colonna
             super().paint(painter, option, index)
             return
@@ -74,7 +89,10 @@ class ColoredDotDelegate(QStyledItemDelegate):
 
 
 class InteractiveStatusCard(QFrame):
-    """Card moderna con animazioni e ombreggiature."""
+    """
+    Card moderna interattiva con animazioni e ombreggiature.
+    Utilizzata per visualizzare i conteggi aggregati (es. Abilitati, In Scadenza, Scaduti).
+    """
 
     clicked = pyqtSignal(str)
 
@@ -87,11 +105,22 @@ class InteractiveStatusCard(QFrame):
         filter_type: str,
         parent: QWidget | None = None,
     ) -> None:
+        """
+        Inizializza la card di stato interattiva.
+
+        Args:
+            label: Titolo della card.
+            color: Colore primario (es. hex).
+            icon_path: Percorso dell'icona (non usato, sostituito da emoji).
+            description: Descrizione della metrica.
+            filter_type: Stringa identificativa per il filtraggio.
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self.base_color = color
         self.filter_type = filter_type
         self.description = description
-        self.setFixedHeight(85)  # Appiattita: ridotta da 110 a 85
+        self.setFixedHeight(85)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
         # Testo tooltip più professionale
@@ -158,9 +187,9 @@ class InteractiveStatusCard(QFrame):
 
         lbl_desc = QLabel(description)
         lbl_desc.setStyleSheet(
-            "font-size: 13px; color: #6c757d; font-weight: 600;"  # Aumentato a 13px e font-weight 600
+            "font-size: 13px; color: #6c757d; font-weight: 600;"
         )
-        lbl_desc.setWordWrap(False)  # Disabilita word wrap per evitare a capo
+        lbl_desc.setWordWrap(False)
         lbl_desc.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         right_layout.addWidget(lbl_title)
@@ -169,26 +198,43 @@ class InteractiveStatusCard(QFrame):
         layout.addLayout(right_layout)
 
     def enterEvent(self, event: QEnterEvent | None) -> None:
+        """Aumenta l'ombra all'ingresso del mouse."""
         self.shadow.setBlurRadius(15)
         self.shadow.setYOffset(4)
         super().enterEvent(event)
 
     def leaveEvent(self, event: Any | None) -> None:
+        """Ripristina l'ombra all'uscita del mouse."""
         self.shadow.setBlurRadius(10)
         self.shadow.setYOffset(2)
         super().leaveEvent(event)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
+        """Emette il segnale 'clicked' con il tipo di filtro."""
         if event and event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self.filter_type)
         super().mousePressEvent(event)
 
     def setValue(self, val: Any) -> None:
+        """
+        Aggiorna il valore numerico visualizzato sulla card.
+
+        Args:
+            val: Valore da visualizzare.
+        """
         self.val_text.setText(str(val))
 
 
 def create_info_card(title: str) -> tuple[QFrame, QVBoxLayout]:
-    """Crea una card informativa con ombra e stile moderno."""
+    """
+    Crea una card informativa con ombra e stile moderno.
+
+    Args:
+        title: Il titolo da visualizzare nell'header della card.
+
+    Returns:
+        tuple: (QFrame istanza card, QVBoxLayout layout del contenuto).
+    """
     card = QFrame()
     card_shadow = QGraphicsDropShadowEffect()
     card_shadow.setBlurRadius(12)
@@ -225,8 +271,8 @@ def create_info_card(title: str) -> tuple[QFrame, QVBoxLayout]:
     content_widget = QWidget()
     content_widget.setStyleSheet("background-color: transparent;")
     content_layout = QVBoxLayout(content_widget)
-    content_layout.setContentsMargins(12, 8, 12, 10)  # Ridotto per compattezza
-    content_layout.setSpacing(8)  # Ridotto da 10 a 8
+    content_layout.setContentsMargins(12, 8, 12, 10)
+    content_layout.setSpacing(8)
 
     main_layout.addWidget(content_widget)
 
@@ -234,12 +280,20 @@ def create_info_card(title: str) -> tuple[QFrame, QVBoxLayout]:
 
 
 def create_field_row(label_text: str) -> QWidget:
-    """Crea una riga di campo con label e valore stilizzati."""
+    """
+    Crea una riga di campo con label e valore stilizzati (stile Material Design).
+
+    Args:
+        label_text: Il testo dell'etichetta del campo.
+
+    Returns:
+        QWidget: Il container della riga di campo.
+    """
     container = QWidget()
     container.setStyleSheet("background-color: transparent;")
     layout = QVBoxLayout(container)
-    layout.setContentsMargins(0, 0, 0, 6)  # Ridotto da 8 a 6
-    layout.setSpacing(3)  # Ridotto da 4 a 3
+    layout.setContentsMargins(0, 0, 0, 6)
+    layout.setSpacing(3)
 
     label = QLabel(label_text.upper())
     label.setStyleSheet(

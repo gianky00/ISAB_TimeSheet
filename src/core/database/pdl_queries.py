@@ -52,7 +52,8 @@ class PDLQueries:
         """
 
         # Converti DD/MM/YYYY -> YYYYMMDD
-        def to_iso(d):
+        def to_iso(d: str) -> str:
+            """Converte una data DD/MM/YYYY in stringa comparabile YYYYMMDD."""
             parts = d.split("/")
             return f"{parts[2]}{parts[1]}{parts[0]}"
 

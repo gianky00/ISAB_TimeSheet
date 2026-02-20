@@ -102,7 +102,7 @@ class ScaricaTSBot(BaseBot):
     def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue il download dei timesheet."""
         self.update_step("login", StepStatus.COMPLETED)
-        
+
         rows, dest_dir = self._prepare_run_environment(data)
 
         try:

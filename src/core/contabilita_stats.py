@@ -13,6 +13,7 @@ from src.utils.parsing import parse_currency
 
 
 class YearStats(TypedDict):
+    """Struttura dati per le statistiche annuali della contabilità."""
     total_prev: float
     total_ore: float
     count_total: int

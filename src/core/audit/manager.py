@@ -26,15 +26,18 @@ class AuditManager:
 
     @classmethod
     def instance(cls) -> "AuditManager":
+        """Restituisce l'istanza singleton della classe, creandola se necessario."""
         return cls()
 
     def __new__(cls) -> "AuditManager":
+        """Gestisce la creazione dell'unica istanza (Singleton)."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialized = False
         return cls._instance
 
     def __init__(self) -> None:
+        """Inizializza i componenti interni del manager (DB, Segnali)."""
         if getattr(self, "_initialized", False):
             return
         self.db = AuditDatabase()
@@ -232,16 +235,20 @@ class AuditManager:
             return False
 
     def get_logs(self, limit: int = 200) -> list[dict[str, Any]]:
+        """Recupera gli ultimi N log di audit (senza filtri avanzati)."""
         logs, _ = self.get_filtered_logs(limit=limit)
         return logs
 
     def get_filtered_logs(self, **kwargs: Any) -> tuple[list[dict[str, Any]], int]:
+        """Interroga il database dell'audit applicando i filtri specificati."""
         return self.db.fetch_filtered(**kwargs)
 
     def get_categories(self) -> list[str]:
+        """Restituisce l'elenco di tutte le categorie presenti nel log di audit."""
         return self.db.get_categories()
 
     def run_retention_policy(self, days: int = 90) -> None:
+        """Elimina i log più vecchi del numero di giorni specificato."""
         cutoff = (datetime.now() - timedelta(days=days)).isoformat()
         deleted_count = self.db.delete_older_than(cutoff)
         if deleted_count > 0:
@@ -253,6 +260,7 @@ class AuditManager:
             )
 
     def get_stats_by_day(self, days: int = 30) -> dict[str, dict[str, int]]:
+        """Calcola statistiche giornaliere (successi/errori) per l'intervallo specificato."""
         cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
         stats: dict[str, dict[str, int]] = {
             (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d"): {

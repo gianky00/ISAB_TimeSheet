@@ -64,7 +64,15 @@ class CaricoTSBot(BaseBot):
         return "Caricamento automatico timesheet"
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
-        """Validazione specifica per Carico TS."""
+        """
+        Esegue la validazione dei dati pre-caricamento.
+
+        Args:
+            data: Lista di righe o dizionario dati.
+
+        Returns:
+            tuple: (bool successo, str messaggio errore)
+        """
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:
             return False, base_msg
@@ -80,7 +88,15 @@ class CaricoTSBot(BaseBot):
         return True, ""
 
     def run(self, data: list[dict[str, Any]]) -> bool:
-        """Esegue il processo di caricamento dei Timesheet per ogni riga di dati."""
+        """
+        Esegue il workflow principale di caricamento TS.
+
+        Args:
+            data: Dati da caricare.
+
+        Returns:
+            bool: True se l'operazione è completata con successo.
+        """
         self.update_step("login", StepStatus.COMPLETED)
 
         # Il driver è garantito da execute()

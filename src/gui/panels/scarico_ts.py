@@ -22,6 +22,12 @@ class ScaricaTSPanel(BaseBotPanel):
     """Pannello per il bot Scarico TS."""
 
     def __init__(self, parent=None):
+        """
+        Inizializza il pannello Scarico TS.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(
             bot_id="scarico_ts",
             bot_name="Scarico TS",
@@ -32,15 +38,19 @@ class ScaricaTSPanel(BaseBotPanel):
         # Forza inizializzazione timeline immediata per Scarico TS
         from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
         self.activity_timeline.set_steps(ScaricaTSBot.STEPS)
-        
+
         # Defer data loading to speed up startup
         QTimer.singleShot(10, self._safe_load_data)
 
     def get_bot_class(self):
+        """
+        Restituisce la classe ScaricaTSBot associata a questo pannello.
+        """
         from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
         return ScaricaTSBot
 
     def _safe_load_data(self):
+        """Carica i dati dai file di configurazione in modo sicuro."""
         try:
             self._load_saved_data()
         except Exception as e:
@@ -48,7 +58,7 @@ class ScaricaTSPanel(BaseBotPanel):
             traceback.print_exc()
 
     def _setup_content(self):
-        """Configura il contenuto specifico del pannello."""
+        """Inizializza e posiziona i componenti UI specifici del pannello."""
         params_group = QGroupBox("Parametri")
         params_layout = QVBoxLayout(params_group)
         params_layout.setSpacing(10)
@@ -87,17 +97,17 @@ class ScaricaTSPanel(BaseBotPanel):
         self.content_layout.addWidget(params_group)
 
     def _open_settings(self):
-        """Apre le impostazioni."""
+        """Apre il dialogo delle impostazioni globali."""
         main_window = self.window()
         if main_window and hasattr(main_window, "show_settings"):
             main_window.show_settings()
 
     def refresh_fornitori(self):
-        """Ricarica i fornitori nel pannello Scarica TS."""
+        """Aggiorna la lista dei fornitori nel menu a tendina."""
         self.params_widget.refresh_fornitori()
 
     def _load_saved_data(self):
-        """Carica i dati salvati."""
+        """Carica le preferenze dell'ultima sessione (OdA, fornitore, date)."""
         config = config_manager.load_config()
         self.refresh_fornitori()
 
@@ -114,7 +124,7 @@ class ScaricaTSPanel(BaseBotPanel):
         self.elabora_ts_check.setChecked(config.get("elabora_ts", False))
 
     def _save_data(self):
-        """Salva i dati correnti."""
+        """Salva i parametri correnti nella configurazione persistente."""
         if not hasattr(self, "params_widget"):
             return
 
@@ -126,13 +136,15 @@ class ScaricaTSPanel(BaseBotPanel):
         config_manager.set_config_value("elabora_ts", self.elabora_ts_check.isChecked())
 
     def _clear_table(self):
-        """Pulisce la tabella."""
+        """Svuota la tabella dei dati OdA previa conferma."""
         if ConfirmationDialog.confirm(self, "Conferma", "Svuotare la tabella?"):
             self.data_table.set_data([])
             self._save_data()
 
     def get_bot_instance(self):
-        """Crea e restituisce un'istanza di ScaricaTSBot."""
+        """
+        Crea e restituisce un'istanza configurata del bot Scarico TS.
+        """
         from src.bots import create_bot
 
         username, password = self.get_credentials()
@@ -151,13 +163,23 @@ class ScaricaTSPanel(BaseBotPanel):
         )
 
     def validate_ready(self) -> tuple[bool, str]:
-        """Verifica che il pannello Scarica TS sia pronto per l'esecuzione."""
+        """
+        Verifica se tutti i campi necessari sono stati compilati correttamente.
+
+        Returns:
+            tuple: (bool successo, str messaggio errore)
+        """
         if not self.data_table.get_data():
             return False, "Nessun dato OdA inserito in tabella."
         return True, ""
 
     def _on_start(self, params_override: dict[str, Any] | None = None):
-        """Avvia il bot."""
+        """
+        Avvia l'esecuzione del bot Scarico TS gestendo il worker e i segnali.
+
+        Args:
+            params_override: Parametri opzionali per sovrascrivere l'UI.
+        """
         # Chiamiamo super senza argomenti (il BaseBotPanel._on_start che abbiamo appena modificato
         # si aspetta params_override ma qui non serve passarglielo, serve solo per il log/stato).
         super()._on_start(params_override)
@@ -205,12 +227,13 @@ class ScaricaTSPanel(BaseBotPanel):
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        self.worker = BotWorker(bot, bot_data, telegram_service=tg_service)
-        self._setup_worker_connections(self.worker)
+        worker = BotWorker(bot, bot_data, telegram_service=tg_service)
+        self.worker = worker
+        self._setup_worker_connections(worker)
 
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
         self.log_widget.append(f"Avvio bot Scarico TS ({fornitore})")
-        self.worker.start()
+        worker.start()
         self.bot_started.emit()

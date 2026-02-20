@@ -130,6 +130,7 @@ async def process_with_ai(service, chat_id, data, is_audio=False):
         return
 
     def run():
+        """Esegue l'interazione con l'AI in un thread separato per non bloccare il bot."""
         try:
             from src.core.lyra_client import LyraClient
 

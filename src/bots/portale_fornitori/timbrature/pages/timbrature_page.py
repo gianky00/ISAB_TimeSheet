@@ -139,7 +139,13 @@ class TimbraturePage:
             return False
 
     def _select_supplier(self, fornitore: str):
-        """Helper to select supplier from dropdown."""
+        """
+        Seleziona il fornitore dal menu a tendina del portale.
+        Implementa logica di retry e click robusto (ActionChains + JS).
+
+        Args:
+            fornitore: Nome del fornitore da selezionare.
+        """
         self.log(f"Seleziono fornitore: {fornitore}")
         try:
             # Ensure overlay is gone before starting interaction
@@ -227,7 +233,12 @@ class TimbraturePage:
             return ""
 
     def _find_excel_button(self):
-        """Tries multiple strategies to find the Excel button."""
+        """
+        Tenta di individuare il pulsante di download Excel utilizzando diverse strategie di localizzazione.
+
+        Returns:
+            WebElement | None: L'elemento del pulsante se trovato, altrimenti None.
+        """
         strategies = [
             TimbratureLocators.DOWNLOAD_BTN_TEXT,
             TimbratureLocators.DOWNLOAD_BTN_ICON,

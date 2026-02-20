@@ -284,11 +284,13 @@ class StartupDialog(QDialog):
         self._fade.start()
 
     def mousePressEvent(self, event):
+        """Inizia il drag della finestra tramite mouse."""
         if event.button() == Qt.MouseButton.LeftButton:
             self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
             event.accept()
 
     def mouseMoveEvent(self, event):
+        """Gestisce il trascinamento della finestra e l'effetto parallasse sulle particelle."""
         if event.buttons() & Qt.MouseButton.LeftButton and self._drag_pos:
             new_pos = event.globalPosition().toPoint() - self._drag_pos
             dx = new_pos.x() - self.pos().x()
@@ -298,6 +300,7 @@ class StartupDialog(QDialog):
             event.accept()
 
     def mouseReleaseEvent(self, event):
+        """Interrompe il drag della finestra."""
         self._drag_pos = None
 
     def _animate_dots(self):
@@ -350,9 +353,11 @@ class StartupDialog(QDialog):
         QTimer.singleShot(400, self.accept)
 
     def get_result(self) -> bool:
+        """Restituisce il risultato dell'inizializzazione dell'app."""
         return self._init_result
 
     def update_status(self, message: str, progress: int):
+        """Metodo pubblico per aggiornare lo stato di caricamento dal worker."""
         self._on_progress(message, progress)
 
     def closeEvent(self, event):

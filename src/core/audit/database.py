@@ -66,9 +66,11 @@ class AuditDatabase:
             conn.commit()
 
     def get_connection(self) -> sqlite3.Connection:
+        """Restituisce una nuova connessione al database dell'Audit."""
         return sqlite3.connect(self.DB_PATH)
 
     def get_last_hash(self) -> str:
+        """Recupera l'hash dell'ultima riga inserita per garantire l'integrità della catena."""
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
@@ -79,7 +81,15 @@ class AuditDatabase:
             return "0" * 64
 
     def insert_log(self, data: tuple[Any, ...]) -> int:
-        """Inserisce un log entry e ritorna l'ID della riga inserita."""
+        """
+        Inserisce un nuovo record di audit.
+
+        Args:
+            data: Tupla contenente i valori per le colonne del log.
+
+        Returns:
+            int: ID della riga inserita.
+        """
         query = """INSERT INTO audit_logs
                    (timestamp, user_id, action, category, entity, params, status, severity,
                     duration_ms, module, error_code, row_hash)
@@ -99,6 +109,21 @@ class AuditDatabase:
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[dict[str, Any]], int]:
+        """
+        Esegue una ricerca filtrata nei log di audit.
+
+        Args:
+            start_date: Data minima.
+            end_date: Data massima.
+            levels: Lista di severità filtrate.
+            category: Categoria specifica.
+            search_text: Testo libero da cercare in più campi.
+            limit: Numero massimo di risultati.
+            offset: Salto per paginazione.
+
+        Returns:
+            tuple: (lista di log come dict, numero totale di match).
+        """
         logs: list[dict[str, Any]] = []
         total = 0
         try:
@@ -147,6 +172,7 @@ class AuditDatabase:
         return logs, total
 
     def get_categories(self) -> list[str]:
+        """Recupera la lista di tutte le categorie distinte presenti nei log."""
         try:
             with self.get_connection() as conn:
                 res = conn.execute("SELECT DISTINCT category FROM audit_logs ORDER BY category")
@@ -155,6 +181,15 @@ class AuditDatabase:
             return []
 
     def delete_older_than(self, cutoff_iso: str) -> int:
+        """
+        Elimina i log più vecchi della data specificata.
+
+        Args:
+            cutoff_iso: Data limite in formato ISO.
+
+        Returns:
+            int: Numero di righe eliminate.
+        """
         try:
             with self.get_connection() as conn:
                 res = conn.execute("DELETE FROM audit_logs WHERE timestamp < ?", (cutoff_iso,))

@@ -46,14 +46,17 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     @staticmethod
     def get_name() -> str:
+        """Restituisce il nome visualizzato del bot."""
         return "Scarico PDL"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
+        """Definisce le colonne richieste per l'input dati del bot."""
         return [{"name": "Numero PDL", "type": "text"}]
 
     @property
     def name(self) -> str:
+        """Restituisce l'ID univoco del bot."""
         return "scarico_pdl"
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
@@ -78,7 +81,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         return True, ""
 
-    def set_progress_callback(self, callback):
+    def set_progress_callback(self, callback: "Callable[[int, bool], None]"):
+        """Imposta la funzione di callback per il monitoraggio del progresso."""
         self.progress_callback = callback
 
     def run(self, data: list[dict[str, Any]]) -> bool:
@@ -427,7 +431,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             btn_tutte.click()
             self.wait.until(EC.element_to_be_clickable((By.ID, "btnAnteprima"))).click()
 
-    def _clean_pdf(self, path: str):
+    def _clean_pdf(self, path: str) -> None:
         """Rimuove la pagina 2 (istruzioni) dal PDF della parte prima."""
         try:
             doc = fitz.open(path)
@@ -474,7 +478,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             return True
         return False
 
-    def _safe_remove(self, path: str | None):
+    def _safe_remove(self, path: str | None) -> None:
+        """Rimuove un file dal filesystem in modo sicuro, ignorando errori se non esiste."""
         if path and Path(path).exists():
             with contextlib.suppress(Exception):
                 Path(path).unlink()

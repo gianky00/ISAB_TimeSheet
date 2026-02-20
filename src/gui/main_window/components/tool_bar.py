@@ -1,3 +1,9 @@
+"""
+SyncroJob - ToolBar Component
+Gestore degli elementi di navigazione e ricerca superiore e laterale.
+Inizializza la sidebar, il banner degli aggiornamenti e la barra di ricerca globale.
+"""
+
 from typing import Any
 
 from PyQt6.QtCore import QObject
@@ -8,7 +14,18 @@ from src.gui.widgets.update_banner import UpdateBanner
 
 
 class ToolBarComponent(QObject):
+    """
+    Coordina la creazione e il posizionamento dei componenti di navigazione principali.
+    Gestisce la comunicazione tra la barra di ricerca globale e il SearchController.
+    """
+
     def __init__(self, main_window: Any) -> None:
+        """
+        Inizializza il componente ToolBar.
+
+        Args:
+            main_window: Riferimento alla MainWindow dell'applicazione.
+        """
         super().__init__(main_window)
         self.main_window = main_window
         self.sidebar: SidebarWidget | None = None
@@ -16,14 +33,29 @@ class ToolBarComponent(QObject):
         self.global_search: QLineEdit | None = None
 
     def setup_sidebar(self, layout: QLayout) -> SidebarWidget:
-        """Creates the sidebar in the main layout (horizontal)."""
+        """
+        Crea e inserisce la sidebar nel layout principale.
+
+        Args:
+            layout: Il layout orizzontale della MainWindow.
+
+        Returns:
+            SidebarWidget: L'istanza creata della sidebar.
+        """
         self.sidebar = SidebarWidget()
-        # Signals will be connected by Controller
         layout.addWidget(self.sidebar)
         return self.sidebar
 
     def setup_content_toolbar(self, layout: QLayout) -> tuple[UpdateBanner, QLineEdit]:
-        """Creates the top toolbar in the content area (vertical layout)."""
+        """
+        Crea la barra superiore nell'area dei contenuti (Banner + Ricerca).
+
+        Args:
+            layout: Il layout verticale dell'area centrale.
+
+        Returns:
+            tuple: (Istanza UpdateBanner, Istanza QLineEdit della ricerca).
+        """
         self.update_banner = UpdateBanner()
         self.update_banner.download_requested.connect(self.main_window._on_download_update_clicked)
         layout.addWidget(self.update_banner)

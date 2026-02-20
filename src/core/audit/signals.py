@@ -11,11 +11,13 @@ class AuditSignals:
 
     @classmethod
     def instance(cls) -> Any:
+        """Restituisce l'istanza singleton del contenitore segnali."""
         if cls._instance is None:
             try:
                 from PyQt6.QtCore import QObject, pyqtSignal
 
                 class _Signals(QObject):
+                    """Contenitore per i segnali basati su Qt."""
                     log_added = pyqtSignal(dict)
                     logs_updated = pyqtSignal()
 
@@ -24,14 +26,19 @@ class AuditSignals:
                 logger.warning("PyQt6 non trovato, segnali Audit disabilitati.")
 
                 class _MockSignals:
+                    """Mock per i segnali in assenza di ambiente GUI."""
                     def emit(self, *args: Any, **kwargs: Any) -> None:
+                        """Simula l'emissione di un segnale."""
                         pass
 
                     class _Signal:
+                        """Simula un singolo segnale Qt."""
                         def connect(self, *args: Any, **kwargs: Any) -> None:
+                            """Simula la connessione di uno slot."""
                             pass
 
                         def emit(self, *args: Any, **kwargs: Any) -> None:
+                            """Simula l'emissione del segnale."""
                             pass
 
                     log_added = _Signal()

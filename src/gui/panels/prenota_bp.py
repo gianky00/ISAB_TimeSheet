@@ -175,8 +175,9 @@ class PrenotaBPPanel(BaseBotPanel):
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        self.worker = BotWorker(bot, bot_data, telegram_service=tg_service)
-        self._setup_worker_connections(self.worker)
+        worker = BotWorker(bot, bot_data, telegram_service=tg_service)
+        self.worker = worker
+        self._setup_worker_connections(worker)
 
         # UI Update
         self._update_status("#0d6efd", "Esecuzione...")
@@ -184,5 +185,5 @@ class PrenotaBPPanel(BaseBotPanel):
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
         self.log_widget.append("Avvio bot Prenota BP...")
-        self.worker.start()
+        worker.start()
         self.bot_started.emit()

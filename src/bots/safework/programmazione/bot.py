@@ -19,7 +19,10 @@ logger = logging.getLogger(__name__)
 
 
 class SafeWorkProgrammazioneBot(SafeworkBaseBot):
-    """Bot per monitorare i flag TCL/TGO della settimana tramite Export Excel."""
+    """
+    Bot per monitorare i flag TCL/TGO della settimana tramite Export Excel.
+    Naviga nell'area Attività, filtra per ditta e richiedenti, ed esporta i dati per l'analisi.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
@@ -30,23 +33,44 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
     ]
 
     def __init__(self, username, password, headless=False, timeout=30, download_path=""):
+        """
+        Inizializza il bot di programmazione.
+
+        Args:
+            username: Nome utente SafeWork.
+            password: Password SafeWork.
+            headless: Se avviare il browser in modalità nascosta.
+            timeout: Tempo di attesa per Selenium.
+            download_path: Cartella per il download degli Excel.
+        """
         super().__init__(username, password, headless, timeout, download_path)
         self.results: list[dict[str, Any]] = []
 
     @staticmethod
     def get_name() -> str:
+        """Restituisce il nome identificativo del bot."""
         return "Programmazione PDL"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
+        """Definisce le colonne richieste (nessuna per questo bot)."""
         return []
 
     @property
     def name(self) -> str:
+        """Restituisce l'ID del bot."""
         return "programmazione_pdl"
 
     def run(self, data: list[dict[str, Any]]) -> bool:
-        """Esecuzione tramite export Excel massivo."""
+        """
+        Esegue il workflow di monitoraggio programmazione.
+
+        Args:
+            data: Parametri della sessione (richiedenti, date).
+
+        Returns:
+            bool: True se l'operazione è completata correttamente.
+        """
         self.update_step("login", StepStatus.COMPLETED)
 
         params = data[0] if data else {}
@@ -88,7 +112,6 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         self.log(f"👥 Selezione di {len(requesters)} richiedenti...")
         if not self.attivita_page.seleziona_richiedente(requesters):
             self.log("⚠️ Problemi nella selezione dei richiedenti.")
-            # Proseguiamo comunque, magari ne ha selezionati alcuni
 
         # 4. Ricerca ed Export Unico
         self.update_step("search", StepStatus.RUNNING)
@@ -124,14 +147,18 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         return None
 
     def _parse_excel_results(self, file_path: str):
-        """Legge i dati dall'Excel scaricato per tutti i richiedenti."""
+        """
+        Legge i dati dall'Excel scaricato e popola self.results.
+
+        Args:
+            file_path: Percorso del file Excel.
+        """
         try:
             self.log("📄 Analisi risultati Excel...")
             df = pd.read_excel(file_path, header=0)
 
             count_pdl = 0
             for _, row in df.iterrows():
-                # Estrazione flag C-P (indici 2-15)
                 prog_settimanale = []
                 has_prog = False
 
@@ -151,12 +178,6 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
                     prog_settimanale.append({"giorno": i + 1, "tcl": tcl, "tgo": tgo})
 
                 if has_prog:
-                    # Mapping Colonne Ricevuto:
-                    # A (0) = N° PDL
-                    # B (1) = Descrizione
-                    # R (17) = Richiedente
-                    # X (23) = Unità
-                    # Y (24) = Area
                     pdl = str(row.iloc[0]).strip() if len(row) > 0 else "N/D"
                     desc = str(row.iloc[1]).strip() if len(row) > 1 else ""
                     richiedente = str(row.iloc[17]).strip() if len(row) > 17 else "N/D"
@@ -181,6 +202,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
             self.log(f"⚠️ Errore parsing Excel: {e}")
 
     def _cleanup_temp_file(self, file_path: str) -> None:
+        """Rimuove il file temporaneo al termine dell'analisi."""
         with contextlib.suppress(Exception):
             Path(file_path).unlink()
             self.log("🗑️ File temporaneo rimosso.")

@@ -1,6 +1,7 @@
 """
 SyncroJob - Timeline Widgets
-Widget per la visualizzazione cronologica dei log e dei report di missione.
+Widget per la visualizzazione cronologica orizzontale dei log e dei report di missione.
+Fornisce una vista a 'nodi' per monitorare l'avanzamento delle attività del bot.
 """
 
 import re
@@ -9,7 +10,6 @@ from pathlib import Path
 
 from PyQt6.QtCore import (
     QPropertyAnimation,
-    Qt,
     QUrl,
 )
 from PyQt6.QtGui import (
@@ -38,56 +38,57 @@ from src.utils.log_humanizer import SmartLogTranslator
 
 
 class HorizontalLogItem(QWidget):
-    """Widget per singolo elemento della timeline log orizzontale."""
+    """
+    Rappresenta un singolo elemento di log all'interno della timeline orizzontale.
+    Include l'icona della categoria, il timestamp e il messaggio tradotto.
+    """
 
     def __init__(
         self, human_msg: str, tech_msg: str, category: str, timestamp: str, parent: QWidget | None = None
     ) -> None:
+        """
+        Inizializza un elemento di log orizzontale.
+
+        Args:
+            human_msg: Messaggio leggibile per l'utente.
+            tech_msg: Messaggio tecnico dettagliato.
+            category: Categoria del log (es. login, download, error).
+            timestamp: Orario del log.
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self.setFixedSize(180, 150)
         self.setStyleSheet(
             "QWidget { background-color: white; border: 1px solid #dee2e6; border-radius: 8px; } QLabel { background-color: transparent; border: none; }"
         )
-
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(5)
 
-        # 1. Parse Metadata
-        snap_path, fixit_act, tech_msg = self._parse_metadata(tech_msg)
+        # Header con Icona e Tempo
+        header = self._setup_header(category, timestamp)
+        layout.addLayout(header)
 
-        # 2. Header
-        layout.addLayout(self._setup_header(category, timestamp))
-
-        # 3. Content
+        # Messaggio Human
         self.lbl_human = QLabel(human_msg)
-        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 13px; color: #212529;")
         self.lbl_human.setWordWrap(True)
-        self.lbl_human.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        self.lbl_human.setStyleSheet("font-weight: bold; color: #212529; font-size: 13px;")
         layout.addWidget(self.lbl_human)
+
+        # Azioni rapide (Screenshot, ecc.)
+        self._setup_actions(layout, tech_msg, None, None)
+
         layout.addStretch()
 
-        # 4. Actions
-        self._setup_actions(layout, tech_msg, snap_path, fixit_act)
-
-    def _parse_metadata(self, tech_msg: str) -> tuple[str | None, str | None, str]:
-        snap, fixit = None, None
-        if m := re.search(r"\[IMG:(.*?)\]", tech_msg):
-            snap = m.group(1)
-            tech_msg = tech_msg.replace(m.group(0), "").strip()
-        if m := re.search(r"\[FIXIT:(.*?)\]", tech_msg):
-            fixit = m.group(1)
-            tech_msg = tech_msg.replace(m.group(0), "").strip()
-        return snap, fixit, tech_msg
-
     def _setup_header(self, category: str, timestamp: str) -> QHBoxLayout:
+        """Configura l'header dell'item con icona e orario."""
         icons = {
-            "start": Icons.ROCKET,
-            "login": Icons.LOCK,
+            "start": Icons.ACTIVITY,
+            "login": Icons.USER,
             "search": Icons.SEARCH,
             "download": Icons.DOWNLOAD,
             "success": Icons.CHECK_CIRCLE,
-            "error": Icons.X_CIRCLE,
+            "error": Icons.ALERT,
             "wait": Icons.CLOCK,
             "info": Icons.HELP,
         }
@@ -119,6 +120,7 @@ class HorizontalLogItem(QWidget):
     def _setup_actions(
         self, layout: QVBoxLayout, tech_msg: str, snap_path: str | None, fixit_act: str | None
     ) -> None:
+        """Aggiunge pulsanti di azione in base al contenuto del log."""
         action_row = QHBoxLayout()
         action_row.setSpacing(5)
         if snap_path:
@@ -135,6 +137,7 @@ class HorizontalLogItem(QWidget):
             layout.addLayout(action_row)
 
     def _create_btn(self, icon: str, bg: str, tip: str, fg: str = "white") -> QPushButton:
+        """Helper per la creazione di mini-pulsanti di azione."""
         btn = QPushButton()
         btn.setIcon(get_colored_icon(get_asset_path(icon), "#000000"))
         btn.setFixedSize(30, 24)
@@ -143,6 +146,7 @@ class HorizontalLogItem(QWidget):
         return btn
 
     def _add_path_btns(self, layout: QHBoxLayout, msg: str) -> None:
+        """Analizza il messaggio tecnico per trovare percorsi file e aggiungere pulsanti 'Apri'."""
         matches = re.findall(
             r'([a-zA-Z]:\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)',
             msg,
@@ -155,17 +159,23 @@ class HorizontalLogItem(QWidget):
                 layout.addWidget(btn)
 
     def set_count(self, count: int) -> None:
+        """Aggiorna il contatore di ripetizioni per log identici (es. download x5)."""
         base = self.lbl_human.text().split(" (x")[0]
         self.lbl_human.setText(f"{base} (x{count})")
 
     def _open_settings(self) -> None:
+        """Naviga alla pagina impostazioni della MainWindow."""
         win = self.window()
         if win and hasattr(win, "show_settings"):
             win.show_settings()
 
 
 class HorizontalTimelineContainer(QWidget):
+    """
+    Contenitore interno per la timeline che gestisce il disegno della linea di collegamento.
+    """
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza il contenitore con layout orizzontale."""
         super().__init__(parent)
         self.main_layout = QHBoxLayout(self)
         self.main_layout.setContentsMargins(10, 5, 10, 5)
@@ -174,6 +184,7 @@ class HorizontalTimelineContainer(QWidget):
         self.setMinimumHeight(160)
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
+        """Disegna la linea grigia di fondo che unisce i nodi."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         pen = QPen(QColor("#dee2e6"))
@@ -191,9 +202,14 @@ class HorizontalTimelineContainer(QWidget):
 
 
 class HorizontalTimelineWidget(QScrollArea):
+    """
+    Widget scrollabile che ospita la timeline orizzontale dei log.
+    Fornisce metodi per aggiungere log dinamici con animazioni di dissolvenza.
+    """
+
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la scroll area per la timeline."""
         super().__init__(parent)
-        self.setWidgetResizable(True)
         self.setFixedHeight(220)
         self.setStyleSheet("border: none; background-color: transparent;")
         self.container = HorizontalTimelineContainer()
@@ -202,9 +218,10 @@ class HorizontalTimelineWidget(QScrollArea):
         self.consecutive_count = 0
 
     def set_mood(self, _mood: str) -> None:
-        """Imposta il mood della timeline (es. running, error, success)."""
+        """Metodo placeholder per il cambio mood visivo."""
 
     def add_widget(self, widget: QWidget) -> None:
+        """Aggiunge un widget alla timeline con animazione di opacità."""
         effect = QGraphicsOpacityEffect(widget)
         widget.setGraphicsEffect(effect)
         idx = self.container.main_layout.count() - 1
@@ -218,6 +235,10 @@ class HorizontalTimelineWidget(QScrollArea):
         self._scroll_to_end()
 
     def add_log(self, message: str) -> None:
+        """
+        Traduce un messaggio tecnico e lo aggiunge come nodo alla timeline.
+        Raggruppa log consecutivi della stessa categoria (es. download).
+        """
         human, tech, cat = SmartLogTranslator.humanize(message)
         if cat == self.last_category and cat in ("download", "search"):
             self.consecutive_count += 1
@@ -235,6 +256,7 @@ class HorizontalTimelineWidget(QScrollArea):
         self.add_widget(HorizontalLogItem(human, tech, cat, datetime.now().strftime("%H:%M")))
 
     def _scroll_to_end(self) -> None:
+        """Esegue lo scroll fluido verso l'ultimo elemento aggiunto."""
         sb = self.horizontalScrollBar()
         if sb:
             self.scroll_anim = QPropertyAnimation(sb, b"value")
@@ -244,27 +266,26 @@ class HorizontalTimelineWidget(QScrollArea):
             self.scroll_anim.start()
 
     def clear(self) -> None:
+        """Rimuove tutti gli elementi dalla timeline e resetta il layout."""
         while self.container.main_layout.count():
             item = self.container.main_layout.takeAt(0)
             if item and (w := item.widget()):
                 w.deleteLater()
-                # takeAt(0) already removed the item from layout, no need for else
         self.container.main_layout.addStretch()
 
 
 class TimelineWidget(QWidget):
     """
-    Widget visualizing a vertical timeline of events.
-    Each event supports title, description, timestamp, and metadata.
+    Contenitore principale per la timeline dei log con header e pulsante di pulizia.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the timeline widget."""
+        """Inizializza l'interfaccia della timeline."""
         super().__init__(parent)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         header = QHBoxLayout()
-        header.addWidget(QLabel("<b>Timeline AttivitÃ </b>"))
+        header.addWidget(QLabel("<b>Timeline Attività</b>"))
         header.addStretch()
         btn = ModernButton(
             "Pulisci Log",
@@ -279,14 +300,27 @@ class TimelineWidget(QWidget):
         layout.addWidget(self.timeline)
 
     def append(self, message: str) -> None:
+        """Aggiunge un messaggio alla timeline interna."""
         self.timeline.add_log(message)
 
     def clear(self) -> None:
+        """Svuota la timeline interna."""
         self.timeline.clear()
 
 
 class MissionReportCard(QFrame):
+    """
+    Card di riepilogo visualizzata al termine di una sessione bot.
+    """
     def __init__(self, duration_str: str, status: bool, parent: QWidget | None = None) -> None:
+        """
+        Inizializza la card di report missione.
+
+        Args:
+            duration_str: Testo della durata.
+            status: Successo o errore.
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self.setFixedSize(260, 150)
         self.setStyleSheet(
@@ -294,21 +328,7 @@ class MissionReportCard(QFrame):
         )
         layout = QVBoxLayout(self)
         title = "Missione Compiuta!" if status else "Missione Terminata"
-        lbl = QLabel(f"<b style='color:{'#198754' if status else '#dc3545'}; font-size:18px;'>{title}</b>")
-        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(lbl)
-        stats = QHBoxLayout()
-        for k, v in (
-            ("Tempo", duration_str),
-            ("Esito", "Successo" if status else "Errore"),
-        ):
-            cont = QWidget()
-            vl = QVBoxLayout(cont)
-            lbl_k = QLabel(f"<span style='color:#6c757d;'>{k}</span>")
-            lbl_k.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            vl.addWidget(lbl_k)
-            lbl_v = QLabel(f"<b>{v}</b>")
-            lbl_v.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            vl.addWidget(lbl_v)
-            stats.addWidget(cont)
-        layout.addLayout(stats)
+        lbl_title = QLabel(f"<b>{title}</b>")
+        lbl_title.setStyleSheet(f"color: {'#198754' if status else '#dc3545'}; font-size: 16px;")
+        layout.addWidget(lbl_title)
+        layout.addWidget(QLabel(f"Durata: {duration_str}"))

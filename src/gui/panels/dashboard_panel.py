@@ -1,3 +1,9 @@
+"""
+SyncroJob - Dashboard Panel
+Pannello di controllo principale (Home) dell'applicazione.
+Organizza le azioni rapide, lo stato dell'Autopilot e il feed delle attività recenti.
+"""
+
 import os
 from contextlib import suppress
 
@@ -20,11 +26,20 @@ from src.gui.widgets.quick_actions import QuickActions
 
 
 class DashboardPanel(QWidget):
-    """Pannello Home con Layout Raffinato."""
+    """
+    Pannello Home con layout raffinato ed elementi interattivi.
+    Fornisce un riepilogo visivo dello stato del sistema e accesso rapido a tutte le funzioni.
+    Include un timer per l'aggiornamento automatico dei dati in tempo reale.
+    """
 
     def __init__(self, parent=None):
+        """
+        Inizializza il pannello dashboard e configura il contenitore principale.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(parent)
-        # Widget members (Strict Typing - Option D)
         self.main_container: QFrame
         self.container_layout: QVBoxLayout
         self.scroll_area: QScrollArea
@@ -51,8 +66,6 @@ class DashboardPanel(QWidget):
         """
         )
 
-        # REMOVED: QGraphicsDropShadowEffect causes QPainter warnings
-
         self.container_layout = QVBoxLayout(self.main_container)
         self.container_layout.setContentsMargins(25, 25, 25, 25)
         self.container_layout.setSpacing(20)
@@ -73,7 +86,6 @@ class DashboardPanel(QWidget):
 
         self.main_layout.addWidget(self.main_container)
 
-        # SubWidgets references
         self.chart = None
 
         self._setup_ui()
@@ -84,11 +96,11 @@ class DashboardPanel(QWidget):
         self.timer.start(30000)  # 30 seconds
 
     def refresh_data(self):
-        """Metodo chiamato esternamente per force-refresh."""
+        """Esegue un aggiornamento forzato di tutti i widget della dashboard."""
         self.refresh_live_data()
 
     def refresh_live_data(self):
-        """Aggiorna i dati senza ricostruire l'intera UI se possibile."""
+        """Aggiorna i dati dinamici dei widget (Feed, Azioni, Autopilot) senza ricostruire la UI."""
         if self.activity_feed:
             self.activity_feed.refresh_feed()
 
@@ -99,6 +111,7 @@ class DashboardPanel(QWidget):
             self.autopilot_widget.refresh_events()
 
     def _setup_ui(self):
+        """Inizializza e posiziona i widget della dashboard nel layout dei contenuti."""
         # 1. Quick Actions Row + Autopilot (Top)
         actions_row = QHBoxLayout()
         actions_row.setSpacing(20)
@@ -115,7 +128,6 @@ class DashboardPanel(QWidget):
 
         self.content_layout.addLayout(actions_row)
 
-        # Space to push the activity feed to the bottom
         self.content_layout.addStretch()
 
         # 2. Activity Feed (Bottom)
@@ -126,17 +138,16 @@ class DashboardPanel(QWidget):
         self.activity_feed = ActivityFeed()
         self.content_layout.addWidget(self.activity_feed)
 
-        # Initial data load
         self.refresh_live_data()
 
     def _navigate_to(self, key):
-        """Naviga alla tab specificata."""
+        """Naviga verso un pannello specifico identificato da una chiave stringa."""
         main_window = self.window()
         if main_window is not None and hasattr(main_window, "navigate_to_panel"):
-            main_window.navigate_to_panel(key)  # dynamic dispatch via hasattr
+            main_window.navigate_to_panel(key)
 
     def _handle_quick_action(self, key):
-        """Gestisce i click delle azioni rapide con navigazione completa."""
+        """Dispatch centralizzato per le azioni rapide cliccate nell'UI."""
         main_window = self.window()
 
         if self._handle_general_commands(key, main_window):
@@ -150,7 +161,7 @@ class DashboardPanel(QWidget):
         self._handle_navigation_fallback(key, main_window)
 
     def _handle_general_commands(self, key, main_window) -> bool:
-        """Gestisce comandi generali (sync, cartelle)."""
+        """Gestisce comandi globali come la sincronizzazione o l'apertura cartelle."""
         if key == "cmd_sync":
             self.refresh_data()
             return True
@@ -160,17 +171,15 @@ class DashboardPanel(QWidget):
             output_dir = BASE_DIR / "output"
             output_dir.mkdir(exist_ok=True)
             if os.name == "nt":
-                os.startfile(output_dir)  # noqa: S606
+                os.startfile(output_dir)
             else:
                 import subprocess
-
                 subprocess.run(["xdg-open", str(output_dir)])
             return True
         return False
 
     def _handle_automation_commands(self, key, main_window) -> bool:
-        """Gestisce navigazione verso automazioni specifiche."""
-        # Mappa chiavi quick actions -> panel keys per navigation_controller
+        """Gestisce la navigazione verso i pannelli di automazione dei bot."""
         automation_map = {
             "nav_dettagli_oda": "dettagli_oda",
             "nav_scarico_ts": "scarico_ts",
@@ -189,12 +198,11 @@ class DashboardPanel(QWidget):
         return False
 
     def _handle_database_commands(self, key, main_window) -> bool:
-        """Gestisce navigazione verso database e notifiche."""
+        """Gestisce la navigazione verso le sezioni database e storici."""
 
         if key == "nav_storico_oda":
             if hasattr(main_window, "_navigate_to"):
                 main_window._navigate_to(10)
-
             return True
 
         if key.startswith("nav_sub_strumentale_"):
@@ -203,7 +211,6 @@ class DashboardPanel(QWidget):
         if key in ("nav_page_2", "nav_lyra_ask"):
             if hasattr(main_window, "_navigate_to"):
                 main_window._navigate_to(2)
-
             return True
 
         if key.startswith("nav_sub_notifiche_"):
@@ -212,7 +219,7 @@ class DashboardPanel(QWidget):
         return False
 
     def _handle_strumentale_subtabs(self, key, main_window) -> bool:
-        """Helper per tab strumentale."""
+        """Helper per la navigazione diretta verso i tab della contabilità strumentale."""
         with suppress(ValueError):
             tab_idx = int(key.split("_")[-1])
 
@@ -223,21 +230,19 @@ class DashboardPanel(QWidget):
                     100,
                     lambda: self._switch_tab_safe(main_window, "contabilita_panel", tab_idx),
                 )
-
         return True
 
     def _handle_notifications_subtabs(self, key, main_window) -> bool:
-        """Helper per tab notifiche."""
+        """Helper per la navigazione verso i tab delle notifiche."""
         with suppress(ValueError):
             tab_idx = int(key.split("_")[-1])
 
             if hasattr(main_window, "_handle_notifications_tab_change"):
                 main_window._handle_notifications_tab_change(tab_idx)
-
         return True
 
     def _handle_settings_commands(self, key, main_window) -> bool:
-        """Gestisce navigazione verso impostazioni."""
+        """Gestisce la navigazione verso specifiche sezioni delle impostazioni."""
         settings_map = {
             "settings_configurazione": 0,
             "settings_backup_cloud": 1,
@@ -256,7 +261,7 @@ class DashboardPanel(QWidget):
         return False
 
     def _handle_navigation_fallback(self, key, main_window):
-        """Gestisce navigazione generica di fallback."""
+        """Gestisce percorsi di navigazione generici o legacy basati su prefissi chiave."""
         if key.startswith("nav_page_"):
             with suppress(ValueError):
                 page_idx = int(key.split("_")[-1])
@@ -268,29 +273,24 @@ class DashboardPanel(QWidget):
             with suppress(ValueError):
                 tab_idx = int(key.split("_")[-1])
                 if hasattr(main_window, "_navigate_to"):
-                    main_window._navigate_to(3)  # Timbrature Page
+                    main_window._navigate_to(3)
                     QTimer.singleShot(
                         100,
                         lambda: self._switch_tab_safe(main_window, "timbrature_db_panel", tab_idx),
                     )
 
         elif key.startswith("nav_sub_automazioni_"):
-            # Automazioni Sub-tabs (legacy)
+            # Automazioni Sub-tabs
             with suppress(ValueError):
                 tab_idx = int(key.split("_")[-1])
                 if hasattr(main_window, "_handle_automation_tab_change"):
                     main_window._handle_automation_tab_change(tab_idx)
 
     def _switch_tab_safe(self, main_window, panel_attr, tab_idx):
-        """Helper to switch tabs on a target panel if it exists."""
+        """Helper per cambiare tab su un pannello bersaglio garantendo l'esistenza dell'attributo."""
         if hasattr(main_window, panel_attr):
             panel = getattr(main_window, panel_attr)
-            # Try common tab names
             if hasattr(panel, "tabs"):
                 panel.tabs.setCurrentIndex(tab_idx)
             elif hasattr(panel, "main_tabs"):
                 panel.main_tabs.setCurrentIndex(tab_idx)
-
-    # Note: nav_scarico_pdl, nav_carico_ts will fall through to nav_ prefix handler
-    # and try to navigate to 'scarico_pdl', 'carico_ts'.
-    # MainWindow must have these registered in panels.py/main_window.py logic.

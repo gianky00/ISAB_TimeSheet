@@ -1,6 +1,6 @@
 """
 SyncroJob - Data Synchronizer
-Gestisce la sincronizzazione dei dati importati con il database.
+Gestisce la sincronizzazione dei dati importati con il database utilizzando tecniche SQL ottimizzate.
 """
 
 from pathlib import Path
@@ -11,11 +11,25 @@ from src.core.excel_importer import ExcelImporter
 
 
 class DataSynchronizer:
-    """Gestore per la sincronizzazione dei dati con il database ottimizzato tramite SQL."""
+    """
+    Gestore per la sincronizzazione dei dati con il database ottimizzato tramite SQL.
+    Utilizza tabelle temporanee e operazioni di set (EXCEPT) per calcolare i diff in modo performante.
+    """
 
     @staticmethod
     def _validate_identifier(name: str) -> str:
-        """Valida che un identificatore SQL (tabella o colonna) sia sicuro."""
+        """
+        Valida che un identificatore SQL (tabella o colonna) sia sicuro per prevenire SQL Injection.
+
+        Args:
+            name: Il nome dell'identificatore da validare.
+
+        Returns:
+            str: Il nome validato.
+
+        Raises:
+            ValueError: Se l'identificatore contiene caratteri non validi.
+        """
         import re
 
         if not re.match(r"^[a-zA-Z0-9_]+$", name):
@@ -24,7 +38,14 @@ class DataSynchronizer:
 
     @classmethod
     def _create_temp_table(cls, cursor: Any, table_name: str, columns: list[str]) -> None:
-        """Crea una tabella temporanea validata."""
+        """
+        Crea una tabella temporanea validata nel database corrente.
+
+        Args:
+            cursor: Cursore del database SQLite.
+            table_name: Nome della tabella base (verrà prefissato con temp_).
+            columns: Lista dei nomi delle colonne.
+        """
         safe_name = cls._validate_identifier(table_name)
         cursor.execute(f"DROP TABLE IF EXISTS temp_{safe_name}")  # nosec B608
         cols_def = ", ".join([f'"{cls._validate_identifier(c)}" TEXT' for c in columns])
@@ -34,7 +55,18 @@ class DataSynchronizer:
     def _get_diff_count(
         cls, cursor: Any, table_name: str, columns: list[str], year: int | None = None
     ) -> tuple[int, int]:
-        """Calcola record aggiunti e rimossi tramite EXCEPT SQL."""
+        """
+        Calcola record aggiunti e rimossi confrontando la tabella principale con quella temporanea.
+
+        Args:
+            cursor: Cursore del database.
+            table_name: Nome della tabella da confrontare.
+            columns: Lista delle colonne da includere nel confronto.
+            year: Anno opzionale per filtrare i dati.
+
+        Returns:
+            tuple: (numero record aggiunti, numero record rimossi).
+        """
         safe_table = cls._validate_identifier(table_name)
         safe_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in columns])
         safe_cast_cols = ", ".join([f'CAST("{cls._validate_identifier(c)}" AS TEXT)' for c in columns])
@@ -56,7 +88,15 @@ class DataSynchronizer:
 
     @classmethod
     def _replace_data(cls, cursor: Any, table_name: str, columns: list[str], year: int | None = None) -> None:
-        """Esegue la sostituzione atomica dei dati."""
+        """
+        Esegue la sostituzione atomica dei dati nella tabella principale con quelli in temporanea.
+
+        Args:
+            cursor: Cursore del database.
+            table_name: Nome della tabella di destinazione.
+            columns: Colonne da copiare.
+            year: Anno opzionale per limitare la sostituzione.
+        """
         safe_table = cls._validate_identifier(table_name)
         safe_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in columns])
 
@@ -73,6 +113,17 @@ class DataSynchronizer:
     def sync_contabilita_dati(
         cls, db_path: Path, imported_data: list[tuple[Any, ...]], imported_years: list[int]
     ) -> tuple[int, int]:
+        """
+        Sincronizza i dati di contabilità nel database.
+
+        Args:
+            db_path: Percorso del file database.
+            imported_data: Lista di tuple contenenti i dati.
+            imported_years: Lista degli anni coinvolti.
+
+        Returns:
+            tuple: (totale aggiunti, totale rimossi).
+        """
         if not imported_data:
             return 0, 0
 
@@ -106,6 +157,17 @@ class DataSynchronizer:
     def sync_giornaliere(
         cls, db_path: Path, all_new_rows: list[tuple[Any, ...]], years_to_clear: list[int]
     ) -> tuple[int, int]:
+        """
+        Sincronizza i dati giornalieri nel database.
+
+        Args:
+            db_path: Percorso del database.
+            all_new_rows: Nuovi record da inserire.
+            years_to_clear: Anni da pulire prima del caricamento.
+
+        Returns:
+            tuple: (aggiunti, rimossi).
+        """
         if not all_new_rows and not years_to_clear:
             return 0, 0
 
@@ -153,6 +215,13 @@ class DataSynchronizer:
         """
         Sincronizzazione per Attività Programmate.
         Usa DELETE ALL + INSERT per evitare duplicati (sostituzione completa).
+
+        Args:
+            db_path: Percorso database.
+            rows_to_insert: Righe da inserire.
+
+        Returns:
+            tuple: (aggiunti, rimossi).
         """
         db_cols = [*list(ExcelImporter.ATTIVITA_PROGRAMMATE_MAPPING.values()), "styles"]
 
@@ -172,6 +241,7 @@ class DataSynchronizer:
 
                 # Clean values
                 def clean_value(x):
+                    """Pulisce il valore rimuovendo spazi bianchi e gestendo i None."""
                     if x is None:
                         return ""
                     if isinstance(x, (int, float)):
@@ -198,6 +268,13 @@ class DataSynchronizer:
         """
         Sincronizzazione ULTRA-OTTIMIZZATA per Scarico Ore (130k+ righe).
         Usa aggressive PRAGMA + batch insert + DELETE ALL per massime prestazioni.
+
+        Args:
+            db_path: Percorso database.
+            rows_to_insert: Migliaia di righe da sincronizzare.
+
+        Returns:
+            tuple: (aggiunti approssimativi, rimossi approssimativi).
         """
         with db_manager.get_connection(db_path) as conn:
             cursor = conn.cursor()
@@ -240,6 +317,16 @@ class DataSynchronizer:
     def sync_certificati_campione(
         cls, db_path: Path, rows_to_insert: list[tuple[Any, ...]]
     ) -> tuple[int, int]:
+        """
+        Sincronizza i certificati campione.
+
+        Args:
+            db_path: Percorso DB.
+            rows_to_insert: Righe da inserire.
+
+        Returns:
+            tuple: (aggiunti, rimossi).
+        """
         return cls._sync_upsert_smart(
             db_path,
             "certificati_campione",
@@ -249,7 +336,16 @@ class DataSynchronizer:
 
     @classmethod
     def sync_storico_oda(cls, db_path: Path, rows_to_insert: list[tuple[Any, ...]]) -> tuple[int, int]:
-        """Sincronizza i dati Storico OdA in modalità Upsert con calcolo diff intelligente."""
+        """
+        Sincronizza i dati Storico OdA in modalità Upsert con calcolo diff intelligente.
+
+        Args:
+            db_path: Percorso DB.
+            rows_to_insert: Dati OdA importati.
+
+        Returns:
+            tuple: (aggiunti o aggiornati, rimossi).
+        """
         return cls._sync_upsert_smart(
             db_path,
             "storico_oda",
@@ -264,6 +360,15 @@ class DataSynchronizer:
         """
         Esegue Upsert (Insert or Replace) calcolando esattamente le righe modificate o aggiunte.
         Usa una tabella temporanea e EXCEPT per confrontare i contenuti.
+
+        Args:
+            db_path: Percorso database.
+            table_name: Nome della tabella.
+            columns: Elenco colonne.
+            new_data: Dati da inserire.
+
+        Returns:
+            tuple: (modificati/aggiunti, rimossi).
         """
         if not new_data:
             return 0, 0
@@ -289,18 +394,12 @@ class DataSynchronizer:
 
             data = [tuple(clean_value(x) for x in r) for r in new_data]
 
-            # Inserimento in temp (tutto come TEXT/affinity dinamica se non specificato in create_temp)
-            # Nota: create_temp_table definisce le colonne come TEXT.
-            # I valori inseriti verranno convertiti in TEXT da SQLite se necessario.
             cursor.executemany(
                 f"INSERT INTO temp_{safe_table} VALUES ({placeholders})",  # nosec B608
                 data,
             )
 
             # 2. Calcola Diff (Righe in Temp che sono diverse da Main)
-            # EXCEPT restituisce le righe di Temp che non trovano corrispondenza in Main
-            # (confronto colonna per colonna).
-            # Main viene castata a TEXT per confrontarsi con Temp (che è TEXT).
             q_diff = f"""
                 SELECT COUNT(*) FROM (
                     SELECT {safe_cols} FROM temp_{safe_table}
@@ -313,8 +412,6 @@ class DataSynchronizer:
             added_or_updated = cursor.fetchone()[0]
 
             # 3. Upsert effettivo
-            # Copiamo da Temp a Main
-            # INSERT OR REPLACE into main SELECT * FROM temp
             q_upsert = (
                 f"INSERT OR REPLACE INTO {safe_table} ({safe_cols}) SELECT {safe_cols} FROM temp_{safe_table}"  # nosec B608
             )

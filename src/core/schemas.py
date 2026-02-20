@@ -14,6 +14,7 @@ class DipendenteSchema(pa.DataFrameModel):
     Data_assunzione: Series[pd.Timestamp] = pa.Field(coerce=True)
 
     class Config:
+        """Configurazione per la validazione dello schema."""
         strict = False
         coerce = True
 
@@ -33,6 +34,7 @@ class GiornaliereSchema(pa.DataFrameModel):
     n_prev: Series[str] = pa.Field(coerce=True, nullable=True)
 
     class Config:
+        """Configurazione per la validazione dello schema."""
         coerce = True
         strict = False
 
@@ -56,6 +58,7 @@ class ContabilitaSchema(pa.DataFrameModel):
     nome_file: Series[str] = pa.Field(nullable=True)
 
     class Config:
+        """Configurazione per la validazione dello schema."""
         coerce = True
         strict = False
 

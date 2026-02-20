@@ -20,7 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 class SafeWorkPDLSearchBot(SafeworkBaseBot):
-    """Bot per la ricerca massiva ed esportazione Excel dei PDL da SafeWork."""
+    """
+    Bot per la ricerca massiva ed esportazione Excel dei PDL da SafeWork.
+    Permette di filtrare i permessi per sito e stato, importandoli nel database locale.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
@@ -31,23 +34,44 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
     ]
 
     def __init__(self, username, password, headless=False, timeout=30, download_path=""):
+        """
+        Inizializza il bot di ricerca PDL.
+
+        Args:
+            username: Nome utente SafeWork.
+            password: Password SafeWork.
+            headless: Se avviare il browser in modalità nascosta.
+            timeout: Tempo di attesa per Selenium.
+            download_path: Cartella per il download degli Excel.
+        """
         super().__init__(username, password, headless, timeout, download_path)
         self.sites = ["IGCC", "ISAB Nord", "ISAB Sud"]
 
     @staticmethod
     def get_name() -> str:
+        """Restituisce il nome identificativo del bot."""
         return "Ricerca PDL"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
+        """Definisce le colonne richieste (nessuna per questo bot)."""
         return []
 
     @property
     def name(self) -> str:
+        """Restituisce l'ID del bot."""
         return "ricerca_pdl"
 
     def run(self, data: list[dict[str, Any]]) -> bool:
-        """Esegue la ricerca e l'esportazione dei PDL delegando alle Page Objects."""
+        """
+        Esegue la pipeline di ricerca ed esportazione dei PDL.
+
+        Args:
+            data: Parametri di ricerca (escludi chiusi, siti).
+
+        Returns:
+            bool: True se l'operazione è completata correttamente.
+        """
         self.update_step("login", StepStatus.COMPLETED)
 
         if not self.driver or not self.wait:
@@ -91,6 +115,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         return True
 
     def _naviga_a_ricerca(self) -> bool:
+        """Gestisce la navigazione dalla Home alla pagina di ricerca PDL."""
         if not self.wait:
             self.log("❌ Wait non inizializzato.")
             return False
@@ -108,6 +133,15 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             return False
 
     def _esegui_export(self, site_name: str) -> str | None:
+        """
+        Avvia l'esportazione Excel dei risultati e attende il file.
+
+        Args:
+            site_name: Nome del sito processato.
+
+        Returns:
+            str | None: Percorso del file scaricato o None.
+        """
         from src.bots.base.wait_helpers import poll_for_new_file
 
         files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*") if f.is_file()}
@@ -125,6 +159,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         return None
 
     def _cleanup_temp_file(self, file_path: str) -> None:
+        """Rimuove il file Excel temporaneo scaricato."""
         try:
             Path(file_path).unlink()
             self.log(f"🗑️ File temporaneo rimosso: {Path(file_path).name}")
@@ -132,15 +167,17 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             logger.debug(f"Impossibile rimuovere il file temporaneo: {file_path}")
 
     def _import_to_db(self, file_path: str):
-        """Importazione massiva in SQLite con mapping normalizzato."""
+        """
+        Importazione massiva dei dati PDL dall'Excel nel database SQLite.
+
+        Args:
+            file_path: Percorso del file Excel.
+        """
         try:
             self.log("🗄️ Importazione in database...")
             start_time = time.time()
             df = pd.read_excel(file_path)
 
-            # Nota: Ho usato nomi inglesi per le colonne per coerenza interna se necessario,
-            # ma dovrei verificare src/core/database/migrations/pdl.py
-            # Per ora manteniamo il mapping originale visto in precedenza
             mapping_ita = {
                 "N° PDL": "n_pdl",
                 "DATA CREAZIONE": "data_creazione",

@@ -91,6 +91,12 @@ class MultiSelectDialog(QDialog):
                 item.setCheckState(state)
 
     def get_selected(self) -> list[str]:
+        """
+        Recupera la lista delle stringhe attualmente selezionate (checked).
+
+        Returns:
+            list[str]: Lista di testi degli elementi selezionati.
+        """
         selected = []
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
@@ -123,12 +129,24 @@ class MultiSelectFilter(QWidget):
         layout.addWidget(self.btn_select)
 
     def set_items(self, items: list[str]):
+        """
+        Imposta i possibili elementi selezionabili nel filtro.
+
+        Args:
+            items: Lista di stringhe.
+        """
         self.items = items
         # Rimuovi selezionati non più presenti
         self.selected = [s for s in self.selected if s in items]
         self._update_button_text()
 
     def set_selected(self, selected: list[str]):
+        """
+        Imposta gli elementi attualmente selezionati.
+
+        Args:
+            selected: Lista di stringhe selezionate.
+        """
         self.selected = selected
         self._update_button_text()
 

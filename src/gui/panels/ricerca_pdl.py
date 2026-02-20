@@ -28,6 +28,12 @@ class RicercaPDLPanel(BaseBotPanel):
     data_updated = pyqtSignal()
 
     def __init__(self, parent=None):
+        """
+        Inizializza il pannello Ricerca PDL.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(
             bot_id="ricerca_pdl",
             bot_name="Ricerca PDL",
@@ -38,10 +44,12 @@ class RicercaPDLPanel(BaseBotPanel):
         QTimer.singleShot(10, self._load_saved_data)
 
     def get_bot_class(self):
+        """Restituisce la classe SafeWorkPDLSearchBot associata."""
         from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
         return SafeWorkPDLSearchBot
 
     def _setup_content(self):
+        """Inizializza e posiziona i componenti UI di filtraggio e ricerca."""
         params_group = QGroupBox("Parametri di Ricerca")
         params_layout = QVBoxLayout(params_group)
         params_layout.setSpacing(15)
@@ -72,16 +80,19 @@ class RicercaPDLPanel(BaseBotPanel):
         self.content_layout.addStretch()
 
     def _load_saved_data(self):
+        """Carica le ultime impostazioni di ricerca salvate."""
         config = config_manager.load_config()
         self.exclude_closed_check.setChecked(config.get("pdl_search_exclude_closed", True))
         saved_site = config.get("pdl_search_site", "Seleziona tutto")
         self.site_combo.setCurrentText(saved_site)
 
     def _save_data(self):
+        """Salva i filtri di ricerca correnti nella configurazione."""
         config_manager.set_config_value("pdl_search_exclude_closed", self.exclude_closed_check.isChecked())
         config_manager.set_config_value("pdl_search_site", self.site_combo.currentText())
 
     def get_bot_instance(self):
+        """Crea e restituisce un'istanza configurata del bot Ricerca PDL."""
         from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
 
         username, password = self.get_credentials()
@@ -96,7 +107,7 @@ class RicercaPDLPanel(BaseBotPanel):
         )
 
     def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
-        """Avvia il bot Ricerca PDL."""
+        """Avvia l'esecuzione del bot Ricerca PDL configurando worker e segnali."""
         super()._on_start(params_override)
         username, password = self.get_credentials()
 
@@ -127,18 +138,19 @@ class RicercaPDLPanel(BaseBotPanel):
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        self.worker = BotWorker(bot, [bot_data], telegram_service=tg_service)
-        self._setup_worker_connections(self.worker)
+        worker = BotWorker(bot, [bot_data], telegram_service=tg_service)
+        self.worker = worker
+        self._setup_worker_connections(worker)
 
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
         self.log_widget.append("Avvio Ricerca PDL SafeWork...")
-        self.worker.start()
+        worker.start()
         self.bot_started.emit()
 
     def get_credentials(self) -> tuple[str, str]:
-        """Override: Recupera credenziali SafeWork."""
+        """Recupera le credenziali SafeWork configurate."""
         # Prende il default da safework_accounts
         accounts = config_manager.load_config().get("safework_accounts", [])
         if not accounts:
@@ -149,6 +161,7 @@ class RicercaPDLPanel(BaseBotPanel):
         return default_acc.get("username", ""), default_acc.get("password", "")
 
     def _on_worker_finished(self, success: bool):
+        """Emette il segnale data_updated al termine dell'operazione."""
         super()._on_worker_finished(success)
         if success:
             self.data_updated.emit()

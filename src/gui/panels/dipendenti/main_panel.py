@@ -1,3 +1,9 @@
+"""
+SyncroJob - Employees Main Panel
+Pannello principale per la gestione del personale che orchestra i tab di monitoraggio e configurazione.
+Funge da punto di ingresso unico per tutte le funzionalità relative ai dipendenti.
+"""
+
 import logging
 
 from PyQt6.QtWidgets import QTabWidget, QVBoxLayout, QWidget
@@ -12,15 +18,24 @@ logger = logging.getLogger(__name__)
 
 class DipendentiPanel(QWidget):
     """
-    Pannello principale Dipendenti.
-    Facade che orchestra i sotto-pannelli (Tabs).
+    Pannello principale Dipendenti (Facade).
+    Coordina i sotto-pannelli organizzati in tab:
+    - Monitoraggio: Analisi abilitazioni e accessi.
+    - Configurazione: Gestione anagrafica (CRUD).
     """
 
     def __init__(self, parent=None):
+        """
+        Inizializza il pannello dipendenti e configura l'interfaccia a tab.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self._setup_ui()
 
     def _setup_ui(self):
+        """Configura il layout principale e inizializza i widget dei tab."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
@@ -28,7 +43,7 @@ class DipendentiPanel(QWidget):
         self.tabs = QTabWidget()
         self.tabs.setProperty("class", "Level2Tabs")  # Stile Tab secondari
 
-        # Tab 1: Monitoraggio (Vecchia interfaccia)
+        # Tab 1: Monitoraggio
         self.anagrafica_page = AnagraficaPage()
         self.tabs.addTab(
             self.anagrafica_page,
@@ -36,7 +51,7 @@ class DipendentiPanel(QWidget):
             "Monitoraggio",
         )
 
-        # Tab 2: Configurazione (Nuova interfaccia CRUD)
+        # Tab 2: Configurazione
         self.manager_page = DipendentiManagerPanel()
         self.tabs.addTab(
             self.manager_page,
@@ -44,19 +59,18 @@ class DipendentiPanel(QWidget):
             "Configurazione",
         )
 
-        # AGGIORNAMENTO AUTOMATICO TRA TAB
+        # Sincronizzazione dati tra tab
         self.manager_page.data_changed.connect(self.anagrafica_page.refresh_data)
 
         main_layout.addWidget(self.tabs)
 
     def refresh_data(self):
-        """Metodo pubblico chiamato dal controller per aggiornare i dati."""
+        """
+        Aggiorna i dati del pannello.
+        Metodo pubblico chiamato dal NavigationController o in risposta ad eventi globali.
+        Innesca il refresh sul widget del tab attualmente attivo.
+        """
         # Aggiorna il tab attivo
         current = self.tabs.currentWidget()
         if current and hasattr(current, "refresh_data"):
             current.refresh_data()
-
-        # Opzionale: aggiorna anche l'altro in background se necessario
-        if current == self.anagrafica_page and hasattr(self.manager_page, "refresh_data"):
-            # Non forziamo il refresh grafico se non visibile, ma magari ricarica dati
-            pass

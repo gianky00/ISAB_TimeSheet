@@ -6,6 +6,7 @@ from typing import Any
 
 
 def normalize_name(text: Any) -> str:
+    """Normalizza una stringa rimuovendo spazi multipli e convertendola in maiuscolo."""
     if not text:
         return ""
     return re.sub(r"\s+", " ", str(text).strip().upper())
@@ -14,11 +15,21 @@ def normalize_name(text: Any) -> str:
 def build_timbrature_maps(
     accessi: list[tuple[str, str, str, str]],
 ) -> tuple[dict[str, int], dict[tuple[str, str], int], Callable[[Any], str]]:
+    """
+    Costruisce mappe di lookup per le timbrature indicizzate per CF e per Nome/Cognome.
+
+    Args:
+        accessi: Lista di tuple (cognome, nome, cf, data_ora).
+
+    Returns:
+        tuple: (mappa_cf, mappa_nomi, funzione_normalize).
+    """
     today = datetime.now(UTC)
     last_by_cf: dict[str, int] = {}
     last_by_name: dict[tuple[str, str], int] = {}
 
     def normalize(t: Any) -> str:
+        """Funzione locale di normalizzazione rapida."""
         return normalize_name(t)
 
     for cog, nom, cf, d_str in accessi:
@@ -68,6 +79,7 @@ def compute_employee_status(
 
 
 def format_db_date(date_str: str | None) -> str:
+    """Formatta una data proveniente dal database in formato leggibile DD/MM/YYYY HH:MM:SS."""
     if not date_str or date_str == "None":
         return "-"
     try:

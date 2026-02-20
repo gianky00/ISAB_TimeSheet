@@ -22,6 +22,7 @@ class FilterHeaderView(QHeaderView):
         self.setHighlightSections(True)
 
     def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:
+        """Gestisce il rilascio del mouse per mostrare il menu di filtro sulla colonna cliccata."""
         if event is not None:
             idx = self.logicalIndexAt(event.pos())
             if idx >= 0:

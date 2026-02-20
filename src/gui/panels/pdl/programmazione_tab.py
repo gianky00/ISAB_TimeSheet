@@ -581,8 +581,8 @@ class ProgrammazioneTab(QWidget):
         if self.last_results:
             self._update_table(self.last_results)
 
-    def _deselect_other_tables(self):
-        """Deseleziona tutte le tabelle tranne quella che ha emesso il segnale."""
+    def _deselect_other_tables(self) -> None:
+        """Deseleziona tutte le tabelle tranne quella che ha emesso il segnale per garantire selezione univoca."""
         sender_table = self.sender()
         for t in self.tables:
             if t is not sender_table:

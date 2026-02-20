@@ -14,6 +14,18 @@ class KPICardsRow(QWidget):
         self.cards: list[KPIBigCard] = []
 
     def add_card(self, title: str, value: str, color: str, subtitle: str | None = None) -> KPIBigCard:
+        """
+        Crea e aggiunge una nuova card KPI alla riga.
+
+        Args:
+            title: Titolo della card.
+            value: Valore visualizzato.
+            color: Colore dell'indicatore.
+            subtitle: Sottotitolo opzionale.
+
+        Returns:
+            KPIBigCard: L'istanza della card creata.
+        """
         card = KPIBigCard(title, value, color, subtitle=subtitle)
         self.main_layout.addWidget(card)
         self.cards.append(card)

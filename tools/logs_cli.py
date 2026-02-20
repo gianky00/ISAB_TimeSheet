@@ -34,8 +34,14 @@ def format_timestamp(ts: str) -> str:
         return ts
 
 
-def print_log_entry(entry: dict[str, Any], verbose: bool = False):
-    """Stampa una singola entry di log formattata."""
+def print_log_entry(entry: dict[str, Any], verbose: bool = False) -> None:
+    """
+    Stampa una singola entry di log formattata con colori ANSI.
+
+    Args:
+        entry: Dizionario dei dati del log.
+        verbose: Se True, stampa anche contesto e metadati.
+    """
     ts = format_timestamp(entry.get("timestamp", ""))
     level = entry.get("level", "INFO")
     message = entry.get("message", "")

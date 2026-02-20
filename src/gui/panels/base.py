@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 from src.core import config_manager
 from src.core.audit_manager import AuditManager
 from src.core.constants import Icons
+from src.core.logging import get_logger
 from src.core.stats_manager import StatsManager
 from src.gui.components.activity_timeline import ActivityTimelineWidget
 from src.gui.components.terminal_log import TerminalLogWidget
@@ -130,7 +131,9 @@ class BaseBotPanel(QWidget):
         self.bot_id = bot_id
         self.bot_name = bot_name
         self.bot_description = bot_description
+        self._logger = get_logger(f"gui.panel.{bot_id}")
 
+        self.worker: BotWorker | None = None
         self.start_time: datetime | None = None
         self._setup_ui()
         self._connect_signals()
@@ -141,14 +144,13 @@ class BaseBotPanel(QWidget):
 
     def get_bot_class(self):
         """Restituisce la classe del bot associata al pannello. Da implementare nelle sottoclassi."""
-        return None
 
     def _init_ghost_timeline(self):
         """Inizializza gli step della timeline utilizzando i metadati della classe del bot."""
         try:
             # 1. Tenta di ottenere la classe direttamente dal pannello (Più robusto)
             bot_class = self.get_bot_class()
-            
+
             # 2. Fallback al registro se la classe non è fornita
             if not bot_class:
                 from src.bots import BOT_REGISTRY
@@ -369,8 +371,10 @@ class BaseBotPanel(QWidget):
 
     def _handle_worker_completion_signals(self, success: bool):
         """Invia segnali e gestisce risultati per Telegram."""
-        if self.worker and hasattr(self.worker.bot, "downloaded_files") and self.worker.bot.downloaded_files:
-            self.bot_results_ready.emit(self.bot_id, self.worker.bot.downloaded_files)
+        if self.worker and hasattr(self.worker.bot, "downloaded_files"):
+            files = getattr(self.worker.bot, "downloaded_files", [])
+            if files:
+                self.bot_results_ready.emit(self.bot_id, files)
         self.bot_finished.emit(success)
 
     def _notify_completion(self, success: bool):

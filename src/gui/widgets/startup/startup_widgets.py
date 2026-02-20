@@ -36,12 +36,14 @@ class AnimatedBorder(QWidget):
         self.timer.start(16)
 
     def _tick(self) -> None:
+        """Aggiorna la fase dell'animazione."""
         self.phase += 0.018
         if self.phase > math.pi * 2:
             self.phase -= math.pi * 2
         self.update()
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
+        """Disegna il bordo con effetti glow e conici."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         w, h = self.width(), self.height()
@@ -94,6 +96,7 @@ class AnimatedBorder(QWidget):
         painter.end()
 
     def _draw_light_points(self, painter: QPainter, w: int, h: int, r: int) -> None:
+        """Disegna i punti luce che scorrono sul bordo."""
         t = self.phase
         cx, cy = w / 2.0, h / 2.0
         a, b = (w / 2.0) - 6.0, (h / 2.0) - 6.0
@@ -123,6 +126,7 @@ class GlowingProgressBar(QWidget):
     """Progress bar con glow e shimmer."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la barra di progresso luminosa."""
         super().__init__(parent)
         self._value = 0
         self._display_value = 0.0
@@ -143,9 +147,16 @@ class GlowingProgressBar(QWidget):
         self.update()
 
     def setValue(self, val: int) -> None:
+        """
+        Imposta il valore del progresso (0-100).
+
+        Args:
+            val: Valore intero del progresso.
+        """
         self._value = max(0, min(100, val))
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
+        """Disegna la barra di progresso con effetto gradiente e shimmer."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         w, h = self.width(), self.height()
@@ -180,6 +191,7 @@ class PulsingLogo(QWidget):
     """Logo con effetto pulsante e glow."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza il widget del logo pulsante."""
         super().__init__(parent)
         self.pixmap: QPixmap | None = None
         self.phase = 0.0
@@ -188,6 +200,7 @@ class PulsingLogo(QWidget):
         self.timer.start(16)
 
     def set_pixmap(self, pm: QPixmap) -> None:
+        """Imposta l'immagine del logo."""
         self.pixmap = pm
         self.update()
 
@@ -196,6 +209,7 @@ class PulsingLogo(QWidget):
         self.update()
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
+        """Disegna il logo con effetti di scala e glow."""
         if not self.pixmap:
             return
         painter = QPainter(self)
@@ -228,22 +242,37 @@ class TypewriterLabel(QLabel):
     """Label con effetto typewriter fluido."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza la label typewriter."""
         super().__init__(parent)
         self._target, self._current, self._index = "", "", 0
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._type)
 
     def set_text_animated(self, text: str, speed: int = 20) -> None:
+        """
+        Imposta il testo con un'animazione di digitazione.
+
+        Args:
+            text: Testo da visualizzare.
+            speed: Velocità di digitazione in ms.
+        """
         self._target, self._current, self._index = text, "", 0
         self._timer.start(speed)
 
     def set_text_instant(self, text: str) -> None:
+        """
+        Imposta il testo istantaneamente senza animazione.
+
+        Args:
+            text: Testo da visualizzare.
+        """
         self._timer.stop()
         self._target = self._current = text
         self._index = len(text)
         self.setText(text)
 
     def _type(self) -> None:
+        """Slot del timer che aggiunge un carattere alla volta."""
         if self._index < len(self._target):
             self._index += 1
             self._current = self._target[: self._index]
