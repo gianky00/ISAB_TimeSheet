@@ -4,8 +4,8 @@ Tabella dati con sorting, filtering e row styling, basata su ExcelTableWidget.
 
 from typing import Any, ClassVar
 
-from PyQt6.QtCore import QModelIndex, Qt, pyqtSignal
-from PyQt6.QtGui import QBrush, QColor
+from PyQt6.QtCore import QModelIndex, Qt, pyqtSignal, QPropertyAnimation, pyqtProperty, QEasingCurve
+from PyQt6.QtGui import QBrush, QColor, QPainter, QPen
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
@@ -26,6 +26,53 @@ from ..design.spacing import Spacing
 
 # Use explicit import from new modular widget to avoid circular dependency
 from .excel_table import ExcelTableWidget
+
+class HoverPulseFrame(QFrame):
+    """
+    Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
+    """
+    def __init__(self, accent_color: str = "#212121", parent=None):
+        super().__init__(parent)
+        self._accent_color = QColor(accent_color)
+        self._pulse_val = 1.0
+        
+        self._anim = QPropertyAnimation(self, b"pulse_value")
+        self._anim.setDuration(1500)
+        self._anim.setStartValue(0.4)
+        self._anim.setEndValue(1.0)
+        self._anim.setLoopCount(-1)
+        self._anim.setEasingCurve(QEasingCurve.Type.InOutSine)
+
+    @pyqtProperty(float)
+    def pulse_value(self):
+        return self._pulse_val
+
+    @pulse_value.setter
+    def pulse_value(self, v):
+        self._pulse_val = v
+        self.update()
+
+    def enterEvent(self, event):
+        self._anim.start()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self._anim.stop()
+        self.pulse_value = 1.0
+        super().leaveEvent(event)
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        alpha = int(100 + (self._pulse_val * 155))
+        pen = QPen(QColor(self._accent_color.red(), self._accent_color.green(), self._accent_color.blue(), alpha))
+        pen.setWidth(3)
+        painter.setPen(pen)
+        
+        rect = self.rect()
+        painter.drawLine(12, rect.height() - 2, rect.width() - 12, rect.height() - 2)
 
 
 class DataTable(QWidget):
@@ -105,14 +152,14 @@ class DataTable(QWidget):
 
         layout.addLayout(toolbar)
 
-        # --- CONTAINER PRINCIPALE (Card con ombra e neon cyan) ---
-        self.container = QFrame()
+        # --- CONTAINER PRINCIPALE (Card con ombra e accento scuro pulsante) ---
+        self.container = HoverPulseFrame("#212121")
         self.container.setObjectName("tableContainer")
         self.container.setStyleSheet("""
             QFrame#tableContainer {
                 background-color: #ffffff;
                 border: 1px solid #e0e0e0;
-                border-bottom: 3px solid #212121; /* Dark Accent */
+                /* border-bottom rimosso perché gestito da HoverPulseFrame */
                 border-radius: 12px;
             }
             QTableWidget {

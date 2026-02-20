@@ -250,7 +250,18 @@ class TimelineWidget(QWidget):
         self.pulse_anim.setEndValue(1.0)
         self.pulse_anim.setLoopCount(-1)
         self.pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
+        # Non avviamo più in automatico: self.pulse_anim.start()
+
+    def enterEvent(self, event):
+        """Avvia la pulsazione del bordo al passaggio del mouse."""
         self.pulse_anim.start()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        """Ferma la pulsazione e ripristina il bordo solido quando il mouse esce."""
+        self.pulse_anim.stop()
+        self.pulse_value = 1.0
+        super().leaveEvent(event)
 
     @pyqtProperty(float)
     def pulse_value(self) -> float:

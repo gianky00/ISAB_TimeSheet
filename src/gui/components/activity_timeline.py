@@ -96,12 +96,41 @@ class ActivityTimelineWidget(QWidget):
         self.setMinimumHeight(400)
 
     def _setup_animations(self):
-        """Configura le animazioni di pulsazione per gli step attivi."""
+        """Configura le animazioni di pulsazione per gli step attivi e per il bordo in hover."""
         self._pulse_anim.setDuration(1000)
         self._pulse_anim.setStartValue(0.4)
         self._pulse_anim.setEndValue(1.0)
         self._pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
         self._pulse_anim.setLoopCount(-1)
+        
+        # Animazione specifica per il bordo (indipendente dagli step)
+        self._border_pulse_val = 1.0
+        self._border_pulse_anim = QPropertyAnimation(self, b"border_pulse")
+        self._border_pulse_anim.setDuration(1500)
+        self._border_pulse_anim.setStartValue(0.4)
+        self._border_pulse_anim.setEndValue(1.0)
+        self._border_pulse_anim.setLoopCount(-1)
+        self._border_pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
+
+    def enterEvent(self, event):
+        """Avvia la pulsazione del bordo al passaggio del mouse."""
+        self._border_pulse_anim.start()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        """Ferma la pulsazione e ripristina il bordo solido."""
+        self._border_pulse_anim.stop()
+        self.border_pulse = 1.0
+        super().leaveEvent(event)
+
+    def get_border_pulse(self) -> float:
+        return self._border_pulse_val
+
+    def set_border_pulse(self, value: float):
+        self._border_pulse_val = value
+        self.update()
+
+    border_pulse = pyqtProperty(float, fget=get_border_pulse, fset=set_border_pulse)
 
     def _tick(self):
         """Metodo di aggiornamento periodico per gli elementi dinamici (60 FPS)."""
@@ -180,8 +209,10 @@ class ActivityTimelineWidget(QWidget):
         self._draw_grid(painter, rect)
         painter.restore()
 
-        # Bordo Neon soft
-        painter.setPen(QPen(self.COLORS["border"], 1.2))
+        # Bordo Neon soft (Con pulsazione in hover)
+        alpha = int(100 + (self._border_pulse_val * 155))
+        c = self.COLORS["border"]
+        painter.setPen(QPen(QColor(c.red(), c.green(), c.blue(), alpha), 1.2))
         painter.drawPath(path)
 
         if not self.nodes:

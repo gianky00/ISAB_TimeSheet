@@ -6,8 +6,8 @@ Widget tabellari avanzati con funzionalità di editing, copia/incolla e integraz
 from collections.abc import Sequence
 from typing import Any
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QBrush, QColor, QCursor, QKeySequence
+from PyQt6.QtCore import QPoint, Qt, pyqtSignal, QPropertyAnimation, pyqtProperty, QEasingCurve
+from PyQt6.QtGui import QAction, QBrush, QColor, QCursor, QKeySequence, QPainter, QPen
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -27,6 +27,55 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Icons
 from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
+
+class HoverPulseFrame(QFrame):
+    """
+    Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
+    """
+    def __init__(self, accent_color: str = "#212121", parent=None):
+        super().__init__(parent)
+        self._accent_color = QColor(accent_color)
+        self._pulse_val = 1.0
+        
+        self._anim = QPropertyAnimation(self, b"pulse_value")
+        self._anim.setDuration(1500)
+        self._anim.setStartValue(0.4)
+        self._anim.setEndValue(1.0)
+        self._anim.setLoopCount(-1)
+        self._anim.setEasingCurve(QEasingCurve.Type.InOutSine)
+
+    @pyqtProperty(float)
+    def pulse_value(self):
+        return self._pulse_val
+
+    @pulse_value.setter
+    def pulse_value(self, v):
+        self._pulse_val = v
+        self.update()
+
+    def enterEvent(self, event):
+        self._anim.start()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self._anim.stop()
+        self.pulse_value = 1.0
+        super().leaveEvent(event)
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # Disegna solo il bordo inferiore con l'alpha pulsante
+        alpha = int(100 + (self._pulse_val * 155))
+        pen = QPen(QColor(self._accent_color.red(), self._accent_color.green(), self._accent_color.blue(), alpha))
+        pen.setWidth(3)
+        painter.setPen(pen)
+        
+        # Linea in basso
+        rect = self.rect()
+        painter.drawLine(12, rect.height() - 2, rect.width() - 12, rect.height() - 2)
 
 
 class ExcelTableWidget(QTableWidget):
@@ -316,14 +365,14 @@ class EditableDataTable(QWidget):
         layout.setContentsMargins(10, 10, 10, 15)
         layout.setSpacing(0)
 
-        # --- CONTAINER PRINCIPALE (Card con ombra e neon cyan) ---
-        self.container = QFrame()
+        # --- CONTAINER PRINCIPALE (Card con ombra e accento scuro pulsante) ---
+        self.container = HoverPulseFrame("#212121")
         self.container.setObjectName("tableContainer")
         self.container.setStyleSheet("""
             QFrame#tableContainer {
                 background-color: #ffffff;
                 border: 1px solid #e0e0e0;
-                border-bottom: 3px solid #212121; /* Dark Accent */
+                /* border-bottom rimosso perché gestito da HoverPulseFrame */
                 border-radius: 12px;
             }
             QTableWidget {

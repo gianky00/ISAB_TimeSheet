@@ -5,17 +5,18 @@ Widget riutilizzabile per la configurazione dei parametri comuni a tutti i bot (
 
 from contextlib import suppress
 
-from PyQt6.QtCore import QDate, QSize, pyqtSignal, Qt
+from PyQt6.QtGui import QColor, QPainter, QPen
+from PyQt6.QtCore import QDate, QSize, pyqtSignal, Qt, QPropertyAnimation, pyqtProperty, QEasingCurve
 from PyQt6.QtWidgets import (
-    QComboBox,
-    QFileDialog,
+    QFrame,
+    QWidget,
+    QVBoxLayout,
     QHBoxLayout,
     QLabel,
+    QComboBox,
     QLineEdit,
     QPushButton,
-    QVBoxLayout,
-    QWidget,
-    QFrame,
+    QFileDialog,
     QGraphicsDropShadowEffect,
 )
 
@@ -24,6 +25,55 @@ from src.core.constants import Icons
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .calendar_date_edit import CalendarDateEdit
+
+class HoverPulseFrame(QFrame):
+    """
+    Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
+    """
+    def __init__(self, accent_color: str = "#212121", parent=None):
+        super().__init__(parent)
+        self._accent_color = QColor(accent_color)
+        self._pulse_val = 1.0
+        
+        self._anim = QPropertyAnimation(self, b"pulse_value")
+        self._anim.setDuration(1500)
+        self._anim.setStartValue(0.4)
+        self._anim.setEndValue(1.0)
+        self._anim.setLoopCount(-1)
+        self._anim.setEasingCurve(QEasingCurve.Type.InOutSine)
+
+    @pyqtProperty(float)
+    def pulse_value(self):
+        return self._pulse_val
+
+    @pulse_value.setter
+    def pulse_value(self, v):
+        self._pulse_val = v
+        self.update()
+
+    def enterEvent(self, event):
+        self._anim.start()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self._anim.stop()
+        self.pulse_value = 1.0
+        super().leaveEvent(event)
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # Disegna solo il bordo inferiore con l'alpha pulsante
+        alpha = int(100 + (self._pulse_val * 155))
+        pen = QPen(QColor(self._accent_color.red(), self._accent_color.green(), self._accent_color.blue(), alpha))
+        pen.setWidth(3)
+        painter.setPen(pen)
+        
+        # Linea in basso (considerando il raggio del bordo del CSS)
+        rect = self.rect()
+        painter.drawLine(12, rect.height() - 2, rect.width() - 12, rect.height() - 2)
 
 
 class BotParametersWidget(QWidget):
@@ -65,14 +115,14 @@ class BotParametersWidget(QWidget):
         main_layout.setContentsMargins(10, 10, 10, 15)
         main_layout.setSpacing(0)
 
-        # --- CONTAINER PRINCIPALE (La "Card" con ombra e neon) ---
-        self.container = QFrame()
+        # --- CONTAINER PRINCIPALE (La "Card" con ombra e pulsazione hover) ---
+        self.container = HoverPulseFrame("#212121")
         self.container.setObjectName("paramsContainer")
         self.container.setStyleSheet("""
             QFrame#paramsContainer {
                 background-color: #ffffff;
                 border: 1px solid #e0e0e0;
-                border-bottom: 3px solid #212121; /* Neon Accent Bottom */
+                /* border-bottom rimosso perché gestito da paintEvent di HoverPulseFrame */
                 border-radius: 12px;
             }
             QLabel {
