@@ -29,13 +29,17 @@ class RicercaPDLPanel(BaseBotPanel):
 
     def __init__(self, parent=None):
         super().__init__(
-            bot_id="pdl_search",
+            bot_id="ricerca_pdl",
             bot_name="Ricerca PDL",
             bot_description="Ricerca ed esporta i PDL da SafeWork nel database locale.",
             parent=parent,
         )
         self._setup_content()
         QTimer.singleShot(10, self._load_saved_data)
+
+    def get_bot_class(self):
+        from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
+        return SafeWorkPDLSearchBot
 
     def _setup_content(self):
         params_group = QGroupBox("Parametri di Ricerca")
@@ -124,9 +128,7 @@ class RicercaPDLPanel(BaseBotPanel):
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
         self.worker = BotWorker(bot, [bot_data], telegram_service=tg_service)
-        self.worker.log_signal.connect(self._on_log)
-        self.worker.status_signal.connect(self._on_status)
-        self.worker.finished_signal.connect(self._on_worker_finished)
+        self._setup_worker_connections(self.worker)
 
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)

@@ -29,8 +29,16 @@ class ScaricaTSPanel(BaseBotPanel):
             parent=parent,
         )
         self._setup_content()
+        # Forza inizializzazione timeline immediata per Scarico TS
+        from src.bots.portale_fornitori.scarico_ts.scarico_ts_bot import ScaricaTSBot
+        self.activity_timeline.set_steps(ScaricaTSBot.STEPS)
+        
         # Defer data loading to speed up startup
         QTimer.singleShot(10, self._safe_load_data)
+
+    def get_bot_class(self):
+        from src.bots.portale_fornitori.scarico_ts.scarico_ts_bot import ScaricaTSBot
+        return ScaricaTSBot
 
     def _safe_load_data(self):
         try:
@@ -198,11 +206,7 @@ class ScaricaTSPanel(BaseBotPanel):
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
         self.worker = BotWorker(bot, bot_data, telegram_service=tg_service)
-        self.worker.log_signal.connect(self._on_log)
-        self.worker.status_signal.connect(self._on_status)
-        self.worker.step_changed_signal.connect(self.activity_timeline.on_step_changed)
-        self.worker.finished_signal.connect(self._on_worker_finished)
-        self.worker.request_input_signal.connect(self._ask_user_input)
+        self._setup_worker_connections(self.worker)
 
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)

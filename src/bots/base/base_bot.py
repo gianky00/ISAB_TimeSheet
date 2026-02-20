@@ -130,7 +130,7 @@ class BaseBot(ABC):
 
             step_name = self.STEPS[index][1]
 
-            # Emit signal for GUI
+            # Emit signal for GUI (Passiamo l'oggetto status direttamente)
             self.signals.step_changed.emit(index, step_name, status)
 
             # Log automatically with explicit step context

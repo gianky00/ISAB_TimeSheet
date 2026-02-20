@@ -34,6 +34,10 @@ class TimbratureBotPanel(BaseBotPanel):
         # Defer data loading
         QTimer.singleShot(10, self._safe_load_data)
 
+    def get_bot_class(self):
+        from src.bots.portale_fornitori.timbrature.bot import TimbratureBot
+        return TimbratureBot
+
     def _safe_load_data(self):
         try:
             self._load_saved_data()
@@ -176,8 +180,9 @@ class TimbratureBotPanel(BaseBotPanel):
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
         self.worker = BotWorker(bot, bot_data, telegram_service=tg_service)
-        self.worker.log_signal.connect(self._on_log)
-        self.worker.status_signal.connect(self._on_status)
+        self._setup_worker_connections(self.worker)
+        # Override finished connection for custom logic
+        self.worker.finished_signal.disconnect(self._on_worker_finished)
         self.worker.finished_signal.connect(self._on_worker_finished_custom)
 
         self.start_btn.setEnabled(False)

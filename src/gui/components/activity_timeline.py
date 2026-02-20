@@ -1,49 +1,81 @@
 """
-Timeline Widget Professionale - Standard Cyber-Stepper V2.
-Design ultra-moderno con sfondi integrati, neon glow e animazioni fluide.
+Timeline Widget Professionale - Standard Cyber-Stepper V5 (Cyber-Rail Ultra).
+Design d'élite con trasparenze reali, bordi neon e ombre portate.
 """
 
-from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QRectF, Qt, pyqtProperty, pyqtSlot
-from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath, QPen, QRadialGradient
-from PyQt6.QtWidgets import QWidget
+import time
+from PyQt6.QtWidgets import QWidget, QGraphicsDropShadowEffect
+from PyQt6.QtCore import Qt, pyqtProperty, QPropertyAnimation, QEasingCurve, pyqtSlot, QRectF, QPointF, QTimer
+from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QFont, QRadialGradient, QPainterPath, QLinearGradient
 
 from src.bots.base.base_bot import StepStatus
-
 
 class TimelineNode:
     def __init__(self, name: str):
         self.name = name
         self.status = StepStatus.PENDING
+        self.start_time = 0.0
+        self.duration_str = ""
 
 class ActivityTimelineWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.nodes: list[TimelineNode] = []
+        
+        # Abilita trasparenza per angoli smussati perfetti
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        
+        # Animazioni
         self._pulse_value = 0.0
+        self._rotation_angle = 0
+        self._grid_offset = 0.0
+        self._dash_offset = 0.0
+        
         self._pulse_anim = QPropertyAnimation(self, b"pulse_value")
-        self._setup_animation()
-
-        # Palette Cyber-Tech V2 (High Contrast)
+        self._setup_animations()
+        
+        # Timer per elementi dinamici
+        self._ui_timer = QTimer(self)
+        self._ui_timer.timeout.connect(self._tick)
+        self._ui_timer.start(16)
+        
+        # Palette Cyber-Rail
         self.COLORS = {
-            "bg": QColor("#0F111A"),           # Sfondo scuro profondo
-            StepStatus.PENDING: QColor("#37474F"),    # Grigio bluastro
-            StepStatus.RUNNING: QColor("#00E5FF"),    # Cyan Neon
-            StepStatus.COMPLETED: QColor("#00E676"),  # Emerald Neon
-            StepStatus.ERROR: QColor("#FF1744"),      # Rosso vivido
-            "line": QColor("#1E2132"),         # Linea binario
+            "bg": QColor(10, 12, 18, 240),      # Sfondo scuro semi-trasparente
+            "grid": QColor(0, 229, 255, 15),   # Griglia tattica
+            "border": QColor("#00E5FF"),       # Bordo Neon
+            StepStatus.PENDING: QColor("#263238"),
+            StepStatus.RUNNING: QColor("#00E5FF"),
+            StepStatus.COMPLETED: QColor("#00E676"),
+            StepStatus.ERROR: QColor("#FF1744"),
+            "line_dim": QColor(30, 33, 50, 100),
             "text_active": QColor("#FFFFFF"),
-            "text_dim": QColor("#90A4AE")
+            "text_dim": QColor("#78909C"),
+            "dash": QColor("#FFFFFF")
         }
+        
+        # Effetto Ombra per profondità
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(20)
+        shadow.setColor(QColor(0, 0, 0, 180))
+        shadow.setOffset(0, 5)
+        self.setGraphicsEffect(shadow)
+        
+        self.setMinimumWidth(280)
+        self.setMinimumHeight(400)
 
-        self.setMinimumWidth(260)
-        self.setMinimumHeight(300)
-
-    def _setup_animation(self):
+    def _setup_animations(self):
         self._pulse_anim.setDuration(1000)
         self._pulse_anim.setStartValue(0.4)
         self._pulse_anim.setEndValue(1.0)
         self._pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
         self._pulse_anim.setLoopCount(-1)
+
+    def _tick(self):
+        self._rotation_angle = (self._rotation_angle + 3) % 360
+        self._grid_offset = (self._grid_offset + 0.3) % 25.0
+        self._dash_offset = (self._dash_offset + 0.01) % 1.0
+        self.update()
 
     def get_pulse_value(self) -> float: return self._pulse_value
     def set_pulse_value(self, value: float):
@@ -53,18 +85,30 @@ class ActivityTimelineWidget(QWidget):
     pulse_value = pyqtProperty(float, fget=get_pulse_value, fset=set_pulse_value) # type: ignore
 
     def set_steps(self, steps: list[tuple[str, str]]):
-        """Popola la timeline con gli step del bot."""
         self.nodes = [TimelineNode(name) for _, name in steps]
         self.update()
 
     @pyqtSlot(int, str, object)
-    def on_step_changed(self, index: int, name: str, status: StepStatus):
+    def on_step_changed(self, index: int, name: str, status):
+        # Supporta sia l'oggetto Enum che l'indice dell'Enum
+        if isinstance(status, int):
+            # Mapping inverso se arriva come int (PyQt signal compat)
+            status = list(StepStatus)[status-1] if status > 0 else StepStatus.PENDING
+
         if 0 <= index < len(self.nodes):
-            self.nodes[index].status = status
-            if any(n.status == StepStatus.RUNNING for n in self.nodes):
+            node = self.nodes[index]
+            node.status = status
+            
+            if status == StepStatus.RUNNING:
+                node.start_time = time.time()
                 if self._pulse_anim.state() != QPropertyAnimation.State.Running:
                     self._pulse_anim.start()
-            else:
+            elif status in (StepStatus.COMPLETED, StepStatus.ERROR):
+                if node.start_time > 0:
+                    dur = time.time() - node.start_time
+                    node.duration_str = f"{dur:.1f}s"
+            
+            if not any(n.status == StepStatus.RUNNING for n in self.nodes):
                 self._pulse_anim.stop()
                 self._pulse_value = 1.0
             self.update()
@@ -72,87 +116,98 @@ class ActivityTimelineWidget(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        # 0. Sfondo del Widget (Cyber Panel)
-        rect = QRectF(0, 0, self.width(), self.height())
+        
+        # 1. DISEGNO SFONDO ARROTONDATO (Cyber-Frame)
+        rect = QRectF(10, 10, self.width()-20, self.height()-20)
         path = QPainterPath()
-        path.addRoundedRect(rect, 8, 8)
-        painter.fillPath(path, self.COLORS["bg"])
-
+        path.addRoundedRect(rect, 15, 15)
+        
+        painter.save()
+        painter.setClipPath(path)
+        painter.fillRect(rect, self.COLORS["bg"])
+        self._draw_grid(painter, rect)
+        painter.restore()
+        
+        # Bordo Neon soft
+        painter.setPen(QPen(self.COLORS["border"], 1.2))
+        painter.drawPath(path)
+        
         if not self.nodes:
-            self._draw_empty_state(painter)
+            self._draw_empty(painter)
             return
 
-        x_axis = 45
-        y_start = 50
-        spacing = 60
+        x_axis = 55
+        y_start = 60
+        spacing = 70
 
-        # 1. Disegna il Binario (Linea di collegamento)
-        pen = QPen(self.COLORS["line"], 3, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
-        painter.setPen(pen)
-        painter.drawLine(x_axis, y_start, x_axis, y_start + (len(self.nodes) - 1) * spacing)
+        # 2. DISEGNO CONNETTORI
+        for i in range(len(self.nodes) - 1):
+            self._draw_connector_v5(painter, x_axis, y_start + i*spacing, y_start + (i+1)*spacing, self.nodes[i], self.nodes[i+1])
 
-        # 2. Disegna gli Step
+        # 3. DISEGNO NODI
         for i, node in enumerate(self.nodes):
-            y = y_start + i * spacing
-            self._draw_node(painter, x_axis, y, node)
-            self._draw_text(painter, x_axis + 30, y, node)
+            self._draw_node_v5(painter, x_axis, y_start + i*spacing, node)
 
-    def _draw_node(self, painter, x, y, node):
+    def _draw_grid(self, painter, rect):
+        painter.setPen(QPen(self.COLORS["grid"], 0.5))
+        step = 25
+        for x in range(int(rect.left()), int(rect.right() + step), step):
+            painter.drawLine(int(x + self._grid_offset), int(rect.top()), int(x + self._grid_offset), int(rect.bottom()))
+        for y in range(int(rect.top()), int(rect.bottom() + step), step):
+            painter.drawLine(int(rect.left()), int(y + self._grid_offset), int(rect.right()), int(y + self._grid_offset))
+
+    def _draw_connector_v5(self, painter, x, y1, y2, n1, n2):
+        is_done = n1.status == StepStatus.COMPLETED and n2.status != StepStatus.PENDING
+        color = self.COLORS[StepStatus.COMPLETED] if is_done else self.COLORS["line_dim"]
+        
+        painter.setPen(QPen(color, 2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+        painter.drawLine(int(x), int(y1), int(x), int(y2))
+        
+        if n1.status == StepStatus.RUNNING or (n1.status == StepStatus.COMPLETED and n2.status == StepStatus.PENDING):
+            # Energy Dash
+            dy = y1 + (y2-y1) * self._dash_offset
+            painter.setBrush(self.COLORS["dash"])
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(QRectF(x-2, dy-2, 4, 4))
+
+    def _draw_node_v5(self, painter, x, y, node):
         color = self.COLORS[node.status]
-
+        
         if node.status == StepStatus.RUNNING:
-            # Effetto GLOW pulsante
-            glow_size = 15 * self._pulse_value
-            grad = QRadialGradient(QPointF(x, y), glow_size)
-            grad.setColorAt(0, QColor(color.red(), color.green(), color.blue(), int(180 * self._pulse_value)))
+            # Scanner Orbital
+            painter.save()
+            painter.translate(x, y)
+            painter.rotate(self._rotation_angle)
+            painter.setPen(QPen(color, 1.5, Qt.PenStyle.DashLine))
+            painter.drawEllipse(QRectF(-16, -16, 32, 32))
+            painter.restore()
+            
+            # Glow
+            g = 12 * self._pulse_value
+            grad = QRadialGradient(QPointF(x, y), g+5)
+            grad.setColorAt(0, QColor(color.red(), color.green(), color.blue(), 120))
             grad.setColorAt(1, Qt.GlobalColor.transparent)
             painter.setBrush(grad)
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawEllipse(QRectF(x - glow_size, y - glow_size, glow_size * 2, glow_size * 2))
+            painter.drawEllipse(QRectF(x-g-5, y-g-5, (g+5)*2, (g+5)*2))
+            
+        # Core
+        painter.setBrush(color)
+        painter.setPen(QPen(Qt.GlobalColor.white, 1.5))
+        r = 8 if node.status != StepStatus.PENDING else 5
+        painter.drawEllipse(QRectF(x-r, y-r, r*2, r*2))
+        
+        # Testo
+        is_active = node.status == StepStatus.RUNNING
+        painter.setPen(self.COLORS["text_active"] if node.status != StepStatus.PENDING else self.COLORS["text_dim"])
+        painter.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold if is_active else QFont.Weight.Normal))
+        painter.drawText(int(x+30), int(y+5), node.name.upper())
+        
+        if is_active or node.duration_str:
+            painter.setFont(QFont("Consolas", 8))
+            msg = "> ACTIVE" if is_active else f"> {node.duration_str}"
+            painter.drawText(int(x+30), int(y+18), msg)
 
-            # Centro Neon
-            painter.setBrush(color)
-            painter.setPen(QPen(Qt.GlobalColor.white, 2))
-            painter.drawEllipse(QRectF(x - 7, y - 7, 14, 14))
-
-        elif node.status == StepStatus.COMPLETED:
-            # Cerchio solido con spunta
-            painter.setBrush(color)
-            painter.setPen(QPen(Qt.GlobalColor.white, 1))
-            painter.drawEllipse(QRectF(x - 10, y - 10, 20, 20))
-            painter.setPen(QPen(Qt.GlobalColor.white, 2))
-            painter.drawLine(int(x-4), int(y), int(x-1), int(y+4))
-            painter.drawLine(int(x-1), int(y+4), int(x+5), int(y-3))
-
-        elif node.status == StepStatus.ERROR:
-            painter.setBrush(self.COLORS[StepStatus.ERROR])
-            painter.setPen(QPen(Qt.GlobalColor.white, 2))
-            painter.drawEllipse(QRectF(x - 10, y - 10, 20, 20))
-            painter.drawText(QRectF(x-10, y-10, 20, 20), Qt.AlignmentFlag.AlignCenter, "!")
-
-        else: # PENDING
-            painter.setBrush(self.COLORS[StepStatus.PENDING])
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawEllipse(QRectF(x - 6, y - 6, 12, 12))
-
-    def _draw_text(self, painter, x, y, node):
-        is_active = node.status in (StepStatus.RUNNING, StepStatus.COMPLETED)
-        painter.setPen(self.COLORS["text_active"] if is_active else self.COLORS["text_dim"])
-
-        font = QFont("Segoe UI", 10)
-        font.setBold(is_active)
-        painter.setFont(font)
-
-        # Testo con leggera ombra se attivo
-        if is_active:
-            painter.setPen(QColor(0, 0, 0, 150))
-            painter.drawText(int(x+1), int(y + 6), node.name)
-            painter.setPen(self.COLORS["text_active"])
-
-        painter.drawText(int(x), int(y + 5), node.name)
-
-    def _draw_empty_state(self, painter):
+    def _draw_empty(self, painter):
         painter.setPen(self.COLORS["text_dim"])
-        painter.setFont(QFont("Segoe UI", 9, QFont.Weight.Light))
-        painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "Timeline non inizializzata")
+        painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "[ LINK OFFLINE ]")

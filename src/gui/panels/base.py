@@ -139,17 +139,34 @@ class BaseBotPanel(QWidget):
         # Usiamo un timer per assicurarci che la sottoclasse abbia completato l'init
         QTimer.singleShot(50, self._init_ghost_timeline)
 
+    def get_bot_class(self):
+        """Restituisce la classe del bot associata al pannello. Da implementare nelle sottoclassi."""
+        return None
+
     def _init_ghost_timeline(self):
-        """Inizializza gli step della timeline senza avviare il bot utilizzando i metadati statici."""
+        """Inizializza gli step della timeline utilizzando i metadati della classe del bot."""
         try:
-            from src.bots import BOT_REGISTRY
-            bot_info = BOT_REGISTRY.get(self.bot_id)
-            if bot_info:
-                bot_class = bot_info["class"]
-                if hasattr(bot_class, "STEPS") and bot_class.STEPS:
-                    self.activity_timeline.set_steps(bot_class.STEPS)
+            # 1. Tenta di ottenere la classe direttamente dal pannello (Più robusto)
+            bot_class = self.get_bot_class()
+            
+            # 2. Fallback al registro se la classe non è fornita
+            if not bot_class:
+                from src.bots import BOT_REGISTRY
+                bot_info = BOT_REGISTRY.get(self.bot_id)
+                if bot_info:
+                    bot_class = bot_info["class"]
+
+            if bot_class and hasattr(bot_class, "STEPS") and bot_class.STEPS:
+                self.activity_timeline.set_steps(bot_class.STEPS)
+            else:
+                self._logger.debug(f"Nessun set di STEPS trovato per il bot_id: {self.bot_id}")
         except Exception as e:
             self._logger.warning(f"Impossibile inizializzare timeline ghost per {self.bot_id}: {e}")
+
+    def showEvent(self, event):
+        """Forza l'inizializzazione della timeline all'apertura del pannello."""
+        super().showEvent(event)
+        QTimer.singleShot(100, self._init_ghost_timeline)
 
     def _setup_base_ui(self):
         """Inizializza l'interfaccia utente di base comune a tutti i pannelli bot."""
@@ -286,10 +303,10 @@ class BaseBotPanel(QWidget):
         self.start_time = datetime.now()
         self._update_status("#0d6efd")
 
-        # Inizializza timeline attività se il bot ha gli steps
-        bot_instance = self.get_bot_instance()
-        if bot_instance and hasattr(bot_instance, "STEPS") and bot_instance.STEPS:
-            self.activity_timeline.set_steps(bot_instance.STEPS)
+        # Inizializza timeline attività se il bot ha gli steps (doppio controllo)
+        bot_class = self.get_bot_class()
+        if bot_class and hasattr(bot_class, "STEPS") and bot_class.STEPS:
+            self.activity_timeline.set_steps(bot_class.STEPS)
 
         # Audit & Stats
         AuditManager.instance().log_action(

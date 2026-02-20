@@ -31,6 +31,10 @@ class PrenotaBPPanel(BaseBotPanel):
         # Defer data loading
         QTimer.singleShot(10, self._safe_load_data)
 
+    def get_bot_class(self):
+        from src.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot
+        return PrenotaBPBot
+
     def _safe_load_data(self):
         try:
             self._load_saved_data()
@@ -172,10 +176,7 @@ class PrenotaBPPanel(BaseBotPanel):
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
         self.worker = BotWorker(bot, bot_data, telegram_service=tg_service)
-
-        self.worker.log_signal.connect(self._on_log)
-        self.worker.status_signal.connect(self._on_status)
-        self.worker.finished_signal.connect(self._on_worker_finished)
+        self._setup_worker_connections(self.worker)
 
         # UI Update
         self._update_status("#0d6efd", "Esecuzione...")
