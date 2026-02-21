@@ -4,17 +4,24 @@ Tabella dati con sorting, filtering e row styling, basata su ExcelTableWidget.
 
 from typing import Any, ClassVar
 
-from PyQt6.QtCore import QModelIndex, Qt, pyqtSignal, QPropertyAnimation, pyqtProperty, QEasingCurve
+from PyQt6.QtCore import (  # type: ignore[attr-defined]
+    QEasingCurve,
+    QModelIndex,
+    QPropertyAnimation,
+    Qt,
+    pyqtProperty,
+    pyqtSignal,
+)
 from PyQt6.QtGui import QBrush, QColor, QPainter, QPen
 from PyQt6.QtWidgets import (
+    QFrame,
+    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QHeaderView,
     QLineEdit,
     QPushButton,
     QVBoxLayout,
     QWidget,
-    QFrame,
-    QGraphicsDropShadowEffect,
 )
 
 from src.core.constants import Icons
@@ -27,15 +34,17 @@ from ..design.spacing import Spacing
 # Use explicit import from new modular widget to avoid circular dependency
 from .excel_table import ExcelTableWidget
 
+
 class HoverPulseFrame(QFrame):
     """
     Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
     """
+
     def __init__(self, accent_color: str = "#212121", parent=None):
         super().__init__(parent)
         self._accent_color = QColor(accent_color)
         self._pulse_val = 1.0
-        
+
         self._anim = QPropertyAnimation(self, b"pulse_value")
         self._anim.setDuration(1500)
         self._anim.setStartValue(0.4)
@@ -44,11 +53,11 @@ class HoverPulseFrame(QFrame):
         self._anim.setEasingCurve(QEasingCurve.Type.InOutSine)
 
     @pyqtProperty(float)
-    def pulse_value(self):
+    def pulse_value(self) -> float:
         return self._pulse_val
 
-    @pulse_value.setter
-    def pulse_value(self, v):
+    @pulse_value.setter  # type: ignore[no-redef]
+    def pulse_value(self, v: float):
         self._pulse_val = v
         self.update()
 
@@ -58,19 +67,21 @@ class HoverPulseFrame(QFrame):
 
     def leaveEvent(self, event):
         self._anim.stop()
-        self.pulse_value = 1.0
+        self.pulse_value = 1.0  # type: ignore[method-assign]
         super().leaveEvent(event)
 
     def paintEvent(self, event):
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        
+
         alpha = int(100 + (self._pulse_val * 155))
-        pen = QPen(QColor(self._accent_color.red(), self._accent_color.green(), self._accent_color.blue(), alpha))
+        pen = QPen(
+            QColor(self._accent_color.red(), self._accent_color.green(), self._accent_color.blue(), alpha)
+        )
         pen.setWidth(3)
         painter.setPen(pen)
-        
+
         rect = self.rect()
         painter.drawLine(12, rect.height() - 2, rect.width() - 12, rect.height() - 2)
 

@@ -1,5 +1,5 @@
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QTabWidget, QWidget, QHBoxLayout, QStackedWidget
+from PyQt6.QtWidgets import QHBoxLayout, QStackedWidget, QTabWidget, QWidget
 
 from src.core.constants import Icons
 from src.gui.panels import (
@@ -41,11 +41,21 @@ class AutomazioniWidget(QTabWidget):
         self.panel_prenota = PrenotaBPPanel()
         self.panel_carico = CaricoTSPanel()
 
-        self._add_bot_tab(self.tab_fornitori, self.corner_fornitori, self.panel_dettagli, Icons.LIST, "Dettagli OdA (bot)")
-        self._add_bot_tab(self.tab_fornitori, self.corner_fornitori, self.panel_scarico, Icons.DOWNLOAD, "Scarico TS (bot)")
-        self._add_bot_tab(self.tab_fornitori, self.corner_fornitori, self.panel_timbrature, Icons.CLOCK, "Timbrature (bot)")
-        self._add_bot_tab(self.tab_fornitori, self.corner_fornitori, self.panel_prenota, Icons.TICKET, "Prenota BP (bot)")
-        self._add_bot_tab(self.tab_fornitori, self.corner_fornitori, self.panel_carico, Icons.UPLOAD, "Carico TS (bot)")
+        self._add_bot_tab(
+            self.tab_fornitori, self.corner_fornitori, self.panel_dettagli, Icons.LIST, "Dettagli OdA (bot)"
+        )
+        self._add_bot_tab(
+            self.tab_fornitori, self.corner_fornitori, self.panel_scarico, Icons.DOWNLOAD, "Scarico TS (bot)"
+        )
+        self._add_bot_tab(
+            self.tab_fornitori, self.corner_fornitori, self.panel_timbrature, Icons.CLOCK, "Timbrature (bot)"
+        )
+        self._add_bot_tab(
+            self.tab_fornitori, self.corner_fornitori, self.panel_prenota, Icons.TICKET, "Prenota BP (bot)"
+        )
+        self._add_bot_tab(
+            self.tab_fornitori, self.corner_fornitori, self.panel_carico, Icons.UPLOAD, "Carico TS (bot)"
+        )
 
         # --- TAB 2: SafeWork ---
         self.tab_safework = QTabWidget()
@@ -56,9 +66,13 @@ class AutomazioniWidget(QTabWidget):
 
         self.panel_pdl = ScaricoPDLPanel()
         self.panel_pdl_search = RicercaPDLPanel()
-        
-        self._add_bot_tab(self.tab_safework, self.corner_safework, self.panel_pdl, Icons.SHIELD, "Scarico PDL (bot)")
-        self._add_bot_tab(self.tab_safework, self.corner_safework, self.panel_pdl_search, Icons.SEARCH, "Ricerca PDL (bot)")
+
+        self._add_bot_tab(
+            self.tab_safework, self.corner_safework, self.panel_pdl, Icons.SHIELD, "Scarico PDL (bot)"
+        )
+        self._add_bot_tab(
+            self.tab_safework, self.corner_safework, self.panel_pdl_search, Icons.SEARCH, "Ricerca PDL (bot)"
+        )
 
         # Aggiunta tab principali
         self.addTab(self.tab_fornitori, "Portale Fornitori")
@@ -89,10 +103,17 @@ class AutomazioniWidget(QTabWidget):
                 ]
             )
 
-    def _add_bot_tab(self, tab_widget: QTabWidget, corner_stack: QStackedWidget, panel: BaseBotPanel, icon_path: str, title: str):
+    def _add_bot_tab(
+        self,
+        tab_widget: QTabWidget,
+        corner_stack: QStackedWidget,
+        panel: BaseBotPanel,
+        icon_path: str,
+        title: str,
+    ):
         """Helper per aggiungere un tab e spostare i suoi controlli nel corner widget."""
         tab_widget.addTab(panel, get_colored_icon(get_asset_path(icon_path), "#546E7A"), title)
-        
+
         # Estraiamo i controlli dal pannello e li mettiamo nello stack del corner
         if hasattr(panel, "controls_widget") and hasattr(panel, "header_layout"):
             # Rimuoviamo dal pannello originale
@@ -102,24 +123,25 @@ class AutomazioniWidget(QTabWidget):
             # Aggiungiamo allo stack del corner (il parent diventerà corner_stack)
             container = QWidget()
             layout = QHBoxLayout(container)
-            layout.setContentsMargins(0, 0, 10, 0) # Padding a destra per non toccare il bordo
+            layout.setContentsMargins(0, 0, 10, 0)  # Padding a destra per non toccare il bordo
             layout.addWidget(panel.controls_widget)
             corner_stack.addWidget(container)
-            
+
             # Se il pannello è BaseBotPanel, possiamo anche nascondere l'header_layout del tutto
             # ma lo lasciamo vuoto per ora o lo rimuoviamo dal layout del pannello
-            item = panel.main_layout.takeAt(0) # L'header_layout è il primo elemento
+            item = panel.main_layout.takeAt(0)  # L'header_layout è il primo elemento
             if item:
-                if item.layout():
+                _layout = item.layout()
+                if _layout is not None:
                     # Svuota e distruggi il layout
-                    while item.layout().count():
-                        w = item.layout().takeAt(0).widget()
-                        if w: w.deleteLater()
+                    while _layout.count():
+                        child_item = _layout.takeAt(0)
+                        if child_item and (w := child_item.widget()):
+                            w.deleteLater()
                 # Se è un layout, non ha deleteLater direttamente come widget
                 # Ma rimuovendolo dal main_layout abbiamo già guadagnato spazio
 
     def set_active_tab(self, main_idx: int, sub_idx: int):
-
         """Imposta programmaticamente il tab attivo con debug."""
         print(f"DEBUG: AutomazioniWidget.set_active_tab({main_idx}, {sub_idx})")
 

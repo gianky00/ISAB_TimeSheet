@@ -159,6 +159,7 @@ class ScaricoPDLPanel(BaseBotPanel):
     def get_bot_class(self):
         """Restituisce la classe SafeWorkPDLBot associata."""
         from src.bots.safework.pdl.bot import SafeWorkPDLBot
+
         return SafeWorkPDLBot
 
     def _safe_load_data(self):
@@ -188,10 +189,11 @@ class ScaricoPDLPanel(BaseBotPanel):
                 background: transparent;
             }
         """)
-        
+
         # Applica Ombra (Shadow Effect)
-        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
         from PyQt6.QtGui import QColor
+        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(25)
         shadow.setXOffset(0)
@@ -210,7 +212,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         # 1. Stampa
         vbox_print = QVBoxLayout()
         vbox_print.addWidget(QLabel("Opzioni Stampa"))
-        
+
         hbox_print = QHBoxLayout()
         self.print_check = QCheckBox("Stampa con:")
         self.print_check.stateChanged.connect(self._save_data)
@@ -256,14 +258,16 @@ class ScaricoPDLPanel(BaseBotPanel):
         # 3. Destinazione
         vbox_dest = QVBoxLayout()
         vbox_dest.addWidget(QLabel("Destinazione"))
-        
+
         hbox_dest = QHBoxLayout()
         self.dest_path_edit = QLineEdit()
         self.dest_path_edit.setPlaceholderText("Download utente (default)")
         self.dest_path_edit.setReadOnly(True)
         self.dest_path_edit.setMinimumWidth(200)
         self.dest_path_edit.setMinimumHeight(38)
-        self.dest_path_edit.setStyleSheet("border: 1px solid #cfd8dc; border-radius: 6px; padding: 5px; background-color: #f8f9fa;")
+        self.dest_path_edit.setStyleSheet(
+            "border: 1px solid #cfd8dc; border-radius: 6px; padding: 5px; background-color: #f8f9fa;"
+        )
         hbox_dest.addWidget(self.dest_path_edit)
 
         browse_btn = QPushButton()
@@ -285,7 +289,9 @@ class ScaricoPDLPanel(BaseBotPanel):
         # Aggiunta Card Parametri al layout principale
         params_wrapper = QWidget()
         wrapper_layout = QVBoxLayout(params_wrapper)
-        wrapper_layout.setContentsMargins(10, 10, 10, 5) # Margine inferiore ridotto per avvicinare la tabella
+        wrapper_layout.setContentsMargins(
+            10, 10, 10, 5
+        )  # Margine inferiore ridotto per avvicinare la tabella
         wrapper_layout.addWidget(self.params_container)
         self.content_layout.addWidget(params_wrapper)
 

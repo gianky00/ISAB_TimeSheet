@@ -6,17 +6,17 @@ Pannello per il bot Ricerca PDL (SafeWork).
 from typing import Any
 
 from PyQt6.QtCore import QTimer, pyqtSignal
+from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
+    QFrame,
+    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QVBoxLayout,
     QWidget,
-    QFrame,
-    QGraphicsDropShadowEffect,
 )
-from PyQt6.QtGui import QColor
 
 from src.core import config_manager
 from src.gui.panels.base import BaseBotPanel, BotWorker
@@ -49,6 +49,7 @@ class RicercaPDLPanel(BaseBotPanel):
     def get_bot_class(self):
         """Restituisce la classe SafeWorkPDLSearchBot associata."""
         from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
+
         return SafeWorkPDLSearchBot
 
     def _setup_content(self):
@@ -73,7 +74,7 @@ class RicercaPDLPanel(BaseBotPanel):
                 background: transparent;
             }
         """)
-        
+
         # Shadow Effect
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(25)

@@ -5,19 +5,26 @@ Widget riutilizzabile per la configurazione dei parametri comuni a tutti i bot (
 
 from contextlib import suppress
 
+from PyQt6.QtCore import (  # type: ignore[attr-defined]
+    QDate,
+    QEasingCurve,
+    QPropertyAnimation,
+    QSize,
+    pyqtProperty,
+    pyqtSignal,
+)
 from PyQt6.QtGui import QColor, QPainter, QPen
-from PyQt6.QtCore import QDate, QSize, pyqtSignal, Qt, QPropertyAnimation, pyqtProperty, QEasingCurve
 from PyQt6.QtWidgets import (
+    QComboBox,
+    QFileDialog,
     QFrame,
-    QWidget,
-    QVBoxLayout,
+    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
-    QComboBox,
     QLineEdit,
     QPushButton,
-    QFileDialog,
-    QGraphicsDropShadowEffect,
+    QVBoxLayout,
+    QWidget,
 )
 
 from src.core import config_manager
@@ -26,15 +33,17 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .calendar_date_edit import CalendarDateEdit
 
+
 class HoverPulseFrame(QFrame):
     """
     Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
     """
+
     def __init__(self, accent_color: str = "#212121", parent=None):
         super().__init__(parent)
         self._accent_color = QColor(accent_color)
         self._pulse_val = 1.0
-        
+
         self._anim = QPropertyAnimation(self, b"pulse_value")
         self._anim.setDuration(1500)
         self._anim.setStartValue(0.4)
@@ -43,11 +52,11 @@ class HoverPulseFrame(QFrame):
         self._anim.setEasingCurve(QEasingCurve.Type.InOutSine)
 
     @pyqtProperty(float)
-    def pulse_value(self):
+    def pulse_value(self) -> float:
         return self._pulse_val
 
-    @pulse_value.setter
-    def pulse_value(self, v):
+    @pulse_value.setter  # type: ignore[no-redef]
+    def pulse_value(self, v: float):
         self._pulse_val = v
         self.update()
 
@@ -57,20 +66,22 @@ class HoverPulseFrame(QFrame):
 
     def leaveEvent(self, event):
         self._anim.stop()
-        self.pulse_value = 1.0
+        self.pulse_value = 1.0  # type: ignore[method-assign]
         super().leaveEvent(event)
 
     def paintEvent(self, event):
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        
+
         # Disegna solo il bordo inferiore con l'alpha pulsante
         alpha = int(100 + (self._pulse_val * 155))
-        pen = QPen(QColor(self._accent_color.red(), self._accent_color.green(), self._accent_color.blue(), alpha))
+        pen = QPen(
+            QColor(self._accent_color.red(), self._accent_color.green(), self._accent_color.blue(), alpha)
+        )
         pen.setWidth(3)
         painter.setPen(pen)
-        
+
         # Linea in basso (considerando il raggio del bordo del CSS)
         rect = self.rect()
         painter.drawLine(12, rect.height() - 2, rect.width() - 12, rect.height() - 2)
@@ -82,7 +93,7 @@ class BotParametersWidget(QWidget):
     - Selezione Fornitore (con pulsante gestione rapida)
     - Selezione Data (singola o range temporale)
     - Percorso di destinazione per i file scaricati
-    
+
     Implementa un design Neon & Shadow standard per tutte le viste.
     """
 
@@ -149,11 +160,7 @@ class BotParametersWidget(QWidget):
         shadow.setBlurRadius(25)
         shadow.setXOffset(0)
         shadow.setYOffset(8)
-        shadow.setColor(Qt.GlobalColor.black if Qt.GlobalColor.black else "#000000")
-        # Nota: Qt.GlobalColor.black non accetta opacità direttamente qui, 
-        # meglio usare un colore con alpha se possibile o un valore hex per QColor.
-        from PyQt6.QtGui import QColor
-        shadow.setColor(QColor(0, 0, 0, 40)) # 40/255 opacità (molto morbida)
+        shadow.setColor(QColor(0, 0, 0, 40))  # 40/255 opacità (molto morbida)
         self.container.setGraphicsEffect(shadow)
 
         container_layout = QVBoxLayout(self.container)
@@ -166,7 +173,7 @@ class BotParametersWidget(QWidget):
         # Fornitore
         vbox_forn = QVBoxLayout()
         vbox_forn.addWidget(QLabel("Fornitore"))
-        
+
         hbox_forn = QHBoxLayout()
         self.fornitore_combo = QComboBox()
         self.fornitore_combo.setMinimumHeight(38)
@@ -184,7 +191,7 @@ class BotParametersWidget(QWidget):
         self.settings_btn.clicked.connect(self.settings_requested.emit)
         self.settings_btn.setStyleSheet(self._get_icon_btn_style())
         hbox_forn.addWidget(self.settings_btn)
-        
+
         vbox_forn.addLayout(hbox_forn)
         self.main_row_layout.addLayout(vbox_forn)
 
@@ -214,7 +221,7 @@ class BotParametersWidget(QWidget):
         if self.show_dest_path:
             vbox_dest = QVBoxLayout()
             vbox_dest.addWidget(QLabel("Destinazione"))
-            
+
             hbox_dest = QHBoxLayout()
             self.dest_path_edit = QLineEdit()
             self.dest_path_edit.setPlaceholderText("Download utente (default)")
@@ -231,13 +238,13 @@ class BotParametersWidget(QWidget):
             self.browse_btn.clicked.connect(self._browse_path)
             self.browse_btn.setStyleSheet(self._get_icon_btn_style())
             hbox_dest.addWidget(self.browse_btn)
-            
+
             vbox_dest.addLayout(hbox_dest)
             self.main_row_layout.addLayout(vbox_dest)
 
         self.main_row_layout.addStretch()
         container_layout.addLayout(self.main_row_layout)
-        
+
         main_layout.addWidget(self.container)
 
     def _create_separator(self) -> QFrame:
@@ -262,7 +269,7 @@ class BotParametersWidget(QWidget):
         container = QVBoxLayout()
         container.addWidget(QLabel("Opzioni"))
         container.addWidget(widget)
-        
+
         self.main_row_layout.addSpacing(5)
         self.main_row_layout.addLayout(container)
 
