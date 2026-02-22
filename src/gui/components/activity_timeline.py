@@ -15,7 +15,15 @@ from PyQt6.QtCore import (  # type: ignore[attr-defined]
     pyqtProperty,
     pyqtSlot,
 )
-from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath, QPen, QRadialGradient
+from PyQt6.QtGui import (
+    QColor,
+    QFont,
+    QFontMetrics,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QRadialGradient,
+)
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QWidget
 
 from src.bots.base.base_bot import StepStatus
@@ -60,10 +68,8 @@ class ActivityTimelineWidget(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         # Animazioni
-        self._pulse_value = 0.0
+        self._pulse_value = self._grid_offset = self._dash_offset = 0.0
         self._rotation_angle = 0
-        self._grid_offset = 0.0
-        self._dash_offset = 0.0
 
         self._pulse_anim = QPropertyAnimation(self, b"pulse_value")
         self._setup_animations()
@@ -369,16 +375,14 @@ class ActivityTimelineWidget(QWidget):
         text_x = int(x + 30)
         available_w = int(container_rect.right() - text_x - 10)
 
-        from PyQt6.QtGui import QFontMetrics
-
-        fm = QFontMetrics(font_main)
-        display_name = fm.elidedText(node.name.upper(), Qt.TextElideMode.ElideRight, available_w)
+        display_name = QFontMetrics(font_main).elidedText(
+            node.name.upper(), Qt.TextElideMode.ElideRight, available_w
+        )
 
         painter.drawText(text_x, int(y + 4), display_name)
 
         if is_active or node.duration_str:
-            font_sub = QFont("Consolas", 8)
-            painter.setFont(font_sub)
+            painter.setFont(QFont("Consolas", 8))
             msg = "> ACTIVE" if is_active else f"> {node.duration_str}"
             painter.drawText(text_x, int(y + 16), msg)
 

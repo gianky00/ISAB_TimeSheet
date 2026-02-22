@@ -270,6 +270,7 @@ def run_pyinstaller(obfuscated=False):
         cmd.extend(["--hidden-import", mod])
 
     qt_excludes = [
+        "shapely",
         "PyQt6.QtBluetooth",
         "PyQt6.QtNfc",
         "PyQt6.Qt3DCore",
