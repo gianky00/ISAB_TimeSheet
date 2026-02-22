@@ -1,6 +1,8 @@
 """
-SyncroJob - Excel Table Widgets
+SyncroJob - Excel Table Widgets.
+
 Widget tabellari avanzati con funzionalità di editing, copia/incolla e integrazione con l'AI Lyra.
+Include classi per tabelle di sola lettura, editabili e componenti grafici di supporto.
 """
 
 from collections.abc import Sequence
@@ -38,9 +40,17 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class HoverPulseFrame(QFrame):
     """
     Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
+    Fornisce un feedback visivo moderno per le sezioni card dell'applicazione.
     """
 
     def __init__(self, accent_color: str = "#212121", parent=None):
+        """
+        Inizializza il frame con il colore di accento specificato.
+
+        Args:
+            accent_color: Colore del bordo pulsante.
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self._accent_color = QColor(accent_color)
         self._pulse_val = 1.0
@@ -54,23 +64,28 @@ class HoverPulseFrame(QFrame):
 
     @pyqtProperty(float)
     def pulse_value(self) -> float:
+        """Restituisce il valore corrente della pulsazione."""
         return self._pulse_val
 
     @pulse_value.setter  # type: ignore[no-redef]
     def pulse_value(self, v: float):
+        """Imposta il valore della pulsazione e forza il ridisegno."""
         self._pulse_val = v
         self.update()
 
     def enterEvent(self, event):
+        """Avvia la pulsazione all'ingresso del mouse."""
         self._anim.start()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
+        """Interrompe la pulsazione all'uscita del mouse."""
         self._anim.stop()
         self.pulse_value = 1.0  # type: ignore[method-assign]
         super().leaveEvent(event)
 
     def paintEvent(self, event):
+        """Disegna il bordo inferiore animato."""
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -427,6 +442,7 @@ class EditableDataTable(QWidget):
         self.table.customContextMenuRequested.connect(self._show_context_menu)
         self.table.itemChanged.connect(self._on_item_changed)
 
+        # Inizializza con alcune righe vuote
         for _ in range(5):
             self._add_row()
 
@@ -559,7 +575,7 @@ class EditableDataTable(QWidget):
             self.data_changed.emit()
 
     def _clear_all(self) -> None:
-        """Svuota completamente la tabella e ripristina una riga iniziale."""
+        """Svuota completamente la tabella e ripristina una riga iniziale con valori di default."""
         self.table.setRowCount(0)
         self._add_row()
         self.data_changed.emit()

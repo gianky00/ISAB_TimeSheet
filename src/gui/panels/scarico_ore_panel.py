@@ -67,6 +67,7 @@ class ScaricoOreWorker(QThread):
             total_rows = 1000
 
         def progress_cb(current, total):
+            """Callback per l'aggiornamento del progresso con calcolo ETA."""
             real_total = max(total if total > 0 else total_rows, current)
             elapsed = time.time() - self.start_time
             if current > 0 and elapsed > 0:
@@ -75,7 +76,9 @@ class ScaricoOreWorker(QThread):
                 eta_sec = remaining / rate if rate > 0 else 0
                 m, s = divmod(int(eta_sec), 60)
                 percent = min(int((current / real_total) * 100), 99)
-                self.progress_signal.emit(f"Importazione: {percent}% completato ({current}/{real_total}) • ETA: {m}m {s}s")
+                self.progress_signal.emit(
+                    f"Importazione: {percent}% completato ({current}/{real_total}) • ETA: {m}m {s}s"
+                )
 
         success, msg, added, removed = ContabilitaManager.import_scarico_ore(
             self.file_path, progress_callback=progress_cb
@@ -183,7 +186,8 @@ class ScaricoOrePanel(QWidget):
             if rid in real_to_vis:
                 vrow = real_to_vis[rid]
                 new_sel.select(
-                    self.source_model.index(vrow, 0), self.source_model.index(vrow, self.source_model.columnCount() - 1)
+                    self.source_model.index(vrow, 0),
+                    self.source_model.index(vrow, self.source_model.columnCount() - 1),
                 )
         if not new_sel.isEmpty() and (sel := self.table_view.selectionModel()):
             sel.select(new_sel, sel.SelectionFlag.ClearAndSelect | sel.SelectionFlag.Rows)
@@ -229,7 +233,9 @@ class ScaricoOrePanel(QWidget):
         path = config_manager.load_config().get("dataease_path", "")
         if not path:
             QMessageBox.warning(
-                self, "Configurazione Mancante", "Configura il percorso 'File Scarico Ore' nelle Impostazioni."
+                self,
+                "Configurazione Mancante",
+                "Configura il percorso 'File Scarico Ore' nelle Impostazioni.",
             )
             return
         self.status_label.setText("Calcolo stima tempi...")
@@ -248,7 +254,9 @@ class ScaricoOrePanel(QWidget):
         self.table_view.setEnabled(True)
         if success:
             ts = datetime.now().strftime("%d/%m/%Y %H:%M")
-            time_str = f"{duration:.1f}s" if duration < 60 else f"{int(duration // 60)}m {int(duration % 60)}s"
+            time_str = (
+                f"{duration:.1f}s" if duration < 60 else f"{int(duration // 60)}m {int(duration % 60)}s"
+            )
             status = f"{ts} <font color='green'><b>+{added}</b></font> <font color='red'><b>-{removed}</b></font> ({time_str})"
             self.status_label.setText(status)
             self._last_update_status = status
@@ -341,6 +349,9 @@ class ScaricoOrePanel(QWidget):
         rows: dict[int, list[tuple[int, str]]] = {}
         for idx in idxs:
             rows.setdefault(idx.row(), []).append((idx.column(), str(idx.data(Qt.ItemDataRole.DisplayRole))))
-        lines = ["\t".join([x[1] for x in sorted(rows[r], key=operator.itemgetter(0))]) for r in sorted(rows.keys())]
+        lines = [
+            "\t".join([x[1] for x in sorted(rows[r], key=operator.itemgetter(0))])
+            for r in sorted(rows.keys())
+        ]
         if cb := QApplication.clipboard():
             cb.setText("\n".join(lines))

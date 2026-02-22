@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-SyncroJob - Log Analysis CLI Tool
+SyncroJob - Log Analysis CLI Tool.
 
-Strumento command-line per analisi log strutturati.
+Strumento command-line per l'analisi e l'esportazione dei log strutturati.
+Consente di eseguire query filtrate, ricostruire trace e visualizzare report di salute.
 
 Usage:
     python tools/logs_cli.py query --level ERROR --bot scarico_ts --limit 20
@@ -26,7 +27,15 @@ from src.core.logging import health_report, query_logs, view_trace  # noqa: E402
 
 
 def format_timestamp(ts: str) -> str:
-    """Formatta timestamp ISO in formato leggibile."""
+    """
+    Formatta un timestamp ISO in un formato leggibile dall'utente.
+
+    Args:
+        ts: Stringa del timestamp in formato ISO.
+
+    Returns:
+        str: Timestamp formattato come YYYY-MM-DD HH:MM:SS.
+    """
     try:
         dt = datetime.fromisoformat(ts)
         return dt.strftime("%Y-%m-%d %H:%M:%S")
@@ -36,11 +45,11 @@ def format_timestamp(ts: str) -> str:
 
 def print_log_entry(entry: dict[str, Any], verbose: bool = False) -> None:
     """
-    Stampa una singola entry di log formattata con colori ANSI.
+    Stampa una singola entry di log formattata con colori ANSI per il terminale.
 
     Args:
         entry: Dizionario dei dati del log.
-        verbose: Se True, stampa anche contesto e metadati.
+        verbose: Se True, stampa anche il contesto esteso e i metadati.
     """
     ts = format_timestamp(entry.get("timestamp", ""))
     level = entry.get("level", "INFO")
@@ -70,8 +79,13 @@ def print_log_entry(entry: dict[str, Any], verbose: bool = False) -> None:
             print(f"           Exception: {entry['exception'].get('type', 'Unknown')}")
 
 
-def cmd_query(args):
-    """Esegue query sui log con filtri."""
+def cmd_query(args: argparse.Namespace) -> None:
+    """
+    Esegue una query sui log utilizzando i filtri forniti tramite argomenti CLI.
+
+    Args:
+        args: Argomenti parsati da argparse.
+    """
     query = query_logs()
 
     if args.level:
@@ -106,8 +120,13 @@ def cmd_query(args):
     print("-" * 80)
 
 
-def cmd_trace(args):
-    """Ricostruisce timeline di un trace_id."""
+def cmd_trace(args: argparse.Namespace) -> None:
+    """
+    Ricostruisce e visualizza la timeline di eventi associata a un trace_id specifico.
+
+    Args:
+        args: Argomenti parsati (deve contenere trace_id).
+    """
     trace_id = args.trace_id
 
     print(f"\n🔍 Ricostruzione timeline per trace: {trace_id}\n")
@@ -143,8 +162,13 @@ def cmd_trace(args):
     print("=" * 80)
 
 
-def cmd_health(args):
-    """Mostra report salute sistema."""
+def cmd_health(args: argparse.Namespace) -> None:
+    """
+    Genera e visualizza un report di salute del sistema basato sugli ultimi eventi di log.
+
+    Args:
+        args: Argomenti parsati (opzionale: hours).
+    """
     hours = args.hours or 24
 
     print(f"\n🏥 Health Report (ultime {hours}h)\n")
@@ -195,8 +219,13 @@ def cmd_health(args):
     print("\n" + "=" * 60)
 
 
-def cmd_export(args):
-    """Esporta log in formato CSV o JSON."""
+def cmd_export(args: argparse.Namespace) -> None:
+    """
+    Esporta i log filtrati in formato JSON o CSV su file.
+
+    Args:
+        args: Argomenti parsati (format, output, filters).
+    """
     print(f"\n📤 Esportazione log in formato {args.format}...")
 
     query = query_logs()
@@ -245,7 +274,8 @@ def cmd_export(args):
     print(f"✅ Esportati {len(results)} log entries in: {output_path}")
 
 
-def main():
+def main() -> None:
+    """Entry point principale per il tool CLI dei log."""
     parser = argparse.ArgumentParser(
         prog="logs_cli",
         description="SyncroJob - Log Analysis CLI Tool",

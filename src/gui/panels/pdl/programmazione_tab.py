@@ -91,6 +91,7 @@ class ProgrammingStatusWidget(QWidget):
         self.setToolTip(html)
 
     def paintEvent(self, event):
+        """Disegna la barra di stato TCL/TGO nella cella con evidenziazione del giorno corrente."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 

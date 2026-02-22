@@ -53,23 +53,28 @@ class HoverPulseFrame(QFrame):
 
     @pyqtProperty(float)
     def pulse_value(self) -> float:
+        """Restituisce il valore corrente della pulsazione per l'animazione del bordo."""
         return self._pulse_val
 
     @pulse_value.setter  # type: ignore[no-redef]
     def pulse_value(self, v: float):
+        """Imposta il valore della pulsazione e forza il ridisegno del widget."""
         self._pulse_val = v
         self.update()
 
     def enterEvent(self, event):
+        """Avvia l'animazione di pulsazione del bordo all'ingresso del mouse."""
         self._anim.start()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
+        """Interrompe l'animazione e ripristina lo stato solido all'uscita del mouse."""
         self._anim.stop()
         self.pulse_value = 1.0  # type: ignore[method-assign]
         super().leaveEvent(event)
 
     def paintEvent(self, event):
+        """Disegna il bordo inferiore pulsante con il colore di accento configurato."""
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

@@ -12,6 +12,7 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
         self.tree = tree_view
 
     def paint(self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+        """Personalizza il disegno delle celle, applicando colori di stato e merge testuale per le righe figlie."""
         if not painter:
             super().paint(painter, option, index)
             return

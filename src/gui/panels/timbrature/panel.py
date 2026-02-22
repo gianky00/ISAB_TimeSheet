@@ -297,4 +297,5 @@ class TimbratureDBPanel(QWidget):
 
     # Exposed for external calls (compatibility)
     def refresh_fornitori(self):
+        """Aggiorna le liste dei fornitori nei menu a tendina dei filtri."""
         self._update_filter_combos()

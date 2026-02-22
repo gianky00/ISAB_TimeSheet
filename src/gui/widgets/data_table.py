@@ -1,5 +1,6 @@
 """
 Tabella dati con sorting, filtering e row styling, basata su ExcelTableWidget.
+Fornisce un'interfaccia ad alto livello con ricerca e pulsante di aggiornamento.
 """
 
 from typing import Any, ClassVar
@@ -38,9 +39,17 @@ from .excel_table import ExcelTableWidget
 class HoverPulseFrame(QFrame):
     """
     Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
+    Migliora il feedback visivo dell'interfaccia.
     """
 
     def __init__(self, accent_color: str = "#212121", parent=None):
+        """
+        Inizializza il frame con il colore di accento specificato.
+
+        Args:
+            accent_color: Colore del bordo pulsante.
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self._accent_color = QColor(accent_color)
         self._pulse_val = 1.0
@@ -54,23 +63,28 @@ class HoverPulseFrame(QFrame):
 
     @pyqtProperty(float)
     def pulse_value(self) -> float:
+        """Restituisce il valore corrente della pulsazione."""
         return self._pulse_val
 
     @pulse_value.setter  # type: ignore[no-redef]
     def pulse_value(self, v: float):
+        """Imposta il valore della pulsazione e aggiorna il widget."""
         self._pulse_val = v
         self.update()
 
     def enterEvent(self, event):
+        """Avvia l'animazione di pulsazione all'ingresso del mouse."""
         self._anim.start()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
+        """Ferma l'animazione di pulsazione all'uscita del mouse."""
         self._anim.stop()
         self.pulse_value = 1.0  # type: ignore[method-assign]
         super().leaveEvent(event)
 
     def paintEvent(self, event):
+        """Disegna il bordo inferiore pulsante."""
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -87,9 +101,13 @@ class HoverPulseFrame(QFrame):
 
 
 class DataTable(QWidget):
-    """Tabella dati con funzionalità avanzate (search, refresh) che wrappa ExcelTableWidget."""
+    """
+    Tabella dati con funzionalità avanzate (search, refresh) che wrappa ExcelTableWidget.
+    Supporta il filtraggio in tempo reale e la colorazione semantica delle righe.
+    """
 
     rowDoubleClicked = pyqtSignal(int, dict)  # row_index, row_data
+    """Segnale emesso al doppio click su una riga."""
 
     # Status colors
     STATUS_COLORS: ClassVar[dict[str, str]] = {
@@ -102,8 +120,11 @@ class DataTable(QWidget):
 
     def __init__(self, columns: list[dict[str, Any]], parent: QWidget | None = None) -> None:
         """
+        Inizializza la DataTable con le colonne specificate.
+
         Args:
-            columns: Lista di dict con keys: 'name', 'key', 'width', 'editable'
+            columns: Lista di dict con keys: 'name', 'key', 'width', 'editable'.
+            parent: Widget genitore.
         """
         super().__init__(parent)
         self._columns = columns
@@ -112,6 +133,7 @@ class DataTable(QWidget):
         self._setup_ui()
 
     def _setup_ui(self) -> None:
+        """Configura il layout, la toolbar di ricerca e la card contenente la tabella."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(Spacing.xs)
@@ -221,19 +243,24 @@ class DataTable(QWidget):
             elif header is not None:
                 header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
 
-        # Remove redundant _apply_table_style call or keep it empty for future needs
         container_layout.addWidget(self._table)
         layout.addWidget(self.container)
 
     def _apply_table_style(self) -> None:
-        """Redundant with global QSS. Can be used for very specific overrides if needed."""
+        """Applica stili specifici alla tabella (opzionale, gestito principalmente da QSS)."""
 
     def setData(self, data: list[dict[str, Any]]) -> None:
-        """Popola la tabella con dati."""
+        """
+        Popola la tabella con i dati forniti.
+
+        Args:
+            data: Lista di dizionari contenenti i dati delle righe.
+        """
         self._data = data
         self._populate_table(data)
 
     def _populate_table(self, data: list[dict[str, Any]]) -> None:
+        """Riempie fisicamente il widget QTableWidget con i dati."""
         self._table.setSortingEnabled(False)  # Optimization
         self._table.setRowCount(len(data))
 
@@ -252,7 +279,7 @@ class DataTable(QWidget):
                 if not col.get("editable", True):
                     item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
-                # Colore sfondo (ExcelTableWidget uses specific logic but we override it here if needed)
+                # Colore sfondo
                 if row_color:
                     item.setBackground(QBrush(QColor(row_color)))
                     item.setForeground(QBrush(QColor("black")))  # Force contrast
@@ -262,6 +289,7 @@ class DataTable(QWidget):
         self._table.setSortingEnabled(True)
 
     def _get_row_color(self, status: str) -> str | None:
+        """Restituisce il codice colore esadecimale per uno stato specifico."""
         if status in self.STATUS_COLORS:
             return self.STATUS_COLORS[status]
         # Check prefix
@@ -271,7 +299,12 @@ class DataTable(QWidget):
         return None
 
     def _filter_rows(self, text: str) -> None:
-        """Filtra righe in base al testo di ricerca."""
+        """
+        Filtra le righe della tabella in base al testo di ricerca (case-insensitive).
+
+        Args:
+            text: Testo da cercare in tutte le colonne.
+        """
         text = text.lower()
         for row in range(self._table.rowCount()):
             match = False
@@ -283,17 +316,24 @@ class DataTable(QWidget):
             self._table.setRowHidden(row, not match)
 
     def _on_double_click(self, index: QModelIndex) -> None:
+        """
+        Gestisce l'evento di doppio click emettendo il segnale rowDoubleClicked.
+
+        Args:
+            index: Indice del modello dell'elemento cliccato.
+        """
         row = index.row()
         if 0 <= row < len(self._data):
             self.rowDoubleClicked.emit(row, self._data[row])
 
     def getSelectedRows(self) -> list[dict[str, Any]]:
-        """Ritorna i dati delle righe selezionate."""
+        """
+        Restituisce i dati di tutte le righe attualmente selezionate.
+
+        Returns:
+            list: Lista di dizionari rappresentanti le righe selezionate.
+        """
         rows = {item.row() for item in self._table.selectedItems()}
-        # Map table row back to data index?
-        # CAUTION: If sorted, index.row() refers to visual row.
-        # We need to get the item and find it in data?
-        # Or better: construct dict from the table row content since it matches `columns`
 
         selected_data = []
         for r in rows:
@@ -307,8 +347,13 @@ class DataTable(QWidget):
         return selected_data
 
     def refresh(self) -> None:
-        """Ricarica dati (da sovrascrivere o connettere)."""
+        """Metodo per ricaricare i dati. Da connettere esternamente."""
 
     def get_table_widget(self) -> ExcelTableWidget:
-        """Returns the internal ExcelTableWidget."""
+        """
+        Restituisce il widget QTableWidget interno.
+
+        Returns:
+            ExcelTableWidget: Il widget della tabella.
+        """
         return self._table

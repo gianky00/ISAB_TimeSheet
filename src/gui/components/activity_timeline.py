@@ -116,20 +116,32 @@ class ActivityTimelineWidget(QWidget):
         self._border_pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
 
     def enterEvent(self, event):
-        """Avvia la pulsazione del bordo al passaggio del mouse."""
+        """
+        Avvia la pulsazione del bordo al passaggio del mouse.
+
+        Args:
+            event: Evento di ingresso.
+        """
         self._border_pulse_anim.start()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
-        """Ferma la pulsazione e ripristina il bordo solido."""
+        """
+        Ferma la pulsazione e ripristina il bordo solido.
+
+        Args:
+            event: Evento di uscita.
+        """
         self._border_pulse_anim.stop()
         self.border_pulse = 1.0
         super().leaveEvent(event)
 
     def get_border_pulse(self) -> float:
+        """Restituisce il valore corrente della pulsazione del bordo."""
         return self._border_pulse_val
 
     def set_border_pulse(self, value: float):
+        """Imposta il valore della pulsazione del bordo e forza il ridisegno."""
         self._border_pulse_val = value
         self.update()
 
@@ -199,7 +211,12 @@ class ActivityTimelineWidget(QWidget):
             self.update()
 
     def paintEvent(self, event):
-        """Gestisce il disegno personalizzato del widget (Grid, Connectors, Nodes)."""
+        """
+        Gestisce il disegno personalizzato del widget (Grid, Connectors, Nodes).
+
+        Args:
+            event: Evento di disegno.
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
@@ -254,7 +271,13 @@ class ActivityTimelineWidget(QWidget):
             self._draw_node_v5(painter, x_axis, y_start + i * spacing, node, rect)
 
     def _draw_grid(self, painter, rect):
-        """Disegna la griglia tattica animata sullo sfondo."""
+        """
+        Disegna la griglia tattica animata sullo sfondo.
+
+        Args:
+            painter: Oggetto QPainter.
+            rect: Rettangolo di disegno.
+        """
         painter.setPen(QPen(self.COLORS["grid"], 0.5))
         step, left, top, right, bottom = (
             25,
@@ -270,7 +293,17 @@ class ActivityTimelineWidget(QWidget):
             painter.drawLine(left, int(y + self._grid_offset), right, int(y + self._grid_offset))
 
     def _draw_connector_v5(self, painter, x, y1, y2, n1, n2):
-        """Disegna la linea di connessione tra due nodi con effetti di flusso dati."""
+        """
+        Disegna la linea di connessione tra due nodi con effetti di flusso dati.
+
+        Args:
+            painter: Oggetto QPainter.
+            x: Coordinata X.
+            y1: Coordinata Y di partenza.
+            y2: Coordinata Y di arrivo.
+            n1: Nodo di partenza.
+            n2: Nodo di arrivo.
+        """
         is_done = n1.status == StepStatus.COMPLETED and n2.status != StepStatus.PENDING
         color = self.COLORS[StepStatus.COMPLETED] if is_done else self.COLORS["line_dim"]
 
@@ -287,7 +320,16 @@ class ActivityTimelineWidget(QWidget):
             painter.drawEllipse(QRectF(x - 2, dy - 2, 4, 4))
 
     def _draw_node_v5(self, painter, x, y, node, container_rect):
-        """Disegna un singolo nodo della timeline con i relativi effetti di stato."""
+        """
+        Disegna un singolo nodo della timeline con i relativi effetti di stato.
+
+        Args:
+            painter: Oggetto QPainter.
+            x: Coordinata X del nodo.
+            y: Coordinata Y del nodo.
+            node: Oggetto TimelineNode da disegnare.
+            container_rect: Rettangolo del contenitore per calcolare l'overflow del testo.
+        """
         color = self.COLORS[node.status]
 
         if node.status == StepStatus.RUNNING:
@@ -341,6 +383,11 @@ class ActivityTimelineWidget(QWidget):
             painter.drawText(text_x, int(y + 16), msg)
 
     def _draw_empty(self, painter):
-        """Disegna lo stato vuoto del widget quando non ci sono step."""
+        """
+        Disegna lo stato vuoto del widget quando non ci sono step.
+
+        Args:
+            painter: Oggetto QPainter.
+        """
         painter.setPen(self.COLORS["text_dim"])
         painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "[ LINK OFFLINE ]")

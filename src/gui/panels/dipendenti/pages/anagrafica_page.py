@@ -301,6 +301,7 @@ class AnagraficaPage(QWidget):
             QMessageBox.critical(self, "Errore", f"Impossibile modificare il monitoraggio:\n{e}")
 
     def refresh_data(self):
+        """Aggiorna i dati della tabella dipendenti caricandoli dal database e applicando i filtri correnti."""
         self.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('timbrature')}")
         search_text = self.search_input.text().lower().strip()
         query = """

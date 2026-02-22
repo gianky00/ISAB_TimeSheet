@@ -63,7 +63,9 @@ class StatusBarComponent(QObject):
         self.footer_toggle_btn.setFixedSize(40, 40)
         self.footer_toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.footer_toggle_btn.setToolTip("Toggle System Metrics / License Info")
-        self.footer_toggle_btn.setStyleSheet("QPushButton { background-color: transparent; border: none; border-radius: 8px; margin: 0 5px; } QPushButton:hover { background-color: rgba(0, 0, 0, 0.05); }")
+        self.footer_toggle_btn.setStyleSheet(
+            "QPushButton { background-color: transparent; border: none; border-radius: 8px; margin: 0 5px; } QPushButton:hover { background-color: rgba(0, 0, 0, 0.05); }"
+        )
         self.footer_toggle_btn.clicked.connect(self._toggle_footer_stats)
         self.status_bar.addWidget(self.footer_toggle_btn)
 
@@ -129,6 +131,7 @@ class StatusBarComponent(QObject):
         Esegue animazioni di fade-out sui widget di avvio e attiva quelli di monitoraggio.
         """
         import logging
+
         logger = logging.getLogger("StatusBar")
 
         try:
@@ -153,6 +156,7 @@ class StatusBarComponent(QObject):
             telemetry_anim.setEasingCurve(QEasingCurve.Type.InCubic)
 
             def hide_and_reset_telemetry():
+                """Nasconde il widget di telemetria e ferma il timer al termine dell'animazione."""
                 self.boot_telemetry.setVisible(False)
                 self.boot_telemetry.setGraphicsEffect(None)
                 if self.boot_telemetry.timer.isActive():
@@ -178,11 +182,17 @@ class StatusBarComponent(QObject):
         Aggiorna le card di stato nella parte destra della barra.
         """
         from PyQt6.QtCore import QTime
+
         config = config_manager.load_config()
 
         tasks = [
             ("PF", "TIMBRATURE", "timbrature_autopilot_enabled", "timbrature_autopilot_time"),
-            ("PF", "SCARICO ODA", "scarico_oda_generale_autopilot_enabled", "scarico_oda_generale_autopilot_time"),
+            (
+                "PF",
+                "SCARICO ODA",
+                "scarico_oda_generale_autopilot_enabled",
+                "scarico_oda_generale_autopilot_time",
+            ),
             ("SW", "RICERCA PDL", "ricerca_pdl_autopilot_enabled", "ricerca_pdl_autopilot_time"),
         ]
 
@@ -208,8 +218,13 @@ class StatusBarComponent(QObject):
                     min_secs_sw, imminent_sw = secs_to, (name, secs_to)
 
         def format_countdown(name, secs):
+            """Formatta il tempo rimanente in una stringa leggibile (H/M)."""
             h, m = secs // 3600, (secs % 3600) // 60
-            return f"{name}: {'TRA '+str(h)+'H '+str(m)+'M' if h > 0 else 'TRA '+str(m)+'M'}"
+            return f"{name}: {'TRA ' + str(h) + 'H ' + str(m) + 'M' if h > 0 else 'TRA ' + str(m) + 'M'}"
 
-        self.status_portale.setAutopilot(bool(imminent_pf), format_countdown(*imminent_pf) if imminent_pf else "")
-        self.status_safework.setAutopilot(bool(imminent_sw), format_countdown(*imminent_sw) if imminent_sw else "")
+        self.status_portale.setAutopilot(
+            bool(imminent_pf), format_countdown(*imminent_pf) if imminent_pf else ""
+        )
+        self.status_safework.setAutopilot(
+            bool(imminent_sw), format_countdown(*imminent_sw) if imminent_sw else ""
+        )
