@@ -56,6 +56,16 @@ class Toast(QWidget):
         pulse: bool = False,
         parent: QWidget | None = None,
     ) -> None:
+        """
+        Inizializza il toast con i parametri di stile e durata.
+
+        Args:
+            message: Il messaggio da visualizzare.
+            toast_type: Tipo di toast (info, success, warning, error).
+            duration: Durata della visualizzazione in millisecondi.
+            pulse: Se True, attiva l'animazione di pulsazione.
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self._duration = duration
         self._type = toast_type
@@ -149,6 +159,7 @@ class Toast(QWidget):
             self._pulse_anim.valueChanged.connect(self._apply_scale)
 
     def _apply_scale(self, scale_factor: Any) -> None:
+        """Applica la scala al container per l'effetto pulsazione."""
         if self._original_container_size is None:
             return
         f_scale = float(scale_factor)
@@ -168,6 +179,7 @@ class Toast(QWidget):
         super().leaveEvent(event)
 
     def show_at(self, x: int, y: int) -> None:
+        """Visualizza il toast in una posizione specifica e avvia le animazioni."""
         self.move(x, y)
         if self._pulse and hasattr(self, "_pulse_anim"):
             self.container.adjustSize()
@@ -184,13 +196,14 @@ class Toast(QWidget):
 
 
 class ToastManager(QObject):
-    """Singleton per la gestione dei toast."""
+    """Singleton per la gestione del posizionamento e dello stacking dei toast."""
 
     _instance: ClassVar[Optional["ToastManager"]] = None
     _active_toasts: ClassVar[list[Toast]] = []
 
     @classmethod
     def instance(cls) -> "ToastManager":
+        """Restituisce l'istanza singleton di ToastManager."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
@@ -203,6 +216,16 @@ class ToastManager(QObject):
         position: str = "top",
         pulse: bool = False,
     ) -> None:
+        """
+        Crea e visualizza un nuovo toast, calcolando la posizione corretta nello stack.
+
+        Args:
+            message: Messaggio da mostrare.
+            toast_type: Tipo di notifica.
+            duration: Durata in ms.
+            position: "top" (default) o "bottom" (sopra il footer).
+            pulse: Se True, attiva l'animazione di pulsazione.
+        """
         parent = QApplication.activeWindow()
         toast = Toast(message, toast_type, duration, pulse, parent)
         # Update active toasts list using the class variable correctly
@@ -237,6 +260,7 @@ class ToastManager(QObject):
 
 # Funzioni helper globali con NUOVI TEMPI
 def toast_info(message: str, duration: int = 3000) -> None:
+    """Visualizza un toast informativo."""
     ToastManager.instance().show(message, Toast.Type.INFO, duration)
 
 

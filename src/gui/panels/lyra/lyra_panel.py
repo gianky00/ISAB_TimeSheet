@@ -176,6 +176,7 @@ class LyraPanel(QWidget):
         self.attachment_frame.setVisible(False)
 
     def ask_lyra(self, question: str):
+        """Invia una domanda all'assistente AI Lyra, includendo eventuali allegati e contesto PDF."""
         if self.worker and self.worker.isRunning():
             return
 
@@ -220,12 +221,14 @@ class LyraPanel(QWidget):
         self.input_bar.set_enabled(True)
 
     def dragEnterEvent(self, event):
+        """Accetta l'evento di drag se contiene URL (file)."""
         if event.mimeData().hasUrls():
             event.accept()
         else:
             event.ignore()
 
     def dropEvent(self, event):
+        """Gestisce il rilascio di un file PDF nell'area chat per l'analisi."""
         urls = event.mimeData().urls()
         if urls:
             self._handle_file(urls[0].toLocalFile())

@@ -20,10 +20,18 @@ class DonutChart(QWidget):
         self.setMinimumSize(200, 200)
 
     def set_data(self, success_count: int, error_count: int) -> None:
+        """
+        Imposta i nuovi dati di successo/errore e aggiorna il grafico.
+
+        Args:
+            success_count: Numero di successi.
+            error_count: Numero di errori.
+        """
         self.values = [success_count, error_count]
         self.update()  # Trigger repaint
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
+        """Disegna il grafico a ciambella basato sui dati correnti."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 

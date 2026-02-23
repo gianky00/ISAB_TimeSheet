@@ -1,6 +1,7 @@
 """
 SyncroJob - PDL Database Panel
-Pannello per la visualizzazione del Database PDL SafeWork.
+Pannello per la visualizzazione e gestione del Database PDL SafeWork.
+Implementa un'architettura Master-Detail per l'esplorazione dei permessi di lavoro.
 """
 
 import os
@@ -26,7 +27,7 @@ from PyQt6.QtWidgets import (
 
 from src.bots import create_bot
 from src.core import config_manager
-from src.core.database import db_manager
+from src.core.database import db_manager, pdl_queries
 from src.core.sync_tracker import SyncTracker
 from src.gui.formatters import FastTableModel
 from src.gui.panels.base import BotWorker
@@ -40,9 +41,19 @@ from .programmazione_tab import ProgrammazioneTab
 
 
 class PDLDBPanel(QWidget):
-    """Pannello per la visualizzazione del Database PDL SafeWork con architettura Master-Detail."""
+    """
+    Pannello per la visualizzazione del Database PDL SafeWork con architettura Master-Detail.
+    Gestisce il filtraggio avanzato, la ricerca testuale, l'esportazione Excel e
+    l'aggiornamento dei dati tramite bot Selenium.
+    """
 
     def __init__(self, parent: QWidget | None = None):
+        """
+        Inizializza il pannello PDL e carica i dati iniziali.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(parent)
 
         # Member declarations
@@ -90,8 +101,8 @@ class PDLDBPanel(QWidget):
         ]
 
         self.model = FastTableModel([], self.master_headers)
-        self._raw_full_data = []  # Buffer per i dati completi
-        self._cache: dict[str, list[tuple[Any, ...]]] = {}  # Cache per le query
+        self._raw_full_data = []
+        self._cache: dict[str, list[tuple[Any, ...]]] = {}
 
         # Stato Ordinamento
         self.current_sort_col: int | None = None
@@ -110,6 +121,7 @@ class PDLDBPanel(QWidget):
         QTimer.singleShot(200, self._update_units)
 
     def _setup_ui(self):
+        """Configura il layout principale con Tab e Splitter."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
@@ -149,7 +161,7 @@ class PDLDBPanel(QWidget):
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
-        self.table.setItemDelegate(PDLDelegate([0], self.table))  # Data Creazione è indice 0
+        self.table.setItemDelegate(PDLDelegate([0], self.table))
 
         if sel_model := self.table.selectionModel():
             sel_model.selectionChanged.connect(self._on_selection_changed)
@@ -179,13 +191,14 @@ class PDLDBPanel(QWidget):
         layout.addWidget(self.tabs)
 
     def _on_update_bot_clicked(self):
-        """Avvia il bot Ricerca PDL per aggiornare i dati."""
+        """Avvia il bot Ricerca PDL per aggiornare i dati dal portale SafeWork."""
         try:
             config = config_manager.load_config()
             safework_accounts = config.get("safework_accounts", [])
 
             username = ""
             password = ""
+            account_type = "Esecutore"
 
             if safework_accounts:
                 default_sw = next(
@@ -194,18 +207,15 @@ class PDLDBPanel(QWidget):
                 )
                 username = default_sw.get("username", "")
                 password = default_sw.get("password", "")
+                account_type = default_sw.get("type", "Esecutore")
 
             if not username or not password:
-                QMessageBox.warning(
-                    self,
-                    "Attenzione",
-                    "Credenziali SafeWork non configurate. Vai in Impostazioni > Account.",
-                )
+                QMessageBox.warning(self, "Attenzione", "Credenziali SafeWork non configurate.")
                 return
 
             if not self._show_confirmation_dialog(
                 "Aggiornamento PDL",
-                f"Avviare la ricerca PDL con account <b>{username}</b>?",
+                f"Avviare la ricerca PDL con account <b>{username}</b> ({account_type})?",
             ):
                 return
 
@@ -217,6 +227,7 @@ class PDLDBPanel(QWidget):
                 "ricerca_pdl",
                 username=username,
                 password=password,
+                account_type=account_type,
                 headless=config.get("browser_headless", False),
                 timeout=config.get("browser_timeout", 30),
                 download_path=str(config_manager.CONFIG_DIR / "temp"),
@@ -237,16 +248,13 @@ class PDLDBPanel(QWidget):
             QMessageBox.critical(self, "Errore", f"Errore avvio bot: {e}")
 
     def _on_bot_finished(self, success: bool):
+        """Gestisce il completamento del bot di ricerca PDL."""
         self.filters.btn_bot_update.setEnabled(True)
         if success:
             ToastManager.instance().show("PDL Aggiornati!", "success")
             self.refresh_data()
-
-            # Aggiorna anche i richiedenti nel tab programmazione
             if hasattr(self, "prog_tab"):
                 self.prog_tab._load_requesters()
-
-            # Notifica pannello caricamento se esiste
             win = self.window()
             if win:
                 scarico_pdl = getattr(win, "scarico_pdl_panel", None)
@@ -290,7 +298,7 @@ class PDLDBPanel(QWidget):
             return False
 
     def _populate_groups(self):
-        """Popola la dropdown dei gruppi (indipendente)."""
+        """Popola la dropdown dei gruppi PDL estratti dai prefissi numerici."""
         try:
             query_grp = "SELECT DISTINCT SUBSTR(n_pdl, INSTR(n_pdl, '/') + 1) as grp FROM pdl WHERE n_pdl LIKE '%/%' ORDER BY grp"
             rows_grp = db_manager.execute_query(db_manager.DB_PDL, query_grp)
@@ -306,7 +314,7 @@ class PDLDBPanel(QWidget):
             print(f"Errore popolamento gruppi: {e}")
 
     def _update_areas(self):
-        """Aggiorna le aree in base al sito selezionato."""
+        """Aggiorna l'elenco delle Aree filtrato per Sito."""
         site = self.filters.site_filter.currentText()
         query = "SELECT DISTINCT area FROM pdl WHERE area IS NOT NULL AND area != ''"
         params = []
@@ -342,7 +350,7 @@ class PDLDBPanel(QWidget):
             print(f"Errore update areas: {e}")
 
     def _update_units(self):
-        """Aggiorna le unità in base a sito e area selezionati."""
+        """Aggiorna l'elenco delle Unità filtrato per Sito e Area."""
         site = self.filters.site_filter.currentText()
         area = self.filters.area_filter.currentText()
 
@@ -384,18 +392,18 @@ class PDLDBPanel(QWidget):
             print(f"Errore update units: {e}")
 
     def _on_site_changed(self):
-        """Gestisce il cambio sito: aggiorna aree (che aggiorneranno unità) e tabella."""
+        """Triggerato al cambio del sito nei filtri."""
         self._update_areas()
         self._update_units()
         self.refresh_data()
 
     def _on_area_changed(self):
-        """Gestisce il cambio area: aggiorna unità e tabella."""
+        """Triggerato al cambio dell'area nei filtri."""
         self._update_units()
         self.refresh_data()
 
     def _on_selection_changed(self, selected, _deselected):
-        """Aggiorna il pannello dettaglio quando si seleziona una riga."""
+        """Aggiorna la vista dettaglio caricando i dati della PDL selezionata."""
         sel_model = self.table.selectionModel()
         if not sel_model:
             return
@@ -407,10 +415,21 @@ class PDLDBPanel(QWidget):
 
         row_idx = indexes[0].row()
         if row_idx < len(self._raw_full_data):
-            self.detail_view.update_details(self._raw_full_data[row_idx])
+            full_data = self._raw_full_data[row_idx]
+            n_pdl = str(full_data[1])
+
+            try:
+                interventions = pdl_queries.PDLQueries.get_pdl_interventions(n_pdl)
+            except Exception as e:
+                print(f"Errore recupero interventi PDL {n_pdl}: {e}")
+                interventions = []
+
+            self.detail_view.update_details(full_data, interventions)
+        else:
+            self.detail_view.clear()
 
     def _on_header_clicked(self, logical_index):
-        """Gestisce il toggle dell'ordinamento."""
+        """Gestisce il toggle dell'ordinamento per colonna."""
         if self.current_sort_col == logical_index:
             self.current_sort_order = "DESC" if self.current_sort_order == "ASC" else "ASC"
         else:
@@ -420,7 +439,10 @@ class PDLDBPanel(QWidget):
         self.refresh_data(sort_col=logical_index)
 
     def refresh_data(self, sort_col=None):
-        """Aggiorna i dati della tabella PDL con sistema di cache."""
+        """
+        Ricarica i dati dal database PDL applicando i filtri e l'ordinamento correnti.
+        Utilizza un sistema di cache per ottimizzare le prestazioni.
+        """
         self.filters.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('pdl')}")
 
         query, params = self._build_pdl_query(sort_col)
@@ -443,7 +465,7 @@ class PDLDBPanel(QWidget):
         self._update_pdl_ui(len(master_rows))
 
     def _build_pdl_query(self, sort_col: int | None) -> tuple[str, list[Any]]:
-        """Costruisce la query SQL per i PDL."""
+        """Costruisce dinamicamente la query SQL in base ai filtri attivi."""
         f = self.filters.get_filters()
         search_text = f["search"]
         site_filter = f["site"]
@@ -519,7 +541,7 @@ class PDLDBPanel(QWidget):
         return query, params
 
     def _process_pdl_rows(self, full_rows: list[tuple[Any, ...]]) -> list[list[Any]]:
-        """Pulisce e formatta le righe per la visualizzazione Master."""
+        """Formatta le righe per la visualizzazione compatta nella tabella master."""
         master_rows = []
         for r in full_rows:
             row = [r[2], r[10], r[1], r[3], r[4], r[8], r[6]]
@@ -527,7 +549,7 @@ class PDLDBPanel(QWidget):
         return master_rows
 
     def _update_pdl_ui(self, count: int):
-        """Ottimizza il layout della tabella."""
+        """Ottimizza il layout delle colonne della tabella dopo il caricamento."""
         header = self.table.horizontalHeader()
         if not header:
             return
@@ -545,7 +567,7 @@ class PDLDBPanel(QWidget):
             QTimer.singleShot(100, self.table.resizeRowsToContents)
 
     def _reset_filters(self):
-        """Resetta tutti i filtri allo stato iniziale."""
+        """Ripristina tutti i filtri di ricerca allo stato predefinito."""
         self.filters.group_filter.blockSignals(True)
         self.filters.site_filter.blockSignals(True)
         self.filters.area_filter.blockSignals(True)
@@ -573,7 +595,7 @@ class PDLDBPanel(QWidget):
         QTimer.singleShot(150, self._update_units)
 
     def _export_to_excel(self):
-        """Esporta i dati correnti in Excel secondo colonne specifiche."""
+        """Esporta l'attuale vista filtrata del database in un file Excel."""
         try:
             query, params = self._build_pdl_query(self.current_sort_col)
             if " LIMIT " in query:

@@ -4,15 +4,24 @@ Bot per la prenotazione automatica dei Badge Provvisori (BP) sul Portale Fornito
 
 import traceback
 from contextlib import suppress
-from typing import Any
+from typing import Any, ClassVar
 
-from src.bots.base.base_bot import BaseBot
+from src.bots.base.base_bot import BaseBot, StepStatus
 
 from .pages.prenota_bp_page import PrenotaBPPage
 
 
 class PrenotaBPBot(BaseBot):
     """Bot per la prenotazione massiva di Badge Provvisori (BP) sul Portale Fornitori."""
+
+    STEPS: ClassVar[list[tuple[str, str]]] = [
+        ("login", "Login Portale ISAB"),
+        ("nav", "Navigazione Gestione BP"),
+        ("filter", "Filtraggio Buoni"),
+        ("details", "Apertura Dettagli"),
+        ("reserve", "Prenotazione BP"),
+        ("cleanup", "Chiusura Sessione"),
+    ]
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
@@ -65,6 +74,8 @@ class PrenotaBPBot(BaseBot):
 
     def run(self, data: Any):
         """Esecuzione principale del bot."""
+        self.update_step("login", StepStatus.COMPLETED)
+
         rows = self._init_run_data(data)
         if not rows:
             return True
@@ -72,10 +83,12 @@ class PrenotaBPBot(BaseBot):
             return False
 
         self.log(f"Avvio elaborazione per {len(rows)} BP (Fornitore: {self.fornitore})")
+        self.update_step("nav", StepStatus.RUNNING)
         page = PrenotaBPPage(self.driver, self.log)
 
         try:
             page.navigate_to_gestione_bp()
+            self.update_step("nav", StepStatus.COMPLETED)
             processed_count = 0
             for i, row in enumerate(rows):
                 if self._stop_requested:
@@ -85,9 +98,12 @@ class PrenotaBPBot(BaseBot):
                     processed_count += 1
 
             self.log(f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
+            self.update_step("cleanup", StepStatus.RUNNING)
+            self.update_step("cleanup", StepStatus.COMPLETED)
             return True
         except Exception as e:
             self.log(f"❗ Errore fatale durante l'esecuzione: {e}")
+            self.update_step("nav", StepStatus.ERROR)
             traceback.print_exc()
             return False
         finally:
@@ -113,9 +129,18 @@ class PrenotaBPBot(BaseBot):
             return False
 
         try:
+            self.update_step("filter", StepStatus.RUNNING)
             page.filtra_buoni_prelievo(self.fornitore, num_bp, self.data_da, self.data_a)
+            self.update_step("filter", StepStatus.COMPLETED)
+
+            self.update_step("details", StepStatus.RUNNING)
             page.apri_dettagli_bp()
+            self.update_step("details", StepStatus.COMPLETED)
+
+            self.update_step("reserve", StepStatus.RUNNING)
             page.gestisci_creazione_richiesta(note)
+            self.update_step("reserve", StepStatus.COMPLETED)
+
             with suppress(Exception):
                 page.chiudi_dettagli_bp()
 
@@ -123,6 +148,7 @@ class PrenotaBPBot(BaseBot):
             return True
         except Exception as e:
             self.log(f"✗ Errore su BP {num_bp}: {e}")
+            self.update_step("reserve", StepStatus.ERROR)
             with suppress(Exception):
                 page.chiudi_dettagli_bp()
             self.results.append({"NUMERO BP": num_bp, "STATO": "ERRORE", "MSG": str(e)})

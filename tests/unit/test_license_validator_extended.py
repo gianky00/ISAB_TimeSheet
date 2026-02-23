@@ -25,6 +25,12 @@ from src.core.license_validator import (
 from src.core.secrets_manager import SecretsManager
 
 
+@pytest.fixture(autouse=True)
+def mock_no_migration(mocker):
+    """Impedisce sempre la migrazione di licenze reali durante i test unitari."""
+    return mocker.patch("src.core.license_validator._check_and_migrate_local_license", return_value=False)
+
+
 @pytest.fixture
 def mock_license_dir(tmp_path):
     license_dir = tmp_path / "Licenza"

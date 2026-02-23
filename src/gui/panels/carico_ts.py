@@ -7,7 +7,7 @@ import traceback
 from typing import Any
 
 from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QVBoxLayout
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.core.constants import Icons
@@ -26,6 +26,12 @@ class CaricoTSPanel(BaseBotPanel):
     """
 
     def __init__(self, parent=None):
+        """
+        Inizializza il pannello Carico TS.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(
             bot_id="carico_ts",
             bot_name="Carico TS",
@@ -36,7 +42,14 @@ class CaricoTSPanel(BaseBotPanel):
         # Defer data loading
         QTimer.singleShot(10, self._safe_load_data)
 
+    def get_bot_class(self):
+        """Restituisce la classe CaricoTSBot associata."""
+        from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot
+
+        return CaricoTSBot
+
     def _safe_load_data(self):
+        """Carica i dati dai file di configurazione in modo sicuro."""
         try:
             self._load_saved_data()
         except Exception as e:
@@ -44,13 +57,16 @@ class CaricoTSPanel(BaseBotPanel):
             traceback.print_exc()
 
     def _setup_content(self):
-        """Configura il contenuto specifico del pannello."""
-        # Tabella dati
-        group = QGroupBox("Parametri")
-        group_layout = QVBoxLayout(group)
+        """Inizializza e posiziona i componenti UI del pannello (Tabella e Parametri)."""
+        # Sezione Parametri (Senza QGroupBox per favorire il design Floating Card)
+        params_container = QWidget()
+        params_layout = QVBoxLayout(params_container)
+        params_layout.setContentsMargins(0, 0, 0, 0)
+        params_layout.setSpacing(5)
 
         # Toolbar per la tabella
         table_toolbar = QHBoxLayout()
+        table_toolbar.setContentsMargins(10, 0, 10, 0)
         table_toolbar.addStretch()
 
         self.clear_btn = ModernButton(
@@ -62,7 +78,7 @@ class CaricoTSPanel(BaseBotPanel):
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
 
-        group_layout.addLayout(table_toolbar)
+        params_layout.addLayout(table_toolbar)
 
         # Tabella con tutte le colonne del database Carico TS
         self.data_table = EditableDataTable(
@@ -88,24 +104,29 @@ class CaricoTSPanel(BaseBotPanel):
         )
         self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
-        group_layout.addWidget(self.data_table)
+        params_layout.addWidget(self.data_table)
 
-        self.content_layout.addWidget(group)
+        self.content_layout.addWidget(params_container)
 
     def _load_saved_data(self):
-        """Carica i dati salvati."""
+        """Carica l'ultima tabella TS salvata nella configurazione."""
         saved_data = config_manager.load_config().get("last_carico_ts_data", [])
         if saved_data:
             self.data_table.set_data(saved_data)
 
     def _clear_table(self):
-        """Pulisce la tabella."""
+        """Svuota la tabella dei dati previa conferma."""
         if ConfirmationDialog.confirm(self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?"):
-            self.data_table.set_data([])
+            self.data_table.clear()
             self._save_data()
 
     def validate_ready(self) -> tuple[bool, str]:
-        """Verifica se il pannello Carico TS ha credenziali e dati validi."""
+        """
+        Verifica che siano presenti credenziali e dati validi.
+
+        Returns:
+            tuple: (bool successo, str messaggio errore)
+        """
         username, password = self.get_credentials()
         if not username or not password:
             return False, "Credenziali ISAB mancanti."
@@ -117,12 +138,12 @@ class CaricoTSPanel(BaseBotPanel):
         return True, ""
 
     def _save_data(self):
-        """Salva i dati correnti."""
+        """Salva i dati della tabella nella configurazione persistente."""
         data = self.data_table.get_data()
         config_manager.set_config_value("last_carico_ts_data", data)
 
     def _on_start(self, params_override: dict[str, Any] | None = None):
-        """Avvia il bot Carico TS."""
+        """Avvia l'esecuzione del bot Carico TS gestendo il worker."""
         super()._on_start(params_override)
         username, password = self.get_credentials()
 
@@ -165,10 +186,9 @@ class CaricoTSPanel(BaseBotPanel):
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        self.worker = BotWorker(bot, {"rows": data}, telegram_service=tg_service)
-        self.worker.log_signal.connect(self._on_log)
-        self.worker.status_signal.connect(self._on_status)
-        self.worker.finished_signal.connect(self._on_worker_finished)
+        worker = BotWorker(bot, {"rows": data}, telegram_service=tg_service)
+        self.worker = worker
+        self._setup_worker_connections(worker)
 
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
@@ -176,5 +196,5 @@ class CaricoTSPanel(BaseBotPanel):
         self.log_widget.clear()
         self.log_widget.append("Avvio bot Carico TS...")
 
-        self.worker.start()
+        worker.start()
         self.bot_started.emit()

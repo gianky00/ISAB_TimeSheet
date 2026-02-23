@@ -5,13 +5,14 @@ SyncroJob Developer Toolbox - GUI Edition
 Interfaccia grafica per tutti gli strumenti di sviluppo del progetto.
 """
 
+import os
 import subprocess
 import sys
 import webbrowser
 from collections.abc import Callable
 from pathlib import Path
 
-from PyQt6.QtCore import QProcess, Qt, QThread, pyqtSignal
+from PyQt6.QtCore import QProcess, QProcessEnvironment, Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFont, QTextCursor
 from PyQt6.QtWidgets import (
     QApplication,
@@ -28,8 +29,12 @@ from PyQt6.QtWidgets import (
 
 # Configurazione
 PROJECT_ROOT = Path(__file__).parent.parent
-VENV_PYTHON = PROJECT_ROOT / ".venv" / "Scripts" / "python.exe"
-VENV_BIN = PROJECT_ROOT / ".venv" / "Scripts"
+if sys.platform == "win32":
+    VENV_PYTHON = PROJECT_ROOT / ".venv" / "Scripts" / "python.exe"
+    VENV_BIN = PROJECT_ROOT / ".venv" / "Scripts"
+else:
+    VENV_PYTHON = PROJECT_ROOT / ".venv" / "bin" / "python"
+    VENV_BIN = PROJECT_ROOT / ".venv" / "bin"
 
 
 class CommandRunner(QThread):
@@ -42,20 +47,18 @@ class CommandRunner(QThread):
         super().__init__()
         self.command = command
         self.shell = shell
-        self.process: QProcess | None = None
+        self.process: QProcess | subprocess.Popen[str] | None = None
 
     def run(self):
         """Esegue il comando e emette l'output in tempo reale"""
         try:
             # Variabili d'ambiente per forzare ASCII e UTF-8
-            import os
-
-            env = os.environ.copy()
-            env["PYTHONIOENCODING"] = "utf-8"
-            env["PYTHONUTF8"] = "1"
-            env["TERM"] = "dumb"  # Disabilita caratteri speciali Rich
-            env["NO_COLOR"] = "1"  # Disabilita colori se problematici
-            env["PYTHONUNBUFFERED"] = "1"  # Forza unbuffered output
+            env_vars = os.environ.copy()
+            env_vars["PYTHONIOENCODING"] = "utf-8"
+            env_vars["PYTHONUTF8"] = "1"
+            env_vars["TERM"] = "dumb"  # Disabilita caratteri speciali Rich
+            env_vars["NO_COLOR"] = "1"  # Disabilita colori se problematici
+            env_vars["PYTHONUNBUFFERED"] = "1"  # Forza unbuffered output
 
             if self.shell:
                 # Per comandi shell (mkdocs serve, ecc.)
@@ -63,45 +66,53 @@ class CommandRunner(QThread):
                 self.process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
 
                 # Imposta variabili d'ambiente
-                self.process.setEnvironment([f"{k}={v}" for k, v in env.items()])
+                q_env = QProcessEnvironment.systemEnvironment()
+                for k, v in env_vars.items():
+                    q_env.insert(k, v)
+                self.process.setProcessEnvironment(q_env)
 
-                self.process.readyRead.connect(self._read_output)
-                self.process.finished.connect(self._on_finished)
+                # self.process.readyRead.connect(self._read_output)  # Preferiamo lettura manuale in loop
+                # self.process.finished.connect(lambda code, status: self._on_finished(code))
 
                 program = self.command[0]
                 args = self.command[1:] if len(self.command) > 1 else []
                 self.process.start(program, args)
+
+                # Loop per leggere output in tempo reale con QProcess in un QThread (senza event loop)
+                while self.process.state() == QProcess.ProcessState.Running:
+                    if self.process.waitForReadyRead(100):
+                        self._read_output()
+
                 self.process.waitForFinished(-1)
+                self._read_output()  # Un'ultima lettura per sicurezza
+                self.finished_signal.emit(self.process.exitCode())
             else:
-                # Esecuzione con streaming output in tempo reale
-                self.process = subprocess.Popen(
+                # Esecuzione con streaming output in tempo reale (merged stdout/stderr)
+                process = subprocess.Popen(
                     self.command,
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
                     text=True,
                     cwd=str(PROJECT_ROOT),
                     encoding="utf-8",
                     errors="replace",
-                    env=env,
+                    env=env_vars,
                     bufsize=1,  # Line buffered
                     universal_newlines=True,
                 )
+                self.process = process
 
-                # Leggi stdout in tempo reale
-                while True:
-                    line = self.process.stdout.readline()
-                    if not line and self.process.poll() is not None:
-                        break
-                    if line:
-                        self.output_received.emit(line)
-
-                # Leggi stderr rimanente
-                stderr = self.process.stderr.read()
-                if stderr:
-                    self.output_received.emit(f"\n[STDERR]\n{stderr}")
+                # Leggi output in tempo reale
+                if process.stdout:
+                    while True:
+                        line = process.stdout.readline()
+                        if not line and process.poll() is not None:
+                            break
+                        if line:
+                            self.output_received.emit(line)
 
                 # Aspetta che il processo finisca
-                returncode = self.process.wait()
+                returncode = process.wait()
                 self.finished_signal.emit(returncode)
 
         except Exception as e:
@@ -110,7 +121,7 @@ class CommandRunner(QThread):
 
     def _read_output(self):
         """Legge output dal processo QProcess"""
-        if self.process:
+        if isinstance(self.process, QProcess):
             data = self.process.readAll().data().decode("utf-8", errors="replace")
             self.output_received.emit(data)
 

@@ -1,3 +1,9 @@
+"""
+SyncroJob - Contabilità Attività Programmate
+Tab specializzato per la visualizzazione delle attività programmate settimanali.
+Include filtri avanzati per PS, PO, Area e Stato PdL.
+"""
+
 import json
 from contextlib import suppress
 from datetime import UTC, datetime
@@ -28,7 +34,10 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class AttivitaProgrammateTab(QWidget):
-    """Tab per Attività Programmate."""
+    """
+    Tab per la visualizzazione e il filtraggio delle Attività Programmate.
+    Utilizza una tabella ad alte prestazioni per mostrare lo stato delle PdL e la pianificazione settimanale.
+    """
 
     COLUMNS: ClassVar[list[str]] = [
         "PS",
@@ -50,8 +59,13 @@ class AttivitaProgrammateTab(QWidget):
     ]
 
     def __init__(self, parent=None):
+        """
+        Inizializza il tab delle attività programmate.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(parent)
-        # Widget members (Strict Typing - Option D)
         self.chk_ps: QCheckBox
         self.chk_po: QCheckBox
         self.combo_area: QComboBox
@@ -63,7 +77,7 @@ class AttivitaProgrammateTab(QWidget):
         self._load_data()
 
     def _setup_ui(self):
-        """Configura l'interfaccia utente del tab."""
+        """Configura l'interfaccia utente del tab, inclusi i filtri e la tabella."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 10, 0, 0)
 
@@ -104,7 +118,7 @@ class AttivitaProgrammateTab(QWidget):
         self.table.setColumnCount(len(self.COLUMNS))
         self.table.setHorizontalHeaderLabels(self.COLUMNS)
         self.table.setWordWrap(True)
-        self.table.setTextElideMode(Qt.TextElideMode.ElideNone)  # No troncamento
+        self.table.setTextElideMode(Qt.TextElideMode.ElideNone)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -114,23 +128,21 @@ class AttivitaProgrammateTab(QWidget):
         header = self.table.horizontalHeader()
         if header is None:
             raise RuntimeError("Table horizontal header is None")
-        # Inizialmente usa Interactive per permettere ridimensionamento automatico
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.table.setColumnHidden(0, True)
         self.table.setColumnHidden(14, True)
 
-        # Imposta larghezze minime ragionevoli
-        self.table.setColumnWidth(1, 80)  # AREA
-        self.table.setColumnWidth(2, 80)  # PdL
-        self.table.setColumnWidth(3, 60)  # IMP.
-        self.table.setColumnWidth(4, 350)  # DESCRIZIONE ATTIVITA'
+        self.table.setColumnWidth(1, 80)
+        self.table.setColumnWidth(2, 80)
+        self.table.setColumnWidth(3, 60)
+        self.table.setColumnWidth(4, 350)
         for i in range(5, 10):
-            self.table.setColumnWidth(i, 50)  # Giorni settimana
-        self.table.setColumnWidth(10, 120)  # STATO PdL
-        self.table.setColumnWidth(11, 120)  # STATO ATTIVITA'
-        self.table.setColumnWidth(12, 100)  # DATA CONTROLLO
-        self.table.setColumnWidth(13, 150)  # PERSONALE IMPIEGATO
-        self.table.setColumnWidth(15, 250)  # AVVISO
+            self.table.setColumnWidth(i, 50)
+        self.table.setColumnWidth(10, 120)
+        self.table.setColumnWidth(11, 120)
+        self.table.setColumnWidth(12, 100)
+        self.table.setColumnWidth(13, 150)
+        self.table.setColumnWidth(15, 250)
 
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
@@ -142,9 +154,11 @@ class AttivitaProgrammateTab(QWidget):
         layout.addWidget(self.table)
 
     def refresh_data(self):
+        """Ricarica i dati dal database e aggiorna la tabella."""
         self._load_data()
 
     def _load_data(self):
+        """Esegue il caricamento effettivo dei dati nel modello della tabella."""
         data = ContabilitaManager.get_attivita_programmate_data()
         self.table.setSortingEnabled(False)
         self.table.blockSignals(True)
@@ -156,7 +170,6 @@ class AttivitaProgrammateTab(QWidget):
                 self._populate_table_row(row_idx, row_data, db_keys)
             self.table.resizeRowsToContents()
             self._populate_filters()
-            # Adatta le colonne al contenuto
             self._adjust_column_widths()
         finally:
             self.table.blockSignals(False)
@@ -168,21 +181,19 @@ class AttivitaProgrammateTab(QWidget):
         if header is None:
             raise RuntimeError("Table horizontal header is None - cannot adjust column widths")
 
-        # Ridimensiona colonne specifiche al contenuto
-        columns_to_resize = [1, 2, 3, 10, 11, 12, 13]  # Escludi quelle con stretch
+        columns_to_resize = [1, 2, 3, 10, 11, 12, 13]
         for col in columns_to_resize:
             if not self.table.isColumnHidden(col):
                 self.table.resizeColumnToContents(col)
-                # Aggiungi buffer per leggibilità (10% + 15px)
                 current_width = self.table.columnWidth(col)
                 self.table.setColumnWidth(col, int(current_width * 1.1) + 15)
 
-        # Imposta Stretch per colonne con testo lungo (dopo aver ridimensionato le altre)
-        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # DESCRIZIONE ATTIVITA'
-        header.setSectionResizeMode(11, QHeaderView.ResizeMode.Stretch)  # STATO ATTIVITA'
-        header.setSectionResizeMode(15, QHeaderView.ResizeMode.Stretch)  # AVVISO
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(11, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(15, QHeaderView.ResizeMode.Stretch)
 
     def _populate_table_row(self, row_idx: int, row_data: tuple[Any, ...], db_keys: list[str]):
+        """Popola una riga della tabella con i dati e applica gli stili salvati."""
         styles_idx = len(self.COLUMNS)
         row_styles = (
             json.loads(row_data[styles_idx]) if len(row_data) > styles_idx and row_data[styles_idx] else {}
@@ -197,6 +208,7 @@ class AttivitaProgrammateTab(QWidget):
             self.table.setItem(row_idx, col_idx, item)
 
     def _format_cell_text(self, col_idx: int, val: Any) -> str:
+        """Formatta il testo della cella in base al tipo di dato (es. date)."""
         s = str(val).strip() if val is not None else ""
         if s.lower() == "nan":
             return ""
@@ -206,6 +218,7 @@ class AttivitaProgrammateTab(QWidget):
         return s
 
     def _apply_item_style(self, item: QTableWidgetItem, style: dict[str, Any] | None):
+        """Applica colori di testo e sfondo all'item in base ai metadati di stile."""
         if not style:
             return
         if "fg" in style:
@@ -214,6 +227,7 @@ class AttivitaProgrammateTab(QWidget):
             item.setBackground(QColor(style["bg"]))
 
     def _populate_filters(self):
+        """Aggiorna le opzioni dei menu a tendina dei filtri in base ai dati presenti in tabella."""
         areas, stati = set(), set()
         for r in range(self.table.rowCount()):
             if it := self.table.item(r, 1):
@@ -235,6 +249,7 @@ class AttivitaProgrammateTab(QWidget):
             combo.blockSignals(False)
 
     def apply_filters(self):
+        """Applica i filtri correnti (Checkbox e ComboBox) nascondendo le righe non corrispondenti."""
         f_ps, f_po = self.chk_ps.isChecked(), self.chk_po.isChecked()
         f_area, f_stato = self.combo_area.currentText(), self.combo_stato.currentText()
         for r in range(self.table.rowCount()):
@@ -251,30 +266,35 @@ class AttivitaProgrammateTab(QWidget):
         return self._is_stato_mismatch(row, f_stato)
 
     def _is_ps_missing(self, row: int, active: bool) -> bool:
+        """Controlla se manca il flag PS."""
         if not active:
             return False
         it = self.table.item(row, 0)
         return not it or not it.text().strip()
 
     def _is_po_missing(self, row: int, active: bool) -> bool:
+        """Controlla se manca il flag PO."""
         if not active:
             return False
         it = self.table.item(row, 14)
         return not it or not it.text().strip()
 
     def _is_area_mismatch(self, row: int, area: str) -> bool:
+        """Verifica se l'area della riga non corrisponde al filtro."""
         if area == "Tutte":
             return False
         it = self.table.item(row, 1)
         return not it or it.text() != area
 
     def _is_stato_mismatch(self, row: int, stato: str) -> bool:
+        """Verifica se lo stato della riga non corrisponde al filtro."""
         if stato == "Tutti":
             return False
         it = self.table.item(row, 10)
         return not it or it.text() != stato
 
     def _reset_filters(self):
+        """Ripristina i filtri ai valori predefiniti."""
         self.chk_ps.setChecked(False)
         self.chk_po.setChecked(False)
         self.combo_area.setCurrentIndex(0)
@@ -282,6 +302,12 @@ class AttivitaProgrammateTab(QWidget):
         self.apply_filters()
 
     def filter_data(self, text):
+        """
+        Esegue una ricerca testuale globale su tutte le righe non già nascoste dai filtri.
+
+        Args:
+            text: Testo di ricerca.
+        """
         search_terms = text.lower().split()
         cols = self.table.columnCount()
         self.apply_filters()
@@ -296,6 +322,7 @@ class AttivitaProgrammateTab(QWidget):
                     self.table.setRowHidden(r, True)
 
     def _show_context_menu(self, pos):
+        """Visualizza il menu contestuale per l'integrazione con Lyra."""
         menu = QMenu(self)
         lyra_action = QAction("Analizza riga con Lyra", self)
         lyra_action.setIcon(get_colored_icon(get_asset_path(Icons.SPARKLES), "#000000"))

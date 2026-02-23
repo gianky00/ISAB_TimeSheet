@@ -253,7 +253,10 @@ def poll_for_new_file(
     snapshot_map: dict[Path, float] = {}
     for f_path in files_before:
         with suppress(Exception):
-            p = Path(f_path).resolve()
+            p = Path(f_path)
+            if not p.is_absolute():
+                p = directory_path / p
+            p = p.resolve()
             if p.exists():
                 snapshot_map[p] = p.stat().st_mtime
 

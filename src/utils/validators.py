@@ -1,5 +1,7 @@
 """
-Framework di validazione input centralizzato.
+SyncroJob - Input Validators
+Framework di validazione centralizzato per garantire l'integrità dei dati inseriti dall'utente.
+Include controlli per OdA, PDL, Codici Fiscali e date.
 """
 
 import re
@@ -9,13 +11,25 @@ from typing import ClassVar
 
 @dataclass
 class ValidationResult:
+    """
+    Rappresenta l'esito di un'operazione di validazione.
+
+    Attributes:
+        valid: True se il valore è conforme al pattern richiesto.
+        error: Messaggio descrittivo in caso di errore.
+        sanitized_value: Il valore normalizzato e pronto per l'uso (es. maiuscolo, senza spazi).
+    """
+
     valid: bool
     error: str | None = None
     sanitized_value: str | None = None
 
 
 class InputValidator:
-    """Validatore centralizzato per tutti gli input utente."""
+    """
+    Validatore centralizzato per tutti gli input utente.
+    Contiene pattern regex standard e logica di validazione complessa (es. checksum CF).
+    """
 
     # Pattern comuni
     PATTERNS: ClassVar[dict[str, str]] = {
@@ -30,7 +44,16 @@ class InputValidator:
 
     @classmethod
     def validate_pdl(cls, value: str) -> ValidationResult:
-        """Valida numero PDL (6 cifre + /C o /S)."""
+        """
+        Valida numero PDL (6 cifre + /C o /S).
+        Se vengono fornite solo 6 cifre, aggiunge automaticamente il suffisso in base al numero.
+
+        Args:
+            value: Il numero PDL grezzo.
+
+        Returns:
+            ValidationResult: L'esito della validazione con il valore eventualmente corretto.
+        """
         if not value:
             return ValidationResult(False, "Numero PDL obbligatorio")
 
@@ -53,7 +76,15 @@ class InputValidator:
 
     @classmethod
     def validate_oda(cls, value: str) -> ValidationResult:
-        """Valida numero OdA."""
+        """
+        Valida la correttezza formale di un numero di Ordine d'Acquisto.
+
+        Args:
+            value: Numero OdA inserito.
+
+        Returns:
+            ValidationResult: Esito della validazione.
+        """
         if not value:
             return ValidationResult(False, "Numero OdA obbligatorio")
 
@@ -69,7 +100,15 @@ class InputValidator:
 
     @classmethod
     def validate_codice_fiscale(cls, value: str) -> ValidationResult:
-        """Valida codice fiscale italiano."""
+        """
+        Valida un Codice Fiscale italiano controllando formato e carattere di controllo.
+
+        Args:
+            value: CF da validare.
+
+        Returns:
+            ValidationResult: Esito con errore descrittivo se non valido.
+        """
         if not value:
             return ValidationResult(False, "Codice Fiscale obbligatorio")
 
@@ -89,8 +128,15 @@ class InputValidator:
 
     @staticmethod
     def _validate_cf_checksum(cf: str) -> bool:
-        """Verifica il carattere di controllo del CF."""
-        # Implementazione algoritmo di controllo
+        """
+        Implementa l'algoritmo di calcolo del carattere di controllo per il Codice Fiscale.
+
+        Args:
+            cf: Il codice fiscale completo (16 caratteri).
+
+        Returns:
+            bool: True se l'ultimo carattere coincide con il checksum calcolato sui primi 15.
+        """
         odd_map = {
             "0": 1,
             "1": 0,
@@ -180,7 +226,15 @@ class InputValidator:
 
     @classmethod
     def validate_date_italian(cls, value: str) -> ValidationResult:
-        """Valida data in formato italiano (GG.MM.AAAA)."""
+        """
+        Valida una data in formato italiano (GG.MM.AAAA).
+
+        Args:
+            value: La data inserita.
+
+        Returns:
+            ValidationResult: Esito con valore sanitizzato (sostituisce / con .).
+        """
         if not value:
             return ValidationResult(False, "Data obbligatoria")
 
@@ -201,7 +255,15 @@ class InputValidator:
 
     @classmethod
     def sanitize_sql_string(cls, value: str) -> str:
-        """Sanitizza stringa per uso in SQL (anche se usiamo parametri)."""
+        """
+        Rimuove caratteri non stampabili per prevenire errori in query SQL.
+
+        Args:
+            value: Stringa da pulire.
+
+        Returns:
+            str: Stringa contenente solo caratteri stampabili e spazi bianchi base.
+        """
         if not value:
             return ""
         # Rimuovi caratteri di controllo, ma mantieni formattazione base

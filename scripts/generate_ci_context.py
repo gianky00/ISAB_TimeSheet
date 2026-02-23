@@ -45,7 +45,7 @@ def main():
     """Aggregatore principale del contesto CI."""
     start_time = datetime.now()
 
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+    with OUTPUT_FILE.open("w", encoding="utf-8") as f:
         f.write("# CI/CD Context Report\n\n")
         f.write(f"**Generated:** {start_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
 

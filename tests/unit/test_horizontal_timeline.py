@@ -30,7 +30,7 @@ def test_horizontal_timeline_functionality(qtbot):
 
     # Check if the number of items in the timeline's container layout matches the number of logs added
     # We count only the widgets, as the layout also contains a stretch (spacer)
-    layout = widget.timeline.container.main_layout
+    layout = widget.timeline.container.log_layout
     item_count = sum(1 for i in range(layout.count()) if layout.itemAt(i).widget())
 
     assert item_count == len(logs_to_add), (

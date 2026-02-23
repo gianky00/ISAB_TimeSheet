@@ -107,6 +107,12 @@ class PDLFilterWidget(QWidget):
         self.export_btn.clicked.connect(self.export_clicked.emit)
 
     def get_filters(self) -> dict[str, str]:
+        """
+        Recupera i valori correnti di tutti i filtri.
+
+        Returns:
+            dict: Mappa dei filtri (search, group, site, area, unit).
+        """
         return {
             "search": self.search_input.text().lower(),
             "group": self.group_filter.currentText(),

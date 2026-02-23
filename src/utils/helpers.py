@@ -7,6 +7,7 @@ import logging
 import os
 import re
 import sys
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -222,6 +223,37 @@ def sanitize_filename(filename: str) -> str:
         return "unnamed_file"
 
     return safe_filename
+
+
+def cleanup_chrome_temp_files(directory: Path | str) -> list[str]:
+    """
+    Rimuove tutti i file da 0 KB (residui di download o placeholder) nella directory.
+
+    Returns:
+        Lista dei nomi dei file rimossi.
+    """
+    dir_path = Path(directory)
+    if not dir_path.exists():
+        return []
+
+    removed = []
+    try:
+        for f in dir_path.iterdir():
+            if f.is_file() and f.stat().st_size == 0:
+                try:
+                    f.unlink()
+                    removed.append(f.name)
+                except Exception as e:
+                    # Se non riusciamo a cancellare un file specifico (es. locked), passiamo al prossimo
+                    import logging
+
+                    logging.getLogger(__name__).warning(f"Impossibile eliminare {f}: {e}")
+                    continue
+    except Exception:
+        # Se la directory non è leggibile o iterabile, ritorniamo quello che abbiamo trovato finora
+        with suppress(Exception):
+            pass
+    return removed
 
 
 def get_colored_icon(icon_path: str, color: str = "#000000") -> QIcon:

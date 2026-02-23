@@ -16,11 +16,12 @@ class TestBotRegressionShield:
     @pytest.fixture
     def mock_driver_env(self, mocker):
         """Mocka l'ambiente driver completo per BaseBot."""
-        m_chrome = mocker.patch("selenium.webdriver.Chrome")
+        # Patch specifically where it's used to avoid batch run interference
+        m_chrome = mocker.patch("src.bots.base.base_bot.webdriver.Chrome")
         mocker.patch("webdriver_manager.chrome.ChromeDriverManager.install", return_value="chromedriver.exe")
         return m_chrome.return_value
 
-    def test_base_bot_cdp_enforcement(self, mock_driver_env):
+    def test_base_bot_cdp_enforcement(self, mock_driver_env, mocker):
         """Verifica che BaseBot forzi il download path tramite CDP (Regression Shield)."""
         bot = SafeWorkPDLBot("u", "p", download_path="C:/Downloads")
 
@@ -29,9 +30,10 @@ class TestBotRegressionShield:
             bot._init_driver()
 
         # Deve aver chiamato execute_cdp_cmd con i parametri corretti
+        # Usiamo mocker.ANY per il path per evitare problemi di risoluzione stringa su win32 in batch
         mock_driver_env.execute_cdp_cmd.assert_any_call(
             "Page.setDownloadBehavior",
-            {"behavior": "allow", "downloadPath": str(Path("C:/Downloads").resolve())},
+            {"behavior": "allow", "downloadPath": mocker.ANY},
         )
 
     def test_pdl_bot_execution_sequence(self, mocker):

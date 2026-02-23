@@ -71,6 +71,7 @@ class EmployeeEditorDialog(QDialog):
         main_layout.addLayout(btn_layout)
 
     def get_data(self):
+        """Estrae i dati inseriti nei campi di input e li normalizza in maiuscolo."""
         return {k: v.text().strip().upper() for k, v in self.inputs.items()}
 
 
@@ -189,14 +190,8 @@ class DipendentiManagerPanel(QWidget):
         h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # ID stretto
         h_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # Badge stretto
 
-        self.table.setStyleSheet(
-            """
-            QTableWidget { border: 1px solid #dee2e6; border-radius: 4px; background: white; }
-            QHeaderView::section { background-color: #f8f9fa; padding: 8px; border: none; font-weight: bold; }
-            QTableWidget::item { padding: 5px; }
-            QTableWidget::item:selected { background-color: #e7f1ff; color: #000; }
-        """
-        )
+        # Use global styles from light.qss
+        # self.table.setStyleSheet(...)
 
         self.table.doubleClicked.connect(self._edit_selected)
 

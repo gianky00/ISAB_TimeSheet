@@ -4,7 +4,8 @@ from pathlib import Path
 import tomlkit
 
 
-def generate_requirements_content():
+def generate_requirements_content() -> str:
+    """Estrae le dipendenze principali dal file poetry.lock e le formatta in stile requirements.txt."""
     lock_file = Path("poetry.lock")
     if not lock_file.exists():
         print("Error: poetry.lock not found.")
@@ -26,7 +27,13 @@ def generate_requirements_content():
     return "\n".join(packages) + "\n"
 
 
-def sync(check_only=False):
+def sync(check_only: bool = False) -> None:
+    """
+    Sincronizza il file requirements.txt con lo stato attuale di Poetry.
+
+    Args:
+        check_only: Se True, verifica solo la sincronizzazione senza scrivere file.
+    """
     content = generate_requirements_content()
     req_file = Path("requirements.txt")
 

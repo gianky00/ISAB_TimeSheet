@@ -7,10 +7,12 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
     """Delegate per gestire lo stile delle righe figlie nel QTreeView degli OdA."""
 
     def __init__(self, tree_view: QTreeView) -> None:
+        """Inizializza il delegate associandolo alla vista ad albero degli OdA."""
         super().__init__(tree_view)
         self.tree = tree_view
 
     def paint(self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+        """Personalizza il disegno delle celle, applicando colori di stato e merge testuale per le righe figlie."""
         if not painter:
             super().paint(painter, option, index)
             return

@@ -1,3 +1,10 @@
+"""
+SyncroJob - Settings Main Panel
+Pannello centralizzato per la configurazione dell'applicazione.
+Organizza le impostazioni in tab tematici: Configurazione, Backup, Statistiche e Telegram.
+Gestisce il salvataggio automatico con debounce e l'import/export delle preferenze.
+"""
+
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QTabWidget, QVBoxLayout, QWidget
 
@@ -13,17 +20,31 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class SettingsPanel(QWidget):
-    """Pannello per le impostazioni dell'applicazione (Refactored)."""
+    """
+    Pannello principale delle impostazioni.
+    Coordina i diversi moduli di configurazione e garantisce la persistenza dei dati.
+    Supporta il monitoraggio dei cambiamenti non salvati e l'integrazione con la guida contestuale.
+    """
 
     unsaved_changes = pyqtSignal(bool)
+    """Segnale emesso quando lo stato delle modifiche cambia (True se ci sono modifiche pendenti)."""
+
     settings_saved = pyqtSignal()
+    """Segnale emesso a conferma del completamento del salvataggio su disco."""
+
     request_help_section = pyqtSignal(str)
+    """Segnale emesso per richiedere l'apertura di una specifica sezione della guida."""
 
     def __init__(self, parent=None):
+        """
+        Inizializza il pannello impostazioni e configura il timer di autosave.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self._has_unsaved_changes = False
 
-        # Timer per Debounce Salvataggio
         self.save_timer = QTimer()
         self.save_timer.setSingleShot(True)
         self.save_timer.setInterval(800)
@@ -34,6 +55,7 @@ class SettingsPanel(QWidget):
         self._has_unsaved_changes = False
 
     def _setup_ui(self):
+        """Costruisce l'interfaccia a schede e i pulsanti di manutenzione (Export/Import)."""
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(15)
         main_layout.setContentsMargins(15, 15, 15, 15)
@@ -53,17 +75,13 @@ class SettingsPanel(QWidget):
         # 2. Backup
         self.backup_tab = BackupTab()
         self.tabs.addTab(
-            self.backup_tab,
-            get_colored_icon(get_asset_path(Icons.CLOUD), "#546E7A"),
-            "Backup Cloud",
+            self.backup_tab, get_colored_icon(get_asset_path(Icons.CLOUD), "#546E7A"), "Backup Cloud"
         )
 
         # 3. Statistiche
         self.stats_widget = StatisticsWidget()
         self.tabs.addTab(
-            self.stats_widget,
-            get_colored_icon(get_asset_path(Icons.ROCKET), "#546E7A"),
-            "Statistiche",
+            self.stats_widget, get_colored_icon(get_asset_path(Icons.ROCKET), "#546E7A"), "Statistiche"
         )
 
         # 4. Telegram
@@ -71,15 +89,13 @@ class SettingsPanel(QWidget):
         self.telegram_tab.settings_changed.connect(self._on_settings_changed)
         self.telegram_tab.request_help.connect(self.request_help_section.emit)
         self.tabs.addTab(
-            self.telegram_tab,
-            get_colored_icon(get_asset_path(Icons.SEND), "#546E7A"),
-            "Telegram",
+            self.telegram_tab, get_colored_icon(get_asset_path(Icons.SEND), "#546E7A"), "Telegram"
         )
 
         self.tabs.currentChanged.connect(self._on_tab_changed)
         main_layout.addWidget(self.tabs)
 
-        # Footer Actions (Import/Export)
+        # Footer
         footer_layout = QHBoxLayout()
         footer_layout.setContentsMargins(0, 10, 0, 0)
 
@@ -99,60 +115,52 @@ class SettingsPanel(QWidget):
         main_layout.addLayout(footer_layout)
 
     def _on_tab_changed(self, index):
+        """Aggiorna i widget dinamici (es. statistiche) al cambio di tab."""
         if self.tabs.tabText(index) == "Statistiche":
             self.stats_widget.refresh()
 
     def _on_settings_changed(self):
-        """Chiamato quando una qualsiasi impostazione cambia."""
+        """Reagisce alla modifica di un valore attivando il timer per il salvataggio differito."""
         self._has_unsaved_changes = True
         self.unsaved_changes.emit(True)
-        self.save_timer.start()  # Reset timer debounce
+        self.save_timer.start()
 
     def _save_settings(self):
-        """Salva le impostazioni su disco."""
+        """Persiste tutte le impostazioni correnti nel file di configurazione globale."""
         try:
             self.config_tab.save_to_config(config_manager)
             self.telegram_tab.save_to_config(config_manager)
-            self.backup_tab._save_auto_backup()  # Backup tab manages its own logic mostly, but check consistency
-
-            # Persist changes
-            # config_manager handles persistence internally usually via set_config_value calls immediately?
-            # Or does it need a save() call?
-            # In the original code, set_config_value writes to file. So we are good.
+            self.backup_tab._save_auto_backup()
 
             self._has_unsaved_changes = False
             self.unsaved_changes.emit(False)
             self.settings_saved.emit()
-
-            # Optional: Show unobtrusive toast?
-
         except Exception as e:
             print(f"Errore salvataggio impostazioni: {e}")
 
     def load_settings(self):
+        """Carica lo stato corrente dei widget leggendo la configurazione da disco."""
         config = config_manager.load_config()
         self.config_tab.load_from_config(config)
         self.backup_tab.load_from_config(config)
         self.telegram_tab.load_from_config(config)
 
-    def has_unsaved_changes(self):
+    def has_unsaved_changes(self) -> bool:
+        """Restituisce True se ci sono modifiche non ancora persistite."""
         return self._has_unsaved_changes
 
-    def prompt_save_if_needed(self):
-        """Se ci sono modifiche non salvate, chiede all'utente (usato alla chiusura)."""
-        # Con autosave, questo serve meno, ma per sicurezza.
+    def prompt_save_if_needed(self) -> bool:
+        """Esegue un salvataggio forzato se ci sono modifiche pendenti."""
         if self._has_unsaved_changes:
             self._save_settings()
         return True
 
     def _export_settings(self):
+        """Apre un dialogo per esportare l'intera configurazione JSON in un file esterno."""
         from PyQt6.QtWidgets import QFileDialog
 
         path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Esporta Configurazione",
-            "SyncroJob_Config.json",
-            "JSON Files (*.json)",
+            self, "Esporta Configurazione", "SyncroJob_Config.json", "JSON Files (*.json)"
         )
         if path:
             success, msg = config_manager.export_configuration(path)
@@ -162,6 +170,7 @@ class SettingsPanel(QWidget):
                 ToastManager.instance().show(f"Errore export: {msg}", "error")
 
     def _import_settings(self):
+        """Importa una configurazione JSON da file, sovrascrivendo quella attuale previa conferma."""
         from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
         path, _ = QFileDialog.getOpenFileName(self, "Importa Configurazione", "", "JSON Files (*.json)")

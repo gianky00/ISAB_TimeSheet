@@ -107,12 +107,15 @@ class FastTableModel(QAbstractTableModel):
         self._alignments[col_idx] = alignment
 
     def rowCount(self, parent: Any = None) -> int:
+        """Restituisce il numero di righe nel modello."""
         return len(self._data)
 
     def columnCount(self, parent: Any = None) -> int:
+        """Restituisce il numero di colonne basato sull'header."""
         return len(self._headers)
 
     def data(self, index: Any, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+        """Recupera il valore per una cella applicando formattazione e allineamento."""
         if not index.isValid():
             return None
 
@@ -143,11 +146,13 @@ class FastTableModel(QAbstractTableModel):
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
     ) -> Any:
+        """Restituisce l'intestazione della colonna."""
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return self._headers[section]
         return None
 
     def update_data(self, new_data: list[list[Any]], new_metadata: list[Any] | None = None) -> None:
+        """Sostituisce i dati del modello e notifica la vista."""
         self.beginResetModel()
         self._data = new_data
         self._metadata = new_metadata or ([None] * len(new_data))
@@ -161,6 +166,7 @@ class FastTableModel(QAbstractTableModel):
             # Restituisce una tupla (prioritÃ , valore)
             # PrioritÃ : 0 = None/Vuoto, 1 = Numeri/Date, 2 = Stringhe
             def sort_key(row_tuple: tuple[list[Any], Any]) -> tuple[int, Any]:
+                """Genera la chiave di ordinamento gestendo i tipi misti."""
                 row_data = row_tuple[0]
                 val = row_data[column]
 

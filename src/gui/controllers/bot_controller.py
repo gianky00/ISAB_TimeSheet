@@ -1,5 +1,8 @@
 """
-Controller per il coordinamento dei Bot e l'aggiornamento dello stato UI.
+SyncroJob - Bot Controller
+Orchestratore per il coordinamento delle attività dei bot Selenium e l'aggiornamento dinamico della UI.
+Gestisce il bridge tra i segnali emessi dai pannelli bot, il servizio di messaggistica Telegram
+e le card di stato globali presenti nel footer della MainWindow.
 """
 
 import os
@@ -12,30 +15,49 @@ from PyQt6.QtWidgets import QWidget
 
 class BotController(QObject):
     """
-    Gestisce l'interazione tra i pannelli Bot, il servizio Telegram
-    e i widget di stato della UI.
+    Controller centrale per il monitoraggio e la notifica dello stato delle automazioni.
+    Si occupa di:
+    - Collegare i segnali di stato di ogni pannello bot alle card informative (Portale/SafeWork).
+    - Inoltrare i file prodotti dai bot (es. PDF dei PDL) direttamente sul canale Telegram.
+    - Identificare il pannello bot attualmente attivo per operazioni contestuali.
     """
 
     def __init__(self, main_window: Any, telegram_service: Any) -> None:
+        """
+        Inizializza il bot controller.
+
+        Args:
+            main_window: Riferimento alla MainWindow (per accesso alle status card).
+            telegram_service: Istanza del TelegramService per l'invio di notifiche e file.
+        """
         super().__init__(main_window)
         self.mw = main_window
         self.telegram = telegram_service
         self.panels: list[Any] = []
 
     def register_panels(self, panels: list[Any]) -> None:
-        """Registra i pannelli bot per monitorarne segnali e risultati."""
+        """
+        Sottoscrive il controller ai segnali di ogni pannello bot registrato.
+
+        Args:
+            panels: Lista di widget bot (che ereditano tipicamente da BaseBotPanel).
+        """
         self.panels = panels
         for panel in self.panels:
-            # Connessione segnali risultati (se presenti)
             if hasattr(panel, "bot_results_ready"):
                 panel.bot_results_ready.connect(self._handle_bot_results)
-
-            # Connessione segnali stato
             if hasattr(panel, "status_changed"):
                 panel.status_changed.connect(self._on_panel_status_changed)
 
     def _handle_bot_results(self, bot_id: str, results: list[str]) -> None:
-        """Gestisce i risultati prodotti dai bot e li invia a Telegram."""
+        """
+        Reagisce al completamento di un bot inviando i file prodotti a Telegram.
+        Specializzato per lo scarico PDL.
+
+        Args:
+            bot_id: Identificatore del bot che ha prodotto i risultati.
+            results: Lista di percorsi file generati.
+        """
         if bot_id == "scarico_pdl":
             for file_path in results:
                 if Path(file_path).exists():
@@ -45,38 +67,41 @@ class BotController(QObject):
                     )
 
     def _on_panel_status_changed(self, status: str, message: str) -> None:
-        """Aggiorna la card di stato appropriata (SafeWork o Portale) in base al bot."""
+        """
+        Aggiorna le card di stato nel footer in base all'appartenenza del bot (Portale o SafeWork).
+
+        Args:
+            status: Codice colore HEX per l'indicatore visuale.
+            message: Testo descrittivo dello stato (es. 'Esecuzione in corso...').
+        """
         sender = self.sender()
         bot_id = getattr(sender, "bot_id", "")
-
-        # SafeWork bots list
         safework_bots = ["scarico_pdl", "pdl_search"]
 
-        # Update the correct status card based on bot_id
-        # Note: status is the color code, message is the text
         if bot_id in safework_bots:
             if hasattr(self.mw, "status_safework"):
                 self.mw.status_safework.setStatus(message, status)
-        else:  # Default to Portale Fornitori bots
+        else:
             if hasattr(self.mw, "status_portale"):
                 self.mw.status_portale.setStatus(message, status)
 
     def _get_active_bot_panel(self) -> QWidget | None:
-        """Determina quale pannello bot è attualmente visibile nella UI."""
-        if not hasattr(self.mw, "automazioni_widget"):
+        """
+        Individua il pannello bot attualmente visualizzato dall'utente navigando tra i tab.
+
+        Returns:
+            Optional[QWidget]: Il pannello attivo o None se non identificato.
+        """
+        if not hasattr(self.mw, "automazioni_widget") or not self.mw.automazioni_widget:
             return None
 
         auto_widget = self.mw.automazioni_widget
-        if not auto_widget:
-            return None
-
         main_idx = auto_widget.currentIndex()
-        if main_idx == 0 and hasattr(auto_widget, "tab_fornitori"):  # Portale Fornitori
+
+        if main_idx == 0 and hasattr(auto_widget, "tab_fornitori"):
             panel = auto_widget.tab_fornitori.currentWidget()
             return panel if isinstance(panel, QWidget) else None
-        if main_idx == 1 and hasattr(auto_widget, "tab_safework"):  # SafeWork
+        if main_idx == 1 and hasattr(auto_widget, "tab_safework"):
             panel = auto_widget.tab_safework.currentWidget()
             return panel if isinstance(panel, QWidget) else None
         return None
-
-    # Removed update_global_status as it's no longer relevant with separate cards

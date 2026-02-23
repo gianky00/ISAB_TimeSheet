@@ -43,6 +43,7 @@ class SensitiveDataFilter(logging.Filter):
     ]
 
     def filter(self, record: logging.LogRecord) -> bool:
+        """Applica il mascheramento dei dati sensibili al messaggio e agli argomenti del log."""
         if isinstance(record.msg, str):
             for pattern, replacement in self.PATTERNS:
                 record.msg = pattern.sub(replacement, record.msg)

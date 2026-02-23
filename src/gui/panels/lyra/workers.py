@@ -29,7 +29,8 @@ class LyraWorker(QThread):
         self.model_name = model_name
         self.ollama_url = ollama_url
 
-    def run(self):
+    def run(self) -> None:
+        """Esegue la chiamata asincrona all'API Lyra."""
         try:
             client = LyraClient(
                 api_key=self.api_key,
@@ -56,7 +57,8 @@ class ModelListWorker(QThread):
         self.provider = provider
         self.ollama_url = ollama_url
 
-    def run(self):
+    def run(self) -> None:
+        """Recupera la lista dei modelli supportati dal provider configurato."""
         try:
             client = LyraClient(api_key=self.api_key, provider=self.provider, ollama_url=self.ollama_url)
             models = client.list_models()

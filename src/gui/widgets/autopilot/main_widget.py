@@ -1,6 +1,7 @@
 """
 SyncroJob - Autopilot Main Widget
-Widget coordinatore per la visualizzazione e configurazione dei bot programmati.
+Widget coordinatore per la visualizzazione e configurazione dei bot programmati (Autopilot).
+Gestisce la pianificazione delle attività automatiche e la loro visualizzazione in tempo reale.
 """
 
 from contextlib import suppress
@@ -39,9 +40,17 @@ from .event_card import AutopilotEventCard
 class AutopilotWidget(QWidget):
     """
     Widget che mostra e configura gli eventi programmati dei bot (Autopilot).
+    Supporta una modalità di visualizzazione (Live) e una di configurazione.
+    Utilizza animazioni per le transizioni e indicatori visivi per lo stato del sistema.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il widget Autopilot.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self._config_mode = False
         self.footer_left_widget: Any = None
@@ -50,17 +59,21 @@ class AutopilotWidget(QWidget):
         self._gear_animation: QParallelAnimationGroup | None = None
         self._setup_ui()
 
+        # Timer di refresh automatico degli eventi (ogni minuto)
         self.refresh_timer = QTimer(self)
         self.refresh_timer.timeout.connect(self.refresh_events)
         self.refresh_timer.start(60000)
 
     def set_footer_widget(self, footer_left_widget: Any) -> None:
+        """Collega il widget del footer per aggiornamenti contestuali."""
         self.footer_left_widget = footer_left_widget
 
     def set_status_bar(self, status_bar: Any) -> None:
+        """Collega la barra di stato per segnalare attività dell'autopilot."""
         self.status_bar = status_bar
 
     def _setup_ui(self) -> None:
+        """Configura il layout, l'header LIVE e i container per le card."""
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
         self.setMinimumWidth(600)
         self.setMaximumWidth(600)
@@ -149,6 +162,7 @@ class AutopilotWidget(QWidget):
         self._refresh_config()
 
     def _toggle_mode(self) -> None:
+        """Passa dalla modalità visualizzazione alla modalità configurazione con animazione."""
         if self._animating:
             return
         self._animating = True
@@ -171,6 +185,7 @@ class AutopilotWidget(QWidget):
         QTimer.singleShot(800, self._restart_live_animations)
 
     def _stop_all_card_animations(self, layout: QGridLayout) -> None:
+        """Ferma preventivamente tutte le animazioni attive nelle card dei layout."""
         for i in range(layout.count()):
             item = layout.itemAt(i)
             if item is not None and item.widget():
@@ -183,6 +198,7 @@ class AutopilotWidget(QWidget):
                         w.timer.stop()  # type: ignore
 
     def _animate_gear_button(self) -> None:
+        """Esegue un'animazione di scuotimento e scala sull'icona delle impostazioni."""
         self._cleanup_gear_animations()
         original_pos = self.config_btn.pos()
         parallel_group = QParallelAnimationGroup(self)
@@ -214,11 +230,13 @@ class AutopilotWidget(QWidget):
         self._gear_animation = parallel_group
 
     def _cleanup_gear_animations(self) -> None:
+        """Ferma in modo sicuro l'animazione dell'ingranaggio."""
         if self._gear_animation:
             with suppress(RuntimeError):
                 self._gear_animation.stop()
 
     def _animate_transition(self, from_widget: QWidget, to_widget: QWidget) -> None:
+        """Gestisce il cross-fade tra i widget di vista e configurazione."""
         to_widget.setVisible(True)
         to_widget.hide()
 
@@ -229,12 +247,14 @@ class AutopilotWidget(QWidget):
         QTimer.singleShot(150, do_transition)
 
     def _restart_live_animations(self) -> None:
+        """Ripristina le animazioni dell'indicatore LIVE dopo una transizione."""
         if hasattr(self, "dot_anim") and self.dot_anim:
             with suppress(RuntimeError):
                 self.dot_anim.start()
         self._animating = False
 
     def refresh_events(self) -> None:
+        """Ricarica la lista degli eventi programmati leggendo la configurazione corrente."""
         while self.view_layout.count() > 0:
             item = self.view_layout.takeAt(0)
             if item is not None:
@@ -298,6 +318,7 @@ class AutopilotWidget(QWidget):
             self.view_layout.addWidget(card, idx // 2, idx % 2)
 
     def _refresh_config(self) -> None:
+        """Ricarica i widget di configurazione per ogni bot supportato dall'autopilot."""
         while self.config_layout.count() > 0:
             item = self.config_layout.takeAt(0)
             if item is not None:

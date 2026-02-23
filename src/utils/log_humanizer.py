@@ -1,9 +1,9 @@
 """
 SyncroJob - Log Humanizer
-Converte messaggi di log tecnici in frasi umane e colloquiali.
+Converte messaggi di log tecnici in frasi pulite e professionali.
+Rimosso il sistema casuale per garantire coerenza e precisione.
 """
 
-import random
 from datetime import datetime
 from typing import ClassVar
 
@@ -27,52 +27,24 @@ def friendly_time_delta(dt: datetime) -> str:
 
 
 class SmartLogTranslator:
-    """Traduce i log tecnici in frasi 'umane'."""
+    """Traduce i log tecnici in frasi pulite e categorizzate per la UI."""
 
-    # Dizionario di template per categoria
-    TEMPLATES: ClassVar[dict[str, list[str]]] = {
-        "start": [
-            "Si parte! Avvio i motori...",
-            "Ciao! Iniziamo subito a lavorare.",
-            "Bot pronto. Andiamo!",
-            "Iniziamo l'automazione.",
-        ],
-        "login": [
-            "Sto effettuando l'accesso al portale...",
-            "Inserisco le credenziali...",
-            "Busso alla porta di ISAB...",
-            "Apro le porte del sistema.",
-        ],
-        "search": [
-            "Cerco i dati richiesti...",
-            "Mi metto alla ricerca...",
-            "Analizzo il database...",
-            "Vediamo cosa trovo...",
-        ],
-        "download": [
-            "Scarico i file...",
-            "Salvo tutto sul disco...",
-            "Pacchetto in arrivo...",
-            "Recupero i documenti.",
-        ],
-        "success": [
-            "Fatto! Tutto perfetto.",
-            "Missione compiuta!",
-            "Ottimo lavoro, ho finito.",
-            "Completato con successo.",
-        ],
-        "error": [
-            "Oops, qualcosa è andato storto.",
-            "Ho incontrato un ostacolo.",
-            "C'è un problema tecnico.",
-            "Ahi, errore imprevisto.",
-        ],
-        "wait": [
-            "Attendo un attimo...",
-            "Pausa caffè virtuale...",
-            "Dammi un secondo...",
-            "Aspetto che il sito risponda...",
-        ],
+    # Mappatura diretta per messaggi comuni (per garantire coerenza)
+    FIXED_MAPPING: ClassVar[dict[str, str]] = {
+        "avvio automazione": "🚀 Avvio automazione in corso...",
+        "inizializzazione browser": "🌐 Inizializzazione browser...",
+        "inserimento credenziali": "🔐 Inserimento credenziali...",
+        "attendo un attimo": "⏳ Attesa operativa...",
+        "aspetto che il sito risponda": "⏳ In attesa di risposta dal server...",
+        "spinner scomparso": "✅ Caricamento completato.",
+        "dashboard raggiunta correttamente": "✅ Accesso al sistema completato.",
+        "recupero i documenti": "📂 Recupero documenti in corso...",
+        "mi metto alla ricerca": "🔍 Ricerca in corso...",
+        "analizzo il database": "🔍 Analisi dati in corso...",
+        "scarico i file": "⬇️ Scarico file in corso...",
+        "missione compiuta": "✨ Missione completata con successo!",
+        "completato con successo": "✅ Operazione conclusa.",
+        "fatto! tutto perfetto": "✅ Operazione conclusa.",
     }
 
     @staticmethod
@@ -80,40 +52,42 @@ class SmartLogTranslator:
         """Analizza il messaggio tecnico e restituisce (human_msg, tech_msg, category)."""
         category = SmartLogTranslator._detect_category(message)
 
-        if category in SmartLogTranslator.TEMPLATES:
-            human_msg = random.choice(SmartLogTranslator.TEMPLATES[category])  # noqa: S311
-        else:
+        # Se il messaggio ha già un'icona o un prefisso speciale, lo teniamo così come è
+        # (es. "🖱️ Click su", "📂 Verifica")
+        if any(
+            message.startswith(icon)
+            for icon in ("🖱️", "📂", "🔍", "⏳", "✅", "❌", "⚠️", "🚀", "✨", "⬇️", "🔗", "⌨️", "🔄", "ℹ️")
+        ):
             human_msg = message
+        else:
+            # Altrimenti cerchiamo una mappatura fissa o puliamo il testo
+            msg_lower = message.lower().strip().rstrip(".")
+            human_msg = SmartLogTranslator.FIXED_MAPPING.get(msg_lower, message)
 
-        tech_msg = SmartLogTranslator._inject_tags(message, category)
-        return human_msg, tech_msg, category
+        return human_msg, message, category
 
     @staticmethod
     def _detect_category(message: str) -> str:
         """Determina la categoria del messaggio basandosi sulle keyword."""
         lower_msg = message.lower()
-        mappings = {
-            "error": ["errore", "fallit", "exception", "eccezion", "✗"],
-            "start": ["avvio", "start"],
-            "login": ["login", "accesso", "connessione"],
-            "search": ["cerca", "trovat", "analizz"],
-            "download": ["scaric", "salvat", "export"],
-            "success": ["successo", "completat", "✓"],
-            "wait": ["attes", "wait"],
-        }
 
-        for cat, keywords in mappings.items():
-            if any(kw in lower_msg for kw in keywords):
-                return cat
-            # Check case-sensitive icons for success/error
-            if cat in ("error", "success") and any(kw in message for kw in ("✗", "✓") if kw in keywords):
-                return cat
+        # Categorie speciali per animazioni o colori
+        if any(kw in lower_msg for kw in ("attesa", "attendi", "aspetto", "polling", "caricamento", "⏳")):
+            return "wait"
+
+        if any(kw in lower_msg for kw in ("errore", "fallit", "exception", "eccezion", "❌")):
+            return "error"
+
+        if any(kw in lower_msg for kw in ("successo", "completat", "✅", "✨")):
+            return "success"
+
+        if any(kw in lower_msg for kw in ("click", "premuto", "selezion", "🖱️")):
+            return "action"
+
+        if any(kw in lower_msg for kw in ("ricerca", "cerca", "🔍")):
+            return "search"
+
+        if any(kw in lower_msg for kw in ("scaric", "download", "⬇️")):
+            return "download"
+
         return "info"
-
-    @staticmethod
-    def _inject_tags(message: str, category: str) -> str:
-        """Inietta tag tecnici per suggerire azioni alla UI."""
-        lower_msg = message.lower()
-        if "credenziali" in lower_msg or (category == "error" and "login" in lower_msg):
-            return f"{message} [FIXIT:ACCOUNT]"
-        return message

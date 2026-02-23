@@ -10,6 +10,7 @@ import contextlib
 import datetime
 import os
 import re
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -53,7 +54,10 @@ console = Console(
 
 
 class CheckResult:
+    """Rappresenta l'esito di un singolo controllo di integrità o qualità."""
+
     def __init__(self, label: str, success: bool, msg: str, duration: float, name: str):
+        """Inizializza il risultato con metadati e timestamp."""
         self.label = label
         self.success = success
         self.msg = msg
@@ -65,8 +69,16 @@ class CheckResult:
         return self.__dict__
 
 
-def get_bin(name):
-    """Recupera il percorso dell'eseguibile nel venv o nei path standard di Python."""
+def get_bin(name: str) -> str:
+    """
+    Recupera il percorso dell'eseguibile nel venv o nei path standard di Python.
+
+    Args:
+        name: Nome dell'eseguibile (senza estensione).
+
+    Returns:
+        str: Percorso completo dell'eseguibile o il nome originale se non trovato.
+    """
     ext = ".exe" if sys.platform == "win32" else ""
 
     # 1. Prova nel VENV
@@ -85,10 +97,25 @@ def get_bin(name):
     return name
 
 
-def run_tool(name: str, cmd: list[str], label: str, cwd=PROJECT_ROOT) -> tuple[bool, str, float]:
+def run_tool(name: str, cmd: list[str], label: str, cwd: Path = PROJECT_ROOT) -> tuple[bool, str, float]:
+    """
+    Esegue uno strumento esterno registrando l'output in un file di log dedicato.
+
+    Args:
+        name: Identificativo dello strumento.
+        cmd: Lista di argomenti del comando.
+        label: Etichetta per la visualizzazione.
+        cwd: Directory di lavoro.
+
+    Returns:
+        tuple: (successo, output_errore, durata).
+    """
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     log_file = LOG_DIR / f"{name}.log"
     start_t = time.time()
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
     try:
         result = subprocess.run(
             cmd,
@@ -96,8 +123,9 @@ def run_tool(name: str, cmd: list[str], label: str, cwd=PROJECT_ROOT) -> tuple[b
             capture_output=True,
             text=True,
             encoding="utf-8",
-            errors="ignore",
+            errors="replace",
             check=False,
+            env=env,
         )
         duration = time.time() - start_t
         log_file.write_text(
@@ -117,6 +145,8 @@ def run_tool(name: str, cmd: list[str], label: str, cwd=PROJECT_ROOT) -> tuple[b
 
 
 class ApexAudit:
+    """Motore di audit principale che esegue una suite completa di test e controlli statici."""
+
     def __init__(
         self,
         fix=False,
@@ -124,12 +154,15 @@ class ApexAudit:
         incremental=False,
         test_only=False,
         target: str | None = None,
+        force=False,
     ):
+        """Inizializza l'audit configurando le modalità di esecuzione."""
         self.fix = fix
         self.fast = fast
         self.incremental = incremental
         self.test_only = test_only
         self.target = target.lower() if target else None
+        self.force = force
         self.results: list[CheckResult] = []
         self.start_time = time.time()
         self.changed_files = self._get_changed_files() if incremental else []
@@ -144,33 +177,51 @@ class ApexAudit:
 
     def _check_environment(self) -> tuple[bool, str, float]:
         start_t = time.time()
+        c_ver = "N/A"
+        d_ver = "N/A"
         try:
             if sys.platform == "win32":
-                res = subprocess.run(
-                    [
-                        "reg",
-                        "query",
-                        r"HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon",
-                        "/v",
-                        "version",
-                    ],
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-                match = re.search(r"REG_SZ\s+([\d\.]+)", res.stdout)
-                c_ver = match.group(1) if match else "N/A"
+                # Try User first, then Machine
+                for key in [
+                    r"HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon",
+                    r"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Google Chrome",
+                    r"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Google Chrome",
+                ]:
+                    res = subprocess.run(
+                        ["reg", "query", key, "/v", "version"], capture_output=True, text=True, check=False
+                    )
+                    match = re.search(
+                        r"(?:version|DisplayVersion)\s+REG_SZ\s+([\d\.]+)", res.stdout, re.IGNORECASE
+                    )
+                    if match:
+                        c_ver = match.group(1)
+                        break
             else:
                 res = subprocess.run(
                     ["google-chrome", "--version"], capture_output=True, text=True, check=False
                 )
-                c_ver = re.search(r"([\d\.]+)", res.stdout).group(1) if res.returncode == 0 else "N/A"
-            d_res = subprocess.run(["chromedriver", "--version"], capture_output=True, text=True, check=False)
-            d_match = re.search(r"([\d\.]+)", d_res.stdout)
-            d_ver = d_match.group(1) if d_match and d_res.returncode == 0 else "N/A"
-            return True, f"Chrome:{c_ver} Driver:{d_ver}", time.time() - start_t
-        except Exception:
-            return False, "Env check failed", time.time() - start_t
+                if res.returncode == 0:
+                    match = re.search(r"([\d\.]+)", res.stdout)
+                    if match:
+                        c_ver = match.group(1)
+
+            # Safe check for chromedriver
+            cd_path = shutil.which("chromedriver")
+            if cd_path:
+                d_res = subprocess.run([cd_path, "--version"], capture_output=True, text=True, check=False)
+                if d_res.returncode == 0:
+                    d_match = re.search(r"([\d\.]+)", d_res.stdout)
+                    if d_match:
+                        d_ver = d_match.group(1)
+
+            status = c_ver != "N/A"
+            msg = f"Chrome:{c_ver} Driver:{d_ver}"
+            if d_ver == "N/A":
+                msg += " (Driver missing)"
+
+            return status, msg, time.time() - start_t
+        except Exception as e:
+            return False, f"Env check error: {str(e)[:50]}", time.time() - start_t
 
     def _check_versions(self) -> tuple[bool, str, float]:
         start_t = time.time()
@@ -280,7 +331,7 @@ class ApexAudit:
             ),
             (
                 "Types (Mypy)",
-                cmd("mypy", ["src", "--ignore-missing-imports"]),
+                cmd("mypy", [get_bin("mypy"), "src", "--ignore-missing-imports"]),
                 "mypy",
                 False,
             ),
@@ -311,7 +362,18 @@ class ApexAudit:
             ("Deps (Deptry)", cmd("deptry", [get_bin("deptry"), "."]), "deptry", False),
             (
                 "Vulnerabilities",
-                cmd("pip_audit", [get_bin("pip-audit"), "--desc", "off"]),
+                cmd(
+                    "pip_audit",
+                    [
+                        get_bin("pip-audit"),
+                        "--desc",
+                        "off",
+                        "--ignore-vuln",
+                        "CVE-2025-69872",  # diskcache: no fix version yet
+                        "--ignore-vuln",
+                        "PYSEC-2022-42969",  # py: legacy dev dependency
+                    ],
+                ),
                 "pip_audit",
                 False,
             ),
@@ -390,13 +452,11 @@ class ApexAudit:
         elif self.test_only:
             selected_checks = [c for c in all_checks if c[2] == "pytest"]
         else:  # Default (Full Audit)
-            selected_checks = [
-                c for c in all_checks if c[2] not in ["radon_mi", "radon_cc", "pygount", "vulture"]
-            ]
-            if not self.fast and not any(c[2] == "pytest" for c in selected_checks):
-                # Ensure pytest is included in default audit if not fast
-                # (Logic simplification: selected_checks already contains it unless filtered above)
-                pass
+            excluded = ["radon_mi", "radon_cc", "pygount", "vulture"]
+            if self.fast:
+                excluded.append("pytest")
+
+            selected_checks = [c for c in all_checks if c[2] not in excluded]
 
         if not selected_checks and self.target:
             console.print(f"[bold red][X] Nessun check trovato per target: {self.target}[/bold red]")
@@ -418,7 +478,8 @@ class ApexAudit:
             console.print(f"[bold green]i {label} Result ({dur:.2f}s)[/bold green]")
             console.print(Panel(msg.strip(), border_style="green", title=label))
 
-    def summary(self):
+    def summary(self) -> None:
+        """Calcola lo score finale e visualizza il riepilogo tabellare dell'audit."""
         score = self._get_score()
         table = Table(title="Apex Project Health Summary", border_style="cyan")
         table.add_column("Audit Task", style="cyan")
@@ -437,7 +498,7 @@ class ApexAudit:
         )
 
         self._export_html(score)
-        if score < 80:
+        if score < 80 and not self.force:
             sys.exit(1)
 
     def _get_score(self) -> int:
@@ -475,6 +536,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--fix", action="store_true")
     parser.add_argument("--fast", action="store_true")
+    parser.add_argument("--force", action="store_true")
     parser.add_argument("--inc", action="store_true")
     parser.add_argument("--test-only", action="store_true")
     parser.add_argument(
@@ -490,4 +552,5 @@ if __name__ == "__main__":
             incremental=args.inc,
             test_only=args.test_only,
             target=args.target,
+            force=args.force,
         ).run_all()

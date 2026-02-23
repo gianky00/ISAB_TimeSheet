@@ -60,6 +60,7 @@ class DetailedInfoDialog(QDialog):
         layout.addWidget(lbl_close)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
+        """Chiude il dialogo al click del mouse."""
         self.accept()
 
 
@@ -164,6 +165,7 @@ class KPIBigCard(QFrame):
             layout.addWidget(lbl_sub)
 
     def set_info_callback(self, callback: Callable[[], str]) -> None:
+        """Imposta la funzione che restituisce il testo informativo del KPI."""
         self.info_content_callback = callback
 
     def _get_info_content(self) -> str:

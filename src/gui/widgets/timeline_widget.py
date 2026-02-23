@@ -1,32 +1,41 @@
 """
-SyncroJob - Timeline Widgets
-Widget per la visualizzazione cronologica dei log e dei report di missione.
+SyncroJob - Cyber Log Console (V5 Edition)
+Visualizzatore di log testuali verticali con estetica Cyber-Rail Ultra.
+Combina la leggibilità della console classica con il design d'élite HUD.
 """
 
 import re
 from datetime import datetime
 from pathlib import Path
 
-from PyQt6.QtCore import (
+from PyQt6.QtCore import (  # type: ignore[attr-defined]
+    QEasingCurve,
     QPropertyAnimation,
+    QRectF,
     Qt,
+    QTimer,
     QUrl,
+    pyqtProperty,
 )
 from PyQt6.QtGui import (
     QColor,
     QDesktopServices,
     QPainter,
+    QPainterPath,
     QPaintEvent,
     QPen,
 )
 from PyQt6.QtWidgets import (
+    QAbstractItemView,
     QApplication,
     QFrame,
-    QGraphicsOpacityEffect,
+    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QMenu,
     QPushButton,
-    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
@@ -38,277 +47,337 @@ from src.utils.log_humanizer import SmartLogTranslator
 
 
 class HorizontalLogItem(QWidget):
-    """Widget per singolo elemento della timeline log orizzontale."""
+    """
+    Singola riga di log testuale con timestamp e supporto per link ai file.
+    """
 
-    def __init__(
-        self, human_msg: str, tech_msg: str, category: str, timestamp: str, parent: QWidget | None = None
-    ) -> None:
+    def __init__(self, human_msg: str, tech_msg: str, category: str, timestamp: str, parent=None):
         super().__init__(parent)
-        self.setFixedSize(180, 150)
-        self.setStyleSheet(
-            "QWidget { background-color: white; border: 1px solid #dee2e6; border-radius: 8px; } QLabel { background-color: transparent; border: none; }"
+        self.human_msg = human_msg
+        self.tech_msg = tech_msg
+        self.timestamp = timestamp
+        self.category = category
+        self.braille_frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+        self.frame_idx = 0
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(10, 2, 10, 2)
+        layout.setSpacing(10)
+
+        # Colori categoria
+        color = {
+            "start": "#212121",
+            "login": "#212121",
+            "search": "#212121",
+            "download": "#212121",
+            "success": "#2E7D32",  # Verde più scuro per successo
+            "error": "#C62828",
+            "wait": "#EF6C00",
+            "action": "#00796B",  # Teal per azioni
+            "info": "#212121",
+        }.get(category, "#212121")
+
+        # Timestamp [HH:MM:SS]
+        self.lbl_time = QLabel(f"[{timestamp}]")
+        self.lbl_time.setStyleSheet("color: #90A4AE; font-family: 'Consolas'; font-size: 11px;")
+        self.lbl_time.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(self.lbl_time)
+
+        # Animazione Braille per attese
+        if category == "wait":
+            self.lbl_spinner = QLabel(self.braille_frames[0])
+            self.lbl_spinner.setStyleSheet(
+                f"color: {color}; font-family: 'Consolas'; font-weight: bold; font-size: 14px;"
+            )
+            layout.addWidget(self.lbl_spinner)
+
+            self.timer = QTimer(self)
+            self.timer.timeout.connect(self._update_spinner)
+            self.timer.start(100)
+
+        # Messaggio
+        self.lbl_msg = QLabel(human_msg)
+        self.lbl_msg.setWordWrap(True)
+        self.lbl_msg.setStyleSheet(
+            f"color: {color}; font-family: 'Segoe UI'; font-weight: 500; font-size: 13px;"
         )
+        self.lbl_msg.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(self.lbl_msg, stretch=1)
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(5)
+        # Azioni rapide (cartelle)
+        self._add_actions(layout, tech_msg)
 
-        # 1. Parse Metadata
-        snap_path, fixit_act, tech_msg = self._parse_metadata(tech_msg)
+    def _update_spinner(self):
+        """Aggiorna il frame dell'animazione braille."""
+        self.frame_idx = (self.frame_idx + 1) % len(self.braille_frames)
+        self.lbl_spinner.setText(self.braille_frames[self.frame_idx])
 
-        # 2. Header
-        layout.addLayout(self._setup_header(category, timestamp))
+    def stop_spinner(self):
+        """Ferma l'animazione e nasconde lo spinner."""
+        if hasattr(self, "timer") and self.timer.isActive():
+            self.timer.stop()
+        if hasattr(self, "lbl_spinner"):
+            self.lbl_spinner.hide()
 
-        # 3. Content
-        self.lbl_human = QLabel(human_msg)
-        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 13px; color: #212529;")
-        self.lbl_human.setWordWrap(True)
-        self.lbl_human.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        layout.addWidget(self.lbl_human)
-        layout.addStretch()
-
-        # 4. Actions
-        self._setup_actions(layout, tech_msg, snap_path, fixit_act)
-
-    def _parse_metadata(self, tech_msg: str) -> tuple[str | None, str | None, str]:
-        snap, fixit = None, None
-        if m := re.search(r"\[IMG:(.*?)\]", tech_msg):
-            snap = m.group(1)
-            tech_msg = tech_msg.replace(m.group(0), "").strip()
-        if m := re.search(r"\[FIXIT:(.*?)\]", tech_msg):
-            fixit = m.group(1)
-            tech_msg = tech_msg.replace(m.group(0), "").strip()
-        return snap, fixit, tech_msg
-
-    def _setup_header(self, category: str, timestamp: str) -> QHBoxLayout:
-        icons = {
-            "start": Icons.ROCKET,
-            "login": Icons.LOCK,
-            "search": Icons.SEARCH,
-            "download": Icons.DOWNLOAD,
-            "success": Icons.CHECK_CIRCLE,
-            "error": Icons.X_CIRCLE,
-            "wait": Icons.CLOCK,
-            "info": Icons.HELP,
-        }
-        colors = {
-            "start": "#0d6efd",
-            "login": "#6f42c1",
-            "search": "#fd7e14",
-            "download": "#0dcaf0",
-            "success": "#198754",
-            "error": "#dc3545",
-            "wait": "#ffc107",
-            "info": "#6c757d",
-        }
-        self.category_color = colors.get(category, "#6c757d")
-
-        row = QHBoxLayout()
-        row.setSpacing(5)
-        icon_lbl = QLabel()
-        icon_lbl.setPixmap(
-            get_colored_icon(get_asset_path(icons.get(category, Icons.HELP)), "#000000").pixmap(24, 24)
-        )
-        row.addWidget(icon_lbl)
-        time_lbl = QLabel(timestamp)
-        time_lbl.setStyleSheet("color: #adb5bd; font-size: 12px; font-family: monospace;")
-        row.addWidget(time_lbl)
-        row.addStretch()
-        return row
-
-    def _setup_actions(
-        self, layout: QVBoxLayout, tech_msg: str, snap_path: str | None, fixit_act: str | None
-    ) -> None:
-        action_row = QHBoxLayout()
-        action_row.setSpacing(5)
-        if snap_path:
-            btn = self._create_btn(Icons.EYE, "#dc3545", "Apri Screenshot")
-            btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snap_path)))
-            action_row.addWidget(btn)
-        if fixit_act == "ACCOUNT":
-            btn = self._create_btn(Icons.SETTINGS, "#ffc107", "Configura Account", "black")
-            btn.clicked.connect(self._open_settings)
-            action_row.addWidget(btn)
-        self._add_path_btns(action_row, tech_msg)
-        action_row.addStretch()
-        if action_row.count() > 1:
-            layout.addLayout(action_row)
-
-    def _create_btn(self, icon: str, bg: str, tip: str, fg: str = "white") -> QPushButton:
-        btn = QPushButton()
-        btn.setIcon(get_colored_icon(get_asset_path(icon), "#000000"))
-        btn.setFixedSize(30, 24)
-        btn.setToolTip(tip)
-        btn.setStyleSheet(f"background-color: {bg}; color: {fg}; border-radius: 4px;")
-        return btn
-
-    def _add_path_btns(self, layout: QHBoxLayout, msg: str) -> None:
+    def _add_actions(self, layout: QHBoxLayout, tech_msg: str):
         matches = re.findall(
-            r'([a-zA-Z]:\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)',
-            msg,
+            r'([a-zA-Z]:\\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)', tech_msg
         )
         for p in set(matches):
             p = p.rstrip(".,';)]}").strip()
             if len(p) > 4 and "http" not in p:
-                btn = self._create_btn(Icons.FOLDER_OPEN, "#17a2b8", f"Apri: {Path(p).name}")
+                btn = QPushButton()
+                btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#212121"))
+                btn.setFixedSize(22, 22)
+                btn.setToolTip(f"Apri: {Path(p).name}")
+                btn.setStyleSheet(
+                    "QPushButton { background: rgba(33, 33, 33, 0.05); border: none; border-radius: 3px; } QPushButton:hover { background: rgba(33, 33, 33, 0.1); }"
+                )
                 btn.clicked.connect(lambda c, path=p: QDesktopServices.openUrl(QUrl.fromLocalFile(path)))
                 layout.addWidget(btn)
 
-    def set_count(self, count: int) -> None:
-        base = self.lbl_human.text().split(" (x")[0]
-        self.lbl_human.setText(f"{base} (x{count})")
 
-    def _open_settings(self) -> None:
-        win = self.window()
-        if win and hasattr(win, "show_settings"):
-            win.show_settings()
+class CyberTimelineFrame(QFrame):
+    """Guscio estetico HUD."""
 
-
-class HorizontalTimelineContainer(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.main_layout = QHBoxLayout(self)
-        self.main_layout.setContentsMargins(10, 5, 10, 5)
-        self.main_layout.setSpacing(10)
-        self.main_layout.addStretch()
-        self.setMinimumHeight(160)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self._pulse_value = 1.0
+        self._grid_offset = 0.0
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(25)
+        shadow.setColor(QColor(0, 0, 0, 40))
+        shadow.setOffset(0, 8)
+        self.setGraphicsEffect(shadow)
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        pen = QPen(QColor("#dee2e6"))
-        pen.setWidth(2)
-        painter.setPen(pen)
-        widgets = []
-        for i in range(self.main_layout.count()):
-            item = self.main_layout.itemAt(i)
-            if item and (w := item.widget()) and not w.isHidden():
-                widgets.append(w)
-        if len(widgets) >= 2:
-            start_x = widgets[0].geometry().center().x()
-            end_x = widgets[-1].geometry().center().x()
-            painter.drawLine(start_x, 30, end_x, 30)
+        rect = QRectF(self.rect()).adjusted(10, 10, -10, -10)
+        path = QPainterPath()
+        path.addRoundedRect(rect, 15, 15)
+        painter.fillPath(path, QColor(255, 255, 255, 250))
+        painter.save()
+        painter.setClipPath(path)
+        painter.setPen(QPen(QColor(0, 0, 0, 10), 0.5))
+        step = 25
+        for x in range(int(rect.left()), int(rect.right() + step), step):
+            painter.drawLine(
+                int(x + self._grid_offset), int(rect.top()), int(x + self._grid_offset), int(rect.bottom())
+            )
+        for y in range(int(rect.top()), int(rect.bottom() + step), step):
+            painter.drawLine(
+                int(rect.left()), int(y + self._grid_offset), int(rect.right()), int(y + self._grid_offset)
+            )
+        painter.restore()
+        alpha = int(100 + (self._pulse_value * 155))
+        painter.setPen(QPen(QColor(33, 33, 33, alpha), 1.5))
+        painter.drawPath(path)
 
 
-class HorizontalTimelineWidget(QScrollArea):
+class HorizontalTimelineContainer(QWidget):
+    """Contenitore trasparente per i log testuali (per compatibilità)."""
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setWidgetResizable(True)
-        self.setFixedHeight(220)
-        self.setStyleSheet("border: none; background-color: transparent;")
-        self.container = HorizontalTimelineContainer()
-        self.setWidget(self.container)
-        self.last_category: str | None = None
-        self.consecutive_count = 0
+        self.setStyleSheet("background: transparent;")
+        self.log_layout = QVBoxLayout(self)
 
-    def set_mood(self, _mood: str) -> None:
-        """Imposta il mood della timeline (es. running, error, success)."""
 
-    def add_widget(self, widget: QWidget) -> None:
-        effect = QGraphicsOpacityEffect(widget)
-        widget.setGraphicsEffect(effect)
-        idx = self.container.main_layout.count() - 1
-        self.container.main_layout.insertWidget(max(0, idx), widget)
-        self.anim = QPropertyAnimation(effect, b"opacity")
-        self.anim.setDuration(500)
-        self.anim.setStartValue(0)
-        self.anim.setEndValue(1)
-        self.anim.start()
-        QApplication.processEvents()
-        self._scroll_to_end()
+class HorizontalTimelineWidget(QListWidget):
+    """Console log multi-selezione."""
 
-    def add_log(self, message: str) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setUniformItemSizes(False)
+        self.setFrameShape(QFrame.Shape.NoFrame)
+        self.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.setStyleSheet("""
+            QListWidget { background: transparent; border: none; outline: none; }
+            QListWidget::item { border-bottom: 1px solid rgba(0,0,0,0.03); }
+            QListWidget::item:selected { background: rgba(0, 150, 136, 0.1); border-left: 3px solid #009688; color: black; }
+        """)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
+
+    def add_log(self, message: str):
+        # Ferma tutti gli spinner precedenti prima di aggiungere un nuovo log
+        for i in range(self.count()):
+            item = self.item(i)
+            w = self.itemWidget(item)
+            if isinstance(w, HorizontalLogItem):
+                w.stop_spinner()
+
         human, tech, cat = SmartLogTranslator.humanize(message)
-        if cat == self.last_category and cat in ("download", "search"):
-            self.consecutive_count += 1
-            items = []
-            for i in range(self.container.main_layout.count()):
-                item = self.container.main_layout.itemAt(i)
-                if item and (w := item.widget()) and isinstance(w, HorizontalLogItem):
-                    items.append(w)
-            if items:
-                last_item = items[-1]
-                last_item.set_count(self.consecutive_count)
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        list_item = QListWidgetItem(self)
+        item_widget = HorizontalLogItem(human, tech, cat, timestamp)
+        list_item.setSizeHint(item_widget.sizeHint())
+        self.addItem(list_item)
+        self.setItemWidget(list_item, item_widget)
+        self.scrollToBottom()
+
+    def _show_context_menu(self, pos):
+        menu = QMenu(self)
+        # Forza sfondo bianco e testo nero per il menu
+        menu.setStyleSheet("""
+            QMenu {
+                background-color: #FFFFFF;
+                color: #212121;
+                border: 1px solid #CCCCCC;
+                font-family: 'Segoe UI';
+                font-size: 13px;
+            }
+            QMenu::item {
+                padding: 6px 25px 6px 20px;
+            }
+            QMenu::item:selected {
+                background-color: #E0F2F1;
+                color: #000000;
+            }
+        """)
+
+        selected = self.selectedItems()
+        if selected:
+            action_copy = menu.addAction("Copia Selezione")
+            if action_copy:
+                action_copy.triggered.connect(self._copy_selection)
+
+        action_select_all = menu.addAction("Seleziona Tutto")
+        if action_select_all:
+            action_select_all.triggered.connect(self.selectAll)
+
+        action_copy_all = menu.addAction("Copia Tutto")
+        if action_copy_all:
+            action_copy_all.triggered.connect(self._copy_all)
+
+        menu.exec(self.mapToGlobal(pos))
+
+    def _copy_selection(self):
+        """Copia le righe selezionate (quello che vede l'utente)."""
+        lines = []
+        # Ordiniamo per riga per mantenere la sequenza temporale corretta
+        selected_rows = sorted([self.row(item) for item in self.selectedItems()])
+        for row in selected_rows:
+            w = self.itemWidget(self.item(row))
+            if isinstance(w, HorizontalLogItem):
+                lines.append(f"[{w.timestamp}] {w.human_msg}")
+        if lines:
+            clipboard = QApplication.clipboard()
+            if clipboard:
+                clipboard.setText("\n".join(lines))
+
+    def _copy_all(self):
+        """Copia l'intero log (quello che vede l'utente)."""
+        lines = []
+        for i in range(self.count()):
+            w = self.itemWidget(self.item(i))
+            if isinstance(w, HorizontalLogItem):
+                lines.append(f"[{w.timestamp}] {w.human_msg}")
+        if lines:
+            clipboard = QApplication.clipboard()
+            if clipboard:
+                clipboard.setText("\n".join(lines))
+
+    def _copy_text(self, text):
+        clipboard = QApplication.clipboard()
+        if clipboard:
+            clipboard.setText(text)
+
+    def keyPressEvent(self, event):
+        """Gestisce scorciatoie Ctrl+C (copia) e Ctrl+A (seleziona tutto)."""
+        if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            if event.key() == Qt.Key.Key_C:
+                self._copy_selection()
                 return
-        self.consecutive_count = 1
-        self.last_category = cat
-        self.add_widget(HorizontalLogItem(human, tech, cat, datetime.now().strftime("%H:%M")))
-
-    def _scroll_to_end(self) -> None:
-        sb = self.horizontalScrollBar()
-        if sb:
-            self.scroll_anim = QPropertyAnimation(sb, b"value")
-            self.scroll_anim.setDuration(400)
-            self.scroll_anim.setStartValue(sb.value())
-            self.scroll_anim.setEndValue(sb.maximum())
-            self.scroll_anim.start()
-
-    def clear(self) -> None:
-        while self.container.main_layout.count():
-            item = self.container.main_layout.takeAt(0)
-            if item and (w := item.widget()):
-                w.deleteLater()
-                # takeAt(0) already removed the item from layout, no need for else
-        self.container.main_layout.addStretch()
+            if event.key() == Qt.Key.Key_A:
+                self.selectAll()
+                return
+        super().keyPressEvent(event)
 
 
 class TimelineWidget(QWidget):
-    """
-    Widget visualizing a vertical timeline of events.
-    Each event supports title, description, timestamp, and metadata.
-    """
+    """Widget Log Principale."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the timeline widget."""
         super().__init__(parent)
+        self.setMinimumHeight(220)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
         header = QHBoxLayout()
-        header.addWidget(QLabel("<b>Timeline AttivitÃ </b>"))
+        header.setContentsMargins(15, 0, 15, 0)
+        lbl = QLabel("MISSION LOG STREAM")
+        lbl.setStyleSheet("font-weight: 900; color: #607D8B; letter-spacing: 2px; font-size: 9px;")
+        header.addWidget(lbl)
         header.addStretch()
         btn = ModernButton(
-            "Pulisci Log",
-            variant=ModernButton.Variant.DANGER,
+            "PULISCI LOG",
+            variant=ModernButton.Variant.GHOST,
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.TRASH),
         )
         btn.clicked.connect(self.clear)
         header.addWidget(btn)
         layout.addLayout(header)
-        self.timeline = HorizontalTimelineWidget()
-        layout.addWidget(self.timeline)
+        self.frame = CyberTimelineFrame()
+        self.frame_layout = QVBoxLayout(self.frame)
+        self.frame_layout.setContentsMargins(12, 12, 12, 12)
+        self.timeline = HorizontalTimelineWidget(self)
+        self.frame_layout.addWidget(self.timeline)
+        layout.addWidget(self.frame)
+        self._pulse_val = 1.0
+        self._grid_off = 0.0
+        self.anim_timer = QTimer(self)
+        self.anim_timer.timeout.connect(self._update_anim)
+        self.anim_timer.start(16)
+        self.pulse_anim = QPropertyAnimation(self, b"pulse_value")
+        self.pulse_anim.setDuration(1500)
+        self.pulse_anim.setStartValue(0.4)
+        self.pulse_anim.setEndValue(1.0)
+        self.pulse_anim.setLoopCount(-1)
+        self.pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
 
-    def append(self, message: str) -> None:
-        self.timeline.add_log(message)
+    def enterEvent(self, event):
+        self.pulse_anim.start()
+        super().enterEvent(event)
 
-    def clear(self) -> None:
+    def leaveEvent(self, event):
+        self.pulse_anim.stop()
+        self._set_pulse_value(1.0)
+        super().leaveEvent(event)
+
+    def _get_pulse_value(self) -> float:
+        return self._pulse_val
+
+    def _set_pulse_value(self, v: float):
+        self._pulse_val = v
+        self.frame._pulse_value = v
+        self.frame.update()
+
+    pulse_value = pyqtProperty(float, _get_pulse_value, _set_pulse_value)
+
+    def _update_anim(self):
+        self._grid_off = (self._grid_off + 0.3) % 25.0
+        self.frame._grid_offset = self._grid_off
+        self.frame.update()
+
+    def append(self, msg: str, level: str = "INFO"):
+        self.timeline.add_log(msg)
+
+    def clear(self):
         self.timeline.clear()
+
+    def set_mood(self, mood: str):
+        if mood == "running":
+            self.pulse_anim.setDuration(800)
+        else:
+            self.pulse_anim.setDuration(1500)
 
 
 class MissionReportCard(QFrame):
-    def __init__(self, duration_str: str, status: bool, parent: QWidget | None = None) -> None:
+    def __init__(self, dur: str, status: bool, parent=None):
         super().__init__(parent)
-        self.setFixedSize(260, 150)
-        self.setStyleSheet(
-            "QFrame { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #e9ecef); border: 1px solid #dee2e6; border-radius: 8px; margin: 10px 5px; }"
-        )
-        layout = QVBoxLayout(self)
-        title = "Missione Compiuta!" if status else "Missione Terminata"
-        lbl = QLabel(f"<b style='color:{'#198754' if status else '#dc3545'}; font-size:18px;'>{title}</b>")
-        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(lbl)
-        stats = QHBoxLayout()
-        for k, v in (
-            ("Tempo", duration_str),
-            ("Esito", "Successo" if status else "Errore"),
-        ):
-            cont = QWidget()
-            vl = QVBoxLayout(cont)
-            lbl_k = QLabel(f"<span style='color:#6c757d;'>{k}</span>")
-            lbl_k.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            vl.addWidget(lbl_k)
-            lbl_v = QLabel(f"<b>{v}</b>")
-            lbl_v.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            vl.addWidget(lbl_v)
-            stats.addWidget(cont)
-        layout.addLayout(stats)
+        self.hide()

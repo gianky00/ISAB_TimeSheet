@@ -1,55 +1,58 @@
 """
-Controller per la gestione della navigazione tra i pannelli della UI.
-Implementa il Lazy Loading per ottimizzare le prestazioni.
+SyncroJob - Navigation Controller
+Gestore centrale del routing e della navigazione tra i diversi pannelli dell'interfaccia utente.
+Implementa una strategia di 'Lazy Loading' (caricamento differito) per ridurre drasticamente i tempi di startup
+dell'applicazione, inizializzando i moduli funzionali solo quando vengono effettivamente richiesti dall'utente.
 """
 
 import logging
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QObject
-from PyQt6.QtWidgets import QMessageBox, QWidget
+from PyQt6.QtWidgets import QMessageBox, QStackedWidget, QWidget
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-# Importiamo PageIndex localmente o usiamo interi per evitare circular imports
-# PageIndex mappa:
-# 0: DASHBOARD
-# 1: AUTOMAZIONI
-# 2: LYRA
-# 3: TIMBRATURE
-# 4: STRUMENTALE
-# 5: DATAEASE
-# 6: ANAGRAFICHE
-# 7: SETTINGS
-# 8: HELP
-# 9: NOTIFICATIONS
-# 10: STORICO_ODA
-# 11: DIPENDENTI
-
 logger = logging.getLogger(__name__)
 
 
-class NavigationController(QObject):
+class NavigationController:
     """
-    Gestisce il routing interno dell'applicazione.
-    Carica i pannelli "on-demand" quando richiesto.
+    Controller responsabile della commutazione tra le pagine nel QStackedWidget della MainWindow.
+    Gestisce il ciclo di vita dei pannelli (creazione, inizializzazione segnali, visualizzazione)
+    e garantisce la sincronizzazione con lo stato della Sidebar e della Command Palette.
     """
 
     def __init__(self, main_window: Any) -> None:
-        super().__init__(main_window)
+        """
+        Inizializza il controller di navigazione.
+
+        Args:
+            main_window: Riferimento alla MainWindow dell'applicazione.
+        """
         self.mw = main_window
 
     def get_panel(self, index: int) -> QWidget | None:
-        """Restituisce il pannello all'indice specificato, creandolo se necessario."""
-        panel = self.mw.page_stack.widget(index)
+        """
+        Recupera un pannello in base al suo indice, creandolo dinamicamente se non ancora inizializzato.
 
-        # Se il pannello Ã¨ giÃ  stato creato, lo restituiamo
+        Args:
+            index: Indice numerico della pagina (riferimento a PageIndex).
+
+        Returns:
+            Optional[QWidget]: L'istanza del pannello caricato o None in caso di errore.
+        """
+        page_stack = self.mw.page_stack
+        if not isinstance(page_stack, QStackedWidget):
+            return None
+
+        panel = page_stack.widget(index)
         if getattr(self.mw, f"_panel_initialized_{index}", False):
-            return panel  # type: ignore[no-any-return]
+            if isinstance(panel, QWidget):
+                return panel
+            return None
 
         logger.info(f"Lazy Loading pannello all'indice: {index}")
-
         try:
             new_panel = self._create_panel_by_index(index)
             if new_panel:
@@ -58,10 +61,12 @@ class NavigationController(QObject):
         except Exception as e:
             self._handle_panel_error(index, e)
 
-        return panel  # type: ignore[no-any-return]
+        if isinstance(panel, QWidget):
+            return panel
+        return None
 
     def _create_panel_by_index(self, index: int) -> QWidget | None:
-        """Factory method per la creazione dei pannelli in base all'indice."""
+        """Factory method che mappa gli indici alle funzioni di creazione dei widget pannello."""
         creators: dict[int, Callable[[], QWidget]] = {
             0: self._create_dashboard,
             1: self._create_automazioni,
@@ -76,90 +81,105 @@ class NavigationController(QObject):
             10: self._create_storico_oda,
             11: self._create_dipendenti,
         }
-
         if creator := creators.get(index):
             return creator()
         return None
 
     def _create_dashboard(self) -> QWidget:
+        """Crea la dashboard e la collega al sistema di monitoraggio del footer."""
         from src.gui.panels import DashboardPanel
 
-        self.mw.dashboard_panel = DashboardPanel()
-
-        # Connetti AutopilotWidget al footer per aggiornamenti in tempo reale
-        if hasattr(self.mw.dashboard_panel, "autopilot_widget"):
-            # Aggiornamento Login Accounts
+        panel = DashboardPanel()
+        self.mw.dashboard_panel = panel
+        if hasattr(panel, "autopilot_widget"):
             if hasattr(self.mw, "footer_left"):
-                self.mw.dashboard_panel.autopilot_widget.set_footer_widget(self.mw.footer_left)
-
-            # Aggiornamento Status Cards (Autopilot UI)
+                panel.autopilot_widget.set_footer_widget(self.mw.footer_left)
             if hasattr(self.mw, "status_bar_component"):
-                self.mw.dashboard_panel.autopilot_widget.set_status_bar(self.mw.status_bar_component)
-
-        return self.mw.dashboard_panel  # type: ignore[no-any-return]
+                panel.autopilot_widget.set_status_bar(self.mw.status_bar_component)
+        return panel
 
     def _create_automazioni(self) -> QWidget:
+        """Crea il selettore centralizzato per le automazioni bot."""
         from src.gui.widgets.automazioni_widget import AutomazioniWidget
 
-        self.mw.automazioni_widget = AutomazioniWidget(self.mw)
-        return self.mw.automazioni_widget  # type: ignore[no-any-return]
+        panel = AutomazioniWidget(self.mw)
+        self.mw.automazioni_widget = panel
+        return panel
 
     def _create_lyra(self) -> QWidget:
+        """Inizializza l'assistente virtuale Lyra."""
         from src.gui.panels import LyraPanel
 
-        self.mw.lyra_panel = LyraPanel()
-        return self.mw.lyra_panel  # type: ignore[no-any-return]
+        panel = LyraPanel()
+        self.mw.lyra_panel = panel
+        return panel
 
     def _create_timbrature(self) -> QWidget:
+        """Inizializza il visualizzatore del database timbrature."""
         from src.gui.panels import TimbratureDBPanel
 
-        self.mw.timbrature_db_panel = TimbratureDBPanel()
-        return self.mw.timbrature_db_panel  # type: ignore[no-any-return]
+        panel = TimbratureDBPanel()
+        self.mw.timbrature_db_panel = panel
+        return panel
 
     def _create_strumentale(self) -> QWidget:
+        """Inizializza il pannello contabilità strumentale."""
         from src.gui.panels import ContabilitaPanel
 
-        self.mw.contabilita_panel = ContabilitaPanel()
-        return self.mw.contabilita_panel  # type: ignore[no-any-return]
+        panel = ContabilitaPanel()
+        self.mw.contabilita_panel = panel
+        return panel
 
     def _create_dataease(self) -> QWidget:
+        """Inizializza il visualizzatore virtualizzato Scarico Ore."""
         from src.gui.panels import ScaricoOrePanel
 
-        self.mw.scarico_ore_panel = ScaricoOrePanel()
-        return self.mw.scarico_ore_panel  # type: ignore[no-any-return]
+        panel = ScaricoOrePanel()
+        self.mw.scarico_ore_panel = panel
+        return panel
 
     def _create_anagrafiche(self) -> QWidget:
+        """Inizializza il database anagrafiche PDL."""
         from src.gui.panels import PDLDBPanel
 
-        self.mw.pdl_db_panel = PDLDBPanel()
-        return self.mw.pdl_db_panel  # type: ignore[no-any-return]
+        panel = PDLDBPanel()
+        self.mw.pdl_db_panel = panel
+        return panel
 
     def _create_storico_oda(self) -> QWidget:
+        """Inizializza la consultazione dello storico OdA."""
         from src.gui.panels import StoricoOdaPanel
 
-        self.mw.storico_oda_panel = StoricoOdaPanel()
-        return self.mw.storico_oda_panel  # type: ignore[no-any-return]
+        panel = StoricoOdaPanel()
+        self.mw.storico_oda_panel = panel
+        return panel
 
     def _create_dipendenti(self) -> QWidget:
+        """Inizializza la gestione organica delle risorse umane."""
         from src.gui.panels.dipendenti.main_panel import DipendentiPanel
 
-        self.mw.dipendenti_panel = DipendentiPanel()
-        return self.mw.dipendenti_panel  # type: ignore[no-any-return]
+        panel = DipendentiPanel()
+        self.mw.dipendenti_panel = panel
+        return panel
 
     def _create_help(self) -> QWidget:
+        """Inizializza il pannello di aiuto e documentazione."""
         from src.gui.panels import HelpPanel
 
-        self.mw.help_panel = HelpPanel()
-        return self.mw.help_panel  # type: ignore[no-any-return]
+        panel = HelpPanel()
+        self.mw.help_panel = panel
+        return panel
 
     def _create_notifications(self) -> QWidget:
+        """Inizializza il centro notifiche e audit log."""
         from src.gui.panels import NotificationsPanel
 
-        self.mw.notifications_panel = NotificationsPanel()
-        return self.mw.notifications_panel  # type: ignore[no-any-return]
+        panel = NotificationsPanel()
+        self.mw.notifications_panel = panel
+        return panel
 
     def _create_settings_panel(self) -> QWidget:
-        """Crea e configura il pannello impostazioni."""
+        """Crea il pannello impostazioni e collega i segnali di salvataggio e aiuto contestuale."""
         from src.gui.panels import SettingsPanel
 
         panel = SettingsPanel()
@@ -169,7 +189,7 @@ class NavigationController(QObject):
         return panel
 
     def _initialize_new_panel(self, index: int, new_panel: QWidget) -> None:
-        """Sostituisce il placeholder e inizializza lo stato del pannello."""
+        """Sostituisce il widget placeholder nello stack con l'istanza reale del pannello creato."""
         old_placeholder = self.mw.page_stack.widget(index)
         self.mw.page_stack.removeWidget(old_placeholder)
         self.mw.page_stack.insertWidget(index, new_panel)
@@ -177,48 +197,27 @@ class NavigationController(QObject):
         self._try_connect_signals()
 
     def _handle_panel_error(self, index: int, e: Exception) -> None:
-        """Gestisce errori critici durante il caricamento dei moduli UI."""
+        """Notifica all'utente e logga il fallimento del caricamento di un modulo GUI."""
         import traceback
 
-        logger.error(f"â Œ Critical Error loading panel {index}: {e}")
+        logger.error(f"❌ Critical Error loading panel {index}: {e}")
         logger.error(traceback.format_exc())
-
-        QMessageBox.critical(
-            self.mw,
-            "Errore Caricamento",
-            f"Impossibile caricare il modulo.\nErrore: {e}",
-        )
+        QMessageBox.critical(self.mw, "Errore Caricamento", f"Impossibile caricare il modulo.\nErrore: {e}")
 
     def _try_connect_signals(self) -> None:
-        """
-        Tenta di collegare i segnali tra pannelli che dipendono l'uno dall'altro
-        quando entrambi sono stati inizializzati.
-        """
-        # Timbrature Bot -> Timbrature DB
-        if (
-            hasattr(self.mw, "timbrature_bot_panel")
-            and hasattr(self.mw, "timbrature_db_panel")
-            and not getattr(self.mw, "_timbrature_signals_connected", False)
-        ):
-            try:
+        """Tenta di instaurare connessioni cross-pannello quando le dipendenze sono state caricate."""
+        # Timbrature Bot -> DB & Dipendenti
+        if hasattr(self.mw, "timbrature_bot_panel"):
+            if hasattr(self.mw, "timbrature_db_panel") and not getattr(
+                self.mw, "_timbrature_signals_connected", False
+            ):
                 self.mw.timbrature_bot_panel.data_updated.connect(self.mw.timbrature_db_panel.refresh_data)
                 self.mw._timbrature_signals_connected = True
-                logger.info("Signal: Timbrature Bot -> DB connected.")
-            except Exception as e:
-                logger.error(f"Signal Connection Failed: {e}")
-
-        # Timbrature Bot -> Dipendenti (Anagrafica)
-        if (
-            hasattr(self.mw, "timbrature_bot_panel")
-            and hasattr(self.mw, "dipendenti_panel")
-            and not getattr(self.mw, "_timbrature_dipendenti_signals_connected", False)
-        ):
-            try:
+            if hasattr(self.mw, "dipendenti_panel") and not getattr(
+                self.mw, "_timbrature_dipendenti_signals_connected", False
+            ):
                 self.mw.timbrature_bot_panel.data_updated.connect(self.mw.dipendenti_panel.refresh_data)
                 self.mw._timbrature_dipendenti_signals_connected = True
-                logger.info("Signal: Timbrature Bot -> Dipendenti connected.")
-            except Exception as e:
-                logger.error(f"Signal Timbrature -> Dipendenti Connection Failed: {e}")
 
         # PDL Search -> PDL DB
         if (
@@ -226,20 +225,21 @@ class NavigationController(QObject):
             and hasattr(self.mw, "pdl_db_panel")
             and not getattr(self.mw, "_pdl_signals_connected", False)
         ):
-            try:
-                self.mw.pdl_search_panel.data_updated.connect(self.mw.pdl_db_panel.refresh_data)
-                self.mw._pdl_signals_connected = True
-                logger.info("Signal: PDL Search -> DB connected.")
-            except Exception as e:
-                logger.error(f"Signal: PDL Search Connection Failed: {e}")
+            self.mw.pdl_search_panel.data_updated.connect(self.mw.pdl_db_panel.refresh_data)
+            self.mw._pdl_signals_connected = True
 
     def navigate_to(self, index: int, sub_index: int | None = None) -> None:
-        """Navigazione con Lazy Loading."""
+        """
+        Esegue la commutazione della pagina attiva, gestendo salvataggi pendenti e feedback della sidebar.
+
+        Args:
+            index: Indice del pannello di destinazione.
+            sub_index: Eventuale indice di sottocategoria (tab interno).
+        """
         if index == self.mw._current_page_index and sub_index is None:
             self.mw.sidebar.set_active_button(index)
             return
 
-        # Controllo salvataggio impostazioni se stiamo lasciando il pannello SETTINGS (7)
         if (
             self.mw._current_page_index == 7
             and hasattr(self.mw, "settings_panel")
@@ -249,33 +249,30 @@ class NavigationController(QObject):
             self.mw.sidebar.set_active_button(self.mw._current_page_index)
             return
 
-        # Assicurati che il pannello di destinazione sia caricato
         self.get_panel(index)
-
         self.mw._current_page_index = index
         self.mw.page_stack.setCurrentIndex(index)
         self.mw.sidebar.set_active_button(index, sub_index)
 
     def navigate_to_extended(self, tab_idx: int, query: str) -> None:
-        """Naviga a un tab specifico di ContabilitÃ ."""
-        self.navigate_to(4, sub_index=tab_idx)  # STRUMENTALE
+        """Naviga al pannello Strumentale attivando un tab specifico e pre-compilando la ricerca."""
+        self.navigate_to(4, sub_index=tab_idx)
         self.mw.contabilita_panel.main_tabs.setCurrentIndex(tab_idx)
         self.mw.contabilita_panel.set_search_query(query)
 
     def navigate_to_dataease(self, query: str) -> None:
-        """Naviga a Scarico Ore (DataEase)."""
-        self.navigate_to(5)  # DATAEASE
+        """Naviga al pannello Scarico Ore applicando un filtro immediato."""
+        self.navigate_to(5)
         self.mw.scarico_ore_panel.search_input.setText(query)
 
     def navigate_to_timbrature(self, query: str) -> None:
-        """Naviga a Timbrature DB."""
-        self.navigate_to(3)  # TIMBRATURE
+        """Naviga al database timbrature applicando un filtro immediato."""
+        self.navigate_to(3)
         self.mw.timbrature_db_panel.search_input.setText(query)
 
     def navigate_to_panel(self, panel_key: str) -> None:
-        """Navigazione verso pannelli annidati."""
+        """Naviga a un pannello bot annidato partendo da una chiave identificativa."""
         bot_map = {
-            # Portale Fornitori (main_idx=0)
             "dettagli_oda": (0, 0),
             "scarico_ts": (0, 1),
             "timbrature": (0, 2),
@@ -284,17 +281,11 @@ class NavigationController(QObject):
             "scarico_pdl": (1, 0),
             "ricerca_pdl": (1, 1),
         }
-
         if panel_key in bot_map:
-            main_idx, sub_idx = bot_map[panel_key]
-            self.navigate_to(1, sub_index=main_idx)  # AUTOMAZIONI
-
-            # Recupera il widget automazioni (ora dovrebbe essere inizializzato)
-            auto_widget = getattr(self.mw, "automazioni_widget", None)
-
-            if auto_widget:
-                # Usa il metodo dedicato che include logging e refresh
-                auto_widget.set_active_tab(main_idx, sub_idx)
+            midx, sidx = bot_map[panel_key]
+            self.navigate_to(1, sub_index=midx)
+            if auto := getattr(self.mw, "automazioni_widget", None):
+                auto.set_active_tab(midx, sidx)
             return
 
         db_map = {
@@ -306,9 +297,8 @@ class NavigationController(QObject):
         }
         if panel_key in db_map:
             self.navigate_to(db_map[panel_key])
-            return
 
     def analyze_with_lyra(self, context_text: str) -> None:
-        """Passa alla vista Lyra."""
-        self.navigate_to(2)  # LYRA
+        """Naviga alla vista Lyra passando un contesto testuale per l'analisi immediata."""
+        self.navigate_to(2)
         self.mw.lyra_panel.ask_lyra("Analizza questi dati e dimmi se ci sono anomalie.", context_text)

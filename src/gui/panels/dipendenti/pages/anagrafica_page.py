@@ -301,6 +301,7 @@ class AnagraficaPage(QWidget):
             QMessageBox.critical(self, "Errore", f"Impossibile modificare il monitoraggio:\n{e}")
 
     def refresh_data(self):
+        """Aggiorna i dati della tabella dipendenti caricandoli dal database e applicando i filtri correnti."""
         self.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('timbrature')}")
         search_text = self.search_input.text().lower().strip()
         query = """
@@ -455,6 +456,7 @@ class AnagraficaPage(QWidget):
         self.refresh_data()
 
     def _on_selection_changed(self, selected, _deselected):
+        """Aggiorna la scheda dettagli quando cambia la riga selezionata in tabella."""
         selection_model = self.table.selectionModel()
         if selection_model is None:
             raise RuntimeError("Table selection model is None")
@@ -493,6 +495,12 @@ class AnagraficaPage(QWidget):
         self.detail_view.update_data(details_dict, access_info)
 
     def _get_last_isab_access(self, cognome, nome):
+        """
+        Recupera la data dell'ultimo accesso ISAB dal database delle timbrature.
+
+        Returns:
+            tuple: (stringa formattata, giorni trascorsi, colore stato).
+        """
         norm_cognome = normalize_name(cognome)
         norm_nome = normalize_name(nome)
         query = """

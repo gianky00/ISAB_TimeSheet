@@ -49,6 +49,10 @@ def _normalize_string(s: str) -> tuple[str, bool]:
     # Rimuovi caratteri invisibili
     s = "".join(c for c in s if c.isprintable())
 
+    # Normalizza separatori multipli (es. ,, -> , o .. -> .)
+    s = re.sub(r",+", ",", s)
+    s = re.sub(r"\.+", ".", s)
+
     return s, is_negative
 
 
@@ -86,35 +90,9 @@ def _handle_single_dot(s: str) -> str:
         # "1.234.567" -> Sicuramente migliaia
         return s.replace(".", "")
 
-    # Un solo punto: ambiguo se ha 3 cifre dopo (es. "1.234")
-    # Manteniamo la logica originale: se non sono 3 cifre, è decimale.
-    # Se sono 3 cifre, per ora lo lasciamo così (float standard).
+    # Un solo punto: trattalo come migliaia se seguito da esattamente 3 cifre
     parts = s.split(".")
     if len(parts) > 1 and len(parts[1]) == 3:
-        # Qui potremmo decidere se trattarlo come migliaia,
-        # ma l'originale faceva 'pass' lasciandolo come float.
-        pass
+        return s.replace(".", "")
 
     return s
-
-
-if __name__ == "__main__":
-    # Test cases
-    tests = [
-        ("1.234,56", 1234.56),
-        ("1,234.56", 1234.56),
-        ("508,83", 508.83),
-        ("508.83", 508.83),
-        (
-            "1.000",
-            1000.0,
-        ),  # Ambiguo, in IT solitamente 1000 se input manuale, ma 1.0 se float. Qui assumiamo float standard se ambiguo? No, parse logic sopra lascia il punto se != 3 cifre.
-        # "1.000" ha 3 cifre. Se lasciamo punto -> 1.0.
-        # Se rimuoviamo punto -> 1000.
-        # Vediamo output script.
-        ("€ 50,00", 50.0),
-        (50.5, 50.5),
-    ]
-    for i, o in tests:
-        res = parse_currency(i)
-        print(f"In: {i!r} -> Out: {res} ({'OK' if res == o else 'FAIL expected ' + str(o)})")

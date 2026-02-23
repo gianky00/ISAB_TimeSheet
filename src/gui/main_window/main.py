@@ -1,3 +1,8 @@
+"""
+SyncroJob - Main Window
+Finestra principale dell'applicazione che coordina tutti i servizi, i controller e i componenti dell'interfaccia utente.
+"""
+
 import webbrowser
 from contextlib import suppress
 from pathlib import Path
@@ -46,10 +51,11 @@ if TYPE_CHECKING:
 class MainWindow(QMainWindow):
     """
     Finestra principale dell'applicazione (Facade).
-    Coordina i componenti modulari e i controller.
+    Coordina i componenti modulari e i controller, fungendo da punto centrale di orchestrazione.
     """
 
     def __init__(self) -> None:
+        """Inizializza la finestra principale, carica gli stili e configura i controller."""
         super().__init__()
         self.setWindowTitle(f"SyncroJob v{VERSION}")
         self.setMinimumSize(1200, 800)
@@ -103,7 +109,7 @@ class MainWindow(QMainWindow):
         self.navigation_controller.navigate_to(PageIndex.DASHBOARD)
 
     def finalize_init(self) -> None:
-        """Metodo chiamato dopo che lo splash screen ha finito il caricamento."""
+        """Metodo chiamato dopo che lo splash screen ha finito il caricamento per finalizzare l'inizializzazione."""
         import logging
 
         logger = logging.getLogger("MainWindow")
@@ -150,12 +156,14 @@ class MainWindow(QMainWindow):
         )
 
     def _load_styles(self) -> None:
+        """Carica i file QSS degli stili."""
         for qss in ("main_window.qss", "message_box.qss"):
             path = Path("assets") / "styles" / qss
             if path.exists():
                 self.setStyleSheet(self.styleSheet() + path.read_text(encoding="utf-8"))
 
     def _setup_ui(self) -> None:
+        """Configura il layout e i componenti UI principali."""
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QHBoxLayout(central_widget)
@@ -183,6 +191,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(content_area)
 
     def _setup_shortcuts(self) -> None:
+        """Configura le scorciatoie da tastiera globali."""
         from PyQt6.QtGui import QKeySequence, QShortcut
 
         self.shortcut_f5 = QShortcut(QKeySequence(Qt.Key.Key_F5), self)
@@ -194,31 +203,39 @@ class MainWindow(QMainWindow):
 
     # --- FACADE METHODS ---
     def _toggle_footer_stats(self) -> None:
+        """Mostra o nasconde le statistiche nel footer."""
         self.status_bar_component._toggle_footer_stats()
 
     def _quit_application(self) -> None:
+        """Avvia la procedura di chiusura dell'applicazione."""
         self.app_event_handler.quit_application()
 
     def closeEvent(self, event: Any) -> None:
+        """Gestisce l'evento di chiusura della finestra."""
         self.app_event_handler.handle_close_event(event)
 
     def show_toast(self, message: str, duration: int = 3000) -> None:
+        """Visualizza un messaggio toast temporaneo."""
         ToastManager.instance().show(message, "info", duration)
 
     def _open_command_palette(self) -> None:
+        """Apre la Command Palette (Ctrl+P)."""
         self.menu_bar_component.open_command_palette()
 
     def _update_autopilot_status_ui(self) -> None:
+        """Aggiorna lo stato visivo dell'Autopilot nella barra di stato."""
         self.status_bar_component.update_autopilot_ui()
 
     def _on_download_update_clicked(self, url: str) -> None:
+        """Gestisce il click per il download di un aggiornamento."""
         webbrowser.open(url)
 
     def _navigate_to(self, index: int) -> None:
+        """Naviga verso una pagina specifica tramite indice."""
         self.navigation_controller.navigate_to(index)
 
     def _handle_f5_action(self) -> None:
-        """Logic for F5 refresh."""
+        """Esegue l'azione di refresh specifica per la pagina corrente."""
         idx = self.page_stack.currentIndex()
         refresh_actions: dict[int, Callable[[], Any]] = {
             PageIndex.DASHBOARD: lambda: (
@@ -261,9 +278,11 @@ class MainWindow(QMainWindow):
             action()
 
     def _handle_f5(self) -> None:
+        """Slot per la scorciatoia F5."""
         self._handle_f5_action()
 
     def _run_timbrature_bot(self, mode: str) -> None:
+        """Avvia il bot delle timbrature in una modalità specifica."""
         if not hasattr(self, "timbrature_bot_panel"):
             self.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
         if hasattr(self, "timbrature_bot_panel"):
@@ -286,6 +305,7 @@ class MainWindow(QMainWindow):
             self.timbrature_bot_panel.run_externally({"data_da": data_da, "data_a": data_a})
 
     def _on_scarico_ts_input(self, args: list[Any]) -> None:
+        """Gestisce l'input della Command Palette per lo scarico TS."""
         if not args or not args[0]:
             return
         self.navigation_controller.navigate_to_panel("scarico_ts")
@@ -298,6 +318,7 @@ class MainWindow(QMainWindow):
             )
 
     def _on_dettagli_oda_input(self, args: list[Any]) -> None:
+        """Gestisce l'input della Command Palette per i dettagli OdA."""
         if not args or not args[0]:
             return
         self.navigation_controller.navigate_to_panel("dettagli_oda")
@@ -310,6 +331,7 @@ class MainWindow(QMainWindow):
             )
 
     def _on_pdl_input(self, args: list[Any]) -> None:
+        """Gestisce l'input della Command Palette per lo scarico PDL."""
         if not args or not args[0]:
             return
         self.navigation_controller.navigate_to_panel("scarico_pdl")
@@ -320,6 +342,7 @@ class MainWindow(QMainWindow):
             )
 
     def _on_prenota_bp_input(self, args: list[Any]) -> None:
+        """Gestisce l'input della Command Palette per la prenotazione BP."""
         if not args or not args[0]:
             return
         self.navigation_controller.navigate_to_panel("prenota_bp")
@@ -330,31 +353,37 @@ class MainWindow(QMainWindow):
             )
 
     def _run_carico_ts(self) -> None:
+        """Avvia la navigazione e l'automazione Carico TS."""
         self.navigation_controller.navigate_to_panel("carico_ts")
         if hasattr(self, "carico_panel"):
             QTimer.singleShot(200, lambda: self.carico_panel.run_externally({}))
 
     def _run_sync_dataease(self) -> None:
+        """Avvia la sincronizzazione DataEase."""
         self._navigate_to(PageIndex.DATAEASE)
         if hasattr(self, "scarico_ore_panel"):
             QTimer.singleShot(500, self.scarico_ore_panel._start_update)
 
     def _run_sync_strumentale(self) -> None:
+        """Avvia la sincronizzazione contabilità strumentale."""
         self._navigate_to(PageIndex.STRUMENTALE)
         if hasattr(self, "contabilita_panel"):
             QTimer.singleShot(500, self.contabilita_panel.start_import_process)
 
     def _handle_automation_tab_change(self, tab_index: int) -> None:
+        """Gestisce il cambio di tab nelle automazioni."""
         self.navigation_controller.navigate_to(PageIndex.AUTOMAZIONI, sub_index=tab_index)
         if hasattr(self, "automazioni_widget"):
             self.automazioni_widget.setCurrentIndex(tab_index)
 
     def _handle_notifications_tab_change(self, tab_index: int) -> None:
+        """Gestisce il cambio di tab nelle notifiche."""
         self.navigation_controller.navigate_to(PageIndex.NOTIFICATIONS, sub_index=tab_index)
         if hasattr(self, "notifications_panel"):
             self.notifications_panel.tabs.setCurrentIndex(tab_index)
 
     def _check_and_start_contabilita_update(self) -> None:
+        """Verifica se avviare l'aggiornamento automatico della contabilità."""
         config = config_manager.load_config()
         if config.get("enable_auto_update_contabilita", False):
             self.navigation_controller.get_panel(PageIndex.STRUMENTALE)
@@ -362,6 +391,7 @@ class MainWindow(QMainWindow):
                 self.contabilita_panel.start_import_process()
 
     def _switch_account(self, service_type: str) -> None:
+        """Passa all'account successivo per il servizio specificato."""
         success, new_user = config_manager.switch_default_account(service_type)
         if success:
             self.status_bar_component.footer_left.refresh_accounts()
@@ -376,11 +406,13 @@ class MainWindow(QMainWindow):
             self._navigate_to_settings_config()
 
     def _navigate_to_settings_config(self) -> None:
+        """Naviga alla pagina di configurazione account nelle impostazioni."""
         self.navigation_controller.navigate_to(PageIndex.SETTINGS)
         if hasattr(self, "settings_panel") and self.settings_panel:
             QTimer.singleShot(50, lambda: self.settings_panel.tabs.setCurrentIndex(0))
 
     def _check_isab_authorizations(self) -> None:
+        """Esegue il controllo proattivo delle abilitazioni ISAB in scadenza."""
         try:
             expiring = check_expiring_isab_authorizations()
             if hasattr(self, "sidebar") and hasattr(self.sidebar, "btn_dipendenti"):
@@ -404,6 +436,7 @@ class MainWindow(QMainWindow):
             print(f"Errore monitoraggio autorizzazioni: {e}")
 
     def _on_anomalies_found(self, count: int) -> None:
+        """Reagisce al rilevamento di anomalie nei dati."""
         if hasattr(self, "sidebar"):
             self.sidebar.btn_lyra.set_badge(count)
         if count > 0:
@@ -414,12 +447,14 @@ class MainWindow(QMainWindow):
             )
 
     def _show_update_banner(self, new_version: str, download_url: str, changelog: str) -> None:
+        """Visualizza il banner di aggiornamento software."""
         if hasattr(self, "update_banner"):
             self.update_banner.show_update(new_version, download_url, changelog)
         if hasattr(self, "tray_icon_component"):
             self.tray_icon_component.show_update_message(new_version)
 
     def _on_settings_saved(self) -> None:
+        """Aggiorna i servizi dopo il salvataggio delle impostazioni."""
         self.telegram.start_service()
         self._update_autopilot_status_ui()
         if hasattr(self, "status_bar_component") and hasattr(self.status_bar_component, "footer_left"):
@@ -427,47 +462,57 @@ class MainWindow(QMainWindow):
         ToastManager.instance().show("Impostazioni salvate!", "success")
 
     def _on_help_requested(self, section_title: str) -> None:
+        """Naviga alla sezione specifica dell'aiuto."""
         self.navigation_controller.navigate_to(PageIndex.HELP)
         if hasattr(self, "help_panel"):
             self.help_panel.open_section(section_title)
 
     def open_bug_report_dialog(self) -> None:
+        """Apre il dialogo per segnalare un bug."""
         from src.gui.dialogs.bug_report_dialog import BugReportDialog
 
         dlg = BugReportDialog(self)
         dlg.exec()
 
     def analyze_with_lyra(self, context_text: str) -> None:
-        pass
+        """Avvia un'analisi contestuale tramite l'AI Lyra."""
 
     def show_settings(self) -> None:
+        """Mostra il pannello delle impostazioni."""
         self.navigation_controller.navigate_to(PageIndex.SETTINGS)
 
     def show_background_notification(self, title: str, message: str, is_error: bool = False) -> None:
+        """Mostra una notifica di sistema (Balloon tray)."""
         if hasattr(self, "tray_icon_component"):
             self.tray_icon_component.show_background_notification(title, message, is_error)
 
-    # --- Properties per compatibilitÃ  ---
+    # --- Properties per compatibilità ---
     @property
     def footer_left(self) -> Any:
+        """Accede al footer sinistro."""
         return self.status_bar_component.footer_left
 
     @property
     def footer_right(self) -> Any:
+        """Accede al footer destro."""
         return self.status_bar_component.footer_right
 
     @property
     def status_portale(self) -> Any:
+        """Accede allo stato del portale ISAB."""
         return self.status_bar_component.status_portale
 
     @property
     def status_safework(self) -> Any:
+        """Accede allo stato del portale SafeWork."""
         return self.status_bar_component.status_safework
 
     @property
     def startup_console(self) -> Any:
+        """Accede alla console di startup."""
         return self.status_bar_component.startup_console
 
     @property
     def boot_telemetry(self) -> Any:
+        """Accede alla telemetria di avvio."""
         return self.status_bar_component.boot_telemetry

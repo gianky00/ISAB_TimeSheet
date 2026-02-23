@@ -23,8 +23,7 @@ def debug_giornaliere():
     print("=" * 70)
 
     # 1. Leggi configurazione
-    config = config_manager.load_config()
-    giornaliere_path = config.get("giornaliere_path", "")
+    giornaliere_path = config_manager.load_config().get("giornaliere_path", "")
 
     print(f"\n[1] Path configurato: {giornaliere_path}")
 
@@ -62,8 +61,7 @@ def debug_giornaliere():
         print(f"\n>>> ANNO {year}: {folder.name}")
         print("-" * 50)
 
-        excel_files = list(folder.glob("*.xls*"))
-        excel_files = [f for f in excel_files if not f.name.startswith("~$")]
+        excel_files = [f for f in folder.glob("*.xls*") if not f.name.startswith("~$")]
 
         print(f"    File Excel trovati: {len(excel_files)}")
 
@@ -90,7 +88,7 @@ def debug_giornaliere():
                 print(f"        Colonne trovate: {list(df.columns)}")
 
                 # Verifica se prima riga sembra un header valido
-                first_cols = [str(c).upper().strip() for c in df.columns]
+                first_cols = df.columns.astype(str).str.upper().str.strip()
                 expected_headers = ["DATA", "PERSONALE", "ORE", "TCL"]
                 headers_found = sum(1 for h in expected_headers if any(h in c for c in first_cols))
                 print(f"        Header validi trovati: {headers_found}/4 ({expected_headers})")
@@ -109,7 +107,7 @@ def debug_giornaliere():
                 for col in expected_cols:
                     col_found = False
                     for actual_col in df.columns:
-                        if str(actual_col).upper().strip() == col.upper():
+                        if actual_col.upper().strip() == col.upper():
                             col_found = True
                             found.append(f"{col} -> {actual_col}")
                             break
@@ -123,7 +121,7 @@ def debug_giornaliere():
 
                 # Mostra prime righe della colonna n_prev se esiste
                 for col in df.columns:
-                    col_upper = str(col).upper().strip()
+                    col_upper = col.upper().strip()
                     if "PREV" in col_upper or "CONSUNTIVO" in col_upper:
                         print(f"        Colonna '{col}' - primi 5 valori: {df[col].head().tolist()}")
 
@@ -149,8 +147,7 @@ def debug_import_simulation():
     from src.core import config_manager
     from src.core.importers.giornaliere import GiornaliereImporter
 
-    config = config_manager.load_config()
-    giornaliere_path = config.get("giornaliere_path", "")
+    giornaliere_path = config_manager.load_config().get("giornaliere_path", "")
 
     if not giornaliere_path:
         print("Path non configurato!")
@@ -189,7 +186,7 @@ def debug_import_simulation():
         print(f"    Righe estratte: {len(rows) if rows else 0}")
         print(f"    Errore: {err}")
 
-        if rows and len(rows) > 0:
+        if rows:
             print("\n    Prima riga (sample):")
             print(f"    {rows[0][:5]}...")  # Prime 5 colonne
     except Exception as e:
@@ -202,7 +199,7 @@ def debug_import_simulation():
     print("\n[4] Stato database attuale...")
     from src.core.contabilita_manager import ContabilitaManager
 
-    for year in [2025, 2026]:
+    for year in (2025, 2026):
         data = ContabilitaManager.get_giornaliere_by_year(year)
         print(f"    Anno {year}: {len(data)} righe nel DB")
 

@@ -23,20 +23,23 @@ class SafeWorkLoginPage:
         self.wait = wait
         self.log = log_func
 
-    def login(self, username, password) -> bool:
+    def login(self, username, password, account_type: str = "Esecutore") -> bool:
         """
-        Esegue il login con strategia differenziata in base all'account.
+        Esegue il login con strategia differenziata in base al tipo di account.
         """
         try:
             # 1. Azioni Comuni (Selezione Sito, Input Credenziali, Click Login)
             self._procedura_comune_login(username, password)
 
             # 2. Dispatcher Logica di Attesa
-            if "gallegretti" in username.lower():
-                self.log(f"🔄 Account COEMI ({username}): Avvio procedura di attesa COMPLETA.")
-                return self._login_flow_coemi()
-            self.log(f"⚡ Account TCL/Standard ({username}): Avvio procedura VELOCE.")
-            return self._login_flow_tcl()
+            # Tipo "ISAB" -> Flusso VELOCE (TCL)
+            # Tipo "Esecutore" -> Flusso ROBUSTO (COEMI)
+            if account_type == "ISAB":
+                self.log(f"⚡ Account ISAB rilevato ({username}): Avvio procedura VELOCE.")
+                return self._login_flow_tcl()
+
+            self.log(f"⚡ Account Esecutore rilevato ({username}): Avvio procedura ROBUSTA.")
+            return self._login_flow_coemi()
 
         except Exception as e:
             self.log(f"❌ Errore critico durante il login: {e}")
@@ -47,7 +50,7 @@ class SafeWorkLoginPage:
         MAX_RETRIES = 3
         for tentativa in range(MAX_RETRIES):
             try:
-                self.log(f"⏳ Tentativo {tentativa + 1}/{MAX_RETRIES}: Selezione sito 'ISAB Sud'...")
+                self.log(f"⏳ Selezione sito 'ISAB Sud' (Tentativo {tentativa + 1}/3)...")
                 btn_sito = WebDriverWait(self.driver, 15).until(
                     EC.element_to_be_clickable(SafeWorkLocators.SITO_BUTTON)
                 )
@@ -58,7 +61,7 @@ class SafeWorkLoginPage:
                 )
                 opzione_isab.click()
 
-                self.log(f"🔐 Inserimento credenziali per: {username}")
+                self.log(f"🔐 Inserimento credenziali per {username}...")
                 u_field = self.wait.until(EC.visibility_of_element_located(SafeWorkLocators.USERNAME_FIELD))
                 u_field.clear()
                 u_field.send_keys(username)
@@ -72,10 +75,10 @@ class SafeWorkLoginPage:
 
             except (TimeoutException, Exception) as e:
                 if "stale" in str(e).lower() and tentativa < MAX_RETRIES - 1:
-                    self.log(f"⚠️ Rilevato elemento stale. Riprovo la procedura di login... ({e})")
-                    self.driver.refresh()  # Resettiamo lo stato per sicurezza
+                    self.log("⚠️ Rilevato elemento non più valido. Ricaricamento...")
+                    self.driver.refresh()
                     continue
-                self.log(f"❌ Errore irreversibile fase preliminare login: {e}")
+                self.log(f"❌ Errore fase preliminare login: {e}")
                 raise
 
     def _login_flow_coemi(self) -> bool:
@@ -83,45 +86,34 @@ class SafeWorkLoginPage:
         Flusso COEMI (Lento):
         - DEVE attendere la comparsa dello spinner 'Caricamento...'
         - DEVE attendere la sua scomparsa.
-        - Infine attende la Dashboard.
         """
         try:
-            self.log("⏳ [COEMI] Attesa obbligatoria spinner 'Caricamento...'")
-            # Timeout allineati alla logica "main" (SafeworkBaseBot._attendi_caricamento_sistema)
-            # 1. Attesa comparsa (molto generosa perché il sistema può essere lento a reagire)
+            self.log("⏳ In attesa dello spinner di sistema...")
             WebDriverWait(self.driver, 60).until(
                 EC.visibility_of_element_located(SafeWorkLocators.CARICAMENTO_SPAN)
             )
-            self.log("🔄 [COEMI] Spinner apparso. Attesa completamento...")
+            self.log("⏳ Sistema in caricamento (attesa completamento)...")
 
-            # 2. Attesa scomparsa (fino a 5 minuti come da storico log)
             WebDriverWait(self.driver, 300).until(
                 EC.invisibility_of_element_located(SafeWorkLocators.CARICAMENTO_SPAN)
             )
-            self.log("✅ [COEMI] Spinner scomparso.")
+            self.log("✅ Caricamento sistema completato.")
 
-            self._attendi_dashboard()
-            return True
+            return self._attendi_dashboard()
         except TimeoutException:
-            self.log("⚠️ [COEMI] Timeout attesa spinner. Provo comunque a verificare la dashboard...")
+            self.log("⚠️ Timeout caricamento. Verifica diretta dashboard...")
             return self._attendi_dashboard()
 
     def _login_flow_tcl(self) -> bool:
-        """
-        Flusso TCL (Veloce):
-        - NON attende spinner (spesso non appare nemmeno).
-        - Va dritto al controllo Dashboard.
-        """
-        self.log("⚡ [TCL] Salto controlli caricamento. Attesa diretta dashboard.")
+        """Flusso TCL (Veloce)."""
         return self._attendi_dashboard()
 
     def _attendi_dashboard(self) -> bool:
         """Verifica finale comune."""
-        self.log("⏳ Verifica finale accesso Dashboard...")
         try:
             WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable(SafeWorkLocators.HOME_BUTTON))
-            self.log("✅ Dashboard raggiunta correttamente.")
+            self.log("✅ Accesso alla Dashboard completato.")
             return True
         except TimeoutException:
-            self.log("❌ Dashboard non raggiunta nei tempi previsti.")
+            self.log("❌ Dashboard non raggiunta.")
             return False

@@ -1,3 +1,9 @@
+"""
+SyncroJob - Signal Connector
+Controller responsabile del cablaggio dei segnali tra i diversi moduli dell'applicazione.
+Mantiene disaccoppiata la logica dei servizi dalla visualizzazione della MainWindow.
+"""
+
 from PyQt6.QtCore import QObject
 
 from src.core.notification_manager import NotificationManager
@@ -5,19 +11,33 @@ from src.gui.widgets.toast import ToastManager
 
 
 class SignalConnector(QObject):
+    """
+    Gestisce la connessione dei segnali PyQt6 tra i Singleton Manager e la UI.
+    Si occupa di aggiornare badge, mostrare toast e gestire la navigazione dalla sidebar.
+    """
+
     def __init__(self, main_window):
+        """
+        Inizializza il connettore di segnali.
+
+        Args:
+            main_window: Riferimento alla MainWindow dell'applicazione.
+        """
         super().__init__(main_window)
         self.main_window = main_window
 
     def connect_global_signals(self):
-        """Connects global application signals."""
+        """
+        Collega i segnali globali dei servizi core.
+        - Notifiche -> Toast Manager
+        - Conteggio notifiche -> Badge Sidebar
+        """
         # Toast Manager
         NotificationManager.instance().request_toast.connect(
             lambda msg, t, d: ToastManager.instance().show(msg, t, d)
         )
 
         # Notification Badge on Sidebar
-        # Accessing sidebar via tool_bar_component
         if hasattr(self.main_window, "tool_bar_component") and self.main_window.tool_bar_component.sidebar:
             sidebar = self.main_window.tool_bar_component.sidebar
             NotificationManager.instance().unread_count_changed.connect(
@@ -26,7 +46,10 @@ class SignalConnector(QObject):
             sidebar.group_notifiche.header_btn.set_badge(NotificationManager.instance().get_unread_count())
 
     def connect_sidebar_signals(self):
-        """Connects sidebar navigation signals."""
+        """
+        Collega i segnali di interazione della barra laterale ai controller di navigazione.
+        Gestisce i cambi pagina, l'apertura di tab specifici e la Command Palette.
+        """
         if (
             not hasattr(self.main_window, "tool_bar_component")
             or not self.main_window.tool_bar_component.sidebar

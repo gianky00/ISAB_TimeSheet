@@ -68,7 +68,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "{#SourcePath}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Copy drivers (CRITICAL for Bot Parity - ensures integrated driver works without internet)
-Source: "..\..\drivers\*"; DestDir: "{app}\drivers"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: DirExists(ExpandConstant('{src}\..\..\drivers'))
+Source: "..\..\drivers\*"; DestDir: "{app}\drivers"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 
 ; Copy all assets (icons, styles, etc.)
 Source: "{#AssetsPath}\*"; DestDir: "{app}\assets"; Flags: ignoreversion recursesubdirs createallsubdirs

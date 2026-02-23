@@ -48,6 +48,16 @@ class ScaricoOreImporter(BaseImporter):
 
     @classmethod
     def scan_scarico_ore_rows(cls, file_path: str) -> int:
+        """
+        Esegue una scansione rapida del file Excel per stimare il numero di righe totali.
+        Legge direttamente la struttura XML del file .xlsx per massima velocità.
+
+        Args:
+            file_path: Percorso del file Excel.
+
+        Returns:
+            int: Numero stimato di righe.
+        """
         path = Path(file_path)
         if not path.exists():
             return 0
@@ -94,6 +104,17 @@ class ScaricoOreImporter(BaseImporter):
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, list[tuple[Any, ...]]]:
+        """
+        Importa i dati dal file Excel dello Scarico Ore Cantiere.
+        Gestisce la decrittazione automatica se necessario e l'estrazione di dati e stili.
+
+        Args:
+            file_path: Percorso del file da importare.
+            progress_callback: Funzione opzionale per monitorare l'avanzamento.
+
+        Returns:
+            tuple: (successo, messaggio, lista di righe processate).
+        """
         path = Path(file_path)
         if not path.exists():
             return False, f"File Scarico Ore non trovato: {file_path}", []

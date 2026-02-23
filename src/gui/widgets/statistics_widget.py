@@ -56,33 +56,8 @@ class StatisticsWidget(QWidget):
         h_header = self.table.horizontalHeader()
         if h_header is not None:
             h_header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        self.table.setStyleSheet(
-            """
-            QTableWidget {
-                border: 1px solid #dee2e6;
-                border-radius: 8px;
-                background-color: white;
-                font-size: 14px;
-                selection-background-color: #0d6efd;
-                selection-color: white;
-            }
-            QHeaderView::section {
-                background-color: #f8f9fa;
-                padding: 12px;
-                border-bottom: 2px solid #dee2e6;
-                font-weight: bold;
-                color: #495057;
-            }
-            QTableWidget::item {
-                padding: 10px;
-                border-bottom: 1px solid #f0f0f0;
-            }
-            QTableWidget::item:selected {
-                background-color: #0d6efd;
-                color: white;
-            }
-        """
-        )
+        # Use global styles from light.qss
+        # self.table.setStyleSheet(...)
         self.table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
         self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         layout.addWidget(self.table)

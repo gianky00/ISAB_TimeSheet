@@ -1,3 +1,9 @@
+"""
+SyncroJob - Backup Tab
+Interfaccia per la gestione della sicurezza dei dati tramite backup Cloud e locali.
+Permette il rilevamento automatico di servizi come OneDrive/Google Drive e il ripristino di versioni precedenti.
+"""
+
 from datetime import UTC, datetime
 from typing import Any
 
@@ -26,13 +32,24 @@ from src.utils.helpers import get_asset_path, get_colored_icon, open_folder
 
 
 class BackupTab(QWidget):
-    """Tab per la gestione del Backup Cloud e Locale."""
+    """
+    Tab dedicato alla configurazione del salvataggio dati.
+    Gestisce la selezione del provider cloud, la schedulazione del backup automatico
+    alla chiusura e fornisce strumenti per il ripristino atomico dei database.
+    """
 
     def __init__(self, parent=None):
+        """
+        Inizializza il tab dei backup.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self._setup_ui()
 
     def _setup_ui(self):
+        """Configura l'interfaccia utente con sezioni per destinazione, opzioni e ripristino."""
         layout = QVBoxLayout(self)
         layout.setSpacing(20)
         layout.setContentsMargins(30, 30, 30, 30)
@@ -52,23 +69,13 @@ class BackupTab(QWidget):
         clouds = BackupManager.detect_cloud_paths()
         status_group = QGroupBox("Destinazione Cloud")
         status_layout = QVBoxLayout(status_group)
-
         status_layout.addWidget(QLabel("Seleziona il servizio Cloud da utilizzare:"))
 
         self.cloud_combo = QComboBox()
         self.cloud_combo.setMinimumHeight(40)
         self.cloud_combo.setStyleSheet(
-            """
-            QComboBox {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 5px;
-                font-size: 14px;
-                background-color: white;
-            }
-        """
+            "QComboBox { border: 1px solid #ced4da; border-radius: 4px; padding: 5px; background-color: white; }"
         )
-
         self.cloud_combo.addItem("Locale (Documenti)", "Local")
         if clouds:
             for name, path in clouds.items():
@@ -78,7 +85,7 @@ class BackupTab(QWidget):
         status_layout.addWidget(self.cloud_combo)
         layout.addWidget(status_group)
 
-        # Settings & Actions combined
+        # Settings & Actions
         sett_group = QGroupBox("Impostazioni")
         sett_layout = QHBoxLayout(sett_group)
         sett_layout.setSpacing(15)
@@ -106,24 +113,13 @@ class BackupTab(QWidget):
         # Restore Section
         restore_group = create_group_box("Ripristino Backup")
         restore_layout = QVBoxLayout(restore_group)
-
-        restore_label = QLabel("Seleziona un backup da ripristinare:")
-        restore_layout.addWidget(restore_label)
+        restore_layout.addWidget(QLabel("Seleziona un backup da ripristinare:"))
 
         restore_controls = QHBoxLayout()
-
         self.restore_combo = QComboBox()
         self.restore_combo.setMinimumHeight(40)
         self.restore_combo.setStyleSheet(
-            """
-            QComboBox {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 5px;
-                font-size: 14px;
-                background-color: white;
-            }
-        """
+            "QComboBox { border: 1px solid #ced4da; border-radius: 4px; padding: 5px; background-color: white; }"
         )
         restore_controls.addWidget(self.restore_combo)
 
@@ -142,10 +138,15 @@ class BackupTab(QWidget):
 
         restore_layout.addLayout(restore_controls)
         layout.addWidget(restore_group)
-
         layout.addStretch()
 
     def load_from_config(self, config: dict[str, Any]):
+        """
+        Carica le preferenze di backup dalla configurazione globale.
+
+        Args:
+            config: Dizionario delle impostazioni caricato.
+        """
         saved_cloud = config.get("backup_cloud_provider")
         if saved_cloud:
             index = self.cloud_combo.findData(saved_cloud)
@@ -156,14 +157,17 @@ class BackupTab(QWidget):
         self._refresh_backups_list()
 
     def _save_cloud_preference(self):
+        """Salva il provider cloud selezionato nella configurazione."""
         provider = self.cloud_combo.currentData()
         if provider:
             config_manager.set_config_value("backup_cloud_provider", provider)
 
     def _save_auto_backup(self):
+        """Salva lo stato dell'opzione di backup automatico."""
         config_manager.set_config_value("auto_backup", self.auto_backup_check.isChecked())
 
     def _run_manual_backup(self):
+        """Avvia immediatamente la procedura di backup e aggiorna la lista cronologica."""
         success, msg = BackupManager.create_backup()
         if success:
             ToastManager.instance().show(f"Backup completato!\n{msg}", "success")
@@ -172,10 +176,12 @@ class BackupTab(QWidget):
             QMessageBox.warning(self, "Errore Backup", msg)
 
     def _open_backup_folder(self):
+        """Apre la cartella contenente i file ZIP di backup nel file explorer di sistema."""
         path = BackupManager.get_backup_dir()
         open_folder(str(path))
 
     def _refresh_backups_list(self):
+        """Scansiona la cartella backup e popola il menu a tendina con le versioni trovate."""
         self.restore_combo.clear()
         backups = BackupManager.list_backups()
 
@@ -190,36 +196,28 @@ class BackupTab(QWidget):
                 name = backup_path.name
                 ts_str = name.replace("BotTS_Backup_", "").replace(".zip", "")
                 dt = datetime.strptime(ts_str, "%Y%m%d_%H%M%S").replace(tzinfo=UTC)
-                display = dt.strftime("%d/%m/%Y %H:%M:%S")
-                size_kb = backup_path.stat().st_size // 1024
-                display += f" ({size_kb} KB)"
+                display = f"{dt.strftime('%d/%m/%Y %H:%M:%S')} ({backup_path.stat().st_size // 1024} KB)"
                 self.restore_combo.addItem(display, str(backup_path))
             except Exception:
                 self.restore_combo.addItem(backup_path.name, str(backup_path))
 
     def _restore_selected_backup(self):
+        """Ripristina i dati dal file selezionato previa conferma dell'utente."""
         path = self.restore_combo.currentData()
         if not path:
             return
 
-        msg_box = QMessageBox(self)
-        msg_box.setWindowTitle("Conferma Ripristino")
-        msg_box.setText(
-            "ATTENZIONE: Il ripristino sovrascriverà le impostazioni e i dati attuali.\n"
-            "L'applicazione potrebbe richiedere un riavvio.\n\n"
-            "Sei sicuro di voler procedere?"
+        res = QMessageBox.question(
+            self,
+            "Conferma Ripristino",
+            "ATTENZIONE: Il ripristino sovrascriverà i dati attuali.\nProcedere?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
-        msg_box.setIcon(QMessageBox.Icon.Question)
-        msg_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-
-        if msg_box.exec() == QMessageBox.StandardButton.Yes:
+        if res == QMessageBox.StandardButton.Yes:
             success, msg = BackupManager.restore_backup(path)
             if success:
                 QMessageBox.information(
-                    self,
-                    "Ripristino Completato",
-                    "Dati ripristinati con successo.\nL'applicazione verrà riavviata.",
+                    self, "Ripristino Completato", "Dati ripristinati con successo. Riavvia l'app."
                 )
-                # Riavvio? Forse meglio gestirlo dal main window, qui diamo solo ok.
             else:
                 QMessageBox.critical(self, "Errore Ripristino", msg)

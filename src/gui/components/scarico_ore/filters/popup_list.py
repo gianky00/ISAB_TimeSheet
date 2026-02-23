@@ -86,6 +86,7 @@ class ListFilterPopupWidget(QWidget):
                     self.list_view.setRowHidden(i, True)
 
     def select_all(self) -> None:
+        """Seleziona tutti i valori visibili nella lista."""
         self.model.blockSignals(True)
         for i in range(self.model.rowCount()):
             if not self.list_view.isRowHidden(i):
@@ -96,6 +97,7 @@ class ListFilterPopupWidget(QWidget):
         self.model.layoutChanged.emit()
 
     def select_none(self) -> None:
+        """Deseleziona tutti i valori visibili nella lista."""
         self.model.blockSignals(True)
         for i in range(self.model.rowCount()):
             if not self.list_view.isRowHidden(i):
@@ -106,13 +108,20 @@ class ListFilterPopupWidget(QWidget):
         self.model.layoutChanged.emit()
 
     def _on_item_changed(self, item: QStandardItem) -> None:
-        pass
+        """Gestore eventi per il cambio di stato di un elemento (placeholder)."""
 
     def apply_filter(self) -> None:
+        """Marca il filtro come applicato e chiude il menu."""
         self.applied = True
         self._close_menu()
 
     def get_selected_values(self) -> list[str] | None:
+        """
+        Ottiene i valori selezionati dal modello.
+
+        Returns:
+            list[str] | None: Lista di stringhe selezionate o None se tutti gli elementi sono selezionati.
+        """
         selected: list[str] = []
         all_checked = True
 

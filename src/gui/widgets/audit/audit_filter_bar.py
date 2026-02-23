@@ -1,3 +1,8 @@
+"""
+SyncroJob - Audit Filter Bar
+Widget per la configurazione dei filtri di ricerca e visualizzazione all'interno dell'Audit Log.
+"""
+
 from collections.abc import Sequence
 from typing import Any
 
@@ -18,16 +23,27 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class AuditFilterBar(QFrame):
-    """Barra dei filtri per l'Audit Log."""
+    """
+    Barra dei filtri per l'Audit Log.
+    Permette di filtrare i log per range temporale, categoria, livello di severità e ricerca testuale.
+    """
 
     filters_applied = pyqtSignal(dict)
+    """Segnale emesso quando l'utente clicca su 'Filtra', contenente il dizionario dei parametri."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza la barra dei filtri.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self.setStyleSheet("background-color: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6;")
         self._setup_ui()
 
     def _setup_ui(self) -> None:
+        """Configura il layout orizzontale e inizializza i widget dei filtri."""
         layout = QHBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(10)
@@ -84,11 +100,18 @@ class AuditFilterBar(QFrame):
         layout.addWidget(apply_btn)
 
     def set_categories(self, categories: Sequence[str]) -> None:
+        """
+        Popola il menu a tendina delle categorie.
+
+        Args:
+            categories: Lista di stringhe rappresentanti le categorie di log disponibili.
+        """
         self.cat_combo.clear()
         self.cat_combo.addItem("Tutte")
         self.cat_combo.addItems(categories)
 
     def _emit_filters(self) -> None:
+        """Raccoglie i valori correnti dei filtri ed emette il segnale 'filters_applied'."""
         lvl_idx = self.level_combo.currentIndex()
         levels = None
         if lvl_idx == 1:
@@ -109,10 +132,22 @@ class AuditFilterBar(QFrame):
         )
 
     def set_enabled_dates(self, enabled: bool) -> None:
+        """
+        Abilita o disabilita i campi di selezione data.
+
+        Args:
+            enabled: Stato di abilitazione.
+        """
         self.date_from.setEnabled(enabled)
         self.date_to.setEnabled(enabled)
 
     def get_filters(self) -> dict[str, Any]:
+        """
+        Restituisce i parametri di filtraggio correnti in un formato pronto per le query.
+
+        Returns:
+            dict: Dizionario contenente date convertite in datetime, categoria, livelli e testo di ricerca.
+        """
         from datetime import datetime
 
         start_dt = datetime.combine(self.date_from.date().toPyDate(), datetime.min.time())

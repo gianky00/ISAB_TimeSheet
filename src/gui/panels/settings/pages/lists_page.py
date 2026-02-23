@@ -489,6 +489,7 @@ class ListsPage(QWidget):
     # --- LOAD & SAVE ---
 
     def load_from_config(self, config: dict[str, Any]) -> None:
+        """Carica tutte le liste (account, contratti, fornitori, ecc.) dalla configurazione."""
         self._render_accounts(self.account_list, config.get("accounts", []))
         self._render_accounts(self.sw_account_list, config.get("safework_accounts", []))
         self._update_simple_list(self.contract_list, config.get("contracts", []))
@@ -497,6 +498,7 @@ class ListsPage(QWidget):
         self._update_simple_list(self.cantieri_list, config.get("cantieri_timbrature", []))
 
     def save_to_config(self, config_manager: Any) -> None:
+        """Salva lo stato corrente delle liste nella configurazione globale."""
         config_manager.set_config_value("accounts", self._get_accounts(self.account_list))
         config_manager.set_config_value("safework_accounts", self._get_accounts(self.sw_account_list))
         config_manager.set_config_value("contracts", self._get_simple_items(self.contract_list))

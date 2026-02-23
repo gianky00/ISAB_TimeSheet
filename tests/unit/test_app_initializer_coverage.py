@@ -50,9 +50,9 @@ class TestAppInitializerCoverage:
         mock_core_deps["run_update"].assert_called_once()
 
     def test_initialize_core_exception(self, mock_core_deps):
-        """Test: Gestione eccezioni durante inizializzazione."""
+        """Test: Gestione eccezioni durante inizializzazione (DB crash)."""
         AppInitializer._core_initialized = False
-        mock_core_deps["setup_logging"].side_effect = Exception("Crash")
+        mock_core_deps["db_init"].side_effect = Exception("Crash")
 
         res = AppInitializer.initialize_core()
 

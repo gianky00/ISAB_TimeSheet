@@ -1,4 +1,9 @@
-import os
+"""
+SyncroJob - Menu Bar Component
+Componente responsabile della gestione delle scorciatoie globali e della Command Palette.
+Implementa il sistema di navigazione gerarchica 'Spotlight' per l'accesso rapido a tutte le funzioni.
+"""
+
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -14,7 +19,18 @@ from src.gui.dialogs.command_palette import CommandPaletteDialog
 
 
 class MenuBarComponent(QObject):
+    """
+    Gestisce l'interazione con i comandi globali tramite tastiera e interfaccia Spotlight.
+    Coordina l'inizializzazione della Command Palette e la costruzione dell'albero dei comandi.
+    """
+
     def __init__(self, main_window):
+        """
+        Inizializza il componente menu e registra le scorciatoie.
+
+        Args:
+            main_window: Riferimento alla MainWindow dell'applicazione.
+        """
         super().__init__(main_window)
         self.main_window = main_window
         self.command_palette = None
@@ -23,7 +39,7 @@ class MenuBarComponent(QObject):
         self._setup_shortcuts()
 
     def open_bug_report_dialog(self):
-        """Apre il dialogo per la segnalazione di bug."""
+        """Visualizza il dialogo avanzato per la segnalazione di problemi tecnici."""
         try:
             self._bug_dialog = BugReportDialog(self.main_window)
             self._bug_dialog.show()
@@ -33,23 +49,21 @@ class MenuBarComponent(QObject):
                 self.main_window.show_toast(f"Errore apertura segnalazione: {e}", "error")
 
     def _setup_shortcuts(self):
-        # Shortcut per Command Palette (Spotlight)
+        """Configura le scorciatoie da tastiera (Ctrl+K, F1, Ctrl+Shift+P) per la Command Palette."""
         self.shortcut_palette = QShortcut(QKeySequence("Ctrl+K"), self.main_window)
         self.shortcut_palette.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self.shortcut_palette.activated.connect(self.open_command_palette)
 
-        # Fallback Shortcut (Ctrl+Shift+P) per conflitti
         self.shortcut_palette_sec = QShortcut(QKeySequence("Ctrl+Shift+P"), self.main_window)
         self.shortcut_palette_sec.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self.shortcut_palette_sec.activated.connect(self.open_command_palette)
 
-        # Fallback Shortcut (F1)
         self.shortcut_palette_f1 = QShortcut(QKeySequence("F1"), self.main_window)
         self.shortcut_palette_f1.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self.shortcut_palette_f1.activated.connect(self.open_command_palette)
 
     def open_command_palette(self):
-        """Apre o chiude la Command Palette (Spotlight) con animazione e debouncing."""
+        """Apre o chiude la Command Palette con effetto a tendina e controllo anti-rimbalzo."""
         now = datetime.now().timestamp() * 1000
         if (now - self._last_palette_toggle) < 300:
             return
@@ -62,27 +76,33 @@ class MenuBarComponent(QObject):
             self.command_palette.hide_animated()
         elif self.command_palette:
             self.command_palette.show_animated()
-            # Optional: Toast per confermare l'apertura se in debug mode, ma meglio evitare spam
 
     def _init_palette(self):
+        """Inizializza l'istanza del dialogo Command Palette costruendo l'albero dei comandi."""
         try:
             root_nodes = self._build_menu_tree()
             self.command_palette = CommandPaletteDialog(self.main_window, root_nodes)
         except Exception as e:
-            import traceback
-
-            print(f"CRITICAL ERROR initializing Command Palette: {e}")
-            traceback.print_exc()
             if hasattr(self.main_window, "show_toast"):
                 self.main_window.show_toast(f"Error opening palette: {e}")
 
     def _build_menu_tree(self):
-        # Helper helpers
+        """
+        Costruisce dinamicamente la struttura gerarchica dei comandi disponibili nell'applicazione.
+        Definisce azioni per esecuzione bot, navigazione pagine e manutenzione sistema.
+
+        Returns:
+            list[CommandNode]: Lista dei nodi comando radice.
+        """
+
         def restart_app():
+            import subprocess
+
             from PyQt6.QtWidgets import QApplication
 
             QApplication.quit()
-            os.execl(sys.executable, sys.executable, *sys.argv)  # noqa: S606
+            subprocess.Popen([sys.executable, *sys.argv])
+            sys.exit()
 
         def open_folder_path(path):
             if Path(path).exists():
@@ -90,16 +110,12 @@ class MenuBarComponent(QObject):
 
         mw = self.main_window
 
-        # We assume mw has methods like _navigate_to, _run_timbrature_bot etc.
-        # This preserves the Facade pattern for now.
-
         # 1. ESEGUI (Execution Flow)
         menu_run = CommandNode(
             "Esegui...",
             "Avvia bot e task automatici",
             Icons.PLAY,
             children=[
-                # --- Timbrature ---
                 CommandNode(
                     "Scarica Timbrature",
                     "Portale Fornitori: Presenze",
@@ -125,7 +141,6 @@ class MenuBarComponent(QObject):
                         ),
                     ],
                 ),
-                # --- Scarico TS ---
                 CommandNode(
                     "Scarico TS",
                     "Portale Fornitori: Download Timesheets",
@@ -148,50 +163,41 @@ class MenuBarComponent(QObject):
                         ),
                     ],
                 ),
-                # --- Other commands (simplified for brevity, keeping critical ones) ---
                 CommandNode(
                     "Dettagli OdA",
-                    "Portale Fornitori: Dettagli Ordini",
+                    "Portale Fornitori",
                     Icons.LIST,
                     input_prompts=["Inserisci Numero OdA"],
                     on_input_complete=mw._on_dettagli_oda_input,
                 ),
                 CommandNode(
                     "Prenota BP",
-                    "Portale Fornitori: Prenotazione Badge",
+                    "Portale Fornitori",
                     Icons.TICKET,
                     input_prompts=["Inserisci Numero BP"],
                     on_input_complete=mw._on_prenota_bp_input,
                 ),
-                CommandNode(
-                    "Carico TS",
-                    "Portale Fornitori: Upload Timesheets",
-                    Icons.UPLOAD,
-                    action=mw._run_carico_ts,
-                ),
+                CommandNode("Carico TS", "Portale Fornitori", Icons.UPLOAD, action=mw._run_carico_ts),
                 CommandNode(
                     "Scarico PDL",
-                    "SafeWork: Download Permessi",
+                    "SafeWork",
                     Icons.SHIELD,
                     input_prompts=["Inserisci Numero PDL"],
                     on_input_complete=mw._on_pdl_input,
                 ),
                 CommandNode(
                     "Sincronizza DataEase",
-                    "Scarico ore e quadrature",
+                    "Scarico ore cantiere",
                     Icons.DATABASE,
                     action=mw._run_sync_dataease,
                 ),
                 CommandNode(
-                    "Sincronizza Strumentale",
-                    "Aggiorna Contabilità e OdA",
-                    Icons.FOLDER,
-                    action=mw._run_sync_strumentale,
+                    "Sincronizza Strumentale", "Contabilità", Icons.FOLDER, action=mw._run_sync_strumentale
                 ),
             ],
         )
 
-        from src.gui.main_window.page_index import PageIndex  # We will create this
+        from src.gui.main_window.page_index import PageIndex
 
         # 2. GO (Navigation Flow)
         menu_go = CommandNode(
@@ -228,7 +234,7 @@ class MenuBarComponent(QObject):
                     "Importazione Dati",
                     Icons.DATABASE,
                     action=lambda: mw._navigate_to(PageIndex.DATAEASE),
-                ),  # Added
+                ),
                 CommandNode(
                     "Dipendenti",
                     "Anagrafica Risorse",
@@ -282,12 +288,7 @@ class MenuBarComponent(QObject):
                 CommandNode(
                     "Manutenzione",
                     children=[
-                        CommandNode(
-                            "Riavvia Applicazione",
-                            "Soft Reboot",
-                            Icons.REFRESH,
-                            action=restart_app,
-                        ),
+                        CommandNode("Riavvia Applicazione", "Soft Reboot", Icons.REFRESH, action=restart_app),
                         CommandNode(
                             "Toggle Stats",
                             "Mostra telemetria",
@@ -296,10 +297,7 @@ class MenuBarComponent(QObject):
                             close_on_execute=False,
                         ),
                         CommandNode(
-                            "Aggiorna Dati (F5)",
-                            "Refresh view",
-                            Icons.REFRESH,
-                            action=mw._handle_f5,
+                            "Aggiorna Dati (F5)", "Refresh view", Icons.REFRESH, action=mw._handle_f5
                         ),
                     ],
                 ),
@@ -330,7 +328,6 @@ class MenuBarComponent(QObject):
             menu_run,
             menu_go,
             menu_help,
-            # Shortcuts
             CommandNode(
                 "Vai a Timbrature",
                 "Nav",
@@ -353,10 +350,5 @@ class MenuBarComponent(QObject):
                 action=lambda: mw._navigate_to(PageIndex.DATAEASE),
             ),
             menu_set,
-            CommandNode(
-                "Esci",
-                "Chiudi applicazione",
-                Icons.LOG_OUT,
-                action=mw._quit_application,
-            ),
+            CommandNode("Esci", "Chiudi applicazione", Icons.LOG_OUT, action=mw._quit_application),
         ]

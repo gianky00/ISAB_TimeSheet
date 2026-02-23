@@ -6,8 +6,9 @@ Bot modulare per lo scarico e la stampa dei PDL.
 import contextlib
 import logging
 import time
+from contextlib import suppress
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import fitz
 from selenium.webdriver.common.by import By
@@ -15,6 +16,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from src.bots.base.base_bot import StepStatus
 from src.bots.safework.base import SafeworkBaseBot
 from src.utils.printing import print_pdf
 
@@ -27,27 +29,46 @@ logger = logging.getLogger(__name__)
 class SafeWorkPDLBot(SafeworkBaseBot):
     """Bot per lo scarico e la stampa automatizzata dei PDL."""
 
-    def __init__(self, username, password, headless=False, timeout=30, download_path=""):
-        super().__init__(username, password, headless, timeout, download_path)
+    STEPS: ClassVar[list[tuple[str, str]]] = [
+        ("login", "Login SafeWork"),
+        ("search", "Ricerca PdL"),
+        ("download_p1", "Scarico Parte Prima"),
+        ("download_p2", "Scarico Parte Seconda"),
+        ("merge", "Unione e Stampa"),
+        ("session", "Chiusura Sessione"),
+    ]
+
+    def __init__(
+        self,
+        username,
+        password,
+        headless=False,
+        timeout=30,
+        download_path="",
+        account_type: str = "Esecutore",
+    ):
+        super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
         self.downloaded_files: list[str] = []
         self.missing_pdls: list[str] = []
         self.progress_callback: Callable[[int, bool], None] | None = None
 
     @staticmethod
     def get_name() -> str:
+        """Restituisce il nome visualizzato del bot."""
         return "Scarico PDL"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
+        """Definisce le colonne richieste per l'input dati del bot."""
         return [{"name": "Numero PDL", "type": "text"}]
 
     @property
     def name(self) -> str:
+        """Restituisce l'ID univoco del bot."""
         return "scarico_pdl"
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """Validazione specifica per SafeWork PDL."""
-        self.log("🔍 Avvio validazione dati...")
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:
             return False, base_msg
@@ -67,42 +88,65 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         return True, ""
 
-    def set_progress_callback(self, callback):
+    def set_progress_callback(self, callback: "Callable[[int, bool], None]"):
+        """Imposta la funzione di callback per il monitoraggio del progresso."""
         self.progress_callback = callback
 
     def run(self, data: list[dict[str, Any]]) -> bool:
         """Ciclo principale di scarico PDL con gestione sessione."""
+        self.update_step("login", StepStatus.COMPLETED)
+
         success_count = 0
         total = len(data)
         self.downloaded_files = []
         all_pdl_paths: list[str] = []
 
-        self.log(f"🚀 Inizio scarico di {total} PDL...")
+        self.log(f"🚀 Inizio elaborazione di {total} PDL...")
 
         for index, item in enumerate(data):
+            pdl_raw = "N/A"
             try:
                 self._check_stop()
-                pdl_raw = item.get("pdl_number") or item.get("numero_pdl")
+                val = item.get("pdl_number") or item.get("numero_pdl")
+                pdl_raw = str(val) if val else "N/A"
                 if not pdl_raw:
                     continue
 
                 pdl_num = self._sanitizza_pdl_number(pdl_raw)
-                self.log(f"--- PDL {index + 1}/{total}: {pdl_num} ---")
+                self.log(f"📋 PDL {index + 1}/{total}: {pdl_num}")
 
                 # Pipeline per singolo PDL
+                self.update_step("search", StepStatus.RUNNING)
                 if self._esegui_ricerca_pdl(pdl_num):
-                    path_p1 = self._scarica_parte_prima(pdl_num)
-                    path_p2 = self._scarica_parte_seconda(pdl_num)
+                    self.update_step("search", StepStatus.COMPLETED)
 
-                    if (
-                        path_p1
-                        and path_p2
-                        and self._unisci_e_stampa(pdl_num, path_p1, path_p2, item, all_pdl_paths)
-                    ):
-                        success_count += 1
+                    self.update_step("download_p1", StepStatus.RUNNING)
+                    path_p1 = self._scarica_parte_prima(pdl_num)
+
+                    path_p2 = None
+                    if path_p1:
+                        self.update_step("download_p1", StepStatus.COMPLETED)
+                        self.update_step("download_p2", StepStatus.RUNNING)
+                        path_p2 = self._scarica_parte_seconda(pdl_num)
+
+                    if path_p1 and path_p2:
+                        self.update_step("download_p2", StepStatus.COMPLETED)
+                        self.update_step("merge", StepStatus.RUNNING)
+                        if self._unisci_e_stampa(pdl_num, path_p1, path_p2, item, all_pdl_paths):
+                            self.update_step("merge", StepStatus.COMPLETED)
+                            success_count += 1
+                        else:
+                            self.update_step("merge", StepStatus.ERROR)
+                    else:
+                        if not path_p1:
+                            self.update_step("download_p1", StepStatus.ERROR)
+                        if not path_p2:
+                            self.update_step("download_p2", StepStatus.ERROR)
 
                     self._safe_remove(path_p1)
                     self._safe_remove(path_p2)
+                else:
+                    self.update_step("search", StepStatus.ERROR)
 
                 if self.progress_callback:
                     self.progress_callback(index, True)
@@ -112,7 +156,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 self.log(f"❌ Errore critico PDL {pdl_raw}: {e}")
 
         # Unione finale di sessione se richiesto
+        self.update_step("session", StepStatus.RUNNING)
         self._handle_session_merge(data, all_pdl_paths)
+        self.update_step("session", StepStatus.COMPLETED)
 
         self.log(f"✨ Completato: {success_count}/{total} PDL.")
         return success_count == total
@@ -130,12 +176,13 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         if not self.wait or not self.driver:
             return False
 
-        self.log(f"🔄 Ricerca PdL {pdl_num} in interfaccia...")
         try:
             campo = self.wait.until(EC.visibility_of_element_located((By.ID, "fldRicercaPdLVeloce")))
+            self.log(f"⌨️ Inserimento numero PdL {pdl_num}...")
             campo.clear()
             campo.send_keys(pdl_num + Keys.ENTER)
-        except Exception:
+        except Exception as e:
+            self.log(f"❌ Campo ricerca veloce non trovato: {e}", "ERROR")
             return False
 
         if self._gestisci_ricerca_estesa():
@@ -143,20 +190,20 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             return False
 
         if self._gestisci_alert_ricerca():
-            self.log(f"⚠️ Rilevato alert per {pdl_num}. Proseguo con attesa resiliente...")
             with contextlib.suppress(Exception):
                 self._attendi_scomparsa_overlay(timeout_secondi=5)
-
-            # Verifica se caricato nonostante l'alert
-            try:
-                self.wait.until(EC.presence_of_element_located((By.ID, "topIcon-acticonAnteprimaStampaMenu")))
-            except Exception:
-                self.log(f"❌ PDL {pdl_num} non caricato dopo alert. Salto.")
-                return False
         else:
             self._attendi_scomparsa_overlay()
 
-        return True
+        # Verifica finale caricamento (indipendente da alert)
+        try:
+            self.wait.until(EC.visibility_of_element_located((By.ID, "topIcon-acticonAnteprimaStampaMenu")))
+            self._attendi_scomparsa_overlay(timeout_secondi=4)
+            self.log(f"✅ PdL {pdl_num} caricato correttamente.")
+            return True
+        except Exception as e:
+            self.log(f"❌ PDL {pdl_num} non caricato correttamente: {e}", "ERROR")
+            return False
 
     def _scarica_parte_prima(self, pdl_num: str) -> str | None:
         """Scarica la parte prima del PDL con attese robuste e pulizia preventiva."""
@@ -165,33 +212,37 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         if not self.driver or not self.wait:
             return None
 
-        self.log(f"⬇️ Avvio scarico Parte Prima per PdL {pdl_num}...")
-        self._attendi_scomparsa_overlay()
-        self.driver.execute_script("window.scrollTo(0, 0);")
-
-        # Pulizia preventiva: SafeWork scarica la parte 1 col nome del PDL (es. 566360C.pdf)
-        clean_name = pdl_num.replace("/", "") + ".pdf"
-        target_path = Path(self.download_path) / clean_name
-        self._safe_remove(str(target_path))
-
-        ts = time.time()
-        files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*.pdf")}
+        # Gestione popup in differita (es. 'Si') che bloccano il menu stampa
+        self._attendi_scomparsa_overlay(timeout_secondi=5)
 
         try:
-            # Clicca su Anteprima Stampa
-            self.wait.until(EC.element_to_be_clickable((By.ID, "topIcon-acticonAnteprimaStampaMenu"))).click()
-            time.sleep(0.5)
-            self.wait.until(EC.element_to_be_clickable((By.ID, "appItaliano"))).click()
+            self.driver.execute_script("window.scrollTo(0, 0);")
+
+            # Pulizia preventiva
+            clean_name = pdl_num.replace("/", "") + ".pdf"
+            target_path = Path(self.download_path) / clean_name
+            self._safe_remove(str(target_path))
+
+            ts = time.time()
+            files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*.pdf")}
+
+            # Clicca su Anteprima Stampa usando click_robusto
+            self.click_robusto((By.ID, "topIcon-acticonAnteprimaStampaMenu"), label="'Anteprima Stampa'")
+            time.sleep(0.8)  # Breve pausa per animazione menu
+            self.click_robusto((By.ID, "appItaliano"), label="'Lingua Italiano'")
 
             # Cerchiamo il file
+            self.log(f"⏳ Polling per file PDF di {pdl_num}...")
             f = poll_for_new_file(self.download_path, files_before, pattern="*.pdf", timeout=60)
             if f:
                 dest = Path(self.download_path) / f"temp_p1_{int(ts)}.pdf"
                 Path(f).rename(dest)
                 self._clean_pdf(str(dest))
                 return str(dest)
-        except Exception:
-            logger.debug("Impossibile scaricare la parte prima del PDL.")
+            self.log("❌ Timeout: nessun PDF generato per la Parte Prima.", "ERROR")
+        except Exception as e:
+            self.log(f"❌ Errore scarico Parte Prima: {e}", "ERROR")
+            logger.exception("Dettaglio crash Parte Prima:")
         return None
 
     def _scarica_parte_seconda(self, pdl_num: str) -> str | None:
@@ -201,40 +252,48 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         if not self.driver or not self.wait:
             return None
 
-        # Assicura che la "Parte Seconda" sia espansa/visibile
         if not self._espandi_parte_seconda():
+            self.log(f"❌ Impossibile espandere la sezione Parte Seconda per {pdl_num}.", "ERROR")
             return None
 
-        self.log(f"⬇️ Avvio scarico Parte Seconda per PdL {pdl_num}...")
         self._attendi_scomparsa_overlay()
-        self.driver.execute_script("window.scrollTo(0, 0);")
-
-        # Pulizia preventiva: SafeWork usa spesso questo nome fisso per la parte 2
-        self._safe_remove(str(Path(self.download_path) / "ReportPdLRinnovi.pdf"))
-
-        ts = time.time()
-        files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*.pdf")}
 
         try:
-            self.wait.until(EC.element_to_be_clickable((By.ID, "btnPrintPS"))).click()
-            self._gestisci_dialogo_stampa_tutte()
-        except Exception:
-            return None
+            self.driver.execute_script("window.scrollTo(0, 0);")
 
-        f = poll_for_new_file(self.download_path, files_before, pattern="*.pdf", timeout=90)
-        if f:
-            dest = Path(self.download_path) / f"temp_p2_{int(ts)}.pdf"
-            Path(f).rename(dest)
-            return str(dest)
+            # Pulizia preventiva
+            self._safe_remove(str(Path(self.download_path) / "ReportPdLRinnovi.pdf"))
+
+            ts = time.time()
+            files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*.pdf")}
+
+            self.click_robusto((By.ID, "btnPrintPS"), label="'Stampa Parte Seconda'")
+            self._gestisci_dialogo_stampa_tutte()
+
+            self.log(f"⏳ Polling per file PDF Parte Seconda di {pdl_num}...")
+            f = poll_for_new_file(self.download_path, files_before, pattern="*.pdf", timeout=90)
+            if f:
+                dest = Path(self.download_path) / f"temp_p2_{int(ts)}.pdf"
+                Path(f).rename(dest)
+                return str(dest)
+            self.log("❌ Timeout: nessun PDF generato per la Parte Seconda.", "ERROR")
+        except Exception as e:
+            self.log(f"❌ Errore scarico Parte Seconda: {e}", "ERROR")
+            logger.exception("Dettaglio crash Parte Seconda:")
         return None
 
     def _espandi_parte_seconda(self) -> bool:
         """Tenta di rendere visibile la sezione Parte Seconda con strategie multiple."""
         if not self.driver or not self.wait:
             return False
+
+        self._attendi_scomparsa_overlay()
+
         try:
-            if not self.driver.find_element(By.ID, "lblPAFoglio").is_displayed():
-                self.log("📂 Tentativo espansione accordion 'Parte Seconda'...")
+            # Verifica visibilità senza lanciare eccezioni se l'elemento non esiste ancora
+            elementi = self.driver.find_elements(By.ID, "lblPAFoglio")
+            if not elementi or not elementi[0].is_displayed():
+                self.log("📂 Espansione sezione 'Parte Seconda'...")
                 clicked = False
 
                 # Strategia 1: ID Label
@@ -268,20 +327,62 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         if not self.driver:
             return False
         try:
+            # Aumentato timeout a 10s per reattività SafeWork
             try:
-                WebDriverWait(self.driver, 2).until(
-                    EC.visibility_of_element_located((By.CSS_SELECTOR, "p[idtxt='1C51D77B']"))
+                self.log("🔍 Controllo presenza popup 'Ricerca Estesa'...")
+                WebDriverWait(self.driver, 10).until(
+                    EC.visibility_of_element_located((By.XPATH, "//p[contains(text(), 'estenderla')]"))
                 )
             except Exception:
-                return False
+                # Fallback idtxt
+                try:
+                    self.driver.find_element(By.CSS_SELECTOR, "p[idtxt='1C51D77B']")
+                    self.log("ℹ️ Popup 'Ricerca Estesa' rilevato via idtxt.")
+                except Exception:
+                    self.log("ℹ️ Nessun popup di ricerca estesa rilevato.")
+                    return False
 
-            # Clicca su Si
-            self.driver.find_element(By.CSS_SELECTOR, "span[idtxt='E421C594']").click()
-            self._attendi_scomparsa_overlay()
+            # Click robusto su 'Si' (cerca span o button con classe btn-ok)
+            clicked = False
+            self.log("🖱️ Tentativo click su 'Si' per estensione ricerca...")
+            for selector in (
+                "span[idtxt='E421C594']",
+                "//button[contains(@class, 'btn-ok') and contains(., 'Si')]",
+                "//button[contains(., 'Si')]",
+            ):
+                try:
+                    by = By.XPATH if selector.startswith("/") else By.CSS_SELECTOR
+                    el = self.driver.find_element(by, selector)
+                    el.click()
+                    self.log(f"✅ Click su 'Si' riuscito (selector: {selector})")
+                    clicked = True
+                    break
+                except Exception as e:
+                    # Strategia di click multipla: ignoriamo l'errore e proviamo il selettore successivo
+                    self.log(f"DEBUG: Fallito click su {selector}: {e}")
+                    continue
+
+            if clicked:
+                self.log("✅ Ricerca PdL estesa agli altri siti.")
+                self._attendi_scomparsa_overlay()
+            else:
+                self.log("⚠️ Popup ricerca estesa rilevato ma impossibile cliccare 'Si'.", "WARNING")
 
             # Verifica Risultati (se 0, PdL inesistente)
-            num_res = self.driver.find_element(By.ID, "numPermessiTrovati").text.strip()
-            return num_res == "0"
+            with suppress(Exception):
+                self.log("🔍 Verifica se PdL inesistente dopo estensione...")
+                msg = self.driver.find_element(By.XPATH, "//div[contains(text(), 'nessun dato trovato')]")
+                if msg.is_displayed():
+                    self.log("ℹ️ PdL non trovato nemmeno con ricerca estesa.")
+                    return True
+            # Se siamo finiti direttamente nella pagina dettaglio, numPermessiTrovati non ci sarà
+            with suppress(Exception):
+                num_res_el = self.driver.find_elements(By.ID, "numPermessiTrovati")
+                if num_res_el:
+                    num_res = num_res_el[0].text.strip()
+                    return num_res == "0"
+
+            return False  # Proseguiamo comunque, la verifica finale la fa _esegui_ricerca_pdl
         except Exception:
             return False
 
@@ -311,7 +412,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             btn_tutte.click()
             self.wait.until(EC.element_to_be_clickable((By.ID, "btnAnteprima"))).click()
 
-    def _clean_pdf(self, path: str):
+    def _clean_pdf(self, path: str) -> None:
         """Rimuove la pagina 2 (istruzioni) dal PDF della parte prima."""
         try:
             doc = fitz.open(path)
@@ -358,7 +459,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             return True
         return False
 
-    def _safe_remove(self, path: str | None):
+    def _safe_remove(self, path: str | None) -> None:
+        """Rimuove un file dal filesystem in modo sicuro, ignorando errori se non esiste."""
         if path and Path(path).exists():
             with contextlib.suppress(Exception):
                 Path(path).unlink()

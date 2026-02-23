@@ -83,6 +83,7 @@ class ChatInputBar(QWidget):
             self.input_field.clear()
 
     def set_enabled(self, enabled: bool) -> None:
+        """Abilita o disabilita i controlli di input durante l'elaborazione dell'AI."""
         self.input_field.setEnabled(enabled)
         self.attach_btn.setEnabled(enabled)
         self.send_btn.setEnabled(enabled)

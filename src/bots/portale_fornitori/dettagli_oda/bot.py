@@ -3,9 +3,9 @@ SyncroJob - Dettagli OdA Bot
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
-from src.bots.base import BaseBot
+from src.bots.base.base_bot import BaseBot, StepStatus
 from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
     DettagliOdAPage,
 )
@@ -14,6 +14,14 @@ from src.core.oda_manager import OdaManager
 
 class DettagliOdABot(BaseBot):
     """Bot per lo scarico dei dettagli degli Ordini di Acquisto (OdA) dal Portale Fornitori."""
+
+    STEPS: ClassVar[list[tuple[str, str]]] = [
+        ("login", "Login Portale ISAB"),
+        ("nav", "Navigazione Portale"),
+        ("supplier", "Selezione Fornitore"),
+        ("download", "Download OdA"),
+        ("db", "Importazione Database"),
+    ]
 
     @staticmethod
     def get_name() -> str:
@@ -68,6 +76,8 @@ class DettagliOdABot(BaseBot):
 
     def run(self, data: list[dict[str, Any]]) -> bool:
         """Esegue lo scarico dei dettagli per ogni Ordine di Acquisto fornito."""
+        self.update_step("login", StepStatus.COMPLETED)
+
         rows = self._prepare_rows(data)
         self.log(f"🚀 Avvio scarico dettagli per {len(rows)} OdA...")
 
@@ -75,7 +85,9 @@ class DettagliOdABot(BaseBot):
             return False
 
         page = DettagliOdAPage(self.driver, self.log)
+        self.update_step("db", StepStatus.RUNNING)
         OdaManager.init_db()
+        self.update_step("db", StepStatus.COMPLETED)
 
         # Chrome downloads directly to download_path (if configured)
         # Source and dest are the same folder - we just rename the downloaded file
@@ -83,10 +95,12 @@ class DettagliOdABot(BaseBot):
         dest_dir = source_dir
 
         success = 0
+        self.update_step("download", StepStatus.RUNNING)
         for i, row in enumerate(rows, 1):
             if self._process_single_oda(page, row, i, source_dir, dest_dir):
                 success += 1
 
+        self.update_step("download", StepStatus.COMPLETED if success == len(rows) else StepStatus.ERROR)
         self.log("✨ Procedura conclusa.")
         return success == len(rows)
 
@@ -119,27 +133,39 @@ class DettagliOdABot(BaseBot):
         oda = str(row.get("numero_oda", "")).strip()
         contract = str(row.get("numero_contratto", "")).strip()
 
+        self.update_step("nav", StepStatus.RUNNING)
         if not page.navigate_to_dettagli(is_first_row=(index == 1)):
             self.log("❌ Problema nella navigazione.")
+            self.update_step("nav", StepStatus.ERROR)
             return False
+        self.update_step("nav", StepStatus.COMPLETED)
+
+        self.update_step("supplier", StepStatus.RUNNING)
         if not page.setup_supplier(self.fornitore):
             self.log("❌ Fornitore non selezionabile.")
+            self.update_step("supplier", StepStatus.ERROR)
             return False
+        self.update_step("supplier", StepStatus.COMPLETED)
 
         downloaded_path = page.process_oda(oda, contract, self.data_da, self.data_a, source_dir, dest_dir)
 
         if downloaded_path:
             # Se è un ODA Generico (senza numero OdA), importiamo nel DB
             if not oda:
+                self.update_step("db", StepStatus.RUNNING)
                 self._import_oda_to_db(downloaded_path)
+                self.update_step("db", StepStatus.COMPLETED)
             return True
         return False
 
     def _import_oda_to_db(self, downloaded_path: Path):
         """Helper per l'importazione nel database."""
-        self.log(f"📥 Avvio importazione in Storico OdA da {downloaded_path.name}...")
-        ok, msg, added, _ = OdaManager.import_oda_from_excel(str(downloaded_path))
-        if ok:
-            self.log(f"✅ Importazione completata: {msg} (Upd/Ins: {added})")
-        else:
-            self.log(f"⚠️ Errore importazione: {msg}")
+        try:
+            self.log(f"📥 Avvio importazione in Storico OdA da {downloaded_path.name}...")
+            ok, msg, added, _ = OdaManager.import_oda_from_excel(str(downloaded_path))
+            if ok:
+                self.log(f"✅ Importazione completata: {msg} (Upd/Ins: {added})")
+            else:
+                self.log(f"⚠️ Errore importazione: {msg}")
+        except Exception as e:
+            self.log(f"❌ Errore critico durante l'importazione database: {e}")

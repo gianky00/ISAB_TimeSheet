@@ -42,6 +42,7 @@ class TimbratureStorage:
     }
 
     def __init__(self, db_path: Path = DB_PATH):
+        """Inizializza il database delle timbrature configurando il percorso e lo schema."""
         self.db_path = Path(db_path)
         self._ensure_db_exists()
 
@@ -49,6 +50,8 @@ class TimbratureStorage:
         """Initializes the database schema for timbrature with all real columns."""
         with db_manager.get_connection(self.db_path) as conn:
             cursor = conn.cursor()
+
+            # 1. Crea tabella se non esiste con schema completo
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS timbrature (
@@ -73,9 +76,38 @@ class TimbratureStorage:
                 )
             """
             )
+
+            # 2. Migrazione manuale: aggiungi colonne se la tabella esiste già ma è incompleta
+            cursor.execute("PRAGMA table_info(timbrature)")
+            existing_cols = [row[1] for row in cursor.fetchall()]
+
+            expected_cols = {
+                "id_dipendente": "TEXT",
+                "fornitore": "TEXT",
+                "codice_rilpres": "TEXT",
+                "numero_badge": "TEXT",
+                "codice_fiscale": "TEXT",
+                "codice_qualifica": "TEXT",
+                "specializzazione": "TEXT",
+                "societa_ospitante": "TEXT",
+                "data_ins": "TEXT",
+                "ore_effettive": "TEXT",  # Presente in alcune migrazioni v3
+            }
+
+            for col, col_type in expected_cols.items():
+                if col not in existing_cols:
+                    with suppress(sqlite3.OperationalError):
+                        cursor.execute(f"ALTER TABLE timbrature ADD COLUMN {col} {col_type}")
+
+            # 3. Indici
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_nome_cogn ON timbrature(nome, cognome)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_cf ON timbrature(codice_fiscale)")
+
+            if "codice_fiscale" in [
+                row[1] for row in cursor.execute("PRAGMA table_info(timbrature)").fetchall()
+            ]:
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_cf ON timbrature(codice_fiscale)")
+
             conn.commit()
 
     def _ensure_db_exists(self):
@@ -159,7 +191,16 @@ class TimbratureStorage:
         reparto: str | None = None,
         cantiere: str | None = None,
     ):
-        """Salva l'assegnazione reparto/cantiere direttamente in config.json."""
+        """
+        Aggiorna le informazioni di reparto e cantiere per un dipendente specifico.
+        I dati vengono salvati nel file di configurazione globale.
+
+        Args:
+            nome: Nome del dipendente.
+            cognome: Cognome del dipendente.
+            reparto: Nome del reparto opzionale.
+            cantiere: Nome del cantiere opzionale.
+        """
         mappings = config_manager.load_config().get("employee_mappings", {})
 
         key = f"{nome}|{cognome}"

@@ -5,6 +5,7 @@ Query SQL centralizzate per il database PDL.
 
 import logging
 import sqlite3
+from pathlib import Path
 from typing import Any
 
 from src.core.database import db_manager
@@ -51,7 +52,8 @@ class PDLQueries:
         """
 
         # Converti DD/MM/YYYY -> YYYYMMDD
-        def to_iso(d):
+        def to_iso(d: str) -> str:
+            """Converte una data DD/MM/YYYY in stringa comparabile YYYYMMDD."""
             parts = d.split("/")
             return f"{parts[2]}{parts[1]}{parts[0]}"
 
@@ -173,4 +175,77 @@ class PDLQueries:
             return results
         except Exception as e:
             logger.error(f"Errore recupero programmazione: {e}")
+            return []
+
+    @classmethod
+    def get_pdl_interventions(cls, n_pdl: str) -> list[dict[str, Any]]:
+        """
+        Recupera la cronologia degli interventi per un determinato PDL
+        dal database dei Report Attività.
+        """
+        from src.core import config_manager
+
+        config = config_manager.load_config()
+        # Path di default storico
+        default_path = "C:/Users/Coemi/Desktop/SCRIPT/report-attivita-app/report_attivita.db"
+        ext_db_path = config.get("activity_db_path", default_path)
+
+        if not ext_db_path or not Path(ext_db_path).exists():
+            # Fallback/Retry logic or just logging
+            if ext_db_path != default_path and Path(default_path).exists():
+                logger.warning(f"DB configurato non trovato ({ext_db_path}). Tento default: {default_path}")
+                ext_db_path = default_path
+
+            if not Path(ext_db_path).exists():
+                logger.warning(f"Database esterno non trovato: {ext_db_path}")
+                return []
+
+        query = """
+            SELECT
+                'Report (Validato)' as fonte,
+                data_riferimento_attivita as data,
+                nome_tecnico as tecnico,
+                '' as team,
+                '' as ore_lavoro,
+                testo_report as descrizione
+            FROM report_interventi
+            WHERE pdl = ?
+
+            UNION ALL
+
+            SELECT
+                'Report (In Attesa)' as fonte,
+                data_riferimento_attivita as data,
+                nome_tecnico as tecnico,
+                '' as team,
+                '' as ore_lavoro,
+                testo_report as descrizione
+            FROM report_da_validare
+            WHERE pdl = ?
+
+            UNION ALL
+
+            SELECT
+                'Relazione' as fonte,
+                data_intervento as data,
+                nome_compilatore || ' ' || cognome_compilatore as tecnico,
+                '' as team,
+                '' as ore_lavoro,
+                corpo_relazione as descrizione
+            FROM relazioni
+            WHERE pdl = ?
+
+            ORDER BY data DESC
+        """
+
+        try:
+            with sqlite3.connect(f"file:{ext_db_path}?mode=ro", uri=True) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute(query, (n_pdl, n_pdl, n_pdl))
+                rows = cursor.fetchall()
+
+            return [dict(r) for r in rows]
+        except Exception as e:
+            logger.error(f"Errore recupero cronologia interventi per PDL {n_pdl}: {e}")
             return []

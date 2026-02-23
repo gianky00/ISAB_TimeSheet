@@ -233,6 +233,7 @@ class TelegramService(QObject):
                 self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Errore invio Telegram: {e}")
 
     def send_photo_sync(self, photo_bytes: bytes, caption: str = "") -> None:
+        """Invia una foto in modo sincrono caricando i byte nel loop asincrono."""
         if not self.connected_chat_id:
             config = config_manager.load_config()
             self.connected_chat_id = config.get("telegram_chat_id", "")
@@ -248,6 +249,7 @@ class TelegramService(QObject):
                 self.log_signal.emit(f"<img src='{icon}' width='14' height='14'> Errore invio foto: {e}")
 
     def send_document_sync(self, file_path: str, caption: str = "") -> None:
+        """Invia un documento (file locale) in modo sincrono."""
         if not self.connected_chat_id:
             config = config_manager.load_config()
             self.connected_chat_id = config.get("telegram_chat_id", "")

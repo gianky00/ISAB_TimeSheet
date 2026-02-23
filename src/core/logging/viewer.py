@@ -1,5 +1,7 @@
 """
-Log viewer e query utility.
+SyncroJob - Log Viewer & Query Utility
+Fornisce strumenti avanzati per l'interrogazione, l'analisi e la ricostruzione dei log JSON dell'applicazione.
+Include un Query Builder fluido e utility per generare report sulla salute del sistema.
 """
 
 import json
@@ -14,37 +16,71 @@ from .config import get_config
 
 
 class LogQuery:
-    """Query builder per log JSON."""
+    """
+    Query builder per file di log in formato JSON.
+    Permette di concatenare filtri per livello, messaggio, contesto, trace_id e range temporale.
+    """
 
     def __init__(self, log_file: Path):
+        """
+        Inizializza il query builder su un file specifico.
+
+        Args:
+            log_file: Percorso del file .json o .log da interrogare.
+        """
         self.log_file = log_file
         self.filters: list[Any] = []
         self._limit: int | None = None
         self._offset: int = 0
 
     def level(self, *levels: str) -> "LogQuery":
-        """Filtra per livello."""
+        """
+        Filtra le entry in base ai livelli specificati (es. INFO, ERROR).
+
+        Args:
+            *levels: Uno o più livelli di log desiderati.
+
+        Returns:
+            LogQuery: L'istanza corrente per concatenazione.
+        """
         self.filters.append(lambda entry: entry.get("level") in levels)
         return self
 
     def contains_message(self, text: str, case_sensitive: bool = False) -> "LogQuery":
-        """Filtra per messaggio contenente testo."""
+        """
+        Filtra i log il cui messaggio contiene la stringa specificata.
+
+        Args:
+            text: Sottostringa da cercare.
+            case_sensitive: Se distinguere tra maiuscole e minuscole.
+
+        Returns:
+            LogQuery: L'istanza corrente.
+        """
 
         def filter_fn(entry):
+            """Filtra per contenuto del messaggio."""
             message = entry.get("message", "")
             if not case_sensitive:
-                message = message.lower()
-                text_lower = text.lower()
-                return text_lower in message
+                return text.lower() in message.lower()
             return text in message
 
         self.filters.append(filter_fn)
         return self
 
     def context_match(self, **kwargs) -> "LogQuery":
-        """Filtra per context fields."""
+        """
+        Filtra in base ai campi contenuti nell'oggetto 'context' del log JSON.
+
+        Args:
+            **kwargs: Coppie chiave=valore da matchare nel contesto.
+
+        Returns:
+            LogQuery: L'istanza corrente.
+        """
 
         def filter_fn(entry):
+            """Filtra per corrispondenza dei campi nel contesto."""
             context = entry.get("context", {})
             return all(context.get(key) == value for key, value in kwargs.items())
 
@@ -52,23 +88,32 @@ class LogQuery:
         return self
 
     def trace_id(self, trace_id: str) -> "LogQuery":
-        """Filtra per trace_id."""
+        """Filtra i log appartenenti a una specifica transazione (trace_id)."""
         return self.context_match(trace_id=trace_id)
 
     def bot_type(self, bot_type: str) -> "LogQuery":
-        """Filtra per bot_type."""
+        """Filtra i log generati da un particolare tipo di bot."""
         return self.context_match(bot_type=bot_type)
 
     def time_range(self, start: datetime | None = None, end: datetime | None = None) -> "LogQuery":
-        """Filtra per range temporale."""
+        """
+        Filtra i log all'interno di una finestra temporale.
+
+        Args:
+            start: Data/ora iniziale (inclusa).
+            end: Data/ora finale (inclusa).
+
+        Returns:
+            LogQuery: L'istanza corrente.
+        """
 
         def filter_fn(entry):
+            """Filtra per finestra temporale."""
             timestamp_str = entry.get("timestamp", "")
             try:
                 timestamp = datetime.fromisoformat(timestamp_str.replace("Z", ""))
             except Exception:
                 return False
-
             if start and timestamp < start:
                 return False
             return not (end and timestamp > end)
@@ -77,86 +122,80 @@ class LogQuery:
         return self
 
     def has_exception(self) -> "LogQuery":
-        """Filtra solo entry con exception."""
+        """Filtra solo le entry che contengono una traccia di eccezione."""
         self.filters.append(lambda entry: "exception" in entry)
         return self
 
     def limit(self, count: int) -> "LogQuery":
-        """Limita risultati."""
+        """Limita il numero massimo di risultati restituiti."""
         self._limit = count
         return self
 
     def offset(self, count: int) -> "LogQuery":
-        """Offset risultati."""
+        """Salta i primi N risultati (paginazione)."""
         self._offset = count
         return self
 
     def execute(self) -> list[dict[str, Any]]:
-        """Esegue query e restituisce risultati."""
+        """
+        Esegue la query leggendo il file riga per riga e applicando i filtri.
+
+        Returns:
+            list: Lista di dizionari log che soddisfano tutti i criteri.
+        """
         if not self.log_file.exists():
             return []
-
         results = []
         skipped = 0
-
         with suppress(Exception), self.log_file.open("r", encoding="utf-8") as f:
             for line in f:
                 entry = json.loads(line)
-
-                # Applica filtri
                 if all(filter_fn(entry) for filter_fn in self.filters):
-                    # Applica offset
                     if skipped < self._offset:
                         skipped += 1
                         continue
-
                     results.append(entry)
-
-                    # Applica limit
                     if self._limit and len(results) >= self._limit:
                         break
-
         return results
 
     def count(self) -> int:
-        """Conta risultati senza caricarli."""
+        """
+        Conta il numero totale di log che matchano la query senza caricarli in memoria.
+
+        Returns:
+            int: Numero di occorrenze.
+        """
         if not self.log_file.exists():
             return 0
-
         count = 0
-
         with suppress(Exception), self.log_file.open("r", encoding="utf-8") as f:
             for line in f:
                 entry = json.loads(line)
                 if all(filter_fn(entry) for filter_fn in self.filters):
                     count += 1
-
         return count
 
 
 class LogViewer:
     """
-    Utility per visualizzare e analizzare log.
-
-    Features:
-    - Query con filtri
-    - Statistiche aggregate
-    - Timeline reconstruction
-    - Error analysis
+    Interfaccia ad alto livello per l'analisi dei log applicativi.
+    Fornisce metodi aggregati per statistiche, analisi errori e monitoraggio performance.
     """
 
     def __init__(self, config=None):
+        """Inizializza il viewer con la configurazione di logging corrente."""
         self.config = config or get_config()
 
     def query(self, log_type: str = "application") -> LogQuery:
         """
-        Crea query builder.
+        Crea un nuovo query builder per il tipo di log specificato.
 
         Args:
-            log_type: Tipo log ("application", "errors")
+            log_type: "application" per i log generali, "errors" per i soli errori.
 
         Returns:
-            LogQuery instance
+            LogQuery: Istanza del builder configurata sul file corretto.
         """
         if log_type == "application":
             log_file = self.config.json_log_file
@@ -164,44 +203,24 @@ class LogViewer:
             log_file = self.config.errors_log_file
         else:
             raise ValueError(f"Unknown log_type: {log_type}")
-
         return LogQuery(log_file)
 
     def get_level_stats(self) -> dict[str, int]:
-        """
-        Statistiche per livello.
-
-        Returns:
-            Dict level -> count
-        """
+        """Restituisce la distribuzione dei log per livello (DEBUG, INFO, ecc.)."""
         stats: dict[str, int] = defaultdict(int)
-
         results = self.query().execute()
         for entry in results:
-            level = entry.get("level", "UNKNOWN")
-            stats[level] += 1
-
+            stats[entry.get("level", "UNKNOWN")] += 1
         return stats.copy()
 
     def get_error_summary(self, limit: int = 10) -> list[dict[str, Any]]:
-        """
-        Summary errori più frequenti.
-
-        Args:
-            limit: Numero massimo errori da restituire
-
-        Returns:
-            Lista di errori con count
-        """
+        """Analizza i log di errore e raggruppa i messaggi più frequenti."""
         error_messages: dict[str, int] = defaultdict(int)
         error_details = {}
-
         results = self.query("errors").execute()
-
         for entry in results:
             message = entry.get("message", "")
             error_messages[message] += 1
-
             if message not in error_details:
                 error_details[message] = {
                     "message": message,
@@ -209,33 +228,15 @@ class LogViewer:
                     "exception_type": (entry.get("exception", {}).get("type", "unknown")),
                     "count": 0,
                 }
-
             error_details[message]["count"] = error_messages[message]
-
-        # Ordina per count
-        sorted_errors = sorted(error_details.values(), key=operator.itemgetter("count"), reverse=True)
-
-        return sorted_errors[:limit]
+        return sorted(error_details.values(), key=operator.itemgetter("count"), reverse=True)[:limit]
 
     def get_slow_operations(self, threshold_ms: float = 5000, limit: int = 10) -> list[dict[str, Any]]:
-        """
-        Operazioni più lente.
-
-        Args:
-            threshold_ms: Soglia millisecondi
-            limit: Numero massimo operazioni da restituire
-
-        Returns:
-            Lista di operazioni lente
-        """
+        """Identifica le funzioni la cui esecuzione ha superato la soglia di millisecondi specificata."""
         slow_ops = []
-
         results = self.query().execute()
-
         for entry in results:
-            data = entry.get("data", {})
-            duration = data.get("duration_ms")
-
+            duration = entry.get("data", {}).get("duration_ms")
             if duration and duration > threshold_ms:
                 slow_ops.append(
                     {
@@ -246,128 +247,74 @@ class LogViewer:
                         "trace_id": entry.get("context", {}).get("trace_id"),
                     }
                 )
-
-        # Ordina per durata
         slow_ops.sort(key=operator.itemgetter("duration_ms"), reverse=True)
-
         return slow_ops[:limit]
 
     def reconstruct_trace(self, trace_id: str) -> list[dict[str, Any]]:
-        """
-        Ricostruisce timeline completa di un trace.
-
-        Args:
-            trace_id: Trace ID da ricostruire
-
-        Returns:
-            Lista di entry ordinati per timestamp
-        """
+        """Ricostruisce la sequenza cronologica di tutti i log appartenenti a un singolo trace_id."""
         results = self.query().trace_id(trace_id).execute()
-
-        # Ordina per timestamp
         results.sort(key=lambda x: x.get("timestamp", ""))
-
         return results
 
     def get_bot_runs_summary(self, bot_type: str | None = None, hours: int = 24) -> list[dict[str, Any]]:
-        """
-        Summary bot runs recenti.
-
-        Args:
-            bot_type: Filtra per bot type (opzionale)
-            hours: Ore di lookback
-
-        Returns:
-            Lista di bot runs con statistiche
-        """
-        # Calcola time range
+        """Genera un riepilogo delle esecuzioni bot nelle ultime ore, raggruppate per trace_id."""
         end = datetime.now()
         start = end - timedelta(hours=hours)
-
-        # Query
         query = self.query().time_range(start, end)
-
         if bot_type:
             query = query.bot_type(bot_type)
-
         results = query.execute()
 
-        # Raggruppa per trace_id
         traces = defaultdict(list)
         for entry in results:
             trace_id = entry.get("context", {}).get("trace_id")
             if trace_id:
                 traces[trace_id].append(entry)
 
-        # Calcola summary per ogni trace
         summaries = []
         for trace_id, entries in traces.items():
-            # Trova primo e ultimo entry
             entries.sort(key=lambda x: x.get("timestamp", ""))
-            first = entries[0]
-            last = entries[-1]
-
-            # Calcola durata totale
             try:
-                start_time = datetime.fromisoformat(first.get("timestamp", "").replace("Z", ""))
-                end_time = datetime.fromisoformat(last.get("timestamp", "").replace("Z", ""))
+                start_time = datetime.fromisoformat(entries[0].get("timestamp", "").replace("Z", ""))
+                end_time = datetime.fromisoformat(entries[-1].get("timestamp", "").replace("Z", ""))
                 duration_sec = (end_time - start_time).total_seconds()
             except Exception:
                 duration_sec = 0
-
-            # Verifica success/failure
             has_error = any(e.get("level") == "ERROR" for e in entries)
-
             summaries.append(
                 {
                     "trace_id": trace_id,
-                    "bot_type": first.get("context", {}).get("bot_type", "unknown"),
-                    "start_time": first.get("timestamp"),
-                    "end_time": last.get("timestamp"),
+                    "bot_type": entries[0].get("context", {}).get("bot_type", "unknown"),
+                    "start_time": entries[0].get("timestamp"),
+                    "end_time": entries[-1].get("timestamp"),
                     "duration_sec": round(duration_sec, 2),
                     "entry_count": len(entries),
                     "success": not has_error,
-                    "context": first.get("context", {}),
+                    "context": entries[0].get("context", {}),
                 }
             )
-
-        # Ordina per start_time
         summaries.sort(key=operator.itemgetter("start_time"), reverse=True)
-
         return summaries
 
     def generate_health_report(self, hours: int = 24) -> dict[str, Any]:
-        """
-        Genera report salute sistema.
-
-        Args:
-            hours: Ore di lookback
-
-        Returns:
-            Dict con health report
-        """
-        # Analizza ultime N ore
+        """Esegue un'analisi completa dei log recenti per determinare il punteggio di salute (Health Score) del sistema."""
         end = datetime.now()
         start = end - timedelta(hours=hours)
-
         results = self.query().time_range(start, end).execute()
 
-        # Statistiche base
         level_stats: dict[str, int] = defaultdict(int)
         for entry in results:
             level_stats[entry.get("level", "UNKNOWN")] += 1
 
-        # Error rate
         total = len(results)
         errors = level_stats.get("ERROR", 0) + level_stats.get("CRITICAL", 0)
         error_rate = (errors / total * 100) if total > 0 else 0
 
-        # Bot runs
         bot_runs = self.get_bot_runs_summary(hours=hours)
         successful_runs = sum(1 for run in bot_runs if run["success"])
         failed_runs = sum(1 for run in bot_runs if not run["success"])
 
-        report = {
+        return {
             "timestamp": datetime.now().isoformat() + "Z",
             "period_hours": hours,
             "total_events": total,
@@ -383,44 +330,17 @@ class LogViewer:
             "slow_operations": self.get_slow_operations(limit=5),
         }
 
-        return report
 
-
-# Utility functions
 def query_logs(log_type: str = "application") -> LogQuery:
-    """
-    Crea query builder per log.
-
-    Args:
-        log_type: Tipo log
-
-    Returns:
-        LogQuery instance
-    """
+    """Helper per creare una query sui log senza istanziare LogViewer manualmente."""
     return LogViewer().query(log_type)
 
 
 def view_trace(trace_id: str) -> list[dict[str, Any]]:
-    """
-    Visualizza timeline completa di un trace.
-
-    Args:
-        trace_id: Trace ID
-
-    Returns:
-        Lista di log entries
-    """
+    """Helper per ricostruire rapidamente un trace specifico."""
     return LogViewer().reconstruct_trace(trace_id)
 
 
 def health_report(hours: int = 24) -> dict[str, Any]:
-    """
-    Genera health report del sistema.
-
-    Args:
-        hours: Ore di lookback
-
-    Returns:
-        Health report
-    """
+    """Helper per generare un report di salute rapido."""
     return LogViewer().generate_health_report(hours=hours)

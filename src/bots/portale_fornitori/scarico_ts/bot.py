@@ -1,38 +1,37 @@
 """
 SyncroJob - Scarico TS Bot
 Bot per il download automatico dei timesheet dal portale ISAB.
-Basato sullo script standalone funzionante.
+Sincronizzato con la logica stabile del branch main e arricchito con STEPS per Cyber-Stepper V5.
 """
 
 import shutil
 import time
 from contextlib import suppress
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
-from src.bots.base import BaseBot
+from src.bots.base import BaseBot, StepStatus
 from src.core.timesheet_processor import TimesheetProcessor
 from src.utils.helpers import sanitize_filename
 
 
 class ScaricaTSBot(BaseBot):
     """
-    Bot per lo scarico automatico dei timesheet.
-
-    Funzionalità:
-    - Login al portale ISAB
-    - Navigazione a Report -> Timesheet
-    - Selezione fornitore (da configurazione)
-    - Impostazione data iniziale
-    - Ricerca per Numero OdA / Posizione OdA
-    - Download del file Excel
-    - Rinomina file scaricato
-    - Logout e chiusura browser
+    Bot per lo scarico automatico dei timesheet dal portale ISAB.
     """
+
+    STEPS: ClassVar[list[tuple[str, str]]] = [
+        ("login", "Login Portale ISAB"),
+        ("nav", "Navigazione Portale"),
+        ("filters", "Impostazione Filtri"),
+        ("download", "Download Timesheet"),
+        ("process", "Elaborazione VBA"),
+        ("cleanup", "Chiusura Sessione"),
+    ]
 
     @staticmethod
     def get_name() -> str:
@@ -102,23 +101,46 @@ class ScaricaTSBot(BaseBot):
 
     def run(self, data: list[dict[str, Any]] | dict[str, Any]) -> bool:
         """Esegue il download dei timesheet."""
+        self.update_step("login", StepStatus.COMPLETED)
+
         rows, dest_dir = self._prepare_run_environment(data)
 
         try:
-            if not self._navigate_to_timesheet() or not self._setup_filters():
+            self.update_step("nav", StepStatus.RUNNING)
+            if not self._navigate_to_timesheet():
+                self.update_step("nav", StepStatus.ERROR)
                 return False
+            self.update_step("nav", StepStatus.COMPLETED)
 
+            self.update_step("filters", StepStatus.RUNNING)
+            if not self._setup_filters():
+                self.update_step("filters", StepStatus.ERROR)
+                return False
+            self.update_step("filters", StepStatus.COMPLETED)
+
+            self.update_step("download", StepStatus.RUNNING)
             success_count, downloaded_files = self._process_oda_rows(rows, dest_dir)
 
             self.log(f"✨ Download completati: {success_count}/{len(rows)}.")
 
-            if self.elabora_ts and downloaded_files:
-                self._run_vba_processing(downloaded_files, dest_dir)
+            # Se almeno uno è stato scaricato, consideriamo lo step riuscito (o parziale)
+            status_download = StepStatus.COMPLETED if success_count == len(rows) else StepStatus.ERROR
+            if success_count > 0 and success_count < len(rows):
+                self.log(f"⚠️ Scarico parziale: {success_count} su {len(rows)}")
 
+            self.update_step("download", status_download)
+
+            if self.elabora_ts and downloaded_files:
+                self.update_step("process", StepStatus.RUNNING)
+                self._run_vba_processing(downloaded_files, dest_dir)
+                self.update_step("process", StepStatus.COMPLETED)
+
+            self.update_step("cleanup", StepStatus.RUNNING)
+            self.update_step("cleanup", StepStatus.COMPLETED)
             return success_count == len(rows)
 
         except Exception as e:
-            self.log(f"❌ Errore imprevisto: {e}")
+            self.log(f"❌ Errore imprevisto nel flusso run: {e}")
             return False
 
     def _prepare_run_environment(self, data: Any) -> tuple[list[dict[str, Any]], Path]:
@@ -137,15 +159,19 @@ class ScaricaTSBot(BaseBot):
         self.log(f"🚀 Inizio scarico TS per {len(rows)} OdA (Fornitore: {self.fornitore})...")
 
         # Chrome downloads directly to download_path (if configured)
+        # Forza la risoluzione del path per coerenza con BaseBot
         source_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
         dest_dir = source_dir
+
+        # Aggiorna download_path per garantire che i metodi successivi usino lo stesso folder
+        self.download_path = str(source_dir)
+
         return rows, dest_dir
 
     def _process_oda_rows(self, rows: list[dict[str, Any]], dest_dir: Path) -> tuple[int, list[str]]:
         """Cicla sugli OdA ed esegue la ricerca e il download."""
         success_count = 0
         downloaded_files = []
-        # Chrome downloads directly to download_path (if configured)
         source_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
 
         for row in rows:
@@ -172,31 +198,35 @@ class ScaricaTSBot(BaseBot):
         if not self.wait or not self.driver:
             return False
 
-        js_dispatch = """
-            var el = arguments[0];
-            var ev_in = new Event('input', {bubbles:true}); el.dispatchEvent(ev_in);
-            var ev_ch = new Event('change', {bubbles:true}); el.dispatchEvent(ev_ch);
-        """
-        # Numero OdA
-        campo_num = self.wait.until(EC.presence_of_element_located((By.NAME, "NumeroOda")))
-        self.driver.execute_script("arguments[0].value = arguments[1];", campo_num, numero_oda)
-        self.driver.execute_script(js_dispatch, campo_num)
+        try:
+            js_dispatch = """
+                var el = arguments[0];
+                var ev_in = new Event('input', {bubbles:true}); el.dispatchEvent(ev_in);
+                var ev_ch = new Event('change', {bubbles:true}); el.dispatchEvent(ev_ch);
+            """
+            # Numero OdA
+            campo_num = self.wait.until(EC.presence_of_element_located((By.NAME, "NumeroOda")))
+            self.driver.execute_script("arguments[0].value = arguments[1];", campo_num, numero_oda)
+            self.driver.execute_script(js_dispatch, campo_num)
 
-        # Posizione OdA
-        campo_pos = self.wait.until(EC.presence_of_element_located((By.NAME, "PosizioneOda")))
-        self.driver.execute_script(
-            "arguments[0].value = ''; arguments[0].value = arguments[1];",
-            campo_pos,
-            posizione_oda,
-        )
-        self.driver.execute_script(js_dispatch, campo_pos)
+            # Posizione OdA
+            campo_pos = self.wait.until(EC.presence_of_element_located((By.NAME, "PosizioneOda")))
+            self.driver.execute_script(
+                "arguments[0].value = ''; arguments[0].value = arguments[1];",
+                campo_pos,
+                posizione_oda,
+            )
+            self.driver.execute_script(js_dispatch, campo_pos)
 
-        # Click Cerca
-        xpath_cerca = "//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Cerca']]"
-        self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_cerca))).click()
+            # Click Cerca
+            xpath_cerca = "//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Cerca']]"
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_cerca))).click()
 
-        self._attendi_scomparsa_overlay(90)
-        return True
+            self._attendi_scomparsa_overlay(90)
+            return True
+        except Exception as e:
+            self.log(f"⚠️ Errore durante l'inserimento ricerca OdA {numero_oda}: {e}")
+            return False
 
     def _run_vba_processing(self, file_list: list[str], dest_dir: Path):
         """Esegue il post-processing stile VBA (TimesheetProcessor)."""
@@ -291,14 +321,16 @@ class ScaricaTSBot(BaseBot):
             self.log(f"✗ Cartella non esiste: {source_dir_path}")
             return None
 
-        # 1. Clicca tasto Excel
+        # 1. Cattura file pre-esistenti
         files_before = {f for f in source_dir_path.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
         self.log(f"[DEBUG] File .xlsx prima del download: {len(files_before)}")
 
+        # 2. Click pulsante Excel (Logica Main Branch con micro-attesa)
+        time.sleep(1)
         if not self._click_excel_export_button():
             return None
 
-        # 2. Attendi download
+        # 3. Attendi download
         downloaded_file = self._wait_for_new_file(source_dir_path, files_before)
         if not downloaded_file:
             # Debug: lista file attuali
@@ -307,30 +339,33 @@ class ScaricaTSBot(BaseBot):
             self.log("⚠️ File non scaricato nel tempo stabilito.")
             return None
 
-        # 3. Finalizzazione (Determina nome e Sposta)
+        # 4. Finalizzazione (Determina nome e Sposta)
         final_path = self._get_final_download_path(source_dir_path, dest_dir, numero_oda, posizione_oda)
         return self._move_to_destination(downloaded_file, final_path)
 
     def _click_excel_export_button(self) -> bool:
-        """Individua e clicca il pulsante di esportazione Excel."""
+        """Individua e clicca il pulsante di esportazione Excel usando il selettore stabile del branch main."""
         if not self.wait:
             return False
 
+        # XPath ESATTO dal branch main
         xpath = "//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]"
         try:
-            self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath))).click()
+            btn = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            btn.click()
             return True
         except Exception as e:
             self.log(f"⚠️ Impossibile cliccare esportazione Excel: {e}")
             return False
 
-    def _wait_for_new_file(self, source_dir: Path, files_before: set[Path], timeout: int = 25) -> Path | None:
-        """Attende la comparsa di un nuovo file .xlsx nella directory sorgente."""
+    def _wait_for_new_file(self, source_dir: Path, files_before: set[Path], timeout: int = 35) -> Path | None:
+        """Attende la comparsa di un nuovo file .xlsx (Logica Main Branch)."""
         start_time = time.time()
         while time.time() - start_time < timeout:
             with suppress(Exception):
-                # Se c'è un download in corso, attendi
+                # Se c'è un download in corso (.crdownload), continua l'attesa
                 if any(f.suffix == ".crdownload" for f in source_dir.iterdir()):
+                    time.sleep(1)
                     continue
 
                 current_files = {
@@ -338,13 +373,14 @@ class ScaricaTSBot(BaseBot):
                 }
                 new_files = current_files - files_before
                 if new_files:
+                    # Restituisce il più recente tra i nuovi
                     return max(list(new_files), key=lambda f: f.stat().st_mtime)
 
             time.sleep(0.5)
         return None
 
     def _get_final_download_path(self, source_dir: Path, dest_dir: Path, oda: str, pos: str) -> Path:
-        """Costruisce il percorso finale basato su ODA/POS e impostazione elabora_ts."""
+        """Costruisce il percorso finale basato su ODA/POS."""
         safe_oda = sanitize_filename(oda)
         safe_pos = sanitize_filename(pos)
 
@@ -362,15 +398,13 @@ class ScaricaTSBot(BaseBot):
                 final_path.unlink()
 
             if final_path.exists():
-                # Fallback con timestamp se file bloccato
                 ts = time.strftime("%Y%m%d-%H%M%S")
                 final_path = target_dir / f"{base_name}_{ts}.xlsx"
 
         return final_path
 
     def _move_to_destination(self, src: Path, dest: Path) -> Path | None:
-        """Sposta il file scaricato nella posizione finale con retry logic."""
-        # Assicura directory esistente
+        """Sposta il file scaricato con retry logic."""
         dest.parent.mkdir(parents=True, exist_ok=True)
 
         for attempt in range(3):
@@ -380,5 +414,6 @@ class ScaricaTSBot(BaseBot):
                 return dest
             except Exception as e:
                 self.log(f"⚠️ Tentativo spostamento {attempt + 1}/3 fallito: {e}")
+                time.sleep(1)
         self.log(f"❌ Impossibile spostare il file in: {dest}")
         return None

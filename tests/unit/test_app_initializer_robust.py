@@ -65,12 +65,19 @@ class TestAppInitializerRobust:
         mock_db.assert_called_once()
 
     @patch("src.core.app_initializer.logger")
-    def test_initialize_core_failure(self, mock_logger):
-        """Test gestione errore critico in init core."""
-        # Forziamo errore nel setup logging (o altro step iniziale)
-        with patch(
-            "src.core.app_initializer.AppInitializer._setup_logging",
-            side_effect=Exception("Critical Fail"),
+    @patch("src.core.database.db_manager.init_db")
+    def test_initialize_core_failure(self, mock_db_init, mock_logger):
+        """Test gestione errore critico in init core (DB failure)."""
+        mock_db_init.side_effect = Exception("DB Error")
+
+        # Patch dependencies to avoid early exit
+        with (
+            patch.dict(
+                "sys.modules",
+                {"pandas": MagicMock(), "numpy": MagicMock(), "selenium": MagicMock()},
+            ),
+            patch("src.core.license_validator.get_detailed_license_status", return_value=(MagicMock(), "OK")),
+            patch.object(AppInitializer, "_setup_logging"),
         ):
             result = AppInitializer.initialize_core()
 

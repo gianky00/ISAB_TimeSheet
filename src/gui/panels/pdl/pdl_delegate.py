@@ -13,6 +13,7 @@ class PDLDelegate(QStyledItemDelegate):
         self.date_columns = date_columns
 
     def initStyleOption(self, option: QStyleOptionViewItem | None, index: QModelIndex) -> None:
+        """Configura le opzioni di stile per la cella, gestendo il wrap del testo."""
         super().initStyleOption(option, index)
         if not option:
             return

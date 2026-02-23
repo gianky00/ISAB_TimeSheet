@@ -33,6 +33,14 @@ class AuditPaginationBar(QWidget):
         layout.addWidget(self.next_btn)
 
     def update_state(self, current_page: int, total_logs: int, page_size: int) -> None:
+        """
+        Aggiorna lo stato visivo della barra (label e abilitazione pulsanti).
+
+        Args:
+            current_page: Indice della pagina corrente (0-based).
+            total_logs: Numero totale di log disponibili.
+            page_size: Numero di log per pagina.
+        """
         total_pages = (total_logs + page_size - 1) // page_size
         if total_pages < 1:
             total_pages = 1
@@ -43,5 +51,11 @@ class AuditPaginationBar(QWidget):
         self.next_btn.setEnabled(disp < total_pages)
 
     def set_enabled(self, enabled: bool) -> None:
+        """
+        Abilita o disabilita i pulsanti di navigazione.
+
+        Args:
+            enabled: True per abilitare, False altrimenti.
+        """
         self.prev_btn.setEnabled(enabled)
         self.next_btn.setEnabled(enabled)

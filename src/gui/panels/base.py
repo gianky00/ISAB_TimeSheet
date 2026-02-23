@@ -8,7 +8,7 @@ import traceback
 from datetime import datetime
 from typing import Any
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -19,10 +19,12 @@ from PyQt6.QtWidgets import (
 from src.core import config_manager
 from src.core.audit_manager import AuditManager
 from src.core.constants import Icons
+from src.core.logging import get_logger
 from src.core.stats_manager import StatsManager
+from src.gui.components.activity_timeline import ActivityTimelineWidget
 from src.gui.design.spacing import Spacing
 from src.gui.dialogs.standard_input_dialog import StandardInputDialog
-from src.gui.widgets import MissionReportCard, TimelineWidget
+from src.gui.widgets import TimelineWidget
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.status_card import StatusCard
 from src.utils.helpers import get_asset_path
@@ -39,6 +41,7 @@ class BotWorker(QThread):
     finished_signal = pyqtSignal(bool)
     request_input_signal = pyqtSignal(str, dict, threading.Event)
     row_status_signal = pyqtSignal(int, bool)  # New signal for row updates
+    step_changed_signal = pyqtSignal(int, str, object)  # Bridge for timeline
 
     def __init__(self, bot, data, telegram_service=None):
         """
@@ -60,6 +63,9 @@ class BotWorker(QThread):
         try:
             # Collega i callback
             self.bot.set_log_callback(self.log_signal.emit)
+
+            # Bridge per Timeline Step signals (Bot -> Worker Signal -> GUI)
+            self.bot.signals.step_changed.connect(self.step_changed_signal.emit)
 
             # Setup input callback se supportato dal bot
             if hasattr(self.bot, "set_input_callback"):
@@ -125,59 +131,110 @@ class BaseBotPanel(QWidget):
         self.bot_id = bot_id
         self.bot_name = bot_name
         self.bot_description = bot_description
+        self._logger = get_logger(f"gui.panel.{bot_id}")
 
         self.worker: BotWorker | None = None
         self.start_time: datetime | None = None
         self._setup_ui()
         self._connect_signals()
 
+        # Inizializza timeline attività in modo differito (Ghost Mode)
+        # Usiamo un timer per assicurarci che la sottoclasse abbia completato l'init
+        QTimer.singleShot(50, self._init_ghost_timeline)
+
+    def get_bot_class(self):
+        """Restituisce la classe del bot associata al pannello. Da implementare nelle sottoclassi."""
+
+    def _init_ghost_timeline(self):
+        """Inizializza gli step della timeline utilizzando i metadati della classe del bot."""
+        try:
+            # 1. Tenta di ottenere la classe direttamente dal pannello (Più robusto)
+            bot_class = self.get_bot_class()
+
+            # 2. Fallback al registro se la classe non è fornita
+            if not bot_class:
+                from src.bots import BOT_REGISTRY
+
+                bot_info = BOT_REGISTRY.get(self.bot_id)
+                if bot_info:
+                    bot_class = bot_info["class"]
+
+            if bot_class and hasattr(bot_class, "STEPS") and bot_class.STEPS:
+                self.activity_timeline.set_steps(bot_class.STEPS)
+            else:
+                self._logger.debug(f"Nessun set di STEPS trovato per il bot_id: {self.bot_id}")
+        except Exception as e:
+            self._logger.warning(f"Impossibile inizializzare timeline ghost per {self.bot_id}: {e}")
+
+    def showEvent(self, event):
+        """Forza l'inizializzazione della timeline all'apertura del pannello."""
+        super().showEvent(event)
+        QTimer.singleShot(100, self._init_ghost_timeline)
+
     def _setup_base_ui(self):
         """Inizializza l'interfaccia utente di base comune a tutti i pannelli bot."""
         self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(Spacing.md, Spacing.md, Spacing.md, Spacing.md)
+        self.main_layout.setContentsMargins(Spacing.md, Spacing.xs, Spacing.md, Spacing.md)
         self.main_layout.setSpacing(Spacing.md)
 
-        # Status Card (Model only, not in layout)
+        # Widget per le azioni (esposto per permettere ad AutomazioniWidget di spostarlo nel cornerWidget)
+        self.controls_widget = QWidget()
+        self.controls_layout = QHBoxLayout(self.controls_widget)
+        self.controls_layout.setContentsMargins(0, 0, 0, 0)
+        self.controls_layout.setSpacing(Spacing.sm)
+
+        self.start_btn = ModernButton(
+            "Avvia",
+            variant=ModernButton.Variant.SUCCESS,
+            size=ModernButton.Size.MEDIUM,
+            icon=get_asset_path(Icons.PLAY),
+        )
+        self.start_btn.setMinimumWidth(110)
+        self.start_btn.clicked.connect(self._on_start)
+        self.controls_layout.addWidget(self.start_btn)
+
+        self.stop_btn = ModernButton(
+            "Stop",
+            variant=ModernButton.Variant.DANGER,
+            size=ModernButton.Size.MEDIUM,
+            icon=get_asset_path(Icons.STOP),
+        )
+        self.stop_btn.setMinimumWidth(90)
+        self.stop_btn.setEnabled(False)
+        self.stop_btn.clicked.connect(self._on_stop)
+        self.controls_layout.addWidget(self.stop_btn)
+
+        # Di default, se non siamo in un QTabWidget che "ruba" i controlli,
+        # li mettiamo in un header layout interno al pannello
+        self.header_layout = QHBoxLayout()
+        self.header_layout.addStretch()
+        self.header_layout.addWidget(self.controls_widget)
+        self.main_layout.addLayout(self.header_layout)
+
+        # Status Card (Model only, not in layout by default)
         self.status_card = StatusCard("Stato Attività")
+
+        # Top Area: Content + Activity Rail
+        top_h_layout = QHBoxLayout()
+        top_h_layout.setSpacing(Spacing.md)
 
         # Content area (da sovrascrivere nelle sottoclassi)
         self.content_widget = QWidget()
         self.content_layout = QVBoxLayout(self.content_widget)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
         self.content_layout.setSpacing(Spacing.md)
-        self.main_layout.addWidget(self.content_widget)
+        top_h_layout.addWidget(self.content_widget, stretch=4)
 
-        # Log
+        # Activity Timeline (Cyber-Stepper Rail)
+        self.activity_timeline = ActivityTimelineWidget()
+        self.activity_timeline.setContentsMargins(10, 10, 10, 10)
+        top_h_layout.addWidget(self.activity_timeline, stretch=1)
+
+        self.main_layout.addLayout(top_h_layout)
+
+        # Bottom Area: Activity Log (Cyber Console)
         self.log_widget = TimelineWidget()
-        self.main_layout.addWidget(self.log_widget)
-
-        # Buttons
-        btn_layout = QHBoxLayout()
-        btn_layout.setSpacing(Spacing.sm)
-        btn_layout.addStretch()
-
-        self.start_btn = ModernButton(
-            "Avvia",
-            variant=ModernButton.Variant.SUCCESS,
-            size=ModernButton.Size.LARGE,
-            icon=get_asset_path(Icons.PLAY),
-        )
-        self.start_btn.setMinimumWidth(120)
-        self.start_btn.clicked.connect(self._on_start)
-        btn_layout.addWidget(self.start_btn)
-
-        self.stop_btn = ModernButton(
-            "Stop",
-            variant=ModernButton.Variant.DANGER,
-            size=ModernButton.Size.LARGE,
-            icon=get_asset_path(Icons.STOP),
-        )
-        self.stop_btn.setMinimumWidth(100)
-        self.stop_btn.setEnabled(False)
-        self.stop_btn.clicked.connect(self._on_stop)
-        btn_layout.addWidget(self.stop_btn)
-
-        self.main_layout.addLayout(btn_layout)
+        self.main_layout.addWidget(self.log_widget, stretch=2)
 
     def _setup_ui(self):
         """
@@ -253,8 +310,16 @@ class BaseBotPanel(QWidget):
     def _on_start(self, params_override: dict[str, Any] | None = None):
         """Gestisce l'avvio del bot. Da implementare nelle sottoclassi."""
         self.start_time = datetime.now()
-        self.log_widget.timeline.set_mood("running")
         self._update_status("#0d6efd")
+
+        # Attiva Cyber-Mood per il log
+        if hasattr(self.log_widget, "set_mood"):
+            self.log_widget.set_mood("running")
+
+        # Inizializza timeline attività se il bot ha gli steps (doppio controllo)
+        bot_class = self.get_bot_class()
+        if bot_class and hasattr(bot_class, "STEPS") and bot_class.STEPS:
+            self.activity_timeline.set_steps(bot_class.STEPS)
 
         # Audit & Stats
         AuditManager.instance().log_action(
@@ -276,6 +341,10 @@ class BaseBotPanel(QWidget):
         """Gestisce il completamento del worker."""
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
+
+        # Ripristina Cyber-Mood
+        if hasattr(self.log_widget, "set_mood"):
+            self.log_widget.set_mood("idle")
 
         duration = self._calculate_duration_str()
         self._log_mission_report(duration, success)
@@ -302,8 +371,8 @@ class BaseBotPanel(QWidget):
 
     def _log_mission_report(self, duration: str, success: bool):
         """Gestisce la UI del report e l'audit."""
-        report = MissionReportCard(duration, success)
-        self.log_widget.timeline.add_widget(report)
+        status_text = "SUCCESS" if success else "ERROR"
+        self.log_widget.append(f"MISSION REPORT: Duration {duration} | Status: {status_text}", status_text)
 
         dettagli = "Esecuzione completata correttamente" if success else "Esecuzione fallita o interrotta"
 
@@ -317,8 +386,10 @@ class BaseBotPanel(QWidget):
 
     def _handle_worker_completion_signals(self, success: bool):
         """Invia segnali e gestisce risultati per Telegram."""
-        if self.worker and hasattr(self.worker.bot, "downloaded_files") and self.worker.bot.downloaded_files:
-            self.bot_results_ready.emit(self.bot_id, self.worker.bot.downloaded_files)
+        if self.worker and hasattr(self.worker.bot, "downloaded_files"):
+            files = getattr(self.worker.bot, "downloaded_files", [])
+            if files:
+                self.bot_results_ready.emit(self.bot_id, files)
         self.bot_finished.emit(success)
 
     def _notify_completion(self, success: bool):
@@ -343,23 +414,9 @@ class BaseBotPanel(QWidget):
         self._on_worker_finished(success)
 
     def _on_log(self, message: str):
-        """Aggiunge un messaggio al log e lo inoltra a Telegram se importante."""
-        self.log_widget.append(message)
-
-        win = self.window()
-        if win and hasattr(win, "telegram"):
-            # Formattiamo il log per Telegram aggiungendo il nome del bot
-            clean_msg = message.strip()
-            # Rimuoviamo eventuali timestamp se presenti all'inizio (stile [HH:mm:ss])
-            import re
-
-            clean_msg = re.sub(r"^[\\[\\]\d{2}:\d{2}:\d{2}[\\]]s*", "", clean_msg)
-
-            tg_text = f"\U0001f539 *{self.bot_name}*\n{clean_msg}"
-            from typing import Any
-
-            cast_win: Any = win
-            cast_win.telegram.send_message_sync(tg_text)
+        """Aggiunge un messaggio al log."""
+        if hasattr(self, "log_widget") and self.log_widget:
+            self.log_widget.append(message)
 
     def _on_status(self, status: str):
         """Aggiorna lo stato (messaggio custom)."""
@@ -379,6 +436,20 @@ class BaseBotPanel(QWidget):
         else:
             result_container["value"] = ""
         event.set()
+
+    def _setup_worker_connections(self, worker: BotWorker):
+        """Connette tutti i segnali standard del worker ai callback del pannello."""
+        worker.log_signal.connect(self._on_log)
+        worker.status_signal.connect(self._on_status)
+        worker.finished_signal.connect(self._on_worker_finished)
+
+        # Connessione automatica timeline
+        if hasattr(self, "activity_timeline"):
+            worker.step_changed_signal.connect(self.activity_timeline.on_step_changed)
+
+        # Connessione input interattivo
+        if hasattr(self, "_ask_user_input"):
+            worker.request_input_signal.connect(self._ask_user_input)
 
     def get_credentials(self) -> tuple[str, str]:
         """Ottiene le credenziali dall'account di default."""

@@ -120,6 +120,50 @@ def clean_build():
                 log(f"  Error removing {folder}: {e}")
 
 
+def ensure_drivers():
+    """Ensure chromedriver is present and up-to-date in drivers folder."""
+    log("[BUILD] Ensuring drivers are present and aligned...")
+    drivers_dir = os.path.join(ROOT_DIR, "drivers")
+    if not os.path.exists(drivers_dir):
+        os.makedirs(drivers_dir)
+
+    # Crea un file sentinel per assicurare che PyInstaller includa sempre la cartella
+    with open(os.path.join(drivers_dir, ".exists"), "w") as f:
+        f.write("Sentinel file for PyInstaller")
+
+    # Use webdriver-manager to get the latest driver
+    try:
+        from webdriver_manager.chrome import ChromeDriverManager
+
+        log("  Checking for latest ChromeDriver...")
+        # Force download/update to the latest version matching current Chrome
+        driver_path = ChromeDriverManager().install()
+
+        # Gestione robusta dei percorsi restituiti da webdriver-manager
+        if not os.path.isfile(driver_path) or not driver_path.lower().endswith(".exe"):
+            # Se è una cartella, cerchiamo l'exe ricorsivamente
+            search_path = os.path.dirname(driver_path) if os.path.isfile(driver_path) else driver_path
+            potential_exes = glob.glob(os.path.join(search_path, "**/chromedriver.exe"), recursive=True)
+            if potential_exes:
+                driver_path = potential_exes[0]
+            else:
+                raise FileNotFoundError(f"Chromedriver.exe not found in {search_path}")
+
+        dest_path = os.path.join(drivers_dir, "chromedriver.exe")
+
+        # Se il driver è già lì ed è lo stesso, shutil.copy2 lo aggiorna comunque (timestamp)
+        shutil.copy2(driver_path, dest_path)
+        log(f"  [SUCCESS] Driver aligned: {dest_path}")
+
+    except Exception as e:
+        log(f"  [WARNING] Could not automatically update driver: {e}")
+        if os.path.exists(os.path.join(drivers_dir, "chromedriver.exe")):
+            log("  [INFO] Using existing driver as fallback.")
+        else:
+            log("  [CRITICAL ERROR] Driver missing and auto-download failed! Build aborted.")
+            sys.exit(1)
+
+
 def run_pyarmor():
     """Obfuscate scripts using PyArmor."""
     log("[BUILD] Running PyArmor obfuscation...")
@@ -175,6 +219,8 @@ def run_pyinstaller(obfuscated=False):
         f"{src_path};src",
         "--add-data",
         f"{os.path.join(ROOT_DIR, 'assets')};assets",
+        "--add-data",
+        f"{os.path.join(ROOT_DIR, 'drivers')};drivers",
     ]
 
     if os.path.exists(ICON_PATH):
@@ -224,6 +270,7 @@ def run_pyinstaller(obfuscated=False):
         cmd.extend(["--hidden-import", mod])
 
     qt_excludes = [
+        "shapely",
         "PyQt6.QtBluetooth",
         "PyQt6.QtNfc",
         "PyQt6.Qt3DCore",
@@ -253,6 +300,8 @@ def run_pyinstaller(obfuscated=False):
         cmd.extend(["--collect-submodules", pkg])
 
     force_collect = [
+        "pandas",
+        "numpy",
         "pandera",
         "telegram",
         "markdown",
@@ -471,7 +520,8 @@ def deploy_netlify(netlify_dir):
     return True
 
 
-def main():
+def main() -> None:
+    """Configura gli argomenti e avvia la pipeline di build completa (PyInstaller + Inno Setup)."""
     parser = argparse.ArgumentParser(description="Bot TS Build Script")
     parser.add_argument("--no-deploy", action="store_true", help="Skip Netlify deployment")
     parser.add_argument("--skip-installer", action="store_true", help="Skip Inno Setup")
@@ -490,6 +540,7 @@ def main():
     log(f"  SYNCROJOB BUILD SCRIPT - v{get_version()}")
     log("=" * 60)
 
+    ensure_drivers()
     clean_build()
 
     is_obfuscated = not args.debug_no_obfuscate

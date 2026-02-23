@@ -208,6 +208,7 @@ class DateFilterPopupWidget(QWidget):
         self._update_parent_state(parent)
 
     def select_all(self) -> None:
+        """Seleziona tutti gli elementi nel widget ad albero."""
         self.model.blockSignals(True)
         root = self.model.invisibleRootItem()
         if root:
@@ -216,6 +217,7 @@ class DateFilterPopupWidget(QWidget):
         self.model.layoutChanged.emit()
 
     def select_none(self) -> None:
+        """Deseleziona tutti gli elementi nel widget ad albero."""
         self.model.blockSignals(True)
         root = self.model.invisibleRootItem()
         if root:
@@ -224,10 +226,17 @@ class DateFilterPopupWidget(QWidget):
         self.model.layoutChanged.emit()
 
     def apply_filter(self) -> None:
+        """Applica il filtro corrente e chiude il menu di popup."""
         self.applied = True
         self._close_menu()
 
     def get_selected_values(self) -> list[str] | None:
+        """
+        Recupera la lista dei valori di data selezionati.
+
+        Returns:
+            list[str] | None: Lista delle stringhe di data selezionate o None se tutte sono selezionate.
+        """
         selected: list[str] = []
         root = self.model.invisibleRootItem()
         if not root:

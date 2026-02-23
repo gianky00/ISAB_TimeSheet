@@ -38,7 +38,13 @@ DATABASES = [
 ]
 
 
-def maintain_db(db_name):
+def maintain_db(db_name: str) -> None:
+    """
+    Esegue operazioni di manutenzione (integrity check, vacuum, analyze) su un singolo database.
+
+    Args:
+        db_name: Nome del file database presente nella cartella dati.
+    """
     db_path = DATA_DIR / db_name
     print(f"\n📦 ANALISI: {db_name}")
 
@@ -78,7 +84,8 @@ def maintain_db(db_name):
         print(f"   ❌ ERRORE CRITICO: {e}")
 
 
-def main():
+def main() -> None:
+    """Entry point per il tool di manutenzione database."""
     print("🔧 SYNCROJOB DB MAINTENANCE TOOL")
     print(f"📂 Data Dir: {DATA_DIR}\n")
 

@@ -31,7 +31,10 @@ HOURLY_COST_STD = 28.50
 
 
 class ContabilitaKPIPanel(QWidget):
+    """Pannello dashboard per la visualizzazione dei KPI della contabilità strumentale."""
+
     def __init__(self, parent: QWidget | None = None):
+        """Inizializza il pannello e prepara i grafici."""
         super().__init__(parent)
 
         # Member declarations
@@ -192,6 +195,7 @@ class ContabilitaKPIPanel(QWidget):
         self.content_layout.addWidget(lbl)
 
     def refresh_years(self) -> None:
+        """Aggiorna la lista degli anni disponibili nella combo box dal database."""
         years = ContabilitaManager.get_available_years()
         current = self.year_combo.currentText()
         self.year_combo.blockSignals(True)

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "syncrojob"
-version = "1.13.2"
+version = "1.20.2"
 description = "ISAB TimeSheet application"
 authors = ["Giancarlo Allegretti"]
 packages = [
@@ -18,14 +18,15 @@ PyQt6-sip = "13.5.2"
 selenium = "4.18.1"
 webdriver-manager = "4.0.1"
 requests = "2.32.4"
-cryptography = "44.0.1"
+cryptography = "46.0.5"
 keyring = ">=24.3.0"
 packaging = "23.2"
-Pillow = "10.3.0"
+Pillow = "12.1.1"
 pyinstaller = "6.4.0"
 openpyxl = ">=3.1.5"
 pandas = "2.2.1"
 pyarrow = ">=15.0.0"
+protobuf = "5.29.6"
 matplotlib = "*"
 setuptools = "78.1.1"
 platformdirs = "*"
@@ -184,9 +185,10 @@ docstring-code-format = true
 mypy_path = "."
 explicit_package_bases = true
 namespace_packages = true
-exclude = ["build", "dist", "config/vulture_whitelist.py", "admin", "tests"]
+exclude = ["build", "dist", "config/vulture_whitelist.py", "admin", "tests", "mutants", "temp_patch_global_mutmut.py"]
 
 # ── Strict Core ──────────────────────────────────────────────
+
 # Ogni funzione DEVE avere type hints (elimina Any implicito)
 disallow_untyped_defs = false
 # Controlla anche il body delle funzioni non ancora tipizzate
@@ -255,6 +257,7 @@ module = [
     "email_validator.*",
     "jaraco.*",
     "diagrams.*",
+    "mutmut.*",
 ]
 ignore_missing_imports = true
 
@@ -267,11 +270,11 @@ disallow_untyped_decorators = false
 
 [tool.deptry]
 known_first_party = ["src"]
-exclude = ["build", "dist", "temp", "admin", "scripts", "site", "docs", "graveyard"]
-# NON ignoriamo piu' globalmente: ogni eccezione e' documentata.
+exclude = [".venv", "build", "dist", "temp", "admin", "scripts", "site", "docs", "graveyard", "mutants"]
+
 [tool.deptry.per_rule_ignores]
 # DEP001 (imported but not declared): nessuna eccezione necessaria al momento
-DEP001 = []
+DEP001 = ["generate_icons"]
 # DEP002 (declared but not imported): meta-packages e build tools
 DEP002 = [
     "pyarrow",          # backend engine per pandas, non importato direttamente
@@ -286,11 +289,14 @@ DEP002 = [
     "loguru",           # logging alternativo, usato in script admin
     "faker",            # test data generation, usato nei test
     "email-validator",  # validazione email, usato via pydantic
+    "protobuf",         # pinned per sicurezza (transitiva)
 ]
 # DEP003 (transitive dependency imported directly)
 DEP003 = [
     "win32con",  # parte di pywin32, importato direttamente in printing.py
 ]
+# DEP004 (dev dependency imported): permessa nei test
+DEP004 = ["pytest", "pyfakefs", "rich"]
 
 [tool.codespell]
 skip = "*.pyc,*.ico,*.qss,*.lock,*.db,*.iss,*.csv,*.js,*.html,*.css,*.map,*.pem,./build/*,./dist/*,./temp/*,./.venv/*,./.git/*,./.ruff_cache/*,./.pytest_cache/*,./.hypothesis/*,./data/*,./htmlcov/*,./claude/*,./site/*,./admin/Crea Setup/*,./admin/Crea Licenze/*"
@@ -305,7 +311,7 @@ ignore-semiprivate = true
 ignore-private = true
 ignore-property-decorators = true
 ignore-module = true
-fail-under = 80
+fail-under = 99
 exclude = ["tests", "docs", "build", "dist", "temp", "graveyard", "site", "admin", "scripts"]
 verbose = 1
 quiet = false
@@ -317,7 +323,7 @@ exclude = ["src/bots/safework/pdl/search_bot.py"]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.13.2"
+version = "1.20.2"
 tag_format = "v$version"
 version_files = [
     "src/core/version.py:__version__",

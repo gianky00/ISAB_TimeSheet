@@ -128,6 +128,23 @@ class TestRunner:
     def discover_tests(self, targets=None, mark=None):
         Console.info("🔍 Rilevamento test in corso (pytest --collect-only)...")
 
+        # --- AUTO-DETECTION DI .VENV ---
+        venv_python = ROOT_DIR / ".venv" / "Scripts" / "python.exe"
+        if not venv_python.exists():
+            venv_python = ROOT_DIR / ".venv" / "bin" / "python"
+
+        current_python = Path(sys.executable).resolve()
+        if venv_python.exists() and current_python != venv_python.resolve():
+            Console.warning(f"! Ambiente virtuale rilevato ma non in uso. Riavvio con: {venv_python}")
+            cmd_restart = [str(venv_python), *sys.argv]
+            try:
+                # Usa lo stesso processo per evitare leak, o subprocess.run e exit
+                result = subprocess.run(cmd_restart, check=False)
+                sys.exit(result.returncode)
+            except Exception as e:
+                Console.error(f"Impossibile riavviare con .venv: {e}")
+        # -------------------------------
+
         if targets is None:
             targets = ["tests"]
 
@@ -152,31 +169,50 @@ class TestRunner:
             Console.error(f"Errore critico discovery: {e}")
             sys.exit(1)
 
+        if result.returncode != 0 and not result.stdout:
+            Console.error("Errore durante la raccolta dei test (Exit Code != 0):")
+            print(result.stderr)
+            sys.exit(result.returncode)
+
         files_map = defaultdict(list)
+        collected_count = 0
 
         for line in result.stdout.splitlines():
             line = line.strip()
             # Un NodeID valido di pytest contiene '::'
+            # Cerchiamo di essere più permissivi nel parsing ma precisi nel NodeID
             if "::" in line:
-                # Se la riga contiene spazi (es. descrizioni), prendiamo solo il NodeID
-                node_id = line.split()[0] if " " in line else line
-                if "::" in node_id:
-                    # Rimuoviamo eventuali tag tipo <Module, <Class se presenti nel NodeID
+                # Prendiamo l'ultima parte se la riga contiene altro, o usiamo la riga intera
+                # Spesso pytest -qq sputa solo il NodeID, ma a volte ci sono prefissi/suffissi
+                potential_node = line.split()[0] if " " in line else line
+
+                if "::" in potential_node:
+                    # Pulizia da tag di visualizzazione se presenti
                     node_id = (
-                        node_id.replace("<Module ", "")
+                        potential_node.replace("<Module ", "")
                         .replace("<Class ", "")
                         .replace("<Function ", "")
                         .replace(">", "")
                         .strip()
                     )
+
+                    # Verifica che il path esista (o sembri un path di test)
                     file_path = node_id.split("::")[0]
                     files_map[file_path].append(node_id)
+                    collected_count += 1
 
         if not files_map:
             if result.stderr:
                 print(result.stderr)
             Console.error("Nessun test trovato!")
             sys.exit(1)
+
+        if result.stderr and "error" in result.stderr.lower():
+            Console.warning("! Alcuni errori segnalati durante la raccolta (possibili test mancanti):")
+            # Mostra solo le righe di errore per non inquinare troppo
+            for err_line in result.stderr.splitlines():
+                if "error" in err_line.lower() or "failed" in err_line.lower():
+                    print(f"  {err_line}")
 
         return files_map
 

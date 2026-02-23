@@ -42,7 +42,10 @@ class TestBaseBotRobust:
 
     @pytest.fixture
     def mock_chrome_manager(self):
-        with patch("src.bots.base.base_bot.ChromeDriverManager") as mock:
+        with (
+            patch("src.bots.base.base_bot.ChromeDriverManager") as mock,
+            patch("src.bots.base.base_bot.Path.exists", return_value=False),
+        ):
             mock.return_value.install.return_value = "/path/to/chromedriver.exe"
             yield mock
 

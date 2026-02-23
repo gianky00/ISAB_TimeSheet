@@ -74,4 +74,5 @@ class OdaFilterWidget(QWidget):
         layout.addWidget(self.export_btn)
 
     def set_sync_status(self, status: str) -> None:
+        """Aggiorna il testo dell'indicatore di stato sincronizzazione."""
         self.lbl_sync_status.setText(status)

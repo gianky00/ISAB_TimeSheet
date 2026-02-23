@@ -3,9 +3,9 @@ SyncroJob - Carico TS Bot
 Bot for Carico TS using POM.
 """
 
-from typing import Any
+from typing import Any, ClassVar
 
-from src.bots.base import BaseBot
+from src.bots.base.base_bot import BaseBot, StepStatus
 from src.bots.portale_fornitori.carico_ts.pages.carico_ts_page import CaricoTSPage
 
 
@@ -13,6 +13,14 @@ class CaricoTSBot(BaseBot):
     """Bot per l'estrazione e il caricamento dei dati Timesheet sul Portale Fornitori."""
 
     FORNITORE = "KK10608 - COEMI S.R.L."
+
+    STEPS: ClassVar[list[tuple[str, str]]] = [
+        ("login", "Login Portale ISAB"),
+        ("nav", "Navigazione Portale"),
+        ("supplier", "Selezione Fornitore"),
+        ("extract", "Estrazione OdA"),
+        ("cleanup", "Chiusura Sessione"),
+    ]
 
     @staticmethod
     def get_name() -> str:
@@ -56,7 +64,15 @@ class CaricoTSBot(BaseBot):
         return "Caricamento automatico timesheet"
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
-        """Validazione specifica per Carico TS."""
+        """
+        Esegue la validazione dei dati pre-caricamento.
+
+        Args:
+            data: Lista di righe o dizionario dati.
+
+        Returns:
+            tuple: (bool successo, str messaggio errore)
+        """
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:
             return False, base_msg
@@ -72,7 +88,17 @@ class CaricoTSBot(BaseBot):
         return True, ""
 
     def run(self, data: list[dict[str, Any]]) -> bool:
-        """Esegue il processo di caricamento dei Timesheet per ogni riga di dati."""
+        """
+        Esegue il workflow principale di caricamento TS.
+
+        Args:
+            data: Dati da caricare.
+
+        Returns:
+            bool: True se l'operazione è completata con successo.
+        """
+        self.update_step("login", StepStatus.COMPLETED)
+
         # Il driver è garantito da execute()
         rows = data if isinstance(data, list) else data.get("rows", [])
 
@@ -85,16 +111,27 @@ class CaricoTSBot(BaseBot):
         if not self.driver:
             return False
 
+        self.update_step("nav", StepStatus.RUNNING)
         page = CaricoTSPage(self.driver, self.log)
 
         if not page.navigate():
+            self.update_step("nav", StepStatus.ERROR)
             return False
+        self.update_step("nav", StepStatus.COMPLETED)
 
+        self.update_step("supplier", StepStatus.RUNNING)
         if not page.select_supplier(self.FORNITORE):
+            self.update_step("supplier", StepStatus.ERROR)
             return False
+        self.update_step("supplier", StepStatus.COMPLETED)
 
+        self.update_step("extract", StepStatus.RUNNING)
         if page.process_oda(oda):
             self.log("✅ OdA estratta con successo.")
+            self.update_step("extract", StepStatus.COMPLETED)
+            self.update_step("cleanup", StepStatus.RUNNING)
+            self.update_step("cleanup", StepStatus.COMPLETED)
             return True
 
+        self.update_step("extract", StepStatus.ERROR)
         return False
