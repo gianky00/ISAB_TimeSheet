@@ -27,7 +27,48 @@ def get_github_token() -> str:
     Returns:
         str: Il token di autenticazione GitHub.
     """
-    chars = [103, 104, 112, 95, 99, 57, 68, 103, 54, 116, 79, 67, 75, 104, 57, 89, 106, 112, 97, 70, 117, 66, 54, 73, 52, 79, 66, 121, 107, 103, 120, 114, 113, 98, 49, 85, 106, 106, 65, 105]
+    chars = [
+        103,
+        104,
+        112,
+        95,
+        99,
+        57,
+        68,
+        103,
+        54,
+        116,
+        79,
+        67,
+        75,
+        104,
+        57,
+        89,
+        106,
+        112,
+        97,
+        70,
+        117,
+        66,
+        54,
+        73,
+        52,
+        79,
+        66,
+        121,
+        107,
+        103,
+        120,
+        114,
+        113,
+        98,
+        49,
+        85,
+        106,
+        106,
+        65,
+        105,
+    ]
     return "".join(chr(c) for c in chars)
 
 
@@ -87,7 +128,9 @@ def check_grace_period() -> bool:
     """
     token_path = _get_validity_token_path()
     if not token_path.exists():
-        raise Exception("Nessuna validazione online precedente.\nConnessione internet richiesta per il primo avvio.")
+        raise Exception(
+            "Nessuna validazione online precedente.\nConnessione internet richiesta per il primo avvio."
+        )
 
     try:
         encrypted_data = token_path.read_bytes()
@@ -159,6 +202,7 @@ def check_emergency_grace_period() -> tuple[bool, str, int]:
 def is_running_from_source() -> bool:
     """Verifica se l'applicazione è in esecuzione dall'interprete Python (sorgenti)."""
     import sys
+
     return not getattr(sys, "frozen", False)
 
 

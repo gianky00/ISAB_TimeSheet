@@ -93,6 +93,7 @@ class SyncTracker:
         """
         cls._load()
         from typing import cast
+
         return cast("dict[str, Any]", cls._cache.get(module, {}))
 
     @classmethod

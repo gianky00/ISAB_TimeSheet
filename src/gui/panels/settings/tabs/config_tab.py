@@ -55,14 +55,18 @@ class ConfigTab(QWidget):
 
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Cerca impostazione...")
-        self.search_bar.setStyleSheet("QLineEdit { border: 1px solid #ced4da; border-radius: 15px; padding: 8px 15px; background-color: #f8f9fa; font-size: 14px; }")
+        self.search_bar.setStyleSheet(
+            "QLineEdit { border: 1px solid #ced4da; border-radius: 15px; padding: 8px 15px; background-color: #f8f9fa; font-size: 14px; }"
+        )
         self.search_bar.textChanged.connect(self._filter_settings)
         search_layout.addWidget(self.search_bar)
         layout.addLayout(search_layout)
 
         # Toolbox Setup
         self.toolbox = QToolBox()
-        self.toolbox.setStyleSheet("QToolBox::tab { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 5px 15px; min-height: 45px; } QToolBox::tab:selected { background: #e7f1ff; color: #0d6efd; border-color: #0d6efd; }")
+        self.toolbox.setStyleSheet(
+            "QToolBox::tab { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 5px 15px; min-height: 45px; } QToolBox::tab:selected { background: #e7f1ff; color: #0d6efd; border-color: #0d6efd; }"
+        )
 
         # Inizializzazione Pagine
         self.general_page = GeneralPage()

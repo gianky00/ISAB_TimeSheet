@@ -20,7 +20,7 @@ class DettagliOdABot(BaseBot):
         ("nav", "Navigazione Portale"),
         ("supplier", "Selezione Fornitore"),
         ("download", "Download OdA"),
-        ("db", "Importazione Database")
+        ("db", "Importazione Database"),
     ]
 
     @staticmethod

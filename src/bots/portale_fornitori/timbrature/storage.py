@@ -91,7 +91,7 @@ class TimbratureStorage:
                 "specializzazione": "TEXT",
                 "societa_ospitante": "TEXT",
                 "data_ins": "TEXT",
-                "ore_effettive": "TEXT" # Presente in alcune migrazioni v3
+                "ore_effettive": "TEXT",  # Presente in alcune migrazioni v3
             }
 
             for col, col_type in expected_cols.items():
@@ -103,7 +103,9 @@ class TimbratureStorage:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_nome_cogn ON timbrature(nome, cognome)")
 
-            if "codice_fiscale" in [row[1] for row in cursor.execute("PRAGMA table_info(timbrature)").fetchall()]:
+            if "codice_fiscale" in [
+                row[1] for row in cursor.execute("PRAGMA table_info(timbrature)").fetchall()
+            ]:
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_cf ON timbrature(codice_fiscale)")
 
             conn.commit()

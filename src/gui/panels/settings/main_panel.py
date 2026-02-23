@@ -66,21 +66,31 @@ class SettingsPanel(QWidget):
         # 1. Configurazione
         self.config_tab = ConfigTab()
         self.config_tab.settings_changed.connect(self._on_settings_changed)
-        self.tabs.addTab(self.config_tab, get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#546E7A"), "Configurazione")
+        self.tabs.addTab(
+            self.config_tab,
+            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#546E7A"),
+            "Configurazione",
+        )
 
         # 2. Backup
         self.backup_tab = BackupTab()
-        self.tabs.addTab(self.backup_tab, get_colored_icon(get_asset_path(Icons.CLOUD), "#546E7A"), "Backup Cloud")
+        self.tabs.addTab(
+            self.backup_tab, get_colored_icon(get_asset_path(Icons.CLOUD), "#546E7A"), "Backup Cloud"
+        )
 
         # 3. Statistiche
         self.stats_widget = StatisticsWidget()
-        self.tabs.addTab(self.stats_widget, get_colored_icon(get_asset_path(Icons.ROCKET), "#546E7A"), "Statistiche")
+        self.tabs.addTab(
+            self.stats_widget, get_colored_icon(get_asset_path(Icons.ROCKET), "#546E7A"), "Statistiche"
+        )
 
         # 4. Telegram
         self.telegram_tab = TelegramTab()
         self.telegram_tab.settings_changed.connect(self._on_settings_changed)
         self.telegram_tab.request_help.connect(self.request_help_section.emit)
-        self.tabs.addTab(self.telegram_tab, get_colored_icon(get_asset_path(Icons.SEND), "#546E7A"), "Telegram")
+        self.tabs.addTab(
+            self.telegram_tab, get_colored_icon(get_asset_path(Icons.SEND), "#546E7A"), "Telegram"
+        )
 
         self.tabs.currentChanged.connect(self._on_tab_changed)
         main_layout.addWidget(self.tabs)
@@ -148,7 +158,10 @@ class SettingsPanel(QWidget):
     def _export_settings(self):
         """Apre un dialogo per esportare l'intera configurazione JSON in un file esterno."""
         from PyQt6.QtWidgets import QFileDialog
-        path, _ = QFileDialog.getSaveFileName(self, "Esporta Configurazione", "SyncroJob_Config.json", "JSON Files (*.json)")
+
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Esporta Configurazione", "SyncroJob_Config.json", "JSON Files (*.json)"
+        )
         if path:
             success, msg = config_manager.export_configuration(path)
             if success:
@@ -159,9 +172,15 @@ class SettingsPanel(QWidget):
     def _import_settings(self):
         """Importa una configurazione JSON da file, sovrascrivendo quella attuale previa conferma."""
         from PyQt6.QtWidgets import QFileDialog, QMessageBox
+
         path, _ = QFileDialog.getOpenFileName(self, "Importa Configurazione", "", "JSON Files (*.json)")
         if path:
-            res = QMessageBox.warning(self, "Conferma", "L'importazione sovrascriverà le impostazioni attuali.\nContinuare?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            res = QMessageBox.warning(
+                self,
+                "Conferma",
+                "L'importazione sovrascriverà le impostazioni attuali.\nContinuare?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
             if res == QMessageBox.StandardButton.Yes:
                 success, msg = config_manager.import_configuration(path)
                 if success:

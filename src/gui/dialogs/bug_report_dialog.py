@@ -305,8 +305,9 @@ class BugReportDialog(QDialog):
             self.accept()
         else:
             QMessageBox.warning(
-                self, "Outlook non disponibile",
-                "Il report è stato generato. Per favore, scegli dove salvarlo e invialo manualmente."
+                self,
+                "Outlook non disponibile",
+                "Il report è stato generato. Per favore, scegli dove salvarlo e invialo manualmente.",
             )
             self.save_manually(file_path)
 
@@ -359,11 +360,13 @@ class BugReportDialog(QDialog):
 
             with suppress(Exception):
                 import uuid
+
                 str(uuid.getnode())
 
             cliente_info = "ISAB S.R.L."
             with suppress(Exception):
                 from src.core.license_validator import get_license_info
+
                 lic_data = get_license_info()
                 if lic_data and "Cliente" in lic_data:
                     cliente_info = lic_data["Cliente"]
@@ -383,7 +386,9 @@ class BugReportDialog(QDialog):
                 final_zip_path = new_path
 
             css_cell = "padding: 8px 12px; border-bottom: 1px solid #e0e0e0; color: #333;"
-            css_header = "padding: 8px 12px; border-bottom: 2px solid #009688; font-weight: 600; color: #009688;"
+            css_header = (
+                "padding: 8px 12px; border-bottom: 2px solid #009688; font-weight: 600; color: #009688;"
+            )
 
             html_body = f"""
             <div style="font-family: 'Segoe UI', sans-serif; color: #333; max-width: 900px;">
@@ -431,6 +436,7 @@ class BugReportDialog(QDialog):
         if dest_path:
             try:
                 import shutil
+
                 shutil.copy2(source_path, dest_path)
                 QMessageBox.information(self, "Salvato", f"Report salvato in:\n{dest_path}")
                 self.accept()

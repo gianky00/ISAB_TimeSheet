@@ -35,11 +35,19 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         ("download_p1", "Scarico Parte Prima"),
         ("download_p2", "Scarico Parte Seconda"),
         ("merge", "Unione e Stampa"),
-        ("session", "Chiusura Sessione")
+        ("session", "Chiusura Sessione"),
     ]
 
-    def __init__(self, username, password, headless=False, timeout=30, download_path=""):
-        super().__init__(username, password, headless, timeout, download_path)
+    def __init__(
+        self,
+        username,
+        password,
+        headless=False,
+        timeout=30,
+        download_path="",
+        account_type: str = "Esecutore",
+    ):
+        super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
         self.downloaded_files: list[str] = []
         self.missing_pdls: list[str] = []
         self.progress_callback: Callable[[int, bool], None] | None = None
@@ -61,7 +69,6 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """Validazione specifica per SafeWork PDL."""
-        self.log("🔍 Avvio validazione dati...")
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:
             return False, base_msg
@@ -94,7 +101,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self.downloaded_files = []
         all_pdl_paths: list[str] = []
 
-        self.log(f"🚀 Inizio scarico di {total} PDL...")
+        self.log(f"🚀 Inizio elaborazione di {total} PDL...")
 
         for index, item in enumerate(data):
             pdl_raw = "N/A"
@@ -106,7 +113,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     continue
 
                 pdl_num = self._sanitizza_pdl_number(pdl_raw)
-                self.log(f"--- PDL {index + 1}/{total}: {pdl_num} ---")
+                self.log(f"📋 PDL {index + 1}/{total}: {pdl_num}")
 
                 # Pipeline per singolo PDL
                 self.update_step("search", StepStatus.RUNNING)
@@ -169,39 +176,29 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         if not self.wait or not self.driver:
             return False
 
-        self.log(f"🔄 Ricerca PdL {pdl_num} in interfaccia...")
         try:
-            self.log("🔍 Attesa campo 'fldRicercaPdLVeloce'...")
             campo = self.wait.until(EC.visibility_of_element_located((By.ID, "fldRicercaPdLVeloce")))
-            self.log("⌨️ Inserimento numero PdL e INVIO...")
+            self.log(f"⌨️ Inserimento numero PdL {pdl_num}...")
             campo.clear()
             campo.send_keys(pdl_num + Keys.ENTER)
         except Exception as e:
             self.log(f"❌ Campo ricerca veloce non trovato: {e}", "ERROR")
             return False
 
-        self.log("⏳ Gestione popup ricerca estesa (se presente)...")
         if self._gestisci_ricerca_estesa():
-            self.log(f"ℹ️ PdL {pdl_num} inesistente (confermata ricerca estesa). Salto.")
+            self.log(f"ℹ️ PdL {pdl_num} inesistente. Salto.")
             return False
 
-        self.log("⏳ Gestione alert ricerca (se presente)...")
         if self._gestisci_alert_ricerca():
-            self.log(f"⚠️ Rilevato alert per {pdl_num}. Proseguo con attesa resiliente...")
             with contextlib.suppress(Exception):
                 self._attendi_scomparsa_overlay(timeout_secondi=5)
         else:
             self._attendi_scomparsa_overlay()
 
         # Verifica finale caricamento (indipendente da alert)
-        self.log("🔍 Verifica finale caricamento pagina PdL...")
         try:
             self.wait.until(EC.visibility_of_element_located((By.ID, "topIcon-acticonAnteprimaStampaMenu")))
-
-            # NUOVO: Check per popup residui 'Si'/'Yes' che appaiono in differita
-            self.log("⏳ Verifica popup conferma post-caricamento...")
             self._attendi_scomparsa_overlay(timeout_secondi=4)
-
             self.log(f"✅ PdL {pdl_num} caricato correttamente.")
             return True
         except Exception as e:
@@ -215,14 +212,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         if not self.driver or not self.wait:
             return None
 
-        self.log(f"⬇️ Avvio scarico Parte Prima per PdL {pdl_num}...")
-
         # Gestione popup in differita (es. 'Si') che bloccano il menu stampa
         self._attendi_scomparsa_overlay(timeout_secondi=5)
 
         try:
             self.driver.execute_script("window.scrollTo(0, 0);")
-            self.log("🔍 Verifica visibilità icona Anteprima Stampa...")
 
             # Pulizia preventiva
             clean_name = pdl_num.replace("/", "") + ".pdf"
@@ -233,27 +227,21 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*.pdf")}
 
             # Clicca su Anteprima Stampa usando click_robusto
-            self.log("🖱️ Click su 'topIcon-acticonAnteprimaStampaMenu'...")
-            self.click_robusto((By.ID, "topIcon-acticonAnteprimaStampaMenu"))
-
-            self.log("⏳ Attesa comparsa pulsante 'Italiano'...")
+            self.click_robusto((By.ID, "topIcon-acticonAnteprimaStampaMenu"), label="'Anteprima Stampa'")
             time.sleep(0.8)  # Breve pausa per animazione menu
-
-            self.log("🖱️ Click su 'appItaliano'...")
-            self.click_robusto((By.ID, "appItaliano"))
+            self.click_robusto((By.ID, "appItaliano"), label="'Lingua Italiano'")
 
             # Cerchiamo il file
-            self.log("📂 Polling per nuovo file PDF (timeout 60s)...")
+            self.log(f"⏳ Polling per file PDF di {pdl_num}...")
             f = poll_for_new_file(self.download_path, files_before, pattern="*.pdf", timeout=60)
             if f:
-                self.log(f"✅ File Parte Prima rilevato: {Path(f).name}")
                 dest = Path(self.download_path) / f"temp_p1_{int(ts)}.pdf"
                 Path(f).rename(dest)
                 self._clean_pdf(str(dest))
                 return str(dest)
-            self.log("❌ Timeout: nessun nuovo PDF generato per la Parte Prima.", "ERROR")
+            self.log("❌ Timeout: nessun PDF generato per la Parte Prima.", "ERROR")
         except Exception as e:
-            self.log(f"❌ Errore durante scarico Parte Prima: {e}", "ERROR")
+            self.log(f"❌ Errore scarico Parte Prima: {e}", "ERROR")
             logger.exception("Dettaglio crash Parte Prima:")
         return None
 
@@ -264,13 +252,10 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         if not self.driver or not self.wait:
             return None
 
-        # Assicura che la "Parte Seconda" sia espansa/visibile
-        self.log(f"📂 Verifica espansione Parte Seconda per {pdl_num}...")
         if not self._espandi_parte_seconda():
             self.log(f"❌ Impossibile espandere la sezione Parte Seconda per {pdl_num}.", "ERROR")
             return None
 
-        self.log(f"⬇️ Avvio scarico Parte Seconda per PdL {pdl_num}...")
         self._attendi_scomparsa_overlay()
 
         try:
@@ -282,22 +267,18 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             ts = time.time()
             files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*.pdf")}
 
-            self.log("🖱️ Click su 'btnPrintPS' (Stampa Parte Seconda)...")
-            self.click_robusto((By.ID, "btnPrintPS"))
-
-            self.log("⏳ Gestione eventuale dialogo 'Stampa Tutte'...")
+            self.click_robusto((By.ID, "btnPrintPS"), label="'Stampa Parte Seconda'")
             self._gestisci_dialogo_stampa_tutte()
 
-            self.log("📂 Polling per nuovo file PDF (timeout 90s)...")
+            self.log(f"⏳ Polling per file PDF Parte Seconda di {pdl_num}...")
             f = poll_for_new_file(self.download_path, files_before, pattern="*.pdf", timeout=90)
             if f:
-                self.log(f"✅ File Parte Seconda rilevato: {Path(f).name}")
                 dest = Path(self.download_path) / f"temp_p2_{int(ts)}.pdf"
                 Path(f).rename(dest)
                 return str(dest)
-            self.log("❌ Timeout: nessun nuovo PDF generato per la Parte Seconda.", "ERROR")
+            self.log("❌ Timeout: nessun PDF generato per la Parte Seconda.", "ERROR")
         except Exception as e:
-            self.log(f"❌ Errore durante scarico Parte Seconda: {e}", "ERROR")
+            self.log(f"❌ Errore scarico Parte Seconda: {e}", "ERROR")
             logger.exception("Dettaglio crash Parte Seconda:")
         return None
 
@@ -312,7 +293,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             # Verifica visibilità senza lanciare eccezioni se l'elemento non esiste ancora
             elementi = self.driver.find_elements(By.ID, "lblPAFoglio")
             if not elementi or not elementi[0].is_displayed():
-                self.log("📂 Tentativo espansione accordion 'Parte Seconda'...")
+                self.log("📂 Espansione sezione 'Parte Seconda'...")
                 clicked = False
 
                 # Strategia 1: ID Label

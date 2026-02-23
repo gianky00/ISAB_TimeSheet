@@ -108,10 +108,9 @@ def _check_and_migrate_local_config() -> bool:
     if local_appdata:
         for old_name in legacy_app_names:
             if old_name != APP_NAME:
-                potential_dirs.extend((
-                    local_appdata / old_name,
-                    local_appdata / "GiancarloAllegretti" / old_name
-                ))
+                potential_dirs.extend(
+                    (local_appdata / old_name, local_appdata / "GiancarloAllegretti" / old_name)
+                )
 
     roaming_appdata = Path(os.environ.get("APPDATA", ""))
     if roaming_appdata:
@@ -177,7 +176,9 @@ def load_config() -> dict[str, Any]:
         # 0. Check for legacy configuration to migrate
         # Trigger migration if file doesn't exist OR if it's a fresh (empty) installation
         config = _load_base_config()
-        if (not CONFIG_FILE.exists() or (not config.get("accounts") and not config.get("safework_accounts"))) and _check_and_migrate_local_config():
+        if (
+            not CONFIG_FILE.exists() or (not config.get("accounts") and not config.get("safework_accounts"))
+        ) and _check_and_migrate_local_config():
             # Re-load if migration happened
             config = _load_base_config()
 

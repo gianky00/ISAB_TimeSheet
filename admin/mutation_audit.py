@@ -20,6 +20,7 @@ REPORTS_DIR = ROOT_DIR / "reports" / "mutation"
 
 class Colors:
     """Costanti ANSI per la colorazione dell'output in console."""
+
     HEADER = "\033[95m"
     BLUE = "\033[94m"
     CYAN = "\033[96m"

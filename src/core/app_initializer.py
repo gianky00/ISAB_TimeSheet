@@ -40,6 +40,7 @@ class AppInitializer:
         Returns:
             bool: True se l'inizializzazione core è terminata con successo, False altrimenti.
         """
+
         def step(msg: str) -> None:
             logger.info(f"[INIT CORE] {msg}")
 
@@ -57,6 +58,7 @@ class AppInitializer:
             try:
                 import numpy  # noqa
                 import pandas  # noqa
+
                 logger.info("Pandas/Numpy loaded successfully")
             except ImportError as e:
                 logger.critical(f"CRITICAL: Missing data analysis libraries: {e}")
@@ -65,6 +67,7 @@ class AppInitializer:
             step("Configurazione Driver Automazione")
             try:
                 import selenium  # noqa
+
                 logger.info("Selenium loaded successfully")
             except ImportError as e:
                 logger.critical(f"CRITICAL: Missing selenium library: {e}")
@@ -77,6 +80,7 @@ class AppInitializer:
                     LicenseStatus,
                     get_detailed_license_status,
                 )
+
                 status, _ = get_detailed_license_status()
                 if status != LicenseStatus.VALID:
                     step("Sincronizzazione Licenza Cloud")
@@ -87,6 +91,7 @@ class AppInitializer:
             step("Connessione Database Sistema")
             try:
                 from src.core.database import db_manager
+
                 db_manager.init_db()
                 logger.info("Database initialized successfully")
             except Exception as e:
@@ -142,6 +147,7 @@ class AppInitializer:
         config = config_manager.load_config()
         if not config.get("telegram_chat_id") and not config.get("telegram_pairing_code"):
             import secrets
+
             code = str(secrets.randbelow(900000) + 100000)
             config_manager.set_config_value("telegram_pairing_code", code)
 
@@ -152,12 +158,17 @@ class AppInitializer:
         """Configura il sistema di logging applicativo, tentando di attivare il modulo enterprise."""
         try:
             from src.core.logging import configure_logging
+
             configure_logging()
             import logging
+
             logging.getLogger().setLevel(logging.INFO)
         except Exception as e:
             import logging
-            logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+            logging.basicConfig(
+                level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
             logging.getLogger().warning(f"Failed to initialize enterprise logging: {e}")
 
     @staticmethod
@@ -170,8 +181,10 @@ class AppInitializer:
             app: Istanza di QApplication da configurare.
         """
         from src.core.version import __version__
+
         app.setStyle("Fusion")
         from src.gui.styles import apply_theme
+
         apply_theme(app, "light")
         app.setFont(QFont("Segoe UI", 10))
         app.setApplicationName("SyncroJob")

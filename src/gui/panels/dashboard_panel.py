@@ -174,6 +174,7 @@ class DashboardPanel(QWidget):
                 os.startfile(output_dir)  # noqa: S606
             else:
                 import subprocess
+
                 subprocess.run(["xdg-open", str(output_dir)])
             return True
         return False

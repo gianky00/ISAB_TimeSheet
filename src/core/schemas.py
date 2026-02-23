@@ -15,6 +15,7 @@ class DipendenteSchema(pa.DataFrameModel):
 
     class Config:
         """Configurazione per la validazione dello schema."""
+
         strict = False
         coerce = True
 
@@ -35,6 +36,7 @@ class GiornaliereSchema(pa.DataFrameModel):
 
     class Config:
         """Configurazione per la validazione dello schema."""
+
         coerce = True
         strict = False
 
@@ -59,6 +61,7 @@ class ContabilitaSchema(pa.DataFrameModel):
 
     class Config:
         """Configurazione per la validazione dello schema."""
+
         coerce = True
         strict = False
 

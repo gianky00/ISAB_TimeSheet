@@ -19,7 +19,7 @@ class CaricoTSBot(BaseBot):
         ("nav", "Navigazione Portale"),
         ("supplier", "Selezione Fornitore"),
         ("extract", "Estrazione OdA"),
-        ("cleanup", "Chiusura Sessione")
+        ("cleanup", "Chiusura Sessione"),
     ]
 
     @staticmethod

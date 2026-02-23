@@ -154,6 +154,7 @@ class ApexAudit:
         incremental=False,
         test_only=False,
         target: str | None = None,
+        force=False,
     ):
         """Inizializza l'audit configurando le modalità di esecuzione."""
         self.fix = fix
@@ -161,6 +162,7 @@ class ApexAudit:
         self.incremental = incremental
         self.test_only = test_only
         self.target = target.lower() if target else None
+        self.force = force
         self.results: list[CheckResult] = []
         self.start_time = time.time()
         self.changed_files = self._get_changed_files() if incremental else []
@@ -496,7 +498,7 @@ class ApexAudit:
         )
 
         self._export_html(score)
-        if score < 80:
+        if score < 80 and not self.force:
             sys.exit(1)
 
     def _get_score(self) -> int:
@@ -534,6 +536,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--fix", action="store_true")
     parser.add_argument("--fast", action="store_true")
+    parser.add_argument("--force", action="store_true")
     parser.add_argument("--inc", action="store_true")
     parser.add_argument("--test-only", action="store_true")
     parser.add_argument(
@@ -549,4 +552,5 @@ if __name__ == "__main__":
             incremental=args.inc,
             test_only=args.test_only,
             target=args.target,
+            force=args.force,
         ).run_all()

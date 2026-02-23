@@ -87,13 +87,17 @@ class HelpPanel(QWidget):
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("Cerca nella guida...")
         self.search_edit.setMinimumHeight(42)
-        self.search_edit.setStyleSheet("QLineEdit { border: 1px solid #CFD8DC; border-radius: 8px; padding: 0 15px; background-color: white; font-size: 14px; }")
+        self.search_edit.setStyleSheet(
+            "QLineEdit { border: 1px solid #CFD8DC; border-radius: 8px; padding: 0 15px; background-color: white; font-size: 14px; }"
+        )
         self.search_edit.textChanged.connect(self._filter_index)
         sidebar_layout.addWidget(self.search_edit)
 
         self.index_list = QListWidget()
         self.index_list.setIconSize(QSize(20, 20))
-        self.index_list.setStyleSheet("QListWidget { background-color: transparent; border: none; } QListWidget::item { padding: 12px 15px; border-radius: 10px; color: #455A64; font-weight: 500; } QListWidget::item:selected { background-color: #E0F2F1; color: #00796B; font-weight: 700; }")
+        self.index_list.setStyleSheet(
+            "QListWidget { background-color: transparent; border: none; } QListWidget::item { padding: 12px 15px; border-radius: 10px; color: #455A64; font-weight: 500; } QListWidget::item:selected { background-color: #E0F2F1; color: #00796B; font-weight: 700; }"
+        )
         self.index_list.currentRowChanged.connect(self._on_index_changed)
         sidebar_layout.addWidget(self.index_list, 1)
 
@@ -101,7 +105,9 @@ class HelpPanel(QWidget):
         self.browser = QTextBrowser()
         self.browser.setOpenExternalLinks(True)
         self.browser.setReadOnly(True)
-        self.browser.setStyleSheet("QTextBrowser { background-color: white; border: none; padding: 50px 60px; font-family: 'Segoe UI', sans-serif; font-size: 16px; line-height: 1.8; color: #263238; }")
+        self.browser.setStyleSheet(
+            "QTextBrowser { background-color: white; border: none; padding: 50px 60px; font-family: 'Segoe UI', sans-serif; font-size: 16px; line-height: 1.8; color: #263238; }"
+        )
 
         self.splitter.addWidget(sidebar)
         self.splitter.addWidget(self.browser)
@@ -188,7 +194,9 @@ class HelpPanel(QWidget):
 
     def _get_oda_md(self) -> str:
         """Restituisce il Markdown per OdA e BP."""
-        return "# 📋 Dettagli OdA & Prenotazioni\nScarica i dettagli completi per alimentare la ricerca globale."
+        return (
+            "# 📋 Dettagli OdA & Prenotazioni\nScarica i dettagli completi per alimentare la ricerca globale."
+        )
 
     def _get_timbrature_md(self) -> str:
         """Restituisce il Markdown per le timbrature."""

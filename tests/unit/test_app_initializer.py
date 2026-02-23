@@ -49,7 +49,9 @@ class TestAppInitializer:
     @patch("src.core.database.db_manager.init_db", side_effect=Exception("DB Error"))
     def test_initialize_core_failure(self, mock_db_init):
         # Patch license check to avoid other side effects
-        with patch("src.core.license_validator.get_detailed_license_status", return_value=(MagicMock(), "OK")):
+        with patch(
+            "src.core.license_validator.get_detailed_license_status", return_value=(MagicMock(), "OK")
+        ):
             with patch.object(AppInitializer, "_setup_logging"):
                 result = AppInitializer.initialize_core()
 

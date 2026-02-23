@@ -402,7 +402,9 @@ class CommandPaletteDialog(QDialog):
     def _collect_all_nodes(self, nodes: list[CommandNode], search: str, results: list[CommandNode]) -> None:
         """Attraversa ricorsivamente l'albero dei comandi per trovare corrispondenze."""
         for node in nodes:
-            match = (search in node.label.lower()) or (node.description and search in node.description.lower())
+            match = (search in node.label.lower()) or (
+                node.description and search in node.description.lower()
+            )
             if match:
                 results.append(node)
             children = node.get_children()

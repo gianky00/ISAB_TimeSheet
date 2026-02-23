@@ -77,10 +77,27 @@ class PDLDBPanel(QWidget):
 
         # Mapping completo per il Dettaglio (Tutte le 21 colonne)
         self.full_headers = [
-            "ID", "N° PDL", "Data Creazione", "Area", "Unità", "Ditta", "Descrizione",
-            "Tipologia", "Stato", "Apparecchiatura", "Richiedente", "Data Richiesta",
-            "Emittente", "Data Emissione", "Aprente", "Data Apertura", "Priorità",
-            "Contratto", "Ordine", "Sito", "Importato il",
+            "ID",
+            "N° PDL",
+            "Data Creazione",
+            "Area",
+            "Unità",
+            "Ditta",
+            "Descrizione",
+            "Tipologia",
+            "Stato",
+            "Apparecchiatura",
+            "Richiedente",
+            "Data Richiesta",
+            "Emittente",
+            "Data Emissione",
+            "Aprente",
+            "Data Apertura",
+            "Priorità",
+            "Contratto",
+            "Ordine",
+            "Sito",
+            "Importato il",
         ]
 
         self.model = FastTableModel([], self.master_headers)
@@ -181,6 +198,7 @@ class PDLDBPanel(QWidget):
 
             username = ""
             password = ""
+            account_type = "Esecutore"
 
             if safework_accounts:
                 default_sw = next(
@@ -189,16 +207,15 @@ class PDLDBPanel(QWidget):
                 )
                 username = default_sw.get("username", "")
                 password = default_sw.get("password", "")
+                account_type = default_sw.get("type", "Esecutore")
 
             if not username or not password:
-                QMessageBox.warning(
-                    self, "Attenzione", "Credenziali SafeWork non configurate."
-                )
+                QMessageBox.warning(self, "Attenzione", "Credenziali SafeWork non configurate.")
                 return
 
             if not self._show_confirmation_dialog(
                 "Aggiornamento PDL",
-                f"Avviare la ricerca PDL con account <b>{username}</b>?",
+                f"Avviare la ricerca PDL con account <b>{username}</b> ({account_type})?",
             ):
                 return
 
@@ -210,6 +227,7 @@ class PDLDBPanel(QWidget):
                 "ricerca_pdl",
                 username=username,
                 password=password,
+                account_type=account_type,
                 headless=config.get("browser_headless", False),
                 timeout=config.get("browser_timeout", 30),
                 download_path=str(config_manager.CONFIG_DIR / "temp"),
@@ -476,9 +494,21 @@ class PDLDBPanel(QWidget):
 
         if search_text:
             search_cols = [
-                "n_pdl", "area", "unita", "ditta", "descrizione_lavoro",
-                "tipologia", "stato", "apparecchiatura", "richiedente",
-                "emittente", "aprente", "priorita", "contratto", "ordine", "sito",
+                "n_pdl",
+                "area",
+                "unita",
+                "ditta",
+                "descrizione_lavoro",
+                "tipologia",
+                "stato",
+                "apparecchiatura",
+                "richiedente",
+                "emittente",
+                "aprente",
+                "priorita",
+                "contratto",
+                "ordine",
+                "sito",
             ]
             OR_clause = " OR ".join([f"{col} LIKE ?" for col in search_cols])
             query += f" AND ({OR_clause})"
@@ -486,8 +516,13 @@ class PDLDBPanel(QWidget):
             params.extend([p] * len(search_cols))
 
         order_map = {
-            0: "data_creazione", 1: "richiedente", 2: "n_pdl",
-            3: "area", 4: "unita", 5: "stato", 6: "descrizione_lavoro",
+            0: "data_creazione",
+            1: "richiedente",
+            2: "n_pdl",
+            3: "area",
+            4: "unita",
+            5: "stato",
+            6: "descrizione_lavoro",
         }
 
         if sort_col is not None and sort_col in order_map:
@@ -572,16 +607,25 @@ class PDLDBPanel(QWidget):
 
             export_data = [
                 {
-                    "N° PDL": r[1], "Data Creazione": r[2], "Area": r[3], "Unità": r[4],
-                    "Descrizione": r[6], "Stato": r[8], "Apparecchiatura": r[9],
-                    "Richiedente": r[10], "Contratto": r[17], "Ordine": r[18], "Sito": r[19],
+                    "N° PDL": r[1],
+                    "Data Creazione": r[2],
+                    "Area": r[3],
+                    "Unità": r[4],
+                    "Descrizione": r[6],
+                    "Stato": r[8],
+                    "Apparecchiatura": r[9],
+                    "Richiedente": r[10],
+                    "Contratto": r[17],
+                    "Ordine": r[18],
+                    "Sito": r[19],
                 }
                 for r in rows
             ]
 
             df = pd.DataFrame(export_data)
             filename, _ = QFileDialog.getSaveFileName(
-                self, "Esporta Excel",
+                self,
+                "Esporta Excel",
                 f"Export_PDL_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
                 "Excel Files (*.xlsx)",
             )

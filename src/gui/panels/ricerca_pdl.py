@@ -148,12 +148,13 @@ class RicercaPDLPanel(BaseBotPanel):
         """Crea e restituisce un'istanza configurata del bot Ricerca PDL."""
         from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
 
-        username, password = self.get_credentials()
+        username, password, account_type = self.get_safework_credentials()
         config = config_manager.load_config()
 
         return SafeWorkPDLSearchBot(
             username=username,
             password=password,
+            account_type=account_type,
             headless=config.get("browser_headless", False),
             timeout=config.get("browser_timeout", 30),
             download_path=config_manager.get_download_path(),
@@ -162,7 +163,7 @@ class RicercaPDLPanel(BaseBotPanel):
     def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
         """Avvia l'esecuzione del bot Ricerca PDL configurando worker e segnali."""
         super()._on_start(params_override)
-        username, password = self.get_credentials()
+        username, password, _ = self.get_safework_credentials()
 
         # Ensure UI elements are available
         if self.start_btn is None:
@@ -202,16 +203,20 @@ class RicercaPDLPanel(BaseBotPanel):
         worker.start()
         self.bot_started.emit()
 
-    def get_credentials(self) -> tuple[str, str]:
-        """Recupera le credenziali SafeWork configurate."""
+    def get_safework_credentials(self) -> tuple[str, str, str]:
+        """Recupera le credenziali SafeWork configurate. Ritorna (user, pass, tipo)."""
         # Prende il default da safework_accounts
         accounts = config_manager.load_config().get("safework_accounts", [])
         if not accounts:
-            return "", ""
+            return "", "", "Esecutore"
 
         # Cerca il default
         default_acc = next((a for a in accounts if a.get("default")), accounts[0])
-        return default_acc.get("username", ""), default_acc.get("password", "")
+        return (
+            default_acc.get("username", ""),
+            default_acc.get("password", ""),
+            default_acc.get("type", "Esecutore"),
+        )
 
     def _on_worker_finished(self, success: bool):
         """Emette il segnale data_updated al termine dell'operazione."""

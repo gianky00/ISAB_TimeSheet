@@ -83,7 +83,11 @@ def _get_windows_hardware_id() -> str | None:
             "-Command",
             "Get-CimInstance -Class Win32_DiskDrive | Select-Object -ExpandProperty SerialNumber",
         ]
-        output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW).decode().strip()
+        output = (
+            subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW)
+            .decode()
+            .strip()
+        )
         if output:
             return output.splitlines()[0].strip()
 
@@ -94,7 +98,11 @@ def _get_windows_hardware_id() -> str | None:
             "-Command",
             "Get-CimInstance -Class Win32_ComputerSystemProduct | Select-Object -ExpandProperty UUID",
         ]
-        output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW).decode().strip()
+        output = (
+            subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW)
+            .decode()
+            .strip()
+        )
         if output:
             return output
     return None

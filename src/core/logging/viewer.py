@@ -57,6 +57,7 @@ class LogQuery:
         Returns:
             LogQuery: L'istanza corrente.
         """
+
         def filter_fn(entry):
             """Filtra per contenuto del messaggio."""
             message = entry.get("message", "")
@@ -77,6 +78,7 @@ class LogQuery:
         Returns:
             LogQuery: L'istanza corrente.
         """
+
         def filter_fn(entry):
             """Filtra per corrispondenza dei campi nel contesto."""
             context = entry.get("context", {})
@@ -104,6 +106,7 @@ class LogQuery:
         Returns:
             LogQuery: L'istanza corrente.
         """
+
         def filter_fn(entry):
             """Filtra per finestra temporale."""
             timestamp_str = entry.get("timestamp", "")
@@ -220,7 +223,8 @@ class LogViewer:
             error_messages[message] += 1
             if message not in error_details:
                 error_details[message] = {
-                    "message": message, "first_seen": entry.get("timestamp"),
+                    "message": message,
+                    "first_seen": entry.get("timestamp"),
                     "exception_type": (entry.get("exception", {}).get("type", "unknown")),
                     "count": 0,
                 }
@@ -234,12 +238,15 @@ class LogViewer:
         for entry in results:
             duration = entry.get("data", {}).get("duration_ms")
             if duration and duration > threshold_ms:
-                slow_ops.append({
-                    "timestamp": entry.get("timestamp"),
-                    "operation": entry.get("context", {}).get("function", "unknown"),
-                    "duration_ms": duration, "message": entry.get("message"),
-                    "trace_id": entry.get("context", {}).get("trace_id"),
-                })
+                slow_ops.append(
+                    {
+                        "timestamp": entry.get("timestamp"),
+                        "operation": entry.get("context", {}).get("function", "unknown"),
+                        "duration_ms": duration,
+                        "message": entry.get("message"),
+                        "trace_id": entry.get("context", {}).get("trace_id"),
+                    }
+                )
         slow_ops.sort(key=operator.itemgetter("duration_ms"), reverse=True)
         return slow_ops[:limit]
 
@@ -274,12 +281,18 @@ class LogViewer:
             except Exception:
                 duration_sec = 0
             has_error = any(e.get("level") == "ERROR" for e in entries)
-            summaries.append({
-                "trace_id": trace_id, "bot_type": entries[0].get("context", {}).get("bot_type", "unknown"),
-                "start_time": entries[0].get("timestamp"), "end_time": entries[-1].get("timestamp"),
-                "duration_sec": round(duration_sec, 2), "entry_count": len(entries),
-                "success": not has_error, "context": entries[0].get("context", {}),
-            })
+            summaries.append(
+                {
+                    "trace_id": trace_id,
+                    "bot_type": entries[0].get("context", {}).get("bot_type", "unknown"),
+                    "start_time": entries[0].get("timestamp"),
+                    "end_time": entries[-1].get("timestamp"),
+                    "duration_sec": round(duration_sec, 2),
+                    "entry_count": len(entries),
+                    "success": not has_error,
+                    "context": entries[0].get("context", {}),
+                }
+            )
         summaries.sort(key=operator.itemgetter("start_time"), reverse=True)
         return summaries
 
@@ -302,11 +315,15 @@ class LogViewer:
         failed_runs = sum(1 for run in bot_runs if not run["success"])
 
         return {
-            "timestamp": datetime.now().isoformat() + "Z", "period_hours": hours,
-            "total_events": total, "level_distribution": level_stats.copy(),
+            "timestamp": datetime.now().isoformat() + "Z",
+            "period_hours": hours,
+            "total_events": total,
+            "level_distribution": level_stats.copy(),
             "error_rate_percent": round(error_rate, 2),
             "bot_runs": {
-                "total": len(bot_runs), "successful": successful_runs, "failed": failed_runs,
+                "total": len(bot_runs),
+                "successful": successful_runs,
+                "failed": failed_runs,
                 "success_rate_percent": (round(successful_runs / len(bot_runs) * 100, 2) if bot_runs else 0),
             },
             "top_errors": self.get_error_summary(limit=5),

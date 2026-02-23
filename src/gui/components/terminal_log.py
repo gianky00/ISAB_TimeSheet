@@ -13,6 +13,7 @@ class TerminalLogWidget(QWidget):
     Console di log in stile terminale con evidenziazione dei livelli.
     Fornisce una visualizzazione testuale moderna e pulita delle attività del bot.
     """
+
     def __init__(self, parent=None):
         """
         Inizializza il widget del terminale e configura l'editor di testo.
@@ -67,6 +68,7 @@ class TerminalLogWidget(QWidget):
             level: Livello del log (es. INFO, ERROR, WARN, SUCCESS).
         """
         from datetime import datetime
+
         timestamp = datetime.now().strftime("%H:%M:%S")
 
         self.editor.moveCursor(QTextCursor.MoveOperation.End)
@@ -100,6 +102,7 @@ class TerminalLogWidget(QWidget):
         v_scroll = self.editor.verticalScrollBar()
         if v_scroll:
             v_scroll.setValue(v_scroll.maximum())
+
     def clear(self):
         """Pulisce tutto il contenuto della console di log."""
         self.editor.clear()

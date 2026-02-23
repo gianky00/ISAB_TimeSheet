@@ -56,6 +56,7 @@ def measure_time[F: Callable[..., Any]](
 
     def decorator(f: F) -> F:
         """Decoratore effettivo che avvolge la funzione per la misurazione del tempo."""
+
         @functools.wraps(f)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             """Wrapper interno per la misurazione del tempo."""
@@ -165,6 +166,7 @@ def log_entry_exit[F: Callable[..., Any]](
 
     def decorator(f: F) -> F:
         """Decoratore effettivo che avvolge la funzione per il log entry/exit."""
+
         @functools.wraps(f)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             """Wrapper interno per loggare entry/exit."""

@@ -20,7 +20,7 @@ class TimbratureBot(BaseBot):
         ("nav", "Navigazione Timbrature"),
         ("filter", "Filtraggio Dati"),
         ("download", "Download Report"),
-        ("import", "Importazione Database")
+        ("import", "Importazione Database"),
     ]
 
     @property

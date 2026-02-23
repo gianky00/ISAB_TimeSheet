@@ -400,7 +400,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         Returns:
             tuple: (bool successo, str messaggio errore)
         """
-        username, password = self.get_credentials()
+        username, password, _ = self.get_safework_credentials()
         if not username or not password:
             return False, "Credenziali SafeWork mancanti."
 
@@ -410,16 +410,20 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         return True, ""
 
-    def get_credentials(self) -> tuple[str, str]:
-        """Recupera le credenziali SafeWork configurate."""
+    def get_safework_credentials(self) -> tuple[str, str, str]:
+        """Recupera le credenziali SafeWork configurate. Ritorna (user, pass, tipo)."""
         # Prende il default da safework_accounts
         accounts = config_manager.load_config().get("safework_accounts", [])
         if not accounts:
-            return "", ""
+            return "", "", "Esecutore"
 
         # Cerca il default
         default_acc = next((a for a in accounts if a.get("default")), accounts[0])
-        return default_acc.get("username", ""), default_acc.get("password", "")
+        return (
+            default_acc.get("username", ""),
+            default_acc.get("password", ""),
+            default_acc.get("type", "Esecutore"),
+        )
 
     #
     def _create_section(self, title: str, items: list[str], color: str, bg_color: str) -> QFrame:
@@ -430,7 +434,7 @@ class ScaricoPDLPanel(BaseBotPanel):
     def _on_start(self, params_override: dict[str, Any] | None = None):
         """Avvia il bot Scarico PDL configurando worker e segnali."""
         super()._on_start(params_override)
-        username, password = self.get_credentials()
+        username, password, account_type = self.get_safework_credentials()
 
         # Handle overrides for validation skipping if needed, or just row processing
         rows = self.data_table.get_data()
@@ -446,7 +450,7 @@ class ScaricoPDLPanel(BaseBotPanel):
                 return
 
         bot_data = self._prepare_bot_data(rows)
-        bot = self._create_pdl_bot(username, password)
+        bot = self._create_pdl_bot(username, password, account_type)
         if not bot:
             return
 
@@ -506,7 +510,7 @@ class ScaricoPDLPanel(BaseBotPanel):
                 )
         return bot_data
 
-    def _create_pdl_bot(self, username, password):
+    def _create_pdl_bot(self, username, password, account_type):
         """Istanzia il bot scarico_pdl con i parametri correnti."""
         from src.bots import create_bot
 
@@ -516,6 +520,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             "scarico_pdl",
             username=username,
             password=password,
+            account_type=account_type,
             headless=config.get("browser_headless", False),
             timeout=config.get("browser_timeout", 30),
             download_path=path,

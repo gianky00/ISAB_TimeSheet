@@ -20,8 +20,17 @@ class SafeworkBaseBot(BaseBot):
     SAFEWORK_URL = "https://safework.isab.com/"
     ISAB_URL = SAFEWORK_URL
 
-    def __init__(self, username, password, headless=False, timeout=30, download_path=""):
+    def __init__(
+        self,
+        username,
+        password,
+        headless=False,
+        timeout=30,
+        download_path="",
+        account_type: str = "Esecutore",
+    ):
         super().__init__(username, password, headless, timeout, download_path)
+        self.account_type = account_type
         self.safework_login_page: SafeWorkLoginPage | None = None
         self.ricerca_pdl_page: RicercaPDLPage | None = None
         self.attivita_page: VisualizzaAttivitaPage | None = None
@@ -38,16 +47,21 @@ class SafeworkBaseBot(BaseBot):
         """Override del login per usare SafeWorkLoginPage."""
         if self.safework_login_page and self.driver:
             self.driver.get(self.ISAB_URL)
-            return self.safework_login_page.login(self.username, self.password)
+            return self.safework_login_page.login(
+                self.username, self.password, account_type=self.account_type
+            )
         return False
 
-    def click_robusto(self, locator: tuple[str, str], timeout: int = 10):
+    def click_robusto(self, locator: tuple[str, str], timeout: int = 10, label: str | None = None):
         """
         Tenta di cliccare un elemento gestendo overlay e intercettazioni.
         """
         if not self.driver:
             self.log("❌ Driver non inizializzato.")
             return
+
+        if label:
+            self.log(f"🖱️ Click su {label}...")
 
         try:
             self._attendi_scomparsa_overlay()
@@ -59,7 +73,7 @@ class SafeworkBaseBot(BaseBot):
                 el = self.driver.find_element(*locator)
                 self.driver.execute_script("arguments[0].click();", el)
             except Exception as e:
-                self.log(f"❌ Errore click robusto su {locator}: {e}")
+                self.log(f"❌ Errore click su {label or locator}: {e}")
                 raise
 
     def _attendi_scomparsa_overlay(self, timeout_secondi: int | None = 120) -> bool:

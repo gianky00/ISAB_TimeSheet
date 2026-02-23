@@ -24,6 +24,7 @@ class NotificationManager(QObject):
     Gestisce il ciclo di vita dei messaggi (creazione, lettura, pin, eliminazione).
     Emette segnali per l'aggiornamento dinamico dell'interfaccia utente.
     """
+
     _instance: Optional["NotificationManager"] = None
     _lock = threading.RLock()
 
@@ -77,9 +78,16 @@ class NotificationManager(QObject):
     def _migrate_notification(self, notif: dict[str, Any]) -> dict[str, Any]:
         """Assicura che la notifica contenga tutti i campi richiesti dallo schema attuale."""
         defaults = {
-            "category": "system", "priority": "low", "source": "Sistema",
-            "pinned": False, "snoozed_until": None, "archived": False,
-            "tags": [], "metadata": {}, "actions": [], "related_id": None,
+            "category": "system",
+            "priority": "low",
+            "source": "Sistema",
+            "pinned": False,
+            "snoozed_until": None,
+            "archived": False,
+            "tags": [],
+            "metadata": {},
+            "actions": [],
+            "related_id": None,
         }
         return defaults | notif
 
@@ -92,10 +100,18 @@ class NotificationManager(QObject):
             print(f"Errore salvataggio notifiche: {e}")
 
     def add_notification(
-        self, title: str, message: str, level: str = "info", category: str = "system",
-        priority: str = "low", source: str = "Sistema", tags: Sequence[str] | None = None,
-        metadata: dict[str, Any] | None = None, actions: Sequence[dict[str, Any]] | None = None,
-        related_id: str | None = None, show_toast: bool = False,
+        self,
+        title: str,
+        message: str,
+        level: str = "info",
+        category: str = "system",
+        priority: str = "low",
+        source: str = "Sistema",
+        tags: Sequence[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        actions: Sequence[dict[str, Any]] | None = None,
+        related_id: str | None = None,
+        show_toast: bool = False,
     ) -> None:
         """
         Crea e aggiunge una nuova notifica al sistema.
@@ -115,11 +131,21 @@ class NotificationManager(QObject):
         """
         id_notif = str(uuid.uuid4())
         notif: dict[str, Any] = {
-            "id": id_notif, "title": title, "message": message, "level": level,
-            "category": category, "priority": priority, "source": source,
-            "timestamp": datetime.now().isoformat(), "read": False, "archived": False,
-            "pinned": False, "snoozed_until": None, "tags": list(tags) if tags is not None else [],
-            "metadata": metadata or {}, "actions": list(actions) if actions is not None else [],
+            "id": id_notif,
+            "title": title,
+            "message": message,
+            "level": level,
+            "category": category,
+            "priority": priority,
+            "source": source,
+            "timestamp": datetime.now().isoformat(),
+            "read": False,
+            "archived": False,
+            "pinned": False,
+            "snoozed_until": None,
+            "tags": list(tags) if tags is not None else [],
+            "metadata": metadata or {},
+            "actions": list(actions) if actions is not None else [],
             "related_id": related_id,
         }
 

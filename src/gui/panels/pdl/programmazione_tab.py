@@ -662,8 +662,10 @@ class ProgrammazioneTab(QWidget):
         config = config_manager.load_config()
         safework_accounts = config.get("safework_accounts", [])
         account = None
+        account_type = "Esecutore"
         if safework_accounts:
             account = next((a for a in safework_accounts if a.get("default")), safework_accounts[0])
+            account_type = account.get("type", "Esecutore")
 
         if not account:
             ToastManager.instance().show("Credenziali SafeWork non configurate.", "error")
@@ -679,6 +681,7 @@ class ProgrammazioneTab(QWidget):
             "programmazione_pdl",
             username=account["username"],
             password=account["password"],
+            account_type=account_type,
             headless=config.get("browser_headless", False),
             timeout=config.get("browser_timeout", 30),
             download_path=str(temp_dir),
@@ -699,7 +702,7 @@ class ProgrammazioneTab(QWidget):
 
         self.log_widget.clear()
         self.log_widget.setVisible(True)
-        self.log_widget.timeline.set_mood("running")
+        self.log_widget.set_mood("running")
 
         self.worker = BotWorker(
             bot, [{"requesters": selected_reqs, "date_start": start_date, "date_end": end_date}]
@@ -711,7 +714,7 @@ class ProgrammazioneTab(QWidget):
 
     def _on_bot_finished(self, success: bool):
         self.btn_run.setEnabled(True)
-        self.log_widget.timeline.set_mood("idle")
+        self.log_widget.set_mood("idle")
         if success and self.worker:
             self.log_widget.setVisible(False)
             self.last_results = getattr(self.worker.bot, "results", [])

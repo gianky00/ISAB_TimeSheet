@@ -50,7 +50,10 @@ class ServiceController(QObject):
         self.sentinel = lyra_sentinel
 
         self.running_bots_by_site: dict[str, list[str]] = {"portale_fornitori": [], "safework": []}
-        self.pending_bots_by_site: dict[str, list[tuple[str, Any, str]]] = {"portale_fornitori": [], "safework": []}
+        self.pending_bots_by_site: dict[str, list[tuple[str, Any, str]]] = {
+            "portale_fornitori": [],
+            "safework": [],
+        }
         self.scheduler_timer: QTimer | None = None
 
     def start_all(self) -> None:
@@ -106,7 +109,9 @@ class ServiceController(QObject):
                 panel = getattr(self.mw, panel_attr)
                 if prepare_cb:
                     prepare_cb(panel)
-                self._schedule_bot_with_parallelism(bot_id, panel, site, f"Avvio pianificato automatico ({now})...")
+                self._schedule_bot_with_parallelism(
+                    bot_id, panel, site, f"Avvio pianificato automatico ({now})..."
+                )
 
         self._check_report_email_schedule(config, now)
 
@@ -203,12 +208,22 @@ class ServiceController(QObject):
             body = f"<html><body style='font-family: Segoe UI;'><h2>Report Accessi ISAB</h2><p>Generato il {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>"
             body += (
                 "<h3>In Scadenza (21-30 gg)</h3><ul>"
-                + "".join([f"<li>{x['cognome']} {x['nome']} - {x['giorni']}gg ({x['data']})</li>" for x in w_list[:20]])
+                + "".join(
+                    [
+                        f"<li>{x['cognome']} {x['nome']} - {x['giorni']}gg ({x['data']})</li>"
+                        for x in w_list[:20]
+                    ]
+                )
                 + "</ul>"
             )
             body += (
                 "<h3>Scaduti (&gt; 30 gg)</h3><ul>"
-                + "".join([f"<li>{x['cognome']} {x['nome']} - {x['giorni']}gg ({x['data']})</li>" for x in e_list[:20]])
+                + "".join(
+                    [
+                        f"<li>{x['cognome']} {x['nome']} - {x['giorni']}gg ({x['data']})</li>"
+                        for x in e_list[:20]
+                    ]
+                )
                 + "</ul></body></html>"
             )
 
@@ -229,7 +244,9 @@ class ServiceController(QObject):
             )
         except Exception as e:
             logger.error(f"Errore report email: {e}")
-            NotificationManager.instance().add_notification(title="Errore Report Email", message=str(e), level="error")
+            NotificationManager.instance().add_notification(
+                title="Errore Report Email", message=str(e), level="error"
+            )
 
     def _prepare_scarico_oda_generale(self, panel: Any) -> None:
         """Configura il pannello Dettagli OdA per uno scarico massivo senza filtri specifici."""

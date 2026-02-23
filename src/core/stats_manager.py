@@ -52,6 +52,7 @@ class StatsManager:
                         return old_stats
             return {}
         from typing import cast
+
         return cast("dict[str, Any]", config.get("statistics", {}))
 
     def _save_stats(self) -> None:

@@ -100,7 +100,14 @@ class HealthScoreBadge(QWidget):
 class StatCard(QFrame):
     """Card informativa minimalista per visualizzare singole metriche (es. Bot Run, Error Rate)."""
 
-    def __init__(self, title: str, value: str = "0", icon: str = "", color: str = "#007bff", parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        title: str,
+        value: str = "0",
+        icon: str = "",
+        color: str = "#007bff",
+        parent: QWidget | None = None,
+    ) -> None:
         """
         Inizializza la card statistica.
 
@@ -118,7 +125,9 @@ class StatCard(QFrame):
 
     def _setup_ui(self, title: str, value: str, icon: str, color: str) -> None:
         """Configura lo stile CSS e il layout interno della card."""
-        self.setStyleSheet(f"QFrame {{ background-color: #ffffff; border-radius: 12px; border: 1px solid #dee2e6; border-left: 4px solid {color}; }}")
+        self.setStyleSheet(
+            f"QFrame {{ background-color: #ffffff; border-radius: 12px; border: 1px solid #dee2e6; border-left: 4px solid {color}; }}"
+        )
         self.setMinimumSize(140, 95)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         layout = QVBoxLayout(self)
@@ -161,7 +170,9 @@ class AnomalyCard(QFrame):
     def _setup_ui(self, anomaly) -> None:
         """Configura il layout e i colori in base alla gravità dell'anomalia."""
         color, bg = self._get_severity_color(anomaly.severity), self._get_bg_color(anomaly.severity)
-        self.setStyleSheet(f"QFrame {{ background-color: {bg}; border-radius: 10px; border: 1px solid {color}40; border-left: 5px solid {color}; }}")
+        self.setStyleSheet(
+            f"QFrame {{ background-color: {bg}; border-radius: 10px; border: 1px solid {color}40; border-left: 5px solid {color}; }}"
+        )
         layout = QVBoxLayout(self)
 
         header = QHBoxLayout()
@@ -172,7 +183,9 @@ class AnomalyCard(QFrame):
         header.addWidget(lbl_title, stretch=1)
 
         lbl_sev = QLabel(anomaly.severity.upper())
-        lbl_sev.setStyleSheet(f"color: {color}; background-color: {color}20; padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: bold;")
+        lbl_sev.setStyleSheet(
+            f"color: {color}; background-color: {color}20; padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: bold;"
+        )
         header.addWidget(lbl_sev)
         layout.addLayout(header)
 
@@ -184,11 +197,15 @@ class AnomalyCard(QFrame):
 
     def _get_severity_color(self, severity: str) -> str:
         """Mappa la gravità a un colore HEX enterprise."""
-        return {"low": "#007bff", "medium": "#ffc107", "high": "#fd7e14", "critical": "#dc3545"}.get(severity, "#6c757d")
+        return {"low": "#007bff", "medium": "#ffc107", "high": "#fd7e14", "critical": "#dc3545"}.get(
+            severity, "#6c757d"
+        )
 
     def _get_bg_color(self, severity: str) -> str:
         """Mappa la gravità a un colore di sfondo leggero."""
-        return {"low": "#e7f1ff", "medium": "#fff8e1", "high": "#fff3e0", "critical": "#ffebee"}.get(severity, "#f8f9fa")
+        return {"low": "#e7f1ff", "medium": "#fff8e1", "high": "#fff3e0", "critical": "#ffebee"}.get(
+            severity, "#f8f9fa"
+        )
 
 
 class HealthPanel(QWidget):
@@ -232,7 +249,9 @@ class HealthPanel(QWidget):
         left_panel = QVBoxLayout()
         left_panel.setSpacing(20)
         score_card = QFrame()
-        score_card.setStyleSheet("QFrame { background-color: #ffffff; border-radius: 16px; border: 1px solid #dee2e6; }")
+        score_card.setStyleSheet(
+            "QFrame { background-color: #ffffff; border-radius: 16px; border: 1px solid #dee2e6; }"
+        )
         score_layout = QVBoxLayout(score_card)
         self._score_badge = HealthScoreBadge(size=160)
         score_layout.addWidget(self._score_badge, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -283,6 +302,7 @@ class HealthPanel(QWidget):
         try:
             from src.core.logging.analytics import generate_analytics_report
             from src.core.logging.viewer import LogViewer
+
             report = generate_analytics_report(hours=24)
             self._score_badge.score = report.health_score
             self._status_label.setText(self._score_badge._get_status_text())
@@ -305,7 +325,9 @@ class HealthPanel(QWidget):
         self._anomaly_count_label.setText(f"{len(anomalies)} problema{'i' if len(anomalies) != 1 else ''}")
         if not anomalies:
             empty = QFrame()
-            empty.setStyleSheet("QFrame { background: #e8f5e9; border-radius: 12px; border: 1px dashed #81c784; }")
+            empty.setStyleSheet(
+                "QFrame { background: #e8f5e9; border-radius: 12px; border: 1px dashed #81c784; }"
+            )
             el = QVBoxLayout(empty)
             el.addWidget(QLabel("✨"), alignment=Qt.AlignmentFlag.AlignCenter)
             el.addWidget(QLabel("Nessuna anomalia"), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -319,6 +341,7 @@ class HealthPanel(QWidget):
         try:
             from src.core.logging.alert_manager import get_alert_manager
             from src.core.logging.analytics import generate_analytics_report
+
             report = generate_analytics_report(hours=24)
             if not report.anomalies:
                 self._show_toast("ℹ️ Nessuna anomalia da segnalare", "info")
@@ -337,6 +360,7 @@ class HealthPanel(QWidget):
         """Esegue un controllo periodico e invia notifiche automatiche se vengono rilevate anomalie critiche."""
         with suppress(Exception):
             from src.core.logging.alert_manager import get_alert_manager
+
             if (sent := get_alert_manager().check_and_alert(hours=24)) > 0:
                 self._last_update.setText(f"🔔 {sent} alert inviati")
 
@@ -344,4 +368,7 @@ class HealthPanel(QWidget):
         """Inoltra una notifica interna al NotificationManager."""
         with suppress(Exception):
             from src.core.notification_manager import NotificationManager
-            NotificationManager.instance().add_notification(title="Health Panel", message=message, level=level)
+
+            NotificationManager.instance().add_notification(
+                title="Health Panel", message=message, level=level
+            )

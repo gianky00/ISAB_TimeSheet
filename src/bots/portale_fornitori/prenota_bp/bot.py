@@ -20,7 +20,7 @@ class PrenotaBPBot(BaseBot):
         ("filter", "Filtraggio Buoni"),
         ("details", "Apertura Dettagli"),
         ("reserve", "Prenotazione BP"),
-        ("cleanup", "Chiusura Sessione")
+        ("cleanup", "Chiusura Sessione"),
     ]
 
     @staticmethod

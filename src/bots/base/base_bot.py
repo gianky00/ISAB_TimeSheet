@@ -153,9 +153,8 @@ class BaseBot(ABC):
             if message:
                 self.log(f"[{step_name}] {message}", current_step=step_name, step_index=index)
             elif status == StepStatus.RUNNING:
-                self.log(f"Inizio: {step_name}", current_step=step_name, step_index=index)
-            elif status == StepStatus.COMPLETED:
-                self.log(f"Completato: {step_name}", current_step=step_name, step_index=index)
+                # Log più pulito per l'inizio dello step
+                self.log(f"⏳ Avvio: {step_name}", current_step=step_name, step_index=index)
             elif status == StepStatus.ERROR:
                 self.log(f"❌ ERRORE: {step_name}", "ERROR", current_step=step_name, step_index=index)
 
@@ -180,7 +179,9 @@ class BaseBot(ABC):
         if self._status != value:
             self._status = value
             self.signals.status_changed.emit(value)
-            self.log(f"Stato: {value.name}")
+            # Log dello stato solo se rilevante (es. ERROR o COMPLETED)
+            if value in (BotStatus.ERROR, BotStatus.COMPLETED, BotStatus.STOPPED):
+                self.log(f"🏁 Stato finale: {value.name}")
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """
@@ -216,13 +217,19 @@ class BaseBot(ABC):
         if self._log_callback:
             self._log_callback(message)
 
-        if current_step is None and hasattr(self, "_current_step_index") and 0 <= self._current_step_index < len(self.STEPS):
+        if (
+            current_step is None
+            and hasattr(self, "_current_step_index")
+            and 0 <= self._current_step_index < len(self.STEPS)
+        ):
             current_step = self.STEPS[self._current_step_index][1]
 
         # Robustness for mocked __init__ in tests
         logger_obj = getattr(self, "_logger", logger)
         trace_id = getattr(self, "_trace_id", "no-trace")
-        status_name = self._status.name if hasattr(self, "_status") and hasattr(self._status, "name") else "IDLE"
+        status_name = (
+            self._status.name if hasattr(self, "_status") and hasattr(self._status, "name") else "IDLE"
+        )
         step_idx = step_index if step_index is not None else getattr(self, "_current_step_index", -1)
 
         getattr(logger_obj, level.lower(), logger_obj.info)(
@@ -264,7 +271,7 @@ class BaseBot(ABC):
     @measure_time(threshold_ms=10000)
     def _init_driver(self) -> None:
         """Inizializza il browser Chrome con opzioni anti-detection e configurazioni di download."""
-        self.log("Inizializzazione browser...")
+        self.log("🌐 Inizializzazione browser...")
         self.status = BotStatus.INITIALIZING
         options = self._get_chrome_options()
         if d_path := self._get_chromedriver_path():
@@ -329,9 +336,10 @@ class BaseBot(ABC):
         if (p_dir / "chromedriver.exe").exists():
             return str((p_dir / "chromedriver.exe").resolve())
 
-        if getattr(sys, "frozen", False) and (
-            ext := Path(sys.executable).parent / "drivers" / "chromedriver.exe"
-        ).exists():
+        if (
+            getattr(sys, "frozen", False)
+            and (ext := Path(sys.executable).parent / "drivers" / "chromedriver.exe").exists()
+        ):
             return str(ext.resolve())
 
         if (bndl := Path(ResourceManager.PROJECT_ROOT) / "drivers" / "chromedriver.exe").exists():
@@ -358,7 +366,9 @@ class BaseBot(ABC):
 
         # Forza SEMPRE il percorso di download per evitare fallback su cartelle temp
         # Se self.download_path è vuoto, usa la cartella Downloads dell'utente
-        target_download = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
+        target_download = (
+            Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
+        )
 
         if not target_download.exists():
             with suppress(Exception):
@@ -407,8 +417,13 @@ class BaseBot(ABC):
         self._stop_requested = False
         self._initialize_steps()
         with with_context(
-            trace_id=self._trace_id, bot_type=self.name.lower().replace(" ", "_"), username=self.username[:3] + "***"
+            trace_id=self._trace_id,
+            bot_type=self.name.lower().replace(" ", "_"),
+            username=self.username[:3] + "***",
         ):
+            # Log di configurazione iniziale pulito
+            self.log(f"⚙️ Avvio {self.name} | Headless: {self.headless} | Timeout: {self.timeout}s")
+
             valid_res, valid_msg = self.validate_data(data)
             if not valid_res:
                 self.log(f"❌ Validazione fallita: {valid_msg}", "ERROR")

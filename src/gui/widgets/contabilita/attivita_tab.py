@@ -40,8 +40,22 @@ class AttivitaProgrammateTab(QWidget):
     """
 
     COLUMNS: ClassVar[list[str]] = [
-        "PS", "AREA", "PdL", "IMP.", "DESCRIZIONE\nATTIVITA'", "LUN", "MAR", "MER", "GIO", "VEN",
-        "STATO\nPdL", "STATO\nATTIVITA'", "DATA\nCONTROLLO", "PERSONALE\nIMPIEGATO", "PO", "AVVISO",
+        "PS",
+        "AREA",
+        "PdL",
+        "IMP.",
+        "DESCRIZIONE\nATTIVITA'",
+        "LUN",
+        "MAR",
+        "MER",
+        "GIO",
+        "VEN",
+        "STATO\nPdL",
+        "STATO\nATTIVITA'",
+        "DATA\nCONTROLLO",
+        "PERSONALE\nIMPIEGATO",
+        "PO",
+        "AVVISO",
     ]
 
     def __init__(self, parent=None):

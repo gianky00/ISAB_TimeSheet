@@ -24,9 +24,7 @@ class SidebarChildButton(SidebarButton):
         super()._update_style()
         if not self._collapsed:
             current_style = self.styleSheet()
-            new_style = current_style.replace(
-                "padding: 12px 15px;", "padding: 10px 10px 10px 35px;"
-            )
+            new_style = current_style.replace("padding: 12px 15px;", "padding: 10px 10px 10px 35px;")
             self.setStyleSheet(new_style)
 
 

@@ -37,6 +37,7 @@ class ScaricaTSPanel(BaseBotPanel):
         self._setup_content()
         # Forza inizializzazione timeline immediata per Scarico TS
         from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
+
         self.activity_timeline.set_steps(ScaricaTSBot.STEPS)
 
         # Defer data loading to speed up startup
@@ -47,6 +48,7 @@ class ScaricaTSPanel(BaseBotPanel):
         Restituisce la classe ScaricaTSBot associata a questo pannello.
         """
         from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
+
         return ScaricaTSBot
 
     def _safe_load_data(self):

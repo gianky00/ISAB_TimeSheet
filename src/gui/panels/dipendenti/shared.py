@@ -186,9 +186,7 @@ class InteractiveStatusCard(QFrame):
         lbl_title.setStyleSheet("font-size: 14px; font-weight: 800; color: #495057; letter-spacing: 0.8px;")
 
         lbl_desc = QLabel(description)
-        lbl_desc.setStyleSheet(
-            "font-size: 13px; color: #6c757d; font-weight: 600;"
-        )
+        lbl_desc.setStyleSheet("font-size: 13px; color: #6c757d; font-weight: 600;")
         lbl_desc.setWordWrap(False)
         lbl_desc.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 

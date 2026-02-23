@@ -18,6 +18,7 @@ class AuditSignals:
 
                 class _Signals(QObject):
                     """Contenitore per i segnali basati su Qt."""
+
                     log_added = pyqtSignal(dict)
                     logs_updated = pyqtSignal()
 
@@ -27,11 +28,13 @@ class AuditSignals:
 
                 class _MockSignals:
                     """Mock per i segnali in assenza di ambiente GUI."""
+
                     def emit(self, *args: Any, **kwargs: Any) -> None:
                         """Simula l'emissione di un segnale."""
 
                     class _Signal:
                         """Simula un singolo segnale Qt."""
+
                         def connect(self, *args: Any, **kwargs: Any) -> None:
                             """Simula la connessione di uno slot."""
 

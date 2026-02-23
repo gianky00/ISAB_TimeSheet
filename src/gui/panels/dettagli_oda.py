@@ -48,6 +48,7 @@ class DettagliOdAPanel(BaseBotPanel):
     def get_bot_class(self) -> type:
         """Restituisce la classe bot specifica per lo scarico dei dettagli OdA."""
         from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
+
         return DettagliOdABot
 
     def _safe_load_data(self) -> None:
@@ -79,17 +80,24 @@ class DettagliOdAPanel(BaseBotPanel):
             "Pulisci Tabella",
             variant=ModernButton.Variant.DANGER,
             size=ModernButton.Size.SMALL,
-            icon=get_asset_path(Icons.TRASH)
+            icon=get_asset_path(Icons.TRASH),
         )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
         params_layout.addLayout(table_toolbar)
 
         config = config_manager.load_config()
-        self.data_table = EditableDataTable([
-            {"name": "Numero OdA", "type": "text"},
-            {"name": "Numero Contratto", "type": "combo", "options": config.get("contracts", []), "default": config.get("default_contract", "")},
-        ])
+        self.data_table = EditableDataTable(
+            [
+                {"name": "Numero OdA", "type": "text"},
+                {
+                    "name": "Numero Contratto",
+                    "type": "combo",
+                    "options": config.get("contracts", []),
+                    "default": config.get("default_contract", ""),
+                },
+            ]
+        )
         self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
         params_layout.addWidget(self.data_table)
@@ -113,7 +121,7 @@ class DettagliOdAPanel(BaseBotPanel):
         self.params_widget.set_fornitore(config.get("last_oda_fornitore", ""))
         self.params_widget.set_dates(
             config.get("last_oda_date_da", "01.01.2025"),
-            config.get("last_oda_date_a", QDate.currentDate().toString("dd.MM.yyyy"))
+            config.get("last_oda_date_a", QDate.currentDate().toString("dd.MM.yyyy")),
         )
         self.params_widget.set_dest_path(config.get("path_dettagli_oda", ""))
         if saved_data := config.get("last_oda_data", []):
@@ -176,6 +184,7 @@ class DettagliOdAPanel(BaseBotPanel):
             self._save_data()
 
         from src.bots import create_bot
+
         config = config_manager.load_config()
         bot = create_bot(
             "dettagli_oda",
@@ -186,7 +195,7 @@ class DettagliOdAPanel(BaseBotPanel):
             download_path=download_path,
             fornitore=fornitore,
             data_da=data_da,
-            data_a=data_a
+            data_a=data_a,
         )
 
         if not bot:
@@ -198,7 +207,7 @@ class DettagliOdAPanel(BaseBotPanel):
         worker = BotWorker(
             bot,
             {"rows": rows, "fornitore": fornitore, "data_da": data_da, "data_a": data_a},
-            telegram_service=tg_service
+            telegram_service=tg_service,
         )
         self.worker = worker
         self._setup_worker_connections(worker)
@@ -214,6 +223,11 @@ class DettagliOdAPanel(BaseBotPanel):
     def _on_worker_finished(self, success: bool) -> None:
         """Gestisce la pulizia post-esecuzione e tenta di aggiornare il pannello storico."""
         super()._on_worker_finished(success)
-        if success and (win := self.window()) and (storico := getattr(win, "storico_oda_panel", None)) and hasattr(storico, "refresh_data"):
+        if (
+            success
+            and (win := self.window())
+            and (storico := getattr(win, "storico_oda_panel", None))
+            and hasattr(storico, "refresh_data")
+        ):
             storico.refresh_data()
             self._on_log("🔄 Aggiornamento Storico OdA avviato.")

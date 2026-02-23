@@ -37,6 +37,7 @@ class FilterState:
     Gestione dello stato dei filtri per le notifiche.
     Mantiene le preferenze dell'utente su livelli, categorie e visibilità.
     """
+
     levels: list[str] = field(default_factory=lambda: ["all"])
     categories: list[str] = field(default_factory=list)
     priorities: list[str] = field(default_factory=list)
@@ -105,7 +106,9 @@ class NotificationsPanel(QWidget):
         actions_layout = QHBoxLayout()
         actions_layout.addStretch()
 
-        mark_read = ModernButton("Segna letti", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL)
+        mark_read = ModernButton(
+            "Segna letti", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL
+        )
         mark_read.setMinimumWidth(120)
         mark_read.setFixedHeight(40)
         mark_read.clicked.connect(self.manager.mark_all_as_read)
@@ -184,7 +187,10 @@ class NotificationsPanel(QWidget):
 
     def _clear_notifications(self):
         """Svuota tutte le notifiche previa conferma dell'utente."""
-        if QMessageBox.question(self, "Conferma", "Vuoi svuotare i messaggi?") == QMessageBox.StandardButton.Yes:
+        if (
+            QMessageBox.question(self, "Conferma", "Vuoi svuotare i messaggi?")
+            == QMessageBox.StandardButton.Yes
+        ):
             self.manager.clear_all()
 
     def refresh_notifications(self):
@@ -192,7 +198,12 @@ class NotificationsPanel(QWidget):
         Ricarica la lista delle notifiche applicando filtri, ricerca e raggruppamento.
         Ottimizza il rendering utilizzando la cache del filtraggio.
         """
-        cache_key = (self.current_filter, self.current_search, self.current_sort, len(self.manager.notifications))
+        cache_key = (
+            self.current_filter,
+            self.current_search,
+            self.current_sort,
+            len(self.manager.notifications),
+        )
 
         if self._last_filter_state == cache_key and self._cached_filter_result is not None:
             notifs = self._cached_filter_result
@@ -227,7 +238,12 @@ class NotificationsPanel(QWidget):
             notifs = [n for n in notifs if n.get("level") == "info"]
 
         if self.current_search:
-            notifs = [n for n in notifs if self.current_search in n.get("title", "").lower() or self.current_search in n.get("message", "").lower()]
+            notifs = [
+                n
+                for n in notifs
+                if self.current_search in n.get("title", "").lower()
+                or self.current_search in n.get("message", "").lower()
+            ]
 
         return self._sort_notifications(notifs)
 
@@ -237,7 +253,12 @@ class NotificationsPanel(QWidget):
             if not group_data["notifications"]:
                 continue
 
-            header = NotificationGroupHeader(title=group_data["title"], group_key=group_key, count=len(group_data["notifications"]), icon=group_data["icon"])
+            header = NotificationGroupHeader(
+                title=group_data["title"],
+                group_key=group_key,
+                count=len(group_data["notifications"]),
+                icon=group_data["icon"],
+            )
             header.toggled.connect(self._on_group_toggled)
             self.scroll_layout.insertWidget(self.scroll_layout.count() - 1, header)
 
@@ -343,7 +364,11 @@ class NotificationsPanel(QWidget):
         elif self.current_filter == "error":
             icon_text, title, subtitle = "🎉", "Sistema funzionante!", "Nessun errore registrato"
         else:
-            icon_text, title, subtitle = "📭", "Nessuna notifica", f"Nessuna notifica di tipo {self.current_filter}"
+            icon_text, title, subtitle = (
+                "📭",
+                "Nessuna notifica",
+                f"Nessuna notifica di tipo {self.current_filter}",
+            )
 
         icon_lbl = QLabel(icon_text)
         icon_lbl.setStyleSheet("font-size: 64px; border: none;")

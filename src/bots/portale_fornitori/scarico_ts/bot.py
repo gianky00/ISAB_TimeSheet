@@ -30,7 +30,7 @@ class ScaricaTSBot(BaseBot):
         ("filters", "Impostazione Filtri"),
         ("download", "Download Timesheet"),
         ("process", "Elaborazione VBA"),
-        ("cleanup", "Chiusura Sessione")
+        ("cleanup", "Chiusura Sessione"),
     ]
 
     @staticmethod

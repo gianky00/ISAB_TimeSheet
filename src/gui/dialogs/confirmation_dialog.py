@@ -26,6 +26,7 @@ class ConfirmationDialog(QDialog):
 
     class Variant:
         """Costanti per definire la tipologia del messaggio."""
+
         INFO = "info"
         WARNING = "warning"
         ERROR = "error"

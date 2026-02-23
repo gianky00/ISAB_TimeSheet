@@ -68,11 +68,15 @@ class TelegramTab(QWidget):
         help_btn.setIcon(get_colored_icon(get_asset_path(Icons.HELP), "#000000"))
         help_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         help_btn.clicked.connect(lambda: self.request_help.emit("Configurazione Telegram"))
-        help_btn.setStyleSheet("background-color: #e7f1ff; color: #0d6efd; border: 1px solid #0d6efd; border-radius: 6px; padding: 8px 15px; font-weight: bold;")
+        help_btn.setStyleSheet(
+            "background-color: #e7f1ff; color: #0d6efd; border: 1px solid #0d6efd; border-radius: 6px; padding: 8px 15px; font-weight: bold;"
+        )
         header_layout.addWidget(help_btn)
         layout.addLayout(header_layout)
 
-        desc = QLabel("Controlla SyncroJob dal tuo smartphone. Avvia bot, controlla lo stato e ricevi notifiche.")
+        desc = QLabel(
+            "Controlla SyncroJob dal tuo smartphone. Avvia bot, controlla lo stato e ricevi notifiche."
+        )
         desc.setStyleSheet("color: #6c757d; font-size: 14px;")
         desc.setWordWrap(True)
         layout.addWidget(desc)
@@ -111,7 +115,9 @@ class TelegramTab(QWidget):
         self.tg_reset_btn.setFixedWidth(180)
         self.tg_reset_btn.setMinimumHeight(40)
         self.tg_reset_btn.clicked.connect(self._reset_telegram_pairing)
-        self.tg_reset_btn.setStyleSheet("background-color: white; border: 2px solid #dc3545; border-radius: 6px; color: #dc3545; font-weight: bold; padding: 5px;")
+        self.tg_reset_btn.setStyleSheet(
+            "background-color: white; border: 2px solid #dc3545; border-radius: 6px; color: #dc3545; font-weight: bold; padding: 5px;"
+        )
         tg_id_layout.addWidget(self.tg_reset_btn)
         gl.addRow("Chat ID Autorizzato:", tg_id_layout)
 
@@ -154,7 +160,12 @@ class TelegramTab(QWidget):
         """Rimuove l'ID della chat autorizzata previa conferma dell'utente."""
         if not self.tg_chat_id_edit.text():
             return
-        res = QMessageBox.question(self, "Scollega Telegram", "Scollegare il dispositivo?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        res = QMessageBox.question(
+            self,
+            "Scollega Telegram",
+            "Scollegare il dispositivo?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
         if res == QMessageBox.StandardButton.Yes:
             self.tg_chat_id_edit.clear()
             self.settings_changed.emit()

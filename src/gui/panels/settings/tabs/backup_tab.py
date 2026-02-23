@@ -73,7 +73,9 @@ class BackupTab(QWidget):
 
         self.cloud_combo = QComboBox()
         self.cloud_combo.setMinimumHeight(40)
-        self.cloud_combo.setStyleSheet("QComboBox { border: 1px solid #ced4da; border-radius: 4px; padding: 5px; background-color: white; }")
+        self.cloud_combo.setStyleSheet(
+            "QComboBox { border: 1px solid #ced4da; border-radius: 4px; padding: 5px; background-color: white; }"
+        )
         self.cloud_combo.addItem("Locale (Documenti)", "Local")
         if clouds:
             for name, path in clouds.items():
@@ -116,7 +118,9 @@ class BackupTab(QWidget):
         restore_controls = QHBoxLayout()
         self.restore_combo = QComboBox()
         self.restore_combo.setMinimumHeight(40)
-        self.restore_combo.setStyleSheet("QComboBox { border: 1px solid #ced4da; border-radius: 4px; padding: 5px; background-color: white; }")
+        self.restore_combo.setStyleSheet(
+            "QComboBox { border: 1px solid #ced4da; border-radius: 4px; padding: 5px; background-color: white; }"
+        )
         restore_controls.addWidget(self.restore_combo)
 
         self.refresh_backups_btn = QPushButton()
@@ -203,10 +207,17 @@ class BackupTab(QWidget):
         if not path:
             return
 
-        res = QMessageBox.question(self, "Conferma Ripristino", "ATTENZIONE: Il ripristino sovrascriverà i dati attuali.\nProcedere?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        res = QMessageBox.question(
+            self,
+            "Conferma Ripristino",
+            "ATTENZIONE: Il ripristino sovrascriverà i dati attuali.\nProcedere?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
         if res == QMessageBox.StandardButton.Yes:
             success, msg = BackupManager.restore_backup(path)
             if success:
-                QMessageBox.information(self, "Ripristino Completato", "Dati ripristinati con successo. Riavvia l'app.")
+                QMessageBox.information(
+                    self, "Ripristino Completato", "Dati ripristinati con successo. Riavvia l'app."
+                )
             else:
                 QMessageBox.critical(self, "Errore Ripristino", msg)

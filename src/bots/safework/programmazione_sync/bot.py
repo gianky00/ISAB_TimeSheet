@@ -23,10 +23,18 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         ("login", "Login SafeWork"),
         ("nav", "Navigazione Attività"),
         ("filter", "Configurazione Filtri"),
-        ("search", "Ricerca ed Esportazione")
+        ("search", "Ricerca ed Esportazione"),
     ]
 
-    def __init__(self, username, password, headless=False, timeout=30, download_path=""):
+    def __init__(
+        self,
+        username,
+        password,
+        headless=False,
+        timeout=30,
+        download_path="",
+        account_type: str = "Esecutore",
+    ):
         """
         Inizializza il bot di sincronizzazione programmazione.
 
@@ -36,8 +44,9 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
             headless: Se avviare il browser in modalità nascosta.
             timeout: Tempo di attesa per Selenium.
             download_path: Cartella per il download degli Excel.
+            account_type: Tipo di account (Esecutore/ISAB).
         """
-        super().__init__(username, password, headless, timeout, download_path)
+        super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
         self.downloaded_file: str | None = None
 
     @staticmethod

@@ -208,7 +208,9 @@ class NavigationController:
         """Tenta di instaurare connessioni cross-pannello quando le dipendenze sono state caricate."""
         # Timbrature Bot -> DB & Dipendenti
         if hasattr(self.mw, "timbrature_bot_panel"):
-            if hasattr(self.mw, "timbrature_db_panel") and not getattr(self.mw, "_timbrature_signals_connected", False):
+            if hasattr(self.mw, "timbrature_db_panel") and not getattr(
+                self.mw, "_timbrature_signals_connected", False
+            ):
                 self.mw.timbrature_bot_panel.data_updated.connect(self.mw.timbrature_db_panel.refresh_data)
                 self.mw._timbrature_signals_connected = True
             if hasattr(self.mw, "dipendenti_panel") and not getattr(
@@ -218,8 +220,10 @@ class NavigationController:
                 self.mw._timbrature_dipendenti_signals_connected = True
 
         # PDL Search -> PDL DB
-        if hasattr(self.mw, "pdl_search_panel") and hasattr(self.mw, "pdl_db_panel") and not getattr(
-            self.mw, "_pdl_signals_connected", False
+        if (
+            hasattr(self.mw, "pdl_search_panel")
+            and hasattr(self.mw, "pdl_db_panel")
+            and not getattr(self.mw, "_pdl_signals_connected", False)
         ):
             self.mw.pdl_search_panel.data_updated.connect(self.mw.pdl_db_panel.refresh_data)
             self.mw._pdl_signals_connected = True
@@ -284,7 +288,13 @@ class NavigationController:
                 auto.set_active_tab(midx, sidx)
             return
 
-        db_map = {"db_timbrature": 3, "db_strumentale": 4, "db_dataease": 5, "db_dipendenti": 11, "nav_page_11": 11}
+        db_map = {
+            "db_timbrature": 3,
+            "db_strumentale": 4,
+            "db_dataease": 5,
+            "db_dipendenti": 11,
+            "nav_page_11": 11,
+        }
         if panel_key in db_map:
             self.navigate_to(db_map[panel_key])
 

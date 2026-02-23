@@ -45,6 +45,7 @@ class CaricoTSPanel(BaseBotPanel):
     def get_bot_class(self):
         """Restituisce la classe CaricoTSBot associata."""
         from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot
+
         return CaricoTSBot
 
     def _safe_load_data(self):
