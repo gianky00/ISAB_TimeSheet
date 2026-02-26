@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import (
 from src.core import config_manager
 from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
+from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.components.scarico_ore import FilterHeaderView, ScaricoOreTableModel
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -115,8 +116,8 @@ class ScaricoOrePanel(QWidget):
         """Configura la toolbar superiore con statistiche e ricerca, e la vista tabellare virtuale."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
-        self.tabs = QTabWidget()
-        self.tabs.setProperty("class", "Level2Tabs")
+        
+        self.tabs = AnimatedTabWidget()
 
         self.toolbar_container = QWidget()
         toolbar_layout = QHBoxLayout(self.toolbar_container)
@@ -140,7 +141,8 @@ class ScaricoOrePanel(QWidget):
             self.update_btn,
         ):
             toolbar_layout.addWidget(w)
-        self.tabs.setCornerWidget(self.toolbar_container, Qt.Corner.TopRightCorner)
+        
+        layout.addWidget(self.toolbar_container)
 
         self.scarico_tab = QWidget()
         scarico_layout = QVBoxLayout(self.scarico_tab)

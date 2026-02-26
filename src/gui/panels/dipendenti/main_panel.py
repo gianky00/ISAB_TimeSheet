@@ -6,9 +6,10 @@ Funge da punto di ingresso unico per tutte le funzionalità relative ai dipenden
 
 import logging
 
-from PyQt6.QtWidgets import QTabWidget, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
 from src.core.constants import Icons
+from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.panels.dipendenti.pages.anagrafica_page import AnagraficaPage
 from src.gui.panels.dipendenti_manager_panel import DipendentiManagerPanel
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -40,8 +41,7 @@ class DipendentiPanel(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        self.tabs = QTabWidget()
-        self.tabs.setProperty("class", "Level2Tabs")  # Stile Tab secondari
+        self.tabs = AnimatedTabWidget()
 
         # Tab 1: Monitoraggio
         self.anagrafica_page = AnagraficaPage()

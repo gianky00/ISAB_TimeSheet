@@ -30,6 +30,7 @@ from src.gui.controllers.bot_controller import BotController
 from src.gui.controllers.navigation_controller import NavigationController
 from src.gui.controllers.search_controller import SearchController
 from src.gui.controllers.service_controller import ServiceController
+from src.gui.components.animated_stack import SlidingStackedWidget
 from src.gui.styles import apply_theme
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path
@@ -181,7 +182,7 @@ class MainWindow(QMainWindow):
             self.global_search,
         ) = self.tool_bar_component.setup_content_toolbar(content_layout)
 
-        self.page_stack = QStackedWidget()
+        self.page_stack = SlidingStackedWidget()
         for i in range(12):
             placeholder = QWidget()
             self.page_stack.addWidget(placeholder)

@@ -26,6 +26,7 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.contabilita_worker import ContabilitaWorker
+from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.widgets.contabilita.attivita_tab import AttivitaProgrammateTab
 from src.gui.widgets.contabilita.certificati_tab import CertificatiCampioneTab
 from src.gui.widgets.contabilita.giornaliere_tab import GiornaliereYearTab
@@ -74,8 +75,8 @@ class ContabilitaPanel(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
 
-        self.main_tabs = QTabWidget()
-        self.main_tabs.setProperty("class", "Level2Tabs")
+        self.main_tabs = AnimatedTabWidget()
+        # self.main_tabs.setProperty("class", "Level2Tabs") # Rimosso per ora, stile gestito internamente
         self.main_tabs.currentChanged.connect(self._on_main_tab_changed)
 
         # --- UNIFIED TOOLBAR ---
@@ -115,12 +116,12 @@ class ContabilitaPanel(QWidget):
         toolbar_layout.addWidget(self.status_lbl)
         toolbar_layout.addWidget(self.update_btn)
 
-        self.main_tabs.setCornerWidget(self.toolbar_container, Qt.Corner.TopRightCorner)
+        layout.addWidget(self.toolbar_container)
 
         # --- TABS ---
-        self.year_tabs_widget = QTabWidget()
-        self.year_tabs_widget.setTabPosition(QTabWidget.TabPosition.South)
-        self.year_tabs_widget.setStyleSheet(self._get_subtab_style())
+        self.year_tabs_widget = AnimatedTabWidget()
+        self.year_tabs_widget.setTabPosition(QTabWidget.TabPosition.North)
+        # self.year_tabs_widget.setStyleSheet(self._get_subtab_style()) # Stile ora gestito internamente
         self.year_tabs_widget.currentChanged.connect(self._on_tab_changed)
         self.main_tabs.addTab(
             self.year_tabs_widget,
@@ -128,9 +129,9 @@ class ContabilitaPanel(QWidget):
             "Preventivi",
         )
 
-        self.giornaliere_tabs_widget = QTabWidget()
-        self.giornaliere_tabs_widget.setTabPosition(QTabWidget.TabPosition.South)
-        self.giornaliere_tabs_widget.setStyleSheet(self._get_subtab_style())
+        self.giornaliere_tabs_widget = AnimatedTabWidget()
+        self.giornaliere_tabs_widget.setTabPosition(QTabWidget.TabPosition.North)
+        # self.giornaliere_tabs_widget.setStyleSheet(self._get_subtab_style())
         self.giornaliere_tabs_widget.currentChanged.connect(self._on_tab_changed)
         self.main_tabs.addTab(
             self.giornaliere_tabs_widget,
@@ -166,7 +167,7 @@ class ContabilitaPanel(QWidget):
     def _on_search_changed(self, text: str) -> None:
         """Inoltra la stringa di ricerca al widget o al tab attualmente attivo."""
         current_widget = self.main_tabs.currentWidget()
-        if isinstance(current_widget, QTabWidget):
+        if isinstance(current_widget, (QTabWidget, AnimatedTabWidget)):
             current_widget = current_widget.currentWidget()
         if current_widget and hasattr(current_widget, "filter_data"):
             current_widget.filter_data(text)
@@ -259,7 +260,7 @@ class ContabilitaPanel(QWidget):
     def _connect_selection_signal(self) -> None:
         """Collega dinamicamente i segnali di selezione della tabella attiva per aggiornare i totali ore."""
         curr = self.main_tabs.currentWidget()
-        target = curr.currentWidget() if isinstance(curr, QTabWidget) else curr
+        target = curr.currentWidget() if isinstance(curr, (QTabWidget, AnimatedTabWidget)) else curr
 
         if target:
             if hasattr(target, "table"):

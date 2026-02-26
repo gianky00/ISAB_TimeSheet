@@ -6,10 +6,11 @@ Gestisce il salvataggio automatico con debounce e l'import/export delle preferen
 """
 
 from PyQt6.QtCore import QTimer, pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QTabWidget, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.core.constants import Icons
+from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.panels.settings.shared import style_button
 from src.gui.panels.settings.tabs.backup_tab import BackupTab
 from src.gui.panels.settings.tabs.config_tab import ConfigTab
@@ -60,8 +61,7 @@ class SettingsPanel(QWidget):
         main_layout.setSpacing(15)
         main_layout.setContentsMargins(15, 15, 15, 15)
 
-        self.tabs = QTabWidget()
-        self.tabs.setProperty("class", "Level2Tabs")
+        self.tabs = AnimatedTabWidget()
 
         # 1. Configurazione
         self.config_tab = ConfigTab()

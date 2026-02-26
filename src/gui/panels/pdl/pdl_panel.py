@@ -20,7 +20,6 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QSplitter,
     QTableView,
-    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -29,6 +28,7 @@ from src.bots import create_bot
 from src.core import config_manager
 from src.core.database import db_manager, pdl_queries
 from src.core.sync_tracker import SyncTracker
+from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.formatters import FastTableModel
 from src.gui.panels.base import BotWorker
 from src.gui.widgets.modern_button import ModernButton
@@ -125,8 +125,7 @@ class PDLDBPanel(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        self.tabs = QTabWidget()
-        self.tabs.setProperty("class", "Level2Tabs")
+        self.tabs = AnimatedTabWidget()
 
         # --- TAB 1: DATABASE PDL ---
         self.db_tab = QWidget()

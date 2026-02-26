@@ -204,9 +204,9 @@ class BaseBotPanel(QWidget):
         self.stop_btn.clicked.connect(self._on_stop)
         self.controls_layout.addWidget(self.stop_btn)
 
-        # Di default, se non siamo in un QTabWidget che "ruba" i controlli,
-        # li mettiamo in un header layout interno al pannello
+        # Header layout interno al pannello per i controlli
         self.header_layout = QHBoxLayout()
+        self.header_layout.setContentsMargins(Spacing.xs, 0, Spacing.xs, 0)
         self.header_layout.addStretch()
         self.header_layout.addWidget(self.controls_widget)
         self.main_layout.addLayout(self.header_layout)

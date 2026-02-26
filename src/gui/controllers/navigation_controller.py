@@ -9,6 +9,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtWidgets import QMessageBox, QStackedWidget, QWidget
+from src.gui.components.animated_tab_widget import AnimatedTabWidget
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -251,7 +252,10 @@ class NavigationController:
 
         self.get_panel(index)
         self.mw._current_page_index = index
-        self.mw.page_stack.setCurrentIndex(index)
+        if hasattr(self.mw.page_stack, "slide_to_index"):
+            self.mw.page_stack.slide_to_index(index)
+        else:
+            self.mw.page_stack.setCurrentIndex(index)
         self.mw.sidebar.set_active_button(index, sub_index)
 
     def navigate_to_extended(self, tab_idx: int, query: str) -> None:
@@ -285,7 +289,11 @@ class NavigationController:
             midx, sidx = bot_map[panel_key]
             self.navigate_to(1, sub_index=midx)
             if auto := getattr(self.mw, "automazioni_widget", None):
-                auto.set_active_tab(midx, sidx)
+                # Se è un AnimatedTabWidget o QTabWidget, deve avere setCurrentIndex
+                if hasattr(auto, "set_active_tab"):
+                    auto.set_active_tab(midx, sidx)
+                else:
+                    auto.setCurrentIndex(midx)
             return
 
         db_map = {
