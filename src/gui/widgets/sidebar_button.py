@@ -3,9 +3,9 @@ SyncroJob - Sidebar Button (Premium V6)
 Risoluzione contrasto: Sfondo selezione più scuro e opacità testo migliorata.
 """
 
-from PyQt6.QtCore import QPropertyAnimation, QRect, QSize, Qt, pyqtProperty
-from PyQt6.QtGui import QColor, QPainter
-from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QGraphicsOpacityEffect, QPushButton, QWidget
+from PyQt6.QtCore import QSize, Qt, pyqtProperty  # type: ignore[attr-defined]
+from PyQt6.QtGui import QColor
+from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QPushButton, QWidget
 
 from src.utils.helpers import get_colored_icon
 
@@ -45,7 +45,7 @@ class SidebarButton(QPushButton):
     def text_opacity(self) -> float:
         return self._text_opacity
 
-    @text_opacity.setter
+    @text_opacity.setter # type: ignore[no-redef]
     def text_opacity(self, value: float) -> None:
         self._text_opacity = value
         self._update_style()
@@ -77,10 +77,10 @@ class SidebarButton(QPushButton):
     def _update_style(self) -> None:
         align = "center" if self._collapsed else "left"
         padding = "0px" if self._collapsed else "12px 15px"
-        
+
         # Sfondo selezione più deciso (Teal scuro trasparente) per contrasto con testo bianco
         if self.isChecked():
-            bg_color = "rgba(0, 150, 136, 0.25)" 
+            bg_color = "rgba(0, 150, 136, 0.25)"
             text_color = "#ffffff"
             font_weight = "800"
         else:
