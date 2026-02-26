@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
+from src.core.constants import URLs
 from src.core.secrets_manager import SecretsManager
 from src.gui.styles import COLORS
 from src.utils.document_processor import DocumentProcessor
@@ -130,7 +131,7 @@ class LyraPanel(QWidget):
 
         provider = config_manager.get_config_value("ai_provider", "gemini")
         api_key = SecretsManager.get_gemini_api_key()
-        ollama_url = config_manager.get_config_value("ollama_url", "http://localhost:11434")
+        ollama_url = config_manager.get_config_value("ollama_url", URLs.OLLAMA_DEFAULT)
 
         # Se è gemini e manca la chiave, non possiamo fare nulla
         if provider == "gemini" and not api_key:
@@ -194,7 +195,7 @@ class LyraPanel(QWidget):
 
         provider = config_manager.get_config_value("ai_provider", "gemini")
         api_key = SecretsManager.get_gemini_api_key()
-        ollama_url = config_manager.get_config_value("ollama_url", "http://localhost:11434")
+        ollama_url = config_manager.get_config_value("ollama_url", URLs.OLLAMA_DEFAULT)
         model = config_manager.get_config_value("ai_model", "")
 
         if provider == "gemini" and not api_key:

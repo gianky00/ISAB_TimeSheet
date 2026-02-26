@@ -178,13 +178,13 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.params_container.setObjectName("paramsContainer")
         self.params_container.setStyleSheet(f"""
             QFrame#paramsContainer {{
-                background-color: {COLORS['bg_white']};
-                border: 1px solid {COLORS['border_light']};
-                border-bottom: 3px solid {COLORS['text_dark']};
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-bottom: 3px solid {COLORS["text_dark"]};
                 border-radius: 12px;
             }}
             QLabel {{
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
                 font-weight: bold;
                 font-size: 13px;
                 background: transparent;
@@ -226,12 +226,12 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.printer_combo.setStyleSheet(
             f"""
             QComboBox {{
-                border: 1px solid {COLORS['border_medium']};
+                border: 1px solid {COLORS["border_medium"]};
                 border-radius: 6px;
                 padding: 5px 10px;
-                background-color: {COLORS['bg_light']};
+                background-color: {COLORS["bg_light"]};
             }}
-            QComboBox:focus {{ border: 2px solid {COLORS['text_dark']}; background-color: {COLORS['bg_white']}; }}
+            QComboBox:focus {{ border: 2px solid {COLORS["text_dark"]}; background-color: {COLORS["bg_white"]}; }}
         """
         )
         # Popola stampanti
@@ -277,8 +277,8 @@ class ScaricoPDLPanel(BaseBotPanel):
         browse_btn.setFixedSize(38, 38)
         browse_btn.clicked.connect(self._browse_dest_path)
         browse_btn.setStyleSheet(f"""
-            QPushButton {{ background-color: {COLORS['bg_white']}; border: 1px solid {COLORS['border_medium']}; border-radius: 6px; }}
-            QPushButton:hover {{ background-color: {COLORS['table_selection_bg']}; border-color: {COLORS['text_dark']}; }}
+            QPushButton {{ background-color: {COLORS["bg_white"]}; border: 1px solid {COLORS["border_medium"]}; border-radius: 6px; }}
+            QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; border-color: {COLORS["text_dark"]}; }}
         """)
         hbox_dest.addWidget(browse_btn)
         vbox_dest.addLayout(hbox_dest)
@@ -328,7 +328,9 @@ class ScaricoPDLPanel(BaseBotPanel):
         status_container.setContentsMargins(0, 0, 0, 0)
 
         status_header = QLabel("Progresso")
-        status_header.setStyleSheet(f"font-weight: bold; font-size: 12px; color: {COLORS['text_muted']}; padding: 4px 0px;")
+        status_header.setStyleSheet(
+            f"font-weight: bold; font-size: 12px; color: {COLORS['text_muted']}; padding: 4px 0px;"
+        )
         status_header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         status_container.addWidget(status_header)
 
@@ -471,9 +473,11 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _validate_pdl_start(self, username, password) -> bool:
         """Esegue validazioni pre-avvio specifiche per PDL."""
+        from src.gui.styles import STATUS_COLORS
+
         if not username or not password:
             ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
-            self._update_status("#C62828", "Credenziali SafeWork mancanti")
+            self._update_status(STATUS_COLORS["error"], "Credenziali SafeWork mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return False
@@ -578,9 +582,11 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _handle_missing_pdls(self, missing_list: list[str]):
         """Segnala i PDL non trovati all'utente."""
+        from src.gui.styles import STATUS_COLORS
+
         if missing_list:
             missing_str = ", ".join(missing_list)
-            self._update_status("#2E7D32", f"Completato (Inesistenti: {missing_str})")
+            self._update_status(STATUS_COLORS["completed"], f"Completato (Inesistenti: {missing_str})")
 
     def _on_row_status(self, index: int, success: bool):
         """Aggiorna lo stato visivo di una specifica riga PDL."""

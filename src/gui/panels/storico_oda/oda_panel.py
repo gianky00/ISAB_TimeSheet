@@ -128,20 +128,20 @@ class StoricoOdaPanel(QWidget):
         self.tree.setAlternatingRowColors(True)
         self.tree.setStyleSheet(f"""
             QTreeView {{
-                gridline-color: {COLORS['bg_alt']};
-                selection-background-color: {COLORS['table_selection_bg']};
-                selection-color: {COLORS['text_dark']};
-                border: 1px solid {COLORS['border_light']};
+                gridline-color: {COLORS["bg_alt"]};
+                selection-background-color: {COLORS["table_selection_bg"]};
+                selection-color: {COLORS["text_dark"]};
+                border: 1px solid {COLORS["border_light"]};
                 border-radius: 8px;
-                background-color: {COLORS['bg_white']};
+                background-color: {COLORS["bg_white"]};
             }}
             QHeaderView::section {{
-                background-color: {COLORS['bg_light']};
-                color: {COLORS['text_dark']};
+                background-color: {COLORS["bg_light"]};
+                color: {COLORS["text_dark"]};
                 padding: 10px;
                 font-weight: bold;
                 border: none;
-                border-bottom: 1px solid {COLORS['border_light']};
+                border-bottom: 1px solid {COLORS["border_light"]};
             }}
         """)
         self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -367,6 +367,8 @@ class StoricoOdaPanel(QWidget):
     def _on_update_clicked(self):
         """Avvia il bot Dettagli OdA per sincronizzare i dati."""
         try:
+            from src.core.constants import Business
+
             account = config_manager.get_default_account()
             if not account:
                 QMessageBox.warning(self, "Attenzione", "Credenziali ISAB non configurate.")
@@ -374,7 +376,7 @@ class StoricoOdaPanel(QWidget):
             username, password = account.get("username"), account.get("password")
 
             config = config_manager.load_config()
-            fornitore = config.get("last_oda_fornitore", "KK10608 - COEMI S.R.L.")
+            fornitore = config.get("last_oda_fornitore", Business.DEFAULT_SUPPLIER)
 
             # Use configured path or default to app temp directory
             dest_path = config.get("path_dettagli_oda")

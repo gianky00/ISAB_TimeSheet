@@ -261,8 +261,8 @@ class ProgrammazioneTab(QWidget):
         # Stile Hover per Importazione
         self.req_filter.setStyleSheet(
             f"""
-            MultiSelectFilter QPushButton {{ border: 1px solid transparent; background: transparent; color: {COLORS['success_dark']}; }}
-            MultiSelectFilter QPushButton:hover {{ border: 1px solid {COLORS['success_dark']}; background: {COLORS['bg_success_pastel']}; border-radius: 6px; }}
+            MultiSelectFilter QPushButton {{ border: 1px solid transparent; background: transparent; color: {COLORS["success_dark"]}; }}
+            MultiSelectFilter QPushButton:hover {{ border: 1px solid {COLORS["success_dark"]}; background: {COLORS["bg_success_pastel"]}; border-radius: 6px; }}
         """
         )
         import_layout.addWidget(self.req_filter)
@@ -293,8 +293,8 @@ class ProgrammazioneTab(QWidget):
         # Stile Hover per Visualizzazione
         self.view_filter.setStyleSheet(
             f"""
-            MultiSelectFilter QPushButton {{ border: 1px solid transparent; background: transparent; color: {COLORS['primary_blue']}; }}
-            MultiSelectFilter QPushButton:hover {{ border: 1px solid {COLORS['primary_blue']}; background: {COLORS['bg_info_pastel']}; border-radius: 6px; }}
+            MultiSelectFilter QPushButton {{ border: 1px solid transparent; background: transparent; color: {COLORS["primary_blue"]}; }}
+            MultiSelectFilter QPushButton:hover {{ border: 1px solid {COLORS["primary_blue"]}; background: {COLORS["bg_info_pastel"]}; border-radius: 6px; }}
         """
         )
         view_layout.addWidget(self.view_filter)
@@ -399,8 +399,8 @@ class ProgrammazioneTab(QWidget):
 
         if hasattr(self, "week_label"):
             self.week_label.setText(
-                f"<span style='color: #6c757d;'>Monitoraggio Settimana:</span> "
-                f"<b style='color: #212529;'>{start_str} - {end_str}</b>"
+                f"<span style='color: {COLORS['text_muted']};'>Monitoraggio Settimana:</span> "
+                f"<b style='color: {COLORS['text_dark']};'>{start_str} - {end_str}</b>"
             )
 
         d = [(start_dt + timedelta(days=i)).strftime("%d/%m") for i in range(7)]
@@ -783,9 +783,9 @@ class ProgrammazioneTab(QWidget):
             group_box.setStyleSheet(
                 f"""
                 QGroupBox {{
-                    font-weight: bold; font-size: 14px; color: {COLORS['glass_dark']};
-                    border: 1px solid {COLORS['border_light']}; border-radius: 10px;
-                    margin-top: 20px; padding-top: 25px; background-color: {COLORS['bg_white']};
+                    font-weight: bold; font-size: 14px; color: {COLORS["glass_dark"]};
+                    border: 1px solid {COLORS["border_light"]}; border-radius: 10px;
+                    margin-top: 20px; padding-top: 25px; background-color: {COLORS["bg_white"]};
                 }}
                 QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top center; padding: 0 10px; }}
             """
@@ -910,16 +910,16 @@ class ProgrammazioneTab(QWidget):
                 if not item:
                     continue
                 if is_current_week and (i - 5 == current_weekday):
-                    item.setBackground(QColor("#cfe2ff"))
-                    item.setForeground(QColor("#084298"))
+                    item.setBackground(QColor(COLORS["table_info_bg"]))
+                    item.setForeground(QColor(COLORS["primary_dark"]))
                     item.setText(headers[i])
                     f = QFont()
                     f.setBold(True)
                     f.setPointSize(11)
                     item.setFont(f)
                 else:
-                    item.setBackground(QColor("#f8f9fa"))
-                    item.setForeground(QColor("#495057"))
+                    item.setBackground(QColor(COLORS["bg_light"]))
+                    item.setForeground(QColor(COLORS["text_dark"]))
                     item.setText(headers[i])
                     f = QFont()
                     f.setBold(True)
@@ -948,8 +948,10 @@ class ProgrammazioneTab(QWidget):
                     email_prefix = f"{parts[1][0].lower()}{parts[0].lower()}"
                     recipients.append(f"{email_prefix}@isab.com")
 
+            from src.core.constants import Emails
+
             mail.To = "; ".join(recipients)
-            mail.CC = "francesco.millo@coemi.it; ciro.scaravelli@coemi.it"
+            mail.CC = Emails.PROG_CC
 
             # Check se siamo nella settimana corrente per evidenziazione oggi
             is_current_week = getattr(self, "week_selector", None) and self.week_selector.currentIndex() == 0
@@ -957,13 +959,13 @@ class ProgrammazioneTab(QWidget):
 
             # Template HTML Moderno e Professionale (Larghezza Dinamica)
             html = f"""
-            <div style='font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: {COLORS['text_dark']}; padding: 20px; line-height: 1.5;'>
-                <h2 style='color: {COLORS['primary_dark']}; border-bottom: 2px solid {COLORS['border_light']}; padding-bottom: 15px; font-size: 24px; margin-top: 0;'>
+            <div style='font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: {COLORS["text_dark"]}; padding: 20px; line-height: 1.5;'>
+                <h2 style='color: {COLORS["primary_dark"]}; border-bottom: 2px solid {COLORS["border_light"]}; padding-bottom: 15px; font-size: 24px; margin-top: 0;'>
                     Programmazione Settimanale
                 </h2>
                 <p style='font-size: 16px; margin-bottom: 20px;'>
-                    Periodo: <span style='color: {COLORS['primary_dark']}; font-weight: bold;'>{{start_date}} - {{end_date}}</span>
-                    <span style='color: {COLORS['text_muted']}; margin-left: 10px;'>(Settimana {{week_num}})</span>
+                    Periodo: <span style='color: {COLORS["primary_dark"]}; font-weight: bold;'>{{start_date}} - {{end_date}}</span>
+                    <span style='color: {COLORS["text_muted"]}; margin-left: 10px;'>(Settimana {{week_num}})</span>
                 </p>
 
                 <table style='border-collapse: collapse; min-width: 600px; width: auto; font-size: 14px; box-shadow: 0 4px 6px {hex_to_rgba(COLORS["text_dark"], 0.05)}; border: 1px solid {COLORS["border_light"]};'>

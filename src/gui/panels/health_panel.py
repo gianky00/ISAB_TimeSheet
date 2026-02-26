@@ -83,7 +83,9 @@ class HealthScoreBadge(QWidget):
         margin, arc_width = 15, 12
         rect = QRectF(margin, margin, self._size - 2 * margin, self._size - 2 * margin)
 
-        painter.setPen(QPen(QColor(COLORS["bg_hover"]), arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+        painter.setPen(
+            QPen(QColor(COLORS["bg_hover"]), arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
+        )
         painter.drawEllipse(rect)
 
         painter.setPen(QPen(self._get_color(), arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
@@ -106,7 +108,7 @@ class StatCard(QFrame):
         title: str,
         value: str = "0",
         icon: str = "",
-        color: str = "#007bff",
+        color: str | None = None,
         parent: QWidget | None = None,
     ) -> None:
         """
@@ -121,8 +123,8 @@ class StatCard(QFrame):
         """
         super().__init__(parent)
         self._value_label: QLabel | None = None
-        self._color = color
-        self._setup_ui(title, value, icon, color)
+        self._color = color or COLORS["info_blue"]
+        self._setup_ui(title, value, icon, self._color)
 
     def _setup_ui(self, title: str, value: str, icon: str, color: str) -> None:
         """Configura lo stile CSS e il layout interno della card."""
@@ -139,7 +141,9 @@ class StatCard(QFrame):
             lbl_icon.setStyleSheet("font-size: 18px; border: none;")
             header.addWidget(lbl_icon)
         lbl_title = QLabel(title)
-        lbl_title.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px; font-weight: 500; border: none;")
+        lbl_title.setStyleSheet(
+            f"color: {COLORS['text_muted']}; font-size: 12px; font-weight: 500; border: none;"
+        )
         header.addWidget(lbl_title)
         header.addStretch()
         layout.addLayout(header)
@@ -239,7 +243,9 @@ class HealthPanel(QWidget):
         layout.setSpacing(20)
         header = QHBoxLayout()
         title = QLabel("📊 System Health")
-        title.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {COLORS['text_dark']}; border: none;")
+        title.setStyleSheet(
+            f"font-size: 24px; font-weight: bold; color: {COLORS['text_dark']}; border: none;"
+        )
         header.addWidget(title)
         header.addStretch()
 

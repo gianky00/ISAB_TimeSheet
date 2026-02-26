@@ -43,9 +43,9 @@ class PrenotaBPBot(BaseBot):
         self,
         username: str = "",
         password: str = "",
-        data_da: str = "01.01.2024",
-        data_a: str = "31.12.2025",
-        fornitore: str = "KK10608 - COEMI S.R.L.",
+        data_da: str | None = None,
+        data_a: str | None = None,
+        fornitore: str | None = None,
         **kwargs,
     ):
         # Pulizia kwargs come in Scarico TS
@@ -55,9 +55,12 @@ class PrenotaBPBot(BaseBot):
 
         # Passiamo i parametri richiesti a BaseBot
         super().__init__(username=username, password=password, **kwargs)
-        self.data_da = data_da
-        self.data_a = data_a
-        self.fornitore = fornitore
+        current_year = datetime.now().year
+        from src.core.constants import Business
+
+        self.data_da = data_da or f"01.01.{current_year}"
+        self.data_a = data_a or f"31.12.{current_year}"
+        self.fornitore = fornitore or Business.DEFAULT_SUPPLIER
         self.results: list[dict[str, Any]] = []
 
     def _get_row_value(self, row: dict[str, Any], target_key: str) -> str:

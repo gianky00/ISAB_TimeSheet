@@ -69,6 +69,17 @@ COLORS: Final[dict[str, str]] = {
 
 
 # =============================================================================
+# SOGLIE OPERATIVE (Business Logic)
+# =============================================================================
+
+THRESHOLD_DAYS: Final[dict[str, int]] = {
+    "warning": 20,
+    "expired": 30,
+    "critical": 60,
+}
+
+
+# =============================================================================
 # COLORI STATUS (per indicatori di stato nei widget)
 # =============================================================================
 
@@ -105,11 +116,18 @@ ANIMATION_TIMINGS: Final[dict[str, int]] = {
     "fade_slow": 500,
     "pulse_duration": 800,
     "pulse_slow": 2000,
+    # Toast Durations
+    "toast_info": 3000,
+    "toast_success": 2000,
+    "toast_warning": 10000,
+    "toast_error": 10000,
     # Intervals
     "countdown_update": 60000,  # 1 minuto
     "dot_cycle": 350,
     "status_refresh": 5000,
     "telemetry_refresh": 2000,
+    "auth_check": 4 * 3600 * 1000,  # 4 ore
+    "init_delay": 2000,
 }
 
 
@@ -158,6 +176,7 @@ UI_SIZES: Final[dict[str, int]] = {
     "radius_medium": 8,
     "radius_large": 12,
     "radius_card": 16,
+    "grid_step": 25,
     # Icon sizes
     "icon_small": 16,
     "icon_medium": 20,

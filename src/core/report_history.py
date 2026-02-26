@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import Any
 
 from src.core.config_manager import CONFIG_DIR
+from src.core.constants import FileNames
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 class ReportHistory:
     """Gestisce lo storico dei report email per il calcolo dei trend."""
 
-    HISTORY_FILE = CONFIG_DIR / "data" / "report_history.json"
+    HISTORY_FILE = CONFIG_DIR / "data" / FileNames.REPORT_HISTORY
     MAX_HISTORY_ENTRIES = 30  # Mantieni ultimi 30 report
 
     @classmethod

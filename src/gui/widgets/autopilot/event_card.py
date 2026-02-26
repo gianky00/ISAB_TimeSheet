@@ -32,19 +32,19 @@ class AutopilotEventCard(QFrame):
         self.setStyleSheet(
             f"""
             AutopilotEventCard {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_light']}, stop:1 {COLORS['bg_white']});
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_light"]}, stop:1 {COLORS["bg_white"]});
                 border-radius: 12px;
                 border-left: 4px solid {color};
-                border-top: 1px solid {COLORS['border_light']};
-                border-right: 1px solid {COLORS['border_light']};
-                border-bottom: 1px solid {COLORS['border_light']};
+                border-top: 1px solid {COLORS["border_light"]};
+                border-right: 1px solid {COLORS["border_light"]};
+                border-bottom: 1px solid {COLORS["border_light"]};
             }}
             AutopilotEventCard:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_hover']}, stop:1 {COLORS['bg_light']});
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_hover"]}, stop:1 {COLORS["bg_light"]});
                 border-left: 4px solid {color};
-                border-top: 1px solid {COLORS['border_medium']};
-                border-right: 1px solid {COLORS['border_medium']};
-                border-bottom: 1px solid {COLORS['border_medium']};
+                border-top: 1px solid {COLORS["border_medium"]};
+                border-right: 1px solid {COLORS["border_medium"]};
+                border-bottom: 1px solid {COLORS["border_medium"]};
             }}
         """
         )
@@ -57,7 +57,9 @@ class AutopilotEventCard(QFrame):
         # Icon
         self.icon_label = QLabel()
         self.icon_label.setFixedSize(32, 32)
-        self.icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(20, 20))
+        self.icon_label.setPixmap(
+            get_colored_icon(get_asset_path(icon_path), COLORS["bg_white"]).pixmap(20, 20)
+        )
         self.icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.icon_label.setStyleSheet(
             f"""
@@ -82,7 +84,7 @@ class AutopilotEventCard(QFrame):
             QLabel {{
                 font-weight: 600;
                 font-size: 14px;
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
                 border: none;
                 background: transparent;
             }}
@@ -96,7 +98,7 @@ class AutopilotEventCard(QFrame):
             f"""
             QLabel {{
                 font-size: 12px;
-                color: {COLORS['text_muted']};
+                color: {COLORS["text_muted"]};
                 border: none;
                 background: transparent;
                 font-weight: 500;

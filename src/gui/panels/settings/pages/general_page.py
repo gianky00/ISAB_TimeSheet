@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.core.constants import URLs
 from src.core.secrets_manager import SecretsManager
 from src.gui.panels.lyra.workers import ModelListWorker
 from src.gui.panels.settings.shared import create_group_box, style_button, style_input
@@ -70,7 +71,7 @@ class GeneralPage(QWidget):
         ollama_url_layout.setContentsMargins(0, 0, 0, 0)
         ollama_url_layout.addWidget(QLabel("Ollama Server URL:"))
         self.ollama_url_edit = QLineEdit()
-        self.ollama_url_edit.setPlaceholderText("http://localhost:11434")
+        self.ollama_url_edit.setPlaceholderText(URLs.OLLAMA_DEFAULT)
         self.ollama_url_edit.setMinimumHeight(40)
         style_input(self.ollama_url_edit)
         self.ollama_url_edit.textChanged.connect(self.settings_changed.emit)
@@ -164,7 +165,7 @@ class GeneralPage(QWidget):
         # AI
         provider = config.get("ai_provider", "gemini")
         self.provider_combo.setCurrentText(provider)
-        self.ollama_url_edit.setText(config.get("ollama_url", "http://localhost:11434"))
+        self.ollama_url_edit.setText(config.get("ollama_url", URLs.OLLAMA_DEFAULT))
 
         # Carichiamo il modello (se non c'è nella lista, il combo essendo editable lo mostrerà comunque)
         self.model_combo.setEditText(config.get("ai_model", ""))

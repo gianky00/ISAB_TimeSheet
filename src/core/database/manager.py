@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, ClassVar, Optional
 
 from src.core.config_manager import CONFIG_DIR
+from src.core.constants import FileNames
 from src.core.database.migrations.contabilita import (
     mig_contabilita_v1,
     mig_contabilita_v2,
@@ -48,11 +49,11 @@ class DatabaseManager:
     _write_lock = threading.Lock()
 
     # Predefined Paths
-    DB_CONTABILITA: ClassVar[Path] = CONFIG_DIR / "data" / "contabilita.db"
-    DB_TIMBRATURE: ClassVar[Path] = CONFIG_DIR / "data" / "timbrature_Isab.db"
-    DB_PDL: ClassVar[Path] = CONFIG_DIR / "data" / "pdl.db"
-    DB_STORICO_ODA: ClassVar[Path] = CONFIG_DIR / "data" / "storico_oda.db"
-    DB_DIPENDENTI: ClassVar[Path] = CONFIG_DIR / "data" / "anagrafica_dipendenti.db"
+    DB_CONTABILITA: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.DB_CONTABILITA
+    DB_TIMBRATURE: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.DB_TIMBRATURE
+    DB_PDL: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.DB_PDL
+    DB_STORICO_ODA: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.DB_STORICO_ODA
+    DB_DIPENDENTI: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.DB_DIPENDENTI
 
     # Dizionari di Migrazione
     MIGRATIONS_CONTABILITA: ClassVar[dict[int, Callable[[sqlite3.Connection], None]]] = {

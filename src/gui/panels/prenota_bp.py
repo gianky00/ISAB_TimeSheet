@@ -116,8 +116,9 @@ class PrenotaBPPanel(BaseBotPanel):
         if saved_data:
             self.data_table.set_data(saved_data)
 
-        date_da = config.get("last_prenota_date_from", "01.01.2024")
-        date_a = config.get("last_prenota_date_to", "31.12.2025")
+        current_year = datetime.now().year
+        date_da = config.get("last_prenota_date_from", f"01.01.{current_year}")
+        date_a = config.get("last_prenota_date_to", f"31.12.{current_year}")
         self.params_widget.set_dates(date_da, date_a)
 
     def _save_data(self):

@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QWidget
 
 from src.bots.base.base_bot import StepStatus
 from src.gui.styles import COLORS
+from src.gui.styles.constants import UI_SIZES
 
 
 class TimelineNode:
@@ -158,7 +159,7 @@ class ActivityTimelineWidget(QWidget):
         """Metodo di aggiornamento periodico per gli elementi dinamici (60 FPS)."""
         self._rotation_angle, self._grid_offset, self._dash_offset = (
             (self._rotation_angle + 3) % 360,
-            (self._grid_offset + 0.3) % 25.0,
+            (self._grid_offset + 0.3) % float(UI_SIZES["grid_step"]),
             (self._dash_offset + 0.01) % 1.0,
         )
         self.update()
@@ -231,7 +232,7 @@ class ActivityTimelineWidget(QWidget):
             # 1. DISEGNO SFONDO ARROTONDATO (Cyber-Frame)
             rect = QRectF(10, 10, self.width() - 20, self.height() - 20)
             path = QPainterPath()
-            path.addRoundedRect(rect, 15, 15)
+            path.addRoundedRect(rect, float(UI_SIZES["radius_card"]), float(UI_SIZES["radius_card"]))
 
             painter.save()
             painter.setClipPath(path)
@@ -290,7 +291,7 @@ class ActivityTimelineWidget(QWidget):
         """
         painter.setPen(QPen(self.PALETTE["grid"], 0.5))
         step, left, top, right, bottom = (
-            25,
+            UI_SIZES["grid_step"],
             int(rect.left()),
             int(rect.top()),
             int(rect.right()),

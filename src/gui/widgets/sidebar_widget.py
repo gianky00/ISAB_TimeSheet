@@ -89,8 +89,9 @@ class SidebarGroup(QWidget):
 
     def _set_arrow_icon(self, expanded: bool) -> None:
         from src.utils.helpers import get_colored_icon
+
         icon_enum = Icons.CHEVRON_DOWN if expanded else Icons.CHEVRON_RIGHT
-        icon = get_colored_icon(get_asset_path(icon_enum), "#FFFFFF")
+        icon = get_colored_icon(get_asset_path(icon_enum), COLORS["bg_white"])
         self.arrow_label.setPixmap(icon.pixmap(12, 12))
 
     def toggle_group(self) -> None:
@@ -183,7 +184,7 @@ class SidebarWidget(QFrame):
     def sidebar_width(self) -> int:
         return self.minimumWidth()
 
-    @sidebar_width.setter # type: ignore[no-redef]
+    @sidebar_width.setter  # type: ignore[no-redef]
     def sidebar_width(self, w: int) -> None:
         self.setMinimumWidth(w)
         self.setMaximumWidth(w)
@@ -192,15 +193,15 @@ class SidebarWidget(QFrame):
         return f"""
             QFrame#sidebarFrame {{
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 {COLORS['glass_dark']}, stop:1 {COLORS['glass_deep']});
-                border-right: 1px solid {COLORS['glass_border']};
+                    stop:0 {COLORS["glass_dark"]}, stop:1 {COLORS["glass_deep"]});
+                border-right: 1px solid {COLORS["glass_border"]};
                 border-radius: 15px;
             }}
             QScrollArea {{ border: none; background: transparent; }}
             QScrollArea > QWidget > QWidget {{ background: transparent; }}
             QWidget#scrollContent {{ background: transparent; }}
             QScrollBar:vertical {{ border: none; background: transparent; width: 4px; }}
-            QScrollBar::handle:vertical {{ background: {hex_to_rgba(COLORS['bg_white'], 0.1)}; border-radius: 2px; }}
+            QScrollBar::handle:vertical {{ background: {hex_to_rgba(COLORS["bg_white"], 0.1)}; border-radius: 2px; }}
         """
 
     def _setup_ui(self) -> None:
@@ -224,7 +225,11 @@ class SidebarWidget(QFrame):
         self.logo_icon = QLabel()
         pix = QPixmap(get_asset_path("assets/app.ico"))
         if not pix.isNull():
-            self.logo_icon.setPixmap(pix.scaled(28, 28, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+            self.logo_icon.setPixmap(
+                pix.scaled(
+                    28, 28, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+                )
+            )
         logo_layout.addWidget(self.logo_icon)
         h_layout.addWidget(self.logo_badge)
 
@@ -252,7 +257,14 @@ class SidebarWidget(QFrame):
         self.btn_lyra = SidebarButton("Lyra AI", get_asset_path(Icons.SPARKLES))
         self.group_notifiche = SidebarGroup("Monitoraggio", get_asset_path(Icons.ACTIVITY))
 
-        self.main_btns: list[SidebarButton | SidebarGroup] = [self.btn_palette, self.btn_home, self.group_automazioni, self.group_db, self.btn_lyra, self.group_notifiche]
+        self.main_btns: list[SidebarButton | SidebarGroup] = [
+            self.btn_palette,
+            self.btn_home,
+            self.group_automazioni,
+            self.group_db,
+            self.btn_lyra,
+            self.group_notifiche,
+        ]
         for btn in self.main_btns:
             self.menu_layout.addWidget(btn)
             if isinstance(btn, SidebarGroup):
@@ -270,14 +282,25 @@ class SidebarWidget(QFrame):
         self.btn_pdl = SidebarChildButton("PDL", get_asset_path(Icons.PDL))
         self.btn_dipendenti = SidebarChildButton("Dipendenti", get_asset_path(Icons.DIPENDENTI))
         self.btn_storico_oda = SidebarChildButton("Storico OdA", get_asset_path(Icons.FILE_TEXT))
-        self.db_child_btns: list[SidebarChildButton] = [self.btn_timbrature, self.btn_strumentale, self.btn_dataease, self.btn_pdl, self.btn_dipendenti, self.btn_storico_oda]
+        self.db_child_btns: list[SidebarChildButton] = [
+            self.btn_timbrature,
+            self.btn_strumentale,
+            self.btn_dataease,
+            self.btn_pdl,
+            self.btn_dipendenti,
+            self.btn_storico_oda,
+        ]
         for b in self.db_child_btns:
             self.group_db.add_child(b)
 
         self.btn_notifiche = SidebarChildButton("Notifiche", get_asset_path(Icons.BELL))
         self.btn_audit = SidebarChildButton("Audit", get_asset_path(Icons.SHIELD))
         self.btn_health = SidebarChildButton("Health", get_asset_path(Icons.ACTIVITY))
-        self.notif_child_btns: list[SidebarChildButton] = [self.btn_notifiche, self.btn_audit, self.btn_health]
+        self.notif_child_btns: list[SidebarChildButton] = [
+            self.btn_notifiche,
+            self.btn_audit,
+            self.btn_health,
+        ]
         for b in self.notif_child_btns:
             self.group_notifiche.add_child(b)
 

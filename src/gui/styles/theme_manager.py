@@ -122,10 +122,10 @@ class ThemeManager:
     def _process_qss(self, content: str) -> str:
         """Sostituisce i segnaposto {{key}} con i valori della palette e delle costanti."""
         p = self.palette
-        from src.gui.styles.constants import COLORS
+        from src.gui.styles.constants import COLORS, FONT_SIZES, UI_SIZES
 
         # Mapping di base dalla ColorPalette
-        mapping = {
+        mapping: dict[str, Any] = {
             "primary": p.primary,
             "primary_variant": p.primary_variant,
             "on_primary": p.on_primary,
@@ -152,6 +152,14 @@ class ThemeManager:
         for k, v in COLORS.items():
             if k not in mapping:
                 mapping[k] = v
+
+        # Aggiunge dimensioni UI
+        for k, v in UI_SIZES.items():
+            mapping[k] = f"{v}px"
+
+        # Aggiunge font sizes
+        for k, v in FONT_SIZES.items():
+            mapping[f"font_{k}"] = f"{v}px"
 
         processed = content
         for key, value in mapping.items():

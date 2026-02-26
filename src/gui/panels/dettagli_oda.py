@@ -120,8 +120,9 @@ class DettagliOdAPanel(BaseBotPanel):
         config = config_manager.load_config()
         self.refresh_fornitori()
         self.params_widget.set_fornitore(config.get("last_oda_fornitore", ""))
+        current_year = datetime.now().year
         self.params_widget.set_dates(
-            config.get("last_oda_date_da", "01.01.2025"),
+            config.get("last_oda_date_da", f"01.01.{current_year}"),
             config.get("last_oda_date_a", QDate.currentDate().toString("dd.MM.yyyy")),
         )
         self.params_widget.set_dest_path(config.get("path_dettagli_oda", ""))

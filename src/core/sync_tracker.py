@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 from src.core.config_manager import CONFIG_DIR
+from src.core.constants import FileNames
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class SyncTracker:
     Fornisce metodi statici per aggiornare e recuperare i metadati delle operazioni di sync.
     """
 
-    STATE_FILE: ClassVar[Path] = CONFIG_DIR / "data" / "sync_state.json"
+    STATE_FILE: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.SYNC_STATE
     """Percorso del file JSON contenente lo stato di sincronizzazione."""
 
     _cache: ClassVar[dict[str, Any]] = {}

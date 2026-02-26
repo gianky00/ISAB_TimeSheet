@@ -133,10 +133,12 @@ class MainWindow(QMainWindow):
             raise
 
         # Proactive Checks
-        QTimer.singleShot(2000, self._check_isab_authorizations)
+        from src.gui.styles.constants import ANIMATION_TIMINGS
+
+        QTimer.singleShot(ANIMATION_TIMINGS["init_delay"], self._check_isab_authorizations)
         self.auth_check_timer = QTimer(self)
         self.auth_check_timer.timeout.connect(self._check_isab_authorizations)
-        self.auth_check_timer.start(4 * 3600 * 1000)
+        self.auth_check_timer.start(ANIMATION_TIMINGS["auth_check"])
 
         # Connect Autopilot real-time updates
         if hasattr(self, "timbrature_bot_panel"):

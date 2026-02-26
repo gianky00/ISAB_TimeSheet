@@ -30,6 +30,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.gui.controllers.command_registry import CommandNode
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 if TYPE_CHECKING:
@@ -90,13 +91,13 @@ class CommandPaletteDialog(QDialog):
         self.container = QWidget(self)
         self.container.setGeometry(10, 10, self.target_width - 20, self.target_height - 20)
 
-        bg_color = "rgba(32, 33, 36, 0.98)"
-        text_color = "#e8eaed"
-        accent_color = "#8ab4f8"
+        bg_color = COLORS["glass_dark"]
+        text_color = COLORS["bg_white"]
+        accent_color = COLORS["primary_blue"]
 
         self.container.setObjectName("MainContainer")
         self.container.setStyleSheet(
-            f"QWidget#MainContainer {{ background-color: {bg_color}; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; color: {text_color}; }} QLabel {{ border: none; background: transparent; }}"
+            f"QWidget#MainContainer {{ background-color: {bg_color}; border: 1px solid {COLORS['glass_border']}; border-radius: 16px; color: {text_color}; }} QLabel {{ border: none; background: transparent; }}"
         )
 
         shadow = QGraphicsDropShadowEffect(self)
@@ -127,7 +128,7 @@ class CommandPaletteDialog(QDialog):
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Type a command...")
         self.search_bar.setStyleSheet(
-            f"QLineEdit {{ background-color: transparent; color: {text_color}; border: none; border-bottom: 2px solid rgba(255, 255, 255, 0.1); font-size: 20px; padding: 8px 4px; }} QLineEdit:focus {{ border-bottom: 2px solid {accent_color}; }}"
+            f"QLineEdit {{ background-color: transparent; color: {text_color}; border: none; border-bottom: 2px solid {COLORS['glass_border']}; font-size: 20px; padding: 8px 4px; }} QLineEdit:focus {{ border-bottom: 2px solid {accent_color}; }}"
         )
         self.search_bar.textChanged.connect(self._filter_list)
         self.search_bar.installEventFilter(self)
@@ -139,7 +140,7 @@ class CommandPaletteDialog(QDialog):
         self.list_widget = QListWidget()
         self.list_widget.setVerticalScrollMode(QListWidget.ScrollMode.ScrollPerPixel)
         self.list_widget.setStyleSheet(
-            f"QListWidget {{ background-color: {bg_color}; border: none; outline: none; }} QListWidget::item {{ color: {text_color}; }} QListWidget::item:selected {{ background-color: #04395e; color: #ffffff; }} QListWidget::item:hover {{ background-color: #2a2d2e; }}"
+            f"QListWidget {{ background-color: {bg_color}; border: none; outline: none; }} QListWidget::item {{ color: {text_color}; }} QListWidget::item:selected {{ background-color: {COLORS['primary_dark']}; color: #ffffff; }} QListWidget::item:hover {{ background-color: {COLORS['glass_deep']}; }}"
         )
         self.list_widget.itemActivated.connect(self._execute_selected)
         self.list_widget.clicked.connect(self._execute_selected)
@@ -352,29 +353,29 @@ class CommandPaletteDialog(QDialog):
 
         icon_lbl = QLabel()
         icon_lbl.setFixedSize(20, 20)
-        pm = get_colored_icon(get_asset_path(node.icon), "#cccccc").pixmap(20, 20)
+        pm = get_colored_icon(get_asset_path(node.icon), COLORS["text_light"]).pixmap(20, 20)
         icon_lbl.setPixmap(pm)
         h.addWidget(icon_lbl)
 
         v = QVBoxLayout()
         v.setSpacing(2)
         lbl = QLabel(node.label)
-        lbl.setStyleSheet("font-size: 14px; font-weight: bold; color: #e1e1e1;")
+        lbl.setStyleSheet(f"font-size: 14px; font-weight: bold; color: {COLORS['bg_white']};")
         v.addWidget(lbl)
         if node.description:
             desc = QLabel(node.description)
-            desc.setStyleSheet("font-size: 12px; color: #858585;")
+            desc.setStyleSheet(f"font-size: 12px; color: {COLORS['text_muted']};")
             v.addWidget(desc)
         h.addLayout(v)
         h.addStretch()
 
         if not node.is_leaf:
             arrow = QLabel("▶")
-            arrow.setStyleSheet("color: #858585; font-size: 10px;")
+            arrow.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px;")
             h.addWidget(arrow)
         elif node.shortcut:
             sc = QLabel(node.shortcut)
-            sc.setStyleSheet("color: #858585; font-family: monospace;")
+            sc.setStyleSheet(f"color: {COLORS['text_muted']}; font-family: monospace;")
             h.addWidget(sc)
 
         item.setData(Qt.ItemDataRole.UserRole, node)

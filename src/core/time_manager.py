@@ -8,6 +8,8 @@ from email.utils import parsedate_to_datetime
 
 import requests
 
+from src.core.constants import URLs
+
 
 def get_network_time(timeout: int = 2) -> datetime | None:
     """
@@ -20,7 +22,7 @@ def get_network_time(timeout: int = 2) -> datetime | None:
     """
     try:
         # Effettua una richiesta HEAD a google.com (veloce e affidabile)
-        response = requests.head("https://www.google.com", timeout=timeout)
+        response = requests.head(URLs.NET_TIME_CHECK, timeout=timeout)
 
         if "Date" in response.headers:
             # Parsa l'header Date (RFC 2822)

@@ -117,7 +117,8 @@ class ScaricaTSPanel(BaseBotPanel):
 
         # Usa il widget per i parametri comuni
         self.params_widget.set_fornitore(config.get("last_ts_fornitore", ""))
-        self.params_widget.set_dates(config.get("last_ts_date", "01.01.2025"))
+        current_year = datetime.now().year
+        self.params_widget.set_dates(config.get("last_ts_date", f"01.01.{current_year}"))
         self.params_widget.set_dest_path(config.get("path_scarico_ts", ""))
 
         # Carica dati specifici

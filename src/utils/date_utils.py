@@ -121,23 +121,27 @@ def calculate_days_diff(date_obj: date | None, from_date: date | None = None) ->
     return (from_date - date_obj).days
 
 
-def get_status_by_days(days: int | None, thresholds: tuple[int, int] = (20, 30)) -> tuple[str, str]:
+def get_status_by_days(days: int | None, thresholds: tuple[int, int] | None = None) -> tuple[str, str]:
     """
     Determina lo status e il colore in base ai giorni trascorsi.
 
     Args:
         days: Numero di giorni
-        thresholds: Tuple (warning_threshold, expired_threshold)
+        thresholds: Tuple opzionale (warning_threshold, expired_threshold)
 
     Returns:
         Tuple (status_type, color_hex)
     """
-    from src.gui.styles.constants import STATUS_COLORS
+    from src.gui.styles.constants import STATUS_COLORS, THRESHOLD_DAYS
 
     if days is None:
         return ("unknown", STATUS_COLORS["excluded"])
 
-    warning_threshold, expired_threshold = thresholds
+    if thresholds:
+        warning_threshold, expired_threshold = thresholds
+    else:
+        warning_threshold = THRESHOLD_DAYS["warning"]
+        expired_threshold = THRESHOLD_DAYS["expired"]
 
     if days <= warning_threshold:
         return ("ok", STATUS_COLORS["ok"])

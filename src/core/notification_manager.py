@@ -16,6 +16,7 @@ from typing import Any, Optional
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from src.core import config_manager
+from src.core.constants import FileNames
 
 
 class NotificationManager(QObject):
@@ -58,7 +59,7 @@ class NotificationManager(QObject):
     def __init__(self) -> None:
         """Inizializza il manager caricando le notifiche salvate su disco."""
         super().__init__()
-        self.notifications_file = config_manager.CONFIG_DIR / "notifications.json"
+        self.notifications_file = config_manager.CONFIG_DIR / FileNames.NOTIFICATIONS
         if not hasattr(self, "_lock"):
             self._lock = threading.RLock()
         self.notifications: list[dict[str, Any]] = self._load_notifications()

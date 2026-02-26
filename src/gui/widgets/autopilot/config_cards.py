@@ -34,12 +34,12 @@ class AutopilotConfigCard(QFrame):
         self.setStyleSheet(
             f"""
             AutopilotConfigCard {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_light']}, stop:1 {COLORS['bg_white']});
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_light"]}, stop:1 {COLORS["bg_white"]});
                 border-radius: 12px;
                 border-left: 4px solid {color};
-                border-top: 1px solid {COLORS['border_light']};
-                border-right: 1px solid {COLORS['border_light']};
-                border-bottom: 1px solid {COLORS['border_light']};
+                border-top: 1px solid {COLORS["border_light"]};
+                border-right: 1px solid {COLORS["border_light"]};
+                border-bottom: 1px solid {COLORS["border_light"]};
             }}
         """
         )
@@ -54,7 +54,7 @@ class AutopilotConfigCard(QFrame):
 
         icon_label = QLabel()
         icon_label.setFixedSize(28, 28)
-        icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18))
+        icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), COLORS["bg_white"]).pixmap(18, 18))
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_label.setStyleSheet(
             f"""
@@ -74,7 +74,7 @@ class AutopilotConfigCard(QFrame):
             QLabel {{
                 font-weight: 600;
                 font-size: 14px;
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
                 border: none;
                 background: transparent;
             }}
@@ -91,20 +91,20 @@ class AutopilotConfigCard(QFrame):
             f"""
             QCheckBox {{
                 font-size: 13px;
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
                 spacing: 8px;
             }}
             QCheckBox::indicator {{
                 width: 18px;
                 height: 18px;
                 border-radius: 4px;
-                border: 2px solid {COLORS['border_medium']};
-                background: {COLORS['bg_white']};
+                border: 2px solid {COLORS["border_medium"]};
+                background: {COLORS["bg_white"]};
             }}
             QCheckBox::indicator:checked {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 {COLORS['primary_blue']}, stop:1 {COLORS['primary_dark']});
-                border-color: {COLORS['primary_dark']};
+                    stop:0 {COLORS["primary_blue"]}, stop:1 {COLORS["primary_dark"]});
+                border-color: {COLORS["primary_dark"]};
                 image: url(assets/icons/check.svg);
             }}
         """
@@ -121,7 +121,7 @@ class AutopilotConfigCard(QFrame):
             f"""
             QLabel {{
                 font-size: 13px;
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
             }}
         """
         )
@@ -134,14 +134,14 @@ class AutopilotConfigCard(QFrame):
             f"""
             QTimeEdit {{
                 padding: 6px 10px;
-                border: 1px solid {COLORS['border_medium']};
+                border: 1px solid {COLORS["border_medium"]};
                 border-radius: 6px;
-                background: {COLORS['bg_white']};
+                background: {COLORS["bg_white"]};
                 font-size: 13px;
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
             }}
             QTimeEdit:focus {{
-                border-color: {COLORS['primary_dark']};
+                border-color: {COLORS["primary_dark"]};
             }}
         """
         )
@@ -207,12 +207,12 @@ class AutopilotConfigCardWithInterval(QFrame):
         self.setStyleSheet(
             f"""
             AutopilotConfigCardWithInterval {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_light']}, stop:1 {COLORS['bg_white']});
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_light"]}, stop:1 {COLORS["bg_white"]});
                 border-radius: 12px;
                 border-left: 4px solid {color};
-                border-top: 1px solid {COLORS['border_light']};
-                border-right: 1px solid {COLORS['border_light']};
-                border-bottom: 1px solid {COLORS['border_light']};
+                border-top: 1px solid {COLORS["border_light"]};
+                border-right: 1px solid {COLORS["border_light"]};
+                border-bottom: 1px solid {COLORS["border_light"]};
             }}
         """
         )
@@ -227,7 +227,7 @@ class AutopilotConfigCardWithInterval(QFrame):
 
         icon_label = QLabel()
         icon_label.setFixedSize(28, 28)
-        icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18))
+        icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), COLORS["bg_white"]).pixmap(18, 18))
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_label.setStyleSheet(
             f"""
@@ -247,7 +247,7 @@ class AutopilotConfigCardWithInterval(QFrame):
             QLabel {{
                 font-weight: 600;
                 font-size: 14px;
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
                 border: none;
                 background: transparent;
             }}
@@ -264,20 +264,20 @@ class AutopilotConfigCardWithInterval(QFrame):
             f"""
             QCheckBox {{
                 font-size: 13px;
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
                 spacing: 8px;
             }}
             QCheckBox::indicator {{
                 width: 18px;
                 height: 18px;
                 border-radius: 4px;
-                border: 2px solid {COLORS['border_medium']};
-                background: {COLORS['bg_white']};
+                border: 2px solid {COLORS["border_medium"]};
+                background: {COLORS["bg_white"]};
             }}
             QCheckBox::indicator:checked {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 {COLORS['primary_blue']}, stop:1 {COLORS['primary_dark']});
-                border-color: {COLORS['primary_dark']};
+                    stop:0 {COLORS["primary_blue"]}, stop:1 {COLORS["primary_dark"]});
+                border-color: {COLORS["primary_dark"]};
                 image: url(assets/icons/check.svg);
             }}
         """
@@ -302,14 +302,14 @@ class AutopilotConfigCardWithInterval(QFrame):
             f"""
             QTimeEdit {{
                 padding: 4px 8px;
-                border: 1px solid {COLORS['border_medium']};
+                border: 1px solid {COLORS["border_medium"]};
                 border-radius: 4px;
-                background: {COLORS['bg_white']};
+                background: {COLORS["bg_white"]};
                 font-size: 12px;
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
             }}
             QTimeEdit:focus {{
-                border-color: {COLORS['primary_dark']};
+                border-color: {COLORS["primary_dark"]};
             }}
         """
         )
@@ -330,14 +330,14 @@ class AutopilotConfigCardWithInterval(QFrame):
             f"""
             QSpinBox {{
                 padding: 4px 8px;
-                border: 1px solid {COLORS['border_medium']};
+                border: 1px solid {COLORS["border_medium"]};
                 border-radius: 4px;
-                background: {COLORS['bg_white']};
+                background: {COLORS["bg_white"]};
                 font-size: 12px;
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
             }}
             QSpinBox:focus {{
-                border-color: {COLORS['primary_dark']};
+                border-color: {COLORS["primary_dark"]};
             }}
         """
         )

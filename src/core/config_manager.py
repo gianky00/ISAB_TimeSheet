@@ -16,6 +16,7 @@ from typing import Any
 
 from platformdirs import user_data_dir
 
+from src.core.constants import URLs
 from src.core.secrets_manager import SecretsManager
 from src.core.version import __version__
 
@@ -25,7 +26,7 @@ APP_NAME = "SyncroJob"
 
 # Use platformdirs to get standard Local AppData path
 CONFIG_DIR = Path(user_data_dir(APP_NAME, appauthor=False))
-CONFIG_FILE = CONFIG_DIR / "config.json"
+CONFIG_FILE = CONFIG_DIR / FileNames.CONFIG
 # Root del progetto (assumendo src/core/config_manager.py)
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 _config_cache: dict[str, Any] | None = None
@@ -48,7 +49,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "download_path": "",
     "fornitori": [],
     "last_ts_data": [],
-    "last_ts_date": "01.01.2025",
+    "last_ts_date": f"01.01.{datetime.now(UTC).year}",
     "last_ts_fornitore": "",
     "last_carico_ts_data": [],
     "last_oda_data": [],
@@ -60,7 +61,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "employee_mappings": {},
     "ai_provider": "gemini",
     "ai_model": "gemini-1.5-pro",
-    "ollama_url": "http://localhost:11434",
+    "ollama_url": URLs.OLLAMA_DEFAULT,
     "quick_actions": ["nav_scarico_ts", "nav_lyra", "cmd_sync", "cmd_open_folder"],
     "statistics": {},
 }
@@ -118,7 +119,7 @@ def _check_and_migrate_local_config() -> bool:
 
     migrated = False
     for legacy_dir in potential_dirs:
-        legacy_config_file = legacy_dir / "config.json"
+        legacy_config_file = legacy_dir / FileNames.CONFIG
         # Avoid migrating from self
         if legacy_config_file.exists() and legacy_dir.resolve() != CONFIG_DIR.resolve():
             try:

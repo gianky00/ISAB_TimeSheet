@@ -20,15 +20,13 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
+from src.core.constants import Business, Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .cards_row import KPICardsRow
 from .charts import ChartContainer, KPIChartsManager
-
-HOURLY_COST_STD = 28.50
 
 
 class ContabilitaKPIPanel(QWidget):
@@ -37,6 +35,7 @@ class ContabilitaKPIPanel(QWidget):
     def __init__(self, parent: QWidget | None = None):
         """Inizializza il pannello e prepara i grafici."""
         super().__init__(parent)
+        self.HOURLY_COST_STD = Business.HOURLY_COST_STD
 
         # Member declarations
         self.year_combo: QComboBox
@@ -57,7 +56,7 @@ class ContabilitaKPIPanel(QWidget):
         with suppress(Exception):
             plt.style.use("seaborn-v0_8-darkgrid")
 
-        self.charts_manager = KPIChartsManager(HOURLY_COST_STD)
+        self.charts_manager = KPIChartsManager(self.HOURLY_COST_STD)
         self._setup_ui()
         self.refresh_years()
 
@@ -69,7 +68,9 @@ class ContabilitaKPIPanel(QWidget):
         # --- Toolbar (Year Selector) ---
         toolbar = QHBoxLayout()
         cal_icon = QLabel()
-        cal_icon.setPixmap(get_colored_icon(get_asset_path(Icons.CALENDAR), COLORS["text_dark"]).pixmap(18, 18))
+        cal_icon.setPixmap(
+            get_colored_icon(get_asset_path(Icons.CALENDAR), COLORS["text_dark"]).pixmap(18, 18)
+        )
         toolbar.addWidget(cal_icon)
         toolbar.addWidget(QLabel("Analisi per Anno:"))
 
@@ -112,7 +113,7 @@ class ContabilitaKPIPanel(QWidget):
             "MARGINE OPERATIVO STIMATO",
             "€ 0,00",
             COLORS["teal_light"],
-            subtitle=f"Base Costo Orario: € {HOURLY_COST_STD:.2f}",
+            subtitle=f"Base Costo Orario: € {self.HOURLY_COST_STD:.2f}",
         )
         self.card_margine_perc = self.row2.add_card(
             "MARGINALITÀ %", "0.0 %", COLORS["teal_light"], subtitle="Su Totale Preventivato"
@@ -191,7 +192,7 @@ class ContabilitaKPIPanel(QWidget):
     def _add_section_title(self, text: str) -> None:
         lbl = QLabel(text)
         lbl.setStyleSheet(
-            "color: #495057; font-weight: bold; font-size: 16px; margin-top: 10px; margin-bottom: 10px;"
+            f"color: {COLORS['text_dark']}; font-weight: bold; font-size: 16px; margin-top: 10px; margin-bottom: 10px;"
         )
         self.content_layout.addWidget(lbl)
 
@@ -240,11 +241,11 @@ class ContabilitaKPIPanel(QWidget):
             ore_dirette = stats.get("ore_dirette", 0.0)
             ore_indirette = stats.get("ore_indirette", 0.0)
 
-            costo_tot = tot_ore * HOURLY_COST_STD
+            costo_tot = tot_ore * self.HOURLY_COST_STD
             margine = tot_prev - costo_tot
             marg_perc = (margine / tot_prev * 100) if tot_prev > 0 else 0
             val_ora = (tot_prev / tot_ore) if tot_ore > 0 else 0
-            utile_ora = val_ora - HOURLY_COST_STD
+            utile_ora = val_ora - self.HOURLY_COST_STD
 
             self.card_totale.lbl_value.setText(f"€ {self._format_currency(tot_prev)}")
             self.card_ore.lbl_value.setText(self._format_currency(tot_ore))

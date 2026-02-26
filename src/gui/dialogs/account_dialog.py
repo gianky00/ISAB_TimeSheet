@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -57,22 +58,22 @@ class AccountDialog(QDialog):
         pass_layout.addWidget(self.password_edit)
 
         self.toggle_pass_btn = QPushButton()
-        self.toggle_pass_btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), "#555555"))
+        self.toggle_pass_btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), COLORS["text_muted"]))
         self.toggle_pass_btn.setIconSize(QSize(20, 20))
         self.toggle_pass_btn.setToolTip("Mostra/Nascondi password")
         self.toggle_pass_btn.setFixedSize(35, 35)
         self.toggle_pass_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.toggle_pass_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: white;
-                border: 1px solid #ced4da;
+            f"""
+            QPushButton {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_medium"]};
                 border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #f8f9fa;
-                border-color: #adb5bd;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS["bg_light"]};
+                border-color: {COLORS["border_dark"]};
+            }}
         """
         )
         self.toggle_pass_btn.clicked.connect(self._toggle_password_visibility)
@@ -114,11 +115,11 @@ class AccountDialog(QDialog):
     def _toggle_password_visibility(self) -> None:
         if self.password_edit.echoMode() == QLineEdit.EchoMode.Password:
             self.password_edit.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.toggle_pass_btn.setIcon(get_colored_icon(get_asset_path(Icons.LOCK), "#555555"))
+            self.toggle_pass_btn.setIcon(get_colored_icon(get_asset_path(Icons.LOCK), COLORS["text_muted"]))
             self.toggle_pass_btn.setToolTip("Nascondi password")
         else:
             self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
-            self.toggle_pass_btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), "#555555"))
+            self.toggle_pass_btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), COLORS["text_muted"]))
             self.toggle_pass_btn.setToolTip("Mostra password")
 
     def get_data(self) -> tuple[str, str, str]:

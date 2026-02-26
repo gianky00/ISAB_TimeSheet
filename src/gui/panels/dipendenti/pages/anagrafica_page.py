@@ -354,7 +354,9 @@ class AnagraficaPage(QWidget):
                 continue
 
             # 3. Formattazione riga
-            inactivation_val = 30 - diff_days if diff_days is not None else None
+            from src.gui.styles.constants import THRESHOLD_DAYS
+
+            inactivation_val = THRESHOLD_DAYS["expired"] - diff_days if diff_days is not None else None
             display_cognome = f"⚠️ {r[1]}" if cf_warning else r[1]
 
             master_rows.append(
@@ -381,12 +383,14 @@ class AnagraficaPage(QWidget):
 
     def _update_status_counts(self, counts, is_monitored, diff_days):
         """Aggiorna i contatori degli stati per le card UI."""
+        from src.gui.styles.constants import THRESHOLD_DAYS
+
         if not is_monitored:
             counts["excluded"] += 1
         elif diff_days is not None:
-            if diff_days <= 20:
+            if diff_days <= THRESHOLD_DAYS["warning"]:
                 counts["ok"] += 1
-            elif diff_days <= 30:
+            elif diff_days <= THRESHOLD_DAYS["expired"]:
                 counts["warning"] += 1
             else:
                 counts["expired"] += 1
@@ -396,6 +400,8 @@ class AnagraficaPage(QWidget):
         if not self.current_filter:
             return False
 
+        from src.gui.styles.constants import THRESHOLD_DAYS
+
         if self.current_filter == "excluded":
             return bool(is_monitored)
 
@@ -403,11 +409,13 @@ class AnagraficaPage(QWidget):
         if not is_monitored or diff_days is None:
             return True
 
-        if self.current_filter == "ok" and diff_days > 20:
+        if self.current_filter == "ok" and diff_days > THRESHOLD_DAYS["warning"]:
             return True
-        if self.current_filter == "warning" and (diff_days <= 20 or diff_days > 30):
+        if self.current_filter == "warning" and (
+            diff_days <= THRESHOLD_DAYS["warning"] or diff_days > THRESHOLD_DAYS["expired"]
+        ):
             return True
-        return bool(self.current_filter == "expired" and diff_days <= 30)
+        return bool(self.current_filter == "expired" and diff_days <= THRESHOLD_DAYS["expired"])
 
     def _inactivation_formatter(self, value):
         if value is None or value == "":
@@ -448,9 +456,9 @@ class AnagraficaPage(QWidget):
         ):
             is_active = card.filter_type == self.current_filter
             gradient = (
-                "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #e8f5e9, stop:1 #f8f9fa)"
+                f"qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS['bg_success_pastel']}, stop:1 {COLORS['bg_light']})"
                 if is_active
-                else "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 white, stop:1 #fafbfc)"
+                else f"qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_alt']})"
             )
             style = f"background: {gradient}; border: {'3px' if is_active else '2px'} solid {card.base_color}; border-radius: 12px;"
             card.setStyleSheet(f"InteractiveStatusCard {{ {style} }}")
@@ -531,9 +539,11 @@ class AnagraficaPage(QWidget):
             delta = (datetime.now() - last_date).days
             formatted_date = last_date.strftime("%d/%m/%Y")
 
-            if delta <= 20:
+            from src.gui.styles.constants import THRESHOLD_DAYS
+
+            if delta <= THRESHOLD_DAYS["warning"]:
                 return f"{formatted_date} ({delta} gg fa)", str(delta), COLORS["success_dark"]
-            if delta <= 30:
+            if delta <= THRESHOLD_DAYS["expired"]:
                 return f"{formatted_date} ({delta} gg fa)", str(delta), COLORS["warning_orange"]
             return (
                 f"{formatted_date} (SCADUTA - {delta} gg fa)",
@@ -636,8 +646,10 @@ class AnagraficaPage(QWidget):
             data_da_fmt = start_date.toString("dd.MM.yyyy")
             data_a_fmt = end_date.toString("dd.MM.yyyy")
 
+            from src.core.constants import Business
+
             config = config_manager.load_config()
-            fornitore = config.get("last_timbrature_fornitore", "KK10608 - COEMI S.R.L.")
+            fornitore = config.get("last_timbrature_fornitore", Business.DEFAULT_SUPPLIER)
 
             # 3. Conferma
             msg = f"Aggiornare timbrature dal <b>{data_da_fmt}</b> al <b>{data_a_fmt}</b>?<br>Fornitore: {fornitore}"
