@@ -177,12 +177,17 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             return False
 
         try:
-            campo = self.wait.until(EC.visibility_of_element_located((By.ID, "fldRicercaPdLVeloce")))
+            from src.bots.safework.common.locators import SafeWorkLocators
+
+            # CRITICAL: Assicurarsi che l'overlay di caricamento sia sparito
+            self._attendi_scomparsa_overlay(timeout_secondi=10)
+
+            campo = self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.RICERCA_VELOCE_PDL))
             self.log(f"⌨️ Inserimento numero PdL {pdl_num}...")
             campo.clear()
             campo.send_keys(pdl_num + Keys.ENTER)
         except Exception as e:
-            self.log(f"❌ Campo ricerca veloce non trovato: {e}", "ERROR")
+            self.log(f"❌ Campo ricerca veloce non trovato o non interagibile: {e}", "ERROR")
             return False
 
         if self._gestisci_ricerca_estesa():

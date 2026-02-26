@@ -37,52 +37,10 @@ class PDLQueries:
             return []
 
     @classmethod
-    def get_pdl_created_in_range(cls, start_date: str, end_date: str) -> list[dict[str, Any]]:
-        """
-        Restituisce i PDL creati in un intervallo di date.
-        Date in formato DD/MM/YYYY.
-        """
-        # SQLite non ha un tipo DATE, usiamo manipolazione stringhe se il formato è DD/MM/YYYY HH:MM:SS
-        # Oppure convertiamo in formato comparabile YYYYMMDD
-        query = """
-            SELECT n_pdl, data_creazione, richiedente, area, descrizione_lavoro, stato
-            FROM pdl
-            WHERE substr(data_creazione, 7, 4) || substr(data_creazione, 4, 2) || substr(data_creazione, 1, 2)
-            BETWEEN ? AND ?
-        """
-
-        # Converti DD/MM/YYYY -> YYYYMMDD
-        def to_iso(d: str) -> str:
-            """Converte una data DD/MM/YYYY in stringa comparabile YYYYMMDD."""
-            parts = d.split("/")
-            return f"{parts[2]}{parts[1]}{parts[0]}"
-
-        params = (to_iso(start_date), to_iso(end_date))
-
-        try:
-            rows = db_manager.execute_query(db_manager.DB_PDL, query, params)
-            return [
-                {
-                    "n_pdl": r[0],
-                    "data_creazione": r[1],
-                    "richiedente": r[2],
-                    "area": r[3],
-                    "descrizione": r[4],
-                    "stato": r[5],
-                }
-                for r in rows
-            ]
-        except Exception as e:
-            logger.error(f"Errore recupero PDL in range: {e}")
-            return []
-
-    @classmethod
     def save_programming_results(cls, results: list[dict[str, Any]], start_date: str, end_date: str) -> bool:
         """Salva i risultati della programmazione settimanale nel DB per la settimana specificata."""
         # Nota: start_date ed end_date sono stringhe DD/MM/YYYY
         if not results:
-            # Se lista vuota, potremmo voler cancellare i dati vecchi di quella settimana?
-            # Per ora manteniamo logica esistente ma cancelliamo la settimana
             try:
                 query_del = "DELETE FROM pdl_programmazione WHERE settimana_start = ? AND settimana_end = ?"
                 db_manager.execute_query(db_manager.DB_PDL, query_del, (start_date, end_date))
@@ -191,7 +149,6 @@ class PDLQueries:
         ext_db_path = config.get("activity_db_path", default_path)
 
         if not ext_db_path or not Path(ext_db_path).exists():
-            # Fallback/Retry logic or just logging
             if ext_db_path != default_path and Path(default_path).exists():
                 logger.warning(f"DB configurato non trovato ({ext_db_path}). Tento default: {default_path}")
                 ext_db_path = default_path

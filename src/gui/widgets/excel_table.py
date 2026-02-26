@@ -88,19 +88,22 @@ class HoverPulseFrame(QFrame):
         """Disegna il bordo inferiore animato."""
         super().paintEvent(event)
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        try:
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        # Disegna solo il bordo inferiore con l'alpha pulsante
-        alpha = int(100 + (self._pulse_val * 155))
-        pen = QPen(
-            QColor(self._accent_color.red(), self._accent_color.green(), self._accent_color.blue(), alpha)
-        )
-        pen.setWidth(3)
-        painter.setPen(pen)
+            # Disegna solo il bordo inferiore con l'alpha pulsante
+            alpha = int(100 + (self._pulse_val * 155))
+            pen = QPen(
+                QColor(self._accent_color.red(), self._accent_color.green(), self._accent_color.blue(), alpha)
+            )
+            pen.setWidth(3)
+            painter.setPen(pen)
 
-        # Linea in basso
-        rect = self.rect()
-        painter.drawLine(12, rect.height() - 2, rect.width() - 12, rect.height() - 2)
+            # Linea in basso
+            rect = self.rect()
+            painter.drawLine(12, rect.height() - 2, rect.width() - 12, rect.height() - 2)
+        finally:
+            painter.end()
 
 
 class ExcelTableWidget(QTableWidget):
@@ -586,7 +589,9 @@ class EditableDataTable(QWidget):
 
     def get_data(self) -> list[dict[str, Any]]:
         """
-        Estrae tutti i dati validi (righe non vuote) dalla tabella.
+        Estrae tutti i dati validi dalla tabella.
+        Una riga è considerata valida solo se la PRIMA colonna (solitamente OdA o ID)
+        non è vuota. Questo previene il salvataggio di righe con solo valori di default.
 
         Returns:
             list: Lista di dizionari con chiavi derivate dai nomi delle colonne.
@@ -594,7 +599,8 @@ class EditableDataTable(QWidget):
         data: list[dict[str, Any]] = []
         for row in range(self.table.rowCount()):
             row_data: dict[str, Any] = {}
-            has_data = False
+            primary_col_has_data = False
+
             for col, column in enumerate(self.columns):
                 key = str(column["name"]).lower().replace(" ", "_")
                 widget = self.table.cellWidget(row, col)
@@ -603,10 +609,14 @@ class EditableDataTable(QWidget):
                 else:
                     item = self.table.item(row, col)
                     value = item.text() if item else ""
+
                 row_data[key] = value
-                if value:
-                    has_data = True
-            if has_data:
+
+                # Consideriamo valida la riga solo se la colonna 0 ha dati
+                if col == 0 and value.strip():
+                    primary_col_has_data = True
+
+            if primary_col_has_data:
                 data.append(row_data)
         return data
 
@@ -625,7 +635,7 @@ class EditableDataTable(QWidget):
             self._populate_row_from_data(row, row_data)
         if self.table.rowCount() == 0:
             while self.table.rowCount() < 5:
-                self._add_row()
+                self._add_row(use_defaults=False)
         self.table.blockSignals(False)
 
     def _populate_row_from_data(self, row: int, row_data: dict[str, Any]) -> None:

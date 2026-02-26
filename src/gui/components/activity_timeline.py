@@ -224,57 +224,60 @@ class ActivityTimelineWidget(QWidget):
             event: Evento di disegno.
         """
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        try:
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        # 1. DISEGNO SFONDO ARROTONDATO (Cyber-Frame)
-        rect = QRectF(10, 10, self.width() - 20, self.height() - 20)
-        path = QPainterPath()
-        path.addRoundedRect(rect, 15, 15)
+            # 1. DISEGNO SFONDO ARROTONDATO (Cyber-Frame)
+            rect = QRectF(10, 10, self.width() - 20, self.height() - 20)
+            path = QPainterPath()
+            path.addRoundedRect(rect, 15, 15)
 
-        painter.save()
-        painter.setClipPath(path)
-        painter.fillRect(rect, self.COLORS["bg"])
-        self._draw_grid(painter, rect)
-        painter.restore()
+            painter.save()
+            painter.setClipPath(path)
+            painter.fillRect(rect, self.COLORS["bg"])
+            self._draw_grid(painter, rect)
+            painter.restore()
 
-        # Bordo Neon soft (Con pulsazione in hover)
-        alpha = int(100 + (self._border_pulse_val * 155))
-        c = self.COLORS["border"]
-        painter.setPen(QPen(QColor(c.red(), c.green(), c.blue(), alpha), 1.2))
-        painter.drawPath(path)
+            # Bordo Neon soft (Con pulsazione in hover)
+            alpha = int(100 + (self._border_pulse_val * 155))
+            c = self.COLORS["border"]
+            painter.setPen(QPen(QColor(c.red(), c.green(), c.blue(), alpha), 1.2))
+            painter.drawPath(path)
 
-        if not self.nodes:
-            self._draw_empty(painter)
-            return
+            if not self.nodes:
+                self._draw_empty(painter)
+                return
 
-        # CALCOLO DINAMICO SPAZIATURA
-        num_nodes = len(self.nodes)
-        x_axis = 55
+            # CALCOLO DINAMICO SPAZIATURA
+            num_nodes = len(self.nodes)
+            x_axis = 55
 
-        # Margini interni alla card
-        margin_y = 40
-        available_h = rect.height() - (margin_y * 2)
+            # Margini interni alla card
+            margin_y = 40
+            available_h = rect.height() - (margin_y * 2)
 
-        spacing = min(75, available_h / (num_nodes - 1)) if num_nodes > 1 else 0
+            spacing = min(75, available_h / (num_nodes - 1)) if num_nodes > 1 else 0
 
-        # Centra verticalmente se c'è spazio in eccesso
-        total_timeline_h = (num_nodes - 1) * spacing
-        y_start = rect.top() + (rect.height() - total_timeline_h) / 2
+            # Centra verticalmente se c'è spazio in eccesso
+            total_timeline_h = (num_nodes - 1) * spacing
+            y_start = rect.top() + (rect.height() - total_timeline_h) / 2
 
-        # 2. DISEGNO CONNETTORI
-        for i in range(len(self.nodes) - 1):
-            self._draw_connector_v5(
-                painter,
-                x_axis,
-                y_start + i * spacing,
-                y_start + (i + 1) * spacing,
-                self.nodes[i],
-                self.nodes[i + 1],
-            )
+            # 2. DISEGNO CONNETTORI
+            for i in range(len(self.nodes) - 1):
+                self._draw_connector_v5(
+                    painter,
+                    x_axis,
+                    y_start + i * spacing,
+                    y_start + (i + 1) * spacing,
+                    self.nodes[i],
+                    self.nodes[i + 1],
+                )
 
-        # 3. DISEGNO NODI
-        for i, node in enumerate(self.nodes):
-            self._draw_node_v5(painter, x_axis, y_start + i * spacing, node, rect)
+            # 3. DISEGNO NODI
+            for i, node in enumerate(self.nodes):
+                self._draw_node_v5(painter, x_axis, y_start + i * spacing, node, rect)
+        finally:
+            painter.end()
 
     def _draw_grid(self, painter, rect):
         """
@@ -341,11 +344,13 @@ class ActivityTimelineWidget(QWidget):
         if node.status == StepStatus.RUNNING:
             # Scanner Orbital
             painter.save()
-            painter.translate(x, y)
-            painter.rotate(self._rotation_angle)
-            painter.setPen(QPen(color, 1.5, Qt.PenStyle.DashLine))
-            painter.drawEllipse(QRectF(-16, -16, 32, 32))
-            painter.restore()
+            try:
+                painter.translate(x, y)
+                painter.rotate(self._rotation_angle)
+                painter.setPen(QPen(color, 1.5, Qt.PenStyle.DashLine))
+                painter.drawEllipse(QRectF(-16, -16, 32, 32))
+            finally:
+                painter.restore()
 
             # Glow
             g = 12 * self._pulse_value

@@ -117,10 +117,6 @@ class TelegramService(QObject):
         if self.app is None:
             raise RuntimeError("Application must be initialized before adding handlers")
 
-        # Wrappers to pass 'self' (the service instance) to handlers
-        async def wrap_cmd(handler):
-            return lambda u, c: handler(self, u, c)
-
         # Commands
         self.app.add_handler(CommandHandler("start", lambda u, c: commands.cmd_start(self, u, c)))
         self.app.add_handler(CommandHandler("status", lambda u, c: commands.cmd_status(self, u, c)))
@@ -202,11 +198,6 @@ class TelegramService(QObject):
 
     async def _check_auth(self, update: object) -> bool:
         """Helper per verificare l'autenticazione (usato anche internamente)."""
-        # Nota: gli handler esterni devono chiamare service._check_auth(update)
-        # Ma _check_auth originale prendeva 'update: Update'.
-        # Qui lo rendo pubblico o accessibile come helper.
-        # Poiché è usato dagli handler esterni, deve essere accessibile.
-        # È definito qui.
         if not hasattr(update, "effective_user") or not update.effective_user:
             return False
         user_id = str(update.effective_user.id)

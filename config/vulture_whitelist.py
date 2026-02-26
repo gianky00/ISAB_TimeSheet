@@ -152,3 +152,102 @@ get_current_filter  # unused method (src/gui/widgets/notification_toolbar.py)
 get_search_query  # unused method (src/gui/widgets/notification_toolbar.py)
 get_sort_key  # unused method (src/gui/widgets/notification_toolbar.py)
 category_color  # unused attribute (src/gui/widgets/timeline_widget.py)
+
+# WIP / Planned Features (Vulture Audit 2026-02-26)
+ProgrammingSyncManager  # unused class (src/core/importers/pdl_sync_manager.py)
+TerminalLogWidget  # unused class (src/gui/components/terminal_log.py)
+SecurityDashboard  # unused class (src/gui/widgets/security_dashboard.py)
+StartupDialog  # unused class (src/gui/dialogs/startup_dialog.py)
+ConnectionTestWorker  # unused class (src/gui/workers/connection_worker.py)
+alert_appears_with_text  # unused class (src/bots/base/wait_helpers.py)
+SamplingFilter  # unused class (src/core/logging/filters.py)
+
+# Pandera Schemas & Fields (False Positives)
+DipendenteSchema
+GiornaliereSchema
+ContabilitaSchema
+id_risorsa
+Cognome
+Nome
+Data_nascita
+Badge
+Data_assunzione
+personale
+descrizione
+tcl
+odc
+pdl
+inizio
+fine
+ore
+n_prev
+data_prev
+mese
+totale_prev
+attivita
+stato_attivita
+tipologia
+ore_sp
+resa
+annotazioni
+indirizzo_consuntivo
+nome_file
+coerce
+strict
+
+# Logging Configuration (Future/External Config)
+rotation_size
+rotation_time
+retention
+errors_retention
+compression
+performance_threshold_ms
+sampling_rate
+console_level
+file_level
+errors_level
+has_critical_issues
+_json_file
+_human_file
+_errors_file
+
+# Pytest Hooks & Test Helpers (Vulture False Positives)
+pytest_sessionstart
+pytest_configure
+session
+create_mock_html
+_isolate_config
+cleanup_widgets
+BLUE
+UNDERLINE
+collected_count
+sig
+isolate
+mock_font
+mock_app_version
+mock_update_url
+mock_bot_deps
+mock_login_page_cls
+mock_ui_deps
+mock_is_avail
+mock_years
+mock_scan
+mock_exec
+mock_get_text
+mock_history
+mock_from_local
+mock_platform
+mock_hwid
+mock_no_migration
+mock_ctx
+mock_sys
+mock_linux
+mock_painter_cls
+mock_printers
+mock_click
+mock_overlay
+mock_wf
+mock_layout
+mock_validate
+mock_scan_files
+mock_scan_sheets

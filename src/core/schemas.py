@@ -66,32 +66,6 @@ class ContabilitaSchema(pa.DataFrameModel):
         strict = False
 
 
-def get_excel_column_letter(n: int) -> str:
-    """Converte un indice di colonna (0-based) in lettera Excel (A, B, C...)."""
-    string = ""
-    n += 1
-    while n > 0:
-        n, remainder = divmod(n - 1, 26)
-        string = chr(65 + remainder) + string
-    return string
-
-
-def _group_ranges(numbers: list[int]) -> str:
-    """Raggruppa numeri consecutivi in range (es. 1, 2, 3, 5 -> 1-3, 5)."""
-    if not numbers:
-        return ""
-    numbers = sorted(set(numbers))
-    ranges = []
-    start = numbers[0]
-    for i in range(1, len(numbers) + 1):
-        if i == len(numbers) or numbers[i] != numbers[i - 1] + 1:
-            end = numbers[i - 1]
-            ranges.append(f"{start}-{end}" if start != end else str(start))
-            if i < len(numbers):
-                start = numbers[i]
-    return ", ".join(ranges)
-
-
 def validate_dipendenti(df: pd.DataFrame, headers_only: bool = False) -> pd.DataFrame:
     """Valida un dataframe di dipendenti."""
     if headers_only:

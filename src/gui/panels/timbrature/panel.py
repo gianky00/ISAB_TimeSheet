@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QSplitter,
     QTableView,
-    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -20,6 +19,7 @@ from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 from src.core import config_manager
 from src.core.audit_manager import AuditManager
 from src.core.constants import Icons
+from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.formatters import FastTableModel, format_date_it
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -39,7 +39,7 @@ class TimbratureDBPanel(QWidget):
 
         # Member declarations
         self.main_layout: QVBoxLayout
-        self.tabs: QTabWidget
+        self.tabs: AnimatedTabWidget
         self.toolbar_container: QWidget
         self.search_input: QLineEdit
         self.reparto_filter: QComboBox
@@ -66,12 +66,13 @@ class TimbratureDBPanel(QWidget):
         self.main_layout.setContentsMargins(10, 10, 10, 10)
         self.main_layout.setSpacing(15)
 
-        # Tabs
-        self.tabs = QTabWidget()
-        self.tabs.setProperty("class", "Level2Tabs")
-
-        # Toolbar
+        # Toolbar (Aggiunta prima dei tab per evitare il setCornerWidget)
         self._setup_toolbar()
+        self.main_layout.addWidget(self.toolbar_container)
+
+        # Tabs
+        self.tabs = AnimatedTabWidget()
+        # self.tabs.setProperty("class", "Level2Tabs") # Stile gestito dal componente
 
         # Tab 1: Database
         self.tab_database = QWidget()
@@ -127,8 +128,6 @@ class TimbratureDBPanel(QWidget):
         toolbar_layout.addWidget(self.reparto_filter)
         toolbar_layout.addWidget(self.cantiere_filter)
         toolbar_layout.addWidget(import_btn)
-
-        self.tabs.setCornerWidget(self.toolbar_container, Qt.Corner.TopRightCorner)
 
     def _setup_database_tab(self, parent):
         layout = QVBoxLayout(parent)

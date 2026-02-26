@@ -1,10 +1,9 @@
 """
-SyncroJob - Help Panel
-Pannello Guida interattivo con navigazione gerarchica e supporto Markdown.
-Fornisce documentazione operativa, assistenza tecnica e informazioni sulle licenze.
+SyncroJob - Help Panel (Next-Gen)
+Pannello Guida interattivo con estetica 'Knowledge Hub', navigazione fluida e contenuti professionali.
 """
 
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QSize, Qt, QTimer
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -25,203 +24,356 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 class HelpPanel(QWidget):
     """
-    Pannello Guida Tecnico-Operativo Professionale.
-    Implementa un browser Markdown per la visualizzazione dei contenuti e un indice laterale filtrabile.
+    Knowledge Hub Enterprise.
+    Un'esperienza immersiva per la documentazione operativa con stile moderno e contenuti ricchi.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pannello guida.
-
-        Args:
-            parent: Widget genitore.
-        """
         super().__init__(parent)
         self.sections: list[tuple[str, str, str]] = []
         self._setup_ui()
         self._load_documentation()
 
+        # Selezione iniziale con leggero delay per caricamento layout
+        QTimer.singleShot(100, lambda: self.index_list.setCurrentRow(0))
+
     def _setup_ui(self) -> None:
-        """Configura l'interfaccia utente con header hero, sidebar e visualizzatore contenuti."""
+        """Costruisce un layout 'Documentation Portal' con Sidebar Glass e Content Card."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Header Hero Moderno
+        # --- HEADER HERO (Professional Gradient) ---
         header = QFrame()
-        header.setFixedHeight(100)
-        header.setStyleSheet("QFrame { background-color: #FFFFFF; border-bottom: 1px solid #E0E0E0; }")
+        header.setFixedHeight(120)
+        header.setStyleSheet("""
+            QFrame {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1a2639, stop:1 #0d1421);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        """)
         header_layout = QHBoxLayout(header)
-        header_layout.setContentsMargins(30, 0, 30, 0)
+        header_layout.setContentsMargins(40, 0, 40, 0)
 
         title_container = QVBoxLayout()
-        title_container.setSpacing(2)
-        title = QLabel("Knowledge Base")
-        title.setStyleSheet("color: #263238; font-size: 24px; font-weight: 800;")
-        subtitle = QLabel(f"Documentazione Ufficiale SyncroJob v{VERSION}")
-        subtitle.setStyleSheet("color: #78909C; font-size: 13px; font-weight: 500;")
+        title_container.setSpacing(4)
+
+        title = QLabel("Centro Risorse & Documentazione")
+        title.setStyleSheet("color: #FFFFFF; font-size: 26px; font-weight: 900; letter-spacing: 0.5px;")
+
+        subtitle = QLabel(f"SyncroJob Enterprise v{VERSION} • Hub di Supporto Tecnico")
+        subtitle.setStyleSheet("color: #4DB6AC; font-size: 14px; font-weight: 600; text-transform: uppercase;")
+
         title_container.addStretch()
         title_container.addWidget(title)
         title_container.addWidget(subtitle)
         title_container.addStretch()
+
         header_layout.addLayout(title_container)
         header_layout.addStretch()
 
+        # Icona decorativa con bagliore
+        icon_badge = QFrame()
+        icon_badge.setFixedSize(64, 64)
+        icon_badge.setStyleSheet(
+            "background: rgba(77, 182, 172, 0.15); border-radius: 32px; border: 1px solid rgba(77, 182, 172, 0.3);"
+        )
+        badge_layout = QVBoxLayout(icon_badge)
+        badge_layout.setContentsMargins(0, 0, 0, 0)
+        badge_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         icon_lbl = QLabel()
-        icon_lbl.setPixmap(get_colored_icon(get_asset_path(Icons.HELP), "#009688").pixmap(48, 48))
-        header_layout.addWidget(icon_lbl)
+        icon_lbl.setPixmap(get_colored_icon(get_asset_path(Icons.HELP), "#4DB6AC").pixmap(32, 32))
+        badge_layout.addWidget(icon_lbl)
+        header_layout.addWidget(icon_badge)
+
         layout.addWidget(header)
 
-        # Splitter per Indice e Contenuto
+        # --- AREA CONTENUTI (Splitter) ---
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
-        self.splitter.setStyleSheet("QSplitter::handle { background-color: #ECEFF1; width: 1px; }")
+        self.splitter.setStyleSheet("QSplitter::handle { background-color: transparent; width: 0px; }")
 
-        # Sidebar
+        # SIDEBAR (Navigation)
         sidebar = QWidget()
+        sidebar.setFixedWidth(300)
+        sidebar.setStyleSheet("background-color: #F8F9FA; border-right: 1px solid #ECEFF1;")
         sidebar_layout = QVBoxLayout(sidebar)
-        sidebar_layout.setContentsMargins(20, 25, 20, 20)
-        sidebar_layout.setSpacing(15)
-        sidebar.setFixedWidth(320)
-        sidebar.setStyleSheet("background-color: #FAFAFA;")
+        sidebar_layout.setContentsMargins(20, 30, 20, 20)
+        sidebar_layout.setSpacing(20)
+
+        # Search Bar High-End
+        search_container = QFrame()
+        search_container.setStyleSheet("background: white; border: 1px solid #CFD8DC; border-radius: 10px;")
+        search_h_layout = QHBoxLayout(search_container)
+        search_h_layout.setContentsMargins(12, 0, 12, 0)
+
+        search_icon = QLabel()
+        search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), "#90A4AE").pixmap(16, 16))
+        search_h_layout.addWidget(search_icon)
 
         self.search_edit = QLineEdit()
-        self.search_edit.setPlaceholderText("Cerca nella guida...")
-        self.search_edit.setMinimumHeight(42)
-        self.search_edit.setStyleSheet(
-            "QLineEdit { border: 1px solid #CFD8DC; border-radius: 8px; padding: 0 15px; background-color: white; font-size: 14px; }"
-        )
+        self.search_edit.setPlaceholderText("Cerca modulo o comando...")
+        self.search_edit.setStyleSheet("border: none; padding: 12px 0; font-size: 14px; background: transparent;")
         self.search_edit.textChanged.connect(self._filter_index)
-        sidebar_layout.addWidget(self.search_edit)
+        search_h_layout.addWidget(self.search_edit)
+        sidebar_layout.addWidget(search_container)
 
+        # Index List
         self.index_list = QListWidget()
         self.index_list.setIconSize(QSize(20, 20))
-        self.index_list.setStyleSheet(
-            "QListWidget { background-color: transparent; border: none; } QListWidget::item { padding: 12px 15px; border-radius: 10px; color: #455A64; font-weight: 500; } QListWidget::item:selected { background-color: #E0F2F1; color: #00796B; font-weight: 700; }"
-        )
+        self.index_list.setStyleSheet("""
+            QListWidget { background: transparent; border: none; outline: none; }
+            QListWidget::item {
+                padding: 14px 18px; border-radius: 8px; color: #455A64;
+                font-weight: 600; font-size: 13px; margin-bottom: 4px;
+            }
+            QListWidget::item:hover { background-color: #ECEFF1; color: #263238; }
+            QListWidget::item:selected { background-color: #009688; color: white; }
+        """)
         self.index_list.currentRowChanged.connect(self._on_index_changed)
-        sidebar_layout.addWidget(self.index_list, 1)
+        sidebar_layout.addWidget(self.index_list)
 
-        # Browser
+        # Footer Sidebar (Version & Status)
+        sb_footer = QLabel("SyncroJob Hub • Built for Excellence")
+        sb_footer.setStyleSheet("color: #B0BEC5; font-size: 11px; font-weight: 700; text-transform: uppercase;")
+        sb_footer.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        sidebar_layout.addWidget(sb_footer)
+
+        # CONTENT BROWSER
+        content_container = QWidget()
+        content_container.setStyleSheet("background-color: white;")
+        content_layout = QVBoxLayout(content_container)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+
         self.browser = QTextBrowser()
         self.browser.setOpenExternalLinks(True)
         self.browser.setReadOnly(True)
-        self.browser.setStyleSheet(
-            "QTextBrowser { background-color: white; border: none; padding: 50px 60px; font-family: 'Segoe UI', sans-serif; font-size: 16px; line-height: 1.8; color: #263238; }"
-        )
+        self.browser.setStyleSheet("""
+            QTextBrowser {
+                background-color: white; border: none; padding: 60px 80px;
+                font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+                font-size: 16px; color: #263238;
+            }
+        """)
+        content_layout.addWidget(self.browser)
 
         self.splitter.addWidget(sidebar)
-        self.splitter.addWidget(self.browser)
-        self.splitter.setStretchFactor(1, 1)
+        self.splitter.addWidget(content_container)
         layout.addWidget(self.splitter)
 
     def _load_documentation(self) -> None:
-        """Inizializza le sezioni della documentazione e popola l'indice."""
+        """Carica contenuti professionali e dettagliati."""
         self.sections = [
-            ("Benvenuto", self._get_intro_md(), Icons.HOME),
-            ("Novità", self._get_news_md(), Icons.SPARKLES),
-            ("Configurazione Telegram", self._get_telegram_md(), Icons.SEND),
-            ("Scarico & Elaborazione", self._get_scarico_md(), Icons.DOWNLOAD),
-            ("Dettagli OdA", self._get_oda_md(), Icons.LIST),
-            ("Timbrature & Autopilot", self._get_timbrature_md(), Icons.CLOCK),
-            ("Strumentale & KPI", self._get_contabilita_md(), Icons.BAR_CHART),
-            ("Lyra AI Assistant", self._get_lyra_md(), Icons.CPU),
-            ("Scorciatoie Veloci", self._get_shortcuts_md(), Icons.ROCKET),
-            ("Risoluzione Problemi", self._get_troubleshooting_md(), Icons.ALERT),
-            ("Sicurezza & Licenza", self._get_license_md(), Icons.SHIELD),
-            ("Supporto & Contatti", self._get_contacts_md(), Icons.USER),
+            ("Introduzione", self._get_intro_md(), Icons.HOME),
+            ("Workflow Automazioni", self._get_scarico_md(), Icons.CPU),
+            ("Gestione Database", self._get_timbrature_md(), Icons.DATABASE),
+            ("Lyra AI Analyst", self._get_lyra_md(), Icons.SPARKLES),
+            ("Sincronizzazione PDL", self._get_oda_md(), Icons.FILE_TEXT),
+            ("KPI & Analisi", self._get_contabilita_md(), Icons.BAR_CHART),
+            ("Notifiche & Audit", self._get_news_md(), Icons.BELL),
+            ("Sicurezza Enterprise", self._get_license_md(), Icons.SHIELD),
+            ("Shortcuts di Sistema", self._get_shortcuts_md(), Icons.ROCKET),
+            ("Troubleshooting", self._get_troubleshooting_md(), Icons.ALERT_TRIANGLE),
+            ("Contatti & Help Desk", self._get_contacts_md(), Icons.USER),
         ]
 
         self.index_list.blockSignals(True)
         for title, _content, icon_key in self.sections:
             item = QListWidgetItem(title)
-            item.setIcon(get_colored_icon(get_asset_path(icon_key), "#546E7A"))
+            color = "#009688" if title == "Introduzione" else "#546E7A"
+            item.setIcon(get_colored_icon(get_asset_path(icon_key), color))
             self.index_list.addItem(item)
         self.index_list.blockSignals(False)
 
     def _on_index_changed(self, row: int) -> None:
-        """Visualizza il contenuto Markdown corrispondente alla sezione selezionata."""
-        if row < 0:
+        if row < 0 or row >= len(self.sections):
             return
-        item = self.index_list.item(row)
-        if not item:
-            return
-        title = item.text()
-        for section_title, content, _ in self.sections:
-            if section_title == title:
-                self.browser.setMarkdown(content)
-                break
+        self.browser.setMarkdown(self.sections[row][1])
+        # Smooth scroll to top
+        bar = self.browser.verticalScrollBar()
+        if bar:
+            bar.setValue(0)
 
     def _filter_index(self, text: str) -> None:
-        """Filtra le voci dell'indice in base al testo inserito nella barra di ricerca."""
         text = text.lower()
-        self.index_list.clear()
-        for title, _content, icon_key in self.sections:
-            if text in title.lower():
-                item = QListWidgetItem(title)
-                item.setIcon(get_colored_icon(get_asset_path(icon_key), "#546E7A"))
-                self.index_list.addItem(item)
-        if self.index_list.count() > 0:
-            self.index_list.setCurrentRow(0)
-
-    def open_section(self, section_title: str) -> None:
-        """
-        Naviga direttamente a una sezione specifica della guida.
-
-        Args:
-            section_title: Titolo (o parte del titolo) della sezione da aprire.
-        """
         for i in range(self.index_list.count()):
             item = self.index_list.item(i)
-            if item is not None and section_title.lower() in item.text().lower():
+            if item:
+                item.setHidden(text not in item.text().lower())
+
+    def open_section(self, section_title: str) -> None:
+        for i in range(self.index_list.count()):
+            item = self.index_list.item(i)
+            if item and section_title.lower() in item.text().lower():
                 self.index_list.setCurrentRow(i)
                 break
 
+    # --- PROFESSIONALLY WRITTEN CONTENT ---
+
     def _get_intro_md(self) -> str:
-        """Restituisce il Markdown per la sezione di benvenuto."""
-        return f"# Benvenuto in SyncroJob v{VERSION}\nLa piattaforma integrata per la gestione automatizzata dell'appalto ISAB."
+        return f"""
+# Benvenuto in SyncroJob Enterprise
+### L'ecosistema definitivo per l'automazione del cantiere ISAB.
 
-    def _get_news_md(self) -> str:
-        """Restituisce il Markdown per le novità della versione."""
-        return f"# 🆕 Novità Versione {VERSION}\n### ⚡ Navigazione 'Clean Line'\nL'interfaccia è stata ridisegnata per massimizzare la produttività."
+SyncroJob v{VERSION} è una suite software di classe enterprise progettata per eliminare le inefficienze operative attraverso l'automazione intelligente dei processi sul **Portale Fornitori ISAB** e **SafeWork**.
 
-    def _get_telegram_md(self) -> str:
-        """Restituisce il Markdown per la guida di Telegram."""
-        return "# 📱 Controllo Remoto Telegram\nGestisci SyncroJob dal tuo smartphone."
+#### 🎯 Obiettivi Chiave
+*   **Zero Error Data Entry**: Riduzione degli errori umani nel carico dei Timesheet.
+*   **Real-time Monitoring**: Visione istantanea dello stato delle abilitazioni e della contabilità.
+*   **AI Augmentation**: Analisi proattiva delle anomalie tramite l'assistente Lyra.
+
+---
+*Usa il menu a sinistra per esplorare i moduli funzionali.*
+"""
 
     def _get_scarico_md(self) -> str:
-        """Restituisce il Markdown per lo scarico/carico TS."""
-        return "# 📥 Scarico & Carico TS\nGestione completa del ciclo di vita dei Timesheet."
+        return """
+# 🤖 Workflow Automazioni (Bot)
+### Esecuzione di processi Selenium ad alta affidabilità.
 
-    def _get_oda_md(self) -> str:
-        """Restituisce il Markdown per OdA e BP."""
-        return (
-            "# 📋 Dettagli OdA & Prenotazioni\nScarica i dettagli completi per alimentare la ricerca globale."
-        )
+I Bot di SyncroJob simulano l'interazione umana per gestire task ripetitivi sul web.
+
+#### ⚙️ Moduli Disponibili
+1.  **Scarico TS**: Recupera automaticamente i file excel dal portale per l'elaborazione VBA.
+2.  **Dettagli OdA**: Estrae metadati critici dagli Ordini d'Acquisto per alimentare la ricerca globale.
+3.  **Carico TS**: Inserisce i dati elaborati nel portale, validando ogni riga in tempo reale.
+4.  **Prenota BP**: Gestisce le prenotazioni dei badge permanenti con reportistica immediata.
+
+#### 💡 Best Practices
+*   Assicurarsi che la **VPN ISAB** sia attiva prima di avviare un bot.
+*   Non interagire con il browser Chrome mentre il bot è in stato `RUNNING`.
+*   Utilizzare la **Command Palette (Ctrl+P)** per avvii rapidi.
+"""
 
     def _get_timbrature_md(self) -> str:
-        """Restituisce il Markdown per le timbrature."""
-        return "# ⏱️ Timbrature\nIl cuore della gestione presenze."
+        return """
+# 📊 Gestione Database & Risorse
+### Archiviazione centralizzata e persistente dei dati operativi.
 
-    def _get_contabilita_md(self) -> str:
-        """Restituisce il Markdown per la contabilità."""
-        return "# 📊 Strumentale (Contabilità)\nVisione economica completa dell'appalto."
+SyncroJob utilizza un motore database SQLite ottimizzato per gestire centinaia di migliaia di record con latenza zero.
+
+#### 📁 Sezioni Database
+*   **Timbrature**: Storico completo degli ingressi/uscite con associazione automatica al cantiere.
+*   **DataEase**: Integrazione con lo scarico ore cantiere per analisi di resa.
+*   **Dipendenti**: Gestione anagrafica, scadenze abilitazioni e badge.
+
+#### 🔍 Ricerca Avanzata
+Utilizza la **Ricerca Universale** in alto (Ctrl+F) per trovare istantaneamente un Badge, un Cognome o un numero OdA in tutto l'ecosistema.
+"""
 
     def _get_lyra_md(self) -> str:
-        """Restituisce il Markdown per l'AI Lyra."""
-        return "# ✨ Lyra AI\nIl tuo assistente analista personale basato su intelligenza artificiale."
+        return """
+# ✨ Lyra AI Analyst
+### L'assistente virtuale basato su Intelligenza Artificiale Generativa.
 
-    def _get_shortcuts_md(self) -> str:
-        """Restituisce il Markdown per le scorciatoie."""
-        return "# ⚡ Scorciatoie\n* **F5**: Aggiorna dati\n* **Ctrl + F**: Cerca"
+Lyra non è un semplice chatbot, ma un modulo di analisi integrato che comprende il contesto dei tuoi dati.
 
-    def _get_troubleshooting_md(self) -> str:
-        """Restituisce il Markdown per il troubleshooting."""
-        return "# 🛠️ Risoluzione Problemi\nControlla Chrome e la VPN ISAB."
+#### 🛠️ Cosa può fare Lyra?
+*   **Analisi Anomalie**: Confronta timbrature e scarico ore per trovare incongruenze.
+*   **Supporto Tecnico**: Risponde a domande operative su come usare l'applicazione.
+*   **Data Extraction**: Estrae informazioni da testi non strutturati.
+
+#### 🔐 Privacy
+Tutte le query inviate a Lyra sono filtrate per rimuovere PII (Informazioni Sensibili) prima dell'elaborazione.
+"""
+
+    def _get_oda_md(self) -> str:
+        return """
+# 🏗️ Sincronizzazione PDL & SafeWork
+### Automazione dei flussi SafeWork per la programmazione lavori.
+
+Il modulo PDL permette di monitorare l'intero ciclo di vita dei Permessi di Lavoro.
+
+#### 🔄 Ciclo Operativo
+1.  **Sync Bot**: Il bot interroga SafeWork e aggiorna il database locale.
+2.  **Programmazione**: Gestione settimanale dei flag TCL/TGO per ogni PDL.
+3.  **Storico Interventi**: Recupero della cronologia tecnica dai database esterni.
+
+> **Nota**: I dati sono sincronizzati ogni volta che viene eseguito il bot 'Ricerca PDL'.
+"""
+
+    def _get_contabilita_md(self) -> str:
+        return """
+# 📈 KPI & Analisi Strumentale
+### La visione economica e produttiva del tuo appalto.
+
+Questo modulo trasforma i dati grezzi in decisioni aziendali.
+
+#### 📉 Funzionalità
+*   **Analisi Preventivi**: Monitoraggio degli importi maturati per anno e per OdA.
+*   **Controllo Giornaliere**: Verifica quotidiana della produzione strumentale.
+*   **Export Enterprise**: Generazione di report Excel pronti per la fatturazione.
+"""
+
+    def _get_news_md(self) -> str:
+        return """
+# 🔔 Notifiche, Audit & News
+### Trasparenza totale su ogni operazione eseguita.
+
+#### 📜 Audit Log
+Ogni azione rilevante (avvio bot, modifica configurazione, login) viene registrata nel database di Audit per garantire la tracciabilità.
+
+#### 🏥 Health Score
+Un algoritmo proprietario valuta la salute del sistema basandosi su:
+*   Connettività di rete.
+*   Validità delle licenze.
+*   Stato dei driver (ChromeDriver).
+*   Integrità del Database.
+"""
 
     def _get_license_md(self) -> str:
-        """Restituisce il Markdown per la licenza."""
-        return "# 🔑 Licenza\nSyncroJob è protetto da licenza digitale hardware."
+        return """
+# 🔑 Sicurezza & Licenza Digitale
+### Protezione dei dati e controllo degli accessi.
+
+SyncroJob Enterprise è protetto da un sistema di licenza hardware univoco.
+
+#### 🛡️ Protocolli di Securrezza
+*   **Hardware Binding**: La licenza è legata all'ID del computer per prevenire duplicazioni.
+*   **Credential Encryption**: Le password dei portali sono criptate nel database locale.
+*   **Session Guard**: Monitoraggio delle scadenze abilitazioni ISAB per evitare blocchi operativi.
+"""
+
+    def _get_shortcuts_md(self) -> str:
+        return """
+# ⚡ Shortcuts di Sistema
+### Massimizza la tua velocità operativa.
+
+| Scorciatoia | Azione |
+| :--- | :--- |
+| **Ctrl + P** | Apri Command Palette (Ricerca Rapida) |
+| **Ctrl + F** | Focus su Ricerca Universale |
+| **F5** | Refresh dati della pagina corrente |
+| **Ctrl + S** | Forza salvataggio impostazioni |
+| **Esc** | Chiude dialoghi e modali |
+"""
+
+    def _get_troubleshooting_md(self) -> str:
+        return """
+# 🛠️ Troubleshooting & Risoluzione Problemi
+### Guida rapida ai problemi comuni.
+
+#### ❌ Il Bot non parte?
+1.  Verifica che **Chrome** sia aggiornato all'ultima versione.
+2.  Controlla che la **VPN ISAB** sia connessa.
+3.  Assicurati che non ci siano altre istanze di Chrome aperte dal bot.
+
+#### ❌ Errore Login Portale?
+*   Verifica le credenziali in `Impostazioni > Account`.
+*   Prova ad accedere manualmente dal browser per sbloccare eventuali Captcha.
+"""
 
     def _get_contacts_md(self) -> str:
-        """Restituisce il Markdown per i contatti."""
-        return "# 📞 Contatti & Supporto\ngianky.allegretti@gmail.com"
+        return """
+# 📞 Supporto Tecnico & Contatti
+### Siamo qui per aiutarti.
+
+Per assistenza prioritaria, bug report o richieste di nuove funzionalità:
+
+*   **Lead Developer**: G. Allegretti
+*   **Email**: [gianky.allegretti@gmail.com](mailto:gianky.allegretti@gmail.com)
+*   **WhatsApp**: [Canale Supporto Interno]
+
+---
+*SyncroJob Enterprise è un prodotto sviluppato con passione per l'eccellenza operativa.*
+"""

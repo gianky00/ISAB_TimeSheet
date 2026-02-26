@@ -35,7 +35,7 @@ La UI è stata progettata per dare priorità alle informazioni critiche:
 ## 📂 Operazioni e Gestione Dati
 
 ### Importazione Anagrafica
-È possibile aggiornare l'elenco dei dipendenti caricando un file CSV (`anagrafica_dipendenti.csv`).
+È possibile aggiornare l'elenco dei dipendenti caricando un file CSV (`data/anagrafiche/anagrafica_dipendenti.csv`).
 - **Requisito**: Il file deve usare il punto e virgola (`;`) come separatore.
 - **Campi supportati**: `id_risorsa`, `Cognome`, `Nome`, `Data_nascita`, `Badge`, `Data_assunzione`.
 - **Sincronizzazione**: Il software associa automaticamente le timbrature ai dipendenti tramite la combinazione di **Cognome e Nome**.

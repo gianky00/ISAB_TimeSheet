@@ -45,55 +45,57 @@ class AnimatedBorder(QWidget):
     def paintEvent(self, event: QPaintEvent | None) -> None:
         """Disegna il bordo con effetti glow e conici."""
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        w, h = self.width(), self.height()
-        r = self.BORDER_RADIUS
-        intensity = 0.6 + 0.4 * math.sin(self.phase * 2)
+        try:
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            w, h = self.width(), self.height()
+            r = self.BORDER_RADIUS
+            intensity = 0.6 + 0.4 * math.sin(self.phase * 2)
 
-        # OUTER GLOW SHADOWS
-        outer_glow1 = QPainterPath()
-        outer_glow1.addRoundedRect(-8.0, -8.0, float(w + 16), float(h + 16), float(r + 8), float(r + 8))
-        painter.setPen(Qt.PenStyle.NoPen)
-        outer_gradient1 = QRadialGradient(w / 2.0, h / 2.0, max(w, h) * 0.7)
-        outer_gradient1.setColorAt(0.5, QColor(52, 152, 219, int(20 * intensity)))
-        outer_gradient1.setColorAt(0.7, QColor(52, 152, 219, int(10 * intensity)))
-        outer_gradient1.setColorAt(1.0, QColor(52, 152, 219, 0))
-        painter.fillPath(outer_glow1, outer_gradient1)
+            # OUTER GLOW SHADOWS
+            outer_glow1 = QPainterPath()
+            outer_glow1.addRoundedRect(-8.0, -8.0, float(w + 16), float(h + 16), float(r + 8), float(r + 8))
+            painter.setPen(Qt.PenStyle.NoPen)
+            outer_gradient1 = QRadialGradient(w / 2.0, h / 2.0, max(w, h) * 0.7)
+            outer_gradient1.setColorAt(0.5, QColor(52, 152, 219, int(20 * intensity)))
+            outer_gradient1.setColorAt(0.7, QColor(52, 152, 219, int(10 * intensity)))
+            outer_gradient1.setColorAt(1.0, QColor(52, 152, 219, 0))
+            painter.fillPath(outer_glow1, outer_gradient1)
 
-        for offset in (6, 4, 2):
-            glow_path = QPainterPath()
-            glow_path.addRoundedRect(
-                float(-offset),
-                float(-offset),
-                float(w + offset * 2),
-                float(h + offset * 2),
-                float(r + offset),
-                float(r + offset),
-            )
-            alpha = int((25 - offset * 3) * intensity)
-            pen = QPen(QColor(52, 152, 219, alpha), offset * 1.5)
+            for offset in (6, 4, 2):
+                glow_path = QPainterPath()
+                glow_path.addRoundedRect(
+                    float(-offset),
+                    float(-offset),
+                    float(w + offset * 2),
+                    float(h + offset * 2),
+                    float(r + offset),
+                    float(r + offset),
+                )
+                alpha = int((25 - offset * 3) * intensity)
+                pen = QPen(QColor(52, 152, 219, alpha), offset * 1.5)
+                pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+                painter.setPen(pen)
+                painter.drawPath(glow_path)
+
+            # MAIN CONIC BORDER
+            cx, cy = w / 2.0, h / 2.0
+            conic = QConicalGradient(cx, cy, -math.degrees(self.phase))
+            conic.setColorAt(0.0, QColor(52, 152, 219, int(255 * intensity)))
+            conic.setColorAt(0.2, QColor(155, 89, 182, int(120 * intensity)))
+            conic.setColorAt(0.5, QColor(100, 60, 140, int(60 * intensity)))
+            conic.setColorAt(0.8, QColor(100, 180, 235, int(120 * intensity)))
+            conic.setColorAt(1.0, QColor(52, 152, 219, int(255 * intensity)))
+
+            inner_path = QPainterPath()
+            inner_path.addRoundedRect(2.0, 2.0, float(w - 4), float(h - 4), float(r - 1), float(r - 1))
+            pen = QPen(QBrush(conic), 2.5)
             pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
             painter.setPen(pen)
-            painter.drawPath(glow_path)
+            painter.drawPath(inner_path)
 
-        # MAIN CONIC BORDER
-        cx, cy = w / 2.0, h / 2.0
-        conic = QConicalGradient(cx, cy, -math.degrees(self.phase))
-        conic.setColorAt(0.0, QColor(52, 152, 219, int(255 * intensity)))
-        conic.setColorAt(0.2, QColor(155, 89, 182, int(120 * intensity)))
-        conic.setColorAt(0.5, QColor(100, 60, 140, int(60 * intensity)))
-        conic.setColorAt(0.8, QColor(100, 180, 235, int(120 * intensity)))
-        conic.setColorAt(1.0, QColor(52, 152, 219, int(255 * intensity)))
-
-        inner_path = QPainterPath()
-        inner_path.addRoundedRect(2.0, 2.0, float(w - 4), float(h - 4), float(r - 1), float(r - 1))
-        pen = QPen(QBrush(conic), 2.5)
-        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
-        painter.setPen(pen)
-        painter.drawPath(inner_path)
-
-        self._draw_light_points(painter, w, h, r)
-        painter.end()
+            self._draw_light_points(painter, w, h, r)
+        finally:
+            painter.end()
 
     def _draw_light_points(self, painter: QPainter, w: int, h: int, r: int) -> None:
         """Disegna i punti luce che scorrono sul bordo."""
@@ -158,33 +160,35 @@ class GlowingProgressBar(QWidget):
     def paintEvent(self, event: QPaintEvent | None) -> None:
         """Disegna la barra di progresso con effetto gradiente e shimmer."""
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        w, h = self.width(), self.height()
+        try:
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            w, h = self.width(), self.height()
 
-        track = QPainterPath()
-        track.addRoundedRect(0.0, 0.0, float(w), float(h), 3.0, 3.0)
-        painter.fillPath(track, QColor(15, 15, 25))
+            track = QPainterPath()
+            track.addRoundedRect(0.0, 0.0, float(w), float(h), 3.0, 3.0)
+            painter.fillPath(track, QColor(15, 15, 25))
 
-        if self._display_value > 0:
-            pw = int((self._display_value / 100.0) * w)
-            grad = QLinearGradient(0.0, 0.0, float(pw), 0.0)
-            grad.setColorAt(0, QColor(52, 152, 219))
-            grad.setColorAt(1, QColor(155, 89, 182))
+            if self._display_value > 0:
+                pw = int((self._display_value / 100.0) * w)
+                grad = QLinearGradient(0.0, 0.0, float(pw), 0.0)
+                grad.setColorAt(0, QColor(52, 152, 219))
+                grad.setColorAt(1, QColor(155, 89, 182))
 
-            progress = QPainterPath()
-            progress.addRoundedRect(0.0, 0.0, float(pw), float(h), 3.0, 3.0)
-            painter.fillPath(progress, grad)
+                progress = QPainterPath()
+                progress.addRoundedRect(0.0, 0.0, float(pw), float(h), 3.0, 3.0)
+                painter.fillPath(progress, grad)
 
-            if 0 < self._shimmer < pw:
-                painter.save()
-                shimmer = QLinearGradient(self._shimmer - 40.0, 0.0, self._shimmer + 40.0, 0.0)
-                shimmer.setColorAt(0, QColor(255, 255, 255, 0))
-                shimmer.setColorAt(0.5, QColor(255, 255, 255, 100))
-                shimmer.setColorAt(1, QColor(255, 255, 255, 0))
-                painter.setClipPath(progress)
-                painter.fillRect(int(self._shimmer - 40), 0, 80, h, shimmer)
-                painter.restore()
-        painter.end()
+                if 0 < self._shimmer < pw:
+                    painter.save()
+                    shimmer = QLinearGradient(self._shimmer - 40.0, 0.0, self._shimmer + 40.0, 0.0)
+                    shimmer.setColorAt(0, QColor(255, 255, 255, 0))
+                    shimmer.setColorAt(0.5, QColor(255, 255, 255, 100))
+                    shimmer.setColorAt(1, QColor(255, 255, 255, 0))
+                    painter.setClipPath(progress)
+                    painter.fillRect(int(self._shimmer - 40), 0, 80, h, shimmer)
+                    painter.restore()
+        finally:
+            painter.end()
 
 
 class PulsingLogo(QWidget):
@@ -213,29 +217,31 @@ class PulsingLogo(QWidget):
         if not self.pixmap:
             return
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        try:
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
 
-        cx, cy = self.width() / 2.0, self.height() / 2.0
-        scale = 1.0 + 0.04 * math.sin(self.phase)
-        glow_op = 0.4 + 0.3 * math.sin(self.phase)
+            cx, cy = self.width() / 2.0, self.height() / 2.0
+            scale = 1.0 + 0.04 * math.sin(self.phase)
+            glow_op = 0.4 + 0.3 * math.sin(self.phase)
 
-        glow = QRadialGradient(cx, cy, 60.0)
-        glow.setColorAt(0, QColor(52, 152, 219, int(100 * glow_op)))
-        glow.setColorAt(1, QColor(52, 152, 219, 0))
-        painter.setBrush(QBrush(glow))
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.drawEllipse(QPoint(int(cx), int(cy)), 60, 60)
+            glow = QRadialGradient(cx, cy, 60.0)
+            glow.setColorAt(0, QColor(52, 152, 219, int(100 * glow_op)))
+            glow.setColorAt(1, QColor(52, 152, 219, 0))
+            painter.setBrush(QBrush(glow))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(QPoint(int(cx), int(cy)), 60, 60)
 
-        size = int(64 * scale)
-        scaled = self.pixmap.scaled(
-            size,
-            size,
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation,
-        )
-        painter.drawPixmap(int(cx - scaled.width() / 2.0), int(cy - scaled.height() / 2.0), scaled)
-        painter.end()
+            size = int(64 * scale)
+            scaled = self.pixmap.scaled(
+                size,
+                size,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            painter.drawPixmap(int(cx - scaled.width() / 2.0), int(cy - scaled.height() / 2.0), scaled)
+        finally:
+            painter.end()
 
 
 class TypewriterLabel(QLabel):

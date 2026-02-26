@@ -48,7 +48,6 @@ class Icons:
     """Relative paths for application icons."""
 
     # Navigation
-    MENU = "assets/icons/menu.svg"
     HOME = "assets/icons/home.svg"
     SETTINGS = "assets/icons/settings.svg"
     SETTINGS_DARK = "assets/icons/settings_dark.svg"
@@ -61,7 +60,6 @@ class Icons:
     RESET = "assets/icons/reset.svg"
     TRASH = "assets/icons/trash.svg"
     EDIT = "assets/icons/edit.svg"
-    SAVE = "assets/icons/save.svg"
     FOLDER = "assets/icons/folder.svg"
     FOLDER_OPEN = "assets/icons/folder-open.svg"
     CLOUD = "assets/icons/cloud.svg"
@@ -86,7 +84,6 @@ class Icons:
 
     BELL = "assets/icons/bell.svg"
     STAR = "assets/icons/star.svg"
-    KEY = "assets/icons/key.svg"
     SHIELD = "assets/icons/shield.svg"
     INFO = "assets/icons/info.svg"
 
@@ -106,7 +103,6 @@ class Icons:
     FILE_TEXT = "assets/icons/file-text.svg"
     EXCEL = "assets/icons/excel.svg"
     BAR_CHART = "assets/icons/bar-chart.svg"
-    BUILDING = "assets/icons/building.svg"
     ACTIVITY = "assets/icons/activity.svg"
     HEART = "assets/icons/activity.svg"  # Alias per Health (usa activity come fallback)
     GLOBE = "assets/icons/globe.svg"
@@ -120,12 +116,6 @@ class Icons:
     ARCHIVE = "assets/icons/archive.svg"
     LOG_OUT = "assets/icons/log-out.svg"
 
-    # Certificates
-    CERTIFICATE_ACTIVE = "assets/icons/certificate_active.svg"
-    CERTIFICATE_EXPIRING = "assets/icons/certificate_expiring.svg"
-    CERTIFICATE_EXPIRED = "assets/icons/certificate_expired.svg"
-    CERTIFICATE_ARCHIVED = "assets/icons/certificate_archived.svg"
-
     # Status Dots
     STATUS_DOT_RED = "assets/icons/status_dot_red.svg"
     STATUS_DOT_ORANGE = "assets/icons/status_dot_orange.svg"
@@ -134,7 +124,6 @@ class Icons:
     STATUS_DOT_GRAY = "assets/icons/status_dot_gray.svg"
 
     # UI Elements
-    SEPARATOR_DOT = "assets/icons/separator_dot.svg"
     FLAG_TCL_ON = "assets/icons/flag_tcl_on.svg"
     FLAG_TCL_OFF = "assets/icons/flag_tcl_off.svg"
     FLAG_TGO_ON = "assets/icons/flag_tgo_on.svg"

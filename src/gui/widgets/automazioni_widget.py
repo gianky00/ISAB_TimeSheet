@@ -1,7 +1,13 @@
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QHBoxLayout, QStackedWidget, QTabWidget, QWidget
+"""
+SyncroJob - Automazioni Widget (Refactored)
+Pannello raggruppato per i Bot con animazioni integrate e controlli locali.
+Gestisce l'orchestrazione dei bot Selenium per Portale Fornitori e SafeWork.
+"""
+
+from PyQt6.QtWidgets import QTabWidget, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
+from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.panels import (
     CaricoTSPanel,
     DettagliOdAPanel,
@@ -11,72 +17,63 @@ from src.gui.panels import (
     ScaricoPDLPanel,
     TimbratureBotPanel,
 )
-from src.gui.panels.base import BaseBotPanel
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
-class AutomazioniWidget(QTabWidget):
-    """Pannello raggruppato per i Bot con caricamento EAGER (tutto subito)."""
+class AutomazioniWidget(QWidget):
+    """
+    Pannello raggruppato per i Bot con animazioni Snapshot-Fade.
+    Centralizza l'accesso a tutti i processi di automazione web.
+    """
 
-    def __init__(self, main_window):
+    def __init__(self, main_window) -> None:
+        """
+        Inizializza il widget delle automazioni.
+
+        Args:
+            main_window: Riferimento alla finestra principale per la registrazione dei pannelli.
+        """
         super().__init__()
         self.mw = main_window
-        # Nascondiamo la barra dei tab superiore perché la navigazione è ora nella Sidebar
-        if tab_bar := self.tabBar():
-            tab_bar.hide()
-        self.setDocumentMode(True)  # Rimuove i bordi extra del frame
-        self.setStyleSheet("QTabWidget::pane { border: none; }")  # Pulizia visuale totale
+
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        # Tab principale (Fornitori | SafeWork)
+        self.main_tabs = AnimatedTabWidget()
+        main_layout.addWidget(self.main_tabs)
 
         # --- TAB 1: Portale Fornitori ---
-        self.tab_fornitori = QTabWidget()
-        self.tab_fornitori.setProperty("class", "Level2Tabs")  # Clean Style
-        self.corner_fornitori = QStackedWidget()
-        self.tab_fornitori.setCornerWidget(self.corner_fornitori, Qt.Corner.TopRightCorner)
-        self.tab_fornitori.currentChanged.connect(self.corner_fornitori.setCurrentIndex)
+        self.tab_fornitori = AnimatedTabWidget()
+        self.tab_fornitori.setTabPosition(QTabWidget.TabPosition.North)
 
-        # Istanzia TUTTI i pannelli subito
+        # Istanzia i pannelli (I pulsanti ora rimangono DENTRO i pannelli)
         self.panel_dettagli = DettagliOdAPanel()
         self.panel_scarico = ScaricaTSPanel()
         self.panel_timbrature = TimbratureBotPanel()
         self.panel_prenota = PrenotaBPPanel()
         self.panel_carico = CaricoTSPanel()
 
-        self._add_bot_tab(
-            self.tab_fornitori, self.corner_fornitori, self.panel_dettagli, Icons.LIST, "Dettagli OdA (bot)"
-        )
-        self._add_bot_tab(
-            self.tab_fornitori, self.corner_fornitori, self.panel_scarico, Icons.DOWNLOAD, "Scarico TS (bot)"
-        )
-        self._add_bot_tab(
-            self.tab_fornitori, self.corner_fornitori, self.panel_timbrature, Icons.CLOCK, "Timbrature (bot)"
-        )
-        self._add_bot_tab(
-            self.tab_fornitori, self.corner_fornitori, self.panel_prenota, Icons.TICKET, "Prenota BP (bot)"
-        )
-        self._add_bot_tab(
-            self.tab_fornitori, self.corner_fornitori, self.panel_carico, Icons.UPLOAD, "Carico TS (bot)"
-        )
+        self.tab_fornitori.addTab(self.panel_dettagli, get_colored_icon(get_asset_path(Icons.LIST), "#546E7A"), "Dettagli OdA (bot)")
+        self.tab_fornitori.addTab(self.panel_scarico, get_colored_icon(get_asset_path(Icons.DOWNLOAD), "#546E7A"), "Scarico TS (bot)")
+        self.tab_fornitori.addTab(self.panel_timbrature, get_colored_icon(get_asset_path(Icons.CLOCK), "#546E7A"), "Timbrature (bot)")
+        self.tab_fornitori.addTab(self.panel_prenota, get_colored_icon(get_asset_path(Icons.TICKET), "#546E7A"), "Prenota BP (bot)")
+        self.tab_fornitori.addTab(self.panel_carico, get_colored_icon(get_asset_path(Icons.UPLOAD), "#546E7A"), "Carico TS (bot)")
 
         # --- TAB 2: SafeWork ---
-        self.tab_safework = QTabWidget()
-        self.tab_safework.setProperty("class", "Level2Tabs")  # Clean Style
-        self.corner_safework = QStackedWidget()
-        self.tab_safework.setCornerWidget(self.corner_safework, Qt.Corner.TopRightCorner)
-        self.tab_safework.currentChanged.connect(self.corner_safework.setCurrentIndex)
+        self.tab_safework = AnimatedTabWidget()
+        self.tab_safework.setTabPosition(QTabWidget.TabPosition.North)
 
         self.panel_pdl = ScaricoPDLPanel()
         self.panel_pdl_search = RicercaPDLPanel()
 
-        self._add_bot_tab(
-            self.tab_safework, self.corner_safework, self.panel_pdl, Icons.SHIELD, "Scarico PDL (bot)"
-        )
-        self._add_bot_tab(
-            self.tab_safework, self.corner_safework, self.panel_pdl_search, Icons.SEARCH, "Ricerca PDL (bot)"
-        )
+        self.tab_safework.addTab(self.panel_pdl, get_colored_icon(get_asset_path(Icons.SHIELD), "#546E7A"), "Scarico PDL (bot)")
+        self.tab_safework.addTab(self.panel_pdl_search, get_colored_icon(get_asset_path(Icons.SEARCH), "#546E7A"), "Ricerca PDL (bot)")
 
         # Aggiunta tab principali
-        self.addTab(self.tab_fornitori, "Portale Fornitori")
-        self.addTab(self.tab_safework, "SafeWork")
+        self.main_tabs.addTab(self.tab_fornitori, "Portale Fornitori")
+        self.main_tabs.addTab(self.tab_safework, "SafeWork")
 
         # Registra riferimenti nella Main Window (per compatibilità)
         self.mw.dettagli_panel = self.panel_dettagli
@@ -89,76 +86,34 @@ class AutomazioniWidget(QTabWidget):
         self.mw.tab_fornitori = self.tab_fornitori
         self.mw.tab_safework = self.tab_safework
 
-        # Registrazione Controller (se presente)
+        # Registrazione Controller
         if hasattr(self.mw, "bot_controller"):
-            self.mw.bot_controller.register_panels(
-                [
-                    self.panel_dettagli,
-                    self.panel_prenota,
-                    self.panel_scarico,
-                    self.panel_timbrature,
-                    self.panel_carico,
-                    self.panel_pdl,
-                    self.panel_pdl_search,
-                ]
-            )
+            self.mw.bot_controller.register_panels([
+                self.panel_dettagli, self.panel_prenota, self.panel_scarico,
+                self.panel_timbrature, self.panel_carico, self.panel_pdl, self.panel_pdl_search
+            ])
 
-    def _add_bot_tab(
-        self,
-        tab_widget: QTabWidget,
-        corner_stack: QStackedWidget,
-        panel: BaseBotPanel,
-        icon_path: str,
-        title: str,
-    ):
-        """Helper per aggiungere un tab e spostare i suoi controlli nel corner widget."""
-        tab_widget.addTab(panel, get_colored_icon(get_asset_path(icon_path), "#546E7A"), title)
+    def set_active_tab(self, main_idx: int, sub_idx: int) -> None:
+        """
+        Imposta programmaticamente il tab e il sottomenu attivi.
 
-        # Estraiamo i controlli dal pannello e li mettiamo nello stack del corner
-        if hasattr(panel, "controls_widget") and hasattr(panel, "header_layout"):
-            # Rimuoviamo dal pannello originale
-            panel.header_layout.removeWidget(panel.controls_widget)
-            # Nascondiamo l'intero header layout per recuperare spazio
-            panel.controls_widget.setParent(None)
-            # Aggiungiamo allo stack del corner (il parent diventerà corner_stack)
-            container = QWidget()
-            layout = QHBoxLayout(container)
-            layout.setContentsMargins(0, 0, 10, 0)  # Padding a destra per non toccare il bordo
-            layout.addWidget(panel.controls_widget)
-            corner_stack.addWidget(container)
+        Args:
+            main_idx: Indice del portale (0: Fornitori, 1: SafeWork).
+            sub_idx: Indice del bot all'interno del portale.
+        """
+        self.main_tabs.setCurrentIndex(main_idx)
+        target = self.tab_fornitori if main_idx == 0 else self.tab_safework
+        target.setCurrentIndex(sub_idx)
 
-            # Se il pannello è BaseBotPanel, possiamo anche nascondere l'header_layout del tutto
-            # ma lo lasciamo vuoto per ora o lo rimuoviamo dal layout del pannello
-            item = panel.main_layout.takeAt(0)  # L'header_layout è il primo elemento
-            if item:
-                _layout = item.layout()
-                if _layout is not None:
-                    # Svuota e distruggi il layout
-                    while _layout.count():
-                        child_item = _layout.takeAt(0)
-                        if child_item and (w := child_item.widget()):
-                            w.deleteLater()
-                # Se è un layout, non ha deleteLater direttamente come widget
-                # Ma rimuovendolo dal main_layout abbiamo già guadagnato spazio
+    def currentIndex(self) -> int:
+        """Restituisce l'indice del portale attivo."""
+        return self.main_tabs.currentIndex()
 
-    def set_active_tab(self, main_idx: int, sub_idx: int):
-        """Imposta programmaticamente il tab attivo con debug."""
-        print(f"DEBUG: AutomazioniWidget.set_active_tab({main_idx}, {sub_idx})")
+    def setCurrentIndex(self, index: int) -> None:
+        """
+        Cambia il portale attivo.
 
-        # 1. Tab Principale
-        self.setCurrentIndex(main_idx)
-
-        # 2. Sotto-Tab (con delay per sicurezza UI)
-        target_widget = None
-        if main_idx == 0:
-            target_widget = self.tab_fornitori
-        elif main_idx == 1:
-            target_widget = self.tab_safework
-
-        if target_widget:
-            print(
-                f"DEBUG: Switching inner tab {main_idx} to {sub_idx} (Current: {target_widget.currentIndex()})"
-            )
-            target_widget.setCurrentIndex(sub_idx)
-            # Force update
-            target_widget.repaint()
+        Args:
+            index: Nuovo indice.
+        """
+        self.main_tabs.setCurrentIndex(index)

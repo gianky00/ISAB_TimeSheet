@@ -15,13 +15,13 @@ from PyQt6.QtWidgets import (
     QLabel,
     QMessageBox,
     QScrollArea,
-    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
 from src.core.constants import Icons
 from src.core.notification_manager import NotificationManager
+from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.panels.health_panel import HealthPanel
 from src.gui.widgets.audit_log_widget import AuditLogWidget
 from src.gui.widgets.modern_button import ModernButton
@@ -87,8 +87,7 @@ class NotificationsPanel(QWidget):
         main_layout.setContentsMargins(15, 15, 15, 15)
         main_layout.setSpacing(10)
 
-        self.tabs = QTabWidget()
-        self.tabs.setProperty("class", "Level2Tabs")
+        self.tabs = AnimatedTabWidget()
         main_layout.addWidget(self.tabs)
 
         # Tab Notifiche
