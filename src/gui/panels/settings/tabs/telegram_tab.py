@@ -41,6 +41,9 @@ class SettingCard(QFrame):
             content_widget: Widget contenuto.
         """
         super().__init__()
+        self.title_text = title
+        self.subtitle_text = subtitle
+
         self.setObjectName("settingCard")
         self.setStyleSheet("""
             QFrame#settingCard {
@@ -111,6 +114,7 @@ class TelegramTab(QWidget):
             parent: Widget genitore.
         """
         super().__init__(parent)
+        self.cards: list[SettingCard] = []
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -118,6 +122,26 @@ class TelegramTab(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
+
+        # --- TOP STATUS BAR (Search) ---
+        self.header_bar = QFrame()
+        self.header_bar.setFixedHeight(50)
+        self.header_bar.setStyleSheet("background: #F8F9FA; border-bottom: 1px solid #ECEFF1;")
+        header_layout = QHBoxLayout(self.header_bar)
+        header_layout.setContentsMargins(20, 0, 20, 0)
+
+        search_icon = QLabel()
+        search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), "#90A4AE").pixmap(16, 16))
+        header_layout.addWidget(search_icon)
+
+        self.search_bar = QLineEdit()
+        self.search_bar.setPlaceholderText("Cerca integrazioni Telegram...")
+        self.search_bar.setStyleSheet("border: none; background: transparent; font-size: 13px; font-weight: 500;")
+        self.search_bar.textChanged.connect(self._filter_cards)
+        header_layout.addWidget(self.search_bar)
+        header_layout.addStretch()
+
+        main_layout.addWidget(self.header_bar)
 
         # Scroll Area
         self.scroll_container = QScrollArea()
@@ -150,11 +174,13 @@ class TelegramTab(QWidget):
         creds_layout.addWidget(QLabel("Chat ID Destinatario:"))
         creds_layout.addWidget(self.chat_id_edit)
 
-        self.cards_layout.addWidget(SettingCard(
+        card_creds = SettingCard(
             "Accesso API Telegram",
             "Configura le credenziali del bot per il controllo remoto.",
             Icons.SEND, creds_widget
-        ))
+        )
+        self.cards_layout.addWidget(card_creds)
+        self.cards.append(card_creds)
 
         # 2. Connectivity Card
         conn_widget = QWidget()
@@ -169,15 +195,24 @@ class TelegramTab(QWidget):
         conn_layout.addWidget(self.btn_test)
         conn_layout.addWidget(self.lbl_status)
 
-        self.cards_layout.addWidget(SettingCard(
+        card_conn = SettingCard(
             "Test Connettività",
             "Verifica che il bot possa inviare notifiche correttamente.",
             Icons.SPARKLES, conn_widget
-        ))
+        )
+        self.cards_layout.addWidget(card_conn)
+        self.cards.append(card_conn)
 
         self.cards_layout.addStretch()
         self.scroll_container.setWidget(scroll_content)
         main_layout.addWidget(self.scroll_container)
+
+    def _filter_cards(self, text: str) -> None:
+        search_term = text.lower().strip()
+        for card in self.cards:
+            match = (search_term in card.title_text.lower() or
+                     search_term in card.subtitle_text.lower())
+            card.setVisible(match or not search_term)
 
     def load_from_config(self, config: dict[str, Any]) -> None:
         """

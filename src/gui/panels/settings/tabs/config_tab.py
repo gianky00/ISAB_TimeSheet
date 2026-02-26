@@ -45,6 +45,9 @@ class SettingCard(QFrame):
             content_widget: Widget contenente i controlli reali.
         """
         super().__init__()
+        self.title_text = title
+        self.subtitle_text = subtitle
+
         self.setObjectName("settingCard")
         self.setStyleSheet("""
             QFrame#settingCard {
@@ -103,7 +106,7 @@ class SettingCard(QFrame):
 class ConfigTab(QWidget):
     """
     Tab di configurazione d'élite.
-    Organizza le impostazioni in Card tematiche scorrevoli (Generale, Account, Liste, Percorsi, Diagnostica).
+    Organizza le impostazioni in Card tematiche scorrevoli.
     """
 
     settings_changed = pyqtSignal()
@@ -118,6 +121,7 @@ class ConfigTab(QWidget):
         """
         super().__init__(parent)
         self.pages: list[QWidget] = []
+        self.cards: list[SettingCard] = []
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -126,28 +130,29 @@ class ConfigTab(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # --- TOP STATUS BAR (System Health) ---
-        self.health_bar = QFrame()
-        self.health_bar.setFixedHeight(50)
-        self.health_bar.setStyleSheet("background: #F8F9FA; border-bottom: 1px solid #ECEFF1;")
-        health_layout = QHBoxLayout(self.health_bar)
-        health_layout.setContentsMargins(20, 0, 20, 0)
+        # --- TOP STATUS BAR (Search) ---
+        self.header_bar = QFrame()
+        self.header_bar.setFixedHeight(50)
+        self.header_bar.setStyleSheet("background: #F8F9FA; border-bottom: 1px solid #ECEFF1;")
+        header_layout = QHBoxLayout(self.header_bar)
+        header_layout.setContentsMargins(20, 0, 20, 0)
 
         search_icon = QLabel()
         search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), "#90A4AE").pixmap(16, 16))
-        health_layout.addWidget(search_icon)
+        header_layout.addWidget(search_icon)
 
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Filtra impostazioni...")
         self.search_bar.setStyleSheet("border: none; background: transparent; font-size: 13px; font-weight: 500;")
-        health_layout.addWidget(self.search_bar)
-        health_layout.addStretch()
+        self.search_bar.textChanged.connect(self._filter_cards)
+        header_layout.addWidget(self.search_bar)
+        header_layout.addStretch()
 
         self.status_lbl = QLabel("Stato Sistema: Operativo")
         self.status_lbl.setStyleSheet("color: #4CAF50; font-weight: 700; font-size: 12px;")
-        health_layout.addWidget(self.status_lbl)
+        header_layout.addWidget(self.status_lbl)
 
-        main_layout.addWidget(self.health_bar)
+        main_layout.addWidget(self.header_bar)
 
         # --- SCROLL AREA PER LE CARDS ---
         self.scroll_container = QScrollArea()
@@ -165,76 +170,104 @@ class ConfigTab(QWidget):
         # --- 1. GENERALE ---
         self.general_page = GeneralPage()
         self.general_page.settings_changed.connect(self.settings_changed.emit)
-        self.cards_layout.addWidget(SettingCard(
+        card_gen = SettingCard(
             "Interfaccia & Automazione",
             "Configura il comportamento del browser e l'aspetto grafico.",
             Icons.CPU, self.general_page
-        ))
+        )
+        self.cards_layout.addWidget(card_gen)
+        self.cards.append(card_gen)
         self.pages.append(self.general_page)
 
-        # --- 2. ACCOUNT ---
+        # --- 2. LISTE & ACCOUNT ---
         self.lists_page = ListsPage()
         self.lists_page.settings_changed.connect(self.settings_changed.emit)
         self.pages.append(self.lists_page)
 
-        acc_container = QWidget()
-        acc_layout = QHBoxLayout(acc_container)
-        acc_layout.setContentsMargins(0, 0, 0, 0)
-        acc_layout.setSpacing(20)
-        acc_layout.addWidget(self.lists_page.account_section)
-        acc_layout.addWidget(self.lists_page.sw_account_section)
+        # Card Account ISAB
+        card_isab = SettingCard(
+            "Account Portale Fornitori",
+            "Gestione credenziali per l'accesso ai servizi ISAB.",
+            Icons.LOCK, self.lists_page.account_section
+        )
+        self.cards_layout.addWidget(card_isab)
+        self.cards.append(card_isab)
 
-        self.cards_layout.addWidget(SettingCard(
-            "Account & Credenziali",
-            "Gestione accessi sicuri per Portale Fornitori e SafeWork.",
-            Icons.LOCK, acc_container
-        ))
+        # Card Account SafeWork
+        card_sw = SettingCard(
+            "Account SafeWork",
+            "Configurazione accessi per il portale SafeWork (PDL).",
+            Icons.SHIELD, self.lists_page.sw_account_section
+        )
+        self.cards_layout.addWidget(card_sw)
+        self.cards.append(card_sw)
 
-        # --- 3. LISTE OPERATIVE ---
+        # Card Anagrafiche Operative (Fornitori e Contratti)
         ops_container = QWidget()
-        ops_layout = QVBoxLayout(ops_container)
+        ops_layout = QHBoxLayout(ops_container)
         ops_layout.setContentsMargins(0, 0, 0, 0)
-        ops_layout.setSpacing(15)
+        ops_layout.setSpacing(20)
+        ops_layout.addWidget(self.lists_page.fornitori_section)
+        ops_layout.addWidget(self.lists_page.contract_section)
 
-        # Righe per le liste
-        row_lists = QHBoxLayout()
-        row_lists.addWidget(self.lists_page.fornitori_section)
-        row_lists.addWidget(self.lists_page.contract_section)
-        ops_layout.addLayout(row_lists)
-
-        row_geo = QHBoxLayout()
-        row_geo.addWidget(self.lists_page.reparti_section)
-        row_geo.addWidget(self.lists_page.cantieri_section)
-        ops_layout.addLayout(row_geo)
-
-        self.cards_layout.addWidget(SettingCard(
-            "Anagrafiche Operative",
-            "Configura liste fornitori, contratti, reparti e cantieri.",
+        card_ops = SettingCard(
+            "Liste Operative",
+            "Anagrafica fornitori e numeri di contratto attivi.",
             Icons.LIST, ops_container
-        ))
+        )
+        self.cards_layout.addWidget(card_ops)
+        self.cards.append(card_ops)
 
-        # --- 4. PERCORSI ---
+        # Card Struttura Aziendale (Reparti e Cantieri)
+        geo_container = QWidget()
+        geo_layout = QHBoxLayout(geo_container)
+        geo_layout.setContentsMargins(0, 0, 0, 0)
+        geo_layout.setSpacing(20)
+        geo_layout.addWidget(self.lists_page.reparti_section)
+        geo_layout.addWidget(self.lists_page.cantieri_section)
+
+        card_geo = SettingCard(
+            "Organizzazione Cantiere",
+            "Definizione reparti e cantieri per la catalogazione dati.",
+            Icons.PDL, geo_container
+        )
+        self.cards_layout.addWidget(card_geo)
+        self.cards.append(card_geo)
+
+        # --- 3. PERCORSI ---
         self.paths_page = PathsPage()
         self.paths_page.settings_changed.connect(self.settings_changed.emit)
-        self.cards_layout.addWidget(SettingCard(
+        card_paths = SettingCard(
             "Archiviazione & Integrazioni",
             "Definisci le cartelle di destinazione e i database esterni.",
             Icons.DATABASE, self.paths_page
-        ))
+        )
+        self.cards_layout.addWidget(card_paths)
+        self.cards.append(card_paths)
         self.pages.append(self.paths_page)
 
-        # --- 5. DIAGNOSTICA ---
+        # --- 4. DIAGNOSTICA ---
         self.diag_page = DiagPage()
-        self.cards_layout.addWidget(SettingCard(
+        card_diag = SettingCard(
             "Diagnostica di Sistema",
             "Strumenti di verifica integrità e risoluzione problemi.",
-            Icons.SHIELD, self.diag_page
-        ))
+            Icons.ACTIVITY, self.diag_page
+        )
+        self.cards_layout.addWidget(card_diag)
+        self.cards.append(card_diag)
         self.pages.append(self.diag_page)
 
         self.cards_layout.addStretch()
         self.scroll_container.setWidget(scroll_content)
         main_layout.addWidget(self.scroll_container)
+
+    def _filter_cards(self, text: str) -> None:
+        """Filtra le card visualizzate in base al testo di ricerca."""
+        search_term = text.lower().strip()
+        for card in self.cards:
+            match = (search_term in card.title_text.lower() or
+                     search_term in card.subtitle_text.lower())
+            card.setVisible(match or not search_term)
 
     def load_from_config(self, config: dict[str, Any]) -> None:
         """Carica i dati in tutte le pagine gestite dal tab."""

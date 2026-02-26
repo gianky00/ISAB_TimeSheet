@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
     QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QScrollArea,
     QSizePolicy,
     QVBoxLayout,
@@ -36,6 +37,9 @@ class SettingCard(QFrame):
             content_widget: Widget contenuto.
         """
         super().__init__()
+        self.title_text = title
+        self.subtitle_text = subtitle
+
         self.setObjectName("settingCard")
         self.setStyleSheet("""
             QFrame#settingCard {
@@ -103,6 +107,7 @@ class BackupTab(QWidget):
             parent: Widget genitore.
         """
         super().__init__(parent)
+        self.cards: list[SettingCard] = []
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -110,6 +115,26 @@ class BackupTab(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
+
+        # --- TOP STATUS BAR (Search) ---
+        self.header_bar = QFrame()
+        self.header_bar.setFixedHeight(50)
+        self.header_bar.setStyleSheet("background: #F8F9FA; border-bottom: 1px solid #ECEFF1;")
+        header_layout = QHBoxLayout(self.header_bar)
+        header_layout.setContentsMargins(20, 0, 20, 0)
+
+        search_icon = QLabel()
+        search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), "#90A4AE").pixmap(16, 16))
+        header_layout.addWidget(search_icon)
+
+        self.search_bar = QLineEdit()
+        self.search_bar.setPlaceholderText("Cerca funzioni backup...")
+        self.search_bar.setStyleSheet("border: none; background: transparent; font-size: 13px; font-weight: 500;")
+        self.search_bar.textChanged.connect(self._filter_cards)
+        header_layout.addWidget(self.search_bar)
+        header_layout.addStretch()
+
+        main_layout.addWidget(self.header_bar)
 
         # Scroll Area
         self.scroll_container = QScrollArea()
@@ -136,11 +161,13 @@ class BackupTab(QWidget):
         backup_layout.addWidget(self.btn_restore)
         backup_layout.addWidget(self.lbl_last_backup)
 
-        self.cards_layout.addWidget(SettingCard(
+        card_backup = SettingCard(
             "Sicurezza Dati",
             "Gestione copie di sicurezza del database di sistema.",
             Icons.DATABASE, backup_widget
-        ))
+        )
+        self.cards_layout.addWidget(card_backup)
+        self.cards.append(card_backup)
 
         # 2. Logs Management
         logs_widget = QWidget()
@@ -153,15 +180,24 @@ class BackupTab(QWidget):
         logs_layout.addWidget(self.btn_open_logs)
         logs_layout.addWidget(self.btn_clear_logs)
 
-        self.cards_layout.addWidget(SettingCard(
+        card_logs = SettingCard(
             "Manutenzione Log",
             "Analisi e pulizia dei file di log generati dai bot.",
             Icons.FILE_TEXT, logs_widget
-        ))
+        )
+        self.cards_layout.addWidget(card_logs)
+        self.cards.append(card_logs)
 
         self.cards_layout.addStretch()
         self.scroll_container.setWidget(scroll_content)
         main_layout.addWidget(self.scroll_container)
+
+    def _filter_cards(self, text: str) -> None:
+        search_term = text.lower().strip()
+        for card in self.cards:
+            match = (search_term in card.title_text.lower() or
+                     search_term in card.subtitle_text.lower())
+            card.setVisible(match or not search_term)
 
     def load_from_config(self, config: dict[str, Any]) -> None:
         """

@@ -275,8 +275,10 @@ def get_colored_icon(icon_path: str, color: str = "#000000") -> QIcon:
 
     # Crea un pittore per ricolorare l'immagine (software buffer sicuro)
     painter = QPainter(image)
-    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
-    painter.fillRect(image.rect(), QColor(color))
-    painter.end()
+    try:
+        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
+        painter.fillRect(image.rect(), QColor(color))
+    finally:
+        painter.end()
 
     return QIcon(QPixmap.fromImage(image))
