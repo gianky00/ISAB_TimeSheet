@@ -39,7 +39,7 @@ class TimbratureDBPanel(QWidget):
 
         # Member declarations
         self.main_layout: QVBoxLayout
-        self.tabs: QTabWidget
+        self.tabs: AnimatedTabWidget
         self.toolbar_container: QWidget
         self.search_input: QLineEdit
         self.reparto_filter: QComboBox

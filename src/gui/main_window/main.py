@@ -13,7 +13,6 @@ from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
     QMainWindow,
-    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -26,11 +25,11 @@ from src.core.lyra_sentinel import LyraSentinel
 from src.core.telegram_bridge import TelegramUIBridge
 from src.core.telegram_manager import TelegramService
 from src.core.version import __version__ as VERSION
+from src.gui.components.animated_stack import SlidingStackedWidget
 from src.gui.controllers.bot_controller import BotController
 from src.gui.controllers.navigation_controller import NavigationController
 from src.gui.controllers.search_controller import SearchController
 from src.gui.controllers.service_controller import ServiceController
-from src.gui.components.animated_stack import SlidingStackedWidget
 from src.gui.styles import apply_theme
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path

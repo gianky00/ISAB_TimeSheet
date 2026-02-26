@@ -20,7 +20,6 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QTableView,
-    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -116,7 +115,7 @@ class ScaricoOrePanel(QWidget):
         """Configura la toolbar superiore con statistiche e ricerca, e la vista tabellare virtuale."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
-        
+
         self.tabs = AnimatedTabWidget()
 
         self.toolbar_container = QWidget()
@@ -141,7 +140,7 @@ class ScaricoOrePanel(QWidget):
             self.update_btn,
         ):
             toolbar_layout.addWidget(w)
-        
+
         layout.addWidget(self.toolbar_container)
 
         self.scarico_tab = QWidget()

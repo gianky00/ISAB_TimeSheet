@@ -223,8 +223,8 @@ class ContabilitaPanel(QWidget):
         if hasattr(self.certificati_widget, "refresh_data"):
             self.certificati_widget.refresh_data()
 
-    def _sync_tab_widget(self, tab_widget: QTabWidget, target_years: list[int], tab_class: type) -> None:
-        """Aggiorna i tab di un QTabWidget senza distruggere i widget esistenti per gli stessi anni."""
+    def _sync_tab_widget(self, tab_widget: AnimatedTabWidget, target_years: list[int], tab_class: type) -> None:
+        """Aggiorna i tab di un AnimatedTabWidget senza distruggere i widget esistenti per gli stessi anni."""
         existing_years = {}
         for i in range(tab_widget.count()):
             with suppress(ValueError):

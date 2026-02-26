@@ -178,10 +178,10 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         try:
             from src.bots.safework.common.locators import SafeWorkLocators
-            
+
             # CRITICAL: Assicurarsi che l'overlay di caricamento sia sparito
             self._attendi_scomparsa_overlay(timeout_secondi=10)
-            
+
             campo = self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.RICERCA_VELOCE_PDL))
             self.log(f"⌨️ Inserimento numero PdL {pdl_num}...")
             campo.clear()

@@ -3,13 +3,11 @@ from typing import Any
 
 from PyQt6.QtCore import QPoint, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
-    QFrame,
     QHBoxLayout,
     QListWidget,
     QListWidgetItem,
     QMenu,
     QPushButton,
-    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
@@ -36,47 +34,27 @@ class ListsPage(QWidget):
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        main_layout = QVBoxLayout(self)
+        """Layout rimosso: ora le sezioni sono usate singolarmente da ConfigTab."""
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        # Inizializziamo le sezioni come widget indipendenti
+        self.account_section = self._create_account_section()
+        self.sw_account_section = self._create_sw_account_section()
+        self.fornitori_section = self._create_fornitori_section()
+        self.contract_section = self._create_contract_section()
+        self.reparti_section = self._create_reparti_section()
+        self.cantieri_section = self._create_cantieri_section()
 
-        content = QWidget()
-        self.main_content_layout = QVBoxLayout(content)
-        self.main_content_layout.setSpacing(20)
-
-        # RIGA 1: Accounts, Fornitori, Contratti (Tutto orizzontale)
-        row1 = QHBoxLayout()
-        self._setup_account_section(row1)
-        self._setup_sw_account_section(row1)
-        self._setup_fornitori_section(row1)
-        self._setup_contract_section(row1)
-        self.main_content_layout.addLayout(row1)
-
-        # RIGA 2: REPARTI E CANTIERI (Affiancati)
-        row2 = QHBoxLayout()
-        self._setup_reparti_section(row2)
-        self._setup_cantieri_section(row2)
-        self.main_content_layout.addLayout(row2)
-
-        self.main_content_layout.addStretch()
-        scroll.setWidget(content)
-        main_layout.addWidget(scroll)
-
-    # --- SEZIONI UI ---
-
-    def _setup_account_section(self, parent_layout: QHBoxLayout) -> None:
+    def _create_account_section(self) -> QWidget:
         group = create_group_box("Account ISAB")
         layout = QVBoxLayout(group)
-
         self.account_list = QListWidget()
-        self.account_list.setMaximumHeight(150)  # Aumentato leggermente
+        self.account_list.setMinimumHeight(120)
         self.account_list.setStyleSheet(list_style())
         self.account_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.account_list.customContextMenuRequested.connect(self._show_account_menu)
         layout.addWidget(self.account_list)
-
         btns = QHBoxLayout()
         self._add_btn(btns, Icons.PLUS, "#28a745", self._add_account, "Aggiungi")
         self._add_btn(btns, Icons.EDIT, "#0d6efd", self._edit_account, "Modifica")
@@ -84,19 +62,17 @@ class ListsPage(QWidget):
         self._add_btn(btns, Icons.STAR, "#ffc107", self._set_default_account, "Default")
         btns.addStretch()
         layout.addLayout(btns)
-        parent_layout.addWidget(group)
+        return group
 
-    def _setup_sw_account_section(self, parent_layout: QHBoxLayout) -> None:
+    def _create_sw_account_section(self) -> QWidget:
         group = create_group_box("Account SafeWork")
         layout = QVBoxLayout(group)
-
         self.sw_account_list = QListWidget()
-        self.sw_account_list.setMaximumHeight(150)  # Aumentato leggermente
+        self.sw_account_list.setMinimumHeight(120)
         self.sw_account_list.setStyleSheet(list_style())
         self.sw_account_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.sw_account_list.customContextMenuRequested.connect(self._show_sw_account_menu)
         layout.addWidget(self.sw_account_list)
-
         btns = QHBoxLayout()
         self._add_btn(btns, Icons.PLUS, "#28a745", self._add_sw_account, "Aggiungi")
         self._add_btn(btns, Icons.EDIT, "#0d6efd", self._edit_sw_account, "Modifica")
@@ -104,95 +80,71 @@ class ListsPage(QWidget):
         self._add_btn(btns, Icons.STAR, "#ffc107", self._set_default_sw_account, "Default")
         btns.addStretch()
         layout.addLayout(btns)
-        parent_layout.addWidget(group)
+        return group
 
-    def _setup_contract_section(self, parent_layout: QHBoxLayout) -> None:
+    def _create_contract_section(self) -> QWidget:
         group = create_group_box("Contratti")
         layout = QVBoxLayout(group)
         self.contract_list = QListWidget()
-        self.contract_list.setMaximumHeight(130)
+        self.contract_list.setMinimumHeight(100)
         self.contract_list.setStyleSheet(list_style())
-        self._setup_generic_list(
-            self.contract_list,
-            self._add_contract,
-            self._edit_contract,
-            self._remove_contract,
-        )
+        self._setup_generic_list(self.contract_list, self._add_contract, self._edit_contract, self._remove_contract)
         layout.addWidget(self.contract_list)
-
         btns = QHBoxLayout()
         self._add_btn(btns, Icons.PLUS, "#28a745", self._add_contract)
         self._add_btn(btns, Icons.EDIT, "#0d6efd", self._edit_contract)
         self._add_btn(btns, Icons.TRASH, "#dc3545", self._remove_contract)
         btns.addStretch()
         layout.addLayout(btns)
-        parent_layout.addWidget(group)
+        return group
 
-    def _setup_fornitori_section(self, parent_layout: QHBoxLayout) -> None:
+    def _create_fornitori_section(self) -> QWidget:
         group = create_group_box("Fornitori")
         layout = QVBoxLayout(group)
         self.fornitori_list = QListWidget()
-        self.fornitori_list.setMaximumHeight(130)
+        self.fornitori_list.setMinimumHeight(100)
         self.fornitori_list.setStyleSheet(list_style())
-        self._setup_generic_list(
-            self.fornitori_list,
-            self._add_fornitore,
-            self._edit_fornitore,
-            self._remove_fornitore,
-        )
+        self._setup_generic_list(self.fornitori_list, self._add_fornitore, self._edit_fornitore, self._remove_fornitore)
         layout.addWidget(self.fornitori_list)
-
         btns = QHBoxLayout()
         self._add_btn(btns, Icons.PLUS, "#28a745", self._add_fornitore)
         self._add_btn(btns, Icons.EDIT, "#0d6efd", self._edit_fornitore)
         self._add_btn(btns, Icons.TRASH, "#dc3545", self._remove_fornitore)
         btns.addStretch()
         layout.addLayout(btns)
-        parent_layout.addWidget(group)
+        return group
 
-    def _setup_reparti_section(self, parent_layout: QHBoxLayout) -> None:
+    def _create_reparti_section(self) -> QWidget:
         group = create_group_box("Reparti")
         layout = QVBoxLayout(group)
         self.reparti_list = QListWidget()
-        self.reparti_list.setMaximumHeight(100)
+        self.reparti_list.setMinimumHeight(80)
         self.reparti_list.setStyleSheet(list_style())
-        self._setup_generic_list(
-            self.reparti_list,
-            self._add_reparto,
-            self._edit_reparto,
-            self._remove_reparto,
-        )
+        self._setup_generic_list(self.reparti_list, self._add_reparto, self._edit_reparto, self._remove_reparto)
         layout.addWidget(self.reparti_list)
-
         btns = QHBoxLayout()
         self._add_btn(btns, Icons.PLUS, "#28a745", self._add_reparto)
         self._add_btn(btns, Icons.EDIT, "#0d6efd", self._edit_reparto)
         self._add_btn(btns, Icons.TRASH, "#dc3545", self._remove_reparto)
         btns.addStretch()
         layout.addLayout(btns)
-        parent_layout.addWidget(group)
+        return group
 
-    def _setup_cantieri_section(self, parent_layout: QHBoxLayout) -> None:
+    def _create_cantieri_section(self) -> QWidget:
         group = create_group_box("Cantieri")
         layout = QVBoxLayout(group)
         self.cantieri_list = QListWidget()
-        self.cantieri_list.setMaximumHeight(100)
+        self.cantieri_list.setMinimumHeight(80)
         self.cantieri_list.setStyleSheet(list_style())
-        self._setup_generic_list(
-            self.cantieri_list,
-            self._add_cantiere,
-            self._edit_cantiere,
-            self._remove_cantiere,
-        )
+        self._setup_generic_list(self.cantieri_list, self._add_cantiere, self._edit_cantiere, self._remove_cantiere)
         layout.addWidget(self.cantieri_list)
-
         btns = QHBoxLayout()
         self._add_btn(btns, Icons.PLUS, "#28a745", self._add_cantiere)
         self._add_btn(btns, Icons.EDIT, "#0d6efd", self._edit_cantiere)
         self._add_btn(btns, Icons.TRASH, "#dc3545", self._remove_cantiere)
         btns.addStretch()
         layout.addLayout(btns)
-        parent_layout.addWidget(group)
+        return group
 
     # --- HELPERS ---
 
@@ -324,12 +276,8 @@ class ListsPage(QWidget):
         row = self.account_list.currentRow()
         if row < 0:
             return
-
-        # Ottieni tutti gli account
         accs = self._get_accounts(self.account_list)
-        # Ottieni quello da modificare
         target_acc = accs[row]
-
         dlg = AccountDialog(self, target_acc["username"], target_acc["password"])
         if dlg.exec():
             u, p, _ = dlg.get_data()
@@ -358,8 +306,6 @@ class ListsPage(QWidget):
             self._render_accounts(self.account_list, accs)
             self.settings_changed.emit()
 
-    # --- LOGICA ACCOUNT SAFEWORK (Simile a ISAB ma su sw_account_list) ---
-    # Per brevità potrei unificare ma per ora copio adattando
     def _add_sw_account(self) -> None:
         dlg = AccountDialog(self, show_type=True)
         dlg.setWindowTitle("Account SafeWork")
@@ -376,17 +322,9 @@ class ListsPage(QWidget):
         row = self.sw_account_list.currentRow()
         if row < 0:
             return
-
         accs = self._get_accounts(self.sw_account_list)
         target_acc = accs[row]
-
-        dlg = AccountDialog(
-            self,
-            target_acc["username"],
-            target_acc["password"],
-            account_type=target_acc.get("type", ""),
-            show_type=True,
-        )
+        dlg = AccountDialog(self, target_acc["username"], target_acc["password"], account_type=target_acc.get("type", ""), show_type=True)
         if dlg.exec():
             u, p, t = dlg.get_data()
             if u:
@@ -414,8 +352,6 @@ class ListsPage(QWidget):
                 a["default"] = i == row
             self._render_accounts(self.sw_account_list, accs)
             self.settings_changed.emit()
-
-    # --- LOGICA LISTE SEMPLICI ---
 
     def _update_simple_list(self, list_widget: QListWidget, items: Sequence[str]) -> None:
         list_widget.clear()
@@ -449,7 +385,6 @@ class ListsPage(QWidget):
             list_widget.takeItem(row)
             self.settings_changed.emit()
 
-    # Wrapper specifici
     def _add_contract(self) -> None:
         self._add_simple(self.contract_list, "Contratto:")
 
@@ -486,10 +421,7 @@ class ListsPage(QWidget):
     def _remove_cantiere(self) -> None:
         self._remove_simple(self.cantieri_list)
 
-    # --- LOAD & SAVE ---
-
     def load_from_config(self, config: dict[str, Any]) -> None:
-        """Carica tutte le liste (account, contratti, fornitori, ecc.) dalla configurazione."""
         self._render_accounts(self.account_list, config.get("accounts", []))
         self._render_accounts(self.sw_account_list, config.get("safework_accounts", []))
         self._update_simple_list(self.contract_list, config.get("contracts", []))
@@ -498,7 +430,6 @@ class ListsPage(QWidget):
         self._update_simple_list(self.cantieri_list, config.get("cantieri_timbrature", []))
 
     def save_to_config(self, config_manager: Any) -> None:
-        """Salva lo stato corrente delle liste nella configurazione globale."""
         config_manager.set_config_value("accounts", self._get_accounts(self.account_list))
         config_manager.set_config_value("safework_accounts", self._get_accounts(self.sw_account_list))
         config_manager.set_config_value("contracts", self._get_simple_items(self.contract_list))

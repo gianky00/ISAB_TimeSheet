@@ -9,7 +9,6 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtWidgets import QMessageBox, QStackedWidget, QWidget
-from src.gui.components.animated_tab_widget import AnimatedTabWidget
 
 if TYPE_CHECKING:
     from collections.abc import Callable

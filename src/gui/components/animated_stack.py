@@ -8,11 +8,9 @@ from PyQt6.QtCore import (
     QParallelAnimationGroup,
     QPoint,
     QPropertyAnimation,
-    Qt,
     pyqtSignal,
 )
-from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel, QStackedWidget, QWidget
+from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel, QStackedWidget
 
 
 class SlidingStackedWidget(QStackedWidget):
@@ -29,11 +27,11 @@ class SlidingStackedWidget(QStackedWidget):
         self._easing_curve = QEasingCurve.Type.OutCubic
         self._animation_group = QParallelAnimationGroup(self)
         self._animation_group.finished.connect(self._on_animation_finished)
-        
+
         self._is_animating = False
         self._current_index = 0
         self._next_index = 0
-        
+
         # Overlay per snapshot
         self.fade_label_old = QLabel(self)
         self.fade_label_new = QLabel(self)
@@ -53,17 +51,22 @@ class SlidingStackedWidget(QStackedWidget):
         # 1. Cattura Snapshot (Cruciale per performance)
         old_widget = self.widget(self._current_index)
         next_widget = self.widget(self._next_index)
-        
+
+        if not old_widget or not next_widget:
+            self.setCurrentIndex(index)
+            self._is_animating = False
+            return
+
         # Prepariamo il prossimo widget (deve essere renderizzato ma non visibile)
         next_widget.setGeometry(0, 0, self.width(), self.height())
-        
+
         pix_old = old_widget.grab()
         pix_new = next_widget.grab()
 
         self.fade_label_old.setPixmap(pix_old)
         self.fade_label_new.setPixmap(pix_new)
         self.fade_label_old.setGeometry(0, 0, self.width(), self.height())
-        
+
         # Direzione
         forward = index > self._current_index
         offset = self.width() if forward else -self.width()
@@ -88,7 +91,7 @@ class SlidingStackedWidget(QStackedWidget):
         anim_out_pos.setStartValue(QPoint(0, 0))
         anim_out_pos.setEndValue(QPoint(-int(offset/2), 0))
         anim_out_pos.setEasingCurve(self._easing_curve)
-        
+
         anim_out_fade = QPropertyAnimation(eff_old, b"opacity")
         anim_out_fade.setDuration(self._animation_duration)
         anim_out_fade.setStartValue(1.0)
@@ -100,7 +103,7 @@ class SlidingStackedWidget(QStackedWidget):
         anim_in_pos.setStartValue(QPoint(offset, 0))
         anim_in_pos.setEndValue(QPoint(0, 0))
         anim_in_pos.setEasingCurve(self._easing_curve)
-        
+
         anim_in_fade = QPropertyAnimation(eff_new, b"opacity")
         anim_in_fade.setDuration(self._animation_duration)
         anim_in_fade.setStartValue(0.0)
@@ -115,7 +118,9 @@ class SlidingStackedWidget(QStackedWidget):
 
     def _on_animation_finished(self):
         self.setCurrentIndex(self._next_index)
-        self.widget(self._next_index).show()
+        w = self.widget(self._next_index)
+        if w:
+            w.show()
         self.fade_label_old.hide()
         self.fade_label_new.hide()
         self._is_animating = False

@@ -3,24 +3,22 @@ SyncroJob - Animated Tab Widget (Premium Stylized)
 Componente universale con animazioni di lusso, gradienti e glow effect.
 """
 
-from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QRect, QEasingCurve, QTimer
-from PyQt6.QtWidgets import (
-    QHBoxLayout, QTabBar, QTabWidget, QVBoxLayout, QWidget, QSizePolicy, QGraphicsDropShadowEffect
-)
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QRect, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor
+from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QHBoxLayout, QTabBar, QTabWidget, QVBoxLayout, QWidget
 
 from src.gui.components.animated_stack import SlidingStackedWidget
 
 
 class AnimatedTabWidget(QWidget):
     """
-    Sostituto d'élite di QTabWidget con transizioni Snapshot-Fade 
+    Sostituto d'élite di QTabWidget con transizioni Snapshot-Fade
     e indicatore di selezione con effetto 'Illumination'.
     """
 
     currentChanged = pyqtSignal(int)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -31,7 +29,7 @@ class AnimatedTabWidget(QWidget):
         self.header_widget.setMinimumHeight(55) # Leggermente più alto per il glow
         # Track di fondo (La linea sottile grigia che segna il percorso)
         self.header_widget.setStyleSheet("border-bottom: 1px solid rgba(0, 0, 0, 0.05); background: white;")
-        
+
         self.header_layout = QHBoxLayout(self.header_widget)
         self.header_layout.setContentsMargins(10, 0, 10, 0)
         self.header_layout.setSpacing(15)
@@ -50,21 +48,21 @@ class AnimatedTabWidget(QWidget):
         # --- INDICATORE PREMIUM (Gradients & Glow) ---
         self.indicator = QWidget(self.header_widget)
         self.indicator.setFixedHeight(4) # Un po' più spessa per mostrare il gradiente
-        
+
         # Design con gradiente lineare
         self.indicator.setStyleSheet("""
-            background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
+            background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #4DB6AC, stop:0.5 #009688, stop:1 #00796B);
             border-radius: 2px;
         """)
-        
+
         # Effetto Glow (Bagliore)
         glow = QGraphicsDropShadowEffect(self.indicator)
         glow.setBlurRadius(10)
         glow.setColor(QColor(0, 150, 136, 120)) # Teal con 40% opacità
         glow.setOffset(0, 1)
         self.indicator.setGraphicsEffect(glow)
-        
+
         self.indicator.raise_()
         self._indicator_anim = QPropertyAnimation(self.indicator, b"geometry")
         self._indicator_anim.setDuration(400) # Un po' più lenta per eleganza
@@ -78,15 +76,16 @@ class AnimatedTabWidget(QWidget):
         self._tab_position = QTabWidget.TabPosition.North
         self._layout.addWidget(self.header_widget)
         self._layout.addWidget(self.stack)
-        
+
         QTimer.singleShot(100, self._update_indicator_instant)
 
-    def setTabPosition(self, position: QTabWidget.TabPosition):
-        if position == self._tab_position: return
+    def setTabPosition(self, position: QTabWidget.TabPosition) -> None:
+        if position == self._tab_position:
+            return
         self._tab_position = position
         self._layout.removeWidget(self.header_widget)
         self._layout.removeWidget(self.stack)
-        
+
         if position == QTabWidget.TabPosition.South:
             self._layout.addWidget(self.stack)
             self._layout.addWidget(self.header_widget)
@@ -97,60 +96,104 @@ class AnimatedTabWidget(QWidget):
             self._layout.addWidget(self.stack)
             self.header_widget.setStyleSheet("border-bottom: 1px solid rgba(0, 0, 0, 0.05); background: white;")
             self.tab_bar.setStyleSheet(self._get_default_style())
-        
+
         QTimer.singleShot(10, self._update_indicator_instant)
 
-    def addTab(self, widget: QWidget, *args):
+    def addTab(self, widget: QWidget, *args) -> int:
         index = self.tab_bar.addTab(*args)
         self.stack.addWidget(widget)
         return index
 
-    def _on_tab_bar_changed(self, index: int):
+    def removeTab(self, index: int) -> None:
+        """Rimuove un tab e il relativo widget dallo stack."""
+        if 0 <= index < self.tab_bar.count():
+            self.tab_bar.removeTab(index)
+            w = self.stack.widget(index)
+            if w:
+                self.stack.removeWidget(w)
+                w.deleteLater()
+            self._update_indicator_instant()
+
+    def clear(self) -> None:
+        """Svuota tutti i tab e i relativi widget."""
+        while self.tab_bar.count() > 0:
+            self.tab_bar.removeTab(0)
+        while self.stack.count() > 0:
+            w = self.stack.widget(0)
+            if w:
+                self.stack.removeWidget(w)
+                w.deleteLater()
+        self.indicator.hide()
+
+    def _on_tab_bar_changed(self, index: int) -> None:
         self._animate_indicator(index)
         if index != self.stack.currentIndex():
             self.setEnabled(False)
             self.stack.slide_to_index(index)
-            if not self.stack._is_animating: self.setEnabled(True)
+            if not self.stack._is_animating:
+                self.setEnabled(True)
             self.currentChanged.emit(index)
 
-    def _animate_indicator(self, index: int):
+    def _animate_indicator(self, index: int) -> None:
         rect = self.tab_bar.tabRect(index)
         if rect.isValid():
             global_pos = self.tab_bar.mapTo(self.header_widget, rect.topLeft())
             y_pos = self.header_widget.height() - self.indicator.height()
-            if self._tab_position == QTabWidget.TabPosition.South: y_pos = 0
-                
+            if self._tab_position == QTabWidget.TabPosition.South:
+                y_pos = 0
+
             # Effetto "Elastic": la linea è leggermente più stretta del tab per eleganza
             target_rect = QRect(global_pos.x() + 15, y_pos, rect.width() - 30, self.indicator.height())
-            
+
+            self.indicator.show()
             self._indicator_anim.stop()
             self._indicator_anim.setEndValue(target_rect)
             self._indicator_anim.start()
 
-    def _update_indicator_instant(self):
+    def _update_indicator_instant(self) -> None:
         idx = self.tab_bar.currentIndex()
+        if idx < 0:
+            self.indicator.hide()
+            return
+
         rect = self.tab_bar.tabRect(idx)
         if rect.isValid():
+            self.indicator.show()
             global_pos = self.tab_bar.mapTo(self.header_widget, rect.topLeft())
             y_pos = self.header_widget.height() - self.indicator.height()
-            if self._tab_position == QTabWidget.TabPosition.South: y_pos = 0
+            if self._tab_position == QTabWidget.TabPosition.South:
+                y_pos = 0
             self.indicator.setGeometry(global_pos.x() + 15, y_pos, rect.width() - 30, self.indicator.height())
+        else:
+            self.indicator.hide()
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
         self._update_indicator_instant()
 
-    def currentIndex(self) -> int: return self.tab_bar.currentIndex()
-    def currentWidget(self) -> QWidget: return self.stack.currentWidget()
-    def setCurrentIndex(self, index: int):
+    def currentIndex(self) -> int:
+        return self.tab_bar.currentIndex()
+
+    def currentWidget(self) -> QWidget | None:
+        return self.stack.currentWidget()
+
+    def setCurrentIndex(self, index: int) -> None:
         self.tab_bar.setCurrentIndex(index)
         self.stack.setCurrentIndex(index)
         self._update_indicator_instant()
-    def count(self) -> int: return self.tab_bar.count()
-    def tabText(self, index: int) -> str: return self.tab_bar.tabText(index)
-    def widget(self, index: int) -> QWidget: return self.stack.widget(index)
-    def tabBar(self) -> QTabBar: return self.tab_bar
-    
+
+    def count(self) -> int:
+        return self.tab_bar.count()
+
+    def tabText(self, index: int) -> str:
+        return self.tab_bar.tabText(index)
+
+    def widget(self, index: int) -> QWidget | None:
+        return self.stack.widget(index)
+
+    def tabBar(self) -> QTabBar:
+        return self.tab_bar
+
     def _get_default_style(self) -> str:
         return """
             QTabBar::tab {

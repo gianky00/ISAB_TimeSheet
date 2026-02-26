@@ -1,223 +1,152 @@
 """
-SyncroJob - Backup Tab
-Interfaccia per la gestione della sicurezza dei dati tramite backup Cloud e locali.
-Permette il rilevamento automatico di servizi come OneDrive/Google Drive e il ripristino di versioni precedenti.
+SyncroJob - Backup Tab (Next-Gen)
+Pannello per la gestione dei backup e dei log strutturato a Card.
 """
 
-from datetime import UTC, datetime
 from typing import Any
 
+from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QGroupBox,
+    QFrame,
+    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
-    QMessageBox,
-    QPushButton,
+    QScrollArea,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
 
-from src.core import config_manager
-from src.core.backup_manager import BackupManager
 from src.core.constants import Icons
-from src.gui.panels.settings.shared import (
-    create_group_box,
-    style_button,
-    style_mini_button,
-)
-from src.gui.widgets.toast import ToastManager
-from src.utils.helpers import get_asset_path, get_colored_icon, open_folder
+from src.gui.widgets.modern_button import ModernButton
+from src.utils.helpers import get_asset_path, get_colored_icon
+
+
+class SettingCard(QFrame):
+    """Container a card con ombra e stile moderno per un gruppo di impostazioni."""
+
+    def __init__(self, title: str, subtitle: str, icon_key: str, content_widget: QWidget):
+        super().__init__()
+        self.setObjectName("settingCard")
+        self.setStyleSheet("""
+            QFrame#settingCard {
+                background-color: white;
+                border: 1px solid #ECEFF1;
+                border-radius: 15px;
+            }
+        """)
+
+        # Shadow Effect
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(20)
+        shadow.setXOffset(0)
+        shadow.setYOffset(4)
+        shadow.setColor(QColor(0, 0, 0, 20))
+        self.setGraphicsEffect(shadow)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(15)
+
+        # Header della Card
+        header_layout = QHBoxLayout()
+        header_layout.setSpacing(15)
+
+        icon_lbl = QLabel()
+        icon_lbl.setPixmap(get_colored_icon(get_asset_path(icon_key), "#009688").pixmap(24, 24))
+        header_layout.addWidget(icon_lbl)
+
+        text_container = QVBoxLayout()
+        text_container.setSpacing(2)
+        title_lbl = QLabel(title)
+        title_lbl.setStyleSheet("font-size: 16px; font-weight: 800; color: #263238;")
+        subtitle_lbl = QLabel(subtitle)
+        subtitle_lbl.setStyleSheet("font-size: 12px; font-weight: 500; color: #90A4AE;")
+        text_container.addWidget(title_lbl)
+        text_container.addWidget(subtitle_lbl)
+        header_layout.addLayout(text_container)
+        header_layout.addStretch()
+
+        layout.addLayout(header_layout)
+
+        # Separatore sottile
+        line = QFrame()
+        line.setFixedHeight(1)
+        line.setStyleSheet("background-color: #F5F7F9;")
+        layout.addWidget(line)
+
+        # Contenuto
+        layout.addWidget(content_widget)
+        content_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.MinimumExpanding)
 
 
 class BackupTab(QWidget):
     """
-    Tab dedicato alla configurazione del salvataggio dati.
-    Gestisce la selezione del provider cloud, la schedulazione del backup automatico
-    alla chiusura e fornisce strumenti per il ripristino atomico dei database.
+    Tab dedicato alla sicurezza dei dati.
+    Permette la gestione dei backup del database e la pulizia dei log.
     """
 
-    def __init__(self, parent=None):
-        """
-        Inizializza il tab dei backup.
-
-        Args:
-            parent: Widget genitore.
-        """
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._setup_ui()
 
-    def _setup_ui(self):
-        """Configura l'interfaccia utente con sezioni per destinazione, opzioni e ripristino."""
-        layout = QVBoxLayout(self)
-        layout.setSpacing(20)
-        layout.setContentsMargins(30, 30, 30, 30)
+    def _setup_ui(self) -> None:
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
-        # Header
-        info = QLabel("Salvataggio Dati in Cloud")
-        info.setStyleSheet("font-size: 20px; font-weight: bold; color: #212529;")
-        layout.addWidget(info)
+        # Scroll Area
+        self.scroll_container = QScrollArea()
+        self.scroll_container.setWidgetResizable(True)
+        self.scroll_container.setStyleSheet("background: transparent; border: none;")
 
-        desc = QLabel(
-            "Il sistema rileva automaticamente OneDrive, Google Drive, Dropbox o MEGA per salvare i tuoi dati al sicuro."
-        )
-        desc.setStyleSheet("color: #6c757d; font-size: 14px;")
-        layout.addWidget(desc)
+        scroll_content = QWidget()
+        scroll_content.setStyleSheet("background: transparent;")
+        self.cards_layout = QVBoxLayout(scroll_content)
+        self.cards_layout.setContentsMargins(30, 30, 30, 30)
+        self.cards_layout.setSpacing(25)
 
-        # Detection Status & Selection
-        clouds = BackupManager.detect_cloud_paths()
-        status_group = QGroupBox("Destinazione Cloud")
-        status_layout = QVBoxLayout(status_group)
-        status_layout.addWidget(QLabel("Seleziona il servizio Cloud da utilizzare:"))
+        # 1. Database Backup
+        backup_widget = QWidget()
+        backup_layout = QVBoxLayout(backup_widget)
+        backup_layout.setContentsMargins(0, 10, 0, 0)
 
-        self.cloud_combo = QComboBox()
-        self.cloud_combo.setMinimumHeight(40)
-        self.cloud_combo.setStyleSheet(
-            "QComboBox { border: 1px solid #ced4da; border-radius: 4px; padding: 5px; background-color: white; }"
-        )
-        self.cloud_combo.addItem("Locale (Documenti)", "Local")
-        if clouds:
-            for name, path in clouds.items():
-                self.cloud_combo.addItem(f"{name} ({path})", name)
+        self.btn_backup = ModernButton("Esegui Backup Database", icon=get_asset_path(Icons.CLOUD_UPLOAD))
+        self.btn_restore = ModernButton("Ripristina Backup", variant=ModernButton.Variant.GHOST, icon=get_asset_path(Icons.UNDO))
+        self.lbl_last_backup = QLabel("Ultimo Backup: Non eseguito")
+        self.lbl_last_backup.setStyleSheet("color: #78909C; font-style: italic;")
 
-        self.cloud_combo.currentIndexChanged.connect(self._save_cloud_preference)
-        status_layout.addWidget(self.cloud_combo)
-        layout.addWidget(status_group)
+        backup_layout.addWidget(self.btn_backup)
+        backup_layout.addWidget(self.btn_restore)
+        backup_layout.addWidget(self.lbl_last_backup)
 
-        # Settings & Actions
-        sett_group = QGroupBox("Impostazioni")
-        sett_layout = QHBoxLayout(sett_group)
-        sett_layout.setSpacing(15)
+        self.cards_layout.addWidget(SettingCard(
+            "Sicurezza Dati",
+            "Gestione copie di sicurezza del database di sistema.",
+            Icons.DATABASE, backup_widget
+        ))
 
-        self.auto_backup_check = QCheckBox("Esegui backup automatico alla chiusura")
-        self.auto_backup_check.stateChanged.connect(self._save_auto_backup)
-        sett_layout.addWidget(self.auto_backup_check)
+        # 2. Logs Management
+        logs_widget = QWidget()
+        logs_layout = QVBoxLayout(logs_widget)
+        logs_layout.setContentsMargins(0, 10, 0, 0)
 
-        sett_layout.addStretch()
+        self.btn_open_logs = ModernButton("Apri Cartella Log", icon=get_asset_path(Icons.FOLDER_OPEN))
+        self.btn_clear_logs = ModernButton("Pulisci Log Vecchi", variant=ModernButton.Variant.DANGER, icon=get_asset_path(Icons.TRASH))
 
-        backup_btn = QPushButton("  Esegui Backup Ora")
-        backup_btn.setIcon(get_colored_icon(get_asset_path(Icons.CLOUD_UPLOAD), "#000000"))
-        backup_btn.clicked.connect(self._run_manual_backup)
-        style_button(backup_btn)
-        sett_layout.addWidget(backup_btn)
+        logs_layout.addWidget(self.btn_open_logs)
+        logs_layout.addWidget(self.btn_clear_logs)
 
-        open_folder_btn = QPushButton("  Apri Cartella Backup")
-        open_folder_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#000000"))
-        open_folder_btn.clicked.connect(self._open_backup_folder)
-        style_button(open_folder_btn)
-        sett_layout.addWidget(open_folder_btn)
+        self.cards_layout.addWidget(SettingCard(
+            "Manutenzione Log",
+            "Analisi e pulizia dei file di log generati dai bot.",
+            Icons.FILE_TEXT, logs_widget
+        ))
 
-        layout.addWidget(sett_group)
+        self.cards_layout.addStretch()
+        self.scroll_container.setWidget(scroll_content)
+        main_layout.addWidget(self.scroll_container)
 
-        # Restore Section
-        restore_group = create_group_box("Ripristino Backup")
-        restore_layout = QVBoxLayout(restore_group)
-        restore_layout.addWidget(QLabel("Seleziona un backup da ripristinare:"))
-
-        restore_controls = QHBoxLayout()
-        self.restore_combo = QComboBox()
-        self.restore_combo.setMinimumHeight(40)
-        self.restore_combo.setStyleSheet(
-            "QComboBox { border: 1px solid #ced4da; border-radius: 4px; padding: 5px; background-color: white; }"
-        )
-        restore_controls.addWidget(self.restore_combo)
-
-        self.refresh_backups_btn = QPushButton()
-        self.refresh_backups_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
-        self.refresh_backups_btn.setToolTip("Aggiorna lista backup")
-        self.refresh_backups_btn.clicked.connect(self._refresh_backups_list)
-        style_mini_button(self.refresh_backups_btn, "#6c757d")
-        restore_controls.addWidget(self.refresh_backups_btn)
-
-        self.restore_btn = QPushButton("  Ripristina")
-        self.restore_btn.setIcon(get_colored_icon(get_asset_path(Icons.UNDO), "#000000"))
-        self.restore_btn.clicked.connect(self._restore_selected_backup)
-        style_button(self.restore_btn)
-        restore_controls.addWidget(self.restore_btn)
-
-        restore_layout.addLayout(restore_controls)
-        layout.addWidget(restore_group)
-        layout.addStretch()
-
-    def load_from_config(self, config: dict[str, Any]):
-        """
-        Carica le preferenze di backup dalla configurazione globale.
-
-        Args:
-            config: Dizionario delle impostazioni caricato.
-        """
-        saved_cloud = config.get("backup_cloud_provider")
-        if saved_cloud:
-            index = self.cloud_combo.findData(saved_cloud)
-            if index >= 0:
-                self.cloud_combo.setCurrentIndex(index)
-
-        self.auto_backup_check.setChecked(config.get("auto_backup", True))
-        self._refresh_backups_list()
-
-    def _save_cloud_preference(self):
-        """Salva il provider cloud selezionato nella configurazione."""
-        provider = self.cloud_combo.currentData()
-        if provider:
-            config_manager.set_config_value("backup_cloud_provider", provider)
-
-    def _save_auto_backup(self):
-        """Salva lo stato dell'opzione di backup automatico."""
-        config_manager.set_config_value("auto_backup", self.auto_backup_check.isChecked())
-
-    def _run_manual_backup(self):
-        """Avvia immediatamente la procedura di backup e aggiorna la lista cronologica."""
-        success, msg = BackupManager.create_backup()
-        if success:
-            ToastManager.instance().show(f"Backup completato!\n{msg}", "success")
-            self._refresh_backups_list()
-        else:
-            QMessageBox.warning(self, "Errore Backup", msg)
-
-    def _open_backup_folder(self):
-        """Apre la cartella contenente i file ZIP di backup nel file explorer di sistema."""
-        path = BackupManager.get_backup_dir()
-        open_folder(str(path))
-
-    def _refresh_backups_list(self):
-        """Scansiona la cartella backup e popola il menu a tendina con le versioni trovate."""
-        self.restore_combo.clear()
-        backups = BackupManager.list_backups()
-
-        if not backups:
-            self.restore_combo.addItem("Nessun backup trovato")
-            self.restore_btn.setEnabled(False)
-            return
-
-        self.restore_btn.setEnabled(True)
-        for backup_path in backups:
-            try:
-                name = backup_path.name
-                ts_str = name.replace("BotTS_Backup_", "").replace(".zip", "")
-                dt = datetime.strptime(ts_str, "%Y%m%d_%H%M%S").replace(tzinfo=UTC)
-                display = f"{dt.strftime('%d/%m/%Y %H:%M:%S')} ({backup_path.stat().st_size // 1024} KB)"
-                self.restore_combo.addItem(display, str(backup_path))
-            except Exception:
-                self.restore_combo.addItem(backup_path.name, str(backup_path))
-
-    def _restore_selected_backup(self):
-        """Ripristina i dati dal file selezionato previa conferma dell'utente."""
-        path = self.restore_combo.currentData()
-        if not path:
-            return
-
-        res = QMessageBox.question(
-            self,
-            "Conferma Ripristino",
-            "ATTENZIONE: Il ripristino sovrascriverà i dati attuali.\nProcedere?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        )
-        if res == QMessageBox.StandardButton.Yes:
-            success, msg = BackupManager.restore_backup(path)
-            if success:
-                QMessageBox.information(
-                    self, "Ripristino Completato", "Dati ripristinati con successo. Riavvia l'app."
-                )
-            else:
-                QMessageBox.critical(self, "Errore Ripristino", msg)
+    def load_from_config(self, config: dict[str, Any]) -> None:
+        last = config.get("last_db_backup", "Mai")
+        self.lbl_last_backup.setText(f"Ultimo Backup: {last}")

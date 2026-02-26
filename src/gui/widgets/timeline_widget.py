@@ -153,27 +153,30 @@ class CyberTimelineFrame(QFrame):
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        rect = QRectF(self.rect()).adjusted(10, 10, -10, -10)
-        path = QPainterPath()
-        path.addRoundedRect(rect, 15, 15)
-        painter.fillPath(path, QColor(255, 255, 255, 250))
-        painter.save()
-        painter.setClipPath(path)
-        painter.setPen(QPen(QColor(0, 0, 0, 10), 0.5))
-        step = 25
-        for x in range(int(rect.left()), int(rect.right() + step), step):
-            painter.drawLine(
-                int(x + self._grid_offset), int(rect.top()), int(x + self._grid_offset), int(rect.bottom())
-            )
-        for y in range(int(rect.top()), int(rect.bottom() + step), step):
-            painter.drawLine(
-                int(rect.left()), int(y + self._grid_offset), int(rect.right()), int(y + self._grid_offset)
-            )
-        painter.restore()
-        alpha = int(100 + (self._pulse_value * 155))
-        painter.setPen(QPen(QColor(33, 33, 33, alpha), 1.5))
-        painter.drawPath(path)
+        try:
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            rect = QRectF(self.rect()).adjusted(10, 10, -10, -10)
+            path = QPainterPath()
+            path.addRoundedRect(rect, 15, 15)
+            painter.fillPath(path, QColor(255, 255, 255, 250))
+            painter.save()
+            painter.setClipPath(path)
+            painter.setPen(QPen(QColor(0, 0, 0, 10), 0.5))
+            step = 25
+            for x in range(int(rect.left()), int(rect.right() + step), step):
+                painter.drawLine(
+                    int(x + self._grid_offset), int(rect.top()), int(x + self._grid_offset), int(rect.bottom())
+                )
+            for y in range(int(rect.top()), int(rect.bottom() + step), step):
+                painter.drawLine(
+                    int(rect.left()), int(y + self._grid_offset), int(rect.right()), int(y + self._grid_offset)
+                )
+            painter.restore()
+            alpha = int(100 + (self._pulse_value * 155))
+            painter.setPen(QPen(QColor(33, 33, 33, alpha), 1.5))
+            painter.drawPath(path)
+        finally:
+            painter.end()
 
 
 class HorizontalTimelineContainer(QWidget):

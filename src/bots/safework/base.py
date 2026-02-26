@@ -117,7 +117,7 @@ class SafeworkBaseBot(BaseBot):
 
     def _attendi_caricamento_sistema(self, timeout: int = 420):
         """
-        Attesa specifica per SafeWork: rileva lo span 'Caricamento...' 
+        Attesa specifica per SafeWork: rileva lo span 'Caricamento...'
         e ne attende la scomparsa completa.
         """
         if not self.driver or not self.wait:
@@ -129,7 +129,7 @@ class SafeworkBaseBot(BaseBot):
                 WebDriverWait(self.driver, 3).until(
                     EC.visibility_of_element_located((By.XPATH, xpath_caricamento))
                 )
-            
+
             # Attendiamo che scompaia
             WebDriverWait(self.driver, timeout).until(
                 EC.invisibility_of_element_located((By.XPATH, xpath_caricamento))

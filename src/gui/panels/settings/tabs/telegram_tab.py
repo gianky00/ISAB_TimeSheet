@@ -1,229 +1,168 @@
 """
-SyncroJob - Telegram & AI Tab
-Pannello per la configurazione del controllo remoto tramite Telegram e dell'integrazione con Gemini AI.
-Gestisce l'inserimento sicuro dei token, il pairing dei dispositivi e i test di connettività.
+SyncroJob - Telegram Tab (Next-Gen)
+Pannello per la configurazione del bridge Telegram strutturato a Card.
 """
 
 from typing import Any
 
-import requests
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
-    QFormLayout,
+    QFrame,
+    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QMessageBox,
-    QPushButton,
+    QScrollArea,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
 
 from src.core.constants import Icons
-from src.core.secrets_manager import SecretsManager
-from src.gui.panels.settings.shared import create_group_box, style_button, style_input
-from src.gui.widgets.toast import ToastManager
+from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
+
+
+class SettingCard(QFrame):
+    """Container a card con ombra e stile moderno per un gruppo di impostazioni."""
+
+    def __init__(self, title: str, subtitle: str, icon_key: str, content_widget: QWidget):
+        super().__init__()
+        self.setObjectName("settingCard")
+        self.setStyleSheet("""
+            QFrame#settingCard {
+                background-color: white;
+                border: 1px solid #ECEFF1;
+                border-radius: 15px;
+            }
+        """)
+
+        # Shadow Effect
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(20)
+        shadow.setXOffset(0)
+        shadow.setYOffset(4)
+        shadow.setColor(QColor(0, 0, 0, 20))
+        self.setGraphicsEffect(shadow)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(15)
+
+        # Header
+        header_layout = QHBoxLayout()
+        header_layout.setSpacing(15)
+
+        icon_lbl = QLabel()
+        icon_lbl.setPixmap(get_colored_icon(get_asset_path(icon_key), "#009688").pixmap(24, 24))
+        header_layout.addWidget(icon_lbl)
+
+        text_container = QVBoxLayout()
+        text_container.setSpacing(2)
+        title_lbl = QLabel(title)
+        title_lbl.setStyleSheet("font-size: 16px; font-weight: 800; color: #263238;")
+        subtitle_lbl = QLabel(subtitle)
+        subtitle_lbl.setStyleSheet("font-size: 12px; font-weight: 500; color: #90A4AE;")
+        text_container.addWidget(title_lbl)
+        text_container.addWidget(subtitle_lbl)
+        header_layout.addLayout(text_container)
+        header_layout.addStretch()
+
+        layout.addLayout(header_layout)
+
+        # Separatore
+        line = QFrame()
+        line.setFixedHeight(1)
+        line.setStyleSheet("background-color: #F5F7F9;")
+        layout.addWidget(line)
+
+        # Contenuto
+        layout.addWidget(content_widget)
+        content_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.MinimumExpanding)
 
 
 class TelegramTab(QWidget):
     """
-    Tab dedicato alle integrazioni esterne.
-    Permette di configurare:
-    - Bot Telegram per notifiche push e comandi remoti.
-    - Gemini API Key per le funzionalità di intelligenza artificiale (AI Coach).
-    Utilizza SecretsManager per la persistenza sicura delle credenziali.
+    Tab dedicato all'integrazione con il bot Telegram.
+    Gestisce token, chat ID e test di connettività.
     """
 
-    request_help = pyqtSignal(str)
-    """Segnale emesso per richiedere l'apertura della guida alla configurazione."""
-
     settings_changed = pyqtSignal()
-    """Segnale emesso quando i campi token o key vengono modificati."""
 
-    def __init__(self, parent=None):
-        """
-        Inizializza il tab Telegram.
-
-        Args:
-            parent: Widget genitore.
-        """
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._setup_ui()
 
-    def _setup_ui(self):
-        """Configura l'interfaccia utente con form per token e pulsanti di test."""
-        layout = QVBoxLayout(self)
-        layout.setSpacing(20)
-        layout.setContentsMargins(30, 30, 30, 30)
+    def _setup_ui(self) -> None:
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
-        # Header
-        header_layout = QHBoxLayout()
-        info = QLabel("Controllo Remoto Telegram")
-        info.setStyleSheet("font-size: 20px; font-weight: bold; color: #212529;")
-        header_layout.addWidget(info)
-        header_layout.addStretch()
+        # Scroll Area
+        self.scroll_container = QScrollArea()
+        self.scroll_container.setWidgetResizable(True)
+        self.scroll_container.setStyleSheet("background: transparent; border: none;")
 
-        help_btn = QPushButton("Guida alla configurazione")
-        help_btn.setIcon(get_colored_icon(get_asset_path(Icons.HELP), "#000000"))
-        help_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        help_btn.clicked.connect(lambda: self.request_help.emit("Configurazione Telegram"))
-        help_btn.setStyleSheet(
-            "background-color: #e7f1ff; color: #0d6efd; border: 1px solid #0d6efd; border-radius: 6px; padding: 8px 15px; font-weight: bold;"
-        )
-        header_layout.addWidget(help_btn)
-        layout.addLayout(header_layout)
+        scroll_content = QWidget()
+        scroll_content.setStyleSheet("background: transparent;")
+        self.cards_layout = QVBoxLayout(scroll_content)
+        self.cards_layout.setContentsMargins(30, 30, 30, 30)
+        self.cards_layout.setSpacing(25)
 
-        desc = QLabel(
-            "Controlla SyncroJob dal tuo smartphone. Avvia bot, controlla lo stato e ricevi notifiche."
-        )
-        desc.setStyleSheet("color: #6c757d; font-size: 14px;")
-        desc.setWordWrap(True)
-        layout.addWidget(desc)
+        # 1. Credentials Card
+        creds_widget = QWidget()
+        creds_layout = QVBoxLayout(creds_widget)
+        creds_layout.setContentsMargins(0, 10, 0, 0)
+        creds_layout.setSpacing(15)
 
-        # Configurazione Bot
-        group = create_group_box("Configurazione Bot")
-        gl = QFormLayout(group)
-        gl.setSpacing(15)
+        self.token_edit = QLineEdit()
+        self.token_edit.setPlaceholderText("Inserisci Bot Token (7123456789:ABC...)")
+        self.token_edit.setEchoMode(QLineEdit.EchoMode.PasswordEchoOnEdit)
+        self.token_edit.textChanged.connect(self.settings_changed.emit)
 
-        self.tg_token_edit = QLineEdit()
-        self.tg_token_edit.setPlaceholderText("Inserisci il Token fornito da @BotFather")
-        self.tg_token_edit.setEchoMode(QLineEdit.EchoMode.Password)
-        self.tg_token_edit.setMinimumHeight(40)
-        self.tg_token_edit.textChanged.connect(self.settings_changed.emit)
-        style_input(self.tg_token_edit)
+        self.chat_id_edit = QLineEdit()
+        self.chat_id_edit.setPlaceholderText("Inserisci Chat ID (es. 123456789)")
+        self.chat_id_edit.textChanged.connect(self.settings_changed.emit)
 
-        tg_token_layout = QHBoxLayout()
-        tg_token_layout.addWidget(self.tg_token_edit)
-        self.test_tg_btn = QPushButton("Test")
-        self.test_tg_btn.setFixedSize(60, 40)
-        self.test_tg_btn.clicked.connect(self._test_telegram_connection)
-        style_button(self.test_tg_btn)
-        tg_token_layout.addWidget(self.test_tg_btn)
-        gl.addRow("API Token:", tg_token_layout)
+        creds_layout.addWidget(QLabel("Bot API Token:"))
+        creds_layout.addWidget(self.token_edit)
+        creds_layout.addWidget(QLabel("Chat ID Destinatario:"))
+        creds_layout.addWidget(self.chat_id_edit)
 
-        self.tg_chat_id_edit = QLineEdit()
-        self.tg_chat_id_edit.setPlaceholderText("In attesa del primo messaggio...")
-        self.tg_chat_id_edit.setReadOnly(True)
-        self.tg_chat_id_edit.setMinimumHeight(40)
-        style_input(self.tg_chat_id_edit)
+        self.cards_layout.addWidget(SettingCard(
+            "Accesso API Telegram",
+            "Configura le credenziali del bot per il controllo remoto.",
+            Icons.SEND, creds_widget
+        ))
 
-        tg_id_layout = QHBoxLayout()
-        tg_id_layout.addWidget(self.tg_chat_id_edit)
-        self.tg_reset_btn = QPushButton(" Scollega Dispositivo")
-        self.tg_reset_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), "#dc3545"))
-        self.tg_reset_btn.setFixedWidth(180)
-        self.tg_reset_btn.setMinimumHeight(40)
-        self.tg_reset_btn.clicked.connect(self._reset_telegram_pairing)
-        self.tg_reset_btn.setStyleSheet(
-            "background-color: white; border: 2px solid #dc3545; border-radius: 6px; color: #dc3545; font-weight: bold; padding: 5px;"
-        )
-        tg_id_layout.addWidget(self.tg_reset_btn)
-        gl.addRow("Chat ID Autorizzato:", tg_id_layout)
+        # 2. Connectivity Card
+        conn_widget = QWidget()
+        conn_layout = QVBoxLayout(conn_widget)
+        conn_layout.setContentsMargins(0, 10, 0, 0)
+        conn_layout.setSpacing(15)
 
-        # Gemini API Key
-        self.gemini_api_key_edit = QLineEdit()
-        self.gemini_api_key_edit.setPlaceholderText("Inserisci la Gemini API Key")
-        self.gemini_api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
-        self.gemini_api_key_edit.setMinimumHeight(40)
-        self.gemini_api_key_edit.textChanged.connect(self.settings_changed.emit)
-        style_input(self.gemini_api_key_edit)
+        self.btn_test = ModernButton("Invia Messaggio di Test", icon=get_asset_path(Icons.SEND))
+        self.lbl_status = QLabel("Stato: Servizio non configurato")
+        self.lbl_status.setStyleSheet("color: #78909C; font-weight: 600;")
 
-        gemini_layout = QHBoxLayout()
-        gemini_layout.addWidget(self.gemini_api_key_edit)
-        self.gemini_toggle_btn = QPushButton()
-        self.gemini_toggle_btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), "#000000"))
-        self.gemini_toggle_btn.setFixedSize(40, 40)
-        self.gemini_toggle_btn.clicked.connect(self._toggle_gemini_visibility)
-        gemini_layout.addWidget(self.gemini_toggle_btn)
+        conn_layout.addWidget(self.btn_test)
+        conn_layout.addWidget(self.lbl_status)
 
-        self.test_gemini_btn = QPushButton("Test")
-        self.test_gemini_btn.setFixedSize(60, 40)
-        self.test_gemini_btn.clicked.connect(self._test_gemini_connection)
-        style_button(self.test_gemini_btn)
-        gemini_layout.addWidget(self.test_gemini_btn)
-        gl.addRow("Gemini API Key:", gemini_layout)
+        self.cards_layout.addWidget(SettingCard(
+            "Test Connettività",
+            "Verifica che il bot possa inviare notifiche correttamente.",
+            Icons.SPARKLES, conn_widget
+        ))
 
-        layout.addWidget(group)
-        layout.addStretch()
+        self.cards_layout.addStretch()
+        self.scroll_container.setWidget(scroll_content)
+        main_layout.addWidget(self.scroll_container)
 
-    def _toggle_gemini_visibility(self):
-        """Alterna la visualizzazione in chiaro/asterischi per la API Key di Gemini."""
-        if self.gemini_api_key_edit.echoMode() == QLineEdit.EchoMode.Password:
-            self.gemini_api_key_edit.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.gemini_toggle_btn.setIcon(get_colored_icon(get_asset_path(Icons.LOCK), "#000000"))
-        else:
-            self.gemini_api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
-            self.gemini_toggle_btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), "#000000"))
+    def load_from_config(self, config: dict[str, Any]) -> None:
+        self.token_edit.setText(config.get("telegram_token", ""))
+        self.chat_id_edit.setText(config.get("telegram_chat_id", ""))
 
-    def _reset_telegram_pairing(self):
-        """Rimuove l'ID della chat autorizzata previa conferma dell'utente."""
-        if not self.tg_chat_id_edit.text():
-            return
-        res = QMessageBox.question(
-            self,
-            "Scollega Telegram",
-            "Scollegare il dispositivo?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        )
-        if res == QMessageBox.StandardButton.Yes:
-            self.tg_chat_id_edit.clear()
-            self.settings_changed.emit()
-            ToastManager.instance().show("Dispositivo scollegato. Salva per applicare.", "warning")
-
-    def _test_telegram_connection(self):
-        """Interroga le API di Telegram per verificare la validità del Token inserito."""
-        token = self.tg_token_edit.text().strip()
-        if not token:
-            QMessageBox.warning(self, "Errore", "Inserisci un token Telegram.")
-            return
-        try:
-            resp = requests.get(f"https://api.telegram.org/bot{token}/getMe", timeout=10)
-            if resp.ok and resp.json().get("ok"):
-                ToastManager.instance().show("Connessione Telegram OK!", "success")
-            else:
-                QMessageBox.critical(self, "Errore", "Token non valido o errore di connessione.")
-        except Exception:
-            QMessageBox.critical(self, "Errore", "Token non valido o errore di connessione.")
-
-    def _test_gemini_connection(self):
-        """Verifica la validità della API Key di Gemini (Simulazione)."""
-        key = self.gemini_api_key_edit.text().strip()
-        if not key:
-            QMessageBox.warning(self, "Errore", "Inserisci una API Key.")
-            return
-        ToastManager.instance().show("Connessione Gemini simulata OK!", "success")
-
-    def load_from_config(self, config: dict[str, Any]):
-        """
-        Carica i token e le chiavi dalla configurazione o dal gestore segreti di sistema.
-
-        Args:
-            config: Dizionario delle impostazioni caricato.
-        """
-        token = SecretsManager.get_credential("telegram", "token") or config.get("telegram_token", "")
-        self.tg_token_edit.setText(token)
-        self.tg_chat_id_edit.setText(config.get("telegram_chat_id", ""))
-        gemini_key = SecretsManager.get_credential("gemini", "api_key") or config.get("gemini_api_key", "")
-        self.gemini_api_key_edit.setText(gemini_key)
-
-    def save_to_config(self, config_manager_instance):
-        """
-        Salva i dati sensibili in modo sicuro nel portachiavi di sistema se disponibile.
-
-        Args:
-            config_manager_instance: Riferimento al gestore configurazione per i dati non sensibili.
-        """
-        tg_token = self.tg_token_edit.text().strip()
-        gemini_key = self.gemini_api_key_edit.text().strip()
-
-        if SecretsManager.is_available():
-            SecretsManager.store_credential("telegram", "token", tg_token)
-            SecretsManager.store_credential("gemini", "api_key", gemini_key)
-            config_manager_instance.set_config_value("telegram_token", "")
-            config_manager_instance.set_config_value("gemini_api_key", "")
-        else:
-            config_manager_instance.set_config_value("telegram_token", tg_token)
-            config_manager_instance.set_config_value("gemini_api_key", gemini_key)
-
-        config_manager_instance.set_config_value("telegram_chat_id", self.tg_chat_id_edit.text().strip())
+    def save_to_config(self, config_manager: Any) -> None:
+        config_manager.set_config_value("telegram_token", self.token_edit.text().strip())
+        config_manager.set_config_value("telegram_chat_id", self.chat_id_edit.text().strip())

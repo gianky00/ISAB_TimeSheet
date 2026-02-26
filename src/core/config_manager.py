@@ -522,7 +522,15 @@ def export_configuration(export_path: str) -> tuple[bool, str]:
         return False, f"Errore durante l'esportazione: {e}"
 
 
-def import_configuration(import_path: str) -> tuple[bool, str]:
+def reset_to_defaults() -> None:
+    """Ripristina la configurazione predefinita cancellando la cache e salvando i default."""
+    global _config_cache
+    with _config_lock:
+        _config_cache = copy.deepcopy(DEFAULT_CONFIG)
+        save_config(_config_cache)
+
+
+def import_configuration(import_path: str | Path) -> tuple[bool, str]:
     """
     Importa la configurazione da un file JSON, sovrascrivendo quella attuale.
     Effettua un backup automatico della configurazione attuale prima di sovrascrivere.

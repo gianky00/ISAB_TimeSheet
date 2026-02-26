@@ -3,8 +3,7 @@ SyncroJob - Automazioni Widget (Refactored)
 Pannello raggruppato per i Bot con animazioni integrate e controlli locali.
 """
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QTabWidget
+from PyQt6.QtWidgets import QTabWidget, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
@@ -26,7 +25,7 @@ class AutomazioniWidget(QWidget):
     def __init__(self, main_window):
         super().__init__()
         self.mw = main_window
-        
+
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
