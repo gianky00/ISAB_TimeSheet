@@ -14,9 +14,10 @@ from src.gui.components.animated_stack import SlidingStackedWidget
 class AnimatedTabWidget(QWidget):
     """
     Sostituto d'élite di QTabWidget con transizioni Snapshot-Fade
-        e indicatore di selezione con effetto 'Illumination'.
-    
-        Supporta il posizionamento dei tab (North/South) e garantisce performance a 60 FPS    grazie alla tecnica di snapshot rendering durante le transizioni.
+    e indicatore di selezione con effetto 'Illumination'.
+
+    Supporta il posizionamento dei tab (North/South) e garantisce performance a 60 FPS
+    grazie alla tecnica di snapshot rendering durante le transizioni.
     """
 
     currentChanged = pyqtSignal(int)
