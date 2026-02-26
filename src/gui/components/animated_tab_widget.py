@@ -9,6 +9,7 @@ from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QHBoxLayout, QTabBar, QTabWidget, QVBoxLayout, QWidget
 
 from src.gui.components.animated_stack import SlidingStackedWidget
+from src.gui.styles import COLORS
 
 
 class AnimatedTabWidget(QWidget):
@@ -61,16 +62,17 @@ class AnimatedTabWidget(QWidget):
         self.indicator.setFixedHeight(4) # Un po' più spessa per mostrare il gradiente
 
         # Design con gradiente lineare
-        self.indicator.setStyleSheet("""
+        self.indicator.setStyleSheet(f"""
             background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 #4DB6AC, stop:0.5 #009688, stop:1 #00796B);
+                stop:0 {COLORS['primary_blue']}, stop:0.5 {COLORS['teal_accent']}, stop:1 {COLORS['primary_dark']});
             border-radius: 2px;
         """)
 
         # Effetto Glow (Bagliore)
         glow = QGraphicsDropShadowEffect(self.indicator)
         glow.setBlurRadius(10)
-        glow.setColor(QColor(0, 150, 136, 120)) # Teal con 40% opacità
+        c = QColor(COLORS["teal_accent"])
+        glow.setColor(QColor(c.red(), c.green(), c.blue(), 120))
         glow.setOffset(0, 1)
         self.indicator.setGraphicsEffect(glow)
 
@@ -254,21 +256,21 @@ class AnimatedTabWidget(QWidget):
 
     def _get_default_style(self) -> str:
         """Restituisce lo stile QSS per la barra dei tab in posizione North."""
-        return """
-            QTabBar::tab {
-                background: transparent; color: #78909C; padding: 12px 24px;
+        return f"""
+            QTabBar::tab {{
+                background: transparent; color: {COLORS['text_muted']}; padding: 12px 24px;
                 font-weight: 600; font-size: 13px; border: none;
-            }
-            QTabBar::tab:selected { color: #00796B; }
-            QTabBar::tab:hover:!selected { color: #455A64; background: rgba(0, 150, 136, 0.04); border-radius: 4px; }
+            }}
+            QTabBar::tab:selected {{ color: {COLORS['primary_dark']}; }}
+            QTabBar::tab:hover:!selected {{ color: {COLORS['text_dark']}; background: rgba({QColor(COLORS['teal_accent']).red()}, {QColor(COLORS['teal_accent']).green()}, {QColor(COLORS['teal_accent']).blue()}, 0.04); border-radius: 4px; }}
         """
 
     def _get_south_style(self) -> str:
         """Restituisce lo stile QSS per la barra dei tab in posizione South."""
-        return """
-            QTabBar::tab {
-                background: transparent; color: #78909C; padding: 10px 18px;
+        return f"""
+            QTabBar::tab {{
+                background: transparent; color: {COLORS['text_muted']}; padding: 10px 18px;
                 font-weight: 600; font-size: 12px; border: none;
-            }
-            QTabBar::tab:selected { color: #00796B; }
+            }}
+            QTabBar::tab:selected {{ color: {COLORS['primary_dark']}; }}
         """

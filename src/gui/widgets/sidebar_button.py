@@ -7,6 +7,8 @@ from PyQt6.QtCore import QSize, Qt, pyqtProperty  # type: ignore[attr-defined]
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QPushButton, QWidget
 
+from src.gui.styles import COLORS
+from src.gui.styles.palette_helpers import hex_to_rgba
 from src.utils.helpers import get_colored_icon
 
 
@@ -25,7 +27,7 @@ class SidebarButton(QPushButton):
         self._text_opacity = 1.0 # Default a 1.0 per visibilità immediata
 
         if icon_path:
-            self.setIcon(get_colored_icon(icon_path, "#ffffff"))
+            self.setIcon(get_colored_icon(icon_path, COLORS["bg_white"]))
 
         self.setCheckable(True)
         self.setMinimumHeight(48)
@@ -33,7 +35,7 @@ class SidebarButton(QPushButton):
 
         self.glow = QGraphicsDropShadowEffect(self)
         self.glow.setBlurRadius(15)
-        self.glow.setColor(QColor(0, 150, 136, 0))
+        self.glow.setColor(QColor(0, 0, 0, 0)) # Trasparente di default
         self.glow.setOffset(0, 0)
         self.setGraphicsEffect(self.glow)
 
@@ -52,10 +54,13 @@ class SidebarButton(QPushButton):
 
     def _on_toggled(self, checked: bool) -> None:
         if checked:
-            self.glow.setColor(QColor(0, 150, 136, 180))
+            # Glow basato sul colore primario/teal
+            c = QColor(COLORS["teal_accent"])
+            c.setAlpha(180)
+            self.glow.setColor(c)
         else:
             if self._badge_count == 0:
-                self.glow.setColor(QColor(0, 150, 136, 0))
+                self.glow.setColor(QColor(0, 0, 0, 0))
         self._update_style()
 
     def set_collapsed(self, collapsed: bool, animated: bool = False) -> None:
@@ -78,14 +83,14 @@ class SidebarButton(QPushButton):
         align = "center" if self._collapsed else "left"
         padding = "0px" if self._collapsed else "12px 15px"
 
-        # Sfondo selezione più deciso (Teal scuro trasparente) per contrasto con testo bianco
+        # Sfondo selezione dinamico basato su teal_accent
         if self.isChecked():
-            bg_color = "rgba(0, 150, 136, 0.25)"
-            text_color = "#ffffff"
+            bg_color = hex_to_rgba(COLORS["teal_accent"], 0.25)
+            text_color = COLORS["bg_white"]
             font_weight = "800"
         else:
             bg_color = "transparent"
-            text_color = f"rgba(255, 255, 255, {max(0.4, self._text_opacity)})" # Mai sotto 0.4 se visibile
+            text_color = hex_to_rgba(COLORS["bg_white"], max(0.4, self._text_opacity)) # Mai sotto 0.4 se visibile
             font_weight = "500"
 
         self.setStyleSheet(f"""
@@ -101,8 +106,8 @@ class SidebarButton(QPushButton):
                 border: none;
             }}
             QPushButton:hover {{
-                background-color: rgba(255, 255, 255, 0.1);
-                color: #ffffff;
+                background-color: {hex_to_rgba(COLORS['bg_white'], 0.1)};
+                color: {COLORS['bg_white']};
             }}
         """)
 

@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -41,7 +42,7 @@ class OdaFilterWidget(QWidget):
 
         # Sync Status
         self.lbl_sync_status = QLabel("")
-        self.lbl_sync_status.setStyleSheet("color: #555; font-size: 11px; margin-right: 15px;")
+        self.lbl_sync_status.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; margin-right: 15px;")
         layout.addWidget(self.lbl_sync_status)
 
         # Update Bot Button
@@ -68,7 +69,7 @@ class OdaFilterWidget(QWidget):
             variant=ModernButton.Variant.GHOST,
             size=ModernButton.Size.SMALL,
         )
-        self.export_btn.setIcon(get_colored_icon(get_asset_path(Icons.EXCEL), "#555"))
+        self.export_btn.setIcon(get_colored_icon(get_asset_path(Icons.EXCEL), COLORS["text_muted"]))
         self.export_btn.setToolTip("Esporta Excel")
         self.export_btn.clicked.connect(self.export_clicked.emit)
         layout.addWidget(self.export_btn)

@@ -21,6 +21,7 @@ from src.core.audit_manager import AuditManager
 from src.core.constants import Icons
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.formatters import FastTableModel, format_date_it
+from src.gui.styles import COLORS
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -79,7 +80,7 @@ class TimbratureDBPanel(QWidget):
         self._setup_database_tab(self.tab_database)
         self.tabs.addTab(
             self.tab_database,
-            get_colored_icon(get_asset_path(Icons.DATABASE), "#546E7A"),
+            get_colored_icon(get_asset_path(Icons.DATABASE), COLORS["text_muted"]),
             "Database",
         )
 
@@ -87,7 +88,7 @@ class TimbratureDBPanel(QWidget):
         self.settings_tab = TimbratureSettingsTab(self.storage)
         self.tabs.addTab(
             self.settings_tab,
-            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#546E7A"),
+            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), COLORS["text_muted"]),
             "Impostazioni",
         )
 
@@ -120,9 +121,19 @@ class TimbratureDBPanel(QWidget):
         self._update_filter_combos()
 
         import_btn = QPushButton("Importa")
-        import_btn.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), "#FFFFFF"))
+        import_btn.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), COLORS["bg_white"]))
         import_btn.setFixedSize(90, 32)
         import_btn.clicked.connect(self._import_excel_manually)
+        import_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['primary_dark']};
+                color: {COLORS['bg_white']};
+                border: none;
+                border-radius: 4px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{ background-color: {COLORS['primary_blue']}; }}
+        """)
 
         toolbar_layout.addWidget(self.search_input)
         toolbar_layout.addWidget(self.reparto_filter)

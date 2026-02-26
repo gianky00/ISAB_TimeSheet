@@ -15,6 +15,7 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel, BotWorker
+from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import BotParametersWidget, EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path
@@ -147,7 +148,7 @@ class PrenotaBPPanel(BaseBotPanel):
         ready, msg = self.validate_ready()
         if not ready:
             ConfirmationDialog.show_warning(self, "Attenzione", msg)
-            self._update_status("#C62828", "Validazione fallita")
+            self._update_status(STATUS_COLORS["error"], "Validazione fallita")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -205,7 +206,7 @@ class PrenotaBPPanel(BaseBotPanel):
         self._setup_worker_connections(worker)
 
         # UI Update
-        self._update_status("#0d6efd", "Esecuzione...")
+        self._update_status(STATUS_COLORS["running"], "Esecuzione...")
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()

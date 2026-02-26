@@ -26,6 +26,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -42,7 +43,7 @@ class HoverPulseFrame(QFrame):
     Migliora il feedback visivo dell'interfaccia.
     """
 
-    def __init__(self, accent_color: str = "#212121", parent=None):
+    def __init__(self, accent_color: str | None = None, parent=None):
         """
         Inizializza il frame con il colore di accento specificato.
 
@@ -51,7 +52,7 @@ class HoverPulseFrame(QFrame):
             parent: Widget genitore.
         """
         super().__init__(parent)
-        self._accent_color = QColor(accent_color)
+        self._accent_color = QColor(accent_color or COLORS["text_dark"])
         self._pulse_val = 1.0
 
         self._anim = QPropertyAnimation(self, b"pulse_value")
@@ -111,11 +112,11 @@ class DataTable(QWidget):
 
     # Status colors
     STATUS_COLORS: ClassVar[dict[str, str]] = {
-        "completato": "#C8E6C9",  # Green
-        "errore": "#FFCDD2",  # Red
-        "in_corso": "#FFF9C4",  # Yellow
-        "pending": "#E3F2FD",  # Blue
-        "da_processare": "#FFFFFF",  # White
+        "completato": COLORS["table_success_bg"],  # Green
+        "errore": COLORS["table_error_bg"],  # Red
+        "in_corso": COLORS["table_warning_bg"],  # Yellow
+        "pending": COLORS["table_info_bg"],  # Blue
+        "da_processare": COLORS["bg_white"],  # White
     }
 
     def __init__(self, columns: list[dict[str, Any]], parent: QWidget | None = None) -> None:
@@ -156,7 +157,7 @@ class DataTable(QWidget):
                 background: {self._palette.surface};
             }}
             QLineEdit:focus {{
-                border: 2px solid #212121;
+                border: 2px solid {COLORS['text_dark']};
             }}
         """
         )
@@ -164,7 +165,7 @@ class DataTable(QWidget):
 
         # Actions
         self._refresh_btn = QPushButton(" Aggiorna")
-        self._refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
+        self._refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), COLORS["text_dark"]))
         self._refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._refresh_btn.clicked.connect(self.refresh)
         self._refresh_btn.setStyleSheet(
@@ -186,31 +187,31 @@ class DataTable(QWidget):
         layout.addLayout(toolbar)
 
         # --- CONTAINER PRINCIPALE (Card con ombra e accento scuro pulsante) ---
-        self.container = HoverPulseFrame("#212121")
+        self.container = HoverPulseFrame(COLORS["text_dark"])
         self.container.setObjectName("tableContainer")
-        self.container.setStyleSheet("""
-            QFrame#tableContainer {
-                background-color: #ffffff;
-                border: 1px solid #e0e0e0;
+        self.container.setStyleSheet(f"""
+            QFrame#tableContainer {{
+                background-color: {COLORS['bg_white']};
+                border: 1px solid {COLORS['border_light']};
                 /* border-bottom rimosso perché gestito da HoverPulseFrame */
                 border-radius: 12px;
-            }
-            QTableWidget {
+            }}
+            QTableWidget {{
                 background-color: transparent;
                 border: none;
-                gridline-color: #f1f3f5;
-                selection-background-color: #E0F7FA;
-                selection-color: #000000;
+                gridline-color: {COLORS['bg_alt']};
+                selection-background-color: {COLORS['table_selection_bg']};
+                selection-color: {COLORS['text_dark']};
                 outline: none;
-            }
-            QHeaderView::section {
-                background-color: #f8f9fa;
-                color: #424242;
+            }}
+            QHeaderView::section {{
+                background-color: {COLORS['bg_light']};
+                color: {COLORS['text_dark']};
                 padding: 10px;
                 font-weight: bold;
                 border: none;
-                border-bottom: 1px solid #dee2e6;
-            }
+                border-bottom: 1px solid {COLORS['border_light']};
+            }}
         """)
 
         # Shadow Effect

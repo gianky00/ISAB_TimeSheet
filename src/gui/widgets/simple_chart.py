@@ -6,6 +6,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.styles import COLORS
+
 
 class DonutChart(QWidget):
     """
@@ -16,7 +18,7 @@ class DonutChart(QWidget):
         super().__init__(parent)
         self.title = title
         self.values = [0, 0]  # [Success, Error]
-        self.colors = [QColor("#198754"), QColor("#dc3545")]  # Green, Red
+        self.colors = [QColor(COLORS["success_dark"]), QColor(COLORS["error_red"])]
         self.setMinimumSize(200, 200)
 
     def set_data(self, success_count: int, error_count: int) -> None:
@@ -49,13 +51,13 @@ class DonutChart(QWidget):
         total = sum(self.values)
         if total == 0:
             # Draw empty grey circle
-            pen = QPen(QColor("#e9ecef"))
+            pen = QPen(QColor(COLORS["bg_hover"]))
             pen.setWidth(15)
             painter.setPen(pen)
             painter.drawEllipse(rect_f)
 
             # Text 0%
-            painter.setPen(QColor("#adb5bd"))
+            painter.setPen(QColor(COLORS["text_light"]))
             painter.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
             painter.drawText(rect_f, Qt.AlignmentFlag.AlignCenter, "N/A")
             painter.end()
@@ -81,14 +83,14 @@ class DonutChart(QWidget):
 
         # Draw Center Text (Percentage)
         success_rate = int((self.values[0] / total) * 100)
-        painter.setPen(QColor("#343a40"))
+        painter.setPen(QColor(COLORS["text_dark"]))
         painter.setFont(QFont("Segoe UI", 24, QFont.Weight.Bold))
         painter.drawText(rect_f, Qt.AlignmentFlag.AlignCenter, f"{success_rate}%")
 
         # Draw Subtext
         sub_rect = QRectF(rect_f)
         sub_rect.moveTop(rect_f.top() + 40.0)
-        painter.setPen(QColor("#6c757d"))
+        painter.setPen(QColor(COLORS["text_muted"]))
         painter.setFont(QFont("Segoe UI", 10))
         painter.drawText(sub_rect, Qt.AlignmentFlag.AlignCenter, "Successo")
         painter.end()
@@ -106,7 +108,7 @@ class StatCard(QWidget):
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         lbl = QLabel(title)
-        lbl.setStyleSheet("font-size: 16px; font-weight: bold; color: #495057;")
+        lbl.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {COLORS['text_dark']};")
         layout.addWidget(lbl)
 
         self.chart = DonutChart()

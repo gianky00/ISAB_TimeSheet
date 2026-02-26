@@ -21,6 +21,7 @@ from src.gui.panels.settings.shared import (
     list_style,
     style_mini_button,
 )
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -67,10 +68,10 @@ class ListsPage(QWidget):
         self.account_list.customContextMenuRequested.connect(self._show_account_menu)
         layout.addWidget(self.account_list)
         btns = QHBoxLayout()
-        self._add_btn(btns, Icons.PLUS, "#28a745", self._add_account, "Aggiungi")
-        self._add_btn(btns, Icons.EDIT, "#0d6efd", self._edit_account, "Modifica")
-        self._add_btn(btns, Icons.TRASH, "#dc3545", self._remove_account, "Rimuovi")
-        self._add_btn(btns, Icons.STAR, "#ffc107", self._set_default_account, "Default")
+        self._add_btn(btns, Icons.PLUS, COLORS["success_green"], self._add_account, "Aggiungi")
+        self._add_btn(btns, Icons.EDIT, COLORS["primary_blue"], self._edit_account, "Modifica")
+        self._add_btn(btns, Icons.TRASH, COLORS["error_red"], self._remove_account, "Rimuovi")
+        self._add_btn(btns, Icons.STAR, COLORS["warning_yellow"], self._set_default_account, "Default")
         btns.addStretch()
         layout.addLayout(btns)
         return group
@@ -86,10 +87,10 @@ class ListsPage(QWidget):
         self.sw_account_list.customContextMenuRequested.connect(self._show_sw_account_menu)
         layout.addWidget(self.sw_account_list)
         btns = QHBoxLayout()
-        self._add_btn(btns, Icons.PLUS, "#28a745", self._add_sw_account, "Aggiungi")
-        self._add_btn(btns, Icons.EDIT, "#0d6efd", self._edit_sw_account, "Modifica")
-        self._add_btn(btns, Icons.TRASH, "#dc3545", self._remove_sw_account, "Rimuovi")
-        self._add_btn(btns, Icons.STAR, "#ffc107", self._set_default_sw_account, "Default")
+        self._add_btn(btns, Icons.PLUS, COLORS["success_green"], self._add_sw_account, "Aggiungi")
+        self._add_btn(btns, Icons.EDIT, COLORS["primary_blue"], self._edit_sw_account, "Modifica")
+        self._add_btn(btns, Icons.TRASH, COLORS["error_red"], self._remove_sw_account, "Rimuovi")
+        self._add_btn(btns, Icons.STAR, COLORS["warning_yellow"], self._set_default_sw_account, "Default")
         btns.addStretch()
         layout.addLayout(btns)
         return group
@@ -104,9 +105,9 @@ class ListsPage(QWidget):
         self._setup_generic_list(self.contract_list, self._add_contract, self._edit_contract, self._remove_contract)
         layout.addWidget(self.contract_list)
         btns = QHBoxLayout()
-        self._add_btn(btns, Icons.PLUS, "#28a745", self._add_contract)
-        self._add_btn(btns, Icons.EDIT, "#0d6efd", self._edit_contract)
-        self._add_btn(btns, Icons.TRASH, "#dc3545", self._remove_contract)
+        self._add_btn(btns, Icons.PLUS, COLORS["success_green"], self._add_contract)
+        self._add_btn(btns, Icons.EDIT, COLORS["primary_blue"], self._edit_contract)
+        self._add_btn(btns, Icons.TRASH, COLORS["error_red"], self._remove_contract)
         btns.addStretch()
         layout.addLayout(btns)
         return group
@@ -121,9 +122,9 @@ class ListsPage(QWidget):
         self._setup_generic_list(self.fornitori_list, self._add_fornitore, self._edit_fornitore, self._remove_fornitore)
         layout.addWidget(self.fornitori_list)
         btns = QHBoxLayout()
-        self._add_btn(btns, Icons.PLUS, "#28a745", self._add_fornitore)
-        self._add_btn(btns, Icons.EDIT, "#0d6efd", self._edit_fornitore)
-        self._add_btn(btns, Icons.TRASH, "#dc3545", self._remove_fornitore)
+        self._add_btn(btns, Icons.PLUS, COLORS["success_green"], self._add_fornitore)
+        self._add_btn(btns, Icons.EDIT, COLORS["primary_blue"], self._edit_fornitore)
+        self._add_btn(btns, Icons.TRASH, COLORS["error_red"], self._remove_fornitore)
         btns.addStretch()
         layout.addLayout(btns)
         return group
@@ -138,9 +139,9 @@ class ListsPage(QWidget):
         self._setup_generic_list(self.reparti_list, self._add_reparto, self._edit_reparto, self._remove_reparto)
         layout.addWidget(self.reparti_list)
         btns = QHBoxLayout()
-        self._add_btn(btns, Icons.PLUS, "#28a745", self._add_reparto)
-        self._add_btn(btns, Icons.EDIT, "#0d6efd", self._edit_reparto)
-        self._add_btn(btns, Icons.TRASH, "#dc3545", self._remove_reparto)
+        self._add_btn(btns, Icons.PLUS, COLORS["success_green"], self._add_reparto)
+        self._add_btn(btns, Icons.EDIT, COLORS["primary_blue"], self._edit_reparto)
+        self._add_btn(btns, Icons.TRASH, COLORS["error_red"], self._remove_reparto)
         btns.addStretch()
         layout.addLayout(btns)
         return group
@@ -155,9 +156,9 @@ class ListsPage(QWidget):
         self._setup_generic_list(self.cantieri_list, self._add_cantiere, self._edit_cantiere, self._remove_cantiere)
         layout.addWidget(self.cantieri_list)
         btns = QHBoxLayout()
-        self._add_btn(btns, Icons.PLUS, "#28a745", self._add_cantiere)
-        self._add_btn(btns, Icons.EDIT, "#0d6efd", self._edit_cantiere)
-        self._add_btn(btns, Icons.TRASH, "#dc3545", self._remove_cantiere)
+        self._add_btn(btns, Icons.PLUS, COLORS["success_green"], self._add_cantiere)
+        self._add_btn(btns, Icons.EDIT, COLORS["primary_blue"], self._edit_cantiere)
+        self._add_btn(btns, Icons.TRASH, COLORS["error_red"], self._remove_cantiere)
         btns.addStretch()
         layout.addLayout(btns)
         return group
@@ -167,7 +168,7 @@ class ListsPage(QWidget):
     ) -> None:
         """Aggiunge un pulsante stilizzato al layout specificato."""
         btn = QPushButton()
-        btn.setIcon(get_colored_icon(get_asset_path(icon), "#000000"))
+        btn.setIcon(get_colored_icon(get_asset_path(icon), COLORS["text_dark"]))
         if tooltip:
             btn.setToolTip(tooltip)
         btn.clicked.connect(callback)
@@ -275,7 +276,7 @@ class ListsPage(QWidget):
 
             item = QListWidgetItem(label)
             if acc.get("default"):
-                item.setIcon(get_colored_icon(get_asset_path(Icons.STAR), "#000000"))
+                item.setIcon(get_colored_icon(get_asset_path(Icons.STAR), COLORS["text_dark"]))
             item.setData(Qt.ItemDataRole.UserRole, acc)
             list_widget.addItem(item)
 

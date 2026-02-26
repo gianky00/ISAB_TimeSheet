@@ -22,6 +22,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.styles import COLORS
+
 
 class PDLDetailView(QWidget):
     """
@@ -49,7 +51,7 @@ class PDLDetailView(QWidget):
         layout.setSpacing(10)
 
         detail_title = QLabel("Dettaglio Completo PDL")
-        detail_title.setStyleSheet("font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;")
+        detail_title.setStyleSheet(f"font-weight: bold; font-size: 14px; color: {COLORS['primary_blue']}; margin-bottom: 5px;")
         layout.addWidget(detail_title)
 
         # Sezione Dati Generali (Scrollabile)
@@ -72,7 +74,7 @@ class PDLDetailView(QWidget):
 
         # Sezione Cronologia Interventi
         cron_label = QLabel("Cronologia Interventi (Report Attività)")
-        cron_label.setStyleSheet("font-weight: bold; font-size: 13px; color: #4CAF50; margin-top: 10px;")
+        cron_label.setStyleSheet(f"font-weight: bold; font-size: 13px; color: {COLORS['success_dark']}; margin-top: 10px;")
         layout.addWidget(cron_label)
 
         self.cron_table = QTableWidget()
@@ -118,9 +120,9 @@ class PDLDetailView(QWidget):
                 fonte_item = QTableWidgetItem(inv.get("fonte", ""))
                 # Colora in base alla fonte per visibilità
                 if "In Attesa" in inv.get("fonte", ""):
-                    fonte_item.setForeground(QColor("#f39c12"))  # Arancione
+                    fonte_item.setForeground(QColor(COLORS["warning_orange"]))
                 elif "Validato" in inv.get("fonte", ""):
-                    fonte_item.setForeground(QColor("#198754"))  # Verde
+                    fonte_item.setForeground(QColor(COLORS["success_dark"]))
 
                 self.cron_table.setItem(row_idx, 1, fonte_item)
                 self.cron_table.setItem(row_idx, 2, QTableWidgetItem(inv.get("tecnico", "")))

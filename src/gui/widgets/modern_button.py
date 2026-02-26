@@ -50,7 +50,8 @@ class ModernButton(QPushButton):
         self._apply_style()
 
         if icon:
-            self.setIcon(get_colored_icon(icon, "#000000"))
+            from src.gui.styles import COLORS
+            self.setIcon(get_colored_icon(icon, COLORS["text_dark"]))
             # Increase padding for icon
             self.setStyleSheet(self.styleSheet() + "QPushButton { padding-left: 32px; text-align: left; }")
 
@@ -88,11 +89,12 @@ class ModernButton(QPushButton):
     def _get_colors(self) -> tuple[str, str]:
         """Restituisce la coppia di colori (sfondo, testo) in base alla variante."""
         p = self._palette
+        from src.gui.styles import COLORS
         return {
             self.Variant.PRIMARY: (p.primary, p.on_primary),
             self.Variant.SECONDARY: (p.secondary, p.on_secondary),
-            self.Variant.SUCCESS: (p.success, "#FFFFFF"),
-            self.Variant.DANGER: (p.error, "#FFFFFF"),
+            self.Variant.SUCCESS: (p.success, COLORS["bg_white"]),
+            self.Variant.DANGER: (p.error, COLORS["bg_white"]),
             self.Variant.GHOST: ("transparent", p.primary),
         }.get(self._variant, (p.primary, p.on_primary))
 

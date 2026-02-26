@@ -33,6 +33,8 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
+from src.gui.styles.palette_helpers import hex_to_rgba
 from src.gui.widgets.sidebar_button import SidebarButton
 from src.utils.helpers import get_asset_path
 
@@ -187,18 +189,18 @@ class SidebarWidget(QFrame):
         self.setMaximumWidth(w)
 
     def _get_glass_style(self) -> str:
-        return """
-            QFrame#sidebarFrame {
+        return f"""
+            QFrame#sidebarFrame {{
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 #1a2639, stop:1 #0d1421);
-                border-right: 1px solid rgba(255, 255, 255, 0.08);
+                    stop:0 {COLORS['glass_dark']}, stop:1 {COLORS['glass_deep']});
+                border-right: 1px solid {COLORS['glass_border']};
                 border-radius: 15px;
-            }
-            QScrollArea { border: none; background: transparent; }
-            QScrollArea > QWidget > QWidget { background: transparent; }
-            QWidget#scrollContent { background: transparent; }
-            QScrollBar:vertical { border: none; background: transparent; width: 4px; }
-            QScrollBar::handle:vertical { background: rgba(255, 255, 255, 0.1); border-radius: 2px; }
+            }}
+            QScrollArea {{ border: none; background: transparent; }}
+            QScrollArea > QWidget > QWidget {{ background: transparent; }}
+            QWidget#scrollContent {{ background: transparent; }}
+            QScrollBar:vertical {{ border: none; background: transparent; width: 4px; }}
+            QScrollBar::handle:vertical {{ background: {hex_to_rgba(COLORS['bg_white'], 0.1)}; border-radius: 2px; }}
         """
 
     def _setup_ui(self) -> None:
@@ -297,7 +299,7 @@ class SidebarWidget(QFrame):
         # Indicatore
         self.active_track = QWidget(self)
         self.active_track.setFixedWidth(5)
-        self.active_track.setStyleSheet("background: #009688; border-radius: 2px;")
+        self.active_track.setStyleSheet(f"background: {COLORS['teal_accent']}; border-radius: 2px;")
         self.active_track.raise_()
         self._track_anim.setTargetObject(self.active_track)
 

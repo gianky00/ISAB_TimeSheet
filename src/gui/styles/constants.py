@@ -27,6 +27,30 @@ COLORS: Final[dict[str, str]] = {
     # Error/Danger
     "error_red": "#dc3545",
     "error_material": "#C62828",
+    # Info & Semantic
+    "info_blue": "#0d6efd",
+    "purple": "#6f42c1",
+    "purple_deep": "#6610f2",
+    "magenta_pink": "#d63384",
+    "teal_accent": "#009688",
+    "teal_light": "#20c997",
+    "cyan_info": "#0dcaf0",
+    # Sidebar Glass Effect
+    "glass_dark": "#1a2639",
+    "glass_deep": "#0d1421",
+    "glass_border": "rgba(255, 255, 255, 0.08)",
+    # Table Status Backgrounds (Pastels)
+    "table_success_bg": "#C8E6C9",
+    "table_error_bg": "#FFCDD2",
+    "table_warning_bg": "#FFF9C4",
+    "table_info_bg": "#E3F2FD",
+    "table_selection_bg": "#E0F7FA",
+    # Pastel Backgrounds for Cards/Sections
+    "bg_success_pastel": "#f0fdf4",
+    "bg_error_pastel": "#fef2f2",
+    "bg_warning_pastel": "#fff7ed",
+    "bg_attention_pastel": "#fefce8",
+    "bg_info_pastel": "#eff6ff",
     # Text
     "text_dark": "#212529",
     "text_muted": "#6c757d",

@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.config_manager import get_config_value
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -30,25 +31,25 @@ class ActionChip(QPushButton):
 
         # Style moderno & Coerente -> Hover NEUTRO (Grigio chiaro)
         self.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #ffffff;
-                color: #495057;
-                border: 1px solid #dee2e6;
+            f"""
+            QPushButton {{
+                background-color: {COLORS['bg_white']};
+                color: {COLORS['text_dark']};
+                border: 1px solid {COLORS['border_light']};
                 border-radius: 19px;
                 padding: 0 15px;
                 font-weight: 600;
                 font-size: 13px;
                 text-align: left;
-            }
-            QPushButton:hover {
-                background-color: #f8f9fa;
-                border-color: #ced4da;
-                color: #212529;
-            }
-            QPushButton:pressed {
-                background-color: #e9ecef;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['bg_hover']};
+                border-color: {COLORS['border_medium']};
+                color: {COLORS['text_dark']};
+            }}
+            QPushButton:pressed {{
+                background-color: {COLORS['bg_alt']};
+            }}
         """
         )
 
@@ -63,31 +64,31 @@ AVAILABLE_ACTIONS: dict[str, dict[str, Any]] = {
     "nav_dettagli_oda": {
         "text": "Dettagli OdA (bot)",
         "icon": Icons.LIST,
-        "color": "#6610f2",
+        "color": COLORS["purple"],
         "path": ["Automazioni", "Portale Fornitori"],
     },
     "nav_scarico_ts": {
         "text": "Scarico TS (bot)",
         "icon": Icons.DOWNLOAD,
-        "color": "#0d6efd",
+        "color": COLORS["primary_dark"],
         "path": ["Automazioni", "Portale Fornitori"],
     },
     "nav_carico_ts": {
         "text": "Carico TS (bot)",
         "icon": Icons.UPLOAD,
-        "color": "#20c997",
+        "color": COLORS["teal_light"],
         "path": ["Automazioni", "Portale Fornitori"],
     },
     "pf_timbrature": {
         "text": "Timbrature (bot)",
         "icon": Icons.CLOCK,
-        "color": "#fd7e14",
+        "color": COLORS["warning_orange"],
         "path": ["Automazioni", "Portale Fornitori"],
     },
     "pf_prenota_bp": {
         "text": "Prenota BP (bot)",
         "icon": Icons.CALENDAR,
-        "color": "#198754",
+        "color": COLORS["success_dark"],
         "path": ["Automazioni", "Portale Fornitori"],
     },
     # ============================================================
@@ -96,13 +97,13 @@ AVAILABLE_ACTIONS: dict[str, dict[str, Any]] = {
     "nav_scarico_pdl": {
         "text": "Scarico PDL (bot)",
         "icon": Icons.SHIELD,
-        "color": "#198754",
+        "color": COLORS["success_dark"],
         "path": ["Automazioni", "SafeWork"],
     },
     "nav_ricerca_pdl": {
         "text": "Ricerca PDL (bot)",
         "icon": Icons.SEARCH,
-        "color": "#198754",
+        "color": COLORS["success_dark"],
         "path": ["Automazioni", "SafeWork"],
     },
     # ============================================================
@@ -111,31 +112,31 @@ AVAILABLE_ACTIONS: dict[str, dict[str, Any]] = {
     "nav_sub_strumentale_0": {
         "text": "Preventivi",
         "icon": Icons.FOLDER,
-        "color": "#fd7e14",
+        "color": COLORS["warning_orange"],
         "path": ["DataBase", "Strumentale"],
     },
     "nav_sub_strumentale_1": {
         "text": "Giornaliere",
         "icon": Icons.FOLDER,
-        "color": "#fd7e14",
+        "color": COLORS["warning_orange"],
         "path": ["DataBase", "Strumentale"],
     },
     "nav_sub_strumentale_2": {
         "text": "Attività Programmate",
         "icon": Icons.CALENDAR,
-        "color": "#fd7e14",
+        "color": COLORS["warning_orange"],
         "path": ["DataBase", "Strumentale"],
     },
     "nav_sub_strumentale_3": {
         "text": "Certificati Campione",
         "icon": Icons.FILE_TEXT,
-        "color": "#fd7e14",
+        "color": COLORS["warning_orange"],
         "path": ["DataBase", "Strumentale"],
     },
     "nav_sub_strumentale_4": {
         "text": "Analisi KPI",
         "icon": Icons.BAR_CHART,
-        "color": "#fd7e14",
+        "color": COLORS["warning_orange"],
         "path": ["DataBase", "Strumentale"],
     },
     # ============================================================
@@ -144,7 +145,7 @@ AVAILABLE_ACTIONS: dict[str, dict[str, Any]] = {
     "nav_page_5": {
         "text": "DataEase",
         "icon": Icons.DOWNLOAD,
-        "color": "#fd7e14",
+        "color": COLORS["warning_orange"],
         "path": ["DataBase"],
     },
     # ============================================================
@@ -153,19 +154,19 @@ AVAILABLE_ACTIONS: dict[str, dict[str, Any]] = {
     "nav_page_6": {
         "text": "PDL",
         "icon": Icons.PDL,
-        "color": "#fd7e14",
+        "color": COLORS["warning_orange"],
         "path": ["DataBase"],
     },
     "nav_page_11": {
         "text": "Dipendenti",
         "icon": Icons.DIPENDENTI,
-        "color": "#fd7e14",
+        "color": COLORS["warning_orange"],
         "path": ["DataBase"],
     },
     "nav_storico_oda": {
         "text": "Storico OdA",
         "icon": Icons.FILE_TEXT,
-        "color": "#fd7e14",
+        "color": COLORS["warning_orange"],
         "path": ["DataBase"],
     },
     # ============================================================
@@ -174,7 +175,7 @@ AVAILABLE_ACTIONS: dict[str, dict[str, Any]] = {
     "nav_page_2": {
         "text": "Lyra AI",
         "icon": Icons.SPARKLES,
-        "color": "#6f42c1",
+        "color": COLORS["purple"],
         "path": [],
     },
     # ============================================================
@@ -183,7 +184,7 @@ AVAILABLE_ACTIONS: dict[str, dict[str, Any]] = {
     "nav_sub_notifiche_1": {
         "text": "Audit",
         "icon": Icons.SHIELD,
-        "color": "#ffc107",
+        "color": COLORS["warning_yellow"],
         "path": ["Notifiche"],
     },
     # ============================================================
@@ -192,25 +193,25 @@ AVAILABLE_ACTIONS: dict[str, dict[str, Any]] = {
     "settings_configurazione": {
         "text": "Configurazione",
         "icon": Icons.SETTINGS,
-        "color": "#adb5bd",
+        "color": COLORS["text_muted"],
         "path": ["Impostazioni"],
     },
     "settings_backup_cloud": {
         "text": "Backup Cloud",
         "icon": Icons.CLOUD,
-        "color": "#adb5bd",
+        "color": COLORS["text_muted"],
         "path": ["Impostazioni"],
     },
     "settings_statistiche": {
         "text": "Statistiche",
         "icon": Icons.BAR_CHART,
-        "color": "#adb5bd",
+        "color": COLORS["text_muted"],
         "path": ["Impostazioni"],
     },
     "settings_telegram": {
         "text": "Telegram",
         "icon": Icons.MESSAGE_SQUARE,
-        "color": "#adb5bd",
+        "color": COLORS["text_muted"],
         "path": ["Impostazioni"],
     },
     # ============================================================
@@ -219,7 +220,7 @@ AVAILABLE_ACTIONS: dict[str, dict[str, Any]] = {
     "nav_page_8": {
         "text": "Guida",
         "icon": Icons.HELP,
-        "color": "#0dcaf0",
+        "color": COLORS["cyan_info"],
         "path": [],
     },
 }
@@ -242,7 +243,7 @@ class QuickActions(QWidget):
         layout.setSpacing(2)  # Spazio minimo tra titolo e pulsanti
 
         title = QLabel("Azioni Rapide")
-        title.setStyleSheet("font-size: 16px; font-weight: bold; color: #495057; margin-bottom: 0px;")
+        title.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {COLORS['text_dark']}; margin-bottom: 0px;")
         layout.addWidget(title)
 
         # Grid Layout per 2 righe (no scroll)
@@ -272,31 +273,31 @@ class QuickActions(QWidget):
 
         # Stile light theme per il menu contestuale
         menu.setStyleSheet(
-            """
-            QMenu {
-                background-color: #ffffff;
-                color: #212529;
-                border: 1px solid #dee2e6;
+            f"""
+            QMenu {{
+                background-color: {COLORS['bg_white']};
+                color: {COLORS['text_dark']};
+                border: 1px solid {COLORS['border_light']};
                 border-radius: 6px;
                 padding: 5px;
-            }
-            QMenu::item {
+            }}
+            QMenu::item {{
                 padding: 8px 20px;
                 border-radius: 4px;
                 background-color: transparent;
-            }
-            QMenu::item:selected {
-                background-color: #f8f9fa;
-                color: #212529;
-            }
-            QMenu::item:pressed {
-                background-color: #e9ecef;
-            }
+            }}
+            QMenu::item:selected {{
+                background-color: {COLORS['bg_hover']};
+                color: {COLORS['text_dark']};
+            }}
+            QMenu::item:pressed {{
+                background-color: {COLORS['bg_alt']};
+            }}
         """
         )
 
         action_cfg = menu.addAction(
-            get_colored_icon(get_asset_path(Icons.SETTINGS), "#495057"),
+            get_colored_icon(get_asset_path(Icons.SETTINGS), COLORS["text_muted"]),
             "Personalizza Azioni...",
         )
 

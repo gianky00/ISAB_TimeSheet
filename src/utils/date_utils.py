@@ -132,16 +132,18 @@ def get_status_by_days(days: int | None, thresholds: tuple[int, int] = (20, 30))
     Returns:
         Tuple (status_type, color_hex)
     """
+    from src.gui.styles.constants import STATUS_COLORS
+
     if days is None:
-        return ("unknown", "#6c757d")
+        return ("unknown", STATUS_COLORS["excluded"])
 
     warning_threshold, expired_threshold = thresholds
 
     if days <= warning_threshold:
-        return ("ok", "#198754")
+        return ("ok", STATUS_COLORS["ok"])
     if days <= expired_threshold:
-        return ("warning", "#fd7e14")
-    return ("expired", "#dc3545")
+        return ("warning", STATUS_COLORS["warning"])
+    return ("expired", STATUS_COLORS["expired"])
 
 
 def format_days_ago(days: int | None) -> str:

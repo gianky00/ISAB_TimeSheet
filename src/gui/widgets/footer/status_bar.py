@@ -6,6 +6,7 @@ Widget per la parte destra della barra di stato, contenente indicatori di progre
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
+from src.gui.styles import COLORS
 from src.gui.widgets.animated_progress_bar import AnimatedProgressBar
 
 
@@ -38,7 +39,7 @@ class FooterRightWidget(QWidget):
 
         self.progress_label = QLabel("0%")
         self.progress_label.setStyleSheet(
-            "color: #000000; font-family: 'Consolas', monospace; font-weight: bold; font-size: 13px;"
+            f"color: {COLORS['text_dark']}; font-family: 'Consolas', monospace; font-weight: bold; font-size: 13px;"
         )
         self.progress_label.setVisible(False)
         layout.addWidget(self.progress_label)

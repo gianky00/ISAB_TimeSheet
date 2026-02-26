@@ -16,6 +16,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.styles import COLORS
+
 
 class MessageBubble(QFrame):
     """
@@ -56,21 +58,21 @@ class MessageBubble(QFrame):
 
         # Colori e stili basati sul mittente
         if self.is_lyra:
-            bg_color = "#f1f3f9"
-            text_color = "#212529"
-            sender_color = "#6f42c1"
+            bg_color = COLORS["bg_alt"]
+            text_color = COLORS["text_dark"]
+            sender_color = COLORS["purple"]
             bubble.setStyleSheet(
                 f"background-color: {bg_color}; "
                 f"border-radius: 15px; "
                 f"border-bottom-left-radius: 2px; "
-                f"border: 1px solid #dee2e6;"
+                f"border: 1px solid {COLORS['border_light']};"
             )
             container_layout.addWidget(bubble)
             container_layout.addStretch()
         else:
-            bg_color = "#6f42c1"
-            text_color = "#ffffff"
-            sender_color = "#e9ecef"
+            bg_color = COLORS["purple"]
+            text_color = COLORS["bg_white"]
+            sender_color = COLORS["bg_hover"]
             bubble.setStyleSheet(
                 f"background-color: {bg_color}; border-radius: 15px; border-bottom-right-radius: 2px;"
             )
@@ -110,7 +112,7 @@ class MessageBubble(QFrame):
             style_table = (
                 'border="1" cellspacing="0" cellpadding="5" '
                 'style="border-collapse: collapse; width: 100%; '
-                'margin-top: 5px; border-color: #dee2e6;"'
+                f'margin-top: 5px; border-color: {COLORS["border_light"]};"'
             )
             html_text = html_text.replace("<table>", f"<table {style_table}>")
 

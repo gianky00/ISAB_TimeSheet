@@ -7,17 +7,17 @@
 }
 
 QMainWindow {
-    background-color: #FAFAFA;
+    background-color: {{background}};
 }
 
 QWidget {
-    color: #212121;
+    color: {{on_background}};
 }
 
 /* === BUTTONS === */
 QPushButton {
-    background-color: #009688;
-    color: white;
+    background-color: {{primary}};
+    color: {{on_primary}};
     border: none;
     padding: 10px 20px;
     border-radius: 6px;
@@ -25,63 +25,63 @@ QPushButton {
 }
 
 QPushButton:hover {
-    background-color: #00897B;
+    background-color: {{primary_variant}};
 }
 
 QPushButton:pressed {
-    background-color: #00796B;
+    background-color: {{primary_variant}};
 }
 
 QPushButton:disabled {
-    background-color: #BDBDBD;
-    color: #757575;
+    background-color: {{disabled}};
+    color: {{text_light}};
 }
 
 QPushButton:focus {
-    outline: 2px solid #00968866;
+    outline: 2px solid {{focus}};
     outline-offset: 2px;
 }
 
 /* Secondary Button */
 QPushButton[variant="secondary"] {
-    background-color: #673AB7;
+    background-color: {{secondary}};
 }
 
 QPushButton[variant="secondary"]:hover {
-    background-color: #5E35B1;
+    background-color: {{secondary_variant}};
 }
 
 /* Ghost Button */
 QPushButton[variant="ghost"] {
     background-color: transparent;
-    color: #009688;
-    border: 1px solid #009688;
+    color: {{primary}};
+    border: 1px solid {{primary}};
 }
 
 QPushButton[variant="ghost"]:hover {
-    background-color: #00968811;
+    background-color: {{hover}};
 }
 
 /* === INPUTS === */
 QLineEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
-    background-color: #FFFFFF;
-    color: #212121; /* Force Text Color */
-    border: 1px solid #E0E0E0;
+    background-color: {{surface}};
+    color: {{on_background}}; /* Force Text Color */
+    border: 1px solid {{border}};
     border-radius: 6px;
     padding: 10px 12px;
 }
 
 QLineEdit:focus, QTextEdit:focus, QSpinBox:focus, QComboBox:focus {
-    border-color: #009688;
+    border-color: {{primary}};
     outline: none;
-    background-color: #FFFFFF; /* Ensure background stays white */
-    color: #000000; /* Force Black Text on Focus */
+    background-color: {{surface}}; /* Ensure background stays white */
+    color: {{text_dark}}; /* Force Black Text on Focus */
 }
 
 /* Specific fix for QTableWidget Inputs to prevent shrinking/disappearing text */
 QTableWidget QLineEdit, QTableWidget QComboBox {
-    color: #000000;
-    background-color: #FFFFFF;
+    color: {{text_dark}};
+    background-color: {{surface}};
     font-size: 14px;
     padding: 0px 4px; /* Reduced padding */
     margin: 0px;      /* Reset margin */
@@ -90,73 +90,73 @@ QTableWidget QLineEdit, QTableWidget QComboBox {
 }
 
 QLineEdit:disabled {
-    background-color: #F5F5F5;
-    color: #9E9E9E;
+    background-color: {{surface_variant}};
+    color: {{disabled}};
 }
 
 /* === TABLES (QTableWidget & QTableView) === */
 QTableWidget, QTableView {
-    background-color: #FFFFFF;
-    alternate-background-color: #FAFAFA;
-    gridline-color: #EEEEEE;
-    border: 1px solid #E0E0E0;
+    background-color: {{surface}};
+    alternate-background-color: {{background}};
+    gridline-color: {{divider}};
+    border: 1px solid {{border}};
     border-radius: 8px;
-    selection-background-color: #E0F2F1; /* Light Teal */
-    selection-color: #000000;
+    selection-background-color: {{table_selection_bg}};
+    selection-color: {{text_dark}};
     outline: none;
 }
 
 QTableWidget::item, QTableView::item {
     padding: 6px 8px;
-    border-bottom: 1px solid #F5F5F5;
+    border-bottom: 1px solid {{divider}};
 }
 
 /* Clean Selection: Soft Teal background, no borders */
 QTableWidget::item:selected, QTableView::item:selected {
-    background-color: #E0F2F1;
-    color: #000000;
+    background-color: {{table_selection_bg}};
+    color: {{text_dark}};
     border: none;
 }
 
 /* Current cell indicator */
 QTableWidget::item:focus, QTableView::item:focus {
-    background-color: #B2DFDB; /* Slightly stronger Teal for current cell */
+    background-color: {{table_info_bg}}; /* Slightly stronger Teal for current cell */
 }
 
 QHeaderView::section {
-    background-color: #E1F5FE; /* Standard Light Blue Header */
-    color: #333333;
+    background-color: {{table_info_bg}}; /* Standard Light Blue Header */
+    color: {{text_dark}};
     padding: 12px 15px;
     border: none;
-    border-right: 1px solid #B3E5FC;
-    border-bottom: 2px solid #81D4FA;
+    border-right: 1px solid {{border}};
+    border-bottom: 2px solid {{primary}};
     font-weight: bold;
     text-transform: uppercase;
     font-size: 13px;
 }
 
 QHeaderView::section:vertical {
-    background-color: #F5F5F5;
-    color: #9E9E9E;
+    background-color: {{surface_variant}};
+    color: {{disabled}};
     font-size: 10px;
     padding: 0px 5px;
-    border-right: 1px solid #E0E0E0;
+    border-right: 1px solid {{border}};
 }
 
 QHeaderView::section:hover {
-    background-color: #B3E5FC;
+    background-color: {{table_selection_bg}};
 }
 
 /* === LEVEL 2 TABS (Sottomenu) === */
 QTabWidget[class="Level2Tabs"]::pane {
     border: none;
-    border-top: 1px solid #CFD8DC; /* Thin separator line */
+    border-top: 1px solid {{border}}; /* Thin separator line */
     background: white;
 }
 
 QTabWidget[class="Level2Tabs"] > QTabBar::tab {
     background: transparent;
-    color: #546E7A; /* Blue Grey */
+    color: {{text_muted}}; /* Blue Grey */
     border: none;
     border-bottom: 3px solid transparent; /* Reserve space for indicator */
     padding: 10px 16px;
@@ -167,14 +167,14 @@ QTabWidget[class="Level2Tabs"] > QTabBar::tab {
 }
 
 QTabWidget[class="Level2Tabs"] > QTabBar::tab:selected {
-    color: #00897B; /* Teal Accent */
-    border-bottom: 3px solid #00897B;
+    color: {{primary}}; /* Teal Accent */
+    border-bottom: 3px solid {{primary}};
     background-color: transparent; /* No background change, clean look */
 }
 
 QTabWidget[class="Level2Tabs"] > QTabBar::tab:hover:!selected {
-    color: #00897B;
-    background-color: #F5F5F5; /* Subtle hover */
+    color: {{primary}};
+    background-color: {{bg_light}}; /* Subtle hover */
     border-radius: 4px 4px 0 0;
 }
 
@@ -182,19 +182,19 @@ QTabWidget[class="Level2Tabs"] > QTabBar::tab:hover:!selected {
 
 /* === SCROLLBARS === */
 QScrollBar:vertical {
-    background-color: #F5F5F5;
+    background-color: {{surface_variant}};
     width: 12px;
     border-radius: 6px;
 }
 
 QScrollBar::handle:vertical {
-    background-color: #BDBDBD;
+    background-color: {{disabled}};
     border-radius: 6px;
     min-height: 30px;
 }
 
 QScrollBar::handle:vertical:hover {
-    background-color: #9E9E9E;
+    background-color: {{text_light}};
 }
 
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
@@ -203,7 +203,7 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
 
 /* === PROGRESS BAR === */
 QProgressBar {
-    background-color: #E0E0E0;
+    background-color: {{border}};
     border: none;
     border-radius: 4px;
     height: 8px;
@@ -211,22 +211,22 @@ QProgressBar {
 }
 
 QProgressBar::chunk {
-    background-color: #009688;
+    background-color: {{primary}};
     border-radius: 4px;
 }
 
 /* === TOOLTIPS === */
 QToolTip {
-    background-color: #FFFFFF;
-    color: #424242;
-    border: 1px solid #BDBDBD;
+    background-color: {{surface}};
+    color: {{on_surface}};
+    border: 1px solid {{border}};
     padding: 8px 12px;
     border-radius: 4px;
 }
 
 /* === GROUP BOX === */
 QGroupBox {
-    border: 1px solid #E0E0E0;
+    border: 1px solid {{border}};
     border-radius: 8px;
     margin-top: 12px;
     padding-top: 20px;
@@ -236,23 +236,23 @@ QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top left;
     padding: 4px 12px;
-    color: #009688;
+    color: {{primary}};
     font-weight: 600;
 }
 
 /* === STATUS COLORS (Generic Classes) === */
 .status-success {
-    background-color: #C8E6C9;
+    background-color: {{table_success_bg}};
 }
 
 .status-error {
-    background-color: #FFCDD2;
+    background-color: {{table_error_bg}};
 }
 
 .status-warning {
-    background-color: #FFF9C4;
+    background-color: {{table_warning_bg}};
 }
 
 .status-pending {
-    background-color: #E3F2FD;
+    background-color: {{table_info_bg}};
 }

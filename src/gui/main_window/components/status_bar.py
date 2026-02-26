@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import QGraphicsOpacityEffect, QPushButton, QStatusBar
 from src.core import config_manager
 from src.core.constants import Icons
 from src.core.license_validator import get_license_info
+from src.gui.styles import COLORS
 from src.gui.widgets.footer import (
     BootTelemetryWidget,
     FooterLeftWidget,
@@ -46,25 +47,25 @@ class StatusBarComponent(QObject):
         """Configura lo stile della barra di stato e inserisce i widget modulari."""
         self.status_bar = QStatusBar()
         self.status_bar.setStyleSheet(
-            """
-            QStatusBar {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFFFF, stop:1 #F5F5F5);
-                border-top: 2px solid qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #E0E0E0, stop:0.5 #BDBDBD, stop:1 #E0E0E0);
+            f"""
+            QStatusBar {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_light']});
+                border-top: 2px solid qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {COLORS['border_light']}, stop:0.5 {COLORS['border_medium']}, stop:1 {COLORS['border_light']});
                 min-height: 65px;
-            }
+            }}
         """
         )
         self.main_window.setStatusBar(self.status_bar)
 
         # Pulsante Toggle Metriche/Licenza
         self.footer_toggle_btn = QPushButton()
-        self.footer_toggle_btn.setIcon(get_colored_icon(get_asset_path(Icons.ACTIVITY), "#000000"))
+        self.footer_toggle_btn.setIcon(get_colored_icon(get_asset_path(Icons.ACTIVITY), COLORS["text_dark"]))
         self.footer_toggle_btn.setIconSize(QSize(20, 20))
         self.footer_toggle_btn.setFixedSize(40, 40)
         self.footer_toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.footer_toggle_btn.setToolTip("Toggle System Metrics / License Info")
         self.footer_toggle_btn.setStyleSheet(
-            "QPushButton { background-color: transparent; border: none; border-radius: 8px; margin: 0 5px; } QPushButton:hover { background-color: rgba(0, 0, 0, 0.05); }"
+            f"QPushButton {{ background-color: transparent; border: none; border-radius: 8px; margin: 0 5px; }} QPushButton:hover {{ background-color: {COLORS['bg_hover']}; }}"
         )
         self.footer_toggle_btn.clicked.connect(self._toggle_footer_stats)
         self.status_bar.addWidget(self.footer_toggle_btn)

@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any
 
 from PyQt6.QtCore import QDate, Qt, QTimer
-from PyQt6.QtGui import QFont, QStandardItem, QStandardItemModel
+from PyQt6.QtGui import QColor, QFont, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -28,6 +28,7 @@ from src.core.oda_manager import OdaManager
 from src.core.sync_tracker import SyncTracker
 from src.gui.formatters import format_currency_smart, format_date_it
 from src.gui.panels.base import BotWorker
+from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
 
@@ -125,6 +126,24 @@ class StoricoOdaPanel(QWidget):
         self.tree = QTreeView()
         self.tree.setModel(self.model)
         self.tree.setAlternatingRowColors(True)
+        self.tree.setStyleSheet(f"""
+            QTreeView {{
+                gridline-color: {COLORS['bg_alt']};
+                selection-background-color: {COLORS['table_selection_bg']};
+                selection-color: {COLORS['text_dark']};
+                border: 1px solid {COLORS['border_light']};
+                border-radius: 8px;
+                background-color: {COLORS['bg_white']};
+            }}
+            QHeaderView::section {{
+                background-color: {COLORS['bg_light']};
+                color: {COLORS['text_dark']};
+                padding: 10px;
+                font-weight: bold;
+                border: none;
+                border-bottom: 1px solid {COLORS['border_light']};
+            }}
+        """)
         self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.tree.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.tree.setUniformRowHeights(True)
@@ -274,7 +293,7 @@ class StoricoOdaPanel(QWidget):
 
             for it in child_row_items:
                 it.setEditable(False)
-                it.setForeground(Qt.GlobalColor.darkBlue)
+                it.setForeground(QColor(COLORS["primary_dark"]))
                 if it != c_desc_merged:
                     it.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 

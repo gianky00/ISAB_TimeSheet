@@ -16,6 +16,7 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel, BotWorker
+from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import BotParametersWidget, EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
@@ -175,7 +176,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
         if not all([username, password, fornitore]):
             ToastManager.instance().show("Verifica i parametri.", "warning")
-            self._update_status("#C62828", "Parametri incompleti")
+            self._update_status(STATUS_COLORS["error"], "Parametri incompleti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return

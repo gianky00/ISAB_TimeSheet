@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayou
 
 from src.core.constants import Icons
 from src.core.notification_manager import NotificationManager
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -29,22 +30,22 @@ class NotificationItem(QFrame):
 
         # Determine colors based on level
         level = self.notification.get("level", "info").lower()
-        bg_color = "#ffffff"
-        border_color = "#dee2e6"
+        bg_color = COLORS["bg_white"]
+        border_color = COLORS["border_light"]
         icon_path = Icons.HELP
 
         if level == "success":
-            border_color = "#198754"
+            border_color = COLORS["success_dark"]
             icon_path = Icons.CHECK_CIRCLE
         elif level == "warning":
-            border_color = "#ffc107"
+            border_color = COLORS["warning_yellow"]
             icon_path = Icons.ALERT
         elif level == "error":
-            border_color = "#dc3545"
+            border_color = COLORS["error_red"]
             icon_path = Icons.X_CIRCLE
 
         if not self.notification.get("read", False):
-            bg_color = "#f8f9fa"
+            bg_color = COLORS["bg_light"]
             # Thicker border for unread
             self.setStyleSheet(
                 f"""
@@ -73,7 +74,7 @@ class NotificationItem(QFrame):
 
         # Icon
         icon_lbl = QLabel()
-        icon = get_colored_icon(get_asset_path(icon_path), "#000000")
+        icon = get_colored_icon(get_asset_path(icon_path), COLORS["text_dark"])
         icon_lbl.setPixmap(icon.pixmap(QSize(18, 18)))
         icon_lbl.setStyleSheet("border: none; background: transparent;")
         header_layout.addWidget(icon_lbl)
@@ -92,25 +93,25 @@ class NotificationItem(QFrame):
             time_str = ""
 
         time_lbl = QLabel(time_str)
-        time_lbl.setStyleSheet("color: #6c757d; font-size: 12px; border: none; background: transparent;")
+        time_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px; border: none; background: transparent;")
         header_layout.addWidget(time_lbl)
 
         # Delete Button
         del_btn = QPushButton()
-        del_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), "#000000"))
+        del_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), COLORS["text_dark"]))
         del_btn.setIconSize(QSize(14, 14))
         del_btn.setFixedSize(20, 20)
         del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         del_btn.setToolTip("Elimina")
         del_btn.setStyleSheet(
-            """
-            QPushButton {
+            f"""
+            QPushButton {{
                 background: transparent;
                 border: none;
                 font-weight: bold;
-                color: #adb5bd;
-            }
-            QPushButton:hover { color: #dc3545; }
+                color: {COLORS['text_light']};
+            }}
+            QPushButton:hover {{ color: {COLORS['error_red']}; }}
         """
         )
         del_btn.clicked.connect(self._delete)
@@ -121,7 +122,7 @@ class NotificationItem(QFrame):
         # Message
         msg_lbl = QLabel(self.notification.get("message", ""))
         msg_lbl.setWordWrap(True)
-        msg_lbl.setStyleSheet("color: #212529; border: none; margin-top: 5px; background: transparent;")
+        msg_lbl.setStyleSheet(f"color: {COLORS['text_dark']}; border: none; margin-top: 5px; background: transparent;")
         layout.addWidget(msg_lbl)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:

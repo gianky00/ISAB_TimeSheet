@@ -8,6 +8,8 @@ from typing import Any, ClassVar
 from PyQt6.QtCore import QVariantAnimation, pyqtProperty  # type: ignore[attr-defined]
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
+from src.gui.styles import COLORS
+
 
 class PriorityBadge(QWidget):
     """
@@ -21,9 +23,9 @@ class PriorityBadge(QWidget):
 
     # Color mapping
     PRIORITY_COLORS: ClassVar[dict[str, str]] = {
-        "high": "#F44336",  # Red
-        "medium": "#FF9800",  # Orange
-        "low": "#4CAF50",  # Green
+        "high": COLORS["error_red"],  # Red
+        "medium": COLORS["warning_orange"],  # Orange
+        "low": COLORS["success_dark"],  # Green
     }
 
     def __init__(self, priority: str = "low", parent: QWidget | None = None) -> None:

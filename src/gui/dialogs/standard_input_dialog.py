@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 
 
@@ -32,22 +33,24 @@ class StandardInputDialog(QDialog):
 
         if label:
             lbl = QLabel(label)
-            lbl.setStyleSheet("font-size: 14px; color: #333;")
+            lbl.setStyleSheet(f"font-size: 14px; color: {COLORS['text_dark']};")
             layout.addWidget(lbl)
 
         self.input_field = QLineEdit(text)
         self.input_field.setMinimumHeight(35)
         self.input_field.setStyleSheet(
-            """
-            QLineEdit {
-                border: 1px solid #ced4da;
+            f"""
+            QLineEdit {{
+                border: 1px solid {COLORS['border_medium']};
                 border-radius: 4px;
                 padding: 5px;
                 font-size: 14px;
-            }
-            QLineEdit:focus {
-                border: 1px solid #0d6efd;
-            }
+                background-color: {COLORS['bg_white']};
+                color: {COLORS['text_dark']};
+            }}
+            QLineEdit:focus {{
+                border: 1px solid {COLORS['primary_dark']};
+            }}
             """
         )
         layout.addWidget(self.input_field)

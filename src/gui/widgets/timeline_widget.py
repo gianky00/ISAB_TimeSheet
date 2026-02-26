@@ -30,6 +30,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.styles import COLORS
+
 
 class CyberTimelineFrame(QFrame):
     """
@@ -92,7 +94,7 @@ class CyberTimelineFrame(QFrame):
             rect = QRectF(self.rect()).adjusted(10, 10, -10, -10)
             path = QPainterPath()
             path.addRoundedRect(rect, 15, 15)
-            painter.fillPath(path, QColor(255, 255, 255, 250))
+            painter.fillPath(path, QColor(COLORS["bg_white"]))
 
             painter.save()
             painter.setClipPath(path)
@@ -109,7 +111,8 @@ class CyberTimelineFrame(QFrame):
             painter.restore()
 
             alpha = int(100 + (self._pulse_value * 155))
-            painter.setPen(QPen(QColor(33, 33, 33, alpha), 1.5))
+            c = QColor(COLORS["text_dark"])
+            painter.setPen(QPen(QColor(c.red(), c.green(), c.blue(), alpha), 1.5))
             painter.drawPath(path)
         finally:
             painter.end()
@@ -138,29 +141,31 @@ class LogEntryWidget(QWidget):
         pattern = r"\[(.*?)\]\s+(INFO|WARNING|ERROR|DEBUG|CRITICAL)\s+-\s+(.*?)\s+-\s+(.*)"
         match = re.search(pattern, text)
 
-        color = "#455A64" # Default
+        color = COLORS["text_muted"]  # Default
         icon = "●"
 
         if match:
             level = match.group(2)
             msg = match.group(4)
-            time_str = match.group(1).split()[-1] # Solo l'ora
+            time_str = match.group(1).split()[-1]  # Solo l'ora
 
             if level == "INFO":
-                color = "#009688"
+                color = COLORS["teal_accent"]
                 icon = "ℹ"
             elif level == "WARNING":
-                color = "#FF9800"
+                color = COLORS["warning_orange"]
                 icon = "⚠"
             elif level in ("ERROR", "CRITICAL"):
-                color = "#F44336"
+                color = COLORS["error_red"]
                 icon = "✖"
             elif level == "DEBUG":
-                color = "#9C27B0"
+                color = COLORS["purple"]
                 icon = "⚙"
 
             self.lbl_time = QLabel(time_str)
-            self.lbl_time.setStyleSheet("color: #90A4AE; font-weight: bold; font-family: monospace;")
+            self.lbl_time.setStyleSheet(
+                f"color: {COLORS['text_light']}; font-weight: bold; font-family: monospace;"
+            )
             layout.addWidget(self.lbl_time)
 
             self.lbl_icon = QLabel(icon)
@@ -169,13 +174,13 @@ class LogEntryWidget(QWidget):
 
             self.lbl_msg = QLabel(msg)
             self.lbl_msg.setWordWrap(True)
-            self.lbl_msg.setStyleSheet("color: #263238; font-weight: 500;")
+            self.lbl_msg.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 500;")
             layout.addWidget(self.lbl_msg, 1)
         else:
             # Fallback per messaggi non standard
             self.lbl_msg = QLabel(text)
             self.lbl_msg.setWordWrap(True)
-            self.lbl_msg.setStyleSheet("color: #455A64; font-family: monospace;")
+            self.lbl_msg.setStyleSheet(f"color: {COLORS['text_muted']}; font-family: monospace;")
             layout.addWidget(self.lbl_msg, 1)
 
 

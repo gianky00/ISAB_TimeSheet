@@ -14,14 +14,14 @@ from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QHideEvent, QShowEvent
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
+from src.gui.styles import COLORS
+
 
 class BootTelemetryWidget(QWidget):
     """
     Telemetria avanzata real-time visualizzata durante il caricamento (Boot).
     Mostra informazioni su OS, Hostname, utilizzo CPU e RAM.
     """
-
-    TEXT_COLOR = "#000000"
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
@@ -39,7 +39,7 @@ class BootTelemetryWidget(QWidget):
         self.last_net = psutil.net_io_counters()
         self.last_time = time.time()
         self.session_id = f"{int(time.time()):x}".upper()
-        self.font_style = f"font-family: 'Consolas', monospace; font-size: 13px; color: {self.TEXT_COLOR};"
+        self.font_style = f"font-family: 'Consolas', monospace; font-size: 13px; color: {COLORS['text_dark']};"
 
         self.lbl_os = QLabel()
         self.lbl_os.setStyleSheet(self.font_style)

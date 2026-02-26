@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
+from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 
 
@@ -54,7 +55,7 @@ class TimbratureSettingsTab(QWidget):
         layout.addLayout(header_layout)
 
         sub = QLabel("Assegna Reparto e Cantiere ai dipendenti. Modifiche salvate automaticamente.")
-        sub.setStyleSheet("color: #6c757d; margin-bottom: 5px;")
+        sub.setStyleSheet(f"color: {COLORS['text_muted']}; margin-bottom: 5px;")
         layout.addWidget(sub)
 
         # Filters
@@ -69,6 +70,22 @@ class TimbratureSettingsTab(QWidget):
 
         # Table
         self.settings_table = QTableWidget()
+        self.settings_table.setStyleSheet(f"""
+            QTableWidget {{
+                gridline-color: {COLORS['bg_alt']};
+                selection-background-color: {COLORS['table_selection_bg']};
+                selection-color: {COLORS['text_dark']};
+                background-color: {COLORS['bg_white']};
+            }}
+            QHeaderView::section {{
+                background-color: {COLORS['bg_light']};
+                color: {COLORS['text_dark']};
+                padding: 8px;
+                font-weight: bold;
+                border: none;
+                border-bottom: 1px solid {COLORS['border_light']};
+            }}
+        """)
         v_header = self.settings_table.verticalHeader()
         if v_header is not None:
             v_header.setVisible(False)

@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.gui.panels.base import BaseBotPanel, BotWorker
+from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import BotParametersWidget
 from src.gui.widgets.toast import ToastManager
 
@@ -143,7 +144,7 @@ class TimbratureBotPanel(BaseBotPanel):
 
         if not all([username, password, fornitore]):
             ToastManager.instance().show("Verifica i parametri (Fornitore mancante).", "warning")
-            self._update_status("#C62828", "Parametri incompleti")
+            self._update_status(STATUS_COLORS["error"], "Parametri incompleti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return

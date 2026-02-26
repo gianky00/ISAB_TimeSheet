@@ -33,6 +33,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -43,7 +44,7 @@ class HoverPulseFrame(QFrame):
     Fornisce un feedback visivo moderno per le sezioni card dell'applicazione.
     """
 
-    def __init__(self, accent_color: str = "#212121", parent=None):
+    def __init__(self, accent_color: str | None = None, parent=None):
         """
         Inizializza il frame con il colore di accento specificato.
 
@@ -52,7 +53,7 @@ class HoverPulseFrame(QFrame):
             parent: Widget genitore.
         """
         super().__init__(parent)
-        self._accent_color = QColor(accent_color)
+        self._accent_color = QColor(accent_color or COLORS["text_dark"])
         self._pulse_val = 1.0
 
         self._anim = QPropertyAnimation(self, b"pulse_value")
@@ -134,11 +135,11 @@ class ExcelTableWidget(QTableWidget):
             status: Stringa identificativa dello stato ('completato', 'errore', 'in_corso', 'da_processare').
         """
         color = {
-            "completato": QColor("#C8E6C9"),  # Verde chiaro
-            "errore": QColor("#FFCDD2"),  # Rosso chiaro
-            "in_corso": QColor("#FFF9C4"),  # Giallo chiaro
-            "da_processare": QColor("#FFFFFF"),  # Bianco
-        }.get(status, QColor("white"))
+            "completato": QColor(COLORS["table_success_bg"]),
+            "errore": QColor(COLORS["table_error_bg"]),
+            "in_corso": QColor(COLORS["table_warning_bg"]),
+            "da_processare": QColor(COLORS["bg_white"]),
+        }.get(status, QColor(COLORS["bg_white"]))
 
         for col in range(self.columnCount()):
             item = self.item(row, col)
@@ -233,7 +234,7 @@ class ExcelTableWidget(QTableWidget):
 
         # Action: Analyze ROW with Lyra
         lyra_row_action = QAction(
-            get_colored_icon(get_asset_path(Icons.SPARKLES), "#000000"),
+            get_colored_icon(get_asset_path(Icons.SPARKLES), COLORS["text_dark"]),
             "Analizza riga con Lyra",
             self,
         )
@@ -241,14 +242,14 @@ class ExcelTableWidget(QTableWidget):
         menu.addAction(lyra_row_action)
 
         lyra_selection_action = QAction(
-            get_colored_icon(get_asset_path(Icons.SPARKLES), "#000000"),
+            get_colored_icon(get_asset_path(Icons.SPARKLES), COLORS["text_dark"]),
             "Analizza selezione con Lyra",
             self,
         )
         lyra_selection_action.triggered.connect(self._analyze_selection)
         menu.addAction(lyra_selection_action)
 
-        copy_action = QAction(get_colored_icon(get_asset_path(Icons.EDIT), "#000000"), "Copia", self)
+        copy_action = QAction(get_colored_icon(get_asset_path(Icons.EDIT), COLORS["text_dark"]), "Copia", self)
         copy_action.triggered.connect(self.copy_selection)
         menu.addAction(copy_action)
         menu.exec(event.globalPos())
@@ -394,31 +395,31 @@ class EditableDataTable(QWidget):
         layout.setSpacing(0)
 
         # --- CONTAINER PRINCIPALE (Card con ombra e accento scuro pulsante) ---
-        self.container = HoverPulseFrame("#212121")
+        self.container = HoverPulseFrame(COLORS["text_dark"])
         self.container.setObjectName("tableContainer")
-        self.container.setStyleSheet("""
-            QFrame#tableContainer {
-                background-color: #ffffff;
-                border: 1px solid #e0e0e0;
+        self.container.setStyleSheet(f"""
+            QFrame#tableContainer {{
+                background-color: {COLORS['bg_white']};
+                border: 1px solid {COLORS['border_light']};
                 /* border-bottom rimosso perché gestito da HoverPulseFrame */
                 border-radius: 12px;
-            }
-            QTableWidget {
+            }}
+            QTableWidget {{
                 background-color: transparent;
                 border: none;
-                gridline-color: #f1f3f5;
-                selection-background-color: #E0F7FA;
-                selection-color: #000000;
+                gridline-color: {COLORS['bg_alt']};
+                selection-background-color: {COLORS['table_selection_bg']};
+                selection-color: {COLORS['text_dark']};
                 outline: none;
-            }
-            QHeaderView::section {
-                background-color: #f8f9fa;
-                color: #424242;
+            }}
+            QHeaderView::section {{
+                background-color: {COLORS['bg_light']};
+                color: {COLORS['text_dark']};
                 padding: 10px;
                 font-weight: bold;
                 border: none;
-                border-bottom: 1px solid #dee2e6;
-            }
+                border-bottom: 1px solid {COLORS['border_light']};
+            }}
         """)
 
         # Shadow Effect
@@ -457,7 +458,7 @@ class EditableDataTable(QWidget):
         menu = QMenu()
 
         lyra_action = QAction(
-            get_colored_icon(get_asset_path(Icons.SPARKLES), "#000000"),
+            get_colored_icon(get_asset_path(Icons.SPARKLES), COLORS["text_dark"]),
             "Analizza con Lyra",
             self,
         )
@@ -465,18 +466,18 @@ class EditableDataTable(QWidget):
         menu.addAction(lyra_action)
         menu.addSeparator()
 
-        copy_action = QAction(get_colored_icon(get_asset_path(Icons.EDIT), "#000000"), "Copia", self)
+        copy_action = QAction(get_colored_icon(get_asset_path(Icons.EDIT), COLORS["text_dark"]), "Copia", self)
         copy_action.triggered.connect(self.table.copy_selection)
         menu.addAction(copy_action)
 
-        paste_action = QAction(get_colored_icon(get_asset_path(Icons.UPLOAD), "#000000"), "Incolla", self)
+        paste_action = QAction(get_colored_icon(get_asset_path(Icons.UPLOAD), COLORS["text_dark"]), "Incolla", self)
         paste_action.triggered.connect(self.table.paste_selection)
         menu.addAction(paste_action)
 
         menu.addSeparator()
 
         add_action = QAction(
-            get_colored_icon(get_asset_path(Icons.PLUS), "#000000"),
+            get_colored_icon(get_asset_path(Icons.PLUS), COLORS["text_dark"]),
             "Aggiungi riga",
             self,
         )
@@ -484,7 +485,7 @@ class EditableDataTable(QWidget):
         menu.addAction(add_action)
 
         add_above_action = QAction(
-            get_colored_icon(get_asset_path(Icons.PLUS), "#000000"),
+            get_colored_icon(get_asset_path(Icons.PLUS), COLORS["text_dark"]),
             "Aggiungi riga sopra",
             self,
         )
@@ -494,7 +495,7 @@ class EditableDataTable(QWidget):
         menu.addSeparator()
 
         remove_action = QAction(
-            get_colored_icon(get_asset_path(Icons.TRASH), "#000000"),
+            get_colored_icon(get_asset_path(Icons.TRASH), COLORS["text_dark"]),
             "Rimuovi riga",
             self,
         )
@@ -502,7 +503,7 @@ class EditableDataTable(QWidget):
         menu.addAction(remove_action)
 
         clear_action = QAction(
-            get_colored_icon(get_asset_path(Icons.TRASH), "#000000"),
+            get_colored_icon(get_asset_path(Icons.TRASH), COLORS["text_dark"]),
             "Pulisci tutto",
             self,
         )
@@ -539,9 +540,9 @@ class EditableDataTable(QWidget):
                 combo = QComboBox()
                 combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
                 combo.setStyleSheet(
-                    """
-                    QComboBox { border: none; background: transparent; color: black; padding-left: 5px; }
-                    QComboBox QAbstractItemView { background-color: white; color: black; selection-background-color: #e7f1ff; selection-color: #0d6efd; }
+                    f"""
+                    QComboBox {{ border: none; background: transparent; color: {COLORS['text_dark']}; padding-left: 5px; }}
+                    QComboBox QAbstractItemView {{ background-color: {COLORS['bg_white']}; color: {COLORS['text_dark']}; selection-background-color: {COLORS['table_info_bg']}; selection-color: {COLORS['info_blue']}; }}
                 """
                 )
                 options = ["", *column.get("options", [])]
@@ -649,9 +650,9 @@ class EditableDataTable(QWidget):
                 combo = QComboBox()
                 combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
                 combo.setStyleSheet(
-                    """
-                    QComboBox { border: none; background: transparent; color: black; padding-left: 5px; }
-                    QComboBox QAbstractItemView { background-color: white; color: black; selection-background-color: #e7f1ff; selection-color: #0d6efd; }
+                    f"""
+                    QComboBox {{ border: none; background: transparent; color: {COLORS['text_dark']}; padding-left: 5px; }}
+                    QComboBox QAbstractItemView {{ background-color: {COLORS['bg_white']}; color: {COLORS['text_dark']}; selection-background-color: {COLORS['table_info_bg']}; selection-color: {COLORS['info_blue']}; }}
                 """
                 )
                 options = ["", *column.get("options", [])]

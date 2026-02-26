@@ -22,6 +22,8 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.core.notification_manager import NotificationManager
+from src.gui.styles import COLORS
+from src.gui.styles.palette_helpers import hex_to_rgba
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.priority_badge import PriorityBadge
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -48,32 +50,32 @@ class NotificationCard(QFrame):
     # Level styles (colors, gradients, icons)
     LEVEL_STYLES: ClassVar[dict[str, dict[str, Any]]] = {
         "error": {
-            "accent": "#F44336",
-            "gradient": "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #fff5f5, stop:1 #ffffff)",
+            "accent": COLORS["error_red"],
+            "gradient": f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_white']})",
             "icon": Icons.X_CIRCLE,
-            "icon_color": "#ffffff",
-            "badge_bg": "#F44336",
+            "icon_color": "white",
+            "badge_bg": COLORS["error_red"],
         },
         "warning": {
-            "accent": "#FF9800",
-            "gradient": "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #fffaf0, stop:1 #ffffff)",
+            "accent": COLORS["warning_orange"],
+            "gradient": f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_white']})",
             "icon": Icons.ALERT_TRIANGLE,
-            "icon_color": "#000000",
-            "badge_bg": "#FF9800",
+            "icon_color": "black",
+            "badge_bg": COLORS["warning_yellow"],
         },
         "success": {
-            "accent": "#4CAF50",
-            "gradient": "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f0fdf4, stop:1 #ffffff)",
+            "accent": COLORS["success_dark"],
+            "gradient": f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_white']})",
             "icon": Icons.CHECK_CIRCLE,
-            "icon_color": "#ffffff",
-            "badge_bg": "#4CAF50",
+            "icon_color": "white",
+            "badge_bg": COLORS["success_dark"],
         },
         "info": {
-            "accent": "#2196F3",
-            "gradient": "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f0f9ff, stop:1 #ffffff)",
+            "accent": COLORS["primary_blue"],
+            "gradient": f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_white']})",
             "icon": Icons.INFO,
-            "icon_color": "#ffffff",
-            "badge_bg": "#2196F3",
+            "icon_color": "white",
+            "badge_bg": COLORS["primary_blue"],
         },
     }
 
@@ -117,7 +119,7 @@ class NotificationCard(QFrame):
         gradient = style["gradient"]
 
         # Background: gradient for unread, white for read
-        bg = gradient if not is_read else "#ffffff"
+        bg = gradient if not is_read else COLORS["bg_white"]
 
         # Stylesheet con border 4px e hover effect
         self.setStyleSheet(
@@ -126,21 +128,21 @@ class NotificationCard(QFrame):
                 background: {bg};
                 border-radius: 12px;
                 border-left: 4px solid {accent_color};
-                border-top: 1px solid #e9ecef;
-                border-right: 1px solid #e9ecef;
-                border-bottom: 1px solid #e9ecef;
+                border-top: 1px solid {COLORS['border_light']};
+                border-right: 1px solid {COLORS['border_light']};
+                border-bottom: 1px solid {COLORS['border_light']};
             }}
             NotificationCard:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #ffffff);
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_hover']}, stop:1 {COLORS['bg_white']});
                 border-left: 4px solid {accent_color};
-                border-top: 1px solid #ced4da;
-                border-right: 1px solid #ced4da;
-                border-bottom: 1px solid #ced4da;
+                border-top: 1px solid {COLORS['border_medium']};
+                border-right: 1px solid {COLORS['border_medium']};
+                border-bottom: 1px solid {COLORS['border_medium']};
             }}
             QToolTip {{
-                background-color: #ffffff;
-                color: #212529;
-                border: 1px solid #bdbdbd;
+                background-color: {COLORS['bg_white']};
+                color: {COLORS['text_dark']};
+                border: 1px solid {COLORS['border_dark']};
                 border-radius: 4px;
                 padding: 5px;
             }}
@@ -164,18 +166,18 @@ class NotificationCard(QFrame):
         self.pin_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.pin_btn.setToolTip("Fissa notifica" if not is_pinned else "Rimuovi pin")
         self.pin_btn.setStyleSheet(
-            """
-            QPushButton {
+            f"""
+            QPushButton {{
                 background: transparent;
                 border: none;
-                color: #6c757d;
+                color: {COLORS['text_muted']};
                 font-size: 14px;
-            }
-            QPushButton:hover {
-                color: #495057;
-                background: rgba(0,0,0,0.05);
+            }}
+            QPushButton:hover {{
+                color: {COLORS['text_dark']};
+                background: {COLORS['bg_hover']};
                 border-radius: 4px;
-            }
+            }}
         """
         )
         self.pin_btn.clicked.connect(self._toggle_pin)
@@ -204,14 +206,14 @@ class NotificationCard(QFrame):
         title = self.notification.get("title", "Notifica")
         self.title_lbl = QLabel(title)
         self.title_lbl.setStyleSheet(
-            """
-            QLabel {
+            f"""
+            QLabel {{
                 font-weight: 600;
                 font-size: 14px;
-                color: #212529;
+                color: {COLORS['text_dark']};
                 border: none;
                 background: transparent;
-            }
+            }}
         """
         )
         self.title_lbl.setWordWrap(False)
@@ -230,37 +232,37 @@ class NotificationCard(QFrame):
 
         self.time_lbl = QLabel(time_str)
         self.time_lbl.setStyleSheet(
-            """
-            QLabel {
-                color: #6c757d;
+            f"""
+            QLabel {{
+                color: {COLORS['text_muted']};
                 font-size: 12px;
                 font-weight: 500;
                 border: none;
                 background: transparent;
-            }
+            }}
         """
         )
         header_layout.addWidget(self.time_lbl)
 
         # Delete button
         self.del_btn = QPushButton()
-        self.del_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), "#6c757d"))
+        self.del_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), COLORS["text_muted"]))
         self.del_btn.setIconSize(QSize(14, 14))
         self.del_btn.setFixedSize(24, 24)
         self.del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.del_btn.setToolTip("Elimina")
         self.del_btn.setStyleSheet(
-            """
-            QPushButton {
+            f"""
+            QPushButton {{
                 background: transparent;
                 border: none;
-                color: #adb5bd;
-            }
-            QPushButton:hover {
-                color: #dc3545;
-                background: rgba(220,53,69,0.1);
+                color: {COLORS['text_light']};
+            }}
+            QPushButton:hover {{
+                color: {COLORS['error_red']};
+                background: {hex_to_rgba(COLORS['error_red'], 0.1)};
                 border-radius: 4px;
-            }
+            }}
         """
         )
         self.del_btn.clicked.connect(self._delete)
@@ -292,13 +294,13 @@ class NotificationCard(QFrame):
             self.message_widget = lbl
 
         self.message_widget.setStyleSheet(
-            """
-            QTextBrowser, QLabel {
-                color: #495057;
+            f"""
+            QTextBrowser, QLabel {{
+                color: {COLORS['text_dark']};
                 font-size: 13px;
                 border: none;
                 background: transparent;
-            }
+            }}
         """
         )
         main_layout.addWidget(self.message_widget)
@@ -312,16 +314,16 @@ class NotificationCard(QFrame):
         if category and category != "system":
             category_label = QLabel(f"🏷️ {category.capitalize()}")
             category_label.setStyleSheet(
-                """
-                QLabel {
-                    background-color: #e7f3ff;
-                    color: #0066cc;
+                f"""
+                QLabel {{
+                    background-color: {COLORS['table_info_bg']};
+                    color: {COLORS['primary_dark']};
                     border-radius: 12px;
                     padding: 4px 10px;
                     font-size: 11px;
                     font-weight: 600;
                     border: none;
-                }
+                }}
             """
             )
             footer_layout.addWidget(category_label)
@@ -384,7 +386,7 @@ class NotificationCard(QFrame):
         Supports:
         - **bold** → <b>bold</b>
         - *italic* → <i>italic</i>
-        - `code` → <code style='background:#f5f5f5;padding:2px 4px;border-radius:3px'>code</code>
+        - `code` → <code style='background:{COLORS["bg_alt"]};padding:2px 4px;border-radius:3px'>code</code>
         - [link](url) → <a href='url'>link</a>
         - Newlines → <br>
         """
@@ -408,7 +410,9 @@ class NotificationCard(QFrame):
         if "`" in html:
             html = re.sub(
                 r"`(.+?)`",
-                r"<code style='background:#f5f5f5;padding:2px 4px;border-radius:3px;font-family:monospace'>\1</code>",
+                r"<code style='background:"
+                + COLORS["bg_alt"]
+                + ";padding:2px 4px;border-radius:3px;font-family:monospace'>\\1</code>",
                 html,
             )
 

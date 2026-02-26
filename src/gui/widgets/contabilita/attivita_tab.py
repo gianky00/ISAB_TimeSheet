@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.excel_importer import ExcelImporter
+from src.gui.styles import COLORS
 from src.gui.widgets import ExcelTableWidget
 from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -325,7 +326,7 @@ class AttivitaProgrammateTab(QWidget):
         """Visualizza il menu contestuale per l'integrazione con Lyra."""
         menu = QMenu(self)
         lyra_action = QAction("Analizza riga con Lyra", self)
-        lyra_action.setIcon(get_colored_icon(get_asset_path(Icons.SPARKLES), "#000000"))
+        lyra_action.setIcon(get_colored_icon(get_asset_path(Icons.SPARKLES), COLORS["text_dark"]))
         lyra_action.triggered.connect(lambda: self.table._analyze_row_at(pos))
         menu.addAction(lyra_action)
 

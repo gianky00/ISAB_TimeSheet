@@ -12,6 +12,7 @@ from src.core.constants import Icons
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.panels.dipendenti.pages.anagrafica_page import AnagraficaPage
 from src.gui.panels.dipendenti_manager_panel import DipendentiManagerPanel
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class DipendentiPanel(QWidget):
         self.anagrafica_page = AnagraficaPage()
         self.tabs.addTab(
             self.anagrafica_page,
-            get_colored_icon(get_asset_path(Icons.ACTIVITY), "#0d6efd"),
+            get_colored_icon(get_asset_path(Icons.ACTIVITY), COLORS["primary_dark"]),
             "Monitoraggio",
         )
 
@@ -55,7 +56,7 @@ class DipendentiPanel(QWidget):
         self.manager_page = DipendentiManagerPanel()
         self.tabs.addTab(
             self.manager_page,
-            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#6c757d"),
+            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), COLORS["text_muted"]),
             "Configurazione",
         )
 

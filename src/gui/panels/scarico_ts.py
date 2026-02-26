@@ -13,6 +13,7 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel, BotWorker
+from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import BotParametersWidget, EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path
@@ -218,7 +219,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
         if not bot:
             self.log_widget.append("❌ Errore creazione bot (parametri mancanti?)")
-            self._update_status("#C62828", "Errore avvio")
+            self._update_status(STATUS_COLORS["error"], "Errore avvio")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return

@@ -21,6 +21,7 @@ from src.core.audit_manager import AuditManager
 from src.core.constants import Icons
 from src.gui.dialogs.audit_detail_dialog import AuditDetailDialog
 from src.gui.models.audit_model import AuditTableModel
+from src.gui.styles import COLORS
 from src.gui.widgets.audit.audit_filter_bar import AuditFilterBar
 from src.gui.widgets.audit.audit_pagination_bar import AuditPaginationBar
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -59,7 +60,7 @@ class AuditLogWidget(QWidget):
         # --- TOP BAR ---
         top_bar = QHBoxLayout()
         info_lbl = QLabel("Dashboard Operazioni")
-        info_lbl.setStyleSheet("font-size: 18px; font-weight: bold; color: #212529;")
+        info_lbl.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {COLORS['text_dark']};")
         top_bar.addWidget(info_lbl)
 
         self.integrity_icon = QLabel()
@@ -67,7 +68,7 @@ class AuditLogWidget(QWidget):
         top_bar.addWidget(self.integrity_icon)
 
         self.integrity_lbl = QLabel("Verifica...")
-        self.integrity_lbl.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: 600;")
+        self.integrity_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 13px; font-weight: 600;")
         top_bar.addWidget(self.integrity_lbl)
 
         top_bar.addStretch()
@@ -93,15 +94,15 @@ class AuditLogWidget(QWidget):
         if header := self.table_view.horizontalHeader():
             header.setStretchLastSection(True)
         self.table_view.setStyleSheet(
-            """
-            QTableView {
-                border: 1px solid #dee2e6; border-radius: 6px;
-                background-color: white; gridline-color: #f1f3f5;
-            }
-            QHeaderView::section {
-                background-color: #e9ecef; padding: 8px; border: none;
-                font-weight: bold; color: #495057;
-            }
+            f"""
+            QTableView {{
+                border: 1px solid {COLORS['border_light']}; border-radius: 6px;
+                background-color: {COLORS['bg_white']}; gridline-color: {COLORS['bg_alt']};
+            }}
+            QHeaderView::section {{
+                background-color: {COLORS['bg_hover']}; padding: 8px; border: none;
+                font-weight: bold; color: {COLORS['text_dark']};
+            }}
         """
         )
 
@@ -166,7 +167,7 @@ class AuditLogWidget(QWidget):
 
     def _check_integrity(self):
         valid = self.manager.verify_integrity()
-        color = "#198754" if valid else "#dc3545"
+        color = COLORS["success_dark"] if valid else COLORS["error_red"]
         text = "Integro" if valid else "Legacy/Manomesso"
         icon = Icons.SHIELD if valid else Icons.ALERT_TRIANGLE
 

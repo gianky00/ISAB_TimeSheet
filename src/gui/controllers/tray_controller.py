@@ -8,6 +8,7 @@ from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.utils.helpers import get_app_icon_path, get_asset_path, get_colored_icon
 
 
@@ -28,7 +29,7 @@ class TrayController:
         # Tray Menu
         tray_menu = QMenu()
         show_action = QAction("Mostra SyncroJob", self.mw)
-        show_action.setIcon(get_colored_icon(get_asset_path(Icons.HOME), "#000000"))
+        show_action.setIcon(get_colored_icon(get_asset_path(Icons.HOME), COLORS["text_dark"]))
         show_action.triggered.connect(self.mw.showMaximized)
         show_action.triggered.connect(self.mw.activateWindow)
         tray_menu.addAction(show_action)
@@ -42,7 +43,7 @@ class TrayController:
                 app.quit()
 
         quit_action = QAction("Esci", self.mw)
-        quit_action.setIcon(get_colored_icon(get_asset_path(Icons.X_CIRCLE), "#000000"))
+        quit_action.setIcon(get_colored_icon(get_asset_path(Icons.X_CIRCLE), COLORS["text_dark"]))
         quit_action.triggered.connect(force_quit_app)
         tray_menu.addAction(quit_action)
 

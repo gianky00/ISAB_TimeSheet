@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import ClassVar
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction, QFont
+from PyQt6.QtGui import QAction, QColor, QFont
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QHeaderView,
@@ -18,6 +18,7 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.gui.formatters import format_date_it, format_number_smart
+from src.gui.styles import COLORS
 from src.gui.widgets import ExcelTableWidget
 from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -153,12 +154,13 @@ class GiornaliereYearTab(QWidget):
         self.table.insertRow(row_idx)
         item = SortableTableWidgetItem("TOTALI")
         item.setFont(QFont("Arial", 10, QFont.Weight.Bold))
-        item.setBackground(Qt.GlobalColor.lightGray)
+        item.setBackground(QColor(COLORS["bg_alt"]))
+        item.setForeground(QColor(COLORS["text_dark"]))
         item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
         self.table.setItem(row_idx, 0, item)
         for c in range(1, self.table.columnCount()):
             it = SortableTableWidgetItem("")
-            it.setBackground(Qt.GlobalColor.lightGray)
+            it.setBackground(QColor(COLORS["bg_alt"]))
             it.setFont(QFont("Arial", 10, QFont.Weight.Bold))
             it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
             if c == self.COL_ORE:
@@ -222,13 +224,13 @@ class GiornaliereYearTab(QWidget):
 
         menu = QMenu(self)
         lyra_action = QAction("Analizza riga con Lyra", self)
-        lyra_action.setIcon(get_colored_icon(get_asset_path(Icons.SPARKLES), "#000000"))
+        lyra_action.setIcon(get_colored_icon(get_asset_path(Icons.SPARKLES), COLORS["text_dark"]))
         lyra_action.triggered.connect(lambda: self.table._analyze_row_at(pos))
         menu.addAction(lyra_action)
         menu.addSeparator()
         if filename:
             action = QAction(f"Apri {filename}", self)
-            action.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#000000"))
+            action.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), COLORS["text_dark"]))
             action.triggered.connect(lambda: self._open_giornaliera(filename))
             menu.addAction(action)
         else:

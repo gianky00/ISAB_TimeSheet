@@ -2,6 +2,8 @@ from PyQt6.QtCore import QModelIndex, Qt
 from PyQt6.QtGui import QColor, QPainter
 from PyQt6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem, QTreeView
 
+from src.gui.styles import COLORS
+
 
 class ChildDescriptionDelegate(QStyledItemDelegate):
     """Delegate per gestire lo stile delle righe figlie nel QTreeView degli OdA."""
@@ -31,10 +33,10 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
                         # Logica colorazione
                         if "Cancellato" in stato or "cancellato" in stato:
                             # 🔴 ROSSO per stato Cancellato
-                            painter.fillRect(option.rect, QColor(255, 220, 220))
+                            painter.fillRect(option.rect, QColor(COLORS["bg_error_pastel"]))
                         elif "In attesa di Rilascio" in ind_rilascio or "in attesa" in ind_rilascio.lower():
                             # 🟠 ARANCIONE per In attesa di Rilascio
-                            painter.fillRect(option.rect, QColor(255, 235, 200))
+                            painter.fillRect(option.rect, QColor(COLORS["bg_warning_pastel"]))
 
         # 2. Verifica se siamo in una riga figlia (ha un genitore valido)
         if index.parent().isValid():
@@ -54,7 +56,7 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
                         if option.state & QStyle.StateFlag.State_Selected:
                             painter.setPen(option.palette.highlightedText().color())
                         else:
-                            painter.setPen(Qt.GlobalColor.darkBlue)
+                            painter.setPen(QColor(COLORS["primary_dark"]))
 
                         # Rettangolo Totale: Inizia a sinistra di Col 1 (inizio Col 0) ed estende per W0 + W1
                         draw_rect = option.rect.adjusted(-width_col0, 0, 0, 0)

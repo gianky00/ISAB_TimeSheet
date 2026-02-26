@@ -17,6 +17,7 @@ from src.gui.panels import (
     ScaricoPDLPanel,
     TimbratureBotPanel,
 )
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -55,11 +56,11 @@ class AutomazioniWidget(QWidget):
         self.panel_prenota = PrenotaBPPanel()
         self.panel_carico = CaricoTSPanel()
 
-        self.tab_fornitori.addTab(self.panel_dettagli, get_colored_icon(get_asset_path(Icons.LIST), "#546E7A"), "Dettagli OdA (bot)")
-        self.tab_fornitori.addTab(self.panel_scarico, get_colored_icon(get_asset_path(Icons.DOWNLOAD), "#546E7A"), "Scarico TS (bot)")
-        self.tab_fornitori.addTab(self.panel_timbrature, get_colored_icon(get_asset_path(Icons.CLOCK), "#546E7A"), "Timbrature (bot)")
-        self.tab_fornitori.addTab(self.panel_prenota, get_colored_icon(get_asset_path(Icons.TICKET), "#546E7A"), "Prenota BP (bot)")
-        self.tab_fornitori.addTab(self.panel_carico, get_colored_icon(get_asset_path(Icons.UPLOAD), "#546E7A"), "Carico TS (bot)")
+        self.tab_fornitori.addTab(self.panel_dettagli, get_colored_icon(get_asset_path(Icons.LIST), COLORS["text_muted"]), "Dettagli OdA (bot)")
+        self.tab_fornitori.addTab(self.panel_scarico, get_colored_icon(get_asset_path(Icons.DOWNLOAD), COLORS["text_muted"]), "Scarico TS (bot)")
+        self.tab_fornitori.addTab(self.panel_timbrature, get_colored_icon(get_asset_path(Icons.CLOCK), COLORS["text_muted"]), "Timbrature (bot)")
+        self.tab_fornitori.addTab(self.panel_prenota, get_colored_icon(get_asset_path(Icons.TICKET), COLORS["text_muted"]), "Prenota BP (bot)")
+        self.tab_fornitori.addTab(self.panel_carico, get_colored_icon(get_asset_path(Icons.UPLOAD), COLORS["text_muted"]), "Carico TS (bot)")
 
         # --- TAB 2: SafeWork ---
         self.tab_safework = AnimatedTabWidget()
@@ -68,8 +69,8 @@ class AutomazioniWidget(QWidget):
         self.panel_pdl = ScaricoPDLPanel()
         self.panel_pdl_search = RicercaPDLPanel()
 
-        self.tab_safework.addTab(self.panel_pdl, get_colored_icon(get_asset_path(Icons.SHIELD), "#546E7A"), "Scarico PDL (bot)")
-        self.tab_safework.addTab(self.panel_pdl_search, get_colored_icon(get_asset_path(Icons.SEARCH), "#546E7A"), "Ricerca PDL (bot)")
+        self.tab_safework.addTab(self.panel_pdl, get_colored_icon(get_asset_path(Icons.SHIELD), COLORS["text_muted"]), "Scarico PDL (bot)")
+        self.tab_safework.addTab(self.panel_pdl_search, get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_muted"]), "Ricerca PDL (bot)")
 
         # Aggiunta tab principali
         self.main_tabs.addTab(self.tab_fornitori, "Portale Fornitori")

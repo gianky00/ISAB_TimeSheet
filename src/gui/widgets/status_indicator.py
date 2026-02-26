@@ -7,6 +7,8 @@ from PyQt6.QtCore import QAbstractAnimation, QPropertyAnimation, Qt
 from PyQt6.QtGui import QBrush, QColor, QPainter, QPaintEvent
 from PyQt6.QtWidgets import QGraphicsOpacityEffect, QWidget
 
+from src.gui.styles import COLORS
+
 
 class StatusIndicator(QWidget):
     """
@@ -28,7 +30,7 @@ class StatusIndicator(QWidget):
         self.animation.setKeyValueAt(0.5, 0.4)
         self.animation.setKeyValueAt(1.0, 1.0)
 
-        self.current_color = QColor("#6c757d")
+        self.current_color = QColor(COLORS["text_muted"])
         self.setToolTip("Pronto")
 
     def set_status(self, status: str, message: str = "") -> None:
@@ -41,19 +43,19 @@ class StatusIndicator(QWidget):
         """
         self.setToolTip(message)
         if status == "running":
-            self.current_color = QColor("#0d6efd")
+            self.current_color = QColor(COLORS["primary_dark"])
             if self.animation.state() == QAbstractAnimation.State.Stopped:
                 self.animation.start()
         elif status == "success":
-            self.current_color = QColor("#198754")
+            self.current_color = QColor(COLORS["success_dark"])
             self.animation.stop()
             self.opacity_effect.setOpacity(1.0)
         elif status == "error":
-            self.current_color = QColor("#dc3545")
+            self.current_color = QColor(COLORS["error_red"])
             self.animation.stop()
             self.opacity_effect.setOpacity(1.0)
         else:
-            self.current_color = QColor("#6c757d")
+            self.current_color = QColor(COLORS["text_muted"])
             self.animation.stop()
             self.opacity_effect.setOpacity(1.0)
         self.update()

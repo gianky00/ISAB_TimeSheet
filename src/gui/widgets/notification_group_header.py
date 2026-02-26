@@ -7,6 +7,8 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QWidget
 
+from src.gui.styles import COLORS
+
 
 class NotificationGroupHeader(QFrame):
     """
@@ -43,16 +45,16 @@ class NotificationGroupHeader(QFrame):
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setStyleSheet(
-            """
-            NotificationGroupHeader {
-                background-color: #f8f9fa;
+            f"""
+            NotificationGroupHeader {{
+                background-color: {COLORS['bg_light']};
                 border-radius: 8px;
-                border: 1px solid #e9ecef;
-            }
-            NotificationGroupHeader:hover {
-                background-color: #e9ecef;
-                border-color: #dee2e6;
-            }
+                border: 1px solid {COLORS['border_light']};
+            }}
+            NotificationGroupHeader:hover {{
+                background-color: {COLORS['bg_hover']};
+                border-color: {COLORS['border_medium']};
+            }}
         """
         )
 
@@ -64,14 +66,14 @@ class NotificationGroupHeader(QFrame):
         self.arrow_btn = QLabel()
         self.arrow_btn.setText("▼" if self._is_expanded else "▶")
         self.arrow_btn.setStyleSheet(
-            """
-            QLabel {
-                color: #6c757d;
+            f"""
+            QLabel {{
+                color: {COLORS['text_muted']};
                 font-size: 12px;
                 font-weight: bold;
                 border: none;
                 background: transparent;
-            }
+            }}
         """
         )
         layout.addWidget(self.arrow_btn)
@@ -92,16 +94,16 @@ class NotificationGroupHeader(QFrame):
         # Title
         self.title_lbl = QLabel(self._title)
         self.title_lbl.setStyleSheet(
-            """
-            QLabel {
+            f"""
+            QLabel {{
                 font-weight: 700;
                 font-size: 13px;
-                color: #495057;
+                color: {COLORS['text_dark']};
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
                 border: none;
                 background: transparent;
-            }
+            }}
         """
         )
         layout.addWidget(self.title_lbl)
@@ -109,14 +111,14 @@ class NotificationGroupHeader(QFrame):
         # Count badge
         self.count_lbl = QLabel(f"({self._count})")
         self.count_lbl.setStyleSheet(
-            """
-            QLabel {
+            f"""
+            QLabel {{
                 font-weight: 600;
                 font-size: 12px;
-                color: #6c757d;
+                color: {COLORS['text_muted']};
                 border: none;
                 background: transparent;
-            }
+            }}
         """
         )
         layout.addWidget(self.count_lbl)

@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -66,7 +67,7 @@ class PDLFilterWidget(QWidget):
 
         # Sync Status
         self.lbl_sync_status = QLabel("")
-        self.lbl_sync_status.setStyleSheet("color: #555; font-size: 11px; margin-right: 15px;")
+        self.lbl_sync_status.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; margin-right: 15px;")
         layout.addWidget(self.lbl_sync_status)
 
         # Update Bot Button
@@ -83,7 +84,7 @@ class PDLFilterWidget(QWidget):
             variant=ModernButton.Variant.DANGER,
             size=ModernButton.Size.SMALL,
         )
-        self.clear_btn.setIcon(get_colored_icon(get_asset_path(Icons.RESET), "#FFFFFF"))
+        self.clear_btn.setIcon(get_colored_icon(get_asset_path(Icons.RESET), COLORS["bg_white"]))
         self.clear_btn.setToolTip("Resetta Filtri")
         layout.addWidget(self.clear_btn)
 
@@ -93,7 +94,7 @@ class PDLFilterWidget(QWidget):
             variant=ModernButton.Variant.SUCCESS,
             size=ModernButton.Size.SMALL,
         )
-        self.export_btn.setIcon(get_colored_icon(get_asset_path(Icons.EXCEL), "#FFFFFF"))
+        self.export_btn.setIcon(get_colored_icon(get_asset_path(Icons.EXCEL), COLORS["bg_white"]))
         self.export_btn.setToolTip("Esporta Excel")
         layout.addWidget(self.export_btn)
 

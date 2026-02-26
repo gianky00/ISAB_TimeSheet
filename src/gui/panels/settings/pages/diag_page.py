@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidg
 from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.panels.settings.shared import create_group_box, style_button
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon, open_folder
 
 
@@ -29,7 +30,7 @@ class DiagPage(QWidget):
         diag_layout.addStretch()
 
         open_folder_btn = QPushButton("  Apri Cartella Dati")
-        open_folder_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#000000"))
+        open_folder_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
         open_folder_btn.clicked.connect(self._open_data_folder)
         style_button(open_folder_btn)
         diag_layout.addWidget(open_folder_btn)

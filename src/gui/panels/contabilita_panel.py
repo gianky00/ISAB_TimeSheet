@@ -27,6 +27,7 @@ from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.contabilita_worker import ContabilitaWorker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
+from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.attivita_tab import AttivitaProgrammateTab
 from src.gui.widgets.contabilita.certificati_tab import CertificatiCampioneTab
 from src.gui.widgets.contabilita.giornaliere_tab import GiornaliereYearTab
@@ -86,9 +87,9 @@ class ContabilitaPanel(QWidget):
         toolbar_layout.setSpacing(10)
 
         self.selection_count_label = QLabel("Righe: 0")
-        self.selection_count_label.setStyleSheet("color: #607D8B; font-weight: 600; font-size: 12px;")
+        self.selection_count_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-weight: 600; font-size: 12px;")
         self.selection_sum_label = QLabel("Totale ORE: 0")
-        self.selection_sum_label.setStyleSheet("color: #009688; font-weight: 700; font-size: 12px;")
+        self.selection_sum_label.setStyleSheet(f"color: {COLORS['teal_accent']}; font-weight: 700; font-size: 12px;")
 
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Cerca nei dati...")
@@ -125,7 +126,7 @@ class ContabilitaPanel(QWidget):
         self.year_tabs_widget.currentChanged.connect(self._on_tab_changed)
         self.main_tabs.addTab(
             self.year_tabs_widget,
-            get_colored_icon(get_asset_path(Icons.FOLDER), "#546E7A"),
+            get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_muted"]),
             "Preventivi",
         )
 
@@ -135,21 +136,21 @@ class ContabilitaPanel(QWidget):
         self.giornaliere_tabs_widget.currentChanged.connect(self._on_tab_changed)
         self.main_tabs.addTab(
             self.giornaliere_tabs_widget,
-            get_colored_icon(get_asset_path(Icons.FOLDER), "#546E7A"),
+            get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_muted"]),
             "Giornaliere",
         )
 
         self.attivita_widget = AttivitaProgrammateTab()
         self.main_tabs.addTab(
             self.attivita_widget,
-            get_colored_icon(get_asset_path(Icons.CALENDAR), "#546E7A"),
+            get_colored_icon(get_asset_path(Icons.CALENDAR), COLORS["text_muted"]),
             "Attività Programmate",
         )
 
         self.certificati_widget = CertificatiCampioneTab()
         self.main_tabs.addTab(
             self.certificati_widget,
-            get_colored_icon(get_asset_path(Icons.FILE_TEXT), "#546E7A"),
+            get_colored_icon(get_asset_path(Icons.FILE_TEXT), COLORS["text_muted"]),
             "Certificati Campione",
         )
 
@@ -158,7 +159,7 @@ class ContabilitaPanel(QWidget):
         self.kpi_panel = ContabilitaKPIPanel()
         self.main_tabs.addTab(
             self.kpi_panel,
-            get_colored_icon(get_asset_path(Icons.BAR_CHART), "#546E7A"),
+            get_colored_icon(get_asset_path(Icons.BAR_CHART), COLORS["text_muted"]),
             "Analisi KPI",
         )
 
@@ -174,13 +175,13 @@ class ContabilitaPanel(QWidget):
 
     def _get_subtab_style(self) -> str:
         """Restituisce il QSS per i tab secondari posizionati in basso."""
-        return """
-            QTabWidget::pane { border: none; border-top: 1px solid #E0E0E0; }
-            QTabBar::tab {
-                background: transparent; color: #78909C; padding: 6px 16px; margin-bottom: -1px;
+        return f"""
+            QTabWidget::pane {{ border: none; border-top: 1px solid {COLORS['border_light']}; }}
+            QTabBar::tab {{
+                background: transparent; color: {COLORS['text_muted']}; padding: 6px 16px; margin-bottom: -1px;
                 border-bottom: 2px solid transparent; font-size: 13px; font-weight: 600;
-            }
-            QTabBar::tab:selected { color: #009688; border-bottom: 2px solid #009688; background-color: #FAFAFA; }
+            }}
+            QTabBar::tab:selected {{ color: {COLORS['teal_accent']}; border-bottom: 2px solid {COLORS['teal_accent']}; background-color: {COLORS['bg_light']}; }}
         """
 
     def _on_main_tab_changed(self, index: int) -> None:
@@ -354,8 +355,8 @@ class ContabilitaPanel(QWidget):
         """Gestisce il completamento dell'importazione aggiornando lo stato e rinfrescando i dati."""
         if success:
             timestamp = datetime.now().strftime("%d/%m/%Y %H:%M")
-            added_str = f"<font color='green'><b>+{added}</b></font>"
-            removed_str = f"<font color='red'><b>-{removed}</b></font>"
+            added_str = f"<font color='{COLORS['success_dark']}'><b>+{added}</b></font>"
+            removed_str = f"<font color='{COLORS['error_red']}'><b>-{removed}</b></font>"
             if duration < 60:
                 time_str = f"{duration:.1f}s"
             else:

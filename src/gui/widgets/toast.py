@@ -24,6 +24,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from ..design.colors import get_palette
@@ -113,7 +114,7 @@ class Toast(QWidget):
         )
 
         icon_label = QLabel()
-        icon = get_colored_icon(get_asset_path(icon_path), "#000000")
+        icon = get_colored_icon(get_asset_path(icon_path), COLORS["text_dark"])
         icon_label.setPixmap(icon.pixmap(QSize(20, 20)))
         icon_label.setStyleSheet("border: none; background: transparent;")
         container_layout.addWidget(icon_label)

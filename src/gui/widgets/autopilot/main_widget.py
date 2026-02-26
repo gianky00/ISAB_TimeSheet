@@ -31,6 +31,7 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .config_cards import AutopilotConfigCard, AutopilotConfigCardWithInterval
@@ -86,7 +87,7 @@ class AutopilotWidget(QWidget):
         header_layout.setSpacing(10)
 
         title = QLabel("Autopilot")
-        title.setStyleSheet("font-size: 16px; font-weight: bold; color: #495057;")
+        title.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {COLORS['text_dark']};")
         header_layout.addWidget(title)
 
         # --- LIVE INDICATOR ---
@@ -98,12 +99,12 @@ class AutopilotWidget(QWidget):
         self.live_dot = QLabel()
         self.live_dot.setFixedSize(8, 8)
         self.live_dot.setStyleSheet(
-            "background-color: #22c55e; border-radius: 4px; border: 1px solid #16a34a;"
+            f"background-color: {COLORS['success_green']}; border-radius: 4px; border: 1px solid {COLORS['success_dark']};"
         )
 
         self.live_text = QLabel("LIVE")
         self.live_text.setStyleSheet(
-            "color: #22c55e; font-size: 10px; font-weight: 800; letter-spacing: 1px;"
+            f"color: {COLORS['success_green']}; font-size: 10px; font-weight: 800; letter-spacing: 1px;"
         )
 
         live_layout.addWidget(self.live_dot)
@@ -122,15 +123,15 @@ class AutopilotWidget(QWidget):
 
         # Pulsante configurazione
         self.config_btn = QPushButton()
-        self.config_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS), "#6c757d"))
+        self.config_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS), COLORS["text_muted"]))
         self.config_btn.setIconSize(QSize(20, 20))
         self.config_btn.setFixedSize(32, 32)
         self.config_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.config_btn.setStyleSheet(
-            """
-            QPushButton { background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 16px; }
-            QPushButton:hover { background-color: #e9ecef; border-color: #ced4da; }
-            QPushButton:pressed { background-color: #dee2e6; }
+            f"""
+            QPushButton {{ background-color: {COLORS['bg_light']}; border: 1px solid {COLORS['border_light']}; border-radius: 16px; }}
+            QPushButton:hover {{ background-color: {COLORS['bg_hover']}; border-color: {COLORS['border_medium']}; }}
+            QPushButton:pressed {{ background-color: {COLORS['bg_alt']}; }}
         """
         )
         self.config_btn.clicked.connect(self._toggle_mode)
@@ -273,7 +274,7 @@ class AutopilotWidget(QWidget):
                     "name": "Timbrature Automatiche",
                     "time": config.get("timbrature_autopilot_time", "09:00"),
                     "icon": Icons.CLOCK,
-                    "color": "#fd7e14",
+                    "color": COLORS["warning_orange"],
                 }
             )
         if config.get("scarico_oda_generale_autopilot_enabled", False):
@@ -282,7 +283,7 @@ class AutopilotWidget(QWidget):
                     "name": "Scarico OdA Generale",
                     "time": config.get("scarico_oda_generale_autopilot_time", "09:00"),
                     "icon": Icons.DOWNLOAD,
-                    "color": "#0d6efd",
+                    "color": COLORS["primary_dark"],
                 }
             )
         if config.get("ricerca_pdl_autopilot_enabled", False):
@@ -291,7 +292,7 @@ class AutopilotWidget(QWidget):
                     "name": "Ricerca PDL",
                     "time": config.get("ricerca_pdl_autopilot_time", "09:00"),
                     "icon": Icons.SEARCH,
-                    "color": "#198754",
+                    "color": COLORS["success_dark"],
                 }
             )
         if config.get("report_email_autopilot_enabled", False):
@@ -300,14 +301,14 @@ class AutopilotWidget(QWidget):
                     "name": f"Report Email (ogni {config.get('report_email_autopilot_interval_days', 7)}gg)",
                     "time": config.get("report_email_autopilot_time", "08:00"),
                     "icon": Icons.SEND,
-                    "color": "#6f42c1",
+                    "color": COLORS["purple"],
                 }
             )
 
         if not events:
             empty = QLabel("⏸️ Nessun bot programmato")
             empty.setStyleSheet(
-                "color: #868e96; font-size: 13px; font-style: italic; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border: 1px dashed #dee2e6;"
+                f"color: {COLORS['text_muted']}; font-size: 13px; font-style: italic; padding: 20px; background-color: {COLORS['bg_light']}; border-radius: 8px; border: 1px dashed {COLORS['border_light']};"
             )
             empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.view_layout.addWidget(empty, 0, 0, 1, 2)
@@ -334,19 +335,19 @@ class AutopilotWidget(QWidget):
                 "id": "timbrature",
                 "name": "Timbrature Automatiche",
                 "icon": Icons.CLOCK,
-                "color": "#fd7e14",
+                "color": COLORS["warning_orange"],
             },
             {
                 "id": "scarico_oda_generale",
                 "name": "Scarico OdA Generale",
                 "icon": Icons.DOWNLOAD,
-                "color": "#0d6efd",
+                "color": COLORS["primary_dark"],
             },
             {
                 "id": "ricerca_pdl",
                 "name": "Ricerca PDL",
                 "icon": Icons.SEARCH,
-                "color": "#198754",
+                "color": COLORS["success_dark"],
             },
         ]
         interval_tasks = [
@@ -354,7 +355,7 @@ class AutopilotWidget(QWidget):
                 "id": "report_email",
                 "name": "Report Email ISAB",
                 "icon": Icons.SEND,
-                "color": "#6f42c1",
+                "color": COLORS["purple"],
             },
         ]
 

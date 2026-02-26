@@ -12,6 +12,8 @@ from ctypes import byref
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
+from src.gui.styles import COLORS
+from src.gui.styles.palette_helpers import hex_to_rgba
 from src.utils.system_telemetry import FILETIME, get_current_process_ram_mb
 
 
@@ -34,13 +36,13 @@ class ResourceMonitor(QWidget):
         # RAM Indicator
         self.ram_lbl = QLabel("RAM: 0MB")
         self.ram_lbl.setStyleSheet(
-            "color: rgba(52, 152, 219, 0.9); font-size: 10px; font-weight: 700; font-family: 'Consolas';"
+            f"color: {hex_to_rgba(COLORS['primary_blue'], 0.9)}; font-size: 10px; font-weight: 700; font-family: 'Consolas';"
         )
 
         # CPU Indicator
         self.cpu_lbl = QLabel("CPU: 0%")
         self.cpu_lbl.setStyleSheet(
-            "color: rgba(46, 204, 113, 0.9); font-size: 10px; font-weight: 700; font-family: 'Consolas';"
+            f"color: {hex_to_rgba(COLORS['success_green'], 0.9)}; font-size: 10px; font-weight: 700; font-family: 'Consolas';"
         )
 
         stats_layout.addWidget(self.ram_lbl)
@@ -49,7 +51,7 @@ class ResourceMonitor(QWidget):
         # Activity Indicator (Fake IO visualization)
         self.activity_bar = QFrame()
         self.activity_bar.setFixedSize(6, 28)
-        self.activity_bar.setStyleSheet("background: rgba(255,255,255,0.1); border-radius: 3px;")
+        self.activity_bar.setStyleSheet(f"background: {hex_to_rgba(COLORS['bg_white'], 0.1)}; border-radius: 3px;")
 
         layout.addStretch()
         layout.addLayout(stats_layout)
@@ -135,11 +137,11 @@ class ResourceMonitor(QWidget):
             self._bar_fill.move(0, 28)
 
         if self._activity_level > 80:
-            col = "#e74c3c"
+            col = COLORS["error_red"]
         elif self._activity_level > 40:
-            col = "#f1c40f"
+            col = COLORS["warning_yellow"]
         else:
-            col = "#2ecc71"
+            col = COLORS["success_green"]
 
         self._bar_fill.setFixedHeight(max(0, h))
         self._bar_fill.move(0, 28 - h)

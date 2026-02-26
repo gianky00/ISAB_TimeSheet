@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 from src.core.secrets_manager import SecretsManager
 from src.gui.panels.lyra.workers import ModelListWorker
 from src.gui.panels.settings.shared import create_group_box, style_button, style_input
+from src.gui.styles import COLORS
 
 
 class GeneralPage(QWidget):
@@ -41,7 +42,7 @@ class GeneralPage(QWidget):
             "Se attivato, il browser verrà eseguito in background senza mostrare la finestra."
         )
         self.headless_check.setStyleSheet(
-            "QCheckBox { padding: 5px; font-size: 15px; font-weight: bold; color: #d63384; }"
+            f"QCheckBox {{ padding: 5px; font-size: 15px; font-weight: bold; color: {COLORS['magenta_pink']}; }}"
         )
         self.headless_check.stateChanged.connect(self.settings_changed.emit)
         gen_layout.addWidget(self.headless_check)

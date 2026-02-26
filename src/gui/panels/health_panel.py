@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 
 
@@ -58,12 +59,12 @@ class HealthScoreBadge(QWidget):
     def _get_color(self) -> QColor:
         """Determina il colore dell'arco in base alla soglia di punteggio."""
         if self._score >= 80:
-            return QColor("#28a745")
+            return QColor(COLORS["success_green"])
         if self._score >= 60:
-            return QColor("#ffc107")
+            return QColor(COLORS["warning_yellow"])
         if self._score >= 40:
-            return QColor("#fd7e14")
-        return QColor("#dc3545")
+            return QColor(COLORS["warning_orange"])
+        return QColor(COLORS["error_red"])
 
     def _get_status_text(self) -> str:
         """Restituisce la label testuale associata al punteggio."""
@@ -82,17 +83,17 @@ class HealthScoreBadge(QWidget):
         margin, arc_width = 15, 12
         rect = QRectF(margin, margin, self._size - 2 * margin, self._size - 2 * margin)
 
-        painter.setPen(QPen(QColor("#e9ecef"), arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+        painter.setPen(QPen(QColor(COLORS["bg_hover"]), arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
         painter.drawEllipse(rect)
 
         painter.setPen(QPen(self._get_color(), arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
         painter.drawArc(rect, 90 * 16, -int(360 * 16 * self._score / 100))
 
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor("#ffffff"))
+        painter.setBrush(QColor(COLORS["bg_white"]))
         painter.drawEllipse(rect.adjusted(18, 18, -18, -18))
 
-        painter.setPen(QColor("#343a40"))
+        painter.setPen(QColor(COLORS["text_dark"]))
         painter.setFont(QFont("Segoe UI", 36, QFont.Weight.Bold))
         painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, str(self._score))
 
@@ -126,7 +127,7 @@ class StatCard(QFrame):
     def _setup_ui(self, title: str, value: str, icon: str, color: str) -> None:
         """Configura lo stile CSS e il layout interno della card."""
         self.setStyleSheet(
-            f"QFrame {{ background-color: #ffffff; border-radius: 12px; border: 1px solid #dee2e6; border-left: 4px solid {color}; }}"
+            f"QFrame {{ background-color: {COLORS['bg_white']}; border-radius: 12px; border: 1px solid {COLORS['border_light']}; border-left: 4px solid {color}; }}"
         )
         self.setMinimumSize(140, 95)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
@@ -138,7 +139,7 @@ class StatCard(QFrame):
             lbl_icon.setStyleSheet("font-size: 18px; border: none;")
             header.addWidget(lbl_icon)
         lbl_title = QLabel(title)
-        lbl_title.setStyleSheet("color: #6c757d; font-size: 12px; font-weight: 500; border: none;")
+        lbl_title.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px; font-weight: 500; border: none;")
         header.addWidget(lbl_title)
         header.addStretch()
         layout.addLayout(header)
@@ -178,7 +179,7 @@ class AnomalyCard(QFrame):
         header = QHBoxLayout()
         emoji = {"low": "ℹ️", "medium": "⚠️", "high": "🔴", "critical": "🚨"}.get(anomaly.severity, "📢")
         lbl_title = QLabel(f"{emoji}  {anomaly.message}")
-        lbl_title.setStyleSheet("color: #343a40; font-weight: 600; font-size: 14px;")
+        lbl_title.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 600; font-size: 14px;")
         lbl_title.setWordWrap(True)
         header.addWidget(lbl_title, stretch=1)
 
@@ -191,21 +192,27 @@ class AnomalyCard(QFrame):
 
         if anomaly.suggestion:
             lbl_sug = QLabel(f"💡 {anomaly.suggestion}")
-            lbl_sug.setStyleSheet("color: #495057; font-size: 12px; padding-left: 24px;")
+            lbl_sug.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px; padding-left: 24px;")
             lbl_sug.setWordWrap(True)
             layout.addWidget(lbl_sug)
 
     def _get_severity_color(self, severity: str) -> str:
         """Mappa la gravità a un colore HEX enterprise."""
-        return {"low": "#007bff", "medium": "#ffc107", "high": "#fd7e14", "critical": "#dc3545"}.get(
-            severity, "#6c757d"
-        )
+        return {
+            "low": COLORS["info_blue"],
+            "medium": COLORS["warning_yellow"],
+            "high": COLORS["warning_orange"],
+            "critical": COLORS["error_red"],
+        }.get(severity, COLORS["text_muted"])
 
     def _get_bg_color(self, severity: str) -> str:
         """Mappa la gravità a un colore di sfondo leggero."""
-        return {"low": "#e7f1ff", "medium": "#fff8e1", "high": "#fff3e0", "critical": "#ffebee"}.get(
-            severity, "#f8f9fa"
-        )
+        return {
+            "low": COLORS["bg_info_pastel"],
+            "medium": COLORS["bg_attention_pastel"],
+            "high": COLORS["bg_warning_pastel"],
+            "critical": COLORS["bg_error_pastel"],
+        }.get(severity, COLORS["bg_light"])
 
 
 class HealthPanel(QWidget):
@@ -232,7 +239,7 @@ class HealthPanel(QWidget):
         layout.setSpacing(20)
         header = QHBoxLayout()
         title = QLabel("📊 System Health")
-        title.setStyleSheet("font-size: 24px; font-weight: bold; color: #343a40; border: none;")
+        title.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {COLORS['text_dark']}; border: none;")
         header.addWidget(title)
         header.addStretch()
 
@@ -250,25 +257,27 @@ class HealthPanel(QWidget):
         left_panel.setSpacing(20)
         score_card = QFrame()
         score_card.setStyleSheet(
-            "QFrame { background-color: #ffffff; border-radius: 16px; border: 1px solid #dee2e6; }"
+            f"QFrame {{ background-color: {COLORS['bg_white']}; border-radius: 16px; border: 1px solid {COLORS['border_light']}; }}"
         )
         score_layout = QVBoxLayout(score_card)
         self._score_badge = HealthScoreBadge(size=160)
         score_layout.addWidget(self._score_badge, alignment=Qt.AlignmentFlag.AlignCenter)
         self._status_label = QLabel("OTTIMO")
         self._status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._status_label.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: bold;")
         score_layout.addWidget(self._status_label)
         self._last_update = QLabel("Ultimo aggiornamento: --")
         self._last_update.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._last_update.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
         score_layout.addWidget(self._last_update)
         left_panel.addWidget(score_card)
 
         stats_grid = QGridLayout()
         stats_grid.setSpacing(12)
-        self._stat_runs_ok = StatCard("Bot Successo", color="#28a745", icon="✅")
-        self._stat_runs_fail = StatCard("Bot Falliti", color="#dc3545", icon="❌")
-        self._stat_error_rate = StatCard("Error Rate", color="#ffc107", icon="📉")
-        self._stat_anomalies = StatCard("Anomalie", color="#fd7e14", icon="⚠️")
+        self._stat_runs_ok = StatCard("Bot Successo", color=COLORS["success_green"], icon="✅")
+        self._stat_runs_fail = StatCard("Bot Falliti", color=COLORS["error_red"], icon="❌")
+        self._stat_error_rate = StatCard("Error Rate", color=COLORS["warning_yellow"], icon="📉")
+        self._stat_anomalies = StatCard("Anomalie", color=COLORS["warning_orange"], icon="⚠️")
         stats_grid.addWidget(self._stat_runs_ok, 0, 0)
         stats_grid.addWidget(self._stat_runs_fail, 0, 1)
         stats_grid.addWidget(self._stat_error_rate, 1, 0)
@@ -326,7 +335,7 @@ class HealthPanel(QWidget):
         if not anomalies:
             empty = QFrame()
             empty.setStyleSheet(
-                "QFrame { background: #e8f5e9; border-radius: 12px; border: 1px dashed #81c784; }"
+                f"QFrame {{ background: {COLORS['bg_success_pastel']}; border-radius: 12px; border: 1px dashed {COLORS['success_green']}; }}"
             )
             el = QVBoxLayout(empty)
             el.addWidget(QLabel("✨"), alignment=Qt.AlignmentFlag.AlignCenter)

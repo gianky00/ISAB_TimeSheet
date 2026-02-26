@@ -17,6 +17,8 @@ from PyQt6.QtGui import (
 )
 from PyQt6.QtWidgets import QWidget
 
+from src.gui.styles import COLORS
+
 
 class AnimatedProgressBar(QWidget):
     """
@@ -97,7 +99,7 @@ class AnimatedProgressBar(QWidget):
 
         # 1. Sfondo
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor(224, 224, 224))  # #E0E0E0
+        painter.setBrush(QColor(COLORS["border_light"]))
         painter.drawRoundedRect(QRectF(0, 0, float(w), float(h)), radius, radius)
 
         # 2. Chunk (parte riempita)
@@ -105,13 +107,14 @@ class AnimatedProgressBar(QWidget):
         if chunk_width > 0:
             chunk_rect = QRectF(2, 2, float(chunk_width), float(h - 4))
 
-            # Gradiente base nero
-            painter.setBrush(QColor(0, 0, 0))
+            # Gradiente base basato su teal_accent
+            painter.setBrush(QColor(COLORS["text_dark"]))
             painter.drawRoundedRect(chunk_rect, radius - 1, radius - 1)
 
             # 3. Striature diagonali animate
             painter.setClipRect(chunk_rect)
-            stripe_color = QColor(60, 60, 60)  # Grigio scuro per contrasto
+            stripe_color = QColor(COLORS["text_muted"])
+            stripe_color.setAlpha(100)
             painter.setBrush(stripe_color)
             painter.setPen(Qt.PenStyle.NoPen)
 
@@ -141,7 +144,8 @@ class AnimatedProgressBar(QWidget):
             painter.setClipping(False)
 
         # 5. Bordo pulsante
-        border_color = QColor(0, 0, 0, self._border_alpha)
+        c = QColor(COLORS["text_dark"])
+        border_color = QColor(c.red(), c.green(), c.blue(), self._border_alpha)
         pen = QPen(border_color, 2)
         painter.setPen(pen)
         painter.setBrush(Qt.BrushStyle.NoBrush)

@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path
 
@@ -38,7 +39,7 @@ class MultiSelectDialog(QDialog):
         self.search_input.setClearButtonEnabled(True)
         self.search_input.textChanged.connect(self._filter_items)
         self.search_input.setStyleSheet(
-            "padding: 8px; font-size: 13px; border: 1px solid #DDD; border-radius: 4px;"
+            f"padding: 8px; font-size: 13px; border: 1px solid {COLORS['border_light']}; border-radius: 4px;"
         )
         layout.addWidget(self.search_input)
 
@@ -57,7 +58,7 @@ class MultiSelectDialog(QDialog):
 
         # Lista
         self.list_widget = QListWidget()
-        self.list_widget.setStyleSheet("border: 1px solid #DDD; border-radius: 4px; outline: none;")
+        self.list_widget.setStyleSheet(f"border: 1px solid {COLORS['border_light']}; border-radius: 4px; outline: none;")
         for text in items:
             item = QListWidgetItem(text)
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
@@ -124,7 +125,7 @@ class MultiSelectFilter(QWidget):
         self.btn_select = ModernButton(
             placeholder, variant=ModernButton.Variant.GHOST, icon=get_asset_path(Icons.LIST)
         )
-        self.btn_select.setStyleSheet("text-align: left; padding-left: 10px; border: 1px solid #ced4da;")
+        self.btn_select.setStyleSheet(f"text-align: left; padding-left: 10px; border: 1px solid {COLORS['border_medium']};")
         self.btn_select.clicked.connect(self._open_dialog)
         layout.addWidget(self.btn_select)
 

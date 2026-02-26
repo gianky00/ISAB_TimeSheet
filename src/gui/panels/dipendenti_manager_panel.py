@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 from src.core.audit_manager import AuditManager
 from src.core.employees import employee_manager
 from src.core.sync_tracker import SyncTracker
+from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 
 
@@ -109,10 +110,10 @@ class DipendentiManagerPanel(QWidget):
         header_layout = QHBoxLayout()
 
         title = QLabel("Gestione Dipendenti")
-        title.setStyleSheet("font-size: 24px; font-weight: bold; color: #333;")
+        title.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {COLORS['text_dark']};")
 
         subtitle = QLabel("Visualizza e modifica l'anagrafica del personale.")
-        subtitle.setStyleSheet("font-size: 14px; color: #666;")
+        subtitle.setStyleSheet(f"font-size: 14px; color: {COLORS['text_muted']};")
 
         text_layout = QVBoxLayout()
         text_layout.addWidget(title)
@@ -124,8 +125,8 @@ class DipendentiManagerPanel(QWidget):
         # Stats rapide (Badge)
         self.lbl_count = QLabel("0 Dipendenti")
         self.lbl_count.setStyleSheet(
-            """
-            background-color: #e9ecef; color: #495057;
+            f"""
+            background-color: {COLORS['bg_hover']}; color: {COLORS['text_dark']};
             padding: 5px 15px; border-radius: 15px; font-weight: bold;
         """
         )
@@ -142,9 +143,9 @@ class DipendentiManagerPanel(QWidget):
         self.search_bar.setPlaceholderText("Cerca per nome, badge o CF...")
         self.search_bar.setFixedWidth(300)
         self.search_bar.setStyleSheet(
-            """
-            QLineEdit { padding: 8px; border: 1px solid #ced4da; border-radius: 4px; }
-            QLineEdit:focus { border: 1px solid #0d6efd; }
+            f"""
+            QLineEdit {{ padding: 8px; border: 1px solid {COLORS['border_medium']}; border-radius: 4px; }}
+            QLineEdit:focus {{ border: 1px solid {COLORS['primary_dark']}; }}
         """
         )
         self.search_bar.textChanged.connect(self._filter_table)
@@ -154,7 +155,7 @@ class DipendentiManagerPanel(QWidget):
 
         # Sync Status
         self.lbl_sync_status = QLabel("")
-        self.lbl_sync_status.setStyleSheet("color: #555; font-size: 11px; margin-right: 15px;")
+        self.lbl_sync_status.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; margin-right: 15px;")
         toolbar.addWidget(self.lbl_sync_status)
 
         # Bottoni

@@ -29,6 +29,7 @@ from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.components.scarico_ore import FilterHeaderView, ScaricoOreTableModel
+from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -159,7 +160,7 @@ class ScaricoOrePanel(QWidget):
 
         scarico_layout.addWidget(self.table_view)
         self.tabs.addTab(
-            self.scarico_tab, get_colored_icon(get_asset_path(Icons.DOWNLOAD), "#546E7A"), "Dati Scaricati"
+            self.scarico_tab, get_colored_icon(get_asset_path(Icons.DOWNLOAD), COLORS["text_muted"]), "Dati Scaricati"
         )
         layout.addWidget(self.tabs)
 
@@ -258,7 +259,7 @@ class ScaricoOrePanel(QWidget):
             time_str = (
                 f"{duration:.1f}s" if duration < 60 else f"{int(duration // 60)}m {int(duration % 60)}s"
             )
-            status = f"{ts} <font color='green'><b>+{added}</b></font> <font color='red'><b>-{removed}</b></font> ({time_str})"
+            status = f"{ts} <font color='{COLORS['success_dark']}'><b>+{added}</b></font> <font color='{COLORS['error_red']}'><b>-{removed}</b></font> ({time_str})"
             self.status_label.setText(status)
             self._last_update_status = status
             with suppress(Exception):

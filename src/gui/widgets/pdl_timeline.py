@@ -11,6 +11,9 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.styles import COLORS
+from src.gui.styles.palette_helpers import hex_to_rgba
+
 
 class PDLTimelineWidget(QWidget):
     """
@@ -28,16 +31,16 @@ class PDLTimelineWidget(QWidget):
         main_layout.setContentsMargins(20, 10, 20, 10)
         main_layout.setSpacing(15)
         # Background leggero per distinguere l'area espansa
-        self.setStyleSheet("background-color: #f8f9fa;")
+        self.setStyleSheet(f"background-color: {COLORS['bg_light']};")
 
         # Titolo
         title = QLabel(f"Cronologia Interventi Recenti ({len(self.interventions)})")
-        title.setStyleSheet("font-weight: bold; font-size: 14px; color: #1e3a5f;")
+        title.setStyleSheet(f"font-weight: bold; font-size: 14px; color: {COLORS['primary_dark']};")
         main_layout.addWidget(title)
 
         if not self.interventions:
             no_data = QLabel("Nessun intervento registrato.")
-            no_data.setStyleSheet("color: #6c757d; font-style: italic; margin-left: 20px;")
+            no_data.setStyleSheet(f"color: {COLORS['text_muted']}; font-style: italic; margin-left: 20px;")
             main_layout.addWidget(no_data)
             return
 
@@ -86,11 +89,11 @@ class PDLTimelineWidget(QWidget):
 
         lbl_day = QLabel(day_num)
         lbl_day.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl_day.setStyleSheet("font-size: 18px; font-weight: bold; color: #212529;")
+        lbl_day.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {COLORS['text_dark']};")
 
         lbl_month = QLabel(month_str)
         lbl_month.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl_month.setStyleSheet("font-size: 11px; color: #6c757d; font-weight: bold;")
+        lbl_month.setStyleSheet(f"font-size: 11px; color: {COLORS['text_muted']}; font-weight: bold;")
 
         date_layout.addWidget(lbl_day)
         date_layout.addWidget(lbl_month)
@@ -110,26 +113,26 @@ class PDLTimelineWidget(QWidget):
         dot.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Colore pallino in base allo stato/fonte
-        color = "#6c757d"  # Default Grigio
+        dot_color = COLORS["text_muted"]  # Default Grigio
         fonte_text = str(data.get("fonte", "Report"))
 
         if "Validato" in fonte_text:
-            color = "#198754"  # Verde
+            dot_color = COLORS["success_dark"]  # Verde
         elif "In Attesa" in fonte_text:
-            color = "#ffc107"  # Giallo/Arancio
+            dot_color = COLORS["warning_orange"]  # Giallo/Arancio
         elif "Relazione" in fonte_text:
-            color = "#6f42c1"  # Viola
+            dot_color = COLORS["purple"]  # Viola
 
-        dot.setStyleSheet(f"color: {color}; font-size: 12px; margin-bottom: -5px;")
+        dot.setStyleSheet(f"color: {dot_color}; font-size: 12px; margin-bottom: -5px;")
         line_painter.addWidget(dot)
 
         # Linea verticale (sempre presente per connettere visivamente, tranne ultimo se vogliamo staccare)
         line = QFrame()
         line.setFixedWidth(2)
-        line.setStyleSheet("background-color: #dee2e6; border: none;")
+        line.setStyleSheet(f"background-color: {COLORS['border_light']}; border: none;")
         if is_last:
             line.setStyleSheet(
-                "background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #dee2e6, stop:1 transparent);"
+                f"background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS['border_light']}, stop:1 transparent);"
             )
 
         line_painter.addWidget(line)
@@ -137,17 +140,17 @@ class PDLTimelineWidget(QWidget):
 
         # 3. Contenuto Card (Destra)
         card_frame = QFrame()
-        card_frame.setStyleSheet("""
-            QFrame {
-                background-color: white;
-                border: 1px solid #e9ecef;
+        card_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['bg_white']};
+                border: 1px solid {COLORS['border_light']};
                 border-radius: 8px;
-            }
-            QFrame:hover {
-                border-color: #b6d4fe;
-                background-color: #ffffff;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            }
+            }}
+            QFrame:hover {{
+                border-color: {COLORS['primary_blue']};
+                background-color: {COLORS['bg_white']};
+                box-shadow: 0 4px 6px {hex_to_rgba(COLORS['text_dark'], 0.1)};
+            }}
         """)
         card_layout = QVBoxLayout(card_frame)
         card_layout.setContentsMargins(15, 12, 15, 12)
@@ -160,21 +163,21 @@ class PDLTimelineWidget(QWidget):
         tecnico_text = str(data.get("tecnico", "Tecnico Sconosciuto"))
         tecnico = QLabel(tecnico_text)
         tecnico.setStyleSheet(
-            "font-weight: bold; font-size: 13px; color: #212529; border: none; background: transparent;"
+            f"font-weight: bold; font-size: 13px; color: {COLORS['text_dark']}; border: none; background: transparent;"
         )
         header_layout.addWidget(tecnico)
 
         header_layout.addStretch()
 
-        badge_bg = "#0d6efd"  # Blu default
+        badge_bg = COLORS["primary_dark"]  # Blu default
         badge_fg = "white"
         if "Relazione" in fonte_text:
-            badge_bg = "#6f42c1"  # Viola
+            badge_bg = COLORS["purple"]  # Viola
         elif "Validato" in fonte_text:
-            badge_bg = "#198754"  # Verde
+            badge_bg = COLORS["success_dark"]  # Verde
         elif "In Attesa" in fonte_text:
-            badge_bg = "#ffc107"
-            badge_fg = "#212529"
+            badge_bg = COLORS["warning_yellow"]
+            badge_fg = COLORS["text_dark"]
 
         lbl_fonte = QLabel(f" {fonte_text} ")
         lbl_fonte.setStyleSheet(f"""
@@ -194,7 +197,7 @@ class PDLTimelineWidget(QWidget):
         desc_text = str(data.get("descrizione", ""))
         desc = QLabel(desc_text)
         desc.setWordWrap(True)
-        desc.setStyleSheet("color: #495057; font-size: 12px; border: none; background: transparent;")
+        desc.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 12px; border: none; background: transparent;")
         card_layout.addWidget(desc)
 
         # Ore (se presenti)
@@ -202,7 +205,7 @@ class PDLTimelineWidget(QWidget):
         if ore and ore != "0" and ore.lower() != "nan":
             lbl_ore = QLabel(f"⏱️ {ore} ore")
             lbl_ore.setStyleSheet(
-                "color: #6c757d; font-size: 11px; margin-top: 5px; border: none; background: transparent;"
+                f"color: {COLORS['text_muted']}; font-size: 11px; margin-top: 5px; border: none; background: transparent;"
             )
             card_layout.addWidget(lbl_ore)
 

@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.core.secrets_manager import SecretsManager
+from src.gui.styles import COLORS
 from src.utils.document_processor import DocumentProcessor
 
 from .chat_area import ChatArea
@@ -59,7 +60,7 @@ class LyraPanel(QWidget):
         tb_layout = QHBoxLayout(self.table_toolbar)
         self.btn_export_table = QPushButton("Esporta ultima tabella Excel")
         self.btn_export_table.setStyleSheet(
-            "background-color: #198754; color: white; padding: 5px 10px; font-weight: bold; border-radius: 4px;"
+            f"background-color: {COLORS['success_dark']}; color: white; padding: 5px 10px; font-weight: bold; border-radius: 4px;"
         )
         self.btn_export_table.clicked.connect(self._export_excel)
         tb_layout.addWidget(self.btn_export_table)
@@ -70,11 +71,11 @@ class LyraPanel(QWidget):
         self.attachment_frame = QFrame()
         self.attachment_frame.setVisible(False)
         self.attachment_frame.setStyleSheet(
-            "background-color: #f1f3f9; border: 1px dashed #6f42c1; border-radius: 6px; margin-bottom: 5px;"
+            f"background-color: {COLORS['bg_alt']}; border: 1px dashed {COLORS['purple']}; border-radius: 6px; margin-bottom: 5px;"
         )
         att_layout = QHBoxLayout(self.attachment_frame)
         self.att_label = QLabel("")
-        self.att_label.setStyleSheet("color: #4b2c85; font-weight: bold;")
+        self.att_label.setStyleSheet(f"color: {COLORS['purple_deep']}; font-weight: bold;")
         att_layout.addWidget(self.att_label)
         att_layout.addStretch()
         btn_remove = QPushButton("X")
@@ -115,7 +116,7 @@ class LyraPanel(QWidget):
         for name, prompt in actions:
             btn = QPushButton(name)
             btn.setStyleSheet(
-                "border: 1px solid #6f42c1; border-radius: 15px; padding: 5px 15px; font-size: 11px;"
+                f"border: 1px solid {COLORS['purple']}; border-radius: 15px; padding: 5px 15px; font-size: 11px; color: {COLORS['text_dark']};"
             )
             btn.clicked.connect(lambda _, p=prompt: self.input_bar.input_field.setText(p))
             layout.addWidget(btn)
