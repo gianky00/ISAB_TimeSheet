@@ -1,7 +1,7 @@
 """
 SyncroJob - Sidebar Widget (Next-Gen)
 Menu laterale con Glassmorphism, Indicatore Verticale Fluido e telemetria integrata.
-Risolve i problemi di schiacciamento e scrollbar visibili.
+Gestisce la navigazione principale dell'applicazione con estetica premium.
 """
 
 from __future__ import annotations
@@ -37,9 +37,10 @@ from src.utils.helpers import get_asset_path
 
 
 class SidebarChildButton(SidebarButton):
-    """Pulsante figlio con indentazione e stile Glass."""
+    """Pulsante figlio con indentazione e stile Glass specifico per i sottomenu."""
 
     def _update_style(self) -> None:
+        """Applica lo stile base aggiungendo indentazione se la sidebar è espansa."""
         super()._update_style()
         if not self._collapsed:
             current_style = self.styleSheet()
@@ -48,11 +49,23 @@ class SidebarChildButton(SidebarButton):
 
 
 class SidebarGroup(QWidget):
-    """Gruppo espandibile con segnale di espansione per Accordion logic."""
+    """
+    Gruppo espandibile con segnale di espansione per Accordion logic.
+    Gestisce la visibilità selettiva dei pulsanti figli in modalità compatta.
+    """
 
     expanded = pyqtSignal(object)
+    """Segnale emesso quando il gruppo viene aperto manualmente."""
 
     def __init__(self, title: str, icon_path: str, parent: QWidget | None = None) -> None:
+        """
+        Inizializza un gruppo della sidebar.
+
+        Args:
+            title: Titolo del gruppo.
+            icon_path: Icona principale.
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -85,6 +98,7 @@ class SidebarGroup(QWidget):
         self._was_expanded = False  # Inizializzato per evitare AttributeError
 
     def _set_arrow_icon(self, expanded: bool) -> None:
+        """Aggiorna l'icona della freccia (Chevron) in base allo stato."""
         from src.utils.helpers import get_colored_icon
 
         icon_enum = Icons.CHEVRON_DOWN if expanded else Icons.CHEVRON_RIGHT
@@ -92,6 +106,7 @@ class SidebarGroup(QWidget):
         self.arrow_label.setPixmap(icon.pixmap(12, 12))
 
     def toggle_group(self) -> None:
+        """Inverte lo stato di visibilità della sezione contenuti."""
         is_opening = not self.content_area.isVisible()
         self.content_area.setVisible(is_opening)
         self._set_arrow_icon(is_opening)
@@ -102,15 +117,28 @@ class SidebarGroup(QWidget):
             self._was_expanded = False
 
     def collapse(self) -> None:
+        """Chiude forzatamente il gruppo nascondendo i contenuti."""
         self.content_area.setVisible(False)
         self._was_expanded = False
         self._set_arrow_icon(False)
 
     def add_child(self, btn: SidebarButton) -> None:
+        """
+        Aggiunge un pulsante figlio alla lista interna.
+
+        Args:
+            btn: Istanza SidebarButton da aggiungere.
+        """
         self.content_layout.addWidget(btn)
         self.children_btns.append(btn)
 
     def set_collapsed(self, collapsed: bool) -> None:
+        """
+        Gestisce la transizione visiva del gruppo tra modalità compatta ed espansa.
+
+        Args:
+            collapsed: True se la sidebar è contratta.
+        """
         self.header_btn.set_collapsed(collapsed)
         self.arrow_label.setVisible(not collapsed)
 
@@ -135,6 +163,13 @@ class SidebarGroup(QWidget):
         self._set_arrow_icon(self.content_area.isVisible() and not collapsed)
 
     def set_active_index(self, index: int, group_indices: Sequence[int]) -> None:
+        """
+        Attiva i pulsanti interni se l'indice corrisponde a uno di quelli del gruppo.
+
+        Args:
+            index: Indice della pagina attiva.
+            group_indices: Lista di indici appartenenti a questo gruppo.
+        """
         is_child_active = index in group_indices
         self.header_btn.setChecked(is_child_active)
 
@@ -155,14 +190,30 @@ class SidebarGroup(QWidget):
 
 
 class SidebarWidget(QFrame):
-    """Sidebar Enterprise con Glassmorphism e Indicatore Verticale Fluido."""
+    """
+    Sidebar Enterprise con Glassmorphism e Indicatore Verticale Fluido.
+    Gestisce il menu di navigazione principale con supporto per l'espansione al passaggio del mouse.
+    """
 
     navigation_requested = pyqtSignal(int)
+    """Segnale emesso per richiedere il cambio della pagina principale."""
+
     automation_tab_requested = pyqtSignal(int)
+    """Segnale emesso per switchare i tab interni dei bot (Fornitori/SafeWork)."""
+
     notifications_tab_requested = pyqtSignal(int)
+    """Segnale emesso per switchare i tab interni del monitoraggio."""
+
     palette_requested = pyqtSignal()
+    """Segnale per aprire la Command Palette."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza la sidebar.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self.setObjectName("sidebarFrame")
         self._is_collapsed = True
@@ -199,6 +250,7 @@ class SidebarWidget(QFrame):
         QTimer.singleShot(500, self._update_track_instant)
 
     def _get_glass_style(self) -> str:
+        """Restituisce lo stile QSS avanzato per il look Glassmorphism."""
         return """
             QFrame#sidebarFrame {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
@@ -224,6 +276,7 @@ class SidebarWidget(QFrame):
         """
 
     def _setup_ui(self) -> None:
+        """Costruisce la gerarchia interna degli elementi (Header, Menu, Footer)."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 20, 0, 20)
         layout.setSpacing(0)
@@ -281,7 +334,7 @@ class SidebarWidget(QFrame):
         self.menu_layout.setContentsMargins(5, 0, 5, 0)
         self.menu_layout.setSpacing(6)
 
-        # Pulsanti
+        # Pulsanti Principali
         self.btn_palette = SidebarButton("Apri Palette", get_asset_path(Icons.COMMAND_PALETTE))
         self.btn_palette.clicked.connect(self.palette_requested.emit)
         self.menu_layout.addWidget(self.btn_palette)
@@ -367,13 +420,20 @@ class SidebarWidget(QFrame):
         f_layout.addWidget(self.btn_settings)
         layout.addWidget(self.footer)
 
-    def _on_group_expanded(self, group: SidebarGroup):
+    def _on_group_expanded(self, group: SidebarGroup) -> None:
+        """Logica Accordion: chiude tutti i gruppi tranne quello appena espanso."""
         for g in (self.group_automazioni, self.group_db, self.group_notifiche):
             if g != group:
                 g.collapse()
         QTimer.singleShot(100, self._update_track)
 
-    def _animate_track(self, target_widget: QWidget):
+    def _animate_track(self, target_widget: QWidget) -> None:
+        """
+        Avvia l'animazione della linea magnetica verso il pulsante target.
+
+        Args:
+            target_widget: Il widget su cui posizionare l'indicatore.
+        """
         if not target_widget or not target_widget.isVisible():
             return
         pos = target_widget.mapTo(self, QPoint(0, 0))
@@ -383,7 +443,8 @@ class SidebarWidget(QFrame):
         self._track_anim.setEndValue(target_rect)
         self._track_anim.start()
 
-    def _update_track(self):
+    def _update_track(self) -> None:
+        """Cerca il pulsante attualmente selezionato e aggiorna la traccia."""
         all_btns = [
             self.btn_home,
             self.btn_lyra,
@@ -407,10 +468,18 @@ class SidebarWidget(QFrame):
                 return
         self.active_track.hide()
 
-    def _update_track_instant(self):
+    def _update_track_instant(self) -> None:
+        """Aggiorna istantaneamente la posizione della traccia senza animazioni."""
         self._update_track()
 
     def set_active_button(self, index: int, sub_index: int | None = None) -> None:
+        """
+        Sincronizza lo stato dei pulsanti della sidebar con la pagina attiva della MainWindow.
+
+        Args:
+            index: Indice della pagina principale.
+            sub_index: Indice della sottoscheda (opzionale).
+        """
         btns = {0: self.btn_home, 2: self.btn_lyra, 7: self.btn_settings, 8: self.btn_help}
         for i, b in btns.items():
             b.setChecked(i == index)
@@ -426,21 +495,25 @@ class SidebarWidget(QFrame):
             self.btn_safework.setChecked(sub_index == 1)
         QTimer.singleShot(150, self._update_track)
 
-    def enterEvent(self, e):
+    def enterEvent(self, e) -> None:
+        """Espande la sidebar all'ingresso del mouse."""
         self._set_collapsed(False)
         super().enterEvent(e)
 
-    def leaveEvent(self, e):
+    def leaveEvent(self, e) -> None:
+        """Contrae la sidebar all'uscita del mouse."""
         self._set_collapsed(True)
         super().leaveEvent(e)
 
-    def _set_collapsed(self, c):
+    def _set_collapsed(self, c: bool) -> None:
+        """Imposta lo stato di contrazione e aggiorna il layout."""
         self._is_collapsed = c
         self.setFixedWidth(self.collapsed_width if c else self.expanded_width)
         self._update_ui_state()
         QTimer.singleShot(150, self._update_track)
 
-    def _update_ui_state(self):
+    def _update_ui_state(self) -> None:
+        """Sincronizza la visibilità degli elementi testuali e delle icone badge."""
         self.logo_label.setVisible(not self._is_collapsed)
         for b in (self.btn_home, self.btn_lyra, self.btn_help, self.btn_settings, self.btn_palette):
             b.set_collapsed(self._is_collapsed)
@@ -448,9 +521,11 @@ class SidebarWidget(QFrame):
             g.set_collapsed(self._is_collapsed)
 
     def _handle_automazione_click(self, tab_index: int) -> None:
+        """Inoltra la navigazione ai tab dei bot."""
         self.navigation_requested.emit(1)
         self.automation_tab_requested.emit(tab_index)
 
     def _handle_notifications_click(self, tab_index: int) -> None:
+        """Inoltra la navigazione ai tab del monitoraggio."""
         self.navigation_requested.emit(9)
         self.notifications_tab_requested.emit(tab_index)

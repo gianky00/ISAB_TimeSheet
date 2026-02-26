@@ -25,16 +25,26 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class ListsPage(QWidget):
-    """Pagina per la gestione delle liste dati (Account, Contratti, ecc.)."""
+    """
+    Pagina per la gestione delle liste dati (Account, Contratti, ecc.).
+    Fornisce sezioni modulari per l'anagrafica operativa utilizzate in ConfigTab.
+    """
 
     settings_changed = pyqtSignal()
+    """Segnale emesso quando una lista viene modificata."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza la pagina delle liste.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        """Layout rimosso: ora le sezioni sono usate singolarmente da ConfigTab."""
+        """Inizializza le sezioni come widget indipendenti per l'iniezione nel layout a card."""
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -47,6 +57,7 @@ class ListsPage(QWidget):
         self.cantieri_section = self._create_cantieri_section()
 
     def _create_account_section(self) -> QWidget:
+        """Crea la sezione per la gestione degli account Portale Fornitori ISAB."""
         group = create_group_box("Account ISAB")
         layout = QVBoxLayout(group)
         self.account_list = QListWidget()
@@ -65,6 +76,7 @@ class ListsPage(QWidget):
         return group
 
     def _create_sw_account_section(self) -> QWidget:
+        """Crea la sezione per la gestione degli account SafeWork."""
         group = create_group_box("Account SafeWork")
         layout = QVBoxLayout(group)
         self.sw_account_list = QListWidget()
@@ -83,6 +95,7 @@ class ListsPage(QWidget):
         return group
 
     def _create_contract_section(self) -> QWidget:
+        """Crea la sezione per la gestione dei numeri di contratto."""
         group = create_group_box("Contratti")
         layout = QVBoxLayout(group)
         self.contract_list = QListWidget()
@@ -99,6 +112,7 @@ class ListsPage(QWidget):
         return group
 
     def _create_fornitori_section(self) -> QWidget:
+        """Crea la sezione per la gestione della lista fornitori."""
         group = create_group_box("Fornitori")
         layout = QVBoxLayout(group)
         self.fornitori_list = QListWidget()
@@ -115,6 +129,7 @@ class ListsPage(QWidget):
         return group
 
     def _create_reparti_section(self) -> QWidget:
+        """Crea la sezione per i reparti aziendali."""
         group = create_group_box("Reparti")
         layout = QVBoxLayout(group)
         self.reparti_list = QListWidget()
@@ -131,6 +146,7 @@ class ListsPage(QWidget):
         return group
 
     def _create_cantieri_section(self) -> QWidget:
+        """Crea la sezione per la gestione dei nomi cantiere."""
         group = create_group_box("Cantieri")
         layout = QVBoxLayout(group)
         self.cantieri_list = QListWidget()
@@ -146,11 +162,10 @@ class ListsPage(QWidget):
         layout.addLayout(btns)
         return group
 
-    # --- HELPERS ---
-
     def _add_btn(
         self, layout: QHBoxLayout, icon: str, color: str, callback: Callable[[], None], tooltip: str = ""
     ) -> None:
+        """Aggiunge un pulsante stilizzato al layout specificato."""
         btn = QPushButton()
         btn.setIcon(get_colored_icon(get_asset_path(icon), "#000000"))
         if tooltip:
@@ -166,14 +181,14 @@ class ListsPage(QWidget):
         edit_cb: Callable[[], None],
         remove_cb: Callable[[], None],
     ) -> None:
+        """Configura il menu contestuale per una QListWidget generica."""
         list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         list_widget.customContextMenuRequested.connect(
             lambda pos: self._show_generic_menu(pos, list_widget, add_cb, edit_cb, remove_cb)
         )
 
-    # --- MENU CONTESTUALI ---
-
     def _show_account_menu(self, position: QPoint) -> None:
+        """Mostra il menu contestuale per gli account ISAB."""
         self._show_acc_menu_impl(
             position,
             self.account_list,
@@ -184,6 +199,7 @@ class ListsPage(QWidget):
         )
 
     def _show_sw_account_menu(self, position: QPoint) -> None:
+        """Mostra il menu contestuale per gli account SafeWork."""
         self._show_acc_menu_impl(
             position,
             self.sw_account_list,
@@ -202,6 +218,7 @@ class ListsPage(QWidget):
         remove_cb: Callable[[], None],
         def_cb: Callable[[], None],
     ) -> None:
+        """Implementazione core del menu contestuale degli account."""
         menu = QMenu()
         item = list_widget.itemAt(position)
         menu.addAction("Aggiungi", add_cb)
@@ -223,6 +240,7 @@ class ListsPage(QWidget):
         edit_cb: Callable[[], None],
         remove_cb: Callable[[], None],
     ) -> None:
+        """Implementazione core del menu contestuale generico."""
         menu = QMenu()
         item = list_widget.itemAt(position)
         menu.addAction("Aggiungi", add_cb)
@@ -235,9 +253,8 @@ class ListsPage(QWidget):
         if viewport is not None:
             menu.exec(viewport.mapToGlobal(position))
 
-    # --- LOGICA ACCOUNT ISAB ---
-
     def _get_accounts(self, list_widget: QListWidget) -> list[dict[str, Any]]:
+        """Estrae i dati degli account dalla QListWidget."""
         accounts = []
         for i in range(list_widget.count()):
             item = list_widget.item(i)
@@ -248,6 +265,7 @@ class ListsPage(QWidget):
         return accounts
 
     def _render_accounts(self, list_widget: QListWidget, accounts: Sequence[dict[str, Any]]) -> None:
+        """Renderizza graficamente la lista degli account."""
         list_widget.clear()
         for acc in accounts:
             label = str(acc["username"])
@@ -262,6 +280,7 @@ class ListsPage(QWidget):
             list_widget.addItem(item)
 
     def _add_account(self) -> None:
+        """Apre il dialogo per aggiungere un nuovo account ISAB."""
         dlg = AccountDialog(self)
         if dlg.exec():
             u, p, _ = dlg.get_data()
@@ -273,6 +292,7 @@ class ListsPage(QWidget):
                 self.settings_changed.emit()
 
     def _edit_account(self) -> None:
+        """Modifica l'account ISAB selezionato."""
         row = self.account_list.currentRow()
         if row < 0:
             return
@@ -288,6 +308,7 @@ class ListsPage(QWidget):
                 self.settings_changed.emit()
 
     def _remove_account(self) -> None:
+        """Rimuove l'account ISAB selezionato previa conferma."""
         row = self.account_list.currentRow()
         if row >= 0 and ConfirmationDialog.confirm(self, "Conferma", "Rimuovere account?"):
             self.account_list.takeItem(row)
@@ -298,6 +319,7 @@ class ListsPage(QWidget):
             self.settings_changed.emit()
 
     def _set_default_account(self) -> None:
+        """Imposta l'account ISAB selezionato come predefinito."""
         row = self.account_list.currentRow()
         if row >= 0:
             accs = self._get_accounts(self.account_list)
@@ -307,6 +329,7 @@ class ListsPage(QWidget):
             self.settings_changed.emit()
 
     def _add_sw_account(self) -> None:
+        """Aggiunge un nuovo account SafeWork."""
         dlg = AccountDialog(self, show_type=True)
         dlg.setWindowTitle("Account SafeWork")
         if dlg.exec():
@@ -319,6 +342,7 @@ class ListsPage(QWidget):
                 self.settings_changed.emit()
 
     def _edit_sw_account(self) -> None:
+        """Modifica l'account SafeWork selezionato."""
         row = self.sw_account_list.currentRow()
         if row < 0:
             return
@@ -335,6 +359,7 @@ class ListsPage(QWidget):
                 self.settings_changed.emit()
 
     def _remove_sw_account(self) -> None:
+        """Rimuove l'account SafeWork selezionato."""
         row = self.sw_account_list.currentRow()
         if row >= 0 and ConfirmationDialog.confirm(self, "Conferma", "Rimuovere account?"):
             self.sw_account_list.takeItem(row)
@@ -345,6 +370,7 @@ class ListsPage(QWidget):
             self.settings_changed.emit()
 
     def _set_default_sw_account(self) -> None:
+        """Imposta l'account SafeWork selezionato come predefinito."""
         row = self.sw_account_list.currentRow()
         if row >= 0:
             accs = self._get_accounts(self.sw_account_list)
@@ -354,10 +380,12 @@ class ListsPage(QWidget):
             self.settings_changed.emit()
 
     def _update_simple_list(self, list_widget: QListWidget, items: Sequence[str]) -> None:
+        """Aggiorna una QListWidget con una lista di stringhe."""
         list_widget.clear()
         list_widget.addItems(items)
 
     def _get_simple_items(self, list_widget: QListWidget) -> list[str]:
+        """Estrae i testi da una QListWidget."""
         items = []
         for i in range(list_widget.count()):
             item = list_widget.item(i)
@@ -366,12 +394,14 @@ class ListsPage(QWidget):
         return items
 
     def _add_simple(self, list_widget: QListWidget, title: str) -> None:
+        """Aggiunge un elemento testuale a una lista tramite input dialog."""
         text, ok = StandardInputDialog.get_input(self, "Aggiungi", title)
         if ok and text:
             list_widget.addItem(text)
             self.settings_changed.emit()
 
     def _edit_simple(self, list_widget: QListWidget, title: str) -> None:
+        """Modifica l'elemento testuale selezionato."""
         item = list_widget.currentItem()
         if item:
             text, ok = StandardInputDialog.get_input(self, "Modifica", title, text=item.text())
@@ -380,48 +410,62 @@ class ListsPage(QWidget):
                 self.settings_changed.emit()
 
     def _remove_simple(self, list_widget: QListWidget) -> None:
+        """Rimuove l'elemento selezionato."""
         row = list_widget.currentRow()
         if row >= 0 and ConfirmationDialog.confirm(self, "Conferma", "Rimuovere elemento?"):
             list_widget.takeItem(row)
             self.settings_changed.emit()
 
     def _add_contract(self) -> None:
+        """Wrapper per aggiungere un contratto."""
         self._add_simple(self.contract_list, "Contratto:")
 
     def _edit_contract(self) -> None:
+        """Wrapper per modificare un contratto."""
         self._edit_simple(self.contract_list, "Contratto:")
 
     def _remove_contract(self) -> None:
+        """Wrapper per rimuovere un contratto."""
         self._remove_simple(self.contract_list)
 
     def _add_fornitore(self) -> None:
+        """Wrapper per aggiungere un fornitore."""
         self._add_simple(self.fornitori_list, "Fornitore:")
 
     def _edit_fornitore(self) -> None:
+        """Wrapper per modificare un fornitore."""
         self._edit_simple(self.fornitori_list, "Fornitore:")
 
     def _remove_fornitore(self) -> None:
+        """Wrapper per rimuovere un fornitore."""
         self._remove_simple(self.fornitori_list)
 
     def _add_reparto(self) -> None:
+        """Wrapper per aggiungere un reparto."""
         self._add_simple(self.reparti_list, "Reparto:")
 
     def _edit_reparto(self) -> None:
+        """Wrapper per modificare un reparto."""
         self._edit_simple(self.reparti_list, "Reparto:")
 
     def _remove_reparto(self) -> None:
+        """Wrapper per rimuovere un reparto."""
         self._remove_simple(self.reparti_list)
 
     def _add_cantiere(self) -> None:
+        """Wrapper per aggiungere un cantiere."""
         self._add_simple(self.cantieri_list, "Cantiere:")
 
     def _edit_cantiere(self) -> None:
+        """Wrapper per modificare un cantiere."""
         self._edit_simple(self.cantieri_list, "Cantiere:")
 
     def _remove_cantiere(self) -> None:
+        """Wrapper per rimuovere un cantiere."""
         self._remove_simple(self.cantieri_list)
 
     def load_from_config(self, config: dict[str, Any]) -> None:
+        """Carica tutte le liste (account, contratti, fornitori, ecc.) dalla configurazione."""
         self._render_accounts(self.account_list, config.get("accounts", []))
         self._render_accounts(self.sw_account_list, config.get("safework_accounts", []))
         self._update_simple_list(self.contract_list, config.get("contracts", []))
@@ -430,6 +474,7 @@ class ListsPage(QWidget):
         self._update_simple_list(self.cantieri_list, config.get("cantieri_timbrature", []))
 
     def save_to_config(self, config_manager: Any) -> None:
+        """Salva lo stato corrente delle liste nella configurazione globale."""
         config_manager.set_config_value("accounts", self._get_accounts(self.account_list))
         config_manager.set_config_value("safework_accounts", self._get_accounts(self.sw_account_list))
         config_manager.set_config_value("contracts", self._get_simple_items(self.contract_list))

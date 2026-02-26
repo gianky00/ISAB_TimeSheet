@@ -1,6 +1,7 @@
 """
 SyncroJob - Automazioni Widget (Refactored)
 Pannello raggruppato per i Bot con animazioni integrate e controlli locali.
+Gestisce l'orchestrazione dei bot Selenium per Portale Fornitori e SafeWork.
 """
 
 from PyQt6.QtWidgets import QTabWidget, QVBoxLayout, QWidget
@@ -20,9 +21,18 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class AutomazioniWidget(QWidget):
-    """Pannello raggruppato per i Bot con animazioni Snapshot-Fade."""
+    """
+    Pannello raggruppato per i Bot con animazioni Snapshot-Fade.
+    Centralizza l'accesso a tutti i processi di automazione web.
+    """
 
-    def __init__(self, main_window):
+    def __init__(self, main_window) -> None:
+        """
+        Inizializza il widget delle automazioni.
+
+        Args:
+            main_window: Riferimento alla finestra principale per la registrazione dei pannelli.
+        """
         super().__init__()
         self.mw = main_window
 
@@ -83,10 +93,27 @@ class AutomazioniWidget(QWidget):
                 self.panel_timbrature, self.panel_carico, self.panel_pdl, self.panel_pdl_search
             ])
 
-    def set_active_tab(self, main_idx: int, sub_idx: int):
+    def set_active_tab(self, main_idx: int, sub_idx: int) -> None:
+        """
+        Imposta programmaticamente il tab e il sottomenu attivi.
+
+        Args:
+            main_idx: Indice del portale (0: Fornitori, 1: SafeWork).
+            sub_idx: Indice del bot all'interno del portale.
+        """
         self.main_tabs.setCurrentIndex(main_idx)
         target = self.tab_fornitori if main_idx == 0 else self.tab_safework
         target.setCurrentIndex(sub_idx)
 
-    def currentIndex(self) -> int: return self.main_tabs.currentIndex()
-    def setCurrentIndex(self, index: int): self.main_tabs.setCurrentIndex(index)
+    def currentIndex(self) -> int:
+        """Restituisce l'indice del portale attivo."""
+        return self.main_tabs.currentIndex()
+
+    def setCurrentIndex(self, index: int) -> None:
+        """
+        Cambia il portale attivo.
+
+        Args:
+            index: Nuovo indice.
+        """
+        self.main_tabs.setCurrentIndex(index)

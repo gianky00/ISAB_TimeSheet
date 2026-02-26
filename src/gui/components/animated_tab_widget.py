@@ -1,6 +1,7 @@
 """
 SyncroJob - Animated Tab Widget (Premium Stylized)
 Componente universale con animazioni di lusso, gradienti e glow effect.
+Fornisce una navigazione tra schede fluida con indicatore di selezione dinamico.
 """
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QRect, QTimer, pyqtSignal
@@ -13,12 +14,21 @@ from src.gui.components.animated_stack import SlidingStackedWidget
 class AnimatedTabWidget(QWidget):
     """
     Sostituto d'élite di QTabWidget con transizioni Snapshot-Fade
-    e indicatore di selezione con effetto 'Illumination'.
+        e indicatore di selezione con effetto 'Illumination'.
+    
+        Supporta il posizionamento dei tab (North/South) e garantisce performance a 60 FPS    grazie alla tecnica di snapshot rendering durante le transizioni.
     """
 
     currentChanged = pyqtSignal(int)
+    """Segnale emesso quando il tab attivo cambia."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il widget dei tab animati.
+
+        Args:
+            parent: Widget genitore opzionale.
+        """
         super().__init__(parent)
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -80,6 +90,12 @@ class AnimatedTabWidget(QWidget):
         QTimer.singleShot(100, self._update_indicator_instant)
 
     def setTabPosition(self, position: QTabWidget.TabPosition) -> None:
+        """
+        Imposta la posizione della barra dei tab.
+
+        Args:
+            position: Posizione desiderata (North o South).
+        """
         if position == self._tab_position:
             return
         self._tab_position = position
@@ -100,12 +116,27 @@ class AnimatedTabWidget(QWidget):
         QTimer.singleShot(10, self._update_indicator_instant)
 
     def addTab(self, widget: QWidget, *args) -> int:
+        """
+        Aggiunge un nuovo tab.
+
+        Args:
+            widget: Il widget da visualizzare nella scheda.
+            *args: Argomenti per QTabBar.addTab (es. icona e testo).
+
+        Returns:
+            int: L'indice del tab aggiunto.
+        """
         index = self.tab_bar.addTab(*args)
         self.stack.addWidget(widget)
         return index
 
     def removeTab(self, index: int) -> None:
-        """Rimuove un tab e il relativo widget dallo stack."""
+        """
+        Rimuove un tab e il relativo widget dallo stack.
+
+        Args:
+            index: Indice del tab da rimuovere.
+        """
         if 0 <= index < self.tab_bar.count():
             self.tab_bar.removeTab(index)
             w = self.stack.widget(index)
@@ -115,7 +146,7 @@ class AnimatedTabWidget(QWidget):
             self._update_indicator_instant()
 
     def clear(self) -> None:
-        """Svuota tutti i tab e i relativi widget."""
+        """Svuota tutti i tab e i relativi widget resettando l'interfaccia."""
         while self.tab_bar.count() > 0:
             self.tab_bar.removeTab(0)
         while self.stack.count() > 0:
@@ -126,6 +157,12 @@ class AnimatedTabWidget(QWidget):
         self.indicator.hide()
 
     def _on_tab_bar_changed(self, index: int) -> None:
+        """
+        Gestisce internamente il cambio di tab nella barra.
+
+        Args:
+            index: Nuovo indice selezionato.
+        """
         self._animate_indicator(index)
         if index != self.stack.currentIndex():
             self.setEnabled(False)
@@ -135,6 +172,12 @@ class AnimatedTabWidget(QWidget):
             self.currentChanged.emit(index)
 
     def _animate_indicator(self, index: int) -> None:
+        """
+        Avvia l'animazione dell'indicatore verso il tab specificato.
+
+        Args:
+            index: Indice di destinazione.
+        """
         rect = self.tab_bar.tabRect(index)
         if rect.isValid():
             global_pos = self.tab_bar.mapTo(self.header_widget, rect.topLeft())
@@ -151,6 +194,7 @@ class AnimatedTabWidget(QWidget):
             self._indicator_anim.start()
 
     def _update_indicator_instant(self) -> None:
+        """Aggiorna istantaneamente la posizione della linea senza animazioni."""
         idx = self.tab_bar.currentIndex()
         if idx < 0:
             self.indicator.hide()
@@ -168,33 +212,47 @@ class AnimatedTabWidget(QWidget):
             self.indicator.hide()
 
     def resizeEvent(self, event) -> None:
+        """Assicura che l'indicatore sia allineato dopo il ridimensionamento."""
         super().resizeEvent(event)
         self._update_indicator_instant()
 
     def currentIndex(self) -> int:
+        """Restituisce l'indice del tab corrente."""
         return self.tab_bar.currentIndex()
 
     def currentWidget(self) -> QWidget | None:
+        """Restituisce il widget associato al tab corrente."""
         return self.stack.currentWidget()
 
     def setCurrentIndex(self, index: int) -> None:
+        """
+        Imposta programmaticamente il tab corrente.
+
+        Args:
+            index: Indice da attivare.
+        """
         self.tab_bar.setCurrentIndex(index)
         self.stack.setCurrentIndex(index)
         self._update_indicator_instant()
 
     def count(self) -> int:
+        """Restituisce il numero totale di tab."""
         return self.tab_bar.count()
 
     def tabText(self, index: int) -> str:
+        """Restituisce il testo del tab all'indice specificato."""
         return self.tab_bar.tabText(index)
 
     def widget(self, index: int) -> QWidget | None:
+        """Restituisce il widget all'indice specificato."""
         return self.stack.widget(index)
 
     def tabBar(self) -> QTabBar:
+        """Restituisce l'istanza della QTabBar interna."""
         return self.tab_bar
 
     def _get_default_style(self) -> str:
+        """Restituisce lo stile QSS per la barra dei tab in posizione North."""
         return """
             QTabBar::tab {
                 background: transparent; color: #78909C; padding: 12px 24px;
@@ -205,6 +263,7 @@ class AnimatedTabWidget(QWidget):
         """
 
     def _get_south_style(self) -> str:
+        """Restituisce lo stile QSS per la barra dei tab in posizione South."""
         return """
             QTabBar::tab {
                 background: transparent; color: #78909C; padding: 10px 18px;

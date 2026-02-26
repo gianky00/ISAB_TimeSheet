@@ -37,9 +37,17 @@ from .calendar_date_edit import CalendarDateEdit
 class HoverPulseFrame(QFrame):
     """
     Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
+    Fornisce un feedback visivo immediato sull'interattività della card parametri.
     """
 
-    def __init__(self, accent_color: str = "#212121", parent=None):
+    def __init__(self, accent_color: str = "#212121", parent: QWidget | None = None) -> None:
+        """
+        Inizializza il frame pulsante.
+
+        Args:
+            accent_color: Colore hex del bordo.
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self._accent_color = QColor(accent_color)
         self._pulse_val = 1.0
@@ -57,23 +65,23 @@ class HoverPulseFrame(QFrame):
         return self._pulse_val
 
     @pulse_value.setter  # type: ignore[no-redef]
-    def pulse_value(self, v: float):
+    def pulse_value(self, v: float) -> None:
         """Imposta il valore della pulsazione e forza il ridisegno del widget."""
         self._pulse_val = v
         self.update()
 
-    def enterEvent(self, event):
+    def enterEvent(self, event) -> None:
         """Avvia l'animazione di pulsazione del bordo all'ingresso del mouse."""
         self._anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event):
+    def leaveEvent(self, event) -> None:
         """Interrompe l'animazione e ripristina lo stato solido all'uscita del mouse."""
         self._anim.stop()
         self.pulse_value = 1.0  # type: ignore[method-assign]
         super().leaveEvent(event)
 
-    def paintEvent(self, event):
+    def paintEvent(self, event) -> None:
         """Disegna il bordo inferiore pulsante con il colore di accento configurato."""
         super().paintEvent(event)
         painter = QPainter(self)
@@ -254,7 +262,7 @@ class BotParametersWidget(QWidget):
 
     def add_widget_to_row(self, widget: QWidget) -> None:
         """
-        Aggiunge un widget personalizzato alla riga dei parametri (prima dello stretch).
+        Aggiunge un widget personalizzato alla riga dei parametri.
 
         Args:
             widget: Il widget QWidget da aggiungere.
@@ -269,7 +277,7 @@ class BotParametersWidget(QWidget):
             self.main_row_layout.addItem(item)
 
     def _get_icon_btn_style(self) -> str:
-        """Restituisce lo stile QSS standard per i pulsanti icona con accento neon."""
+        """Restituisce lo stile QSS per i pulsanti icona."""
         return """
             QPushButton {
                 background-color: #ffffff;
@@ -288,13 +296,13 @@ class BotParametersWidget(QWidget):
         """
 
     def _browse_path(self) -> None:
-        """Apre il dialogo di selezione cartella di sistema per impostare la destinazione."""
+        """Apre il dialogo di selezione cartella di sistema."""
         path = QFileDialog.getExistingDirectory(self, "Seleziona cartella destinazione")
         if path:
             self.dest_path_edit.setText(path)
 
     def refresh_fornitori(self) -> None:
-        """Ricarica l'elenco dei fornitori attingendo dalla configurazione globale persistente."""
+        """Ricarica l'elenco dei fornitori dalla configurazione globale."""
         fornitori = config_manager.load_config().get("fornitori", [])
         current = self.fornitore_combo.currentText()
 
@@ -305,21 +313,24 @@ class BotParametersWidget(QWidget):
             if index >= 0:
                 self.fornitore_combo.setCurrentIndex(index)
 
-    # --- Getters / Setters ---
     def get_fornitore(self) -> str:
+        """Restituisce il fornitore selezionato."""
         return self.fornitore_combo.currentText()
 
     def set_fornitore(self, fornitore: str) -> None:
+        """Imposta il fornitore selezionato."""
         index = self.fornitore_combo.findText(fornitore)
         if index >= 0:
             self.fornitore_combo.setCurrentIndex(index)
 
     def get_dates(self) -> tuple[str, str | None]:
+        """Restituisce il range di date selezionato."""
         date_da = self.date_da.date().toString("dd.MM.yyyy")
         date_a = self.date_a.date().toString("dd.MM.yyyy") if self.show_date_range else None
         return date_da, date_a
 
     def set_dates(self, date_da_str: str, date_a_str: str | None = None) -> None:
+        """Imposta le date nei campi di input."""
         with suppress(Exception):
             d, m, y = map(int, date_da_str.split("."))
             self.date_da.setDate(QDate(y, m, d))
@@ -328,8 +339,10 @@ class BotParametersWidget(QWidget):
                 self.date_a.setDate(QDate(y, m, d))
 
     def get_dest_path(self) -> str:
+        """Restituisce il percorso di destinazione impostato."""
         return self.dest_path_edit.text() if self.show_dest_path else ""
 
     def set_dest_path(self, path: str) -> None:
+        """Imposta il percorso di destinazione."""
         if self.show_dest_path:
             self.dest_path_edit.setText(path)

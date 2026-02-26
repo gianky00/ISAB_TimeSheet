@@ -25,9 +25,21 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class SettingCard(QFrame):
-    """Container a card con ombra e stile moderno per un gruppo di impostazioni."""
+    """
+    Container a card con ombra e stile moderno per un gruppo di impostazioni.
+    Fornisce coerenza visiva in tutto il pannello.
+    """
 
-    def __init__(self, title: str, subtitle: str, icon_key: str, content_widget: QWidget):
+    def __init__(self, title: str, subtitle: str, icon_key: str, content_widget: QWidget) -> None:
+        """
+        Inizializza la card di impostazione.
+
+        Args:
+            title: Titolo principale.
+            subtitle: Descrizione breve.
+            icon_key: Chiave icona in Icons.
+            content_widget: Widget contenuto.
+        """
         super().__init__()
         self.setObjectName("settingCard")
         self.setStyleSheet("""
@@ -85,16 +97,24 @@ class SettingCard(QFrame):
 class TelegramTab(QWidget):
     """
     Tab dedicato all'integrazione con il bot Telegram.
-    Gestisce token, chat ID e test di connettività.
+    Gestisce token, chat ID e fornisce strumenti di test per la connettività remota.
     """
 
     settings_changed = pyqtSignal()
+    """Segnale emesso quando le credenziali Telegram vengono modificate."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il tab di Telegram.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self._setup_ui()
 
     def _setup_ui(self) -> None:
+        """Configura il layout a card per credenziali e test di connettività."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
@@ -160,9 +180,21 @@ class TelegramTab(QWidget):
         main_layout.addWidget(self.scroll_container)
 
     def load_from_config(self, config: dict[str, Any]) -> None:
+        """
+        Carica i parametri Telegram dalla configurazione attuale.
+
+        Args:
+            config: Dizionario di configurazione.
+        """
         self.token_edit.setText(config.get("telegram_token", ""))
         self.chat_id_edit.setText(config.get("telegram_chat_id", ""))
 
     def save_to_config(self, config_manager: Any) -> None:
+        """
+        Salva i parametri Telegram nel gestore di configurazione.
+
+        Args:
+            config_manager: Riferimento al manager globale.
+        """
         config_manager.set_config_value("telegram_token", self.token_edit.text().strip())
         config_manager.set_config_value("telegram_chat_id", self.chat_id_edit.text().strip())

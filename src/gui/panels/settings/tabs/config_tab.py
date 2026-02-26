@@ -4,6 +4,8 @@ Pannello di configurazione strutturato a Card Moderne con navigazione fluida.
 Sostituisce il vecchio QToolBox con un design 'System Hub' ad alta leggibilità.
 """
 
+from typing import Any
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
@@ -27,9 +29,21 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class SettingCard(QFrame):
-    """Container a card con ombra e stile moderno per un gruppo di impostazioni."""
+    """
+    Container a card con ombra e stile moderno per un gruppo di impostazioni.
+    Fornisce un'intestazione con icona, titolo e sottotitolo.
+    """
 
-    def __init__(self, title: str, subtitle: str, icon_key: str, content_widget: QWidget):
+    def __init__(self, title: str, subtitle: str, icon_key: str, content_widget: QWidget) -> None:
+        """
+        Inizializza la card di impostazione.
+
+        Args:
+            title: Titolo della sezione.
+            subtitle: Descrizione breve dello scopo.
+            icon_key: Chiave dell'icona in Icons.
+            content_widget: Widget contenente i controlli reali.
+        """
         super().__init__()
         self.setObjectName("settingCard")
         self.setStyleSheet("""
@@ -89,17 +103,25 @@ class SettingCard(QFrame):
 class ConfigTab(QWidget):
     """
     Tab di configurazione d'élite.
-    Organizza le impostazioni in Card tematiche scorrevoli.
+    Organizza le impostazioni in Card tematiche scorrevoli (Generale, Account, Liste, Percorsi, Diagnostica).
     """
 
     settings_changed = pyqtSignal()
+    """Segnale emesso quando un'impostazione interna viene variata."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il tab di configurazione.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(parent)
-        self.pages = []
+        self.pages: list[QWidget] = []
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
+        """Costruisce il layout a card verticali con scroll area."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
@@ -150,7 +172,7 @@ class ConfigTab(QWidget):
         ))
         self.pages.append(self.general_page)
 
-        # --- 2. ACCOUNT (Splittato da ListsPage) ---
+        # --- 2. ACCOUNT ---
         self.lists_page = ListsPage()
         self.lists_page.settings_changed.connect(self.settings_changed.emit)
         self.pages.append(self.lists_page)
@@ -214,12 +236,14 @@ class ConfigTab(QWidget):
         self.scroll_container.setWidget(scroll_content)
         main_layout.addWidget(self.scroll_container)
 
-    def load_from_config(self, config):
+    def load_from_config(self, config: dict[str, Any]) -> None:
+        """Carica i dati in tutte le pagine gestite dal tab."""
         for page in self.pages:
             if hasattr(page, "load_from_config"):
                 page.load_from_config(config)
 
-    def save_to_config(self, config_manager):
+    def save_to_config(self, config_manager: Any) -> None:
+        """Persiste i dati di tutte le pagine nella configurazione globale."""
         for page in self.pages:
             if hasattr(page, "save_to_config"):
                 page.save_to_config(config_manager)

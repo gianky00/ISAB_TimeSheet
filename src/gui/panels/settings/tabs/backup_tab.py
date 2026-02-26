@@ -25,7 +25,16 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class SettingCard(QFrame):
     """Container a card con ombra e stile moderno per un gruppo di impostazioni."""
 
-    def __init__(self, title: str, subtitle: str, icon_key: str, content_widget: QWidget):
+    def __init__(self, title: str, subtitle: str, icon_key: str, content_widget: QWidget) -> None:
+        """
+        Inizializza la card di impostazione.
+
+        Args:
+            title: Titolo della sezione.
+            subtitle: Descrizione breve.
+            icon_key: Chiave icona.
+            content_widget: Widget contenuto.
+        """
         super().__init__()
         self.setObjectName("settingCard")
         self.setStyleSheet("""
@@ -83,14 +92,21 @@ class SettingCard(QFrame):
 class BackupTab(QWidget):
     """
     Tab dedicato alla sicurezza dei dati.
-    Permette la gestione dei backup del database e la pulizia dei log.
+    Permette la gestione dei backup del database e la pulizia dei log operativi.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il tab di backup.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self._setup_ui()
 
     def _setup_ui(self) -> None:
+        """Configura il layout a card per backup e log."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
@@ -148,5 +164,11 @@ class BackupTab(QWidget):
         main_layout.addWidget(self.scroll_container)
 
     def load_from_config(self, config: dict[str, Any]) -> None:
+        """
+        Carica i metadati del backup dalla configurazione.
+
+        Args:
+            config: Dizionario di configurazione.
+        """
         last = config.get("last_db_backup", "Mai")
         self.lbl_last_backup.setText(f"Ultimo Backup: {last}")

@@ -10,7 +10,7 @@ from PyQt6.QtCore import (
     QPropertyAnimation,
     pyqtSignal,
 )
-from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel, QStackedWidget
+from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel, QStackedWidget, QWidget
 
 
 class SlidingStackedWidget(QStackedWidget):
@@ -20,8 +20,15 @@ class SlidingStackedWidget(QStackedWidget):
     """
 
     animation_finished = pyqtSignal()
+    """Segnale emesso al termine della transizione animata."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza lo stack animato.
+
+        Args:
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self._animation_duration = 350
         self._easing_curve = QEasingCurve.Type.OutCubic
@@ -38,8 +45,14 @@ class SlidingStackedWidget(QStackedWidget):
         self.fade_label_old.hide()
         self.fade_label_new.hide()
 
-    def slide_to_index(self, index: int):
-        """Esegue l'animazione di transizione premium."""
+    def slide_to_index(self, index: int) -> None:
+        """
+        Esegue l'animazione di transizione premium verso l'indice specificato.
+        Utilizza snapshot QPixmap per mantenere la fluidità indipendentemente dal carico dei widget.
+
+        Args:
+            index: L'indice del widget verso cui navigare.
+        """
         if self._is_animating or index == self.currentIndex() or index < 0 or index >= self.count():
             self.setCurrentIndex(index)
             return
@@ -116,7 +129,8 @@ class SlidingStackedWidget(QStackedWidget):
 
         self._animation_group.start()
 
-    def _on_animation_finished(self):
+    def _on_animation_finished(self) -> None:
+        """Cleanup al termine dell'animazione: scambia i widget reali e nasconde gli snapshot."""
         self.setCurrentIndex(self._next_index)
         w = self.widget(self._next_index)
         if w:
@@ -126,7 +140,8 @@ class SlidingStackedWidget(QStackedWidget):
         self._is_animating = False
         self.animation_finished.emit()
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event) -> None:
+        """Sincronizza le dimensioni degli snapshot con il widget principale."""
         super().resizeEvent(event)
         size = event.size()
         self.fade_label_old.resize(size)
