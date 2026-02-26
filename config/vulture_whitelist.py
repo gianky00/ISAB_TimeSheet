@@ -152,3 +152,45 @@ get_current_filter  # unused method (src/gui/widgets/notification_toolbar.py)
 get_search_query  # unused method (src/gui/widgets/notification_toolbar.py)
 get_sort_key  # unused method (src/gui/widgets/notification_toolbar.py)
 category_color  # unused attribute (src/gui/widgets/timeline_widget.py)
+
+# WIP / Planned Features (Vulture Audit 2026-02-26)
+ProgrammingSyncManager  # unused class (src/core/importers/pdl_sync_manager.py)
+TerminalLogWidget  # unused class (src/gui/components/terminal_log.py)
+SecurityDashboard  # unused class (src/gui/widgets/security_dashboard.py)
+StartupDialog  # unused class (src/gui/dialogs/startup_dialog.py)
+ConnectionTestWorker  # unused class (src/gui/workers/connection_worker.py)
+alert_appears_with_text  # unused class (src/bots/base/wait_helpers.py)
+SamplingFilter  # unused class (src/core/logging/filters.py)
+
+# Pandera Schemas & Fields (False Positives)
+DipendenteSchema
+GiornaliereSchema
+ContabilitaSchema
+id_risorsa
+Cognome
+Nome
+Data_nascita
+Badge
+Data_assunzione
+personale
+descrizione
+tcl
+odc
+pdl
+inizio
+fine
+ore
+n_prev
+data_prev
+mese
+totale_prev
+attivita
+stato_attivita
+tipologia
+ore_sp
+resa
+annotazioni
+indirizzo_consuntivo
+nome_file
+coerce
+strict

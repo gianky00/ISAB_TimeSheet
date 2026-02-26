@@ -9,7 +9,7 @@ console = Console()
 
 def test_validate_real_anagrafica():
     """Testa la validazione sullo script reale anagrafica_dipendenti.csv."""
-    path = "anagrafica_dipendenti.csv"
+    path = "data/anagrafiche/anagrafica_dipendenti.csv"
     try:
         # Caricamento con i parametri corretti identificati
         df = pd.read_csv(

@@ -80,6 +80,5 @@ temp_pytest_panel/
 # Mutation testing (mutmut)
 .mutmutrc
 mutants/
-temp_patch*.py
 refurb_report.txt
 nul

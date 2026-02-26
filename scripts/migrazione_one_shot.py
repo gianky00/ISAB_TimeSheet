@@ -17,7 +17,7 @@ def run_migration():
     db_manager.init_db()
 
     # 2. Percorso del CSV
-    csv_path = project_root / "anagrafica_dipendenti.csv"
+    csv_path = project_root / "data/anagrafiche/anagrafica_dipendenti.csv"
 
     if not csv_path.exists():
         print(f"ERRORE: File {csv_path} non trovato!")
