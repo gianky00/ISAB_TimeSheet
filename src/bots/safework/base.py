@@ -115,6 +115,30 @@ class SafeworkBaseBot(BaseBot):
         # No sleep needed: invisibility check is sufficient
         return True
 
+    def _attendi_caricamento_sistema(self, timeout: int = 420):
+        """
+        Attesa specifica per SafeWork: rileva lo span 'Caricamento...' 
+        e ne attende la scomparsa completa.
+        """
+        if not self.driver or not self.wait:
+            return
+        xpath_caricamento = "//span[contains(text(), 'Caricamento...')]"
+        try:
+            # Attendiamo che appaia (se non è già apparso e scomparso velocemente)
+            with suppress(TimeoutException):
+                WebDriverWait(self.driver, 3).until(
+                    EC.visibility_of_element_located((By.XPATH, xpath_caricamento))
+                )
+            
+            # Attendiamo che scompaia
+            WebDriverWait(self.driver, timeout).until(
+                EC.invisibility_of_element_located((By.XPATH, xpath_caricamento))
+            )
+        except TimeoutException:
+            self.log("⚠️ Timeout attesa caricamento sistema (proseguo...)")
+
+        self._attendi_scomparsa_overlay()
+
     @property
     def name(self) -> str:
         return "SafeWorkBot"

@@ -22,6 +22,7 @@ class SafeWorkLocators:
     HOME_BUTTON = (By.ID, "topIcon-actHomePage")
     VISUALIZZA_ATTIVITA_BUTTON = (By.ID, "sideBar-actVisualizzaAttivita")
     RICERCA_PDL_BUTTON = (By.ID, "sideBar-actRicercaPdL")
+    RICERCA_VELOCE_PDL = (By.ID, "fldRicercaPdLVeloce")
 
     # Filtri Visualizza Attività
     NUM_PERMESSO_FIELD = (By.ID, "fldNumPermesso")
