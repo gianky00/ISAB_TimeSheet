@@ -118,7 +118,6 @@ class TelegramService(QObject):
             raise RuntimeError("Application must be initialized before adding handlers")
 
         # Wrappers to pass 'self' (the service instance) to handlers
-        async def wrap_cmd(handler):
             return lambda u, c: handler(self, u, c)
 
         # Commands

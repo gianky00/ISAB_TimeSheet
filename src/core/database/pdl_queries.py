@@ -37,7 +37,6 @@ class PDLQueries:
             return []
 
     @classmethod
-    def get_pdl_created_in_range(cls, start_date: str, end_date: str) -> list[dict[str, Any]]:
         """
         Restituisce i PDL creati in un intervallo di date.
         Date in formato DD/MM/YYYY.
