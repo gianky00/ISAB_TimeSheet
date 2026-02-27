@@ -202,17 +202,30 @@ class SidebarWidget(QFrame):
                 QScrollArea > QWidget > QWidget { background: transparent; }
                 QWidget#scrollContent { background: transparent; }
             """
+
+        # Un nuovo gradiente di classe Enterprise
+        # Un mix di blu notte profondo, ciano scuro e leggeri riflessi viola per spezzare
+        # la piattezza e dare profondità e un feeling "Tech/Cyber".
+        gradient = """qlineargradient(
+            x1: 0, y1: 0, x2: 1, y2: 1,
+            stop: 0 #0f172a,   /* Base Deep Dark Blue (Top-Left) */
+            stop: 0.4 #172554, /* Dark Ocean Blue (Middle) */
+            stop: 0.8 #081121, /* Very Dark Blue (Bottom-Right) */
+            stop: 1 #1e1b4b    /* Subtle Violet/Indigo touch at the very end */
+        )"""
+
         return f"""
             QFrame#sidebarFrame {{
-                background-color: {COLORS["glass_dark"]};
-                border-right: 1px solid {COLORS["glass_border"]};
-                border-radius: 15px;
+                background: {gradient};
+                border-right: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 18px;
             }}
             QScrollArea {{ border: none; background: transparent; }}
             QScrollArea > QWidget > QWidget {{ background: transparent; }}
             QWidget#scrollContent {{ background: transparent; }}
             QScrollBar:vertical {{ border: none; background: transparent; width: 4px; }}
-            QScrollBar::handle:vertical {{ background: {hex_to_rgba(COLORS["bg_white"], 0.1)}; border-radius: 2px; }}
+            QScrollBar::handle:vertical {{ background: {hex_to_rgba(COLORS["bg_white"], 0.15)}; border-radius: 2px; }}
+            QScrollBar::handle:vertical:hover {{ background: {hex_to_rgba(COLORS["bg_white"], 0.25)}; }}
         """
 
     def _setup_ui(self) -> None:
