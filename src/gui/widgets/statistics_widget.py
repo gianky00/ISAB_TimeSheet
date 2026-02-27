@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
@@ -48,7 +49,7 @@ class StatisticsWidget(QWidget):
         layout.addWidget(table_title)
 
         # Table
-        self.table = QTableWidget()
+        self.table = StandardTable()
         v_header = self.table.verticalHeader()
         if v_header is not None:
             v_header.setVisible(False)
@@ -64,7 +65,7 @@ class StatisticsWidget(QWidget):
         layout.addWidget(self.table)
 
         # Refresh Button
-        refresh_btn = QPushButton("  Aggiorna Statistiche")
+        refresh_btn = PrimaryButton("  Aggiorna Statistiche")
         refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), COLORS["text_dark"]))
         refresh_btn.setFixedWidth(200)
         refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)

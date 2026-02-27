@@ -3,6 +3,7 @@ from io import StringIO
 from pathlib import Path
 
 import pandas as pd
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QFileDialog,
@@ -60,7 +61,7 @@ class LyraPanel(QWidget):
         self.table_toolbar = QWidget()
         self.table_toolbar.setVisible(False)
         tb_layout = QHBoxLayout(self.table_toolbar)
-        self.btn_export_table = QPushButton("Esporta ultima tabella Excel")
+        self.btn_export_table = PrimaryButton("Esporta ultima tabella Excel")
         self.btn_export_table.setStyleSheet(
             f"background-color: {COLORS['success_dark']}; color: white; padding: 5px 10px; font-weight: bold; border-radius: 4px;"
         )
@@ -80,7 +81,7 @@ class LyraPanel(QWidget):
         self.att_label.setStyleSheet(f"color: {COLORS['purple_deep']}; font-weight: bold;")
         att_layout.addWidget(self.att_label)
         att_layout.addStretch()
-        btn_remove = QPushButton("X")
+        btn_remove = PrimaryButton("X")
         btn_remove.setFixedSize(20, 20)
         btn_remove.clicked.connect(self._remove_attachment)
         att_layout.addWidget(btn_remove)

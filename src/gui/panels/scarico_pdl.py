@@ -7,6 +7,7 @@ import traceback
 from pathlib import Path
 from typing import Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import QSize, Qt, QTimer
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -204,7 +205,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.print_check.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 500;")
         hbox_print.addWidget(self.print_check)
 
-        self.printer_combo = QComboBox()
+        self.printer_combo = FilterComboBox()
         self.printer_combo.setMinimumHeight(38)
         self.printer_combo.setMinimumWidth(180)
         self.printer_combo.setStyleSheet(COMBOBOX_STYLE)

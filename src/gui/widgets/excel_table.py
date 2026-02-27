@@ -8,6 +8,7 @@ Include classi per tabelle di sola lettura, editabili e componenti grafici di su
 from collections.abc import Sequence
 from typing import Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import (  # type: ignore[attr-defined]
     QEasingCurve,
     QPoint,
@@ -537,7 +538,7 @@ class EditableDataTable(QWidget):
             col_type = column.get("type", "text")
 
             if col_type == "combo":
-                combo = QComboBox()
+                combo = FilterComboBox()
                 combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
                 combo.setStyleSheet(
                     f"""
@@ -647,7 +648,7 @@ class EditableDataTable(QWidget):
             value = row_data.get(key, "")
 
             if col_type == "combo":
-                combo = QComboBox()
+                combo = FilterComboBox()
                 combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
                 combo.setStyleSheet(
                     f"""

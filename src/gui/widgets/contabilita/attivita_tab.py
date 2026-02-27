@@ -9,6 +9,7 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any, ClassVar
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QColor
 from PyQt6.QtWidgets import (
@@ -95,7 +96,7 @@ class AttivitaProgrammateTab(QWidget):
 
         filter_layout.addSpacing(20)
         filter_layout.addWidget(QLabel("Area:"))
-        self.combo_area = QComboBox()
+        self.combo_area = FilterComboBox()
         self.combo_area.setMinimumWidth(150)
         self.combo_area.addItem("Tutte")
         self.combo_area.currentTextChanged.connect(self.apply_filters)
@@ -103,13 +104,13 @@ class AttivitaProgrammateTab(QWidget):
 
         filter_layout.addSpacing(15)
         filter_layout.addWidget(QLabel("Stato PdL:"))
-        self.combo_stato = QComboBox()
+        self.combo_stato = FilterComboBox()
         self.combo_stato.setMinimumWidth(150)
         self.combo_stato.addItem("Tutti")
         self.combo_stato.currentTextChanged.connect(self.apply_filters)
         filter_layout.addWidget(self.combo_stato)
 
-        self.btn_reset = QPushButton("Reset Filtri")
+        self.btn_reset = PrimaryButton("Reset Filtri")
         self.btn_reset.clicked.connect(self._reset_filters)
         filter_layout.addWidget(self.btn_reset)
         filter_layout.addStretch()

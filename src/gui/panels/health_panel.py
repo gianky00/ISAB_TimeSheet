@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Any
 
 from PyQt6.QtCore import QRectF, Qt, QTimer
-from PyQt6.QtGui import QColor, QFont, QPainter, QPen
+from PyQt6.QtGui import QColor, QFont, QPainter, QPaintEvent, QPen
 from PyQt6.QtWidgets import (
     QFrame,
     QGridLayout,

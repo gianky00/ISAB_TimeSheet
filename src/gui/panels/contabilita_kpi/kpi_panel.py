@@ -2,6 +2,7 @@ from contextlib import suppress
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import (
     QAbstractAnimation,
     QEasingCurve,
@@ -74,7 +75,7 @@ class ContabilitaKPIPanel(QWidget):
         toolbar.addWidget(cal_icon)
         toolbar.addWidget(QLabel("Analisi per Anno:"))
 
-        self.year_combo = QComboBox()
+        self.year_combo = FilterComboBox()
         self.year_combo.setMinimumWidth(100)
         self.year_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.year_combo.setStyleSheet(

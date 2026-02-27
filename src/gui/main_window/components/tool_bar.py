@@ -6,6 +6,7 @@ Inizializza la sidebar, il banner degli aggiornamenti e la barra di ricerca glob
 
 from typing import Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import QObject
 from PyQt6.QtWidgets import QLineEdit, QVBoxLayout, QWidget
 
@@ -64,7 +65,7 @@ class ToolBarComponent(QObject):
         search_layout = QHBoxLayout()
         search_layout.setContentsMargins(75, 0, 0, 0) # Spazio per il logo fluttuante
 
-        self.global_search = QLineEdit()
+        self.global_search = SearchInput()
         self.global_search.setPlaceholderText("Ricerca Universale (OdA, Dipendenti, Log...) - Ctrl+F")
         self.global_search.setMinimumHeight(40)
         self.global_search.returnPressed.connect(

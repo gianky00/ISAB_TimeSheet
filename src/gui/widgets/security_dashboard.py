@@ -1,3 +1,4 @@
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QFrame,
@@ -56,7 +57,7 @@ class SecurityDashboard(QWidget):
         header_layout.addWidget(title)
         header_layout.addStretch()
 
-        integrity_btn = QPushButton("Verifica Integrità")
+        integrity_btn = PrimaryButton("Verifica Integrità")
         integrity_btn.setIcon(get_colored_icon(get_asset_path(Icons.SHIELD), "white"))
         integrity_btn.setStyleSheet(
             f"""

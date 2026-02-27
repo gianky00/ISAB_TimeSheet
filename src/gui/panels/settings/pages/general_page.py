@@ -1,5 +1,6 @@
 from typing import Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -56,7 +57,7 @@ class GeneralPage(QWidget):
         # Provider
         provider_layout = QHBoxLayout()
         provider_layout.addWidget(QLabel("AI Provider:"))
-        self.provider_combo = QComboBox()
+        self.provider_combo = FilterComboBox()
         self.provider_combo.addItems(["gemini", "ollama"])
         self.provider_combo.setMinimumHeight(40)
         style_input(self.provider_combo)
@@ -82,7 +83,7 @@ class GeneralPage(QWidget):
         model_container = QHBoxLayout()
         model_container.addWidget(QLabel("Modello AI:"))
 
-        self.model_combo = QComboBox()
+        self.model_combo = FilterComboBox()
         self.model_combo.setEditable(True)  # Permette inserimento manuale se fetch fallisce
         self.model_combo.setMinimumHeight(40)
         self.model_combo.setMinimumWidth(200)
@@ -90,7 +91,7 @@ class GeneralPage(QWidget):
         self.model_combo.currentTextChanged.connect(self.settings_changed.emit)
         model_container.addWidget(self.model_combo, 1)
 
-        self.btn_refresh_models = QPushButton("Aggiorna Lista")
+        self.btn_refresh_models = PrimaryButton("Aggiorna Lista")
         self.btn_refresh_models.setMinimumHeight(40)
         style_button(self.btn_refresh_models)
         self.btn_refresh_models.clicked.connect(self.refresh_models)

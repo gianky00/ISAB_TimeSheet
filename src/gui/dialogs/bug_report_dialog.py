@@ -9,6 +9,7 @@ import os
 from contextlib import suppress
 from pathlib import Path
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -229,13 +230,13 @@ class BugReportDialog(QDialog):
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
 
-        self.btn_cancel = QPushButton("Annulla")
+        self.btn_cancel = PrimaryButton("Annulla")
         self.btn_cancel.setStyleSheet(
             f"background-color: {COLORS['text_muted']}; color: white; border-radius: 6px; padding: 10px 20px;"
         )
         self.btn_cancel.clicked.connect(self.reject)
 
-        self.btn_send = QPushButton("Genera e Invia")
+        self.btn_send = PrimaryButton("Genera e Invia")
         self.btn_send.clicked.connect(self.start_generation)
 
         btn_layout.addWidget(self.btn_cancel)

@@ -1,3 +1,4 @@
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -155,7 +156,7 @@ class DipendentiManagerPanel(QWidget):
         search_v.setSpacing(4)
         lbl_search = QLabel("CERCA DIPENDENTE")
         lbl_search.setStyleSheet(LABEL_MUTED)
-        self.search_bar = QLineEdit()
+        self.search_bar = SearchInput()
         self.search_bar.setPlaceholderText("Nome, Badge o CF...")
         self.search_bar.setFixedWidth(300)
         self.search_bar.setStyleSheet(LINEEDIT_STYLE)
@@ -201,7 +202,7 @@ class DipendentiManagerPanel(QWidget):
         self.main_layout.addWidget(self.toolbar_card)
 
     def _setup_table(self):
-        self.table = QTableWidget()
+        self.table = StandardTable()
         self.table.setColumnCount(6)
         self.table.setHorizontalHeaderLabels(
             ["ID", "Cognome", "Nome", "Badge", "Codice Fiscale", "Assunzione"]

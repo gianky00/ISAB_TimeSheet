@@ -1,3 +1,4 @@
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton
 
@@ -32,7 +33,7 @@ class UpdateBanner(QFrame):
 
         layout.addStretch()
 
-        self.download_btn = QPushButton("Scarica e Installa")
+        self.download_btn = PrimaryButton("Scarica e Installa")
         self.download_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.download_btn.clicked.connect(self._on_download_clicked)
         layout.addWidget(self.download_btn)

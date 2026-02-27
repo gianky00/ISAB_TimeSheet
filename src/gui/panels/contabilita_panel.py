@@ -9,6 +9,7 @@ from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QFrame,
@@ -127,7 +128,7 @@ class ContabilitaPanel(QWidget):
         search_v.setSpacing(4)
         lbl_search = QLabel("CERCA NEI DATI")
         lbl_search.setStyleSheet(LABEL_MUTED)
-        self.search_input = QLineEdit()
+        self.search_input = SearchInput()
         self.search_input.setPlaceholderText("Cerca ovunque...")
         self.search_input.setClearButtonEnabled(True)
         self.search_input.setMinimumWidth(300)

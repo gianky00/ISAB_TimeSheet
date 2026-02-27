@@ -1,5 +1,6 @@
 from typing import Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from src.core import config_manager
@@ -29,7 +30,7 @@ class DiagPage(QWidget):
 
         diag_layout.addStretch()
 
-        open_folder_btn = QPushButton("  Apri Cartella Dati")
+        open_folder_btn = PrimaryButton("  Apri Cartella Dati")
         open_folder_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
         open_folder_btn.clicked.connect(self._open_data_folder)
         style_button(open_folder_btn)

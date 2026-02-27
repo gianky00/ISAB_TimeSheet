@@ -3,6 +3,7 @@ SyncroJob - MultiSelect Filter Widget
 Widget professionale per la selezione multipla con ricerca e chip.
 """
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QDialog,
@@ -34,7 +35,7 @@ class MultiSelectDialog(QDialog):
         layout.setSpacing(10)
 
         # Ricerca
-        self.search_input = QLineEdit()
+        self.search_input = SearchInput()
         self.search_input.setPlaceholderText("Cerca...")
         self.search_input.setClearButtonEnabled(True)
         self.search_input.textChanged.connect(self._filter_items)

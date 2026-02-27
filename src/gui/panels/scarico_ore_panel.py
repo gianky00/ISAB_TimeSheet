@@ -10,6 +10,7 @@ import time
 from contextlib import suppress
 from datetime import datetime
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import QItemSelection, Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QKeySequence
 from PyQt6.QtWidgets import (
@@ -178,7 +179,7 @@ class ScaricoOrePanel(QWidget):
         search_v.setSpacing(4)
         lbl_search = QLabel("CERCA PERSONALE / ODA")
         lbl_search.setStyleSheet(LABEL_MUTED)
-        self.search_input = QLineEdit()
+        self.search_input = SearchInput()
         self.search_input.setPlaceholderText("Filtra dati (Premi Invio)...")
         self.search_input.setMinimumWidth(300)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)

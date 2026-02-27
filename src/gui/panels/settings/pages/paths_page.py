@@ -2,6 +2,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -94,7 +95,7 @@ class PathsPage(QWidget):
         edit.textChanged.connect(lambda: self._validate_path(edit))
         row.addWidget(edit)
 
-        btn = QPushButton("Sfoglia")
+        btn = PrimaryButton("Sfoglia")
         btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), COLORS["text_dark"]))
         btn.setMinimumHeight(40)
         btn.setMinimumWidth(120)

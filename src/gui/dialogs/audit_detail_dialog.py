@@ -2,6 +2,7 @@ import json
 from contextlib import suppress
 from datetime import datetime
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import (
@@ -80,7 +81,7 @@ class AuditDetailDialog(QDialog):
         btn_layout = QHBoxLayout()
 
         # Copia JSON
-        btn_copy = QPushButton("Copia JSON")
+        btn_copy = PrimaryButton("Copia JSON")
         btn_copy.setIcon(get_colored_icon(get_asset_path(Icons.FILE_TEXT), COLORS["text_dark"]))
         btn_copy.clicked.connect(self._copy_to_clipboard)
         btn_copy.setStyleSheet(
@@ -97,7 +98,7 @@ class AuditDetailDialog(QDialog):
         btn_layout.addStretch()
 
         # Chiudi
-        btn_close = QPushButton("Chiudi")
+        btn_close = PrimaryButton("Chiudi")
         btn_close.clicked.connect(self.accept)
         btn_close.setStyleSheet(
             f"""

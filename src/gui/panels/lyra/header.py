@@ -1,3 +1,4 @@
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import QSize, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -33,7 +34,7 @@ class LyraHeader(QFrame):
         title.setStyleSheet("font-size: 20px; font-weight: bold; color: white;")
         layout.addWidget(title)
 
-        self.model_combo = QComboBox()
+        self.model_combo = FilterComboBox()
         self.model_combo.setMinimumWidth(180)
         self.model_combo.currentTextChanged.connect(self.model_changed.emit)
         self.model_combo.setStyleSheet(
@@ -63,7 +64,7 @@ class LyraHeader(QFrame):
         layout.addWidget(subtitle)
         layout.addStretch()
 
-        self.export_btn = QPushButton("Esporta Chat")
+        self.export_btn = PrimaryButton("Esporta Chat")
         self.export_btn.setStyleSheet(
             """
             QPushButton {

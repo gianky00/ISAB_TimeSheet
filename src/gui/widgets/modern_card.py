@@ -3,6 +3,8 @@ SyncroJob - Modern Card Widget
 Un contenitore elegante con ombre morbide, angoli arrotondati e animazioni hover.
 """
 
+from typing import Any
+
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QFrame, QGraphicsDropShadowEffect, QVBoxLayout, QWidget

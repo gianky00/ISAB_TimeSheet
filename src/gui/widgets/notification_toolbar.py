@@ -5,6 +5,7 @@ Include filter chips, search bar, sort dropdown e bulk actions menu.
 
 from typing import Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -162,7 +163,7 @@ class NotificationToolbar(QWidget):
         lbl_search = QLabel("CERCA NOTIFICHE")
         lbl_search.setStyleSheet(LABEL_MUTED)
 
-        self.search_input = QLineEdit()
+        self.search_input = SearchInput()
         self.search_input.setPlaceholderText("Oggetto, Messaggio...")
         self.search_input.setFixedWidth(250)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)
@@ -214,7 +215,7 @@ class NotificationToolbar(QWidget):
         lbl_sort = QLabel("ORDINA")
         lbl_sort.setStyleSheet(LABEL_MUTED)
 
-        self.sort_combo = QComboBox()
+        self.sort_combo = FilterComboBox()
         self.sort_combo.addItem("Data (recenti)", "date_desc")
         self.sort_combo.addItem("Data (vecchie)", "date_asc")
         self.sort_combo.addItem("Priorità", "priority")

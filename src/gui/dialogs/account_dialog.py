@@ -1,3 +1,4 @@
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -82,7 +83,7 @@ class AccountDialog(QDialog):
         form.addRow("Password:", pass_layout)
 
         # Account Type (Optional, shown for SafeWork)
-        self.type_combo = QComboBox()
+        self.type_combo = FilterComboBox()
         self.type_combo.addItems(["Esecutore", "ISAB"])
         self.type_combo.setMinimumHeight(35)
         if account_type:

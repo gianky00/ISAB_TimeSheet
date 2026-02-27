@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import QRectF, Qt
 from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath
 from PyQt6.QtWidgets import (
@@ -792,7 +793,7 @@ class ProgrammazioneTab(QWidget):
             )
             group_layout = QVBoxLayout(group_box)
 
-            table = QTableWidget()
+            table = StandardTable()
             table.setColumnCount(12)
             table.setAlternatingRowColors(True)
             table.setRowCount(len(group_results))

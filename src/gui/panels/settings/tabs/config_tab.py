@@ -6,6 +6,7 @@ Sostituisce il vecchio QToolBox con un design 'System Hub' ad alta leggibilità.
 
 from typing import Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
@@ -142,7 +143,7 @@ class ConfigTab(QWidget):
         search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_light"]).pixmap(16, 16))
         header_layout.addWidget(search_icon)
 
-        self.search_bar = QLineEdit()
+        self.search_bar = SearchInput()
         self.search_bar.setPlaceholderText("Filtra impostazioni...")
         self.search_bar.setStyleSheet("border: none; background: transparent; font-size: 13px; font-weight: 500;")
         self.search_bar.textChanged.connect(self._filter_cards)

@@ -5,6 +5,7 @@ Pannello per la gestione dei backup e dei log strutturato a Card.
 
 from typing import Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QFrame,
@@ -128,7 +129,7 @@ class BackupTab(QWidget):
         search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_light"]).pixmap(16, 16))
         header_layout.addWidget(search_icon)
 
-        self.search_bar = QLineEdit()
+        self.search_bar = SearchInput()
         self.search_bar.setPlaceholderText("Cerca funzioni backup...")
         self.search_bar.setStyleSheet("border: none; background: transparent; font-size: 13px; font-weight: 500;")
         self.search_bar.textChanged.connect(self._filter_cards)

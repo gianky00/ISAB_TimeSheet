@@ -5,6 +5,7 @@ Pannello per il bot Ricerca PDL (SafeWork).
 
 from typing import Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -98,7 +99,7 @@ class RicercaPDLPanel(BaseBotPanel):
         lbl_site.setStyleSheet(LABEL_MUTED)
         vbox_site.addWidget(lbl_site)
 
-        self.site_combo = QComboBox()
+        self.site_combo = FilterComboBox()
         self.site_combo.addItems(["Seleziona tutto", "IGCC", "ISAB Nord", "ISAB Sud"])
         self.site_combo.setMinimumWidth(200)
         self.site_combo.setStyleSheet(COMBOBOX_STYLE)

@@ -3,6 +3,7 @@ SyncroJob - Help Panel (Next-Gen)
 Pannello Guida interattivo con estetica 'Knowledge Hub', navigazione fluida e contenuti professionali.
 """
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import QSize, Qt, QTimer
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
@@ -123,7 +124,7 @@ class HelpPanel(QWidget):
         )
         search_h_layout.addWidget(search_icon)
 
-        self.search_edit = QLineEdit()
+        self.search_edit = SearchInput()
         self.search_edit.setPlaceholderText("Cerca modulo o comando...")
         self.search_edit.setStyleSheet(
             "border: none; padding: 12px 0; font-size: 14px; background: transparent;"

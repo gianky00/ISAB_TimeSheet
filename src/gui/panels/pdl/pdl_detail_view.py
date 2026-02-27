@@ -9,6 +9,7 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
@@ -77,7 +78,7 @@ class PDLDetailView(QWidget):
         cron_label.setStyleSheet(f"font-weight: bold; font-size: 13px; color: {COLORS['success_dark']}; margin-top: 10px;")
         layout.addWidget(cron_label)
 
-        self.cron_table = QTableWidget()
+        self.cron_table = StandardTable()
         self.cron_table.setColumnCount(5)
         self.cron_table.setHorizontalHeaderLabels(["Data", "Fonte", "Tecnico", "Ore", "Descrizione"])
         if header := self.cron_table.horizontalHeader():

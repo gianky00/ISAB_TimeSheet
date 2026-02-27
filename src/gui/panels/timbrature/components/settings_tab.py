@@ -1,5 +1,6 @@
 from typing import Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -69,7 +70,7 @@ class TimbratureSettingsTab(QWidget):
         layout.addLayout(filter_layout)
 
         # Table
-        self.settings_table = QTableWidget()
+        self.settings_table = StandardTable()
         self.settings_table.setStyleSheet(f"""
             QTableWidget {{
                 gridline-color: {COLORS['bg_alt']};
@@ -132,12 +133,12 @@ class TimbratureSettingsTab(QWidget):
         self.settings_table.setItem(row_idx, 1, item_cognome)
 
         # Combos
-        combo_rep = QComboBox()
+        combo_rep = FilterComboBox()
         combo_rep.addItems(["", *self.reparti])
         combo_rep.setCurrentText(str(emp["reparto"]))
         combo_rep.setStyleSheet("QComboBox { border: none; background: transparent; }")
 
-        combo_cant = QComboBox()
+        combo_cant = FilterComboBox()
         combo_cant.addItems(["", *self.cantieri])
         combo_cant.setCurrentText(str(emp["cantiere"]))
         combo_cant.setStyleSheet("QComboBox { border: none; background: transparent; }")

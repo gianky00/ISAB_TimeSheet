@@ -7,6 +7,7 @@ Gestisce il salvataggio automatico e l'import/export della configurazione.
 
 from pathlib import Path
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QVBoxLayout, QWidget
 
@@ -85,9 +86,9 @@ class SettingsPanel(QWidget):
         actions_layout = QHBoxLayout()
         actions_layout.setContentsMargins(10, 0, 10, 10)
 
-        self.btn_import = QPushButton("Importa Config")
-        self.btn_export = QPushButton("Esporta Config")
-        self.btn_reset = QPushButton("Reset Fabbrica")
+        self.btn_import = PrimaryButton("Importa Config")
+        self.btn_export = PrimaryButton("Esporta Config")
+        self.btn_reset = PrimaryButton("Reset Fabbrica")
 
         style_button(self.btn_import)
         style_button(self.btn_export)

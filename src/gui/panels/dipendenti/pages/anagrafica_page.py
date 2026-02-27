@@ -2,6 +2,7 @@ import csv
 import logging
 from datetime import UTC, datetime
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import (
     QDate,
     Qt,
@@ -125,7 +126,7 @@ class AnagraficaPage(QWidget):
         search_label = QLabel("CERCA DIPENDENTE")
         from src.gui.styles import LABEL_MUTED, LINEEDIT_STYLE
         search_label.setStyleSheet(LABEL_MUTED)
-        self.search_input = QLineEdit()
+        self.search_input = SearchInput()
         self.search_input.setPlaceholderText("Nome, Cognome, CF o Badge...")
         self.search_input.setMinimumWidth(300)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)

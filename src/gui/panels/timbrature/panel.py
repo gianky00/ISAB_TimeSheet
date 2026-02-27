@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -119,7 +120,7 @@ class TimbratureDBPanel(QWidget):
         from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
         lbl_search = QLabel("CERCA PERSONALE")
         lbl_search.setStyleSheet(LABEL_MUTED)
-        self.search_input = QLineEdit()
+        self.search_input = SearchInput()
         self.search_input.setPlaceholderText("Cognome, Nome...")
         self.search_input.setClearButtonEnabled(True)
         self.search_input.setMinimumWidth(200)
@@ -145,7 +146,7 @@ class TimbratureDBPanel(QWidget):
         rep_v.setSpacing(4)
         lbl_rep = QLabel("REPARTO")
         lbl_rep.setStyleSheet(LABEL_MUTED)
-        self.reparto_filter = QComboBox()
+        self.reparto_filter = FilterComboBox()
         self.reparto_filter.setMinimumWidth(150)
         self.reparto_filter.setStyleSheet(COMBOBOX_STYLE)
         self.reparto_filter.currentIndexChanged.connect(self.refresh_data)
@@ -158,7 +159,7 @@ class TimbratureDBPanel(QWidget):
         cant_v.setSpacing(4)
         lbl_cant = QLabel("CANTIERE")
         lbl_cant.setStyleSheet(LABEL_MUTED)
-        self.cantiere_filter = QComboBox()
+        self.cantiere_filter = FilterComboBox()
         self.cantiere_filter.setMinimumWidth(150)
         self.cantiere_filter.setStyleSheet(COMBOBOX_STYLE)
         self.cantiere_filter.currentIndexChanged.connect(self.refresh_data)

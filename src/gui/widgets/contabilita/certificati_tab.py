@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QBrush, QColor, QIcon, QPainter, QPixmap
 from PyQt6.QtWidgets import (
@@ -199,7 +200,7 @@ class ScadenzeAnalysisDialog(QDialog):
         footer_layout.addStretch()
 
         # Pulsante Invia Email
-        email_btn = QPushButton("Invia Email")
+        email_btn = PrimaryButton("Invia Email")
         email_btn.setStyleSheet(
             f"""
             QPushButton {{
@@ -221,7 +222,7 @@ class ScadenzeAnalysisDialog(QDialog):
 
         footer_layout.addSpacing(10)
 
-        close_btn = QPushButton("Chiudi")
+        close_btn = PrimaryButton("Chiudi")
         close_btn.setStyleSheet(
             f"""
             QPushButton {{
@@ -604,7 +605,7 @@ class CertificatiCampioneTab(QWidget):
         toolbar = QHBoxLayout()
 
         # Gruppo espansione
-        btn_expand = QPushButton("Espandi Tutto")
+        btn_expand = PrimaryButton("Espandi Tutto")
         btn_expand.setIcon(QIcon(get_asset_path(Icons.FOLDER_OPEN)))
         btn_expand.clicked.connect(self.tree.expandAll)
         btn_expand.setStyleSheet(
@@ -623,7 +624,7 @@ class CertificatiCampioneTab(QWidget):
         """
         )
 
-        btn_collapse = QPushButton("Comprimi Tutto")
+        btn_collapse = PrimaryButton("Comprimi Tutto")
         btn_collapse.setIcon(QIcon(get_asset_path(Icons.FOLDER)))
         btn_collapse.clicked.connect(self.tree.collapseAll)
         btn_collapse.setStyleSheet(
@@ -686,7 +687,7 @@ class CertificatiCampioneTab(QWidget):
         toolbar.addStretch()
 
         # Pulsante analisi con stile migliorato
-        self.btn_analyze = QPushButton("Analizza Scadenze")
+        self.btn_analyze = PrimaryButton("Analizza Scadenze")
         self.btn_analyze.setIcon(QIcon(get_asset_path(Icons.BAR_CHART)))
         self.btn_analyze.clicked.connect(self._run_analysis)
         self.btn_analyze.setStyleSheet(

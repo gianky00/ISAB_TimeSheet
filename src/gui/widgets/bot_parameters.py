@@ -5,6 +5,7 @@ Widget riutilizzabile per la configurazione dei parametri comuni a tutti i bot (
 
 from contextlib import suppress
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import (  # type: ignore[attr-defined]
     QDate,
     QEasingCurve,
@@ -168,7 +169,7 @@ class BotParametersWidget(QWidget):
 
         hbox_forn = QHBoxLayout()
         hbox_forn.setSpacing(8)
-        self.fornitore_combo = QComboBox()
+        self.fornitore_combo = FilterComboBox()
         self.fornitore_combo.setMinimumHeight(38)
         self.fornitore_combo.setMinimumWidth(200)
         self.fornitore_combo.setStyleSheet(COMBOBOX_STYLE)

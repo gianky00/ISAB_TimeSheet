@@ -7,6 +7,7 @@ Supporta navigazione gerarchica, ricerca globale ricorsiva e modalità di input 
 from contextlib import suppress
 from typing import TYPE_CHECKING, Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import (
     QEasingCurve,
     QPropertyAnimation,
@@ -125,7 +126,7 @@ class CommandPaletteDialog(QDialog):
         search_layout = QVBoxLayout(search_container)
         search_layout.setContentsMargins(15, 15, 15, 15)
 
-        self.search_bar = QLineEdit()
+        self.search_bar = SearchInput()
         self.search_bar.setPlaceholderText("Type a command...")
         self.search_bar.setStyleSheet(
             f"QLineEdit {{ background-color: transparent; color: {text_color}; border: none; border-bottom: 2px solid {COLORS['glass_border']}; font-size: 20px; padding: 8px 4px; }} QLineEdit:focus {{ border-bottom: 2px solid {accent_color}; }}"

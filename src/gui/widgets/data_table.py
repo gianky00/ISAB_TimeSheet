@@ -5,6 +5,7 @@ Fornisce un'interfaccia ad alto livello con ricerca e pulsante di aggiornamento.
 
 from typing import Any, ClassVar
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import (  # type: ignore[attr-defined]
     QEasingCurve,
     QModelIndex,
@@ -143,7 +144,7 @@ class DataTable(QWidget):
         toolbar = QHBoxLayout()
 
         # Search
-        self._search_input = QLineEdit()
+        self._search_input = SearchInput()
         self._search_input.setPlaceholderText("Cerca...")
         self._search_input.setClearButtonEnabled(True)
         self._search_input.textChanged.connect(self._filter_rows)
@@ -164,7 +165,7 @@ class DataTable(QWidget):
         toolbar.addWidget(self._search_input, 1)
 
         # Actions
-        self._refresh_btn = QPushButton(" Aggiorna")
+        self._refresh_btn = PrimaryButton(" Aggiorna")
         self._refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), COLORS["text_dark"]))
         self._refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._refresh_btn.clicked.connect(self.refresh)

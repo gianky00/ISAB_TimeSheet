@@ -6,6 +6,7 @@ Widget per la configurazione dei filtri di ricerca e visualizzazione all'interno
 from collections.abc import Sequence
 from typing import Any
 
+from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
 from PyQt6.QtCore import QDate, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -87,7 +88,7 @@ class AuditFilterBar(ModernCard):
         cat_v.setSpacing(4)
         lbl_cat = QLabel("CATEGORIA")
         lbl_cat.setStyleSheet(LABEL_MUTED)
-        self.cat_combo = QComboBox()
+        self.cat_combo = FilterComboBox()
         self.cat_combo.addItem("Tutte")
         self.cat_combo.setMinimumWidth(140)
         self.cat_combo.setStyleSheet(COMBOBOX_STYLE)
@@ -99,7 +100,7 @@ class AuditFilterBar(ModernCard):
         lvl_v.setSpacing(4)
         lbl_lvl = QLabel("LIVELLO")
         lbl_lvl.setStyleSheet(LABEL_MUTED)
-        self.level_combo = QComboBox()
+        self.level_combo = FilterComboBox()
         self.level_combo.addItems(["Tutti", "Info (Low)", "Warning (Med)", "Error (High)"])
         self.level_combo.setMinimumWidth(130)
         self.level_combo.setStyleSheet(COMBOBOX_STYLE)
@@ -114,7 +115,7 @@ class AuditFilterBar(ModernCard):
         search_v.setSpacing(4)
         lbl_search = QLabel("TESTO")
         lbl_search.setStyleSheet(LABEL_MUTED)
-        self.search_edit = QLineEdit()
+        self.search_edit = SearchInput()
         self.search_edit.setPlaceholderText("Cerca nei log...")
         self.search_edit.setMinimumWidth(200)
         self.search_edit.setStyleSheet(LINEEDIT_STYLE)
