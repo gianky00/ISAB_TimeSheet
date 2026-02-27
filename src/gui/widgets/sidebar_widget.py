@@ -173,8 +173,10 @@ class SidebarWidget(QFrame):
 
         self.setMinimumWidth(self.collapsed_width)
         self.setMaximumWidth(self.collapsed_width)
+        self.setMinimumHeight(102)
+        self.setMaximumHeight(102) # Altezza fissa iniziale (solo logo)
         self.setMouseTracking(True)
-        self.setStyleSheet(self._get_glass_style())
+        self.setStyleSheet(self._get_glass_style(collapsed=True))
 
         self._setup_ui()
         self._update_ui_state()
@@ -189,7 +191,17 @@ class SidebarWidget(QFrame):
         self.setMinimumWidth(w)
         self.setMaximumWidth(w)
 
-    def _get_glass_style(self) -> str:
+    def _get_glass_style(self, collapsed: bool = False) -> str:
+        if collapsed:
+            return """
+                QFrame#sidebarFrame {
+                    background: transparent;
+                    border: none;
+                }
+                QScrollArea { border: none; background: transparent; }
+                QScrollArea > QWidget > QWidget { background: transparent; }
+                QWidget#scrollContent { background: transparent; }
+            """
         return f"""
             QFrame#sidebarFrame {{
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
@@ -319,6 +331,11 @@ class SidebarWidget(QFrame):
             f_layout.addWidget(footer_btn)
         layout.addWidget(self.footer)
 
+        # Nascondi elementi se parte collassata
+        if self._is_collapsed:
+            self.scroll_area.setVisible(False)
+            self.footer.setVisible(False)
+
         # Indicatore
         self.active_track = QWidget(self)
         self.active_track.setFixedWidth(5)
@@ -427,6 +444,22 @@ class SidebarWidget(QFrame):
 
         self.logo_opacity.setOpacity(0.0 if c else 1.0)
         self.logo_label.setVisible(not c)
+
+        # Mostra/nascondi le intere aree per un effetto "solo logo"
+        self.scroll_area.setVisible(not c)
+        self.footer.setVisible(not c)
+
+        if c:
+            self.active_track.hide()
+            self.setMinimumHeight(102)
+            self.setMaximumHeight(102)
+            self.setStyleSheet(self._get_glass_style(collapsed=True))
+        else:
+            parent = self.parentWidget()
+            parent_height = parent.height() if parent else 800
+            self.setMinimumHeight(parent_height - 20)
+            self.setMaximumHeight(parent_height - 20)
+            self.setStyleSheet(self._get_glass_style(collapsed=False))
 
         for b in self.main_btns + self.footer_btns:
             if hasattr(b, "set_collapsed"):
