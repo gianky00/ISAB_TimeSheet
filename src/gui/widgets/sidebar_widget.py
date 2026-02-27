@@ -157,9 +157,8 @@ class SidebarWidget(QFrame):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setObjectName("sidebarFrame")
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground) # Rende lo sfondo del widget trasparente a livello di sistema
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True) # Obbliga a dipingere il background custom via CSS
+        self.setObjectName("sidebarContainer")
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self._is_collapsed = True
         self.expanded_width = 245
         self.collapsed_width = 75
@@ -177,9 +176,9 @@ class SidebarWidget(QFrame):
         self.setMinimumHeight(60)
         self.setMaximumHeight(60) # Altezza fissa iniziale (solo logo allineato alla search bar)
         self.setMouseTracking(True)
-        self.setStyleSheet(self._get_glass_style(collapsed=True))
 
         self._setup_ui()
+        self.bg_frame.setStyleSheet(self._get_glass_style(collapsed=True))
         self._update_ui_state()
         QTimer.singleShot(500, self._update_track_instant)
 
@@ -217,7 +216,18 @@ class SidebarWidget(QFrame):
         """
 
     def _setup_ui(self) -> None:
-        layout = QVBoxLayout(self)
+        # Container layout
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        # Background frame that receives the gradient or transparency
+        self.bg_frame = QFrame(self)
+        self.bg_frame.setObjectName("sidebarFrame")
+        main_layout.addWidget(self.bg_frame)
+
+        # Inner layout for the components
+        layout = QVBoxLayout(self.bg_frame)
         layout.setContentsMargins(0, 7, 0, 20)
         layout.setSpacing(0)
 
@@ -457,15 +467,15 @@ class SidebarWidget(QFrame):
 
         if c:
             self.active_track.hide()
-            self.setMinimumHeight(102)
-            self.setMaximumHeight(102)
-            self.setStyleSheet(self._get_glass_style(collapsed=True))
+            self.setMinimumHeight(60)
+            self.setMaximumHeight(60)
+            self.bg_frame.setStyleSheet(self._get_glass_style(collapsed=True))
         else:
             parent = self.parentWidget()
             parent_height = parent.height() if parent else 800
             self.setMinimumHeight(parent_height - 20)
             self.setMaximumHeight(parent_height - 20)
-            self.setStyleSheet(self._get_glass_style(collapsed=False))
+            self.bg_frame.setStyleSheet(self._get_glass_style(collapsed=False))
 
         for b in self.main_btns + self.footer_btns:
             if hasattr(b, "set_collapsed"):
