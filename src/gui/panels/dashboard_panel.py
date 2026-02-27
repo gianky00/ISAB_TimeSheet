@@ -165,24 +165,65 @@ class DashboardPanel(QWidget):
     def _update_quick_stats(self):
         """Recupera dati reali dal DB per le card della dashboard."""
         from src.core.database import db_manager
+        from src.core.sync_tracker import SyncTracker
         with suppress(Exception):
-            # PDL Count
+            # 1. PDL Stats
             res = db_manager.execute_query(db_manager.DB_PDL, "SELECT COUNT(*) FROM pdl")
-            if res:
-                self.card_pdl.update_value(str(res[0][0]))
+            total_pdl = res[0][0] if res else 0
 
-            # Notif Count (Unread)
+            active_q = """
+                SELECT COUNT(*) FROM pdl
+                WHERE stato LIKE 'Aperto%'
+                   OR stato LIKE 'Emesso%'
+                   OR stato LIKE 'Richiesto%'
+                   OR stato LIKE 'Accettato%'
+            """
+            res_active = db_manager.execute_query(db_manager.DB_PDL, active_q)
+            active_pdl = res_active[0][0] if res_active else 0
+
+            last_sync = SyncTracker.get_formatted_status("pdl")
+            self.card_pdl.update_value(
+                str(total_pdl),
+                f"ATTIVE: {active_pdl} | CHIUSE: {total_pdl - active_pdl}",
+                f"Ultima Sincronizzazione: {last_sync}"
+            )
+
+            # 2. Notif Count (Unread)
             from src.core.notification_manager import NotificationManager
-            unread = len([n for n in NotificationManager.instance().get_notifications() if not n.read])
-            self.card_notif.update_value(str(unread))
+            notifs = NotificationManager.instance().get_notifications()
+            unread = [n for n in notifs if not n.get("read", False)]
+            errors = len([n for n in unread if n.get("level") == "error"])
+            warns = len([n for n in unread if n.get("level") == "warning"])
 
-            # Health Score
+            last_msg = ""
+            if unread:
+                last_msg = unread[0].get("message", "")[:40] + "..."
+
+            self.card_notif.update_value(
+                str(len(unread)),
+                f"ERRORI: {errors} | AVVISI: {warns}",
+                f"Ultimo alert: {last_msg}" if last_msg else "Nessun nuovo avviso"
+            )
+
+            # 3. Health Score & Bot Performance
             from src.core.logging.analytics import generate_analytics_report
+            from src.core.logging.viewer import LogViewer
+
             report = generate_analytics_report(hours=24)
-            score = report.health_score
-            self.card_health.update_value(f"{int(score)}%")
+            health_data = LogViewer().generate_health_report()
+
+            ok = health_data.get("bot_runs", {}).get("successful", 0)
+            ko = health_data.get("bot_runs", {}).get("failed", 0)
+            err_rate = health_data.get("error_rate_percent", 0)
+
+            self.card_health.update_value(
+                f"{int(report.health_score)}%",
+                f"BOT OK: {ok} | FALLITI: {ko}",
+                f"Tasso Errore: {err_rate:.1f}% nelle ultime 24h"
+            )
+
             self.card_health.icon_container.setStyleSheet(f"""
-                background-color: {COLORS["success_dark"] if score > 80 else COLORS["warning_orange"]}20;
+                background-color: {COLORS["success_dark"] if report.health_score > 80 else COLORS["warning_orange"]}20;
                 border-radius: 25px;
             """)
 

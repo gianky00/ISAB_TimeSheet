@@ -55,26 +55,56 @@ class DashboardStatCard(ModernCard):
 
         self.val_lbl = QLabel(value)
         self.val_lbl.setStyleSheet(f"""
-            font-size: 22px;
-            font-weight: 800;
+            font-size: 24px;
+            font-weight: 900;
             color: {COLORS["text_dark"]};
             background: transparent;
         """)
 
         self.title_lbl = QLabel(title.upper())
         self.title_lbl.setStyleSheet(f"""
-            font-size: 11px;
-            font-weight: 700;
+            font-size: 10px;
+            font-weight: 800;
             color: {COLORS["text_muted"]};
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             background: transparent;
+        """)
+
+        self.detail_lbl = QLabel("")
+        self.detail_lbl.setStyleSheet(f"""
+            font-size: 11px;
+            font-weight: 600;
+            color: {COLORS["text_dark"]};
+            background: transparent;
+            margin-top: 4px;
+        """)
+        
+        self.meta_lbl = QLabel("")
+        self.meta_lbl.setStyleSheet(f"""
+            font-size: 10px;
+            color: {COLORS["text_muted"]};
+            background: transparent;
+            font-style: italic;
         """)
 
         text_v.addWidget(self.val_lbl)
         text_v.addWidget(self.title_lbl)
+        text_v.addWidget(self.detail_lbl)
+        text_v.addWidget(self.meta_lbl)
         layout.addLayout(text_v)
 
         layout.addStretch()
 
-    def update_value(self, new_value: str) -> None:
+    def update_value(self, new_value: str, details: str = "", meta: str = "") -> None:
         self.val_lbl.setText(new_value)
+        if details:
+            self.detail_lbl.setText(details)
+            self.detail_lbl.show()
+        else:
+            self.detail_lbl.hide()
+            
+        if meta:
+            self.meta_lbl.setText(meta)
+            self.meta_lbl.show()
+        else:
+            self.meta_lbl.hide()
