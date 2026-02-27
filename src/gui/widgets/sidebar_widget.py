@@ -158,6 +158,7 @@ class SidebarWidget(QFrame):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setObjectName("sidebarFrame")
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground) # Rende lo sfondo del widget trasparente a livello di sistema
         self._is_collapsed = True
         self.expanded_width = 245
         self.collapsed_width = 75
@@ -172,8 +173,8 @@ class SidebarWidget(QFrame):
 
         self.setMinimumWidth(self.collapsed_width)
         self.setMaximumWidth(self.collapsed_width)
-        self.setMinimumHeight(102)
-        self.setMaximumHeight(102) # Altezza fissa iniziale (solo logo)
+        self.setMinimumHeight(60)
+        self.setMaximumHeight(60) # Altezza fissa iniziale (solo logo allineato alla search bar)
         self.setMouseTracking(True)
         self.setStyleSheet(self._get_glass_style(collapsed=True))
 
@@ -194,7 +195,7 @@ class SidebarWidget(QFrame):
         if collapsed:
             return """
                 QFrame#sidebarFrame {
-                    background: transparent;
+                    background-color: transparent;
                     border: none;
                 }
                 QScrollArea { border: none; background: transparent; }
@@ -203,7 +204,7 @@ class SidebarWidget(QFrame):
             """
         return f"""
             QFrame#sidebarFrame {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                     stop:0 {COLORS["glass_dark"]}, stop:1 {COLORS["glass_deep"]});
                 border-right: 1px solid {COLORS["glass_border"]};
                 border-radius: 15px;
@@ -217,24 +218,23 @@ class SidebarWidget(QFrame):
 
     def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 20, 0, 20)
+        layout.setContentsMargins(0, 7, 0, 20)
         layout.setSpacing(0)
 
         # Header
         self.header_container = QWidget()
         h_layout = QHBoxLayout(self.header_container)
-        h_layout.setContentsMargins(14, 12, 14, 12)
+        h_layout.setContentsMargins(14, 0, 14, 15)
         h_layout.setSpacing(12)
 
         self.logo_badge = QFrame()
         self.logo_badge.setFixedSize(46, 46)
-        border_color = hex_to_rgba(COLORS["teal_accent"], 0.5)
-        self.logo_badge.setStyleSheet(f"""
-            QFrame {{
+        self.logo_badge.setStyleSheet("""
+            QFrame {
                 background: white;
                 border-radius: 23px;
-                border: 2px solid {border_color};
-            }}
+                border: 2px solid black;
+            }
         """)
         logo_layout = QVBoxLayout(self.logo_badge)
         logo_layout.setContentsMargins(0, 0, 0, 0)
