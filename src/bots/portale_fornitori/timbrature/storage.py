@@ -334,6 +334,7 @@ class TimbratureStorage:
         """Imports an Excel file into the database."""
 
         def log(m):
+            """Internal logging helper."""
             log_callback(m) if log_callback else print(m)
 
         with suppress(Exception):

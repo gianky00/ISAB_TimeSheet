@@ -58,5 +58,6 @@ class AuditPaginationBar(QWidget):
         self.next_btn.setEnabled(disp < total_pages)
 
     def set_enabled(self, enabled: bool) -> None:
+        """Abilita o disabilita i pulsanti della barra."""
         self.prev_btn.setEnabled(enabled)
         self.next_btn.setEnabled(enabled)

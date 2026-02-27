@@ -17,12 +17,14 @@ class ModernCard(QFrame):
     """
 
     def __init__(self, parent: QWidget | None = None, elevation: int = 15) -> None:
+        """Inizializza la card con un livello di elevazione personalizzabile."""
         super().__init__(parent)
         self.elevation = elevation
         self._setup_base_style()
         self._setup_shadow()
 
     def _setup_base_style(self) -> None:
+        """Configura lo stile CSS base della card."""
         self.setObjectName("modernCard")
         self.setStyleSheet(f"""
             QFrame#modernCard {{
@@ -33,6 +35,7 @@ class ModernCard(QFrame):
         """)
 
     def _setup_shadow(self) -> None:
+        """Applica l'effetto ombra e prepara le animazioni."""
         self.shadow = QGraphicsDropShadowEffect(self)
         self.shadow.setBlurRadius(self.elevation)
         self.shadow.setXOffset(0)
@@ -45,7 +48,8 @@ class ModernCard(QFrame):
         self.shadow_anim.setDuration(200)
         self.shadow_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-    def enterEvent(self, event) -> None:
+    def enterEvent(self, event: Any) -> None:
+        """Gestisce l'effetto hover aumentando l'ombra e cambiando il bordo."""
         self.shadow_anim.setEndValue(self.elevation + 10)
         self.shadow_anim.start()
         self.setStyleSheet(f"""
@@ -57,7 +61,8 @@ class ModernCard(QFrame):
         """)
         super().enterEvent(event)
 
-    def leaveEvent(self, event) -> None:
+    def leaveEvent(self, event: Any) -> None:
+        """Ripristina lo stile originale all'uscita del mouse."""
         self.shadow_anim.setEndValue(self.elevation)
         self.shadow_anim.start()
         self._setup_base_style()
@@ -67,10 +72,12 @@ class ModernCard(QFrame):
 class ModernContentCard(ModernCard):
     """Card che include già un layout per i contenuti."""
     def __init__(self, parent: QWidget | None = None, elevation: int = 15) -> None:
+        """Inizializza la card con layout verticale integrato."""
         super().__init__(parent, elevation)
         self.content_layout = QVBoxLayout(self)
         self.content_layout.setContentsMargins(15, 15, 15, 15)
         self.content_layout.setSpacing(10)
 
     def addWidget(self, widget: QWidget) -> None:
+        """Aggiunge un widget al layout dei contenuti della card."""
         self.content_layout.addWidget(widget)

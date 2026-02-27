@@ -217,7 +217,7 @@ class DashboardPanel(QWidget):
             err_rate = health_data.get("error_rate_percent", 0)
 
             self.card_health.update_value(
-                f"{int(report.health_score)}%",
+                f"{report.health_score}%",
                 f"BOT OK: {ok} | FALLITI: {ko}",
                 f"Tasso Errore: {err_rate:.1f}% nelle ultime 24h"
             )

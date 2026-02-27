@@ -96,6 +96,7 @@ class DashboardStatCard(ModernCard):
         layout.addStretch()
 
     def update_value(self, new_value: str, details: str = "", meta: str = "") -> None:
+        """Aggiorna i valori visualizzati nella card."""
         self.val_lbl.setText(new_value)
         if details:
             self.detail_lbl.setText(details)

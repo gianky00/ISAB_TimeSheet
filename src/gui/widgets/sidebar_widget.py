@@ -184,14 +184,17 @@ class SidebarWidget(QFrame):
 
     @pyqtProperty(int)
     def sidebar_width(self) -> int:
+        """Restituisce la larghezza corrente della sidebar."""
         return self.minimumWidth()
 
     @sidebar_width.setter  # type: ignore[no-redef]
     def sidebar_width(self, w: int) -> None:
+        """Imposta la larghezza della sidebar."""
         self.setMinimumWidth(w)
         self.setMaximumWidth(w)
 
     def _get_glass_style(self, collapsed: bool = False) -> str:
+        """Genera lo stile CSS dinamico per l'effetto vetro."""
         if collapsed:
             return """
                 QFrame#sidebarFrame {
@@ -229,6 +232,7 @@ class SidebarWidget(QFrame):
         """
 
     def _setup_ui(self) -> None:
+        """Inizializza l'interfaccia utente della sidebar."""
         # Container layout
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -264,8 +268,7 @@ class SidebarWidget(QFrame):
         self.logo_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         from PyQt6.QtGui import QIcon
-        icon = QIcon(get_asset_path("assets/app.ico"))
-        pix = icon.pixmap(64, 64) # Carica una risoluzione maggiore per evitare sgranature
+        pix = QIcon(get_asset_path("assets/app.ico")).pixmap(64, 64) # Carica una risoluzione maggiore per evitare sgranature
         if not pix.isNull():
             self.logo_badge.setPixmap(
                 pix.scaled(
@@ -393,12 +396,14 @@ class SidebarWidget(QFrame):
         self.btn_settings.clicked.connect(lambda: self.navigation_requested.emit(7))
 
     def _on_group_expanded(self, group: SidebarGroup) -> None:
+        """Gestisce l'espansione di un gruppo chiudendo gli altri (Accordion)."""
         for g in (self.group_automazioni, self.group_db, self.group_notifiche):
             if g != group:
                 g.collapse()
         QTimer.singleShot(100, self._update_track)
 
     def _animate_track(self, target_widget: QWidget) -> None:
+        """Esegue l'animazione dell'indicatore verso il widget target."""
         if not target_widget or not target_widget.isVisible():
             return
         pos = target_widget.mapTo(self, QPoint(0, 0))
@@ -436,9 +441,11 @@ class SidebarWidget(QFrame):
         self.active_track.hide()
 
     def _update_track_instant(self) -> None:
+        """Aggiorna la posizione del track istantaneamente."""
         self._update_track()
 
     def set_active_button(self, index: int, sub_index: int | None = None) -> None:
+        """Sincronizza lo stato dei pulsanti con l'indice di navigazione."""
         btns = {0: self.btn_home, 2: self.btn_lyra, 7: self.btn_settings, 8: self.btn_help}
         for i, b in btns.items():
             b.setChecked(i == index)
@@ -455,14 +462,17 @@ class SidebarWidget(QFrame):
         QTimer.singleShot(150, self._update_track)
 
     def enterEvent(self, e: Any) -> None:
+        """Espande la sidebar al passaggio del mouse."""
         self._set_collapsed(False)
         super().enterEvent(e)
 
     def leaveEvent(self, e: Any) -> None:
+        """Comprime la sidebar quando il mouse esce."""
         self._set_collapsed(True)
         super().leaveEvent(e)
 
     def _set_collapsed(self, c: bool) -> None:
+        """Gestisce il cambio di stato della sidebar."""
         if self._is_collapsed == c:
             return
         self._is_collapsed = c
@@ -507,9 +517,11 @@ class SidebarWidget(QFrame):
             g.set_collapsed(self._is_collapsed)
 
     def _handle_automazione_click(self, tab_index: int) -> None:
+        """Naviga alla sezione automazioni sul tab specificato."""
         self.navigation_requested.emit(1)
         self.automation_tab_requested.emit(tab_index)
 
     def _handle_notifications_click(self, tab_index: int) -> None:
+        """Naviga alla sezione notifiche sul tab specificato."""
         self.navigation_requested.emit(9)
         self.notifications_tab_requested.emit(tab_index)

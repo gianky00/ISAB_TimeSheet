@@ -85,6 +85,7 @@ class StatusCard(ModernCard):
         layout.addWidget(self._meta_label)
 
     def setStatus(self, message: str, status_id: str | None = None) -> None:
+        """Aggiorna il messaggio di stato e il colore della barra laterale."""
         self._status_label.setText(message)
         if status_id:
             self._status = status_id
@@ -93,6 +94,7 @@ class StatusCard(ModernCard):
             )
 
     def setAutopilot(self, active: bool, text: str = "") -> None:
+        """Mostra o nasconde l'indicatore Autopilot."""
         if active:
             self._meta_label.setText(text.upper() or "AUTO")
             self._meta_label.setVisible(True)
@@ -111,8 +113,10 @@ class StatusCard(ModernCard):
             self._meta_label.setVisible(False)
 
     def _update_status_display(self, message: str) -> None:
+        """Metodo di compatibilità per l'aggiornamento rapido dello stato."""
         self._status_label.setText(message)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
+        """Emette il segnale di click."""
         self.clicked.emit()
         super().mousePressEvent(event)

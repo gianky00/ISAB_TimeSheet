@@ -47,10 +47,12 @@ class SidebarButton(QPushButton):
 
     @pyqtProperty(float)
     def text_opacity(self) -> float:
+        """Restituisce l'opacità del testo."""
         return self._text_opacity
 
     @text_opacity.setter # type: ignore[no-redef]
     def text_opacity(self, value: float) -> None:
+        """Imposta l'opacità del testo."""
         self._text_opacity = value
         self._update_style()
 
@@ -71,6 +73,7 @@ class SidebarButton(QPushButton):
         self._update_style()
 
     def set_collapsed(self, collapsed: bool, animated: bool = False) -> None:
+        """Aggiorna lo stato visivo in base al collasso della sidebar."""
         self._collapsed = collapsed
         self._refresh_state()
         self._update_style()
@@ -119,6 +122,7 @@ class SidebarButton(QPushButton):
         """)
 
     def set_badge(self, count: int) -> None:
+        """Imposta un badge numerico sul pulsante."""
         self._badge_count = count
         self._refresh_state()
         if count > 0 and not self.isChecked():

@@ -66,7 +66,8 @@ class HealthScoreBadge(QWidget):
             return "ATTENZIONE RICHIESTA"
         return "STATO CRITICO"
 
-    def paintEvent(self, event) -> None:
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        """Esegue il rendering del badge circolare."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
@@ -154,6 +155,7 @@ class StatCard(ModernCard):
         layout.addStretch()
 
     def set_value(self, value: str) -> None:
+        """Aggiorna il valore visualizzato nella card."""
         self.val_lbl.setText(value)
 
 
