@@ -5,7 +5,7 @@ Widget riutilizzabile per la configurazione dei parametri comuni a tutti i bot (
 
 from contextlib import suppress
 
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import (  # type: ignore[attr-defined]
     QDate,
     QEasingCurve,
@@ -177,7 +177,7 @@ class BotParametersWidget(QWidget):
         hbox_forn.addWidget(self.fornitore_combo)
 
         # Pulsante Settings
-        self.settings_btn = QPushButton()
+        self.settings_btn = IconButton()
         self.settings_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), COLORS["text_dark"]))
         self.settings_btn.setIconSize(QSize(20, 20))
         self.settings_btn.setFixedSize(38, 38)
@@ -240,7 +240,7 @@ class BotParametersWidget(QWidget):
 
             hbox_dest = QHBoxLayout()
             hbox_dest.setSpacing(8)
-            self.dest_path_edit = QLineEdit()
+            self.dest_path_edit = StandardInput()
             self.dest_path_edit.setPlaceholderText("Download utente (default)")
             self.dest_path_edit.setReadOnly(True)
             self.dest_path_edit.setMinimumWidth(200)
@@ -249,7 +249,7 @@ class BotParametersWidget(QWidget):
             self.dest_path_edit.textChanged.connect(self.changed.emit)
             hbox_dest.addWidget(self.dest_path_edit)
 
-            self.browse_btn = QPushButton()
+            self.browse_btn = IconButton()
             self.browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
             self.browse_btn.setIconSize(QSize(20, 20))
             self.browse_btn.setFixedSize(38, 38)

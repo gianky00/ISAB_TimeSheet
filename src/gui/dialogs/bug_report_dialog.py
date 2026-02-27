@@ -9,7 +9,7 @@ import os
 from contextlib import suppress
 from pathlib import Path
 
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -131,7 +131,7 @@ class BugReportDialog(QDialog):
         layout.addWidget(lbl_info)
 
         # Text Area
-        self.txt_description = QTextEdit()
+        self.txt_description = StandardTextEdit()
         self.txt_description.setPlaceholderText(
             "Es: Ho cliccato su Scarica PDL e l'app si è chiusa... Stavo lavorando sul cantiere X..."
         )
@@ -143,22 +143,22 @@ class BugReportDialog(QDialog):
         layout.addWidget(self.txt_description)
 
         # Options Group
-        options_group = QGroupBox("Contenuto Report")
+        options_group = StandardGroupBox("Contenuto Report")
         options_group.setStyleSheet(f"QGroupBox {{ font-weight: 600; color: {palette.on_surface}; margin-top: 10px; }}")
         options_layout = QVBoxLayout(options_group)
         options_layout.setSpacing(8)
 
-        self.chk_include_logs = QCheckBox("Includi Log Enterprise (app.json, app.log)")
+        self.chk_include_logs = StandardCheckBox("Includi Log Enterprise (app.json, app.log)")
         self.chk_include_logs.setChecked(True)
         self.chk_include_logs.toggled.connect(self._update_size_estimate)
         options_layout.addWidget(self.chk_include_logs)
 
-        self.chk_include_analytics = QCheckBox("Includi Analytics Report (anomalie, health score)")
+        self.chk_include_analytics = StandardCheckBox("Includi Analytics Report (anomalie, health score)")
         self.chk_include_analytics.setChecked(True)
         self.chk_include_analytics.toggled.connect(self._update_size_estimate)
         options_layout.addWidget(self.chk_include_analytics)
 
-        self.chk_include_audit = QCheckBox("Includi Audit Trail (ultime 50 azioni)")
+        self.chk_include_audit = StandardCheckBox("Includi Audit Trail (ultime 50 azioni)")
         self.chk_include_audit.setChecked(True)
         self.chk_include_audit.toggled.connect(self._update_size_estimate)
         options_layout.addWidget(self.chk_include_audit)
@@ -168,7 +168,7 @@ class BugReportDialog(QDialog):
         trace_layout.setSpacing(8)
         lbl_trace = QLabel("Trace ID (opzionale):")
         lbl_trace.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px;")
-        self.txt_trace_id = QLineEdit()
+        self.txt_trace_id = StandardInput()
         self.txt_trace_id.setPlaceholderText("Es: abc123def456")
         self.txt_trace_id.setStyleSheet(
             f"background: {palette.surface}; border: 1px solid {palette.border}; border-radius: 4px; "
@@ -203,7 +203,7 @@ class BugReportDialog(QDialog):
         layout.addWidget(warning_frame)
 
         # Progress
-        self.progress = QProgressBar()
+        self.progress = StandardProgressBar()
         self.progress.setVisible(False)
         self.progress.setRange(0, 0)
         self.progress.setStyleSheet(
@@ -213,7 +213,7 @@ class BugReportDialog(QDialog):
         layout.addWidget(self.progress)
 
         # Preview Area (initially hidden)
-        self.preview_group = QGroupBox("File inclusi nel report")
+        self.preview_group = StandardGroupBox("File inclusi nel report")
         self.preview_group.setVisible(False)
         preview_layout = QVBoxLayout(self.preview_group)
         self.preview_scroll = QScrollArea()

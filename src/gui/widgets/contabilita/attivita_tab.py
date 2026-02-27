@@ -9,7 +9,7 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any, ClassVar
 
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QColor
 from PyQt6.QtWidgets import (
@@ -86,11 +86,11 @@ class AttivitaProgrammateTab(QWidget):
         filter_layout = QHBoxLayout()
         filter_layout.setContentsMargins(5, 0, 5, 5)
 
-        self.chk_ps = QCheckBox("Filtra PS")
+        self.chk_ps = StandardCheckBox("Filtra PS")
         self.chk_ps.stateChanged.connect(self.apply_filters)
         filter_layout.addWidget(self.chk_ps)
 
-        self.chk_po = QCheckBox("Filtra PO")
+        self.chk_po = StandardCheckBox("Filtra PO")
         self.chk_po.stateChanged.connect(self.apply_filters)
         filter_layout.addWidget(self.chk_po)
 

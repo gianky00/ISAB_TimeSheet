@@ -7,8 +7,9 @@ import traceback
 from datetime import datetime
 from typing import Any
 
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QCheckBox, QHBoxLayout, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.core.constants import Icons
@@ -76,7 +77,7 @@ class ScaricaTSPanel(BaseBotPanel):
         params_layout.addWidget(self.params_widget)
 
         # Parametri specifici: Flag Elabora TS
-        self.elabora_ts_check = QCheckBox("Elabora TS")
+        self.elabora_ts_check = StandardCheckBox("Elabora TS")
         self.elabora_ts_check.stateChanged.connect(self._save_data)
         self.params_widget.add_widget_to_row(self.elabora_ts_check)
 

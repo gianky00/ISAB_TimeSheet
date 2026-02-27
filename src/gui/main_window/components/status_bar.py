@@ -6,6 +6,7 @@ Gestisce le transizioni visive tra la fase di avvio e quella operativa dell'appl
 
 from datetime import datetime
 
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QSize, Qt, QTimer
 from PyQt6.QtWidgets import QGraphicsOpacityEffect, QPushButton, QStatusBar
 
@@ -58,7 +59,7 @@ class StatusBarComponent(QObject):
         self.main_window.setStatusBar(self.status_bar)
 
         # Pulsante Toggle Metriche/Licenza
-        self.footer_toggle_btn = QPushButton()
+        self.footer_toggle_btn = IconButton()
         self.footer_toggle_btn.setIcon(get_colored_icon(get_asset_path(Icons.ACTIVITY), COLORS["text_dark"]))
         self.footer_toggle_btn.setIconSize(QSize(20, 20))
         self.footer_toggle_btn.setFixedSize(40, 40)

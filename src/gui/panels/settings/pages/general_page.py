@@ -1,6 +1,6 @@
 from typing import Any
 
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -39,7 +39,7 @@ class GeneralPage(QWidget):
         self.general_group = create_group_box("Generale")
         gen_layout = QVBoxLayout(self.general_group)
 
-        self.headless_check = QCheckBox("Nascondi browser dei bot")
+        self.headless_check = StandardCheckBox("Nascondi browser dei bot")
         self.headless_check.setToolTip(
             "Se attivato, il browser verrà eseguito in background senza mostrare la finestra."
         )
@@ -71,7 +71,7 @@ class GeneralPage(QWidget):
         ollama_url_layout = QHBoxLayout(self.ollama_url_container)
         ollama_url_layout.setContentsMargins(0, 0, 0, 0)
         ollama_url_layout.addWidget(QLabel("Ollama Server URL:"))
-        self.ollama_url_edit = QLineEdit()
+        self.ollama_url_edit = StandardInput()
         self.ollama_url_edit.setPlaceholderText(URLs.OLLAMA_DEFAULT)
         self.ollama_url_edit.setMinimumHeight(40)
         style_input(self.ollama_url_edit)
@@ -110,7 +110,7 @@ class GeneralPage(QWidget):
         timeout_label.setStyleSheet("font-size: 15px;")
         timeout_layout.addWidget(timeout_label)
 
-        self.timeout_spin = QSpinBox()
+        self.timeout_spin = StandardSpinBox()
         self.timeout_spin.setRange(10, 120)
         self.timeout_spin.setValue(30)
         self.timeout_spin.setMinimumHeight(40)

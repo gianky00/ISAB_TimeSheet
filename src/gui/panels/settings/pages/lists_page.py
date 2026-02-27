@@ -1,6 +1,7 @@
 from collections.abc import Callable, Sequence
 from typing import Any
 
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QPoint, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QHBoxLayout,
@@ -61,7 +62,7 @@ class ListsPage(QWidget):
         """Crea la sezione per la gestione degli account Portale Fornitori ISAB."""
         group = create_group_box("Account ISAB")
         layout = QVBoxLayout(group)
-        self.account_list = QListWidget()
+        self.account_list = StandardListWidget()
         self.account_list.setMinimumHeight(120)
         self.account_list.setStyleSheet(list_style())
         self.account_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -80,7 +81,7 @@ class ListsPage(QWidget):
         """Crea la sezione per la gestione degli account SafeWork."""
         group = create_group_box("Account SafeWork")
         layout = QVBoxLayout(group)
-        self.sw_account_list = QListWidget()
+        self.sw_account_list = StandardListWidget()
         self.sw_account_list.setMinimumHeight(120)
         self.sw_account_list.setStyleSheet(list_style())
         self.sw_account_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -99,7 +100,7 @@ class ListsPage(QWidget):
         """Crea la sezione per la gestione dei numeri di contratto."""
         group = create_group_box("Contratti")
         layout = QVBoxLayout(group)
-        self.contract_list = QListWidget()
+        self.contract_list = StandardListWidget()
         self.contract_list.setMinimumHeight(100)
         self.contract_list.setStyleSheet(list_style())
         self._setup_generic_list(self.contract_list, self._add_contract, self._edit_contract, self._remove_contract)
@@ -116,7 +117,7 @@ class ListsPage(QWidget):
         """Crea la sezione per la gestione della lista fornitori."""
         group = create_group_box("Fornitori")
         layout = QVBoxLayout(group)
-        self.fornitori_list = QListWidget()
+        self.fornitori_list = StandardListWidget()
         self.fornitori_list.setMinimumHeight(100)
         self.fornitori_list.setStyleSheet(list_style())
         self._setup_generic_list(self.fornitori_list, self._add_fornitore, self._edit_fornitore, self._remove_fornitore)
@@ -133,7 +134,7 @@ class ListsPage(QWidget):
         """Crea la sezione per i reparti aziendali."""
         group = create_group_box("Reparti")
         layout = QVBoxLayout(group)
-        self.reparti_list = QListWidget()
+        self.reparti_list = StandardListWidget()
         self.reparti_list.setMinimumHeight(80)
         self.reparti_list.setStyleSheet(list_style())
         self._setup_generic_list(self.reparti_list, self._add_reparto, self._edit_reparto, self._remove_reparto)
@@ -150,7 +151,7 @@ class ListsPage(QWidget):
         """Crea la sezione per la gestione dei nomi cantiere."""
         group = create_group_box("Cantieri")
         layout = QVBoxLayout(group)
-        self.cantieri_list = QListWidget()
+        self.cantieri_list = StandardListWidget()
         self.cantieri_list.setMinimumHeight(80)
         self.cantieri_list.setStyleSheet(list_style())
         self._setup_generic_list(self.cantieri_list, self._add_cantiere, self._edit_cantiere, self._remove_cantiere)
@@ -167,7 +168,7 @@ class ListsPage(QWidget):
         self, layout: QHBoxLayout, icon: str, color: str, callback: Callable[[], None], tooltip: str = ""
     ) -> None:
         """Aggiunge un pulsante stilizzato al layout specificato."""
-        btn = QPushButton()
+        btn = IconButton()
         btn.setIcon(get_colored_icon(get_asset_path(icon), COLORS["text_dark"]))
         if tooltip:
             btn.setToolTip(tooltip)

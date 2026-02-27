@@ -5,7 +5,7 @@ Pannello per la configurazione del bridge Telegram strutturato a Card.
 
 from typing import Any
 
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
@@ -162,12 +162,12 @@ class TelegramTab(QWidget):
         creds_layout.setContentsMargins(0, 10, 0, 0)
         creds_layout.setSpacing(15)
 
-        self.token_edit = QLineEdit()
+        self.token_edit = StandardInput()
         self.token_edit.setPlaceholderText("Inserisci Bot Token (7123456789:ABC...)")
         self.token_edit.setEchoMode(QLineEdit.EchoMode.PasswordEchoOnEdit)
         self.token_edit.textChanged.connect(self.settings_changed.emit)
 
-        self.chat_id_edit = QLineEdit()
+        self.chat_id_edit = StandardInput()
         self.chat_id_edit.setPlaceholderText("Inserisci Chat ID (es. 123456789)")
         self.chat_id_edit.textChanged.connect(self.settings_changed.emit)
 

@@ -8,7 +8,7 @@ Include classi per tabelle di sola lettura, editabili e componenti grafici di su
 from collections.abc import Sequence
 from typing import Any
 
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import (  # type: ignore[attr-defined]
     QEasingCurve,
     QPoint,

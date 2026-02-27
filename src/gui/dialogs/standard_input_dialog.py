@@ -1,3 +1,4 @@
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QDialog,
@@ -36,7 +37,7 @@ class StandardInputDialog(QDialog):
             lbl.setStyleSheet(f"font-size: 14px; color: {COLORS['text_dark']};")
             layout.addWidget(lbl)
 
-        self.input_field = QLineEdit(text)
+        self.input_field = StandardInput(text)
         self.input_field.setMinimumHeight(35)
         self.input_field.setStyleSheet(
             f"""

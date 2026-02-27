@@ -7,7 +7,7 @@ import traceback
 from pathlib import Path
 from typing import Any
 
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QSize, Qt, QTimer
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -200,7 +200,7 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         hbox_print = QHBoxLayout()
         hbox_print.setSpacing(8)
-        self.print_check = QCheckBox("Attiva")
+        self.print_check = StandardCheckBox("Attiva")
         self.print_check.stateChanged.connect(self._save_data)
         self.print_check.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 500;")
         hbox_print.addWidget(self.print_check)
@@ -233,7 +233,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         lbl_merge = QLabel("UNIONE PDF")
         lbl_merge.setStyleSheet(LABEL_MUTED)
         vbox_merge.addWidget(lbl_merge)
-        self.merge_all_check = QCheckBox("Unisci tutti in unico file")
+        self.merge_all_check = StandardCheckBox("Unisci tutti in unico file")
         self.merge_all_check.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 500;")
         self.merge_all_check.stateChanged.connect(self._save_data)
         vbox_merge.addWidget(self.merge_all_check)
@@ -255,7 +255,7 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         hbox_dest = QHBoxLayout()
         hbox_dest.setSpacing(8)
-        self.dest_path_edit = QLineEdit()
+        self.dest_path_edit = StandardInput()
         self.dest_path_edit.setPlaceholderText("Download (default)")
         self.dest_path_edit.setReadOnly(True)
         self.dest_path_edit.setMinimumWidth(180)
@@ -263,7 +263,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.dest_path_edit.setStyleSheet(LINEEDIT_STYLE)
         hbox_dest.addWidget(self.dest_path_edit)
 
-        browse_btn = QPushButton()
+        browse_btn = IconButton()
         browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
         browse_btn.setIconSize(QSize(20, 20))
         browse_btn.setFixedSize(38, 38)

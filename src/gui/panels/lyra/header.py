@@ -1,4 +1,4 @@
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QSize, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -51,7 +51,7 @@ class LyraHeader(QFrame):
         )
         layout.addWidget(self.model_combo)
 
-        self.refresh_btn = QPushButton()
+        self.refresh_btn = IconButton()
         self.refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), COLORS["bg_white"]))
         self.refresh_btn.setFixedSize(32, 32)
         self.refresh_btn.setIconSize(QSize(18, 18))

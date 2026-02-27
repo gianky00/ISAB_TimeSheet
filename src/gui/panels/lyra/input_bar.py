@@ -1,3 +1,4 @@
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QFrame,
@@ -53,7 +54,7 @@ class ChatInputBar(QWidget):
         layout.setContentsMargins(8, 6, 8, 6)
         layout.setSpacing(10)
 
-        self.attach_btn = QPushButton()
+        self.attach_btn = IconButton()
         self.attach_btn.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), COLORS["text_muted"]))
         self.attach_btn.setFixedSize(40, 40)
         self.attach_btn.setIconSize(QSize(20, 20))
@@ -72,7 +73,7 @@ class ChatInputBar(QWidget):
         self.attach_btn.clicked.connect(self.attach_clicked.emit)
         layout.addWidget(self.attach_btn)
 
-        self.input_field = QLineEdit()
+        self.input_field = StandardInput()
         self.input_field.setPlaceholderText("Messaggio per Lyra...")
         self.input_field.setMinimumHeight(40)
         self.input_field.setStyleSheet(
@@ -89,7 +90,7 @@ class ChatInputBar(QWidget):
         self.input_field.returnPressed.connect(self._on_send)
         layout.addWidget(self.input_field)
 
-        self.send_btn = QPushButton()
+        self.send_btn = IconButton()
         self.send_btn.setIcon(get_colored_icon(get_asset_path(Icons.SEND), "white"))
         self.send_btn.setIconSize(QSize(18, 18))
         self.send_btn.setFixedSize(40, 40)

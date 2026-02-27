@@ -2,7 +2,7 @@ import json
 from contextlib import suppress
 from datetime import datetime
 
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import (
@@ -60,7 +60,7 @@ class AuditDetailDialog(QDialog):
         # JSON Viewer
         layout.addWidget(QLabel("<b>Dettagli Tecnici (JSON):</b>"))
 
-        self.text_edit = QTextEdit()
+        self.text_edit = StandardTextEdit()
         self.text_edit.setReadOnly(True)
         self.text_edit.setStyleSheet(
             f"font-family: Consolas, monospace; font-size: 13px; background-color: {COLORS['bg_light']}; color: {COLORS['text_dark']};"

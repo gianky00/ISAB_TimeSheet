@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QRectF, Qt
 from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath
 from PyQt6.QtWidgets import (
@@ -245,7 +245,7 @@ class ProgrammazioneTab(QWidget):
         import_layout.addWidget(import_label)
 
         # Selettore Settimana
-        self.week_selector = QComboBox()
+        self.week_selector = FilterComboBox()
         self.week_selector.addItems(["Settimana Corrente", "Settimana Prossima"])
         self.week_selector.setFixedWidth(160)
         saved_week = config_manager.get_config_value("programming_selected_week", 0)
@@ -301,7 +301,7 @@ class ProgrammazioneTab(QWidget):
         view_layout.addWidget(self.view_filter)
 
         # Selettore Giorno (Compattazione)
-        self.day_selector = QComboBox()
+        self.day_selector = FilterComboBox()
         self.day_selector.addItems(
             [
                 "Settimana Intera",
@@ -320,7 +320,7 @@ class ProgrammazioneTab(QWidget):
         view_layout.addWidget(self.day_selector)
 
         # Selettore Raggruppamento
-        self.group_selector = QComboBox()
+        self.group_selector = FilterComboBox()
         self.group_selector.addItems(["Tabella Unica", "Area", "Richiedente"])
         self.group_selector.setFixedWidth(140)
         saved_group = config_manager.get_config_value("programming_group_mode", "Tabella Unica")
@@ -780,7 +780,7 @@ class ProgrammazioneTab(QWidget):
         today_idx = datetime.now().weekday()
 
         for group_name, group_results in sorted(grouped_data.items()):
-            group_box = QGroupBox(group_name)
+            group_box = StandardGroupBox(group_name)
             group_box.setStyleSheet(
                 f"""
                 QGroupBox {{

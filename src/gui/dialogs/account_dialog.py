@@ -1,4 +1,4 @@
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -42,12 +42,12 @@ class AccountDialog(QDialog):
         form.setSpacing(10)
 
         # Username
-        self.username_edit = QLineEdit(username)
+        self.username_edit = StandardInput(username)
         self.username_edit.setMinimumHeight(35)
         form.addRow("Username:", self.username_edit)
 
         # Password
-        self.password_edit = QLineEdit(password)
+        self.password_edit = StandardInput(password)
         self.password_edit.setMinimumHeight(35)
         self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
 
@@ -58,7 +58,7 @@ class AccountDialog(QDialog):
 
         pass_layout.addWidget(self.password_edit)
 
-        self.toggle_pass_btn = QPushButton()
+        self.toggle_pass_btn = IconButton()
         self.toggle_pass_btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), COLORS["text_muted"]))
         self.toggle_pass_btn.setIconSize(QSize(20, 20))
         self.toggle_pass_btn.setToolTip("Mostra/Nascondi password")

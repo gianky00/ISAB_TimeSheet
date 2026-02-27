@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QBrush, QColor, QIcon, QPainter, QPixmap
 from PyQt6.QtWidgets import (
@@ -548,7 +548,7 @@ class CertificatiCampioneTab(QWidget):
         layout.setContentsMargins(0, 10, 0, 0)
 
         # Tree widget configuration
-        self.tree = QTreeWidget()
+        self.tree = StandardTreeWidget()
         self.tree.setHeaderLabels(self.HEADERS)
         self.tree.setWordWrap(True)
         self.tree.setAlternatingRowColors(True)
@@ -648,7 +648,7 @@ class CertificatiCampioneTab(QWidget):
         toolbar.addSpacing(20)
 
         # Checkbox per mostrare esclusi
-        self.show_excluded_check = QCheckBox("Mostra esclusi")
+        self.show_excluded_check = StandardCheckBox("Mostra esclusi")
         self.show_excluded_check.setChecked(False)
         self.show_excluded_check.setStyleSheet(
             f"""

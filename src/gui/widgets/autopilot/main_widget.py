@@ -7,6 +7,7 @@ Gestisce la pianificazione delle attività automatiche e la loro visualizzazione
 from contextlib import suppress
 from typing import Any
 
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import (
     QEasingCurve,
     QParallelAnimationGroup,
@@ -122,7 +123,7 @@ class AutopilotWidget(QWidget):
         self.dot_anim.start()
 
         # Pulsante configurazione
-        self.config_btn = QPushButton()
+        self.config_btn = IconButton()
         self.config_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS), COLORS["text_muted"]))
         self.config_btn.setIconSize(QSize(20, 20))
         self.config_btn.setFixedSize(32, 32)

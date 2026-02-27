@@ -1,3 +1,4 @@
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QDialog,
@@ -75,7 +76,7 @@ class QuickActionsConfigDialog(QDialog):
         layout.addWidget(lbl)
 
         # TREE WIDGET
-        self.tree = QTreeWidget()
+        self.tree = StandardTreeWidget()
         self.tree.setHeaderHidden(True)
         self.tree.setIndentation(20)
         # Forced Style to ensure Light Theme inside Dialog

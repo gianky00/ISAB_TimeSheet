@@ -7,7 +7,7 @@ Supporta navigazione gerarchica, ricerca globale ricorsiva e modalità di input 
 from contextlib import suppress
 from typing import TYPE_CHECKING, Any
 
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import (
     QEasingCurve,
     QPropertyAnimation,
@@ -138,7 +138,7 @@ class CommandPaletteDialog(QDialog):
         layout.addWidget(search_container)
 
         # List Widget
-        self.list_widget = QListWidget()
+        self.list_widget = StandardListWidget()
         self.list_widget.setVerticalScrollMode(QListWidget.ScrollMode.ScrollPerPixel)
         self.list_widget.setStyleSheet(
             f"QListWidget {{ background-color: {bg_color}; border: none; outline: none; }} QListWidget::item {{ color: {text_color}; }} QListWidget::item:selected {{ background-color: {COLORS['primary_dark']}; color: #ffffff; }} QListWidget::item:hover {{ background-color: {COLORS['glass_deep']}; }}"

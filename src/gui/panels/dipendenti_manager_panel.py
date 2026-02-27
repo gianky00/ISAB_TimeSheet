@@ -1,4 +1,4 @@
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -50,7 +50,7 @@ class EmployeeEditorDialog(QDialog):
         ]
 
         for label, key in fields:
-            le = QLineEdit()
+            le = StandardInput()
             if self.data.get(key):
                 le.setText(str(self.data.get(key)))
             self.inputs[key] = le

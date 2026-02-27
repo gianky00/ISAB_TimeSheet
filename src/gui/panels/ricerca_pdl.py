@@ -5,7 +5,7 @@ Pannello per il bot Ricerca PDL (SafeWork).
 
 from typing import Any
 
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -78,7 +78,7 @@ class RicercaPDLPanel(BaseBotPanel):
         lbl_status.setStyleSheet(LABEL_MUTED)
         vbox_check.addWidget(lbl_status)
 
-        self.exclude_closed_check = QCheckBox("Escludi chiusi/scaduti")
+        self.exclude_closed_check = StandardCheckBox("Escludi chiusi/scaduti")
         self.exclude_closed_check.setChecked(True)
         self.exclude_closed_check.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 500;")
         self.exclude_closed_check.stateChanged.connect(self._save_data)

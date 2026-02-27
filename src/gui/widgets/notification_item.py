@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any
 
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
@@ -97,7 +98,7 @@ class NotificationItem(QFrame):
         header_layout.addWidget(time_lbl)
 
         # Delete Button
-        del_btn = QPushButton()
+        del_btn = IconButton()
         del_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), COLORS["text_dark"]))
         del_btn.setIconSize(QSize(14, 14))
         del_btn.setFixedSize(20, 20)

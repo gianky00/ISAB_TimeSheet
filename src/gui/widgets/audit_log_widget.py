@@ -6,6 +6,7 @@ Refactoring modulare V2.
 
 import logging
 
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -86,7 +87,7 @@ class AuditLogWidget(QWidget):
 
         header_layout.addStretch()
 
-        self.live_check = QCheckBox("Live Mode")
+        self.live_check = StandardCheckBox("Live Mode")
         self.live_check.setToolTip("Aggiorna automaticamente ogni 5 secondi")
         self.live_check.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 600; font-size: 13px;")
         self.live_check.stateChanged.connect(self._toggle_live_mode)

@@ -1,6 +1,6 @@
 from typing import Any
 
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -61,7 +61,7 @@ class TimbratureSettingsTab(QWidget):
 
         # Filters
         filter_layout = QHBoxLayout()
-        self.filter_empty_cb = QCheckBox("Mostra solo dati mancanti (Vuoti)")
+        self.filter_empty_cb = StandardCheckBox("Mostra solo dati mancanti (Vuoti)")
         config = config_manager.load_config()
         self.filter_empty_cb.setChecked(bool(config.get("timbrature_filter_empty_only", False)))
         self.filter_empty_cb.stateChanged.connect(self._on_filter_empty_changed)

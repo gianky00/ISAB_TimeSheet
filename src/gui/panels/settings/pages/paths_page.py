@@ -2,7 +2,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -86,7 +86,7 @@ class PathsPage(QWidget):
         self, parent_layout: QLayout, browse_cb: Callable[[], None], folder: bool = False
     ) -> QLineEdit:
         row = QHBoxLayout()
-        edit = QLineEdit()
+        edit = StandardInput()
         edit.setReadOnly(True)
         edit.setMinimumHeight(40)
         edit.setPlaceholderText("Seleziona cartella..." if folder else "Seleziona file...")

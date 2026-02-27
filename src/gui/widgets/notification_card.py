@@ -6,6 +6,7 @@ Supporta gradient backgrounds, animations, rich content e inline actions.
 from datetime import datetime
 from typing import Any, ClassVar
 
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QAction, QContextMenuEvent, QMouseEvent, QShowEvent
 from PyQt6.QtWidgets import (
@@ -159,7 +160,7 @@ class NotificationCard(QFrame):
         header_layout.setSpacing(12)
 
         # Pin button (using text emoji instead of icon)
-        self.pin_btn = QPushButton()
+        self.pin_btn = IconButton()
         pin_text = "📌" if is_pinned else "📍"
         self.pin_btn.setText(pin_text)
         self.pin_btn.setFixedSize(24, 24)
@@ -244,7 +245,7 @@ class NotificationCard(QFrame):
         header_layout.addWidget(self.time_lbl)
 
         # Delete button
-        self.del_btn = QPushButton()
+        self.del_btn = IconButton()
         self.del_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), COLORS["text_muted"]))
         self.del_btn.setIconSize(QSize(14, 14))
         self.del_btn.setFixedSize(24, 24)

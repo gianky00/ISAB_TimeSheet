@@ -5,7 +5,7 @@ Fornisce un'interfaccia ad alto livello con ricerca e pulsante di aggiornamento.
 
 from typing import Any, ClassVar
 
-from src.gui.widgets.core_widgets import PrimaryButton, SecondaryButton, SearchInput, FilterComboBox, StandardTable, DangerButton
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import (  # type: ignore[attr-defined]
     QEasingCurve,
     QModelIndex,

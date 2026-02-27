@@ -1,3 +1,4 @@
+from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import QGroupBox, QPushButton, QWidget
 
@@ -6,7 +7,7 @@ from src.gui.styles import COLORS
 
 def create_group_box(title: str) -> QGroupBox:
     """Crea un QGroupBox con stile standard."""
-    group = QGroupBox(title)
+    group = StandardGroupBox(title)
     group.setStyleSheet(
         f"""
         QGroupBox {{

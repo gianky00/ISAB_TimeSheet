@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
+    QMenu,
     QSplitter,
     QTreeView,
     QVBoxLayout,
@@ -154,6 +155,10 @@ class StoricoOdaPanel(QWidget):
         self.tree.setExpandsOnDoubleClick(False)
         self.tree.setItemDelegate(ChildDescriptionDelegate(self.tree))
 
+        # Context Menu
+        self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self._show_context_menu)
+
         # Selection & Interaction
         if sel_model := self.tree.selectionModel():
             sel_model.selectionChanged.connect(self._on_selection_changed)
@@ -180,9 +185,10 @@ class StoricoOdaPanel(QWidget):
 
         self.splitter.addWidget(self.tree)
 
-        # --- DETAIL VIEW ---
+        # --- DETAIL VIEW (nascosto di default) ---
         self.detail_view = OdaDetailView(self.full_headers)
         self.splitter.addWidget(self.detail_view)
+        self.detail_view.hide()
 
         # --- EMPTY STATE ---
         self.empty_state = EmptyStateWidget(
@@ -328,6 +334,13 @@ class StoricoOdaPanel(QWidget):
             self.tree.expandAll()
 
     def _on_selection_changed(self, selected, _deselected):
+        """Aggiorna il dettaglio solo se il pannello è visibile."""
+        if not self.detail_view.isVisible():
+            return
+        self._update_detail_from_selection()
+
+    def _update_detail_from_selection(self):
+        """Recupera i dati dalla riga selezionata e aggiorna il pannello dettaglio."""
         sel_model = self.tree.selectionModel()
         if not sel_model:
             self.detail_view.clear()
@@ -337,9 +350,7 @@ class StoricoOdaPanel(QWidget):
             self.detail_view.clear()
             return
 
-        # I dati sono salvati nell'ItemDataRole.UserRole della riga (col 0 o col 3 dipendentemente dal tipo)
         full_data = indexes[0].data(Qt.ItemDataRole.UserRole)
-
         if full_data:
             self.detail_view.update_details(list(full_data))
         else:
@@ -352,11 +363,72 @@ class StoricoOdaPanel(QWidget):
         self._set_row_bold(index, False)
 
     def _on_tree_double_clicked(self, index):
+        """Doppio click: espande o collassa il nodo per mostrare le righe figlie."""
         source_index = index.sibling(index.row(), 0)
         if self.tree.isExpanded(source_index):
             self.tree.collapse(source_index)
         else:
             self.tree.expand(source_index)
+
+    def _show_context_menu(self, pos):
+        """Menu contestuale: 'Mostra dati OdA' per aprire il pannello dettaglio."""
+        index = self.tree.indexAt(pos)
+        if not index.isValid():
+            return
+
+        menu = QMenu(self)
+        menu.setStyleSheet(f"""
+            QMenu {{
+                background-color: {COLORS['bg_white']};
+                border: 1px solid {COLORS['border_light']};
+                border-radius: 8px;
+                padding: 4px;
+            }}
+            QMenu::item {{
+                padding: 8px 20px;
+                border-radius: 4px;
+            }}
+            QMenu::item:selected {{
+                background-color: {COLORS['table_selection_bg']};
+            }}
+        """)
+
+        # Azione: Mostra/Nascondi Dettaglio
+        if self.detail_view.isVisible():
+            action_detail = menu.addAction("✕  Nascondi dettaglio OdA")
+        else:
+            action_detail = menu.addAction("📋  Mostra dati OdA")
+
+        # Azione: Espandi/Collassa
+        source_index = index.sibling(index.row(), 0)
+        if not source_index.parent().isValid():  # Solo su nodi parent
+            menu.addSeparator()
+            if self.tree.isExpanded(source_index):
+                action_toggle = menu.addAction("▲  Collassa posizioni")
+            else:
+                action_toggle = menu.addAction("▼  Espandi posizioni")
+        else:
+            action_toggle = None
+
+        chosen = menu.exec(self.tree.viewport().mapToGlobal(pos))
+        if not chosen:
+            return
+
+        if chosen == action_detail:
+            self._toggle_detail_view()
+        elif chosen == action_toggle:
+            if self.tree.isExpanded(source_index):
+                self.tree.collapse(source_index)
+            else:
+                self.tree.expand(source_index)
+
+    def _toggle_detail_view(self):
+        """Mostra o nasconde il pannello dettaglio a destra."""
+        if self.detail_view.isVisible():
+            self.detail_view.hide()
+        else:
+            self.detail_view.show()
+            self._update_detail_from_selection()
 
     def _set_row_bold(self, parent_index, bold: bool):
         row = parent_index.row()
