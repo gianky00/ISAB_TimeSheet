@@ -173,8 +173,8 @@ class SidebarWidget(QFrame):
 
         self.setMinimumWidth(self.collapsed_width)
         self.setMaximumWidth(self.collapsed_width)
-        self.setMinimumHeight(60)
-        self.setMaximumHeight(60) # Altezza fissa iniziale (solo logo allineato alla search bar)
+        self.setMinimumHeight(68)
+        self.setMaximumHeight(68) # Altezza fissa iniziale (logo + margini)
         self.setMouseTracking(True)
 
         self._setup_ui()
@@ -467,8 +467,8 @@ class SidebarWidget(QFrame):
 
         if c:
             self.active_track.hide()
-            self.setMinimumHeight(60)
-            self.setMaximumHeight(60)
+            self.setMinimumHeight(68)
+            self.setMaximumHeight(68)
             self.bg_frame.setStyleSheet(self._get_glass_style(collapsed=True))
         else:
             parent = self.parentWidget()
