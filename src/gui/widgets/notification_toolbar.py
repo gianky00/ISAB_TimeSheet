@@ -8,10 +8,12 @@ from typing import Any
 from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QPushButton,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -141,33 +143,52 @@ class NotificationToolbar(QWidget):
 
     def _setup_ui(self) -> None:
         """Setup layout e componenti."""
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(12)
+        main_layout = QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        # Container Card
+        self.container = QFrame()
+        self.container.setObjectName("filterBar")
+        self.container.setStyleSheet(f"""
+            QFrame#filterBar {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-radius: 12px;
+            }}
+        """)
+        layout = QHBoxLayout(self.container)
+        layout.setContentsMargins(15, 10, 15, 10)
+        layout.setSpacing(15)
 
         # === SEARCH BAR ===
+        search_v = QVBoxLayout()
+        search_v.setSpacing(4)
+        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
+        lbl_search = QLabel("CERCA NOTIFICHE")
+        lbl_search.setStyleSheet(LABEL_MUTED)
+
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("🔍 Cerca notifiche...")
+        self.search_input.setPlaceholderText("Oggetto, Messaggio...")
         self.search_input.setFixedWidth(250)
-        self.search_input.setStyleSheet(
-            f"""
-            QLineEdit {{
-                padding: 8px 12px;
-                border: 1px solid {COLORS['border_medium']};
-                border-radius: 8px;
-                font-size: 13px;
-                background: {COLORS['bg_white']};
-            }}
-            QLineEdit:focus {{
-                border-color: {COLORS['primary_blue']};
-                outline: none;
-            }}
-        """
-        )
+        self.search_input.setStyleSheet(LINEEDIT_STYLE)
         self.search_input.textChanged.connect(self._on_search_text_changed)
-        layout.addWidget(self.search_input)
+
+        search_v.addWidget(lbl_search)
+        search_v.addWidget(self.search_input)
+        layout.addLayout(search_v)
+
+        # Divisore
+        v_line = QFrame()
+        v_line.setFrameShape(QFrame.Shape.VLine)
+        v_line.setFrameShadow(QFrame.Shadow.Plain)
+        v_line.setStyleSheet(f"color: {COLORS['border_light']};")
+        layout.addWidget(v_line)
 
         # === FILTER CHIPS ===
+        chips_layout = QHBoxLayout()
+        chips_layout.setSpacing(8)
+
         filter_configs: list[dict[str, Any]] = [
             {"label": "Tutti", "key": "all", "icon": None},
             {"label": "Da leggere", "key": "unread", "icon": Icons.BELL},
@@ -185,48 +206,34 @@ class NotificationToolbar(QWidget):
             )
             chip.clicked.connect(lambda checked, k=str(config["key"]): self._on_filter_clicked(k))
             self._filter_chips[str(config["key"])] = chip
-            layout.addWidget(chip)
+            chips_layout.addWidget(chip)
 
         # Set "Tutti" as default active
         self._filter_chips["all"].setChecked(True)
+        layout.addLayout(chips_layout)
 
         layout.addStretch()
 
         # === SORT DROPDOWN ===
-        sort_label = QLabel("Ordina:")
-        sort_label.setStyleSheet(f"font-size: 13px; color: {COLORS['text_muted']}; font-weight: 600;")
-        layout.addWidget(sort_label)
+        sort_v = QVBoxLayout()
+        sort_v.setSpacing(4)
+        lbl_sort = QLabel("ORDINA")
+        lbl_sort.setStyleSheet(LABEL_MUTED)
 
         self.sort_combo = QComboBox()
         self.sort_combo.addItem("Data (recenti)", "date_desc")
         self.sort_combo.addItem("Data (vecchie)", "date_asc")
         self.sort_combo.addItem("Priorità", "priority")
         self.sort_combo.addItem("Livello", "level")
-        self.sort_combo.setStyleSheet(
-            f"""
-            QComboBox {{
-                padding: 6px 12px;
-                border: 1px solid {COLORS['border_medium']};
-                border-radius: 6px;
-                font-size: 13px;
-                background: {COLORS['bg_white']};
-                min-width: 140px;
-            }}
-            QComboBox:hover {{
-                border-color: {COLORS['border_dark']};
-            }}
-            QComboBox::drop-down {{
-                border: none;
-            }}
-            QComboBox QAbstractItemView {{
-                border: 1px solid {COLORS['border_medium']};
-                selection-background-color: {COLORS['table_info_bg']};
-                background: {COLORS['bg_white']};
-            }}
-        """
-        )
+        self.sort_combo.setStyleSheet(COMBOBOX_STYLE)
+        self.sort_combo.setMinimumWidth(160)
         self.sort_combo.currentIndexChanged.connect(self._on_sort_changed)
-        layout.addWidget(self.sort_combo)
+
+        sort_v.addWidget(lbl_sort)
+        sort_v.addWidget(self.sort_combo)
+        layout.addLayout(sort_v)
+
+        main_layout.addWidget(self.container)
 
     def _on_search_text_changed(self, text: str) -> None:
         """Handle search input change with debounce."""

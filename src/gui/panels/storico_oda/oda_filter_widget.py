@@ -1,16 +1,18 @@
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
+    QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QSizePolicy,
+    QVBoxLayout,
     QWidget,
 )
 
 from src.core.constants import Icons
-from src.gui.styles import COLORS
+from src.gui.styles import COLORS, LABEL_MUTED, LINEEDIT_STYLE
 from src.gui.widgets.modern_button import ModernButton
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.utils.helpers import get_asset_path
 
 
 class OdaFilterWidget(QWidget):
@@ -28,51 +30,91 @@ class OdaFilterWidget(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
     def _setup_ui(self) -> None:
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(10)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
+        # Bar Container with modern Card style
+        self.container = QFrame()
+        self.container.setObjectName("filterBar")
+        self.container.setStyleSheet(f"""
+            QFrame#filterBar {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-radius: 12px;
+            }}
+        """)
+
+        layout = QHBoxLayout(self.container)
+        layout.setContentsMargins(15, 10, 15, 10)
+        layout.setSpacing(15)
+
+        # --- SEZIONE RICERCA ---
+        search_container = QVBoxLayout()
+        search_container.setSpacing(4)
+        search_label = QLabel("CERCA ODA / FORNITORE")
+        search_label.setStyleSheet(LABEL_MUTED)
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Cerca per OdA, Fornitore o Descrizione...")
-        self.search_input.setMinimumWidth(300)
+        self.search_input.setPlaceholderText("OdA, Fornitore, Descrizione...")
+        self.search_input.setMinimumWidth(350)
+        self.search_input.setStyleSheet(LINEEDIT_STYLE)
         self.search_input.textChanged.connect(self.search_changed.emit)
-        layout.addWidget(self.search_input)
+
+        search_container.addWidget(search_label)
+        search_container.addWidget(self.search_input)
+        layout.addLayout(search_container)
 
         layout.addStretch()
 
-        # Sync Status
-        self.lbl_sync_status = QLabel("")
-        self.lbl_sync_status.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; margin-right: 15px;")
-        layout.addWidget(self.lbl_sync_status)
+        # --- INFO & STATUS ---
+        info_v = QVBoxLayout()
+        info_v.setSpacing(4)
+        info_v.setAlignment(Qt.AlignmentFlag.AlignRight)
 
-        # Update Bot Button
-        self.btn_bot_update = ModernButton(
-            "Aggiorna",
-            variant=ModernButton.Variant.PRIMARY,
-            icon=get_asset_path(Icons.REFRESH),
-        )
-        self.btn_bot_update.clicked.connect(self.update_clicked.emit)
-        layout.addWidget(self.btn_bot_update)
+        self.lbl_sync_status = QLabel("Ultimo Sync: --")
+        self.lbl_sync_status.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px;")
+
+        # Action Buttons Row
+        actions_h = QHBoxLayout()
+        actions_h.setSpacing(8)
 
         # Import Excel Button
         self.btn_import = ModernButton(
-            "Importa Excel",
+            "IMPORTA",
             variant=ModernButton.Variant.GHOST,
+            size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.UPLOAD),
         )
         self.btn_import.clicked.connect(self.import_clicked.emit)
-        layout.addWidget(self.btn_import)
+
+        # Update Bot Button
+        self.btn_bot_update = ModernButton(
+            "AGGIORNA",
+            variant=ModernButton.Variant.PRIMARY,
+            size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.REFRESH),
+        )
+        self.btn_bot_update.clicked.connect(self.update_clicked.emit)
 
         # Export Excel
         self.export_btn = ModernButton(
-            "",
-            variant=ModernButton.Variant.GHOST,
+            "EXPORT",
+            variant=ModernButton.Variant.SUCCESS,
             size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.EXCEL),
         )
-        self.export_btn.setIcon(get_colored_icon(get_asset_path(Icons.EXCEL), COLORS["text_muted"]))
         self.export_btn.setToolTip("Esporta Excel")
         self.export_btn.clicked.connect(self.export_clicked.emit)
-        layout.addWidget(self.export_btn)
+
+        actions_h.addWidget(self.btn_import)
+        actions_h.addWidget(self.export_btn)
+        actions_h.addWidget(self.btn_bot_update)
+
+        info_v.addWidget(self.lbl_sync_status)
+        info_v.addLayout(actions_h)
+        layout.addLayout(info_v)
+
+        main_layout.addWidget(self.container)
 
     def set_sync_status(self, status: str) -> None:
         """Aggiorna il testo dell'indicatore di stato sincronizzazione."""

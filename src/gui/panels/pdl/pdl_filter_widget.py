@@ -1,15 +1,17 @@
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QSizePolicy,
+    QVBoxLayout,
     QWidget,
 )
 
 from src.core.constants import Icons
-from src.gui.styles import COLORS
+from src.gui.styles import COLORS, COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -31,72 +33,147 @@ class PDLFilterWidget(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
     def _setup_ui(self) -> None:
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(10)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
+        # Bar Container with modern Card style
+        self.container = QFrame()
+        self.container.setObjectName("filterBar")
+        self.container.setStyleSheet(f"""
+            QFrame#filterBar {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-radius: 12px;
+            }}
+        """)
+
+        layout = QHBoxLayout(self.container)
+        layout.setContentsMargins(15, 10, 15, 10)
+        layout.setSpacing(15)
+
+        # --- SEZIONE RICERCA ---
+        search_container = QVBoxLayout()
+        search_container.setSpacing(4)
+        search_label = QLabel("CERCA PDL")
+        search_label.setStyleSheet(LABEL_MUTED)
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Cerca ovunque...")
-        self.search_input.setMaximumWidth(250)
-        layout.addWidget(self.search_input)
+        self.search_input.setPlaceholderText("N°, Area, Richiedente...")
+        self.search_input.setMinimumWidth(200)
+        self.search_input.setStyleSheet(LINEEDIT_STYLE)
 
-        layout.addWidget(QLabel("Gruppo:"))
+        search_container.addWidget(search_label)
+        search_container.addWidget(self.search_input)
+        layout.addLayout(search_container)
+
+        # Vertical Divider
+        v_line = QFrame()
+        v_line.setFrameShape(QFrame.Shape.VLine)
+        v_line.setFrameShadow(QFrame.Shadow.Plain)
+        v_line.setStyleSheet(f"color: {COLORS['border_light']};")
+        layout.addWidget(v_line)
+
+        # --- FILTRI COMBO ---
+        filter_group = QHBoxLayout()
+        filter_group.setSpacing(12)
+
+        # Gruppo
+        group_v = QVBoxLayout()
+        group_v.setSpacing(4)
+        lbl_group = QLabel("GRUPPO")
+        lbl_group.setStyleSheet(LABEL_MUTED)
         self.group_filter = QComboBox()
         self.group_filter.addItem("Tutti")
         self.group_filter.setMinimumWidth(80)
-        layout.addWidget(self.group_filter)
+        self.group_filter.setStyleSheet(COMBOBOX_STYLE)
+        group_v.addWidget(lbl_group)
+        group_v.addWidget(self.group_filter)
+        filter_group.addLayout(group_v)
 
-        layout.addWidget(QLabel("Sito:"))
+        # Sito
+        site_v = QVBoxLayout()
+        site_v.setSpacing(4)
+        lbl_site = QLabel("SITO")
+        lbl_site.setStyleSheet(LABEL_MUTED)
         self.site_filter = QComboBox()
         self.site_filter.addItems(["Tutti i siti", "IGCC", "ISAB Nord", "ISAB Sud"])
-        layout.addWidget(self.site_filter)
+        self.site_filter.setMinimumWidth(110)
+        self.site_filter.setStyleSheet(COMBOBOX_STYLE)
+        site_v.addWidget(lbl_site)
+        site_v.addWidget(self.site_filter)
+        filter_group.addLayout(site_v)
 
-        layout.addWidget(QLabel("Area:"))
+        # Area
+        area_v = QVBoxLayout()
+        area_v.setSpacing(4)
+        lbl_area = QLabel("AREA")
+        lbl_area.setStyleSheet(LABEL_MUTED)
         self.area_filter = QComboBox()
         self.area_filter.addItem("Tutte")
-        self.area_filter.setMinimumWidth(100)
-        layout.addWidget(self.area_filter)
+        self.area_filter.setMinimumWidth(120)
+        self.area_filter.setStyleSheet(COMBOBOX_STYLE)
+        area_v.addWidget(lbl_area)
+        area_v.addWidget(self.area_filter)
+        filter_group.addLayout(area_v)
 
-        layout.addWidget(QLabel("Unità:"))
+        # Unità
+        unit_v = QVBoxLayout()
+        unit_v.setSpacing(4)
+        lbl_unit = QLabel("UNITÀ")
+        lbl_unit.setStyleSheet(LABEL_MUTED)
         self.unit_filter = QComboBox()
         self.unit_filter.addItem("Tutte")
-        self.unit_filter.setMinimumWidth(80)
-        layout.addWidget(self.unit_filter)
+        self.unit_filter.setMinimumWidth(100)
+        self.unit_filter.setStyleSheet(COMBOBOX_STYLE)
+        unit_v.addWidget(lbl_unit)
+        unit_v.addWidget(self.unit_filter)
+        filter_group.addLayout(unit_v)
 
+        layout.addLayout(filter_group)
         layout.addStretch()
 
-        # Sync Status
-        self.lbl_sync_status = QLabel("")
-        self.lbl_sync_status.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; margin-right: 15px;")
-        layout.addWidget(self.lbl_sync_status)
+        # --- INFO & STATUS ---
+        info_v = QVBoxLayout()
+        info_v.setSpacing(4)
+        info_v.setAlignment(Qt.AlignmentFlag.AlignRight)
 
-        # Update Bot Button
+        self.lbl_sync_status = QLabel("Ultimo Sync: --")
+        self.lbl_sync_status.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px;")
+
+        # Action Buttons Row
+        actions_h = QHBoxLayout()
+        actions_h.setSpacing(8)
+
+        # Reset
+        self.clear_btn = ModernButton("", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL)
+        self.clear_btn.setIcon(get_colored_icon(get_asset_path(Icons.RESET), COLORS["text_muted"]))
+        self.clear_btn.setToolTip("Resetta Filtri")
+
+        # Update Bot
         self.btn_bot_update = ModernButton(
-            "Aggiorna",
+            "AGGIORNA",
             variant=ModernButton.Variant.PRIMARY,
+            size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.REFRESH),
         )
-        layout.addWidget(self.btn_bot_update)
 
-        # Clear Filters
-        self.clear_btn = ModernButton(
-            "RESETTA FILTRI",
-            variant=ModernButton.Variant.DANGER,
-            size=ModernButton.Size.SMALL,
-        )
-        self.clear_btn.setIcon(get_colored_icon(get_asset_path(Icons.RESET), COLORS["bg_white"]))
-        self.clear_btn.setToolTip("Resetta Filtri")
-        layout.addWidget(self.clear_btn)
-
-        # Export Excel
+        # Export
         self.export_btn = ModernButton(
-            "ESPORTA",
+            "EXPORT",
             variant=ModernButton.Variant.SUCCESS,
             size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.EXCEL),
         )
-        self.export_btn.setIcon(get_colored_icon(get_asset_path(Icons.EXCEL), COLORS["bg_white"]))
-        self.export_btn.setToolTip("Esporta Excel")
-        layout.addWidget(self.export_btn)
+
+        actions_h.addWidget(self.clear_btn)
+        actions_h.addWidget(self.export_btn)
+        actions_h.addWidget(self.btn_bot_update)
+
+        info_v.addWidget(self.lbl_sync_status)
+        info_v.addLayout(actions_h)
+        layout.addLayout(info_v)
+
+        main_layout.addWidget(self.container)
 
         # Connessioni
         self.group_filter.currentTextChanged.connect(self.filter_changed.emit)

@@ -10,6 +10,7 @@ from typing import Any
 
 import pandas as pd
 from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -17,6 +18,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
+    QMenu,
     QMessageBox,
     QSplitter,
     QTableView,
@@ -161,6 +163,9 @@ class PDLDBPanel(QWidget):
         self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setItemDelegate(PDLDelegate([0], self.table))
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._show_context_menu)
+        self.table.doubleClicked.connect(self._toggle_detail_view)
 
         if sel_model := self.table.selectionModel():
             sel_model.selectionChanged.connect(self._on_selection_changed)
@@ -173,6 +178,7 @@ class PDLDBPanel(QWidget):
 
         # --- PANNELLO DETTAGLIO (DETAIL) ---
         self.detail_view = PDLDetailView(self.full_headers)
+        self.detail_view.setVisible(False)
         self.splitter.addWidget(self.detail_view)
 
         self.splitter.setStretchFactor(0, 3)
@@ -426,6 +432,30 @@ class PDLDBPanel(QWidget):
             self.detail_view.update_details(full_data, interventions)
         else:
             self.detail_view.clear()
+
+    def _show_context_menu(self, pos):
+        """Mostra il menu contestuale sulla tabella."""
+        index = self.table.indexAt(pos)
+        if not index.isValid():
+            return
+
+        menu = QMenu(self)
+        action_toggle = QAction("Mostra/Nascondi dettaglio", self)
+        action_toggle.triggered.connect(self._toggle_detail_view)
+        menu.addAction(action_toggle)
+        
+        viewport = self.table.viewport()
+        if viewport:
+            menu.exec(viewport.mapToGlobal(pos))
+
+    def _toggle_detail_view(self, index=None):
+        """Mostra o nasconde il pannello dei dettagli."""
+        is_visible = self.detail_view.isVisible()
+        self.detail_view.setVisible(not is_visible)
+
+        # Se lo stiamo rendendo visibile, assicuriamoci che i pesi dello splitter siano corretti
+        if not is_visible:
+            self.splitter.setSizes([int(self.width() * 0.7), int(self.width() * 0.3)])
 
     def _on_header_clicked(self, logical_index):
         """Gestisce il toggle dell'ordinamento per colonna."""

@@ -5,10 +5,11 @@ from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
     QFileDialog,
+    QFrame,
     QHBoxLayout,
     QHeaderView,
+    QLabel,
     QLineEdit,
-    QPushButton,
     QSplitter,
     QTableView,
     QVBoxLayout,
@@ -99,46 +100,86 @@ class TimbratureDBPanel(QWidget):
         self.settings_tab.settings_changed.connect(self._on_settings_changed)
 
     def _setup_toolbar(self):
-        self.toolbar_container = QWidget()
+        self.toolbar_container = QFrame()
+        self.toolbar_container.setObjectName("filterBar")
+        self.toolbar_container.setStyleSheet(f"""
+            QFrame#filterBar {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-radius: 12px;
+            }}
+        """)
         toolbar_layout = QHBoxLayout(self.toolbar_container)
-        toolbar_layout.setContentsMargins(0, 0, 0, 0)
-        toolbar_layout.setSpacing(10)
+        toolbar_layout.setContentsMargins(15, 10, 15, 10)
+        toolbar_layout.setSpacing(15)
 
+        # Sezione Ricerca
+        search_v = QVBoxLayout()
+        search_v.setSpacing(4)
+        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
+        lbl_search = QLabel("CERCA PERSONALE")
+        lbl_search.setStyleSheet(LABEL_MUTED)
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Cerca...")
+        self.search_input.setPlaceholderText("Cognome, Nome...")
         self.search_input.setClearButtonEnabled(True)
-        self.search_input.setFixedWidth(200)
+        self.search_input.setMinimumWidth(200)
+        self.search_input.setStyleSheet(LINEEDIT_STYLE)
         self.search_input.textChanged.connect(self.refresh_data)
+        search_v.addWidget(lbl_search)
+        search_v.addWidget(self.search_input)
+        toolbar_layout.addLayout(search_v)
 
+        # Divisore
+        v_line = QFrame()
+        v_line.setFrameShape(QFrame.Shape.VLine)
+        v_line.setFrameShadow(QFrame.Shadow.Plain)
+        v_line.setStyleSheet(f"color: {COLORS['border_light']};")
+        toolbar_layout.addWidget(v_line)
+
+        # Filtri Combo
+        filters_h = QHBoxLayout()
+        filters_h.setSpacing(12)
+
+        # Reparto
+        rep_v = QVBoxLayout()
+        rep_v.setSpacing(4)
+        lbl_rep = QLabel("REPARTO")
+        lbl_rep.setStyleSheet(LABEL_MUTED)
         self.reparto_filter = QComboBox()
-        self.reparto_filter.setMinimumWidth(130)
+        self.reparto_filter.setMinimumWidth(150)
+        self.reparto_filter.setStyleSheet(COMBOBOX_STYLE)
         self.reparto_filter.currentIndexChanged.connect(self.refresh_data)
+        rep_v.addWidget(lbl_rep)
+        rep_v.addWidget(self.reparto_filter)
+        filters_h.addLayout(rep_v)
 
+        # Cantiere
+        cant_v = QVBoxLayout()
+        cant_v.setSpacing(4)
+        lbl_cant = QLabel("CANTIERE")
+        lbl_cant.setStyleSheet(LABEL_MUTED)
         self.cantiere_filter = QComboBox()
-        self.cantiere_filter.setMinimumWidth(130)
+        self.cantiere_filter.setMinimumWidth(150)
+        self.cantiere_filter.setStyleSheet(COMBOBOX_STYLE)
         self.cantiere_filter.currentIndexChanged.connect(self.refresh_data)
+        cant_v.addWidget(lbl_cant)
+        cant_v.addWidget(self.cantiere_filter)
+        filters_h.addLayout(cant_v)
+
+        toolbar_layout.addLayout(filters_h)
+        toolbar_layout.addStretch()
 
         self._update_filter_combos()
 
-        import_btn = QPushButton("Importa")
-        import_btn.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), COLORS["bg_white"]))
-        import_btn.setFixedSize(90, 32)
+        from src.gui.widgets.modern_button import ModernButton
+        import_btn = ModernButton(
+            "IMPORTA EXCEL",
+            variant=ModernButton.Variant.PRIMARY,
+            size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.PLUS),
+        )
         import_btn.clicked.connect(self._import_excel_manually)
-        import_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {COLORS['primary_dark']};
-                color: {COLORS['bg_white']};
-                border: none;
-                border-radius: 4px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{ background-color: {COLORS['primary_blue']}; }}
-        """)
-
-        toolbar_layout.addWidget(self.search_input)
-        toolbar_layout.addWidget(self.reparto_filter)
-        toolbar_layout.addWidget(self.cantiere_filter)
-        toolbar_layout.addWidget(import_btn)
+        toolbar_layout.addWidget(import_btn, alignment=Qt.AlignmentFlag.AlignBottom)
 
     def _setup_database_tab(self, parent):
         layout = QVBoxLayout(parent)

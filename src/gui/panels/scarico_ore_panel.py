@@ -14,6 +14,7 @@ from PyQt6.QtCore import QItemSelection, Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QKeySequence
 from PyQt6.QtWidgets import (
     QApplication,
+    QFrame,
     QHBoxLayout,
     QHeaderView,
     QLabel,
@@ -116,34 +117,107 @@ class ScaricoOrePanel(QWidget):
         """Configura la toolbar superiore con statistiche e ricerca, e la vista tabellare virtuale."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(15)
 
-        self.tabs = AnimatedTabWidget()
-
-        self.toolbar_container = QWidget()
-        toolbar_layout = QHBoxLayout(self.toolbar_container)
+        # --- TOOLBAR (Design Modern Card) ---
+        self.toolbar_card = QFrame()
+        self.toolbar_card.setObjectName("filterBar")
+        self.toolbar_card.setStyleSheet(f"""
+            QFrame#filterBar {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-radius: 12px;
+            }}
+        """)
+        toolbar_layout = QHBoxLayout(self.toolbar_card)
+        toolbar_layout.setContentsMargins(15, 10, 15, 10)
         toolbar_layout.setSpacing(15)
-        self.lbl_count = QLabel("Righe: 0")
-        self.lbl_selection_total = QLabel("Selezionato: 0")
-        self.lbl_total_hours = QLabel("Totale Ore: 0")
+
+        from src.gui.styles import LABEL_MUTED, LINEEDIT_STYLE
+
+        # Sezione Statistiche
+        stats_h = QHBoxLayout()
+        stats_h.setSpacing(20)
+
+        count_v = QVBoxLayout()
+        count_v.setSpacing(4)
+        lbl_count_title = QLabel("RIGHE VISIBILI")
+        lbl_count_title.setStyleSheet(LABEL_MUTED)
+        self.lbl_count = QLabel("0")
+        self.lbl_count.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 700; font-size: 14px;")
+        count_v.addWidget(lbl_count_title)
+        count_v.addWidget(self.lbl_count)
+        stats_h.addLayout(count_v)
+
+        sel_v = QVBoxLayout()
+        sel_v.setSpacing(4)
+        lbl_sel_title = QLabel("SELEZIONATO")
+        lbl_sel_title.setStyleSheet(LABEL_MUTED)
+        self.lbl_selection_total = QLabel("0")
+        self.lbl_selection_total.setStyleSheet(f"color: {COLORS['primary_blue']}; font-weight: 700; font-size: 14px;")
+        sel_v.addWidget(lbl_sel_title)
+        sel_v.addWidget(self.lbl_selection_total)
+        stats_h.addLayout(sel_v)
+
+        hours_v = QVBoxLayout()
+        hours_v.setSpacing(4)
+        lbl_hours_title = QLabel("TOTALE ORE")
+        lbl_hours_title.setStyleSheet(LABEL_MUTED)
+        self.lbl_total_hours = QLabel("0")
+        self.lbl_total_hours.setStyleSheet(f"color: {COLORS['teal_accent']}; font-weight: 800; font-size: 14px;")
+        hours_v.addWidget(lbl_hours_title)
+        hours_v.addWidget(self.lbl_total_hours)
+        stats_h.addLayout(hours_v)
+
+        toolbar_layout.addLayout(stats_h)
+
+        # Divisore
+        v_line = QFrame()
+        v_line.setFrameShape(QFrame.Shape.VLine)
+        v_line.setFrameShadow(QFrame.Shadow.Plain)
+        v_line.setStyleSheet(f"color: {COLORS['border_light']};")
+        toolbar_layout.addWidget(v_line)
+
+        # Sezione Ricerca
+        search_v = QVBoxLayout()
+        search_v.setSpacing(4)
+        lbl_search = QLabel("CERCA PERSONALE / ODA")
+        lbl_search.setStyleSheet(LABEL_MUTED)
         self.search_input = QLineEdit()
-        self.search_input.setFixedWidth(250)
+        self.search_input.setPlaceholderText("Filtra dati (Premi Invio)...")
+        self.search_input.setMinimumWidth(300)
+        self.search_input.setStyleSheet(LINEEDIT_STYLE)
         self.search_input.returnPressed.connect(self._perform_search)
+        search_v.addWidget(lbl_search)
+        search_v.addWidget(self.search_input)
+        toolbar_layout.addLayout(search_v)
+
+        toolbar_layout.addStretch()
+
+        # Info & Actions
+        info_v = QVBoxLayout()
+        info_v.setSpacing(4)
+        info_v.setAlignment(Qt.AlignmentFlag.AlignRight)
+
         self.status_label = QLabel("Inizializzazione...")
-        self.update_btn = ModernButton("Aggiorna", icon=get_asset_path(Icons.REFRESH))
+        self.status_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px;")
+        self.status_label.setTextFormat(Qt.TextFormat.RichText)
+
+        self.update_btn = ModernButton(
+            "SINCRONIZZA",
+            variant=ModernButton.Variant.PRIMARY,
+            size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.REFRESH),
+        )
         self.update_btn.clicked.connect(self._start_update)
 
-        for w in (
-            self.lbl_count,
-            self.lbl_selection_total,
-            self.lbl_total_hours,
-            self.search_input,
-            self.status_label,
-            self.update_btn,
-        ):
-            toolbar_layout.addWidget(w)
+        info_v.addWidget(self.status_label)
+        info_v.addWidget(self.update_btn)
+        toolbar_layout.addLayout(info_v)
 
-        layout.addWidget(self.toolbar_container)
+        layout.addWidget(self.toolbar_card)
 
+        self.tabs = AnimatedTabWidget()
         self.scarico_tab = QWidget()
         scarico_layout = QVBoxLayout(self.scarico_tab)
         self.table_view = QTableView()
