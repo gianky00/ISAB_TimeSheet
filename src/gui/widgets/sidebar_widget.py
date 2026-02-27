@@ -159,6 +159,7 @@ class SidebarWidget(QFrame):
         super().__init__(parent)
         self.setObjectName("sidebarFrame")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground) # Rende lo sfondo del widget trasparente a livello di sistema
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True) # Obbliga a dipingere il background custom via CSS
         self._is_collapsed = True
         self.expanded_width = 245
         self.collapsed_width = 75
@@ -204,8 +205,7 @@ class SidebarWidget(QFrame):
             """
         return f"""
             QFrame#sidebarFrame {{
-                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 {COLORS["glass_dark"]}, stop:1 {COLORS["glass_deep"]});
+                background-color: {COLORS["glass_dark"]};
                 border-right: 1px solid {COLORS["glass_border"]};
                 border-radius: 15px;
             }}
@@ -223,34 +223,32 @@ class SidebarWidget(QFrame):
 
         # Header
         self.header_container = QWidget()
+        self.header_container.setStyleSheet("background: transparent;")
         h_layout = QHBoxLayout(self.header_container)
         h_layout.setContentsMargins(14, 0, 14, 15)
         h_layout.setSpacing(12)
 
-        self.logo_badge = QFrame()
+        self.logo_badge = QLabel()
+        self.logo_badge.setObjectName("logoBadge")
         self.logo_badge.setFixedSize(46, 46)
         self.logo_badge.setStyleSheet("""
-            QFrame {
-                background: white;
+            QLabel#logoBadge {
+                background-color: white;
                 border-radius: 23px;
                 border: 2px solid black;
             }
         """)
-        logo_layout = QVBoxLayout(self.logo_badge)
-        logo_layout.setContentsMargins(0, 0, 0, 0)
-        logo_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.logo_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.logo_icon = QLabel()
         from PyQt6.QtGui import QIcon
         icon = QIcon(get_asset_path("assets/app.ico"))
         pix = icon.pixmap(64, 64) # Carica una risoluzione maggiore per evitare sgranature
         if not pix.isNull():
-            self.logo_icon.setPixmap(
+            self.logo_badge.setPixmap(
                 pix.scaled(
                     30, 30, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
                 )
             )
-        logo_layout.addWidget(self.logo_icon)
         h_layout.addWidget(self.logo_badge)
 
         self.logo_label = QLabel("SyncroJob")
