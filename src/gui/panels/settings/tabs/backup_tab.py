@@ -158,8 +158,12 @@ class BackupTab(QWidget):
         self.lbl_last_backup = QLabel("Ultimo Backup: Non eseguito")
         self.lbl_last_backup.setStyleSheet(f"color: {COLORS['text_muted']}; font-style: italic;")
 
-        backup_layout.addWidget(self.btn_backup)
-        backup_layout.addWidget(self.btn_restore)
+        btn_backup_layout = QHBoxLayout()
+        btn_backup_layout.addWidget(self.btn_backup)
+        btn_backup_layout.addWidget(self.btn_restore)
+        btn_backup_layout.addStretch()
+
+        backup_layout.addLayout(btn_backup_layout)
         backup_layout.addWidget(self.lbl_last_backup)
 
         card_backup = SettingCard(
@@ -178,8 +182,12 @@ class BackupTab(QWidget):
         self.btn_open_logs = ModernButton("Apri Cartella Log", icon=get_asset_path(Icons.FOLDER_OPEN))
         self.btn_clear_logs = ModernButton("Pulisci Log Vecchi", variant=ModernButton.Variant.DANGER, icon=get_asset_path(Icons.TRASH))
 
-        logs_layout.addWidget(self.btn_open_logs)
-        logs_layout.addWidget(self.btn_clear_logs)
+        btn_logs_layout = QHBoxLayout()
+        btn_logs_layout.addWidget(self.btn_open_logs)
+        btn_logs_layout.addWidget(self.btn_clear_logs)
+        btn_logs_layout.addStretch()
+
+        logs_layout.addLayout(btn_logs_layout)
 
         card_logs = SettingCard(
             "Manutenzione Log",

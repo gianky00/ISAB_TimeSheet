@@ -193,7 +193,11 @@ class TelegramTab(QWidget):
         self.lbl_status = QLabel("Stato: Servizio non configurato")
         self.lbl_status.setStyleSheet(f"color: {COLORS['text_muted']}; font-weight: 600;")
 
-        conn_layout.addWidget(self.btn_test)
+        btn_test_layout = QHBoxLayout()
+        btn_test_layout.addWidget(self.btn_test)
+        btn_test_layout.addStretch()
+
+        conn_layout.addLayout(btn_test_layout)
         conn_layout.addWidget(self.lbl_status)
 
         card_conn = SettingCard(

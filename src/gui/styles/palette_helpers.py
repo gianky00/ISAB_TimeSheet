@@ -20,12 +20,11 @@ def get_glass_gradient(vertical: bool = True) -> str:
 
 def get_status_color(status: str) -> str:
     """Mappa uno stato testuale al colore HEX corrispondente nelle costanti."""
-    status_map = {
+    return {
         "success": COLORS["success_dark"],
         "error": COLORS["error_red"],
         "warning": COLORS["warning_orange"],
         "info": COLORS["info_blue"],
         "running": COLORS["primary_dark"],
         "pending": COLORS["warning_yellow"],
-    }
-    return status_map.get(status.lower(), COLORS["text_muted"])
+    }.get(status.lower(), COLORS["text_muted"])

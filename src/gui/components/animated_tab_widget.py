@@ -4,6 +4,8 @@ Componente universale con animazioni di lusso, gradienti e glow effect.
 Fornisce una navigazione tra schede fluida con indicatore di selezione dinamico.
 """
 
+from typing import Any
+
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QRect, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QHBoxLayout, QTabBar, QTabWidget, QVBoxLayout, QWidget
@@ -91,6 +93,17 @@ class AnimatedTabWidget(QWidget):
         self._layout.addWidget(self.stack)
 
         QTimer.singleShot(100, self._update_indicator_instant)
+
+    def showEvent(self, event: Any) -> None:
+        """Forza l'aggiornamento dello stile quando il widget viene mostrato."""
+        super().showEvent(event)
+        self._update_indicator_instant()
+
+        # Riapplica lo stile locale per evitare override da ThemeManager globale
+        if self._tab_position == QTabWidget.TabPosition.South:
+            self.tab_bar.setStyleSheet(self._get_south_style())
+        else:
+            self.tab_bar.setStyleSheet(self._get_default_style())
 
     def setTabPosition(self, position: QTabWidget.TabPosition) -> None:
         """

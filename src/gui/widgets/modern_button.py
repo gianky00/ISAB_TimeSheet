@@ -61,6 +61,11 @@ class ModernButton(QPushButton):
         self._anim.setDuration(150)
         self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
+    def showEvent(self, event: Any) -> None:
+        """Forza l'aggiornamento dello stile quando il widget viene mostrato."""
+        super().showEvent(event)
+        self._apply_style()
+
     def get_hover_opacity(self) -> float:
         """Restituisce il valore corrente dell'opacità hover."""
         return self._hover_opacity

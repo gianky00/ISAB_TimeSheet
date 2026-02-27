@@ -3,6 +3,8 @@ SyncroJob - Sidebar Button (Premium V6)
 Risoluzione contrasto: Sfondo selezione più scuro e opacità testo migliorata.
 """
 
+from typing import Any
+
 from PyQt6.QtCore import QSize, Qt, pyqtProperty  # type: ignore[attr-defined]
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QPushButton, QWidget
@@ -61,6 +63,11 @@ class SidebarButton(QPushButton):
         else:
             if self._badge_count == 0:
                 self.glow.setColor(QColor(0, 0, 0, 0))
+        self._update_style()
+
+    def showEvent(self, event: Any) -> None:
+        """Forza l'aggiornamento dello stile quando il widget viene mostrato."""
+        super().showEvent(event)
         self._update_style()
 
     def set_collapsed(self, collapsed: bool, animated: bool = False) -> None:

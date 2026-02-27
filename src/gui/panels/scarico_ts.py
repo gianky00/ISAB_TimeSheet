@@ -4,6 +4,7 @@ Pannello per il bot Scarico TS.
 """
 
 import traceback
+from datetime import datetime
 from typing import Any
 
 from PyQt6.QtCore import QTimer
@@ -57,7 +58,7 @@ class ScaricaTSPanel(BaseBotPanel):
         try:
             self._load_saved_data()
         except Exception as e:
-            print(f"❌ Error loading data for ScaricaTSPanel: {e}")
+            print(f"[ERROR] Error loading data for ScaricaTSPanel: {e}")
             traceback.print_exc()
 
     def _setup_content(self):

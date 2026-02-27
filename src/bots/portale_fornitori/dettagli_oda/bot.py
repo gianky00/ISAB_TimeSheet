@@ -2,6 +2,7 @@
 SyncroJob - Dettagli OdA Bot
 """
 
+from datetime import datetime
 from pathlib import Path
 from typing import Any, ClassVar
 

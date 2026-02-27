@@ -4,6 +4,7 @@ Bot per la prenotazione automatica dei Badge Provvisori (BP) sul Portale Fornito
 
 import traceback
 from contextlib import suppress
+from datetime import datetime
 from typing import Any, ClassVar
 
 from src.bots.base.base_bot import BaseBot, StepStatus

@@ -6,6 +6,7 @@ sul portale fornitori ISAB. Consente di inserire una lista di BP, configurare
 il fornitore e l'intervallo temporale, e avviare l'automazione.
 """
 
+from datetime import datetime
 from typing import Any
 
 from PyQt6.QtCore import QTimer
@@ -60,7 +61,7 @@ class PrenotaBPPanel(BaseBotPanel):
         try:
             self._load_saved_data()
         except Exception as e:
-            print(f"❌ Error loading data for PrenotaBPPanel: {e}")
+            print(f"[ERROR] Error loading data for PrenotaBPPanel: {e}")
 
     def _setup_content(self):
         """Configura il layout e i widget specifici per la prenotazione BP."""

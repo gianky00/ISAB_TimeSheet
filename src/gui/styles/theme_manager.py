@@ -5,7 +5,7 @@ Gestisce l'applicazione di temi, palette e fogli di stile (QSS).
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import QApplication
@@ -154,12 +154,12 @@ class ThemeManager:
                 mapping[k] = v
 
         # Aggiunge dimensioni UI
-        for k, v in UI_SIZES.items():
-            mapping[k] = f"{v}px"
+        for size_k, size_v in UI_SIZES.items():
+            mapping[size_k] = f"{size_v}px"
 
         # Aggiunge font sizes
-        for k, v in FONT_SIZES.items():
-            mapping[f"font_{k}"] = f"{v}px"
+        for font_k, font_v in FONT_SIZES.items():
+            mapping[f"font_{font_k}"] = f"{font_v}px"
 
         processed = content
         for key, value in mapping.items():

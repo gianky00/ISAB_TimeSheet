@@ -12,6 +12,7 @@ from src.core.database import db_manager
 from src.core.report_history import ReportHistory
 from src.gui.panels.dipendenti.utils.data_helpers import build_timbrature_maps
 from src.gui.styles import COLORS
+from src.gui.styles.constants import THRESHOLD_DAYS
 from src.gui.widgets.toast import ToastManager
 
 logger = logging.getLogger(__name__)
@@ -87,8 +88,6 @@ class ReportGenerator:
                 "giorni": diff_days,
                 "data": last_access_date.strftime("%d/%m/%Y"),
             }
-
-            from src.gui.styles.constants import THRESHOLD_DAYS
 
             if THRESHOLD_DAYS["warning"] < diff_days <= THRESHOLD_DAYS["expired"]:
                 warning_list.append(item)

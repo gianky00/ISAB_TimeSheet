@@ -16,7 +16,7 @@ from typing import Any
 
 from platformdirs import user_data_dir
 
-from src.core.constants import URLs
+from src.core.constants import FileNames, URLs
 from src.core.secrets_manager import SecretsManager
 from src.core.version import __version__
 

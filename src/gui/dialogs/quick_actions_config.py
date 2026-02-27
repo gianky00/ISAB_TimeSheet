@@ -66,6 +66,7 @@ class QuickActionsConfigDialog(QDialog):
         self._setup_ui()
 
     def _setup_ui(self) -> None:
+        palette = get_palette()
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
 

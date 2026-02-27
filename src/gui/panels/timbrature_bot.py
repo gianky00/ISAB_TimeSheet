@@ -62,7 +62,7 @@ class TimbratureBotPanel(BaseBotPanel):
         try:
             self._load_saved_data()
         except Exception as e:
-            print(f"❌ Error loading data for TimbratureBotPanel: {e}")
+            print(f"[ERROR] Error loading data for TimbratureBotPanel: {e}")
             traceback.print_exc()
 
     def _setup_content(self) -> None:

@@ -61,7 +61,7 @@ class Business:
     HOURLY_COST_STD = 28.50
     DEFAULT_SUPPLIER = "KK10608 - COEMI S.R.L."
     DEFAULT_SITE = "ISAB"
-    DEFAULT_EXCEL_PASSWORD = "coemi"
+    DEFAULT_EXCEL_PASSWORD = "coemi"  # noqa: S105
 
 
 class Emails:
