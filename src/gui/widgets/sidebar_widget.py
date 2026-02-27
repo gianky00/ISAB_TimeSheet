@@ -205,7 +205,8 @@ class SidebarWidget(QFrame):
             """
         return f"""
             QFrame#sidebarFrame {{
-                background-color: {COLORS["glass_dark"]};
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 {COLORS["glass_dark"]}, stop:1 {COLORS["glass_deep"]});
                 border-right: 1px solid {COLORS["glass_border"]};
                 border-radius: 15px;
             }}
@@ -457,8 +458,8 @@ class SidebarWidget(QFrame):
 
         if c:
             self.active_track.hide()
-            self.setMinimumHeight(102)
-            self.setMaximumHeight(102)
+            self.setMinimumHeight(60)
+            self.setMaximumHeight(60)
             self.setStyleSheet(self._get_glass_style(collapsed=True))
         else:
             parent = self.parentWidget()
