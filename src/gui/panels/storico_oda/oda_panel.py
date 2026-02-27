@@ -15,7 +15,6 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
-    QMessageBox,
     QSplitter,
     QTreeView,
     QVBoxLayout,
@@ -26,6 +25,7 @@ from src.bots import create_bot
 from src.core import config_manager
 from src.core.oda_manager import OdaManager
 from src.core.sync_tracker import SyncTracker
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.formatters import format_currency_smart, format_date_it
 from src.gui.panels.base import BotWorker
 from src.gui.styles import COLORS
@@ -360,9 +360,9 @@ class StoricoOdaPanel(QWidget):
                 ToastManager.instance().show(f"Importazione completata: {added} righe aggiornate.", "success")
                 self.refresh_data()
             else:
-                QMessageBox.warning(self, "Errore Importazione", f"Impossibile importare:\n{message}")
+                ConfirmationDialog.show_warning(self, "Errore Importazione", f"Impossibile importare:\n{message}")
         except Exception as e:
-            QMessageBox.critical(self, "Errore Critico", f"Errore durante l'importazione:\n{e}")
+            ConfirmationDialog.show_error(self, "Errore Critico", f"Errore durante l'importazione:\n{e}")
 
     def _on_update_clicked(self):
         """Avvia il bot Dettagli OdA per sincronizzare i dati."""
@@ -371,7 +371,7 @@ class StoricoOdaPanel(QWidget):
 
             account = config_manager.get_default_account()
             if not account:
-                QMessageBox.warning(self, "Attenzione", "Credenziali ISAB non configurate.")
+                ConfirmationDialog.show_warning(self, "Attenzione", "Credenziali ISAB non configurate.")
                 return
             username, password = account.get("username"), account.get("password")
 
@@ -426,7 +426,7 @@ class StoricoOdaPanel(QWidget):
 
         except Exception as e:
             self.filters.btn_bot_update.setEnabled(True)
-            QMessageBox.critical(self, "Errore", f"Errore durante l'avvio del bot: {e}")
+            ConfirmationDialog.show_error(self, "Errore", f"Errore durante l'avvio del bot: {e}")
 
     def _on_bot_finished(self, success: bool):
         self.filters.btn_bot_update.setEnabled(True)
@@ -434,7 +434,7 @@ class StoricoOdaPanel(QWidget):
             ToastManager.instance().show("Aggiornamento completato!", "success")
             self.refresh_data()
         else:
-            QMessageBox.warning(self, "Errore", "Il bot ha terminato con errori. Controlla i log.")
+            ConfirmationDialog.show_warning(self, "Errore", "Il bot ha terminato con errori. Controlla i log.")
 
     def _show_confirmation_dialog(self, title: str, message: str) -> bool:
         dlg = QDialog(self)
@@ -481,4 +481,4 @@ class StoricoOdaPanel(QWidget):
 
             os.startfile(filename)  # noqa: S606
         except Exception as e:
-            QMessageBox.critical(self, "Errore Export", f"Impossibile esportare: {e}")
+            ConfirmationDialog.show_error(self, "Errore Export", f"Impossibile esportare: {e}")

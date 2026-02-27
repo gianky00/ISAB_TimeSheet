@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
     QLineEdit,
-    QMessageBox,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -19,6 +18,7 @@ from PyQt6.QtWidgets import (
 from src.core.audit_manager import AuditManager
 from src.core.employees import employee_manager
 from src.core.sync_tracker import SyncTracker
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 
@@ -260,7 +260,7 @@ class DipendentiManagerPanel(QWidget):
             self._filter_table(self.search_bar.text())  # Riapplica filtro se presente
 
         except Exception as e:
-            QMessageBox.critical(self, "Errore", f"Impossibile caricare i dati: {e}")
+            ConfirmationDialog.show_error(self, "Errore", f"Impossibile caricare i dati: {e}")
 
     def _filter_table(self, text):
         """Filtra la tabella in locale con supporto multi-termine (AND logico)."""
@@ -297,14 +297,14 @@ class DipendentiManagerPanel(QWidget):
 
         try:
             count = employee_manager.import_from_csv(file_path)
-            QMessageBox.information(self, "Sync Completato", f"Importati/Aggiornati {count} dipendenti.")
+            ConfirmationDialog.show_info(self, "Sync Completato", f"Importati/Aggiornati {count} dipendenti.")
             self.refresh_data()
             self.data_changed.emit()
             AuditManager.instance().log_action(
                 "Sync CSV", "dipendenti", "Manuale", {"file": file_path, "count": count}
             )
         except Exception as e:
-            QMessageBox.warning(self, "Errore Sync", f"Errore durante l'importazione:\n{e}")
+            ConfirmationDialog.show_warning(self, "Errore Sync", f"Errore durante l'importazione:\n{e}")
 
     def _add_employee(self):
         dialog = EmployeeEditorDialog(self)
@@ -322,7 +322,7 @@ class DipendentiManagerPanel(QWidget):
                 self.refresh_data()
                 self.data_changed.emit()
             else:
-                QMessageBox.warning(
+                ConfirmationDialog.show_warning(
                     self,
                     "Errore",
                     "Errore durante l'inserimento nel DB (forse ID duplicato?)",
@@ -364,4 +364,4 @@ class DipendentiManagerPanel(QWidget):
                 self.data_changed.emit()
                 AuditManager.instance().log_action("Modifica Dipendente", "dipendenti", id_risorsa)
             else:
-                QMessageBox.warning(self, "Errore", "Impossibile aggiornare i dati.")
+                ConfirmationDialog.show_warning(self, "Errore", "Impossibile aggiornare i dati.")

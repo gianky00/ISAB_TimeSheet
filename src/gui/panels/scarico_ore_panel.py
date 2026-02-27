@@ -19,7 +19,6 @@ from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
     QLineEdit,
-    QMessageBox,
     QTableView,
     QVBoxLayout,
     QWidget,
@@ -30,6 +29,7 @@ from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.components.scarico_ore import FilterHeaderView, ScaricoOreTableModel
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -308,7 +308,7 @@ class ScaricoOrePanel(QWidget):
         """Avvia la procedura di sincronizzazione dal file DataEase esterno."""
         path = config_manager.load_config().get("dataease_path", "")
         if not path:
-            QMessageBox.warning(
+            ConfirmationDialog.show_warning(
                 self,
                 "Configurazione Mancante",
                 "Configura il percorso 'File Scarico Ore' nelle Impostazioni.",
@@ -343,7 +343,7 @@ class ScaricoOrePanel(QWidget):
             self._load_data()
         else:
             self.status_label.setText("Errore")
-            QMessageBox.critical(self, "Errore Aggiornamento", msg)
+            ConfirmationDialog.show_error(self, "Errore Aggiornamento", msg)
 
     def _perform_search(self) -> None:
         """Applica il filtro testuale globale al modello e ricalcola i totali."""

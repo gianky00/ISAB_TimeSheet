@@ -19,7 +19,6 @@ from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
     QMenu,
-    QMessageBox,
     QSplitter,
     QTableView,
     QVBoxLayout,
@@ -31,6 +30,7 @@ from src.core import config_manager
 from src.core.database import db_manager, pdl_queries
 from src.core.sync_tracker import SyncTracker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.formatters import FastTableModel
 from src.gui.panels.base import BotWorker
 from src.gui.widgets.modern_button import ModernButton
@@ -215,7 +215,7 @@ class PDLDBPanel(QWidget):
                 account_type = default_sw.get("type", "Esecutore")
 
             if not username or not password:
-                QMessageBox.warning(self, "Attenzione", "Credenziali SafeWork non configurate.")
+                ConfirmationDialog.show_warning(self, "Attenzione", "Credenziali SafeWork non configurate.")
                 return
 
             if not self._show_confirmation_dialog(
@@ -250,7 +250,7 @@ class PDLDBPanel(QWidget):
 
         except Exception as e:
             self.filters.btn_bot_update.setEnabled(True)
-            QMessageBox.critical(self, "Errore", f"Errore avvio bot: {e}")
+            ConfirmationDialog.show_error(self, "Errore", f"Errore avvio bot: {e}")
 
     def _on_bot_finished(self, success: bool):
         """Gestisce il completamento del bot di ricerca PDL."""
@@ -267,7 +267,7 @@ class PDLDBPanel(QWidget):
                     scarico_pdl._on_log("✅ Bot Ricerca PDL completato.")
         else:
             self.filters.lbl_sync_status.setText("❌ Errore Bot")
-            QMessageBox.warning(self, "Errore", "Bot terminato con errori.")
+            ConfirmationDialog.show_warning(self, "Errore", "Bot terminato con errori.")
 
     def _show_confirmation_dialog(self, title: str, message: str) -> bool:
         """Mostra una dialog di conferma con stile coerente."""

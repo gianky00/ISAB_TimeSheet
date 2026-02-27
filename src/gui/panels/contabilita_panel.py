@@ -15,7 +15,6 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QMessageBox,
     QTableWidget,
     QTabWidget,
     QTreeWidget,
@@ -28,6 +27,7 @@ from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.contabilita_worker import ContabilitaWorker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.attivita_tab import AttivitaProgrammateTab
 from src.gui.widgets.contabilita.certificati_tab import CertificatiCampioneTab
@@ -415,6 +415,6 @@ class ContabilitaPanel(QWidget):
             self.refresh_tabs()
         else:
             self.status_lbl.setText("Errore")
-            QMessageBox.warning(self, "Errore", msg)
+            ConfirmationDialog.show_error(self, "Errore", msg)
         self.worker = None
         self.update_btn.setDisabled(False)
