@@ -1,8 +1,10 @@
-from PyQt6.QtCore import QSize, pyqtSignal
+from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
+    QFrame,
     QHBoxLayout,
     QLineEdit,
     QPushButton,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -22,60 +24,91 @@ class ChatInputBar(QWidget):
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(20, 10, 20, 20)
+        main_layout.setSpacing(0)
+
+        # Floating Container
+        self.container = QFrame()
+        self.container.setObjectName("floatingInput")
+        self.container.setStyleSheet(f"""
+            QFrame#floatingInput {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-radius: 28px;
+            }}
+        """)
+
+        # Shadow for floating effect
+        from PyQt6.QtGui import QColor
+        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(20)
+        shadow.setXOffset(0)
+        shadow.setYOffset(4)
+        shadow.setColor(QColor(0, 0, 0, 40))
+        self.container.setGraphicsEffect(shadow)
+
+        layout = QHBoxLayout(self.container)
+        layout.setContentsMargins(8, 6, 8, 6)
+        layout.setSpacing(10)
 
         self.attach_btn = QPushButton()
-        self.attach_btn.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), COLORS["text_dark"]))
-        self.attach_btn.setFixedSize(45, 45)
-        self.attach_btn.setIconSize(QSize(24, 24))
+        self.attach_btn.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), COLORS["text_muted"]))
+        self.attach_btn.setFixedSize(40, 40)
+        self.attach_btn.setIconSize(QSize(20, 20))
         self.attach_btn.setToolTip("Allega un documento (PDF)")
+        self.attach_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.attach_btn.setStyleSheet(
             f"""
             QPushButton {{
-                background-color: {COLORS['bg_white']};
-                border: 2px solid {COLORS['border_medium']};
-                border-radius: 22px;
+                background-color: {COLORS['bg_hover']};
+                border: none;
+                border-radius: 20px;
             }}
-            QPushButton:hover {{ border-color: {COLORS['purple']}; }}
+            QPushButton:hover {{ background-color: {COLORS['border_light']}; }}
         """
         )
         self.attach_btn.clicked.connect(self.attach_clicked.emit)
         layout.addWidget(self.attach_btn)
 
         self.input_field = QLineEdit()
-        self.input_field.setPlaceholderText("Chiedi a Lyra o trascina qui un PDF...")
-        self.input_field.setMinimumHeight(45)
+        self.input_field.setPlaceholderText("Messaggio per Lyra...")
+        self.input_field.setMinimumHeight(40)
         self.input_field.setStyleSheet(
             f"""
             QLineEdit {{
-                border: 2px solid {COLORS['border_medium']};
-                border-radius: 22px;
-                padding: 0 15px;
+                border: none;
+                background: transparent;
+                padding: 0 5px;
                 font-size: 15px;
+                color: {COLORS['text_dark']};
             }}
-            QLineEdit:focus {{ border-color: {COLORS['purple']}; }}
         """
         )
         self.input_field.returnPressed.connect(self._on_send)
         layout.addWidget(self.input_field)
 
-        self.send_btn = QPushButton("Invia")
-        self.send_btn.setMinimumHeight(45)
+        self.send_btn = QPushButton()
+        self.send_btn.setIcon(get_colored_icon(get_asset_path(Icons.SEND), "white"))
+        self.send_btn.setIconSize(QSize(18, 18))
+        self.send_btn.setFixedSize(40, 40)
+        self.send_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.send_btn.setStyleSheet(
             f"""
             QPushButton {{
                 background-color: {COLORS['purple']};
-                color: white;
-                border-radius: 22px;
-                padding: 0 20px;
-                font-weight: bold;
+                border: none;
+                border-radius: 20px;
             }}
-            QPushButton:hover {{ background-color: {COLORS['purple']}; opacity: 0.8; }}
+            QPushButton:hover {{ background-color: {COLORS['purple']}; opacity: 0.9; }}
+            QPushButton:disabled {{ background-color: {COLORS['text_muted']}; }}
         """
         )
         self.send_btn.clicked.connect(self._on_send)
         layout.addWidget(self.send_btn)
+
+        main_layout.addWidget(self.container)
 
     def _on_send(self) -> None:
         text = self.input_field.text().strip()
