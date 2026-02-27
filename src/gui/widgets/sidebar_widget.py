@@ -21,7 +21,6 @@ from PyQt6.QtCore import (  # type: ignore[attr-defined]
     pyqtProperty,
     pyqtSignal,
 )
-from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
@@ -224,22 +223,31 @@ class SidebarWidget(QFrame):
         # Header
         self.header_container = QWidget()
         h_layout = QHBoxLayout(self.header_container)
-        h_layout.setContentsMargins(12, 5, 10, 15)
+        h_layout.setContentsMargins(14, 12, 14, 12)
         h_layout.setSpacing(12)
 
         self.logo_badge = QFrame()
-        self.logo_badge.setFixedSize(42, 42)
-        self.logo_badge.setStyleSheet("background: white; border-radius: 21px;")
+        self.logo_badge.setFixedSize(46, 46)
+        border_color = hex_to_rgba(COLORS["teal_accent"], 0.5)
+        self.logo_badge.setStyleSheet(f"""
+            QFrame {{
+                background: white;
+                border-radius: 23px;
+                border: 2px solid {border_color};
+            }}
+        """)
         logo_layout = QVBoxLayout(self.logo_badge)
         logo_layout.setContentsMargins(0, 0, 0, 0)
         logo_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.logo_icon = QLabel()
-        pix = QPixmap(get_asset_path("assets/app.ico"))
+        from PyQt6.QtGui import QIcon
+        icon = QIcon(get_asset_path("assets/app.ico"))
+        pix = icon.pixmap(64, 64) # Carica una risoluzione maggiore per evitare sgranature
         if not pix.isNull():
             self.logo_icon.setPixmap(
                 pix.scaled(
-                    28, 28, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+                    30, 30, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
                 )
             )
         logo_layout.addWidget(self.logo_icon)
