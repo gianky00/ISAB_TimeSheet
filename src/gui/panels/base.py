@@ -24,6 +24,7 @@ from src.core.stats_manager import StatsManager
 from src.gui.components.activity_timeline import ActivityTimelineWidget
 from src.gui.design.spacing import Spacing
 from src.gui.dialogs.standard_input_dialog import StandardInputDialog
+from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import TimelineWidget
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.status_card import StatusCard
@@ -248,10 +249,10 @@ class BaseBotPanel(QWidget):
         if not message:
             # Map standard colors to messages
             mapping = {
-                "#0d6efd": "In esecuzione...",
-                "#2E7D32": "Completato",
-                "#ffc107": "In attesa",
-                "#C62828": "Errore",
+                STATUS_COLORS["running"]: "In esecuzione...",
+                STATUS_COLORS["completed"]: "Completato",
+                STATUS_COLORS["pending"]: "In attesa",
+                STATUS_COLORS["error"]: "Errore",
             }
             message = mapping.get(color, "In attesa")
 
@@ -310,7 +311,7 @@ class BaseBotPanel(QWidget):
     def _on_start(self, params_override: dict[str, Any] | None = None):
         """Gestisce l'avvio del bot. Da implementare nelle sottoclassi."""
         self.start_time = datetime.now()
-        self._update_status("#0d6efd")
+        self._update_status(STATUS_COLORS["running"])
 
         # Attiva Cyber-Mood per il log
         if hasattr(self.log_widget, "set_mood"):
@@ -335,7 +336,7 @@ class BaseBotPanel(QWidget):
         if self.worker:
             self.worker.stop()
             self.log_widget.append("[AVVISO] Stop richiesto...")
-            self._update_status("#ffc107", "Arresto richiesto...")
+            self._update_status(STATUS_COLORS["pending"], "Arresto richiesto...")
 
     def _on_worker_finished(self, success: bool):
         """Gestisce il completamento del worker."""
@@ -350,7 +351,7 @@ class BaseBotPanel(QWidget):
         self._log_mission_report(duration, success)
 
         # Update Status Card
-        final_status = "#2E7D32" if success else "#C62828"
+        final_status = STATUS_COLORS["completed"] if success else STATUS_COLORS["error"]
         self._update_status(final_status, "Completato" if success else "Errore")
 
         # Notify & Signals

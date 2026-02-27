@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -58,7 +59,7 @@ class FilterChip(QPushButton):
             self.setIcon(
                 get_colored_icon(
                     get_asset_path(self._icon_path),
-                    "#ffffff" if self._is_active else "#6c757d",
+                    COLORS["bg_white"] if self._is_active else COLORS["text_muted"],
                 )
             )
             self.setIconSize(QSize(16, 16))
@@ -82,37 +83,37 @@ class FilterChip(QPushButton):
         if self._is_active:
             # Active: filled with accent color
             self.setStyleSheet(
-                """
-                QPushButton {
-                    background-color: #2196F3;
-                    color: #ffffff;
+                f"""
+                QPushButton {{
+                    background-color: {COLORS['primary_blue']};
+                    color: {COLORS['bg_white']};
                     border: none;
                     border-radius: 20px;
                     padding: 8px 16px;
                     font-size: 13px;
                     font-weight: 600;
-                }
-                QPushButton:hover {
-                    background-color: #1976D2;
-                }
+                }}
+                QPushButton:hover {{
+                    background-color: {COLORS['primary_dark']};
+                }}
             """
             )
         else:
             self.setStyleSheet(
-                """
-                QPushButton {
+                f"""
+                QPushButton {{
                     background-color: transparent;
-                    color: #6c757d;
-                    border: 1px solid #ced4da;
+                    color: {COLORS['text_muted']};
+                    border: 1px solid {COLORS['border_medium']};
                     border-radius: 20px;
                     padding: 8px 16px;
                     font-size: 13px;
                     font-weight: 600;
-                }
-                QPushButton:hover {
-                    background-color: #f8f9fa;
-                    border-color: #adb5bd;
-                }
+                }}
+                QPushButton:hover {{
+                    background-color: {COLORS['bg_light']};
+                    border-color: {COLORS['border_dark']};
+                }}
             """
             )
 
@@ -149,18 +150,18 @@ class NotificationToolbar(QWidget):
         self.search_input.setPlaceholderText("🔍 Cerca notifiche...")
         self.search_input.setFixedWidth(250)
         self.search_input.setStyleSheet(
-            """
-            QLineEdit {
+            f"""
+            QLineEdit {{
                 padding: 8px 12px;
-                border: 1px solid #ced4da;
+                border: 1px solid {COLORS['border_medium']};
                 border-radius: 8px;
                 font-size: 13px;
-                background: #ffffff;
-            }
-            QLineEdit:focus {
-                border-color: #2196F3;
+                background: {COLORS['bg_white']};
+            }}
+            QLineEdit:focus {{
+                border-color: {COLORS['primary_blue']};
                 outline: none;
-            }
+            }}
         """
         )
         self.search_input.textChanged.connect(self._on_search_text_changed)
@@ -193,7 +194,7 @@ class NotificationToolbar(QWidget):
 
         # === SORT DROPDOWN ===
         sort_label = QLabel("Ordina:")
-        sort_label.setStyleSheet("font-size: 13px; color: #6c757d; font-weight: 600;")
+        sort_label.setStyleSheet(f"font-size: 13px; color: {COLORS['text_muted']}; font-weight: 600;")
         layout.addWidget(sort_label)
 
         self.sort_combo = QComboBox()
@@ -202,26 +203,26 @@ class NotificationToolbar(QWidget):
         self.sort_combo.addItem("Priorità", "priority")
         self.sort_combo.addItem("Livello", "level")
         self.sort_combo.setStyleSheet(
-            """
-            QComboBox {
+            f"""
+            QComboBox {{
                 padding: 6px 12px;
-                border: 1px solid #ced4da;
+                border: 1px solid {COLORS['border_medium']};
                 border-radius: 6px;
                 font-size: 13px;
-                background: #ffffff;
+                background: {COLORS['bg_white']};
                 min-width: 140px;
-            }
-            QComboBox:hover {
-                border-color: #adb5bd;
-            }
-            QComboBox::drop-down {
+            }}
+            QComboBox:hover {{
+                border-color: {COLORS['border_dark']};
+            }}
+            QComboBox::drop-down {{
                 border: none;
-            }
-            QComboBox QAbstractItemView {
-                border: 1px solid #ced4da;
-                selection-background-color: #e7f3ff;
-                background: #ffffff;
-            }
+            }}
+            QComboBox QAbstractItemView {{
+                border: 1px solid {COLORS['border_medium']};
+                selection-background-color: {COLORS['table_info_bg']};
+                background: {COLORS['bg_white']};
+            }}
         """
         )
         self.sort_combo.currentIndexChanged.connect(self._on_sort_changed)

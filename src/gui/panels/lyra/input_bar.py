@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -25,18 +26,18 @@ class ChatInputBar(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.attach_btn = QPushButton()
-        self.attach_btn.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), "#000000"))
+        self.attach_btn.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), COLORS["text_dark"]))
         self.attach_btn.setFixedSize(45, 45)
         self.attach_btn.setIconSize(QSize(24, 24))
         self.attach_btn.setToolTip("Allega un documento (PDF)")
         self.attach_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: white;
-                border: 2px solid #ced4da;
+            f"""
+            QPushButton {{
+                background-color: {COLORS['bg_white']};
+                border: 2px solid {COLORS['border_medium']};
                 border-radius: 22px;
-            }
-            QPushButton:hover { border-color: #6f42c1; }
+            }}
+            QPushButton:hover {{ border-color: {COLORS['purple']}; }}
         """
         )
         self.attach_btn.clicked.connect(self.attach_clicked.emit)
@@ -46,14 +47,14 @@ class ChatInputBar(QWidget):
         self.input_field.setPlaceholderText("Chiedi a Lyra o trascina qui un PDF...")
         self.input_field.setMinimumHeight(45)
         self.input_field.setStyleSheet(
-            """
-            QLineEdit {
-                border: 2px solid #ced4da;
+            f"""
+            QLineEdit {{
+                border: 2px solid {COLORS['border_medium']};
                 border-radius: 22px;
                 padding: 0 15px;
                 font-size: 15px;
-            }
-            QLineEdit:focus { border-color: #6f42c1; }
+            }}
+            QLineEdit:focus {{ border-color: {COLORS['purple']}; }}
         """
         )
         self.input_field.returnPressed.connect(self._on_send)
@@ -62,15 +63,15 @@ class ChatInputBar(QWidget):
         self.send_btn = QPushButton("Invia")
         self.send_btn.setMinimumHeight(45)
         self.send_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #6f42c1;
+            f"""
+            QPushButton {{
+                background-color: {COLORS['purple']};
                 color: white;
                 border-radius: 22px;
                 padding: 0 20px;
                 font-weight: bold;
-            }
-            QPushButton:hover { background-color: #59359a; }
+            }}
+            QPushButton:hover {{ background-color: {COLORS['purple']}; opacity: 0.8; }}
         """
         )
         self.send_btn.clicked.connect(self._on_send)

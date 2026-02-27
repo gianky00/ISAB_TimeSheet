@@ -17,6 +17,7 @@ from src.gui.panels.settings.shared import style_button
 from src.gui.panels.settings.tabs.backup_tab import BackupTab
 from src.gui.panels.settings.tabs.config_tab import ConfigTab
 from src.gui.panels.settings.tabs.telegram_tab import TelegramTab
+from src.gui.styles import COLORS
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -57,7 +58,7 @@ class SettingsPanel(QWidget):
         self.config_tab.settings_changed.connect(self.save_settings)
         self.tabs.addTab(
             self.config_tab,
-            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#546E7A"),
+            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), COLORS["text_muted"]),
             "Configurazione",
         )
 
@@ -65,7 +66,7 @@ class SettingsPanel(QWidget):
         self.backup_tab = BackupTab()
         self.tabs.addTab(
             self.backup_tab,
-            get_colored_icon(get_asset_path(Icons.DATABASE), "#546E7A"),
+            get_colored_icon(get_asset_path(Icons.DATABASE), COLORS["text_muted"]),
             "Backup & Log",
         )
 
@@ -74,7 +75,7 @@ class SettingsPanel(QWidget):
         self.telegram_tab.settings_changed.connect(self.save_settings)
         self.tabs.addTab(
             self.telegram_tab,
-            get_colored_icon(get_asset_path(Icons.SEND), "#546E7A"),
+            get_colored_icon(get_asset_path(Icons.SEND), COLORS["text_muted"]),
             "Telegram Bot",
         )
 
@@ -93,7 +94,10 @@ class SettingsPanel(QWidget):
         style_button(self.btn_reset)
 
         # Sovrascrive il colore del reset essendo un'azione distruttiva
-        self.btn_reset.setStyleSheet(self.btn_reset.styleSheet() + "QPushButton { color: #C62828; border-color: #C62828; }")
+        self.btn_reset.setStyleSheet(
+            self.btn_reset.styleSheet()
+            + f"QPushButton {{ color: {COLORS['error_material']}; border-color: {COLORS['error_material']}; }}"
+        )
 
         self.btn_import.clicked.connect(self._import_config)
         self.btn_export.clicked.connect(self._export_config)

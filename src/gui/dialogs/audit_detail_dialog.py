@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -61,7 +62,7 @@ class AuditDetailDialog(QDialog):
         self.text_edit = QTextEdit()
         self.text_edit.setReadOnly(True)
         self.text_edit.setStyleSheet(
-            "font-family: Consolas, monospace; font-size: 13px; background-color: #f8f9fa;"
+            f"font-family: Consolas, monospace; font-size: 13px; background-color: {COLORS['bg_light']}; color: {COLORS['text_dark']};"
         )
 
         try:
@@ -80,15 +81,15 @@ class AuditDetailDialog(QDialog):
 
         # Copia JSON
         btn_copy = QPushButton("Copia JSON")
-        btn_copy.setIcon(get_colored_icon(get_asset_path(Icons.FILE_TEXT), "#000000"))
+        btn_copy.setIcon(get_colored_icon(get_asset_path(Icons.FILE_TEXT), COLORS["text_dark"]))
         btn_copy.clicked.connect(self._copy_to_clipboard)
         btn_copy.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #e9ecef; border: 1px solid #ced4da;
-                padding: 8px 15px; border-radius: 4px; font-weight: 600;
-            }
-            QPushButton:hover { background-color: #dee2e6; }
+            f"""
+            QPushButton {{
+                background-color: {COLORS['bg_alt']}; border: 1px solid {COLORS['border_medium']};
+                padding: 8px 15px; border-radius: 4px; font-weight: 600; color: {COLORS['text_dark']};
+            }}
+            QPushButton:hover {{ background-color: {COLORS['bg_hover']}; }}
         """
         )
         btn_layout.addWidget(btn_copy)
@@ -99,12 +100,12 @@ class AuditDetailDialog(QDialog):
         btn_close = QPushButton("Chiudi")
         btn_close.clicked.connect(self.accept)
         btn_close.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #6c757d; color: white; border: none;
+            f"""
+            QPushButton {{
+                background-color: {COLORS['text_muted']}; color: white; border: none;
                 padding: 8px 15px; border-radius: 4px; font-weight: bold;
-            }
-            QPushButton:hover { background-color: #5c636a; }
+            }}
+            QPushButton:hover {{ opacity: 0.8; }}
         """
         )
         btn_layout.addWidget(btn_close)

@@ -16,6 +16,7 @@ from src.gui.formatters import (
     format_date_it,
     format_number_smart,
 )
+from src.gui.styles import COLORS
 
 
 class MultiColumnFilterProxyModel(QSortFilterProxyModel):
@@ -100,6 +101,24 @@ class ContabilitaYearTab(QWidget):
         self.table = QTableView()
         self.table.setModel(self.proxy_model)
         self.table.setAlternatingRowColors(True)
+        self.table.setStyleSheet(f"""
+            QTableView {{
+                gridline-color: {COLORS['bg_alt']};
+                background-color: {COLORS['bg_white']};
+                alternate-background-color: {COLORS['bg_light']};
+                selection-background-color: {COLORS['table_selection_bg']};
+                selection-color: {COLORS['text_dark']};
+                border: none;
+            }}
+            QHeaderView::section {{
+                background-color: {COLORS['bg_light']};
+                color: {COLORS['text_dark']};
+                padding: 8px;
+                font-weight: bold;
+                border: none;
+                border-bottom: 1px solid {COLORS['border_light']};
+            }}
+        """)
 
         # --- Configurazione Selezione (Single row, come richiesto) ---
         self.table.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)

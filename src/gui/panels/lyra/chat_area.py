@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.styles import COLORS
 from src.gui.widgets.message_bubble import MessageBubble
 
 
@@ -20,10 +21,10 @@ class ChatArea(QScrollArea):
         super().__init__(parent)
         self.setWidgetResizable(True)
         self.setFrameShape(QFrame.Shape.NoFrame)
-        self.setStyleSheet("background-color: white; border: 1px solid #dee2e6; border-radius: 8px;")
+        self.setStyleSheet(f"background-color: {COLORS['bg_white']}; border: 1px solid {COLORS['border_light']}; border-radius: 8px;")
 
         self.container = QWidget()
-        self.container.setStyleSheet("background-color: white;")
+        self.container.setStyleSheet(f"background-color: {COLORS['bg_white']};")
         self.chat_layout = QVBoxLayout(self.container)
         self.chat_layout.setContentsMargins(5, 10, 5, 10)
         self.chat_layout.setSpacing(5)

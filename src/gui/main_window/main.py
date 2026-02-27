@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QApplication,
-    QHBoxLayout,
     QMainWindow,
     QVBoxLayout,
     QWidget,
@@ -133,10 +132,12 @@ class MainWindow(QMainWindow):
             raise
 
         # Proactive Checks
-        QTimer.singleShot(2000, self._check_isab_authorizations)
+        from src.gui.styles.constants import ANIMATION_TIMINGS
+
+        QTimer.singleShot(ANIMATION_TIMINGS["init_delay"], self._check_isab_authorizations)
         self.auth_check_timer = QTimer(self)
         self.auth_check_timer.timeout.connect(self._check_isab_authorizations)
-        self.auth_check_timer.start(4 * 3600 * 1000)
+        self.auth_check_timer.start(ANIMATION_TIMINGS["auth_check"])
 
         # Connect Autopilot real-time updates
         if hasattr(self, "timbrature_bot_panel"):
@@ -163,18 +164,21 @@ class MainWindow(QMainWindow):
                 self.setStyleSheet(self.styleSheet() + path.read_text(encoding="utf-8"))
 
     def _setup_ui(self) -> None:
-        """Configura il layout e i componenti UI principali."""
+        """Configura il layout e i componenti UI principali usando un overlay per la sidebar."""
+        from PyQt6.QtWidgets import QGridLayout
+
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        main_layout = QHBoxLayout(central_widget)
-        main_layout.setContentsMargins(10, 10, 10, 10)
-        main_layout.setSpacing(10)
 
-        self.sidebar = self.tool_bar_component.setup_sidebar(main_layout)
+        # QGridLayout permette di sovrapporre i widget nella stessa cella (z-index)
+        main_layout = QGridLayout(central_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
+        # 1. Content Area (Sotto)
         content_area = QWidget()
         content_layout = QVBoxLayout(content_area)
-        content_layout.setContentsMargins(20, 20, 20, 20)
+        content_layout.setContentsMargins(10, 10, 10, 10)
 
         (
             self.update_banner,
@@ -188,7 +192,15 @@ class MainWindow(QMainWindow):
             setattr(self, f"_panel_initialized_{i}", False)
 
         content_layout.addWidget(self.page_stack)
-        main_layout.addWidget(content_area)
+        main_layout.addWidget(content_area, 0, 0)
+
+        # 2. Sidebar come Overlay (Sopra, allineata in alto a sinistra)
+        self.sidebar = self.tool_bar_component.setup_sidebar(central_widget)
+        # L'allineamento evita che la sidebar si espanda a tutto schermo, mantenendo la sua dimensione
+        main_layout.addWidget(self.sidebar, 0, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+
+        # IMPORTANT: Raise sidebar to the top of the Z-order so it floats OVER content_area
+        self.sidebar.raise_()
 
     def _setup_shortcuts(self) -> None:
         """Configura le scorciatoie da tastiera globali."""

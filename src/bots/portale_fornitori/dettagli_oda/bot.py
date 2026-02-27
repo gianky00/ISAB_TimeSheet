@@ -2,6 +2,7 @@
 SyncroJob - Dettagli OdA Bot
 """
 
+from datetime import datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -51,15 +52,18 @@ class DettagliOdABot(BaseBot):
 
     def __init__(
         self,
-        data_da: str = "01.01.2024",
-        data_a: str = "31.12.2025",
-        fornitore: str = "KK10608 - COEMI S.R.L.",
+        data_da: str | None = None,
+        data_a: str | None = None,
+        fornitore: str | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.data_da = data_da
-        self.data_a = data_a
-        self.fornitore = fornitore
+        current_year = datetime.now().year
+        from src.core.constants import Business
+
+        self.data_da = data_da or f"01.01.{current_year}"
+        self.data_a = data_a or f"31.12.{current_year}"
+        self.fornitore = fornitore or Business.DEFAULT_SUPPLIER
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """Validazione specifica per Dettagli OdA."""

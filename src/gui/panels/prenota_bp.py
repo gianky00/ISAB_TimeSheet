@@ -6,6 +6,7 @@ sul portale fornitori ISAB. Consente di inserire una lista di BP, configurare
 il fornitore e l'intervallo temporale, e avviare l'automazione.
 """
 
+from datetime import datetime
 from typing import Any
 
 from PyQt6.QtCore import QTimer
@@ -15,6 +16,7 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel, BotWorker
+from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import BotParametersWidget, EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path
@@ -59,7 +61,7 @@ class PrenotaBPPanel(BaseBotPanel):
         try:
             self._load_saved_data()
         except Exception as e:
-            print(f"❌ Error loading data for PrenotaBPPanel: {e}")
+            print(f"[ERROR] Error loading data for PrenotaBPPanel: {e}")
 
     def _setup_content(self):
         """Configura il layout e i widget specifici per la prenotazione BP."""
@@ -115,8 +117,9 @@ class PrenotaBPPanel(BaseBotPanel):
         if saved_data:
             self.data_table.set_data(saved_data)
 
-        date_da = config.get("last_prenota_date_from", "01.01.2024")
-        date_a = config.get("last_prenota_date_to", "31.12.2025")
+        current_year = datetime.now().year
+        date_da = config.get("last_prenota_date_from", f"01.01.{current_year}")
+        date_a = config.get("last_prenota_date_to", f"31.12.{current_year}")
         self.params_widget.set_dates(date_da, date_a)
 
     def _save_data(self):
@@ -147,7 +150,7 @@ class PrenotaBPPanel(BaseBotPanel):
         ready, msg = self.validate_ready()
         if not ready:
             ConfirmationDialog.show_warning(self, "Attenzione", msg)
-            self._update_status("#C62828", "Validazione fallita")
+            self._update_status(STATUS_COLORS["error"], "Validazione fallita")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -205,7 +208,7 @@ class PrenotaBPPanel(BaseBotPanel):
         self._setup_worker_connections(worker)
 
         # UI Update
-        self._update_status("#0d6efd", "Esecuzione...")
+        self._update_status(STATUS_COLORS["running"], "Esecuzione...")
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()

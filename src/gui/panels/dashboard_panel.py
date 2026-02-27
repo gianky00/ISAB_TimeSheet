@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.styles import COLORS
 from src.gui.widgets.activity_feed import ActivityFeed
 from src.gui.widgets.autopilot import AutopilotWidget
 from src.gui.widgets.quick_actions import QuickActions
@@ -57,12 +58,12 @@ class DashboardPanel(QWidget):
         self.main_container = QFrame()
         self.main_container.setObjectName("mainDashboardContainer")
         self.main_container.setStyleSheet(
-            """
-            QFrame#mainDashboardContainer {
-                background-color: #ffffff;
+            f"""
+            QFrame#mainDashboardContainer {{
+                background-color: {COLORS['bg_white']};
                 border-radius: 20px;
-                border: 1px solid #dee2e6;
-            }
+                border: 1px solid {COLORS['border_light']};
+            }}
         """
         )
 
@@ -132,7 +133,7 @@ class DashboardPanel(QWidget):
 
         # 2. Activity Feed (Bottom)
         subtitle = QLabel("Feed Attività")
-        subtitle.setStyleSheet("font-size: 16px; font-weight: 700; color: #6c757d; margin-top: 20px;")
+        subtitle.setStyleSheet(f"font-size: 16px; font-weight: 700; color: {COLORS['text_muted']}; margin-top: 20px;")
         self.content_layout.addWidget(subtitle)
 
         self.activity_feed = ActivityFeed()

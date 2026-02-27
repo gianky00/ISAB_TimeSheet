@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import Any, Optional
 
 from src.core import config_manager
+from src.core.constants import FileNames
 
 
 class StatsManager:
@@ -43,7 +44,7 @@ class StatsManager:
         """
         config = config_manager.load_config()
         if not config.get("statistics"):
-            old_file = config_manager.CONFIG_DIR / "statistics.json"
+            old_file = config_manager.CONFIG_DIR / FileNames.STATISTICS
             if old_file.exists():
                 with suppress(Exception), old_file.open("r", encoding="utf-8") as f:
                     old_stats: dict[str, Any] = json.load(f)

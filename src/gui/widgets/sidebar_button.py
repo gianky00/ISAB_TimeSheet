@@ -1,49 +1,43 @@
 """
-SyncroJob - Sidebar Button (Premium)
-Pulsante avanzato con supporto per Glassmorphism, Glow effect e animazioni di stato.
-Integra feedback visivi dinamici per migliorare l'esperienza utente.
+SyncroJob - Sidebar Button (Premium V6)
+Risoluzione contrasto: Sfondo selezione più scuro e opacità testo migliorata.
 """
 
-from PyQt6.QtCore import QSize, Qt
+from typing import Any
+
+from PyQt6.QtCore import QSize, Qt, pyqtProperty  # type: ignore[attr-defined]
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QPushButton, QWidget
 
+from src.gui.styles import COLORS
+from src.gui.styles.palette_helpers import hex_to_rgba
 from src.utils.helpers import get_colored_icon
 
 
 class SidebarButton(QPushButton):
     """
-    Pulsante d'élite per la sidebar.
-    Integra effetti di luce e animazioni per comunicare lo stato dell'app.
-    Supporta badge di notifica e bagliori di stato dinamici.
+    Pulsante ultra-moderno per la sidebar.
+    Ottimizzato per la visibilità su sfondi scuri gradienti.
     """
 
     def __init__(self, text: str, icon_path: str = "", parent: QWidget | None = None) -> None:
-        """
-        Inizializza il pulsante della sidebar.
-
-        Args:
-            text: Testo dell'etichetta del pulsante.
-            icon_path: Percorso del file SVG dell'icona.
-            parent: Widget genitore opzionale.
-        """
         super().__init__(parent)
         self.label_text = text
         self.icon_path = icon_path
         self._collapsed = False
         self._badge_count = 0
+        self._text_opacity = 1.0 # Default a 1.0 per visibilità immediata
 
         if icon_path:
-            self.setIcon(get_colored_icon(icon_path, "#ffffff"))
+            self.setIcon(get_colored_icon(icon_path, COLORS["bg_white"]))
 
         self.setCheckable(True)
         self.setMinimumHeight(48)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
-        # Effetto Glow (Bagliore) per stato Checked/Hover
         self.glow = QGraphicsDropShadowEffect(self)
         self.glow.setBlurRadius(15)
-        self.glow.setColor(QColor(0, 150, 136, 0))
+        self.glow.setColor(QColor(0, 0, 0, 0)) # Trasparente di default
         self.glow.setOffset(0, 0)
         self.setGraphicsEffect(self.glow)
 
@@ -51,86 +45,60 @@ class SidebarButton(QPushButton):
         self._update_style()
         self.toggled.connect(self._on_toggled)
 
-    def _on_toggled(self, checked: bool) -> None:
-        """
-        Gestisce il cambiamento di stato del pulsante (selezionato/non selezionato).
+    @pyqtProperty(float)
+    def text_opacity(self) -> float:
+        return self._text_opacity
 
-        Args:
-            checked: True se il pulsante è selezionato.
-        """
-        if checked:
-            self.glow.setColor(QColor(0, 150, 136, 180)) # Teal glow
-        else:
-            if self._badge_count == 0:
-                self.glow.setColor(QColor(0, 150, 136, 0))
+    @text_opacity.setter # type: ignore[no-redef]
+    def text_opacity(self, value: float) -> None:
+        self._text_opacity = value
         self._update_style()
 
-    def set_collapsed(self, collapsed: bool) -> None:
-        """
-        Imposta la modalità visiva del pulsante.
+    def _on_toggled(self, checked: bool) -> None:
+        if checked:
+            # Glow basato sul colore primario/teal
+            c = QColor(COLORS["teal_accent"])
+            c.setAlpha(180)
+            self.glow.setColor(c)
+        else:
+            if self._badge_count == 0:
+                self.glow.setColor(QColor(0, 0, 0, 0))
+        self._update_style()
 
-        Args:
-            collapsed: True per mostrare solo l'icona, False per testo completo.
-        """
+    def showEvent(self, event: Any) -> None:
+        """Forza l'aggiornamento dello stile quando il widget viene mostrato."""
+        super().showEvent(event)
+        self._update_style()
+
+    def set_collapsed(self, collapsed: bool, animated: bool = False) -> None:
         self._collapsed = collapsed
         self._refresh_state()
         self._update_style()
 
     def _refresh_state(self) -> None:
-        """Sincronizza il contenuto testuale e le icone in base allo stato (badge/collapse)."""
         base_text = f"   {self.label_text}"
         display_text = f"{base_text} ({self._badge_count})" if self._badge_count > 0 else base_text
 
         if self._collapsed:
             self.setText("")
             self.setIconSize(QSize(22, 22))
-            tooltip = self.label_text
-            if self._badge_count > 0:
-                tooltip += f" ({self._badge_count} notifiche)"
-            self.setToolTip(tooltip)
         else:
             self.setText(display_text)
             self.setIconSize(QSize(18, 18))
-            self.setToolTip("")
-
-    def set_badge(self, count: int) -> None:
-        """
-        Imposta un badge numerico di notifica sul pulsante.
-
-        Args:
-            count: Numero di notifiche da visualizzare.
-        """
-        self._badge_count = count
-        self._refresh_state()
-        if count > 0 and not self.isChecked():
-            self.glow.setColor(QColor(255, 152, 0, 100)) # Orange soft glow
-            self.glow.setBlurRadius(10)
-        elif count == 0 and not self.isChecked():
-            self.glow.setColor(QColor(0, 0, 0, 0))
-
-    def set_status_glow(self, active: bool, color: str = "#009688") -> None:
-        """
-        Attiva un bagliore di stato specifico per processi in background.
-
-        Args:
-            active: True per attivare il bagliore.
-            color: Colore hex del bagliore.
-        """
-        if active:
-            self.glow.setColor(QColor(color))
-            self.glow.setBlurRadius(20)
-        else:
-            self._on_toggled(self.isChecked())
 
     def _update_style(self) -> None:
-        """Genera e applica il foglio di stile QSS per l'estetica Glassmorphism."""
         align = "center" if self._collapsed else "left"
         padding = "0px" if self._collapsed else "12px 15px"
 
-        # Sfondo premium per selezione
-        bg_color = "rgba(255, 255, 255, 0.12)" if self.isChecked() else "transparent"
-        text_color = "#ffffff" if self.isChecked() else "rgba(255, 255, 255, 0.65)"
-        font_weight = "700" if self.isChecked() else "500"
+        # Sfondo selezione dinamico basato su teal_accent
+        if self.isChecked():
+            bg_color = hex_to_rgba(COLORS["teal_accent"], 0.25)
+            text_color = COLORS["bg_white"]
+            font_weight = "800"
+        else:
+            bg_color = "transparent"
+            text_color = hex_to_rgba(COLORS["bg_white"], max(0.4, self._text_opacity)) # Mai sotto 0.4 se visibile
+            font_weight = "500"
 
         self.setStyleSheet(f"""
             QPushButton {{
@@ -145,7 +113,16 @@ class SidebarButton(QPushButton):
                 border: none;
             }}
             QPushButton:hover {{
-                background-color: rgba(255, 255, 255, 0.08);
-                color: #ffffff;
+                background-color: {hex_to_rgba(COLORS['bg_white'], 0.1)};
+                color: {COLORS['bg_white']};
             }}
         """)
+
+    def set_badge(self, count: int) -> None:
+        self._badge_count = count
+        self._refresh_state()
+        if count > 0 and not self.isChecked():
+            self.glow.setColor(QColor(255, 152, 0, 100))
+            self.glow.setBlurRadius(10)
+        elif count == 0 and not self.isChecked():
+            self.glow.setColor(QColor(0, 0, 0, 0))

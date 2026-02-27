@@ -24,6 +24,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from ..design.colors import get_palette
@@ -113,7 +114,7 @@ class Toast(QWidget):
         )
 
         icon_label = QLabel()
-        icon = get_colored_icon(get_asset_path(icon_path), "#000000")
+        icon = get_colored_icon(get_asset_path(icon_path), COLORS["text_dark"])
         icon_label.setPixmap(icon.pixmap(QSize(20, 20)))
         icon_label.setStyleSheet("border: none; background: transparent;")
         container_layout.addWidget(icon_label)
@@ -259,21 +260,33 @@ class ToastManager(QObject):
 
 
 # Funzioni helper globali con NUOVI TEMPI
-def toast_info(message: str, duration: int = 3000) -> None:
+def toast_info(message: str, duration: int | None = None) -> None:
     """Visualizza un toast informativo."""
-    ToastManager.instance().show(message, Toast.Type.INFO, duration)
+    from src.gui.styles.constants import ANIMATION_TIMINGS
+
+    d = duration or ANIMATION_TIMINGS["toast_info"]
+    ToastManager.instance().show(message, Toast.Type.INFO, d)
 
 
-def toast_success(message: str, duration: int = 2000) -> None:
+def toast_success(message: str, duration: int | None = None) -> None:
     """Visualizza un toast di successo (Veloce: 2s)."""
-    ToastManager.instance().show(message, Toast.Type.SUCCESS, duration)
+    from src.gui.styles.constants import ANIMATION_TIMINGS
+
+    d = duration or ANIMATION_TIMINGS["toast_success"]
+    ToastManager.instance().show(message, Toast.Type.SUCCESS, d)
 
 
-def toast_warning(message: str, duration: int = 10000) -> None:
+def toast_warning(message: str, duration: int | None = None) -> None:
     """Visualizza un toast di avviso (Lungo: 10s)."""
-    ToastManager.instance().show(message, Toast.Type.WARNING, duration)
+    from src.gui.styles.constants import ANIMATION_TIMINGS
+
+    d = duration or ANIMATION_TIMINGS["toast_warning"]
+    ToastManager.instance().show(message, Toast.Type.WARNING, d)
 
 
-def toast_error(message: str, duration: int = 10000) -> None:
+def toast_error(message: str, duration: int | None = None) -> None:
     """Visualizza un toast di errore (Lungo: 10s)."""
-    ToastManager.instance().show(message, Toast.Type.ERROR, duration)
+    from src.gui.styles.constants import ANIMATION_TIMINGS
+
+    d = duration or ANIMATION_TIMINGS["toast_error"]
+    ToastManager.instance().show(message, Toast.Type.ERROR, d)

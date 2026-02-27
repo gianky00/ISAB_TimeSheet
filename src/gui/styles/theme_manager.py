@@ -5,7 +5,7 @@ Gestisce l'applicazione di temi, palette e fogli di stile (QSS).
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import QApplication
@@ -92,30 +92,80 @@ class ThemeManager:
         app.setPalette(palette)
 
     def _apply_stylesheet(self, app: QApplication, theme_name: str) -> None:
-        """Carica e applica il file QSS principale e gli overrides."""
+        """Carica, processa e applica il file QSS principale e gli overrides."""
         # 1. Carica QSS del tema specifico
         qss_path = Path(get_asset_path(f"assets/styles/{theme_name}.qss"))
         qss_content = ""
         if qss_path.exists():
             try:
                 qss_content = qss_path.read_text(encoding="utf-8")
+                qss_content = self._process_qss(qss_content)
             except Exception as e:
                 logger.error(f"Errore lettura QSS {qss_path}: {e}")
 
         if not qss_content:
             qss_content = f"QMainWindow {{ background-color: {self.palette.background}; }}"
 
-        # 2. Carica QSS degli Overrides globali (estratto in file esterno)
+        # 2. Carica QSS degli Overrides globali
         overrides_path = Path(get_asset_path("assets/styles/overrides.qss"))
         overrides_content = ""
         if overrides_path.exists():
             try:
                 overrides_content = overrides_path.read_text(encoding="utf-8")
+                overrides_content = self._process_qss(overrides_content)
             except Exception as e:
                 logger.error(f"Errore lettura Overrides QSS: {e}")
 
         # 3. Applica la combinazione degli stili
         app.setStyleSheet(qss_content + overrides_content)
+
+    def _process_qss(self, content: str) -> str:
+        """Sostituisce i segnaposto {{key}} con i valori della palette e delle costanti."""
+        p = self.palette
+        from src.gui.styles.constants import COLORS, FONT_SIZES, UI_SIZES
+
+        # Mapping di base dalla ColorPalette
+        mapping: dict[str, Any] = {
+            "primary": p.primary,
+            "primary_variant": p.primary_variant,
+            "on_primary": p.on_primary,
+            "secondary": p.secondary,
+            "secondary_variant": p.secondary_variant,
+            "on_secondary": p.on_secondary,
+            "background": p.background,
+            "surface": p.surface,
+            "surface_variant": p.surface_variant,
+            "on_background": p.on_background,
+            "on_surface": p.on_surface,
+            "success": p.success,
+            "warning": p.warning,
+            "error": p.error,
+            "info": p.info,
+            "border": p.border,
+            "divider": p.divider,
+            "disabled": p.disabled,
+            "hover": p.hover,
+            "focus": p.focus,
+        }
+
+        # Estende con tutte le costanti COLORS
+        for k, v in COLORS.items():
+            if k not in mapping:
+                mapping[k] = v
+
+        # Aggiunge dimensioni UI
+        for size_k, size_v in UI_SIZES.items():
+            mapping[size_k] = f"{size_v}px"
+
+        # Aggiunge font sizes
+        for font_k, font_v in FONT_SIZES.items():
+            mapping[f"font_{font_k}"] = f"{font_v}px"
+
+        processed = content
+        for key, value in mapping.items():
+            processed = processed.replace(f"{{{{{key}}}}}", str(value))
+
+        return processed
 
 
 def apply_theme(app: QApplication, theme_name: str = "light") -> None:

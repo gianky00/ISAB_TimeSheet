@@ -13,6 +13,7 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel, BotWorker
+from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
@@ -53,7 +54,7 @@ class CaricoTSPanel(BaseBotPanel):
         try:
             self._load_saved_data()
         except Exception as e:
-            print(f"❌ Error loading data for CaricoTSPanel: {e}")
+            print(f"[ERROR] Error loading data for CaricoTSPanel: {e}")
             traceback.print_exc()
 
     def _setup_content(self):
@@ -149,7 +150,7 @@ class CaricoTSPanel(BaseBotPanel):
 
         if not username or not password:
             ToastManager.instance().show("Configura le credenziali ISAB nelle Impostazioni.", "warning")
-            self._update_status("#C62828", "Credenziali mancanti")
+            self._update_status(STATUS_COLORS["error"], "Credenziali mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -160,7 +161,7 @@ class CaricoTSPanel(BaseBotPanel):
                 "Inserisci almeno una riga con i dati del Timesheet da caricare.",
                 "warning",
             )
-            self._update_status("#C62828", "Dati mancanti")
+            self._update_status(STATUS_COLORS["error"], "Dati mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return

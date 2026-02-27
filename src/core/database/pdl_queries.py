@@ -144,8 +144,9 @@ class PDLQueries:
         from src.core import config_manager
 
         config = config_manager.load_config()
-        # Path di default storico
-        default_path = "C:/Users/Coemi/Desktop/SCRIPT/report-attivita-app/report_attivita.db"
+        # Path di default storico (Cerca in folder parallela se non configurato)
+        # Nota: Idealmente l'utente lo configura nelle impostazioni.
+        default_path = str(config_manager.BASE_DIR.parent / "report-attivita-app" / "report_attivita.db")
         ext_db_path = config.get("activity_db_path", default_path)
 
         if not ext_db_path or not Path(ext_db_path).exists():

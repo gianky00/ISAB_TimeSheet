@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
+from src.gui.styles import COLORS
 
 from .components import ClickableLabel
 
@@ -28,7 +29,6 @@ class FooterLeftWidget(QWidget):
 
     portale_clicked = pyqtSignal()
     safework_clicked = pyqtSignal()
-    TEXT_COLOR = "#000000"
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
@@ -51,9 +51,9 @@ class FooterLeftWidget(QWidget):
         v1.setContentsMargins(0, 0, 0, 0)
         v1.setSpacing(2)
         self.client_item = QLabel()
-        self.client_item.setStyleSheet(f"color: {self.TEXT_COLOR}; font-size: 13px;")
+        self.client_item.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 13px;")
         self.expiry_item = QLabel()
-        self.expiry_item.setStyleSheet(f"color: {self.TEXT_COLOR}; font-size: 13px;")
+        self.expiry_item.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 13px;")
         v1.addWidget(self.client_item)
         v1.addWidget(self.expiry_item)
         layout.addWidget(col1)
@@ -66,9 +66,9 @@ class FooterLeftWidget(QWidget):
         v2.setContentsMargins(0, 0, 0, 0)
         v2.setSpacing(2)
         self.hw_id_item = QLabel()
-        self.hw_id_item.setStyleSheet(f"color: {self.TEXT_COLOR}; font-size: 13px;")
+        self.hw_id_item.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 13px;")
         self.last_login_item = QLabel()
-        self.last_login_item.setStyleSheet(f"color: {self.TEXT_COLOR}; font-size: 13px;")
+        self.last_login_item.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 13px;")
         v2.addWidget(self.hw_id_item)
         v2.addWidget(self.last_login_item)
         layout.addWidget(col2)
@@ -81,10 +81,10 @@ class FooterLeftWidget(QWidget):
         v3.setContentsMargins(0, 0, 0, 0)
         v3.setSpacing(2)
         self.portale_item = ClickableLabel()
-        self.portale_item.setBaseStyle(f"color: {self.TEXT_COLOR}; font-size: 13px;")
+        self.portale_item.setBaseStyle(f"color: {COLORS['text_dark']}; font-size: 13px;")
         self.portale_item.clicked.connect(self.portale_clicked.emit)
         self.safe_item = ClickableLabel()
-        self.safe_item.setBaseStyle(f"color: {self.TEXT_COLOR}; font-size: 13px;")
+        self.safe_item.setBaseStyle(f"color: {COLORS['text_dark']}; font-size: 13px;")
         self.safe_item.clicked.connect(self.safework_clicked.emit)
         v3.addWidget(self.portale_item)
         v3.addWidget(self.safe_item)
@@ -100,7 +100,7 @@ class FooterLeftWidget(QWidget):
         line.setFixedHeight(32)
         line.setFixedWidth(2)
         line.setStyleSheet(
-            "background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 transparent, stop:0.3 #BDBDBD, stop:0.7 #BDBDBD, stop:1 transparent); border: none;"
+            f"background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 transparent, stop:0.3 {COLORS['border_dark']}, stop:0.7 {COLORS['border_dark']}, stop:1 transparent); border: none;"
         )
         layout.addWidget(line)
 

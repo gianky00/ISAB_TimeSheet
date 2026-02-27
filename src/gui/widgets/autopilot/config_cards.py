@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -33,12 +34,12 @@ class AutopilotConfigCard(QFrame):
         self.setStyleSheet(
             f"""
             AutopilotConfigCard {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #ffffff);
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_light"]}, stop:1 {COLORS["bg_white"]});
                 border-radius: 12px;
                 border-left: 4px solid {color};
-                border-top: 1px solid #e9ecef;
-                border-right: 1px solid #e9ecef;
-                border-bottom: 1px solid #e9ecef;
+                border-top: 1px solid {COLORS["border_light"]};
+                border-right: 1px solid {COLORS["border_light"]};
+                border-bottom: 1px solid {COLORS["border_light"]};
             }}
         """
         )
@@ -53,7 +54,7 @@ class AutopilotConfigCard(QFrame):
 
         icon_label = QLabel()
         icon_label.setFixedSize(28, 28)
-        icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18))
+        icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), COLORS["bg_white"]).pixmap(18, 18))
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_label.setStyleSheet(
             f"""
@@ -69,14 +70,14 @@ class AutopilotConfigCard(QFrame):
 
         name_lbl = QLabel(bot_name)
         name_lbl.setStyleSheet(
-            """
-            QLabel {
+            f"""
+            QLabel {{
                 font-weight: 600;
                 font-size: 14px;
-                color: #212529;
+                color: {COLORS["text_dark"]};
                 border: none;
                 background: transparent;
-            }
+            }}
         """
         )
         header_layout.addWidget(name_lbl)
@@ -87,25 +88,25 @@ class AutopilotConfigCard(QFrame):
         # Checkbox abilitazione
         self.enable_check = QCheckBox("Abilita esecuzione automatica")
         self.enable_check.setStyleSheet(
-            """
-            QCheckBox {
+            f"""
+            QCheckBox {{
                 font-size: 13px;
-                color: #495057;
+                color: {COLORS["text_dark"]};
                 spacing: 8px;
-            }
-            QCheckBox::indicator {
+            }}
+            QCheckBox::indicator {{
                 width: 18px;
                 height: 18px;
                 border-radius: 4px;
-                border: 2px solid #ced4da;
-                background: #ffffff;
-            }
-            QCheckBox::indicator:checked {
+                border: 2px solid {COLORS["border_medium"]};
+                background: {COLORS["bg_white"]};
+            }}
+            QCheckBox::indicator:checked {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #0d6efd, stop:1 #0a58ca);
-                border-color: #0d6efd;
+                    stop:0 {COLORS["primary_blue"]}, stop:1 {COLORS["primary_dark"]});
+                border-color: {COLORS["primary_dark"]};
                 image: url(assets/icons/check.svg);
-            }
+            }}
         """
         )
         self.enable_check.stateChanged.connect(self._on_config_changed)
@@ -117,11 +118,11 @@ class AutopilotConfigCard(QFrame):
 
         time_label = QLabel("Orario esecuzione:")
         time_label.setStyleSheet(
-            """
-            QLabel {
+            f"""
+            QLabel {{
                 font-size: 13px;
-                color: #495057;
-            }
+                color: {COLORS["text_dark"]};
+            }}
         """
         )
         time_layout.addWidget(time_label)
@@ -130,18 +131,18 @@ class AutopilotConfigCard(QFrame):
         self.time_edit.setTime(QTime(9, 0))
         self.time_edit.setDisplayFormat("HH:mm")
         self.time_edit.setStyleSheet(
-            """
-            QTimeEdit {
+            f"""
+            QTimeEdit {{
                 padding: 6px 10px;
-                border: 1px solid #ced4da;
+                border: 1px solid {COLORS["border_medium"]};
                 border-radius: 6px;
-                background: #ffffff;
+                background: {COLORS["bg_white"]};
                 font-size: 13px;
-                color: #212529;
-            }
-            QTimeEdit:focus {
-                border-color: #0d6efd;
-            }
+                color: {COLORS["text_dark"]};
+            }}
+            QTimeEdit:focus {{
+                border-color: {COLORS["primary_dark"]};
+            }}
         """
         )
         self.time_edit.timeChanged.connect(self._on_config_changed)
@@ -206,12 +207,12 @@ class AutopilotConfigCardWithInterval(QFrame):
         self.setStyleSheet(
             f"""
             AutopilotConfigCardWithInterval {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #ffffff);
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_light"]}, stop:1 {COLORS["bg_white"]});
                 border-radius: 12px;
                 border-left: 4px solid {color};
-                border-top: 1px solid #e9ecef;
-                border-right: 1px solid #e9ecef;
-                border-bottom: 1px solid #e9ecef;
+                border-top: 1px solid {COLORS["border_light"]};
+                border-right: 1px solid {COLORS["border_light"]};
+                border-bottom: 1px solid {COLORS["border_light"]};
             }}
         """
         )
@@ -226,7 +227,7 @@ class AutopilotConfigCardWithInterval(QFrame):
 
         icon_label = QLabel()
         icon_label.setFixedSize(28, 28)
-        icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18))
+        icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), COLORS["bg_white"]).pixmap(18, 18))
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_label.setStyleSheet(
             f"""
@@ -242,14 +243,14 @@ class AutopilotConfigCardWithInterval(QFrame):
 
         name_lbl = QLabel(bot_name)
         name_lbl.setStyleSheet(
-            """
-            QLabel {
+            f"""
+            QLabel {{
                 font-weight: 600;
                 font-size: 14px;
-                color: #212529;
+                color: {COLORS["text_dark"]};
                 border: none;
                 background: transparent;
-            }
+            }}
         """
         )
         header_layout.addWidget(name_lbl)
@@ -260,25 +261,25 @@ class AutopilotConfigCardWithInterval(QFrame):
         # Checkbox abilitazione
         self.enable_check = QCheckBox("Abilita invio automatico")
         self.enable_check.setStyleSheet(
-            """
-            QCheckBox {
+            f"""
+            QCheckBox {{
                 font-size: 13px;
-                color: #495057;
+                color: {COLORS["text_dark"]};
                 spacing: 8px;
-            }
-            QCheckBox::indicator {
+            }}
+            QCheckBox::indicator {{
                 width: 18px;
                 height: 18px;
                 border-radius: 4px;
-                border: 2px solid #ced4da;
-                background: #ffffff;
-            }
-            QCheckBox::indicator:checked {
+                border: 2px solid {COLORS["border_medium"]};
+                background: {COLORS["bg_white"]};
+            }}
+            QCheckBox::indicator:checked {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #0d6efd, stop:1 #0a58ca);
-                border-color: #0d6efd;
+                    stop:0 {COLORS["primary_blue"]}, stop:1 {COLORS["primary_dark"]});
+                border-color: {COLORS["primary_dark"]};
                 image: url(assets/icons/check.svg);
-            }
+            }}
         """
         )
         self.enable_check.stateChanged.connect(self._on_config_changed)
@@ -290,7 +291,7 @@ class AutopilotConfigCardWithInterval(QFrame):
 
         # Time picker
         time_label = QLabel("Ore:")
-        time_label.setStyleSheet("font-size: 12px; color: #495057;")
+        time_label.setStyleSheet(f"font-size: 12px; color: {COLORS['text_dark']};")
         settings_layout.addWidget(time_label)
 
         self.time_edit = QTimeEdit()
@@ -298,18 +299,18 @@ class AutopilotConfigCardWithInterval(QFrame):
         self.time_edit.setDisplayFormat("HH:mm")
         self.time_edit.setFixedWidth(70)
         self.time_edit.setStyleSheet(
-            """
-            QTimeEdit {
+            f"""
+            QTimeEdit {{
                 padding: 4px 8px;
-                border: 1px solid #ced4da;
+                border: 1px solid {COLORS["border_medium"]};
                 border-radius: 4px;
-                background: #ffffff;
+                background: {COLORS["bg_white"]};
                 font-size: 12px;
-                color: #212529;
-            }
-            QTimeEdit:focus {
-                border-color: #0d6efd;
-            }
+                color: {COLORS["text_dark"]};
+            }}
+            QTimeEdit:focus {{
+                border-color: {COLORS["primary_dark"]};
+            }}
         """
         )
         self.time_edit.timeChanged.connect(self._on_config_changed)
@@ -317,7 +318,7 @@ class AutopilotConfigCardWithInterval(QFrame):
 
         # Intervallo giorni
         interval_label = QLabel("Ogni:")
-        interval_label.setStyleSheet("font-size: 12px; color: #495057;")
+        interval_label.setStyleSheet(f"font-size: 12px; color: {COLORS['text_dark']};")
         settings_layout.addWidget(interval_label)
 
         self.interval_spin = QSpinBox()
@@ -326,18 +327,18 @@ class AutopilotConfigCardWithInterval(QFrame):
         self.interval_spin.setSuffix(" gg")
         self.interval_spin.setFixedWidth(70)
         self.interval_spin.setStyleSheet(
-            """
-            QSpinBox {
+            f"""
+            QSpinBox {{
                 padding: 4px 8px;
-                border: 1px solid #ced4da;
+                border: 1px solid {COLORS["border_medium"]};
                 border-radius: 4px;
-                background: #ffffff;
+                background: {COLORS["bg_white"]};
                 font-size: 12px;
-                color: #212529;
-            }
-            QSpinBox:focus {
-                border-color: #0d6efd;
-            }
+                color: {COLORS["text_dark"]};
+            }}
+            QSpinBox:focus {{
+                border-color: {COLORS["primary_dark"]};
+            }}
         """
         )
         self.interval_spin.valueChanged.connect(self._on_config_changed)

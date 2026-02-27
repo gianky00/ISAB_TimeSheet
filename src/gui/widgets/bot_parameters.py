@@ -29,6 +29,7 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .calendar_date_edit import CalendarDateEdit
@@ -40,7 +41,7 @@ class HoverPulseFrame(QFrame):
     Fornisce un feedback visivo immediato sull'interattività della card parametri.
     """
 
-    def __init__(self, accent_color: str = "#212121", parent: QWidget | None = None) -> None:
+    def __init__(self, accent_color: str | None = None, parent: QWidget | None = None) -> None:
         """
         Inizializza il frame pulsante.
 
@@ -49,7 +50,7 @@ class HoverPulseFrame(QFrame):
             parent: Widget genitore.
         """
         super().__init__(parent)
-        self._accent_color = QColor(accent_color)
+        self._accent_color = QColor(accent_color or COLORS["text_dark"])
         self._pulse_val = 1.0
 
         self._anim = QPropertyAnimation(self, b"pulse_value")
@@ -143,32 +144,32 @@ class BotParametersWidget(QWidget):
         main_layout.setSpacing(0)
 
         # --- CONTAINER PRINCIPALE (La "Card" con ombra e pulsazione hover) ---
-        self.container = HoverPulseFrame("#212121")
+        self.container = HoverPulseFrame(COLORS["text_dark"])
         self.container.setObjectName("paramsContainer")
-        self.container.setStyleSheet("""
-            QFrame#paramsContainer {
-                background-color: #ffffff;
-                border: 1px solid #e0e0e0;
+        self.container.setStyleSheet(f"""
+            QFrame#paramsContainer {{
+                background-color: {COLORS['bg_white']};
+                border: 1px solid {COLORS['border_light']};
                 /* border-bottom rimosso perché gestito da paintEvent di HoverPulseFrame */
                 border-radius: 12px;
-            }
-            QLabel {
-                color: #424242;
+            }}
+            QLabel {{
+                color: {COLORS['text_dark']};
                 font-weight: bold;
                 font-size: 13px;
                 background: transparent;
-            }
-            QComboBox, QLineEdit, QDateEdit {
-                border: 1px solid #cfd8dc;
+            }}
+            QComboBox, QLineEdit, QDateEdit {{
+                border: 1px solid {COLORS['border_medium']};
                 border-radius: 6px;
                 padding: 5px 10px;
-                background-color: #f8f9fa;
+                background-color: {COLORS['bg_light']};
                 min-height: 32px;
-            }
-            QComboBox:focus, QLineEdit:focus, QDateEdit:focus {
-                border: 2px solid #212121;
-                background-color: #ffffff;
-            }
+            }}
+            QComboBox:focus, QLineEdit:focus, QDateEdit:focus {{
+                border: 2px solid {COLORS['text_dark']};
+                background-color: {COLORS['bg_white']};
+            }}
         """)
 
         # Applica Ombra (Shadow Effect)
@@ -200,7 +201,7 @@ class BotParametersWidget(QWidget):
 
         # Pulsante Settings
         self.settings_btn = QPushButton()
-        self.settings_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#212121"))
+        self.settings_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), COLORS["text_dark"]))
         self.settings_btn.setIconSize(QSize(20, 20))
         self.settings_btn.setFixedSize(38, 38)
         self.settings_btn.setToolTip("Gestisci fornitori")
@@ -245,7 +246,7 @@ class BotParametersWidget(QWidget):
             hbox_dest.addWidget(self.dest_path_edit)
 
             self.browse_btn = QPushButton()
-            self.browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#212121"))
+            self.browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
             self.browse_btn.setIconSize(QSize(20, 20))
             self.browse_btn.setFixedSize(38, 38)
             self.browse_btn.clicked.connect(self._browse_path)
@@ -278,21 +279,21 @@ class BotParametersWidget(QWidget):
 
     def _get_icon_btn_style(self) -> str:
         """Restituisce lo stile QSS per i pulsanti icona."""
-        return """
-            QPushButton {
-                background-color: #ffffff;
-                color: #212121;
-                border: 1px solid #cfd8dc;
+        return f"""
+            QPushButton {{
+                background-color: {COLORS['bg_white']};
+                color: {COLORS['text_dark']};
+                border: 1px solid {COLORS['border_medium']};
                 border-radius: 6px;
                 padding: 2px;
-            }
-            QPushButton:hover {
-                background-color: #E0F7FA;
-                border-color: #212121;
-            }
-            QPushButton:pressed {
-                background-color: #e1bee7;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['table_selection_bg']};
+                border-color: {COLORS['text_dark']};
+            }}
+            QPushButton:pressed {{
+                background-color: {COLORS['bg_alt']};
+            }}
         """
 
     def _browse_path(self) -> None:

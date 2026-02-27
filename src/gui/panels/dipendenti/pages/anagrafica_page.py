@@ -41,6 +41,7 @@ from src.gui.panels.dipendenti.utils.data_helpers import (
 )
 from src.gui.panels.dipendenti.utils.report_generator import ReportGenerator
 from src.gui.panels.dipendenti.widgets.employee_detail_view import EmployeeDetailView
+from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -115,7 +116,7 @@ class AnagraficaPage(QWidget):
         # Sync Status Label
         self.lbl_sync_status = QLabel("")
         self.lbl_sync_status.setStyleSheet(
-            "color: #555; font-size: 11px; margin-left: 5px; margin-right: 5px;"
+            f"color: {COLORS['text_muted']}; font-size: 11px; margin-left: 5px; margin-right: 5px;"
         )
         filter_layout.addWidget(self.lbl_sync_status)
 
@@ -153,21 +154,21 @@ class AnagraficaPage(QWidget):
         cards_layout.setSpacing(15)
 
         self.card_ok = InteractiveStatusCard(
-            "Operativi", "#198754", Icons.CHECK_CIRCLE, "Ultimo accesso ≤20gg", "ok"
+            "Operativi", COLORS["success_dark"], Icons.CHECK_CIRCLE, "Ultimo accesso ≤20gg", "ok"
         )
         self.card_warning = InteractiveStatusCard(
             "In Scadenza",
-            "#fd7e14",
+            COLORS["warning_orange"],
             Icons.ALERT_TRIANGLE,
             "Accesso 21-30gg fa",
             "warning",
         )
         self.card_expired = InteractiveStatusCard(
-            "Scaduti", "#dc3545", Icons.X_CIRCLE, "Accesso >30gg fa", "expired"
+            "Scaduti", COLORS["error_red"], Icons.X_CIRCLE, "Accesso >30gg fa", "expired"
         )
         self.card_excluded = InteractiveStatusCard(
             "Esclusi",
-            "#6c757d",
+            COLORS["text_muted"],
             Icons.EYE_OFF,
             "Non monitorati",
             "excluded",
@@ -264,14 +265,14 @@ class AnagraficaPage(QWidget):
 
         if is_monitored:
             action = QAction(
-                get_colored_icon(get_asset_path(Icons.X_CIRCLE), "#dc3545"),
+                get_colored_icon(get_asset_path(Icons.X_CIRCLE), COLORS["error_red"]),
                 "🚫 Escludi da monitoraggio",
                 self,
             )
             action.triggered.connect(lambda: self._toggle_monitoring(id_risorsa, False))
         else:
             action = QAction(
-                get_colored_icon(get_asset_path(Icons.CHECK_CIRCLE), "#198754"),
+                get_colored_icon(get_asset_path(Icons.CHECK_CIRCLE), COLORS["success_dark"]),
                 "✅ Riattiva monitoraggio",
                 self,
             )
@@ -353,7 +354,9 @@ class AnagraficaPage(QWidget):
                 continue
 
             # 3. Formattazione riga
-            inactivation_val = 30 - diff_days if diff_days is not None else None
+            from src.gui.styles.constants import THRESHOLD_DAYS
+
+            inactivation_val = THRESHOLD_DAYS["expired"] - diff_days if diff_days is not None else None
             display_cognome = f"⚠️ {r[1]}" if cf_warning else r[1]
 
             master_rows.append(
@@ -380,12 +383,14 @@ class AnagraficaPage(QWidget):
 
     def _update_status_counts(self, counts, is_monitored, diff_days):
         """Aggiorna i contatori degli stati per le card UI."""
+        from src.gui.styles.constants import THRESHOLD_DAYS
+
         if not is_monitored:
             counts["excluded"] += 1
         elif diff_days is not None:
-            if diff_days <= 20:
+            if diff_days <= THRESHOLD_DAYS["warning"]:
                 counts["ok"] += 1
-            elif diff_days <= 30:
+            elif diff_days <= THRESHOLD_DAYS["expired"]:
                 counts["warning"] += 1
             else:
                 counts["expired"] += 1
@@ -395,6 +400,8 @@ class AnagraficaPage(QWidget):
         if not self.current_filter:
             return False
 
+        from src.gui.styles.constants import THRESHOLD_DAYS
+
         if self.current_filter == "excluded":
             return bool(is_monitored)
 
@@ -402,11 +409,13 @@ class AnagraficaPage(QWidget):
         if not is_monitored or diff_days is None:
             return True
 
-        if self.current_filter == "ok" and diff_days > 20:
+        if self.current_filter == "ok" and diff_days > THRESHOLD_DAYS["warning"]:
             return True
-        if self.current_filter == "warning" and (diff_days <= 20 or diff_days > 30):
+        if self.current_filter == "warning" and (
+            diff_days <= THRESHOLD_DAYS["warning"] or diff_days > THRESHOLD_DAYS["expired"]
+        ):
             return True
-        return bool(self.current_filter == "expired" and diff_days <= 30)
+        return bool(self.current_filter == "expired" and diff_days <= THRESHOLD_DAYS["expired"])
 
     def _inactivation_formatter(self, value):
         if value is None or value == "":
@@ -447,9 +456,9 @@ class AnagraficaPage(QWidget):
         ):
             is_active = card.filter_type == self.current_filter
             gradient = (
-                "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #e8f5e9, stop:1 #f8f9fa)"
+                f"qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS['bg_success_pastel']}, stop:1 {COLORS['bg_light']})"
                 if is_active
-                else "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 white, stop:1 #fafbfc)"
+                else f"qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_alt']})"
             )
             style = f"background: {gradient}; border: {'3px' if is_active else '2px'} solid {card.base_color}; border-radius: 12px;"
             card.setStyleSheet(f"InteractiveStatusCard {{ {style} }}")
@@ -512,7 +521,7 @@ class AnagraficaPage(QWidget):
         try:
             res = db_manager.execute_query(db_manager.DB_TIMBRATURE, query, (norm_cognome, norm_nome))
             if not res:
-                return "Mai effettuato", "-", "#6c757d"
+                return "Mai effettuato", "-", COLORS["text_muted"]
 
             last_date_str = str(res[0][0])
             date_part = last_date_str.split(" ")[0]
@@ -525,23 +534,25 @@ class AnagraficaPage(QWidget):
                     continue
 
             if not last_date:
-                return "Errore data", "-", "#6c757d"
+                return "Errore data", "-", COLORS["text_muted"]
 
             delta = (datetime.now() - last_date).days
             formatted_date = last_date.strftime("%d/%m/%Y")
 
-            if delta <= 20:
-                return f"{formatted_date} ({delta} gg fa)", str(delta), "#198754"
-            if delta <= 30:
-                return f"{formatted_date} ({delta} gg fa)", str(delta), "#fd7e14"
+            from src.gui.styles.constants import THRESHOLD_DAYS
+
+            if delta <= THRESHOLD_DAYS["warning"]:
+                return f"{formatted_date} ({delta} gg fa)", str(delta), COLORS["success_dark"]
+            if delta <= THRESHOLD_DAYS["expired"]:
+                return f"{formatted_date} ({delta} gg fa)", str(delta), COLORS["warning_orange"]
             return (
                 f"{formatted_date} (SCADUTA - {delta} gg fa)",
                 str(delta),
-                "#dc3545",
+                COLORS["error_red"],
             )
         except Exception as e:
             logger.error(f"Errore recupero ultimo accesso ISAB: {e}")
-            return "Errore", "-", "#6c757d"
+            return "Errore", "-", COLORS["text_muted"]
 
     def _on_import_clicked(self):
         file_path, _ = QFileDialog.getOpenFileName(
@@ -635,8 +646,10 @@ class AnagraficaPage(QWidget):
             data_da_fmt = start_date.toString("dd.MM.yyyy")
             data_a_fmt = end_date.toString("dd.MM.yyyy")
 
+            from src.core.constants import Business
+
             config = config_manager.load_config()
-            fornitore = config.get("last_timbrature_fornitore", "KK10608 - COEMI S.R.L.")
+            fornitore = config.get("last_timbrature_fornitore", Business.DEFAULT_SUPPLIER)
 
             # 3. Conferma
             msg = f"Aggiornare timbrature dal <b>{data_da_fmt}</b> al <b>{data_a_fmt}</b>?<br>Fornitore: {fornitore}"

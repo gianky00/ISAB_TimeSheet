@@ -29,6 +29,8 @@ from PyQt6.QtWidgets import (
 
 from src.core.bug_reporter import BugReporter
 from src.core.config_manager import get_version
+from src.gui.design.colors import get_palette
+from src.gui.styles import COLORS
 
 logger = logging.getLogger(__name__)
 
@@ -104,15 +106,17 @@ class BugReportDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
 
+        palette = get_palette()
+
         # Style
-        btn_style = """
-            QPushButton {
-                background-color: #009688; color: white; border: none;
+        btn_style = f"""
+            QPushButton {{
+                background-color: {palette.primary}; color: {palette.on_primary}; border: none;
                 padding: 10px 20px; border-radius: 6px; font-weight: 600; min-width: 120px;
-            }
-            QPushButton:hover { background-color: #00897B; }
-            QPushButton:pressed { background-color: #00796B; }
-            QPushButton:disabled { background-color: #BDBDBD; color: #757575; }
+            }}
+            QPushButton:hover {{ background-color: {palette.primary_variant}; }}
+            QPushButton:pressed {{ background-color: {palette.primary_variant}; }}
+            QPushButton:disabled {{ background-color: {palette.disabled}; color: {COLORS['text_light']}; }}
         """
         self.setStyleSheet(btn_style)
 
@@ -121,7 +125,7 @@ class BugReportDialog(QDialog):
             "Descrivi il problema riscontrato con il maggior dettaglio possibile.\n"
             "Se possibile, indica i passaggi per riprodurlo."
         )
-        lbl_info.setStyleSheet("font-size: 14px; color: #424242; margin-bottom: 5px;")
+        lbl_info.setStyleSheet(f"font-size: 14px; color: {palette.on_surface}; margin-bottom: 5px;")
         lbl_info.setWordWrap(True)
         layout.addWidget(lbl_info)
 
@@ -131,7 +135,7 @@ class BugReportDialog(QDialog):
             "Es: Ho cliccato su Scarica PDL e l'app si è chiusa... Stavo lavorando sul cantiere X..."
         )
         self.txt_description.setStyleSheet(
-            "background-color: white; border: 1px solid #BDBDBD; "
+            f"background-color: {palette.surface}; border: 1px solid {palette.border}; "
             "border-radius: 4px; padding: 8px; min-height: 100px;"
         )
         self.txt_description.setMaximumHeight(120)
@@ -139,7 +143,7 @@ class BugReportDialog(QDialog):
 
         # Options Group
         options_group = QGroupBox("Contenuto Report")
-        options_group.setStyleSheet("QGroupBox { font-weight: 600; color: #424242; margin-top: 10px; }")
+        options_group.setStyleSheet(f"QGroupBox {{ font-weight: 600; color: {palette.on_surface}; margin-top: 10px; }}")
         options_layout = QVBoxLayout(options_group)
         options_layout.setSpacing(8)
 
@@ -162,11 +166,11 @@ class BugReportDialog(QDialog):
         trace_layout = QHBoxLayout()
         trace_layout.setSpacing(8)
         lbl_trace = QLabel("Trace ID (opzionale):")
-        lbl_trace.setStyleSheet("color: #666; font-size: 12px;")
+        lbl_trace.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px;")
         self.txt_trace_id = QLineEdit()
         self.txt_trace_id.setPlaceholderText("Es: abc123def456")
         self.txt_trace_id.setStyleSheet(
-            "background: white; border: 1px solid #ddd; border-radius: 4px; "
+            f"background: {palette.surface}; border: 1px solid {palette.border}; border-radius: 4px; "
             "padding: 4px 8px; font-family: monospace;"
         )
         self.txt_trace_id.setMaximumWidth(200)
@@ -179,20 +183,20 @@ class BugReportDialog(QDialog):
 
         # Size Estimate
         self.lbl_size = QLabel("Dimensione stimata: ~50 KB")
-        self.lbl_size.setStyleSheet("color: #666; font-size: 12px; margin-top: 5px;")
+        self.lbl_size.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px; margin-top: 5px;")
         layout.addWidget(self.lbl_size)
 
         # Privacy Warning
         warning_frame = QFrame()
         warning_frame.setStyleSheet(
-            "background-color: #FFF3E0; border: 1px solid #FFB74D; border-radius: 6px; padding: 8px;"
+            f"background-color: {COLORS['bg_warning_pastel']}; border: 1px solid {COLORS['warning_light']}; border-radius: 6px; padding: 8px;"
         )
         warning_layout = QHBoxLayout(warning_frame)
         warning_layout.setContentsMargins(8, 8, 8, 8)
         lbl_warning = QLabel(
             "⚠️ Il report potrebbe contenere informazioni sensibili. Verifica il contenuto prima di inviare."
         )
-        lbl_warning.setStyleSheet("color: #E65100; font-size: 12px;")
+        lbl_warning.setStyleSheet(f"color: {COLORS['warning_orange']}; font-size: 12px;")
         lbl_warning.setWordWrap(True)
         warning_layout.addWidget(lbl_warning)
         layout.addWidget(warning_frame)
@@ -202,8 +206,8 @@ class BugReportDialog(QDialog):
         self.progress.setVisible(False)
         self.progress.setRange(0, 0)
         self.progress.setStyleSheet(
-            "QProgressBar { background: #E0E0E0; border: none; height: 6px; } "
-            "QProgressBar::chunk { background: #009688; }"
+            f"QProgressBar {{ background: {palette.border}; border: none; height: 6px; }} "
+            f"QProgressBar::chunk {{ background: {palette.primary}; }}"
         )
         layout.addWidget(self.progress)
 
@@ -215,7 +219,7 @@ class BugReportDialog(QDialog):
         self.preview_scroll.setWidgetResizable(True)
         self.preview_scroll.setMaximumHeight(100)
         self.preview_content = QLabel()
-        self.preview_content.setStyleSheet("font-family: monospace; font-size: 11px; color: #555;")
+        self.preview_content.setStyleSheet(f"font-family: monospace; font-size: 11px; color: {COLORS['text_muted']};")
         self.preview_content.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.preview_scroll.setWidget(self.preview_content)
         preview_layout.addWidget(self.preview_scroll)
@@ -227,7 +231,7 @@ class BugReportDialog(QDialog):
 
         self.btn_cancel = QPushButton("Annulla")
         self.btn_cancel.setStyleSheet(
-            "background-color: #757575; color: white; border-radius: 6px; padding: 10px 20px;"
+            f"background-color: {COLORS['text_muted']}; color: white; border-radius: 6px; padding: 10px 20px;"
         )
         self.btn_cancel.clicked.connect(self.reject)
 
@@ -365,17 +369,17 @@ class BugReportDialog(QDialog):
 
             cliente_info = "ISAB S.R.L."
             with suppress(Exception):
-                from src.core.license_validator import get_license_info
+                            from src.core.constants import Emails
+                            from src.core.license_validator import get_license_info
 
-                lic_data = get_license_info()
-                if lic_data and "Cliente" in lic_data:
-                    cliente_info = lic_data["Cliente"]
+                            lic_data = get_license_info()
+                            if lic_data and "Cliente" in lic_data:
+                                cliente_info = lic_data["Cliente"]
 
-            mail = outlook.CreateItem(0)
-            mail.To = "gianky.allegretti@gmail.com"
-            mail.Subject = f"[Segnalazione Bug] SyncroJob v{current_ver} - {email_subject_suffix}"
-
-            # Rinomina ZIP per includere Ticket ID
+                            mail = outlook.CreateItem(0)
+                            mail.To = Emails.SUPPORT
+                            mail.Subject = f"[Segnalazione Bug] SyncroJob v{current_ver} - {email_subject_suffix}"
+                            # Rinomina ZIP per includere Ticket ID
             final_zip_path = attachment_path
             with suppress(Exception):
                 dir_name = os.path.dirname(attachment_path)
@@ -385,14 +389,15 @@ class BugReportDialog(QDialog):
                 os.rename(attachment_path, new_path)
                 final_zip_path = new_path
 
-            css_cell = "padding: 8px 12px; border-bottom: 1px solid #e0e0e0; color: #333;"
+            palette = get_palette()
+            css_cell = f"padding: 8px 12px; border-bottom: 1px solid {palette.border}; color: {palette.on_surface};"
             css_header = (
-                "padding: 8px 12px; border-bottom: 2px solid #009688; font-weight: 600; color: #009688;"
+                f"padding: 8px 12px; border-bottom: 2px solid {palette.primary}; font-weight: 600; color: {palette.primary};"
             )
 
             html_body = f"""
-            <div style="font-family: 'Segoe UI', sans-serif; color: #333; max-width: 900px;">
-                <h2 style="color: #009688;">Segnalazione Bug SyncroJob</h2>
+            <div style="font-family: 'Segoe UI', sans-serif; color: {palette.on_surface}; max-width: 900px;">
+                <h2 style="color: {palette.primary};">Segnalazione Bug SyncroJob</h2>
                 <table style="width: 100%; border-collapse: separate; margin-top: 20px;">
                     <tr>
                         <td style="width: 320px; vertical-align: top;">
@@ -405,7 +410,7 @@ class BugReportDialog(QDialog):
                             </table>
                         </td>
                         <td style="vertical-align: top; padding-left: 20px;">
-                            <h3 style="border-bottom: 2px solid #ddd;">Descrizione Problema</h3>
+                            <h3 style="border-bottom: 2px solid {palette.border};">Descrizione Problema</h3>
                             <div style="line-height: 1.6;">{description.replace(chr(10), "<br>")}</div>
                         </td>
                     </tr>

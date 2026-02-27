@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 from src.utils.log_humanizer import friendly_time_delta
 
@@ -33,14 +34,14 @@ class ActivityItem(QFrame):
         # Determina il colore in base allo status
         status = log_entry.get("status", "success").lower()
         if status == "error":
-            self.border_color = "#dc3545"
-            self.bg_gradient = "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #fff5f5, stop:1 #ffffff)"
+            self.border_color = COLORS["error_red"]
+            self.bg_gradient = f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_white']})"
         elif status == "warning":
-            self.border_color = "#ffc107"
-            self.bg_gradient = "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #fffaf0, stop:1 #ffffff)"
+            self.border_color = COLORS["warning_yellow"]
+            self.bg_gradient = f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_white']})"
         else:
-            self.border_color = "#198754"
-            self.bg_gradient = "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f0fdf4, stop:1 #ffffff)"
+            self.border_color = COLORS["success_dark"]
+            self.bg_gradient = f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_white']})"
 
         self.setStyleSheet(
             f"""
@@ -48,21 +49,21 @@ class ActivityItem(QFrame):
                 background: {self.bg_gradient};
                 border-radius: 12px;
                 border-left: 4px solid {self.border_color};
-                border-top: 1px solid #e9ecef;
-                border-right: 1px solid #e9ecef;
-                border-bottom: 1px solid #e9ecef;
+                border-top: 1px solid {COLORS['border_light']};
+                border-right: 1px solid {COLORS['border_light']};
+                border-bottom: 1px solid {COLORS['border_light']};
             }}
             ActivityItem:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #ffffff);
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_hover']}, stop:1 {COLORS['bg_white']});
                 border-left: 4px solid {self.border_color};
-                border-top: 1px solid #ced4da;
-                border-right: 1px solid #ced4da;
-                border-bottom: 1px solid #ced4da;
+                border-top: 1px solid {COLORS['border_medium']};
+                border-right: 1px solid {COLORS['border_medium']};
+                border-bottom: 1px solid {COLORS['border_medium']};
             }}
             QToolTip {{
-                background-color: #ffffff;
-                color: #212529;
-                border: 1px solid #bdbdbd;
+                background-color: {COLORS['bg_white']};
+                color: {COLORS['text_dark']};
+                border: 1px solid {COLORS['border_dark']};
                 border-radius: 4px;
                 padding: 5px;
             }}
@@ -81,16 +82,16 @@ class ActivityItem(QFrame):
         # 1. Badge Stato con Icona (Stile Moderno)
         status = log_entry.get("status", "success").lower()
         if status == "error":
-            icon_color = "#ffffff"
-            badge_bg = "#dc3545"
+            icon_color = "white"
+            badge_bg = COLORS["error_red"]
             icon_path = Icons.ALERT_CIRCLE
         elif status == "warning":
-            icon_color = "#000000"
-            badge_bg = "#ffc107"
+            icon_color = "black"
+            badge_bg = COLORS["warning_yellow"]
             icon_path = Icons.ALERT_TRIANGLE
         else:
-            icon_color = "#ffffff"
-            badge_bg = "#198754"
+            icon_color = "white"
+            badge_bg = COLORS["success_dark"]
             icon_path = Icons.CHECK_CIRCLE
 
         # Badge container
@@ -122,14 +123,14 @@ class ActivityItem(QFrame):
 
         action_lbl = QLabel(full_text)
         action_lbl.setStyleSheet(
-            """
-            QLabel {
+            f"""
+            QLabel {{
                 font-weight: 600;
                 font-size: 14px;
-                color: #212529;
+                color: {COLORS['text_dark']};
                 border: none;
                 background: transparent;
-            }
+            }}
         """
         )
         action_lbl.setWordWrap(True)
@@ -148,14 +149,14 @@ class ActivityItem(QFrame):
 
         time_lbl = QLabel(time_str)
         time_lbl.setStyleSheet(
-            """
-            QLabel {
+            f"""
+            QLabel {{
                 font-size: 12px;
-                color: #868e96;
+                color: {COLORS['text_muted']};
                 border: none;
                 background: transparent;
                 font-weight: 500;
-            }
+            }}
         """
         )
         text_layout.addWidget(time_lbl)
@@ -216,31 +217,31 @@ class ActivityFeed(QWidget):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
         self.scroll_area.setStyleSheet(
-            """
-            QScrollArea {
+            f"""
+            QScrollArea {{
                 background: transparent;
                 border: none;
-            }
-            QScrollBar:horizontal {
+            }}
+            QScrollBar:horizontal {{
                 border: none;
-                background: #f8f9fa;
+                background: {COLORS['bg_light']};
                 height: 8px;
                 border-radius: 4px;
                 margin: 0px;
-            }
-            QScrollBar::handle:horizontal {
-                background: #ced4da;
+            }}
+            QScrollBar::handle:horizontal {{
+                background: {COLORS['border_medium']};
                 border-radius: 4px;
                 min-width: 40px;
-            }
-            QScrollBar::handle:horizontal:hover {
-                background: #adb5bd;
-            }
-            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+            }}
+            QScrollBar::handle:horizontal:hover {{
+                background: {COLORS['border_dark']};
+            }}
+            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
                 border: none;
                 background: none;
                 width: 0px;
-            }
+            }}
         """
         )
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -290,17 +291,17 @@ class ActivityFeed(QWidget):
             if not logs:
                 empty_lbl = QLabel("✨ Nessuna attività recente")
                 empty_lbl.setStyleSheet(
-                    """
-                    QLabel {
-                        color: #868e96;
+                    f"""
+                    QLabel {{
+                        color: {COLORS['text_muted']};
                         font-size: 13px;
                         font-weight: 500;
                         font-style: italic;
                         padding: 10px 20px;
-                        background-color: #f8f9fa;
+                        background-color: {COLORS['bg_light']};
                         border-radius: 8px;
-                        border: 1px dashed #dee2e6;
-                    }
+                        border: 1px dashed {COLORS['border_light']};
+                    }}
                 """
                 )
                 self.feed_layout.insertWidget(0, empty_lbl)

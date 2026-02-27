@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.styles import COLORS
 from src.gui.widgets.info_widgets import InfoLabel
 
 
@@ -23,12 +24,12 @@ class ChartContainer(QWidget):
         self.setMinimumHeight(height)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setStyleSheet(
-            """
-            QWidget {
-                background-color: white;
+            f"""
+            QWidget {{
+                background-color: {COLORS['bg_white']};
                 border-radius: 15px;
-                border: 1px solid #e9ecef;
-            }
+                border: 1px solid {COLORS['border_light']};
+            }}
         """
         )
 
@@ -49,7 +50,7 @@ class ChartContainer(QWidget):
 
         if title:
             lbl = QLabel(title)
-            lbl.setStyleSheet("font-weight: bold; color: #495057; font-size: 14px; border: none;")
+            lbl.setStyleSheet(f"font-weight: bold; color: {COLORS['text_dark']}; font-size: 14px; border: none;")
             header_layout.addWidget(lbl)
 
         header_layout.addStretch()
@@ -103,7 +104,14 @@ class KPIChartsManager:
             self.canvas1.draw()
             return
 
-        colors = ["#4b6cb7", "#198754", "#ffc107", "#dc3545", "#6f42c1", "#0dcaf0"]
+        colors = [
+            COLORS["primary_blue"],
+            COLORS["success_dark"],
+            COLORS["warning_yellow"],
+            COLORS["error_red"],
+            COLORS["purple"],
+            COLORS["cyan_info"],
+        ]
         wedges, _texts = ax.pie(
             counts,
             labels=None,
@@ -192,7 +200,7 @@ class KPIChartsManager:
             grouped["totale_prev"],
             width=0.4,
             label="Totale Prev (€)",
-            color="#198754",
+            color=COLORS["success_dark"],
             alpha=0.8,
         )
         ax2 = ax.twinx()
@@ -200,7 +208,7 @@ class KPIChartsManager:
             x,
             grouped["ore_sp"],
             label="Ore Spese",
-            color="#4b6cb7",
+            color=COLORS["primary_blue"],
             marker="o",
             linewidth=3,
         )
@@ -241,7 +249,7 @@ class KPIChartsManager:
             grouped["totale_prev"],
             height,
             label="Ricavi (Prev.)",
-            color="#198754",
+            color=COLORS["success_dark"],
             alpha=0.8,
         )
         ax.barh(
@@ -249,7 +257,7 @@ class KPIChartsManager:
             grouped["Costo"],
             height,
             label="Costi Stimati",
-            color="#dc3545",
+            color=COLORS["error_red"],
             alpha=0.7,
         )
         ax.set_yticks(y)
@@ -263,7 +271,7 @@ class KPIChartsManager:
                 f" € {row['totale_prev'] / 1000:.1f}k",
                 va="center",
                 fontsize=9,
-                color="#198754",
+                color=COLORS["success_dark"],
             )
             ax.text(
                 row["Costo"],
@@ -271,7 +279,7 @@ class KPIChartsManager:
                 f" € {row['Costo'] / 1000:.1f}k",
                 va="center",
                 fontsize=9,
-                color="#dc3545",
+                color=COLORS["error_red"],
             )
 
         ax.grid(axis="x", linestyle="--", alpha=0.5)
@@ -312,8 +320,8 @@ class KPIChartsManager:
             return
 
         x = range(len(grouped))
-        ax.plot(x, grouped.values, color="#182848", marker="o", linewidth=3)
-        ax.fill_between(x, grouped.values, color="#4b6cb7", alpha=0.1)
+        ax.plot(x, grouped.values, color=COLORS["glass_deep"], marker="o", linewidth=3)
+        ax.fill_between(x, grouped.values, color=COLORS["primary_blue"], alpha=0.1)
         ax.set_xticks(x)
         ax.set_xticklabels([m.capitalize()[:3] for m in grouped.index], rotation=45)
         ax.grid(True, linestyle="--", alpha=0.5)
@@ -338,14 +346,14 @@ class KPIChartsManager:
         p_todo = (to_complete / total) * 100
         p_other = (other / total) * 100
 
-        ax.barh(0, p_comp, height=0.6, color="#198754", label="Contabilizzate")
-        ax.barh(0, p_tcl, left=p_comp, height=0.6, color="#ffc107", label="In Attesa TCL")
+        ax.barh(0, p_comp, height=0.6, color=COLORS["success_dark"], label="Contabilizzate")
+        ax.barh(0, p_tcl, left=p_comp, height=0.6, color=COLORS["warning_yellow"], label="In Attesa TCL")
         ax.barh(
             0,
             p_todo,
             left=p_comp + p_tcl,
             height=0.6,
-            color="#dc3545",
+            color=COLORS["error_red"],
             label="Da Completare",
         )
         ax.barh(
@@ -353,7 +361,7 @@ class KPIChartsManager:
             p_other,
             left=p_comp + p_tcl + p_todo,
             height=0.6,
-            color="#e9ecef",
+            color=COLORS["bg_hover"],
             label="Altro",
         )
 

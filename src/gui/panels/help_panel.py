@@ -4,6 +4,7 @@ Pannello Guida interattivo con estetica 'Knowledge Hub', navigazione fluida e co
 """
 
 from PyQt6.QtCore import QSize, Qt, QTimer
+from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -19,6 +20,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.core.version import __version__ as VERSION
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -46,11 +48,11 @@ class HelpPanel(QWidget):
         # --- HEADER HERO (Professional Gradient) ---
         header = QFrame()
         header.setFixedHeight(120)
-        header.setStyleSheet("""
-            QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1a2639, stop:1 #0d1421);
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            }
+        header.setStyleSheet(f"""
+            QFrame {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {COLORS["glass_dark"]}, stop:1 {COLORS["glass_deep"]});
+                border-bottom: 1px solid {COLORS["glass_border"]};
+            }}
         """)
         header_layout = QHBoxLayout(header)
         header_layout.setContentsMargins(40, 0, 40, 0)
@@ -59,10 +61,14 @@ class HelpPanel(QWidget):
         title_container.setSpacing(4)
 
         title = QLabel("Centro Risorse & Documentazione")
-        title.setStyleSheet("color: #FFFFFF; font-size: 26px; font-weight: 900; letter-spacing: 0.5px;")
+        title.setStyleSheet(
+            f"color: {COLORS['bg_white']}; font-size: 26px; font-weight: 900; letter-spacing: 0.5px;"
+        )
 
         subtitle = QLabel(f"SyncroJob Enterprise v{VERSION} • Hub di Supporto Tecnico")
-        subtitle.setStyleSheet("color: #4DB6AC; font-size: 14px; font-weight: 600; text-transform: uppercase;")
+        subtitle.setStyleSheet(
+            f"color: {COLORS['teal_accent']}; font-size: 14px; font-weight: 600; text-transform: uppercase;"
+        )
 
         title_container.addStretch()
         title_container.addWidget(title)
@@ -76,14 +82,14 @@ class HelpPanel(QWidget):
         icon_badge = QFrame()
         icon_badge.setFixedSize(64, 64)
         icon_badge.setStyleSheet(
-            "background: rgba(77, 182, 172, 0.15); border-radius: 32px; border: 1px solid rgba(77, 182, 172, 0.3);"
+            f"background: rgba({QColor(COLORS['teal_accent']).red()}, {QColor(COLORS['teal_accent']).green()}, {QColor(COLORS['teal_accent']).blue()}, 0.15); border-radius: 32px; border: 1px solid rgba({QColor(COLORS['teal_accent']).red()}, {QColor(COLORS['teal_accent']).green()}, {QColor(COLORS['teal_accent']).blue()}, 0.3);"
         )
         badge_layout = QVBoxLayout(icon_badge)
         badge_layout.setContentsMargins(0, 0, 0, 0)
         badge_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         icon_lbl = QLabel()
-        icon_lbl.setPixmap(get_colored_icon(get_asset_path(Icons.HELP), "#4DB6AC").pixmap(32, 32))
+        icon_lbl.setPixmap(get_colored_icon(get_asset_path(Icons.HELP), COLORS["teal_accent"]).pixmap(32, 32))
         badge_layout.addWidget(icon_lbl)
         header_layout.addWidget(icon_badge)
 
@@ -96,24 +102,32 @@ class HelpPanel(QWidget):
         # SIDEBAR (Navigation)
         sidebar = QWidget()
         sidebar.setFixedWidth(300)
-        sidebar.setStyleSheet("background-color: #F8F9FA; border-right: 1px solid #ECEFF1;")
+        sidebar.setStyleSheet(
+            f"background-color: {COLORS['bg_light']}; border-right: 1px solid {COLORS['border_light']};"
+        )
         sidebar_layout = QVBoxLayout(sidebar)
         sidebar_layout.setContentsMargins(20, 30, 20, 20)
         sidebar_layout.setSpacing(20)
 
         # Search Bar High-End
         search_container = QFrame()
-        search_container.setStyleSheet("background: white; border: 1px solid #CFD8DC; border-radius: 10px;")
+        search_container.setStyleSheet(
+            f"background: {COLORS['bg_white']}; border: 1px solid {COLORS['border_medium']}; border-radius: 10px;"
+        )
         search_h_layout = QHBoxLayout(search_container)
         search_h_layout.setContentsMargins(12, 0, 12, 0)
 
         search_icon = QLabel()
-        search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), "#90A4AE").pixmap(16, 16))
+        search_icon.setPixmap(
+            get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_muted"]).pixmap(16, 16)
+        )
         search_h_layout.addWidget(search_icon)
 
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("Cerca modulo o comando...")
-        self.search_edit.setStyleSheet("border: none; padding: 12px 0; font-size: 14px; background: transparent;")
+        self.search_edit.setStyleSheet(
+            "border: none; padding: 12px 0; font-size: 14px; background: transparent;"
+        )
         self.search_edit.textChanged.connect(self._filter_index)
         search_h_layout.addWidget(self.search_edit)
         sidebar_layout.addWidget(search_container)
@@ -121,39 +135,41 @@ class HelpPanel(QWidget):
         # Index List
         self.index_list = QListWidget()
         self.index_list.setIconSize(QSize(20, 20))
-        self.index_list.setStyleSheet("""
-            QListWidget { background: transparent; border: none; outline: none; }
-            QListWidget::item {
-                padding: 14px 18px; border-radius: 8px; color: #455A64;
+        self.index_list.setStyleSheet(f"""
+            QListWidget {{ background: transparent; border: none; outline: none; }}
+            QListWidget::item {{
+                padding: 14px 18px; border-radius: 8px; color: {COLORS["text_dark"]};
                 font-weight: 600; font-size: 13px; margin-bottom: 4px;
-            }
-            QListWidget::item:hover { background-color: #ECEFF1; color: #263238; }
-            QListWidget::item:selected { background-color: #009688; color: white; }
+            }}
+            QListWidget::item:hover {{ background-color: {COLORS["bg_hover"]}; color: {COLORS["text_dark"]}; }}
+            QListWidget::item:selected {{ background-color: {COLORS["teal_accent"]}; color: white; }}
         """)
         self.index_list.currentRowChanged.connect(self._on_index_changed)
         sidebar_layout.addWidget(self.index_list)
 
         # Footer Sidebar (Version & Status)
         sb_footer = QLabel("SyncroJob Hub • Built for Excellence")
-        sb_footer.setStyleSheet("color: #B0BEC5; font-size: 11px; font-weight: 700; text-transform: uppercase;")
+        sb_footer.setStyleSheet(
+            f"color: {COLORS['text_muted']}; font-size: 11px; font-weight: 700; text-transform: uppercase;"
+        )
         sb_footer.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sidebar_layout.addWidget(sb_footer)
 
         # CONTENT BROWSER
         content_container = QWidget()
-        content_container.setStyleSheet("background-color: white;")
+        content_container.setStyleSheet(f"background-color: {COLORS['bg_white']};")
         content_layout = QVBoxLayout(content_container)
         content_layout.setContentsMargins(0, 0, 0, 0)
 
         self.browser = QTextBrowser()
         self.browser.setOpenExternalLinks(True)
         self.browser.setReadOnly(True)
-        self.browser.setStyleSheet("""
-            QTextBrowser {
-                background-color: white; border: none; padding: 60px 80px;
+        self.browser.setStyleSheet(f"""
+            QTextBrowser {{
+                background-color: {COLORS["bg_white"]}; border: none; padding: 60px 80px;
                 font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-                font-size: 16px; color: #263238;
-            }
+                font-size: 16px; color: {COLORS["text_dark"]};
+            }}
         """)
         content_layout.addWidget(self.browser)
 
@@ -180,7 +196,7 @@ class HelpPanel(QWidget):
         self.index_list.blockSignals(True)
         for title, _content, icon_key in self.sections:
             item = QListWidgetItem(title)
-            color = "#009688" if title == "Introduzione" else "#546E7A"
+            color = COLORS["teal_accent"] if title == "Introduzione" else COLORS["text_muted"]
             item.setIcon(get_colored_icon(get_asset_path(icon_key), color))
             self.index_list.addItem(item)
         self.index_list.blockSignals(False)

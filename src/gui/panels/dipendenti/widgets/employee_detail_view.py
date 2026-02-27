@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.gui.panels.dipendenti.shared import create_field_row, create_info_card
+from src.gui.styles import COLORS
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class EmployeeDetailView(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setFixedWidth(360)
-        self.setStyleSheet("QWidget { background-color: #f8f9fa; }")
+        self.setStyleSheet(f"QWidget {{ background-color: {COLORS['bg_light']}; }}")
 
         self.detail_labels: dict[str, QLabel] = {}
         self._setup_ui()
@@ -42,18 +43,18 @@ class EmployeeDetailView(QWidget):
         header_shadow.setColor(QColor(0, 0, 0, 60))
         header_card.setGraphicsEffect(header_shadow)
         header_card.setStyleSheet(
-            """
-            QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2196F3, stop:1 #1976D2);
+            f"""
+            QFrame {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['primary_blue']}, stop:1 {COLORS['primary_dark']});
                 border-radius: 12px;
-            }
+            }}
         """
         )
         header_layout = QVBoxLayout(header_card)
         header_layout.setContentsMargins(18, 12, 18, 12)
 
         title_label = QLabel("📋 SCHEDA DIPENDENTE")
-        title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: white; letter-spacing: 1px;")
+        title_label.setStyleSheet(f"font-size: 20px; font-weight: bold; color: {COLORS['bg_white']}; letter-spacing: 1px;")
         subtitle_label = QLabel("Dettagli anagrafica e accessi")
         subtitle_label.setStyleSheet("font-size: 14px; color: rgba(255, 255, 255, 0.90); margin-top: 2px;")
         header_layout.addWidget(title_label)
@@ -103,12 +104,12 @@ class EmployeeDetailView(QWidget):
         access_shadow.setColor(QColor(0, 0, 0, 50))
         access_card.setGraphicsEffect(access_shadow)
         access_card.setStyleSheet(
-            """
-            QFrame {
-                background: white;
+            f"""
+            QFrame {{
+                background: {COLORS['bg_white']};
                 border-radius: 10px;
-                border-left: 4px solid #2196F3;
-            }
+                border-left: 4px solid {COLORS['primary_blue']};
+            }}
         """
         )
         access_layout = QVBoxLayout(access_card)
@@ -117,13 +118,13 @@ class EmployeeDetailView(QWidget):
 
         access_title = QLabel("🏭 ULTIMO ACCESSO ISAB")
         access_title.setStyleSheet(
-            "font-size: 13px; font-weight: bold; color: #2196F3; letter-spacing: 0.5px;"
+            f"font-size: 13px; font-weight: bold; color: {COLORS['primary_blue']}; letter-spacing: 0.5px;"
         )
         self.last_access_label = QLabel("-")
         self.last_access_label.setWordWrap(True)
         self.last_access_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.last_access_label.setStyleSheet(
-            "font-size: 16px; font-weight: bold; color: #2c3e50; padding: 5px 0;"
+            f"font-size: 16px; font-weight: bold; color: {COLORS['text_dark']}; padding: 5px 0;"
         )
         access_layout.addWidget(access_title)
         access_layout.addWidget(self.last_access_label)
@@ -160,7 +161,7 @@ class EmployeeDetailView(QWidget):
         else:
             self.last_access_label.setText("-")
             self.last_access_label.setStyleSheet(
-                "color: #2c3e50; font-weight: bold; font-size: 14px; padding: 5px 0;"
+                f"color: {COLORS['text_dark']}; font-weight: bold; font-size: 14px; padding: 5px 0;"
             )
 
     def reset(self) -> None:
@@ -169,5 +170,5 @@ class EmployeeDetailView(QWidget):
             widget.setText("-")
         self.last_access_label.setText("-")
         self.last_access_label.setStyleSheet(
-            "color: #2c3e50; font-weight: bold; font-size: 14px; padding: 5px 0;"
+            f"color: {COLORS['text_dark']}; font-weight: bold; font-size: 14px; padding: 5px 0;"
         )

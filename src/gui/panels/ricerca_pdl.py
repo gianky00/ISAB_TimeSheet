@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.gui.panels.base import BaseBotPanel, BotWorker
+from src.gui.styles import COLORS, STATUS_COLORS
 from src.gui.widgets.toast import ToastManager
 
 
@@ -57,22 +58,22 @@ class RicercaPDLPanel(BaseBotPanel):
         # Sezione Parametri (Design Neon Floating Card Standard)
         params_container = QFrame()
         params_container.setObjectName("paramsContainer")
-        params_container.setStyleSheet("""
-            QFrame#paramsContainer {
-                background-color: #ffffff;
-                border: 1px solid #e0e0e0;
-                border-bottom: 3px solid #212121; /* Cyan Neon */
+        params_container.setStyleSheet(f"""
+            QFrame#paramsContainer {{
+                background-color: {COLORS['bg_white']};
+                border: 1px solid {COLORS['border_light']};
+                border-bottom: 3px solid {COLORS['text_dark']};
                 border-radius: 12px;
-            }
-            QLabel {
-                color: #424242;
+            }}
+            QLabel {{
+                color: {COLORS['text_dark']};
                 font-weight: bold;
                 font-size: 13px;
                 background: transparent;
-            }
-            QComboBox, QCheckBox {
+            }}
+            QComboBox, QCheckBox {{
                 background: transparent;
-            }
+            }}
         """)
 
         # Shadow Effect
@@ -108,14 +109,14 @@ class RicercaPDLPanel(BaseBotPanel):
         self.site_combo.addItems(["Seleziona tutto", "IGCC", "ISAB Nord", "ISAB Sud"])
         self.site_combo.setMinimumWidth(180)
         self.site_combo.setMinimumHeight(38)
-        self.site_combo.setStyleSheet("""
-            QComboBox {
-                border: 1px solid #cfd8dc;
+        self.site_combo.setStyleSheet(f"""
+            QComboBox {{
+                border: 1px solid {COLORS['border_medium']};
                 border-radius: 6px;
                 padding: 5px 10px;
-                background-color: #f8f9fa;
-            }
-            QComboBox:focus { border: 2px solid #212121; background-color: #ffffff; }
+                background-color: {COLORS['bg_light']};
+            }}
+            QComboBox:focus {{ border: 2px solid {COLORS['text_dark']}; background-color: {COLORS['bg_white']}; }}
         """)
         self.site_combo.currentTextChanged.connect(self._save_data)
         vbox_site.addWidget(self.site_combo)
@@ -175,7 +176,7 @@ class RicercaPDLPanel(BaseBotPanel):
 
         if not username or not password:
             ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
-            self._update_status("#C62828", "Credenziali mancanti")
+            self._update_status(STATUS_COLORS["error"], "Credenziali mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return

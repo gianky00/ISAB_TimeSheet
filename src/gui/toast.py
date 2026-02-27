@@ -6,6 +6,8 @@ Widget per notifiche non intrusive.
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer
 from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel, QVBoxLayout, QWidget
 
+from src.gui.styles import COLORS
+
 
 class ToastOverlay(QWidget):
     """
@@ -21,19 +23,19 @@ class ToastOverlay(QWidget):
         # Stile (Explicit colors for dark/light mode compatibility)
         # Forced black text on white background as requested
         self.setStyleSheet(
-            """
-            QWidget {
-                background-color: #ffffff;
-                color: #000000;
+            f"""
+            QWidget {{
+                background-color: {COLORS['bg_white']};
+                color: {COLORS['text_dark']};
                 border-radius: 6px;
-                border: 1px solid #ced4da;
-            }
-            QLabel {
-                color: #000000;
+                border: 1px solid {COLORS['border_medium']};
+            }}
+            QLabel {{
+                color: {COLORS['text_dark']};
                 font-size: 14px;
                 font-weight: bold;
                 background-color: transparent;
-            }
+            }}
         """
         )
 

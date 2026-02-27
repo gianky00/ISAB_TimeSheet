@@ -3,7 +3,8 @@ from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
-from src.gui.design.colors import LIGHT
+from src.gui.design.colors import get_palette
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -22,20 +23,20 @@ class StatusCard(QFrame):
         self.setFrameShadow(QFrame.Shadow.Raised)
         self.setCursor(Qt.CursorShape.PointingHandCursor)  # Cursore pointer per indicare cliccabilità
         self.setStyleSheet(
-            """
-            StatusCard {
-                background-color: #FFFFFF;
-                border: 1px solid #E0E0E0;
+            f"""
+            StatusCard {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
                 border-radius: 8px;
-            }
-            StatusCard:hover {
-                background-color: #F8F9FA;
-                border-color: #009688;
-            }
+            }}
+            StatusCard:hover {{
+                background-color: {COLORS["bg_hover"]};
+                border-color: {COLORS["teal_accent"]};
+            }}
             """
         )
 
-        self._palette = LIGHT
+        self._palette = get_palette()
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 4, 12, 4)
         layout.setSpacing(12)
@@ -103,14 +104,14 @@ class StatusCard(QFrame):
             self._meta_label.setVisible(True)
             # Stile "Big Badge": font 11px, grassetto, padding generoso
             self._meta_label.setStyleSheet(
-                """
+                f"""
                 font-size: 11px;
                 font-weight: 800;
-                color: #1B5E20;
-                background-color: #C8E6C9;
+                color: {COLORS["success_material"]};
+                background-color: {COLORS["table_success_bg"]};
                 border-radius: 6px;
                 padding: 6px 10px;
-                border: 1px solid #A5D6A7;
+                border: 1px solid {COLORS["success_green"]};
                 """
             )
         else:

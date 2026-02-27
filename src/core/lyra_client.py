@@ -11,6 +11,7 @@ import requests
 from src.core import config_manager
 from src.core.audit_manager import AuditManager
 from src.core.config_manager import CONFIG_DIR
+from src.core.constants import Business, URLs
 from src.core.contabilita_manager import ContabilitaManager
 
 
@@ -34,7 +35,7 @@ class LyraClient:
             pass
 
         self.model = model_name or config.get("ai_model", "gemini-1.5-pro")
-        self.ollama_url = ollama_url or config.get("ollama_url", "http://localhost:11434")
+        self.ollama_url = ollama_url or config.get("ollama_url", URLs.OLLAMA_DEFAULT)
 
         # Prompt di sistema unificato
         self.context_prompt = """
@@ -102,14 +103,14 @@ class LyraClient:
 
             latest_year = max(years)
             stats = ContabilitaManager.get_year_stats(latest_year)
-            margine = stats["total_prev"] - (stats["total_ore"] * 30.0)
+            margine = stats["total_prev"] - (stats["total_ore"] * Business.HOURLY_COST_STD)
             marginalita = (margine / stats["total_prev"] * 100) if stats["total_prev"] > 0 else 0
 
             lines = [
                 f"=== REPORT CONTABILITÀ ({latest_year}) ===",
                 f"- Valore Totale Preventivato: € {stats['total_prev']:,.2f}",
                 f"- Ore Spese Totali: {stats['total_ore']:,.1f} h",
-                f"- Margine Operativo Stimato (vs Costo €30/h): € {margine:,.2f} ({marginalita:.1f}%)",
+                f"- Margine Operativo Stimato (vs Costo €{Business.HOURLY_COST_STD:.0f}/h): € {margine:,.2f} ({marginalita:.1f}%)",
                 f"- Totale Commesse: {stats['count_total']}",
                 "- Stato Avanzamento:",
             ]

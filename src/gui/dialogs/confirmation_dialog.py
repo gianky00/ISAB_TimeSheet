@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -72,7 +73,7 @@ class ConfirmationDialog(QDialog):
         msg_label = QLabel(message)
         msg_label.setWordWrap(True)
         msg_label.setTextFormat(Qt.TextFormat.RichText)
-        msg_label.setStyleSheet("font-size: 14px; color: #333;")
+        msg_label.setStyleSheet(f"font-size: 14px; color: {COLORS['text_dark']};")
         header_layout.addWidget(msg_label, 1)
 
         layout.addLayout(header_layout)
@@ -112,14 +113,14 @@ class ConfirmationDialog(QDialog):
     def _get_icon_color(self, variant: str) -> str:
         """Restituisce il colore CSS corrispondente alla variante."""
         if variant == self.Variant.INFO:
-            return "#0d6efd"
+            return COLORS["info_blue"]
         if variant == self.Variant.WARNING:
-            return "#fd7e14"
+            return COLORS["warning_orange"]
         if variant == self.Variant.ERROR:
-            return "#dc3545"
+            return COLORS["error_red"]
         if variant == self.Variant.QUESTION:
-            return "#0d6efd"
-        return "#333"
+            return COLORS["primary_dark"]
+        return COLORS["text_dark"]
 
     @staticmethod
     def confirm(parent: QWidget | None, title: str, message: str) -> bool:

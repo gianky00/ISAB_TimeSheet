@@ -27,6 +27,8 @@ from PyQt6.QtGui import (
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QWidget
 
 from src.bots.base.base_bot import StepStatus
+from src.gui.styles import COLORS
+from src.gui.styles.constants import UI_SIZES
 
 
 class TimelineNode:
@@ -80,18 +82,18 @@ class ActivityTimelineWidget(QWidget):
         self._ui_timer.start(16)
 
         # Palette Cyber-Rail LIGHT MODE
-        self.COLORS = {
-            "bg": QColor(255, 255, 255, 250),  # Sfondo Bianco quasi opaco
+        self.PALETTE = {
+            "bg": QColor(COLORS["bg_white"]),
             "grid": QColor(0, 0, 0, 10),  # Griglia scura molto soft
-            "border": QColor("#212121"),  # Bordo Scuro Accent
-            StepStatus.PENDING: QColor("#CFD8DC"),  # Grigio chiaro per attesa
-            StepStatus.RUNNING: QColor("#212121"),  # Scuro per esecuzione
-            StepStatus.COMPLETED: QColor("#00E676"),  # Green
-            StepStatus.ERROR: QColor("#FF1744"),  # Red
-            "line_dim": QColor(236, 239, 241),  # Linee di connessione chiare
-            "text_active": QColor("#212121"),  # Testo scuro per contrasto
-            "text_dim": QColor("#90A4AE"),  # Testo spento
-            "dash": QColor("#212121"),  # Particelle scure
+            "border": QColor(COLORS["text_dark"]),  # Bordo Scuro Accent
+            StepStatus.PENDING: QColor(COLORS["border_medium"]),  # Grigio chiaro per attesa
+            StepStatus.RUNNING: QColor(COLORS["primary_dark"]),  # Scuro per esecuzione
+            StepStatus.COMPLETED: QColor(COLORS["success_green"]),  # Green
+            StepStatus.ERROR: QColor(COLORS["error_red"]),  # Red
+            "line_dim": QColor(COLORS["bg_alt"]),  # Linee di connessione chiare
+            "text_active": QColor(COLORS["text_dark"]),  # Testo scuro per contrasto
+            "text_dim": QColor(COLORS["text_muted"]),  # Testo spento
+            "dash": QColor(COLORS["text_dark"]),  # Particelle scure
         }
 
         # Effetto Ombra più delicato per il tema light
@@ -157,7 +159,7 @@ class ActivityTimelineWidget(QWidget):
         """Metodo di aggiornamento periodico per gli elementi dinamici (60 FPS)."""
         self._rotation_angle, self._grid_offset, self._dash_offset = (
             (self._rotation_angle + 3) % 360,
-            (self._grid_offset + 0.3) % 25.0,
+            (self._grid_offset + 0.3) % float(UI_SIZES["grid_step"]),
             (self._dash_offset + 0.01) % 1.0,
         )
         self.update()
@@ -230,17 +232,17 @@ class ActivityTimelineWidget(QWidget):
             # 1. DISEGNO SFONDO ARROTONDATO (Cyber-Frame)
             rect = QRectF(10, 10, self.width() - 20, self.height() - 20)
             path = QPainterPath()
-            path.addRoundedRect(rect, 15, 15)
+            path.addRoundedRect(rect, float(UI_SIZES["radius_card"]), float(UI_SIZES["radius_card"]))
 
             painter.save()
             painter.setClipPath(path)
-            painter.fillRect(rect, self.COLORS["bg"])
+            painter.fillRect(rect, self.PALETTE["bg"])
             self._draw_grid(painter, rect)
             painter.restore()
 
             # Bordo Neon soft (Con pulsazione in hover)
             alpha = int(100 + (self._border_pulse_val * 155))
-            c = self.COLORS["border"]
+            c = self.PALETTE["border"]
             painter.setPen(QPen(QColor(c.red(), c.green(), c.blue(), alpha), 1.2))
             painter.drawPath(path)
 
@@ -287,9 +289,9 @@ class ActivityTimelineWidget(QWidget):
             painter: Oggetto QPainter.
             rect: Rettangolo di disegno.
         """
-        painter.setPen(QPen(self.COLORS["grid"], 0.5))
+        painter.setPen(QPen(self.PALETTE["grid"], 0.5))
         step, left, top, right, bottom = (
-            25,
+            UI_SIZES["grid_step"],
             int(rect.left()),
             int(rect.top()),
             int(rect.right()),
@@ -314,7 +316,7 @@ class ActivityTimelineWidget(QWidget):
             n2: Nodo di arrivo.
         """
         is_done = n1.status == StepStatus.COMPLETED and n2.status != StepStatus.PENDING
-        color = self.COLORS[StepStatus.COMPLETED] if is_done else self.COLORS["line_dim"]
+        color = self.PALETTE[StepStatus.COMPLETED] if is_done else self.PALETTE["line_dim"]
 
         painter.setPen(QPen(color, 2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
         painter.drawLine(int(x), int(y1), int(x), int(y2))
@@ -324,7 +326,7 @@ class ActivityTimelineWidget(QWidget):
         ):
             # Energy Dash
             dy = y1 + (y2 - y1) * self._dash_offset
-            painter.setBrush(self.COLORS["dash"])
+            painter.setBrush(self.PALETTE["dash"])
             painter.setPen(Qt.PenStyle.NoPen)
             painter.drawEllipse(QRectF(x - 2, dy - 2, 4, 4))
 
@@ -339,7 +341,7 @@ class ActivityTimelineWidget(QWidget):
             node: Oggetto TimelineNode da disegnare.
             container_rect: Rettangolo del contenitore per calcolare l'overflow del testo.
         """
-        color = self.COLORS[node.status]
+        color = self.PALETTE[node.status]
 
         if node.status == StepStatus.RUNNING:
             # Scanner Orbital
@@ -370,7 +372,7 @@ class ActivityTimelineWidget(QWidget):
         # Testo
         is_active = node.status == StepStatus.RUNNING
         painter.setPen(
-            self.COLORS["text_active"] if node.status != StepStatus.PENDING else self.COLORS["text_dim"]
+            self.PALETTE["text_active"] if node.status != StepStatus.PENDING else self.PALETTE["text_dim"]
         )
 
         font_main = QFont("Segoe UI", 9, QFont.Weight.DemiBold if is_active else QFont.Weight.Normal)
@@ -398,5 +400,5 @@ class ActivityTimelineWidget(QWidget):
         Args:
             painter: Oggetto QPainter.
         """
-        painter.setPen(self.COLORS["text_dim"])
+        painter.setPen(self.PALETTE["text_dim"])
         painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "[ LINK OFFLINE ]")

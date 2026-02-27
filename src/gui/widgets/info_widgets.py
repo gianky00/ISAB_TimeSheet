@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -31,22 +32,22 @@ class DetailedInfoDialog(QDialog):
         self.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
         self.setFixedWidth(400)
         self.setStyleSheet(
-            """
-            QDialog {
-                background-color: #ffffff;
-                border: 2px solid #0d6efd;
+            f"""
+            QDialog {{
+                background-color: {COLORS['bg_white']};
+                border: 2px solid {COLORS['primary_dark']};
                 border-radius: 8px;
-            }
-            QLabel {
-                color: #212529;
+            }}
+            QLabel {{
+                color: {COLORS['text_dark']};
                 font-size: 14px;
-            }
+            }}
         """
         )
 
         layout = QVBoxLayout(self)
         lbl_title = QLabel(title)
-        lbl_title.setStyleSheet("font-weight: bold; font-size: 16px; color: #0d6efd; margin-bottom: 10px;")
+        lbl_title.setStyleSheet(f"font-weight: bold; font-size: 16px; color: {COLORS['primary_dark']}; margin-bottom: 10px;")
         layout.addWidget(lbl_title)
 
         lbl_content = QLabel(content)
@@ -56,7 +57,7 @@ class DetailedInfoDialog(QDialog):
 
         lbl_close = QLabel("\n(Clicca per chiudere)")
         lbl_close.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl_close.setStyleSheet("color: #adb5bd; font-size: 11px;")
+        lbl_close.setStyleSheet(f"color: {COLORS['text_light']}; font-size: 11px;")
         layout.addWidget(lbl_close)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
@@ -71,7 +72,7 @@ class InfoLabel(QPushButton):
         self, title: str, get_text_callback: str | Callable[[], str], parent: QWidget | None = None
     ) -> None:
         super().__init__("", parent)
-        self.setIcon(get_colored_icon(get_asset_path(Icons.HELP), "#000000"))
+        self.setIcon(get_colored_icon(get_asset_path(Icons.HELP), COLORS["text_dark"]))
         self.setIconSize(QSize(18, 18))
         self.title = title
         self.get_text_callback = get_text_callback
@@ -79,7 +80,7 @@ class InfoLabel(QPushButton):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.clicked.connect(self._show_info)
         self.setStyleSheet(
-            "QPushButton { color: #6c757d; font-weight: bold; font-size: 16px; background: transparent; border: none; padding: 0px 5px; } QPushButton:hover { color: #0d6efd; }"
+            f"QPushButton {{ color: {COLORS['text_muted']}; font-weight: bold; font-size: 16px; background: transparent; border: none; padding: 0px 5px; }} QPushButton:hover {{ color: {COLORS['primary_dark']}; }}"
         )
 
     def _show_info(self) -> None:
@@ -117,19 +118,20 @@ class KPIBigCard(QFrame):
         self,
         title: str,
         value: str,
-        color: str = "#0d6efd",
+        color: str | None = None,
         parent: QWidget | None = None,
         subtitle: str | None = None,
     ) -> None:
         super().__init__(parent)
+        accent = color or COLORS["primary_dark"]
         self.info_content_callback: Callable[[], str] = lambda: "Nessuna informazione disponibile."
         self.setStyleSheet(
             f"""
             QFrame {{
-                background-color: white;
+                background-color: {COLORS['bg_white']};
                 border-radius: 15px;
-                border: 1px solid #e9ecef;
-                border-left: 5px solid {color};
+                border: 1px solid {COLORS['border_light']};
+                border-left: 5px solid {accent};
             }}
         """
         )
@@ -143,7 +145,7 @@ class KPIBigCard(QFrame):
         header_layout = QHBoxLayout()
         lbl_title = QLabel(title)
         lbl_title.setStyleSheet(
-            "color: #6c757d; font-size: 13px; font-weight: bold; border: none; background: transparent;"
+            f"color: {COLORS['text_muted']}; font-size: 13px; font-weight: bold; border: none; background: transparent;"
         )
         header_layout.addWidget(lbl_title)
         header_layout.addStretch()
@@ -153,14 +155,14 @@ class KPIBigCard(QFrame):
 
         self.lbl_value = QLabel(value)
         self.lbl_value.setStyleSheet(
-            f"color: {color}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
+            f"color: {accent}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
         )
         self.lbl_value.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.lbl_value)
 
         if subtitle:
             lbl_sub = QLabel(subtitle)
-            lbl_sub.setStyleSheet("color: #adb5bd; font-size: 11px; border: none; background: transparent;")
+            lbl_sub.setStyleSheet(f"color: {COLORS['text_light']}; font-size: 11px; border: none; background: transparent;")
             lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(lbl_sub)
 

@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.gui.formatters import format_currency_smart, format_date_it
+from src.gui.styles import COLORS
 
 
 class OdaDetailView(QWidget):
@@ -28,7 +29,7 @@ class OdaDetailView(QWidget):
         layout.setContentsMargins(5, 0, 5, 0)
 
         detail_title = QLabel("Dettaglio Completo OdA")
-        detail_title.setStyleSheet("font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;")
+        detail_title.setStyleSheet(f"font-weight: bold; font-size: 14px; color: {COLORS['primary_blue']}; margin-bottom: 5px;")
         layout.addWidget(detail_title)
 
         scroll = QScrollArea()

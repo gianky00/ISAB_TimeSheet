@@ -7,7 +7,7 @@ Inizializza la sidebar, il banner degli aggiornamenti e la barra di ricerca glob
 from typing import Any
 
 from PyQt6.QtCore import QObject
-from PyQt6.QtWidgets import QLayout, QLineEdit
+from PyQt6.QtWidgets import QLineEdit, QVBoxLayout, QWidget
 
 from src.gui.widgets.sidebar_widget import SidebarWidget
 from src.gui.widgets.update_banner import UpdateBanner
@@ -32,21 +32,20 @@ class ToolBarComponent(QObject):
         self.update_banner: UpdateBanner | None = None
         self.global_search: QLineEdit | None = None
 
-    def setup_sidebar(self, layout: QLayout) -> SidebarWidget:
+    def setup_sidebar(self, parent_widget: QWidget) -> SidebarWidget:
         """
-        Crea e inserisce la sidebar nel layout principale.
+        Crea la sidebar per l'uso come overlay.
 
         Args:
-            layout: Il layout orizzontale della MainWindow.
+            parent_widget: Il widget genitore.
 
         Returns:
             SidebarWidget: L'istanza creata della sidebar.
         """
-        self.sidebar = SidebarWidget()
-        layout.addWidget(self.sidebar)
+        self.sidebar = SidebarWidget(parent_widget)
         return self.sidebar
 
-    def setup_content_toolbar(self, layout: QLayout) -> tuple[UpdateBanner, QLineEdit]:
+    def setup_content_toolbar(self, layout: QVBoxLayout) -> tuple[UpdateBanner, QLineEdit]:
         """
         Crea la barra superiore nell'area dei contenuti (Banner + Ricerca).
 
@@ -60,6 +59,11 @@ class ToolBarComponent(QObject):
         self.update_banner.download_requested.connect(self.main_window._on_download_update_clicked)
         layout.addWidget(self.update_banner)
 
+        # Wrap search bar in a horizontal layout to add margin for floating logo
+        from PyQt6.QtWidgets import QHBoxLayout
+        search_layout = QHBoxLayout()
+        search_layout.setContentsMargins(75, 0, 0, 0) # Spazio per il logo fluttuante
+
         self.global_search = QLineEdit()
         self.global_search.setPlaceholderText("Ricerca Universale (OdA, Dipendenti, Log...) - Ctrl+F")
         self.global_search.setMinimumHeight(40)
@@ -68,6 +72,8 @@ class ToolBarComponent(QObject):
                 self.global_search.text() if self.global_search else ""
             )
         )
-        layout.addWidget(self.global_search)
+        search_layout.addWidget(self.global_search)
+
+        layout.addLayout(search_layout)
 
         return self.update_banner, self.global_search

@@ -12,6 +12,7 @@ from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt
 from PyQt6.QtGui import QColor, QFont, QIcon
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -44,11 +45,11 @@ class AuditTableModel(QAbstractTableModel):
         self._logs = logs or []
         # Pre-load icons
         self._icons = {
-            "high": get_colored_icon(get_asset_path(Icons.STATUS_DOT_RED), "#dc3545"),
-            "medium": get_colored_icon(get_asset_path(Icons.STATUS_DOT_ORANGE), "#fd7e14"),
-            "low": get_colored_icon(get_asset_path(Icons.STATUS_DOT_GREEN), "#198754"),
-            "success": get_colored_icon(get_asset_path(Icons.STATUS_DOT_GREEN), "#198754"),
-            "error": get_colored_icon(get_asset_path(Icons.STATUS_DOT_RED), "#dc3545"),
+            "high": get_colored_icon(get_asset_path(Icons.STATUS_DOT_RED), COLORS["error_red"]),
+            "medium": get_colored_icon(get_asset_path(Icons.STATUS_DOT_ORANGE), COLORS["warning_orange"]),
+            "low": get_colored_icon(get_asset_path(Icons.STATUS_DOT_GREEN), COLORS["success_dark"]),
+            "success": get_colored_icon(get_asset_path(Icons.STATUS_DOT_GREEN), COLORS["success_dark"]),
+            "error": get_colored_icon(get_asset_path(Icons.STATUS_DOT_RED), COLORS["error_red"]),
         }
 
     def update_data(self, logs: list[dict[str, Any]]) -> None:
@@ -141,19 +142,19 @@ class AuditTableModel(QAbstractTableModel):
         """Restituisce un colore di sfondo tenue per evidenziare errori o warning."""
         status = str(log.get("status", "success")).lower()
         if status == "error":
-            return QColor("#fff5f5")  # Red tint
+            return QColor(COLORS["table_error_bg"])
 
         severity = str(log.get("severity", "low")).lower()
         if severity == "medium":
-            return QColor("#fff9f0")  # Orange tint
+            return QColor(COLORS["table_warning_bg"])
         return None
 
     def _get_foreground_data(self, log: dict[str, Any], col: int) -> QColor | None:
         """Evidenzia in rosso i codici errore e in arancione le operazioni lente."""
         if col == 6 and log.get("error_code"):  # Error Code Red
-            return QColor("#dc3545")
+            return QColor(COLORS["error_red"])
         if col == 2 and (log.get("duration_ms", 0) or 0) > 5000:  # Slow ops
-            return QColor("#fd7e14")
+            return QColor(COLORS["warning_orange"])
         return None
 
     def _get_font_data(self, log: dict[str, Any], col: int) -> QFont | None:

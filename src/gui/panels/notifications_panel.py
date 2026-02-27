@@ -23,6 +23,7 @@ from src.core.constants import Icons
 from src.core.notification_manager import NotificationManager
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.panels.health_panel import HealthPanel
+from src.gui.styles import COLORS
 from src.gui.widgets.audit_log_widget import AuditLogWidget
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.notification_card import NotificationCard
@@ -132,15 +133,21 @@ class NotificationsPanel(QWidget):
         self.scroll_area.setWidget(self.scroll_content)
         nl.addWidget(self.scroll_area)
 
-        self.tabs.addTab(self.notif_tab, get_colored_icon(get_asset_path(Icons.BELL), "#546E7A"), "Notifiche")
+        self.tabs.addTab(
+            self.notif_tab, get_colored_icon(get_asset_path(Icons.BELL), COLORS["text_muted"]), "Notifiche"
+        )
 
         # Tab Audit
         self.audit_tab = AuditLogWidget()
-        self.tabs.addTab(self.audit_tab, get_colored_icon(get_asset_path(Icons.SHIELD), "#546E7A"), "Audit")
+        self.tabs.addTab(
+            self.audit_tab, get_colored_icon(get_asset_path(Icons.SHIELD), COLORS["text_muted"]), "Audit"
+        )
 
         # Tab Health
         self.health_tab = HealthPanel()
-        self.tabs.addTab(self.health_tab, get_colored_icon(get_asset_path(Icons.HEART), "#546E7A"), "Health")
+        self.tabs.addTab(
+            self.health_tab, get_colored_icon(get_asset_path(Icons.HEART), COLORS["text_muted"]), "Health"
+        )
 
         self.tabs.currentChanged.connect(self._on_tab_changed)
 
@@ -375,12 +382,12 @@ class NotificationsPanel(QWidget):
         empty_layout.addWidget(icon_lbl)
 
         title_lbl = QLabel(title)
-        title_lbl.setStyleSheet("font-size: 20px; font-weight: bold; color: #495057; border: none;")
+        title_lbl.setStyleSheet(f"font-size: 20px; font-weight: bold; color: {COLORS['text_dark']}; border: none;")
         title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(title_lbl)
 
         subtitle_lbl = QLabel(subtitle)
-        subtitle_lbl.setStyleSheet("font-size: 14px; color: #6c757d; border: none;")
+        subtitle_lbl.setStyleSheet(f"font-size: 14px; color: {COLORS['text_muted']}; border: none;")
         subtitle_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(subtitle_lbl)
 

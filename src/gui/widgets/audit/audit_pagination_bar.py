@@ -1,6 +1,8 @@
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QWidget
 
+from src.gui.styles import COLORS
+
 
 class AuditPaginationBar(QWidget):
     """Barra di paginazione per l'Audit Log."""
@@ -20,7 +22,7 @@ class AuditPaginationBar(QWidget):
         self.prev_btn.clicked.connect(lambda: self.page_changed.emit(-1))
 
         self.page_lbl = QLabel("Pagina 1")
-        self.page_lbl.setStyleSheet("font-weight: bold;")
+        self.page_lbl.setStyleSheet(f"font-weight: bold; color: {COLORS['text_dark']};")
 
         self.next_btn = QPushButton("Successiva")
         self.next_btn.setEnabled(False)

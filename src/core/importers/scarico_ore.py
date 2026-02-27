@@ -86,12 +86,14 @@ class ScaricoOreImporter(BaseImporter):
         except (zipfile.BadZipFile, Exception) as e:
             logger.debug(f"Scan excel rows error: {e}")
 
+        from src.core.constants import Business
+
         if msoffcrypto:
             with suppress(Exception):
                 decrypted = io.BytesIO()
                 with path.open("rb") as f:
                     office_file = msoffcrypto.OfficeFile(f)
-                    office_file.load_key(password="coemi")  # nosec: B106 # noqa: S106
+                    office_file.load_key(password=Business.DEFAULT_EXCEL_PASSWORD)  # nosec: B106
                     office_file.decrypt(decrypted)
                 decrypted.seek(0)
                 return _scan_zip(decrypted)
@@ -137,13 +139,15 @@ class ScaricoOreImporter(BaseImporter):
 
     @classmethod
     def _load_scarico_workbook(cls, path: Path) -> Any:
+        from src.core.constants import Business
+
         wb_file = io.BytesIO()
         is_encrypted = False
 
         if msoffcrypto:
             with suppress(Exception), path.open("rb") as f:
                 office_file = msoffcrypto.OfficeFile(f)
-                office_file.load_key(password="coemi")  # nosec: B106 # noqa: S106
+                office_file.load_key(password=Business.DEFAULT_EXCEL_PASSWORD)  # nosec: B106
                 office_file.decrypt(wb_file)
                 is_encrypted = True
 

@@ -104,13 +104,14 @@ def check_expiring_isab_authorizations() -> list[dict[str, Any]]:
                         missing_cf_flag = True
 
             if match_found and delta is not None:
-                # Monitoraggio: 20-30 giorni (In Scadenza)
-                # > 30 giorni (Scaduti) - Nessun limite superiore
-                if delta <= 20:
+                from src.gui.styles.constants import THRESHOLD_DAYS
+
+                # Monitoraggio basato su soglie centralizzate
+                if delta <= THRESHOLD_DAYS["warning"]:
                     continue
 
                 stat = "IN SCADENZA"
-                if delta > 30:
+                if delta > THRESHOLD_DAYS["expired"]:
                     stat = "SCADUTA"
 
                 results.append(

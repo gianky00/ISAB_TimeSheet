@@ -20,6 +20,12 @@ if TYPE_CHECKING:
 ROOT_DIR = Path(__file__).parent.resolve()
 sys.path.insert(0, str(ROOT_DIR / "src"))
 
+def _print_exception_and_exit(exc_type, exc_value, exc_tb):
+    print("FATAL UNCAUGHT EXCEPTION:")
+    traceback.print_exception(exc_type, exc_value, exc_tb)
+    sys.exit(1)
+sys.excepthook = _print_exception_and_exit
+
 from src.core.config_manager import CONFIG_DIR
 
 # Now we can import our logging system

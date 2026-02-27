@@ -4,6 +4,7 @@ Pannello per il bot Scarico TS.
 """
 
 import traceback
+from datetime import datetime
 from typing import Any
 
 from PyQt6.QtCore import QTimer
@@ -13,6 +14,7 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel, BotWorker
+from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import BotParametersWidget, EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path
@@ -56,7 +58,7 @@ class ScaricaTSPanel(BaseBotPanel):
         try:
             self._load_saved_data()
         except Exception as e:
-            print(f"❌ Error loading data for ScaricaTSPanel: {e}")
+            print(f"[ERROR] Error loading data for ScaricaTSPanel: {e}")
             traceback.print_exc()
 
     def _setup_content(self):
@@ -116,7 +118,8 @@ class ScaricaTSPanel(BaseBotPanel):
 
         # Usa il widget per i parametri comuni
         self.params_widget.set_fornitore(config.get("last_ts_fornitore", ""))
-        self.params_widget.set_dates(config.get("last_ts_date", "01.01.2025"))
+        current_year = datetime.now().year
+        self.params_widget.set_dates(config.get("last_ts_date", f"01.01.{current_year}"))
         self.params_widget.set_dest_path(config.get("path_scarico_ts", ""))
 
         # Carica dati specifici
@@ -218,7 +221,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
         if not bot:
             self.log_widget.append("❌ Errore creazione bot (parametri mancanti?)")
-            self._update_status("#C62828", "Errore avvio")
+            self._update_status(STATUS_COLORS["error"], "Errore avvio")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return

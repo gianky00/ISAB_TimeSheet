@@ -2,6 +2,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -23,7 +24,7 @@ class UpdateBanner(QFrame):
         layout.setSpacing(10)
 
         self.icon_label = QLabel()
-        self.icon_label.setPixmap(get_colored_icon(get_asset_path(Icons.ROCKET), "#000000").pixmap(20, 20))
+        self.icon_label.setPixmap(get_colored_icon(get_asset_path(Icons.ROCKET), COLORS["text_dark"]).pixmap(20, 20))
         layout.addWidget(self.icon_label)
 
         self.update_label = QLabel("Nuova versione disponibile!")

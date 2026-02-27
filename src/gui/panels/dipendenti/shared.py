@@ -20,6 +20,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.styles import COLORS
+
 logger = logging.getLogger(__name__)
 
 
@@ -53,7 +55,7 @@ class ColoredDotDelegate(QStyledItemDelegate):
         if option.state & QStyle.StateFlag.State_Selected:
             painter.fillRect(option.rect, option.palette.highlight())
         elif index.row() % 2 == 1:
-            painter.fillRect(option.rect, QColor("#f8f9fa"))
+            painter.fillRect(option.rect, QColor(COLORS["bg_light"]))
 
         try:
             parts = str(value).split()
@@ -61,11 +63,11 @@ class ColoredDotDelegate(QStyledItemDelegate):
                 days = int(parts[1])
 
                 if days >= 10:
-                    color = QColor("#198754")  # Verde
+                    color = QColor(COLORS["success_dark"])
                 elif days >= 0:
-                    color = QColor("#fd7e14")  # Arancione
+                    color = QColor(COLORS["warning_orange"])
                 else:
-                    color = QColor("#dc3545")  # Rosso
+                    color = QColor(COLORS["error_red"])
                     days = 0
 
                 center_x = option.rect.center().x() - 15
@@ -74,7 +76,7 @@ class ColoredDotDelegate(QStyledItemDelegate):
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.drawEllipse(center_x, center_y - 5, 10, 10)
 
-                painter.setPen(QColor("#333333"))
+                painter.setPen(QColor(COLORS["text_dark"]))
                 font = QFont()
                 font.setPointSize(10)
                 font.setBold(True)
@@ -143,7 +145,7 @@ class InteractiveStatusCard(QFrame):
             f"""
             InteractiveStatusCard {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 white, stop:1 #fafbfc);
+                    stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_alt']});
                 border: 2px solid {color};
                 border-radius: 10px;
             }}
@@ -175,7 +177,7 @@ class InteractiveStatusCard(QFrame):
         line = QFrame()
         line.setFrameShape(QFrame.Shape.VLine)
         line.setFrameShadow(QFrame.Shadow.Sunken)
-        line.setStyleSheet("background-color: #dee2e6; min-width: 2px;")
+        line.setStyleSheet(f"background-color: {COLORS['border_light']}; min-width: 2px;")
         layout.addWidget(line)
 
         right_layout = QVBoxLayout()
@@ -183,10 +185,10 @@ class InteractiveStatusCard(QFrame):
         right_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         lbl_title = QLabel(label.upper())
-        lbl_title.setStyleSheet("font-size: 14px; font-weight: 800; color: #495057; letter-spacing: 0.8px;")
+        lbl_title.setStyleSheet(f"font-size: 14px; font-weight: 800; color: {COLORS['text_dark']}; letter-spacing: 0.8px;")
 
         lbl_desc = QLabel(description)
-        lbl_desc.setStyleSheet("font-size: 13px; color: #6c757d; font-weight: 600;")
+        lbl_desc.setStyleSheet(f"font-size: 13px; color: {COLORS['text_muted']}; font-weight: 600;")
         lbl_desc.setWordWrap(False)
         lbl_desc.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
@@ -241,11 +243,11 @@ def create_info_card(title: str) -> tuple[QFrame, QVBoxLayout]:
     card_shadow.setColor(QColor(0, 0, 0, 30))
     card.setGraphicsEffect(card_shadow)
     card.setStyleSheet(
-        """
-        QFrame {
-            background-color: white;
+        f"""
+        QFrame {{
+            background-color: {COLORS['bg_white']};
             border-radius: 10px;
-        }
+        }}
     """
     )
 
@@ -255,10 +257,10 @@ def create_info_card(title: str) -> tuple[QFrame, QVBoxLayout]:
 
     header = QLabel(title)
     header.setStyleSheet(
-        """
+        f"""
         font-size: 14px;
         font-weight: bold;
-        color: #5a5a5a;
+        color: {COLORS['text_dark']};
         background-color: transparent;
         padding: 10px 12px 6px 12px;
         letter-spacing: 0.5px;
@@ -295,21 +297,21 @@ def create_field_row(label_text: str) -> QWidget:
 
     label = QLabel(label_text.upper())
     label.setStyleSheet(
-        """
+        f"""
         font-size: 13px;
         font-weight: 700;
-        color: #7f8c8d;
+        color: {COLORS['text_muted']};
         letter-spacing: 0.8px;
     """
     )
 
     value_label = QLabel("-")
     value_label.setStyleSheet(
-        """
+        f"""
         font-size: 15px;
-        color: #2c3e50;
+        color: {COLORS['text_dark']};
         font-weight: 500;
-        border-bottom: 1px solid #e0e0e0;
+        border-bottom: 1px solid {COLORS['border_light']};
         padding-bottom: 4px;
     """
     )

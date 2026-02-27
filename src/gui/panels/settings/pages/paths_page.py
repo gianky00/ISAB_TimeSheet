@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.gui.panels.settings.shared import create_group_box, style_button, style_input
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -94,7 +95,7 @@ class PathsPage(QWidget):
         row.addWidget(edit)
 
         btn = QPushButton("Sfoglia")
-        btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#000000"))
+        btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), COLORS["text_dark"]))
         btn.setMinimumHeight(40)
         btn.setMinimumWidth(120)
         style_button(btn)
@@ -115,30 +116,30 @@ class PathsPage(QWidget):
         p = Path(path)
         if p.exists():
             widget.setStyleSheet(
-                """
-                QLineEdit {
-                    border: 2px solid #28a745;
+                f"""
+                QLineEdit {{
+                    border: 2px solid {COLORS['success_green']};
                     border-radius: 4px;
                     padding: 10px;
                     font-size: 15px;
-                    background-color: #e8f5e9;
-                    color: #155724;
-                }
-                QLineEdit:focus { border-color: #28a745; }
+                    background-color: {COLORS['bg_success_pastel']};
+                    color: {COLORS['success_material']};
+                }}
+                QLineEdit:focus {{ border-color: {COLORS['success_green']}; }}
             """
             )
         else:
             widget.setStyleSheet(
-                """
-                QLineEdit {
-                    border: 2px solid #dc3545;
+                f"""
+                QLineEdit {{
+                    border: 2px solid {COLORS['error_red']};
                     border-radius: 4px;
                     padding: 10px;
                     font-size: 15px;
-                    background-color: #f8d7da;
-                    color: #721c24;
-                }
-                QLineEdit:focus { border-color: #dc3545; }
+                    background-color: {COLORS['bg_error_pastel']};
+                    color: {COLORS['error_material']};
+                }}
+                QLineEdit:focus {{ border-color: {COLORS['error_red']}; }}
             """
             )
 

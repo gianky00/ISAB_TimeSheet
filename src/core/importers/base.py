@@ -43,10 +43,11 @@ class BaseImporter:
         if msoffcrypto:
             with suppress(Exception):
                 from src.core import config_manager
+                from src.core.constants import Business
 
                 config = config_manager.load_config()
-                # Recupera password da config, default "coemi"
-                pwd = config.get("excel_decryption_password", "coemi")
+                # Recupera password da config, default centralizzato
+                pwd = config.get("excel_decryption_password", Business.DEFAULT_EXCEL_PASSWORD)
 
                 with Path(file_path).open("rb") as f:
                     office_file = msoffcrypto.OfficeFile(f)

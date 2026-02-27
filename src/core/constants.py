@@ -5,12 +5,42 @@ Centralized configuration for the application.
 
 from enum import Enum
 
+from src.core import version
+
 
 class URLs:
     """Application URLs."""
 
     ISAB_PORTAL = "https://portalefornitori.isab.com/Ui/"
-    UPDATE_URL = "https://projectjob-bot.netlify.app/"
+    SAFEWORK_URL = "https://safework.isab.com/"
+    UPDATE_URL = version.UPDATE_URL
+    OLLAMA_DEFAULT = "http://localhost:11434"
+    NET_TIME_CHECK = "https://www.google.com"
+
+
+class FileNames:
+    """Standard file and database names."""
+
+    # Databases
+    DB_CONTABILITA = "contabilita.db"
+    DB_TIMBRATURE = "timbrature_Isab.db"
+    DB_PDL = "pdl.db"
+    DB_STORICO_ODA = "storico_oda.db"
+    DB_DIPENDENTI = "anagrafica_dipendenti.db"
+    DB_AUDIT_LOG = "audit_log.db"
+
+    # Configuration & State
+    CONFIG = "config.json"
+    SYNC_STATE = "sync_state.json"
+    REPORT_HISTORY = "report_history.json"
+    NOTIFICATIONS = "notifications.json"
+    STATISTICS = "statistics.json"
+    LICENSE_MANIFEST = "manifest.json"
+
+    # Logs
+    LOG_JSON = "app.json"
+    LOG_HUMAN = "app.log"
+    LOG_ERRORS = "errors.json"
 
 
 class Timeouts:
@@ -19,9 +49,33 @@ class Timeouts:
     DEFAULT = 30
     SHORT = 5
     LONG = 60
+    EXTREME = 600
     OVERLAY = 45
     DOWNLOAD = 25
     PAGE_LOAD = 15
+
+
+class Business:
+    """Business logic constants."""
+
+    HOURLY_COST_STD = 28.50
+    DEFAULT_SUPPLIER = "KK10608 - COEMI S.R.L."
+    DEFAULT_SITE = "ISAB"
+    DEFAULT_EXCEL_PASSWORD = "coemi"  # noqa: S105
+
+
+class Emails:
+    """Default email recipients and configurations."""
+
+    # Report Accessi Dipendenti
+    ACCESSI_TO = "luca.riccio@coemi.it"
+    ACCESSI_CC = "isabsud@coemi.it"
+
+    # Programmazione PDL
+    PROG_CC = "francesco.millo@coemi.it; ciro.scaravelli@coemi.it"
+
+    # Supporto tecnico
+    SUPPORT = "gianky.allegretti@gmail.com"
 
 
 class BotStatus(Enum):

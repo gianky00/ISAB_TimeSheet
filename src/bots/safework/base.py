@@ -9,6 +9,7 @@ from src.bots.base.base_bot import BaseBot
 from src.bots.safework.pages.login_page import SafeWorkLoginPage
 from src.bots.safework.pages.ricerca_pdl_page import RicercaPDLPage
 from src.bots.safework.pages.visualizza_attivita_page import VisualizzaAttivitaPage
+from src.core.constants import URLs
 
 
 class SafeworkBaseBot(BaseBot):
@@ -17,7 +18,7 @@ class SafeworkBaseBot(BaseBot):
     Isola le logiche SafeWork da quelle del Portale Fornitori.
     """
 
-    SAFEWORK_URL = "https://safework.isab.com/"
+    SAFEWORK_URL = URLs.SAFEWORK_URL
     ISAB_URL = SAFEWORK_URL
 
     def __init__(

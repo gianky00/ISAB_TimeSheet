@@ -5,6 +5,7 @@ Configurazione sistema di logging.
 from pathlib import Path
 
 from src.core import config_manager
+from src.core.constants import FileNames
 
 
 class LoggingConfig:
@@ -21,9 +22,9 @@ class LoggingConfig:
         self.bots_dir = self.base_dir / "bots"
 
         # File paths
-        self.json_log_file = self.application_dir / "app.json"
-        self.human_log_file = self.application_dir / "app.log"
-        self.errors_log_file = self.errors_dir / "errors.json"
+        self.json_log_file = self.application_dir / FileNames.LOG_JSON
+        self.human_log_file = self.application_dir / FileNames.LOG_HUMAN
+        self.errors_log_file = self.errors_dir / FileNames.LOG_ERRORS
 
         # Rotation settings
         self.rotation_size = "10 MB"  # Rotazione quando file raggiunge 10MB

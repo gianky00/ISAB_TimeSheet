@@ -31,6 +31,8 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.core.database.pdl_queries import PDLQueries
 from src.gui.panels.base import BotWorker
+from src.gui.styles import COLORS
+from src.gui.styles.palette_helpers import hex_to_rgba
 from src.gui.widgets import MultiSelectFilter, TimelineWidget
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
@@ -101,7 +103,8 @@ class ProgrammingStatusWidget(QWidget):
         # 0. Evidenziazione Giorno Corrente (Background TOTALE della cella)
         if self.is_today:
             # Opacità marcata (~16%) per un effetto colonna pieno e professionale
-            painter.fillRect(self.rect(), QColor(13, 110, 253, 40))
+            c = QColor(COLORS["primary_dark"])
+            painter.fillRect(self.rect(), QColor(c.red(), c.green(), c.blue(), 40))
 
         # Configurazione Barra di Progresso
         bar_w = 80.0  # Larghezza fissa centrata
@@ -146,12 +149,12 @@ class ProgrammingStatusWidget(QWidget):
 
         # 1. Tracciato di sfondo (Grigio visibile)
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor("#e9ecef"))
+        painter.setBrush(QColor(COLORS["bg_hover"]))
         painter.drawPath(path)
 
         # 2. Colori
-        green_color = QColor("#198754")
-        orange_color = QColor("#f39c12")
+        green_color = QColor(COLORS["success_dark"])
+        orange_color = QColor(COLORS["warning_orange"])
 
         # 3. Disegno contenuto
         if self.tcl and self.tgo:
@@ -221,8 +224,8 @@ class ProgrammazioneTab(QWidget):
         # Info Settimana
         start_date, end_date = self._get_current_week_range()
         self.week_label = QLabel(
-            f"<span style='color: #6c757d;'>Monitoraggio Settimana:</span> "
-            f"<b style='color: #212529;'>{start_date} - {end_date}</b>"
+            f"<span style='color: {COLORS['text_muted']};'>Monitoraggio Settimana:</span> "
+            f"<b style='color: {COLORS['text_dark']};'>{start_date} - {end_date}</b>"
         )
         self.week_label.setStyleSheet("font-size: 13px; margin-bottom: 5px;")
         filter_area.addWidget(self.week_label)
@@ -237,7 +240,7 @@ class ProgrammazioneTab(QWidget):
         import_layout.setSpacing(8)
 
         import_label = QLabel("IMPORTA:")
-        import_label.setStyleSheet("color: #198754; font-weight: bold; font-size: 11px;")
+        import_label.setStyleSheet(f"color: {COLORS['success_dark']}; font-weight: bold; font-size: 11px;")
         import_layout.addWidget(import_label)
 
         # Selettore Settimana
@@ -257,9 +260,9 @@ class ProgrammazioneTab(QWidget):
         self.req_filter.changed.connect(self._on_requesters_changed)
         # Stile Hover per Importazione
         self.req_filter.setStyleSheet(
-            """
-            MultiSelectFilter QPushButton { border: 1px solid transparent; background: transparent; color: #198754; }
-            MultiSelectFilter QPushButton:hover { border: 1px solid #198754; background: #f8fff9; border-radius: 6px; }
+            f"""
+            MultiSelectFilter QPushButton {{ border: 1px solid transparent; background: transparent; color: {COLORS["success_dark"]}; }}
+            MultiSelectFilter QPushButton:hover {{ border: 1px solid {COLORS["success_dark"]}; background: {COLORS["bg_success_pastel"]}; border-radius: 6px; }}
         """
         )
         import_layout.addWidget(self.req_filter)
@@ -270,7 +273,7 @@ class ProgrammazioneTab(QWidget):
         line = QFrame()
         line.setFrameShape(QFrame.Shape.VLine)
         line.setFrameShadow(QFrame.Shadow.Sunken)
-        line.setStyleSheet("color: #dee2e6;")
+        line.setStyleSheet(f"color: {COLORS['border_light']};")
         controls_layout.addWidget(line)
 
         # --- SEZIONE 2: VISUALIZZAZIONE (A destra) ---
@@ -280,7 +283,7 @@ class ProgrammazioneTab(QWidget):
         view_layout.setSpacing(8)
 
         view_label = QLabel("FILTRA:")
-        view_label.setStyleSheet("color: #0d6efd; font-weight: bold; font-size: 11px;")
+        view_label.setStyleSheet(f"color: {COLORS['primary_blue']}; font-weight: bold; font-size: 11px;")
         view_layout.addWidget(view_label)
 
         # Filtro Visualizzazione (Locale)
@@ -289,9 +292,9 @@ class ProgrammazioneTab(QWidget):
         self.view_filter.changed.connect(self._apply_view_filter)
         # Stile Hover per Visualizzazione
         self.view_filter.setStyleSheet(
-            """
-            MultiSelectFilter QPushButton { border: 1px solid transparent; background: transparent; color: #0d6efd; }
-            MultiSelectFilter QPushButton:hover { border: 1px solid #0d6efd; background: #f0f7ff; border-radius: 6px; }
+            f"""
+            MultiSelectFilter QPushButton {{ border: 1px solid transparent; background: transparent; color: {COLORS["primary_blue"]}; }}
+            MultiSelectFilter QPushButton:hover {{ border: 1px solid {COLORS["primary_blue"]}; background: {COLORS["bg_info_pastel"]}; border-radius: 6px; }}
         """
         )
         view_layout.addWidget(self.view_filter)
@@ -396,8 +399,8 @@ class ProgrammazioneTab(QWidget):
 
         if hasattr(self, "week_label"):
             self.week_label.setText(
-                f"<span style='color: #6c757d;'>Monitoraggio Settimana:</span> "
-                f"<b style='color: #212529;'>{start_str} - {end_str}</b>"
+                f"<span style='color: {COLORS['text_muted']};'>Monitoraggio Settimana:</span> "
+                f"<b style='color: {COLORS['text_dark']};'>{start_str} - {end_str}</b>"
             )
 
         d = [(start_dt + timedelta(days=i)).strftime("%d/%m") for i in range(7)]
@@ -431,16 +434,16 @@ class ProgrammazioneTab(QWidget):
                 is_today = is_current_week and (i - 5 == current_weekday)
                 if is_today:
                     # Header più scuro per abbinarsi alla colonna marcata
-                    item.setBackground(QColor("#cfe2ff"))
-                    item.setForeground(QColor("#084298"))
+                    item.setBackground(QColor(COLORS["table_info_bg"]))
+                    item.setForeground(QColor(COLORS["primary_dark"]))
                     item.setText(headers[i])
                     font = QFont()
                     font.setBold(True)
                     font.setPointSize(11)
                     item.setFont(font)
                 else:
-                    item.setBackground(QColor("#f8f9fa"))
-                    item.setForeground(QColor("#495057"))
+                    item.setBackground(QColor(COLORS["bg_light"]))
+                    item.setForeground(QColor(COLORS["text_dark"]))
                     item.setText(headers[i])
                     font = QFont()
                     font.setBold(True)
@@ -778,13 +781,13 @@ class ProgrammazioneTab(QWidget):
         for group_name, group_results in sorted(grouped_data.items()):
             group_box = QGroupBox(group_name)
             group_box.setStyleSheet(
-                """
-                QGroupBox {
-                    font-weight: bold; font-size: 14px; color: #1e3a5f;
-                    border: 1px solid #dee2e6; border-radius: 10px;
-                    margin-top: 20px; padding-top: 25px; background-color: #fcfcfc;
-                }
-                QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top center; padding: 0 10px; }
+                f"""
+                QGroupBox {{
+                    font-weight: bold; font-size: 14px; color: {COLORS["glass_dark"]};
+                    border: 1px solid {COLORS["border_light"]}; border-radius: 10px;
+                    margin-top: 20px; padding-top: 25px; background-color: {COLORS["bg_white"]};
+                }}
+                QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top center; padding: 0 10px; }}
             """
             )
             group_layout = QVBoxLayout(group_box)
@@ -805,7 +808,7 @@ class ProgrammazioneTab(QWidget):
 
             # Padding 0 e Margini 0 per permettere al widget di toccare i bordi cella
             # Stile minimale per integrarsi con il GroupBox
-            table.setStyleSheet("QTableWidget { border: none; background-color: white; }")
+            table.setStyleSheet(f"QTableWidget {{ border: none; background-color: {COLORS['bg_white']}; }}")
             v_header = table.verticalHeader()
             if v_header is not None:
                 v_header.setVisible(False)
@@ -907,16 +910,16 @@ class ProgrammazioneTab(QWidget):
                 if not item:
                     continue
                 if is_current_week and (i - 5 == current_weekday):
-                    item.setBackground(QColor("#cfe2ff"))
-                    item.setForeground(QColor("#084298"))
+                    item.setBackground(QColor(COLORS["table_info_bg"]))
+                    item.setForeground(QColor(COLORS["primary_dark"]))
                     item.setText(headers[i])
                     f = QFont()
                     f.setBold(True)
                     f.setPointSize(11)
                     item.setFont(f)
                 else:
-                    item.setBackground(QColor("#f8f9fa"))
-                    item.setForeground(QColor("#495057"))
+                    item.setBackground(QColor(COLORS["bg_light"]))
+                    item.setForeground(QColor(COLORS["text_dark"]))
                     item.setText(headers[i])
                     f = QFont()
                     f.setBold(True)
@@ -945,33 +948,35 @@ class ProgrammazioneTab(QWidget):
                     email_prefix = f"{parts[1][0].lower()}{parts[0].lower()}"
                     recipients.append(f"{email_prefix}@isab.com")
 
+            from src.core.constants import Emails
+
             mail.To = "; ".join(recipients)
-            mail.CC = "francesco.millo@coemi.it; ciro.scaravelli@coemi.it"
+            mail.CC = Emails.PROG_CC
 
             # Check se siamo nella settimana corrente per evidenziazione oggi
             is_current_week = getattr(self, "week_selector", None) and self.week_selector.currentIndex() == 0
             today_idx = datetime.now().weekday() if is_current_week else -1
 
             # Template HTML Moderno e Professionale (Larghezza Dinamica)
-            html = """
-            <div style='font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: #212529; padding: 20px; line-height: 1.5;'>
-                <h2 style='color: #0d6efd; border-bottom: 2px solid #e9ecef; padding-bottom: 15px; font-size: 24px; margin-top: 0;'>
+            html = f"""
+            <div style='font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: {COLORS["text_dark"]}; padding: 20px; line-height: 1.5;'>
+                <h2 style='color: {COLORS["primary_dark"]}; border-bottom: 2px solid {COLORS["border_light"]}; padding-bottom: 15px; font-size: 24px; margin-top: 0;'>
                     Programmazione Settimanale
                 </h2>
                 <p style='font-size: 16px; margin-bottom: 20px;'>
-                    Periodo: <span style='color: #0d6efd; font-weight: bold;'>{start_date} - {end_date}</span>
-                    <span style='color: #6c757d; margin-left: 10px;'>(Settimana {week_num})</span>
+                    Periodo: <span style='color: {COLORS["primary_dark"]}; font-weight: bold;'>{{start_date}} - {{end_date}}</span>
+                    <span style='color: {COLORS["text_muted"]}; margin-left: 10px;'>(Settimana {{week_num}})</span>
                 </p>
 
-                <table style='border-collapse: collapse; min-width: 600px; width: auto; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #dee2e6;'>
+                <table style='border-collapse: collapse; min-width: 600px; width: auto; font-size: 14px; box-shadow: 0 4px 6px {hex_to_rgba(COLORS["text_dark"], 0.05)}; border: 1px solid {COLORS["border_light"]};'>
                     <thead>
-                        <tr style='background-color: #f8f9fa; color: #495057; text-align: center;'>
-                            <th style='padding: 12px 15px; border: 1px solid #dee2e6;'>Richiedente</th>
-                            <th style='padding: 12px 15px; border: 1px solid #dee2e6;'>Area</th>
-                            <th style='padding: 12px 15px; border: 1px solid #dee2e6;'>Unità</th>
-                            <th style='padding: 12px 15px; border: 1px solid #dee2e6; text-align: center;'>PdL</th>
-                            <th style='padding: 12px 15px; border: 1px solid #dee2e6;'>Descrizione</th>
-                            {headers_html}
+                        <tr style='background-color: {COLORS["bg_light"]}; color: {COLORS["text_dark"]}; text-align: center;'>
+                            <th style='padding: 12px 15px; border: 1px solid {COLORS["border_light"]};'>Richiedente</th>
+                            <th style='padding: 12px 15px; border: 1px solid {COLORS["border_light"]};'>Area</th>
+                            <th style='padding: 12px 15px; border: 1px solid {COLORS["border_light"]};'>Unità</th>
+                            <th style='padding: 12px 15px; border: 1px solid {COLORS["border_light"]}; text-align: center;'>PdL</th>
+                            <th style='padding: 12px 15px; border: 1px solid {COLORS["border_light"]};'>Descrizione</th>
+                            {{headers_html}}
                         </tr>
                     </thead>
                     <tbody>
@@ -980,9 +985,9 @@ class ProgrammazioneTab(QWidget):
             day_names = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"]
             headers_html = ""
             for i, day in enumerate(day_names):
-                style = "padding: 12px 10px; border: 1px solid #dee2e6; text-align: center; min-width: 65px;"
+                style = f"padding: 12px 10px; border: 1px solid {COLORS['border_light']}; text-align: center; min-width: 65px;"
                 if i == today_idx:
-                    style += " background-color: #e7f1ff; color: #0d6efd; font-weight: bold; border-bottom: 3px solid #0d6efd;"
+                    style += f" background-color: {COLORS['table_info_bg']}; color: {COLORS['primary_dark']}; font-weight: bold; border-bottom: 3px solid {COLORS['primary_dark']};"
                 headers_html += f"<th style='{style}'>{day}</th>"
 
             html = html.format(
@@ -994,27 +999,27 @@ class ProgrammazioneTab(QWidget):
 
             for res in self.last_results:
                 html += "<tr>"
-                html += f"<td style='padding: 12px 15px; border: 1px solid #dee2e6; white-space: nowrap;'>{res['richiedente']}</td>"
-                html += f"<td style='padding: 12px 15px; border: 1px solid #dee2e6; color: #495057;'>{res.get('area', '')}</td>"
-                html += f"<td style='padding: 12px 15px; border: 1px solid #dee2e6; color: #495057;'>{res.get('unita', '')}</td>"
-                html += f"<td style='padding: 12px; border: 1px solid #dee2e6; text-align: center;'><b>{res['pdl']}</b></td>"
-                html += f"<td style='padding: 12px 15px; border: 1px solid #dee2e6; color: #495057;'>{res.get('descrizione', '')}</td>"
+                html += f"<td style='padding: 12px 15px; border: 1px solid {COLORS['border_light']}; white-space: nowrap;'>{res['richiedente']}</td>"
+                html += f"<td style='padding: 12px 15px; border: 1px solid {COLORS['border_light']}; color: {COLORS['text_muted']};'>{res.get('area', '')}</td>"
+                html += f"<td style='padding: 12px 15px; border: 1px solid {COLORS['border_light']}; color: {COLORS['text_muted']};'>{res.get('unita', '')}</td>"
+                html += f"<td style='padding: 12px; border: 1px solid {COLORS['border_light']}; text-align: center;'><b>{res['pdl']}</b></td>"
+                html += f"<td style='padding: 12px 15px; border: 1px solid {COLORS['border_light']}; color: {COLORS['text_muted']};'>{res.get('descrizione', '')}</td>"
 
                 for i, prog in enumerate(res["programmazione"]):
                     tcl_val = prog["tcl"]
                     tgo_val = prog["tgo"]
 
-                    bg_color = "#ffffff"
+                    bg_color = COLORS["bg_white"]
                     if tcl_val or tgo_val:
-                        bg_color = "#f8fff9"  # Verde chiarissimo attività
+                        bg_color = COLORS["bg_success_pastel"]  # Verde chiarissimo attività
 
                     if i == today_idx:
-                        bg_color = "#f0f7ff"  # Azzurro oggi
+                        bg_color = COLORS["bg_info_pastel"]  # Azzurro oggi
 
-                    tcl_style = f"color: {'#198754' if tcl_val else '#dc3545'}; font-weight: {'bold' if tcl_val else 'normal'};"
-                    tgo_style = f"color: {'#198754' if tcl_val else '#dc3545'}; font-weight: {'bold' if tcl_val else 'normal'};"
+                    tcl_style = f"color: {COLORS['success_dark'] if tcl_val else COLORS['error_red']}; font-weight: {'bold' if tcl_val else 'normal'};"
+                    tgo_style = f"color: {COLORS['success_dark'] if tcl_val else COLORS['error_red']}; font-weight: {'bold' if tcl_val else 'normal'};"
 
-                    html += f"<td align='center' style='padding: 10px; border: 1px solid #dee2e6; background-color: {bg_color}; font-size: 13px;'>"
+                    html += f"<td align='center' style='padding: 10px; border: 1px solid {COLORS['border_light']}; background-color: {bg_color}; font-size: 13px;'>"
                     html += f"<span style='{tcl_style}'>TCL</span><br><span style='{tgo_style}'>TGO</span>"
                     html += "</td>"
                 html += "</tr>"

@@ -6,6 +6,7 @@ Definizioni centralizzate per widget comuni.
 from typing import Final
 
 from src.gui.styles.constants import COLORS
+from src.gui.styles.palette_helpers import hex_to_rgba
 
 # =============================================================================
 # CARD STYLES
@@ -60,7 +61,7 @@ BUTTON_PRIMARY: Final[str] = f"""
         background-color: {COLORS["primary_blue"]};
     }}
     QPushButton:pressed {{
-        background-color: #0a58ca;
+        background-color: {COLORS["primary_dark"]};
     }}
     QPushButton:disabled {{
         background-color: {COLORS["text_light"]};
@@ -77,7 +78,7 @@ BUTTON_SUCCESS: Final[str] = f"""
         font-weight: bold;
     }}
     QPushButton:hover {{
-        background-color: #157347;
+        background-color: {COLORS["success_green"]};
     }}
 """
 
@@ -91,7 +92,7 @@ BUTTON_DANGER: Final[str] = f"""
         font-weight: bold;
     }}
     QPushButton:hover {{
-        background-color: #bb2d3b;
+        background-color: {COLORS["error_material"]};
     }}
 """
 
@@ -108,15 +109,15 @@ BUTTON_SECONDARY: Final[str] = f"""
     }}
 """
 
-BUTTON_TRANSPARENT: Final[str] = """
-    QPushButton {
+BUTTON_TRANSPARENT: Final[str] = f"""
+    QPushButton {{
         background-color: transparent;
         border: none;
-    }
-    QPushButton:hover {
-        background-color: rgba(0, 0, 0, 0.05);
+    }}
+    QPushButton:hover {{
+        background-color: {COLORS['bg_hover']};
         border-radius: 4px;
-    }
+    }}
 """
 
 BUTTON_ICON_ONLY: Final[str] = """
@@ -195,15 +196,15 @@ COMBOBOX_STYLE: Final[str] = f"""
     }}
 """
 
-COMBOBOX_LIGHT_ON_DARK: Final[str] = """
-    QComboBox {
-        background-color: rgba(255,255,255,0.2);
-        color: white;
-        border: 1px solid rgba(255,255,255,0.5);
+COMBOBOX_LIGHT_ON_DARK: Final[str] = f"""
+    QComboBox {{
+        background-color: {hex_to_rgba(COLORS['bg_white'], 0.2)};
+        color: {COLORS['bg_white']};
+        border: 1px solid {hex_to_rgba(COLORS['bg_white'], 0.5)};
         padding: 5px 10px;
         border-radius: 4px;
-    }
-    QComboBox::drop-down { border: none; }
+    }}
+    QComboBox::drop-down {{ border: none; }}
 """
 
 LINEEDIT_STYLE: Final[str] = f"""
@@ -325,12 +326,12 @@ SCROLL_AREA_BORDERED: Final[str] = f"""
     }}
 """
 
-FRAME_HEADER: Final[str] = """
-    QFrame {
-        background-color: #6f42c1;
+FRAME_HEADER: Final[str] = f"""
+    QFrame {{
+        background-color: {COLORS['purple']};
         border-radius: 8px;
         padding: 10px 15px;
-    }
+    }}
 """
 
 
@@ -372,15 +373,15 @@ def status_dot(color: str, size: int = 10) -> str:
     """
 
 
-LIVE_DOT: Final[str] = """
-    QLabel {
-        background-color: #28a745;
+LIVE_DOT: Final[str] = f"""
+    QLabel {{
+        background-color: {COLORS['success_green']};
         border-radius: 5px;
         min-width: 10px;
         max-width: 10px;
         min-height: 10px;
         max-height: 10px;
-    }
+    }}
 """
 
 

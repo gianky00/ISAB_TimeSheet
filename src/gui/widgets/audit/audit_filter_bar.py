@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.gui.widgets.calendar_date_edit import CalendarDateEdit
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -39,7 +40,7 @@ class AuditFilterBar(QFrame):
             parent: Widget genitore.
         """
         super().__init__(parent)
-        self.setStyleSheet("background-color: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6;")
+        self.setStyleSheet(f"background-color: {COLORS['bg_light']}; border-radius: 6px; border: 1px solid {COLORS['border_light']};")
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -81,19 +82,19 @@ class AuditFilterBar(QFrame):
         # Search
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("Cerca nei log...")
-        self.search_edit.setStyleSheet("border: 1px solid #ced4da; border-radius: 4px; padding: 4px;")
+        self.search_edit.setStyleSheet(f"border: 1px solid {COLORS['border_medium']}; border-radius: 4px; padding: 4px;")
         layout.addWidget(self.search_edit)
 
         # Btn Applica
         apply_btn = QPushButton("Filtra")
-        apply_btn.setIcon(get_colored_icon(get_asset_path(Icons.SEARCH), "#ffffff"))
+        apply_btn.setIcon(get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["bg_white"]))
         apply_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #0d6efd; color: white; border: none;
+            f"""
+            QPushButton {{
+                background-color: {COLORS['primary_dark']}; color: {COLORS['bg_white']}; border: none;
                 border-radius: 4px; padding: 6px 12px; font-weight: bold;
-            }
-            QPushButton:hover { background-color: #0b5ed7; }
+            }}
+            QPushButton:hover {{ background-color: {COLORS['primary_blue']}; }}
         """
         )
         apply_btn.clicked.connect(self._emit_filters)

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from src.core.config_manager import CONFIG_DIR
+from src.core.constants import FileNames
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 class AuditDatabase:
     """Gestisce il database SQLite per l'Audit Log."""
 
-    DB_PATH = CONFIG_DIR / "data" / "audit_log.db"
+    DB_PATH = CONFIG_DIR / "data" / FileNames.DB_AUDIT_LOG
 
     def __init__(self) -> None:
         self._init_db()

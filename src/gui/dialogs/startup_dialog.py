@@ -26,6 +26,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
+from src.gui.styles import COLORS
+
 # Import widget specializzati
 from src.gui.widgets.startup.particle_background import ParticleBackground
 from src.gui.widgets.startup.startup_widgets import (
@@ -97,7 +99,8 @@ class StartupDialog(QDialog):
         # Shadow luminosa esterna
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(80)
-        shadow.setColor(QColor(52, 152, 219, 120))
+        c = QColor(COLORS["primary_blue"])
+        shadow.setColor(QColor(c.red(), c.green(), c.blue(), 120))
         shadow.setOffset(0, 0)
         self.container.setGraphicsEffect(shadow)
 
@@ -137,8 +140,8 @@ class StartupDialog(QDialog):
         self.title = QLabel()
         self.title.setTextFormat(Qt.TextFormat.RichText)
         self.title.setText(
-            '<span style="font-size:40px; font-weight:800; color:white; letter-spacing:2px;">'
-            'SYNCRO<span style="color:#3498db;">JOB</span></span>'
+            f'<span style="font-size:40px; font-weight:800; color:{COLORS["bg_white"]}; letter-spacing:2px;">'
+            f'SYNCRO<span style="color:{COLORS["primary_blue"]};">JOB</span></span>'
         )
         title_box.addWidget(self.title)
 
@@ -146,7 +149,7 @@ class StartupDialog(QDialog):
 
         self.version = QLabel(f"v{__version__}")
         self.version.setStyleSheet(
-            "font-size:13px; color:rgba(52,152,219,0.9); font-weight:600; letter-spacing:3px;"
+            f"font-size:13px; color:{COLORS['primary_blue']}; opacity: 0.9; font-weight:600; letter-spacing:3px;"
         )
         title_box.addWidget(self.version)
 
@@ -197,8 +200,9 @@ class StartupDialog(QDialog):
     def _setup_console(self, parent_layout: QVBoxLayout):
         """Configura la console di log con TypewriterLabels."""
         self.log_frame = QFrame()
+        c = QColor(COLORS["primary_blue"])
         self.log_frame.setStyleSheet(
-            "background:rgba(0,0,0,0.35); border-radius:16px; border:1px solid rgba(52,152,219,0.2);"
+            f"background:rgba(0,0,0,0.35); border-radius:16px; border:1px solid rgba({c.red()},{c.green()},{c.blue()},0.2);"
         )
         log_layout = QVBoxLayout(self.log_frame)
         log_layout.setContentsMargins(10, 10, 10, 10)  # Margini ridotti
@@ -206,13 +210,13 @@ class StartupDialog(QDialog):
 
         log_header = QLabel("INIZIALIZZAZIONE SISTEMA")
         log_header.setStyleSheet(
-            "font-size:9px; color:rgba(52,152,219,0.6); letter-spacing:2px; font-weight:600;"
+            f"font-size:9px; color:rgba({c.red()},{c.green()},{c.blue()},0.6); letter-spacing:2px; font-weight:600;"
         )
         log_layout.addWidget(log_header)
 
         sep = QFrame()
         sep.setFixedHeight(1)
-        sep.setStyleSheet("background:rgba(52,152,219,0.15);")
+        sep.setStyleSheet(f"background:rgba({c.red()},{c.green()},{c.blue()},0.15);")
         log_layout.addWidget(sep)
 
         self.log_labels = []
@@ -241,19 +245,21 @@ class StartupDialog(QDialog):
         # Indicatore di stato
         self.indicator = QLabel()
         self.indicator.setFixedSize(8, 8)
-        self.indicator.setStyleSheet("background:#3498db; border-radius:4px;")
+        self.indicator.setStyleSheet(f"background:{COLORS['primary_blue']}; border-radius:4px;")
         footer.addWidget(self.indicator)
         footer.addSpacing(8)
 
         # Label status
         self.status = QLabel("AVVIO IN CORSO...")
         self.status.setStyleSheet(
-            "font-size:11px; color:rgba(255,255,255,0.5); font-weight:600; letter-spacing:2px;"
+            f"font-size:11px; color:{COLORS['bg_white']}; opacity: 0.5; font-weight:600; letter-spacing:2px;"
         )
         footer.addWidget(self.status)
 
         self.dots = QLabel("")
-        self.dots.setStyleSheet("font-size:11px; color:rgba(52,152,219,0.8); font-weight:600;")
+        self.dots.setStyleSheet(
+            f"font-size:11px; color:{COLORS['primary_blue']}; opacity: 0.8; font-weight:600;"
+        )
         footer.addWidget(self.dots)
 
         footer.addStretch()
@@ -309,7 +315,8 @@ class StartupDialog(QDialog):
 
     def _pulse_indicator(self):
         self._pulse_state = not self._pulse_state
-        color = "#3498db" if self._pulse_state else "rgba(52,152,219,0.4)"
+        c = QColor(COLORS["primary_blue"])
+        color = COLORS["primary_blue"] if self._pulse_state else f"rgba({c.red()},{c.green()},{c.blue()},0.4)"
         self.indicator.setStyleSheet(f"background:{color}; border-radius:4px;")
 
     def _on_progress(self, message: str, prog: int):
@@ -317,11 +324,11 @@ class StartupDialog(QDialog):
         self.status.setText(message.upper())
 
         if prog >= 90:
-            self.indicator.setStyleSheet("background:#2ecc71; border-radius:4px;")
+            self.indicator.setStyleSheet(f"background:{COLORS['success_green']}; border-radius:4px;")
         elif prog >= 50:
-            self.indicator.setStyleSheet("background:#3498db; border-radius:4px;")
+            self.indicator.setStyleSheet(f"background:{COLORS['primary_blue']}; border-radius:4px;")
         else:
-            self.indicator.setStyleSheet("background:#f39c12; border-radius:4px;")
+            self.indicator.setStyleSheet(f"background:{COLORS['warning_orange']}; border-radius:4px;")
 
         entry = f"> {message}"
         self.current_logs.append(entry)

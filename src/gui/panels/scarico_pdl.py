@@ -27,6 +27,7 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel, BotWorker
+from src.gui.styles import COLORS
 from src.gui.widgets import EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
@@ -77,7 +78,7 @@ class StatusListWidget(QListWidget):
             icon_label = QLabel()
             icon_label.setFixedSize(24, 24)
             icon_label.setStyleSheet(
-                "background-color: #E0E0E0; border-radius: 12px; border: 1px solid #BDBDBD;"
+                f"background-color: {COLORS['border_light']}; border-radius: 12px; border: 1px solid {COLORS['border_medium']};"
             )
 
             # Usiamo un widget container per centrare
@@ -112,8 +113,8 @@ class StatusListWidget(QListWidget):
         if success:
             # Spunta Verde
             icon_path = get_asset_path(Icons.CHECK)
-            color = "#2E7D32"  # Green 800
-            bg = "#C8E6C9"  # Green 100
+            color = COLORS["success_dark"]
+            bg = COLORS["table_success_bg"]
             pixmap = get_colored_icon(icon_path, color).pixmap(16, 16)
             icon_label.setPixmap(pixmap)
             icon_label.setStyleSheet(
@@ -123,8 +124,8 @@ class StatusListWidget(QListWidget):
         else:
             # Croce Rossa
             icon_path = get_asset_path(Icons.X_CIRCLE)
-            color = "#C62828"  # Red 800
-            bg = "#FFCDD2"  # Red 100
+            color = COLORS["error_red"]
+            bg = COLORS["table_error_bg"]
             pixmap = get_colored_icon(icon_path, color).pixmap(16, 16)
             icon_label.setPixmap(pixmap)
             icon_label.setStyleSheet(
@@ -167,7 +168,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         try:
             self._load_saved_data()
         except Exception as e:
-            print(f"❌ Error loading data for ScaricoPDLPanel: {e}")
+            print(f"[ERROR] Error loading data for ScaricoPDLPanel: {e}")
             traceback.print_exc()
 
     def _setup_content(self):
@@ -175,19 +176,19 @@ class ScaricoPDLPanel(BaseBotPanel):
         # --- 1. CARD PARAMETRI (Floating Card) ---
         self.params_container = QFrame()
         self.params_container.setObjectName("paramsContainer")
-        self.params_container.setStyleSheet("""
-            QFrame#paramsContainer {
-                background-color: #ffffff;
-                border: 1px solid #e0e0e0;
-                border-bottom: 3px solid #212121;
+        self.params_container.setStyleSheet(f"""
+            QFrame#paramsContainer {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-bottom: 3px solid {COLORS["text_dark"]};
                 border-radius: 12px;
-            }
-            QLabel {
-                color: #424242;
+            }}
+            QLabel {{
+                color: {COLORS["text_dark"]};
                 font-weight: bold;
                 font-size: 13px;
                 background: transparent;
-            }
+            }}
         """)
 
         # Applica Ombra (Shadow Effect)
@@ -223,14 +224,14 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.printer_combo.setMinimumWidth(180)
         self.printer_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.printer_combo.setStyleSheet(
-            """
-            QComboBox {
-                border: 1px solid #cfd8dc;
+            f"""
+            QComboBox {{
+                border: 1px solid {COLORS["border_medium"]};
                 border-radius: 6px;
                 padding: 5px 10px;
-                background-color: #f8f9fa;
-            }
-            QComboBox:focus { border: 2px solid #212121; background-color: #ffffff; }
+                background-color: {COLORS["bg_light"]};
+            }}
+            QComboBox:focus {{ border: 2px solid {COLORS["text_dark"]}; background-color: {COLORS["bg_white"]}; }}
         """
         )
         # Popola stampanti
@@ -266,18 +267,18 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.dest_path_edit.setMinimumWidth(200)
         self.dest_path_edit.setMinimumHeight(38)
         self.dest_path_edit.setStyleSheet(
-            "border: 1px solid #cfd8dc; border-radius: 6px; padding: 5px; background-color: #f8f9fa;"
+            f"border: 1px solid {COLORS['border_medium']}; border-radius: 6px; padding: 5px; background-color: {COLORS['bg_light']};"
         )
         hbox_dest.addWidget(self.dest_path_edit)
 
         browse_btn = QPushButton()
-        browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#212121"))
+        browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
         browse_btn.setIconSize(QSize(20, 20))
         browse_btn.setFixedSize(38, 38)
         browse_btn.clicked.connect(self._browse_dest_path)
-        browse_btn.setStyleSheet("""
-            QPushButton { background-color: #ffffff; border: 1px solid #cfd8dc; border-radius: 6px; }
-            QPushButton:hover { background-color: #E0F7FA; border-color: #212121; }
+        browse_btn.setStyleSheet(f"""
+            QPushButton {{ background-color: {COLORS["bg_white"]}; border: 1px solid {COLORS["border_medium"]}; border-radius: 6px; }}
+            QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; border-color: {COLORS["text_dark"]}; }}
         """)
         hbox_dest.addWidget(browse_btn)
         vbox_dest.addLayout(hbox_dest)
@@ -327,7 +328,9 @@ class ScaricoPDLPanel(BaseBotPanel):
         status_container.setContentsMargins(0, 0, 0, 0)
 
         status_header = QLabel("Progresso")
-        status_header.setStyleSheet("font-weight: bold; font-size: 12px; color: #424242; padding: 4px 0px;")
+        status_header.setStyleSheet(
+            f"font-weight: bold; font-size: 12px; color: {COLORS['text_muted']}; padding: 4px 0px;"
+        )
         status_header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         status_container.addWidget(status_header)
 
@@ -470,9 +473,11 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _validate_pdl_start(self, username, password) -> bool:
         """Esegue validazioni pre-avvio specifiche per PDL."""
+        from src.gui.styles import STATUS_COLORS
+
         if not username or not password:
             ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
-            self._update_status("#C62828", "Credenziali SafeWork mancanti")
+            self._update_status(STATUS_COLORS["error"], "Credenziali SafeWork mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return False
@@ -577,9 +582,11 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _handle_missing_pdls(self, missing_list: list[str]):
         """Segnala i PDL non trovati all'utente."""
+        from src.gui.styles import STATUS_COLORS
+
         if missing_list:
             missing_str = ", ".join(missing_list)
-            self._update_status("#2E7D32", f"Completato (Inesistenti: {missing_str})")
+            self._update_status(STATUS_COLORS["completed"], f"Completato (Inesistenti: {missing_str})")
 
     def _on_row_status(self, index: int, success: bool):
         """Aggiorna lo stato visivo di una specifica riga PDL."""

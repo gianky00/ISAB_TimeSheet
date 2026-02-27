@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -21,7 +22,7 @@ class LyraHeader(QFrame):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setStyleSheet("background-color: #6f42c1; border-radius: 8px; padding: 10px 15px;")
+        self.setStyleSheet(f"background-color: {COLORS['purple']}; border-radius: 8px; padding: 10px 15px;")
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -50,7 +51,7 @@ class LyraHeader(QFrame):
         layout.addWidget(self.model_combo)
 
         self.refresh_btn = QPushButton()
-        self.refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
+        self.refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), COLORS["bg_white"]))
         self.refresh_btn.setFixedSize(32, 32)
         self.refresh_btn.setIconSize(QSize(18, 18))
         self.refresh_btn.setStyleSheet("QPushButton { background-color: transparent; border: none; }")

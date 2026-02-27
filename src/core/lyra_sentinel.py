@@ -10,6 +10,7 @@ from pathlib import Path  # noqa: F401
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from src.core.config_manager import CONFIG_DIR
+from src.core.constants import Business, FileNames
 from src.core.contabilita_manager import ContabilitaManager
 
 
@@ -24,7 +25,7 @@ class LyraSentinel(QThread):
 
         # 1. Check Timbrature (Uscite mancanti recenti)
         with suppress(Exception):
-            db_path = CONFIG_DIR / "data" / "timbrature_Isab.db"
+            db_path = CONFIG_DIR / "data" / FileNames.DB_TIMBRATURE
             if db_path.exists():
                 conn = sqlite3.connect(db_path)
                 cursor = conn.cursor()
@@ -43,7 +44,7 @@ class LyraSentinel(QThread):
             if years:
                 latest = max(years)
                 stats = ContabilitaManager.get_year_stats(latest)
-                margin = stats.get("total_prev", 0) - (stats.get("total_ore", 0) * 30.0)
+                margin = stats.get("total_prev", 0) - (stats.get("total_ore", 0) * Business.HOURLY_COST_STD)
                 if margin < 0:
                     anomaly_count += 1
 

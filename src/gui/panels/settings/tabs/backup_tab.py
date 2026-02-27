@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -41,12 +42,12 @@ class SettingCard(QFrame):
         self.subtitle_text = subtitle
 
         self.setObjectName("settingCard")
-        self.setStyleSheet("""
-            QFrame#settingCard {
-                background-color: white;
-                border: 1px solid #ECEFF1;
+        self.setStyleSheet(f"""
+            QFrame#settingCard {{
+                background-color: {COLORS['bg_white']};
+                border: 1px solid {COLORS['border_light']};
                 border-radius: 15px;
-            }
+            }}
         """)
 
         # Shadow Effect
@@ -66,15 +67,15 @@ class SettingCard(QFrame):
         header_layout.setSpacing(15)
 
         icon_lbl = QLabel()
-        icon_lbl.setPixmap(get_colored_icon(get_asset_path(icon_key), "#009688").pixmap(24, 24))
+        icon_lbl.setPixmap(get_colored_icon(get_asset_path(icon_key), COLORS["teal_accent"]).pixmap(24, 24))
         header_layout.addWidget(icon_lbl)
 
         text_container = QVBoxLayout()
         text_container.setSpacing(2)
         title_lbl = QLabel(title)
-        title_lbl.setStyleSheet("font-size: 16px; font-weight: 800; color: #263238;")
+        title_lbl.setStyleSheet(f"font-size: 16px; font-weight: 800; color: {COLORS['text_dark']};")
         subtitle_lbl = QLabel(subtitle)
-        subtitle_lbl.setStyleSheet("font-size: 12px; font-weight: 500; color: #90A4AE;")
+        subtitle_lbl.setStyleSheet(f"font-size: 12px; font-weight: 500; color: {COLORS['text_muted']};")
         text_container.addWidget(title_lbl)
         text_container.addWidget(subtitle_lbl)
         header_layout.addLayout(text_container)
@@ -85,7 +86,7 @@ class SettingCard(QFrame):
         # Separatore sottile
         line = QFrame()
         line.setFixedHeight(1)
-        line.setStyleSheet("background-color: #F5F7F9;")
+        line.setStyleSheet(f"background-color: {COLORS['bg_alt']};")
         layout.addWidget(line)
 
         # Contenuto
@@ -119,12 +120,12 @@ class BackupTab(QWidget):
         # --- TOP STATUS BAR (Search) ---
         self.header_bar = QFrame()
         self.header_bar.setFixedHeight(50)
-        self.header_bar.setStyleSheet("background: #F8F9FA; border-bottom: 1px solid #ECEFF1;")
+        self.header_bar.setStyleSheet(f"background: {COLORS['bg_light']}; border-bottom: 1px solid {COLORS['border_light']};")
         header_layout = QHBoxLayout(self.header_bar)
         header_layout.setContentsMargins(20, 0, 20, 0)
 
         search_icon = QLabel()
-        search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), "#90A4AE").pixmap(16, 16))
+        search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_light"]).pixmap(16, 16))
         header_layout.addWidget(search_icon)
 
         self.search_bar = QLineEdit()
@@ -155,10 +156,14 @@ class BackupTab(QWidget):
         self.btn_backup = ModernButton("Esegui Backup Database", icon=get_asset_path(Icons.CLOUD_UPLOAD))
         self.btn_restore = ModernButton("Ripristina Backup", variant=ModernButton.Variant.GHOST, icon=get_asset_path(Icons.UNDO))
         self.lbl_last_backup = QLabel("Ultimo Backup: Non eseguito")
-        self.lbl_last_backup.setStyleSheet("color: #78909C; font-style: italic;")
+        self.lbl_last_backup.setStyleSheet(f"color: {COLORS['text_muted']}; font-style: italic;")
 
-        backup_layout.addWidget(self.btn_backup)
-        backup_layout.addWidget(self.btn_restore)
+        btn_backup_layout = QHBoxLayout()
+        btn_backup_layout.addWidget(self.btn_backup)
+        btn_backup_layout.addWidget(self.btn_restore)
+        btn_backup_layout.addStretch()
+
+        backup_layout.addLayout(btn_backup_layout)
         backup_layout.addWidget(self.lbl_last_backup)
 
         card_backup = SettingCard(
@@ -177,8 +182,12 @@ class BackupTab(QWidget):
         self.btn_open_logs = ModernButton("Apri Cartella Log", icon=get_asset_path(Icons.FOLDER_OPEN))
         self.btn_clear_logs = ModernButton("Pulisci Log Vecchi", variant=ModernButton.Variant.DANGER, icon=get_asset_path(Icons.TRASH))
 
-        logs_layout.addWidget(self.btn_open_logs)
-        logs_layout.addWidget(self.btn_clear_logs)
+        btn_logs_layout = QHBoxLayout()
+        btn_logs_layout.addWidget(self.btn_open_logs)
+        btn_logs_layout.addWidget(self.btn_clear_logs)
+        btn_logs_layout.addStretch()
+
+        logs_layout.addLayout(btn_logs_layout)
 
         card_logs = SettingCard(
             "Manutenzione Log",

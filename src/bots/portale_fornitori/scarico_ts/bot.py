@@ -7,6 +7,7 @@ Sincronizzato con la logica stabile del branch main e arricchito con STEPS per C
 import shutil
 import time
 from contextlib import suppress
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -61,7 +62,7 @@ class ScaricaTSBot(BaseBot):
 
     def __init__(
         self,
-        data_da: str = "01.01.2025",
+        data_da: str | None = None,
         fornitore: str = "",
         elabora_ts: bool = False,
         **kwargs,
@@ -70,7 +71,7 @@ class ScaricaTSBot(BaseBot):
         Inizializza il bot.
         """
         super().__init__(**kwargs)
-        self.data_da = data_da
+        self.data_da = data_da or f"01.01.{datetime.now(UTC).year}"
         self.fornitore = fornitore
         self.elabora_ts = elabora_ts
 

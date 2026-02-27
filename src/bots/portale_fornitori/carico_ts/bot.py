@@ -7,12 +7,13 @@ from typing import Any, ClassVar
 
 from src.bots.base.base_bot import BaseBot, StepStatus
 from src.bots.portale_fornitori.carico_ts.pages.carico_ts_page import CaricoTSPage
+from src.core.constants import Business
 
 
 class CaricoTSBot(BaseBot):
     """Bot per l'estrazione e il caricamento dei dati Timesheet sul Portale Fornitori."""
 
-    FORNITORE = "KK10608 - COEMI S.R.L."
+    FORNITORE = Business.DEFAULT_SUPPLIER
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login Portale ISAB"),

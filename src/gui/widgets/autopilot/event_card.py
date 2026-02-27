@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -31,19 +32,19 @@ class AutopilotEventCard(QFrame):
         self.setStyleSheet(
             f"""
             AutopilotEventCard {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #ffffff);
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_light"]}, stop:1 {COLORS["bg_white"]});
                 border-radius: 12px;
                 border-left: 4px solid {color};
-                border-top: 1px solid #e9ecef;
-                border-right: 1px solid #e9ecef;
-                border-bottom: 1px solid #e9ecef;
+                border-top: 1px solid {COLORS["border_light"]};
+                border-right: 1px solid {COLORS["border_light"]};
+                border-bottom: 1px solid {COLORS["border_light"]};
             }}
             AutopilotEventCard:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #e9ecef, stop:1 #f8f9fa);
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_hover"]}, stop:1 {COLORS["bg_light"]});
                 border-left: 4px solid {color};
-                border-top: 1px solid #ced4da;
-                border-right: 1px solid #ced4da;
-                border-bottom: 1px solid #ced4da;
+                border-top: 1px solid {COLORS["border_medium"]};
+                border-right: 1px solid {COLORS["border_medium"]};
+                border-bottom: 1px solid {COLORS["border_medium"]};
             }}
         """
         )
@@ -56,7 +57,9 @@ class AutopilotEventCard(QFrame):
         # Icon
         self.icon_label = QLabel()
         self.icon_label.setFixedSize(32, 32)
-        self.icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(20, 20))
+        self.icon_label.setPixmap(
+            get_colored_icon(get_asset_path(icon_path), COLORS["bg_white"]).pixmap(20, 20)
+        )
         self.icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.icon_label.setStyleSheet(
             f"""
@@ -77,14 +80,14 @@ class AutopilotEventCard(QFrame):
         # Bot name
         name_lbl = QLabel(bot_name)
         name_lbl.setStyleSheet(
-            """
-            QLabel {
+            f"""
+            QLabel {{
                 font-weight: 600;
                 font-size: 14px;
-                color: #212529;
+                color: {COLORS["text_dark"]};
                 border: none;
                 background: transparent;
-            }
+            }}
         """
         )
         text_layout.addWidget(name_lbl)
@@ -92,14 +95,14 @@ class AutopilotEventCard(QFrame):
         # Countdown label
         self.countdown_lbl = QLabel()
         self.countdown_lbl.setStyleSheet(
-            """
-            QLabel {
+            f"""
+            QLabel {{
                 font-size: 12px;
-                color: #868e96;
+                color: {COLORS["text_muted"]};
                 border: none;
                 background: transparent;
                 font-weight: 500;
-            }
+            }}
         """
         )
         text_layout.addWidget(self.countdown_lbl)

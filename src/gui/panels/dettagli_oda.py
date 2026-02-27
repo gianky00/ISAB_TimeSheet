@@ -6,6 +6,7 @@ il download automatico dei documenti dal portale fornitori.
 """
 
 import traceback
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,7 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel, BotWorker
+from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import BotParametersWidget, EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
@@ -56,7 +58,7 @@ class DettagliOdAPanel(BaseBotPanel):
         try:
             self._load_saved_data()
         except Exception as e:
-            print(f"❌ Error loading data for DettagliOdAPanel: {e}")
+            print(f"[ERROR] Error loading data for DettagliOdAPanel: {e}")
             traceback.print_exc()
 
     def _setup_content(self) -> None:
@@ -119,8 +121,9 @@ class DettagliOdAPanel(BaseBotPanel):
         config = config_manager.load_config()
         self.refresh_fornitori()
         self.params_widget.set_fornitore(config.get("last_oda_fornitore", ""))
+        current_year = datetime.now().year
         self.params_widget.set_dates(
-            config.get("last_oda_date_da", "01.01.2025"),
+            config.get("last_oda_date_da", f"01.01.{current_year}"),
             config.get("last_oda_date_a", QDate.currentDate().toString("dd.MM.yyyy")),
         )
         self.params_widget.set_dest_path(config.get("path_dettagli_oda", ""))
@@ -175,7 +178,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
         if not all([username, password, fornitore]):
             ToastManager.instance().show("Verifica i parametri.", "warning")
-            self._update_status("#C62828", "Parametri incompleti")
+            self._update_status(STATUS_COLORS["error"], "Parametri incompleti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return

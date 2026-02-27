@@ -32,6 +32,8 @@ from src.core.config_manager import CONFIG_DIR
 from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.version import __app_name__, __version__
+from src.gui.styles import COLORS
+from src.gui.styles.palette_helpers import hex_to_rgba
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
 from src.utils.helpers import get_asset_path
 
@@ -55,10 +57,10 @@ class ScadenzeAnalysisDialog(QDialog):
         self.setWindowTitle(f"Analisi Scadenze Certificati - {__app_name__}")
         self.setMinimumSize(900, 650)
         self.setStyleSheet(
-            """
-            QDialog {
-                background-color: #f8fafc;
-            }
+            f"""
+            QDialog {{
+                background-color: {COLORS['bg_light']};
+            }}
             """
         )
 
@@ -69,12 +71,12 @@ class ScadenzeAnalysisDialog(QDialog):
         # === HEADER ===
         header = self.header = QFrame()
         header.setStyleSheet(
-            """
-            QFrame {
+            f"""
+            QFrame {{
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #1e3a5f, stop:1 #2d5a87);
+                    stop:0 {COLORS['glass_dark']}, stop:1 {COLORS['glass_deep']});
                 border: none;
-            }
+            }}
             """
         )
         header_layout = QVBoxLayout(header)
@@ -83,18 +85,18 @@ class ScadenzeAnalysisDialog(QDialog):
         # Titolo e versione
         title_row = QHBoxLayout()
         title_label = QLabel("Analisi Scadenze Certificati")
-        title_label.setStyleSheet("color: white; font-size: 24px; font-weight: bold;")
+        title_label.setStyleSheet(f"color: {COLORS['bg_white']}; font-size: 24px; font-weight: bold;")
         title_row.addWidget(title_label)
         title_row.addStretch()
 
         version_label = QLabel(f"{__app_name__} v{__version__}")
-        version_label.setStyleSheet("color: rgba(255,255,255,0.7); font-size: 13px;")
+        version_label.setStyleSheet(f"color: {hex_to_rgba(COLORS['bg_white'], 0.7)}; font-size: 13px;")
         title_row.addWidget(version_label)
         header_layout.addLayout(title_row)
 
         # Data analisi
         date_label = QLabel(f"Generato il {datetime.now().strftime('%d/%m/%Y alle %H:%M')}")
-        date_label.setStyleSheet("color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 5px;")
+        date_label.setStyleSheet(f"color: {hex_to_rgba(COLORS['bg_white'], 0.6)}; font-size: 12px; margin-top: 5px;")
         header_layout.addWidget(date_label)
 
         layout.addWidget(header)
@@ -102,11 +104,11 @@ class ScadenzeAnalysisDialog(QDialog):
         # === STATISTICHE ===
         stats_frame = self.stats_frame = QFrame()
         stats_frame.setStyleSheet(
-            """
-            QFrame {
-                background-color: white;
-                border-bottom: 1px solid #e2e8f0;
-            }
+            f"""
+            QFrame {{
+                background-color: {COLORS['bg_white']};
+                border-bottom: 1px solid {COLORS['border_light']};
+            }}
             """
         )
         stats_layout = QHBoxLayout(stats_frame)
@@ -121,12 +123,12 @@ class ScadenzeAnalysisDialog(QDialog):
         non_disp = [c for c in self.certificates_data if c["days"] is None]
 
         stats_layout.addWidget(
-            self._create_stat_card("Totale Monitorati", len(self.certificates_data), "#3b82f6")
+            self._create_stat_card("Totale Monitorati", len(self.certificates_data), COLORS["info_blue"])
         )
-        stats_layout.addWidget(self._create_stat_card("Scaduti", len(scaduti), "#dc2626"))
-        stats_layout.addWidget(self._create_stat_card("Urgenti (0-15gg)", len(urgenti), "#ea580c"))
-        stats_layout.addWidget(self._create_stat_card("Attenzione (16-30gg)", len(attenzione), "#ca8a04"))
-        stats_layout.addWidget(self._create_stat_card("Attivi (>30gg)", len(attivi), "#16a34a"))
+        stats_layout.addWidget(self._create_stat_card("Scaduti", len(scaduti), COLORS["error_red"]))
+        stats_layout.addWidget(self._create_stat_card("Urgenti (0-15gg)", len(urgenti), COLORS["warning_orange"]))
+        stats_layout.addWidget(self._create_stat_card("Attenzione (16-30gg)", len(attenzione), COLORS["warning_yellow"]))
+        stats_layout.addWidget(self._create_stat_card("Attivi (>30gg)", len(attivi), COLORS["success_dark"]))
         stats_layout.addStretch()
 
         layout.addWidget(stats_frame)
@@ -135,11 +137,11 @@ class ScadenzeAnalysisDialog(QDialog):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setStyleSheet(
-            """
-            QScrollArea {
+            f"""
+            QScrollArea {{
                 border: none;
-                background-color: #f8fafc;
-            }
+                background-color: {COLORS['bg_light']};
+            }}
             """
         )
 
@@ -150,28 +152,28 @@ class ScadenzeAnalysisDialog(QDialog):
 
         # Sezioni per stato
         if scaduti:
-            content_layout.addWidget(self._create_section("SCADUTI", scaduti, "#dc2626", "#fef2f2"))
+            content_layout.addWidget(self._create_section("SCADUTI", scaduti, COLORS["error_red"], COLORS["bg_error_pastel"]))
         if urgenti:
             content_layout.addWidget(
-                self._create_section("IN SCADENZA (0-15 giorni)", urgenti, "#ea580c", "#fff7ed")
+                self._create_section("IN SCADENZA (0-15 giorni)", urgenti, COLORS["warning_orange"], COLORS["bg_warning_pastel"])
             )
         if attenzione:
             content_layout.addWidget(
-                self._create_section("ATTENZIONE (16-30 giorni)", attenzione, "#ca8a04", "#fefce8")
+                self._create_section("ATTENZIONE (16-30 giorni)", attenzione, COLORS["warning_yellow"], COLORS["bg_attention_pastel"])
             )
         if attivi:
             content_layout.addWidget(
-                self._create_section("ATTIVI (oltre 30 giorni)", attivi, "#16a34a", "#f0fdf4")
+                self._create_section("ATTIVI (oltre 30 giorni)", attivi, COLORS["success_dark"], COLORS["bg_success_pastel"])
             )
         if non_disp:
             content_layout.addWidget(
-                self._create_section("DATA NON DISPONIBILE", non_disp, "#6b7280", "#f9fafb")
+                self._create_section("DATA NON DISPONIBILE", non_disp, COLORS["text_muted"], COLORS["bg_alt"])
             )
 
         if not self.certificates_data:
             empty_label = QLabel("Nessun certificato in monitoraggio.")
             empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            empty_label.setStyleSheet("color: #6b7280; font-size: 16px; padding: 40px;")
+            empty_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 16px; padding: 40px;")
             content_layout.addWidget(empty_label)
 
         content_layout.addStretch()
@@ -181,38 +183,38 @@ class ScadenzeAnalysisDialog(QDialog):
         # === FOOTER ===
         footer = self.footer = QFrame()
         footer.setStyleSheet(
-            """
-            QFrame {
-                background-color: white;
-                border-top: 1px solid #e2e8f0;
-            }
+            f"""
+            QFrame {{
+                background-color: {COLORS['bg_white']};
+                border-top: 1px solid {COLORS['border_light']};
+            }}
             """
         )
         footer_layout = QHBoxLayout(footer)
         footer_layout.setContentsMargins(30, 15, 30, 15)
 
         footer_info = QLabel(f"Report generato da {__app_name__} v{__version__}")
-        footer_info.setStyleSheet("color: #94a3b8; font-size: 11px;")
+        footer_info.setStyleSheet(f"color: {COLORS['text_light']}; font-size: 11px;")
         footer_layout.addWidget(footer_info)
         footer_layout.addStretch()
 
         # Pulsante Invia Email
         email_btn = QPushButton("Invia Email")
         email_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #059669;
+            f"""
+            QPushButton {{
+                background-color: {COLORS['success_dark']};
                 color: white;
                 border: none;
                 border-radius: 6px;
                 padding: 10px 25px;
                 font-weight: 600;
                 font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #047857;
-            }
-            """
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['success_green']};
+            }}
+        """
         )
         email_btn.clicked.connect(self._send_email)
         footer_layout.addWidget(email_btn)
@@ -221,19 +223,19 @@ class ScadenzeAnalysisDialog(QDialog):
 
         close_btn = QPushButton("Chiudi")
         close_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #3b82f6;
+            f"""
+            QPushButton {{
+                background-color: {COLORS['primary_blue']};
                 color: white;
                 border: none;
                 border-radius: 6px;
                 padding: 10px 30px;
                 font-weight: 600;
                 font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #2563eb;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['primary_dark']};
+            }}
             """
         )
         close_btn.clicked.connect(self.accept)
@@ -245,13 +247,13 @@ class ScadenzeAnalysisDialog(QDialog):
         """Crea una card per le statistiche."""
         card = QFrame()
         card.setStyleSheet(
-            """
-            QFrame {
-                background-color: white;
-                border: 1px solid #e2e8f0;
+            f"""
+            QFrame {{
+                background-color: {COLORS['bg_white']};
+                border: 1px solid {COLORS['border_light']};
                 border-radius: 8px;
                 padding: 10px;
-            }
+            }}
             """
         )
         card_layout = QVBoxLayout(card)
@@ -263,7 +265,7 @@ class ScadenzeAnalysisDialog(QDialog):
         value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         title_label = QLabel(title)
-        title_label.setStyleSheet("color: #64748b; font-size: 11px; font-weight: 500;")
+        title_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; font-weight: 500;")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         card_layout.addWidget(value_label)
@@ -319,13 +321,13 @@ class ScadenzeAnalysisDialog(QDialog):
             if "MANOMETRO DIGITALE" in modello_text.upper() and item.get("range"):
                 modello_text += f" ({item['range']})"
             modello_label = QLabel(modello_text)
-            modello_label.setStyleSheet("color: #475569; font-size: 12px;")
+            modello_label.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 12px;")
             modello_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
             item_layout.addWidget(modello_label)
 
             # Costruttore
             costruttore_label = QLabel(item["costruttore"])
-            costruttore_label.setStyleSheet("color: #64748b; font-size: 12px; min-width: 100px;")
+            costruttore_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px; min-width: 100px;")
             item_layout.addWidget(costruttore_label)
 
             # Scadenza
@@ -371,7 +373,7 @@ class ScadenzeAnalysisDialog(QDialog):
 
             # Crea un pixmap per il report completo
             pixmap = QPixmap(total_width, total_height)
-            pixmap.fill(QColor("#f8fafc"))
+            pixmap.fill(QColor(COLORS["bg_light"]))
 
             painter = QPainter(pixmap)
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -474,8 +476,8 @@ class CertificatiCampioneTab(QWidget):
     EXCLUSIONS_FILE: ClassVar[Path] = CONFIG_DIR / "data" / "certificati_exclusions.json"
 
     # Stile per elementi esclusi
-    EXCLUDED_STYLE: ClassVar[str] = """
-        color: #9ca3af;
+    EXCLUDED_STYLE: ClassVar[str] = f"""
+        color: {COLORS['text_light']};
         text-decoration: line-through;
     """
 
@@ -568,33 +570,33 @@ class CertificatiCampioneTab(QWidget):
 
         # Stile personalizzato per il tree
         self.tree.setStyleSheet(
-            """
-            QTreeWidget {
-                border: 1px solid #e5e7eb;
+            f"""
+            QTreeWidget {{
+                border: 1px solid {COLORS['border_light']};
                 border-radius: 8px;
-                background-color: white;
+                background-color: {COLORS['bg_white']};
                 outline: none;
-            }
-            QTreeWidget::item {
+            }}
+            QTreeWidget::item {{
                 padding: 8px 4px;
-                border-bottom: 1px solid #f3f4f6;
-            }
-            QTreeWidget::item:hover {
-                background-color: #f9fafb;
-            }
-            QTreeWidget::item:selected {
-                background-color: #e0f2fe;
-                color: #0c4a6e;
-            }
-            QHeaderView::section {
-                background-color: #f8fafc;
+                border-bottom: 1px solid {COLORS['bg_alt']};
+            }}
+            QTreeWidget::item:hover {{
+                background-color: {COLORS['bg_light']};
+            }}
+            QTreeWidget::item:selected {{
+                background-color: {COLORS['bg_info_pastel']};
+                color: {COLORS['primary_dark']};
+            }}
+            QHeaderView::section {{
+                background-color: {COLORS['bg_light']};
                 padding: 10px 8px;
                 border: none;
-                border-bottom: 2px solid #e2e8f0;
-                border-right: 1px solid #e5e7eb;
+                border-bottom: 2px solid {COLORS['border_light']};
+                border-right: 1px solid {COLORS['border_light']};
                 font-weight: bold;
-                color: #475569;
-            }
+                color: {COLORS['text_muted']};
+            }}
         """
         )
 
@@ -606,18 +608,18 @@ class CertificatiCampioneTab(QWidget):
         btn_expand.setIcon(QIcon(get_asset_path(Icons.FOLDER_OPEN)))
         btn_expand.clicked.connect(self.tree.expandAll)
         btn_expand.setStyleSheet(
-            """
-            QPushButton {
+            f"""
+            QPushButton {{
                 padding: 8px 16px;
-                background-color: #f1f5f9;
-                border: 1px solid #cbd5e1;
+                background-color: {COLORS['bg_alt']};
+                border: 1px solid {COLORS['border_medium']};
                 border-radius: 6px;
                 font-weight: 500;
-                color: #000000;
-            }
-            QPushButton:hover {
-                background-color: #e2e8f0;
-            }
+                color: {COLORS['text_dark']};
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['bg_hover']};
+            }}
         """
         )
 
@@ -625,18 +627,18 @@ class CertificatiCampioneTab(QWidget):
         btn_collapse.setIcon(QIcon(get_asset_path(Icons.FOLDER)))
         btn_collapse.clicked.connect(self.tree.collapseAll)
         btn_collapse.setStyleSheet(
-            """
-            QPushButton {
+            f"""
+            QPushButton {{
                 padding: 8px 16px;
-                background-color: #f1f5f9;
-                border: 1px solid #cbd5e1;
+                background-color: {COLORS['bg_alt']};
+                border: 1px solid {COLORS['border_medium']};
                 border-radius: 6px;
                 font-weight: 500;
-                color: #000000;
-            }
-            QPushButton:hover {
-                background-color: #e2e8f0;
-            }
+                color: {COLORS['text_dark']};
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['bg_hover']};
+            }}
         """
         )
 
@@ -648,29 +650,29 @@ class CertificatiCampioneTab(QWidget):
         self.show_excluded_check = QCheckBox("Mostra esclusi")
         self.show_excluded_check.setChecked(False)
         self.show_excluded_check.setStyleSheet(
-            """
-            QCheckBox {
+            f"""
+            QCheckBox {{
                 padding: 8px 12px;
                 font-weight: 500;
-                color: #64748b;
-            }
-            QCheckBox:hover {
-                color: #334155;
-            }
-            QCheckBox::indicator {
+                color: {COLORS['text_muted']};
+            }}
+            QCheckBox:hover {{
+                color: {COLORS['text_dark']};
+            }}
+            QCheckBox::indicator {{
                 width: 18px;
                 height: 18px;
-            }
-            QCheckBox::indicator:unchecked {
-                border: 2px solid #cbd5e1;
+            }}
+            QCheckBox::indicator:unchecked {{
+                border: 2px solid {COLORS['border_medium']};
                 border-radius: 4px;
-                background: white;
-            }
-            QCheckBox::indicator:checked {
-                border: 2px solid #3b82f6;
+                background: {COLORS['bg_white']};
+            }}
+            QCheckBox::indicator:checked {{
+                border: 2px solid {COLORS['primary_blue']};
                 border-radius: 4px;
-                background: #3b82f6;
-            }
+                background: {COLORS['primary_blue']};
+            }}
         """
         )
         self.show_excluded_check.stateChanged.connect(self._on_show_excluded_changed)
@@ -678,7 +680,7 @@ class CertificatiCampioneTab(QWidget):
 
         # Label conteggio esclusi
         self.excluded_count_label = QLabel("")
-        self.excluded_count_label.setStyleSheet("color: #94a3b8; font-size: 12px; padding: 0 8px;")
+        self.excluded_count_label.setStyleSheet(f"color: {COLORS['text_light']}; font-size: 12px; padding: 0 8px;")
         toolbar.addWidget(self.excluded_count_label)
 
         toolbar.addStretch()
@@ -688,21 +690,21 @@ class CertificatiCampioneTab(QWidget):
         self.btn_analyze.setIcon(QIcon(get_asset_path(Icons.BAR_CHART)))
         self.btn_analyze.clicked.connect(self._run_analysis)
         self.btn_analyze.setStyleSheet(
-            """
-            QPushButton {
+            f"""
+            QPushButton {{
                 padding: 8px 20px;
-                background-color: #3b82f6;
+                background-color: {COLORS['primary_blue']};
                 color: white;
                 border: none;
                 border-radius: 6px;
                 font-weight: 600;
-            }
-            QPushButton:hover {
-                background-color: #2563eb;
-            }
-            QPushButton:pressed {
-                background-color: #1d4ed8;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['primary_dark']};
+            }}
+            QPushButton:pressed {{
+                background-color: {COLORS['primary_dark']};
+            }}
         """
         )
         toolbar.addWidget(self.btn_analyze)
@@ -854,7 +856,7 @@ class CertificatiCampioneTab(QWidget):
                 font = parent_item.font(0)
                 font.setStrikeOut(True)
                 parent_item.setFont(0, font)
-                parent_item.setForeground(0, QBrush(QColor("#9ca3af")))
+                parent_item.setForeground(0, QBrush(QColor(COLORS["text_light"])))
 
             # Step 6: Aggiungi i certificati come figli
             for idx, cert in enumerate(certificates_sorted):
@@ -922,31 +924,30 @@ class CertificatiCampioneTab(QWidget):
     def _apply_current_certificate_styling(self, item, cert, days_to_expiry, status_dot_icon):
         """Applica styling al certificato CORRENTE (più recente) con stato reale."""
         # Colori e stati basati sui giorni alla scadenza
-        # AGGIORNATO: Colori più distintivi per migliore visibilità
         if days_to_expiry is None:
             status_text = "N/D"
-            bg_color = QColor("#f3f4f6")
-            text_color = QColor("#6b7280")
+            bg_color = QColor(COLORS["bg_alt"])
+            text_color = QColor(COLORS["text_muted"])
         elif days_to_expiry < 0:
             # ROSSO SCURO per scaduti
             status_text = f"Scaduto da {abs(days_to_expiry)} giorni"
-            bg_color = QColor("#fee2e2")
-            text_color = QColor("#dc2626")  # Rosso più scuro
+            bg_color = QColor(COLORS["bg_error_pastel"])
+            text_color = QColor(COLORS["error_red"])
         elif 0 <= days_to_expiry <= 15:
             # ARANCIONE SCURO per urgenza massima (0-15 giorni)
             status_text = f"Scade tra {days_to_expiry} giorni"
-            bg_color = QColor("#fed7aa")
-            text_color = QColor("#ea580c")  # Arancione scuro distintivo
+            bg_color = QColor(COLORS["bg_warning_pastel"])
+            text_color = QColor(COLORS["warning_orange"])
         elif 16 <= days_to_expiry <= 30:
             # GIALLO CHIARO/BRILLANTE per attenzione (16-30 giorni)
             status_text = f"Scade tra {days_to_expiry} giorni"
-            bg_color = QColor("#fef9c3")  # Giallo chiaro nel background
-            text_color = QColor("#ca8a04")  # Giallo scuro nel testo per contrasto
+            bg_color = QColor(COLORS["bg_attention_pastel"])
+            text_color = QColor(COLORS["warning_yellow"])
         else:
             # VERDE per attivi (>30 giorni)
             status_text = f"Attivo ({days_to_expiry} giorni rimanenti)"
-            bg_color = QColor("#d1fae5")
-            text_color = QColor("#10b981")
+            bg_color = QColor(COLORS["bg_success_pastel"])
+            text_color = QColor(COLORS["success_dark"])
 
         # Applica background
         for col in range(self.tree.columnCount()):
@@ -965,14 +966,14 @@ class CertificatiCampioneTab(QWidget):
     def _apply_historical_certificate_styling(self, item, cert):
         """Applica styling ai certificati STORICI (nessun alert)."""
         # Background grigio molto chiaro
-        bg_color = QColor("#fafafa")
+        bg_color = QColor(COLORS["bg_alt"])
         for col in range(self.tree.columnCount()):
             item.setBackground(col, QBrush(bg_color))
 
         # Pallino grigio e testo STORICO
         item.setIcon(self.IDX_STATO, QIcon(get_asset_path(Icons.STATUS_DOT_GRAY)))
         item.setText(self.IDX_STATO, "STORICO")
-        item.setForeground(self.IDX_STATO, QBrush(QColor("#9ca3af")))
+        item.setForeground(self.IDX_STATO, QBrush(QColor(COLORS["text_light"])))
 
         # Tooltip informativo
         tooltip = "Certificato storico - Esiste un certificato più recente per questa matricola"

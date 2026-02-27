@@ -20,14 +20,13 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
+from src.core.constants import Business, Icons
 from src.core.contabilita_manager import ContabilitaManager
+from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .cards_row import KPICardsRow
 from .charts import ChartContainer, KPIChartsManager
-
-HOURLY_COST_STD = 28.50
 
 
 class ContabilitaKPIPanel(QWidget):
@@ -36,6 +35,7 @@ class ContabilitaKPIPanel(QWidget):
     def __init__(self, parent: QWidget | None = None):
         """Inizializza il pannello e prepara i grafici."""
         super().__init__(parent)
+        self.HOURLY_COST_STD = Business.HOURLY_COST_STD
 
         # Member declarations
         self.year_combo: QComboBox
@@ -56,7 +56,7 @@ class ContabilitaKPIPanel(QWidget):
         with suppress(Exception):
             plt.style.use("seaborn-v0_8-darkgrid")
 
-        self.charts_manager = KPIChartsManager(HOURLY_COST_STD)
+        self.charts_manager = KPIChartsManager(self.HOURLY_COST_STD)
         self._setup_ui()
         self.refresh_years()
 
@@ -68,7 +68,9 @@ class ContabilitaKPIPanel(QWidget):
         # --- Toolbar (Year Selector) ---
         toolbar = QHBoxLayout()
         cal_icon = QLabel()
-        cal_icon.setPixmap(get_colored_icon(get_asset_path(Icons.CALENDAR), "#000000").pixmap(18, 18))
+        cal_icon.setPixmap(
+            get_colored_icon(get_asset_path(Icons.CALENDAR), COLORS["text_dark"]).pixmap(18, 18)
+        )
         toolbar.addWidget(cal_icon)
         toolbar.addWidget(QLabel("Analisi per Anno:"))
 
@@ -76,7 +78,7 @@ class ContabilitaKPIPanel(QWidget):
         self.year_combo.setMinimumWidth(100)
         self.year_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.year_combo.setStyleSheet(
-            "QComboBox { padding: 5px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; }"
+            f"QComboBox {{ padding: 5px; border: 1px solid {COLORS['border_medium']}; border-radius: 4px; font-size: 14px; }}"
         )
         self.year_combo.currentTextChanged.connect(self._load_kpi_data)
         toolbar.addWidget(self.year_combo)
@@ -87,10 +89,10 @@ class ContabilitaKPIPanel(QWidget):
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
-        self.scroll_area.setStyleSheet("background-color: #f8f9fa;")
+        self.scroll_area.setStyleSheet(f"background-color: {COLORS['bg_light']};")
 
         content = QWidget()
-        content.setStyleSheet("background-color: #f8f9fa;")
+        content.setStyleSheet(f"background-color: {COLORS['bg_light']};")
         self.content_layout = QVBoxLayout(content)
         self.content_layout.setSpacing(30)
         self.content_layout.setContentsMargins(10, 10, 10, 10)
@@ -98,10 +100,10 @@ class ContabilitaKPIPanel(QWidget):
         # ROW 1: General Scorecards
         self._add_section_title("METRICHE GENERALI")
         self.row1 = KPICardsRow()
-        self.card_totale = self.row1.add_card("TOTALE PREVENTIVATO", "€ 0,00", "#198754")
-        self.card_ore = self.row1.add_card("ORE SPESE TOTALI", "0", "#0d6efd")
-        self.card_resa = self.row1.add_card("RESA MEDIA", "0", "#fd7e14")
-        self.card_count = self.row1.add_card("N° COMMESSE", "0", "#6f42c1")
+        self.card_totale = self.row1.add_card("TOTALE PREVENTIVATO", "€ 0,00", COLORS["success_dark"])
+        self.card_ore = self.row1.add_card("ORE SPESE TOTALI", "0", COLORS["primary_dark"])
+        self.card_resa = self.row1.add_card("RESA MEDIA", "0", COLORS["warning_orange"])
+        self.card_count = self.row1.add_card("N° COMMESSE", "0", COLORS["purple"])
         self.content_layout.addWidget(self.row1)
 
         # ROW 2: Deep Technical Analysis
@@ -110,22 +112,22 @@ class ContabilitaKPIPanel(QWidget):
         self.card_margine = self.row2.add_card(
             "MARGINE OPERATIVO STIMATO",
             "€ 0,00",
-            "#20c997",
-            subtitle=f"Base Costo Orario: € {HOURLY_COST_STD:.2f}",
+            COLORS["teal_light"],
+            subtitle=f"Base Costo Orario: € {self.HOURLY_COST_STD:.2f}",
         )
         self.card_margine_perc = self.row2.add_card(
-            "MARGINALITÀ %", "0.0 %", "#20c997", subtitle="Su Totale Preventivato"
+            "MARGINALITÀ %", "0.0 %", COLORS["teal_light"], subtitle="Su Totale Preventivato"
         )
         self.card_eff_resa = self.row2.add_card(
             "UTILE NETTO ORARIO",
             "€ 0,00 / h",
-            "#6610f2",
+            COLORS["purple_deep"],
             subtitle="Valore Ora - Costo Base",
         )
         self.card_val_ora = self.row2.add_card(
             "VALORE PER ORA SPESA",
             "€ 0,00 / h",
-            "#d63384",
+            COLORS["magenta_pink"],
             subtitle="Totale Prev / Ore Spese",
         )
         self.content_layout.addWidget(self.row2)
@@ -190,7 +192,7 @@ class ContabilitaKPIPanel(QWidget):
     def _add_section_title(self, text: str) -> None:
         lbl = QLabel(text)
         lbl.setStyleSheet(
-            "color: #495057; font-weight: bold; font-size: 16px; margin-top: 10px; margin-bottom: 10px;"
+            f"color: {COLORS['text_dark']}; font-weight: bold; font-size: 16px; margin-top: 10px; margin-bottom: 10px;"
         )
         self.content_layout.addWidget(lbl)
 
@@ -239,11 +241,11 @@ class ContabilitaKPIPanel(QWidget):
             ore_dirette = stats.get("ore_dirette", 0.0)
             ore_indirette = stats.get("ore_indirette", 0.0)
 
-            costo_tot = tot_ore * HOURLY_COST_STD
+            costo_tot = tot_ore * self.HOURLY_COST_STD
             margine = tot_prev - costo_tot
             marg_perc = (margine / tot_prev * 100) if tot_prev > 0 else 0
             val_ora = (tot_prev / tot_ore) if tot_ore > 0 else 0
-            utile_ora = val_ora - HOURLY_COST_STD
+            utile_ora = val_ora - self.HOURLY_COST_STD
 
             self.card_totale.lbl_value.setText(f"€ {self._format_currency(tot_prev)}")
             self.card_ore.lbl_value.setText(self._format_currency(tot_ore))
@@ -285,15 +287,15 @@ class ContabilitaKPIPanel(QWidget):
             # Style updates for margins
             self.card_margine.lbl_value.setText(f"€ {self._format_currency(margine)}")
             self.card_margine.lbl_value.setStyleSheet(
-                f"color: {'#20c997' if margine >= 0 else '#dc3545'}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
+                f"color: {COLORS['teal_light'] if margine >= 0 else COLORS['error_red']}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
             )
             self.card_margine_perc.lbl_value.setText(f"{marg_perc:.1f} %".replace(".", ","))
             self.card_margine_perc.lbl_value.setStyleSheet(
-                f"color: {'#20c997' if marg_perc >= 0 else '#dc3545'}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
+                f"color: {COLORS['teal_light'] if marg_perc >= 0 else COLORS['error_red']}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
             )
             self.card_eff_resa.lbl_value.setText(f"€ {self._format_currency(utile_ora)} / h")
             self.card_eff_resa.lbl_value.setStyleSheet(
-                f"color: {'#20c997' if utile_ora >= 0 else '#dc3545'}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
+                f"color: {COLORS['purple_deep'] if utile_ora >= 0 else COLORS['error_red']}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
             )
             self.card_val_ora.lbl_value.setText(f"€ {self._format_currency(val_ora)} / h")
 
