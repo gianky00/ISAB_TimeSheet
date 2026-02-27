@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QFileDialog,
+    QFrame,
     QHBoxLayout,
     QHeaderView,
     QLabel,
@@ -102,50 +103,86 @@ class AnagraficaPage(QWidget):
     def _setup_ui(self):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 10)
-        main_layout.setSpacing(10)
+        main_layout.setSpacing(15)
 
-        # 1. Filtri e Azioni
-        filter_layout = QHBoxLayout()
-        filter_layout.setSpacing(10)
+        # 1. Filtri e Azioni (Design Modern Card)
+        self.filter_card = QFrame()
+        self.filter_card.setObjectName("filterBar")
+        self.filter_card.setStyleSheet(f"""
+            QFrame#filterBar {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-radius: 12px;
+            }}
+        """)
+        filter_layout = QHBoxLayout(self.filter_card)
+        filter_layout.setContentsMargins(15, 10, 15, 10)
+        filter_layout.setSpacing(15)
 
+        # Sezione Ricerca
+        search_v = QVBoxLayout()
+        search_v.setSpacing(4)
+        search_label = QLabel("CERCA DIPENDENTE")
+        from src.gui.styles import LABEL_MUTED, LINEEDIT_STYLE
+        search_label.setStyleSheet(LABEL_MUTED)
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Cerca per nome, cognome, CF o badge...")
+        self.search_input.setPlaceholderText("Nome, Cognome, CF o Badge...")
+        self.search_input.setMinimumWidth(300)
+        self.search_input.setStyleSheet(LINEEDIT_STYLE)
         self.search_input.textChanged.connect(lambda: self.search_timer.start(500))
-        filter_layout.addWidget(self.search_input)
+        search_v.addWidget(search_label)
+        search_v.addWidget(self.search_input)
+        filter_layout.addLayout(search_v)
+
+        filter_layout.addStretch()
+
+        # Info & Actions
+        info_v = QVBoxLayout()
+        info_v.setSpacing(4)
+        info_v.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         # Sync Status Label
         self.lbl_sync_status = QLabel("")
         self.lbl_sync_status.setStyleSheet(
-            f"color: {COLORS['text_muted']}; font-size: 11px; margin-left: 5px; margin-right: 5px;"
+            f"color: {COLORS['text_muted']}; font-size: 10px;"
         )
-        filter_layout.addWidget(self.lbl_sync_status)
+        info_v.addWidget(self.lbl_sync_status)
+
+        actions_h = QHBoxLayout()
+        actions_h.setSpacing(8)
 
         import_btn = ModernButton(
-            "Importa CSV",
+            "IMPORTA CSV",
             variant=ModernButton.Variant.GHOST,
+            size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.UPLOAD),
         )
         import_btn.clicked.connect(self._on_import_clicked)
-        filter_layout.addWidget(import_btn)
 
         email_report_btn = ModernButton(
-            "Genera Report via Email",
-            variant=ModernButton.Variant.PRIMARY,
+            "REPORT EMAIL",
+            variant=ModernButton.Variant.GHOST,
+            size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.SEND),
         )
         email_report_btn.clicked.connect(self._generate_email_report)
-        filter_layout.addWidget(email_report_btn)
 
         # Update Bot Button
         self.btn_bot_update = ModernButton(
-            "Aggiorna",
+            "AGGIORNA",
             variant=ModernButton.Variant.PRIMARY,
+            size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.REFRESH),
         )
         self.btn_bot_update.clicked.connect(self._on_update_bot_clicked)
-        filter_layout.addWidget(self.btn_bot_update)
 
-        main_layout.addLayout(filter_layout)
+        actions_h.addWidget(import_btn)
+        actions_h.addWidget(email_report_btn)
+        actions_h.addWidget(self.btn_bot_update)
+        info_v.addLayout(actions_h)
+
+        filter_layout.addLayout(info_v)
+        main_layout.addWidget(self.filter_card)
 
         # Cards Container
         self.cards_container = QWidget()

@@ -18,7 +18,6 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QFileDialog,
     QFrame,
-    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -143,59 +142,36 @@ class BotParametersWidget(QWidget):
         main_layout.setContentsMargins(10, 10, 10, 15)
         main_layout.setSpacing(0)
 
-        # --- CONTAINER PRINCIPALE (La "Card" con ombra e pulsazione hover) ---
-        self.container = HoverPulseFrame(COLORS["text_dark"])
-        self.container.setObjectName("paramsContainer")
+        # --- CONTAINER PRINCIPALE (La "Card" Modern Design) ---
+        self.container = QFrame()
+        self.container.setObjectName("filterBar")
+        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
         self.container.setStyleSheet(f"""
-            QFrame#paramsContainer {{
-                background-color: {COLORS['bg_white']};
-                border: 1px solid {COLORS['border_light']};
-                /* border-bottom rimosso perché gestito da paintEvent di HoverPulseFrame */
+            QFrame#filterBar {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
                 border-radius: 12px;
-            }}
-            QLabel {{
-                color: {COLORS['text_dark']};
-                font-weight: bold;
-                font-size: 13px;
-                background: transparent;
-            }}
-            QComboBox, QLineEdit, QDateEdit {{
-                border: 1px solid {COLORS['border_medium']};
-                border-radius: 6px;
-                padding: 5px 10px;
-                background-color: {COLORS['bg_light']};
-                min-height: 32px;
-            }}
-            QComboBox:focus, QLineEdit:focus, QDateEdit:focus {{
-                border: 2px solid {COLORS['text_dark']};
-                background-color: {COLORS['bg_white']};
             }}
         """)
 
-        # Applica Ombra (Shadow Effect)
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(25)
-        shadow.setXOffset(0)
-        shadow.setYOffset(8)
-        shadow.setColor(QColor(0, 0, 0, 40))  # 40/255 opacità (molto morbida)
-        self.container.setGraphicsEffect(shadow)
+        container_layout = QHBoxLayout(self.container)
+        container_layout.setContentsMargins(15, 10, 15, 10)
+        container_layout.setSpacing(20)
 
-        container_layout = QVBoxLayout(self.container)
-        container_layout.setContentsMargins(15, 15, 15, 15)
-
-        # --- Riga Unica: Fornitore, Date, Destinazione ---
-        self.main_row_layout = QHBoxLayout()
-        self.main_row_layout.setSpacing(15)
-
+        # --- Elementi: Fornitore, Date, Destinazione ---
         # Fornitore
         vbox_forn = QVBoxLayout()
-        vbox_forn.addWidget(QLabel("Fornitore"))
+        vbox_forn.setSpacing(4)
+        lbl_forn = QLabel("FORNITORE")
+        lbl_forn.setStyleSheet(LABEL_MUTED)
+        vbox_forn.addWidget(lbl_forn)
 
         hbox_forn = QHBoxLayout()
+        hbox_forn.setSpacing(8)
         self.fornitore_combo = QComboBox()
         self.fornitore_combo.setMinimumHeight(38)
-        self.fornitore_combo.setMinimumWidth(180)
-        self.fornitore_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.fornitore_combo.setMinimumWidth(200)
+        self.fornitore_combo.setStyleSheet(COMBOBOX_STYLE)
         self.fornitore_combo.currentIndexChanged.connect(self.changed.emit)
         hbox_forn.addWidget(self.fornitore_combo)
 
@@ -210,38 +186,65 @@ class BotParametersWidget(QWidget):
         hbox_forn.addWidget(self.settings_btn)
 
         vbox_forn.addLayout(hbox_forn)
-        self.main_row_layout.addLayout(vbox_forn)
+        container_layout.addLayout(vbox_forn)
+
+        # Divisore
+        v_line1 = QFrame()
+        v_line1.setFrameShape(QFrame.Shape.VLine)
+        v_line1.setFrameShadow(QFrame.Shadow.Plain)
+        v_line1.setStyleSheet(f"color: {COLORS['border_light']};")
+        container_layout.addWidget(v_line1)
 
         # Data Da
         vbox_da = QVBoxLayout()
-        vbox_da.addWidget(QLabel("Data Da"))
+        vbox_da.setSpacing(4)
+        lbl_da = QLabel("DATA INIZIO")
+        lbl_da.setStyleSheet(LABEL_MUTED)
+        vbox_da.addWidget(lbl_da)
         self.date_da = CalendarDateEdit()
         self.date_da.setMinimumHeight(38)
+        self.date_da.setStyleSheet(COMBOBOX_STYLE) # CalendarDateEdit inherits styles
         self.date_da.dateChanged.connect(self.changed.emit)
         vbox_da.addWidget(self.date_da)
-        self.main_row_layout.addLayout(vbox_da)
+        container_layout.addLayout(vbox_da)
 
         # Data A (opzionale)
         if self.show_date_range:
             vbox_a = QVBoxLayout()
-            vbox_a.addWidget(QLabel("Data A"))
+            vbox_a.setSpacing(4)
+            lbl_a = QLabel("DATA FINE")
+            lbl_a.setStyleSheet(LABEL_MUTED)
+            vbox_a.addWidget(lbl_a)
             self.date_a = CalendarDateEdit()
             self.date_a.setMinimumHeight(38)
+            self.date_a.setStyleSheet(COMBOBOX_STYLE)
             self.date_a.dateChanged.connect(self.changed.emit)
             vbox_a.addWidget(self.date_a)
-            self.main_row_layout.addLayout(vbox_a)
+            container_layout.addLayout(vbox_a)
 
         # Destinazione (opzionale)
         if self.show_dest_path:
+            # Divisore
+            v_line2 = QFrame()
+            v_line2.setFrameShape(QFrame.Shape.VLine)
+            v_line2.setFrameShadow(QFrame.Shadow.Plain)
+            v_line2.setStyleSheet(f"color: {COLORS['border_light']};")
+            container_layout.addWidget(v_line2)
+
             vbox_dest = QVBoxLayout()
-            vbox_dest.addWidget(QLabel("Destinazione"))
+            vbox_dest.setSpacing(4)
+            lbl_dest = QLabel("CARTELLA DESTINAZIONE")
+            lbl_dest.setStyleSheet(LABEL_MUTED)
+            vbox_dest.addWidget(lbl_dest)
 
             hbox_dest = QHBoxLayout()
+            hbox_dest.setSpacing(8)
             self.dest_path_edit = QLineEdit()
             self.dest_path_edit.setPlaceholderText("Download utente (default)")
             self.dest_path_edit.setReadOnly(True)
-            self.dest_path_edit.setMinimumWidth(180)
+            self.dest_path_edit.setMinimumWidth(200)
             self.dest_path_edit.setMinimumHeight(38)
+            self.dest_path_edit.setStyleSheet(LINEEDIT_STYLE)
             self.dest_path_edit.textChanged.connect(self.changed.emit)
             hbox_dest.addWidget(self.dest_path_edit)
 
@@ -254,10 +257,10 @@ class BotParametersWidget(QWidget):
             hbox_dest.addWidget(self.browse_btn)
 
             vbox_dest.addLayout(hbox_dest)
-            self.main_row_layout.addLayout(vbox_dest)
+            container_layout.addLayout(vbox_dest)
 
-        self.main_row_layout.addStretch()
-        container_layout.addLayout(self.main_row_layout)
+        container_layout.addStretch()
+        self.main_row_layout = container_layout # Referenza per add_widget_to_row
 
         main_layout.addWidget(self.container)
 

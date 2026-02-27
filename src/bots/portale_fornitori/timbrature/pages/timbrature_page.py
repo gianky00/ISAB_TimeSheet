@@ -40,6 +40,7 @@ class TimbraturePage:
         self.download_path = download_path
 
     def log(self, msg: str):
+        """Proxy per il logging."""
         self._log(msg)
 
     def _wait_for_overlay(self):

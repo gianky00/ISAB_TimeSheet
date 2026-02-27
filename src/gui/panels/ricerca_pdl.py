@@ -6,12 +6,10 @@ Pannello per il bot Ricerca PDL (SafeWork).
 from typing import Any
 
 from PyQt6.QtCore import QTimer, pyqtSignal
-from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QFrame,
-    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QVBoxLayout,
@@ -54,76 +52,61 @@ class RicercaPDLPanel(BaseBotPanel):
         return SafeWorkPDLSearchBot
 
     def _setup_content(self):
-        """Inizializza e posiziona i componenti UI di filtraggio e ricerca con design Neon Card."""
-        # Sezione Parametri (Design Neon Floating Card Standard)
+        """Inizializza e posiziona i componenti UI di filtraggio e ricerca con design Modern Card."""
+        # Sezione Parametri (Design Modern Card Uniformato)
         params_container = QFrame()
-        params_container.setObjectName("paramsContainer")
+        params_container.setObjectName("filterBar")
         params_container.setStyleSheet(f"""
-            QFrame#paramsContainer {{
-                background-color: {COLORS['bg_white']};
-                border: 1px solid {COLORS['border_light']};
-                border-bottom: 3px solid {COLORS['text_dark']};
+            QFrame#filterBar {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
                 border-radius: 12px;
-            }}
-            QLabel {{
-                color: {COLORS['text_dark']};
-                font-weight: bold;
-                font-size: 13px;
-                background: transparent;
-            }}
-            QComboBox, QCheckBox {{
-                background: transparent;
             }}
         """)
 
-        # Shadow Effect
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(25)
-        shadow.setXOffset(0)
-        shadow.setYOffset(8)
-        shadow.setColor(QColor(0, 0, 0, 40))
-        params_container.setGraphicsEffect(shadow)
+        params_layout = QHBoxLayout(params_container)
+        params_layout.setContentsMargins(15, 10, 15, 10)
+        params_layout.setSpacing(20)
 
-        params_layout = QVBoxLayout(params_container)
-        params_layout.setContentsMargins(15, 15, 15, 15)
-        params_layout.setSpacing(15)
-
-        # Riga unica per Flag e Sito
-        top_row = QHBoxLayout()
+        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED
 
         # 1. Flag Escludi Chiusi
         vbox_check = QVBoxLayout()
-        vbox_check.addWidget(QLabel("Stato Permessi"))
+        vbox_check.setSpacing(4)
+        lbl_status = QLabel("STATO PERMESSI")
+        lbl_status.setStyleSheet(LABEL_MUTED)
+        vbox_check.addWidget(lbl_status)
+
         self.exclude_closed_check = QCheckBox("Escludi chiusi/scaduti")
         self.exclude_closed_check.setChecked(True)
+        self.exclude_closed_check.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 500;")
         self.exclude_closed_check.stateChanged.connect(self._save_data)
         vbox_check.addWidget(self.exclude_closed_check)
-        top_row.addLayout(vbox_check)
+        params_layout.addLayout(vbox_check)
 
-        top_row.addSpacing(20)
+        # Vertical Divider
+        v_line = QFrame()
+        v_line.setFrameShape(QFrame.Shape.VLine)
+        v_line.setFrameShadow(QFrame.Shadow.Plain)
+        v_line.setStyleSheet(f"color: {COLORS['border_light']};")
+        params_layout.addWidget(v_line)
 
         # 2. Selezione Sito
         vbox_site = QVBoxLayout()
-        vbox_site.addWidget(QLabel("Sito di Riferimento"))
+        vbox_site.setSpacing(4)
+        lbl_site = QLabel("SITO DI RIFERIMENTO")
+        lbl_site.setStyleSheet(LABEL_MUTED)
+        vbox_site.addWidget(lbl_site)
+
         self.site_combo = QComboBox()
         self.site_combo.addItems(["Seleziona tutto", "IGCC", "ISAB Nord", "ISAB Sud"])
-        self.site_combo.setMinimumWidth(180)
-        self.site_combo.setMinimumHeight(38)
-        self.site_combo.setStyleSheet(f"""
-            QComboBox {{
-                border: 1px solid {COLORS['border_medium']};
-                border-radius: 6px;
-                padding: 5px 10px;
-                background-color: {COLORS['bg_light']};
-            }}
-            QComboBox:focus {{ border: 2px solid {COLORS['text_dark']}; background-color: {COLORS['bg_white']}; }}
-        """)
+        self.site_combo.setMinimumWidth(200)
+        self.site_combo.setStyleSheet(COMBOBOX_STYLE)
         self.site_combo.currentTextChanged.connect(self._save_data)
         vbox_site.addWidget(self.site_combo)
-        top_row.addLayout(vbox_site)
+        params_layout.addLayout(vbox_site)
 
-        top_row.addStretch()
-        params_layout.addLayout(top_row)
+        params_layout.addStretch()
 
         # Aggiunta al layout principale
         wrapper = QWidget()

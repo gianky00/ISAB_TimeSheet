@@ -10,6 +10,7 @@ from typing import Any
 
 import pandas as pd
 from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -17,7 +18,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
-    QMessageBox,
+    QMenu,
     QSplitter,
     QTableView,
     QVBoxLayout,
@@ -26,12 +27,14 @@ from PyQt6.QtWidgets import (
 
 from src.bots import create_bot
 from src.core import config_manager
+from src.core.constants import Icons
 from src.core.database import db_manager, pdl_queries
 from src.core.sync_tracker import SyncTracker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.formatters import FastTableModel
 from src.gui.panels.base import BotWorker
-from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets import EmptyStateWidget, ModernButton
 from src.gui.widgets.toast import ToastManager
 
 from .pdl_delegate import PDLDelegate
@@ -161,6 +164,9 @@ class PDLDBPanel(QWidget):
         self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setItemDelegate(PDLDelegate([0], self.table))
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._show_context_menu)
+        self.table.doubleClicked.connect(self._toggle_detail_view)
 
         if sel_model := self.table.selectionModel():
             sel_model.selectionChanged.connect(self._on_selection_changed)
@@ -173,7 +179,17 @@ class PDLDBPanel(QWidget):
 
         # --- PANNELLO DETTAGLIO (DETAIL) ---
         self.detail_view = PDLDetailView(self.full_headers)
+        self.detail_view.setVisible(False)
         self.splitter.addWidget(self.detail_view)
+
+        # --- EMPTY STATE ---
+        self.empty_state = EmptyStateWidget(
+            title="Nessun Permesso di Lavoro",
+            message="Non sono stati trovati PDL corrispondenti ai filtri attuali.\nAssicurati di aver sincronizzato il database.",
+            icon_key=Icons.FILE_TEXT
+        )
+        self.empty_state.setParent(self.table)
+        self.empty_state.hide()
 
         self.splitter.setStretchFactor(0, 3)
         self.splitter.setStretchFactor(1, 1)
@@ -209,7 +225,7 @@ class PDLDBPanel(QWidget):
                 account_type = default_sw.get("type", "Esecutore")
 
             if not username or not password:
-                QMessageBox.warning(self, "Attenzione", "Credenziali SafeWork non configurate.")
+                ConfirmationDialog.show_warning(self, "Attenzione", "Credenziali SafeWork non configurate.")
                 return
 
             if not self._show_confirmation_dialog(
@@ -244,7 +260,7 @@ class PDLDBPanel(QWidget):
 
         except Exception as e:
             self.filters.btn_bot_update.setEnabled(True)
-            QMessageBox.critical(self, "Errore", f"Errore avvio bot: {e}")
+            ConfirmationDialog.show_error(self, "Errore", f"Errore avvio bot: {e}")
 
     def _on_bot_finished(self, success: bool):
         """Gestisce il completamento del bot di ricerca PDL."""
@@ -261,7 +277,7 @@ class PDLDBPanel(QWidget):
                     scarico_pdl._on_log("✅ Bot Ricerca PDL completato.")
         else:
             self.filters.lbl_sync_status.setText("❌ Errore Bot")
-            QMessageBox.warning(self, "Errore", "Bot terminato con errori.")
+            ConfirmationDialog.show_warning(self, "Errore", "Bot terminato con errori.")
 
     def _show_confirmation_dialog(self, title: str, message: str) -> bool:
         """Mostra una dialog di conferma con stile coerente."""
@@ -427,6 +443,30 @@ class PDLDBPanel(QWidget):
         else:
             self.detail_view.clear()
 
+    def _show_context_menu(self, pos):
+        """Mostra il menu contestuale sulla tabella."""
+        index = self.table.indexAt(pos)
+        if not index.isValid():
+            return
+
+        menu = QMenu(self)
+        action_toggle = QAction("Mostra/Nascondi dettaglio", self)
+        action_toggle.triggered.connect(self._toggle_detail_view)
+        menu.addAction(action_toggle)
+
+        viewport = self.table.viewport()
+        if viewport:
+            menu.exec(viewport.mapToGlobal(pos))
+
+    def _toggle_detail_view(self, index=None):
+        """Mostra o nasconde il pannello dei dettagli."""
+        is_visible = self.detail_view.isVisible()
+        self.detail_view.setVisible(not is_visible)
+
+        # Se lo stiamo rendendo visibile, assicuriamoci che i pesi dello splitter siano corretti
+        if not is_visible:
+            self.splitter.setSizes([int(self.width() * 0.7), int(self.width() * 0.3)])
+
     def _on_header_clicked(self, logical_index):
         """Gestisce il toggle dell'ordinamento per colonna."""
         if self.current_sort_col == logical_index:
@@ -458,10 +498,23 @@ class PDLDBPanel(QWidget):
                 print(f"Errore caricamento PDL: {e}")
                 return
 
+        # Mostra/Nascondi Empty State
+        if not full_rows:
+            self.empty_state.show()
+            self.empty_state.resize(self.table.size())
+        else:
+            self.empty_state.hide()
+
         self._raw_full_data = full_rows
         master_rows = self._process_pdl_rows(full_rows)
         self.model.update_data(master_rows)
         self._update_pdl_ui(len(master_rows))
+
+    def resizeEvent(self, event):
+        """Gestisce il ridimensionamento per l'empty state."""
+        super().resizeEvent(event)
+        if hasattr(self, "empty_state") and self.empty_state.isVisible():
+            self.empty_state.resize(self.table.size())
 
     def _build_pdl_query(self, sort_col: int | None) -> tuple[str, list[Any]]:
         """Costruisce dinamicamente la query SQL in base ai filtri attivi."""

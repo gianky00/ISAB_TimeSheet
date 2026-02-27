@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.gui.styles import COLORS
+from src.gui.widgets import DashboardStatCard
 from src.gui.widgets.activity_feed import ActivityFeed
 from src.gui.widgets.autopilot import AutopilotWidget
 from src.gui.widgets.quick_actions import QuickActions
@@ -102,6 +103,7 @@ class DashboardPanel(QWidget):
 
     def refresh_live_data(self):
         """Aggiorna i dati dinamici dei widget (Feed, Azioni, Autopilot) senza ricostruire la UI."""
+        self._update_quick_stats()
         if self.activity_feed:
             self.activity_feed.refresh_feed()
 
@@ -113,7 +115,25 @@ class DashboardPanel(QWidget):
 
     def _setup_ui(self):
         """Inizializza e posiziona i widget della dashboard nel layout dei contenuti."""
-        # 1. Quick Actions Row + Autopilot (Top)
+        # 0. Quick Stats Row (Nuova sezione Centrale Operativa)
+        stats_row = QHBoxLayout()
+        stats_row.setSpacing(20)
+
+        from src.core.constants import Icons
+
+        # Stat 1: PDL Totali
+        self.card_pdl = DashboardStatCard("PDL In Database", "0", Icons.FILE_TEXT, COLORS["primary_blue"])
+        # Stat 2: Bot Status (Health)
+        self.card_health = DashboardStatCard("System Health", "100%", Icons.ACTIVITY, COLORS["success_dark"])
+        # Stat 3: Notifiche non lette
+        self.card_notif = DashboardStatCard("Notifiche", "0", Icons.BELL, COLORS["warning_orange"])
+
+        stats_row.addWidget(self.card_pdl)
+        stats_row.addWidget(self.card_health)
+        stats_row.addWidget(self.card_notif)
+        self.content_layout.addLayout(stats_row)
+
+        # 1. Quick Actions Row + Autopilot (Middle)
         actions_row = QHBoxLayout()
         actions_row.setSpacing(20)
         actions_row.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -139,7 +159,73 @@ class DashboardPanel(QWidget):
         self.activity_feed = ActivityFeed()
         self.content_layout.addWidget(self.activity_feed)
 
+        self._update_quick_stats()
         self.refresh_live_data()
+
+    def _update_quick_stats(self):
+        """Recupera dati reali dal DB per le card della dashboard."""
+        from src.core.database import db_manager
+        from src.core.sync_tracker import SyncTracker
+        with suppress(Exception):
+            # 1. PDL Stats
+            res = db_manager.execute_query(db_manager.DB_PDL, "SELECT COUNT(*) FROM pdl")
+            total_pdl = res[0][0] if res else 0
+
+            active_q = """
+                SELECT COUNT(*) FROM pdl
+                WHERE stato LIKE 'Aperto%'
+                   OR stato LIKE 'Emesso%'
+                   OR stato LIKE 'Richiesto%'
+                   OR stato LIKE 'Accettato%'
+            """
+            res_active = db_manager.execute_query(db_manager.DB_PDL, active_q)
+            active_pdl = res_active[0][0] if res_active else 0
+
+            last_sync = SyncTracker.get_formatted_status("pdl")
+            self.card_pdl.update_value(
+                str(total_pdl),
+                f"ATTIVE: {active_pdl} | CHIUSE: {total_pdl - active_pdl}",
+                f"Ultima Sincronizzazione: {last_sync}"
+            )
+
+            # 2. Notif Count (Unread)
+            from src.core.notification_manager import NotificationManager
+            notifs = NotificationManager.instance().get_notifications()
+            unread = [n for n in notifs if not n.get("read", False)]
+            errors = len([n for n in unread if n.get("level") == "error"])
+            warns = len([n for n in unread if n.get("level") == "warning"])
+
+            last_msg = ""
+            if unread:
+                last_msg = unread[0].get("message", "")[:40] + "..."
+
+            self.card_notif.update_value(
+                str(len(unread)),
+                f"ERRORI: {errors} | AVVISI: {warns}",
+                f"Ultimo alert: {last_msg}" if last_msg else "Nessun nuovo avviso"
+            )
+
+            # 3. Health Score & Bot Performance
+            from src.core.logging.analytics import generate_analytics_report
+            from src.core.logging.viewer import LogViewer
+
+            report = generate_analytics_report(hours=24)
+            health_data = LogViewer().generate_health_report()
+
+            ok = health_data.get("bot_runs", {}).get("successful", 0)
+            ko = health_data.get("bot_runs", {}).get("failed", 0)
+            err_rate = health_data.get("error_rate_percent", 0)
+
+            self.card_health.update_value(
+                f"{report.health_score}%",
+                f"BOT OK: {ok} | FALLITI: {ko}",
+                f"Tasso Errore: {err_rate:.1f}% nelle ultime 24h"
+            )
+
+            self.card_health.icon_container.setStyleSheet(f"""
+                background-color: {COLORS["success_dark"] if report.health_score > 80 else COLORS["warning_orange"]}20;
+                border-radius: 25px;
+            """)
 
     def _navigate_to(self, key):
         """Naviga verso un pannello specifico identificato da una chiave stringa."""

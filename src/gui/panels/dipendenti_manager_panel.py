@@ -1,14 +1,14 @@
-from PyQt6.QtCore import QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QFileDialog,
     QFormLayout,
+    QFrame,
     QHBoxLayout,
     QHeaderView,
     QLabel,
     QLineEdit,
-    QMessageBox,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 from src.core.audit_manager import AuditManager
 from src.core.employees import employee_manager
 from src.core.sync_tracker import SyncTracker
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 
@@ -135,39 +136,69 @@ class DipendentiManagerPanel(QWidget):
         self.main_layout.addLayout(header_layout)
 
     def _setup_toolbar(self):
-        toolbar = QHBoxLayout()
-        toolbar.setSpacing(10)
+        self.toolbar_card = QFrame()
+        self.toolbar_card.setObjectName("filterBar")
+        from src.gui.styles import LABEL_MUTED, LINEEDIT_STYLE
+        self.toolbar_card.setStyleSheet(f"""
+            QFrame#filterBar {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-radius: 12px;
+            }}
+        """)
+        toolbar_layout = QHBoxLayout(self.toolbar_card)
+        toolbar_layout.setContentsMargins(15, 10, 15, 10)
+        toolbar_layout.setSpacing(15)
 
-        # Ricerca
+        # Sezione Ricerca
+        search_v = QVBoxLayout()
+        search_v.setSpacing(4)
+        lbl_search = QLabel("CERCA DIPENDENTE")
+        lbl_search.setStyleSheet(LABEL_MUTED)
         self.search_bar = QLineEdit()
-        self.search_bar.setPlaceholderText("Cerca per nome, badge o CF...")
+        self.search_bar.setPlaceholderText("Nome, Badge o CF...")
         self.search_bar.setFixedWidth(300)
-        self.search_bar.setStyleSheet(
-            f"""
-            QLineEdit {{ padding: 8px; border: 1px solid {COLORS['border_medium']}; border-radius: 4px; }}
-            QLineEdit:focus {{ border: 1px solid {COLORS['primary_dark']}; }}
-        """
-        )
+        self.search_bar.setStyleSheet(LINEEDIT_STYLE)
         self.search_bar.textChanged.connect(self._filter_table)
-        toolbar.addWidget(self.search_bar)
+        search_v.addWidget(lbl_search)
+        search_v.addWidget(self.search_bar)
+        toolbar_layout.addLayout(search_v)
 
-        toolbar.addStretch()
+        toolbar_layout.addStretch()
+
+        # Info & Actions
+        info_v = QVBoxLayout()
+        info_v.setSpacing(4)
+        info_v.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         # Sync Status
         self.lbl_sync_status = QLabel("")
-        self.lbl_sync_status.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; margin-right: 15px;")
-        toolbar.addWidget(self.lbl_sync_status)
+        self.lbl_sync_status.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px;")
+        info_v.addWidget(self.lbl_sync_status)
 
-        # Bottoni
-        self.btn_sync = ModernButton("Sync da CSV", variant=ModernButton.Variant.SECONDARY)
+        actions_h = QHBoxLayout()
+        actions_h.setSpacing(8)
+
+        self.btn_sync = ModernButton(
+            "SYNC CSV",
+            variant=ModernButton.Variant.SECONDARY,
+            size=ModernButton.Size.SMALL,
+        )
         self.btn_sync.clicked.connect(self._sync_from_csv)
-        toolbar.addWidget(self.btn_sync)
 
-        self.btn_add = ModernButton("Nuovo Dipendente", variant=ModernButton.Variant.SUCCESS)
+        self.btn_add = ModernButton(
+            "NUOVO DIPENDENTE",
+            variant=ModernButton.Variant.SUCCESS,
+            size=ModernButton.Size.SMALL,
+        )
         self.btn_add.clicked.connect(self._add_employee)
-        toolbar.addWidget(self.btn_add)
 
-        self.main_layout.addLayout(toolbar)
+        actions_h.addWidget(self.btn_sync)
+        actions_h.addWidget(self.btn_add)
+        info_v.addLayout(actions_h)
+
+        toolbar_layout.addLayout(info_v)
+        self.main_layout.addWidget(self.toolbar_card)
 
     def _setup_table(self):
         self.table = QTableWidget()
@@ -229,7 +260,7 @@ class DipendentiManagerPanel(QWidget):
             self._filter_table(self.search_bar.text())  # Riapplica filtro se presente
 
         except Exception as e:
-            QMessageBox.critical(self, "Errore", f"Impossibile caricare i dati: {e}")
+            ConfirmationDialog.show_error(self, "Errore", f"Impossibile caricare i dati: {e}")
 
     def _filter_table(self, text):
         """Filtra la tabella in locale con supporto multi-termine (AND logico)."""
@@ -266,14 +297,14 @@ class DipendentiManagerPanel(QWidget):
 
         try:
             count = employee_manager.import_from_csv(file_path)
-            QMessageBox.information(self, "Sync Completato", f"Importati/Aggiornati {count} dipendenti.")
+            ConfirmationDialog.show_info(self, "Sync Completato", f"Importati/Aggiornati {count} dipendenti.")
             self.refresh_data()
             self.data_changed.emit()
             AuditManager.instance().log_action(
                 "Sync CSV", "dipendenti", "Manuale", {"file": file_path, "count": count}
             )
         except Exception as e:
-            QMessageBox.warning(self, "Errore Sync", f"Errore durante l'importazione:\n{e}")
+            ConfirmationDialog.show_warning(self, "Errore Sync", f"Errore durante l'importazione:\n{e}")
 
     def _add_employee(self):
         dialog = EmployeeEditorDialog(self)
@@ -291,7 +322,7 @@ class DipendentiManagerPanel(QWidget):
                 self.refresh_data()
                 self.data_changed.emit()
             else:
-                QMessageBox.warning(
+                ConfirmationDialog.show_warning(
                     self,
                     "Errore",
                     "Errore durante l'inserimento nel DB (forse ID duplicato?)",
@@ -333,4 +364,4 @@ class DipendentiManagerPanel(QWidget):
                 self.data_changed.emit()
                 AuditManager.instance().log_action("Modifica Dipendente", "dipendenti", id_risorsa)
             else:
-                QMessageBox.warning(self, "Errore", "Impossibile aggiornare i dati.")
+                ConfirmationDialog.show_warning(self, "Errore", "Impossibile aggiornare i dati.")

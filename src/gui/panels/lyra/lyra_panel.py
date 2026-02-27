@@ -3,6 +3,7 @@ from io import StringIO
 from pathlib import Path
 
 import pandas as pd
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QFileDialog,
     QFrame,
@@ -103,6 +104,7 @@ class LyraPanel(QWidget):
     def _create_quick_actions(self):
         w = QWidget()
         layout = QHBoxLayout(w)
+        layout.setContentsMargins(20, 0, 20, 0)
         actions = [
             (
                 "Estrai Tabella Giornaliere",
@@ -116,8 +118,22 @@ class LyraPanel(QWidget):
         ]
         for name, prompt in actions:
             btn = QPushButton(name)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setStyleSheet(
-                f"border: 1px solid {COLORS['purple']}; border-radius: 15px; padding: 5px 15px; font-size: 11px; color: {COLORS['text_dark']};"
+                f"""
+                QPushButton {{
+                    border: 1px solid {COLORS['purple']};
+                    border-radius: 15px;
+                    padding: 6px 15px;
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: {COLORS['purple']};
+                    background: transparent;
+                }}
+                QPushButton:hover {{
+                    background: {COLORS['purple']}10;
+                }}
+                """
             )
             btn.clicked.connect(lambda _, p=prompt: self.input_bar.input_field.setText(p))
             layout.addWidget(btn)
@@ -184,8 +200,8 @@ class LyraPanel(QWidget):
 
         self.chat_area.append_message("Tu", question)
 
-        # Feedback visivo immediato
-        self.chat_area.append_message("Lyra", "<i>Lyra sta pensando...</i>")
+        # Feedback visivo immediato (Nuovo indicatore animato)
+        self.chat_area.set_typing(True)
 
         context = ""
         if self.attached_file and DocumentProcessor.is_pdf_searchable(self.attached_file):
@@ -218,7 +234,7 @@ class LyraPanel(QWidget):
         self.worker.start()
 
     def _on_answer(self, text):
-        self.chat_area.remove_last_message()  # Rimuovi "Lyra sta pensando..."
+        self.chat_area.set_typing(False)
         self.chat_area.append_message("Lyra", text)
         self.input_bar.set_enabled(True)
 

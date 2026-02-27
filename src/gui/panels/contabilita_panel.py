@@ -11,10 +11,10 @@ from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
+    QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QMessageBox,
     QTableWidget,
     QTabWidget,
     QTreeWidget,
@@ -27,12 +27,14 @@ from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.contabilita_worker import ContabilitaWorker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.attivita_tab import AttivitaProgrammateTab
 from src.gui.widgets.contabilita.certificati_tab import CertificatiCampioneTab
 from src.gui.widgets.contabilita.giornaliere_tab import GiornaliereYearTab
 from src.gui.widgets.contabilita.year_tab import ContabilitaYearTab
 from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -75,54 +77,98 @@ class ContabilitaPanel(QWidget):
         """Costruisce l'architettura dei tab e la toolbar unificata."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(15)
 
-        self.main_tabs = AnimatedTabWidget()
-        # self.main_tabs.setProperty("class", "Level2Tabs") # Rimosso per ora, stile gestito internamente
-        self.main_tabs.currentChanged.connect(self._on_main_tab_changed)
+        # --- UNIFIED TOOLBAR (Design Modern Card) ---
+        self.toolbar_card = ModernCard(elevation=10)
+        self.toolbar_card.setObjectName("filterBar")
 
-        # --- UNIFIED TOOLBAR ---
-        self.toolbar_container = QWidget()
-        toolbar_layout = QHBoxLayout(self.toolbar_container)
-        toolbar_layout.setContentsMargins(0, 0, 0, 0)
-        toolbar_layout.setSpacing(10)
+        toolbar_layout = QHBoxLayout(self.toolbar_card)
+        toolbar_layout.setContentsMargins(15, 10, 15, 10)
+        toolbar_layout.setSpacing(15)
 
-        self.selection_count_label = QLabel("Righe: 0")
-        self.selection_count_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-weight: 600; font-size: 12px;")
-        self.selection_sum_label = QLabel("Totale ORE: 0")
-        self.selection_sum_label.setStyleSheet(f"color: {COLORS['teal_accent']}; font-weight: 700; font-size: 12px;")
+        from src.gui.styles import LABEL_MUTED, LINEEDIT_STYLE
 
+        # Sezione Statistiche Rapide
+        stats_h = QHBoxLayout()
+        stats_h.setSpacing(20)
+
+        rows_v = QVBoxLayout()
+        rows_v.setSpacing(4)
+        lbl_rows = QLabel("RIGHE SELEZIONATE")
+        lbl_rows.setStyleSheet(LABEL_MUTED)
+        self.selection_count_label = QLabel("0")
+        self.selection_count_label.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 700; font-size: 14px;")
+        rows_v.addWidget(lbl_rows)
+        rows_v.addWidget(self.selection_count_label)
+        stats_h.addLayout(rows_v)
+
+        hours_v = QVBoxLayout()
+        hours_v.setSpacing(4)
+        lbl_hours = QLabel("TOTALE ORE")
+        lbl_hours.setStyleSheet(LABEL_MUTED)
+        self.selection_sum_label = QLabel("0")
+        self.selection_sum_label.setStyleSheet(f"color: {COLORS['teal_accent']}; font-weight: 800; font-size: 14px;")
+        hours_v.addWidget(lbl_hours)
+        hours_v.addWidget(self.selection_sum_label)
+        stats_h.addLayout(hours_v)
+
+        toolbar_layout.addLayout(stats_h)
+
+        # Divisore
+        v_line = QFrame()
+        v_line.setFrameShape(QFrame.Shape.VLine)
+        v_line.setFrameShadow(QFrame.Shadow.Plain)
+        v_line.setStyleSheet(f"color: {COLORS['border_light']};")
+        toolbar_layout.addWidget(v_line)
+
+        # Sezione Ricerca
+        search_v = QVBoxLayout()
+        search_v.setSpacing(4)
+        lbl_search = QLabel("CERCA NEI DATI")
+        lbl_search.setStyleSheet(LABEL_MUTED)
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Cerca nei dati...")
+        self.search_input.setPlaceholderText("Cerca ovunque...")
         self.search_input.setClearButtonEnabled(True)
-        self.search_input.setFixedWidth(250)
+        self.search_input.setMinimumWidth(300)
+        self.search_input.setStyleSheet(LINEEDIT_STYLE)
         self.search_input.textChanged.connect(self._on_search_changed)
+        search_v.addWidget(lbl_search)
+        search_v.addWidget(self.search_input)
+        toolbar_layout.addLayout(search_v)
+
+        toolbar_layout.addStretch()
+
+        # Info & Actions
+        info_v = QVBoxLayout()
+        info_v.setSpacing(4)
+        info_v.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         self.status_lbl = QLabel("Pronto")
-        self.status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.status_lbl.setStyleSheet("font-size: 12px;")
+        self.status_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px;")
         self.status_lbl.setTextFormat(Qt.TextFormat.RichText)
 
         self.update_btn = ModernButton(
-            "Aggiorna",
+            "AGGIORNA DATABASE",
             variant=ModernButton.Variant.PRIMARY,
+            size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.REFRESH),
         )
         self.update_btn.clicked.connect(self.start_import_process)
 
-        toolbar_layout.addWidget(self.selection_count_label)
-        toolbar_layout.addSpacing(10)
-        toolbar_layout.addWidget(self.selection_sum_label)
-        toolbar_layout.addSpacing(20)
-        toolbar_layout.addWidget(self.search_input)
-        toolbar_layout.addWidget(self.status_lbl)
-        toolbar_layout.addWidget(self.update_btn)
+        info_v.addWidget(self.status_lbl)
+        info_v.addWidget(self.update_btn)
+        toolbar_layout.addLayout(info_v)
 
-        layout.addWidget(self.toolbar_container)
+        layout.addWidget(self.toolbar_card)
+
+        # --- TABS ---
+        self.main_tabs = AnimatedTabWidget()
+        self.main_tabs.currentChanged.connect(self._on_main_tab_changed)
 
         # --- TABS ---
         self.year_tabs_widget = AnimatedTabWidget()
         self.year_tabs_widget.setTabPosition(QTabWidget.TabPosition.North)
-        # self.year_tabs_widget.setStyleSheet(self._get_subtab_style()) # Stile ora gestito internamente
         self.year_tabs_widget.currentChanged.connect(self._on_tab_changed)
         self.main_tabs.addTab(
             self.year_tabs_widget,
@@ -132,7 +178,6 @@ class ContabilitaPanel(QWidget):
 
         self.giornaliere_tabs_widget = AnimatedTabWidget()
         self.giornaliere_tabs_widget.setTabPosition(QTabWidget.TabPosition.North)
-        # self.giornaliere_tabs_widget.setStyleSheet(self._get_subtab_style())
         self.giornaliere_tabs_widget.currentChanged.connect(self._on_tab_changed)
         self.main_tabs.addTab(
             self.giornaliere_tabs_widget,
@@ -188,9 +233,7 @@ class ContabilitaPanel(QWidget):
         """Nasconde o mostra gli strumenti di ricerca in base al tab selezionato."""
         tab_text = self.main_tabs.tabText(index)
         is_kpi = "Analisi KPI" in tab_text
-        self.selection_count_label.setVisible(not is_kpi)
-        self.selection_sum_label.setVisible(not is_kpi)
-        self.search_input.setVisible(not is_kpi)
+        self.toolbar_card.setVisible(not is_kpi)
 
         if not is_kpi:
             self._connect_selection_signal()
@@ -280,7 +323,7 @@ class ContabilitaPanel(QWidget):
         """Esegue il calcolo granulare delle ore selezionate filtrando le righe nascoste."""
         with suppress(Exception):
             if isinstance(widget, QTreeWidget):
-                self.selection_count_label.setText(f"Selezionati: {len(widget.selectedItems())}")
+                self.selection_count_label.setText(str(len(widget.selectedItems())))
                 self.selection_sum_label.setText("")
                 return
 
@@ -293,8 +336,8 @@ class ContabilitaPanel(QWidget):
 
             indexes = model.selectedIndexes()
             if not indexes:
-                self.selection_count_label.setText("Righe: 0")
-                self.selection_sum_label.setText("Totale ORE: 0")
+                self.selection_count_label.setText("0")
+                self.selection_sum_label.setText("0")
                 return
 
             target_col = self._find_ore_column(widget)
@@ -319,8 +362,8 @@ class ContabilitaPanel(QWidget):
             else:
                 fmt_ore = str(int(total_ore))
 
-            self.selection_count_label.setText(f"Righe: {len(selected_rows)}")
-            self.selection_sum_label.setText(f"Totale ORE: {fmt_ore}")
+            self.selection_count_label.setText(str(len(selected_rows)))
+            self.selection_sum_label.setText(fmt_ore)
 
     def _find_ore_column(self, table: QTableWidget) -> int:
         """Individua l'indice della colonna contenente le ore in base all'header."""
@@ -367,6 +410,6 @@ class ContabilitaPanel(QWidget):
             self.refresh_tabs()
         else:
             self.status_lbl.setText("Errore")
-            QMessageBox.warning(self, "Errore", msg)
+            ConfirmationDialog.show_error(self, "Errore", msg)
         self.worker = None
         self.update_btn.setDisabled(False)

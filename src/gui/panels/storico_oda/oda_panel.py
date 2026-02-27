@@ -15,7 +15,6 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
-    QMessageBox,
     QSplitter,
     QTreeView,
     QVBoxLayout,
@@ -24,11 +23,14 @@ from PyQt6.QtWidgets import (
 
 from src.bots import create_bot
 from src.core import config_manager
+from src.core.constants import Icons
 from src.core.oda_manager import OdaManager
 from src.core.sync_tracker import SyncTracker
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.formatters import format_currency_smart, format_date_it
 from src.gui.panels.base import BotWorker
 from src.gui.styles import COLORS
+from src.gui.widgets import EmptyStateWidget
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
 
@@ -182,6 +184,15 @@ class StoricoOdaPanel(QWidget):
         self.detail_view = OdaDetailView(self.full_headers)
         self.splitter.addWidget(self.detail_view)
 
+        # --- EMPTY STATE ---
+        self.empty_state = EmptyStateWidget(
+            title="Nessun Ordine d'Acquisto",
+            message="Non è stato trovato alcun OdA corrispondente alla ricerca.\nProva ad aggiornare il database o a cambiare i filtri.",
+            icon_key=Icons.FOLDER
+        )
+        self.empty_state.setParent(self.tree)
+        self.empty_state.hide()
+
         self.splitter.setStretchFactor(0, 3)
         self.splitter.setStretchFactor(1, 1)
 
@@ -195,9 +206,23 @@ class StoricoOdaPanel(QWidget):
         try:
             full_rows = OdaManager.get_all_oda(search_text or None)
             self._raw_full_data = full_rows
+
+            # Mostra/Nascondi Empty State
+            if not full_rows:
+                self.empty_state.show()
+                self.empty_state.resize(self.tree.size())
+            else:
+                self.empty_state.hide()
+
             self._populate_tree(full_rows)
         except Exception as e:
             print(f"Errore caricamento Storico OdA: {e}")
+
+    def resizeEvent(self, event):
+        """Assicura che l'empty state segua il ridimensionamento della tabella."""
+        super().resizeEvent(event)
+        if hasattr(self, "empty_state") and self.empty_state.isVisible():
+            self.empty_state.resize(self.tree.size())
 
     def _populate_tree(self, full_rows: list[tuple[Any, ...]]):
         """Popola il modello ad albero raggruppando per ODA + POS."""
@@ -360,9 +385,9 @@ class StoricoOdaPanel(QWidget):
                 ToastManager.instance().show(f"Importazione completata: {added} righe aggiornate.", "success")
                 self.refresh_data()
             else:
-                QMessageBox.warning(self, "Errore Importazione", f"Impossibile importare:\n{message}")
+                ConfirmationDialog.show_warning(self, "Errore Importazione", f"Impossibile importare:\n{message}")
         except Exception as e:
-            QMessageBox.critical(self, "Errore Critico", f"Errore durante l'importazione:\n{e}")
+            ConfirmationDialog.show_error(self, "Errore Critico", f"Errore durante l'importazione:\n{e}")
 
     def _on_update_clicked(self):
         """Avvia il bot Dettagli OdA per sincronizzare i dati."""
@@ -371,7 +396,7 @@ class StoricoOdaPanel(QWidget):
 
             account = config_manager.get_default_account()
             if not account:
-                QMessageBox.warning(self, "Attenzione", "Credenziali ISAB non configurate.")
+                ConfirmationDialog.show_warning(self, "Attenzione", "Credenziali ISAB non configurate.")
                 return
             username, password = account.get("username"), account.get("password")
 
@@ -426,7 +451,7 @@ class StoricoOdaPanel(QWidget):
 
         except Exception as e:
             self.filters.btn_bot_update.setEnabled(True)
-            QMessageBox.critical(self, "Errore", f"Errore durante l'avvio del bot: {e}")
+            ConfirmationDialog.show_error(self, "Errore", f"Errore durante l'avvio del bot: {e}")
 
     def _on_bot_finished(self, success: bool):
         self.filters.btn_bot_update.setEnabled(True)
@@ -434,7 +459,7 @@ class StoricoOdaPanel(QWidget):
             ToastManager.instance().show("Aggiornamento completato!", "success")
             self.refresh_data()
         else:
-            QMessageBox.warning(self, "Errore", "Il bot ha terminato con errori. Controlla i log.")
+            ConfirmationDialog.show_warning(self, "Errore", "Il bot ha terminato con errori. Controlla i log.")
 
     def _show_confirmation_dialog(self, title: str, message: str) -> bool:
         dlg = QDialog(self)
@@ -481,4 +506,4 @@ class StoricoOdaPanel(QWidget):
 
             os.startfile(filename)  # noqa: S606
         except Exception as e:
-            QMessageBox.critical(self, "Errore Export", f"Impossibile esportare: {e}")
+            ConfirmationDialog.show_error(self, "Errore Export", f"Impossibile esportare: {e}")

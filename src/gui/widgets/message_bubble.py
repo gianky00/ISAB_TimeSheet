@@ -6,10 +6,8 @@ Estratto da lyra_panel.py per riutilizzabilità.
 
 import markdown
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QFrame,
-    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QVBoxLayout,
@@ -44,59 +42,76 @@ class MessageBubble(QFrame):
     def _setup_ui(self, sender: str, text: str) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
         # Container per l'allineamento
         container = QWidget()
         container_layout = QHBoxLayout(container)
-        container_layout.setContentsMargins(10, 5, 10, 5)
+        container_layout.setContentsMargins(20, 8, 20, 8)
+        container_layout.setSpacing(15)
 
         # La bolla effettiva
         bubble = QFrame()
+        bubble.setObjectName("chatBubble")
         bubble_layout = QVBoxLayout(bubble)
-        bubble_layout.setContentsMargins(15, 10, 15, 10)
-        bubble_layout.setSpacing(5)
+        bubble_layout.setContentsMargins(18, 12, 18, 12)
+        bubble_layout.setSpacing(6)
+
+        # Avatar / Name Initials
+        avatar = QLabel()
+        avatar.setFixedSize(32, 32)
+        avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Colori e stili basati sul mittente
         if self.is_lyra:
-            bg_color = COLORS["bg_alt"]
+            bg_color = "#f4f4f9"
             text_color = COLORS["text_dark"]
-            sender_color = COLORS["purple"]
-            bubble.setStyleSheet(
-                f"background-color: {bg_color}; "
-                f"border-radius: 15px; "
-                f"border-bottom-left-radius: 2px; "
-                f"border: 1px solid {COLORS['border_light']};"
-            )
+
+            avatar.setText("L")
+            avatar.setStyleSheet(f"""
+                background-color: {COLORS["purple"]};
+                color: white;
+                border-radius: 16px;
+                font-weight: 900;
+                font-size: 14px;
+            """)
+
+            bubble.setStyleSheet(f"""
+                QFrame#chatBubble {{
+                    background-color: {bg_color};
+                    border-radius: 20px;
+                    border-top-left-radius: 4px;
+                    border: 1px solid {COLORS["border_light"]};
+                }}
+            """)
+
+            container_layout.addWidget(avatar, alignment=Qt.AlignmentFlag.AlignTop)
             container_layout.addWidget(bubble)
             container_layout.addStretch()
         else:
             bg_color = COLORS["purple"]
             text_color = COLORS["bg_white"]
-            sender_color = COLORS["bg_hover"]
-            bubble.setStyleSheet(
-                f"background-color: {bg_color}; border-radius: 15px; border-bottom-right-radius: 2px;"
-            )
+
+            avatar.setText("U")
+            avatar.setStyleSheet(f"""
+                background-color: {COLORS["text_muted"]};
+                color: white;
+                border-radius: 16px;
+                font-weight: 900;
+                font-size: 14px;
+            """)
+
+            bubble.setStyleSheet(f"""
+                QFrame#chatBubble {{
+                    background-color: {bg_color};
+                    border-radius: 20px;
+                    border-top-right-radius: 4px;
+                }}
+            """)
+
             container_layout.addStretch()
             container_layout.addWidget(bubble)
-
-        # Shadow
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(10)
-        shadow.setXOffset(0)
-        shadow.setYOffset(2)
-        shadow.setColor(QColor(0, 0, 0, 30))
-        bubble.setGraphicsEffect(shadow)
-
-        # Sender Label
-        lbl_sender = QLabel(sender)
-        lbl_sender.setStyleSheet(
-            f"font-weight: bold; "
-            f"font-size: 11px; "
-            f"color: {sender_color}; "
-            f"background: transparent; "
-            f"border: none;"
-        )
-        bubble_layout.addWidget(lbl_sender)
+            container_layout.addWidget(avatar, alignment=Qt.AlignmentFlag.AlignTop)
 
         # Message Label (Markdown Support via RichText)
         lbl_msg = QLabel()
@@ -105,19 +120,19 @@ class MessageBubble(QFrame):
         lbl_msg.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
 
         # Formattazione Markdown per HTML
-        html_text = markdown.markdown(text, extensions=["tables", "fenced_code"])
+        html_text = markdown.markdown(text, extensions=["tables", "fenced_code", "nl2br"])
 
         # Custom styles for table inside bubble
         if self.is_lyra:
             style_table = (
-                'border="1" cellspacing="0" cellpadding="5" '
+                'border="1" cellspacing="0" cellpadding="8" '
                 'style="border-collapse: collapse; width: 100%; '
-                f'margin-top: 5px; border-color: {COLORS["border_light"]};"'
+                f'margin-top: 10px; border: 1px solid {COLORS["border_light"]}; border-radius: 8px;"'
             )
             html_text = html_text.replace("<table>", f"<table {style_table}>")
 
         lbl_msg.setText(
-            f"<div style='color: {text_color}; font-size: 14px; line-height: 1.4;'>{html_text}</div>"
+            f"<div style='color: {text_color}; font-size: 14px; line-height: 1.5;'>{html_text}</div>"
         )
         lbl_msg.setStyleSheet("background: transparent; border: none;")
         bubble_layout.addWidget(lbl_msg)

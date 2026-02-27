@@ -42,6 +42,7 @@ class AppInitializer:
         """
 
         def step(msg: str) -> None:
+            """Logga un passo dell'inizializzazione."""
             logger.info(f"[INIT CORE] {msg}")
 
         try:

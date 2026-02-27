@@ -173,102 +173,93 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _setup_content(self):
         """Configura l'interfaccia utente del pannello (Parametri, Tabella, Status)."""
-        # --- 1. CARD PARAMETRI (Floating Card) ---
+        # --- 1. CARD PARAMETRI (Design Modern Card) ---
         self.params_container = QFrame()
-        self.params_container.setObjectName("paramsContainer")
+        self.params_container.setObjectName("filterBar")
         self.params_container.setStyleSheet(f"""
-            QFrame#paramsContainer {{
+            QFrame#filterBar {{
                 background-color: {COLORS["bg_white"]};
                 border: 1px solid {COLORS["border_light"]};
-                border-bottom: 3px solid {COLORS["text_dark"]};
                 border-radius: 12px;
-            }}
-            QLabel {{
-                color: {COLORS["text_dark"]};
-                font-weight: bold;
-                font-size: 13px;
-                background: transparent;
             }}
         """)
 
-        # Applica Ombra (Shadow Effect)
-        from PyQt6.QtGui import QColor
-        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+        params_layout = QHBoxLayout(self.params_container)
+        params_layout.setContentsMargins(15, 10, 15, 10)
+        params_layout.setSpacing(20)
 
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(25)
-        shadow.setXOffset(0)
-        shadow.setYOffset(8)
-        shadow.setColor(QColor(0, 0, 0, 40))
-        self.params_container.setGraphicsEffect(shadow)
-
-        params_layout = QVBoxLayout(self.params_container)
-        params_layout.setContentsMargins(15, 15, 15, 15)
-        params_layout.setSpacing(10)
-
-        # Riga unica per tutte le opzioni
-        options_layout = QHBoxLayout()
-        options_layout.setSpacing(15)
+        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
 
         # 1. Stampa
         vbox_print = QVBoxLayout()
-        vbox_print.addWidget(QLabel("Opzioni Stampa"))
+        vbox_print.setSpacing(4)
+        lbl_print = QLabel("OPZIONI STAMPA")
+        lbl_print.setStyleSheet(LABEL_MUTED)
+        vbox_print.addWidget(lbl_print)
 
         hbox_print = QHBoxLayout()
-        self.print_check = QCheckBox("Stampa con:")
+        hbox_print.setSpacing(8)
+        self.print_check = QCheckBox("Attiva")
         self.print_check.stateChanged.connect(self._save_data)
+        self.print_check.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 500;")
         hbox_print.addWidget(self.print_check)
 
         self.printer_combo = QComboBox()
         self.printer_combo.setMinimumHeight(38)
         self.printer_combo.setMinimumWidth(180)
-        self.printer_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
-        self.printer_combo.setStyleSheet(
-            f"""
-            QComboBox {{
-                border: 1px solid {COLORS["border_medium"]};
-                border-radius: 6px;
-                padding: 5px 10px;
-                background-color: {COLORS["bg_light"]};
-            }}
-            QComboBox:focus {{ border: 2px solid {COLORS["text_dark"]}; background-color: {COLORS["bg_white"]}; }}
-        """
-        )
+        self.printer_combo.setStyleSheet(COMBOBOX_STYLE)
         # Popola stampanti
         printers = get_installed_printers()
         if printers:
             self.printer_combo.addItems(printers)
         else:
-            self.printer_combo.addItem("Nessuna stampante trovata")
+            self.printer_combo.addItem("Nessuna stampante")
         self.printer_combo.currentTextChanged.connect(self._save_data)
         hbox_print.addWidget(self.printer_combo)
         vbox_print.addLayout(hbox_print)
-        options_layout.addLayout(vbox_print)
+        params_layout.addLayout(vbox_print)
+
+        # Divisore
+        v_line1 = QFrame()
+        v_line1.setFrameShape(QFrame.Shape.VLine)
+        v_line1.setFrameShadow(QFrame.Shadow.Plain)
+        v_line1.setStyleSheet(f"color: {COLORS['border_light']};")
+        params_layout.addWidget(v_line1)
 
         # 2. Merge
         vbox_merge = QVBoxLayout()
-        vbox_merge.addWidget(QLabel("Unione PDF"))
-        self.merge_all_check = QCheckBox("Unisci in unico file")
-        self.merge_all_check.setToolTip(
-            "Se attivo, alla fine scaricherà un unico file PDF contenente tutti i PDL."
-        )
+        vbox_merge.setSpacing(4)
+        lbl_merge = QLabel("UNIONE PDF")
+        lbl_merge.setStyleSheet(LABEL_MUTED)
+        vbox_merge.addWidget(lbl_merge)
+        self.merge_all_check = QCheckBox("Unisci tutti in unico file")
+        self.merge_all_check.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 500;")
         self.merge_all_check.stateChanged.connect(self._save_data)
         vbox_merge.addWidget(self.merge_all_check)
-        options_layout.addLayout(vbox_merge)
+        params_layout.addLayout(vbox_merge)
+
+        # Divisore
+        v_line2 = QFrame()
+        v_line2.setFrameShape(QFrame.Shape.VLine)
+        v_line2.setFrameShadow(QFrame.Shadow.Plain)
+        v_line2.setStyleSheet(f"color: {COLORS['border_light']};")
+        params_layout.addWidget(v_line2)
 
         # 3. Destinazione
         vbox_dest = QVBoxLayout()
-        vbox_dest.addWidget(QLabel("Destinazione"))
+        vbox_dest.setSpacing(4)
+        lbl_dest = QLabel("DESTINAZIONE")
+        lbl_dest.setStyleSheet(LABEL_MUTED)
+        vbox_dest.addWidget(lbl_dest)
 
         hbox_dest = QHBoxLayout()
+        hbox_dest.setSpacing(8)
         self.dest_path_edit = QLineEdit()
-        self.dest_path_edit.setPlaceholderText("Download utente (default)")
+        self.dest_path_edit.setPlaceholderText("Download (default)")
         self.dest_path_edit.setReadOnly(True)
-        self.dest_path_edit.setMinimumWidth(200)
+        self.dest_path_edit.setMinimumWidth(180)
         self.dest_path_edit.setMinimumHeight(38)
-        self.dest_path_edit.setStyleSheet(
-            f"border: 1px solid {COLORS['border_medium']}; border-radius: 6px; padding: 5px; background-color: {COLORS['bg_light']};"
-        )
+        self.dest_path_edit.setStyleSheet(LINEEDIT_STYLE)
         hbox_dest.addWidget(self.dest_path_edit)
 
         browse_btn = QPushButton()
@@ -278,21 +269,18 @@ class ScaricoPDLPanel(BaseBotPanel):
         browse_btn.clicked.connect(self._browse_dest_path)
         browse_btn.setStyleSheet(f"""
             QPushButton {{ background-color: {COLORS["bg_white"]}; border: 1px solid {COLORS["border_medium"]}; border-radius: 6px; }}
-            QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; border-color: {COLORS["text_dark"]}; }}
+            QPushButton:hover {{ background-color: {COLORS["bg_light"]}; border-color: {COLORS["text_dark"]}; }}
         """)
         hbox_dest.addWidget(browse_btn)
         vbox_dest.addLayout(hbox_dest)
-        options_layout.addLayout(vbox_dest)
+        params_layout.addLayout(vbox_dest)
 
-        options_layout.addStretch()
-        params_layout.addLayout(options_layout)
+        params_layout.addStretch()
 
         # Aggiunta Card Parametri al layout principale
         params_wrapper = QWidget()
         wrapper_layout = QVBoxLayout(params_wrapper)
-        wrapper_layout.setContentsMargins(
-            10, 10, 10, 5
-        )  # Margine inferiore ridotto per avvicinare la tabella
+        wrapper_layout.setContentsMargins(10, 10, 10, 5)
         wrapper_layout.addWidget(self.params_container)
         self.content_layout.addWidget(params_wrapper)
 
@@ -315,7 +303,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         work_area.setSpacing(10)
         work_area.setContentsMargins(0, 0, 0, 0)
 
-        # Sinistra: Card Tabella (già implementata come card neon cyan via EditableDataTable)
+        # Sinistra: Card Tabella
         self.data_table = EditableDataTable([{"name": "NUMERO PDL", "type": "text"}])
         self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
@@ -327,10 +315,8 @@ class ScaricoPDLPanel(BaseBotPanel):
         status_container.setSpacing(0)
         status_container.setContentsMargins(0, 0, 0, 0)
 
-        status_header = QLabel("Progresso")
-        status_header.setStyleSheet(
-            f"font-weight: bold; font-size: 12px; color: {COLORS['text_muted']}; padding: 4px 0px;"
-        )
+        status_header = QLabel("PROGRESSO")
+        status_header.setStyleSheet(LABEL_MUTED)
         status_header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         status_container.addWidget(status_header)
 

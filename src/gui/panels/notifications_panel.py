@@ -103,23 +103,28 @@ class NotificationsPanel(QWidget):
         self.toolbar.sort_changed.connect(self._on_sort_changed)
         nl.addWidget(self.toolbar)
 
-        actions_layout = QHBoxLayout()
+        # Barra Azioni integrata meglio
+        actions_card = QFrame()
+        actions_card.setStyleSheet("background: transparent; border: none;")
+        actions_layout = QHBoxLayout(actions_card)
+        actions_layout.setContentsMargins(10, 0, 10, 0)
+
         actions_layout.addStretch()
 
         mark_read = ModernButton(
-            "Segna letti", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL
+            "SEGNA TUTTI COME LETTI", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.CHECK_CIRCLE)
         )
-        mark_read.setMinimumWidth(120)
-        mark_read.setFixedHeight(40)
         mark_read.clicked.connect(self.manager.mark_all_as_read)
         actions_layout.addWidget(mark_read)
 
-        clear = ModernButton("Svuota", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL)
-        clear.setMinimumWidth(120)
-        clear.setFixedHeight(40)
+        clear = ModernButton(
+            "SVUOTA TUTTO", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.TRASH)
+        )
         clear.clicked.connect(self._clear_notifications)
         actions_layout.addWidget(clear)
-        nl.addLayout(actions_layout)
+        nl.addWidget(actions_card)
 
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)

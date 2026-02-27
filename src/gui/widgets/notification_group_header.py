@@ -47,48 +47,24 @@ class NotificationGroupHeader(QFrame):
         self.setStyleSheet(
             f"""
             NotificationGroupHeader {{
-                background-color: {COLORS['bg_light']};
-                border-radius: 8px;
+                background-color: {COLORS['bg_hover']};
+                border-radius: 10px;
                 border: 1px solid {COLORS['border_light']};
             }}
             NotificationGroupHeader:hover {{
-                background-color: {COLORS['bg_hover']};
+                background-color: {COLORS['bg_light']};
                 border-color: {COLORS['border_medium']};
             }}
         """
         )
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(12, 8, 12, 8)
-        layout.setSpacing(8)
-
-        # Collapse/Expand arrow
-        self.arrow_btn = QLabel()
-        self.arrow_btn.setText("▼" if self._is_expanded else "▶")
-        self.arrow_btn.setStyleSheet(
-            f"""
-            QLabel {{
-                color: {COLORS['text_muted']};
-                font-size: 12px;
-                font-weight: bold;
-                border: none;
-                background: transparent;
-            }}
-        """
-        )
-        layout.addWidget(self.arrow_btn)
+        layout.setContentsMargins(15, 10, 15, 10)
+        layout.setSpacing(10)
 
         # Icon
         icon_lbl = QLabel(self._icon)
-        icon_lbl.setStyleSheet(
-            """
-            QLabel {
-                font-size: 16px;
-                border: none;
-                background: transparent;
-            }
-        """
-        )
+        icon_lbl.setStyleSheet("font-size: 18px; border: none; background: transparent;")
         layout.addWidget(icon_lbl)
 
         # Title
@@ -96,11 +72,11 @@ class NotificationGroupHeader(QFrame):
         self.title_lbl.setStyleSheet(
             f"""
             QLabel {{
-                font-weight: 700;
-                font-size: 13px;
+                font-weight: 800;
+                font-size: 12px;
                 color: {COLORS['text_dark']};
                 text-transform: uppercase;
-                letter-spacing: 0.5px;
+                letter-spacing: 1px;
                 border: none;
                 background: transparent;
             }}
@@ -109,15 +85,17 @@ class NotificationGroupHeader(QFrame):
         layout.addWidget(self.title_lbl)
 
         # Count badge
-        self.count_lbl = QLabel(f"({self._count})")
+        self.count_lbl = QLabel(str(self._count))
         self.count_lbl.setStyleSheet(
             f"""
             QLabel {{
-                font-weight: 600;
-                font-size: 12px;
-                color: {COLORS['text_muted']};
+                font-weight: 700;
+                font-size: 10px;
+                color: white;
+                background-color: {COLORS['text_muted']};
+                padding: 2px 8px;
+                border-radius: 10px;
                 border: none;
-                background: transparent;
             }}
         """
         )
@@ -125,17 +103,34 @@ class NotificationGroupHeader(QFrame):
 
         layout.addStretch()
 
+        # Collapse/Expand arrow (moved to the right)
+        self.arrow_btn = QLabel()
+        self.arrow_btn.setText("SCENDI" if self._is_expanded else "ESPANDI")
+        self.arrow_btn.setStyleSheet(
+            f"""
+            QLabel {{
+                color: {COLORS['text_muted']};
+                font-size: 9px;
+                font-weight: 900;
+                letter-spacing: 0.5px;
+                border: none;
+                background: transparent;
+            }}
+        """
+        )
+        layout.addWidget(self.arrow_btn)
+
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Toggle expanded state on click."""
         self._is_expanded = not self._is_expanded
-        self.arrow_btn.setText("▼" if self._is_expanded else "▶")
+        self.arrow_btn.setText("SCENDI" if self._is_expanded else "ESPANDI")
         self.toggled.emit(self.group_key, self._is_expanded)
         super().mousePressEvent(event)
 
     def set_count(self, count: int) -> None:
         """Update count badge."""
         self._count = count
-        self.count_lbl.setText(f"({count})")
+        self.count_lbl.setText(str(count))
 
     def is_expanded(self) -> bool:
         """Check if group is expanded."""
@@ -144,4 +139,4 @@ class NotificationGroupHeader(QFrame):
     def set_expanded(self, expanded: bool) -> None:
         """Set expanded state programmatically."""
         self._is_expanded = expanded
-        self.arrow_btn.setText("▼" if expanded else "▶")
+        self.arrow_btn.setText("SCENDI" if expanded else "ESPANDI")

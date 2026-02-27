@@ -218,6 +218,7 @@ class HelpPanel(QWidget):
                 item.setHidden(text not in item.text().lower())
 
     def open_section(self, section_title: str) -> None:
+        """Naviga alla sezione specificata nella lista dell'indice."""
         for i in range(self.index_list.count()):
             item = self.index_list.item(i)
             if item and section_title.lower() in item.text().lower():

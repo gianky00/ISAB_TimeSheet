@@ -1,3 +1,8 @@
+"""
+SyncroJob - Status Card (Modern)
+Card per la status bar che mostra lo stato di un servizio con ombre morbide.
+"""
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
@@ -5,36 +10,30 @@ from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 from src.core.constants import Icons
 from src.gui.design.colors import get_palette
 from src.gui.styles import COLORS
+from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
-class StatusCard(QFrame):
+class StatusCard(ModernCard):
     """
     Card per la status bar che mostra lo stato di un servizio.
-    Layout: [Icona] | [Titolo]     | [BADGE AUTOPILOT]
-                    | [Stato]      |
+    Eredita da ModernCard per ombre e hover premium.
     """
 
     clicked = pyqtSignal()
 
     def __init__(self, title: str, status: str = "In attesa", parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        self.setFrameShape(QFrame.Shape.StyledPanel)
-        self.setFrameShadow(QFrame.Shadow.Raised)
-        self.setCursor(Qt.CursorShape.PointingHandCursor)  # Cursore pointer per indicare cliccabilità
-        self.setStyleSheet(
-            f"""
-            StatusCard {{
+        super().__init__(parent, elevation=8)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        # Override base style for status bar context
+        self.setStyleSheet(f"""
+            QFrame#modernCard {{
                 background-color: {COLORS["bg_white"]};
                 border: 1px solid {COLORS["border_light"]};
                 border-radius: 8px;
             }}
-            StatusCard:hover {{
-                background-color: {COLORS["bg_hover"]};
-                border-color: {COLORS["teal_accent"]};
-            }}
-            """
-        )
+        """)
 
         self._palette = get_palette()
         layout = QHBoxLayout(self)
@@ -76,17 +75,17 @@ class StatusCard(QFrame):
 
         layout.addLayout(text_layout)
 
-        # 3. Spacer elastico (spinge il badge a destra)
+        # 3. Spacer elastico
         layout.addStretch()
 
-        # 4. Badge Autopilot (Grande, a destra)
+        # 4. Badge Autopilot
         self._meta_label = QLabel()
         self._meta_label.setVisible(False)
         self._meta_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self._meta_label)
 
     def setStatus(self, message: str, status_id: str | None = None) -> None:
-        """Imposta il testo di stato e opzionalmente il colore dell'indicatore."""
+        """Aggiorna il messaggio di stato e il colore della barra laterale."""
         self._status_label.setText(message)
         if status_id:
             self._status = status_id
@@ -95,14 +94,10 @@ class StatusCard(QFrame):
             )
 
     def setAutopilot(self, active: bool, text: str = "") -> None:
-        """
-        Imposta l'indicatore dell'autopilot.
-        Ora il badge è posizionato a destra e occupa visivamente più spazio verticale.
-        """
+        """Mostra o nasconde l'indicatore Autopilot."""
         if active:
             self._meta_label.setText(text.upper() or "AUTO")
             self._meta_label.setVisible(True)
-            # Stile "Big Badge": font 11px, grassetto, padding generoso
             self._meta_label.setStyleSheet(
                 f"""
                 font-size: 11px;
@@ -118,10 +113,10 @@ class StatusCard(QFrame):
             self._meta_label.setVisible(False)
 
     def _update_status_display(self, message: str) -> None:
-        """Aggiorna solo il testo dello stato (per compatibilità)."""
+        """Metodo di compatibilità per l'aggiornamento rapido dello stato."""
         self._status_label.setText(message)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
-        """Emette il segnale clicked quando la card viene cliccata."""
+        """Emette il segnale di click."""
         self.clicked.emit()
         super().mousePressEvent(event)
