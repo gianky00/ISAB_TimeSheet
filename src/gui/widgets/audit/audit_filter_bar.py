@@ -6,99 +6,133 @@ Widget per la configurazione dei filtri di ricerca e visualizzazione all'interno
 from collections.abc import Sequence
 from typing import Any
 
-from PyQt6.QtCore import QDate, pyqtSignal
+from PyQt6.QtCore import QDate, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QPushButton,
+    QVBoxLayout,
     QWidget,
 )
 
 from src.core.constants import Icons
-from src.gui.styles import COLORS
+from src.gui.styles import COLORS, COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
 from src.gui.widgets.calendar_date_edit import CalendarDateEdit
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets.modern_card import ModernCard
+from src.utils.helpers import get_asset_path
 
 
-class AuditFilterBar(QFrame):
+class AuditFilterBar(ModernCard):
     """
-    Barra dei filtri per l'Audit Log.
-    Permette di filtrare i log per range temporale, categoria, livello di severità e ricerca testuale.
+    Barra dei filtri per l'Audit Log con design Enterprise.
     """
 
     filters_applied = pyqtSignal(dict)
-    """Segnale emesso quando l'utente clicca su 'Filtra', contenente il dizionario dei parametri."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """
-        Inizializza la barra dei filtri.
-
-        Args:
-            parent: Widget genitore.
-        """
-        super().__init__(parent)
-        self.setStyleSheet(f"background-color: {COLORS['bg_light']}; border-radius: 6px; border: 1px solid {COLORS['border_light']};")
+        super().__init__(parent, elevation=8)
         self._setup_ui()
 
     def _setup_ui(self) -> None:
         """Configura il layout orizzontale e inizializza i widget dei filtri."""
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(10)
+        layout.setContentsMargins(15, 10, 15, 10)
+        layout.setSpacing(15)
 
-        # Date Range
+        # 1. Date Range
+        range_h = QHBoxLayout()
+        range_h.setSpacing(8)
+
+        v_da = QVBoxLayout()
+        v_da.setSpacing(4)
+        lbl_da = QLabel("DAL")
+        lbl_da.setStyleSheet(LABEL_MUTED)
         self.date_from = CalendarDateEdit()
         self.date_from.setDate(QDate.currentDate().addDays(-7))
-        self.date_from.setDisplayFormat("dd/MM/yyyy")
-        self.date_from.setMinimumWidth(180)
-        self.date_from.setMaximumWidth(220)
+        self.date_from.setMinimumWidth(120)
+        self.date_from.setStyleSheet(COMBOBOX_STYLE)
+        v_da.addWidget(lbl_da)
+        v_da.addWidget(self.date_from)
+        range_h.addLayout(v_da)
 
+        v_a = QVBoxLayout()
+        v_a.setSpacing(4)
+        lbl_a = QLabel("AL")
+        lbl_a.setStyleSheet(LABEL_MUTED)
         self.date_to = CalendarDateEdit()
         self.date_to.setDate(QDate.currentDate())
-        self.date_to.setDisplayFormat("dd/MM/yyyy")
-        self.date_to.setMinimumWidth(180)
-        self.date_to.setMaximumWidth(220)
+        self.date_to.setMinimumWidth(120)
+        self.date_to.setStyleSheet(COMBOBOX_STYLE)
+        v_a.addWidget(lbl_a)
+        v_a.addWidget(self.date_to)
+        range_h.addLayout(v_a)
 
-        layout.addWidget(QLabel("Dal:"))
-        layout.addWidget(self.date_from)
-        layout.addWidget(QLabel("Al:"))
-        layout.addWidget(self.date_to)
+        layout.addLayout(range_h)
 
-        # Categoria
+        # Vertical Divider
+        v_line1 = QFrame()
+        v_line1.setFrameShape(QFrame.Shape.VLine)
+        v_line1.setFrameShadow(QFrame.Shadow.Plain)
+        v_line1.setStyleSheet(f"color: {COLORS['border_light']};")
+        layout.addWidget(v_line1)
+
+        # 2. Categoria & Livello
+        filter_group = QHBoxLayout()
+        filter_group.setSpacing(12)
+
+        cat_v = QVBoxLayout()
+        cat_v.setSpacing(4)
+        lbl_cat = QLabel("CATEGORIA")
+        lbl_cat.setStyleSheet(LABEL_MUTED)
         self.cat_combo = QComboBox()
         self.cat_combo.addItem("Tutte")
-        self.cat_combo.setFixedWidth(150)
-        layout.addWidget(self.cat_combo)
+        self.cat_combo.setMinimumWidth(140)
+        self.cat_combo.setStyleSheet(COMBOBOX_STYLE)
+        cat_v.addWidget(lbl_cat)
+        cat_v.addWidget(self.cat_combo)
+        filter_group.addLayout(cat_v)
 
-        # Livello
+        lvl_v = QVBoxLayout()
+        lvl_v.setSpacing(4)
+        lbl_lvl = QLabel("LIVELLO")
+        lbl_lvl.setStyleSheet(LABEL_MUTED)
         self.level_combo = QComboBox()
         self.level_combo.addItems(["Tutti", "Info (Low)", "Warning (Med)", "Error (High)"])
-        self.level_combo.setFixedWidth(130)
-        layout.addWidget(self.level_combo)
+        self.level_combo.setMinimumWidth(130)
+        self.level_combo.setStyleSheet(COMBOBOX_STYLE)
+        lvl_v.addWidget(lbl_lvl)
+        lvl_v.addWidget(self.level_combo)
+        filter_group.addLayout(lvl_v)
 
-        # Search
+        layout.addLayout(filter_group)
+
+        # 3. Search
+        search_v = QVBoxLayout()
+        search_v.setSpacing(4)
+        lbl_search = QLabel("TESTO")
+        lbl_search.setStyleSheet(LABEL_MUTED)
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("Cerca nei log...")
-        self.search_edit.setStyleSheet(f"border: 1px solid {COLORS['border_medium']}; border-radius: 4px; padding: 4px;")
-        layout.addWidget(self.search_edit)
+        self.search_edit.setMinimumWidth(200)
+        self.search_edit.setStyleSheet(LINEEDIT_STYLE)
+        search_v.addWidget(lbl_search)
+        search_v.addWidget(self.search_edit)
+        layout.addLayout(search_v)
 
-        # Btn Applica
-        apply_btn = QPushButton("Filtra")
-        apply_btn.setIcon(get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["bg_white"]))
-        apply_btn.setStyleSheet(
-            f"""
-            QPushButton {{
-                background-color: {COLORS['primary_dark']}; color: {COLORS['bg_white']}; border: none;
-                border-radius: 4px; padding: 6px 12px; font-weight: bold;
-            }}
-            QPushButton:hover {{ background-color: {COLORS['primary_blue']}; }}
-        """
+        layout.addStretch()
+
+        # 4. Btn Applica
+        self.apply_btn = ModernButton(
+            "FILTRA",
+            variant=ModernButton.Variant.PRIMARY,
+            size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.SEARCH)
         )
-        apply_btn.clicked.connect(self._emit_filters)
-        layout.addWidget(apply_btn)
+        self.apply_btn.clicked.connect(self._emit_filters)
+        layout.addWidget(self.apply_btn, alignment=Qt.AlignmentFlag.AlignBottom)
 
     def set_categories(self, categories: Sequence[str]) -> None:
         """

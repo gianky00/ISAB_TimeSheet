@@ -17,29 +17,23 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QScrollArea,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
 
+from src.core.constants import Icons
 from src.gui.styles import COLORS
-from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets import ModernButton, ModernCard
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class HealthScoreBadge(QWidget):
     """
-    Widget circolare (Gauge) che rappresenta visivamente l'Health Score.
-    Cambia colore (verde, giallo, arancio, rosso) in base al punteggio percentuale.
+    Widget circolare (Gauge) Premium per l'Health Score.
+    Implementa gradienti dinamici e ombre interne per un look Next-Gen.
     """
 
-    def __init__(self, parent: QWidget | None = None, size: int = 160) -> None:
-        """
-        Inizializza il badge del punteggio salute.
-
-        Args:
-            parent: Widget genitore.
-            size: Diametro del widget in pixel.
-        """
+    def __init__(self, parent: QWidget | None = None, size: int = 180) -> None:
         super().__init__(parent)
         self._score = 100
         self._size = size
@@ -47,17 +41,14 @@ class HealthScoreBadge(QWidget):
 
     @property
     def score(self) -> int:
-        """Restituisce il punteggio attuale (0-100)."""
         return self._score
 
     @score.setter
     def score(self, value: int) -> None:
-        """Imposta il punteggio e richiede il ridisegno del widget."""
         self._score = max(0, min(100, value))
         self.update()
 
-    def _get_color(self) -> QColor:
-        """Determina il colore dell'arco in base alla soglia di punteggio."""
+    def _get_gradient(self) -> QColor:
         if self._score >= 80:
             return QColor(COLORS["success_green"])
         if self._score >= 60:
@@ -67,156 +58,162 @@ class HealthScoreBadge(QWidget):
         return QColor(COLORS["error_red"])
 
     def _get_status_text(self) -> str:
-        """Restituisce la label testuale associata al punteggio."""
         if self._score >= 80:
-            return "OTTIMO"
+            return "SISTEMA OTTIMO"
         if self._score >= 60:
-            return "DISCRETO"
+            return "SISTEMA STABILE"
         if self._score >= 40:
-            return "ATTENZIONE"
-        return "CRITICO"
+            return "ATTENZIONE RICHIESTA"
+        return "STATO CRITICO"
 
     def paintEvent(self, event) -> None:
-        """Esegue il rendering personalizzato dell'arco di progresso tramite QPainter."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        margin, arc_width = 15, 12
-        rect = QRectF(margin, margin, self._size - 2 * margin, self._size - 2 * margin)
 
-        painter.setPen(
-            QPen(QColor(COLORS["bg_hover"]), arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
-        )
-        painter.drawEllipse(rect)
+        center = self.rect().center()
+        radius = (self._size // 2) - 10
+        arc_width = 14
 
-        painter.setPen(QPen(self._get_color(), arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
-        painter.drawArc(rect, 90 * 16, -int(360 * 16 * self._score / 100))
+        # 1. Background Circle (Track)
+        bg_pen = QPen(QColor(COLORS["bg_hover"]), arc_width)
+        bg_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        painter.setPen(bg_pen)
+        painter.drawEllipse(center, radius, radius)
 
+        # 2. Progress Arc with Gradient
+        color = self._get_gradient()
+        grad_pen = QPen(color, arc_width)
+        grad_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        painter.setPen(grad_pen)
+
+        rect = QRectF(center.x() - radius, center.y() - radius, radius * 2, radius * 2)
+        start_angle = 90 * 16
+        span_angle = -int(360 * 16 * (self._score / 100))
+        painter.drawArc(rect, start_angle, span_angle)
+
+        # 3. Inner Shadow/Circle
+        inner_radius = radius - 15
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor(COLORS["bg_white"]))
-        painter.drawEllipse(rect.adjusted(18, 18, -18, -18))
+        painter.setBrush(QColor(255, 255, 255, 200))
+        painter.drawEllipse(center, inner_radius, inner_radius)
 
+        # 4. Score Text
         painter.setPen(QColor(COLORS["text_dark"]))
-        painter.setFont(QFont("Segoe UI", 36, QFont.Weight.Bold))
-        painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, str(self._score))
+        font = QFont("Segoe UI", 38, QFont.Weight.Black)
+        painter.setFont(font)
+        painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, str(self._score))
 
 
-class StatCard(QFrame):
-    """Card informativa minimalista per visualizzare singole metriche (es. Bot Run, Error Rate)."""
+class StatCard(ModernCard):
+    """Card statistica Premium con elevazione e icone colorate."""
 
     def __init__(
         self,
         title: str,
         value: str = "0",
-        icon: str = "",
+        icon_key: str = Icons.ACTIVITY,
         color: str | None = None,
         parent: QWidget | None = None,
     ) -> None:
-        """
-        Inizializza la card statistica.
-
-        Args:
-            title: Etichetta della metrica.
-            value: Valore visualizzato.
-            icon: Emoji o carattere icona.
-            color: Colore primario della card (bordo e testo).
-            parent: Widget genitore.
-        """
-        super().__init__(parent)
-        self._value_label: QLabel | None = None
+        super().__init__(parent, elevation=10)
         self._color = color or COLORS["info_blue"]
-        self._setup_ui(title, value, icon, self._color)
+        self.setMinimumSize(160, 100)
+        self._setup_content(title, value, icon_key, self._color)
 
-    def _setup_ui(self, title: str, value: str, icon: str, color: str) -> None:
-        """Configura lo stile CSS e il layout interno della card."""
-        self.setStyleSheet(
-            f"QFrame {{ background-color: {COLORS['bg_white']}; border-radius: 12px; border: 1px solid {COLORS['border_light']}; border-left: 4px solid {color}; }}"
-        )
-        self.setMinimumSize(140, 95)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        layout = QVBoxLayout(self)
+    def _setup_content(self, title: str, value: str, icon_key: str, color: str) -> None:
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(12)
 
-        header = QHBoxLayout()
-        if icon:
-            lbl_icon = QLabel(icon)
-            lbl_icon.setStyleSheet("font-size: 18px; border: none;")
-            header.addWidget(lbl_icon)
-        lbl_title = QLabel(title)
-        lbl_title.setStyleSheet(
-            f"color: {COLORS['text_muted']}; font-size: 12px; font-weight: 500; border: none;"
-        )
-        header.addWidget(lbl_title)
-        header.addStretch()
-        layout.addLayout(header)
+        # Icon Container
+        self.icon_box = QWidget()
+        self.icon_box.setFixedSize(42, 42)
+        self.icon_box.setStyleSheet(f"background: {color}15; border-radius: 10px;")
+        ib_layout = QVBoxLayout(self.icon_box)
+        ib_layout.setContentsMargins(0, 0, 0, 0)
+        ib_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self._value_label = QLabel(value)
-        self._value_label.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: bold; border: none;")
-        layout.addWidget(self._value_label)
+        icon_lbl = QLabel()
+        icon_lbl.setPixmap(get_colored_icon(get_asset_path(icon_key), color).pixmap(22, 22))
+        ib_layout.addWidget(icon_lbl)
+        layout.addWidget(self.icon_box)
+
+        # Text Column
+        text_v = QVBoxLayout()
+        text_v.setSpacing(2)
+
+        self.title_lbl = QLabel(title.upper())
+        self.title_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px; font-weight: 800; letter-spacing: 0.5px;")
+
+        self.val_lbl = QLabel(value)
+        self.val_lbl.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 22px; font-weight: 900;")
+
+        text_v.addWidget(self.title_lbl)
+        text_v.addWidget(self.val_lbl)
+        layout.addLayout(text_v)
+        layout.addStretch()
 
     def set_value(self, value: str) -> None:
-        """Aggiorna dinamicamente il testo del valore nella card."""
-        if self._value_label:
-            self._value_label.setText(value)
+        self.val_lbl.setText(value)
 
 
-class AnomalyCard(QFrame):
-    """Widget per la visualizzazione di un'anomalia specifica rilevata dal sistema di monitoraggio."""
+class AnomalyCard(ModernCard):
+    """Card anomalia con design a lista orizzontale e badge di severità."""
 
     def __init__(self, anomaly, parent: QWidget | None = None) -> None:
-        """
-        Inizializza la card anomalia.
+        super().__init__(parent, elevation=6)
+        self._setup_content(anomaly)
 
-        Args:
-            anomaly: Oggetto anomalia (deve avere message, severity e suggestion).
-            parent: Widget genitore.
-        """
-        super().__init__(parent)
-        self._setup_ui(anomaly)
+    def _setup_content(self, anomaly) -> None:
+        color = self._get_severity_color(anomaly.severity)
+        self.setObjectName("anomalyCard")
+        self.setStyleSheet(f"QFrame#anomalyCard {{ border-left: 4px solid {color}; }}")
 
-    def _setup_ui(self, anomaly) -> None:
-        """Configura il layout e i colori in base alla gravità dell'anomalia."""
-        color, bg = self._get_severity_color(anomaly.severity), self._get_bg_color(anomaly.severity)
-        self.setStyleSheet(
-            f"QFrame {{ background-color: {bg}; border-radius: 10px; border: 1px solid {color}40; border-left: 5px solid {color}; }}"
-        )
-        layout = QVBoxLayout(self)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(15, 12, 15, 12)
+        layout.setSpacing(15)
 
-        header = QHBoxLayout()
-        emoji = {"low": "ℹ️", "medium": "⚠️", "high": "🔴", "critical": "🚨"}.get(anomaly.severity, "📢")
-        lbl_title = QLabel(f"{emoji}  {anomaly.message}")
-        lbl_title.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 600; font-size: 14px;")
-        lbl_title.setWordWrap(True)
-        header.addWidget(lbl_title, stretch=1)
+        # Icon Status
+        icon_lbl = QLabel()
+        emoji = {"low": Icons.INFO, "medium": Icons.ALERT_TRIANGLE, "high": Icons.X_CIRCLE, "critical": Icons.ACTIVITY}.get(anomaly.severity, Icons.BELL)
+        icon_lbl.setPixmap(get_colored_icon(get_asset_path(emoji), color).pixmap(24, 24))
+        layout.addWidget(icon_lbl)
 
-        lbl_sev = QLabel(anomaly.severity.upper())
-        lbl_sev.setStyleSheet(
-            f"color: {color}; background-color: {color}20; padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: bold;"
-        )
-        header.addWidget(lbl_sev)
-        layout.addLayout(header)
+        # Message Content
+        text_v = QVBoxLayout()
+        text_v.setSpacing(2)
+
+        msg_lbl = QLabel(anomaly.message)
+        msg_lbl.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 700; font-size: 13px;")
+        msg_lbl.setWordWrap(True)
+        text_v.addWidget(msg_lbl)
 
         if anomaly.suggestion:
-            lbl_sug = QLabel(f"💡 {anomaly.suggestion}")
-            lbl_sug.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px; padding-left: 24px;")
-            lbl_sug.setWordWrap(True)
-            layout.addWidget(lbl_sug)
+            sug_lbl = QLabel(anomaly.suggestion)
+            sug_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
+            text_v.addWidget(sug_lbl)
+
+        layout.addLayout(text_v, stretch=1)
+
+        # Severity Badge
+        sev_badge = QLabel(anomaly.severity.upper())
+        sev_badge.setStyleSheet(f"""
+            background-color: {color};
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 9px;
+            font-weight: 900;
+        """)
+        layout.addWidget(sev_badge)
 
     def _get_severity_color(self, severity: str) -> str:
-        """Mappa la gravità a un colore HEX enterprise."""
         return {
             "low": COLORS["info_blue"],
             "medium": COLORS["warning_yellow"],
             "high": COLORS["warning_orange"],
             "critical": COLORS["error_red"],
         }.get(severity, COLORS["text_muted"])
-
-    def _get_bg_color(self, severity: str) -> str:
-        """Mappa la gravità a un colore di sfondo leggero."""
-        return {
-            "low": COLORS["bg_info_pastel"],
-            "medium": COLORS["bg_attention_pastel"],
-            "high": COLORS["bg_warning_pastel"],
-            "critical": COLORS["bg_error_pastel"],
-        }.get(severity, COLORS["bg_light"])
 
 
 class HealthPanel(QWidget):
@@ -240,50 +237,75 @@ class HealthPanel(QWidget):
     def _setup_ui(self) -> None:
         """Costruisce il layout a due colonne: statistiche a sinistra, anomalie a destra."""
         layout = QVBoxLayout(self)
-        layout.setSpacing(20)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(25)
+
         header = QHBoxLayout()
-        title = QLabel("📊 System Health")
-        title.setStyleSheet(
-            f"font-size: 24px; font-weight: bold; color: {COLORS['text_dark']}; border: none;"
-        )
-        header.addWidget(title)
+        header.setContentsMargins(0, 0, 0, 10)
+
+        title_v = QVBoxLayout()
+        title_v.setSpacing(2)
+        title = QLabel("System Health")
+        title.setStyleSheet(f"font-size: 28px; font-weight: 900; color: {COLORS['text_dark']}; border: none;")
+        subtitle = QLabel("Monitoraggio in tempo reale e diagnostica di sistema")
+        subtitle.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 13px; font-weight: 500;")
+        title_v.addWidget(title)
+        title_v.addWidget(subtitle)
+        header.addLayout(title_v)
         header.addStretch()
 
-        self._alert_btn = ModernButton("📢 Invia Alert", variant=ModernButton.Variant.SECONDARY)
+        self._alert_btn = ModernButton(
+            "INVIA ALERT",
+            variant=ModernButton.Variant.GHOST,
+            icon=get_asset_path(Icons.SEND)
+        )
         self._alert_btn.clicked.connect(self._send_telegram_alert)
         header.addWidget(self._alert_btn)
-        self._refresh_btn = ModernButton("🔄 Aggiorna")
+
+        self._refresh_btn = ModernButton(
+            "AGGIORNA",
+            variant=ModernButton.Variant.PRIMARY,
+            icon=get_asset_path(Icons.REFRESH)
+        )
         self._refresh_btn.clicked.connect(self.refresh)
         header.addWidget(self._refresh_btn)
         layout.addLayout(header)
 
         content = QHBoxLayout()
-        content.setSpacing(24)
+        content.setSpacing(30)
+
         left_panel = QVBoxLayout()
-        left_panel.setSpacing(20)
-        score_card = QFrame()
-        score_card.setStyleSheet(
-            f"QFrame {{ background-color: {COLORS['bg_white']}; border-radius: 16px; border: 1px solid {COLORS['border_light']}; }}"
-        )
+        left_panel.setSpacing(25)
+
+        # 1. Main Gauge Card
+        score_card = ModernCard(elevation=15)
+        score_card.setStyleSheet(f"QFrame {{ background-color: {COLORS['bg_white']}; border-radius: 20px; }}")
         score_layout = QVBoxLayout(score_card)
-        self._score_badge = HealthScoreBadge(size=160)
+        score_layout.setContentsMargins(20, 30, 20, 30)
+        score_layout.setSpacing(15)
+
+        self._score_badge = HealthScoreBadge(size=180)
         score_layout.addWidget(self._score_badge, alignment=Qt.AlignmentFlag.AlignCenter)
+
         self._status_label = QLabel("OTTIMO")
         self._status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._status_label.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: bold;")
+        self._status_label.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 900; font-size: 14px; letter-spacing: 1px;")
         score_layout.addWidget(self._status_label)
+
         self._last_update = QLabel("Ultimo aggiornamento: --")
         self._last_update.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._last_update.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
         score_layout.addWidget(self._last_update)
         left_panel.addWidget(score_card)
 
+        # 2. Mini Stats Grid
         stats_grid = QGridLayout()
-        stats_grid.setSpacing(12)
-        self._stat_runs_ok = StatCard("Bot Successo", color=COLORS["success_green"], icon="✅")
-        self._stat_runs_fail = StatCard("Bot Falliti", color=COLORS["error_red"], icon="❌")
-        self._stat_error_rate = StatCard("Error Rate", color=COLORS["warning_yellow"], icon="📉")
-        self._stat_anomalies = StatCard("Anomalie", color=COLORS["warning_orange"], icon="⚠️")
+        stats_grid.setSpacing(15)
+        self._stat_runs_ok = StatCard("Bot Successo", color=COLORS["success_green"], icon_key=Icons.CHECK_CIRCLE)
+        self._stat_runs_fail = StatCard("Bot Falliti", color=COLORS["error_red"], icon_key=Icons.X_CIRCLE)
+        self._stat_error_rate = StatCard("Error Rate", color=COLORS["warning_yellow"], icon_key=Icons.BAR_CHART)
+        self._stat_anomalies = StatCard("Anomalie", color=COLORS["warning_orange"], icon_key=Icons.ALERT_TRIANGLE)
+
         stats_grid.addWidget(self._stat_runs_ok, 0, 0)
         stats_grid.addWidget(self._stat_runs_fail, 0, 1)
         stats_grid.addWidget(self._stat_error_rate, 1, 0)
@@ -292,23 +314,36 @@ class HealthPanel(QWidget):
         left_panel.addStretch()
         content.addLayout(left_panel, stretch=1)
 
+        # 3. Anomalies Panel (Right)
         right_panel = QVBoxLayout()
-        right_panel.setSpacing(16)
+        right_panel.setSpacing(15)
+
         anom_header = QHBoxLayout()
-        anom_header.addWidget(QLabel("⚠️ Anomalie Rilevate"))
+        anom_title = QLabel("Anomalie Rilevate")
+        anom_title.setStyleSheet(f"font-size: 16px; font-weight: 800; color: {COLORS['text_dark']};")
+        anom_header.addWidget(anom_title)
+
         self._anomaly_count_label = QLabel("0 problemi")
+        self._anomaly_count_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-weight: 600; font-size: 13px;")
         anom_header.addStretch()
         anom_header.addWidget(self._anomaly_count_label)
         right_panel.addLayout(anom_header)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setStyleSheet("QScrollArea { background: transparent; }")
+
         self._anomalies_container = QWidget()
+        self._anomalies_container.setStyleSheet("background: transparent;")
         self._anomalies_layout = QVBoxLayout(self._anomalies_container)
+        self._anomalies_layout.setContentsMargins(5, 5, 15, 5)
+        self._anomalies_layout.setSpacing(12)
         self._anomalies_layout.addStretch()
+
         scroll.setWidget(self._anomalies_container)
         right_panel.addWidget(scroll)
+
         content.addLayout(right_panel, stretch=2)
         layout.addLayout(content)
 

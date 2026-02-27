@@ -10,6 +10,7 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QTableView,
@@ -24,6 +25,7 @@ from src.gui.models.audit_model import AuditTableModel
 from src.gui.styles import COLORS
 from src.gui.widgets.audit.audit_filter_bar import AuditFilterBar
 from src.gui.widgets.audit.audit_pagination_bar import AuditPaginationBar
+from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
@@ -54,62 +56,71 @@ class AuditLogWidget(QWidget):
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 10, 0, 0)
-        layout.setSpacing(10)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(15)
 
-        # --- TOP BAR ---
-        top_bar = QHBoxLayout()
-        info_lbl = QLabel("Dashboard Operazioni")
-        info_lbl.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {COLORS['text_dark']};")
-        top_bar.addWidget(info_lbl)
+        # --- TOP HEADER ---
+        header_layout = QHBoxLayout()
+        header_layout.setContentsMargins(0, 0, 0, 10)
 
+        title_v = QVBoxLayout()
+        title_v.setSpacing(2)
+        title = QLabel("Dashboard Operazioni")
+        title.setStyleSheet(f"font-size: 24px; font-weight: 900; color: {COLORS['text_dark']};")
+
+        # Subtitle with Integrity Status
+        status_h = QHBoxLayout()
+        status_h.setSpacing(8)
         self.integrity_icon = QLabel()
-        self.integrity_icon.setFixedSize(18, 18)
-        top_bar.addWidget(self.integrity_icon)
+        self.integrity_icon.setFixedSize(16, 16)
+        status_h.addWidget(self.integrity_icon)
 
-        self.integrity_lbl = QLabel("Verifica...")
+        self.integrity_lbl = QLabel("Verifica integrità...")
         self.integrity_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 13px; font-weight: 600;")
-        top_bar.addWidget(self.integrity_lbl)
+        status_h.addWidget(self.integrity_lbl)
+        status_h.addStretch()
 
-        top_bar.addStretch()
+        title_v.addWidget(title)
+        title_v.addLayout(status_h)
+        header_layout.addLayout(title_v)
+
+        header_layout.addStretch()
 
         self.live_check = QCheckBox("Live Mode")
         self.live_check.setToolTip("Aggiorna automaticamente ogni 5 secondi")
+        self.live_check.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 600; font-size: 13px;")
         self.live_check.stateChanged.connect(self._toggle_live_mode)
-        top_bar.addWidget(self.live_check)
-        layout.addLayout(top_bar)
+        header_layout.addWidget(self.live_check, alignment=Qt.AlignmentFlag.AlignVCenter)
+
+        layout.addLayout(header_layout)
 
         # --- FILTER BAR ---
         self.filter_bar = AuditFilterBar()
         self.filter_bar.filters_applied.connect(lambda: self.refresh(reset_page=True))
         layout.addWidget(self.filter_bar)
 
-        # --- DATA GRID ---
+        # --- DATA GRID (Wrapped in a ModernCard for elevation) ---
+        self.table_card = ModernCard(elevation=12)
+        table_layout = QVBoxLayout(self.table_card)
+        table_layout.setContentsMargins(5, 5, 5, 5)
+
         self.table_view = QTableView()
         self.table_view.setAlternatingRowColors(True)
         self.table_view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table_view.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table_view.setFrameShape(QFrame.Shape.NoFrame)
+
         if v_header := self.table_view.verticalHeader():
             v_header.setVisible(False)
         if header := self.table_view.horizontalHeader():
             header.setStretchLastSection(True)
-        self.table_view.setStyleSheet(
-            f"""
-            QTableView {{
-                border: 1px solid {COLORS['border_light']}; border-radius: 6px;
-                background-color: {COLORS['bg_white']}; gridline-color: {COLORS['bg_alt']};
-            }}
-            QHeaderView::section {{
-                background-color: {COLORS['bg_hover']}; padding: 8px; border: none;
-                font-weight: bold; color: {COLORS['text_dark']};
-            }}
-        """
-        )
 
         self.model = AuditTableModel([])
         self.table_view.setModel(self.model)
         self.table_view.doubleClicked.connect(self._on_row_double_click)
-        layout.addWidget(self.table_view)
+
+        table_layout.addWidget(self.table_view)
+        layout.addWidget(self.table_card)
 
         # --- PAGINATION ---
         self.pagination_bar = AuditPaginationBar()

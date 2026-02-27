@@ -53,29 +53,29 @@ class NotificationCard(QFrame):
             "accent": COLORS["error_red"],
             "gradient": f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_white']})",
             "icon": Icons.X_CIRCLE,
-            "icon_color": "white",
-            "badge_bg": COLORS["error_red"],
+            "icon_color": COLORS["error_red"],
+            "badge_bg": "#FFEBEE",
         },
         "warning": {
             "accent": COLORS["warning_orange"],
             "gradient": f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_white']})",
             "icon": Icons.ALERT_TRIANGLE,
-            "icon_color": "black",
-            "badge_bg": COLORS["warning_yellow"],
+            "icon_color": COLORS["warning_orange"],
+            "badge_bg": "#FFF3E0",
         },
         "success": {
             "accent": COLORS["success_dark"],
             "gradient": f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_white']})",
             "icon": Icons.CHECK_CIRCLE,
-            "icon_color": "white",
-            "badge_bg": COLORS["success_dark"],
+            "icon_color": COLORS["success_dark"],
+            "badge_bg": "#E8F5E9",
         },
         "info": {
             "accent": COLORS["primary_blue"],
             "gradient": f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_white']})",
             "icon": Icons.INFO,
-            "icon_color": "white",
-            "badge_bg": COLORS["primary_blue"],
+            "icon_color": COLORS["primary_blue"],
+            "badge_bg": "#E3F2FD",
         },
     }
 
@@ -183,20 +183,19 @@ class NotificationCard(QFrame):
         self.pin_btn.clicked.connect(self._toggle_pin)
         header_layout.addWidget(self.pin_btn)
 
-        # Icon Badge (32px circular)
         badge = QLabel()
-        badge.setFixedSize(32, 32)
+        badge.setFixedSize(36, 36)
         icon_path = style["icon"]
         icon_color = style["icon_color"]
         badge_bg = style["badge_bg"]
-        badge.setPixmap(get_colored_icon(get_asset_path(icon_path), icon_color).pixmap(18, 18))
+        badge.setPixmap(get_colored_icon(get_asset_path(icon_path), icon_color).pixmap(20, 22))
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         badge.setStyleSheet(
             f"""
             QLabel {{
                 background-color: {badge_bg};
-                border-radius: 16px;
-                border: none;
+                border-radius: 18px;
+                border: 1px solid {accent_color}30;
             }}
         """
         )
@@ -273,17 +272,18 @@ class NotificationCard(QFrame):
         # === BODY === (with markdown support, optimized)
         message = str(self.notification.get("message", ""))
 
-        # Use lightweight QLabel for simple text, QTextBrowser only for rich content
+        # Check for HTML tags to force RichText mode
+        has_html = "<" in message and ">" in message
         has_markdown = any(char in message for char in ("*", "`", "[", "]", "\n"))
 
-        if has_markdown or len(message) > 200:
+        if has_html or has_markdown or len(message) > 200:
             # Use QTextBrowser for rich content or long text
-            html_message = self._markdown_to_html(message)
+            html_message = self._markdown_to_html(message) if not has_html else message
             browser = QTextBrowser()
             browser.setHtml(html_message)
             browser.setOpenExternalLinks(True)
             browser.setFrameShape(QFrame.Shape.NoFrame)
-            browser.setMaximumHeight(150)  # Reduced from 200
+            browser.setMaximumHeight(150)
             self.message_widget = browser
         else:
             # Use lightweight QLabel for simple short text
