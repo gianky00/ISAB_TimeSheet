@@ -206,14 +206,14 @@ class StoricoOdaPanel(QWidget):
         try:
             full_rows = OdaManager.get_all_oda(search_text or None)
             self._raw_full_data = full_rows
-            
+
             # Mostra/Nascondi Empty State
             if not full_rows:
                 self.empty_state.show()
                 self.empty_state.resize(self.tree.size())
             else:
                 self.empty_state.hide()
-                
+
             self._populate_tree(full_rows)
         except Exception as e:
             print(f"Errore caricamento Storico OdA: {e}")

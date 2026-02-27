@@ -78,7 +78,7 @@ class DashboardStatCard(ModernCard):
             background: transparent;
             margin-top: 4px;
         """)
-        
+
         self.meta_lbl = QLabel("")
         self.meta_lbl.setStyleSheet(f"""
             font-size: 10px;
@@ -102,7 +102,7 @@ class DashboardStatCard(ModernCard):
             self.detail_lbl.show()
         else:
             self.detail_lbl.hide()
-            
+
         if meta:
             self.meta_lbl.setText(meta)
             self.meta_lbl.show()

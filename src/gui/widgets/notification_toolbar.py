@@ -151,7 +151,7 @@ class NotificationToolbar(QWidget):
         # Container Card (using ModernCard for elevation/hover)
         self.container = ModernCard(elevation=10)
         self.container.setObjectName("filterBar")
-        
+
         layout = QHBoxLayout(self.container)
         layout.setContentsMargins(15, 10, 15, 10)
         layout.setSpacing(15)
@@ -159,7 +159,6 @@ class NotificationToolbar(QWidget):
         # === SEARCH BAR ===
         search_v = QVBoxLayout()
         search_v.setSpacing(4)
-        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
         lbl_search = QLabel("CERCA NOTIFICHE")
         lbl_search.setStyleSheet(LABEL_MUTED)
 

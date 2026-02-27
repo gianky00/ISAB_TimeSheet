@@ -25,7 +25,7 @@ class StatusCard(ModernCard):
     def __init__(self, title: str, status: str = "In attesa", parent: QWidget | None = None) -> None:
         super().__init__(parent, elevation=8)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        
+
         # Override base style for status bar context
         self.setStyleSheet(f"""
             QFrame#modernCard {{

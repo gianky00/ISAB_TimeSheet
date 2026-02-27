@@ -453,7 +453,7 @@ class PDLDBPanel(QWidget):
         action_toggle = QAction("Mostra/Nascondi dettaglio", self)
         action_toggle.triggered.connect(self._toggle_detail_view)
         menu.addAction(action_toggle)
-        
+
         viewport = self.table.viewport()
         if viewport:
             menu.exec(viewport.mapToGlobal(pos))

@@ -82,7 +82,7 @@ class ContabilitaPanel(QWidget):
         # --- UNIFIED TOOLBAR (Design Modern Card) ---
         self.toolbar_card = ModernCard(elevation=10)
         self.toolbar_card.setObjectName("filterBar")
-        
+
         toolbar_layout = QHBoxLayout(self.toolbar_card)
         toolbar_layout.setContentsMargins(15, 10, 15, 10)
         toolbar_layout.setSpacing(15)

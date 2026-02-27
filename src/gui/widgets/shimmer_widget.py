@@ -3,7 +3,7 @@ SyncroJob - Shimmer Widget (Skeleton Loading)
 Effetto pulsante per indicare il caricamento dei dati in modo elegante.
 """
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation
 from PyQt6.QtWidgets import QFrame, QGraphicsOpacityEffect, QVBoxLayout, QWidget
 
 from src.gui.styles import COLORS
@@ -49,5 +49,5 @@ class ShimmerSkeleton(QWidget):
             layout.addWidget(ShimmerItem(height=15))
             layout.addWidget(ShimmerItem(height=15, width=200))
             layout.addSpacing(10)
-        
+
         layout.addStretch()

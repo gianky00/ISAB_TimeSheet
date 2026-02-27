@@ -53,16 +53,16 @@ class ChatArea(QScrollArea):
         self.chat_layout.addStretch()
 
         self.setWidget(self.container)
-        self.typing_indicator = None
+        self.typing_indicator: TypingIndicator | None = None
 
     def set_typing(self, is_typing: bool) -> None:
         """Mostra o nasconde l'indicatore di digitazione."""
         if is_typing:
-            if not self.typing_indicator:
+            if self.typing_indicator is None:
                 self.typing_indicator = TypingIndicator()
                 self.chat_layout.insertWidget(self.chat_layout.count() - 1, self.typing_indicator)
         else:
-            if self.typing_indicator:
+            if self.typing_indicator is not None:
                 self.chat_layout.removeWidget(self.typing_indicator)
                 self.typing_indicator.deleteLater()
                 self.typing_indicator = None

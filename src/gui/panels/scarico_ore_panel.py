@@ -123,7 +123,7 @@ class ScaricoOrePanel(QWidget):
         # --- TOOLBAR (Design Modern Card) ---
         self.toolbar_card = ModernCard(elevation=10)
         self.toolbar_card.setObjectName("filterBar")
-        
+
         toolbar_layout = QHBoxLayout(self.toolbar_card)
         toolbar_layout.setContentsMargins(15, 10, 15, 10)
         toolbar_layout.setSpacing(15)
@@ -364,7 +364,7 @@ class ScaricoOrePanel(QWidget):
         self.search_input.setEnabled(not loading)
         self.update_btn.setEnabled(not loading)
         self.search_input.setPlaceholderText("Caricamento..." if loading else "Filtra dati (Premi Invio)...")
-        
+
         if loading:
             self.table_view.hide()
             self.shimmer.show()
