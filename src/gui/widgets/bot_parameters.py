@@ -5,7 +5,6 @@ Widget riutilizzabile per la configurazione dei parametri comuni a tutti i bot (
 
 from contextlib import suppress
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import (  # type: ignore[attr-defined]
     QDate,
     QEasingCurve,
@@ -16,13 +15,10 @@ from PyQt6.QtCore import (  # type: ignore[attr-defined]
 )
 from PyQt6.QtGui import QColor, QPainter, QPen
 from PyQt6.QtWidgets import (
-    QComboBox,
     QFileDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
-    QPushButton,
     QVBoxLayout,
     QWidget,
 )
@@ -30,6 +26,11 @@ from PyQt6.QtWidgets import (
 from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    FilterComboBox,
+    IconButton,
+    StandardInput,
+)
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .calendar_date_edit import CalendarDateEdit

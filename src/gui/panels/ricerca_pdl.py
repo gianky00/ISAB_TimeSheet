@@ -5,11 +5,8 @@ Pannello per il bot Ricerca PDL (SafeWork).
 
 from typing import Any
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -20,6 +17,10 @@ from PyQt6.QtWidgets import (
 from src.core import config_manager
 from src.gui.panels.base import BaseBotPanel, BotWorker
 from src.gui.styles import COLORS, STATUS_COLORS
+from src.gui.widgets.core_widgets import (
+    FilterComboBox,
+    StandardCheckBox,
+)
 from src.gui.widgets.toast import ToastManager
 
 

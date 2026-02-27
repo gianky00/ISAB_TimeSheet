@@ -6,7 +6,6 @@ Supporta gradient backgrounds, animations, rich content e inline actions.
 from datetime import datetime
 from typing import Any, ClassVar
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QAction, QContextMenuEvent, QMouseEvent, QShowEvent
 from PyQt6.QtWidgets import (
@@ -25,6 +24,9 @@ from src.core.constants import Icons
 from src.core.notification_manager import NotificationManager
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
+from src.gui.widgets.core_widgets import (
+    IconButton,
+)
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.priority_badge import PriorityBadge
 from src.utils.helpers import get_asset_path, get_colored_icon

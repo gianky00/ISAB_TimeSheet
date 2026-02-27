@@ -7,7 +7,6 @@ Supporta navigazione gerarchica, ricerca globale ricorsiva e modalità di input 
 from contextlib import suppress
 from typing import TYPE_CHECKING, Any
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import (
     QEasingCurve,
     QPropertyAnimation,
@@ -23,7 +22,6 @@ from PyQt6.QtWidgets import (
     QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QListWidget,
     QListWidgetItem,
     QVBoxLayout,
@@ -32,6 +30,10 @@ from PyQt6.QtWidgets import (
 
 from src.gui.controllers.command_registry import CommandNode
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    SearchInput,
+    StandardListWidget,
+)
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 if TYPE_CHECKING:

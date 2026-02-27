@@ -2,7 +2,6 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -11,7 +10,6 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLayout,
     QLineEdit,
-    QPushButton,
     QVBoxLayout,
     QWidget,
 )
@@ -19,6 +17,10 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Icons
 from src.gui.panels.settings.shared import create_group_box, style_button, style_input
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    PrimaryButton,
+    StandardInput,
+)
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 

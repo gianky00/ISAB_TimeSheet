@@ -9,7 +9,6 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any, ClassVar
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QColor
 from PyQt6.QtWidgets import (
@@ -31,6 +30,11 @@ from src.core.contabilita_manager import ContabilitaManager
 from src.core.excel_importer import ExcelImporter
 from src.gui.styles import COLORS
 from src.gui.widgets import ExcelTableWidget
+from src.gui.widgets.core_widgets import (
+    FilterComboBox,
+    PrimaryButton,
+    StandardCheckBox,
+)
 from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 

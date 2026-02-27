@@ -1,12 +1,14 @@
 from typing import Any
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.panels.settings.shared import create_group_box, style_button
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    PrimaryButton,
+)
 from src.utils.helpers import get_asset_path, get_colored_icon, open_folder
 
 

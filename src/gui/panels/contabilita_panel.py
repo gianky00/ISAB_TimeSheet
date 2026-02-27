@@ -9,13 +9,11 @@ from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QTableWidget,
     QTabWidget,
     QTreeWidget,
@@ -34,6 +32,9 @@ from src.gui.widgets.contabilita.attivita_tab import AttivitaProgrammateTab
 from src.gui.widgets.contabilita.certificati_tab import CertificatiCampioneTab
 from src.gui.widgets.contabilita.giornaliere_tab import GiornaliereYearTab
 from src.gui.widgets.contabilita.year_tab import ContabilitaYearTab
+from src.gui.widgets.core_widgets import (
+    SearchInput,
+)
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon

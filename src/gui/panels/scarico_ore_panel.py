@@ -10,7 +10,6 @@ import time
 from contextlib import suppress
 from datetime import datetime
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QItemSelection, Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QKeySequence
 from PyQt6.QtWidgets import (
@@ -19,7 +18,6 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
-    QLineEdit,
     QTableView,
     QVBoxLayout,
     QWidget,
@@ -33,6 +31,9 @@ from src.gui.components.scarico_ore import FilterHeaderView, ScaricoOreTableMode
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import COLORS
 from src.gui.widgets import ModernButton, ShimmerSkeleton
+from src.gui.widgets.core_widgets import (
+    SearchInput,
+)
 from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 

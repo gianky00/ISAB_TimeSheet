@@ -1,11 +1,8 @@
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt, QTime, QTimer
 from PyQt6.QtWidgets import (
-    QCheckBox,
     QFrame,
     QHBoxLayout,
     QLabel,
-    QSpinBox,
     QTimeEdit,
     QVBoxLayout,
     QWidget,
@@ -13,6 +10,7 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import StandardCheckBox, StandardSpinBox
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 

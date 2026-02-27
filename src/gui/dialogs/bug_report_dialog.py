@@ -9,22 +9,15 @@ import os
 from contextlib import suppress
 from pathlib import Path
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
-    QCheckBox,
     QDialog,
     QFileDialog,
     QFrame,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QMessageBox,
-    QProgressBar,
-    QPushButton,
     QScrollArea,
-    QTextEdit,
     QVBoxLayout,
 )
 
@@ -32,6 +25,14 @@ from src.core.bug_reporter import BugReporter
 from src.core.config_manager import get_version
 from src.gui.design.colors import get_palette
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    PrimaryButton,
+    StandardCheckBox,
+    StandardGroupBox,
+    StandardInput,
+    StandardProgressBar,
+    StandardTextEdit,
+)
 
 logger = logging.getLogger(__name__)
 

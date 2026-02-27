@@ -3,7 +3,6 @@ from io import StringIO
 from pathlib import Path
 
 import pandas as pd
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QFileDialog,
@@ -20,6 +19,9 @@ from src.core import config_manager
 from src.core.constants import URLs
 from src.core.secrets_manager import SecretsManager
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    PrimaryButton,
+)
 from src.utils.document_processor import DocumentProcessor
 
 from .chat_area import ChatArea

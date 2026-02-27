@@ -1,4 +1,3 @@
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -21,6 +20,7 @@ from src.core.employees import employee_manager
 from src.core.sync_tracker import SyncTracker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import SearchInput, StandardInput, StandardTable
 from src.gui.widgets.modern_button import ModernButton
 
 

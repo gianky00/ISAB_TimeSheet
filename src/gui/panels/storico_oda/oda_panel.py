@@ -410,7 +410,10 @@ class StoricoOdaPanel(QWidget):
         else:
             action_toggle = None
 
-        chosen = menu.exec(self.tree.viewport().mapToGlobal(pos))
+        viewport = self.tree.viewport()
+        if not viewport:
+            return
+        chosen = menu.exec(viewport.mapToGlobal(pos))
         if not chosen:
             return
 

@@ -7,19 +7,14 @@ import traceback
 from pathlib import Path
 from typing import Any
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QSize, Qt, QTimer
 from PyQt6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
     QFileDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QListWidget,
     QListWidgetItem,
-    QPushButton,
     QVBoxLayout,
     QWidget,
 )
@@ -30,6 +25,12 @@ from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel, BotWorker
 from src.gui.styles import COLORS
 from src.gui.widgets import EditableDataTable
+from src.gui.widgets.core_widgets import (
+    FilterComboBox,
+    IconButton,
+    StandardCheckBox,
+    StandardInput,
+)
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path, get_colored_icon

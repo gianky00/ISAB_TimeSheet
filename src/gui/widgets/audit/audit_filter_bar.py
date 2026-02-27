@@ -6,14 +6,11 @@ Widget per la configurazione dei filtri di ricerca e visualizzazione all'interno
 from collections.abc import Sequence
 from typing import Any
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QDate, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
-    QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -21,6 +18,10 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Icons
 from src.gui.styles import COLORS, COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
 from src.gui.widgets.calendar_date_edit import CalendarDateEdit
+from src.gui.widgets.core_widgets import (
+    FilterComboBox,
+    SearchInput,
+)
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path

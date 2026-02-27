@@ -9,7 +9,6 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
@@ -17,13 +16,15 @@ from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
     QScrollArea,
-    QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    StandardTable,
+)
 
 
 class PDLDetailView(QWidget):

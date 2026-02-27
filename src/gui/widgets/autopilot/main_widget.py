@@ -7,7 +7,6 @@ Gestisce la pianificazione delle attività automatiche e la loro visualizzazione
 from contextlib import suppress
 from typing import Any
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import (
     QEasingCurve,
     QParallelAnimationGroup,
@@ -24,7 +23,6 @@ from PyQt6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLabel,
-    QPushButton,
     QSizePolicy,
     QVBoxLayout,
     QWidget,
@@ -33,6 +31,9 @@ from PyQt6.QtWidgets import (
 from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    IconButton,
+)
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .config_cards import AutopilotConfigCard, AutopilotConfigCardWithInterval

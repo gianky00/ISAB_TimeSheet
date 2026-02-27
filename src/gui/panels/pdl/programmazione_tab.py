@@ -9,11 +9,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QRectF, Qt
 from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath
 from PyQt6.QtWidgets import (
-    QComboBox,
     QFrame,
     QGroupBox,
     QHBoxLayout,
@@ -35,6 +33,11 @@ from src.gui.panels.base import BotWorker
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
 from src.gui.widgets import MultiSelectFilter, TimelineWidget
+from src.gui.widgets.core_widgets import (
+    FilterComboBox,
+    StandardGroupBox,
+    StandardTable,
+)
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path

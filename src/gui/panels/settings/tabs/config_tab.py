@@ -6,7 +6,6 @@ Sostituisce il vecchio QToolBox con un design 'System Hub' ad alta leggibilità.
 
 from typing import Any
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
@@ -14,7 +13,6 @@ from PyQt6.QtWidgets import (
     QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QScrollArea,
     QSizePolicy,
     QVBoxLayout,
@@ -27,6 +25,9 @@ from src.gui.panels.settings.pages.general_page import GeneralPage
 from src.gui.panels.settings.pages.lists_page import ListsPage
 from src.gui.panels.settings.pages.paths_page import PathsPage
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    SearchInput,
+)
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 

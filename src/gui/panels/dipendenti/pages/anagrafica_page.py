@@ -2,7 +2,6 @@ import csv
 import logging
 from datetime import UTC, datetime
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import (
     QDate,
     Qt,
@@ -44,6 +43,9 @@ from src.gui.panels.dipendenti.utils.data_helpers import (
 from src.gui.panels.dipendenti.utils.report_generator import ReportGenerator
 from src.gui.panels.dipendenti.widgets.employee_detail_view import EmployeeDetailView
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    SearchInput,
+)
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path, get_colored_icon

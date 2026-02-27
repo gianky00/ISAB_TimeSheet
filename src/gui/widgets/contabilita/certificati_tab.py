@@ -7,7 +7,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QBrush, QColor, QIcon, QPainter, QPixmap
 from PyQt6.QtWidgets import (
@@ -36,6 +35,11 @@ from src.core.version import __app_name__, __version__
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
+from src.gui.widgets.core_widgets import (
+    PrimaryButton,
+    StandardCheckBox,
+    StandardTreeWidget,
+)
 from src.utils.helpers import get_asset_path
 
 

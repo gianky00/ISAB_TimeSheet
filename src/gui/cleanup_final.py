@@ -7,6 +7,7 @@ Usa ast.parse per validazione post-modifica.
 import ast
 import os
 import re
+from pathlib import Path
 
 GUI_DIR = r"c:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\src\gui"
 SKIP_FILES = {"core_widgets.py", "modern_button.py", "__init__.py",
@@ -23,12 +24,12 @@ def remove_orphan_imports(content: str) -> str:
     for widget in ORPHAN_WIDGETS:
         # Controlla se il widget è ancora usato nel codice (non solo nell'import)
         # Cerca occorrenze fuori dalla riga di import
-        import_pattern = re.compile(rf'^\s*(?:from PyQt6\.QtWidgets import.*)?{widget}', re.MULTILINE)
+
         usage_pattern = re.compile(rf'\b{widget}\b')
-        
+
         # Trova tutte le occorrenze
         all_matches = list(usage_pattern.finditer(content))
-        
+
         # Filtra: conta solo le occorrenze NON nelle righe di import
         usage_count = 0
         for m in all_matches:
@@ -39,14 +40,14 @@ def remove_orphan_imports(content: str) -> str:
             line = content[line_start:line_end].strip()
             if not line.startswith(("from ", "import ")):
                 usage_count += 1
-        
+
         if usage_count > 0:
             continue  # Widget ancora usato direttamente, non rimuovere
-        
+
         # Rimuovi dall'import multi-linea
         # Pattern: "    QPushButton,\n" o "    QPushButton\n"
         content = re.sub(rf'^\s*{widget},?\s*\n', '', content, flags=re.MULTILINE)
-        
+
         # Pattern: in import a linea singola "from PyQt6.QtWidgets import ..., QPushButton, ..."
         content = re.sub(rf',\s*{widget}\b', '', content)
         content = re.sub(rf'\b{widget}\s*,\s*', '', content)
@@ -56,17 +57,16 @@ def remove_orphan_imports(content: str) -> str:
 
 def process_file(filepath: str) -> None:
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
-            content = f.read()
+        content = Path(filepath).read_text(encoding="utf-8")
     except Exception:
         return
 
     original = content
-    
+
     # 1. Rimuovi import orfani
     if "core_widgets" in content:
         content = remove_orphan_imports(content)
-    
+
     if content == original:
         return
 

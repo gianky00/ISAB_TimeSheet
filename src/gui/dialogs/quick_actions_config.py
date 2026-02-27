@@ -1,10 +1,8 @@
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QLabel,
-    QTreeWidget,
     QTreeWidgetItem,
     QTreeWidgetItemIterator,
     QVBoxLayout,
@@ -14,6 +12,7 @@ from PyQt6.QtWidgets import (
 from src.core.config_manager import get_config_value, set_config_value
 from src.gui.design.colors import get_palette
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import StandardTreeWidget
 from src.gui.widgets.quick_actions import AVAILABLE_ACTIONS
 
 

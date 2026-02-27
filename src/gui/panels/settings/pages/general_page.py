@@ -1,15 +1,9 @@
 from typing import Any
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
-    QPushButton,
-    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
@@ -19,6 +13,13 @@ from src.core.secrets_manager import SecretsManager
 from src.gui.panels.lyra.workers import ModelListWorker
 from src.gui.panels.settings.shared import create_group_box, style_button, style_input
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    FilterComboBox,
+    PrimaryButton,
+    StandardCheckBox,
+    StandardInput,
+    StandardSpinBox,
+)
 
 
 class GeneralPage(QWidget):

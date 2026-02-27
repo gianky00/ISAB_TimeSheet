@@ -2,7 +2,6 @@ from contextlib import suppress
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import (
     QAbstractAnimation,
     QEasingCurve,
@@ -24,6 +23,9 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Business, Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    FilterComboBox,
+)
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .cards_row import KPICardsRow

@@ -6,14 +6,16 @@ Gestisce le transizioni visive tra la fase di avvio e quella operativa dell'appl
 
 from datetime import datetime
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QSize, Qt, QTimer
-from PyQt6.QtWidgets import QGraphicsOpacityEffect, QPushButton, QStatusBar
+from PyQt6.QtWidgets import QGraphicsOpacityEffect, QStatusBar
 
 from src.core import config_manager
 from src.core.constants import Icons
 from src.core.license_validator import get_license_info
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    IconButton,
+)
 from src.gui.widgets.footer import (
     BootTelemetryWidget,
     FooterLeftWidget,

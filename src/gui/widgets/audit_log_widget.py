@@ -6,11 +6,9 @@ Refactoring modulare V2.
 
 import logging
 
-from src.gui.widgets.core_widgets import (PrimaryButton, SecondaryButton, DangerButton, GhostButton, IconButton, SearchInput, StandardInput, StandardTextEdit, FilterComboBox, StandardCheckBox, StandardSpinBox, StandardTable, StandardListWidget, StandardTreeWidget, StandardGroupBox, StandardProgressBar)
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QAbstractItemView,
-    QCheckBox,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -26,6 +24,9 @@ from src.gui.models.audit_model import AuditTableModel
 from src.gui.styles import COLORS
 from src.gui.widgets.audit.audit_filter_bar import AuditFilterBar
 from src.gui.widgets.audit.audit_pagination_bar import AuditPaginationBar
+from src.gui.widgets.core_widgets import (
+    StandardCheckBox,
+)
 from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 
