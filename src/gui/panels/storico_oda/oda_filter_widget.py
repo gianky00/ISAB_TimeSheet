@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Icons
 from src.gui.styles import COLORS, LABEL_MUTED, LINEEDIT_STYLE
 from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path
 
 
@@ -34,16 +35,9 @@ class OdaFilterWidget(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # Bar Container with modern Card style
-        self.container = QFrame()
+        # Bar Container with modern Card style (using ModernCard for elevation/hover)
+        self.container = ModernCard(elevation=10)
         self.container.setObjectName("filterBar")
-        self.container.setStyleSheet(f"""
-            QFrame#filterBar {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 12px;
-            }}
-        """)
 
         layout = QHBoxLayout(self.container)
         layout.setContentsMargins(15, 10, 15, 10)

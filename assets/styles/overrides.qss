@@ -164,7 +164,6 @@ QToolTip {
     border: 1px solid {{glass_border}};
     border-radius: 6px;
     padding: 6px 10px;
-    opacity: 230;
 }
 
 /* === TREE & LIST WIDGETS === */

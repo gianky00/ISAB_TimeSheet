@@ -27,13 +27,14 @@ from PyQt6.QtWidgets import (
 
 from src.bots import create_bot
 from src.core import config_manager
+from src.core.constants import Icons
 from src.core.database import db_manager, pdl_queries
 from src.core.sync_tracker import SyncTracker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.formatters import FastTableModel
 from src.gui.panels.base import BotWorker
-from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets import EmptyStateWidget, ModernButton
 from src.gui.widgets.toast import ToastManager
 
 from .pdl_delegate import PDLDelegate
@@ -180,6 +181,15 @@ class PDLDBPanel(QWidget):
         self.detail_view = PDLDetailView(self.full_headers)
         self.detail_view.setVisible(False)
         self.splitter.addWidget(self.detail_view)
+
+        # --- EMPTY STATE ---
+        self.empty_state = EmptyStateWidget(
+            title="Nessun Permesso di Lavoro",
+            message="Non sono stati trovati PDL corrispondenti ai filtri attuali.\nAssicurati di aver sincronizzato il database.",
+            icon_key=Icons.FILE_TEXT
+        )
+        self.empty_state.setParent(self.table)
+        self.empty_state.hide()
 
         self.splitter.setStretchFactor(0, 3)
         self.splitter.setStretchFactor(1, 1)
@@ -488,10 +498,23 @@ class PDLDBPanel(QWidget):
                 print(f"Errore caricamento PDL: {e}")
                 return
 
+        # Mostra/Nascondi Empty State
+        if not full_rows:
+            self.empty_state.show()
+            self.empty_state.resize(self.table.size())
+        else:
+            self.empty_state.hide()
+
         self._raw_full_data = full_rows
         master_rows = self._process_pdl_rows(full_rows)
         self.model.update_data(master_rows)
         self._update_pdl_ui(len(master_rows))
+
+    def resizeEvent(self, event):
+        """Gestisce il ridimensionamento per l'empty state."""
+        super().resizeEvent(event)
+        if hasattr(self, "empty_state") and self.empty_state.isVisible():
+            self.empty_state.resize(self.table.size())
 
     def _build_pdl_query(self, sort_col: int | None) -> tuple[str, list[Any]]:
         """Costruisce dinamicamente la query SQL in base ai filtri attivi."""

@@ -18,7 +18,8 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
-from src.gui.styles import COLORS
+from src.gui.styles import COLORS, COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
+from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -147,16 +148,10 @@ class NotificationToolbar(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # Container Card
-        self.container = QFrame()
+        # Container Card (using ModernCard for elevation/hover)
+        self.container = ModernCard(elevation=10)
         self.container.setObjectName("filterBar")
-        self.container.setStyleSheet(f"""
-            QFrame#filterBar {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 12px;
-            }}
-        """)
+        
         layout = QHBoxLayout(self.container)
         layout.setContentsMargins(15, 10, 15, 10)
         layout.setSpacing(15)

@@ -34,6 +34,7 @@ from src.gui.widgets.contabilita.certificati_tab import CertificatiCampioneTab
 from src.gui.widgets.contabilita.giornaliere_tab import GiornaliereYearTab
 from src.gui.widgets.contabilita.year_tab import ContabilitaYearTab
 from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -79,15 +80,9 @@ class ContabilitaPanel(QWidget):
         layout.setSpacing(15)
 
         # --- UNIFIED TOOLBAR (Design Modern Card) ---
-        self.toolbar_card = QFrame()
+        self.toolbar_card = ModernCard(elevation=10)
         self.toolbar_card.setObjectName("filterBar")
-        self.toolbar_card.setStyleSheet(f"""
-            QFrame#filterBar {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 12px;
-            }}
-        """)
+        
         toolbar_layout = QHBoxLayout(self.toolbar_card)
         toolbar_layout.setContentsMargins(15, 10, 15, 10)
         toolbar_layout.setSpacing(15)

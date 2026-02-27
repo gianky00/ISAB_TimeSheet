@@ -31,7 +31,8 @@ from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.components.scarico_ore import FilterHeaderView, ScaricoOreTableModel
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import COLORS
-from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets import ModernButton, ShimmerSkeleton
+from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -120,15 +121,9 @@ class ScaricoOrePanel(QWidget):
         layout.setSpacing(15)
 
         # --- TOOLBAR (Design Modern Card) ---
-        self.toolbar_card = QFrame()
+        self.toolbar_card = ModernCard(elevation=10)
         self.toolbar_card.setObjectName("filterBar")
-        self.toolbar_card.setStyleSheet(f"""
-            QFrame#filterBar {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 12px;
-            }}
-        """)
+        
         toolbar_layout = QHBoxLayout(self.toolbar_card)
         toolbar_layout.setContentsMargins(15, 10, 15, 10)
         toolbar_layout.setSpacing(15)
@@ -233,6 +228,12 @@ class ScaricoOrePanel(QWidget):
         header.filterChanged.connect(self._on_header_filter_changed)
 
         scarico_layout.addWidget(self.table_view)
+
+        # --- SHIMMER LOADING ---
+        self.shimmer = ShimmerSkeleton(rows=10)
+        self.shimmer.setParent(self.table_view)
+        self.shimmer.hide()
+
         self.tabs.addTab(
             self.scarico_tab, get_colored_icon(get_asset_path(Icons.DOWNLOAD), COLORS["text_muted"]), "Dati Scaricati"
         )
@@ -363,8 +364,23 @@ class ScaricoOrePanel(QWidget):
         self.search_input.setEnabled(not loading)
         self.update_btn.setEnabled(not loading)
         self.search_input.setPlaceholderText("Caricamento..." if loading else "Filtra dati (Premi Invio)...")
+        
+        if loading:
+            self.table_view.hide()
+            self.shimmer.show()
+            self.shimmer.resize(self.table_view.size())
+        else:
+            self.shimmer.hide()
+            self.table_view.show()
+
         self.table_view.setDisabled(loading)
         QApplication.processEvents()
+
+    def resizeEvent(self, event) -> None:
+        """Sincronizza shimmer e altri overlay."""
+        super().resizeEvent(event)
+        if hasattr(self, "shimmer") and self.shimmer.isVisible():
+            self.shimmer.resize(self.table_view.size())
 
     def _on_loading_progress(self, msg: str) -> None:
         """Inoltra i messaggi di progresso dal worker alla label di stato."""

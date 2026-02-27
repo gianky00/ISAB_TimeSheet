@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.gui.styles import COLORS
+from src.gui.widgets import DashboardStatCard
 from src.gui.widgets.activity_feed import ActivityFeed
 from src.gui.widgets.autopilot import AutopilotWidget
 from src.gui.widgets.quick_actions import QuickActions
@@ -102,6 +103,7 @@ class DashboardPanel(QWidget):
 
     def refresh_live_data(self):
         """Aggiorna i dati dinamici dei widget (Feed, Azioni, Autopilot) senza ricostruire la UI."""
+        self._update_quick_stats()
         if self.activity_feed:
             self.activity_feed.refresh_feed()
 
@@ -113,7 +115,25 @@ class DashboardPanel(QWidget):
 
     def _setup_ui(self):
         """Inizializza e posiziona i widget della dashboard nel layout dei contenuti."""
-        # 1. Quick Actions Row + Autopilot (Top)
+        # 0. Quick Stats Row (Nuova sezione Centrale Operativa)
+        stats_row = QHBoxLayout()
+        stats_row.setSpacing(20)
+
+        from src.core.constants import Icons
+
+        # Stat 1: PDL Totali
+        self.card_pdl = DashboardStatCard("PDL In Database", "0", Icons.FILE_TEXT, COLORS["primary_blue"])
+        # Stat 2: Bot Status (Health)
+        self.card_health = DashboardStatCard("System Health", "100%", Icons.ACTIVITY, COLORS["success_dark"])
+        # Stat 3: Notifiche non lette
+        self.card_notif = DashboardStatCard("Notifiche", "0", Icons.BELL, COLORS["warning_orange"])
+
+        stats_row.addWidget(self.card_pdl)
+        stats_row.addWidget(self.card_health)
+        stats_row.addWidget(self.card_notif)
+        self.content_layout.addLayout(stats_row)
+
+        # 1. Quick Actions Row + Autopilot (Middle)
         actions_row = QHBoxLayout()
         actions_row.setSpacing(20)
         actions_row.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -139,7 +159,32 @@ class DashboardPanel(QWidget):
         self.activity_feed = ActivityFeed()
         self.content_layout.addWidget(self.activity_feed)
 
+        self._update_quick_stats()
         self.refresh_live_data()
+
+    def _update_quick_stats(self):
+        """Recupera dati reali dal DB per le card della dashboard."""
+        from src.core.database import db_manager
+        with suppress(Exception):
+            # PDL Count
+            res = db_manager.execute_query(db_manager.DB_PDL, "SELECT COUNT(*) FROM pdl")
+            if res:
+                self.card_pdl.update_value(str(res[0][0]))
+
+            # Notif Count (Unread)
+            from src.core.notification_manager import NotificationManager
+            unread = len([n for n in NotificationManager.instance().get_notifications() if not n.read])
+            self.card_notif.update_value(str(unread))
+
+            # Health Score
+            from src.core.logging.analytics import generate_analytics_report
+            report = generate_analytics_report(hours=24)
+            score = report.health_score
+            self.card_health.update_value(f"{int(score)}%")
+            self.card_health.icon_container.setStyleSheet(f"""
+                background-color: {COLORS["success_dark"] if score > 80 else COLORS["warning_orange"]}20;
+                border-radius: 25px;
+            """)
 
     def _navigate_to(self, key):
         """Naviga verso un pannello specifico identificato da una chiave stringa."""
