@@ -186,7 +186,7 @@ class MainWindow(QMainWindow):
         ) = self.tool_bar_component.setup_content_toolbar(content_layout)
 
         self.page_stack = SlidingStackedWidget()
-        for i in range(12):
+        for i in range(13):
             placeholder = QWidget()
             self.page_stack.addWidget(placeholder)
             setattr(self, f"_panel_initialized_{i}", False)

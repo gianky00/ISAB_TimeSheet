@@ -80,6 +80,7 @@ class NavigationController:
             9: self._create_notifications,
             10: self._create_storico_oda,
             11: self._create_dipendenti,
+            12: self._create_consuntivo,
         }
         if creator := creators.get(index):
             return creator()
@@ -160,6 +161,14 @@ class NavigationController:
 
         panel = DipendentiPanel()
         self.mw.dipendenti_panel = panel
+        return panel
+
+    def _create_consuntivo(self) -> QWidget:
+        """Inizializza il pannello di gestione consuntivi."""
+        from src.gui.panels.consuntivo_panel import ConsuntivoPanel
+
+        panel = ConsuntivoPanel()
+        self.mw.consuntivo_panel = panel
         return panel
 
     def _create_help(self) -> QWidget:

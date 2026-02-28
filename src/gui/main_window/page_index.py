@@ -48,3 +48,6 @@ class PageIndex(IntEnum):
 
     DIPENDENTI = 11
     """Gestione schede dipendenti e monitoraggio PDL."""
+
+    CONSUNTIVO = 12
+    """Generatore e gestore consuntivi automatizzato."""

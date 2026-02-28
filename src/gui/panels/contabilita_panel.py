@@ -32,6 +32,7 @@ from src.gui.widgets.contabilita.attivita_tab import AttivitaProgrammateTab
 from src.gui.widgets.contabilita.certificati_tab import CertificatiCampioneTab
 from src.gui.widgets.contabilita.giornaliere_tab import GiornaliereYearTab
 from src.gui.widgets.contabilita.year_tab import ContabilitaYearTab
+
 from src.gui.widgets.core_widgets import (
     SearchInput,
 )
@@ -186,6 +187,8 @@ class ContabilitaPanel(QWidget):
             get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_muted"]),
             "Giornaliere",
         )
+
+
 
         self.attivita_widget = AttivitaProgrammateTab()
         self.main_tabs.addTab(

@@ -169,7 +169,6 @@ class ContabilitaYearTab(QWidget):
 
             # Passa i dati grezzi direttamente al modello.
             # Il modello userà i formatters per la visualizzazione e i valori grezzi per l'ordinamento.
-            # Convertiamo solo in lista per mutabilità se necessario, ma db_data è lista di tuple
             # FastTableModel si aspetta lista di liste/tuple accessibili per indice.
 
             # Nota: ContabilitaQueries restituisce tutto. Dobbiamo assicurarci di prendere solo le colonne che servono

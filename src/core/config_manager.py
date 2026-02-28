@@ -56,6 +56,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "contabilita_file_path": "",
     "enable_auto_update_contabilita": True,
     "certificati_campione_path": "",
+    "master_preventivi_path": "",
     "reparti": ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"],
     "cantieri": [],
     "employee_mappings": {},

@@ -74,6 +74,15 @@ class PathsPage(QWidget):
 
         layout.addWidget(contabilita_group)
 
+        # --- SEZIONE PREVENTIVI ---
+        preventivi_group = create_group_box("Generazione Preventivi")
+        prev_layout = QVBoxLayout(preventivi_group)
+
+        prev_layout.addWidget(QLabel("File Master Preventivi (Excel con Macro .xlsm):"))
+        self.master_preventivi_path_edit = self._create_path_row(prev_layout, self._browse_master_preventivi)
+
+        layout.addWidget(preventivi_group)
+
         # --- SEZIONE DATAEASE ---
         dataease_group = create_group_box("DataEase & Consuntivi")
         de_layout = QVBoxLayout(dataease_group)
@@ -185,6 +194,11 @@ class PathsPage(QWidget):
         if p:
             self.certificati_root_edit.setText(p)
 
+    def _browse_master_preventivi(self) -> None:
+        p = self._browse_file("Seleziona File Master Preventivi", "Excel Macro Files (*.xlsm)")
+        if p:
+            self.master_preventivi_path_edit.setText(p)
+
     def _browse_dataease(self) -> None:
         p = self._browse_file("Seleziona DB DataEase", "Access DB (*.mdb *.accdb)")
         if p:
@@ -214,6 +228,9 @@ class PathsPage(QWidget):
         self.certificati_root_edit.setText(str(config.get("certificati_root_path", "")))
         self._validate_path(self.certificati_root_edit)
 
+        self.master_preventivi_path_edit.setText(str(config.get("master_preventivi_path", "")))
+        self._validate_path(self.master_preventivi_path_edit)
+
         self.dataease_path_edit.setText(str(config.get("dataease_db_path", "")))
         self._validate_path(self.dataease_path_edit)
 
@@ -226,4 +243,5 @@ class PathsPage(QWidget):
         config_manager.set_config_value("activity_db_path", self.activity_db_path_edit.text())
         config_manager.set_config_value("certificati_campione_path", self.certificati_path_edit.text())
         config_manager.set_config_value("certificati_root_path", self.certificati_root_edit.text())
+        config_manager.set_config_value("master_preventivi_path", self.master_preventivi_path_edit.text())
         config_manager.set_config_value("dataease_db_path", self.dataease_path_edit.text())

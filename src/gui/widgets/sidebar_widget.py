@@ -326,6 +326,7 @@ class SidebarWidget(QFrame):
         self.btn_pdl = SidebarChildButton("PDL", get_asset_path(Icons.PDL))
         self.btn_dipendenti = SidebarChildButton("Dipendenti", get_asset_path(Icons.DIPENDENTI))
         self.btn_storico_oda = SidebarChildButton("Storico OdA", get_asset_path(Icons.FILE_TEXT))
+        self.btn_consuntivo = SidebarChildButton("Consuntivo", get_asset_path(Icons.BAR_CHART))
         self.db_child_btns: list[SidebarChildButton] = [
             self.btn_timbrature,
             self.btn_strumentale,
@@ -333,6 +334,7 @@ class SidebarWidget(QFrame):
             self.btn_pdl,
             self.btn_dipendenti,
             self.btn_storico_oda,
+            self.btn_consuntivo,
         ]
         for b in self.db_child_btns:
             self.group_db.add_child(b)
@@ -388,6 +390,7 @@ class SidebarWidget(QFrame):
         self.btn_pdl.clicked.connect(lambda: self.navigation_requested.emit(6))
         self.btn_dipendenti.clicked.connect(lambda: self.navigation_requested.emit(11))
         self.btn_storico_oda.clicked.connect(lambda: self.navigation_requested.emit(10))
+        self.btn_consuntivo.clicked.connect(lambda: self.navigation_requested.emit(12))
         self.btn_lyra.clicked.connect(lambda: self.navigation_requested.emit(2))
         self.btn_notifiche.clicked.connect(lambda: self._handle_notifications_click(0))
         self.btn_audit.clicked.connect(lambda: self._handle_notifications_click(1))
@@ -449,7 +452,7 @@ class SidebarWidget(QFrame):
         btns = {0: self.btn_home, 2: self.btn_lyra, 7: self.btn_settings, 8: self.btn_help}
         for i, b in btns.items():
             b.setChecked(i == index)
-        self.group_db.set_active_index(index, (3, 4, 5, 6, 11, 10))
+        self.group_db.set_active_index(index, (3, 4, 5, 6, 11, 10, 12))
         self.group_notifiche.set_active_index(index, (9,))
         if index == 9:
             self.btn_notifiche.setChecked(sub_index == 0)

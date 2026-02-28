@@ -240,3 +240,9 @@ class FastTableModel(QAbstractTableModel):
             print(f"Sort Error: {e}")
         finally:
             self.layoutChanged.emit()
+
+    def get_raw_row(self, row_idx: int) -> list[Any] | None:
+        """Restituisce i dati grezzi di una riga specifica."""
+        if 0 <= row_idx < len(self._data):
+            return self._data[row_idx]
+        return None
