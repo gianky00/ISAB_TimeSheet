@@ -51,6 +51,8 @@ class GeneratoreWorker(QThread):
 class MacroWorker(QThread):
     """Esegue una o più Macro VBA sul file generato in un thread separato."""
     finished_signal = pyqtSignal(bool, str)
+    macro_started = pyqtSignal(str)     # Emesso quando inizia una macro
+    macro_progress = pyqtSignal(str, bool) # Emesso quando finisce una singola macro (nome, successo)
 
     def __init__(self, file_path: str, macros: List[str]):
         super().__init__()
@@ -69,12 +71,18 @@ class MacroWorker(QThread):
             wb = excel_app.Workbooks.Open(self.file_path, UpdateLinks=0)
             
             for macro in self.macros:
+                self.macro_started.emit(macro)
                 logger.info(f"Esecuzione macro: {macro}")
                 try:
                     excel_app.Run(f"'{wb.Name}'!{macro}")
+                    self.macro_progress.emit(macro, True)
                 except Exception as me:
                     logger.error(f"Errore durante macro {macro}: {me}")
-                    # Continua con le altre se possibile o ferma? Per ora logga e continua
+                    self.macro_progress.emit(macro, False)
+                    # Fermiamo il loop se una macro critica fallisce
+                    self.finished_signal.emit(False, f"Errore nell'esecuzione della macro '{macro}':\n{me}")
+                    wb.Close(False)
+                    return
             
             wb.Save()
             self.finished_signal.emit(True, "Operazioni macro completate.")
