@@ -8,12 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from PyQt6.QtCore import (
-    Qt,
-    QTimer,
-    pyqtProperty,  # type: ignore[attr-defined]
-    pyqtSignal,
-)
+from PyQt6.QtCore import Qt, QTimer, pyqtProperty, pyqtSignal  # type: ignore[attr-defined]
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
@@ -112,7 +107,10 @@ class SidebarWidget(QFrame):
         if not pix.isNull():
             self.logo_badge.setPixmap(
                 pix.scaled(
-                    30, 30, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+                    30,
+                    30,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
                 )
             )
         self.h_lay.addWidget(self.logo_badge)
@@ -262,14 +260,24 @@ class SidebarWidget(QFrame):
         self.btn_settings.clicked.connect(lambda: self.navigation_requested.emit(7, -1, -1))
 
     def _on_group_expanded(self, group):
-        for g in (self.group_automazioni, self.group_db, self.group_contabilita, self.group_notifiche):
+        for g in (
+            self.group_automazioni,
+            self.group_db,
+            self.group_contabilita,
+            self.group_notifiche,
+        ):
             if g != group:
                 g.collapse()
         QTimer.singleShot(100, self._update_track)
 
     def _update_track(self):
         targets = []
-        for g in (self.group_automazioni, self.group_db, self.group_contabilita, self.group_notifiche):
+        for g in (
+            self.group_automazioni,
+            self.group_db,
+            self.group_contabilita,
+            self.group_notifiche,
+        ):
             for e in g.children_elements:
                 if isinstance(e, SidebarButton):
                     targets.append(e)
@@ -277,7 +285,7 @@ class SidebarWidget(QFrame):
                     targets.append(e.header_btn)
                     targets.extend(e.children_btns)
 
-        for b in self.main_btns + self.footer_btns:
+        for b in (*self.main_btns, *self.footer_btns):
             if isinstance(b, SidebarButton):
                 targets.append(b)
             elif isinstance(b, SidebarGroup):
@@ -387,5 +395,10 @@ class SidebarWidget(QFrame):
         QTimer.singleShot(150, self._update_track)
 
     def _update_ui_state(self):
-        for g in (self.group_db, self.group_automazioni, self.group_contabilita, self.group_notifiche):
+        for g in (
+            self.group_db,
+            self.group_automazioni,
+            self.group_contabilita,
+            self.group_notifiche,
+        ):
             g.set_collapsed(self._is_collapsed)

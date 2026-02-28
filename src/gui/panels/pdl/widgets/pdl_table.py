@@ -35,10 +35,10 @@ class PDLTableView(QTableView):
         self.setItemDelegate(PDLDelegate([0], self))
 
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.customContextMenuRequested.connect(lambda pos: self.context_menu_requested.emit(pos))
+        self.customContextMenuRequested.connect(self.context_menu_requested.emit)
         self.doubleClicked.connect(lambda _: self.row_double_clicked.emit())
         if sel_model := self.selectionModel():
-            sel_model.selectionChanged.connect(lambda _1, _2: self.selection_changed_custom.emit())
+            sel_model.selectionChanged.connect(self.selection_changed_custom.emit)
 
         v_header = self.verticalHeader()
         if v_header:

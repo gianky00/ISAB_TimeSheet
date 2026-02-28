@@ -116,7 +116,7 @@ class CertificatiEngine:
         """Estrae i metadati dalla stringa del nodo padre del TreeWidget."""
         parts = text.split("  •  ")
         return {
-            "matricola": parts[0].strip() if len(parts) > 0 else "",
+            "matricola": parts[0].strip() if parts else "",
             "costruttore": parts[1].strip() if len(parts) > 1 else "N/D",
             "modello": parts[2].strip() if len(parts) > 2 else "N/D",
             "range": parts[3].strip() if len(parts) > 3 and "Digital" in parts[2] else "",

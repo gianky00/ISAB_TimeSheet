@@ -36,7 +36,7 @@ class ODATreeView(QTreeView):
         self.setItemDelegate(ChildDescriptionDelegate(self))
 
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.customContextMenuRequested.connect(lambda pos: self.context_menu_requested.emit(pos))
+        self.customContextMenuRequested.connect(self.context_menu_requested.emit)
 
         # Gestione manuale doppio click su ogni colonna
         self.doubleClicked.connect(self._on_double_clicked)

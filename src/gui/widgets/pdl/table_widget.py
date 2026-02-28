@@ -58,7 +58,7 @@ class ProgrammazioneTableWidget(StandardTable):
                 self.setColumnWidth(i, 85)
 
         self.cellDoubleClicked.connect(self._handle_double_click)
-        self.cellClicked.connect(lambda: self.selection_changed_custom.emit())
+        self.cellClicked.connect(self.selection_changed_custom.emit)
 
     def _handle_double_click(self, row: int, column: int):
         from src.gui.widgets.pdl_timeline import PDLTimelineWidget

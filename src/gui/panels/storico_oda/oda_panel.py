@@ -6,6 +6,7 @@ Refactored V9.4: Bold on selection and context menu for details.
 """
 
 import os
+from contextlib import suppress
 from datetime import datetime
 
 import pandas as pd
@@ -155,15 +156,13 @@ class StoricoOdaPanel(QWidget):
 
         # Reset bold precedente
         if self._last_selected_parent:
-            try:
+            with suppress(Exception):
                 for col in range(self.model.columnCount()):
                     it = self.model.item(self._last_selected_parent.row(), col)
                     if it:
                         font = it.font()
                         font.setBold(False)
                         it.setFont(font)
-            except Exception:  # noqa: S110
-                pass
             self._last_selected_parent = None
 
         if not idx:

@@ -3,11 +3,7 @@ SyncroJob - UI Effects Widgets.
 Include componenti grafici con animazioni avanzate per il feedback visivo.
 """
 
-from PyQt6.QtCore import (
-    QEasingCurve,
-    QPropertyAnimation,
-    pyqtProperty,  # type: ignore[attr-defined]
-)
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtProperty  # type: ignore[attr-defined]
 from PyQt6.QtGui import QColor, QPainter, QPen
 from PyQt6.QtWidgets import QFrame
 
@@ -58,7 +54,12 @@ class HoverPulseFrame(QFrame):
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
             alpha = int(100 + (self._pulse_val * 155))
             pen = QPen(
-                QColor(self._accent_color.red(), self._accent_color.green(), self._accent_color.blue(), alpha)
+                QColor(
+                    self._accent_color.red(),
+                    self._accent_color.green(),
+                    self._accent_color.blue(),
+                    alpha,
+                )
             )
             pen.setWidth(3)
             painter.setPen(pen)

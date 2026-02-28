@@ -176,7 +176,7 @@ class EditableDataTable(QWidget):
 
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
-        self.table.itemChanged.connect(lambda: self.data_changed.emit())
+        self.table.itemChanged.connect(self.data_changed.emit)
 
         for _ in range(5):
             self._add_row()
