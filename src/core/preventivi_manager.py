@@ -1,26 +1,26 @@
 """
 SyncroJob - Preventivi Generator Manager
 Gestisce la generazione di preventivi Excel a partire da un file Master con macro.
-Implementa una tecnica avanzata di "Sanitizzazione XML" per eliminare i bug 
+Implementa una tecnica avanzata di "Sanitizzazione XML" per eliminare i bug
 dei Nomi Definiti (Print_Area) prima di lanciare l'automazione Win32COM.
 """
 
 import os
-import shutil
 import re
-import zipfile
+import shutil
 import tempfile
-from datetime import datetime
+import zipfile
+from contextlib import suppress
 from pathlib import Path
-from typing import Any, Optional, List, Dict
+from typing import Any
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from src.core.logging import get_logger
 
 try:
-    import win32com.client
     import pythoncom
+    import win32com.client
     _win32com_found = True
 except ImportError:
     _win32com_found = False
@@ -32,13 +32,13 @@ class GeneratoreWorker(QThread):
     """Esegue la generazione del file Excel in background."""
     finished_signal = pyqtSignal(bool, str)
 
-    def __init__(self, master_path: str, data: dict, dest_path: str):
+    def __init__(self, master_path: str, data: dict[str, Any], dest_path: str):
         super().__init__()
         self.master_path = master_path
         self.data = data
         self.dest_path = dest_path
 
-    def run(self):
+    def run(self) -> None:
         try:
             manager = PreventiviGeneratorManager(self.master_path)
             success, result = manager.generate_preventivo(self.data, self.dest_path)
@@ -54,22 +54,22 @@ class MacroWorker(QThread):
     macro_started = pyqtSignal(str)     # Emesso quando inizia una macro
     macro_progress = pyqtSignal(str, bool) # Emesso quando finisce una singola macro (nome, successo)
 
-    def __init__(self, file_path: str, macros: List[str]):
+    def __init__(self, file_path: str, macros: list[str]):
         super().__init__()
         self.file_path = file_path
         self.macros = macros
 
-    def run(self):
+    def run(self) -> None:
         try:
             pythoncom.CoInitialize()
             import win32com.client
-            
+
             excel_app = win32com.client.Dispatch("Excel.Application")
-            excel_app.Visible = True 
+            excel_app.Visible = True
             excel_app.DisplayAlerts = False
-            
+
             wb = excel_app.Workbooks.Open(self.file_path, UpdateLinks=0)
-            
+
             for macro in self.macros:
                 self.macro_started.emit(macro)
                 logger.info(f"Esecuzione macro: {macro}")
@@ -83,7 +83,7 @@ class MacroWorker(QThread):
                     self.finished_signal.emit(False, f"Errore nell'esecuzione della macro '{macro}':\n{me}")
                     wb.Close(False)
                     return
-            
+
             wb.Save()
             self.finished_signal.emit(True, "Operazioni macro completate.")
         except Exception as e:
@@ -107,7 +107,7 @@ class PreventiviGeneratorManager:
 
         max_num = 0
         pattern = re.compile(r"(\d{3})[-/]\d{2}")
-        
+
         try:
             for f in os.listdir(directory):
                 match = pattern.search(f)
@@ -115,24 +115,24 @@ class PreventiviGeneratorManager:
                     num = int(match.group(1))
                     if num > max_num:
                         max_num = num
-            
+
             return f"{max_num + 1:03d}"
         except Exception as e:
             logger.warning(f"Errore calcolo progressivo: {e}")
             return "001"
 
-    def read_existing_data(self, file_path: str) -> Dict[str, Any]:
+    def read_existing_data(self, file_path: str) -> dict[str, Any]:
         """Legge i dati da un file Excel esistente per popolare la UI."""
         if not _win32com_found or not os.path.exists(file_path):
             return {}
 
-        data = {}
+        data: dict[str, Any] = {}
         try:
             pythoncom.CoInitialize()
             app = win32com.client.Dispatch("Excel.Application")
             app.Visible = False
             wb = app.Workbooks.Open(file_path, ReadOnly=True, UpdateLinks=0)
-            
+
             try:
                 sheet = wb.Sheets("inserimento dati")
                 data["data"] = str(sheet.Range("A5").Value)
@@ -143,25 +143,24 @@ class PreventiviGeneratorManager:
                 data["stato_attivita"] = str(sheet.Range("D11").Value)
                 data["tipologia_preventivo"] = str(sheet.Range("D13").Value)
                 data["tipologia_economia"] = str(sheet.Range("E13").Value)
-                
+
                 # Descrizione lavoro (prime 11 righe)
                 desc = []
                 for i in range(11):
                     val = sheet.Range(f"A{11+i}").Value
-                    if val: desc.append(str(val))
+                    if val:
+                        desc.append(str(val))
                 data["descrizione_lavoro"] = "\n".join(desc)
                 data["descrizione_relazione"] = str(sheet.Range("A32").Value or "")
-                
+
                 # Progressivo da rif.VBA
-                try:
+                with suppress(Exception):
                     vba_sheet = wb.Sheets("rif.VBA")
                     prog_val = str(vba_sheet.Range("A4").Value)
                     if "/" in prog_val:
                         data["progressivo"] = prog_val.split("/")[0]
                         data["anno_full"] = "20" + prog_val.split("/")[1]
-                except:
-                    pass
-                    
+
             finally:
                 wb.Close(False)
                 app.Quit()
@@ -170,31 +169,31 @@ class PreventiviGeneratorManager:
             logger.error(f"Errore lettura dati esistenti: {e}")
         return data
 
-    def _sanitize_excel_file(self, filepath: str):
+    def _sanitize_excel_file(self, filepath: str) -> None:
         temp_dir = tempfile.mkdtemp()
         try:
             with zipfile.ZipFile(filepath, 'r') as zip_ref:
                 zip_ref.extractall(temp_dir)
-                
+
             wb_xml_path = os.path.join(temp_dir, 'xl', 'workbook.xml')
             if os.path.exists(wb_xml_path):
-                with open(wb_xml_path, 'r', encoding='utf-8') as f:
+                with open(wb_xml_path, encoding='utf-8') as f:
                     xml = f.read()
-                
+
                 xml = re.sub(r'<definedName[^>]*name="[^"]*Print_Area"[^>]*>.*?</definedName>', '', xml, flags=re.IGNORECASE|re.DOTALL)
                 xml = re.sub(r'<definedName[^>]*name="[^"]*Print_Area"[^>]*/>', '', xml, flags=re.IGNORECASE)
-                
+
                 with open(wb_xml_path, 'w', encoding='utf-8') as f:
                     f.write(xml)
-                    
+
             temp_zip = filepath + ".tmp"
             with zipfile.ZipFile(temp_zip, 'w', zipfile.ZIP_DEFLATED) as zip_out:
-                for root, dirs, files in os.walk(temp_dir):
+                for root, _, files in os.walk(temp_dir):
                     for file in files:
                         file_path = os.path.join(root, file)
                         arcname = os.path.relpath(file_path, temp_dir)
                         zip_out.write(file_path, arcname)
-                        
+
             shutil.move(temp_zip, filepath)
         except Exception as e:
             logger.error(f"Errore sanitizzazione: {e}")
@@ -202,7 +201,8 @@ class PreventiviGeneratorManager:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
     def generate_preventivo(self, data: dict[str, Any], output_dir: str) -> tuple[bool, str]:
-        if not _win32com_found: return False, "pywin32 mancante."
+        if not _win32com_found:
+            return False, "pywin32 mancante."
         try:
             out_path = Path(output_dir)
             out_path.mkdir(parents=True, exist_ok=True)
@@ -213,7 +213,7 @@ class PreventiviGeneratorManager:
 
             shutil.copy2(self.master_path, dest_file)
             self._sanitize_excel_file(str(dest_file))
-            
+
             success, msg = self._fill_excel_data(str(dest_file), data)
             return success, str(dest_file) if success else msg
         except Exception as e:
@@ -226,7 +226,7 @@ class PreventiviGeneratorManager:
             self.excel_app.Visible = False
             self.excel_app.DisplayAlerts = False
             self.wb = self.excel_app.Workbooks.Open(file_path, UpdateLinks=0)
-            
+
             sheet = self.wb.Sheets("inserimento dati")
             sheet.Range("A5").Value = data.get("data", "")
             sheet.Range("A7").Value = data.get("tcl", "")
@@ -242,17 +242,18 @@ class PreventiviGeneratorManager:
                 sheet.Range(f"A{11+i}").Value = line
             sheet.Range("A32").Value = data.get("descrizione_relazione", "")
 
-            try:
+            with suppress(Exception):
                 vba_ref = self.wb.Sheets("rif.VBA")
                 vba_ref.Range("A4").Value = f"{data.get('progressivo', '000')}/{data.get('anno_short', '26')}"
                 vba_ref.Range("A6").Value = data.get("data", "")
-            except: pass
 
             self.wb.Save()
             return True, "OK"
         except Exception as e:
             return False, str(e)
         finally:
-            if self.wb: self.wb.Close(False)
-            if self.excel_app: self.excel_app.Quit()
+            if self.wb:
+                self.wb.Close(False)
+            if self.excel_app:
+                self.excel_app.Quit()
             pythoncom.CoUninitialize()

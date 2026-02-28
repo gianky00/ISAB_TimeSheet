@@ -4,12 +4,19 @@ Console dark per il tracciamento delle operazioni in tempo reale.
 """
 
 from datetime import datetime
+
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QColor
+from PyQt6.QtGui import QColor, QFont
 from PyQt6.QtWidgets import (
-    QFrame, QVBoxLayout, QHBoxLayout, QLabel, 
-    QPushButton, QTextEdit, QGraphicsDropShadowEffect
+    QFrame,
+    QGraphicsDropShadowEffect,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
 )
+
 
 class OperationLogWidget(QFrame):
     """Console dark per i log delle operazioni."""

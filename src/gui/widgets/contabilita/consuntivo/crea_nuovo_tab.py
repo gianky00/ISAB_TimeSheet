@@ -5,33 +5,39 @@ Tab per la generazione di un nuovo consuntivo da template Master.
 
 import os
 from datetime import datetime
-from typing import Optional
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont
+
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
-    QComboBox, QTextEdit, QScrollArea
+    QComboBox,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QScrollArea,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
 
 from src.core import config_manager
-from src.core.preventivi_manager import PreventiviGeneratorManager, GeneratoreWorker, MacroWorker
+from src.core.preventivi_manager import GeneratoreWorker, MacroWorker, PreventiviGeneratorManager
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import COLORS
+from src.gui.widgets.contabilita.consuntivo.log_widget import OperationLogWidget
+from src.gui.widgets.contabilita.consuntivo.workflow_widgets import WorkflowMapWidget, WorkflowStepButton
 from src.gui.widgets.core_widgets import PrimaryButton, StandardInput
 from src.gui.widgets.modern_card import ModernContentCard
-from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
-from src.gui.widgets.contabilita.consuntivo.workflow_widgets import WorkflowMapWidget, WorkflowStepButton
-from src.gui.widgets.contabilita.consuntivo.log_widget import OperationLogWidget
+
 
 class CreaNuovoTab(QWidget):
     """Tab per la generazione di un nuovo consuntivo con tutti i campi necessari."""
 
     step_clicked = pyqtSignal(str)
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.worker: Optional[GeneratoreWorker] = None
-        self.macro_worker: Optional[MacroWorker] = None
-        self.last_generated_file: Optional[str] = None
+        self.worker: GeneratoreWorker | None = None
+        self.macro_worker: MacroWorker | None = None
+        self.last_generated_file: str | None = None
         self._setup_ui()
 
     def _setup_ui(self) -> None:

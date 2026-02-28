@@ -3,17 +3,14 @@ SyncroJob - Consuntivo Workflow Widgets
 Componenti grafici per la visualizzazione del processo di automazione.
 """
 
-from typing import Any, Optional
-from PyQt6.QtCore import (
-    Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, 
-    pyqtProperty
-)
+from typing import Any, ClassVar, cast
+
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, pyqtProperty, pyqtSignal  # type: ignore
 from PyQt6.QtGui import QColor, QFont
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
-    QGraphicsDropShadowEffect
-)
+from PyQt6.QtWidgets import QFrame, QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+
 from src.gui.styles import COLORS
+
 
 class WorkflowStepButton(QFrame):
     """Card pulsante premium per uno step del workflow consuntivo con animazione Glow."""
@@ -32,7 +29,7 @@ class WorkflowStepButton(QFrame):
         title: str,
         description: str,
         is_action: bool = False,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self._step_id = step_id
@@ -107,7 +104,7 @@ class WorkflowStepButton(QFrame):
             self._glow_opacity = 0.0
 
     def _apply_style(self) -> None:
-        state_styles = {
+        state_styles: dict[str, dict[str, Any]] = {
             self.State.IDLE: {
                 "bg": "#ffffff", "border": COLORS["border_light"],
                 "badge_bg": "#f1f3f5", "badge_color": COLORS["text_muted"],
@@ -174,7 +171,7 @@ class WorkflowStepButton(QFrame):
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(16)
         shadow.setOffset(0, 4)
-        shadow.setColor(s["shadow_color"])
+        shadow.setColor(cast("QColor", s["shadow_color"]))
         self.setGraphicsEffect(shadow)
 
     def mousePressEvent(self, event: Any) -> None:
@@ -199,7 +196,7 @@ class WorkflowMapWidget(QWidget):
 
     step_clicked = pyqtSignal(str)
 
-    STEPS = [
+    STEPS: ClassVar[list[tuple[str, int, str, str]]] = [
         ("carica_dati", 1, "CARICA\nDATI", "CaricaDatiMultiplo"),
         ("elabora_dati", 2, "ELABORA\nDATI", "elaboraDati"),
         ("compila_consuntivo", 3, "COMPILA\nCONSUNTIVO", "EseguiTuttiSmista"),
@@ -207,13 +204,13 @@ class WorkflowMapWidget(QWidget):
         ("stampa", 5, "STAMPA", "verificaEstampaFogli"),
     ]
 
-    ACTIONS = [
+    ACTIONS: ClassVar[list[tuple[str, int, str, str]]] = [
         ("esegui_1_4", 6, "🚀 ESEGUI\n1→4", "Carica → Elabora → Compila → Verifica"),
         ("esegui_1_5", 7, "🚀 ESEGUI\n1→5", "Intero workflow completo"),
     ]
 
     # Mapping step_id → lista macro VBA da eseguire
-    MACRO_MAP: dict[str, list[str]] = {
+    MACRO_MAP: ClassVar[dict[str, list[str]]] = {
         "carica_dati": ["CaricaDatiMultiplo"],
         "elabora_dati": ["elaboraDati"],
         "compila_consuntivo": ["EseguiTuttiSmista"],
@@ -223,7 +220,7 @@ class WorkflowMapWidget(QWidget):
         "esegui_1_5": ["CaricaDatiMultiplo", "elaboraDati", "EseguiTuttiSmista", "VerificaConsuntivo", "verificaEstampaFogli"],
     }
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setMinimumHeight(300)
         self._step_buttons: dict[str, WorkflowStepButton] = {}

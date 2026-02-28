@@ -4,34 +4,44 @@ Tab intelligente per la scansione, auto-fill e manipolazione di file esistenti.
 """
 
 import os
+from contextlib import suppress
 from datetime import datetime
-from typing import Optional, Dict, List
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer
+from typing import cast
+
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
-    QComboBox, QTextEdit, QScrollArea, QGridLayout, QLineEdit, QPushButton, QFileDialog
+    QComboBox,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QScrollArea,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
 
 from src.core import config_manager
-from src.core.preventivi_manager import PreventiviGeneratorManager, MacroWorker
-from src.gui.styles import COLORS
-from src.gui.widgets.core_widgets import StandardInput
-from src.gui.widgets.modern_card import ModernContentCard
+from src.core.preventivi_manager import MacroWorker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
-from src.gui.widgets.contabilita.consuntivo.workflow_widgets import WorkflowMapWidget, WorkflowStepButton
+from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.consuntivo.log_widget import OperationLogWidget
+from src.gui.widgets.contabilita.consuntivo.workflow_widgets import WorkflowMapWidget, WorkflowStepButton
+from src.gui.widgets.modern_card import ModernContentCard
+
 
 class ModificaEsistenteTab(QWidget):
     """Tab intelligente: scansiona la directory preventivi, elenca i file .xlsm,
-    e auto-compila i campi leggendo il file selezionato senza aprire Excel."""
+    e auto-compila i campi leggendo le informazioni dal file selezionato."""
 
     step_clicked = pyqtSignal(str)
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.macro_worker: Optional[MacroWorker] = None
-        self.loaded_file: Optional[str] = None
+        self.macro_worker: MacroWorker | None = None
+        self.loaded_file: str | None = None
         self._setup_ui()
         QTimer.singleShot(500, self._scan_directory)
 
@@ -125,7 +135,7 @@ class ModificaEsistenteTab(QWidget):
 
         grid = QGridLayout()
         grid.setSpacing(10)
-        self._fields: Dict[str, QLineEdit] = {}
+        self._fields: dict[str, QLineEdit] = {}
         field_defs = [
             ("Data (A5)", "data", 0, 0), ("TCL (A7)", "tcl", 0, 1),
             ("ODC (B5)", "odc", 0, 2), ("Avviso (C7)", "avviso", 0, 3),
@@ -274,7 +284,7 @@ class ModificaEsistenteTab(QWidget):
                     if v is None:
                         return ""
                     if hasattr(v, 'strftime'):
-                        return v.strftime("%d/%m/%Y")
+                        return cast("str", v.strftime("%d/%m/%Y"))
                     return str(v).strip()
                 except Exception:
                     return ""
@@ -290,12 +300,10 @@ class ModificaEsistenteTab(QWidget):
 
             prog = ""
             if "rif.VBA" in wb.sheetnames:
-                try:
+                with suppress(Exception):
                     prog_val = wb["rif.VBA"]["A4"].value
                     if prog_val:
                         prog = str(prog_val).strip()
-                except Exception:
-                    pass
             self._fields["progressivo"].setText(prog)
 
             lines = [cv(f"A{r}") for r in range(11, 22) if cv(f"A{r}")]
@@ -345,6 +353,7 @@ class ModificaEsistenteTab(QWidget):
                 if val:
                     sheet[addr] = val
 
+            # Descrizione lavoro (A11:A21)
             desc_lines = self._desc_lavoro_display.toPlainText().split("\n")
             for i in range(11, 22):
                 idx = i - 11
