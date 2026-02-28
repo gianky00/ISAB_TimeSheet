@@ -1,0 +1,5 @@
+src\gui\panels\pdl\programmazione_tab.py:225:9 [FURB184]: Assignment statement should be chained
+src\gui\widgets\contabilita\consuntivo\crea_nuovo_tab.py:261:9 [FURB184]: Assignment statement should be chained
+src\gui\widgets\dashboard\weather_widget.py:383:9 [FURB184]: Return statement should be chained
+
+Run `refurb --explain ERR` to further explain an error. Use `--quiet` to silence this message

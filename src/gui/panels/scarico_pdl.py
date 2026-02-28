@@ -83,7 +83,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.combo_stampanti = FilterComboBox()
         self.combo_stampanti.addItems(get_installed_printers())
         self.combo_stampanti.setStyleSheet(COMBOBOX_STYLE)
-        for w in [self.check_stampa, self.combo_stampanti]:
+        for w in (self.check_stampa, self.combo_stampanti):
             h_p.addWidget(w)
         v_print.addLayout(h_p)
         params_lay.addLayout(v_print)

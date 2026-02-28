@@ -257,8 +257,7 @@ class CreaNuovoTab(QWidget):
         threading.Thread(target=run_check, daemon=True).start()
 
     def _on_generate(self) -> None:
-        config = config_manager.load_config()
-        master_path = config.get("master_preventivi_path", "")
+        master_path = config_manager.load_config().get("master_preventivi_path", "")
 
         if not master_path or not Path(master_path).exists():
             ConfirmationDialog.show_error(

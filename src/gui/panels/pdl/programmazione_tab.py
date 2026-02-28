@@ -212,7 +212,7 @@ class ProgrammazioneTab(QWidget):
     def _apply_filters(self):
         selected_reqs = self.view_filter.selected
         day_choice = self.day_selector.currentText()
-        day_map = {
+        target_day = {
             "Lunedì": 0,
             "Martedì": 1,
             "Mercoledì": 2,
@@ -221,8 +221,7 @@ class ProgrammazioneTab(QWidget):
             "Sabato": 5,
             "Domenica": 6,
             "Oggi": datetime.now().weekday(),
-        }
-        target_day = day_map.get(day_choice, -1)
+        }.get(day_choice, -1)
 
         for table in self.tables:
             for i in range(7):

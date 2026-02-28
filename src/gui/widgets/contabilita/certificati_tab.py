@@ -65,7 +65,7 @@ class CertificatiCampioneTab(QWidget):
         self.btn_analyze.setIcon(QIcon(get_asset_path(Icons.BAR_CHART)))
         self.btn_analyze.clicked.connect(self._run_analysis)
 
-        for w in [btn_expand, btn_collapse]:
+        for w in (btn_expand, btn_collapse):
             toolbar.addWidget(w)
         toolbar.addSpacing(20)
         toolbar.addWidget(self.show_excluded_check)

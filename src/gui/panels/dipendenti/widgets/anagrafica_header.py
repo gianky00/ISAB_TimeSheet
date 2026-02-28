@@ -102,7 +102,7 @@ class AnagraficaHeaderWidget(QWidget):
         )
         self.btn_bot_update.clicked.connect(self.update_requested.emit)
 
-        for b in [import_btn, email_report_btn, self.btn_bot_update]:
+        for b in (import_btn, email_report_btn, self.btn_bot_update):
             actions_h.addWidget(b)
         info_v.addLayout(actions_h)
         filter_layout.addLayout(info_v)
@@ -127,7 +127,7 @@ class AnagraficaHeaderWidget(QWidget):
             "Esclusi", COLORS["text_muted"], Icons.EYE_OFF, "Non monitorati", "excluded"
         )
 
-        for card in [self.card_ok, self.card_warning, self.card_expired, self.card_excluded]:
+        for card in (self.card_ok, self.card_warning, self.card_expired, self.card_excluded):
             card.clicked.connect(self.filter_changed.emit)
             cards_layout.addWidget(card, stretch=1)
 

@@ -47,8 +47,8 @@ class SidebarWidget(QFrame):
 
         self.setMinimumWidth(self.collapsed_width)
         self.setMaximumWidth(self.collapsed_width)
-        self.setMinimumHeight(90)
-        self.setMaximumHeight(90)
+        self.setMinimumHeight(100)
+        self.setMaximumHeight(100)
         self.setMouseTracking(True)
 
         self._setup_ui()
@@ -120,6 +120,11 @@ class SidebarWidget(QFrame):
         self.logo_opacity = QGraphicsOpacityEffect(self.logo_label)
         self.logo_label.setGraphicsEffect(self.logo_opacity)
         self.h_lay.addWidget(self.logo_label)
+
+        # Gestione visibilità iniziale
+        self.logo_label.setVisible(not self._is_collapsed)
+        self.logo_opacity.setOpacity(0.0 if self._is_collapsed else 1.0)
+
         layout.addWidget(self.h_container)
 
         # Scroll Area
@@ -152,19 +157,19 @@ class SidebarWidget(QFrame):
 
         # --- LEVEL 3: AUTOMATIONS ---
         self.sub_fornitori = SidebarSubGroup("Portale Fornitori")
-        for n, i in [
+        for n, i in (
             ("Dettagli OdA", 0),
             ("Scarico TS", 1),
             ("Timbrature", 2),
             ("Prenota BP", 3),
             ("Carico TS", 4),
-        ]:
+        ):
             btn = SidebarChildButton(n, "")
             btn.clicked.connect(lambda _, s=i: self.navigation_requested.emit(1, 0, s))
             self.sub_fornitori.add_child(btn)
 
         self.sub_safework = SidebarSubGroup("SafeWork")
-        for n, i in [("Scarico PDL", 0), ("Ricerca PDL", 1)]:
+        for n, i in (("Scarico PDL", 0), ("Ricerca PDL", 1)):
             btn = SidebarChildButton(n, "")
             btn.clicked.connect(lambda _, s=i: self.navigation_requested.emit(1, 1, s))
             self.sub_safework.add_child(btn)
@@ -178,35 +183,35 @@ class SidebarWidget(QFrame):
         self.btn_pdl = SidebarChildButton("PDL", get_asset_path(Icons.PDL))
         self.btn_storico_oda = SidebarChildButton("Storico OdA", get_asset_path(Icons.FILE_TEXT))
         self.sub_dipendenti = SidebarSubGroup("Dipendenti")
-        for n, i in [("Monitoraggio", 0), ("Configurazione", 1)]:
+        for n, i in (("Monitoraggio", 0), ("Configurazione", 1)):
             btn = SidebarChildButton(n, "")
             btn.clicked.connect(lambda _, s=i: self.navigation_requested.emit(11, s, -1))
             self.sub_dipendenti.add_child(btn)
 
-        for b in [
+        for b in (
             self.btn_timbrature,
             self.btn_dataease,
             self.btn_pdl,
             self.sub_dipendenti,
             self.btn_storico_oda,
-        ]:
+        ):
             self.group_db.add_child(b)
 
         # --- LEVEL 3: CONTABILITA ---
         self.sub_strumentale = SidebarSubGroup("Strumentale")
-        for n, i in [
+        for n, i in (
             ("Preventivi", 0),
             ("Giornaliere", 1),
             ("Attività Programmate", 2),
             ("Certificati", 3),
             ("KPI", 4),
-        ]:
+        ):
             btn = SidebarChildButton(n, "")
             btn.clicked.connect(lambda _, s=i: self.navigation_requested.emit(4, s, -1))
             self.sub_strumentale.add_child(btn)
 
         self.sub_consuntivo = SidebarSubGroup("Consuntivo")
-        for n, i in [("Crea Nuovo", 0), ("Modifica Esistente", 1), ("Impostazioni", 2)]:
+        for n, i in (("Crea Nuovo", 0), ("Modifica Esistente", 1), ("Impostazioni", 2)):
             btn = SidebarChildButton(n, "")
             btn.clicked.connect(lambda _, s=i: self.navigation_requested.emit(12, s, -1))
             self.sub_consuntivo.add_child(btn)
@@ -235,7 +240,7 @@ class SidebarWidget(QFrame):
                 b.expanded.connect(self._on_group_expanded)
 
         self.notif_child_btns = []
-        for n, i in [("Notifiche", 0), ("Audit", 1), ("Health", 2)]:
+        for n, i in (("Notifiche", 0), ("Audit", 1), ("Health", 2)):
             btn = SidebarChildButton(n, "")
             btn.clicked.connect(lambda _, s=i: self.navigation_requested.emit(9, s, -1))
             self.group_notifiche.add_child(btn)
@@ -245,6 +250,11 @@ class SidebarWidget(QFrame):
         self.active_track = QWidget(self)
         self.active_track.setFixedWidth(5)
         self.active_track.setStyleSheet(f"background: {COLORS['teal_accent']}; border-radius: 2px;")
+
+        # Nascondi elementi se parte collassata
+        if self._is_collapsed:
+            self.scroll_area.setVisible(False)
+            self.footer.setVisible(False)
 
         self._setup_connections()
 
@@ -311,12 +321,12 @@ class SidebarWidget(QFrame):
         for i, b in btns.items():
             b.setChecked(i == index)
 
-        for g, indices in [
+        for g, indices in (
             (self.group_db, (3, 5, 6, 11, 10)),
             (self.group_contabilita, (4, 12)),
             (self.group_notifiche, (9,)),
             (self.group_automazioni, (1,)),
-        ]:
+        ):
             g.set_active_index(index, indices)
 
         if index == 1:
@@ -372,8 +382,8 @@ class SidebarWidget(QFrame):
 
         if c:
             self.active_track.hide()
-            self.setMinimumHeight(90)
-            self.setMaximumHeight(90)
+            self.setMinimumHeight(100)
+            self.setMaximumHeight(100)
             self.bg_frame.setStyleSheet(self._get_glass_style(collapsed=True))
         else:
             p = self.parentWidget()

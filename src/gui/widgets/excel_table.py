@@ -92,7 +92,7 @@ class ExcelTableWidget(QTableWidget, ClipboardMixin):
         copy_act = QAction(get_colored_icon(get_asset_path(Icons.EDIT), icon_color), "Copia", self)
         copy_act.triggered.connect(self.copy_selection)
 
-        for act in [lyra_row, lyra_sel, copy_act]:
+        for act in (lyra_row, lyra_sel, copy_act):
             menu.addAction(act)
         menu.exec(event.globalPos())
 
@@ -202,7 +202,7 @@ class EditableDataTable(QWidget):
         rem = QAction(get_colored_icon(get_asset_path(Icons.TRASH), c), "Rimuovi riga", self)
         rem.triggered.connect(self._remove_row)
 
-        for a in [lyra, copy, paste, None, add, rem]:
+        for a in (lyra, copy, paste, None, add, rem):
             if a is None:
                 menu.addSeparator()
             else:

@@ -187,5 +187,5 @@ class DashboardPanel(QWidget):
         }
         if key in automation_map:
             panel_key = automation_map[key]
-            if hasattr(main_window, "navigation_controller"):
+            if main_window is not None and hasattr(main_window, "navigation_controller"):
                 main_window.navigation_controller.navigate_to_panel(panel_key)
