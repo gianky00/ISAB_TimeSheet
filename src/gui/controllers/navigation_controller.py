@@ -336,6 +336,32 @@ class NavigationController:
         if panel_key in db_map:
             self.navigate_to(db_map[panel_key])
 
+    def refresh_current_page(self) -> None:
+        """Esegue l'azione di refresh specifica per la pagina corrente (pattern F5)."""
+        from src.gui.main_window.page_index import PageIndex
+
+        idx = self.mw.page_stack.currentIndex()
+        panel = self.mw.page_stack.currentWidget()
+
+        if not panel or not isinstance(panel, QWidget):
+            return
+
+        # Pattern mapping per refresh
+        refreshable_indices = (
+            PageIndex.DASHBOARD,
+            PageIndex.TIMBRATURE,
+            PageIndex.ANAGRAFICHE,
+            PageIndex.STORICO_ODA,
+            PageIndex.DIPENDENTI,
+        )
+
+        if idx in refreshable_indices and hasattr(panel, "refresh_data"):
+            panel.refresh_data()
+        elif idx == PageIndex.STRUMENTALE and hasattr(panel, "refresh_tabs"):
+            panel.refresh_tabs()
+        elif idx == PageIndex.DATAEASE and hasattr(panel, "_start_update"):
+            panel._start_update()
+
     def analyze_with_lyra(self, context_text: str) -> None:
         """Naviga alla vista Lyra passando un contesto testuale per l'analisi immediata."""
         self.navigate_to(2)

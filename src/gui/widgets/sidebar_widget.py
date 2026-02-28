@@ -94,26 +94,35 @@ class SidebarWidget(QFrame):
         layout.setSpacing(0)
 
         # Header
-        h_container = QWidget()
-        h_lay = QHBoxLayout(h_container)
-        h_lay.setContentsMargins(14, 0, 14, 15)
+        self.h_container = QWidget()
+        self.h_lay = QHBoxLayout(self.h_container)
+        # Default state: Collapsed
+        self.h_lay.setContentsMargins(0, 8, 0, 15)
+        self.h_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.h_lay.setSpacing(10)
+
         self.logo_badge = QLabel()
         self.logo_badge.setFixedSize(46, 46)
+        self.logo_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.logo_badge.setStyleSheet("background: white; border-radius: 23px; border: 2px solid black;")
 
         from PyQt6.QtGui import QIcon
 
         pix = QIcon(get_asset_path("assets/app.ico")).pixmap(64, 64)
         if not pix.isNull():
-            self.logo_badge.setPixmap(pix.scaled(30, 30, Qt.AspectRatioMode.KeepAspectRatio))
-        h_lay.addWidget(self.logo_badge)
+            self.logo_badge.setPixmap(
+                pix.scaled(
+                    30, 30, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+                )
+            )
+        self.h_lay.addWidget(self.logo_badge)
 
         self.logo_label = QLabel("SyncroJob")
         self.logo_label.setStyleSheet("font-size: 18px; font-weight: 900; color: white;")
         self.logo_opacity = QGraphicsOpacityEffect(self.logo_label)
         self.logo_label.setGraphicsEffect(self.logo_opacity)
-        h_lay.addWidget(self.logo_label)
-        layout.addWidget(h_container)
+        self.h_lay.addWidget(self.logo_label)
+        layout.addWidget(self.h_container)
 
         # Scroll Area
         self.scroll_area = QScrollArea()
@@ -344,6 +353,14 @@ class SidebarWidget(QFrame):
         self.logo_label.setVisible(not c)
         self.scroll_area.setVisible(not c)
         self.footer.setVisible(not c)
+
+        # Aggiorna allineamento header
+        if c:
+            self.h_lay.setContentsMargins(0, 8, 0, 15)
+            self.h_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        else:
+            self.h_lay.setContentsMargins(14, 8, 14, 15)
+            self.h_lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         if c:
             self.active_track.hide()

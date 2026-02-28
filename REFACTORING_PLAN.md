@@ -83,7 +83,7 @@ I seguenti file sono stati identificati come "God Objects" o moduli eccessivamen
         3. Ottimizzata la logica di animazione e formattazione. (COMPLETATO)
 
 ### 🔵 Priorità Bassa (Rifinitura Stilistica)
-- [ ] `src/core/config_manager.py` (~464 righe)
+- [x] `src/core/config_manager.py` (~464 righe)
 - [ ] `src/gui/main_window/main.py` (~462 righe)
 - [ ] `src/bots/base/base_bot.py` (~447 righe)
 - [ ] `src/gui/panels/settings/pages/lists_page.py` (~436 righe)

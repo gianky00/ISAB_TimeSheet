@@ -58,7 +58,9 @@ class ServiceController(QObject):
 
     def start_all(self) -> None:
         """Avvia la sequenza di attivazione dei servizi di background con ritardi differiti per non saturare lo startup."""
-        self.sentinel.anomalies_found.connect(self.mw._on_anomalies_found)
+        if hasattr(self.mw, "monitoring_controller"):
+            self.sentinel.anomalies_found.connect(self.mw.monitoring_controller.handle_anomalies_found)
+
         QTimer.singleShot(2000, self.sentinel.start)
         QTimer.singleShot(1000, self.telegram.start_service)
         QTimer.singleShot(3000, self._check_updates)

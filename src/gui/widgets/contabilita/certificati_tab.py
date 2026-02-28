@@ -291,7 +291,7 @@ class CertificatiCampioneTab(QWidget):
             text = " | ".join(
                 [f"{self.tree.HEADERS[c]}: {item.text(c)}" for c in range(self.tree.columnCount())]
             )
-            mw.analyze_with_lyra(f"Certificato: {text}")
+            mw.navigation_controller.analyze_with_lyra(f"Certificato: {text}")
 
     def _run_analysis(self):
         certs_data = []

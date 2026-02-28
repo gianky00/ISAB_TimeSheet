@@ -29,7 +29,7 @@ class ODATreeView(QTreeView):
         self.setUniformRowHeights(True)
         self.setIndentation(25)
         self.setAnimated(True)
-        self.setExpandsOnDoubleClick(False)
+        self.setExpandsOnDoubleClick(True)
 
         # Delegato per descrizioni posizioni
         self.setItemDelegate(ChildDescriptionDelegate(self))
