@@ -54,6 +54,7 @@ class DatabaseManager:
     DB_PDL: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.DB_PDL
     DB_STORICO_ODA: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.DB_STORICO_ODA
     DB_DIPENDENTI: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.DB_DIPENDENTI
+    DB_AUDIT: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.DB_AUDIT_LOG
 
     # Dizionari di Migrazione
     MIGRATIONS_CONTABILITA: ClassVar[dict[int, Callable[[sqlite3.Connection], None]]] = {
