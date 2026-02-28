@@ -29,17 +29,41 @@ class ODATreeView(QTreeView):
         self.setUniformRowHeights(True)
         self.setIndentation(25)
         self.setAnimated(True)
-        self.setExpandsOnDoubleClick(True)
+        # Disabilitiamo l'espansione nativa per gestirla manualmente su tutte le colonne
+        self.setExpandsOnDoubleClick(False)
 
         # Delegato per descrizioni posizioni
         self.setItemDelegate(ChildDescriptionDelegate(self))
 
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(lambda pos: self.context_menu_requested.emit(pos))
-        self.doubleClicked.connect(lambda _: self.row_double_clicked.emit())
+
+        # Gestione manuale doppio click su ogni colonna
+        self.doubleClicked.connect(self._on_double_clicked)
+
+        # Effetto animazione: scroll fluido all'espansione
+        self.expanded.connect(self._on_expanded)
 
         if sel_model := self.selectionModel():
             sel_model.selectionChanged.connect(lambda _1, _2: self.selection_changed_custom.emit())
+
+    def _on_double_clicked(self, index):
+        """Espande o comprime la riga al doppio click su qualsiasi colonna."""
+        if not index.isValid():
+            return
+
+        # Se è un genitore (non ha parent), invertiamo l'espansione
+        if not index.parent().isValid():
+            if self.isExpanded(index):
+                self.collapse(index)
+            else:
+                self.expand(index)
+
+        self.row_double_clicked.emit()
+
+    def _on_expanded(self, index):
+        """Scrolla in modo fluido per mostrare i figli appena espansi."""
+        self.scrollTo(index, QAbstractItemView.ScrollHint.PositionAtTop)
 
         # Styling
         self.setStyleSheet(f"""
