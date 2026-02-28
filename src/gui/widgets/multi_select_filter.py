@@ -57,7 +57,9 @@ class MultiSelectDialog(QDialog):
 
         # Lista
         self.list_widget = StandardListWidget()
-        self.list_widget.setStyleSheet(f"border: 1px solid {COLORS['border_light']}; border-radius: 4px; outline: none;")
+        self.list_widget.setStyleSheet(
+            f"border: 1px solid {COLORS['border_light']}; border-radius: 4px; outline: none;"
+        )
         for text in items:
             item = QListWidgetItem(text)
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
@@ -124,7 +126,9 @@ class MultiSelectFilter(QWidget):
         self.btn_select = ModernButton(
             placeholder, variant=ModernButton.Variant.GHOST, icon=get_asset_path(Icons.LIST)
         )
-        self.btn_select.setStyleSheet(f"text-align: left; padding-left: 10px; border: 1px solid {COLORS['border_medium']};")
+        self.btn_select.setStyleSheet(
+            f"text-align: left; padding-left: 10px; border: 1px solid {COLORS['border_medium']};"
+        )
         self.btn_select.clicked.connect(self._open_dialog)
         layout.addWidget(self.btn_select)
 

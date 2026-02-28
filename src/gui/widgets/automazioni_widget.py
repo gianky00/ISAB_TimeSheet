@@ -56,11 +56,31 @@ class AutomazioniWidget(QWidget):
         self.panel_prenota = PrenotaBPPanel()
         self.panel_carico = CaricoTSPanel()
 
-        self.tab_fornitori.addTab(self.panel_dettagli, get_colored_icon(get_asset_path(Icons.LIST), COLORS["text_muted"]), "Dettagli OdA (bot)")
-        self.tab_fornitori.addTab(self.panel_scarico, get_colored_icon(get_asset_path(Icons.DOWNLOAD), COLORS["text_muted"]), "Scarico TS (bot)")
-        self.tab_fornitori.addTab(self.panel_timbrature, get_colored_icon(get_asset_path(Icons.CLOCK), COLORS["text_muted"]), "Timbrature (bot)")
-        self.tab_fornitori.addTab(self.panel_prenota, get_colored_icon(get_asset_path(Icons.TICKET), COLORS["text_muted"]), "Prenota BP (bot)")
-        self.tab_fornitori.addTab(self.panel_carico, get_colored_icon(get_asset_path(Icons.UPLOAD), COLORS["text_muted"]), "Carico TS (bot)")
+        self.tab_fornitori.addTab(
+            self.panel_dettagli,
+            get_colored_icon(get_asset_path(Icons.LIST), COLORS["text_muted"]),
+            "Dettagli OdA (bot)",
+        )
+        self.tab_fornitori.addTab(
+            self.panel_scarico,
+            get_colored_icon(get_asset_path(Icons.DOWNLOAD), COLORS["text_muted"]),
+            "Scarico TS (bot)",
+        )
+        self.tab_fornitori.addTab(
+            self.panel_timbrature,
+            get_colored_icon(get_asset_path(Icons.CLOCK), COLORS["text_muted"]),
+            "Timbrature (bot)",
+        )
+        self.tab_fornitori.addTab(
+            self.panel_prenota,
+            get_colored_icon(get_asset_path(Icons.TICKET), COLORS["text_muted"]),
+            "Prenota BP (bot)",
+        )
+        self.tab_fornitori.addTab(
+            self.panel_carico,
+            get_colored_icon(get_asset_path(Icons.UPLOAD), COLORS["text_muted"]),
+            "Carico TS (bot)",
+        )
 
         # --- TAB 2: SafeWork ---
         self.tab_safework = AnimatedTabWidget()
@@ -69,8 +89,16 @@ class AutomazioniWidget(QWidget):
         self.panel_pdl = ScaricoPDLPanel()
         self.panel_pdl_search = RicercaPDLPanel()
 
-        self.tab_safework.addTab(self.panel_pdl, get_colored_icon(get_asset_path(Icons.SHIELD), COLORS["text_muted"]), "Scarico PDL (bot)")
-        self.tab_safework.addTab(self.panel_pdl_search, get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_muted"]), "Ricerca PDL (bot)")
+        self.tab_safework.addTab(
+            self.panel_pdl,
+            get_colored_icon(get_asset_path(Icons.SHIELD), COLORS["text_muted"]),
+            "Scarico PDL (bot)",
+        )
+        self.tab_safework.addTab(
+            self.panel_pdl_search,
+            get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_muted"]),
+            "Ricerca PDL (bot)",
+        )
 
         # Aggiunta tab principali
         self.main_tabs.addTab(self.tab_fornitori, "Portale Fornitori")
@@ -89,10 +117,17 @@ class AutomazioniWidget(QWidget):
 
         # Registrazione Controller
         if hasattr(self.mw, "bot_controller"):
-            self.mw.bot_controller.register_panels([
-                self.panel_dettagli, self.panel_prenota, self.panel_scarico,
-                self.panel_timbrature, self.panel_carico, self.panel_pdl, self.panel_pdl_search
-            ])
+            self.mw.bot_controller.register_panels(
+                [
+                    self.panel_dettagli,
+                    self.panel_prenota,
+                    self.panel_scarico,
+                    self.panel_timbrature,
+                    self.panel_carico,
+                    self.panel_pdl,
+                    self.panel_pdl_search,
+                ]
+            )
 
     def set_active_tab(self, main_idx: int, sub_idx: int) -> None:
         """

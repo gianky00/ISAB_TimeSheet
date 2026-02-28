@@ -121,6 +121,7 @@ class TimbratureDBPanel(QWidget):
         search_v = QVBoxLayout()
         search_v.setSpacing(4)
         from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
+
         lbl_search = QLabel("CERCA PERSONALE")
         lbl_search.setStyleSheet(LABEL_MUTED)
         self.search_input = SearchInput()
@@ -176,6 +177,7 @@ class TimbratureDBPanel(QWidget):
         self._update_filter_combos()
 
         from src.gui.widgets.modern_button import ModernButton
+
         import_btn = ModernButton(
             "IMPORTA EXCEL",
             variant=ModernButton.Variant.PRIMARY,

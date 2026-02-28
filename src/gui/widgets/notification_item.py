@@ -96,7 +96,9 @@ class NotificationItem(QFrame):
             time_str = ""
 
         time_lbl = QLabel(time_str)
-        time_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px; border: none; background: transparent;")
+        time_lbl.setStyleSheet(
+            f"color: {COLORS['text_muted']}; font-size: 12px; border: none; background: transparent;"
+        )
         header_layout.addWidget(time_lbl)
 
         # Delete Button
@@ -112,9 +114,9 @@ class NotificationItem(QFrame):
                 background: transparent;
                 border: none;
                 font-weight: bold;
-                color: {COLORS['text_light']};
+                color: {COLORS["text_light"]};
             }}
-            QPushButton:hover {{ color: {COLORS['error_red']}; }}
+            QPushButton:hover {{ color: {COLORS["error_red"]}; }}
         """
         )
         del_btn.clicked.connect(self._delete)
@@ -125,7 +127,9 @@ class NotificationItem(QFrame):
         # Message
         msg_lbl = QLabel(self.notification.get("message", ""))
         msg_lbl.setWordWrap(True)
-        msg_lbl.setStyleSheet(f"color: {COLORS['text_dark']}; border: none; margin-top: 5px; background: transparent;")
+        msg_lbl.setStyleSheet(
+            f"color: {COLORS['text_dark']}; border: none; margin-top: 5px; background: transparent;"
+        )
         layout.addWidget(msg_lbl)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:

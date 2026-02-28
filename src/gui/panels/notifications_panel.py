@@ -112,15 +112,19 @@ class NotificationsPanel(QWidget):
         actions_layout.addStretch()
 
         mark_read = ModernButton(
-            "SEGNA TUTTI COME LETTI", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL,
-            icon=get_asset_path(Icons.CHECK_CIRCLE)
+            "SEGNA TUTTI COME LETTI",
+            variant=ModernButton.Variant.GHOST,
+            size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.CHECK_CIRCLE),
         )
         mark_read.clicked.connect(self.manager.mark_all_as_read)
         actions_layout.addWidget(mark_read)
 
         clear = ModernButton(
-            "SVUOTA TUTTO", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL,
-            icon=get_asset_path(Icons.TRASH)
+            "SVUOTA TUTTO",
+            variant=ModernButton.Variant.DANGER,
+            size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.TRASH),
         )
         clear.clicked.connect(self._clear_notifications)
         actions_layout.addWidget(clear)
@@ -387,7 +391,9 @@ class NotificationsPanel(QWidget):
         empty_layout.addWidget(icon_lbl)
 
         title_lbl = QLabel(title)
-        title_lbl.setStyleSheet(f"font-size: 20px; font-weight: bold; color: {COLORS['text_dark']}; border: none;")
+        title_lbl.setStyleSheet(
+            f"font-size: 20px; font-weight: bold; color: {COLORS['text_dark']}; border: none;"
+        )
         title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(title_lbl)
 

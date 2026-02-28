@@ -33,9 +33,9 @@ class ActionChip(QPushButton):
         self.setStyleSheet(
             f"""
             QPushButton {{
-                background-color: {COLORS['bg_white']};
-                color: {COLORS['text_dark']};
-                border: 1px solid {COLORS['border_light']};
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
+                border: 1px solid {COLORS["border_light"]};
                 border-radius: 19px;
                 padding: 0 15px;
                 font-weight: 600;
@@ -43,12 +43,12 @@ class ActionChip(QPushButton):
                 text-align: left;
             }}
             QPushButton:hover {{
-                background-color: {COLORS['bg_hover']};
-                border-color: {COLORS['border_medium']};
-                color: {COLORS['text_dark']};
+                background-color: {COLORS["bg_hover"]};
+                border-color: {COLORS["border_medium"]};
+                color: {COLORS["text_dark"]};
             }}
             QPushButton:pressed {{
-                background-color: {COLORS['bg_alt']};
+                background-color: {COLORS["bg_alt"]};
             }}
         """
         )
@@ -243,7 +243,9 @@ class QuickActions(QWidget):
         layout.setSpacing(2)  # Spazio minimo tra titolo e pulsanti
 
         title = QLabel("Azioni Rapide")
-        title.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {COLORS['text_dark']}; margin-bottom: 0px;")
+        title.setStyleSheet(
+            f"font-size: 16px; font-weight: bold; color: {COLORS['text_dark']}; margin-bottom: 0px;"
+        )
         layout.addWidget(title)
 
         # Grid Layout per 2 righe (no scroll)
@@ -275,9 +277,9 @@ class QuickActions(QWidget):
         menu.setStyleSheet(
             f"""
             QMenu {{
-                background-color: {COLORS['bg_white']};
-                color: {COLORS['text_dark']};
-                border: 1px solid {COLORS['border_light']};
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
+                border: 1px solid {COLORS["border_light"]};
                 border-radius: 6px;
                 padding: 5px;
             }}
@@ -287,11 +289,11 @@ class QuickActions(QWidget):
                 background-color: transparent;
             }}
             QMenu::item:selected {{
-                background-color: {COLORS['bg_hover']};
-                color: {COLORS['text_dark']};
+                background-color: {COLORS["bg_hover"]};
+                color: {COLORS["text_dark"]};
             }}
             QMenu::item:pressed {{
-                background-color: {COLORS['bg_alt']};
+                background-color: {COLORS["bg_alt"]};
             }}
         """
         )

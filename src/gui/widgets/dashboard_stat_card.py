@@ -23,7 +23,7 @@ class DashboardStatCard(ModernCard):
         value: str,
         icon_key: str,
         color: str = COLORS["primary_blue"],
-        parent: QWidget | None = None
+        parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent, elevation=12)
         self.setMinimumHeight(100)

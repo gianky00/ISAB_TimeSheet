@@ -41,15 +41,15 @@ class StandardInputDialog(QDialog):
         self.input_field.setStyleSheet(
             f"""
             QLineEdit {{
-                border: 1px solid {COLORS['border_medium']};
+                border: 1px solid {COLORS["border_medium"]};
                 border-radius: 4px;
                 padding: 5px;
                 font-size: 14px;
-                background-color: {COLORS['bg_white']};
-                color: {COLORS['text_dark']};
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
             }}
             QLineEdit:focus {{
-                border: 1px solid {COLORS['primary_dark']};
+                border: 1px solid {COLORS["primary_dark"]};
             }}
             """
         )

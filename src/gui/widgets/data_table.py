@@ -159,7 +159,7 @@ class DataTable(QWidget):
                 background: {self._palette.surface};
             }}
             QLineEdit:focus {{
-                border: 2px solid {COLORS['text_dark']};
+                border: 2px solid {COLORS["text_dark"]};
             }}
         """
         )
@@ -193,26 +193,26 @@ class DataTable(QWidget):
         self.container.setObjectName("tableContainer")
         self.container.setStyleSheet(f"""
             QFrame#tableContainer {{
-                background-color: {COLORS['bg_white']};
-                border: 1px solid {COLORS['border_light']};
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
                 /* border-bottom rimosso perché gestito da HoverPulseFrame */
                 border-radius: 12px;
             }}
             QTableWidget {{
                 background-color: transparent;
                 border: none;
-                gridline-color: {COLORS['bg_alt']};
-                selection-background-color: {COLORS['table_selection_bg']};
-                selection-color: {COLORS['text_dark']};
+                gridline-color: {COLORS["bg_alt"]};
+                selection-background-color: {COLORS["table_selection_bg"]};
+                selection-color: {COLORS["text_dark"]};
                 outline: none;
             }}
             QHeaderView::section {{
-                background-color: {COLORS['bg_light']};
-                color: {COLORS['text_dark']};
+                background-color: {COLORS["bg_light"]};
+                color: {COLORS["text_dark"]};
                 padding: 10px;
                 font-weight: bold;
                 border: none;
-                border-bottom: 1px solid {COLORS['border_light']};
+                border-bottom: 1px solid {COLORS["border_light"]};
             }}
         """)
 

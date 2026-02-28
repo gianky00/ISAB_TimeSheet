@@ -144,7 +144,9 @@ class StatCard(ModernCard):
         text_v.setSpacing(2)
 
         self.title_lbl = QLabel(title.upper())
-        self.title_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px; font-weight: 800; letter-spacing: 0.5px;")
+        self.title_lbl.setStyleSheet(
+            f"color: {COLORS['text_muted']}; font-size: 10px; font-weight: 800; letter-spacing: 0.5px;"
+        )
 
         self.val_lbl = QLabel(value)
         self.val_lbl.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 22px; font-weight: 900;")
@@ -177,7 +179,12 @@ class AnomalyCard(ModernCard):
 
         # Icon Status
         icon_lbl = QLabel()
-        emoji = {"low": Icons.INFO, "medium": Icons.ALERT_TRIANGLE, "high": Icons.X_CIRCLE, "critical": Icons.ACTIVITY}.get(anomaly.severity, Icons.BELL)
+        emoji = {
+            "low": Icons.INFO,
+            "medium": Icons.ALERT_TRIANGLE,
+            "high": Icons.X_CIRCLE,
+            "critical": Icons.ACTIVITY,
+        }.get(anomaly.severity, Icons.BELL)
         icon_lbl.setPixmap(get_colored_icon(get_asset_path(emoji), color).pixmap(24, 24))
         layout.addWidget(icon_lbl)
 
@@ -257,17 +264,13 @@ class HealthPanel(QWidget):
         header.addStretch()
 
         self._alert_btn = ModernButton(
-            "INVIA ALERT",
-            variant=ModernButton.Variant.GHOST,
-            icon=get_asset_path(Icons.SEND)
+            "INVIA ALERT", variant=ModernButton.Variant.GHOST, icon=get_asset_path(Icons.SEND)
         )
         self._alert_btn.clicked.connect(self._send_telegram_alert)
         header.addWidget(self._alert_btn)
 
         self._refresh_btn = ModernButton(
-            "AGGIORNA",
-            variant=ModernButton.Variant.PRIMARY,
-            icon=get_asset_path(Icons.REFRESH)
+            "AGGIORNA", variant=ModernButton.Variant.PRIMARY, icon=get_asset_path(Icons.REFRESH)
         )
         self._refresh_btn.clicked.connect(self.refresh)
         header.addWidget(self._refresh_btn)
@@ -291,7 +294,9 @@ class HealthPanel(QWidget):
 
         self._status_label = QLabel("OTTIMO")
         self._status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._status_label.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 900; font-size: 14px; letter-spacing: 1px;")
+        self._status_label.setStyleSheet(
+            f"color: {COLORS['text_dark']}; font-weight: 900; font-size: 14px; letter-spacing: 1px;"
+        )
         score_layout.addWidget(self._status_label)
 
         self._last_update = QLabel("Ultimo aggiornamento: --")
@@ -303,10 +308,16 @@ class HealthPanel(QWidget):
         # 2. Mini Stats Grid
         stats_grid = QGridLayout()
         stats_grid.setSpacing(15)
-        self._stat_runs_ok = StatCard("Bot Successo", color=COLORS["success_green"], icon_key=Icons.CHECK_CIRCLE)
+        self._stat_runs_ok = StatCard(
+            "Bot Successo", color=COLORS["success_green"], icon_key=Icons.CHECK_CIRCLE
+        )
         self._stat_runs_fail = StatCard("Bot Falliti", color=COLORS["error_red"], icon_key=Icons.X_CIRCLE)
-        self._stat_error_rate = StatCard("Error Rate", color=COLORS["warning_yellow"], icon_key=Icons.BAR_CHART)
-        self._stat_anomalies = StatCard("Anomalie", color=COLORS["warning_orange"], icon_key=Icons.ALERT_TRIANGLE)
+        self._stat_error_rate = StatCard(
+            "Error Rate", color=COLORS["warning_yellow"], icon_key=Icons.BAR_CHART
+        )
+        self._stat_anomalies = StatCard(
+            "Anomalie", color=COLORS["warning_orange"], icon_key=Icons.ALERT_TRIANGLE
+        )
 
         stats_grid.addWidget(self._stat_runs_ok, 0, 0)
         stats_grid.addWidget(self._stat_runs_fail, 0, 1)
@@ -326,7 +337,9 @@ class HealthPanel(QWidget):
         anom_header.addWidget(anom_title)
 
         self._anomaly_count_label = QLabel("0 problemi")
-        self._anomaly_count_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-weight: 600; font-size: 13px;")
+        self._anomaly_count_label.setStyleSheet(
+            f"color: {COLORS['text_muted']}; font-weight: 600; font-size: 13px;"
+        )
         anom_header.addStretch()
         anom_header.addWidget(self._anomaly_count_label)
         right_panel.addLayout(anom_header)

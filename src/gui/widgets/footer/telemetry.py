@@ -39,7 +39,9 @@ class BootTelemetryWidget(QWidget):
         self.last_net = psutil.net_io_counters()
         self.last_time = time.time()
         self.session_id = f"{int(time.time()):x}".upper()
-        self.font_style = f"font-family: 'Consolas', monospace; font-size: 13px; color: {COLORS['text_dark']};"
+        self.font_style = (
+            f"font-family: 'Consolas', monospace; font-size: 13px; color: {COLORS['text_dark']};"
+        )
 
         self.lbl_os = QLabel()
         self.lbl_os.setStyleSheet(self.font_style)

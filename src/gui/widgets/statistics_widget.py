@@ -47,7 +47,9 @@ class StatisticsWidget(QWidget):
 
         # Table Title
         table_title = QLabel("Dettaglio Attività")
-        table_title.setStyleSheet(f"font-size: 16px; font-weight: bold; margin-top: 10px; color: {COLORS['text_dark']};")
+        table_title.setStyleSheet(
+            f"font-size: 16px; font-weight: bold; margin-top: 10px; color: {COLORS['text_dark']};"
+        )
         layout.addWidget(table_title)
 
         # Table
@@ -74,15 +76,15 @@ class StatisticsWidget(QWidget):
         refresh_btn.setStyleSheet(
             f"""
             QPushButton {{
-                background-color: {COLORS['bg_white']};
-                color: {COLORS['text_dark']};
-                border: 1px solid {COLORS['text_dark']};
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
+                border: 1px solid {COLORS["text_dark"]};
                 border-radius: 6px;
                 padding: 10px 20px;
                 font-weight: bold;
                 font-size: 14px;
             }}
-            QPushButton:hover {{ background-color: {COLORS['bg_hover']}; }}
+            QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; }}
         """
         )
         refresh_btn.clicked.connect(self.refresh)
@@ -97,8 +99,8 @@ class StatisticsWidget(QWidget):
         card.setStyleSheet(
             f"""
             QFrame {{
-                background-color: {COLORS['bg_white']};
-                border: 1px solid {COLORS['border_light']};
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
                 border-left: 5px solid {color};
                 border-radius: 8px;
             }}
@@ -112,11 +114,15 @@ class StatisticsWidget(QWidget):
 
         if icon_path:
             icon_lbl = QLabel()
-            icon_lbl.setPixmap(get_colored_icon(get_asset_path(icon_path), COLORS["text_dark"]).pixmap(16, 16))
+            icon_lbl.setPixmap(
+                get_colored_icon(get_asset_path(icon_path), COLORS["text_dark"]).pixmap(16, 16)
+            )
             title_layout.addWidget(icon_lbl)
 
         lbl_title = QLabel(title)
-        lbl_title.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 13px; font-weight: bold; border: none;")
+        lbl_title.setStyleSheet(
+            f"color: {COLORS['text_muted']}; font-size: 13px; font-weight: bold; border: none;"
+        )
         title_layout.addWidget(lbl_title)
         title_layout.addStretch()
         layout.addLayout(title_layout)

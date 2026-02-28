@@ -26,9 +26,9 @@ class ChartContainer(QWidget):
         self.setStyleSheet(
             f"""
             QWidget {{
-                background-color: {COLORS['bg_white']};
+                background-color: {COLORS["bg_white"]};
                 border-radius: 15px;
-                border: 1px solid {COLORS['border_light']};
+                border: 1px solid {COLORS["border_light"]};
             }}
         """
         )
@@ -50,7 +50,9 @@ class ChartContainer(QWidget):
 
         if title:
             lbl = QLabel(title)
-            lbl.setStyleSheet(f"font-weight: bold; color: {COLORS['text_dark']}; font-size: 14px; border: none;")
+            lbl.setStyleSheet(
+                f"font-weight: bold; color: {COLORS['text_dark']}; font-size: 14px; border: none;"
+            )
             header_layout.addWidget(lbl)
 
         header_layout.addStretch()

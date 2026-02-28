@@ -130,7 +130,8 @@ class ClickableLabel(QLabel):
     def enterEvent(self, event: QEnterEvent | None) -> None:
         """Gestisce l'evento hover-in cambiando lo sfondo."""
         self.setStyleSheet(
-            self._base_style + f" background-color: {COLORS['bg_hover']}; border-radius: 3px; padding: 2px 4px;"
+            self._base_style
+            + f" background-color: {COLORS['bg_hover']}; border-radius: 3px; padding: 2px 4px;"
         )
         super().enterEvent(event)
 

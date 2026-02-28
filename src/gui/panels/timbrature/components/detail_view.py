@@ -45,7 +45,9 @@ class TimbratureDetailView(QWidget):
         detail_layout.setContentsMargins(10, 0, 5, 0)
 
         detail_title = QLabel("Dettaglio Timbratura")
-        detail_title.setStyleSheet(f"font-weight: bold; font-size: 14px; color: {COLORS['primary_blue']}; margin-bottom: 5px;")
+        detail_title.setStyleSheet(
+            f"font-weight: bold; font-size: 14px; color: {COLORS['primary_blue']}; margin-bottom: 5px;"
+        )
         detail_layout.addWidget(detail_title)
 
         scroll = QScrollArea()

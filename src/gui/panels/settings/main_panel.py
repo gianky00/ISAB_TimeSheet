@@ -171,9 +171,7 @@ class SettingsPanel(QWidget):
         """Importa un file di configurazione JSON esterno."""
         from PyQt6.QtWidgets import QFileDialog
 
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Importa Configurazione", "", "JSON Files (*.json)"
-        )
+        path, _ = QFileDialog.getOpenFileName(self, "Importa Configurazione", "", "JSON Files (*.json)")
         if path:
             success, msg = config_manager.import_configuration(Path(path))
             if success:

@@ -151,7 +151,9 @@ class ScaricoOrePanel(QWidget):
         lbl_sel_title = QLabel("SELEZIONATO")
         lbl_sel_title.setStyleSheet(LABEL_MUTED)
         self.lbl_selection_total = QLabel("0")
-        self.lbl_selection_total.setStyleSheet(f"color: {COLORS['primary_blue']}; font-weight: 700; font-size: 14px;")
+        self.lbl_selection_total.setStyleSheet(
+            f"color: {COLORS['primary_blue']}; font-weight: 700; font-size: 14px;"
+        )
         sel_v.addWidget(lbl_sel_title)
         sel_v.addWidget(self.lbl_selection_total)
         stats_h.addLayout(sel_v)
@@ -161,7 +163,9 @@ class ScaricoOrePanel(QWidget):
         lbl_hours_title = QLabel("TOTALE ORE")
         lbl_hours_title.setStyleSheet(LABEL_MUTED)
         self.lbl_total_hours = QLabel("0")
-        self.lbl_total_hours.setStyleSheet(f"color: {COLORS['teal_accent']}; font-weight: 800; font-size: 14px;")
+        self.lbl_total_hours.setStyleSheet(
+            f"color: {COLORS['teal_accent']}; font-weight: 800; font-size: 14px;"
+        )
         hours_v.addWidget(lbl_hours_title)
         hours_v.addWidget(self.lbl_total_hours)
         stats_h.addLayout(hours_v)
@@ -237,7 +241,9 @@ class ScaricoOrePanel(QWidget):
         self.shimmer.hide()
 
         self.tabs.addTab(
-            self.scarico_tab, get_colored_icon(get_asset_path(Icons.DOWNLOAD), COLORS["text_muted"]), "Dati Scaricati"
+            self.scarico_tab,
+            get_colored_icon(get_asset_path(Icons.DOWNLOAD), COLORS["text_muted"]),
+            "Dati Scaricati",
         )
         layout.addWidget(self.tabs)
 

@@ -54,8 +54,8 @@ class SettingCard(QFrame):
         self.setObjectName("settingCard")
         self.setStyleSheet(f"""
             QFrame#settingCard {{
-                background-color: {COLORS['bg_white']};
-                border: 1px solid {COLORS['border_light']};
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
                 border-radius: 15px;
             }}
         """)
@@ -136,17 +136,23 @@ class ConfigTab(QWidget):
         # --- TOP STATUS BAR (Search) ---
         self.header_bar = QFrame()
         self.header_bar.setFixedHeight(50)
-        self.header_bar.setStyleSheet(f"background: {COLORS['bg_light']}; border-bottom: 1px solid {COLORS['border_light']};")
+        self.header_bar.setStyleSheet(
+            f"background: {COLORS['bg_light']}; border-bottom: 1px solid {COLORS['border_light']};"
+        )
         header_layout = QHBoxLayout(self.header_bar)
         header_layout.setContentsMargins(20, 0, 20, 0)
 
         search_icon = QLabel()
-        search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_light"]).pixmap(16, 16))
+        search_icon.setPixmap(
+            get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_light"]).pixmap(16, 16)
+        )
         header_layout.addWidget(search_icon)
 
         self.search_bar = SearchInput()
         self.search_bar.setPlaceholderText("Filtra impostazioni...")
-        self.search_bar.setStyleSheet("border: none; background: transparent; font-size: 13px; font-weight: 500;")
+        self.search_bar.setStyleSheet(
+            "border: none; background: transparent; font-size: 13px; font-weight: 500;"
+        )
         self.search_bar.textChanged.connect(self._filter_cards)
         header_layout.addWidget(self.search_bar)
         header_layout.addStretch()
@@ -176,7 +182,8 @@ class ConfigTab(QWidget):
         card_gen = SettingCard(
             "Interfaccia & Automazione",
             "Configura il comportamento del browser e l'aspetto grafico.",
-            Icons.CPU, self.general_page
+            Icons.CPU,
+            self.general_page,
         )
         self.cards_layout.addWidget(card_gen)
         self.cards.append(card_gen)
@@ -191,7 +198,8 @@ class ConfigTab(QWidget):
         card_isab = SettingCard(
             "Account Portale Fornitori",
             "Gestione credenziali per l'accesso ai servizi ISAB.",
-            Icons.LOCK, self.lists_page.account_section
+            Icons.LOCK,
+            self.lists_page.account_section,
         )
         self.cards_layout.addWidget(card_isab)
         self.cards.append(card_isab)
@@ -200,7 +208,8 @@ class ConfigTab(QWidget):
         card_sw = SettingCard(
             "Account SafeWork",
             "Configurazione accessi per il portale SafeWork (PDL).",
-            Icons.SHIELD, self.lists_page.sw_account_section
+            Icons.SHIELD,
+            self.lists_page.sw_account_section,
         )
         self.cards_layout.addWidget(card_sw)
         self.cards.append(card_sw)
@@ -214,9 +223,7 @@ class ConfigTab(QWidget):
         ops_layout.addWidget(self.lists_page.contract_section)
 
         card_ops = SettingCard(
-            "Liste Operative",
-            "Anagrafica fornitori e numeri di contratto attivi.",
-            Icons.LIST, ops_container
+            "Liste Operative", "Anagrafica fornitori e numeri di contratto attivi.", Icons.LIST, ops_container
         )
         self.cards_layout.addWidget(card_ops)
         self.cards.append(card_ops)
@@ -232,7 +239,8 @@ class ConfigTab(QWidget):
         card_geo = SettingCard(
             "Organizzazione Cantiere",
             "Definizione reparti e cantieri per la catalogazione dati.",
-            Icons.PDL, geo_container
+            Icons.PDL,
+            geo_container,
         )
         self.cards_layout.addWidget(card_geo)
         self.cards.append(card_geo)
@@ -243,7 +251,8 @@ class ConfigTab(QWidget):
         card_paths = SettingCard(
             "Archiviazione & Integrazioni",
             "Definisci le cartelle di destinazione e i database esterni.",
-            Icons.DATABASE, self.paths_page
+            Icons.DATABASE,
+            self.paths_page,
         )
         self.cards_layout.addWidget(card_paths)
         self.cards.append(card_paths)
@@ -254,7 +263,8 @@ class ConfigTab(QWidget):
         card_diag = SettingCard(
             "Diagnostica di Sistema",
             "Strumenti di verifica integrità e risoluzione problemi.",
-            Icons.ACTIVITY, self.diag_page
+            Icons.ACTIVITY,
+            self.diag_page,
         )
         self.cards_layout.addWidget(card_diag)
         self.cards.append(card_diag)
@@ -268,8 +278,7 @@ class ConfigTab(QWidget):
         """Filtra le card visualizzate in base al testo di ricerca."""
         search_term = text.lower().strip()
         for card in self.cards:
-            match = (search_term in card.title_text.lower() or
-                     search_term in card.subtitle_text.lower())
+            match = search_term in card.title_text.lower() or search_term in card.subtitle_text.lower()
             card.setVisible(match or not search_term)
 
     def load_from_config(self, config: dict[str, Any]) -> None:

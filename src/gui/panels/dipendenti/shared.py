@@ -145,7 +145,7 @@ class InteractiveStatusCard(QFrame):
             f"""
             InteractiveStatusCard {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_alt']});
+                    stop:0 {COLORS["bg_white"]}, stop:1 {COLORS["bg_alt"]});
                 border: 2px solid {color};
                 border-radius: 10px;
             }}
@@ -185,7 +185,9 @@ class InteractiveStatusCard(QFrame):
         right_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         lbl_title = QLabel(label.upper())
-        lbl_title.setStyleSheet(f"font-size: 14px; font-weight: 800; color: {COLORS['text_dark']}; letter-spacing: 0.8px;")
+        lbl_title.setStyleSheet(
+            f"font-size: 14px; font-weight: 800; color: {COLORS['text_dark']}; letter-spacing: 0.8px;"
+        )
 
         lbl_desc = QLabel(description)
         lbl_desc.setStyleSheet(f"font-size: 13px; color: {COLORS['text_muted']}; font-weight: 600;")
@@ -245,7 +247,7 @@ def create_info_card(title: str) -> tuple[QFrame, QVBoxLayout]:
     card.setStyleSheet(
         f"""
         QFrame {{
-            background-color: {COLORS['bg_white']};
+            background-color: {COLORS["bg_white"]};
             border-radius: 10px;
         }}
     """
@@ -260,7 +262,7 @@ def create_info_card(title: str) -> tuple[QFrame, QVBoxLayout]:
         f"""
         font-size: 14px;
         font-weight: bold;
-        color: {COLORS['text_dark']};
+        color: {COLORS["text_dark"]};
         background-color: transparent;
         padding: 10px 12px 6px 12px;
         letter-spacing: 0.5px;
@@ -300,7 +302,7 @@ def create_field_row(label_text: str) -> QWidget:
         f"""
         font-size: 13px;
         font-weight: 700;
-        color: {COLORS['text_muted']};
+        color: {COLORS["text_muted"]};
         letter-spacing: 0.8px;
     """
     )
@@ -309,9 +311,9 @@ def create_field_row(label_text: str) -> QWidget:
     value_label.setStyleSheet(
         f"""
         font-size: 15px;
-        color: {COLORS['text_dark']};
+        color: {COLORS["text_dark"]};
         font-weight: 500;
-        border-bottom: 1px solid {COLORS['border_light']};
+        border-bottom: 1px solid {COLORS["border_light"]};
         padding-bottom: 4px;
     """
     )

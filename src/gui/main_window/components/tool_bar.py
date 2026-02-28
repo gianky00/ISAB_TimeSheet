@@ -64,8 +64,9 @@ class ToolBarComponent(QObject):
 
         # Wrap search bar in a horizontal layout to add margin for floating logo
         from PyQt6.QtWidgets import QHBoxLayout
+
         search_layout = QHBoxLayout()
-        search_layout.setContentsMargins(75, 0, 0, 0) # Spazio per il logo fluttuante
+        search_layout.setContentsMargins(75, 0, 0, 0)  # Spazio per il logo fluttuante
 
         self.global_search = SearchInput()
         self.global_search.setPlaceholderText("Ricerca Universale (OdA, Dipendenti, Log...) - Ctrl+F")

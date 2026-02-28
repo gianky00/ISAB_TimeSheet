@@ -25,13 +25,13 @@ class ToastOverlay(QWidget):
         self.setStyleSheet(
             f"""
             QWidget {{
-                background-color: {COLORS['bg_white']};
-                color: {COLORS['text_dark']};
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
                 border-radius: 6px;
-                border: 1px solid {COLORS['border_medium']};
+                border: 1px solid {COLORS["border_medium"]};
             }}
             QLabel {{
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
                 font-size: 14px;
                 font-weight: bold;
                 background-color: transparent;

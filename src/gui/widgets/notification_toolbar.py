@@ -90,8 +90,8 @@ class FilterChip(QPushButton):
             self.setStyleSheet(
                 f"""
                 QPushButton {{
-                    background-color: {COLORS['primary_blue']};
-                    color: {COLORS['bg_white']};
+                    background-color: {COLORS["primary_blue"]};
+                    color: {COLORS["bg_white"]};
                     border: none;
                     border-radius: 20px;
                     padding: 8px 16px;
@@ -99,7 +99,7 @@ class FilterChip(QPushButton):
                     font-weight: 600;
                 }}
                 QPushButton:hover {{
-                    background-color: {COLORS['primary_dark']};
+                    background-color: {COLORS["primary_dark"]};
                 }}
             """
             )
@@ -108,16 +108,16 @@ class FilterChip(QPushButton):
                 f"""
                 QPushButton {{
                     background-color: transparent;
-                    color: {COLORS['text_muted']};
-                    border: 1px solid {COLORS['border_medium']};
+                    color: {COLORS["text_muted"]};
+                    border: 1px solid {COLORS["border_medium"]};
                     border-radius: 20px;
                     padding: 8px 16px;
                     font-size: 13px;
                     font-weight: 600;
                 }}
                 QPushButton:hover {{
-                    background-color: {COLORS['bg_light']};
-                    border-color: {COLORS['border_dark']};
+                    background-color: {COLORS["bg_light"]};
+                    border-color: {COLORS["border_dark"]};
                 }}
             """
             )

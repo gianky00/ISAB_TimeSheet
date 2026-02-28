@@ -1,128 +1,37 @@
 """
-SyncroJob - Excel Table Widgets.
-
-Widget tabellari avanzati con funzionalità di editing, copia/incolla e integrazione con l'AI Lyra.
-Include classi per tabelle di sola lettura, editabili e componenti grafici di supporto.
+SyncroJob - Excel Table Widgets (Refactored)
+Widget tabellari avanzati con integrazione AI Lyra e supporto mixin per Clipboard.
 """
 
-from collections.abc import Sequence
 from typing import Any
 
-from PyQt6.QtCore import (  # type: ignore[attr-defined]
-    QEasingCurve,
-    QPoint,
-    QPropertyAnimation,
-    Qt,
-    pyqtProperty,
-    pyqtSignal,
-)
-from PyQt6.QtGui import QAction, QBrush, QColor, QCursor, QKeySequence, QPainter, QPen
+from PyQt6.QtCore import QPoint, Qt, pyqtSignal
+from PyQt6.QtGui import QAction, QBrush, QColor, QKeySequence
 from PyQt6.QtWidgets import (
     QAbstractItemView,
-    QApplication,
-    QComboBox,
-    QFrame,
     QGraphicsDropShadowEffect,
     QHeaderView,
     QMenu,
     QTableWidget,
-    QTableWidgetItem,
-    QToolTip,
     QVBoxLayout,
     QWidget,
 )
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
-from src.gui.widgets.core_widgets import (
-    FilterComboBox,
-)
+from src.gui.widgets.core_widgets import FilterComboBox
+from src.gui.widgets.effects import HoverPulseFrame
+from src.gui.widgets.mixins.clipboard_mixin import ClipboardMixin
 from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
-class HoverPulseFrame(QFrame):
-    """
-    Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
-    Fornisce un feedback visivo moderno per le sezioni card dell'applicazione.
-    """
-
-    def __init__(self, accent_color: str | None = None, parent=None):
-        """
-        Inizializza il frame con il colore di accento specificato.
-
-        Args:
-            accent_color: Colore del bordo pulsante.
-            parent: Widget genitore.
-        """
-        super().__init__(parent)
-        self._accent_color = QColor(accent_color or COLORS["text_dark"])
-        self._pulse_val = 1.0
-
-        self._anim = QPropertyAnimation(self, b"pulse_value")
-        self._anim.setDuration(1500)
-        self._anim.setStartValue(0.4)
-        self._anim.setEndValue(1.0)
-        self._anim.setLoopCount(-1)
-        self._anim.setEasingCurve(QEasingCurve.Type.InOutSine)
-
-    @pyqtProperty(float)
-    def pulse_value(self) -> float:
-        """Restituisce il valore corrente della pulsazione."""
-        return self._pulse_val
-
-    @pulse_value.setter  # type: ignore[no-redef]
-    def pulse_value(self, v: float):
-        """Imposta il valore della pulsazione e forza il ridisegno."""
-        self._pulse_val = v
-        self.update()
-
-    def enterEvent(self, event):
-        """Avvia la pulsazione all'ingresso del mouse."""
-        self._anim.start()
-        super().enterEvent(event)
-
-    def leaveEvent(self, event):
-        """Interrompe la pulsazione all'uscita del mouse."""
-        self._anim.stop()
-        self.pulse_value = 1.0  # type: ignore[method-assign]
-        super().leaveEvent(event)
-
-    def paintEvent(self, event):
-        """Disegna il bordo inferiore animato."""
-        super().paintEvent(event)
-        painter = QPainter(self)
-        try:
-            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-            # Disegna solo il bordo inferiore con l'alpha pulsante
-            alpha = int(100 + (self._pulse_val * 155))
-            pen = QPen(
-                QColor(self._accent_color.red(), self._accent_color.green(), self._accent_color.blue(), alpha)
-            )
-            pen.setWidth(3)
-            painter.setPen(pen)
-
-            # Linea in basso
-            rect = self.rect()
-            painter.drawLine(12, rect.height() - 2, rect.width() - 12, rect.height() - 2)
-        finally:
-            painter.end()
-
-
-class ExcelTableWidget(QTableWidget):
-    """
-    QTableWidget potenziato con funzionalità avanzate:
-    - Copia/Incolla intelligente (compatibile con Excel/TSV).
-    - Gestione dello stato delle righe (colorazione semantica).
-    - Integrazione con l'AI Lyra per l'analisi contestuale delle righe.
-    """
+class ExcelTableWidget(QTableWidget, ClipboardMixin):
+    """QTableWidget con funzionalità Clipboard TSV e analisi AI Lyra."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Inizializza la tabella e configura i trigger di editing."""
         super().__init__(*args, **kwargs)
-        self.auto_copy_headers = False  # Flag per copiare automaticamente le intestazioni
-
+        self.auto_copy_headers = False
         self.setEditTriggers(
             QAbstractItemView.EditTrigger.DoubleClicked
             | QAbstractItemView.EditTrigger.EditKeyPressed
@@ -130,29 +39,21 @@ class ExcelTableWidget(QTableWidget):
         )
 
     def set_row_status(self, row: int, status: str) -> None:
-        """
-        Imposta il colore di sfondo della riga in base allo stato di avanzamento del bot.
-
-        Args:
-            row: Indice della riga.
-            status: Stringa identificativa dello stato ('completato', 'errore', 'in_corso', 'da_processare').
-        """
-        color = {
-            "completato": QColor(COLORS["table_success_bg"]),
-            "errore": QColor(COLORS["table_error_bg"]),
-            "in_corso": QColor(COLORS["table_warning_bg"]),
-            "da_processare": QColor(COLORS["bg_white"]),
-        }.get(status, QColor(COLORS["bg_white"]))
-
+        """Imposta il colore semantico della riga."""
+        colors = {
+            "completato": COLORS["table_success_bg"],
+            "errore": COLORS["table_error_bg"],
+            "in_corso": COLORS["table_warning_bg"],
+            "da_processare": COLORS["bg_white"],
+        }
+        color = QColor(colors.get(status, COLORS["bg_white"]))
         for col in range(self.columnCount()):
-            item = self.item(row, col)
-            if item:
-                item.setBackground(QBrush(color))
-                # Ripristina testo nero per contrasto
-                item.setForeground(QBrush(QColor("black")))
+            it = self.item(row, col)
+            if it:
+                it.setBackground(QBrush(color))
+                it.setForeground(QBrush(QColor("black")))
 
     def keyPressEvent(self, event: Any) -> None:
-        """Gestisce le scorciatoie da tastiera standard (Copia, Incolla, Cancella)."""
         if event.matches(QKeySequence.StandardKey.Copy):
             self.copy_selection()
         elif event.matches(QKeySequence.StandardKey.Paste):
@@ -163,410 +64,177 @@ class ExcelTableWidget(QTableWidget):
             super().keyPressEvent(event)
 
     def clear_selection(self) -> None:
-        """Svuota il contenuto delle celle selezionate, gestendo sia testi che widget personalizzati."""
-        ranges = self.selectedRanges()
-        for r in ranges:
+        for r in self.selectedRanges():
             for row in range(r.topRow(), r.bottomRow() + 1):
                 for col in range(r.leftColumn(), r.rightColumn() + 1):
-                    # Gestione Widget (es. ComboBox)
-                    widget = self.cellWidget(row, col)
-                    if isinstance(widget, QComboBox):
-                        idx = widget.findText("")
-                        if idx >= 0:
-                            widget.setCurrentIndex(idx)
-                        else:
-                            widget.setCurrentIndex(-1)
+                    w = self.cellWidget(row, col)
+                    if isinstance(w, FilterComboBox):
+                        w.setCurrentIndex(0)
                     else:
-                        # Gestione Item Standard
-                        item = self.item(row, col)
-                        if item and (item.flags() & Qt.ItemFlag.ItemIsEditable):
-                            item.setText("")
-
-    def paste_selection(self) -> None:
-        """Incolla i dati dagli appunti del sistema nella tabella a partire dalla cella corrente."""
-        text = self._get_clipboard_text()
-        if not text:
-            return
-
-        rows_data = text.split("\n")
-        if rows_data and not rows_data[-1]:
-            rows_data.pop()
-
-        start_row, start_col = self._get_paste_start_pos()
-
-        for r_idx, row_text in enumerate(rows_data):
-            target_r = start_row + r_idx
-            if target_r >= self.rowCount():
-                break
-
-            cols_data = row_text.split("\t")
-            for c_idx, cell_text in enumerate(cols_data):
-                target_c = start_col + c_idx
-                if target_c >= self.columnCount() or self.isColumnHidden(target_c):
-                    continue
-                self._paste_cell_data(target_r, target_c, cell_text.strip())
-
-    def _get_clipboard_text(self) -> str:
-        """Recupera il testo contenuto negli appunti."""
-        clipboard = QApplication.clipboard()
-        return clipboard.text() if clipboard else ""
-
-    def _get_paste_start_pos(self) -> tuple[int, int]:
-        """Restituisce la posizione di partenza (riga, colonna) per l'operazione di incolla."""
-        r, c = self.currentRow(), self.currentColumn()
-        return (max(0, r), max(0, c))
-
-    def _paste_cell_data(self, row: int, col: int, text: str) -> None:
-        """Aggiorna il contenuto di una singola cella con il testo fornito."""
-        widget = self.cellWidget(row, col)
-        if isinstance(widget, QComboBox):
-            idx = widget.findText(text)
-            if idx >= 0:
-                widget.setCurrentIndex(idx)
-        else:
-            item = self.item(row, col)
-            if not item:
-                item = SortableTableWidgetItem(text)
-                self.setItem(row, col, item)
-            else:
-                item.setText(text)
+                        it = self.item(row, col)
+                        if it and (it.flags() & Qt.ItemFlag.ItemIsEditable):
+                            it.setText("")
 
     def contextMenuEvent(self, event: Any) -> None:
-        """Genera il menu contestuale con opzioni di copia e analisi AI."""
         menu = QMenu(self)
+        icon_color = COLORS["text_dark"]
 
-        # Action: Analyze ROW with Lyra
-        lyra_row_action = QAction(
-            get_colored_icon(get_asset_path(Icons.SPARKLES), COLORS["text_dark"]),
-            "Analizza riga con Lyra",
-            self,
+        lyra_row = QAction(
+            get_colored_icon(get_asset_path(Icons.SPARKLES), icon_color), "Analizza riga con Lyra", self
         )
-        lyra_row_action.triggered.connect(lambda: self._analyze_row_at(event.pos()))
-        menu.addAction(lyra_row_action)
+        lyra_row.triggered.connect(lambda: self._analyze_row_at(event.pos()))
 
-        lyra_selection_action = QAction(
-            get_colored_icon(get_asset_path(Icons.SPARKLES), COLORS["text_dark"]),
-            "Analizza selezione con Lyra",
-            self,
+        lyra_sel = QAction(
+            get_colored_icon(get_asset_path(Icons.SPARKLES), icon_color), "Analizza selezione con Lyra", self
         )
-        lyra_selection_action.triggered.connect(self._analyze_selection)
-        menu.addAction(lyra_selection_action)
+        lyra_sel.triggered.connect(self._analyze_selection)
 
-        copy_action = QAction(get_colored_icon(get_asset_path(Icons.EDIT), COLORS["text_dark"]), "Copia", self)
-        copy_action.triggered.connect(self.copy_selection)
-        menu.addAction(copy_action)
+        copy_act = QAction(get_colored_icon(get_asset_path(Icons.EDIT), icon_color), "Copia", self)
+        copy_act.triggered.connect(self.copy_selection)
+
+        for act in [lyra_row, lyra_sel, copy_act]:
+            menu.addAction(act)
         menu.exec(event.globalPos())
 
     def _analyze_row_at(self, pos: QPoint) -> None:
-        """Estrae i dati della riga alla posizione specificata e li invia a Lyra."""
-        item = self.itemAt(pos)
-        if not item:
+        it = self.itemAt(pos)
+        if not it:
             return
-        row = item.row()
-
-        row_data: list[str] = []
+        row = it.row()
+        data = []
         for c in range(self.columnCount()):
-            if not self.isColumnHidden(c):
-                header_item = self.horizontalHeaderItem(c)
-                header = header_item.text() if header_item else f"Col {c}"
-                widget = self.cellWidget(row, c)
-                if isinstance(widget, QComboBox):
-                    text = widget.currentText()
-                else:
-                    it = self.item(row, c)
-                    text = it.text() if it else ""
-
-                row_data.append(f"**{header}**: {text}")
-
-        context = " | ".join(row_data)
+            if self.isColumnHidden(c):
+                continue
+            h = self.horizontalHeaderItem(c)
+            label = h.text() if h else f"Col {c}"
+            val = self._get_cell_value(row, c)
+            data.append(f"**{label}**: {val}")
 
         win = self.window()
         if hasattr(win, "analyze_with_lyra"):
-            win.analyze_with_lyra(context)  # type: ignore
+            win.analyze_with_lyra(" | ".join(data))  # type: ignore
 
     def _analyze_selection(self) -> None:
-        """Invia il testo di tutte le celle selezionate all'AI Lyra."""
-        selection = self.selectedRanges()
-        if not selection:
+        ranges = self.selectedRanges()
+        if not ranges:
             return
-
-        rows_text: list[str] = []
-        for r in range(selection[0].topRow(), selection[0].bottomRow() + 1):
-            row_data = []
+        rows_text = []
+        for r in range(ranges[0].topRow(), ranges[0].bottomRow() + 1):
+            line = []
             for c in range(self.columnCount()):
-                item = self.item(r, c)
-                if item and not self.isColumnHidden(c):
-                    header_item = self.horizontalHeaderItem(c)
-                    header_text = header_item.text() if header_item else f"Col {c}"
-                    row_data.append(f"{header_text}: {item.text()}")
-            rows_text.append(" | ".join(row_data))
-
-        context = "\n".join(rows_text)
+                if self.isColumnHidden(c):
+                    continue
+                h = self.horizontalHeaderItem(c)
+                label = h.text() if h else f"Col {c}"
+                line.append(f"{label}: {self._get_cell_value(r, c)}")
+            rows_text.append(" | ".join(line))
 
         win = self.window()
         if hasattr(win, "analyze_with_lyra"):
-            win.analyze_with_lyra(context)  # type: ignore
-
-    def copy_selection(self) -> None:
-        """Copia i dati selezionati in formato TSV negli appunti."""
-        selection = self.selectedIndexes()
-        if not selection:
-            return
-
-        rows, cols = self._get_selected_rows_cols(selection)
-        if not rows or not cols:
-            return
-
-        tsv_rows: list[str] = []
-        # 1. Header (se abilitato)
-        if self.auto_copy_headers and len(self.selectedItems()) > 1:
-            tsv_rows.append(self._build_header_tsv(cols))
-
-        # 2. Data Rows
-        tsv_rows.extend(self._get_row_as_tsv(r, cols) for r in rows if not self.isRowHidden(r))
-
-        if tsv_rows:
-            clipboard = QApplication.clipboard()
-            if clipboard:
-                clipboard.setText("\n".join(tsv_rows))
-            QToolTip.showText(QCursor.pos(), "Copiato!", self)
-
-    def _get_selected_rows_cols(self, ranges: Sequence[Any]) -> tuple[list[int], list[int]]:
-        """Estrae indici univoci di riga e colonna da una sequenza di indici o range."""
-        rows: set[int] = set()
-        cols: set[int] = set()
-        for item in ranges:
-            if hasattr(item, "topRow"):  # QTableWidgetSelectionRange
-                rows.update(range(item.topRow(), item.bottomRow() + 1))
-                cols.update(range(item.leftColumn(), item.rightColumn() + 1))
-            elif hasattr(item, "row"):  # QModelIndex
-                rows.add(item.row())
-                cols.add(item.column())
-        return sorted(rows), sorted(cols)
-
-    def _build_header_tsv(self, cols: list[int]) -> str:
-        """Genera una stringa TSV contenente le intestazioni delle colonne specificate."""
-        headers: list[str] = []
-        for c in cols:
-            if not self.isColumnHidden(c):
-                it = self.horizontalHeaderItem(c)
-                headers.append(it.text() if it else "")
-        return "\t".join(headers)
-
-    def _get_row_as_tsv(self, row: int, cols: list[int]) -> str:
-        """Converte i dati di una riga in formato TSV per le colonne selezionate."""
-        data: list[str] = []
-        for c in cols:
-            val = self._get_cell_value(row, c)
-            data.append(val.replace("\t", " ").replace("\n", " "))
-        return "\t".join(data)
-
-    def _get_cell_value(self, row: int, col: int) -> str:
-        """Estrae il valore testuale da una cella, gestendo anche widget interni."""
-        widget = self.cellWidget(row, col)
-        if isinstance(widget, QComboBox):
-            return widget.currentText()
-        it = self.item(row, col)
-        return it.text() if it else ""
+            win.analyze_with_lyra("\n".join(rows_text))  # type: ignore
 
 
 class EditableDataTable(QWidget):
-    """
-    Widget ad alto livello che incapsula una ExcelTableWidget.
-    Fornisce menu contestuali per gestire righe (aggiunta/rimozione) e manipolare i dati.
-    """
+    """Wrapper per ExcelTableWidget con gestione righe dinamica."""
 
     data_changed = pyqtSignal()
-    """Segnale emesso quando il contenuto della tabella viene modificato."""
 
     def __init__(self, columns: list[dict[str, Any]], parent: QWidget | None = None) -> None:
-        """
-        Inizializza la tabella editabile.
-
-        Args:
-            columns: Lista di dizionari che definiscono le colonne (name, type, options).
-            parent: Widget genitore.
-        """
         super().__init__(parent)
         self.columns = columns
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        """Configura il layout e la tabella interna con design Neon & Shadow."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 15)
         layout.setSpacing(0)
 
-        # --- CONTAINER PRINCIPALE (Card con ombra e accento scuro pulsante) ---
         self.container = HoverPulseFrame(COLORS["text_dark"])
         self.container.setObjectName("tableContainer")
         self.container.setStyleSheet(f"""
-            QFrame#tableContainer {{
-                background-color: {COLORS['bg_white']};
-                border: 1px solid {COLORS['border_light']};
-                /* border-bottom rimosso perché gestito da HoverPulseFrame */
-                border-radius: 12px;
-            }}
-            QTableWidget {{
-                background-color: transparent;
-                border: none;
-                gridline-color: {COLORS['bg_alt']};
-                selection-background-color: {COLORS['table_selection_bg']};
-                selection-color: {COLORS['text_dark']};
-                outline: none;
-            }}
-            QHeaderView::section {{
-                background-color: {COLORS['bg_light']};
-                color: {COLORS['text_dark']};
-                padding: 10px;
-                font-weight: bold;
-                border: none;
-                border-bottom: 1px solid {COLORS['border_light']};
-            }}
+            QFrame#tableContainer {{ background-color: {COLORS["bg_white"]}; border: 1px solid {COLORS["border_light"]}; border-radius: 12px; }}
+            QTableWidget {{ background-color: transparent; border: none; gridline-color: {COLORS["bg_alt"]}; selection-background-color: {COLORS["table_selection_bg"]}; selection-color: {COLORS["text_dark"]}; outline: none; }}
+            QHeaderView::section {{ background-color: {COLORS["bg_light"]}; color: {COLORS["text_dark"]}; padding: 10px; font-weight: bold; border: none; border-bottom: 1px solid {COLORS["border_light"]}; }}
         """)
 
-        # Shadow Effect
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(25)
-        shadow.setXOffset(0)
         shadow.setYOffset(8)
         shadow.setColor(QColor(0, 0, 0, 40))
         self.container.setGraphicsEffect(shadow)
 
-        container_layout = QVBoxLayout(self.container)
-        container_layout.setContentsMargins(5, 5, 5, 5)
+        container_lay = QVBoxLayout(self.container)
+        container_lay.setContentsMargins(5, 5, 5, 5)
 
         self.table = ExcelTableWidget()
         self.table.setColumnCount(len(self.columns))
         self.table.setHorizontalHeaderLabels([str(c["name"]) for c in self.columns])
 
-        header = self.table.horizontalHeader()
-        if header is not None:
-            header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-            header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        h = self.table.horizontalHeader()
+        if h:
+            h.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
-        self.table.itemChanged.connect(self._on_item_changed)
+        self.table.itemChanged.connect(lambda: self.data_changed.emit())
 
-        # Inizializza con alcune righe vuote
         for _ in range(5):
             self._add_row()
-
-        container_layout.addWidget(self.table)
+        container_lay.addWidget(self.table)
         layout.addWidget(self.container)
 
-    def _show_context_menu(self, position: QPoint) -> None:
-        """Visualizza il menu contestuale per la gestione delle righe e dei dati."""
+    def _show_context_menu(self, pos: QPoint) -> None:
         menu = QMenu()
+        c = COLORS["text_dark"]
 
-        lyra_action = QAction(
-            get_colored_icon(get_asset_path(Icons.SPARKLES), COLORS["text_dark"]),
-            "Analizza con Lyra",
-            self,
-        )
-        lyra_action.triggered.connect(self.table._analyze_selection)
-        menu.addAction(lyra_action)
-        menu.addSeparator()
+        lyra = QAction(get_colored_icon(get_asset_path(Icons.SPARKLES), c), "Analizza con Lyra", self)
+        lyra.triggered.connect(self.table._analyze_selection)
 
-        copy_action = QAction(get_colored_icon(get_asset_path(Icons.EDIT), COLORS["text_dark"]), "Copia", self)
-        copy_action.triggered.connect(self.table.copy_selection)
-        menu.addAction(copy_action)
+        copy = QAction(get_colored_icon(get_asset_path(Icons.EDIT), c), "Copia", self)
+        copy.triggered.connect(self.table.copy_selection)
 
-        paste_action = QAction(get_colored_icon(get_asset_path(Icons.UPLOAD), COLORS["text_dark"]), "Incolla", self)
-        paste_action.triggered.connect(self.table.paste_selection)
-        menu.addAction(paste_action)
+        paste = QAction(get_colored_icon(get_asset_path(Icons.UPLOAD), c), "Incolla", self)
+        paste.triggered.connect(self.table.paste_selection)
 
-        menu.addSeparator()
+        add = QAction(get_colored_icon(get_asset_path(Icons.PLUS), c), "Aggiungi riga", self)
+        add.triggered.connect(self._add_row)
 
-        add_action = QAction(
-            get_colored_icon(get_asset_path(Icons.PLUS), COLORS["text_dark"]),
-            "Aggiungi riga",
-            self,
-        )
-        add_action.triggered.connect(self._add_row)
-        menu.addAction(add_action)
+        rem = QAction(get_colored_icon(get_asset_path(Icons.TRASH), c), "Rimuovi riga", self)
+        rem.triggered.connect(self._remove_row)
 
-        add_above_action = QAction(
-            get_colored_icon(get_asset_path(Icons.PLUS), COLORS["text_dark"]),
-            "Aggiungi riga sopra",
-            self,
-        )
-        add_above_action.triggered.connect(self._add_row_above)
-        menu.addAction(add_above_action)
+        for a in [lyra, copy, paste, None, add, rem]:
+            if a is None:
+                menu.addSeparator()
+            else:
+                menu.addAction(a)
 
-        menu.addSeparator()
-
-        remove_action = QAction(
-            get_colored_icon(get_asset_path(Icons.TRASH), COLORS["text_dark"]),
-            "Rimuovi riga",
-            self,
-        )
-        remove_action.triggered.connect(self._remove_row)
-        menu.addAction(remove_action)
-
-        clear_action = QAction(
-            get_colored_icon(get_asset_path(Icons.TRASH), COLORS["text_dark"]),
-            "Pulisci tutto",
-            self,
-        )
-        clear_action.triggered.connect(self._clear_all)
-        menu.addAction(clear_action)
-
-        viewport = self.table.viewport()
-        if viewport is not None:
-            menu.exec(viewport.mapToGlobal(position))
+        if viewport := self.table.viewport():
+            menu.exec(viewport.mapToGlobal(pos))
 
     def _add_row(self, use_defaults: bool = True) -> None:
-        """Aggiunge una riga vuota alla fine della tabella."""
         row = self.table.rowCount()
         self.table.insertRow(row)
-        self._populate_row(row, use_defaults=use_defaults)
-        self.data_changed.emit()
-
-    def _add_row_above(self) -> None:
-        """Inserisce una riga vuota sopra la riga attualmente selezionata."""
-        current_row = self.table.currentRow()
-        if current_row < 0:
-            current_row = 0
-
-        self.table.insertRow(current_row)
-        self._populate_row(current_row, use_defaults=True)
-        self.data_changed.emit()
-
-    def _populate_row(self, row: int, use_defaults: bool = True) -> None:
-        """Inizializza le celle di una riga con i widget appropriati (testo o combo)."""
-        for col, column in enumerate(self.columns):
-            col_type = column.get("type", "text")
-
-            if col_type == "combo":
-                combo = FilterComboBox()
-                combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
-                combo.setStyleSheet(
-                    f"""
-                    QComboBox {{ border: none; background: transparent; color: {COLORS['text_dark']}; padding-left: 5px; }}
-                    QComboBox QAbstractItemView {{ background-color: {COLORS['bg_white']}; color: {COLORS['text_dark']}; selection-background-color: {COLORS['table_info_bg']}; selection-color: {COLORS['info_blue']}; }}
-                """
-                )
-                options = ["", *column.get("options", [])]
-                combo.addItems(options)
-
-                if use_defaults:
-                    default_val = column.get("default", "")
-                    if default_val and default_val in options:
-                        combo.setCurrentText(str(default_val))
-                else:
-                    combo.setCurrentIndex(0)  # Forza cella vuota
-
-                combo.currentTextChanged.connect(lambda text: self.data_changed.emit())
-                self.table.setCellWidget(row, col, combo)
+        for col, config in enumerate(self.columns):
+            if config.get("type") == "combo":
+                cb = FilterComboBox()
+                cb.addItems(["", *config.get("options", [])])
+                if use_defaults and config.get("default"):
+                    cb.setCurrentText(str(config["default"]))
+                cb.currentTextChanged.connect(lambda _: self.data_changed.emit())
+                self.table.setCellWidget(row, col, cb)
             else:
-                default_val = column.get("default", "") if use_defaults else ""
-                item = SortableTableWidgetItem(str(default_val))
-                self.table.setItem(row, col, item)
+                val = str(config.get("default", "")) if use_defaults else ""
+                self.table.setItem(row, col, SortableTableWidgetItem(val))
+        self.data_changed.emit()
+
+    def _remove_row(self) -> None:
+        r = self.table.currentRow()
+        if r >= 0:
+            self.table.removeRow(r)
+            self.data_changed.emit()
 
     def clear(self) -> None:
-        """Svuota completamente la tabella e ripristina righe vuote senza valori di default."""
+        """Svuota la tabella e ripristina le righe predefinite."""
         self.table.blockSignals(True)
         self.table.setRowCount(0)
         for _ in range(5):
@@ -574,133 +242,38 @@ class EditableDataTable(QWidget):
         self.table.blockSignals(False)
         self.data_changed.emit()
 
-    def _remove_row(self) -> None:
-        """Rimuove la riga attualmente selezionata."""
-        current_row = self.table.currentRow()
-        if current_row >= 0:
-            self.table.removeRow(current_row)
-            self.data_changed.emit()
-
-    def _clear_all(self) -> None:
-        """Svuota completamente la tabella e ripristina una riga iniziale con valori di default."""
-        self.table.setRowCount(0)
-        self._add_row()
-        self.data_changed.emit()
-
-    def _on_item_changed(self, item: QTableWidgetItem) -> None:
-        """Emette il segnale di modifica dati quando un item cambia."""
-        self.data_changed.emit()
-
     def get_data(self) -> list[dict[str, Any]]:
-        """
-        Estrae tutti i dati validi dalla tabella.
-        Una riga è considerata valida solo se la PRIMA colonna (solitamente OdA o ID)
-        non è vuota. Questo previene il salvataggio di righe con solo valori di default.
-
-        Returns:
-            list: Lista di dizionari con chiavi derivate dai nomi delle colonne.
-        """
-        data: list[dict[str, Any]] = []
-        for row in range(self.table.rowCount()):
-            row_data: dict[str, Any] = {}
-            primary_col_has_data = False
-
-            for col, column in enumerate(self.columns):
-                key = str(column["name"]).lower().replace(" ", "_")
-                widget = self.table.cellWidget(row, col)
-                if isinstance(widget, QComboBox):
-                    value = widget.currentText()
-                else:
-                    item = self.table.item(row, col)
-                    value = item.text() if item else ""
-
-                row_data[key] = value
-
-                # Consideriamo valida la riga solo se la colonna 0 ha dati
-                if col == 0 and value.strip():
-                    primary_col_has_data = True
-
-            if primary_col_has_data:
-                data.append(row_data)
-        return data
+        results = []
+        for r in range(self.table.rowCount()):
+            row_data = {}
+            valid = False
+            for c, col_cfg in enumerate(self.columns):
+                key = col_cfg["name"].lower().replace(" ", "_")
+                val = self.table._get_cell_value(r, c)
+                row_data[key] = val
+                if c == 0 and val.strip():
+                    valid = True
+            if valid:
+                results.append(row_data)
+        return results
 
     def set_data(self, data: list[dict[str, Any]]) -> None:
-        """
-        Popola la tabella con una lista di dati, resettando il contenuto precedente.
-
-        Args:
-            data: Lista di dizionari contenenti i valori per le colonne.
-        """
         self.table.blockSignals(True)
         self.table.setRowCount(0)
         for row_data in data:
             row = self.table.rowCount()
             self.table.insertRow(row)
-            self._populate_row_from_data(row, row_data)
-        if self.table.rowCount() == 0:
-            while self.table.rowCount() < 5:
-                self._add_row(use_defaults=False)
-        self.table.blockSignals(False)
-
-    def _populate_row_from_data(self, row: int, row_data: dict[str, Any]) -> None:
-        """Popola una riga specifica utilizzando i dati forniti."""
-        for col, column in enumerate(self.columns):
-            col_type = column.get("type", "text")
-            key = str(column["name"]).lower().replace(" ", "_")
-            value = row_data.get(key, "")
-
-            if col_type == "combo":
-                combo = FilterComboBox()
-                combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
-                combo.setStyleSheet(
-                    f"""
-                    QComboBox {{ border: none; background: transparent; color: {COLORS['text_dark']}; padding-left: 5px; }}
-                    QComboBox QAbstractItemView {{ background-color: {COLORS['bg_white']}; color: {COLORS['text_dark']}; selection-background-color: {COLORS['table_info_bg']}; selection-color: {COLORS['info_blue']}; }}
-                """
-                )
-                options = ["", *column.get("options", [])]
-                combo.addItems(options)
-                if value:
-                    idx = combo.findText(str(value))
-                    if idx >= 0:
-                        combo.setCurrentIndex(idx)
-                    else:
-                        combo.setCurrentIndex(0)
+            for c, col_cfg in enumerate(self.columns):
+                key = col_cfg["name"].lower().replace(" ", "_")
+                val = str(row_data.get(key, ""))
+                if col_cfg.get("type") == "combo":
+                    cb = FilterComboBox()
+                    cb.addItems(["", *col_cfg.get("options", [])])
+                    cb.setCurrentText(val)
+                    cb.currentTextChanged.connect(lambda _: self.data_changed.emit())
+                    self.table.setCellWidget(row, c, cb)
                 else:
-                    combo.setCurrentIndex(0)
-                combo.currentTextChanged.connect(lambda text: self.data_changed.emit())
-                self.table.setCellWidget(row, col, combo)
-            else:
-                item = SortableTableWidgetItem(str(value))
-                self.table.setItem(row, col, item)
-
-    def update_column_options(self, column_name: str, new_options: list[str]) -> None:
-        """
-        Aggiorna dinamicamente le opzioni di una colonna di tipo ComboBox.
-
-        Args:
-            column_name: Nome esatto della colonna da aggiornare.
-            new_options: Nuova lista di stringhe per il menu a tendina.
-        """
-        target_col_idx = -1
-        for i, col in enumerate(self.columns):
-            if col["name"] == column_name:
-                col["options"] = new_options
-                target_col_idx = i
-                break
-
-        if target_col_idx == -1:
-            return
-
-        self.table.blockSignals(True)
-        for row in range(self.table.rowCount()):
-            widget = self.table.cellWidget(row, target_col_idx)
-            if isinstance(widget, QComboBox):
-                current_text = widget.currentText()
-                widget.clear()
-                widget.addItems(["", *new_options])
-                if current_text in new_options:
-                    widget.setCurrentText(current_text)
-                elif new_options:
-                    widget.setCurrentIndex(0)
+                    self.table.setItem(row, c, SortableTableWidgetItem(val))
+        while self.table.rowCount() < 5:
+            self._add_row(use_defaults=False)
         self.table.blockSignals(False)

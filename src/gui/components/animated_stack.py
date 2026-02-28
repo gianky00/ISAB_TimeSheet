@@ -93,7 +93,7 @@ class SlidingStackedWidget(QStackedWidget):
 
         self.fade_label_old.show()
         self.fade_label_new.show()
-        old_widget.hide() # Nasconde il reale per non interferire
+        old_widget.hide()  # Nasconde il reale per non interferire
 
         # 2. Configura animazioni
         self._animation_group.clear()
@@ -102,7 +102,7 @@ class SlidingStackedWidget(QStackedWidget):
         anim_out_pos = QPropertyAnimation(self.fade_label_old, b"pos")
         anim_out_pos.setDuration(self._animation_duration)
         anim_out_pos.setStartValue(QPoint(0, 0))
-        anim_out_pos.setEndValue(QPoint(-int(offset/2), 0))
+        anim_out_pos.setEndValue(QPoint(-int(offset / 2), 0))
         anim_out_pos.setEasingCurve(self._easing_curve)
 
         anim_out_fade = QPropertyAnimation(eff_old, b"opacity")

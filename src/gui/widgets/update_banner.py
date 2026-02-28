@@ -25,7 +25,9 @@ class UpdateBanner(QFrame):
         layout.setSpacing(10)
 
         self.icon_label = QLabel()
-        self.icon_label.setPixmap(get_colored_icon(get_asset_path(Icons.ROCKET), COLORS["text_dark"]).pixmap(20, 20))
+        self.icon_label.setPixmap(
+            get_colored_icon(get_asset_path(Icons.ROCKET), COLORS["text_dark"]).pixmap(20, 20)
+        )
         layout.addWidget(self.icon_label)
 
         self.update_label = QLabel("Nuova versione disponibile!")

@@ -74,18 +74,18 @@ class TimbratureSettingsTab(QWidget):
         self.settings_table = StandardTable()
         self.settings_table.setStyleSheet(f"""
             QTableWidget {{
-                gridline-color: {COLORS['bg_alt']};
-                selection-background-color: {COLORS['table_selection_bg']};
-                selection-color: {COLORS['text_dark']};
-                background-color: {COLORS['bg_white']};
+                gridline-color: {COLORS["bg_alt"]};
+                selection-background-color: {COLORS["table_selection_bg"]};
+                selection-color: {COLORS["text_dark"]};
+                background-color: {COLORS["bg_white"]};
             }}
             QHeaderView::section {{
-                background-color: {COLORS['bg_light']};
-                color: {COLORS['text_dark']};
+                background-color: {COLORS["bg_light"]};
+                color: {COLORS["text_dark"]};
                 padding: 8px;
                 font-weight: bold;
                 border: none;
-                border-bottom: 1px solid {COLORS['border_light']};
+                border-bottom: 1px solid {COLORS["border_light"]};
             }}
         """)
         v_header = self.settings_table.verticalHeader()

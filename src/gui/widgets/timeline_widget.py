@@ -102,11 +102,17 @@ class CyberTimelineFrame(QFrame):
             step = 25
             for x in range(int(rect.left()), int(rect.right() + step), step):
                 painter.drawLine(
-                    int(x + self._grid_offset), int(rect.top()), int(x + self._grid_offset), int(rect.bottom())
+                    int(x + self._grid_offset),
+                    int(rect.top()),
+                    int(x + self._grid_offset),
+                    int(rect.bottom()),
                 )
             for y in range(int(rect.top()), int(rect.bottom() + step), step):
                 painter.drawLine(
-                    int(rect.left()), int(y + self._grid_offset), int(rect.right()), int(y + self._grid_offset)
+                    int(rect.left()),
+                    int(y + self._grid_offset),
+                    int(rect.right()),
+                    int(y + self._grid_offset),
                 )
             painter.restore()
 
@@ -267,6 +273,7 @@ class TimelineWidget(CyberLogConsole):
 
 class MissionReportCard(QFrame):
     """Versione legacy mantenuta per compatibilità di export."""
+
     def __init__(self, dur: str, status: bool, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.hide()
@@ -274,17 +281,20 @@ class MissionReportCard(QFrame):
 
 class HorizontalLogItem(QWidget):
     """Versione legacy mantenuta per compatibilità di export."""
+
     def __init__(self, text: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
 
 
 class HorizontalTimelineWidget(QWidget):
     """Versione legacy mantenuta per compatibilità di export."""
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
 
 
 class HorizontalTimelineContainer(QFrame):
     """Versione legacy mantenuta per compatibilità di export."""
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)

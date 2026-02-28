@@ -130,28 +130,28 @@ class PathsPage(QWidget):
             widget.setStyleSheet(
                 f"""
                 QLineEdit {{
-                    border: 2px solid {COLORS['success_green']};
+                    border: 2px solid {COLORS["success_green"]};
                     border-radius: 4px;
                     padding: 10px;
                     font-size: 15px;
-                    background-color: {COLORS['bg_success_pastel']};
-                    color: {COLORS['success_material']};
+                    background-color: {COLORS["bg_success_pastel"]};
+                    color: {COLORS["success_material"]};
                 }}
-                QLineEdit:focus {{ border-color: {COLORS['success_green']}; }}
+                QLineEdit:focus {{ border-color: {COLORS["success_green"]}; }}
             """
             )
         else:
             widget.setStyleSheet(
                 f"""
                 QLineEdit {{
-                    border: 2px solid {COLORS['error_red']};
+                    border: 2px solid {COLORS["error_red"]};
                     border-radius: 4px;
                     padding: 10px;
                     font-size: 15px;
-                    background-color: {COLORS['bg_error_pastel']};
-                    color: {COLORS['error_material']};
+                    background-color: {COLORS["bg_error_pastel"]};
+                    color: {COLORS["error_material"]};
                 }}
-                QLineEdit:focus {{ border-color: {COLORS['error_red']}; }}
+                QLineEdit:focus {{ border-color: {COLORS["error_red"]}; }}
             """
             )
 

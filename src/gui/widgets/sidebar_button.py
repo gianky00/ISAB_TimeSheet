@@ -26,7 +26,7 @@ class SidebarButton(QPushButton):
         self.icon_path = icon_path
         self._collapsed = False
         self._badge_count = 0
-        self._text_opacity = 1.0 # Default a 1.0 per visibilità immediata
+        self._text_opacity = 1.0  # Default a 1.0 per visibilità immediata
 
         if icon_path:
             self.setIcon(get_colored_icon(icon_path, COLORS["bg_white"]))
@@ -37,7 +37,7 @@ class SidebarButton(QPushButton):
 
         self.glow = QGraphicsDropShadowEffect(self)
         self.glow.setBlurRadius(15)
-        self.glow.setColor(QColor(0, 0, 0, 0)) # Trasparente di default
+        self.glow.setColor(QColor(0, 0, 0, 0))  # Trasparente di default
         self.glow.setOffset(0, 0)
         self.setGraphicsEffect(self.glow)
 
@@ -50,7 +50,7 @@ class SidebarButton(QPushButton):
         """Restituisce l'opacità del testo."""
         return self._text_opacity
 
-    @text_opacity.setter # type: ignore[no-redef]
+    @text_opacity.setter  # type: ignore[no-redef]
     def text_opacity(self, value: float) -> None:
         """Imposta l'opacità del testo."""
         self._text_opacity = value
@@ -100,7 +100,9 @@ class SidebarButton(QPushButton):
             font_weight = "800"
         else:
             bg_color = "transparent"
-            text_color = hex_to_rgba(COLORS["bg_white"], max(0.4, self._text_opacity)) # Mai sotto 0.4 se visibile
+            text_color = hex_to_rgba(
+                COLORS["bg_white"], max(0.4, self._text_opacity)
+            )  # Mai sotto 0.4 se visibile
             font_weight = "500"
 
         self.setStyleSheet(f"""
@@ -116,8 +118,8 @@ class SidebarButton(QPushButton):
                 border: none;
             }}
             QPushButton:hover {{
-                background-color: {hex_to_rgba(COLORS['bg_white'], 0.1)};
-                color: {COLORS['bg_white']};
+                background-color: {hex_to_rgba(COLORS["bg_white"], 0.1)};
+                color: {COLORS["bg_white"]};
             }}
         """)
 

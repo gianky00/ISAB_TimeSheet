@@ -61,9 +61,9 @@ class DashboardPanel(QWidget):
         self.main_container.setStyleSheet(
             f"""
             QFrame#mainDashboardContainer {{
-                background-color: {COLORS['bg_white']};
+                background-color: {COLORS["bg_white"]};
                 border-radius: 20px;
-                border: 1px solid {COLORS['border_light']};
+                border: 1px solid {COLORS["border_light"]};
             }}
         """
         )
@@ -153,7 +153,9 @@ class DashboardPanel(QWidget):
 
         # 2. Activity Feed (Bottom)
         subtitle = QLabel("Feed Attività")
-        subtitle.setStyleSheet(f"font-size: 16px; font-weight: 700; color: {COLORS['text_muted']}; margin-top: 20px;")
+        subtitle.setStyleSheet(
+            f"font-size: 16px; font-weight: 700; color: {COLORS['text_muted']}; margin-top: 20px;"
+        )
         self.content_layout.addWidget(subtitle)
 
         self.activity_feed = ActivityFeed()
@@ -166,6 +168,7 @@ class DashboardPanel(QWidget):
         """Recupera dati reali dal DB per le card della dashboard."""
         from src.core.database import db_manager
         from src.core.sync_tracker import SyncTracker
+
         with suppress(Exception):
             # 1. PDL Stats
             res = db_manager.execute_query(db_manager.DB_PDL, "SELECT COUNT(*) FROM pdl")
@@ -185,11 +188,12 @@ class DashboardPanel(QWidget):
             self.card_pdl.update_value(
                 str(total_pdl),
                 f"ATTIVE: {active_pdl} | CHIUSE: {total_pdl - active_pdl}",
-                f"Ultima Sincronizzazione: {last_sync}"
+                f"Ultima Sincronizzazione: {last_sync}",
             )
 
             # 2. Notif Count (Unread)
             from src.core.notification_manager import NotificationManager
+
             notifs = NotificationManager.instance().get_notifications()
             unread = [n for n in notifs if not n.get("read", False)]
             errors = len([n for n in unread if n.get("level") == "error"])
@@ -202,7 +206,7 @@ class DashboardPanel(QWidget):
             self.card_notif.update_value(
                 str(len(unread)),
                 f"ERRORI: {errors} | AVVISI: {warns}",
-                f"Ultimo alert: {last_msg}" if last_msg else "Nessun nuovo avviso"
+                f"Ultimo alert: {last_msg}" if last_msg else "Nessun nuovo avviso",
             )
 
             # 3. Health Score & Bot Performance
@@ -219,7 +223,7 @@ class DashboardPanel(QWidget):
             self.card_health.update_value(
                 f"{report.health_score}%",
                 f"BOT OK: {ok} | FALLITI: {ko}",
-                f"Tasso Errore: {err_rate:.1f}% nelle ultime 24h"
+                f"Tasso Errore: {err_rate:.1f}% nelle ultime 24h",
             )
 
             self.card_health.icon_container.setStyleSheet(f"""

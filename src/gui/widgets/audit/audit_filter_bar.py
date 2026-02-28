@@ -131,7 +131,7 @@ class AuditFilterBar(ModernCard):
             "FILTRA",
             variant=ModernButton.Variant.PRIMARY,
             size=ModernButton.Size.SMALL,
-            icon=get_asset_path(Icons.SEARCH)
+            icon=get_asset_path(Icons.SEARCH),
         )
         self.apply_btn.clicked.connect(self._emit_filters)
         layout.addWidget(self.apply_btn, alignment=Qt.AlignmentFlag.AlignBottom)

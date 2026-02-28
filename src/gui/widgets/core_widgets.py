@@ -5,7 +5,6 @@ Questo modulo definisce wrapper stilizzati per i widget PyQt6 di base,
 garantendo coerenza visiva nell'intera applicazione.
 """
 
-
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -26,6 +25,7 @@ from src.gui.design.colors import get_palette
 from src.gui.widgets.modern_button import ModernButton
 
 # ─── BUTTONS ──────────────────────────────────────────────────────────────────
+
 
 class PrimaryButton(ModernButton):
     """Pulsante primario con stile accent."""
@@ -82,6 +82,7 @@ class IconButton(QPushButton):
 
 
 # ─── INPUTS ───────────────────────────────────────────────────────────────────
+
 
 class SearchInput(QLineEdit):
     """QLineEdit stilizzato per campi di ricerca, con placeholder e clear button."""
@@ -155,6 +156,7 @@ class StandardTextEdit(QTextEdit):
 
 
 # ─── SELECTORS ────────────────────────────────────────────────────────────────
+
 
 class FilterComboBox(QComboBox):
     """QComboBox stilizzata per filtri e selettori."""
@@ -235,6 +237,7 @@ class StandardSpinBox(QSpinBox):
 
 
 # ─── CONTAINERS & LISTS ──────────────────────────────────────────────────────
+
 
 class StandardTable(QTableWidget):
     """QTableWidget con stile enterprise, righe alternate e selezione per riga."""

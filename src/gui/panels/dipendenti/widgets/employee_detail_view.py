@@ -45,7 +45,7 @@ class EmployeeDetailView(QWidget):
         header_card.setStyleSheet(
             f"""
             QFrame {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['primary_blue']}, stop:1 {COLORS['primary_dark']});
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["primary_blue"]}, stop:1 {COLORS["primary_dark"]});
                 border-radius: 12px;
             }}
         """
@@ -54,7 +54,9 @@ class EmployeeDetailView(QWidget):
         header_layout.setContentsMargins(18, 12, 18, 12)
 
         title_label = QLabel("📋 SCHEDA DIPENDENTE")
-        title_label.setStyleSheet(f"font-size: 20px; font-weight: bold; color: {COLORS['bg_white']}; letter-spacing: 1px;")
+        title_label.setStyleSheet(
+            f"font-size: 20px; font-weight: bold; color: {COLORS['bg_white']}; letter-spacing: 1px;"
+        )
         subtitle_label = QLabel("Dettagli anagrafica e accessi")
         subtitle_label.setStyleSheet("font-size: 14px; color: rgba(255, 255, 255, 0.90); margin-top: 2px;")
         header_layout.addWidget(title_label)
@@ -106,9 +108,9 @@ class EmployeeDetailView(QWidget):
         access_card.setStyleSheet(
             f"""
             QFrame {{
-                background: {COLORS['bg_white']};
+                background: {COLORS["bg_white"]};
                 border-radius: 10px;
-                border-left: 4px solid {COLORS['primary_blue']};
+                border-left: 4px solid {COLORS["primary_blue"]};
             }}
         """
         )

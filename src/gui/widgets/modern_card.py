@@ -73,6 +73,7 @@ class ModernCard(QFrame):
 
 class ModernContentCard(ModernCard):
     """Card che include già un layout per i contenuti."""
+
     def __init__(self, parent: QWidget | None = None, elevation: int = 15) -> None:
         """Inizializza la card con layout verticale integrato."""
         super().__init__(parent, elevation)

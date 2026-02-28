@@ -59,12 +59,19 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "master_preventivi_path": "",
     "base_network_path_preventivi": r"\\192.168.11.251\Database_Tecnico_SMI\Contabilita' strumentale",
     "preventivi_tcl": [
-        "MESSINA I.", "AGUSTA D.", "CALDARELLA F.",
-        "PREZZAVENTO M.", "BOSCO F.", "RUGGIERI F.", "BARBAGALLO G."
+        "MESSINA I.",
+        "AGUSTA D.",
+        "CALDARELLA F.",
+        "PREZZAVENTO M.",
+        "BOSCO F.",
+        "RUGGIERI F.",
+        "BARBAGALLO G.",
     ],
     "preventivi_stati": [
-        "ATTIVITA' DA COMPLETARE", "IN ATTESA TCL",
-        "RICHIESTA ODC MIDOLO", "CONTABILIZZATA"
+        "ATTIVITA' DA COMPLETARE",
+        "IN ATTESA TCL",
+        "RICHIESTA ODC MIDOLO",
+        "CONTABILIZZATA",
     ],
     "reparti": ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"],
     "cantieri": [],

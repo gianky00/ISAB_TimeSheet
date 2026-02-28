@@ -77,12 +77,17 @@ class OperationLogWidget(QFrame):
 
     def append_log(self, message: str, level: str = "info") -> None:
         colors = {
-            "info": "#89b4fa", "success": "#a6e3a1", "warning": "#f9e2af",
-            "error": "#f38ba8", "step": "#cba6f7",
+            "info": "#89b4fa",
+            "success": "#a6e3a1",
+            "warning": "#f9e2af",
+            "error": "#f38ba8",
+            "step": "#cba6f7",
         }
         color = colors.get(level, colors["info"])
         time_str = datetime.now().strftime("%H:%M:%S")
-        self._log_text.append(f'<span style="color:#585b70;">[{time_str}]</span> <span style="color:{color};">{message}</span>')
+        self._log_text.append(
+            f'<span style="color:#585b70;">[{time_str}]</span> <span style="color:{color};">{message}</span>'
+        )
         self._log_text.ensureCursorVisible()
 
     def clear(self) -> None:

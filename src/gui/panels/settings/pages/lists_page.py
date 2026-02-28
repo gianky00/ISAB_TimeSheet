@@ -105,7 +105,9 @@ class ListsPage(QWidget):
         self.contract_list = StandardListWidget()
         self.contract_list.setMinimumHeight(100)
         self.contract_list.setStyleSheet(list_style())
-        self._setup_generic_list(self.contract_list, self._add_contract, self._edit_contract, self._remove_contract)
+        self._setup_generic_list(
+            self.contract_list, self._add_contract, self._edit_contract, self._remove_contract
+        )
         layout.addWidget(self.contract_list)
         btns = QHBoxLayout()
         self._add_btn(btns, Icons.PLUS, COLORS["success_green"], self._add_contract)
@@ -122,7 +124,9 @@ class ListsPage(QWidget):
         self.fornitori_list = StandardListWidget()
         self.fornitori_list.setMinimumHeight(100)
         self.fornitori_list.setStyleSheet(list_style())
-        self._setup_generic_list(self.fornitori_list, self._add_fornitore, self._edit_fornitore, self._remove_fornitore)
+        self._setup_generic_list(
+            self.fornitori_list, self._add_fornitore, self._edit_fornitore, self._remove_fornitore
+        )
         layout.addWidget(self.fornitori_list)
         btns = QHBoxLayout()
         self._add_btn(btns, Icons.PLUS, COLORS["success_green"], self._add_fornitore)
@@ -139,7 +143,9 @@ class ListsPage(QWidget):
         self.reparti_list = StandardListWidget()
         self.reparti_list.setMinimumHeight(80)
         self.reparti_list.setStyleSheet(list_style())
-        self._setup_generic_list(self.reparti_list, self._add_reparto, self._edit_reparto, self._remove_reparto)
+        self._setup_generic_list(
+            self.reparti_list, self._add_reparto, self._edit_reparto, self._remove_reparto
+        )
         layout.addWidget(self.reparti_list)
         btns = QHBoxLayout()
         self._add_btn(btns, Icons.PLUS, COLORS["success_green"], self._add_reparto)
@@ -156,7 +162,9 @@ class ListsPage(QWidget):
         self.cantieri_list = StandardListWidget()
         self.cantieri_list.setMinimumHeight(80)
         self.cantieri_list.setStyleSheet(list_style())
-        self._setup_generic_list(self.cantieri_list, self._add_cantiere, self._edit_cantiere, self._remove_cantiere)
+        self._setup_generic_list(
+            self.cantieri_list, self._add_cantiere, self._edit_cantiere, self._remove_cantiere
+        )
         layout.addWidget(self.cantieri_list)
         btns = QHBoxLayout()
         self._add_btn(btns, Icons.PLUS, COLORS["success_green"], self._add_cantiere)
@@ -352,7 +360,13 @@ class ListsPage(QWidget):
             return
         accs = self._get_accounts(self.sw_account_list)
         target_acc = accs[row]
-        dlg = AccountDialog(self, target_acc["username"], target_acc["password"], account_type=target_acc.get("type", ""), show_type=True)
+        dlg = AccountDialog(
+            self,
+            target_acc["username"],
+            target_acc["password"],
+            account_type=target_acc.get("type", ""),
+            show_type=True,
+        )
         if dlg.exec():
             u, p, t = dlg.get_data()
             if u:

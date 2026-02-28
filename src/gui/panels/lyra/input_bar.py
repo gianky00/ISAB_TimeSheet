@@ -41,6 +41,7 @@ class ChatInputBar(QWidget):
         # Shadow for floating effect
         from PyQt6.QtGui import QColor
         from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(20)
         shadow.setXOffset(0)
@@ -61,11 +62,11 @@ class ChatInputBar(QWidget):
         self.attach_btn.setStyleSheet(
             f"""
             QPushButton {{
-                background-color: {COLORS['bg_hover']};
+                background-color: {COLORS["bg_hover"]};
                 border: none;
                 border-radius: 20px;
             }}
-            QPushButton:hover {{ background-color: {COLORS['border_light']}; }}
+            QPushButton:hover {{ background-color: {COLORS["border_light"]}; }}
         """
         )
         self.attach_btn.clicked.connect(self.attach_clicked.emit)
@@ -81,7 +82,7 @@ class ChatInputBar(QWidget):
                 background: transparent;
                 padding: 0 5px;
                 font-size: 15px;
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
             }}
         """
         )
@@ -96,12 +97,12 @@ class ChatInputBar(QWidget):
         self.send_btn.setStyleSheet(
             f"""
             QPushButton {{
-                background-color: {COLORS['purple']};
+                background-color: {COLORS["purple"]};
                 border: none;
                 border-radius: 20px;
             }}
-            QPushButton:hover {{ background-color: {COLORS['purple']}; opacity: 0.9; }}
-            QPushButton:disabled {{ background-color: {COLORS['text_muted']}; }}
+            QPushButton:hover {{ background-color: {COLORS["purple"]}; opacity: 0.9; }}
+            QPushButton:disabled {{ background-color: {COLORS["text_muted"]}; }}
         """
         )
         self.send_btn.clicked.connect(self._on_send)

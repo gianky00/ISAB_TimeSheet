@@ -100,7 +100,9 @@ class ContabilitaPanel(QWidget):
         lbl_rows = QLabel("RIGHE SELEZIONATE")
         lbl_rows.setStyleSheet(LABEL_MUTED)
         self.selection_count_label = QLabel("0")
-        self.selection_count_label.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 700; font-size: 14px;")
+        self.selection_count_label.setStyleSheet(
+            f"color: {COLORS['text_dark']}; font-weight: 700; font-size: 14px;"
+        )
         rows_v.addWidget(lbl_rows)
         rows_v.addWidget(self.selection_count_label)
         stats_h.addLayout(rows_v)
@@ -110,7 +112,9 @@ class ContabilitaPanel(QWidget):
         lbl_hours = QLabel("TOTALE ORE")
         lbl_hours.setStyleSheet(LABEL_MUTED)
         self.selection_sum_label = QLabel("0")
-        self.selection_sum_label.setStyleSheet(f"color: {COLORS['teal_accent']}; font-weight: 800; font-size: 14px;")
+        self.selection_sum_label.setStyleSheet(
+            f"color: {COLORS['teal_accent']}; font-weight: 800; font-size: 14px;"
+        )
         hours_v.addWidget(lbl_hours)
         hours_v.addWidget(self.selection_sum_label)
         stats_h.addLayout(hours_v)
@@ -187,8 +191,6 @@ class ContabilitaPanel(QWidget):
             "Giornaliere",
         )
 
-
-
         self.attivita_widget = AttivitaProgrammateTab()
         self.main_tabs.addTab(
             self.attivita_widget,
@@ -225,12 +227,12 @@ class ContabilitaPanel(QWidget):
     def _get_subtab_style(self) -> str:
         """Restituisce il QSS per i tab secondari posizionati in basso."""
         return f"""
-            QTabWidget::pane {{ border: none; border-top: 1px solid {COLORS['border_light']}; }}
+            QTabWidget::pane {{ border: none; border-top: 1px solid {COLORS["border_light"]}; }}
             QTabBar::tab {{
-                background: transparent; color: {COLORS['text_muted']}; padding: 6px 16px; margin-bottom: -1px;
+                background: transparent; color: {COLORS["text_muted"]}; padding: 6px 16px; margin-bottom: -1px;
                 border-bottom: 2px solid transparent; font-size: 13px; font-weight: 600;
             }}
-            QTabBar::tab:selected {{ color: {COLORS['teal_accent']}; border-bottom: 2px solid {COLORS['teal_accent']}; background-color: {COLORS['bg_light']}; }}
+            QTabBar::tab:selected {{ color: {COLORS["teal_accent"]}; border-bottom: 2px solid {COLORS["teal_accent"]}; background-color: {COLORS["bg_light"]}; }}
         """
 
     def _on_main_tab_changed(self, index: int) -> None:
@@ -271,7 +273,9 @@ class ContabilitaPanel(QWidget):
         if hasattr(self.certificati_widget, "refresh_data"):
             self.certificati_widget.refresh_data()
 
-    def _sync_tab_widget(self, tab_widget: AnimatedTabWidget, target_years: list[int], tab_class: type) -> None:
+    def _sync_tab_widget(
+        self, tab_widget: AnimatedTabWidget, target_years: list[int], tab_class: type
+    ) -> None:
         """Aggiorna i tab di un AnimatedTabWidget senza distruggere i widget esistenti per gli stessi anni."""
         existing_years = {}
         for i in range(tab_widget.count()):

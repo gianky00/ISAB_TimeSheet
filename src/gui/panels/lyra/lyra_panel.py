@@ -125,16 +125,16 @@ class LyraPanel(QWidget):
             btn.setStyleSheet(
                 f"""
                 QPushButton {{
-                    border: 1px solid {COLORS['purple']};
+                    border: 1px solid {COLORS["purple"]};
                     border-radius: 15px;
                     padding: 6px 15px;
                     font-size: 11px;
                     font-weight: 600;
-                    color: {COLORS['purple']};
+                    color: {COLORS["purple"]};
                     background: transparent;
                 }}
                 QPushButton:hover {{
-                    background: {COLORS['purple']}10;
+                    background: {COLORS["purple"]}10;
                 }}
                 """
             )

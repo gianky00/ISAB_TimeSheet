@@ -88,10 +88,10 @@ class AuditDetailDialog(QDialog):
         btn_copy.setStyleSheet(
             f"""
             QPushButton {{
-                background-color: {COLORS['bg_alt']}; border: 1px solid {COLORS['border_medium']};
-                padding: 8px 15px; border-radius: 4px; font-weight: 600; color: {COLORS['text_dark']};
+                background-color: {COLORS["bg_alt"]}; border: 1px solid {COLORS["border_medium"]};
+                padding: 8px 15px; border-radius: 4px; font-weight: 600; color: {COLORS["text_dark"]};
             }}
-            QPushButton:hover {{ background-color: {COLORS['bg_hover']}; }}
+            QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; }}
         """
         )
         btn_layout.addWidget(btn_copy)
@@ -104,7 +104,7 @@ class AuditDetailDialog(QDialog):
         btn_close.setStyleSheet(
             f"""
             QPushButton {{
-                background-color: {COLORS['text_muted']}; color: white; border: none;
+                background-color: {COLORS["text_muted"]}; color: white; border: none;
                 padding: 8px 15px; border-radius: 4px; font-weight: bold;
             }}
             QPushButton:hover {{ opacity: 0.8; }}

@@ -128,7 +128,7 @@ class DipendentiManagerPanel(QWidget):
         self.lbl_count = QLabel("0 Dipendenti")
         self.lbl_count.setStyleSheet(
             f"""
-            background-color: {COLORS['bg_hover']}; color: {COLORS['text_dark']};
+            background-color: {COLORS["bg_hover"]}; color: {COLORS["text_dark"]};
             padding: 5px 15px; border-radius: 15px; font-weight: bold;
         """
         )
@@ -140,6 +140,7 @@ class DipendentiManagerPanel(QWidget):
         self.toolbar_card = QFrame()
         self.toolbar_card.setObjectName("filterBar")
         from src.gui.styles import LABEL_MUTED, LINEEDIT_STYLE
+
         self.toolbar_card.setStyleSheet(f"""
             QFrame#filterBar {{
                 background-color: {COLORS["bg_white"]};

@@ -148,6 +148,7 @@ class BotParametersWidget(QWidget):
         self.container = QFrame()
         self.container.setObjectName("filterBar")
         from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
+
         self.container.setStyleSheet(f"""
             QFrame#filterBar {{
                 background-color: {COLORS["bg_white"]};
@@ -205,7 +206,7 @@ class BotParametersWidget(QWidget):
         vbox_da.addWidget(lbl_da)
         self.date_da = CalendarDateEdit()
         self.date_da.setMinimumHeight(38)
-        self.date_da.setStyleSheet(COMBOBOX_STYLE) # CalendarDateEdit inherits styles
+        self.date_da.setStyleSheet(COMBOBOX_STYLE)  # CalendarDateEdit inherits styles
         self.date_da.dateChanged.connect(self.changed.emit)
         vbox_da.addWidget(self.date_da)
         container_layout.addLayout(vbox_da)
@@ -262,7 +263,7 @@ class BotParametersWidget(QWidget):
             container_layout.addLayout(vbox_dest)
 
         container_layout.addStretch()
-        self.main_row_layout = container_layout # Referenza per add_widget_to_row
+        self.main_row_layout = container_layout  # Referenza per add_widget_to_row
 
         main_layout.addWidget(self.container)
 
@@ -286,18 +287,18 @@ class BotParametersWidget(QWidget):
         """Restituisce lo stile QSS per i pulsanti icona."""
         return f"""
             QPushButton {{
-                background-color: {COLORS['bg_white']};
-                color: {COLORS['text_dark']};
-                border: 1px solid {COLORS['border_medium']};
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
+                border: 1px solid {COLORS["border_medium"]};
                 border-radius: 6px;
                 padding: 2px;
             }}
             QPushButton:hover {{
-                background-color: {COLORS['table_selection_bg']};
-                border-color: {COLORS['text_dark']};
+                background-color: {COLORS["table_selection_bg"]};
+                border-color: {COLORS["text_dark"]};
             }}
             QPushButton:pressed {{
-                background-color: {COLORS['bg_alt']};
+                background-color: {COLORS["bg_alt"]};
             }}
         """
 

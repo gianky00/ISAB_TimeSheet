@@ -118,7 +118,7 @@ class BugReportDialog(QDialog):
             }}
             QPushButton:hover {{ background-color: {palette.primary_variant}; }}
             QPushButton:pressed {{ background-color: {palette.primary_variant}; }}
-            QPushButton:disabled {{ background-color: {palette.disabled}; color: {COLORS['text_light']}; }}
+            QPushButton:disabled {{ background-color: {palette.disabled}; color: {COLORS["text_light"]}; }}
         """
         self.setStyleSheet(btn_style)
 
@@ -145,7 +145,9 @@ class BugReportDialog(QDialog):
 
         # Options Group
         options_group = StandardGroupBox("Contenuto Report")
-        options_group.setStyleSheet(f"QGroupBox {{ font-weight: 600; color: {palette.on_surface}; margin-top: 10px; }}")
+        options_group.setStyleSheet(
+            f"QGroupBox {{ font-weight: 600; color: {palette.on_surface}; margin-top: 10px; }}"
+        )
         options_layout = QVBoxLayout(options_group)
         options_layout.setSpacing(8)
 
@@ -221,7 +223,9 @@ class BugReportDialog(QDialog):
         self.preview_scroll.setWidgetResizable(True)
         self.preview_scroll.setMaximumHeight(100)
         self.preview_content = QLabel()
-        self.preview_content.setStyleSheet(f"font-family: monospace; font-size: 11px; color: {COLORS['text_muted']};")
+        self.preview_content.setStyleSheet(
+            f"font-family: monospace; font-size: 11px; color: {COLORS['text_muted']};"
+        )
         self.preview_content.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.preview_scroll.setWidget(self.preview_content)
         preview_layout.addWidget(self.preview_scroll)
@@ -371,17 +375,17 @@ class BugReportDialog(QDialog):
 
             cliente_info = "ISAB S.R.L."
             with suppress(Exception):
-                            from src.core.constants import Emails
-                            from src.core.license_validator import get_license_info
+                from src.core.constants import Emails
+                from src.core.license_validator import get_license_info
 
-                            lic_data = get_license_info()
-                            if lic_data and "Cliente" in lic_data:
-                                cliente_info = lic_data["Cliente"]
+                lic_data = get_license_info()
+                if lic_data and "Cliente" in lic_data:
+                    cliente_info = lic_data["Cliente"]
 
-                            mail = outlook.CreateItem(0)
-                            mail.To = Emails.SUPPORT
-                            mail.Subject = f"[Segnalazione Bug] SyncroJob v{current_ver} - {email_subject_suffix}"
-                            # Rinomina ZIP per includere Ticket ID
+                mail = outlook.CreateItem(0)
+                mail.To = Emails.SUPPORT
+                mail.Subject = f"[Segnalazione Bug] SyncroJob v{current_ver} - {email_subject_suffix}"
+                # Rinomina ZIP per includere Ticket ID
             final_zip_path = attachment_path
             with suppress(Exception):
                 dir_name = os.path.dirname(attachment_path)
@@ -392,10 +396,10 @@ class BugReportDialog(QDialog):
                 final_zip_path = new_path
 
             palette = get_palette()
-            css_cell = f"padding: 8px 12px; border-bottom: 1px solid {palette.border}; color: {palette.on_surface};"
-            css_header = (
-                f"padding: 8px 12px; border-bottom: 2px solid {palette.primary}; font-weight: 600; color: {palette.primary};"
+            css_cell = (
+                f"padding: 8px 12px; border-bottom: 1px solid {palette.border}; color: {palette.on_surface};"
             )
+            css_header = f"padding: 8px 12px; border-bottom: 2px solid {palette.primary}; font-weight: 600; color: {palette.primary};"
 
             html_body = f"""
             <div style="font-family: 'Segoe UI', sans-serif; color: {palette.on_surface}; max-width: 900px;">

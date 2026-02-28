@@ -19,21 +19,19 @@ class AuditPaginationBar(QWidget):
         layout.setContentsMargins(15, 5, 15, 5)
 
         self.prev_btn = ModernButton(
-            "PRECEDENTE",
-            variant=ModernButton.Variant.GHOST,
-            size=ModernButton.Size.SMALL
+            "PRECEDENTE", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL
         )
         self.prev_btn.setEnabled(False)
         self.prev_btn.clicked.connect(lambda: self.page_changed.emit(-1))
 
         self.page_lbl = QLabel("PAGINA 1")
-        self.page_lbl.setStyleSheet(f"font-weight: 800; color: {COLORS['text_muted']}; font-size: 11px; letter-spacing: 1px;")
+        self.page_lbl.setStyleSheet(
+            f"font-weight: 800; color: {COLORS['text_muted']}; font-size: 11px; letter-spacing: 1px;"
+        )
         self.page_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.next_btn = ModernButton(
-            "SUCCESSIVA",
-            variant=ModernButton.Variant.GHOST,
-            size=ModernButton.Size.SMALL
+            "SUCCESSIVA", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL
         )
         self.next_btn.setEnabled(False)
         self.next_btn.clicked.connect(lambda: self.page_changed.emit(1))

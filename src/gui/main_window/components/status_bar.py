@@ -52,8 +52,8 @@ class StatusBarComponent(QObject):
         self.status_bar.setStyleSheet(
             f"""
             QStatusBar {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_light']});
-                border-top: 2px solid qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {COLORS['border_light']}, stop:0.5 {COLORS['border_medium']}, stop:1 {COLORS['border_light']});
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS["bg_white"]}, stop:1 {COLORS["bg_light"]});
+                border-top: 2px solid qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {COLORS["border_light"]}, stop:0.5 {COLORS["border_medium"]}, stop:1 {COLORS["border_light"]});
                 min-height: 65px;
             }}
         """

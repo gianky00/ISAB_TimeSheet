@@ -14,6 +14,7 @@ from src.gui.styles import COLORS
 
 class WorkflowStepButton(QFrame):
     """Card pulsante premium per uno step del workflow consuntivo con animazione Glow."""
+
     clicked = pyqtSignal(str)
 
     class State:
@@ -106,26 +107,34 @@ class WorkflowStepButton(QFrame):
     def _apply_style(self) -> None:
         state_styles: dict[str, dict[str, Any]] = {
             self.State.IDLE: {
-                "bg": "#ffffff", "border": COLORS["border_light"],
-                "badge_bg": "#f1f3f5", "badge_color": COLORS["text_muted"],
+                "bg": "#ffffff",
+                "border": COLORS["border_light"],
+                "badge_bg": "#f1f3f5",
+                "badge_color": COLORS["text_muted"],
                 "title_color": COLORS["text_dark"],
                 "shadow_color": QColor(0, 0, 0, 25),
             },
             self.State.ACTIVE: {
-                "bg": "#e8f5e9", "border": "#4CAF50",
-                "badge_bg": "#4CAF50", "badge_color": "#ffffff",
+                "bg": "#e8f5e9",
+                "border": "#4CAF50",
+                "badge_bg": "#4CAF50",
+                "badge_color": "#ffffff",
                 "title_color": "#2E7D32",
                 "shadow_color": QColor(76, 175, 80, 80),
             },
             self.State.COMPLETED: {
-                "bg": "#f0fdf4", "border": "#2E7D32",
-                "badge_bg": "#2E7D32", "badge_color": "#ffffff",
+                "bg": "#f0fdf4",
+                "border": "#2E7D32",
+                "badge_bg": "#2E7D32",
+                "badge_color": "#ffffff",
                 "title_color": "#1b5e20",
                 "shadow_color": QColor(46, 125, 50, 60),
             },
             self.State.ERROR: {
-                "bg": "#fef2f2", "border": COLORS["error_red"],
-                "badge_bg": COLORS["error_red"], "badge_color": "#ffffff",
+                "bg": "#fef2f2",
+                "border": COLORS["error_red"],
+                "badge_bg": COLORS["error_red"],
+                "badge_color": "#ffffff",
                 "title_color": COLORS["error_red"],
                 "shadow_color": QColor(220, 53, 69, 60),
             },
@@ -164,9 +173,7 @@ class WorkflowStepButton(QFrame):
                 f"background-color: {s['badge_bg']}; color: {s['badge_color']}; "
                 f"border-radius: 14px; border: none;"
             )
-            self._title_label.setStyleSheet(
-                f"color: {s['title_color']}; background: transparent;"
-            )
+            self._title_label.setStyleSheet(f"color: {s['title_color']}; background: transparent;")
 
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(16)
@@ -190,6 +197,7 @@ class WorkflowStepButton(QFrame):
     def leaveEvent(self, event: Any) -> None:
         self._apply_style()
         super().leaveEvent(event)
+
 
 class WorkflowMapWidget(QWidget):
     """Widget mappa workflow con step connessi da frecce."""
@@ -217,7 +225,13 @@ class WorkflowMapWidget(QWidget):
         "verifica": ["VerificaConsuntivo"],
         "stampa": ["verificaEstampaFogli"],
         "esegui_1_4": ["CaricaDatiMultiplo", "elaboraDati", "EseguiTuttiSmista", "VerificaConsuntivo"],
-        "esegui_1_5": ["CaricaDatiMultiplo", "elaboraDati", "EseguiTuttiSmista", "VerificaConsuntivo", "verificaEstampaFogli"],
+        "esegui_1_5": [
+            "CaricaDatiMultiplo",
+            "elaboraDati",
+            "EseguiTuttiSmista",
+            "VerificaConsuntivo",
+            "verificaEstampaFogli",
+        ],
     }
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -273,7 +287,7 @@ class WorkflowMapWidget(QWidget):
 
         container_layout.addLayout(main_row)
 
-        # Riga azioni composte
+        # Riga azioni complesse
         action_row = QHBoxLayout()
         action_row.setSpacing(16)
         action_row.setAlignment(Qt.AlignmentFlag.AlignCenter)

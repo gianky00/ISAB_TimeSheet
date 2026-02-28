@@ -131,9 +131,9 @@ class AutopilotWidget(QWidget):
         self.config_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.config_btn.setStyleSheet(
             f"""
-            QPushButton {{ background-color: {COLORS['bg_light']}; border: 1px solid {COLORS['border_light']}; border-radius: 16px; }}
-            QPushButton:hover {{ background-color: {COLORS['bg_hover']}; border-color: {COLORS['border_medium']}; }}
-            QPushButton:pressed {{ background-color: {COLORS['bg_alt']}; }}
+            QPushButton {{ background-color: {COLORS["bg_light"]}; border: 1px solid {COLORS["border_light"]}; border-radius: 16px; }}
+            QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; border-color: {COLORS["border_medium"]}; }}
+            QPushButton:pressed {{ background-color: {COLORS["bg_alt"]}; }}
         """
         )
         self.config_btn.clicked.connect(self._toggle_mode)

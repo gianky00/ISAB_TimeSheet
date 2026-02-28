@@ -61,10 +61,10 @@ class SecurityDashboard(QWidget):
         integrity_btn.setStyleSheet(
             f"""
             QPushButton {{
-                background-color: {COLORS['success_dark']}; color: white; border: none;
+                background-color: {COLORS["success_dark"]}; color: white; border: none;
                 padding: 8px 15px; border-radius: 5px; font-weight: bold;
             }}
-            QPushButton:hover {{ background-color: {COLORS['success_green']}; }}
+            QPushButton:hover {{ background-color: {COLORS["success_green"]}; }}
         """
         )
         integrity_btn.clicked.connect(self._run_integrity_check)
@@ -78,7 +78,9 @@ class SecurityDashboard(QWidget):
 
         # 2. Daily Stats Chart (Simplified CSS Bars)
         chart_frame = QFrame()
-        chart_frame.setStyleSheet(f"background: {COLORS['bg_white']}; border-radius: 10px; border: 1px solid {COLORS['border_light']};")
+        chart_frame.setStyleSheet(
+            f"background: {COLORS['bg_white']}; border-radius: 10px; border: 1px solid {COLORS['border_light']};"
+        )
         chart_layout = QVBoxLayout(chart_frame)
 
         chart_title = QLabel("Ultimi 7 Giorni")
@@ -105,8 +107,8 @@ class SecurityDashboard(QWidget):
 
         self.log_area.setStyleSheet(
             f"""
-            QScrollArea {{ border: 1px solid {COLORS['border_light']}; border-radius: 8px; background: {COLORS['bg_white']}; }}
-            QWidget {{ background: {COLORS['bg_white']}; }}
+            QScrollArea {{ border: 1px solid {COLORS["border_light"]}; border-radius: 8px; background: {COLORS["bg_white"]}; }}
+            QWidget {{ background: {COLORS["bg_white"]}; }}
         """
         )
         layout.addWidget(self.log_area)
@@ -135,16 +137,20 @@ class SecurityDashboard(QWidget):
                 if w is not None:
                     w.deleteLater()
 
-        self.kpi_layout.addWidget(self._create_kpi_card("Success Rate", f"{rate:.1f}%", COLORS["success_dark"]))
+        self.kpi_layout.addWidget(
+            self._create_kpi_card("Success Rate", f"{rate:.1f}%", COLORS["success_dark"])
+        )
         self.kpi_layout.addWidget(self._create_kpi_card("Errori (7gg)", str(total_err), COLORS["error_red"]))
-        self.kpi_layout.addWidget(self._create_kpi_card("Warning (7gg)", str(total_warn), COLORS["warning_yellow"]))
+        self.kpi_layout.addWidget(
+            self._create_kpi_card("Warning (7gg)", str(total_warn), COLORS["warning_yellow"])
+        )
 
     def _create_kpi_card(self, title, value, color):
         card = QFrame()
         card.setStyleSheet(
             f"""
-            background: {COLORS['bg_white']}; border-radius: 8px;
-            border: 1px solid {COLORS['border_light']}; border-left: 5px solid {color};
+            background: {COLORS["bg_white"]}; border-radius: 8px;
+            border: 1px solid {COLORS["border_light"]}; border-left: 5px solid {color};
         """
         )
         layout = QVBoxLayout(card)
@@ -231,7 +237,9 @@ class SecurityDashboard(QWidget):
         for log in logs:
             row = QFrame()
             # Use a light red background for critical logs
-            row.setStyleSheet(f"background: {hex_to_rgba(COLORS['error_red'], 0.08)}; border-radius: 5px; padding: 5px;")
+            row.setStyleSheet(
+                f"background: {hex_to_rgba(COLORS['error_red'], 0.08)}; border-radius: 5px; padding: 5px;"
+            )
             layout = QHBoxLayout(row)
 
             ts = log["timestamp"][11:19]
