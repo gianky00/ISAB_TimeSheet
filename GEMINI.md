@@ -1,185 +1,77 @@
-# SyncroJob Enterprise - Developer Context
+# SyncroJob Enterprise - Developer Context (V8.5)
 
-**SyncroJob Enterprise** is an advanced integrated software suite designed to automate, monitor, and optimize business workflows on the ISAB supplier portal and SafeWork. It features a modern PyQt6-based GUI and uses Selenium/automation bots to handle complex tasks like timesheet downloading, purchase order analysis, and personnel management.
+**SyncroJob Enterprise** è una suite integrata di automazione industriale progettata per l'ecosistema ISAB e SafeWork. L'applicazione combina un'interfaccia grafica moderna in PyQt6 con un potente motore di automazione basato su Selenium e PyWin32, offrendo strumenti per la gestione di timesheet, ordini di acquisto (OdA), personale e generazione automatizzata di consuntivi Excel.
 
-## 📂 Project Structure
+## 📂 Struttura del Progetto
 
-```
+```text
 C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\
-├── main.py                 # Application entry point
-├── pyproject.toml          # Poetry configuration and dependencies
-├── README.md               # General project documentation
-├── generate_icons.py       # Utility to generate app icons
-├── src/                    # Source code
-│   ├── bots/               # Automation logic (Selenium/Web drivers)
-│   │   ├── base/           # Base bot classes
-│   │   ├── portale_fornitori/ # ISAB portal specific bots
-│   │   └── safework/       # SafeWork portal bots
-│   ├── core/               # Core business logic (DB, Config, Audit)
-│   ├── gui/                # PyQt6 Graphical User Interface
-│   └── utils/              # Helper functions
-├── assets/                 # Icons, styles (QSS), images
-├── admin/                  # Administrative scripts (Release, License, Cleanup)
-├── tests/                  # Pytest test suite
-└── docs/                   # Documentation and planning
+├── main.py                 # Entry point: gestisce splash screen e inizializzazione generativa
+├── pyproject.toml          # Configurazione Poetry, Ruff, MyPy, Pytest
+├── src/
+│   ├── bots/               # Automazione (Selenium/Web drivers)
+│   │   ├── base/           # Core Bot: BaseBot (State Machine, Signals, Logging)
+│   │   ├── portale_fornitori/ # Bot ISAB (TS, OdA, Prenotazione BP, Timbrature)
+│   │   └── safework/       # Bot SafeWork (Ricerca PDL, Certificati)
+│   ├── core/               # Business Logic & Infrastructure
+│   │   ├── database/       # SQLite Manager (WAL mode, Migrazioni)
+│   │   ├── logging/        # Structured Logging (JSON, Context propagation, PII Masking)
+│   │   ├── telegram/       # Integrazione Cloud (Notifiche push, Bot Bridge)
+│   │   └── preventivi/     # Motore Consuntivi (Win32COM, XML Sanitizer)
+│   ├── gui/                # PyQt6 Desktop Interface
+│   │   ├── panels/         # Dashboard, Database, Contabilità, Lyra AI
+│   │   ├── widgets/        # UI Kit (ModernButton, StandardInput, Sidebar)
+│   │   └── controllers/    # Routing (NavigationController), SearchController
+│   └── utils/              # Helper funzionali e gestione Asset
+├── assets/                 # Risorse statiche (QSS, Icons SVG, Icons app)
+├── admin/                  # Tooling (Release, Licenze, Setup, DB Maintenance)
+└── tests/                  # Suite di test (Unit, GUI, Integration)
 ```
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack & Standards
 
-* **Language:** Python 3.12+
-* **GUI:** PyQt6
-* **Automation:** Selenium, Requests
-* **Data Processing:** Pandas, OpenPyXL, PyArrow
-* **Database:** SQLite (managed via internal ORM/Helpers)
-* **Build System:** Poetry / PyInstaller
-* **Linting/Formatting:** Ruff, Black, Mypy
+*   **Runtime**: Python 3.12.x (Encoding UTF-8 forzato).
+*   **GUI**: PyQt6 (Stile Spectacular V8, animazioni hardware-accelerated).
+*   **Automation**: Selenium 4.x, PyWin32 (Automazione Macro Excel "Out-of-Process").
+*   **Data**: Pandas (Analisi), SQLite (Persistence), OpenPyXL/PyArrow (I/O).
+*   **DevOps**: Poetry (Deps), PyInstaller (Build), PyArmor (Obfuscation), Inno Setup (Installer).
+*   **Qualità**: Zero segnalazioni da Ruff, MyPy, Refurb e Bandit.
 
-## 🚀 Getting Started
+## 📐 Architettura & Pattern Fondamentali
 
-### Prerequisites
+### 1. Sistema di Navigazione (Premium Navigation)
+*   **NavigationController**: Gestisce il routing tra 13 pannelli funzionali. Implementa il **Lazy Loading** per lo startup rapido, ma supporta l'**Eager Loading** per i moduli critici (es. Consuntivo) caricati in `finalize_init`.
+*   **SidebarWidget**: Navigazione magnetica con track animato. Supporta gruppi a fisarmonica (Accordion) e badge dinamici per notifiche/scadenze.
+*   **PageIndex**: Enumerazione centralizzata degli indici di pagina per prevenire conflitti di routing.
 
-* Python 3.12 (recommended)
-* Poetry (dependency manager)
-* Google Chrome (latest version) for automation bots
+### 2. Bot Framework (Robust Automation)
+*   **BaseBot**: Tutti i bot ereditano da questa classe che gestisce automaticamente:
+    *   State Machine (IDLE, RUNNING, COMPLETED, ERROR).
+    *   Reporting per step con avanzamento percentuale.
+    *   Screenshot automatici in caso di errore.
+    *   Logging contestuale con `trace_id` per ogni sessione di automazione.
 
-### Installation
+### 3. Modulo Consuntivo (High Performance)
+*   **Background Processing**: Calcolo progressivi e scansioni directory di rete eseguiti su thread dedicati per non bloccare l'UI.
+*   **Smart Caching**: Cache temporale (60s per progressivi, 30s per liste file) per eliminare i caricamenti "a freddo" durante la navigazione.
+*   **Professional UI**: Pulsanti centrati, assenza di emoji, input standardizzati e workflow guidato (WorkflowMap).
 
-1. **Clone/Navigate to the repository:**
-
-    ```bash
-    cd C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet
-    ```
-
-2. **Install dependencies:**
-
-    ```bash
-    # Using Poetry (Recommended)
-    poetry install
-
-    # Or using pip
-    pip install -r requirements.txt
-    ```
-
-### Running the Application
-
-* **Start the GUI:**
-
-    ```bash
-    python main.py
-    ```
-
-    Or use the poetry script:
-
-    ```bash
-    poetry run syncrojob
-    ```
-
-## 🧪 Testing & Quality Assurance
-
-* **Run Unit Tests:**
-
-    ```bash
-    pytest tests/
-    ```
-
-    *See `tests/TESTING_PLAN_2026.md` for the current testing strategy.*
-
-* **Linting:**
-
-    ```bash
-    ruff check .
-    ```
-
-* **Type Checking:**
-
-    ```bash
-    mypy .
-    ```
-
-* **Formatting:**
-
-    ```bash
-    black .
-    ```
-
-## 📦 Building for Distribution
-
-To create a standalone executable (EXE) and setup installer:
-
-```bash
-python "admin/Crea Setup/build_dist.py"
-```
-
-## 📐 Architecture & Patterns
-
-### 1. Singleton Managers
-
-Core services like `AuditManager` and `NotificationManager` use a strict Singleton pattern.
-
-* **Usage:** ALWAYS access via `.instance()`, never instantiate directly.
-* **Signals:** Signals are decoupled into a nested `MySignals` class to avoid QObject multi-inheritance issues.
-  * Example: `AuditManager.instance().signals.log_added.connect(...)`
-
-### 2. Bot Architecture
-
-All bots reside in `src/bots/` and inherit from `BaseBot`.
-
-* **Structure:** Logic is separated into `pages/` (Page Object Model) and `locators.py`.
-* **State:** Bots use `BotStatus` enum (IDLE, RUNNING, ERROR, etc.).
-
-### 3. GUI Lazy Loading
-
-The `MainWindow` uses lazy loading for its panels to improve startup time. Panels are instantiated only when first accessed via the `NavigationController`.
-
-## 📝 Conventions
-
-* **Imports:** Absolute imports from `src` (e.g., `from src.core.constants import ...`).
-* **GUI Styling:** Styles are separated in `assets/styles/*.qss`.
-* **Logging:** Use the enterprise logging system in `src/core/logging/`. See section below.
-* **Bots:** All bots should inherit from `src.bots.base.BaseBot` (or similar base classes) to ensure consistent error handling and logging.
+### 4. Core Services (Singleton Managers)
+Accessibili esclusivamente tramite `.instance()`:
+*   **DatabaseManager**: Gestione persistenza SQLite con supporto multi-thread.
+*   **AuditManager**: Tracciamento di ogni azione amministrativa/operativa.
+*   **NotificationManager**: Sistema centralizzato per Toast, Tray Notifications e Alert.
+*   **ConfigManager**: Gestione cifrata delle credenziali e preferenze utente.
 
 ## 📋 Enterprise Logging System
+Localizzato in `src/core/logging/`, il sistema produce log strutturati in `logs/app.json`:
+*   **Context Propagation**: I log includono automaticamente `span_id` e `trace_id`.
+*   **Performance Monitoring**: Decoratore `@measure_time` per individuare colli di bottiglia.
+*   **PII Masking**: Filtro automatico di password, CF, email e dati sensibili.
 
-SyncroJob uses an AI-ready structured logging system in `src/core/logging/`.
-
-### Quick Start
-
-```python
-from src.core.logging import get_logger, with_context, measure_time
-
-logger = get_logger(__name__)
-
-with with_context(bot_type="scarico_ts", cantiere="ISAB"):
-    logger.info("Operation started", items=42)
-
-@measure_time(threshold_ms=5000)  # Warning if > 5s
-def slow_operation():
-    pass
-```
-
-### Key Features
-
-* **JSON Structured Logs**: AI-ready format in `logs/app.json`
-* **Context Propagation**: trace_id, span_id automatic correlation
-* **Performance Monitoring**: `@measure_time` decorator with baselines
-* **PII Masking**: Automatic filtering of passwords, CF, emails
-* **Audit Correlation**: `AuditManager.log_action()` returns audit_id
-
-### Documentation
-
-* **API Reference**: `src/core/logging/README.md`
-* **Migration Guide**: `src/core/logging/MIGRATION_GUIDE.md`
-* **Best Practices**: `src/core/logging/BEST_PRACTICES.md`
-
-### CLI Tools
-
-```bash
-# Query logs
-python tools/logs_cli.py query --level ERROR --bot scarico_ts
-
-# Reconstruct trace timeline
-python tools/logs_cli.py trace <trace_id>
-
-# System health report
-python tools/logs_cli.py health --hours 24
-```
+## 📝 Regole d'Ingegneria del Software
+1.  **Imports**: Sempre assoluti da `src` (es. `from src.core.constants import ...`).
+2.  **Encoding**: Ogni file modificato deve mantenere l'encoding UTF-8.
+3.  **UI Consistency**: Utilizzare esclusivamente i componenti in `src.gui.widgets.core_widgets` (es. `StandardInput` invece di `QLineEdit`).
+4.  **Async Ops**: Mai eseguire operazioni di rete o I/O pesante nel thread GUI. Usare `QThread` o `threading.Thread` con segnali sicuri.
+5.  **Clean Code**: Il progetto deve superare i controlli `ruff check .` e `mypy .` prima di ogni commit.

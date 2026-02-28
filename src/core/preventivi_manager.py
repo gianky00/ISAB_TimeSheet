@@ -21,6 +21,7 @@ from src.core.logging import get_logger
 try:
     import pythoncom
     import win32com.client
+
     _win32com_found = True
 except ImportError:
     _win32com_found = False
@@ -30,6 +31,7 @@ logger = get_logger(__name__)
 
 class GeneratoreWorker(QThread):
     """Esegue la generazione del file Excel in background."""
+
     finished_signal = pyqtSignal(bool, str)
 
     def __init__(self, master_path: str, data: dict[str, Any], dest_path: str):
@@ -50,9 +52,10 @@ class GeneratoreWorker(QThread):
 
 class MacroWorker(QThread):
     """Esegue una o più Macro VBA sul file generato in un thread separato."""
+
     finished_signal = pyqtSignal(bool, str)
-    macro_started = pyqtSignal(str)     # Emesso quando inizia una macro
-    macro_progress = pyqtSignal(str, bool) # Emesso quando finisce una singola macro (nome, successo)
+    macro_started = pyqtSignal(str)  # Emesso quando inizia una macro
+    macro_progress = pyqtSignal(str, bool)  # Emesso quando finisce una singola macro (nome, successo)
 
     def __init__(self, file_path: str, macros: list[str]):
         super().__init__()
@@ -102,7 +105,7 @@ class PreventiviGeneratorManager:
         self.wb: Any = None
 
     def get_next_progressive(self, directory: str) -> str:
-        if not os.path.exists(directory):
+        if not Path(directory).exists():
             return "001"
 
         max_num = 0
@@ -123,7 +126,7 @@ class PreventiviGeneratorManager:
 
     def read_existing_data(self, file_path: str) -> dict[str, Any]:
         """Legge i dati da un file Excel esistente per popolare la UI."""
-        if not _win32com_found or not os.path.exists(file_path):
+        if not _win32com_found or not Path(file_path).exists():
             return {}
 
         data: dict[str, Any] = {}
@@ -147,7 +150,7 @@ class PreventiviGeneratorManager:
                 # Descrizione lavoro (prime 11 righe)
                 desc = []
                 for i in range(11):
-                    val = sheet.Range(f"A{11+i}").Value
+                    val = sheet.Range(f"A{11 + i}").Value
                     if val:
                         desc.append(str(val))
                 data["descrizione_lavoro"] = "\n".join(desc)
@@ -172,22 +175,25 @@ class PreventiviGeneratorManager:
     def _sanitize_excel_file(self, filepath: str) -> None:
         temp_dir = tempfile.mkdtemp()
         try:
-            with zipfile.ZipFile(filepath, 'r') as zip_ref:
+            with zipfile.ZipFile(filepath, "r") as zip_ref:
                 zip_ref.extractall(temp_dir)
 
-            wb_xml_path = os.path.join(temp_dir, 'xl', 'workbook.xml')
-            if os.path.exists(wb_xml_path):
-                with open(wb_xml_path, encoding='utf-8') as f:
-                    xml = f.read()
+            wb_xml_path = Path(temp_dir) / "xl" / "workbook.xml"
+            if wb_xml_path.exists():
+                xml = wb_xml_path.read_text(encoding="utf-8")
 
-                xml = re.sub(r'<definedName[^>]*name="[^"]*Print_Area"[^>]*>.*?</definedName>', '', xml, flags=re.IGNORECASE|re.DOTALL)
-                xml = re.sub(r'<definedName[^>]*name="[^"]*Print_Area"[^>]*/>', '', xml, flags=re.IGNORECASE)
+                xml = re.sub(
+                    r'<definedName[^>]*name="[^"]*Print_Area"[^>]*>.*?</definedName>',
+                    "",
+                    xml,
+                    flags=re.IGNORECASE | re.DOTALL,
+                )
+                xml = re.sub(r'<definedName[^>]*name="[^"]*Print_Area"[^>]*/>', "", xml, flags=re.IGNORECASE)
 
-                with open(wb_xml_path, 'w', encoding='utf-8') as f:
-                    f.write(xml)
+                wb_xml_path.write_text(xml, encoding="utf-8")
 
             temp_zip = filepath + ".tmp"
-            with zipfile.ZipFile(temp_zip, 'w', zipfile.ZIP_DEFLATED) as zip_out:
+            with zipfile.ZipFile(temp_zip, "w", zipfile.ZIP_DEFLATED) as zip_out:
                 for root, _, files in os.walk(temp_dir):
                     for file in files:
                         file_path = os.path.join(root, file)
@@ -239,7 +245,7 @@ class PreventiviGeneratorManager:
 
             lines = data.get("descrizione_lavoro", "").split("\n")[:11]
             for i, line in enumerate(lines):
-                sheet.Range(f"A{11+i}").Value = line
+                sheet.Range(f"A{11 + i}").Value = line
             sheet.Range("A32").Value = data.get("descrizione_relazione", "")
 
             with suppress(Exception):

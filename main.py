@@ -20,10 +20,13 @@ if TYPE_CHECKING:
 ROOT_DIR = Path(__file__).parent.resolve()
 sys.path.insert(0, str(ROOT_DIR / "src"))
 
+
 def _print_exception_and_exit(exc_type, exc_value, exc_tb):
     print("FATAL UNCAUGHT EXCEPTION:")
     traceback.print_exception(exc_type, exc_value, exc_tb)
     sys.exit(1)
+
+
 sys.excepthook = _print_exception_and_exit
 
 from src.core.config_manager import CONFIG_DIR
@@ -199,9 +202,6 @@ def main():
             startup_logger.info("Finalizing startup sequence...")
             splash.update_status("Avvio completato", 100)
 
-            startup_logger.info("Calling finalize_init...")
-            main_window_instance.finalize_init()
-
             startup_logger.info("Showing main window...")
             # Show main window FIRST (hidden behind splash)
             main_window_instance.show()
@@ -215,6 +215,10 @@ def main():
 
             # Close splash - main window will automatically come to front
             splash.close()
+
+            startup_logger.info("Calling finalize_init...")
+            # Ritardiamo leggermente finalize_init per dare priorità al rendering dell'UI
+            QTimer.singleShot(100, main_window_instance.finalize_init)
 
             startup_logger.info("Startup finalized successfully")
         except Exception as e:

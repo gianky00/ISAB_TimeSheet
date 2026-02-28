@@ -4,16 +4,17 @@ Tab per la generazione di un nuovo consuntivo da template Master.
 """
 
 import os
+import threading
+import time
 from datetime import datetime
+from pathlib import Path
 
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
-    QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
     QScrollArea,
-    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -24,7 +25,7 @@ from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.consuntivo.log_widget import OperationLogWidget
 from src.gui.widgets.contabilita.consuntivo.workflow_widgets import WorkflowMapWidget, WorkflowStepButton
-from src.gui.widgets.core_widgets import PrimaryButton, StandardInput
+from src.gui.widgets.core_widgets import FilterComboBox, PrimaryButton, StandardInput, StandardTextEdit
 from src.gui.widgets.modern_card import ModernContentCard
 
 
@@ -38,6 +39,8 @@ class CreaNuovoTab(QWidget):
         self.worker: GeneratoreWorker | None = None
         self.macro_worker: MacroWorker | None = None
         self.last_generated_file: str | None = None
+        self._last_prog_check = 0.0
+        self._cached_prog = ""
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -58,9 +61,9 @@ class CreaNuovoTab(QWidget):
         config_row = QHBoxLayout()
         config_row.setSpacing(20)
 
-        self.anno_combo = QComboBox()
+        self.anno_combo = FilterComboBox()
         self.anno_combo.addItems([str(y) for y in range(datetime.now().year, 2024, -1)])
-        self.anno_combo.currentIndexChanged.connect(self._update_dynamic_path)
+        self.anno_combo.currentIndexChanged.connect(lambda: self._update_dynamic_path(force=True))
         config_row.addLayout(self._create_input_group("ANNO", self.anno_combo, width=100))
 
         self.progressivo_edit = StandardInput()
@@ -69,7 +72,9 @@ class CreaNuovoTab(QWidget):
 
         self.dest_path_edit = StandardInput()
         self.dest_path_edit.setReadOnly(True)
-        self.dest_path_edit.setStyleSheet(f"background-color: {COLORS['bg_light']}; color: {COLORS['text_muted']};")
+        self.dest_path_edit.setStyleSheet(
+            f"background-color: {COLORS['bg_light']}; color: {COLORS['text_muted']};"
+        )
         config_row.addLayout(self._create_input_group("PERCORSO DI RETE (AUTOMATICO)", self.dest_path_edit))
 
         card1_lay.addLayout(config_row)
@@ -84,13 +89,23 @@ class CreaNuovoTab(QWidget):
         self.data_edit.setText(datetime.now().strftime("%d/%m/%Y"))
         row1.addLayout(self._create_input_group("DATA (A5)", self.data_edit, width=120))
 
-        self.tcl_combo = QComboBox()
+        self.tcl_combo = FilterComboBox()
         # Carica dinamico da config se disponibile, altrimenti default
         config = config_manager.load_config()
-        self.tcl_combo.addItems(config.get("preventivi_tcl", [
-            "MESSINA I.", "AGUSTA D.", "CALDARELLA F.",
-            "PREZZAVENTO M.", "BOSCO F.", "RUGGIERI F.", "BARBAGALLO G.",
-        ]))
+        self.tcl_combo.addItems(
+            config.get(
+                "preventivi_tcl",
+                [
+                    "MESSINA I.",
+                    "AGUSTA D.",
+                    "CALDARELLA F.",
+                    "PREZZAVENTO M.",
+                    "BOSCO F.",
+                    "RUGGIERI F.",
+                    "BARBAGALLO G.",
+                ],
+            )
+        )
         row1.addLayout(self._create_input_group("TCL (A7)", self.tcl_combo, width=180))
 
         self.odc_edit = StandardInput()
@@ -107,18 +122,27 @@ class CreaNuovoTab(QWidget):
         row2 = QHBoxLayout()
         row2.setSpacing(15)
 
-        self.stato_combo = QComboBox()
-        self.stato_combo.addItems(config.get("preventivi_stati", [
-            "ATTIVITA' DA COMPLETARE", "IN ATTESA TCL",
-            "RICHIESTA ODC MIDOLO", "CONTABILIZZATA",
-        ]))
+        self.stato_combo = FilterComboBox()
+        self.stato_combo.addItems(
+            config.get(
+                "preventivi_stati",
+                [
+                    "ATTIVITA' DA COMPLETARE",
+                    "IN ATTESA TCL",
+                    "RICHIESTA ODC MIDOLO",
+                    "CONTABILIZZATA",
+                ],
+            )
+        )
         row2.addLayout(self._create_input_group("STATO ATTIVITÀ (D11)", self.stato_combo, width=220))
 
-        self.tipo_prev_combo = QComboBox()
+        self.tipo_prev_combo = FilterComboBox()
         self.tipo_prev_combo.addItems(["MISURA", "SQUADRA", "CHIAMATA", "FORNITURA", "PREVENTIVO"])
-        row2.addLayout(self._create_input_group("TIPOLOGIA PREVENTIVO (D13)", self.tipo_prev_combo, width=220))
+        row2.addLayout(
+            self._create_input_group("TIPOLOGIA PREVENTIVO (D13)", self.tipo_prev_combo, width=220)
+        )
 
-        self.tipo_econ_combo = QComboBox()
+        self.tipo_econ_combo = FilterComboBox()
         self.tipo_econ_combo.addItems(["SQUADRA GIORNALIERA", "SQUADRA SETTIMANALE", "CONSTATAZIONE PURA"])
         row2.addLayout(self._create_input_group("TIPOLOGIA ECONOMIA (E13)", self.tipo_econ_combo, width=220))
         row2.addStretch()
@@ -131,25 +155,16 @@ class CreaNuovoTab(QWidget):
         desc_row = QHBoxLayout()
         desc_row.setSpacing(20)
 
-        self.desc_lavoro_edit = QTextEdit()
+        self.desc_lavoro_edit = StandardTextEdit()
         self.desc_lavoro_edit.setPlaceholderText("Es. Smontaggio valvola...")
         self.desc_lavoro_edit.setMinimumHeight(80)
         self.desc_lavoro_edit.setMaximumHeight(110)
-        self.desc_lavoro_edit.setStyleSheet(f"""
-            QTextEdit {{
-                border: 1px solid {COLORS['border_light']}; border-radius: 6px;
-                padding: 10px; background-color: {COLORS['bg_white']};
-                color: {COLORS['text_dark']}; font-size: 13px;
-            }}
-            QTextEdit:focus {{ border: 2px solid {COLORS['teal_accent']}; }}
-        """)
         desc_row.addLayout(self._create_input_group("DESCRIZIONE LAVORO (A11:A21)", self.desc_lavoro_edit))
 
-        self.desc_relazione_edit = QTextEdit()
+        self.desc_relazione_edit = StandardTextEdit()
         self.desc_relazione_edit.setPlaceholderText("Inserisci eventuali note (A32)...")
         self.desc_relazione_edit.setMinimumHeight(80)
         self.desc_relazione_edit.setMaximumHeight(110)
-        self.desc_relazione_edit.setStyleSheet(self.desc_lavoro_edit.styleSheet())
         desc_row.addLayout(self._create_input_group("DESCRIZIONE RELAZIONE (A32)", self.desc_relazione_edit))
 
         desc_layout.addLayout(desc_row)
@@ -161,22 +176,10 @@ class CreaNuovoTab(QWidget):
         layout.addWidget(self.workflow_map)
 
         # --- BOTTONE GENERA ---
-        self.btn_generate = PrimaryButton("⚡ GENERA CONSUNTIVO EXCEL")
+        self.btn_generate = PrimaryButton("GENERA CONSUNTIVO EXCEL")
         self.btn_generate.setMinimumHeight(55)
-        self.btn_generate.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {COLORS['teal_accent']}; color: white;
-                font-size: 16px; font-weight: bold; border-radius: 8px;
-                letter-spacing: 1px;
-            }}
-            QPushButton:hover {{ background-color: #2b9e95; }}
-            QPushButton:disabled {{
-                background-color: {COLORS['border_light']};
-                color: {COLORS['text_muted']};
-            }}
-        """)
         self.btn_generate.clicked.connect(self._on_generate)
-        layout.addWidget(self.btn_generate)
+        layout.addWidget(self.btn_generate, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # --- LOG ---
         self.log_widget = OperationLogWidget()
@@ -203,7 +206,9 @@ class CreaNuovoTab(QWidget):
         lay.addWidget(title_lbl)
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)
-        line.setStyleSheet(f"background-color: {COLORS['bg_alt']}; border: none; min-height: 1px; max-height: 1px;")
+        line.setStyleSheet(
+            f"background-color: {COLORS['bg_alt']}; border: none; min-height: 1px; max-height: 1px;"
+        )
         lay.addWidget(line)
         return card, lay
 
@@ -221,27 +226,44 @@ class CreaNuovoTab(QWidget):
         lay.addWidget(widget)
         return lay
 
-    def _update_dynamic_path(self) -> None:
+    def _update_dynamic_path(self, force: bool = False) -> None:
+        """Aggiorna il percorso e calcola il progressivo con caching intelligente."""
+        now = time.time()
         year = self.anno_combo.currentText()
         base_network = r"\\192.168.11.251\Database_Tecnico_SMI\Contabilita' strumentale"
         dynamic_path = os.path.join(base_network, year, "CONSUNTIVI", year)
+
         self.dest_path_edit.setText(dynamic_path)
         self.dest_path_edit.setToolTip(dynamic_path)
 
-        try:
-            manager = PreventiviGeneratorManager("")
-            next_prog = manager.get_next_progressive(dynamic_path)
-            self.progressivo_edit.setText(next_prog)
-        except Exception:
-            self.progressivo_edit.setText("001")
+        # Se meno di 60 secondi dall'ultimo controllo e il percorso è uguale, non ricalcolare
+        if not force and (now - self._last_prog_check < 60) and self._cached_prog:
+            self.progressivo_edit.setText(self._cached_prog)
+            return
+
+        self._last_prog_check = now
+
+        # Esegue il calcolo in background per non bloccare l'UI durante la navigazione
+        def run_check():
+            try:
+                manager = PreventiviGeneratorManager("")
+                next_prog = manager.get_next_progressive(dynamic_path)
+                self._cached_prog = next_prog
+                # Aggiorna l'UI in modo sicuro
+                QTimer.singleShot(0, lambda: self.progressivo_edit.setText(next_prog))
+            except Exception:
+                QTimer.singleShot(0, lambda: self.progressivo_edit.setText("001"))
+
+        threading.Thread(target=run_check, daemon=True).start()
 
     def _on_generate(self) -> None:
         config = config_manager.load_config()
         master_path = config.get("master_preventivi_path", "")
 
-        if not master_path or not os.path.exists(master_path):
+        if not master_path or not Path(master_path).exists():
             ConfirmationDialog.show_error(
-                self, "Configurazione Errata",
+                self,
+                "Configurazione Errata",
                 "Il file Master non è stato configurato nelle Impostazioni.",
             )
             return
@@ -263,7 +285,7 @@ class CreaNuovoTab(QWidget):
 
         self.setEnabled(False)
         self.btn_generate.setText("GENERAZIONE IN CORSO...")
-        self.log_widget.append_log("🔄 Generazione file in corso...", "step")
+        self.log_widget.append_log("Generazione file in corso...", "step")
 
         self.worker = GeneratoreWorker(master_path, data, self.dest_path_edit.text())
         self.worker.finished_signal.connect(self._on_generate_finished)
@@ -271,17 +293,19 @@ class CreaNuovoTab(QWidget):
 
     def _on_generate_finished(self, success: bool, result: str) -> None:
         self.setEnabled(True)
-        self.btn_generate.setText("⚡ GENERA CONSUNTIVO EXCEL")
+        self.btn_generate.setText("GENERA CONSUNTIVO EXCEL")
 
         if success:
             self.last_generated_file = result
-            self.log_widget.append_log(f"✅ File generato: {result}", "success")
+            self._last_prog_check = 0  # Forza ricalcolo al prossimo passaggio
+            self.log_widget.append_log(f"File generato: {result}", "success")
             ConfirmationDialog.show_info(
-                self, "File Generato",
+                self,
+                "File Generato",
                 f"Il file Excel è pronto:\n\n{result}\n\nPuoi ora lanciare le Macro dalla mappa workflow.",
             )
         else:
-            self.log_widget.append_log(f"❌ Errore: {result}", "error")
+            self.log_widget.append_log(f"Errore: {result}", "error")
             ConfirmationDialog.show_error(self, "Errore Generazione", result)
 
     def _on_workflow_step(self, step_id: str) -> None:
@@ -289,9 +313,10 @@ class CreaNuovoTab(QWidget):
         if not macros:
             return
 
-        if not self.last_generated_file or not os.path.exists(self.last_generated_file):
+        if not self.last_generated_file or not Path(self.last_generated_file).exists():
             ConfirmationDialog.show_error(
-                self, "Errore",
+                self,
+                "Errore",
                 "Nessun file generato. Genera prima il consuntivo Excel.",
             )
             return
@@ -304,9 +329,7 @@ class CreaNuovoTab(QWidget):
 
         self.setEnabled(False)
         self.macro_worker = MacroWorker(self.last_generated_file, macros)
-        self.macro_worker.finished_signal.connect(
-            lambda ok, msg: self._on_macro_finished(ok, msg, step_id)
-        )
+        self.macro_worker.finished_signal.connect(lambda ok, msg: self._on_macro_finished(ok, msg, step_id))
         self.macro_worker.start()
 
     def _on_macro_finished(self, success: bool, result: str, step_id: str) -> None:

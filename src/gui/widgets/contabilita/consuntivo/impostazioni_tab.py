@@ -3,24 +3,23 @@ SyncroJob - Consuntivo Impostazioni Tab
 Tab per la configurazione delle liste dinamiche (Tecnici, Stati).
 """
 
-from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
-    QInputDialog,
     QLabel,
     QListWidget,
-    QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
 from src.core import config_manager
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import SecondaryButton, StandardListWidget
 
 
 class ImpostazioniTab(QWidget):
     """Tab per configurare le liste dinamiche usate nei consuntivi."""
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._setup_ui()
@@ -30,12 +29,16 @@ class ImpostazioniTab(QWidget):
         layout.setContentsMargins(30, 30, 30, 30)
         layout.setSpacing(20)
 
-        info = QLabel("⚙️ PERSONALIZZAZIONE LISTE")
-        info.setStyleSheet(f"font-weight: 900; font-size: 16px; color: {COLORS['primary_dark']};")
+        info = QLabel("PERSONALIZZAZIONE LISTE")
+        info.setStyleSheet(
+            f"font-weight: 900; font-size: 16px; color: {COLORS['primary_dark']}; border: none;"
+        )
         layout.addWidget(info)
 
-        desc = QLabel("Modifica i nomi dei tecnici e gli stati dell'attività che appariranno nei menu a tendina.")
-        desc.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 13px;")
+        desc = QLabel(
+            "Modifica i nomi dei tecnici e gli stati dell'attività che appariranno nei menu a tendina."
+        )
+        desc.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 13px; border: none;")
         layout.addWidget(desc)
 
         lists_row = QHBoxLayout()
@@ -51,30 +54,40 @@ class ImpostazioniTab(QWidget):
 
     def _create_list_editor(self, title: str, config_key: str) -> QFrame:
         container = QFrame()
-        container.setStyleSheet(f"background: white; border-radius: 12px; border: 1px solid {COLORS['border_light']};")
+        container.setObjectName("listContainer")
+        container.setStyleSheet(f"""
+            QFrame#listContainer {{
+                background: {COLORS["bg_white"]};
+                border-radius: 12px;
+                border: 1px solid {COLORS["border_light"]};
+            }}
+        """)
         lay = QVBoxLayout(container)
         lay.setContentsMargins(15, 15, 15, 15)
+        lay.setSpacing(10)
 
         lbl = QLabel(title.upper())
         lbl.setStyleSheet(f"font-weight: 800; font-size: 11px; color: {COLORS['text_muted']}; border: none;")
         lay.addWidget(lbl)
 
-        lst = QListWidget()
-        lst.setStyleSheet(f"border: 1px solid {COLORS['bg_alt']}; border-radius: 6px; padding: 5px; color: {COLORS['text_dark']};")
+        lst = StandardListWidget()
         lst.addItems(config_manager.get_config_value(config_key, []))
         lay.addWidget(lst)
 
         btns = QHBoxLayout()
-        add_btn = QPushButton("+")
-        rem_btn = QPushButton("-")
-        for b in [add_btn, rem_btn]:
-            b.setFixedSize(30, 30)
-            b.setCursor(Qt.CursorShape.PointingHandCursor)
-            b.setStyleSheet(f"background: {COLORS['bg_alt']}; font-weight: bold; border-radius: 4px; color: {COLORS['text_dark']};")
+        btns.setSpacing(10)
+        add_btn = SecondaryButton("Aggiungi")
+        add_btn.setMinimumHeight(32)
+        rem_btn = SecondaryButton("Rimuovi")
+        rem_btn.setMinimumHeight(32)
+
+        for b in (add_btn, rem_btn):
             btns.addWidget(b)
 
         def add() -> None:
-            text, ok = QInputDialog.getText(self, title, "Nuovo valore:")
+            from src.gui.dialogs.standard_input_dialog import StandardInputDialog
+
+            text, ok = StandardInputDialog.get_input(self, title, "Nuovo valore:")
             if ok and text.strip():
                 lst.addItem(text.strip())
                 self._save(lst, config_key)

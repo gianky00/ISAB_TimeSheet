@@ -58,7 +58,6 @@ class SignalConnector(QObject):
 
         sidebar = self.main_window.tool_bar_component.sidebar
 
+        # La navigazione a 3 livelli è ora gestita centralmente dal NavigationController
         sidebar.navigation_requested.connect(self.main_window.navigation_controller.navigate_to)
-        sidebar.automation_tab_requested.connect(self.main_window._handle_automation_tab_change)
-        sidebar.notifications_tab_requested.connect(self.main_window._handle_notifications_tab_change)
         sidebar.palette_requested.connect(self.main_window._open_command_palette)

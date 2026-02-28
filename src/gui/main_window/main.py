@@ -67,6 +67,7 @@ class MainWindow(QMainWindow):
 
         self._current_page_index = -1
         self._force_quit = False
+        self._is_initializing = True
 
         # --- SERVIZI ---
         self.sentinel = LyraSentinel()
@@ -108,14 +109,13 @@ class MainWindow(QMainWindow):
         self.navigation_controller.navigate_to(PageIndex.DASHBOARD)
 
     def finalize_init(self) -> None:
-        """Metodo chiamato dopo che lo splash screen ha finito il caricamento per finalizzare l'inizializzazione."""
+        """Metodo chiamato per finalizzare l'inizializzazione dopo la visualizzazione della finestra."""
         import logging
 
         logger = logging.getLogger("MainWindow")
 
         try:
-            logger.info("Starting finalize_init...")
-            logger.info("Calling show_operational_state...")
+            logger.info("Finalizing UI state...")
             self.status_bar_component.show_operational_state()
 
             # Connect Footer Signals for Account Switching
@@ -126,34 +126,45 @@ class MainWindow(QMainWindow):
                 lambda: self._switch_account("safework")
             )
 
-            logger.info("finalize_init completed successfully")
+            # --- Eager Loading & Background Checks (Differiti per massime prestazioni UI) ---
+            # Carichiamo il pannello Consuntivo e facciamo i check solo dopo un breve delay
+            # Questo garantisce che l'utente possa interagire subito con la Home
+            QTimer.singleShot(200, self._deferred_finalize)
+
+            logger.info("finalize_init sequence triggered")
         except Exception as e:
             logger.critical(f"Error in finalize_init: {e}", exc_info=True)
             raise
 
-        # Proactive Checks
+    def _deferred_finalize(self) -> None:
+        """Esegue le operazioni pesanti di inizializzazione senza bloccare l'avvio immediato."""
+        # 1. Pre-caricamento pannelli critici
+        self.navigation_controller.get_panel(PageIndex.CONSUNTIVO)
+
+        # 2. Reset flag per abilitare i toast utente
+        self._is_initializing = False
+
+        # 3. Proactive Checks (Abilitazioni ISAB)
         from src.gui.styles.constants import ANIMATION_TIMINGS
 
-        QTimer.singleShot(ANIMATION_TIMINGS["init_delay"], self._check_isab_authorizations)
+        self._check_isab_authorizations()
+
         self.auth_check_timer = QTimer(self)
         self.auth_check_timer.timeout.connect(self._check_isab_authorizations)
         self.auth_check_timer.start(ANIMATION_TIMINGS["auth_check"])
 
-        # Connect Autopilot real-time updates
+        # 4. Connect Autopilot real-time updates
         if hasattr(self, "timbrature_bot_panel"):
             with suppress(Exception):
                 self.timbrature_bot_panel.autopilot_changed.connect(self._update_autopilot_status_ui)
 
-        # Show success toast
-        QTimer.singleShot(
-            500,
-            lambda: ToastManager.instance().show(
-                "<center><b>Sistema inizializzato e pronto all'uso</b><br/>Tutti i moduli sono operativi. Enjoy!</center>",
-                "success",
-                5000,
-                position="bottom",
-                pulse=True,
-            ),
+        # 5. Show final system-ready toast
+        ToastManager.instance().show(
+            "<center><b>Sistema inizializzato e pronto all'uso</b><br/>Tutti i moduli sono operativi. Enjoy!</center>",
+            "success",
+            5000,
+            position="bottom",
+            pulse=True,
         )
 
     def _load_styles(self) -> None:
@@ -382,11 +393,17 @@ class MainWindow(QMainWindow):
         if hasattr(self, "contabilita_panel"):
             QTimer.singleShot(500, self.contabilita_panel.start_import_process)
 
-    def _handle_automation_tab_change(self, tab_index: int) -> None:
-        """Gestisce il cambio di tab nelle automazioni."""
-        self.navigation_controller.navigate_to(PageIndex.AUTOMAZIONI, sub_index=tab_index)
+    def _handle_automation_tab_change(self, tab_index: int, bot_index: int | None = None) -> None:
+        """Gestisce il cambio di tab nelle automazioni con supporto per bot specifici."""
+        self.navigation_controller.navigate_to(
+            PageIndex.AUTOMAZIONI, sub_index=tab_index, bot_index=bot_index
+        )
         if hasattr(self, "automazioni_widget"):
-            self.automazioni_widget.setCurrentIndex(tab_index)
+            # Se bot_index è fornito, navighiamo direttamente al bot nel tab
+            if bot_index is not None and hasattr(self.automazioni_widget, "set_active_tab"):
+                self.automazioni_widget.set_active_tab(tab_index, bot_index)
+            else:
+                self.automazioni_widget.setCurrentIndex(tab_index)
 
     def _handle_notifications_tab_change(self, tab_index: int) -> None:
         """Gestisce il cambio di tab nelle notifiche."""
@@ -471,7 +488,10 @@ class MainWindow(QMainWindow):
         self._update_autopilot_status_ui()
         if hasattr(self, "status_bar_component") and hasattr(self.status_bar_component, "footer_left"):
             self.status_bar_component.footer_left.refresh_accounts()
-        ToastManager.instance().show("Impostazioni salvate!", "success")
+
+        # Mostra il toast solo se non siamo in fase di inizializzazione
+        if not getattr(self, "_is_initializing", False):
+            ToastManager.instance().show("Impostazioni salvate!", "success")
 
     def _on_help_requested(self, section_title: str) -> None:
         """Naviga alla sezione specifica dell'aiuto."""

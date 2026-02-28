@@ -4,7 +4,7 @@ Pannello premium per la generazione e manipolazione dei consuntivi automatizzati
 Struttura modulare che integra i widget specializzati per Nuovo, Esistente e Impostazioni.
 """
 
-
+from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
 from src.core import config_manager
@@ -19,7 +19,10 @@ class ConsuntivoPanel(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self._data_preloaded = False
         self._setup_ui()
+        # Avvia il caricamento dei dati immediatamente all'istanza (Eager Loading)
+        QTimer.singleShot(100, self._pre_load_data)
 
     def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
@@ -40,27 +43,35 @@ class ConsuntivoPanel(QWidget):
 
         layout.addWidget(self.tabs)
 
+    def _pre_load_data(self) -> None:
+        """Esegue il caricamento pesante dei dati in background all'avvio dell'app."""
+        if self._data_preloaded:
+            return
+
+        # Carica configurazione per il tab Crea Nuovo
+        config = config_manager.load_config()
+        self._tab_new.tcl_combo.blockSignals(True)
+        self._tab_new.tcl_combo.clear()
+        self._tab_new.tcl_combo.addItems(config.get("preventivi_tcl", []))
+        self._tab_new.tcl_combo.blockSignals(False)
+
+        self._tab_new.stato_combo.blockSignals(True)
+        self._tab_new.stato_combo.clear()
+        self._tab_new.stato_combo.addItems(config.get("preventivi_stati", []))
+        self._tab_new.stato_combo.blockSignals(False)
+
+        # Carica directory per il tab Modifica Esistente
+        self._tab_modify._scan_directory()
+        self._data_preloaded = True
+
     def _on_tab_changed(self, index: int) -> None:
-        """Gestisce il caricamento dinamico dei dati al cambio scheda."""
+        """Gestisce il refresh leggero dell'interfaccia al cambio scheda.
+        I tab ora gestiscono autonomamente il caching pesante."""
         widget = self.tabs.widget(index)
 
         if isinstance(widget, CreaNuovoTab):
-            # Forza l'aggiornamento del percorso e ricarica i dati dinamici (TCL, Stati)
+            # Aggiorna solo i percorsi, il progressivo usa la cache interna
             widget._update_dynamic_path()
-
-            # Ricarica le combo box dalla configurazione aggiornata
-            config = config_manager.load_config()
-
-            widget.tcl_combo.blockSignals(True)
-            widget.tcl_combo.clear()
-            widget.tcl_combo.addItems(config.get("preventivi_tcl", []))
-            widget.tcl_combo.blockSignals(False)
-
-            widget.stato_combo.blockSignals(True)
-            widget.stato_combo.clear()
-            widget.stato_combo.addItems(config.get("preventivi_stati", []))
-            widget.stato_combo.blockSignals(False)
-
         elif isinstance(widget, ModificaEsistenteTab):
-            # Riesegue la scansione della directory per trovare nuovi file
+            # Tenta una scansione silente (usata solo se la cache è scaduta)
             widget._scan_directory()

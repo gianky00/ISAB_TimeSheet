@@ -237,15 +237,20 @@ class NavigationController:
             self.mw.pdl_search_panel.data_updated.connect(self.mw.pdl_db_panel.refresh_data)
             self.mw._pdl_signals_connected = True
 
-    def navigate_to(self, index: int, sub_index: int | None = None) -> None:
+    def navigate_to(self, index: int, sub_index: int | None = None, bot_index: int | None = None) -> None:
         """
         Esegue la commutazione della pagina attiva, gestendo salvataggi pendenti e feedback della sidebar.
 
         Args:
             index: Indice del pannello di destinazione.
             sub_index: Eventuale indice di sottocategoria (tab interno).
+            bot_index: Eventuale indice del bot specifico (terzo livello).
         """
-        if index == self.mw._current_page_index and sub_index is None:
+        # Se sub_index è -1, lo trattiamo come None per la Sidebar
+        norm_sub = None if sub_index == -1 else sub_index
+        norm_bot = None if bot_index == -1 else bot_index
+
+        if index == self.mw._current_page_index and norm_sub is norm_bot is None:
             self.mw.sidebar.set_active_button(index)
             return
 
@@ -258,13 +263,30 @@ class NavigationController:
             self.mw.sidebar.set_active_button(self.mw._current_page_index)
             return
 
-        self.get_panel(index)
+        panel = self.get_panel(index)
         self.mw._current_page_index = index
         if hasattr(self.mw.page_stack, "slide_to_index"):
             self.mw.page_stack.slide_to_index(index)
         else:
             self.mw.page_stack.setCurrentIndex(index)
-        self.mw.sidebar.set_active_button(index, sub_index)
+
+        # Gestione Tab Interni (Livello 3)
+        if norm_sub is not None and panel:
+            if index == 1:  # Automazioni
+                auto_widget = getattr(self.mw, "automazioni_widget", None)
+                if auto_widget:
+                    if norm_bot is not None and hasattr(auto_widget, "set_active_tab"):
+                        auto_widget.set_active_tab(norm_sub, norm_bot)
+                    elif hasattr(auto_widget, "setCurrentIndex"):
+                        auto_widget.setCurrentIndex(norm_sub)
+            elif index == 4:  # Strumentale
+                if hasattr(panel, "main_tabs"):
+                    panel.main_tabs.setCurrentIndex(norm_sub)
+            elif index in (9, 11, 12):  # Consuntivo, Dipendenti, Monitoraggio
+                if hasattr(panel, "tabs"):
+                    panel.tabs.setCurrentIndex(norm_sub)
+
+        self.mw.sidebar.set_active_button(index, norm_sub, norm_bot)
 
     def navigate_to_extended(self, tab_idx: int, query: str) -> None:
         """Naviga al pannello Strumentale attivando un tab specifico e pre-compilando la ricerca."""
