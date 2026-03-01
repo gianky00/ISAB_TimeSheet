@@ -17,15 +17,20 @@ if TYPE_CHECKING:
 
 import typing
 
+from PyQt6.QtCore import QObject, pyqtSignal
+
 logger = logging.getLogger(__name__)
 
 
-class NavigationController:
+class NavigationController(QObject):
     """
     Controller responsabile della commutazione tra le pagine nel QStackedWidget della MainWindow.
     Gestisce il ciclo di vita dei pannelli (creazione, inizializzazione segnali, visualizzazione)
     e garantisce la sincronizzazione con lo stato della Sidebar e della Command Palette.
     """
+
+    panel_detached = pyqtSignal(int, str)  # index, title
+    panel_reattached = pyqtSignal(int)  # index
 
     def __init__(self, main_window: Any) -> None:
         """
@@ -34,6 +39,7 @@ class NavigationController:
         Args:
             main_window: Riferimento alla MainWindow dell'applicazione.
         """
+        super().__init__(main_window)
         self.mw = main_window
         # Traccia i pannelli attualmente staccati (indice -> struct con panel nativo, placeholder, e finestra top-level)
         self._detached_panels: dict[int, dict[str, Any]] = {}
@@ -108,7 +114,25 @@ class NavigationController:
                 panel.autopilot_widget.set_footer_widget(self.mw.footer_left)
             if hasattr(self.mw, "status_bar_component"):
                 panel.autopilot_widget.set_status_bar(self.mw.status_bar_component)
+
+        # Connessione per l'aggiornamento della card moduli sganciati
+        if hasattr(panel, "multi_window_card"):
+            self.panel_detached.connect(
+                lambda i, t: panel.multi_window_card.update_modules(self._detached_panels)
+            )
+            self.panel_reattached.connect(
+                lambda i: panel.multi_window_card.update_modules(self._detached_panels)
+            )
+            panel.multi_window_card.reattach_single_requested.connect(self._on_panel_reattached)
+            panel.multi_window_card.reattach_all_requested.connect(self._reattach_all_panels)
+
         return panel
+
+    def _reattach_all_panels(self) -> None:
+        """Riaggancia automaticamente tutti i pannelli attualmente sganciati."""
+        indices = list(self._detached_panels.keys())
+        for idx in indices:
+            self._on_panel_reattached(idx)
 
     def _create_automazioni(self) -> QWidget:
         """Crea il selettore centralizzato per le automazioni bot."""
@@ -252,6 +276,8 @@ class NavigationController:
 
         self._detached_panels[index] = {"panel": panel, "placeholder": placeholder, "window": popout_win}
 
+        self.panel_detached.emit(index, title)
+
         # Facciamo scorrere lo stack sul placeholder per conferma visiva all'utente
         if self.mw._current_page_index == index:
             # Force refresh layout internal to stackedwidget since its a different instance
@@ -280,6 +306,8 @@ class NavigationController:
         # Rimettiamo il figlio originale (Timbrature, OdA ecc) al suo index corretto.
         # N.B. self.get_panel tornerà quello vero d'ora in poi
         self.mw.page_stack.insertWidget(index, panel)
+
+        self.panel_reattached.emit(index)
 
         if self.mw._current_page_index == index:
             self.mw.page_stack.setCurrentIndex(index)

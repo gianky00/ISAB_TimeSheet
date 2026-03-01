@@ -23,6 +23,7 @@ from src.gui.styles import COLORS
 from src.gui.widgets import DashboardStatCard
 from src.gui.widgets.activity_feed import ActivityFeed
 from src.gui.widgets.autopilot import AutopilotWidget
+from src.gui.widgets.dashboard.multi_window_status import MultiWindowStatusWidget
 from src.gui.widgets.dashboard.roi_widget import BotSavingsWidget
 
 # Nuovi Widget Dashboard
@@ -104,6 +105,10 @@ class DashboardPanel(QWidget):
 
     def _setup_ui(self):
         """Inizializza e posiziona i widget della dashboard."""
+        # -1. Multi Window Status Card
+        self.multi_window_card = MultiWindowStatusWidget()
+        self.content_layout.addWidget(self.multi_window_card)
+
         # 0. Context & Value Row (Meteo & ROI)
         context_row = QHBoxLayout()
         context_row.setSpacing(20)
