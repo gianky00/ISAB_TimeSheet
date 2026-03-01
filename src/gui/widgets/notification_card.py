@@ -32,7 +32,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class NotificationCard(QFrame):
     """
     Widget moderno per la visualizzazione di una singola notifica.
-    Utilizza stili esterni per una manutenibilità superiore.
+    Utilizza stili dinamici basati sulla severità e supporta animazioni di fade-in.
     """
 
     # Signals
@@ -47,6 +47,14 @@ class NotificationCard(QFrame):
         parent: QWidget | None = None,
         disable_animations: bool = False,
     ) -> None:
+        """
+        Inizializza la card di notifica.
+
+        Args:
+            notification: Dizionario contenente i dati della notifica (id, titolo, messaggio, ecc.).
+            parent: Widget genitore opzionale.
+            disable_animations: Se True, disabilita l'effetto di fade-in iniziale.
+        """
         super().__init__(parent)
         self.notification = notification
         self.manager = NotificationManager.instance()
@@ -66,7 +74,7 @@ class NotificationCard(QFrame):
             self._setup_animations()
 
     def _setup_ui(self) -> None:
-        """Setup del layout e componenti della card."""
+        """Configura il layout, gli stili e gli elementi interattivi della card."""
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
@@ -148,6 +156,7 @@ class NotificationCard(QFrame):
             main_layout.addLayout(footer_lay)
 
     def _format_timestamp(self, ts: Any) -> str:
+        """Converte un timestamp in formato leggibile (HH:MM)."""
         if isinstance(ts, str):
             return ts
         if isinstance(ts, (int, float)):
@@ -157,6 +166,7 @@ class NotificationCard(QFrame):
         return datetime.now().strftime("%H:%M")
 
     def _setup_animations(self) -> None:
+        """Configura l'effetto di opacità per l'animazione di ingresso."""
         self.opacity_effect = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self.opacity_effect)
         self.fade_in_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
@@ -166,20 +176,24 @@ class NotificationCard(QFrame):
         self.fade_in_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
 
     def showEvent(self, event: QShowEvent | None) -> None:
+        """Avvia l'animazione di fade-in quando la card viene mostrata."""
         if not self._disable_animations:
             self.fade_in_animation.start()
         super().showEvent(event)
 
     def _toggle_pin(self) -> None:
+        """Gestisce il cambiamento di stato 'pinned' della notifica."""
         new_state = not self.notification.get("pinned", False)
         self.notification["pinned"] = new_state
         self.pin_btn.setText("📌" if new_state else "📍")
         self.pin_toggled.emit(self.notification["id"], new_state)
 
     def _delete_notification(self) -> None:
+        """Emette il segnale per la rimozione della notifica dal gestore."""
         self.card_deleted.emit(self.notification["id"])
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
+        """Emette il segnale di clic sulla card per contrassegnarla come letta."""
         if event and event.button() == Qt.MouseButton.LeftButton:
             self.card_clicked.emit(self.notification["id"])
         super().mousePressEvent(event)

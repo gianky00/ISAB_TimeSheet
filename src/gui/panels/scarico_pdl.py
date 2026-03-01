@@ -6,6 +6,7 @@ Modularizzato per una migliore manutenibilità.
 
 import logging
 from pathlib import Path
+from typing import Any
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import (
@@ -14,6 +15,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QVBoxLayout,
+    QWidget,
 )
 
 from src.core import config_manager
@@ -37,9 +39,18 @@ logger = logging.getLogger(__name__)
 
 
 class ScaricoPDLPanel(BaseBotPanel):
-    """Orchestratore per lo scarico PDL con gestione parametri e stati riga."""
+    """
+    Orchestratore per lo scarico PDL con gestione parametri e stati riga.
+    Consente di definire una lista di numeri PDL, la cartella di destinazione e le opzioni di stampa.
+    """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il pannello scarico PDL.
+
+        Args:
+            parent: Widget genitore opzionale.
+        """
         super().__init__(
             bot_id="scarico_pdl",
             bot_name="Scarico PDL",
@@ -49,18 +60,26 @@ class ScaricoPDLPanel(BaseBotPanel):
         self._setup_content()
         QTimer.singleShot(10, self._safe_load_data)
 
-    def get_bot_class(self):
+    def get_bot_class(self) -> Any:
+        """
+        Restituisce la classe del bot associata a questo pannello.
+
+        Returns:
+            Type[SafeWorkPDLBot]: La classe per l'automazione PDL.
+        """
         from src.bots.safework.pdl.bot import SafeWorkPDLBot
 
         return SafeWorkPDLBot
 
-    def _safe_load_data(self):
+    def _safe_load_data(self) -> None:
+        """Carica i dati salvati dall'ultima sessione gestendo eventuali eccezioni."""
         try:
             self._load_saved_data()
         except Exception as e:
             logger.error(f"Error loading data: {e}")
 
-    def _setup_content(self):
+    def _setup_content(self) -> None:
+        """Inizializza il contenuto specifico del pannello: filtri, opzioni stampa e tabella PDL."""
         # 1. Parametri
         self.params_container = QFrame()
         self.params_container.setObjectName("filterBar")
@@ -137,16 +156,19 @@ class ScaricoPDLPanel(BaseBotPanel):
         if isinstance(lay2, QVBoxLayout):
             lay2.insertLayout(2, content_lay)
 
-    def _update_status_list(self):
+    def _update_status_list(self) -> None:
+        """Sincronizza il contatore visivo dello stato con il numero di righe della tabella."""
         count = self.data_table.table.rowCount()
         self.status_list.initialize_rows(count, self.data_table.table.rowHeight(0) or 30)
 
-    def _on_browse_clicked(self):
+    def _on_browse_clicked(self) -> None:
+        """Apre il dialogo di selezione cartella per i PDF scaricati."""
         path = QFileDialog.getExistingDirectory(self, "Seleziona Cartella Destinazione")
         if path:
             self.edit_dest.setText(path)
 
-    def _load_saved_data(self):
+    def _load_saved_data(self) -> None:
+        """Ripristina i dati e i parametri dell'ultima sessione dalla configurazione locale."""
         config = config_manager.load_config()
         data = config.get("last_pdl_data", [])
         if data:
@@ -159,7 +181,13 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.edit_dest.setText(p_cfg.get("destinazione", str(Path.home() / "Downloads")))
         self._update_status_list()
 
-    def _get_bot_data(self):
+    def _get_bot_data(self) -> list[dict[str, Any]] | None:
+        """
+        Prepara e salva i dati da passare al bot per l'esecuzione.
+
+        Returns:
+            list[dict[str, Any]] | None: Lista di configurazioni riga o None se tabella vuota.
+        """
         items = self.data_table.get_data()
         if not items:
             ConfirmationDialog.show_warning(
@@ -188,12 +216,26 @@ class ScaricoPDLPanel(BaseBotPanel):
             for it in items
         ]
 
-    def _on_bot_finished(self, success: bool):
+    def _on_bot_finished(self, success: bool) -> None:
+        """
+        Gestisce la fine del processo del bot.
+
+        Args:
+            success: Esito dell'operazione.
+        """
         super()._on_bot_finished(success)
         if success:
             ToastManager.instance().show("Processo PDL Completato!", "success")
 
-    def on_step_completed(self, step_idx: int, success: bool, message: str):
+    def on_step_completed(self, step_idx: int, success: bool, message: str) -> None:
+        """
+        Aggiorna lo stato visivo di una specifica riga PDL al termine del suo processing.
+
+        Args:
+            step_idx: Indice della riga processata.
+            success: Esito del processing della riga.
+            message: Messaggio di errore opzionale.
+        """
         self.status_list.update_status(step_idx, success)
         if not success:
             logger.error(f"Errore riga {step_idx}: {message}")

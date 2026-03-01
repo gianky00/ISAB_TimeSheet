@@ -7,6 +7,7 @@ Refactored V9.5: Modular architecture with Controller and specialized Widgets.
 from contextlib import suppress
 
 from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QResizeEvent
 from PyQt6.QtWidgets import (
     QApplication,
     QVBoxLayout,
@@ -28,9 +29,18 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class ScaricoOrePanel(QWidget):
-    """Orchestratore dello Scarico Ore coordinato dal ScaricoOreController."""
+    """
+    Orchestratore dello Scarico Ore coordinato dal ScaricoOreController.
+    Gestisce il caricamento asincrono, il filtraggio avanzato e la visualizzazione delle ore.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il pannello dello scarico ore.
+
+        Args:
+            parent: Widget genitore opzionale.
+        """
         super().__init__(parent)
         self.controller = ScaricoOreController()
         self._current_col_filters: dict[int, set[str]] = {}
@@ -48,6 +58,7 @@ class ScaricoOrePanel(QWidget):
         QTimer.singleShot(50, self._load_data)
 
     def _setup_ui(self) -> None:
+        """Configura il layout, la toolbar dei filtri e la tabella dati con effetto shimmer."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(15)
@@ -87,12 +98,17 @@ class ScaricoOrePanel(QWidget):
         layout.addWidget(self.tabs)
 
     def _perform_search(self, text: str) -> None:
-        """Applica i filtri al modello."""
+        """
+        Applica i filtri testuali e per colonna al modello dati.
+
+        Args:
+            text: Testo di ricerca globale.
+        """
         self.source_model.set_filter(text, self._current_col_filters)
         self._update_totals()
 
     def _start_update(self) -> None:
-        """Avvia l'importazione via controller."""
+        """Avvia la procedura di sincronizzazione/importazione dei dati via controller."""
         path = config_manager.load_config().get("dataease_path", "")
         if not path:
             ConfirmationDialog.show_warning(
@@ -108,7 +124,13 @@ class ScaricoOrePanel(QWidget):
         self.controller.start_import(path)
 
     def _on_update_finished(self, success: bool, status_msg: str) -> None:
-        """Gestisce la fine del sync."""
+        """
+        Gestisce la finalizzazione del processo di aggiornamento.
+
+        Args:
+            success: True se l'operazione è andata a buon fine.
+            status_msg: Messaggio di stato restituito dal bot.
+        """
         self.filters.update_btn.setEnabled(True)
         self.table_view.setEnabled(True)
 
@@ -129,7 +151,7 @@ class ScaricoOrePanel(QWidget):
             ConfirmationDialog.show_error(self, "Errore Aggiornamento", status_msg)
 
     def _load_data(self) -> None:
-        """Caricamento asincrono."""
+        """Avvia il caricamento asincrono dei dati dal database o dalla cache locale."""
         if not ContabilitaManager.DB_PATH.exists():
             self.filters.status_label.setText("Database non trovato.")
             return
@@ -145,7 +167,7 @@ class ScaricoOrePanel(QWidget):
                 self._set_ui_loading(False)
 
     def _on_cache_loaded(self) -> None:
-        """Finalizzazione dopo caricamento."""
+        """Esegue le operazioni finali di UI una volta che i dati sono pronti in memoria."""
         self.filters.status_label.setText(self._last_update_status or "Pronto")
         self._set_ui_loading(False)
         self.table_view.resize_columns()
@@ -153,7 +175,7 @@ class ScaricoOrePanel(QWidget):
         self._update_totals()
 
     def _update_totals(self) -> None:
-        """Aggiorna le statistiche nella filter bar."""
+        """Ricalcola e aggiorna le statistiche globali (righe totali e ore)."""
         row_count = self.source_model.rowCount()
         total_hours = self.source_model.get_float_total_for_visible() if row_count > 0 else 0.0
 
@@ -164,11 +186,22 @@ class ScaricoOrePanel(QWidget):
         )
 
     def _update_selection_totals(self, total: float) -> None:
-        """Aggiorna la label della selezione nella filter bar."""
+        """
+        Aggiorna l'indicatore delle ore totali per le righe selezionate.
+
+        Args:
+            total: Somma delle ore selezionate.
+        """
         self.filters.lbl_selection.setText(f"Totale selezionato: {self.controller.format_number(total)}")
 
     def _on_header_filter_changed(self, col: int, values: list[str]) -> None:
-        """Filtro per colonna."""
+        """
+        Gestisce l'attivazione di filtri specifici per singola colonna.
+
+        Args:
+            col: Indice della colonna interessata.
+            values: Elenco di valori da filtrare.
+        """
         if not values:
             self._current_col_filters.pop(col, None)
         else:
@@ -176,7 +209,12 @@ class ScaricoOrePanel(QWidget):
         self._perform_search(self.filters.search_input.text())
 
     def _set_ui_loading(self, loading: bool) -> None:
-        """Feedback visivo di caricamento."""
+        """
+        Mostra o nasconde l'interfaccia di caricamento (shimmer).
+
+        Args:
+            loading: True per mostrare l'effetto shimmer, False per la tabella.
+        """
         self.filters.search_input.setEnabled(not loading)
         self.filters.update_btn.setEnabled(not loading)
         self.filters.search_input.setPlaceholderText(
@@ -195,16 +233,28 @@ class ScaricoOrePanel(QWidget):
         QApplication.processEvents()
 
     def _on_loading_progress(self, msg: str) -> None:
+        """Aggiorna la label di stato durante le fasi del caricamento asincrono."""
         self.filters.status_label.setText(msg)
         QApplication.processEvents()
 
-    def resizeEvent(self, event) -> None:
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
+        """
+        Aggiorna le dimensioni degli overlay (shimmer) al ridimensionamento del pannello.
+
+        Args:
+            event: Evento di ridimensionamento Qt.
+        """
         super().resizeEvent(event)
         if hasattr(self, "shimmer") and self.shimmer.isVisible():
             self.shimmer.resize(self.table_view.size())
 
     def set_search_query(self, text: str) -> None:
-        """API pubblica per ricerca esterna."""
+        """
+        API pubblica per impostare una ricerca dall'esterno (es. NavigationController).
+
+        Args:
+            text: Testo da cercare.
+        """
         self.filters.search_input.setText(text)
         self.filters.search_input.setFocus()
         self.filters.search_input.selectAll()

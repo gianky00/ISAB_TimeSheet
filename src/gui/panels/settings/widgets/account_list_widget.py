@@ -32,17 +32,29 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class AccountListWidget(QWidget):
-    """Gestisce una lista di account con icone di default e dialoghi cifrati."""
+    """
+    Gestisce una lista di account con icone di default e dialoghi cifrati.
+    Consente l'aggiunta, modifica, rimozione e impostazione dell'account predefinito.
+    """
 
     changed = pyqtSignal()
 
     def __init__(self, title: str, show_type: bool = False, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il widget lista account.
+
+        Args:
+            title: Titolo del gruppo (es. 'Account ISAB').
+            show_type: Se True, mostra il campo tipologia nel dialogo account.
+            parent: Widget genitore opzionale.
+        """
         super().__init__(parent)
         self.title = title
         self.show_type = show_type
         self._setup_ui()
 
     def _setup_ui(self) -> None:
+        """Configura l'interfaccia, la lista e i pulsanti d'azione."""
         self.group = create_group_box(self.title)
         layout = QVBoxLayout(self.group)
 
@@ -66,6 +78,7 @@ class AccountListWidget(QWidget):
         layout.addLayout(btns)
 
     def _add_btn(self, layout: QHBoxLayout, icon: str, color: str, callback: Any, tooltip: str) -> None:
+        """Helper per aggiungere un pulsante icona alla barra delle azioni."""
         btn = IconButton()
         btn.setIcon(get_colored_icon(get_asset_path(icon), COLORS["text_dark"]))
         btn.setToolTip(tooltip)
@@ -74,6 +87,7 @@ class AccountListWidget(QWidget):
         layout.addWidget(btn)
 
     def _show_menu(self, pos: QPoint) -> None:
+        """Mostra il menu contestuale per l'account selezionato."""
         menu = QMenu()
         item = self.list_widget.itemAt(pos)
         menu.addAction("Aggiungi", self.add_account)
@@ -89,6 +103,7 @@ class AccountListWidget(QWidget):
             menu.exec(viewport.mapToGlobal(pos))
 
     def add_account(self) -> None:
+        """Apre il dialogo per l'aggiunta di un nuovo account."""
         dlg = AccountDialog(self, show_type=self.show_type)
         if dlg.exec():
             u, p, t = dlg.get_data()
@@ -100,6 +115,7 @@ class AccountListWidget(QWidget):
                 self.changed.emit()
 
     def edit_account(self) -> None:
+        """Apre il dialogo di modifica per l'account selezionato."""
         row = self.list_widget.currentRow()
         if row < 0:
             return
@@ -122,6 +138,7 @@ class AccountListWidget(QWidget):
                 self.changed.emit()
 
     def remove_account(self) -> None:
+        """Rimuove l'account selezionato previa conferma."""
         row = self.list_widget.currentRow()
         if row >= 0 and ConfirmationDialog.confirm(self, "Conferma", "Rimuovere account?"):
             self.list_widget.takeItem(row)
@@ -132,6 +149,7 @@ class AccountListWidget(QWidget):
             self.changed.emit()
 
     def set_default(self) -> None:
+        """Imposta l'account selezionato come predefinito per il servizio."""
         row = self.list_widget.currentRow()
         if row >= 0:
             accs = self.get_accounts()
@@ -141,6 +159,7 @@ class AccountListWidget(QWidget):
             self.changed.emit()
 
     def get_accounts(self) -> list[dict[str, Any]]:
+        """Restituisce l'elenco completo degli account configurati."""
         accounts = []
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
@@ -151,6 +170,12 @@ class AccountListWidget(QWidget):
         return accounts
 
     def set_accounts(self, accounts: Sequence[dict[str, Any]]) -> None:
+        """
+        Popola la lista con gli account forniti.
+
+        Args:
+            accounts: Sequenza di dizionari account.
+        """
         self.list_widget.clear()
         for acc in accounts:
             label = str(acc["username"])

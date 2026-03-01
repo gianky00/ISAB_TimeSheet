@@ -30,12 +30,21 @@ from .sidebar.components import SidebarChildButton, SidebarGroup, SidebarSubGrou
 
 
 class SidebarWidget(QFrame):
-    """Orchestratore della Sidebar con navigazione profonda e track magnetico."""
+    """
+    Orchestratore della Sidebar con navigazione profonda e track magnetico.
+    Gestisce l'espansione automatica all'hover e la gerarchia dei menu a 3 livelli.
+    """
 
     navigation_requested = pyqtSignal(int, int, int)  # (page, sub, bot)
     palette_requested = pyqtSignal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il componente sidebar.
+
+        Args:
+            parent: Widget genitore opzionale.
+        """
         super().__init__(parent)
         self.setObjectName("sidebarContainer")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -57,15 +66,18 @@ class SidebarWidget(QFrame):
         QTimer.singleShot(500, self._update_track)
 
     def get_sidebar_width(self) -> int:
+        """Restituisce la larghezza corrente della sidebar."""
         return self.minimumWidth()
 
     def set_sidebar_width(self, w: int) -> None:
+        """Imposta la larghezza della sidebar (usato dalle animazioni)."""
         self.setMinimumWidth(w)
         self.setMaximumWidth(w)
 
     sidebar_width = pyqtProperty(int, fget=get_sidebar_width, fset=set_sidebar_width)
 
     def _get_glass_style(self, collapsed: bool = False) -> str:
+        """Genera lo stile QSS per l'effetto glass della sidebar."""
         if collapsed:
             return "QFrame#sidebarFrame { background: transparent; border: none; }"
         gradient = "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #0f172a, stop:0.4 #172554, stop:0.8 #081121, stop:1 #1e1b4b)"
@@ -78,6 +90,7 @@ class SidebarWidget(QFrame):
         """
 
     def _setup_ui(self) -> None:
+        """Inizializza l'interfaccia grafica e la struttura dei menu."""
         main_lay = QVBoxLayout(self)
         main_lay.setContentsMargins(0, 0, 0, 0)
         self.bg_frame = QFrame(self)
@@ -258,7 +271,8 @@ class SidebarWidget(QFrame):
 
         self._setup_connections()
 
-    def _setup_connections(self):
+    def _setup_connections(self) -> None:
+        """Configura i collegamenti dei segnali per i pulsanti principali."""
         self.btn_palette.clicked.connect(self.palette_requested.emit)
         self.btn_home.clicked.connect(lambda: self.navigation_requested.emit(0, -1, -1))
         self.btn_timbrature.clicked.connect(lambda: self.navigation_requested.emit(3, -1, -1))
@@ -269,7 +283,13 @@ class SidebarWidget(QFrame):
         self.btn_help.clicked.connect(lambda: self.navigation_requested.emit(8, -1, -1))
         self.btn_settings.clicked.connect(lambda: self.navigation_requested.emit(7, -1, -1))
 
-    def _on_group_expanded(self, group):
+    def _on_group_expanded(self, group: SidebarGroup) -> None:
+        """
+        Gestisce l'espansione di un gruppo, assicurando che gli altri siano chiusi (Accordion logic).
+
+        Args:
+            group: Il gruppo che è stato espanso.
+        """
         for g in (
             self.group_automazioni,
             self.group_db,
@@ -280,7 +300,8 @@ class SidebarWidget(QFrame):
                 g.collapse()
         QTimer.singleShot(100, self._update_track)
 
-    def _update_track(self):
+    def _update_track(self) -> None:
+        """Aggiorna la posizione del track magnetico basandosi sul pulsante attivo."""
         targets = []
         for g in (
             self.group_automazioni,
@@ -307,7 +328,15 @@ class SidebarWidget(QFrame):
                 return
         self.active_track.hide()
 
-    def set_active_button(self, index: int, sub: int | None = None, bot: int | None = None):
+    def set_active_button(self, index: int, sub: int | None = None, bot: int | None = None) -> None:
+        """
+        Imposta visivamente il pulsante attivo nella sidebar.
+
+        Args:
+            index: Indice della pagina principale.
+            sub: Indice del sottomenu opzionale.
+            bot: Indice del bot specifico opzionale.
+        """
         btns = {
             0: self.btn_home,
             2: self.btn_lyra,
@@ -354,15 +383,18 @@ class SidebarWidget(QFrame):
 
         QTimer.singleShot(150, self._update_track)
 
-    def enterEvent(self, e: Any):
+    def enterEvent(self, e: Any) -> None:
+        """Espande la sidebar all'ingresso del mouse."""
         self._set_collapsed(False)
         super().enterEvent(e)
 
-    def leaveEvent(self, e: Any):
+    def leaveEvent(self, e: Any) -> None:
+        """Contrae la sidebar all'uscita del mouse."""
         self._set_collapsed(True)
         super().leaveEvent(e)
 
-    def _set_collapsed(self, c: bool):
+    def _set_collapsed(self, c: bool) -> None:
+        """Configura lo stato di espansione/contrazione della sidebar."""
         if self._is_collapsed == c:
             return
         self._is_collapsed = c
@@ -404,7 +436,8 @@ class SidebarWidget(QFrame):
             self._update_ui_state()
         QTimer.singleShot(150, self._update_track)
 
-    def _update_ui_state(self):
+    def _update_ui_state(self) -> None:
+        """Sincronizza lo stato dei gruppi figli con quello della sidebar."""
         for g in (
             self.group_db,
             self.group_automazioni,

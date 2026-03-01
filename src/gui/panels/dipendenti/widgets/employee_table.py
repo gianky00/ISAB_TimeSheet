@@ -4,9 +4,17 @@ Widget specializzato per la visualizzazione della griglia anagrafica dipendenti.
 """
 
 import logging
+from typing import Any
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QAbstractItemView, QHeaderView, QMenu, QSizePolicy, QTableView
+from PyQt6.QtCore import QPoint, Qt, pyqtSignal
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QHeaderView,
+    QMenu,
+    QSizePolicy,
+    QTableView,
+    QWidget,
+)
 
 from src.core.constants import Icons
 from src.core.database import db_manager
@@ -23,12 +31,20 @@ class EmployeeTableView(QTableView):
     monitoring_toggled = pyqtSignal(str, bool)  # id_risorsa, enable
     employee_selected = pyqtSignal(int)  # row_idx
 
-    def __init__(self, model, parent=None):
+    def __init__(self, model: Any, parent: QWidget | None = None) -> None:
+        """
+        Inizializza la tabella dipendenti.
+
+        Args:
+            model: Il modello dati (FastTableModel).
+            parent: Widget genitore opzionale.
+        """
         super().__init__(parent)
         self.setModel(model)
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
+        """Configura il comportamento della tabella, i delegati e lo stile."""
         self.setAlternatingRowColors(True)
         self.setSortingEnabled(True)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -61,7 +77,13 @@ class EmployeeTableView(QTableView):
             }}
         """)
 
-    def configure_columns(self, widths: list[int]):
+    def configure_columns(self, widths: list[int]) -> None:
+        """
+        Configura la larghezza fissa delle colonne.
+
+        Args:
+            widths: Lista di interi rappresentanti i pixel per ogni colonna.
+        """
         header = self.horizontalHeader()
         if not header:
             return
@@ -71,7 +93,8 @@ class EmployeeTableView(QTableView):
         total_w = sum(widths) + 20
         self.setFixedWidth(total_w)
 
-    def _on_selection_internal(self, selected, _):
+    def _on_selection_internal(self, selected: Any, deselected: Any) -> None:
+        """Emette il segnale di selezione dipendente quando cambia la riga attiva."""
         sel_model = self.selectionModel()
         if not sel_model:
             return
@@ -79,7 +102,13 @@ class EmployeeTableView(QTableView):
         if indexes:
             self.employee_selected.emit(indexes[0].row())
 
-    def _show_context_menu(self, position):
+    def _show_context_menu(self, position: QPoint) -> None:
+        """
+        Mostra il menu contestuale per attivare/disattivare il monitoraggio del dipendente.
+
+        Args:
+            position: Posizione del clic del mouse.
+        """
         from PyQt6.QtGui import QAction
 
         sel_model = self.selectionModel()

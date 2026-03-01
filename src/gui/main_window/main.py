@@ -240,36 +240,46 @@ class MainWindow(QMainWindow):
 
     # --- UI HELPERS & OVERRIDES ---
     def _toggle_footer_stats(self) -> None:
+        """Alterna la visibilità delle statistiche nel footer."""
         self.status_bar_component._toggle_footer_stats()
 
     def _quit_application(self) -> None:
+        """Chiude l'applicazione in modo sicuro."""
         self.app_event_handler.quit_application()
 
     def closeEvent(self, event: Any) -> None:
+        """Gestisce l'evento di chiusura della finestra."""
         self.app_event_handler.handle_close_event(event)
 
     def show_toast(self, message: str, duration: int = 3000) -> None:
+        """Mostra un messaggio toast a video."""
         ToastManager.instance().show(message, "info", duration)
 
     def _open_command_palette(self) -> None:
+        """Apre la palette dei comandi rapidi."""
         self.menu_bar_component.open_command_palette()
 
     def _update_autopilot_status_ui(self) -> None:
+        """Aggiorna lo stato visivo dell'autopilot nella barra di stato."""
         self.status_bar_component.update_autopilot_ui()
 
     def _on_download_update_clicked(self, url: str) -> None:
+        """Apre il browser per il download di un aggiornamento."""
         webbrowser.open(url)
 
     def _navigate_to(self, index: int) -> None:
+        """Naviga verso una pagina specifica tramite indice."""
         self.navigation_controller.navigate_to(index)
 
     def _show_update_banner(self, new_version: str, download_url: str, changelog: str) -> None:
+        """Mostra il banner di aggiornamento disponibile."""
         if hasattr(self, "update_banner"):
             self.update_banner.show_update(new_version, download_url, changelog)
         if hasattr(self, "tray_icon_component"):
             self.tray_icon_component.show_update_message(new_version)
 
     def _on_settings_saved(self) -> None:
+        """Callback eseguita al salvataggio delle impostazioni."""
         self.telegram.start_service()
         self._update_autopilot_status_ui()
         if hasattr(self, "status_bar_component") and hasattr(self.status_bar_component, "footer_left"):
@@ -278,44 +288,54 @@ class MainWindow(QMainWindow):
             ToastManager.instance().show("Impostazioni salvate!", "success")
 
     def _on_help_requested(self, section_title: str) -> None:
+        """Naviga alla sezione di aiuto specificata."""
         self.navigation_controller.navigate_to(PageIndex.HELP)
         if hasattr(self, "help_panel"):
             self.help_panel.open_section(section_title)
 
     def open_bug_report_dialog(self) -> None:
+        """Apre il dialogo per la segnalazione di un bug."""
         from src.gui.dialogs.bug_report_dialog import BugReportDialog
 
         dlg = BugReportDialog(self)
         dlg.exec()
 
     def show_settings(self) -> None:
+        """Naviga alla pagina delle impostazioni."""
         self.navigation_controller.navigate_to(PageIndex.SETTINGS)
 
     def show_background_notification(self, title: str, message: str, is_error: bool = False) -> None:
+        """Mostra una notifica di sistema (Toast/Tray) in background."""
         if hasattr(self, "tray_icon_component"):
             self.tray_icon_component.show_background_notification(title, message, is_error)
 
     # --- Properties per compatibilità ---
     @property
     def footer_left(self) -> Any:
+        """Restituisce il componente sinistro del footer."""
         return self.status_bar_component.footer_left
 
     @property
     def footer_right(self) -> Any:
+        """Restituisce il componente destro del footer."""
         return self.status_bar_component.footer_right
 
     @property
     def status_portale(self) -> Any:
+        """Restituisce l'indicatore di stato del Portale ISAB."""
         return self.status_bar_component.status_portale
 
     @property
     def status_safework(self) -> Any:
+        """Restituisce l'indicatore di stato di SafeWork."""
         return self.status_bar_component.status_safework
 
     @property
     def startup_console(self) -> Any:
+        """Restituisce la console di avvio."""
         return self.status_bar_component.startup_console
 
     @property
     def boot_telemetry(self) -> Any:
+        """Restituisce il monitor di telemetria boot."""
         return self.status_bar_component.boot_telemetry

@@ -25,6 +25,7 @@ from src.utils.helpers import get_asset_path
 class DetachedPanelWindow(QMainWindow):
     """
     Finestra indipendente che ospita un pannello precedentemente residente nello SlidingStackedWidget.
+    Gestisce il proprio ciclo di vita e informa il controller alla chiusura per il riaggancio del widget.
     """
 
     panel_closed_signal = pyqtSignal(int)  # Indice originale del pannello
@@ -32,6 +33,15 @@ class DetachedPanelWindow(QMainWindow):
     def __init__(
         self, original_index: int, panel: QWidget, title: str, parent: QWidget | None = None
     ) -> None:
+        """
+        Inizializza la finestra esterna.
+
+        Args:
+            original_index: L'indice della pagina nello stack originale.
+            panel: L'istanza del widget da visualizzare.
+            title: Il titolo da mostrare nella barra del titolo.
+            parent: Il widget genitore opzionale.
+        """
         super().__init__(parent)
         self.original_index = original_index
         self.panel = panel
@@ -48,6 +58,9 @@ class DetachedPanelWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent | None):
         """
         Intercetta la chiusura della finestra per avviare il riaggancio.
+
+        Args:
+            event: L'evento di chiusura di Qt.
         """
         if event:
             self.panel_closed_signal.emit(self.original_index)
@@ -58,13 +71,23 @@ class PopoutPlaceholderWidget(QWidget):
     """
     Widget visualizzato nello StackedWidget centrale quando il suo contenuto nativo
     è stato spostato in una DetachedPanelWindow.
+    Fornisce feedback visivo all'utente e un pulsante per il riaggancio manuale.
     """
 
     def __init__(self, title: str, on_reattach: Callable[[], None], parent: QWidget | None = None) -> None:
+        """
+        Inizializza il placeholder.
+
+        Args:
+            title: Il nome del modulo sganciato.
+            on_reattach: La callback da eseguire per riagganciare il pannello.
+            parent: Il widget genitore opzionale.
+        """
         super().__init__(parent)
         self._setup_ui(title, on_reattach)
 
     def _setup_ui(self, title: str, on_reattach: Callable[[], None]) -> None:
+        """Configura l'interfaccia grafica del placeholder."""
         main_layout = QVBoxLayout(self)
         main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.setContentsMargins(40, 40, 40, 40)

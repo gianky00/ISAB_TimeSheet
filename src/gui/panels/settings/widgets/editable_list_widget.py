@@ -31,17 +31,29 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class EditableListWidget(QWidget):
-    """Widget che gestisce una lista di stringhe con controlli CRUD."""
+    """
+    Widget che gestisce una lista di stringhe con controlli CRUD.
+    Supporta l'interazione tramite pulsanti dedicati o menu contestuale.
+    """
 
     changed = pyqtSignal()
 
     def __init__(self, title: str, input_label: str, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il widget lista modificabile.
+
+        Args:
+            title: Titolo del gruppo visualizzato.
+            input_label: Etichetta da mostrare nel dialogo di input.
+            parent: Widget genitore opzionale.
+        """
         super().__init__(parent)
         self.title = title
         self.input_label = input_label
         self._setup_ui()
 
     def _setup_ui(self) -> None:
+        """Configura il layout, la lista e i pulsanti d'azione."""
         self.group = create_group_box(self.title)
         layout = QVBoxLayout(self.group)
 
@@ -64,6 +76,7 @@ class EditableListWidget(QWidget):
         layout.addLayout(btns)
 
     def _add_btn(self, layout: QHBoxLayout, icon: str, color: str, callback: Any, tooltip: str) -> None:
+        """Helper per aggiungere un pulsante icona alla barra delle azioni."""
         btn = IconButton()
         btn.setIcon(get_colored_icon(get_asset_path(icon), COLORS["text_dark"]))
         btn.setToolTip(tooltip)
@@ -72,6 +85,7 @@ class EditableListWidget(QWidget):
         layout.addWidget(btn)
 
     def _show_menu(self, pos: QPoint) -> None:
+        """Mostra il menu contestuale per l'elemento selezionato."""
         menu = QMenu()
         item = self.list_widget.itemAt(pos)
         menu.addAction("Aggiungi", self.add_item)
@@ -86,12 +100,14 @@ class EditableListWidget(QWidget):
             menu.exec(viewport.mapToGlobal(pos))
 
     def add_item(self) -> None:
+        """Apre il dialogo di input per aggiungere una nuova stringa alla lista."""
         text, ok = StandardInputDialog.get_input(self, "Aggiungi", self.input_label)
         if ok and text:
             self.list_widget.addItem(text)
             self.changed.emit()
 
     def edit_item(self) -> None:
+        """Apre il dialogo di input per modificare l'elemento selezionato."""
         item = self.list_widget.currentItem()
         if item:
             text, ok = StandardInputDialog.get_input(self, "Modifica", self.input_label, text=item.text())
@@ -100,6 +116,7 @@ class EditableListWidget(QWidget):
                 self.changed.emit()
 
     def remove_item(self) -> None:
+        """Rimuove l'elemento selezionato previa conferma dell'utente."""
         row = self.list_widget.currentRow()
         item = self.list_widget.item(row)
         if item and ConfirmationDialog.confirm(self, "Conferma", f"Rimuovere '{item.text()}'?"):
@@ -107,6 +124,7 @@ class EditableListWidget(QWidget):
             self.changed.emit()
 
     def get_items(self) -> list[str]:
+        """Restituisce l'elenco di tutte le stringhe contenute nella lista."""
         items = []
         for i in range(self.list_widget.count()):
             it = self.list_widget.item(i)
@@ -115,5 +133,11 @@ class EditableListWidget(QWidget):
         return items
 
     def set_items(self, items: Sequence[str]) -> None:
+        """
+        Popola la lista con le stringhe fornite.
+
+        Args:
+            items: Sequenza di stringhe da aggiungere.
+        """
         self.list_widget.clear()
         self.list_widget.addItems(items)

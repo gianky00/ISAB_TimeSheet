@@ -21,11 +21,20 @@ logger = logging.getLogger(__name__)
 
 
 class BotSavingsWidget(ModernCard):
-    """Widget che mostra le metriche di risparmio dei bot (ROI) con design premium."""
+    """
+    Widget che mostra le metriche di risparmio dei bot (ROI) con design premium.
+    Calcola il tempo risparmiato, i task automatizzati e la riduzione dello stress operativo.
+    """
 
     stats_updated = pyqtSignal(object)  # ROIMetrics
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il widget ROI.
+
+        Args:
+            parent: Widget genitore opzionale.
+        """
         super().__init__(elevation=5, parent=parent)
         self.setMinimumWidth(340)
         self._setup_ui()
@@ -40,6 +49,7 @@ class BotSavingsWidget(ModernCard):
     # ── UI Setup ──────────────────────────────────────────────────────────
 
     def _setup_ui(self) -> None:
+        """Configura l'architettura visiva del widget (Header, KPI, Dettagli, Footer)."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 12, 15, 10)
         layout.setSpacing(8)
@@ -60,6 +70,7 @@ class BotSavingsWidget(ModernCard):
         self._build_footer(layout)
 
     def _build_header(self, layout: QVBoxLayout) -> None:
+        """Costruisce l'intestazione con icona badge e titolo."""
         header_h = QHBoxLayout()
         header_h.setSpacing(10)
 
@@ -76,6 +87,7 @@ class BotSavingsWidget(ModernCard):
         layout.addLayout(header_h)
 
     def _build_kpi_row(self, layout: QVBoxLayout) -> None:
+        """Costruisce la riga dei Key Performance Indicators principali."""
         kpi_h = QHBoxLayout()
         kpi_h.setSpacing(16)
 
@@ -106,6 +118,7 @@ class BotSavingsWidget(ModernCard):
         layout.addLayout(kpi_h)
 
     def _build_detail_section(self, layout: QVBoxLayout) -> None:
+        """Costruisce la sezione di dettaglio con stress bar e risparmio economico."""
         # -- Stress Row --
         stress_h = QHBoxLayout()
         stress_h.setSpacing(10)
@@ -169,6 +182,7 @@ class BotSavingsWidget(ModernCard):
         layout.addLayout(money_h)
 
     def _build_footer(self, layout: QVBoxLayout) -> None:
+        """Costruisce il piè di pagina con la media giornaliera dei task."""
         self.lbl_avg = QLabel("Media giornaliera: -- task/giorno")
         self.lbl_avg.setStyleSheet(
             f"color: {COLORS['text_light']}; font-size: 11px; font-style: italic;"
@@ -248,6 +262,8 @@ class BotSavingsWidget(ModernCard):
     # ── Data ──────────────────────────────────────────────────────────────
 
     def refresh_stats(self) -> None:
+        """Avvia il thread di calcolo delle statistiche ROI in background."""
+
         def run():
             try:
                 metrics = ROIEngine.calculate_savings()
@@ -258,9 +274,15 @@ class BotSavingsWidget(ModernCard):
         threading.Thread(target=run, daemon=True).start()
 
     def _update_ui(self, metrics: ROIMetrics) -> None:
-        if self.lbl_time:
+        """
+        Aggiorna gli elementi grafici con le nuove metriche calcolate.
+
+        Args:
+            metrics: Oggetto ROIMetrics contenente i dati elaborati.
+        """
+        if hasattr(self, "lbl_time") and self.lbl_time:
             self.lbl_time.setText(ROIEngine.format_time_saved(metrics.total_minutes_saved))
-        if self.lbl_ops:
+        if hasattr(self, "lbl_ops") and self.lbl_ops:
             self.lbl_ops.setText(str(metrics.total_operations))
 
         self.lbl_money.setText(f"€ {metrics.estimated_cost_saved:.2f}")

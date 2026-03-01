@@ -8,9 +8,10 @@ Refactored V9.4: Bold on selection and context menu for details.
 import os
 from contextlib import suppress
 from datetime import datetime
+from typing import Any
 
 import pandas as pd
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import QPoint, Qt, QTimer
 from PyQt6.QtGui import QStandardItemModel
 from PyQt6.QtWidgets import (
     QFileDialog,
@@ -37,11 +38,19 @@ from .widgets.oda_tree import ODATreeView
 class StoricoOdaPanel(QWidget):
     """Orchestratore dello Storico OdA con architettura Master-Detail modularizzata."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il pannello dello storico OdA.
+
+        Args:
+            parent: Widget genitore opzionale.
+        """
         super().__init__(parent)
         self.controller = ODAController()
         self.worker: BotWorker | None = None
-        self._last_selected_parent = None
+        from PyQt6.QtGui import QStandardItem
+
+        self._last_selected_parent: QStandardItem | None = None
 
         self.master_headers = [
             "Data OdA",
@@ -98,7 +107,8 @@ class StoricoOdaPanel(QWidget):
         self._setup_ui()
         QTimer.singleShot(100, self.refresh_data)
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
+        """Inizializza l'interfaccia utente del pannello."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 0, 10, 10)
         layout.setSpacing(5)
@@ -129,7 +139,8 @@ class StoricoOdaPanel(QWidget):
 
         layout.addWidget(self.splitter)
 
-    def refresh_data(self):
+    def refresh_data(self) -> None:
+        """Aggiorna i dati visualizzati nel tree applicando i filtri correnti."""
         self.filters.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('oda')}")
         search_text = self.filters.search_input.text()
 
@@ -148,7 +159,8 @@ class StoricoOdaPanel(QWidget):
         if structured_data:
             self.empty_state.hide()
 
-    def _on_selection_changed(self):
+    def _on_selection_changed(self) -> None:
+        """Gestisce il cambiamento di selezione per evidenziare il record padre."""
         sel_model = self.tree.selectionModel()
         if not sel_model:
             return
@@ -182,7 +194,13 @@ class StoricoOdaPanel(QWidget):
                     font.setBold(True)
                     it.setFont(font)
 
-    def _show_context_menu(self, pos):
+    def _show_context_menu(self, pos: QPoint) -> None:
+        """
+        Mostra il menu contestuale per l'elemento selezionato.
+
+        Args:
+            pos: Posizione del clic del mouse.
+        """
         idx = self.tree.indexAt(pos)
         if not idx.isValid():
             return
@@ -208,7 +226,7 @@ class StoricoOdaPanel(QWidget):
         if vp:
             menu.exec(vp.mapToGlobal(pos))
 
-    def _open_detail_for_index(self, index):
+    def _open_detail_for_index(self, index: Any) -> None:
         """Recupera i dati e apre il pannello laterale."""
         item = self.model.itemFromIndex(index)
         if not item:
@@ -225,14 +243,16 @@ class StoricoOdaPanel(QWidget):
                 self.detail_view.setVisible(True)
                 self.splitter.setSizes([int(self.width() * 0.7), int(self.width() * 0.3)])
 
-    def _on_update_clicked(self):
+    def _on_update_clicked(self) -> None:
+        """Esegue il workflow di aggiornamento del database."""
         from src.gui.main_window import MainWindow
 
         mw = self.window()
         if isinstance(mw, MainWindow):
             mw.workflow_controller.run_carico_ts()
 
-    def _on_import_clicked(self):
+    def _on_import_clicked(self) -> None:
+        """Gestisce l'importazione manuale di un file Excel OdA."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Seleziona File Storico OdA", "", "Excel Files (*.xlsx *.xls)"
         )
@@ -251,7 +271,8 @@ class StoricoOdaPanel(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Errore Critico", f"Errore durante l'importazione: {e}")
 
-    def _export_to_excel(self):
+    def _export_to_excel(self) -> None:
+        """Esporta i dati filtrati correnti in un file Excel."""
         search_text = self.filters.search_input.text()
         raw_data = OdaManager.get_all_oda(search_text)
         if not raw_data:

@@ -27,9 +27,13 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class ExcelTableWidget(QTableWidget, ClipboardMixin):
-    """QTableWidget con funzionalità Clipboard TSV e analisi AI Lyra."""
+    """
+    QTableWidget con funzionalità Clipboard TSV e analisi AI Lyra.
+    Supporta la formattazione semantica delle righe e l'interazione con l'intelligenza artificiale.
+    """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Inizializza la tabella configurando i trigger di modifica e la clipboard."""
         super().__init__(*args, **kwargs)
         self.auto_copy_headers = False
         self.setEditTriggers(
@@ -39,7 +43,13 @@ class ExcelTableWidget(QTableWidget, ClipboardMixin):
         )
 
     def set_row_status(self, row: int, status: str) -> None:
-        """Imposta il colore semantico della riga."""
+        """
+        Imposta il colore semantico della riga in base allo stato.
+
+        Args:
+            row: Indice della riga.
+            status: Stato della riga (es. 'completato', 'errore').
+        """
         colors = {
             "completato": COLORS["table_success_bg"],
             "errore": COLORS["table_error_bg"],
@@ -54,6 +64,7 @@ class ExcelTableWidget(QTableWidget, ClipboardMixin):
                 it.setForeground(QBrush(QColor("black")))
 
     def keyPressEvent(self, event: Any) -> None:
+        """Gestisce le scorciatoie da tastiera standard (Copia, Incolla, Canc)."""
         if event.matches(QKeySequence.StandardKey.Copy):
             self.copy_selection()
         elif event.matches(QKeySequence.StandardKey.Paste):
@@ -64,6 +75,7 @@ class ExcelTableWidget(QTableWidget, ClipboardMixin):
             super().keyPressEvent(event)
 
     def clear_selection(self) -> None:
+        """Svuota il contenuto delle celle selezionate."""
         for r in self.selectedRanges():
             for row in range(r.topRow(), r.bottomRow() + 1):
                 for col in range(r.leftColumn(), r.rightColumn() + 1):
@@ -76,6 +88,7 @@ class ExcelTableWidget(QTableWidget, ClipboardMixin):
                             it.setText("")
 
     def contextMenuEvent(self, event: Any) -> None:
+        """Mostra il menu contestuale con opzioni di analisi AI e clipboard."""
         menu = QMenu(self)
         icon_color = COLORS["text_dark"]
 
@@ -97,6 +110,7 @@ class ExcelTableWidget(QTableWidget, ClipboardMixin):
         menu.exec(event.globalPos())
 
     def _analyze_row_at(self, pos: QPoint) -> None:
+        """Invia i dati della riga corrente a Lyra AI per l'analisi."""
         it = self.itemAt(pos)
         if not it:
             return
@@ -115,6 +129,7 @@ class ExcelTableWidget(QTableWidget, ClipboardMixin):
             win.analyze_with_lyra(" | ".join(data))  # type: ignore
 
     def _analyze_selection(self) -> None:
+        """Invia i dati delle celle selezionate a Lyra AI per l'analisi massiva."""
         ranges = self.selectedRanges()
         if not ranges:
             return
@@ -140,11 +155,19 @@ class EditableDataTable(QWidget):
     data_changed = pyqtSignal()
 
     def __init__(self, columns: list[dict[str, Any]], parent: QWidget | None = None) -> None:
+        """
+        Inizializza la tabella modificabile.
+
+        Args:
+            columns: Elenco di configurazioni per le colonne (nome, tipo, opzioni).
+            parent: Widget genitore opzionale.
+        """
         super().__init__(parent)
         self.columns = columns
         self._setup_ui()
 
     def _setup_ui(self) -> None:
+        """Configura l'interfaccia, i frame e l'effetto ombra."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 15)
         layout.setSpacing(0)
@@ -184,6 +207,7 @@ class EditableDataTable(QWidget):
         layout.addWidget(self.container)
 
     def _show_context_menu(self, pos: QPoint) -> None:
+        """Mostra il menu contestuale per la gestione delle righe."""
         menu = QMenu()
         c = COLORS["text_dark"]
 
@@ -212,6 +236,7 @@ class EditableDataTable(QWidget):
             menu.exec(viewport.mapToGlobal(pos))
 
     def _add_row(self, use_defaults: bool = True) -> None:
+        """Aggiunge una nuova riga alla tabella, configurando eventuali widget combo."""
         row = self.table.rowCount()
         self.table.insertRow(row)
         for col, config in enumerate(self.columns):
@@ -228,6 +253,7 @@ class EditableDataTable(QWidget):
         self.data_changed.emit()
 
     def _remove_row(self) -> None:
+        """Rimuove la riga attualmente selezionata."""
         r = self.table.currentRow()
         if r >= 0:
             self.table.removeRow(r)
@@ -243,6 +269,7 @@ class EditableDataTable(QWidget):
         self.data_changed.emit()
 
     def get_data(self) -> list[dict[str, Any]]:
+        """Restituisce l'elenco dei dati contenuti nella tabella come lista di dizionari."""
         results = []
         for r in range(self.table.rowCount()):
             row_data = {}
@@ -258,6 +285,7 @@ class EditableDataTable(QWidget):
         return results
 
     def set_data(self, data: list[dict[str, Any]]) -> None:
+        """Popola la tabella con un set di dati esistente."""
         self.table.blockSignals(True)
         self.table.setRowCount(0)
         for row_data in data:

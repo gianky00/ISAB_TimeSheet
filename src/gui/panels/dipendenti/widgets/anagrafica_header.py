@@ -27,11 +27,18 @@ class AnagraficaHeaderWidget(QWidget):
     update_requested = pyqtSignal()
     filter_changed = pyqtSignal(str)  # tipo filtro ("ok", "warning", etc.)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza l'header dell'anagrafica.
+
+        Args:
+            parent: Widget genitore opzionale.
+        """
         super().__init__(parent)
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
+        """Configura il layout dei filtri, della ricerca e delle card statistiche."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(15)
@@ -133,16 +140,34 @@ class AnagraficaHeaderWidget(QWidget):
 
         layout.addWidget(self.cards_container)
 
-    def set_sync_status(self, text: str):
+    def set_sync_status(self, text: str) -> None:
+        """
+        Aggiorna il testo informativo dell'ultimo sync.
+
+        Args:
+            text: Testo formattato da visualizzare.
+        """
         self.lbl_sync_status.setText(text)
 
-    def update_counts(self, counts: dict[str, int]):
+    def update_counts(self, counts: dict[str, int]) -> None:
+        """
+        Aggiorna i contatori numerici sulle card statistiche.
+
+        Args:
+            counts: Dizionario con chiavi 'ok', 'warning', 'expired', 'excluded'.
+        """
         self.card_ok.setValue(counts.get("ok", 0))
         self.card_warning.setValue(counts.get("warning", 0))
         self.card_expired.setValue(counts.get("expired", 0))
         self.card_excluded.setValue(counts.get("excluded", 0))
 
-    def update_card_styles(self, current_filter: str | None):
+    def update_card_styles(self, current_filter: str | None) -> None:
+        """
+        Evidenzia la card corrispondente al filtro attualmente attivo.
+
+        Args:
+            current_filter: Tipo di filtro selezionato.
+        """
         for card in (self.card_ok, self.card_warning, self.card_expired, self.card_excluded):
             is_active = card.filter_type == current_filter
             gradient = (

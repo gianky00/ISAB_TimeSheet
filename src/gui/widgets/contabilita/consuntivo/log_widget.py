@@ -15,13 +15,20 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QTextEdit,
     QVBoxLayout,
+    QWidget,
 )
 
 
 class OperationLogWidget(QFrame):
     """Console dark per i log delle operazioni."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza la console di log.
+
+        Args:
+            parent: Widget genitore opzionale.
+        """
         super().__init__(parent)
         self.setObjectName("logWidget")
         self.setStyleSheet("""
@@ -76,6 +83,13 @@ class OperationLogWidget(QFrame):
         layout.addWidget(self._log_text)
 
     def append_log(self, message: str, level: str = "info") -> None:
+        """
+        Aggiunge una riga alla console con formattazione semantica.
+
+        Args:
+            message: Il testo da visualizzare.
+            level: Il livello di severità per la colorazione (info, success, warning, error, step).
+        """
         colors = {
             "info": "#89b4fa",
             "success": "#a6e3a1",
@@ -91,4 +105,5 @@ class OperationLogWidget(QFrame):
         self._log_text.ensureCursorVisible()
 
     def clear(self) -> None:
+        """Svuota completamente il contenuto della console."""
         self._log_text.clear()

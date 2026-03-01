@@ -23,6 +23,7 @@ class SidebarChildButton(SidebarButton):
     """Pulsante figlio con stile Glass specifico e indentazione."""
 
     def _update_style(self) -> None:
+        """Aggiorna lo stile del pulsante applicando un'indentazione se espanso."""
         super()._update_style()
         if not self._collapsed:
             current_style = self.styleSheet()
@@ -34,6 +35,13 @@ class SidebarSubGroup(QWidget):
     """Sottogruppo di secondo livello (es. Portale Fornitori sotto Automazioni)."""
 
     def __init__(self, title: str, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il sottogruppo della sidebar.
+
+        Args:
+            title: Titolo del sottogruppo.
+            parent: Widget genitore opzionale.
+        """
         super().__init__(parent)
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -54,10 +62,17 @@ class SidebarSubGroup(QWidget):
         self.children_btns: list[SidebarButton] = []
 
     def toggle_group(self) -> None:
+        """Alterna la visibilità del contenuto del sottogruppo."""
         is_visible = self.content_area.isVisible()
         self.content_area.setVisible(not is_visible)
 
     def add_child(self, btn: SidebarButton) -> None:
+        """
+        Aggiunge un pulsante figlio al sottogruppo.
+
+        Args:
+            btn: Il pulsante da aggiungere.
+        """
         # Indentazione aggiuntiva per il terzo livello (55px)
         if not btn._collapsed:
             current_style = btn.styleSheet()
@@ -68,6 +83,12 @@ class SidebarSubGroup(QWidget):
         self.children_btns.append(btn)
 
     def set_collapsed(self, collapsed: bool) -> None:
+        """
+        Imposta lo stato di contrazione del sottogruppo.
+
+        Args:
+            collapsed: True per contrarre, False per espandere.
+        """
         self.header_btn.set_collapsed(collapsed)
         for btn in self.children_btns:
             btn.set_collapsed(collapsed)
@@ -86,6 +107,14 @@ class SidebarGroup(QWidget):
     expanded = pyqtSignal(object)
 
     def __init__(self, title: str, icon_path: str, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il gruppo principale della sidebar.
+
+        Args:
+            title: Titolo del gruppo.
+            icon_path: Percorso dell'icona del gruppo.
+            parent: Widget genitore opzionale.
+        """
         super().__init__(parent)
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -118,6 +147,7 @@ class SidebarGroup(QWidget):
         self._was_expanded = False
 
     def _set_arrow_icon(self, expanded: bool) -> None:
+        """Imposta l'icona della freccia (espansa/contratta)."""
         from src.utils.helpers import get_colored_icon
 
         icon_enum = Icons.CHEVRON_DOWN if expanded else Icons.CHEVRON_RIGHT
@@ -125,6 +155,7 @@ class SidebarGroup(QWidget):
         self.arrow_label.setPixmap(icon.pixmap(12, 12))
 
     def toggle_group(self) -> None:
+        """Alterna lo stato di apertura del gruppo principale."""
         is_opening = not self.content_area.isVisible()
         self.content_area.setVisible(is_opening)
         self._set_arrow_icon(is_opening)
@@ -135,15 +166,28 @@ class SidebarGroup(QWidget):
             self._was_expanded = False
 
     def collapse(self) -> None:
+        """Chiude forzatamente il gruppo."""
         self.content_area.setVisible(False)
         self._was_expanded = False
         self._set_arrow_icon(False)
 
     def add_child(self, widget: QWidget) -> None:
+        """
+        Aggiunge un elemento figlio (pulsante o sottogruppo).
+
+        Args:
+            widget: Il widget da aggiungere.
+        """
         self.content_layout.addWidget(widget)
         self.children_elements.append(widget)
 
     def set_collapsed(self, collapsed: bool) -> None:
+        """
+        Imposta lo stato di contrazione del gruppo.
+
+        Args:
+            collapsed: True per contrarre, False per espandere.
+        """
         self.header_btn.set_collapsed(collapsed)
         self.arrow_label.setVisible(not collapsed)
 
@@ -175,6 +219,13 @@ class SidebarGroup(QWidget):
         self._set_arrow_icon(self.content_area.isVisible() and not collapsed)
 
     def set_active_index(self, index: int, group_indices: Sequence[int]) -> None:
+        """
+        Imposta il pulsante attivo all'interno del gruppo.
+
+        Args:
+            index: Indice della pagina corrente.
+            group_indices: Elenco degli indici appartenenti a questo gruppo.
+        """
         is_child_active = index in group_indices
         self.header_btn.setChecked(is_child_active)
         if is_child_active:

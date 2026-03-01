@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Any
 
 import pandas as pd
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import QPoint, Qt, QTimer
 from PyQt6.QtWidgets import (
     QFileDialog,
     QMenu,
@@ -39,7 +39,13 @@ logger = logging.getLogger(__name__)
 class PDLDBPanel(QWidget):
     """Orchestratore del modulo PDL con architettura Master-Detail modularizzata."""
 
-    def __init__(self, parent: QWidget | None = None):
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il pannello del database PDL.
+
+        Args:
+            parent: Widget genitore opzionale.
+        """
         super().__init__(parent)
         self.controller = PDLController()
         self.worker: BotWorker | None = None
@@ -87,7 +93,8 @@ class PDLDBPanel(QWidget):
         QTimer.singleShot(50, self.refresh_data)
         QTimer.singleShot(100, self._populate_initial_filters)
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
+        """Configura l'interfaccia grafica e i componenti principali."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         self.tabs = AnimatedTabWidget()
@@ -138,7 +145,8 @@ class PDLDBPanel(QWidget):
         self.tabs.addTab(self.prog_tab, "Programmazione")
         layout.addWidget(self.tabs)
 
-    def _populate_initial_filters(self):
+    def _populate_initial_filters(self) -> None:
+        """Popola i menu a tendina dei filtri con i dati unici presenti nel DB."""
         # Logica di popolamento spostata parzialmente nel controller in futuro
         try:
             from src.core.database import db_manager
@@ -156,7 +164,13 @@ class PDLDBPanel(QWidget):
         except Exception:
             logger.warning("Impossibile caricare i filtri PDL.")
 
-    def refresh_data(self, sort_col=None):
+    def refresh_data(self, sort_col: int | None = None) -> None:
+        """
+        Ricarica i dati dal database applicando i filtri correnti.
+
+        Args:
+            sort_col: Indice opzionale della colonna per l'ordinamento.
+        """
         self.filters.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('pdl')}")
         filters = self.filters.get_filters()
 
@@ -172,11 +186,13 @@ class PDLDBPanel(QWidget):
         self.model.update_data(master_rows)
         self.table.optimize_columns(len(self.master_headers))
 
-    def _on_site_changed(self):
+    def _on_site_changed(self) -> None:
+        """Gestisce il cambio del filtro Sito e aggiorna le Aree disponibili."""
         self._update_areas()
         self.refresh_data()
 
-    def _update_areas(self):
+    def _update_areas(self) -> None:
+        """Aggiorna dinamicamente il filtro Area basandosi sul Sito selezionato."""
         # Delega query leggera a helper futuro
         site = self.filters.site_filter.currentText()
         q = "SELECT DISTINCT area FROM pdl WHERE 1=1"
@@ -196,7 +212,8 @@ class PDLDBPanel(QWidget):
                 self.filters.area_filter.addItem(str(r[0]))
         self.filters.area_filter.blockSignals(False)
 
-    def _on_selection_changed(self):
+    def _on_selection_changed(self) -> None:
+        """Aggiorna la vista di dettaglio quando viene selezionata una riga."""
         sel_model = self.table.selectionModel()
         if not sel_model:
             return
@@ -214,32 +231,37 @@ class PDLDBPanel(QWidget):
                 interventions = []
             self.detail_view.update_details(full_data, interventions)
 
-    def _toggle_detail_view(self):
+    def _toggle_detail_view(self) -> None:
+        """Mostra o nasconde il pannello laterale di dettaglio."""
         self.detail_view.setVisible(not self.detail_view.isVisible())
         if self.detail_view.isVisible():
             self.splitter.setSizes([int(self.width() * 0.7), int(self.width() * 0.3)])
 
-    def _show_context_menu(self, pos):
+    def _show_context_menu(self, pos: QPoint) -> None:
+        """Mostra il menu contestuale nella posizione specificata."""
         menu = QMenu(self)
         menu.addAction("Mostra/Nascondi dettaglio", self._toggle_detail_view)
         vp = self.table.viewport()
         if vp:
             menu.exec(vp.mapToGlobal(pos))
 
-    def _on_header_clicked(self, idx):
+    def _on_header_clicked(self, idx: int) -> None:
+        """Esegue l'ordinamento dei dati al clic sull'header della colonna."""
         self.refresh_data(sort_col=idx)
 
-    def _reset_filters(self):
+    def _reset_filters(self) -> None:
+        """Ripristina tutti i filtri allo stato predefinito."""
         self.filters.search_input.clear()
         self.filters.group_filter.setCurrentIndex(0)
         self.filters.site_filter.setCurrentIndex(0)
         self.refresh_data()
 
-    def _on_update_bot_clicked(self):
+    def _on_update_bot_clicked(self) -> None:
+        """Avvia il bot di aggiornamento per i PDL (implementazione delegata)."""
         # Logica bot delegata a BotController futuro, per ora rimane qui ma ripulita
-        pass
 
-    def _export_to_excel(self):
+    def _export_to_excel(self) -> None:
+        """Esporta l'intero set di dati filtrato in formato Excel."""
         if not self._raw_full_data:
             return
         df = pd.DataFrame(self._raw_full_data, columns=self.full_headers)
