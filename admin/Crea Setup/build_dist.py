@@ -76,8 +76,9 @@ def run_command(cmd, cwd=None, shell=False, check=True):
         )
 
         with open(LOG_FILE, "a", encoding="utf-8") as f:
-            for line in process.stdout:
+            for line in iter(process.stdout.readline, ""):
                 sys.stdout.write(line)
+                sys.stdout.flush()
                 f.write(line)
                 f.flush()
 
