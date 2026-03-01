@@ -182,16 +182,16 @@ class MainWindow(QMainWindow):
         content_layout = QVBoxLayout(content_area)
         content_layout.setContentsMargins(10, 10, 10, 10)
 
-        (
-            self.update_banner,
-            self.global_search,
-        ) = self.tool_bar_component.setup_content_toolbar(content_layout)
-
         self.page_stack = SlidingStackedWidget()
         for i in range(13):
             placeholder = QWidget()
             self.page_stack.addWidget(placeholder)
             setattr(self, f"_panel_initialized_{i}", False)
+
+        (
+            self.update_banner,
+            self.global_search,
+        ) = self.tool_bar_component.setup_content_toolbar(content_layout)
 
         content_layout.addWidget(self.page_stack)
         main_layout.addWidget(content_area, 0, 0)
