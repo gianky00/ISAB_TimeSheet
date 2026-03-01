@@ -6,17 +6,71 @@ Inizializza la sidebar, il banner degli aggiornamenti e la barra di ricerca glob
 
 from typing import Any
 
-from PyQt6.QtCore import QObject
-from PyQt6.QtWidgets import QLineEdit, QVBoxLayout, QWidget
+from PyQt6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QSize, Qt
+from PyQt6.QtGui import QEnterEvent
+from PyQt6.QtWidgets import QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.gui.widgets.core_widgets import (
     SearchInput,
 )
-from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.sidebar_widget import SidebarWidget
 from src.gui.widgets.update_banner import UpdateBanner
-from src.utils.helpers import get_asset_path
+from src.utils.helpers import get_asset_path, get_colored_icon
+
+
+class AnimatedSplitButton(QPushButton):
+    """Pulsante Split personalizzato con sfondo bianco, massimo contrasto e animazione al passaggio del mouse."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedWidth(45)
+        self.setFixedHeight(40)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setToolTip("Sgancia la vista corrente in una finestra esterna (Multi-Window)")
+
+        # Sfondo bianco per massimo contrasto
+        self.setStyleSheet("""
+            QPushButton {
+                background-color: #FFFFFF;
+                border: 2px solid #2C3E50;
+                border-radius: 8px;
+            }
+            QPushButton:hover {
+                background-color: #F0F4F8;
+                border: 2px solid #3498DB;
+            }
+            QPushButton:pressed {
+                background-color: #E2E8F0;
+                padding-top: 2px;
+            }
+        """)
+
+        # Icona scura per massimo contrasto
+        icon_path = get_asset_path(Icons.SPLIT_WINDOW)
+        self.setIcon(get_colored_icon(icon_path, "#212121"))
+        self.setIconSize(QSize(20, 20))
+
+        # Setup Animazione (Bounce sull'icon size)
+        self.anim = QPropertyAnimation(self, b"iconSize")
+        self.anim.setDuration(300)
+        self.anim.setEasingCurve(QEasingCurve.Type.OutBack)
+
+    def enterEvent(self, event: QEnterEvent | None) -> None:
+        """Animazione di ingrandimento dell'icona al passaggio del mouse."""
+        self.anim.stop()
+        self.anim.setStartValue(QSize(20, 20))
+        self.anim.setEndValue(QSize(26, 26))
+        self.anim.start()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event: Any | None) -> None:
+        """Ritorno alla dimensione normale."""
+        self.anim.stop()
+        self.anim.setStartValue(self.iconSize())
+        self.anim.setEndValue(QSize(20, 20))
+        self.anim.start()
+        super().leaveEvent(event)
 
 
 class ToolBarComponent(QObject):
@@ -61,13 +115,12 @@ class ToolBarComponent(QObject):
         Returns:
             tuple: (Istanza UpdateBanner, Istanza QLineEdit della ricerca).
         """
+
         self.update_banner = UpdateBanner()
         self.update_banner.download_requested.connect(self.main_window._on_download_update_clicked)
         layout.addWidget(self.update_banner)
 
         # Wrap search bar in a horizontal layout to add margin for floating logo
-        from PyQt6.QtWidgets import QHBoxLayout
-
         search_layout = QHBoxLayout()
         search_layout.setContentsMargins(75, 0, 0, 0)  # Spazio per il logo fluttuante
 
@@ -81,15 +134,8 @@ class ToolBarComponent(QObject):
         )
         search_layout.addWidget(self.global_search)
 
-        # Pulsante Split Window (Vista Esterna) Universale
-        self.detach_btn = ModernButton(
-            "",
-            variant=ModernButton.Variant.SECONDARY,
-            size=ModernButton.Size.MEDIUM,
-            icon=get_asset_path(Icons.SPLIT_WINDOW),
-        )
-        self.detach_btn.setToolTip("Sgancia la vista corrente in una finestra esterna (Multi-Window)")
-        self.detach_btn.setFixedWidth(45)
+        # Pulsante Split Window (Vista Esterna) Universale con animazione
+        self.detach_btn = AnimatedSplitButton()
         self.detach_btn.clicked.connect(self.main_window.navigation_controller.detach_current_panel)
         search_layout.addWidget(self.detach_btn)
 
