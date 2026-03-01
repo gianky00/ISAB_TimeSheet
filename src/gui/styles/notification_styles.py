@@ -66,11 +66,4 @@ def get_notification_qss(level: str, is_read: bool) -> str:
             border-right: 1px solid {COLORS["border_medium"]};
             border-bottom: 1px solid {COLORS["border_medium"]};
         }}
-        QToolTip {{
-            background-color: {COLORS["bg_white"]};
-            color: {COLORS["text_dark"]};
-            border: 1px solid {COLORS["border_dark"]};
-            border-radius: 4px;
-            padding: 5px;
-        }}
     """

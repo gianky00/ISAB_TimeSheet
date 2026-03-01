@@ -157,13 +157,13 @@ QSplitter::handle:vertical {
     image: url(assets/icons/drag-handle-horizontal.svg);
 }
 
-/* === GLASS TOOLTIPS (Dark Mode for High Contrast) === */
+/* === UNIFIED TOOLTIPS (Light Mode - High Contrast) === */
 QToolTip {
-    background-color: {{glass_deep}};
-    color: white;
-    border: 1px solid {{glass_border}};
+    background-color: #FFFFFF;
+    color: #212121;
+    border: 1px solid #BBBBBB;
     border-radius: 6px;
-    padding: 6px 10px;
+    padding: 8px 12px;
 }
 
 /* === TREE & LIST WIDGETS === */

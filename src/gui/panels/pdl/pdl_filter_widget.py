@@ -140,7 +140,6 @@ class PDLFilterWidget(QWidget):
         # Reset
         self.clear_btn = ModernButton("", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL)
         self.clear_btn.setIcon(get_colored_icon(get_asset_path(Icons.RESET), COLORS["text_muted"]))
-        self.clear_btn.setToolTip("Resetta Filtri")
 
         # Update Bot
         self.btn_bot_update = ModernButton(

@@ -162,8 +162,12 @@ class ContabilitaPanel(QWidget):
         )
         self.update_btn.clicked.connect(self.start_import_process)
 
+        btn_h = QHBoxLayout()
+        btn_h.setSpacing(5)
+        btn_h.addWidget(self.update_btn)
+
         info_v.addWidget(self.status_lbl)
-        info_v.addWidget(self.update_btn)
+        info_v.addLayout(btn_h)
         toolbar_layout.addLayout(info_v)
 
         layout.addWidget(self.toolbar_card)

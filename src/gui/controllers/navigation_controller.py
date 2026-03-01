@@ -10,8 +10,12 @@ from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtWidgets import QMessageBox, QStackedWidget, QWidget
 
+from src.gui.components.popout.popout_manager import DetachedPanelWindow, PopoutPlaceholderWidget
+
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+import typing
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +35,8 @@ class NavigationController:
             main_window: Riferimento alla MainWindow dell'applicazione.
         """
         self.mw = main_window
+        # Traccia i pannelli attualmente staccati (indice -> struct con panel nativo, placeholder, e finestra top-level)
+        self._detached_panels: dict[int, dict[str, Any]] = {}
 
     def get_panel(self, index: int) -> QWidget | None:
         """
@@ -48,6 +54,11 @@ class NavigationController:
 
         panel = page_stack.widget(index)
         if getattr(self.mw, f"_panel_initialized_{index}", False):
+            # Se è distaccato, restituiamo il suo placeholder al master view
+            if index in self._detached_panels:
+                # Ritorna il placeholder anzichè il pannello sganciato
+                return typing.cast("QWidget", self._detached_panels[index]["placeholder"])
+
             if isinstance(panel, QWidget):
                 return panel
             return None
@@ -204,6 +215,76 @@ class NavigationController:
         self.mw.page_stack.insertWidget(index, new_panel)
         setattr(self.mw, f"_panel_initialized_{index}", True)
         self._try_connect_signals()
+
+    def detach_panel(self, index: int, title: str) -> None:
+        """
+        Stacca un modulo dall'interno della MainWindow in una finestra top-level (Pop-out).
+        Al suo posto nel QStackedWidget viene inserito un placeholder.
+        """
+        if index in self._detached_panels:
+            # È già staccato, portionalo in primo piano (Raise)
+            self._detached_panels[index]["window"].raise_()
+            self._detached_panels[index]["window"].activateWindow()
+            return
+
+        panel = self.mw.page_stack.widget(index)
+        if not panel or not getattr(self.mw, f"_panel_initialized_{index}", False):
+            # Non possiamo staccare un pannello che non è ancora stato caricato/inizializzato
+            logger.warning(f"Tentato distacco di panel non init. (Index: {index})")
+            return
+
+        # Rimuoviamo il pannello originale dallo stack
+        self.mw.page_stack.removeWidget(panel)
+
+        # Creiamo un placeholder informativo col pulsante "Riaggancia"
+        # Notare come il clack triggeri lo stesso riaggancio di evento chiesta OS!
+        placeholder = PopoutPlaceholderWidget(title, on_reattach=lambda: self._on_panel_reattached(index))
+        self.mw.page_stack.insertWidget(index, placeholder)
+
+        # Creiamo la nuova finestra nativa PyQt passando il vero pannello
+        popout_win = DetachedPanelWindow(original_index=index, panel=panel, title=title)
+
+        # Colleghiamo il segnale emesso alla chiusura per fare il ripristino automatico
+        popout_win.panel_closed_signal.connect(self._on_panel_reattached)
+
+        # Mostriamolo fisicamente sull'OS
+        popout_win.show()
+
+        self._detached_panels[index] = {"panel": panel, "placeholder": placeholder, "window": popout_win}
+
+        # Facciamo scorrere lo stack sul placeholder per conferma visiva all'utente
+        if self.mw._current_page_index == index:
+            # Force refresh layout internal to stackedwidget since its a different instance
+            self.mw.page_stack.setCurrentIndex(index)
+
+    def _on_panel_reattached(self, index: int) -> None:
+        """Riporta il pannello dentro la MainWindow e distrugge la Popout Window."""
+        popout_data = self._detached_panels.pop(index, None)
+        if not popout_data:
+            return
+
+        panel = popout_data["panel"]
+        placeholder = popout_data["placeholder"]
+        window = popout_data["window"]
+
+        # Evita cicli chiudendola programmatticamente solo se on_reattach
+        # è stato premuto. Se è stata chiusa dall'utente, il closeEvent invia già questo signal.
+        if window.isVisible():
+            window.panel_closed_signal.disconnect(self._on_panel_reattached)  # disconnette per no-loop
+            window.close()
+
+        # Togliamo il vecchio widget informativo "Sono in popout"
+        self.mw.page_stack.removeWidget(placeholder)
+        placeholder.deleteLater()
+
+        # Rimettiamo il figlio originale (Timbrature, OdA ecc) al suo index corretto.
+        # N.B. self.get_panel tornerà quello vero d'ora in poi
+        self.mw.page_stack.insertWidget(index, panel)
+
+        if self.mw._current_page_index == index:
+            self.mw.page_stack.setCurrentIndex(index)
+
+        logger.info(f"Pannello idx:{index} è stato ricollegato (reattached) regolarmente.")
 
     def _handle_panel_error(self, index: int, e: Exception) -> None:
         """Notifica all'utente e logga il fallimento del caricamento di un modulo GUI."""
@@ -366,3 +447,43 @@ class NavigationController:
         """Naviga alla vista Lyra passando un contesto testuale per l'analisi immediata."""
         self.navigate_to(2)
         self.mw.lyra_panel.ask_lyra("Analizza questi dati e dimmi se ci sono anomalie.", context_text)
+
+    def detach_current_panel(self) -> None:
+        """Sgancia il pannello attualmente visualizzato in una finestra esterna."""
+        idx = self.mw.page_stack.currentIndex()
+        if idx < 0:
+            return
+
+        panel = self.mw.page_stack.widget(idx)
+        if not panel:
+            return
+
+        # Recupera il titolo dal pannello se disponibile, altrimenti usa un default basato sull'indice
+        title = "Pannello"
+        if hasattr(panel, "bot_name"):
+            title = panel.bot_name
+        elif hasattr(panel, "windowTitle") and panel.windowTitle():
+            title = panel.windowTitle()
+
+        # Mapping manuale se i titoli sono vuoti (Dashboard, ecc)
+        from src.gui.main_window.page_index import PageIndex
+
+        titles = {
+            PageIndex.DASHBOARD: "Dashboard",
+            PageIndex.AUTOMAZIONI: "Automazioni",
+            PageIndex.LYRA: "Lyra AI",
+            PageIndex.TIMBRATURE: "Database Timbrature",
+            PageIndex.STRUMENTALE: "Contabilità Strumentale",
+            PageIndex.DATAEASE: "Scarico Ore (DataEase)",
+            PageIndex.ANAGRAFICHE: "Anagrafica PDL",
+            PageIndex.SETTINGS: "Impostazioni",
+            PageIndex.HELP: "Aiuto e Supporto",
+            PageIndex.NOTIFICATIONS: "Centro Notifiche",
+            PageIndex.STORICO_ODA: "Storico OdA",
+            PageIndex.DIPENDENTI: "Gestione Dipendenti",
+            PageIndex.CONSUNTIVO: "Consuntivo",
+        }
+        if title == "Pannello" or not title:
+            title = titles.get(idx, f"Modulo {idx}")
+
+        self.detach_panel(idx, title)

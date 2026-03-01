@@ -9,11 +9,14 @@ from typing import Any
 from PyQt6.QtCore import QObject
 from PyQt6.QtWidgets import QLineEdit, QVBoxLayout, QWidget
 
+from src.core.constants import Icons
 from src.gui.widgets.core_widgets import (
     SearchInput,
 )
+from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.sidebar_widget import SidebarWidget
 from src.gui.widgets.update_banner import UpdateBanner
+from src.utils.helpers import get_asset_path
 
 
 class ToolBarComponent(QObject):
@@ -77,6 +80,18 @@ class ToolBarComponent(QObject):
             )
         )
         search_layout.addWidget(self.global_search)
+
+        # Pulsante Split Window (Vista Esterna) Universale
+        self.detach_btn = ModernButton(
+            "",
+            variant=ModernButton.Variant.SECONDARY,
+            size=ModernButton.Size.MEDIUM,
+            icon=get_asset_path(Icons.SPLIT_WINDOW),
+        )
+        self.detach_btn.setToolTip("Sgancia la vista corrente in una finestra esterna (Multi-Window)")
+        self.detach_btn.setFixedWidth(45)
+        self.detach_btn.clicked.connect(self.main_window.navigation_controller.detach_current_panel)
+        search_layout.addWidget(self.detach_btn)
 
         layout.addLayout(search_layout)
 

@@ -194,15 +194,6 @@ QProgressBar::chunk {
     border-radius: 4px;
 }
 
-/* === TOOLTIPS === */
-QToolTip {
-    background-color: {{surface}};
-    color: {{on_surface}};
-    border: 1px solid {{border}};
-    padding: 8px 12px;
-    border-radius: 4px;
-}
-
 /* === GROUP BOX === */
 QGroupBox {
     border: 1px solid {{border}};

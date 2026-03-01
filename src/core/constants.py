@@ -180,5 +180,6 @@ class Icons:
     # UI Elements
     FLAG_TCL_ON = "assets/icons/flag_tcl_on.svg"
     FLAG_TCL_OFF = "assets/icons/flag_tcl_off.svg"
+    SPLIT_WINDOW = "assets/icons/split-window.svg"
     FLAG_TGO_ON = "assets/icons/flag_tgo_on.svg"
     FLAG_TGO_OFF = "assets/icons/flag_tgo_off.svg"

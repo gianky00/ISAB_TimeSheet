@@ -79,8 +79,12 @@ class ScaricoOreFilterBar(ModernCard):
         )
         self.update_btn.clicked.connect(self.update_requested.emit)
 
+        btn_h = QHBoxLayout()
+        btn_h.setSpacing(5)
+        btn_h.addWidget(self.update_btn)
+
         info_v.addWidget(self.status_label)
-        info_v.addWidget(self.update_btn)
+        info_v.addLayout(btn_h)
         layout.addLayout(info_v)
 
     def _create_stat_vbox(
