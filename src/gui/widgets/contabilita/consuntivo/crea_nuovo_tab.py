@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -33,6 +33,7 @@ class CreaNuovoTab(QWidget):
     """Tab per la generazione di un nuovo consuntivo con tutti i campi necessari."""
 
     step_clicked = pyqtSignal(str)
+    _prog_computed = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -41,7 +42,11 @@ class CreaNuovoTab(QWidget):
         self.last_generated_file: str | None = None
         self._last_prog_check = 0.0
         self._cached_prog = ""
+        self._prog_computed.connect(self._on_prog_computed)
         self._setup_ui()
+
+    def _on_prog_computed(self, prog: str) -> None:
+        self.progressivo_edit.setText(prog)
 
     def _setup_ui(self) -> None:
         main_layout = QVBoxLayout(self)
@@ -249,10 +254,10 @@ class CreaNuovoTab(QWidget):
                 manager = PreventiviGeneratorManager("")
                 next_prog = manager.get_next_progressive(dynamic_path)
                 self._cached_prog = next_prog
-                # Aggiorna l'UI in modo sicuro
-                QTimer.singleShot(0, lambda: self.progressivo_edit.setText(next_prog))
+                # Aggiorna l'UI in modo sicuro tramite un signal
+                self._prog_computed.emit(next_prog)
             except Exception:
-                QTimer.singleShot(0, lambda: self.progressivo_edit.setText("001"))
+                self._prog_computed.emit("001")
 
         threading.Thread(target=run_check, daemon=True).start()
 

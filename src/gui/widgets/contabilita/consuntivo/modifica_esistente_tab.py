@@ -40,6 +40,8 @@ class ModificaEsistenteTab(QWidget):
     """Tab intelligente per la gestione di consuntivi esistenti con caching delle scansioni di rete."""
 
     step_clicked = pyqtSignal(str)
+    _scan_finished = pyqtSignal()
+    _scan_error = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -48,8 +50,13 @@ class ModificaEsistenteTab(QWidget):
         self._last_scan_time = 0.0
         self._cached_files: list[tuple[str, str]] = []
         self._is_scanning = False
+        self._scan_finished.connect(self._update_combo_from_cache)
+        self._scan_error.connect(self._on_scan_error)
         self._setup_ui()
         QTimer.singleShot(500, self._scan_directory)
+
+    def _on_scan_error(self, msg: str) -> None:
+        self.log_widget.append_log(msg, "error")
 
     def _setup_ui(self) -> None:
         scroll = QScrollArea()
@@ -228,12 +235,10 @@ class ModificaEsistenteTab(QWidget):
                             temp_files.append((f, str(full)))
 
                 self._cached_files = temp_files
-                QTimer.singleShot(0, self._update_combo_from_cache)
+                self._scan_finished.emit()
             except Exception as e:
                 err_msg = str(e)
-                QTimer.singleShot(
-                    0, lambda: self.log_widget.append_log(f"Errore scansione: {err_msg}", "error")
-                )
+                self._scan_error.emit(f"Errore scansione: {err_msg}")
             finally:
                 self._is_scanning = False
 

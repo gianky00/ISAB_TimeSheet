@@ -24,6 +24,16 @@ sys.path.insert(0, str(ROOT_DIR / "src"))
 def _print_exception_and_exit(exc_type, exc_value, exc_tb):
     print("FATAL UNCAUGHT EXCEPTION:")
     traceback.print_exception(exc_type, exc_value, exc_tb)
+    # Salvataggio del crash di basso livello nativo
+    import contextlib
+
+    with contextlib.suppress(Exception):
+        from src.core.config_manager import CONFIG_DIR
+
+        crash_file = CONFIG_DIR / "crash.txt"
+        with open(crash_file, "a", encoding="utf-8") as f:
+            f.write(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] NATIVE FATAL UNCAUGHT EXCEPTION:\n")
+            traceback.print_exception(exc_type, exc_value, exc_tb, file=f)
     sys.exit(1)
 
 
@@ -44,6 +54,24 @@ def setup_enterprise_logging():
     # Ensure config directory exists
     if not CONFIG_DIR.exists():
         CONFIG_DIR.mkdir(parents=True)
+
+    # Assicurati che il file crash esista e puliscilo per la nuova sessione
+    crash_file = CONFIG_DIR / "crash.txt"
+    import contextlib
+
+    with contextlib.suppress(Exception):
+        crash_file.write_text(
+            "=== SYNCROJOB CRASH LOG ===\nNessun crash rilevato in questa sessione.\n", encoding="utf-8"
+        )
+
+        # Abilita traceback a livello C/C++ (Segmentation Fault, Access Violation)
+        import faulthandler
+
+        # Mantiene il file aperto per faulthandler in modo safely append
+        crash_native_file = open(crash_file, "a", encoding="utf-8")  # noqa: SIM115
+        crash_native_file.write("\n[DEBUG] Native C++ faulthandler engine enabled.\n")
+        crash_native_file.flush()
+        faulthandler.enable(file=crash_native_file)
 
     # Configure logging system
     configure_logging()
@@ -258,6 +286,7 @@ def main():
 
         # Write explicitly to crash.txt for user visibility
         crash_file = None
+        global_crash_file = CONFIG_DIR / "crash.txt"
         try:
             log_dir = CONFIG_DIR / "logs" / "errors"
             log_dir.mkdir(exist_ok=True, parents=True)
@@ -265,13 +294,19 @@ def main():
             report: list[str] = []
             report.extend(("=== TRACEBACK ===\n", traceback.format_exc()))
 
-            crash_file.write_text(
+            crash_content = (
                 f"=== CRASH REPORT ===\n"
                 f"Timestamp: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n"
                 f"Trace ID: {app_trace_id}\n"
-                f"Error: {e!s}\n\n" + "".join(report),
-                encoding="utf-8",
+                f"Error: {e!s}\n\n" + "".join(report)
             )
+
+            crash_file.write_text(crash_content, encoding="utf-8")
+
+            # Scrivi anche nel file globale pulito all'avvio
+            with open(global_crash_file, "w", encoding="utf-8") as f:
+                f.write(crash_content)
+
         except Exception as io_error:
             print(f"Failed to write crash.txt: {io_error}")
 

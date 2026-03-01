@@ -5,15 +5,12 @@ Consente di separare i widget dallo stack centrale della MainWindow e renderizza
 
 from collections.abc import Callable
 
-from PyQt6.QtCore import QPoint, QSettings, Qt, pyqtSignal
-from PyQt6.QtGui import QCloseEvent, QMouseEvent
+from PyQt6.QtCore import QPoint, Qt, pyqtSignal
+from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import (
     QFrame,
-    QHBoxLayout,
     QLabel,
     QMainWindow,
-    QPushButton,
-    QSizeGrip,
     QVBoxLayout,
     QWidget,
 )
@@ -24,88 +21,10 @@ from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path
 
 
-class CustomTitleBar(QFrame):
-    """Barra del titolo personalizzata per la finestra sganciata."""
-
-    def __init__(
-        self, parent: QWidget, title: str, on_close: Callable[[], None], on_pin: Callable[[bool], None]
-    ):
-        super().__init__(parent)
-        self.setFixedHeight(40)
-        self.setStyleSheet(f"""
-            QFrame {{
-                background-color: {COLORS["primary_blue"]};
-                border-top-left-radius: 10px;
-                border-top-right-radius: 10px;
-                border-bottom: none;
-            }}
-            QPushButton {{
-                background: transparent;
-                border: none;
-                border-radius: 4px;
-                color: white;
-                font-weight: bold;
-                font-size: 14px;
-            }}
-            QPushButton:hover {{
-                background-color: rgba(255, 255, 255, 0.2);
-            }}
-            QPushButton#btnClose:hover {{
-                background-color: #E53935;
-            }}
-        """)
-
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(15, 0, 8, 0)
-
-        # Icona e Titolo
-        self.title_lbl = QLabel(title)
-        self.title_lbl.setStyleSheet("font-weight: 800; font-size: 14px; color: white;")
-        layout.addWidget(self.title_lbl)
-
-        layout.addStretch()
-
-        # Bottone Pin
-        self.pin_btn = QPushButton("📌")
-        self.pin_btn.setToolTip("Mantieni in primo piano")
-        self.pin_btn.setFixedSize(30, 30)
-        self.pin_btn.setCheckable(True)
-        self.pin_btn.clicked.connect(on_pin)
-        layout.addWidget(self.pin_btn)
-
-        # Bottone Chiudi/Riaggancia
-        self.close_btn = QPushButton("✕")
-        self.close_btn.setObjectName("btnClose")
-        self.close_btn.setToolTip("Chiudi e riaggancia")
-        self.close_btn.setFixedSize(30, 30)
-        self.close_btn.clicked.connect(on_close)
-        layout.addWidget(self.close_btn)
-
-        self._start_pos: QPoint | None = None
-
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
-        if event and event.button() == Qt.MouseButton.LeftButton:
-            self._start_pos = event.globalPosition().toPoint()
-
-    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
-        if not event:
-            return
-        if self._start_pos and self.window():
-            delta = event.globalPosition().toPoint() - self._start_pos
-            win = self.window()
-            if win:
-                win.move(win.pos() + delta)
-            self._start_pos = event.globalPosition().toPoint()
-
-    def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:
-        self._start_pos = None
-
-
 class DetachedPanelWindow(QMainWindow):
     """
     Finestra indipendente che ospita un pannello precedentemente residente nello SlidingStackedWidget.
-    Gestisce il proprio ciclo di vita e informa il controller alla chiusura per il riaggancio del widget.
-    Include barra custom, Pin-To-Top e salvataggio/ripristino della posizione.
+    Utiilzza il frame di sistema OS per prevenire il noto crash PyQt6 (Access Violation) durante il reparenting C++.
     """
 
     panel_closed_signal = pyqtSignal(int)  # Indice originale del pannello
@@ -113,129 +32,43 @@ class DetachedPanelWindow(QMainWindow):
     def __init__(
         self, original_index: int, panel: QWidget, title: str, parent: QWidget | None = None
     ) -> None:
-        """
-        Inizializza la finestra esterna.
-        """
         super().__init__(parent)
         self.original_index = original_index
         self.panel = panel
-        self.settings = QSettings("SyncroJob", "MultiWindow")
 
-        # Configurazione Finestra Frameless
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window)
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setWindowTitle(f"{title} - SyncroJob (Finestra Esterna)")
+        self.setMinimumSize(1000, 700)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
-        self.central_widget = QWidget()
-        self.setCentralWidget(self.central_widget)
-
-        main_layout = QVBoxLayout(self.central_widget)
-        main_layout.setContentsMargins(10, 10, 10, 10)  # Spazio per drop shadow
-
-        # Container per gestire i bordi e gli angoli arrotondati
-        self.container = QFrame()
-        self.container.setStyleSheet(f"""
-            QFrame {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 10px;
-            }}
-        """)
-
-        # Drop shadow
-        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
-
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(20)
-        shadow.setColor(Qt.GlobalColor.black)
-        shadow.setOffset(0, 5)
-        self.container.setGraphicsEffect(shadow)
-
-        container_layout = QVBoxLayout(self.container)
-        container_layout.setContentsMargins(0, 0, 0, 0)
-        container_layout.setSpacing(0)
-
-        # Aggiunta Custom Title Bar
-        # Cast close a callable che ritorna None per Mypy
-        def _close_action():
-            self.close()
-
-        self.title_bar = CustomTitleBar(self, f"{title} - SyncroJob", _close_action, self._toggle_pin)
-        container_layout.addWidget(self.title_bar)
-
-        # Aggiunta del Pannello vero e proprio
-        self.panel.setParent(self.container)
-        self.panel.setStyleSheet("border: none; border-radius: 0px;")  # Resetta bordi interni
-        container_layout.addWidget(self.panel, stretch=1)
-
-        # Grip per il ridimensionamento
-        bottom_layout = QHBoxLayout()
-        bottom_layout.setContentsMargins(0, 0, 0, 0)
-        bottom_layout.addStretch()
-        grip = QSizeGrip(self.container)
-        grip.setFixedSize(15, 15)
-        grip.setStyleSheet("background: transparent;")
-        bottom_layout.addWidget(grip, 0, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight)
-        container_layout.addLayout(bottom_layout)
-
-        main_layout.addWidget(self.container)
-
-        # Ripristino Geometria
-        geom = self.settings.value(f"geometry_{self.original_index}")
-        if geom:
-            self.restoreGeometry(geom)
-        else:
-            self.resize(1100, 750)
-
+        # Configura il widget centrale in modo elementare e solido
+        self.panel.setParent(self)
+        self.setCentralWidget(self.panel)
         self.panel.show()
-
-    def _toggle_pin(self, checked: bool) -> None:
-        """Attiva o disattiva la modalità 'Sempre in Primo Piano'."""
-        flags = self.windowFlags()
-        if checked:
-            self.setWindowFlags(flags | Qt.WindowType.WindowStaysOnTopHint)
-            self.title_bar.pin_btn.setStyleSheet("background-color: #F59E0B; color: white;")
-        else:
-            self.setWindowFlags(flags & ~Qt.WindowType.WindowStaysOnTopHint)
-            self.title_bar.pin_btn.setStyleSheet("")
-        self.show()  # setWindowFlags forza un hide(), dobbiamo rishoware
 
     def closeEvent(self, event: QCloseEvent | None) -> None:
         """
-        Intercetta la chiusura per salvare la geometria e avviare il riaggancio.
+        Intercetta la chiusura della finestra per avviare il riaggancio.
         """
         if event:
-            self.settings.setValue(f"geometry_{self.original_index}", self.saveGeometry())
+            import logging
+
+            logging.getLogger(__name__).info("Popout finestra esterna chiusa, innesco reattach...")
             self.panel_closed_signal.emit(self.original_index)
             super().closeEvent(event)
 
 
 class PopoutPlaceholderWidget(QWidget):
-    """
-    Widget visualizzato nello StackedWidget centrale quando il suo contenuto nativo
-    è stato spostato in una DetachedPanelWindow.
-    Fornisce feedback visivo all'utente e un pulsante per il riaggancio manuale.
-    """
+    """Placeholder per lo stack centrale."""
 
     def __init__(self, title: str, on_reattach: Callable[[], None], parent: QWidget | None = None) -> None:
-        """
-        Inizializza il placeholder.
-
-        Args:
-            title: Il nome del modulo sganciato.
-            on_reattach: La callback da eseguire per riagganciare il pannello.
-            parent: Il widget genitore opzionale.
-        """
         super().__init__(parent)
         self._setup_ui(title, on_reattach)
 
     def _setup_ui(self, title: str, on_reattach: Callable[[], None]) -> None:
-        """Configura l'interfaccia grafica del placeholder."""
         main_layout = QVBoxLayout(self)
         main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.setContentsMargins(40, 40, 40, 40)
 
-        # Container Card Centrale
         self.card = QFrame()
         self.card.setObjectName("placeholderCard")
         self.card.setStyleSheet(f"""
@@ -245,14 +78,10 @@ class PopoutPlaceholderWidget(QWidget):
                 border-top: 5px solid {COLORS["primary_blue"]};
                 border-radius: 12px;
             }}
-            QLabel {{
-                border: none;
-                background: transparent;
-            }}
+            QLabel {{ border: none; background: transparent; }}
         """)
         self.card.setFixedWidth(560)
 
-        # Shadow Effect
         from PyQt6.QtWidgets import QGraphicsDropShadowEffect
 
         shadow = QGraphicsDropShadowEffect(self)
@@ -266,7 +95,6 @@ class PopoutPlaceholderWidget(QWidget):
         card_layout.setSpacing(20)
         card_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Container per il Logo con animazione fluttuante
         self.logo_container = QWidget()
         self.logo_container.setFixedSize(140, 140)
         logo_layout = QVBoxLayout(self.logo_container)
@@ -279,10 +107,8 @@ class PopoutPlaceholderWidget(QWidget):
         try:
             from PyQt6.QtGui import QIcon
 
-            # Carica l'app.ico tramite QIcon per estrarre il layer ad alta risoluzione
             logo_path = get_asset_path("app.ico")
             icon = QIcon(logo_path)
-            # Richiediamo una dimensione grande (es. 256x256) per evitare pixelation, poi la scaliamo morbidamente a 120x120
             pixmap = icon.pixmap(256, 256)
             if not pixmap.isNull():
                 self.logo_label.setPixmap(
@@ -302,80 +128,50 @@ class PopoutPlaceholderWidget(QWidget):
 
         logo_layout.addWidget(self.logo_label)
 
-        # Badge di stato
         badge_label = QLabel("IN ESECUZIONE")
-        badge_label.setStyleSheet(f"""
-            QLabel {{
-                background-color: {COLORS["bg_hover"]};
-                color: {COLORS["primary_blue"]};
-                padding: 6px 12px;
-                border-radius: 12px;
-                font-weight: 800;
-                font-size: 11px;
-                letter-spacing: 1px;
-            }}
-        """)
+        badge_label.setStyleSheet(
+            f"background-color: {COLORS['bg_hover']}; color: {COLORS['primary_blue']}; padding: 6px 12px; border-radius: 12px; font-weight: 800; font-size: 11px; letter-spacing: 1px;"
+        )
         badge_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        badge_layout = QHBoxLayout()
-        badge_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        badge_layout.addWidget(badge_label)
-
-        # Titolo
         title_label = QLabel(f"Modulo '{title}' attivo")
         title_label.setStyleSheet(f"font-size: 26px; font-weight: 900; color: {COLORS['text_dark']};")
-        title_label.setWordWrap(True)
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Descrizione
         desc_label = QLabel(
-            "Il modulo selezionato è in esecuzione in una <b>finestra indipendente</b>.<br><br>"
-            "Puoi utilizzare il menu laterale per continuare a navigare e lavorare all'interno di questa finestra principale, "
-            "mantenendo la vista sganciata a tua disposizione."
+            "Il modulo selezionato è in esecuzione in una <b>finestra indipendente</b>.<br><br>Puoi utilizzare il menu laterale per continuare a navigare e lavorare all'interno di questa finestra principale."
         )
         desc_label.setStyleSheet(f"font-size: 14.5px; color: {COLORS['text_muted']}; line-height: 1.6;")
         desc_label.setWordWrap(True)
         desc_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Bottone di "Ricongiungimento"
         self.reattach_btn = ModernButton(
             "TORNA ALLA VISTA PRINCIPALE",
             icon=get_asset_path(Icons.CHEVRON_DOWN),
             variant=ModernButton.Variant.PRIMARY,
             parent=self,
         )
-        self.reattach_btn.setToolTip("Riporta questo pannello all'interno della finestra principale.")
         self.reattach_btn.setFixedWidth(320)
         self.reattach_btn.setMinimumHeight(50)
-        self.reattach_btn.setStyleSheet(
-            self.reattach_btn.styleSheet() + "QPushButton { font-size: 14px; font-weight: bold; }"
-        )
         self.reattach_btn.clicked.connect(on_reattach)
 
-        # Assemblaggio Layout
         card_layout.addWidget(self.logo_container, alignment=Qt.AlignmentFlag.AlignHCenter)
-        card_layout.addLayout(badge_layout)
+        card_layout.addWidget(badge_label, alignment=Qt.AlignmentFlag.AlignHCenter)
         card_layout.addSpacing(5)
         card_layout.addWidget(title_label)
         card_layout.addWidget(desc_label)
         card_layout.addSpacing(25)
-
-        btn_h = QHBoxLayout()
-        btn_h.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        btn_h.addWidget(self.reattach_btn)
-        card_layout.addLayout(btn_h)
+        card_layout.addWidget(self.reattach_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         main_layout.addWidget(self.card)
 
-        # === ANIMAZIONI ===
-        from PyQt6.QtCore import QEasingCurve, QPoint, QPropertyAnimation, QSequentialAnimationGroup
+        # Animazioni
+        from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSequentialAnimationGroup
         from PyQt6.QtWidgets import QGraphicsOpacityEffect
 
-        # 1. Fade In della Card
         self.opacity_effect = QGraphicsOpacityEffect(self.card)
         self.card.setGraphicsEffect(self.opacity_effect)
         self.opacity_effect.setOpacity(0.0)
-
         self.fade_anim = QPropertyAnimation(self.opacity_effect, b"opacity")
         self.fade_anim.setDuration(800)
         self.fade_anim.setStartValue(0.0)
@@ -383,21 +179,18 @@ class PopoutPlaceholderWidget(QWidget):
         self.fade_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
         self.fade_anim.start()
 
-        # 2. Effetto "Levitazione" continua per il logo
         self.float_anim_up = QPropertyAnimation(self.logo_label, b"pos")
         self.float_anim_up.setDuration(1500)
-        self.float_anim_up.setStartValue(self.logo_label.pos())
-        self.float_anim_up.setEndValue(self.logo_label.pos() + QPoint(0, -10))
+        self.float_anim_up.setStartValue(QPoint(0, 0))
+        self.float_anim_up.setEndValue(QPoint(0, -10))
         self.float_anim_up.setEasingCurve(QEasingCurve.Type.InOutSine)
-
         self.float_anim_down = QPropertyAnimation(self.logo_label, b"pos")
         self.float_anim_down.setDuration(1500)
-        self.float_anim_down.setStartValue(self.logo_label.pos() + QPoint(0, -10))
-        self.float_anim_down.setEndValue(self.logo_label.pos())
+        self.float_anim_down.setStartValue(QPoint(0, -10))
+        self.float_anim_down.setEndValue(QPoint(0, 0))
         self.float_anim_down.setEasingCurve(QEasingCurve.Type.InOutSine)
-
         self.bounce_group = QSequentialAnimationGroup(self)
         self.bounce_group.addAnimation(self.float_anim_up)
         self.bounce_group.addAnimation(self.float_anim_down)
-        self.bounce_group.setLoopCount(-1)  # Infinito
+        self.bounce_group.setLoopCount(-1)
         self.bounce_group.start()

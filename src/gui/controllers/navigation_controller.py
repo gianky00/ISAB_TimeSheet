@@ -257,8 +257,15 @@ class NavigationController(QObject):
             logger.warning(f"Tentato distacco di panel non init. (Index: {index})")
             return
 
-        # Rimuoviamo il pannello originale dallo stack
+        # Spegniamo visibilità prima del reparenting C++ per pulire le handle grafiche
+        panel.hide()
+
+        # Rimuoviamo il pannello originale dallo stack (questo NON cambia il parent PyQt)
         self.mw.page_stack.removeWidget(panel)
+
+        # Sganciamo ufficialmente il parent C++.
+        # Questo su Windows chiude le API DirectX/OpenGL interne legate alla UI principale.
+        panel.setParent(None)
 
         # Creiamo un placeholder informativo col pulsante "Riaggancia"
         # Notare come il clack triggeri lo stesso riaggancio di evento chiesta OS!
@@ -513,5 +520,9 @@ class NavigationController(QObject):
         }
         if title == "Pannello" or not title:
             title = titles.get(idx, f"Modulo {idx}")
+        from PyQt6.QtCore import QTimer
 
-        self.detach_panel(idx, title)
+        # Deferiamo il distacco di 100ms per permettere all'Event Loop di concludere
+        # il click sul bottone 'split' (o altro meccanismo di chiamata) senza
+        # distruggere i widget sotto ai piedi del QCoreApplication
+        QTimer.singleShot(100, lambda idx=idx, title=title: self.detach_panel(idx, title))
