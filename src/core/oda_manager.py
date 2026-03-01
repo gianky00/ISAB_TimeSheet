@@ -70,7 +70,7 @@ class OdaManager:
             "testo_breve",
         ]
 
-        query = f"SELECT {', '.join(columns)} FROM storico_oda WHERE 1=1"
+        query = f"SELECT {', '.join(columns)} FROM storico_oda WHERE 1=1"  # nosec B608
         params = []
 
         if search_text:

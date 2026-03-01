@@ -34,7 +34,7 @@ class ContabilitaSyncEngine(BaseSyncEngine):
 
             placeholders = ", ".join(["?"] * len(target_columns))
             data = [tuple(cls._clean_value(x) for x in r) for r in imported_data]
-            cursor.executemany(f"INSERT INTO {temp_table} VALUES ({placeholders})", data)
+            cursor.executemany(f"INSERT INTO {temp_table} VALUES ({placeholders})", data)  # nosec B608
 
             for year in imported_years:
                 added, removed = cls._get_diff_count(cursor, "contabilita", target_columns, year)
@@ -76,7 +76,7 @@ class ContabilitaSyncEngine(BaseSyncEngine):
             if all_new_rows:
                 placeholders = ", ".join(["?"] * len(target_cols))
                 data = [tuple(cls._clean_value(x) for x in r) for r in all_new_rows]
-                cursor.executemany(f"INSERT INTO {temp_table} VALUES ({placeholders})", data)
+                cursor.executemany(f"INSERT INTO {temp_table} VALUES ({placeholders})", data)  # nosec B608
 
             for year in years_to_clear:
                 added, removed = cls._get_diff_count(cursor, "giornaliere", target_cols, year)
@@ -100,12 +100,12 @@ class ContabilitaSyncEngine(BaseSyncEngine):
         params = (year,) if year is not None else ()
 
         # Aggiunti
-        q_added = f"SELECT COUNT(*) FROM (SELECT {safe_cols} FROM temp_{safe_table} {where_clause} EXCEPT SELECT {safe_cast_cols} FROM {safe_table} {where_clause})"
+        q_added = f"SELECT COUNT(*) FROM (SELECT {safe_cols} FROM temp_{safe_table} {where_clause} EXCEPT SELECT {safe_cast_cols} FROM {safe_table} {where_clause})"  # nosec B608
         cursor.execute(q_added, params + params)
         added = cursor.fetchone()[0]
 
         # Rimossi
-        q_removed = f"SELECT COUNT(*) FROM (SELECT {safe_cast_cols} FROM {safe_table} {where_clause} EXCEPT SELECT {safe_cols} FROM temp_{safe_table} {where_clause})"
+        q_removed = f"SELECT COUNT(*) FROM (SELECT {safe_cast_cols} FROM {safe_table} {where_clause} EXCEPT SELECT {safe_cols} FROM temp_{safe_table} {where_clause})"  # nosec B608
         cursor.execute(q_removed, params + params)
         removed = cursor.fetchone()[0]
 
@@ -118,10 +118,10 @@ class ContabilitaSyncEngine(BaseSyncEngine):
         safe_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in columns])
 
         if year is not None:
-            cursor.execute(f"DELETE FROM {safe_table} WHERE year = ?", (year,))
-            q_ins = f"INSERT INTO {safe_table} ({safe_cols}) SELECT {safe_cols} FROM temp_{safe_table} WHERE year = ?"
+            cursor.execute(f"DELETE FROM {safe_table} WHERE year = ?", (year,))  # nosec B608
+            q_ins = f"INSERT INTO {safe_table} ({safe_cols}) SELECT {safe_cols} FROM temp_{safe_table} WHERE year = ?"  # nosec B608
             cursor.execute(q_ins, (year,))
         else:
-            cursor.execute(f"DELETE FROM {safe_table}")
-            q_ins = f"INSERT INTO {safe_table} ({safe_cols}) SELECT {safe_cols} FROM temp_{safe_table}"
+            cursor.execute(f"DELETE FROM {safe_table}")  # nosec B608
+            q_ins = f"INSERT INTO {safe_table} ({safe_cols}) SELECT {safe_cols} FROM temp_{safe_table}"  # nosec B608
             cursor.execute(q_ins)

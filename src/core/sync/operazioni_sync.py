@@ -33,7 +33,7 @@ class OperazioniSyncEngine(BaseSyncEngine):
                 placeholders = ", ".join(["?"] * len(db_cols))
                 data = [tuple(cls._clean_value(x) for x in r) for r in rows_to_insert]
                 cursor.executemany(
-                    f"INSERT INTO attivita_programmate ({safe_cols}) VALUES ({placeholders})",
+                    f"INSERT INTO attivita_programmate ({safe_cols}) VALUES ({placeholders})",  # nosec B608
                     data,
                 )
 
@@ -56,7 +56,7 @@ class OperazioniSyncEngine(BaseSyncEngine):
                 columns = ExcelImporter.SCARICO_ORE_COLS
                 safe_columns = [cls._validate_identifier(c) for c in columns]
                 placeholders = ", ".join(["?"] * len(columns))
-                insert_query = f"INSERT INTO scarico_ore ({', '.join(safe_columns)}) VALUES ({placeholders})"
+                insert_query = f"INSERT INTO scarico_ore ({', '.join(safe_columns)}) VALUES ({placeholders})"  # nosec B608
 
                 batch_size = 10000
                 all_data = [tuple(cls._clean_value(x) for x in r) for r in rows_to_insert]

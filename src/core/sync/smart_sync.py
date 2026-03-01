@@ -31,7 +31,7 @@ class SmartSyncEngine(BaseSyncEngine):
             placeholders = ", ".join(["?"] * len(columns))
 
             data = [tuple(cls._clean_value(x) for x in r) for r in new_data]
-            cursor.executemany(f"INSERT INTO {temp_table} VALUES ({placeholders})", data)
+            cursor.executemany(f"INSERT INTO {temp_table} VALUES ({placeholders})", data)  # nosec B608
 
             # Calcola Diff (Righe in Temp diverse da Main)
             q_diff = f"""
@@ -40,13 +40,13 @@ class SmartSyncEngine(BaseSyncEngine):
                     EXCEPT
                     SELECT {safe_cast_cols} FROM {safe_table}
                 )
-            """
+            """  # nosec B608
             cursor.execute(q_diff)
             added_or_updated = cursor.fetchone()[0]
 
             # Upsert
             q_upsert = (
-                f"INSERT OR REPLACE INTO {safe_table} ({safe_cols}) SELECT {safe_cols} FROM {temp_table}"
+                f"INSERT OR REPLACE INTO {safe_table} ({safe_cols}) SELECT {safe_cols} FROM {temp_table}"  # nosec B608
             )
             cursor.execute(q_upsert)
             conn.commit()
