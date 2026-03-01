@@ -5,9 +5,9 @@ Risoluzione contrasto: Sfondo selezione più scuro e opacità testo migliorata.
 
 from typing import Any
 
-from PyQt6.QtCore import QSize, Qt, pyqtProperty  # type: ignore[attr-defined]
-from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QPushButton, QWidget
+from PyQt6.QtCore import QMimeData, QPoint, QSize, Qt, pyqtProperty, pyqtSignal  # type: ignore[attr-defined]
+from PyQt6.QtGui import QColor, QDrag, QMouseEvent
+from PyQt6.QtWidgets import QApplication, QGraphicsDropShadowEffect, QPushButton, QWidget
 
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
@@ -18,7 +18,10 @@ class SidebarButton(QPushButton):
     """
     Pulsante ultra-moderno per la sidebar.
     Ottimizzato per la visibilità su sfondi scuri gradienti.
+    Supporta il Drag & Drop per lo sgancio dei pannelli.
     """
+
+    dragged_out = pyqtSignal()
 
     def __init__(self, text: str, icon_path: str = "", parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -27,6 +30,7 @@ class SidebarButton(QPushButton):
         self._collapsed = False
         self._badge_count = 0
         self._text_opacity = 1.0  # Default a 1.0 per visibilità immediata
+        self._drag_start_pos: QPoint | None = None
 
         if icon_path:
             self.setIcon(get_colored_icon(icon_path, COLORS["bg_white"]))
@@ -44,6 +48,40 @@ class SidebarButton(QPushButton):
         self._refresh_state()
         self._update_style()
         self.toggled.connect(self._on_toggled)
+
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+        """Inizia a tracciare la pressione per il drag."""
+        if event and event.button() == Qt.MouseButton.LeftButton:
+            self._drag_start_pos = event.pos()
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
+        """Gestisce il movimento del mouse e innesca il drag se la soglia viene superata."""
+        if not event or not (event.buttons() & Qt.MouseButton.LeftButton) or not self._drag_start_pos:
+            super().mouseMoveEvent(event)
+            return
+
+        if (event.pos() - self._drag_start_pos).manhattanLength() < QApplication.startDragDistance():
+            super().mouseMoveEvent(event)
+            return
+
+        drag = QDrag(self)
+        mime_data = QMimeData()
+        mime_data.setText(f"detach:{self.label_text}")
+        drag.setMimeData(mime_data)
+
+        # Pixmap per il drag visuale
+        if not self._collapsed and not self.icon().isNull():
+            drag.setPixmap(self.icon().pixmap(32, 32))
+
+        # Esegui il drag
+        action = drag.exec(Qt.DropAction.CopyAction | Qt.DropAction.MoveAction)
+
+        # Se viene "sganciato" (drop ignorato da altri widget o tirato fuori dalla finestra)
+        if action == Qt.DropAction.IgnoreAction:
+            self.dragged_out.emit()
+
+        super().mouseMoveEvent(event)
 
     @pyqtProperty(float)
     def text_opacity(self) -> float:

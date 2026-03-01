@@ -5,13 +5,15 @@ Consente di separare i widget dallo stack centrale della MainWindow e renderizza
 
 from collections.abc import Callable
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QCloseEvent
+from PyQt6.QtCore import QPoint, QSettings, Qt, pyqtSignal
+from PyQt6.QtGui import QCloseEvent, QMouseEvent
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QPushButton,
+    QSizeGrip,
     QVBoxLayout,
     QWidget,
 )
@@ -22,10 +24,88 @@ from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path
 
 
+class CustomTitleBar(QFrame):
+    """Barra del titolo personalizzata per la finestra sganciata."""
+
+    def __init__(
+        self, parent: QWidget, title: str, on_close: Callable[[], None], on_pin: Callable[[bool], None]
+    ):
+        super().__init__(parent)
+        self.setFixedHeight(40)
+        self.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS["primary_blue"]};
+                border-top-left-radius: 10px;
+                border-top-right-radius: 10px;
+                border-bottom: none;
+            }}
+            QPushButton {{
+                background: transparent;
+                border: none;
+                border-radius: 4px;
+                color: white;
+                font-weight: bold;
+                font-size: 14px;
+            }}
+            QPushButton:hover {{
+                background-color: rgba(255, 255, 255, 0.2);
+            }}
+            QPushButton#btnClose:hover {{
+                background-color: #E53935;
+            }}
+        """)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(15, 0, 8, 0)
+
+        # Icona e Titolo
+        self.title_lbl = QLabel(title)
+        self.title_lbl.setStyleSheet("font-weight: 800; font-size: 14px; color: white;")
+        layout.addWidget(self.title_lbl)
+
+        layout.addStretch()
+
+        # Bottone Pin
+        self.pin_btn = QPushButton("📌")
+        self.pin_btn.setToolTip("Mantieni in primo piano")
+        self.pin_btn.setFixedSize(30, 30)
+        self.pin_btn.setCheckable(True)
+        self.pin_btn.clicked.connect(on_pin)
+        layout.addWidget(self.pin_btn)
+
+        # Bottone Chiudi/Riaggancia
+        self.close_btn = QPushButton("✕")
+        self.close_btn.setObjectName("btnClose")
+        self.close_btn.setToolTip("Chiudi e riaggancia")
+        self.close_btn.setFixedSize(30, 30)
+        self.close_btn.clicked.connect(on_close)
+        layout.addWidget(self.close_btn)
+
+        self._start_pos: QPoint | None = None
+
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+        if event and event.button() == Qt.MouseButton.LeftButton:
+            self._start_pos = event.globalPosition().toPoint()
+
+    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
+        if not event:
+            return
+        if self._start_pos and self.window():
+            delta = event.globalPosition().toPoint() - self._start_pos
+            win = self.window()
+            if win:
+                win.move(win.pos() + delta)
+            self._start_pos = event.globalPosition().toPoint()
+
+    def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:
+        self._start_pos = None
+
+
 class DetachedPanelWindow(QMainWindow):
     """
     Finestra indipendente che ospita un pannello precedentemente residente nello SlidingStackedWidget.
     Gestisce il proprio ciclo di vita e informa il controller alla chiusura per il riaggancio del widget.
+    Include barra custom, Pin-To-Top e salvataggio/ripristino della posizione.
     """
 
     panel_closed_signal = pyqtSignal(int)  # Indice originale del pannello
@@ -35,34 +115,97 @@ class DetachedPanelWindow(QMainWindow):
     ) -> None:
         """
         Inizializza la finestra esterna.
-
-        Args:
-            original_index: L'indice della pagina nello stack originale.
-            panel: L'istanza del widget da visualizzare.
-            title: Il titolo da mostrare nella barra del titolo.
-            parent: Il widget genitore opzionale.
         """
         super().__init__(parent)
         self.original_index = original_index
         self.panel = panel
+        self.settings = QSettings("SyncroJob", "MultiWindow")
 
-        self.setWindowTitle(f"{title} - SyncroJob (Finestra Esterna)")
-        self.setMinimumSize(1000, 700)
+        # Configurazione Finestra Frameless
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
-        # Configura il widget centrale
-        self.panel.setParent(self)
-        self.setCentralWidget(self.panel)
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+
+        main_layout = QVBoxLayout(self.central_widget)
+        main_layout.setContentsMargins(10, 10, 10, 10)  # Spazio per drop shadow
+
+        # Container per gestire i bordi e gli angoli arrotondati
+        self.container = QFrame()
+        self.container.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-radius: 10px;
+            }}
+        """)
+
+        # Drop shadow
+        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(20)
+        shadow.setColor(Qt.GlobalColor.black)
+        shadow.setOffset(0, 5)
+        self.container.setGraphicsEffect(shadow)
+
+        container_layout = QVBoxLayout(self.container)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+        container_layout.setSpacing(0)
+
+        # Aggiunta Custom Title Bar
+        # Cast close a callable che ritorna None per Mypy
+        def _close_action():
+            self.close()
+
+        self.title_bar = CustomTitleBar(self, f"{title} - SyncroJob", _close_action, self._toggle_pin)
+        container_layout.addWidget(self.title_bar)
+
+        # Aggiunta del Pannello vero e proprio
+        self.panel.setParent(self.container)
+        self.panel.setStyleSheet("border: none; border-radius: 0px;")  # Resetta bordi interni
+        container_layout.addWidget(self.panel, stretch=1)
+
+        # Grip per il ridimensionamento
+        bottom_layout = QHBoxLayout()
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
+        bottom_layout.addStretch()
+        grip = QSizeGrip(self.container)
+        grip.setFixedSize(15, 15)
+        grip.setStyleSheet("background: transparent;")
+        bottom_layout.addWidget(grip, 0, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight)
+        container_layout.addLayout(bottom_layout)
+
+        main_layout.addWidget(self.container)
+
+        # Ripristino Geometria
+        geom = self.settings.value(f"geometry_{self.original_index}")
+        if geom:
+            self.restoreGeometry(geom)
+        else:
+            self.resize(1100, 750)
+
         self.panel.show()
 
-    def closeEvent(self, event: QCloseEvent | None):
-        """
-        Intercetta la chiusura della finestra per avviare il riaggancio.
+    def _toggle_pin(self, checked: bool) -> None:
+        """Attiva o disattiva la modalità 'Sempre in Primo Piano'."""
+        flags = self.windowFlags()
+        if checked:
+            self.setWindowFlags(flags | Qt.WindowType.WindowStaysOnTopHint)
+            self.title_bar.pin_btn.setStyleSheet("background-color: #F59E0B; color: white;")
+        else:
+            self.setWindowFlags(flags & ~Qt.WindowType.WindowStaysOnTopHint)
+            self.title_bar.pin_btn.setStyleSheet("")
+        self.show()  # setWindowFlags forza un hide(), dobbiamo rishoware
 
-        Args:
-            event: L'evento di chiusura di Qt.
+    def closeEvent(self, event: QCloseEvent | None) -> None:
+        """
+        Intercetta la chiusura per salvare la geometria e avviare il riaggancio.
         """
         if event:
+            self.settings.setValue(f"geometry_{self.original_index}", self.saveGeometry())
             self.panel_closed_signal.emit(self.original_index)
             super().closeEvent(event)
 

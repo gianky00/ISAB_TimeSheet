@@ -283,6 +283,30 @@ class SidebarWidget(QFrame):
         self.btn_help.clicked.connect(lambda: self.navigation_requested.emit(8, -1, -1))
         self.btn_settings.clicked.connect(lambda: self.navigation_requested.emit(7, -1, -1))
 
+        # Gestione Drag and Drop per lo sgancio
+        from src.gui.main_window.page_index import PageIndex
+
+        self.btn_home.dragged_out.connect(lambda: self._emit_drag_detach(PageIndex.DASHBOARD))
+        self.btn_timbrature.dragged_out.connect(lambda: self._emit_drag_detach(PageIndex.TIMBRATURE))
+        self.btn_dataease.dragged_out.connect(lambda: self._emit_drag_detach(PageIndex.DATAEASE))
+        self.btn_pdl.dragged_out.connect(lambda: self._emit_drag_detach(PageIndex.ANAGRAFICHE))
+        self.btn_storico_oda.dragged_out.connect(lambda: self._emit_drag_detach(PageIndex.STORICO_ODA))
+
+    def _emit_drag_detach(self, page_index: int) -> None:
+        """Naviga alla pagina trascinata e ne richiede lo sgancio."""
+        self.navigation_requested.emit(page_index, -1, -1)
+
+        # Piccolo delay per permettere alla UI di caricare la pagina prima di sganciarla
+        def _do_detach():
+            win = self.window()
+            if win and hasattr(win, "navigation_controller"):
+                # Usiamo getattr per evitare errori di tipo se MainWindow non è ancora tipizzata qui
+                nav = win.navigation_controller
+                if nav:
+                    nav.detach_current_panel()
+
+        QTimer.singleShot(100, _do_detach)
+
     def _on_group_expanded(self, group: SidebarGroup) -> None:
         """
         Gestisce l'espansione di un gruppo, assicurando che gli altri siano chiusi (Accordion logic).
