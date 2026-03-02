@@ -19,6 +19,7 @@ from src.gui.panels.base import BaseBotPanel, BotWorker
 from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import BotParametersWidget, EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets.safework.status_list import StatusListWidget
 from src.utils.helpers import get_asset_path
 
 
@@ -92,17 +93,59 @@ class PrenotaBPPanel(BaseBotPanel):
         table_toolbar.addWidget(self.clear_btn)
         params_layout.addLayout(table_toolbar)
 
-        # Definiamo le colonne
-        columns = [
+        # 2. Tabella e Stati
+        table_h = QHBoxLayout()
+        table_h.setSpacing(10)
+
+        cols: list[dict[str, Any]] = [
             {"name": "NUMERO BP", "type": "text"},
             {"name": "NOTE DI RITIRO", "type": "text"},
+            {"name": "ESITO", "type": "text", "default": "", "readonly": True},
         ]
-        self.data_table = EditableDataTable(columns)
+        self.data_table = EditableDataTable(cols)
         self.data_table.setMinimumHeight(200)
+        self.data_table.data_changed.connect(self._update_status_list)
         self.data_table.data_changed.connect(self._save_data)
-        params_layout.addWidget(self.data_table)
+
+        v_status = QVBoxLayout()
+        v_status.setContentsMargins(0, 56, 0, 0)
+        self.status_list = StatusListWidget()
+        self.status_list.setFixedWidth(40)
+        v_status.addWidget(self.status_list)
+        v_status.addStretch()
+
+        table_h.addWidget(self.data_table)
+        table_h.addLayout(v_status)
+        params_layout.addLayout(table_h)
 
         self.content_layout.addWidget(params_container)
+
+    def _update_status_list(self, force: bool = False) -> None:
+        """
+        Sincronizza il contatore visivo dello stato con il numero di righe della tabella.
+
+        Args:
+            force: Se True, reinizializza sempre la lista.
+        """
+        count = self.data_table.table.rowCount()
+        if force or self.status_list.count() != count:
+            self.status_list.initialize_rows(count, self.data_table.table.rowHeight(0) or 30)
+
+    def on_step_completed(self, step_idx: int, success: bool, message: str = "") -> None:
+        """
+        Aggiorna lo stato visivo di una specifica riga al termine del suo processing.
+
+        Args:
+            step_idx: Indice della riga processata.
+            success: Esito del processing della riga.
+            message: Messaggio di errore opzionale.
+        """
+        self.status_list.update_status(step_idx, success)
+
+        # Aggiorna la colonna "ESITO" nella tabella (indice colonna = 2)
+        # Usiamo emit_signal=False per evitare di resettare i pallini appena colorati
+        esito_text = "Completato" if success else f"Errore: {message}" if message else "Errore"
+        self.data_table.update_cell(step_idx, 2, esito_text, emit_signal=False)
 
     def _open_settings(self):
         """Richiede alla MainWindow di visualizzare la pagina delle impostazioni."""
@@ -121,6 +164,7 @@ class PrenotaBPPanel(BaseBotPanel):
         date_da = config.get("last_prenota_date_from", f"01.01.{current_year}")
         date_a = config.get("last_prenota_date_to", f"31.12.{current_year}")
         self.params_widget.set_dates(date_da, date_a)
+        self._update_status_list()
 
     def _save_data(self):
         """Salva i dati correnti della tabella e i parametri temporali in configurazione."""
@@ -206,6 +250,9 @@ class PrenotaBPPanel(BaseBotPanel):
         worker = BotWorker(bot, bot_data, telegram_service=tg_service)
         self.worker = worker
         self._setup_worker_connections(worker)
+
+        # Reset pallini all'avvio
+        self._update_status_list(force=True)
 
         # UI Update
         self._update_status(STATUS_COLORS["running"], "Esecuzione...")

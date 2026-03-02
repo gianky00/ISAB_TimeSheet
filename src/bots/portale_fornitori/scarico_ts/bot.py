@@ -175,7 +175,7 @@ class ScaricaTSBot(BaseBot):
         downloaded_files = []
         source_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
 
-        for row in rows:
+        for i, row in enumerate(rows):
             self._check_stop()
             numero_oda = str(row.get("numero_oda", "")).strip()
             posizione_oda = str(row.get("posizione_oda", "")).strip()
@@ -183,14 +183,27 @@ class ScaricaTSBot(BaseBot):
             if not numero_oda:
                 continue
 
+            res = False
+            msg = ""
             try:
                 if self._search_oda(numero_oda, posizione_oda):
                     final_path = self._download_excel(source_dir, dest_dir, numero_oda, posizione_oda)
                     if final_path:
                         success_count += 1
                         downloaded_files.append(str(final_path))
+                        res = True
+                    else:
+                        msg = "File non scaricato"
+                else:
+                    msg = "OdA non trovato"
             except Exception as e:
                 self.log(f"❌ Errore OdA {numero_oda}: {e}")
+                msg = str(e)
+
+            # Notifica progresso alla GUI (index, success, message)
+            callback = getattr(self, "_progress_callback", None)
+            if callback:
+                callback(i, res, "" if res else msg)
 
         return success_count, downloaded_files
 

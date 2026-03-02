@@ -246,7 +246,13 @@ class EditableDataTable(QWidget):
                 if use_defaults and config.get("default"):
                     cb.setCurrentText(str(config["default"]))
                 cb.currentTextChanged.connect(lambda _: self.data_changed.emit())
-                self.table.setCellWidget(row, col, cb)
+
+                # Fix allineamento: rimuovi margini e centra il widget
+                container = QWidget()
+                c_lay = QVBoxLayout(container)
+                c_lay.setContentsMargins(2, 2, 2, 2)
+                c_lay.addWidget(cb)
+                self.table.setCellWidget(row, col, container)
             else:
                 val = str(config.get("default", "")) if use_defaults else ""
                 item = SortableTableWidgetItem(val)
@@ -256,7 +262,7 @@ class EditableDataTable(QWidget):
                 self.table.setItem(row, col, item)
         self.data_changed.emit()
 
-    def update_cell(self, row: int, col: int, value: str) -> None:
+    def update_cell(self, row: int, col: int, value: str, emit_signal: bool = True) -> None:
         """Aggiorna programmaticamente il valore di una cella specifica."""
         if 0 <= row < self.table.rowCount() and 0 <= col < self.table.columnCount():
             item = self.table.item(row, col)
@@ -269,7 +275,9 @@ class EditableDataTable(QWidget):
                     item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     item.setBackground(QColor(COLORS["bg_alt"]))
                 self.table.setItem(row, col, item)
-            self.data_changed.emit()
+
+            if emit_signal:
+                self.data_changed.emit()
 
     def _remove_row(self) -> None:
         """Rimuove la riga attualmente selezionata."""
@@ -318,7 +326,13 @@ class EditableDataTable(QWidget):
                     cb.addItems(["", *col_cfg.get("options", [])])
                     cb.setCurrentText(val)
                     cb.currentTextChanged.connect(lambda _: self.data_changed.emit())
-                    self.table.setCellWidget(row, c, cb)
+
+                    # Fix allineamento: rimuovi margini e centra il widget
+                    container = QWidget()
+                    c_lay = QVBoxLayout(container)
+                    c_lay.setContentsMargins(2, 2, 2, 2)
+                    c_lay.addWidget(cb)
+                    self.table.setCellWidget(row, c, container)
                 else:
                     item = SortableTableWidgetItem(val)
                     if col_cfg.get("readonly"):

@@ -35,12 +35,21 @@ class GeneratoreWorker(QThread):
     finished_signal = pyqtSignal(bool, str)
 
     def __init__(self, master_path: str, data: dict[str, Any], dest_path: str):
+        """
+        Inizializza il worker per la generazione del preventivo.
+
+        Args:
+            master_path: Percorso del file Excel master template.
+            data: Dizionario contenente i dati da inserire nel preventivo.
+            dest_path: Percorso di destinazione per il file generato.
+        """
         super().__init__()
         self.master_path = master_path
         self.data = data
         self.dest_path = dest_path
 
     def run(self) -> None:
+        """Esegue la logica di generazione nel thread dedicato."""
         try:
             manager = PreventiviGeneratorManager(self.master_path)
             success, result = manager.generate_preventivo(self.data, self.dest_path)
@@ -58,11 +67,19 @@ class MacroWorker(QThread):
     macro_progress = pyqtSignal(str, bool)  # Emesso quando finisce una singola macro (nome, successo)
 
     def __init__(self, file_path: str, macros: list[str]):
+        """
+        Inizializza il worker per l'esecuzione delle macro.
+
+        Args:
+            file_path: Percorso del file Excel su cui eseguire le macro.
+            macros: Lista dei nomi delle macro da lanciare.
+        """
         super().__init__()
         self.file_path = file_path
         self.macros = macros
 
     def run(self) -> None:
+        """Esegue le macro VBA sequenzialmente tramite Win32COM."""
         try:
             pythoncom.CoInitialize()
             import win32com.client
@@ -100,11 +117,26 @@ class PreventiviGeneratorManager:
     """Manager avanzato per la generazione di preventivi basati su template Excel Master."""
 
     def __init__(self, master_path: str = ""):
+        """
+        Inizializza il manager dei preventivi.
+
+        Args:
+            master_path: Percorso assoluto del file Master XLSM.
+        """
         self.master_path = master_path
         self.excel_app: Any = None
         self.wb: Any = None
 
     def get_next_progressive(self, directory: str) -> str:
+        """
+        Scansiona una cartella per determinare il prossimo numero progressivo disponibile.
+
+        Args:
+            directory: Cartella contenente i preventivi esistenti.
+
+        Returns:
+            str: Il prossimo progressivo formattato a 3 cifre (es. '005').
+        """
         if not Path(directory).exists():
             return "001"
 
@@ -173,6 +205,10 @@ class PreventiviGeneratorManager:
         return data
 
     def _sanitize_excel_file(self, filepath: str) -> None:
+        """
+        Rimuove i riferimenti corrotti a Print_Area all'interno dell'XML di Excel.
+        Risolve il bug 'Impossibile trovare il file' durante l'esecuzione di macro.
+        """
         temp_dir = tempfile.mkdtemp()
         try:
             with zipfile.ZipFile(filepath, "r") as zip_ref:
@@ -207,6 +243,16 @@ class PreventiviGeneratorManager:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
     def generate_preventivo(self, data: dict[str, Any], output_dir: str) -> tuple[bool, str]:
+        """
+        Genera un nuovo preventivo popolando il template e sanitizzando l'output.
+
+        Args:
+            data: Dati inseriti dall'utente nella UI.
+            output_dir: Cartella dove salvare il preventivo.
+
+        Returns:
+            tuple: (successo, percorso del file generato o messaggio di errore).
+        """
         if not _win32com_found:
             return False, "pywin32 mancante."
         try:
@@ -226,6 +272,7 @@ class PreventiviGeneratorManager:
             return False, str(e)
 
     def _fill_excel_data(self, file_path: str, data: dict[str, Any]) -> tuple[bool, str]:
+        """Inietta i dati nelle celle specifiche del foglio 'inserimento dati'."""
         try:
             pythoncom.CoInitialize()
             self.excel_app = win32com.client.Dispatch("Excel.Application")

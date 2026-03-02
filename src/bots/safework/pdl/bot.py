@@ -8,7 +8,7 @@ import logging
 import time
 from contextlib import suppress
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import Any, ClassVar
 
 import fitz
 from selenium.webdriver.common.by import By
@@ -19,9 +19,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from src.bots.base.base_bot import StepStatus
 from src.bots.safework.base import SafeworkBaseBot
 from src.utils.printing import print_pdf
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -47,10 +44,10 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         download_path="",
         account_type: str = "Esecutore",
     ):
+        """Inizializza il bot SafeWork PDL."""
         super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
         self.downloaded_files: list[str] = []
         self.missing_pdls: list[str] = []
-        self.progress_callback: Callable[[int, bool], None] | None = None
 
     @staticmethod
     def get_name() -> str:
@@ -87,10 +84,6 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             return False, "Nessun numero PDL trovato nei dati."
 
         return True, ""
-
-    def set_progress_callback(self, callback: "Callable[[int, bool], None]"):
-        """Imposta la funzione di callback per il monitoraggio del progresso."""
-        self.progress_callback = callback
 
     def run(self, data: list[dict[str, Any]]) -> bool:
         """Ciclo principale di scarico PDL con gestione sessione."""
@@ -148,12 +141,18 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 else:
                     self.update_step("search", StepStatus.ERROR)
 
-                if self.progress_callback:
-                    self.progress_callback(index, True)
+                # Notifica progresso alla GUI (index, success, message)
+                callback = getattr(self, "_progress_callback", None)
+                if callback:
+                    callback(index, True, "")
             except InterruptedError:
                 raise
             except Exception as e:
                 self.log(f"❌ Errore critico PDL {pdl_raw}: {e}")
+                # Notifica errore alla GUI
+                callback = getattr(self, "_progress_callback", None)
+                if callback:
+                    callback(index, False, str(e))
 
         # Unione finale di sessione se richiesto
         self.update_step("session", StepStatus.RUNNING)

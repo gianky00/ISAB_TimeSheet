@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 class BotSavingsWidget(ModernCard):
     """
-    Widget che mostra le metriche di efficienza dei bot con design premium.
-    Visualizza il tempo risparmiato, il tasso di successo e l'affidabilità del sistema.
+    Widget premium per la visualizzazione dell'efficienza delle automazioni.
+    Calcola il tempo risparmiato, il tasso di successo e l'affidabilità basandosi sullo storico totale.
     """
 
     stats_updated = pyqtSignal(object)  # ROIMetrics
@@ -280,9 +280,10 @@ class BotSavingsWidget(ModernCard):
     # ── Data ──────────────────────────────────────────────────────────────
 
     def refresh_stats(self) -> None:
-        """Avvia il thread di calcolo delle statistiche in background."""
+        """Avvia il thread di calcolo delle statistiche in background per non bloccare la UI."""
 
         def run():
+            """Esegue il calcolo effettivo del ROI tramite ROIEngine."""
             try:
                 metrics = ROIEngine.calculate_savings()
                 self.stats_updated.emit(metrics)

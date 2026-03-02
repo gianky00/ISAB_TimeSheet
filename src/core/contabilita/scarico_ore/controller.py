@@ -21,11 +21,21 @@ class ScaricoOreWorker(QThread):
     progress_signal = pyqtSignal(str)
 
     def __init__(self, file_path: str) -> None:
+        """
+        Inizializza il worker per l'importazione.
+
+        Args:
+            file_path: Percorso del file Excel dello Scarico Ore da importare.
+        """
         super().__init__()
         self.file_path = file_path
         self.start_time: float = 0.0
 
     def run(self) -> None:
+        """
+        Esegue l'importazione nel thread separato con calcolo del progresso e dell'ETA.
+        Inizializza il database e invoca il manager per il processing del file.
+        """
         ContabilitaManager.init_db()
         self.start_time = time.time()
         try:
@@ -34,6 +44,7 @@ class ScaricoOreWorker(QThread):
             total_rows = 1000
 
         def progress_cb(current, total):
+            """Callback per l'aggiornamento dello stato di avanzamento e calcolo ETA."""
             real_total = max(total if total > 0 else total_rows, current)
             elapsed = time.time() - self.start_time
             if current > 0 and elapsed > 0:
@@ -59,18 +70,33 @@ class ScaricoOreController(QObject):
     update_finished = pyqtSignal(bool, str)
 
     def __init__(self) -> None:
+        """Inizializza il controller di Scarico Ore."""
         super().__init__()
         self.worker: ScaricoOreWorker | None = None
 
     def start_import(self, file_path: str) -> None:
-        """Avvia il worker di importazione."""
+        """
+        Inizializza e avvia il thread di importazione asincrona.
+
+        Args:
+            file_path: Percorso del file Excel sorgente.
+        """
         self.worker = ScaricoOreWorker(file_path)
         self.worker.progress_signal.connect(self.status_changed.emit)
         self.worker.finished_signal.connect(self._handle_finished)
         self.worker.start()
 
     def _handle_finished(self, success: bool, msg: str, added: int, removed: int, duration: float) -> None:
-        """Formatta il risultato dell'importazione."""
+        """
+        Gestisce il completamento del worker di importazione, formattando il report per la UI.
+
+        Args:
+            success: Esito dell'operazione.
+            msg: Messaggio di errore o di stato.
+            added: Numero di record aggiunti/aggiornati.
+            removed: Numero di record rimossi.
+            duration: Durata totale dell'operazione in secondi.
+        """
         if success:
             ts = datetime.now().strftime("%d/%m/%Y %H:%M")
             time_str = (
@@ -84,5 +110,13 @@ class ScaricoOreController(QObject):
 
     @staticmethod
     def format_number(value: float) -> str:
-        """Helper per la formattazione numerica."""
+        """
+        Formatta un numero decimale rimuovendo gli zeri inutili.
+
+        Args:
+            value: Il valore numerico da formattare.
+
+        Returns:
+            str: Stringa formattata (es. '5' invece di '5.00').
+        """
         return str(int(value)) if value % 1 == 0 else f"{value:.2f}"

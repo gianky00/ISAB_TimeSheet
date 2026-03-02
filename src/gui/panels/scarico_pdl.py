@@ -155,10 +155,16 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         self.content_layout.addLayout(content_lay)
 
-    def _update_status_list(self) -> None:
-        """Sincronizza il contatore visivo dello stato con il numero di righe della tabella."""
+    def _update_status_list(self, force: bool = False) -> None:
+        """
+        Sincronizza il contatore visivo dello stato con il numero di righe della tabella.
+
+        Args:
+            force: Se True, reinizializza sempre la lista (usato all'avvio bot).
+        """
         count = self.data_table.table.rowCount()
-        self.status_list.initialize_rows(count, self.data_table.table.rowHeight(0) or 30)
+        if force or self.status_list.count() != count:
+            self.status_list.initialize_rows(count, self.data_table.table.rowHeight(0) or 30)
 
     def _on_browse_clicked(self) -> None:
         """Apre il dialogo di selezione cartella per i PDF scaricati."""
@@ -277,6 +283,9 @@ class ScaricoPDLPanel(BaseBotPanel):
         # Connessione segnale specifico per riga PDL
         worker.row_status_signal.connect(self.on_step_completed)
 
+        # Reset pallini all'avvio
+        self._update_status_list(force=True)
+
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
@@ -307,8 +316,9 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.status_list.update_status(step_idx, success)
 
         # Aggiorna la colonna "ESITO" nella tabella (indice colonna = 1)
+        # Usiamo emit_signal=False per evitare di resettare i pallini appena colorati
         esito_text = "Completato" if success else f"Errore: {message}" if message else "Errore generico"
-        self.data_table.update_cell(step_idx, 1, esito_text)
+        self.data_table.update_cell(step_idx, 1, esito_text, emit_signal=False)
 
         if not success:
             logger.error(f"Errore riga {step_idx}: {message}")

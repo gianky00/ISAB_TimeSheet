@@ -41,7 +41,7 @@ class BotWorker(QThread):
     status_signal = pyqtSignal(str)
     finished_signal = pyqtSignal(bool)
     request_input_signal = pyqtSignal(str, dict, threading.Event)
-    row_status_signal = pyqtSignal(int, bool)  # New signal for row updates
+    row_status_signal = pyqtSignal(int, bool, str)  # index, success, message
     step_changed_signal = pyqtSignal(int, str, object)  # Bridge for timeline
 
     def __init__(self, bot, data, telegram_service=None):
@@ -451,6 +451,10 @@ class BaseBotPanel(QWidget):
         # Connessione input interattivo
         if hasattr(self, "_ask_user_input"):
             worker.request_input_signal.connect(self._ask_user_input)
+
+        # Connessione segnale specifico per riga (Feedback Tabella)
+        if hasattr(self, "on_step_completed"):
+            worker.row_status_signal.connect(self.on_step_completed)
 
     def get_credentials(self) -> tuple[str, str]:
         """Ottiene le credenziali dall'account di default."""

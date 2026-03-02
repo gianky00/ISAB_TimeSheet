@@ -100,9 +100,15 @@ class DettagliOdABot(BaseBot):
 
         success = 0
         self.update_step("download", StepStatus.RUNNING)
-        for i, row in enumerate(rows, 1):
-            if self._process_single_oda(page, row, i, source_dir, dest_dir):
+        for i, row in enumerate(rows):
+            res = self._process_single_oda(page, row, i + 1, source_dir, dest_dir)
+            if res:
                 success += 1
+
+            # Notifica progresso alla GUI (index, success, message)
+            callback = getattr(self, "_progress_callback", None)
+            if callback:
+                callback(i, res, "" if res else "Errore download")
 
         self.update_step("download", StepStatus.COMPLETED if success == len(rows) else StepStatus.ERROR)
         self.log("✨ Procedura conclusa.")

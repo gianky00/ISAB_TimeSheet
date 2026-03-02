@@ -71,6 +71,12 @@ def remove_orphan_imports(content: str) -> str:
 
 
 def process_file(filepath: str) -> None:
+    """
+    Analizza e pulisce un singolo file sorgente.
+
+    Args:
+        filepath: Percorso del file da processare.
+    """
     try:
         content = Path(filepath).read_text(encoding="utf-8")
     except Exception:
@@ -101,6 +107,7 @@ def process_file(filepath: str) -> None:
 
 
 def main():
+    """Punto di ingresso dello script: scansiona la directory GUI ed esegue la pulizia."""
     count = 0
     for root, _dirs, files in os.walk(GUI_DIR):
         for fname in files:

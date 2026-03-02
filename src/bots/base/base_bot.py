@@ -103,6 +103,7 @@ class BaseBot(ABC):
         self._stop_requested = False
         self._log_callback: Callable[[str], None] | None = None
         self._input_callback: Callable[[str], str] | None = None
+        self._progress_callback: Callable[[int, bool, str], None] | None = None
         self.login_page: LoginPage | None = None
         self._telegram_service: Any = None
         self.signals = BotSignals()
@@ -257,6 +258,10 @@ class BaseBot(ABC):
     def set_input_callback(self, callback: Callable[[str], str]) -> None:
         """Imposta una callback per richiedere dati all'utente durante l'esecuzione (es. CAPTCHA o OTP)."""
         self._input_callback = callback
+
+    def set_progress_callback(self, callback: Callable[[int, bool, str], None]) -> None:
+        """Imposta una callback per notificare il progresso di una riga specifica alla GUI."""
+        self._progress_callback = callback
 
     def request_stop(self) -> None:
         """Invia una richiesta di interruzione gentile al loop operativo del bot."""
