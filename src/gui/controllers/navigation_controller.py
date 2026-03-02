@@ -5,6 +5,7 @@ Implementa una strategia di 'Lazy Loading' (caricamento differito) per ridurre d
 dell'applicazione, inizializzando i moduli funzionali solo quando vengono effettivamente richiesti dall'utente.
 """
 
+import functools
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -525,4 +526,4 @@ class NavigationController(QObject):
         # Deferiamo il distacco di 100ms per permettere all'Event Loop di concludere
         # il click sul bottone 'split' (o altro meccanismo di chiamata) senza
         # distruggere i widget sotto ai piedi del QCoreApplication
-        QTimer.singleShot(100, lambda idx=idx, title=title: self.detach_panel(idx, title))
+        QTimer.singleShot(100, functools.partial(self.detach_panel, idx, title))

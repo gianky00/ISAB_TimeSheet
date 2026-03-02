@@ -4,7 +4,10 @@ Calcola il risparmio di tempo e risorse basandosi sullo storico delle operazioni
 """
 
 import logging
+import operator
+from contextlib import suppress
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from typing import ClassVar
 
 from src.core.database import db_manager
@@ -18,8 +21,12 @@ class ROIMetrics:
 
     total_minutes_saved: float
     total_operations: int
-    estimated_cost_saved: float  # In Euro (basato su costo orario medio)
-    stress_reduction_score: int  # 1-100
+    success_rate: float  # Percentuale di successo (0-100)
+    reliability_score: int  # Affidabilità del sistema (0-100)
+    total_days: int  # Giorni totali di storico
+    trend_percentage: float  # Variazione % rispetto al mese precedente
+    top_task_name: str  # Nome del task più eseguito
+    top_task_pct: float  # Percentuale del top task sul totale
 
 
 class ROIEngine:
@@ -37,42 +44,107 @@ class ROIEngine:
         "Export Excel": 5.0,
     }
 
-    HOURLY_RATE = 25.0  # Costo orario medio aziendale stimato
-
     @classmethod
     def calculate_savings(cls) -> ROIMetrics:
         """Esegue l'analisi dello storico audit per derivare le metriche di risparmio."""
         try:
-            # Recuperiamo le azioni riuscite dall'Audit
-            query = "SELECT action, entity FROM audit_logs WHERE timestamp > datetime('now', '-30 days')"
+            # Recuperiamo TUTTE le azioni dall'Audit (Senza limite 30gg)
+            query = "SELECT action, entity, status, severity, timestamp FROM audit_logs ORDER BY timestamp ASC"
             rows = db_manager.execute_query(db_manager.DB_AUDIT, query)
+
+            if not rows:
+                return ROIMetrics(0, 0, 0, 0, 0, 0.0, "Nessuno", 0.0)
 
             total_min = 0.0
             total_ops = 0
+            success_count = 0
+            fail_count = 0
+            critical_errors = 0
 
-            for action, entity in rows:
-                # Se l'azione è presente nei pesi, aggiungiamo il risparmio
-                for key, minutes in cls.MINUTES_PER_ACTION.items():
-                    if key.lower() in str(action).lower() or key.lower() in str(entity).lower():
-                        total_min += minutes
-                        total_ops += 1
-                        break
+            # Variabili per Trend e Top Task
+            current_30d_ops = 0
+            prev_30d_ops = 0
+            task_counts: dict[str, int] = {}
+
+            # Calcolo giorni totali e reference date per il trend
+            first_ts = rows[0][4]
+            last_ts = rows[-1][4]
+
+            now = datetime.now()
+            thirty_days_ago = now - timedelta(days=30)
+            sixty_days_ago = now - timedelta(days=60)
+
+            try:
+                d1 = datetime.fromisoformat(first_ts.split(".")[0].replace(" ", "T"))
+                d2 = datetime.fromisoformat(last_ts.split(".")[0].replace(" ", "T"))
+                total_days = max(1, (d2 - d1).days)
+            except Exception:
+                total_days = 1
+
+            for action, entity, status, severity, _ts in rows:
+                is_success = str(status).lower() == "success"
+
+                row_date = None
+                with suppress(Exception):
+                    row_date = datetime.fromisoformat(_ts.split(".")[0].replace(" ", "T"))
+
+                if is_success:
+                    success_count += 1
+                    # Se l'azione è riuscita, calcoliamo il risparmio di tempo e statistiche
+                    for key, minutes in cls.MINUTES_PER_ACTION.items():
+                        if key.lower() in str(action).lower() or key.lower() in str(entity).lower():
+                            total_min += minutes
+                            total_ops += 1
+
+                            task_counts[key] = task_counts.get(key, 0) + 1
+
+                            # Calcolo del trend a 30 e 60 giorni
+                            if row_date:
+                                if row_date >= thirty_days_ago:
+                                    current_30d_ops += 1
+                                elif row_date >= sixty_days_ago:
+                                    prev_30d_ops += 1
+                            break
+                else:
+                    fail_count += 1
+                    if str(severity).lower() == "critical":
+                        critical_errors += 1
 
             # Calcolo metriche derivate
-            cost_saved = (total_min / 60.0) * cls.HOURLY_RATE
+            total_actions = success_count + fail_count
+            success_rate = (success_count / total_actions * 100) if total_actions > 0 else 0
 
-            # Lo stress reduction è basato sul volume di operazioni noiose automatizzate
-            stress_score = min(100, int((total_ops / 500.0) * 100)) if total_ops > 0 else 0
+            # Affidabilità: 100% meno penalità per errori critici
+            reliability = 100 - (critical_errors * 5)
+            reliability = max(0, min(100, reliability))
+
+            # Trend calculation
+            if prev_30d_ops > 0:
+                trend_percentage = ((current_30d_ops - prev_30d_ops) / prev_30d_ops) * 100.0
+            else:
+                trend_percentage = 100.0 if current_30d_ops > 0 else 0.0
+
+            # Top Task calculation
+            top_task_name = "Nessuno"
+            top_task_pct = 0.0
+            if task_counts:
+                top_task = max(task_counts.items(), key=operator.itemgetter(1))
+                top_task_name = top_task[0]
+                top_task_pct = (top_task[1] / total_ops) * 100 if total_ops > 0 else 0.0
 
             return ROIMetrics(
                 total_minutes_saved=total_min,
                 total_operations=total_ops,
-                estimated_cost_saved=cost_saved,
-                stress_reduction_score=stress_score,
+                success_rate=round(success_rate, 1),
+                reliability_score=reliability,
+                total_days=total_days,
+                trend_percentage=round(trend_percentage, 1),
+                top_task_name=top_task_name,
+                top_task_pct=round(top_task_pct, 1)
             )
         except Exception as e:
             logger.error(f"Errore calcolo ROI: {e}")
-            return ROIMetrics(0, 0, 0, 0)
+            return ROIMetrics(0, 0, 0, 0, 0, 0.0, "Nessuno", 0.0)
 
     @classmethod
     def format_time_saved(cls, minutes: float) -> str:
@@ -81,4 +153,10 @@ class ROIEngine:
             return f"{int(minutes)} min"
         hours = int(minutes // 60)
         rem_min = int(minutes % 60)
+
+        if hours > 24:
+            days = hours // 24
+            rem_hours = hours % 24
+            return f"{days}g {rem_hours}h"
+
         return f"{hours}h {rem_min}m"

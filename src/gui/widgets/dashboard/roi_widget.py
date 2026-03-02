@@ -1,7 +1,7 @@
 """
-SyncroJob - Bot Savings Widget (ROI)
-Visualizza il tempo e le risorse risparmiate grazie alle automazioni.
-V3.0: Design premium con badge circolari, separatore gradient, dettagli espansi.
+SyncroJob - Bot Efficiency Widget
+Visualizza le metriche di efficienza e affidabilità delle automazioni su tutto lo storico.
+V4.0: Storico totale, nuove metriche di successo e affidabilità con barre di progresso.
 """
 
 import logging
@@ -22,15 +22,15 @@ logger = logging.getLogger(__name__)
 
 class BotSavingsWidget(ModernCard):
     """
-    Widget che mostra le metriche di risparmio dei bot (ROI) con design premium.
-    Calcola il tempo risparmiato, i task automatizzati e la riduzione dello stress operativo.
+    Widget che mostra le metriche di efficienza dei bot con design premium.
+    Visualizza il tempo risparmiato, il tasso di successo e l'affidabilità del sistema.
     """
 
     stats_updated = pyqtSignal(object)  # ROIMetrics
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
-        Inizializza il widget ROI.
+        Inizializza il widget Efficienza.
 
         Args:
             parent: Widget genitore opzionale.
@@ -63,7 +63,7 @@ class BotSavingsWidget(ModernCard):
         # 3. Gradient Separator
         self._add_gradient_separator(layout)
 
-        # 4. Detail Section (Stress + Money)
+        # 4. Detail Section (Success Rate + Reliability)
         self._build_detail_section(layout)
 
         # 5. Footer
@@ -77,12 +77,12 @@ class BotSavingsWidget(ModernCard):
         badge = self._create_icon_badge(Icons.CPU, COLORS["teal_accent"], "#e0f2f1")
         header_h.addWidget(badge)
 
-        lbl_title = QLabel("EFFICIENZA AUTOMAZIONI (30gg)")
-        lbl_title.setStyleSheet(
+        self.lbl_title = QLabel("EFFICIENZA AUTOMAZIONI")
+        self.lbl_title.setStyleSheet(
             f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: 800;"
             " letter-spacing: 1.2px; background: transparent; border: none;"
         )
-        header_h.addWidget(lbl_title)
+        header_h.addWidget(self.lbl_title)
         header_h.addStretch()
         layout.addLayout(header_h)
 
@@ -98,9 +98,10 @@ class BotSavingsWidget(ModernCard):
             bg_color="#f0fdf4",
             value_text="Calcolo...",
             value_color=COLORS["success_dark"],
-            tag_text="TEMPO RISPARMIATO",
+            tag_text="RISPARMIO TOTALE",
         )
         self.lbl_time = time_card.findChild(QLabel, "kpi_value")
+        self.lbl_trend = time_card.findChild(QLabel, "kpi_sub")
         kpi_h.addWidget(time_card)
 
         # KPI 2: Task Automatizzati
@@ -110,76 +111,85 @@ class BotSavingsWidget(ModernCard):
             bg_color="#eff6ff",
             value_text="-",
             value_color=COLORS["primary_blue"],
-            tag_text="TASK AUTOMATIZZATI",
+            tag_text="TASK COMPLETATI",
         )
         self.lbl_ops = ops_card.findChild(QLabel, "kpi_value")
+        self.lbl_top_task = ops_card.findChild(QLabel, "kpi_sub")
         kpi_h.addWidget(ops_card)
 
         layout.addLayout(kpi_h)
 
     def _build_detail_section(self, layout: QVBoxLayout) -> None:
-        """Costruisce la sezione di dettaglio con stress bar e risparmio economico."""
-        # -- Stress Row --
-        stress_h = QHBoxLayout()
-        stress_h.setSpacing(10)
+        """Costruisce la sezione di dettaglio con barre di successo e affidabilità."""
+        # -- Success Rate Row --
+        success_h = QHBoxLayout()
+        success_h.setSpacing(10)
 
-        lbl_stress_icon = QLabel()
-        lbl_stress_icon.setFixedSize(16, 16)
-        lbl_stress_icon.setPixmap(
-            get_colored_icon(get_asset_path(Icons.HEART), COLORS["error_red"]).pixmap(14, 14)
+        lbl_success_icon = QLabel()
+        lbl_success_icon.setFixedSize(16, 16)
+        lbl_success_icon.setPixmap(
+            get_colored_icon(get_asset_path(Icons.CHECK_CIRCLE), COLORS["success_dark"]).pixmap(14, 14)
         )
-        lbl_stress_icon.setStyleSheet("background: transparent; border: none;")
-        stress_h.addWidget(lbl_stress_icon)
+        lbl_success_icon.setStyleSheet("background: transparent; border: none;")
+        success_h.addWidget(lbl_success_icon)
 
-        self.lbl_stress = QLabel("Riduzione Stress: 0%")
-        self.lbl_stress.setStyleSheet(
+        lbl_success_tag = QLabel("Tasso di Successo")
+        lbl_success_tag.setStyleSheet(
             f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: 700;"
             " background: transparent; border: none;"
         )
-        stress_h.addWidget(self.lbl_stress)
-        stress_h.addStretch()
+        success_h.addWidget(lbl_success_tag)
+        success_h.addStretch()
 
-        self.lbl_stress_pct = QLabel("0%")
-        self.lbl_stress_pct.setStyleSheet(
-            f"color: {COLORS['teal_accent']}; font-size: 13px; font-weight: 800;"
+        self.lbl_success_pct = QLabel("0%")
+        self.lbl_success_pct.setStyleSheet(
+            f"color: {COLORS['success_dark']}; font-size: 13px; font-weight: 800;"
             " background: transparent; border: none;"
         )
-        stress_h.addWidget(self.lbl_stress_pct)
-        layout.addLayout(stress_h)
+        success_h.addWidget(self.lbl_success_pct)
+        layout.addLayout(success_h)
 
-        # Progress Bar
-        self.progress_stress = AnimatedProgressBar()
-        self.progress_stress.setFixedHeight(10)
-        self.progress_stress.set_color(COLORS["teal_accent"])
-        layout.addWidget(self.progress_stress)
+        # Progress Bar Success
+        self.progress_success = AnimatedProgressBar()
+        self.progress_success.setFixedHeight(8)
+        self.progress_success.set_color(COLORS["success_dark"])
+        layout.addWidget(self.progress_success)
 
-        # -- Money Row --
-        money_h = QHBoxLayout()
-        money_h.setSpacing(10)
+        layout.addSpacing(4)
 
-        lbl_money_icon = QLabel()
-        lbl_money_icon.setFixedSize(16, 16)
-        lbl_money_icon.setPixmap(
-            get_colored_icon(get_asset_path(Icons.SPARKLES), COLORS["teal_accent"]).pixmap(14, 14)
+        # -- Reliability Row --
+        rel_h = QHBoxLayout()
+        rel_h.setSpacing(10)
+
+        lbl_rel_icon = QLabel()
+        lbl_rel_icon.setFixedSize(16, 16)
+        lbl_rel_icon.setPixmap(
+            get_colored_icon(get_asset_path(Icons.SHIELD), COLORS["primary_blue"]).pixmap(14, 14)
         )
-        lbl_money_icon.setStyleSheet("background: transparent; border: none;")
-        money_h.addWidget(lbl_money_icon)
+        lbl_rel_icon.setStyleSheet("background: transparent; border: none;")
+        rel_h.addWidget(lbl_rel_icon)
 
-        lbl_money_tag = QLabel("Risparmio Economico")
-        lbl_money_tag.setStyleSheet(
-            f"color: {COLORS['text_muted']}; font-size: 12px; font-weight: 700;"
+        lbl_rel_tag = QLabel("Affidabilità Sistema")
+        lbl_rel_tag.setStyleSheet(
+            f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: 700;"
             " background: transparent; border: none;"
         )
-        money_h.addWidget(lbl_money_tag)
-        money_h.addStretch()
+        rel_h.addWidget(lbl_rel_tag)
+        rel_h.addStretch()
 
-        self.lbl_money = QLabel("€ 0.00")
-        self.lbl_money.setStyleSheet(
-            f"color: {COLORS['success_dark']}; font-size: 16px; font-weight: 800;"
+        self.lbl_rel_pct = QLabel("0%")
+        self.lbl_rel_pct.setStyleSheet(
+            f"color: {COLORS['primary_blue']}; font-size: 13px; font-weight: 800;"
             " background: transparent; border: none;"
         )
-        money_h.addWidget(self.lbl_money)
-        layout.addLayout(money_h)
+        rel_h.addWidget(self.lbl_rel_pct)
+        layout.addLayout(rel_h)
+
+        # Progress Bar Reliability
+        self.progress_rel = AnimatedProgressBar()
+        self.progress_rel.setFixedHeight(8)
+        self.progress_rel.set_color(COLORS["primary_blue"])
+        layout.addWidget(self.progress_rel)
 
     def _build_footer(self, layout: QVBoxLayout) -> None:
         """Costruisce il piè di pagina con la media giornaliera dei task."""
@@ -234,14 +244,22 @@ class BotSavingsWidget(ModernCard):
         lbl_val = QLabel(value_text)
         lbl_val.setObjectName("kpi_value")
         lbl_val.setStyleSheet(
-            f"color: {value_color}; font-size: 26px; font-weight: 900; background: transparent; border: none;"
+            f"color: {value_color}; font-size: 24px; font-weight: 900; background: transparent; border: none;"
         )
         v.addWidget(lbl_val)
+
+        # Sub (Trend / Top Task)
+        lbl_sub = QLabel("")
+        lbl_sub.setObjectName("kpi_sub")
+        lbl_sub.setStyleSheet(
+            f"color: {COLORS['text_muted']}; font-size: 11px; font-weight: 600; background: transparent; border: none;"
+        )
+        v.addWidget(lbl_sub)
 
         # Tag
         lbl_tag = QLabel(tag_text)
         lbl_tag.setStyleSheet(
-            f"color: {COLORS['text_muted']}; font-size: 11px; font-weight: 800;"
+            f"color: {COLORS['text_muted']}; font-size: 10px; font-weight: 800;"
             " letter-spacing: 0.5px; background: transparent; border: none;"
         )
         v.addWidget(lbl_tag)
@@ -262,14 +280,14 @@ class BotSavingsWidget(ModernCard):
     # ── Data ──────────────────────────────────────────────────────────────
 
     def refresh_stats(self) -> None:
-        """Avvia il thread di calcolo delle statistiche ROI in background."""
+        """Avvia il thread di calcolo delle statistiche in background."""
 
         def run():
             try:
                 metrics = ROIEngine.calculate_savings()
                 self.stats_updated.emit(metrics)
             except Exception as e:
-                logger.error(f"ROI Update Error: {e}")
+                logger.error(f"Efficiency Update Error: {e}")
 
         threading.Thread(target=run, daemon=True).start()
 
@@ -282,14 +300,40 @@ class BotSavingsWidget(ModernCard):
         """
         if hasattr(self, "lbl_time") and self.lbl_time:
             self.lbl_time.setText(ROIEngine.format_time_saved(metrics.total_minutes_saved))
+
+            # Aggiorna Trend
+            trend = metrics.trend_percentage
+            if trend > 0:
+                trend_text = f"▲ +{trend}% vs 30gg prec."
+                color = COLORS["success_dark"]
+            elif trend < 0:
+                trend_text = f"▼ {trend}% vs 30gg prec."
+                color = COLORS["error_red"]
+            else:
+                trend_text = "▶ 0% vs 30gg prec."
+                color = COLORS["text_muted"]
+
+            self.lbl_trend.setText(trend_text)
+            self.lbl_trend.setStyleSheet(f"color: {color}; font-size: 11px; font-weight: 700; background: transparent; border: none;")
+
         if hasattr(self, "lbl_ops") and self.lbl_ops:
             self.lbl_ops.setText(str(metrics.total_operations))
 
-        self.lbl_money.setText(f"€ {metrics.estimated_cost_saved:.2f}")
-        self.lbl_stress.setText(f"Riduzione Stress: {metrics.stress_reduction_score}%")
-        self.lbl_stress_pct.setText(f"{metrics.stress_reduction_score}%")
-        self.progress_stress.set_value(metrics.stress_reduction_score)
+            # Aggiorna Top Task
+            if metrics.top_task_name != "Nessuno":
+                self.lbl_top_task.setText(f"🏆 Top: {metrics.top_task_name} ({metrics.top_task_pct}%)")
+                self.lbl_top_task.setStyleSheet(f"color: {COLORS['primary_blue']}; font-size: 11px; font-weight: 700; background: transparent; border: none;")
+            else:
+                self.lbl_top_task.setText("")
 
-        # Media giornaliera
-        avg = round(metrics.total_operations / 30, 1) if metrics.total_operations > 0 else 0
-        self.lbl_avg.setText(f"Media giornaliera: ~{avg} task/giorno")
+        # Update Progress Bars
+        self.lbl_success_pct.setText(f"{metrics.success_rate}%")
+        self.progress_success.set_value(int(metrics.success_rate))
+
+        self.lbl_rel_pct.setText(f"{metrics.reliability_score}%")
+        self.progress_rel.set_value(metrics.reliability_score)
+
+        # Media giornaliera basata sullo storico reale
+        days = max(1, metrics.total_days)
+        avg = round(metrics.total_operations / days, 1) if metrics.total_operations > 0 else 0
+        self.lbl_avg.setText(f"Media: ~{avg} task/giorno (su {days} gg)")

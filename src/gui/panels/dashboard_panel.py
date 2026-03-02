@@ -181,6 +181,12 @@ class DashboardPanel(QWidget):
 
     def _handle_quick_action(self, key):
         main_window = self.window()
+        if main_window is None or not hasattr(main_window, "navigation_controller"):
+            return
+
+        nav = main_window.navigation_controller
+
+        # Mapping bot -> navigate_to_panel keys
         automation_map = {
             "nav_dettagli_oda": "dettagli_oda",
             "nav_scarico_ts": "scarico_ts",
@@ -190,7 +196,31 @@ class DashboardPanel(QWidget):
             "nav_scarico_pdl": "scarico_pdl",
             "nav_ricerca_pdl": "ricerca_pdl",
         }
+
+        # Handle specific page navigation
         if key in automation_map:
-            panel_key = automation_map[key]
-            if main_window is not None and hasattr(main_window, "navigation_controller"):
-                main_window.navigation_controller.navigate_to_panel(panel_key)
+            nav.navigate_to_panel(automation_map[key])
+        elif key.startswith("nav_sub_strumentale_"):
+            try:
+                sub_idx = int(key.split("_")[-1])
+                nav.navigate_to(4, sub_index=sub_idx)
+            except ValueError:
+                pass
+        elif key == "nav_page_2":
+            nav.navigate_to(2)  # Lyra
+        elif key == "nav_page_5":
+            nav.navigate_to(5)  # DataEase
+        elif key == "nav_page_6":
+            nav.navigate_to(6)  # Anagrafiche PDL
+        elif key == "nav_page_8":
+            nav.navigate_to(8)  # Guida
+        elif key == "nav_page_11":
+            nav.navigate_to(11) # Dipendenti
+        elif key == "nav_storico_oda":
+            nav.navigate_to(10) # Storico OdA
+        elif key == "nav_sub_notifiche_1":
+            nav.navigate_to(9, sub_index=1) # Notifiche -> Audit
+        elif key.startswith("settings_"):
+            # Mappa le sotto-pagine dei settings (se implementate tramite sub_index)
+            # Al momento mandiamo al pannello Impostazioni (7) principale
+            nav.navigate_to(7)
