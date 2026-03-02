@@ -22,7 +22,7 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel
-from src.gui.styles import COLORS, COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
+from src.gui.styles import COLORS, COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE, STATUS_COLORS
 from src.gui.widgets import EditableDataTable
 from src.gui.widgets.core_widgets import (
     FilterComboBox,
@@ -128,33 +128,32 @@ class ScaricoPDLPanel(BaseBotPanel):
         params_lay.addLayout(v_dest)
 
         params_lay.addStretch()
-        lay = self.layout()
-        if isinstance(lay, QVBoxLayout):
-            lay.insertWidget(1, self.params_container)
+
+        # Inserisci nel layout del contenuto anziché nel layout principale
+        self.content_layout.addWidget(self.params_container)
 
         # 2. Tabella e Stati
         content_lay = QHBoxLayout()
         content_lay.setSpacing(10)
-        cols = [
+        cols: list[dict[str, Any]] = [
             {"name": "N° PDL", "type": "text", "default": ""},
-            {"name": "Note / Esito", "type": "text", "default": ""},
+            {"name": "ESITO", "type": "text", "default": "", "readonly": True},
         ]
         self.data_table = EditableDataTable(cols)
         self.data_table.data_changed.connect(self._update_status_list)
 
         v_status = QVBoxLayout()
-        v_status.setContentsMargins(0, 35, 0, 0)
+        # 56px offset = 10px (EditableDataTable margin) + 5px (container inner margin) + ~41px (table header)
+        v_status.setContentsMargins(0, 56, 0, 0)
         self.status_list = StatusListWidget()
         self.status_list.setFixedWidth(40)
         v_status.addWidget(self.status_list)
         v_status.addStretch()
 
-        content_lay.addLayout(v_status)
         content_lay.addWidget(self.data_table)
+        content_lay.addLayout(v_status)
 
-        lay2 = self.layout()
-        if isinstance(lay2, QVBoxLayout):
-            lay2.insertLayout(2, content_lay)
+        self.content_layout.addLayout(content_lay)
 
     def _update_status_list(self) -> None:
         """Sincronizza il contatore visivo dello stato con il numero di righe della tabella."""
@@ -209,12 +208,81 @@ class ScaricoPDLPanel(BaseBotPanel):
         return [
             {
                 "pdl_number": it["n°_pdl"],
-                "stampa": self.check_stampa.isChecked(),
-                "stampante": self.combo_stampanti.currentText(),
+                "print_enabled": self.check_stampa.isChecked(),
+                "printer_name": self.combo_stampanti.currentText(),
                 "output_dir": self.edit_dest.text(),
             }
             for it in items
         ]
+
+    def get_safework_credentials(self) -> tuple[str, str, str]:
+        """Recupera le credenziali SafeWork configurate. Ritorna (user, pass, tipo)."""
+        accounts = config_manager.load_config().get("safework_accounts", [])
+        if not accounts:
+            return "", "", "Esecutore"
+        default_acc = next((a for a in accounts if a.get("default")), accounts[0])
+        return (
+            default_acc.get("username", ""),
+            default_acc.get("password", ""),
+            default_acc.get("type", "Esecutore"),
+        )
+
+    def get_bot_instance(self) -> Any:
+        """Crea e restituisce un'istanza configurata del bot Scarico PDL."""
+        bot_class = self.get_bot_class()
+        username, password, account_type = self.get_safework_credentials()
+        config = config_manager.load_config()
+
+        return bot_class(
+            username=username,
+            password=password,
+            account_type=account_type,
+            headless=config.get("browser_headless", False),
+            timeout=config.get("browser_timeout", 30),
+            download_path=config_manager.get_download_path(),
+        )
+
+    def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
+        """Avvia l'esecuzione del bot configurando worker e segnali."""
+        super()._on_start(params_override)
+        username, password, _ = self.get_safework_credentials()
+
+        if not username or not password:
+            ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
+            self._update_status(STATUS_COLORS["error"], "Credenziali mancanti")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
+            return
+
+        bot_data = self._get_bot_data()
+        if not bot_data:
+            self._update_status(STATUS_COLORS["pending"], "In attesa")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
+            return
+
+        bot = self.get_bot_instance()
+        if not bot:
+            return
+
+        main_win = self.window()
+        tg_service = getattr(main_win, "telegram", None) if main_win else None
+
+        from src.gui.panels.base import BotWorker
+
+        worker = BotWorker(bot, bot_data, telegram_service=tg_service)
+        self.worker = worker
+        self._setup_worker_connections(worker)
+
+        # Connessione segnale specifico per riga PDL
+        worker.row_status_signal.connect(self.on_step_completed)
+
+        self.start_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.log_widget.clear()
+        self.log_widget.append("Avvio Scarico PDL SafeWork...")
+        worker.start()
+        self.bot_started.emit()
 
     def _on_bot_finished(self, success: bool) -> None:
         """
@@ -227,7 +295,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         if success:
             ToastManager.instance().show("Processo PDL Completato!", "success")
 
-    def on_step_completed(self, step_idx: int, success: bool, message: str) -> None:
+    def on_step_completed(self, step_idx: int, success: bool, message: str = "") -> None:
         """
         Aggiorna lo stato visivo di una specifica riga PDL al termine del suo processing.
 
@@ -237,5 +305,10 @@ class ScaricoPDLPanel(BaseBotPanel):
             message: Messaggio di errore opzionale.
         """
         self.status_list.update_status(step_idx, success)
+
+        # Aggiorna la colonna "ESITO" nella tabella (indice colonna = 1)
+        esito_text = "Completato" if success else f"Errore: {message}" if message else "Errore generico"
+        self.data_table.update_cell(step_idx, 1, esito_text)
+
         if not success:
             logger.error(f"Errore riga {step_idx}: {message}")

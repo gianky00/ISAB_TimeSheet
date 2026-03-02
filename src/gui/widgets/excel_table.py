@@ -249,8 +249,27 @@ class EditableDataTable(QWidget):
                 self.table.setCellWidget(row, col, cb)
             else:
                 val = str(config.get("default", "")) if use_defaults else ""
-                self.table.setItem(row, col, SortableTableWidgetItem(val))
+                item = SortableTableWidgetItem(val)
+                if config.get("readonly"):
+                    item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                    item.setBackground(QColor(COLORS["bg_alt"]))
+                self.table.setItem(row, col, item)
         self.data_changed.emit()
+
+    def update_cell(self, row: int, col: int, value: str) -> None:
+        """Aggiorna programmaticamente il valore di una cella specifica."""
+        if 0 <= row < self.table.rowCount() and 0 <= col < self.table.columnCount():
+            item = self.table.item(row, col)
+            if item:
+                item.setText(value)
+            else:
+                item = SortableTableWidgetItem(value)
+                col_cfg = self.columns[col]
+                if col_cfg.get("readonly"):
+                    item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                    item.setBackground(QColor(COLORS["bg_alt"]))
+                self.table.setItem(row, col, item)
+            self.data_changed.emit()
 
     def _remove_row(self) -> None:
         """Rimuove la riga attualmente selezionata."""
@@ -301,7 +320,11 @@ class EditableDataTable(QWidget):
                     cb.currentTextChanged.connect(lambda _: self.data_changed.emit())
                     self.table.setCellWidget(row, c, cb)
                 else:
-                    self.table.setItem(row, c, SortableTableWidgetItem(val))
+                    item = SortableTableWidgetItem(val)
+                    if col_cfg.get("readonly"):
+                        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                        item.setBackground(QColor(COLORS["bg_alt"]))
+                    self.table.setItem(row, c, item)
         while self.table.rowCount() < 5:
             self._add_row(use_defaults=False)
         self.table.blockSignals(False)
