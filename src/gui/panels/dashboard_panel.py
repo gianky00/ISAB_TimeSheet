@@ -201,11 +201,10 @@ class DashboardPanel(QWidget):
         if key in automation_map:
             nav.navigate_to_panel(automation_map[key])
         elif key.startswith("nav_sub_strumentale_"):
-            try:
+            from contextlib import suppress
+            with suppress(ValueError):
                 sub_idx = int(key.split("_")[-1])
                 nav.navigate_to(4, sub_index=sub_idx)
-            except ValueError:
-                pass
         elif key == "nav_page_2":
             nav.navigate_to(2)  # Lyra
         elif key == "nav_page_5":
@@ -221,6 +220,6 @@ class DashboardPanel(QWidget):
         elif key == "nav_sub_notifiche_1":
             nav.navigate_to(9, sub_index=1) # Notifiche -> Audit
         elif key.startswith("settings_"):
-            # Mappa le sotto-pagine dei settings (se implementate tramite sub_index)
+            # Mappa le sotto-pagine dei settings (se configurate tramite sub_index)
             # Al momento mandiamo al pannello Impostazioni (7) principale
             nav.navigate_to(7)
