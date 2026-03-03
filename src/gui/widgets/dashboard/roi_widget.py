@@ -240,13 +240,18 @@ class BotSavingsWidget(ModernCard):
         badge_h.addStretch()
         v.addLayout(badge_h)
 
+        # Row for Value and Sub (Horizontal Alignment)
+        row_h = QHBoxLayout()
+        row_h.setSpacing(10)
+        row_h.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
         # Value
         lbl_val = QLabel(value_text)
         lbl_val.setObjectName("kpi_value")
         lbl_val.setStyleSheet(
             f"color: {value_color}; font-size: 24px; font-weight: 900; background: transparent; border: none;"
         )
-        v.addWidget(lbl_val)
+        row_h.addWidget(lbl_val)
 
         # Sub (Trend / Top Task)
         lbl_sub = QLabel("")
@@ -254,7 +259,9 @@ class BotSavingsWidget(ModernCard):
         lbl_sub.setStyleSheet(
             f"color: {COLORS['text_muted']}; font-size: 11px; font-weight: 600; background: transparent; border: none;"
         )
-        v.addWidget(lbl_sub)
+        row_h.addWidget(lbl_sub)
+        row_h.addStretch()
+        v.addLayout(row_h)
 
         # Tag
         lbl_tag = QLabel(tag_text)

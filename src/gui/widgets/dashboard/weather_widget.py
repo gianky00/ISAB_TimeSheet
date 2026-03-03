@@ -137,11 +137,35 @@ class WeatherWidget(ModernCard):
 
         header_h.addStretch()
 
+        # Data e Ora
         self.lbl_clock = QLabel()
         self.lbl_clock.setObjectName("lbl_clock")
         self.lbl_clock.setStyleSheet(f"#lbl_clock {{ color: {COLORS['text_muted']}; font-size: 12px; font-weight: 700; background: transparent; border: none; letter-spacing: 0.5px; }}")
         self._update_clock()
         header_h.addWidget(self.lbl_clock)
+
+        # Alba e Tramonto (Spostati qui per compattezza)
+        header_h.addSpacing(10)
+
+        self.lbl_icon_sunrise = QLabel()
+        self.lbl_icon_sunrise.setPixmap(get_colored_icon("assets/icons/sunrise.svg", COLORS["text_muted"]).pixmap(12, 12))
+        header_h.addWidget(self.lbl_icon_sunrise)
+
+        self.lbl_sunrise = QLabel("--:--")
+        self.lbl_sunrise.setObjectName("lbl_sunrise")
+        self.lbl_sunrise.setStyleSheet(f"#lbl_sunrise {{ color: {COLORS['text_muted']}; font-size: 11px; font-weight: 600; background: transparent; border: none; }}")
+        header_h.addWidget(self.lbl_sunrise)
+
+        header_h.addSpacing(6)
+
+        self.lbl_icon_sunset = QLabel()
+        self.lbl_icon_sunset.setPixmap(get_colored_icon("assets/icons/sunset.svg", COLORS["text_muted"]).pixmap(12, 12))
+        header_h.addWidget(self.lbl_icon_sunset)
+
+        self.lbl_sunset = QLabel("--:--")
+        self.lbl_sunset.setObjectName("lbl_sunset")
+        self.lbl_sunset.setStyleSheet(f"#lbl_sunset {{ color: {COLORS['text_muted']}; font-size: 11px; font-weight: 600; background: transparent; border: none; }}")
+        header_h.addWidget(self.lbl_sunset)
 
         header_h.addStretch()
 
@@ -214,29 +238,10 @@ class WeatherWidget(ModernCard):
         footer_h = QHBoxLayout()
         footer_h.setSpacing(6)
 
-        # Alba
-        self.lbl_icon_sunrise = QLabel()
-        self.lbl_icon_sunrise.setPixmap(get_colored_icon("assets/icons/sunrise.svg", COLORS["text_muted"]).pixmap(12, 12))
-        self.lbl_sunrise = QLabel("--:--")
-        self.lbl_sunrise.setObjectName("lbl_sunrise")
-        self.lbl_sunrise.setStyleSheet(f"#lbl_sunrise {{ color: {COLORS['text_muted']}; font-size: 11px; font-weight: 600; background: transparent; border: none; }}")
-
-        # Tramonto
-        self.lbl_icon_sunset = QLabel()
-        self.lbl_icon_sunset.setPixmap(get_colored_icon("assets/icons/sunset.svg", COLORS["text_muted"]).pixmap(12, 12))
-        self.lbl_icon_sunset.setContentsMargins(8, 0, 0, 0) # Spazio aggiuntivo a sinistra
-        self.lbl_sunset = QLabel("--:--")
-        self.lbl_sunset.setObjectName("lbl_sunset")
-        self.lbl_sunset.setStyleSheet(f"#lbl_sunset {{ color: {COLORS['text_muted']}; font-size: 11px; font-weight: 600; background: transparent; border: none; }}")
-
         self.lbl_updated = QLabel("In attesa di dati...")
         self.lbl_updated.setObjectName("lbl_updated")
         self.lbl_updated.setStyleSheet(f"#lbl_updated {{ color: {COLORS['text_light']}; font-size: 11px; font-style: italic; background: transparent; border: none; }}")
 
-        footer_h.addWidget(self.lbl_icon_sunrise)
-        footer_h.addWidget(self.lbl_sunrise)
-        footer_h.addWidget(self.lbl_icon_sunset)
-        footer_h.addWidget(self.lbl_sunset)
         footer_h.addStretch()
         footer_h.addWidget(self.lbl_updated)
         self.main_layout.addLayout(footer_h)
