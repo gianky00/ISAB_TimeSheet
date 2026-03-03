@@ -30,6 +30,17 @@ class AccountDialog(QDialog):
         self.setWindowTitle("Account")
         self.setFixedWidth(350)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {COLORS["bg_white"]};
+                border-radius: 12px;
+            }}
+            QLabel {{
+                color: {COLORS["text_dark"]};
+                font-weight: 500;
+                font-size: 13px;
+            }}
+        """)
 
         # Main Layout (Vertical) instead of Form for better control
         main_layout = QVBoxLayout(self)

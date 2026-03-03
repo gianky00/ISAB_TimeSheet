@@ -20,12 +20,13 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.core.database.pdl_queries import PDLQueries
 from src.core.pdl.period_manager import PDLPeriodManager
-from src.gui.panels.base import BotWorker  # noqa: TC001
+from src.gui.panels.base import BotWorker
 from src.gui.styles import COLORS
 from src.gui.widgets import MultiSelectFilter, TimelineWidget
 from src.gui.widgets.core_widgets import FilterComboBox, StandardGroupBox
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.pdl.table_widget import ProgrammazioneTableWidget
+from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path
 
 logger = logging.getLogger(__name__)
@@ -252,9 +253,85 @@ class ProgrammazioneTab(QWidget):
             table.setMaximumHeight(h + 20 if h > 25 else 0)
 
     def _on_run_clicked(self):
-        # ... logica bot worker invariata ma ripulita ...
-        pass
+        """Avvia il controllo programmazione tramite bot SafeWork."""
+        # 1. Recupero credenziali
+        username, password, account_type = self.get_safework_credentials()
+        if not username or not password:
+            ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
+            return
+
+        # 2. Parametri Bot
+        requesters = self.req_filter.selected
+        if not requesters:
+            ToastManager.instance().show("Seleziona almeno un richiedente dal filtro.", "info")
+            return
+
+        start_date, end_date, _ = PDLPeriodManager.get_week_range(self.week_selector.currentIndex())
+
+        # 3. Istanza Bot
+        from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
+
+        config = config_manager.load_config()
+        bot = SafeWorkProgrammazioneBot(
+            username=username,
+            password=password,
+            account_type=account_type,
+            headless=config.get("browser_headless", False),
+            timeout=config.get("browser_timeout", 30),
+            download_path=config_manager.get_download_path(),
+        )
+
+        # 4. Worker
+        bot_data = {
+            "requesters": requesters,
+            "date_start": start_date,
+            "date_end": end_date,
+        }
+
+        self.worker = BotWorker(bot, [bot_data])
+        self.worker.log_signal.connect(self._on_log)
+        self.worker.finished_signal.connect(self._on_worker_finished)
+
+        # UI Update
+        self.btn_run.setEnabled(False)
+        self.log_widget.setVisible(True)
+        self.log_widget.clear()
+        self.log_widget.append(f"Avvio controllo programmazione per la settimana {start_date} - {end_date}...")
+
+        self.worker.start()
+
+    def get_safework_credentials(self) -> tuple[str, str, str]:
+        """Recupera le credenziali SafeWork predefinite."""
+        accounts = config_manager.load_config().get("safework_accounts", [])
+        if not accounts:
+            return "", "", "Esecutore"
+        default_acc = next((a for a in accounts if a.get("default")), accounts[0])
+        return (
+            default_acc.get("username", ""),
+            default_acc.get("password", ""),
+            default_acc.get("type", "Esecutore"),
+        )
+
+    def _on_worker_finished(self, success: bool):
+        """Gestisce il completamento del bot worker."""
+        self.btn_run.setEnabled(True)
+        if success and self.worker:
+            results = getattr(self.worker.bot, "results", [])
+            start_date, end_date, _ = PDLPeriodManager.get_week_range(self.week_selector.currentIndex())
+            PDLQueries.save_programming_results(results, start_date, end_date)
+            self.log_widget.append(f"✅ Controllo completato. Trovati {len(results)} PDL aggiornati.", "SUCCESS")
+            self._load_persisted_data()
+        else:
+            self.log_widget.append("❌ Errore durante il controllo della programmazione.", "ERROR")
+
+        if self.worker:
+            self.worker.deleteLater()
+            self.worker = None
+
+    def _on_log(self, message: str):
+        """Aggiunge un messaggio al widget dei log."""
+        self.log_widget.append(message)
 
     def _on_email_clicked(self):
-        # ... logica email delegata a helper futuro ...
-        pass
+        """Gestione invio report via email (Placeholder)."""
+        ToastManager.instance().show("Funzionalità Report Outlook in fase di implementazione.", "info")

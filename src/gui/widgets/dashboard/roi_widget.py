@@ -320,12 +320,21 @@ class BotSavingsWidget(ModernCard):
         if hasattr(self, "lbl_ops") and self.lbl_ops:
             self.lbl_ops.setText(str(metrics.total_operations))
 
-            # Aggiorna Top Task
-            if metrics.top_task_name != "Nessuno":
-                self.lbl_top_task.setText(f"🏆 Top: {metrics.top_task_name} ({metrics.top_task_pct}%)")
-                self.lbl_top_task.setStyleSheet(f"color: {COLORS['primary_blue']}; font-size: 11px; font-weight: 700; background: transparent; border: none;")
+            # Aggiorna Top Task (Top 3)
+            if metrics.top_tasks:
+                icons = ["🥇", "🥈", "🥉"]
+                top_text_lines = []
+                for i, (name, pct) in enumerate(metrics.top_tasks):
+                    icon = icons[i] if i < len(icons) else "•"
+                    top_text_lines.append(f"{icon} {name} ({pct}%)")
+
+                self.lbl_top_task.setText("\n".join(top_text_lines))
+                self.lbl_top_task.setStyleSheet(
+                    f"color: {COLORS['primary_blue']}; font-size: 10px; font-weight: 700;"
+                    " background: transparent; border: none; line-height: 1.2;"
+                )
             else:
-                self.lbl_top_task.setText("")
+                self.lbl_top_task.setText("Nessun dato")
 
         # Update Progress Bars
         self.lbl_success_pct.setText(f"{metrics.success_rate}%")

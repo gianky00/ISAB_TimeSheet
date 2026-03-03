@@ -28,7 +28,7 @@ class ProgrammazioneTableWidget(StandardTable):
     selection_changed_custom = pyqtSignal()
 
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super().__init__(0, 0, parent)
         self._setup_ui()
 
     def _setup_ui(self):

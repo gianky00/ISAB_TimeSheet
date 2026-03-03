@@ -1,16 +1,18 @@
 """
 Standard Terminal Log Widget per SyncroJob.
-Sostituisce la vecchia timeline orizzontale con un visualizzatore testuale pulito e moderno.
+Sostituisce la vecchia timeline orizzontale con un visualizzatore testuale pulito e moderno in Light Mode.
 """
 
 from PyQt6.QtCore import pyqtSlot
 from PyQt6.QtGui import QColor, QFont, QTextCharFormat, QTextCursor
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPlainTextEdit, QVBoxLayout, QWidget
 
+from src.gui.styles import COLORS
+
 
 class TerminalLogWidget(QWidget):
     """
-    Console di log in stile terminale con evidenziazione dei livelli.
+    Console di log in stile terminale chiaro con evidenziazione dei livelli.
     Fornisce una visualizzazione testuale moderna e pulita delle attività del bot.
     """
 
@@ -29,7 +31,7 @@ class TerminalLogWidget(QWidget):
         # Header opzionale
         header_layout = QHBoxLayout()
         self.title_label = QLabel("LOG ATTIVITÀ")
-        self.title_label.setStyleSheet("font-weight: bold; color: #808080; font-size: 10px;")
+        self.title_label.setStyleSheet(f"font-weight: bold; color: {COLORS['text_muted']}; font-size: 10px; letter-spacing: 1px;")
         header_layout.addWidget(self.title_label)
         header_layout.addStretch()
         self.main_layout.addLayout(header_layout)
@@ -37,17 +39,17 @@ class TerminalLogWidget(QWidget):
         # Area di testo
         self.editor = QPlainTextEdit()
         self.editor.setReadOnly(True)
-        self.editor.setMaximumBlockCount(1000)  # Limite per performance
+        self.editor.setMaximumBlockCount(1000)
 
-        # Styling Cyber-Console
-        self.editor.setStyleSheet("""
-            QPlainTextEdit {
-                background-color: #1E1E1E;
-                color: #D4D4D4;
-                border: 1px solid #333333;
-                border-radius: 4px;
-                padding: 5px;
-            }
+        # Styling Enterprise Light Console
+        self.editor.setStyleSheet(f"""
+            QPlainTextEdit {{
+                background-color: {COLORS["bg_light"]};
+                color: {COLORS["text_dark"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-radius: 8px;
+                padding: 8px;
+            }}
         """)
 
         font = QFont("Consolas", 10)
@@ -73,24 +75,27 @@ class TerminalLogWidget(QWidget):
 
         self.editor.moveCursor(QTextCursor.MoveOperation.End)
 
-        # Formattazione per livello
-        color = "#D4D4D4"
+        # Formattazione per livello (Colori ad alto contrasto per Light Mode)
+        color = COLORS["text_dark"]
 
         level_upper = level.upper()
         if "ERROR" in level_upper or "❌" in message:
-            color = "#F44336"
+            color = COLORS["error_red"]
         elif "WARN" in level_upper or "⚠️" in message:
-            color = "#FFB300"
+            color = COLORS["warning_orange"]
         elif "SUCCESS" in level_upper or "✅" in message:
-            color = "#4CAF50"
+            color = COLORS["success_dark"]
+        elif "INFO" in level_upper:
+            color = COLORS["primary_blue"]
 
         # Costruisce la riga
         fmt = QTextCharFormat()
         fmt.setForeground(QColor(color))
+        fmt.setFontWeight(600 if level_upper != "INFO" else 400)
 
         # Inserisce timestamp grigio
         ts_fmt = QTextCharFormat()
-        ts_fmt.setForeground(QColor("#606060"))
+        ts_fmt.setForeground(QColor(COLORS["text_muted"]))
         self.editor.setCurrentCharFormat(ts_fmt)
         self.editor.insertPlainText(f"[{timestamp}] ")
 

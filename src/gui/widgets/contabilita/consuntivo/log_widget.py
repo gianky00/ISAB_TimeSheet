@@ -1,6 +1,6 @@
 """
 SyncroJob - Consuntivo Operations Log Widget
-Console dark per il tracciamento delle operazioni in tempo reale.
+Console chiara per il tracciamento delle operazioni in tempo reale.
 """
 
 from datetime import datetime
@@ -18,9 +18,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.styles import COLORS
+
 
 class OperationLogWidget(QFrame):
-    """Console dark per i log delle operazioni."""
+    """Console professionale in Light Mode per i log delle operazioni."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
@@ -31,39 +33,46 @@ class OperationLogWidget(QFrame):
         """
         super().__init__(parent)
         self.setObjectName("logWidget")
-        self.setStyleSheet("""
-            QFrame#logWidget {
-                background-color: #1e1e2e;
-                border: 1px solid #313244;
-                border-radius: 16px;
-            }
+        self.setStyleSheet(f"""
+            QFrame#logWidget {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-radius: 12px;
+            }}
         """)
         shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(12)
-        shadow.setOffset(0, 3)
-        shadow.setColor(QColor(0, 0, 0, 20))
+        shadow.setBlurRadius(10)
+        shadow.setOffset(0, 2)
+        shadow.setColor(QColor(0, 0, 0, 15))
         self.setGraphicsEffect(shadow)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 12, 16, 12)
+        layout.setContentsMargins(15, 12, 15, 12)
         layout.setSpacing(8)
 
         header_row = QHBoxLayout()
-        header_label = QLabel("🖥️ Console Operazioni")
-        header_label.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
-        header_label.setStyleSheet("color: #cdd6f4;")
+        header_label = QLabel("Console Operazioni")
+        header_label.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
+        header_label.setStyleSheet(f"color: {COLORS['text_dark']}; text-transform: uppercase; letter-spacing: 0.5px;")
         header_row.addWidget(header_label)
         header_row.addStretch()
 
         clear_btn = QPushButton("Pulisci")
         clear_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        clear_btn.setStyleSheet("""
-            QPushButton {
-                background: rgba(255,255,255,0.08); color: #bac2de;
-                border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 6px; padding: 4px 12px; font-size: 11px;
-            }
-            QPushButton:hover { background: rgba(255,255,255,0.15); }
+        clear_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS["bg_light"]};
+                color: {COLORS["text_muted"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-radius: 6px;
+                padding: 4px 12px;
+                font-size: 11px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS["border_light"]};
+                color: {COLORS["text_dark"]};
+            }}
         """)
         clear_btn.clicked.connect(self.clear)
         header_row.addWidget(clear_btn)
@@ -72,13 +81,17 @@ class OperationLogWidget(QFrame):
         self._log_text = QTextEdit()
         self._log_text.setReadOnly(True)
         self._log_text.setFont(QFont("Cascadia Code", 10))
-        self._log_text.setStyleSheet("""
-            QTextEdit {
-                background: transparent; color: #a6e3a1; border: none;
-                selection-background-color: rgba(137, 180, 250, 0.3);
-            }
-            QScrollBar:vertical { border: none; background: transparent; width: 6px; }
-            QScrollBar::handle:vertical { background: rgba(255,255,255,0.15); border-radius: 3px; }
+        self._log_text.setStyleSheet(f"""
+            QTextEdit {{
+                background-color: {COLORS["bg_light"]};
+                color: {COLORS["text_dark"]};
+                border: 1px solid {COLORS["border_light"]};
+                border-radius: 8px;
+                padding: 5px;
+                selection-background-color: {COLORS["primary_blue"]}4D;
+            }}
+            QScrollBar:vertical {{ border: none; background: transparent; width: 6px; }}
+            QScrollBar::handle:vertical {{ background: {COLORS["border_medium"]}; border-radius: 3px; }}
         """)
         layout.addWidget(self._log_text)
 
@@ -91,16 +104,17 @@ class OperationLogWidget(QFrame):
             level: Il livello di severità per la colorazione (info, success, warning, error, step).
         """
         colors = {
-            "info": "#89b4fa",
-            "success": "#a6e3a1",
-            "warning": "#f9e2af",
-            "error": "#f38ba8",
-            "step": "#cba6f7",
+            "info": COLORS["primary_blue"],
+            "success": COLORS["success_dark"],
+            "warning": COLORS["warning_orange"],
+            "error": COLORS["error_red"],
+            "step": COLORS["purple"],
         }
         color = colors.get(level, colors["info"])
         time_str = datetime.now().strftime("%H:%M:%S")
         self._log_text.append(
-            f'<span style="color:#585b70;">[{time_str}]</span> <span style="color:{color};">{message}</span>'
+            f'<span style="color:{COLORS["text_muted"]};">[{time_str}]</span> '
+            f'<span style="color:{color}; font-weight: 500;">{message}</span>'
         )
         self._log_text.ensureCursorVisible()
 

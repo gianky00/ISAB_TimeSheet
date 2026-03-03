@@ -25,8 +25,9 @@ class ROIMetrics:
     reliability_score: int  # Affidabilità del sistema (0-100)
     total_days: int  # Giorni totali di storico
     trend_percentage: float  # Variazione % rispetto al mese precedente
-    top_task_name: str  # Nome del task più eseguito
-    top_task_pct: float  # Percentuale del top task sul totale
+    top_task_name: str  # Nome del task più eseguito (mantenuto per compatibilità)
+    top_task_pct: float  # Percentuale del top task sul totale (mantenuto per compatibilità)
+    top_tasks: list[tuple[str, float]]  # Top 3 task: [(nome, percentuale), ...]
 
 
 class ROIEngine:
@@ -48,12 +49,12 @@ class ROIEngine:
     def calculate_savings(cls) -> ROIMetrics:
         """Esegue l'analisi dello storico audit per derivare le metriche di risparmio."""
         try:
-            # Recuperiamo TUTTE le azioni dall'Audit (Senza limite 30gg)
+            # Recuperiamo TUTTE le azioni dall'Audit
             query = "SELECT action, entity, status, severity, timestamp FROM audit_logs ORDER BY timestamp ASC"
             rows = db_manager.execute_query(db_manager.DB_AUDIT, query)
 
             if not rows:
-                return ROIMetrics(0, 0, 0, 0, 0, 0.0, "Nessuno", 0.0)
+                return ROIMetrics(0, 0, 0, 0, 0, 0.0, "Nessuno", 0.0, [])
 
             total_min = 0.0
             total_ops = 0
@@ -90,12 +91,11 @@ class ROIEngine:
 
                 if is_success:
                     success_count += 1
-                    # Se l'azione è riuscita, calcoliamo il risparmio di tempo e statistiche
+                    # Filtro: Contiamo solo i bot reali mappati in MINUTES_PER_ACTION
                     for key, minutes in cls.MINUTES_PER_ACTION.items():
                         if key.lower() in str(action).lower() or key.lower() in str(entity).lower():
                             total_min += minutes
                             total_ops += 1
-
                             task_counts[key] = task_counts.get(key, 0) + 1
 
                             # Calcolo del trend a 30 e 60 giorni
@@ -124,13 +124,22 @@ class ROIEngine:
             else:
                 trend_percentage = 100.0 if current_30d_ops > 0 else 0.0
 
-            # Top Task calculation
+            # Top Tasks calculation (Top 3)
+            top_tasks_list = []
             top_task_name = "Nessuno"
             top_task_pct = 0.0
+
             if task_counts:
-                top_task = max(task_counts.items(), key=operator.itemgetter(1))
-                top_task_name = top_task[0]
-                top_task_pct = (top_task[1] / total_ops) * 100 if total_ops > 0 else 0.0
+                # Ordina per numero di esecuzioni decrescente
+                sorted_tasks = sorted(task_counts.items(), key=operator.itemgetter(1), reverse=True)
+
+                for name, count in sorted_tasks[:3]:
+                    pct = (count / total_ops) * 100 if total_ops > 0 else 0.0
+                    top_tasks_list.append((name, round(pct, 1)))
+
+                if top_tasks_list:
+                    top_task_name = top_tasks_list[0][0]
+                    top_task_pct = top_tasks_list[0][1]
 
             return ROIMetrics(
                 total_minutes_saved=total_min,
@@ -140,11 +149,12 @@ class ROIEngine:
                 total_days=total_days,
                 trend_percentage=round(trend_percentage, 1),
                 top_task_name=top_task_name,
-                top_task_pct=round(top_task_pct, 1)
+                top_task_pct=top_task_pct,
+                top_tasks=top_tasks_list
             )
         except Exception as e:
             logger.error(f"Errore calcolo ROI: {e}")
-            return ROIMetrics(0, 0, 0, 0, 0, 0.0, "Nessuno", 0.0)
+            return ROIMetrics(0, 0, 0, 0, 0, 0.0, "Nessuno", 0.0, [])
 
     @classmethod
     def format_time_saved(cls, minutes: float) -> str:
