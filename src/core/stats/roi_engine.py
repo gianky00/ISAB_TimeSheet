@@ -8,8 +8,8 @@ import operator
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import ClassVar
 
+from src.core.config_manager import get_config_value
 from src.core.database import db_manager
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 class ROIMetrics:
     """Modello dati per le metriche di risparmio."""
 
-    total_minutes_saved: float
+    total_minutes_saved: float  # Tempo manuale stimato
+    net_minutes_saved: float    # Risparmio reale (Manuale - Bot)
     total_operations: int
     success_rate: float  # Percentuale di successo (0-100)
     reliability_score: int  # Affidabilità del sistema (0-100)
@@ -33,30 +34,37 @@ class ROIMetrics:
 class ROIEngine:
     """Motore per il calcolo del Ritorno sull'Investimento (ROI) delle automazioni."""
 
-    # Pesi: minuti di lavoro manuale stimati per ogni azione riuscita
-    MINUTES_PER_ACTION: ClassVar[dict[str, float]] = {
-        "Scarico TS": 5.0,
-        "Carico TS": 8.0,
-        "Dettagli ODA": 3.0,
-        "Prenota BP": 10.0,
-        "Scarico PDL": 12.0,
-        "Ricerca PDL": 2.0,
-        "Sincronizzazione": 1.0,
-        "Export Excel": 5.0,
-    }
+    @classmethod
+    def get_weights(cls) -> dict[str, float]:
+        """Recupera i pesi (minuti manuali) dalla configurazione."""
+        default_weights = {
+            "Scarico TS": 5.0,
+            "Carico TS": 8.0,
+            "Dettagli ODA": 3.0,
+            "Prenota BP": 10.0,
+            "Scarico PDL": 12.0,
+            "Ricerca PDL": 2.0,
+            "Sincronizzazione": 1.0,
+            "Export Excel": 5.0,
+        }
+        return get_config_value("roi_weights", default_weights)
 
     @classmethod
     def calculate_savings(cls) -> ROIMetrics:
         """Esegue l'analisi dello storico audit per derivare le metriche di risparmio."""
         try:
-            # Recuperiamo TUTTE le azioni dall'Audit
-            query = "SELECT action, entity, status, severity, timestamp FROM audit_logs ORDER BY timestamp ASC"
+            # Carichiamo i pesi dinamici
+            weights = cls.get_weights()
+
+            # Recuperiamo TUTTE le azioni dall'Audit includendo la durata reale
+            query = "SELECT action, entity, status, severity, timestamp, duration_ms FROM audit_logs ORDER BY timestamp ASC"
             rows = db_manager.execute_query(db_manager.DB_AUDIT, query)
 
             if not rows:
-                return ROIMetrics(0, 0, 0, 0, 0, 0.0, "Nessuno", 0.0, [])
+                return ROIMetrics(0, 0, 0, 0, 0, 0, 0.0, "Nessuno", 0.0, [])
 
-            total_min = 0.0
+            total_min_manual = 0.0
+            total_bot_min = 0.0
             total_ops = 0
             success_count = 0
             fail_count = 0
@@ -82,7 +90,7 @@ class ROIEngine:
             except Exception:
                 total_days = 1
 
-            for action, entity, status, severity, _ts in rows:
+            for action, entity, status, severity, _ts, dur_ms in rows:
                 is_success = str(status).lower() == "success"
 
                 row_date = None
@@ -91,10 +99,15 @@ class ROIEngine:
 
                 if is_success:
                     success_count += 1
-                    # Filtro: Contiamo solo i bot reali mappati in MINUTES_PER_ACTION
-                    for key, minutes in cls.MINUTES_PER_ACTION.items():
+                    # Filtro: Contiamo solo i bot reali mappati in weights
+                    for key, minutes in weights.items():
                         if key.lower() in str(action).lower() or key.lower() in str(entity).lower():
-                            total_min += minutes
+                            total_min_manual += float(minutes)
+
+                            # Aggiungiamo la durata reale del bot (ms -> min)
+                            bot_dur_min = (dur_ms or 0) / 60000.0
+                            total_bot_min += bot_dur_min
+
                             total_ops += 1
                             task_counts[key] = task_counts.get(key, 0) + 1
 
@@ -124,6 +137,9 @@ class ROIEngine:
             else:
                 trend_percentage = 100.0 if current_30d_ops > 0 else 0.0
 
+            # Risparmio Netto
+            net_min = max(0.0, total_min_manual - total_bot_min)
+
             # Top Tasks calculation (Top 3)
             top_tasks_list = []
             top_task_name = "Nessuno"
@@ -142,7 +158,8 @@ class ROIEngine:
                     top_task_pct = top_tasks_list[0][1]
 
             return ROIMetrics(
-                total_minutes_saved=total_min,
+                total_minutes_saved=total_min_manual,
+                net_minutes_saved=net_min,
                 total_operations=total_ops,
                 success_rate=round(success_rate, 1),
                 reliability_score=reliability,
@@ -154,7 +171,7 @@ class ROIEngine:
             )
         except Exception as e:
             logger.error(f"Errore calcolo ROI: {e}")
-            return ROIMetrics(0, 0, 0, 0, 0, 0.0, "Nessuno", 0.0, [])
+            return ROIMetrics(0, 0, 0, 0, 0, 0, 0.0, "Nessuno", 0.0, [])
 
     @classmethod
     def format_time_saved(cls, minutes: float) -> str:

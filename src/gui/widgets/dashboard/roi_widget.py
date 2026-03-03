@@ -98,7 +98,7 @@ class BotSavingsWidget(ModernCard):
             bg_color="#f0fdf4",
             value_text="Calcolo...",
             value_color=COLORS["success_dark"],
-            tag_text="RISPARMIO TOTALE",
+            tag_text="RISPARMIO REALE (NET)",
         )
         self.lbl_time = time_card.findChild(QLabel, "kpi_value")
         self.lbl_trend = time_card.findChild(QLabel, "kpi_sub")
@@ -307,7 +307,8 @@ class BotSavingsWidget(ModernCard):
             metrics: Oggetto ROIMetrics contenente i dati elaborati.
         """
         if hasattr(self, "lbl_time") and self.lbl_time:
-            self.lbl_time.setText(ROIEngine.format_time_saved(metrics.total_minutes_saved))
+            # Visualizziamo il Risparmio Netto (Manuale - Bot)
+            self.lbl_time.setText(ROIEngine.format_time_saved(metrics.net_minutes_saved))
 
             # Aggiorna Trend
             trend = metrics.trend_percentage

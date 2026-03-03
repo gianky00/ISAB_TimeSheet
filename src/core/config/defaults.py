@@ -50,5 +50,15 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "ai_model": "gemini-1.5-pro",
     "ollama_url": URLs.OLLAMA_DEFAULT,
     "quick_actions": ["nav_scarico_ts", "nav_lyra", "cmd_sync", "cmd_open_folder"],
+    "roi_weights": {
+        "Scarico TS": 5.0,
+        "Carico TS": 8.0,
+        "Dettagli ODA": 3.0,
+        "Prenota BP": 10.0,
+        "Scarico PDL": 12.0,
+        "Ricerca PDL": 2.0,
+        "Sincronizzazione": 1.0,
+        "Export Excel": 5.0,
+    },
     "statistics": {},
 }

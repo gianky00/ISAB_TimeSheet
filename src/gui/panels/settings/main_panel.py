@@ -16,6 +16,7 @@ from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.panels.settings.shared import style_button
 from src.gui.panels.settings.tabs.backup_tab import BackupTab
 from src.gui.panels.settings.tabs.config_tab import ConfigTab
+from src.gui.panels.settings.tabs.roi_tab import ROITab
 from src.gui.panels.settings.tabs.telegram_tab import TelegramTab
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import (
@@ -65,7 +66,16 @@ class SettingsPanel(QWidget):
             "Configurazione",
         )
 
-        # 2. Backup e Manutenzione
+        # 2. Efficienza & ROI
+        self.roi_tab = ROITab()
+        self.roi_tab.settings_changed.connect(self.save_settings)
+        self.tabs.addTab(
+            self.roi_tab,
+            get_colored_icon(get_asset_path(Icons.CLOCK), COLORS["text_muted"]),
+            "Efficienza & ROI",
+        )
+
+        # 3. Backup e Manutenzione
         self.backup_tab = BackupTab()
         self.tabs.addTab(
             self.backup_tab,
@@ -117,17 +127,20 @@ class SettingsPanel(QWidget):
         """Carica la configurazione attuale e aggiorna tutti i tab."""
         config = config_manager.load_config()
         self.config_tab.load_from_config(config)
+        self.roi_tab.load_from_config(config)
         self.backup_tab.load_from_config(config)
         self.telegram_tab.load_from_config(config)
 
     def save_settings(self) -> None:
         """Raccoglie i dati dai tab e li persiste tramite il config_manager."""
+        config = config_manager.load_config()
         self.config_tab.save_to_config(config_manager)
+        self.roi_tab.save_to_config(config)
         self.telegram_tab.save_to_config(config_manager)
-        # Nota: save_to_config ha già salvato i singoli valori tramite set_config_value,
-        # che internamente chiama save_config(config).
-        # Non è necessario chiamare save_config(updated_config) manualmente qui
-        # se set_config_value è usato correttamente.
+
+        # Salva la configurazione aggiornata
+        config_manager.save_config(config)
+
         self.settings_saved.emit()
 
     def has_unsaved_changes(self) -> bool:
