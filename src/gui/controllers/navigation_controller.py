@@ -405,6 +405,14 @@ class NavigationController(QObject):
 
         self.mw.sidebar.set_active_button(index, norm_sub, norm_bot)
 
+    def navigate_to_pdl(self, site: str | None = None, area: str | None = None) -> None:
+        """Naviga al database PDL applicando i filtri specificati."""
+        from src.gui.main_window.page_index import PageIndex
+        self.navigate_to(PageIndex.ANAGRAFICHE)
+        panel = self.get_panel(PageIndex.ANAGRAFICHE)
+        if panel and hasattr(panel, "set_filters"):
+            panel.set_filters(site=site, area=area)
+
     def navigate_to_extended(self, tab_idx: int, query: str) -> None:
         """Naviga al pannello Strumentale attivando un tab specifico e pre-compilando la ricerca."""
         self.navigate_to(4, sub_index=tab_idx)

@@ -1,7 +1,7 @@
 """
 SyncroJob - Dashboard Panel
 Pannello di controllo principale (Home) dell'applicazione.
-Refactored V9.6: Integrated Weather Widget and Bot Savings (ROI) Tracker.
+Refactored V9.7: Integrated PDL Stats Widget with Trends and Interactive Areas.
 """
 
 from contextlib import suppress
@@ -20,13 +20,11 @@ from PyQt6.QtWidgets import (
 )
 
 from src.gui.styles import COLORS
-from src.gui.widgets import DashboardStatCard
 from src.gui.widgets.activity_feed import ActivityFeed
 from src.gui.widgets.autopilot import AutopilotWidget
 from src.gui.widgets.dashboard.multi_window_status import MultiWindowStatusWidget
+from src.gui.widgets.dashboard.pdl_stats_widget import PDLStatsWidget
 from src.gui.widgets.dashboard.roi_widget import BotSavingsWidget
-
-# Nuovi Widget Dashboard
 from src.gui.widgets.dashboard.weather_widget import WeatherWidget
 from src.gui.widgets.quick_actions import QuickActions
 
@@ -34,7 +32,7 @@ from src.gui.widgets.quick_actions import QuickActions
 class DashboardPanel(QWidget):
     """
     Dashboard Home evoluta.
-    Sostituisce le card statiche con indicatori dinamici di valore (ROI) e contesto (Meteo).
+    Sostituisce le card statiche con indicatori dinamici di valore (ROI) e contesto (Meteo/PDL).
     """
 
     def __init__(self, parent=None):
@@ -89,7 +87,6 @@ class DashboardPanel(QWidget):
 
     def refresh_live_data(self):
         """Aggiorna i dati dinamici dei widget senza ricostruire la UI."""
-        self._update_quick_stats()
         with suppress(Exception):
             if hasattr(self, "activity_feed"):
                 self.activity_feed.refresh_feed()
@@ -103,22 +100,25 @@ class DashboardPanel(QWidget):
             if hasattr(self, "roi_widget"):
                 self.roi_widget.refresh_stats()
 
+            if hasattr(self, "card_pdl") and hasattr(self.card_pdl, "refresh_stats"):
+                self.card_pdl.refresh_stats()
+
     def _setup_ui(self):
         """Inizializza e posiziona i widget della dashboard."""
         # -1. Multi Window Status Card
         self.multi_window_card = MultiWindowStatusWidget()
         self.content_layout.addWidget(self.multi_window_card)
 
-        # 0. Context & Value Row (Meteo & ROI)
+        # 0. Context & Value Row (Meteo, ROI & PDL)
         context_row = QHBoxLayout()
         context_row.setSpacing(20)
 
         self.weather_widget = WeatherWidget()
         self.roi_widget = BotSavingsWidget()
+        self.card_pdl = PDLStatsWidget()
 
-        from src.core.constants import Icons
-
-        self.card_pdl = DashboardStatCard("PDL In Database", "0", Icons.FILE_TEXT, COLORS["primary_blue"])
+        # Connessione navigazione filtrata
+        self.card_pdl.area_selected.connect(self._handle_pdl_area_click)
 
         context_row.addWidget(self.weather_widget, stretch=1)
         context_row.addWidget(self.roi_widget, stretch=1)
@@ -151,33 +151,14 @@ class DashboardPanel(QWidget):
         self.activity_feed = ActivityFeed()
         self.content_layout.addWidget(self.activity_feed)
 
-        self._update_quick_stats()
+    def _handle_pdl_area_click(self, area_name: str) -> None:
+        """Gestisce il click su un'area specifica dei PDL, navigando alla vista filtrata."""
+        main_window = self.window()
+        if main_window is None or not hasattr(main_window, "navigation_controller"):
+            return
 
-    def _update_quick_stats(self):
-        """Recupera dati reali dal DB per la card PDL."""
-        from src.core.database import db_manager
-        from src.core.sync_tracker import SyncTracker
-
-        with suppress(Exception):
-            res = db_manager.execute_query(db_manager.DB_PDL, "SELECT COUNT(*) FROM pdl")
-            total_pdl = res[0][0] if res else 0
-
-            active_q = """
-                SELECT COUNT(*) FROM pdl
-                WHERE stato LIKE 'Aperto%'
-                   OR stato LIKE 'Emesso%'
-                   OR stato LIKE 'Richiesto%'
-                   OR stato LIKE 'Accettato%'
-            """
-            res_active = db_manager.execute_query(db_manager.DB_PDL, active_q)
-            active_pdl = res_active[0][0] if res_active else 0
-
-            last_sync = SyncTracker.get_formatted_status("pdl")
-            self.card_pdl.update_value(
-                str(total_pdl),
-                f"ATTIVE: {active_pdl} | CHIUSE: {total_pdl - active_pdl}",
-                f"Ultima Sincronizzazione: {last_sync}",
-            )
+        # Navigazione al database PDL con filtri pre-impostati
+        main_window.navigation_controller.navigate_to_pdl(site="ISAB Sud", area=area_name)
 
     def _handle_quick_action(self, key):
         main_window = self.window()
@@ -217,9 +198,9 @@ class DashboardPanel(QWidget):
             nav.navigate_to(11) # Dipendenti
         elif key == "nav_storico_oda":
             nav.navigate_to(10) # Storico OdA
-        elif key == "nav_sub_notifiche_1":
-            nav.navigate_to(9, sub_index=1) # Notifiche -> Audit
+        elif key.startswith("nav_sub_notifiche_"):
+            with suppress(ValueError):
+                sub_idx = int(key.split("_")[-1])
+                nav.navigate_to(9, sub_index=sub_idx)
         elif key.startswith("settings_"):
-            # Mappa le sotto-pagine dei settings (se configurate tramite sub_index)
-            # Al momento mandiamo al pannello Impostazioni (7) principale
             nav.navigate_to(7)

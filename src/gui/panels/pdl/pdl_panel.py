@@ -186,6 +186,27 @@ class PDLDBPanel(QWidget):
         self.model.update_data(master_rows)
         self.table.optimize_columns(len(self.master_headers))
 
+    def set_filters(self, site: str | None = None, area: str | None = None, search: str | None = None) -> None:
+        """
+        Imposta i filtri del pannello programmaticamente.
+
+        Args:
+            site: Nome del sito da selezionare.
+            area: Nome dell'area da selezionare.
+            search: Testo di ricerca.
+        """
+        if site:
+            self.filters.site_filter.setCurrentText(site)
+            self._update_areas()
+        
+        if area:
+            self.filters.area_filter.setCurrentText(area)
+            
+        if search is not None:
+            self.filters.search_input.setText(search)
+            
+        self.refresh_data()
+
     def _on_site_changed(self) -> None:
         """Gestisce il cambio del filtro Sito e aggiorna le Aree disponibili."""
         self._update_areas()
