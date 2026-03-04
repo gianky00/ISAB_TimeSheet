@@ -262,7 +262,7 @@ class BotParametersWidget(QWidget):
 
             from src.gui.widgets.modern_button import ModernButton
             self.open_btn = ModernButton(
-                "APRI", 
+                "APRI",
                 variant=ModernButton.Variant.GHOST,
                 size=ModernButton.Size.SMALL
             )

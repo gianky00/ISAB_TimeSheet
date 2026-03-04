@@ -133,7 +133,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             }}
             QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
         """)
-        
+
         from src.gui.widgets.modern_button import ModernButton
         self.btn_open = ModernButton(
             "APRI",
@@ -390,7 +390,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.data_table.clear()
 
         # 2. Prepara dati per la tabella (Formato: [{"n°_pdl": "...", "esito": ""}])
-        rows = [{"n°_pdl": str(num), "esito": ""} for num in pdl_numbers]
+        rows = [{"n°_pdl": num, "esito": ""} for num in pdl_numbers]
         self.data_table.set_data(rows)
 
         # 3. Attiva stampa di default per questa modalità

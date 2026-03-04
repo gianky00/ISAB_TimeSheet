@@ -20,8 +20,8 @@ def add_account_logic(
         is_default = True
 
     # Trova account esistente per preservare altri campi
-    existing = next((a for a in accounts if a.get("username") == username), {})
-    
+    existing: dict[str, Any] = next((a for a in accounts if a.get("username") == username), {})
+
     accounts = [a for a in accounts if a.get("username") != username]
 
     if is_default:
@@ -30,13 +30,13 @@ def add_account_logic(
 
     new_acc = existing.copy()
     new_acc.update({
-        "username": username, 
-        "password": password, 
+        "username": username,
+        "password": password,
         "default": is_default
     })
     if account_type:
         new_acc["type"] = account_type
-        
+
     accounts.append(new_acc)
     config[key] = accounts
     return config

@@ -329,7 +329,7 @@ class MainWindow(QMainWindow):
                 panel.refresh_contracts()
             if hasattr(panel, "refresh_fornitori"):
                 panel.refresh_fornitori()
-            
+
             # Refresh Percorsi e Dati Salvati
             if hasattr(panel, "_load_saved_data"):
                 try:
@@ -349,7 +349,7 @@ class MainWindow(QMainWindow):
         # 4. Feedback utente
         if not getattr(self, "_is_initializing", False):
             ToastManager.instance().show(
-                "<center><b>Hot Reload Completato</b><br/>Tutte le impostazioni sono ora attive.</center>", 
+                "<center><b>Hot Reload Completato</b><br/>Tutte le impostazioni sono ora attive.</center>",
                 "success"
             )
 

@@ -264,7 +264,7 @@ class PDLDBPanel(QWidget):
         """Mostra il menu contestuale nella posizione specificata."""
         menu = QMenu(self)
         menu.addAction("Mostra/Nascondi dettaglio", self._toggle_detail_view)
-        
+
         sel_model = self.table.selectionModel()
         if sel_model and sel_model.hasSelection():
             menu.addSeparator()
@@ -279,11 +279,11 @@ class PDLDBPanel(QWidget):
         sel_model = self.table.selectionModel()
         if not sel_model:
             return
-        
+
         indexes = sel_model.selectedRows()
         if not indexes:
             return
-        
+
         pdl_numbers = []
         for idx in indexes:
             row = idx.row()
