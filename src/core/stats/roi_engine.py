@@ -20,7 +20,7 @@ class ROIMetrics:
     """Modello dati per le metriche di risparmio."""
 
     total_minutes_saved: float  # Tempo manuale stimato
-    net_minutes_saved: float    # Risparmio reale (Manuale - Bot)
+    net_minutes_saved: float  # Risparmio reale (Manuale - Bot)
     total_operations: int
     success_rate: float  # Percentuale di successo (0-100)
     reliability_score: int  # Affidabilità del sistema (0-100)
@@ -48,6 +48,7 @@ class ROIEngine:
             "Export Excel": 5.0,
         }
         from typing import cast
+
         return cast("dict[str, float]", get_config_value("roi_weights", default_weights))
 
     @classmethod
@@ -59,9 +60,21 @@ class ROIEngine:
 
             # Alias per il mapping flessibile delle azioni audit ai pesi ROI
             task_aliases = {
-                "Scarico TS": ["scarico ts", "scarico timesheet", "download ts", "download timesheet", "scarico ore"],
+                "Scarico TS": [
+                    "scarico ts",
+                    "scarico timesheet",
+                    "download ts",
+                    "download timesheet",
+                    "scarico ore",
+                ],
                 "Carico TS": ["carico ts", "carico timesheet", "upload ts", "upload timesheet", "carico ore"],
-                "Dettagli ODA": ["dettagli oda", "scarico oda", "analisi oda", "importazione oda", "dettagli oda"],
+                "Dettagli ODA": [
+                    "dettagli oda",
+                    "scarico oda",
+                    "analisi oda",
+                    "importazione oda",
+                    "dettagli oda",
+                ],
                 "Prenota BP": ["prenota bp", "prenotazione bp", "creazione bp"],
                 "Scarico PDL": ["scarico pdl", "download pdl", "esportazione pdl"],
                 "Ricerca PDL": ["ricerca pdl", "search pdl", "query pdl"],
@@ -145,7 +158,9 @@ class ROIEngine:
                         # Calcolo del trend a 30 e 60 giorni
                         row_date = None
                         with suppress(Exception):
-                            row_date = datetime.fromisoformat(ts_str.split(".")[0].replace(" ", "T")).astimezone()
+                            row_date = datetime.fromisoformat(
+                                ts_str.split(".")[0].replace(" ", "T")
+                            ).astimezone()
 
                         if row_date:
                             if row_date >= thirty_days_ago:
@@ -212,7 +227,7 @@ class ROIEngine:
                 trend_percentage=round(trend_percentage, 1),
                 top_task_name=top_task_name,
                 top_task_pct=top_task_pct,
-                top_tasks=top_tasks_list
+                top_tasks=top_tasks_list,
             )
         except Exception as e:
             logger.error(f"Errore critico calcolo ROI: {e}", exc_info=True)

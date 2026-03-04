@@ -82,7 +82,9 @@ class LogEntryWidget(QWidget):
                 icon = "✔"
 
             self.lbl_time = QLabel(time_str)
-            self.lbl_time.setStyleSheet(f"color: {COLORS['text_muted']}; font-family: monospace; font-size: 11px;")
+            self.lbl_time.setStyleSheet(
+                f"color: {COLORS['text_muted']}; font-family: monospace; font-size: 11px;"
+            )
             layout.addWidget(self.lbl_time)
 
             self.lbl_icon = QLabel(icon)

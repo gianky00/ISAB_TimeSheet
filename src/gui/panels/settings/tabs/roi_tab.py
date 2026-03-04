@@ -56,7 +56,7 @@ class ROIWeightsPage(QWidget):
             "Scarico PDL",
             "Ricerca PDL",
             "Sincronizzazione",
-            "Export Excel"
+            "Export Excel",
         ]
 
         for task in self.tasks:
@@ -108,15 +108,15 @@ class ROIWeightsPage(QWidget):
         return f"""
             QSpinBox {{
                 padding: 5px;
-                border: 1px solid {COLORS['border_light']};
+                border: 1px solid {COLORS["border_light"]};
                 border-radius: 6px;
-                background: {COLORS['bg_white']};
-                color: {COLORS['text_dark']};
+                background: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
                 font-weight: 800;
                 font-size: 12px;
             }}
             QSpinBox:focus {{
-                border: 1.5px solid {COLORS['primary_blue']};
+                border: 1.5px solid {COLORS["primary_blue"]};
                 background: #FFFFFF;
             }}
         """
@@ -177,7 +177,9 @@ class ROITab(QWidget):
         header_layout.setContentsMargins(20, 0, 20, 0)
 
         title_lbl = QLabel("CONFIGURAZIONE ROI & EFFICIENZA")
-        title_lbl.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 800; font-size: 13px; letter-spacing: 1px;")
+        title_lbl.setStyleSheet(
+            f"color: {COLORS['text_dark']}; font-weight: 800; font-size: 13px; letter-spacing: 1px;"
+        )
         header_layout.addWidget(title_lbl)
         header_layout.addStretch()
 
@@ -202,7 +204,7 @@ class ROITab(QWidget):
             "Stima Tempi Manuali",
             "Definisci minuti e secondi che un operatore impiegherebbe per ogni task.",
             Icons.CLOCK,
-            self.weights_page
+            self.weights_page,
         )
         self.cards_layout.addWidget(card_weights)
 

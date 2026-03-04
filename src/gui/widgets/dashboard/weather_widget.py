@@ -38,6 +38,7 @@ QToolTip {
 }
 """
 
+
 class WeatherWidget(ModernCard):
     """Widget meteo premium con metriche industriali per il cantiere."""
 
@@ -107,7 +108,9 @@ class WeatherWidget(ModernCard):
 
         self.lbl_alert_msg = QLabel("Nessuna allerta")
         self.lbl_alert_msg.setObjectName("lbl_alert_msg")
-        self.lbl_alert_msg.setStyleSheet(f"#lbl_alert_msg {{ color: {COLORS['warning_orange']}; font-size: 11px; font-weight: 800; }}")
+        self.lbl_alert_msg.setStyleSheet(
+            f"#lbl_alert_msg {{ color: {COLORS['warning_orange']}; font-size: 11px; font-weight: 800; }}"
+        )
         h.addWidget(self.lbl_alert_msg)
         h.addStretch()
 
@@ -122,7 +125,9 @@ class WeatherWidget(ModernCard):
 
         lbl_title = QLabel("METEO CANTIERE")
         lbl_title.setObjectName("lbl_title")
-        lbl_title.setStyleSheet(f"#lbl_title {{ color: {COLORS['text_dark']}; font-size: 13px; font-weight: 800; letter-spacing: 1.2px; background: transparent; border: none; }}")
+        lbl_title.setStyleSheet(
+            f"#lbl_title {{ color: {COLORS['text_dark']}; font-size: 13px; font-weight: 800; letter-spacing: 1.2px; background: transparent; border: none; }}"
+        )
         header_h.addWidget(lbl_title)
 
         self.btn_refresh = QPushButton()
@@ -140,7 +145,9 @@ class WeatherWidget(ModernCard):
         # Data e Ora
         self.lbl_clock = QLabel()
         self.lbl_clock.setObjectName("lbl_clock")
-        self.lbl_clock.setStyleSheet(f"#lbl_clock {{ color: {COLORS['text_muted']}; font-size: 12px; font-weight: 700; background: transparent; border: none; letter-spacing: 0.5px; }}")
+        self.lbl_clock.setStyleSheet(
+            f"#lbl_clock {{ color: {COLORS['text_muted']}; font-size: 12px; font-weight: 700; background: transparent; border: none; letter-spacing: 0.5px; }}"
+        )
         self._update_clock()
         header_h.addWidget(self.lbl_clock)
 
@@ -148,30 +155,40 @@ class WeatherWidget(ModernCard):
         header_h.addSpacing(10)
 
         self.lbl_icon_sunrise = QLabel()
-        self.lbl_icon_sunrise.setPixmap(get_colored_icon("assets/icons/sunrise.svg", COLORS["text_muted"]).pixmap(12, 12))
+        self.lbl_icon_sunrise.setPixmap(
+            get_colored_icon("assets/icons/sunrise.svg", COLORS["text_muted"]).pixmap(12, 12)
+        )
         header_h.addWidget(self.lbl_icon_sunrise)
 
         self.lbl_sunrise = QLabel("--:--")
         self.lbl_sunrise.setObjectName("lbl_sunrise")
-        self.lbl_sunrise.setStyleSheet(f"#lbl_sunrise {{ color: {COLORS['text_muted']}; font-size: 11px; font-weight: 600; background: transparent; border: none; }}")
+        self.lbl_sunrise.setStyleSheet(
+            f"#lbl_sunrise {{ color: {COLORS['text_muted']}; font-size: 11px; font-weight: 600; background: transparent; border: none; }}"
+        )
         header_h.addWidget(self.lbl_sunrise)
 
         header_h.addSpacing(6)
 
         self.lbl_icon_sunset = QLabel()
-        self.lbl_icon_sunset.setPixmap(get_colored_icon("assets/icons/sunset.svg", COLORS["text_muted"]).pixmap(12, 12))
+        self.lbl_icon_sunset.setPixmap(
+            get_colored_icon("assets/icons/sunset.svg", COLORS["text_muted"]).pixmap(12, 12)
+        )
         header_h.addWidget(self.lbl_icon_sunset)
 
         self.lbl_sunset = QLabel("--:--")
         self.lbl_sunset.setObjectName("lbl_sunset")
-        self.lbl_sunset.setStyleSheet(f"#lbl_sunset {{ color: {COLORS['text_muted']}; font-size: 11px; font-weight: 600; background: transparent; border: none; }}")
+        self.lbl_sunset.setStyleSheet(
+            f"#lbl_sunset {{ color: {COLORS['text_muted']}; font-size: 11px; font-weight: 600; background: transparent; border: none; }}"
+        )
         header_h.addWidget(self.lbl_sunset)
 
         header_h.addStretch()
 
         self.lbl_location = QLabel("Priolo G. (SR)")
         self.lbl_location.setObjectName("lbl_location")
-        self.lbl_location.setStyleSheet(f"#lbl_location {{ color: {COLORS['text_muted']}; font-size: 12px; font-weight: 700; background: transparent; border: none; }}")
+        self.lbl_location.setStyleSheet(
+            f"#lbl_location {{ color: {COLORS['text_muted']}; font-size: 12px; font-weight: 700; background: transparent; border: none; }}"
+        )
         header_h.addWidget(self.lbl_location)
         self.main_layout.addLayout(header_h)
 
@@ -186,14 +203,18 @@ class WeatherWidget(ModernCard):
         icon_v.setContentsMargins(0, 0, 0, 0)
 
         lbl_today = QLabel("OGGI")
-        lbl_today.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; background: transparent;")
+        lbl_today.setStyleSheet(
+            f"color: {COLORS['text_muted']}; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; background: transparent;"
+        )
         lbl_today.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_v.addWidget(lbl_today, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self.lbl_main_icon = QLabel()
         self.lbl_main_icon.setFixedSize(64, 64)
         self.lbl_main_icon.setObjectName("lbl_main_icon")
-        self.lbl_main_icon.setStyleSheet(f"{TOOLTIP_CSS}\n#lbl_main_icon {{ background: transparent; border: none; }}")
+        self.lbl_main_icon.setStyleSheet(
+            f"{TOOLTIP_CSS}\n#lbl_main_icon {{ background: transparent; border: none; }}"
+        )
         icon_v.addWidget(self.lbl_main_icon, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         body_h.addLayout(icon_v)
@@ -204,15 +225,21 @@ class WeatherWidget(ModernCard):
 
         self.lbl_temp = QLabel("--.-°C")
         self.lbl_temp.setObjectName("lbl_temp")
-        self.lbl_temp.setStyleSheet(f"#lbl_temp {{ color: {COLORS['text_dark']}; font-size: 38px; font-weight: 900; line-height: 1; background: transparent; border: none; }}")
+        self.lbl_temp.setStyleSheet(
+            f"#lbl_temp {{ color: {COLORS['text_dark']}; font-size: 38px; font-weight: 900; line-height: 1; background: transparent; border: none; }}"
+        )
 
         self.lbl_apparent = QLabel("Percepita: --°")
         self.lbl_apparent.setObjectName("lbl_apparent")
-        self.lbl_apparent.setStyleSheet(f"#lbl_apparent {{ color: {COLORS['text_muted']}; font-size: 12px; font-weight: 600; background: transparent; border: none; }}")
+        self.lbl_apparent.setStyleSheet(
+            f"#lbl_apparent {{ color: {COLORS['text_muted']}; font-size: 12px; font-weight: 600; background: transparent; border: none; }}"
+        )
 
         self.lbl_condition = QLabel("Sincronizzazione...")
         self.lbl_condition.setObjectName("lbl_condition")
-        self.lbl_condition.setStyleSheet(f"#lbl_condition {{ color: {COLORS['primary_blue']}; font-size: 13px; font-weight: 800; text-transform: uppercase; margin-top: 4px; background: transparent; border: none; }}")
+        self.lbl_condition.setStyleSheet(
+            f"#lbl_condition {{ color: {COLORS['primary_blue']}; font-size: 13px; font-weight: 800; text-transform: uppercase; margin-top: 4px; background: transparent; border: none; }}"
+        )
 
         temp_v.addWidget(self.lbl_temp)
         temp_v.addWidget(self.lbl_apparent)
@@ -226,10 +253,18 @@ class WeatherWidget(ModernCard):
         pills_v.setSpacing(3)
         pills_v.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
-        self.pill_wind = self._create_info_pill(Icons.ACTIVITY, "-- km/h", COLORS["info_blue"], "<b>Vento</b><br/>Velocità attuale")
-        self.pill_hum = self._create_info_pill(Icons.CLOUD, "--% UR", COLORS["teal_accent"], "<b>Umidità</b><br/>Umidità relativa")
-        self.pill_uv = self._create_info_pill(Icons.SPARKLES, "UV: --", COLORS["warning_orange"], "<b>Indice UV</b><br/>Radiazioni UV")
-        self.pill_aqi = self._create_info_pill(Icons.GLOBE, "AQI: --", COLORS["success_green"], "<b>Qualità Aria</b><br/>Indice EU (0-100+)")
+        self.pill_wind = self._create_info_pill(
+            Icons.ACTIVITY, "-- km/h", COLORS["info_blue"], "<b>Vento</b><br/>Velocità attuale"
+        )
+        self.pill_hum = self._create_info_pill(
+            Icons.CLOUD, "--% UR", COLORS["teal_accent"], "<b>Umidità</b><br/>Umidità relativa"
+        )
+        self.pill_uv = self._create_info_pill(
+            Icons.SPARKLES, "UV: --", COLORS["warning_orange"], "<b>Indice UV</b><br/>Radiazioni UV"
+        )
+        self.pill_aqi = self._create_info_pill(
+            Icons.GLOBE, "AQI: --", COLORS["success_green"], "<b>Qualità Aria</b><br/>Indice EU (0-100+)"
+        )
 
         pills_v.addWidget(self.pill_wind)
         pills_v.addWidget(self.pill_hum)
@@ -242,7 +277,9 @@ class WeatherWidget(ModernCard):
     def _build_forecast_area(self) -> None:
         self.forecast_container = QWidget()
         self.forecast_container.setObjectName("forecast_container")
-        self.forecast_container.setStyleSheet("#forecast_container { background: transparent; border: none; }")
+        self.forecast_container.setStyleSheet(
+            "#forecast_container { background: transparent; border: none; }"
+        )
         self.forecast_h = QHBoxLayout(self.forecast_container)
         self.forecast_h.setContentsMargins(0, 4, 0, 0)
         self.forecast_h.setSpacing(0)
@@ -254,7 +291,9 @@ class WeatherWidget(ModernCard):
 
         self.lbl_updated = QLabel("In attesa di dati...")
         self.lbl_updated.setObjectName("lbl_updated")
-        self.lbl_updated.setStyleSheet(f"#lbl_updated {{ color: {COLORS['text_light']}; font-size: 11px; font-style: italic; background: transparent; border: none; }}")
+        self.lbl_updated.setStyleSheet(
+            f"#lbl_updated {{ color: {COLORS['text_light']}; font-size: 11px; font-style: italic; background: transparent; border: none; }}"
+        )
 
         footer_h.addStretch()
         footer_h.addWidget(self.lbl_updated)
@@ -267,7 +306,9 @@ class WeatherWidget(ModernCard):
         badge.setFixedSize(28, 28)
         badge.setObjectName("icon_badge")
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        badge.setStyleSheet(f"#icon_badge {{ background-color: {bg_color}; border-radius: 14px; border: none; }}")
+        badge.setStyleSheet(
+            f"#icon_badge {{ background-color: {bg_color}; border-radius: 14px; border: none; }}"
+        )
         badge.setPixmap(get_colored_icon(get_asset_path(icon_key), icon_color).pixmap(14, 14))
         return badge
 
@@ -275,8 +316,10 @@ class WeatherWidget(ModernCard):
         pill = QFrame()
         pill.setObjectName("info_pill")
         pill.setToolTip(tooltip)
-        pill.setStyleSheet(f"{TOOLTIP_CSS}\n#info_pill {{ background-color: {COLORS['bg_light']}; border-radius: 10px; border: 1px solid {COLORS['border_light']}; padding: 0px; }}")
-        pill.setFixedHeight(22) # Più compatto per ospitare 4 pill
+        pill.setStyleSheet(
+            f"{TOOLTIP_CSS}\n#info_pill {{ background-color: {COLORS['bg_light']}; border-radius: 10px; border: 1px solid {COLORS['border_light']}; padding: 0px; }}"
+        )
+        pill.setFixedHeight(22)  # Più compatto per ospitare 4 pill
 
         h = QHBoxLayout(pill)
         h.setContentsMargins(8, 0, 10, 0)
@@ -290,7 +333,9 @@ class WeatherWidget(ModernCard):
 
         lbl = QLabel(text)
         lbl.setObjectName("pill_text")
-        lbl.setStyleSheet(f"#pill_text {{ color: {COLORS['text_dark']}; font-size: 10px; font-weight: 700; background: transparent; border: none; }}")
+        lbl.setStyleSheet(
+            f"#pill_text {{ color: {COLORS['text_dark']}; font-size: 10px; font-weight: 700; background: transparent; border: none; }}"
+        )
         h.addWidget(lbl)
         return pill
 
@@ -298,7 +343,9 @@ class WeatherWidget(ModernCard):
         sep = QFrame()
         sep.setObjectName("gradient_sep")
         sep.setFixedHeight(1)
-        sep.setStyleSheet(f"#gradient_sep {{ background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 transparent, stop:0.2 {COLORS['border_light']}, stop:0.8 {COLORS['border_light']}, stop:1 transparent); border: none; }}")
+        sep.setStyleSheet(
+            f"#gradient_sep {{ background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 transparent, stop:0.2 {COLORS['border_light']}, stop:0.8 {COLORS['border_light']}, stop:1 transparent); border: none; }}"
+        )
         self.main_layout.addWidget(sep)
 
     # ── Logica API Chained ────────────────────────────────────────────────
@@ -375,7 +422,9 @@ class WeatherWidget(ModernCard):
         self._is_loading = False
         self.btn_refresh.setEnabled(True)
         self.lbl_condition.setText(msg)
-        self.lbl_condition.setStyleSheet(f"#lbl_condition {{ color: {COLORS['error_red']}; font-weight: 800; }}")
+        self.lbl_condition.setStyleSheet(
+            f"#lbl_condition {{ color: {COLORS['error_red']}; font-weight: 800; }}"
+        )
 
     # ── Rendering UI ──────────────────────────────────────────────────────
 
@@ -398,7 +447,9 @@ class WeatherWidget(ModernCard):
             self.lbl_temp.setText(f"{temp}°C")
             self.lbl_apparent.setText(f"Percepita: {apparent}°")
             self.lbl_condition.setText(self._get_condition_text(code))
-            self.lbl_condition.setStyleSheet(f"#lbl_condition {{ color: {COLORS['primary_blue']}; font-weight: 800; }}")
+            self.lbl_condition.setStyleSheet(
+                f"#lbl_condition {{ color: {COLORS['primary_blue']}; font-weight: 800; }}"
+            )
 
             self._update_pills(wind, gusts, hum, uv, aqi)
             self._evaluate_alerts(code, gusts)
@@ -492,7 +543,9 @@ class WeatherWidget(ModernCard):
 
             item = QWidget()
             item.setObjectName(f"forecast_item_{i}")
-            item.setStyleSheet(f"{TOOLTIP_CSS}\n#forecast_item_{i} {{ background: transparent; border: none; }}")
+            item.setStyleSheet(
+                f"{TOOLTIP_CSS}\n#forecast_item_{i} {{ background: transparent; border: none; }}"
+            )
 
             v = QVBoxLayout(item)
             v.setContentsMargins(0, 0, 0, 0)
@@ -504,7 +557,9 @@ class WeatherWidget(ModernCard):
             days = ["LUN", "MAR", "MER", "GIO", "VEN", "SAB", "DOM"]
             lbl_d = QLabel(days[dt.weekday()])
             lbl_d.setObjectName("forecast_day")
-            lbl_d.setStyleSheet(f"#forecast_day {{ color: {COLORS['text_muted']}; font-size: 10px; font-weight: 800; }}")
+            lbl_d.setStyleSheet(
+                f"#forecast_day {{ color: {COLORS['text_muted']}; font-size: 10px; font-weight: 800; }}"
+            )
             lbl_d.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             # Icona
@@ -518,25 +573,31 @@ class WeatherWidget(ModernCard):
             pop_val = pops[i] if i < len(pops) else 0
             lbl_pop = QLabel(f"💧 {pop_val}%" if pop_val > 0 else "")
             lbl_pop.setObjectName("forecast_pop")
-            pop_color = COLORS['primary_blue'] if pop_val > 40 else COLORS['text_muted']
-            lbl_pop.setStyleSheet(f"#forecast_pop {{ color: {pop_color}; font-size: 9px; font-weight: 800; }}")
+            pop_color = COLORS["primary_blue"] if pop_val > 40 else COLORS["text_muted"]
+            lbl_pop.setStyleSheet(
+                f"#forecast_pop {{ color: {pop_color}; font-size: 9px; font-weight: 800; }}"
+            )
             lbl_pop.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             # Temp
             mx, mn = int(t_max[i]), int(t_min[i])
             lbl_t = QLabel(f"{mx}°/{mn}°")
             lbl_t.setObjectName("forecast_temp")
-            lbl_t.setStyleSheet(f"#forecast_temp {{ color: {COLORS['text_dark']}; font-size: 11px; font-weight: 700; }}")
+            lbl_t.setStyleSheet(
+                f"#forecast_temp {{ color: {COLORS['text_dark']}; font-size: 11px; font-weight: 700; }}"
+            )
             lbl_t.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             v.addWidget(lbl_d)
             v.addWidget(lbl_i)
             if pop_val > 0:
-                v.addWidget(lbl_pop) # Aggiunge POP solo se > 0%
+                v.addWidget(lbl_pop)  # Aggiunge POP solo se > 0%
             v.addWidget(lbl_t)
 
             pop_text = f"<br/>Pioggia: {pop_val}%" if pop_val > 0 else ""
-            item.setToolTip(f"<b>Previsione {days[dt.weekday()]}</b><br/>{self._get_condition_text(f_code)}{pop_text}")
+            item.setToolTip(
+                f"<b>Previsione {days[dt.weekday()]}</b><br/>{self._get_condition_text(f_code)}{pop_text}"
+            )
             self.forecast_h.addWidget(item)
 
     def _get_weather_style(self, code: int) -> tuple[str, str]:

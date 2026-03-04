@@ -323,7 +323,9 @@ class BotSavingsWidget(ModernCard):
                 color = COLORS["text_muted"]
 
             self.lbl_trend.setText(trend_text)
-            self.lbl_trend.setStyleSheet(f"color: {color}; font-size: 11px; font-weight: 700; background: transparent; border: none;")
+            self.lbl_trend.setStyleSheet(
+                f"color: {color}; font-size: 11px; font-weight: 700; background: transparent; border: none;"
+            )
 
         if hasattr(self, "lbl_ops") and self.lbl_ops:
             self.lbl_ops.setText(str(metrics.total_operations))

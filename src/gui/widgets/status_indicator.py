@@ -20,6 +20,7 @@ QToolTip {
 }
 """
 
+
 class StatusIndicator(QWidget):
     """
     Indicatore di stato circolare con animazione di pulsazione.

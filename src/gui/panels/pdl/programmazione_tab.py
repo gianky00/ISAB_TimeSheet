@@ -296,7 +296,9 @@ class ProgrammazioneTab(QWidget):
         self.btn_run.setEnabled(False)
         self.log_widget.setVisible(True)
         self.log_widget.clear()
-        self.log_widget.append(f"Avvio controllo programmazione per la settimana {start_date} - {end_date}...")
+        self.log_widget.append(
+            f"Avvio controllo programmazione per la settimana {start_date} - {end_date}..."
+        )
 
         self.worker.start()
 
@@ -319,7 +321,9 @@ class ProgrammazioneTab(QWidget):
             results = getattr(self.worker.bot, "results", [])
             start_date, end_date, _ = PDLPeriodManager.get_week_range(self.week_selector.currentIndex())
             PDLQueries.save_programming_results(results, start_date, end_date)
-            self.log_widget.append(f"✅ Controllo completato. Trovati {len(results)} PDL aggiornati.", "SUCCESS")
+            self.log_widget.append(
+                f"✅ Controllo completato. Trovati {len(results)} PDL aggiornati.", "SUCCESS"
+            )
             self._load_persisted_data()
         else:
             self.log_widget.append("❌ Errore durante il controllo della programmazione.", "ERROR")

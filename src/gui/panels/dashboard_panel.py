@@ -159,16 +159,14 @@ class DashboardPanel(QWidget):
             return
 
         # Mapping inverso: Nome Visualizzato -> Nome Database
-        DISPLAY_TO_DB = {
+        db_area_name = {
             "Area 1": "Process Area 1",
             "Area 2": "Process Area 2",
             "Area 3": "Process Area 3",
             "Blending Sud": "Blending Sud",
             "Pontile Sud": "Pontile Sud",
-            "UTILITIES (CTE/TAS)": "UTILITIES (CTE/TAS)"
-        }
-
-        db_area_name = DISPLAY_TO_DB.get(area_name, area_name)
+            "UTILITIES (CTE/TAS)": "UTILITIES (CTE/TAS)",
+        }.get(area_name, area_name)
 
         # Navigazione al database PDL con filtri pre-impostati
         main_window.navigation_controller.navigate_to_pdl(site="ISAB Sud", area=db_area_name)
@@ -181,8 +179,16 @@ class DashboardPanel(QWidget):
 
         # Mapping bot_id -> (panel_attr, site, log_msg)
         bot_map = {
-            "timbrature": ("timbrature_bot_panel", "portale_fornitori", "Avvio manuale Timbrature da Dashboard..."),
-            "scarico_oda_generale": ("dettagli_panel", "portale_fornitori", "Avvio manuale OdA da Dashboard..."),
+            "timbrature": (
+                "timbrature_bot_panel",
+                "portale_fornitori",
+                "Avvio manuale Timbrature da Dashboard...",
+            ),
+            "scarico_oda_generale": (
+                "dettagli_panel",
+                "portale_fornitori",
+                "Avvio manuale OdA da Dashboard...",
+            ),
             "ricerca_pdl": ("pdl_search_panel", "safework", "Avvio manuale PDL da Dashboard..."),
         }
 
@@ -232,9 +238,9 @@ class DashboardPanel(QWidget):
         elif key == "nav_page_8":
             nav.navigate_to(8)  # Guida
         elif key == "nav_page_11":
-            nav.navigate_to(11) # Dipendenti
+            nav.navigate_to(11)  # Dipendenti
         elif key == "nav_storico_oda":
-            nav.navigate_to(10) # Storico OdA
+            nav.navigate_to(10)  # Storico OdA
         elif key.startswith("nav_sub_notifiche_"):
             with suppress(ValueError):
                 sub_idx = int(key.split("_")[-1])

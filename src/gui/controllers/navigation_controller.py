@@ -408,6 +408,7 @@ class NavigationController(QObject):
     def navigate_to_pdl(self, site: str | None = None, area: str | None = None) -> None:
         """Naviga al database PDL applicando i filtri specificati."""
         from src.gui.main_window.page_index import PageIndex
+
         self.navigate_to(PageIndex.ANAGRAFICHE)
         panel = self.get_panel(PageIndex.ANAGRAFICHE)
         if panel and hasattr(panel, "set_filters"):

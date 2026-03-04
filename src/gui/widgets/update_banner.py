@@ -17,6 +17,7 @@ QToolTip {
 }
 """
 
+
 class UpdateBanner(QFrame):
     """Banner per la notifica di aggiornamenti disponibili."""
 

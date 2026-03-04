@@ -53,7 +53,9 @@ class OperationLogWidget(QFrame):
         header_row = QHBoxLayout()
         header_label = QLabel("Console Operazioni")
         header_label.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
-        header_label.setStyleSheet(f"color: {COLORS['text_dark']}; text-transform: uppercase; letter-spacing: 0.5px;")
+        header_label.setStyleSheet(
+            f"color: {COLORS['text_dark']}; text-transform: uppercase; letter-spacing: 0.5px;"
+        )
         header_row.addWidget(header_label)
         header_row.addStretch()
 

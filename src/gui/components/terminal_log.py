@@ -31,7 +31,9 @@ class TerminalLogWidget(QWidget):
         # Header opzionale
         header_layout = QHBoxLayout()
         self.title_label = QLabel("LOG ATTIVITÀ")
-        self.title_label.setStyleSheet(f"font-weight: bold; color: {COLORS['text_muted']}; font-size: 10px; letter-spacing: 1px;")
+        self.title_label.setStyleSheet(
+            f"font-weight: bold; color: {COLORS['text_muted']}; font-size: 10px; letter-spacing: 1px;"
+        )
         header_layout.addWidget(self.title_label)
         header_layout.addStretch()
         self.main_layout.addLayout(header_layout)

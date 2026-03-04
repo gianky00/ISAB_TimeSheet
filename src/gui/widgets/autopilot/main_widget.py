@@ -329,7 +329,13 @@ class AutopilotWidget(QWidget):
 
         for idx, event in enumerate(events):
             card = AutopilotEventCard(
-                event["id"], event["name"], event["time"], event["icon"], event["color"], event.get("module_id"), self
+                event["id"],
+                event["name"],
+                event["time"],
+                event["icon"],
+                event["color"],
+                event.get("module_id"),
+                self,
             )
             card.sync_requested.connect(self.bot_sync_requested.emit)
             self.view_layout.addWidget(card, idx // 2, idx % 2)

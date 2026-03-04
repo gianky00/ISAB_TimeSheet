@@ -186,7 +186,9 @@ class PDLDBPanel(QWidget):
         self.model.update_data(master_rows)
         self.table.optimize_columns(len(self.master_headers))
 
-    def set_filters(self, site: str | None = None, area: str | None = None, search: str | None = None) -> None:
+    def set_filters(
+        self, site: str | None = None, area: str | None = None, search: str | None = None
+    ) -> None:
         """
         Imposta i filtri del pannello programmaticamente.
 

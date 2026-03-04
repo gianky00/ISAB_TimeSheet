@@ -107,7 +107,11 @@ class PDLStatsEngine:
                     if dt_obj.month == now.month and dt_obj.year == now.year and day_part <= today_day:
                         stats_map[area]["curr"] += 1
                         current_mtd_global += 1
-                    elif dt_obj.month == last_day_prev.month and dt_obj.year == last_day_prev.year and day_part <= today_day:
+                    elif (
+                        dt_obj.month == last_day_prev.month
+                        and dt_obj.year == last_day_prev.year
+                        and day_part <= today_day
+                    ):
                         stats_map[area]["prev"] += 1
                         prev_mtd_global += 1
 
@@ -122,10 +126,22 @@ class PDLStatsEngine:
 
             # 5. Elaborazione Trend
             # Trend Mensile MTD
-            global_trend = (current_mtd_global - prev_mtd_global) / prev_mtd_global * 100 if prev_mtd_global > 0 else 100.0 if current_mtd_global > 0 else 0.0
+            global_trend = (
+                (current_mtd_global - prev_mtd_global) / prev_mtd_global * 100
+                if prev_mtd_global > 0
+                else 100.0
+                if current_mtd_global > 0
+                else 0.0
+            )
 
             # Trend Settimanale WoW
-            weekly_trend = (last_7d_count - prev_7d_count) / prev_7d_count * 100 if prev_7d_count > 0 else 100.0 if last_7d_count > 0 else 0.0
+            weekly_trend = (
+                (last_7d_count - prev_7d_count) / prev_7d_count * 100
+                if prev_7d_count > 0
+                else 100.0
+                if last_7d_count > 0
+                else 0.0
+            )
 
             # 6. Elaborazione Aree (Filtrate e Ordinate come da specifica)
             # Mapping tra Nome Visualizzato e Nome nel Database
@@ -135,7 +151,7 @@ class PDLStatsEngine:
                 "Area 3": "Process Area 3",
                 "Blending Sud": "Blending Sud",
                 "Pontile Sud": "Pontile Sud",
-                "UTILITIES (CTE/TAS)": "UTILITIES (CTE/TAS)"
+                "UTILITIES (CTE/TAS)": "UTILITIES (CTE/TAS)",
             }
 
             areas_stats_list = []
@@ -153,6 +169,7 @@ class PDLStatsEngine:
             # 7. Ultimo Sync
             try:
                 from src.core.sync_tracker import SyncTracker
+
                 last_sync = SyncTracker.get_formatted_status("pdl")
             except ImportError:
                 last_sync = "--"

@@ -27,6 +27,7 @@ QToolTip {
 }
 """
 
+
 class SecurityDashboard(QWidget):
     """
     Dashboard di sicurezza e audit log.

@@ -28,6 +28,7 @@ QToolTip {
 }
 """
 
+
 class AutopilotEventCard(QFrame):
     """
     Card per visualizzare un singolo evento programmato del bot.
@@ -37,7 +38,14 @@ class AutopilotEventCard(QFrame):
     sync_requested = pyqtSignal(str)  # Segnale emesso quando l'utente preme il tasto sync
 
     def __init__(
-        self, bot_id: str, bot_name: str, target_time_str: str, icon_path: str, color: str, module_id: str | None = None, parent: QWidget | None = None
+        self,
+        bot_id: str,
+        bot_name: str,
+        target_time_str: str,
+        icon_path: str,
+        color: str,
+        module_id: str | None = None,
+        parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self.bot_id = bot_id

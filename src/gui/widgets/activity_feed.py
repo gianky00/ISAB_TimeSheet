@@ -28,6 +28,7 @@ QToolTip {
 }
 """
 
+
 class ActivityItem(QFrame):
     """
     Rappresenta una singola voce nella timeline orizzontale (Compact) con animazioni moderne.

@@ -30,6 +30,7 @@ QToolTip {
 }
 """
 
+
 class DetachedModuleItem(QFrame):
     """Singola voce di un modulo sganciato nella card."""
 

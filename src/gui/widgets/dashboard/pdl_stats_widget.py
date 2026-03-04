@@ -37,6 +37,7 @@ QToolTip {
 """
 """Stringa CSS per la personalizzazione dei tooltip dell'applicazione."""
 
+
 class AreaBadge(QPushButton):
     """Badge cliccabile per rappresentare un'area con statistiche live."""
 
@@ -52,7 +53,9 @@ class AreaBadge(QPushButton):
         super().__init__(f"{name}\n({count} • {trend_str})", parent)
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setToolTip(f"<b>Area:</b> {name}<br><b>PDL Creati (Mese):</b> {count}<br><b>Andamento:</b> {trend_str}")
+        self.setToolTip(
+            f"<b>Area:</b> {name}<br><b>PDL Creati (Mese):</b> {count}<br><b>Andamento:</b> {trend_str}"
+        )
 
         self.setFixedHeight(45)
         self.setMinimumWidth(75)
@@ -60,15 +63,15 @@ class AreaBadge(QPushButton):
         # Logica Colori: Incremento = Rosso (Allerta carico)
         if trend_int > 30:
             bg_color = "#fee2e2"  # Rosso chiaro
-            text_color = "#991b1b" # Rosso scuro
+            text_color = "#991b1b"  # Rosso scuro
             border_color = "#fca5a5"
         elif trend_int > 0:
             bg_color = "#ffedd5"  # Arancio chiaro
-            text_color = "#9a3412" # Arancio scuro
+            text_color = "#9a3412"  # Arancio scuro
             border_color = "#fdba74"
         else:
             bg_color = "#f0fdf4"  # Verde chiaro
-            text_color = "#166534" # Verde scuro
+            text_color = "#166534"  # Verde scuro
             border_color = "#bbf7d0"
 
         self.setStyleSheet(f"""
@@ -125,7 +128,9 @@ class PDLStatsWidget(ModernCard):
 
         header_h = QHBoxLayout()
         self.lbl_title = QLabel("DATABASE PDL")
-        self.lbl_title.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; font-weight: 800; letter-spacing: 1px;")
+        self.lbl_title.setStyleSheet(
+            f"color: {COLORS['text_muted']}; font-size: 11px; font-weight: 800; letter-spacing: 1px;"
+        )
         header_h.addWidget(self.lbl_title)
         header_h.addStretch()
 
@@ -161,7 +166,9 @@ class PDLStatsWidget(ModernCard):
         layout.addWidget(sep)
 
         area_label = QLabel("AREE ISAB SUD (VOLUME MENSILE)")
-        area_label.setStyleSheet(f"font-size: 10px; font-weight: 800; color: {COLORS['text_muted']}; letter-spacing: 0.5px; margin-top: 2px;")
+        area_label.setStyleSheet(
+            f"font-size: 10px; font-weight: 800; color: {COLORS['text_muted']}; letter-spacing: 0.5px; margin-top: 2px;"
+        )
         layout.addWidget(area_label)
 
         self.scroll_area = QScrollArea()
@@ -179,6 +186,7 @@ class PDLStatsWidget(ModernCard):
 
     def refresh_stats(self) -> None:
         """Avvia un thread in background per ricalcolare le metriche PDL."""
+
         def run():
             """Funzione worker per l'esecuzione asincrona del calcolo metriche."""
             try:
@@ -186,6 +194,7 @@ class PDLStatsWidget(ModernCard):
                 self.stats_updated.emit(metrics)
             except Exception as e:
                 logger.error(f"PDL Refresh Error: {e}")
+
         threading.Thread(target=run, daemon=True).start()
 
     def _update_ui(self, metrics: PDLMetrics) -> None:
@@ -217,7 +226,7 @@ class PDLStatsWidget(ModernCard):
                 w = child.widget()
                 if w:
                     w.deleteLater()
-                elif (lay := child.layout()):
+                elif lay := child.layout():
                     while lay.count():
                         item = lay.takeAt(0)
                         if item:
