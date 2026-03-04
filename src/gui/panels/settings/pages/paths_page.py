@@ -106,17 +106,51 @@ class PathsPage(QWidget):
         edit.textChanged.connect(lambda: self._validate_path(edit))
         row.addWidget(edit)
 
-        btn = PrimaryButton("Sfoglia")
-        btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), COLORS["text_dark"]))
-        btn.setMinimumHeight(40)
-        btn.setMinimumWidth(120)
-        style_button(btn)
-        btn.clicked.connect(browse_cb)
-        row.addWidget(btn)
+        # Pulsante Sfoglia
+        btn_browse = PrimaryButton("Sfoglia")
+        btn_browse.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
+        btn_browse.setMinimumHeight(40)
+        btn_browse.setMinimumWidth(100)
+        style_button(btn_browse)
+        btn_browse.clicked.connect(browse_cb)
+        row.addWidget(btn_browse)
+
+        # Pulsante Apri
+        btn_open = PrimaryButton("Apri")
+        btn_open.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), COLORS["text_dark"]))
+        btn_open.setMinimumHeight(40)
+        btn_open.setMinimumWidth(80)
+        style_button(btn_open)
+        btn_open.clicked.connect(lambda: self._open_path(edit.text()))
+        row.addWidget(btn_open)
 
         if isinstance(parent_layout, (QVBoxLayout, QHBoxLayout)):
             parent_layout.addLayout(row)
         return edit
+
+    def _open_path(self, path_str: str) -> None:
+        """Apre il percorso specificato nell'esplora risorse."""
+        if not path_str:
+            return
+        
+        import os
+        from pathlib import Path
+        from src.gui.widgets.toast import ToastManager
+
+        path = Path(path_str).resolve()
+        if not path.exists():
+            ToastManager.instance().show(f"Percorso non trovato: {path_str}", "warning")
+            return
+
+        try:
+            if path.is_file():
+                # Su Windows, apre la cartella e seleziona il file
+                import subprocess
+                subprocess.run(['explorer', '/select,', str(path)])
+            else:
+                os.startfile(str(path))
+        except Exception as e:
+            ToastManager.instance().show(f"Errore apertura: {e}", "error")
 
     def _validate_path(self, widget: QLineEdit) -> None:
         """Valida visivamente il percorso inserito."""

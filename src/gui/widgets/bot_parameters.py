@@ -255,9 +255,21 @@ class BotParametersWidget(QWidget):
             self.browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
             self.browse_btn.setIconSize(QSize(20, 20))
             self.browse_btn.setFixedSize(38, 38)
+            self.browse_btn.setToolTip("Seleziona cartella")
             self.browse_btn.clicked.connect(self._browse_path)
             self.browse_btn.setStyleSheet(self._get_icon_btn_style())
             hbox_dest.addWidget(self.browse_btn)
+
+            from src.gui.widgets.modern_button import ModernButton
+            self.open_btn = ModernButton(
+                "APRI", 
+                variant=ModernButton.Variant.SECONDARY,
+                size=ModernButton.Size.SMALL
+            )
+            self.open_btn.setFixedSize(60, 38)
+            self.open_btn.setToolTip("Apri cartella nel file system")
+            self.open_btn.clicked.connect(self._open_folder)
+            hbox_dest.addWidget(self.open_btn)
 
             vbox_dest.addLayout(hbox_dest)
             container_layout.addLayout(vbox_dest)
@@ -307,6 +319,26 @@ class BotParametersWidget(QWidget):
         path = QFileDialog.getExistingDirectory(self, "Seleziona cartella destinazione")
         if path:
             self.dest_path_edit.setText(path)
+
+    def _open_folder(self) -> None:
+        """Apre la cartella di destinazione nell'esplora risorse di sistema."""
+        import os
+        from pathlib import Path
+
+        path_str = self.dest_path_edit.text()
+        if not path_str:
+            path_str = str(Path.home() / "Downloads")
+
+        path = Path(path_str).resolve()
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
+
+        try:
+            os.startfile(str(path))
+        except Exception:
+            from src.gui.widgets.toast import ToastManager
+
+            ToastManager.instance().show(f"Impossibile aprire la cartella: {path}", "error")
 
     def refresh_fornitori(self) -> None:
         """Ricarica l'elenco dei fornitori dalla configurazione globale."""

@@ -54,6 +54,14 @@ class ConfirmationDialog(QDialog):
         self.setMinimumWidth(380)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
 
+        # Forza stile Light a livello di Dialog
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_medium"]};
+            }}
+        """)
+
         layout = QVBoxLayout(self)
         layout.setSpacing(20)
         layout.setContentsMargins(25, 25, 25, 25)
