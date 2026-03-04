@@ -31,7 +31,7 @@ def _print_exception_and_exit(exc_type, exc_value, exc_tb):
         from src.core.config_manager import CONFIG_DIR
 
         crash_file = CONFIG_DIR / "crash.txt"
-        with open(crash_file, "a", encoding="utf-8") as f:
+        with crash_file.open("a", encoding="utf-8") as f:
             f.write(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] NATIVE FATAL UNCAUGHT EXCEPTION:\n")
             traceback.print_exception(exc_type, exc_value, exc_tb, file=f)
     sys.exit(1)
@@ -68,7 +68,7 @@ def setup_enterprise_logging():
         import faulthandler
 
         # Mantiene il file aperto per faulthandler in modo safely append
-        crash_native_file = open(crash_file, "a", encoding="utf-8")  # noqa: SIM115
+        crash_native_file = crash_file.open("a", encoding="utf-8")
         crash_native_file.write("\n[DEBUG] Native C++ faulthandler engine enabled.\n")
         crash_native_file.flush()
         faulthandler.enable(file=crash_native_file)
@@ -304,7 +304,7 @@ def main():
             crash_file.write_text(crash_content, encoding="utf-8")
 
             # Scrivi anche nel file globale pulito all'avvio
-            with open(global_crash_file, "w", encoding="utf-8") as f:
+            with global_crash_file.open("w", encoding="utf-8") as f:
                 f.write(crash_content)
 
         except Exception as io_error:

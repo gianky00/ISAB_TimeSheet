@@ -94,12 +94,12 @@ class ClipboardMixin:
             from PyQt6.QtWidgets import QComboBox
             # Se è direttamente una QComboBox
             if isinstance(widget, QComboBox):
-                return widget.currentText()
+                return str(widget.currentText())
             # Se è un container che ospita una QComboBox
             cb = widget.findChild(QComboBox)
             if cb:
-                return cb.currentText()
-                
+                return str(cb.currentText())
+
         it = self.item(row, col)  # type: ignore
         return it.text() if it else ""
 

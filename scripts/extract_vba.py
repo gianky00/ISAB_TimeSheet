@@ -1,10 +1,11 @@
-import os
+from pathlib import Path
 
 from oletools.olevba import VBA_Parser  # type: ignore
 
 
 def extract_vba_no_excel(file_path: str, output_md: str) -> None:
-    if not os.path.exists(file_path):
+    p_file = Path(file_path)
+    if not p_file.exists():
         print(f"File non trovato: {file_path}")
         return
 
@@ -14,8 +15,9 @@ def extract_vba_no_excel(file_path: str, output_md: str) -> None:
             print("Nessuna macro rilevata nel file.")
             return
 
-        with open(output_md, "w", encoding="utf-8") as f:
-            f.write(f"# Knowledge Base VBA: {os.path.basename(file_path)}\n\n")
+        p_out = Path(output_md)
+        with p_out.open("w", encoding="utf-8") as f:
+            f.write(f"# Knowledge Base VBA: {p_file.name}\n\n")
             f.write(
                 "Questo file contiene il codice estratto senza l'uso di Excel (bypassando gli errori UI).\n\n"
             )
@@ -40,5 +42,5 @@ def extract_vba_no_excel(file_path: str, output_md: str) -> None:
 if __name__ == "__main__":
     target = r"C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\master_consuntivo_Automatico.xlsm"
     output = r"docs/VBA_KNOW_HOW.md"
-    os.makedirs("docs", exist_ok=True)
+    Path("docs").mkdir(parents=True, exist_ok=True)
     extract_vba_no_excel(target, output)

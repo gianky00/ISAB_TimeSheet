@@ -42,8 +42,9 @@ class ExcelTableWidget(QTableWidget, ClipboardMixin):
             | QAbstractItemView.EditTrigger.AnyKeyPressed
         )
         # Forza altezza riga per ospitare comodamente i widget (Enterprise Look)
-        self.verticalHeader().setDefaultSectionSize(34)
-        self.verticalHeader().setVisible(False)
+        if v_header := self.verticalHeader():
+            v_header.setDefaultSectionSize(34)
+            v_header.setVisible(False)
 
     def set_row_status(self, row: int, status: str) -> None:
         """

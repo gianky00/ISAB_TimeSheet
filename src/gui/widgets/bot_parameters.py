@@ -262,7 +262,7 @@ class BotParametersWidget(QWidget):
 
             from src.gui.widgets.modern_button import ModernButton
             self.open_btn = ModernButton(
-                "APRI", 
+                "APRI",
                 variant=ModernButton.Variant.SECONDARY,
                 size=ModernButton.Size.SMALL
             )
@@ -334,7 +334,8 @@ class BotParametersWidget(QWidget):
             path.mkdir(parents=True, exist_ok=True)
 
         try:
-            os.startfile(str(path))
+            import os
+            os.startfile(str(path)) # noqa: S606
         except Exception:
             from src.gui.widgets.toast import ToastManager
 

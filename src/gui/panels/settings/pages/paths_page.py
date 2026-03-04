@@ -132,9 +132,10 @@ class PathsPage(QWidget):
         """Apre il percorso specificato nell'esplora risorse."""
         if not path_str:
             return
-        
+
         import os
         from pathlib import Path
+
         from src.gui.widgets.toast import ToastManager
 
         path = Path(path_str).resolve()
@@ -146,9 +147,10 @@ class PathsPage(QWidget):
             if path.is_file():
                 # Su Windows, apre la cartella e seleziona il file
                 import subprocess
-                subprocess.run(['explorer', '/select,', str(path)])
+                subprocess.run(['explorer', '/select,', str(path)], check=False)
             else:
-                os.startfile(str(path))
+                import os
+                os.startfile(str(path)) # noqa: S606
         except Exception as e:
             ToastManager.instance().show(f"Errore apertura: {e}", "error")
 

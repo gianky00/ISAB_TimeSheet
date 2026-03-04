@@ -128,9 +128,12 @@ class DettagliOdABot(BaseBot):
             self.log("ℹ️ Nessun OdA specificato. Avvio ricerca per lista generale.")
             # Restituiamo una riga vuota per innescare la ricerca generale nel portale
             return [{"numero_oda": "", "numero_contratto": ""}]
-        
-        return rows
 
+        # Validazione tipo per Mypy
+        if not isinstance(rows, list):
+            return []
+
+        return rows
     def _process_single_oda(
         self,
         page: DettagliOdAPage,
