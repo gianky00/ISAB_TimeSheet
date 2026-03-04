@@ -16,6 +16,16 @@ from src.gui.styles.palette_helpers import hex_to_rgba
 from src.gui.widgets.core_widgets import PrimaryButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
+# Stile forzato per i tooltip in Light Mode
+TOOLTIP_CSS = """
+QToolTip {
+    background-color: #FFFFFF;
+    color: #212121;
+    border: 1px solid #BBBBBB;
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+"""
 
 class SecurityDashboard(QWidget):
     """
@@ -26,6 +36,7 @@ class SecurityDashboard(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.audit_manager = AuditManager.instance()
+        self.setStyleSheet(TOOLTIP_CSS)
 
         # Widget members (Strict Typing - Option D)
         self.kpi_layout: QHBoxLayout

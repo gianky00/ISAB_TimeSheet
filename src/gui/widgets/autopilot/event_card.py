@@ -151,6 +151,10 @@ class AutopilotEventCard(QFrame):
         self.sync_btn.clicked.connect(self._on_sync_clicked)
         layout.addWidget(self.sync_btn)
 
+        # Nascondi il tasto sync se non c'è azione mappata
+        if self.module_id == "none":
+            self.sync_btn.hide()
+
         # --- ANIMAZIONE "VIVO" (Pulse Effect sull'icona) ---
         self.icon_opacity = QGraphicsOpacityEffect(self.icon_label)
         self.icon_label.setGraphicsEffect(self.icon_opacity)
@@ -219,6 +223,12 @@ class AutopilotEventCard(QFrame):
 
     def _update_db_status(self) -> None:
         """Aggiorna il colore del pallino in base alla freschezza dei dati."""
+        # Se non c'è un database associato (es. Report Email), nascondi il pallino
+        if self.module_id == "none":
+            self.status_dot.hide()
+            return
+        
+        self.status_dot.show()
         status = SyncTracker.get_status(self.module_id)
         if not status:
             # Mai sincronizzato
@@ -229,21 +239,33 @@ class AutopilotEventCard(QFrame):
         last_ts_float = status.get("last_ts", 0)
         last_dt = datetime.fromtimestamp(last_ts_float)
         now = datetime.now()
-        diff = now - last_dt
-
-        # Logica freschezza:
-        # Verde: < 12 ore
-        # Giallo: < 24 ore
-        # Rosso: > 24 ore
-        if diff.total_seconds() < 12 * 3600:
-            color = COLORS["success_green"]
-            msg = f"Database aggiornato ({status.get('timestamp')})"
-        elif diff.total_seconds() < 24 * 3600:
-            color = COLORS["warning_yellow"]
-            msg = f"Aggiornamento consigliato (Ultimo: {status.get('timestamp')})"
+        
+        # Logica speciale per TIMBRATURE:
+        # Se ho sincronizzato ieri o oggi, i dati sono considerati "freschi" (Verde)
+        # perché le timbrature del giorno corrente si vedono solo domani.
+        if self.module_id == "timbrature":
+            diff_days = (now.date() - last_dt.date()).days
+            if diff_days <= 1:
+                color = COLORS["success_green"]
+                msg = f"Database aggiornato ({status.get('timestamp')})"
+            elif diff_days == 2:
+                color = COLORS["warning_yellow"]
+                msg = f"Sincronizzazione consigliata (Ultima: {status.get('timestamp')})"
+            else:
+                color = COLORS["error_red"]
+                msg = f"Dati obsoleti! (Ultima: {status.get('timestamp')})"
         else:
-            color = COLORS["error_red"]
-            msg = f"Database non aggiornato! (Ultimo: {status.get('timestamp')})"
+            # Logica standard per gli altri moduli (OdA, PDL)
+            diff_secs = (now - last_dt).total_seconds()
+            if diff_secs < 12 * 3600:
+                color = COLORS["success_green"]
+                msg = f"Database aggiornato ({status.get('timestamp')})"
+            elif diff_secs < 24 * 3600:
+                color = COLORS["warning_yellow"]
+                msg = f"Aggiornamento consigliato (Ultimo: {status.get('timestamp')})"
+            else:
+                color = COLORS["error_red"]
+                msg = f"Database non aggiornato! (Ultimo: {status.get('timestamp')})"
 
         self.status_dot.setStyleSheet(f"background-color: {color}; border-radius: 4px;")
         self.status_dot.setToolTip(msg)

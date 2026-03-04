@@ -19,6 +19,16 @@ from src.core.constants import Icons
 from src.gui.styles import COLORS, card_style
 from src.utils.helpers import get_asset_path, get_colored_icon
 
+# Stile forzato per i tooltip in Light Mode
+TOOLTIP_CSS = """
+QToolTip {
+    background-color: #FFFFFF;
+    color: #212121;
+    border: 1px solid #BBBBBB;
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+"""
 
 class DetachedModuleItem(QFrame):
     """Singola voce di un modulo sganciato nella card."""

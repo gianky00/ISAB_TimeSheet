@@ -6,6 +6,16 @@ from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import PrimaryButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
+# Stile forzato per i tooltip in Light Mode
+TOOLTIP_CSS = """
+QToolTip {
+    background-color: #FFFFFF;
+    color: #212121;
+    border: 1px solid #BBBBBB;
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+"""
 
 class UpdateBanner(QFrame):
     """Banner per la notifica di aggiornamenti disponibili."""
@@ -15,6 +25,7 @@ class UpdateBanner(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("updateBanner")
+        self.setStyleSheet(TOOLTIP_CSS)
         self.setVisible(False)
         self._download_url = ""
         self._setup_ui()

@@ -17,6 +17,16 @@ from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 from src.utils.log_humanizer import friendly_time_delta
 
+# Stile forzato per i tooltip in Light Mode
+TOOLTIP_CSS = """
+QToolTip {
+    background-color: #FFFFFF;
+    color: #212121;
+    border: 1px solid #BBBBBB;
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+"""
 
 class ActivityItem(QFrame):
     """
@@ -45,6 +55,7 @@ class ActivityItem(QFrame):
 
         self.setStyleSheet(
             f"""
+            {TOOLTIP_CSS}
             ActivityItem {{
                 background: {self.bg_gradient};
                 border-radius: 12px;

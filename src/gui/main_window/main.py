@@ -161,6 +161,18 @@ class MainWindow(QMainWindow):
 
     def _load_styles(self) -> None:
         """Carica i file QSS degli stili."""
+        # Forza i tooltip in Light Mode a livello globale
+        global_tooltip_style = """
+            QToolTip {
+                background-color: #FFFFFF;
+                color: #212121;
+                border: 1px solid #BBBBBB;
+                border-radius: 6px;
+                padding: 8px 12px;
+            }
+        """
+        self.setStyleSheet(global_tooltip_style)
+
         for qss in ("main_window.qss", "message_box.qss"):
             path = Path("assets") / "styles" / qss
             if path.exists():

@@ -25,6 +25,16 @@ from src.gui.widgets.modern_card import ModernCard
 
 logger = logging.getLogger(__name__)
 
+# Stile forzato per i tooltip in Light Mode
+TOOLTIP_CSS = """
+QToolTip {
+    background-color: #FFFFFF;
+    color: #212121;
+    border: 1px solid #BBBBBB;
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+"""
 
 class AreaBadge(QPushButton):
     """Badge cliccabile per rappresentare un'area con statistiche live."""
