@@ -16,6 +16,7 @@ from PyQt6.QtCore import (
     QSize,
     Qt,
     QTimer,
+    pyqtSignal,
 )
 from PyQt6.QtWidgets import (
     QApplication,
@@ -46,6 +47,8 @@ class AutopilotWidget(QWidget):
     Supporta una modalità di visualizzazione (Live) e una di configurazione.
     Utilizza animazioni per le transizioni e indicatori visivi per lo stato del sistema.
     """
+
+    bot_sync_requested = pyqtSignal(str)  # Segnale per richiedere il sync di un bot specifico
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
@@ -273,6 +276,8 @@ class AutopilotWidget(QWidget):
         if config.get("timbrature_autopilot_enabled", False):
             events.append(
                 {
+                    "id": "timbrature",
+                    "module_id": "timbrature",
                     "name": "Timbrature Automatiche",
                     "time": config.get("timbrature_autopilot_time", "09:00"),
                     "icon": Icons.CLOCK,
@@ -282,6 +287,8 @@ class AutopilotWidget(QWidget):
         if config.get("scarico_oda_generale_autopilot_enabled", False):
             events.append(
                 {
+                    "id": "scarico_oda_generale",
+                    "module_id": "oda",
                     "name": "Scarico OdA Generale",
                     "time": config.get("scarico_oda_generale_autopilot_time", "09:00"),
                     "icon": Icons.DOWNLOAD,
@@ -291,6 +298,8 @@ class AutopilotWidget(QWidget):
         if config.get("ricerca_pdl_autopilot_enabled", False):
             events.append(
                 {
+                    "id": "ricerca_pdl",
+                    "module_id": "pdl",
                     "name": "Ricerca PDL",
                     "time": config.get("ricerca_pdl_autopilot_time", "09:00"),
                     "icon": Icons.SEARCH,
@@ -300,6 +309,8 @@ class AutopilotWidget(QWidget):
         if config.get("report_email_autopilot_enabled", False):
             events.append(
                 {
+                    "id": "report_email",
+                    "module_id": "none",
                     "name": f"Report Email (ogni {config.get('report_email_autopilot_interval_days', 7)}gg)",
                     "time": config.get("report_email_autopilot_time", "08:00"),
                     "icon": Icons.SEND,
@@ -317,7 +328,10 @@ class AutopilotWidget(QWidget):
             return
 
         for idx, event in enumerate(events):
-            card = AutopilotEventCard(event["name"], event["time"], event["icon"], event["color"], self)
+            card = AutopilotEventCard(
+                event["id"], event["name"], event["time"], event["icon"], event["color"], event.get("module_id"), self
+            )
+            card.sync_requested.connect(self.bot_sync_requested.emit)
             self.view_layout.addWidget(card, idx // 2, idx % 2)
 
     def _refresh_config(self) -> None:

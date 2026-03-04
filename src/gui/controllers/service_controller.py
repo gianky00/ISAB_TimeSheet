@@ -90,7 +90,7 @@ class ServiceController(QObject):
             ),
             (
                 "scarico_oda_generale",
-                "dettagli_oda_bot_panel",
+                "dettagli_panel",
                 "portale_fornitori",
                 str(config.get("scarico_oda_generale_autopilot_time", "09:00")),
                 bool(config.get("scarico_oda_generale_autopilot_enabled", False)),
@@ -98,7 +98,7 @@ class ServiceController(QObject):
             ),
             (
                 "ricerca_pdl",
-                "ricerca_pdl_bot_panel",
+                "pdl_search_panel",
                 "safework",
                 str(config.get("ricerca_pdl_autopilot_time", "09:00")),
                 bool(config.get("ricerca_pdl_autopilot_enabled", False)),

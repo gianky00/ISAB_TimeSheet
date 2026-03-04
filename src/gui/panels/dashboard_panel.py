@@ -135,6 +135,7 @@ class DashboardPanel(QWidget):
         actions_row.addWidget(self.quick_actions, stretch=2)
 
         self.autopilot_widget = AutopilotWidget()
+        self.autopilot_widget.bot_sync_requested.connect(self._handle_bot_sync_requested)
         actions_row.addWidget(self.autopilot_widget, stretch=1)
 
         self.content_layout.addLayout(actions_row)
@@ -159,6 +160,31 @@ class DashboardPanel(QWidget):
 
         # Navigazione al database PDL con filtri pre-impostati
         main_window.navigation_controller.navigate_to_pdl(site="ISAB Sud", area=area_name)
+
+    def _handle_bot_sync_requested(self, bot_id: str) -> None:
+        """Avvia manualmente un bot dell'autopilot dal controller centrale."""
+        mw = self.window()
+        if not hasattr(mw, "service_controller"):
+            return
+
+        # Mapping bot_id -> (panel_attr, site, log_msg)
+        bot_map = {
+            "timbrature": ("timbrature_bot_panel", "portale_fornitori", "Avvio manuale Timbrature da Dashboard..."),
+            "scarico_oda_generale": ("dettagli_panel", "portale_fornitori", "Avvio manuale OdA da Dashboard..."),
+            "ricerca_pdl": ("pdl_search_panel", "safework", "Avvio manuale PDL da Dashboard..."),
+        }
+
+        if bot_id not in bot_map:
+            return
+
+        panel_attr, site, log_msg = bot_map[bot_id]
+        if hasattr(mw, panel_attr):
+            panel = getattr(mw, panel_attr)
+            # Se è OdA Generale, applichiamo la preparazione (pulizia filtri)
+            if bot_id == "scarico_oda_generale":
+                mw.service_controller._prepare_scarico_oda_generale(panel)
+
+            mw.service_controller._schedule_bot_with_parallelism(bot_id, panel, site, log_msg)
 
     def _handle_quick_action(self, key):
         main_window = self.window()
