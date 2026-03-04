@@ -23,11 +23,11 @@ class DettagliOdALocators:
         "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]",
     )
 
-    # Input Fields (Based on provided HTML)
-    ODA_NUMBER_FIELD = (By.NAME, "NumeroOdA")
-    CONTRACT_FIELD = (By.NAME, "NumeroContratto")
-    DATE_FROM_FIELD = (By.NAME, "DataCreazioneDa")
-    DATE_A_FIELD = (By.NAME, "DataCreazioneA")
+    # Input Fields (Specific to Portale ISAB)
+    ODA_NUMBER_FIELD = (By.CSS_SELECTOR, "input[name='NumeroOdA']")
+    CONTRACT_FIELD = (By.CSS_SELECTOR, "input[name='NumeroContratto']")
+    DATE_FROM_FIELD = (By.CSS_SELECTOR, "input[name='DataCreazioneDa']")
+    DATE_A_FIELD = (By.CSS_SELECTOR, "input[name='DataCreazioneA']")
     CHECKBOX_FIELD = (
         By.NAME,
         "GetItemServiceInfo",
