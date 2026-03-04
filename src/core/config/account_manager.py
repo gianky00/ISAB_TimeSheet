@@ -10,22 +10,35 @@ from src.core.secrets_manager import SecretsManager
 
 
 def add_account_logic(
-    config: dict[str, Any], username: str, password: str, is_default: bool = False
+    config: dict[str, Any], username: str, password: str, is_default: bool = False, account_type: str = ""
 ) -> dict[str, Any]:
     """Logica per aggiungere o aggiornare un account in una configurazione."""
-    accounts = config.get("accounts", [])
+    key = "accounts" if not account_type else "safework_accounts"
+    accounts = config.get(key, [])
 
     if not accounts:
         is_default = True
 
+    # Trova account esistente per preservare altri campi
+    existing = next((a for a in accounts if a.get("username") == username), {})
+    
     accounts = [a for a in accounts if a.get("username") != username]
 
     if is_default:
         for acc in accounts:
             acc["default"] = False
 
-    accounts.append({"username": username, "password": password, "default": is_default})
-    config["accounts"] = accounts
+    new_acc = existing.copy()
+    new_acc.update({
+        "username": username, 
+        "password": password, 
+        "default": is_default
+    })
+    if account_type:
+        new_acc["type"] = account_type
+        
+    accounts.append(new_acc)
+    config[key] = accounts
     return config
 
 

@@ -309,25 +309,49 @@ class MainWindow(QMainWindow):
                 pdl_panel.set_pdl_list(pdl_numbers)
 
     def _on_settings_saved(self) -> None:
-        """Callback eseguita al salvataggio delle impostazioni (Hot Reload)."""
+        """Callback eseguita al salvataggio delle impostazioni (Hot Reload Globale)."""
+        # 1. Riavvia servizi dipendenti dalle credenziali/token
         self.telegram.start_service()
         self._update_autopilot_status_ui()
 
-        # Refresh account nel footer
+        # 2. Refresh account nel footer (Account Portale/SafeWork)
         if hasattr(self, "status_bar_component") and hasattr(self.status_bar_component, "footer_left"):
             self.status_bar_component.footer_left.refresh_accounts()
 
-        # Hot Reload Contratti e Fornitori in tutti i pannelli inizializzati
+        # 3. Hot Reload in tutti i pannelli inizializzati
         for i in range(self.page_stack.count()):
             panel = self.page_stack.widget(i)
-            if panel and panel is not self.page_stack:
-                if hasattr(panel, "refresh_contracts"):
-                    panel.refresh_contracts()
-                if hasattr(panel, "refresh_fornitori"):
-                    panel.refresh_fornitori()
+            if not panel or panel is self.page_stack:
+                continue
 
+            # Refresh Anagrafiche (Fornitori, Contratti)
+            if hasattr(panel, "refresh_contracts"):
+                panel.refresh_contracts()
+            if hasattr(panel, "refresh_fornitori"):
+                panel.refresh_fornitori()
+            
+            # Refresh Percorsi e Dati Salvati
+            if hasattr(panel, "_load_saved_data"):
+                try:
+                    panel._load_saved_data()
+                except Exception as e:
+                    import logging
+                    logging.getLogger("MainWindow").warning(f"Errore hot-reload dati in {panel}: {e}")
+
+            # Refresh Database se visibili
+            if hasattr(panel, "refresh_data"):
+                try:
+                    panel.refresh_data()
+                except Exception as e:
+                    import logging
+                    logging.getLogger("MainWindow").debug(f"Salto refresh database silente per {panel}: {e}")
+
+        # 4. Feedback utente
         if not getattr(self, "_is_initializing", False):
-            ToastManager.instance().show("Impostazioni salvate e moduli aggiornati!", "success")
+            ToastManager.instance().show(
+                "<center><b>Hot Reload Completato</b><br/>Tutte le impostazioni sono ora attive.</center>", 
+                "success"
+            )
 
     def _on_help_requested(self, section_title: str) -> None:
         """Naviga alla sezione di aiuto specificata."""

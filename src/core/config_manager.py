@@ -154,10 +154,10 @@ def get_accounts() -> list[dict[str, Any]]:
     return get_config_value("accounts", [])  # type: ignore[no-any-return]
 
 
-def add_account(username: str, password: str, is_default: bool = False) -> None:
+def add_account(username: str, password: str, is_default: bool = False, account_type: str = "") -> None:
     """Aggiunge o aggiorna un account."""
     config = load_config()
-    config = add_account_logic(config, username, password, is_default)
+    config = add_account_logic(config, username, password, is_default, account_type)
     save_config(config)
 
 
