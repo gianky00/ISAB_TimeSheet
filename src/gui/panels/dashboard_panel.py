@@ -158,8 +158,20 @@ class DashboardPanel(QWidget):
         if main_window is None or not hasattr(main_window, "navigation_controller"):
             return
 
+        # Mapping inverso: Nome Visualizzato -> Nome Database
+        DISPLAY_TO_DB = {
+            "Area 1": "Process Area 1",
+            "Area 2": "Process Area 2",
+            "Area 3": "Process Area 3",
+            "Blending Sud": "Blending Sud",
+            "Pontile Sud": "Pontile Sud",
+            "UTILITIES (CTE/TAS)": "UTILITIES (CTE/TAS)"
+        }
+        
+        db_area_name = DISPLAY_TO_DB.get(area_name, area_name)
+
         # Navigazione al database PDL con filtri pre-impostati
-        main_window.navigation_controller.navigate_to_pdl(site="ISAB Sud", area=area_name)
+        main_window.navigation_controller.navigate_to_pdl(site="ISAB Sud", area=db_area_name)
 
     def _handle_bot_sync_requested(self, bot_id: str) -> None:
         """Avvia manualmente un bot dell'autopilot dal controller centrale."""

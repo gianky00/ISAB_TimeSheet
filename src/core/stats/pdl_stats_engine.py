@@ -9,6 +9,8 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+from src.core.database.manager import db_manager
+
 logger = logging.getLogger(__name__)
 
 
@@ -37,13 +39,13 @@ class PDLMetrics:
 class PDLStatsEngine:
     """Motore per l'analisi statistica dei PDL nel database locale."""
 
-    DB_PATH = "C:/Users/Coemi/AppData/Local/SyncroJob/data/pdl.db"
-
     @classmethod
     def get_metrics(cls) -> PDLMetrics:
         """Calcola e restituisce le metriche complete per la dashboard."""
         try:
-            conn = sqlite3.connect(cls.DB_PATH)
+            # Usiamo DatabaseManager per ottenere il percorso corretto
+            db_path = db_manager.DB_PDL
+            conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
 
             # 1. Conteggio Totale
@@ -126,15 +128,28 @@ class PDLStatsEngine:
             # Trend Settimanale WoW
             weekly_trend = (last_7d_count - prev_7d_count) / prev_7d_count * 100 if prev_7d_count > 0 else 100.0 if last_7d_count > 0 else 0.0
 
-            # 6. Elaborazione Aree
+            # 6. Elaborazione Aree (Filtrate e Ordinate come da specifica)
+            # Mapping tra Nome Visualizzato e Nome nel Database
+            DISPLAY_TO_DB = {
+                "Area 1": "Process Area 1",
+                "Area 2": "Process Area 2",
+                "Area 3": "Process Area 3",
+                "Blending Sud": "Blending Sud",
+                "Pontile Sud": "Pontile Sud",
+                "UTILITIES (CTE/TAS)": "UTILITIES (CTE/TAS)"
+            }
+            
             areas_stats_list = []
-            for area_name, counts in stats_map.items():
-                curr = counts["curr"]
-                prev = counts["prev"]
-                area_trend = (curr - prev) / prev * 100 if prev > 0 else 100.0 if curr > 0 else 0.0
-                areas_stats_list.append(AreaStats(area_name, curr, round(area_trend, 1)))
-
-            areas_stats_list.sort(key=lambda x: x.name)
+            for display_name, db_name in DISPLAY_TO_DB.items():
+                if db_name in stats_map:
+                    counts = stats_map[db_name]
+                    curr = counts["curr"]
+                    prev = counts["prev"]
+                    area_trend = (curr - prev) / prev * 100 if prev > 0 else 100.0 if curr > 0 else 0.0
+                    areas_stats_list.append(AreaStats(display_name, curr, round(area_trend, 1)))
+                else:
+                    # Se un'area non ha dati nel periodo, la aggiungiamo comunque a 0 per mantenere l'ordine
+                    areas_stats_list.append(AreaStats(display_name, 0, 0.0))
 
             # 7. Ultimo Sync
             try:
