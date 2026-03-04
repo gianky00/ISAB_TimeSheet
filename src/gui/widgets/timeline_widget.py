@@ -133,7 +133,7 @@ class EnterpriseLogConsole(QWidget):
         layout.addWidget(self.frame)
 
     def add_log(self, text: str) -> None:
-        """Aggiunge una riga di log."""
+        """Aggiunge una riga di log alla console con autoscroll."""
         entry = LogEntryWidget(text)
         self.log_layout.insertWidget(self.log_layout.count() - 1, entry)
 
@@ -143,9 +143,11 @@ class EnterpriseLogConsole(QWidget):
         self.log_added.emit(text)
 
     def append(self, text: str, status: str = "") -> None:
+        """Alias di compatibilità per aggiungere log."""
         self.add_log(text)
 
     def clear(self) -> None:
+        """Rimuove tutti i log visualizzati nella console."""
         while self.log_layout.count() > 1:
             item = self.log_layout.takeAt(0)
             if item and (widget := item.widget()):

@@ -35,6 +35,7 @@ QToolTip {
     padding: 8px 12px;
 }
 """
+"""Stringa CSS per la personalizzazione dei tooltip dell'applicazione."""
 
 class AreaBadge(QPushButton):
     """Badge cliccabile per rappresentare un'area con statistiche live."""
@@ -42,6 +43,7 @@ class AreaBadge(QPushButton):
     clicked_area = pyqtSignal(str)
 
     def __init__(self, name: str, count: int, trend: float, parent: QWidget | None = None) -> None:
+        """Inizializza il badge dell'area con il nome, il conteggio e il trend."""
         # Formattazione: Percentuale intera e carattere elegante
         trend_int = round(trend)
         trend_str = f"+{trend_int}%" if trend_int > 0 else f"{trend_int}%"
@@ -104,6 +106,7 @@ class PDLStatsWidget(ModernCard):
     area_selected = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza il widget delle statistiche PDL e avvia il timer di aggiornamento."""
         super().__init__(elevation=5, parent=parent)
         self.setMinimumWidth(340)
         self._setup_ui()
@@ -115,6 +118,7 @@ class PDLStatsWidget(ModernCard):
         QTimer.singleShot(1000, self.refresh_stats)
 
     def _setup_ui(self) -> None:
+        """Inizializza l'interfaccia grafica e la disposizione dei widget."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 12, 15, 12)
         layout.setSpacing(8)
@@ -174,7 +178,9 @@ class PDLStatsWidget(ModernCard):
         layout.addWidget(self.scroll_area)
 
     def refresh_stats(self) -> None:
+        """Avvia un thread in background per ricalcolare le metriche PDL."""
         def run():
+            """Funzione worker per l'esecuzione asincrona del calcolo metriche."""
             try:
                 metrics = PDLStatsEngine.get_metrics()
                 self.stats_updated.emit(metrics)
@@ -183,10 +189,12 @@ class PDLStatsWidget(ModernCard):
         threading.Thread(target=run, daemon=True).start()
 
     def _update_ui(self, metrics: PDLMetrics) -> None:
+        """Aggiorna i widget grafici con i dati delle metriche ricevute."""
         self.lbl_total.setText(str(metrics.total_count))
         self.lbl_sync.setText(f"Sync: {metrics.last_sync}")
 
         def set_trend_style(label, trend, prefix):
+            """Applica lo stile cromatico basato sull'andamento del trend."""
             val = round(trend)
             if val > 0:
                 # ROSSO per Incremento (più lavoro)

@@ -122,6 +122,7 @@ class ROIWeightsPage(QWidget):
         """
 
     def load_from_config(self, config: dict[str, Any]) -> None:
+        """Carica i pesi ROI dal dizionario di configurazione."""
         weights = config.get("roi_weights", {})
         for task, inputs in self.task_inputs.items():
             val = float(weights.get(task, 5.0))  # Default in minuti decimali
@@ -142,6 +143,7 @@ class ROIWeightsPage(QWidget):
             inputs["sec"].blockSignals(False)
 
     def save_to_config(self, config: dict[str, Any]) -> None:
+        """Salva i pesi ROI nel dizionario di configurazione."""
         weights = {}
         for task, inputs in self.task_inputs.items():
             mins = inputs["min"].value()
@@ -209,7 +211,9 @@ class ROITab(QWidget):
         layout.addWidget(self.scroll_area)
 
     def load_from_config(self, config: dict[str, Any]) -> None:
+        """Carica la configurazione del tab dal dizionario globale."""
         self.weights_page.load_from_config(config)
 
     def save_to_config(self, config: dict[str, Any]) -> None:
+        """Salva la configurazione del tab nel dizionario globale."""
         self.weights_page.save_to_config(config)
