@@ -240,12 +240,12 @@ class TelegramTab(QWidget):
         self.token_edit.setText(config.get("telegram_token", ""))
         self.chat_id_edit.setText(config.get("telegram_chat_id", ""))
 
-    def save_to_config(self, config_manager: Any) -> None:
+    def save_to_config(self, config: dict[str, Any]) -> None:
         """
-        Salva i parametri Telegram nel gestore di configurazione.
+        Salva i parametri Telegram nel dizionario di configurazione.
 
         Args:
-            config_manager: Riferimento al manager globale.
+            config: Dizionario di configurazione globale.
         """
-        config_manager.set_config_value("telegram_token", self.token_edit.text().strip())
-        config_manager.set_config_value("telegram_chat_id", self.chat_id_edit.text().strip())
+        config["telegram_token"] = self.token_edit.text().strip()
+        config["telegram_chat_id"] = self.chat_id_edit.text().strip()

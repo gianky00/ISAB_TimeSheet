@@ -35,11 +35,13 @@ class ThemeManager:
 
     def apply_theme(self, app: QApplication, theme_name: str = "light") -> None:
         """
-        Applica il tema completo all'applicazione.
+        Applica il tema completo all'applicazione (FORZATO A LIGHT).
         Configura la QPalette e carica i file QSS necessari.
         """
-        self.current_theme = theme_name
-        logger.info(f"Applicazione tema: {theme_name}")
+        # Forza sempre il tema light per standard aziendale
+        theme_name = "light"
+        self.current_theme = "light"
+        logger.info("Applicazione tema Enterprise Light Mode (Forced)")
 
         # 0. Force Fusion Style (Crucial for consistent palette)
         app.setStyle("Fusion")

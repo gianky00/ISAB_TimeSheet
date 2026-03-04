@@ -95,7 +95,7 @@ class DettagliOdAPanel(BaseBotPanel):
         table_h = QHBoxLayout()
         table_h.setSpacing(10)
 
-        cols: list[dict[str, Any]] = [
+        self.cols: list[dict[str, Any]] = [
             {"name": "Numero OdA", "type": "text"},
             {
                 "name": "Numero Contratto",
@@ -105,7 +105,7 @@ class DettagliOdAPanel(BaseBotPanel):
             },
             {"name": "ESITO", "type": "text", "default": "", "readonly": True},
         ]
-        self.data_table = EditableDataTable(cols)
+        self.data_table = EditableDataTable(self.cols)
         self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._update_status_list)
         self.data_table.data_changed.connect(self._save_data)
@@ -159,6 +159,22 @@ class DettagliOdAPanel(BaseBotPanel):
     def refresh_fornitori(self) -> None:
         """Aggiorna la lista dei fornitori selezionabili nel widget parametri."""
         self.params_widget.refresh_fornitori()
+
+    def refresh_contracts(self) -> None:
+        """Aggiorna dinamicamente i numeri di contratto selezionabili nella tabella."""
+        config = config_manager.load_config()
+        contracts = config.get("contracts", [])
+
+        # Trova l'indice della colonna "Numero Contratto"
+        contract_col_idx = -1
+        for i, col in enumerate(self.cols):
+            if col["name"] == "Numero Contratto":
+                contract_col_idx = i
+                break
+
+        if contract_col_idx != -1:
+            self.data_table.update_column_options(contract_col_idx, contracts)
+            self._on_log("🔄 Elenco contratti aggiornato (Hot Reload).")
 
     def _load_saved_data(self) -> None:
         """Ripristina lo stato del pannello (date, fornitori, tabella) dall'ultimo salvataggio."""

@@ -41,6 +41,9 @@ class ExcelTableWidget(QTableWidget, ClipboardMixin):
             | QAbstractItemView.EditTrigger.EditKeyPressed
             | QAbstractItemView.EditTrigger.AnyKeyPressed
         )
+        # Forza altezza riga per ospitare comodamente i widget (Enterprise Look)
+        self.verticalHeader().setDefaultSectionSize(34)
+        self.verticalHeader().setVisible(False)
 
     def set_row_status(self, row: int, status: str) -> None:
         """
@@ -235,6 +238,33 @@ class EditableDataTable(QWidget):
         if viewport := self.table.viewport():
             menu.exec(viewport.mapToGlobal(pos))
 
+    def update_column_options(self, col_index: int, new_options: list[str]) -> None:
+        """
+        Aggiorna dinamicamente le opzioni per una colonna di tipo 'combo'.
+
+        Args:
+            col_index: Indice della colonna da aggiornare.
+            new_options: Nuova lista di stringhe per la combo box.
+        """
+        if col_index < 0 or col_index >= len(self.columns):
+            return
+
+        # Aggiorna la configurazione della colonna per le future righe
+        self.columns[col_index]["options"] = new_options
+
+        # Aggiorna i widget esistenti nelle righe correnti
+        for row in range(self.table.rowCount()):
+            container = self.table.cellWidget(row, col_index)
+            if container:
+                cb = container.findChild(FilterComboBox)
+                if cb:
+                    current_text = cb.currentText()
+                    cb.blockSignals(True)
+                    cb.clear()
+                    cb.addItems(["", *new_options])
+                    cb.setCurrentText(current_text)
+                    cb.blockSignals(False)
+
     def _add_row(self, use_defaults: bool = True) -> None:
         """Aggiunge una nuova riga alla tabella, configurando eventuali widget combo."""
         row = self.table.rowCount()
@@ -249,8 +279,10 @@ class EditableDataTable(QWidget):
 
                 # Fix allineamento: rimuovi margini e centra il widget
                 container = QWidget()
+                container.setStyleSheet("background: transparent; border: none;")
                 c_lay = QVBoxLayout(container)
-                c_lay.setContentsMargins(2, 2, 2, 2)
+                c_lay.setContentsMargins(1, 1, 1, 1)
+                c_lay.setSpacing(0)
                 c_lay.addWidget(cb)
                 self.table.setCellWidget(row, col, container)
             else:
@@ -300,14 +332,15 @@ class EditableDataTable(QWidget):
         results = []
         for r in range(self.table.rowCount()):
             row_data = {}
-            valid = False
+            has_value = False
             for c, col_cfg in enumerate(self.columns):
                 key = col_cfg["name"].lower().replace(" ", "_")
                 val = self.table._get_cell_value(r, c)
                 row_data[key] = val
-                if c == 0 and val.strip():
-                    valid = True
-            if valid:
+                # Consideriamo la riga valida se ha almeno OdA o Contratto (prime 2 colonne)
+                if c < 2 and val.strip():
+                    has_value = True
+            if has_value:
                 results.append(row_data)
         return results
 

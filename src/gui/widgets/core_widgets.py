@@ -169,18 +169,31 @@ class FilterComboBox(QComboBox):
         palette = get_palette()
         self.setStyleSheet(f"""
             QComboBox {{
-                padding: 6px 12px;
+                padding: 2px 8px;
                 border: 1px solid {palette.border};
-                border-radius: 6px;
+                border-radius: 4px;
                 background-color: {palette.surface};
                 color: {palette.on_surface};
+                min-height: 20px;
             }}
             QComboBox:focus {{
-                border: 1px solid {palette.primary};
+                border: 1.5px solid {palette.primary};
             }}
             QComboBox::drop-down {{
                 border: none;
                 width: 20px;
+            }}
+            QComboBox::down-arrow {{
+                image: url(assets/icons/chevron-down.svg);
+                width: 12px;
+                height: 12px;
+            }}
+            QComboBox QAbstractItemView {{
+                border: 1px solid {palette.border};
+                selection-background-color: {palette.primary};
+                selection-color: {palette.on_primary};
+                background-color: {palette.surface};
+                outline: none;
             }}
         """)
 

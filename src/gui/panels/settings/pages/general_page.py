@@ -174,12 +174,12 @@ class GeneralPage(QWidget):
 
         self._on_provider_changed(provider)
 
-    def save_to_config(self, config_manager: Any) -> None:
-        """Salva i valori nella configurazione."""
-        config_manager.set_config_value("browser_headless", self.headless_check.isChecked())
-        config_manager.set_config_value("browser_timeout", self.timeout_spin.value())
+    def save_to_config(self, config: dict[str, Any]) -> None:
+        """Salva i valori nel dizionario di configurazione."""
+        config["browser_headless"] = self.headless_check.isChecked()
+        config["browser_timeout"] = self.timeout_spin.value()
 
         # AI
-        config_manager.set_config_value("ai_provider", self.provider_combo.currentText())
-        config_manager.set_config_value("ai_model", self.model_combo.currentText())
-        config_manager.set_config_value("ollama_url", self.ollama_url_edit.text())
+        config["ai_provider"] = self.provider_combo.currentText()
+        config["ai_model"] = self.model_combo.currentText()
+        config["ollama_url"] = self.ollama_url_edit.text()

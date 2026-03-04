@@ -70,11 +70,11 @@ class ListsPage(QWidget):
         self.reparti_section.set_items(config.get("reparti_timbrature", []))
         self.cantieri_section.set_items(config.get("cantieri_timbrature", []))
 
-    def save_to_config(self, config_manager: Any) -> None:
-        """Persiste lo stato dei widget nella configurazione globale."""
-        config_manager.set_config_value("accounts", self.account_section.get_accounts())
-        config_manager.set_config_value("safework_accounts", self.sw_account_section.get_accounts())
-        config_manager.set_config_value("contracts", self.contract_section.get_items())
-        config_manager.set_config_value("fornitori", self.fornitori_section.get_items())
-        config_manager.set_config_value("reparti_timbrature", self.reparti_section.get_items())
-        config_manager.set_config_value("cantieri_timbrature", self.cantieri_section.get_items())
+    def save_to_config(self, config: dict[str, Any]) -> None:
+        """Persiste lo stato dei widget nel dizionario di configurazione."""
+        config["accounts"] = self.account_section.get_accounts()
+        config["safework_accounts"] = self.sw_account_section.get_accounts()
+        config["contracts"] = self.contract_section.get_items()
+        config["fornitori"] = self.fornitori_section.get_items()
+        config["reparti_timbrature"] = self.reparti_section.get_items()
+        config["cantieri_timbrature"] = self.cantieri_section.get_items()

@@ -287,8 +287,8 @@ class ConfigTab(QWidget):
             if hasattr(page, "load_from_config"):
                 page.load_from_config(config)
 
-    def save_to_config(self, config_manager: Any) -> None:
-        """Persiste i dati di tutte le pagine nella configurazione globale."""
+    def save_to_config(self, config: dict[str, Any]) -> None:
+        """Persiste i dati di tutte le pagine nel dizionario di configurazione globale."""
         for page in self.pages:
             if hasattr(page, "save_to_config"):
-                page.save_to_config(config_manager)
+                page.save_to_config(config)

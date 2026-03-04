@@ -234,14 +234,14 @@ class PathsPage(QWidget):
         self.dataease_path_edit.setText(str(config.get("dataease_db_path", "")))
         self._validate_path(self.dataease_path_edit)
 
-    def save_to_config(self, config_manager: Any) -> None:
-        """Salva i percorsi attualmente impostati nella configurazione globale."""
-        config_manager.set_config_value("contabilita_file_path", self.contabilita_path_edit.text())
-        config_manager.set_config_value("enable_auto_update_contabilita", self.auto_update_check.isChecked())
-        config_manager.set_config_value("giornaliere_path", self.giornaliere_path_edit.text())
-        config_manager.set_config_value("attivita_programmate_path", self.attivita_path_edit.text())
-        config_manager.set_config_value("activity_db_path", self.activity_db_path_edit.text())
-        config_manager.set_config_value("certificati_campione_path", self.certificati_path_edit.text())
-        config_manager.set_config_value("certificati_root_path", self.certificati_root_edit.text())
-        config_manager.set_config_value("master_preventivi_path", self.master_preventivi_path_edit.text())
-        config_manager.set_config_value("dataease_db_path", self.dataease_path_edit.text())
+    def save_to_config(self, config: dict[str, Any]) -> None:
+        """Salva i percorsi attualmente impostati nel dizionario di configurazione."""
+        config["contabilita_file_path"] = self.contabilita_path_edit.text()
+        config["enable_auto_update_contabilita"] = self.auto_update_check.isChecked()
+        config["giornaliere_path"] = self.giornaliere_path_edit.text()
+        config["attivita_programmate_path"] = self.attivita_path_edit.text()
+        config["activity_db_path"] = self.activity_db_path_edit.text()
+        config["certificati_campione_path"] = self.certificati_path_edit.text()
+        config["certificati_root_path"] = self.certificati_root_edit.text()
+        config["master_preventivi_path"] = self.master_preventivi_path_edit.text()
+        config["dataease_db_path"] = self.dataease_path_edit.text()

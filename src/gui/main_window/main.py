@@ -291,13 +291,25 @@ class MainWindow(QMainWindow):
             self.tray_icon_component.show_update_message(new_version)
 
     def _on_settings_saved(self) -> None:
-        """Callback eseguita al salvataggio delle impostazioni."""
+        """Callback eseguita al salvataggio delle impostazioni (Hot Reload)."""
         self.telegram.start_service()
         self._update_autopilot_status_ui()
+
+        # Refresh account nel footer
         if hasattr(self, "status_bar_component") and hasattr(self.status_bar_component, "footer_left"):
             self.status_bar_component.footer_left.refresh_accounts()
+
+        # Hot Reload Contratti e Fornitori in tutti i pannelli inizializzati
+        for i in range(self.page_stack.count()):
+            panel = self.page_stack.widget(i)
+            if panel and panel is not self.page_stack:
+                if hasattr(panel, "refresh_contracts"):
+                    panel.refresh_contracts()
+                if hasattr(panel, "refresh_fornitori"):
+                    panel.refresh_fornitori()
+
         if not getattr(self, "_is_initializing", False):
-            ToastManager.instance().show("Impostazioni salvate!", "success")
+            ToastManager.instance().show("Impostazioni salvate e moduli aggiornati!", "success")
 
     def _on_help_requested(self, section_title: str) -> None:
         """Naviga alla sezione di aiuto specificata."""

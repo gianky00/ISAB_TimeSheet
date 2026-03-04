@@ -134,9 +134,9 @@ class SettingsPanel(QWidget):
     def save_settings(self) -> None:
         """Raccoglie i dati dai tab e li persiste tramite il config_manager."""
         config = config_manager.load_config()
-        self.config_tab.save_to_config(config_manager)
+        self.config_tab.save_to_config(config)
         self.roi_tab.save_to_config(config)
-        self.telegram_tab.save_to_config(config_manager)
+        self.telegram_tab.save_to_config(config)
 
         # Salva la configurazione aggiornata
         config_manager.save_config(config)
