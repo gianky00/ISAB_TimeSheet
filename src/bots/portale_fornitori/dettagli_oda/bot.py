@@ -126,9 +126,10 @@ class DettagliOdABot(BaseBot):
 
         if not rows:
             self.log("ℹ️ Nessun OdA specificato. Avvio ricerca per lista generale.")
+            # Restituiamo una riga vuota per innescare la ricerca generale nel portale
             return [{"numero_oda": "", "numero_contratto": ""}]
-        result: list[dict[str, Any]] = rows
-        return result
+        
+        return rows
 
     def _process_single_oda(
         self,

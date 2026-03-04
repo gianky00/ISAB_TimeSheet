@@ -187,8 +187,14 @@ class DettagliOdAPanel(BaseBotPanel):
             config.get("last_oda_date_a", QDate.currentDate().toString("dd.MM.yyyy")),
         )
         self.params_widget.set_dest_path(config.get("path_dettagli_oda", ""))
-        if saved_data := config.get("last_oda_data", []):
+        
+        saved_data = config.get("last_oda_data", [])
+        if saved_data:
             self.data_table.set_data(saved_data)
+        else:
+            # Se non ci sono dati salvati, svuota esplicitamente per evitare default indesiderati
+            self.data_table.clear()
+            
         self._update_status_list()
 
     def _save_data(self) -> None:
