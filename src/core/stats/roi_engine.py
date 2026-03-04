@@ -47,7 +47,8 @@ class ROIEngine:
             "Sincronizzazione": 1.0,
             "Export Excel": 5.0,
         }
-        return get_config_value("roi_weights", default_weights)
+        from typing import cast
+        return cast("dict[str, float]", get_config_value("roi_weights", default_weights))
 
     @classmethod
     def calculate_savings(cls) -> ROIMetrics:
@@ -55,7 +56,7 @@ class ROIEngine:
         try:
             # Carichiamo i pesi dinamici
             weights = cls.get_weights()
-            
+
             # Alias per il mapping flessibile delle azioni audit ai pesi ROI
             task_aliases = {
                 "Scarico TS": ["scarico ts", "scarico timesheet", "download ts", "download timesheet", "scarico ore"],
@@ -90,7 +91,7 @@ class ROIEngine:
             task_counts: dict[str, int] = {}
 
             # Calcolo giorni totali e reference date per il trend
-            now = datetime.now()
+            now = datetime.now().astimezone()
             thirty_days_ago = now - timedelta(days=30)
             sixty_days_ago = now - timedelta(days=60)
 
@@ -103,10 +104,9 @@ class ROIEngine:
                     severity = str(row[3]).lower()
                     ts_str = str(row[4])
                     dur_ms = row[5] or 0
-                    category = str(row[6]).lower()
 
                     is_success = status == "success"
-                    
+
                     # Consideriamo solo il completamento per non duplicare i minuti (avvio + fine)
                     # Supportiamo sia il nome esatto che varianti
                     if not is_success or "Completamento" not in action:
@@ -126,7 +126,7 @@ class ROIEngine:
                         if any(alias in search_text for alias in aliases):
                             matched_task = weight_key
                             break
-                    
+
                     # Caso speciale: "Timbrature" nel log deve mappare a un peso ROI (es. Scarico TS)
                     if not matched_task and "timbrature" in search_text:
                         matched_task = "Scarico TS"
@@ -145,8 +145,8 @@ class ROIEngine:
                         # Calcolo del trend a 30 e 60 giorni
                         row_date = None
                         with suppress(Exception):
-                            row_date = datetime.fromisoformat(ts_str.split(".")[0].replace(" ", "T"))
-                        
+                            row_date = datetime.fromisoformat(ts_str.split(".")[0].replace(" ", "T")).astimezone()
+
                         if row_date:
                             if row_date >= thirty_days_ago:
                                 current_30d_ops += 1
@@ -216,56 +216,6 @@ class ROIEngine:
             )
         except Exception as e:
             logger.error(f"Errore critico calcolo ROI: {e}", exc_info=True)
-            return ROIMetrics(0, 0, 0, 0, 0, 0, 0.0, "Nessuno", 0.0, [])
-
-            # Calcolo metriche derivate
-            total_actions = success_count + fail_count
-            success_rate = (success_count / total_actions * 100) if total_actions > 0 else 0
-
-            # Affidabilità: 100% meno penalità per errori critici
-            reliability = 100 - (critical_errors * 5)
-            reliability = max(0, min(100, reliability))
-
-            # Trend calculation
-            if prev_30d_ops > 0:
-                trend_percentage = ((current_30d_ops - prev_30d_ops) / prev_30d_ops) * 100.0
-            else:
-                trend_percentage = 100.0 if current_30d_ops > 0 else 0.0
-
-            # Risparmio Netto
-            net_min = max(0.0, total_min_manual - total_bot_min)
-
-            # Top Tasks calculation (Top 3)
-            top_tasks_list = []
-            top_task_name = "Nessuno"
-            top_task_pct = 0.0
-
-            if task_counts:
-                # Ordina per numero di esecuzioni decrescente
-                sorted_tasks = sorted(task_counts.items(), key=operator.itemgetter(1), reverse=True)
-
-                for name, count in sorted_tasks[:3]:
-                    pct = (count / total_ops) * 100 if total_ops > 0 else 0.0
-                    top_tasks_list.append((name, round(pct, 1)))
-
-                if top_tasks_list:
-                    top_task_name = top_tasks_list[0][0]
-                    top_task_pct = top_tasks_list[0][1]
-
-            return ROIMetrics(
-                total_minutes_saved=total_min_manual,
-                net_minutes_saved=net_min,
-                total_operations=total_ops,
-                success_rate=round(success_rate, 1),
-                reliability_score=reliability,
-                total_days=total_days,
-                trend_percentage=round(trend_percentage, 1),
-                top_task_name=top_task_name,
-                top_task_pct=top_task_pct,
-                top_tasks=top_tasks_list
-            )
-        except Exception as e:
-            logger.error(f"Errore calcolo ROI: {e}")
             return ROIMetrics(0, 0, 0, 0, 0, 0, 0.0, "Nessuno", 0.0, [])
 
     @classmethod

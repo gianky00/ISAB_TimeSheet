@@ -1,7 +1,7 @@
 from contextlib import suppress
 from datetime import datetime
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTime, QTimer, pyqtSignal, QSize
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, QTime, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
@@ -11,11 +11,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.core.constants import Icons
 from src.core.sync_tracker import SyncTracker
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import IconButton
 from src.utils.helpers import get_asset_path, get_colored_icon
-from src.core.constants import Icons
 
 # Stile forzato per i tooltip in Light Mode
 TOOLTIP_CSS = """
@@ -100,7 +100,7 @@ class AutopilotEventCard(QFrame):
         # Bot name row with status dot
         name_h = QHBoxLayout()
         name_h.setSpacing(6)
-        
+
         # Status Dot (Pallino database)
         self.status_dot = QLabel()
         self.status_dot.setFixedSize(8, 8)
@@ -214,11 +214,7 @@ class AutopilotEventCard(QFrame):
         hours = secs_to // 3600
         mins = (secs_to % 3600) // 60
 
-        if hours > 0:
-            countdown = f"⏱️ Tra {hours}h {mins}m"
-        else:
-            countdown = f"⏱️ Tra {mins}m"
-
+        countdown = f"⏱️ Tra {hours}h {mins}m" if hours > 0 else f"⏱️ Tra {mins}m"
         self.countdown_lbl.setText(countdown)
 
     def _update_db_status(self) -> None:
@@ -227,7 +223,7 @@ class AutopilotEventCard(QFrame):
         if self.module_id == "none":
             self.status_dot.hide()
             return
-        
+
         self.status_dot.show()
         status = SyncTracker.get_status(self.module_id)
         if not status:
@@ -237,9 +233,9 @@ class AutopilotEventCard(QFrame):
             return
 
         last_ts_float = status.get("last_ts", 0)
-        last_dt = datetime.fromtimestamp(last_ts_float)
-        now = datetime.now()
-        
+        last_dt = datetime.fromtimestamp(last_ts_float).astimezone()
+        now = datetime.now().astimezone()
+
         # Logica speciale per TIMBRATURE:
         # Se ho sincronizzato ieri o oggi, i dati sono considerati "freschi" (Verde)
         # perché le timbrature del giorno corrente si vedono solo domani.

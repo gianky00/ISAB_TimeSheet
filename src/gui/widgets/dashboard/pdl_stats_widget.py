@@ -43,9 +43,9 @@ class AreaBadge(QPushButton):
 
     def __init__(self, name: str, count: int, trend: float, parent: QWidget | None = None) -> None:
         # Formattazione: Percentuale intera e carattere elegante
-        trend_int = int(round(trend))
+        trend_int = round(trend)
         trend_str = f"+{trend_int}%" if trend_int > 0 else f"{trend_int}%"
-        
+
         # Uso del bullet elegante • invece di |
         super().__init__(f"{name}\n({count} • {trend_str})", parent)
 
@@ -160,18 +160,18 @@ class PDLStatsWidget(ModernCard):
         area_label.setStyleSheet(f"font-size: 10px; font-weight: 800; color: {COLORS['text_muted']}; letter-spacing: 0.5px; margin-top: 2px;")
         layout.addWidget(area_label)
 
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.scroll.setStyleSheet("background: transparent;")
-        self.scroll.setMinimumHeight(200)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll_area.setStyleSheet("background: transparent;")
+        self.scroll_area.setMinimumHeight(200)
 
         self.area_container = QWidget()
         self.area_layout = QVBoxLayout(self.area_container)
         self.area_layout.setContentsMargins(0, 0, 5, 0)
         self.area_layout.setSpacing(6)
-        self.scroll.setWidget(self.area_container)
-        layout.addWidget(self.scroll)
+        self.scroll_area.setWidget(self.area_container)
+        layout.addWidget(self.scroll_area)
 
     def refresh_stats(self) -> None:
         def run():
@@ -187,7 +187,7 @@ class PDLStatsWidget(ModernCard):
         self.lbl_sync.setText(f"Sync: {metrics.last_sync}")
 
         def set_trend_style(label, trend, prefix):
-            val = int(round(trend))
+            val = round(trend)
             if val > 0:
                 # ROSSO per Incremento (più lavoro)
                 label.setText(f"{prefix}: ▲ +{val}%")
@@ -205,11 +205,17 @@ class PDLStatsWidget(ModernCard):
 
         while self.area_layout.count():
             child = self.area_layout.takeAt(0)
-            if child.widget(): child.widget().deleteLater()
-            elif child.layout():
-                while child.layout().count():
-                    item = child.layout().takeAt(0)
-                    if item.widget(): item.widget().deleteLater()
+            if child:
+                w = child.widget()
+                if w:
+                    w.deleteLater()
+                elif (lay := child.layout()):
+                    while lay.count():
+                        item = lay.takeAt(0)
+                        if item:
+                            iw = item.widget()
+                            if iw:
+                                iw.deleteLater()
 
         cols = 4
         rows = math.ceil(len(metrics.areas_stats) / cols)

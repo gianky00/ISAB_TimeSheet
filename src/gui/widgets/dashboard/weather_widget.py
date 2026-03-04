@@ -195,7 +195,7 @@ class WeatherWidget(ModernCard):
         self.lbl_main_icon.setObjectName("lbl_main_icon")
         self.lbl_main_icon.setStyleSheet(f"{TOOLTIP_CSS}\n#lbl_main_icon {{ background: transparent; border: none; }}")
         icon_v.addWidget(self.lbl_main_icon, alignment=Qt.AlignmentFlag.AlignHCenter)
-        
+
         body_h.addLayout(icon_v)
 
         temp_v = QVBoxLayout()

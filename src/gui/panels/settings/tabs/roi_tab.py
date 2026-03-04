@@ -13,9 +13,9 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QScrollArea,
+    QSpinBox,
     QVBoxLayout,
     QWidget,
-    QSpinBox,
 )
 
 from src.core.constants import Icons
@@ -33,9 +33,9 @@ class ROIWeightsPage(QWidget):
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 10, 0, 10)
-        self.layout.setSpacing(15)
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 10, 0, 10)
+        self.main_layout.setSpacing(15)
 
         # Container per il form
         self.form_container = QFrame()
@@ -100,8 +100,8 @@ class ROIWeightsPage(QWidget):
             self.form_layout.addRow(label, input_layout)
             self.task_inputs[task] = {"min": spin_min, "sec": spin_sec}
 
-        self.layout.addWidget(self.form_container)
-        self.layout.addStretch()
+        self.main_layout.addWidget(self.form_container)
+        self.main_layout.addStretch()
 
     def _get_input_style(self) -> str:
         """Ritorna lo stile CSS per i campi di input numerici senza pulsanti."""
@@ -125,10 +125,10 @@ class ROIWeightsPage(QWidget):
         weights = config.get("roi_weights", {})
         for task, inputs in self.task_inputs.items():
             val = float(weights.get(task, 5.0))  # Default in minuti decimali
-            
+
             minutes = int(val)
-            seconds = int(round((val - minutes) * 60))
-            
+            seconds = round((val - minutes) * 60)
+
             # Gestione arrotondamento (es. 5.999 -> 6.0)
             if seconds >= 60:
                 minutes += 1
@@ -182,9 +182,9 @@ class ROITab(QWidget):
         layout.addWidget(self.header_bar)
 
         # Scroll Area
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setStyleSheet("background: transparent; border: none;")
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet("background: transparent; border: none;")
 
         scroll_content = QWidget()
         scroll_content.setStyleSheet("background: transparent;")
@@ -205,8 +205,8 @@ class ROITab(QWidget):
         self.cards_layout.addWidget(card_weights)
 
         self.cards_layout.addStretch()
-        self.scroll.setWidget(scroll_content)
-        layout.addWidget(self.scroll)
+        self.scroll_area.setWidget(scroll_content)
+        layout.addWidget(self.scroll_area)
 
     def load_from_config(self, config: dict[str, Any]) -> None:
         self.weights_page.load_from_config(config)

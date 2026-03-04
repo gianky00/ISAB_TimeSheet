@@ -198,13 +198,13 @@ class PDLDBPanel(QWidget):
         if site:
             self.filters.site_filter.setCurrentText(site)
             self._update_areas()
-        
+
         if area:
             self.filters.area_filter.setCurrentText(area)
-            
+
         if search is not None:
             self.filters.search_input.setText(search)
-            
+
         self.refresh_data()
 
     def _on_site_changed(self) -> None:

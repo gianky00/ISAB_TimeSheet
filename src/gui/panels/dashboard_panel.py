@@ -167,7 +167,7 @@ class DashboardPanel(QWidget):
             "Pontile Sud": "Pontile Sud",
             "UTILITIES (CTE/TAS)": "UTILITIES (CTE/TAS)"
         }
-        
+
         db_area_name = DISPLAY_TO_DB.get(area_name, area_name)
 
         # Navigazione al database PDL con filtri pre-impostati
@@ -176,7 +176,7 @@ class DashboardPanel(QWidget):
     def _handle_bot_sync_requested(self, bot_id: str) -> None:
         """Avvia manualmente un bot dell'autopilot dal controller centrale."""
         mw = self.window()
-        if not hasattr(mw, "service_controller"):
+        if mw is None or not hasattr(mw, "service_controller"):
             return
 
         # Mapping bot_id -> (panel_attr, site, log_msg)
@@ -220,7 +220,6 @@ class DashboardPanel(QWidget):
         if key in automation_map:
             nav.navigate_to_panel(automation_map[key])
         elif key.startswith("nav_sub_strumentale_"):
-            from contextlib import suppress
             with suppress(ValueError):
                 sub_idx = int(key.split("_")[-1])
                 nav.navigate_to(4, sub_index=sub_idx)

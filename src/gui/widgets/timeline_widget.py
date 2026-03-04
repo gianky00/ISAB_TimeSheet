@@ -5,14 +5,8 @@ Sostituisce l'estetica HUD con un design moderno coerente con il sistema.
 """
 
 import re
-from datetime import datetime
 
-from PyQt6.QtCore import (
-    QRectF,
-    QTimer,
-    pyqtSignal,
-    Qt
-)
+from PyQt6.QtCore import QRectF, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import (
     QColor,
     QPainter,
@@ -47,7 +41,7 @@ class StandardTimelineFrame(QFrame):
             rect = QRectF(self.rect()).adjusted(1, 1, -1, -1)
             path = QPainterPath()
             path.addRoundedRect(rect, 12, 12)
-            
+
             painter.setPen(QPen(QColor(COLORS["border_light"]), 1))
             painter.drawPath(path)
         finally:
@@ -159,7 +153,6 @@ class EnterpriseLogConsole(QWidget):
 
     def set_mood(self, mood: str) -> None:
         """Metodo mantenuto per compatibilità API."""
-        pass
 
 
 class MissionReportCard(QFrame):
@@ -179,7 +172,7 @@ class MissionReportCard(QFrame):
         title.setStyleSheet(f"font-weight: bold; color: {COLORS['text_dark']};")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
-        
+
         info = QLabel(f"Durata: {duration}")
         info.setStyleSheet(f"color: {COLORS['text_muted']};")
         info.setAlignment(Qt.AlignmentFlag.AlignCenter)

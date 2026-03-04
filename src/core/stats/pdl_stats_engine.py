@@ -64,7 +64,7 @@ class PDLStatsEngine:
             active = cursor.fetchone()[0]
 
             # 3. Parametri temporali
-            now = datetime.now()
+            now = datetime.now().astimezone()
             today_day = now.day
             month_curr_str = now.strftime("/%m/%Y")
 
@@ -88,30 +88,29 @@ class PDLStatsEngine:
             stats_map = {}
             current_mtd_global = 0
             prev_mtd_global = 0
-            
+
             last_7d_count = 0
             prev_7d_count = 0
 
             for area, date_str in rows:
                 try:
                     # Parsing data_creazione "DD/MM/YYYY HH:MM:SS"
-                    dt_obj = datetime.strptime(date_str, "%d/%m/%Y %H:%M:%S")
+                    dt_obj = datetime.strptime(date_str, "%d/%m/%Y %H:%M:%S").astimezone()
                     day_part = dt_obj.day
-                    
+
                     # --- Logica MTD (per aree e globale) ---
-                    if not area: continue
+                    if not area:
+                        continue
                     if area not in stats_map:
                         stats_map[area] = {"curr": 0, "prev": 0}
 
-                    if dt_obj.month == now.month and dt_obj.year == now.year:
-                        if day_part <= today_day:
-                            stats_map[area]["curr"] += 1
-                            current_mtd_global += 1
-                    elif dt_obj.month == last_day_prev.month and dt_obj.year == last_day_prev.year:
-                        if day_part <= today_day:
-                            stats_map[area]["prev"] += 1
-                            prev_mtd_global += 1
-                    
+                    if dt_obj.month == now.month and dt_obj.year == now.year and day_part <= today_day:
+                        stats_map[area]["curr"] += 1
+                        current_mtd_global += 1
+                    elif dt_obj.month == last_day_prev.month and dt_obj.year == last_day_prev.year and day_part <= today_day:
+                        stats_map[area]["prev"] += 1
+                        prev_mtd_global += 1
+
                     # --- Logica Weekly (Rolling 7d vs Prev 7d) ---
                     if dt_obj >= seven_days_ago:
                         last_7d_count += 1
@@ -124,7 +123,7 @@ class PDLStatsEngine:
             # 5. Elaborazione Trend
             # Trend Mensile MTD
             global_trend = (current_mtd_global - prev_mtd_global) / prev_mtd_global * 100 if prev_mtd_global > 0 else 100.0 if current_mtd_global > 0 else 0.0
-            
+
             # Trend Settimanale WoW
             weekly_trend = (last_7d_count - prev_7d_count) / prev_7d_count * 100 if prev_7d_count > 0 else 100.0 if last_7d_count > 0 else 0.0
 
@@ -138,7 +137,7 @@ class PDLStatsEngine:
                 "Pontile Sud": "Pontile Sud",
                 "UTILITIES (CTE/TAS)": "UTILITIES (CTE/TAS)"
             }
-            
+
             areas_stats_list = []
             for display_name, db_name in DISPLAY_TO_DB.items():
                 if db_name in stats_map:
