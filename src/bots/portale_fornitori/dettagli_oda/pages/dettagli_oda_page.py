@@ -159,10 +159,12 @@ class DettagliOdAPage:
             field_date_a = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.DATE_A_FIELD))
             self.driver.execute_script(js_set_value, field_date_a, date_a)
 
-            field_contract = self.wait.until(
-                EC.presence_of_element_located(DettagliOdALocators.CONTRACT_FIELD)
-            )
-            self.driver.execute_script(js_set_value, field_contract, contract)
+            if contract:
+                self.log(f"  Inserimento contratto: {contract}")
+                field_contract = self.wait.until(
+                    EC.presence_of_element_located(DettagliOdALocators.CONTRACT_FIELD)
+                )
+                self.driver.execute_script(js_set_value, field_contract, contract)
 
             checkbox = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.CHECKBOX_FIELD))
             if not checkbox.is_selected():

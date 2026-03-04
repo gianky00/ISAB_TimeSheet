@@ -90,8 +90,16 @@ class ClipboardMixin:
 
     def _get_cell_value(self, row: int, col: int) -> str:
         widget = self.cellWidget(row, col)  # type: ignore
-        if isinstance(widget, QComboBox):
-            return widget.currentText()
+        if widget:
+            from PyQt6.QtWidgets import QComboBox
+            # Se è direttamente una QComboBox
+            if isinstance(widget, QComboBox):
+                return widget.currentText()
+            # Se è un container che ospita una QComboBox
+            cb = widget.findChild(QComboBox)
+            if cb:
+                return cb.currentText()
+                
         it = self.item(row, col)  # type: ignore
         return it.text() if it else ""
 
