@@ -8,7 +8,6 @@ from typing import Any
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
-    QDoubleSpinBox,
     QFormLayout,
     QFrame,
     QHBoxLayout,
@@ -16,6 +15,7 @@ from PyQt6.QtWidgets import (
     QScrollArea,
     QVBoxLayout,
     QWidget,
+    QSpinBox,
 )
 
 from src.core.constants import Icons
@@ -44,7 +44,8 @@ class ROIWeightsPage(QWidget):
         self.form_layout.setSpacing(12)
         self.form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
-        self.spinners: dict[str, QDoubleSpinBox] = {}
+        # Dictionary per conservare i widget di input (min e sec per ogni task)
+        self.task_inputs: dict[str, dict[str, QSpinBox]] = {}
 
         # Definizione dei task standard (quelli usati in ROIEngine)
         self.tasks = [
@@ -59,44 +60,94 @@ class ROIWeightsPage(QWidget):
         ]
 
         for task in self.tasks:
-            spinner = QDoubleSpinBox()
-            spinner.setRange(0.1, 120.0)
-            spinner.setSuffix(" min")
-            spinner.setSingleStep(0.5)
-            spinner.setDecimals(1)
-            spinner.setFixedWidth(100)
-            spinner.setStyleSheet(f"""
-                QDoubleSpinBox {{
-                    padding: 5px;
-                    border: 1px solid {COLORS['border_light']};
-                    border-radius: 6px;
-                    background: {COLORS['bg_white']};
-                    font-weight: 700;
-                }}
-            """)
-            spinner.valueChanged.connect(lambda _: self.settings_changed.emit())
+            # Layout orizzontale per ospitare minuti e secondi
+            input_layout = QHBoxLayout()
+            input_layout.setSpacing(10)
+
+            # Campo Minuti
+            spin_min = QSpinBox()
+            spin_min.setRange(0, 120)
+            spin_min.setFixedWidth(60)
+            spin_min.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
+            spin_min.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            spin_min.setStyleSheet(self._get_input_style())
+            spin_min.valueChanged.connect(lambda _: self.settings_changed.emit())
+
+            # Campo Secondi
+            spin_sec = QSpinBox()
+            spin_sec.setRange(0, 59)
+            spin_sec.setFixedWidth(60)
+            spin_sec.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
+            spin_sec.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            spin_sec.setStyleSheet(self._get_input_style())
+            spin_sec.valueChanged.connect(lambda _: self.settings_changed.emit())
+
+            # Label separatrici
+            lbl_min = QLabel("min")
+            lbl_min.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; font-weight: 700;")
+            lbl_sec = QLabel("sec")
+            lbl_sec.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; font-weight: 700;")
+
+            input_layout.addWidget(spin_min)
+            input_layout.addWidget(lbl_min)
+            input_layout.addWidget(spin_sec)
+            input_layout.addWidget(lbl_sec)
+            input_layout.addStretch()
 
             label = QLabel(f"Tempo per {task}:")
             label.setStyleSheet(f"font-weight: 600; color: {COLORS['text_dark']};")
 
-            self.form_layout.addRow(label, spinner)
-            self.spinners[task] = spinner
+            self.form_layout.addRow(label, input_layout)
+            self.task_inputs[task] = {"min": spin_min, "sec": spin_sec}
 
         self.layout.addWidget(self.form_container)
         self.layout.addStretch()
 
+    def _get_input_style(self) -> str:
+        """Ritorna lo stile CSS per i campi di input numerici senza pulsanti."""
+        return f"""
+            QSpinBox {{
+                padding: 5px;
+                border: 1px solid {COLORS['border_light']};
+                border-radius: 6px;
+                background: {COLORS['bg_white']};
+                color: {COLORS['text_dark']};
+                font-weight: 800;
+                font-size: 12px;
+            }}
+            QSpinBox:focus {{
+                border: 1.5px solid {COLORS['primary_blue']};
+                background: #FFFFFF;
+            }}
+        """
+
     def load_from_config(self, config: dict[str, Any]) -> None:
         weights = config.get("roi_weights", {})
-        for task, spinner in self.spinners.items():
-            val = weights.get(task, 5.0)  # Default fallbacks
-            spinner.blockSignals(True)
-            spinner.setValue(float(val))
-            spinner.blockSignals(False)
+        for task, inputs in self.task_inputs.items():
+            val = float(weights.get(task, 5.0))  # Default in minuti decimali
+            
+            minutes = int(val)
+            seconds = int(round((val - minutes) * 60))
+            
+            # Gestione arrotondamento (es. 5.999 -> 6.0)
+            if seconds >= 60:
+                minutes += 1
+                seconds = 0
+
+            inputs["min"].blockSignals(True)
+            inputs["sec"].blockSignals(True)
+            inputs["min"].setValue(minutes)
+            inputs["sec"].setValue(seconds)
+            inputs["min"].blockSignals(False)
+            inputs["sec"].blockSignals(False)
 
     def save_to_config(self, config: dict[str, Any]) -> None:
         weights = {}
-        for task, spinner in self.spinners.items():
-            weights[task] = spinner.value()
+        for task, inputs in self.task_inputs.items():
+            mins = inputs["min"].value()
+            secs = inputs["sec"].value()
+            # Converte tutto in minuti decimali per ROIEngine
+            weights[task] = mins + (secs / 60.0)
         config["roi_weights"] = weights
 
 
@@ -114,7 +165,7 @@ class ROITab(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Header bar (placeholder for search if needed)
+        # Header bar
         self.header_bar = QFrame()
         self.header_bar.setFixedHeight(50)
         self.header_bar.setStyleSheet(
@@ -147,7 +198,7 @@ class ROITab(QWidget):
 
         card_weights = SettingCard(
             "Stima Tempi Manuali",
-            "Definisci i minuti che un operatore impiegherebbe per ogni task.",
+            "Definisci minuti e secondi che un operatore impiegherebbe per ogni task.",
             Icons.CLOCK,
             self.weights_page
         )
@@ -161,5 +212,4 @@ class ROITab(QWidget):
         self.weights_page.load_from_config(config)
 
     def save_to_config(self, config: dict[str, Any]) -> None:
-        """Note: In this project architecture, saving is often handled by the main panel."""
         self.weights_page.save_to_config(config)

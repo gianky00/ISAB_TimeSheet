@@ -178,15 +178,29 @@ class WeatherWidget(ModernCard):
     def _build_body(self) -> None:
         body_h = QHBoxLayout()
         body_h.setSpacing(16)
+        body_h.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+
+        # Icona principale con etichetta "OGGI" centralizzata
+        icon_v = QVBoxLayout()
+        icon_v.setSpacing(2)
+        icon_v.setContentsMargins(0, 0, 0, 0)
+
+        lbl_today = QLabel("OGGI")
+        lbl_today.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; background: transparent;")
+        lbl_today.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon_v.addWidget(lbl_today, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self.lbl_main_icon = QLabel()
         self.lbl_main_icon.setFixedSize(64, 64)
         self.lbl_main_icon.setObjectName("lbl_main_icon")
         self.lbl_main_icon.setStyleSheet(f"{TOOLTIP_CSS}\n#lbl_main_icon {{ background: transparent; border: none; }}")
-        body_h.addWidget(self.lbl_main_icon)
+        icon_v.addWidget(self.lbl_main_icon, alignment=Qt.AlignmentFlag.AlignHCenter)
+        
+        body_h.addLayout(icon_v)
 
         temp_v = QVBoxLayout()
         temp_v.setSpacing(0)
+        temp_v.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
         self.lbl_temp = QLabel("--.-°C")
         self.lbl_temp.setObjectName("lbl_temp")
