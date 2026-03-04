@@ -153,3 +153,19 @@ class AutomazioniWidget(QWidget):
             index: Nuovo indice.
         """
         self.main_tabs.setCurrentIndex(index)
+
+    def get_bot_panel(self, main_idx: int, sub_idx: int) -> QWidget | None:
+        """
+        Restituisce l'istanza del pannello bot all'indice specificato.
+
+        Args:
+            main_idx: Indice del portale (0: Fornitori, 1: SafeWork).
+            sub_idx: Indice del bot nel tab secondario.
+
+        Returns:
+            Optional[QWidget]: L'istanza del pannello o None se non trovato.
+        """
+        target_tab = self.tab_fornitori if main_idx == 0 else self.tab_safework
+        if sub_idx < target_tab.count():
+            return target_tab.widget(sub_idx)
+        return None

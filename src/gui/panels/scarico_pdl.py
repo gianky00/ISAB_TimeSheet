@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import QSize, QTimer
 from PyQt6.QtWidgets import (
     QFileDialog,
     QFrame,
@@ -120,10 +120,42 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.edit_dest.setStyleSheet(LINEEDIT_STYLE)
         self.btn_browse = IconButton()
         self.btn_browse.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
+        self.btn_browse.setIconSize(QSize(20, 20))
+        self.btn_browse.setFixedSize(38, 38)
         self.btn_browse.setToolTip("Sfoglia...")
         self.btn_browse.clicked.connect(self._on_browse_clicked)
+        self.btn_browse.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_medium"]};
+                border-radius: 6px;
+                padding: 2px;
+            }}
+            QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
+        """)
+        
+        from src.gui.widgets.modern_button import ModernButton
+        self.btn_open = ModernButton(
+            "APRI",
+            variant=ModernButton.Variant.GHOST,
+            size=ModernButton.Size.SMALL
+        )
+        self.btn_open.setFixedSize(60, 38)
+        self.btn_open.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
+                border: 1px solid {COLORS["border_medium"]};
+                font-weight: bold;
+            }}
+            QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
+        """)
+        self.btn_open.setToolTip("Apri cartella nel file system")
+        self.btn_open.clicked.connect(self._on_open_clicked)
+
         h_d.addWidget(self.edit_dest)
         h_d.addWidget(self.btn_browse)
+        h_d.addWidget(self.btn_open)
         v_dest.addLayout(h_d)
         params_lay.addLayout(v_dest)
 
@@ -171,6 +203,29 @@ class ScaricoPDLPanel(BaseBotPanel):
         path = QFileDialog.getExistingDirectory(self, "Seleziona Cartella Destinazione")
         if path:
             self.edit_dest.setText(path)
+
+    def _on_open_clicked(self) -> None:
+        """Apre la cartella di destinazione nell'esplora risorse di sistema."""
+        import os
+        from pathlib import Path
+
+        path_str = self.edit_dest.text()
+        if not path_str:
+            path_str = str(Path.home() / "Downloads")
+
+        path = Path(path_str).resolve()
+        if not path.exists():
+            try:
+                path.mkdir(parents=True, exist_ok=True)
+            except Exception:
+                ToastManager.instance().show(f"Impossibile creare la cartella: {path}", "error")
+                return
+
+        try:
+            import os
+            os.startfile(str(path)) # noqa: S606
+        except Exception:
+            ToastManager.instance().show(f"Impossibile aprire la cartella: {path}", "error")
 
     def _load_saved_data(self) -> None:
         """Ripristina i dati e i parametri dell'ultima sessione dalla configurazione locale."""
@@ -322,3 +377,25 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         if not success:
             logger.error(f"Errore riga {step_idx}: {message}")
+
+    def set_pdl_list(self, pdl_numbers: list[str]) -> None:
+        """
+        Popola la tabella con i numeri PDL forniti e avvia automaticamente lo scarico.
+        Utilizzato per l'integrazione con il Database PDL.
+        """
+        if not pdl_numbers:
+            return
+
+        # 1. Pulisci tabella
+        self.data_table.clear()
+
+        # 2. Prepara dati per la tabella (Formato: [{"n°_pdl": "...", "esito": ""}])
+        rows = [{"n°_pdl": str(num), "esito": ""} for num in pdl_numbers]
+        self.data_table.set_data(rows)
+
+        # 3. Attiva stampa di default per questa modalità
+        self.check_stampa.setChecked(True)
+
+        # 4. Avvia bot dopo un delay di rendering
+        self._on_log(f"📥 Ricevuti {len(pdl_numbers)} PDL dal database. Avvio stampa automatica...")
+        QTimer.singleShot(500, self._on_start)

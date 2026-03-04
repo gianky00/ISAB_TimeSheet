@@ -290,6 +290,24 @@ class MainWindow(QMainWindow):
         if hasattr(self, "tray_icon_component"):
             self.tray_icon_component.show_update_message(new_version)
 
+    def trigger_pdl_print(self, pdl_numbers: list[str]) -> None:
+        """
+        Riceve una lista di numeri PDL dal database e li invia al pannello di scarico PDL
+        per l'avvio automatico del bot di stampa.
+        """
+        if not pdl_numbers:
+            return
+
+        # 1. Forza l'inizializzazione del pannello Automazioni (che contiene scarico_pdl)
+        self.navigation_controller.navigate_to_panel("scarico_pdl")
+
+        # 2. Recupera l'istanza del pannello Scarico PDL tramite AutomazioniWidget
+        if hasattr(self, "automazioni_widget"):
+            # Scarico PDL è nel tab 1 (SafeWork), bot 0
+            pdl_panel = self.automazioni_widget.get_bot_panel(1, 0)
+            if pdl_panel and hasattr(pdl_panel, "set_pdl_list"):
+                pdl_panel.set_pdl_list(pdl_numbers)
+
     def _on_settings_saved(self) -> None:
         """Callback eseguita al salvataggio delle impostazioni (Hot Reload)."""
         self.telegram.start_service()

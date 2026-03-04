@@ -262,15 +262,23 @@ class BotParametersWidget(QWidget):
 
             from src.gui.widgets.modern_button import ModernButton
             self.open_btn = ModernButton(
-                "APRI",
-                variant=ModernButton.Variant.SECONDARY,
+                "APRI", 
+                variant=ModernButton.Variant.GHOST,
                 size=ModernButton.Size.SMALL
             )
             self.open_btn.setFixedSize(60, 38)
+            self.open_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {COLORS["bg_white"]};
+                    color: {COLORS["text_dark"]};
+                    border: 1px solid {COLORS["border_medium"]};
+                    font-weight: bold;
+                }}
+                QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
+            """)
             self.open_btn.setToolTip("Apri cartella nel file system")
             self.open_btn.clicked.connect(self._open_folder)
             hbox_dest.addWidget(self.open_btn)
-
             vbox_dest.addLayout(hbox_dest)
             container_layout.addLayout(vbox_dest)
 

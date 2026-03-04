@@ -264,9 +264,37 @@ class PDLDBPanel(QWidget):
         """Mostra il menu contestuale nella posizione specificata."""
         menu = QMenu(self)
         menu.addAction("Mostra/Nascondi dettaglio", self._toggle_detail_view)
+        
+        sel_model = self.table.selectionModel()
+        if sel_model and sel_model.hasSelection():
+            menu.addSeparator()
+            menu.addAction("Stampa PDL Selezionati", self._on_print_selected)
+
         vp = self.table.viewport()
         if vp:
             menu.exec(vp.mapToGlobal(pos))
+
+    def _on_print_selected(self) -> None:
+        """Estrae i numeri PDL dalle righe selezionate e invia il comando di stampa alla MainWindow."""
+        sel_model = self.table.selectionModel()
+        if not sel_model:
+            return
+        
+        indexes = sel_model.selectedRows()
+        if not indexes:
+            return
+        
+        pdl_numbers = []
+        for idx in indexes:
+            row = idx.row()
+            if row < len(self._raw_full_data):
+                # La colonna 1 è "N° PDL" nei full_headers
+                pdl_numbers.append(str(self._raw_full_data[row][1]))
+
+        if pdl_numbers:
+            main_win = self.window()
+            if main_win and hasattr(main_win, "trigger_pdl_print"):
+                main_win.trigger_pdl_print(pdl_numbers)
 
     def _on_header_clicked(self, idx: int) -> None:
         """Esegue l'ordinamento dei dati al clic sull'header della colonna."""

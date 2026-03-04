@@ -117,10 +117,18 @@ class PathsPage(QWidget):
 
         # Pulsante Apri
         btn_open = PrimaryButton("Apri")
-        btn_open.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), COLORS["text_dark"]))
         btn_open.setMinimumHeight(40)
         btn_open.setMinimumWidth(80)
-        style_button(btn_open)
+        btn_open.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
+                border: 1px solid {COLORS["border_medium"]};
+                border-radius: 6px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
+        """)
         btn_open.clicked.connect(lambda: self._open_path(edit.text()))
         row.addWidget(btn_open)
 
