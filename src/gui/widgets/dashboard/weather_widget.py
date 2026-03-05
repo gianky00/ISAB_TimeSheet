@@ -246,7 +246,10 @@ class WeatherWidget(ModernCard):
         temp_v.addWidget(self.lbl_condition)
         body_h.addLayout(temp_v)
 
-        body_h.addStretch()
+        # Animazione Don Ciro
+        from src.gui.widgets.dashboard.don_ciro_widget import DonCiroWidget
+        self.don_ciro = DonCiroWidget()
+        body_h.addWidget(self.don_ciro)
 
         # 4 Pills: Vento, Umidità, UV, AQI
         pills_v = QVBoxLayout()
