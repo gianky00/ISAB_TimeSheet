@@ -1,92 +1,63 @@
+import pytest
 from src.utils.log_humanizer import SmartLogTranslator
 
-
 class TestLogHumanizerBoost:
-    """Test suite estesa per SmartLogTranslator."""
+    """Test suite per SmartLogTranslator V9.0 deterministico."""
 
-    def test_humanize_start_category(self):
-        """Verifica che messaggi di avvio vengano categorizzati correttamente."""
-        msg = "Avvio del sistema in corso..."
+    def test_humanize_fixed_mapping(self):
+        """Verifica la traduzione di messaggi comuni."""
+        msg = "avvio automazione"
         human, tech, cat = SmartLogTranslator.humanize(msg)
-        assert cat == "start"
-        assert human in SmartLogTranslator.TEMPLATES["start"]
+        assert human == "🚀 Avvio automazione in corso..."
         assert tech == msg
 
-    def test_humanize_login_category(self):
-        """Verifica categorizzazione login."""
-        msg = "Esecuzione login utente"
-        human, _tech, cat = SmartLogTranslator.humanize(msg)
-        assert cat == "login"
-        assert human in SmartLogTranslator.TEMPLATES["login"]
-
-    def test_humanize_search_category(self):
-        """Verifica categorizzazione ricerca."""
-        msg = "Analizzo i dati ricevuti"
-        human, _tech, cat = SmartLogTranslator.humanize(msg)
-        assert cat == "search"
-        assert human in SmartLogTranslator.TEMPLATES["search"]
-
-    def test_humanize_download_category(self):
-        """Verifica categorizzazione download."""
-        msg = "Export completato e file salvato"
-        # Nota: 'salvat' attiva download, ma 'completat' attiva success.
-        # L'ordine degli if nel codice originale determina la priorità.
-        # 'scaric'/'salvat' viene prima di 'successo'/'completat'?
-        # Controllando il codice: 'download' è prima di 'success' nell'if-elif chain?
-        # No, guardando il codice:
-        # 1. start
-        # 2. login
-        # 3. search
-        # 4. download (scaric, salvat, export)
-        # 5. success (successo, completat)
-        # Quindi "Export completato e file salvato" -> ha "export" e "salvat" -> entra in download.
-        human, _tech, cat = SmartLogTranslator.humanize(msg)
-        assert cat == "download"
-        assert human in SmartLogTranslator.TEMPLATES["download"]
-
-    def test_humanize_success_category(self):
-        """Verifica categorizzazione successo."""
-        msg = "Operazione completata con successo"
-        # Qui non ci sono keyword di download, quindi dovrebbe andare su success
-        human, _tech, cat = SmartLogTranslator.humanize(msg)
+    def test_humanize_preserve_icons(self):
+        """Verifica che i messaggi con icone non vengano alterati."""
+        msg = "✅ Operazione conclusa"
+        human, tech, cat = SmartLogTranslator.humanize(msg)
+        assert human == msg
         assert cat == "success"
-        assert human in SmartLogTranslator.TEMPLATES["success"]
 
-    def test_humanize_error_category(self):
-        """Verifica categorizzazione errore."""
-        msg = "Eccezione non gestita durante il processo"  # 'exception' -> error
-        human, _tech, cat = SmartLogTranslator.humanize(msg)
-        assert cat == "error"
-        assert human in SmartLogTranslator.TEMPLATES["error"]
+    def test_detect_category_wait(self):
+        """Verifica rilevamento categoria attesa con keyword V9.0."""
+        # 'attendi' è presente, 'attendo' no.
+        assert SmartLogTranslator._detect_category("Attendi un attimo") == "wait"
+        assert SmartLogTranslator._detect_category("caricamento in corso") == "wait"
+        assert SmartLogTranslator._detect_category("⏳ Polling") == "wait"
 
-    def test_humanize_wait_category(self):
-        """Verifica categorizzazione attesa."""
-        msg = "In attesa del caricamento pagina..."
-        human, _tech, cat = SmartLogTranslator.humanize(msg)
-        assert cat == "wait"
-        assert human in SmartLogTranslator.TEMPLATES["wait"]
+    def test_detect_category_error(self):
+        """Verifica rilevamento categoria errore."""
+        assert SmartLogTranslator._detect_category("Errore di connessione") == "error"
+        assert SmartLogTranslator._detect_category("Login fallito") == "error"
+        assert SmartLogTranslator._detect_category("❌ Eccezione") == "error"
 
-    def test_fallback_unknown_category(self):
-        """Verifica fallback per messaggi non riconosciuti."""
-        msg = "Messaggio neutro senza keyword particolari"
-        human, tech, cat = SmartLogTranslator.humanize(msg)
-        assert cat == "info"
-        assert human == msg  # Human message is same as original
-        assert tech == msg
+    def test_detect_category_success(self):
+        """Verifica rilevamento categoria successo."""
+        assert SmartLogTranslator._detect_category("Completato con successo") == "success"
+        assert SmartLogTranslator._detect_category("✅ Fatto") == "success"
+        assert SmartLogTranslator._detect_category("✨ Ottimo") == "success"
 
-    def test_rich_tags_injection_login_error(self):
-        """Verifica l'injection del tag [FIXIT:ACCOUNT] per errori di login."""
-        # Deve essere categoria error E contenere "login"
-        msg = "Errore durante il login al portale"
-        _human, tech, cat = SmartLogTranslator.humanize(msg)
-        assert cat == "error"
-        assert "[FIXIT:ACCOUNT]" in tech
+    def test_detect_category_action(self):
+        """Verifica rilevamento categoria azione utente/bot."""
+        assert SmartLogTranslator._detect_category("Click sul pulsante") == "action"
+        assert SmartLogTranslator._detect_category("🖱️ Seleziono") == "action"
 
-    def test_rich_tags_injection_credentials(self):
-        """Verifica l'injection del tag [FIXIT:ACCOUNT] se presente 'credenziali'."""
-        msg = "Credenziali non valide"
-        # 'credenziali' non è mappato a una categoria specifica nell'if-elif principale
-        # quindi cat sarà 'info' (a meno che non ci siano altre keyword).
-        _human, tech, cat = SmartLogTranslator.humanize(msg)
-        assert cat == "info"
-        assert "[FIXIT:ACCOUNT]" in tech
+    def test_detect_category_search(self):
+        """Verifica rilevamento categoria ricerca."""
+        assert SmartLogTranslator._detect_category("Ricerca documenti") == "search"
+        assert SmartLogTranslator._detect_category("🔍 Analisi") == "search"
+
+    def test_detect_category_download(self):
+        """Verifica rilevamento categoria download."""
+        assert SmartLogTranslator._detect_category("Scaricamento file") == "download"
+        assert SmartLogTranslator._detect_category("⬇️ Download") == "download"
+
+    def test_fallback_info(self):
+        """Verifica fallback su info per messaggi neutri."""
+        assert SmartLogTranslator._detect_category("Messaggio informativo generico") == "info"
+
+    def test_humanize_cleaning(self):
+        """Verifica pulizia spazi e punti nei messaggi per il mapping."""
+        msg = "  MISSIONE COMPIUTA.  "
+        human, _, _ = SmartLogTranslator.humanize(msg)
+        assert human == "✨ Missione completata con successo!"

@@ -45,6 +45,7 @@ class SmartLogTranslator:
         "missione compiuta": "✨ Missione completata con successo!",
         "completato con successo": "✅ Operazione conclusa.",
         "fatto! tutto perfetto": "✅ Operazione conclusa.",
+        "errore critico": "❌ Errore critico rilevato!",
     }
 
     @staticmethod
@@ -71,14 +72,14 @@ class SmartLogTranslator:
         """Determina la categoria del messaggio basandosi sulle keyword."""
         lower_msg = message.lower()
 
-        # Categorie speciali per animazioni o colori
-        if any(kw in lower_msg for kw in ("attesa", "attendi", "aspetto", "polling", "caricamento", "⏳")):
-            return "wait"
+        # Priorità a categorie specifiche di business
+        if any(kw in lower_msg for kw in ("scaric", "download", "⬇️")):
+            return "download"
 
-        if any(kw in lower_msg for kw in ("errore", "fallit", "exception", "eccezion", "❌")):
+        if any(kw in lower_msg for kw in ("errore", "fallit", "falliment", "fail", "exception", "eccezion", "critico", "❌")):
             return "error"
 
-        if any(kw in lower_msg for kw in ("successo", "completat", "✅", "✨")):
+        if any(kw in lower_msg for kw in ("successo", "completat", "compiut", "fatto", "✅", "✨")):
             return "success"
 
         if any(kw in lower_msg for kw in ("click", "premuto", "selezion", "🖱️")):
@@ -87,7 +88,8 @@ class SmartLogTranslator:
         if any(kw in lower_msg for kw in ("ricerca", "cerca", "🔍")):
             return "search"
 
-        if any(kw in lower_msg for kw in ("scaric", "download", "⬇️")):
-            return "download"
+        # Categorie speciali per animazioni o colori
+        if any(kw in lower_msg for kw in ("attesa", "attendi", "aspetto", "polling", "caricamento", "⏳")):
+            return "wait"
 
         return "info"

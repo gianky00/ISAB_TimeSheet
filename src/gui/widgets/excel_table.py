@@ -26,11 +26,21 @@ from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
-class ExcelTableWidget(QTableWidget, ClipboardMixin):
+class ExcelTableWidget(QTableWidget):
     """
     QTableWidget con funzionalità Clipboard TSV e analisi AI Lyra.
     Supporta la formattazione semantica delle righe e l'interazione con l'intelligenza artificiale.
     """
+
+    # Safe Method Injection: Copia i metodi di ClipboardMixin per evitare crash da eredità multipla su Windows
+    copy_selection = ClipboardMixin.copy_selection
+    paste_selection = ClipboardMixin.paste_selection
+    _get_selected_rows_cols = ClipboardMixin._get_selected_rows_cols
+    _build_header_tsv = ClipboardMixin._build_header_tsv
+    _get_row_as_tsv = ClipboardMixin._get_row_as_tsv
+    _get_cell_value = ClipboardMixin._get_cell_value
+    _get_paste_start_pos = ClipboardMixin._get_paste_start_pos
+    _paste_cell_data = ClipboardMixin._paste_cell_data
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Inizializza la tabella configurando i trigger di modifica e la clipboard."""
@@ -208,171 +218,86 @@ class EditableDataTable(QWidget):
         for _ in range(5):
             self._add_row()
         container_lay.addWidget(self.table)
-        layout.addWidget(self.container)
 
-    def _show_context_menu(self, pos: QPoint) -> None:
-        """Mostra il menu contestuale per la gestione delle righe."""
-        menu = QMenu()
-        c = COLORS["text_dark"]
-
-        lyra = QAction(get_colored_icon(get_asset_path(Icons.SPARKLES), c), "Analizza con Lyra", self)
-        lyra.triggered.connect(self.table._analyze_selection)
-
-        copy = QAction(get_colored_icon(get_asset_path(Icons.EDIT), c), "Copia", self)
-        copy.triggered.connect(self.table.copy_selection)
-
-        paste = QAction(get_colored_icon(get_asset_path(Icons.UPLOAD), c), "Incolla", self)
-        paste.triggered.connect(self.table.paste_selection)
-
-        add = QAction(get_colored_icon(get_asset_path(Icons.PLUS), c), "Aggiungi riga", self)
-        add.triggered.connect(self._add_row)
-
-        rem = QAction(get_colored_icon(get_asset_path(Icons.TRASH), c), "Rimuovi riga", self)
-        rem.triggered.connect(self._remove_row)
-
-        for a in (lyra, copy, paste, None, add, rem):
-            if a is None:
-                menu.addSeparator()
-            else:
-                menu.addAction(a)
-
-        if viewport := self.table.viewport():
-            menu.exec(viewport.mapToGlobal(pos))
-
-    def update_column_options(self, col_index: int, new_options: list[str]) -> None:
-        """
-        Aggiorna dinamicamente le opzioni per una colonna di tipo 'combo'.
-
-        Args:
-            col_index: Indice della colonna da aggiornare.
-            new_options: Nuova lista di stringhe per la combo box.
-        """
-        if col_index < 0 or col_index >= len(self.columns):
-            return
-
-        # Aggiorna la configurazione della colonna per le future righe
-        self.columns[col_index]["options"] = new_options
-
-        # Aggiorna i widget esistenti nelle righe correnti
-        for row in range(self.table.rowCount()):
-            container = self.table.cellWidget(row, col_index)
-            if container:
-                cb = container.findChild(FilterComboBox)
-                if cb:
-                    current_text = cb.currentText()
-                    cb.blockSignals(True)
-                    cb.clear()
-                    cb.addItems(["", *new_options])
-                    cb.setCurrentText(current_text)
-                    cb.blockSignals(False)
-
-    def _add_row(self, use_defaults: bool = True) -> None:
-        """Aggiunge una nuova riga alla tabella, configurando eventuali widget combo."""
+    def _add_row(self) -> None:
+        """Aggiunge una riga vuota alla tabella con i widget appropriati."""
         row = self.table.rowCount()
         self.table.insertRow(row)
-        for col, config in enumerate(self.columns):
-            if config.get("type") == "combo":
-                cb = FilterComboBox()
-                cb.addItems(["", *config.get("options", [])])
-                if use_defaults and config.get("default"):
-                    cb.setCurrentText(str(config["default"]))
-                cb.currentTextChanged.connect(lambda _: self.data_changed.emit())
-
-                # Fix allineamento: rimuovi margini e centra il widget
-                container = QWidget()
-                container.setStyleSheet("background: transparent; border: none;")
-                c_lay = QVBoxLayout(container)
-                c_lay.setContentsMargins(1, 1, 1, 1)
-                c_lay.setSpacing(0)
-                c_lay.addWidget(cb)
-                self.table.setCellWidget(row, col, container)
+        for col, col_def in enumerate(self.columns):
+            if col_def.get("type") == "combo":
+                combo = FilterComboBox()
+                combo.addItems(col_def.get("options", []))
+                combo.currentIndexChanged.connect(self.data_changed.emit)
+                self.table.setCellWidget(row, col, combo)
             else:
-                val = str(config.get("default", "")) if use_defaults else ""
-                item = SortableTableWidgetItem(val)
-                if config.get("readonly"):
+                item = SortableTableWidgetItem("")
+                if col_def.get("readonly"):
                     item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    item.setBackground(QColor(COLORS["bg_alt"]))
-                self.table.setItem(row, col, item)
-        self.data_changed.emit()
-
-    def update_cell(self, row: int, col: int, value: str, emit_signal: bool = True) -> None:
-        """Aggiorna programmaticamente il valore di una cella specifica."""
-        if 0 <= row < self.table.rowCount() and 0 <= col < self.table.columnCount():
-            item = self.table.item(row, col)
-            if item:
-                item.setText(value)
-            else:
-                item = SortableTableWidgetItem(value)
-                col_cfg = self.columns[col]
-                if col_cfg.get("readonly"):
-                    item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    item.setBackground(QColor(COLORS["bg_alt"]))
                 self.table.setItem(row, col, item)
 
-            if emit_signal:
-                self.data_changed.emit()
-
-    def _remove_row(self) -> None:
-        """Rimuove la riga attualmente selezionata."""
-        r = self.table.currentRow()
-        if r >= 0:
-            self.table.removeRow(r)
-            self.data_changed.emit()
-
-    def clear(self) -> None:
-        """Svuota la tabella e ripristina le righe predefinite."""
-        self.table.blockSignals(True)
-        self.table.setRowCount(0)
-        for _ in range(5):
-            self._add_row(use_defaults=False)
-        self.table.blockSignals(False)
-        self.data_changed.emit()
+    def _show_context_menu(self, pos: QPoint) -> None:
+        """Delegato per il menu contestuale della tabella."""
+        self.table.contextMenuEvent(pos)
 
     def get_data(self) -> list[dict[str, Any]]:
-        """Restituisce l'elenco dei dati contenuti nella tabella come lista di dizionari."""
-        results = []
+        """Estrae i dati dalla tabella in formato lista di dizionari."""
+        data = []
         for r in range(self.table.rowCount()):
             row_data = {}
-            has_value = False
-            for c, col_cfg in enumerate(self.columns):
-                key = col_cfg["name"].lower().replace(" ", "_")
+            has_content = False
+            for c, col_def in enumerate(self.columns):
                 val = self.table._get_cell_value(r, c)
-                row_data[key] = val
-                # Consideriamo la riga valida se ha almeno OdA o Contratto (prime 2 colonne)
-                if c < 2 and val.strip():
-                    has_value = True
-            if has_value:
-                results.append(row_data)
-        return results
+                row_data[col_def["name"]] = val
+                if val:
+                    has_content = True
+            if has_content:
+                data.append(row_data)
+        return data
 
     def set_data(self, data: list[dict[str, Any]]) -> None:
-        """Popola la tabella con un set di dati esistente."""
-        self.table.blockSignals(True)
-        self.table.setRowCount(0)
-        for row_data in data:
-            row = self.table.rowCount()
-            self.table.insertRow(row)
-            for c, col_cfg in enumerate(self.columns):
-                key = col_cfg["name"].lower().replace(" ", "_")
-                val = str(row_data.get(key, ""))
-                if col_cfg.get("type") == "combo":
-                    cb = FilterComboBox()
-                    cb.addItems(["", *col_cfg.get("options", [])])
-                    cb.setCurrentText(val)
-                    cb.currentTextChanged.connect(lambda _: self.data_changed.emit())
+        """
+        Popola la tabella con i dati forniti.
+        Utilizza un algoritmo di matching flessibile per le chiavi (ignora case, spazi e underscore).
 
-                    # Fix allineamento: rimuovi margini e centra il widget
-                    container = QWidget()
-                    c_lay = QVBoxLayout(container)
-                    c_lay.setContentsMargins(2, 2, 2, 2)
-                    c_lay.addWidget(cb)
-                    self.table.setCellWidget(row, c, container)
+        Args:
+            data: Lista di dizionari contenenti i dati delle righe.
+        """
+        self.table.setRowCount(0)
+        if not data:
+            for _ in range(5):
+                self._add_row()
+            return
+
+        def normalize(s: str) -> str:
+            return "".join(c.lower() for c in s if c.isalnum())
+
+        for row_dict in data:
+            self._add_row()
+            row_idx = self.table.rowCount() - 1
+            for col_idx, col_def in enumerate(self.columns):
+                col_name = col_def["name"]
+                norm_col = normalize(col_name)
+
+                # Cerca il valore nel dizionario con matching flessibile
+                val = ""
+                for k, v in row_dict.items():
+                    if normalize(k) == norm_col:
+                        val = str(v)
+                        break
+
+                if col_def.get("type") == "combo":
+                    combo = self.table.cellWidget(row_idx, col_idx)
+                    if isinstance(combo, FilterComboBox):
+                        idx = combo.findText(val)
+                        if idx >= 0:
+                            combo.setCurrentIndex(idx)
                 else:
-                    item = SortableTableWidgetItem(val)
-                    if col_cfg.get("readonly"):
-                        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                        item.setBackground(QColor(COLORS["bg_alt"]))
-                    self.table.setItem(row, c, item)
-        while self.table.rowCount() < 5:
-            self._add_row(use_defaults=False)
-        self.table.blockSignals(False)
+                    item = self.table.item(row_idx, col_idx)
+                    if item:
+                        item.setText(val)
+
+    def clear(self) -> None:
+        """Svuota la tabella e ripristina le righe iniziali."""
+        self.table.setRowCount(0)
+        for _ in range(5):
+            self._add_row()

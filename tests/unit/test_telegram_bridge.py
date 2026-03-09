@@ -1,119 +1,68 @@
-from unittest.mock import MagicMock, patch
-
 import pytest
-
+from unittest.mock import MagicMock, patch
+from src.core.telegram_bridge import TelegramUIBridge
 
 class TestTelegramUIBridge:
     @pytest.fixture
-    def mock_main_window(self):
+    def mock_mw(self):
         mw = MagicMock()
         mw.telegram = MagicMock()
-        mw.telegram.pending_data = {}
-        mw.pdl_panel = MagicMock()
-        mw.pdl_panel.data_table.get_data.return_value = []
-        mw.scarico_panel = MagicMock()
-        mw.scarico_panel.data_table.get_data.return_value = []
         return mw
 
     @pytest.fixture
-    def bridge(self, mock_main_window):
+    def bridge(self, mock_mw):
+        # Patch QObject.__init__ per evitare inizializzazione Qt reale
         with patch("src.core.telegram_bridge.QObject.__init__"):
-            from src.core.telegram_bridge import TelegramUIBridge
-
-            b = TelegramUIBridge(mock_main_window)
-            b.mw = mock_main_window
-            b.telegram = mock_main_window.telegram
-            return b
+            return TelegramUIBridge(mock_mw)
 
     def test_setup_connections(self, bridge):
+        """Verifica il collegamento dei segnali Telegram."""
         bridge.setup_connections()
         bridge.telegram.command_received.connect.assert_called()
+        bridge.telegram.data_received.connect.assert_called()
         bridge.telegram.status_requested.connect.assert_called()
+        bridge.telegram.query_received.connect.assert_called()
 
-    def test_handle_command_run_ts(self, bridge):
-        bridge.mw.scarico_panel.validate_ready.return_value = (True, "OK")
+    def test_dispatch_command_run_ts(self, bridge):
+        """Verifica la delega del comando run_ts a ui_commands."""
+        with patch.object(bridge.ui_commands, "run_ts_bot") as mock_run:
+            bridge._dispatch_command("run_ts", {})
+            mock_run.assert_called_once()
 
-        bridge._handle_command("run_ts", {})
+    def test_dispatch_command_run_pdl(self, bridge):
+        """Verifica la delega del comando run_pdl a ui_commands."""
+        params = {"id": "123"}
+        with patch.object(bridge.ui_commands, "run_pdl_bot") as mock_run:
+            bridge._dispatch_command("run_pdl", params)
+            mock_run.assert_called_with(params)
 
-        bridge.mw.navigate_to_panel.assert_called_with("scarico_ts")
-        bridge.mw.scarico_panel.start_btn.click.assert_called()
+    def test_dispatch_data_pdl(self, bridge):
+        """Verifica la delega del processamento dati PDL a data_processor."""
+        items = ["PDL1", "PDL2"]
+        with patch.object(bridge.data_processor, "process_pdl_items") as mock_proc:
+            bridge._dispatch_data("pdl", items)
+            mock_proc.assert_called_with(items)
 
-    def test_handle_command_list_pdl(self, bridge):
-        bridge.mw.pdl_panel.data_table.get_data.return_value = [
-            {"numero_pdl": "12345/A"},
-            {"numero_pdl": "67890/B"},
-        ]
+    @patch("src.core.telegram_bridge.SecretsManager.get_gemini_api_key", return_value=None)
+    def test_handle_ai_query_no_key(self, mock_key, bridge):
+        """Verifica segnalazione errore se manca API Key."""
+        bridge._handle_ai_query(123, "ciao")
+        bridge.telegram.send_message_sync.assert_called_with("⚠️ API Key mancante.")
 
-        bridge._handle_list_pdl()
-
-        bridge.telegram.send_message_sync.assert_called()
-        call_args = bridge.telegram.send_message_sync.call_args[0][0]
-        assert "12345/A" in call_args
-
-    def test_handle_command_clear_pdl(self, bridge):
-        bridge._handle_clear_pdl()
-
-        bridge.mw.pdl_panel.clear_rows_simple.assert_called()
-        bridge.telegram.send_message_sync.assert_called()
-
-    def test_handle_command_stop_all_active(self, bridge):
-        mock_panel = MagicMock()
-        mock_panel.stop_btn.isEnabled.return_value = True
-        bridge.mw.bot_controller._get_active_bot_panel.return_value = mock_panel
-
-        bridge._handle_stop_all()
-
-        mock_panel.stop_btn.click.assert_called()
-
-    def test_handle_command_stop_all_no_active(self, bridge):
-        bridge.mw.bot_controller._get_active_bot_panel.return_value = None
-
-        bridge._handle_stop_all()
-
-        call_args = bridge.telegram.send_message_sync.call_args[0][0]
-        assert "Nessun processo" in call_args
-
-    def test_handle_status_idle(self, bridge):
-        bridge.mw._get_active_bot_panel.return_value = None
-
-        bridge._handle_status(123456)
-
-        call_args = bridge.telegram.send_message_sync.call_args[0][0]
-        assert "Idle" in call_args
-
-    @patch("src.core.telegram_bridge.InputValidator")
-    def test_process_pdl_items_valid(self, mock_validator, bridge):
-        mock_result = MagicMock()
-        mock_result.valid = True
-        mock_result.sanitized_value = "12345/A"
-        mock_validator.validate_pdl.return_value = mock_result
-
-        bridge._process_pdl_items(["12345/A"])
-
-        bridge.mw.pdl_panel.add_rows_simple.assert_called()
-
-    @patch("src.core.telegram_bridge.InputValidator")
-    def test_add_pdl_from_telegram(self, mock_validator, bridge):
-        mock_result = MagicMock()
-        mock_result.valid = True
-        mock_result.sanitized_value = "12345/A"
-        mock_validator.validate_pdl.return_value = mock_result
-
-        bridge._add_pdl_from_telegram(["12345/A"])
-
-        bridge.mw.pdl_panel.add_rows_simple.assert_called()
-        bridge.mw.show_toast.assert_called()
-
-    def test_handle_intent_status(self, bridge):
-        bridge.mw._get_active_bot_panel.return_value = None
-
-        bridge._handle_intent(123, {"action": "status", "object": None, "items": []})
-
-        bridge.telegram.send_message_sync.assert_called()
-
-    def test_send_data_feedback_valid(self, bridge):
-        bridge._send_data_feedback(5, 2, [])
-
-        call_args = bridge.telegram.send_message_sync.call_args[0][0]
-        assert "5" in call_args
-        assert "2 duplicati" in call_args
+    @patch("src.core.telegram_bridge.LyraClient")
+    @patch("src.core.telegram_bridge.SecretsManager.get_gemini_api_key", return_value="fake")
+    def test_handle_ai_query_success(self, mock_key, mock_lyra_cls, bridge):
+        """Verifica avvio thread per query AI."""
+        mock_lyra = mock_lyra_cls.return_value
+        mock_lyra.ask.return_value = "Risposta"
+        
+        with patch("src.core.telegram_bridge.threading.Thread") as mock_thread:
+            bridge._handle_ai_query(123, "test")
+            assert mock_thread.called
+            # Recuperiamo la funzione passata al thread ed eseguiamola
+            thread_fn = mock_thread.call_args[1]["target"]
+            thread_fn()
+            
+            bridge.telegram.send_message_sync.assert_called()
+            args = bridge.telegram.send_message_sync.call_args[0][0]
+            assert "Risposta" in args

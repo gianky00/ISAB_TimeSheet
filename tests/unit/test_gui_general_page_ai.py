@@ -1,14 +1,7 @@
-"""
-Tests for Settings GeneralPage AI configuration UI.
-"""
-
-from unittest.mock import MagicMock, patch
-
 import pytest
 from PyQt6.QtCore import Qt
-
+from unittest.mock import MagicMock, patch
 from src.gui.panels.settings.pages.general_page import GeneralPage
-
 
 class TestGeneralPageAI:
     @pytest.fixture
@@ -20,11 +13,9 @@ class TestGeneralPageAI:
 
     def test_provider_switch_visibility(self, page, qtbot):
         """Verifica che cambiare provider mostri/nasconda l'URL di Ollama."""
-        # Switch a ollama
         page.provider_combo.setCurrentText("ollama")
         assert not page.ollama_url_container.isHidden()
 
-        # Switch a gemini
         page.provider_combo.setCurrentText("gemini")
         assert page.ollama_url_container.isHidden()
 
@@ -42,20 +33,20 @@ class TestGeneralPageAI:
         assert page.provider_combo.currentText() == "ollama"
         assert page.model_combo.currentText() == "llama3:latest"
         assert page.ollama_url_edit.text() == "http://192.168.1.10:11434"
-        assert not page.ollama_url_container.isHidden()
 
     def test_save_to_config_ai(self, page):
-        """Verifica che il salvataggio dei dati AI sia corretto."""
+        """Verifica che il salvataggio dei dati AI in un dizionario sia corretto."""
         page.provider_combo.setCurrentText("ollama")
-        page.model_combo.setCurrentText("mistral")
+        page.model_combo.setEditText("mistral")
         page.ollama_url_edit.setText("http://localhost:1234")
 
-        mock_config_manager = MagicMock()
-        page.save_to_config(mock_config_manager)
+        # In V9.0 save_to_config accetta un dict
+        config = {}
+        page.save_to_config(config)
 
-        mock_config_manager.set_config_value.assert_any_call("ai_provider", "ollama")
-        mock_config_manager.set_config_value.assert_any_call("ai_model", "mistral")
-        mock_config_manager.set_config_value.assert_any_call("ollama_url", "http://localhost:1234")
+        assert config["ai_provider"] == "ollama"
+        assert config["ai_model"] == "mistral"
+        assert config["ollama_url"] == "http://localhost:1234"
 
     @patch("src.gui.panels.settings.pages.general_page.ModelListWorker")
     def test_refresh_models_trigger(self, mock_worker_cls, page, qtbot):

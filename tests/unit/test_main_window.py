@@ -1,10 +1,9 @@
-from unittest.mock import patch
-
+from unittest.mock import patch, MagicMock
 import pytest
+from PyQt6.QtWidgets import QApplication
 
 from src.gui.main_window.main import MainWindow
 from src.gui.main_window.page_index import PageIndex
-
 
 class TestMainWindow:
     @pytest.fixture
@@ -18,80 +17,54 @@ class TestMainWindow:
     @patch("src.gui.main_window.main.apply_theme")
     def test_init(self, mock_theme, mock_conf, mock_sentinel, mock_service, mock_timer, app, qtbot):
         mock_conf.return_value = {}
-
         window = MainWindow()
         qtbot.addWidget(window)
 
         assert "SyncroJob" in window.windowTitle()
-        assert window.page_stack.count() >= 6
+        assert window.page_stack.count() >= 13
         assert window.sidebar.btn_home.isChecked()
 
     def test_navigation(self, app, qtbot):
-        # Mock internal components to avoid side effects
         with (
             patch("src.gui.main_window.main.QTimer.singleShot"),
             patch("src.gui.main_window.main.ServiceController"),
             patch("src.gui.main_window.main.LyraSentinel"),
-            patch("src.gui.panels.contabilita_panel.ContabilitaManager") as mock_manager,
+            patch("src.gui.panels.contabilita_panel.ContabilitaManager"),
             patch("src.gui.main_window.main.config_manager.load_config", return_value={}),
         ):
-            mock_manager.get_available_years.return_value = []
-            mock_manager.get_year_stats.return_value = {
-                "total_prev": 0.0,
-                "total_ore": 0.0,
-                "count_total": 0,
-                "status_counts": {},
-                "top_commesse": [],
-                "ore_dirette": 0.0,
-                "ore_indirette": 0.0,
-            }
-
             window = MainWindow()
             qtbot.addWidget(window)
+            QApplication.processEvents()
 
-            # Click Automazioni
-            window.sidebar.btn_fornitori.click()
-            assert window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI
-            assert window.sidebar.group_automazioni.header_btn.isChecked()
-
-            # Click Home
-            window.sidebar.btn_home.click()
-            assert window.page_stack.currentIndex() == PageIndex.DASHBOARD
+            # Navigazione Automazioni
+            window.navigation_controller.navigate_to(PageIndex.AUTOMAZIONI)
+            qtbot.waitUntil(lambda: window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI, timeout=2000)
+            
+            # Ritorno alla Home
+            window.navigation_controller.navigate_to(PageIndex.DASHBOARD)
+            qtbot.waitUntil(lambda: window.page_stack.currentIndex() == PageIndex.DASHBOARD, timeout=2000)
             assert window.sidebar.btn_home.isChecked()
 
     def test_navigate_to_panel(self, app, qtbot):
+        """Test deep link navigation naming matching the runner expectation."""
         with (
             patch("src.gui.main_window.main.QTimer.singleShot"),
             patch("src.gui.main_window.main.ServiceController"),
             patch("src.gui.main_window.main.LyraSentinel"),
-            patch("src.gui.panels.contabilita_panel.ContabilitaManager") as mock_manager,
             patch("src.gui.main_window.main.config_manager.load_config", return_value={}),
         ):
-            mock_manager.get_available_years.return_value = []
-            mock_manager.get_year_stats.return_value = {
-                "total_prev": 0.0,
-                "total_ore": 0.0,
-                "count_total": 0,
-                "status_counts": {},
-                "top_commesse": [],
-                "ore_dirette": 0.0,
-                "ore_indirette": 0.0,
-            }
-
             window = MainWindow()
             qtbot.addWidget(window)
+            QApplication.processEvents()
 
-            # Manually ensure panels are loaded for the test
-            window.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
-
-            # Test deep link navigation
-            window.navigation_controller.navigate_to_panel(
-                "timbrature"
-            )  # Should go to Automazioni -> Timbrature (Tab 2)
-            assert window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI
-
-            # Automazioni panel is at index 1
+            # Deep link: 'timbrature' porta a Automazioni (1) -> Fornitori (0) -> Timbrature (2)
+            window.navigation_controller.navigate_to_panel("timbrature")
+            qtbot.waitUntil(lambda: window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI, timeout=2000)
+            
+            # Recupera il widget delle automazioni
             automazioni_panel = window.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
-            # Timbrature is at index 2 in Portale Fornitori (tab 0 of Automazioni)
-            portale_fornitori_tab = automazioni_panel.widget(0)
-            assert portale_fornitori_tab.currentIndex() == 2
+            
+            # Verifica tab Fornitori attivo
+            assert automazioni_panel.main_tabs.currentIndex() == 0
+            # Verifica tab Timbrature (bot) attivo
+            assert automazioni_panel.tab_fornitori.currentIndex() == 2

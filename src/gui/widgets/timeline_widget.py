@@ -141,7 +141,9 @@ class EnterpriseLogConsole(QWidget):
 
         bar = self.scroll_container.verticalScrollBar()
         if bar:
-            QTimer.singleShot(20, lambda: bar.setValue(bar.maximum()))
+            # Fix: Ensure bar is not deleted when timer fires (prevents RuntimeError in tests)
+            from PyQt6.sip import isdeleted
+            QTimer.singleShot(20, lambda: not isdeleted(bar) and bar.setValue(bar.maximum()))
         self.log_added.emit(text)
 
     def append(self, text: str, status: str = "") -> None:

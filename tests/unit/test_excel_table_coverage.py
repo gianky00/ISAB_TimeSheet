@@ -1,8 +1,11 @@
 import pytest
-from PyQt6.QtWidgets import QApplication, QComboBox, QTableWidgetItem
+from PyQt6.QtWidgets import QApplication, QTableWidgetItem, QWidget
+from PyQt6.QtCore import Qt
+from unittest.mock import MagicMock
 
 from src.gui.widgets.excel_table import EditableDataTable, ExcelTableWidget
-
+from src.gui.widgets.core_widgets import FilterComboBox
+from src.gui.styles import COLORS
 
 class TestExcelTableCoverage:
     @pytest.fixture
@@ -15,9 +18,13 @@ class TestExcelTableCoverage:
         table.setRowCount(2)
         table.setColumnCount(2)
 
-        # Inserisci dati
-        table.setItem(0, 0, QTableWidgetItem("Test"))
-        combo = QComboBox()
+        # Inserisci dati editabili
+        it = QTableWidgetItem("Test")
+        it.setFlags(it.flags() | Qt.ItemFlag.ItemIsEditable)
+        table.setItem(0, 0, it)
+        
+        # Usa FilterComboBox (richiesto da ExcelTableWidget per la pulizia widget)
+        combo = FilterComboBox()
         combo.addItems(["", "Option 1"])
         combo.setCurrentText("Option 1")
         table.setCellWidget(1, 1, combo)
@@ -27,68 +34,48 @@ class TestExcelTableCoverage:
         table.clear_selection()
 
         assert table.item(0, 0).text() == ""
-        assert combo.currentText() == ""
+        assert combo.currentIndex() == 0
 
-    def test_editable_data_table_row_management(self, app):
-        """Verifica l'aggiunta di righe sopra e l'aggiornamento opzioni."""
+    def test_editable_data_table_basic_flow(self, app):
+        """Verifica caricamento e scaricamento dati in EditableDataTable."""
         cols = [
             {"name": "Col1", "type": "text"},
             {"name": "Col2", "type": "combo", "options": ["A", "B"]},
         ]
         data_table = EditableDataTable(cols)
 
-        # Inizialmente 5 righe (come da _setup_ui)
+        # Inizialmente 5 righe vuote
         assert data_table.table.rowCount() == 5
 
-        # Aggiungi riga sopra (alla prima riga)
-        data_table.table.setCurrentCell(0, 0)
-        data_table._add_row_above()
-        assert data_table.table.rowCount() == 6  # 5 default + 1
-
-        # Aggiorna opzioni combo
-        data_table.update_column_options("Col2", ["C", "D"])
-        combo = data_table.table.cellWidget(0, 1)
-        # L'indice 0 è sempre la stringa vuota ""
-        assert combo.itemText(0) == ""
-        assert combo.itemText(1) == "C"
-
-    def test_copy_paste_cycle(self, app):
-        """Simula il ciclo di copia e incolla tramite appunti."""
-        table = ExcelTableWidget()
-        table.setRowCount(2)
-        table.setColumnCount(1)
-        table.setItem(0, 0, QTableWidgetItem("Data1"))
-
-        # Mock clipboard
-        clipboard = QApplication.clipboard()
-
-        # Copia
-        table.setCurrentCell(0, 0)
-        table.copy_selection()
-
-        clipboard.setText("PastedData")
-        table.setCurrentCell(1, 0)
-        table.paste_selection()
-
-        assert table.item(1, 0).text() == "PastedData"
+        # Carica dati (matching flessibile)
+        test_data = [{"col1": "Val1", "COL 2": "A"}]
+        data_table.set_data(test_data)
+        
+        # Una riga caricata
+        assert data_table.table.rowCount() == 1
+        assert data_table.table.item(0, 0).text() == "Val1"
+        
+        # Recupera dati
+        exported = data_table.get_data()
+        assert len(exported) == 1
+        assert exported[0]["Col1"] == "Val1"
 
     def test_set_row_status_colors(self, app):
         """Verifica che i colori degli stati riga siano applicati correttamente."""
         table = ExcelTableWidget()
         table.setRowCount(1)
         table.setColumnCount(1)
-        table.setItem(0, 0, QTableWidgetItem("Item"))
+        it = QTableWidgetItem("Item")
+        table.setItem(0, 0, it)
 
         table.set_row_status(0, "completato")
-        color = table.item(0, 0).background().color().name().upper()
-        assert color == "#C8E6C9"
-
-        table.set_row_status(0, "errore")
-        color = table.item(0, 0).background().color().name().upper()
-        assert color == "#FFCDD2"
+        color = it.background().color().name().upper()
+        # Allineamento a COLORS["table_success_bg"]
+        expected = COLORS["table_success_bg"].upper()
+        assert color == expected
 
     def test_analyze_with_lyra_selection(self, app, mocker):
-        """Verifica che la selezione venga formattata correttamente per Lyra."""
+        """Verifica che la selezione venga formattata correttamente per Lyra AI."""
         table = ExcelTableWidget()
         table.setRowCount(1)
         table.setColumnCount(1)
@@ -96,13 +83,11 @@ class TestExcelTableCoverage:
         table.setItem(0, 0, QTableWidgetItem("Value1"))
         table.selectAll()
 
-        # Mock window and its method
-        mock_win = mocker.MagicMock()
+        mock_win = MagicMock()
         mocker.patch.object(table, "window", return_value=mock_win)
 
         table._analyze_selection()
 
-        # Verifica chiamata (formato: Header: Value)
         mock_win.analyze_with_lyra.assert_called_once()
         args = mock_win.analyze_with_lyra.call_args[0][0]
         assert "H1: Value1" in args

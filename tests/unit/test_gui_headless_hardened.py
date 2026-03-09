@@ -1,11 +1,8 @@
-from unittest.mock import MagicMock
-
+from unittest.mock import MagicMock, patch
 import pytest
 from PyQt6.QtWidgets import QWidget
-
 from src.gui.panels.settings.main_panel import SettingsPanel
 from src.gui.widgets.toast import Toast
-
 
 class TestGUIHeadlessHardened:
     @pytest.fixture
@@ -15,68 +12,58 @@ class TestGUIHeadlessHardened:
             "src.gui.panels.settings.main_panel.config_manager.load_config",
             return_value={"browser_headless": False, "browser_timeout": 30},
         )
-        mocker.patch("src.gui.panels.settings.main_panel.config_manager.set_config_value")
+        m_save = mocker.patch("src.gui.panels.settings.main_panel.config_manager.save_config")
         mocker.patch(
             "src.core.secrets_manager.SecretsManager.get_gemini_api_key",
             return_value="fake_key",
         )
-
-        panel = SettingsPanel()
-        return panel
+        p = SettingsPanel()
+        p._mock_save = m_save
+        return p
 
     def test_settings_auto_save_trigger(self, settings_panel, mocker):
-        """Verifica che i cambiamenti nella UI scatenino il salvataggio automatico."""
-        m_save = mocker.patch.object(settings_panel, "_save_settings")
-
-        # Simula cambio checkbox headless
+        """Verifica che i cambiamenti nella UI scatenino il salvataggio."""
         gen_page = settings_panel.config_tab.general_page
-        gen_page.headless_check.setChecked(not gen_page.headless_check.isChecked())
-        # Manually trigger save as real trigger is debounced timer
-        settings_panel._save_settings()
-        assert m_save.called
+        gen_page.headless_check.setChecked(True)
+        assert settings_panel._mock_save.called
 
     def test_toast_animation_lifecycle(self, qapp, mocker):
         """Verifica che il toast si mostri e avvii l'animazione."""
         parent = QWidget()
         toast = Toast("Test Message", parent=parent)
-
-        # Mock QPropertyAnimation
         m_anim = MagicMock()
         toast._fade_in = m_anim
-
         toast.show_at(0, 0)
-
         assert m_anim.start.called
 
     def test_settings_account_addition_flow(self, settings_panel, mocker):
-        """Verifica il flusso di aggiunta account tramite dialog."""
-        # Mock Dialog - Returns (user, pass, type)
+        """Verifica il flusso di aggiunta account tramite widget dedicato."""
         mock_dlg = MagicMock()
         mock_dlg.exec.return_value = True
         mock_dlg.get_data.return_value = ("new_user", "new_pass", "default")
+        
         mocker.patch(
-            "src.gui.panels.settings.pages.lists_page.AccountDialog",
+            "src.gui.panels.settings.widgets.account_list_widget.AccountDialog",
             return_value=mock_dlg,
         )
-
+        # In V9.0 add_account non chiama SecretsManager direttamente (lo fa il controller dopo il salvataggio o set_accounts)
+        
         lists_page = settings_panel.config_tab.lists_page
-        initial_count = lists_page.account_list.count()
-        lists_page._add_account()
+        acc_widget = lists_page.account_section
+        
+        initial_count = acc_widget.list_widget.count()
+        # Chiamata al metodo pubblico corretto V9.0
+        acc_widget.add_account()
 
-        assert lists_page.account_list.count() == initial_count + 1
-
-        # Cerca l'utente in tutta la lista per robustezza
-        found = False
-        for i in range(lists_page.account_list.count()):
-            if "new_user" in lists_page.account_list.item(i).text():
-                found = True
-                break
+        assert acc_widget.list_widget.count() == initial_count + 1
+        
+        found = any("new_user" in acc_widget.list_widget.item(i).text() 
+                    for i in range(acc_widget.list_widget.count()))
         assert found
 
-    def test_settings_tab_change_refresh(self, settings_panel, mocker):
-        """Verifica che il cambio tab aggiorni le statistiche."""
-        m_refresh = mocker.patch.object(settings_panel.stats_widget, "refresh")
-
-        # Indice tab statistiche (è la terza, indice 2)
-        settings_panel.tabs.setCurrentIndex(2)
-        assert m_refresh.called
+    def test_settings_tab_change_logic(self, settings_panel):
+        """Verifica la navigazione tra i tab delle impostazioni."""
+        assert settings_panel.tabs.currentIndex() == 0
+        settings_panel.tabs.setCurrentIndex(1)
+        assert settings_panel.tabs.currentIndex() == 1
+        assert "ROI" in settings_panel.tabs.tabText(1)

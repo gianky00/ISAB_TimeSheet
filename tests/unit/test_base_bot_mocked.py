@@ -56,9 +56,14 @@ class TestBaseBot:
         log_mock = MagicMock()
         bot.set_log_callback(log_mock)
 
+        # RUNNING should NOT log anymore to reduce noise
         bot.status = BotStatus.RUNNING
         assert bot.status == BotStatus.RUNNING
-        log_mock.assert_called_with("Stato: RUNNING")
+        log_mock.assert_not_called()
+
+        # Final states SHOULD log
+        bot.status = BotStatus.COMPLETED
+        log_mock.assert_called_with("🏁 Stato finale: COMPLETED")
 
     def test_log_telegram(self):
         bot = ConcreteBot("u", "p")

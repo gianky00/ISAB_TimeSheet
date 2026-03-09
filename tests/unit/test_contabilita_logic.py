@@ -1,154 +1,67 @@
-from unittest.mock import ANY, MagicMock, patch
-
-import pandas as pd
+from unittest.mock import MagicMock, patch
 import pytest
-
+from pathlib import Path
 from src.core.contabilita_manager import ContabilitaManager
 
-
 class TestContabilitaLogic:
-    @pytest.fixture(autouse=True)
-    def mock_db(self):
+    @pytest.fixture
+    def manager(self):
+        return ContabilitaManager
+
+    def test_import_data_success(self, manager):
+        mock_rows = [{"year": 2024}]
         with (
-            patch("src.core.contabilita_manager.db_manager") as mock1,
-            patch("src.core.data_synchronizer.db_manager") as mock2,
+            patch("src.core.contabilita_manager.ExcelImporter.import_contabilita_dati", 
+                  return_value=(True, "OK", mock_rows, [2024])),
+            patch("src.core.contabilita_manager.DataSynchronizer.sync_contabilita_dati",
+                  return_value=(1, 0))
         ):
-            mock_conn = MagicMock()
-            mock_cursor = MagicMock()
-            mock_conn.cursor.return_value = mock_cursor
+            success, msg, added, removed = manager.import_data_from_excel("mock.xlsx")
+            assert success is True
+            assert added == 1
 
-            mock1.get_connection.return_value.__enter__.return_value = mock_conn
-            mock1.get_connection.return_value.__exit__.return_value = None
-            mock2.get_connection.return_value.__enter__.return_value = mock_conn
-            mock2.get_connection.return_value.__exit__.return_value = None
-
-            # Ensure SELECT returns an empty list for existence checks
-            mock_cursor.fetchall.return_value = []
-            yield mock1
-
-    @patch("src.core.contabilita_manager.DataSynchronizer.sync_contabilita_dati")
-    @patch("src.core.excel_importer.pd.read_sql")
-    @patch("src.core.excel_importer.pd.read_excel")
-    @patch("src.core.excel_importer.pd.ExcelFile")
-    def test_import_data_success(self, mock_excel_file, mock_read_excel, mock_read_sql, mock_sync, mock_db):
-        """Test importazione contabilità con successo."""
-        # 1. Mock Excel File structure
-        mock_file_instance = MagicMock()
-        mock_file_instance.sheet_names = ["Dati 2024"]
-        # Fix: The code uses ExcelFile as a constructor, not context manager
-        mock_excel_file.return_value = mock_file_instance
-
-        # 2. Mock DataFrame content
-        cols = [
-            "Data Prev",
-            "Mese",
-            "N° Prev",
-            "Totale Prev",
-            "Descrizione Attività",
-            "TCL",
-            "ODC",
-            "Stato Attività",
-            "Tipologia",
-            "Ore SP",
-            "Resa",
-            "Annotazioni",
-            "Indirizzo Consuntivo",
+    def test_get_year_stats(self, manager):
+        # Mock dei dati restituiti dalle query (14 colonne per OdA, 11 per Giornaliere)
+        # OdA mapping: data_prev(0), mese(1), n_prev(2), totale_prev(3), attivita(4), tcl(5), odc(6), stato_attivita(7), tipologia(8), ore_sp(9)...
+        mock_oda = [
+            ("2024-01-01", "GEN", "PREV-001", 1000.0, "ATT", "TCL", "ODC", "CHIUSO", "TIP", 10.0, "R", "N", "P", "F")
         ]
-        # Create valid rows (Need at least 2 rows because logic drops last row as Total)
-        data = {c: ["val", "val_total"] for c in cols}
-        data["Data Prev"] = ["2024-01-01", "Totale"]
-        data["N° Prev"] = ["100/2024", ""]
-        df = pd.DataFrame(data)
-
-        mock_read_excel.return_value = df
-
-        # 3. Mock SQL return (Empty existing data)
-        db_cols = [
-            "year",
-            "data_prev",
-            "mese",
-            "n_prev",
-            "totale_prev",
-            "attivita",
-            "tcl",
-            "odc",
-            "stato_attivita",
-            "tipologia",
-            "ore_sp",
-            "resa",
-            "annotazioni",
-            "indirizzo_consuntivo",
-            "nome_file",
+        # Giornaliere mapping: data(0), personale(1), tcl(2), descrizione(3), n_prev(4), odc(5), pdl(6), inizio(7), fine(8), ore(9), nome_file(10)
+        mock_giornaliere = [
+            ("2024-01-01", "P1", "T", "D", "PREV-001", "ODC", "P", "08", "17", 8.0, "F")
         ]
-        mock_read_sql.return_value = pd.DataFrame(columns=db_cols)
-        mock_sync.return_value = (1, 0)
+        
+        with (
+            patch("src.core.contabilita_queries.ContabilitaQueries.get_data_by_year", return_value=mock_oda),
+            patch("src.core.contabilita_queries.ContabilitaQueries.get_giornaliere_by_year", return_value=mock_giornaliere)
+        ):
+            stats = manager.get_year_stats(2024)
+            
+            assert stats["total_prev"] == 1000.0
+            assert stats["total_ore"] == 10.0
+            assert stats["status_counts"]["CHIUSO"] == 1
+            assert stats["ore_dirette"] == 8.0
+            assert stats["ore_indirette"] == 0.0
 
-        # 4. Call import
-        with patch("pathlib.Path.exists", return_value=True):
-            success, msg, _added, _removed = ContabilitaManager.import_data_from_excel(
-                "C:/Fake/Contabilita_2024.xlsx"
-            )
+    def test_import_giornaliere(self, manager, tmp_path):
+        g_dir = tmp_path / "Giornaliere 2024"
+        g_dir.mkdir()
+        with (
+            patch("src.core.contabilita_manager.ExcelImporter.import_giornaliere", return_value=(True, "OK", [], [2024])),
+            patch("src.core.contabilita_manager.DataSynchronizer.sync_giornaliere", return_value=(1, 0)),
+            patch("src.core.database.db_manager.get_connection")
+        ):
+            success, msg, added, removed = manager.import_giornaliere(str(tmp_path))
+            assert success is True
+            assert added == 1
 
-        assert success is True
-        assert "importati" in msg.lower()
-        assert "2024" in msg
+    def test_scan_workload(self, manager):
+        with patch("src.core.contabilita_manager.ExcelImporter.scan_workload", return_value=(10, 5)):
+            rows, files = manager.scan_workload("fake.xlsx", "fake_dir")
+            assert rows == 10
+            assert files == 5
 
-    @patch("src.core.contabilita_manager.DataSynchronizer")
-    @patch("src.core.contabilita_manager.ExcelImporter")
-    def test_import_giornaliere(self, mock_excel_importer, mock_data_synchronizer, mock_db):
-        # Mock ExcelImporter.import_giornaliere
-        imported_rows = [
-            (
-                2023,
-                "2023-01-01",
-                "U",
-                "D",
-                "T",
-                "O",
-                "P",
-                "08",
-                "17",
-                8,
-                "100",
-                "file.xlsx",
-            ),
-        ]
-        imported_years = [2023]
-        mock_excel_importer.import_giornaliere.return_value = (
-            True,
-            "Import successful",
-            imported_rows,
-            imported_years,
-        )
-
-        # Mock DataSynchronizer.sync_giornaliere
-        mock_data_synchronizer.sync_giornaliere.return_value = (1, 0)
-
-        with patch("src.core.contabilita_manager.Path") as MockPath:
-            path_inst = MockPath.return_value
-            path_inst.exists.return_value = True
-
-            success, _msg, added, removed = ContabilitaManager.import_giornaliere("dummy_folder")
-
-        assert success is True
-        assert added == 1
-        assert removed == 0
-        mock_excel_importer.import_giornaliere.assert_called_once_with("dummy_folder", ANY, ANY)
-        mock_data_synchronizer.sync_giornaliere.assert_called_once_with(
-            ContabilitaManager.DB_PATH, imported_rows, imported_years
-        )
-
-    def test_scan_workload(self, tmp_path):
-        d = tmp_path / "dummy_dir"
-        d.mkdir()
-        f = tmp_path / "dummy_file.xlsx"
-        f.touch()
-
-        with patch("zipfile.ZipFile") as MockZip:
-            z = MockZip.return_value
-            z.__enter__.return_value = z
-            z.namelist.return_value = ["xl/workbook.xml"]
-            z.read.return_value = b'name="2023"'
-
-            sheets, _files = ContabilitaManager.scan_workload(str(f), str(d))
-            assert sheets == 1
+    def test_scan_scarico_ore_rows(self, manager):
+        with patch("src.core.contabilita_manager.ExcelImporter.scan_scarico_ore_rows", return_value=100):
+            rows = manager.scan_scarico_ore_rows("fake.xlsx")
+            assert rows == 100

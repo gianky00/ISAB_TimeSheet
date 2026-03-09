@@ -1,72 +1,46 @@
-from PyQt6.QtCore import QModelIndex, Qt
-
-from src.gui.design.colors import DARK, LIGHT, get_palette
-from src.gui.design.spacing import BorderRadius, Shadow, Spacing
-from src.gui.formatters import FastTableModel
+import pytest
+from src.gui.styles.constants import COLORS, UI_SIZES, FONT_SIZES
 from src.utils.log_humanizer import SmartLogTranslator
 
-
-class TestDesignSystem:
+class TestSimpleCoverage:
     def test_colors(self):
-        assert LIGHT.primary == "#009688"
-        assert DARK.primary == "#4DB6AC"
-        assert get_palette("light") == LIGHT
-        assert get_palette("dark") == DARK
-        assert get_palette("invalid") == LIGHT
+        """Verifica che i colori del Design System siano caricati."""
+        assert "primary_blue" in COLORS
+        assert "success_green" in COLORS
+        assert COLORS["primary_blue"].startswith("#")
 
-    def test_spacing(self):
-        assert Spacing.BASE == 4
-        assert Spacing.md == 16
-        assert BorderRadius.full == 9999
-        assert "rgba" in Shadow.md
+    def test_ui_sizes(self):
+        """Verifica che le dimensioni UI del Design System siano caricate."""
+        assert "spacing_md" in UI_SIZES
+        assert isinstance(UI_SIZES["spacing_md"], int)
 
+    def test_font_sizes(self):
+        """Verifica che i font size siano caricate."""
+        assert "md" in FONT_SIZES
+        assert FONT_SIZES["md"] >= 10
 
 class TestLogHumanizer:
     def test_humanize_categories(self):
-        # Start
-        h, _, c = SmartLogTranslator.humanize("Avvio bot")
-        assert c == "start"
-        assert h in SmartLogTranslator.TEMPLATES["start"]
-
-        # Login
-        _, _, c = SmartLogTranslator.humanize("Effettuo login")
-        assert c == "login"
-
-        # Search
-        _, _, c = SmartLogTranslator.humanize("Cerca OdA")
-        assert c == "search"
-
+        """Verifica il rilevamento categorie deterministico V9.0."""
         # Download
-        _, _, c = SmartLogTranslator.humanize("Scarico file")
-        assert c == "download"
-
-        # Success
-        _, _, c = SmartLogTranslator.humanize("Completato con successo")
-        assert c == "success"
-
+        _, _, cat = SmartLogTranslator.humanize("scarico i dati")
+        assert cat == "download"
+        
         # Error
-        h, _t, c = SmartLogTranslator.humanize("Errore fatale")
-        assert c == "error"
-
+        _, _, cat = SmartLogTranslator.humanize("errore fatale")
+        assert cat == "error"
+        
+        # Success
+        _, _, cat = SmartLogTranslator.humanize("✅ missione compiuta")
+        assert cat == "success"
+        
         # Wait
-        _, _, c = SmartLogTranslator.humanize("In attesa...")
-        assert c == "wait"
+        _, _, cat = SmartLogTranslator.humanize("⏳ attendi un attimo")
+        assert cat == "wait"
 
-    def test_fixit_tag_injection(self):
-        _h, t, _c = SmartLogTranslator.humanize("login fallito per credenziali errate")
-        assert "[FIXIT:ACCOUNT]" in t
-
-
-class TestFastTableModelExtended:
-    def test_model_edge_cases(self):
-        model = FastTableModel(data=[[None]], headers=["Col1"])
-        assert model.data(model.index(0, 0)) == ""
-
-        # Invalid index
-        assert model.data(QModelIndex()) is None
-
-        # Unhandled role
-        assert model.data(model.index(0, 0), role=Qt.ItemDataRole.ToolTipRole) is None
-
-        # Vertical header
-        assert model.headerData(0, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole) is None
+    def test_humanize_cleaning_logic(self):
+        """Verifica la pulizia del messaggio prima del mapping."""
+        msg = "  MISSIONE COMPIUTA.  "
+        human, _, _ = SmartLogTranslator.humanize(msg)
+        assert "Missione" in human
+        assert "completata" in human

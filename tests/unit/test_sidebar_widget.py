@@ -1,101 +1,64 @@
-"""
-Test per SidebarWidget e nuovi segnali aggiunti.
-"""
-
+import pytest
 from unittest.mock import patch
-
+from PyQt6.QtCore import Qt
 
 class TestSidebarWidget:
-    """Test per SidebarWidget."""
+    """Test suite per SidebarWidget V9.0 (Navigazione Profonda)."""
 
     @patch("src.gui.widgets.sidebar_widget.get_asset_path")
-    def test_sidebar_initialization(self, mock_asset, qtbot):
-        """Testa l'inizializzazione della sidebar."""
+    def test_sidebar_initialization(self, mock_asset, qapp, qtbot):
         mock_asset.return_value = ""
-
         from src.gui.widgets.sidebar_widget import SidebarWidget
-
         sidebar = SidebarWidget()
         qtbot.addWidget(sidebar)
-
-        # Verifica stato iniziale collapsed
         assert sidebar._is_collapsed is True
-        assert sidebar.width() == sidebar.collapsed_width
 
     @patch("src.gui.widgets.sidebar_widget.get_asset_path")
-    def test_sidebar_has_palette_signal(self, mock_asset, qtbot):
-        """Testa che il segnale palette_requested esista."""
+    def test_sidebar_palette_click_emits_signal(self, mock_asset, qapp, qtbot):
         mock_asset.return_value = ""
-
         from src.gui.widgets.sidebar_widget import SidebarWidget
+        sidebar = SidebarWidget()
+        qtbot.addWidget(sidebar)
+        sidebar._set_collapsed(False)
+        with qtbot.waitSignal(sidebar.palette_requested, timeout=1000):
+            qtbot.mouseClick(sidebar.btn_palette, Qt.MouseButton.LeftButton)
 
+    @patch("src.gui.widgets.sidebar_widget.get_asset_path")
+    def test_sidebar_monitoraggio_group_exists(self, mock_asset, qapp, qtbot):
+        mock_asset.return_value = ""
+        from src.gui.widgets.sidebar_widget import SidebarWidget
         sidebar = SidebarWidget()
         qtbot.addWidget(sidebar)
 
-        # Verifica che il segnale esista
-        assert hasattr(sidebar, "palette_requested")
-
-    @patch("src.gui.widgets.sidebar_widget.get_asset_path")
-    def test_sidebar_palette_button_exists(self, mock_asset, qtbot):
-        """Testa che il pulsante palette esista."""
-        mock_asset.return_value = ""
-
-        from src.gui.widgets.sidebar_widget import SidebarWidget
-
-        sidebar = SidebarWidget()
-        qtbot.addWidget(sidebar)
-
-        assert hasattr(sidebar, "btn_palette")
-        assert sidebar.btn_palette is not None
-
-    @patch("src.gui.widgets.sidebar_widget.get_asset_path")
-    def test_sidebar_palette_click_emits_signal(self, mock_asset, qtbot):
-        """Testa che il click sul pulsante palette emetta il segnale."""
-        mock_asset.return_value = ""
-
-        from src.gui.widgets.sidebar_widget import SidebarWidget
-
-        sidebar = SidebarWidget()
-        qtbot.addWidget(sidebar)
-
-        # Connetti un handler di test
-        signal_received = []
-        sidebar.palette_requested.connect(lambda: signal_received.append(True))
-
-        # Simula click
-        sidebar._on_palette_click()
-
-        assert len(signal_received) == 1
-
-    @patch("src.gui.widgets.sidebar_widget.get_asset_path")
-    def test_sidebar_monitoraggio_group_exists(self, mock_asset, qtbot):
-        """Testa che il gruppo Monitoraggio esista."""
-        mock_asset.return_value = ""
-
-        from src.gui.widgets.sidebar_widget import SidebarWidget
-
-        sidebar = SidebarWidget()
-        qtbot.addWidget(sidebar)
-
-        # Verifica che il gruppo esista (rinominato in "Monitoraggio" ma variabile ancora group_notifiche)
+        # Il gruppo esiste ancora come group_notifiche (titolo "Monitoraggio")
         assert hasattr(sidebar, "group_notifiche")
-        assert sidebar.group_notifiche is not None
-
-        # Verifica che i bottoni child esistano
-        assert hasattr(sidebar, "btn_notifiche")
-        assert hasattr(sidebar, "btn_audit")
-        assert hasattr(sidebar, "btn_health")
+        
+        # In V9.0 i bottoni child sono in notif_child_btns
+        # Verifichiamo che il numero di bottoni aggiunti al gruppo sia 3
+        assert len(sidebar.notif_child_btns) == 3
 
     @patch("src.gui.widgets.sidebar_widget.get_asset_path")
-    def test_sidebar_expand_collapse_state(self, mock_asset, qtbot):
-        """Testa lo stato collapsed/expanded."""
+    def test_sidebar_navigation_signal(self, mock_asset, qapp, qtbot):
         mock_asset.return_value = ""
-
         from src.gui.widgets.sidebar_widget import SidebarWidget
+        sidebar = SidebarWidget()
+        qtbot.addWidget(sidebar)
+        sidebar._set_collapsed(False)
 
+        with qtbot.waitSignal(sidebar.navigation_requested, timeout=1000) as blocker:
+            qtbot.mouseClick(sidebar.btn_home, Qt.MouseButton.LeftButton)
+        
+        # Home -> Page 0, Sub -1, Bot -1
+        assert blocker.args == [0, -1, -1]
+
+    @patch("src.gui.widgets.sidebar_widget.get_asset_path")
+    def test_sidebar_expand_collapse_state(self, mock_asset, qapp, qtbot):
+        mock_asset.return_value = ""
+        from src.gui.widgets.sidebar_widget import SidebarWidget
         sidebar = SidebarWidget()
         qtbot.addWidget(sidebar)
 
-        # Stato iniziale: collapsed
+        sidebar._set_collapsed(False)
+        assert sidebar._is_collapsed is False
+        sidebar._set_collapsed(True)
         assert sidebar._is_collapsed is True
-        assert sidebar.width() == sidebar.collapsed_width

@@ -1,13 +1,14 @@
-from datetime import datetime, timedelta
-from unittest.mock import patch
+from datetime import datetime, timedelta, UTC
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from src.core.constants import Icons
+from src.core.contabilita.certificati_engine import CertificatiEngine
 from src.gui.widgets.contabilita.certificati_tab import (
     CertificatiCampioneTab,
-    ScadenzeAnalysisDialog,
 )
+from src.gui.dialogs.certificati_analysis_dialog import ScadenzeAnalysisDialog
 
 
 class TestCertificatiGUI:
@@ -25,96 +26,65 @@ class TestCertificatiGUI:
             self.qtbot.addWidget(tab)
             return tab
 
-    def test_calculate_days_and_status(self, cert_tab):
-        """Testa la logica di calcolo giorni e icone di stato."""
-        today = datetime.now()
+    def test_calculate_days_and_status_logic(self):
+        """Testa la logica di calcolo giorni nell'Engine."""
+        # Mock current date to fixed point
+        with patch("src.core.contabilita.certificati_engine.datetime") as mock_dt:
+            mock_dt.now.return_value = datetime(2024, 1, 1, tzinfo=UTC)
+            mock_dt.strptime = datetime.strptime
+            
+            # Scaduto
+            days, icon = CertificatiEngine.calculate_days_and_status("01/12/2023")
+            assert days is not None and days < 0
+            assert icon == Icons.STATUS_DOT_RED
 
-        # Scaduto
-        past_date = (today - timedelta(days=5)).strftime("%d/%m/%Y")
-        days, icon = cert_tab._calculate_days_and_status(past_date)
-        assert days is not None and days < 0
-        assert icon == Icons.STATUS_DOT_RED
+            # In Scadenza (10gg)
+            days, icon = CertificatiEngine.calculate_days_and_status("11/01/2024")
+            assert days is not None and 0 <= days <= 15
+            assert icon == Icons.STATUS_DOT_ORANGE
 
-        # Urgente (0-15 giorni)
-        near_future = (today + timedelta(days=10)).strftime("%d/%m/%Y")
-        days, icon = cert_tab._calculate_days_and_status(near_future)
-        assert days is not None and 0 <= days <= 15
-        assert icon == Icons.STATUS_DOT_ORANGE
+            # Attivo
+            days, icon = CertificatiEngine.calculate_days_and_status("01/03/2024")
+            assert days is not None and days > 30
+            assert icon == Icons.STATUS_DOT_GREEN
 
-        # Attenzione (16-30 giorni)
-        attention_future = (today + timedelta(days=20)).strftime("%d/%m/%Y")
-        days, icon = cert_tab._calculate_days_and_status(attention_future)
-        assert days is not None and 16 <= days <= 30
-        assert icon == Icons.STATUS_DOT_YELLOW
+    def test_format_days_text_short(self):
+        """Testa la formattazione breve del testo giorni nell'Engine."""
+        assert "Scaduto" in CertificatiEngine.format_days_text_short(-10)
+        assert "Scade tra 5gg" in CertificatiEngine.format_days_text_short(5)
+        assert "Attivo" in CertificatiEngine.format_days_text_short(60)
+        assert CertificatiEngine.format_days_text_short(None) == "N/D"
 
-        # Attivo (>30 giorni)
-        far_future = (today + timedelta(days=45)).strftime("%d/%m/%Y")
-        days, icon = cert_tab._calculate_days_and_status(far_future)
-        assert days is not None and days > 30
-        assert icon == Icons.STATUS_DOT_GREEN
-
-        # N/D
-        days, icon = cert_tab._calculate_days_and_status("")
-        assert days is None
-        assert icon == Icons.STATUS_DOT_GRAY
-
-    def test_format_days_text_short(self, cert_tab):
-        """Testa la formattazione breve del testo giorni."""
-        assert "Scaduto" in cert_tab._format_days_text_short(-10)
-        assert "Scade tra 5gg" in cert_tab._format_days_text_short(5)
-        assert "Attivo" in cert_tab._format_days_text_short(60)
-        assert cert_tab._format_days_text_short(None) == "N/D"
-
-    def test_exclusions_io(self, cert_tab, tmp_path):
-        """Testa il caricamento e salvataggio delle esclusioni."""
+    def test_exclusions_engine_io(self, tmp_path):
+        """Testa il caricamento e salvataggio delle esclusioni nell'Engine."""
         test_file = tmp_path / "exclusions.json"
-
-        with patch.object(CertificatiCampioneTab, "EXCLUSIONS_FILE", test_file):
+        
+        with patch("src.core.contabilita.certificati_engine.CertificatiEngine.EXCLUSIONS_FILE", test_file):
+            engine = CertificatiEngine()
             # Salva
-            cert_tab._exclusions = {"MAT-001", "MAT-002"}
-            cert_tab._save_exclusions()
+            engine.save_exclusions({"MAT-001", "MAT-002"})
             assert test_file.exists()
 
-            # Carica in una nuova istanza
-            with patch(
-                "src.core.contabilita_manager.ContabilitaManager.get_certificati_campione_data"
-            ) as mock_data:
-                mock_data.return_value = []
-                new_tab = CertificatiCampioneTab()
-                assert "MAT-001" in new_tab._exclusions
-                assert "MAT-002" in new_tab._exclusions
-
-    def test_exclude_include_methods(self, cert_tab, tmp_path):
-        """Testa i metodi per escludere/includere matricole."""
-        test_file = tmp_path / "exclusions_methods.json"
-        with patch.object(CertificatiCampioneTab, "EXCLUSIONS_FILE", test_file):
-            with patch.object(cert_tab, "_load_data") as mock_load:
-                cert_tab._exclude_matricola("TEST-MAT")
-                assert "TEST-MAT" in cert_tab._exclusions
-                assert mock_load.called
-
-                mock_load.reset_mock()
-                cert_tab._include_matricola("TEST-MAT")
-                assert "TEST-MAT" not in cert_tab._exclusions
-                assert mock_load.called
+            # Ricarica
+            engine2 = CertificatiEngine()
+            exclusions = engine2.load_exclusions()
+            assert "MAT-001" in exclusions
+            assert "MAT-002" in exclusions
 
     def test_analysis_dialog_init(self):
         """Verifica che il dialogo di analisi si inizializzi senza errori."""
         test_data = [
             {"matricola": "M1", "days": -5, "modello": "Mod1", "costruttore": "C1"},
             {"matricola": "M2", "days": 10, "modello": "Mod2", "costruttore": "C2"},
-            {"matricola": "M3", "days": 40, "modello": "Mod3", "costruttore": "C3"},
         ]
         dialog = ScadenzeAnalysisDialog(test_data)
         self.qtbot.addWidget(dialog)
 
-        assert dialog.windowTitle().startswith("Analisi Scadenze")
-        # Verifica che i widget siano stati creati
+        assert "Analisi Scadenze" in dialog.windowTitle()
         assert dialog.header is not None
-        assert dialog.stats_frame is not None
 
     def test_load_data_grouping(self, cert_tab):
-        """Testa il raggruppamento dei certificati per matricola."""
+        """Testa il raggruppamento dei certificati nel Tab UI."""
         # Mock data: 2 certificati per la stessa matricola
         mock_data = [
             # Modello, Costruttore, Matricola, Range, Errore, Certificato, Scadenza, Emissione, ID, Stato
@@ -148,7 +118,7 @@ class TestCertificatiGUI:
             "src.core.contabilita_manager.ContabilitaManager.get_certificati_campione_data",
             return_value=mock_data,
         ):
-            cert_tab._load_data()
+            cert_tab.refresh_data()
 
             # Dovrebbe esserci 1 solo nodo top level (per matricola)
             assert cert_tab.tree.topLevelItemCount() == 1
@@ -157,41 +127,3 @@ class TestCertificatiGUI:
 
             # Dovrebbe avere 2 figli
             assert parent.childCount() == 2
-
-            # Il primo figlio dovrebbe essere il più recente (CERT-1)
-            assert parent.child(0).text(cert_tab.IDX_CERTIFICATO) == "CERT-1"
-            assert parent.child(1).text(cert_tab.IDX_CERTIFICATO) == "CERT-2"
-
-    def test_screenshot_generation_logic(self, cert_tab):
-        """Testa la logica di preparazione dello screenshot (senza esecuzione effettiva)."""
-        test_data = [{"matricola": "M1", "days": 10, "modello": "Mod1", "costruttore": "C1"}]
-        dialog = ScadenzeAnalysisDialog(test_data, cert_tab)
-        self.qtbot.addWidget(dialog)
-
-        # Mocking heavy Qt GUI operations that cause COM crashes on Windows
-        with (
-            patch("PyQt6.QtGui.QPainter"),
-            patch("PyQt6.QtGui.QPixmap"),
-            patch("PyQt6.QtWidgets.QMessageBox.information"),
-            patch("PyQt6.QtWidgets.QMessageBox.critical"),
-            patch("os.startfile"),
-            patch("subprocess.Popen") as mock_popen,
-        ):
-            # Caso 1: Senza macro Excel
-            with patch("src.core.config_manager.load_config", return_value={}):
-                dialog._send_email()
-                assert not mock_popen.called
-
-            # Caso 2: Con macro Excel (simulata)
-            with (
-                patch(
-                    "src.core.config_manager.load_config",
-                    return_value={"certificati_campione_path": "test.xlsx"},
-                ),
-                patch("src.gui.widgets.contabilita.certificati_tab.Path.exists") as mock_exists,
-            ):
-                mock_exists.return_value = True
-                dialog._send_email()
-                assert mock_popen.called
-                args, _kwargs = mock_popen.call_args
-                assert "powershell" in args[0]

@@ -1,78 +1,63 @@
-from unittest.mock import patch
-
+import pytest
 from src.utils.log_humanizer import SmartLogTranslator
 
-
 class TestLogHumanizerCoverage:
-    """Test suite per src/utils/log_humanizer.py"""
-
     def test_humanize_start(self):
-        human, tech, cat = SmartLogTranslator.humanize("Avvio sistema")
-        assert cat == "start"
-        assert human in SmartLogTranslator.TEMPLATES["start"]
-        assert tech == "Avvio sistema"
+        """Verifica la mappatura del messaggio di avvio."""
+        msg = "avvio automazione"
+        human, _, cat = SmartLogTranslator.humanize(msg)
+        assert human == "🚀 Avvio automazione in corso..."
+        assert cat == "info"
 
     def test_humanize_login(self):
-        human, _tech, cat = SmartLogTranslator.humanize("Tentativo di accesso")
-        assert cat == "login"
-        assert human in SmartLogTranslator.TEMPLATES["login"]
+        """Verifica la mappatura dell'inserimento credenziali."""
+        msg = "inserimento credenziali"
+        human, _, cat = SmartLogTranslator.humanize(msg)
+        assert human == "🔐 Inserimento credenziali..."
+        assert cat == "info"
 
     def test_humanize_search(self):
-        human, _tech, cat = SmartLogTranslator.humanize("Ricerca dati in corso")
+        """Verifica la mappatura del messaggio di ricerca."""
+        msg = "mi metto alla ricerca"
+        human, _, cat = SmartLogTranslator.humanize(msg)
+        assert human == "🔍 Ricerca in corso..."
         assert cat == "search"
-        assert human in SmartLogTranslator.TEMPLATES["search"]
 
     def test_humanize_download(self):
-        human, _tech, cat = SmartLogTranslator.humanize("Scarico file excel")
+        """Verifica la mappatura del messaggio di scarico."""
+        msg = "scarico i file"
+        human, _, cat = SmartLogTranslator.humanize(msg)
+        assert human == "⬇️ Scarico file in corso..."
         assert cat == "download"
-        assert human in SmartLogTranslator.TEMPLATES["download"]
 
     def test_humanize_success(self):
-        human, _tech, cat = SmartLogTranslator.humanize("Operazione completata")
+        """Verifica la mappatura del successo."""
+        msg = "missione compiuta"
+        human, _, cat = SmartLogTranslator.humanize(msg)
+        assert human == "✨ Missione completata con successo!"
         assert cat == "success"
-        assert human in SmartLogTranslator.TEMPLATES["success"]
-
-        # Test con carattere speciale
-        _, _, cat2 = SmartLogTranslator.humanize("Risultato ✓")
-        assert cat2 == "success"
 
     def test_humanize_error(self):
-        human, _tech, cat = SmartLogTranslator.humanize("Errore imprevisto")
+        """Verifica la mappatura dell'errore."""
+        msg = "errore critico"
+        human, _, cat = SmartLogTranslator.humanize(msg)
+        assert human == "❌ Errore critico rilevato!"
         assert cat == "error"
-        assert human in SmartLogTranslator.TEMPLATES["error"]
 
-        # Test con carattere speciale
-        _, _, cat2 = SmartLogTranslator.humanize("Fallito ✗")
-        assert cat2 == "error"
+    def test_detect_category_error_variants(self):
+        """Verifica varianti di keyword per categoria errore."""
+        assert SmartLogTranslator._detect_category("Fallimento critico") == "error"
+        assert SmartLogTranslator._detect_category("Eccezione timeout") == "error"
+        assert SmartLogTranslator._detect_category("❌ Portale offline") == "error"
 
-    def test_humanize_wait(self):
-        human, _tech, cat = SmartLogTranslator.humanize("In attesa del server")
-        assert cat == "wait"
-        assert human in SmartLogTranslator.TEMPLATES["wait"]
+    def test_detect_category_success_variants(self):
+        """Verifica varianti di keyword per categoria successo."""
+        assert SmartLogTranslator._detect_category("Operazione completata") == "success"
+        assert SmartLogTranslator._detect_category("✅ Dati inviati") == "success"
+        assert SmartLogTranslator._detect_category("✨ Risultato ottimo") == "success"
 
-    def test_humanize_fallback(self):
-        """Test messaggio che non rientra in nessuna categoria specifica."""
-        msg = "Messaggio generico qualunque"
-        human, tech, cat = SmartLogTranslator.humanize(msg)
-        assert cat == "info"
+    def test_humanize_preserve_custom_icons(self):
+        """Verifica che icone non standard vengano preservate."""
+        msg = "ℹ️ Nota di sistema"
+        human, _, _ = SmartLogTranslator.humanize(msg)
         assert human == msg
-        assert tech == msg
-
-    def test_rich_tags_injection_account(self):
-        """Test aggiunta tag [FIXIT:ACCOUNT] su errori credenziali."""
-        # Caso login + errore
-        _, tech, cat = SmartLogTranslator.humanize("Errore login credenziali")
-        assert cat == "error"
-        assert "[FIXIT:ACCOUNT]" in tech
-
-        # Solo credenziali
-        _, tech, cat = SmartLogTranslator.humanize("credenziali errate")
-        assert "[FIXIT:ACCOUNT]" in tech
-
-    @patch("random.choice")
-    def test_humanize_deterministic(self, mock_choice):
-        """Verifica che venga effettivamente chiamato random.choice con i template corretti."""
-        mock_choice.return_value = "Messaggio Mockato"
-        human, _, _ = SmartLogTranslator.humanize("start")
-        assert human == "Messaggio Mockato"
-        mock_choice.assert_called_once_with(SmartLogTranslator.TEMPLATES["start"])

@@ -42,6 +42,13 @@ _config_cache: dict[str, Any] | None = None
 _config_lock = threading.RLock()
 
 
+def _reset_configuration_for_testing() -> None:
+    """Resetta la cache della configurazione (solo per unit test)."""
+    global _config_cache
+    with _config_lock:
+        _config_cache = None
+
+
 def get_version() -> str:
     """Restituisce la versione corrente dell'applicazione."""
     return __version__

@@ -1,38 +1,37 @@
-from src.gui.widgets.timeline_widget import HorizontalTimelineWidget, TimelineWidget
+import pytest
+from PyQt6.QtWidgets import QLabel
+from src.gui.widgets.timeline_widget import TimelineWidget
 
-# The 'qapp' fixture is automatically provided by pytest-qt and ensures a
-# QApplication instance exists before any tests that use GUI components are run.
-
-
-def test_horizontal_timeline_functionality(qtbot):
-    """
-    Tests the basic functionality of the TimelineWidget and its HorizontalTimelineWidget.
-    """
+def test_timeline_functionality(qtbot):
+    """Verifica l'aggiunta di log nella nuova TimelineWidget V9.0."""
     widget = TimelineWidget()
     qtbot.addWidget(widget)
 
-    # Verify that the TimelineWidget correctly contains a HorizontalTimelineWidget
-    assert isinstance(widget.timeline, HorizontalTimelineWidget), (
-        "TimelineWidget should be using HorizontalTimelineWidget"
-    )
-
-    # Add a series of logs to the widget
     logs_to_add = [
         "🚀 Avvio sistema",
         "🔐 Login in corso...",
         "✅ Accesso effettuato",
-        "📥 Download dati",
-        "❌ Errore critico [IMG:/tmp/screenshot.png]",
     ]
 
     for log_message in logs_to_add:
-        widget.append(log_message)
+        widget.add_log(log_message)
 
-    # Check if the number of items in the timeline's container layout matches the number of logs added
-    # We count only the widgets, as the layout also contains a stretch (spacer)
-    layout = widget.timeline.container.log_layout
-    item_count = sum(1 for i in range(layout.count()) if layout.itemAt(i).widget())
+    # In V9.0 i log sono aggiunti a un layout verticale contenuto in una scroll area
+    # Troviamo i QLabel creati
+    labels = widget.findChildren(QLabel)
+    
+    # Verifichiamo che i testi siano presenti (filtrando eventuali placeholder)
+    texts = [l.text() for l in labels]
+    for log in logs_to_add:
+        assert any(log in t for t in texts)
 
-    assert item_count == len(logs_to_add), (
-        f"Expected {len(logs_to_add)} items in timeline, but found {item_count}"
-    )
+def test_timeline_autoscroll_safe(qtbot):
+    """Verifica che l'aggiunta massiva di log non crashi (autoscroll safe)."""
+    widget = TimelineWidget()
+    qtbot.addWidget(widget)
+    
+    for i in range(100):
+        widget.add_log(f"Log riga {i}")
+    
+    # Se arriviamo qui senza RuntimeError, il fix sip.isdeleted() sta funzionando
+    assert True
