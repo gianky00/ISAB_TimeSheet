@@ -244,12 +244,12 @@ class StoricoOdaPanel(QWidget):
                 self.splitter.setSizes([int(self.width() * 0.7), int(self.width() * 0.3)])
 
     def _on_update_clicked(self) -> None:
-        """Esegue il workflow di aggiornamento del database."""
+        """Esegue il workflow di aggiornamento del database tramite Dettagli OdA."""
         from src.gui.main_window import MainWindow
 
         mw = self.window()
         if isinstance(mw, MainWindow):
-            mw.workflow_controller.run_carico_ts()
+            mw.workflow_controller.run_dettagli_oda_update()
 
     def _on_import_clicked(self) -> None:
         """Gestisce l'importazione manuale di un file Excel OdA."""

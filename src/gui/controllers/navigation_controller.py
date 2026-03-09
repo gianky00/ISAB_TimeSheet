@@ -332,6 +332,12 @@ class NavigationController(QObject):
 
     def _try_connect_signals(self) -> None:
         """Tenta di instaurare connessioni cross-pannello quando le dipendenze sono state caricate."""
+        # Dettagli OdA -> Storico OdA
+        if hasattr(self.mw, "dettagli_panel") and hasattr(self.mw, "storico_oda_panel"):
+            if not getattr(self.mw, "_oda_signals_connected", False):
+                self.mw.dettagli_panel.data_updated.connect(self.mw.storico_oda_panel.refresh_data)
+                self.mw._oda_signals_connected = True
+
         # Timbrature Bot -> DB & Dipendenti
         if hasattr(self.mw, "timbrature_bot_panel"):
             if hasattr(self.mw, "timbrature_db_panel") and not getattr(

@@ -115,6 +115,7 @@ class BaseBotPanel(QWidget):
     bot_started = pyqtSignal()
     bot_stopped = pyqtSignal()
     bot_finished = pyqtSignal(bool)
+    data_updated = pyqtSignal()
     bot_results_ready = pyqtSignal(str, list)  # bot_id, list of results (e.g. file paths)
     status_changed = pyqtSignal(str, str)  # status, message
 
@@ -443,6 +444,10 @@ class BaseBotPanel(QWidget):
         worker.log_signal.connect(self._on_log)
         worker.status_signal.connect(self._on_status)
         worker.finished_signal.connect(self._on_worker_finished)
+
+        # Segnale di aggiornamento dati (per sincronizzare altri pannelli)
+        if hasattr(self, "data_updated"):
+            worker.finished_signal.connect(lambda success: success and self.data_updated.emit())
 
         # Connessione automatica timeline
         if hasattr(self, "activity_timeline"):

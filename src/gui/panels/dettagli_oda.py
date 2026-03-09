@@ -101,7 +101,7 @@ class DettagliOdAPanel(BaseBotPanel):
                 "name": "Numero Contratto",
                 "type": "combo",
                 "options": config.get("contracts", []),
-                "default": config.get("default_contract", ""),
+                "default": "",  # Forza vuoto per nuove righe all'avvio
             },
             {"name": "ESITO", "type": "text", "default": "", "readonly": True},
         ]
@@ -190,6 +190,12 @@ class DettagliOdAPanel(BaseBotPanel):
 
         saved_data = config.get("last_oda_data", [])
         if saved_data:
+            # Forza la colonna Numero Contratto a vuoto all'avvio per policy Enterprise
+            for row_dict in saved_data:
+                # Supporta sia "Numero Contratto" che la chiave normalizzata "numero_contratto"
+                for k in list(row_dict.keys()):
+                    if k.lower().replace(" ", "_") == "numero_contratto":
+                        row_dict[k] = ""
             self.data_table.set_data(saved_data)
         else:
             # Se non ci sono dati salvati, svuota esplicitamente per evitare default indesiderati
@@ -240,7 +246,9 @@ class DettagliOdAPanel(BaseBotPanel):
         if params_override:
             data_da = params_override.get("data_da", data_da)
             data_a = params_override.get("data_a", data_a)
-            if item := params_override.get("single_item"):
+            if "rows" in params_override:
+                rows = params_override["rows"]
+            elif item := params_override.get("single_item"):
                 rows = [item]
                 self.log_widget.append(f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}")
 

@@ -106,3 +106,32 @@ class WorkflowController(QObject):
         panel = getattr(self.mw, "carico_panel", None)
         if panel:
             QTimer.singleShot(200, lambda: panel.run_externally({}))
+
+    def run_dettagli_oda_update(self) -> None:
+        """Avvia l'aggiornamento massivo dello Storico OdA tramite il bot Dettagli OdA."""
+        from src.gui.main_window.page_index import PageIndex
+        from PyQt6.QtCore import QDate
+
+        # 1. Recupera il pannello Automazioni (Lazy Loading) senza navigare
+        automazioni_widget = self.mw.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
+        from src.gui.widgets.automazioni_widget import AutomazioniWidget
+
+        if isinstance(automazioni_widget, AutomazioniWidget):
+            # 2. Imposta i tab corretti internamente
+            automazioni_widget.set_active_tab(0, 0)
+
+            # 3. Recupera il pannello bot registrato
+            panel = getattr(self.mw, "dettagli_panel", None)
+            if panel:
+                # Feedback visivo nello Storico OdA
+                ToastManager.instance().show("🚀 Sincronizzazione database OdA avviata in background...", "info")
+
+                # Calcola la data odierna nel formato richiesto: GG.MM.AAAA
+                data_attuale = QDate.currentDate().toString("dd.MM.yyyy")
+
+                # Avvio bot bypassando le righe (triggera Lista Generale)
+                # Passiamo data_a come data attuale (override del widget UI)
+                QTimer.singleShot(100, lambda: panel.run_externally({
+                    "rows": [],
+                    "data_a": data_attuale
+                }))

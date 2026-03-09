@@ -218,19 +218,32 @@ class EditableDataTable(QWidget):
         for _ in range(5):
             self._add_row()
         container_lay.addWidget(self.table)
+        layout.addWidget(self.container)
 
-    def _add_row(self) -> None:
+    def _add_row(self, use_defaults: bool = True) -> None:
         """Aggiunge una riga vuota alla tabella con i widget appropriati."""
         row = self.table.rowCount()
         self.table.insertRow(row)
         for col, col_def in enumerate(self.columns):
+            default_val = str(col_def.get("default", "")) if use_defaults else ""
+
             if col_def.get("type") == "combo":
                 combo = FilterComboBox()
-                combo.addItems(col_def.get("options", []))
+                options = col_def.get("options", [])
+                # Assicurati che ci sia un'opzione vuota
+                if "" not in options:
+                    options = [""] + list(options)
+                combo.addItems(options)
+
+                if default_val:
+                    combo.setCurrentText(default_val)
+                else:
+                    combo.setCurrentIndex(0)
+
                 combo.currentIndexChanged.connect(self.data_changed.emit)
                 self.table.setCellWidget(row, col, combo)
             else:
-                item = SortableTableWidgetItem("")
+                item = SortableTableWidgetItem(default_val)
                 if col_def.get("readonly"):
                     item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 self.table.setItem(row, col, item)
@@ -296,8 +309,49 @@ class EditableDataTable(QWidget):
                     if item:
                         item.setText(val)
 
+    def update_cell(self, row: int, col: int, value: str, emit_signal: bool = True) -> None:
+        """
+        Aggiorna il contenuto di una cella specifica.
+
+        Args:
+            row: Indice della riga.
+            col: Indice della colonna.
+            value: Nuovo valore testuale.
+            emit_signal: Se True, emette il segnale data_changed.
+        """
+        if row >= self.table.rowCount() or col >= self.table.columnCount():
+            return
+
+        if not emit_signal:
+            self.table.blockSignals(True)
+
+        try:
+            item = self.table.item(row, col)
+            if item:
+                item.setText(value)
+            else:
+                # Se è un widget (es. combo), non facciamo nulla o gestiamo se serve
+                widget = self.table.cellWidget(row, col)
+                if isinstance(widget, FilterComboBox):
+                    idx = widget.findText(value)
+                    if idx >= 0:
+                        widget.setCurrentIndex(idx)
+        finally:
+            if not emit_signal:
+                self.table.blockSignals(False)
+
+    def set_row_status(self, row: int, status: str) -> None:
+        """
+        Proxy per impostare lo stato semantico della riga nella tabella.
+
+        Args:
+            row: Indice della riga.
+            status: Stato della riga.
+        """
+        self.table.set_row_status(row, status)
+
     def clear(self) -> None:
         """Svuota la tabella e ripristina le righe iniziali."""
         self.table.setRowCount(0)
         for _ in range(5):
-            self._add_row()
+            self._add_row(use_defaults=False)
