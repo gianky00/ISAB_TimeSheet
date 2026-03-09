@@ -58,7 +58,9 @@ class MonitoringController(QObject):
                 msg += f"<img src='{yellow_dot}' width='14' height='14'> {len(in_scadenza)} In scadenza (20-30 gg)<br/>"
             msg += "<br/><small>Controlla la tabella 'Dipendenti' per i dettagli.</small>"
 
-            ToastManager.instance().show(msg, "warning" if in_scadenza or scaduti else "info", 8000)
+            ToastManager.instance().show(
+                msg, "warning" if in_scadenza or scaduti else "info", 8000, is_rich_text=True
+            )
         except Exception as e:
             print(f"Errore monitoraggio autorizzazioni: {e}")
 
@@ -71,4 +73,5 @@ class MonitoringController(QObject):
             ToastManager.instance().show(
                 f"<img src='{alert_icon}' width='14' height='14'> Lyra ha rilevato {count} anomalie",
                 "warning",
+                is_rich_text=True,
             )

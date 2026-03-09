@@ -301,7 +301,7 @@ def toast_info(message: str, duration: int | None = None) -> None:
     from src.gui.styles.constants import ANIMATION_TIMINGS
 
     d = duration or ANIMATION_TIMINGS["toast_info"]
-    ToastManager.instance().show(message, Toast.Type.INFO, d)
+    ToastManager.instance().show(message, Toast.Type.INFO, d, is_rich_text=("<" in message))
 
 
 def toast_success(message: str, duration: int | None = None) -> None:
@@ -309,7 +309,7 @@ def toast_success(message: str, duration: int | None = None) -> None:
     from src.gui.styles.constants import ANIMATION_TIMINGS
 
     d = duration or ANIMATION_TIMINGS["toast_success"]
-    ToastManager.instance().show(message, Toast.Type.SUCCESS, d)
+    ToastManager.instance().show(message, Toast.Type.SUCCESS, d, is_rich_text=("<" in message))
 
 
 def toast_warning(message: str, duration: int | None = None) -> None:
@@ -317,7 +317,7 @@ def toast_warning(message: str, duration: int | None = None) -> None:
     from src.gui.styles.constants import ANIMATION_TIMINGS
 
     d = duration or ANIMATION_TIMINGS["toast_warning"]
-    ToastManager.instance().show(message, Toast.Type.WARNING, d)
+    ToastManager.instance().show(message, Toast.Type.WARNING, d, is_rich_text=("<" in message))
 
 
 def toast_error(message: str, duration: int | None = None) -> None:
@@ -325,4 +325,4 @@ def toast_error(message: str, duration: int | None = None) -> None:
     from src.gui.styles.constants import ANIMATION_TIMINGS
 
     d = duration or ANIMATION_TIMINGS["toast_error"]
-    ToastManager.instance().show(message, Toast.Type.ERROR, d)
+    ToastManager.instance().show(message, Toast.Type.ERROR, d, is_rich_text=("<" in message))

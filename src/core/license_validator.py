@@ -57,14 +57,18 @@ def get_hardware_id() -> str:
     Returns:
         str: Identificativo hardware normalizzato.
     """
+    raw_id = ""
     if platform.system() == "Windows":
-        return _get_windows_hardware_id() or "ERROR_GETTING_ID"
-    if platform.system() == "Linux":
-        return _get_linux_hardware_id() or "ERROR_GETTING_ID"
-    try:
-        return str(uuid.getnode())
-    except Exception:
-        return "ERROR_GETTING_ID"
+        raw_id = _get_windows_hardware_id() or "ERROR_GETTING_ID"
+    elif platform.system() == "Linux":
+        raw_id = _get_linux_hardware_id() or "ERROR_GETTING_ID"
+    else:
+        try:
+            raw_id = str(uuid.getnode())
+        except Exception:
+            raw_id = "ERROR_GETTING_ID"
+
+    return raw_id.strip().rstrip(".")
 
 
 def _get_windows_hardware_id() -> str | None:

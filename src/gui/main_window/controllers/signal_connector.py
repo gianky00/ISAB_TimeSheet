@@ -34,7 +34,9 @@ class SignalConnector(QObject):
         """
         # Toast Manager
         NotificationManager.instance().request_toast.connect(
-            lambda msg, t, d: ToastManager.instance().show(msg, t, d)
+            lambda msg, t, d: ToastManager.instance().show(
+                msg, t, d, is_rich_text=("<" in msg and ">" in msg)
+            )
         )
 
         # Notification Badge on Sidebar

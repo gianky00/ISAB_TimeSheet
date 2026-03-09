@@ -84,9 +84,9 @@ class SecretsManager:
         """
         from src.core.license_validator import get_hardware_id
 
-        hwid = get_hardware_id().strip().encode("utf-8")
-        # Usa l'HWID come password per derivare una chiave Fernet valida
-        return cls.derive_key(hwid.decode(), salt=b"SyncroJob_Grace_Salt_2026")
+        hwid = get_hardware_id()
+        # Usa l'HWID normalizzato per derivare una chiave Fernet valida
+        return cls.derive_key(hwid, salt=b"SyncroJob_Grace_Salt_2026")
 
     @classmethod
     def get_license_key(cls) -> bytes | None:

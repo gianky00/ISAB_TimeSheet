@@ -23,8 +23,6 @@ current_dir = Path(__file__).parent.resolve()
 project_root = current_dir.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.core.secrets_manager import SecretsManager
-
 # Carica variabili d'ambiente
 load_dotenv()
 
@@ -32,22 +30,30 @@ load_dotenv()
 CLIENTS_FILE = current_dir / "clients.json"
 
 
-def get_signing_key():
-    """Recupera la chiave di firma/cifratura in modo sicuro."""
-    # 1. Environment Variable
-    import os
+def derive_license_key(hw_id: str) -> bytes:
+    """
+    Deriva la chiave di cifratura dall'Hardware ID utilizzando la stessa logica del client.
+    Garantisce che la chiave sia esattamente 32 byte url-safe base64-encoded.
+    """
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-    env_key = os.getenv("LICENSE_SECRET_KEY")
-    if env_key:
-        return env_key.encode()
+    # Pulisce l'Hardware ID (rimuove spazi e punti finali)
+    clean_hwid = hw_id.strip().rstrip(".")
+    if not clean_hwid:
+        raise ValueError("Hardware ID vuoto")
 
-    # 2. SecretsManager (se configurato localmente per admin)
-    with contextlib.suppress(Exception):
-        raw_key = SecretsManager.get_license_key()
-        if raw_key:
-            return base64.urlsafe_b64encode(raw_key)
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=b"SyncroJob_Grace_Salt_2026",
+        iterations=480000,
+    )
+    # Deriva la chiave grezza (32 byte)
+    raw_key = kdf.derive(clean_hwid.encode("utf-8"))
 
-    return b""
+    # Converte in Base64 URL-safe (44 byte) come richiesto da Fernet
+    return base64.urlsafe_b64encode(raw_key)
 
 
 def _calculate_sha256(filepath):
@@ -396,16 +402,17 @@ class LicenseAdminApp:
         if not client_name:
             client_name = disk_serial[:20]  # Fallback
 
-        license_key = get_signing_key()
-        if not license_key:
-            messagebox.showerror(
-                "Errore Crittografia",
-                "Chiave segreta LICENSE_SECRET_KEY non trovata!\nImposta la variabile d'ambiente o il .env.",
-            )
-            return
-
         # Pulisci HW_ID (rimuovi punto finale se presente)
         hw_id = disk_serial.strip().rstrip(".")
+
+        # --- NUOVA LOGICA: Derivazione Chiave specifica per questo HWID ---
+        try:
+            # Usa la funzione locale auto-contenuta
+            license_key = derive_license_key(hw_id)
+        except Exception as ke:
+            messagebox.showerror("Errore Crittografia", f"Impossibile generare la chiave: {ke}")
+            return
+        # -----------------------------------------------------------------
 
         # Pulisci nome per cartella
         folder_name = (
