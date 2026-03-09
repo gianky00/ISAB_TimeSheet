@@ -72,6 +72,7 @@ class Toast(QWidget):
         self._type = toast_type
         self._pulse = pulse
         self._palette = get_palette()
+        self._msg_text = message
         self._original_container_size: QSize | None = None
 
         self.setWindowFlags(
@@ -219,6 +220,7 @@ class ToastManager(QObject):
     ) -> None:
         """
         Crea e visualizza un nuovo toast, calcolando la posizione corretta nello stack.
+        Evita duplicati identici visibili contemporaneamente.
 
         Args:
             message: Messaggio da mostrare.
@@ -227,10 +229,17 @@ class ToastManager(QObject):
             position: "top" (default) o "bottom" (sopra il footer).
             pulse: Se True, attiva l'animazione di pulsazione.
         """
+        # Pulisce la lista dei toast non più visibili
+        ToastManager._active_toasts = [t for t in ToastManager._active_toasts if t.isVisible()]
+
+        # Prevenzione duplicati identici (spam)
+        for t in ToastManager._active_toasts:
+            if hasattr(t, "_msg_text") and t._msg_text == message:
+                return
+
         parent = QApplication.activeWindow()
         toast = Toast(message, toast_type, duration, pulse, parent)
-        # Update active toasts list using the class variable correctly
-        ToastManager._active_toasts = [t for t in ToastManager._active_toasts if t.isVisible()]
+        toast._msg_text = message  # Memorizza il testo per il filtro duplicati
 
         if parent:
             geo = parent.geometry()

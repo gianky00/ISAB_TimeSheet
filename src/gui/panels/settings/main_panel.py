@@ -46,6 +46,7 @@ class SettingsPanel(QWidget):
             parent: Widget genitore.
         """
         super().__init__(parent)
+        self._is_loading = False
         self._setup_ui()
         QTimer.singleShot(50, self.load_settings)
 
@@ -125,14 +126,21 @@ class SettingsPanel(QWidget):
 
     def load_settings(self) -> None:
         """Carica la configurazione attuale e aggiorna tutti i tab."""
-        config = config_manager.load_config()
-        self.config_tab.load_from_config(config)
-        self.roi_tab.load_from_config(config)
-        self.backup_tab.load_from_config(config)
-        self.telegram_tab.load_from_config(config)
+        self._is_loading = True
+        try:
+            config = config_manager.load_config()
+            self.config_tab.load_from_config(config)
+            self.roi_tab.load_from_config(config)
+            self.backup_tab.load_from_config(config)
+            self.telegram_tab.load_from_config(config)
+        finally:
+            self._is_loading = False
 
     def save_settings(self) -> None:
         """Raccoglie i dati dai tab e li persiste tramite il config_manager."""
+        if self._is_loading:
+            return
+
         config = config_manager.load_config()
         self.config_tab.save_to_config(config)
         self.roi_tab.save_to_config(config)

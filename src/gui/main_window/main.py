@@ -373,12 +373,24 @@ class MainWindow(QMainWindow):
 
                     logging.getLogger("MainWindow").debug(f"Salto refresh database silente per {panel}: {e}")
 
-        # 4. Feedback utente
+        # 4. Feedback utente (Debounced per evitare spam all'avvio)
         if not getattr(self, "_is_initializing", False):
-            ToastManager.instance().show(
-                "<center><b>Hot Reload Completato</b><br/>Tutte le impostazioni sono ora attive.</center>",
-                "success",
-            )
+            if not hasattr(self, "_hot_reload_timer"):
+                self._hot_reload_timer = QTimer(self)
+                self._hot_reload_timer.setSingleShot(True)
+                self._hot_reload_timer.timeout.connect(self._show_hot_reload_toast)
+
+            # Riavvia il timer (debounce 500ms)
+            self._hot_reload_timer.start(500)
+
+    def _show_hot_reload_toast(self) -> None:
+        """Mostra il toast di conferma ricaricamento impostazioni."""
+        from src.gui.widgets.toast import ToastManager
+
+        ToastManager.instance().show(
+            "<center><b>Hot Reload Completato</b><br/>Tutte le impostazioni sono ora attive.</center>",
+            "success",
+        )
 
     def _on_help_requested(self, section_title: str) -> None:
         """Naviga alla sezione di aiuto specificata."""
