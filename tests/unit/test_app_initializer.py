@@ -12,9 +12,10 @@ class TestAppInitializer:
         yield
         AppInitializer._core_initialized = False
 
+    @patch("src.core.license_updater.run_update")
     @patch("src.core.license_validator.get_detailed_license_status")
     @patch("src.core.database.db_manager.init_db")
-    def test_initialize_core_success(self, mock_db_init, mock_license):
+    def test_initialize_core_success(self, mock_db_init, mock_license, mock_update):
         from src.core.license_validator import LicenseStatus
 
         mock_license.return_value = (LicenseStatus.VALID, "OK")
@@ -24,6 +25,7 @@ class TestAppInitializer:
 
         assert result is True
         assert AppInitializer._core_initialized is True
+        mock_update.assert_called_once()
 
     @patch("src.core.license_updater.run_update")
     @patch("src.core.license_validator.get_detailed_license_status")
@@ -34,9 +36,9 @@ class TestAppInitializer:
         mock_license.return_value = (LicenseStatus.EXPIRED, "License expired")
 
         with patch.object(AppInitializer, "_setup_logging"):
-            result = AppInitializer.initialize_core()
+            with pytest.raises(Exception, match="Licenza non valida"):
+                AppInitializer.initialize_core()
 
-        assert result is False
         mock_update.assert_called_once()
 
     def test_initialize_core_already_initialized(self):
@@ -46,16 +48,20 @@ class TestAppInitializer:
 
         assert result is True
 
+    @patch("src.core.license_updater.run_update")
     @patch("src.core.database.db_manager.init_db", side_effect=Exception("DB Error"))
-    def test_initialize_core_failure(self, mock_db_init):
+    def test_initialize_core_failure(self, mock_db_init, mock_update):
         # Patch license check to avoid other side effects
+        from src.core.license_validator import LicenseStatus
+
         with patch(
-            "src.core.license_validator.get_detailed_license_status", return_value=(MagicMock(), "OK")
+            "src.core.license_validator.get_detailed_license_status",
+            return_value=(LicenseStatus.VALID, "OK"),
         ):
             with patch.object(AppInitializer, "_setup_logging"):
-                result = AppInitializer.initialize_core()
-
-        assert result is False
+                with pytest.raises(Exception, match="Errore Database"):
+                    AppInitializer.initialize_core()
+        mock_update.assert_called_once()
 
     @patch("src.core.app_initializer.QApplication")
     def test_yield_processes_events(self, mock_qapp):

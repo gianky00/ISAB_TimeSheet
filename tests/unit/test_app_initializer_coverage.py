@@ -40,23 +40,24 @@ class TestAppInitializerCoverage:
         mock_core_deps["setup_logging"].assert_not_called()
 
     def test_initialize_core_with_license_update(self, mock_core_deps):
-        """Test: Tenta update licenza e ritorna False se ancora non valida."""
+        """Test: Tenta update licenza e solleva eccezione se ancora non valida."""
         AppInitializer._core_initialized = False
         mock_core_deps["get_status"].return_value = (LicenseStatus.INVALID, "Expired")
 
-        res = AppInitializer.initialize_core()
+        with pytest.raises(Exception, match="Licenza non valida"):
+            AppInitializer.initialize_core()
 
-        assert res is False
         mock_core_deps["run_update"].assert_called_once()
 
     def test_initialize_core_exception(self, mock_core_deps):
         """Test: Gestione eccezioni durante inizializzazione (DB crash)."""
         AppInitializer._core_initialized = False
         mock_core_deps["db_init"].side_effect = Exception("Crash")
+        mock_core_deps["get_status"].return_value = (LicenseStatus.VALID, "OK")
 
-        res = AppInitializer.initialize_core()
+        with pytest.raises(Exception, match="Crash"):
+            AppInitializer.initialize_core()
 
-        assert res is False
         assert AppInitializer._core_initialized is False
 
     def test_setup_app_style(self, mocker):
