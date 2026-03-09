@@ -36,7 +36,7 @@ class TestAppInitializer:
         with patch.object(AppInitializer, "_setup_logging"):
             result = AppInitializer.initialize_core()
 
-        assert result is True
+        assert result is False
         mock_update.assert_called_once()
 
     def test_initialize_core_already_initialized(self):

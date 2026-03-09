@@ -61,6 +61,9 @@ class BotSignals(QObject):
     log_emitted = pyqtSignal(str, str)
     """Segnale emesso per ogni nuovo messaggio di log (messaggio, livello)."""
 
+    critical_error = pyqtSignal(str, str)
+    """Segnale emesso per errori fatali che richiedono un'interazione UI bloccante (titolo, messaggio)."""
+
 
 class BaseBot(ABC):
     """
@@ -111,6 +114,7 @@ class BaseBot(ABC):
         self._steps_state: list[StepStatus] = []
         self._trace_id = generate_trace_id()
         self._logger = get_logger(f"bot.{self.__class__.__name__}")
+        self._force_download = False
 
     @property
     @abstractmethod
@@ -303,7 +307,7 @@ class BaseBot(ABC):
             "--no-restore-session-state",
             "--disable-dev-shm-usage",
             "--disable-gpu",
-            "--remote-debugging-port=9222",
+            "--remote-debugging-port=0",
             "--disable-software-rasterizer",
         ]
         for a in args:
@@ -318,7 +322,9 @@ class BaseBot(ABC):
             opt.add_argument("--headless=new")
             opt.add_argument(f"--window-size={BrowserConfig.WINDOW_SIZE}")
 
-        opt.add_argument(f"user-data-dir={config_manager.CONFIG_DIR / 'data' / BrowserConfig.CACHE_DIR_NAME}")
+        opt.add_argument(
+            f"--user-data-dir={config_manager.CONFIG_DIR / 'data' / BrowserConfig.CACHE_DIR_NAME}"
+        )
 
         prefs: dict[str, Any] = {
             "profile.default_content_setting_values.automatic_downloads": 1,
@@ -338,20 +344,22 @@ class BaseBot(ABC):
         from src.utils.resource_manager import ResourceManager
 
         p_dir = ResourceManager.get_writable_drivers_dir()
-        if (p_dir / "chromedriver.exe").exists():
-            return str((p_dir / "chromedriver.exe").resolve())
 
-        if (
-            getattr(sys, "frozen", False)
-            and (ext := Path(sys.executable).parent / "drivers" / "chromedriver.exe").exists()
-        ):
-            return str(ext.resolve())
+        if not getattr(self, "_force_download", False):
+            if (p_dir / "chromedriver.exe").exists():
+                return str((p_dir / "chromedriver.exe").resolve())
 
-        if (bndl := Path(ResourceManager.PROJECT_ROOT) / "drivers" / "chromedriver.exe").exists():
-            return str(bndl.resolve())
+            if (
+                getattr(sys, "frozen", False)
+                and (ext := Path(sys.executable).parent / "drivers" / "chromedriver.exe").exists()
+            ):
+                return str(ext.resolve())
+
+            if (bndl := Path(ResourceManager.PROJECT_ROOT) / "drivers" / "chromedriver.exe").exists():
+                return str(bndl.resolve())
 
         try:
-            self.log("Aggiornamento driver...")
+            self.log("Aggiornamento driver in corso...")
             d_path = ChromeDriverManager().install()
             if not d_path.lower().endswith(".exe") and (
                 pot := list(Path(d_path).parent.rglob("chromedriver.exe"))
@@ -406,12 +414,26 @@ class BaseBot(ABC):
         if "chrome instance exited" in msg:
             self.log("❌ CRASH: Chrome si è chiuso all'avvio", "ERROR")
             self.log("💡 SUGGERIMENTO: Assicurati che Chrome sia aggiornato e non ci siano istanze appese.")
+            self._force_driver_redownload()
         elif "version" in msg or "sessionnotcreated" in msg:
             self.log("❌ ERRORE CRITICO DRIVER: Versione incompatibile", "ERROR")
-            self.log("💡 SUGGERIMENTO: Aggiorna Chrome o scarica chromedriver compatibile.")
+            self.log("💡 SUGGERIMENTO: Al prossimo avvio verrà scaricato un driver aggiornato.")
+            self._force_driver_redownload()
         else:
             self.log(f"❌ ERRORE DRIVER: {e}", "ERROR")
         raise e
+
+    def _force_driver_redownload(self) -> None:
+        """Forza la rimozione del driver in cache per costringere il download al prossimo tentativo."""
+        from src.utils.resource_manager import ResourceManager
+
+        self._force_download = True
+        with suppress(Exception):
+            p_dir = ResourceManager.get_writable_drivers_dir()
+            d_exe = p_dir / "chromedriver.exe"
+            if d_exe.exists():
+                d_exe.unlink()
+                self.log("🗑️ Driver locale obsoleto rimosso dalla cache.")
 
     @measure_time(threshold_ms=5000)
     def execute(self, data: list[dict[str, Any]]) -> bool:
@@ -420,6 +442,29 @@ class BaseBot(ABC):
         Garantisce il mantenimento del contesto di logging e la cattura di screenshot in caso di fallimento.
         """
         self._stop_requested = False
+
+        # --- SICUREZZA: Verifica Licenza JIT (Just-In-Time) ---
+        from src.core.license_updater import run_update
+        from src.core.license_validator import verify_license
+
+        try:
+            # Tenta una sincronizzazione rapida cloud prima dell'avvio
+            run_update()
+        except Exception as le:
+            if "REVOCATA" in str(le):
+                self.log(f"❌ ACCESSO NEGATO: {le}", "ERROR")
+                if hasattr(self, "signals"):
+                    self.signals.critical_error.emit("Licenza Revocata", str(le))
+                self.status = BotStatus.ERROR
+                return False
+
+        valid, msg = verify_license()
+        if not valid:
+            self.log(f"❌ AVVIO NEGATO: {msg}", "ERROR")
+            self.status = BotStatus.ERROR
+            return False
+        # ----------------------------------------------------
+
         self._initialize_steps()
         with with_context(
             trace_id=self._trace_id,

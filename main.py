@@ -93,7 +93,7 @@ def main():
 
     from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
     from PyQt6.QtNetwork import QLocalServer, QLocalSocket
-    from PyQt6.QtWidgets import QApplication, QMessageBox
+    from PyQt6.QtWidgets import QApplication
 
     # Get loggers
     logger = get_logger("main")
@@ -159,7 +159,7 @@ def main():
         """Worker thread for Phase 1 initialization (heavy imports)."""
 
         progress = pyqtSignal(str, int)
-        finished = pyqtSignal(bool)
+        finished = pyqtSignal(bool, str)
 
         def run(self):
             """Execute Phase 1 initialization in background thread."""
@@ -170,23 +170,28 @@ def main():
                 # FASE 1 ora usa initialize_core (ritorna bool)
                 success = AppInitializer.initialize_core()
                 phase1_logger.info("Phase 1 completed", success=success)
-                self.finished.emit(success)
+                if not success:
+                    self.finished.emit(False, "Errore generico di inizializzazione")
+                else:
+                    self.finished.emit(True, "")
             except Exception as e:
                 phase1_logger.exception("Phase 1 initialization failed", exc=e)
-                self.finished.emit(False)
+                self.finished.emit(False, str(e))
 
     # Variabili di stato
     phase1_done = [False]
     phase1_success = [False]
+    phase1_error_msg = [""]
 
     def on_phase1_progress(msg, prog):
         """Update splash screen with Phase 1 progress."""
         splash.update_status(msg, prog)
 
-    def on_phase1_finished(success):
+    def on_phase1_finished(success, error_msg):
         """Handle Phase 1 completion and store result."""
         phase1_done[0] = True
         phase1_success[0] = success
+        phase1_error_msg[0] = error_msg
 
     # Avvia thread per fase 1
     thread1 = QThread()
@@ -205,10 +210,22 @@ def main():
     thread1.quit()
     thread1.wait(1000)
 
+    from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
+
     if not phase1_success[0]:
         splash.close()
-        QMessageBox.critical(None, "Errore", "Inizializzazione fallita")
+        err_text = phase1_error_msg[0] if phase1_error_msg[0] else "Inizializzazione fallita"
+        ConfirmationDialog.show_error(None, "Errore Avvio", err_text)
         sys.exit(1)
+
+    # Visualizzazione Avvisi Accumulati (Non-Bloccanti ma importanti per l'utente)
+    for severity, message in AppInitializer.get_alerts():
+        if severity == "CRITICAL" or severity == "ERROR":
+            ConfirmationDialog.show_error(splash, "Allerta Licenza", message)
+        elif severity == "WARNING":
+            ConfirmationDialog.show_warning(splash, "Avviso Licenza", message)
+        else:
+            ConfirmationDialog.show_info(splash, "Sincronizzazione", message)
 
     # === FASE 2: Creazione MainWindow (Thread principale richiesto da Qt) ===
     splash.update_status("Costruzione interfaccia...", 40)
@@ -310,10 +327,12 @@ def main():
         except Exception as io_error:
             print(f"Failed to write crash.txt: {io_error}")
 
-        QMessageBox.critical(
+        from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
+
+        ConfirmationDialog.show_error(
             None,
-            "Errore",
-            f"Errore fatale:\n{e}\n\nDettagli salvati in: {crash_file or 'logs'}",
+            "Errore Fatale",
+            f"Errore improvviso:\n{e}\n\nDettagli salvati in: {crash_file or 'logs'}",
         )
         server.close()
         sys.exit(1)

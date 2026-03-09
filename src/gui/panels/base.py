@@ -23,6 +23,7 @@ from src.core.logging import get_logger
 from src.core.stats_manager import StatsManager
 from src.gui.components.activity_timeline import ActivityTimelineWidget
 from src.gui.design.spacing import Spacing
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.dialogs.standard_input_dialog import StandardInputDialog
 from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import TimelineWidget
@@ -444,6 +445,11 @@ class BaseBotPanel(QWidget):
         worker.log_signal.connect(self._on_log)
         worker.status_signal.connect(self._on_status)
         worker.finished_signal.connect(self._on_worker_finished)
+
+        # Segnale per errori critici (es. licenza revocata)
+        worker.bot.signals.critical_error.connect(
+            lambda title, msg: ConfirmationDialog.show_error(self, title, msg)
+        )
 
         # Segnale di aggiornamento dati (per sincronizzare altri pannelli)
         if hasattr(self, "data_updated"):

@@ -22,8 +22,11 @@ from typing import Any
 from cryptography.fernet import Fernet
 
 from src.core.audit_manager import AuditManager
+from src.core.logging import get_logger
 from src.core.secrets_manager import SecretsManager
 from src.core.time_manager import get_trusted_time
+
+logger = get_logger(__name__)
 
 
 class LicenseStatus(Enum):
@@ -193,14 +196,20 @@ def get_license_info() -> dict[str, Any] | None:
         encrypted_data = paths["config"].read_bytes()
         key_raw = SecretsManager.get_license_key()
         if not key_raw:
+            logger.error("Chiave di licenza non trovata in SecretsManager")
             return None
         import base64
 
         key_b64 = base64.urlsafe_b64encode(key_raw)
         cipher = Fernet(key_b64)
-        decrypted = cipher.decrypt(encrypted_data).decode("utf-8")
-        return json.loads(decrypted)  # type: ignore[no-any-return]
-    except Exception:
+        try:
+            decrypted = cipher.decrypt(encrypted_data).decode("utf-8")
+            return json.loads(decrypted)  # type: ignore[no-any-return]
+        except Exception as de:
+            logger.error(f"Errore decifratura config.dat: {de}")
+            return None
+    except Exception as e:
+        logger.error(f"Errore caricamento licenza: {e}")
         return None
 
 

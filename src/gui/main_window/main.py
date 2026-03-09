@@ -109,6 +109,31 @@ class MainWindow(QMainWindow):
         # Navigazione iniziale (Dashboard)
         self.navigation_controller.navigate_to(PageIndex.DASHBOARD)
 
+        # --- LICENSE HEARTBEAT (Real-time enforcement) ---
+        self._license_timer = QTimer(self)
+        self._license_timer.timeout.connect(self._check_license_heartbeat)
+        # Controllo ogni 4 ore (4 * 60 * 60 * 1000 ms)
+        self._license_timer.start(14400000)
+
+    def _check_license_heartbeat(self) -> None:
+        """Esegue una sincronizzazione silente della licenza in background."""
+        from src.core.license_updater import run_update
+        from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
+
+        try:
+            # run_update() solleva Exception("REVOCATA...") se la licenza è stata rimossa
+            run_update()
+        except Exception as e:
+            if "REVOCATA" in str(e):
+                self._license_timer.stop()
+                ConfirmationDialog.show_error(
+                    self,
+                    "Licenza Revocata",
+                    "La licenza è stata revocata dal server.\nL'applicazione verrà chiusa.",
+                )
+                self._force_quit = True
+                QApplication.quit()
+
     def finalize_init(self) -> None:
         """Metodo chiamato per finalizzare l'inizializzazione dopo la visualizzazione della finestra."""
         import logging
@@ -336,6 +361,7 @@ class MainWindow(QMainWindow):
                     panel._load_saved_data()
                 except Exception as e:
                     import logging
+
                     logging.getLogger("MainWindow").warning(f"Errore hot-reload dati in {panel}: {e}")
 
             # Refresh Database se visibili
@@ -344,13 +370,14 @@ class MainWindow(QMainWindow):
                     panel.refresh_data()
                 except Exception as e:
                     import logging
+
                     logging.getLogger("MainWindow").debug(f"Salto refresh database silente per {panel}: {e}")
 
         # 4. Feedback utente
         if not getattr(self, "_is_initializing", False):
             ToastManager.instance().show(
                 "<center><b>Hot Reload Completato</b><br/>Tutte le impostazioni sono ora attive.</center>",
-                "success"
+                "success",
             )
 
     def _on_help_requested(self, section_title: str) -> None:
