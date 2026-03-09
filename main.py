@@ -132,7 +132,9 @@ def main():
         """Handle incoming connection from another instance to activate window."""
         client_socket = server.nextPendingConnection()
         if client_socket and client_socket.waitForReadyRead(500):
-            msg = client_socket.readAll().data().decode()
+            # Limita la lettura a 1024 byte per prevenire Local DoS via memoria
+            data = client_socket.read(1024)
+            msg = data.data().decode()
             if msg == "ACTIVATE" and main_window_instance:
                 main_window_instance.show()
                 main_window_instance.raise_()
@@ -221,11 +223,11 @@ def main():
     # Visualizzazione Avvisi Accumulati (Non-Bloccanti ma importanti per l'utente)
     for severity, message in AppInitializer.get_alerts():
         if severity == "CRITICAL" or severity == "ERROR":
-            ConfirmationDialog.show_error(splash, "Allerta Licenza", message)
+            ConfirmationDialog.show_error(splash, "Allerta Licenza", message, is_rich_text=True)
         elif severity == "WARNING":
-            ConfirmationDialog.show_warning(splash, "Avviso Licenza", message)
+            ConfirmationDialog.show_warning(splash, "Avviso Licenza", message, is_rich_text=True)
         else:
-            ConfirmationDialog.show_info(splash, "Sincronizzazione", message)
+            ConfirmationDialog.show_info(splash, "Sincronizzazione", message, is_rich_text=True)
 
     # === FASE 2: Creazione MainWindow (Thread principale richiesto da Qt) ===
     splash.update_status("Costruzione interfaccia...", 40)

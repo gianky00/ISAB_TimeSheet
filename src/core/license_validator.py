@@ -198,10 +198,8 @@ def get_license_info() -> dict[str, Any] | None:
         if not key_raw:
             logger.error("Chiave di licenza non trovata in SecretsManager")
             return None
-        import base64
 
-        key_b64 = base64.urlsafe_b64encode(key_raw)
-        cipher = Fernet(key_b64)
+        cipher = Fernet(key_raw)
         try:
             decrypted = cipher.decrypt(encrypted_data).decode("utf-8")
             return json.loads(decrypted)  # type: ignore[no-any-return]

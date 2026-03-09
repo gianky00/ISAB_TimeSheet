@@ -182,6 +182,7 @@ class MainWindow(QMainWindow):
             5000,
             position="bottom",
             pulse=True,
+            is_rich_text=True,
         )
 
     def _load_styles(self) -> None:
@@ -390,6 +391,7 @@ class MainWindow(QMainWindow):
         ToastManager.instance().show(
             "<center><b>Hot Reload Completato</b><br/>Tutte le impostazioni sono ora attive.</center>",
             "success",
+            is_rich_text=True,
         )
 
     def _on_help_requested(self, section_title: str) -> None:

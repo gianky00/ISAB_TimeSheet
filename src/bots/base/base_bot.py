@@ -513,9 +513,26 @@ class BaseBot(ABC):
             edir = config_manager.CONFIG_DIR / "logs" / "errors"
             edir.mkdir(parents=True, exist_ok=True)
             ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-            sn = self.name.replace(" ", "_").lower()
+            # Sanificazione nome bot per prevenire Path Traversal
+            sn = re.sub(r"[^\w\-]", "_", self.name.lower())
             self.driver.save_screenshot(str(edir / f"error_{sn}_{ts}.png"))
-            (edir / f"error_{sn}_{ts}.html").write_text(self.driver.page_source, encoding="utf-8")
+
+            # Sanificazione sorgente HTML per prevenire Stored XSS nei log
+            raw_source = self.driver.page_source
+            clean_source = re.sub(
+                r"<script.*?>.*?</script>",
+                "<!-- SCRIPT REMOVED FOR SECURITY -->",
+                raw_source,
+                flags=re.DOTALL | re.IGNORECASE,
+            )
+            clean_source = re.sub(
+                r"<(iframe|object|embed|applet|meta|link|style).*?>",
+                "<!-- TAG REMOVED -->",
+                clean_source,
+                flags=re.IGNORECASE,
+            )
+
+            (edir / f"error_{sn}_{ts}.html").write_text(clean_source, encoding="utf-8")
             self.log(f"📸 Stato errore salvato in: {edir.name}")
 
     def _login(self) -> bool:

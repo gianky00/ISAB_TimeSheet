@@ -56,6 +56,7 @@ class Toast(QWidget):
         duration: int = 3000,
         pulse: bool = False,
         parent: QWidget | None = None,
+        is_rich_text: bool = False,
     ) -> None:
         """
         Inizializza il toast con i parametri di stile e durata.
@@ -66,6 +67,7 @@ class Toast(QWidget):
             duration: Durata della visualizzazione in millisecondi.
             pulse: Se True, attiva l'animazione di pulsazione.
             parent: Widget genitore.
+            is_rich_text: Se True, abilita il rendering HTML (sanificato).
         """
         super().__init__(parent)
         self._duration = duration
@@ -73,6 +75,7 @@ class Toast(QWidget):
         self._pulse = pulse
         self._palette = get_palette()
         self._msg_text = message
+        self._is_rich_text = is_rich_text
         self._original_container_size: QSize | None = None
 
         self.setWindowFlags(
@@ -120,7 +123,15 @@ class Toast(QWidget):
         icon_label.setStyleSheet("border: none; background: transparent;")
         container_layout.addWidget(icon_label)
 
-        msg_label = QLabel(message)
+        msg_label = QLabel()
+        if self._is_rich_text:
+            safe_msg = self._sanitize_html(message)
+            msg_label.setTextFormat(Qt.TextFormat.RichText)
+            msg_label.setText(safe_msg)
+        else:
+            msg_label.setTextFormat(Qt.TextFormat.PlainText)
+            msg_label.setText(message)
+
         msg_label.setStyleSheet(
             f"""
             color: {self._palette.on_surface};
@@ -133,6 +144,20 @@ class Toast(QWidget):
 
         main_layout.addWidget(self.container)
         self.adjustSize()
+
+    def _sanitize_html(self, html: str) -> str:
+        """Rimuove tag pericolosi dall'HTML del toast."""
+        import re
+
+        clean = re.sub(r"<script.*?>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
+        clean = re.sub(
+            r"<(script|iframe|object|embed|applet|meta|link|style).*?>",
+            "",
+            clean,
+            flags=re.IGNORECASE,
+        )
+        clean = re.sub(r"\son\w+?\s*=\s*['\"].*?['\"]", "", clean, flags=re.IGNORECASE)
+        return clean
 
     def _setup_animation(self) -> None:
         """Configura le animazioni di fade-in e fade-out."""
@@ -217,6 +242,7 @@ class ToastManager(QObject):
         duration: int = 3000,
         position: str = "top",
         pulse: bool = False,
+        is_rich_text: bool = False,
     ) -> None:
         """
         Crea e visualizza un nuovo toast, calcolando la posizione corretta nello stack.
@@ -228,6 +254,7 @@ class ToastManager(QObject):
             duration: Durata in ms.
             position: "top" (default) o "bottom" (sopra il footer).
             pulse: Se True, attiva l'animazione di pulsazione.
+            is_rich_text: Se True, abilita il rendering HTML (sanificato).
         """
         # Pulisce la lista dei toast non più visibili
         ToastManager._active_toasts = [t for t in ToastManager._active_toasts if t.isVisible()]
@@ -238,7 +265,7 @@ class ToastManager(QObject):
                 return
 
         parent = QApplication.activeWindow()
-        toast = Toast(message, toast_type, duration, pulse, parent)
+        toast = Toast(message, toast_type, duration, pulse, parent, is_rich_text=is_rich_text)
         toast._msg_text = message  # Memorizza il testo per il filtro duplicati
 
         if parent:

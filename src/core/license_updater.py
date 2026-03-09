@@ -12,65 +12,21 @@ import requests
 from cryptography.fernet import Fernet
 
 from src.core.logging import get_logger
+from src.core.secrets_manager import SecretsManager
 
 from . import config_manager, license_validator, time_manager
 
 logger = get_logger(__name__)
 
-# Chiave per cifratura token grace period
-GRACE_PERIOD_KEY = b"8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek="
-
 
 def get_github_token() -> str:
     """
-    Ricostruisce dinamicamente il token GitHub offuscato utilizzato per l'accesso ai file di licenza.
+    Recupera il token GitHub tramite il gestore dei segreti.
 
     Returns:
         str: Il token di autenticazione GitHub.
     """
-    chars = [
-        103,
-        104,
-        112,
-        95,
-        99,
-        57,
-        68,
-        103,
-        54,
-        116,
-        79,
-        67,
-        75,
-        104,
-        57,
-        89,
-        106,
-        112,
-        97,
-        70,
-        117,
-        66,
-        54,
-        73,
-        52,
-        79,
-        66,
-        121,
-        107,
-        103,
-        120,
-        114,
-        113,
-        98,
-        49,
-        85,
-        106,
-        106,
-        65,
-        105,
-    ]
-    return "".join(chr(c) for c in chars)
+    return SecretsManager.get_github_token()
 
 
 def get_license_dir() -> Path:
@@ -103,7 +59,7 @@ def update_grace_timestamp() -> None:
         token_path = _get_validity_token_path()
         current_time, _ = time_manager.get_trusted_time()
 
-        cipher = Fernet(GRACE_PERIOD_KEY)
+        cipher = Fernet(SecretsManager.get_grace_period_key())
         encrypted_time = cipher.encrypt(current_time.isoformat().encode("utf-8"))
 
         token_path.parent.mkdir(parents=True, exist_ok=True)
@@ -135,7 +91,7 @@ def check_grace_period() -> bool:
 
     try:
         encrypted_data = token_path.read_bytes()
-        cipher = Fernet(GRACE_PERIOD_KEY)
+        cipher = Fernet(SecretsManager.get_grace_period_key())
         decrypted_data = cipher.decrypt(encrypted_data).decode("utf-8")
         last_online = datetime.fromisoformat(decrypted_data)
 
@@ -170,7 +126,7 @@ def check_emergency_grace_period() -> tuple[bool, str, int]:
 
     if not token_path.exists():
         try:
-            cipher = Fernet(GRACE_PERIOD_KEY)
+            cipher = Fernet(SecretsManager.get_grace_period_key())
             encrypted_start = cipher.encrypt(current_time.isoformat().encode("utf-8"))
             token_path.parent.mkdir(parents=True, exist_ok=True)
             token_path.write_bytes(encrypted_start)
@@ -180,7 +136,7 @@ def check_emergency_grace_period() -> tuple[bool, str, int]:
 
     try:
         encrypted_data = token_path.read_bytes()
-        cipher = Fernet(GRACE_PERIOD_KEY)
+        cipher = Fernet(SecretsManager.get_grace_period_key())
         decrypted_data = cipher.decrypt(encrypted_data).decode("utf-8")
         start_time = datetime.fromisoformat(decrypted_data)
 
@@ -286,14 +242,11 @@ def run_update() -> bool:
 
                 # --- SICUREZZA: Verifica la validità dei nuovi dati prima di sovrascrivere ---
                 try:
-                    import base64
-
                     from src.core.secrets_manager import SecretsManager
 
                     key_raw = SecretsManager.get_license_key()
                     if key_raw:
-                        key_b64 = base64.urlsafe_b64encode(key_raw)
-                        cipher = Fernet(key_b64)
+                        cipher = Fernet(key_raw)
                         # Tenta la decifratura in memoria
                         decrypted = cipher.decrypt(new_config_bytes).decode("utf-8")
                         payload = json.loads(decrypted)
