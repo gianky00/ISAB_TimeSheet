@@ -108,8 +108,12 @@ class SecretsManager:
         if key:
             return key
 
-        # 4. Fallback Hardcoded (Master Key per decifratura config.dat)
-        return b"8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek="
+        # 4. Fallback Dinamico (UNICO PER PC): Derivazione da Hardware ID
+        # Rimosso fallback Master Key universale per massima sicurezza
+        try:
+            return cls.get_grace_period_key()
+        except Exception:
+            return None
 
     @classmethod
     def _get_key_from_env(cls) -> bytes | None:
