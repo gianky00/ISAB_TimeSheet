@@ -26,6 +26,12 @@ try:
             super().__init__(*args, **kwargs)
             self.figure = MagicMock()
 
+        def setParent(self, parent): pass
+        def setMinimumHeight(self, h): pass
+        def setSizePolicy(self, *args): pass
+        def setGraphicsEffect(self, effect): pass
+        def setStyleSheet(self, style): pass
+
     mock_backend = MagicMock()
     mock_backend.FigureCanvasQTAgg = MockCanvas
     mock_backend.FigureCanvas = MockCanvas
