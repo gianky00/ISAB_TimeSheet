@@ -1,28 +1,18 @@
 import base64
 import hashlib
 import json
-from datetime import UTC, date, datetime, timedelta
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from datetime import UTC, datetime
 
 import pytest
 from cryptography.fernet import Fernet
 
-from src.core.audit_manager import AuditManager
 from src.core.license_validator import (
     LicenseStatus,
-    _calculate_sha256,
-    _check_integrity_with_manifest,
-    _get_license_paths,
     _validate_license_data,
     get_detailed_license_status,
-    get_hardware_id,
-    get_license_client,
-    get_license_expiry,
-    get_license_info,
-    verify_license,
 )
 from src.core.secrets_manager import SecretsManager
+
 
 @pytest.fixture(autouse=True)
 def mock_no_migration(mocker):
@@ -46,7 +36,7 @@ def test_validate_license_data_expired_untrusted(mocker):
     payload = {"Hardware ID": "SAME", "Scadenza Licenza": "01/01/2020"}
     mocker.patch("src.core.license_validator.get_license_info", return_value=payload)
     mocker.patch("src.core.license_validator.get_hardware_id", return_value="SAME")
-    
+
     # Mock orario scaduto
     mocker.patch(
         "src.core.license_validator.get_trusted_time",
@@ -66,7 +56,7 @@ def test_get_detailed_license_status_valid(mocker, mock_license_dir, mock_secret
     }
     mocker.patch("src.core.license_validator._get_license_paths", return_value=paths)
     mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE_HW_ID")
-    
+
     cipher = Fernet(mock_secrets_manager)
     license_data = {
         "Hardware ID": "FAKE_HW_ID",

@@ -1,6 +1,9 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.gui.controllers.service_controller import ServiceController
+
 
 @pytest.mark.skip(reason="Crash nativo in ambiente headless Windows V9.0 durante coordinamento servizi background.")
 class TestServiceControllerCoverage:
@@ -60,7 +63,7 @@ class TestServiceControllerCoverage:
     def test_check_scheduled_tasks_no_trigger(self, mock_dt, controller):
         """Verifica che lo scheduler non parta se l'orario non coincide."""
         mock_dt.now.return_value.strftime.return_value = "10:00"
-        
+
         # Configurazione completa per evitare TypeError in V9.0
         test_config = {
             "timbrature_autopilot_enabled": True,
@@ -71,5 +74,5 @@ class TestServiceControllerCoverage:
 
         with patch("src.core.config_manager.load_config", return_value=test_config):
             controller._check_scheduled_tasks()
-            
+
         assert controller.running_bots_by_site["portale_fornitori"] == []

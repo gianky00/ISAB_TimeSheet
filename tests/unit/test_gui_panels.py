@@ -1,9 +1,12 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
 import pytest
 from PyQt6.QtWidgets import QApplication
+
 from src.gui.panels.carico_ts import CaricoTSPanel
 from src.gui.panels.scarico_ts import ScaricaTSPanel
 from src.gui.panels.settings.main_panel import SettingsPanel
+
 
 class TestGUIPanels:
     @pytest.fixture
@@ -47,7 +50,7 @@ class TestGUIPanels:
             "reparti": []
         }
         mock_load.return_value = test_config
-        
+
         with patch("src.core.secrets_manager.SecretsManager.get_gemini_api_key", return_value="fake"):
             panel = SettingsPanel()
             qtbot.addWidget(panel)
@@ -63,7 +66,7 @@ class TestGUIPanels:
 
             assert gen_page.headless_check.isChecked() is True
             assert gen_page.timeout_spin.value() == 60
-            
+
             # Verifica caricamento account nel widget modulare
             acc_widget = lists_page.account_section
             assert acc_widget.list_widget.count() >= 1

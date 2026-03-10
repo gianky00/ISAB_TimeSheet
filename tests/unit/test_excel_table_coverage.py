@@ -1,11 +1,13 @@
-import pytest
-from PyQt6.QtWidgets import QApplication, QTableWidgetItem, QWidget
-from PyQt6.QtCore import Qt
 from unittest.mock import MagicMock
 
-from src.gui.widgets.excel_table import EditableDataTable, ExcelTableWidget
-from src.gui.widgets.core_widgets import FilterComboBox
+import pytest
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QTableWidgetItem
+
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import FilterComboBox
+from src.gui.widgets.excel_table import EditableDataTable, ExcelTableWidget
+
 
 class TestExcelTableCoverage:
     @pytest.fixture
@@ -22,7 +24,7 @@ class TestExcelTableCoverage:
         it = QTableWidgetItem("Test")
         it.setFlags(it.flags() | Qt.ItemFlag.ItemIsEditable)
         table.setItem(0, 0, it)
-        
+
         # Usa FilterComboBox (richiesto da ExcelTableWidget per la pulizia widget)
         combo = FilterComboBox()
         combo.addItems(["", "Option 1"])
@@ -50,11 +52,11 @@ class TestExcelTableCoverage:
         # Carica dati (matching flessibile)
         test_data = [{"col1": "Val1", "COL 2": "A"}]
         data_table.set_data(test_data)
-        
+
         # Una riga caricata
         assert data_table.table.rowCount() == 1
         assert data_table.table.item(0, 0).text() == "Val1"
-        
+
         # Recupera dati
         exported = data_table.get_data()
         assert len(exported) == 1

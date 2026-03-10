@@ -453,7 +453,7 @@ class BaseBotPanel(QWidget):
 
         # Segnale di aggiornamento dati (per sincronizzare altri pannelli)
         if hasattr(self, "data_updated"):
-            worker.finished_signal.connect(lambda success: success and self.data_updated.emit())
+            worker.finished_signal.connect(lambda success: self.data_updated.emit() if success else None)
 
         # Connessione automatica timeline
         if hasattr(self, "activity_timeline"):

@@ -1,14 +1,14 @@
-from datetime import datetime, timedelta, UTC
-from unittest.mock import MagicMock, patch
+from datetime import UTC, datetime
+from unittest.mock import patch
 
 import pytest
 
 from src.core.constants import Icons
 from src.core.contabilita.certificati_engine import CertificatiEngine
+from src.gui.dialogs.certificati_analysis_dialog import ScadenzeAnalysisDialog
 from src.gui.widgets.contabilita.certificati_tab import (
     CertificatiCampioneTab,
 )
-from src.gui.dialogs.certificati_analysis_dialog import ScadenzeAnalysisDialog
 
 
 class TestCertificatiGUI:
@@ -32,7 +32,7 @@ class TestCertificatiGUI:
         with patch("src.core.contabilita.certificati_engine.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2024, 1, 1, tzinfo=UTC)
             mock_dt.strptime = datetime.strptime
-            
+
             # Scaduto
             days, icon = CertificatiEngine.calculate_days_and_status("01/12/2023")
             assert days is not None and days < 0
@@ -58,7 +58,7 @@ class TestCertificatiGUI:
     def test_exclusions_engine_io(self, tmp_path):
         """Testa il caricamento e salvataggio delle esclusioni nell'Engine."""
         test_file = tmp_path / "exclusions.json"
-        
+
         with patch("src.core.contabilita.certificati_engine.CertificatiEngine.EXCLUSIONS_FILE", test_file):
             engine = CertificatiEngine()
             # Salva

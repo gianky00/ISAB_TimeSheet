@@ -1,9 +1,10 @@
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 from src.core.telegram_bridge import TelegramUIBridge
 from src.core.telegram_manager import TelegramService
+
 
 class TestTelegramCoverage:
     @pytest.fixture

@@ -1,5 +1,6 @@
+
 from src.gui.widgets.excel_table import EditableDataTable, ExcelTableWidget
-import pytest
+
 
 class TestExcelTableWidgetDeep:
     def test_basic_table_operations(self, qapp, qtbot):

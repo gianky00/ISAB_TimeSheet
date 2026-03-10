@@ -1,9 +1,11 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+
 import pytest
 from PyQt6.QtWidgets import QApplication
 
 from src.gui.main_window.main import MainWindow
 from src.gui.main_window.page_index import PageIndex
+
 
 class TestMainWindow:
     @pytest.fixture
@@ -39,7 +41,7 @@ class TestMainWindow:
             # Navigazione Automazioni
             window.navigation_controller.navigate_to(PageIndex.AUTOMAZIONI)
             qtbot.waitUntil(lambda: window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI, timeout=2000)
-            
+
             # Ritorno alla Home
             window.navigation_controller.navigate_to(PageIndex.DASHBOARD)
             qtbot.waitUntil(lambda: window.page_stack.currentIndex() == PageIndex.DASHBOARD, timeout=2000)
@@ -60,10 +62,10 @@ class TestMainWindow:
             # Deep link: 'timbrature' porta a Automazioni (1) -> Fornitori (0) -> Timbrature (2)
             window.navigation_controller.navigate_to_panel("timbrature")
             qtbot.waitUntil(lambda: window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI, timeout=2000)
-            
+
             # Recupera il widget delle automazioni
             automazioni_panel = window.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
-            
+
             # Verifica tab Fornitori attivo
             assert automazioni_panel.main_tabs.currentIndex() == 0
             # Verifica tab Timbrature (bot) attivo

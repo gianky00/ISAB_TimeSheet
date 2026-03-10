@@ -109,8 +109,9 @@ class WorkflowController(QObject):
 
     def run_dettagli_oda_update(self) -> None:
         """Avvia l'aggiornamento massivo dello Storico OdA tramite il bot Dettagli OdA."""
-        from src.gui.main_window.page_index import PageIndex
         from PyQt6.QtCore import QDate
+
+        from src.gui.main_window.page_index import PageIndex
 
         # 1. Recupera il pannello Automazioni (Lazy Loading) senza navigare
         automazioni_widget = self.mw.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)

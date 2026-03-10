@@ -78,7 +78,7 @@ class ODAController:
         # 31:testo_breve, 3:pos_oda, 27:num_riga, 28:quantita, 29:unita_mis, 30:prezzo_lordo
 
         val_pos_riga = f"{pos_row[3]}/{pos_row[27]}" if str(pos_row[27]) != "0" else str(pos_row[3])
-        
+
         # Accorpamento Quantità + Unità Misura + Prezzo con €
         qta_val = pos_row[28]
         uom_val = pos_row[29]

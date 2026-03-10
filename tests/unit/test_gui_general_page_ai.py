@@ -1,7 +1,10 @@
+from unittest.mock import patch
+
 import pytest
 from PyQt6.QtCore import Qt
-from unittest.mock import MagicMock, patch
+
 from src.gui.panels.settings.pages.general_page import GeneralPage
+
 
 class TestGeneralPageAI:
     @pytest.fixture

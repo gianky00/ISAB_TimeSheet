@@ -1,5 +1,7 @@
 from unittest.mock import patch
+
 from src.core.oda_manager import OdaManager
+
 
 class TestOdaManager:
     @patch("src.core.oda_manager.db_manager")

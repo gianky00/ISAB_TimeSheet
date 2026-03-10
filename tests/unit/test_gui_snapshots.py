@@ -1,4 +1,3 @@
-from unittest.mock import patch, MagicMock
 import pytest
 from PyQt6.QtWidgets import QApplication
 
@@ -6,15 +5,16 @@ from PyQt6.QtWidgets import QApplication
 from src.gui.panels.contabilita_panel import ContabilitaPanel
 from src.gui.panels.scarico_ore_panel import ScaricoOrePanel
 
+
 class TestGuiSnapshots:
     @pytest.fixture
     def mock_deps(self, mocker):
         # Mock per ContabilitaManager (evita chiamate DB in refresh_tabs)
         mocker.patch("src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024, 2025])
-        
+
         # Mock per ScaricoOreController (evita inizializzazione database reale)
         mocker.patch("src.gui.panels.scarico_ore_panel.ScaricoOreController")
-        
+
         # Mock per config_manager
         mocker.patch("src.core.config_manager.get_config_value", return_value=[])
         mocker.patch("src.core.config_manager.load_config", return_value={})

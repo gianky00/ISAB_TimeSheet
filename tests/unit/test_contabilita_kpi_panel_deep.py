@@ -1,6 +1,8 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
 import pytest
 from PyQt6.QtWidgets import QWidget
+
 
 class TestContabilitaKPIPanelDeep:
     @pytest.mark.skip(reason="Matplotlib Qt backend causes persistent native Access Violation in this headless environment")

@@ -1,16 +1,8 @@
-import numpy as np
 import os
 import sys
-# Evita il caricamento dei backend Matplotlib Qt durante i test per prevenire Access Violation nativi
-if "pytest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST"):
-    from unittest.mock import MagicMock
-    FigureCanvas = MagicMock  # type: ignore
-else:
-    try:
-        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-    except (ImportError, RuntimeError):
-        from unittest.mock import MagicMock
-        FigureCanvas = MagicMock  # type: ignore
+from typing import Any
+
+import numpy as np
 from matplotlib.figure import Figure
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
@@ -24,6 +16,20 @@ from PyQt6.QtWidgets import (
 
 from src.gui.styles import COLORS
 from src.gui.widgets.info_widgets import InfoLabel
+
+FigureCanvas: Any = None
+
+# Evita il caricamento dei backend Matplotlib Qt durante i test per prevenire Access Violation nativi
+if "pytest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST"):
+    from unittest.mock import MagicMock
+    FigureCanvas = MagicMock
+else:
+    try:
+        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+        FigureCanvas = FigureCanvasQTAgg
+    except (ImportError, RuntimeError):
+        from unittest.mock import MagicMock
+        FigureCanvas = MagicMock
 
 
 class ChartContainer(QWidget):

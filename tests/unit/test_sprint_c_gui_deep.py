@@ -1,9 +1,9 @@
+
 import pytest
-from unittest.mock import MagicMock, patch
-from PyQt6.QtWidgets import QApplication
 
 from src.gui.panels.contabilita_panel import ContabilitaPanel
 from src.gui.panels.dashboard_panel import DashboardPanel
+
 
 class TestSprintCGUIDeep:
     """Test suite di integrazione profonda per la GUI V9.0."""
@@ -14,7 +14,7 @@ class TestSprintCGUIDeep:
         mocker.patch("src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024])
         panel = ContabilitaPanel()
         qtbot.addWidget(panel)
-        
+
         # Simula refresh
         panel._safe_refresh_tabs()
         assert panel.main_tabs.count() > 0

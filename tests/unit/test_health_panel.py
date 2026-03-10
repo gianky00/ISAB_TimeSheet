@@ -1,7 +1,9 @@
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
 from PyQt6.QtGui import QColor
+
 from src.gui.styles import COLORS
+
 
 class TestHealthScoreBadge:
     """Test per HealthScoreBadge widget."""
@@ -70,6 +72,7 @@ class TestStatCard:
 class TestAnomalyCard:
     def test_anomaly_card_initialization(self, qtbot):
         from dataclasses import dataclass
+
         from src.gui.panels.health_panel import AnomalyCard
 
         @dataclass
@@ -84,13 +87,14 @@ class TestAnomalyCard:
 
     def test_anomaly_severity_colors(self, qtbot):
         from dataclasses import dataclass
+
         from src.gui.panels.health_panel import AnomalyCard
         @dataclass
         class MockAnomaly:
             severity: str = "low"
             message: str = "T"
             suggestion: str = ""
-        
+
         card = AnomalyCard(MockAnomaly())
         assert card._get_severity_color("low") == COLORS["info_blue"]
         assert card._get_severity_color("critical") == COLORS["error_red"]
@@ -109,6 +113,7 @@ class TestHealthPanel:
     @patch("src.core.logging.viewer.LogViewer")
     def test_panel_refresh(self, mock_viewer, mock_report, mock_timer, qtbot):
         from dataclasses import dataclass
+
         from src.gui.panels.health_panel import HealthPanel
 
         @dataclass
@@ -116,7 +121,8 @@ class TestHealthPanel:
             health_score: int = 85
             anomalies: list = None
             def __post_init__(self):
-                if self.anomalies is None: self.anomalies = []
+                if self.anomalies is None:
+                    self.anomalies = []
 
         mock_report.return_value = MockReport()
         mock_viewer().generate_health_report.return_value = {

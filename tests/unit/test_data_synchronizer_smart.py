@@ -1,7 +1,10 @@
 import sqlite3
+
 import pytest
-from src.core.sync.smart_sync import SmartSyncEngine
+
 from src.core.sync.base import BaseSyncEngine
+from src.core.sync.smart_sync import SmartSyncEngine
+
 
 class TestDataSynchronizerSmart:
     @pytest.fixture

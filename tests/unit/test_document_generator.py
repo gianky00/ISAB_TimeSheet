@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock, patch
-from src.utils.document_generator import generate_pdf_from_html
+
 from src.gui.styles import COLORS
+from src.utils.document_generator import generate_pdf_from_html
+
 
 class TestDocumentGenerator:
     @patch("src.utils.document_generator.QPrinter")
@@ -30,7 +32,7 @@ class TestDocumentGenerator:
         mock_printer_class.return_value = mock_printer
 
         generate_pdf_from_html("Test", "out.pdf", landscape=False)
-        
+
         # Verifica che sia stata impostata un'orientazione (Portrait è il default se landscape=False)
         mock_printer.setPageOrientation.assert_called()
 

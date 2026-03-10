@@ -367,7 +367,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             success: Esito dell'operazione.
         """
         # Recupera i file scaricati prima che il worker venga distrutto dal super()
-        downloaded_files = []
+        downloaded_files: list[str] = []
         if self.worker and hasattr(self.worker.bot, "downloaded_files"):
             downloaded_files = getattr(self.worker.bot, "downloaded_files", [])
 
@@ -400,7 +400,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             report_path = files[0]  # Fallback
             if len(files) > 1:
                 self.log_widget.append(f"📎 Inviando {len(files)} file a Telegram...")
-            
+
             tg_service.send_document_sync(report_path, caption=f"✅ Scarico PDL completato ({len(files)} file)")
             self.log_widget.append("📤 Report inviato correttamente a Telegram.")
         except Exception as e:

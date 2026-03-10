@@ -162,8 +162,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
     def refresh_contracts(self) -> None:
         """Aggiorna dinamicamente i numeri di contratto selezionabili nella tabella."""
-        config = config_manager.load_config()
-        contracts = config.get("contracts", [])
+        contracts = config_manager.load_config().get("contracts", [])
 
         # Trova l'indice della colonna "Numero Contratto"
         contract_col_idx = -1

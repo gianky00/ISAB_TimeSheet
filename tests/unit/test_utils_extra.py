@@ -1,7 +1,8 @@
 import logging
-import pytest
+
 from src.utils.log_humanizer import SmartLogTranslator
 from src.utils.secure_logger import SensitiveDataFilter, get_secure_logger
+
 
 def test_log_humanizer_categories():
     """Verifica che tutte le categorie restituiscano stringhe non vuote."""

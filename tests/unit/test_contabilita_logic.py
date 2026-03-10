@@ -1,7 +1,9 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
 import pytest
-from pathlib import Path
+
 from src.core.contabilita_manager import ContabilitaManager
+
 
 class TestContabilitaLogic:
     @pytest.fixture
@@ -11,12 +13,12 @@ class TestContabilitaLogic:
     def test_import_data_success(self, manager):
         mock_rows = [{"year": 2024}]
         with (
-            patch("src.core.contabilita_manager.ExcelImporter.import_contabilita_dati", 
+            patch("src.core.contabilita_manager.ExcelImporter.import_contabilita_dati",
                   return_value=(True, "OK", mock_rows, [2024])),
             patch("src.core.contabilita_manager.DataSynchronizer.sync_contabilita_dati",
                   return_value=(1, 0))
         ):
-            success, msg, added, removed = manager.import_data_from_excel("mock.xlsx")
+            success, _msg, added, _removed = manager.import_data_from_excel("mock.xlsx")
             assert success is True
             assert added == 1
 
@@ -30,13 +32,13 @@ class TestContabilitaLogic:
         mock_giornaliere = [
             ("2024-01-01", "P1", "T", "D", "PREV-001", "ODC", "P", "08", "17", 8.0, "F")
         ]
-        
+
         with (
             patch("src.core.contabilita_queries.ContabilitaQueries.get_data_by_year", return_value=mock_oda),
             patch("src.core.contabilita_queries.ContabilitaQueries.get_giornaliere_by_year", return_value=mock_giornaliere)
         ):
             stats = manager.get_year_stats(2024)
-            
+
             assert stats["total_prev"] == 1000.0
             assert stats["total_ore"] == 10.0
             assert stats["status_counts"]["CHIUSO"] == 1
@@ -51,7 +53,7 @@ class TestContabilitaLogic:
             patch("src.core.contabilita_manager.DataSynchronizer.sync_giornaliere", return_value=(1, 0)),
             patch("src.core.database.db_manager.get_connection")
         ):
-            success, msg, added, removed = manager.import_giornaliere(str(tmp_path))
+            success, _msg, added, _removed = manager.import_giornaliere(str(tmp_path))
             assert success is True
             assert added == 1
 

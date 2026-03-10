@@ -1,6 +1,9 @@
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, patch
+
 from src.gui.panels.scarico_ore_panel import ScaricoOrePanel
+
 
 class TestScaricoOrePanelDeep:
     @pytest.fixture
@@ -16,7 +19,7 @@ class TestScaricoOrePanelDeep:
         """Verifica il calcolo della somma ore per la selezione."""
         # In V9.0 il metodo riceve direttamente il totale
         panel._update_selection_totals(12.5)
-        
+
         text = panel.filters.lbl_selection.text()
         # Verifichiamo il valore formattato (12,5)
         assert "12,5" in text
@@ -38,7 +41,7 @@ class TestScaricoOrePanelDeep:
         """Verifica il ripristino della UI dopo l'aggiornamento."""
         mocker.patch("src.gui.panels.scarico_ore_panel.ContabilitaManager.DB_PATH")
         mocker.patch("src.gui.panels.scarico_ore_panel.ScaricoOreTableModel.CACHE_PATH")
-        
+
         panel._on_update_finished(True, "OK")
         assert panel.filters.update_btn.isEnabled()
         assert "OK" in panel.filters.status_label.text()

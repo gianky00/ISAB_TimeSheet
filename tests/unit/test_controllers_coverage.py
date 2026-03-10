@@ -1,12 +1,13 @@
 from unittest.mock import MagicMock
+
 import pytest
 from PyQt6.QtCore import QObject
 from PyQt6.QtWidgets import QWidget
-from pathlib import Path
 
 from src.gui.controllers.bot_controller import BotController
 from src.gui.controllers.navigation_controller import NavigationController
 from src.gui.controllers.search_controller import SearchController
+
 
 class MockMainWindow(QObject):
     """Mock leggero che simula l'interfaccia di MainWindow senza caricare Qt reale."""
@@ -15,7 +16,7 @@ class MockMainWindow(QObject):
         self.page_stack = MagicMock()
         # Aggiungiamo slide_to_index che è usato in V9.0
         self.page_stack.slide_to_index = MagicMock()
-        
+
         self.automazioni_widget = MagicMock()
         self.sidebar = MagicMock()
         self._current_page_index = 0

@@ -1,6 +1,9 @@
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 from src.gui.panels.scarico_pdl import ScaricoPDLPanel
+
 
 @pytest.fixture
 def mock_gui_deps(mocker):
@@ -17,7 +20,7 @@ class TestScaricoPDLPanel:
         mock_win = MagicMock()
         mock_tg = MagicMock()
         mock_win.telegram = mock_tg
-        
+
         with patch.object(panel, "window", return_value=mock_win):
             qtbot.addWidget(panel)
 
@@ -31,14 +34,14 @@ class TestScaricoPDLPanel:
                 patch("src.gui.panels.scarico_pdl.Path.exists", return_value=True),
             ):
                 panel._on_start()
-                
+
                 # Configure the mock worker instance created by _on_start
                 mock_worker = mock_worker_cls.return_value
                 panel.worker = mock_worker # Ensure it's set
-                
+
                 mock_worker.bot = MagicMock()
                 mock_worker.bot.downloaded_files = ["/path/to/report.pdf"]
-                
+
                 panel._on_worker_finished(True)
 
                 mock_win.telegram.send_document_sync.assert_called()
@@ -46,10 +49,10 @@ class TestScaricoPDLPanel:
     def test_validate_ready(self, qtbot, mock_gui_deps):
         panel = ScaricoPDLPanel()
         qtbot.addWidget(panel)
-        
+
         # Explicitly clear table to avoid default rows interference
         panel.data_table.table.setRowCount(0)
-        
+
         # Test empty
         ready, msg = panel.validate_ready()
         assert ready is False
@@ -64,7 +67,7 @@ class TestScaricoPDLPanel:
         panel = ScaricoPDLPanel()
         qtbot.addWidget(panel)
         panel.data_table.set_data([{"N° PDL": "123"}])
-        
+
         with (
             patch.object(panel, "get_bot_instance", return_value=MagicMock()),
             patch.object(panel, "get_safework_credentials", return_value=("u", "p", "E")),

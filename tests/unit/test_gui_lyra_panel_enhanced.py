@@ -1,16 +1,17 @@
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import MagicMock, patch
-from PyQt6.QtWidgets import QLabel, QApplication
+from PyQt6.QtWidgets import QApplication
 
 from src.gui.panels.lyra.lyra_panel import LyraPanel
-from src.gui.widgets.message_bubble import MessageBubble
+
 
 class TestLyraPanelEnhanced:
     @pytest.fixture
     def panel(self, qtbot, mocker):
         # Patch del worker PRIMA dell'istanziazione per evitare chiamate reali nel costruttore
         mocker.patch("src.gui.panels.lyra.lyra_panel.ModelListWorker")
-        
+
         with (
             patch("src.core.secrets_manager.SecretsManager.get_gemini_api_key", return_value="fake_key"),
             patch(
@@ -48,13 +49,13 @@ class TestLyraPanelEnhanced:
         # Recuperiamo il mock già creato nella fixture
         import src.gui.panels.lyra.lyra_panel as lp_mod
         mock_worker_cls = lp_mod.ModelListWorker
-        
+
         mock_worker_cls.return_value.isRunning.return_value = False
 
         # Simuliamo un cambio provider e un refresh manuale
         with patch("src.gui.panels.lyra.lyra_panel.config_manager.get_config_value", return_value="ollama"):
             panel._fetch_models()
-            
+
             assert mock_worker_cls.return_value.start.called
             # Verifica kwargs dell'ultima chiamata (V9.0 ModelListWorker(api_key, provider, ollama_url))
             _, kwargs = mock_worker_cls.call_args

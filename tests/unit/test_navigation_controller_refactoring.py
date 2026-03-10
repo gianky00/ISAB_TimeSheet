@@ -1,6 +1,9 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.gui.controllers.navigation_controller import NavigationController
+
 
 @pytest.fixture
 def mock_mw():
@@ -20,7 +23,7 @@ def controller(mock_mw):
 class TestNavigationControllerRefactoring:
     def test_get_panel_already_initialized(self, controller, mock_mw):
         """Verifica il recupero di un pannello già caricato (Refactoring)."""
-        setattr(mock_mw, "_panel_initialized_0", True)
+        mock_mw._panel_initialized_0 = True
         mock_widget = MagicMock()
         mock_mw.page_stack.widget.return_value = mock_widget
         controller._detached_panels = {}

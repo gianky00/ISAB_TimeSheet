@@ -1,6 +1,9 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
 import pytest
+
 from src.gui.panels.settings.main_panel import SettingsPanel
+
 
 class TestSettingsGUI:
     @pytest.mark.skip(reason="Incompatibilità mock strutturale in ambiente headless Windows V9.0.")
@@ -14,14 +17,14 @@ class TestSettingsGUI:
             "safework_accounts": []
         }
         mock_load.return_value = test_config
-        
+
         with patch("src.core.secrets_manager.SecretsManager.get_gemini_api_key", return_value="fake"):
             panel = SettingsPanel()
             qtbot.addWidget(panel)
-            
+
             # Forza caricamento tab configurazione
             panel.config_tab.load_from_config(test_config)
-            
+
             gen_page = panel.config_tab.general_page
             assert gen_page.headless_check.isChecked() is True
             assert gen_page.timeout_spin.value() == 45
@@ -34,8 +37,8 @@ class TestSettingsGUI:
         with patch("src.core.secrets_manager.SecretsManager.get_gemini_api_key", return_value="fake"):
             panel = SettingsPanel()
             qtbot.addWidget(panel)
-            
+
             panel.config_tab.general_page.timeout_spin.setValue(120)
             panel.save_settings()
-            
+
             assert mock_save.called

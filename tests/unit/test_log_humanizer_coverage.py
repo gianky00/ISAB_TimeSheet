@@ -1,5 +1,5 @@
-import pytest
 from src.utils.log_humanizer import SmartLogTranslator
+
 
 class TestLogHumanizerCoverage:
     def test_humanize_start(self):

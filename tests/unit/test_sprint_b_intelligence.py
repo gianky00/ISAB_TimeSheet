@@ -1,7 +1,10 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.core.contabilita_stats import ContabilitaStats
 from src.core.lyra_client import LyraClient
+
 
 class TestSprintBIntelligence:
     @pytest.fixture

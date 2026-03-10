@@ -1,6 +1,6 @@
-import pytest
-from src.gui.styles.constants import COLORS, UI_SIZES, FONT_SIZES
+from src.gui.styles.constants import COLORS, FONT_SIZES, UI_SIZES
 from src.utils.log_humanizer import SmartLogTranslator
+
 
 class TestSimpleCoverage:
     def test_colors(self):
@@ -25,15 +25,15 @@ class TestLogHumanizer:
         # Download
         _, _, cat = SmartLogTranslator.humanize("scarico i dati")
         assert cat == "download"
-        
+
         # Error
         _, _, cat = SmartLogTranslator.humanize("errore fatale")
         assert cat == "error"
-        
+
         # Success
         _, _, cat = SmartLogTranslator.humanize("✅ missione compiuta")
         assert cat == "success"
-        
+
         # Wait
         _, _, cat = SmartLogTranslator.humanize("⏳ attendi un attimo")
         assert cat == "wait"

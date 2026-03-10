@@ -1,11 +1,13 @@
+from unittest.mock import MagicMock
+
+import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QWidget
-from unittest.mock import MagicMock, patch
-import pytest
 
 from src.gui.panels.dashboard_panel import DashboardPanel
 from src.gui.widgets.activity_feed import ActivityFeed
 from src.gui.widgets.quick_actions import QuickActions
+
 
 class TestDashboardComponents:
     def test_quick_actions_signals(self, qapp, qtbot):
@@ -40,11 +42,11 @@ class TestDashboardPanelFull:
         # Patch centralizzato della configurazione
         mocker.patch("src.core.config_manager.get_config_value", return_value={})
         mocker.patch("src.core.audit_manager.AuditManager.get_logs", return_value=[])
-        
+
         # Mock PDL e Database
         mocker.patch("src.core.database.pdl_queries.PDLQueries.get_all_pdl", return_value=[])
         mocker.patch("src.core.database.db_manager.get_connection")
-        
+
         # Mock WIDGET CRITICI (Don Ciro e Meteo) per evitare crash grafici/rete
         mocker.patch("src.gui.widgets.dashboard.don_ciro_widget.DonCiroWidget", return_value=QWidget())
         mocker.patch("src.gui.widgets.dashboard.weather_widget.WeatherWidget", return_value=QWidget())
@@ -64,7 +66,7 @@ class TestDashboardPanelFull:
         mw_mock = MagicMock()
         mw_mock.navigation_controller = MagicMock()
         mocker.patch.object(panel, "window", return_value=mw_mock)
-        
+
         # Simuliamo il click su Lyra AI
         panel._handle_quick_action("nav_page_2")
         mw_mock.navigation_controller.navigate_to.assert_called_with(2)

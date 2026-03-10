@@ -1,8 +1,11 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+
 import pytest
 from PyQt6.QtWidgets import QWidget
+
 from src.gui.panels.settings.main_panel import SettingsPanel
 from src.gui.widgets.toast import Toast
+
 
 class TestGUIHeadlessHardened:
     @pytest.fixture
@@ -41,23 +44,23 @@ class TestGUIHeadlessHardened:
         mock_dlg = MagicMock()
         mock_dlg.exec.return_value = True
         mock_dlg.get_data.return_value = ("new_user", "new_pass", "default")
-        
+
         mocker.patch(
             "src.gui.panels.settings.widgets.account_list_widget.AccountDialog",
             return_value=mock_dlg,
         )
         # In V9.0 add_account non chiama SecretsManager direttamente (lo fa il controller dopo il salvataggio o set_accounts)
-        
+
         lists_page = settings_panel.config_tab.lists_page
         acc_widget = lists_page.account_section
-        
+
         initial_count = acc_widget.list_widget.count()
         # Chiamata al metodo pubblico corretto V9.0
         acc_widget.add_account()
 
         assert acc_widget.list_widget.count() == initial_count + 1
-        
-        found = any("new_user" in acc_widget.list_widget.item(i).text() 
+
+        found = any("new_user" in acc_widget.list_widget.item(i).text()
                     for i in range(acc_widget.list_widget.count()))
         assert found
 

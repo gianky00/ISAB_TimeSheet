@@ -1,6 +1,9 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.gui.controllers.navigation_controller import NavigationController
+
 
 @pytest.mark.skip(reason="Crash nativo in ambiente headless Windows V9.0 durante accesso a page_stack mockato.")
 class TestNavigationControllerCoverage:
@@ -20,7 +23,7 @@ class TestNavigationControllerCoverage:
 
     def test_get_panel_already_initialized(self, controller, mw):
         """Verifica il recupero di un pannello già caricato."""
-        setattr(mw, "_panel_initialized_0", True)
+        mw._panel_initialized_0 = True
         mock_widget = MagicMock()
         mw.page_stack.widget.return_value = mock_widget
         controller._detached_panels = {}
@@ -29,12 +32,12 @@ class TestNavigationControllerCoverage:
 
     def test_get_panel_lazy_loading(self, controller, mw):
         """Verifica il caricamento differito (lazy) di un pannello."""
-        setattr(mw, "_panel_initialized_1", False)
+        mw._panel_initialized_1 = False
         new_widget = MagicMock()
         with (
             patch.object(controller, "_create_panel_by_index", return_value=new_widget),
             patch.object(controller, "_initialize_new_panel")
-        ) as (mock_create, mock_init):
+        ) as (_mock_create, mock_init):
             res = controller.get_panel(1)
             assert res == new_widget
             mock_init.assert_called_with(1, new_widget)

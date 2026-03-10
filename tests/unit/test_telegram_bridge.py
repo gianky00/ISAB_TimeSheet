@@ -1,6 +1,9 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.core.telegram_bridge import TelegramUIBridge
+
 
 class TestTelegramUIBridge:
     @pytest.fixture
@@ -55,14 +58,14 @@ class TestTelegramUIBridge:
         """Verifica avvio thread per query AI."""
         mock_lyra = mock_lyra_cls.return_value
         mock_lyra.ask.return_value = "Risposta"
-        
+
         with patch("src.core.telegram_bridge.threading.Thread") as mock_thread:
             bridge._handle_ai_query(123, "test")
             assert mock_thread.called
             # Recuperiamo la funzione passata al thread ed eseguiamola
             thread_fn = mock_thread.call_args[1]["target"]
             thread_fn()
-            
+
             bridge.telegram.send_message_sync.assert_called()
             args = bridge.telegram.send_message_sync.call_args[0][0]
             assert "Risposta" in args

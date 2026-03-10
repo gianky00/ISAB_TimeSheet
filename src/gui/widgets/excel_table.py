@@ -80,9 +80,9 @@ class ExcelTableWidget(QTableWidget):
     def keyPressEvent(self, event: Any) -> None:
         """Gestisce le scorciatoie da tastiera standard (Copia, Incolla, Canc)."""
         if event.matches(QKeySequence.StandardKey.Copy):
-            self.copy_selection()
+            self.copy_selection()  # type: ignore
         elif event.matches(QKeySequence.StandardKey.Paste):
-            self.paste_selection()
+            self.paste_selection()  # type: ignore
         elif event.key() == Qt.Key.Key_Delete:
             self.clear_selection()
         else:
@@ -117,7 +117,7 @@ class ExcelTableWidget(QTableWidget):
         lyra_sel.triggered.connect(self._analyze_selection)
 
         copy_act = QAction(get_colored_icon(get_asset_path(Icons.EDIT), icon_color), "Copia", self)
-        copy_act.triggered.connect(self.copy_selection)
+        copy_act.triggered.connect(self.copy_selection)  # type: ignore
 
         for act in (lyra_row, lyra_sel, copy_act):
             menu.addAction(act)
@@ -135,7 +135,7 @@ class ExcelTableWidget(QTableWidget):
                 continue
             h = self.horizontalHeaderItem(c)
             label = h.text() if h else f"Col {c}"
-            val = self._get_cell_value(row, c)
+            val = self._get_cell_value(row, c)  # type: ignore
             data.append(f"**{label}**: {val}")
 
         win = self.window()
@@ -155,7 +155,7 @@ class ExcelTableWidget(QTableWidget):
                     continue
                 h = self.horizontalHeaderItem(c)
                 label = h.text() if h else f"Col {c}"
-                line.append(f"{label}: {self._get_cell_value(r, c)}")
+                line.append(f"{label}: {self._get_cell_value(r, c)}")  # type: ignore
             rows_text.append(" | ".join(line))
 
         win = self.window()
@@ -232,7 +232,7 @@ class EditableDataTable(QWidget):
                 options = col_def.get("options", [])
                 # Assicurati che ci sia un'opzione vuota
                 if "" not in options:
-                    options = [""] + list(options)
+                    options = ["", *list(options)]
                 combo.addItems(options)
 
                 if default_val:
@@ -259,7 +259,7 @@ class EditableDataTable(QWidget):
             row_data = {}
             has_content = False
             for c, col_def in enumerate(self.columns):
-                val = self.table._get_cell_value(r, c)
+                val = self.table._get_cell_value(r, c)  # type: ignore
                 row_data[col_def["name"]] = val
                 if val:
                     has_content = True
@@ -349,6 +349,40 @@ class EditableDataTable(QWidget):
             status: Stato della riga.
         """
         self.table.set_row_status(row, status)
+
+    def update_column_options(self, col: int, options: list[str]) -> None:
+        """
+        Aggiorna le opzioni di una colonna di tipo 'combo' per tutte le righe esistenti.
+        Aggiorna anche la definizione della colonna per le future righe.
+
+        Args:
+            col: Indice della colonna.
+            options: Nuova lista di opzioni.
+        """
+        if col < 0 or col >= len(self.columns):
+            return
+
+        # Aggiorna la definizione
+        self.columns[col]["options"] = options
+
+        # Aggiorna i widget esistenti
+        for row in range(self.table.rowCount()):
+            widget = self.table.cellWidget(row, col)
+            if isinstance(widget, FilterComboBox):
+                current_text = widget.currentText()
+                widget.blockSignals(True)
+                widget.clear()
+                # Assicurati che ci sia un'opzione vuota
+                final_options = ["", *[o for o in options if o]] if "" not in options else options
+                widget.addItems(final_options)
+
+                # Ripristina il valore se ancora valido
+                idx = widget.findText(current_text)
+                if idx >= 0:
+                    widget.setCurrentIndex(idx)
+                else:
+                    widget.setCurrentIndex(0)
+                widget.blockSignals(False)
 
     def clear(self) -> None:
         """Svuota la tabella e ripristina le righe iniziali."""

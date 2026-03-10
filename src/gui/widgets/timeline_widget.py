@@ -143,7 +143,12 @@ class EnterpriseLogConsole(QWidget):
         if bar:
             # Fix: Ensure bar is not deleted when timer fires (prevents RuntimeError in tests)
             from PyQt6.sip import isdeleted
-            QTimer.singleShot(20, lambda: not isdeleted(bar) and bar.setValue(bar.maximum()))
+
+            def safe_scroll() -> None:
+                if not isdeleted(bar):
+                    bar.setValue(bar.maximum())
+
+            QTimer.singleShot(20, safe_scroll)
         self.log_added.emit(text)
 
     def append(self, text: str, status: str = "") -> None:

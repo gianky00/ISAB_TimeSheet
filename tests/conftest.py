@@ -20,28 +20,29 @@ sys.path.insert(0, str(ROOT_DIR / "src"))
 try:
     import sys
     from unittest.mock import MagicMock
-    
+
     class MockCanvas(MagicMock):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.figure = MagicMock()
-            
+
     mock_backend = MagicMock()
     mock_backend.FigureCanvasQTAgg = MockCanvas
     mock_backend.FigureCanvas = MockCanvas
-    
+
     sys.modules["matplotlib.backends.backend_qtagg"] = mock_backend
     sys.modules["matplotlib.backends.backend_qt5agg"] = mock_backend
     sys.modules["matplotlib.backends.backend_qt"] = mock_backend
     sys.modules["matplotlib.backends.qt_compat"] = MagicMock()
-except Exception:
+except Exception:  # noqa: S110
+    # Matplotlib might not be installed, ignore error for headless environments
     pass
 # --------------------------------------------------------
 
 
 # --- GLOBAL PYQT6 MOCK FOR HEADLESS ENVIRONMENTS ---
 try:
-    from PyQt6 import QtCore, QtGui, QtWidgets
+    import PyQt6  # noqa: F401
 except (ImportError, RuntimeError):
     # If PyQt6 is missing or DLLs fail to load, provide a minimal mock infrastructure
     class MockQObject:
@@ -77,7 +78,7 @@ except (ImportError, RuntimeError):
 try:
     import matplotlib
     matplotlib.use("Agg")
-    
+
     # Mock canvas classes that cause native crashes in headless Windows
     mock_canvas = MagicMock()
     sys.modules["matplotlib.backends.backend_qt5agg"] = mock_canvas

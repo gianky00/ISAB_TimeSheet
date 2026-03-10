@@ -1,5 +1,5 @@
-import pytest
 from src.utils.log_humanizer import SmartLogTranslator
+
 
 class TestLogHumanizerBoost:
     """Test suite per SmartLogTranslator V9.0 deterministico."""
@@ -7,14 +7,14 @@ class TestLogHumanizerBoost:
     def test_humanize_fixed_mapping(self):
         """Verifica la traduzione di messaggi comuni."""
         msg = "avvio automazione"
-        human, tech, cat = SmartLogTranslator.humanize(msg)
+        human, tech, _cat = SmartLogTranslator.humanize(msg)
         assert human == "🚀 Avvio automazione in corso..."
         assert tech == msg
 
     def test_humanize_preserve_icons(self):
         """Verifica che i messaggi con icone non vengano alterati."""
         msg = "✅ Operazione conclusa"
-        human, tech, cat = SmartLogTranslator.humanize(msg)
+        human, _tech, cat = SmartLogTranslator.humanize(msg)
         assert human == msg
         assert cat == "success"
 

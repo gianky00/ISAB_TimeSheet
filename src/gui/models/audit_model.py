@@ -44,7 +44,7 @@ class AuditTableModel(QAbstractTableModel):
         super().__init__()
         self._logs = logs or []
         # Pre-load icons
-        self._icons = {
+        self._icons: dict[str, QIcon] = {
             "high": get_colored_icon(get_asset_path(Icons.STATUS_DOT_RED), COLORS["error_red"]),
             "medium": get_colored_icon(get_asset_path(Icons.STATUS_DOT_ORANGE), COLORS["warning_orange"]),
             "low": get_colored_icon(get_asset_path(Icons.STATUS_DOT_GREEN), COLORS["success_dark"]),

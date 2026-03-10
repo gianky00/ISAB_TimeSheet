@@ -1,6 +1,9 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.gui.controllers.service_controller import ServiceController
+
 
 @pytest.mark.skip(reason="Crash nativo in ambiente headless Windows V9.0 durante coordinamento servizi background.")
 class TestServiceControllerRobust:
@@ -27,7 +30,7 @@ class TestServiceControllerRobust:
         mock_panel = MagicMock()
         mock_panel.start_btn.isEnabled.return_value = True
         controller._schedule_bot_with_parallelism("bot1", mock_panel, "portale_fornitori", "msg")
-        
+
         assert "bot1" in controller.running_bots_by_site["portale_fornitori"]
         assert mock_panel._on_start.called
 
@@ -35,9 +38,9 @@ class TestServiceControllerRobust:
         """Verifica accodamento se il sito è occupato."""
         controller.running_bots_by_site["portale_fornitori"] = ["other_bot"]
         mock_panel = MagicMock()
-        
+
         controller._schedule_bot_with_parallelism("bot1", mock_panel, "portale_fornitori", "msg")
-        
+
         assert "bot1" not in controller.running_bots_by_site["portale_fornitori"]
         assert len(controller.pending_bots_by_site["portale_fornitori"]) == 1
 
@@ -59,7 +62,7 @@ class TestServiceControllerRobust:
     def test_check_scheduled_tasks_timbrature(self, mock_load, mock_dt, controller, mw):
         mock_dt.now.return_value.strftime.return_value = "09:00"
         mock_load.return_value = {"timbrature_autopilot_enabled": True, "timbrature_autopilot_time": "09:00"}
-        
+
         mock_panel = MagicMock()
         mock_panel.start_btn.isEnabled.return_value = True
         mw.timbrature_bot_panel = mock_panel
@@ -76,7 +79,7 @@ class TestServiceControllerRobust:
             "report_email_autopilot_interval_days": 1,
             "report_email_autopilot_last_sent": "2020-01-01T00:00:00"
         }
-        
+
         with patch.object(controller, "_send_scheduled_report_email") as mock_send:
             controller._check_report_email_schedule(config, "08:00")
             assert mock_send.called
@@ -86,6 +89,6 @@ class TestServiceControllerRobust:
         mock_panel = MagicMock()
         # In V9.0 il metodo è _prepare_scarico_oda_generale
         controller._prepare_scarico_oda_generale(mock_panel)
-        
+
         mock_panel.data_table.set_data.assert_called_with([])
         assert "pulita" in mock_panel.log_widget.append.call_args[0][0]

@@ -1,6 +1,7 @@
-import pytest
 from unittest.mock import patch
+
 from PyQt6.QtCore import Qt
+
 
 class TestSidebarWidget:
     """Test suite per SidebarWidget V9.0 (Navigazione Profonda)."""
@@ -32,7 +33,7 @@ class TestSidebarWidget:
 
         # Il gruppo esiste ancora come group_notifiche (titolo "Monitoraggio")
         assert hasattr(sidebar, "group_notifiche")
-        
+
         # In V9.0 i bottoni child sono in notif_child_btns
         # Verifichiamo che il numero di bottoni aggiunti al gruppo sia 3
         assert len(sidebar.notif_child_btns) == 3
@@ -47,7 +48,7 @@ class TestSidebarWidget:
 
         with qtbot.waitSignal(sidebar.navigation_requested, timeout=1000) as blocker:
             qtbot.mouseClick(sidebar.btn_home, Qt.MouseButton.LeftButton)
-        
+
         # Home -> Page 0, Sub -1, Bot -1
         assert blocker.args == [0, -1, -1]
 

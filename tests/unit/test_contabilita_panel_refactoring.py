@@ -1,14 +1,10 @@
+from unittest.mock import patch
+
 import pytest
-from PyQt6.QtWidgets import (
-    QTableWidget,
-    QTableWidgetItem,
-    QLabel,
-    QApplication
-)
-from PyQt6.QtCore import Qt
-from unittest.mock import MagicMock, patch
+from PyQt6.QtWidgets import QLabel, QTableWidget, QTableWidgetItem
 
 from src.gui.panels.contabilita_panel import ContabilitaPanel
+
 
 class TestContabilitaPanelRefactoring:
     @pytest.fixture
@@ -28,7 +24,7 @@ class TestContabilitaPanelRefactoring:
         table = QTableWidget(3, 3)
         table.setItem(0, 0, QTableWidgetItem("10,5"))
         table.setItem(1, 0, QTableWidgetItem("5,0"))
-        
+
         # Inseriamo la tabella nel pannello o rendiamola attiva
         # selezioniamo gli indici tramite il selectionModel reale
         sel_model = table.selectionModel()
@@ -41,10 +37,10 @@ class TestContabilitaPanelRefactoring:
         # Verifica
         count_text = panel.selection_count_label.text()
         sum_text = panel.selection_sum_label.text()
-        
+
         # Debug print (sarà visibile solo se il test fallisce con -s)
         print(f"DEBUG: Count={count_text}, Sum={sum_text}")
-        
+
         assert "2" in count_text
         assert "15,5" in sum_text
 

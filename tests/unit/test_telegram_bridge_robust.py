@@ -1,6 +1,9 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.core.telegram_bridge import TelegramUIBridge
+
 
 class TestTelegramUIBridgeRobust:
     @pytest.fixture

@@ -1,7 +1,9 @@
+
 import pytest
 from PyQt6.QtCore import Qt
-from unittest.mock import patch
+
 from src.gui.panels.settings.main_panel import SettingsPanel
+
 
 @pytest.fixture
 def panel(qapp, mocker):

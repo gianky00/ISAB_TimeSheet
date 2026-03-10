@@ -1,9 +1,8 @@
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 import pytest
 
 from src.core.data_synchronizer import DataSynchronizer
 from src.core.database import db_manager
+
 
 class TestDataSynchronizerDetailed:
     @pytest.fixture
@@ -70,7 +69,7 @@ class TestDataSynchronizerDetailed:
     def test_sync_attivita_programmate(self, real_db):
         with db_manager.get_connection(real_db) as conn:
             conn.execute("INSERT INTO attivita_programmate (ps) VALUES ('old1')")
-        
+
         # 17 colonne per attivita_programmate
         new_rows = [("ps1", "a", "p", "i", "d", "l", "m", "m", "g", "v", "s", "s", "d", "p", "p", "a", "s")]
         added, removed = DataSynchronizer.sync_attivita_programmate(real_db, new_rows)
