@@ -17,6 +17,17 @@ from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 from src.utils.log_humanizer import friendly_time_delta
 
+# Stile forzato per i tooltip in Light Mode
+TOOLTIP_CSS = """
+QToolTip {
+    background-color: #FFFFFF;
+    color: #212121;
+    border: 1px solid #BBBBBB;
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+"""
+
 
 class ActivityItem(QFrame):
     """
@@ -45,27 +56,21 @@ class ActivityItem(QFrame):
 
         self.setStyleSheet(
             f"""
+            {TOOLTIP_CSS}
             ActivityItem {{
                 background: {self.bg_gradient};
                 border-radius: 12px;
                 border-left: 4px solid {self.border_color};
-                border-top: 1px solid {COLORS['border_light']};
-                border-right: 1px solid {COLORS['border_light']};
-                border-bottom: 1px solid {COLORS['border_light']};
+                border-top: 1px solid {COLORS["border_light"]};
+                border-right: 1px solid {COLORS["border_light"]};
+                border-bottom: 1px solid {COLORS["border_light"]};
             }}
             ActivityItem:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['bg_hover']}, stop:1 {COLORS['bg_white']});
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_hover"]}, stop:1 {COLORS["bg_white"]});
                 border-left: 4px solid {self.border_color};
-                border-top: 1px solid {COLORS['border_medium']};
-                border-right: 1px solid {COLORS['border_medium']};
-                border-bottom: 1px solid {COLORS['border_medium']};
-            }}
-            QToolTip {{
-                background-color: {COLORS['bg_white']};
-                color: {COLORS['text_dark']};
-                border: 1px solid {COLORS['border_dark']};
-                border-radius: 4px;
-                padding: 5px;
+                border-top: 1px solid {COLORS["border_medium"]};
+                border-right: 1px solid {COLORS["border_medium"]};
+                border-bottom: 1px solid {COLORS["border_medium"]};
             }}
         """
         )
@@ -127,7 +132,7 @@ class ActivityItem(QFrame):
             QLabel {{
                 font-weight: 600;
                 font-size: 14px;
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
                 border: none;
                 background: transparent;
             }}
@@ -152,7 +157,7 @@ class ActivityItem(QFrame):
             f"""
             QLabel {{
                 font-size: 12px;
-                color: {COLORS['text_muted']};
+                color: {COLORS["text_muted"]};
                 border: none;
                 background: transparent;
                 font-weight: 500;
@@ -224,18 +229,18 @@ class ActivityFeed(QWidget):
             }}
             QScrollBar:horizontal {{
                 border: none;
-                background: {COLORS['bg_light']};
+                background: {COLORS["bg_light"]};
                 height: 8px;
                 border-radius: 4px;
                 margin: 0px;
             }}
             QScrollBar::handle:horizontal {{
-                background: {COLORS['border_medium']};
+                background: {COLORS["border_medium"]};
                 border-radius: 4px;
                 min-width: 40px;
             }}
             QScrollBar::handle:horizontal:hover {{
-                background: {COLORS['border_dark']};
+                background: {COLORS["border_dark"]};
             }}
             QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
                 border: none;
@@ -293,14 +298,14 @@ class ActivityFeed(QWidget):
                 empty_lbl.setStyleSheet(
                     f"""
                     QLabel {{
-                        color: {COLORS['text_muted']};
+                        color: {COLORS["text_muted"]};
                         font-size: 13px;
                         font-weight: 500;
                         font-style: italic;
                         padding: 10px 20px;
-                        background-color: {COLORS['bg_light']};
+                        background-color: {COLORS["bg_light"]};
                         border-radius: 8px;
-                        border: 1px dashed {COLORS['border_light']};
+                        border: 1px dashed {COLORS["border_light"]};
                     }}
                 """
                 )

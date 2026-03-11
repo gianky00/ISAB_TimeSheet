@@ -16,6 +16,7 @@ from PyQt6.QtCore import (
     QSize,
     Qt,
     QTimer,
+    pyqtSignal,
 )
 from PyQt6.QtWidgets import (
     QApplication,
@@ -23,7 +24,6 @@ from PyQt6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLabel,
-    QPushButton,
     QSizePolicy,
     QVBoxLayout,
     QWidget,
@@ -32,6 +32,9 @@ from PyQt6.QtWidgets import (
 from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    IconButton,
+)
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .config_cards import AutopilotConfigCard, AutopilotConfigCardWithInterval
@@ -44,6 +47,8 @@ class AutopilotWidget(QWidget):
     Supporta una modalità di visualizzazione (Live) e una di configurazione.
     Utilizza animazioni per le transizioni e indicatori visivi per lo stato del sistema.
     """
+
+    bot_sync_requested = pyqtSignal(str)  # Segnale per richiedere il sync di un bot specifico
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
@@ -122,16 +127,16 @@ class AutopilotWidget(QWidget):
         self.dot_anim.start()
 
         # Pulsante configurazione
-        self.config_btn = QPushButton()
+        self.config_btn = IconButton()
         self.config_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS), COLORS["text_muted"]))
         self.config_btn.setIconSize(QSize(20, 20))
         self.config_btn.setFixedSize(32, 32)
         self.config_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.config_btn.setStyleSheet(
             f"""
-            QPushButton {{ background-color: {COLORS['bg_light']}; border: 1px solid {COLORS['border_light']}; border-radius: 16px; }}
-            QPushButton:hover {{ background-color: {COLORS['bg_hover']}; border-color: {COLORS['border_medium']}; }}
-            QPushButton:pressed {{ background-color: {COLORS['bg_alt']}; }}
+            QPushButton {{ background-color: {COLORS["bg_light"]}; border: 1px solid {COLORS["border_light"]}; border-radius: 16px; }}
+            QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; border-color: {COLORS["border_medium"]}; }}
+            QPushButton:pressed {{ background-color: {COLORS["bg_alt"]}; }}
         """
         )
         self.config_btn.clicked.connect(self._toggle_mode)
@@ -271,6 +276,8 @@ class AutopilotWidget(QWidget):
         if config.get("timbrature_autopilot_enabled", False):
             events.append(
                 {
+                    "id": "timbrature",
+                    "module_id": "timbrature",
                     "name": "Timbrature Automatiche",
                     "time": config.get("timbrature_autopilot_time", "09:00"),
                     "icon": Icons.CLOCK,
@@ -280,6 +287,8 @@ class AutopilotWidget(QWidget):
         if config.get("scarico_oda_generale_autopilot_enabled", False):
             events.append(
                 {
+                    "id": "scarico_oda_generale",
+                    "module_id": "oda",
                     "name": "Scarico OdA Generale",
                     "time": config.get("scarico_oda_generale_autopilot_time", "09:00"),
                     "icon": Icons.DOWNLOAD,
@@ -289,6 +298,8 @@ class AutopilotWidget(QWidget):
         if config.get("ricerca_pdl_autopilot_enabled", False):
             events.append(
                 {
+                    "id": "ricerca_pdl",
+                    "module_id": "pdl",
                     "name": "Ricerca PDL",
                     "time": config.get("ricerca_pdl_autopilot_time", "09:00"),
                     "icon": Icons.SEARCH,
@@ -298,6 +309,8 @@ class AutopilotWidget(QWidget):
         if config.get("report_email_autopilot_enabled", False):
             events.append(
                 {
+                    "id": "report_email",
+                    "module_id": "none",
                     "name": f"Report Email (ogni {config.get('report_email_autopilot_interval_days', 7)}gg)",
                     "time": config.get("report_email_autopilot_time", "08:00"),
                     "icon": Icons.SEND,
@@ -315,7 +328,16 @@ class AutopilotWidget(QWidget):
             return
 
         for idx, event in enumerate(events):
-            card = AutopilotEventCard(event["name"], event["time"], event["icon"], event["color"], self)
+            card = AutopilotEventCard(
+                event["id"],
+                event["name"],
+                event["time"],
+                event["icon"],
+                event["color"],
+                event.get("module_id"),
+                self,
+            )
+            card.sync_requested.connect(self.bot_sync_requested.emit)
             self.view_layout.addWidget(card, idx // 2, idx % 2)
 
     def _refresh_config(self) -> None:

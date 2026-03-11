@@ -137,8 +137,10 @@ class TestBaseBotRobust:
 
     # --- Execution Flow Tests ---
 
+    @patch("src.core.license_validator.verify_license", return_value=(True, "OK"))
+    @patch("src.core.license_updater.run_update")
     @patch("src.bots.base.base_bot.LoginPage")
-    def test_execute_success(self, mock_login_page_cls, bot):
+    def test_execute_success(self, mock_login_page_cls, mock_update, mock_verify, bot):
         """Test flusso execute completo con successo."""
         # Setup mocks
         bot._init_driver = MagicMock()
@@ -156,9 +158,13 @@ class TestBaseBotRobust:
         bot._login.assert_called_once()
         bot.run.assert_called_once_with(data)
         bot.cleanup.assert_called_once()
+        mock_update.assert_called_once()
+        mock_verify.assert_called_once()
         assert bot.status == BotStatus.COMPLETED
 
-    def test_execute_validation_fail(self, bot):
+    @patch("src.core.license_validator.verify_license", return_value=(True, "OK"))
+    @patch("src.core.license_updater.run_update")
+    def test_execute_validation_fail(self, mock_update, mock_verify, bot):
         """Test fallimento validazione."""
         bot.validate_data = MagicMock(return_value=(False, "Bad data"))
         bot.cleanup = MagicMock()
@@ -170,8 +176,10 @@ class TestBaseBotRobust:
         # Cleanup non deve essere chiamato perché validation fallisce PRIMA del blocco try/finally del driver
         bot.cleanup.assert_not_called()
 
+    @patch("src.core.license_validator.verify_license", return_value=(True, "OK"))
+    @patch("src.core.license_updater.run_update")
     @patch("src.bots.base.base_bot.LoginPage")
-    def test_execute_login_fail(self, mock_login_page_cls, bot):
+    def test_execute_login_fail(self, mock_login_page_cls, mock_update, mock_verify, bot):
         """Test fallimento login."""
         bot._init_driver = MagicMock()
         bot._login = MagicMock(return_value=False)
@@ -182,10 +190,10 @@ class TestBaseBotRobust:
         assert res is False
         assert bot.status == BotStatus.ERROR
         bot.cleanup.assert_called()  # Chiamato da _safe_login_with_retry o finally?
-        # _safe_login_with_retry chiama cleanup se fallisce.
-        # E execute chiama cleanup nel finally.
 
-    def test_execute_exception_during_run(self, bot):
+    @patch("src.core.license_validator.verify_license", return_value=(True, "OK"))
+    @patch("src.core.license_updater.run_update")
+    def test_execute_exception_during_run(self, mock_update, mock_verify, bot):
         """Test eccezione durante run."""
         bot._init_driver = MagicMock()
         bot._login = MagicMock(return_value=True)

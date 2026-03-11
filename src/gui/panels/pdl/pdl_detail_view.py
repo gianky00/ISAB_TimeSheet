@@ -16,13 +16,15 @@ from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
     QScrollArea,
-    QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    StandardTable,
+)
 
 
 class PDLDetailView(QWidget):
@@ -51,7 +53,9 @@ class PDLDetailView(QWidget):
         layout.setSpacing(10)
 
         detail_title = QLabel("Dettaglio Completo PDL")
-        detail_title.setStyleSheet(f"font-weight: bold; font-size: 14px; color: {COLORS['primary_blue']}; margin-bottom: 5px;")
+        detail_title.setStyleSheet(
+            f"font-weight: bold; font-size: 14px; color: {COLORS['primary_blue']}; margin-bottom: 5px;"
+        )
         layout.addWidget(detail_title)
 
         # Sezione Dati Generali (Scrollabile)
@@ -74,10 +78,12 @@ class PDLDetailView(QWidget):
 
         # Sezione Cronologia Interventi
         cron_label = QLabel("Cronologia Interventi (Report Attività)")
-        cron_label.setStyleSheet(f"font-weight: bold; font-size: 13px; color: {COLORS['success_dark']}; margin-top: 10px;")
+        cron_label.setStyleSheet(
+            f"font-weight: bold; font-size: 13px; color: {COLORS['success_dark']}; margin-top: 10px;"
+        )
         layout.addWidget(cron_label)
 
-        self.cron_table = QTableWidget()
+        self.cron_table = StandardTable()
         self.cron_table.setColumnCount(5)
         self.cron_table.setHorizontalHeaderLabels(["Data", "Fonte", "Tecnico", "Ore", "Descrizione"])
         if header := self.cron_table.horizontalHeader():

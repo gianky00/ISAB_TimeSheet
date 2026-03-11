@@ -41,7 +41,8 @@ class TestAppInitializerRobust:
         assert AppInitializer._core_initialized is True
         mock_log.assert_called_once()
         mock_db.assert_called_once()
-        mock_update.assert_not_called()
+        # run_update viene ora chiamato SEMPRE all'inizio
+        mock_update.assert_called_once()
 
     @patch("src.core.app_initializer.AppInitializer._setup_logging")
     @patch("src.core.database.db_manager.init_db")
@@ -52,22 +53,25 @@ class TestAppInitializerRobust:
         {"pandas": MagicMock(), "numpy": MagicMock(), "selenium": MagicMock()},
     )
     def test_initialize_core_license_invalid(self, mock_update, mock_status, mock_db, mock_log):
-        """Test aggiornamento licenza se invalida."""
+        """Test blocco inizializzazione se licenza invalida."""
         from src.core.license_validator import LicenseStatus
 
         # Simula licenza NON valida
         mock_status.return_value = (LicenseStatus.EXPIRED, "Expired")
 
-        result = AppInitializer.initialize_core()
+        # Mi aspetto eccezione bloccante
+        with pytest.raises(Exception, match="Licenza non valida"):
+            AppInitializer.initialize_core()
 
-        assert result is True
         mock_update.assert_called_once()
-        mock_db.assert_called_once()
 
     @patch("src.core.app_initializer.logger")
     @patch("src.core.database.db_manager.init_db")
-    def test_initialize_core_failure(self, mock_db_init, mock_logger):
+    @patch("src.core.license_updater.run_update")
+    def test_initialize_core_failure(self, mock_update, mock_db_init, mock_logger):
         """Test gestione errore critico in init core (DB failure)."""
+        from src.core.license_validator import LicenseStatus
+
         mock_db_init.side_effect = Exception("DB Error")
 
         # Patch dependencies to avoid early exit
@@ -76,14 +80,18 @@ class TestAppInitializerRobust:
                 "sys.modules",
                 {"pandas": MagicMock(), "numpy": MagicMock(), "selenium": MagicMock()},
             ),
-            patch("src.core.license_validator.get_detailed_license_status", return_value=(MagicMock(), "OK")),
+            patch(
+                "src.core.license_validator.get_detailed_license_status",
+                return_value=(LicenseStatus.VALID, "OK"),
+            ),
             patch.object(AppInitializer, "_setup_logging"),
         ):
-            result = AppInitializer.initialize_core()
+            # Mi aspetto eccezione
+            with pytest.raises(Exception, match="DB Error"):
+                AppInitializer.initialize_core()
 
-            assert result is False
             assert AppInitializer._core_initialized is False
-            mock_logger.critical.assert_called()
+            mock_update.assert_called_once()
 
     def test_init_generator_flow(self):
         """Test del generatore di inizializzazione GUI."""

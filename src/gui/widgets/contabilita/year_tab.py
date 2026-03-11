@@ -103,20 +103,20 @@ class ContabilitaYearTab(QWidget):
         self.table.setAlternatingRowColors(True)
         self.table.setStyleSheet(f"""
             QTableView {{
-                gridline-color: {COLORS['bg_alt']};
-                background-color: {COLORS['bg_white']};
-                alternate-background-color: {COLORS['bg_light']};
-                selection-background-color: {COLORS['table_selection_bg']};
-                selection-color: {COLORS['text_dark']};
+                gridline-color: {COLORS["bg_alt"]};
+                background-color: {COLORS["bg_white"]};
+                alternate-background-color: {COLORS["bg_light"]};
+                selection-background-color: {COLORS["table_selection_bg"]};
+                selection-color: {COLORS["text_dark"]};
                 border: none;
             }}
             QHeaderView::section {{
-                background-color: {COLORS['bg_light']};
-                color: {COLORS['text_dark']};
+                background-color: {COLORS["bg_light"]};
+                color: {COLORS["text_dark"]};
                 padding: 8px;
                 font-weight: bold;
                 border: none;
-                border-bottom: 1px solid {COLORS['border_light']};
+                border-bottom: 1px solid {COLORS["border_light"]};
             }}
         """)
 
@@ -169,7 +169,6 @@ class ContabilitaYearTab(QWidget):
 
             # Passa i dati grezzi direttamente al modello.
             # Il modello userà i formatters per la visualizzazione e i valori grezzi per l'ordinamento.
-            # Convertiamo solo in lista per mutabilità se necessario, ma db_data è lista di tuple
             # FastTableModel si aspetta lista di liste/tuple accessibili per indice.
 
             # Nota: ContabilitaQueries restituisce tutto. Dobbiamo assicurarci di prendere solo le colonne che servono

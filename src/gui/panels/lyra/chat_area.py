@@ -16,13 +16,16 @@ from src.gui.widgets.message_bubble import MessageBubble
 
 class TypingIndicator(QWidget):
     """Widget che simula Lyra che sta scrivendo."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(20, 5, 20, 5)
 
         self.container = QFrame()
-        self.container.setStyleSheet(f"background: #f4f4f9; border-radius: 15px; border: 1px solid {COLORS['border_light']};")
+        self.container.setStyleSheet(
+            f"background: #f4f4f9; border-radius: 15px; border: 1px solid {COLORS['border_light']};"
+        )
         c_layout = QHBoxLayout(self.container)
         c_layout.setContentsMargins(15, 8, 15, 8)
 

@@ -5,6 +5,7 @@ Facade per retrocompatibilità.
 
 from src.gui.panels.base import BaseBotPanel, BotWorker
 from src.gui.panels.carico_ts import CaricoTSPanel
+from src.gui.panels.consuntivo_panel import ConsuntivoPanel
 from src.gui.panels.contabilita_kpi import ContabilitaKPIPanel
 from src.gui.panels.contabilita_panel import ContabilitaPanel
 from src.gui.panels.dashboard_panel import DashboardPanel
@@ -28,6 +29,7 @@ __all__ = [
     "BaseBotPanel",
     "BotWorker",
     "CaricoTSPanel",
+    "ConsuntivoPanel",
     "ContabilitaKPIPanel",
     "ContabilitaPanel",
     "DashboardPanel",

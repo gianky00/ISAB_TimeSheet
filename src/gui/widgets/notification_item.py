@@ -3,11 +3,14 @@ from typing import Any
 
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QMouseEvent
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.core.notification_manager import NotificationManager
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    IconButton,
+)
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -93,11 +96,13 @@ class NotificationItem(QFrame):
             time_str = ""
 
         time_lbl = QLabel(time_str)
-        time_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px; border: none; background: transparent;")
+        time_lbl.setStyleSheet(
+            f"color: {COLORS['text_muted']}; font-size: 12px; border: none; background: transparent;"
+        )
         header_layout.addWidget(time_lbl)
 
         # Delete Button
-        del_btn = QPushButton()
+        del_btn = IconButton()
         del_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), COLORS["text_dark"]))
         del_btn.setIconSize(QSize(14, 14))
         del_btn.setFixedSize(20, 20)
@@ -109,9 +114,9 @@ class NotificationItem(QFrame):
                 background: transparent;
                 border: none;
                 font-weight: bold;
-                color: {COLORS['text_light']};
+                color: {COLORS["text_light"]};
             }}
-            QPushButton:hover {{ color: {COLORS['error_red']}; }}
+            QPushButton:hover {{ color: {COLORS["error_red"]}; }}
         """
         )
         del_btn.clicked.connect(self._delete)
@@ -122,7 +127,9 @@ class NotificationItem(QFrame):
         # Message
         msg_lbl = QLabel(self.notification.get("message", ""))
         msg_lbl.setWordWrap(True)
-        msg_lbl.setStyleSheet(f"color: {COLORS['text_dark']}; border: none; margin-top: 5px; background: transparent;")
+        msg_lbl.setStyleSheet(
+            f"color: {COLORS['text_dark']}; border: none; margin-top: 5px; background: transparent;"
+        )
         layout.addWidget(msg_lbl)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:

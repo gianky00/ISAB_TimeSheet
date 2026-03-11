@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Any
 
 from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QCheckBox, QHBoxLayout, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.core.constants import Icons
@@ -16,7 +16,11 @@ from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel, BotWorker
 from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import BotParametersWidget, EditableDataTable
+from src.gui.widgets.core_widgets import (
+    StandardCheckBox,
+)
 from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets.safework.status_list import StatusListWidget
 from src.utils.helpers import get_asset_path
 
 
@@ -76,7 +80,7 @@ class ScaricaTSPanel(BaseBotPanel):
         params_layout.addWidget(self.params_widget)
 
         # Parametri specifici: Flag Elabora TS
-        self.elabora_ts_check = QCheckBox("Elabora TS")
+        self.elabora_ts_check = StandardCheckBox("Elabora TS")
         self.elabora_ts_check.stateChanged.connect(self._save_data)
         self.params_widget.add_widget_to_row(self.elabora_ts_check)
 
@@ -94,12 +98,58 @@ class ScaricaTSPanel(BaseBotPanel):
         table_toolbar.addWidget(self.clear_btn)
         params_layout.addLayout(table_toolbar)
 
-        self.data_table = EditableDataTable([{"name": "Numero OdA", "type": "text"}])
+        # 2. Tabella e Stati
+        table_h = QHBoxLayout()
+        table_h.setSpacing(10)
+
+        cols: list[dict[str, Any]] = [
+            {"name": "Numero OdA", "type": "text"},
+            {"name": "ESITO", "type": "text", "default": "", "readonly": True},
+        ]
+        self.data_table = EditableDataTable(cols)
         self.data_table.setMinimumHeight(250)
+        self.data_table.data_changed.connect(self._update_status_list)
         self.data_table.data_changed.connect(self._save_data)
-        params_layout.addWidget(self.data_table)
+
+        v_status = QVBoxLayout()
+        v_status.setContentsMargins(0, 56, 0, 0)
+        self.status_list = StatusListWidget()
+        self.status_list.setFixedWidth(40)
+        v_status.addWidget(self.status_list)
+        v_status.addStretch()
+
+        table_h.addWidget(self.data_table)
+        table_h.addLayout(v_status)
+        params_layout.addLayout(table_h)
 
         self.content_layout.addWidget(params_container)
+
+    def _update_status_list(self, force: bool = False) -> None:
+        """
+        Sincronizza il contatore visivo dello stato con il numero di righe della tabella.
+
+        Args:
+            force: Se True, reinizializza sempre la lista.
+        """
+        count = self.data_table.table.rowCount()
+        if force or self.status_list.count() != count:
+            self.status_list.initialize_rows(count, self.data_table.table.rowHeight(0) or 30)
+
+    def on_step_completed(self, step_idx: int, success: bool, message: str = "") -> None:
+        """
+        Aggiorna lo stato visivo di una specifica riga al termine del suo processing.
+
+        Args:
+            step_idx: Indice della riga processata.
+            success: Esito del processing della riga.
+            message: Messaggio di errore opzionale.
+        """
+        self.status_list.update_status(step_idx, success)
+
+        # Aggiorna la colonna "ESITO" nella tabella (indice colonna = 1)
+        # Usiamo emit_signal=False per evitare di resettare i pallini appena colorati
+        esito_text = "Completato" if success else f"Errore: {message}" if message else "Errore"
+        self.data_table.update_cell(step_idx, 1, esito_text, emit_signal=False)
 
     def _open_settings(self):
         """Apre il dialogo delle impostazioni globali."""
@@ -128,6 +178,7 @@ class ScaricaTSPanel(BaseBotPanel):
             self.data_table.set_data(saved_data)
 
         self.elabora_ts_check.setChecked(config.get("elabora_ts", False))
+        self._update_status_list()
 
     def _save_data(self):
         """Salva i parametri correnti nella configurazione persistente."""
@@ -240,6 +291,9 @@ class ScaricaTSPanel(BaseBotPanel):
         worker = BotWorker(bot, bot_data, telegram_service=tg_service)
         self.worker = worker
         self._setup_worker_connections(worker)
+
+        # Reset pallini all'avvio
+        self._update_status_list(force=True)
 
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)

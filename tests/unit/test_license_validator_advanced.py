@@ -1,4 +1,3 @@
-import base64
 import hashlib
 import json
 from datetime import datetime
@@ -69,10 +68,9 @@ class TestLicenseValidatorAdvanced:
 
         # 1. Setup Chiave e Fernet
         key = Fernet.generate_key()
-        raw_key = base64.urlsafe_b64decode(key)
         mocker.patch(
             "src.core.license_validator.SecretsManager.get_license_key",
-            return_value=raw_key,
+            return_value=key,
         )
 
         # 2. Prepara Dati Licenza

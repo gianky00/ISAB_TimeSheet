@@ -15,13 +15,10 @@ from PyQt6.QtCore import (  # type: ignore[attr-defined]
 )
 from PyQt6.QtGui import QColor, QPainter, QPen
 from PyQt6.QtWidgets import (
-    QComboBox,
     QFileDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
-    QPushButton,
     QVBoxLayout,
     QWidget,
 )
@@ -29,6 +26,11 @@ from PyQt6.QtWidgets import (
 from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    FilterComboBox,
+    IconButton,
+    StandardInput,
+)
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .calendar_date_edit import CalendarDateEdit
@@ -146,6 +148,7 @@ class BotParametersWidget(QWidget):
         self.container = QFrame()
         self.container.setObjectName("filterBar")
         from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
+
         self.container.setStyleSheet(f"""
             QFrame#filterBar {{
                 background-color: {COLORS["bg_white"]};
@@ -168,7 +171,7 @@ class BotParametersWidget(QWidget):
 
         hbox_forn = QHBoxLayout()
         hbox_forn.setSpacing(8)
-        self.fornitore_combo = QComboBox()
+        self.fornitore_combo = FilterComboBox()
         self.fornitore_combo.setMinimumHeight(38)
         self.fornitore_combo.setMinimumWidth(200)
         self.fornitore_combo.setStyleSheet(COMBOBOX_STYLE)
@@ -176,7 +179,7 @@ class BotParametersWidget(QWidget):
         hbox_forn.addWidget(self.fornitore_combo)
 
         # Pulsante Settings
-        self.settings_btn = QPushButton()
+        self.settings_btn = IconButton()
         self.settings_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), COLORS["text_dark"]))
         self.settings_btn.setIconSize(QSize(20, 20))
         self.settings_btn.setFixedSize(38, 38)
@@ -203,7 +206,7 @@ class BotParametersWidget(QWidget):
         vbox_da.addWidget(lbl_da)
         self.date_da = CalendarDateEdit()
         self.date_da.setMinimumHeight(38)
-        self.date_da.setStyleSheet(COMBOBOX_STYLE) # CalendarDateEdit inherits styles
+        self.date_da.setStyleSheet(COMBOBOX_STYLE)  # CalendarDateEdit inherits styles
         self.date_da.dateChanged.connect(self.changed.emit)
         vbox_da.addWidget(self.date_da)
         container_layout.addLayout(vbox_da)
@@ -239,7 +242,7 @@ class BotParametersWidget(QWidget):
 
             hbox_dest = QHBoxLayout()
             hbox_dest.setSpacing(8)
-            self.dest_path_edit = QLineEdit()
+            self.dest_path_edit = StandardInput()
             self.dest_path_edit.setPlaceholderText("Download utente (default)")
             self.dest_path_edit.setReadOnly(True)
             self.dest_path_edit.setMinimumWidth(200)
@@ -248,19 +251,39 @@ class BotParametersWidget(QWidget):
             self.dest_path_edit.textChanged.connect(self.changed.emit)
             hbox_dest.addWidget(self.dest_path_edit)
 
-            self.browse_btn = QPushButton()
+            self.browse_btn = IconButton()
             self.browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
             self.browse_btn.setIconSize(QSize(20, 20))
             self.browse_btn.setFixedSize(38, 38)
+            self.browse_btn.setToolTip("Seleziona cartella")
             self.browse_btn.clicked.connect(self._browse_path)
             self.browse_btn.setStyleSheet(self._get_icon_btn_style())
             hbox_dest.addWidget(self.browse_btn)
 
+            from src.gui.widgets.modern_button import ModernButton
+            self.open_btn = ModernButton(
+                "APRI",
+                variant=ModernButton.Variant.GHOST,
+                size=ModernButton.Size.SMALL
+            )
+            self.open_btn.setFixedSize(60, 38)
+            self.open_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {COLORS["bg_white"]};
+                    color: {COLORS["text_dark"]};
+                    border: 1px solid {COLORS["border_medium"]};
+                    font-weight: bold;
+                }}
+                QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
+            """)
+            self.open_btn.setToolTip("Apri cartella nel file system")
+            self.open_btn.clicked.connect(self._open_folder)
+            hbox_dest.addWidget(self.open_btn)
             vbox_dest.addLayout(hbox_dest)
             container_layout.addLayout(vbox_dest)
 
         container_layout.addStretch()
-        self.main_row_layout = container_layout # Referenza per add_widget_to_row
+        self.main_row_layout = container_layout  # Referenza per add_widget_to_row
 
         main_layout.addWidget(self.container)
 
@@ -284,18 +307,18 @@ class BotParametersWidget(QWidget):
         """Restituisce lo stile QSS per i pulsanti icona."""
         return f"""
             QPushButton {{
-                background-color: {COLORS['bg_white']};
-                color: {COLORS['text_dark']};
-                border: 1px solid {COLORS['border_medium']};
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
+                border: 1px solid {COLORS["border_medium"]};
                 border-radius: 6px;
                 padding: 2px;
             }}
             QPushButton:hover {{
-                background-color: {COLORS['table_selection_bg']};
-                border-color: {COLORS['text_dark']};
+                background-color: {COLORS["table_selection_bg"]};
+                border-color: {COLORS["text_dark"]};
             }}
             QPushButton:pressed {{
-                background-color: {COLORS['bg_alt']};
+                background-color: {COLORS["bg_alt"]};
             }}
         """
 
@@ -304,6 +327,27 @@ class BotParametersWidget(QWidget):
         path = QFileDialog.getExistingDirectory(self, "Seleziona cartella destinazione")
         if path:
             self.dest_path_edit.setText(path)
+
+    def _open_folder(self) -> None:
+        """Apre la cartella di destinazione nell'esplora risorse di sistema."""
+        import os
+        from pathlib import Path
+
+        path_str = self.dest_path_edit.text()
+        if not path_str:
+            path_str = str(Path.home() / "Downloads")
+
+        path = Path(path_str).resolve()
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
+
+        try:
+            import os
+            os.startfile(str(path)) # noqa: S606
+        except Exception:
+            from src.gui.widgets.toast import ToastManager
+
+            ToastManager.instance().show(f"Impossibile aprire la cartella: {path}", "error")
 
     def refresh_fornitori(self) -> None:
         """Ricarica l'elenco dei fornitori dalla configurazione globale."""

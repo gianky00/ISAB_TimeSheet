@@ -39,6 +39,7 @@ class ConfirmationDialog(QDialog):
         title: str = "",
         message: str = "",
         variant: str = Variant.QUESTION,
+        is_rich_text: bool = False,
     ) -> None:
         """
         Inizializza il dialogo di conferma.
@@ -46,13 +47,22 @@ class ConfirmationDialog(QDialog):
         Args:
             parent: Widget genitore.
             title: Titolo della finestra.
-            message: Messaggio da visualizzare (supporta HTML).
+            message: Messaggio da visualizzare.
             variant: Variante del dialogo (es. Variant.QUESTION).
+            is_rich_text: Se True, abilita il rendering HTML (sanificato).
         """
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setMinimumWidth(380)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
+
+        # Forza stile Light a livello di Dialog
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_medium"]};
+            }}
+        """)
 
         layout = QVBoxLayout(self)
         layout.setSpacing(20)
@@ -70,9 +80,18 @@ class ConfirmationDialog(QDialog):
             icon_label.setFixedSize(32, 32)
             header_layout.addWidget(icon_label, 0, Qt.AlignmentFlag.AlignTop)
 
-        msg_label = QLabel(message)
+        msg_label = QLabel()
         msg_label.setWordWrap(True)
-        msg_label.setTextFormat(Qt.TextFormat.RichText)
+
+        if is_rich_text:
+            # Sanificazione minima per prevenire UI Injection/XSS
+            safe_msg = self._sanitize_html(message)
+            msg_label.setTextFormat(Qt.TextFormat.RichText)
+            msg_label.setText(safe_msg)
+        else:
+            msg_label.setTextFormat(Qt.TextFormat.PlainText)
+            msg_label.setText(message)
+
         msg_label.setStyleSheet(f"font-size: 14px; color: {COLORS['text_dark']};")
         header_layout.addWidget(msg_label, 1)
 
@@ -122,8 +141,25 @@ class ConfirmationDialog(QDialog):
             return COLORS["primary_dark"]
         return COLORS["text_dark"]
 
+    def _sanitize_html(self, html: str) -> str:
+        """Rimuove tag potenzialmente pericolosi (script, iframe, object) dall'HTML."""
+        import re
+
+        # Rimuove blocchi script completi
+        clean = re.sub(r"<script.*?>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
+        # Rimuove tag singoli pericolosi
+        clean = re.sub(
+            r"<(script|iframe|object|embed|applet|meta|link|style).*?>",
+            "",
+            clean,
+            flags=re.IGNORECASE,
+        )
+        # Rimuove attributi evento (onmouseover, onclick, etc)
+        clean = re.sub(r"\son\w+?\s*=\s*['\"].*?['\"]", "", clean, flags=re.IGNORECASE)
+        return clean
+
     @staticmethod
-    def confirm(parent: QWidget | None, title: str, message: str) -> bool:
+    def confirm(parent: QWidget | None, title: str, message: str, is_rich_text: bool = False) -> bool:
         """
         Helper statico per mostrare rapidamente una richiesta di conferma Sì/No.
 
@@ -131,27 +167,36 @@ class ConfirmationDialog(QDialog):
             parent: Widget genitore.
             title: Titolo.
             message: Messaggio.
+            is_rich_text: Se il messaggio contiene HTML.
 
         Returns:
             bool: True se l'utente ha confermato.
         """
-        dlg = ConfirmationDialog(parent, title, message, variant=ConfirmationDialog.Variant.QUESTION)
+        dlg = ConfirmationDialog(
+            parent, title, message, variant=ConfirmationDialog.Variant.QUESTION, is_rich_text=is_rich_text
+        )
         return dlg.exec() == QDialog.DialogCode.Accepted
 
     @staticmethod
-    def show_info(parent: QWidget | None, title: str, message: str) -> None:
+    def show_info(parent: QWidget | None, title: str, message: str, is_rich_text: bool = False) -> None:
         """Mostra un messaggio informativo con pulsante OK."""
-        dlg = ConfirmationDialog(parent, title, message, variant=ConfirmationDialog.Variant.INFO)
+        dlg = ConfirmationDialog(
+            parent, title, message, variant=ConfirmationDialog.Variant.INFO, is_rich_text=is_rich_text
+        )
         dlg.exec()
 
     @staticmethod
-    def show_warning(parent: QWidget | None, title: str, message: str) -> None:
+    def show_warning(parent: QWidget | None, title: str, message: str, is_rich_text: bool = False) -> None:
         """Mostra un avviso con pulsante OK."""
-        dlg = ConfirmationDialog(parent, title, message, variant=ConfirmationDialog.Variant.WARNING)
+        dlg = ConfirmationDialog(
+            parent, title, message, variant=ConfirmationDialog.Variant.WARNING, is_rich_text=is_rich_text
+        )
         dlg.exec()
 
     @staticmethod
-    def show_error(parent: QWidget | None, title: str, message: str) -> None:
+    def show_error(parent: QWidget | None, title: str, message: str, is_rich_text: bool = False) -> None:
         """Mostra un messaggio di errore con pulsante OK."""
-        dlg = ConfirmationDialog(parent, title, message, variant=ConfirmationDialog.Variant.ERROR)
+        dlg = ConfirmationDialog(
+            parent, title, message, variant=ConfirmationDialog.Variant.ERROR, is_rich_text=is_rich_text
+        )
         dlg.exec()

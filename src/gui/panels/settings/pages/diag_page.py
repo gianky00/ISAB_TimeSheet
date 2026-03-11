@@ -1,11 +1,14 @@
 from typing import Any
 
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.panels.settings.shared import create_group_box, style_button
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    PrimaryButton,
+)
 from src.utils.helpers import get_asset_path, get_colored_icon, open_folder
 
 
@@ -29,7 +32,7 @@ class DiagPage(QWidget):
 
         diag_layout.addStretch()
 
-        open_folder_btn = QPushButton("  Apri Cartella Dati")
+        open_folder_btn = PrimaryButton("  Apri Cartella Dati")
         open_folder_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
         open_folder_btn.clicked.connect(self._open_data_folder)
         style_button(open_folder_btn)
@@ -47,6 +50,6 @@ class DiagPage(QWidget):
         """Carica le impostazioni diagnostiche dalla configurazione (non implementato)."""
         # Nulla da caricare per ora
 
-    def save_to_config(self, config_manager: Any) -> None:
-        """Salva le impostazioni diagnostiche nella configurazione (non implementato)."""
-        # Nulla da salvare
+    def save_to_config(self, config: dict[str, Any]) -> None:
+        """Salva le impostazioni diagnostiche nel dizionario di configurazione."""
+        # Nulla da salvare per ora

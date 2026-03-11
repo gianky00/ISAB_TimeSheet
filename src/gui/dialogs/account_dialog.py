@@ -1,17 +1,16 @@
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import (
-    QComboBox,
     QDialog,
     QFormLayout,
     QHBoxLayout,
     QLineEdit,
-    QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import FilterComboBox, IconButton, StandardInput
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -31,6 +30,17 @@ class AccountDialog(QDialog):
         self.setWindowTitle("Account")
         self.setFixedWidth(350)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {COLORS["bg_white"]};
+                border-radius: 12px;
+            }}
+            QLabel {{
+                color: {COLORS["text_dark"]};
+                font-weight: 500;
+                font-size: 13px;
+            }}
+        """)
 
         # Main Layout (Vertical) instead of Form for better control
         main_layout = QVBoxLayout(self)
@@ -41,12 +51,12 @@ class AccountDialog(QDialog):
         form.setSpacing(10)
 
         # Username
-        self.username_edit = QLineEdit(username)
+        self.username_edit = StandardInput(username)
         self.username_edit.setMinimumHeight(35)
         form.addRow("Username:", self.username_edit)
 
         # Password
-        self.password_edit = QLineEdit(password)
+        self.password_edit = StandardInput(password)
         self.password_edit.setMinimumHeight(35)
         self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
 
@@ -57,7 +67,7 @@ class AccountDialog(QDialog):
 
         pass_layout.addWidget(self.password_edit)
 
-        self.toggle_pass_btn = QPushButton()
+        self.toggle_pass_btn = IconButton()
         self.toggle_pass_btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), COLORS["text_muted"]))
         self.toggle_pass_btn.setIconSize(QSize(20, 20))
         self.toggle_pass_btn.setToolTip("Mostra/Nascondi password")
@@ -82,7 +92,7 @@ class AccountDialog(QDialog):
         form.addRow("Password:", pass_layout)
 
         # Account Type (Optional, shown for SafeWork)
-        self.type_combo = QComboBox()
+        self.type_combo = FilterComboBox()
         self.type_combo.addItems(["Esecutore", "ISAB"])
         self.type_combo.setMinimumHeight(35)
         if account_type:

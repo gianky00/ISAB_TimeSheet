@@ -23,6 +23,7 @@ from src.core.logging import get_logger
 from src.core.stats_manager import StatsManager
 from src.gui.components.activity_timeline import ActivityTimelineWidget
 from src.gui.design.spacing import Spacing
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.dialogs.standard_input_dialog import StandardInputDialog
 from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import TimelineWidget
@@ -41,7 +42,7 @@ class BotWorker(QThread):
     status_signal = pyqtSignal(str)
     finished_signal = pyqtSignal(bool)
     request_input_signal = pyqtSignal(str, dict, threading.Event)
-    row_status_signal = pyqtSignal(int, bool)  # New signal for row updates
+    row_status_signal = pyqtSignal(int, bool, str)  # index, success, message
     step_changed_signal = pyqtSignal(int, str, object)  # Bridge for timeline
 
     def __init__(self, bot, data, telegram_service=None):
@@ -115,6 +116,7 @@ class BaseBotPanel(QWidget):
     bot_started = pyqtSignal()
     bot_stopped = pyqtSignal()
     bot_finished = pyqtSignal(bool)
+    data_updated = pyqtSignal()
     bot_results_ready = pyqtSignal(str, list)  # bot_id, list of results (e.g. file paths)
     status_changed = pyqtSignal(str, str)  # status, message
 
@@ -444,6 +446,15 @@ class BaseBotPanel(QWidget):
         worker.status_signal.connect(self._on_status)
         worker.finished_signal.connect(self._on_worker_finished)
 
+        # Segnale per errori critici (es. licenza revocata)
+        worker.bot.signals.critical_error.connect(
+            lambda title, msg: ConfirmationDialog.show_error(self, title, msg)
+        )
+
+        # Segnale di aggiornamento dati (per sincronizzare altri pannelli)
+        if hasattr(self, "data_updated"):
+            worker.finished_signal.connect(lambda success: self.data_updated.emit() if success else None)
+
         # Connessione automatica timeline
         if hasattr(self, "activity_timeline"):
             worker.step_changed_signal.connect(self.activity_timeline.on_step_changed)
@@ -451,6 +462,10 @@ class BaseBotPanel(QWidget):
         # Connessione input interattivo
         if hasattr(self, "_ask_user_input"):
             worker.request_input_signal.connect(self._ask_user_input)
+
+        # Connessione segnale specifico per riga (Feedback Tabella)
+        if hasattr(self, "on_step_completed"):
+            worker.row_status_signal.connect(self.on_step_completed)
 
     def get_credentials(self) -> tuple[str, str]:
         """Ottiene le credenziali dall'account di default."""

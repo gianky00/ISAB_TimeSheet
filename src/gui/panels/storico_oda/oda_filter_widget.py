@@ -2,7 +2,6 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QSizePolicy,
     QVBoxLayout,
     QWidget,
@@ -10,6 +9,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS, LABEL_MUTED, LINEEDIT_STYLE
+from src.gui.widgets.core_widgets import SearchInput
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path
@@ -47,7 +47,7 @@ class OdaFilterWidget(QWidget):
         search_container.setSpacing(4)
         search_label = QLabel("CERCA ODA / FORNITORE")
         search_label.setStyleSheet(LABEL_MUTED)
-        self.search_input = QLineEdit()
+        self.search_input = SearchInput()
         self.search_input.setPlaceholderText("OdA, Fornitore, Descrizione...")
         self.search_input.setMinimumWidth(350)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)

@@ -8,7 +8,7 @@ Gestisce il salvataggio automatico e l'import/export della configurazione.
 from pathlib import Path
 
 from PyQt6.QtCore import QTimer, pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.core.constants import Icons
@@ -16,8 +16,12 @@ from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.panels.settings.shared import style_button
 from src.gui.panels.settings.tabs.backup_tab import BackupTab
 from src.gui.panels.settings.tabs.config_tab import ConfigTab
+from src.gui.panels.settings.tabs.roi_tab import ROITab
 from src.gui.panels.settings.tabs.telegram_tab import TelegramTab
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    PrimaryButton,
+)
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -42,6 +46,7 @@ class SettingsPanel(QWidget):
             parent: Widget genitore.
         """
         super().__init__(parent)
+        self._is_loading = False
         self._setup_ui()
         QTimer.singleShot(50, self.load_settings)
 
@@ -62,7 +67,16 @@ class SettingsPanel(QWidget):
             "Configurazione",
         )
 
-        # 2. Backup e Manutenzione
+        # 2. Efficienza & ROI
+        self.roi_tab = ROITab()
+        self.roi_tab.settings_changed.connect(self.save_settings)
+        self.tabs.addTab(
+            self.roi_tab,
+            get_colored_icon(get_asset_path(Icons.CLOCK), COLORS["text_muted"]),
+            "Efficienza & ROI",
+        )
+
+        # 3. Backup e Manutenzione
         self.backup_tab = BackupTab()
         self.tabs.addTab(
             self.backup_tab,
@@ -85,9 +99,9 @@ class SettingsPanel(QWidget):
         actions_layout = QHBoxLayout()
         actions_layout.setContentsMargins(10, 0, 10, 10)
 
-        self.btn_import = QPushButton("Importa Config")
-        self.btn_export = QPushButton("Esporta Config")
-        self.btn_reset = QPushButton("Reset Fabbrica")
+        self.btn_import = PrimaryButton("Importa Config")
+        self.btn_export = PrimaryButton("Esporta Config")
+        self.btn_reset = PrimaryButton("Reset Fabbrica")
 
         style_button(self.btn_import)
         style_button(self.btn_export)
@@ -112,19 +126,29 @@ class SettingsPanel(QWidget):
 
     def load_settings(self) -> None:
         """Carica la configurazione attuale e aggiorna tutti i tab."""
-        config = config_manager.load_config()
-        self.config_tab.load_from_config(config)
-        self.backup_tab.load_from_config(config)
-        self.telegram_tab.load_from_config(config)
+        self._is_loading = True
+        try:
+            config = config_manager.load_config()
+            self.config_tab.load_from_config(config)
+            self.roi_tab.load_from_config(config)
+            self.backup_tab.load_from_config(config)
+            self.telegram_tab.load_from_config(config)
+        finally:
+            self._is_loading = False
 
     def save_settings(self) -> None:
         """Raccoglie i dati dai tab e li persiste tramite il config_manager."""
-        self.config_tab.save_to_config(config_manager)
-        self.telegram_tab.save_to_config(config_manager)
-        # Nota: save_to_config ha già salvato i singoli valori tramite set_config_value,
-        # che internamente chiama save_config(config).
-        # Non è necessario chiamare save_config(updated_config) manualmente qui
-        # se set_config_value è usato correttamente.
+        if self._is_loading:
+            return
+
+        config = config_manager.load_config()
+        self.config_tab.save_to_config(config)
+        self.roi_tab.save_to_config(config)
+        self.telegram_tab.save_to_config(config)
+
+        # Salva la configurazione aggiornata
+        config_manager.save_config(config)
+
         self.settings_saved.emit()
 
     def has_unsaved_changes(self) -> bool:
@@ -168,9 +192,7 @@ class SettingsPanel(QWidget):
         """Importa un file di configurazione JSON esterno."""
         from PyQt6.QtWidgets import QFileDialog
 
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Importa Configurazione", "", "JSON Files (*.json)"
-        )
+        path, _ = QFileDialog.getOpenFileName(self, "Importa Configurazione", "", "JSON Files (*.json)")
         if path:
             success, msg = config_manager.import_configuration(Path(path))
             if success:

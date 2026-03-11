@@ -3,6 +3,8 @@ SyncroJob - Modern Card Widget
 Un contenitore elegante con ombre morbide, angoli arrotondati e animazioni hover.
 """
 
+from typing import Any
+
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QFrame, QGraphicsDropShadowEffect, QVBoxLayout, QWidget
@@ -71,6 +73,7 @@ class ModernCard(QFrame):
 
 class ModernContentCard(ModernCard):
     """Card che include già un layout per i contenuti."""
+
     def __init__(self, parent: QWidget | None = None, elevation: int = 15) -> None:
         """Inizializza la card con layout verticale integrato."""
         super().__init__(parent, elevation)

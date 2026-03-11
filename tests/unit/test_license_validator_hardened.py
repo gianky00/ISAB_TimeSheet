@@ -30,16 +30,13 @@ class TestLicenseValidatorHardened:
         # Mock paths in validator
         mocker.patch("src.core.license_validator._get_license_paths", return_value=paths)
         # Mock license key
-        fake_key = b"0" * 32
+        fake_key = Fernet.generate_key()
         mocker.patch("src.core.secrets_manager.SecretsManager.get_license_key", return_value=fake_key)
 
         return paths, fake_key
 
     def _create_license_files(self, paths, key, payload):
-        import base64
-
-        key_b64 = base64.urlsafe_b64encode(key)
-        cipher = Fernet(key_b64)
+        cipher = Fernet(key)
         encrypted = cipher.encrypt(json.dumps(payload).encode())
 
         paths["config"].write_bytes(encrypted)

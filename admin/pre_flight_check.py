@@ -8,6 +8,7 @@ L'Oracolo del Progetto: Score, Dashboard HTML, Git-Hooks e Intelligence.
 import argparse
 import contextlib
 import datetime
+import io
 import os
 import re
 import shutil
@@ -18,6 +19,13 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
+
+if sys.platform == "win32":
+    with contextlib.suppress(Exception):
+        if hasattr(sys.stdout, "buffer"):
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+        if hasattr(sys.stderr, "buffer"):
+            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 # Rich Imports
 try:
@@ -126,6 +134,7 @@ def run_tool(name: str, cmd: list[str], label: str, cwd: Path = PROJECT_ROOT) ->
             errors="replace",
             check=False,
             env=env,
+            timeout=120,  # Timeout di sicurezza per evitare blocchi infiniti
         )
         duration = time.time() - start_t
         log_file.write_text(
@@ -137,6 +146,9 @@ def run_tool(name: str, cmd: list[str], label: str, cwd: Path = PROJECT_ROOT) ->
             result.stdout if result.returncode != 0 else "",
             duration,
         )
+    except subprocess.TimeoutExpired:
+        duration = time.time() - start_t
+        return False, f"Timeout superato ({duration:.1f}s). Il processo si era bloccato.", duration
     except Exception as e:
         return False, f"Eccezione: {e}", time.time() - start_t
 
@@ -278,32 +290,57 @@ class ApexAudit:
         )
 
     def _run_parallel(self, parallel_checks):
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TimeElapsedColumn(),
-            console=console,
-        ) as prog:
-            tasks = {
-                label: prog.add_task(f"Audit {label}...", total=100) for label, _, _, _ in parallel_checks
-            }
+        is_dumb = os.environ.get("TERM") == "dumb"
+
+        if is_dumb:
+            ts = datetime.datetime.now().strftime("%H:%M:%S")
+            console.print(f"[[dim]{ts}[/dim]] [bold yellow]Inizio controlli paralleli...[/bold yellow]")
             with ThreadPoolExecutor(max_workers=len(parallel_checks)) as executor:
-                futures = {
-                    executor.submit(func): (label, name, always_show)
-                    for label, func, name, always_show in parallel_checks
-                }
+                futures = {}
+                for label, func, name, always_show in parallel_checks:
+                    ts = datetime.datetime.now().strftime("%H:%M:%S")
+                    console.print(f"[[dim]{ts}[/dim]] [dim] -> Avvio {label}...[/dim]")
+                    futures[executor.submit(func)] = (label, name, always_show)
+
                 for future in futures:
                     label, name, always_show = futures[future]
                     success, msg, dur = future.result()
                     self._add_res(label, success, msg, dur, name, always_show)
-                    prog.update(tasks[label], completed=100, description=f"[green][OK] {label}")
+                    ts = datetime.datetime.now().strftime("%H:%M:%S")
+                    if success:
+                        console.print(
+                            f"[[dim]{ts}[/dim]] [green][OK] {label} completato in {dur:.1f}s.[/green]"
+                        )
+                    else:
+                        console.print(f"[[dim]{ts}[/dim]] [red][X] {label} fallito in {dur:.1f}s.[/red]")
+        else:
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TimeElapsedColumn(),
+                console=console,
+            ) as prog:
+                tasks = {
+                    label: prog.add_task(f"Audit {label}...", total=100) for label, _, _, _ in parallel_checks
+                }
+                with ThreadPoolExecutor(max_workers=len(parallel_checks)) as executor:
+                    futures = {
+                        executor.submit(func): (label, name, always_show)
+                        for label, func, name, always_show in parallel_checks
+                    }
+                    for future in futures:
+                        label, name, always_show = futures[future]
+                        success, msg, dur = future.result()
+                        self._add_res(label, success, msg, dur, name, always_show)
+                        prog.update(tasks[label], completed=100, description=f"[green][OK] {label}")
 
     def run_all(self):
         console.print(
             Panel.fit(
                 "[bold cyan]SYNCROJOB APEX AUDIT ENGINE[/bold cyan]",
                 border_style="cyan",
+                safe_box=True,
             )
         )
 
@@ -421,19 +458,24 @@ class ApexAudit:
 
         # Intelligence Checks
         if not self.target or self.target in ["all", "intelligence"]:
-            # Usa spinner ASCII-only se TERM=dumb (eseguito da GUI)
-            spinner_type = "dots"
-
-            with Progress(
-                SpinnerColumn(spinner_name=spinner_type),
-                TextColumn("[progress.description]{task.description}"),
-                console=console,
-            ) as prog:
-                prog.add_task("Intelligence Scan...", total=None)
+            if os.environ.get("TERM") == "dumb":
+                ts = datetime.datetime.now().strftime("%H:%M:%S")
+                console.print(f"[[dim]{ts}[/dim]] [bold yellow]⠴ Intelligence Scan...[/bold yellow]")
                 self._add_res("Environment", *self._check_environment(), "env", False)
                 self._add_res("Versions", *self._check_versions(), "ver", False)
                 self._add_res("Secrets", *self._scan_for_secrets(), "sec", False)
                 self._add_res("Database", *self._check_db_integrity(), "db", False)
+            else:
+                with Progress(
+                    SpinnerColumn(spinner_name="dots"),
+                    TextColumn("[progress.description]{task.description}"),
+                    console=console,
+                ) as prog:
+                    prog.add_task("Intelligence Scan...", total=None)
+                    self._add_res("Environment", *self._check_environment(), "env", False)
+                    self._add_res("Versions", *self._check_versions(), "ver", False)
+                    self._add_res("Secrets", *self._scan_for_secrets(), "sec", False)
+                    self._add_res("Database", *self._check_db_integrity(), "db", False)
 
         # Filter Logic
         selected_checks = []
@@ -481,21 +523,30 @@ class ApexAudit:
     def summary(self) -> None:
         """Calcola lo score finale e visualizza il riepilogo tabellare dell'audit."""
         score = self._get_score()
-        table = Table(title="Apex Project Health Summary", border_style="cyan")
-        table.add_column("Audit Task", style="cyan")
-        table.add_column("Status", justify="center")
-        for r in self.results:
-            table.add_row(
-                r.label,
-                "[green]PASS[/green]" if r.success else "[bold red]FAIL[/bold red]",
+
+        is_dumb = os.environ.get("TERM") == "dumb"
+        if is_dumb:
+            console.print("\n=== APEX PROJECT HEALTH SUMMARY ===")
+            for r in self.results:
+                status = "PASS" if r.success else "FAIL"
+                console.print(f"- {r.label}: {status}")
+            console.print(f"\nSYNCRO-SCORE: {score}/100\n")
+        else:
+            table = Table(title="Apex Project Health Summary", border_style="cyan")
+            table.add_column("Audit Task", style="cyan")
+            table.add_column("Status", justify="center")
+            for r in self.results:
+                table.add_row(
+                    r.label,
+                    "[green]PASS[/green]" if r.success else "[bold red]FAIL[/bold red]",
+                )
+            console.print("\n", table)
+            console.print(
+                Panel(
+                    f"[bold cyan]🏆 SYNCRO-SCORE: {score}/100[/bold cyan]",
+                    border_style="cyan",
+                )
             )
-        console.print("\n", table)
-        console.print(
-            Panel(
-                f"[bold cyan]🏆 SYNCRO-SCORE: {score}/100[/bold cyan]",
-                border_style="cyan",
-            )
-        )
 
         self._export_html(score)
         if score < 80 and not self.force:

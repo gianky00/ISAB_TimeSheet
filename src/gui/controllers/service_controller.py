@@ -58,7 +58,9 @@ class ServiceController(QObject):
 
     def start_all(self) -> None:
         """Avvia la sequenza di attivazione dei servizi di background con ritardi differiti per non saturare lo startup."""
-        self.sentinel.anomalies_found.connect(self.mw._on_anomalies_found)
+        if hasattr(self.mw, "monitoring_controller"):
+            self.sentinel.anomalies_found.connect(self.mw.monitoring_controller.handle_anomalies_found)
+
         QTimer.singleShot(2000, self.sentinel.start)
         QTimer.singleShot(1000, self.telegram.start_service)
         QTimer.singleShot(3000, self._check_updates)
@@ -88,7 +90,7 @@ class ServiceController(QObject):
             ),
             (
                 "scarico_oda_generale",
-                "dettagli_oda_bot_panel",
+                "dettagli_panel",
                 "portale_fornitori",
                 str(config.get("scarico_oda_generale_autopilot_time", "09:00")),
                 bool(config.get("scarico_oda_generale_autopilot_enabled", False)),
@@ -96,7 +98,7 @@ class ServiceController(QObject):
             ),
             (
                 "ricerca_pdl",
-                "ricerca_pdl_bot_panel",
+                "pdl_search_panel",
                 "safework",
                 str(config.get("ricerca_pdl_autopilot_time", "09:00")),
                 bool(config.get("ricerca_pdl_autopilot_enabled", False)),

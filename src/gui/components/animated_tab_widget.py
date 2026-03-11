@@ -40,7 +40,7 @@ class AnimatedTabWidget(QWidget):
 
         # Header superiore: TabBar + Controlli opzionali
         self.header_widget = QWidget()
-        self.header_widget.setMinimumHeight(55) # Leggermente più alto per il glow
+        self.header_widget.setMinimumHeight(55)  # Leggermente più alto per il glow
         # Track di fondo (La linea sottile grigia che segna il percorso)
         self.header_widget.setStyleSheet("border-bottom: 1px solid rgba(0, 0, 0, 0.05); background: white;")
 
@@ -61,12 +61,12 @@ class AnimatedTabWidget(QWidget):
 
         # --- INDICATORE PREMIUM (Gradients & Glow) ---
         self.indicator = QWidget(self.header_widget)
-        self.indicator.setFixedHeight(4) # Un po' più spessa per mostrare il gradiente
+        self.indicator.setFixedHeight(4)  # Un po' più spessa per mostrare il gradiente
 
         # Design con gradiente lineare
         self.indicator.setStyleSheet(f"""
             background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 {COLORS['primary_blue']}, stop:0.5 {COLORS['teal_accent']}, stop:1 {COLORS['primary_dark']});
+                stop:0 {COLORS["primary_blue"]}, stop:0.5 {COLORS["teal_accent"]}, stop:1 {COLORS["primary_dark"]});
             border-radius: 2px;
         """)
 
@@ -80,8 +80,8 @@ class AnimatedTabWidget(QWidget):
 
         self.indicator.raise_()
         self._indicator_anim = QPropertyAnimation(self.indicator, b"geometry")
-        self._indicator_anim.setDuration(400) # Un po' più lenta per eleganza
-        self._indicator_anim.setEasingCurve(QEasingCurve.Type.OutQuint) # Il top della fluidità
+        self._indicator_anim.setDuration(400)  # Un po' più lenta per eleganza
+        self._indicator_anim.setEasingCurve(QEasingCurve.Type.OutQuint)  # Il top della fluidità
 
         # Stack animato
         self.stack = SlidingStackedWidget()
@@ -126,7 +126,9 @@ class AnimatedTabWidget(QWidget):
         else:
             self._layout.addWidget(self.header_widget)
             self._layout.addWidget(self.stack)
-            self.header_widget.setStyleSheet("border-bottom: 1px solid rgba(0, 0, 0, 0.05); background: white;")
+            self.header_widget.setStyleSheet(
+                "border-bottom: 1px solid rgba(0, 0, 0, 0.05); background: white;"
+            )
             self.tab_bar.setStyleSheet(self._get_default_style())
 
         QTimer.singleShot(10, self._update_indicator_instant)
@@ -271,19 +273,19 @@ class AnimatedTabWidget(QWidget):
         """Restituisce lo stile QSS per la barra dei tab in posizione North."""
         return f"""
             QTabBar::tab {{
-                background: transparent; color: {COLORS['text_muted']}; padding: 12px 24px;
+                background: transparent; color: {COLORS["text_muted"]}; padding: 12px 24px;
                 font-weight: 600; font-size: 13px; border: none;
             }}
-            QTabBar::tab:selected {{ color: {COLORS['primary_dark']}; }}
-            QTabBar::tab:hover:!selected {{ color: {COLORS['text_dark']}; background: rgba({QColor(COLORS['teal_accent']).red()}, {QColor(COLORS['teal_accent']).green()}, {QColor(COLORS['teal_accent']).blue()}, 0.04); border-radius: 4px; }}
+            QTabBar::tab:selected {{ color: {COLORS["primary_dark"]}; }}
+            QTabBar::tab:hover:!selected {{ color: {COLORS["text_dark"]}; background: rgba({QColor(COLORS["teal_accent"]).red()}, {QColor(COLORS["teal_accent"]).green()}, {QColor(COLORS["teal_accent"]).blue()}, 0.04); border-radius: 4px; }}
         """
 
     def _get_south_style(self) -> str:
         """Restituisce lo stile QSS per la barra dei tab in posizione South."""
         return f"""
             QTabBar::tab {{
-                background: transparent; color: {COLORS['text_muted']}; padding: 10px 18px;
+                background: transparent; color: {COLORS["text_muted"]}; padding: 10px 18px;
                 font-weight: 600; font-size: 12px; border: none;
             }}
-            QTabBar::tab:selected {{ color: {COLORS['primary_dark']}; }}
+            QTabBar::tab:selected {{ color: {COLORS["primary_dark"]}; }}
         """

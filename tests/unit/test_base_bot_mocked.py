@@ -34,13 +34,18 @@ def mock_bot_deps():
         patch("src.bots.base.base_bot.ChromeDriverManager") as mock_cdm,
         patch("src.bots.base.base_bot.config_manager") as mock_config,
         patch("src.bots.base.base_bot.LoginPage") as mock_login_page,
+        patch("src.core.license_updater.run_update") as mock_update,
+        patch("src.core.license_validator.verify_license") as mock_verify,
     ):
         mock_config.load_config.return_value = {}
+        mock_verify.return_value = (True, "OK")
         yield {
             "webdriver": mock_webdriver,
             "cdm": mock_cdm,
             "config": mock_config,
             "login_page": mock_login_page,
+            "run_update": mock_update,
+            "verify_license": mock_verify,
         }
 
 
@@ -56,9 +61,14 @@ class TestBaseBot:
         log_mock = MagicMock()
         bot.set_log_callback(log_mock)
 
+        # RUNNING should NOT log anymore to reduce noise
         bot.status = BotStatus.RUNNING
         assert bot.status == BotStatus.RUNNING
-        log_mock.assert_called_with("Stato: RUNNING")
+        log_mock.assert_not_called()
+
+        # Final states SHOULD log
+        bot.status = BotStatus.COMPLETED
+        log_mock.assert_called_with("🏁 Stato finale: COMPLETED")
 
     def test_log_telegram(self):
         bot = ConcreteBot("u", "p")
@@ -91,16 +101,17 @@ class TestBaseBot:
         assert "Credenziali" in msg
 
     @patch.object(ConcreteBot, "_safe_login_with_retry", return_value=True)
-    def test_execute_workflow_success(self, mock_login):
+    def test_execute_workflow_success(self, mock_login, mock_bot_deps):
         bot = ConcreteBot("u", "p")
         result = bot.execute([{"data": 1}])
 
         assert result is True
         assert bot.status == BotStatus.COMPLETED
         mock_login.assert_called_once()
+        mock_bot_deps["run_update"].assert_called_once()
 
     @patch.object(ConcreteBot, "_safe_login_with_retry", return_value=False)
-    def test_execute_workflow_login_fail(self, mock_login):
+    def test_execute_workflow_login_fail(self, mock_login, mock_bot_deps):
         bot = ConcreteBot("u", "p")
         result = bot.execute([{"data": 1}])
 
@@ -108,7 +119,7 @@ class TestBaseBot:
         assert bot.status == BotStatus.ERROR
 
     @patch.object(ConcreteBot, "_safe_login_with_retry", return_value=True)
-    def test_execute_workflow_run_fail(self, mock_login):
+    def test_execute_workflow_run_fail(self, mock_login, mock_bot_deps):
         bot = ConcreteBot("u", "p")
         with patch.object(bot, "run", return_value=False):
             result = bot.execute([{"data": 1}])

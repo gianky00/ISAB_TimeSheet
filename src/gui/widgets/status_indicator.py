@@ -9,6 +9,17 @@ from PyQt6.QtWidgets import QGraphicsOpacityEffect, QWidget
 
 from src.gui.styles import COLORS
 
+# Stile forzato per i tooltip in Light Mode
+TOOLTIP_CSS = """
+QToolTip {
+    background-color: #FFFFFF;
+    color: #212121;
+    border: 1px solid #BBBBBB;
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+"""
+
 
 class StatusIndicator(QWidget):
     """
@@ -19,6 +30,7 @@ class StatusIndicator(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setFixedSize(20, 20)
+        self.setStyleSheet(TOOLTIP_CSS)
 
         self.opacity_effect = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self.opacity_effect)

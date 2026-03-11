@@ -129,4 +129,6 @@ def test_init_driver_version_error(bot, mocker):
 
     # Verify error logging
     assert any("❌ ERRORE CRITICO DRIVER: Versione incompatibile" in log for log in logs)
-    assert any("💡 SUGGERIMENTO: Aggiorna Chrome o scarica chromedriver compatibile." in log for log in logs)
+    assert any(
+        "💡 SUGGERIMENTO: Al prossimo avvio verrà scaricato un driver aggiornato." in log for log in logs
+    )

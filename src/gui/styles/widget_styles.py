@@ -115,7 +115,7 @@ BUTTON_TRANSPARENT: Final[str] = f"""
         border: none;
     }}
     QPushButton:hover {{
-        background-color: {COLORS['bg_hover']};
+        background-color: {COLORS["bg_hover"]};
         border-radius: 4px;
     }}
 """
@@ -198,9 +198,9 @@ COMBOBOX_STYLE: Final[str] = f"""
 
 COMBOBOX_LIGHT_ON_DARK: Final[str] = f"""
     QComboBox {{
-        background-color: {hex_to_rgba(COLORS['bg_white'], 0.2)};
-        color: {COLORS['bg_white']};
-        border: 1px solid {hex_to_rgba(COLORS['bg_white'], 0.5)};
+        background-color: {hex_to_rgba(COLORS["bg_white"], 0.2)};
+        color: {COLORS["bg_white"]};
+        border: 1px solid {hex_to_rgba(COLORS["bg_white"], 0.5)};
         padding: 5px 10px;
         border-radius: 4px;
     }}
@@ -328,7 +328,7 @@ SCROLL_AREA_BORDERED: Final[str] = f"""
 
 FRAME_HEADER: Final[str] = f"""
     QFrame {{
-        background-color: {COLORS['purple']};
+        background-color: {COLORS["purple"]};
         border-radius: 8px;
         padding: 10px 15px;
     }}
@@ -375,7 +375,7 @@ def status_dot(color: str, size: int = 10) -> str:
 
 LIVE_DOT: Final[str] = f"""
     QLabel {{
-        background-color: {COLORS['success_green']};
+        background-color: {COLORS["success_green"]};
         border-radius: 5px;
         min-width: 10px;
         max-width: 10px;

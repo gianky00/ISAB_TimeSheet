@@ -142,14 +142,14 @@ class PDLTimelineWidget(QWidget):
         card_frame = QFrame()
         card_frame.setStyleSheet(f"""
             QFrame {{
-                background-color: {COLORS['bg_white']};
-                border: 1px solid {COLORS['border_light']};
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
                 border-radius: 8px;
             }}
             QFrame:hover {{
-                border-color: {COLORS['primary_blue']};
-                background-color: {COLORS['bg_white']};
-                box-shadow: 0 4px 6px {hex_to_rgba(COLORS['text_dark'], 0.1)};
+                border-color: {COLORS["primary_blue"]};
+                background-color: {COLORS["bg_white"]};
+                box-shadow: 0 4px 6px {hex_to_rgba(COLORS["text_dark"], 0.1)};
             }}
         """)
         card_layout = QVBoxLayout(card_frame)
@@ -197,7 +197,9 @@ class PDLTimelineWidget(QWidget):
         desc_text = str(data.get("descrizione", ""))
         desc = QLabel(desc_text)
         desc.setWordWrap(True)
-        desc.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 12px; border: none; background: transparent;")
+        desc.setStyleSheet(
+            f"color: {COLORS['text_dark']}; font-size: 12px; border: none; background: transparent;"
+        )
         card_layout.addWidget(desc)
 
         # Ore (se presenti)

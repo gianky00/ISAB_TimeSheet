@@ -3,12 +3,12 @@ from PyQt6.QtWidgets import (
     QDialog,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QVBoxLayout,
     QWidget,
 )
 
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import StandardInput
 from src.gui.widgets.modern_button import ModernButton
 
 
@@ -27,6 +27,14 @@ class StandardInputDialog(QDialog):
         # Rimuovi pulsante aiuto
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
 
+        # Forza stile Light a livello di Dialog
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_medium"]};
+            }}
+        """)
+
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -36,20 +44,20 @@ class StandardInputDialog(QDialog):
             lbl.setStyleSheet(f"font-size: 14px; color: {COLORS['text_dark']};")
             layout.addWidget(lbl)
 
-        self.input_field = QLineEdit(text)
+        self.input_field = StandardInput(text)
         self.input_field.setMinimumHeight(35)
         self.input_field.setStyleSheet(
             f"""
             QLineEdit {{
-                border: 1px solid {COLORS['border_medium']};
+                border: 1px solid {COLORS["border_medium"]};
                 border-radius: 4px;
                 padding: 5px;
                 font-size: 14px;
-                background-color: {COLORS['bg_white']};
-                color: {COLORS['text_dark']};
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
             }}
             QLineEdit:focus {{
-                border: 1px solid {COLORS['primary_dark']};
+                border: 1px solid {COLORS["primary_dark"]};
             }}
             """
         )

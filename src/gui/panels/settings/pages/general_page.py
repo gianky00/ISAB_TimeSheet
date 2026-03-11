@@ -2,13 +2,8 @@ from typing import Any
 
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
-    QPushButton,
-    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
@@ -18,6 +13,13 @@ from src.core.secrets_manager import SecretsManager
 from src.gui.panels.lyra.workers import ModelListWorker
 from src.gui.panels.settings.shared import create_group_box, style_button, style_input
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    FilterComboBox,
+    PrimaryButton,
+    StandardCheckBox,
+    StandardInput,
+    StandardSpinBox,
+)
 
 
 class GeneralPage(QWidget):
@@ -38,7 +40,7 @@ class GeneralPage(QWidget):
         self.general_group = create_group_box("Generale")
         gen_layout = QVBoxLayout(self.general_group)
 
-        self.headless_check = QCheckBox("Nascondi browser dei bot")
+        self.headless_check = StandardCheckBox("Nascondi browser dei bot")
         self.headless_check.setToolTip(
             "Se attivato, il browser verrà eseguito in background senza mostrare la finestra."
         )
@@ -56,7 +58,7 @@ class GeneralPage(QWidget):
         # Provider
         provider_layout = QHBoxLayout()
         provider_layout.addWidget(QLabel("AI Provider:"))
-        self.provider_combo = QComboBox()
+        self.provider_combo = FilterComboBox()
         self.provider_combo.addItems(["gemini", "ollama"])
         self.provider_combo.setMinimumHeight(40)
         style_input(self.provider_combo)
@@ -70,7 +72,7 @@ class GeneralPage(QWidget):
         ollama_url_layout = QHBoxLayout(self.ollama_url_container)
         ollama_url_layout.setContentsMargins(0, 0, 0, 0)
         ollama_url_layout.addWidget(QLabel("Ollama Server URL:"))
-        self.ollama_url_edit = QLineEdit()
+        self.ollama_url_edit = StandardInput()
         self.ollama_url_edit.setPlaceholderText(URLs.OLLAMA_DEFAULT)
         self.ollama_url_edit.setMinimumHeight(40)
         style_input(self.ollama_url_edit)
@@ -82,7 +84,7 @@ class GeneralPage(QWidget):
         model_container = QHBoxLayout()
         model_container.addWidget(QLabel("Modello AI:"))
 
-        self.model_combo = QComboBox()
+        self.model_combo = FilterComboBox()
         self.model_combo.setEditable(True)  # Permette inserimento manuale se fetch fallisce
         self.model_combo.setMinimumHeight(40)
         self.model_combo.setMinimumWidth(200)
@@ -90,7 +92,7 @@ class GeneralPage(QWidget):
         self.model_combo.currentTextChanged.connect(self.settings_changed.emit)
         model_container.addWidget(self.model_combo, 1)
 
-        self.btn_refresh_models = QPushButton("Aggiorna Lista")
+        self.btn_refresh_models = PrimaryButton("Aggiorna Lista")
         self.btn_refresh_models.setMinimumHeight(40)
         style_button(self.btn_refresh_models)
         self.btn_refresh_models.clicked.connect(self.refresh_models)
@@ -109,7 +111,7 @@ class GeneralPage(QWidget):
         timeout_label.setStyleSheet("font-size: 15px;")
         timeout_layout.addWidget(timeout_label)
 
-        self.timeout_spin = QSpinBox()
+        self.timeout_spin = StandardSpinBox()
         self.timeout_spin.setRange(10, 120)
         self.timeout_spin.setValue(30)
         self.timeout_spin.setMinimumHeight(40)
@@ -172,12 +174,12 @@ class GeneralPage(QWidget):
 
         self._on_provider_changed(provider)
 
-    def save_to_config(self, config_manager: Any) -> None:
-        """Salva i valori nella configurazione."""
-        config_manager.set_config_value("browser_headless", self.headless_check.isChecked())
-        config_manager.set_config_value("browser_timeout", self.timeout_spin.value())
+    def save_to_config(self, config: dict[str, Any]) -> None:
+        """Salva i valori nel dizionario di configurazione."""
+        config["browser_headless"] = self.headless_check.isChecked()
+        config["browser_timeout"] = self.timeout_spin.value()
 
         # AI
-        config_manager.set_config_value("ai_provider", self.provider_combo.currentText())
-        config_manager.set_config_value("ai_model", self.model_combo.currentText())
-        config_manager.set_config_value("ollama_url", self.ollama_url_edit.text())
+        config["ai_provider"] = self.provider_combo.currentText()
+        config["ai_model"] = self.model_combo.currentText()
+        config["ollama_url"] = self.ollama_url_edit.text()

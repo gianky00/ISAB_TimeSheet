@@ -5,23 +5,33 @@ Implementa una strategia di 'Lazy Loading' (caricamento differito) per ridurre d
 dell'applicazione, inizializzando i moduli funzionali solo quando vengono effettivamente richiesti dall'utente.
 """
 
+import functools
 import logging
 from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtWidgets import QMessageBox, QStackedWidget, QWidget
 
+from src.gui.components.popout.popout_manager import DetachedPanelWindow, PopoutPlaceholderWidget
+
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+import typing
+
+from PyQt6.QtCore import QObject, pyqtSignal
 
 logger = logging.getLogger(__name__)
 
 
-class NavigationController:
+class NavigationController(QObject):
     """
     Controller responsabile della commutazione tra le pagine nel QStackedWidget della MainWindow.
     Gestisce il ciclo di vita dei pannelli (creazione, inizializzazione segnali, visualizzazione)
     e garantisce la sincronizzazione con lo stato della Sidebar e della Command Palette.
     """
+
+    panel_detached = pyqtSignal(int, str)  # index, title
+    panel_reattached = pyqtSignal(int)  # index
 
     def __init__(self, main_window: Any) -> None:
         """
@@ -30,7 +40,10 @@ class NavigationController:
         Args:
             main_window: Riferimento alla MainWindow dell'applicazione.
         """
+        super().__init__(main_window)
         self.mw = main_window
+        # Traccia i pannelli attualmente staccati (indice -> struct con panel nativo, placeholder, e finestra top-level)
+        self._detached_panels: dict[int, dict[str, Any]] = {}
 
     def get_panel(self, index: int) -> QWidget | None:
         """
@@ -48,6 +61,11 @@ class NavigationController:
 
         panel = page_stack.widget(index)
         if getattr(self.mw, f"_panel_initialized_{index}", False):
+            # Se è distaccato, restituiamo il suo placeholder al master view
+            if index in self._detached_panels:
+                # Ritorna il placeholder anzichè il pannello sganciato
+                return typing.cast("QWidget", self._detached_panels[index]["placeholder"])
+
             if isinstance(panel, QWidget):
                 return panel
             return None
@@ -80,6 +98,7 @@ class NavigationController:
             9: self._create_notifications,
             10: self._create_storico_oda,
             11: self._create_dipendenti,
+            12: self._create_consuntivo,
         }
         if creator := creators.get(index):
             return creator()
@@ -96,7 +115,25 @@ class NavigationController:
                 panel.autopilot_widget.set_footer_widget(self.mw.footer_left)
             if hasattr(self.mw, "status_bar_component"):
                 panel.autopilot_widget.set_status_bar(self.mw.status_bar_component)
+
+        # Connessione per l'aggiornamento della card moduli sganciati
+        if hasattr(panel, "multi_window_card"):
+            self.panel_detached.connect(
+                lambda i, t: panel.multi_window_card.update_modules(self._detached_panels)
+            )
+            self.panel_reattached.connect(
+                lambda i: panel.multi_window_card.update_modules(self._detached_panels)
+            )
+            panel.multi_window_card.reattach_single_requested.connect(self._on_panel_reattached)
+            panel.multi_window_card.reattach_all_requested.connect(self._reattach_all_panels)
+
         return panel
+
+    def _reattach_all_panels(self) -> None:
+        """Riaggancia automaticamente tutti i pannelli attualmente sganciati."""
+        indices = list(self._detached_panels.keys())
+        for idx in indices:
+            self._on_panel_reattached(idx)
 
     def _create_automazioni(self) -> QWidget:
         """Crea il selettore centralizzato per le automazioni bot."""
@@ -162,6 +199,14 @@ class NavigationController:
         self.mw.dipendenti_panel = panel
         return panel
 
+    def _create_consuntivo(self) -> QWidget:
+        """Inizializza il pannello di gestione consuntivi."""
+        from src.gui.panels.consuntivo_panel import ConsuntivoPanel
+
+        panel = ConsuntivoPanel()
+        self.mw.consuntivo_panel = panel
+        return panel
+
     def _create_help(self) -> QWidget:
         """Inizializza il pannello di aiuto e documentazione."""
         from src.gui.panels import HelpPanel
@@ -196,6 +241,87 @@ class NavigationController:
         setattr(self.mw, f"_panel_initialized_{index}", True)
         self._try_connect_signals()
 
+    def detach_panel(self, index: int, title: str) -> None:
+        """
+        Stacca un modulo dall'interno della MainWindow in una finestra top-level (Pop-out).
+        Al suo posto nel QStackedWidget viene inserito un placeholder.
+        """
+        if index in self._detached_panels:
+            # È già staccato, portionalo in primo piano (Raise)
+            self._detached_panels[index]["window"].raise_()
+            self._detached_panels[index]["window"].activateWindow()
+            return
+
+        panel = self.mw.page_stack.widget(index)
+        if not panel or not getattr(self.mw, f"_panel_initialized_{index}", False):
+            # Non possiamo staccare un pannello che non è ancora stato caricato/inizializzato
+            logger.warning(f"Tentato distacco di panel non init. (Index: {index})")
+            return
+
+        # Spegniamo visibilità prima del reparenting C++ per pulire le handle grafiche
+        panel.hide()
+
+        # Rimuoviamo il pannello originale dallo stack (questo NON cambia il parent PyQt)
+        self.mw.page_stack.removeWidget(panel)
+
+        # Sganciamo ufficialmente il parent C++.
+        # Questo su Windows chiude le API DirectX/OpenGL interne legate alla UI principale.
+        panel.setParent(None)
+
+        # Creiamo un placeholder informativo col pulsante "Riaggancia"
+        # Notare come il clack triggeri lo stesso riaggancio di evento chiesta OS!
+        placeholder = PopoutPlaceholderWidget(title, on_reattach=lambda: self._on_panel_reattached(index))
+        self.mw.page_stack.insertWidget(index, placeholder)
+
+        # Creiamo la nuova finestra nativa PyQt passando il vero pannello
+        popout_win = DetachedPanelWindow(original_index=index, panel=panel, title=title)
+
+        # Colleghiamo il segnale emesso alla chiusura per fare il ripristino automatico
+        popout_win.panel_closed_signal.connect(self._on_panel_reattached)
+
+        # Mostriamolo fisicamente sull'OS
+        popout_win.show()
+
+        self._detached_panels[index] = {"panel": panel, "placeholder": placeholder, "window": popout_win}
+
+        self.panel_detached.emit(index, title)
+
+        # Facciamo scorrere lo stack sul placeholder per conferma visiva all'utente
+        if self.mw._current_page_index == index:
+            # Force refresh layout internal to stackedwidget since its a different instance
+            self.mw.page_stack.setCurrentIndex(index)
+
+    def _on_panel_reattached(self, index: int) -> None:
+        """Riporta il pannello dentro la MainWindow e distrugge la Popout Window."""
+        popout_data = self._detached_panels.pop(index, None)
+        if not popout_data:
+            return
+
+        panel = popout_data["panel"]
+        placeholder = popout_data["placeholder"]
+        window = popout_data["window"]
+
+        # Evita cicli chiudendola programmatticamente solo se on_reattach
+        # è stato premuto. Se è stata chiusa dall'utente, il closeEvent invia già questo signal.
+        if window.isVisible():
+            window.panel_closed_signal.disconnect(self._on_panel_reattached)  # disconnette per no-loop
+            window.close()
+
+        # Togliamo il vecchio widget informativo "Sono in popout"
+        self.mw.page_stack.removeWidget(placeholder)
+        placeholder.deleteLater()
+
+        # Rimettiamo il figlio originale (Timbrature, OdA ecc) al suo index corretto.
+        # N.B. self.get_panel tornerà quello vero d'ora in poi
+        self.mw.page_stack.insertWidget(index, panel)
+
+        self.panel_reattached.emit(index)
+
+        if self.mw._current_page_index == index:
+            self.mw.page_stack.setCurrentIndex(index)
+
+        logger.info(f"Pannello idx:{index} è stato ricollegato (reattached) regolarmente.")
+
     def _handle_panel_error(self, index: int, e: Exception) -> None:
         """Notifica all'utente e logga il fallimento del caricamento di un modulo GUI."""
         import traceback
@@ -206,6 +332,15 @@ class NavigationController:
 
     def _try_connect_signals(self) -> None:
         """Tenta di instaurare connessioni cross-pannello quando le dipendenze sono state caricate."""
+        # Dettagli OdA -> Storico OdA
+        if (
+            hasattr(self.mw, "dettagli_panel")
+            and hasattr(self.mw, "storico_oda_panel")
+            and not getattr(self.mw, "_oda_signals_connected", False)
+        ):
+            self.mw.dettagli_panel.data_updated.connect(self.mw.storico_oda_panel.refresh_data)
+            self.mw._oda_signals_connected = True
+
         # Timbrature Bot -> DB & Dipendenti
         if hasattr(self.mw, "timbrature_bot_panel"):
             if hasattr(self.mw, "timbrature_db_panel") and not getattr(
@@ -228,15 +363,20 @@ class NavigationController:
             self.mw.pdl_search_panel.data_updated.connect(self.mw.pdl_db_panel.refresh_data)
             self.mw._pdl_signals_connected = True
 
-    def navigate_to(self, index: int, sub_index: int | None = None) -> None:
+    def navigate_to(self, index: int, sub_index: int | None = None, bot_index: int | None = None) -> None:
         """
         Esegue la commutazione della pagina attiva, gestendo salvataggi pendenti e feedback della sidebar.
 
         Args:
             index: Indice del pannello di destinazione.
             sub_index: Eventuale indice di sottocategoria (tab interno).
+            bot_index: Eventuale indice del bot specifico (terzo livello).
         """
-        if index == self.mw._current_page_index and sub_index is None:
+        # Se sub_index è -1, lo trattiamo come None per la Sidebar
+        norm_sub = None if sub_index == -1 else sub_index
+        norm_bot = None if bot_index == -1 else bot_index
+
+        if index == self.mw._current_page_index and norm_sub is norm_bot is None:
             self.mw.sidebar.set_active_button(index)
             return
 
@@ -249,13 +389,39 @@ class NavigationController:
             self.mw.sidebar.set_active_button(self.mw._current_page_index)
             return
 
-        self.get_panel(index)
+        panel = self.get_panel(index)
         self.mw._current_page_index = index
         if hasattr(self.mw.page_stack, "slide_to_index"):
             self.mw.page_stack.slide_to_index(index)
         else:
             self.mw.page_stack.setCurrentIndex(index)
-        self.mw.sidebar.set_active_button(index, sub_index)
+
+        # Gestione Tab Interni (Livello 3)
+        if norm_sub is not None and panel:
+            if index == 1:  # Automazioni
+                auto_widget = getattr(self.mw, "automazioni_widget", None)
+                if auto_widget:
+                    if norm_bot is not None and hasattr(auto_widget, "set_active_tab"):
+                        auto_widget.set_active_tab(norm_sub, norm_bot)
+                    elif hasattr(auto_widget, "setCurrentIndex"):
+                        auto_widget.setCurrentIndex(norm_sub)
+            elif index == 4:  # Strumentale
+                if hasattr(panel, "main_tabs"):
+                    panel.main_tabs.setCurrentIndex(norm_sub)
+            elif index in (9, 11, 12):  # Consuntivo, Dipendenti, Monitoraggio
+                if hasattr(panel, "tabs"):
+                    panel.tabs.setCurrentIndex(norm_sub)
+
+        self.mw.sidebar.set_active_button(index, norm_sub, norm_bot)
+
+    def navigate_to_pdl(self, site: str | None = None, area: str | None = None) -> None:
+        """Naviga al database PDL applicando i filtri specificati."""
+        from src.gui.main_window.page_index import PageIndex
+
+        self.navigate_to(PageIndex.ANAGRAFICHE)
+        panel = self.get_panel(PageIndex.ANAGRAFICHE)
+        if panel and hasattr(panel, "set_filters"):
+            panel.set_filters(site=site, area=area)
 
     def navigate_to_extended(self, tab_idx: int, query: str) -> None:
         """Naviga al pannello Strumentale attivando un tab specifico e pre-compilando la ricerca."""
@@ -305,7 +471,77 @@ class NavigationController:
         if panel_key in db_map:
             self.navigate_to(db_map[panel_key])
 
+    def refresh_current_page(self) -> None:
+        """Esegue l'azione di refresh specifica per la pagina corrente (pattern F5)."""
+        from src.gui.main_window.page_index import PageIndex
+
+        idx = self.mw.page_stack.currentIndex()
+        panel = self.mw.page_stack.currentWidget()
+
+        if not panel or not isinstance(panel, QWidget):
+            return
+
+        # Pattern mapping per refresh
+        refreshable_indices = (
+            PageIndex.DASHBOARD,
+            PageIndex.TIMBRATURE,
+            PageIndex.ANAGRAFICHE,
+            PageIndex.STORICO_ODA,
+            PageIndex.DIPENDENTI,
+        )
+
+        if idx in refreshable_indices and hasattr(panel, "refresh_data"):
+            panel.refresh_data()
+        elif idx == PageIndex.STRUMENTALE and hasattr(panel, "refresh_tabs"):
+            panel.refresh_tabs()
+        elif idx == PageIndex.DATAEASE and hasattr(panel, "_start_update"):
+            panel._start_update()
+
     def analyze_with_lyra(self, context_text: str) -> None:
         """Naviga alla vista Lyra passando un contesto testuale per l'analisi immediata."""
         self.navigate_to(2)
         self.mw.lyra_panel.ask_lyra("Analizza questi dati e dimmi se ci sono anomalie.", context_text)
+
+    def detach_current_panel(self) -> None:
+        """Sgancia il pannello attualmente visualizzato in una finestra esterna."""
+        idx = self.mw.page_stack.currentIndex()
+        if idx < 0:
+            return
+
+        panel = self.mw.page_stack.widget(idx)
+        if not panel:
+            return
+
+        # Recupera il titolo dal pannello se disponibile, altrimenti usa un default basato sull'indice
+        title = "Pannello"
+        if hasattr(panel, "bot_name"):
+            title = panel.bot_name
+        elif hasattr(panel, "windowTitle") and panel.windowTitle():
+            title = panel.windowTitle()
+
+        # Mapping manuale se i titoli sono vuoti (Dashboard, ecc)
+        from src.gui.main_window.page_index import PageIndex
+
+        titles = {
+            PageIndex.DASHBOARD: "Dashboard",
+            PageIndex.AUTOMAZIONI: "Automazioni",
+            PageIndex.LYRA: "Lyra AI",
+            PageIndex.TIMBRATURE: "Database Timbrature",
+            PageIndex.STRUMENTALE: "Contabilità Strumentale",
+            PageIndex.DATAEASE: "Scarico Ore (DataEase)",
+            PageIndex.ANAGRAFICHE: "Anagrafica PDL",
+            PageIndex.SETTINGS: "Impostazioni",
+            PageIndex.HELP: "Aiuto e Supporto",
+            PageIndex.NOTIFICATIONS: "Centro Notifiche",
+            PageIndex.STORICO_ODA: "Storico OdA",
+            PageIndex.DIPENDENTI: "Gestione Dipendenti",
+            PageIndex.CONSUNTIVO: "Consuntivo",
+        }
+        if title == "Pannello" or not title:
+            title = titles.get(idx, f"Modulo {idx}")
+        from PyQt6.QtCore import QTimer
+
+        # Deferiamo il distacco di 100ms per permettere all'Event Loop di concludere
+        # il click sul bottone 'split' (o altro meccanismo di chiamata) senza
+        # distruggere i widget sotto ai piedi del QCoreApplication
+        QTimer.singleShot(100, functools.partial(self.detach_panel, idx, title))

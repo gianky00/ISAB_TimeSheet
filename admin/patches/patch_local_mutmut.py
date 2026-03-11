@@ -20,5 +20,6 @@ def patch_mutmut():
     else:
         print("Mutmut already patched or import not found.")
 
+
 if __name__ == "__main__":
     patch_mutmut()

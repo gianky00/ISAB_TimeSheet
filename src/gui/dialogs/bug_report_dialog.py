@@ -11,19 +11,13 @@ from pathlib import Path
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
-    QCheckBox,
     QDialog,
     QFileDialog,
     QFrame,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QMessageBox,
-    QProgressBar,
-    QPushButton,
     QScrollArea,
-    QTextEdit,
     QVBoxLayout,
 )
 
@@ -31,6 +25,14 @@ from src.core.bug_reporter import BugReporter
 from src.core.config_manager import get_version
 from src.gui.design.colors import get_palette
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    PrimaryButton,
+    StandardCheckBox,
+    StandardGroupBox,
+    StandardInput,
+    StandardProgressBar,
+    StandardTextEdit,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +118,7 @@ class BugReportDialog(QDialog):
             }}
             QPushButton:hover {{ background-color: {palette.primary_variant}; }}
             QPushButton:pressed {{ background-color: {palette.primary_variant}; }}
-            QPushButton:disabled {{ background-color: {palette.disabled}; color: {COLORS['text_light']}; }}
+            QPushButton:disabled {{ background-color: {palette.disabled}; color: {COLORS["text_light"]}; }}
         """
         self.setStyleSheet(btn_style)
 
@@ -130,7 +132,7 @@ class BugReportDialog(QDialog):
         layout.addWidget(lbl_info)
 
         # Text Area
-        self.txt_description = QTextEdit()
+        self.txt_description = StandardTextEdit()
         self.txt_description.setPlaceholderText(
             "Es: Ho cliccato su Scarica PDL e l'app si è chiusa... Stavo lavorando sul cantiere X..."
         )
@@ -142,22 +144,24 @@ class BugReportDialog(QDialog):
         layout.addWidget(self.txt_description)
 
         # Options Group
-        options_group = QGroupBox("Contenuto Report")
-        options_group.setStyleSheet(f"QGroupBox {{ font-weight: 600; color: {palette.on_surface}; margin-top: 10px; }}")
+        options_group = StandardGroupBox("Contenuto Report")
+        options_group.setStyleSheet(
+            f"QGroupBox {{ font-weight: 600; color: {palette.on_surface}; margin-top: 10px; }}"
+        )
         options_layout = QVBoxLayout(options_group)
         options_layout.setSpacing(8)
 
-        self.chk_include_logs = QCheckBox("Includi Log Enterprise (app.json, app.log)")
+        self.chk_include_logs = StandardCheckBox("Includi Log Enterprise (app.json, app.log)")
         self.chk_include_logs.setChecked(True)
         self.chk_include_logs.toggled.connect(self._update_size_estimate)
         options_layout.addWidget(self.chk_include_logs)
 
-        self.chk_include_analytics = QCheckBox("Includi Analytics Report (anomalie, health score)")
+        self.chk_include_analytics = StandardCheckBox("Includi Analytics Report (anomalie, health score)")
         self.chk_include_analytics.setChecked(True)
         self.chk_include_analytics.toggled.connect(self._update_size_estimate)
         options_layout.addWidget(self.chk_include_analytics)
 
-        self.chk_include_audit = QCheckBox("Includi Audit Trail (ultime 50 azioni)")
+        self.chk_include_audit = StandardCheckBox("Includi Audit Trail (ultime 50 azioni)")
         self.chk_include_audit.setChecked(True)
         self.chk_include_audit.toggled.connect(self._update_size_estimate)
         options_layout.addWidget(self.chk_include_audit)
@@ -167,7 +171,7 @@ class BugReportDialog(QDialog):
         trace_layout.setSpacing(8)
         lbl_trace = QLabel("Trace ID (opzionale):")
         lbl_trace.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px;")
-        self.txt_trace_id = QLineEdit()
+        self.txt_trace_id = StandardInput()
         self.txt_trace_id.setPlaceholderText("Es: abc123def456")
         self.txt_trace_id.setStyleSheet(
             f"background: {palette.surface}; border: 1px solid {palette.border}; border-radius: 4px; "
@@ -202,7 +206,7 @@ class BugReportDialog(QDialog):
         layout.addWidget(warning_frame)
 
         # Progress
-        self.progress = QProgressBar()
+        self.progress = StandardProgressBar()
         self.progress.setVisible(False)
         self.progress.setRange(0, 0)
         self.progress.setStyleSheet(
@@ -212,14 +216,16 @@ class BugReportDialog(QDialog):
         layout.addWidget(self.progress)
 
         # Preview Area (initially hidden)
-        self.preview_group = QGroupBox("File inclusi nel report")
+        self.preview_group = StandardGroupBox("File inclusi nel report")
         self.preview_group.setVisible(False)
         preview_layout = QVBoxLayout(self.preview_group)
         self.preview_scroll = QScrollArea()
         self.preview_scroll.setWidgetResizable(True)
         self.preview_scroll.setMaximumHeight(100)
         self.preview_content = QLabel()
-        self.preview_content.setStyleSheet(f"font-family: monospace; font-size: 11px; color: {COLORS['text_muted']};")
+        self.preview_content.setStyleSheet(
+            f"font-family: monospace; font-size: 11px; color: {COLORS['text_muted']};"
+        )
         self.preview_content.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.preview_scroll.setWidget(self.preview_content)
         preview_layout.addWidget(self.preview_scroll)
@@ -229,13 +235,13 @@ class BugReportDialog(QDialog):
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
 
-        self.btn_cancel = QPushButton("Annulla")
+        self.btn_cancel = PrimaryButton("Annulla")
         self.btn_cancel.setStyleSheet(
             f"background-color: {COLORS['text_muted']}; color: white; border-radius: 6px; padding: 10px 20px;"
         )
         self.btn_cancel.clicked.connect(self.reject)
 
-        self.btn_send = QPushButton("Genera e Invia")
+        self.btn_send = PrimaryButton("Genera e Invia")
         self.btn_send.clicked.connect(self.start_generation)
 
         btn_layout.addWidget(self.btn_cancel)
@@ -369,17 +375,17 @@ class BugReportDialog(QDialog):
 
             cliente_info = "ISAB S.R.L."
             with suppress(Exception):
-                            from src.core.constants import Emails
-                            from src.core.license_validator import get_license_info
+                from src.core.constants import Emails
+                from src.core.license_validator import get_license_info
 
-                            lic_data = get_license_info()
-                            if lic_data and "Cliente" in lic_data:
-                                cliente_info = lic_data["Cliente"]
+                lic_data = get_license_info()
+                if lic_data and "Cliente" in lic_data:
+                    cliente_info = lic_data["Cliente"]
 
-                            mail = outlook.CreateItem(0)
-                            mail.To = Emails.SUPPORT
-                            mail.Subject = f"[Segnalazione Bug] SyncroJob v{current_ver} - {email_subject_suffix}"
-                            # Rinomina ZIP per includere Ticket ID
+                mail = outlook.CreateItem(0)
+                mail.To = Emails.SUPPORT
+                mail.Subject = f"[Segnalazione Bug] SyncroJob v{current_ver} - {email_subject_suffix}"
+                # Rinomina ZIP per includere Ticket ID
             final_zip_path = attachment_path
             with suppress(Exception):
                 dir_name = os.path.dirname(attachment_path)
@@ -390,10 +396,10 @@ class BugReportDialog(QDialog):
                 final_zip_path = new_path
 
             palette = get_palette()
-            css_cell = f"padding: 8px 12px; border-bottom: 1px solid {palette.border}; color: {palette.on_surface};"
-            css_header = (
-                f"padding: 8px 12px; border-bottom: 2px solid {palette.primary}; font-weight: 600; color: {palette.primary};"
+            css_cell = (
+                f"padding: 8px 12px; border-bottom: 1px solid {palette.border}; color: {palette.on_surface};"
             )
+            css_header = f"padding: 8px 12px; border-bottom: 2px solid {palette.primary}; font-weight: 600; color: {palette.primary};"
 
             html_body = f"""
             <div style="font-family: 'Segoe UI', sans-serif; color: {palette.on_surface}; max-width: 900px;">

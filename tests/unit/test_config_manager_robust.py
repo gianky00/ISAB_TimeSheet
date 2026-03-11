@@ -31,7 +31,7 @@ class TestConfigManagerRobust:
         with (
             patch("src.core.config_manager.CONFIG_DIR", self.mock_config_dir),
             patch("src.core.config_manager.CONFIG_FILE", self.mock_config_file),
-            patch("src.core.config_manager.SecretsManager") as mock_sec,
+            patch("src.core.config.security.SecretsManager") as mock_sec,
         ):
             # Mock SecretsManager per evitare keyring
             mock_sec.is_available.return_value = False  # Force file encryption fallback
@@ -152,7 +152,7 @@ class TestConfigManagerRobust:
         assert Path(data_path).exists()
         assert Path(logs_path).exists()
 
-    @patch("src.core.config_manager.SecretsManager")
+    @patch("src.core.config.security.SecretsManager")
     def test_credential_encryption_fallback(self, mock_sec):
         """Test crittografia locale password se keyring non disponibile."""
         mock_sec.is_available.return_value = False

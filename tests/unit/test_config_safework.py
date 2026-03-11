@@ -12,7 +12,7 @@ class TestConfigSafeWork:
         with patch("src.core.secrets_manager.keyring"):
             yield
 
-    @patch("src.core.config_manager.SecretsManager")
+    @patch("src.core.config.security.SecretsManager")
     @patch("src.core.config_manager._load_base_config")
     @patch("src.core.config_manager.save_config")
     def test_load_save_safework_accounts(self, mock_save, mock_load_base, mock_secrets):
@@ -37,7 +37,7 @@ class TestConfigSafeWork:
             acc = config["safework_accounts"][0]
             assert acc["password"] == "real_pw"  # Should be decrypted
 
-    @patch("src.core.config_manager.SecretsManager")
+    @patch("src.core.config.security.SecretsManager")
     @patch("src.core.config_manager.CONFIG_FILE", new=MagicMock())
     @patch("builtins.open", new_callable=MagicMock)
     @patch("json.dump")

@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import (
     QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QScrollArea,
     QSizePolicy,
     QVBoxLayout,
@@ -20,6 +19,9 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    SearchInput,
+)
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -44,8 +46,8 @@ class SettingCard(QFrame):
         self.setObjectName("settingCard")
         self.setStyleSheet(f"""
             QFrame#settingCard {{
-                background-color: {COLORS['bg_white']};
-                border: 1px solid {COLORS['border_light']};
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
                 border-radius: 15px;
             }}
         """)
@@ -120,17 +122,23 @@ class BackupTab(QWidget):
         # --- TOP STATUS BAR (Search) ---
         self.header_bar = QFrame()
         self.header_bar.setFixedHeight(50)
-        self.header_bar.setStyleSheet(f"background: {COLORS['bg_light']}; border-bottom: 1px solid {COLORS['border_light']};")
+        self.header_bar.setStyleSheet(
+            f"background: {COLORS['bg_light']}; border-bottom: 1px solid {COLORS['border_light']};"
+        )
         header_layout = QHBoxLayout(self.header_bar)
         header_layout.setContentsMargins(20, 0, 20, 0)
 
         search_icon = QLabel()
-        search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_light"]).pixmap(16, 16))
+        search_icon.setPixmap(
+            get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_light"]).pixmap(16, 16)
+        )
         header_layout.addWidget(search_icon)
 
-        self.search_bar = QLineEdit()
+        self.search_bar = SearchInput()
         self.search_bar.setPlaceholderText("Cerca funzioni backup...")
-        self.search_bar.setStyleSheet("border: none; background: transparent; font-size: 13px; font-weight: 500;")
+        self.search_bar.setStyleSheet(
+            "border: none; background: transparent; font-size: 13px; font-weight: 500;"
+        )
         self.search_bar.textChanged.connect(self._filter_cards)
         header_layout.addWidget(self.search_bar)
         header_layout.addStretch()
@@ -154,7 +162,9 @@ class BackupTab(QWidget):
         backup_layout.setContentsMargins(0, 10, 0, 0)
 
         self.btn_backup = ModernButton("Esegui Backup Database", icon=get_asset_path(Icons.CLOUD_UPLOAD))
-        self.btn_restore = ModernButton("Ripristina Backup", variant=ModernButton.Variant.GHOST, icon=get_asset_path(Icons.UNDO))
+        self.btn_restore = ModernButton(
+            "Ripristina Backup", variant=ModernButton.Variant.GHOST, icon=get_asset_path(Icons.UNDO)
+        )
         self.lbl_last_backup = QLabel("Ultimo Backup: Non eseguito")
         self.lbl_last_backup.setStyleSheet(f"color: {COLORS['text_muted']}; font-style: italic;")
 
@@ -168,8 +178,9 @@ class BackupTab(QWidget):
 
         card_backup = SettingCard(
             "Sicurezza Dati",
-            "Gestione copie di sicurezza del database di sistema.",
-            Icons.DATABASE, backup_widget
+            "Gestione backup di sicurezza del database di sistema.",
+            Icons.DATABASE,
+            backup_widget,
         )
         self.cards_layout.addWidget(card_backup)
         self.cards.append(card_backup)
@@ -180,7 +191,9 @@ class BackupTab(QWidget):
         logs_layout.setContentsMargins(0, 10, 0, 0)
 
         self.btn_open_logs = ModernButton("Apri Cartella Log", icon=get_asset_path(Icons.FOLDER_OPEN))
-        self.btn_clear_logs = ModernButton("Pulisci Log Vecchi", variant=ModernButton.Variant.DANGER, icon=get_asset_path(Icons.TRASH))
+        self.btn_clear_logs = ModernButton(
+            "Pulisci Log Vecchi", variant=ModernButton.Variant.DANGER, icon=get_asset_path(Icons.TRASH)
+        )
 
         btn_logs_layout = QHBoxLayout()
         btn_logs_layout.addWidget(self.btn_open_logs)
@@ -192,7 +205,8 @@ class BackupTab(QWidget):
         card_logs = SettingCard(
             "Manutenzione Log",
             "Analisi e pulizia dei file di log generati dai bot.",
-            Icons.FILE_TEXT, logs_widget
+            Icons.FILE_TEXT,
+            logs_widget,
         )
         self.cards_layout.addWidget(card_logs)
         self.cards.append(card_logs)
@@ -204,8 +218,7 @@ class BackupTab(QWidget):
     def _filter_cards(self, text: str) -> None:
         search_term = text.lower().strip()
         for card in self.cards:
-            match = (search_term in card.title_text.lower() or
-                     search_term in card.subtitle_text.lower())
+            match = search_term in card.title_text.lower() or search_term in card.subtitle_text.lower()
             card.setVisible(match or not search_term)
 
     def load_from_config(self, config: dict[str, Any]) -> None:

@@ -1,10 +1,8 @@
 from PyQt6.QtCore import Qt, QTime, QTimer
 from PyQt6.QtWidgets import (
-    QCheckBox,
     QFrame,
     QHBoxLayout,
     QLabel,
-    QSpinBox,
     QTimeEdit,
     QVBoxLayout,
     QWidget,
@@ -12,6 +10,7 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import StandardCheckBox, StandardSpinBox
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -86,7 +85,7 @@ class AutopilotConfigCard(QFrame):
         layout.addLayout(header_layout)
 
         # Checkbox abilitazione
-        self.enable_check = QCheckBox("Abilita esecuzione automatica")
+        self.enable_check = StandardCheckBox("Abilita esecuzione automatica")
         self.enable_check.setStyleSheet(
             f"""
             QCheckBox {{
@@ -259,7 +258,7 @@ class AutopilotConfigCardWithInterval(QFrame):
         layout.addLayout(header_layout)
 
         # Checkbox abilitazione
-        self.enable_check = QCheckBox("Abilita invio automatico")
+        self.enable_check = StandardCheckBox("Abilita invio automatico")
         self.enable_check.setStyleSheet(
             f"""
             QCheckBox {{
@@ -321,7 +320,7 @@ class AutopilotConfigCardWithInterval(QFrame):
         interval_label.setStyleSheet(f"font-size: 12px; color: {COLORS['text_dark']};")
         settings_layout.addWidget(interval_label)
 
-        self.interval_spin = QSpinBox()
+        self.interval_spin = StandardSpinBox()
         self.interval_spin.setRange(1, 30)
         self.interval_spin.setValue(7)
         self.interval_spin.setSuffix(" gg")

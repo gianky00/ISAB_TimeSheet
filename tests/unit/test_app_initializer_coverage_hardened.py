@@ -28,28 +28,29 @@ class TestAppInitializerHardened:
 
         assert result is True
         mock_deps["db_manager"].init_db.assert_called_once()
-        mock_deps["run_update"].assert_not_called()
+        # run_update viene ora chiamato SEMPRE all'inizio
+        mock_deps["run_update"].assert_called_once()
 
     def test_initialize_with_cloud_sync(self, mock_deps):
         """Workflow con licenza da aggiornare (sync cloud)."""
         AppInitializer._core_initialized = False
         mock_deps["get_status"].return_value = (LicenseStatus.EXPIRED, "Expired")
 
-        result = AppInitializer.initialize_core()
+        # Se la licenza è scaduta, solleva eccezione
+        with pytest.raises(Exception, match="Licenza non valida"):
+            AppInitializer.initialize_core()
 
-        assert result is True
         mock_deps["run_update"].assert_called_once()
-        mock_deps["db_manager"].init_db.assert_called_once()
 
     def test_db_init_fatal_fail(self, mock_deps):
-        """Se il DB crasha durante init_db, initialize_core deve fallire."""
+        """Se il DB crasha durante init_db, initialize_core deve fallire con eccezione."""
         AppInitializer._core_initialized = False
         mock_deps["get_status"].return_value = (LicenseStatus.VALID, "Valid")
         mock_deps["db_manager"].init_db.side_effect = Exception("Fatal DB Error")
 
-        result = AppInitializer.initialize_core()
+        with pytest.raises(Exception, match="Fatal DB Error"):
+            AppInitializer.initialize_core()
 
-        assert result is False
         assert AppInitializer._core_initialized is False
 
     def test_setup_app_style_minimal(self, mocker):

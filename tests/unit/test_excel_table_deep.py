@@ -1,3 +1,4 @@
+
 from src.gui.widgets.excel_table import EditableDataTable, ExcelTableWidget
 
 
@@ -29,11 +30,15 @@ class TestExcelTableWidgetDeep:
         edt._add_row()
         assert edt.table.rowCount() == initial_rows + 1
 
-        # Test data retrieval
+        # Test data retrieval (Case-sensitive check on output keys)
+        # Note: set_data is flexible (norm_col), but get_data returns column names
         edt.set_data([{"col1": "val1", "col2": "A"}])
         data = edt.get_data()
         assert len(data) >= 1
-        assert data[0]["col1"] == "val1"
+        # Keys in returned data must match exactly the 'name' field in cols
+        assert "Col1" in data[0]
+        assert data[0]["Col1"] == "val1"
+        assert data[0]["Col2"] == "A"
 
     def test_row_status_coloring(self, qapp, qtbot):
         table = ExcelTableWidget()

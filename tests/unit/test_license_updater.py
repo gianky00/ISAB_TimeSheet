@@ -128,11 +128,31 @@ def test_is_license_folder_empty(mocker, mock_license_dir):
 def test_run_update_success(mocker, mock_license_dir):
     mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
     mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE_HW_ID")
+    # Mock status locale come EXPIRED per forzare il download
+    mocker.patch(
+        "src.core.license_validator.get_detailed_license_status",
+        return_value=("EXPIRED", "Expired"),
+    )
 
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.content = b"fake content"
-    mocker.patch("requests.get", return_value=mock_response)
+    def mock_requests_get(url, **kwargs):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        if url.endswith("/manifest.json"):
+            mock_resp.content = b'{"config.dat": "new_hash"}'
+        elif url.endswith("/config.dat"):
+            mock_resp.content = b"fake_encrypted_data"
+        else:
+            # Chiamata alla cartella base
+            mock_resp.status_code = 200
+        return mock_resp
+
+    mocker.patch("requests.get", side_effect=mock_requests_get)
+
+    # Mock della validazione in memoria (decifratura e check HWID)
+    mock_cipher = MagicMock()
+    mock_cipher.decrypt.return_value = b'{"Hardware ID": "FAKE_HW_ID", "Cliente": "Test"}'
+    mocker.patch("src.core.license_updater.Fernet", return_value=mock_cipher)
+    mocker.patch("src.core.secrets_manager.SecretsManager.get_license_key", return_value=b"key")
 
     success = run_update()
     assert success is True
@@ -144,9 +164,11 @@ def test_run_update_fail(mocker, mock_license_dir):
     mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
     mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE_HW_ID")
 
+    # Simula cartella licenza mancante (Revocata)
     mock_response = MagicMock()
     mock_response.status_code = 404
     mocker.patch("requests.get", return_value=mock_response)
 
-    success = run_update()
-    assert success is False
+    # In caso di 404, run_update solleva eccezione "REVOCATA"
+    with pytest.raises(Exception, match="REVOCATA"):
+        run_update()

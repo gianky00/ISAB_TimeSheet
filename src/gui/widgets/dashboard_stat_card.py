@@ -23,14 +23,14 @@ class DashboardStatCard(ModernCard):
         value: str,
         icon_key: str,
         color: str = COLORS["primary_blue"],
-        parent: QWidget | None = None
+        parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent, elevation=12)
         self.setMinimumHeight(100)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(20, 15, 20, 15)
-        layout.setSpacing(15)
+        layout.setContentsMargins(15, 12, 15, 10)
+        layout.setSpacing(10)
 
         # Icona Badge
         self.icon_container = QWidget()
@@ -44,7 +44,7 @@ class DashboardStatCard(ModernCard):
         icon_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         icon_lbl = QLabel()
-        icon_lbl.setPixmap(get_colored_icon(get_asset_path(icon_key), color).pixmap(24, 24))
+        icon_lbl.setPixmap(get_colored_icon(get_asset_path(icon_key), color).pixmap(28, 28))
         icon_layout.addWidget(icon_lbl)
         layout.addWidget(self.icon_container)
 
@@ -55,7 +55,7 @@ class DashboardStatCard(ModernCard):
 
         self.val_lbl = QLabel(value)
         self.val_lbl.setStyleSheet(f"""
-            font-size: 24px;
+            font-size: 32px;
             font-weight: 900;
             color: {COLORS["text_dark"]};
             background: transparent;
@@ -63,7 +63,7 @@ class DashboardStatCard(ModernCard):
 
         self.title_lbl = QLabel(title.upper())
         self.title_lbl.setStyleSheet(f"""
-            font-size: 10px;
+            font-size: 12px;
             font-weight: 800;
             color: {COLORS["text_muted"]};
             letter-spacing: 1.5px;
@@ -72,8 +72,8 @@ class DashboardStatCard(ModernCard):
 
         self.detail_lbl = QLabel("")
         self.detail_lbl.setStyleSheet(f"""
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 13px;
+            font-weight: 700;
             color: {COLORS["text_dark"]};
             background: transparent;
             margin-top: 4px;
@@ -81,7 +81,7 @@ class DashboardStatCard(ModernCard):
 
         self.meta_lbl = QLabel("")
         self.meta_lbl.setStyleSheet(f"""
-            font-size: 10px;
+            font-size: 11px;
             color: {COLORS["text_muted"]};
             background: transparent;
             font-style: italic;

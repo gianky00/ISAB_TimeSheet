@@ -1,10 +1,8 @@
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
-    QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QSizePolicy,
     QVBoxLayout,
     QWidget,
@@ -12,6 +10,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS, COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
+from src.gui.widgets.core_widgets import FilterComboBox, SearchInput
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -51,7 +50,7 @@ class PDLFilterWidget(QWidget):
         search_container.setSpacing(4)
         search_label = QLabel("CERCA PDL")
         search_label.setStyleSheet(LABEL_MUTED)
-        self.search_input = QLineEdit()
+        self.search_input = SearchInput()
         self.search_input.setPlaceholderText("N°, Area, Richiedente...")
         self.search_input.setMinimumWidth(200)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)
@@ -76,7 +75,7 @@ class PDLFilterWidget(QWidget):
         group_v.setSpacing(4)
         lbl_group = QLabel("GRUPPO")
         lbl_group.setStyleSheet(LABEL_MUTED)
-        self.group_filter = QComboBox()
+        self.group_filter = FilterComboBox()
         self.group_filter.addItem("Tutti")
         self.group_filter.setMinimumWidth(80)
         self.group_filter.setStyleSheet(COMBOBOX_STYLE)
@@ -89,7 +88,7 @@ class PDLFilterWidget(QWidget):
         site_v.setSpacing(4)
         lbl_site = QLabel("SITO")
         lbl_site.setStyleSheet(LABEL_MUTED)
-        self.site_filter = QComboBox()
+        self.site_filter = FilterComboBox()
         self.site_filter.addItems(["Tutti i siti", "IGCC", "ISAB Nord", "ISAB Sud"])
         self.site_filter.setMinimumWidth(110)
         self.site_filter.setStyleSheet(COMBOBOX_STYLE)
@@ -102,7 +101,7 @@ class PDLFilterWidget(QWidget):
         area_v.setSpacing(4)
         lbl_area = QLabel("AREA")
         lbl_area.setStyleSheet(LABEL_MUTED)
-        self.area_filter = QComboBox()
+        self.area_filter = FilterComboBox()
         self.area_filter.addItem("Tutte")
         self.area_filter.setMinimumWidth(120)
         self.area_filter.setStyleSheet(COMBOBOX_STYLE)
@@ -115,7 +114,7 @@ class PDLFilterWidget(QWidget):
         unit_v.setSpacing(4)
         lbl_unit = QLabel("UNITÀ")
         lbl_unit.setStyleSheet(LABEL_MUTED)
-        self.unit_filter = QComboBox()
+        self.unit_filter = FilterComboBox()
         self.unit_filter.addItem("Tutte")
         self.unit_filter.setMinimumWidth(100)
         self.unit_filter.setStyleSheet(COMBOBOX_STYLE)
@@ -141,7 +140,6 @@ class PDLFilterWidget(QWidget):
         # Reset
         self.clear_btn = ModernButton("", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL)
         self.clear_btn.setIcon(get_colored_icon(get_asset_path(Icons.RESET), COLORS["text_muted"]))
-        self.clear_btn.setToolTip("Resetta Filtri")
 
         # Update Bot
         self.btn_bot_update = ModernButton(

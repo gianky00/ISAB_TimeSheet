@@ -13,10 +13,12 @@ def hex_to_rgba(hex_color: str, alpha: float = 1.0) -> str:
     color = QColor(hex_color)
     return f"rgba({color.red()}, {color.green()}, {color.blue()}, {alpha})"
 
+
 def get_glass_gradient(vertical: bool = True) -> str:
     """Ritorna il gradiente Glass standard dell'applicazione."""
     direction = "x1:0, y1:0, x2:0, y2:1" if vertical else "x1:0, y1:0, x2:1, y2:0"
     return f"qlineargradient({direction}, stop:0 {COLORS['glass_dark']}, stop:1 {COLORS['glass_deep']})"
+
 
 def get_status_color(status: str) -> str:
     """Mappa uno stato testuale al colore HEX corrispondente nelle costanti."""

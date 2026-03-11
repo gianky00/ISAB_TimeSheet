@@ -7,6 +7,8 @@ Gestisce il ciclo di vita dell'avvio dell'applicazione, suddividendolo in fasi a
 Include meccanismi di yield per garantire la reattività dell'interfaccia durante il caricamento.
 """
 
+from typing import ClassVar
+
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication
 
@@ -29,6 +31,17 @@ class AppInitializer:
     """
 
     _core_initialized = False
+    _startup_alerts: ClassVar[list[tuple[str, str]]] = []  # List of (severity, message)
+
+    @staticmethod
+    def add_alert(severity: str, message: str) -> None:
+        """Aggiunge un avviso da mostrare all'utente all'avvio."""
+        AppInitializer._startup_alerts.append((severity, message))
+
+    @staticmethod
+    def get_alerts() -> list[tuple[str, str]]:
+        """Restituisce gli avvisi accumulati durante l'avvio."""
+        return AppInitializer._startup_alerts
 
     @staticmethod
     def initialize_core() -> bool:
@@ -62,8 +75,9 @@ class AppInitializer:
 
                 logger.info("Pandas/Numpy loaded successfully")
             except ImportError as e:
-                logger.critical(f"CRITICAL: Missing data analysis libraries: {e}")
-                return False
+                msg = f"Librerie di analisi dati mancanti: {e}"
+                logger.critical(f"CRITICAL: {msg}")
+                raise Exception(msg) from e
 
             step("Configurazione Driver Automazione")
             try:
@@ -71,8 +85,9 @@ class AppInitializer:
 
                 logger.info("Selenium loaded successfully")
             except ImportError as e:
-                logger.critical(f"CRITICAL: Missing selenium library: {e}")
-                return False
+                msg = f"Libreria Selenium mancante: {e}"
+                logger.critical(f"CRITICAL: {msg}")
+                raise Exception(msg) from e
 
             step("Verifica Integrità Hardware")
             try:
@@ -82,12 +97,22 @@ class AppInitializer:
                     get_detailed_license_status,
                 )
 
-                status, _ = get_detailed_license_status()
-                if status != LicenseStatus.VALID:
-                    step("Sincronizzazione Licenza Cloud")
+                step("Sincronizzazione Licenza Cloud")
+                try:
                     run_update()
+                except Exception as update_err:
+                    if "REVOCATA" in str(update_err):
+                        raise
+                    logger.warning(f"License update failed (non-blocking): {update_err}")
+
+                status, msg = get_detailed_license_status()
+                if status != LicenseStatus.VALID:
+                    logger.critical(f"License check failed: {msg}")
+                    raise Exception(f"Licenza non valida: {msg}")
+
             except Exception as e:
-                logger.error(f"License check failed: {e}")
+                # Blocchiamo SEMPRE l'avvio se la licenza non è valida o è stata revocata
+                raise e
 
             step("Connessione Database Sistema")
             try:
@@ -97,14 +122,19 @@ class AppInitializer:
                 logger.info("Database initialized successfully")
             except Exception as e:
                 logger.critical(f"Database initialization failed: {e}")
-                return False
+                raise Exception(f"Errore Database: {e}") from e
 
             AppInitializer._core_initialized = True
             return True
 
         except Exception as e:
+            # Se è un'eccezione esplicita di licenza o database che abbiamo già loggato e "formattato", la rilanciamo
+            if any(x in str(e) for x in ("REVOCATA", "Licenza non valida", "Errore Database")):
+                raise
+
+            # Per errori imprevisti, logghiamo tutto e rilanciamo con un messaggio leggibile
             logger.critical(f"Unexpected startup error: {e}", exc_info=True)
-            return False
+            raise Exception(f"Errore imprevisto durante l'avvio: {e}") from e
 
     @staticmethod
     def init_generator(mw_instance):

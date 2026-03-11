@@ -51,7 +51,9 @@ class ResourceMonitor(QWidget):
         # Activity Indicator (Fake IO visualization)
         self.activity_bar = QFrame()
         self.activity_bar.setFixedSize(6, 28)
-        self.activity_bar.setStyleSheet(f"background: {hex_to_rgba(COLORS['bg_white'], 0.1)}; border-radius: 3px;")
+        self.activity_bar.setStyleSheet(
+            f"background: {hex_to_rgba(COLORS['bg_white'], 0.1)}; border-radius: 3px;"
+        )
 
         layout.addStretch()
         layout.addLayout(stats_layout)

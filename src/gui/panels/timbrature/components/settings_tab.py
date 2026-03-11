@@ -2,12 +2,9 @@ from typing import Any
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
     QHBoxLayout,
     QHeaderView,
     QLabel,
-    QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
@@ -15,6 +12,11 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    FilterComboBox,
+    StandardCheckBox,
+    StandardTable,
+)
 from src.gui.widgets.modern_button import ModernButton
 
 
@@ -60,7 +62,7 @@ class TimbratureSettingsTab(QWidget):
 
         # Filters
         filter_layout = QHBoxLayout()
-        self.filter_empty_cb = QCheckBox("Mostra solo dati mancanti (Vuoti)")
+        self.filter_empty_cb = StandardCheckBox("Mostra solo dati mancanti (Vuoti)")
         config = config_manager.load_config()
         self.filter_empty_cb.setChecked(bool(config.get("timbrature_filter_empty_only", False)))
         self.filter_empty_cb.stateChanged.connect(self._on_filter_empty_changed)
@@ -69,21 +71,21 @@ class TimbratureSettingsTab(QWidget):
         layout.addLayout(filter_layout)
 
         # Table
-        self.settings_table = QTableWidget()
+        self.settings_table = StandardTable()
         self.settings_table.setStyleSheet(f"""
             QTableWidget {{
-                gridline-color: {COLORS['bg_alt']};
-                selection-background-color: {COLORS['table_selection_bg']};
-                selection-color: {COLORS['text_dark']};
-                background-color: {COLORS['bg_white']};
+                gridline-color: {COLORS["bg_alt"]};
+                selection-background-color: {COLORS["table_selection_bg"]};
+                selection-color: {COLORS["text_dark"]};
+                background-color: {COLORS["bg_white"]};
             }}
             QHeaderView::section {{
-                background-color: {COLORS['bg_light']};
-                color: {COLORS['text_dark']};
+                background-color: {COLORS["bg_light"]};
+                color: {COLORS["text_dark"]};
                 padding: 8px;
                 font-weight: bold;
                 border: none;
-                border-bottom: 1px solid {COLORS['border_light']};
+                border-bottom: 1px solid {COLORS["border_light"]};
             }}
         """)
         v_header = self.settings_table.verticalHeader()
@@ -132,12 +134,12 @@ class TimbratureSettingsTab(QWidget):
         self.settings_table.setItem(row_idx, 1, item_cognome)
 
         # Combos
-        combo_rep = QComboBox()
+        combo_rep = FilterComboBox()
         combo_rep.addItems(["", *self.reparti])
         combo_rep.setCurrentText(str(emp["reparto"]))
         combo_rep.setStyleSheet("QComboBox { border: none; background: transparent; }")
 
-        combo_cant = QComboBox()
+        combo_cant = FilterComboBox()
         combo_cant.addItems(["", *self.cantieri])
         combo_cant.setCurrentText(str(emp["cantiere"]))
         combo_cant.setStyleSheet("QComboBox { border: none; background: transparent; }")

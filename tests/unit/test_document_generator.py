@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+from src.gui.styles import COLORS
 from src.utils.document_generator import generate_pdf_from_html
 
 
@@ -18,26 +19,21 @@ class TestDocumentGenerator:
         mock_doc.setHtml.assert_called()
         call_args = mock_doc.setHtml.call_args[0][0]
         assert "<h1>Test</h1>" in call_args
-        assert "<style>" in call_args  # Injected CSS
+        assert "<style>" in call_args
 
         # Verify printer configuration
-        mock_printer.setOutputFormat.assert_called()
         mock_printer.setOutputFileName.assert_called_with("output.pdf")
-
-        # Verify printing call
         mock_doc.print.assert_called_with(mock_printer)
 
     @patch("src.utils.document_generator.QPrinter")
     @patch("src.utils.document_generator.QTextDocument")
-    @patch("src.utils.document_generator.QPageLayout")
-    def test_generate_pdf_orientation_portrait(self, mock_layout, mock_doc_class, mock_printer_class):
+    def test_generate_pdf_orientation_portrait(self, mock_doc_class, mock_printer_class):
         mock_printer = MagicMock()
         mock_printer_class.return_value = mock_printer
 
         generate_pdf_from_html("Test", "out.pdf", landscape=False)
 
-        # Orientation should be portrait (default behavior of the logic)
-        # We can't easily assert the enum value if it's mocked, but we can check if setPageOrientation was called
+        # Verifica che sia stata impostata un'orientazione (Portrait è il default se landscape=False)
         mock_printer.setPageOrientation.assert_called()
 
     @patch("src.utils.document_generator.QPrinter")
@@ -49,5 +45,7 @@ class TestDocumentGenerator:
         generate_pdf_from_html("<p>Hello</p>", "styles.pdf")
 
         html_input = mock_doc.setHtml.call_args[0][0]
-        assert "font-family: Arial" in html_input
-        assert "color: #0d6efd" in html_input  # Blue h3 style
+        # Verifichiamo la presenza dei font e colori del Design System V9.0
+        assert "Segoe UI" in html_input
+        assert COLORS["primary_dark"] in html_input
+        assert COLORS["text_muted"] in html_input

@@ -7,12 +7,15 @@ Gestisce le transizioni visive tra la fase di avvio e quella operativa dell'appl
 from datetime import datetime
 
 from PyQt6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QSize, Qt, QTimer
-from PyQt6.QtWidgets import QGraphicsOpacityEffect, QPushButton, QStatusBar
+from PyQt6.QtWidgets import QGraphicsOpacityEffect, QStatusBar
 
 from src.core import config_manager
 from src.core.constants import Icons
 from src.core.license_validator import get_license_info
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    IconButton,
+)
 from src.gui.widgets.footer import (
     BootTelemetryWidget,
     FooterLeftWidget,
@@ -49,8 +52,8 @@ class StatusBarComponent(QObject):
         self.status_bar.setStyleSheet(
             f"""
             QStatusBar {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS['bg_white']}, stop:1 {COLORS['bg_light']});
-                border-top: 2px solid qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {COLORS['border_light']}, stop:0.5 {COLORS['border_medium']}, stop:1 {COLORS['border_light']});
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS["bg_white"]}, stop:1 {COLORS["bg_light"]});
+                border-top: 2px solid qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {COLORS["border_light"]}, stop:0.5 {COLORS["border_medium"]}, stop:1 {COLORS["border_light"]});
                 min-height: 65px;
             }}
         """
@@ -58,7 +61,7 @@ class StatusBarComponent(QObject):
         self.main_window.setStatusBar(self.status_bar)
 
         # Pulsante Toggle Metriche/Licenza
-        self.footer_toggle_btn = QPushButton()
+        self.footer_toggle_btn = IconButton()
         self.footer_toggle_btn.setIcon(get_colored_icon(get_asset_path(Icons.ACTIVITY), COLORS["text_dark"]))
         self.footer_toggle_btn.setIconSize(QSize(20, 20))
         self.footer_toggle_btn.setFixedSize(40, 40)

@@ -19,14 +19,16 @@ from PyQt6.QtWidgets import (
     QGraphicsDropShadowEffect,
     QHBoxLayout,
     QHeaderView,
-    QLineEdit,
-    QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    PrimaryButton,
+    SearchInput,
+)
 from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -143,7 +145,7 @@ class DataTable(QWidget):
         toolbar = QHBoxLayout()
 
         # Search
-        self._search_input = QLineEdit()
+        self._search_input = SearchInput()
         self._search_input.setPlaceholderText("Cerca...")
         self._search_input.setClearButtonEnabled(True)
         self._search_input.textChanged.connect(self._filter_rows)
@@ -157,14 +159,14 @@ class DataTable(QWidget):
                 background: {self._palette.surface};
             }}
             QLineEdit:focus {{
-                border: 2px solid {COLORS['text_dark']};
+                border: 2px solid {COLORS["text_dark"]};
             }}
         """
         )
         toolbar.addWidget(self._search_input, 1)
 
         # Actions
-        self._refresh_btn = QPushButton(" Aggiorna")
+        self._refresh_btn = PrimaryButton(" Aggiorna")
         self._refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), COLORS["text_dark"]))
         self._refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._refresh_btn.clicked.connect(self.refresh)
@@ -191,26 +193,26 @@ class DataTable(QWidget):
         self.container.setObjectName("tableContainer")
         self.container.setStyleSheet(f"""
             QFrame#tableContainer {{
-                background-color: {COLORS['bg_white']};
-                border: 1px solid {COLORS['border_light']};
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
                 /* border-bottom rimosso perché gestito da HoverPulseFrame */
                 border-radius: 12px;
             }}
             QTableWidget {{
                 background-color: transparent;
                 border: none;
-                gridline-color: {COLORS['bg_alt']};
-                selection-background-color: {COLORS['table_selection_bg']};
-                selection-color: {COLORS['text_dark']};
+                gridline-color: {COLORS["bg_alt"]};
+                selection-background-color: {COLORS["table_selection_bg"]};
+                selection-color: {COLORS["text_dark"]};
                 outline: none;
             }}
             QHeaderView::section {{
-                background-color: {COLORS['bg_light']};
-                color: {COLORS['text_dark']};
+                background-color: {COLORS["bg_light"]};
+                color: {COLORS["text_dark"]};
                 padding: 10px;
                 font-weight: bold;
                 border: none;
-                border-bottom: 1px solid {COLORS['border_light']};
+                border-bottom: 1px solid {COLORS["border_light"]};
             }}
         """)
 

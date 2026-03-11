@@ -9,8 +9,6 @@ from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
-    QListWidget,
     QListWidgetItem,
     QSplitter,
     QTextBrowser,
@@ -21,6 +19,7 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Icons
 from src.core.version import __version__ as VERSION
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import SearchInput, StandardListWidget
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -123,7 +122,7 @@ class HelpPanel(QWidget):
         )
         search_h_layout.addWidget(search_icon)
 
-        self.search_edit = QLineEdit()
+        self.search_edit = SearchInput()
         self.search_edit.setPlaceholderText("Cerca modulo o comando...")
         self.search_edit.setStyleSheet(
             "border: none; padding: 12px 0; font-size: 14px; background: transparent;"
@@ -133,7 +132,7 @@ class HelpPanel(QWidget):
         sidebar_layout.addWidget(search_container)
 
         # Index List
-        self.index_list = QListWidget()
+        self.index_list = StandardListWidget()
         self.index_list.setIconSize(QSize(20, 20))
         self.index_list.setStyleSheet(f"""
             QListWidget {{ background: transparent; border: none; outline: none; }}

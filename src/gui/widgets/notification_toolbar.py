@@ -7,11 +7,9 @@ from typing import Any
 
 from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
-    QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -19,6 +17,10 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS, COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
+from src.gui.widgets.core_widgets import (
+    FilterComboBox,
+    SearchInput,
+)
 from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -88,8 +90,8 @@ class FilterChip(QPushButton):
             self.setStyleSheet(
                 f"""
                 QPushButton {{
-                    background-color: {COLORS['primary_blue']};
-                    color: {COLORS['bg_white']};
+                    background-color: {COLORS["primary_blue"]};
+                    color: {COLORS["bg_white"]};
                     border: none;
                     border-radius: 20px;
                     padding: 8px 16px;
@@ -97,7 +99,7 @@ class FilterChip(QPushButton):
                     font-weight: 600;
                 }}
                 QPushButton:hover {{
-                    background-color: {COLORS['primary_dark']};
+                    background-color: {COLORS["primary_dark"]};
                 }}
             """
             )
@@ -106,16 +108,16 @@ class FilterChip(QPushButton):
                 f"""
                 QPushButton {{
                     background-color: transparent;
-                    color: {COLORS['text_muted']};
-                    border: 1px solid {COLORS['border_medium']};
+                    color: {COLORS["text_muted"]};
+                    border: 1px solid {COLORS["border_medium"]};
                     border-radius: 20px;
                     padding: 8px 16px;
                     font-size: 13px;
                     font-weight: 600;
                 }}
                 QPushButton:hover {{
-                    background-color: {COLORS['bg_light']};
-                    border-color: {COLORS['border_dark']};
+                    background-color: {COLORS["bg_light"]};
+                    border-color: {COLORS["border_dark"]};
                 }}
             """
             )
@@ -162,7 +164,7 @@ class NotificationToolbar(QWidget):
         lbl_search = QLabel("CERCA NOTIFICHE")
         lbl_search.setStyleSheet(LABEL_MUTED)
 
-        self.search_input = QLineEdit()
+        self.search_input = SearchInput()
         self.search_input.setPlaceholderText("Oggetto, Messaggio...")
         self.search_input.setFixedWidth(250)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)
@@ -214,7 +216,7 @@ class NotificationToolbar(QWidget):
         lbl_sort = QLabel("ORDINA")
         lbl_sort.setStyleSheet(LABEL_MUTED)
 
-        self.sort_combo = QComboBox()
+        self.sort_combo = FilterComboBox()
         self.sort_combo.addItem("Data (recenti)", "date_desc")
         self.sort_combo.addItem("Data (vecchie)", "date_asc")
         self.sort_combo.addItem("Priorità", "priority")

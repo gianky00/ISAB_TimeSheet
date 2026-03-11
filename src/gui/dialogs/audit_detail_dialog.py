@@ -9,13 +9,15 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMessageBox,
-    QPushButton,
-    QTextEdit,
     QVBoxLayout,
 )
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    PrimaryButton,
+    StandardTextEdit,
+)
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -59,7 +61,7 @@ class AuditDetailDialog(QDialog):
         # JSON Viewer
         layout.addWidget(QLabel("<b>Dettagli Tecnici (JSON):</b>"))
 
-        self.text_edit = QTextEdit()
+        self.text_edit = StandardTextEdit()
         self.text_edit.setReadOnly(True)
         self.text_edit.setStyleSheet(
             f"font-family: Consolas, monospace; font-size: 13px; background-color: {COLORS['bg_light']}; color: {COLORS['text_dark']};"
@@ -80,16 +82,16 @@ class AuditDetailDialog(QDialog):
         btn_layout = QHBoxLayout()
 
         # Copia JSON
-        btn_copy = QPushButton("Copia JSON")
+        btn_copy = PrimaryButton("Copia JSON")
         btn_copy.setIcon(get_colored_icon(get_asset_path(Icons.FILE_TEXT), COLORS["text_dark"]))
         btn_copy.clicked.connect(self._copy_to_clipboard)
         btn_copy.setStyleSheet(
             f"""
             QPushButton {{
-                background-color: {COLORS['bg_alt']}; border: 1px solid {COLORS['border_medium']};
-                padding: 8px 15px; border-radius: 4px; font-weight: 600; color: {COLORS['text_dark']};
+                background-color: {COLORS["bg_alt"]}; border: 1px solid {COLORS["border_medium"]};
+                padding: 8px 15px; border-radius: 4px; font-weight: 600; color: {COLORS["text_dark"]};
             }}
-            QPushButton:hover {{ background-color: {COLORS['bg_hover']}; }}
+            QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; }}
         """
         )
         btn_layout.addWidget(btn_copy)
@@ -97,12 +99,12 @@ class AuditDetailDialog(QDialog):
         btn_layout.addStretch()
 
         # Chiudi
-        btn_close = QPushButton("Chiudi")
+        btn_close = PrimaryButton("Chiudi")
         btn_close.clicked.connect(self.accept)
         btn_close.setStyleSheet(
             f"""
             QPushButton {{
-                background-color: {COLORS['text_muted']}; color: white; border: none;
+                background-color: {COLORS["text_muted"]}; color: white; border: none;
                 padding: 8px 15px; border-radius: 4px; font-weight: bold;
             }}
             QPushButton:hover {{ opacity: 0.8; }}

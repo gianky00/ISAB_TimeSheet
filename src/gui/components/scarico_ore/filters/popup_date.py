@@ -6,10 +6,13 @@ from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QMenu,
-    QPushButton,
     QTreeView,
     QVBoxLayout,
     QWidget,
+)
+
+from src.gui.widgets.core_widgets import (
+    PrimaryButton,
 )
 
 
@@ -26,9 +29,9 @@ class DateFilterPopupWidget(QWidget):
         layout.setContentsMargins(5, 5, 5, 5)
 
         btn_layout = QHBoxLayout()
-        btn_all = QPushButton("Tutti")
-        btn_none = QPushButton("Nessuno")
-        btn_ok = QPushButton("OK")
+        btn_all = PrimaryButton("Tutti")
+        btn_none = PrimaryButton("Nessuno")
+        btn_ok = PrimaryButton("OK")
         for btn in (btn_all, btn_none, btn_ok):
             btn.setStyleSheet("font-size: 11px; padding: 2px;")
 

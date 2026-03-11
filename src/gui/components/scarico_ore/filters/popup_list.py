@@ -5,12 +5,15 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QHBoxLayout,
-    QLineEdit,
     QListView,
     QMenu,
-    QPushButton,
     QVBoxLayout,
     QWidget,
+)
+
+from src.gui.widgets.core_widgets import (
+    PrimaryButton,
+    SearchInput,
 )
 
 
@@ -29,15 +32,15 @@ class ListFilterPopupWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
 
-        self.search_edit = QLineEdit()
+        self.search_edit = SearchInput()
         self.search_edit.setPlaceholderText("Cerca...")
         self.search_edit.textChanged.connect(self._filter_list)
         layout.addWidget(self.search_edit)
 
         btn_layout = QHBoxLayout()
-        btn_all = QPushButton("Tutti")
-        btn_none = QPushButton("Nessuno")
-        btn_ok = QPushButton("OK")
+        btn_all = PrimaryButton("Tutti")
+        btn_none = PrimaryButton("Nessuno")
+        btn_ok = PrimaryButton("OK")
         for btn in (btn_all, btn_none, btn_ok):
             btn.setStyleSheet("font-size: 11px; padding: 2px;")
 

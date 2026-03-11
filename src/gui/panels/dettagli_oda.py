@@ -20,6 +20,7 @@ from src.gui.panels.base import BaseBotPanel, BotWorker
 from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import BotParametersWidget, EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets.safework.status_list import StatusListWidget
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path
 
@@ -89,22 +90,65 @@ class DettagliOdAPanel(BaseBotPanel):
         params_layout.addLayout(table_toolbar)
 
         config = config_manager.load_config()
-        self.data_table = EditableDataTable(
-            [
-                {"name": "Numero OdA", "type": "text"},
-                {
-                    "name": "Numero Contratto",
-                    "type": "combo",
-                    "options": config.get("contracts", []),
-                    "default": config.get("default_contract", ""),
-                },
-            ]
-        )
+
+        # 2. Tabella e Stati
+        table_h = QHBoxLayout()
+        table_h.setSpacing(10)
+
+        self.cols: list[dict[str, Any]] = [
+            {"name": "Numero OdA", "type": "text"},
+            {
+                "name": "Numero Contratto",
+                "type": "combo",
+                "options": config.get("contracts", []),
+                "default": "",  # Forza vuoto per nuove righe all'avvio
+            },
+            {"name": "ESITO", "type": "text", "default": "", "readonly": True},
+        ]
+        self.data_table = EditableDataTable(self.cols)
         self.data_table.setMinimumHeight(250)
+        self.data_table.data_changed.connect(self._update_status_list)
         self.data_table.data_changed.connect(self._save_data)
-        params_layout.addWidget(self.data_table)
+
+        v_status = QVBoxLayout()
+        v_status.setContentsMargins(0, 56, 0, 0)
+        self.status_list = StatusListWidget()
+        self.status_list.setFixedWidth(40)
+        v_status.addWidget(self.status_list)
+        v_status.addStretch()
+
+        table_h.addWidget(self.data_table)
+        table_h.addLayout(v_status)
+        params_layout.addLayout(table_h)
 
         self.content_layout.addWidget(params_container)
+
+    def _update_status_list(self, force: bool = False) -> None:
+        """
+        Sincronizza il contatore visivo dello stato con il numero di righe della tabella.
+
+        Args:
+            force: Se True, reinizializza sempre la lista.
+        """
+        count = self.data_table.table.rowCount()
+        if force or self.status_list.count() != count:
+            self.status_list.initialize_rows(count, self.data_table.table.rowHeight(0) or 30)
+
+    def on_step_completed(self, step_idx: int, success: bool, message: str = "") -> None:
+        """
+        Aggiorna lo stato visivo di una specifica riga al termine del suo processing.
+
+        Args:
+            step_idx: Indice della riga processata.
+            success: Esito del processing della riga.
+            message: Messaggio di errore opzionale.
+        """
+        self.status_list.update_status(step_idx, success)
+
+        # Aggiorna la colonna "ESITO" nella tabella (indice colonna = 2)
+        # Usiamo emit_signal=False per evitare di resettare i pallini appena colorati
+        esito_text = "Completato" if success else f"Errore: {message}" if message else "Errore"
+        self.data_table.update_cell(step_idx, 2, esito_text, emit_signal=False)
 
     def _open_settings(self) -> None:
         """Comunica alla finestra principale di mostrare la pagina delle impostazioni."""
@@ -115,6 +159,21 @@ class DettagliOdAPanel(BaseBotPanel):
     def refresh_fornitori(self) -> None:
         """Aggiorna la lista dei fornitori selezionabili nel widget parametri."""
         self.params_widget.refresh_fornitori()
+
+    def refresh_contracts(self) -> None:
+        """Aggiorna dinamicamente i numeri di contratto selezionabili nella tabella."""
+        contracts = config_manager.load_config().get("contracts", [])
+
+        # Trova l'indice della colonna "Numero Contratto"
+        contract_col_idx = -1
+        for i, col in enumerate(self.cols):
+            if col["name"] == "Numero Contratto":
+                contract_col_idx = i
+                break
+
+        if contract_col_idx != -1:
+            self.data_table.update_column_options(contract_col_idx, contracts)
+            self._on_log("🔄 Elenco contratti aggiornato (Hot Reload).")
 
     def _load_saved_data(self) -> None:
         """Ripristina lo stato del pannello (date, fornitori, tabella) dall'ultimo salvataggio."""
@@ -127,8 +186,21 @@ class DettagliOdAPanel(BaseBotPanel):
             config.get("last_oda_date_a", QDate.currentDate().toString("dd.MM.yyyy")),
         )
         self.params_widget.set_dest_path(config.get("path_dettagli_oda", ""))
-        if saved_data := config.get("last_oda_data", []):
+
+        saved_data = config.get("last_oda_data", [])
+        if saved_data:
+            # Forza la colonna Numero Contratto a vuoto all'avvio per policy Enterprise
+            for row_dict in saved_data:
+                # Supporta sia "Numero Contratto" che la chiave normalizzata "numero_contratto"
+                for k in list(row_dict.keys()):
+                    if k.lower().replace(" ", "_") == "numero_contratto":
+                        row_dict[k] = ""
             self.data_table.set_data(saved_data)
+        else:
+            # Se non ci sono dati salvati, svuota esplicitamente per evitare default indesiderati
+            self.data_table.clear()
+
+        self._update_status_list()
 
     def _save_data(self) -> None:
         """Persiste i parametri attuali nella configurazione globale."""
@@ -171,8 +243,11 @@ class DettagliOdAPanel(BaseBotPanel):
         rows = self.data_table.get_data()
 
         if params_override:
-            data_da, data_a = params_override.get("data_da", data_da), params_override.get("data_a", data_a)
-            if item := params_override.get("single_item"):
+            data_da = params_override.get("data_da", data_da)
+            data_a = params_override.get("data_a", data_a)
+            if "rows" in params_override:
+                rows = params_override["rows"]
+            elif item := params_override.get("single_item"):
                 rows = [item]
                 self.log_widget.append(f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}")
 
@@ -214,6 +289,9 @@ class DettagliOdAPanel(BaseBotPanel):
         )
         self.worker = worker
         self._setup_worker_connections(worker)
+
+        # Reset pallini all'avvio
+        self._update_status_list(force=True)
 
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)

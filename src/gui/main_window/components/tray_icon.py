@@ -37,7 +37,7 @@ class TrayIconComponent(QObject):
         """
         self.controller.show_message(
             "Aggiornamento Disponibile",
-            f"È uscita la versione {new_version}. Clicca qui per scaricarla.",
+            f"È disponibile la nuova versione {new_version} di SyncroJob.",
         )
 
     def show_background_notification(self, title: str, message: str, is_error: bool = False) -> None:

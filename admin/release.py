@@ -7,6 +7,7 @@ import argparse
 import contextlib
 import io
 import json
+import os
 import subprocess
 import sys
 import time
@@ -30,15 +31,33 @@ def run_command(cmd, description, exit_on_fail=True, capture=False):
             result = subprocess.run(cmd, cwd=ROOT_DIR, capture_output=True, text=True, check=True)
             return result.stdout.strip()
 
-        result = subprocess.run(cmd, cwd=ROOT_DIR, check=exit_on_fail)
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"[ERROR] Comando fallito: {description}")
-        print(f"        Exit code: {e.returncode}")
-        sys.stdout.flush()
-        if exit_on_fail:
+        env = os.environ.copy()
+        env["PYTHONUNBUFFERED"] = "1"
+
+        process = subprocess.Popen(
+            cmd,
+            cwd=ROOT_DIR,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            env=env,
+            bufsize=1,
+            universal_newlines=True,
+        )
+
+        if process.stdout:
+            for line in process.stdout:
+                sys.stdout.write(line)
+                sys.stdout.flush()
+
+        returncode = process.wait()
+
+        if exit_on_fail and returncode != 0:
+            print(f"[ERROR] Comando fallito: {description}")
+            print(f"        Exit code: {returncode}")
+            sys.stdout.flush()
             sys.exit(1)
-        return False
+        return returncode == 0
     except Exception as e:
         print(f"[ERROR] Errore durante: {description}")
         print(f"        Dettaglio: {e}")

@@ -47,13 +47,13 @@ class NotificationGroupHeader(QFrame):
         self.setStyleSheet(
             f"""
             NotificationGroupHeader {{
-                background-color: {COLORS['bg_hover']};
+                background-color: {COLORS["bg_hover"]};
                 border-radius: 10px;
-                border: 1px solid {COLORS['border_light']};
+                border: 1px solid {COLORS["border_light"]};
             }}
             NotificationGroupHeader:hover {{
-                background-color: {COLORS['bg_light']};
-                border-color: {COLORS['border_medium']};
+                background-color: {COLORS["bg_light"]};
+                border-color: {COLORS["border_medium"]};
             }}
         """
         )
@@ -74,7 +74,7 @@ class NotificationGroupHeader(QFrame):
             QLabel {{
                 font-weight: 800;
                 font-size: 12px;
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
                 text-transform: uppercase;
                 letter-spacing: 1px;
                 border: none;
@@ -92,7 +92,7 @@ class NotificationGroupHeader(QFrame):
                 font-weight: 700;
                 font-size: 10px;
                 color: white;
-                background-color: {COLORS['text_muted']};
+                background-color: {COLORS["text_muted"]};
                 padding: 2px 8px;
                 border-radius: 10px;
                 border: none;
@@ -109,7 +109,7 @@ class NotificationGroupHeader(QFrame):
         self.arrow_btn.setStyleSheet(
             f"""
             QLabel {{
-                color: {COLORS['text_muted']};
+                color: {COLORS["text_muted"]};
                 font-size: 9px;
                 font-weight: 900;
                 letter-spacing: 0.5px;

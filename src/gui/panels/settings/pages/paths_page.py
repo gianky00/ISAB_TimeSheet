@@ -10,7 +10,6 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLayout,
     QLineEdit,
-    QPushButton,
     QVBoxLayout,
     QWidget,
 )
@@ -18,6 +17,10 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Icons
 from src.gui.panels.settings.shared import create_group_box, style_button, style_input
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    PrimaryButton,
+    StandardInput,
+)
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -71,6 +74,15 @@ class PathsPage(QWidget):
 
         layout.addWidget(contabilita_group)
 
+        # --- SEZIONE PREVENTIVI ---
+        preventivi_group = create_group_box("Generazione Preventivi")
+        prev_layout = QVBoxLayout(preventivi_group)
+
+        prev_layout.addWidget(QLabel("File Master Preventivi (Excel con Macro .xlsm):"))
+        self.master_preventivi_path_edit = self._create_path_row(prev_layout, self._browse_master_preventivi)
+
+        layout.addWidget(preventivi_group)
+
         # --- SEZIONE DATAEASE ---
         dataease_group = create_group_box("DataEase & Consuntivi")
         de_layout = QVBoxLayout(dataease_group)
@@ -85,7 +97,7 @@ class PathsPage(QWidget):
         self, parent_layout: QLayout, browse_cb: Callable[[], None], folder: bool = False
     ) -> QLineEdit:
         row = QHBoxLayout()
-        edit = QLineEdit()
+        edit = StandardInput()
         edit.setReadOnly(True)
         edit.setMinimumHeight(40)
         edit.setPlaceholderText("Seleziona cartella..." if folder else "Seleziona file...")
@@ -94,17 +106,61 @@ class PathsPage(QWidget):
         edit.textChanged.connect(lambda: self._validate_path(edit))
         row.addWidget(edit)
 
-        btn = QPushButton("Sfoglia")
-        btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), COLORS["text_dark"]))
-        btn.setMinimumHeight(40)
-        btn.setMinimumWidth(120)
-        style_button(btn)
-        btn.clicked.connect(browse_cb)
-        row.addWidget(btn)
+        # Pulsante Sfoglia
+        btn_browse = PrimaryButton("Sfoglia")
+        btn_browse.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
+        btn_browse.setMinimumHeight(40)
+        btn_browse.setMinimumWidth(100)
+        style_button(btn_browse)
+        btn_browse.clicked.connect(browse_cb)
+        row.addWidget(btn_browse)
+
+        # Pulsante Apri
+        btn_open = PrimaryButton("Apri")
+        btn_open.setMinimumHeight(40)
+        btn_open.setMinimumWidth(80)
+        btn_open.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
+                border: 1px solid {COLORS["border_medium"]};
+                border-radius: 6px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
+        """)
+        btn_open.clicked.connect(lambda: self._open_path(edit.text()))
+        row.addWidget(btn_open)
 
         if isinstance(parent_layout, (QVBoxLayout, QHBoxLayout)):
             parent_layout.addLayout(row)
         return edit
+
+    def _open_path(self, path_str: str) -> None:
+        """Apre il percorso specificato nell'esplora risorse."""
+        if not path_str:
+            return
+
+        import os
+        from pathlib import Path
+
+        from src.gui.widgets.toast import ToastManager
+
+        path = Path(path_str).resolve()
+        if not path.exists():
+            ToastManager.instance().show(f"Percorso non trovato: {path_str}", "warning")
+            return
+
+        try:
+            if path.is_file():
+                # Su Windows, apre la cartella e seleziona il file
+                import subprocess
+                subprocess.run(['explorer', '/select,', str(path)], check=False)
+            else:
+                import os
+                os.startfile(str(path)) # noqa: S606
+        except Exception as e:
+            ToastManager.instance().show(f"Errore apertura: {e}", "error")
 
     def _validate_path(self, widget: QLineEdit) -> None:
         """Valida visivamente il percorso inserito."""
@@ -118,28 +174,28 @@ class PathsPage(QWidget):
             widget.setStyleSheet(
                 f"""
                 QLineEdit {{
-                    border: 2px solid {COLORS['success_green']};
+                    border: 2px solid {COLORS["success_green"]};
                     border-radius: 4px;
                     padding: 10px;
                     font-size: 15px;
-                    background-color: {COLORS['bg_success_pastel']};
-                    color: {COLORS['success_material']};
+                    background-color: {COLORS["bg_success_pastel"]};
+                    color: {COLORS["success_material"]};
                 }}
-                QLineEdit:focus {{ border-color: {COLORS['success_green']}; }}
+                QLineEdit:focus {{ border-color: {COLORS["success_green"]}; }}
             """
             )
         else:
             widget.setStyleSheet(
                 f"""
                 QLineEdit {{
-                    border: 2px solid {COLORS['error_red']};
+                    border: 2px solid {COLORS["error_red"]};
                     border-radius: 4px;
                     padding: 10px;
                     font-size: 15px;
-                    background-color: {COLORS['bg_error_pastel']};
-                    color: {COLORS['error_material']};
+                    background-color: {COLORS["bg_error_pastel"]};
+                    color: {COLORS["error_material"]};
                 }}
-                QLineEdit:focus {{ border-color: {COLORS['error_red']}; }}
+                QLineEdit:focus {{ border-color: {COLORS["error_red"]}; }}
             """
             )
 
@@ -182,6 +238,11 @@ class PathsPage(QWidget):
         if p:
             self.certificati_root_edit.setText(p)
 
+    def _browse_master_preventivi(self) -> None:
+        p = self._browse_file("Seleziona File Master Preventivi", "Excel Macro Files (*.xlsm)")
+        if p:
+            self.master_preventivi_path_edit.setText(p)
+
     def _browse_dataease(self) -> None:
         p = self._browse_file("Seleziona DB DataEase", "Access DB (*.mdb *.accdb)")
         if p:
@@ -211,16 +272,20 @@ class PathsPage(QWidget):
         self.certificati_root_edit.setText(str(config.get("certificati_root_path", "")))
         self._validate_path(self.certificati_root_edit)
 
+        self.master_preventivi_path_edit.setText(str(config.get("master_preventivi_path", "")))
+        self._validate_path(self.master_preventivi_path_edit)
+
         self.dataease_path_edit.setText(str(config.get("dataease_db_path", "")))
         self._validate_path(self.dataease_path_edit)
 
-    def save_to_config(self, config_manager: Any) -> None:
-        """Salva i percorsi attualmente impostati nella configurazione globale."""
-        config_manager.set_config_value("contabilita_file_path", self.contabilita_path_edit.text())
-        config_manager.set_config_value("enable_auto_update_contabilita", self.auto_update_check.isChecked())
-        config_manager.set_config_value("giornaliere_path", self.giornaliere_path_edit.text())
-        config_manager.set_config_value("attivita_programmate_path", self.attivita_path_edit.text())
-        config_manager.set_config_value("activity_db_path", self.activity_db_path_edit.text())
-        config_manager.set_config_value("certificati_campione_path", self.certificati_path_edit.text())
-        config_manager.set_config_value("certificati_root_path", self.certificati_root_edit.text())
-        config_manager.set_config_value("dataease_db_path", self.dataease_path_edit.text())
+    def save_to_config(self, config: dict[str, Any]) -> None:
+        """Salva i percorsi attualmente impostati nel dizionario di configurazione."""
+        config["contabilita_file_path"] = self.contabilita_path_edit.text()
+        config["enable_auto_update_contabilita"] = self.auto_update_check.isChecked()
+        config["giornaliere_path"] = self.giornaliere_path_edit.text()
+        config["attivita_programmate_path"] = self.attivita_path_edit.text()
+        config["activity_db_path"] = self.activity_db_path_edit.text()
+        config["certificati_campione_path"] = self.certificati_path_edit.text()
+        config["certificati_root_path"] = self.certificati_root_edit.text()
+        config["master_preventivi_path"] = self.master_preventivi_path_edit.text()
+        config["dataease_db_path"] = self.dataease_path_edit.text()

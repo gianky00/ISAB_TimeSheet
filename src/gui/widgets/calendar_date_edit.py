@@ -29,44 +29,44 @@ class CalendarDateEdit(QDateEdit):
             calendar.setStyleSheet(
                 f"""
             QCalendarWidget QWidget {{
-                alternate-background-color: {COLORS['bg_light']};
-                color: {COLORS['text_dark']};
+                alternate-background-color: {COLORS["bg_light"]};
+                color: {COLORS["text_dark"]};
             }}
             QCalendarWidget QTableView {{
-                selection-background-color: {COLORS['primary_dark']};
+                selection-background-color: {COLORS["primary_dark"]};
                 selection-color: white;
                 font-size: 14px;
                 outline: 0;
             }}
             /* Intestazione giorni (L, M, M...) */
             QCalendarWidget QHeaderView {{
-                background-color: {COLORS['bg_light']};
+                background-color: {COLORS["bg_light"]};
             }}
             QCalendarWidget QHeaderView::section {{
-                background-color: {COLORS['bg_light']};
-                color: {COLORS['text_muted']};
+                background-color: {COLORS["bg_light"]};
+                color: {COLORS["text_muted"]};
                 padding: 5px;
                 font-weight: bold;
                 font-size: 13px;
                 border: none;
             }}
             QCalendarWidget QToolButton {{
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
                 icon-size: 28px;
                 background-color: transparent;
                 margin: 5px;
                 font-weight: bold;
             }}
             QCalendarWidget QToolButton:hover {{
-                background-color: {COLORS['bg_hover']};
+                background-color: {COLORS["bg_hover"]};
                 border-radius: 4px;
             }}
             QCalendarWidget QSpinBox {{
                 width: 50px;
                 font-size: 14px;
-                color: {COLORS['text_dark']};
-                background-color: {COLORS['bg_white']};
-                selection-background-color: {COLORS['primary_dark']};
+                color: {COLORS["text_dark"]};
+                background-color: {COLORS["bg_white"]};
+                selection-background-color: {COLORS["primary_dark"]};
                 selection-color: white;
             }}
             """
@@ -77,26 +77,26 @@ class CalendarDateEdit(QDateEdit):
         self.setStyleSheet(
             f"""
             QDateEdit {{
-                border: 1px solid {COLORS['border_medium']};
+                border: 1px solid {COLORS["border_medium"]};
                 border-radius: 4px;
                 padding: 5px 45px 5px 10px;
                 font-size: 14px;
-                background-color: {COLORS['bg_white']};
-                color: {COLORS['text_dark']};
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
             }}
             QDateEdit:focus {{
-                border-color: {COLORS['primary_dark']};
+                border-color: {COLORS["primary_dark"]};
             }}
             QDateEdit::drop-down {{
                 subcontrol-origin: padding;
                 subcontrol-position: top right;
                 width: 40px;
                 border-left-width: 1px;
-                border-left-color: {COLORS['border_medium']};
+                border-left-color: {COLORS["border_medium"]};
                 border-left-style: solid;
                 border-top-right-radius: 3px;
                 border-bottom-right-radius: 3px;
-                background-color: {COLORS['bg_light']};
+                background-color: {COLORS["bg_light"]};
             }}
             QDateEdit::down-arrow {{
                 image: url({icon_path});
@@ -104,7 +104,7 @@ class CalendarDateEdit(QDateEdit):
                 height: 18px;
             }}
             QDateEdit::drop-down:hover {{
-                background-color: {COLORS['bg_hover']};
+                background-color: {COLORS["bg_hover"]};
             }}
         """
         )

@@ -21,6 +21,10 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    SearchInput,
+    StandardInput,
+)
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -48,8 +52,8 @@ class SettingCard(QFrame):
         self.setObjectName("settingCard")
         self.setStyleSheet(f"""
             QFrame#settingCard {{
-                background-color: {COLORS['bg_white']};
-                border: 1px solid {COLORS['border_light']};
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
                 border-radius: 15px;
             }}
         """)
@@ -127,17 +131,23 @@ class TelegramTab(QWidget):
         # --- TOP STATUS BAR (Search) ---
         self.header_bar = QFrame()
         self.header_bar.setFixedHeight(50)
-        self.header_bar.setStyleSheet(f"background: {COLORS['bg_light']}; border-bottom: 1px solid {COLORS['border_light']};")
+        self.header_bar.setStyleSheet(
+            f"background: {COLORS['bg_light']}; border-bottom: 1px solid {COLORS['border_light']};"
+        )
         header_layout = QHBoxLayout(self.header_bar)
         header_layout.setContentsMargins(20, 0, 20, 0)
 
         search_icon = QLabel()
-        search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_light"]).pixmap(16, 16))
+        search_icon.setPixmap(
+            get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_light"]).pixmap(16, 16)
+        )
         header_layout.addWidget(search_icon)
 
-        self.search_bar = QLineEdit()
+        self.search_bar = SearchInput()
         self.search_bar.setPlaceholderText("Cerca integrazioni Telegram...")
-        self.search_bar.setStyleSheet("border: none; background: transparent; font-size: 13px; font-weight: 500;")
+        self.search_bar.setStyleSheet(
+            "border: none; background: transparent; font-size: 13px; font-weight: 500;"
+        )
         self.search_bar.textChanged.connect(self._filter_cards)
         header_layout.addWidget(self.search_bar)
         header_layout.addStretch()
@@ -161,12 +171,12 @@ class TelegramTab(QWidget):
         creds_layout.setContentsMargins(0, 10, 0, 0)
         creds_layout.setSpacing(15)
 
-        self.token_edit = QLineEdit()
+        self.token_edit = StandardInput()
         self.token_edit.setPlaceholderText("Inserisci Bot Token (7123456789:ABC...)")
         self.token_edit.setEchoMode(QLineEdit.EchoMode.PasswordEchoOnEdit)
         self.token_edit.textChanged.connect(self.settings_changed.emit)
 
-        self.chat_id_edit = QLineEdit()
+        self.chat_id_edit = StandardInput()
         self.chat_id_edit.setPlaceholderText("Inserisci Chat ID (es. 123456789)")
         self.chat_id_edit.textChanged.connect(self.settings_changed.emit)
 
@@ -178,7 +188,8 @@ class TelegramTab(QWidget):
         card_creds = SettingCard(
             "Accesso API Telegram",
             "Configura le credenziali del bot per il controllo remoto.",
-            Icons.SEND, creds_widget
+            Icons.SEND,
+            creds_widget,
         )
         self.cards_layout.addWidget(card_creds)
         self.cards.append(card_creds)
@@ -203,7 +214,8 @@ class TelegramTab(QWidget):
         card_conn = SettingCard(
             "Test Connettività",
             "Verifica che il bot possa inviare notifiche correttamente.",
-            Icons.SPARKLES, conn_widget
+            Icons.SPARKLES,
+            conn_widget,
         )
         self.cards_layout.addWidget(card_conn)
         self.cards.append(card_conn)
@@ -215,8 +227,7 @@ class TelegramTab(QWidget):
     def _filter_cards(self, text: str) -> None:
         search_term = text.lower().strip()
         for card in self.cards:
-            match = (search_term in card.title_text.lower() or
-                     search_term in card.subtitle_text.lower())
+            match = search_term in card.title_text.lower() or search_term in card.subtitle_text.lower()
             card.setVisible(match or not search_term)
 
     def load_from_config(self, config: dict[str, Any]) -> None:
@@ -229,12 +240,12 @@ class TelegramTab(QWidget):
         self.token_edit.setText(config.get("telegram_token", ""))
         self.chat_id_edit.setText(config.get("telegram_chat_id", ""))
 
-    def save_to_config(self, config_manager: Any) -> None:
+    def save_to_config(self, config: dict[str, Any]) -> None:
         """
-        Salva i parametri Telegram nel gestore di configurazione.
+        Salva i parametri Telegram nel dizionario di configurazione.
 
         Args:
-            config_manager: Riferimento al manager globale.
+            config: Dizionario di configurazione globale.
         """
-        config_manager.set_config_value("telegram_token", self.token_edit.text().strip())
-        config_manager.set_config_value("telegram_chat_id", self.chat_id_edit.text().strip())
+        config["telegram_token"] = self.token_edit.text().strip()
+        config["telegram_chat_id"] = self.chat_id_edit.text().strip()

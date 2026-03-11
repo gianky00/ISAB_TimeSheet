@@ -13,4 +13,4 @@ if not exist ".venv\Scripts\python.exe" (
 )
 
 echo Avvio Developer Toolbox GUI...
-".venv\Scripts\python.exe" admin/developer_toolbox_gui.py
+".venv\Scripts\python.exe" admin/developer_toolbox_gui.py %*

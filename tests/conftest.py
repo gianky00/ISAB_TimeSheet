@@ -15,6 +15,86 @@ ROOT_DIR = Path(__file__).parent.parent.resolve()
 sys.path.insert(0, str(ROOT_DIR / "src"))
 
 
+# --- GLOBAL MATPLOTLIB MOCK FOR HEADLESS ENVIRONMENTS ---
+# Eradicates Access Violation crashes in headless Windows by intercepting Qt backends
+try:
+    import sys
+    from unittest.mock import MagicMock
+
+    class MockCanvas(MagicMock):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.figure = MagicMock()
+
+        def setParent(self, parent): pass
+        def setMinimumHeight(self, h): pass
+        def setSizePolicy(self, *args): pass
+        def setGraphicsEffect(self, effect): pass
+        def setStyleSheet(self, style): pass
+
+    mock_backend = MagicMock()
+    mock_backend.FigureCanvasQTAgg = MockCanvas
+    mock_backend.FigureCanvas = MockCanvas
+
+    sys.modules["matplotlib.backends.backend_qtagg"] = mock_backend
+    sys.modules["matplotlib.backends.backend_qt5agg"] = mock_backend
+    sys.modules["matplotlib.backends.backend_qt"] = mock_backend
+    sys.modules["matplotlib.backends.qt_compat"] = MagicMock()
+except Exception:  # noqa: S110
+    # Matplotlib might not be installed, ignore error for headless environments
+    pass
+# --------------------------------------------------------
+
+
+# --- GLOBAL PYQT6 MOCK FOR HEADLESS ENVIRONMENTS ---
+try:
+    import PyQt6  # noqa: F401
+except (ImportError, RuntimeError):
+    # If PyQt6 is missing or DLLs fail to load, provide a minimal mock infrastructure
+    class MockQObject:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def setParent(self, parent):
+            pass
+
+    class MockPyqtSignal:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def emit(self, *args, **kwargs):
+            pass
+
+        def connect(self, slot):
+            pass
+
+    mock_qt_core = MagicMock()
+    mock_qt_core.QObject = MockQObject
+    mock_qt_core.pyqtSignal = MockPyqtSignal
+
+    sys.modules["PyQt6"] = MagicMock()
+    sys.modules["PyQt6.QtCore"] = mock_qt_core
+    sys.modules["PyQt6.QtGui"] = MagicMock()
+    sys.modules["PyQt6.QtWidgets"] = MagicMock()
+    sys.modules["PyQt6.QtTest"] = MagicMock()
+# ---------------------------------------------------
+
+
+# --- GLOBAL MATPLOTLIB MOCK FOR HEADLESS ENVIRONMENTS ---
+try:
+    import matplotlib
+    matplotlib.use("Agg")
+
+    # Mock canvas classes that cause native crashes in headless Windows
+    mock_canvas = MagicMock()
+    sys.modules["matplotlib.backends.backend_qt5agg"] = mock_canvas
+    sys.modules["matplotlib.backends.backend_qtagg"] = mock_canvas
+    sys.modules["matplotlib.backends.backend_qt"] = mock_canvas
+except (ImportError, RuntimeError):
+    pass
+# --------------------------------------------------------
+
+
 # Set matplotlib backend to 'Agg' to avoid GUI issues during tests
 def pytest_sessionstart(session):
     """
@@ -111,7 +191,7 @@ def _isolate_config(tmp_path):
     with (
         patch("src.core.config_manager.CONFIG_DIR", fake_dir),
         patch("src.core.config_manager.CONFIG_FILE", fake_file),
-        patch("src.core.config_manager._check_and_migrate_local_config", return_value=False),
+        patch("src.core.config_manager.check_and_migrate_local_config", return_value=False),
     ):
         yield fake_file
 
@@ -134,7 +214,12 @@ def cleanup_widgets():
 
     import gc
 
-    from PyQt6.QtWidgets import QApplication
+    try:
+        from PyQt6.QtWidgets import QApplication
+    except (ImportError, RuntimeError):
+        # PyQt6 not available or broken in this environment
+        gc.collect()
+        return
 
     # Only clean up if QApplication exists
     if not QApplication.instance():
@@ -150,10 +235,6 @@ def cleanup_widgets():
             if widget.isVisible():
                 widget.close()
             widget.deleteLater()
-            # if sip and not sip.isdeleted(widget):
-            #     # Dangerous but necessary for GDI leak prevention in massive suites
-            #     # sip.delete(widget)
-            #     pass
 
     # Process deferred delete events
     QApplication.processEvents()
@@ -188,13 +269,14 @@ def mock_ui_dependencies(mocker):
 
     # Mock TimbratureStorage
     # Force import to avoid AttributeError: module 'src' has no attribute 'bots'
-    import src.bots.portale_fornitori.timbrature.storage
+    with contextlib.suppress(ImportError):
+        import src.bots.portale_fornitori.timbrature.storage
 
-    mocker.patch.object(
-        src.bots.portale_fornitori.timbrature.storage,
-        "TimbratureStorage",
-        return_value=MagicMock(),
-    )
+        mocker.patch.object(
+            src.bots.portale_fornitori.timbrature.storage,
+            "TimbratureStorage",
+            return_value=MagicMock(),
+        )
 
     # Mock LyraSentinel & Telegram
     mocker.patch("src.core.lyra_sentinel.LyraSentinel", return_value=MagicMock())

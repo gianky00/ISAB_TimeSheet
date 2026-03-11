@@ -5,8 +5,8 @@ Risoluzione contrasto: Sfondo selezione più scuro e opacità testo migliorata.
 
 from typing import Any
 
-from PyQt6.QtCore import QSize, Qt, pyqtProperty  # type: ignore[attr-defined]
-from PyQt6.QtGui import QColor
+from PyQt6.QtCore import QPoint, QSize, Qt, pyqtProperty  # type: ignore[attr-defined]
+from PyQt6.QtGui import QColor, QDrag
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QPushButton, QWidget
 
 from src.gui.styles import COLORS
@@ -26,7 +26,9 @@ class SidebarButton(QPushButton):
         self.icon_path = icon_path
         self._collapsed = False
         self._badge_count = 0
-        self._text_opacity = 1.0 # Default a 1.0 per visibilità immediata
+        self._text_opacity = 1.0  # Default a 1.0 per visibilità immediata
+        self._drag_start_pos: QPoint | None = None
+        self._current_drag: QDrag | None = None
 
         if icon_path:
             self.setIcon(get_colored_icon(icon_path, COLORS["bg_white"]))
@@ -37,10 +39,13 @@ class SidebarButton(QPushButton):
 
         self.glow = QGraphicsDropShadowEffect(self)
         self.glow.setBlurRadius(15)
-        self.glow.setColor(QColor(0, 0, 0, 0)) # Trasparente di default
+        self.glow.setColor(QColor(0, 0, 0, 0))  # Trasparente di default
         self.glow.setOffset(0, 0)
         self.setGraphicsEffect(self.glow)
 
+        self._refresh_state()
+        self._update_style()
+        self.toggled.connect(self._on_toggled)
         self._refresh_state()
         self._update_style()
         self.toggled.connect(self._on_toggled)
@@ -50,7 +55,7 @@ class SidebarButton(QPushButton):
         """Restituisce l'opacità del testo."""
         return self._text_opacity
 
-    @text_opacity.setter # type: ignore[no-redef]
+    @text_opacity.setter  # type: ignore[no-redef]
     def text_opacity(self, value: float) -> None:
         """Imposta l'opacità del testo."""
         self._text_opacity = value
@@ -100,7 +105,9 @@ class SidebarButton(QPushButton):
             font_weight = "800"
         else:
             bg_color = "transparent"
-            text_color = hex_to_rgba(COLORS["bg_white"], max(0.4, self._text_opacity)) # Mai sotto 0.4 se visibile
+            text_color = hex_to_rgba(
+                COLORS["bg_white"], max(0.4, self._text_opacity)
+            )  # Mai sotto 0.4 se visibile
             font_weight = "500"
 
         self.setStyleSheet(f"""
@@ -116,8 +123,8 @@ class SidebarButton(QPushButton):
                 border: none;
             }}
             QPushButton:hover {{
-                background-color: {hex_to_rgba(COLORS['bg_white'], 0.1)};
-                color: {COLORS['bg_white']};
+                background-color: {hex_to_rgba(COLORS["bg_white"], 0.1)};
+                color: {COLORS["bg_white"]};
             }}
         """)
 

@@ -101,11 +101,27 @@ class TestLicenseUpdaterAdvanced:
         """Verifica aggiornamento completo con successo da GitHub."""
         mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE-HWID")
 
-        mock_resp_ok = MagicMock()
-        mock_resp_ok.status_code = 200
-        mock_resp_ok.content = b"fake-content"
+        import json
 
-        with patch("requests.get", return_value=mock_resp_ok):
+        from cryptography.fernet import Fernet
+
+        key = Fernet.generate_key()
+        mocker.patch("src.core.secrets_manager.SecretsManager.get_license_key", return_value=key)
+
+        f = Fernet(key)
+        payload = json.dumps({"Hardware ID": "FAKE-HWID"}).encode("utf-8")
+        token = f.encrypt(payload)
+
+        def mock_get(url, **kwargs):
+            resp = MagicMock()
+            resp.status_code = 200
+            if "manifest.json" in url:
+                resp.content = json.dumps({"config.dat": "newhash"}).encode("utf-8")
+            else:
+                resp.content = token
+            return resp
+
+        with patch("requests.get", side_effect=mock_get):
             success = run_update()
 
         assert success is True

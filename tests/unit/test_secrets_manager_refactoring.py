@@ -18,14 +18,15 @@ def test_get_key_from_env():
     test_key_b64 = base64.urlsafe_b64encode(test_key_bytes).decode()
     with patch.dict(os.environ, {"SYNCROJOB_LICENSE_KEY": test_key_b64}):
         res = SecretsManager._get_key_from_env()
-        assert res == test_key_bytes
+        assert res == test_key_b64.encode("utf-8")
 
 
 def test_get_key_from_env_invalid():
     """Test variabile d'ambiente non valida."""
     with patch.dict(os.environ, {"SYNCROJOB_LICENSE_KEY": "!!!not_b64!!!"}):
         res = SecretsManager._get_key_from_env()
-        assert res is None
+        # Non c'è validazione in questo layer, ritorna semplicemente i byte
+        assert res == b"!!!not_b64!!!"
 
 
 def test_get_key_from_env_file(tmp_path):
@@ -37,7 +38,7 @@ def test_get_key_from_env_file(tmp_path):
 
     with patch.object(SecretsManager, "_get_env_file_path", return_value=env_file):
         res = SecretsManager._get_key_from_env_file()
-        assert res == test_key_bytes
+        assert res == test_key_b64.encode("utf-8")
 
 
 def test_get_env_file_path_logic():
@@ -62,7 +63,7 @@ def test_get_key_from_keyring():
     test_key_b64 = base64.urlsafe_b64encode(test_key_bytes).decode()
     with patch("keyring.get_password", return_value=test_key_b64):
         res = SecretsManager._get_key_from_keyring()
-        assert res == test_key_bytes
+        assert res == test_key_b64.encode("utf-8")
 
 
 def test_get_license_key_priority():
@@ -87,7 +88,7 @@ def test_get_license_key_priority():
                 with patch.object(SecretsManager, "_get_key_from_keyring", return_value=None):
                     fallback = SecretsManager.get_license_key()
                     assert fallback is not None
-                    assert len(fallback) == 32
+                    assert len(base64.urlsafe_b64decode(fallback)) == 32
 
 
 def test_is_available():

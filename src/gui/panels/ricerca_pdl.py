@@ -7,8 +7,6 @@ from typing import Any
 
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -19,6 +17,10 @@ from PyQt6.QtWidgets import (
 from src.core import config_manager
 from src.gui.panels.base import BaseBotPanel, BotWorker
 from src.gui.styles import COLORS, STATUS_COLORS
+from src.gui.widgets.core_widgets import (
+    FilterComboBox,
+    StandardCheckBox,
+)
 from src.gui.widgets.toast import ToastManager
 
 
@@ -77,7 +79,7 @@ class RicercaPDLPanel(BaseBotPanel):
         lbl_status.setStyleSheet(LABEL_MUTED)
         vbox_check.addWidget(lbl_status)
 
-        self.exclude_closed_check = QCheckBox("Escludi chiusi/scaduti")
+        self.exclude_closed_check = StandardCheckBox("Escludi chiusi/scaduti")
         self.exclude_closed_check.setChecked(True)
         self.exclude_closed_check.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: 500;")
         self.exclude_closed_check.stateChanged.connect(self._save_data)
@@ -98,7 +100,7 @@ class RicercaPDLPanel(BaseBotPanel):
         lbl_site.setStyleSheet(LABEL_MUTED)
         vbox_site.addWidget(lbl_site)
 
-        self.site_combo = QComboBox()
+        self.site_combo = FilterComboBox()
         self.site_combo.addItems(["Seleziona tutto", "IGCC", "ISAB Nord", "ISAB Sud"])
         self.site_combo.setMinimumWidth(200)
         self.site_combo.setStyleSheet(COMBOBOX_STYLE)

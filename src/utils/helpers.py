@@ -12,8 +12,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtGui import QColor, QIcon, QImage, QPainter, QPixmap
-
 
 def get_asset_path(relative_path: str) -> str:
     """
@@ -256,11 +254,13 @@ def cleanup_chrome_temp_files(directory: Path | str) -> list[str]:
     return removed
 
 
-def get_colored_icon(icon_path: str, color: str = "#000000") -> QIcon:
+def get_colored_icon(icon_path: str, color: str = "#000000") -> Any:
     """
     Carica un'icona SVG e ne cambia il colore in modo sicuro.
     Usa QImage per evitare conflitti di pittura su QPixmap.
     """
+    from PyQt6.QtGui import QColor, QIcon, QImage, QPainter, QPixmap
+
     if not Path(icon_path).exists():
         return QIcon()
 

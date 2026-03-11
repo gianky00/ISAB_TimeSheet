@@ -28,5 +28,6 @@ def patch_global_mutmut():
     p.write_text(content, encoding="utf-8")
     print(f"Successfully patched global mutmut at: {p}")
 
+
 if __name__ == "__main__":
     patch_global_mutmut()

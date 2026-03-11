@@ -1,4 +1,3 @@
-import contextlib
 import os
 import sys
 import unittest
@@ -6,8 +5,7 @@ import unittest
 # Ensure src can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-with contextlib.suppress(ImportError):
-    from src.utils.helpers import sanitize_filename
+from src.utils.helpers import sanitize_filename
 
 
 class TestFilenameSanitization(unittest.TestCase):

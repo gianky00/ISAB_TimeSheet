@@ -1,15 +1,14 @@
 from PyQt6.QtCore import QSize, pyqtSignal
 from PyQt6.QtWidgets import (
-    QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
-    QPushButton,
     QWidget,
 )
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import FilterComboBox, IconButton, PrimaryButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -33,7 +32,7 @@ class LyraHeader(QFrame):
         title.setStyleSheet("font-size: 20px; font-weight: bold; color: white;")
         layout.addWidget(title)
 
-        self.model_combo = QComboBox()
+        self.model_combo = FilterComboBox()
         self.model_combo.setMinimumWidth(180)
         self.model_combo.currentTextChanged.connect(self.model_changed.emit)
         self.model_combo.setStyleSheet(
@@ -50,7 +49,7 @@ class LyraHeader(QFrame):
         )
         layout.addWidget(self.model_combo)
 
-        self.refresh_btn = QPushButton()
+        self.refresh_btn = IconButton()
         self.refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), COLORS["bg_white"]))
         self.refresh_btn.setFixedSize(32, 32)
         self.refresh_btn.setIconSize(QSize(18, 18))
@@ -63,7 +62,7 @@ class LyraHeader(QFrame):
         layout.addWidget(subtitle)
         layout.addStretch()
 
-        self.export_btn = QPushButton("Esporta Chat")
+        self.export_btn = PrimaryButton("Esporta Chat")
         self.export_btn.setStyleSheet(
             """
             QPushButton {

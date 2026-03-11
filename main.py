@@ -20,10 +20,23 @@ if TYPE_CHECKING:
 ROOT_DIR = Path(__file__).parent.resolve()
 sys.path.insert(0, str(ROOT_DIR / "src"))
 
+
 def _print_exception_and_exit(exc_type, exc_value, exc_tb):
     print("FATAL UNCAUGHT EXCEPTION:")
     traceback.print_exception(exc_type, exc_value, exc_tb)
+    # Salvataggio del crash di basso livello nativo
+    import contextlib
+
+    with contextlib.suppress(Exception):
+        from src.core.config_manager import CONFIG_DIR
+
+        crash_file = CONFIG_DIR / "crash.txt"
+        with crash_file.open("a", encoding="utf-8") as f:
+            f.write(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] NATIVE FATAL UNCAUGHT EXCEPTION:\n")
+            traceback.print_exception(exc_type, exc_value, exc_tb, file=f)
     sys.exit(1)
+
+
 sys.excepthook = _print_exception_and_exit
 
 from src.core.config_manager import CONFIG_DIR
@@ -41,6 +54,24 @@ def setup_enterprise_logging():
     # Ensure config directory exists
     if not CONFIG_DIR.exists():
         CONFIG_DIR.mkdir(parents=True)
+
+    # Assicurati che il file crash esista e puliscilo per la nuova sessione
+    crash_file = CONFIG_DIR / "crash.txt"
+    import contextlib
+
+    with contextlib.suppress(Exception):
+        crash_file.write_text(
+            "=== SYNCROJOB CRASH LOG ===\nNessun crash rilevato in questa sessione.\n", encoding="utf-8"
+        )
+
+        # Abilita traceback a livello C/C++ (Segmentation Fault, Access Violation)
+        import faulthandler
+
+        # Mantiene il file aperto per faulthandler in modo safely append
+        crash_native_file = crash_file.open("a", encoding="utf-8")
+        crash_native_file.write("\n[DEBUG] Native C++ faulthandler engine enabled.\n")
+        crash_native_file.flush()
+        faulthandler.enable(file=crash_native_file)
 
     # Configure logging system
     configure_logging()
@@ -62,7 +93,7 @@ def main():
 
     from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
     from PyQt6.QtNetwork import QLocalServer, QLocalSocket
-    from PyQt6.QtWidgets import QApplication, QMessageBox
+    from PyQt6.QtWidgets import QApplication
 
     # Get loggers
     logger = get_logger("main")
@@ -101,7 +132,9 @@ def main():
         """Handle incoming connection from another instance to activate window."""
         client_socket = server.nextPendingConnection()
         if client_socket and client_socket.waitForReadyRead(500):
-            msg = client_socket.readAll().data().decode()
+            # Limita la lettura a 1024 byte per prevenire Local DoS via memoria
+            data = client_socket.read(1024)
+            msg = data.data().decode()
             if msg == "ACTIVATE" and main_window_instance:
                 main_window_instance.show()
                 main_window_instance.raise_()
@@ -128,7 +161,7 @@ def main():
         """Worker thread for Phase 1 initialization (heavy imports)."""
 
         progress = pyqtSignal(str, int)
-        finished = pyqtSignal(bool)
+        finished = pyqtSignal(bool, str)
 
         def run(self):
             """Execute Phase 1 initialization in background thread."""
@@ -139,23 +172,28 @@ def main():
                 # FASE 1 ora usa initialize_core (ritorna bool)
                 success = AppInitializer.initialize_core()
                 phase1_logger.info("Phase 1 completed", success=success)
-                self.finished.emit(success)
+                if not success:
+                    self.finished.emit(False, "Errore generico di inizializzazione")
+                else:
+                    self.finished.emit(True, "")
             except Exception as e:
                 phase1_logger.exception("Phase 1 initialization failed", exc=e)
-                self.finished.emit(False)
+                self.finished.emit(False, str(e))
 
     # Variabili di stato
     phase1_done = [False]
     phase1_success = [False]
+    phase1_error_msg = [""]
 
     def on_phase1_progress(msg, prog):
         """Update splash screen with Phase 1 progress."""
         splash.update_status(msg, prog)
 
-    def on_phase1_finished(success):
+    def on_phase1_finished(success, error_msg):
         """Handle Phase 1 completion and store result."""
         phase1_done[0] = True
         phase1_success[0] = success
+        phase1_error_msg[0] = error_msg
 
     # Avvia thread per fase 1
     thread1 = QThread()
@@ -174,10 +212,22 @@ def main():
     thread1.quit()
     thread1.wait(1000)
 
+    from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
+
     if not phase1_success[0]:
         splash.close()
-        QMessageBox.critical(None, "Errore", "Inizializzazione fallita")
+        err_text = phase1_error_msg[0] if phase1_error_msg[0] else "Inizializzazione fallita"
+        ConfirmationDialog.show_error(None, "Errore Avvio", err_text)
         sys.exit(1)
+
+    # Visualizzazione Avvisi Accumulati (Non-Bloccanti ma importanti per l'utente)
+    for severity, message in AppInitializer.get_alerts():
+        if severity == "CRITICAL" or severity == "ERROR":
+            ConfirmationDialog.show_error(splash, "Allerta Licenza", message, is_rich_text=True)
+        elif severity == "WARNING":
+            ConfirmationDialog.show_warning(splash, "Avviso Licenza", message, is_rich_text=True)
+        else:
+            ConfirmationDialog.show_info(splash, "Sincronizzazione", message, is_rich_text=True)
 
     # === FASE 2: Creazione MainWindow (Thread principale richiesto da Qt) ===
     splash.update_status("Costruzione interfaccia...", 40)
@@ -199,9 +249,6 @@ def main():
             startup_logger.info("Finalizing startup sequence...")
             splash.update_status("Avvio completato", 100)
 
-            startup_logger.info("Calling finalize_init...")
-            main_window_instance.finalize_init()
-
             startup_logger.info("Showing main window...")
             # Show main window FIRST (hidden behind splash)
             main_window_instance.show()
@@ -215,6 +262,10 @@ def main():
 
             # Close splash - main window will automatically come to front
             splash.close()
+
+            startup_logger.info("Calling finalize_init...")
+            # Ritardiamo leggermente finalize_init per dare priorità al rendering dell'UI
+            QTimer.singleShot(100, main_window_instance.finalize_init)
 
             startup_logger.info("Startup finalized successfully")
         except Exception as e:
@@ -254,6 +305,7 @@ def main():
 
         # Write explicitly to crash.txt for user visibility
         crash_file = None
+        global_crash_file = CONFIG_DIR / "crash.txt"
         try:
             log_dir = CONFIG_DIR / "logs" / "errors"
             log_dir.mkdir(exist_ok=True, parents=True)
@@ -261,20 +313,28 @@ def main():
             report: list[str] = []
             report.extend(("=== TRACEBACK ===\n", traceback.format_exc()))
 
-            crash_file.write_text(
+            crash_content = (
                 f"=== CRASH REPORT ===\n"
                 f"Timestamp: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n"
                 f"Trace ID: {app_trace_id}\n"
-                f"Error: {e!s}\n\n" + "".join(report),
-                encoding="utf-8",
+                f"Error: {e!s}\n\n" + "".join(report)
             )
+
+            crash_file.write_text(crash_content, encoding="utf-8")
+
+            # Scrivi anche nel file globale pulito all'avvio
+            with global_crash_file.open("w", encoding="utf-8") as f:
+                f.write(crash_content)
+
         except Exception as io_error:
             print(f"Failed to write crash.txt: {io_error}")
 
-        QMessageBox.critical(
+        from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
+
+        ConfirmationDialog.show_error(
             None,
-            "Errore",
-            f"Errore fatale:\n{e}\n\nDettagli salvati in: {crash_file or 'logs'}",
+            "Errore Fatale",
+            f"Errore improvviso:\n{e}\n\nDettagli salvati in: {crash_file or 'logs'}",
         )
         server.close()
         sys.exit(1)

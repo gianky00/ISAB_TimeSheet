@@ -20,6 +20,7 @@ from src.core.employees import employee_manager
 from src.core.sync_tracker import SyncTracker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import SearchInput, StandardInput, StandardTable
 from src.gui.widgets.modern_button import ModernButton
 
 
@@ -49,7 +50,7 @@ class EmployeeEditorDialog(QDialog):
         ]
 
         for label, key in fields:
-            le = QLineEdit()
+            le = StandardInput()
             if self.data.get(key):
                 le.setText(str(self.data.get(key)))
             self.inputs[key] = le
@@ -127,7 +128,7 @@ class DipendentiManagerPanel(QWidget):
         self.lbl_count = QLabel("0 Dipendenti")
         self.lbl_count.setStyleSheet(
             f"""
-            background-color: {COLORS['bg_hover']}; color: {COLORS['text_dark']};
+            background-color: {COLORS["bg_hover"]}; color: {COLORS["text_dark"]};
             padding: 5px 15px; border-radius: 15px; font-weight: bold;
         """
         )
@@ -139,6 +140,7 @@ class DipendentiManagerPanel(QWidget):
         self.toolbar_card = QFrame()
         self.toolbar_card.setObjectName("filterBar")
         from src.gui.styles import LABEL_MUTED, LINEEDIT_STYLE
+
         self.toolbar_card.setStyleSheet(f"""
             QFrame#filterBar {{
                 background-color: {COLORS["bg_white"]};
@@ -155,7 +157,7 @@ class DipendentiManagerPanel(QWidget):
         search_v.setSpacing(4)
         lbl_search = QLabel("CERCA DIPENDENTE")
         lbl_search.setStyleSheet(LABEL_MUTED)
-        self.search_bar = QLineEdit()
+        self.search_bar = SearchInput()
         self.search_bar.setPlaceholderText("Nome, Badge o CF...")
         self.search_bar.setFixedWidth(300)
         self.search_bar.setStyleSheet(LINEEDIT_STYLE)
@@ -201,7 +203,7 @@ class DipendentiManagerPanel(QWidget):
         self.main_layout.addWidget(self.toolbar_card)
 
     def _setup_table(self):
-        self.table = QTableWidget()
+        self.table = StandardTable()
         self.table.setColumnCount(6)
         self.table.setHorizontalHeaderLabels(
             ["ID", "Cognome", "Nome", "Badge", "Codice Fiscale", "Assunzione"]

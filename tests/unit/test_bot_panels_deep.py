@@ -50,7 +50,7 @@ def test_scarica_ts_panel_deep(qtbot, mock_ui_deps):
         assert "OdA" in msg
 
     # Case 2: Success
-    panel.data_table.set_data([{"numero_oda": "123456"}])
+    panel.data_table.set_data([{"Numero OdA": "123456"}])
     ready, msg = panel.validate_ready()
     assert ready is True
 
@@ -59,8 +59,8 @@ def test_carico_ts_panel_deep(qtbot, mock_ui_deps):
     panel = CaricoTSPanel()
     qtbot.addWidget(panel)
 
-    # Mock table data
-    panel.data_table.set_data([{"id": "1", "stato": "da_caricare"}])
+    # Mock table data (set_data handles case-insensitive but get_data is precise)
+    panel.data_table.set_data([{"ID": "1", "STATO": "da_caricare"}])
     assert panel.data_table.table.rowCount() == 1
 
     # Test reset
@@ -77,8 +77,8 @@ def test_dettagli_oda_panel_deep(qtbot, mock_ui_deps):
     assert panel.bot_id == "dettagli_oda"
 
     # Test adding rows
-    panel.add_rows_simple([{"numero_oda": "999"}])
-    assert panel.data_table.get_data()[0]["numero_oda"] == "999"
+    panel.add_rows_simple([{"Numero OdA": "999"}])
+    assert panel.data_table.get_data()[0]["Numero OdA"] == "999"
 
 
 @patch("src.gui.panels.scarico_ts.BotWorker")
@@ -87,7 +87,7 @@ def test_bot_worker_integration(mock_worker_cls, qtbot, mock_ui_deps):
     qtbot.addWidget(panel)
 
     # Setup for start
-    panel.data_table.set_data([{"numero_oda": "123"}])
+    panel.data_table.set_data([{"Numero OdA": "123"}])
 
     with patch.object(panel, "get_bot_instance", return_value=MagicMock()):
         panel._on_start()

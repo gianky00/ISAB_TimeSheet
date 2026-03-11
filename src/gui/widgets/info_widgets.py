@@ -34,12 +34,12 @@ class DetailedInfoDialog(QDialog):
         self.setStyleSheet(
             f"""
             QDialog {{
-                background-color: {COLORS['bg_white']};
-                border: 2px solid {COLORS['primary_dark']};
+                background-color: {COLORS["bg_white"]};
+                border: 2px solid {COLORS["primary_dark"]};
                 border-radius: 8px;
             }}
             QLabel {{
-                color: {COLORS['text_dark']};
+                color: {COLORS["text_dark"]};
                 font-size: 14px;
             }}
         """
@@ -47,7 +47,9 @@ class DetailedInfoDialog(QDialog):
 
         layout = QVBoxLayout(self)
         lbl_title = QLabel(title)
-        lbl_title.setStyleSheet(f"font-weight: bold; font-size: 16px; color: {COLORS['primary_dark']}; margin-bottom: 10px;")
+        lbl_title.setStyleSheet(
+            f"font-weight: bold; font-size: 16px; color: {COLORS['primary_dark']}; margin-bottom: 10px;"
+        )
         layout.addWidget(lbl_title)
 
         lbl_content = QLabel(content)
@@ -128,9 +130,9 @@ class KPIBigCard(QFrame):
         self.setStyleSheet(
             f"""
             QFrame {{
-                background-color: {COLORS['bg_white']};
+                background-color: {COLORS["bg_white"]};
                 border-radius: 15px;
-                border: 1px solid {COLORS['border_light']};
+                border: 1px solid {COLORS["border_light"]};
                 border-left: 5px solid {accent};
             }}
         """
@@ -162,7 +164,9 @@ class KPIBigCard(QFrame):
 
         if subtitle:
             lbl_sub = QLabel(subtitle)
-            lbl_sub.setStyleSheet(f"color: {COLORS['text_light']}; font-size: 11px; border: none; background: transparent;")
+            lbl_sub.setStyleSheet(
+                f"color: {COLORS['text_light']}; font-size: 11px; border: none; background: transparent;"
+            )
             lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(lbl_sub)
 

@@ -45,8 +45,8 @@ class TestConfigManagerAdvanced:
             assert json.load(f) == data2
 
     @patch("src.core.config_manager.CONFIG_FILE")
-    @patch("src.core.config_manager.SecretsManager.is_available", return_value=True)
-    @patch("src.core.config_manager.SecretsManager.store_credential")
+    @patch("src.core.config.security.SecretsManager.is_available", return_value=True)
+    @patch("src.core.config.security.SecretsManager.store_credential")
     @patch("src.core.config_manager._atomic_write_json")
     def test_save_config_credential_protection(self, mock_atomic, mock_store, mock_is_avail, mock_file):
         config = {"accounts": [{"username": "user1", "password": "clear_password"}]}

@@ -17,14 +17,14 @@ class TestSecretsManagerDeep:
         {"SYNCROJOB_LICENSE_KEY": base64.urlsafe_b64encode(b"env_key").decode()},
     )
     def test_get_license_key_priority_env(self):
-        assert SecretsManager.get_license_key() == b"env_key"
+        assert SecretsManager.get_license_key() == base64.urlsafe_b64encode(b"env_key")
 
     @patch("src.core.secrets_manager.keyring.get_password")
     @patch("src.core.secrets_manager.os.environ", {})
     def test_get_license_key_priority_keyring(self, mock_keyring):
         # Env empty, check keyring
         mock_keyring.return_value = base64.urlsafe_b64encode(b"keyring_key").decode()
-        assert SecretsManager.get_license_key() == b"keyring_key"
+        assert SecretsManager.get_license_key() == base64.urlsafe_b64encode(b"keyring_key")
 
     def test_derive_key_robustness(self):
         # Test HMAC key derivation (PBKDF2)

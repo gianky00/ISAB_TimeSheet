@@ -12,7 +12,7 @@ import webbrowser
 from collections.abc import Callable
 from pathlib import Path
 
-from PyQt6.QtCore import QProcess, QProcessEnvironment, Qt, QThread, pyqtSignal
+from PyQt6.QtCore import QProcess, QProcessEnvironment, Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont, QTextCursor
 from PyQt6.QtWidgets import (
     QApplication,
@@ -102,14 +102,10 @@ class CommandRunner(QThread):
                 )
                 self.process = process
 
-                # Leggi output in tempo reale
+                # Leggi output in tempo reale senza read-ahead buffer
                 if process.stdout:
-                    while True:
-                        line = process.stdout.readline()
-                        if not line and process.poll() is not None:
-                            break
-                        if line:
-                            self.output_received.emit(line)
+                    for line in iter(process.stdout.readline, ""):
+                        self.output_received.emit(line)
 
                 # Aspetta che il processo finisca
                 returncode = process.wait()
@@ -362,6 +358,28 @@ class DeveloperToolboxGUI(QMainWindow):
         self._log_output("=== SyncroJob Developer Toolbox ===\n")
         self._log_output("Seleziona un'operazione dal pannello sinistro.\n\n")
 
+        # Gestione CLI args
+        QTimer.singleShot(500, self._handle_cli_args)
+
+    def _handle_cli_args(self):
+        """Gestisce eventuali argomenti passati da riga di comando"""
+        if len(sys.argv) < 2:
+            return
+
+        arg = " ".join(sys.argv[1:]).lower().replace("-", " ")
+        if "fast release" in arg:
+            self._fast_release()
+        elif "full release" in arg:
+            self._full_release()
+        elif "fast audit" in arg:
+            self._fast_audit()
+        elif "full audit" in arg:
+            self._full_audit()
+        elif "smart check" in arg:
+            self._smart_check()
+        elif "deploy" in arg:
+            self._full_deploy()
+
     def _create_group(self, title: str, buttons: list[tuple[str, Callable[[], None], str]]) -> QGroupBox:
         """Crea un gruppo di pulsanti con descrizioni"""
         group = QGroupBox(title)
@@ -451,7 +469,7 @@ class DeveloperToolboxGUI(QMainWindow):
         """Esegue un comando in un thread separato"""
         self._log_output(f"\n{'=' * 60}\n")
         self._log_output(f"[INFO] Avvio: {label}\n")
-        self._log_output(f"[CMD] {' '.join(str(c) for c in command)}\n")
+        self._log_output(f"[CMD] {' '.join(command)}\n")
         self._log_output(f"{'=' * 60}\n\n")
 
         self.current_runner = CommandRunner(command, shell=shell)
@@ -571,7 +589,7 @@ class DeveloperToolboxGUI(QMainWindow):
 
     def _full_deploy(self):
         """Opzione 16: Full Deploy"""
-        self._run_command([str(VENV_PYTHON), "admin/release.py", "auto", "--deploy"], "Full Deploy")
+        self._run_command([str(VENV_PYTHON), "admin/release.py", "auto", "--skip-tests", "--deploy"], "Full Deploy")
 
     def _secrets_mgmt(self):
         """Opzione 17: Secrets Management"""

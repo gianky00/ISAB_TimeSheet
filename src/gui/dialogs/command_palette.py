@@ -22,7 +22,6 @@ from PyQt6.QtWidgets import (
     QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QListWidget,
     QListWidgetItem,
     QVBoxLayout,
@@ -31,6 +30,10 @@ from PyQt6.QtWidgets import (
 
 from src.gui.controllers.command_registry import CommandNode
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    SearchInput,
+    StandardListWidget,
+)
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 if TYPE_CHECKING:
@@ -125,7 +128,7 @@ class CommandPaletteDialog(QDialog):
         search_layout = QVBoxLayout(search_container)
         search_layout.setContentsMargins(15, 15, 15, 15)
 
-        self.search_bar = QLineEdit()
+        self.search_bar = SearchInput()
         self.search_bar.setPlaceholderText("Type a command...")
         self.search_bar.setStyleSheet(
             f"QLineEdit {{ background-color: transparent; color: {text_color}; border: none; border-bottom: 2px solid {COLORS['glass_border']}; font-size: 20px; padding: 8px 4px; }} QLineEdit:focus {{ border-bottom: 2px solid {accent_color}; }}"
@@ -137,7 +140,7 @@ class CommandPaletteDialog(QDialog):
         layout.addWidget(search_container)
 
         # List Widget
-        self.list_widget = QListWidget()
+        self.list_widget = StandardListWidget()
         self.list_widget.setVerticalScrollMode(QListWidget.ScrollMode.ScrollPerPixel)
         self.list_widget.setStyleSheet(
             f"QListWidget {{ background-color: {bg_color}; border: none; outline: none; }} QListWidget::item {{ color: {text_color}; }} QListWidget::item:selected {{ background-color: {COLORS['primary_dark']}; color: #ffffff; }} QListWidget::item:hover {{ background-color: {COLORS['glass_deep']}; }}"

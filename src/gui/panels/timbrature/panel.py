@@ -23,6 +23,10 @@ from src.core.constants import Icons
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.formatters import FastTableModel, format_date_it
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    FilterComboBox,
+    SearchInput,
+)
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -117,9 +121,10 @@ class TimbratureDBPanel(QWidget):
         search_v = QVBoxLayout()
         search_v.setSpacing(4)
         from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
+
         lbl_search = QLabel("CERCA PERSONALE")
         lbl_search.setStyleSheet(LABEL_MUTED)
-        self.search_input = QLineEdit()
+        self.search_input = SearchInput()
         self.search_input.setPlaceholderText("Cognome, Nome...")
         self.search_input.setClearButtonEnabled(True)
         self.search_input.setMinimumWidth(200)
@@ -145,7 +150,7 @@ class TimbratureDBPanel(QWidget):
         rep_v.setSpacing(4)
         lbl_rep = QLabel("REPARTO")
         lbl_rep.setStyleSheet(LABEL_MUTED)
-        self.reparto_filter = QComboBox()
+        self.reparto_filter = FilterComboBox()
         self.reparto_filter.setMinimumWidth(150)
         self.reparto_filter.setStyleSheet(COMBOBOX_STYLE)
         self.reparto_filter.currentIndexChanged.connect(self.refresh_data)
@@ -158,7 +163,7 @@ class TimbratureDBPanel(QWidget):
         cant_v.setSpacing(4)
         lbl_cant = QLabel("CANTIERE")
         lbl_cant.setStyleSheet(LABEL_MUTED)
-        self.cantiere_filter = QComboBox()
+        self.cantiere_filter = FilterComboBox()
         self.cantiere_filter.setMinimumWidth(150)
         self.cantiere_filter.setStyleSheet(COMBOBOX_STYLE)
         self.cantiere_filter.currentIndexChanged.connect(self.refresh_data)
@@ -172,6 +177,7 @@ class TimbratureDBPanel(QWidget):
         self._update_filter_combos()
 
         from src.gui.widgets.modern_button import ModernButton
+
         import_btn = ModernButton(
             "IMPORTA EXCEL",
             variant=ModernButton.Variant.PRIMARY,

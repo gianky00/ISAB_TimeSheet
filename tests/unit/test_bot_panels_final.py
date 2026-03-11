@@ -23,10 +23,10 @@ class TestBotPanelsFinal:
         with patch("src.utils.printing.get_installed_printers", return_value=["Printer1"]):
             panel = ScaricoPDLPanel()
             qtbot.addWidget(panel)
-            assert panel.printer_combo.count() > 0
+            assert panel.combo_stampanti.count() > 0
 
-            panel.print_check.setChecked(True)
-            assert panel.print_check.isChecked()
+            panel.check_stampa.setChecked(True)
+            assert panel.check_stampa.isChecked()
 
     def test_timbrature_db_panel_refresh(self, qapp, qtbot):
         with patch("src.gui.panels.timbrature.panel.TimbratureStorage") as mock_storage:

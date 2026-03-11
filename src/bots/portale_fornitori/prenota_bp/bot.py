@@ -149,6 +149,12 @@ class PrenotaBPBot(BaseBot):
                 page.chiudi_dettagli_bp()
 
             self.results.append({"NUMERO BP": num_bp, "STATO": "OK"})
+
+            # Notifica progresso alla GUI (index, success, message)
+            callback = getattr(self, "_progress_callback", None)
+            if callback:
+                callback(index, True, "")
+
             return True
         except Exception as e:
             self.log(f"✗ Errore su BP {num_bp}: {e}")
@@ -156,4 +162,10 @@ class PrenotaBPBot(BaseBot):
             with suppress(Exception):
                 page.chiudi_dettagli_bp()
             self.results.append({"NUMERO BP": num_bp, "STATO": "ERRORE", "MSG": str(e)})
+
+            # Notifica progresso alla GUI (index, success, message)
+            callback = getattr(self, "_progress_callback", None)
+            if callback:
+                callback(index, False, str(e))
+
             return False

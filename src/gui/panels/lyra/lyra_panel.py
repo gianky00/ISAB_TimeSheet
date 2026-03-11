@@ -19,6 +19,9 @@ from src.core import config_manager
 from src.core.constants import URLs
 from src.core.secrets_manager import SecretsManager
 from src.gui.styles import COLORS
+from src.gui.widgets.core_widgets import (
+    PrimaryButton,
+)
 from src.utils.document_processor import DocumentProcessor
 
 from .chat_area import ChatArea
@@ -60,7 +63,7 @@ class LyraPanel(QWidget):
         self.table_toolbar = QWidget()
         self.table_toolbar.setVisible(False)
         tb_layout = QHBoxLayout(self.table_toolbar)
-        self.btn_export_table = QPushButton("Esporta ultima tabella Excel")
+        self.btn_export_table = PrimaryButton("Esporta ultima tabella Excel")
         self.btn_export_table.setStyleSheet(
             f"background-color: {COLORS['success_dark']}; color: white; padding: 5px 10px; font-weight: bold; border-radius: 4px;"
         )
@@ -80,7 +83,7 @@ class LyraPanel(QWidget):
         self.att_label.setStyleSheet(f"color: {COLORS['purple_deep']}; font-weight: bold;")
         att_layout.addWidget(self.att_label)
         att_layout.addStretch()
-        btn_remove = QPushButton("X")
+        btn_remove = PrimaryButton("X")
         btn_remove.setFixedSize(20, 20)
         btn_remove.clicked.connect(self._remove_attachment)
         att_layout.addWidget(btn_remove)
@@ -122,16 +125,16 @@ class LyraPanel(QWidget):
             btn.setStyleSheet(
                 f"""
                 QPushButton {{
-                    border: 1px solid {COLORS['purple']};
+                    border: 1px solid {COLORS["purple"]};
                     border-radius: 15px;
                     padding: 6px 15px;
                     font-size: 11px;
                     font-weight: 600;
-                    color: {COLORS['purple']};
+                    color: {COLORS["purple"]};
                     background: transparent;
                 }}
                 QPushButton:hover {{
-                    background: {COLORS['purple']}10;
+                    background: {COLORS["purple"]}10;
                 }}
                 """
             )
