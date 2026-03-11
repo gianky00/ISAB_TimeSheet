@@ -101,12 +101,13 @@ class TestLicenseUpdaterAdvanced:
         """Verifica aggiornamento completo con successo da GitHub."""
         mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE-HWID")
 
-        from cryptography.fernet import Fernet
         import json
-        
+
+        from cryptography.fernet import Fernet
+
         key = Fernet.generate_key()
         mocker.patch("src.core.secrets_manager.SecretsManager.get_license_key", return_value=key)
-        
+
         f = Fernet(key)
         payload = json.dumps({"Hardware ID": "FAKE-HWID"}).encode("utf-8")
         token = f.encrypt(payload)

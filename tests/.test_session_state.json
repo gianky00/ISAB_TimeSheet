@@ -1,5 +1,30 @@
 {
   "queue": [
+    "tests/integration/test_safework_pdl_flow.py",
+    "tests/integration/test_sync_flow_hardened.py",
+    "tests/security/test_filename_sanitization.py",
+    "tests/test_basic.py",
+    "tests/test_import.py",
+    "tests/unit/test_ai_sentinel_hardened.py",
+    "tests/unit/test_analytics.py",
+    "tests/unit/test_app_initializer.py",
+    "tests/unit/test_app_initializer_coverage.py",
+    "tests/unit/test_app_initializer_coverage_hardened.py",
+    "tests/unit/test_app_initializer_deep.py",
+    "tests/unit/test_app_initializer_robust.py",
+    "tests/unit/test_app_startup_sequence.py",
+    "tests/unit/test_app_updater.py",
+    "tests/unit/test_app_updater_simulation.py",
+    "tests/unit/test_audit_integrity_deep.py",
+    "tests/unit/test_audit_log_refactoring.py",
+    "tests/unit/test_audit_manager_ai.py",
+    "tests/unit/test_audit_manager_coverage.py",
+    "tests/unit/test_audit_manager_coverage_hardened.py",
+    "tests/unit/test_audit_manager_new.py",
+    "tests/unit/test_auth_monitor_robust.py",
+    "tests/unit/test_autopilot_gui.py",
+    "tests/unit/test_backup_features.py",
+    "tests/unit/test_backup_manager.py",
     "tests/unit/test_backup_manager_coverage.py",
     "tests/unit/test_backup_manager_robust.py",
     "tests/unit/test_backup_resilience.py",
@@ -231,7 +256,7 @@
     "tests/unit/test_wait_helpers_robust.py"
   ],
   "failed": [],
-  "passed": 152,
+  "passed": 2,
   "skipped": 0,
   "total_files_map": {
     "tests/integration/test_config_security.py": [
@@ -347,22 +372,6 @@
       "tests/unit/test_app_updater.py::test_check_for_updates_request_exception",
       "tests/unit/test_app_updater.py::test_check_for_updates_silent_mode",
       "tests/unit/test_app_updater.py::test_check_for_updates_no_download_url_provided"
-    ],
-    "tests/unit/test_app_updater_coverage.py": [
-      "tests/unit/test_app_updater_coverage.py::TestAppUpdater::test_check_for_updates_no_url",
-      "tests/unit/test_app_updater_coverage.py::TestAppUpdater::test_check_for_updates_request_fail",
-      "tests/unit/test_app_updater_coverage.py::TestAppUpdater::test_check_for_updates_newer_found",
-      "tests/unit/test_app_updater_coverage.py::TestAppUpdater::test_check_for_updates_not_newer",
-      "tests/unit/test_app_updater_coverage.py::TestAppUpdater::test_is_newer_version",
-      "tests/unit/test_app_updater_coverage.py::TestAppUpdater::test_handle_update_found_callback",
-      "tests/unit/test_app_updater_coverage.py::TestAppUpdater::test_check_updates_silent_exception"
-    ],
-    "tests/unit/test_app_updater_robust.py": [
-      "tests/unit/test_app_updater_robust.py::TestAppUpdaterRobust::test_is_newer_version",
-      "tests/unit/test_app_updater_robust.py::TestAppUpdaterRobust::test_check_for_updates_success",
-      "tests/unit/test_app_updater_robust.py::TestAppUpdaterRobust::test_check_for_updates_failure",
-      "tests/unit/test_app_updater_robust.py::TestAppUpdaterRobust::test_handle_update_found_gui",
-      "tests/unit/test_app_updater_robust.py::TestAppUpdaterRobust::test_handle_update_found_callback"
     ],
     "tests/unit/test_app_updater_simulation.py": [
       "tests/unit/test_app_updater_simulation.py::TestAppUpdaterSimulation::test_check_for_updates_found",
@@ -2167,5 +2176,5 @@
       "tests/unit/test_wait_helpers_robust.py::TestWaitHelpersRobust::test_execute_with_wait"
     ]
   },
-  "timestamp": 1773224999.1658902
+  "timestamp": 1773229671.7924945
 }
