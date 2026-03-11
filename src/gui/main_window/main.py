@@ -4,7 +4,6 @@ Finestra principale dell'applicazione che coordina tutti i servizi, i controller
 Refactored V9.0: Orchestration with modular Workflow and Monitoring Controllers.
 """
 
-import webbrowser
 from contextlib import suppress
 from pathlib import Path
 from typing import Any
@@ -304,7 +303,7 @@ class MainWindow(QMainWindow):
     def _on_download_update_clicked(self, url: str) -> None:
         """Avvia il download asincrono dell'aggiornamento o lo installa se già pronto."""
         from src.core.app_updater import get_local_setup_path, perform_auto_update, show_install_prompt
-        
+
         # Se il banner indica che è già completo, mostra direttamente la prompt di installazione
         if hasattr(self, "update_banner") and self.update_banner and getattr(self.update_banner, "_is_complete", False):
             setup_path = get_local_setup_path(url)

@@ -271,7 +271,7 @@ disallow_untyped_decorators = false
 
 [tool.deptry]
 known_first_party = ["src"]
-exclude = [".venv", "build", "dist", "temp", "admin", "scripts", "site", "docs", "graveyard", "mutants"]
+exclude = [".venv", "build", "dist", "temp", "admin", "scripts", "site", "docs", "graveyard", "mutants", "aggiornamenti"]
 
 [tool.deptry.per_rule_ignores]
 # DEP001 (imported but not declared): nessuna eccezione necessaria al momento

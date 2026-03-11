@@ -214,29 +214,29 @@ def show_install_prompt(setup_path: str, parent: QWidget | None = None):
     msg_box.setWindowTitle("🔄 Aggiornamento Pronto")
     msg_box.setText("L'aggiornamento è stato scaricato ed è pronto per l'installazione.\n\nCosa desideri fare?")
     msg_box.setIcon(QMessageBox.Icon.Question)
-    
+
     # Forza lo stile Fusion e Light Mode per questa dialog
     msg_box.setStyle(QApplication.style())
-    
+
     btn_now = msg_box.addButton("Installa Ora", QMessageBox.ButtonRole.AcceptRole)
     btn_later = msg_box.addButton("Alla Chiusura", QMessageBox.ButtonRole.ActionRole)
     msg_box.addButton("Annulla", QMessageBox.ButtonRole.RejectRole)
-    
+
     # Applica stile esplicito per prevenire testi bianchi su sfondo chiaro (Bleeding di sistema)
-    msg_box.setStyleSheet(f"""
-        QMessageBox {{ background-color: white; }}
-        QLabel {{ color: black; font-size: 13px; }}
-        QPushButton {{ 
-            background-color: #f0f0f0; 
-            color: black; 
-            border: 1px solid #ccc; 
-            padding: 6px 15px; 
+    msg_box.setStyleSheet("""
+        QMessageBox { background-color: white; }
+        QLabel { color: black; font-size: 13px; }
+        QPushButton {
+            background-color: #f0f0f0;
+            color: black;
+            border: 1px solid #ccc;
+            padding: 6px 15px;
             border-radius: 4px;
             font-weight: bold;
-        }}
-        QPushButton:hover {{ background-color: #e0e0e0; }}
+        }
+        QPushButton:hover { background-color: #e0e0e0; }
     """)
-    
+
     msg_box.exec()
     if msg_box.clickedButton() == btn_now:
         _run_installer_and_exit(setup_path)
@@ -262,8 +262,8 @@ def run_pending_installer():
         # arrestati prima che l'installer tenti di sovrascrivere i file.
         flags = 0x00000008 if os.name == "nt" else 0
         cmd_str = f'ping 127.0.0.1 -n 4 > nul && "{_pending_installer_path}" /SILENT /FORCESTART'
-        
-        subprocess.Popen(
+
+        subprocess.Popen(  # noqa: S602
             cmd_str,
             shell=True,
             creationflags=flags,
@@ -352,11 +352,11 @@ def perform_auto_update(download_url: str, parent: QWidget | None = None):
             if widget.isWindow() and not widget.parent():
                 parent = widget
                 break
-    
+
     # Crea il worker
     global _active_update_worker
     _active_update_worker = DownloadWorker(download_url)
-    
+
     # Se il genitore ha un banner degli aggiornamenti, connetti i segnali per il progresso inline
     if parent and hasattr(parent, "update_banner") and parent.update_banner:
         _active_update_worker.progress.connect(parent.update_banner.update_progress)

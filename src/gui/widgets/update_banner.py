@@ -43,19 +43,19 @@ class UpdateBanner(QFrame):
         self._setup_ui()
 
     def _setup_ui(self):
-        self.layout = QHBoxLayout(self)
-        self.layout.setContentsMargins(15, 10, 15, 10)
-        self.layout.setSpacing(15)
+        self.main_layout = QHBoxLayout(self)
+        self.main_layout.setContentsMargins(15, 10, 15, 10)
+        self.main_layout.setSpacing(15)
 
         self.icon_label = QLabel()
         self.icon_label.setPixmap(
             get_colored_icon(get_asset_path(Icons.ROCKET), COLORS["text_dark"]).pixmap(20, 20)
         )
-        self.layout.addWidget(self.icon_label)
+        self.main_layout.addWidget(self.icon_label)
 
         self.update_label = QLabel("Nuova versione disponibile!")
         self.update_label.setStyleSheet(f"color: {COLORS['text_dark']}; font-weight: bold; font-size: 13px;")
-        self.layout.addWidget(self.update_label)
+        self.main_layout.addWidget(self.update_label)
 
         # Container per il progresso (nascosto inizialmente)
         self.progress_container = QFrame()
@@ -84,21 +84,20 @@ class UpdateBanner(QFrame):
             }}
         """)
         prog_layout.addWidget(self.progress_bar, 1)
-        
-        self.layout.addWidget(self.progress_container, 1)
 
-        self.layout.addStretch()
+        self.main_layout.addWidget(self.progress_container, 1)
+
+        self.main_layout.addStretch()
 
         self.download_btn = PrimaryButton("Scarica e Installa")
         self.download_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.download_btn.clicked.connect(self._on_download_clicked)
-        self.layout.addWidget(self.download_btn)
-
+        self.main_layout.addWidget(self.download_btn)
     def show_update(self, version: str, download_url: str, changelog: str = "", is_partial: bool = False, is_complete: bool = False):
         """Mostra il banner con le informazioni dell'aggiornamento."""
         self._download_url = download_url
         self._is_complete = is_complete
-        
+
         if is_complete:
             self.update_label.setText(f"Aggiornamento v{version} Pronto")
             self.download_btn.setText("Installa Ora")
@@ -115,7 +114,7 @@ class UpdateBanner(QFrame):
         # Reset stato download
         self.progress_container.setVisible(False)
         self.download_btn.setVisible(True)
-        
+
         self.setVisible(True)
 
     @pyqtSlot(int, int, float)
@@ -129,7 +128,7 @@ class UpdateBanner(QFrame):
         if total > 0:
             self.progress_bar.setMaximum(total)
             self.progress_bar.setValue(downloaded)
-            
+
             mb_down = downloaded / (1024 * 1024)
             mb_total = total / (1024 * 1024)
             speed_mb = speed / (1024 * 1024)
