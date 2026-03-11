@@ -1,7 +1,6 @@
 """
-SyncroJob - Architecture Generator
-Genera il diagramma dell'architettura dell'applicazione.
-Richiede Graphviz installato nel sistema (https://graphviz.org/download/).
+SyncroJob - Architecture Generator (V2.2 - High Resolution & Clean Layout)
+Genera il diagramma dell'architettura enterprise in alta risoluzione (300 DPI).
 """
 
 import os
@@ -15,65 +14,118 @@ if sys.platform == "win32":
         os.environ["PATH"] += os.pathsep + graphviz_path
 
 from diagrams import Cluster, Diagram, Edge
+from diagrams.generic.compute import Rack
 from diagrams.generic.database import SQL
 from diagrams.generic.device import Tablet
 from diagrams.generic.network import Firewall
+from diagrams.generic.storage import Storage
 from diagrams.onprem.client import User
 from diagrams.programming.language import Python
+from diagrams.saas.chat import Telegram
 
 # Percorso di output
 OUTPUT_DIR = Path(__file__).parent / "assets"
 OUTPUT_DIR.mkdir(exist_ok=True)
 OUTPUT_FILE = "architecture"
 
-# Cambia directory di lavoro per salvare l'output correttamente
+# Cambia directory di lavoro
 os.chdir(OUTPUT_DIR)
 
-graph_attr = {"fontsize": "20", "bgcolor": "transparent"}
+# Attributi Graphviz per Alta Risoluzione e Spaziamento
+graph_attr = {
+    "fontsize": "32",
+    "bgcolor": "white",
+    "fontname": "Verdana Bold",
+    "pad": "2.0",
+    "nodesep": "1.8",  # Distanza orizzontale tra i nodi
+    "ranksep": "2.5",  # Distanza verticale tra i livelli
+    "dpi": "300",  # Alta risoluzione
+    "splines": "curved",  # Linee curve eleganti
+    "concentrate": "true",  # Unisce linee sovrapposte
+    "compound": "true",
+}
+
+node_attr = {
+    "fontsize": "14",
+    "fontname": "Verdana",
+}
 
 with Diagram(
-    "SyncroJob Enterprise Architecture",
+    "SyncroJob Enterprise Architecture v1.29",
     show=False,
     filename=OUTPUT_FILE,
     direction="TB",
     graph_attr=graph_attr,
+    node_attr=node_attr,
 ):
     user = User("Operatore COEMI")
+    tg_ext = Telegram("Telegram App")
+    excel_legacy = Storage("Legacy Excel\n(.xlsm / .xlsx)")
 
-    with Cluster("SyncroJob Application (PyQt6)"):
-        with Cluster("Core Engine"):
+    with Cluster("SyncroJob Enterprise Ecosystem"):
+        with Cluster("GUI Application (PyQt6)"):
+            gui = Tablet("Main Dashboard")
+            gui_components = [Python("KPI & Stats"), Python("Lyra AI Panel"), Python("Consuntivi View")]
+            notif = Python("Toast Notifications")
+
+        with Cluster("Core Engine & Services"):
             core = Python("Core Logic")
-            db = SQL("Local Cache\n(Audit / Data)")
-            config = Python("Config Manager")
+            security = Rack("SecretsManager\n(Keyring)")
+            excel_eng = Python("Excel Engine")
+            sync_tracker = Python("SyncTracker")
+            health = Python("Backup & Telemetry")
 
-        with Cluster("GUI Panels"):
-            gui = Tablet("Main Window")
-            notif = Python("Notifications")
-            audit_ui = Python("Audit Dashboard")
+        with Cluster("Communication & Intelligence"):
+            tg_bridge = Python("Telegram Bridge")
+            lyra_client = Python("Lyra AI Client")
 
-        with Cluster("Automation Bots (Selenium)"):
-            scheduler = Python("Autopilot\nScheduler")
-            isab_bot = Python("ISAB Portal Bot")
-            safework_bot = Python("SafeWork Bot")
+        with Cluster("Automation Engine (Selenium)"):
+            autopilot = Python("Autopilot\nScheduler")
+            isab_bots = Python("ISAB Bots\n(TS/ODA)")
+            safework_bots = Python("SafeWork Bots\n(PDL)")
 
-    with Cluster("External Systems"):
-        isab_ext = Firewall("ISAB Supplier\nPortal")
-        safework_ext = Firewall("SafeWork\nPortal")
+        with Cluster("Persistence Layer"):
+            db_main = SQL("Main Data (SQLite)")
+            db_audit = SQL("Audit (History)")
+
+        reports = Storage("Output Reports\n(Excel / PDF)")
+
+    with Cluster("External Infrastructure"):
+        isab_ext = Firewall("ISAB Portal")
+        safework_ext = Firewall("SafeWork Portal")
+        ai_service = Rack("AI Services")
 
     # Connections
-    user >> Edge(label="Interazione UI", color="blue") >> gui
+    user >> Edge(label="User Interaction", color="blue", penwidth="2.0") >> gui
     gui >> core
-    core >> db
-    core >> config
 
-    gui >> scheduler
-    scheduler >> isab_bot
-    scheduler >> safework_bot
+    # Core Data Flow
+    core >> excel_eng
+    excel_eng << Edge(label="Import", color="orange", style="dashed") << excel_legacy
+    excel_eng >> Edge(label="Export", color="orange") >> reports
 
-    isab_bot >> Edge(label="Automation", color="red", style="dashed") >> isab_ext
-    (safework_bot >> Edge(label="Automation", color="red", style="dashed") >> safework_ext)
+    core >> db_main
+    core >> db_audit
+    core >> security
+    core >> sync_tracker
+    core >> health
 
-    isab_bot >> Edge(label="Data Sync", color="green") >> db
-    safework_bot >> Edge(label="Data Sync", color="green") >> db
+    # Automation Flow
+    gui >> autopilot
+    autopilot >> isab_bots
+    autopilot >> safework_bots
 
-print(f"✅ Architettura generata in: {OUTPUT_DIR / OUTPUT_FILE}.png")
+    isab_bots >> Edge(label="Sync", color="green", penwidth="1.5") >> db_main
+    safework_bots >> Edge(label="Sync", color="green", penwidth="1.5") >> db_main
+
+    isab_bots >> Edge(label="Bot Action", color="red", style="dashed") >> isab_ext
+    safework_bots >> Edge(label="Bot Action", color="red", style="dashed") >> safework_ext
+
+    # AI & Comms Flow
+    lyra_client >> Edge(label="AI Sync", color="purple") >> ai_service
+    lyra_client >> core
+
+    tg_bridge >> Edge(label="Telegram Sync", color="cyan", penwidth="2.0") >> tg_ext
+    tg_bridge >> core
+
+print(f"✅ Architettura High-Res v1.29 generata in: {OUTPUT_DIR / OUTPUT_FILE}.png")
