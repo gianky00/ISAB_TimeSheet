@@ -153,6 +153,30 @@ def run_tool(name: str, cmd: list[str], label: str, cwd: Path = PROJECT_ROOT) ->
         return False, f"Eccezione: {e}", time.time() - start_t
 
 
+def find_git_executable():
+    """Tenta di trovare l'eseguibile git in percorsi comuni su Windows."""
+    git_bin = shutil.which("git")
+    if git_bin:
+        return git_bin
+    if sys.platform != "win32":
+        return "git"
+    common_paths = [
+        Path(os.environ.get("PROGRAMFILES", "C:/Program Files")) / "Git/cmd/git.exe",
+        Path(os.environ.get("PROGRAMFILES(X86)", "C:/Program Files (x86)")) / "Git/cmd/git.exe",
+        Path(os.environ.get("LOCALAPPDATA", "")) / "GitHubDesktop" / "bin" / "git.exe",
+    ]
+    github_desktop_root = Path(os.environ.get("LOCALAPPDATA", "")) / "GitHubDesktop"
+    if github_desktop_root.exists():
+        for app_dir in github_desktop_root.glob("app-*"):
+            git_path = app_dir / "resources" / "app" / "git" / "cmd" / "git.exe"
+            if git_path.exists():
+                common_paths.append(git_path)
+    for p in common_paths:
+        if p.exists():
+            return str(p)
+    return "git"
+
+
 # --- APEX ENGINE ---
 
 
@@ -177,11 +201,12 @@ class ApexAudit:
         self.force = force
         self.results: list[CheckResult] = []
         self.start_time = time.time()
+        self.git_bin = find_git_executable()
         self.changed_files = self._get_changed_files() if incremental else []
 
     def _get_changed_files(self) -> list[str]:
         try:
-            cmd = ["git", "diff", "HEAD", "--name-only"]
+            cmd = [self.git_bin, "diff", "HEAD", "--name-only"]
             res = subprocess.run(cmd, capture_output=True, text=True, cwd=PROJECT_ROOT, check=False)
             return [f for f in res.stdout.splitlines() if f.endswith(".py") and Path(f).exists()]
         except Exception:

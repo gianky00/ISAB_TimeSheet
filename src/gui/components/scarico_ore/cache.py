@@ -1,5 +1,4 @@
 import json
-import pickle
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +10,7 @@ from src.utils.parsing import parse_currency
 class CacheWorker(QThread):
     """
     ⚡ BOLT OPTIMIZATION: Background worker for heavy cache operations.
-    Handles file I/O (pickle) and data processing.
+    Handles file I/O (JSON) and data processing.
     Now builds a PRE-FORMATTED display cache for max speed.
     """
 
@@ -22,8 +21,12 @@ class CacheWorker(QThread):
 
     def __init__(self, cache_path: Path, data_source: list[tuple[Any, ...]] | None = None) -> None:
         super().__init__()
-        self.cache_path = cache_path
-        self.data_source = data_source  # If provided, we build cache from this data.
+        # Use .json extension if not already present, for clarity
+        if cache_path.suffix != ".json":
+            self.cache_path = cache_path.with_suffix(".json")
+        else:
+            self.cache_path = cache_path
+        self.data_source = data_source
 
     def run(self) -> None:
         """Esegue l'operazione di caricamento o generazione della cache in background."""
@@ -46,80 +49,19 @@ class CacheWorker(QThread):
 
             try:
                 self.progress.emit("Caricamento cache...")
-                with self.cache_path.open("rb") as f:
-                    loaded = pickle.load(f)  # nosec B301 # noqa: S301
-                    if len(loaded) == 3:
-                        raw_data = loaded[0]
-                        (
-                            display_data,
-                            search_index,
-                            float_totals,
-                            style_cache,
-                            date_keys,
-                        ) = (
-                            self._build_caches(raw_data)
-                            if raw_data and not isinstance(raw_data[0][0], str)
-                            else (raw_data, [], [], [], [])
-                        )
-                    elif len(loaded) == 5:
+                # FIX B403: Use JSON instead of pickle for security
+                with self.cache_path.open("r", encoding="utf-8") as f:
+                    loaded = json.load(f)
+                    if isinstance(loaded, list) and len(loaded) == 5:
                         d, s, t, st, dk = loaded
-                        (
-                            display_data,
-                            search_index,
-                            float_totals,
-                            style_cache,
-                            date_keys,
-                        ) = (
-                            d,
-                            s,
-                            t,
-                            st,
-                            dk,
-                        )
-                    elif len(loaded) == 4:
-                        d, _, _, _ = loaded
-                        (
-                            display_data,
-                            search_index,
-                            float_totals,
-                            style_cache,
-                            date_keys,
-                        ) = (
-                            self._build_caches(d)
-                            if d and not isinstance(d[0][0], str)
-                            else (d, [], [], [], [])
-                        )
+                        self.finished.emit(d, s, t, st, dk)
                     else:
-                        (
-                            display_data,
-                            search_index,
-                            float_totals,
-                            style_cache,
-                            date_keys,
-                        ) = ([], [], [], [], [])
+                        # Fallback for old cache format or invalid data
+                        self.finished.emit([], [], [], [], [])
 
-                self.finished.emit(display_data, search_index, float_totals, style_cache, date_keys)
             except Exception as e:
                 print(f"Error loading cache: {e}")
                 self.finished.emit([], [], [], [], [])
-
-    def _build_style_cache_only(self, data: list[tuple[Any, ...]]) -> list[dict[str, Any] | None]:
-        style_cache: list[dict[str, Any] | None] = []
-        append_style = style_cache.append
-
-        for row in data:
-            if len(row) > 11:
-                style_json = row[11]
-                if style_json:
-                    try:
-                        append_style(json.loads(style_json))
-                    except Exception:
-                        append_style(None)
-                else:
-                    append_style(None)
-            else:
-                append_style(None)
-        return style_cache
 
     def _build_caches(
         self, data: list[tuple[Any, ...]]
@@ -194,7 +136,8 @@ class CacheWorker(QThread):
     ) -> None:
         try:
             self.cache_path.parent.mkdir(parents=True, exist_ok=True)
-            with self.cache_path.open("wb") as f:
-                pickle.dump((data, search, totals, style_cache, date_keys), f)  # nosec B403
+            # FIX B403: Use JSON instead of pickle for security
+            with self.cache_path.open("w", encoding="utf-8") as f:
+                json.dump((data, search, totals, style_cache, date_keys), f)
         except Exception as e:
             print(f"Error saving cache: {e}")

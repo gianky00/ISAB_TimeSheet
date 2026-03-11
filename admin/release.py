@@ -8,6 +8,7 @@ import contextlib
 import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -22,10 +23,47 @@ VENV_PYTHON = (
 )
 
 
+def find_git_executable():
+    """Tenta di trovare l'eseguibile git in percorsi comuni su Windows."""
+    # 1. Prova nel PATH standard
+    git_bin = shutil.which("git")
+    if git_bin:
+        return git_bin
+
+    if sys.platform != "win32":
+        return "git"
+
+    # 2. Prova percorsi comuni Windows
+    common_paths = [
+        Path(os.environ.get("PROGRAMFILES", "C:/Program Files")) / "Git/cmd/git.exe",
+        Path(os.environ.get("PROGRAMFILES(X86)", "C:/Program Files (x86)")) / "Git/cmd/git.exe",
+        Path(os.environ.get("LOCALAPPDATA", "")) / "GitHubDesktop" / "bin" / "git.exe",
+    ]
+
+    # 3. Prova a cercare nelle cartelle app di GitHub Desktop (percorso variabile con versione)
+    github_desktop_root = Path(os.environ.get("LOCALAPPDATA", "")) / "GitHubDesktop"
+    if github_desktop_root.exists():
+        for app_dir in github_desktop_root.glob("app-*"):
+            git_path = app_dir / "resources" / "app" / "git" / "cmd" / "git.exe"
+            if git_path.exists():
+                common_paths.append(git_path)
+
+    for p in common_paths:
+        if p.exists():
+            return str(p)
+
+    return "git"
+
+
 def run_command(cmd, description, exit_on_fail=True, capture=False):
     """Executes a subprocess command with error handling and optional output capture."""
     print(f"\n[STEP] {description}...")
     sys.stdout.flush()
+
+    # Se il primo argomento è 'git', prova a risolverlo
+    if cmd[0] == "git":
+        cmd[0] = find_git_executable()
+
     try:
         if capture:
             result = subprocess.run(cmd, cwd=ROOT_DIR, capture_output=True, text=True, check=True)
@@ -106,9 +144,10 @@ def detect_bump_type():
     """Rileva automaticamente il tipo di bump analizzando branch e commit log."""
     try:
         # 1. Controlla il nome del branch corrente
+        git_bin = find_git_executable()
         current_branch = (
             subprocess.run(
-                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                [git_bin, "rev-parse", "--abbrev-ref", "HEAD"],
                 cwd=ROOT_DIR,
                 capture_output=True,
                 text=True,
@@ -120,7 +159,7 @@ def detect_bump_type():
 
         # 2. Trova l'ultimo tag
         last_tag = subprocess.run(
-            ["git", "describe", "--tags", "--abbrev=0"],
+            [git_bin, "describe", "--tags", "--abbrev=0"],
             cwd=ROOT_DIR,
             capture_output=True,
             text=True,
@@ -133,7 +172,7 @@ def detect_bump_type():
 
         # 3. Prende i messaggi dei commit dal tag ad oggi
         logs = subprocess.run(
-            ["git", "log", f"{last_tag}..HEAD", "--oneline"],
+            [git_bin, "log", f"{last_tag}..HEAD", "--oneline"],
             cwd=ROOT_DIR,
             capture_output=True,
             text=True,

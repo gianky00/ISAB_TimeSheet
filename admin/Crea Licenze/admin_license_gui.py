@@ -331,7 +331,7 @@ class LicenseAdminApp:
         git_path = shutil.which("git")
         if git_path:
             return git_path
-        
+
         # Fallback per percorsi comuni se non è nel PATH
         common_paths = [
             r"C:\Program Files\Git\cmd\git.exe",
@@ -348,7 +348,7 @@ class LicenseAdminApp:
         try:
             # Trova l'eseguibile git
             git_bin = self._get_git_binary()
-            
+
             # Path del repository locale (da clonare se non esiste)
             repo_name = "gianky00/intelleo-licenses"
             temp_repo_dir = current_dir / "_intelleo-licenses"

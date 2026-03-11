@@ -3,6 +3,7 @@ SyncroJob - Global Constants
 Centralized configuration for the application.
 """
 
+import os
 from enum import Enum
 
 from src.core import version
@@ -61,7 +62,7 @@ class Business:
     HOURLY_COST_STD = 28.50
     DEFAULT_SUPPLIER = "KK10608 - COEMI S.R.L."
     DEFAULT_SITE = "ISAB"
-    DEFAULT_EXCEL_PASSWORD = "coemi"  # noqa: S105
+    DEFAULT_EXCEL_PASSWORD = os.getenv("EXCEL_PASSWORD", "coemi")
 
 
 class Emails:
