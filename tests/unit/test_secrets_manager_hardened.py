@@ -20,7 +20,7 @@ class TestSecretsManagerHardened:
         mocker.patch.object(SecretsManager, "_get_key_from_keyring", return_value=None)
 
         key = SecretsManager.get_license_key()
-        assert key == b"my_env_key"
+        assert key == encoded_key.encode("utf-8")
 
     def test_get_license_key_fallback(self, mocker):
         """Verifica il fallback sulla chiave hardcoded se tutto il resto manca."""
@@ -30,8 +30,8 @@ class TestSecretsManagerHardened:
 
         key = SecretsManager.get_license_key()
         assert key is not None
-        # La chiave hardcoded inizia con 8kHs...
-        assert len(key) == 32
+        # La chiave generata è in formato base64 urlsafe
+        assert len(base64.urlsafe_b64decode(key)) == 32
 
     def test_keyring_store_retrieve(self, mocker):
         """Testa l'integrazione con keyring (mocked)."""

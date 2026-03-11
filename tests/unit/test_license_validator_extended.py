@@ -27,8 +27,7 @@ def mock_license_dir(tmp_path):
 @pytest.fixture
 def mock_secrets_manager(mocker):
     key_b64 = Fernet.generate_key()
-    key_raw = base64.urlsafe_b64decode(key_b64)
-    mocker.patch.object(SecretsManager, "get_license_key", return_value=key_raw)
+    mocker.patch.object(SecretsManager, "get_license_key", return_value=key_b64)
     return key_b64
 
 def test_validate_license_data_expired_untrusted(mocker):
