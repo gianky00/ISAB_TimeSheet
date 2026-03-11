@@ -41,6 +41,19 @@ class AppEventHandler(QObject):
         Args:
             event: QCloseEvent intercettato dalla MainWindow.
         """
+        from src.core.app_updater import has_pending_update, run_pending_installer
+
+        # Se c'è un aggiornamento programmato e l'utente clicca la 'X'
+        if not self._force_quit and has_pending_update():
+            from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
+            res = ConfirmationDialog.confirm(
+                self.main_window,
+                "Aggiornamento Pronto",
+                "Hai richiesto l'installazione dell'aggiornamento alla chiusura.\nVuoi chiudere definitivamente l'applicazione per aggiornarla ora?"
+            )
+            if res:
+                self._force_quit = True
+
         if self._force_quit:
             # Stop Telegram Service
             if hasattr(self.main_window, "telegram") and self.main_window.telegram:
@@ -50,6 +63,9 @@ class AppEventHandler(QObject):
             config = config_manager.load_config()
             if config.get("auto_backup", True):
                 BackupManager.create_backup()
+
+            # Esegue installer in un processo staccato
+            run_pending_installer()
 
             event.accept()
             return

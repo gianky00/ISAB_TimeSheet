@@ -302,17 +302,39 @@ class MainWindow(QMainWindow):
         self.status_bar_component.update_autopilot_ui()
 
     def _on_download_update_clicked(self, url: str) -> None:
-        """Apre il browser per il download di un aggiornamento."""
-        webbrowser.open(url)
+        """Avvia il download asincrono dell'aggiornamento o lo installa se già pronto."""
+        from src.core.app_updater import get_local_setup_path, perform_auto_update, show_install_prompt
+        
+        # Se il banner indica che è già completo, mostra direttamente la prompt di installazione
+        if hasattr(self, "update_banner") and self.update_banner and getattr(self.update_banner, "_is_complete", False):
+            setup_path = get_local_setup_path(url)
+            show_install_prompt(setup_path, self)
+            return
+
+        perform_auto_update(url, self)
+
+    def _on_update_downloaded(self, setup_path: str) -> None:
+        """Gestisce il completamento del download dell'aggiornamento."""
+        from src.core.app_updater import show_install_prompt
+        # Segnala al banner che il download è terminato per aggiornare lo stato visivo
+        if hasattr(self, "update_banner") and self.update_banner:
+            self.update_banner._is_complete = True
+            # Opzionale: cambia testo banner in "Aggiornamento Pronto"
+            self.update_banner.update_label.setText("Aggiornamento Pronto!")
+            self.update_banner.download_btn.setText("Installa Ora")
+            self.update_banner.download_btn.setVisible(True)
+            self.update_banner.progress_container.setVisible(False)
+
+        show_install_prompt(setup_path, self)
 
     def _navigate_to(self, index: int) -> None:
         """Naviga verso una pagina specifica tramite indice."""
         self.navigation_controller.navigate_to(index)
 
-    def _show_update_banner(self, new_version: str, download_url: str, changelog: str) -> None:
+    def _show_update_banner(self, new_version: str, download_url: str, changelog: str, is_partial: bool = False, is_complete: bool = False) -> None:
         """Mostra il banner di aggiornamento disponibile."""
         if hasattr(self, "update_banner"):
-            self.update_banner.show_update(new_version, download_url, changelog)
+            self.update_banner.show_update(new_version, download_url, changelog, is_partial, is_complete)
         if hasattr(self, "tray_icon_component"):
             self.tray_icon_component.show_update_message(new_version)
 
