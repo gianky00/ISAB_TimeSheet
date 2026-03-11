@@ -45,7 +45,8 @@ def get_local_setup_path(url: str) -> str:
 
 class DownloadWorker(QThread):
     """Worker per il download dell'aggiornamento con supporto per la ripresa (resume) infinita."""
-    progress = pyqtSignal(int, int, float)  # downloaded, total, speed
+    # downloaded, total, speed (bytes/s), eta (seconds)
+    progress = pyqtSignal(int, int, float, float)
     finished_download = pyqtSignal(str)     # path del file scaricato
     error = pyqtSignal(str)
     retrying = pyqtSignal(int)              # numero del tentativo di riconnessione
@@ -56,6 +57,7 @@ class DownloadWorker(QThread):
         self.url = url
         self._is_cancelled = False
         self.max_retries = 999
+        self._ema_speed = 0.0
 
     def stop(self):
         """Richiede l'interruzione del download."""
@@ -68,7 +70,7 @@ class DownloadWorker(QThread):
         downloaded = 0
         total_size = 0
         retries = 0
-        start_time = time.time()
+        self._ema_speed = 0.0
 
         # Rimuovi file vecchio solo se è molto vecchio (più di 24 ore)
         if Path(setup_path).exists() and time.time() - Path(setup_path).stat().st_mtime > 86400:
@@ -102,17 +104,38 @@ class DownloadWorker(QThread):
                 mode = "ab" if downloaded > 0 else "wb"
                 with open(setup_path, mode) as f:
                     content_iterator = response.iter_content(chunk_size=131072)
+                    last_time = time.time()
+
                     while True:
                         if self._is_cancelled:
                             return  # type: ignore[unreachable]
                         try:
                             chunk = next(content_iterator)
                             if chunk:
+                                current_time = time.time()
+                                elapsed = current_time - last_time
+                                last_time = current_time
+
+                                chunk_size = len(chunk)
                                 f.write(chunk)
-                                downloaded += len(chunk)
-                                elapsed = time.time() - start_time
-                                speed = downloaded / elapsed if elapsed > 0 else 0
-                                self.progress.emit(downloaded, total_size, speed)
+                                downloaded += chunk_size
+
+                                # Calcolo Velocità Istantanea
+                                current_speed = chunk_size / elapsed if elapsed > 0 else 0
+
+                                # Exponential Moving Average (EMA) per rendere l'ETA stabile
+                                # alpha = 0.1 significa che la nuova misurazione pesa il 10% e la storia il 90%
+                                alpha = 0.1
+                                if self._ema_speed == 0.0:
+                                    self._ema_speed = current_speed
+                                else:
+                                    self._ema_speed = (alpha * current_speed) + ((1 - alpha) * self._ema_speed)
+
+                                # Calcolo ETA (Tempo rimanente in secondi)
+                                remaining_bytes = total_size - downloaded
+                                eta = remaining_bytes / self._ema_speed if self._ema_speed > 0 else 0.0
+
+                                self.progress.emit(downloaded, total_size, self._ema_speed, eta)
                                 retries = 0
                         except StopIteration:
                             break

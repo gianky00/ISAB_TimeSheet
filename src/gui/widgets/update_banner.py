@@ -117,8 +117,8 @@ class UpdateBanner(QFrame):
 
         self.setVisible(True)
 
-    @pyqtSlot(int, int, float)
-    def update_progress(self, downloaded: int, total: int, speed: float):
+    @pyqtSlot(int, int, float, float)
+    def update_progress(self, downloaded: int, total: int, speed: float, eta: float):
         """Aggiorna il progresso del download nel banner."""
         if not self.progress_container.isVisible():
             self.progress_container.setVisible(True)
@@ -132,7 +132,16 @@ class UpdateBanner(QFrame):
             mb_down = downloaded / (1024 * 1024)
             mb_total = total / (1024 * 1024)
             speed_mb = speed / (1024 * 1024)
-            self.details_label.setText(f"{mb_down:.1f}/{mb_total:.1f} MB ({speed_mb:.2f} MB/s)")
+
+            # Formattazione ETA in minuti e secondi
+            if eta > 0:
+                mins = int(eta // 60)
+                secs = int(eta % 60)
+                eta_str = f" - {mins}m {secs}s" if mins > 0 else f" - {secs}s"
+            else:
+                eta_str = ""
+
+            self.details_label.setText(f"{mb_down:.1f}/{mb_total:.1f} MB ({speed_mb:.2f} MB/s{eta_str})")
         else:
             self.progress_bar.setMaximum(0)
 
