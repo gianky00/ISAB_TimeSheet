@@ -6,7 +6,6 @@ e deploya su Netlify tramite API (ZIP deploy).
 
 import argparse
 import contextlib
-import glob
 import json
 import logging
 import os
@@ -15,30 +14,31 @@ import subprocess
 import sys
 import time
 import zipfile
+from pathlib import Path
 
 # Add admin folder to path to import analyzer
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 import requests
-from analyze_dependencies import get_all_imports
+from analyze_dependencies import get_all_imports  # type: ignore
 
 # Paths
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(os.path.dirname(SCRIPT_DIR))
-DIST_DIR = os.path.join(SCRIPT_DIR, "dist")
-BUILD_DIR = os.path.join(SCRIPT_DIR, "build")
-OBF_DIR = os.path.join(BUILD_DIR, "obf")
-ASSETS_DIR = os.path.join(ROOT_DIR, "assets")
-SETUP_OUTPUT_DIR = os.path.join(SCRIPT_DIR, "Setup")
+SCRIPT_DIR = Path(__file__).resolve().parent
+ROOT_DIR = SCRIPT_DIR.parent.parent
+DIST_DIR = SCRIPT_DIR / "dist"
+BUILD_DIR = SCRIPT_DIR / "build"
+OBF_DIR = BUILD_DIR / "obf"
+ASSETS_DIR = ROOT_DIR / "assets"
+SETUP_OUTPUT_DIR = SCRIPT_DIR / "Setup"
 
 # Log File
-LOG_FILE = os.path.join(ROOT_DIR, "build_log.txt")
+LOG_FILE = ROOT_DIR / "build_log.txt"
 
 # Application info
 APP_NAME = "SyncroJob"
 APP_EXE_NAME = "SyncroJob"
-MAIN_SCRIPT = os.path.join(ROOT_DIR, "main.py")
-ICON_PATH = os.path.join(ASSETS_DIR, "app.ico")
-ISS_SCRIPT = os.path.join(SCRIPT_DIR, "setup_script.iss")
+MAIN_SCRIPT = ROOT_DIR / "main.py"
+ICON_PATH = ASSETS_DIR / "app.ico"
+ISS_SCRIPT = SCRIPT_DIR / "setup_script.iss"
 
 # Netlify config
 NETLIFY_SITE_ID = "2b481f10-fbd1-44d4-81ed-1a15b15c315b"
@@ -86,11 +86,12 @@ def run_command(cmd, cwd=None, shell=False, check=True):
             errors="replace",
         )
 
-        for line in iter(process.stdout.readline, ""):
-            if line:
-                sys.stdout.write(line)
-                sys.stdout.flush()
-                logger.info(f"[CMD] {line.strip()}")
+        if process.stdout:
+            for line in iter(process.stdout.readline, ""):
+                if line:
+                    sys.stdout.write(line)
+                    sys.stdout.flush()
+                    logger.info(f"[CMD] {line.strip()}")
 
         return_code = process.wait()
 
@@ -108,9 +109,9 @@ def run_command(cmd, cwd=None, shell=False, check=True):
 
 def get_version():
     """Read version from version.py"""
-    version_file = os.path.join(ROOT_DIR, "src", "core", "version.py")
+    version_file = ROOT_DIR / "src" / "core" / "version.py"
     try:
-        with open(version_file, encoding="utf-8") as f:
+        with version_file.open(encoding="utf-8") as f:
             for line in f:
                 if line.startswith("__version__"):
                     return line.split('"')[1]
@@ -122,8 +123,8 @@ def get_version():
 def clean_build():
     """Remove previous build artifacts."""
     log_and_print("[BUILD] Cleaning previous builds...")
-    for folder in [DIST_DIR, BUILD_DIR]:
-        if os.path.exists(folder):
+    for folder in (DIST_DIR, BUILD_DIR):
+        if folder.exists():
             try:
                 shutil.rmtree(folder)
                 log_and_print(f"  Removed: {folder}")
@@ -134,36 +135,35 @@ def clean_build():
 def ensure_drivers():
     """Ensure chromedriver is present and up-to-date in drivers folder."""
     log_and_print("[BUILD] Ensuring drivers are present and aligned...")
-    drivers_dir = os.path.join(ROOT_DIR, "drivers")
-    if not os.path.exists(drivers_dir):
-        os.makedirs(drivers_dir)
+    drivers_dir = ROOT_DIR / "drivers"
+    drivers_dir.mkdir(parents=True, exist_ok=True)
 
     # Crea un file sentinel per assicurare che PyInstaller includa sempre la cartella
-    with open(os.path.join(drivers_dir, ".exists"), "w") as f:
-        f.write("Sentinel file for PyInstaller")
+    (drivers_dir / ".exists").write_text("Sentinel file for PyInstaller")
 
     # Use webdriver-manager to get the latest driver
     try:
         from webdriver_manager.chrome import ChromeDriverManager
 
         log_and_print("  Checking for latest ChromeDriver...")
-        driver_path = ChromeDriverManager().install()
+        driver_path_str = ChromeDriverManager().install()
+        driver_path = Path(driver_path_str)
 
-        if not os.path.isfile(driver_path) or not driver_path.lower().endswith(".exe"):
-            search_path = os.path.dirname(driver_path) if os.path.isfile(driver_path) else driver_path
-            potential_exes = glob.glob(os.path.join(search_path, "**/chromedriver.exe"), recursive=True)
+        if not driver_path.is_file() or driver_path.suffix.lower() != ".exe":
+            search_path = driver_path.parent if driver_path.is_file() else driver_path
+            potential_exes = list(search_path.rglob("chromedriver.exe"))
             if potential_exes:
                 driver_path = potential_exes[0]
             else:
                 raise FileNotFoundError(f"Chromedriver.exe not found in {search_path}")
 
-        dest_path = os.path.join(drivers_dir, "chromedriver.exe")
+        dest_path = drivers_dir / "chromedriver.exe"
         shutil.copy2(driver_path, dest_path)
         log_and_print(f"  [SUCCESS] Driver aligned: {dest_path}")
 
     except Exception as e:
         log_and_print(f"  [WARNING] Could not automatically update driver: {e}", "WARNING")
-        if os.path.exists(os.path.join(drivers_dir, "chromedriver.exe")):
+        if (drivers_dir / "chromedriver.exe").exists():
             log_and_print("  [INFO] Using existing driver as fallback.")
         else:
             log_and_print("  [CRITICAL ERROR] Driver missing and auto-download failed! Build aborted.", "ERROR")
@@ -174,8 +174,7 @@ def run_pyarmor():
     """Obfuscate scripts using PyArmor."""
     log_and_print("[BUILD] Running PyArmor obfuscation...")
 
-    if not os.path.exists(OBF_DIR):
-        os.makedirs(OBF_DIR)
+    OBF_DIR.mkdir(parents=True, exist_ok=True)
 
     cmd = [
         sys.executable,
@@ -183,10 +182,10 @@ def run_pyarmor():
         "pyarmor.cli",
         "gen",
         "--output",
-        OBF_DIR,
+        str(OBF_DIR),
         "--recursive",
-        os.path.join(ROOT_DIR, "src"),
-        MAIN_SCRIPT,
+        str(ROOT_DIR / "src"),
+        str(MAIN_SCRIPT),
     ]
 
     run_command(cmd, cwd=ROOT_DIR)
@@ -198,14 +197,14 @@ def run_pyinstaller(obfuscated=False):
     log_and_print(f"[BUILD] Running PyInstaller (Obfuscated: {obfuscated})...")
 
     if obfuscated:
-        script_path = os.path.join(OBF_DIR, "main.py")
-        src_path = os.path.join(OBF_DIR, "src")
-        if not os.path.exists(script_path):
+        script_path = OBF_DIR / "main.py"
+        src_path = OBF_DIR / "src"
+        if not script_path.exists():
             log_and_print(f"[ERROR] Obfuscated script not found: {script_path}", "ERROR")
             sys.exit(1)
     else:
         script_path = MAIN_SCRIPT
-        src_path = os.path.join(ROOT_DIR, "src")
+        src_path = ROOT_DIR / "src"
 
     cmd = [
         sys.executable,
@@ -218,113 +217,69 @@ def run_pyinstaller(obfuscated=False):
         "--noconfirm",
         "--clean",
         "--distpath",
-        DIST_DIR,
+        str(DIST_DIR),
         "--workpath",
-        BUILD_DIR,
+        str(BUILD_DIR),
         "--add-data",
         f"{src_path};src",
         "--add-data",
-        f"{os.path.join(ROOT_DIR, 'assets')};assets",
+        f"{ROOT_DIR / 'assets'};assets",
         "--add-data",
-        f"{os.path.join(ROOT_DIR, 'drivers')};drivers",
+        f"{ROOT_DIR / 'drivers'};drivers",
     ]
 
-    if os.path.exists(ICON_PATH):
-        cmd.extend(["--icon", ICON_PATH])
+    if ICON_PATH.exists():
+        cmd.extend(["--icon", str(ICON_PATH)])
 
     log_and_print("[BUILD] Analyzing source code for dependencies...")
 
     try:
-        detected_imports = get_all_imports(MAIN_SCRIPT, os.path.join(ROOT_DIR, "src"))
+        detected_imports = get_all_imports(str(MAIN_SCRIPT), str(ROOT_DIR / "src"))
         log_and_print(f"[BUILD] Detected {len(detected_imports)} hidden imports.")
     except Exception as e:
         log_and_print(f"[ERROR] Dependency analysis failed: {e}", "ERROR")
         detected_imports = []
 
     ignored_imports = [
-        "bot",
-        "locators",
-        "pages",
-        "modern_button",
-        "timeline_widget",
-        "toast",
-        "status_card",
-        "status_indicator",
-        "helpers",
-        "info_widgets",
-        "data_table",
-        "excel_table",
-        "version",
-        "constants",
+        "bot", "locators", "pages", "modern_button", "timeline_widget",
+        "toast", "status_card", "status_indicator", "helpers",
+        "info_widgets", "data_table", "excel_table", "version", "constants",
     ]
     detected_imports = [imp for imp in detected_imports if imp not in ignored_imports]
 
     for imp in detected_imports:
         cmd.extend(["--hidden-import", imp])
 
-    # CRITICAL: Force include standard library handlers often missed in frozen environments
+    # CRITICAL: Force include standard library handlers
     force_hidden_imports = [
-        "win32con",
-        "win32print",
-        "win32ui",
-        "logging.handlers",
-        "win32com",
-        "win32com.client",
-        "pythoncom",
+        "win32con", "win32print", "win32ui", "logging.handlers",
+        "win32com", "win32com.client", "pythoncom",
     ]
     for mod in force_hidden_imports:
         cmd.extend(["--hidden-import", mod])
 
     qt_excludes = [
-        "shapely",
-        "PyQt6.QtBluetooth",
-        "PyQt6.QtNfc",
-        "PyQt6.Qt3DCore",
-        "PyQt6.Qt3DRender",
-        "PyQt6.Qt3DInput",
-        "PyQt6.Qt3DLogic",
-        "PyQt6.Qt3DExtras",
-        "PyQt6.QtSpatialAudio",
-        "PyQt6.QtSensors",
-        "PyQt6.QtQuick3D",
-        "PyQt6.QtMultimedia",
-        "PyQt6.QtQml",
-        "PyQt6.QtQuick",
+        "shapely", "PyQt6.QtBluetooth", "PyQt6.QtNfc", "PyQt6.Qt3DCore",
+        "PyQt6.Qt3DRender", "PyQt6.Qt3DInput", "PyQt6.Qt3DLogic",
+        "PyQt6.Qt3DExtras", "PyQt6.QtSpatialAudio", "PyQt6.QtSensors",
+        "PyQt6.QtQuick3D", "PyQt6.QtMultimedia", "PyQt6.QtQml", "PyQt6.QtQuick",
     ]
     for exc in qt_excludes:
         cmd.extend(["--exclude-module", exc])
 
-    complex_packages = [
-        "selenium",
-        "webdriver_manager",
-        "markdown",
-        "matplotlib",
-        "telegram",
-        "pandera",
-    ]
+    complex_packages = ["selenium", "webdriver_manager", "markdown", "matplotlib", "telegram", "pandera"]
     for pkg in complex_packages:
         cmd.extend(["--collect-submodules", pkg])
 
     force_collect = [
-        "pandas",
-        "numpy",
-        "pandera",
-        "telegram",
-        "markdown",
-        "matplotlib",
-        "cryptography",
-        "jaraco.text",
-        "keyring",
-        "pymupdf",
-        "fitz",
-        "lxml",
-        "openpyxl",
-        "PIL",
+        "pandas", "numpy", "pandera", "telegram", "markdown", "matplotlib",
+        "cryptography", "jaraco.text", "keyring", "pymupdf", "fitz", "lxml",
+        "openpyxl", "PIL",
     ]
     for pkg in force_collect:
         cmd.extend(["--collect-all", pkg])
 
-    cmd.append(script_path)
+    cmd.append(str(script_path))
     run_command(cmd, cwd=ROOT_DIR)
     log_and_print("[BUILD] PyInstaller completed successfully.")
 
@@ -333,27 +288,19 @@ def run_inno_setup():
     """Build installer with Inno Setup."""
     log_and_print("[BUILD] Running Inno Setup...")
 
-    inno_paths = [
-        r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
-    ]
-
-    iscc = None
-    for path in inno_paths:
-        if os.path.exists(path):
-            iscc = path
-            break
+    inno_paths = [Path(r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe")]
+    iscc = next((p for p in inno_paths if p.exists()), None)
 
     if not iscc:
         log_and_print("[WARNING] Inno Setup not found. Skipping installer creation.", "WARNING")
         return False
 
-    if not os.path.exists(SETUP_OUTPUT_DIR):
-        os.makedirs(SETUP_OUTPUT_DIR)
+    SETUP_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     version = get_version()
     log_and_print(f"[BUILD] Building installer for version: {version}")
 
-    cmd = [iscc, f"/DMyAppVersion={version}", ISS_SCRIPT]
+    cmd = [str(iscc), f"/DMyAppVersion={version}", str(ISS_SCRIPT)]
     run_command(cmd, cwd=SCRIPT_DIR)
 
     log_and_print("[BUILD] Installer created successfully.")
@@ -362,14 +309,10 @@ def run_inno_setup():
 
 def get_netlify_token():
     """Returns the obfuscated Netlify API token."""
-    # Obfuscated token parts
-    p1 = "nfp_VJbSMoKXxms3"
-    p2 = "Xa8gdQkKKedPC6"
-    p3 = "EnHQZL9687"
-    return p1 + p2 + p3
+    return "nfp_VJbSMoKXxms3" + "Xa8gdQkKKedPC6" + "EnHQZL9687"
 
 
-def generate_index_html(deploy_dir, setup_filename, version_str):
+def generate_index_html(deploy_dir: Path, setup_filename: str, version_str: str):
     """Generates a professional index.html download page."""
     html_content = f"""<!DOCTYPE html>
 <html lang="it">
@@ -380,56 +323,14 @@ def generate_index_html(deploy_dir, setup_filename, version_str):
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
-        body {{
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }}
-        .card {{
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            max-width: 500px;
-            width: 90%;
-        }}
-        .card-header {{
-            background-color: white;
-            border-bottom: none;
-            padding-top: 30px;
-            border-radius: 15px 15px 0 0 !important;
-        }}
-        .app-icon {{
-            font-size: 4rem;
-            color: #764ba2;
-        }}
-        .btn-download {{
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            font-weight: 600;
-            border-radius: 50px;
-            box-shadow: 0 4px 6px rgba(118, 75, 162, 0.3);
-            transition: all 0.3s ease;
-            background-color: #667eea;
-            border-color: #667eea;
-            color: white;
-        }}
-        .btn-download:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(118, 75, 162, 0.4);
-            background-color: #764ba2;
-            border-color: #764ba2;
-            color: white;
-        }}
-        .features-list {{
-            text-align: left;
-            margin: 20px 0;
-            color: #6c757d;
-        }}
-        .features-list li {{
-            margin-bottom: 8px;
-        }}
+        body {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 100vh; display: flex; align-items: center; justify-content: center; }}
+        .card {{ border: none; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-width: 500px; width: 90%; }}
+        .card-header {{ background-color: white; border-bottom: none; padding-top: 30px; border-radius: 15px 15px 0 0 !important; }}
+        .app-icon {{ font-size: 4rem; color: #764ba2; }}
+        .btn-download {{ padding: 15px 30px; font-size: 1.2rem; font-weight: 600; border-radius: 50px; box-shadow: 0 4px 6px rgba(118, 75, 162, 0.3); transition: all 0.3s ease; background-color: #667eea; border-color: #667eea; color: white; }}
+        .btn-download:hover {{ transform: translateY(-2px); box-shadow: 0 6px 12px rgba(118, 75, 162, 0.4); background-color: #764ba2; border-color: #764ba2; color: white; }}
+        .features-list {{ text-align: left; margin: 20px 0; color: #6c757d; }}
+        .features-list li {{ margin-bottom: 8px; }}
     </style>
 </head>
 <body>
@@ -445,152 +346,136 @@ def generate_index_html(deploy_dir, setup_filename, version_str):
                 <li><i class="bi bi-check-circle-fill text-success me-2"></i>Integrazione Safework</li>
                 <li><i class="bi bi-check-circle-fill text-success me-2"></i>Dashboard Intelligente</li>
             </ul>
-
-            <a href="{setup_filename}" class="btn btn-download w-100 my-3">
-                <i class="bi bi-windows me-2"></i> Scarica per Windows
-            </a>
-
+            <a href="{setup_filename}" class="btn btn-download w-100 my-3"><i class="bi bi-windows me-2"></i> Scarica per Windows</a>
             <div class="mt-4 pt-3 border-top">
                 <div class="row text-muted small">
-                    <div class="col-6 text-start">
-                        Versione: <span class="fw-bold text-dark">v{version_str}</span>
-                    </div>
-                    <div class="col-6 text-end">
-                        Data: {time.strftime("%d/%m/%Y")}
-                    </div>
+                    <div class="col-6 text-start">Versione: <span class="fw-bold text-dark">v{version_str}</span></div>
+                    <div class="col-6 text-end">Data: {time.strftime("%d/%m/%Y")}</div>
                 </div>
             </div>
         </div>
     </div>
-    <script>
-        setTimeout(function() {{
-            window.location.href = "{setup_filename}";
-        }}, 2000);
-    </script>
+    <script>setTimeout(function() {{ window.location.href = "{setup_filename}"; }}, 2000);</script>
 </body>
 </html>"""
-
-    with open(os.path.join(deploy_dir, "index.html"), "w", encoding="utf-8") as f:
-        f.write(html_content)
+    (deploy_dir / "index.html").write_text(html_content, encoding="utf-8")
     log_and_print("Generated index.html")
 
 
-def prepare_and_deploy_netlify(setup_dir, setup_filename):
-    """
-    Creates a deploy folder with version.json, index.html, and the setup file,
-    then uploads to Netlify via API (ZIP deploy).
-    """
-    deploy_dir = os.path.join(DIST_DIR, "deploy")
-    if os.path.exists(deploy_dir):
+def prepare_and_deploy_netlify(setup_dir: Path, setup_filename: str):
+    """Creates deploy folder and uploads to Netlify."""
+    deploy_dir = DIST_DIR / "deploy"
+    if deploy_dir.exists():
         shutil.rmtree(deploy_dir)
-    os.makedirs(deploy_dir)
+    deploy_dir.mkdir(parents=True)
 
     # 1. Copy Setup File
-    src_setup = os.path.join(setup_dir, setup_filename)
-    dst_setup = os.path.join(deploy_dir, setup_filename)
-    shutil.copy(src_setup, dst_setup)
+    shutil.copy2(setup_dir / setup_filename, deploy_dir / setup_filename)
     log_and_print(f"Copied setup to: {deploy_dir}")
 
     # 2. Generate version.json
     version_str = get_version()
-    # Costruiamo l'URL in base al nome dell'installer come nel file originale
     download_url = f"https://projectjob-bot.netlify.app/{setup_filename}"
-
     version_data = {"version": version_str, "url": download_url}
-
-    with open(os.path.join(deploy_dir, "version.json"), "w", encoding="utf-8") as f:
-        json.dump(version_data, f, indent=4)
+    (deploy_dir / "version.json").write_text(json.dumps(version_data, indent=4), encoding="utf-8")
     log_and_print(f"Generated version.json (v{version_str})")
 
     # 3. Generate Landing Page
     generate_index_html(deploy_dir, setup_filename, version_str)
 
-    # 4. Generate netlify.toml to skip post-processing
-    netlify_toml = """[build]
-  publish = "."
+    # 4. Generate netlify.toml
+    netlify_toml = "[build]\n  publish = \".\"\n\n[build.processing]\n  skip_processing = true"
+    (deploy_dir / "netlify.toml").write_text(netlify_toml, encoding="utf-8")
 
-[build.processing]
-  skip_processing = true
-
-[build.processing.html]
-  pretty_urls = false
-
-[build.processing.images]
-  compress = false
-
-[build.processing.js]
-  bundle = false
-  minify = false
-
-[build.processing.css]
-  bundle = false
-  minify = false
-"""
-    with open(os.path.join(deploy_dir, "netlify.toml"), "w", encoding="utf-8") as f:
-        f.write(netlify_toml)
-    log_and_print("Generated netlify.toml (skip processing enabled)")
-
-    # 5. Netlify Credentials & Upload
-    auth_token = get_netlify_token()
-    site_id = NETLIFY_SITE_ID
-
-    log_and_print(f"Ready to deploy to Site ID: {site_id}")
-    log_and_print("Starting automatic upload to Netlify via ZIP deploy...")
-
-    zip_path = os.path.join(DIST_DIR, "deploy.zip")
+    # 5. ZIP and Upload
+    log_and_print("Starting Netlify ZIP deploy...")
+    zip_path = DIST_DIR / "deploy.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-        for root, _dirs, files in os.walk(deploy_dir):
-            for file in files:
-                file_path = os.path.join(root, file)
-                arcname = os.path.relpath(file_path, deploy_dir)
-                zipf.write(file_path, arcname)
-                log_and_print(f"  + Added to zip: {arcname}")
+        for file in deploy_dir.rglob("*"):
+            if file.is_file():
+                zipf.write(file, file.relative_to(deploy_dir))
 
-    if os.path.exists(zip_path):
-        size_mb = os.path.getsize(zip_path) / (1024 * 1024)
-        log_and_print(f"Zip created successfully. Size: {size_mb:.2f} MB")
+    if zip_path.exists():
+        log_and_print(f"Zip created: {zip_path.stat().st_size / 1024 / 1024:.2f} MB")
 
     try:
-        with open(zip_path, "rb") as f:
-            data = f.read()
-
-        url = f"https://api.netlify.com/api/v1/sites/{site_id}/deploys"
-        headers = {"Content-Type": "application/zip", "Authorization": f"Bearer {auth_token}"}
-
+        data = zip_path.read_bytes()
+        url = f"https://api.netlify.com/api/v1/sites/{NETLIFY_SITE_ID}/deploys"
+        headers = {"Content-Type": "application/zip", "Authorization": f"Bearer {get_netlify_token()}"}
         response = requests.post(url, headers=headers, data=data, timeout=600)
 
         if response.status_code == 200:
-            log_and_print("-" * 40)
-            log_and_print("DEPLOY SUCCESSFUL!", "INFO")
+            log_and_print("DEPLOY SUCCESSFUL!")
             log_and_print(f"Live URL: {response.json().get('url')}")
-            log_and_print(f"Admin Console: {response.json().get('admin_url')}")
-            log_and_print("-" * 40)
             return True
         log_and_print(f"Upload Failed: {response.status_code} - {response.text}", "ERROR")
         return False
-
     except Exception as e:
-        log_and_print(f"Error during Netlify upload: {e}", "ERROR")
+        log_and_print(f"Error during upload: {e}", "ERROR")
         return False
     finally:
-        if os.path.exists(zip_path):
-            os.remove(zip_path)
+        if zip_path.exists():
+            zip_path.unlink()
+
+
+def deploy_to_network_share(setup_dir: Path, setup_filename: str):
+    """Deploys to local network share with auto-archiving."""
+    try:
+        from src.core import version as v_mod
+        net_path_str = getattr(v_mod, "NETWORK_UPDATE_PATH", None)
+        if not net_path_str:
+            log_and_print("[WARNING] NETWORK_UPDATE_PATH not defined. Skipping.", "WARNING")
+            return False
+
+        net_path = Path(net_path_str)
+        log_and_print(f"[DEPLOY] Starting network deploy to: {net_path}")
+
+        archive_path = net_path / "archive"
+        archive_path.mkdir(parents=True, exist_ok=True)
+
+        # 1. Archivia i setup precedenti
+        for existing_file in net_path.glob("SyncroJob_Setup_*.exe"):
+            if existing_file.name != setup_filename:
+                dst_old = archive_path / existing_file.name
+                try:
+                    if dst_old.exists():
+                        dst_old.unlink()
+                    shutil.move(str(existing_file), str(dst_old))
+                    log_and_print(f"  Archived: {existing_file.name}")
+                except Exception as e:
+                    log_and_print(f"  [WARNING] Could not archive {existing_file.name}: {e}", "WARNING")
+
+        # 2. Copia il nuovo Setup File
+        shutil.copy2(setup_dir / setup_filename, net_path / setup_filename)
+        log_and_print(f"  Copying latest setup: {setup_filename}")
+
+        # 3. Update version.json
+        version_str = get_version()
+        version_data = {
+            "version": version_str,
+            "url": setup_filename,
+            "date": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "notes": "Latest stable release"
+        }
+        (net_path / "version.json").write_text(json.dumps(version_data, indent=4), encoding="utf-8")
+        log_and_print(f"  [SUCCESS] Network deploy complete (v{version_str}).")
+        return True
+    except Exception as e:
+        log_and_print(f"[ERROR] Network deploy failed: {e}", "ERROR")
+        return False
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Bot TS Build Script")
-    parser.add_argument("--no-deploy", action="store_true", help="Skip Netlify deployment")
-    parser.add_argument("--skip-installer", action="store_true", help="Skip Inno Setup")
-    parser.add_argument(
-        "--debug-no-obfuscate",
-        action="store_true",
-        help="DEBUG ONLY: Skip PyArmor",
-    )
+    parser.add_argument("--no-deploy", action="store_true", help="Skip Netlify")
+    parser.add_argument("--no-network", action="store_true", help="Skip Network")
+    parser.add_argument("--skip-installer", action="store_true", help="Skip Inno")
+    parser.add_argument("--debug-no-obfuscate", action="store_true", help="Skip PyArmor")
     args = parser.parse_args()
 
-    if os.path.exists(LOG_FILE):
+    if LOG_FILE.exists():
         with contextlib.suppress(OSError):
-            os.remove(LOG_FILE)
+            LOG_FILE.unlink()
 
     log_and_print("=" * 60)
     log_and_print(f"  SYNCROJOB BUILD SCRIPT - v{get_version()}")
@@ -602,33 +487,25 @@ def main() -> None:
     is_obfuscated = not args.debug_no_obfuscate
     if is_obfuscated:
         run_pyarmor()
-    else:
-        log_and_print("[WARNING] SKIPPING OBFUSCATION.", "WARNING")
 
     run_pyinstaller(obfuscated=is_obfuscated)
 
     setup_filename = None
     if not args.skip_installer:
         run_inno_setup()
-        version = get_version()
-        setup_filename = f"SyncroJob_Setup_{version}.exe"
+        setup_filename = f"SyncroJob_Setup_{get_version()}.exe"
 
-    if setup_filename and os.path.exists(os.path.join(SETUP_OUTPUT_DIR, setup_filename)) and not args.no_deploy:
-        deploy_success = prepare_and_deploy_netlify(SETUP_OUTPUT_DIR, setup_filename)
-        if deploy_success:
-            log_and_print("=" * 60)
-            log_and_print("BUILD AND PACKAGING COMPLETE SUCCESS!")
-            log_and_print("=" * 60)
-        else:
-            log_and_print("=" * 60)
-            log_and_print("BUILD SUCCESSFUL BUT DEPLOY FAILED!")
-            log_and_print("=" * 60)
-            sys.exit(1)
+    if setup_filename and (SETUP_OUTPUT_DIR / setup_filename).exists():
+        if not args.no_network:
+            deploy_to_network_share(SETUP_OUTPUT_DIR, setup_filename)
+        if not args.no_deploy:
+            if prepare_and_deploy_netlify(SETUP_OUTPUT_DIR, setup_filename):
+                log_and_print("=" * 60 + "\nBUILD AND PACKAGING COMPLETE SUCCESS!\n" + "=" * 60)
+            else:
+                log_and_print("=" * 60 + "\nBUILD SUCCESSFUL BUT DEPLOY FAILED!\n" + "=" * 60)
+                sys.exit(1)
     elif args.no_deploy:
-        log_and_print("[BUILD] Skipping Netlify deployment (--no-deploy)")
-        log_and_print("=" * 60)
         log_and_print("BUILD COMPLETED (NO DEPLOY)!")
-        log_and_print("=" * 60)
     else:
         log_and_print("[WARNING] Installer missing, skipping deploy.", "WARNING")
 

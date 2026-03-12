@@ -4,6 +4,8 @@ Business logic for checking and downloading updates.
 """
 
 import contextlib
+import json
+import logging
 import os
 import subprocess
 import sys
@@ -14,28 +16,34 @@ from pathlib import Path
 import requests
 from PyQt6.QtCore import QThread, pyqtSignal
 
+from .. import version
+
+logger = logging.getLogger(__name__)
+
 # Global state for pending updates
 _pending_installer_path: str | None = None
 
 
-def get_local_setup_path(url: str) -> str:
-    """Determines the local path for the downloaded setup."""
-    local_filename = url.split("/")[-1]
+def get_local_setup_path(url_or_path: str) -> str:
+    """Determines the local path for the downloaded setup, handling both URL and Windows paths."""
+    # Convert to forward slashes for unified parsing
+    clean_path = url_or_path.replace("\\", "/")
+    local_filename = clean_path.split("/")[-1]
     if not local_filename.endswith(".exe"):
         local_filename = "update_setup.exe"
     return os.path.join(tempfile.gettempdir(), local_filename)
 
 
 class DownloadWorker(QThread):
-    """Worker for resilient update downloading with resume support."""
+    """Worker for resilient update downloading or network copying with progress support."""
     progress = pyqtSignal(int, int, float, float)
     finished_download = pyqtSignal(str)
     error = pyqtSignal(str)
     retrying = pyqtSignal(int)
 
-    def __init__(self, url: str):
+    def __init__(self, url_or_path: str):
         super().__init__()
-        self.url = url
+        self.url_or_path = url_or_path
         self._is_cancelled = False
         self.max_retries = 999
         self._ema_speed = 0.0
@@ -44,15 +52,57 @@ class DownloadWorker(QThread):
         self._is_cancelled = True
 
     def run(self):
-        setup_path = get_local_setup_path(self.url)
-        downloaded = 0
-        total_size = 0
-        retries = 0
+        setup_path = get_local_setup_path(self.url_or_path)
+        start_time = time.time()
         self._ema_speed = 0.0
 
         if Path(setup_path).exists() and time.time() - Path(setup_path).stat().st_mtime > 86400:
             with contextlib.suppress(Exception):
                 Path(setup_path).unlink()
+
+        if self.url_or_path.startswith("http"):
+            self._run_http_download(setup_path)
+        else:
+            self._run_network_copy(setup_path, start_time)
+
+    def _run_network_copy(self, setup_path, start_time):
+        """Copies file from network path with progress feedback."""
+        try:
+            src_path = Path(self.url_or_path)
+            if not src_path.exists():
+                raise FileNotFoundError(f"Percorso di rete non trovato: {self.url_or_path}")
+
+            total_size = src_path.stat().st_size
+            downloaded = 0
+
+            with open(self.url_or_path, "rb") as f_src, open(setup_path, "wb") as f_dst:
+                while not self._is_cancelled:
+                    chunk = f_src.read(1024 * 1024) # 1MB chunks
+                    if not chunk:
+                        break
+
+                    f_dst.write(chunk)
+                    downloaded += len(chunk)
+
+                    # Update EMA Speed
+                    elapsed_total = time.time() - start_time
+                    current_speed = downloaded / elapsed_total if elapsed_total > 0 else 0
+                    self._ema_speed = current_speed
+
+                    remaining_bytes = total_size - downloaded
+                    eta = remaining_bytes / self._ema_speed if self._ema_speed > 0 else 0.0
+                    self.progress.emit(downloaded, total_size, self._ema_speed, eta)
+
+            if not self._is_cancelled:
+                self.finished_download.emit(setup_path)
+        except Exception as e:
+            self.error.emit(str(e))
+
+    def _run_http_download(self, setup_path):
+        """Existing HTTP download logic with resume support."""
+        downloaded = 0
+        total_size = 0
+        retries = 0
 
         while not self._is_cancelled:
             try:
@@ -60,7 +110,7 @@ class DownloadWorker(QThread):
                 headers = {'Range': f'bytes={downloaded}-'} if downloaded > 0 else {}
 
                 session = requests.Session()
-                response = session.get(self.url, headers=headers, stream=True, timeout=(10, 30))
+                response = session.get(self.url_or_path, headers=headers, stream=True, timeout=(10, 30))
 
                 if downloaded > 0 and response.status_code != 206:
                     downloaded = 0
@@ -83,41 +133,43 @@ class DownloadWorker(QThread):
                     content_iterator = response.iter_content(chunk_size=131072)
                     last_time = time.time()
 
-                    while True:
-                        if self._is_cancelled:
-                            pass # return irraggiungibile per mypy, saltiamo il blocco
+                    while not self._is_cancelled:
                         try:
                             chunk = next(content_iterator)
-                            if chunk:
-                                current_time = time.time()
-                                elapsed = current_time - last_time
-                                last_time = current_time
-                                chunk_size = len(chunk)
-                                f.write(chunk)
-                                downloaded += chunk_size
+                            if not chunk:
+                                break
 
-                                current_speed = chunk_size / elapsed if elapsed > 0 else 0
-                                alpha = 0.1
-                                if self._ema_speed == 0.0:
-                                    self._ema_speed = current_speed
-                                else:
-                                    self._ema_speed = (alpha * current_speed) + ((1 - alpha) * self._ema_speed)
+                            current_time = time.time()
+                            elapsed = current_time - last_time
+                            last_time = current_time
+                            chunk_size = len(chunk)
+                            f.write(chunk)
+                            downloaded += chunk_size
 
-                                remaining_bytes = total_size - downloaded
-                                eta = remaining_bytes / self._ema_speed if self._ema_speed > 0 else 0.0
-                                self.progress.emit(downloaded, total_size, self._ema_speed, eta)
-                                retries = 0
+                            current_speed = chunk_size / elapsed if elapsed > 0 else 0
+                            alpha = 0.1
+                            if self._ema_speed == 0.0:
+                                self._ema_speed = current_speed
+                            else:
+                                self._ema_speed = (alpha * current_speed) + ((1 - alpha) * self._ema_speed)
+
+                            remaining_bytes = total_size - downloaded
+                            eta = remaining_bytes / self._ema_speed if self._ema_speed > 0 else 0.0
+                            self.progress.emit(downloaded, total_size, self._ema_speed, eta)
+                            retries = 0
                         except StopIteration:
                             break
 
-                if total_size > 0 and downloaded >= total_size:
+                if not self._is_cancelled and total_size > 0 and downloaded >= total_size:
                     self.finished_download.emit(setup_path)
                     return
-                raise requests.exceptions.ConnectionError("Stream interrupted")
+
+                if not self._is_cancelled:
+                    raise requests.exceptions.ConnectionError("Stream interrupted")
 
             except Exception:
                 if self._is_cancelled:
-                    pass # return irraggiungibile per mypy
+                    return  # type: ignore[unreachable]
                 retries += 1
                 self.retrying.emit(retries)
                 time.sleep(min(retries * 2, 10))
@@ -126,30 +178,20 @@ class DownloadWorker(QThread):
 def run_installer_and_exit(setup_path: str):
     """Executes the installer and terminates the process (Fix B603)."""
     if Path(setup_path).exists():
-        # Using list of arguments and shell=False (Fix B603)
         subprocess.Popen([setup_path, "/SILENT", "/CLOSEAPPLICATIONS", "/RESTARTAPPLICATIONS", "/FORCESTART"])
         sys.exit(0)
 
 
 def run_pending_installer():
-    """Executes the installer stored at app closure in a separate process (Fix B602)."""
+    """Executes the installer stored at app closure in a separate process."""
     global _pending_installer_path
     if _pending_installer_path and Path(_pending_installer_path).exists():
         flags = 0x00000008 if os.name == "nt" else 0
-
-        # FIX B602: Avoid shell=True. Use cmd /c to delay execution.
-        # timeout /t 3 is safer than ping loop.
         args = [
             "cmd.exe", "/c",
             f"timeout /t 3 /nobreak > NUL && \"{_pending_installer_path}\" /SILENT /FORCESTART"
         ]
-
-        subprocess.Popen(
-            args,
-            shell=False,
-            creationflags=flags,
-            close_fds=True
-        )
+        subprocess.Popen(args, shell=False, creationflags=flags, close_fds=True)
 
 
 def set_pending_installer(path: str):
@@ -162,3 +204,33 @@ def has_pending_update() -> bool:
     """Returns True if there is an update ready to be installed."""
     global _pending_installer_path
     return bool(_pending_installer_path and Path(_pending_installer_path).exists())
+
+
+def get_web_update_info():
+    """Fetches version info from Web."""
+    try:
+        response = requests.get(version.UPDATE_URL, timeout=5)
+        if response.status_code == 200:
+            return response.json()
+    except Exception as e:
+        logger.debug(f"Web update check failed: {e}")
+    return None
+
+
+def get_network_update_info():
+    """Fetches version info from network share."""
+    try:
+        net_path = getattr(version, 'NETWORK_UPDATE_PATH', None)
+        if not net_path:
+            return None
+
+        json_path = Path(net_path) / "version.json"
+        if json_path.exists():
+            with json_path.open("r", encoding='utf-8') as f:
+                data = json.load(f)
+                if data.get("url") and not data["url"].startswith("http") and not data["url"].startswith("\\\\"):
+                    data["url"] = str(Path(net_path) / data["url"])
+                return data
+    except Exception as e:
+        logger.debug(f"Network update check failed: {e}")
+    return None

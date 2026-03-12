@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "syncrojob"
-version = "1.30.0"
+version = "1.31.0"
 description = "ISAB TimeSheet application"
 authors = ["Giancarlo Allegretti"]
 packages = [
@@ -271,7 +271,7 @@ disallow_untyped_decorators = false
 
 [tool.deptry]
 known_first_party = ["src"]
-exclude = [".venv", "build", "dist", "temp", "admin", "scripts", "site", "docs", "graveyard", "mutants", "aggiornamenti"]
+exclude = [".venv", "build", "dist", "temp", "admin", "scripts", "site", "docs", "graveyard", "mutants"]
 
 [tool.deptry.per_rule_ignores]
 # DEP001 (imported but not declared): nessuna eccezione necessaria al momento
@@ -324,7 +324,7 @@ exclude = ["src/bots/safework/pdl/search_bot.py"]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.30.0"
+version = "1.31.0"
 tag_format = "v$version"
 version_files = [
     "src/core/version.py:__version__",

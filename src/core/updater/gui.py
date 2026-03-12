@@ -3,7 +3,10 @@ SyncroJob - Updater GUI
 UI components for update notifications and progress.
 """
 
+import contextlib
+import logging
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, cast
 
@@ -14,7 +17,16 @@ from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QMessageBox, QProgressBar, QVBoxLayout, QWidget
 
 from .. import version
-from .engine import DownloadWorker, get_local_setup_path, run_installer_and_exit, set_pending_installer
+from .engine import (
+    DownloadWorker,
+    get_local_setup_path,
+    get_network_update_info,
+    get_web_update_info,
+    run_installer_and_exit,
+    set_pending_installer,
+)
+
+logger = logging.getLogger(__name__)
 
 # Store active worker to prevent garbage collection
 _active_update_worker = None
@@ -22,19 +34,23 @@ _active_update_dialog = None
 
 
 class UpdateProgressDialog(QDialog):
-    """Fallback progress dialog for update downloads."""
-    def __init__(self, url: str, parent: QWidget | None = None):
+    """Progress dialog for update downloads or network transfers."""
+    def __init__(self, url_or_path: str, parent: QWidget | None = None):
         super().__init__(parent)
-        self.setWindowTitle("Aggiornamento Resiliente")
+        self.setWindowTitle("Aggiornamento SyncroJob")
         self.setFixedSize(450, 200)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint)
         self.setup_ui()
-        self.worker = DownloadWorker(url)
+        self.worker = DownloadWorker(url_or_path)
         self.worker.progress.connect(self.update_progress)
         self.worker.finished_download.connect(self.on_finished)
         self.worker.error.connect(self.on_error)
         self.worker.retrying.connect(self.on_retrying)
+
+        # Adjust label based on source
+        if not url_or_path.startswith("http"):
+            self.lbl_status.setText("Avvio trasferimento rete...")
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
@@ -68,15 +84,16 @@ class UpdateProgressDialog(QDialog):
             mb_down = downloaded / (1024 * 1024)
             mb_total = total / (1024 * 1024)
             speed_mb = speed / (1024 * 1024)
-            self.lbl_status.setText(f"Scaricamento: {int(percent)}% completato")
+            action = "Scaricamento" if self.worker.url_or_path.startswith("http") else "Trasferimento"
+            self.lbl_status.setText(f"{action}: {int(percent)}% completato")
             self.lbl_details.setText(f"{mb_down:.1f} MB di {mb_total:.1f} MB ({speed_mb:.2f} MB/s) - ETA: {int(eta)}s")
         else:
             self.pb.setMaximum(0)
-            self.lbl_status.setText("Scaricamento in corso...")
+            self.lbl_status.setText("Operazione in corso...")
 
     @pyqtSlot(int)
     def on_retrying(self, retry_count):
-        self.lbl_retry.setText(f"⚠️ Connessione persa. Tentativo di ripresa #{retry_count}...")
+        self.lbl_retry.setText(f"⚠️ Connessione instabile. Tentativo #{retry_count}...")
 
     @pyqtSlot(str)
     def on_finished(self, setup_path):
@@ -86,7 +103,7 @@ class UpdateProgressDialog(QDialog):
     @pyqtSlot(str)
     def on_error(self, err_msg):
         self.close()
-        QMessageBox.critical(cast("QWidget", self.parent()), "Errore", f"Download interrotto: {err_msg}")
+        QMessageBox.critical(cast("QWidget", self.parent()), "Errore", f"Trasferimento interrotto: {err_msg}")
 
 
 def show_install_prompt(setup_path: str, parent: QWidget | None = None):
@@ -128,72 +145,82 @@ def check_for_updates(
     silent: bool = True,
     callback: Callable[[str, str, str, bool, bool], Any] | None = None,
 ) -> None:
-    """Checks for new version availability."""
-    url = version.UPDATE_URL
-    if not url or "example.com" in url:
+    """Checks for new version availability from Web and Network share in parallel."""
+    update_sources = []
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = {
+            executor.submit(get_web_update_info): "Web",
+            executor.submit(get_network_update_info): "Network"
+        }
+        for future in as_completed(futures):
+            info = future.result()
+            if info and info.get("version"):
+                update_sources.append(info)
+
+    if not update_sources:
+        if not silent:
+            QMessageBox.information(parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})")
         return
 
-    try:
-        response = requests.get(url, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            remote_ver_str = data.get("version")
-            download_url = data.get("url")
-            changelog = data.get("changelog", "")
+    # Find the newest version among available sources
+    latest_update = max(update_sources, key=lambda x: pkg_version.parse(x["version"]))
+    remote_ver_str = latest_update["version"]
+    download_url = latest_update["url"]
+    changelog = latest_update.get("changelog", "")
 
-            if not remote_ver_str or not download_url:
-                return
+    if pkg_version.parse(remote_ver_str) > pkg_version.parse(version.__version__):
+        setup_path = get_local_setup_path(download_url)
 
-            if pkg_version.parse(remote_ver_str) > pkg_version.parse(version.__version__):
-                setup_path = get_local_setup_path(download_url)
+        # Verify if setup is already complete locally
+        is_complete = False
+        remote_size = 0
+        if download_url.startswith("http"):
+            try:
+                head_resp = requests.head(download_url, timeout=5)
+                remote_size = int(head_resp.headers.get("content-length", 0))
+            except Exception as e:
+                logger.debug(f"Failed to get remote size: {e}")
+        else:
+            with contextlib.suppress(Exception):
+                remote_size = Path(download_url).stat().st_size
 
-                # HEAD request for remote size
-                remote_size = 0
-                try:
-                    head_resp = requests.head(download_url, timeout=5)
-                    remote_size = int(head_resp.headers.get("content-length", 0))
-                except Exception:  # noqa: S110
-                    pass
+        local_size = Path(setup_path).stat().st_size if Path(setup_path).exists() else 0
+        is_partial = 0 < local_size < remote_size
+        is_complete = remote_size > 0 and local_size >= remote_size
 
-                local_size = Path(setup_path).stat().st_size if Path(setup_path).exists() else 0
-                is_partial = 0 < local_size < remote_size
-                is_complete = remote_size > 0 and local_size >= remote_size
+        if callback:
+            callback(remote_ver_str, download_url, changelog, is_partial, is_complete)
+            return
 
-                if callback:
-                    callback(remote_ver_str, download_url, changelog, is_partial, is_complete)
-                    return
-
-                if is_complete:
-                    show_install_prompt(setup_path, parent)
-                else:
-                    msg = _build_update_msg(remote_ver_str, changelog, is_partial, local_size, remote_size)
-                    reply = QMessageBox.question(
-                        parent, "🔄 Aggiornamento", msg,
-                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-                    )
-                    if reply == QMessageBox.StandardButton.Yes:
-                        perform_auto_update(download_url, parent)
-            elif not silent:
-                QMessageBox.information(parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})")
-    except Exception as e:
-        if not silent:
-            QMessageBox.warning(parent, "Errore Aggiornamento", str(e))
+        if is_complete:
+            show_install_prompt(setup_path, parent)
+        else:
+            msg = _build_update_msg(remote_ver_str, changelog, is_partial, local_size, remote_size)
+            reply = QMessageBox.question(
+                parent, "🔄 Aggiornamento", msg,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                perform_auto_update(download_url, parent)
+    elif not silent:
+        QMessageBox.information(parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})")
 
 
 def _build_update_msg(ver, changelog, partial, local_s, remote_s) -> str:
     if partial:
         percent = (local_s / remote_s) * 100
-        return f"Rilevato download parziale ({int(percent)}%) della versione {ver}.\n\nVuoi completare lo scaricamento ora?"
+        return f"Rilevato trasferimento parziale ({int(percent)}%) della versione {ver}.\n\nVuoi completare ora?"
 
     msg = f"Nuova versione {ver} disponibile!\n"
     if changelog:
         msg += f"\nNovità:\n{changelog}\n"
-    msg += "\nVuoi scaricarla ora?"
+    msg += "\nVuoi aggiornare ora?"
     return msg
 
 
 def perform_auto_update(download_url: str, parent: QWidget | None = None):
-    """Starts asynchronous download in background."""
+    """Starts asynchronous download/transfer in background."""
     if parent is None:
         for widget in QApplication.topLevelWidgets():
             if widget.isWindow() and not widget.parent():
