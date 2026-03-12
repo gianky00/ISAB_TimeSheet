@@ -6,7 +6,7 @@ Integra segnali per l'aggiornamento dinamico delle statistiche e della dashboard
 """
 
 import traceback
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QDate, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
@@ -16,6 +16,9 @@ from src.gui.panels.base import BaseBotPanel, BotWorker
 from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import BotParametersWidget
 from src.gui.widgets.toast import ToastManager
+
+if TYPE_CHECKING:
+    from src.bots.base.base_bot import BaseBot
 
 
 class TimbratureBotPanel(BaseBotPanel):
@@ -51,7 +54,7 @@ class TimbratureBotPanel(BaseBotPanel):
         self._setup_content()
         QTimer.singleShot(10, self._safe_load_data)
 
-    def get_bot_class(self) -> type:
+    def get_bot_class(self) -> type["BaseBot"]:
         """Restituisce la classe bot specifica per la gestione delle timbrature."""
         from src.bots.portale_fornitori.timbrature.bot import TimbratureBot
 

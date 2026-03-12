@@ -3,7 +3,7 @@ SyncroJob - Ricerca PDL Panel
 Pannello per il bot Ricerca PDL (SafeWork).
 """
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -22,6 +22,9 @@ from src.gui.widgets.core_widgets import (
     StandardCheckBox,
 )
 from src.gui.widgets.toast import ToastManager
+
+if TYPE_CHECKING:
+    from src.bots.base.base_bot import BaseBot
 
 
 class RicercaPDLPanel(BaseBotPanel):
@@ -47,7 +50,7 @@ class RicercaPDLPanel(BaseBotPanel):
         self._setup_content()
         QTimer.singleShot(10, self._load_saved_data)
 
-    def get_bot_class(self):
+    def get_bot_class(self) -> type["BaseBot"]:
         """Restituisce la classe SafeWorkPDLSearchBot associata."""
         from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
 

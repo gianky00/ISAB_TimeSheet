@@ -5,9 +5,8 @@ Gestisce l'interfaccia utente per il bot di prenotazione dei Badge Provvisori (B
 sul portale fornitori ISAB. Consente di inserire una lista di BP, configurare
 il fornitore e l'intervallo temporale, e avviare l'automazione.
 """
-
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
@@ -21,6 +20,9 @@ from src.gui.widgets import BotParametersWidget, EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.safework.status_list import StatusListWidget
 from src.utils.helpers import get_asset_path
+
+if TYPE_CHECKING:
+    from src.bots.base.base_bot import BaseBot
 
 
 class PrenotaBPPanel(BaseBotPanel):
@@ -46,7 +48,7 @@ class PrenotaBPPanel(BaseBotPanel):
         # Caricamento dati differito per non rallentare l'avvio GUI
         QTimer.singleShot(10, self._safe_load_data)
 
-    def get_bot_class(self):
+    def get_bot_class(self) -> type["BaseBot"]:
         """
         Restituisce la classe del bot associata al pannello.
 

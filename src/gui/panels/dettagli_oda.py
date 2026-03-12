@@ -8,7 +8,7 @@ il download automatico dei documenti dal portale fornitori.
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QDate, QTimer
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
@@ -23,6 +23,9 @@ from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.safework.status_list import StatusListWidget
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path
+
+if TYPE_CHECKING:
+    from src.bots.base.base_bot import BaseBot
 
 
 class DettagliOdAPanel(BaseBotPanel):
@@ -48,7 +51,7 @@ class DettagliOdAPanel(BaseBotPanel):
         self._setup_content()
         QTimer.singleShot(10, self._safe_load_data)
 
-    def get_bot_class(self) -> type:
+    def get_bot_class(self) -> type["BaseBot"]:
         """Restituisce la classe bot specifica per lo scarico dei dettagli OdA."""
         from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
 

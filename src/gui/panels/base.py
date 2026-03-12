@@ -6,9 +6,12 @@ Classi base e worker per i pannelli dei bot.
 import threading
 import traceback
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QThread, QTimer, pyqtSignal
+
+if TYPE_CHECKING:
+    from src.bots.base.base_bot import BaseBot
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -145,8 +148,9 @@ class BaseBotPanel(QWidget):
         # Usiamo un timer per assicurarci che la sottoclasse abbia completato l'init
         QTimer.singleShot(50, self._init_ghost_timeline)
 
-    def get_bot_class(self):
+    def get_bot_class(self) -> type["BaseBot"] | None:
         """Restituisce la classe del bot associata al pannello. Da implementare nelle sottoclassi."""
+        return None
 
     def _init_ghost_timeline(self):
         """Inizializza gli step della timeline utilizzando i metadati della classe del bot."""

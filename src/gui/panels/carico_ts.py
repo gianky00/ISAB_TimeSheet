@@ -4,7 +4,7 @@ Pannello per il bot Carico TS.
 """
 
 import traceback
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
@@ -18,6 +18,9 @@ from src.gui.widgets import EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path
+
+if TYPE_CHECKING:
+    from src.bots.base.base_bot import BaseBot
 
 
 class CaricoTSPanel(BaseBotPanel):
@@ -43,7 +46,7 @@ class CaricoTSPanel(BaseBotPanel):
         # Defer data loading
         QTimer.singleShot(10, self._safe_load_data)
 
-    def get_bot_class(self):
+    def get_bot_class(self) -> type["BaseBot"]:
         """Restituisce la classe CaricoTSBot associata."""
         from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot
 
