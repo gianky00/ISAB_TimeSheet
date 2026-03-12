@@ -216,13 +216,13 @@ def main():
 
     if not phase1_success[0]:
         splash.close()
-        err_text = phase1_error_msg[0] if phase1_error_msg[0] else "Inizializzazione fallita"
+        err_text = phase1_error_msg[0] or "Inizializzazione fallita"
         ConfirmationDialog.show_error(None, "Errore Avvio", err_text)
         sys.exit(1)
 
     # Visualizzazione Avvisi Accumulati (Non-Bloccanti ma importanti per l'utente)
     for severity, message in AppInitializer.get_alerts():
-        if severity == "CRITICAL" or severity == "ERROR":
+        if severity in ("CRITICAL", "ERROR"):
             ConfirmationDialog.show_error(splash, "Allerta Licenza", message, is_rich_text=True)
         elif severity == "WARNING":
             ConfirmationDialog.show_warning(splash, "Avviso Licenza", message, is_rich_text=True)

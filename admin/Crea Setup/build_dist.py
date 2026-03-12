@@ -30,6 +30,10 @@ OBF_DIR = BUILD_DIR / "obf"
 ASSETS_DIR = ROOT_DIR / "assets"
 SETUP_OUTPUT_DIR = SCRIPT_DIR / "Setup"
 
+# Add ROOT_DIR to sys.path to allow importing src
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 # Log File
 LOG_FILE = ROOT_DIR / "build_log.txt"
 
