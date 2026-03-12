@@ -48,8 +48,8 @@ class ScaricaTSBot(BaseBot):
     def get_columns() -> list[dict[str, Any]]:
         """Restituisce la configurazione delle colonne per l'input dati."""
         return [
-            {"name": "Numero OdA", "type": "text"},
-            {"name": "Posizione OdA", "type": "text"},
+            {"name": "numero_oda", "label": "Numero OdA", "type": "text"},
+            {"name": "posizione_oda", "label": "Posizione OdA", "type": "text"},
         ]
 
     @property

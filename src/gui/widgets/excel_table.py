@@ -205,7 +205,7 @@ class EditableDataTable(QWidget):
 
         self.table = ExcelTableWidget()
         self.table.setColumnCount(len(self.columns))
-        self.table.setHorizontalHeaderLabels([str(c["name"]) for c in self.columns])
+        self.table.setHorizontalHeaderLabels([str(c.get("label", c["name"])) for c in self.columns])
 
         h = self.table.horizontalHeader()
         if h:

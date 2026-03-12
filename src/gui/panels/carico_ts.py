@@ -82,27 +82,7 @@ class CaricoTSPanel(BaseBotPanel):
         params_layout.addLayout(table_toolbar)
 
         # Tabella con tutte le colonne del database Carico TS
-        self.data_table = EditableDataTable(
-            [
-                {"name": "Numero OdA", "type": "text"},
-                {"name": "Posizione OdA", "type": "text"},
-                {"name": "Codice Fiscale", "type": "text"},
-                {"name": "Ingresso", "type": "text"},
-                {"name": "Uscita", "type": "text"},
-                {"name": "Tipo Prestazione", "type": "text"},
-                {"name": "C", "type": "text"},
-                {"name": "M", "type": "text"},
-                {"name": "Str D", "type": "text"},
-                {"name": "Str N", "type": "text"},
-                {"name": "Str F D", "type": "text"},
-                {"name": "Str F N", "type": "text"},
-                {"name": "Sq", "type": "text"},
-                {"name": "Nota D", "type": "text"},
-                {"name": "Nota S", "type": "text"},
-                {"name": "F S", "type": "text"},
-                {"name": "G T", "type": "text"},
-            ]
-        )
+        self.data_table = EditableDataTable(self.get_bot_class().get_columns())
         self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
         params_layout.addWidget(self.data_table)

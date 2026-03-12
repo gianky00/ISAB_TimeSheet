@@ -102,10 +102,10 @@ class ScaricaTSPanel(BaseBotPanel):
         table_h = QHBoxLayout()
         table_h.setSpacing(10)
 
-        cols: list[dict[str, Any]] = [
-            {"name": "Numero OdA", "type": "text"},
-            {"name": "ESITO", "type": "text", "default": "", "readonly": True},
-        ]
+        # Recupera le colonne dal bot e aggiunge la colonna ESITO
+        cols = list(self.get_bot_class().get_columns())
+        cols.append({"name": "esito", "label": "ESITO", "type": "text", "default": "", "readonly": True})
+
         self.data_table = EditableDataTable(cols)
         self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._update_status_list)
@@ -146,10 +146,16 @@ class ScaricaTSPanel(BaseBotPanel):
         """
         self.status_list.update_status(step_idx, success)
 
-        # Aggiorna la colonna "ESITO" nella tabella (indice colonna = 1)
-        # Usiamo emit_signal=False per evitare di resettare i pallini appena colorati
-        esito_text = "Completato" if success else f"Errore: {message}" if message else "Errore"
-        self.data_table.update_cell(step_idx, 1, esito_text, emit_signal=False)
+        # Trova dinamicamente l'indice della colonna 'esito'
+        col_idx = -1
+        for i, col in enumerate(self.data_table.columns):
+            if col["name"] == "esito":
+                col_idx = i
+                break
+
+        if col_idx != -1:
+            esito_text = "Completato" if success else f"Errore: {message}" if message else "Errore"
+            self.data_table.update_cell(step_idx, col_idx, esito_text, emit_signal=False)
 
     def _open_settings(self):
         """Apre il dialogo delle impostazioni globali."""

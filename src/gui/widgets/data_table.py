@@ -229,7 +229,7 @@ class DataTable(QWidget):
 
         self._table = ExcelTableWidget()
         self._table.setColumnCount(len(self._columns))
-        self._table.setHorizontalHeaderLabels([str(c["name"]) for c in self._columns])
+        self._table.setHorizontalHeaderLabels([str(c.get("label", c["name"])) for c in self._columns])
         # ExcelTableWidget handles SelectionBehavior and SelectionMode already
         self._table.setAlternatingRowColors(True)
         self._table.setSortingEnabled(True)
@@ -273,7 +273,8 @@ class DataTable(QWidget):
             row_color = self._get_row_color(status)
 
             for col_idx, col in enumerate(self._columns):
-                key = col.get("key", str(col["name"]).lower())
+                # Usa 'name' come chiave dati (standard programmatico)
+                key = col["name"]
                 value = str(row_data.get(key, ""))
 
                 item = SortableTableWidgetItem(value)
@@ -343,7 +344,7 @@ class DataTable(QWidget):
             row_dict: dict[str, Any] = {}
             for c, col in enumerate(self._columns):
                 item = self._table.item(r, c)
-                key = col.get("key", str(col["name"]).lower())
+                key = col["name"]
                 row_dict[key] = item.text() if item else ""
             selected_data.append(row_dict)
 

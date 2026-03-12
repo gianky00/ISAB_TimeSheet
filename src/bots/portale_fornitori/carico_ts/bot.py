@@ -36,24 +36,23 @@ class CaricoTSBot(BaseBot):
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
         """Definisce le colonne richieste per l'input dei dati."""
-        # Full list from original code
         return [
-            {"name": "Numero OdA", "type": "text"},
-            {"name": "Codice Fiscale", "type": "text"},
-            {"name": "Cognome", "type": "text"},
-            {"name": "Nome", "type": "text"},
-            {"name": "Mese", "type": "text"},
-            {"name": "Anno", "type": "text"},
-            {"name": "G 1", "type": "text"},
-            {"name": "G 2", "type": "text"},
-            {"name": "G 3", "type": "text"},
-            {"name": "G 4", "type": "text"},
-            {"name": "G 5", "type": "text"},
-            {"name": "G 6", "type": "text"},
-            {"name": "G 7", "type": "text"},
-            {"name": "G 8", "type": "text"},
-            {"name": "G 9", "type": "text"},
-            {"name": "G T", "type": "text"},
+            {"name": "numero_oda", "label": "Numero OdA", "type": "text"},
+            {"name": "codice_fiscale", "label": "Codice Fiscale", "type": "text"},
+            {"name": "cognome", "label": "Cognome", "type": "text"},
+            {"name": "nome", "label": "Nome", "type": "text"},
+            {"name": "mese", "label": "Mese", "type": "text"},
+            {"name": "anno", "label": "Anno", "type": "text"},
+            {"name": "g1", "label": "G 1", "type": "text"},
+            {"name": "g2", "label": "G 2", "type": "text"},
+            {"name": "g3", "label": "G 3", "type": "text"},
+            {"name": "g4", "label": "G 4", "type": "text"},
+            {"name": "g5", "label": "G 5", "type": "text"},
+            {"name": "g6", "label": "G 6", "type": "text"},
+            {"name": "g7", "label": "G 7", "type": "text"},
+            {"name": "g8", "label": "G 8", "type": "text"},
+            {"name": "g9", "label": "G 9", "type": "text"},
+            {"name": "gt", "label": "G T", "type": "text"},
         ]
 
     @property

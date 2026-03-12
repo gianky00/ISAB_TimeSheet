@@ -95,16 +95,19 @@ class DettagliOdAPanel(BaseBotPanel):
         table_h = QHBoxLayout()
         table_h.setSpacing(10)
 
-        self.cols: list[dict[str, Any]] = [
-            {"name": "Numero OdA", "type": "text"},
-            {
-                "name": "Numero Contratto",
-                "type": "combo",
-                "options": config.get("contracts", []),
-                "default": "",  # Forza vuoto per nuove righe all'avvio
-            },
-            {"name": "ESITO", "type": "text", "default": "", "readonly": True},
-        ]
+        # Recupera le colonne dal bot
+        cols = list(self.get_bot_class().get_columns())
+
+        # Inietta le opzioni per la colonna contratto se presente
+        for col in cols:
+            if col["name"] == "numero_contratto":
+                col["options"] = config.get("contracts", [])
+                col["default"] = ""
+
+        # Aggiunge la colonna ESITO
+        cols.append({"name": "esito", "label": "ESITO", "type": "text", "default": "", "readonly": True})
+        self.cols = cols
+
         self.data_table = EditableDataTable(self.cols)
         self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._update_status_list)
@@ -145,10 +148,16 @@ class DettagliOdAPanel(BaseBotPanel):
         """
         self.status_list.update_status(step_idx, success)
 
-        # Aggiorna la colonna "ESITO" nella tabella (indice colonna = 2)
-        # Usiamo emit_signal=False per evitare di resettare i pallini appena colorati
-        esito_text = "Completato" if success else f"Errore: {message}" if message else "Errore"
-        self.data_table.update_cell(step_idx, 2, esito_text, emit_signal=False)
+        # Trova dinamicamente l'indice della colonna 'esito'
+        col_idx = -1
+        for i, col in enumerate(self.data_table.columns):
+            if col["name"] == "esito":
+                col_idx = i
+                break
+
+        if col_idx != -1:
+            esito_text = "Completato" if success else f"Errore: {message}" if message else "Errore"
+            self.data_table.update_cell(step_idx, col_idx, esito_text, emit_signal=False)
 
     def _open_settings(self) -> None:
         """Comunica alla finestra principale di mostrare la pagina delle impostazioni."""
@@ -164,10 +173,10 @@ class DettagliOdAPanel(BaseBotPanel):
         """Aggiorna dinamicamente i numeri di contratto selezionabili nella tabella."""
         contracts = config_manager.load_config().get("contracts", [])
 
-        # Trova l'indice della colonna "Numero Contratto"
+        # Trova l'indice della colonna "numero_contratto"
         contract_col_idx = -1
         for i, col in enumerate(self.cols):
-            if col["name"] == "Numero Contratto":
+            if col["name"] == "numero_contratto":
                 contract_col_idx = i
                 break
 

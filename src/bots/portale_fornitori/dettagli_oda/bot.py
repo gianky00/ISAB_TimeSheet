@@ -38,8 +38,8 @@ class DettagliOdABot(BaseBot):
     def get_columns() -> list[dict[str, Any]]:
         """Definisce le colonne richieste per l'input dei dati."""
         return [
-            {"name": "Numero OdA", "type": "text"},
-            {"name": "Numero Contratto", "type": "combo", "options": []},
+            {"name": "numero_oda", "label": "Numero OdA", "type": "text"},
+            {"name": "numero_contratto", "label": "Numero Contratto", "type": "combo", "options": []},
         ]
 
     @property

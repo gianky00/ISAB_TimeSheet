@@ -57,7 +57,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
         """Definisce le colonne richieste per l'input dati del bot."""
-        return [{"name": "Numero PDL", "type": "text"}]
+        return [{"name": "numero_pdl", "label": "Numero PDL", "type": "text"}]
 
     @property
     def name(self) -> str:
@@ -76,7 +76,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         found_pdl = False
         for _i, item in enumerate(rows):
-            if item.get("pdl_number") or item.get("numero_pdl"):
+            if item.get("numero_pdl"):
                 found_pdl = True
                 break
 
@@ -100,7 +100,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             pdl_raw = "N/A"
             try:
                 self._check_stop()
-                val = item.get("pdl_number") or item.get("numero_pdl")
+                val = item.get("numero_pdl")
                 pdl_raw = str(val) if val else "N/A"
                 if not pdl_raw:
                     continue

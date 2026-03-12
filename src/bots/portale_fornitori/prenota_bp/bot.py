@@ -28,8 +28,8 @@ class PrenotaBPBot(BaseBot):
     def get_columns() -> list[dict[str, Any]]:
         """Definisce le colonne richieste per l'input dei dati (Numero BP, Note)."""
         return [
-            {"name": "Numero BP", "type": "text"},
-            {"name": "Note di Ritiro", "type": "text"},
+            {"name": "numero_bp", "label": "Numero BP", "type": "text"},
+            {"name": "note_ritiro", "label": "Note di Ritiro", "type": "text"},
         ]
 
     @property
@@ -125,8 +125,8 @@ class PrenotaBPBot(BaseBot):
 
     def _process_single_bp(self, page: PrenotaBPPage, index: int, row: dict[str, Any]) -> bool:
         """Elabora un singolo buono prelievo."""
-        num_bp = self._get_row_value(row, "Numero BP").strip()
-        note = self._get_row_value(row, "Note di Ritiro").strip()
+        num_bp = str(row.get("numero_bp", "")).strip()
+        note = str(row.get("note_ritiro", "")).strip()
 
         if not num_bp:
             self.log(f"Riga {index + 1}: Numero BP mancante, salto.")
