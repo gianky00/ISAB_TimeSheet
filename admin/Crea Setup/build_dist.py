@@ -351,6 +351,7 @@ def run_nuitka(obfuscated=False):
         "--enable-plugin=pyqt6",
         "--windows-disable-console",
         "--follow-imports",
+        "--assume-yes-for-downloads",
         "--output-dir=" + str(DIST_DIR),
         "--include-data-dir=" + str(src_path) + "=src",
         "--include-data-dir=" + str(ROOT_DIR / "assets") + "=assets",
