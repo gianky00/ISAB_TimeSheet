@@ -172,11 +172,9 @@ class ContabilitaPanel(QWidget):
 
         layout.addWidget(self.toolbar_card)
 
-        # --- TABS ---
         self.main_tabs = AnimatedTabWidget()
         self.main_tabs.currentChanged.connect(self._on_main_tab_changed)
 
-        # --- TABS ---
         self.year_tabs_widget = AnimatedTabWidget()
         self.year_tabs_widget.setTabPosition(QTabWidget.TabPosition.North)
         self.year_tabs_widget.currentChanged.connect(self._on_tab_changed)
@@ -195,30 +193,50 @@ class ContabilitaPanel(QWidget):
             "Giornaliere",
         )
 
-        self.attivita_widget = AttivitaProgrammateTab()
-        self.main_tabs.addTab(
-            self.attivita_widget,
-            get_colored_icon(get_asset_path(Icons.CALENDAR), COLORS["text_muted"]),
-            "Attività Programmate",
-        )
-
-        self.certificati_widget = CertificatiCampioneTab()
-        self.main_tabs.addTab(
-            self.certificati_widget,
-            get_colored_icon(get_asset_path(Icons.FILE_TEXT), COLORS["text_muted"]),
-            "Certificati Campione",
-        )
-
-        from src.gui.panels.contabilita_kpi import ContabilitaKPIPanel
-
-        self.kpi_panel = ContabilitaKPIPanel()
-        self.main_tabs.addTab(
-            self.kpi_panel,
-            get_colored_icon(get_asset_path(Icons.BAR_CHART), COLORS["text_muted"]),
-            "Analisi KPI",
-        )
+        # Coda per inizializzazione differita tab pesanti
+        self._init_queue = []
+        self._tabs_initialized = False
+        self.attivita_widget = None
+        self.certificati_widget = None
+        self.kpi_panel = None
 
         layout.addWidget(self.main_tabs)
+        QTimer.singleShot(500, self._start_granular_init)
+
+    def _start_granular_init(self) -> None:
+        """Inizia la creazione dei tab pesanti in background."""
+        from src.gui.widgets.contabilita.attivita_tab import AttivitaProgrammateTab
+        from src.gui.widgets.contabilita.certificati_tab import CertificatiCampioneTab
+        from src.gui.panels.contabilita_kpi import ContabilitaKPIPanel
+
+        self._init_queue = [
+            (AttivitaProgrammateTab, Icons.CALENDAR, "Attività Programmate", "attivita_widget"),
+            (CertificatiCampioneTab, Icons.FILE_TEXT, "Certificati Campione", "certificati_widget"),
+            (ContabilitaKPIPanel, Icons.BAR_CHART, "Analisi KPI", "kpi_panel"),
+        ]
+        self._process_init_queue()
+
+    def _process_init_queue(self) -> None:
+        """Crea un tab pesante alla volta, permettendo allo splash screen di respirare."""
+        if not self._init_queue:
+            self._tabs_initialized = True
+            self.refresh_tabs()
+            return
+
+        cls, icon, label, attr_name = self._init_queue.pop(0)
+        try:
+            widget = cls()
+            setattr(self, attr_name, widget)
+            self.main_tabs.addTab(
+                widget,
+                get_colored_icon(get_asset_path(icon), COLORS["text_muted"]),
+                label
+            )
+        except Exception as e:
+            print(f"Errore caricamento tab contabilità {label}: {e}")
+
+        # Passa al prossimo tab nel prossimo frame UI
+        QTimer.singleShot(10, self._process_init_queue)
 
     def _on_search_changed(self, text: str) -> None:
         """Inoltra la stringa di ricerca al widget o al tab attualmente attivo."""

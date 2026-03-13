@@ -74,12 +74,77 @@ class DashboardPanel(QWidget):
 
         self.main_layout.addWidget(self.main_container)
 
-        self._setup_ui()
+        # Coda per inizializzazione granulare dei widget
+        self._init_queue = []
+        self._widgets_initialized = False
+        
+        QTimer.singleShot(50, self._start_granular_init)
 
         # Refresh Timer (Live Dashboard)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refresh_live_data)
         self.timer.start(30000)  # 30 seconds
+
+    def _start_granular_init(self) -> None:
+        """Configura la coda di creazione dei widget dashboard."""
+        self._init_queue = [
+            ("_init_multi_window", "Stato Finestre"),
+            ("_init_context_row", "Indicatori di Contesto"),
+            ("_init_actions_row", "Azioni Rapide"),
+            ("_init_activity_feed", "Feed Attività"),
+        ]
+        self._process_init_queue()
+
+    def _process_init_queue(self) -> None:
+        """Costruisce un blocco della dashboard alla volta."""
+        if not self._init_queue:
+            self._widgets_initialized = True
+            self.refresh_live_data()
+            return
+
+        method_name, label = self._init_queue.pop(0)
+        try:
+            getattr(self, method_name)()
+        except Exception as e:
+            print(f"Errore caricamento widget dashboard {label}: {e}")
+
+        QTimer.singleShot(10, self._process_init_queue)
+
+    def _init_multi_window(self):
+        self.multi_window_card = MultiWindowStatusWidget()
+        self.content_layout.addWidget(self.multi_window_card)
+
+    def _init_context_row(self):
+        context_row = QHBoxLayout()
+        context_row.setSpacing(20)
+        self.weather_widget = WeatherWidget()
+        self.roi_widget = BotSavingsWidget()
+        self.card_pdl = PDLStatsWidget()
+        self.card_pdl.area_selected.connect(self._handle_pdl_area_click)
+        context_row.addWidget(self.weather_widget, stretch=1)
+        context_row.addWidget(self.roi_widget, stretch=1)
+        context_row.addWidget(self.card_pdl, stretch=1)
+        self.content_layout.addLayout(context_row)
+
+    def _init_actions_row(self):
+        actions_row = QHBoxLayout()
+        actions_row.setSpacing(20)
+        actions_row.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.quick_actions = QuickActions()
+        self.quick_actions.action_clicked.connect(self._handle_quick_action)
+        actions_row.addWidget(self.quick_actions, stretch=2)
+        self.autopilot_widget = AutopilotWidget()
+        self.autopilot_widget.bot_sync_requested.connect(self._handle_bot_sync_requested)
+        actions_row.addWidget(self.autopilot_widget, stretch=1)
+        self.content_layout.addLayout(actions_row)
+
+    def _init_activity_feed(self):
+        subtitle = QLabel("Feed Attività Recenti")
+        subtitle.setStyleSheet(f"font-size: 16px; font-weight: 700; color: {COLORS['text_muted']}; margin-top: 20px;")
+        self.content_layout.addWidget(subtitle)
+        self.activity_feed = ActivityFeed()
+        self.content_layout.addWidget(self.activity_feed)
+        self.content_layout.addStretch()
 
     def refresh_data(self):
         """Esegue un aggiornamento forzato di tutti i widget della dashboard."""
@@ -103,54 +168,7 @@ class DashboardPanel(QWidget):
             if hasattr(self, "card_pdl") and hasattr(self.card_pdl, "refresh_stats"):
                 self.card_pdl.refresh_stats()
 
-    def _setup_ui(self):
-        """Inizializza e posiziona i widget della dashboard."""
-        # -1. Multi Window Status Card
-        self.multi_window_card = MultiWindowStatusWidget()
-        self.content_layout.addWidget(self.multi_window_card)
 
-        # 0. Context & Value Row (Meteo, ROI & PDL)
-        context_row = QHBoxLayout()
-        context_row.setSpacing(20)
-
-        self.weather_widget = WeatherWidget()
-        self.roi_widget = BotSavingsWidget()
-        self.card_pdl = PDLStatsWidget()
-
-        # Connessione navigazione filtrata
-        self.card_pdl.area_selected.connect(self._handle_pdl_area_click)
-
-        context_row.addWidget(self.weather_widget, stretch=1)
-        context_row.addWidget(self.roi_widget, stretch=1)
-        context_row.addWidget(self.card_pdl, stretch=1)
-        self.content_layout.addLayout(context_row)
-
-        # 1. Quick Actions Row + Autopilot (Middle)
-        actions_row = QHBoxLayout()
-        actions_row.setSpacing(20)
-        actions_row.setAlignment(Qt.AlignmentFlag.AlignTop)
-
-        self.quick_actions = QuickActions()
-        self.quick_actions.action_clicked.connect(self._handle_quick_action)
-        actions_row.addWidget(self.quick_actions, stretch=2)
-
-        self.autopilot_widget = AutopilotWidget()
-        self.autopilot_widget.bot_sync_requested.connect(self._handle_bot_sync_requested)
-        actions_row.addWidget(self.autopilot_widget, stretch=1)
-
-        self.content_layout.addLayout(actions_row)
-
-        self.content_layout.addStretch()
-
-        # 2. Activity Feed (Bottom)
-        subtitle = QLabel("Feed Attività Recenti")
-        subtitle.setStyleSheet(
-            f"font-size: 16px; font-weight: 700; color: {COLORS['text_muted']}; margin-top: 20px;"
-        )
-        self.content_layout.addWidget(subtitle)
-
-        self.activity_feed = ActivityFeed()
-        self.content_layout.addWidget(self.activity_feed)
 
     def _handle_pdl_area_click(self, area_name: str) -> None:
         """Gestisce il click su un'area specifica dei PDL, navigando alla vista filtrata."""

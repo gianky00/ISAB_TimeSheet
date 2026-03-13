@@ -52,14 +52,12 @@ class AutomazioniWidget(QWidget):
         self.mw.tab_fornitori = self.tab_fornitori
         self.mw.tab_safework = self.tab_safework
 
-        # Inizializzazione posticipata dei pannelli interni
-        QTimer.singleShot(100, self._initialize_all_panels)
+        # Inizializzazione posticipata e granulare dei pannelli interni
+        self._init_queue = []
+        QTimer.singleShot(100, self._start_granular_init)
 
-    def _initialize_all_panels(self) -> None:
-        """Istanzia i bot panel in modo differito per non bloccare lo splash screen."""
-        if self._panels_initialized:
-            return
-
+    def _start_granular_init(self) -> None:
+        """Prepara la coda di inizializzazione per i pannelli bot."""
         from src.gui.panels.carico_ts import CaricoTSPanel
         from src.gui.panels.dettagli_oda import DettagliOdAPanel
         from src.gui.panels.prenota_bp import PrenotaBPPanel
@@ -68,63 +66,45 @@ class AutomazioniWidget(QWidget):
         from src.gui.panels.scarico_ts import ScaricaTSPanel
         from src.gui.panels.timbrature_bot import TimbratureBotPanel
 
-        # Istanzia i pannelli
-        self.panel_dettagli = DettagliOdAPanel()
-        self.panel_scarico = ScaricaTSPanel()
-        self.panel_timbrature = TimbratureBotPanel()
-        self.panel_prenota = PrenotaBPPanel()
-        self.panel_carico = CaricoTSPanel()
+        # Definiamo i task: (classe, icona, label, tab_parent, attr_name)
+        self._init_queue = [
+            (DettagliOdAPanel, Icons.LIST, "Dettagli OdA (bot)", self.tab_fornitori, "panel_dettagli"),
+            (ScaricaTSPanel, Icons.DOWNLOAD, "Scarico TS (bot)", self.tab_fornitori, "panel_scarico"),
+            (TimbratureBotPanel, Icons.CLOCK, "Timbrature (bot)", self.tab_fornitori, "panel_timbrature"),
+            (PrenotaBPPanel, Icons.TICKET, "Prenota BP (bot)", self.tab_fornitori, "panel_prenota"),
+            (CaricoTSPanel, Icons.UPLOAD, "Carico TS (bot)", self.tab_fornitori, "panel_carico"),
+            (ScaricoPDLPanel, Icons.SHIELD, "Scarico PDL (bot)", self.tab_safework, "panel_pdl"),
+            (RicercaPDLPanel, Icons.SEARCH, "Ricerca PDL (bot)", self.tab_safework, "panel_pdl_search"),
+        ]
+        self._process_init_queue()
 
-        self.tab_fornitori.addTab(
-            self.panel_dettagli,
-            get_colored_icon(get_asset_path(Icons.LIST), COLORS["text_muted"]),
-            "Dettagli OdA (bot)",
-        )
-        self.tab_fornitori.addTab(
-            self.panel_scarico,
-            get_colored_icon(get_asset_path(Icons.DOWNLOAD), COLORS["text_muted"]),
-            "Scarico TS (bot)",
-        )
-        self.tab_fornitori.addTab(
-            self.panel_timbrature,
-            get_colored_icon(get_asset_path(Icons.CLOCK), COLORS["text_muted"]),
-            "Timbrature (bot)",
-        )
-        self.tab_fornitori.addTab(
-            self.panel_prenota,
-            get_colored_icon(get_asset_path(Icons.TICKET), COLORS["text_muted"]),
-            "Prenota BP (bot)",
-        )
-        self.tab_fornitori.addTab(
-            self.panel_carico,
-            get_colored_icon(get_asset_path(Icons.UPLOAD), COLORS["text_muted"]),
-            "Carico TS (bot)",
-        )
+    def _process_init_queue(self) -> None:
+        """Crea un singolo pannello bot e programma il prossimo, mantenendo la UI fluida."""
+        if not self._init_queue:
+            self._finalize_init()
+            return
 
-        self.panel_pdl = ScaricoPDLPanel()
-        self.panel_pdl_search = RicercaPDLPanel()
+        cls, icon, label, tab_parent, attr_name = self._init_queue.pop(0)
+        
+        try:
+            panel = cls()
+            setattr(self, attr_name, panel)
+            tab_parent.addTab(
+                panel,
+                get_colored_icon(get_asset_path(icon), COLORS["text_muted"]),
+                label,
+            )
+            # Collega alla mw per compatibilità
+            setattr(self.mw, attr_name, panel)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Errore inizializzazione bot {label}: {e}")
 
-        self.tab_safework.addTab(
-            self.panel_pdl,
-            get_colored_icon(get_asset_path(Icons.SHIELD), COLORS["text_muted"]),
-            "Scarico PDL (bot)",
-        )
-        self.tab_safework.addTab(
-            self.panel_pdl_search,
-            get_colored_icon(get_asset_path(Icons.SEARCH), COLORS["text_muted"]),
-            "Ricerca PDL (bot)",
-        )
+        # Cede il controllo e passa al prossimo al prossimo giro dell'event loop
+        QTimer.singleShot(0, self._process_init_queue)
 
-        # Registra riferimenti nella Main Window
-        self.mw.dettagli_panel = self.panel_dettagli
-        self.mw.prenota_panel = self.panel_prenota
-        self.mw.scarico_panel = self.panel_scarico
-        self.mw.timbrature_bot_panel = self.panel_timbrature
-        self.mw.carico_panel = self.panel_carico
-        self.mw.pdl_panel = self.panel_pdl
-        self.mw.pdl_search_panel = self.panel_pdl_search
-
-        # Registrazione Controller
+    def _finalize_init(self) -> None:
+        """Registra i controller una volta che tutti i pannelli sono pronti."""
         if hasattr(self.mw, "bot_controller"):
             self.mw.bot_controller.register_panels(
                 [

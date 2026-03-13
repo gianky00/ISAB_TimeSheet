@@ -57,43 +57,13 @@ class SettingsPanel(QWidget):
         main_layout.setContentsMargins(15, 15, 15, 15)
 
         self.tabs = AnimatedTabWidget()
-
-        # 1. Configurazione
-        self.config_tab = ConfigTab()
-        self.config_tab.settings_changed.connect(self.save_settings)
-        self.tabs.addTab(
-            self.config_tab,
-            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), COLORS["text_muted"]),
-            "Configurazione",
-        )
-
-        # 2. Efficienza & ROI
-        self.roi_tab = ROITab()
-        self.roi_tab.settings_changed.connect(self.save_settings)
-        self.tabs.addTab(
-            self.roi_tab,
-            get_colored_icon(get_asset_path(Icons.CLOCK), COLORS["text_muted"]),
-            "Efficienza & ROI",
-        )
-
-        # 3. Backup e Manutenzione
-        self.backup_tab = BackupTab()
-        self.tabs.addTab(
-            self.backup_tab,
-            get_colored_icon(get_asset_path(Icons.DATABASE), COLORS["text_muted"]),
-            "Backup & Log",
-        )
-
-        # 3. Telegram
-        self.telegram_tab = TelegramTab()
-        self.telegram_tab.settings_changed.connect(self.save_settings)
-        self.tabs.addTab(
-            self.telegram_tab,
-            get_colored_icon(get_asset_path(Icons.SEND), COLORS["text_muted"]),
-            "Telegram Bot",
-        )
-
         main_layout.addWidget(self.tabs)
+
+        # Coda per inizializzazione differita
+        self._init_queue = []
+        self._tabs_initialized = False
+        
+        QTimer.singleShot(100, self._start_granular_init)
 
         # Barra Azioni Inferiore
         actions_layout = QHBoxLayout()
@@ -124,8 +94,44 @@ class SettingsPanel(QWidget):
 
         main_layout.addLayout(actions_layout)
 
+    def _start_granular_init(self) -> None:
+        """Prepara la creazione dei tab impostazioni."""
+        self._init_queue = [
+            (ConfigTab, Icons.SETTINGS_DARK, "Configurazione", "config_tab"),
+            (ROITab, Icons.CLOCK, "Efficienza & ROI", "roi_tab"),
+            (BackupTab, Icons.DATABASE, "Backup & Log", "backup_tab"),
+            (TelegramTab, Icons.SEND, "Telegram Bot", "telegram_tab"),
+        ]
+        self._process_init_queue()
+
+    def _process_init_queue(self) -> None:
+        """Crea un tab impostazioni alla volta."""
+        if not self._init_queue:
+            self._tabs_initialized = True
+            self.load_settings()
+            return
+
+        cls, icon, label, attr_name = self._init_queue.pop(0)
+        try:
+            tab = cls()
+            setattr(self, attr_name, tab)
+            if hasattr(tab, "settings_changed"):
+                tab.settings_changed.connect(self.save_settings)
+            
+            self.tabs.addTab(
+                tab,
+                get_colored_icon(get_asset_path(icon), COLORS["text_muted"]),
+                label
+            )
+        except Exception as e:
+            print(f"Errore caricamento tab settings {label}: {e}")
+
+        QTimer.singleShot(10, self._process_init_queue)
+
     def load_settings(self) -> None:
         """Carica la configurazione attuale e aggiorna tutti i tab."""
+        if not self._tabs_initialized:
+            return
         self._is_loading = True
         try:
             config = config_manager.load_config()

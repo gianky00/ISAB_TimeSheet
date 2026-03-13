@@ -157,14 +157,9 @@ class ScaricoOrePanel(QWidget):
             return
 
         self._set_ui_loading(True)
-        if ScaricoOreTableModel.CACHE_PATH.exists():
-            self.source_model.load_data_async(None)
-        else:
-            try:
-                self.source_model.load_data_async(ContabilitaManager.get_scarico_ore_data())
-            except Exception as e:
-                self.filters.status_label.setText(f"Errore: {e}")
-                self._set_ui_loading(False)
+        # Passiamo la funzione come riferimento, non il risultato!
+        # Il modello la eseguirà nel thread di background.
+        self.source_model.load_data_async(ContabilitaManager.get_scarico_ore_data)
 
     def _on_cache_loaded(self) -> None:
         """Esegue le operazioni finali di UI una volta che i dati sono pronti in memoria."""

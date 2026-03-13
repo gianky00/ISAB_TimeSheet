@@ -163,16 +163,24 @@ class AppInitializer:
             (PageIndex.DIPENDENTI, "Gestione Schede Dipendenti"),
         ]
 
+        from PyQt6.QtWidgets import QApplication
         base_prog = 45
         total = len(tasks)
 
         for i, (idx, name) in enumerate(tasks):
             prog = base_prog + int((i / total) * 45)
             yield name, prog
+            
+            # Forza il processamento degli eventi UI per fluidità splash
+            QApplication.processEvents()
+            
             try:
                 mw_instance.navigation_controller.get_panel(idx)
             except Exception as e:
                 logger.error(f"Error loading panel {name}: {e}", exc_info=True)
+            
+            # Permette ai widget appena creati di processare i loro timer iniziali
+            QApplication.processEvents()
 
         yield "Monitoraggio Sicurezza Telegram", 94
         config = config_manager.load_config()
