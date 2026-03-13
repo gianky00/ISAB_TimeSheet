@@ -3,6 +3,7 @@ SyncroJob - Scarico Ore Data Model
 Modello tabellare ottimizzato per la gestione di grandi volumi di dati (130k+ righe).
 """
 
+from collections.abc import Callable
 from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
@@ -95,12 +96,12 @@ class ScaricoOreTableModel(QAbstractTableModel):
         if data:
             self.update_data(data)
 
-    def load_data_async(self, raw_data: list[tuple[Any, ...]] | None = None) -> None:
+    def load_data_async(self, raw_data: list[tuple[Any, ...]] | Callable[[], list[tuple[Any, ...]]] | None = None) -> None:
         """
         Avvia il caricamento asincrono dei dati tramite CacheWorker.
 
         Args:
-            raw_data: Dati grezzi da processare o None per caricare da cache pkl.
+            raw_data: Dati grezzi da processare, funzione di caricamento o None per caricare da cache pkl.
         """
         if self._global_cache["loaded"] and raw_data is None:
             self.cache_loaded.emit()

@@ -1,4 +1,5 @@
 import json
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +20,7 @@ class CacheWorker(QThread):
     )  # display_data, search_index, float_totals, style_cache, date_keys
     progress = pyqtSignal(str)
 
-    def __init__(self, cache_path: Path, data_source: list[tuple[Any, ...]] | None = None) -> None:
+    def __init__(self, cache_path: Path, data_source: list[tuple[Any, ...]] | Callable[[], list[tuple[Any, ...]]] | None = None) -> None:
         super().__init__()
         # Use .json extension if not already present, for clarity
         if cache_path.suffix != ".json":
@@ -31,6 +32,23 @@ class CacheWorker(QThread):
     def run(self) -> None:
         """Esegue l'operazione di caricamento o generazione della cache in background."""
         if self.data_source:
+            self.progress.emit("Recupero dati...")
+
+            # Se data_source è una funzione, la eseguiamo nel thread di background
+            if callable(self.data_source):
+                try:
+                    data = self.data_source()
+                except Exception as e:
+                    print(f"Error fetching data from source: {e}")
+                    self.finished.emit([], [], [], [], [])
+                    return
+            else:
+                data = self.data_source
+
+            if not data:
+                self.finished.emit([], [], [], [], [])
+                return
+
             self.progress.emit("Elaborazione dati...")
             (
                 display_data,
@@ -38,7 +56,7 @@ class CacheWorker(QThread):
                 float_totals,
                 style_cache,
                 date_keys,
-            ) = self._build_caches(self.data_source)
+            ) = self._build_caches(data)
             self.progress.emit("Salvataggio cache...")
             self._save_cache(display_data, search_index, float_totals, style_cache, date_keys)
             self.finished.emit(display_data, search_index, float_totals, style_cache, date_keys)
