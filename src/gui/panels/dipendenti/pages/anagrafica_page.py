@@ -20,6 +20,7 @@ from src.gui.panels.base import BotWorker  # noqa: TC001
 from src.gui.panels.dipendenti.utils.data_helpers import format_db_date
 from src.gui.panels.dipendenti.utils.report_generator import ReportGenerator
 from src.gui.widgets.toast import ToastManager
+from src.gui.workers.data_loader_worker import DataLoaderWorker
 
 from ..widgets.anagrafica_header import AnagraficaHeaderWidget
 from ..widgets.employee_detail_view import EmployeeDetailView
@@ -51,8 +52,10 @@ class AnagraficaPage(QWidget):
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self.refresh_data)
 
+        self.data_worker: DataLoaderWorker | None = None
+
         self._setup_ui()
-        QTimer.singleShot(50, self.refresh_data)
+        QTimer.singleShot(10, self.refresh_data)
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -85,12 +88,20 @@ class AnagraficaPage(QWidget):
         layout.addLayout(content_layout)
 
     def refresh_data(self):
-        """Sincronizza i dati tra DB, Controller e UI."""
+        """Innesca il caricamento asincrono dei dati dipendenti."""
+        if self.data_worker and self.data_worker.isRunning():
+            self.data_worker.terminate()
+            self.data_worker.wait()
+
         self.header.set_sync_status(f"Ultimo Sync: {SyncTracker.get_formatted_status('timbrature')}")
+        query_text = self.header.search_input.text()
 
-        # 1. Caricamento dati grezzi
-        full_rows = AnagraficaController.get_employees(self.header.search_input.text())
+        self.data_worker = DataLoaderWorker(AnagraficaController.get_employees, query_text)
+        self.data_worker.finished.connect(self._on_data_loaded)
+        self.data_worker.start()
 
+    def _on_data_loaded(self, full_rows):
+        """Callback eseguita al termine del caricamento dei dati."""
         # 2. Processing (Calcolo scadenze e filtri)
         master_rows, counts = AnagraficaController.process_rows(full_rows, self.current_filter)
 

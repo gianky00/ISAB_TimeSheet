@@ -28,6 +28,7 @@ from src.core.sync_tracker import SyncTracker
 from src.gui.panels.base import BotWorker  # noqa: TC001
 from src.gui.widgets import EmptyStateWidget
 from src.gui.widgets.toast import ToastManager
+from src.gui.workers.data_loader_worker import DataLoaderWorker
 
 from .oda_detail_view import OdaDetailView
 from .oda_filter_widget import OdaFilterWidget
@@ -103,8 +104,10 @@ class StoricoOdaPanel(QWidget):
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self.refresh_data)
 
+        self.data_worker: DataLoaderWorker | None = None
+
         self._setup_ui()
-        QTimer.singleShot(100, self.refresh_data)
+        QTimer.singleShot(10, self.refresh_data)
 
     def _setup_ui(self) -> None:
         """Inizializza l'interfaccia utente del pannello."""
@@ -139,13 +142,25 @@ class StoricoOdaPanel(QWidget):
         layout.addWidget(self.splitter)
 
     def refresh_data(self) -> None:
-        """Aggiorna i dati visualizzati nel tree applicando i filtri correnti."""
+        """Innesca il caricamento asincrono dei dati OdA."""
+        if self.data_worker and self.data_worker.isRunning():
+            self.data_worker.terminate()
+            self.data_worker.wait()
+
         self.filters.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('oda')}")
         search_text = self.filters.search_input.text()
 
-        structured_data = self.controller.get_grouped_data(search_text)
+        self.data_worker = DataLoaderWorker(self.controller.get_grouped_data, search_text)
+        self.data_worker.finished.connect(self._on_data_loaded)
+        self.data_worker.start()
 
+    def _on_data_loaded(self, structured_data: Any) -> None:
+        """Aggiorna l'UI con i dati strutturati caricati dal worker."""
         self.model.removeRows(0, self.model.rowCount())
+        if not structured_data:
+            self.empty_state.show()
+            return
+
         for oda_data in structured_data:
             root_row = self.controller.create_root_item(oda_data)
             self.model.appendRow(root_row)

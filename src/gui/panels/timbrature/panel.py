@@ -28,6 +28,7 @@ from src.gui.widgets.core_widgets import (
     SearchInput,
 )
 from src.gui.widgets.toast import ToastManager
+from src.gui.workers.data_loader_worker import DataLoaderWorker
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .components.detail_view import TimbratureDetailView
@@ -64,8 +65,10 @@ class TimbratureDBPanel(QWidget):
         self.reparti = self.lists.get("reparti", [])
         self.cantieri = self.lists.get("cantieri", [])
 
+        self.data_worker: DataLoaderWorker | None = None
+
         self._setup_ui()
-        QTimer.singleShot(50, self.refresh_data)
+        QTimer.singleShot(10, self.refresh_data)
 
     def _setup_ui(self):
         self.main_layout = QVBoxLayout(self)
@@ -251,21 +254,29 @@ class TimbratureDBPanel(QWidget):
         self.cantiere_filter.blockSignals(False)
 
     def refresh_data(self):
-        """Carica i dati dal DB e aggiorna il modello virtuale."""
+        """Innesca il caricamento asincrono dei dati dal DB."""
+        if self.data_worker and self.data_worker.isRunning():
+            self.data_worker.terminate()
+            self.data_worker.wait()
+
         text = self.search_input.text()
         reparto = self.reparto_filter.currentData()
         cantiere = self.cantiere_filter.currentData()
 
-        # Get rows
-        rows = self.storage.get_timbrature_with_reparto(
+        # Esegue la query pesante in background
+        self.data_worker = DataLoaderWorker(
+            self.storage.get_timbrature_with_reparto,
             limit=2000,
             filter_text=text,
             filter_reparto=reparto,
             filter_cantiere=cantiere,
         )
+        self.data_worker.finished.connect(self._on_data_loaded)
+        self.data_worker.start()
 
+    def _on_data_loaded(self, rows):
+        """Callback per l'aggiornamento UI al termine della query in background."""
         # Prepare for FastTableModel
-        # Headers: Data(0), Cognome(4), Nome(3), Ingresso(1), Uscita(2), Reparto(16), Cantiere(17)
         master_rows = []
         for row in rows:
             iso_date = str(row[0]).split(" ")[0] if row[0] else ""
@@ -284,10 +295,11 @@ class TimbratureDBPanel(QWidget):
         # Resize con protezione
         QTimer.singleShot(
             0,
-            lambda: self.db_table.resizeColumnsToContents() if self.db_table else None,
+            lambda: self.db_table.resizeColumnsToContents() if (hasattr(self, "db_table") and self.db_table) else None,
         )
         # Reset detail
-        self.detail_view.clear_fields()
+        if hasattr(self, "detail_view") and self.detail_view:
+            self.detail_view.clear_fields()
 
     def _on_selection_changed(self, selected, _deselected):
         # Protezione contro selectionModel None

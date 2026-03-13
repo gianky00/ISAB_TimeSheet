@@ -26,6 +26,7 @@ from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.formatters import FastTableModel
 from src.gui.panels.base import BotWorker  # noqa: TC001
 from src.gui.widgets import EmptyStateWidget
+from src.gui.workers.data_loader_worker import DataLoaderWorker
 
 from .pdl_detail_view import PDLDetailView
 from .pdl_filter_widget import PDLFilterWidget
@@ -88,8 +89,11 @@ class PDLDBPanel(QWidget):
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self.refresh_data)
 
+        self.data_worker: DataLoaderWorker | None = None
+
         self._setup_ui()
-        QTimer.singleShot(50, self.refresh_data)
+        # Caricamento asincrono immediato: non blocca lo splash screen!
+        QTimer.singleShot(10, self.refresh_data)
         QTimer.singleShot(100, self._populate_initial_filters)
 
     def _setup_ui(self) -> None:
@@ -165,17 +169,24 @@ class PDLDBPanel(QWidget):
 
     def refresh_data(self, sort_col: int | None = None) -> None:
         """
-        Ricarica i dati dal database applicando i filtri correnti.
-
-        Args:
-            sort_col: Indice opzionale della colonna per l'ordinamento.
+        Innesca il caricamento asincrono dei dati dal database.
         """
+        if self.data_worker and self.data_worker.isRunning():
+            self.data_worker.terminate()
+            self.data_worker.wait()
+
         self.filters.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('pdl')}")
         filters = self.filters.get_filters()
+        sort_order = "DESC"
 
-        # Recupero dati dal Controller (con Caching)
-        sort_order = "DESC"  # In futuro gestito dinamicamente
-        self._raw_full_data = self.controller.get_pdl_data(filters, sort_col, sort_order)
+        # Crea il worker per caricare i dati in background
+        self.data_worker = DataLoaderWorker(self.controller.get_pdl_data, filters, sort_col, sort_order)
+        self.data_worker.finished.connect(self._on_data_loaded)
+        self.data_worker.start()
+
+    def _on_data_loaded(self, raw_data: Any) -> None:
+        """Callback eseguita al termine del caricamento asincrono."""
+        self._raw_full_data = raw_data or []
 
         self.empty_state.setVisible(not self._raw_full_data)
         if self._raw_full_data:
