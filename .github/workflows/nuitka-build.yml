@@ -42,3 +42,5 @@ jobs:
         name: SyncroJob-Installer-Nuitka
         path: "admin/Crea Setup/Setup/*.exe"
         if-no-files-found: error
+
+# Trigger build test v1.0
