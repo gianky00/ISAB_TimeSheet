@@ -164,6 +164,7 @@ class AppInitializer:
         ]
 
         from PyQt6.QtWidgets import QApplication
+        import time
         base_prog = 45
         total = len(tasks)
 
@@ -171,11 +172,16 @@ class AppInitializer:
             prog = base_prog + int((i / total) * 45)
             yield name, prog
             
+            start_time = time.perf_counter()
+            logger.info(f"[UI STARTUP] Loading panel: {name}...")
+            
             # Forza il processamento degli eventi UI per fluidità splash
             QApplication.processEvents()
             
             try:
                 mw_instance.navigation_controller.get_panel(idx)
+                elapsed = (time.perf_counter() - start_time) * 1000
+                logger.info(f"[UI STARTUP] Panel {name} loaded in {elapsed:.2f}ms")
             except Exception as e:
                 logger.error(f"Error loading panel {name}: {e}", exc_info=True)
             
