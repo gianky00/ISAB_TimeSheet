@@ -93,7 +93,15 @@ class UpdateBanner(QFrame):
         self.download_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.download_btn.clicked.connect(self._on_download_clicked)
         self.main_layout.addWidget(self.download_btn)
-    def show_update(self, version: str, download_url: str, changelog: str = "", is_partial: bool = False, is_complete: bool = False):
+
+    def show_update(
+        self,
+        version: str,
+        download_url: str,
+        changelog: str = "",
+        is_partial: bool = False,
+        is_complete: bool = False,
+    ):
         """Mostra il banner con le informazioni dell'aggiornamento."""
         self._download_url = download_url
         self._is_complete = is_complete

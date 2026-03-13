@@ -5,7 +5,9 @@ import pytest
 from src.gui.controllers.service_controller import ServiceController
 
 
-@pytest.mark.skip(reason="Crash nativo in ambiente headless Windows V9.0 durante coordinamento servizi background.")
+@pytest.mark.skip(
+    reason="Crash nativo in ambiente headless Windows V9.0 durante coordinamento servizi background."
+)
 class TestServiceControllerRobust:
     @pytest.fixture
     def mw(self):
@@ -77,7 +79,7 @@ class TestServiceControllerRobust:
             "report_email_autopilot_enabled": True,
             "report_email_autopilot_time": "08:00",
             "report_email_autopilot_interval_days": 1,
-            "report_email_autopilot_last_sent": "2020-01-01T00:00:00"
+            "report_email_autopilot_last_sent": "2020-01-01T00:00:00",
         }
 
         with patch.object(controller, "_send_scheduled_report_email") as mock_send:

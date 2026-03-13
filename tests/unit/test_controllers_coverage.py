@@ -11,6 +11,7 @@ from src.gui.controllers.search_controller import SearchController
 
 class MockMainWindow(QObject):
     """Mock leggero che simula l'interfaccia di MainWindow senza caricare Qt reale."""
+
     def __init__(self):
         super().__init__()
         self.page_stack = MagicMock()
@@ -24,6 +25,7 @@ class MockMainWindow(QObject):
         self.scarico_ore_panel = MagicMock()
         self.timbrature_db_panel = MagicMock()
         self.contabilita_panel = MagicMock()
+
 
 class TestControllersCoverage:
     @pytest.fixture

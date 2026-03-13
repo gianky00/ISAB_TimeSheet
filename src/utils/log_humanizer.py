@@ -76,7 +76,10 @@ class SmartLogTranslator:
         if any(kw in lower_msg for kw in ("scaric", "download", "⬇️")):
             return "download"
 
-        if any(kw in lower_msg for kw in ("errore", "fallit", "falliment", "fail", "exception", "eccezion", "critico", "❌")):
+        if any(
+            kw in lower_msg
+            for kw in ("errore", "fallit", "falliment", "fail", "exception", "eccezion", "critico", "❌")
+        ):
             return "error"
 
         if any(kw in lower_msg for kw in ("successo", "completat", "compiut", "fatto", "✅", "✨")):

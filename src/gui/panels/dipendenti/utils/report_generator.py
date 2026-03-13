@@ -231,6 +231,7 @@ class ReportGenerator:
             return None
 
         import pandas as pd
+
         df_report = pd.DataFrame(excel_data)
         path = (
             Path(os.environ["TEMP"]) / f"report Accessi ISAB {datetime.now().strftime('%d-%m-%Y_%H-%M')}.xlsx"

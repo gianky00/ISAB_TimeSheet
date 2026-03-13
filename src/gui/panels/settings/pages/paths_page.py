@@ -155,10 +155,12 @@ class PathsPage(QWidget):
             if path.is_file():
                 # Su Windows, apre la cartella e seleziona il file
                 import subprocess
-                subprocess.run(['explorer', '/select,', str(path)], check=False)
+
+                subprocess.run(["explorer", "/select,", str(path)], check=False)
             else:
                 import os
-                os.startfile(str(path)) # noqa: S606
+
+                os.startfile(str(path))  # noqa: S606
         except Exception as e:
             ToastManager.instance().show(f"Errore apertura: {e}", "error")
 

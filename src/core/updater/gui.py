@@ -35,6 +35,7 @@ _active_update_dialog = None
 
 class UpdateProgressDialog(QDialog):
     """Progress dialog for update downloads or network transfers."""
+
     def __init__(self, url_or_path: str, parent: QWidget | None = None):
         super().__init__(parent)
         self.setWindowTitle("Aggiornamento SyncroJob")
@@ -60,7 +61,9 @@ class UpdateProgressDialog(QDialog):
         layout.addWidget(self.lbl_status)
         self.pb = QProgressBar()
         self.pb.setFixedHeight(24)
-        self.pb.setStyleSheet("QProgressBar { border: 1px solid #CCCCCC; border-radius: 6px; text-align: center; background-color: #F0F0F0; } QProgressBar::chunk { background-color: #0D6EFD; border-radius: 5px; }")
+        self.pb.setStyleSheet(
+            "QProgressBar { border: 1px solid #CCCCCC; border-radius: 6px; text-align: center; background-color: #F0F0F0; } QProgressBar::chunk { background-color: #0D6EFD; border-radius: 5px; }"
+        )
         layout.addWidget(self.pb)
         self.lbl_details = QLabel("Preparazione...")
         self.lbl_details.setFont(QFont("Segoe UI", 9))
@@ -86,7 +89,9 @@ class UpdateProgressDialog(QDialog):
             speed_mb = speed / (1024 * 1024)
             action = "Scaricamento" if self.worker.url_or_path.startswith("http") else "Trasferimento"
             self.lbl_status.setText(f"{action}: {int(percent)}% completato")
-            self.lbl_details.setText(f"{mb_down:.1f} MB di {mb_total:.1f} MB ({speed_mb:.2f} MB/s) - ETA: {int(eta)}s")
+            self.lbl_details.setText(
+                f"{mb_down:.1f} MB di {mb_total:.1f} MB ({speed_mb:.2f} MB/s) - ETA: {int(eta)}s"
+            )
         else:
             self.pb.setMaximum(0)
             self.lbl_status.setText("Operazione in corso...")
@@ -110,7 +115,9 @@ def show_install_prompt(setup_path: str, parent: QWidget | None = None):
     """Shows choices for immediate or delayed installation."""
     msg_box = QMessageBox(parent)
     msg_box.setWindowTitle("🔄 Aggiornamento Pronto")
-    msg_box.setText("L'aggiornamento è stato scaricato ed è pronto per l'installazione.\n\nCosa desideri fare?")
+    msg_box.setText(
+        "L'aggiornamento è stato scaricato ed è pronto per l'installazione.\n\nCosa desideri fare?"
+    )
     msg_box.setIcon(QMessageBox.Icon.Question)
     msg_box.setStyle(QApplication.style())
 
@@ -137,7 +144,9 @@ def show_install_prompt(setup_path: str, parent: QWidget | None = None):
         run_installer_and_exit(setup_path)
     elif msg_box.clickedButton() == btn_later:
         set_pending_installer(setup_path)
-        QMessageBox.information(parent, "ℹ️ Info", "L'aggiornamento partirà automaticamente alla chiusura dell'app.")
+        QMessageBox.information(
+            parent, "ℹ️ Info", "L'aggiornamento partirà automaticamente alla chiusura dell'app."
+        )
 
 
 def check_for_updates(
@@ -151,7 +160,7 @@ def check_for_updates(
     with ThreadPoolExecutor(max_workers=2) as executor:
         futures = {
             executor.submit(get_web_update_info): "Web",
-            executor.submit(get_network_update_info): "Network"
+            executor.submit(get_network_update_info): "Network",
         }
         for future in as_completed(futures):
             info = future.result()
@@ -160,7 +169,9 @@ def check_for_updates(
 
     if not update_sources:
         if not silent:
-            QMessageBox.information(parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})")
+            QMessageBox.information(
+                parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
+            )
         return
 
     # Find the newest version among available sources
@@ -198,19 +209,25 @@ def check_for_updates(
         else:
             msg = _build_update_msg(remote_ver_str, changelog, is_partial, local_size, remote_size)
             reply = QMessageBox.question(
-                parent, "🔄 Aggiornamento", msg,
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                parent,
+                "🔄 Aggiornamento",
+                msg,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
             if reply == QMessageBox.StandardButton.Yes:
                 perform_auto_update(download_url, parent)
     elif not silent:
-        QMessageBox.information(parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})")
+        QMessageBox.information(
+            parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
+        )
 
 
 def _build_update_msg(ver, changelog, partial, local_s, remote_s) -> str:
     if partial:
         percent = (local_s / remote_s) * 100
-        return f"Rilevato trasferimento parziale ({int(percent)}%) della versione {ver}.\n\nVuoi completare ora?"
+        return (
+            f"Rilevato trasferimento parziale ({int(percent)}%) della versione {ver}.\n\nVuoi completare ora?"
+        )
 
     msg = f"Nuova versione {ver} disponibile!\n"
     if changelog:

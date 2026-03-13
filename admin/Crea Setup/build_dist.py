@@ -54,6 +54,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(file_handler)
 
+
 def log_and_print(message, level="INFO"):
     """Logga su file e stampa a video."""
     print(message)
@@ -170,7 +171,9 @@ def ensure_drivers():
         if (drivers_dir / "chromedriver.exe").exists():
             log_and_print("  [INFO] Using existing driver as fallback.")
         else:
-            log_and_print("  [CRITICAL ERROR] Driver missing and auto-download failed! Build aborted.", "ERROR")
+            log_and_print(
+                "  [CRITICAL ERROR] Driver missing and auto-download failed! Build aborted.", "ERROR"
+            )
             sys.exit(1)
 
 
@@ -245,9 +248,20 @@ def run_pyinstaller(obfuscated=False):
         detected_imports = []
 
     ignored_imports = [
-        "bot", "locators", "pages", "modern_button", "timeline_widget",
-        "toast", "status_card", "status_indicator", "helpers",
-        "info_widgets", "data_table", "excel_table", "version", "constants",
+        "bot",
+        "locators",
+        "pages",
+        "modern_button",
+        "timeline_widget",
+        "toast",
+        "status_card",
+        "status_indicator",
+        "helpers",
+        "info_widgets",
+        "data_table",
+        "excel_table",
+        "version",
+        "constants",
     ]
     detected_imports = [imp for imp in detected_imports if imp not in ignored_imports]
 
@@ -256,17 +270,32 @@ def run_pyinstaller(obfuscated=False):
 
     # CRITICAL: Force include standard library handlers
     force_hidden_imports = [
-        "win32con", "win32print", "win32ui", "logging.handlers",
-        "win32com", "win32com.client", "pythoncom",
+        "win32con",
+        "win32print",
+        "win32ui",
+        "logging.handlers",
+        "win32com",
+        "win32com.client",
+        "pythoncom",
     ]
     for mod in force_hidden_imports:
         cmd.extend(["--hidden-import", mod])
 
     qt_excludes = [
-        "shapely", "PyQt6.QtBluetooth", "PyQt6.QtNfc", "PyQt6.Qt3DCore",
-        "PyQt6.Qt3DRender", "PyQt6.Qt3DInput", "PyQt6.Qt3DLogic",
-        "PyQt6.Qt3DExtras", "PyQt6.QtSpatialAudio", "PyQt6.QtSensors",
-        "PyQt6.QtQuick3D", "PyQt6.QtMultimedia", "PyQt6.QtQml", "PyQt6.QtQuick",
+        "shapely",
+        "PyQt6.QtBluetooth",
+        "PyQt6.QtNfc",
+        "PyQt6.Qt3DCore",
+        "PyQt6.Qt3DRender",
+        "PyQt6.Qt3DInput",
+        "PyQt6.Qt3DLogic",
+        "PyQt6.Qt3DExtras",
+        "PyQt6.QtSpatialAudio",
+        "PyQt6.QtSensors",
+        "PyQt6.QtQuick3D",
+        "PyQt6.QtMultimedia",
+        "PyQt6.QtQml",
+        "PyQt6.QtQuick",
     ]
     for exc in qt_excludes:
         cmd.extend(["--exclude-module", exc])
@@ -276,9 +305,20 @@ def run_pyinstaller(obfuscated=False):
         cmd.extend(["--collect-submodules", pkg])
 
     force_collect = [
-        "pandas", "numpy", "pandera", "telegram", "markdown", "matplotlib",
-        "cryptography", "jaraco.text", "keyring", "pymupdf", "fitz", "lxml",
-        "openpyxl", "PIL",
+        "pandas",
+        "numpy",
+        "pandera",
+        "telegram",
+        "markdown",
+        "matplotlib",
+        "cryptography",
+        "jaraco.text",
+        "keyring",
+        "pymupdf",
+        "fitz",
+        "lxml",
+        "openpyxl",
+        "PIL",
     ]
     for pkg in force_collect:
         cmd.extend(["--collect-all", pkg])
@@ -388,7 +428,7 @@ def prepare_and_deploy_netlify(setup_dir: Path, setup_filename: str):
     generate_index_html(deploy_dir, setup_filename, version_str)
 
     # 4. Generate netlify.toml
-    netlify_toml = "[build]\n  publish = \".\"\n\n[build.processing]\n  skip_processing = true"
+    netlify_toml = '[build]\n  publish = "."\n\n[build.processing]\n  skip_processing = true'
     (deploy_dir / "netlify.toml").write_text(netlify_toml, encoding="utf-8")
 
     # 5. ZIP and Upload
@@ -426,6 +466,7 @@ def deploy_to_network_share(setup_dir: Path, setup_filename: str):
     """Deploys to local network share with auto-archiving."""
     try:
         from src.core import version as v_mod
+
         net_path_str = getattr(v_mod, "NETWORK_UPDATE_PATH", None)
         if not net_path_str:
             log_and_print("[WARNING] NETWORK_UPDATE_PATH not defined. Skipping.", "WARNING")
@@ -459,7 +500,7 @@ def deploy_to_network_share(setup_dir: Path, setup_filename: str):
             "version": version_str,
             "url": setup_filename,
             "date": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "notes": "Latest stable release"
+            "notes": "Latest stable release",
         }
         (net_path / "version.json").write_text(json.dumps(version_data, indent=4), encoding="utf-8")
         log_and_print(f"  [SUCCESS] Network deploy complete (v{version_str}).")

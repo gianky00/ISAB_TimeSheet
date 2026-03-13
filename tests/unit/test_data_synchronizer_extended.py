@@ -59,9 +59,7 @@ class TestDataSynchronizerDetailed:
         assert removed == 0
 
     def test_sync_giornaliere_logic(self, real_db):
-        new_rows = [
-            (2024, "2024-01-01", "P", "D", "T", "O", "P", "08", "17", 8.0, "100", "f.xlsx")
-        ]
+        new_rows = [(2024, "2024-01-01", "P", "D", "T", "O", "P", "08", "17", 8.0, "100", "f.xlsx")]
         added, removed = DataSynchronizer.sync_giornaliere(real_db, new_rows, [2024])
         assert added == 1
         assert removed == 0

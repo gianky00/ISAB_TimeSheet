@@ -29,25 +29,22 @@ class ServiceController(QObject):
     """
     Gestore del ciclo di vita dei servizi asincroni e dei task pianificati (Autopilot).
     Coordina:
-    - Lyra Sentinel per il rilevamento proattivo di anomalie.
     - TelegramService per il monitoraggio remoto e l'invio di documenti.
     - Scheduler dei Bot per lo scarico automatico di timbrature, OdA e PDL.
     - Generazione e invio automatico dei report email via Outlook.
     """
 
-    def __init__(self, main_window: Any, telegram_service: Any, lyra_sentinel: Any) -> None:
+    def __init__(self, main_window: Any, telegram_service: Any) -> None:
         """
         Inizializza il controller dei servizi e le code di gestione del parallelismo.
 
         Args:
             main_window: Riferimento alla MainWindow dell'applicazione.
             telegram_service: Istanza del servizio Telegram.
-            lyra_sentinel: Istanza del monitor anomalie Lyra.
         """
         super().__init__(main_window)
         self.mw = main_window
         self.telegram = telegram_service
-        self.sentinel = lyra_sentinel
 
         self.running_bots_by_site: dict[str, list[str]] = {"portale_fornitori": [], "safework": []}
         self.pending_bots_by_site: dict[str, list[tuple[str, Any, str]]] = {
@@ -58,10 +55,6 @@ class ServiceController(QObject):
 
     def start_all(self) -> None:
         """Avvia la sequenza di attivazione dei servizi di background con ritardi differiti per non saturare lo startup."""
-        if hasattr(self.mw, "monitoring_controller"):
-            self.sentinel.anomalies_found.connect(self.mw.monitoring_controller.handle_anomalies_found)
-
-        QTimer.singleShot(2000, self.sentinel.start)
         QTimer.singleShot(1000, self.telegram.start_service)
         QTimer.singleShot(3000, self._check_updates)
 

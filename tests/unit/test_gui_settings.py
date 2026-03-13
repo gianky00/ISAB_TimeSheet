@@ -14,7 +14,7 @@ class TestSettingsGUI:
             "browser_timeout": 45,
             "ai_provider": "gemini",
             "accounts": [],
-            "safework_accounts": []
+            "safework_accounts": [],
         }
         mock_load.return_value = test_config
 

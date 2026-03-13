@@ -248,6 +248,7 @@ class WeatherWidget(ModernCard):
 
         # Animazione Don Ciro
         from src.gui.widgets.dashboard.don_ciro_widget import DonCiroWidget
+
         self.don_ciro = DonCiroWidget()
         body_h.addWidget(self.don_ciro)
 

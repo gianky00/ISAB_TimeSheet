@@ -229,8 +229,6 @@ class DashboardPanel(QWidget):
             with suppress(ValueError):
                 sub_idx = int(key.split("_")[-1])
                 nav.navigate_to(4, sub_index=sub_idx)
-        elif key == "nav_page_2":
-            nav.navigate_to(2)  # Lyra
         elif key == "nav_page_5":
             nav.navigate_to(5)  # DataEase
         elif key == "nav_page_6":

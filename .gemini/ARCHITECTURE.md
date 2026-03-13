@@ -10,7 +10,6 @@ Il progetto segue una struttura ispirata al pattern Model-View-Controller, con u
 - `ConfigManager` (`src/core/config_manager.py`): Gestione file `.json` per impostazioni utente e costanti globali.
 - `NotificationManager` (`src/core/notification_manager.py`): Hub centrale per messaggi di sistema e segnali GUI.
 - `AuditManager` (`src/core/audit/manager.py`): Gestione log centralizzati delle azioni dell'utente e sistema per compliance enterprise.
-- `LyraSentinel` (`src/core/lyra/sentinel.py`): Motore di monitoraggio anomalie in background tramite analisi euristica.
 - `TelegramService` (`src/core/telegram/service.py`): Bot per notifiche push e controllo remoto dello stato dei bot.
 
 ### 2. GUI Layer (`src/gui/`)
@@ -19,7 +18,7 @@ Il progetto segue una struttura ispirata al pattern Model-View-Controller, con u
 - **Controllers**:
     - `NavigationController`: Gestisce i cambi pagina e il caricamento on-demand (**Lazy Loading**).
     - `BotController`: Coordina il ciclo di vita dei bot di automazione (Init -> Login -> Run -> Cleanup).
-    - `ServiceController`: Gestisce il ciclo di vita dei servizi di background (Lyra, Telegram).
+    - `ServiceController`: Gestisce il ciclo di vita dei servizi di background (Telegram).
 
 ### 3. Automation Layer (`src/bots/`)
 - Bot basati su Selenium per interagire con i portali ISAB/SafeWork.
@@ -46,7 +45,7 @@ class MyManager:
 ```
 
 ### 2. Lazy Loading Navigation
-I pannelli della UI devono essere registrati nel `NavigationController` e creati solo tramite metodi `_create_*` al primo accesso. 
+I pannelli della UI devono essere registrati nel `NavigationController` e creati solo tramite metodi `_create_*` al primo accesso.
 **Procedura per aggiungere un nuovo pannello:**
 1. Aggiungere il nome all'enum `PageIndex` in `main_window.py`.
 2. Creare il placeholder nel loop `_setup_ui()` della `MainWindow`.
@@ -88,11 +87,11 @@ Il processo di release è automatizzato via `admin/release.py` e include:
 
 ### 2. Modularità e Performance
 *   **Lazy Loading**: I pannelli della `MainWindow` devono essere istanziati solo al primo accesso reale.
-*   **Thread Safety**: Ogni operazione di I/O pesante (Bot, SQL massive, scansione file) **DEVE** essere eseguita in un thread separato (`QThread` o `QTimer` differiti).
-*   **Strangler Fig Pattern**: Per il refactoring di moduli grandi, muoversi incrementalmente spostando una funzione alla volta e usando il re-export temporaneo per non rompere le dipendenze.
+*   **Thread Safety**: Ogni operazione di I/O pesante (Bot, SQL massive, scansione file) **DEVE** essere eseguita in un thread separato (`QThread` or `QTimer` differiti).
+*   **Strangler Fig Pattern**: For the refactoring of large modules, move incrementally by moving one function at a time and using temporary re-exporting so as not to break dependencies.
 
 ### 3. Comunicazione tra Layer
-*   **Segnali (PyQt6)**: È l'unico modo permesso per la comunicazione GUI -> Core e viceversa.
+*   **Segnali (PyQt6)**: È l'unico modo permesso per la comunicazione GUI -> Core e vice-versa.
 *   **Singleton Access**: Manager globali acceduti esclusivamente tramite `.instance()`.
 *   **Naming**: Suffissi `_requested` (comando), `_changed` (stato), `_failed` (errore).
 

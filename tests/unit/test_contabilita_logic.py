@@ -13,10 +13,11 @@ class TestContabilitaLogic:
     def test_import_data_success(self, manager):
         mock_rows = [{"year": 2024}]
         with (
-            patch("src.core.contabilita_manager.ExcelImporter.import_contabilita_dati",
-                  return_value=(True, "OK", mock_rows, [2024])),
-            patch("src.core.contabilita_manager.DataSynchronizer.sync_contabilita_dati",
-                  return_value=(1, 0))
+            patch(
+                "src.core.contabilita_manager.ExcelImporter.import_contabilita_dati",
+                return_value=(True, "OK", mock_rows, [2024]),
+            ),
+            patch("src.core.contabilita_manager.DataSynchronizer.sync_contabilita_dati", return_value=(1, 0)),
         ):
             success, _msg, added, _removed = manager.import_data_from_excel("mock.xlsx")
             assert success is True
@@ -26,16 +27,32 @@ class TestContabilitaLogic:
         # Mock dei dati restituiti dalle query (14 colonne per OdA, 11 per Giornaliere)
         # OdA mapping: data_prev(0), mese(1), n_prev(2), totale_prev(3), attivita(4), tcl(5), odc(6), stato_attivita(7), tipologia(8), ore_sp(9)...
         mock_oda = [
-            ("2024-01-01", "GEN", "PREV-001", 1000.0, "ATT", "TCL", "ODC", "CHIUSO", "TIP", 10.0, "R", "N", "P", "F")
+            (
+                "2024-01-01",
+                "GEN",
+                "PREV-001",
+                1000.0,
+                "ATT",
+                "TCL",
+                "ODC",
+                "CHIUSO",
+                "TIP",
+                10.0,
+                "R",
+                "N",
+                "P",
+                "F",
+            )
         ]
         # Giornaliere mapping: data(0), personale(1), tcl(2), descrizione(3), n_prev(4), odc(5), pdl(6), inizio(7), fine(8), ore(9), nome_file(10)
-        mock_giornaliere = [
-            ("2024-01-01", "P1", "T", "D", "PREV-001", "ODC", "P", "08", "17", 8.0, "F")
-        ]
+        mock_giornaliere = [("2024-01-01", "P1", "T", "D", "PREV-001", "ODC", "P", "08", "17", 8.0, "F")]
 
         with (
             patch("src.core.contabilita_queries.ContabilitaQueries.get_data_by_year", return_value=mock_oda),
-            patch("src.core.contabilita_queries.ContabilitaQueries.get_giornaliere_by_year", return_value=mock_giornaliere)
+            patch(
+                "src.core.contabilita_queries.ContabilitaQueries.get_giornaliere_by_year",
+                return_value=mock_giornaliere,
+            ),
         ):
             stats = manager.get_year_stats(2024)
 
@@ -49,9 +66,12 @@ class TestContabilitaLogic:
         g_dir = tmp_path / "Giornaliere 2024"
         g_dir.mkdir()
         with (
-            patch("src.core.contabilita_manager.ExcelImporter.import_giornaliere", return_value=(True, "OK", [], [2024])),
+            patch(
+                "src.core.contabilita_manager.ExcelImporter.import_giornaliere",
+                return_value=(True, "OK", [], [2024]),
+            ),
             patch("src.core.contabilita_manager.DataSynchronizer.sync_giornaliere", return_value=(1, 0)),
-            patch("src.core.database.db_manager.get_connection")
+            patch("src.core.database.db_manager.get_connection"),
         ):
             success, _msg, added, _removed = manager.import_giornaliere(str(tmp_path))
             assert success is True

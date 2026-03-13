@@ -56,6 +56,7 @@ class ContabilitaKPIPanel(QWidget):
 
         with suppress(Exception):
             import matplotlib.pyplot as plt
+
             plt.style.use("seaborn-v0_8-darkgrid")
 
         self.charts_manager = KPIChartsManager(self.HOURLY_COST_STD)
@@ -278,6 +279,7 @@ class ContabilitaKPIPanel(QWidget):
                 "nome_file",
             ]
             import pandas as pd
+
             df = pd.DataFrame(data, columns=cols)
             df["totale_prev"] = pd.to_numeric(df["totale_prev"], errors="coerce").fillna(0)
             df["ore_sp"] = pd.to_numeric(df["ore_sp"], errors="coerce").fillna(0)

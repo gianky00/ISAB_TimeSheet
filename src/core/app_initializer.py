@@ -154,7 +154,6 @@ class AppInitializer:
         tasks = [
             (PageIndex.DASHBOARD, "Preparazione Dashboard"),
             (PageIndex.AUTOMAZIONI, "Scheduler Attività"),
-            (PageIndex.LYRA, "Motore Analisi Lyra"),
             (PageIndex.TIMBRATURE, "Caricamento Repository Ore"),
             (PageIndex.STRUMENTALE, "Registro Asset Aziendali"),
             (PageIndex.DATAEASE, "DataEase Sync Bridge"),
@@ -163,28 +162,30 @@ class AppInitializer:
             (PageIndex.DIPENDENTI, "Gestione Schede Dipendenti"),
         ]
 
-        from PyQt6.QtWidgets import QApplication
         import time
+
+        from PyQt6.QtWidgets import QApplication
+
         base_prog = 45
         total = len(tasks)
 
         for i, (idx, name) in enumerate(tasks):
             prog = base_prog + int((i / total) * 45)
             yield name, prog
-            
+
             start_time = time.perf_counter()
             logger.info(f"[UI STARTUP] Loading panel: {name}...")
-            
+
             # Forza il processamento degli eventi UI per fluidità splash
             QApplication.processEvents()
-            
+
             try:
                 mw_instance.navigation_controller.get_panel(idx)
                 elapsed = (time.perf_counter() - start_time) * 1000
                 logger.info(f"[UI STARTUP] Panel {name} loaded in {elapsed:.2f}ms")
             except Exception as e:
                 logger.error(f"Error loading panel {name}: {e}", exc_info=True)
-            
+
             # Permette ai widget appena creati di processare i loro timer iniziali
             QApplication.processEvents()
 

@@ -11,14 +11,16 @@ class TestContabilitaPanelRefactoring:
     def panel(self, qtbot):
         with (
             patch("src.gui.panels.contabilita_panel.ContabilitaPanel.refresh_tabs"),
-            patch("src.gui.panels.contabilita_panel.ContabilitaPanel._connect_selection_signal")
+            patch("src.gui.panels.contabilita_panel.ContabilitaPanel._connect_selection_signal"),
         ):
             p = ContabilitaPanel()
             p.selection_count_label = QLabel("0")
             p.selection_sum_label = QLabel("0")
             return p
 
-    @pytest.mark.skip(reason="Incompatibilità mock in ambiente headless Windows. Logica da spostare in utility.")
+    @pytest.mark.skip(
+        reason="Incompatibilità mock in ambiente headless Windows. Logica da spostare in utility."
+    )
     def test_update_selection_total_table(self, panel, qtbot):
         """Test calculation of totals in a QTableWidget."""
         table = QTableWidget(3, 3)
@@ -44,10 +46,13 @@ class TestContabilitaPanelRefactoring:
         assert "2" in count_text
         assert "15,5" in sum_text
 
-    @pytest.mark.skip(reason="Incompatibilità mock in ambiente headless Windows. Logica da spostare in utility.")
+    @pytest.mark.skip(
+        reason="Incompatibilità mock in ambiente headless Windows. Logica da spostare in utility."
+    )
     def test_update_selection_total_tree(self, panel):
         """Test selection count in a QTreeWidget."""
         from PyQt6.QtWidgets import QTreeWidget, QTreeWidgetItem
+
         tree = QTreeWidget()
         item = QTreeWidgetItem(["A"])
         tree.addTopLevelItem(item)

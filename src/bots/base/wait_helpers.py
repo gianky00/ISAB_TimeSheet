@@ -55,9 +55,6 @@ def wait_for_overlay_to_disappear(
         return False
 
 
-
-
-
 def wait_for_element_clickable(
     driver: WebDriver,
     locator: tuple[str, str],
@@ -175,9 +172,6 @@ def poll_for_file(
     return None
 
 
-
-
-
 def poll_for_new_file(
     directory: Path | str,
     files_before: Iterable[Path | str],
@@ -256,6 +250,3 @@ def poll_for_new_file(
 
     logger.warning("Timeout attesa nuovo file / aggiornamento.")
     return None
-
-
-

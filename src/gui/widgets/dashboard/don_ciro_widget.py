@@ -199,9 +199,7 @@ class DonCiroWidget(QWidget):
 
         # Fisica Cravatta (Molla)
         target_t = (
-            math.sin(self._walk_phase * 2 * math.pi) * 12 * cos_y
-            if self._state == DonState.WALKING
-            else 0.0
+            math.sin(self._walk_phase * 2 * math.pi) * 12 * cos_y if self._state == DonState.WALKING else 0.0
         )
         if self._weather == WeatherCond.WINDY:
             target_t += 20 * self._look_dir
@@ -216,9 +214,7 @@ class DonCiroWidget(QWidget):
         )
         if self._weather == WeatherCond.WINDY:
             target_j -= 10 * self._look_dir
-        self._jacket_vel += (
-            (target_j - self._jacket_flap) * 40.0 * dt - self._jacket_vel * 6.0 * dt
-        )
+        self._jacket_vel += (target_j - self._jacket_flap) * 40.0 * dt - self._jacket_vel * 6.0 * dt
         self._jacket_flap += self._jacket_vel * dt
 
         if self._state == DonState.WALKING:
@@ -307,18 +303,12 @@ class DonCiroWidget(QWidget):
         if self._weather == WeatherCond.RAINY:
             p.setPen(QPen(QColor(255, 255, 255, 40), 1))
             for i in range(15):
-                rx, ry = (self._walk_phase * 500 + i * 30) % 280, (
-                    self._walk_phase * 800 + i * 40
-                ) % 180
+                rx, ry = (self._walk_phase * 500 + i * 30) % 280, (self._walk_phase * 800 + i * 40) % 180
                 p.drawLine(QPointF(rx, ry), QPointF(rx - 5, ry + 15))
 
     def _draw_dynamic_shadow(self, p: QPainter) -> None:
         """Ombra proiettata al suolo che reagisce al rimbalzo."""
-        bob = (
-            abs(math.sin(self._walk_phase * 2 * math.pi))
-            if self._state == DonState.WALKING
-            else 0.0
-        )
+        bob = abs(math.sin(self._walk_phase * 2 * math.pi)) if self._state == DonState.WALKING else 0.0
         s = (42 - bob * 4) * self._scale
         g = QRadialGradient(0, 0, s)
         g.setColorAt(0, QColor(0, 0, 0, int(80 - bob * 20)))
@@ -332,14 +322,8 @@ class DonCiroWidget(QWidget):
         f = self._walk_phase * 2 * math.pi
         rad = math.radians(self._yaw_angle)
         cos_y, sin_y = math.cos(rad), math.sin(rad)
-        sq = (
-            1.0 - 0.03 * max(0.0, math.sin(f * 2))
-            if self._state == DonState.WALKING
-            else 1.0
-        )
-        by = (
-            -68 - (abs(math.sin(f * 2)) * 6 if self._state == DonState.WALKING else 0)
-        ) * self._scale
+        sq = 1.0 - 0.03 * max(0.0, math.sin(f * 2)) if self._state == DonState.WALKING else 1.0
+        by = (-68 - (abs(math.sin(f * 2)) * 6 if self._state == DonState.WALKING else 0)) * self._scale
         ln = (0.08 if self._state == DonState.WALKING else 0.0) * cos_y
         if self._weather == WeatherCond.WINDY:
             ln += 0.1 * self._look_dir
@@ -371,9 +355,7 @@ class DonCiroWidget(QWidget):
             al_p.setX(al_p.x() + asw)
         elif self._state == DonState.ACTION_WATCH:
             ap = math.sin(self._action_phase * math.pi)
-            al_p = QPointF(
-                l_sh.x() + 10 * self._scale * cos_y, sy + 10 * self._scale - 10 * self._scale * ap
-            )
+            al_p = QPointF(l_sh.x() + 10 * self._scale * cos_y, sy + 10 * self._scale - 10 * self._scale * ap)
             hd_p.setX(hd_p.x() + 5 * self._scale * ap * cos_y)
             hd_p.setY(hd_p.y() + 5 * self._scale * ap)
         elif self._state == DonState.ACTION_TIE:
@@ -382,14 +364,16 @@ class DonCiroWidget(QWidget):
 
         rq: list[RenderItem] = []
         rz, lz = wo * cos_y, -wo * cos_y
-        rq.extend((
-            RenderItem(-rz, self._draw_leg, (r_hp, kn_r, QPointF(r_hp.x() + frx, fry), rz, cos_y)),
-            RenderItem(-lz, self._draw_leg, (l_hp, kn_l, QPointF(l_hp.x() + flx, fly), lz, cos_y)),
-            RenderItem(-rz, self._draw_arm, (r_sh, ar_p, rz, True)),
-            RenderItem(-lz, self._draw_arm, (l_sh, al_p, lz, False)),
-            RenderItem(0.0, self._draw_torso, (hp_c, sc, cos_y, sin_y)),
-            RenderItem(0.5, self._draw_head, (hd_p, cos_y, sin_y)),
-        ))
+        rq.extend(
+            (
+                RenderItem(-rz, self._draw_leg, (r_hp, kn_r, QPointF(r_hp.x() + frx, fry), rz, cos_y)),
+                RenderItem(-lz, self._draw_leg, (l_hp, kn_l, QPointF(l_hp.x() + flx, fly), lz, cos_y)),
+                RenderItem(-rz, self._draw_arm, (r_sh, ar_p, rz, True)),
+                RenderItem(-lz, self._draw_arm, (l_sh, al_p, lz, False)),
+                RenderItem(0.0, self._draw_torso, (hp_c, sc, cos_y, sin_y)),
+                RenderItem(0.5, self._draw_head, (hd_p, cos_y, sin_y)),
+            )
+        )
         rq.sort(key=lambda x: x.z_depth, reverse=True)
         p.save()
         p.scale(1.0, sq)
@@ -459,7 +443,14 @@ class DonCiroWidget(QWidget):
         """Disegna un braccio con eventuale ombrello."""
         op = 0.8 if z < 0 else 1.0
         p.setOpacity(op)
-        p.setPen(QPen(self.C_SUIT.darker(105 if z < 0 else 100), 7 * self._scale, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+        p.setPen(
+            QPen(
+                self.C_SUIT.darker(105 if z < 0 else 100),
+                7 * self._scale,
+                Qt.PenStyle.SolidLine,
+                Qt.PenCapStyle.RoundCap,
+            )
+        )
         p.drawLine(sh, hand)
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(QBrush(self.C_SKIN.darker(105 if z < 0 else 100)))
@@ -471,7 +462,9 @@ class DonCiroWidget(QWidget):
             p.drawLine(QPointF(0, 0), QPointF(0, -35 * self._scale))
             p.setPen(Qt.PenStyle.NoPen)
             p.setBrush(QBrush(QColor("#111111")))
-            p.drawChord(QRectF(-20 * self._scale, -45 * self._scale, 40 * self._scale, 20 * self._scale), 0, 180 * 16)
+            p.drawChord(
+                QRectF(-20 * self._scale, -45 * self._scale, 40 * self._scale, 20 * self._scale), 0, 180 * 16
+            )
             p.restore()
         p.setOpacity(1.0)
 
@@ -606,13 +599,9 @@ class DonCiroWidget(QWidget):
                 if self._blink > 0.3:
                     p.setBrush(QBrush(Qt.GlobalColor.black))
                     poff = 1.5 * s * cy
-                    p.drawEllipse(
-                        QRectF(nx + gap - 1.2 * s + poff, pos.y() + 2 * s, 2.5 * s, 2.5 * s)
-                    )
+                    p.drawEllipse(QRectF(nx + gap - 1.2 * s + poff, pos.y() + 2 * s, 2.5 * s, 2.5 * s))
                     if abs(sy) > 0.35:
-                        p.drawEllipse(
-                            QRectF(nx - gap - 1.2 * s + poff, pos.y() + 2 * s, 2.5 * s, 2.5 * s)
-                        )
+                        p.drawEllipse(QRectF(nx - gap - 1.2 * s + poff, pos.y() + 2 * s, 2.5 * s, 2.5 * s))
 
     def _draw_label(self, p: QPainter) -> None:
         """Disegna l'etichetta animata spettacolare con effetto Chrome."""

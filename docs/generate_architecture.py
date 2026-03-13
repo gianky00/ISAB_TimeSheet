@@ -51,7 +51,7 @@ node_attr = {
 }
 
 with Diagram(
-    "SyncroJob Enterprise Architecture v1.29",
+    "SyncroJob Enterprise Architecture v1.30",
     show=False,
     filename=OUTPUT_FILE,
     direction="TB",
@@ -65,7 +65,7 @@ with Diagram(
     with Cluster("SyncroJob Enterprise Ecosystem"):
         with Cluster("GUI Application (PyQt6)"):
             gui = Tablet("Main Dashboard")
-            gui_components = [Python("KPI & Stats"), Python("Lyra AI Panel"), Python("Consuntivi View")]
+            gui_components = [Python("KPI & Stats"), Python("Consuntivi View")]
             notif = Python("Toast Notifications")
 
         with Cluster("Core Engine & Services"):
@@ -75,9 +75,8 @@ with Diagram(
             sync_tracker = Python("SyncTracker")
             health = Python("Backup & Telemetry")
 
-        with Cluster("Communication & Intelligence"):
+        with Cluster("Communication"):
             tg_bridge = Python("Telegram Bridge")
-            lyra_client = Python("Lyra AI Client")
 
         with Cluster("Automation Engine (Selenium)"):
             autopilot = Python("Autopilot\nScheduler")
@@ -93,7 +92,6 @@ with Diagram(
     with Cluster("External Infrastructure"):
         isab_ext = Firewall("ISAB Portal")
         safework_ext = Firewall("SafeWork Portal")
-        ai_service = Rack("AI Services")
 
     # Connections
     user >> Edge(label="User Interaction", color="blue", penwidth="2.0") >> gui
@@ -121,11 +119,8 @@ with Diagram(
     isab_bots >> Edge(label="Bot Action", color="red", style="dashed") >> isab_ext
     safework_bots >> Edge(label="Bot Action", color="red", style="dashed") >> safework_ext
 
-    # AI & Comms Flow
-    lyra_client >> Edge(label="AI Sync", color="purple") >> ai_service
-    lyra_client >> core
-
+    # Comms Flow
     tg_bridge >> Edge(label="Telegram Sync", color="cyan", penwidth="2.0") >> tg_ext
     tg_bridge >> core
 
-print(f"✅ Architettura High-Res v1.29 generata in: {OUTPUT_DIR / OUTPUT_FILE}.png")
+print(f"✅ Architettura High-Res v1.30 generata in: {OUTPUT_DIR / OUTPUT_FILE}.png")

@@ -96,7 +96,9 @@ class ScaricoOreTableModel(QAbstractTableModel):
         if data:
             self.update_data(data)
 
-    def load_data_async(self, raw_data: list[tuple[Any, ...]] | Callable[[], list[tuple[Any, ...]]] | None = None) -> None:
+    def load_data_async(
+        self, raw_data: list[tuple[Any, ...]] | Callable[[], list[tuple[Any, ...]]] | None = None
+    ) -> None:
         """
         Avvia il caricamento asincrono dei dati tramite CacheWorker.
 

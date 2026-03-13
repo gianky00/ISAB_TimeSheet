@@ -92,6 +92,7 @@ class ClipboardMixin:
         widget = self.cellWidget(row, col)  # type: ignore
         if widget:
             from PyQt6.QtWidgets import QComboBox
+
             # Se è direttamente una QComboBox
             if isinstance(widget, QComboBox):
                 return str(widget.currentText())

@@ -10,7 +10,9 @@ class TestGuiSnapshots:
     @pytest.fixture
     def mock_deps(self, mocker):
         # Mock per ContabilitaManager (evita chiamate DB in refresh_tabs)
-        mocker.patch("src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024, 2025])
+        mocker.patch(
+            "src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024, 2025]
+        )
 
         # Mock per ScaricoOreController (evita inizializzazione database reale)
         mocker.patch("src.gui.panels.scarico_ore_panel.ScaricoOreController")

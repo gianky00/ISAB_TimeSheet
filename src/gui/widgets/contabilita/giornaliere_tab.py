@@ -223,11 +223,6 @@ class GiornaliereYearTab(QWidget):
         filename = item_0.data(Qt.ItemDataRole.UserRole) if item_0 else None
 
         menu = QMenu(self)
-        lyra_action = QAction("Analizza riga con Lyra", self)
-        lyra_action.setIcon(get_colored_icon(get_asset_path(Icons.SPARKLES), COLORS["text_dark"]))
-        lyra_action.triggered.connect(lambda: self.table._analyze_row_at(pos))
-        menu.addAction(lyra_action)
-        menu.addSeparator()
         if filename:
             action = QAction(f"Apri {filename}", self)
             action.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), COLORS["text_dark"]))

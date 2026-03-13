@@ -10,6 +10,7 @@ class TestSidebarWidget:
     def test_sidebar_initialization(self, mock_asset, qapp, qtbot):
         mock_asset.return_value = ""
         from src.gui.widgets.sidebar_widget import SidebarWidget
+
         sidebar = SidebarWidget()
         qtbot.addWidget(sidebar)
         assert sidebar._is_collapsed is True
@@ -18,6 +19,7 @@ class TestSidebarWidget:
     def test_sidebar_palette_click_emits_signal(self, mock_asset, qapp, qtbot):
         mock_asset.return_value = ""
         from src.gui.widgets.sidebar_widget import SidebarWidget
+
         sidebar = SidebarWidget()
         qtbot.addWidget(sidebar)
         sidebar._set_collapsed(False)
@@ -28,6 +30,7 @@ class TestSidebarWidget:
     def test_sidebar_monitoraggio_group_exists(self, mock_asset, qapp, qtbot):
         mock_asset.return_value = ""
         from src.gui.widgets.sidebar_widget import SidebarWidget
+
         sidebar = SidebarWidget()
         qtbot.addWidget(sidebar)
 
@@ -42,6 +45,7 @@ class TestSidebarWidget:
     def test_sidebar_navigation_signal(self, mock_asset, qapp, qtbot):
         mock_asset.return_value = ""
         from src.gui.widgets.sidebar_widget import SidebarWidget
+
         sidebar = SidebarWidget()
         qtbot.addWidget(sidebar)
         sidebar._set_collapsed(False)
@@ -56,6 +60,7 @@ class TestSidebarWidget:
     def test_sidebar_expand_collapse_state(self, mock_asset, qapp, qtbot):
         mock_asset.return_value = ""
         from src.gui.widgets.sidebar_widget import SidebarWidget
+
         sidebar = SidebarWidget()
         qtbot.addWidget(sidebar)
 

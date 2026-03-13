@@ -12,7 +12,7 @@ Analizzare la directory `src/` del progetto corrente e generare uno script Pytho
 
 ## 🔍 Fasi di Analisi Richieste
 
-1.  **Core Discovery**: Analizza `src/core/` per identificare i manager (Secrets, Config, Sync, Audit, Telegram, Lyra AI).
+1.  **Core Discovery**: Analizza `src/core/` per identificare i manager (Secrets, Config, Sync, Audit, Telegram).
 2.  **GUI Mapping**: Analizza `src/gui/panels/` e `src/gui/widgets/` per mappare i moduli utente.
 3.  **Bot Inventory**: Analizza `src/bots/` per identificare i portali esterni supportati (ISAB, SafeWork).
 4.  **Data Flow**: Identifica come i bot scrivono nel DB (`DataSynchronizer`) e come la GUI comunica con il Core.
@@ -31,13 +31,11 @@ Lo script prodotto deve implementare i seguenti standard:
 graph_attr = {
     "fontsize": "32",
     "bgcolor": "white",
-    "fontname": "Verdana Bold",
     "pad": "2.0",
     "nodesep": "1.8",
     "ranksep": "2.5",
     "dpi": "300",
     "splines": "curved",
-    "concentrate": "true"
 }
 ```
 
@@ -46,7 +44,7 @@ graph_attr = {
 - **Cluster Core**: Deve evidenziare SecretsManager, SyncTracker e la logica di business.
 - **Cluster Automation**: Deve mostrare Autopilot e i singoli Bot Selenium.
 - **Cluster Persistence**: Database SQLite e DB di Audit.
-- **External Systems**: Firewall/Nodi per i Portali ISAB, SafeWork e i servizi AI.
+- **External Systems**: Firewall/Nodi per i Portali ISAB e SafeWork.
 
 ### 4. Mappatura Flussi (Color Coding)
 - **Blu**: Interazione Utente -> GUI.
@@ -54,7 +52,6 @@ graph_attr = {
 - **Verde**: Sincronizzazione Bot -> Database.
 - **Rosso (Dashed)**: Automazione Bot -> Portali Esterni.
 - **Ciano**: Telegram Bridge -> App Telegram.
-- **Viola**: Lyra AI -> Servizi AI Esterni.
 
 ## 📤 Output Atteso
 Fornisci il codice Python completo, pronto per l'esecuzione, che rifletta fedelmente le dipendenze e i moduli trovati durante la tua analisi del codebase attuale.

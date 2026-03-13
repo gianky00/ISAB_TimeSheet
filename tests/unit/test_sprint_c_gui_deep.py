@@ -1,4 +1,3 @@
-
 import pytest
 
 from src.gui.panels.contabilita_panel import ContabilitaPanel
@@ -11,7 +10,9 @@ class TestSprintCGUIDeep:
     @pytest.mark.skip(reason="Incompatibilità rendering AnimatedTabWidget in ambiente headless Windows V9.0.")
     def test_contabilita_tab_synchronization(self, qtbot, mocker):
         """Verifica che il refresh del panel si propaghi ai tab interni."""
-        mocker.patch("src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024])
+        mocker.patch(
+            "src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024]
+        )
         panel = ContabilitaPanel()
         qtbot.addWidget(panel)
 

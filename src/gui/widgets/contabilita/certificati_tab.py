@@ -283,11 +283,6 @@ class CertificatiCampioneTab(QWidget):
                 open_act = QAction("📄 Apri Certificato", self)
                 open_act.triggered.connect(lambda: self._open_certificate(cert_number))
                 menu.addAction(open_act)
-                menu.addSeparator()
-
-            lyra_act = QAction("🔍 Analizza con Lyra", self)
-            lyra_act.triggered.connect(lambda: self._analyze_item(item))
-            menu.addAction(lyra_act)
 
         if viewport := self.tree.viewport():
             menu.exec(viewport.mapToGlobal(pos))
@@ -308,17 +303,6 @@ class CertificatiCampioneTab(QWidget):
             os.startfile(path)  # noqa: S606
         else:
             QMessageBox.warning(self, "Non trovato", f"Impossibile trovare il certificato '{cert_number}'")
-
-    def _analyze_item(self, item: QTreeWidgetItem) -> None:
-        """Invia i dettagli del certificato selezionato a Lyra AI."""
-        from src.gui.main_window import MainWindow
-
-        mw = self.window()
-        if isinstance(mw, MainWindow):
-            text = " | ".join(
-                [f"{self.tree.HEADERS[c]}: {item.text(c)}" for c in range(self.tree.columnCount())]
-            )
-            mw.navigation_controller.analyze_with_lyra(f"Certificato: {text}")
 
     def _run_analysis(self) -> None:
         """Avvia l'algoritmo di analisi predittiva delle scadenze."""

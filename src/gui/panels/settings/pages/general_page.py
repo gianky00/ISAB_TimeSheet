@@ -1,6 +1,6 @@
 from typing import Any
 
-from PyQt6.QtCore import QTimer, pyqtSignal
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -8,16 +8,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import URLs
-from src.core.secrets_manager import SecretsManager
-from src.gui.panels.lyra.workers import ModelListWorker
-from src.gui.panels.settings.shared import create_group_box, style_button, style_input
+from src.gui.panels.settings.shared import create_group_box, style_input
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import (
-    FilterComboBox,
-    PrimaryButton,
     StandardCheckBox,
-    StandardInput,
     StandardSpinBox,
 )
 
@@ -29,7 +23,6 @@ class GeneralPage(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.model_worker: ModelListWorker | None = None
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -50,57 +43,6 @@ class GeneralPage(QWidget):
         self.headless_check.stateChanged.connect(self.settings_changed.emit)
         gen_layout.addWidget(self.headless_check)
         layout.addWidget(self.general_group)
-
-        # AI Group
-        self.ai_group = create_group_box("Intelligenza Artificiale (Lyra AI)")
-        ai_layout = QVBoxLayout(self.ai_group)
-
-        # Provider
-        provider_layout = QHBoxLayout()
-        provider_layout.addWidget(QLabel("AI Provider:"))
-        self.provider_combo = FilterComboBox()
-        self.provider_combo.addItems(["gemini", "ollama"])
-        self.provider_combo.setMinimumHeight(40)
-        style_input(self.provider_combo)
-        self.provider_combo.currentTextChanged.connect(self.settings_changed.emit)
-        self.provider_combo.currentTextChanged.connect(self._on_provider_changed)
-        provider_layout.addWidget(self.provider_combo)
-        ai_layout.addLayout(provider_layout)
-
-        # Ollama URL
-        self.ollama_url_container = QWidget()
-        ollama_url_layout = QHBoxLayout(self.ollama_url_container)
-        ollama_url_layout.setContentsMargins(0, 0, 0, 0)
-        ollama_url_layout.addWidget(QLabel("Ollama Server URL:"))
-        self.ollama_url_edit = StandardInput()
-        self.ollama_url_edit.setPlaceholderText(URLs.OLLAMA_DEFAULT)
-        self.ollama_url_edit.setMinimumHeight(40)
-        style_input(self.ollama_url_edit)
-        self.ollama_url_edit.textChanged.connect(self.settings_changed.emit)
-        ollama_url_layout.addWidget(self.ollama_url_edit)
-        ai_layout.addWidget(self.ollama_url_container)
-
-        # Model Selection with Refresh
-        model_container = QHBoxLayout()
-        model_container.addWidget(QLabel("Modello AI:"))
-
-        self.model_combo = FilterComboBox()
-        self.model_combo.setEditable(True)  # Permette inserimento manuale se fetch fallisce
-        self.model_combo.setMinimumHeight(40)
-        self.model_combo.setMinimumWidth(200)
-        style_input(self.model_combo)
-        self.model_combo.currentTextChanged.connect(self.settings_changed.emit)
-        model_container.addWidget(self.model_combo, 1)
-
-        self.btn_refresh_models = PrimaryButton("Aggiorna Lista")
-        self.btn_refresh_models.setMinimumHeight(40)
-        style_button(self.btn_refresh_models)
-        self.btn_refresh_models.clicked.connect(self.refresh_models)
-        model_container.addWidget(self.btn_refresh_models)
-
-        ai_layout.addLayout(model_container)
-
-        layout.addWidget(self.ai_group)
 
         # Browser Group
         self.browser_group = create_group_box("Impostazioni Browser")
@@ -126,60 +68,12 @@ class GeneralPage(QWidget):
 
         layout.addStretch()
 
-    def _on_provider_changed(self, provider: str) -> None:
-        """Mostra/nasconde impostazioni specifiche e resetta i modelli."""
-        self.ollama_url_container.setVisible(provider == "ollama")
-        # Trigger automatico refresh quando cambia il provider
-        QTimer.singleShot(500, self.refresh_models)
-
-    def refresh_models(self):
-        """Avvia il worker per recuperare i modelli in base al provider e config attuale."""
-        if self.model_worker and self.model_worker.isRunning():
-            return
-
-        self.btn_refresh_models.setEnabled(False)
-        self.btn_refresh_models.setText("Recupero...")
-
-        provider = self.provider_combo.currentText()
-        ollama_url = self.ollama_url_edit.text()
-        api_key = SecretsManager.get_gemini_api_key()
-
-        self.model_worker = ModelListWorker(api_key, provider=provider, ollama_url=ollama_url)
-        self.model_worker.finished.connect(self._on_models_fetched)
-        self.model_worker.start()
-
-    def _on_models_fetched(self, models: list[str]):
-        current_model = self.model_combo.currentText()
-        self.model_combo.clear()
-        if models:
-            self.model_combo.addItems(sorted(models))
-            if current_model in models:
-                self.model_combo.setCurrentText(current_model)
-
-        self.btn_refresh_models.setEnabled(True)
-        self.btn_refresh_models.setText("Aggiorna Lista")
-
     def load_from_config(self, config: dict[str, Any]) -> None:
         """Carica i valori dalla configurazione."""
         self.headless_check.setChecked(bool(config.get("browser_headless", False)))
         self.timeout_spin.setValue(int(config.get("browser_timeout", 30)))
 
-        # AI
-        provider = config.get("ai_provider", "gemini")
-        self.provider_combo.setCurrentText(provider)
-        self.ollama_url_edit.setText(config.get("ollama_url", URLs.OLLAMA_DEFAULT))
-
-        # Carichiamo il modello (se non c'è nella lista, il combo essendo editable lo mostrerà comunque)
-        self.model_combo.setEditText(config.get("ai_model", ""))
-
-        self._on_provider_changed(provider)
-
     def save_to_config(self, config: dict[str, Any]) -> None:
         """Salva i valori nel dizionario di configurazione."""
         config["browser_headless"] = self.headless_check.isChecked()
         config["browser_timeout"] = self.timeout_spin.value()
-
-        # AI
-        config["ai_provider"] = self.provider_combo.currentText()
-        config["ai_model"] = self.model_combo.currentText()
-        config["ollama_url"] = self.ollama_url_edit.text()

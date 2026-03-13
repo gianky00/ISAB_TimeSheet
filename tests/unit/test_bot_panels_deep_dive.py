@@ -13,6 +13,7 @@ def mock_gui_deps(mocker):
     mocker.patch("src.core.telegram_manager.TelegramService", return_value=MagicMock())
     return MagicMock()
 
+
 class TestScaricoPDLPanel:
     @patch("src.gui.panels.base.BotWorker")
     def test_telegram_send_after_finish(self, mock_worker_cls, qapp, qtbot, mock_gui_deps):
@@ -37,7 +38,7 @@ class TestScaricoPDLPanel:
 
                 # Configure the mock worker instance created by _on_start
                 mock_worker = mock_worker_cls.return_value
-                panel.worker = mock_worker # Ensure it's set
+                panel.worker = mock_worker  # Ensure it's set
 
                 mock_worker.bot = MagicMock()
                 mock_worker.bot.downloaded_files = ["/path/to/report.pdf"]

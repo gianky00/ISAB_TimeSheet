@@ -1,9 +1,9 @@
 import re
-import sys
+
 
 def main():
     try:
-        with open("tests/vulture_raw.txt", "r", encoding="utf-8") as f:
+        with open("tests/vulture_raw.txt", encoding="utf-8") as f:
             lines = f.readlines()
     except FileNotFoundError:
         print("File non trovato")
@@ -19,11 +19,11 @@ def main():
     if names:
         with open("config/vulture_whitelist.py", "a", encoding="utf-8") as f:
             f.write("\n# Auto-generated whitelists from framework utilities\n")
-            for name in sorted(names):
-                f.write(f"{name}\n")
+            f.writelines(f"{name}\n" for name in sorted(names))
         print(f"Aggiunti {len(names)} elementi alla whitelist.")
     else:
         print("Nessun elemento da aggiungere.")
+
 
 if __name__ == "__main__":
     main()

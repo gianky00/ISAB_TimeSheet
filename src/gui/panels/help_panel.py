@@ -182,7 +182,6 @@ class HelpPanel(QWidget):
             ("Introduzione", self._get_intro_md(), Icons.HOME),
             ("Workflow Automazioni", self._get_scarico_md(), Icons.CPU),
             ("Gestione Database", self._get_timbrature_md(), Icons.DATABASE),
-            ("Lyra AI Analyst", self._get_lyra_md(), Icons.SPARKLES),
             ("Sincronizzazione PDL", self._get_oda_md(), Icons.FILE_TEXT),
             ("KPI & Analisi", self._get_contabilita_md(), Icons.BAR_CHART),
             ("Notifiche & Audit", self._get_news_md(), Icons.BELL),
@@ -236,7 +235,6 @@ SyncroJob v{VERSION} è una suite software di classe enterprise progettata per e
 #### 🎯 Obiettivi Chiave
 *   **Zero Error Data Entry**: Riduzione degli errori umani nel carico dei Timesheet.
 *   **Real-time Monitoring**: Visione istantanea dello stato delle abilitazioni e della contabilità.
-*   **AI Augmentation**: Analisi proattiva delle anomalie tramite l'assistente Lyra.
 
 ---
 *Usa il menu a sinistra per esplorare i moduli funzionali.*
@@ -275,22 +273,6 @@ SyncroJob utilizza un motore database SQLite ottimizzato per gestire centinaia d
 
 #### 🔍 Ricerca Avanzata
 Utilizza la **Ricerca Universale** in alto (Ctrl+F) per trovare istantaneamente un Badge, un Cognome o un numero OdA in tutto l'ecosistema.
-"""
-
-    def _get_lyra_md(self) -> str:
-        return """
-# ✨ Lyra AI Analyst
-### L'assistente virtuale basato su Intelligenza Artificiale Generativa.
-
-Lyra non è un semplice chatbot, ma un modulo di analisi integrato che comprende il contesto dei tuoi dati.
-
-#### 🛠️ Cosa può fare Lyra?
-*   **Analisi Anomalie**: Confronta timbrature e scarico ore per trovare incongruenze.
-*   **Supporto Tecnico**: Risponde a domande operative su come usare l'applicazione.
-*   **Data Extraction**: Estrae informazioni da testi non strutturati.
-
-#### 🔐 Privacy
-Tutte le query inviate a Lyra sono filtrate per rimuovere PII (Informazioni Sensibili) prima dell'elaborazione.
 """
 
     def _get_oda_md(self) -> str:

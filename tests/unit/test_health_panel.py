@@ -10,6 +10,7 @@ class TestHealthScoreBadge:
 
     def test_badge_initialization(self, qtbot):
         from src.gui.panels.health_panel import HealthScoreBadge
+
         badge = HealthScoreBadge(size=160)
         qtbot.addWidget(badge)
         assert badge._score == 100
@@ -17,6 +18,7 @@ class TestHealthScoreBadge:
 
     def test_badge_score_setter(self, qtbot):
         from src.gui.panels.health_panel import HealthScoreBadge
+
         badge = HealthScoreBadge()
         qtbot.addWidget(badge)
         badge.score = 75
@@ -29,6 +31,7 @@ class TestHealthScoreBadge:
     def test_badge_color_thresholds(self, qtbot):
         """Testa i colori basati su soglie V9.0."""
         from src.gui.panels.health_panel import HealthScoreBadge
+
         badge = HealthScoreBadge()
         qtbot.addWidget(badge)
 
@@ -47,6 +50,7 @@ class TestHealthScoreBadge:
     def test_badge_status_text(self, qtbot):
         """Testa i testi di stato V9.0."""
         from src.gui.panels.health_panel import HealthScoreBadge
+
         badge = HealthScoreBadge()
         qtbot.addWidget(badge)
 
@@ -55,19 +59,23 @@ class TestHealthScoreBadge:
         badge.score = 30
         assert "CRITICO" in badge._get_status_text()
 
+
 class TestStatCard:
     def test_statcard_initialization(self, qtbot):
         from src.gui.panels.health_panel import StatCard
+
         card = StatCard("Test", "42")
         qtbot.addWidget(card)
         assert card.val_lbl.text() == "42"
 
     def test_statcard_set_value(self, qtbot):
         from src.gui.panels.health_panel import StatCard
+
         card = StatCard("Test", "0")
         qtbot.addWidget(card)
         card.set_value("100")
         assert card.val_lbl.text() == "100"
+
 
 class TestAnomalyCard:
     def test_anomaly_card_initialization(self, qtbot):
@@ -89,6 +97,7 @@ class TestAnomalyCard:
         from dataclasses import dataclass
 
         from src.gui.panels.health_panel import AnomalyCard
+
         @dataclass
         class MockAnomaly:
             severity: str = "low"
@@ -99,10 +108,12 @@ class TestAnomalyCard:
         assert card._get_severity_color("low") == COLORS["info_blue"]
         assert card._get_severity_color("critical") == COLORS["error_red"]
 
+
 class TestHealthPanel:
     @patch("src.gui.panels.health_panel.QTimer")
     def test_panel_initialization(self, mock_timer, qtbot):
         from src.gui.panels.health_panel import HealthPanel
+
         panel = HealthPanel()
         qtbot.addWidget(panel)
         assert panel._score_badge is not None
@@ -120,6 +131,7 @@ class TestHealthPanel:
         class MockReport:
             health_score: int = 85
             anomalies: list = None
+
             def __post_init__(self):
                 if self.anomalies is None:
                     self.anomalies = []

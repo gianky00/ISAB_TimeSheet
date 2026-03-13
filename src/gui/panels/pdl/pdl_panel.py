@@ -313,6 +313,7 @@ class PDLDBPanel(QWidget):
     def _export_to_excel(self) -> None:
         """Esporta l'intero set di dati filtrato in formato Excel."""
         import pandas as pd
+
         if not self._raw_full_data:
             return
         df = pd.DataFrame(self._raw_full_data, columns=self.full_headers)

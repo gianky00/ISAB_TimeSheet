@@ -36,6 +36,7 @@ def get_local_setup_path(url_or_path: str) -> str:
 
 class DownloadWorker(QThread):
     """Worker for resilient update downloading or network copying with progress support."""
+
     progress = pyqtSignal(int, int, float, float)
     finished_download = pyqtSignal(str)
     error = pyqtSignal(str)
@@ -77,7 +78,7 @@ class DownloadWorker(QThread):
 
             with open(self.url_or_path, "rb") as f_src, open(setup_path, "wb") as f_dst:
                 while not self._is_cancelled:
-                    chunk = f_src.read(1024 * 1024) # 1MB chunks
+                    chunk = f_src.read(1024 * 1024)  # 1MB chunks
                     if not chunk:
                         break
 
@@ -107,7 +108,7 @@ class DownloadWorker(QThread):
         while not self._is_cancelled:
             try:
                 downloaded = Path(setup_path).stat().st_size if Path(setup_path).exists() else 0
-                headers = {'Range': f'bytes={downloaded}-'} if downloaded > 0 else {}
+                headers = {"Range": f"bytes={downloaded}-"} if downloaded > 0 else {}
 
                 session = requests.Session()
                 response = session.get(self.url_or_path, headers=headers, stream=True, timeout=(10, 30))
@@ -125,8 +126,8 @@ class DownloadWorker(QThread):
 
                 if downloaded == 0:
                     total_size = int(response.headers.get("content-length", 0))
-                elif 'Content-Range' in response.headers:
-                    total_size = int(response.headers['Content-Range'].split('/')[-1])
+                elif "Content-Range" in response.headers:
+                    total_size = int(response.headers["Content-Range"].split("/")[-1])
 
                 mode = "ab" if downloaded > 0 else "wb"
                 with open(setup_path, mode) as f:
@@ -188,8 +189,9 @@ def run_pending_installer():
     if _pending_installer_path and Path(_pending_installer_path).exists():
         flags = 0x00000008 if os.name == "nt" else 0
         args = [
-            "cmd.exe", "/c",
-            f"timeout /t 3 /nobreak > NUL && \"{_pending_installer_path}\" /SILENT /FORCESTART"
+            "cmd.exe",
+            "/c",
+            f'timeout /t 3 /nobreak > NUL && "{_pending_installer_path}" /SILENT /FORCESTART',
         ]
         subprocess.Popen(args, shell=False, creationflags=flags, close_fds=True)
 
@@ -220,15 +222,19 @@ def get_web_update_info():
 def get_network_update_info():
     """Fetches version info from network share."""
     try:
-        net_path = getattr(version, 'NETWORK_UPDATE_PATH', None)
+        net_path = getattr(version, "NETWORK_UPDATE_PATH", None)
         if not net_path:
             return None
 
         json_path = Path(net_path) / "version.json"
         if json_path.exists():
-            with json_path.open("r", encoding='utf-8') as f:
+            with json_path.open("r", encoding="utf-8") as f:
                 data = json.load(f)
-                if data.get("url") and not data["url"].startswith("http") and not data["url"].startswith("\\\\"):
+                if (
+                    data.get("url")
+                    and not data["url"].startswith("http")
+                    and not data["url"].startswith("\\\\")
+                ):
                     data["url"] = str(Path(net_path) / data["url"])
                 return data
     except Exception as e:

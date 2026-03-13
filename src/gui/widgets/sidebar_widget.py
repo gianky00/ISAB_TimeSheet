@@ -242,12 +242,11 @@ class SidebarWidget(QFrame):
         f_lay = QVBoxLayout(self.footer)
         f_lay.setContentsMargins(5, 10, 5, 0)
         f_lay.setSpacing(6)
-        self.btn_lyra = SidebarButton("Lyra AI", get_asset_path(Icons.SPARKLES))
         self.group_notifiche = SidebarGroup("Monitoraggio", get_asset_path(Icons.ACTIVITY))
         self.btn_help = SidebarButton("Guida", get_asset_path(Icons.HELP))
         self.btn_settings = SidebarButton("Impostazioni", get_asset_path(Icons.SETTINGS))
 
-        self.footer_btns = [self.btn_lyra, self.group_notifiche, self.btn_help, self.btn_settings]
+        self.footer_btns = [self.group_notifiche, self.btn_help, self.btn_settings]
         for b in self.footer_btns:
             f_lay.addWidget(b)
             if isinstance(b, SidebarGroup):
@@ -280,7 +279,6 @@ class SidebarWidget(QFrame):
         self.btn_dataease.clicked.connect(lambda: self.navigation_requested.emit(5, -1, -1))
         self.btn_pdl.clicked.connect(lambda: self.navigation_requested.emit(6, -1, -1))
         self.btn_storico_oda.clicked.connect(lambda: self.navigation_requested.emit(10, -1, -1))
-        self.btn_lyra.clicked.connect(lambda: self.navigation_requested.emit(2, -1, -1))
         self.btn_help.clicked.connect(lambda: self.navigation_requested.emit(8, -1, -1))
         self.btn_settings.clicked.connect(lambda: self.navigation_requested.emit(7, -1, -1))
 
@@ -340,7 +338,6 @@ class SidebarWidget(QFrame):
         """
         btns = {
             0: self.btn_home,
-            2: self.btn_lyra,
             7: self.btn_settings,
             8: self.btn_help,
             3: self.btn_timbrature,

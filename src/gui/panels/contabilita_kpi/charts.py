@@ -22,13 +22,16 @@ FigureCanvas: Any = None
 # Evita il caricamento dei backend Matplotlib Qt durante i test per prevenire Access Violation nativi
 if "pytest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST"):
     from unittest.mock import MagicMock
+
     FigureCanvas = MagicMock
 else:
     try:
         from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+
         FigureCanvas = FigureCanvasQTAgg
     except (ImportError, RuntimeError):
         from unittest.mock import MagicMock
+
         FigureCanvas = MagicMock
 
 

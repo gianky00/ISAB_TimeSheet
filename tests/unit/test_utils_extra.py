@@ -13,17 +13,20 @@ def test_log_humanizer_categories():
         assert isinstance(h, str)
         assert len(h) > 0
 
+
 def test_log_humanizer_unknown_category():
     """Verifica fallback su categoria sconosciuta (info)."""
     h, _, c = SmartLogTranslator.humanize("Messaggio generico")
     assert c == "info"
     assert h == "Messaggio generico"
 
+
 def test_log_humanizer_deterministic_choice():
     """Verifica che la scelta sia deterministica in V9.0 (niente varianti casuali)."""
     results = {SmartLogTranslator.humanize("errore")[0] for _ in range(50)}
     # In V9.0 c'è solo 1 variante per messaggio
     assert len(results) == 1
+
 
 def test_secure_logger_masking_via_filter():
     """Verifica mascheramento dati sensibili tramite filtro."""
@@ -42,6 +45,7 @@ def test_secure_logger_masking_via_filter():
     filt.filter(record2)
     assert "segreta123" not in record2.msg
     assert "password=***MASKED***" in record2.msg
+
 
 def test_get_secure_logger():
     """Verifica inizializzazione e recupero logger sicuro."""

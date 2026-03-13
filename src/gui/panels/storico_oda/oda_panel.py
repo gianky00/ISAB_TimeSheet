@@ -273,6 +273,7 @@ class StoricoOdaPanel(QWidget):
     def _export_to_excel(self) -> None:
         """Esporta i dati filtrati correnti in un file Excel."""
         import pandas as pd
+
         search_text = self.filters.search_input.text()
         raw_data = OdaManager.get_all_oda(search_text)
         if not raw_data:

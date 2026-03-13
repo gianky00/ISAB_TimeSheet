@@ -107,6 +107,24 @@ class WorkflowController(QObject):
         if panel:
             QTimer.singleShot(200, lambda: panel.run_externally({}))
 
+    def run_sync_dataease(self) -> None:
+        """Avvia la sincronizzazione DataEase."""
+        from src.gui.main_window.page_index import PageIndex
+
+        self.mw.navigation_controller.navigate_to(PageIndex.DATAEASE)
+        panel = getattr(self.mw, "scarico_ore_panel", None)
+        if panel and hasattr(panel, "_start_update"):
+            QTimer.singleShot(200, panel._start_update)
+
+    def run_sync_strumentale(self) -> None:
+        """Avvia la sincronizzazione contabilità strumentale."""
+        from src.gui.main_window.page_index import PageIndex
+
+        self.mw.navigation_controller.navigate_to(PageIndex.STRUMENTALE)
+        panel = getattr(self.mw, "contabilita_panel", None)
+        if panel and hasattr(panel, "refresh_tabs"):
+            QTimer.singleShot(200, panel.refresh_tabs)
+
     def run_dettagli_oda_update(self) -> None:
         """Avvia l'aggiornamento massivo dello Storico OdA tramite il bot Dettagli OdA."""
         from PyQt6.QtCore import QDate
@@ -125,14 +143,13 @@ class WorkflowController(QObject):
             panel = getattr(self.mw, "dettagli_panel", None)
             if panel:
                 # Feedback visivo nello Storico OdA
-                ToastManager.instance().show("🚀 Sincronizzazione database OdA avviata in background...", "info")
+                ToastManager.instance().show(
+                    "🚀 Sincronizzazione database OdA avviata in background...", "info"
+                )
 
                 # Calcola la data odierna nel formato richiesto: GG.MM.AAAA
                 data_attuale = QDate.currentDate().toString("dd.MM.yyyy")
 
                 # Avvio bot bypassando le righe (triggera Lista Generale)
                 # Passiamo data_a come data attuale (override del widget UI)
-                QTimer.singleShot(100, lambda: panel.run_externally({
-                    "rows": [],
-                    "data_a": data_attuale
-                }))
+                QTimer.singleShot(100, lambda: panel.run_externally({"rows": [], "data_a": data_attuale}))

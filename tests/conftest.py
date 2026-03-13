@@ -26,11 +26,20 @@ try:
             super().__init__(*args, **kwargs)
             self.figure = MagicMock()
 
-        def setParent(self, parent): pass
-        def setMinimumHeight(self, h): pass
-        def setSizePolicy(self, *args): pass
-        def setGraphicsEffect(self, effect): pass
-        def setStyleSheet(self, style): pass
+        def setParent(self, parent):
+            pass
+
+        def setMinimumHeight(self, h):
+            pass
+
+        def setSizePolicy(self, *args):
+            pass
+
+        def setGraphicsEffect(self, effect):
+            pass
+
+        def setStyleSheet(self, style):
+            pass
 
     mock_backend = MagicMock()
     mock_backend.FigureCanvasQTAgg = MockCanvas
@@ -83,6 +92,7 @@ except (ImportError, RuntimeError):
 # --- GLOBAL MATPLOTLIB MOCK FOR HEADLESS ENVIRONMENTS ---
 try:
     import matplotlib
+
     matplotlib.use("Agg")
 
     # Mock canvas classes that cause native crashes in headless Windows
@@ -278,8 +288,7 @@ def mock_ui_dependencies(mocker):
             return_value=MagicMock(),
         )
 
-    # Mock LyraSentinel & Telegram
-    mocker.patch("src.core.lyra_sentinel.LyraSentinel", return_value=MagicMock())
+    # Mock Telegram
     mocker.patch("src.core.telegram_manager.TelegramService", return_value=MagicMock())
 
     # Mock ConfigManager per evitare scritture reali

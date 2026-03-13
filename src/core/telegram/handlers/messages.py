@@ -1,18 +1,15 @@
-import json
 import re
-from contextlib import suppress
 
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from src.core.secrets_manager import SecretsManager
 from src.core.telegram.ui.keyboards import TelegramUI
 
 
 async def handle_text_input(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Main router for incoming text messages.
-    Routes based on current user state (DB query, wizard) or passes to NLU.
+    Routes based on current user state (DB query, wizard) or passes to query dispatcher.
     """
     if (
         not await service._check_auth(update)
@@ -31,9 +28,9 @@ async def handle_text_input(service, update: Update, context: ContextTypes.DEFAU
         await _handle_db_query_input(service, chat_id, state, text, update)
         return
 
-    # 2. Gestione Intenti NLU (senza stato)
+    # 2. Gestione Query (senza stato)
     if not state:
-        await _handle_nlu_or_query(service, chat_id, text)
+        service.query_received.emit(str(chat_id), text)
         return
 
     # 3. Gestione Input Sequenziali (OdA, PDL, Time)
@@ -50,15 +47,6 @@ async def _handle_db_query_input(service, chat_id, state, text, update):
     await update.message.reply_chat_action("typing")
     service.command_received.emit("search_db_pdf", params)
     service.user_states[chat_id] = None
-
-
-async def _handle_nlu_or_query(service, chat_id, text):
-    """Decides whether to process text as an NLU intent or a simple query."""
-    keywords = ["scarica", "stampa", "avvia", "pdl", "oda", "stato", "riavvia"]
-    if any(k in text.lower() for k in keywords):
-        await process_with_ai(service, chat_id, text)
-    else:
-        service.query_received.emit(str(chat_id), text)
 
 
 async def _handle_sequential_input(service, chat_id, state, text, update):
@@ -86,19 +74,10 @@ async def _handle_sequential_input(service, chat_id, state, text, update):
 
 async def handle_voice(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Handles voice messages.
-    Downloads audio and sends it to the AI processor for transcription/analysis.
+    Handles voice messages. (AI functionality removed)
     """
-    if not await service._check_auth(update):
-        return
-    if not update.effective_chat or not update.message or not update.message.voice:
-        return
-
-    chat_id = update.effective_chat.id
-    file = await context.bot.get_file(update.message.voice.file_id)
-    audio_bytes = await file.download_as_bytearray()
-    await update.message.reply_chat_action("typing")
-    await process_with_ai(service, chat_id, bytes(audio_bytes), is_audio=True)
+    if update.message:
+        await update.message.reply_text("🎤 Messaggi vocali non supportati in questa versione.")
 
 
 async def handle_photo(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -117,47 +96,3 @@ async def handle_photo(service, update: Update, context: ContextTypes.DEFAULT_TY
     file = await context.bot.get_file(photo.file_id)
     photo_bytes = await file.download_as_bytearray()
     service.photo_received.emit(chat_id, bytes(photo_bytes), caption)
-
-
-async def process_with_ai(service, chat_id, data, is_audio=False):
-    """
-    Submits text or audio data to the Gemini/Lyra AI engine.
-    Parses the JSON response to trigger application actions or replies.
-    """
-    api_key = SecretsManager.get_gemini_api_key()
-    if not api_key:
-        service.send_message_sync("⚠️ API Key mancante per intelligenza bot.")
-        return
-
-    def run():
-        """Esegue l'interazione con l'AI in un thread separato per non bloccare il bot."""
-        try:
-            from src.core.lyra_client import LyraClient
-
-            client = LyraClient(api_key=api_key)
-            if isinstance(data, str) and not is_audio:
-                res = client.ask(data)
-                with suppress(Exception):
-                    clean = res.replace("```json", "").replace("```", "").strip()
-                    intent = json.loads(clean)
-                    if "action" in intent:
-                        service.intent_received.emit(str(chat_id), intent)
-                        return
-                service.send_message_sync(f"🤖 **Lyra**: {res}")
-            else:
-                prompt = (
-                    "Sei l'interfaccia NLU di SyncroJob. Analizza il messaggio e restituisci SOLO JSON.\n"
-                    "Azioni: 'download', 'print', 'status', 'restart'.\n"
-                    "Oggetti: 'pdl', 'oda', 'timbrature'.\n"
-                    "Items: codici PDL (es. 123456/C o 123456 senza suffisso) o OdA.\n"
-                    'JSON: {"action": "...", "object": "...", "items": [...]}'
-                )
-                res = client.analyze_media(data, prompt, "audio/ogg")
-                with suppress(Exception):
-                    clean = res.replace("```json", "").replace("```", "").strip()
-                    intent = json.loads(clean)
-                    service.intent_received.emit(str(chat_id), intent)
-        except Exception as e:
-            service.send_message_sync(f"❌ Errore AI: {e}")
-
-    service.ai_executor.submit(run)

@@ -26,6 +26,7 @@ def test_timeline_functionality(qtbot):
     for log in logs_to_add:
         assert any(log in t for t in texts)
 
+
 def test_timeline_autoscroll_safe(qtbot):
     """Verifica che l'aggiunta massiva di log non crashi (autoscroll safe)."""
     widget = TimelineWidget()

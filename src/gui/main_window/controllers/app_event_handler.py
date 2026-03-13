@@ -46,10 +46,11 @@ class AppEventHandler(QObject):
         # Se c'è un aggiornamento programmato e l'utente clicca la 'X'
         if not self._force_quit and has_pending_update():
             from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
+
             res = ConfirmationDialog.confirm(
                 self.main_window,
                 "Aggiornamento Pronto",
-                "Hai richiesto l'installazione dell'aggiornamento alla chiusura.\nVuoi chiudere definitivamente l'applicazione per aggiornarla ora?"
+                "Hai richiesto l'installazione dell'aggiornamento alla chiusura.\nVuoi chiudere definitivamente l'applicazione per aggiornarla ora?",
             )
             if res:
                 self._force_quit = True

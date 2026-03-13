@@ -3,8 +3,6 @@
 
 # Qt Framework Overrides & Slots
 closeEvent  # unused method (src/gui/main_window.py)
-dropEvent  # unused method (src/gui/lyra_panel.py)
-dragEnterEvent  # unused method (src/gui/lyra_panel.py)
 paintEvent  # unused method (src/gui/widgets/status_indicator.py)
 headerData  # unused method (src/gui/formatters.py)
 contextMenuEvent  # unused method (src/gui/widgets/excel_table.py)
@@ -28,7 +26,6 @@ run_retention_policy  # unused method (src/core/audit_manager.py)
 validate_codice_fiscale  # unused method (src/utils/validators.py)
 sanitize_sql_string  # unused method (src/utils/validators.py)
 get_fornitori  # unused function (src/core/config_manager.py)
-get_exa_api_key  # unused method (src/core/secrets_manager.py)
 get_openai_key  # unused method (src/core/secrets_manager.py)
 derive_key  # unused method (src/core/secrets_manager.py)
 
@@ -356,11 +353,6 @@ ResponsiveContainer
 _console_anim
 _telemetry_anim
 handle_f5
-handle_scarico_ts_input
-handle_dettagli_oda_input
-handle_pdl_input
-handle_prenota_bp_input
-run_carico_ts
 tray_controller
 finalize_init
 get_rows_count

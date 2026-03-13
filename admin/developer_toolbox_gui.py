@@ -589,7 +589,9 @@ class DeveloperToolboxGUI(QMainWindow):
 
     def _full_deploy(self):
         """Opzione 16: Full Deploy"""
-        self._run_command([str(VENV_PYTHON), "admin/release.py", "auto", "--skip-tests", "--deploy"], "Full Deploy")
+        self._run_command(
+            [str(VENV_PYTHON), "admin/release.py", "auto", "--skip-tests", "--deploy"], "Full Deploy"
+        )
 
     def _secrets_mgmt(self):
         """Opzione 17: Secrets Management"""

@@ -13,10 +13,38 @@ class TestOdaManager:
     def test_get_all_oda_no_filter(self, mock_query):
         mock_query.return_value = [
             (
-                "ORG1", "2025-01-15", "123", "10", "APERTO", "CAT1", "Test desc", 10, "PZ",
-                "2025-02-01", 1000.0, 500.0, 1500.0, "DIV1", "DEST1", "Nome Dest",
-                "FOR001", "Fornitore S.r.l.", "EMI01", "Emittente", "CC01", "CONTR001",
-                "POS1", "GRP1", "IND1", "STATO1", "ATT1", "1", 5, "UNI", 200.0, "Testo"
+                "ORG1",
+                "2025-01-15",
+                "123",
+                "10",
+                "APERTO",
+                "CAT1",
+                "Test desc",
+                10,
+                "PZ",
+                "2025-02-01",
+                1000.0,
+                500.0,
+                1500.0,
+                "DIV1",
+                "DEST1",
+                "Nome Dest",
+                "FOR001",
+                "Fornitore S.r.l.",
+                "EMI01",
+                "Emittente",
+                "CC01",
+                "CONTR001",
+                "POS1",
+                "GRP1",
+                "IND1",
+                "STATO1",
+                "ATT1",
+                "1",
+                5,
+                "UNI",
+                200.0,
+                "Testo",
             )
         ]
         result = OdaManager.get_all_oda()

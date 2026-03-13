@@ -5,7 +5,9 @@ import pytest
 from src.gui.controllers.service_controller import ServiceController
 
 
-@pytest.mark.skip(reason="Crash nativo in ambiente headless Windows V9.0 durante coordinamento servizi background.")
+@pytest.mark.skip(
+    reason="Crash nativo in ambiente headless Windows V9.0 durante coordinamento servizi background."
+)
 class TestServiceControllerCoverage:
     @pytest.fixture
     def mw(self):
@@ -33,16 +35,16 @@ class TestServiceControllerCoverage:
     @patch("src.gui.controllers.service_controller.check_for_updates")
     def test_check_updates(self, mock_check, controller, mw):
         controller._check_updates()
-        mock_check.assert_called_with(
-            parent=mw, silent=True, callback=mw._show_update_banner
-        )
+        mock_check.assert_called_with(parent=mw, silent=True, callback=mw._show_update_banner)
 
     def test_forward_notification_to_telegram_sent(self, controller):
         notif = {"title": "Error", "level": "error", "message": "msg"}
         controller._forward_notification_to_telegram(notif)
         controller.telegram.send_message_sync.assert_called()
 
-    @pytest.mark.skip(reason="Crash nativo in ambiente headless Windows V9.0 durante coordinamento servizi background.")
+    @pytest.mark.skip(
+        reason="Crash nativo in ambiente headless Windows V9.0 durante coordinamento servizi background."
+    )
     @patch("src.gui.controllers.service_controller.datetime")
     def test_check_scheduled_tasks_autopilot_trigger(self, mock_dt, controller, mw):
         mock_dt.now.return_value.strftime.return_value = "09:00"
@@ -50,7 +52,7 @@ class TestServiceControllerCoverage:
         mw.timbrature_bot_panel = mock_panel
         with (
             patch("src.core.config_manager.load_config") as mock_load,
-            patch.object(controller, "_schedule_bot_with_parallelism") as mock_sched
+            patch.object(controller, "_schedule_bot_with_parallelism") as mock_sched,
         ):
             mock_load.return_value = {
                 "timbrature_autopilot_enabled": True,
@@ -69,7 +71,7 @@ class TestServiceControllerCoverage:
             "timbrature_autopilot_enabled": True,
             "timbrature_autopilot_time": "09:00",
             "report_email_autopilot_enabled": False,
-            "report_email_autopilot_interval_days": 7
+            "report_email_autopilot_interval_days": 7,
         }
 
         with patch("src.core.config_manager.load_config", return_value=test_config):

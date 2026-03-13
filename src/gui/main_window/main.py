@@ -18,7 +18,6 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.core.audit_manager import AuditManager
-from src.core.lyra_sentinel import LyraSentinel
 from src.core.telegram_bridge import TelegramUIBridge
 from src.core.telegram_manager import TelegramService
 from src.core.version import __version__ as VERSION
@@ -66,7 +65,6 @@ class MainWindow(QMainWindow):
         self._is_initializing = True
 
         # --- SERVIZI ---
-        self.sentinel = LyraSentinel()
         self.telegram = TelegramService()
         self.telegram_bridge = TelegramUIBridge(self)
         self.telegram_bridge.setup_connections()
@@ -86,7 +84,7 @@ class MainWindow(QMainWindow):
         self.navigation_controller = NavigationController(self)
         self.tray_controller = self.tray_icon_component.controller
         self.bot_controller = BotController(self, self.telegram)
-        self.service_controller = ServiceController(self, self.telegram, self.sentinel)
+        self.service_controller = ServiceController(self, self.telegram)
 
         # Modular Workflow and Monitoring Controllers
         self.workflow_controller = WorkflowController(self)
@@ -305,7 +303,11 @@ class MainWindow(QMainWindow):
         from src.core.app_updater import get_local_setup_path, perform_auto_update, show_install_prompt
 
         # Se il banner indica che è già completo, mostra direttamente la prompt di installazione
-        if hasattr(self, "update_banner") and self.update_banner and getattr(self.update_banner, "_is_complete", False):
+        if (
+            hasattr(self, "update_banner")
+            and self.update_banner
+            and getattr(self.update_banner, "_is_complete", False)
+        ):
             setup_path = get_local_setup_path(url)
             show_install_prompt(setup_path, self)
             return
@@ -315,6 +317,7 @@ class MainWindow(QMainWindow):
     def _on_update_downloaded(self, setup_path: str) -> None:
         """Gestisce il completamento del download dell'aggiornamento."""
         from src.core.app_updater import show_install_prompt
+
         # Segnala al banner che il download è terminato per aggiornare lo stato visivo
         if hasattr(self, "update_banner") and self.update_banner:
             self.update_banner._is_complete = True
@@ -330,7 +333,14 @@ class MainWindow(QMainWindow):
         """Naviga verso una pagina specifica tramite indice."""
         self.navigation_controller.navigate_to(index)
 
-    def _show_update_banner(self, new_version: str, download_url: str, changelog: str, is_partial: bool = False, is_complete: bool = False) -> None:
+    def _show_update_banner(
+        self,
+        new_version: str,
+        download_url: str,
+        changelog: str,
+        is_partial: bool = False,
+        is_complete: bool = False,
+    ) -> None:
         """Mostra il banner di aggiornamento disponibile."""
         if hasattr(self, "update_banner"):
             self.update_banner.show_update(new_version, download_url, changelog, is_partial, is_complete)

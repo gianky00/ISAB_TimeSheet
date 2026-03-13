@@ -3,7 +3,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.gui.panels.help_panel import HelpPanel
-from src.gui.panels.lyra.lyra_panel import LyraPanel
 from src.gui.panels.notifications_panel import NotificationsPanel
 
 
@@ -11,27 +10,6 @@ class TestGUIPanelsExtended:
     @pytest.fixture
     def app(self, qapp):
         return qapp
-
-    def test_lyra_panel_init(self, qtbot):
-        with patch(
-            "src.gui.panels.lyra.lyra_panel.SecretsManager.get_gemini_api_key",
-            return_value="fake_key",
-        ):
-            panel = LyraPanel()
-            qtbot.addWidget(panel)
-            assert panel.chat_area is not None
-            assert panel.input_bar is not None
-
-            # Test typing and sending (verifichiamo l'effetto sulla chat area)
-            initial_count = panel.chat_area.chat_layout.count()
-            panel.input_bar.input_field.setText("Ciao Lyra")
-
-            # Mockiamo il worker per evitare chiamate API reali
-            with patch("src.gui.panels.lyra.lyra_panel.LyraWorker"):
-                panel.input_bar.send_clicked.emit("Ciao Lyra")
-
-            # Verifichiamo che il messaggio "Tu" sia stato aggiunto
-            assert panel.chat_area.chat_layout.count() > initial_count
 
     def test_notifications_panel(self, qtbot):
         with patch("src.core.notification_manager.NotificationManager.instance") as mock_inst:

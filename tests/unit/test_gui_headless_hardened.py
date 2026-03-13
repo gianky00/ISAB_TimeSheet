@@ -60,8 +60,9 @@ class TestGUIHeadlessHardened:
 
         assert acc_widget.list_widget.count() == initial_count + 1
 
-        found = any("new_user" in acc_widget.list_widget.item(i).text()
-                    for i in range(acc_widget.list_widget.count()))
+        found = any(
+            "new_user" in acc_widget.list_widget.item(i).text() for i in range(acc_widget.list_widget.count())
+        )
         assert found
 
     def test_settings_tab_change_logic(self, settings_panel):

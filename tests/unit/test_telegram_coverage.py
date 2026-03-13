@@ -32,6 +32,7 @@ class TestTelegramCoverage:
             service.send_message_sync("Hello")
             assert mock_run.called
 
+
 class TestTelegramBridge:
     @pytest.fixture
     def bridge(self, mocker):

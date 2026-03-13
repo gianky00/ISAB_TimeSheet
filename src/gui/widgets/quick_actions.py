@@ -170,15 +170,6 @@ AVAILABLE_ACTIONS: dict[str, dict[str, Any]] = {
         "path": ["DataBase"],
     },
     # ============================================================
-    # PRIMO LIVELLO: Lyra AI (selectable root)
-    # ============================================================
-    "nav_page_2": {
-        "text": "Lyra AI",
-        "icon": Icons.SPARKLES,
-        "color": COLORS["purple"],
-        "path": [],
-    },
-    # ============================================================
     # PRIMO LIVELLO: Notifiche > SECONDO LIVELLO: Audit
     # ============================================================
     "nav_sub_notifiche_1": {
@@ -325,10 +316,10 @@ class QuickActions(QWidget):
         if not saved_keys:
             # Default set if nothing configured
             saved_keys = [
-                "nav_page_2",
                 "nav_dettagli_oda",
                 "nav_scarico_ts",
                 "nav_carico_ts",
+                "pf_timbrature",
             ]
 
         # Calcola quanti pulsanti per riga (max 5 per riga per evitare scroll orizzontale)

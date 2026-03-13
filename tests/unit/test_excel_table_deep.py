@@ -1,4 +1,3 @@
-
 from src.gui.widgets.excel_table import EditableDataTable, ExcelTableWidget
 
 

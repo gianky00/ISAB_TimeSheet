@@ -88,7 +88,6 @@ class NavigationController(QObject):
         creators: dict[int, Callable[[], QWidget]] = {
             0: self._create_dashboard,
             1: self._create_automazioni,
-            2: self._create_lyra,
             3: self._create_timbrature,
             4: self._create_strumentale,
             5: self._create_dataease,
@@ -141,14 +140,6 @@ class NavigationController(QObject):
 
         panel = AutomazioniWidget(self.mw)
         self.mw.automazioni_widget = panel
-        return panel
-
-    def _create_lyra(self) -> QWidget:
-        """Inizializza l'assistente virtuale Lyra."""
-        from src.gui.panels import LyraPanel
-
-        panel = LyraPanel()
-        self.mw.lyra_panel = panel
         return panel
 
     def _create_timbrature(self) -> QWidget:
@@ -497,11 +488,6 @@ class NavigationController(QObject):
         elif idx == PageIndex.DATAEASE and hasattr(panel, "_start_update"):
             panel._start_update()
 
-    def analyze_with_lyra(self, context_text: str) -> None:
-        """Naviga alla vista Lyra passando un contesto testuale per l'analisi immediata."""
-        self.navigate_to(2)
-        self.mw.lyra_panel.ask_lyra("Analizza questi dati e dimmi se ci sono anomalie.", context_text)
-
     def detach_current_panel(self) -> None:
         """Sgancia il pannello attualmente visualizzato in una finestra esterna."""
         idx = self.mw.page_stack.currentIndex()
@@ -525,7 +511,7 @@ class NavigationController(QObject):
         titles = {
             PageIndex.DASHBOARD: "Dashboard",
             PageIndex.AUTOMAZIONI: "Automazioni",
-            PageIndex.LYRA: "Lyra AI",
+            PageIndex.RESERVED_AI: "Riservato",
             PageIndex.TIMBRATURE: "Database Timbrature",
             PageIndex.STRUMENTALE: "Contabilità Strumentale",
             PageIndex.DATAEASE: "Scarico Ore (DataEase)",

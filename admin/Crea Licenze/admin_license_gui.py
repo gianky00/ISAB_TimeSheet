@@ -328,6 +328,7 @@ class LicenseAdminApp:
     def _get_git_binary(self):
         """Trova il percorso dell'eseguibile git."""
         import shutil
+
         git_path = shutil.which("git")
         if git_path:
             return git_path
@@ -336,12 +337,12 @@ class LicenseAdminApp:
         common_paths = [
             r"C:\Program Files\Git\cmd\git.exe",
             r"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd\git.exe",
-            r"C:\Program Files\Git\bin\git.exe"
+            r"C:\Program Files\Git\bin\git.exe",
         ]
         for p in common_paths:
             if Path(p).exists():
                 return p
-        return "git" # Speriamo nel meglio
+        return "git"  # Speriamo nel meglio
 
     def upload_to_github(self, hw_id, target_dir):
         """Carica i file su GitHub usando gh CLI."""

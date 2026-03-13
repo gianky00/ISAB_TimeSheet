@@ -261,10 +261,9 @@ class BotParametersWidget(QWidget):
             hbox_dest.addWidget(self.browse_btn)
 
             from src.gui.widgets.modern_button import ModernButton
+
             self.open_btn = ModernButton(
-                "APRI",
-                variant=ModernButton.Variant.GHOST,
-                size=ModernButton.Size.SMALL
+                "APRI", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL
             )
             self.open_btn.setFixedSize(60, 38)
             self.open_btn.setStyleSheet(f"""
@@ -343,7 +342,8 @@ class BotParametersWidget(QWidget):
 
         try:
             import os
-            os.startfile(str(path)) # noqa: S606
+
+            os.startfile(str(path))  # noqa: S606
         except Exception:
             from src.gui.widgets.toast import ToastManager
 

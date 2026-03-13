@@ -1,6 +1,6 @@
 """
 SyncroJob - Monitoring Controller
-Gestisce i controlli proattivi (abilitazioni, anomalie, health) e i relativi timer.
+Gestisce i controlli proattivi (abilitazioni, health) e i relativi timer.
 """
 
 from typing import TYPE_CHECKING
@@ -63,15 +63,3 @@ class MonitoringController(QObject):
             )
         except Exception as e:
             print(f"Errore monitoraggio autorizzazioni: {e}")
-
-    def handle_anomalies_found(self, count: int) -> None:
-        """Reagisce al rilevamento di anomalie nei dati."""
-        if hasattr(self.mw, "sidebar"):
-            self.mw.sidebar.btn_lyra.set_badge(count)
-        if count > 0:
-            alert_icon = get_asset_path(Icons.ALERT)
-            ToastManager.instance().show(
-                f"<img src='{alert_icon}' width='14' height='14'> Lyra ha rilevato {count} anomalie",
-                "warning",
-                is_rich_text=True,
-            )

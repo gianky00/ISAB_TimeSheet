@@ -12,7 +12,6 @@ from src.gui.panels.dashboard_panel import DashboardPanel
 from src.gui.panels.dettagli_oda import DettagliOdAPanel
 from src.gui.panels.dipendenti import DipendentiPanel
 from src.gui.panels.help_panel import HelpPanel
-from src.gui.panels.lyra import LyraPanel
 from src.gui.panels.notifications_panel import NotificationsPanel
 from src.gui.panels.pdl import PDLDBPanel
 from src.gui.panels.prenota_bp import PrenotaBPPanel
@@ -36,7 +35,6 @@ __all__ = [
     "DettagliOdAPanel",
     "DipendentiPanel",
     "HelpPanel",
-    "LyraPanel",
     "NotificationsPanel",
     "PDLDBPanel",
     "PrenotaBPPanel",

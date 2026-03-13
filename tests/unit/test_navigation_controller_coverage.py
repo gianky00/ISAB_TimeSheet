@@ -5,7 +5,9 @@ import pytest
 from src.gui.controllers.navigation_controller import NavigationController
 
 
-@pytest.mark.skip(reason="Crash nativo in ambiente headless Windows V9.0 durante accesso a page_stack mockato.")
+@pytest.mark.skip(
+    reason="Crash nativo in ambiente headless Windows V9.0 durante accesso a page_stack mockato."
+)
 class TestNavigationControllerCoverage:
     @pytest.fixture
     def mw(self):
@@ -13,7 +15,6 @@ class TestNavigationControllerCoverage:
         mock_mw.page_stack = MagicMock()
         mock_mw.sidebar = MagicMock()
         mock_mw._current_page_index = 0
-        mock_mw.lyra_panel = MagicMock()
         mock_mw.automazioni_widget = MagicMock()
         return mock_mw
 
@@ -36,29 +37,20 @@ class TestNavigationControllerCoverage:
         new_widget = MagicMock()
         with (
             patch.object(controller, "_create_panel_by_index", return_value=new_widget),
-            patch.object(controller, "_initialize_new_panel")
+            patch.object(controller, "_initialize_new_panel"),
         ) as (_mock_create, mock_init):
             res = controller.get_panel(1)
             assert res == new_widget
             mock_init.assert_called_with(1, new_widget)
 
     def test_navigate_to_different_page(self, controller, mw):
-        """Verifica il routing verso una pagina differente."""
+        """Verifica il routing verso una pagina differente (different)."""
         mw._current_page_index = 0
         new_panel = MagicMock()
         with patch.object(controller, "get_panel", return_value=new_panel):
             controller.navigate_to(1)
             assert mw._current_page_index == 1
             mw.sidebar.set_active_button.assert_called_with(1, None, None)
-
-    @pytest.mark.skip(reason="Crash nativo in ambiente headless Windows V9.0 durante coordinamento Lyra/MainWindow.")
-    def test_analyze_with_lyra(self, controller, mw):
-        """Verifica l'inoltro del contesto a Lyra AI senza caricare il pannello reale."""
-        with patch.object(controller, "get_panel", return_value=mw.lyra_panel):
-            controller.analyze_with_lyra("test context")
-            mw.lyra_panel.ask_lyra.assert_called()
-            args, _ = mw.lyra_panel.ask_lyra.call_args
-            assert any("test context" in str(arg) for arg in args)
 
     def test_navigate_to_panel_nested_bot(self, controller, mw):
         """Verifica la navigazione verso un bot specifico."""

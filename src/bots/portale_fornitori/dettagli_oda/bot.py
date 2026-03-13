@@ -134,6 +134,7 @@ class DettagliOdABot(BaseBot):
             return []
 
         return rows
+
     def _process_single_oda(
         self,
         page: DettagliOdAPage,

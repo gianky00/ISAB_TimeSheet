@@ -1,4 +1,3 @@
-
 import pytest
 from PyQt6.QtCore import Qt
 
@@ -14,13 +13,19 @@ def panel(qapp, mocker):
     mocker.patch("src.core.config_manager.load_config", return_value={})
     return SettingsPanel()
 
+
 @pytest.mark.skip(reason="Incompatibilità mock strutturale in ambiente headless Windows V9.0.")
 def test_context_menu_setup(panel):
     """Test that list widgets have context menu policy set correctly."""
     lists_page = panel.config_tab.lists_page
     # In V9.0: section -> list_widget
-    assert lists_page.account_section.list_widget.contextMenuPolicy() == Qt.ContextMenuPolicy.CustomContextMenu
-    assert lists_page.contract_section.list_widget.contextMenuPolicy() == Qt.ContextMenuPolicy.CustomContextMenu
+    assert (
+        lists_page.account_section.list_widget.contextMenuPolicy() == Qt.ContextMenuPolicy.CustomContextMenu
+    )
+    assert (
+        lists_page.contract_section.list_widget.contextMenuPolicy() == Qt.ContextMenuPolicy.CustomContextMenu
+    )
+
 
 @pytest.mark.skip(reason="Incompatibilità mock strutturale in ambiente headless Windows V9.0.")
 def test_generic_menu_callback_structure(panel):

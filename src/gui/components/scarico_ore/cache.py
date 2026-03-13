@@ -20,7 +20,11 @@ class CacheWorker(QThread):
     )  # display_data, search_index, float_totals, style_cache, date_keys
     progress = pyqtSignal(str)
 
-    def __init__(self, cache_path: Path, data_source: list[tuple[Any, ...]] | Callable[[], list[tuple[Any, ...]]] | None = None) -> None:
+    def __init__(
+        self,
+        cache_path: Path,
+        data_source: list[tuple[Any, ...]] | Callable[[], list[tuple[Any, ...]]] | None = None,
+    ) -> None:
         super().__init__()
         # Use .json extension if not already present, for clarity
         if cache_path.suffix != ".json":

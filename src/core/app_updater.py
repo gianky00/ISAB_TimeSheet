@@ -29,6 +29,7 @@ if __name__ == "__main__":
     import sys
 
     from PyQt6.QtWidgets import QApplication
+
     app = QApplication(sys.argv)
     check_for_updates(silent=False)
     sys.exit(app.exec())

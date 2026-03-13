@@ -29,11 +29,7 @@ def add_account_logic(
             acc["default"] = False
 
     new_acc = existing.copy()
-    new_acc.update({
-        "username": username,
-        "password": password,
-        "default": is_default
-    })
+    new_acc.update({"username": username, "password": password, "default": is_default})
     if account_type:
         new_acc["type"] = account_type
 

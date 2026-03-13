@@ -20,6 +20,7 @@ class TestGUIPanels:
 
         panel.params_widget.fornitore_combo.addItem("F1")
         from PyQt6.QtCore import QDate
+
         panel.params_widget.date_da.setDate(QDate(2025, 1, 1))
 
         assert panel.params_widget.fornitore_combo.count() >= 1
@@ -47,43 +48,41 @@ class TestGUIPanels:
             "accounts": [{"username": "user_test", "password": "p"}],
             "safework_accounts": [],
             "fornitori": [],
-            "reparti": []
+            "reparti": [],
         }
         mock_load.return_value = test_config
 
-        with patch("src.core.secrets_manager.SecretsManager.get_gemini_api_key", return_value="fake"):
-            panel = SettingsPanel()
-            qtbot.addWidget(panel)
-            QApplication.processEvents()
+        panel = SettingsPanel()
+        qtbot.addWidget(panel)
+        QApplication.processEvents()
 
-            # In V9.0, accediamo al config_tab che contiene le pagine
-            config_tab = panel.config_tab
-            config_tab.load_from_config(test_config)
-            QApplication.processEvents()
+        # In V9.0, accediamo al config_tab che contiene le pagine
+        config_tab = panel.config_tab
+        config_tab.load_from_config(test_config)
+        QApplication.processEvents()
 
-            gen_page = config_tab.general_page
-            lists_page = config_tab.lists_page
+        gen_page = config_tab.general_page
+        lists_page = config_tab.lists_page
 
-            assert gen_page.headless_check.isChecked() is True
-            assert gen_page.timeout_spin.value() == 60
+        assert gen_page.headless_check.isChecked() is True
+        assert gen_page.timeout_spin.value() == 60
 
-            # Verifica caricamento account nel widget modulare
-            acc_widget = lists_page.account_section
-            assert acc_widget.list_widget.count() >= 1
+        # Verifica caricamento account nel widget modulare
+        acc_widget = lists_page.account_section
+        assert acc_widget.list_widget.count() >= 1
 
     @pytest.mark.skip(reason="Incompatibilità mock strutturale in ambiente headless Windows V9.0.")
     @patch("src.gui.panels.settings.main_panel.config_manager.save_config")
     @patch("src.gui.panels.settings.main_panel.config_manager.load_config")
     def test_settings_panel_save(self, mock_load, mock_save, app, qtbot):
         mock_load.return_value = {}
-        with patch("src.core.secrets_manager.SecretsManager.get_gemini_api_key", return_value="fake"):
-            panel = SettingsPanel()
-            qtbot.addWidget(panel)
-            QApplication.processEvents()
+        panel = SettingsPanel()
+        qtbot.addWidget(panel)
+        QApplication.processEvents()
 
-            panel.config_tab.general_page.timeout_spin.setValue(99)
-            panel.save_settings()
-            assert mock_save.called
+        panel.config_tab.general_page.timeout_spin.setValue(99)
+        panel.save_settings()
+        assert mock_save.called
 
     def test_carico_ts_panel_structure(self, app, qtbot):
         panel = CaricoTSPanel()

@@ -1,6 +1,6 @@
 """
 SyncroJob - Excel Table Widgets (Refactored)
-Widget tabellari avanzati con integrazione AI Lyra e supporto mixin per Clipboard.
+Widget tabellari avanzati con supporto mixin per Clipboard.
 """
 
 from typing import Any
@@ -28,8 +28,8 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 class ExcelTableWidget(QTableWidget):
     """
-    QTableWidget con funzionalità Clipboard TSV e analisi AI Lyra.
-    Supporta la formattazione semantica delle righe e l'interazione con l'intelligenza artificiale.
+    QTableWidget con funzionalità Clipboard TSV.
+    Supporta la formattazione semantica delle righe.
     """
 
     # Safe Method Injection: Copia i metodi di ClipboardMixin per evitare crash da eredità multipla su Windows
@@ -102,7 +102,7 @@ class ExcelTableWidget(QTableWidget):
                             it.setText("")
 
     def contextMenuEvent(self, event: Any) -> None:
-        """Mostra il menu contestuale con opzioni di analisi AI e clipboard."""
+        """Mostra il menu contestuale con opzioni di clipboard."""
         # Se riceve un QPoint (da customContextMenuRequested), lo gestisce
         if hasattr(event, "globalPos"):
             pos = event.pos()
@@ -114,61 +114,11 @@ class ExcelTableWidget(QTableWidget):
         menu = QMenu(self)
         icon_color = COLORS["text_dark"]
 
-        lyra_row = QAction(
-            get_colored_icon(get_asset_path(Icons.SPARKLES), icon_color), "Analizza riga con Lyra", self
-        )
-        lyra_row.triggered.connect(lambda: self._analyze_row_at(pos))
-
-        lyra_sel = QAction(
-            get_colored_icon(get_asset_path(Icons.SPARKLES), icon_color), "Analizza selezione con Lyra", self
-        )
-        lyra_sel.triggered.connect(self._analyze_selection)
-
         copy_act = QAction(get_colored_icon(get_asset_path(Icons.EDIT), icon_color), "Copia", self)
         copy_act.triggered.connect(self.copy_selection)  # type: ignore
 
-        for act in (lyra_row, lyra_sel, copy_act):
-            menu.addAction(act)
+        menu.addAction(copy_act)
         menu.exec(global_pos)
-
-    def _analyze_row_at(self, pos: QPoint) -> None:
-        """Invia i dati della riga corrente a Lyra AI per l'analisi."""
-        it = self.itemAt(pos)
-        if not it:
-            return
-        row = it.row()
-        data = []
-        for c in range(self.columnCount()):
-            if self.isColumnHidden(c):
-                continue
-            h = self.horizontalHeaderItem(c)
-            label = h.text() if h else f"Col {c}"
-            val = self._get_cell_value(row, c)  # type: ignore
-            data.append(f"**{label}**: {val}")
-
-        win = self.window()
-        if hasattr(win, "analyze_with_lyra"):
-            win.analyze_with_lyra(" | ".join(data))  # type: ignore
-
-    def _analyze_selection(self) -> None:
-        """Invia i dati delle celle selezionate a Lyra AI per l'analisi massiva."""
-        ranges = self.selectedRanges()
-        if not ranges:
-            return
-        rows_text = []
-        for r in range(ranges[0].topRow(), ranges[0].bottomRow() + 1):
-            line = []
-            for c in range(self.columnCount()):
-                if self.isColumnHidden(c):
-                    continue
-                h = self.horizontalHeaderItem(c)
-                label = h.text() if h else f"Col {c}"
-                line.append(f"{label}: {self._get_cell_value(r, c)}")  # type: ignore
-            rows_text.append(" | ".join(line))
-
-        win = self.window()
-        if hasattr(win, "analyze_with_lyra"):
-            win.analyze_with_lyra("\n".join(rows_text))  # type: ignore
 
 
 class EditableDataTable(QWidget):
@@ -176,7 +126,9 @@ class EditableDataTable(QWidget):
 
     data_changed = pyqtSignal()
 
-    def __init__(self, columns: list[dict[str, Any]], parent: QWidget | None = None, initial_rows: int = 20) -> None:
+    def __init__(
+        self, columns: list[dict[str, Any]], parent: QWidget | None = None, initial_rows: int = 20
+    ) -> None:
         """
         Inizializza la tabella modificabile.
 
@@ -271,14 +223,12 @@ class EditableDataTable(QWidget):
         self.data_changed.emit()
 
     def _show_context_menu(self, pos: QPoint) -> None:
-        """Menu contestuale con opzioni di gestione riga e Lyra."""
+        """Menu contestuale con opzioni di gestione riga."""
         global_pos = self.table.mapToGlobal(pos)
         menu = QMenu(self)
         icon_color = COLORS["text_dark"]
 
-        add_act = QAction(
-            get_colored_icon(get_asset_path(Icons.PLUS), icon_color), "Aggiungi riga", self
-        )
+        add_act = QAction(get_colored_icon(get_asset_path(Icons.PLUS), icon_color), "Aggiungi riga", self)
         add_act.triggered.connect(self._add_row)
 
         remove_act = QAction(
@@ -286,20 +236,10 @@ class EditableDataTable(QWidget):
         )
         remove_act.triggered.connect(self._remove_row)
 
-        lyra_row = QAction(
-            get_colored_icon(get_asset_path(Icons.SPARKLES), icon_color), "Analizza riga con Lyra", self
-        )
-        lyra_row.triggered.connect(lambda: self.table._analyze_row_at(pos))
-
-        lyra_sel = QAction(
-            get_colored_icon(get_asset_path(Icons.SPARKLES), icon_color), "Analizza selezione con Lyra", self
-        )
-        lyra_sel.triggered.connect(self.table._analyze_selection)
-
         copy_act = QAction(get_colored_icon(get_asset_path(Icons.EDIT), icon_color), "Copia", self)
         copy_act.triggered.connect(self.table.copy_selection)  # type: ignore
 
-        for act in (add_act, remove_act, lyra_row, lyra_sel, copy_act):
+        for act in (add_act, remove_act, copy_act):
             menu.addAction(act)
         menu.exec(global_pos)
 
@@ -323,8 +263,7 @@ class EditableDataTable(QWidget):
     def clear_status_columns(self) -> None:
         """Ripulisce le celle delle colonne ESITO e ERRORE, resettando il colore della riga."""
         target_cols = [
-            c for c, col_def in enumerate(self.columns)
-            if col_def["name"].upper() in {"ESITO", "ERRORE"}
+            c for c, col_def in enumerate(self.columns) if col_def["name"].upper() in {"ESITO", "ERRORE"}
         ]
 
         if not target_cols:

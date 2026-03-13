@@ -83,6 +83,10 @@ class MenuBarComponent(QObject):
             root_nodes = self._build_menu_tree()
             self.command_palette = CommandPaletteDialog(self.main_window, root_nodes)
         except Exception as e:
+            import traceback
+
+            print(f"Error opening palette: {e}")
+            traceback.print_exc()
             if hasattr(self.main_window, "show_toast"):
                 self.main_window.show_toast(f"Error opening palette: {e}")
 
@@ -109,6 +113,7 @@ class MenuBarComponent(QObject):
                 QDesktopServices.openUrl(QUrl.fromLocalFile(path))
 
         mw = self.main_window
+        wc = mw.workflow_controller
 
         # 1. ESEGUI (Execution Flow)
         menu_run = CommandNode(
@@ -125,19 +130,19 @@ class MenuBarComponent(QObject):
                             "Oggi",
                             "Scarica solo oggi",
                             Icons.CALENDAR,
-                            action=lambda: mw._run_timbrature_bot("oggi"),
+                            action=lambda: wc.run_timbrature_bot("oggi"),
                         ),
                         CommandNode(
                             "Ieri",
                             "Scarica giornata di ieri",
                             Icons.CLOCK,
-                            action=lambda: mw._run_timbrature_bot("ieri"),
+                            action=lambda: wc.run_timbrature_bot("ieri"),
                         ),
                         CommandNode(
                             "Mese Corrente",
                             "Dal 1° del mese ad oggi",
                             Icons.CALENDAR,
-                            action=lambda: mw._run_timbrature_bot("mese"),
+                            action=lambda: wc.run_timbrature_bot("mese"),
                         ),
                     ],
                 ),
@@ -151,7 +156,7 @@ class MenuBarComponent(QObject):
                             "Inserisci numero OdA manualmente",
                             Icons.EDIT,
                             input_prompts=["Inserisci Numero OdA"],
-                            on_input_complete=mw._on_scarico_ts_input,
+                            on_input_complete=wc.handle_scarico_ts_input,
                         ),
                         CommandNode(
                             "Esegui lista pannello",
@@ -168,31 +173,22 @@ class MenuBarComponent(QObject):
                     "Portale Fornitori",
                     Icons.LIST,
                     input_prompts=["Inserisci Numero OdA"],
-                    on_input_complete=mw._on_dettagli_oda_input,
+                    on_input_complete=wc.handle_dettagli_oda_input,
                 ),
                 CommandNode(
                     "Prenota BP",
                     "Portale Fornitori",
                     Icons.TICKET,
                     input_prompts=["Inserisci Numero BP"],
-                    on_input_complete=mw._on_prenota_bp_input,
+                    on_input_complete=wc.handle_prenota_bp_input,
                 ),
-                CommandNode("Carico TS", "Portale Fornitori", Icons.UPLOAD, action=mw._run_carico_ts),
+                CommandNode("Carico TS", "Portale Fornitori", Icons.UPLOAD, action=wc.run_carico_ts),
                 CommandNode(
                     "Scarico PDL",
                     "SafeWork",
                     Icons.SHIELD,
                     input_prompts=["Inserisci Numero PDL"],
-                    on_input_complete=mw._on_pdl_input,
-                ),
-                CommandNode(
-                    "Sincronizza DataEase",
-                    "Scarico ore cantiere",
-                    Icons.DATABASE,
-                    action=mw._run_sync_dataease,
-                ),
-                CommandNode(
-                    "Sincronizza Strumentale", "Contabilità", Icons.FOLDER, action=mw._run_sync_strumentale
+                    on_input_complete=wc.handle_pdl_input,
                 ),
             ],
         )

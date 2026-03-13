@@ -19,8 +19,8 @@ class PageIndex(IntEnum):
     AUTOMAZIONI = 1
     """Pannello di controllo per l'avvio manuale dei bot."""
 
-    LYRA = 2
-    """Interfaccia dell'assistente AI Lyra."""
+    RESERVED_AI = 2
+    """Indice riservato (precedentemente Lyra)."""
 
     TIMBRATURE = 3
     """Gestione scarico timbrature portale fornitori."""

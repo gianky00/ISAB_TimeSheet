@@ -6,8 +6,6 @@ Definizioni predefinite per la configurazione dell'applicazione.
 from datetime import UTC, datetime
 from typing import Any
 
-from src.core.constants import URLs
-
 # Configurazione di default
 DEFAULT_CONFIG: dict[str, Any] = {
     "accounts": [],
@@ -46,10 +44,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "reparti": ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"],
     "cantieri": [],
     "employee_mappings": {},
-    "ai_provider": "gemini",
-    "ai_model": "gemini-1.5-pro",
-    "ollama_url": URLs.OLLAMA_DEFAULT,
-    "quick_actions": ["nav_scarico_ts", "nav_lyra", "cmd_sync", "cmd_open_folder"],
+    "quick_actions": ["nav_scarico_ts", "cmd_sync", "cmd_open_folder"],
     "roi_weights": {
         "Scarico TS": 5.0,
         "Carico TS": 8.0,

@@ -15,11 +15,15 @@ def mock_mw():
     mw.automazioni_widget = MagicMock()
     return mw
 
+
 @pytest.fixture
 def controller(mock_mw):
     return NavigationController(mock_mw)
 
-@pytest.mark.skip(reason="Crash nativo in ambiente headless Windows V9.0 durante coordinamento grafico navigazione.")
+
+@pytest.mark.skip(
+    reason="Crash nativo in ambiente headless Windows V9.0 durante coordinamento grafico navigazione."
+)
 class TestNavigationControllerRefactoring:
     def test_get_panel_already_initialized(self, controller, mock_mw):
         """Verifica il recupero di un pannello già caricato (Refactoring)."""

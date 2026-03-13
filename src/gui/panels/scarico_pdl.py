@@ -135,11 +135,8 @@ class ScaricoPDLPanel(BaseBotPanel):
         """)
 
         from src.gui.widgets.modern_button import ModernButton
-        self.btn_open = ModernButton(
-            "APRI",
-            variant=ModernButton.Variant.GHOST,
-            size=ModernButton.Size.SMALL
-        )
+
+        self.btn_open = ModernButton("APRI", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL)
         self.btn_open.setFixedSize(60, 38)
         self.btn_open.setStyleSheet(f"""
             QPushButton {{
@@ -224,7 +221,8 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         try:
             import os
-            os.startfile(str(path)) # noqa: S606
+
+            os.startfile(str(path))  # noqa: S606
         except Exception:
             ToastManager.instance().show(f"Impossibile aprire la cartella: {path}", "error")
 
@@ -402,7 +400,9 @@ class ScaricoPDLPanel(BaseBotPanel):
             if len(files) > 1:
                 self.log_widget.append(f"📎 Inviando {len(files)} file a Telegram...")
 
-            tg_service.send_document_sync(report_path, caption=f"✅ Scarico PDL completato ({len(files)} file)")
+            tg_service.send_document_sync(
+                report_path, caption=f"✅ Scarico PDL completato ({len(files)} file)"
+            )
             self.log_widget.append("📤 Report inviato correttamente a Telegram.")
         except Exception as e:
             self.log_widget.append(f"⚠️ Errore invio Telegram: {e}", "ERROR")

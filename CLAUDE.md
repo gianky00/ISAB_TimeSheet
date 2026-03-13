@@ -59,13 +59,13 @@ python "admin/Crea Setup/build_dist.py"
   - Implements **lazy loading** - panels created on first navigation
   - Startup sequence with animated console and progress tracking
 
-- **NavigationController** (`src/gui/controllers/navigation_controller.py`): Handles routing between 11 main panels
+- **NavigationController** (`src/gui/controllers/navigation_controller.py`): Handles routing between main panels
   - Factory pattern for panel creation (`_create_*` methods)
   - Tracks initialization state per panel (`_panel_initialized_{index}`)
 
 - **Controllers** (`src/gui/controllers/`):
   - `BotController`: Manages automation bot lifecycle
-  - `ServiceController`: Background services (Telegram, Lyra Sentinel)
+  - `ServiceController`: Background services (Telegram)
   - `TrayController`: System tray integration
   - `SearchController`: Universal search across modules
 

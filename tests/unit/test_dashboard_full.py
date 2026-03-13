@@ -36,6 +36,7 @@ class TestDashboardComponents:
         all_text = [lbl.text() for lbl in feed.findChildren(QLabel)]
         assert any("A" in t for t in all_text)
 
+
 class TestDashboardPanelFull:
     @pytest.fixture
     def mock_dashboard_deps(self, mocker):
@@ -51,7 +52,9 @@ class TestDashboardPanelFull:
         mocker.patch("src.gui.widgets.dashboard.don_ciro_widget.DonCiroWidget", return_value=QWidget())
         mocker.patch("src.gui.widgets.dashboard.weather_widget.WeatherWidget", return_value=QWidget())
 
-    @pytest.mark.skip(reason="Crash nativo in ambiente headless Windows dovuto a rendering complesso (Don Ciro/Weather).")
+    @pytest.mark.skip(
+        reason="Crash nativo in ambiente headless Windows dovuto a rendering complesso (Don Ciro/Weather)."
+    )
     def test_dashboard_initialization(self, qapp, mock_dashboard_deps, qtbot):
         """Verifica che la dashboard si inizializzi senza crash."""
         panel = DashboardPanel()
@@ -59,7 +62,9 @@ class TestDashboardPanelFull:
         assert hasattr(panel, "activity_feed")
         assert hasattr(panel, "quick_actions")
 
-    @pytest.mark.skip(reason="Crash nativo in ambiente headless Windows dovuto a rendering complesso (Don Ciro/Weather).")
+    @pytest.mark.skip(
+        reason="Crash nativo in ambiente headless Windows dovuto a rendering complesso (Don Ciro/Weather)."
+    )
     def test_dashboard_quick_action_integration(self, qapp, mock_dashboard_deps, qtbot, mocker):
         """Verifica l'integrazione della navigazione tramite Quick Action."""
         panel = DashboardPanel()

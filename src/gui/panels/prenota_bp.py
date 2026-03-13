@@ -5,6 +5,7 @@ Gestisce l'interfaccia utente per il bot di prenotazione dei Badge Provvisori (B
 sul portale fornitori ISAB. Consente di inserire una lista di BP, configurare
 il fornitore e l'intervallo temporale, e avviare l'automazione.
 """
+
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 

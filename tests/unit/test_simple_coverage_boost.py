@@ -19,6 +19,7 @@ class TestSimpleCoverage:
         assert "md" in FONT_SIZES
         assert FONT_SIZES["md"] >= 10
 
+
 class TestLogHumanizer:
     def test_humanize_categories(self):
         """Verifica il rilevamento categorie deterministico V9.0."""
