@@ -27,6 +27,12 @@ class StatusListWidget(QListWidget):
 
     def initialize_rows(self, count: int, row_height: int = 30):
         """Prepara n righe con stato 'Pending' (pallino grigio)."""
+        # Ottimizzazione: Se il numero di righe è lo stesso, resetta solo le icone esistenti
+        if self.count() == count:
+            for i in range(count):
+                self._reset_row_icon(i)
+            return
+
         self.clear()
         for _ in range(count):
             item = QListWidgetItem()
@@ -45,6 +51,18 @@ class StatusListWidget(QListWidget):
 
             self.addItem(item)
             self.setItemWidget(item, container)
+
+    def _reset_row_icon(self, index: int):
+        """Ripristina l'icona di una riga allo stato 'Pending'."""
+        item = self.item(index)
+        widget = self.itemWidget(item)
+        if widget:
+            icon_label = widget.findChild(QLabel)
+            if icon_label:
+                icon_label.clear()
+                icon_label.setStyleSheet(
+                    f"background-color: {COLORS['border_light']}; border-radius: 12px; border: 1px solid {COLORS['border_medium']};"
+                )
 
     def update_status(self, index: int, success: bool):
         """Aggiorna l'icona della riga specificata (Verde successo, Rosso errore)."""
