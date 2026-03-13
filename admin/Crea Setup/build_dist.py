@@ -372,8 +372,7 @@ def run_nuitka(obfuscated=False):
         "jaraco.text",
         "keyring.backends",
     ]
-    for mod in force_include_mods:
-        cmd.extend(["--include-module", mod])
+    cmd.extend([f"--include-module={mod}" for mod in force_include_mods])
 
     force_include_pkgs = [
         "pandas",
@@ -391,8 +390,7 @@ def run_nuitka(obfuscated=False):
         "selenium",
         "webdriver_manager",
     ]
-    for pkg in force_include_pkgs:
-        cmd.extend(["--include-package", pkg])
+    cmd.extend([f"--include-package={pkg}" for pkg in force_include_pkgs])
 
     cmd.append(str(script_path))
     run_command(cmd, cwd=ROOT_DIR)
