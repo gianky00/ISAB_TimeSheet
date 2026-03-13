@@ -36,6 +36,7 @@ class AutomazioniWidget(QWidget):
         """
         super().__init__()
         self.mw = main_window
+        self._panels_initialized = False
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -45,11 +46,37 @@ class AutomazioniWidget(QWidget):
         self.main_tabs = AnimatedTabWidget()
         main_layout.addWidget(self.main_tabs)
 
-        # --- TAB 1: Portale Fornitori ---
+        # Creiamo i contenitori dei tab (vuoti)
         self.tab_fornitori = AnimatedTabWidget()
         self.tab_fornitori.setTabPosition(QTabWidget.TabPosition.North)
+        self.tab_safework = AnimatedTabWidget()
+        self.tab_safework.setTabPosition(QTabWidget.TabPosition.North)
 
-        # Istanzia i pannelli (I pulsanti ora rimangono DENTRO i pannelli)
+        # Aggiunta tab principali
+        self.main_tabs.addTab(self.tab_fornitori, "Portale Fornitori")
+        self.main_tabs.addTab(self.tab_safework, "SafeWork")
+
+        # Registriamo i tab nella mw per compatibilità immediata (ma saranno popolati dopo)
+        self.mw.tab_fornitori = self.tab_fornitori
+        self.mw.tab_safework = self.tab_safework
+
+        # Inizializzazione posticipata dei pannelli interni
+        QTimer.singleShot(100, self._initialize_all_panels)
+
+    def _initialize_all_panels(self) -> None:
+        """Istanzia i bot panel in modo differito per non bloccare lo splash screen."""
+        if self._panels_initialized:
+            return
+
+        from src.gui.panels.carico_ts import CaricoTSPanel
+        from src.gui.panels.dettagli_oda import DettagliOdAPanel
+        from src.gui.panels.prenota_bp import PrenotaBPPanel
+        from src.gui.panels.ricerca_pdl import RicercaPDLPanel
+        from src.gui.panels.scarico_pdl import ScaricoPDLPanel
+        from src.gui.panels.scarico_ts import ScaricaTSPanel
+        from src.gui.panels.timbrature_bot import TimbratureBotPanel
+
+        # Istanzia i pannelli
         self.panel_dettagli = DettagliOdAPanel()
         self.panel_scarico = ScaricaTSPanel()
         self.panel_timbrature = TimbratureBotPanel()
@@ -82,10 +109,6 @@ class AutomazioniWidget(QWidget):
             "Carico TS (bot)",
         )
 
-        # --- TAB 2: SafeWork ---
-        self.tab_safework = AnimatedTabWidget()
-        self.tab_safework.setTabPosition(QTabWidget.TabPosition.North)
-
         self.panel_pdl = ScaricoPDLPanel()
         self.panel_pdl_search = RicercaPDLPanel()
 
@@ -100,11 +123,7 @@ class AutomazioniWidget(QWidget):
             "Ricerca PDL (bot)",
         )
 
-        # Aggiunta tab principali
-        self.main_tabs.addTab(self.tab_fornitori, "Portale Fornitori")
-        self.main_tabs.addTab(self.tab_safework, "SafeWork")
-
-        # Registra riferimenti nella Main Window (per compatibilità)
+        # Registra riferimenti nella Main Window
         self.mw.dettagli_panel = self.panel_dettagli
         self.mw.prenota_panel = self.panel_prenota
         self.mw.scarico_panel = self.panel_scarico
@@ -112,8 +131,6 @@ class AutomazioniWidget(QWidget):
         self.mw.carico_panel = self.panel_carico
         self.mw.pdl_panel = self.panel_pdl
         self.mw.pdl_search_panel = self.panel_pdl_search
-        self.mw.tab_fornitori = self.tab_fornitori
-        self.mw.tab_safework = self.tab_safework
 
         # Registrazione Controller
         if hasattr(self.mw, "bot_controller"):
@@ -128,6 +145,8 @@ class AutomazioniWidget(QWidget):
                     self.panel_pdl_search,
                 ]
             )
+        self._panels_initialized = True
+
 
     def set_active_tab(self, main_idx: int, sub_idx: int) -> None:
         """

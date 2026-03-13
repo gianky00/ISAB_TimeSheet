@@ -145,7 +145,7 @@ class NavigationController(QObject):
 
     def _create_lyra(self) -> QWidget:
         """Inizializza l'assistente virtuale Lyra."""
-        from src.gui.panels import LyraPanel
+        from src.gui.panels.lyra.lyra_panel import LyraPanel
 
         panel = LyraPanel()
         self.mw.lyra_panel = panel
@@ -153,7 +153,7 @@ class NavigationController(QObject):
 
     def _create_timbrature(self) -> QWidget:
         """Inizializza il visualizzatore del database timbrature."""
-        from src.gui.panels import TimbratureDBPanel
+        from src.gui.panels.timbrature.panel import TimbratureDBPanel
 
         panel = TimbratureDBPanel()
         self.mw.timbrature_db_panel = panel
@@ -161,7 +161,7 @@ class NavigationController(QObject):
 
     def _create_strumentale(self) -> QWidget:
         """Inizializza il pannello contabilità strumentale."""
-        from src.gui.panels import ContabilitaPanel
+        from src.gui.panels.contabilita_panel import ContabilitaPanel
 
         panel = ContabilitaPanel()
         self.mw.contabilita_panel = panel
@@ -169,7 +169,7 @@ class NavigationController(QObject):
 
     def _create_dataease(self) -> QWidget:
         """Inizializza il visualizzatore virtualizzato Scarico Ore."""
-        from src.gui.panels import ScaricoOrePanel
+        from src.gui.panels.scarico_ore_panel import ScaricoOrePanel
 
         panel = ScaricoOrePanel()
         self.mw.scarico_ore_panel = panel
@@ -177,7 +177,7 @@ class NavigationController(QObject):
 
     def _create_anagrafiche(self) -> QWidget:
         """Inizializza il database anagrafiche PDL."""
-        from src.gui.panels import PDLDBPanel
+        from src.gui.panels.pdl.pdl_panel import PDLDBPanel
 
         panel = PDLDBPanel()
         self.mw.pdl_db_panel = panel
@@ -185,7 +185,7 @@ class NavigationController(QObject):
 
     def _create_storico_oda(self) -> QWidget:
         """Inizializza la consultazione dello storico OdA."""
-        from src.gui.panels import StoricoOdaPanel
+        from src.gui.panels.storico_oda.oda_panel import StoricoOdaPanel
 
         panel = StoricoOdaPanel()
         self.mw.storico_oda_panel = panel
@@ -209,7 +209,7 @@ class NavigationController(QObject):
 
     def _create_help(self) -> QWidget:
         """Inizializza il pannello di aiuto e documentazione."""
-        from src.gui.panels import HelpPanel
+        from src.gui.panels.help_panel import HelpPanel
 
         panel = HelpPanel()
         self.mw.help_panel = panel
@@ -217,7 +217,7 @@ class NavigationController(QObject):
 
     def _create_notifications(self) -> QWidget:
         """Inizializza il centro notifiche e audit log."""
-        from src.gui.panels import NotificationsPanel
+        from src.gui.panels.notifications_panel import NotificationsPanel
 
         panel = NotificationsPanel()
         self.mw.notifications_panel = panel
@@ -225,7 +225,7 @@ class NavigationController(QObject):
 
     def _create_settings_panel(self) -> QWidget:
         """Crea il pannello impostazioni e collega i segnali di salvataggio e aiuto contestuale."""
-        from src.gui.panels import SettingsPanel
+        from src.gui.panels.settings.main_panel import SettingsPanel
 
         panel = SettingsPanel()
         self.mw.settings_panel = panel
