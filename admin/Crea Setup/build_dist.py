@@ -334,13 +334,11 @@ def run_nuitka(obfuscated=False):
 
     if obfuscated:
         script_path = OBF_DIR / "main.py"
-        src_path = OBF_DIR / "src"
         if not script_path.exists():
             log_and_print(f"[ERROR] Obfuscated script not found: {script_path}", "ERROR")
             sys.exit(1)
     else:
         script_path = MAIN_SCRIPT
-        src_path = ROOT_DIR / "src"
 
     cmd = [
         sys.executable,
@@ -349,11 +347,13 @@ def run_nuitka(obfuscated=False):
         "--standalone",
         "--show-progress",
         "--enable-plugin=pyqt6",
+        "--enable-plugin=matplotlib",
         "--windows-disable-console",
         "--follow-imports",
         "--assume-yes-for-downloads",
+        "--lto=yes",
+        "--python-flag=-O",
         "--output-dir=" + str(DIST_DIR),
-        "--include-data-dir=" + str(src_path) + "=src",
         "--include-data-dir=" + str(ROOT_DIR / "assets") + "=assets",
         "--include-data-dir=" + str(ROOT_DIR / "drivers") + "=drivers",
     ]
