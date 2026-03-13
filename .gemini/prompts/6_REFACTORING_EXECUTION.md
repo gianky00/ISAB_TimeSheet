@@ -90,12 +90,11 @@ FASE 1 — ANALISI ARCHITETTURALE (AS-IS)
    ```
 
    Classifica:
-   - < 200 LOC:  Modulo focalizzato ✅
-   - 200-400 LOC: Modulo accettabile, monitorare
-   - 400-600 LOC: Candidato per split
-   - > 600 LOC:  Split necessario — probabilmente viola SRP
+   - Singola Responsabilità (SRP Rispettato): Modulo focalizzato ✅
+   - Responsabilità Miste (UI + Business Logic): Candidato per split
+   - Modulo "God Object": Split necessario — viola palesemente l'SRP
 
-4. PER OGNI file > 400 LOC, rispondi:
+4. PER OGNI file che viola l'SRP, rispondi:
    - Quante "responsabilità" diverse ha?
    - Posso descriverlo con UNA frase senza "e" / "anche" / "inoltre"?
    - Se no → viola Single Responsibility → va diviso
@@ -333,7 +332,7 @@ class NotificationService:
 ────────────────────────────────────
 3.3 — EXTRACT MODULE
 ────────────────────────────────────
-Quando: File > 400 LOC con sezioni logicamente separate.
+Quando: File che viola palesemente l'SRP con sezioni logicamente separate (es. UI + API + Logica).
 Procedura SICURA:
 
 1. Identifica le sezioni (classi/funzioni raggruppabili per responsabilità)
