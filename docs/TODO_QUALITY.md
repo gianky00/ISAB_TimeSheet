@@ -8,6 +8,8 @@ Le seguenti classi/file presentano responsabilità multiple mischiate (UI, Dati,
 - [ ] `src/gui/widgets/dashboard/weather_widget.py`
 - [ ] `src/bots/base/base_bot.py`
 - [ ] `src/gui/controllers/navigation_controller.py`
+- [ ] `src/gui/panels/base.py` (Monitorare: ~400 LOC)
+- [ ] `src/bots/safework/pdl/bot.py` (Monitorare: complessità logica)
 
 ## 🏗️ Refactoring Complessità (Xenon Grade C -> B)
 Le seguenti funzioni/moduli hanno superato la soglia di complessità desiderata (B) e devono essere spezzettate:
@@ -34,4 +36,4 @@ Le seguenti funzioni/moduli hanno superato la soglia di complessità desiderata 
 - [ ] Portare la copertura delle docstring dal attuale ~80% al 95%.
 
 ---
-*Ultimo aggiornamento: 15 Gennaio 2026*
+*Ultimo aggiornamento: 13 Marzo 2026*

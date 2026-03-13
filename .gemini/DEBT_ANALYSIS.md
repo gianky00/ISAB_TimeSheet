@@ -16,11 +16,14 @@ Analisi del debito tecnico rilevato tramite strumenti di analisi statica (Vultur
 
 ## 🏗️ Refactoring Complessità (SRP & Xenon)
 
-### Moduli critici (God Objects)
-I seguenti moduli violano palesemente l'SRP e devono essere scomposti prioritariamente:
+### Moduli critici (God Objects / SRP Violations)
+I seguenti moduli presentano responsabilità multiple mischiate e devono essere scomposti prioritariamente:
 - `don_ciro_widget.py`: Troppe responsabilità (UI + API + Data Processing).
 - `weather_widget.py`: Logica di fetch meteo integrata nella vista.
 - `base_bot.py`: Accumulo di utility cross-bot che dovrebbero essere in helper separati.
+- `navigation_controller.py`: Gestione di troppi pannelli/creators in un unico file.
+- `src/gui/panels/base.py`: Classe base eccessivamente densa.
+- `src/bots/safework/pdl/bot.py`: Logica di bot e parsing PDL complessa.
 
 ---
 
