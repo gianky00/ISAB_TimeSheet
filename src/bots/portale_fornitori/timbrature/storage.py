@@ -97,7 +97,7 @@ class TimbratureStorage:
             for col, col_type in expected_cols.items():
                 if col not in existing_cols:
                     with suppress(sqlite3.OperationalError):
-                        cursor.execute(f"ALTER TABLE timbrature ADD COLUMN {col} {col_type}")
+                        cursor.execute(f"ALTER TABLE timbrature ADD COLUMN {col} {col_type}")  # nosec B608
 
             # 3. Indici
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")

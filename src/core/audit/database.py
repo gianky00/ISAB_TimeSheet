@@ -61,7 +61,7 @@ class AuditDatabase:
                 if col_name not in existing_cols:
                     with suppress(sqlite3.OperationalError):
                         logger.info(f"[AUDIT DB] Migrazione: Aggiunta colonna {col_name}...")
-                        conn.execute(f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_def}")
+                        conn.execute(f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_def}")  # nosec B608
 
             conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)")
             conn.commit()

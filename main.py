@@ -134,7 +134,7 @@ def main():
         if client_socket and client_socket.waitForReadyRead(500):
             # Limita la lettura a 1024 byte per prevenire Local DoS via memoria
             data = client_socket.read(1024)
-            msg = data.data().decode()
+            msg = data.decode("utf-8", errors="ignore")
             if msg == "ACTIVATE" and main_window_instance:
                 main_window_instance.show()
                 main_window_instance.raise_()
