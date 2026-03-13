@@ -219,6 +219,7 @@ def main():
         help="Bump type",
     )
     parser.add_argument("--deploy", action="store_true", help="Deploy to Netlify")
+    parser.add_argument("--nuitka", action="store_true", help="Use Nuitka instead of PyInstaller")
     parser.add_argument(
         "--skip-tests",
         action="store_true",
@@ -272,6 +273,8 @@ def main():
     build_cmd = [str(VENV_PYTHON), str(build_script)]
     if not args.deploy:
         build_cmd.append("--no-deploy")
+    if args.nuitka:
+        build_cmd.append("--use-nuitka")
     run_command(build_cmd, "Building Distribution")
 
     duration = time.time() - start_time

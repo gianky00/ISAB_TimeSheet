@@ -328,15 +328,104 @@ def run_pyinstaller(obfuscated=False):
     log_and_print("[BUILD] PyInstaller completed successfully.")
 
 
+def run_nuitka(obfuscated=False):
+    """Build executable with Nuitka."""
+    log_and_print(f"[BUILD] Running Nuitka (Obfuscated: {obfuscated})...")
+
+    if obfuscated:
+        script_path = OBF_DIR / "main.py"
+        src_path = OBF_DIR / "src"
+        if not script_path.exists():
+            log_and_print(f"[ERROR] Obfuscated script not found: {script_path}", "ERROR")
+            sys.exit(1)
+    else:
+        script_path = MAIN_SCRIPT
+        src_path = ROOT_DIR / "src"
+
+    cmd = [
+        sys.executable,
+        "-m",
+        "nuitka",
+        "--standalone",
+        "--show-progress",
+        "--enable-plugin=pyqt6",
+        "--windows-disable-console",
+        "--follow-imports",
+        "--output-dir=" + str(DIST_DIR),
+        "--include-data-dir=" + str(src_path) + "=src",
+        "--include-data-dir=" + str(ROOT_DIR / "assets") + "=assets",
+        "--include-data-dir=" + str(ROOT_DIR / "drivers") + "=drivers",
+    ]
+
+    if ICON_PATH.exists():
+        cmd.append(f"--windows-icon-from-ico={ICON_PATH}")
+
+    # Nuitka handles hidden imports differently.
+    force_include_mods = [
+        "win32con",
+        "win32print",
+        "win32ui",
+        "logging.handlers",
+        "win32com",
+        "win32com.client",
+        "pythoncom",
+        "jaraco.text",
+        "keyring.backends",
+    ]
+    for mod in force_include_mods:
+        cmd.extend(["--include-module", mod])
+
+    force_include_pkgs = [
+        "pandas",
+        "numpy",
+        "pandera",
+        "telegram",
+        "markdown",
+        "matplotlib",
+        "cryptography",
+        "keyring",
+        "pymupdf",
+        "fitz",
+        "openpyxl",
+        "PIL",
+        "selenium",
+        "webdriver_manager",
+    ]
+    for pkg in force_include_pkgs:
+        cmd.extend(["--include-package", pkg])
+
+    cmd.append(str(script_path))
+    run_command(cmd, cwd=ROOT_DIR)
+
+    # Nuitka puts the output in <output-dir>/<script-name>.dist
+    # We need to move/align it to match DIST_DIR structure expected by Inno Setup
+    nuitka_dist = DIST_DIR / (script_path.stem + ".dist")
+    target_dist = DIST_DIR / APP_EXE_NAME
+
+    if nuitka_dist.exists():
+        if target_dist.exists():
+            shutil.rmtree(target_dist)
+        shutil.move(str(nuitka_dist), str(target_dist))
+        log_and_print(f"[BUILD] Nuitka build moved to {target_dist}")
+
+    log_and_print("[BUILD] Nuitka completed successfully.")
+
+
 def run_inno_setup():
     """Build installer with Inno Setup."""
     log_and_print("[BUILD] Running Inno Setup...")
 
-    inno_paths = [Path(r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe")]
-    iscc = next((p for p in inno_paths if p.exists()), None)
+    # Tenta di trovare ISCC nel PATH o in percorsi comuni
+    iscc = shutil.which("iscc")
+    if not iscc:
+        inno_paths = [
+            Path(r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe"),
+            Path(r"C:\Program Files\Inno Setup 6\ISCC.exe"),
+        ]
+        iscc = next((str(p) for p in inno_paths if p.exists()), None)
 
     if not iscc:
-        log_and_print("[WARNING] Inno Setup not found. Skipping installer creation.", "WARNING")
+        log_and_print("[WARNING] Inno Setup (ISCC.exe) not found. Skipping installer creation.", "WARNING")
         return False
 
     SETUP_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -512,6 +601,7 @@ def deploy_to_network_share(setup_dir: Path, setup_filename: str):
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Bot TS Build Script")
+    parser.add_argument("--use-nuitka", action="store_true", help="Use Nuitka instead of PyInstaller")
     parser.add_argument("--no-deploy", action="store_true", help="Skip Netlify")
     parser.add_argument("--no-network", action="store_true", help="Skip Network")
     parser.add_argument("--skip-installer", action="store_true", help="Skip Inno")
@@ -524,6 +614,10 @@ def main() -> None:
 
     log_and_print("=" * 60)
     log_and_print(f"  SYNCROJOB BUILD SCRIPT - v{get_version()}")
+    if args.use_nuitka:
+        log_and_print("  COMPILER: NUITKA")
+    else:
+        log_and_print("  COMPILER: PYINSTALLER")
     log_and_print("=" * 60)
 
     ensure_drivers()
@@ -533,7 +627,10 @@ def main() -> None:
     if is_obfuscated:
         run_pyarmor()
 
-    run_pyinstaller(obfuscated=is_obfuscated)
+    if args.use_nuitka:
+        run_nuitka(obfuscated=is_obfuscated)
+    else:
+        run_pyinstaller(obfuscated=is_obfuscated)
 
     setup_filename = None
     if not args.skip_installer:

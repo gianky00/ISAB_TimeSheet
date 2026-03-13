@@ -2359,6 +2359,24 @@ files = [
 ]
 
 [[package]]
+name = "nuitka"
+version = "4.0.5"
+description = "Python compiler with full language support and CPython compatibility"
+optional = false
+python-versions = "*"
+groups = ["dev"]
+files = [
+    {file = "nuitka-4.0.5.tar.gz", hash = "sha256:45e7d90266e76fe64eeb8d196c17666d7cd7cffbf68d6a24f233c3c03b6feaa8"},
+]
+
+[package.extras]
+all = ["imageio", "setuptools (>=42)", "toml", "zstandard (>=0.15)"]
+app = ["zstandard (>=0.15)"]
+build-wheel = ["setuptools (>=42)", "toml", "wheel"]
+icon-conversion = ["imageio"]
+onefile = ["zstandard (>=0.15)"]
+
+[[package]]
 name = "numpy"
 version = "1.26.4"
 description = "Fundamental package for array computing in Python"
@@ -4790,4 +4808,4 @@ tokenize-rt = ">=2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "242ca6d6993ede95951cf9f52549fd66a2f794ddd8bb625d62d7506a46a05126"
+content-hash = "b75f17a4cd0b9368abe08c4752b2b4a67b3c7c31d37d1ba6c3fc1efb73d17ce4"

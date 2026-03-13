@@ -24,13 +24,19 @@ if not exist "%VENV_PYTHON%" (
     exit /b 1
 )
 
+set "NUITKA_FLAG="
+if "%1"=="--nuitka" (
+    set "NUITKA_FLAG=--nuitka"
+    echo [INFO] Utilizzo Nuitka come compilatore...
+)
+
 REM Esegue release.py in modalità "solo build locale"
 REM --no-git: Non crea commit o tag
 REM --no-deploy: Non carica su Netlify
-REM --skip-tests: Salta i test unitari per velocizzare (rimuovi se vuoi i test)
-REM patch: usa un incremento di versione patch temporaneo (o usa 'auto')
+REM --skip-tests: Salta i test unitari per velocizzare
+REM patch: usa un incremento di versione patch temporaneo
 
-"%VENV_PYTHON%" "admin/release.py" patch --no-git --skip-tests --force
+"%VENV_PYTHON%" "admin/release.py" patch --no-git --skip-tests --force %NUITKA_FLAG%
 
 if %errorlevel% neq 0 (
     echo [ERROR] Build fallita.
@@ -43,13 +49,4 @@ echo.
 echo [SUCCESS] Build Locale Completata!
 echo Trovi l'installer in: admin\Crea Setup\Setup
 popd
-pause
-
-if %errorlevel% neq 0 (
-    echo [ERROR] Build fallita. Vedi log per dettagli.
-    pause
-    exit /b 1
-)
-
-echo [SUCCESS] Build completata!
 pause

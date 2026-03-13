@@ -43,8 +43,15 @@ ruff format .
 
 ### Building
 ```bash
-# Create installer/executable
+# Standard build (PyInstaller)
 python "admin/Crea Setup/build_dist.py"
+
+# Nuitka build (Standalone)
+python "admin/Crea Setup/build_dist.py" --use-nuitka
+
+# Local build via batch script
+scripts\build.bat          # Uses PyInstaller
+scripts\build.bat --nuitka # Uses Nuitka
 ```
 
 ## Architecture
