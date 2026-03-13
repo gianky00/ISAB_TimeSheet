@@ -319,6 +319,10 @@ class BaseBotPanel(QWidget):
         self.start_time = datetime.now()
         self._update_status(STATUS_COLORS["running"])
 
+        # Pulizia della tabella dagli esiti della sessione precedente
+        if hasattr(self, "data_table") and hasattr(self.data_table, "clear_status_columns"):
+            self.data_table.clear_status_columns()
+
         # Attiva Cyber-Mood per il log
         if hasattr(self.log_widget, "set_mood"):
             self.log_widget.set_mood("running")
