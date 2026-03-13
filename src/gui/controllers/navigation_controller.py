@@ -106,7 +106,7 @@ class NavigationController(QObject):
 
     def _create_dashboard(self) -> QWidget:
         """Crea la dashboard e la collega al sistema di monitoraggio del footer."""
-        from src.gui.panels import DashboardPanel
+        from src.gui.panels.dashboard_panel import DashboardPanel
 
         panel = DashboardPanel()
         self.mw.dashboard_panel = panel

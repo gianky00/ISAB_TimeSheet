@@ -4,19 +4,11 @@ Pannello raggruppato per i Bot con animazioni integrate e controlli locali.
 Gestisce l'orchestrazione dei bot Selenium per Portale Fornitori e SafeWork.
 """
 
+from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QTabWidget, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
-from src.gui.panels import (
-    CaricoTSPanel,
-    DettagliOdAPanel,
-    PrenotaBPPanel,
-    RicercaPDLPanel,
-    ScaricaTSPanel,
-    ScaricoPDLPanel,
-    TimbratureBotPanel,
-)
 from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
