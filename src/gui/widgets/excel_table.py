@@ -306,17 +306,36 @@ class EditableDataTable(QWidget):
     def get_data(self) -> list[dict[str, Any]]:
         """Estrae i dati dalla tabella in formato lista di dizionari."""
         data = []
+        ignore_cols = {"ESITO", "ERRORE"}
         for r in range(self.table.rowCount()):
             row_data = {}
             has_content = False
             for c, col_def in enumerate(self.columns):
                 val = self.table._get_cell_value(r, c)  # type: ignore
                 row_data[col_def["name"]] = val
-                if val:
+                # Considera la riga valida solo se ha contenuto in una colonna non di servizio
+                if val and col_def["name"].upper() not in ignore_cols:
                     has_content = True
             if has_content:
                 data.append(row_data)
         return data
+
+    def clear_status_columns(self) -> None:
+        """Ripulisce le celle delle colonne ESITO e ERRORE, resettando il colore della riga."""
+        target_cols = [
+            c for c, col_def in enumerate(self.columns)
+            if col_def["name"].upper() in {"ESITO", "ERRORE"}
+        ]
+
+        if not target_cols:
+            return
+
+        for r in range(self.table.rowCount()):
+            self.set_row_status(r, "da_processare")
+            for c in target_cols:
+                item = self.table.item(r, c)
+                if item:
+                    item.setText("")
 
     def set_data(self, data: list[dict[str, Any]]) -> None:
         """
