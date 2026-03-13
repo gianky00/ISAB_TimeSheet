@@ -6,7 +6,6 @@ import json
 from collections import defaultdict
 from contextlib import suppress
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Optional
 
 from .config import get_config
@@ -206,89 +205,6 @@ class PerformanceTracker:
             Baseline in millisecondi o None
         """
         return self._baselines.get(operation)
-
-    def is_anomaly(
-        self,
-        operation: str,
-        duration_ms: float,
-        threshold_multiplier: float = 3.0,
-    ) -> bool:
-        """
-        Verifica se durata è anomala.
-
-        Args:
-            operation: Nome operazione
-            duration_ms: Durata da verificare
-            threshold_multiplier: Moltiplicatore baseline (default: 3x)
-
-        Returns:
-            True se anomalia, False altrimenti
-        """
-        baseline = self.get_baseline(operation)
-        if baseline is None:
-            # Auto-calcola baseline da statistiche
-            stats = self.get_statistics(operation)
-            if stats:
-                baseline = stats["p95"]  # Usa p95 come baseline
-                self.set_baseline(operation, baseline)
-            else:
-                return False  # Non abbastanza dati
-
-        return duration_ms > (baseline * threshold_multiplier)
-
-    def load_baselines_from_file(self, file_path: Path) -> None:
-        """
-        Carica baselines da file JSON.
-
-        Args:
-            file_path: Path al file JSON
-        """
-        with suppress(Exception), file_path.open("r", encoding="utf-8") as f:
-            self._baselines = json.load(f)
-
-    def save_baselines_to_file(self, file_path: Path) -> None:
-        """
-        Salva baselines su file JSON.
-
-        Args:
-            file_path: Path al file JSON
-        """
-        with suppress(Exception), file_path.open("w", encoding="utf-8") as f:
-            json.dump(self._baselines, f, indent=2)
-
-    def auto_learn_baselines(self) -> None:
-        """
-        Auto-learn baselines dalle metriche correnti.
-
-        Calcola p95 per ogni operazione e lo imposta come baseline.
-        """
-        for operation in self._in_memory_metrics:
-            stats = self.get_statistics(operation)
-            if stats and stats["count"] >= 10:  # Minimo 10 campioni
-                self.set_baseline(operation, stats["p95"])
-
-    def generate_report(self) -> dict[str, Any]:
-        """
-        Genera report performance completo.
-
-        Returns:
-            Dict con report
-        """
-        report: dict[str, Any] = {
-            "timestamp": datetime.now().isoformat() + "Z",
-            "operations": {},
-        }
-
-        for operation in self._in_memory_metrics:
-            stats = self.get_statistics(operation)
-            baseline = self.get_baseline(operation)
-
-            report["operations"][operation] = {
-                "statistics": stats,
-                "baseline_ms": baseline,
-            }
-
-        return report
 
 
 # Singleton access

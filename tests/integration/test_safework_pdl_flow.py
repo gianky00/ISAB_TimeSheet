@@ -29,7 +29,7 @@ class TestSafeWorkPDLIntegration:
         mocker.patch.object(bot, "_safe_remove")
 
         # 2. Esecuzione
-        data = [{"pdl_number": "566360", "merge_all_session": True}]
+        data = [{"numero_pdl": "566360", "merge_all_session": True}]
         success = bot.execute(data)
 
         # 3. Verifiche
@@ -49,7 +49,7 @@ class TestSafeWorkPDLIntegration:
         mocker.patch.object(bot, "_esegui_ricerca_pdl", return_value=False)
         mocker.patch.object(bot, "cleanup")
 
-        data = [{"pdl_number": "999999"}]
+        data = [{"numero_pdl": "999999"}]
         success = bot.execute(data)
 
         # Dovrebbe finire con successo (True) perché il bot conta i PDL mancanti come 'gestiti'
