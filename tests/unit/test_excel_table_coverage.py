@@ -46,15 +46,15 @@ class TestExcelTableCoverage:
         ]
         data_table = EditableDataTable(cols)
 
-        # Inizialmente 5 righe vuote
-        assert data_table.table.rowCount() == 5
+        # Inizialmente 20 righe vuote
+        assert data_table.table.rowCount() == 20
 
         # Carica dati (matching flessibile)
         test_data = [{"col1": "Val1", "COL 2": "A"}]
         data_table.set_data(test_data)
 
-        # Una riga caricata
-        assert data_table.table.rowCount() == 1
+        # La tabella ora padderà a 20 righe (initial_rows)
+        assert data_table.table.rowCount() == 20
         assert data_table.table.item(0, 0).text() == "Val1"
 
         # Recupera dati
@@ -93,3 +93,16 @@ class TestExcelTableCoverage:
         mock_win.analyze_with_lyra.assert_called_once()
         args = mock_win.analyze_with_lyra.call_args[0][0]
         assert "H1: Value1" in args
+
+    def test_excel_table_context_menu_event_with_qpoint(self, app, mocker):
+        """Verifica che contextMenuEvent non crashi con un QPoint (CustomContextMenu)."""
+        from PyQt6.QtCore import QPoint
+        table = ExcelTableWidget()
+        pos = QPoint(10, 10)
+
+        # Mock QMenu.exec e mapToGlobal
+        mocker.patch("PyQt6.QtWidgets.QMenu.exec")
+        mocker.patch.object(table, "mapToGlobal", return_value=QPoint(100, 100))
+
+        # Non dovrebbe sollevare AttributeError
+        table.contextMenuEvent(pos)

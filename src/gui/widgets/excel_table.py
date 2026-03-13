@@ -103,13 +103,21 @@ class ExcelTableWidget(QTableWidget):
 
     def contextMenuEvent(self, event: Any) -> None:
         """Mostra il menu contestuale con opzioni di analisi AI e clipboard."""
+        # Se riceve un QPoint (da customContextMenuRequested), lo gestisce
+        if hasattr(event, "globalPos"):
+            pos = event.pos()
+            global_pos = event.globalPos()
+        else:
+            pos = event
+            global_pos = self.mapToGlobal(pos)
+
         menu = QMenu(self)
         icon_color = COLORS["text_dark"]
 
         lyra_row = QAction(
             get_colored_icon(get_asset_path(Icons.SPARKLES), icon_color), "Analizza riga con Lyra", self
         )
-        lyra_row.triggered.connect(lambda: self._analyze_row_at(event.pos()))
+        lyra_row.triggered.connect(lambda: self._analyze_row_at(pos))
 
         lyra_sel = QAction(
             get_colored_icon(get_asset_path(Icons.SPARKLES), icon_color), "Analizza selezione con Lyra", self
@@ -121,7 +129,7 @@ class ExcelTableWidget(QTableWidget):
 
         for act in (lyra_row, lyra_sel, copy_act):
             menu.addAction(act)
-        menu.exec(event.globalPos())
+        menu.exec(global_pos)
 
     def _analyze_row_at(self, pos: QPoint) -> None:
         """Invia i dati della riga corrente a Lyra AI per l'analisi."""
@@ -168,16 +176,18 @@ class EditableDataTable(QWidget):
 
     data_changed = pyqtSignal()
 
-    def __init__(self, columns: list[dict[str, Any]], parent: QWidget | None = None) -> None:
+    def __init__(self, columns: list[dict[str, Any]], parent: QWidget | None = None, initial_rows: int = 20) -> None:
         """
         Inizializza la tabella modificabile.
 
         Args:
             columns: Elenco di configurazioni per le colonne (nome, tipo, opzioni).
             parent: Widget genitore opzionale.
+            initial_rows: Numero di righe vuote iniziali.
         """
         super().__init__(parent)
         self.columns = columns
+        self.initial_rows = initial_rows
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -215,7 +225,8 @@ class EditableDataTable(QWidget):
         self.table.customContextMenuRequested.connect(self._show_context_menu)
         self.table.itemChanged.connect(self.data_changed.emit)
 
-        for _ in range(5):
+        # Standard: righe predefinite
+        for _ in range(self.initial_rows):
             self._add_row()
         container_lay.addWidget(self.table)
         layout.addWidget(self.container)
@@ -248,9 +259,49 @@ class EditableDataTable(QWidget):
                     item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 self.table.setItem(row, col, item)
 
+    def _remove_row(self) -> None:
+        """Rimuove la riga corrente o le righe selezionate."""
+        rows = sorted({index.row() for index in self.table.selectedIndexes()}, reverse=True)
+        if not rows and self.table.rowCount() > 0:
+            # Se nulla è selezionato, rimuovi l'ultima riga
+            self.table.removeRow(self.table.rowCount() - 1)
+        else:
+            for row in rows:
+                self.table.removeRow(row)
+        self.data_changed.emit()
+
     def _show_context_menu(self, pos: QPoint) -> None:
-        """Delegato per il menu contestuale della tabella."""
-        self.table.contextMenuEvent(pos)
+        """Menu contestuale con opzioni di gestione riga e Lyra."""
+        global_pos = self.table.mapToGlobal(pos)
+        menu = QMenu(self)
+        icon_color = COLORS["text_dark"]
+
+        add_act = QAction(
+            get_colored_icon(get_asset_path(Icons.PLUS), icon_color), "Aggiungi riga", self
+        )
+        add_act.triggered.connect(self._add_row)
+
+        remove_act = QAction(
+            get_colored_icon(get_asset_path(Icons.TRASH), icon_color), "Rimuovi riga/e", self
+        )
+        remove_act.triggered.connect(self._remove_row)
+
+        lyra_row = QAction(
+            get_colored_icon(get_asset_path(Icons.SPARKLES), icon_color), "Analizza riga con Lyra", self
+        )
+        lyra_row.triggered.connect(lambda: self.table._analyze_row_at(pos))
+
+        lyra_sel = QAction(
+            get_colored_icon(get_asset_path(Icons.SPARKLES), icon_color), "Analizza selezione con Lyra", self
+        )
+        lyra_sel.triggered.connect(self.table._analyze_selection)
+
+        copy_act = QAction(get_colored_icon(get_asset_path(Icons.EDIT), icon_color), "Copia", self)
+        copy_act.triggered.connect(self.table.copy_selection)  # type: ignore
+
+        for act in (add_act, remove_act, lyra_row, lyra_sel, copy_act):
+            menu.addAction(act)
+        menu.exec(global_pos)
 
     def get_data(self) -> list[dict[str, Any]]:
         """Estrae i dati dalla tabella in formato lista di dizionari."""
@@ -277,7 +328,7 @@ class EditableDataTable(QWidget):
         """
         self.table.setRowCount(0)
         if not data:
-            for _ in range(5):
+            for _ in range(self.initial_rows):
                 self._add_row()
             return
 
@@ -308,6 +359,10 @@ class EditableDataTable(QWidget):
                     item = self.table.item(row_idx, col_idx)
                     if item:
                         item.setText(val)
+
+        # Padding per garantire sempre almeno 'initial_rows' righe a schermo
+        while self.table.rowCount() < self.initial_rows:
+            self._add_row()
 
     def update_cell(self, row: int, col: int, value: str, emit_signal: bool = True) -> None:
         """
@@ -387,5 +442,5 @@ class EditableDataTable(QWidget):
     def clear(self) -> None:
         """Svuota la tabella e ripristina le righe iniziali."""
         self.table.setRowCount(0)
-        for _ in range(5):
+        for _ in range(self.initial_rows):
             self._add_row(use_defaults=False)
