@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
 from PyQt6.QtWidgets import QMessageBox
 
 from src.core.database import db_manager
@@ -231,6 +230,7 @@ class ReportGenerator:
         if not excel_data:
             return None
 
+        import pandas as pd
         df_report = pd.DataFrame(excel_data)
         path = (
             Path(os.environ["TEMP"]) / f"report Accessi ISAB {datetime.now().strftime('%d-%m-%Y_%H-%M')}.xlsx"

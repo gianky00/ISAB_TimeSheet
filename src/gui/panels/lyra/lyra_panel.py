@@ -2,7 +2,6 @@ import os
 from io import StringIO
 from pathlib import Path
 
-import pandas as pd
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QFileDialog,
@@ -262,6 +261,7 @@ class LyraPanel(QWidget):
         if not self.last_table_data:
             return
         try:
+            import pandas as pd
             lines = self.last_table_data.split("\n")
             table_lines = [line for line in lines if "|" in line and "---" not in line]
             data = StringIO("\n".join(table_lines))
