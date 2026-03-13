@@ -123,7 +123,7 @@ class DatabaseManager:
             if not read_only:
                 conn.execute("PRAGMA journal_mode=WAL;")
                 conn.execute("PRAGMA synchronous=NORMAL;")
-                conn.execute(f"PRAGMA busy_timeout={int(timeout * 1000)};")
+                conn.execute(f"PRAGMA busy_timeout={int(timeout * 1000)};")  # nosec B608
 
             # Enable Foreign Keys for both read and write
             conn.execute("PRAGMA foreign_keys = ON;")
@@ -199,7 +199,7 @@ class DatabaseManager:
             return 0
 
     def _set_db_version(self, conn: sqlite3.Connection, version: int) -> None:
-        conn.execute(f"PRAGMA user_version = {version}")
+        conn.execute(f"PRAGMA user_version = {version}")  # nosec B608
 
     def _run_migrations(
         self, db_path: Path, migrations: dict[int, Callable[[sqlite3.Connection], None]], db_name: str

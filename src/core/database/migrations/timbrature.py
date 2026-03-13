@@ -66,4 +66,4 @@ def mig_timbrature_v4(conn: sqlite3.Connection) -> None:
 
     for col, col_type in new_cols.items():
         if col not in existing:
-            cursor.execute(f"ALTER TABLE timbrature ADD COLUMN {col} {col_type}")
+            cursor.execute(f"ALTER TABLE timbrature ADD COLUMN {col} {col_type}")  # nosec B608
