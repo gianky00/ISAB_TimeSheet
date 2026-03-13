@@ -2,6 +2,13 @@
 
 Questo file tiene traccia dei debiti tecnici e dei miglioramenti necessari per mantenere il codice a standard di eccellenza (Senior Level).
 
+## 🧩 Refactoring Architetturale (Violazioni SRP)
+Le seguenti classi/file presentano responsabilità multiple mischiate (UI, Dati, API) e devono essere scomposte in componenti specializzati (Single Responsibility Principle):
+- [ ] `src/gui/widgets/dashboard/don_ciro_widget.py`
+- [ ] `src/gui/widgets/dashboard/weather_widget.py`
+- [ ] `src/bots/base/base_bot.py`
+- [ ] `src/gui/controllers/navigation_controller.py`
+
 ## 🏗️ Refactoring Complessità (Xenon Grade C -> B)
 Le seguenti funzioni/moduli hanno superato la soglia di complessità desiderata (B) e devono essere spezzettate:
 
@@ -11,10 +18,10 @@ Le seguenti funzioni/moduli hanno superato la soglia di complessità desiderata 
 - [ ] `src/bots/portale_fornitori/scarico_ts/pages/scarico_ts_page.py`: Metodo `_download_excel`
 
 ### Core
-- [ ] `src/core/audit_manager.py`: Metodi `_generate_notification_if_needed` e `_get_current_user`
+- [ ] `src/core/audit/manager.py`: Metodi `_generate_notification` e `_get_current_user`
 - [ ] `src/core/backup_manager.py`: Metodo `detect_cloud_paths`
-- [ ] `src/core/data_synchronizer.py`: Metodi `sync_giornaliere`, `sync_contabilita_dati`, `_sync_generic`
-- [ ] `src/core/excel_importer.py`: Metodi `scan_workload`, `import_certificati_campione`, `_get_cell_style`
+- [ ] `src/core/data_synchronizer.py`: Metodi `sync_giornaliere` e `sync_contabilita_dati`
+- [ ] `src/core/importers/`: Moduli e metodi complessi (es. `scan_workload` in `__init__.py`, `import_certificati_campione` in `certificati.py`)
 
 ### UI & Utils
 - [ ] `src/gui/widgets/contabilita/helpers.py`: Intero modulo (media C)

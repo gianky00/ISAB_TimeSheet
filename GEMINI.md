@@ -4,9 +4,9 @@ Sei Gemini CLI, l'architetto senior di SyncroJob. Il tuo compito è far evolvere
 
 ## 🚨 REGOLE FERREE (MANDATORIE)
 
-1.  **STRUTTURA MODULARE**:
+1.  **STRUTTURA MODULARE (Single Responsibility Principle)**:
     *   **Mai** aggiungere logica di business nei pannelli della GUI. Se devi processare dati, crea un `Controller` in `src/core/`.
-    *   **Mai** superare le 400 righe per file. Se un file cresce troppo, scomponilo immediatamente seguendo il pattern "Component-Widget".
+    *   **Rispetta rigorosamente il Single Responsibility Principle (SRP).** Non focalizzarti sul numero di righe, ma sulle responsabilità. Se un modulo o una classe fa più di una cosa (es. gestisce la UI, elabora dati, fa richieste di rete), scomponilo immediatamente in classi/componenti specializzati.
 
 2.  **STILE E DESIGN**:
     *   Usa **SEMPRE** i widget del Design System (`ModernButton`, `ConfirmationDialog`, ecc.).
@@ -25,13 +25,19 @@ Sei Gemini CLI, l'architetto senior di SyncroJob. Il tuo compito è far evolvere
     *   Ogni bugfix deve essere accompagnato da un test di regressione in `tests/`.
     *   Le nuove feature devono avere unit test dedicati.
 
+6.  **DOCUMENTAZIONE PERSISTENTE**:
+    *   **Ogni** cambiamento strutturale, scoperta tecnica o fix architetturale deve essere immediatamente registrato nel file pertinente in `.gemini/`.
+    *   Non lasciare mai le scoperte solo nel contesto della chat. La "memoria" del progetto risiede nei file MD di questa cartella.
+
 ## 📂 MAPPA DEI CONTENUTI
-*   `docs/ARCHITECTURE_STANDARDS.md`: Come scrivere il codice.
-*   `docs/DESIGN_SYSTEM.md`: Come costruire la UI.
-*   `REFACTORING_PLAN_V2.md`: Cosa rifattorizzare prossimamente.
+*   `.gemini/index.md`: Hub centrale della documentazione IA.
+*   `.gemini/ARCHITECTURE.md`: Standard architetturali e ingegneristici.
+*   `.gemini/DESIGN_GUIDELINES.md`: Design System e linee guida UI.
+*   `docs/TODO_QUALITY.md`: Debito tecnico operativo e priorità utente.
 
 ## 🧠 ALGORITMO DI RISPOSTA
-1.  Verifica se la richiesta viola il limite delle 400 righe.
-2.  Se sì, proponi prima la scomposizione.
-3.  Implementa usando i segnali per la comunicazione tra moduli.
-4.  Valida con la suite QA.
+1.  Verifica se la richiesta viola il Single Responsibility Principle (SRP) (es. classi/file con troppe responsabilità miste).
+2.  Se sì, proponi e implementa prima la scomposizione per separare le responsabilità (UI, Business Logic, Dati, ecc.).
+3.  Implementa le nuove funzionalità usando i segnali per la comunicazione tra i moduli.
+4.  Valida con la suite QA (test, linting, type-check).
+5.  **Aggiorna o convalida la documentazione in `.gemini/` per riflettere le modifiche fatte.**

@@ -58,7 +58,7 @@ Il progetto adotta una politica **Zero Regressions**.
 Utilizziamo strumenti di analisi statica per mantenere il codice pulito.
 
 - **Linting**: `ruff check .`
-- **Formatting**: `black .`
+- **Formatting**: `ruff format .`
 - **Type Checking**: `mypy src/core`
 
 Prima di un commit, assicurati che `ruff` e `mypy` non segnalino errori.

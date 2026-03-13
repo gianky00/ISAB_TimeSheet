@@ -1,23 +1,47 @@
-# Diario di Analisi e Fix Test (Testing Insights)
+# SyncroJob - Testing Insights & QA Standards
 
-## 🛡️ REGOLA MANDATORIA DI TEST (MANDATORY)
-**DA ORA IN POI, OGNI OPERAZIONE DI TEST DEVE UTILIZZARE IL RUNNER ROBUSTO.**
-- **Comando Preferito**: `scripts/avvio_test.bat`
+Questo diario tiene traccia delle scoperte critiche e delle regole mandatorie per la suite di test.
+
+## 🛡️ REGOLA MANDATORIA (MANDATORY)
+**OGNI OPERAZIONE DI TEST DEVE UTILIZZARE IL RUNNER ROBUSTO.**
+- **Comando**: `scripts/avvio_test.bat`
 - **Engine**: `python tests/run_robust_tests.py`
-- **DIVIETO**: Non usare più `pytest` direttamente per l'esecuzione dei test. Il runner robusto gestisce l'isolamento dei processi, i timeout e i report necessari per evitare crash della suite causati da conflitti di risorse (Qt/GUI).
+- **DIVIETO**: Non usare `pytest` direttamente. Il runner robusto gestisce l'isolamento dei processi Qt, i timeout e previene i crash della GDI su Windows.
 
-## Obiettivo
-Analizzare e correggere tutti i test che causano crash quando eseguiti in suite completa, garantendo stabilità tramite l'esecuzione isolata.
+---
 
-## Cronologia e Scoperte
+## 🔍 Scoperte Architetturali e Fix Storici
 
-### [Gennaio 2026] - Migrazione a Robust Runner
-- **Status**: Migrazione completata.
-- **Configurazione**: `scripts/avvio_test.bat` ora include il flag `--reset` di default per garantire il rilevamento di tutti i test.
-- **Vantaggi**:
-    - Esecuzione isolata per file che falliscono o vanno in timeout.
-    - Generazione automatica di `tests/test_report.md`.
-    - Persistenza dello stato tramite `.test_session_state.json` (permette di riprendere i test dopo un'interruzione).
+### 1. Gestione Crittografica (Marzo 2026)
+*   **Problema**: Molteplici fallimenti nei test di licenza/secrets a causa di decodifica Base64 errata.
+*   **Root Cause**: I test decodificavano i token Fernet prima di passarli alla libreria, mentre `cryptography.fernet` richiede la stringa Base64 originale (url-safe).
+*   **Lezione**: `SecretsManager` ritorna stringhe Base64 in UTF-8. Non decodificarle mai manualmente nei test o nel codice client prima dell'uso con Fernet.
 
-### Crash Point Storici (Risolti o Monitorati)
-- `tests/unit/test_accessibility_simple.py::TestAccessibilitySimple::test_make_accessible`: Identificato come punto di crash critico in esecuzione seriale standard (risolto tramite isolamento del runner robusto).
+### 2. Incongruenza Chiavi Dizionario (Marzo 2026)
+*   **Problema**: Crash nei test di integrazione SafeWork PDL.
+*   **Root Cause**: Il test usava la chiave `"pdl_number"`, ma il bot/UI si aspettava `"numero_pdl"`.
+*   **Standard**: Verificare sempre `get_columns()` nel bot per assicurare la parità tra dati mockati e aspettative del parser.
+
+### 3. Crash Point Qt/Accessibility
+*   **Problema**: `test_make_accessible` causava crash della suite intera.
+*   **Soluzione**: Isolamento forzato nel runner robusto e pulizia dei widget Qt nel `tearDown`.
+
+---
+
+## 🛠️ Convenzioni di Testing
+
+### 1. Struttura dei Test
+- I file di test devono rispecchiare la struttura della cartella `src/` all'interno di `tests/` (es. `src/core/auth.py` -> `tests/unit/test_auth.py`).
+- Utilizzare fixture globali definite in `tests/conftest.py`.
+
+### 2. Mocking e Isolamento
+- **Bot**: Mockare sempre il Selenium WebDriver per evitare l'apertura di browser reali durante i test unitari.
+- **UI**: Mockare `QApplication` e utilizzare `qtbot` per interagire con i widget.
+- **Database**: Utilizzare database in memoria (`:memory:`) o fixture che ripuliscono lo stato dopo ogni test.
+
+---
+
+## 📈 Metriche di Qualità Target
+- **Docstring Coverage**: 95% (attuale ~80%).
+- **Test Coverage**: > 70% per i moduli Core e Bot Critici.
+- **Zero Warnings**: Nessun warning ammesso da Ruff/MyPy.
