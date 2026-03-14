@@ -353,7 +353,7 @@ def run_nuitka(obfuscated=False):
         "--assume-yes-for-downloads",
         "--lto=no",
         "--jobs=1",
-        "--optimization-level=1",
+        "--low-memory",
         "--python-flag=-O",
         "--output-dir=" + str(DIST_DIR),
         "--include-data-dir=" + str(ROOT_DIR / "assets") + "=assets",
