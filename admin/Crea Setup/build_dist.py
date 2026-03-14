@@ -353,7 +353,6 @@ def run_nuitka(obfuscated=False):
         "--assume-yes-for-downloads",
         "--lto=no",
         "--jobs=2",
-        "--msvc-64",
         "--include-package-as-bytecode=pandera",
         "--python-flag=-O",
         "--output-dir=" + str(DIST_DIR),
