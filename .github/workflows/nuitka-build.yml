@@ -1,8 +1,8 @@
 name: Nuitka Build Pipeline
 
 on:
-  push:
-    branches: [ feat/nuitka-compilation ]
+  # push:
+  #   branches: [ feat/nuitka-compilation ]
   workflow_dispatch:
 
 jobs:
