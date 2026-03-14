@@ -70,7 +70,7 @@ class ServiceController(QObject):
         Applica la logica di parallelismo intelligente per l'accodamento dei task.
         """
         config = config_manager.load_config()
-        now = datetime.now().strftime("%H:%M")
+        now = datetime.now(UTC).astimezone().strftime("%H:%M")
 
         scheduled_bots = [
             (
@@ -124,7 +124,7 @@ class ServiceController(QObject):
         if not should_send:
             with suppress(Exception):
                 last_sent_dt = datetime.fromisoformat(str(last_sent))
-                if (datetime.now() - last_sent_dt).days >= interval:
+                if (datetime.now(UTC).astimezone() - last_sent_dt).days >= interval:
                     should_send = True
 
         if should_send:
@@ -184,7 +184,7 @@ class ServiceController(QObject):
                     "nome": d[2],
                     "badge": d[4] or "-",
                     "giorni": df,
-                    "data": (datetime.now() - timedelta(days=df)).strftime("%d/%m/%Y"),
+                    "data": (datetime.now(UTC).astimezone() - timedelta(days=df)).strftime("%d/%m/%Y"),
                 }
                 if 21 <= df <= 30:
                     w_list.append(item)
@@ -200,7 +200,7 @@ class ServiceController(QObject):
                 return
             import win32com.client
 
-            body = f"<html><body style='font-family: Segoe UI;'><h2>Report Accessi ISAB</h2><p>Generato il {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>"
+            body = f"<html><body style='font-family: Segoe UI;'><h2>Report Accessi ISAB</h2><p>Generato il {datetime.now(UTC).astimezone().strftime('%d/%m/%Y %H:%M')}</p>"
             body += (
                 "<h3>In Scadenza (21-30 gg)</h3><ul>"
                 + "".join(
@@ -226,12 +226,12 @@ class ServiceController(QObject):
             m = out.CreateItem(0)
             m.To = "luca.riccio@coemi.it"
             m.CC = "isabsud@coemi.it"
-            m.Subject = f"[AUTO] Report Monitoraggio ISAB - {datetime.now().strftime('%d/%m/%Y')}"
+            m.Subject = f"[AUTO] Report Monitoraggio ISAB - {datetime.now(UTC).astimezone().strftime('%d/%m/%Y')}"
             m.HTMLBody = body
             m.Send()
 
             ReportHistory.save_report(w_list, e_list)
-            config_manager.set_config_value("report_email_autopilot_last_sent", datetime.now().isoformat())
+            config_manager.set_config_value("report_email_autopilot_last_sent", datetime.now(UTC).astimezone().isoformat())
             NotificationManager.instance().add_notification(
                 title="Report Email Inviato",
                 message=f"Inviati {len(w_list)} warning e {len(e_list)} expired.",

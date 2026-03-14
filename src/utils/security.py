@@ -127,8 +127,7 @@ class PasswordManager:
         if ciphertext.startswith("ENC:"):
             try:
                 encrypted_data = ciphertext[4:].encode()
-                decrypted = self._cipher.decrypt(encrypted_data).decode()
-                return decrypted
+                return self._cipher.decrypt(encrypted_data).decode()
             except Exception:
                 logger.error("Decryption error (legacy)", exc_info=True)
                 return ""

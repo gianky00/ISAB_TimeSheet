@@ -4,7 +4,7 @@ Scheda coordinata per il monitoraggio della programmazione settimanale SafeWork.
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from PyQt6.QtCore import QTimer
@@ -186,7 +186,7 @@ class ProgrammazioneTab(QWidget):
 
         _, _, start_dt = PDLPeriodManager.get_week_range(self.week_selector.currentIndex())
         headers = PDLPeriodManager.get_table_headers(start_dt)
-        today_idx = datetime.now().weekday() if self.week_selector.currentIndex() == 0 else -1
+        today_idx = datetime.now(UTC).astimezone().weekday() if self.week_selector.currentIndex() == 0 else -1
 
         for name, res in sorted(grouped.items()):
             box = StandardGroupBox(name)
@@ -221,7 +221,7 @@ class ProgrammazioneTab(QWidget):
             "Venerdì": 4,
             "Sabato": 5,
             "Domenica": 6,
-            "Oggi": datetime.now().weekday(),
+            "Oggi": datetime.now(UTC).astimezone().weekday(),
         }.get(day_choice, -1)
 
         for table in self.tables:

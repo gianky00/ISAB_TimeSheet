@@ -3,7 +3,7 @@ SyncroJob - PDL Period Manager
 Logica di business per il calcolo dei range settimanali e degli header temporali.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 
 class PDLPeriodManager:
@@ -15,7 +15,7 @@ class PDLPeriodManager:
         Calcola il range della settimana basato sull'offset rispetto alla corrente.
         Returns: (start_str, end_str, start_datetime)
         """
-        today = datetime.now()
+        today = datetime.now(UTC).astimezone()
         current_weekday = today.weekday()
         # Inizio settimana (Lunedì)
         start_current = today - timedelta(days=current_weekday)
@@ -48,4 +48,4 @@ class PDLPeriodManager:
     def is_today(start_dt: datetime, day_offset: int) -> bool:
         """Verifica se il giorno all'offset specificato è oggi."""
         target_day = (start_dt + timedelta(days=day_offset)).date()
-        return target_day == datetime.now().date()
+        return target_day == datetime.now(UTC).astimezone().date()

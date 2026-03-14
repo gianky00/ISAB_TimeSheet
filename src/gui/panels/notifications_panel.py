@@ -5,7 +5,7 @@ Gestisce il filtraggio, la ricerca e il raggruppamento temporale dei messaggi.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from PyQt6.QtCore import Qt, QTimer
@@ -320,7 +320,7 @@ class NotificationsPanel(QWidget):
 
     def _group_notifications_by_time(self, notifs: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
         """Suddivide le notifiche in secchielli temporali (Oggi, Ieri, ecc.)."""
-        now = datetime.now()
+        now = datetime.now(UTC)
         groups: dict[str, dict[str, Any]] = {
             "pinned": {"title": "Fissate", "icon": "📌", "notifications": []},
             "today": {"title": "Oggi", "icon": "📅", "notifications": []},

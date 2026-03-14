@@ -5,7 +5,7 @@ Gestione dell'importazione e archiviazione dati della Contabilità Strumentale.
 
 from collections.abc import Callable
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -79,7 +79,7 @@ class ContabilitaManager:
         if not root.exists():
             return False, "Directory Giornaliere non trovata.", 0, 0
 
-        current_year = datetime.now().year
+        current_year = datetime.now(UTC).year
 
         try:
             # 1. Lookup Map Preparation

@@ -4,7 +4,7 @@ Modulo specializzato per la visualizzazione e l'esportazione delle scadenze cert
 """
 
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -86,7 +86,7 @@ class ScadenzeAnalysisDialog(QDialog):
         header_layout.addLayout(title_row)
 
         # Data analisi
-        date_label = QLabel(f"Generato il {datetime.now().strftime('%d/%m/%Y alle %H:%M')}")
+        date_label = QLabel(f"Generato il {datetime.now(UTC).astimezone().strftime('%d/%m/%Y alle %H:%M')}")
         date_label.setStyleSheet(
             f"color: {hex_to_rgba(COLORS['bg_white'], 0.6)}; font-size: 12px; margin-top: 5px;"
         )

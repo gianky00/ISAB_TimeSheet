@@ -71,9 +71,9 @@ class TerminalLogWidget(QWidget):
             message: Testo del messaggio da loggare.
             level: Livello del log (es. INFO, ERROR, WARN, SUCCESS).
         """
-        from datetime import datetime
+        from datetime import UTC, datetime
 
-        timestamp = datetime.now().strftime("%H:%M:%S")
+        timestamp = datetime.now(UTC).astimezone().strftime("%H:%M:%S")
 
         self.editor.moveCursor(QTextCursor.MoveOperation.End)
 

@@ -5,7 +5,7 @@ Performance metrics tracking e storage.
 import json
 from collections import defaultdict
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Optional
 
 from .config import get_config
@@ -22,7 +22,7 @@ class PerformanceMetric:
     ):
         self.operation = operation
         self.duration_ms = duration_ms
-        self.timestamp = datetime.now()
+        self.timestamp = datetime.now(UTC)
         self.metadata = metadata or {}
 
     def to_dict(self) -> dict[str, Any]:
@@ -96,7 +96,14 @@ class MetricsSink:
                     duration_ms=data["duration_ms"],
                     metadata=data.get("metadata", {}),
                 )
-                metric.timestamp = datetime.fromisoformat(data["timestamp"].replace("Z", ""))
+                ts_str = data["timestamp"]
+                if ts_str.endswith("Z"):
+                    metric.timestamp = datetime.fromisoformat(ts_str)
+                else:
+                    metric.timestamp = datetime.fromisoformat(ts_str)
+
+                if metric.timestamp.tzinfo is None:
+                    metric.timestamp = metric.timestamp.replace(tzinfo=UTC)
 
                 metrics.append(metric)
                 count += 1
@@ -172,7 +179,7 @@ class PerformanceTracker:
         sorted_durations = sorted(durations)
         count = len(sorted_durations)
 
-        stats = {
+        return {
             "count": float(count),
             "avg": sum(sorted_durations) / count,
             "min": sorted_durations[0],
@@ -182,7 +189,6 @@ class PerformanceTracker:
             "p99": sorted_durations[int(count * 0.99)],
         }
 
-        return stats
 
     def set_baseline(self, operation: str, baseline_ms: float) -> None:
         """

@@ -22,8 +22,7 @@ def deep_update_paths(data: Any, old_path: str, new_path: str) -> Any:
     """Sostituisce ricorsivamente i puntamenti ai vecchi percorsi nelle stringhe."""
     if isinstance(data, str):
         updated = data.replace(old_path.replace("/", ""), new_path.replace("/", ""))
-        updated = updated.replace(old_path.replace("", "/"), new_path.replace("", "/"))
-        return updated
+        return updated.replace(old_path.replace("", "/"), new_path.replace("", "/"))
     if isinstance(data, dict):
         return {k: deep_update_paths(v, old_path, new_path) for k, v in data.items()}
     if isinstance(data, list):

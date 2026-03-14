@@ -8,7 +8,7 @@ import os
 import re
 import sys
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -80,7 +80,7 @@ def format_timestamp(dt: datetime | None = None) -> str:
         Stringa formattata
     """
     if dt is None:
-        dt = datetime.now()
+        dt = datetime.now(UTC).astimezone()
     return dt.strftime("%d/%m/%Y %H:%M:%S")
 
 
@@ -113,7 +113,7 @@ def get_years_list(start_offset: int = -2, end_offset: int = 2) -> list[str]:
     Returns:
         Lista di anni come stringhe
     """
-    current_year = datetime.now().year
+    current_year = datetime.now(UTC).astimezone().year
     return [str(year) for year in range(current_year + start_offset, current_year + end_offset + 1)]
 
 

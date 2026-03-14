@@ -205,7 +205,6 @@ class TimbraturePage:
 
     def download_excel(self) -> str:
         """Finds and clicks the Excel download button, returning the file path."""
-        downloaded_file = ""
         try:
             self.log("Cerco pulsante Excel...")
             # No sleep needed: _find_excel_button() has internal waits
@@ -226,8 +225,7 @@ class TimbraturePage:
 
             self.log("Attendo download...")
             # No sleep needed: _rename_latest_download() should use polling
-            downloaded_file = self._rename_latest_download("timbrature_temp")
-            return downloaded_file
+            return self._rename_latest_download("timbrature_temp")
 
         except Exception as e:
             self.log(f"⚠️ Errore download Excel: {e}")

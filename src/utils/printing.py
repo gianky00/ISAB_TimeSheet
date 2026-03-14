@@ -22,8 +22,7 @@ logger = logging.getLogger(__name__)
 def get_installed_printers() -> list[str]:
     """Restituisce una lista di nomi delle stampanti installate."""
     try:
-        printers = [str(printer[2]) for printer in win32print.EnumPrinters(2)]
-        return printers
+        return [str(printer[2]) for printer in win32print.EnumPrinters(2)]
     except Exception as e:
         logger.error(f"Errore nel recupero stampanti: {e}")
         return []
@@ -33,13 +32,12 @@ def _run_powershell(command: str) -> Any:
     """Esegue un comando PowerShell e restituisce l'output."""
     try:
         creation_flags = 0x08000000  # CREATE_NO_WINDOW
-        result = subprocess.run(
+        return subprocess.run(
             ["powershell", "-Command", command],
             capture_output=True,
             text=True,
             creationflags=creation_flags,
         )
-        return result
     except Exception as e:
         logger.error(f"Errore esecuzione PowerShell: {e}")
         return None

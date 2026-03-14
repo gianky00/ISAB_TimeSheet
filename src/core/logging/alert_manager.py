@@ -7,7 +7,7 @@ Gestisce invio automatico alert su Telegram per anomalie e eventi critici.
 import threading
 from contextlib import suppress
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 from .analytics import Anomaly, get_anomalies
@@ -107,7 +107,7 @@ class AlertManager:
             last_alert = self._last_alerts.get(alert_key)
             if last_alert:
                 cooldown = timedelta(minutes=self.config.cooldown_minutes)
-                if datetime.now() - last_alert < cooldown:
+                if datetime.now(UTC) - last_alert < cooldown:
                     return False
 
         return True
@@ -116,7 +116,7 @@ class AlertManager:
         """Registra che un alert è stato inviato."""
         alert_key = f"{anomaly.type}:{anomaly.message[:50]}"
         with self._lock:
-            self._last_alerts[alert_key] = datetime.now()
+            self._last_alerts[alert_key] = datetime.now(UTC)
 
     def _format_alert_message(self, anomaly: Anomaly) -> str:
         """Formatta messaggio alert per Telegram."""
@@ -146,7 +146,7 @@ class AlertManager:
             for key, value in list(anomaly.details.items())[:3]:
                 lines.append(f"• {key}: {value}")
 
-        lines.extend(("", f"<code>{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</code>"))
+        lines.extend(("", f"<code>{datetime.now(UTC).astimezone().strftime('%Y-%m-%d %H:%M:%S')}</code>"))
 
         return "\n".join(lines)
 

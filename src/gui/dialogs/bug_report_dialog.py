@@ -347,7 +347,7 @@ class BugReportDialog(QDialog):
             import getpass
             import platform
             import secrets
-            from datetime import datetime
+            from datetime import UTC, datetime
 
             import win32com.client as win32
 
@@ -356,7 +356,7 @@ class BugReportDialog(QDialog):
             except Exception:
                 return False
 
-            now = datetime.now()
+            now = datetime.now(UTC).astimezone()
             date_display = now.strftime("%d/%m/%Y %H:%M")
             date_file = now.strftime("%d-%m-%Y_%H-%M")
             rand_hex = f"{secrets.randbelow(0x10000):04X}"

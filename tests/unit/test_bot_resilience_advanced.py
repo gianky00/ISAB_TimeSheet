@@ -32,8 +32,7 @@ class TestBotResilienceAdvanced:
     def bot(self, tmp_path, mocker):
         """Setup del bot con percorsi mockati."""
         mocker.patch("src.core.config_manager.CONFIG_DIR", tmp_path)
-        bot = MockBot("user", "pass")
-        return bot
+        return MockBot("user", "pass")
 
     def test_save_error_state_generation(self, bot, tmp_path):
         """Test: Verifica la generazione fisica di screenshot e HTML al crash."""

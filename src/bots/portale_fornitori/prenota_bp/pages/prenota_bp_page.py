@@ -4,7 +4,7 @@ Page Object per la gestione Prenotazioni BP sul Portale Fornitori.
 
 from collections.abc import Callable
 from contextlib import suppress
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -319,7 +319,7 @@ class PrenotaBPPage:
             self.wait_and_click(PrenotaBPLocators.BT_CREA_RICHIESTA)
             self._wait_for_overlay()
 
-            now = datetime.now()
+            now = datetime.now(UTC).astimezone()
             data_oggi = now.strftime("%d/%m/%Y")
             ora_attuale = now.strftime("%H%M")
             ora_fine = (now + timedelta(minutes=30)).strftime("%H%M")

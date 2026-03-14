@@ -1,7 +1,7 @@
 import logging
 import operator
 import os
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -78,7 +78,7 @@ class ReportGenerator:
             if diff_days is None:
                 continue
 
-            last_access_date = datetime.now() - timedelta(days=diff_days)
+            last_access_date = datetime.now(UTC).astimezone() - timedelta(days=diff_days)
             item = {
                 "id": id_ris,
                 "cognome": cog,
@@ -108,7 +108,7 @@ class ReportGenerator:
         """Costruisce il template HTML per l'email."""
         from src.core.version import __version__
 
-        current_date = datetime.now().strftime("%d/%m/%Y %H:%M")
+        current_date = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
         font_family = "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif"
         header_color = COLORS["primary_dark"]
         border_color = COLORS["border_light"]
@@ -234,7 +234,7 @@ class ReportGenerator:
 
         df_report = pd.DataFrame(excel_data)
         path = (
-            Path(os.environ["TEMP"]) / f"report Accessi ISAB {datetime.now().strftime('%d-%m-%Y_%H-%M')}.xlsx"
+            Path(os.environ["TEMP"]) / f"report Accessi ISAB {datetime.now(UTC).astimezone().strftime('%d-%m-%Y_%H-%M')}.xlsx"
         )
         df_report.to_excel(path, index=False, sheet_name="Dipendenti")
         return path
@@ -242,7 +242,7 @@ class ReportGenerator:
     @staticmethod
     def _send_report_email(body_html, excel_path, data):
         """Gestisce l'invio fisico dell'email tramite Outlook o Browser."""
-        subject = f"Report Monitoraggio Accessi in ISAB - {datetime.now().strftime('%d/%m/%Y')}"
+        subject = f"Report Monitoraggio Accessi in ISAB - {datetime.now(UTC).astimezone().strftime('%d/%m/%Y')}"
 
         if os.name == "nt":
             try:
@@ -287,7 +287,7 @@ class ReportGenerator:
         from PyQt6.QtCore import QUrl
         from PyQt6.QtGui import QDesktopServices
 
-        tmp_path = Path(os.environ["TEMP"]) / f"report_isab_{datetime.now().strftime('%H%M%S')}.html"
+        tmp_path = Path(os.environ["TEMP"]) / f"report_isab_{datetime.now(UTC).astimezone().strftime('%H%M%S')}.html"
         try:
             tmp_path.write_text(body_html, encoding="utf-8")
             # Usa QDesktopServices per aprire il file con l'app predefinita del sistema

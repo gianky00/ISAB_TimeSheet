@@ -24,8 +24,7 @@ class ContabilitaQueries:
                 cursor.execute(
                     "SELECT DISTINCT year FROM contabilita UNION SELECT DISTINCT year FROM giornaliere ORDER BY 1 DESC"
                 )
-                years = [row[0] for row in cursor.fetchall()]
-                return years
+                return [row[0] for row in cursor.fetchall()]
         except Exception:
             return []
 
@@ -42,8 +41,7 @@ class ContabilitaQueries:
                     f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY n_prev DESC, id DESC"  # nosec B608
                 )
                 cursor.execute(query, (year,))
-                rows = cursor.fetchall()
-                return rows
+                return cursor.fetchall()
         except Exception:
             return []
 
@@ -72,8 +70,7 @@ class ContabilitaQueries:
                     f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"  # nosec B608
                 )
                 cursor.execute(query, (year,))
-                rows = cursor.fetchall()
-                return rows
+                return cursor.fetchall()
         except Exception:
             return []
 
@@ -88,8 +85,7 @@ class ContabilitaQueries:
                 cols = ExcelImporter.ATTIVITA_PROGRAMMATE_COLS
                 query = f"SELECT {', '.join(cols)} FROM attivita_programmate ORDER BY id ASC"  # nosec B608
                 cursor.execute(query)
-                rows = cursor.fetchall()
-                return rows
+                return cursor.fetchall()
         except Exception:
             return []
 
@@ -104,8 +100,7 @@ class ContabilitaQueries:
                 cols = ExcelImporter.CERTIFICATI_CAMPIONE_COLS
                 query = f"SELECT {', '.join(cols)} FROM certificati_campione ORDER BY id ASC"  # nosec B608
                 cursor.execute(query)
-                rows = cursor.fetchall()
-                return rows
+                return cursor.fetchall()
         except Exception:
             return []
 
@@ -120,7 +115,6 @@ class ContabilitaQueries:
                 cols = ExcelImporter.SCARICO_ORE_COLS
                 query = f"SELECT {', '.join(cols)} FROM scarico_ore ORDER BY id DESC"  # nosec B608
                 cursor.execute(query)
-                rows = cursor.fetchall()
-                return rows
+                return cursor.fetchall()
         except Exception:
             return []

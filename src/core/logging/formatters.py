@@ -6,7 +6,7 @@ import json
 import os
 import sys
 import threading
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from .context import get_context
@@ -53,7 +53,7 @@ class JSONFormatter:
             Stringa JSON
         """
         # Timestamp ISO 8601
-        timestamp = datetime.now().isoformat() + "Z"
+        timestamp = datetime.now(UTC).isoformat() + "Z"
 
         # Context corrente
         context = get_context().to_dict()
@@ -190,7 +190,7 @@ class HumanFormatter:
             Stringa formattata
         """
         # Timestamp (rimuovi microsecondi)
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = datetime.now(UTC).astimezone().strftime("%Y-%m-%d %H:%M:%S")
 
         # Colorizza livello
         level_colored = self._colorize_level(level) if self.colorize else f"{level:8}"

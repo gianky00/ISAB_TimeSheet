@@ -15,7 +15,7 @@ Usage:
 import argparse
 import json
 import sys
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -99,8 +99,8 @@ def cmd_query(args: argparse.Namespace) -> None:
         query = query.contains_message(args.message, case_sensitive=False)
 
     if args.hours:
-        start = datetime.now() - timedelta(hours=args.hours)
-        query = query.time_range(start=start, end=datetime.now())
+        start = datetime.now(UTC) - timedelta(hours=args.hours)
+        query = query.time_range(start=start, end=datetime.now(UTC))
 
     if args.limit:
         query = query.limit(args.limit)
@@ -231,8 +231,8 @@ def cmd_export(args: argparse.Namespace) -> None:
     query = query_logs()
 
     if args.hours:
-        start = datetime.now() - timedelta(hours=args.hours)
-        query = query.time_range(start=start, end=datetime.now())
+        start = datetime.now(UTC) - timedelta(hours=args.hours)
+        query = query.time_range(start=start, end=datetime.now(UTC))
 
     if args.level:
         levels = [lvl.upper() for lvl in args.level]

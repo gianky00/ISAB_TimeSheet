@@ -163,7 +163,7 @@ class NotificationCard(QFrame):
             from datetime import UTC
 
             return datetime.fromtimestamp(ts, tz=UTC).strftime("%H:%M")
-        return datetime.now().strftime("%H:%M")
+        return datetime.now(UTC).astimezone().strftime("%H:%M")
 
     def _setup_animations(self) -> None:
         """Configura l'effetto di opacità per l'animazione di ingresso."""

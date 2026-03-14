@@ -7,7 +7,7 @@ I dati vengono salvati centralmente nel file di configurazione principale dell'a
 
 import json
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Optional
 
 from src.core import config_manager
@@ -76,7 +76,7 @@ class StatsManager:
             self.stats[bot_id]["errors"] = 0
 
         self.stats[bot_id]["runs"] += 1
-        self.stats[bot_id]["last_run"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.stats[bot_id]["last_run"] = datetime.now(UTC).astimezone().strftime("%Y-%m-%d %H:%M:%S")
         self._save_stats()
 
     def increment_error(self, bot_id: str) -> None:

@@ -3,7 +3,7 @@ SyncroJob - Consuntivo Operations Log Widget
 Console chiara per il tracciamento delle operazioni in tempo reale.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QFont
@@ -113,7 +113,7 @@ class OperationLogWidget(QFrame):
             "step": COLORS["purple"],
         }
         color = colors.get(level, colors["info"])
-        time_str = datetime.now().strftime("%H:%M:%S")
+        time_str = datetime.now(UTC).astimezone().strftime("%H:%M:%S")
         self._log_text.append(
             f'<span style="color:{COLORS["text_muted"]};">[{time_str}]</span> '
             f'<span style="color:{color}; font-weight: 500;">{message}</span>'

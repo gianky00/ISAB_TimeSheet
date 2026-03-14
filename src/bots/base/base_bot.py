@@ -11,7 +11,7 @@ import sys
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum, auto
 from pathlib import Path
 from typing import Any, ClassVar
@@ -512,7 +512,7 @@ class BaseBot(ABC):
         with suppress(Exception):
             edir = config_manager.CONFIG_DIR / "logs" / "errors"
             edir.mkdir(parents=True, exist_ok=True)
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            ts = datetime.now(UTC).astimezone().strftime("%Y%m%d_%H%M%S")
             # Sanificazione nome bot per prevenire Path Traversal
             sn = re.sub(r"[^\w\-]", "_", self.name.lower())
             self.driver.save_screenshot(str(edir / f"error_{sn}_{ts}.png"))

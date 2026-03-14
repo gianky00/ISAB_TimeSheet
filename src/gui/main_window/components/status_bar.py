@@ -4,7 +4,7 @@ Gestore della barra di stato principale che coordina telemetria, info licenza e 
 Gestisce le transizioni visive tra la fase di avvio e quella operativa dell'applicazione.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from PyQt6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QSize, Qt, QTimer
 from PyQt6.QtWidgets import QGraphicsOpacityEffect, QStatusBar
@@ -123,7 +123,7 @@ class StatusBarComponent(QObject):
             config = config_manager.load_config()
             last_login = config.get("last_login_date", "N/D")
 
-            now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
+            now_str = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
             config_manager.set_config_value("last_login_date", now_str)
 
             self.footer_left.update_info(client, expiry, last_login, hw_id)

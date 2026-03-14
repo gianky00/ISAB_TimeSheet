@@ -156,8 +156,7 @@ class Toast(QWidget):
             clean,
             flags=re.IGNORECASE,
         )
-        clean = re.sub(r"\son\w+?\s*=\s*['\"].*?['\"]", "", clean, flags=re.IGNORECASE)
-        return clean
+        return re.sub(r"\son\w+?\s*=\s*['\"].*?['\"]", "", clean, flags=re.IGNORECASE)
 
     def _setup_animation(self) -> None:
         """Configura le animazioni di fade-in e fade-out."""

@@ -17,8 +17,7 @@ class TestAppInitializerRobust:
     @pytest.fixture
     def mock_qapp(self):
         """Mocka QApplication."""
-        app = QApplication([]) if not QApplication.instance() else QApplication.instance()
-        return app
+        return QApplication([]) if not QApplication.instance() else QApplication.instance()
 
     @patch("src.core.app_initializer.AppInitializer._setup_logging")
     @patch("src.core.database.db_manager.init_db")

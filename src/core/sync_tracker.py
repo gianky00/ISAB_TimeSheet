@@ -8,7 +8,7 @@ Permette di visualizzare nella UI lo stato dell'ultimo aggiornamento (es. PDL, D
 import json
 import logging
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -71,7 +71,7 @@ class SyncTracker:
             duration: Tempo totale impiegato per la sincronizzazione (secondi).
         """
         cls._load()
-        timestamp_str = datetime.now().strftime("%d/%m/%Y %H:%M")
+        timestamp_str = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
         cls._cache[module] = {
             "timestamp": timestamp_str,
             "added": added,

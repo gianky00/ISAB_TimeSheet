@@ -5,7 +5,7 @@ Gestisce la logica di business, l'importazione e il calcolo dei totali per lo Sc
 
 import logging
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
 
@@ -98,7 +98,7 @@ class ScaricoOreController(QObject):
             duration: Durata totale dell'operazione in secondi.
         """
         if success:
-            ts = datetime.now().strftime("%d/%m/%Y %H:%M")
+            ts = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
             time_str = (
                 f"{duration:.1f}s" if duration < 60 else f"{int(duration // 60)}m {int(duration % 60)}s"
             )

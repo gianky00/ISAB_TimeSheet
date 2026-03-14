@@ -4,7 +4,7 @@ Pannello per il bot Scarico TS.
 """
 
 import traceback
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QTimer
@@ -177,7 +177,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
         # Usa il widget per i parametri comuni
         self.params_widget.set_fornitore(config.get("last_ts_fornitore", ""))
-        current_year = datetime.now().year
+        current_year = datetime.now(UTC).year
         self.params_widget.set_dates(config.get("last_ts_date", f"01.01.{current_year}"))
         self.params_widget.set_dest_path(config.get("path_scarico_ts", ""))
 

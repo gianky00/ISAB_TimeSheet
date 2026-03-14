@@ -5,7 +5,7 @@ Implementa il sistema di navigazione gerarchica 'Spotlight' per l'accesso rapido
 """
 
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from PyQt6.QtCore import QObject, Qt, QUrl
@@ -64,7 +64,7 @@ class MenuBarComponent(QObject):
 
     def open_command_palette(self):
         """Apre o chiude la Command Palette con effetto a tendina e controllo anti-rimbalzo."""
-        now = datetime.now().timestamp() * 1000
+        now = datetime.now(UTC).timestamp() * 1000
         if (now - self._last_palette_toggle) < 300:
             return
         self._last_palette_toggle = now

@@ -145,9 +145,9 @@ class MetricsRotatingSink:
 
         if size > self.max_size_bytes:
             # Ruota: rinomina file corrente con timestamp
-            from datetime import datetime
+            from datetime import UTC, datetime
 
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(UTC).astimezone().strftime("%Y%m%d_%H%M%S")
             rotated_file = self.metrics_file.with_suffix(f".{timestamp}.jsonl")
 
             try:

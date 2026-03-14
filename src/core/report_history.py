@@ -6,7 +6,7 @@ Salva snapshot di ogni report inviato e permette il confronto con il precedente.
 
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from src.core.config_manager import CONFIG_DIR
@@ -67,7 +67,7 @@ class ReportHistory:
         expired_ids = [str(d.get("id", d.get("badge", ""))) for d in expired_list]
 
         new_report = {
-            "date": datetime.now().isoformat(),
+            "date": datetime.now(UTC).isoformat(),
             "warning_count": len(warning_list),
             "expired_count": len(expired_list),
             "warning_ids": warning_ids,

@@ -1,7 +1,7 @@
 import json
 import os
 import traceback
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
@@ -115,7 +115,7 @@ class AuditManager:
             category = category or "general"
             error_code = error_code or ""
             params_json = json.dumps(params, ensure_ascii=False) if params else "{}"
-            timestamp = datetime.now().isoformat()
+            timestamp = datetime.now(UTC).isoformat()
 
             prev_hash = self.db.get_last_hash()
 
@@ -249,7 +249,7 @@ class AuditManager:
 
     def run_retention_policy(self, days: int = 90) -> None:
         """Elimina i log più vecchi del numero di giorni specificato."""
-        cutoff = (datetime.now() - timedelta(days=days)).isoformat()
+        cutoff = (datetime.now(UTC) - timedelta(days=days)).isoformat()
         deleted_count = self.db.delete_older_than(cutoff)
         if deleted_count > 0:
             self.log_action(
@@ -261,9 +261,9 @@ class AuditManager:
 
     def get_stats_by_day(self, days: int = 30) -> dict[str, dict[str, int]]:
         """Calcola statistiche giornaliere (successi/errori) per l'intervallo specificato."""
-        cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+        cutoff = (datetime.now(UTC) - timedelta(days=days)).strftime("%Y-%m-%d")
         stats: dict[str, dict[str, int]] = {
-            (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d"): {
+            (datetime.now(UTC) - timedelta(days=i)).strftime("%Y-%m-%d"): {
                 "success": 0,
                 "error": 0,
                 "warning": 0,

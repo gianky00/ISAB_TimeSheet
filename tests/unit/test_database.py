@@ -16,8 +16,7 @@ class TestDatabaseManager:
         # Actually DatabaseManager is a singleton, so we need to be careful.
         # But we can create a fresh instance by bypassing __new__ logic or just
         # testing the methods on a specific path.
-        mgr = DatabaseManager()
-        return mgr
+        return DatabaseManager()
 
     def test_singleton(self):
         m1 = DatabaseManager()

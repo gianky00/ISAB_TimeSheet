@@ -5,7 +5,7 @@ Classi base e worker per i pannelli dei bot.
 
 import threading
 import traceback
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QThread, QTimer, pyqtSignal
@@ -316,7 +316,7 @@ class BaseBotPanel(QWidget):
 
     def _on_start(self, params_override: dict[str, Any] | None = None):
         """Gestisce l'avvio del bot. Da implementare nelle sottoclassi."""
-        self.start_time = datetime.now()
+        self.start_time = datetime.now(UTC)
         self._update_status(STATUS_COLORS["running"])
 
         # Pulizia della tabella dagli esiti della sessione precedente (Asincrona per evitare blocchi UI)
@@ -376,7 +376,7 @@ class BaseBotPanel(QWidget):
         """Helper per calcolare la durata dell'operazione."""
         if not self.start_time:
             return "N/D"
-        delta = datetime.now() - self.start_time
+        delta = datetime.now(UTC) - self.start_time
         m, s = divmod(int(delta.total_seconds()), 60)
         return f"{m}m {s}s"
 

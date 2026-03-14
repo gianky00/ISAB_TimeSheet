@@ -2,7 +2,7 @@ import io
 import re
 import warnings
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -84,5 +84,5 @@ class BaseImporter:
             return year if 2000 <= year <= 2100 else None
 
         if sheet_name.lower() in ("dati", "preventivi", "riepilogo"):
-            return datetime.now().year
+            return datetime.now(UTC).year
         return None

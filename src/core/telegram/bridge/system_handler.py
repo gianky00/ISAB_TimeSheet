@@ -6,7 +6,7 @@ Gestisce screenshot, report PDF, stati di sistema e restart.
 import logging
 import os
 import subprocess
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
@@ -119,7 +119,7 @@ class TelegramSystemHandler(QObject):
             self.telegram.send_message_sync("❌ Errore: Dati non validi per il report.")
             return
 
-        filename = f"report_{db_type}_{int(datetime.now().timestamp())}.pdf"
+        filename = f"report_{db_type}_{int(datetime.now(UTC).timestamp())}.pdf"
         temp_dir = config_manager.CONFIG_DIR / "temp"
         temp_dir.mkdir(exist_ok=True)
         path = str(temp_dir / filename)

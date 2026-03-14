@@ -6,7 +6,7 @@ Utilizza PDLController per la logica di business e PDLTableView per la griglia.
 
 import logging
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from PyQt6.QtCore import QPoint, Qt, QTimer
@@ -318,7 +318,7 @@ class PDLDBPanel(QWidget):
             return
         df = pd.DataFrame(self._raw_full_data, columns=self.full_headers)
         f, _ = QFileDialog.getSaveFileName(
-            self, "Esporta PDL", f"Export_PDL_{datetime.now().strftime('%Y%m%d')}.xlsx", "Excel (*.xlsx)"
+            self, "Esporta PDL", f"Export_PDL_{datetime.now(UTC).astimezone().strftime('%Y%m%d')}.xlsx", "Excel (*.xlsx)"
         )
         if f:
             df.to_excel(f, index=False)

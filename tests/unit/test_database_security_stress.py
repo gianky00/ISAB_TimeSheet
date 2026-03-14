@@ -14,8 +14,7 @@ class TestDatabaseSecurityStress:
     def db_mgr(self, tmp_path, mocker):
         # Patch CONFIG_DIR per usare tmp_path
         mocker.patch("src.core.database.manager.CONFIG_DIR", tmp_path)
-        mgr = DatabaseManager()
-        return mgr
+        return DatabaseManager()
 
     def test_database_wal_mode_concurrency(self, db_mgr, tmp_path):
         """Verifica la resilienza della scrittura concorrente in WAL mode."""

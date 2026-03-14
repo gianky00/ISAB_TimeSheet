@@ -28,8 +28,7 @@ class MockMainWindow(QObject):
 class TestNavigationStability:
     @pytest.fixture
     def mw(self, qtbot):
-        mw = MockMainWindow()
-        return mw
+        return MockMainWindow()
 
     def test_lazy_loading_persistence(self, mw):
         """Verifica che il pannello venga creato una sola volta."""

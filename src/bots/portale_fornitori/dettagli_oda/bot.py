@@ -2,7 +2,7 @@
 SyncroJob - Dettagli OdA Bot
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -58,7 +58,7 @@ class DettagliOdABot(BaseBot):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        current_year = datetime.now().year
+        current_year = datetime.now(UTC).astimezone().year
         from src.core.constants import Business
 
         self.data_da = data_da or f"01.01.{current_year}"

@@ -7,7 +7,7 @@ Refactored V9.4: Bold on selection and context menu for details.
 
 import os
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from PyQt6.QtCore import QPoint, Qt, QTimer
@@ -283,7 +283,7 @@ class StoricoOdaPanel(QWidget):
         f, _ = QFileDialog.getSaveFileName(
             self,
             "Esporta OdA",
-            f"Export_ODA_{datetime.now().strftime('%Y%m%d')}.xlsx",
+            f"Export_ODA_{datetime.now(UTC).astimezone().strftime('%Y%m%d')}.xlsx",
             "Excel (*.xlsx)",
         )
         if f:

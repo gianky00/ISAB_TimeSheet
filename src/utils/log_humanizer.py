@@ -4,13 +4,15 @@ Converte messaggi di log tecnici in frasi pulite e professionali.
 Rimosso il sistema casuale per garantire coerenza e precisione.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import ClassVar
 
 
 def friendly_time_delta(dt: datetime) -> str:
     """Restituisce una stringa amichevole per il delta temporale (es. '5 min fa')."""
-    now = datetime.now()
+    if dt.tzinfo is None:
+        dt = dt.astimezone()
+    now = datetime.now(UTC).astimezone()
     diff = now - dt
 
     if diff.days > 0:

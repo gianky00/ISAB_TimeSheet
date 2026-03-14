@@ -15,7 +15,7 @@ import platform
 import zipfile
 from contextlib import suppress
 from dataclasses import asdict
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -60,7 +60,7 @@ class BugReporter:
         included_files: list[str] = []
 
         try:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(UTC).astimezone().strftime("%Y%m%d_%H%M%S")
             report_name = f"syncrojob_report_{timestamp}.zip"
             report_path = CONFIG_DIR / "reports" / report_name
 
@@ -167,7 +167,7 @@ class BugReporter:
 
             # Converti dataclass in dict
             report_dict = {
-                "generated_at": datetime.now().isoformat(),
+                "generated_at": datetime.now(UTC).isoformat(),
                 "hours_analyzed": hours,
                 "health_score": report.health_score,
                 "anomalies": [asdict(a) for a in report.anomalies],
@@ -194,7 +194,7 @@ class BugReporter:
             actions = manager.get_logs(limit=limit)
 
             audit_data = {
-                "generated_at": datetime.now().isoformat(),
+                "generated_at": datetime.now(UTC).isoformat(),
                 "total_actions": len(actions),
                 "actions": actions,
             }
@@ -222,7 +222,7 @@ class BugReporter:
 
             trace_data = {
                 "trace_id": trace_id,
-                "generated_at": datetime.now().isoformat(),
+                "generated_at": datetime.now(UTC).isoformat(),
                 "events_count": len(timeline),
                 "events": timeline,
             }
@@ -246,7 +246,7 @@ class BugReporter:
             "os_release": platform.release(),
             "os_version": platform.version(),
             "machine": platform.machine(),
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).astimezone().isoformat(),
             "python_version": platform.python_version(),
             "processor": platform.processor(),
         }

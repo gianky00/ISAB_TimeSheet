@@ -8,7 +8,7 @@ import json
 import operator
 from collections import defaultdict
 from contextlib import suppress
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -111,12 +111,28 @@ class LogQuery:
             """Filtra per finestra temporale."""
             timestamp_str = entry.get("timestamp", "")
             try:
-                timestamp = datetime.fromisoformat(timestamp_str.replace("Z", ""))
+                # Supporta sia formati con 'Z' che senza
+                if timestamp_str.endswith("Z"):
+                    timestamp = datetime.fromisoformat(timestamp_str)
+                else:
+                    timestamp = datetime.fromisoformat(timestamp_str)
+
+                # Se il timestamp è naive, assumiamo UTC per coerenza con i log JSON
+                if timestamp.tzinfo is None:
+                    timestamp = timestamp.replace(tzinfo=UTC)
             except Exception:
                 return False
-            if start and timestamp < start:
-                return False
-            return not (end and timestamp > end)
+            if start:
+                # Assicura che start sia aware per il confronto
+                start_aware = start if start.tzinfo else start.replace(tzinfo=UTC)
+                if timestamp < start_aware:
+                    return False
+            if end:
+                # Assicura che end sia aware per il confronto
+                end_aware = end if end.tzinfo else end.replace(tzinfo=UTC)
+                if timestamp > end_aware:
+                    return False
+            return True
 
         self.filters.append(filter_fn)
         return self
@@ -258,7 +274,7 @@ class LogViewer:
 
     def get_bot_runs_summary(self, bot_type: str | None = None, hours: int = 24) -> list[dict[str, Any]]:
         """Genera un riepilogo delle esecuzioni bot nelle ultime ore, raggruppate per trace_id."""
-        end = datetime.now()
+        end = datetime.now(UTC)
         start = end - timedelta(hours=hours)
         query = self.query().time_range(start, end)
         if bot_type:
@@ -298,7 +314,7 @@ class LogViewer:
 
     def generate_health_report(self, hours: int = 24) -> dict[str, Any]:
         """Esegue un'analisi completa dei log recenti per determinare il punteggio di salute (Health Score) del sistema."""
-        end = datetime.now()
+        end = datetime.now(UTC)
         start = end - timedelta(hours=hours)
         results = self.query().time_range(start, end).execute()
 
@@ -315,7 +331,7 @@ class LogViewer:
         failed_runs = sum(1 for run in bot_runs if not run["success"])
 
         return {
-            "timestamp": datetime.now().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat() + "Z",
             "period_hours": hours,
             "total_events": total,
             "level_distribution": level_stats.copy(),

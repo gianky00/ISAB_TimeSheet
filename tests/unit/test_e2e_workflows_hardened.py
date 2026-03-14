@@ -18,8 +18,7 @@ class TestE2EWorkflowsHardened:
     @pytest.fixture
     def db_mgr(self, tmp_path, mocker):
         mocker.patch("src.core.database.manager.CONFIG_DIR", tmp_path)
-        mgr = DatabaseManager()
-        return mgr
+        return DatabaseManager()
 
     def test_workflow_import_to_search(self, db_mgr, tmp_path, mocker):
         """E2E: Simula download bot -> Importazione -> Ricerca FTS5."""

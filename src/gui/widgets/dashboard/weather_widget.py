@@ -65,7 +65,7 @@ class WeatherWidget(ModernCard):
     def _update_clock(self) -> None:
         """Aggiorna l'orologio dell'header in tempo reale."""
         if hasattr(self, "lbl_clock"):
-            self.lbl_clock.setText(datetime.now().strftime("%d/%m/%Y %H:%M"))
+            self.lbl_clock.setText(datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M"))
 
     def _setup_ui(self) -> None:
         self.main_layout = QVBoxLayout(self)

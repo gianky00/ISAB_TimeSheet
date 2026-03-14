@@ -155,8 +155,7 @@ class ConfirmationDialog(QDialog):
             flags=re.IGNORECASE,
         )
         # Rimuove attributi evento (onmouseover, onclick, etc)
-        clean = re.sub(r"\son\w+?\s*=\s*['\"].*?['\"]", "", clean, flags=re.IGNORECASE)
-        return clean
+        return re.sub(r"\son\w+?\s*=\s*['\"].*?['\"]", "", clean, flags=re.IGNORECASE)
 
     @staticmethod
     def confirm(parent: QWidget | None, title: str, message: str, is_rich_text: bool = False) -> bool:

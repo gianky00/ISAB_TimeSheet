@@ -7,7 +7,7 @@ import logging
 import os
 import zipfile
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import ClassVar
 
@@ -135,7 +135,7 @@ class BackupManager:
             source_dir = CONFIG_DIR
             target_dir = BackupManager.get_backup_dir()
 
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(UTC).astimezone().strftime("%Y%m%d_%H%M%S")
             zip_filename = f"SyncroJob_Backup_{timestamp}.zip"
             zip_path = target_dir / zip_filename
 

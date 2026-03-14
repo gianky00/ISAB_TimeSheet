@@ -6,7 +6,7 @@ Tab per la generazione di un nuovo consuntivo da template Master.
 import os
 import threading
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -67,7 +67,7 @@ class CreaNuovoTab(QWidget):
         config_row.setSpacing(20)
 
         self.anno_combo = FilterComboBox()
-        self.anno_combo.addItems([str(y) for y in range(datetime.now().year, 2024, -1)])
+        self.anno_combo.addItems([str(y) for y in range(datetime.now(UTC).year, 2024, -1)])
         self.anno_combo.currentIndexChanged.connect(lambda: self._update_dynamic_path(force=True))
         config_row.addLayout(self._create_input_group("ANNO", self.anno_combo, width=100))
 
@@ -91,7 +91,7 @@ class CreaNuovoTab(QWidget):
         row1 = QHBoxLayout()
         row1.setSpacing(15)
         self.data_edit = StandardInput()
-        self.data_edit.setText(datetime.now().strftime("%d/%m/%Y"))
+        self.data_edit.setText(datetime.now(UTC).strftime("%d/%m/%Y"))
         row1.addLayout(self._create_input_group("DATA (A5)", self.data_edit, width=120))
 
         self.tcl_combo = FilterComboBox()

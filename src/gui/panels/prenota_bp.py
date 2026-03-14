@@ -6,7 +6,7 @@ sul portale fornitori ISAB. Consente di inserire una lista di BP, configurare
 il fornitore e l'intervallo temporale, e avviare l'automazione.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QTimer
@@ -168,7 +168,7 @@ class PrenotaBPPanel(BaseBotPanel):
         if saved_data:
             self.data_table.set_data(saved_data)
 
-        current_year = datetime.now().year
+        current_year = datetime.now(UTC).year
         date_da = config.get("last_prenota_date_from", f"01.01.{current_year}")
         date_a = config.get("last_prenota_date_to", f"31.12.{current_year}")
         self.params_widget.set_dates(date_da, date_a)

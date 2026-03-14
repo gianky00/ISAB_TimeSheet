@@ -7,7 +7,7 @@ import os
 import threading
 import time
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
@@ -89,7 +89,7 @@ class ModificaEsistenteTab(QWidget):
         )
         top_row.addWidget(anno_lbl)
         self.anno_combo = FilterComboBox()
-        self.anno_combo.addItems([str(y) for y in range(datetime.now().year, 2024, -1)])
+        self.anno_combo.addItems([str(y) for y in range(datetime.now(UTC).year, 2024, -1)])
         self.anno_combo.setFixedWidth(100)
         self.anno_combo.currentIndexChanged.connect(lambda: self._scan_directory(force=True))
         top_row.addWidget(self.anno_combo)

@@ -4,7 +4,7 @@ Bot per la prenotazione automatica dei Badge Provvisori (BP) sul Portale Fornito
 
 import traceback
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, ClassVar
 
 from src.bots.base.base_bot import BaseBot, StepStatus
@@ -56,7 +56,7 @@ class PrenotaBPBot(BaseBot):
 
         # Passiamo i parametri richiesti a BaseBot
         super().__init__(username=username, password=password, **kwargs)
-        current_year = datetime.now().year
+        current_year = datetime.now(UTC).astimezone().year
         from src.core.constants import Business
 
         self.data_da = data_da or f"01.01.{current_year}"

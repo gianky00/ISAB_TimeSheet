@@ -6,7 +6,7 @@ Include un motore di ricerca unificato e l'accesso al pannello di analisi KPI.
 """
 
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer
@@ -409,7 +409,7 @@ class ContabilitaPanel(QWidget):
     def _on_import_finished(self, success: bool, msg: str, added: int, removed: int, duration: float) -> None:
         """Gestisce il completamento dell'importazione aggiornando lo stato e rinfrescando i dati."""
         if success:
-            timestamp = datetime.now().strftime("%d/%m/%Y %H:%M")
+            timestamp = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
             added_str = f"<font color='{COLORS['success_dark']}'><b>+{added}</b></font>"
             removed_str = f"<font color='{COLORS['error_red']}'><b>-{removed}</b></font>"
             if duration < 60:

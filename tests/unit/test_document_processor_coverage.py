@@ -11,8 +11,7 @@ class TestDocumentProcessorCoverage:
     @pytest.fixture
     def mock_fitz(self, mocker):
         """Mock della libreria PyMuPDF."""
-        mock_lib = mocker.patch("src.utils.document_processor.fitz")
-        return mock_lib
+        return mocker.patch("src.utils.document_processor.fitz")
 
     def test_extract_text_success(self, mock_fitz):
         """Verifica estrazione testo da più pagine."""

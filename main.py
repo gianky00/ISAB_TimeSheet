@@ -9,7 +9,7 @@ Animazioni fluide a 60fps garantite tramite thread separato per il caricamento.
 import os
 import sys
 import traceback
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -32,7 +32,7 @@ def _print_exception_and_exit(exc_type, exc_value, exc_tb):
 
         crash_file = CONFIG_DIR / "crash.txt"
         with crash_file.open("a", encoding="utf-8") as f:
-            f.write(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] NATIVE FATAL UNCAUGHT EXCEPTION:\n")
+            f.write(f"\n[{datetime.now(UTC).astimezone().strftime('%Y-%m-%d %H:%M:%S')}] NATIVE FATAL UNCAUGHT EXCEPTION:\n")
             traceback.print_exception(exc_type, exc_value, exc_tb, file=f)
     sys.exit(1)
 
@@ -309,13 +309,13 @@ def main():
         try:
             log_dir = CONFIG_DIR / "logs" / "errors"
             log_dir.mkdir(exist_ok=True, parents=True)
-            crash_file = log_dir / f"crash_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            crash_file = log_dir / f"crash_{datetime.now(UTC).astimezone().strftime('%Y%m%d_%H%M%S')}.txt"
             report: list[str] = []
             report.extend(("=== TRACEBACK ===\n", traceback.format_exc()))
 
             crash_content = (
                 f"=== CRASH REPORT ===\n"
-                f"Timestamp: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n"
+                f"Timestamp: {datetime.now(UTC).astimezone().strftime('%d/%m/%Y %H:%M:%S')}\n"
                 f"Trace ID: {app_trace_id}\n"
                 f"Error: {e!s}\n\n" + "".join(report)
             )

@@ -22,8 +22,7 @@ class TestSprintAAuditBackup:
 
         # Forza reset singleton reale
         AuditManager._instance = None
-        mgr = AuditManager()
-        return mgr
+        return AuditManager()
 
     def test_audit_integrity_chain(self, audit_mgr):
         """Verifica che la catena di hash rilevi manomissioni."""

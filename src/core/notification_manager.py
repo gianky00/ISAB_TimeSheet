@@ -10,7 +10,7 @@ import threading
 import uuid
 from collections.abc import Sequence
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Optional
 
 from PyQt6.QtCore import QObject, pyqtSignal
@@ -139,7 +139,7 @@ class NotificationManager(QObject):
             "category": category,
             "priority": priority,
             "source": source,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "read": False,
             "archived": False,
             "pinned": False,

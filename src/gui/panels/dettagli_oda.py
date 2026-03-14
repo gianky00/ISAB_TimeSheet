@@ -6,7 +6,7 @@ il download automatico dei documenti dal portale fornitori.
 """
 
 import traceback
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -192,7 +192,7 @@ class DettagliOdAPanel(BaseBotPanel):
         config = config_manager.load_config()
         self.refresh_fornitori()
         self.params_widget.set_fornitore(config.get("last_oda_fornitore", ""))
-        current_year = datetime.now().year
+        current_year = datetime.now(UTC).year
         self.params_widget.set_dates(
             config.get("last_oda_date_da", f"01.01.{current_year}"),
             config.get("last_oda_date_a", QDate.currentDate().toString("dd.MM.yyyy")),

@@ -5,7 +5,7 @@ import warnings
 import zipfile
 from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -44,7 +44,7 @@ class GiornaliereImporter(BaseImporter):
             return 0
 
         count = 0
-        current_year = datetime.now().year
+        current_year = datetime.now(UTC).year
         for folder in p_giorn.iterdir():
             if not folder.is_dir():
                 continue
@@ -78,7 +78,7 @@ class GiornaliereImporter(BaseImporter):
         if not tasks_args:
             return (
                 True,
-                f"Nessuna nuova giornaliera trovata (check anno >= {datetime.now().year}).",
+                f"Nessuna nuova giornaliera trovata (check anno >= {datetime.now(UTC).year}).",
                 [],
                 [],
             )
@@ -101,7 +101,7 @@ class GiornaliereImporter(BaseImporter):
     ) -> list[tuple[int, Path, dict[str, str]]]:
         """Raccoglie i task di importazione (solo anni >= MIN_IMPORT_YEAR con foglio RIASSUNTO)."""
         tasks: list[tuple[int, Path, dict[str, str]]] = []
-        current_year = datetime.now().year
+        current_year = datetime.now(UTC).year
         for folder in root.iterdir():
             if not folder.is_dir():
                 continue

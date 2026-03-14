@@ -213,8 +213,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         """Calcola la somma delle ore per le sole righe visibili."""
         if not self._float_totals:
             return 0.0
-        total = sum(self._float_totals[i] for i in self._visible_indices)
-        return total
+        return sum(self._float_totals[i] for i in self._visible_indices)
 
     def rowCount(self, parent: QModelIndex | None = None) -> int:
         """Restituisce il numero di righe filtrate."""
