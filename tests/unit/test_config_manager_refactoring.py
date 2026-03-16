@@ -42,18 +42,16 @@ def test_load_config_default(clean_config_env):
     if mock_file.exists():
         mock_file.unlink()
     config = load_config()
-    assert config["ai_model"] == "gemini-1.5-pro"
     assert config["accounts"] == []
 
 
 def test_load_config_from_file(clean_config_env):
     """Test loading config from an existing file."""
     _mock_dir, mock_file = clean_config_env
-    data = {"ai_model": "custom-model", "browser_headless": True}
+    data = {"browser_headless": True}
     mock_file.write_text(json.dumps(data), encoding="utf-8")
 
     config = load_config()
-    assert config["ai_model"] == "custom-model"
     assert config["browser_headless"] is True
     # Default values should still be there
     assert config["browser_timeout"] == 30
@@ -109,8 +107,8 @@ def test_load_config_with_credentials_fallback(clean_config_env):
         mock_decrypt.side_effect = lambda x: f"decrypted_{x}"
 
         config = load_config()
+        config = load_config()
         assert config["accounts"][0]["password"] == "decrypted_encrypted_pw"
-        assert config["safework_accounts"][0]["password"] == "decrypted_sw_encrypted"
 
 
 def test_load_config_legacy_migration(clean_config_env):

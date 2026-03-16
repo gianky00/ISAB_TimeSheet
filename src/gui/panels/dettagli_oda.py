@@ -220,15 +220,20 @@ class DettagliOdAPanel(BaseBotPanel):
         self._update_status_list()
 
     def _save_data(self) -> None:
-        """Persiste i parametri attuali nella configurazione globale."""
+        """Persiste i parametri attuali nella configurazione globale (Batch optimization)."""
         if not hasattr(self, "params_widget"):
             return
         date_da, date_a = self.params_widget.get_dates()
-        config_manager.set_config_value("last_oda_data", self.data_table.get_data())
-        config_manager.set_config_value("last_oda_fornitore", self.params_widget.get_fornitore())
-        config_manager.set_config_value("last_oda_date_da", date_da)
-        config_manager.set_config_value("last_oda_date_a", date_a)
-        config_manager.set_config_value("path_dettagli_oda", self.params_widget.get_dest_path())
+        
+        updates = {
+            "last_oda_data": self.data_table.get_data(),
+            "last_oda_fornitore": self.params_widget.get_fornitore(),
+            "last_oda_date_da": date_da,
+            "last_oda_date_a": date_a,
+            "path_dettagli_oda": self.params_widget.get_dest_path()
+        }
+        
+        config_manager.set_config_values(updates)
 
     def _clear_table(self) -> None:
         """Svuota l'elenco OdA previa conferma dell'utente."""
@@ -309,8 +314,9 @@ class DettagliOdAPanel(BaseBotPanel):
         
         self._setup_worker_connections(self.worker)
 
-        # Reset pallini all'avvio
-        self._update_status_list(force=True)
+        # Reset pallini all'avvio (Asincrono per non bloccare il click)
+        from PyQt6.QtCore import QTimer
+        QTimer.singleShot(0, lambda: self._update_status_list(force=True))
 
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)

@@ -34,23 +34,27 @@ class StatusListWidget(QListWidget):
             return
 
         self.clear()
-        for _ in range(count):
-            item = QListWidgetItem()
-            item.setSizeHint(QSize(40, row_height))
+        self.setUpdatesEnabled(False)
+        try:
+            for _ in range(count):
+                item = QListWidgetItem()
+                item.setSizeHint(QSize(40, row_height))
 
-            icon_label = QLabel()
-            icon_label.setFixedSize(24, 24)
-            icon_label.setStyleSheet(
-                f"background-color: {COLORS['border_light']}; border-radius: 12px; border: 1px solid {COLORS['border_medium']};"
-            )
+                icon_label = QLabel()
+                icon_label.setFixedSize(24, 24)
+                icon_label.setStyleSheet(
+                    f"background-color: {COLORS['border_light']}; border-radius: 12px; border: 1px solid {COLORS['border_medium']};"
+                )
 
-            container = QWidget()
-            layout = QVBoxLayout(container)
-            layout.setContentsMargins(0, 3, 0, 3)
-            layout.addWidget(icon_label, 0, Qt.AlignmentFlag.AlignCenter)
+                container = QWidget()
+                layout = QVBoxLayout(container)
+                layout.setContentsMargins(0, 3, 0, 3)
+                layout.addWidget(icon_label, 0, Qt.AlignmentFlag.AlignCenter)
 
-            self.addItem(item)
-            self.setItemWidget(item, container)
+                self.addItem(item)
+                self.setItemWidget(item, container)
+        finally:
+            self.setUpdatesEnabled(True)
 
     def _reset_row_icon(self, index: int):
         """Ripristina l'icona di una riga allo stato 'Pending'."""

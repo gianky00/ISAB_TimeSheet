@@ -1,6 +1,10 @@
 import json
 import os
+import queue
+import threading
+import time
 import traceback
+from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
@@ -17,7 +21,7 @@ logger = get_logger(__name__)
 class AuditManager:
     """
     Manager per l'Audit Log con meccanismi di integrità e severità.
-    Implementazione rifattorizzata e modulare.
+    Implementazione rifattorizzata e modulare con supporto asincrono per evitare lag UI.
     """
 
     _instance: Optional["AuditManager"] = None
@@ -37,12 +41,32 @@ class AuditManager:
         return cls._instance
 
     def __init__(self) -> None:
-        """Inizializza i componenti interni del manager (DB, Segnali)."""
+        """Inizializza i componenti interni del manager (DB, Segnali, Worker)."""
         if getattr(self, "_initialized", False):
             return
         self.db = AuditDatabase()
         self.signals = AuditSignals.instance()
+
+        # Meccanismo Asincrono
+        self._log_queue: queue.Queue = queue.Queue()
+        self._worker_thread = threading.Thread(target=self._worker_loop, daemon=True)
+        self._worker_thread.start()
+
         self._initialized = True
+
+    def _worker_loop(self) -> None:
+        """Loop infinito del thread di background per processare i log."""
+        while True:
+            try:
+                task = self._log_queue.get()
+                if task is None:  # Sentinel
+                    break
+
+                self._execute_log_internal(**task)
+                self._log_queue.task_done()
+            except Exception as e:
+                logger.error(f"Audit Worker Error: {e}")
+                time.sleep(1) # Evita busy loop in caso di errore persistente
 
     @property
     def DB_PATH(self) -> Path:
@@ -79,32 +103,47 @@ class AuditManager:
         error_code: str | None = None,
         notify: bool = False,
         trace_id: str | None = None,
+    ) -> None:
+        """
+        Inoda un'azione dettagliata nell'audit log (Asincrono).
+        """
+        # Auto-recupera trace_id dal context SE siamo nel thread principale
+        if trace_id is None:
+            with suppress(Exception):
+                trace_id = get_context().get("trace_id")
+
+        task = {
+            "action": action,
+            "category": category,
+            "entity": entity,
+            "params": params,
+            "status": status,
+            "severity": severity,
+            "duration_ms": duration_ms,
+            "module": module,
+            "error_code": error_code,
+            "notify": notify,
+            "trace_id": trace_id,
+        }
+        self._log_queue.put(task)
+
+    def _execute_log_internal(
+        self,
+        action: str,
+        category: str,
+        entity: str,
+        params: Any,
+        status: Any,
+        severity: Any,
+        duration_ms: int,
+        module: str,
+        error_code: str | None,
+        notify: bool,
+        trace_id: str | None,
     ) -> int | None:
-        """
-        Registra un'azione dettagliata nell'audit log.
-
-        Args:
-            action: Descrizione dell'azione
-            category: Categoria (es. "bot", "sistema", "utente")
-            entity: Entità coinvolta (es. nome file, cantiere)
-            params: Parametri addizionali (dict convertito a JSON)
-            status: Status esito (SUCCESS, ERROR, WARNING)
-            severity: Gravità (LOW, MEDIUM, HIGH)
-            duration_ms: Durata operazione in millisecondi
-            module: Nome modulo/bot
-            error_code: Codice errore opzionale
-            notify: Se True, genera notifica utente
-            trace_id: ID trace dal logging system (auto-recuperato se non fornito)
-
-        Returns:
-            audit_id: ID della riga inserita, o None in caso di errore
-        """
+        """Esecuzione effettiva della scrittura su DB (eseguita nel Worker Thread)."""
         try:
             user_id = self._get_current_user()
-
-            # Auto-recupera trace_id dal context se non fornito
-            if trace_id is None:
-                trace_id = get_context().get("trace_id")
 
             # Normalizzazione
             status_val = status.value if isinstance(status, Status) else str(status)
@@ -153,7 +192,7 @@ class AuditManager:
                 duration_ms=duration_ms,
             )
 
-            # Segnali
+            # Segnali (PyQt gestirà la traduzione tra thread se collegati a widget)
             log_entry = {
                 "timestamp": timestamp,
                 "user_id": user_id,

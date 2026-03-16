@@ -29,6 +29,7 @@ from src.bots.portale_fornitori.common.locators import CommonLocators
 from src.core import config_manager
 from src.core.constants import BotStatus, BrowserConfig, Timeouts, URLs
 from src.core.logging import generate_trace_id, get_logger, measure_time, with_context
+from src.utils.helpers import cleanup_bot_processes
 
 logger = get_logger(__name__)
 
@@ -280,6 +281,10 @@ class BaseBot(ABC):
     @measure_time(threshold_ms=10000)
     def _init_driver(self) -> None:
         """Inizializza il browser Chrome con opzioni anti-detection e configurazioni di download."""
+        self.log("🧹 Cleanup processi stale...")
+        with suppress(Exception):
+            cleanup_bot_processes()
+            
         self.log("🌐 Inizializzazione browser...")
         self.status = BotStatus.INITIALIZING
         options = self._get_chrome_options()

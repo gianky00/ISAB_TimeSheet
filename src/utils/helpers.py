@@ -1,6 +1,7 @@
 """
 SyncroJob - Utility Helpers
-Funzioni di utilità generali.
+Funzioni di utilità generali per la gestione del filesystem, formattazione dati e cleanup processi.
+Include una robusta logica di terminazione per processi Chrome/Chromedriver "zombie".
 """
 
 import logging
@@ -87,50 +88,40 @@ def format_timestamp(dt: datetime | None = None) -> str:
 def get_months_list() -> list[str]:
     """Restituisce la lista dei mesi in italiano."""
     return [
-        "Gennaio",
-        "Febbraio",
-        "Marzo",
-        "Aprile",
-        "Maggio",
-        "Giugno",
-        "Luglio",
-        "Agosto",
-        "Settembre",
-        "Ottobre",
-        "Novembre",
-        "Dicembre",
+        "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+        "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre",
     ]
 
 
 def get_years_list(start_offset: int = -2, end_offset: int = 2) -> list[str]:
     """
-    Restituisce una lista di anni.
+    Restituisce una lista di anni intorno a quello corrente.
 
     Args:
-        start_offset: Offset dall'anno corrente per l'inizio
-        end_offset: Offset dall'anno corrente per la fine
+        start_offset: Offset dall'anno corrente per l'inizio.
+        end_offset: Offset dall'anno corrente per la fine.
 
     Returns:
-        Lista di anni come stringhe
+        Lista di anni come stringhe.
     """
     current_year = datetime.now(UTC).astimezone().year
     return [str(year) for year in range(current_year + start_offset, current_year + end_offset + 1)]
 
 
 def is_windows() -> bool:
-    """Verifica se il sistema operativo è Windows."""
+    """Verifica se il sistema operativo corrente è Windows."""
     return sys.platform.startswith("win")
 
 
 def open_folder(path: str) -> bool:
     """
-    Apre una cartella nel file manager.
+    Apre una cartella nel file manager del sistema operativo.
 
     Args:
-        path: Percorso della cartella
+        path: Percorso della cartella da aprire.
 
     Returns:
-        True se successo, False altrimenti
+        bool: True se la cartella è stata aperta correttamente, False altrimenti.
     """
     import subprocess
 
@@ -152,83 +143,41 @@ def open_folder(path: str) -> bool:
 
 def safe_str(value: Any, default: str = "") -> str:
     """
-    Conversione sicura a stringa.
-
-    Args:
-        value: Valore da convertire
-        default: Valore default se None
-
-    Returns:
-        Stringa
+    Esegue una conversione sicura a stringa gestendo i valori None.
     """
-    if value is None:
-        return default
-    return str(value)
+    return str(value) if value is not None else default
 
 
 def truncate_string(text: str, max_length: int = 50, suffix: str = "...") -> str:
     """
-    Tronca una stringa alla lunghezza massima.
-
-    Args:
-        text: Testo da troncare
-        max_length: Lunghezza massima
-        suffix: Suffisso da aggiungere se troncato
-
-    Returns:
-        Stringa troncata
+    Tronca una stringa se supera la lunghezza specificata.
     """
     if not text:
         return ""
-
     if len(text) <= max_length:
         return text
-
     return text[: max_length - len(suffix)] + suffix
 
 
 def sanitize_filename(filename: str) -> str:
     """
-    Sanitizes a string to be safe for use as a filename.
-    Removes path traversal characters and other unsafe symbols.
-
-    Args:
-        filename: The input string (e.g., user input).
-
-    Returns:
-        A safe filename string.
+    Sanitizza una stringa per renderla sicura come nome file (previene Path Traversal).
     """
     if not filename:
         return "unnamed_file"
 
-    # 1. Strip null bytes
     filename = filename.replace("\0", "")
-
-    # 2. Replace forbidden characters with underscore
-    # We use a whitelist approach for maximum security:
-    # Alphanumeric, underscore, hyphen, dot, parenthesis, square brackets and spaces.
-    # Excludes: / \ : * ? " < > |
+    # Whitelist: Alfanumerici, underscore, trattino, punto, parentesi, spazi.
     safe_filename = re.sub(r"[^a-zA-Z0-9_\-\.\(\)\[\] ]", "_", filename)
-
-    # 3. Collapse multiple underscores
     safe_filename = re.sub(r"_+", "_", safe_filename)
-
-    # 4. Collapse multiple dots and trim (prevent ".." traversal patterns)
     safe_filename = re.sub(r"\.+", ".", safe_filename).strip(" .")
 
-    # 6. Ensure not empty after sanitization
-    if not safe_filename:
-        return "unnamed_file"
-
-    return safe_filename
+    return safe_filename if safe_filename else "unnamed_file"
 
 
 def cleanup_chrome_temp_files(directory: Path | str) -> list[str]:
     """
-    Rimuove tutti i file da 0 KB (residui di download o placeholder) nella directory.
-
-    Returns:
-        Lista dei nomi dei file rimossi.
+    Rimuove file da 0 KB nella directory (residui di download Selenium falliti).
     """
     dir_path = Path(directory)
     if not dir_path.exists():
@@ -238,42 +187,69 @@ def cleanup_chrome_temp_files(directory: Path | str) -> list[str]:
     try:
         for f in dir_path.iterdir():
             if f.is_file() and f.stat().st_size == 0:
-                try:
+                with suppress(Exception):
                     f.unlink()
                     removed.append(f.name)
-                except Exception as e:
-                    # Se non riusciamo a cancellare un file specifico (es. locked), passiamo al prossimo
-                    import logging
-
-                    logging.getLogger(__name__).warning(f"Impossibile eliminare {f}: {e}")
-                    continue
-    except Exception:
-        # Se la directory non è leggibile o iterabile, ritorniamo quello che abbiamo trovato finora
-        with suppress(Exception):
-            pass
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Error during temp cleanup: {e}")
     return removed
+
+
+def cleanup_bot_processes() -> None:
+    """
+    Termina forzatamente le istanze 'zombie' di Chrome e Chromedriver legate all'applicazione.
+    Rimuove i file di lock del profilo per prevenire errori di sessione (SessionNotCreated).
+    """
+    import psutil
+    from src.core.config_manager import CONFIG_DIR
+    from src.core.constants import BrowserConfig
+
+    logger = logging.getLogger("Cleanup")
+
+    # 1. Terminazione Chromedriver
+    for proc in psutil.process_iter(['name']):
+        with suppress(Exception):
+            if proc.info['name'] == 'chromedriver.exe':
+                proc.kill()
+
+    # 2. Terminazione Chrome (Solo se utilizza il profilo dedicato di SyncroJob)
+    profile_dir = "chrome_profile"
+    for proc in psutil.process_iter(['name', 'cmdline']):
+        with suppress(Exception):
+            if proc.info['name'] == 'chrome.exe':
+                cmdline = " ".join(proc.info['cmdline'] or [])
+                if profile_dir in cmdline.lower() and "syncrojob" in cmdline.lower():
+                    proc.kill()
+
+    # 3. Rimozione file di lock nel profilo
+    profile_path = CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
+    lock_files = ["SingletonLock", "SingletonSocket", "SingletonCookie"]
+    
+    if profile_path.exists():
+        for lock_file in lock_files:
+            f_path = profile_path / lock_file
+            if f_path.exists():
+                with suppress(Exception):
+                    f_path.unlink()
+                    logger.info(f"Removed stale lock file: {lock_file}")
 
 
 def get_colored_icon(icon_path: str, color: str = "#000000") -> Any:
     """
-    Carica un'icona SVG e ne cambia il colore in modo sicuro.
-    Usa QImage per evitare conflitti di pittura su QPixmap.
+    Applica un colore personalizzato a un'icona SVG tramite QPainter.
     """
     from PyQt6.QtGui import QColor, QIcon, QImage, QPainter, QPixmap
 
     if not Path(icon_path).exists():
         return QIcon()
 
-    # Tentativo caricamento diretto
     image = QImage(icon_path)
     if image.isNull():
-        # Fallback via pixmap per SVG complessi
         pixmap = QPixmap(icon_path)
         if pixmap.isNull():
             return QIcon()
         image = pixmap.toImage()
 
-    # Crea un pittore per ricolorare l'immagine (software buffer sicuro)
     painter = QPainter(image)
     try:
         painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)

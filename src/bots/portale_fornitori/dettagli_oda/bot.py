@@ -89,9 +89,6 @@ class DettagliOdABot(BaseBot):
             return False
 
         page = DettagliOdAPage(self.driver, self.log)
-        self.update_step("db", StepStatus.RUNNING)
-        OdaManager.init_db()
-        self.update_step("db", StepStatus.COMPLETED)
 
         # Chrome downloads directly to download_path (if configured)
         # Source and dest are the same folder - we just rename the downloaded file

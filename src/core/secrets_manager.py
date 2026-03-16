@@ -149,14 +149,23 @@ class SecretsManager:
                 return stored.encode("utf-8")
         return None
 
+    _keyring_available: bool | None = None
+    """Cache per lo stato di disponibilità del backend di keyring."""
+
     @classmethod
     def is_available(cls) -> bool:
-        """Verifica se il servizio di keyring è disponibile."""
+        """Verifica se il servizio di keyring è disponibile (con caching)."""
+        if cls._keyring_available is not None:
+            return cls._keyring_available
+
         with suppress(Exception):
             # Prova a recuperare una chiave dummy per vedere se il backend risponde
             # Non salviamo nulla per evitare sporcizia, solo get
             keyring.get_password("test_backend_availability", "test")
+            cls._keyring_available = True
             return True
+
+        cls._keyring_available = False
         return False
 
     @classmethod

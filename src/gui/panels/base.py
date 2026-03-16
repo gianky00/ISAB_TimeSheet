@@ -350,14 +350,21 @@ class BaseBotPanel(QWidget):
         if bot_class and hasattr(bot_class, "STEPS") and bot_class.STEPS:
             self.activity_timeline.set_steps(bot_class.STEPS)
 
-        # Audit & Stats
-        AuditManager.instance().log_action(
-            action="Avvio Automazione",
-            category="automazione",
-            entity=self.bot_name,
-            params={"bot_id": self.bot_id},
-        )
-        StatsManager().increment_usage(self.bot_id)
+        # Audit & Stats (Defer to next event loop to avoid UI blocking on DB contention)
+        QTimer.singleShot(0, lambda: self._log_startup_telemetry())
+
+    def _log_startup_telemetry(self):
+        """Esegue il logging di avvio in modo asincrono rispetto all'evento click UI."""
+        try:
+            AuditManager.instance().log_action(
+                action="Avvio Automazione",
+                category="automazione",
+                entity=self.bot_name,
+                params={"bot_id": self.bot_id},
+            )
+            StatsManager().increment_usage(self.bot_id)
+        except Exception as e:
+            self._logger.warning(f"Errore durante il logging della telemetria: {e}")
 
     def _on_stop(self):
         """Gestisce lo stop del bot."""
@@ -405,12 +412,16 @@ class BaseBotPanel(QWidget):
 
         dettagli = "Esecuzione completata correttamente" if success else "Esecuzione fallita o interrotta"
 
-        AuditManager.instance().log_action(
-            action="Completamento Automazione",
-            category="automazione",
-            entity=self.bot_name,
-            params={"durata": duration, "dettagli": dettagli},
-            status="success" if success else "error",
+        # Audit (Defer to next event loop cycle)
+        QTimer.singleShot(
+            0,
+            lambda: AuditManager.instance().log_action(
+                action="Completamento Automazione",
+                category="automazione",
+                entity=self.bot_name,
+                params={"durata": duration, "dettagli": dettagli},
+                status="success" if success else "error",
+            ),
         )
 
     def _handle_worker_completion_signals(self, success: bool):

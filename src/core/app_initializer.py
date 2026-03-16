@@ -171,12 +171,15 @@ class AppInitializer:
         tasks = [
             (PageIndex.DASHBOARD, "Preparazione Dashboard"),
             (PageIndex.AUTOMAZIONI, "Scheduler Attività"),
+            (PageIndex.STORICO_ODA, "Archivio Storico OdA"),
             (PageIndex.TIMBRATURE, "Caricamento Repository Ore"),
             (PageIndex.STRUMENTALE, "Registro Asset Aziendali"),
+            (PageIndex.NOTIFICATIONS, "Centro Notifiche"),
             (PageIndex.DATAEASE, "DataEase Sync Bridge"),
             (PageIndex.ANAGRAFICHE, "Directory Personale"),
             (PageIndex.SETTINGS, "Configurazione Utente"),
             (PageIndex.DIPENDENTI, "Gestione Schede Dipendenti"),
+            (PageIndex.HELP, "Manuale Operativo"),
         ]
 
         import time

@@ -151,8 +151,16 @@ def get_config_value(key: str, default: Any = None) -> Any:
 
 def set_config_value(key: str, value: Any) -> None:
     """Imposta un valore nella configurazione."""
+    set_config_values({key: value})
+
+
+def set_config_values(updates: dict[str, Any]) -> None:
+    """
+    Aggiorna più valori nella configurazione in un'unica operazione atomica.
+    Riduce il numero di operazioni di cifratura e IO su disco.
+    """
     config = load_config()
-    config[key] = value
+    config.update(updates)
     save_config(config)
 
 
