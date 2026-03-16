@@ -173,17 +173,16 @@ class DettagliOdABot(BaseBot):
     def _import_oda_to_db(self, downloaded_path: Path):
         """Helper per l'importazione nel database. Utilizza un ProcessPool per non bloccare il GIL della GUI."""
         import concurrent.futures
-        import os
 
         try:
             self.log(f"📥 Avvio importazione in Storico OdA da {downloaded_path.name}... (Potrebbe richiedere alcuni secondi)")
-            
+
             # Utilizziamo ProcessPoolExecutor per aggirare il blocco del GIL causato dal parsing C di openpyxl/pandas
             with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
                 # Eseguiamo la funzione bloccante in un processo Python totalmente separato
                 future = executor.submit(OdaManager.import_oda_from_excel, str(downloaded_path), None)
                 ok, msg, added, _ = future.result()
-                
+
             if ok:
                 self.log(f"✅ Importazione completata: {msg} (Upd/Ins: {added})")
             else:

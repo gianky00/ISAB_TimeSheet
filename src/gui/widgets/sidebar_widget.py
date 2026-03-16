@@ -65,7 +65,7 @@ class SidebarWidget(QFrame):
         # Inizializziamo lo stile base
         self.bg_frame.setStyleSheet(self._get_glass_style())
         self.bg_frame.setProperty("state", "collapsed")
-        
+
         self._update_ui_state()
         QTimer.singleShot(500, self._update_track)
 
@@ -84,10 +84,10 @@ class SidebarWidget(QFrame):
         """Genera lo stile QSS per l'effetto glass della sidebar."""
         gradient = "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #0f172a, stop:0.4 #172554, stop:0.8 #081121, stop:1 #1e1b4b)"
         return f"""
-            QFrame#sidebarFrame {{ 
-                background: {gradient}; 
-                border-right: 1px solid rgba(255, 255, 255, 0.05); 
-                border-radius: 18px; 
+            QFrame#sidebarFrame {{
+                background: {gradient};
+                border-right: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 18px;
             }}
             QFrame#sidebarFrame[state="collapsed"] {{ background: transparent; border: none; }}
             QScrollArea {{ border: none; background: transparent; }}
@@ -131,7 +131,7 @@ class SidebarWidget(QFrame):
         self.logo_opacity = QGraphicsOpacityEffect(self.logo_label)
         self.logo_label.setGraphicsEffect(self.logo_opacity)
         self.h_lay.addWidget(self.logo_label)
-        
+
         # Opacità logo iniziale
         self.logo_opacity.setOpacity(0.0 if self._is_collapsed else 1.0)
 
@@ -153,21 +153,21 @@ class SidebarWidget(QFrame):
         self.group_db = SidebarGroup("Database", get_asset_path(Icons.DATABASE))
         self.group_contabilita = SidebarGroup("Contabilità", get_asset_path(Icons.BAR_CHART))
 
-        self.main_btns = [self.btn_palette, self.btn_home, self.group_automazioni, self.group_db, self.group_contabilita]
-        for b in self.main_btns:
-            self.menu_layout.addWidget(b)
-            if isinstance(b, SidebarGroup):
-                b.expanded.connect(self._on_group_expanded)
+        self.main_btns = (self.btn_palette, self.btn_home, self.group_automazioni, self.group_db, self.group_contabilita)
+        for main_btn in self.main_btns:
+            self.menu_layout.addWidget(main_btn)
+            if isinstance(main_btn, SidebarGroup):
+                main_btn.expanded.connect(self._on_group_expanded)
 
         # Level 3: Automations
         self.sub_fornitori = SidebarSubGroup("Portale Fornitori")
-        for n, i in [("Dettagli OdA", 0), ("Scarico TS", 1), ("Timbrature", 2), ("Prenota BP", 3), ("Carico TS", 4)]:
+        for n, i in (("Dettagli OdA", 0), ("Scarico TS", 1), ("Timbrature", 2), ("Prenota BP", 3), ("Carico TS", 4)):
             btn = SidebarChildButton(n, "")
             btn.clicked.connect(lambda _, s=i: self.navigation_requested.emit(1, 0, s))
             self.sub_fornitori.add_child(btn)
 
         self.sub_safework = SidebarSubGroup("SafeWork")
-        for n, i in [("Scarico PDL", 0), ("Ricerca PDL", 1)]:
+        for n, i in (("Scarico PDL", 0), ("Ricerca PDL", 1)):
             btn = SidebarChildButton(n, "")
             btn.clicked.connect(lambda _, s=i: self.navigation_requested.emit(1, 1, s))
             self.sub_safework.add_child(btn)
@@ -181,23 +181,23 @@ class SidebarWidget(QFrame):
         self.btn_pdl = SidebarChildButton("PDL", get_asset_path(Icons.PDL))
         self.btn_storico_oda = SidebarChildButton("Storico OdA", get_asset_path(Icons.FILE_TEXT))
         self.sub_dipendenti = SidebarSubGroup("Dipendenti")
-        for n, i in [("Monitoraggio", 0), ("Configurazione", 1)]:
+        for n, i in (("Monitoraggio", 0), ("Configurazione", 1)):
             btn = SidebarChildButton(n, "")
             btn.clicked.connect(lambda _, s=i: self.navigation_requested.emit(11, s, -1))
             self.sub_dipendenti.add_child(btn)
 
-        for b in (self.btn_timbrature, self.btn_dataease, self.btn_pdl, self.sub_dipendenti, self.btn_storico_oda):
-            self.group_db.add_child(b)
+        for db_btn in (self.btn_timbrature, self.btn_dataease, self.btn_pdl, self.sub_dipendenti, self.btn_storico_oda):
+            self.group_db.add_child(db_btn)
 
         # Level 3: Contabilità
         self.sub_strumentale = SidebarSubGroup("Strumentale")
-        for n, i in [("Preventivi", 0), ("Giornaliere", 1), ("Attività Programmate", 2), ("Certificati", 3), ("KPI", 4)]:
+        for n, i in (("Preventivi", 0), ("Giornaliere", 1), ("Attività Programmate", 2), ("Certificati", 3), ("KPI", 4)):
             btn = SidebarChildButton(n, "")
             btn.clicked.connect(lambda _, s=i: self.navigation_requested.emit(4, s, -1))
             self.sub_strumentale.add_child(btn)
 
         self.sub_consuntivo = SidebarSubGroup("Consuntivo")
-        for n, i in [("Crea Nuovo", 0), ("Modifica Esistente", 1), ("Impostazioni", 2)]:
+        for n, i in (("Crea Nuovo", 0), ("Modifica Esistente", 1), ("Impostazioni", 2)):
             btn = SidebarChildButton(n, "")
             btn.clicked.connect(lambda _, s=i: self.navigation_requested.emit(12, s, -1))
             self.sub_consuntivo.add_child(btn)
@@ -218,21 +218,21 @@ class SidebarWidget(QFrame):
         self.btn_help = SidebarButton("Guida", get_asset_path(Icons.HELP))
         self.btn_settings = SidebarButton("Impostazioni", get_asset_path(Icons.SETTINGS))
 
-        self.footer_btns = [self.group_notifiche, self.btn_help, self.btn_settings]
-        for b in self.footer_btns:
-            f_lay.addWidget(b)
-            if isinstance(b, SidebarGroup):
-                b.expanded.connect(self._on_group_expanded)
+        self.footer_btns = (self.group_notifiche, self.btn_help, self.btn_settings)
+        for footer_btn in self.footer_btns:
+            f_lay.addWidget(footer_btn)
+            if isinstance(footer_btn, SidebarGroup):
+                footer_btn.expanded.connect(self._on_group_expanded)
 
         self.notif_child_btns = []
-        for n, i in [("Notifiche", 0), ("Audit", 1), ("Health", 2)]:
+        for n, i in (("Notifiche", 0), ("Audit", 1), ("Health", 2)):
             btn = SidebarChildButton(n, "")
             btn.clicked.connect(lambda _, s=i: self.navigation_requested.emit(9, s, -1))
             self.group_notifiche.add_child(btn)
             self.notif_child_btns.append(btn)
 
         layout.addWidget(self.footer)
-        
+
         self.active_track = QWidget(self)
         self.active_track.setFixedWidth(5)
         self.active_track.setStyleSheet(f"background: {COLORS['teal_accent']}; border-radius: 2px;")
@@ -256,7 +256,7 @@ class SidebarWidget(QFrame):
 
     def _on_group_expanded(self, group: SidebarGroup) -> None:
         """Accordion logic."""
-        for g in [self.group_automazioni, self.group_db, self.group_contabilita, self.group_notifiche]:
+        for g in (self.group_automazioni, self.group_db, self.group_contabilita, self.group_notifiche):
             if g != group:
                 g.collapse()
         QTimer.singleShot(100, self._update_track)
@@ -264,15 +264,18 @@ class SidebarWidget(QFrame):
     def _update_track(self) -> None:
         """Sposta il track magnetico."""
         targets = []
-        for g in [self.group_automazioni, self.group_db, self.group_contabilita, self.group_notifiche]:
+        for g in (self.group_automazioni, self.group_db, self.group_contabilita, self.group_notifiche):
             for e in g.children_elements:
-                if isinstance(e, SidebarButton): targets.append(e)
+                if isinstance(e, SidebarButton):
+                    targets.append(e)
                 elif isinstance(e, SidebarSubGroup):
                     targets.append(e.header_btn)
                     targets.extend(e.children_btns)
         for b in (*self.main_btns, *self.footer_btns):
-            if isinstance(b, SidebarButton): targets.append(b)
-            elif isinstance(b, SidebarGroup): targets.append(b.header_btn)
+            if isinstance(b, SidebarButton):
+                targets.append(b)
+            elif isinstance(b, SidebarGroup):
+                targets.append(b.header_btn)
 
         for t in targets:
             if t.isChecked() and t.isVisible():
@@ -283,26 +286,34 @@ class SidebarWidget(QFrame):
     def set_active_button(self, index: int, sub: int | None = None, bot: int | None = None) -> None:
         """Evidenzia il pulsante attivo."""
         btns = {0: self.btn_home, 7: self.btn_settings, 8: self.btn_help, 3: self.btn_timbrature, 5: self.btn_dataease, 6: self.btn_pdl, 10: self.btn_storico_oda}
-        for i, b in btns.items(): b.setChecked(i == index)
+        for i, b in btns.items():
+            b.setChecked(i == index)
 
-        for g, indices in [(self.group_db, (3, 5, 6, 11, 10)), (self.group_contabilita, (4, 12)), (self.group_notifiche, (9,)), (self.group_automazioni, (1,))]:
+        for g, indices in ((self.group_db, (3, 5, 6, 11, 10)), (self.group_contabilita, (4, 12)), (self.group_notifiche, (9,)), (self.group_automazioni, (1,))):
             g.set_active_index(index, indices)
 
         if index == 1:
-            self.sub_fornitori.header_btn.setChecked(sub == 0); self.sub_safework.header_btn.setChecked(sub == 1)
-            for i, b in enumerate(self.sub_fornitori.children_btns): b.setChecked(sub == 0 and i == bot)
-            for i, b in enumerate(self.sub_safework.children_btns): b.setChecked(sub == 1 and i == bot)
+            self.sub_fornitori.header_btn.setChecked(sub == 0)
+            self.sub_safework.header_btn.setChecked(sub == 1)
+            for i, b in enumerate(self.sub_fornitori.children_btns):
+                b.setChecked(sub == 0 and i == bot)
+            for i, b in enumerate(self.sub_safework.children_btns):
+                b.setChecked(sub == 1 and i == bot)
         elif index == 11:
             self.sub_dipendenti.header_btn.setChecked(True)
-            for i, b in enumerate(self.sub_dipendenti.children_btns): b.setChecked(i == sub)
+            for i, b in enumerate(self.sub_dipendenti.children_btns):
+                b.setChecked(i == sub)
         elif index == 4:
             self.sub_strumentale.header_btn.setChecked(True)
-            for i, b in enumerate(self.sub_strumentale.children_btns): b.setChecked(i == sub)
+            for i, b in enumerate(self.sub_strumentale.children_btns):
+                b.setChecked(i == sub)
         elif index == 12:
             self.sub_consuntivo.header_btn.setChecked(True)
-            for i, b in enumerate(self.sub_consuntivo.children_btns): b.setChecked(i == sub)
+            for i, b in enumerate(self.sub_consuntivo.children_btns):
+                b.setChecked(i == sub)
         elif index == 9:
-            for i, b in enumerate(self.notif_child_btns): b.setChecked(i == sub)
+            for i, b in enumerate(self.notif_child_btns):
+                b.setChecked(i == sub)
 
         QTimer.singleShot(150, self._update_track)
 
@@ -322,7 +333,7 @@ class SidebarWidget(QFrame):
         if self._is_collapsed == c:
             return
         self._is_collapsed = c
-        
+
         # Animazioni
         self.anim_manager.animate_width(self.collapsed_width if c else self.expanded_width)
         self.anim_manager.animate_content(self.logo_opacity, 0.0 if c else 1.0)
@@ -332,7 +343,7 @@ class SidebarWidget(QFrame):
             self.footer.show()
             self.h_lay.setContentsMargins(14, 8, 14, 15)
             self.h_lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-            
+
             p = self.parentWidget()
             ph = p.height() if p else 800
             self.setMinimumHeight(ph - 20)
@@ -343,14 +354,15 @@ class SidebarWidget(QFrame):
             self.h_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.active_track.hide()
             self.bg_frame.setProperty("state", "collapsed")
-            
+
             QTimer.singleShot(250, lambda: self.scroll_area.hide() if self._is_collapsed else None)
             QTimer.singleShot(250, lambda: self.footer.hide() if self._is_collapsed else None)
             QTimer.singleShot(250, lambda: self.setMinimumHeight(100) if self._is_collapsed else None)
             QTimer.singleShot(250, lambda: self.setMaximumHeight(100) if self._is_collapsed else None)
 
-        self.bg_frame.style().unpolish(self.bg_frame)
-        self.bg_frame.style().polish(self.bg_frame)
+        if style := self.bg_frame.style():
+            style.unpolish(self.bg_frame)
+            style.polish(self.bg_frame)
 
         for b in self.main_btns + self.footer_btns:
             if hasattr(b, "set_collapsed"):
@@ -366,5 +378,5 @@ class SidebarWidget(QFrame):
 
     def _update_ui_state(self) -> None:
         """Sincronizza lo stato dei gruppi."""
-        for g in [self.group_db, self.group_automazioni, self.group_contabilita, self.group_notifiche]:
+        for g in (self.group_db, self.group_automazioni, self.group_contabilita, self.group_notifiche):
             g.set_collapsed(self._is_collapsed)

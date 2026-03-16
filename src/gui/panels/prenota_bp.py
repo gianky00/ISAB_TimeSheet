@@ -255,7 +255,7 @@ class PrenotaBPPanel(BaseBotPanel):
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        worker = BotWorker(bot, bot_data, telegram_service=tg_service)
+        worker = BotWorker(bot, data=bot_data, telegram_service=tg_service)
         self.worker = worker
         self._setup_worker_connections(worker)
 

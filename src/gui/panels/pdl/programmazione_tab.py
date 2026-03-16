@@ -288,7 +288,7 @@ class ProgrammazioneTab(QWidget):
             "date_end": end_date,
         }
 
-        self.worker = BotWorker(bot, [bot_data])
+        self.worker = BotWorker(bot, data=[bot_data])
         self.worker.log_signal.connect(self._on_log)
         self.worker.finished_signal.connect(self._on_worker_finished)
 

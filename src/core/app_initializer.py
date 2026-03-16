@@ -7,7 +7,8 @@ Gestisce il ciclo di vita dell'avvio dell'applicazione, suddividendolo in fasi a
 Include meccanismi di yield per garantire la reattività dell'interfaccia durante il caricamento.
 """
 
-from typing import ClassVar, Callable
+from collections.abc import Callable
+from typing import ClassVar
 
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication
@@ -87,10 +88,10 @@ class AppInitializer:
             try:
                 import selenium  # noqa
                 from src.utils.resource_manager import ResourceManager
-                
+
                 # Pre-warming Webdriver (Verifica path e aggiornamento silente)
                 ResourceManager.ensure_automation_driver()
-                
+
                 logger.info("Selenium loaded successfully")
             except ImportError as e:
                 msg = f"Libreria Selenium mancante: {e}"

@@ -4,7 +4,6 @@ Pannello per il bot Scarico TS.
 """
 
 import traceback
-from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QTimer
@@ -14,7 +13,6 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel, BotWorker
-from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import BotParametersWidget, EditableDataTable
 from src.gui.widgets.core_widgets import (
     StandardCheckBox,
@@ -253,7 +251,7 @@ class ScaricaTSPanel(BaseBotPanel):
             data=bot_data,
             telegram_service=tg_service,
         )
-        
+
         self._setup_worker_connections(self.worker)
 
         self.start_btn.setEnabled(False)

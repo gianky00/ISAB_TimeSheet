@@ -3,6 +3,8 @@ SyncroJob - Base Panel Components
 Classi base e worker per i pannelli dei bot.
 """
 
+from __future__ import annotations
+
 import threading
 import traceback
 from datetime import UTC, datetime
@@ -49,32 +51,42 @@ class BotWorker(QThread):
     step_changed_signal = pyqtSignal(int, str, object)  # Bridge for timeline
     critical_error_signal = pyqtSignal(str, str)  # Bridge for license/fatal errors
 
-    def __init__(self, bot_id: str, bot_params: dict[str, Any], data: Any, telegram_service=None):
+    def __init__(
+        self,
+        bot_id: str | BaseBot,
+        bot_params: dict[str, Any] | None = None,
+        data: Any = None,
+        telegram_service: Any = None,
+    ):
         """
         Inizializza il worker del bot.
 
         Args:
-            bot_id: ID del bot da creare (es. 'timbrature').
-            bot_params: Parametri per create_bot.
+            bot_id: ID del bot da creare o istanza già creata.
+            bot_params: Parametri per create_bot (se bot_id è str).
             data: I dati di input per il bot.
             telegram_service: Servizio opzionale per notifiche Telegram.
         """
         super().__init__()
         self.bot_id = bot_id
-        self.bot_params = bot_params
+        self.bot_params = bot_params or {}
         self.data = data
         self._is_running = True
         self.telegram_service = telegram_service
-        self.bot = None
+        self.bot: BaseBot | None = None
 
     def run(self):
         """Avvia l'esecuzione del bot nel thread dedicato."""
         try:
             # 1. Inizializzazione Differita (Background)
             from src.bots import create_bot
-            self.log_signal.emit("🔧 Preparazione ambiente bot...")
 
-            self.bot = create_bot(self.bot_id, **self.bot_params)
+            if isinstance(self.bot_id, str):
+                self.log_signal.emit("🔧 Preparazione ambiente bot...")
+                self.bot = create_bot(self.bot_id, **self.bot_params)
+            else:
+                self.bot = self.bot_id
+
             if not self.bot:
                 self.log_signal.emit("❌ Errore critico: Impossibile creare l'istanza del bot.")
                 self.finished_signal.emit(False)
@@ -166,7 +178,7 @@ class BaseBotPanel(QWidget):
         # Usiamo un timer per assicurarci che la sottoclasse abbia completato l'init
         QTimer.singleShot(50, self._init_ghost_timeline)
 
-    def get_bot_class(self) -> type["BaseBot"] | None:
+    def get_bot_class(self) -> type[BaseBot] | None:
         """Restituisce la classe del bot associata al pannello. Da implementare nelle sottoclassi."""
         return None
 
@@ -351,7 +363,7 @@ class BaseBotPanel(QWidget):
             self.activity_timeline.set_steps(bot_class.STEPS)
 
         # Audit & Stats (Defer to next event loop to avoid UI blocking on DB contention)
-        QTimer.singleShot(0, lambda: self._log_startup_telemetry())
+        QTimer.singleShot(0, self._log_startup_telemetry)
 
     def _log_startup_telemetry(self):
         """Esegue il logging di avvio in modo asincrono rispetto all'evento click UI."""
@@ -442,7 +454,6 @@ class BaseBotPanel(QWidget):
                 else "Si è verificato un errore durante l'esecuzione."
             )
             title = f"{self.bot_name} - {'Completato' if success else 'Errore'}"
-            from typing import Any
 
             cast_win: Any = win
             cast_win.show_background_notification(title, msg, is_error=not success)

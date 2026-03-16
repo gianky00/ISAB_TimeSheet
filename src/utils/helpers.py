@@ -172,7 +172,7 @@ def sanitize_filename(filename: str) -> str:
     safe_filename = re.sub(r"_+", "_", safe_filename)
     safe_filename = re.sub(r"\.+", ".", safe_filename).strip(" .")
 
-    return safe_filename if safe_filename else "unnamed_file"
+    return safe_filename or "unnamed_file"
 
 
 def cleanup_chrome_temp_files(directory: Path | str) -> list[str]:
@@ -201,6 +201,7 @@ def cleanup_bot_processes() -> None:
     Rimuove i file di lock del profilo per prevenire errori di sessione (SessionNotCreated).
     """
     import psutil
+
     from src.core.config_manager import CONFIG_DIR
     from src.core.constants import BrowserConfig
 
@@ -224,7 +225,7 @@ def cleanup_bot_processes() -> None:
     # 3. Rimozione file di lock nel profilo
     profile_path = CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
     lock_files = ["SingletonLock", "SingletonSocket", "SingletonCookie"]
-    
+
     if profile_path.exists():
         for lock_file in lock_files:
             f_path = profile_path / lock_file

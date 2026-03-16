@@ -7,7 +7,6 @@ e logica enterprise di logging con trace_id e screenshot di errore automatici.
 """
 
 import re
-import sys
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from contextlib import suppress
@@ -22,7 +21,6 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
 
 from src.bots.base.login_page import LoginPage
 from src.bots.portale_fornitori.common.locators import CommonLocators
@@ -284,7 +282,7 @@ class BaseBot(ABC):
         self.log("🧹 Cleanup processi stale...")
         with suppress(Exception):
             cleanup_bot_processes()
-            
+
         self.log("🌐 Inizializzazione browser...")
         self.status = BotStatus.INITIALIZING
         options = self._get_chrome_options()
@@ -346,10 +344,11 @@ class BaseBot(ABC):
         """Ricerca il path del driver Chrome tra cartelle persistenti, bundle e download automatico."""
         from src.utils.resource_manager import ResourceManager
 
-        if not getattr(self, "_force_download", False):
+        if not getattr(self, "_force_download", False) and (
+            d_path := ResourceManager.ensure_automation_driver()
+        ):
             # Tenta di usare il driver già validato/scaricato durante lo splashscreen
-            if d_path := ResourceManager.ensure_automation_driver():
-                return d_path
+            return d_path
 
         # Fallback se è richiesto un force download o se il pre-warming è fallito
         try:
@@ -360,25 +359,10 @@ class BaseBot(ABC):
                 pot := list(Path(d_path).parent.rglob("chromedriver.exe"))
             ):
                 d_path = str(pot[0])
-            
+
             if Path(d_path).exists():
                 import shutil
                 p_dir = ResourceManager.get_writable_drivers_dir()
-                with suppress(Exception):
-                    shutil.copy2(d_path, p_dir / "chromedriver.exe")
-            return d_path
-        except Exception as e:
-            self.log(f"⚠️ Errore download driver: {e}")
-        return None
-
-        try:
-            self.log("Aggiornamento driver in corso...")
-            d_path = ChromeDriverManager().install()
-            if not d_path.lower().endswith(".exe") and (
-                pot := list(Path(d_path).parent.rglob("chromedriver.exe"))
-            ):
-                d_path = str(pot[0])
-            if Path(d_path).exists():
                 with suppress(Exception):
                     shutil.copy2(d_path, p_dir / "chromedriver.exe")
             return d_path

@@ -164,7 +164,6 @@ class RicercaPDLPanel(BaseBotPanel):
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        from src.gui.panels.base import BotWorker
 
         # Configura i parametri per il BotWorker (verranno passati a create_bot nel thread secondario)
         bot_params = {

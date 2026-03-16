@@ -169,12 +169,12 @@ def main():
                 from src.core.app_initializer import AppInitializer
 
                 phase1_logger.info("Starting Phase 1 initialization")
-                
+
                 # FASE 1 ora usa initialize_core con callback di progresso
                 success = AppInitializer.initialize_core(
-                    progress_callback=lambda msg, perc: self.progress.emit(msg, perc)
+                    progress_callback=self.progress.emit
                 )
-                
+
                 phase1_logger.info("Phase 1 completed", success=success)
                 if not success:
                     self.finished.emit(False, "Errore generico di inizializzazione")

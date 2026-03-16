@@ -49,11 +49,11 @@ class DettagliOdAPanel(BaseBotPanel):
             parent=parent,
         )
         self._setup_content()
-        
+
         # Forza inizializzazione timeline immediata per Dettagli OdA (Previene blocchi su _on_start)
         from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
         self.activity_timeline.set_steps(DettagliOdABot.STEPS)
-        
+
         QTimer.singleShot(10, self._safe_load_data)
 
     def get_bot_class(self) -> type["BaseBot"]:
@@ -224,7 +224,7 @@ class DettagliOdAPanel(BaseBotPanel):
         if not hasattr(self, "params_widget"):
             return
         date_da, date_a = self.params_widget.get_dates()
-        
+
         updates = {
             "last_oda_data": self.data_table.get_data(),
             "last_oda_fornitore": self.params_widget.get_fornitore(),
@@ -232,7 +232,7 @@ class DettagliOdAPanel(BaseBotPanel):
             "last_oda_date_a": date_a,
             "path_dettagli_oda": self.params_widget.get_dest_path()
         }
-        
+
         config_manager.set_config_values(updates)
 
     def _clear_table(self) -> None:
@@ -311,7 +311,7 @@ class DettagliOdAPanel(BaseBotPanel):
             data=data,
             telegram_service=tg_service,
         )
-        
+
         self._setup_worker_connections(self.worker)
 
         # Reset pallini all'avvio (Asincrono per non bloccare il click)

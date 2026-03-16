@@ -183,9 +183,9 @@ class TimbratureBotPanel(BaseBotPanel):
             data=bot_data,
             telegram_service=tg_service,
         )
-        
+
         self._setup_worker_connections(self.worker)
-        
+
         # Override del finished_signal per logica custom
         self.worker.finished_signal.disconnect(self._on_worker_finished)
         self.worker.finished_signal.connect(self._on_worker_finished_custom)

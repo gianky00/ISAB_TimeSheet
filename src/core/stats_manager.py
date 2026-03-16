@@ -28,9 +28,9 @@ class StatsManager:
     def _init(self) -> None:
         """Inizializza il manager caricando i dati storici dalla configurazione globale."""
         self.stats: dict[str, Any] = self._load_stats()
-        
+
         # Meccanismo di salvataggio asincrono
-        self._save_queue: queue.Queue = queue.Queue()
+        self._save_queue: queue.Queue[dict[str, Any] | None] = queue.Queue()
         self._worker_thread = threading.Thread(target=self._worker_loop, daemon=True)
         self._worker_thread.start()
 
@@ -66,7 +66,7 @@ class StatsManager:
                 task = self._save_queue.get()
                 if task is None:
                     break
-                
+
                 # Esegui il salvataggio effettivo
                 stats_to_save = task
                 config_manager.set_config_value("statistics", stats_to_save)

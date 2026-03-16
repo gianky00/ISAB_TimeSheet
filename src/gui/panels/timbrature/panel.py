@@ -60,11 +60,11 @@ class TimbratureDBPanel(QWidget):
         self.storage = TimbratureStorage(self.db_path)
 
         # Local cache for filters (Inizializzato a vuoto, caricato asincronamente)
-        self.reparti = []
-        self.cantieri = []
+        self.reparti: list[str] = []
+        self.cantieri: list[str] = []
 
         self._setup_ui()
-        
+
         # Caricamento differito per massimizzare la fluidità dello splash screen
         QTimer.singleShot(150, self._deferred_init)
 
@@ -74,16 +74,16 @@ class TimbratureDBPanel(QWidget):
             lists = self.storage.get_lists()
             self.reparti = lists.get("reparti", [])
             self.cantieri = lists.get("cantieri", [])
-            
+
             # Aggiorna i filtri nella UI
             self.reparto_filter.clear()
             self.reparto_filter.addItem("Tutti")
             self.reparto_filter.addItems(self.reparti)
-            
+
             self.cantiere_filter.clear()
             self.cantiere_filter.addItem("Tutti")
             self.cantiere_filter.addItems(self.cantieri)
-            
+
             self.refresh_data()
         except Exception as e:
             from src.core.logging import get_logger

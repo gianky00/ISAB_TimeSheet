@@ -128,9 +128,8 @@ class CaricoTSPanel(BaseBotPanel):
         username, password = self.get_credentials()
         rows = self.data_table.get_data()
 
-        if params_override:
-            if "rows" in params_override:
-                rows = params_override["rows"]
+        if params_override and "rows" in params_override:
+            rows = params_override["rows"]
 
         if not all([username, password]) or not rows:
             ToastManager.instance().show("Verifica parametri e dati.", "warning")
@@ -166,7 +165,7 @@ class CaricoTSPanel(BaseBotPanel):
             data=bot_data,
             telegram_service=tg_service,
         )
-        
+
         self._setup_worker_connections(self.worker)
 
         self.start_btn.setEnabled(False)

@@ -5,10 +5,10 @@ Supporta sia l'esecuzione da sorgenti che da pacchetto PyInstaller (congelato).
 """
 
 import os
-import sys
 import shutil
-from pathlib import Path
+import sys
 from contextlib import suppress
+from pathlib import Path
 
 
 class ResourceManager:
@@ -106,13 +106,13 @@ class ResourceManager:
             from webdriver_manager.chrome import ChromeDriverManager
             # webdriver-manager gestisce internamente il lock e il download
             d_path = ChromeDriverManager().install()
-            
+
             # webdriver-manager a volte ritorna una cartella che contiene l'exe
             if not d_path.lower().endswith(".exe") and (
                 pot := list(Path(d_path).parent.rglob("chromedriver.exe"))
             ):
                 d_path = str(pot[0])
-            
+
             if Path(d_path).exists():
                 with suppress(Exception):
                     shutil.copy2(d_path, d_exe)
@@ -124,7 +124,7 @@ class ResourceManager:
                 ext = Path(sys.executable).parent / "drivers" / "chromedriver.exe"
                 if ext.exists():
                     return str(ext.resolve())
-            
+
             bndl = Path(cls.PROJECT_ROOT) / "drivers" / "chromedriver.exe"
             if bndl.exists():
                 return str(bndl.resolve())

@@ -48,7 +48,7 @@ class AuditManager:
         self.signals = AuditSignals.instance()
 
         # Meccanismo Asincrono
-        self._log_queue: queue.Queue = queue.Queue()
+        self._log_queue: queue.Queue[dict[str, Any] | None] = queue.Queue()
         self._worker_thread = threading.Thread(target=self._worker_loop, daemon=True)
         self._worker_thread.start()
 
