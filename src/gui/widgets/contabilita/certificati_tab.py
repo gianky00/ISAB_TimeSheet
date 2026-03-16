@@ -3,10 +3,10 @@ SyncroJob - Certificati Campione Tab (Refactored)
 Gestore dell'interfaccia per il monitoraggio dei certificati campione.
 Coordina l'uso del CertificatiEngine e del CertificatiTreeWidget.
 """
-
 import operator
 import os
 from collections import defaultdict
+from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
 
@@ -129,8 +129,30 @@ class CertificatiCampioneTab(QWidget):
             parent.setHidden(is_excluded and not self._show_excluded)
 
     def refresh_data(self) -> None:
-        """Ricarica i dati dal database e aggiorna la vista."""
+        """Ricarica i dati dal database e aggiorna la vista preservando lo stato."""
+        # Ricarica esclusioni dal disco per sicurezza
+        self.engine.load_exclusions()
+
+        # Salva stato espansione
+        expanded_matricole = []
+        for i in range(self.tree.topLevelItemCount()):
+            item = self.tree.topLevelItem(i)
+            if item and item.isExpanded():
+                with suppress(Exception):
+                    matricola = self.engine.parse_parent_label(item.text(0))["matricola"]
+                    expanded_matricole.append(matricola)
+
         self._load_data()
+
+        # Ripristina stato espansione
+        if expanded_matricole:
+            for i in range(self.tree.topLevelItemCount()):
+                item = self.tree.topLevelItem(i)
+                if item:
+                    with suppress(Exception):
+                        matricola = self.engine.parse_parent_label(item.text(0))["matricola"]
+                        if matricola in expanded_matricole:
+                            item.setExpanded(True)
 
     def _load_data(self) -> None:
         """Popola l'albero delegando i calcoli all'engine."""

@@ -278,6 +278,11 @@ class ContabilitaPanel(QWidget):
         if hasattr(self.certificati_widget, "refresh_data"):
             self.certificati_widget.refresh_data()
 
+        # Riapplica il filtro di ricerca se presente
+        search_text = self.search_input.text()
+        if search_text:
+            self._on_search_changed(search_text)
+
     def _sync_tab_widget(
         self, tab_widget: AnimatedTabWidget, target_years: list[int], tab_class: type
     ) -> None:

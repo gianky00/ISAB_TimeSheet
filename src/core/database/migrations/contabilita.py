@@ -121,3 +121,23 @@ def mig_contabilita_v3(conn: sqlite3.Connection) -> None:
     cursor.execute(
         "INSERT INTO contabilita_fts(rowid, n_prev, attivita, odc, annotazioni) SELECT id, n_prev, attivita, odc, annotazioni FROM contabilita"
     )
+
+
+def mig_contabilita_v4(conn: sqlite3.Connection) -> None:
+    """Risoluzione duplicati Certificati Campione e indice univoco (v4)"""
+    cursor = conn.cursor()
+    # 1. Pulizia duplicati esistenti (mantiene solo il primo ID trovato per coppia matricola-certificato)
+    cursor.execute(
+        """
+        DELETE FROM certificati_campione 
+        WHERE id NOT IN (
+            SELECT MIN(id) 
+            FROM certificati_campione 
+            GROUP BY matricola, certificato
+        )
+    """
+    )
+    # 2. Indice univoco per prevenire futuri duplicati via INSERT OR REPLACE
+    cursor.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_cert_unique ON certificati_campione(matricola, certificato)"
+    )

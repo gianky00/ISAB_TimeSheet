@@ -171,6 +171,7 @@ class AttivitaProgrammateTab(QWidget):
             self.table.resizeRowsToContents()
             self._populate_filters()
             self._adjust_column_widths()
+            self.apply_filters()
         finally:
             self.table.blockSignals(False)
             self.table.setSortingEnabled(True)

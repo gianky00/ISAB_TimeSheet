@@ -28,7 +28,7 @@ class CertificatiEngine:
             if self.EXCLUSIONS_FILE.exists():
                 with self.EXCLUSIONS_FILE.open("r", encoding="utf-8") as f:
                     data = json.load(f)
-                    self._exclusions = set(data.get("excluded_matricole", []))
+                    self._exclusions = {str(x).strip() for x in data.get("excluded_matricole", [])}
         except Exception:
             self._exclusions = set()
         return self._exclusions
