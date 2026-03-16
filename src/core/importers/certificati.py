@@ -180,8 +180,21 @@ class CertificatiImporter(BaseImporter):
             except (ValueError, TypeError):
                 return str(val)
 
+        def format_errore_max(val: Any) -> str:
+            if pd_obj.isna(val) or val == "":
+                return ""
+            try:
+                # Se è un float (es. 0.0005 da Excel per 0.05%), lo convertiamo e formattiamo
+                num = float(val)
+                return f"{num * 100:g}%".replace(".", ",")
+            except (ValueError, TypeError):
+                # Se è già una stringa formattata o altro
+                return str(val).replace(".", ",")
+
         df["scadenza"] = df["scadenza"].apply(format_date_it)
         df["emissione"] = df["emissione"].apply(format_date_it)
         if "stato" in df.columns:
             df["stato"] = df["stato"].apply(format_stato)
+        if "errore_max" in df.columns:
+            df["errore_max"] = df["errore_max"].apply(format_errore_max)
         return df

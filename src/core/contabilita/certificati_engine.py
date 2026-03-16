@@ -58,6 +58,9 @@ class CertificatiEngine:
         if not scadenza_str:
             return None, Icons.STATUS_DOT_GRAY
 
+        if "GUASTO" in scadenza_str.upper():
+            return -9999, Icons.STATUS_DOT_RED
+
         try:
             scadenza_date = datetime.strptime(scadenza_str, "%d/%m/%Y").replace(tzinfo=UTC)
             today = datetime.now(UTC)
@@ -78,6 +81,8 @@ class CertificatiEngine:
     @staticmethod
     def format_days_text_short(days: int | None) -> str:
         """Ritorna una rappresentazione testuale breve dello stato scadenze."""
+        if days == -9999:
+            return "❌ STRUMENTO GUASTO"
         if days is None:
             return "N/D"
         if days < 0:
@@ -87,6 +92,21 @@ class CertificatiEngine:
         if 16 <= days <= 30:
             return f"🟡 Scade tra {days}gg"
         return f"✅ Attivo ({days}gg rim.)"
+
+    @staticmethod
+    def format_errore_max(val: float | str | None) -> str:
+        """Formatta il valore decimale di errore in percentuale localizzata (es. 0.0005 -> 0,05%)."""
+        if val is None or val == "":
+            return ""
+        try:
+            f_val = float(val)
+            # Moltiplichiamo per 100 per avere la percentuale
+            perc = f_val * 100
+            # Formattiamo con virgola come separatore decimale, rimuovendo ,00 se superfluo
+            res = f"{perc:.4f}".rstrip("0").rstrip(".").replace(".", ",")
+            return f"{res}%" if res else "0%"
+        except (ValueError, TypeError):
+            return str(val)
 
     @staticmethod
     def find_certificate_path(cert_number: str) -> str | None:

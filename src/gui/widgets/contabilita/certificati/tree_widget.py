@@ -5,8 +5,17 @@ Componente specializzato per la visualizzazione gerarchica dei certificati campi
 
 from typing import ClassVar
 
+from PyQt6.QtCore import QModelIndex, Qt, pyqtSignal
 from PyQt6.QtGui import QBrush, QColor, QIcon
-from PyQt6.QtWidgets import QAbstractItemView, QHeaderView
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QComboBox,
+    QHeaderView,
+    QLineEdit,
+    QStyledItemDelegate,
+    QTreeWidgetItem,
+    QWidget,
+)
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
@@ -15,8 +24,57 @@ from src.gui.widgets.core_widgets import StandardTreeWidget
 from src.utils.helpers import get_asset_path
 
 
+class UbicazioneDelegate(QStyledItemDelegate):
+    """Delegate per la selezione dell'ubicazione tramite ComboBox."""
+
+    def __init__(self, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.items = ["", "UFFICIO", "OFFICINA", "ASSEGNATO AL TECNICO"]
+
+    def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:
+        editor = QComboBox(parent)
+        editor.addItems(self.items)
+        # Seleziona l'elemento corrente se valido
+        current_text = index.data(Qt.ItemDataRole.EditRole)
+        if current_text in self.items:
+            editor.setCurrentText(current_text)
+        return editor
+
+    def setEditorData(self, editor: QWidget | None, index: QModelIndex):
+        value = index.data(Qt.ItemDataRole.EditRole)
+        if isinstance(editor, QComboBox):
+            idx = editor.findText(value)
+            if idx >= 0:
+                editor.setCurrentIndex(idx)
+
+    def setModelData(self, editor: QWidget | None, model: object, index: QModelIndex):
+        if isinstance(editor, QComboBox):
+            value = editor.currentText()
+            model.setData(index, value, Qt.ItemDataRole.EditRole)  # type: ignore
+
+
+class AnnotazioniDelegate(QStyledItemDelegate):
+    """Delegate per l'inserimento testo libero nelle annotazioni."""
+
+    def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:
+        editor = QLineEdit(parent)
+        return editor
+
+    def setEditorData(self, editor: QWidget | None, index: QModelIndex):
+        value = index.data(Qt.ItemDataRole.EditRole)
+        if isinstance(editor, QLineEdit):
+            editor.setText(value)
+
+    def setModelData(self, editor: QWidget | None, model: object, index: QModelIndex):
+        if isinstance(editor, QLineEdit):
+            value = editor.text()
+            model.setData(index, value, Qt.ItemDataRole.EditRole)  # type: ignore
+
+
 class CertificatiTreeWidget(StandardTreeWidget):
     """Tree Widget specializzato per la gestione dei certificati."""
+
+    itemEditedCustom = pyqtSignal(object, str, str)  # (item, col_name, new_value)
 
     HEADERS: ClassVar[list[str]] = [
         "Modello /\nTipo",
@@ -29,6 +87,8 @@ class CertificatiTreeWidget(StandardTreeWidget):
         "Emissione\nCertificato",
         "ID-COEMI",
         "Stato\nCertificato",
+        "Annotazioni",
+        "Ubicazione",
     ]
 
     (
@@ -42,23 +102,33 @@ class CertificatiTreeWidget(StandardTreeWidget):
         IDX_EMISSIONE,
         IDX_ID,
         IDX_STATO,
-    ) = range(10)
+        IDX_ANNOTAZIONI,
+        IDX_UBICAZIONE,
+    ) = range(12)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self._setup_ui()
+        self.itemChanged.connect(self._on_item_changed)
 
     def _setup_ui(self):
         self.setHeaderLabels(self.HEADERS)
         self.setWordWrap(True)
         self.setAlternatingRowColors(True)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        # Abilitiamo l'edit on double click, ma poi gestiremo i flag nei singoli item
+        self.setEditTriggers(
+            QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed
+        )
         self.setAnimated(True)
+
+        # Applica i delegate
+        self.setItemDelegateForColumn(self.IDX_UBICAZIONE, UbicazioneDelegate(self))
+        self.setItemDelegateForColumn(self.IDX_ANNOTAZIONI, AnnotazioniDelegate(self))
 
         h = self.header()
         if h:
-            for col in range(10):
+            for col in range(12):
                 h.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
             h.setStretchLastSection(True)
 
@@ -95,6 +165,12 @@ class CertificatiTreeWidget(StandardTreeWidget):
         """Applica lo styling specifico per il certificato più recente."""
         if days_to_expiry is None:
             status_text, bg_color, text_color = "N/D", COLORS["bg_alt"], COLORS["text_muted"]
+        elif days_to_expiry == -9999:
+            status_text, bg_color, text_color = (
+                "GUASTO",
+                COLORS["bg_error_pastel"],
+                COLORS["error_red"],
+            )
         elif days_to_expiry < 0:
             status_text, bg_color, text_color = (
                 f"Scaduto da {abs(days_to_expiry)} giorni",
@@ -141,3 +217,10 @@ class CertificatiTreeWidget(StandardTreeWidget):
         item.setText(self.IDX_STATO, "STORICO")
         item.setForeground(self.IDX_STATO, QBrush(QColor(COLORS["text_light"])))
         item.setToolTip(self.IDX_STATO, "Certificato storico - Esiste un certificato più recente")
+
+    def _on_item_changed(self, item: QTreeWidgetItem, column: int):
+        """Gestisce il cambiamento di valore in una cella."""
+        if column == self.IDX_ANNOTAZIONI:
+            self.itemEditedCustom.emit(item, "annotazioni", item.text(column))
+        elif column == self.IDX_UBICAZIONE:
+            self.itemEditedCustom.emit(item, "ubicazione", item.text(column))

@@ -1,3 +1,4 @@
+import contextlib
 import sqlite3
 
 
@@ -129,10 +130,10 @@ def mig_contabilita_v4(conn: sqlite3.Connection) -> None:
     # 1. Pulizia duplicati esistenti (mantiene solo il primo ID trovato per coppia matricola-certificato)
     cursor.execute(
         """
-        DELETE FROM certificati_campione 
+        DELETE FROM certificati_campione
         WHERE id NOT IN (
-            SELECT MIN(id) 
-            FROM certificati_campione 
+            SELECT MIN(id)
+            FROM certificati_campione
             GROUP BY matricola, certificato
         )
     """
@@ -141,3 +142,13 @@ def mig_contabilita_v4(conn: sqlite3.Connection) -> None:
     cursor.execute(
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_cert_unique ON certificati_campione(matricola, certificato)"
     )
+
+
+def mig_contabilita_v5(conn: sqlite3.Connection) -> None:
+    """Aggiunta colonne annotazioni e ubicazione a certificati_campione (v5)"""
+    cursor = conn.cursor()
+    # Ignoriamo l'errore se le colonne esistono già
+    with contextlib.suppress(sqlite3.OperationalError):
+        cursor.execute("ALTER TABLE certificati_campione ADD COLUMN annotazioni TEXT DEFAULT ''")
+    with contextlib.suppress(sqlite3.OperationalError):
+        cursor.execute("ALTER TABLE certificati_campione ADD COLUMN ubicazione TEXT DEFAULT ''")

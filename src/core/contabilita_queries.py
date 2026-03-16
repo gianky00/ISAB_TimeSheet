@@ -98,7 +98,9 @@ class ContabilitaQueries:
             with db_manager.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
                 cols = ExcelImporter.CERTIFICATI_CAMPIONE_COLS
-                query = f"SELECT {', '.join(cols)} FROM certificati_campione ORDER BY id ASC"  # nosec B608
+                cols_str = ", ".join(cols)
+                # Includiamo anche annotazioni, ubicazione e id (che serve per l'aggiornamento)
+                query = f"SELECT {cols_str}, annotazioni, ubicazione, id FROM certificati_campione ORDER BY id ASC"  # nosec B608
                 cursor.execute(query)
                 return cursor.fetchall()
         except Exception:

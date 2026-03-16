@@ -3,6 +3,7 @@ Bot TS - Contabilita Manager
 Gestione dell'importazione e archiviazione dati della Contabilità Strumentale.
 """
 
+import logging
 from collections.abc import Callable
 from contextlib import suppress
 from datetime import UTC, datetime
@@ -16,6 +17,8 @@ from src.core.contabilita_stats import ContabilitaStats, YearStats
 from src.core.data_synchronizer import DataSynchronizer
 from src.core.database import db_manager
 from src.core.excel_importer import ExcelImporter
+
+logger = logging.getLogger(__name__)
 
 
 class ContabilitaManager:
@@ -194,6 +197,20 @@ class ContabilitaManager:
     def get_certificati_campione_data(cls) -> list[tuple[Any, ...]]:
         """Restituisce i dati Certificati Campione."""
         return ContabilitaQueries.get_certificati_campione_data(cls.DB_PATH)
+
+    @classmethod
+    def update_certificato_field(cls, record_id: int, field: str, value: str) -> bool:
+        """Aggiorna un singolo campo di un certificato campione."""
+        if field not in ("annotazioni", "ubicazione"):
+            return False
+
+        try:
+            query = f"UPDATE certificati_campione SET {field} = ? WHERE id = ?"
+            db_manager.execute_query(cls.DB_PATH, query, (value, record_id))
+            return True
+        except Exception as e:
+            logger.error(f"Errore aggiornamento certificato ({field}): {e}")
+            return False
 
     @classmethod
     def get_scarico_ore_data(cls) -> list[tuple[Any, ...]]:

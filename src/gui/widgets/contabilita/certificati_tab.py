@@ -3,6 +3,7 @@ SyncroJob - Certificati Campione Tab (Refactored)
 Gestore dell'interfaccia per il monitoraggio dei certificati campione.
 Coordina l'uso del CertificatiEngine e del CertificatiTreeWidget.
 """
+
 import operator
 import os
 from collections import defaultdict
@@ -13,6 +14,7 @@ from typing import Any
 from PyQt6.QtCore import QPoint, Qt
 from PyQt6.QtGui import QAction, QBrush, QColor, QIcon
 from PyQt6.QtWidgets import (
+    QFileDialog,
     QHBoxLayout,
     QLabel,
     QMenu,
@@ -25,6 +27,7 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Icons
 from src.core.contabilita.certificati_engine import CertificatiEngine
 from src.core.contabilita_manager import ContabilitaManager
+from src.core.notification_manager import NotificationManager
 from src.gui.dialogs.certificati_analysis_dialog import ScadenzeAnalysisDialog
 from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
@@ -69,6 +72,10 @@ class CertificatiCampioneTab(QWidget):
             f"color: {COLORS['text_light']}; font-size: 12px; padding: 0 8px;"
         )
 
+        self.btn_export_pdf = PrimaryButton("Esporta PDF")
+        self.btn_export_pdf.setIcon(QIcon(get_asset_path(Icons.FILE_TEXT)))
+        self.btn_export_pdf.clicked.connect(self._export_pdf)
+
         self.btn_analyze = PrimaryButton("Analizza Scadenze")
         self.btn_analyze.setIcon(QIcon(get_asset_path(Icons.BAR_CHART)))
         self.btn_analyze.clicked.connect(self._run_analysis)
@@ -79,6 +86,7 @@ class CertificatiCampioneTab(QWidget):
         toolbar.addWidget(self.show_excluded_check)
         toolbar.addWidget(self.excluded_count_label)
         toolbar.addStretch()
+        toolbar.addWidget(self.btn_export_pdf)
         toolbar.addWidget(self.btn_analyze)
         layout.addLayout(toolbar)
 
@@ -88,6 +96,7 @@ class CertificatiCampioneTab(QWidget):
         self.tree.customContextMenuRequested.connect(self._show_context_menu)
         self.tree.itemExpanded.connect(self._on_item_expanded)
         self.tree.itemCollapsed.connect(self._on_item_collapsed)
+        self.tree.itemEditedCustom.connect(self._on_item_edited)
         layout.addWidget(self.tree)
 
     def _create_toolbar_btn(self, text: str, icon_enum: str, callback: Any) -> PrimaryButton:
@@ -225,7 +234,29 @@ class CertificatiCampioneTab(QWidget):
 
             cert_list: list[Any] = g["certificates"]  # type: ignore
             for i, cert in enumerate(cert_list):
-                row = SortableTreeWidgetItem(parent_item, [str(x) if x is not None else "" for x in cert])
+                # La tupla ha 13 elementi (10 base + annotazioni + ubicazione + id)
+                row_data = []
+                for col_idx, val in enumerate(cert[:10]):
+                    if col_idx == self.tree.IDX_ERRORE and val is not None:
+                        # Formattazione percentuale (es. 0.0005 -> 0,05%)
+                        row_data.append(self.engine.format_errore_max(val))
+                    else:
+                        row_data.append(str(val) if val is not None else "")
+
+                # Aggiungiamo annotazioni e ubicazione come colonne modificabili
+                row_data.append(str(cert[10] if len(cert) > 10 and cert[10] else ""))  # Annotazioni
+                row_data.append(str(cert[11] if len(cert) > 11 and cert[11] else ""))  # Ubicazione
+
+                row = SortableTreeWidgetItem(parent_item, row_data)
+
+                # Salviamo l'ID nel ruolo user per poterlo aggiornare
+                record_id = cert[12] if len(cert) > 12 else None
+                row.setData(0, Qt.ItemDataRole.UserRole, record_id)
+
+                # Permettiamo l'editing solo delle ultime due colonne
+                flags = row.flags() | Qt.ItemFlag.ItemIsEditable
+                row.setFlags(flags)
+
                 if i == 0:
                     icon_val: str = g["icon"]  # type: ignore
                     self.tree.apply_current_certificate_styling(row, days_val, icon_val)
@@ -235,6 +266,12 @@ class CertificatiCampioneTab(QWidget):
         self.tree.collapseAll()
         self._apply_exclusion_visibility()
         self._update_excluded_count_label()
+
+    def _on_item_edited(self, item: QTreeWidgetItem, col_name: str, new_value: str) -> None:
+        """Salva nel database quando un utente modifica Annotazioni o Ubicazione."""
+        record_id = item.data(0, Qt.ItemDataRole.UserRole)
+        if record_id:
+            ContabilitaManager.update_certificato_field(record_id, col_name, new_value)
 
     def _update_excluded_count_label(self) -> None:
         """Aggiorna il contatore degli strumenti esclusi nella toolbar."""
@@ -300,11 +337,22 @@ class CertificatiCampioneTab(QWidget):
             )
             menu.addAction(toggle_expand)
         else:
+            # Opzioni per il singolo certificato (Figlio)
             cert_number = item.text(self.tree.IDX_CERTIFICATO)
             if cert_number:
                 open_act = QAction("📄 Apri Certificato", self)
                 open_act.triggered.connect(lambda: self._open_certificate(cert_number))
                 menu.addAction(open_act)
+
+            menu.addSeparator()
+
+            edit_anno_act = QAction("📝 Modifica Annotazioni", self)
+            edit_anno_act.triggered.connect(lambda: self.tree.editItem(item, self.tree.IDX_ANNOTAZIONI))
+            menu.addAction(edit_anno_act)
+
+            edit_ubic_act = QAction("📍 Modifica Ubicazione", self)
+            edit_ubic_act.triggered.connect(lambda: self.tree.editItem(item, self.tree.IDX_UBICAZIONE))
+            menu.addAction(edit_ubic_act)
 
         if viewport := self.tree.viewport():
             menu.exec(viewport.mapToGlobal(pos))
@@ -350,3 +398,33 @@ class CertificatiCampioneTab(QWidget):
 
         certs_data.sort(key=lambda x: x["days"] if x["days"] is not None else 9999)
         ScadenzeAnalysisDialog(certs_data, self).exec()
+
+    def _export_pdf(self) -> None:
+        """Esporta la lista dei certificati in un PDF formattato professionalmente."""
+        # Creiamo un modulo separato o usiamo una classe dedicata all'esportazione per mantenere SRP
+        from src.gui.widgets.contabilita.certificati.pdf_exporter import CertificatiPdfExporter
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Esporta Certificati in PDF",
+            f"Certificati_Campione_{datetime.now().strftime('%Y%m%d')}.pdf",
+            "PDF Files (*.pdf)",
+        )
+
+        if not file_path:
+            return
+
+        exporter = CertificatiPdfExporter(self.tree, self._show_excluded)
+        success, message = exporter.export(file_path)
+
+        if success:
+            NotificationManager.instance().add_notification(
+                title="Esportazione completata",
+                message=f"PDF generato con successo: {os.path.basename(file_path)}",
+                level="success",
+                show_toast=True,
+            )
+        else:
+            NotificationManager.instance().add_notification(
+                title="Errore esportazione", message=message, level="error", show_toast=True
+            )
