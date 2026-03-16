@@ -218,7 +218,8 @@ class SidebarWidget(QFrame):
         self.btn_help = SidebarButton("Guida", get_asset_path(Icons.HELP))
         self.btn_settings = SidebarButton("Impostazioni", get_asset_path(Icons.SETTINGS))
 
-        for b in [self.group_notifiche, self.btn_help, self.btn_settings]:
+        self.footer_btns = [self.group_notifiche, self.btn_help, self.btn_settings]
+        for b in self.footer_btns:
             f_lay.addWidget(b)
             if isinstance(b, SidebarGroup):
                 b.expanded.connect(self._on_group_expanded)
