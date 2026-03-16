@@ -339,24 +339,32 @@ class BaseBot(ABC):
 
     def _get_chromedriver_path(self) -> str | None:
         """Ricerca il path del driver Chrome tra cartelle persistenti, bundle e download automatico."""
-        import shutil
-
         from src.utils.resource_manager import ResourceManager
 
-        p_dir = ResourceManager.get_writable_drivers_dir()
-
         if not getattr(self, "_force_download", False):
-            if (p_dir / "chromedriver.exe").exists():
-                return str((p_dir / "chromedriver.exe").resolve())
+            # Tenta di usare il driver già validato/scaricato durante lo splashscreen
+            if d_path := ResourceManager.ensure_automation_driver():
+                return d_path
 
-            if (
-                getattr(sys, "frozen", False)
-                and (ext := Path(sys.executable).parent / "drivers" / "chromedriver.exe").exists()
+        # Fallback se è richiesto un force download o se il pre-warming è fallito
+        try:
+            from webdriver_manager.chrome import ChromeDriverManager
+            self.log("Aggiornamento driver in corso...")
+            d_path = ChromeDriverManager().install()
+            if not d_path.lower().endswith(".exe") and (
+                pot := list(Path(d_path).parent.rglob("chromedriver.exe"))
             ):
-                return str(ext.resolve())
-
-            if (bndl := Path(ResourceManager.PROJECT_ROOT) / "drivers" / "chromedriver.exe").exists():
-                return str(bndl.resolve())
+                d_path = str(pot[0])
+            
+            if Path(d_path).exists():
+                import shutil
+                p_dir = ResourceManager.get_writable_drivers_dir()
+                with suppress(Exception):
+                    shutil.copy2(d_path, p_dir / "chromedriver.exe")
+            return d_path
+        except Exception as e:
+            self.log(f"⚠️ Errore download driver: {e}")
+        return None
 
         try:
             self.log("Aggiornamento driver in corso...")

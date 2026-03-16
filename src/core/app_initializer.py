@@ -7,7 +7,7 @@ Gestisce il ciclo di vita dell'avvio dell'applicazione, suddividendolo in fasi a
 Include meccanismi di yield per garantire la reattività dell'interfaccia durante il caricamento.
 """
 
-from typing import ClassVar
+from typing import ClassVar, Callable
 
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication
@@ -44,52 +44,68 @@ class AppInitializer:
         return AppInitializer._startup_alerts
 
     @staticmethod
-    def initialize_core() -> bool:
+    def initialize_core(progress_callback: Callable[[str, int], None] | None = None) -> bool:
         """
         Esegue l'inizializzazione dei servizi fondamentali (Fase 1).
         Verifica la presenza delle librerie necessarie (Pandas, Selenium), configura il logging enterprise,
         connette il database e valida lo stato della licenza.
 
+        Args:
+            progress_callback: Funzione opzionale (msg, perc) per aggiornare lo splash screen.
+
         Returns:
             bool: True se l'inizializzazione core è terminata con successo, False altrimenti.
         """
 
-        def step(msg: str) -> None:
-            """Logga un passo dell'inizializzazione."""
+        def step(msg: str, perc: int) -> None:
+            """Logga un passo dell'inizializzazione e aggiorna il progresso se callback presente."""
             logger.info(f"[INIT CORE] {msg}")
+            if progress_callback:
+                progress_callback(msg, perc)
 
         try:
             if AppInitializer._core_initialized:
                 return True
 
-            step("Inizializzazione Nucleo Sistema")
+            step("Inizializzazione Nucleo Sistema", 5)
             try:
                 AppInitializer._setup_logging()
             except Exception as e:
                 logger.error(f"Failed to setup logging: {e}")
 
-            step("Caricamento Motori Analisi Dati")
+            step("Caricamento Motori Analisi Dati", 10)
             try:
                 import numpy  # noqa
                 import pandas  # noqa
-
                 logger.info("Pandas/Numpy loaded successfully")
             except ImportError as e:
                 msg = f"Librerie di analisi dati mancanti: {e}"
                 logger.critical(f"CRITICAL: {msg}")
                 raise Exception(msg) from e
 
-            step("Configurazione Driver Automazione")
+            step("Configurazione Driver Automazione", 15)
             try:
                 import selenium  # noqa
-
+                from src.utils.resource_manager import ResourceManager
+                
+                # Pre-warming Webdriver (Verifica path e aggiornamento silente)
+                ResourceManager.ensure_automation_driver()
+                
                 logger.info("Selenium loaded successfully")
             except ImportError as e:
                 msg = f"Libreria Selenium mancante: {e}"
                 logger.critical(f"CRITICAL: {msg}")
                 raise Exception(msg) from e
 
-            step("Verifica Integrità Hardware")
+            step("Pre-caricamento Motori Automazione", 20)
+            try:
+                # Importiamo preventivamente il factory dei bot per caricare tutti i sottomoduli
+                from src.bots import create_bot, get_available_bots  # noqa
+                logger.info("Automation bots engines pre-loaded")
+            except Exception as e:
+                logger.warning(f"Errore non-bloccante pre-caricamento bot: {e}")
+
+            step("Verifica Integrità Hardware", 25)
             try:
                 from src.core.license_updater import run_update
                 from src.core.license_validator import (
@@ -97,7 +113,7 @@ class AppInitializer:
                     get_detailed_license_status,
                 )
 
-                step("Sincronizzazione Licenza Cloud")
+                step("Sincronizzazione Licenza Cloud", 30)
                 try:
                     run_update()
                 except Exception as update_err:
@@ -114,7 +130,7 @@ class AppInitializer:
                 # Blocchiamo SEMPRE l'avvio se la licenza non è valida o è stata revocata
                 raise e
 
-            step("Connessione Database Sistema")
+            step("Connessione Database Sistema", 35)
             try:
                 from src.core.database import db_manager
 
@@ -125,6 +141,7 @@ class AppInitializer:
                 raise Exception(f"Errore Database: {e}") from e
 
             AppInitializer._core_initialized = True
+            step("Nucleo Inizializzato", 40)
             return True
 
         except Exception as e:

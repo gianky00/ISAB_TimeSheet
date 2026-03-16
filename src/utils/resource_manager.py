@@ -6,7 +6,9 @@ Supporta sia l'esecuzione da sorgenti che da pacchetto PyInstaller (congelato).
 
 import os
 import sys
+import shutil
 from pathlib import Path
+from contextlib import suppress
 
 
 class ResourceManager:
@@ -81,6 +83,52 @@ class ResourceManager:
         path = cls._get_config_dir() / "drivers"
         path.mkdir(parents=True, exist_ok=True)
         return path
+
+    @classmethod
+    def ensure_automation_driver(cls) -> str | None:
+        """
+        Assicura la presenza di chromedriver.exe nella directory scrivibile.
+        Se non presente, lo scarica/aggiorna silenziando l'output.
+        Chiamato durante lo splash screen (Phase 1) per il pre-warming.
+
+        Returns:
+            str | None: Path assoluto al driver o None in caso di errore.
+        """
+        p_dir = cls.get_writable_drivers_dir()
+        d_exe = p_dir / "chromedriver.exe"
+
+        # Se il driver esiste già, lo consideriamo valido (il bot farà il check di versione JIT se serve)
+        if d_exe.exists():
+            return str(d_exe.resolve())
+
+        # Download silente se mancante
+        try:
+            from webdriver_manager.chrome import ChromeDriverManager
+            # webdriver-manager gestisce internamente il lock e il download
+            d_path = ChromeDriverManager().install()
+            
+            # webdriver-manager a volte ritorna una cartella che contiene l'exe
+            if not d_path.lower().endswith(".exe") and (
+                pot := list(Path(d_path).parent.rglob("chromedriver.exe"))
+            ):
+                d_path = str(pot[0])
+            
+            if Path(d_path).exists():
+                with suppress(Exception):
+                    shutil.copy2(d_path, d_exe)
+                    return str(d_exe.resolve())
+            return d_path
+        except Exception:
+            # Fallback ai driver bundle se presenti
+            if getattr(sys, "frozen", False):
+                ext = Path(sys.executable).parent / "drivers" / "chromedriver.exe"
+                if ext.exists():
+                    return str(ext.resolve())
+            
+            bndl = Path(cls.PROJECT_ROOT) / "drivers" / "chromedriver.exe"
+            if bndl.exists():
+                return str(bndl.resolve())
+        return None
 
     @classmethod
     def get_asset_path(cls, relative_path: str) -> str:

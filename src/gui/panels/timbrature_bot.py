@@ -155,39 +155,46 @@ class TimbratureBotPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        from src.bots import create_bot
-
-        config = config_manager.load_config()
-        bot = create_bot(
-            "timbrature",
-            username=username,
-            password=password,
-            headless=config.get("browser_headless", False),
-            timeout=config.get("browser_timeout", 30),
-            download_path=config_manager.get_download_path(),
-            data_da=data_da,
-            data_a=data_a,
-            fornitore=fornitore,
-        )
-
-        if not bot:
-            ToastManager.instance().show("Errore creazione bot.", "error")
-            return
+        from src.core.config_manager import load_config
+        config = load_config()
 
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
+
+        # Configura i parametri per il BotWorker (verranno passati a create_bot nel thread secondario)
+        bot_params = {
+            "username": username,
+            "password": password,
+            "headless": config.get("browser_headless", False),
+            "timeout": config.get("browser_timeout", 30),
+            "download_path": config_manager.get_download_path(),
+            "data_da": data_da,
+            "data_a": data_a,
+            "fornitore": fornitore,
+        }
+
+        # Dati da elaborare
         bot_data = {"fornitore": fornitore, "data_da": data_da, "data_a": data_a}
-        worker = BotWorker(bot, bot_data, telegram_service=tg_service)
-        self.worker = worker
-        self._setup_worker_connections(worker)
-        worker.finished_signal.disconnect(self._on_worker_finished)
-        worker.finished_signal.connect(self._on_worker_finished_custom)
+
+        # Inizializza il worker (nessuna importazione pesante Selenium qui)
+        self.worker = BotWorker(
+            bot_id="timbrature",
+            bot_params=bot_params,
+            data=bot_data,
+            telegram_service=tg_service,
+        )
+        
+        self._setup_worker_connections(self.worker)
+        
+        # Override del finished_signal per logica custom
+        self.worker.finished_signal.disconnect(self._on_worker_finished)
+        self.worker.finished_signal.connect(self._on_worker_finished_custom)
 
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
         self.log_widget.append(f"Avvio bot Timbrature ({fornitore})")
-        worker.start()
+        self.worker.start()
         self.bot_started.emit()
 
     def _on_worker_finished_custom(self, success: bool) -> None:

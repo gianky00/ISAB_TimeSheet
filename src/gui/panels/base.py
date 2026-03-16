@@ -38,7 +38,7 @@ from src.utils.helpers import get_asset_path
 class BotWorker(QThread):
     """
     Thread worker per eseguire i bot in background.
-    Gestisce i segnali di log, stato, conclusione e richieste di input interattivo.
+    Gestisce l'inizializzazione del bot (pesante) e l'esecuzione.
     """
 
     log_signal = pyqtSignal(str)
@@ -47,45 +47,63 @@ class BotWorker(QThread):
     request_input_signal = pyqtSignal(str, dict, threading.Event)
     row_status_signal = pyqtSignal(int, bool, str)  # index, success, message
     step_changed_signal = pyqtSignal(int, str, object)  # Bridge for timeline
+    critical_error_signal = pyqtSignal(str, str)  # Bridge for license/fatal errors
 
-    def __init__(self, bot, data, telegram_service=None):
+    def __init__(self, bot_id: str, bot_params: dict[str, Any], data: Any, telegram_service=None):
         """
         Inizializza il worker del bot.
 
         Args:
-            bot: L'istanza del bot da eseguire.
+            bot_id: ID del bot da creare (es. 'timbrature').
+            bot_params: Parametri per create_bot.
             data: I dati di input per il bot.
             telegram_service: Servizio opzionale per notifiche Telegram.
         """
         super().__init__()
-        self.bot = bot
+        self.bot_id = bot_id
+        self.bot_params = bot_params
         self.data = data
         self._is_running = True
         self.telegram_service = telegram_service
+        self.bot = None
 
     def run(self):
         """Avvia l'esecuzione del bot nel thread dedicato."""
         try:
-            # Collega i callback
+            # 1. Inizializzazione Differita (Background)
+            from src.bots import create_bot
+            self.log_signal.emit("🔧 Preparazione ambiente bot...")
+
+            self.bot = create_bot(self.bot_id, **self.bot_params)
+            if not self.bot:
+                self.log_signal.emit("❌ Errore critico: Impossibile creare l'istanza del bot.")
+                self.finished_signal.emit(False)
+                return
+
+            # 2. Configurazione Bot
+            if self.telegram_service:
+                self.bot.set_telegram_service(self.telegram_service)
+
             self.bot.set_log_callback(self.log_signal.emit)
-
-            # Bridge per Timeline Step signals (Bot -> Worker Signal -> GUI)
             self.bot.signals.step_changed.connect(self.step_changed_signal.emit)
+            self.bot.signals.critical_error.connect(self.critical_error_signal.emit)
 
-            # Setup input callback se supportato dal bot
             if hasattr(self.bot, "set_input_callback"):
                 self.bot.set_input_callback(self._request_input_wrapper)
 
-            # Setup progress callback se supportato
             if hasattr(self.bot, "set_progress_callback"):
                 self.bot.set_progress_callback(self.row_status_signal.emit)
 
+            # 3. Esecuzione
             result = self.bot.execute(self.data)
             self.finished_signal.emit(result)
         except Exception as e:
             error_trace = traceback.format_exc()
             self.log_signal.emit(f"[ERRORE CRITICO] {e}\n{error_trace}")
             self.finished_signal.emit(False)
+        finally:
+            if self.bot:
+                self.bot.cleanup()
 
     def _request_input_wrapper(self, prompt: str) -> str:
         """
@@ -106,7 +124,7 @@ class BotWorker(QThread):
     def stop(self):
         """Interrompe l'esecuzione del bot segnalando la richiesta di stop."""
         self._is_running = False
-        if hasattr(self.bot, "request_stop"):
+        if self.bot and hasattr(self.bot, "request_stop"):
             self.bot.request_stop()
 
 
@@ -397,7 +415,7 @@ class BaseBotPanel(QWidget):
 
     def _handle_worker_completion_signals(self, success: bool):
         """Invia segnali e gestisce risultati per Telegram."""
-        if self.worker and hasattr(self.worker.bot, "downloaded_files"):
+        if self.worker and self.worker.bot and hasattr(self.worker.bot, "downloaded_files"):
             files = getattr(self.worker.bot, "downloaded_files", [])
             if files:
                 self.bot_results_ready.emit(self.bot_id, files)
@@ -454,8 +472,8 @@ class BaseBotPanel(QWidget):
         worker.status_signal.connect(self._on_status)
         worker.finished_signal.connect(self._on_worker_finished)
 
-        # Segnale per errori critici (es. licenza revocata)
-        worker.bot.signals.critical_error.connect(
+        # Segnale per errori critici (es. licenza revocata) - Bridge via Worker
+        worker.critical_error_signal.connect(
             lambda title, msg: ConfirmationDialog.show_error(self, title, msg)
         )
 

@@ -133,26 +133,10 @@ class RicercaPDLPanel(BaseBotPanel):
         config_manager.set_config_value("pdl_search_exclude_closed", self.exclude_closed_check.isChecked())
         config_manager.set_config_value("pdl_search_site", self.site_combo.currentText())
 
-    def get_bot_instance(self):
-        """Crea e restituisce un'istanza configurata del bot Ricerca PDL."""
-        from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
-
-        username, password, account_type = self.get_safework_credentials()
-        config = config_manager.load_config()
-
-        return SafeWorkPDLSearchBot(
-            username=username,
-            password=password,
-            account_type=account_type,
-            headless=config.get("browser_headless", False),
-            timeout=config.get("browser_timeout", 30),
-            download_path=config_manager.get_download_path(),
-        )
-
     def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
         """Avvia l'esecuzione del bot Ricerca PDL configurando worker e segnali."""
         super()._on_start(params_override)
-        username, password, _ = self.get_safework_credentials()
+        username, password, account_type = self.get_safework_credentials()
 
         # Ensure UI elements are available
         if self.start_btn is None:
@@ -169,19 +153,36 @@ class RicercaPDLPanel(BaseBotPanel):
             self.stop_btn.setEnabled(False)
             return
 
-        bot = self.get_bot_instance()
-        if not bot:
-            return
-
         bot_data = {
             "exclude_closed": self.exclude_closed_check.isChecked(),
             "site_selection": self.site_combo.currentText(),
         }
 
+        from src.core.config_manager import load_config
+        config = load_config()
+
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        worker = BotWorker(bot, [bot_data], telegram_service=tg_service)
+        from src.gui.panels.base import BotWorker
+
+        # Configura i parametri per il BotWorker (verranno passati a create_bot nel thread secondario)
+        bot_params = {
+            "username": username,
+            "password": password,
+            "account_type": account_type,
+            "headless": config.get("browser_headless", False),
+            "timeout": config.get("browser_timeout", 30),
+            "download_path": config_manager.get_download_path(),
+        }
+
+        # Inizializza il worker in modo asincrono
+        worker = BotWorker(
+            bot_id="ricerca_pdl",
+            bot_params=bot_params,
+            data=[bot_data],
+            telegram_service=tg_service,
+        )
         self.worker = worker
         self._setup_worker_connections(worker)
 
@@ -191,7 +192,6 @@ class RicercaPDLPanel(BaseBotPanel):
         self.log_widget.append("Avvio Ricerca PDL SafeWork...")
         worker.start()
         self.bot_started.emit()
-
     def get_safework_credentials(self) -> tuple[str, str, str]:
         """Recupera le credenziali SafeWork configurate. Ritorna (user, pass, tipo)."""
         # Prende il default da safework_accounts

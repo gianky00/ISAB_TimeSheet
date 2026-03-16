@@ -98,87 +98,80 @@ class CaricoTSPanel(BaseBotPanel):
         if saved_data:
             self.data_table.set_data(saved_data)
 
+    def _save_data(self):
+        """Salva i dati della tabella nella configurazione globale."""
+        config_manager.set_config_value("last_carico_ts_data", self.data_table.get_data())
+
     def _clear_table(self):
-        """Svuota la tabella dei dati previa conferma."""
-        if ConfirmationDialog.confirm(self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?"):
+        """Svuota la tabella dati previa conferma."""
+        if ConfirmationDialog.confirm(self, "Conferma", "Svuotare la tabella?"):
             self.data_table.clear()
             self._save_data()
 
     def validate_ready(self) -> tuple[bool, str]:
         """
-        Verifica che siano presenti credenziali e dati validi.
+        Verifica la presenza di credenziali e dati prima dell'avvio.
 
         Returns:
-            tuple: (bool successo, str messaggio errore)
+            tuple: (bool pronto, messaggio errore).
         """
         username, password = self.get_credentials()
         if not username or not password:
             return False, "Credenziali ISAB mancanti."
-
-        data = self.data_table.get_data()
-        if not data:
-            return False, "Nessuna riga di dati Timesheet inserita."
-
+        if not self.data_table.get_data():
+            return False, "Nessun dato inserito in tabella."
         return True, ""
 
-    def _save_data(self):
-        """Salva i dati della tabella nella configurazione persistente."""
-        data = self.data_table.get_data()
-        config_manager.set_config_value("last_carico_ts_data", data)
-
     def _on_start(self, params_override: dict[str, Any] | None = None):
-        """Avvia l'esecuzione del bot Carico TS gestendo il worker."""
+        """Prepara e avvia il thread per il bot Carico TS."""
         super()._on_start(params_override)
         username, password = self.get_credentials()
+        rows = self.data_table.get_data()
 
-        if not username or not password:
-            ToastManager.instance().show("Configura le credenziali ISAB nelle Impostazioni.", "warning")
-            self._update_status(STATUS_COLORS["error"], "Credenziali mancanti")
+        if params_override:
+            if "rows" in params_override:
+                rows = params_override["rows"]
+
+        if not all([username, password]) or not rows:
+            ToastManager.instance().show("Verifica parametri e dati.", "warning")
+            self._update_status(STATUS_COLORS["error"], "Parametri incompleti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
 
-        data = self.data_table.get_data()
-        if not data:
-            ToastManager.instance().show(
-                "Inserisci almeno una riga con i dati del Timesheet da caricare.",
-                "warning",
-            )
-            self._update_status(STATUS_COLORS["error"], "Dati mancanti")
-            self.start_btn.setEnabled(True)
-            self.stop_btn.setEnabled(False)
-            return
+        if not params_override:
+            self._save_data()
 
-        # Crea e avvia il worker
-        from src.bots import create_bot
+        from src.core.config_manager import load_config
+        config = load_config()
 
-        config = config_manager.load_config()
-        bot = create_bot(
-            "carico_ts",
-            username=username,
-            password=password,
-            headless=config.get("browser_headless", False),
-            timeout=config.get("browser_timeout", 30),
-            download_path=config_manager.get_download_path(),
-        )
-
-        if not bot:
-            ToastManager.instance().show("Impossibile creare il bot.", "error")
-            return
-
-        # Get telegram service safely
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        worker = BotWorker(bot, {"rows": data}, telegram_service=tg_service)
-        self.worker = worker
-        self._setup_worker_connections(worker)
+        # Configura i parametri per il BotWorker (avvio asincrono)
+        bot_params = {
+            "username": username,
+            "password": password,
+            "headless": config.get("browser_headless", False),
+            "timeout": config.get("browser_timeout", 30),
+        }
+
+        # Dati da elaborare
+        bot_data = rows
+
+        # Inizializza il worker (nessuna importazione pesante Selenium qui)
+        self.worker = BotWorker(
+            bot_id="carico_ts",
+            bot_params=bot_params,
+            data=bot_data,
+            telegram_service=tg_service,
+        )
+        
+        self._setup_worker_connections(self.worker)
 
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
-
         self.log_widget.clear()
         self.log_widget.append("Avvio bot Carico TS...")
-
-        worker.start()
+        self.worker.start()
         self.bot_started.emit()

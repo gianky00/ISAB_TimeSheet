@@ -273,34 +273,36 @@ class DettagliOdAPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        from src.bots import create_bot
-
-        config = config_manager.load_config()
-        bot = create_bot(
-            "dettagli_oda",
-            username=username,
-            password=password,
-            headless=config.get("browser_headless", False),
-            timeout=config.get("browser_timeout", 30),
-            download_path=download_path,
-            fornitore=fornitore,
-            data_da=data_da,
-            data_a=data_a,
-        )
-
-        if not bot:
-            ToastManager.instance().show("Errore creazione bot.", "error")
-            return
+        from src.core.config_manager import load_config
+        config = load_config()
 
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
-        worker = BotWorker(
-            bot,
-            {"rows": rows, "fornitore": fornitore, "data_da": data_da, "data_a": data_a},
+
+        # Configura i parametri per il BotWorker (verranno passati a create_bot nel thread secondario)
+        bot_params = {
+            "username": username,
+            "password": password,
+            "headless": config.get("browser_headless", False),
+            "timeout": config.get("browser_timeout", 30),
+            "download_path": download_path,
+            "fornitore": fornitore,
+            "data_da": data_da,
+            "data_a": data_a,
+        }
+
+        # Dati da elaborare (verranno passati a bot.execute() nel thread secondario)
+        data = {"rows": rows, "fornitore": fornitore, "data_da": data_da, "data_a": data_a}
+
+        # Inizializza il worker (nessuna importazione pesante Selenium qui)
+        self.worker = BotWorker(
+            bot_id="dettagli_oda",
+            bot_params=bot_params,
+            data=data,
             telegram_service=tg_service,
         )
-        self.worker = worker
-        self._setup_worker_connections(worker)
+        
+        self._setup_worker_connections(self.worker)
 
         # Reset pallini all'avvio
         self._update_status_list(force=True)
@@ -310,7 +312,7 @@ class DettagliOdAPanel(BaseBotPanel):
         self.log_widget.clear()
         self.log_widget.append(f"Avvio bot Dettagli OdA ({fornitore})")
         self.log_widget.append(f"  Periodo: {data_da} - {data_a}")
-        worker.start()
+        self.worker.start()
         self.bot_started.emit()
 
     def _on_worker_finished(self, success: bool) -> None:

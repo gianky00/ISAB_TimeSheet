@@ -105,15 +105,13 @@ class ScaricaTSPanel(BaseBotPanel):
         table_h = QHBoxLayout()
         table_h.setSpacing(10)
 
-        # Recupera le colonne dal bot e aggiunge la colonna ESITO
-        cols = list(self.get_bot_class().get_columns())
-        cols.append({"name": "esito", "label": "ESITO", "type": "text", "default": "", "readonly": True})
-
-        self.data_table = EditableDataTable(cols)
+        # Tabella con tutte le colonne del database Scarico TS
+        self.data_table = EditableDataTable(self.get_bot_class().get_columns())
         self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._update_status_list)
         self.data_table.data_changed.connect(self._save_data)
 
+        # Status List (Pallini a sinistra)
         v_status = QVBoxLayout()
         v_status.setContentsMargins(0, 56, 0, 0)
         self.status_list = StatusListWidget()
@@ -127,110 +125,58 @@ class ScaricaTSPanel(BaseBotPanel):
 
         self.content_layout.addWidget(params_container)
 
-    def _update_status_list(self, force: bool = False) -> None:
-        """
-        Sincronizza il contatore visivo dello stato con il numero di righe della tabella.
-
-        Args:
-            force: Se True, reinizializza sempre la lista.
-        """
+    def _update_status_list(self, force=False):
+        """Aggiorna il numero di righe nella lista degli stati."""
         count = self.data_table.table.rowCount()
         if force or self.status_list.count() != count:
             self.status_list.initialize_rows(count, self.data_table.table.rowHeight(0) or 30)
 
-    def on_step_completed(self, step_idx: int, success: bool, message: str = "") -> None:
-        """
-        Aggiorna lo stato visivo di una specifica riga al termine del suo processing.
-
-        Args:
-            step_idx: Indice della riga processata.
-            success: Esito del processing della riga.
-            message: Messaggio di errore opzionale.
-        """
+    def on_step_completed(self, step_idx, success, message=""):
+        """Aggiorna lo stato della riga quando il bot termina l'elaborazione."""
         self.status_list.update_status(step_idx, success)
 
-        # Trova dinamicamente l'indice della colonna 'esito'
-        col_idx = -1
-        for i, col in enumerate(self.data_table.columns):
-            if col["name"] == "esito":
-                col_idx = i
-                break
-
-        if col_idx != -1:
-            esito_text = "Completato" if success else f"Errore: {message}" if message else "Errore"
-            self.data_table.update_cell(step_idx, col_idx, esito_text, emit_signal=False)
+        # Se abbiamo una colonna ESITO, aggiorniamola
+        # ... logic if needed ...
 
     def _open_settings(self):
-        """Apre il dialogo delle impostazioni globali."""
+        """Apre il pannello impostazioni."""
         main_window = self.window()
         if main_window and hasattr(main_window, "show_settings"):
             main_window.show_settings()
 
     def refresh_fornitori(self):
-        """Aggiorna la lista dei fornitori nel menu a tendina."""
-        self.params_widget.refresh_fornitori()
+        """Ricarica l'elenco dei fornitori."""
+        if hasattr(self, "params_widget"):
+            self.params_widget.refresh_fornitori()
 
     def _load_saved_data(self):
-        """Carica le preferenze dell'ultima sessione (OdA, fornitore, date)."""
+        """Carica i dati salvati."""
         config = config_manager.load_config()
         self.refresh_fornitori()
-
-        # Usa il widget per i parametri comuni
-        self.params_widget.set_fornitore(config.get("last_ts_fornitore", ""))
-        current_year = datetime.now(UTC).year
-        self.params_widget.set_dates(config.get("last_ts_date", f"01.01.{current_year}"))
+        self.params_widget.set_fornitore(config.get("last_scarico_ts_fornitore", ""))
         self.params_widget.set_dest_path(config.get("path_scarico_ts", ""))
+        self.elabora_ts_check.setChecked(config.get("last_scarico_ts_elabora", True))
 
-        # Carica dati specifici
-        saved_data = config.get("last_ts_data", [])
+        saved_data = config.get("last_scarico_ts_data", [])
         if saved_data:
             self.data_table.set_data(saved_data)
 
-        self.elabora_ts_check.setChecked(config.get("elabora_ts", False))
         self._update_status_list()
 
     def _save_data(self):
-        """Salva i parametri correnti nella configurazione persistente."""
+        """Salva i dati correnti."""
         if not hasattr(self, "params_widget"):
             return
-
-        date_da, _ = self.params_widget.get_dates()
-        config_manager.set_config_value("last_ts_data", self.data_table.get_data())
-        config_manager.set_config_value("last_ts_date", date_da)
-        config_manager.set_config_value("last_ts_fornitore", self.params_widget.get_fornitore())
+        config_manager.set_config_value("last_scarico_ts_data", self.data_table.get_data())
+        config_manager.set_config_value("last_scarico_ts_fornitore", self.params_widget.get_fornitore())
         config_manager.set_config_value("path_scarico_ts", self.params_widget.get_dest_path())
-        config_manager.set_config_value("elabora_ts", self.elabora_ts_check.isChecked())
+        config_manager.set_config_value("last_scarico_ts_elabora", self.elabora_ts_check.isChecked())
 
     def _clear_table(self):
-        """Svuota la tabella dei dati OdA previa conferma."""
+        """Svuota la tabella."""
         if ConfirmationDialog.confirm(self, "Conferma", "Svuotare la tabella?"):
             self.data_table.clear()
             self._save_data()
-
-    def get_bot_instance(self):
-        """
-        Crea e restituisce un'istanza configurata del bot Scarico TS.
-        """
-        from src.bots import create_bot
-
-        username, password = self.get_credentials()
-        data_da, _ = self.params_widget.get_dates()
-        config = config_manager.load_config()
-
-        # Forza un percorso di download valido per evitare fallback su cartelle temp
-        path = self.params_widget.get_dest_path() or config_manager.get_download_path()
-
-        return create_bot(
-            "scarico_ts",
-            username=username,
-            password=password,
-            headless=config.get("browser_headless", False),
-            timeout=config.get("browser_timeout", 30),
-            download_path=path,
-            data_da=data_da,
-            fornitore=self.params_widget.get_fornitore(),
-            elabora_ts=self.elabora_ts_check.isChecked(),
-        )
 
     def validate_ready(self) -> tuple[bool, str]:
         """
@@ -250,16 +196,14 @@ class ScaricaTSPanel(BaseBotPanel):
         Args:
             params_override: Parametri opzionali per sovrascrivere l'UI.
         """
-        # Chiamiamo super senza argomenti (il BaseBotPanel._on_start che abbiamo appena modificato
-        # si aspetta params_override ma qui non serve passarglielo, serve solo per il log/stato).
         super()._on_start(params_override)
 
-        _username, _password = self.get_credentials()
+        username, password = self.get_credentials()
         data = self.data_table.get_data()
         fornitore = self.params_widget.get_fornitore()
-
-        # Default behavior: get dates from UI
         data_da, _ = self.params_widget.get_dates()
+        download_path = self.params_widget.get_dest_path() or config_manager.get_download_path()
+        elabora_ts = self.elabora_ts_check.isChecked()
 
         # Handle Overrides
         if params_override:
@@ -267,9 +211,8 @@ class ScaricaTSPanel(BaseBotPanel):
                 data_da = params_override["data_da"]
                 self.log_widget.append(f"ℹ️ Override Data Inizio: {data_da}")
 
-            # Single Shot Execution Override
             if "single_item" in params_override:
-                item = params_override["single_item"]  # Expect dict like {"Numero OdA": "...", ...}
+                item = params_override["single_item"]
                 if item:
                     data = [item]
                     self.log_widget.append(f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}")
@@ -277,36 +220,50 @@ class ScaricaTSPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        bot = self.get_bot_instance()
+        from src.core.config_manager import load_config
+        config = load_config()
 
-        if not bot:
-            self.log_widget.append("❌ Errore creazione bot (parametri mancanti?)")
-            self._update_status(STATUS_COLORS["error"], "Errore avvio")
-            self.start_btn.setEnabled(True)
-            self.stop_btn.setEnabled(False)
-            return
+        main_win = self.window()
+        tg_service = getattr(main_win, "telegram", None) if main_win else None
 
+        # Configura i parametri per il BotWorker (nessuna istanza bot qui)
+        bot_params = {
+            "username": username,
+            "password": password,
+            "headless": config.get("browser_headless", False),
+            "timeout": config.get("browser_timeout", 30),
+            "download_path": download_path,
+            "data_da": data_da,
+            "fornitore": fornitore,
+            "elabora_ts": elabora_ts,
+        }
+
+        # Dati da elaborare
         bot_data = {
             "rows": data,
             "data_da": data_da,
             "fornitore": fornitore,
-            "elabora_ts": self.elabora_ts_check.isChecked(),
+            "elabora_ts": elabora_ts,
         }
 
-        # Get telegram service safely
-        main_win = self.window()
-        tg_service = getattr(main_win, "telegram", None) if main_win else None
-
-        worker = BotWorker(bot, bot_data, telegram_service=tg_service)
-        self.worker = worker
-        self._setup_worker_connections(worker)
-
-        # Reset pallini all'avvio
-        self._update_status_list(force=True)
+        # Inizializza il worker (avvio asincrono)
+        self.worker = BotWorker(
+            bot_id="scarico_ts",
+            bot_params=bot_params,
+            data=bot_data,
+            telegram_service=tg_service,
+        )
+        
+        self._setup_worker_connections(self.worker)
 
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
-        self.log_widget.append(f"Avvio bot Scarico TS ({fornitore})")
-        worker.start()
+        self.log_widget.append("Avvio bot Scarico TS...")
+        self.worker.start()
         self.bot_started.emit()
+
+    def _on_worker_finished(self, success: bool):
+        """Chiamato al termine del bot."""
+        super()._on_worker_finished(success)
+        # Se successo, potremmo voler aggiornare altri componenti
