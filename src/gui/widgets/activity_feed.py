@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
@@ -261,7 +261,8 @@ class ActivityFeed(QWidget):
         self.scroll_area.setWidget(self.feed_widget)
         layout.addWidget(self.scroll_area)
 
-        self.refresh_feed()
+        # Caricamento differito per non bloccare lo splash screen
+        QTimer.singleShot(800, self.refresh_feed)
 
     def _on_new_log_added(self, log_entry: dict[str, Any]):
         """Chiamato quando viene aggiunto un nuovo log all'AuditManager."""

@@ -63,7 +63,8 @@ class ContabilitaPanel(QWidget):
         self.update_buttons: list[ModernButton] = []
         self._last_status_html = "Pronto"
         self._setup_ui()
-        QTimer.singleShot(10, self._safe_refresh_tabs)
+        # Aumentato il ritardo per non interferire con lo splash screen
+        QTimer.singleShot(800, self._safe_refresh_tabs)
 
     def _safe_refresh_tabs(self) -> None:
         """Tenta il caricamento dei tab gestendo eventuali errori critici del DB."""

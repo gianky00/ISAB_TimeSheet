@@ -59,13 +59,35 @@ class TimbratureDBPanel(QWidget):
         self.db_path = config_manager.CONFIG_DIR / "data" / "timbrature_Isab.db"
         self.storage = TimbratureStorage(self.db_path)
 
-        # Local cache for filters
-        self.lists = self.storage.get_lists()
-        self.reparti = self.lists.get("reparti", [])
-        self.cantieri = self.lists.get("cantieri", [])
+        # Local cache for filters (Inizializzato a vuoto, caricato asincronamente)
+        self.reparti = []
+        self.cantieri = []
 
         self._setup_ui()
-        QTimer.singleShot(50, self.refresh_data)
+        
+        # Caricamento differito per massimizzare la fluidità dello splash screen
+        QTimer.singleShot(150, self._deferred_init)
+
+    def _deferred_init(self):
+        """Carica le liste e i dati iniziali dopo la creazione del widget."""
+        try:
+            lists = self.storage.get_lists()
+            self.reparti = lists.get("reparti", [])
+            self.cantieri = lists.get("cantieri", [])
+            
+            # Aggiorna i filtri nella UI
+            self.reparto_filter.clear()
+            self.reparto_filter.addItem("Tutti")
+            self.reparto_filter.addItems(self.reparti)
+            
+            self.cantiere_filter.clear()
+            self.cantiere_filter.addItem("Tutti")
+            self.cantiere_filter.addItems(self.cantieri)
+            
+            self.refresh_data()
+        except Exception as e:
+            from src.core.logging import get_logger
+            get_logger(__name__).error(f"Error in deferred init: {e}")
 
     def _setup_ui(self):
         self.main_layout = QVBoxLayout(self)

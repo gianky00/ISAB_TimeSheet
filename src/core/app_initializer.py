@@ -207,6 +207,9 @@ class AppInitializer:
                 logger.error(f"Error loading panel {name}: {e}", exc_info=True)
 
             # Permette ai widget appena creati di processare i loro timer iniziali
+            # e dà respiro allo splash screen per le animazioni
+            QApplication.processEvents()
+            time.sleep(0.02)  # Piccolo respiro per fluidità 60fps dello splash
             QApplication.processEvents()
 
         yield "Monitoraggio Sicurezza Telegram", 94

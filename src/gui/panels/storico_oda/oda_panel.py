@@ -104,7 +104,8 @@ class StoricoOdaPanel(QWidget):
         self.search_timer.timeout.connect(self.refresh_data)
 
         self._setup_ui()
-        QTimer.singleShot(100, self.refresh_data)
+        # Aumentato il ritardo per non bloccare lo splash screen durante il caricamento massivo iniziale
+        QTimer.singleShot(1000, self.refresh_data)
 
     def _setup_ui(self) -> None:
         """Inizializza l'interfaccia utente del pannello."""
