@@ -49,6 +49,11 @@ class DettagliOdAPanel(BaseBotPanel):
             parent=parent,
         )
         self._setup_content()
+        
+        # Forza inizializzazione timeline immediata per Dettagli OdA (Previene blocchi su _on_start)
+        from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
+        self.activity_timeline.set_steps(DettagliOdABot.STEPS)
+        
         QTimer.singleShot(10, self._safe_load_data)
 
     def get_bot_class(self) -> type["BaseBot"]:
