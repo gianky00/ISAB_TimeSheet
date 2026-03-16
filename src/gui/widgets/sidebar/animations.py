@@ -39,7 +39,7 @@ class SidebarAnimationManager(QObject):
         target_rect = QRect(2, pos.y() + 8, 5, target_widget.height() - 16)
 
         track_widget.show()
-        self.track_anim.setTargetObject(track_widget)
         self.track_anim.stop()
+        self.track_anim.setTargetObject(track_widget)
         self.track_anim.setEndValue(target_rect)
         self.track_anim.start()
