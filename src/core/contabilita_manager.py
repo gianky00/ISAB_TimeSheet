@@ -205,7 +205,7 @@ class ContabilitaManager:
             return False
 
         try:
-            query = f"UPDATE certificati_campione SET {field} = ? WHERE id = ?"
+            query = f"UPDATE certificati_campione SET {field} = ? WHERE id = ?"  # nosec B608
             db_manager.execute_query(cls.DB_PATH, query, (value, record_id))
             return True
         except Exception as e:
