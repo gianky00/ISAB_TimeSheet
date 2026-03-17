@@ -92,11 +92,11 @@ class CertificatiPdfExporter:
         <head>
         <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 7pt; color: #1e293b; margin: 10px; margin-bottom: 0px; }
-        h1 { color: #1e3a8a; text-align: center; margin-top: 5px; margin-bottom: 5px; font-size: 8pt; font-weight: bold; }
+        h1 { color: #1e3a8a; text-align: center; margin-top: 5px; margin-bottom: 5px; font-size: 6.5pt; font-weight: bold; }
         .timestamp { text-align: right; color: #64748b; font-size: 7pt; margin-bottom: 5px; margin-right: 5px; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th { background-color: #f8fafc; color: #0f172a; font-weight: bold; padding: 4px 4px; border-bottom: 1.5pt solid #cbd5e1; text-align: left; font-size: 6pt; }
-        td { padding: 4px 4px; font-size: 6pt; vertical-align: middle; }
+        table { border-collapse: collapse; }
+        th { background-color: #f8fafc; color: #0f172a; font-weight: bold; padding: 4px 3px; border-bottom: 1.5pt solid #cbd5e1; text-align: left; font-size: 6pt; }
+        td { padding: 4px 3px; font-size: 6pt; vertical-align: middle; }
         .historical-row td { color: #64748b; border-top: none; }
         .parent-yes td { background-color: #dcfce7; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
         .parent-no td { background-color: #fee2e2; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
@@ -112,22 +112,22 @@ class CertificatiPdfExporter:
         page_header_html = f"""
         <div class='timestamp'>{meta_info}</div>
         <h1>{title}</h1>
-        <table>
+        <table width="100%">
         <thead>
         <tr>
-        <th style='width: 8%;' class='text-center'>ID</th>
-        <th style='width: 8%;'>Certificato</th>
-        <th style='width: 11%;'>Modello / Tipo</th>
-        <th style='width: 8%;'>Costruttore</th>
-        <th style='width: 8%;'>Matricola</th>
-        <th style='width: 8.5%;'>Range Strumento</th>
-        <th style='width: 4%;' class='text-center'>Err %</th>
-        <th style='width: 6.5%;'>Emissione</th>
-        <th style='width: 6.5%;'>Scadenza</th>
-        <th style='width: 8%;'>Stato</th>
-        <th style='width: 6.5%;'>Ubicazione</th>
-        <th style='width: 11.5%;'>Annotazioni</th>
-        <th style='width: 5.5%;' class='text-center'>UTILIZZATO</th>
+        <th width="6%" class='text-center'>ID</th>
+        <th width="8%">Certificato</th>
+        <th width="12%">Modello / Tipo</th>
+        <th width="9%">Costruttore</th>
+        <th width="9%">Matricola</th>
+        <th width="9%">Range Strumento</th>
+        <th width="4%" class='text-center'>Err %</th>
+        <th width="7%">Emissione</th>
+        <th width="7%">Scadenza</th>
+        <th width="8%">Stato</th>
+        <th width="8%">Ubicazione</th>
+        <th width="7%">Annotazioni</th>
+        <th width="6%" class='text-center'>UTILIZZATO</th>
         </tr>
         </thead>
         <tbody>
