@@ -1,6 +1,6 @@
 """
 SyncroJob - Splash Screen
-Gestisce l'inizializzazione dell'applicazione con animazioni fluide.
+Gestisce l'inizializzazione dell'applicazione con animazioni fluide e effetti 3D.
 """
 
 import logging
@@ -12,10 +12,12 @@ from PyQt6.QtCore import (
     QPropertyAnimation,
     Qt,
     QTimer,
+    QPoint,
 )
 from PyQt6.QtGui import (
     QColor,
     QIcon,
+    QTransform,
 )
 from PyQt6.QtWidgets import (
     QDialog,
@@ -35,6 +37,7 @@ from src.gui.widgets.startup.startup_widgets import (
     ConsoleOverlay,
     GlowingProgressBar,
     PulsingLogo,
+    TechBlueprint,
     TypewriterLabel,
 )
 
@@ -42,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 
 class StartupDialog(QDialog):
-    """Splash screen con animazioni fluide a 60fps."""
+    """Splash screen con animazioni fluide a 60fps e effetti 3D."""
 
     # Dimensioni del contenuto visibile
     CONTENT_WIDTH = 700
@@ -52,6 +55,7 @@ class StartupDialog(QDialog):
 
     def __init__(self):
         super().__init__()
+        self.setMouseTracking(True) # Fondamentale per il Tilt 3D
         self._init_window()
         self._init_state()
         self._setup_container()
@@ -69,8 +73,6 @@ class StartupDialog(QDialog):
         total_w = self.CONTENT_WIDTH + (self.SHADOW_MARGIN * 2)
         total_h = self.CONTENT_HEIGHT + (self.SHADOW_MARGIN * 2)
         self.setFixedSize(total_w, total_h)
-        
-        # NESSUNO STILE sul dialog principale per evitare perdite di colore negli angoli
         self.setStyleSheet("background: transparent; border: none;")
 
     def _init_state(self):
@@ -80,6 +82,8 @@ class StartupDialog(QDialog):
         self._init_result = False
         self.current_logs = []
         self._drag_pos = None
+        self._tilt_x = 0.0
+        self._tilt_y = 0.0
 
     def _setup_container(self):
         """Configura il container principale con particelle, bordo e shadow."""
@@ -107,7 +111,7 @@ class StartupDialog(QDialog):
         self.content.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.content.setStyleSheet("background: transparent; border: none;")
 
-        # Shadow luminosa esterna (Ora ha spazio per sfumare grazie ai margini)
+        # Shadow luminosa esterna
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(60)
         c = QColor(COLORS["primary_blue"])
@@ -129,22 +133,29 @@ class StartupDialog(QDialog):
         self._setup_footer(content_layout)
 
     def _setup_header(self, parent_layout: QVBoxLayout):
-        """Configura l'header con logo, titolo e info licenza."""
-        header = QHBoxLayout()
-        header.setSpacing(20)
+        """Configura l'header con logo, blueprint e titoli."""
+        header_container = QFrame()
+        header_container.setFixedHeight(100)
+        header_layout = QHBoxLayout(header_container)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setSpacing(20)
+
+        # Blueprint olografico (dietro il logo)
+        self.blueprint = TechBlueprint(header_container)
+        self.blueprint.setFixedSize(100, 100)
+        self.blueprint.move(-8, -8) # Centratura rispetto al logo
 
         from src.utils.helpers import get_asset_path
         icon_path = get_asset_path("assets/app.ico")
 
-        self.logo = PulsingLogo()
+        self.logo = PulsingLogo(header_container)
         self.logo.setFixedSize(85, 85)
         if Path(icon_path).exists():
             self.logo.set_pixmap(QIcon(icon_path).pixmap(64, 64))
-        header.addWidget(self.logo)
+        header_layout.addWidget(self.logo)
 
         title_box = QVBoxLayout()
         title_box.setSpacing(4)
-
         self.title = QLabel()
         self.title.setTextFormat(Qt.TextFormat.RichText)
         self.title.setText(
@@ -155,16 +166,13 @@ class StartupDialog(QDialog):
 
         from src.core.version import __version__
         self.version = QLabel(f"v{__version__}")
-        self.version.setStyleSheet(
-            f"font-size:13px; color:{COLORS['primary_blue']}; opacity: 0.9; font-weight:600; letter-spacing:3px;"
-        )
+        self.version.setStyleSheet(f"font-size:13px; color:{COLORS['primary_blue']}; opacity: 0.9; font-weight:600; letter-spacing:3px;")
         title_box.addWidget(self.version)
+        header_layout.addLayout(title_box)
+        header_layout.addStretch()
 
-        header.addLayout(title_box)
-        header.addStretch()
-
-        self._setup_license_info(header)
-        parent_layout.addLayout(header)
+        self._setup_license_info(header_layout)
+        parent_layout.addWidget(header_container)
 
     def _setup_license_info(self, parent_layout: QHBoxLayout):
         """Configura il box con le informazioni della licenza."""
@@ -215,7 +223,7 @@ class StartupDialog(QDialog):
         log_layout.setContentsMargins(15, 12, 15, 12)
         log_layout.setSpacing(4)
 
-        log_header = QLabel("TERMINALE DI SISTEMA")
+        log_header = QLabel("DIAGNOSTICA DI SISTEMA")
         log_header.setStyleSheet(
             f"font-size:10px; color:rgba({c.red()},{c.green()},{c.blue()},0.7); letter-spacing:3px; font-weight:800;"
         )
@@ -306,7 +314,7 @@ class StartupDialog(QDialog):
             event.accept()
 
     def mouseMoveEvent(self, event):
-        """Gestisce il trascinamento della finestra e l'effetto parallasse sulle particelle."""
+        """Gestisce il trascinamento e l'effetto 3D Tilt."""
         if event.buttons() & Qt.MouseButton.LeftButton and self._drag_pos:
             new_pos = event.globalPosition().toPoint() - self._drag_pos
             dx = new_pos.x() - self.pos().x()
@@ -314,6 +322,17 @@ class StartupDialog(QDialog):
             self.move(new_pos)
             self.particles.apply_parallax(dx, dy)
             event.accept()
+        else:
+            # Effetto 3D Tilt basato sulla posizione del mouse
+            pos = event.position()
+            rel_x = (pos.x() - self.width() / 2) / (self.width() / 2)
+            rel_y = (pos.y() - self.height() / 2) / (self.height() / 2)
+            
+            # Inclinazione massima 3 gradi
+            self._tilt_x = rel_y * 3.0
+            self._tilt_y = -rel_x * 3.0
+            # Sostituiamo apply_tilt con parallasse soft per performance e compatibilità shadow
+            self.particles.apply_parallax(rel_x * 5, rel_y * 5)
 
     def mouseReleaseEvent(self, event):
         """Interrompe il drag della finestra."""
@@ -330,9 +349,10 @@ class StartupDialog(QDialog):
         self.indicator.setStyleSheet(f"background:{color}; border-radius:4px;")
 
     def _on_progress(self, message: str, prog: int):
-        """Aggiorna UI con log animati e case originale."""
+        """Aggiorna UI e particelle per convergenza."""
         full_entry = f"> {message}"
-        self.status.setText(message.upper()) # Status footer rimane upper per design
+        self.status.setText(message.upper())
+        self.particles.set_progress(prog) # Sincronizza convergenza particelle
 
         if prog >= 90:
             self.indicator.setStyleSheet(f"background:{COLORS['success_green']}; border-radius:4px;")

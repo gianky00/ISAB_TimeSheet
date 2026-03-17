@@ -238,6 +238,59 @@ class PulsingLogo(QWidget):
             painter.end()
 
 
+class TechBlueprint(QWidget):
+    """Overlay olografico tecnico con cerchi rotanti e griglie polari."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.phase = 0.0
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self._tick)
+        self.timer.start(16)
+
+    def _tick(self) -> None:
+        self.phase += 0.01
+        self.update()
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        w, h = self.width(), self.height()
+        cx, cy = w / 2.0, h / 2.0
+        
+        painter.setPen(QPen(QColor(52, 152, 219, 40), 1, Qt.PenStyle.DotLine))
+        
+        # 1. Cerchi rotanti concentrici
+        for i in range(3):
+            radius = 40 + i * 25
+            speed = (i + 1) * 0.5
+            angle = math.degrees(self.phase * speed)
+            
+            painter.save()
+            painter.translate(cx, cy)
+            painter.rotate(angle if i % 2 == 0 else -angle)
+            
+            # Arco parziale per effetto "blueprint"
+            painter.drawArc(int(-radius), int(-radius), int(radius*2), int(radius*2), 0, 240 * 16)
+            
+            # Piccoli marcatori sui cerchi
+            painter.setPen(QPen(QColor(52, 152, 219, 80), 2))
+            painter.drawPoint(int(radius), 0)
+            painter.restore()
+
+        # 2. Griglia polare sottile
+        painter.setPen(QColor(52, 152, 219, 20))
+        for angle in range(0, 360, 45):
+            rad = math.radians(angle + math.degrees(self.phase * 0.2))
+            x2 = cx + 100 * math.cos(rad)
+            y2 = cy + 100 * math.sin(rad)
+            painter.drawLine(int(cx), int(cy), int(x2), int(y2))
+
+        painter.end()
+
+
 class TypewriterLabel(QLabel):
     """Label con effetto typewriter fluido."""
 
