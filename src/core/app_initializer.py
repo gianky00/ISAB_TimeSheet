@@ -197,9 +197,6 @@ class AppInitializer:
             start_time = time.perf_counter()
             logger.info(f"[UI STARTUP] Loading panel: {name}...")
 
-            # Forza il processamento degli eventi UI per fluidità splash
-            QApplication.processEvents()
-
             try:
                 mw_instance.navigation_controller.get_panel(idx)
                 elapsed = (time.perf_counter() - start_time) * 1000
@@ -207,10 +204,7 @@ class AppInitializer:
             except Exception as e:
                 logger.error(f"Error loading panel {name}: {e}", exc_info=True)
 
-            # Permette ai widget appena creati di processare i loro timer iniziali
-            # e dà respiro allo splash screen per le animazioni
-            QApplication.processEvents()
-            time.sleep(0.02)  # Piccolo respiro per fluidità 60fps dello splash
+            # Una sola chiamata per processare eventuali segnali interni dei widget
             QApplication.processEvents()
 
         yield "Monitoraggio Sicurezza Telegram", 94

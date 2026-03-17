@@ -149,11 +149,65 @@ def main():
 
     AppInitializer.setup_app_style(app)
 
-    # === SPLASH SCREEN ===
-    from src.gui.dialogs.startup_dialog import StartupDialog
+    # === SPLASH SCREEN (Standalone Process for Zero-Stutter) ===
+    import subprocess
+    import json
 
-    splash = StartupDialog()
-    splash.show()
+    splash_script = str(ROOT_DIR / "src" / "gui" / "dialogs" / "splash_standalone.py")
+    startup_logger_global.info(f"Launching standalone splash process: {splash_script}")
+
+    # Forza comunicazione non bufferizzata
+    env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
+    env["PYTHONPATH"] = str(ROOT_DIR)
+
+    # Avvia lo splash in un processo separato per garantire fluidità assoluta
+    # Usiamo creationflags su Windows per nascondere la console se necessario
+    creation_flags = 0
+    if sys.platform == "win32":
+        # Se siamo in modalità GUI (pythonw), non vogliamo una console popup
+        creation_flags = subprocess.CREATE_NO_WINDOW if getattr(sys, "frozen", False) else 0
+
+    splash_process = subprocess.Popen(
+        [sys.executable, splash_script],
+        stdin=subprocess.PIPE,
+        text=True,
+        bufsize=1,  # Line buffered
+        encoding="utf-8",
+        env=env,
+        creationflags=creation_flags
+    )
+
+    def update_splash(msg: str, prog: int):
+        """Invia comando di aggiornamento allo splash process."""
+        if splash_process.poll() is None and splash_process.stdin:
+            try:
+                # Sanitizzazione messaggio per evitare rotture JSON
+                clean_msg = str(msg).replace("\n", " ").replace("\r", "").strip()
+                data = json.dumps({"cmd": "update", "msg": clean_msg, "prog": int(prog)}, ensure_ascii=False)
+                splash_process.stdin.write(data + "\n")
+                splash_process.stdin.flush()
+            except Exception as e:
+                startup_logger_global.warning(f"Failed to update splash process: {e}")
+
+    def close_splash():
+        """Chiude gentilmente lo splash process."""
+        if splash_process.poll() is None and splash_process.stdin:
+            try:
+                data = json.dumps({"cmd": "close"})
+                splash_process.stdin.write(data + "\n")
+                splash_process.stdin.flush()
+                splash_process.stdin.close()
+                # Attendi un po' che si chiuda, poi killa se necessario
+                try:
+                    splash_process.wait(timeout=1.5)
+                except subprocess.TimeoutExpired:
+                    splash_process.kill()
+            except Exception:
+                splash_process.kill()
+
+    # Inizializza stato splash
+    update_splash("Inizializzazione Nucleo...", 5)
     app.processEvents()
 
     # === WORKER PER FASE 1 (Import pesanti) - Thread separato ===
@@ -191,7 +245,7 @@ def main():
 
     def on_phase1_progress(msg, prog):
         """Update splash screen with Phase 1 progress."""
-        splash.update_status(msg, prog)
+        update_splash(msg, prog)
 
     def on_phase1_finished(success, error_msg):
         """Handle Phase 1 completion and store result."""
@@ -219,22 +273,23 @@ def main():
     from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 
     if not phase1_success[0]:
-        splash.close()
+        close_splash()
         err_text = phase1_error_msg[0] or "Inizializzazione fallita"
         ConfirmationDialog.show_error(None, "Errore Avvio", err_text)
         sys.exit(1)
 
     # Visualizzazione Avvisi Accumulati (Non-Bloccanti ma importanti per l'utente)
+    from src.core.app_initializer import AppInitializer
     for severity, message in AppInitializer.get_alerts():
         if severity in ("CRITICAL", "ERROR"):
-            ConfirmationDialog.show_error(splash, "Allerta Licenza", message, is_rich_text=True)
+            ConfirmationDialog.show_error(None, "Allerta Licenza", message, is_rich_text=True)
         elif severity == "WARNING":
-            ConfirmationDialog.show_warning(splash, "Avviso Licenza", message, is_rich_text=True)
+            ConfirmationDialog.show_warning(None, "Avviso Licenza", message, is_rich_text=True)
         else:
-            ConfirmationDialog.show_info(splash, "Sincronizzazione", message, is_rich_text=True)
+            ConfirmationDialog.show_info(None, "Sincronizzazione", message, is_rich_text=True)
 
     # === FASE 2: Creazione MainWindow (Thread principale richiesto da Qt) ===
-    splash.update_status("Costruzione interfaccia...", 40)
+    update_splash("Costruzione interfaccia...", 40)
     app.processEvents()
 
     from src.gui.main_window.main import MainWindow
@@ -251,7 +306,7 @@ def main():
         """Called when initialization is complete."""
         try:
             startup_logger.info("Finalizing startup sequence...")
-            splash.update_status("Avvio completato", 100)
+            update_splash("Avvio completato", 100)
 
             startup_logger.info("Showing main window...")
             # Show main window FIRST (hidden behind splash)
@@ -264,8 +319,8 @@ def main():
             # Process events to ensure window is rendered
             app.processEvents()
 
-            # Close splash - main window will automatically come to front
-            splash.close()
+            # Close splash process
+            close_splash()
 
             startup_logger.info("Calling finalize_init...")
             # Ritardiamo leggermente finalize_init per dare priorità al rendering dell'UI
@@ -281,7 +336,7 @@ def main():
             # Esegue UN solo step e ritorna subito
             msg, prog = next(gui_init_gen)
             startup_logger.debug("Init step", step_message=msg, progress=prog)
-            splash.update_status(msg, prog)
+            update_splash(msg, prog)
 
             # Pianifica il prossimo step al prossimo ciclo di eventi libero (0ms)
             # Questo permette alla GUI di aggiornarsi e alle animazioni di avanzare
