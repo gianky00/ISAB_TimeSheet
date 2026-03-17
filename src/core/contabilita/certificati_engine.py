@@ -103,7 +103,7 @@ class CertificatiEngine:
             # Moltiplichiamo per 100 per avere la percentuale
             perc = f_val * 100
             # Formattiamo con virgola come separatore decimale, rimuovendo ,00 se superfluo
-            res = f"{perc:.4f}".rstrip("0").rstrip(".").replace(".", ",")
+            res = f"{perc:.4f}".rstrip(".0").replace(".", ",")
             return f"{res}%" if res else "0%"
         except (ValueError, TypeError):
             return str(val)

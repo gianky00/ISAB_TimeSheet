@@ -106,18 +106,18 @@ class CertificatiPdfExporter:
             "<html>",
             "<head>",
             "<style>",
-            "body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 8pt; color: #1e293b; margin: 0; }",
-            "h1 { color: #1e3a8a; text-align: center; margin-bottom: 2px; font-size: 16pt; }",
-            ".timestamp { text-align: center; color: #64748b; font-size: 8pt; margin-bottom: 10px; }",
-            "table { width: 100%; border-collapse: collapse; border: 0.5pt solid #94a3b8; table-layout: fixed; }",
-            "th { background-color: #f1f5f9; color: #0f172a; font-weight: bold; padding: 6pt 2pt; border: 0.5pt solid #cbd5e1; text-align: left; font-size: 7pt; }",
-            "td { padding: 5pt 2pt; border: 1px solid #e2e8f0; font-size: 7pt; vertical-align: middle; word-wrap: break-word; }",
+            "body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 7pt; color: #1e293b; margin: 0; }",
+            "h1 { color: #1e3a8a; text-align: center; margin-bottom: 2px; font-size: 14pt; }",
+            ".timestamp { text-align: center; color: #64748b; font-size: 7pt; margin-bottom: 8px; }",
+            "table { width: 100%; border-collapse: collapse; border: 0.2pt solid #94a3b8; table-layout: fixed; }",
+            "th { background-color: #f1f5f9; color: #0f172a; font-weight: bold; padding: 4pt 2pt; border: 0.2pt solid #cbd5e1; text-align: left; font-size: 6pt; }",
+            "td { padding: 3pt 2pt; border: 0.1pt solid #e2e8f0; font-size: 6pt; vertical-align: middle; word-wrap: break-word; }",
             ".historical-row { background-color: #ffffff; color: #94a3b8; }",
             ".current-row { background-color: #f0fdf4; color: #0f172a; font-weight: bold; }",
             ".status-yes { color: #15803d; font-weight: bold; text-align: center; background-color: #dcfce7; }",
             ".status-no { color: #b91c1c; font-weight: bold; text-align: center; background-color: #fee2e2; }",
             ".text-center { text-align: center; }",
-            ".col-stato { font-weight: bold; font-size: 7pt; }",
+            ".col-stato { font-weight: bold; font-size: 6pt; }",
             "</style>",
             "</head>",
             "<body>",
@@ -162,8 +162,7 @@ class CertificatiPdfExporter:
                 row_class = "current-row" if is_current else "historical-row"
                 prefix = "" if is_current else "&raquo; "
 
-                html.append(f"<tr class='{row_class}'>")
-                html.append(f"<td>{prefix}{child.text(0)}</td>")
+                html.extend((f"<tr class='{row_class}'>", f"<td>{prefix}{child.text(0)}</td>"))
                 html.extend(f"<td>{child.text(col)}</td>" for col in range(1, 9))
 
                 # Calcolo Stato Scadenza
@@ -173,22 +172,19 @@ class CertificatiPdfExporter:
                 if is_current:
                     stato_display = CertificatiEngine.format_days_text_short(days)
                     # Pulizia emoji per PDF Enterprise
-                    for emoji in ["✅", "🔴", "🟠", "🟡", "❌"]:
+                    for emoji in ("✅", "🔴", "🟠", "🟡", "❌"):
                         stato_display = stato_display.replace(emoji, "")
                     stato_display = stato_display.strip()
                 else:
                     stato_display = "STORICO"
 
-                html.append(f"<td class='col-stato'>{stato_display}</td>")
-                html.append(f"<td>{child.text(10)}</td>")
-                html.append(f"<td>{child.text(11)}</td>")
+                html.extend((f"<td class='col-stato'>{stato_display}</td>", f"<td>{child.text(10)}</td>", f"<td>{child.text(11)}</td>"))
 
                 # UTILIZZATO
                 is_valid = days is not None and days != -9999 and days >= 0
                 utilizzato = "SI" if (is_current and is_valid) else "NO"
                 status_class = "status-yes" if utilizzato == "SI" else "status-no"
-                html.append(f"<td class='{status_class}'>{utilizzato}</td>")
-                html.append("</tr>")
+                html.extend((f"<td class='{status_class}'>{utilizzato}</td>", "</tr>"))
 
         html.append("</tbody></table></body></html>")
         self._html_content = "".join(html)

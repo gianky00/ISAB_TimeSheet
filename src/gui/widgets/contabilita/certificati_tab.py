@@ -244,8 +244,10 @@ class CertificatiCampioneTab(QWidget):
                         row_data.append(str(val) if val is not None else "")
 
                 # Aggiungiamo annotazioni e ubicazione come colonne modificabili
-                row_data.append(str(cert[10] if len(cert) > 10 and cert[10] else ""))  # Annotazioni
-                row_data.append(str(cert[11] if len(cert) > 11 and cert[11] else ""))  # Ubicazione
+                row_data.extend((
+                    str(cert[10] if len(cert) > 10 and cert[10] else ""),  # Annotazioni
+                    str(cert[11] if len(cert) > 11 and cert[11] else "")   # Ubicazione
+                ))
 
                 row = SortableTreeWidgetItem(parent_item, row_data)
 
@@ -382,22 +384,32 @@ class CertificatiCampioneTab(QWidget):
             if not parent:
                 continue
             meta = self.engine.parse_parent_label(parent.text(0))
-            if meta["matricola"] in self.engine._exclusions:
+            
+            # Se il filtro "Mostra esclusi" è disattivato, saltiamo gli esclusi
+            is_excluded = meta["matricola"] in self.engine._exclusions
+            if is_excluded and not self._show_excluded:
                 continue
 
             user_data = parent.data(0, Qt.ItemDataRole.UserRole)
+            
+            # Recuperiamo l'ID-COEMI dal certificato corrente (primo figlio)
+            id_coemi = ""
+            if parent.childCount() > 0:
+                id_coemi = parent.child(0).text(self.tree.IDX_ID)
+
             certs_data.append(
                 {
                     "matricola": meta["matricola"],
                     "costruttore": meta["costruttore"],
                     "modello": meta["modello"],
                     "range": meta["range"],
+                    "id_coemi": id_coemi,
                     "days": user_data.get("days") if user_data else None,
                 }
             )
 
         certs_data.sort(key=lambda x: x["days"] if x["days"] is not None else 9999)
-        ScadenzeAnalysisDialog(certs_data, self).exec()
+        ScadenzeAnalysisDialog(certs_data, self._show_excluded, self).exec()
 
     def _export_pdf(self) -> None:
         """Esporta la lista dei certificati in un PDF formattato professionalmente."""

@@ -32,9 +32,10 @@ from src.gui.widgets.core_widgets import PrimaryButton
 class ScadenzeAnalysisDialog(QDialog):
     """Finestra di analisi scadenze certificati - Design professionale."""
 
-    def __init__(self, certificates_data: list[Any], parent=None):
+    def __init__(self, certificates_data: list[Any], show_excluded: bool = False, parent=None):
         super().__init__(parent)
         self.certificates_data = certificates_data
+        self.show_excluded = show_excluded
 
         # Widget members
         self.header: QFrame
@@ -46,7 +47,7 @@ class ScadenzeAnalysisDialog(QDialog):
 
     def _setup_ui(self):
         self.setWindowTitle(f"Analisi Scadenze Certificati - {__app_name__}")
-        self.setMinimumSize(900, 650)
+        self.setMinimumSize(950, 650)
         self.setStyleSheet(
             f"""
             QDialog {{
@@ -285,13 +286,13 @@ class ScadenzeAnalysisDialog(QDialog):
         return card
 
     def _create_section(self, title: str, items: list[Any], color: str, bg_color: str) -> QFrame:
-        """Crea una sezione con elenco certificati."""
+        """Crea una sezione con elenco certificati - Senza bordi pesanti per screenshot pulito."""
         section = QFrame()
         section.setStyleSheet(
             f"""
             QFrame {{
                 background-color: {bg_color};
-                border: 1px solid {color}40;
+                border: none;
                 border-radius: 8px;
             }}
             """
@@ -314,6 +315,34 @@ class ScadenzeAnalysisDialog(QDialog):
         sep.setStyleSheet(f"background-color: {color}30;")
         sep.setFixedHeight(1)
         section_layout.addWidget(sep)
+
+        # Riga Intestazione Colonne
+        header_row_layout = QHBoxLayout()
+        header_row_layout.setSpacing(15)
+        
+        lbl_h_mat = QLabel("MATRICOLA")
+        lbl_h_mat.setStyleSheet(f"color: {color}; font-size: 9px; font-weight: bold; min-width: 120px;")
+        
+        lbl_h_mod = QLabel("MODELLO / TIPO")
+        lbl_h_mod.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 9px; font-weight: bold;")
+        lbl_h_mod.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        
+        lbl_h_cos = QLabel("COSTRUTTORE")
+        lbl_h_cos.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 9px; font-weight: bold; min-width: 100px;")
+        
+        lbl_h_id = QLabel("ID-COEMI")
+        lbl_h_id.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 9px; font-weight: bold; min-width: 80px;")
+        
+        lbl_h_scad = QLabel("STATO SCADENZA")
+        lbl_h_scad.setStyleSheet(f"color: {color}; font-size: 9px; font-weight: bold; min-width: 130px;")
+        lbl_h_scad.setAlignment(Qt.AlignmentFlag.AlignRight)
+        
+        header_row_layout.addWidget(lbl_h_mat)
+        header_row_layout.addWidget(lbl_h_mod)
+        header_row_layout.addWidget(lbl_h_cos)
+        header_row_layout.addWidget(lbl_h_id)
+        header_row_layout.addWidget(lbl_h_scad)
+        section_layout.addLayout(header_row_layout)
 
         # Items
         for item in items:
@@ -342,6 +371,13 @@ class ScadenzeAnalysisDialog(QDialog):
                 f"color: {COLORS['text_muted']}; font-size: 12px; min-width: 100px;"
             )
             item_layout.addWidget(costruttore_label)
+
+            # ID-COEMI
+            id_label = QLabel(item.get("id_coemi", ""))
+            id_label.setStyleSheet(
+                f"color: {COLORS['text_muted']}; font-size: 12px; font-weight: 500; min-width: 80px;"
+            )
+            item_layout.addWidget(id_label)
 
             # Scadenza
             if item["days"] is not None:
@@ -382,7 +418,7 @@ class ScadenzeAnalysisDialog(QDialog):
 
             # Limite di sicurezza per evitare allocazioni pixmap troppo grandi
             total_height = min(total_height, 15000)
-            total_width = max(900, self.width())
+            total_width = max(1100, self.width())
 
             # Crea un pixmap per il report completo
             pixmap = QPixmap(total_width, total_height)
@@ -419,14 +455,20 @@ class ScadenzeAnalysisDialog(QDialog):
                 ps_script = f"""
 $xl = New-Object -ComObject Excel.Application
 $xl.Visible = $false
-$wb = $xl.Workbooks.Open("{excel_path.replace(chr(92), chr(92) + chr(92))}")
 try {{
-    $xl.Run("'" + $wb.Name + "'!InviaEmailConScreenshotDaPS", "{temp_path.replace(chr(92), chr(92) + chr(92))}")
-}} catch {{
-    Start-Process "{temp_path.replace(chr(92), chr(92) + chr(92))}"
+    $wb = $xl.Workbooks.Open("{excel_path.replace(chr(92), chr(92) + chr(92))}")
+    try {{
+        # La macro originale accetta solo il percorso del file.
+        $xl.Run("'" + $wb.Name + "'!InviaEmailConScreenshotDaPS", "{temp_path.replace(chr(92), chr(92) + chr(92))}")
+    }} catch {{
+        # In caso di errore macro, apriamo lo screenshot come fallback
+        Start-Process "{temp_path.replace(chr(92), chr(92) + chr(92))}"
+    }}
+    $wb.Close($false)
+}} finally {{
+    $xl.Quit()
+    [System.Runtime.Interopservices.Marshal]::ReleaseComObject($xl) | Out-Null
 }}
-$wb.Close($false)
-$xl.Quit()
 """
                 with tempfile.NamedTemporaryFile(
                     mode="w", suffix=".ps1", delete=False, encoding="utf-8"
@@ -445,7 +487,8 @@ $xl.Quit()
                     "Email in preparazione",
                     "Lo screenshot del report è stato generato.\n\n"
                     f"Percorso: {temp_path}\n\n"
-                    "Se configurata, la macro Excel invierà l'email automaticamente.",
+                    "La macro Excel è stata avviata. Se il destinatario non è corretto, "
+                    "è necessario aggiornare il codice della macro VBA nel file Excel.",
                 )
             else:
                 # Se non c'è excel, apri solo lo screenshot
