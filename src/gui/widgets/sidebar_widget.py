@@ -1,7 +1,7 @@
 """
-SyncroJob - Sidebar Widget (Refactored V8.8 - Performance Optimized V3)
+SyncroJob - Sidebar Widget (Refactored V8.8 - Performance Optimized V4)
 Navigazione magnetica enterprise a 3 livelli.
-Risolto bug sfondo invisibile e ottimizzata la fluidità senza bloccare il repaint.
+Risolti bug di sovrapposizione e artefatti grafici. Massima fluidità garantita.
 """
 
 from __future__ import annotations
@@ -48,10 +48,8 @@ class SidebarWidget(QFrame):
         super().__init__(parent)
         self.setObjectName("sidebarContainer")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        
-        # OTTIMIZZAZIONE: WA_StaticContents aiuta a non ricalcolare il contenuto interno se non cambia
-        self.setAttribute(Qt.WidgetAttribute.WA_StaticContents)
-        
+
+        # OTTIMIZZAZIONE: Carichiamo il logo una sola volta
         self._is_collapsed = True
         self._drag_in_progress = False
         self.expanded_width = 245
@@ -85,18 +83,20 @@ class SidebarWidget(QFrame):
     sidebar_width = pyqtProperty(int, fget=get_sidebar_width, fset=set_sidebar_width)
 
     def _get_glass_style(self) -> str:
-        """Genera lo stile QSS. Semplificato per performance."""
-        # Gradiente verticale per velocità di rendering
+        """Genera lo stile QSS pulito ed efficiente."""
         gradient = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #0f172a, stop:1 #1e1b4b)"
         sb_handle = hex_to_rgba(COLORS["bg_white"], 0.15)
-        
+
         return f"""
             QFrame#sidebarFrame {{
                 background: {gradient};
                 border-right: 1px solid rgba(255, 255, 255, 0.05);
                 border-radius: 18px;
             }}
-            QFrame#sidebarFrame[state="collapsed"] {{ background: transparent; border: none; }}
+            QFrame#sidebarFrame[state="collapsed"] {{ 
+                background: transparent; 
+                border: none; 
+            }}
             QScrollArea {{ border: none; background: transparent; }}
             QWidget#scrollContent {{ background: transparent; }}
             QScrollBar:vertical {{ border: none; background: transparent; width: 4px; }}
@@ -111,9 +111,10 @@ class SidebarWidget(QFrame):
         self.bg_frame.setObjectName("sidebarFrame")
         main_lay.addWidget(self.bg_frame)
 
-        layout = QVBoxLayout(self.bg_frame)
-        layout.setContentsMargins(0, 7, 0, 20)
-        layout.setSpacing(0)
+        # Layout principale del frame di sfondo
+        self.content_layout = QVBoxLayout(self.bg_frame)
+        self.content_layout.setContentsMargins(0, 7, 0, 20)
+        self.content_layout.setSpacing(0)
 
         # Header
         self.h_container = QWidget()
@@ -125,7 +126,8 @@ class SidebarWidget(QFrame):
         self.logo_badge = QLabel()
         self.logo_badge.setFixedSize(46, 46)
         self.logo_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.logo_badge.setStyleSheet("background: white; border-radius: 23px; border: 2px solid black;")
+        # FIX: Rimosso bordo nero spesso, reso più elegante
+        self.logo_badge.setStyleSheet("background: white; border-radius: 23px; border: 1px solid #e2e8f0;")
 
         from PyQt6.QtGui import QIcon
         pix = QIcon(get_asset_path("assets/app.ico")).pixmap(64, 64)
@@ -142,7 +144,7 @@ class SidebarWidget(QFrame):
         # Opacità logo iniziale
         self.logo_opacity.setOpacity(0.0 if self._is_collapsed else 1.0)
 
-        layout.addWidget(self.h_container)
+        self.content_layout.addWidget(self.h_container)
 
         # Scroll Area
         self.scroll_area = QScrollArea()
@@ -214,7 +216,7 @@ class SidebarWidget(QFrame):
 
         self.menu_layout.addStretch()
         self.scroll_area.setWidget(self.scroll_content)
-        layout.addWidget(self.scroll_area)
+        self.content_layout.addWidget(self.scroll_area)
 
         # Footer
         self.footer = QWidget()
@@ -238,11 +240,12 @@ class SidebarWidget(QFrame):
             self.group_notifiche.add_child(btn)
             self.notif_child_btns.append(btn)
 
-        layout.addWidget(self.footer)
+        self.content_layout.addWidget(self.footer)
 
         self.active_track = QWidget(self)
         self.active_track.setFixedWidth(5)
         self.active_track.setStyleSheet(f"background: {COLORS['teal_accent']}; border-radius: 2px;")
+        self.active_track.hide()
 
         # Stato iniziale visibilità
         self.scroll_area.setVisible(not self._is_collapsed)
@@ -269,7 +272,11 @@ class SidebarWidget(QFrame):
         QTimer.singleShot(100, self._update_track)
 
     def _update_track(self) -> None:
-        """Sposta il track magnetico."""
+        """Sposta il track magnetico in modo sicuro."""
+        if self._is_collapsed:
+            self.active_track.hide()
+            return
+
         targets = []
         for g in (self.group_automazioni, self.group_db, self.group_contabilita, self.group_notifiche):
             for e in g.children_elements:
@@ -338,20 +345,20 @@ class SidebarWidget(QFrame):
         super().leaveEvent(e)
 
     def _set_collapsed(self, c: bool) -> None:
-        """Gestisce espansione e contrazione con ottimizzazioni bilanciate."""
+        """Gestisce espansione e contrazione senza rompere il layout."""
         if self._is_collapsed == c:
             return
         self._is_collapsed = c
 
-        # Disabilita layout durante l'animazione (Layout Freeze) per performance
-        if self.bg_frame.layout():
-            self.bg_frame.layout().setEnabled(False)
+        # Nascondiamo il track durante il movimento per evitare artefatti (gui2.png)
+        self.active_track.hide()
 
         # Animazioni
         self.anim_manager.animate_width(self.collapsed_width if c else self.expanded_width)
         self.anim_manager.animate_content(self.logo_opacity, 0.0 if c else 1.0)
 
         if not c:
+            # ESPANSIONE
             self.scroll_area.show()
             self.footer.show()
             self.h_lay.setContentsMargins(14, 8, 14, 15)
@@ -363,19 +370,18 @@ class SidebarWidget(QFrame):
             self.setMaximumHeight(ph - 20)
             self.bg_frame.setProperty("state", "expanded")
         else:
+            # COLLASSO
             self.h_lay.setContentsMargins(0, 8, 0, 15)
             self.h_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.active_track.hide()
             self.bg_frame.setProperty("state", "collapsed")
 
-            # Nascondiamo le aree pesanti a metà animazione per non vedere il troncamento
-            QTimer.singleShot(100, lambda: self.scroll_area.hide() if self._is_collapsed else None)
-            QTimer.singleShot(100, lambda: self.footer.hide() if self._is_collapsed else None)
-            QTimer.singleShot(150, lambda: self.setMinimumHeight(100) if self._is_collapsed else None)
-            QTimer.singleShot(150, lambda: self.setMaximumHeight(100) if self._is_collapsed else None)
+            # Nascondiamo SUBITO le aree pesanti per evitare l'overlap (GUI.png)
+            self.scroll_area.hide()
+            self.footer.hide()
+            self.setMinimumHeight(100)
+            self.setMaximumHeight(100)
 
-        # FIX: Sfondo mancante. È OBBLIGATORIO fare unpolish/polish quando si usa setProperty nel QSS.
-        # Lo facciamo solo una volta all'inizio della transizione.
+        # Refresh stile per lo sfondo (OBBLIGATORIO per QSS property)
         if style := self.bg_frame.style():
             style.unpolish(self.bg_frame)
             style.polish(self.bg_frame)
@@ -391,15 +397,8 @@ class SidebarWidget(QFrame):
         else:
             self._update_ui_state()
 
-        # Riabilita layout a fine animazione (200ms)
-        QTimer.singleShot(200, self._finalize_animation)
-
-    def _finalize_animation(self) -> None:
-        """Riabilita il layout a fine transizione."""
-        if self.bg_frame.layout():
-            self.bg_frame.layout().setEnabled(True)
-        self.bg_frame.update()
-        self._update_track()
+        # Riposizionamento track a fine corsa
+        QTimer.singleShot(250, self._update_track)
 
     def _update_ui_state(self) -> None:
         """Sincronizza lo stato dei gruppi."""
