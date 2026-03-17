@@ -77,33 +77,33 @@ class CertificatiTreeWidget(StandardTreeWidget):
     itemEditedCustom = pyqtSignal(object, str, str)  # (item, col_name, new_value)
 
     HEADERS: ClassVar[list[str]] = [
+        "ID",
+        "Certificato",
         "Modello /\nTipo",
         "Costruttore",
         "Matricola",
         "Range\nStrumento",
-        "Errore\nmax %",
-        "Certificato\nTaratura",
-        "Scadenza\nCertificato",
-        "Emissione\nCertificato",
-        "ID-COEMI",
-        "Stato\nCertificato",
-        "Annotazioni",
+        "Err %",
+        "Emissione",
+        "Scadenza",
+        "Stato",
         "Ubicazione",
+        "Annotazioni",
     ]
 
     (
+        IDX_ID,
+        IDX_CERTIFICATO,
         IDX_MODELLO,
         IDX_COSTRUTTORE,
         IDX_MATRICOLA,
         IDX_RANGE,
         IDX_ERRORE,
-        IDX_CERTIFICATO,
-        IDX_SCADENZA,
         IDX_EMISSIONE,
-        IDX_ID,
+        IDX_SCADENZA,
         IDX_STATO,
-        IDX_ANNOTAZIONI,
         IDX_UBICAZIONE,
+        IDX_ANNOTAZIONI,
     ) = range(12)
 
     def __init__(self, parent: QWidget | None = None):

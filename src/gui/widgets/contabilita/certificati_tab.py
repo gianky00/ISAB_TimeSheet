@@ -234,20 +234,29 @@ class CertificatiCampioneTab(QWidget):
 
             cert_list: list[Any] = g["certificates"]  # type: ignore
             for i, cert in enumerate(cert_list):
-                # La tupla ha 13 elementi (10 base + annotazioni + ubicazione + id)
-                row_data = []
-                for col_idx, val in enumerate(cert[:10]):
-                    if col_idx == self.tree.IDX_ERRORE and val is not None:
-                        # Formattazione percentuale (es. 0.0005 -> 0,05%)
-                        row_data.append(self.engine.format_errore_max(val))
-                    else:
-                        row_data.append(str(val) if val is not None else "")
+                # La tupla ha 13 elementi dal DB in ordine:
+                # 0: id_coemi, 1: certificato, 2: modello, 3: costruttore, 4: matricola
+                # 5: range, 6: errore_max, 7: emissione, 8: scadenza, 9: stato
+                # 10: annotazioni, 11: ubicazione, 12: id
 
-                # Aggiungiamo annotazioni e ubicazione come colonne modificabili
-                row_data.extend((
-                    str(cert[10] if len(cert) > 10 and cert[10] else ""),  # Annotazioni
-                    str(cert[11] if len(cert) > 11 and cert[11] else "")   # Ubicazione
-                ))
+                # Format errore_max (index 6)
+                err_val = cert[6]
+                err_formatted = self.engine.format_errore_max(err_val) if err_val is not None else ""
+
+                row_data = [
+                    str(cert[0] if cert[0] is not None else ""),  # 0. ID
+                    str(cert[1] if cert[1] is not None else ""),  # 1. Certificato
+                    str(cert[2] if cert[2] is not None else ""),  # 2. Modello
+                    str(cert[3] if cert[3] is not None else ""),  # 3. Costruttore
+                    str(cert[4] if cert[4] is not None else ""),  # 4. Matricola
+                    str(cert[5] if cert[5] is not None else ""),  # 5. Range Strumento
+                    err_formatted,                                # 6. Err %
+                    str(cert[7] if cert[7] is not None else ""),  # 7. Emissione
+                    str(cert[8] if cert[8] is not None else ""),  # 8. Scadenza
+                    str(cert[9] if cert[9] is not None else ""),  # 9. Stato
+                    str(cert[11] if len(cert) > 11 and cert[11] is not None else ""), # 10. Ubicazione
+                    str(cert[10] if len(cert) > 10 and cert[10] is not None else "")  # 11. Annotazioni
+                ]
 
                 row = SortableTreeWidgetItem(parent_item, row_data)
 
@@ -384,18 +393,20 @@ class CertificatiCampioneTab(QWidget):
             if not parent:
                 continue
             meta = self.engine.parse_parent_label(parent.text(0))
-            
+
             # Se il filtro "Mostra esclusi" è disattivato, saltiamo gli esclusi
             is_excluded = meta["matricola"] in self.engine._exclusions
             if is_excluded and not self._show_excluded:
                 continue
 
             user_data = parent.data(0, Qt.ItemDataRole.UserRole)
-            
+
             # Recuperiamo l'ID-COEMI dal certificato corrente (primo figlio)
             id_coemi = ""
             if parent.childCount() > 0:
-                id_coemi = parent.child(0).text(self.tree.IDX_ID)
+                child = parent.child(0)
+                if child:
+                    id_coemi = child.text(self.tree.IDX_ID)
 
             certs_data.append(
                 {

@@ -319,24 +319,24 @@ class ScadenzeAnalysisDialog(QDialog):
         # Riga Intestazione Colonne
         header_row_layout = QHBoxLayout()
         header_row_layout.setSpacing(15)
-        
+
         lbl_h_mat = QLabel("MATRICOLA")
         lbl_h_mat.setStyleSheet(f"color: {color}; font-size: 9px; font-weight: bold; min-width: 120px;")
-        
+
         lbl_h_mod = QLabel("MODELLO / TIPO")
         lbl_h_mod.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 9px; font-weight: bold;")
         lbl_h_mod.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        
+
         lbl_h_cos = QLabel("COSTRUTTORE")
         lbl_h_cos.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 9px; font-weight: bold; min-width: 100px;")
-        
+
         lbl_h_id = QLabel("ID-COEMI")
         lbl_h_id.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 9px; font-weight: bold; min-width: 80px;")
-        
+
         lbl_h_scad = QLabel("STATO SCADENZA")
         lbl_h_scad.setStyleSheet(f"color: {color}; font-size: 9px; font-weight: bold; min-width: 130px;")
         lbl_h_scad.setAlignment(Qt.AlignmentFlag.AlignRight)
-        
+
         header_row_layout.addWidget(lbl_h_mat)
         header_row_layout.addWidget(lbl_h_mod)
         header_row_layout.addWidget(lbl_h_cos)

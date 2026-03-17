@@ -12,15 +12,15 @@ class CertificatiImporter(BaseImporter):
     """Importer per i Certificati Campione."""
 
     CERTIFICATI_CAMPIONE_MAPPING: ClassVar[dict[str, str]] = {
+        "ID-COEMI": "id_coemi",
+        "Certificato Taratura": "certificato",
         "Modello / Tipo": "modello",
         "Costruttore": "costruttore",
         "Matricola": "matricola",
         "Range Strumento": "range_strumento",
         "Errore max %": "errore_max",
-        "Certificato Taratura": "certificato",
-        "Scadenza Certificato": "scadenza",
         "Emissione Certificato": "emissione",
-        "ID-COEMI": "id_coemi",
+        "Scadenza Certificato": "scadenza",
         "Stato Certificato": "stato",
     }
 
