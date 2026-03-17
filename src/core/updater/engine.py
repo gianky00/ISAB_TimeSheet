@@ -181,7 +181,9 @@ class DownloadWorker(QThread):
 def run_installer_and_exit(setup_path: str):
     """Executes the installer and terminates the process (Fix B603)."""
     if Path(setup_path).exists():
-        subprocess.Popen([setup_path, "/SILENT", "/CLOSEAPPLICATIONS", "/RESTARTAPPLICATIONS", "/FORCESTART"])
+        # Rimosso /SILENT per permettere all'utente di scegliere se avviare l'app alla fine.
+        # Mantengo /CLOSEAPPLICATIONS per facilitare la sovrascrittura dei file.
+        subprocess.Popen([setup_path, "/CLOSEAPPLICATIONS", "/RESTARTAPPLICATIONS"])
         sys.exit(0)
 
 
@@ -193,7 +195,7 @@ def run_pending_installer():
         args = [
             "cmd.exe",
             "/c",
-            f'timeout /t 3 /nobreak > NUL && "{_pending_installer_path}" /SILENT /FORCESTART',
+            f'timeout /t 3 /nobreak > NUL && "{_pending_installer_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS',
         ]
         subprocess.Popen(args, shell=False, creationflags=flags, close_fds=True)
 

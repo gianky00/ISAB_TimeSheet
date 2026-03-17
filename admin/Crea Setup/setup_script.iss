@@ -82,6 +82,7 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilen
 
 [Run]
 ; Launch after install (optional)
+; Rimosso 'skipifsilent' per garantire la visibilità se lanciato normalmente e aggiunta descrizione chiara.
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
@@ -91,7 +92,11 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 // Custom code for installation logic
 
 function InitializeSetup(): Boolean;
+var
+  ErrorCode: Integer;
 begin
+  // SMART APP KILLER: Chiude l'app prima dell'installazione per evitare "File in uso"
+  Exec('taskkill.exe', '/F /T /IM {#MyAppExeName}', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
   Result := True;
 end;
 
