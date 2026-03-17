@@ -32,6 +32,7 @@ from src.gui.styles import COLORS
 from src.gui.widgets.startup.particle_background import ParticleBackground
 from src.gui.widgets.startup.startup_widgets import (
     AnimatedBorder,
+    ConsoleOverlay,
     GlowingProgressBar,
     PulsingLogo,
     TypewriterLabel,
@@ -81,12 +82,12 @@ class StartupDialog(QDialog):
         self.container.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.container.setStyleSheet("#Container { background: transparent; border: none; }")
 
-        # Particle background (Estratto)
+        # Particle background
         self.particles = ParticleBackground(self.container)
         self.particles.setGeometry(0, 0, self.WIDTH, self.HEIGHT)
         self.particles.init_particles(70)
 
-        # Animated border (Estratto)
+        # Animated border
         self.border = AnimatedBorder(self.container)
         self.border.setGeometry(0, 0, self.WIDTH, self.HEIGHT)
 
@@ -109,7 +110,7 @@ class StartupDialog(QDialog):
     def _setup_content(self):
         """Configura il contenuto principale (header, console, progress, footer)."""
         content_layout = QVBoxLayout(self.content)
-        content_layout.setContentsMargins(30, 45, 30, 45)  # Ridotti margini laterali per logs
+        content_layout.setContentsMargins(30, 45, 30, 45)
         content_layout.setSpacing(20)
 
         self._setup_header(content_layout)
@@ -122,9 +123,7 @@ class StartupDialog(QDialog):
         header = QHBoxLayout()
         header.setSpacing(20)
 
-        # Logo pulsante (Estratto)
         from src.utils.helpers import get_asset_path
-
         icon_path = get_asset_path("assets/app.ico")
 
         self.logo = PulsingLogo()
@@ -133,7 +132,6 @@ class StartupDialog(QDialog):
             self.logo.set_pixmap(QIcon(icon_path).pixmap(64, 64))
         header.addWidget(self.logo)
 
-        # Titolo e versione
         title_box = QVBoxLayout()
         title_box.setSpacing(4)
 
@@ -146,7 +144,6 @@ class StartupDialog(QDialog):
         title_box.addWidget(self.title)
 
         from src.core.version import __version__
-
         self.version = QLabel(f"v{__version__}")
         self.version.setStyleSheet(
             f"font-size:13px; color:{COLORS['primary_blue']}; opacity: 0.9; font-weight:600; letter-spacing:3px;"
@@ -156,7 +153,6 @@ class StartupDialog(QDialog):
         header.addLayout(title_box)
         header.addStretch()
 
-        # License info box
         self._setup_license_info(header)
         parent_layout.addLayout(header)
 
@@ -198,43 +194,46 @@ class StartupDialog(QDialog):
         return row
 
     def _setup_console(self, parent_layout: QVBoxLayout):
-        """Configura la console di log con TypewriterLabels."""
+        """Configura la console di log con TypewriterLabels e overlay CRT."""
         self.log_frame = QFrame()
+        self.log_frame.setObjectName("LogConsole")
         c = QColor(COLORS["primary_blue"])
         self.log_frame.setStyleSheet(
-            f"background:rgba(0,0,0,0.35); border-radius:16px; border:1px solid rgba({c.red()},{c.green()},{c.blue()},0.2);"
+            f"#LogConsole {{ background:rgba(0,0,0,0.4); border-radius:16px; border:1px solid rgba({c.red()},{c.green()},{c.blue()},0.25); }}"
         )
         log_layout = QVBoxLayout(self.log_frame)
-        log_layout.setContentsMargins(10, 10, 10, 10)  # Margini ridotti
-        log_layout.setSpacing(2)
+        log_layout.setContentsMargins(15, 12, 15, 12)
+        log_layout.setSpacing(4)
 
-        log_header = QLabel("INIZIALIZZAZIONE SISTEMA")
+        log_header = QLabel("TERMINALE DI SISTEMA")
         log_header.setStyleSheet(
-            f"font-size:9px; color:rgba({c.red()},{c.green()},{c.blue()},0.6); letter-spacing:2px; font-weight:600;"
+            f"font-size:10px; color:rgba({c.red()},{c.green()},{c.blue()},0.7); letter-spacing:3px; font-weight:800;"
         )
         log_layout.addWidget(log_header)
 
         sep = QFrame()
         sep.setFixedHeight(1)
-        sep.setStyleSheet(f"background:rgba({c.red()},{c.green()},{c.blue()},0.15);")
+        sep.setStyleSheet(f"background:rgba({c.red()},{c.green()},{c.blue()},0.2);")
         log_layout.addWidget(sep)
 
         self.log_labels = []
         for i in range(5):
-            lbl = TypewriterLabel()  # Estratto
-            lbl.setWordWrap(False)  # Disabilita a capo automatico per singola riga
+            lbl = TypewriterLabel()
+            lbl.setWordWrap(False)
+            lbl.setTextFormat(Qt.TextFormat.RichText)
             lbl.setStyleSheet(
-                f"font-size:10px; color:rgba(255,255,255,{0.2 + i * 0.15}); "
-                f"font-family:'Consolas','Fira Code',monospace; padding:1px 0;"
+                f"font-size:10px; font-family:'Consolas','Fira Code',monospace; padding:1px 0;"
             )
             log_layout.addWidget(lbl)
             self.log_labels.append(lbl)
 
+        # Overlay CRT (Scanlines + Grid)
+        self.console_overlay = ConsoleOverlay(self.log_frame)
         parent_layout.addWidget(self.log_frame)
 
     def _setup_progress(self, parent_layout: QVBoxLayout):
         """Configura la barra di progresso."""
-        self.progress = GlowingProgressBar()  # Estratto
+        self.progress = GlowingProgressBar()
         parent_layout.addWidget(self.progress)
 
     def _setup_footer(self, parent_layout: QVBoxLayout):
@@ -242,14 +241,12 @@ class StartupDialog(QDialog):
         footer = QHBoxLayout()
         footer.setContentsMargins(0, 5, 0, 0)
 
-        # Indicatore di stato
         self.indicator = QLabel()
         self.indicator.setFixedSize(8, 8)
         self.indicator.setStyleSheet(f"background:{COLORS['primary_blue']}; border-radius:4px;")
         footer.addWidget(self.indicator)
         footer.addSpacing(8)
 
-        # Label status
         self.status = QLabel("AVVIO IN CORSO...")
         self.status.setStyleSheet(
             f"font-size:11px; color:{COLORS['bg_white']}; opacity: 0.5; font-weight:600; letter-spacing:2px;"
@@ -263,9 +260,6 @@ class StartupDialog(QDialog):
         footer.addWidget(self.dots)
 
         footer.addStretch()
-
-        # Rimosso Resource Monitor
-
         parent_layout.addLayout(footer)
 
     def _setup_animations(self):
@@ -288,6 +282,12 @@ class StartupDialog(QDialog):
         self._fade.setEndValue(1.0)
         self._fade.setEasingCurve(QEasingCurve.Type.OutCubic)
         self._fade.start()
+
+    def resizeEvent(self, event):
+        """Gestisce il ridimensionamento dell'overlay della console."""
+        super().resizeEvent(event)
+        if hasattr(self, 'console_overlay'):
+            self.console_overlay.setGeometry(self.log_frame.rect())
 
     def mousePressEvent(self, event):
         """Inizia il drag della finestra tramite mouse."""
@@ -320,8 +320,9 @@ class StartupDialog(QDialog):
         self.indicator.setStyleSheet(f"background:{color}; border-radius:4px;")
 
     def _on_progress(self, message: str, prog: int):
-        """Aggiorna UI - chiamato dal thread principale via signal."""
-        self.status.setText(message.upper())
+        """Aggiorna UI con log animati e case originale."""
+        full_entry = f"> {message}"
+        self.status.setText(message.upper()) # Status footer rimane upper per design
 
         if prog >= 90:
             self.indicator.setStyleSheet(f"background:{COLORS['success_green']}; border-radius:4px;")
@@ -330,21 +331,21 @@ class StartupDialog(QDialog):
         else:
             self.indicator.setStyleSheet(f"background:{COLORS['warning_orange']}; border-radius:4px;")
 
-        entry = f"> {message}"
-        self.current_logs.append(entry)
+        self.current_logs.append(full_entry)
         if len(self.current_logs) > 5:
             self.current_logs.pop(0)
 
         for i in range(5):
             if i < len(self.current_logs):
                 is_last = i == len(self.current_logs) - 1
-                opacity = 1.0 if is_last else 0.25 + i * 0.12
+                opacity = 1.0 if is_last else 0.2 + i * 0.15
+                
                 self.log_labels[i].setStyleSheet(
-                    f"font-size:10px; color:rgba(255,255,255,{opacity}); "
-                    f"font-family:'Consolas','Fira Code',monospace; padding:1px 0;"
+                    f"font-size:10px; font-family:'Consolas',monospace; color:white; opacity:{opacity};"
                 )
+                
                 if is_last:
-                    self.log_labels[i].set_text_animated(self.current_logs[i], speed=18)
+                    self.log_labels[i].set_text_animated(self.current_logs[i], speed=15)
                 else:
                     self.log_labels[i].set_text_instant(self.current_logs[i])
             else:

@@ -156,26 +156,20 @@ def main():
     splash_script = str(ROOT_DIR / "src" / "gui" / "dialogs" / "splash_standalone.py")
     startup_logger_global.info(f"Launching standalone splash process: {splash_script}")
 
-    # Forza comunicazione non bufferizzata
+    # Forza comunicazione non bufferizzata e PYTHONPATH corretto
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
     env["PYTHONPATH"] = str(ROOT_DIR)
 
-    # Avvia lo splash in un processo separato per garantire fluidità assoluta
-    # Usiamo creationflags su Windows per nascondere la console se necessario
-    creation_flags = 0
-    if sys.platform == "win32":
-        # Se siamo in modalità GUI (pythonw), non vogliamo una console popup
-        creation_flags = subprocess.CREATE_NO_WINDOW if getattr(sys, "frozen", False) else 0
-
+    # Avvia lo splash in un processo separato
+    # Rimuoviamo creationflags per assicurarci che la finestra sia visibile
     splash_process = subprocess.Popen(
         [sys.executable, splash_script],
         stdin=subprocess.PIPE,
         text=True,
-        bufsize=1,  # Line buffered
+        bufsize=1,
         encoding="utf-8",
-        env=env,
-        creationflags=creation_flags
+        env=env
     )
 
     def update_splash(msg: str, prog: int):

@@ -5,7 +5,7 @@ Collezione di widget animati utilizzati nella Splash Screen.
 
 import math
 
-from PyQt6.QtCore import QPoint, Qt, QTimer
+from PyQt6.QtCore import QPoint, QRect, Qt, QTimer
 from PyQt6.QtGui import (
     QBrush,
     QColor,
@@ -192,28 +192,20 @@ class GlowingProgressBar(QWidget):
 
 
 class PulsingLogo(QWidget):
-    """Logo con effetto pulsante e glow."""
+    """Logo statico con bagliore soffuso (Nessuna animazione)."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Inizializza il widget del logo pulsante."""
+        """Inizializza il widget del logo in modalità statica."""
         super().__init__(parent)
         self.pixmap: QPixmap | None = None
-        self.phase = 0.0
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self._tick)
-        self.timer.start(16)
 
     def set_pixmap(self, pm: QPixmap) -> None:
         """Imposta l'immagine del logo."""
         self.pixmap = pm
         self.update()
 
-    def _tick(self) -> None:
-        self.phase += 0.04
-        self.update()
-
     def paintEvent(self, event: QPaintEvent | None) -> None:
-        """Disegna il logo con effetti di scala e glow."""
+        """Disegna il logo e il bagliore in modo statico."""
         if not self.pixmap:
             return
         painter = QPainter(self)
@@ -221,25 +213,28 @@ class PulsingLogo(QWidget):
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
 
-            cx, cy = self.width() / 2.0, self.height() / 2.0
-            scale = 1.0 + 0.04 * math.sin(self.phase)
-            glow_op = 0.4 + 0.3 * math.sin(self.phase)
-
-            glow = QRadialGradient(cx, cy, 60.0)
-            glow.setColorAt(0, QColor(52, 152, 219, int(100 * glow_op)))
+            w, h = float(self.width()), float(self.height())
+            cx, cy = w / 2.0, h / 2.0
+            
+            # 1. BAGLIORE STATICO
+            glow = QRadialGradient(cx, cy, 65.0)
+            glow.setColorAt(0, QColor(52, 152, 219, 70))
             glow.setColorAt(1, QColor(52, 152, 219, 0))
+            
             painter.setBrush(QBrush(glow))
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawEllipse(QPoint(int(cx), int(cy)), 60, 60)
+            painter.drawEllipse(QPoint(int(cx), int(cy)), 70, 70)
 
-            size = int(64 * scale)
-            scaled = self.pixmap.scaled(
-                size,
-                size,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
+            # 2. DISEGNO LOGO STATICO
+            logo_size = 64
+            target_rect = QRect(
+                int(cx - logo_size / 2), 
+                int(cy - logo_size / 2), 
+                logo_size, 
+                logo_size
             )
-            painter.drawPixmap(int(cx - scaled.width() / 2.0), int(cy - scaled.height() / 2.0), scaled)
+            painter.drawPixmap(target_rect, self.pixmap)
+                
         finally:
             painter.end()
 
@@ -285,3 +280,38 @@ class TypewriterLabel(QLabel):
             self.setText(self._current)
         else:
             self._timer.stop()
+
+
+class ConsoleOverlay(QWidget):
+    """Overlay per la console con effetto scanline e griglia CRT."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        """Disegna scanline orizzontali e griglia di punti sottile."""
+        painter = QPainter(self)
+        try:
+            w, h = self.width(), self.height()
+            
+            # 1. SCANLINES ORIZZONTALI
+            painter.setPen(QColor(0, 0, 0, 45))
+            for y in range(0, h, 2):
+                painter.drawLine(0, y, w, y)
+            
+            # 2. GRIGLIA DI PUNTI SUBTLE
+            painter.setPen(QColor(52, 152, 219, 15))
+            grid_size = 10
+            for x in range(0, w, grid_size):
+                for y in range(0, h, grid_size):
+                    painter.drawPoint(x, y)
+                    
+            # 3. EFFETTO VIGNETTE INTERNO
+            grad = QRadialGradient(w / 2.0, h / 2.0, max(w, h) * 0.6)
+            grad.setColorAt(0, QColor(0, 0, 0, 0))
+            grad.setColorAt(1, QColor(0, 0, 0, 40))
+            painter.fillRect(0, 0, w, h, grad)
+        finally:
+            painter.end()

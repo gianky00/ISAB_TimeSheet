@@ -174,20 +174,32 @@ class AppInitializer:
         for i, (idx, name) in enumerate(tasks):
             prog = base_prog + int((i / total) * 45)
             
-            # Step tecnici granulari per ogni pannello
+            # Step tecnici granulari per ogni pannello (senza indici numerici)
             yield f"Allocazione Risorse: {name}...", prog - 3
-            yield f"Binding Segnali Controller: {idx}...", prog - 2
-            yield f"Validazione Metadati Pagina: {idx}...", prog - 1
+            yield f"Binding Segnali Controller: {name}...", prog - 2
+            yield f"Validazione Metadati Pagina: {name}...", prog - 1
             
-            # Casi specifici con log extra reali
-            if idx == PageIndex.STORICO_ODA:
-                yield "Inizializzazione Engine SQL ODA...", prog - 1
-            
+            # === LOG EXTRA AD ALTA DENSITÀ PER ELIMINARE TEMPI MORTI ===
             if idx == PageIndex.AUTOMAZIONI:
-                yield "Parsing Schedule Background...", prog - 1
+                yield "Inizializzazione Sottosistema Scheduler...", prog - 1
+                yield "Parsing Tabelle Cronjob Background...", prog - 1
+                yield "Verifica Conflitti Attività Pianificate...", prog - 1
+                yield "Caricamento Moduli Crittografia Credenziali...", prog
+            
+            if idx == PageIndex.STORICO_ODA:
+                yield "Bootstrap Engine Analisi Storico...", prog - 2
+                yield "Handshake SQL Server Repository...", prog - 2
+                yield "Ottimizzazione Pool di Connessioni...", prog - 1
+                yield "Compilazione Query SQL Pre-cached...", prog - 1
+                yield "Validazione Integrità Documentale...", prog - 1
+            
+            if idx == PageIndex.TIMBRATURE:
+                yield "Sincronizzazione Registry Ore Locale...", prog - 1
+                yield "Check Somma di Controllo Repository...", prog - 1
             
             if idx == PageIndex.SETTINGS:
-                yield "Loading User Preferences JSON...", prog - 1
+                yield "Validazione Schema JSON Config...", prog - 1
+                yield "Parsing Preferenze Utente Enterprise...", prog - 1
 
             yield f"Caricamento {name}...", prog
 
