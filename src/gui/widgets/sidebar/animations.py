@@ -14,19 +14,19 @@ class SidebarAnimationManager(QObject):
         super().__init__(sidebar)
         self.sidebar = sidebar
 
-        # Animazione Larghezza Sidebar
+        # Animazione Larghezza Sidebar - Ottimizzata (200ms invece di 250ms)
         self.width_anim = QPropertyAnimation(sidebar, b"sidebar_width")
-        self.width_anim.setDuration(250)
+        self.width_anim.setDuration(200)
         self.width_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-        # Animazione Opacità Contenuto
+        # Animazione Opacità Contenuto - Ottimizzata (150ms invece di 200ms)
         self.content_anim = QPropertyAnimation(None, b"opacity")
-        self.content_anim.setDuration(200)
+        self.content_anim.setDuration(150)
         self.content_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-        # Animazione Track Magnetico
+        # Animazione Track Magnetico - Ottimizzata (250ms invece di 350ms)
         self.track_anim = QPropertyAnimation(None, b"geometry")
-        self.track_anim.setDuration(350)
+        self.track_anim.setDuration(250)
         self.track_anim.setEasingCurve(QEasingCurve.Type.OutQuint)
 
     def animate_width(self, target_width: int):

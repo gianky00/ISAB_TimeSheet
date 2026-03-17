@@ -357,10 +357,10 @@ class SidebarWidget(QFrame):
             self.active_track.hide()
             self.bg_frame.setProperty("state", "collapsed")
 
-            QTimer.singleShot(250, lambda: self.scroll_area.hide() if self._is_collapsed else None)
-            QTimer.singleShot(250, lambda: self.footer.hide() if self._is_collapsed else None)
-            QTimer.singleShot(250, lambda: self.setMinimumHeight(100) if self._is_collapsed else None)
-            QTimer.singleShot(250, lambda: self.setMaximumHeight(100) if self._is_collapsed else None)
+            QTimer.singleShot(150, lambda: self.scroll_area.hide() if self._is_collapsed else None)
+            QTimer.singleShot(150, lambda: self.footer.hide() if self._is_collapsed else None)
+            QTimer.singleShot(150, lambda: self.setMinimumHeight(100) if self._is_collapsed else None)
+            QTimer.singleShot(150, lambda: self.setMaximumHeight(100) if self._is_collapsed else None)
 
         if style := self.bg_frame.style():
             style.unpolish(self.bg_frame)
@@ -373,10 +373,10 @@ class SidebarWidget(QFrame):
                 b.header_btn.set_collapsed(c)
 
         if not c:
-            QTimer.singleShot(100, self._update_ui_state)
+            QTimer.singleShot(50, self._update_ui_state)
         else:
             self._update_ui_state()
-        QTimer.singleShot(150, self._update_track)
+        QTimer.singleShot(100, self._update_track)
 
     def _update_ui_state(self) -> None:
         """Sincronizza lo stato dei gruppi."""
