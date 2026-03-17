@@ -291,6 +291,7 @@ class EditableDataTable(QWidget):
             return
 
         def normalize(s: str) -> str:
+            """Rimuove caratteri non alfanumerici e converte in minuscolo."""
             return "".join(c.lower() for c in s if c.isalnum())
 
         for row_dict in data:

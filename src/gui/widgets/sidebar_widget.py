@@ -318,10 +318,12 @@ class SidebarWidget(QFrame):
         QTimer.singleShot(150, self._update_track)
 
     def enterEvent(self, e: Any) -> None:
+        """Gestisce l'evento di entrata del mouse (espansione)."""
         self._set_collapsed(False)
         super().enterEvent(e)
 
     def leaveEvent(self, e: Any) -> None:
+        """Gestisce l'evento di uscita del mouse (collasso)."""
         if getattr(self, "_drag_in_progress", False):
             super().leaveEvent(e)
             return

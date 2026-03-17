@@ -145,6 +145,7 @@ class EnterpriseLogConsole(QWidget):
             from PyQt6.sip import isdeleted
 
             def safe_scroll() -> None:
+                """Esegue lo scroll in modo sicuro per evitare crash UI."""
                 if not isdeleted(bar):
                     bar.setValue(bar.maximum())
 

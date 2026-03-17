@@ -54,6 +54,7 @@ class UpdateProgressDialog(QDialog):
             self.lbl_status.setText("Avvio trasferimento rete...")
 
     def setup_ui(self):
+        """Configura l'interfaccia grafica del dialogo."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(25, 25, 25, 25)
         self.lbl_status = QLabel("Avvio download...")
@@ -74,11 +75,13 @@ class UpdateProgressDialog(QDialog):
         layout.addWidget(self.lbl_retry)
 
     def start(self):
+        """Mostra il dialogo e avvia il worker."""
         self.show()
         self.worker.start()
 
     @pyqtSlot(int, int, float, float)
     def update_progress(self, downloaded, total, speed, eta):
+        """Aggiorna la barra di progresso e le etichette informative."""
         self.lbl_retry.setText("")
         if total > 0:
             self.pb.setMaximum(total)
@@ -98,15 +101,18 @@ class UpdateProgressDialog(QDialog):
 
     @pyqtSlot(int)
     def on_retrying(self, retry_count):
+        """Gestisce i tentativi di riconnessione."""
         self.lbl_retry.setText(f"⚠️ Connessione instabile. Tentativo #{retry_count}...")
 
     @pyqtSlot(str)
     def on_finished(self, setup_path):
+        """Gestisce il completamento del download."""
         self.close()
         show_install_prompt(setup_path, cast("QWidget", self.parent()))
 
     @pyqtSlot(str)
     def on_error(self, err_msg):
+        """Gestisce eventuali errori durante il download."""
         self.close()
         QMessageBox.critical(cast("QWidget", self.parent()), "Errore", f"Trasferimento interrotto: {err_msg}")
 

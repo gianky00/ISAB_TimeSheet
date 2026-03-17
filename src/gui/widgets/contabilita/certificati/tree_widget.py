@@ -32,6 +32,7 @@ class UbicazioneDelegate(QStyledItemDelegate):
         self.items = ["", "UFFICIO", "OFFICINA", "ASSEGNATO AL TECNICO"]
 
     def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:
+        """Crea l'editor per la colonna Ubicazione."""
         editor = QComboBox(parent)
         editor.addItems(self.items)
         # Seleziona l'elemento corrente se valido
@@ -41,6 +42,7 @@ class UbicazioneDelegate(QStyledItemDelegate):
         return editor
 
     def setEditorData(self, editor: QWidget | None, index: QModelIndex):
+        """Popola l'editor con i dati correnti."""
         value = index.data(Qt.ItemDataRole.EditRole)
         if isinstance(editor, QComboBox):
             idx = editor.findText(value)
@@ -48,6 +50,7 @@ class UbicazioneDelegate(QStyledItemDelegate):
                 editor.setCurrentIndex(idx)
 
     def setModelData(self, editor: QWidget | None, model: object, index: QModelIndex):
+        """Salva i dati dall'editor al modello."""
         if isinstance(editor, QComboBox):
             value = editor.currentText()
             model.setData(index, value, Qt.ItemDataRole.EditRole)  # type: ignore
@@ -57,15 +60,18 @@ class AnnotazioniDelegate(QStyledItemDelegate):
     """Delegate per l'inserimento testo libero nelle annotazioni."""
 
     def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:
+        """Crea l'editor per la colonna Annotazioni."""
         editor = QLineEdit(parent)
         return editor
 
     def setEditorData(self, editor: QWidget | None, index: QModelIndex):
+        """Popola l'editor con i dati correnti."""
         value = index.data(Qt.ItemDataRole.EditRole)
         if isinstance(editor, QLineEdit):
             editor.setText(value)
 
     def setModelData(self, editor: QWidget | None, model: object, index: QModelIndex):
+        """Salva i dati dall'editor al modello."""
         if isinstance(editor, QLineEdit):
             value = editor.text()
             model.setData(index, value, Qt.ItemDataRole.EditRole)  # type: ignore

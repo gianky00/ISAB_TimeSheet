@@ -50,9 +50,11 @@ class DownloadWorker(QThread):
         self._ema_speed = 0.0
 
     def stop(self):
+        """Richiede l'interruzione del download."""
         self._is_cancelled = True
 
     def run(self):
+        """Esegue il download o la copia del file."""
         setup_path = get_local_setup_path(self.url_or_path)
         start_time = time.time()
         self._ema_speed = 0.0
