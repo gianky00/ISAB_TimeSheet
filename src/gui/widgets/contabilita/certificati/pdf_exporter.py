@@ -46,7 +46,7 @@ class CertificatiPdfExporter:
 
             # Mapping coordinate logiche (punti) su area fisica (pixel)
             painter.setViewport(layout.paintRectPixels(dpi))
-            painter.setWindow(0, 0, int(width_pt), int(paint_rect_pt.height()))
+            painter.setWindow(0, 0, width_pt, paint_rect_pt.height())
 
             total_pages = len(pages_html)
 
@@ -240,12 +240,12 @@ class CertificatiPdfExporter:
         </thead>
         <tbody>
         """
-        
+
         page_footer_html = "</tbody></table></body></html>"
 
         # FIX PAGINAZIONE: Riserva molto spazio per header e footer (circa 180pt)
         available_height = height_pt - 180
-        
+
         pages_html: list[str] = []
         current_rows: list[str] = []
         current_page_height = 0
@@ -339,7 +339,7 @@ class CertificatiPdfExporter:
 
             # Stima altezza: 35pt per padre, 22pt per figlio (conservativa)
             group_est_height = 35 + (len(group_html_blocks) - 1) * 22
-            
+
             if current_page_height + group_est_height > available_height and current_rows:
                 pages_html.append(style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html)
                 current_rows = []
