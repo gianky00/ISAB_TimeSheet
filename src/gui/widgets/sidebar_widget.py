@@ -1,7 +1,7 @@
 """
-SyncroJob - Sidebar Widget (Refactored V8.8)
+SyncroJob - Sidebar Widget (Refactored V8.8 - Performance Optimized)
 Navigazione magnetica enterprise a 3 livelli.
-Ottimizzata per la fluidità totale e risoluzione bug visibilità.
+Ottimizzata per la fluidità estrema rimuovendo i ricalcoli QSS intensivi.
 """
 
 from __future__ import annotations
@@ -48,6 +48,10 @@ class SidebarWidget(QFrame):
         super().__init__(parent)
         self.setObjectName("sidebarContainer")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        
+        # Performance Hint: Evita ricalcoli inutili se il contenuto non cambia visivamente
+        self.setAttribute(Qt.WidgetAttribute.WA_StaticContents)
+        
         self._is_collapsed = True
         self._drag_in_progress = False
         self.expanded_width = 245
@@ -62,7 +66,7 @@ class SidebarWidget(QFrame):
         self.setMouseTracking(True)
 
         self._setup_ui()
-        # Inizializziamo lo stile base
+        # Inizializziamo lo stile base una sola volta
         self.bg_frame.setStyleSheet(self._get_glass_style())
         self.bg_frame.setProperty("state", "collapsed")
 
@@ -81,8 +85,9 @@ class SidebarWidget(QFrame):
     sidebar_width = pyqtProperty(int, fget=get_sidebar_width, fset=set_sidebar_width)
 
     def _get_glass_style(self) -> str:
-        """Genera lo stile QSS per l'effetto glass della sidebar."""
+        """Genera lo stile QSS statico. Evitiamo variabili dinamiche qui."""
         gradient = "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #0f172a, stop:0.4 #172554, stop:0.8 #081121, stop:1 #1e1b4b)"
+        sb_handle = hex_to_rgba(COLORS["bg_white"], 0.15)
         return f"""
             QFrame#sidebarFrame {{
                 background: {gradient};
@@ -93,7 +98,7 @@ class SidebarWidget(QFrame):
             QScrollArea {{ border: none; background: transparent; }}
             QWidget#scrollContent {{ background: transparent; }}
             QScrollBar:vertical {{ border: none; background: transparent; width: 4px; }}
-            QScrollBar::handle:vertical {{ background: {hex_to_rgba(COLORS["bg_white"], 0.15)}; border-radius: 2px; }}
+            QScrollBar::handle:vertical {{ background: {sb_handle}; border-radius: 2px; }}
         """
 
     def _setup_ui(self) -> None:
@@ -129,6 +134,8 @@ class SidebarWidget(QFrame):
         self.logo_label = QLabel("SyncroJob")
         self.logo_label.setStyleSheet("font-size: 18px; font-weight: 900; color: white;")
         self.logo_opacity = QGraphicsOpacityEffect(self.logo_label)
+        # Abilitiamo il caching per l'effetto opacità
+        self.logo_opacity.setEnabled(True)
         self.logo_label.setGraphicsEffect(self.logo_opacity)
         self.h_lay.addWidget(self.logo_label)
 
@@ -336,6 +343,10 @@ class SidebarWidget(QFrame):
             return
         self._is_collapsed = c
 
+        # Disabilita layout durante l'animazione per evitare micro-lag
+        if self.bg_frame.layout():
+            self.bg_frame.layout().setEnabled(False)
+
         # Animazioni
         self.anim_manager.animate_width(self.collapsed_width if c else self.expanded_width)
         self.anim_manager.animate_content(self.logo_opacity, 0.0 if c else 1.0)
@@ -362,9 +373,8 @@ class SidebarWidget(QFrame):
             QTimer.singleShot(150, lambda: self.setMinimumHeight(100) if self._is_collapsed else None)
             QTimer.singleShot(150, lambda: self.setMaximumHeight(100) if self._is_collapsed else None)
 
-        if style := self.bg_frame.style():
-            style.unpolish(self.bg_frame)
-            style.polish(self.bg_frame)
+        # OTTIMIZZAZIONE: unpolish/polish rimosso. Usiamo solo repaint se necessario.
+        self.bg_frame.update()
 
         for b in self.main_btns + self.footer_btns:
             if hasattr(b, "set_collapsed"):
@@ -376,6 +386,9 @@ class SidebarWidget(QFrame):
             QTimer.singleShot(50, self._update_ui_state)
         else:
             self._update_ui_state()
+        
+        # Riabilita layout dopo che l'animazione è avanzata
+        QTimer.singleShot(200, lambda: self.bg_frame.layout().setEnabled(True) if self.bg_frame.layout() else None)
         QTimer.singleShot(100, self._update_track)
 
     def _update_ui_state(self) -> None:

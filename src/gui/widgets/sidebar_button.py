@@ -1,6 +1,6 @@
 """
-SyncroJob - Sidebar Button (Premium V6)
-Risoluzione contrasto: Sfondo selezione più scuro e opacità testo migliorata.
+SyncroJob - Sidebar Button (Premium V6 - Optimized)
+Ottimizzato per la fluidità: rimosso l'uso intensivo di setStyleSheet durante le animazioni.
 """
 
 from typing import Any
@@ -17,7 +17,7 @@ from src.utils.helpers import get_colored_icon
 class SidebarButton(QPushButton):
     """
     Pulsante ultra-moderno per la sidebar.
-    Ottimizzato per la visibilità su sfondi scuri gradienti.
+    Ottimizzato per la visibilità su sfondi scuri gradienti e performance elevate.
     """
 
     def __init__(self, text: str, icon_path: str = "", parent: QWidget | None = None) -> None:
@@ -26,7 +26,7 @@ class SidebarButton(QPushButton):
         self.icon_path = icon_path
         self._collapsed = False
         self._badge_count = 0
-        self._text_opacity = 1.0  # Default a 1.0 per visibilità immediata
+        self._text_opacity = 1.0
         self._drag_start_pos: QPoint | None = None
         self._current_drag: QDrag | None = None
 
@@ -39,15 +39,12 @@ class SidebarButton(QPushButton):
 
         self.glow = QGraphicsDropShadowEffect(self)
         self.glow.setBlurRadius(15)
-        self.glow.setColor(QColor(0, 0, 0, 0))  # Trasparente di default
+        self.glow.setColor(QColor(0, 0, 0, 0))
         self.glow.setOffset(0, 0)
         self.setGraphicsEffect(self.glow)
 
         self._refresh_state()
-        self._update_style()
-        self.toggled.connect(self._on_toggled)
-        self._refresh_state()
-        self._update_style()
+        self._set_base_style()
         self.toggled.connect(self._on_toggled)
 
     @pyqtProperty(float)
@@ -57,33 +54,34 @@ class SidebarButton(QPushButton):
 
     @text_opacity.setter  # type: ignore[no-redef]
     def text_opacity(self, value: float) -> None:
-        """Imposta l'opacità del testo."""
+        """Imposta l'opacità del testo (senza ricaricare lo stile intero)."""
         self._text_opacity = value
-        self._update_style()
+        # Non chiamiamo _update_style qui per performance
 
     def _on_toggled(self, checked: bool) -> None:
         if checked:
-            # Glow basato sul colore primario/teal
             c = QColor(COLORS["teal_accent"])
             c.setAlpha(180)
             self.glow.setColor(c)
         else:
             if self._badge_count == 0:
                 self.glow.setColor(QColor(0, 0, 0, 0))
-        self._update_style()
-
-    def showEvent(self, event: Any) -> None:
-        """Forza l'aggiornamento dello stile quando il widget viene mostrato."""
-        super().showEvent(event)
-        self._update_style()
 
     def set_collapsed(self, collapsed: bool, animated: bool = False) -> None:
-        """Aggiorna lo stato visivo in base al collasso della sidebar."""
+        """Aggiorna lo stato visivo senza forzare ricaricamenti pesanti."""
+        if self._collapsed == collapsed:
+            return
         self._collapsed = collapsed
+        self.setProperty("collapsed", collapsed)
         self._refresh_state()
-        self._update_style()
+        
+        # Invece di riscrivere tutto il QSS, aggiorniamo solo le proprietà necessarie
+        if style := self.style():
+            style.unpolish(self)
+            style.polish(self)
 
     def _refresh_state(self) -> None:
+        """Sincronizza testo e icone."""
         base_text = f"   {self.label_text}"
         display_text = f"{base_text} ({self._badge_count})" if self._badge_count > 0 else base_text
 
@@ -94,37 +92,37 @@ class SidebarButton(QPushButton):
             self.setText(display_text)
             self.setIconSize(QSize(18, 18))
 
-    def _update_style(self) -> None:
-        align = "center" if self._collapsed else "left"
-        padding = "0px" if self._collapsed else "12px 15px"
-
-        # Sfondo selezione dinamico basato su teal_accent
-        if self.isChecked():
-            bg_color = hex_to_rgba(COLORS["teal_accent"], 0.25)
-            text_color = COLORS["bg_white"]
-            font_weight = "800"
-        else:
-            bg_color = "transparent"
-            text_color = hex_to_rgba(
-                COLORS["bg_white"], max(0.4, self._text_opacity)
-            )  # Mai sotto 0.4 se visibile
-            font_weight = "500"
+    def _set_base_style(self) -> None:
+        """Imposta lo stile QSS statico con selettori di stato."""
+        active_bg = hex_to_rgba(COLORS["teal_accent"], 0.25)
+        hover_bg = hex_to_rgba(COLORS["bg_white"], 0.1)
+        text_color = COLORS["bg_white"]
+        muted_text = hex_to_rgba(COLORS["bg_white"], 0.7)
 
         self.setStyleSheet(f"""
             QPushButton {{
-                color: {text_color};
-                background-color: {bg_color};
+                color: {muted_text};
+                background-color: transparent;
                 border-radius: 8px;
-                padding: {padding};
-                text-align: {align};
+                padding: 12px 15px;
+                text-align: left;
                 font-size: 14px;
-                font-weight: {font_weight};
+                font-weight: 500;
                 margin: 2px 8px;
                 border: none;
             }}
+            QPushButton[collapsed="true"] {{
+                padding: 0px;
+                text-align: center;
+            }}
+            QPushButton:checked {{
+                background-color: {active_bg};
+                color: {text_color};
+                font-weight: 800;
+            }}
             QPushButton:hover {{
-                background-color: {hex_to_rgba(COLORS["bg_white"], 0.1)};
-                color: {COLORS["bg_white"]};
+                background-color: {hover_bg};
+                color: {text_color};
             }}
         """)
 
