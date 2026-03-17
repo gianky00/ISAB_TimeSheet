@@ -1,7 +1,7 @@
 """
-SyncroJob - Sidebar Widget (Refactored V8.8 - Performance Optimized V2)
+SyncroJob - Sidebar Widget (Refactored V8.8 - Performance Optimized V3)
 Navigazione magnetica enterprise a 3 livelli.
-Ottimizzata per la fluidità estrema rimuovendo ombre e semplificando il background.
+Risolto bug sfondo invisibile e ottimizzata la fluidità senza bloccare il repaint.
 """
 
 from __future__ import annotations
@@ -49,7 +49,7 @@ class SidebarWidget(QFrame):
         self.setObjectName("sidebarContainer")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
-        # OTTIMIZZAZIONE: Evitiamo ricalcoli pesanti durante il ridimensionamento
+        # OTTIMIZZAZIONE: WA_StaticContents aiuta a non ricalcolare il contenuto interno se non cambia
         self.setAttribute(Qt.WidgetAttribute.WA_StaticContents)
         
         self._is_collapsed = True
@@ -86,7 +86,7 @@ class SidebarWidget(QFrame):
 
     def _get_glass_style(self) -> str:
         """Genera lo stile QSS. Semplificato per performance."""
-        # Gradiente verticale invece di diagonale (più veloce da renderizzare)
+        # Gradiente verticale per velocità di rendering
         gradient = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #0f172a, stop:1 #1e1b4b)"
         sb_handle = hex_to_rgba(COLORS["bg_white"], 0.15)
         
@@ -338,13 +338,12 @@ class SidebarWidget(QFrame):
         super().leaveEvent(e)
 
     def _set_collapsed(self, c: bool) -> None:
-        """Gestisce espansione e contrazione con ottimizzazioni aggressive."""
+        """Gestisce espansione e contrazione con ottimizzazioni bilanciate."""
         if self._is_collapsed == c:
             return
         self._is_collapsed = c
 
-        # Disabilita layout e aggiornamenti durante l'animazione
-        self.setUpdatesEnabled(False)
+        # Disabilita layout durante l'animazione (Layout Freeze) per performance
         if self.bg_frame.layout():
             self.bg_frame.layout().setEnabled(False)
 
@@ -369,11 +368,17 @@ class SidebarWidget(QFrame):
             self.active_track.hide()
             self.bg_frame.setProperty("state", "collapsed")
 
-            # Nascondiamo subito le aree pesanti durante la contrazione
-            self.scroll_area.hide()
-            self.footer.hide()
-            self.setMinimumHeight(100)
-            self.setMaximumHeight(100)
+            # Nascondiamo le aree pesanti a metà animazione per non vedere il troncamento
+            QTimer.singleShot(100, lambda: self.scroll_area.hide() if self._is_collapsed else None)
+            QTimer.singleShot(100, lambda: self.footer.hide() if self._is_collapsed else None)
+            QTimer.singleShot(150, lambda: self.setMinimumHeight(100) if self._is_collapsed else None)
+            QTimer.singleShot(150, lambda: self.setMaximumHeight(100) if self._is_collapsed else None)
+
+        # FIX: Sfondo mancante. È OBBLIGATORIO fare unpolish/polish quando si usa setProperty nel QSS.
+        # Lo facciamo solo una volta all'inizio della transizione.
+        if style := self.bg_frame.style():
+            style.unpolish(self.bg_frame)
+            style.polish(self.bg_frame)
 
         for b in self.main_btns + self.footer_btns:
             if hasattr(b, "set_collapsed"):
@@ -385,14 +390,18 @@ class SidebarWidget(QFrame):
             QTimer.singleShot(50, self._update_ui_state)
         else:
             self._update_ui_state()
-        
-        # Riabilita tutto a fine animazione (200ms)
+
+        # Riabilita layout a fine animazione (200ms)
         QTimer.singleShot(200, self._finalize_animation)
 
     def _finalize_animation(self) -> None:
-        """Riabilita layout e repaint a fine transizione."""
-        self.setUpdatesEnabled(True)
+        """Riabilita il layout a fine transizione."""
         if self.bg_frame.layout():
             self.bg_frame.layout().setEnabled(True)
         self.bg_frame.update()
         self._update_track()
+
+    def _update_ui_state(self) -> None:
+        """Sincronizza lo stato dei gruppi."""
+        for g in (self.group_db, self.group_automazioni, self.group_contabilita, self.group_notifiche):
+            g.set_collapsed(self._is_collapsed)

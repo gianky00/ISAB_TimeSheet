@@ -3,10 +3,14 @@ SyncroJob - Sidebar Button (Premium V6 - Ultra Optimized)
 Rimosso QGraphicsDropShadowEffect per garantire 60fps costanti anche su hardware datato.
 """
 
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QDrag
 
 from PyQt6.QtCore import QPoint, QSize, Qt, pyqtProperty  # type: ignore[attr-defined]
-from PyQt6.QtGui import QColor, QDrag
 from PyQt6.QtWidgets import QPushButton, QWidget
 
 from src.gui.styles import COLORS
@@ -60,7 +64,7 @@ class SidebarButton(QPushButton):
         self._collapsed = collapsed
         self.setProperty("collapsed", collapsed)
         self._refresh_state()
-        
+
         if style := self.style():
             style.unpolish(self)
             style.polish(self)
@@ -119,4 +123,3 @@ class SidebarButton(QPushButton):
         """Imposta un badge numerico sul pulsante."""
         self._badge_count = count
         self._refresh_state()
-        # Invece di cambiare il glow, cambiamo il colore del testo o dello sfondo se necessario
