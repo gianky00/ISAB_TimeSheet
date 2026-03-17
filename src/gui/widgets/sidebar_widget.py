@@ -93,9 +93,9 @@ class SidebarWidget(QFrame):
                 border-right: 1px solid rgba(255, 255, 255, 0.05);
                 border-radius: 18px;
             }}
-            QFrame#sidebarFrame[state="collapsed"] {{ 
-                background: transparent; 
-                border: none; 
+            QFrame#sidebarFrame[state="collapsed"] {{
+                background: transparent;
+                border: none;
             }}
             QScrollArea {{ border: none; background: transparent; }}
             QWidget#scrollContent {{ background: transparent; }}

@@ -22,10 +22,12 @@ from src.utils.helpers import get_asset_path
 class SidebarChildButton(SidebarButton):
     """Pulsante figlio con stile Glass specifico e indentazione."""
 
-    def _update_style(self) -> None:
-        """Aggiorna lo stile del pulsante applicando un'indentazione se espanso."""
-        super()._update_style()
-        if not self._collapsed:
+    def set_collapsed(self, collapsed: bool, animated: bool = False) -> None:
+        """Sovrascrive set_collapsed per mantenere l'indentazione specifica dei figli."""
+        super().set_collapsed(collapsed, animated)
+        if not collapsed:
+            # Ripristiniamo l'indentazione specifica per il secondo livello
+            # Questo sovrascrive il padding standard del SidebarButton
             current_style = self.styleSheet()
             new_style = current_style.replace("padding: 12px 15px;", "padding: 10px 10px 10px 35px;")
             self.setStyleSheet(new_style)
