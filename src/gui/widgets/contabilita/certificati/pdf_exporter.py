@@ -94,9 +94,9 @@ class CertificatiPdfExporter:
         body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 7pt; color: #1e293b; margin: 10px; margin-bottom: 0px; }
         h1 { color: #1e3a8a; text-align: center; margin-top: 5px; margin-bottom: 5px; font-size: 8pt; font-weight: bold; }
         .timestamp { text-align: right; color: #64748b; font-size: 7pt; margin-bottom: 5px; margin-right: 5px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background-color: #f8fafc; color: #0f172a; font-weight: bold; padding: 6px 8px; border-bottom: 1.5pt solid #cbd5e1; text-align: left; font-size: 6pt; }
-        td { padding: 5px 8px; font-size: 6pt; vertical-align: middle; word-wrap: break-word; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th { background-color: #f8fafc; color: #0f172a; font-weight: bold; padding: 4px 4px; border-bottom: 1.5pt solid #cbd5e1; text-align: left; font-size: 6pt; }
+        td { padding: 4px 4px; font-size: 6pt; vertical-align: middle; }
         .historical-row td { color: #64748b; border-top: none; }
         .parent-yes td { background-color: #dcfce7; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
         .parent-no td { background-color: #fee2e2; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
@@ -115,19 +115,19 @@ class CertificatiPdfExporter:
         <table>
         <thead>
         <tr>
-        <th style='width: 9%;' class='text-center'>ID</th>
-        <th style='width: 10%;'>Certificato</th>
-        <th style='width: 14%;'>Modello / Tipo</th>
-        <th style='width: 9%;'>Costruttore</th>
+        <th style='width: 8%;' class='text-center'>ID</th>
+        <th style='width: 8%;'>Certificato</th>
+        <th style='width: 11%;'>Modello / Tipo</th>
+        <th style='width: 8%;'>Costruttore</th>
         <th style='width: 8%;'>Matricola</th>
-        <th style='width: 7%;'>Range Strumento</th>
+        <th style='width: 8.5%;'>Range Strumento</th>
         <th style='width: 4%;' class='text-center'>Err %</th>
-        <th style='width: 8%;'>Emissione</th>
-        <th style='width: 8%;'>Scadenza</th>
+        <th style='width: 6.5%;'>Emissione</th>
+        <th style='width: 6.5%;'>Scadenza</th>
         <th style='width: 8%;'>Stato</th>
-        <th style='width: 7%;'>Ubicazione</th>
-        <th style='width: 8%;'>Annotazioni</th>
-        <th style='width: 4%;' class='text-center'>UTILIZZATO</th>
+        <th style='width: 6.5%;'>Ubicazione</th>
+        <th style='width: 11.5%;'>Annotazioni</th>
+        <th style='width: 5.5%;' class='text-center'>UTILIZZATO</th>
         </tr>
         </thead>
         <tbody>
@@ -199,7 +199,7 @@ class CertificatiPdfExporter:
                     row_html += f"<td>{child.text(3)}</td>"
                     row_html += f"<td>{child.text(4)}</td>"
                     row_html += f"<td>{child.text(5)}</td>"
-                    row_html += f"<td class='text-center'>{child.text(6)}</td>"
+                    row_html += f"<td class='text-center' style='white-space: nowrap;'>{child.text(6)}</td>"
                     row_html += f"<td>{child.text(7)}</td>"
                     row_html += f"<td>{child.text(8)}</td>"
                     row_html += f"<td class='col-stato'>{stato_display}</td>"
