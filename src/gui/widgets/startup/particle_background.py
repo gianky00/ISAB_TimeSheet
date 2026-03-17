@@ -53,8 +53,10 @@ class Particle:
         self.phase += 0.015
         if self.y < -20:
             self.reset(self.w, self.h)
-        if self.x > self.w + 20: self.x = -20.0
-        if self.x < -20: self.x = float(self.w + 20)
+        if self.x > self.w + 20:
+            self.x = -20.0
+        if self.x < -20:
+            self.x = float(self.w + 20)
 
     def apply_force(self, dx: float, dy: float) -> None:
         """Applica parallasse basata sulla dimensione."""
@@ -73,19 +75,19 @@ class ParticleBackground(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
-        
+
         self.particles: list[Particle] = []
         self.phase: float = 0.0
         self.progress: float = 0.0
-        
-        # Stato impulsi neurali
-        self._pulses = [] # (p1_idx, p2_idx, t)
-        
+
+        # Stato impulsi neurali: list of [p1_idx, p2_idx, t]
+        self._pulses: list[list[float]] = []
+
         # Timer 60fps
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._tick)
         self.timer.start(16)
-        
+
         self._bg_cache: QPixmap | None = None
         self._sprite_cache: QPixmap | None = None
         self._circuit_cache: QPixmap | None = None
@@ -108,7 +110,7 @@ class ParticleBackground(QWidget):
     def _tick(self) -> None:
         self.phase += 0.015
         cx, cy = self.width() / 2.0, self.height() / 2.0
-        
+
         for p in self.particles:
             if self.progress > 0.92:
                 # Forza gravitazionale verso il centro
@@ -119,17 +121,18 @@ class ParticleBackground(QWidget):
                 p.speed *= 0.94
             else:
                 p.update()
-        
+
         # Gestione impulsi neurali
-        if random.random() < 0.12 and len(self.particles) > 1:
-            p1 = random.randint(0, len(self.particles)-1)
-            p2 = (p1 + 1) % len(self.particles)
+        if random.random() < 0.12 and len(self.particles) > 1:  # noqa: S311
+            p1 = float(random.randint(0, len(self.particles) - 1))  # noqa: S311
+            p2 = float((int(p1) + 1) % len(self.particles))
             self._pulses.append([p1, p2, 0.0])
-            
-        for pulse in self._pulses[:]:
+
+        for pulse in self._pulses.copy():
             pulse[2] += 0.025
-            if pulse[2] > 1.0: self._pulses.remove(pulse)
-                
+            if pulse[2] > 1.0:
+                self._pulses.remove(pulse)
+
         self.update()
 
     def _render_background_to_cache(self) -> None:
@@ -157,24 +160,29 @@ class ParticleBackground(QWidget):
         p = QPainter(self._circuit_cache)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         p.setPen(QPen(QColor(52, 152, 219, 15), 1))
-        
+
         grid = 40
         for x in range(0, w, grid):
             for y in range(0, h, grid):
-                if random.random() < 0.3:
+                if random.random() < 0.3:  # noqa: S311
                     # Traccia a 90 o 45 gradi
-                    mode = random.choice(["H", "V", "D"])
-                    if mode == "H": p.drawLine(x, y, x + grid, y)
-                    elif mode == "V": p.drawLine(x, y, x, y + grid)
-                    elif mode == "D": p.drawLine(x, y, int(x + grid/2), int(y + grid/2))
-                    
-                    if random.random() < 0.2: # Nodo circolare
+                    mode = random.choice(["H", "V", "D"])  # noqa: S311
+                    if mode == "H":
+                        p.drawLine(x, y, x + grid, y)
+                    elif mode == "V":
+                        p.drawLine(x, y, x, y + grid)
+                    elif mode == "D":
+                        p.drawLine(x, y, int(x + grid / 2), int(y + grid / 2))
+
+                    if random.random() < 0.2:  # noqa: S311
+                        # Nodo circolare
                         p.setBrush(QColor(52, 152, 219, 25))
                         p.drawEllipse(QPoint(x, y), 2, 2)
         p.end()
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
-        if event is None or self.width() <= 0 or self.height() <= 0: return
+        if event is None or self.width() <= 0 or self.height() <= 0:
+            return
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         w, h = self.width(), self.height()
@@ -184,14 +192,18 @@ class ParticleBackground(QWidget):
         path.addRoundedRect(0.0, 0.0, float(w), float(h), r, r)
         painter.setClipPath(path)
 
-        if self._bg_cache is None: self._render_background_to_cache()
-        painter.drawPixmap(0, 0, self._bg_cache)
+        if self._bg_cache is None:
+            self._render_background_to_cache()
+        if self._bg_cache is not None:
+            painter.drawPixmap(0, 0, self._bg_cache)
 
         # 1. Tracce Circuitali Pulsanti
-        if self._circuit_cache is None: self._render_circuit_to_cache()
-        painter.setOpacity(0.3 + 0.2 * math.sin(self.phase * 0.5))
-        painter.drawPixmap(0, 0, self._circuit_cache)
-        painter.setOpacity(1.0)
+        if self._circuit_cache is None:
+            self._render_circuit_to_cache()
+        if self._circuit_cache is not None:
+            painter.setOpacity(0.3 + 0.2 * math.sin(self.phase * 0.5))
+            painter.drawPixmap(0, 0, self._circuit_cache)
+            painter.setOpacity(1.0)
 
         # 2. Particelle e Connessioni
         self._draw_particles(painter)
@@ -200,22 +212,26 @@ class ParticleBackground(QWidget):
         painter.end()
 
     def _draw_particles(self, painter: QPainter) -> None:
-        if self._sprite_cache is None: self._render_sprite_to_cache()
+        if self._sprite_cache is None:
+            self._render_sprite_to_cache()
+        if self._sprite_cache is None:
+            return
+
         max_dist = 85.0
         pen = QPen(QColor(52, 152, 219, 45), 1)
-        
+
         for i, p1 in enumerate(self.particles):
             # Disegno connessioni
             painter.setPen(pen)
             for p2 in self.particles[i + 1 : min(i + 5, len(self.particles))]:
                 if math.dist((p1.x, p1.y), (p2.x, p2.y)) < max_dist:
                     painter.drawLine(int(p1.x), int(p1.y), int(p2.x), int(p2.y))
-            
+
             # Disegno Sprite
             op = 0.6 + 0.4 * math.sin(self.phase * 2.0 + p1.phase)
             painter.setOpacity(op * p1.opacity)
-            target_size = p1.size * (8.0 if self.progress < 0.9 else 8.0 + (self.progress-0.9)*60)
-            painter.drawPixmap(int(p1.x - target_size/2), int(p1.y - target_size/2), 
+            target_size = p1.size * (8.0 if self.progress < 0.9 else 8.0 + (self.progress - 0.9) * 60)
+            painter.drawPixmap(int(p1.x - target_size / 2), int(p1.y - target_size / 2),
                               int(target_size), int(target_size), self._sprite_cache)
         painter.setOpacity(1.0)
 
@@ -225,21 +241,24 @@ class ParticleBackground(QWidget):
         self._sprite_cache.fill(Qt.GlobalColor.transparent)
         pt = QPainter(self._sprite_cache)
         pt.setRenderHint(QPainter.RenderHint.Antialiasing)
-        glow = QRadialGradient(size/2, size/2, size/2)
+        glow = QRadialGradient(size / 2, size / 2, size / 2)
         glow.setColorAt(0, QColor(52, 152, 219, 190))
         glow.setColorAt(1, QColor(52, 152, 219, 0))
         pt.setBrush(QBrush(glow))
         pt.setPen(Qt.PenStyle.NoPen)
         pt.drawEllipse(0, 0, size, size)
         pt.setBrush(QColor(255, 255, 255, 210))
-        pt.drawEllipse(QPoint(int(size/2), int(size/2)), 3, 3)
+        pt.drawEllipse(QPoint(int(size / 2), int(size / 2)), 3, 3)
         pt.end()
 
     def _draw_neural_streams(self, painter: QPainter) -> None:
-        for p1_idx, p2_idx, t in self._pulses:
-            if p1_idx >= len(self.particles) or p2_idx >= len(self.particles): continue
+        for p1_idx_f, p2_idx_f, t in self._pulses:
+            p1_idx, p2_idx = int(p1_idx_f), int(p2_idx_f)
+            if p1_idx >= len(self.particles) or p2_idx >= len(self.particles):
+                continue
             p1, p2 = self.particles[p1_idx], self.particles[p2_idx]
-            if math.dist((p1.x, p1.y), (p2.x, p2.y)) > 150: continue
+            if math.dist((p1.x, p1.y), (p2.x, p2.y)) > 150:
+                continue
             ix, iy = p1.x + (p2.x - p1.x) * t, p1.y + (p2.y - p1.y) * t
             glow = QRadialGradient(ix, iy, 12.0)
             glow.setColorAt(0, QColor(255, 255, 255, 180))
@@ -250,10 +269,10 @@ class ParticleBackground(QWidget):
 
     def _draw_glow_orbs(self, painter: QPainter, w: int, h: int) -> None:
         intensity = 0.5 + 0.5 * math.sin(self.phase)
-        for cx, cy, color, rad in [
+        for cx, cy, color, rad in (
             (w * 0.85, h * 0.15, QColor(52, 152, 219), 200),
-            (w * 0.1, h * 0.9, QColor(155, 89, 182), 160)
-        ]:
+            (w * 0.1, h * 0.9, QColor(155, 89, 182), 160),
+        ):
             g = QRadialGradient(cx, cy, float(rad))
             g.setColorAt(0, QColor(color.red(), color.green(), color.blue(), int(35 * intensity)))
             g.setColorAt(1, QColor(color.red(), color.green(), color.blue(), 0))

@@ -150,8 +150,8 @@ def main():
     AppInitializer.setup_app_style(app)
 
     # === SPLASH SCREEN (Standalone Process for Zero-Stutter) ===
-    import subprocess
     import json
+    import subprocess
 
     splash_script = str(ROOT_DIR / "src" / "gui" / "dialogs" / "splash_standalone.py")
     startup_logger_global.info(f"Launching standalone splash process: {splash_script}")

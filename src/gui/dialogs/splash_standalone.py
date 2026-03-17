@@ -1,16 +1,14 @@
 """
 SyncroJob - Splash Screen Standalone Process
-Esegue lo splash screen in un processo separato per garantire fluidità assoluta (60fps) 
+Esegue lo splash screen in un processo separato per garantire fluidità assoluta (60fps)
 indipendentemente dal carico del processo principale.
 Riceve aggiornamenti di stato tramite stdin in formato JSON.
 """
 
 import json
-import os
-import sys
 import logging
+import sys
 import threading
-import time
 from pathlib import Path
 
 # Setup logging base per il processo standalone
@@ -30,19 +28,22 @@ project_root = str(Path(__file__).parent.parent.parent.parent)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from PyQt6.QtCore import QObject, pyqtSignal, QTimer, Qt
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QObject, QTimer, pyqtSignal  # noqa: E402
+from PyQt6.QtWidgets import QApplication  # noqa: E402
 
-from src.gui.dialogs.startup_dialog import StartupDialog
+from src.gui.dialogs.startup_dialog import StartupDialog  # noqa: E402
+
 
 class SplashCommunicator(QObject):
     """Gestore della comunicazione thread-safe tra stdin e UI."""
+
     update_signal = pyqtSignal(str, int)
     close_signal = pyqtSignal()
 
+
 class StandaloneSplash(StartupDialog):
     """Estensione dello StartupDialog con logging aggiuntivo e fix visibilità."""
-    
+
     def __init__(self):
         super().__init__()
         # Forza opacità iniziale se l'animazione fallisse
@@ -50,15 +51,16 @@ class StandaloneSplash(StartupDialog):
         # Assicura che sia in primo piano
         self.raise_()
         self.activateWindow()
-    
+
     def update_status(self, message: str, progress: int):
         logger.info(f"UI UPDATE EXEC: {message} | {progress}%")
         super().update_status(message, progress)
 
+
 def run_standalone():
     """Main loop dello splash screen standalone."""
     logger.info("Splash standalone process starting...")
-    
+
     # Forza encoding UTF-8 per la comunicazione
     if sys.platform == "win32":
         import ctypes
@@ -72,9 +74,9 @@ def run_standalone():
     splash = StandaloneSplash()
     splash.show()
     # Piccola attesa per il rendering iniziale
-    QTimer.singleShot(100, lambda: splash.raise_())
-    QTimer.singleShot(200, lambda: splash.activateWindow())
-    
+    QTimer.singleShot(100, splash.raise_)
+    QTimer.singleShot(200, splash.activateWindow)
+
     logger.info("Splash dialog shown")
 
     # Setup communicator
@@ -87,18 +89,18 @@ def run_standalone():
         import io
         # Usiamo il buffer binario per evitare problemi di encoding su Windows
         input_stream = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8', line_buffering=True)
-        
+
         while True:
             try:
                 line = input_stream.readline()
                 if not line:
                     logger.info("Stdin stream closed")
                     break
-                
+
                 line = line.strip()
                 if not line:
                     continue
-                    
+
                 data = json.loads(line)
                 command = data.get("cmd")
 
@@ -121,6 +123,7 @@ def run_standalone():
     exit_code = app.exec()
     logger.info(f"Splash process exiting (code {exit_code})")
     sys.exit(exit_code)
+
 
 if __name__ == "__main__":
     try:

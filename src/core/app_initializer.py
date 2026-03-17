@@ -61,9 +61,9 @@ class AppInitializer:
                 return True
 
             step("Analisi variabili d'ambiente...", 2)
-            import os
-            logger.debug(f"CWD: {os.getcwd()}")
-            
+            from pathlib import Path
+            logger.debug(f"CWD: {Path.cwd()}")
+
             step("Inizializzazione Sottosistema Logging...", 4)
             try:
                 AppInitializer._setup_logging()
@@ -73,7 +73,7 @@ class AppInitializer:
             step("Verifica dipendenze critiche (Pandas/Numpy)...", 7)
             import numpy
             import pandas
-            
+
             step("Audit sicurezza moduli di analisi...", 10)
             # Simuliamo/eseguiamo check versioni
             logger.info(f"Engine: Pandas {pandas.__version__} | Numpy {numpy.__version__}")
@@ -83,15 +83,14 @@ class AppInitializer:
             CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
             step("Configurazione Motore Selenium (Chrome)...", 16)
-            import selenium
-            
+
             step("Verifica integrità WebDriver locale...", 19)
             from src.utils.resource_manager import ResourceManager
             driver_path = ResourceManager.ensure_automation_driver()
             logger.info(f"WebDriver pronto: {driver_path}")
 
             step("Caricamento Registry Bot Automazione...", 22)
-            from src.bots import create_bot, get_available_bots
+            from src.bots import get_available_bots
             bots = get_available_bots()
             logger.info(f"Moduli bot rilevati: {len(bots)}")
 
@@ -115,13 +114,13 @@ class AppInitializer:
 
             step("Inizializzazione Engine SQLite3...", 34)
             from src.core.database import db_manager
-            
+
             step("Verifica Integrità Schema Database...", 37)
             db_manager.init_db()
-            
+
             step("Ottimizzazione Indici e Vacuum...", 39)
             # Operazioni reali sul DB
-            
+
             AppInitializer._core_initialized = True
             step("Nucleo Sistema Operativo", 40)
             return True
@@ -173,30 +172,30 @@ class AppInitializer:
 
         for i, (idx, name) in enumerate(tasks):
             prog = base_prog + int((i / total) * 45)
-            
+
             # Step tecnici granulari per ogni pannello (senza indici numerici)
             yield f"Allocazione Risorse: {name}...", prog - 3
             yield f"Binding Segnali Controller: {name}...", prog - 2
             yield f"Validazione Metadati Pagina: {name}...", prog - 1
-            
+
             # === LOG EXTRA AD ALTA DENSITÀ PER ELIMINARE TEMPI MORTI ===
             if idx == PageIndex.AUTOMAZIONI:
                 yield "Inizializzazione Sottosistema Scheduler...", prog - 1
                 yield "Parsing Tabelle Cronjob Background...", prog - 1
                 yield "Verifica Conflitti Attività Pianificate...", prog - 1
                 yield "Caricamento Moduli Crittografia Credenziali...", prog
-            
+
             if idx == PageIndex.STORICO_ODA:
                 yield "Bootstrap Engine Analisi Storico...", prog - 2
                 yield "Handshake SQL Server Repository...", prog - 2
                 yield "Ottimizzazione Pool di Connessioni...", prog - 1
                 yield "Compilazione Query SQL Pre-cached...", prog - 1
                 yield "Validazione Integrità Documentale...", prog - 1
-            
+
             if idx == PageIndex.TIMBRATURE:
                 yield "Sincronizzazione Registry Ore Locale...", prog - 1
                 yield "Check Somma di Controllo Repository...", prog - 1
-            
+
             if idx == PageIndex.SETTINGS:
                 yield "Validazione Schema JSON Config...", prog - 1
                 yield "Parsing Preferenze Utente Enterprise...", prog - 1

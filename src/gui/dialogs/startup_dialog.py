@@ -12,12 +12,10 @@ from PyQt6.QtCore import (
     QPropertyAnimation,
     Qt,
     QTimer,
-    QPoint,
 )
 from PyQt6.QtGui import (
     QColor,
     QIcon,
-    QTransform,
 )
 from PyQt6.QtWidgets import (
     QDialog,
@@ -68,7 +66,7 @@ class StartupDialog(QDialog):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
-        
+
         # Dimensione totale = Contenuto + Margini per l'ombra
         total_w = self.CONTENT_WIDTH + (self.SHADOW_MARGIN * 2)
         total_h = self.CONTENT_HEIGHT + (self.SHADOW_MARGIN * 2)
@@ -235,12 +233,12 @@ class StartupDialog(QDialog):
         log_layout.addWidget(sep)
 
         self.log_labels = []
-        for i in range(5):
+        for _i in range(5):
             lbl = TypewriterLabel()
             lbl.setWordWrap(False)
             lbl.setTextFormat(Qt.TextFormat.RichText)
             lbl.setStyleSheet(
-                f"font-size:10px; font-family:'Consolas','Fira Code',monospace; padding:1px 0;"
+                "font-size:10px; font-family:'Consolas','Fira Code',monospace; padding:1px 0;"
             )
             log_layout.addWidget(lbl)
             self.log_labels.append(lbl)
@@ -327,7 +325,7 @@ class StartupDialog(QDialog):
             pos = event.position()
             rel_x = (pos.x() - self.width() / 2) / (self.width() / 2)
             rel_y = (pos.y() - self.height() / 2) / (self.height() / 2)
-            
+
             # Inclinazione massima 3 gradi
             self._tilt_x = rel_y * 3.0
             self._tilt_y = -rel_x * 3.0
@@ -369,11 +367,11 @@ class StartupDialog(QDialog):
             if i < len(self.current_logs):
                 is_last = i == len(self.current_logs) - 1
                 opacity = 1.0 if is_last else 0.2 + i * 0.15
-                
+
                 self.log_labels[i].setStyleSheet(
                     f"font-size:10px; font-family:'Consolas',monospace; color:white; opacity:{opacity};"
                 )
-                
+
                 if is_last:
                     self.log_labels[i].set_text_animated(self.current_logs[i], speed=15)
                 else:
@@ -404,7 +402,6 @@ class StartupDialog(QDialog):
             self.particles.timer.stop()
             self.border.timer.stop()
             self.progress.timer.stop()
-            self.logo.timer.stop()
             self._dot_timer.stop()
             self._pulse_timer.stop()
             for lbl in self.log_labels:

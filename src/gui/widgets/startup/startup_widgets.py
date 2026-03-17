@@ -214,12 +214,12 @@ class PulsingLogo(QWidget):
 
             w, h = float(self.width()), float(self.height())
             cx, cy = w / 2.0, h / 2.0
-            
+
             # 1. BAGLIORE STATICO
             glow = QRadialGradient(cx, cy, 65.0)
             glow.setColorAt(0, QColor(52, 152, 219, 70))
             glow.setColorAt(1, QColor(52, 152, 219, 0))
-            
+
             painter.setBrush(QBrush(glow))
             painter.setPen(Qt.PenStyle.NoPen)
             painter.drawEllipse(QPoint(int(cx), int(cy)), 70, 70)
@@ -227,13 +227,13 @@ class PulsingLogo(QWidget):
             # 2. DISEGNO LOGO STATICO
             logo_size = 64
             target_rect = QRect(
-                int(cx - logo_size / 2), 
-                int(cy - logo_size / 2), 
-                logo_size, 
+                int(cx - logo_size / 2),
+                int(cy - logo_size / 2),
+                logo_size,
                 logo_size
             )
             painter.drawPixmap(target_rect, self.pixmap)
-                
+
         finally:
             painter.end()
 
@@ -259,27 +259,26 @@ class TechBlueprint(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         w, h = self.width(), self.height()
         cx, cy = w / 2.0, h / 2.0
-        
+
         painter.setPen(QPen(QColor(52, 152, 219, 40), 1, Qt.PenStyle.DotLine))
-        
+
         # 1. Cerchi rotanti concentrici
         for i in range(3):
             radius = 40 + i * 25
             speed = (i + 1) * 0.5
             angle = math.degrees(self.phase * speed)
-            
+
             painter.save()
             painter.translate(cx, cy)
             painter.rotate(angle if i % 2 == 0 else -angle)
-            
+
             # Arco parziale per effetto "blueprint"
-            painter.drawArc(int(-radius), int(-radius), int(radius*2), int(radius*2), 0, 240 * 16)
-            
+            painter.drawArc(-radius, -radius, radius * 2, radius * 2, 0, 240 * 16)
+
             # Piccoli marcatori sui cerchi
             painter.setPen(QPen(QColor(52, 152, 219, 80), 2))
-            painter.drawPoint(int(radius), 0)
+            painter.drawPoint(radius, 0)
             painter.restore()
-
         # 2. Griglia polare sottile
         painter.setPen(QColor(52, 152, 219, 20))
         for angle in range(0, 360, 45):
@@ -347,19 +346,19 @@ class ConsoleOverlay(QWidget):
         painter = QPainter(self)
         try:
             w, h = self.width(), self.height()
-            
+
             # 1. SCANLINES ORIZZONTALI
             painter.setPen(QColor(0, 0, 0, 45))
             for y in range(0, h, 2):
                 painter.drawLine(0, y, w, y)
-            
+
             # 2. GRIGLIA DI PUNTI SUBTLE
             painter.setPen(QColor(52, 152, 219, 15))
             grid_size = 10
             for x in range(0, w, grid_size):
                 for y in range(0, h, grid_size):
                     painter.drawPoint(x, y)
-                    
+
             # 3. EFFETTO VIGNETTE INTERNO
             grad = QRadialGradient(w / 2.0, h / 2.0, max(w, h) * 0.6)
             grad.setColorAt(0, QColor(0, 0, 0, 0))
