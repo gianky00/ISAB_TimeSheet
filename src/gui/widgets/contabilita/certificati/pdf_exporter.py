@@ -148,9 +148,8 @@ class CertificatiPdfExporter:
                         tot_ufficio += 1
                     elif "OFFICINA" in ubicazione:
                         tot_officina += 1
-                    elif "TECNIC" in ubicazione: # codespell:ignore TECNIC
+                    elif "TECNICO" in ubicazione:
                         tot_campo += 1
-
         style_html = """
         <html>
         <head>
