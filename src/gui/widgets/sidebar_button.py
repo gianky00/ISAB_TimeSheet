@@ -1,13 +1,13 @@
 """
-SyncroJob - Sidebar Button (Premium V6 - Optimized)
-Ottimizzato per la fluidità: rimosso l'uso intensivo di setStyleSheet durante le animazioni.
+SyncroJob - Sidebar Button (Premium V6 - Ultra Optimized)
+Rimosso QGraphicsDropShadowEffect per garantire 60fps costanti anche su hardware datato.
 """
 
 from typing import Any
 
 from PyQt6.QtCore import QPoint, QSize, Qt, pyqtProperty  # type: ignore[attr-defined]
 from PyQt6.QtGui import QColor, QDrag
-from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QPushButton, QWidget
+from PyQt6.QtWidgets import QPushButton, QWidget
 
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
@@ -17,7 +17,7 @@ from src.utils.helpers import get_colored_icon
 class SidebarButton(QPushButton):
     """
     Pulsante ultra-moderno per la sidebar.
-    Ottimizzato per la visibilità su sfondi scuri gradienti e performance elevate.
+    Ottimizzato per la fluidità estrema rimuovendo gli effetti grafici costosi.
     """
 
     def __init__(self, text: str, icon_path: str = "", parent: QWidget | None = None) -> None:
@@ -37,15 +37,11 @@ class SidebarButton(QPushButton):
         self.setMinimumHeight(48)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
-        self.glow = QGraphicsDropShadowEffect(self)
-        self.glow.setBlurRadius(15)
-        self.glow.setColor(QColor(0, 0, 0, 0))
-        self.glow.setOffset(0, 0)
-        self.setGraphicsEffect(self.glow)
+        # OTTIMIZZAZIONE: Rimosso QGraphicsDropShadowEffect (Glow)
+        # Gli effetti grafici causano lag massivo durante il ridimensionamento della sidebar.
 
         self._refresh_state()
         self._set_base_style()
-        self.toggled.connect(self._on_toggled)
 
     @pyqtProperty(float)
     def text_opacity(self) -> float:
@@ -54,18 +50,8 @@ class SidebarButton(QPushButton):
 
     @text_opacity.setter  # type: ignore[no-redef]
     def text_opacity(self, value: float) -> None:
-        """Imposta l'opacità del testo (senza ricaricare lo stile intero)."""
+        """Imposta l'opacità del testo."""
         self._text_opacity = value
-        # Non chiamiamo _update_style qui per performance
-
-    def _on_toggled(self, checked: bool) -> None:
-        if checked:
-            c = QColor(COLORS["teal_accent"])
-            c.setAlpha(180)
-            self.glow.setColor(c)
-        else:
-            if self._badge_count == 0:
-                self.glow.setColor(QColor(0, 0, 0, 0))
 
     def set_collapsed(self, collapsed: bool, animated: bool = False) -> None:
         """Aggiorna lo stato visivo senza forzare ricaricamenti pesanti."""
@@ -75,7 +61,6 @@ class SidebarButton(QPushButton):
         self.setProperty("collapsed", collapsed)
         self._refresh_state()
         
-        # Invece di riscrivere tutto il QSS, aggiorniamo solo le proprietà necessarie
         if style := self.style():
             style.unpolish(self)
             style.polish(self)
@@ -95,6 +80,8 @@ class SidebarButton(QPushButton):
     def _set_base_style(self) -> None:
         """Imposta lo stile QSS statico con selettori di stato."""
         active_bg = hex_to_rgba(COLORS["teal_accent"], 0.25)
+        # Usiamo un bordo invece del glow per indicare lo stato attivo senza pesare sulla GPU
+        active_border = f"1px solid {hex_to_rgba(COLORS['teal_accent'], 0.5)}"
         hover_bg = hex_to_rgba(COLORS["bg_white"], 0.1)
         text_color = COLORS["bg_white"]
         muted_text = hex_to_rgba(COLORS["bg_white"], 0.7)
@@ -109,14 +96,16 @@ class SidebarButton(QPushButton):
                 font-size: 14px;
                 font-weight: 500;
                 margin: 2px 8px;
-                border: none;
+                border: 1px solid transparent;
             }}
             QPushButton[collapsed="true"] {{
                 padding: 0px;
                 text-align: center;
+                margin: 2px 4px;
             }}
             QPushButton:checked {{
                 background-color: {active_bg};
+                border: {active_border};
                 color: {text_color};
                 font-weight: 800;
             }}
@@ -130,8 +119,4 @@ class SidebarButton(QPushButton):
         """Imposta un badge numerico sul pulsante."""
         self._badge_count = count
         self._refresh_state()
-        if count > 0 and not self.isChecked():
-            self.glow.setColor(QColor(255, 152, 0, 100))
-            self.glow.setBlurRadius(10)
-        elif count == 0 and not self.isChecked():
-            self.glow.setColor(QColor(0, 0, 0, 0))
+        # Invece di cambiare il glow, cambiamo il colore del testo o dello sfondo se necessario

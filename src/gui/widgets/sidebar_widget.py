@@ -1,7 +1,7 @@
 """
-SyncroJob - Sidebar Widget (Refactored V8.8 - Performance Optimized)
+SyncroJob - Sidebar Widget (Refactored V8.8 - Performance Optimized V2)
 Navigazione magnetica enterprise a 3 livelli.
-Ottimizzata per la fluidità estrema rimuovendo i ricalcoli QSS intensivi.
+Ottimizzata per la fluidità estrema rimuovendo ombre e semplificando il background.
 """
 
 from __future__ import annotations
@@ -49,7 +49,7 @@ class SidebarWidget(QFrame):
         self.setObjectName("sidebarContainer")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
-        # Performance Hint: Evita ricalcoli inutili se il contenuto non cambia visivamente
+        # OTTIMIZZAZIONE: Evitiamo ricalcoli pesanti durante il ridimensionamento
         self.setAttribute(Qt.WidgetAttribute.WA_StaticContents)
         
         self._is_collapsed = True
@@ -66,7 +66,7 @@ class SidebarWidget(QFrame):
         self.setMouseTracking(True)
 
         self._setup_ui()
-        # Inizializziamo lo stile base una sola volta
+        # Inizializziamo lo stile base
         self.bg_frame.setStyleSheet(self._get_glass_style())
         self.bg_frame.setProperty("state", "collapsed")
 
@@ -85,9 +85,11 @@ class SidebarWidget(QFrame):
     sidebar_width = pyqtProperty(int, fget=get_sidebar_width, fset=set_sidebar_width)
 
     def _get_glass_style(self) -> str:
-        """Genera lo stile QSS statico. Evitiamo variabili dinamiche qui."""
-        gradient = "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #0f172a, stop:0.4 #172554, stop:0.8 #081121, stop:1 #1e1b4b)"
+        """Genera lo stile QSS. Semplificato per performance."""
+        # Gradiente verticale invece di diagonale (più veloce da renderizzare)
+        gradient = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #0f172a, stop:1 #1e1b4b)"
         sb_handle = hex_to_rgba(COLORS["bg_white"], 0.15)
+        
         return f"""
             QFrame#sidebarFrame {{
                 background: {gradient};
@@ -134,8 +136,6 @@ class SidebarWidget(QFrame):
         self.logo_label = QLabel("SyncroJob")
         self.logo_label.setStyleSheet("font-size: 18px; font-weight: 900; color: white;")
         self.logo_opacity = QGraphicsOpacityEffect(self.logo_label)
-        # Abilitiamo il caching per l'effetto opacità
-        self.logo_opacity.setEnabled(True)
         self.logo_label.setGraphicsEffect(self.logo_opacity)
         self.h_lay.addWidget(self.logo_label)
 
@@ -338,12 +338,13 @@ class SidebarWidget(QFrame):
         super().leaveEvent(e)
 
     def _set_collapsed(self, c: bool) -> None:
-        """Gestisce espansione e contrazione."""
+        """Gestisce espansione e contrazione con ottimizzazioni aggressive."""
         if self._is_collapsed == c:
             return
         self._is_collapsed = c
 
-        # Disabilita layout durante l'animazione per evitare micro-lag
+        # Disabilita layout e aggiornamenti durante l'animazione
+        self.setUpdatesEnabled(False)
         if self.bg_frame.layout():
             self.bg_frame.layout().setEnabled(False)
 
@@ -368,13 +369,11 @@ class SidebarWidget(QFrame):
             self.active_track.hide()
             self.bg_frame.setProperty("state", "collapsed")
 
-            QTimer.singleShot(150, lambda: self.scroll_area.hide() if self._is_collapsed else None)
-            QTimer.singleShot(150, lambda: self.footer.hide() if self._is_collapsed else None)
-            QTimer.singleShot(150, lambda: self.setMinimumHeight(100) if self._is_collapsed else None)
-            QTimer.singleShot(150, lambda: self.setMaximumHeight(100) if self._is_collapsed else None)
-
-        # OTTIMIZZAZIONE: unpolish/polish rimosso. Usiamo solo repaint se necessario.
-        self.bg_frame.update()
+            # Nascondiamo subito le aree pesanti durante la contrazione
+            self.scroll_area.hide()
+            self.footer.hide()
+            self.setMinimumHeight(100)
+            self.setMaximumHeight(100)
 
         for b in self.main_btns + self.footer_btns:
             if hasattr(b, "set_collapsed"):
@@ -387,11 +386,13 @@ class SidebarWidget(QFrame):
         else:
             self._update_ui_state()
         
-        # Riabilita layout dopo che l'animazione è avanzata
-        QTimer.singleShot(200, lambda: self.bg_frame.layout().setEnabled(True) if self.bg_frame.layout() else None)
-        QTimer.singleShot(100, self._update_track)
+        # Riabilita tutto a fine animazione (200ms)
+        QTimer.singleShot(200, self._finalize_animation)
 
-    def _update_ui_state(self) -> None:
-        """Sincronizza lo stato dei gruppi."""
-        for g in (self.group_db, self.group_automazioni, self.group_contabilita, self.group_notifiche):
-            g.set_collapsed(self._is_collapsed)
+    def _finalize_animation(self) -> None:
+        """Riabilita layout e repaint a fine transizione."""
+        self.setUpdatesEnabled(True)
+        if self.bg_frame.layout():
+            self.bg_frame.layout().setEnabled(True)
+        self.bg_frame.update()
+        self._update_track()
