@@ -43,7 +43,7 @@ class AnimatedBorder(QWidget):
         self.update()
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
-        """Disegna il bordo con effetti glow e conici."""
+        """Disegna il bordo con effetti glow e conici, rispettando rigorosamente gli angoli arrotondati."""
         painter = QPainter(self)
         try:
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -51,33 +51,31 @@ class AnimatedBorder(QWidget):
             r = self.BORDER_RADIUS
             intensity = 0.6 + 0.4 * math.sin(self.phase * 2)
 
-            # OUTER GLOW SHADOWS
-            outer_glow1 = QPainterPath()
-            outer_glow1.addRoundedRect(-8.0, -8.0, float(w + 16), float(h + 16), float(r + 8), float(r + 8))
-            painter.setPen(Qt.PenStyle.NoPen)
-            outer_gradient1 = QRadialGradient(w / 2.0, h / 2.0, max(w, h) * 0.7)
-            outer_gradient1.setColorAt(0.5, QColor(52, 152, 219, int(20 * intensity)))
-            outer_gradient1.setColorAt(0.7, QColor(52, 152, 219, int(10 * intensity)))
-            outer_gradient1.setColorAt(1.0, QColor(52, 152, 219, 0))
-            painter.fillPath(outer_glow1, outer_gradient1)
+            # 1. CLIP PATH PER EVITARE PUNTE NEGLI ANGOLI
+            # Questo assicura che nulla venga disegnato fuori dagli angoli smussati
+            clip_path = QPainterPath()
+            clip_path.addRoundedRect(0.0, 0.0, float(w), float(h), float(r), float(r))
+            painter.setClipPath(clip_path)
 
-            for offset in (6, 4, 2):
+            # 2. GLOW INTERNO (Invece di esterno che veniva tagliato)
+            for offset in (2, 4, 6):
                 glow_path = QPainterPath()
+                # Disegniamo leggermente all'interno per evitare artefatti di clipping
                 glow_path.addRoundedRect(
-                    float(-offset),
-                    float(-offset),
-                    float(w + offset * 2),
-                    float(h + offset * 2),
-                    float(r + offset),
-                    float(r + offset),
+                    float(offset),
+                    float(offset),
+                    float(w - offset * 2),
+                    float(h - offset * 2),
+                    float(r - offset),
+                    float(r - offset),
                 )
-                alpha = int((25 - offset * 3) * intensity)
-                pen = QPen(QColor(52, 152, 219, alpha), offset * 1.5)
+                alpha = int((20 - offset * 2) * intensity)
+                pen = QPen(QColor(52, 152, 219, alpha), float(offset * 2))
                 pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
                 painter.setPen(pen)
                 painter.drawPath(glow_path)
 
-            # MAIN CONIC BORDER
+            # 3. MAIN CONIC BORDER (Posizionato esattamente sul bordo)
             cx, cy = w / 2.0, h / 2.0
             conic = QConicalGradient(cx, cy, -math.degrees(self.phase))
             conic.setColorAt(0.0, QColor(52, 152, 219, int(255 * intensity)))
@@ -86,12 +84,13 @@ class AnimatedBorder(QWidget):
             conic.setColorAt(0.8, QColor(100, 180, 235, int(120 * intensity)))
             conic.setColorAt(1.0, QColor(52, 152, 219, int(255 * intensity)))
 
-            inner_path = QPainterPath()
-            inner_path.addRoundedRect(2.0, 2.0, float(w - 4), float(h - 4), float(r - 1), float(r - 1))
+            border_path = QPainterPath()
+            # Un leggero inset di 1px assicura che l'antialiasing del bordo non venga tagliato
+            border_path.addRoundedRect(1.0, 1.0, float(w - 2), float(h - 2), float(r - 1), float(r - 1))
             pen = QPen(QBrush(conic), 2.5)
             pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
             painter.setPen(pen)
-            painter.drawPath(inner_path)
+            painter.drawPath(border_path)
 
             self._draw_light_points(painter, w, h, r)
         finally:

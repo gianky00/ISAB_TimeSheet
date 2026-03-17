@@ -44,8 +44,11 @@ logger = logging.getLogger(__name__)
 class StartupDialog(QDialog):
     """Splash screen con animazioni fluide a 60fps."""
 
-    WIDTH = 700
-    HEIGHT = 460
+    # Dimensioni del contenuto visibile
+    CONTENT_WIDTH = 700
+    CONTENT_HEIGHT = 460
+    # Margine per l'ombra (per evitare che venga tagliata creando "punte")
+    SHADOW_MARGIN = 40
 
     def __init__(self):
         super().__init__()
@@ -61,8 +64,14 @@ class StartupDialog(QDialog):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
-        self.setFixedSize(self.WIDTH, self.HEIGHT)
-        self.setStyleSheet("#StartupDialog { background: transparent; border: none; }")
+        
+        # Dimensione totale = Contenuto + Margini per l'ombra
+        total_w = self.CONTENT_WIDTH + (self.SHADOW_MARGIN * 2)
+        total_h = self.CONTENT_HEIGHT + (self.SHADOW_MARGIN * 2)
+        self.setFixedSize(total_w, total_h)
+        
+        # NESSUNO STILE sul dialog principale per evitare perdite di colore negli angoli
+        self.setStyleSheet("background: transparent; border: none;")
 
     def _init_state(self):
         """Inizializza lo stato interno del dialog."""
@@ -75,33 +84,34 @@ class StartupDialog(QDialog):
     def _setup_container(self):
         """Configura il container principale con particelle, bordo e shadow."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(self.SHADOW_MARGIN, self.SHADOW_MARGIN, self.SHADOW_MARGIN, self.SHADOW_MARGIN)
 
         self.container = QFrame()
         self.container.setObjectName("Container")
+        self.container.setFixedSize(self.CONTENT_WIDTH, self.CONTENT_HEIGHT)
         self.container.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.container.setStyleSheet("#Container { background: transparent; border: none; }")
 
         # Particle background
         self.particles = ParticleBackground(self.container)
-        self.particles.setGeometry(0, 0, self.WIDTH, self.HEIGHT)
+        self.particles.setGeometry(0, 0, self.CONTENT_WIDTH, self.CONTENT_HEIGHT)
         self.particles.init_particles(70)
 
         # Animated border
         self.border = AnimatedBorder(self.container)
-        self.border.setGeometry(0, 0, self.WIDTH, self.HEIGHT)
+        self.border.setGeometry(0, 0, self.CONTENT_WIDTH, self.CONTENT_HEIGHT)
 
         # Content overlay
         self.content = QFrame(self.container)
-        self.content.setGeometry(0, 0, self.WIDTH, self.HEIGHT)
+        self.content.setGeometry(0, 0, self.CONTENT_WIDTH, self.CONTENT_HEIGHT)
         self.content.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.content.setStyleSheet("background: transparent; border: none;")
 
-        # Shadow luminosa esterna
+        # Shadow luminosa esterna (Ora ha spazio per sfumare grazie ai margini)
         shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(80)
+        shadow.setBlurRadius(60)
         c = QColor(COLORS["primary_blue"])
-        shadow.setColor(QColor(c.red(), c.green(), c.blue(), 120))
+        shadow.setColor(QColor(c.red(), c.green(), c.blue(), 100))
         shadow.setOffset(0, 0)
         self.container.setGraphicsEffect(shadow)
 

@@ -157,12 +157,21 @@ class ParticleBackground(QWidget):
         pt.end()
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
-        """Render cached background and sprite-based particles."""
+        """Render cached background and sprite-based particles with strict rounded corners clipping."""
         if event is None or self.width() <= 0 or self.height() <= 0:
             return
 
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        w, h = self.width(), self.height()
+        r = float(self.BORDER_RADIUS)
+
+        # === CLIP PATH GLOBALE PER ELIMINARE PUNTE NEGLI ANGOLI ===
+        # Applichiamo il ritaglio qui per assicurarci che NULLA sbordi
+        path = QPainterPath()
+        path.addRoundedRect(0.0, 0.0, float(w), float(h), r, r)
+        painter.setClipPath(path)
 
         # 1. Background (Cached)
         if self._bg_cache is None:
@@ -174,16 +183,7 @@ class ParticleBackground(QWidget):
         if self._sprite_cache is None:
             self._render_sprite_to_cache()
 
-        w, h = self.width(), self.height()
-        r = float(self.BORDER_RADIUS)
-
         painter.save()
-
-        # Clip for particles
-        path = QPainterPath()
-        path.addRoundedRect(0.0, 0.0, float(w), float(h), r, r)
-        painter.setClipPath(path)
-
         # Draw sprites
         if self._sprite_cache is not None:
             for p in self.particles:
@@ -197,7 +197,10 @@ class ParticleBackground(QWidget):
         painter.setOpacity(1.0)
         self._draw_connections(painter)
         painter.restore()
+
+        # 3. GLOW ORBS (Ora protetti dal clip path globale)
         self._draw_glow_orbs(painter, w, h)
+        
         painter.end()
 
     def _draw_glow_orbs(self, painter: QPainter, w: int, h: int) -> None:
