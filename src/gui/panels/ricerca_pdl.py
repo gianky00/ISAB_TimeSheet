@@ -47,6 +47,7 @@ class RicercaPDLPanel(BaseBotPanel):
             bot_description="Ricerca ed esporta i PDL da SafeWork nel database locale.",
             parent=parent,
         )
+        self.sync_module_id = "pdl"
         self._setup_content()
         QTimer.singleShot(10, self._load_saved_data)
 

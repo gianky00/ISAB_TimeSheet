@@ -48,6 +48,7 @@ class DettagliOdAPanel(BaseBotPanel):
             bot_description="Scarica automaticamente i dettagli degli Ordini d'Acquisto.",
             parent=parent,
         )
+        self.sync_module_id = "oda"
         self._setup_content()
 
         # Forza inizializzazione timeline immediata per Dettagli OdA (Previene blocchi su _on_start)

@@ -152,6 +152,7 @@ class BaseBotPanel(QWidget):
     data_updated = pyqtSignal()
     bot_results_ready = pyqtSignal(str, list)  # bot_id, list of results (e.g. file paths)
     status_changed = pyqtSignal(str, str)  # status, message
+    autopilot_changed = pyqtSignal()  # Segnale per aggiornamento UI Autopilot
 
     def __init__(self, bot_id: str, bot_name: str, bot_description: str, parent=None):
         """
@@ -168,6 +169,7 @@ class BaseBotPanel(QWidget):
         self.bot_name = bot_name
         self.bot_description = bot_description
         self._logger = get_logger(f"gui.panel.{bot_id}")
+        self.sync_module_id: str | None = None  # Mapping per SyncTracker (es. 'pdl', 'oda')
 
         self.worker: BotWorker | None = None
         self.start_time: datetime | None = None
@@ -349,6 +351,11 @@ class BaseBotPanel(QWidget):
         self.start_time = datetime.now(UTC)
         self._update_status(STATUS_COLORS["running"])
 
+        # Segnala inizio sync a SyncTracker
+        if self.sync_module_id:
+            from src.core.sync_tracker import SyncTracker
+            SyncTracker.mark_start(self.sync_module_id)
+
         # Pulizia della tabella dagli esiti della sessione precedente (Asincrona per evitare blocchi UI)
         if hasattr(self, "data_table") and hasattr(self.data_table, "clear_status_columns"):
             QTimer.singleShot(0, self.data_table.clear_status_columns)
@@ -442,7 +449,14 @@ class BaseBotPanel(QWidget):
             files = getattr(self.worker.bot, "downloaded_files", [])
             if files:
                 self.bot_results_ready.emit(self.bot_id, files)
+
+        # Tracciamento fallimento tentativi sync
+        if not success and self.sync_module_id:
+            from src.core.sync_tracker import SyncTracker
+            SyncTracker.mark_failure(self.sync_module_id)
+
         self.bot_finished.emit(success)
+        self.autopilot_changed.emit()
 
     def _notify_completion(self, success: bool):
         """Gestisce le notifiche di sistema e background."""

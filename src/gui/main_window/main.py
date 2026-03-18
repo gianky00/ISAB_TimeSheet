@@ -4,7 +4,6 @@ Finestra principale dell'applicazione che coordina tutti i servizi, i controller
 Refactored V9.0: Orchestration with modular Workflow and Monitoring Controllers.
 """
 
-from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -160,6 +159,7 @@ class MainWindow(QMainWindow):
         """Esegue le operazioni pesanti di inizializzazione senza bloccare l'avvio immediato."""
         # 1. Pre-caricamento pannelli critici
         self.navigation_controller.get_panel(PageIndex.CONSUNTIVO)
+        self.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
 
         # 2. Reset flag per abilitare i toast utente
         self._is_initializing = False
@@ -167,12 +167,7 @@ class MainWindow(QMainWindow):
         # 3. Start Monitoring
         self.monitoring_controller.start_monitoring()
 
-        # 4. Connect Autopilot real-time updates
-        if hasattr(self, "timbrature_bot_panel"):
-            with suppress(Exception):
-                self.timbrature_bot_panel.autopilot_changed.connect(self._update_autopilot_status_ui)
-
-        # 5. Show final system-ready toast
+        # 4. Show final system-ready toast
         ToastManager.instance().show(
             "<center><b>Sistema inizializzato e pronto all'uso</b><br/>Tutti i moduli sono operativi. Enjoy!</center>",
             "success",

@@ -244,9 +244,27 @@ class AutopilotEventCard(QFrame):
         last_dt = datetime.fromtimestamp(last_ts_float).astimezone()
         now = datetime.now().astimezone()
 
+        # 1. Controllo Stato Tentativo Corrente (In corso / Fallito)
+        last_success = status.get("last_attempt_success")
+
+        if last_success is None:
+            # Sincronizzazione in corso
+            color = "#2196F3"  # Blu Material
+            msg = "Sincronizzazione in corso..."
+            self.status_dot.setStyleSheet(f"background-color: {color}; border-radius: 4px;")
+            self.status_dot.setToolTip(msg)
+            return
+
+        if last_success is False:
+            # Ultimo tentativo fallito
+            color = COLORS["error_red"]
+            msg = f"Ultimo tentativo FALLITO! (Dati al: {status.get('timestamp')})"
+            self.status_dot.setStyleSheet(f"background-color: {color}; border-radius: 4px; border: 1px solid white;")
+            self.status_dot.setToolTip(msg)
+            return
+
+        # 2. Logica standard per i dati (Successo dell'ultimo tentativo o dati esistenti)
         # Logica speciale per TIMBRATURE:
-        # Se ho sincronizzato ieri o oggi, i dati sono considerati "freschi" (Verde)
-        # perché le timbrature del giorno corrente si vedono solo domani.
         if self.module_id == "timbrature":
             diff_days = (now.date() - last_dt.date()).days
             if diff_days <= 1:

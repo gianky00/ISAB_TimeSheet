@@ -48,6 +48,8 @@ class BotController(QObject):
                 panel.bot_results_ready.connect(self._handle_bot_results)
             if hasattr(panel, "status_changed"):
                 panel.status_changed.connect(self._on_panel_status_changed)
+            if hasattr(panel, "autopilot_changed"):
+                panel.autopilot_changed.connect(self._on_autopilot_trigger)
 
     def _handle_bot_results(self, bot_id: str, results: list[str]) -> None:
         """
@@ -76,7 +78,7 @@ class BotController(QObject):
         """
         sender = self.sender()
         bot_id = getattr(sender, "bot_id", "")
-        safework_bots = ["scarico_pdl", "pdl_search"]
+        safework_bots = ["scarico_pdl", "ricerca_pdl"]
 
         if bot_id in safework_bots:
             if hasattr(self.mw, "status_safework"):
@@ -84,6 +86,16 @@ class BotController(QObject):
         else:
             if hasattr(self.mw, "status_portale"):
                 self.mw.status_portale.setStatus(message, status)
+
+    def _on_autopilot_trigger(self) -> None:
+        """Aggiorna globalmente la UI dell'Autopilot (Barra di stato e Dashboard)."""
+        # 1. Update StatusBar indicators
+        if hasattr(self.mw, "status_bar_component"):
+            self.mw.status_bar_component.update_autopilot_ui()
+
+        # 2. Update Dashboard cards if visible
+        if hasattr(self.mw, "dashboard_panel"):
+            self.mw.dashboard_panel.refresh_live_data()
 
     def _get_active_bot_panel(self) -> QWidget | None:
         """

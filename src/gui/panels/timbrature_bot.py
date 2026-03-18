@@ -34,9 +34,6 @@ class TimbratureBotPanel(BaseBotPanel):
     status_changed = pyqtSignal(str, str)
     """Segnale emesso quando cambia lo stato del bot (stato, messaggio)."""
 
-    autopilot_changed = pyqtSignal()
-    """Segnale emesso per richiedere l'aggiornamento real-time della UI in modalità Autopilot."""
-
     def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il pannello e prepara il caricamento dei dati salvati.
@@ -50,6 +47,7 @@ class TimbratureBotPanel(BaseBotPanel):
             bot_description="Scarica e gestisci le timbrature del personale",
             parent=parent,
         )
+        self.sync_module_id = "timbrature"
         self._is_loading = False
         self._setup_content()
         QTimer.singleShot(10, self._safe_load_data)

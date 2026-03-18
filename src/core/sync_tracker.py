@@ -8,7 +8,7 @@ Permette di visualizzare nella UI lo stato dell'ultimo aggiornamento (es. PDL, D
 import json
 import logging
 import time
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -62,7 +62,7 @@ class SyncTracker:
     @classmethod
     def update_status(cls, module: str, added: int, removed: int, duration: float = 0.0) -> None:
         """
-        Registra l'avvenuta sincronizzazione di un modulo specifico.
+        Registra l'avvenuta sincronizzazione con successo di un modulo specifico.
 
         Args:
             module: Identificativo del modulo (es. 'pdl', 'dipendenti', 'storico_oda').
@@ -71,14 +71,51 @@ class SyncTracker:
             duration: Tempo totale impiegato per la sincronizzazione (secondi).
         """
         cls._load()
-        timestamp_str = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
+        now = time.time()
+        timestamp_str = datetime.fromtimestamp(now).astimezone().strftime("%d/%m/%Y %H:%M")
         cls._cache[module] = {
             "timestamp": timestamp_str,
             "added": added,
             "removed": removed,
             "duration": duration,
-            "last_ts": time.time(),
+            "last_ts": now,
+            "last_attempt_success": True,
+            "last_attempt_ts": now,
+            "last_error": "",
         }
+        cls._save()
+
+    @classmethod
+    def mark_start(cls, module: str) -> None:
+        """Segnala l'inizio di un tentativo di sincronizzazione."""
+        cls._load()
+        if module not in cls._cache:
+            cls._cache[module] = {
+                "timestamp": "Mai",
+                "added": 0,
+                "removed": 0,
+                "duration": 0,
+                "last_ts": 0,
+            }
+        cls._cache[module]["last_attempt_success"] = None
+        cls._cache[module]["last_attempt_ts"] = time.time()
+        cls._save()
+
+    @classmethod
+    def mark_failure(cls, module: str, error: str = "") -> None:
+        """Registra il fallimento dell'ultimo tentativo di sincronizzazione."""
+        cls._load()
+        if module not in cls._cache:
+            cls._cache[module] = {
+                "timestamp": "Mai",
+                "added": 0,
+                "removed": 0,
+                "duration": 0,
+                "last_ts": 0,
+            }
+        cls._cache[module]["last_attempt_success"] = False
+        cls._cache[module]["last_attempt_ts"] = time.time()
+        cls._cache[module]["last_error"] = error
         cls._save()
 
     @classmethod
