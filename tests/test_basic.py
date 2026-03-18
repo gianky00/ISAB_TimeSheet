@@ -139,9 +139,9 @@ class TestScaricaTSBot:
         columns = ScaricaTSBot.get_columns()
         assert len(columns) == 2
 
-        column_names = [col["name"] for col in columns]
-        assert "Numero OdA" in column_names
-        assert "Posizione OdA" in column_names
+        column_labels = [col["label"] for col in columns]
+        assert "Numero OdA" in column_labels
+        assert "Posizione OdA" in column_labels
 
     def test_bot_metadata(self):
         """Should have correct metadata."""
@@ -161,9 +161,9 @@ class TestDettagliOdABot:
         columns = DettagliOdABot.get_columns()
         assert len(columns) == 2
 
-        column_names = [col["name"] for col in columns]
-        assert "Numero OdA" in column_names
-        assert "Numero Contratto" in column_names
+        column_labels = [col["label"] for col in columns]
+        assert "Numero OdA" in column_labels
+        assert "Numero Contratto" in column_labels
 
     def test_bot_metadata(self):
         """Should have correct metadata."""
@@ -183,10 +183,10 @@ class TestCaricoTSBot:
         columns = CaricoTSBot.get_columns()
         assert len(columns) == 16
 
-        column_names = [col["name"] for col in columns]
-        assert "Numero OdA" in column_names
-        assert "Codice Fiscale" in column_names
-        assert "G T" in column_names
+        column_labels = [col["label"] for col in columns]
+        assert "Numero OdA" in column_labels
+        assert "Codice Fiscale" in column_labels
+        assert "G T" in column_labels
 
     def test_bot_metadata(self):
         """Should have correct metadata."""

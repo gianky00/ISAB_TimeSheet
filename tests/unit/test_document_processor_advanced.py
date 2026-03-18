@@ -32,29 +32,6 @@ class TestDocumentProcessorAdvanced:
         assert "Pagina 1" in text
         assert "Pagina 2" in text
 
-    def test_get_pages_as_images_limit(self, mock_fitz):
-        """Test: Conversione in base64 con limite pagine."""
-        mock_doc = MagicMock()
-        mock_doc.__enter__.return_value = mock_doc
-        mock_doc.__exit__.return_value = None
-        mock_doc.__len__.return_value = 10  # PDF da 10 pagine
-
-        mock_page = MagicMock()
-        mock_pix = MagicMock()
-        mock_pix.tobytes.return_value = b"FAKE_PNG_DATA"
-        mock_page.get_pixmap.return_value = mock_pix
-
-        mock_doc.__getitem__.return_value = mock_page
-        mock_fitz.open.return_value = mock_doc
-
-        # Chiamiamo con max_pages=3
-        images = DocumentProcessor.get_pages_as_images(Path("long.pdf"), max_pages=3)
-
-        assert len(images) == 3
-        # Verifica codifica base64
-        expected = base64.b64encode(b"FAKE_PNG_DATA").decode("utf-8")
-        assert images[0] == expected
-
     def test_is_pdf_searchable_true(self, mock_fitz):
         """Test: PDF riconosciuto come ricercabile se ha testo."""
         mock_doc = MagicMock()

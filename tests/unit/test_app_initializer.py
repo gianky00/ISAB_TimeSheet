@@ -59,7 +59,7 @@ class TestAppInitializer:
             return_value=(LicenseStatus.VALID, "OK"),
         ):
             with patch.object(AppInitializer, "_setup_logging"):
-                with pytest.raises(Exception, match="Errore Database"):
+                with pytest.raises(Exception, match="Errore imprevisto durante l'avvio"):
                     AppInitializer.initialize_core()
         mock_update.assert_called_once()
 

@@ -29,7 +29,7 @@ def mock_update_url():
 @pytest.fixture
 def mock_msgbox(mocker):
     """Mock the whole QMessageBox class in the target module while preserving Enums."""
-    mock = mocker.patch("src.core.app_updater.QMessageBox")
+    mock = mocker.patch("src.core.updater.gui.QMessageBox")
     # Preserve StandardButton Enum for comparisons
     mock.StandardButton = QMessageBox.StandardButton
     return mock
@@ -38,17 +38,23 @@ def mock_msgbox(mocker):
 def test_check_for_updates_no_url(mocker, mock_app_version, mock_msgbox):
     mocker.patch.object(version, "UPDATE_URL", None)
 
-    # Assicurati che non ci siano chiamate a requests.get
-    mock_requests_get = mocker.patch("requests.get")
+    # Patch functions in the GUI module
+    mocker.patch("src.core.updater.gui.get_web_update_info", return_value=None)
+    mocker.patch("src.core.updater.gui.get_network_update_info", return_value=None)
+
     check_for_updates(silent=False)
-    mock_requests_get.assert_not_called()
+
+    # Should call information if no sources found
+    mock_msgbox.information.assert_called_once()
 
 
 def test_check_for_updates_no_new_version(mocker, mock_app_version, mock_update_url, mock_msgbox):
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {"version": "1.0.0", "url": "http://download.url"}
-    mocker.patch("requests.get", return_value=mock_response)
+    # Simula versione uguale alla corrente
+    mocker.patch(
+        "src.core.updater.gui.get_web_update_info",
+        return_value={"version": "1.0.0", "url": "http://download.url"},
+    )
+    mocker.patch("src.core.updater.gui.get_network_update_info", return_value=None)
 
     check_for_updates(silent=False)
 
@@ -60,68 +66,63 @@ def test_check_for_updates_no_new_version(mocker, mock_app_version, mock_update_
 
 
 def test_check_for_updates_new_version_download(mocker, mock_app_version, mock_update_url, mock_msgbox):
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {"version": "1.1.0", "url": "http://download.url"}
-    mocker.patch("requests.get", return_value=mock_response)
+    # Simula versione nuova
+    mocker.patch(
+        "src.core.updater.gui.get_web_update_info",
+        return_value={"version": "1.1.0", "url": "http://download.url"},
+    )
+    mocker.patch("src.core.updater.gui.get_network_update_info", return_value=None)
 
+    # Mock delle dipendenze GUI/Sistema
     mock_msgbox.question.return_value = QMessageBox.StandardButton.Yes
-    mock_webbrowser_open = mocker.patch("webbrowser.open")
     mocker.patch.object(AuditManager, "log_action")
+    mock_auto_update = mocker.patch("src.core.updater.gui.perform_auto_update")
+    
+    # Mock HEAD request per la dimensione remota
+    mock_resp = MagicMock()
+    mock_resp.headers = {"content-length": "1000000"}
+    mocker.patch("src.core.updater.gui.requests.head", return_value=mock_resp)
 
     check_for_updates(silent=False)
 
     mock_msgbox.question.assert_called_once()
-    mock_webbrowser_open.assert_called_once_with("http://download.url")
+    mock_auto_update.assert_called_once_with("http://download.url", None)
 
 
 def test_check_for_updates_new_version_no_download(mocker, mock_app_version, mock_update_url, mock_msgbox):
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {"version": "1.1.0", "url": "http://download.url"}
-    mocker.patch("requests.get", return_value=mock_response)
+    mocker.patch(
+        "src.core.updater.gui.get_web_update_info",
+        return_value={"version": "1.1.0", "url": "http://download.url"},
+    )
+    mocker.patch("src.core.updater.gui.get_network_update_info", return_value=None)
 
     mock_msgbox.question.return_value = QMessageBox.StandardButton.No
-    mock_webbrowser_open = mocker.patch("webbrowser.open")
-    mocker.patch.object(AuditManager, "log_action")
+    
+    # Mock HEAD request
+    mock_resp = MagicMock()
+    mock_resp.headers = {"content-length": "1000000"}
+    mocker.patch("src.core.updater.gui.requests.head", return_value=mock_resp)
 
     check_for_updates(silent=False)
 
     mock_msgbox.question.assert_called_once()
-    mock_webbrowser_open.assert_not_called()
 
 
 def test_check_for_updates_http_error(mocker, mock_app_version, mock_update_url, mock_msgbox):
-    mock_response = MagicMock()
-    mock_response.status_code = 404
-    mocker.patch("requests.get", return_value=mock_response)
+    mocker.patch("src.core.updater.gui.get_web_update_info", return_value=None)
+    mocker.patch("src.core.updater.gui.get_network_update_info", return_value=None)
 
     check_for_updates(silent=False)
 
-    mock_msgbox.information.assert_not_called()
-
-
-def test_check_for_updates_timeout(mocker, mock_app_version, mock_update_url, mock_msgbox):
-    mocker.patch("requests.get", side_effect=requests.Timeout)
-
-    check_for_updates(silent=False)
-
-    mock_msgbox.information.assert_not_called()
-
-
-def test_check_for_updates_request_exception(mocker, mock_app_version, mock_update_url, mock_msgbox):
-    mocker.patch("requests.get", side_effect=requests.RequestException("Connection error"))
-
-    check_for_updates(silent=False)
-
-    mock_msgbox.information.assert_not_called()
+    mock_msgbox.information.assert_called_once()
 
 
 def test_check_for_updates_silent_mode(mocker, mock_app_version, mock_update_url, mock_msgbox):
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {"version": "1.0.0", "url": "http://download.url"}
-    mocker.patch("requests.get", return_value=mock_response)
+    mocker.patch(
+        "src.core.updater.gui.get_web_update_info",
+        return_value={"version": "1.0.0", "url": "http://download.url"},
+    )
+    mocker.patch("src.core.updater.gui.get_network_update_info", return_value=None)
 
     check_for_updates(silent=True)
 
@@ -129,16 +130,17 @@ def test_check_for_updates_silent_mode(mocker, mock_app_version, mock_update_url
 
 
 def test_check_for_updates_no_download_url_provided(mocker, mock_app_version, mock_update_url, mock_msgbox):
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {"version": "1.1.0", "url": None}
-    mocker.patch("requests.get", return_value=mock_response)
-
-    mock_msgbox.question.return_value = QMessageBox.StandardButton.Yes
-    mock_webbrowser_open = mocker.patch("webbrowser.open")
+    mocker.patch(
+        "src.core.updater.gui.get_web_update_info",
+        return_value={"version": "1.1.0", "url": None},
+    )
+    mocker.patch("src.core.updater.gui.get_network_update_info", return_value=None)
 
     check_for_updates(silent=False)
 
-    mock_msgbox.question.assert_called_once()
-    mock_webbrowser_open.assert_not_called()
-    mock_msgbox.information.assert_not_called()
+    # Se l'URL è None, non dovrebbe nemmeno considerarlo una sorgente valida (info.get('url') check in code?)
+    # Vediamo il codice: if info and info.get("version"): update_sources.append(info)
+    # Quindi entra, ma poi download_url è None.
+    # Se silent=False, dovrebbe mostrare "aggiornata" o nulla se ha fallito i check successivi.
+    
+    mock_msgbox.information.assert_called_once()

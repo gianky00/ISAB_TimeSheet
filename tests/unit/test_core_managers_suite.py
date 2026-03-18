@@ -22,22 +22,29 @@ class TestStatsManager:
     @patch("src.core.config_manager.set_config_value")
     def test_increment_usage(self, mock_save, manager):
         manager.increment_usage("bot_test")
+        
+        # Attendi il salvataggio asincrono (necessario in V2)
+        manager._save_queue.join()
 
-        assert "bot_test" in manager.stats
-        assert manager.stats["bot_test"]["runs"] == 1
-        assert manager.stats["bot_test"]["errors"] == 0
-        assert manager.stats["bot_test"]["last_run"] is not None
+        stats = manager.get_all_stats()
+        assert "bot_test" in stats
+        assert stats["bot_test"]["runs"] == 1
+        assert stats["bot_test"]["errors"] == 0
+        assert stats["bot_test"]["last_run"] is not None
 
         mock_save.assert_called()
 
     @patch("src.core.config_manager.set_config_value")
     def test_increment_error(self, mock_save, manager):
         manager.increment_error("bot_test")
+        
+        manager._save_queue.join()
 
-        assert "bot_test" in manager.stats
-        assert manager.stats["bot_test"]["errors"] == 1
-        # Runs should be 0 if only error incremented first (though logical flow usually implies run start first)
-        assert manager.stats["bot_test"]["runs"] == 0
+        stats = manager.get_all_stats()
+        assert "bot_test" in stats
+        assert stats["bot_test"]["errors"] == 1
+        # Runs should be 0 if only error incremented first
+        assert stats["bot_test"]["runs"] == 0
 
         mock_save.assert_called()
 

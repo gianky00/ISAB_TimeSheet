@@ -65,16 +65,18 @@ class TestContabilitaQueries:
 
         # Certificati Campione: modello, costruttore, matricola, range_strumento, errore_max, certificato, scadenza, emissione, id_coemi, stato
         cc_cols = [
+            "id_coemi",
+            "certificato",
             "modello",
             "costruttore",
             "matricola",
             "range_strumento",
             "errore_max",
-            "certificato",
-            "scadenza",
             "emissione",
-            "id_coemi",
+            "scadenza",
             "stato",
+            "annotazioni",
+            "ubicazione",
         ]
         schema_cc = "id INTEGER PRIMARY KEY, " + ", ".join([f"{c} TEXT" for c in cc_cols])
         cursor.execute(f"CREATE TABLE certificati_campione ({schema_cc})")
@@ -142,9 +144,10 @@ class TestContabilitaQueries:
     def test_get_certificati_campione_data(self, temp_db):
         rows = ContabilitaQueries.get_certificati_campione_data(temp_db)
         assert len(rows) == 1
-        # modello(0), costruttore(1), matricola(2), range_strumento(3), errore_max(4), certificato(5), scadenza(6)
-        assert rows[0][0] == "Modello1"
-        assert rows[0][6] == "01/01/2024"
+        # id_coemi(0), certificato(1), modello(2), costruttore(3), matricola(4), range(5), errore(6), emissione(7), scadenza(8), stato(9)
+        # + annotazioni(10), ubicazione(11), id(12)
+        assert rows[0][2] == "Modello1"
+        assert rows[0][8] == "01/01/2024"
 
     def test_get_scarico_ore_data(self, temp_db):
         rows = ContabilitaQueries.get_scarico_ore_data(temp_db)

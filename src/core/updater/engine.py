@@ -181,9 +181,13 @@ class DownloadWorker(QThread):
 def run_installer_and_exit(setup_path: str):
     """Executes the installer and terminates the process (Fix B603)."""
     if Path(setup_path).exists():
-        # Rimosso /SILENT per permettere all'utente di scegliere se avviare l'app alla fine.
-        # Mantengo /CLOSEAPPLICATIONS per facilitare la sovrascrittura dei file.
-        subprocess.Popen([setup_path, "/CLOSEAPPLICATIONS", "/RESTARTAPPLICATIONS"])
+        # Usa DETACHED_PROCESS su Windows per garantire che l'installer sopravviva alla chiusura dell'app
+        flags = subprocess.DETACHED_PROCESS if os.name == "nt" else 0
+        subprocess.Popen(
+            [setup_path, "/CLOSEAPPLICATIONS", "/RESTARTAPPLICATIONS"],
+            creationflags=flags,
+            close_fds=True,
+        )
         sys.exit(0)
 
 
@@ -191,13 +195,17 @@ def run_pending_installer():
     """Executes the installer stored at app closure in a separate process."""
     global _pending_installer_path
     if _pending_installer_path and Path(_pending_installer_path).exists():
-        flags = 0x00000008 if os.name == "nt" else 0
+        # Usa DETACHED_PROCESS per slegarsi dal ciclo di vita dell'app corrente
+        flags = subprocess.DETACHED_PROCESS if os.name == "nt" else 0
+        # Avvio tramite cmd per il timeout, ma con quoting rinforzato
         args = [
             "cmd.exe",
             "/c",
             f'timeout /t 3 /nobreak > NUL && "{_pending_installer_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS',
         ]
-        subprocess.Popen(args, shell=False, creationflags=flags, close_fds=True)
+        subprocess.Popen(
+            args, shell=False, creationflags=flags, close_fds=True, stdin=subprocess.DEVNULL
+        )
 
 
 def set_pending_installer(path: str):
@@ -214,6 +222,9 @@ def has_pending_update() -> bool:
 
 def get_web_update_info():
     """Fetches version info from Web."""
+    if not getattr(version, "UPDATE_URL", None):
+        return None
+
     try:
         response = requests.get(version.UPDATE_URL, timeout=5)
         if response.status_code == 200:

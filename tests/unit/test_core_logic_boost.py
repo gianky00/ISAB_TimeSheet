@@ -22,6 +22,8 @@ class TestCoreLogicRefined:
                 assert res is not None
 
             am.log_action("Test Action")
+            # Attendi il worker asincrono (necessario in V2)
+            am._log_queue.join()
             assert len(am.get_logs()) == 1
 
     def test_contabilita_stats_calculation_real(self, tmp_path):

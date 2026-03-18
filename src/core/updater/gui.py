@@ -183,8 +183,15 @@ def check_for_updates(
     # Find the newest version among available sources
     latest_update = max(update_sources, key=lambda x: pkg_version.parse(x["version"]))
     remote_ver_str = latest_update["version"]
-    download_url = latest_update["url"]
+    download_url = latest_update.get("url")
     changelog = latest_update.get("changelog", "")
+
+    if not download_url:
+        if not silent:
+            QMessageBox.information(
+                parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
+            )
+        return
 
     if pkg_version.parse(remote_ver_str) > pkg_version.parse(version.__version__):
         setup_path = get_local_setup_path(download_url)

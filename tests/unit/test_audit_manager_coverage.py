@@ -46,6 +46,9 @@ class TestAuditManager:
 
         # Log action
         manager.log_action("LOGIN", "auth", "user1", {"ip": "127.0.0.1"})
+        
+        # Attendi che il worker asincrono finisca (necessario in V2)
+        manager._log_queue.join()
 
         # Verify it's in DB
         logs = manager.get_logs()
@@ -62,6 +65,7 @@ class TestAuditManager:
     def test_integrity_failure(self, temp_db_manager):
         manager = temp_db_manager
         manager.log_action("TEST", "test")
+        manager._log_queue.join()
 
         # Tamper with DB
         with sqlite3.connect(manager.DB_PATH) as conn:
@@ -88,6 +92,9 @@ class TestAuditManager:
             notify=True,
             params={"error_details": "Versione aggiornata a 2.0"},
         )
+        
+        # Attendi il worker asincrono
+        temp_db_manager._log_queue.join()
 
         mock_instance.add_notification.assert_called_once()
         args, kwargs = mock_instance.add_notification.call_args
@@ -107,6 +114,9 @@ class TestAuditManager:
             conn.commit()
 
         temp_db_manager.run_retention_policy(days=90)
+        
+        # Attendi il log di "Pulizia Log" emesso internamente
+        temp_db_manager._log_queue.join()
 
         logs = temp_db_manager.get_logs(limit=100)
         # Should only have the log about retention, OLD_ACTION should be gone

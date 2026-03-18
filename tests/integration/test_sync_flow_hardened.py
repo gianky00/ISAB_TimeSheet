@@ -128,17 +128,18 @@ class TestSyncFlowHardened(unittest.TestCase):
 
     def test_extended_search_integration(self):
         """Verifica che la ricerca estesa trovi i dati appena inseriti."""
+        # Modello test: (id_coemi, certificato, modello, costruttore, matricola, range, errore, emissione, scadenza, stato)
         imported_rows = [
             (
+                "ID-X",
+                "CERT-X",
                 "STAZIONE",
                 "LEICA",
                 "ST-001",
                 "",
                 "",
-                "CERT-X",
-                "01/01/2030",
                 "01/01/2024",
-                "ID-X",
+                "01/01/2030",
                 "",
             ),
         ]

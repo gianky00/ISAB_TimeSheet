@@ -21,7 +21,7 @@ class TestConfigSafeWork:
 
         # Setup initial config with SafeWork accounts
         config_data = {
-            "safework_accounts": [{"username": "user1", "password": "encrypted_pw"}],
+            "safework_accounts": [{"username": "user1", "password": "ENC:v2:encrypted_pw"}],
             "accounts": [],  # Standard accounts
         }
         mock_load_base.return_value = config_data

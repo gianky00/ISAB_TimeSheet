@@ -52,18 +52,21 @@ class DettagliOdABot(BaseBot):
 
     def __init__(
         self,
+        username: str,
+        password: str,
         data_da: str | None = None,
         data_a: str | None = None,
         fornitore: str | None = None,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(username, password, **kwargs)
         current_year = datetime.now(UTC).astimezone().year
         from src.core.constants import Business
 
         self.data_da = data_da or f"01.01.{current_year}"
         self.data_a = data_a or f"31.12.{current_year}"
-        self.fornitore = fornitore or Business.DEFAULT_SUPPLIER
+        self.fornitore = fornitore or Business.COMPANY_NAME
+
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """Validazione specifica per Dettagli OdA."""

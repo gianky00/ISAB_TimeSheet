@@ -8,8 +8,11 @@ from src.core.audit.models import Severity, Status
 
 class TestAuditManager:
     @pytest.fixture(autouse=True)
-    def setup_manager(self, tmp_path):
+    def setup_manager(self, tmp_path, mocker):
         """Setup AuditManager with a temp DB."""
+        # Patch AuditSignals to avoid PyQt6 issues in headless
+        mocker.patch("src.core.audit.manager.AuditSignals.instance")
+        
         AuditManager._instance = None  # Reset Singleton
         db_path = tmp_path / "audit_test.db"
 
@@ -20,15 +23,17 @@ class TestAuditManager:
 
     def test_log_action_success(self, setup_manager):
         manager = setup_manager
-        audit_id = manager.log_action(
+        # log_action in V2 returns None (asynchronous)
+        manager.log_action(
             action="Test Action",
             category="Test Cat",
             entity="Test Entity",
             severity=Severity.HIGH,
             status=Status.SUCCESS,
         )
+        
+        manager._log_queue.join()
 
-        assert audit_id is not None
         logs, total = manager.get_filtered_logs()
         assert total == 1
         assert logs[0]["action"] == "Test Action"
@@ -39,6 +44,8 @@ class TestAuditManager:
         manager = setup_manager
         params = {"key": "value", "nested": 123}
         manager.log_action("Action with params", params=params)
+        
+        manager._log_queue.join()
 
         logs, _ = manager.get_filtered_logs()
         import json
@@ -50,12 +57,16 @@ class TestAuditManager:
         manager = setup_manager
         manager.log_action("Action 1")
         manager.log_action("Action 2")
+        
+        manager._log_queue.join()
 
         assert manager.verify_integrity() is True
 
     def test_verify_integrity_fail(self, setup_manager, tmp_path):
         manager = setup_manager
         manager.log_action("Action 1")
+        
+        manager._log_queue.join()
 
         # Tamper with the database manually
         import sqlite3
@@ -72,9 +83,9 @@ class TestAuditManager:
         manager = setup_manager
         # Manually insert an old record
         import sqlite3
-        from datetime import datetime, timedelta
+        from datetime import datetime, timedelta, UTC
 
-        old_ts = (datetime.now() - timedelta(days=100)).isoformat()
+        old_ts = (datetime.now(UTC) - timedelta(days=100)).isoformat()
 
         with sqlite3.connect(manager.db.DB_PATH) as conn:
             conn.execute(
@@ -82,10 +93,14 @@ class TestAuditManager:
                 (old_ts, "Old Action"),
             )
 
-        _, total = manager.get_filtered_logs()
+        # Sync check
+        logs, total = manager.get_filtered_logs()
         assert total == 1
 
         manager.run_retention_policy(days=90)
+        
+        # Attendi il log di pulizia asincrono
+        manager._log_queue.join()
 
         # Old record should be deleted
         _, total = manager.get_filtered_logs()
@@ -99,8 +114,11 @@ class TestAuditManager:
         manager = setup_manager
         manager.log_action("A1", status=Status.SUCCESS)
         manager.log_action("A2", status=Status.ERROR)
+        
+        manager._log_queue.join()
 
         stats = manager.get_stats_by_day(days=1)
-        today = list(stats.keys())[-1]
+        # Sort keys to get today (last one)
+        today = sorted(stats.keys())[-1]
         assert stats[today]["success"] >= 1
         assert stats[today]["error"] >= 1

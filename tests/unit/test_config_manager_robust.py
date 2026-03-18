@@ -162,11 +162,11 @@ class TestConfigManagerRobust:
         with (
             patch(
                 "src.utils.security.password_manager.encrypt",
-                side_effect=lambda x: f"ENC_{x}",
+                side_effect=lambda x: f"ENC:v2:{x}",
             ),
             patch(
                 "src.utils.security.password_manager.decrypt",
-                side_effect=lambda x: x.replace("ENC_", ""),
+                side_effect=lambda x: x.replace("ENC:v2:", ""),
             ),
         ):
             add_account("user_enc", "secret")
@@ -174,7 +174,7 @@ class TestConfigManagerRobust:
             # Verifica su disco che sia criptata
             disk_data = json.loads(self.mock_config_file.read_text(encoding="utf-8"))
             acc = disk_data["accounts"][0]
-            assert acc["password"] == "ENC_secret"
+            assert acc["password"] == "ENC:v2:secret"
 
             # Verifica in memoria che sia decriptata
             _reset_configuration_for_testing()

@@ -31,7 +31,7 @@ class ConcreteBot(BaseBot):
 def mock_bot_deps():
     with (
         patch("src.bots.base.base_bot.webdriver") as mock_webdriver,
-        patch("src.bots.base.base_bot.ChromeDriverManager") as mock_cdm,
+        patch("webdriver_manager.chrome.ChromeDriverManager") as mock_cdm,
         patch("src.bots.base.base_bot.config_manager") as mock_config,
         patch("src.bots.base.base_bot.LoginPage") as mock_login_page,
         patch("src.core.license_updater.run_update") as mock_update,

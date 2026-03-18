@@ -44,7 +44,7 @@ def test_init_driver_success(bot, mocker):
     # Mocking external dependencies
     mocker.patch("src.bots.base.base_bot.Options")
     m_chrome = mocker.patch("src.bots.base.base_bot.webdriver.Chrome")
-    m_manager = mocker.patch("src.bots.base.base_bot.ChromeDriverManager")
+    m_manager = mocker.patch("webdriver_manager.chrome.ChromeDriverManager")
     m_manager.return_value.install.return_value = "chromedriver.exe"
 
     bot._init_driver()
@@ -62,7 +62,7 @@ def test_init_driver_headless_config(bot, mocker):
     m_options = mocker.patch("src.bots.base.base_bot.Options")
     mocker.patch("src.bots.base.base_bot.webdriver.Chrome")
     mocker.patch(
-        "src.bots.base.base_bot.ChromeDriverManager"
+        "webdriver_manager.chrome.ChromeDriverManager"
     ).return_value.install.return_value = "chromedriver.exe"
 
     bot._init_driver()
@@ -73,7 +73,7 @@ def test_init_driver_headless_config(bot, mocker):
 
 def test_init_driver_fallback_local(bot, mocker):
     """Test fallback to local driver if manager fails."""
-    mocker.patch("src.bots.base.base_bot.ChromeDriverManager").return_value.install.side_effect = Exception(
+    mocker.patch("webdriver_manager.chrome.ChromeDriverManager").return_value.install.side_effect = Exception(
         "Network error"
     )
 
@@ -100,7 +100,7 @@ def test_init_driver_failure_handling(bot, mocker):
         side_effect=Exception("chrome instance exited"),
     )
     mocker.patch(
-        "src.bots.base.base_bot.ChromeDriverManager"
+        "webdriver_manager.chrome.ChromeDriverManager"
     ).return_value.install.return_value = "chromedriver.exe"
 
     # Capture logs

@@ -22,7 +22,9 @@ class TestAuditManager:
 
         # Reset singleton
         AuditManager._instance = None
-        return AuditManager()
+        mgr = AuditManager()
+        yield mgr
+        AuditManager._instance = None
 
     def test_log_action_and_integrity(self, manager):
         """Test logging an action and verifying chain integrity."""
@@ -33,13 +35,15 @@ class TestAuditManager:
             entity="App",
             status=AuditManager.Status.SUCCESS,
         )
+        # Attendi il worker asincrono
+        manager._log_queue.join()
 
         # Verify integrity
         assert manager.verify_integrity() is True
 
         # Manually corrupt DB to test integrity failure
         with sqlite3.connect(manager.DB_PATH) as conn:
-            conn.execute("UPDATE audit_logs SET action = 'Hacked' WHERE id = 1")
+            conn.execute("UPDATE audit_logs SET action = 'Hacked' WHERE action = 'Test Action'")
             conn.commit()
 
         assert manager.verify_integrity() is False
@@ -47,6 +51,7 @@ class TestAuditManager:
     def test_get_logs(self, manager):
         manager.log_action("A1")
         manager.log_action("A2")
+        manager._log_queue.join()
 
         logs = manager.get_logs()
         assert len(logs) == 2
@@ -54,6 +59,7 @@ class TestAuditManager:
 
     def test_retention_policy(self, manager):
         manager.log_action("Old Action")
+        manager._log_queue.join()
 
         # Manually set timestamp to old date
         with sqlite3.connect(manager.DB_PATH) as conn:
@@ -61,6 +67,7 @@ class TestAuditManager:
             conn.commit()
 
         manager.run_retention_policy(days=1)
+        manager._log_queue.join()
 
         # Old action should be gone, but policy run itself logged
         logs = manager.get_logs()
@@ -70,6 +77,7 @@ class TestAuditManager:
     def test_notification_emission(self, manager):
         with patch("src.core.notification_manager.NotificationManager.instance") as mock_notif:
             manager.log_action("Action", notify=True)
+            manager._log_queue.join()
             mock_notif.return_value.add_notification.assert_called_once()
 
     def test_get_current_user(self, manager):

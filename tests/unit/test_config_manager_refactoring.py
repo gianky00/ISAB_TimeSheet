@@ -70,8 +70,8 @@ def test_load_config_with_credentials_keyring(clean_config_env):
     """Test loading config with credentials stored in keyring."""
     _mock_dir, mock_file = clean_config_env
     data = {
-        "accounts": [{"username": "user1", "password": "encrypted_pw"}],
-        "safework_accounts": [{"username": "sw_user", "password": "sw_encrypted"}],
+        "accounts": [{"username": "user1", "password": "ENC:v2:encrypted_pw"}],
+        "safework_accounts": [{"username": "sw_user", "password": "ENC:v2:sw_encrypted"}],
     }
     mock_file.write_text(json.dumps(data), encoding="utf-8")
 
@@ -95,8 +95,8 @@ def test_load_config_with_credentials_fallback(clean_config_env):
     """Test loading config with credentials decrypted from file (fallback)."""
     _mock_dir, mock_file = clean_config_env
     data = {
-        "accounts": [{"username": "user1", "password": "encrypted_pw"}],
-        "safework_accounts": [{"username": "sw_user", "password": "sw_encrypted"}],
+        "accounts": [{"username": "user1", "password": "ENC:v2:encrypted_pw"}],
+        "safework_accounts": [{"username": "sw_user", "password": "ENC:v2:sw_encrypted"}],
     }
     mock_file.write_text(json.dumps(data), encoding="utf-8")
 
@@ -107,8 +107,7 @@ def test_load_config_with_credentials_fallback(clean_config_env):
         mock_decrypt.side_effect = lambda x: f"decrypted_{x}"
 
         config = load_config()
-        config = load_config()
-        assert config["accounts"][0]["password"] == "decrypted_encrypted_pw"
+        assert config["accounts"][0]["password"] == "decrypted_ENC:v2:encrypted_pw"
 
 
 def test_load_config_legacy_migration(clean_config_env):

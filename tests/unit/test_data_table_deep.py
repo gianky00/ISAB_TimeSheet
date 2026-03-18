@@ -6,9 +6,9 @@ from src.gui.widgets.data_table import DataTable
 @pytest.fixture
 def columns():
     return [
-        {"name": "ID", "key": "id", "width": 50},
-        {"name": "Nome", "key": "nome", "width": 150},
-        {"name": "Stato", "key": "stato", "editable": False},
+        {"name": "id", "label": "ID", "width": 50},
+        {"name": "nome", "label": "Nome", "width": 150},
+        {"name": "stato", "label": "Stato", "editable": False},
     ]
 
 

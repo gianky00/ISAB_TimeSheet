@@ -378,10 +378,6 @@ class ScaricoPDLPanel(BaseBotPanel):
             if getattr(self, "merge_and_send_from_telegram", False) and downloaded_files:
                 self._handle_telegram_auto_send(downloaded_files)
 
-    def _on_bot_finished(self, success: bool) -> None:
-        """Alias per compatibilità test."""
-        self._on_worker_finished(success)
-
     def _handle_telegram_auto_send(self, files: list[str]) -> None:
         """Unisce i PDF e li invia via Telegram se il servizio è disponibile."""
         main_win = self.window()

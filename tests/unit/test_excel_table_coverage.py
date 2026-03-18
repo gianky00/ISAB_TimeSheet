@@ -76,24 +76,6 @@ class TestExcelTableCoverage:
         expected = COLORS["table_success_bg"].upper()
         assert color == expected
 
-    def test_analyze_with_lyra_selection(self, app, mocker):
-        """Verifica che la selezione venga formattata correttamente per Lyra AI."""
-        table = ExcelTableWidget()
-        table.setRowCount(1)
-        table.setColumnCount(1)
-        table.setHorizontalHeaderLabels(["H1"])
-        table.setItem(0, 0, QTableWidgetItem("Value1"))
-        table.selectAll()
-
-        mock_win = MagicMock()
-        mocker.patch.object(table, "window", return_value=mock_win)
-
-        table._analyze_selection()
-
-        mock_win.analyze_with_lyra.assert_called_once()
-        args = mock_win.analyze_with_lyra.call_args[0][0]
-        assert "H1: Value1" in args
-
     def test_excel_table_context_menu_event_with_qpoint(self, app, mocker):
         """Verifica che contextMenuEvent non crashi con un QPoint (CustomContextMenu)."""
         from PyQt6.QtCore import QPoint

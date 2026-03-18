@@ -69,7 +69,7 @@ def log_and_print(message, level="INFO"):
 
 
 def run_command(cmd, cwd=None, shell=False, check=True):
-    """Run command and log output with a life-indicator spinner."""
+    """Run command and log output."""
     if cwd is None:
         cwd = ROOT_DIR
 
@@ -79,21 +79,10 @@ def run_command(cmd, cwd=None, shell=False, check=True):
     cmd_str = " ".join(cmd) if isinstance(cmd, list) else cmd
     log_and_print(f"\n[EXEC] {cmd_str}")
 
-    # Spinner logic
-    stop_spinner = threading.Event()
-
-    def spinner_task():
-        chars = ["|", "/", "-", "\\"]
-        idx = 0
-        while not stop_spinner.is_set():
-            sys.stdout.write(f"\r[WORKING] {chars[idx % 4]} ")
-            sys.stdout.flush()
-            idx += 1
-            time.sleep(0.15)
-        sys.stdout.write("\r" + " " * 20 + "\r")  # Clean line
-
-    spinner_thread = threading.Thread(target=spinner_task, daemon=True)
-    spinner_thread.start()
+    # Costanti per Windows
+    creationflags = 0
+    if os.name == "nt":
+        creationflags = subprocess.CREATE_NO_WINDOW
 
     try:
         process = subprocess.Popen(
@@ -105,6 +94,7 @@ def run_command(cmd, cwd=None, shell=False, check=True):
             text=True,
             encoding="utf-8",
             errors="replace",
+            creationflags=creationflags,
         )
 
         if process.stdout:
@@ -117,8 +107,6 @@ def run_command(cmd, cwd=None, shell=False, check=True):
                     logger.info(f"[CMD] {line.strip()}")
 
         return_code = process.wait()
-        stop_spinner.set()
-        spinner_thread.join(timeout=1.0)
 
         if check and return_code != 0:
             log_and_print(f"[ERROR] Command failed with return code {return_code}", "ERROR")
@@ -126,7 +114,6 @@ def run_command(cmd, cwd=None, shell=False, check=True):
         return return_code
 
     except Exception as e:
-        stop_spinner.set()
         log_and_print(f"[EXCEPTION] {e}", "ERROR")
         if check:
             sys.exit(1)

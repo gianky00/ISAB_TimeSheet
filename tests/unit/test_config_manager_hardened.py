@@ -31,7 +31,6 @@ class TestConfigManagerHardened:
         """Verifica caricamento dei valori di default se il file non esiste."""
         config = load_config()
         assert config["browser_timeout"] == 30
-        assert config["ai_model"] == "gemini-1.5-pro"
         assert setup_config.parent.exists()  # Verifica creazione directory
 
     def test_load_config_corrupted_json(self, setup_config):

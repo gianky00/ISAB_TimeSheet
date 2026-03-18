@@ -58,10 +58,15 @@ def test_scarica_ts_panel_deep(qtbot, mock_ui_deps):
 def test_carico_ts_panel_deep(qtbot, mock_ui_deps):
     panel = CaricoTSPanel()
     qtbot.addWidget(panel)
+    
+    # Forza il caricamento differito per svuotare la coda dei timer
+    panel._safe_load_data()
 
-    # Mock table data (set_data handles case-insensitive but get_data is precise)
-    panel.data_table.set_data([{"ID": "1", "STATO": "da_caricare"}])
-    assert panel.data_table.table.rowCount() == 1
+    # Mock table data con metodo ad alto livello
+    panel.add_rows_simple([{"numero_oda": "123456", "cognome": "Rossi"}])
+    
+    # get_rows_count() è più robusto perché filtra le righe vuote
+    assert panel.get_rows_count() == 1
 
     # Test reset
     panel.log_widget.clear()
@@ -76,9 +81,9 @@ def test_dettagli_oda_panel_deep(qtbot, mock_ui_deps):
     # Check if correct bot_id
     assert panel.bot_id == "dettagli_oda"
 
-    # Test adding rows
-    panel.add_rows_simple([{"Numero OdA": "999"}])
-    assert panel.data_table.get_data()[0]["Numero OdA"] == "999"
+    # Test adding rows (usando nomi tecnici colonne)
+    panel.add_rows_simple([{"numero_oda": "999"}])
+    assert panel.data_table.get_data()[0]["numero_oda"] == "999"
 
 
 @patch("src.gui.panels.scarico_ts.BotWorker")

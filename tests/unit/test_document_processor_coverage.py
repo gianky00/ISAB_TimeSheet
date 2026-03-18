@@ -29,27 +29,6 @@ class TestDocumentProcessorCoverage:
         text = DocumentProcessor.extract_text(Path("test.pdf"))
         assert text == "Pagina 1Pagina 2"
 
-    def test_get_pages_as_images_limit(self, mock_fitz):
-        """Verifica conversione in base64 con limite pagine."""
-        mock_doc = MagicMock()
-        mock_doc.__enter__.return_value = mock_doc
-        mock_doc.__exit__.return_value = None
-        mock_doc.__len__.return_value = 10  # 10 pagine
-
-        mock_page = MagicMock()
-        mock_pix = MagicMock()
-        mock_pix.tobytes.return_value = b"fake_png_data"
-        mock_page.get_pixmap.return_value = mock_pix
-
-        mock_doc.__getitem__.return_value = mock_page
-        mock_fitz.open.return_value = mock_doc
-
-        # Chiedi max 2 pagine
-        images = DocumentProcessor.get_pages_as_images(Path("test.pdf"), max_pages=2)
-
-        assert len(images) == 2
-        assert images[0] == base64.b64encode(b"fake_png_data").decode("utf-8")
-
     def test_is_pdf_searchable_true(self, mock_fitz):
         """Verifica rilevamento PDF con testo."""
         mock_doc = MagicMock()

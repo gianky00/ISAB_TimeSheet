@@ -26,7 +26,11 @@ class TestBugReporterRobust:
     @patch("src.core.bug_reporter.BugReporter._collect_system_info")
     def test_collect_diagnostics_success(self, mock_sys_info, mock_datetime, mock_zip, mock_config_dir):
         """Test creazione report con successo."""
-        mock_datetime.now.return_value.strftime.return_value = "20230101_120000"
+        # Configura datetime per gestire now(UTC) e astimezone()
+        mock_now = MagicMock()
+        mock_now.astimezone.return_value.strftime.return_value = "20230101_120000"
+        mock_datetime.now.return_value = mock_now
+        
         mock_zip_instance = mock_zip.return_value.__enter__.return_value
 
         # Mock system info sicuro per JSON

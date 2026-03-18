@@ -496,9 +496,9 @@ def test_import_certificati_campione_success(tmp_path):
     success, _msg, rows = ExcelImporter.import_certificati_campione(str(path))
     assert success is True
     assert len(rows) == 1
-    # row: (modello, costruttore, matricola, range, errore, certificato, scadenza, emissione, id_coemi, stato)
-    assert rows[0][0] == "M1"
-    assert "31/12/2026" in rows[0][6]
+    # row: (id_coemi(0), certificato(1), modello(2), costruttore(3), matricola(4), range(5), errore(6), emissione(7), scadenza(8), stato(9))
+    assert rows[0][2] == "M1"
+    assert "31/12/2026" in rows[0][8]
     assert "Scade tra 30 giorni" in rows[0][9]
 
 

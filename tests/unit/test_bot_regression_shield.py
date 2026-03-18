@@ -51,7 +51,7 @@ class TestBotRegressionShield:
         manager.attach_mock(mocker.patch.object(bot, "_scarica_parte_seconda", return_value="p2.pdf"), "p2")
         manager.attach_mock(mocker.patch.object(bot, "_unisci_e_stampa", return_value=True), "merge")
 
-        data = [{"pdl_number": "566360"}]
+        data = [{"numero_pdl": "566360"}]
         bot.run(data)
 
         # Verifichiamo l'ordine delle chiamate fondamentali per la riga 1

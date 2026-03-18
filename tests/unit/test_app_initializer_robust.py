@@ -23,10 +23,6 @@ class TestAppInitializerRobust:
     @patch("src.core.database.db_manager.init_db")
     @patch("src.core.license_validator.get_detailed_license_status")
     @patch("src.core.license_updater.run_update")
-    @patch.dict(
-        "sys.modules",
-        {"pandas": MagicMock(), "numpy": MagicMock(), "selenium": MagicMock()},
-    )
     def test_initialize_core_success(self, mock_update, mock_status, mock_db, mock_log):
         """Test inizializzazione core completa con successo."""
         from src.core.license_validator import LicenseStatus
@@ -47,10 +43,6 @@ class TestAppInitializerRobust:
     @patch("src.core.database.db_manager.init_db")
     @patch("src.core.license_validator.get_detailed_license_status")
     @patch("src.core.license_updater.run_update")
-    @patch.dict(
-        "sys.modules",
-        {"pandas": MagicMock(), "numpy": MagicMock(), "selenium": MagicMock()},
-    )
     def test_initialize_core_license_invalid(self, mock_update, mock_status, mock_db, mock_log):
         """Test blocco inizializzazione se licenza invalida."""
         from src.core.license_validator import LicenseStatus
@@ -75,10 +67,6 @@ class TestAppInitializerRobust:
 
         # Patch dependencies to avoid early exit
         with (
-            patch.dict(
-                "sys.modules",
-                {"pandas": MagicMock(), "numpy": MagicMock(), "selenium": MagicMock()},
-            ),
             patch(
                 "src.core.license_validator.get_detailed_license_status",
                 return_value=(LicenseStatus.VALID, "OK"),
@@ -99,16 +87,18 @@ class TestAppInitializerRobust:
 
         # Setup PageIndex mocks to match integers used in code
         with patch("src.gui.main_window.page_index.PageIndex") as MockPageIndex:
-            # Configura gli attributi come interi
+            # Configura gli attributi come interi (Real values from PageIndex)
             MockPageIndex.DASHBOARD = 0
             MockPageIndex.AUTOMAZIONI = 1
-            MockPageIndex.LYRA = 2
             MockPageIndex.TIMBRATURE = 3
             MockPageIndex.STRUMENTALE = 4
             MockPageIndex.DATAEASE = 5
             MockPageIndex.ANAGRAFICHE = 6
             MockPageIndex.SETTINGS = 7
-            MockPageIndex.DIPENDENTI = 11  # Match source code
+            MockPageIndex.HELP = 8
+            MockPageIndex.NOTIFICATIONS = 9
+            MockPageIndex.STORICO_ODA = 10
+            MockPageIndex.DIPENDENTI = 11
 
             # Esegui generatore
             gen = AppInitializer.init_generator(mock_mw)
@@ -122,8 +112,8 @@ class TestAppInitializerRobust:
             assert steps[-1][1] == 100  # Ultimo step 100%
 
             # Verifica chiamate ai pannelli
-            # Ci aspettiamo chiamate a get_panel per ogni indice nella lista tasks
-            expected_indices = [0, 1, 2, 3, 4, 5, 6, 7, 11]
+            # Ci aspettiamo chiamate a get_panel per ogni indice nella lista tasks di AppInitializer
+            expected_indices = [0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11]
             for idx in expected_indices:
                 mock_nav.get_panel.assert_any_call(idx)
 

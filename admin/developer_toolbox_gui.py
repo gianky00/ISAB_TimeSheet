@@ -60,6 +60,11 @@ class CommandRunner(QThread):
             env_vars["NO_COLOR"] = "1"  # Disabilita colori se problematici
             env_vars["PYTHONUNBUFFERED"] = "1"  # Forza unbuffered output
 
+            # Costanti per Windows
+            creationflags = 0
+            if sys.platform == "win32":
+                creationflags = subprocess.CREATE_NO_WINDOW
+
             if self.shell:
                 # Per comandi shell (mkdocs serve, ecc.)
                 self.process = QProcess()
@@ -71,9 +76,7 @@ class CommandRunner(QThread):
                     q_env.insert(k, v)
                 self.process.setProcessEnvironment(q_env)
 
-                # self.process.readyRead.connect(self._read_output)  # Preferiamo lettura manuale in loop
-                # self.process.finished.connect(lambda code, status: self._on_finished(code))
-
+                # Su Windows, QProcess gestisce già bene l'assenza di finestra
                 program = self.command[0]
                 args = self.command[1:] if len(self.command) > 1 else []
                 self.process.start(program, args)
@@ -99,6 +102,7 @@ class CommandRunner(QThread):
                     env=env_vars,
                     bufsize=1,  # Line buffered
                     universal_newlines=True,
+                    creationflags=creationflags,
                 )
                 self.process = process
 
@@ -349,8 +353,18 @@ class DeveloperToolboxGUI(QMainWindow):
         stop_btn = QPushButton("Stop Process")
         stop_btn.clicked.connect(self._stop_current_process)
         stop_btn.setStyleSheet("QPushButton { background-color: #c0392b; color: white; }")
+        
+        # Spinner/Status Label
+        self.status_label = QLabel("Pronto")
+        self.status_label.setStyleSheet("color: #1abc9c; font-weight: bold; margin-left: 10px;")
+        self.spinner_timer = QTimer()
+        self.spinner_timer.timeout.connect(self._update_spinner)
+        self.spinner_chars = ["|", "/", "-", "\\"]
+        self.spinner_idx = 0
+
         console_controls.addWidget(clear_btn)
         console_controls.addWidget(stop_btn)
+        console_controls.addWidget(self.status_label)
         console_controls.addStretch()
         output_layout.addLayout(console_controls)
 
@@ -472,10 +486,19 @@ class DeveloperToolboxGUI(QMainWindow):
         self._log_output(f"[CMD] {' '.join(command)}\n")
         self._log_output(f"{'=' * 60}\n\n")
 
+        self.status_label.setText(f"In esecuzione {self.spinner_chars[0]}")
+        self.status_label.setStyleSheet("color: #f39c12; font-weight: bold; margin-left: 10px;")
+        self.spinner_timer.start(150)
+
         self.current_runner = CommandRunner(command, shell=shell)
         self.current_runner.output_received.connect(self._log_output)
         self.current_runner.finished_signal.connect(self._on_command_finished)
         self.current_runner.start()
+
+    def _update_spinner(self):
+        """Aggiorna lo spinner visivo nella GUI"""
+        self.spinner_idx = (self.spinner_idx + 1) % len(self.spinner_chars)
+        self.status_label.setText(f"In esecuzione {self.spinner_chars[self.spinner_idx]}")
 
     def _log_output(self, text: str):
         """Aggiunge testo alla console di output"""
@@ -485,7 +508,16 @@ class DeveloperToolboxGUI(QMainWindow):
 
     def _on_command_finished(self, exit_code: int):
         """Chiamato quando un comando finisce"""
-        status = "SUCCESS" if exit_code == 0 else f"FAILED (exit code: {exit_code})"
+        self.spinner_timer.stop()
+        if exit_code == 0:
+            status = "SUCCESS"
+            self.status_label.setText("Pronto")
+            self.status_label.setStyleSheet("color: #1abc9c; font-weight: bold; margin-left: 10px;")
+        else:
+            status = f"FAILED (exit code: {exit_code})"
+            self.status_label.setText(f"Errore ({exit_code})")
+            self.status_label.setStyleSheet("color: #e74c3c; font-weight: bold; margin-left: 10px;")
+
         self._log_output(f"\n[{status}] Operazione completata.\n")
         self.current_runner = None
 

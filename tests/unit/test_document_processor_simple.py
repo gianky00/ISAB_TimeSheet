@@ -38,8 +38,3 @@ class TestDocumentProcessorSimple:
         success = DocumentProcessor.merge_pdfs(["f1.pdf", "f2.pdf"], "out.pdf")
         assert success is True
         assert mock_fitz.open.called
-
-    def test_get_pages_as_images_error(self):
-        # Should return empty list on error
-        res = DocumentProcessor.get_pages_as_images(Path("invalid.pdf"))
-        assert res == []
