@@ -22,7 +22,7 @@ class TestStatsManager:
     @patch("src.core.config_manager.set_config_value")
     def test_increment_usage(self, mock_save, manager):
         manager.increment_usage("bot_test")
-        
+
         # Attendi il salvataggio asincrono (necessario in V2)
         manager._save_queue.join()
 
@@ -37,7 +37,7 @@ class TestStatsManager:
     @patch("src.core.config_manager.set_config_value")
     def test_increment_error(self, mock_save, manager):
         manager.increment_error("bot_test")
-        
+
         manager._save_queue.join()
 
         stats = manager.get_all_stats()

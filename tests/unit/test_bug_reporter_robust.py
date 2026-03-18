@@ -30,7 +30,7 @@ class TestBugReporterRobust:
         mock_now = MagicMock()
         mock_now.astimezone.return_value.strftime.return_value = "20230101_120000"
         mock_datetime.now.return_value = mock_now
-        
+
         mock_zip_instance = mock_zip.return_value.__enter__.return_value
 
         # Mock system info sicuro per JSON

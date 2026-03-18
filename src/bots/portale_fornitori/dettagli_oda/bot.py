@@ -65,7 +65,7 @@ class DettagliOdABot(BaseBot):
 
         self.data_da = data_da or f"01.01.{current_year}"
         self.data_a = data_a or f"31.12.{current_year}"
-        self.fornitore = fornitore or Business.COMPANY_NAME
+        self.fornitore = fornitore or Business.DEFAULT_SUPPLIER
 
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:

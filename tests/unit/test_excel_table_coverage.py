@@ -1,4 +1,3 @@
-from unittest.mock import MagicMock
 
 import pytest
 from PyQt6.QtCore import Qt

@@ -46,7 +46,7 @@ class TestAuditManager:
 
         # Log action
         manager.log_action("LOGIN", "auth", "user1", {"ip": "127.0.0.1"})
-        
+
         # Attendi che il worker asincrono finisca (necessario in V2)
         manager._log_queue.join()
 
@@ -92,7 +92,7 @@ class TestAuditManager:
             notify=True,
             params={"error_details": "Versione aggiornata a 2.0"},
         )
-        
+
         # Attendi il worker asincrono
         temp_db_manager._log_queue.join()
 
@@ -114,7 +114,7 @@ class TestAuditManager:
             conn.commit()
 
         temp_db_manager.run_retention_policy(days=90)
-        
+
         # Attendi il log di "Pulizia Log" emesso internamente
         temp_db_manager._log_queue.join()
 

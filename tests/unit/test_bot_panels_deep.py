@@ -58,13 +58,13 @@ def test_scarica_ts_panel_deep(qtbot, mock_ui_deps):
 def test_carico_ts_panel_deep(qtbot, mock_ui_deps):
     panel = CaricoTSPanel()
     qtbot.addWidget(panel)
-    
+
     # Forza il caricamento differito per svuotare la coda dei timer
     panel._safe_load_data()
 
     # Mock table data con metodo ad alto livello
     panel.add_rows_simple([{"numero_oda": "123456", "cognome": "Rossi"}])
-    
+
     # get_rows_count() è più robusto perché filtra le righe vuote
     assert panel.get_rows_count() == 1
 

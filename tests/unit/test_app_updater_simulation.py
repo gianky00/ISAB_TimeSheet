@@ -4,7 +4,9 @@ Verifies version check and update notification using direct function mocking.
 """
 
 from unittest.mock import MagicMock
+
 import pytest
+
 from src.core.app_updater import check_for_updates
 
 

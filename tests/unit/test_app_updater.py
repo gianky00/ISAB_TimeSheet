@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock
 
 import pytest
-import requests
 from PyQt6.QtWidgets import QMessageBox
 
 from src.core import version
@@ -77,7 +76,7 @@ def test_check_for_updates_new_version_download(mocker, mock_app_version, mock_u
     mock_msgbox.question.return_value = QMessageBox.StandardButton.Yes
     mocker.patch.object(AuditManager, "log_action")
     mock_auto_update = mocker.patch("src.core.updater.gui.perform_auto_update")
-    
+
     # Mock HEAD request per la dimensione remota
     mock_resp = MagicMock()
     mock_resp.headers = {"content-length": "1000000"}
@@ -97,7 +96,7 @@ def test_check_for_updates_new_version_no_download(mocker, mock_app_version, moc
     mocker.patch("src.core.updater.gui.get_network_update_info", return_value=None)
 
     mock_msgbox.question.return_value = QMessageBox.StandardButton.No
-    
+
     # Mock HEAD request
     mock_resp = MagicMock()
     mock_resp.headers = {"content-length": "1000000"}
@@ -142,5 +141,5 @@ def test_check_for_updates_no_download_url_provided(mocker, mock_app_version, mo
     # Vediamo il codice: if info and info.get("version"): update_sources.append(info)
     # Quindi entra, ma poi download_url è None.
     # Se silent=False, dovrebbe mostrare "aggiornata" o nulla se ha fallito i check successivi.
-    
+
     mock_msgbox.information.assert_called_once()

@@ -1,0 +1,5 @@
+src\bots\portale_fornitori\dettagli_oda\bot.py:68:39: error: "type[Business]"
+has no attribute "COMPANY_NAME"  [attr-defined]
+            self.fornitore = fornitore or Business.COMPANY_NAME
+                                          ^~~~~~~~~~~~~~~~~~~~~
+Found 1 error in 1 file (checked 349 source files)

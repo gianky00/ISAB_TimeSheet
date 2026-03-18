@@ -177,8 +177,8 @@ def main():
         if splash_process.poll() is None and splash_process.stdin:
             try:
                 # Sanitizzazione messaggio per evitare rotture JSON
-                clean_msg = str(msg).replace("\n", " ").replace("\r", "").strip()
-                data = json.dumps({"cmd": "update", "msg": clean_msg, "prog": int(prog)}, ensure_ascii=False)
+                clean_msg = msg.replace("\n", " ").replace("\r", "").strip()
+                data = json.dumps({"cmd": "update", "msg": clean_msg, "prog": prog}, ensure_ascii=False)
                 splash_process.stdin.write(data + "\n")
                 splash_process.stdin.flush()
             except Exception as e:

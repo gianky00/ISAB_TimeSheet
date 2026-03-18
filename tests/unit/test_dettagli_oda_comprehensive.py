@@ -8,13 +8,11 @@ Matches source code:
 - src/bots/portale_fornitori/dettagli_oda/pages/dettagli_oda_page.py
 """
 
-import concurrent.futures
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.bots.base.base_bot import StepStatus
 from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
 from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
     DettagliOdAPage,
@@ -34,7 +32,7 @@ class TestDettagliOdaComprehensive:
         assert ok is True
 
         # Case 2: Dati validi (Generale - senza OdA)
-        ok, msg = bot.validate_data([])
+        ok, _msg = bot.validate_data([])
         assert ok is True
 
     @patch("src.bots.portale_fornitori.dettagli_oda.bot.DettagliOdAPage")
@@ -51,7 +49,7 @@ class TestDettagliOdaComprehensive:
         data = [{"numero_oda": "123"}]
         # Mock driver
         bot.driver = MagicMock()
-        
+
         success = bot.run(data)
 
         assert success is True
@@ -70,7 +68,7 @@ class TestDettagliOdaComprehensive:
         mock_future.result.return_value = (True, "OK", 5, [])
         mock_executor.submit.return_value = mock_future
         mock_executor.__enter__.return_value = mock_executor
-        
+
         with patch("concurrent.futures.ProcessPoolExecutor", return_value=mock_executor):
             bot._import_oda_to_db(Path("test.xlsx"))
 
@@ -82,16 +80,16 @@ class TestDettagliOdaComprehensive:
         mock_btn = MagicMock()
         mock_driver.find_element.return_value = mock_btn
         mock_btn.is_displayed.return_value = True
-        
+
         page = DettagliOdAPage(mock_driver)
         page.expand_sidebar_if_collapsed()
-        
+
         mock_driver.execute_script.assert_called()
 
     @patch("src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.ActionChains")
     def test_page_setup_supplier_success(self, mock_action_chains):
         mock_driver = MagicMock()
-        
+
         # Mock WebDriverWait prima dell'istanziazione
         with patch("src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.WebDriverWait") as mock_wait:
             mock_wait.return_value.until.return_value = MagicMock()
@@ -112,14 +110,14 @@ class TestDettagliOdaComprehensive:
         """Test logica attesa download (senza attese reali)."""
         mock_driver = MagicMock()
         page = DettagliOdAPage(mock_driver)
-        
+
         source_dir = MagicMock(spec=Path)
         file_mock = MagicMock(spec=Path)
         file_mock.suffix = ".xlsx"
         file_mock.stat.return_value.st_mtime = 100
-        
+
         source_dir.iterdir.return_value = [file_mock]
-        
+
         # files_before era vuoto
         res = page._wait_for_download(source_dir, set())
         assert res == file_mock
@@ -137,7 +135,7 @@ class TestDettagliOdaComprehensive:
 
         success = bot.run([])
         assert success is True
-        
+
         # Verifica che oda_number passato a process_oda sia vuoto
         args = mock_page.process_oda.call_args[0]
         assert args[0] == ""
@@ -149,7 +147,7 @@ class TestDettagliOdaComprehensive:
         mock_future.result.return_value = (False, "Errore SQL", 0, [])
         mock_executor.submit.return_value = mock_future
         mock_executor.__enter__.return_value = mock_executor
-        
+
         with patch("concurrent.futures.ProcessPoolExecutor", return_value=mock_executor):
             bot._import_oda_to_db(Path("test.xlsx"))
 

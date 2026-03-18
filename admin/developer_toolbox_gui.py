@@ -353,7 +353,7 @@ class DeveloperToolboxGUI(QMainWindow):
         stop_btn = QPushButton("Stop Process")
         stop_btn.clicked.connect(self._stop_current_process)
         stop_btn.setStyleSheet("QPushButton { background-color: #c0392b; color: white; }")
-        
+
         # Spinner/Status Label
         self.status_label = QLabel("Pronto")
         self.status_label.setStyleSheet("color: #1abc9c; font-weight: bold; margin-left: 10px;")

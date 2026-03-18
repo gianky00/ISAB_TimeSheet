@@ -12,7 +12,7 @@ class TestAuditManager:
         """Setup AuditManager with a temp DB."""
         # Patch AuditSignals to avoid PyQt6 issues in headless
         mocker.patch("src.core.audit.manager.AuditSignals.instance")
-        
+
         AuditManager._instance = None  # Reset Singleton
         db_path = tmp_path / "audit_test.db"
 
@@ -31,7 +31,7 @@ class TestAuditManager:
             severity=Severity.HIGH,
             status=Status.SUCCESS,
         )
-        
+
         manager._log_queue.join()
 
         logs, total = manager.get_filtered_logs()
@@ -44,7 +44,7 @@ class TestAuditManager:
         manager = setup_manager
         params = {"key": "value", "nested": 123}
         manager.log_action("Action with params", params=params)
-        
+
         manager._log_queue.join()
 
         logs, _ = manager.get_filtered_logs()
@@ -57,7 +57,7 @@ class TestAuditManager:
         manager = setup_manager
         manager.log_action("Action 1")
         manager.log_action("Action 2")
-        
+
         manager._log_queue.join()
 
         assert manager.verify_integrity() is True
@@ -65,7 +65,7 @@ class TestAuditManager:
     def test_verify_integrity_fail(self, setup_manager, tmp_path):
         manager = setup_manager
         manager.log_action("Action 1")
-        
+
         manager._log_queue.join()
 
         # Tamper with the database manually
@@ -83,7 +83,7 @@ class TestAuditManager:
         manager = setup_manager
         # Manually insert an old record
         import sqlite3
-        from datetime import datetime, timedelta, UTC
+        from datetime import UTC, datetime, timedelta
 
         old_ts = (datetime.now(UTC) - timedelta(days=100)).isoformat()
 
@@ -98,7 +98,7 @@ class TestAuditManager:
         assert total == 1
 
         manager.run_retention_policy(days=90)
-        
+
         # Attendi il log di pulizia asincrono
         manager._log_queue.join()
 
@@ -114,7 +114,7 @@ class TestAuditManager:
         manager = setup_manager
         manager.log_action("A1", status=Status.SUCCESS)
         manager.log_action("A2", status=Status.ERROR)
-        
+
         manager._log_queue.join()
 
         stats = manager.get_stats_by_day(days=1)

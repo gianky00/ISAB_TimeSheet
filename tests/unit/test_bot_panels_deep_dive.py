@@ -1,6 +1,9 @@
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 from src.gui.panels.scarico_pdl import ScaricoPDLPanel
+
 
 @pytest.fixture
 def mock_gui_deps(mocker):
@@ -21,7 +24,7 @@ class TestScaricoPDLPanel:
 
         # Mock window() method of QWidget
         panel.window = MagicMock(return_value=mock_win)
-        
+
         qtbot.addWidget(panel)
 
         # Ensure table uses technical names
