@@ -55,6 +55,7 @@ class DataSynchronizer:
             "certificati_campione",
             ExcelImporter.CERTIFICATI_CAMPIONE_COLS,
             rows_to_insert,
+            conflict_cols=["matricola", "certificato"],
         )
 
     @classmethod
@@ -65,4 +66,5 @@ class DataSynchronizer:
             "storico_oda",
             ExcelImporter.STORICO_ODA_COLS,
             rows_to_insert,
+            conflict_cols=["oda", "pos_oda", "num_riga"],
         )

@@ -15,7 +15,7 @@ class SmartSyncEngine(BaseSyncEngine):
 
     @classmethod
     def sync_upsert_smart(
-        cls, db_path: Path, table_name: str, columns: list[str], new_data: list[tuple[Any, ...]]
+        cls, db_path: Path, table_name: str, columns: list[str], new_data: list[tuple[Any, ...]], conflict_cols: list[str] | None = None
     ) -> tuple[int, int]:
         """Esegue Upsert calcolando esattamente le righe modificate o aggiunte."""
         if not new_data:
@@ -45,9 +45,31 @@ class SmartSyncEngine(BaseSyncEngine):
             added_or_updated = cursor.fetchone()[0]
 
             # Upsert
-            q_upsert = (
-                f"INSERT OR REPLACE INTO {safe_table} ({safe_cols}) SELECT {safe_cols} FROM {temp_table}"  # nosec B608
-            )
+            if conflict_cols:
+                safe_conflict = ", ".join([f'"{cls._validate_identifier(c)}"' for c in conflict_cols])
+                update_assignments = ", ".join([f'"{cls._validate_identifier(c)}" = excluded."{cls._validate_identifier(c)}"' for c in columns if c not in conflict_cols])
+
+                # Se non ci sono colonne da aggiornare (tutte in conflict_cols), facciamo DO NOTHING
+                if update_assignments:
+                    q_upsert = f"""
+                        INSERT INTO {safe_table} ({safe_cols})
+                        SELECT {safe_cols} FROM {temp_table}
+                        WHERE true
+                        ON CONFLICT({safe_conflict}) DO UPDATE SET
+                        {update_assignments}
+                    """
+                else:
+                    q_upsert = f"""
+                        INSERT INTO {safe_table} ({safe_cols})
+                        SELECT {safe_cols} FROM {temp_table}
+                        WHERE true
+                        ON CONFLICT({safe_conflict}) DO NOTHING
+                    """
+            else:
+                q_upsert = (
+                    f"INSERT OR REPLACE INTO {safe_table} ({safe_cols}) SELECT {safe_cols} FROM {temp_table}"  # nosec B608
+                )
+
             cursor.execute(q_upsert)
             conn.commit()
 

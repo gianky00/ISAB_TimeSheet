@@ -28,7 +28,7 @@ class TestDettagliOdaComprehensive:
     def test_bot_validate_data(self, bot):
         """Verifica validazione parametri input."""
         # Case 1: Dati validi (lista OdA)
-        ok, msg = bot.validate_data([{"numero_oda": "123"}])
+        ok, _msg = bot.validate_data([{"numero_oda": "123"}])
         assert ok is True
 
         # Case 2: Dati validi (Generale - senza OdA)

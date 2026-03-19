@@ -38,7 +38,8 @@ class TestDataSynchronizer:
 
         # Storico OdA
         s_cols = ExcelImporter.STORICO_ODA_COLS
-        schema_s = "id INTEGER PRIMARY KEY, " + ", ".join([f'"{c}" TEXT' for c in s_cols])
+        schema_s = ", ".join([f'"{c}" TEXT' for c in s_cols])
+        schema_s += ", PRIMARY KEY (oda, pos_oda, num_riga)"
         cursor.execute(f"CREATE TABLE storico_oda ({schema_s})")
 
         # Attivita Programmate
