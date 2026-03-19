@@ -57,14 +57,14 @@ class SmartSyncEngine(BaseSyncEngine):
                         WHERE true
                         ON CONFLICT({safe_conflict}) DO UPDATE SET
                         {update_assignments}
-                    """
+                    """  # nosec B608
                 else:
                     q_upsert = f"""
                         INSERT INTO {safe_table} ({safe_cols})
                         SELECT {safe_cols} FROM {temp_table}
                         WHERE true
                         ON CONFLICT({safe_conflict}) DO NOTHING
-                    """
+                    """  # nosec B608
             else:
                 q_upsert = (
                     f"INSERT OR REPLACE INTO {safe_table} ({safe_cols}) SELECT {safe_cols} FROM {temp_table}"  # nosec B608
