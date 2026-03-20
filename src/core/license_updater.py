@@ -273,9 +273,14 @@ def run_update() -> bool:
                 files = {"manifest.json": remote_manifest_bytes, "config.dat": new_config_bytes}
                 saved = _save_license_files(license_dir, files)
                 if saved:
-                    from src.core.app_initializer import AppInitializer
+                    from src.core.notification_manager import NotificationManager
 
-                    AppInitializer.add_alert("INFO", "Licenza aggiornata con successo dal cloud.")
+                    NotificationManager.instance().add_notification(
+                        "Sincronizzazione",
+                        "Licenza aggiornata con successo dal cloud.",
+                        level="success",
+                        show_toast=True,
+                    )
                 return saved
 
             logger.error("Errore durante il download di config.dat")

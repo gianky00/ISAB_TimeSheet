@@ -29,15 +29,36 @@ class SignalConnector(QObject):
     def connect_global_signals(self):
         """
         Collega i segnali globali dei servizi core.
-        - Notifiche -> Toast Manager
+        - Notifiche -> Toast Manager & Tray Icon
         - Conteggio notifiche -> Badge Sidebar
         """
-        # Toast Manager
+        # Toast Manager (In-app notification)
         NotificationManager.instance().request_toast.connect(
             lambda msg, t, d: ToastManager.instance().show(
                 msg, t, d, is_rich_text=("<" in msg and ">" in msg)
             )
         )
+
+        # Tray Icon (System notification)
+        if hasattr(self.main_window, "tray_controller"):
+            from PyQt6.QtWidgets import QSystemTrayIcon
+
+            icon_map = {
+                "info": QSystemTrayIcon.MessageIcon.Information,
+                "success": QSystemTrayIcon.MessageIcon.Information,
+                "warning": QSystemTrayIcon.MessageIcon.Warning,
+                "error": QSystemTrayIcon.MessageIcon.Critical,
+            }
+
+            def show_tray_msg(msg, level, duration):
+                title = "SyncroJob"
+                if ":" in msg:
+                    title, msg = msg.split(":", 1)
+                self.main_window.tray_controller.show_message(
+                    title.strip(), msg.strip(), icon_map.get(level, QSystemTrayIcon.MessageIcon.Information), duration
+                )
+
+            NotificationManager.instance().request_toast.connect(show_tray_msg)
 
         # Notification Badge on Sidebar
         if hasattr(self.main_window, "tool_bar_component") and self.main_window.tool_bar_component.sidebar:

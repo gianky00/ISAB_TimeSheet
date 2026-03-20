@@ -12,10 +12,11 @@ from src.core.version import __version__
 class CertificatiPdfExporter:
     """Genera report PDF professionale per i certificati campione."""
 
-    def __init__(self, tree: QTreeWidget, show_excluded: bool, include_history: bool = True):
+    def __init__(self, tree: QTreeWidget, show_excluded: bool, include_history: bool = True, print_exclusions: set[str] | None = None):
         self.tree = tree
         self.show_excluded = show_excluded
         self.include_history = include_history
+        self.print_exclusions = print_exclusions or set()
 
     def export(self, file_path: str) -> tuple[bool, str]:
         """Esporta il TreeWidget in un file PDF con paginazione intelligente."""
@@ -101,9 +102,20 @@ class CertificatiPdfExporter:
             parent = self.tree.topLevelItem(i)
             if not parent or parent.isHidden():
                 continue
-            is_excluded = "[ESCLUSO]" in parent.text(0).upper()
+
+            # Parsing matricola dalla label del padre per il check esclusioni
+            # La label ha formato: MATRICOLA  •  COSTRUTTORE  •  MODELLO  •  STATO
+            label_text = parent.text(0)
+            matricola = label_text.split("  •  ")[0].strip()
+
+            is_excluded = "[ESCLUSO]" in label_text.upper()
             if is_excluded and not self.show_excluded:
                 continue
+
+            # Filtro Esclusione Stampa
+            if matricola in self.print_exclusions:
+                continue
+
             all_parents.append(parent)
 
         # FIX ORDINAMENTO: Prendiamo l'ID-COEMI dal primo figlio (child 0, col 0)

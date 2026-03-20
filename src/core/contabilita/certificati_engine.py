@@ -20,27 +20,37 @@ class CertificatiEngine:
 
     def __init__(self):
         self._exclusions: set[str] = set()
+        self._print_exclusions: set[str] = set()
         self.load_exclusions()
 
     def load_exclusions(self) -> set[str]:
-        """Carica le matricole escluse dal monitoraggio."""
+        """Carica le matricole escluse dal monitoraggio e dalla stampa."""
         try:
             if self.EXCLUSIONS_FILE.exists():
                 with self.EXCLUSIONS_FILE.open("r", encoding="utf-8") as f:
                     data = json.load(f)
                     self._exclusions = {str(x).strip() for x in data.get("excluded_matricole", [])}
+                    self._print_exclusions = {str(x).strip() for x in data.get("print_excluded_matricole", [])}
         except Exception:
             self._exclusions = set()
+            self._print_exclusions = set()
         return self._exclusions
 
-    def save_exclusions(self, exclusions: set[str]) -> bool:
+    def save_exclusions(self, exclusions: set[str] | None = None, print_exclusions: set[str] | None = None) -> bool:
         """Salva le matricole escluse su disco."""
         try:
-            self._exclusions = exclusions
+            if exclusions is not None:
+                self._exclusions = exclusions
+            if print_exclusions is not None:
+                self._print_exclusions = print_exclusions
+
             self.EXCLUSIONS_FILE.parent.mkdir(parents=True, exist_ok=True)
             with self.EXCLUSIONS_FILE.open("w", encoding="utf-8") as f:
                 json.dump(
-                    {"excluded_matricole": list(self._exclusions)},
+                    {
+                        "excluded_matricole": list(self._exclusions),
+                        "print_excluded_matricole": list(self._print_exclusions)
+                    },
                     f,
                     indent=2,
                     ensure_ascii=False,

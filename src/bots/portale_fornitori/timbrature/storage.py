@@ -14,7 +14,10 @@ import pandas as pd
 from src.core import config_manager
 from src.core.config_manager import CONFIG_DIR
 from src.core.database import db_manager
+from src.core.logging import get_logger
 from src.core.sync_tracker import SyncTracker
+
+logger = get_logger(__name__)
 
 
 class TimbratureStorage:
@@ -45,6 +48,44 @@ class TimbratureStorage:
         """Inizializza il database delle timbrature configurando il percorso."""
         self.db_path = Path(db_path)
         # Lo schema viene inizializzato centralmente da DatabaseManager durante la Phase 1 (main.py)
+        self._ensure_columns()
+
+    def _ensure_columns(self) -> None:
+        """Failsafe per garantire che le colonne critiche esistano (es. codice_fiscale)."""
+        try:
+            with db_manager.get_connection(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("PRAGMA table_info(timbrature)")
+                columns = [row[1] for row in cursor.fetchall()]
+
+                # Lista di colonne critiche richieste dalla query in _build_timb_query
+                critical_cols = {
+                    "codice_fiscale": "TEXT",
+                    "id_dipendente": "TEXT",
+                    "fornitore": "TEXT",
+                    "codice_rilpres": "TEXT",
+                    "numero_badge": "TEXT",
+                    "codice_qualifica": "TEXT",
+                    "specializzazione": "TEXT",
+                    "societa_ospitante": "TEXT",
+                    "data_ins": "TEXT",
+                    "presenza_ts": "TEXT",
+                    "sito_timbratura": "TEXT",
+                }
+
+                added = False
+                for col, col_type in critical_cols.items():
+                    if col not in columns:
+                        logger.info(f"Failsafe: aggiunta colonna {col} a {self.db_path.name}")
+                        cursor.execute(f"ALTER TABLE timbrature ADD COLUMN {col} {col_type}")
+                        added = True
+
+                if added:
+                    conn.commit()
+
+        except Exception as e:
+            from src.core.logging import get_logger
+            get_logger("storage").error(f"Errore durante ensure_columns in TimbratureStorage: {e}")
 
     def search_employees(self, query: str) -> list[dict[str, str]]:
         """

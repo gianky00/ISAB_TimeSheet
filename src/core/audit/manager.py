@@ -158,8 +158,21 @@ class AuditManager:
 
             prev_hash = self.db.get_last_hash()
 
-            # Hash payload esteso
-            data_to_hash = f"{timestamp}|{user_id}|{action}|{category}|{entity}|{params_json}|{status_val}|{severity_val}|{duration_ms}|{module}|{error_code}"
+            # Costruiamo un dict temporaneo per usare la stessa logica di hashing della verifica
+            temp_row = {
+                "timestamp": timestamp,
+                "user_id": user_id,
+                "action": action,
+                "category": category,
+                "entity": entity,
+                "params": params_json,
+                "status": status_val,
+                "severity": severity_val,
+                "duration_ms": duration_ms,
+                "module": module,
+                "error_code": error_code,
+            }
+            data_to_hash = AuditIntegrity.build_hash_string_v2(temp_row)
             current_hash = AuditIntegrity.calculate_hash(data_to_hash, prev_hash)
 
             audit_id = self.db.insert_log(
@@ -266,8 +279,16 @@ class AuditManager:
                         calc_hash_legacy = AuditIntegrity.calculate_hash(data_legacy, prev_hash)
 
                         if row["row_hash"] != calc_hash_legacy:
-                            print(f"DEBUG: Integrity check failed at ID {row['id']}. Row hash: {row['row_hash'][:10]}... Expected: {calc_hash[:10]}...")
-                            return False
+                            # Tentativo 3: Hash V2 Legacy (None -> "None" come da vecchi f-string)
+                            data_v2_old = "|".join([str(row[k]) for k in (
+                                "timestamp", "user_id", "action", "category", "entity", "params",
+                                "status", "severity", "duration_ms", "module", "error_code"
+                            )])
+                            calc_hash_v2_old = AuditIntegrity.calculate_hash(data_v2_old, prev_hash)
+
+                            if row["row_hash"] != calc_hash_v2_old:
+                                print(f"DEBUG: Integrity check failed at ID {row['id']}. Row hash: {row['row_hash'][:10]}... Expected: {calc_hash[:10]}...")
+                                return False
 
                     prev_hash = row["row_hash"]
                 return True

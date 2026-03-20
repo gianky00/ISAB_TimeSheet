@@ -1,21 +1,21 @@
 # 📊 Test Execution Report
 
-**Date:** 2026-03-20 13:38:38
-**Duration:** 3304.71s
+**Date:** 2026-03-20 14:41:37
+**Duration:** 3677.38s
 
 ## Summary
 | Metric | Count |
 |---|---|
 | 🧪 Total | 1306 |
-| ✅ Passed | 867 |
+| ✅ Passed | 869 |
 | ❌ Failed | 1 |
 | ⏩ Skipped | 0 |
 
 ## ❌ Failures Details
-### `tests/unit/test_prenota_bp_comprehensive.py::TestPrenotaBPBotComprehensive::test_init_and_properties`
-**Error:** `FAILED tests/unit/test_prenota_bp_comprehensive.py::TestPrenotaBPBotComprehensive::test_init_and_properties`
+### `tests/unit/test_prenota_bp_comprehensive.py::TestPrenotaBPBotComprehensive::test_run_success`
+**Error:** `FAILED tests/unit/test_prenota_bp_comprehensive.py::TestPrenotaBPBotComprehensive::test_run_success`
 
-**Timestamp:** `2026-03-20T13:38:38.897298`
+**Timestamp:** `2026-03-20T14:41:37.842990`
 
 <details><summary>Full Output</summary>
 
@@ -26,12 +26,22 @@ collected 1 item
 tests\unit\test_prenota_bp_comprehensive.py F                            [100%]
 
 ================================== FAILURES ===================================
-___________ TestPrenotaBPBotComprehensive.test_init_and_properties ____________
-tests\unit\test_prenota_bp_comprehensive.py:28: in test_init_and_properties
-    self.assertEqual(cols[0]["name"], "Numero BP")
-E   AssertionError: 'numero_bp' != 'Numero BP'
-E   - numero_bp
-E   + Numero BP
+_______________ TestPrenotaBPBotComprehensive.test_run_success ________________
+C:\Program Files\Python312\Lib\unittest\mock.py:928: in assert_called_once
+    raise AssertionError(msg)
+E   AssertionError: Expected 'filtra_buoni_prelievo' to have been called once. Called 0 times.
+
+During handling of the above exception, another exception occurred:
+tests\unit\test_prenota_bp_comprehensive.py:47: in test_run_success
+    mock_page.filtra_buoni_prelievo.assert_called_once()
+E   AssertionError: Expected 'filtra_buoni_prelievo' to have been called once. Called 0 times.
+---------------------------- Captured stdout call -----------------------------
+[2026-03-20 14:41:26] INFO     - bot.PrenotaBPBot               - Avvio elaborazione per 1 BP (Fornitore: KK10608 - COEMI S.R.L.) | trace_id=trace_ac92037836b34855 | bot_type=prenota_bp | bot_status=IDLE | current_step=Login Portale ISAB | step_index=0
+[2026-03-20 14:41:26] INFO     - bot.PrenotaBPBot               - ⏳ Avvio: Navigazione Gestione BP | trace_id=trace_ac92037836b34855 | bot_type=prenota_bp | bot_status=IDLE | current_step=Navigazione Gestione BP | step_index=1
+[2026-03-20 14:41:26] INFO     - bot.PrenotaBPBot               - Riga 1: Numero BP mancante, salto. | trace_id=trace_ac92037836b34855 | bot_type=prenota_bp | bot_status=IDLE | current_step=Navigazione Gestione BP | step_index=1
+[2026-03-20 14:41:26] INFO     - bot.PrenotaBPBot               - ✓ Elaborazione completata: 0/1 BP prenotati. | trace_id=trace_ac92037836b34855 | bot_type=prenota_bp | bot_status=IDLE | current_step=Navigazione Gestione BP | step_index=1
+[2026-03-20 14:41:26] INFO     - bot.PrenotaBPBot               - ⏳ Avvio: Chiusura Sessione | trace_id=trace_ac92037836b34855 | bot_type=prenota_bp | bot_status=IDLE | current_step=Chiusura Sessione | step_index=5
+[2026-03-20 14:41:26] INFO     - bot.PrenotaBPBot               - Fine sessione Prenota BP. | trace_id=trace_ac92037836b34855 | bot_type=prenota_bp | bot_status=IDLE | current_step=Chiusura Sessione | step_index=5
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
 
@@ -128,14 +138,14 @@ src\core\logging\alert_manager.py                                      115     8
 src\core\logging\analytics.py                                          136     46    66%   50, 54, 77-81, 100, 129-138, 161-191, 226-228, 264-271, 275, 279, 320, 333, 338, 343
 src\core\logging\config.py                                              37      0   100%
 src\core\logging\context.py                                             57     10    82%   31-32, 54, 128-129, 139-140, 150, 160-161
-src\core\logging\decorators.py                                          74     27    64%   64, 66, 121, 167-201
+src\core\logging\decorators.py                                          74     29    61%   64, 66, 87-88, 121, 167-201
 src\core\logging\filters.py                                             60     28    53%   114, 121, 139-150, 163-169, 187-188, 197-206
 src\core\logging\formatters.py                                          83      8    90%   84, 125, 164-165, 230-240
 src\core\logging\logger.py                                             116     19    84%   84, 96, 123, 135-141, 156-157, 173-174, 182-183, 258, 302-307
 src\core\logging\metadata.py                                            86     86     0%   5-198
 src\core\logging\metrics.py                                             74     30    59%   77-111, 163, 175-182, 201, 213
 src\core\logging\migration.py                                           42     42     0%   5-120
-src\core\logging\sampling.py                                            54     13    76%   58, 67, 100, 105, 144-154, 163, 201
+src\core\logging\sampling.py                                            54     15    72%   58, 67, 95, 100, 105, 122, 144-154, 163, 201
 src\core\logging\sinks.py                                              100     61    39%   55, 70-71, 75-78, 91-103, 114-119, 129-136, 140-156, 167-169, 179-184, 196-206, 226-228, 234-236
 src\core\logging\viewer.py                                             177    143    19%   31-34, 46-47, 61-69, 82-88, 92, 96, 110-138, 142-143, 147-148, 152-153, 162-176, 185-193, 216-222, 226-230, 234-248, 252-267, 271-273, 277-313, 317-333, 352, 357, 362
 src\core\notification_manager.py                                       116     15    87%   64, 74, 100-101, 166, 217-225, 229
@@ -210,7 +220,7 @@ src\gui\formatters.py                                                  135     5
 src\gui\main_window\__init__.py                                          2      0   100%
 src\gui\main_window\components\__init__.py                               0      0   100%
 src\gui\main_window\components\menu_bar.py                              75     43    43%   43-49, 67-78, 82-91, 102-323
-src\gui\main_window\components\status_bar.py                           132     71    46%   102-114, 118-130, 137-181, 209-222, 226-227
+src\gui\main_window\components\status_bar.py                           132     82    38%   102-114, 118-130, 137-181, 188-232
 src\gui\main_window\components\tool_bar.py                              82     18    78%   43-60, 85-89, 93-97, 177-181
 src\gui\main_window\components\tray_icon.py                             17      7    59%   38, 53-62
 src\gui\main_window\controllers\__init__.py                              0      0   100%
@@ -282,7 +292,7 @@ src\gui\panels\storico_oda\widgets\oda_tree.py                          55     4
 src\gui\panels\timbrature\__init__.py                                    2      0   100%
 src\gui\panels\timbrature\components\detail_view.py                     63     25    60%   76-116, 120-135
 src\gui\panels\timbrature\components\settings_tab.py                   102      4    96%   166, 178-180
-src\gui\panels\timbrature\panel.py                                     221     30    86%   88-90, 227, 236, 316-334, 337-344, 359, 374-375, 380
+src\gui\panels\timbrature\panel.py                                     221     41    81%   73-90, 227, 236, 316-334, 337-344, 359, 374-375, 380
 src\gui\panels\timbrature_bot.py                                       106     67    37%   57-59, 63-67, 89-91, 95-96, 100-108, 112-117, 126-131, 135-196, 200-202
 src\gui\panels\timbrature_db.py                                          2      0   100%
 src\gui\styles\__init__.py                                               4      0   100%
@@ -317,7 +327,7 @@ src\gui\widgets\contabilita\giornaliere_tab.py                         186     5
 src\gui\widgets\contabilita\helpers.py                                  36     18    50%   13, 25-35, 43-45, 48-53
 src\gui\widgets\contabilita\year_tab.py                                102     31    70%   31-32, 39-53, 130, 135, 161, 184-185, 189-220, 224, 228
 src\gui\widgets\core_widgets.py                                        106     11    90%   41, 48, 55, 139-140, 143-144, 384-385, 388-389
-src\gui\widgets\dashboard\don_ciro_widget.py                           462    102    78%   124, 128-129, 134, 138-139, 193, 205, 216, 223, 226, 228, 230-240, 245-252, 256-257, 261-263, 267-268, 272-278, 304-307, 329, 342, 356-363, 395-396, 459-468, 491-496, 513-530, 544, 560, 586-591, 598, 604
+src\gui\widgets\dashboard\don_ciro_widget.py                           462    111    76%   124, 128-129, 134, 138-139, 144, 148-149, 193, 205, 216, 223, 226, 228, 230-240, 245-252, 256-257, 261-263, 267-268, 272-278, 282-287, 304-307, 329, 342, 356-363, 395-396, 459-468, 491-496, 513-530, 544, 560, 586-591, 598, 604
 src\gui\widgets\dashboard\multi_window_status.py                        86     39    55%   40-94, 180-204
 src\gui\widgets\dashboard\pdl_stats_widget.py                          146     71    51%   49-100, 190-198, 202-254
 src\gui\widgets\dashboard\roi_widget.py                                179     38    79%   292-300, 309-359
@@ -358,7 +368,7 @@ src\gui\widgets\sidebar_widget.py                                      267     8
 src\gui\widgets\simple_chart.py                                         67     67     0%   1-115
 src\gui\widgets\sortable_table_item.py                                  47     33    30%   26, 30-58, 63-76, 80-93
 src\gui\widgets\statistics_widget.py                                   108    108     0%   1-205
-src\gui\widgets\status_card.py                                          60      6    90%   99-101, 117, 121-122
+src\gui\widgets\status_card.py                                          60      8    87%   98-113, 117, 121-122
 src\gui\widgets\status_indicator.py                                     46      7    85%   77-83
 src\gui\widgets\timeline_widget.py                                     118     39    67%   67-97, 162-164, 174-191
 src\gui\widgets\toast.py                                               157     51    68%   128-130, 150-159, 178-185, 189-194, 198-200, 204-205, 211-212, 218, 263-264, 271-278, 286, 300-303, 308-311, 316-319, 324-327
@@ -378,11 +388,11 @@ src\utils\security.py                                                   78      
 src\utils\system_telemetry.py                                           26     26     0%   6-74
 src\utils\validators.py                                                 73      2    97%   121, 244
 --------------------------------------------------------------------------------------------------
-TOTAL                                                                30670  13725    55%
+TOTAL                                                                30670  13762    55%
 Coverage HTML written to dir htmlcov
 =========================== short test summary info ===========================
-FAILED tests/unit/test_prenota_bp_comprehensive.py::TestPrenotaBPBotComprehensive::test_init_and_properties
-============================= 1 failed in 11.47s ==============================
+FAILED tests/unit/test_prenota_bp_comprehensive.py::TestPrenotaBPBotComprehensive::test_run_success
+============================= 1 failed in 15.49s ==============================
 
 ```
 </details>

@@ -38,7 +38,7 @@ class TestPrenotaBPBotComprehensive(unittest.TestCase):
     def test_run_success(self, mock_page_class):
         """Test di esecuzione completata con successo."""
         mock_page = mock_page_class.return_value
-        data = {"rows": [{"Numero BP": "BP001", "Note di Ritiro": "Nota 1"}]}
+        data = {"rows": [{"numero_bp": "BP001", "note_ritiro": "Nota 1"}]}
 
         result = self.bot.run(data)
 
@@ -54,7 +54,7 @@ class TestPrenotaBPBotComprehensive(unittest.TestCase):
     def test_run_stop_requested(self, mock_page_class):
         """Verifica che il bot si fermi se richiesto dall'utente."""
         self.bot._stop_requested = True
-        data = {"rows": [{"Numero BP": "BP001"}]}
+        data = {"rows": [{"numero_bp": "BP001"}]}
 
         result = self.bot.run(data)
 

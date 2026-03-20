@@ -50,6 +50,7 @@ class CertificatiCampioneTab(QWidget):
         super().__init__(parent)
         self.engine = CertificatiEngine()
         self._show_excluded = False
+        self._show_print_excluded = False
         self._setup_ui()
         self._load_data()
 
@@ -64,8 +65,11 @@ class CertificatiCampioneTab(QWidget):
         btn_expand = self._create_toolbar_btn("Espandi Tutto", Icons.FOLDER_OPEN, self._expand_all)
         btn_collapse = self._create_toolbar_btn("Comprimi Tutto", Icons.FOLDER, self._collapse_all)
 
-        self.show_excluded_check = StandardCheckBox("Mostra esclusi")
+        self.show_excluded_check = StandardCheckBox("Mostra esclusi monitoraggio")
         self.show_excluded_check.stateChanged.connect(self._on_show_excluded_changed)
+
+        self.show_print_excluded_check = StandardCheckBox("Mostra esclusi stampa")
+        self.show_print_excluded_check.stateChanged.connect(self._on_show_print_excluded_changed)
 
         self.include_history_check = StandardCheckBox("Includi storico")
         self.include_history_check.setChecked(True)
@@ -84,12 +88,13 @@ class CertificatiCampioneTab(QWidget):
         self.btn_analyze.clicked.connect(self._run_analysis)
 
         for w in (btn_expand, btn_collapse):
-            toolbar.addWidget(btn_collapse)
-            toolbar.addSpacing(20)
-            toolbar.addWidget(self.show_excluded_check)
-            toolbar.addWidget(self.include_history_check)
-            toolbar.addWidget(self.excluded_count_label)
-            toolbar.addStretch()
+            toolbar.addWidget(w)
+        toolbar.addSpacing(20)
+        toolbar.addWidget(self.show_excluded_check)
+        toolbar.addWidget(self.show_print_excluded_check)
+        toolbar.addWidget(self.include_history_check)
+        toolbar.addWidget(self.excluded_count_label)
+        toolbar.addStretch()
         toolbar.addWidget(self.btn_export_pdf)
         toolbar.addWidget(self.btn_analyze)
         layout.addLayout(toolbar)
@@ -127,19 +132,32 @@ class CertificatiCampioneTab(QWidget):
         self.tree.collapseAll()
 
     def _on_show_excluded_changed(self, state: int) -> None:
-        """Gestisce il cambiamento della checkbox 'Mostra esclusi'."""
+        """Gestisce il cambiamento della checkbox 'Mostra esclusi monitoraggio'."""
         self._show_excluded = state in (Qt.CheckState.Checked.value, 2)
         self._apply_exclusion_visibility()
 
+    def _on_show_print_excluded_changed(self, state: int) -> None:
+        """Gestisce il cambiamento della checkbox 'Mostra esclusi stampa'."""
+        self._show_print_excluded = state in (Qt.CheckState.Checked.value, 2)
+        self._apply_exclusion_visibility()
+
     def _apply_exclusion_visibility(self) -> None:
-        """Applica la visibilità agli strumenti esclusi in base allo stato del filtro."""
+        """Applica la visibilità agli strumenti esclusi (monitoraggio/stampa) in base allo stato dei filtri."""
         for i in range(self.tree.topLevelItemCount()):
             parent = self.tree.topLevelItem(i)
             if not parent:
                 continue
             matricola = self.engine.parse_parent_label(parent.text(0))["matricola"]
-            is_excluded = matricola in self.engine._exclusions
-            parent.setHidden(is_excluded and not self._show_excluded)
+            
+            is_mon_excluded = matricola in self.engine._exclusions
+            is_print_excluded = matricola in self.engine._print_exclusions
+            
+            # Nascondi se è escluso dal monitoraggio e non vogliamo vederlo
+            hide_mon = is_mon_excluded and not self._show_excluded
+            # Nascondi se è escluso dalla stampa e non vogliamo vederlo
+            hide_print = is_print_excluded and not self._show_print_excluded
+            
+            parent.setHidden(hide_mon or hide_print)
 
     def refresh_data(self) -> None:
         """Ricarica i dati dal database e aggiorna la vista preservando lo stato."""
@@ -214,6 +232,7 @@ class CertificatiCampioneTab(QWidget):
 
         for g in groups_with_priority:
             is_excluded = g["matricola"] in self.engine._exclusions
+            is_print_excluded = g["matricola"] in self.engine._print_exclusions
             days_val: int | None = g["days"]  # type: ignore
             days_text = self.engine.format_days_text_short(days_val)
 
@@ -221,8 +240,9 @@ class CertificatiCampioneTab(QWidget):
             is_digital = "MANOMETRO DIGITALE" in modello_str.upper()
             range_part = f"  •  {g['range_strumento']}" if is_digital and g["range_strumento"] else ""
             excluded_marker = "  [ESCLUSO]" if is_excluded else ""
+            print_excluded_marker = "  [NON STAMPARE]" if is_print_excluded else ""
 
-            label = f"{g['matricola']}  •  {g['costruttore']}  •  {g['modello']}{range_part}  •  {days_text}{excluded_marker}"
+            label = f"{g['matricola']}  •  {g['costruttore']}  •  {g['modello']}{range_part}  •  {days_text}{excluded_marker}{print_excluded_marker}"
             parent_item = SortableTreeWidgetItem(self.tree, [label])
             parent_item.setFirstColumnSpanned(True)
 
@@ -290,8 +310,17 @@ class CertificatiCampioneTab(QWidget):
 
     def _update_excluded_count_label(self) -> None:
         """Aggiorna il contatore degli strumenti esclusi nella toolbar."""
-        count = len(self.engine._exclusions)
-        self.excluded_count_label.setText(f"({count} esclusi)" if count > 0 else "")
+        mon_count = len(self.engine._exclusions)
+        print_count = len(self.engine._print_exclusions)
+        
+        parts = []
+        if mon_count > 0:
+            parts.append(f"{mon_count} monitoraggio")
+        if print_count > 0:
+            parts.append(f"{print_count} stampa")
+            
+        text = f"({', '.join(parts)} esclusi)" if parts else ""
+        self.excluded_count_label.setText(text)
 
     def _on_item_expanded(self, item: QTreeWidgetItem) -> None:
         """Evidenzia in grassetto l'intestazione quando viene espansa."""
@@ -340,11 +369,21 @@ class CertificatiCampioneTab(QWidget):
 
         if is_parent:
             matricola = self.engine.parse_parent_label(item.text(0))["matricola"]
+
+            # Monitoraggio
             is_excluded = matricola in self.engine._exclusions
-            action_text = "✅ Includi nel monitoraggio" if is_excluded else "🚫 Escludi dal monitoraggio"
-            action = QAction(action_text, self)
-            action.triggered.connect(lambda: self._toggle_exclusion(matricola))
-            menu.addAction(action)
+            mon_text = "✅ Includi nel monitoraggio" if is_excluded else "🚫 Escludi dal monitoraggio"
+            mon_act = QAction(mon_text, self)
+            mon_act.triggered.connect(lambda: self._toggle_exclusion(matricola))
+            menu.addAction(mon_act)
+
+            # Stampa
+            is_print_excluded = matricola in self.engine._print_exclusions
+            print_text = "🖨️ Includi nella stampa" if is_print_excluded else "🚫 Escludi dalla stampa"
+            print_act = QAction(print_text, self)
+            print_act.triggered.connect(lambda: self._toggle_print_exclusion(matricola))
+            menu.addAction(print_act)
+
             menu.addSeparator()
             toggle_expand = QAction("Comprimi" if item.isExpanded() else "Espandi", self)
             toggle_expand.triggered.connect(
@@ -378,7 +417,16 @@ class CertificatiCampioneTab(QWidget):
             self.engine._exclusions.discard(matricola)
         else:
             self.engine._exclusions.add(matricola)
-        self.engine.save_exclusions(self.engine._exclusions)
+        self.engine.save_exclusions(exclusions=self.engine._exclusions)
+        self._load_data()
+
+    def _toggle_print_exclusion(self, matricola: str) -> None:
+        """Inverte lo stato di esclusione dalla stampa di una matricola."""
+        if matricola in self.engine._print_exclusions:
+            self.engine._print_exclusions.discard(matricola)
+        else:
+            self.engine._print_exclusions.add(matricola)
+        self.engine.save_exclusions(print_exclusions=self.engine._print_exclusions)
         self._load_data()
 
     def _open_certificate(self, cert_number: str) -> None:
@@ -442,7 +490,10 @@ class CertificatiCampioneTab(QWidget):
             return
 
         exporter = CertificatiPdfExporter(
-            self.tree, self._show_excluded, include_history=self.include_history_check.isChecked()
+            self.tree,
+            self._show_excluded,
+            include_history=self.include_history_check.isChecked(),
+            print_exclusions=self.engine._print_exclusions
         )
         success, message = exporter.export(file_path)
 
