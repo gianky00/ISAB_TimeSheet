@@ -167,7 +167,43 @@ class MainWindow(QMainWindow):
         # 3. Start Monitoring
         self.monitoring_controller.start_monitoring()
 
-        # 4. Show final system-ready toast
+        # 4. Notifica Licenza Validata (System Tray & In-App)
+        from src.core.notification_manager import NotificationManager
+
+        # Toast immediato in-app (questo dovrebbe vedersi sempre)
+        NotificationManager.instance().add_notification(
+            "Licenza",
+            "Licenza validata correttamente. Sistema operativo.",
+            level="success",
+            show_toast=True,
+        )
+
+        # Notifica Windows nativa via Tray (Diretta + Ritardo)
+        # Usiamo il controller tray direttamente per essere sicuri che il segnale non si perda
+        def force_tray_notify():
+            import logging
+
+            diag_logger = logging.getLogger("TrayDebug")
+            diag_logger.info("Tentativo invio notifica Tray forzata...")
+            if hasattr(self, "tray_controller") and self.tray_controller:
+                from PyQt6.QtWidgets import QSystemTrayIcon
+
+                try:
+                    self.tray_controller.show_message(
+                        "SyncroJob: Licenza",
+                        "Licenza validata correttamente. Sistema operativo.",
+                        QSystemTrayIcon.MessageIcon.Information,
+                    )
+                    diag_logger.info("Notifica inviata al TrayController con successo.")
+                except Exception as e:
+                    diag_logger.error(f"Errore durante l'invio della notifica tray: {e}")
+            else:
+                diag_logger.warning("TrayController non trovato o non inizializzato!")
+
+        # Portiamo a 5 secondi per dare tempo a Windows di processare il nuovo AppUserModelID
+        QTimer.singleShot(5000, force_tray_notify)
+
+        # 5. Show final system-ready toast
         ToastManager.instance().show(
             "<center><b>Sistema inizializzato e pronto all'uso</b><br/>Tutti i moduli sono operativi. Enjoy!</center>",
             "success",

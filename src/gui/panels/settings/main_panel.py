@@ -6,8 +6,9 @@ Gestisce il salvataggio automatico e l'import/export della configurazione.
 """
 
 from pathlib import Path
+from typing import Any
 
-from PyQt6.QtCore import QTimer, pyqtSignal
+from PyQt6.QtCore import QThread, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from src.core import config_manager
@@ -22,8 +23,25 @@ from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import (
     PrimaryButton,
 )
-from src.gui.widgets.toast import ToastManager
+from src.gui.widgets.toast import ToastManager, toast_error
 from src.utils.helpers import get_asset_path, get_colored_icon
+
+
+class ConfigSaveWorker(QThread):
+    """Worker thread per il salvataggio asincrono della configurazione."""
+
+    finished = pyqtSignal(bool, str)
+
+    def __init__(self, config: dict[str, Any]):
+        super().__init__()
+        self.config = config
+
+    def run(self):
+        try:
+            config_manager.save_config(self.config)
+            self.finished.emit(True, "")
+        except Exception as e:
+            self.finished.emit(False, str(e))
 
 
 class SettingsPanel(QWidget):
@@ -47,6 +65,12 @@ class SettingsPanel(QWidget):
         """
         super().__init__(parent)
         self._is_loading = False
+        self._save_timer = QTimer(self)
+        self._save_timer.setSingleShot(True)
+        self._save_timer.setInterval(500)  # 500ms debounce
+        self._save_timer.timeout.connect(self._execute_async_save)
+        self._save_worker: ConfigSaveWorker | None = None
+
         self._setup_ui()
         QTimer.singleShot(50, self.load_settings)
 
@@ -137,8 +161,17 @@ class SettingsPanel(QWidget):
             self._is_loading = False
 
     def save_settings(self) -> None:
-        """Raccoglie i dati dai tab e li persiste tramite il config_manager."""
+        """Innesca il salvataggio con debouncing."""
         if self._is_loading:
+            return
+        self._save_timer.start()
+
+    def _execute_async_save(self) -> None:
+        """Raccoglie i dati e avvia il thread di salvataggio."""
+        # Se c'è già un salvataggio in corso, lo ignoriamo per ora
+        # Il debouncing gestisce la maggior parte dei casi.
+        if self._save_worker and self._save_worker.isRunning():
+            self._save_timer.start()  # Ritenta tra poco
             return
 
         config = config_manager.load_config()
@@ -146,10 +179,16 @@ class SettingsPanel(QWidget):
         self.roi_tab.save_to_config(config)
         self.telegram_tab.save_to_config(config)
 
-        # Salva la configurazione aggiornata
-        config_manager.save_config(config)
+        self._save_worker = ConfigSaveWorker(config)
+        self._save_worker.finished.connect(self._on_save_finished)
+        self._save_worker.start()
 
-        self.settings_saved.emit()
+    def _on_save_finished(self, success: bool, error_msg: str) -> None:
+        """Gestisce l'esito del salvataggio asincrono."""
+        if success:
+            self.settings_saved.emit()
+        else:
+            toast_error(f"Errore durante il salvataggio: {error_msg}")
 
     def has_unsaved_changes(self) -> bool:
         """Placeholder per la logica di rilevamento modifiche pendenti."""

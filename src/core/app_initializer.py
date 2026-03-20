@@ -62,6 +62,7 @@ class AppInitializer:
 
             step("Analisi variabili d'ambiente...", 2)
             from pathlib import Path
+
             logger.debug(f"CWD: {Path.cwd()}")
 
             step("Inizializzazione Sottosistema Logging...", 4)
@@ -80,27 +81,32 @@ class AppInitializer:
 
             step("Validazione Path di Sistema e Permessi...", 13)
             from src.core.config_manager import CONFIG_DIR
+
             CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
             step("Configurazione Motore Selenium (Chrome)...", 16)
 
             step("Verifica integrità WebDriver locale...", 19)
             from src.utils.resource_manager import ResourceManager
+
             driver_path = ResourceManager.ensure_automation_driver()
             logger.info(f"WebDriver pronto: {driver_path}")
 
             step("Caricamento Registry Bot Automazione...", 22)
             from src.bots import get_available_bots
+
             bots = get_available_bots()
             logger.info(f"Moduli bot rilevati: {len(bots)}")
 
             step("Verifica Identità Hardware (HWID)...", 25)
             from src.core.license_validator import get_hardware_id
+
             hwid = get_hardware_id()
             logger.info(f"Hardware fingerprint: {hwid[:12]}...")
 
             step("Handshake con Server Licenze Cloud...", 28)
             from src.core.license_updater import run_update
+
             try:
                 run_update()
             except Exception as update_err:
@@ -108,6 +114,7 @@ class AppInitializer:
 
             step("Validazione Certificati di Licenza...", 31)
             from src.core.license_validator import LicenseStatus, get_detailed_license_status
+
             status, msg = get_detailed_license_status()
             if status != LicenseStatus.VALID:
                 raise Exception(f"Licenza non valida: {msg}")
@@ -248,11 +255,21 @@ class AppInitializer:
         """
         Configura l'aspetto visivo e i metadati dell'applicazione.
         Imposta il tema Fusion, il font di sistema Segoe UI e la versione dell'app.
+        Registra l'AppUserModelID per le notifiche Windows.
 
         Args:
             app: Istanza di QApplication da configurare.
         """
+        # Registrazione AppUserModelID per Windows (Mandatorio per Notifiche Tray/Toast)
+        import os
+
         from src.core.version import __version__
+
+        if os.name == "nt":
+            import ctypes
+
+            myappid = f"Coemi.SyncroJob.Enterprise.{__version__}"
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
         app.setStyle("Fusion")
         from src.gui.styles import apply_theme
@@ -261,3 +278,4 @@ class AppInitializer:
         app.setFont(QFont("Segoe UI", 10))
         app.setApplicationName("SyncroJob")
         app.setApplicationVersion(__version__)
+        app.setDesktopFileName(f"Coemi.SyncroJob.Enterprise.{__version__}")
