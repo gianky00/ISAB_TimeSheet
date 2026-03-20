@@ -1,21 +1,21 @@
 # 📊 Test Execution Report
 
-**Date:** 2026-03-20 12:41:50
-**Duration:** 3432.49s
+**Date:** 2026-03-20 13:38:38
+**Duration:** 3304.71s
 
 ## Summary
 | Metric | Count |
 |---|---|
 | 🧪 Total | 1306 |
-| ✅ Passed | 792 |
+| ✅ Passed | 867 |
 | ❌ Failed | 1 |
 | ⏩ Skipped | 0 |
 
 ## ❌ Failures Details
-### `tests/unit/test_notifications_panel_deep.py::TestNotificationsPanelDeep::test_refresh_notifications_with_data`
-**Error:** `FAILED tests/unit/test_notifications_panel_deep.py::TestNotificationsPanelDeep::test_refresh_notifications_with_data`
+### `tests/unit/test_prenota_bp_comprehensive.py::TestPrenotaBPBotComprehensive::test_init_and_properties`
+**Error:** `FAILED tests/unit/test_prenota_bp_comprehensive.py::TestPrenotaBPBotComprehensive::test_init_and_properties`
 
-**Timestamp:** `2026-03-20T12:41:50.852336`
+**Timestamp:** `2026-03-20T13:38:38.897298`
 
 <details><summary>Full Output</summary>
 
@@ -23,31 +23,15 @@
 ============================= test session starts =============================
 collected 1 item
 
-tests\unit\test_notifications_panel_deep.py F                            [100%]
+tests\unit\test_prenota_bp_comprehensive.py F                            [100%]
 
 ================================== FAILURES ===================================
-_______ TestNotificationsPanelDeep.test_refresh_notifications_with_data _______
-tests\unit\test_notifications_panel_deep.py:24: in test_refresh_notifications_with_data
-    panel = NotificationsPanel()
-            ^^^^^^^^^^^^^^^^^^^^
-src\gui\panels\notifications_panel.py:83: in __init__
-    self.refresh_notifications()
-src\gui\panels\notifications_panel.py:239: in refresh_notifications
-    self._render_groups(grouped, disable_animations)
-src\gui\panels\notifications_panel.py:286: in _render_groups
-    card = NotificationCard(notif, disable_animations=disable_animations)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-src\gui\widgets\notification_card.py:72: in __init__
-    self._setup_ui()
-src\gui\widgets\notification_card.py:120: in _setup_ui
-    self.time_lbl = QLabel(self._format_timestamp(self.notification.get("timestamp")))
-                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-src\gui\widgets\notification_card.py:166: in _format_timestamp
-    return datetime.now(UTC).astimezone().strftime("%H:%M")
-                        ^^^
-E   UnboundLocalError: cannot access local variable 'UTC' where it is not associated with a value
----------------------------- Captured stdout call -----------------------------
-DEBUG: Integrity check failed at ID 1. Row hash: 29a060d110... Expected: 4bce7543b8...
+___________ TestPrenotaBPBotComprehensive.test_init_and_properties ____________
+tests\unit\test_prenota_bp_comprehensive.py:28: in test_init_and_properties
+    self.assertEqual(cols[0]["name"], "Numero BP")
+E   AssertionError: 'numero_bp' != 'Numero BP'
+E   - numero_bp
+E   + Numero BP
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
 
@@ -68,9 +52,9 @@ src\bots\portale_fornitori\dettagli_oda\bot.py                         106     2
 src\bots\portale_fornitori\dettagli_oda\locators.py                     19      0   100%
 src\bots\portale_fornitori\dettagli_oda\pages\dettagli_oda_page.py     207    133    36%   51-71, 86-88, 101-103, 113-118, 139-213, 217-228, 238-267, 271-280, 287, 292, 296-305
 src\bots\portale_fornitori\prenota_bp\__init__.py                        1      0   100%
-src\bots\portale_fornitori\prenota_bp\bot.py                           107     87    19%   37, 41, 53-65, 70-77, 81-114, 118-124, 128-171
+src\bots\portale_fornitori\prenota_bp\bot.py                           107     36    66%   85, 87, 102, 108-112, 124, 135-171
 src\bots\portale_fornitori\prenota_bp\locators.py                       33      0   100%
-src\bots\portale_fornitori\prenota_bp\pages\prenota_bp_page.py         217    189    13%   28-31, 35, 39-41, 53-79, 90-96, 101-106, 110-138, 142-175, 179-187, 196-224, 228-235, 239-259, 263-275, 279-291, 295-313, 317-341, 345-349
+src\bots\portale_fornitori\prenota_bp\pages\prenota_bp_page.py         217     77    65%   75-76, 79, 101-106, 116-117, 124-125, 160-162, 179-187, 196-224, 228-235, 239-259, 268, 272, 289-291, 297-298, 337-341, 348-349
 src\bots\portale_fornitori\scarico_ts\__init__.py                        2      0   100%
 src\bots\portale_fornitori\scarico_ts\bot.py                           259    180    31%   40, 45, 57, 61, 80-82, 86-101, 105-145, 150-170, 174-208, 212-243, 247-256, 260-285, 290, 319-321, 327-358, 362-373, 391, 398-418, 427-428
 src\bots\portale_fornitori\scarico_ts\locators.py                       10      0   100%
@@ -141,7 +125,7 @@ src\core\license_updater.py                                            192     5
 src\core\license_validator.py                                          176     40    77%   66-69, 86-115, 125-129, 148, 195, 197, 203-204, 213-215, 235-236, 258-259, 285-286, 289-290, 295-296, 301-302
 src\core\logging\__init__.py                                            10      0   100%
 src\core\logging\alert_manager.py                                      115     86    25%   51-53, 56-59, 64-69, 81-92, 96-113, 117-119, 123-151, 170-181, 193-210, 222-233, 239-240
-src\core\logging\analytics.py                                          136     24    82%   50, 54, 100, 135-136, 165-176, 266-271, 275, 333, 338, 343
+src\core\logging\analytics.py                                          136     46    66%   50, 54, 77-81, 100, 129-138, 161-191, 226-228, 264-271, 275, 279, 320, 333, 338, 343
 src\core\logging\config.py                                              37      0   100%
 src\core\logging\context.py                                             57     10    82%   31-32, 54, 128-129, 139-140, 150, 160-161
 src\core\logging\decorators.py                                          74     27    64%   64, 66, 121, 167-201
@@ -153,15 +137,15 @@ src\core\logging\metrics.py                                             74     3
 src\core\logging\migration.py                                           42     42     0%   5-120
 src\core\logging\sampling.py                                            54     13    76%   58, 67, 100, 105, 144-154, 163, 201
 src\core\logging\sinks.py                                              100     61    39%   55, 70-71, 75-78, 91-103, 114-119, 129-136, 140-156, 167-169, 179-184, 196-206, 226-228, 234-236
-src\core\logging\viewer.py                                             177     68    62%   46-47, 61-69, 82-88, 92, 96, 118, 122, 130-135, 142-143, 147-148, 152-153, 163, 171-172, 175, 185-193, 221, 226-230, 271-273, 281, 286-288, 292-300, 323, 352, 357, 362
+src\core\logging\viewer.py                                             177    143    19%   31-34, 46-47, 61-69, 82-88, 92, 96, 110-138, 142-143, 147-148, 152-153, 162-176, 185-193, 216-222, 226-230, 234-248, 252-267, 271-273, 277-313, 317-333, 352, 357, 362
 src\core\notification_manager.py                                       116     15    87%   64, 74, 100-101, 166, 217-225, 229
 src\core\oda\oda_controller.py                                          40     25    38%   26-54, 59-72, 80-108
-src\core\oda_manager.py                                                 42     26    38%   29, 38-91, 98-112
+src\core\oda_manager.py                                                 42      3    93%   82-84
 src\core\pdl\pdl_controller.py                                          66     55    17%   18, 24-36, 40, 44-109, 114-118
 src\core\pdl\period_manager.py                                          18     10    44%   18-26, 31-32, 50-51
 src\core\preventivi_manager.py                                         196    164    16%   26-27, 46-49, 53-59, 77-79, 83-113, 126-128, 140-157, 161-205, 212-243, 256-272, 276-312
 src\core\report_history.py                                              68     44    35%   27-29, 37-43, 48-52, 63-87, 97, 115-135, 148-158
-src\core\schemas.py                                                     57      5    91%   71-73, 79, 86
+src\core\schemas.py                                                     57      3    95%   72, 79, 86
 src\core\secrets_manager.py                                            105     23    78%   32, 99, 104, 109, 115-116, 122, 130-135, 141, 149, 168-169, 176-179, 186-188
 src\core\stats\pdl_stats_engine.py                                      89     66    26%   45-191
 src\core\stats\roi_engine.py                                           134    107    20%   40-52, 57-234, 239-249
@@ -226,7 +210,7 @@ src\gui\formatters.py                                                  135     5
 src\gui\main_window\__init__.py                                          2      0   100%
 src\gui\main_window\components\__init__.py                               0      0   100%
 src\gui\main_window\components\menu_bar.py                              75     43    43%   43-49, 67-78, 82-91, 102-323
-src\gui\main_window\components\status_bar.py                           132     82    38%   102-114, 118-130, 137-181, 188-232
+src\gui\main_window\components\status_bar.py                           132     71    46%   102-114, 118-130, 137-181, 209-222, 226-227
 src\gui\main_window\components\tool_bar.py                              82     18    78%   43-60, 85-89, 93-97, 177-181
 src\gui\main_window\components\tray_icon.py                             17      7    59%   38, 53-62
 src\gui\main_window\controllers\__init__.py                              0      0   100%
@@ -258,7 +242,7 @@ src\gui\panels\dipendenti\widgets\anagrafica_header.py                  86     6
 src\gui\panels\dipendenti\widgets\employee_detail_view.py              105     91    13%   25-30, 33-138, 141-145, 153-165, 171-174
 src\gui\panels\dipendenti\widgets\employee_table.py                     77     59    23%   42-44, 48-72, 87-94, 98-103, 112-153
 src\gui\panels\dipendenti_manager_panel.py                             206    101    51%   31-74, 78, 218, 222, 236-265, 269-286, 290-309, 312-327, 334-369
-src\gui\panels\health_panel.py                                         275     53    81%   64, 66, 71-105, 382-383, 388-389, 406-422, 426-430, 434-437
+src\gui\panels\health_panel.py                                         275     55    80%   64, 66, 71-105, 382-383, 388-389, 401-402, 406-422, 426-430, 434-437
 src\gui\panels\help_panel.py                                           137      6    96%   204, 220-224
 src\gui\panels\notifications_panel.py                                  243     44    82%   165-169, 173-175, 185-187, 201, 244, 249, 251, 253, 256, 304-305, 311-319, 334-335, 339-346, 353-354, 377-382
 src\gui\panels\pdl\__init__.py                                           2      0   100%
@@ -323,7 +307,7 @@ src\gui\widgets\bot_parameters.py                                      222     5
 src\gui\widgets\calendar_date_edit.py                                   18      0   100%
 src\gui\widgets\contabilita\attivita_tab.py                            209    178    15%   70-79, 83-154, 158, 162-177, 181-194, 198-209, 213-219, 223-228, 232-250, 254-257, 261-267, 271-274, 278-281, 285-288, 292-295, 299-303, 312-323
 src\gui\widgets\contabilita\certificati\tree_widget.py                  98     31    68%   36-42, 46-50, 54-56, 64-65, 69-71, 75-77, 174-199
-src\gui\widgets\contabilita\certificati_tab.py                         261    130    50%   73, 78, 82, 92-93, 101, 103, 108, 119, 123, 127, 131, 139, 141-142, 150-153, 155-165, 167, 172, 177, 180, 187, 215, 220, 230-234, 237-240, 276, 282, 288, 293-294, 298, 300-301, 305, 307-308, 317-328, 330-331, 335-373, 377-378, 381-382, 386-387, 390, 394-427, 432-457
+src\gui\widgets\contabilita\certificati_tab.py                         261    113    57%   123, 127, 131-132, 139, 152-156, 162-168, 193-194, 234-237, 289, 298-301, 305-308, 317-331, 335-373, 377-382, 386-390, 394-427, 432-457
 src\gui\widgets\contabilita\consuntivo\crea_nuovo_tab.py               206    178    14%   39-46, 49, 52-199, 202-218, 221-232, 236-262, 265-296, 299-313, 316-337, 340-348
 src\gui\widgets\contabilita\consuntivo\impostazioni_tab.py              68     59    13%   24-25, 28-53, 56-103, 106-111
 src\gui\widgets\contabilita\consuntivo\log_widget.py                    43     34    21%   34-98, 108-121, 125
@@ -333,7 +317,7 @@ src\gui\widgets\contabilita\giornaliere_tab.py                         186     5
 src\gui\widgets\contabilita\helpers.py                                  36     18    50%   13, 25-35, 43-45, 48-53
 src\gui\widgets\contabilita\year_tab.py                                102     31    70%   31-32, 39-53, 130, 135, 161, 184-185, 189-220, 224, 228
 src\gui\widgets\core_widgets.py                                        106     11    90%   41, 48, 55, 139-140, 143-144, 384-385, 388-389
-src\gui\widgets\dashboard\don_ciro_widget.py                           462    111    76%   124, 128-129, 134, 138-139, 144, 148-149, 193, 205, 216, 223, 226, 228, 230-240, 245-252, 256-257, 261-263, 267-268, 272-278, 282-287, 304-307, 329, 342, 356-363, 395-396, 459-468, 491-496, 513-530, 544, 560, 586-591, 598, 604
+src\gui\widgets\dashboard\don_ciro_widget.py                           462    102    78%   124, 128-129, 134, 138-139, 193, 205, 216, 223, 226, 228, 230-240, 245-252, 256-257, 261-263, 267-268, 272-278, 304-307, 329, 342, 356-363, 395-396, 459-468, 491-496, 513-530, 544, 560, 586-591, 598, 604
 src\gui\widgets\dashboard\multi_window_status.py                        86     39    55%   40-94, 180-204
 src\gui\widgets\dashboard\pdl_stats_widget.py                          146     71    51%   49-100, 190-198, 202-254
 src\gui\widgets\dashboard\roi_widget.py                                179     38    79%   292-300, 309-359
@@ -351,11 +335,11 @@ src\gui\widgets\footer\status_bar.py                                    36     1
 src\gui\widgets\footer\telemetry.py                                     55     12    78%   70-73, 77-79, 83-87
 src\gui\widgets\info_widgets.py                                         92     38    59%   30-63, 67, 89-113
 src\gui\widgets\message_bubble.py                                       54     54     0%   7-140
-src\gui\widgets\mixins\clipboard_mixin.py                               87     15    83%   19, 26, 31, 36, 54, 61, 67, 78-82, 100-102
+src\gui\widgets\mixins\clipboard_mixin.py                               87     16    82%   19, 26, 31, 36, 50, 54, 61, 67, 78-82, 100-102
 src\gui\widgets\modern_button.py                                        67     12    82%   67-68, 76-77, 83-86, 90-93
 src\gui\widgets\modern_card.py                                          42     13    69%   55-64, 68-71, 79-82, 86
 src\gui\widgets\multi_select_filter.py                                  99     80    19%   26-80, 83-87, 90-93, 102-107, 116-133, 142-145, 154-155, 158-161, 164-168
-src\gui\widgets\notification_card.py                                   116     21    82%   145-156, 163-165, 180-182, 186-189, 193, 197-199
+src\gui\widgets\notification_card.py                                   116     23    80%   145-156, 162-166, 180-182, 186-189, 193, 197-199
 src\gui\widgets\notification_group_header.py                            48      9    81%   125-128, 132-133, 137, 141-142
 src\gui\widgets\notification_item.py                                    74     13    82%   41-42, 44-45, 47-48, 64, 95-96, 137-139, 142
 src\gui\widgets\notification_toolbar.py                                131      9    93%   237-238, 242-243, 259-260, 275, 279, 283
@@ -374,7 +358,7 @@ src\gui\widgets\sidebar_widget.py                                      267     8
 src\gui\widgets\simple_chart.py                                         67     67     0%   1-115
 src\gui\widgets\sortable_table_item.py                                  47     33    30%   26, 30-58, 63-76, 80-93
 src\gui\widgets\statistics_widget.py                                   108    108     0%   1-205
-src\gui\widgets\status_card.py                                          60      8    87%   98-113, 117, 121-122
+src\gui\widgets\status_card.py                                          60      6    90%   99-101, 117, 121-122
 src\gui\widgets\status_indicator.py                                     46      7    85%   77-83
 src\gui\widgets\timeline_widget.py                                     118     39    67%   67-97, 162-164, 174-191
 src\gui\widgets\toast.py                                               157     51    68%   128-130, 150-159, 178-185, 189-194, 198-200, 204-205, 211-212, 218, 263-264, 271-278, 286, 300-303, 308-311, 316-319, 324-327
@@ -384,21 +368,21 @@ src\utils\animation_helpers.py                                         100    10
 src\utils\date_utils.py                                                 74      2    97%   55, 141
 src\utils\document_generator.py                                         18      2    89%   40-41
 src\utils\document_processor.py                                         66     15    77%   13-14, 24, 37, 41-42, 59-60, 73-74, 84-89
-src\utils\helpers.py                                                   128     38    70%   34, 67-68, 113, 126-141, 182-195, 223, 230-235, 252
+src\utils\helpers.py                                                   128     41    68%   34, 67-68, 113, 126-141, 182-195, 214, 221-223, 230-235, 252
 src\utils\log_humanizer.py                                              43      8    81%   21-28
-src\utils\parsing.py                                                    51      7    86%   15, 22, 46-47, 84, 91, 96
+src\utils\parsing.py                                                    51      0   100%
 src\utils\printing.py                                                   88     69    22%   14-15, 26-28, 33-43, 51-57, 68-149
 src\utils\resource_manager.py                                           86     27    69%   22-33, 63, 73, 102, 114, 117-119, 124-126, 160-166, 179-180, 193-194
 src\utils\secure_logger.py                                              23      5    78%   52, 57-60
-src\utils\security.py                                                   78     18    77%   43-44, 80-82, 102, 104, 109-111, 116, 122-124, 131-136
+src\utils\security.py                                                   78      9    88%   43-44, 80-82, 109-111, 136
 src\utils\system_telemetry.py                                           26     26     0%   6-74
 src\utils\validators.py                                                 73      2    97%   121, 244
 --------------------------------------------------------------------------------------------------
-TOTAL                                                                30670  13863    55%
+TOTAL                                                                30670  13725    55%
 Coverage HTML written to dir htmlcov
 =========================== short test summary info ===========================
-FAILED tests/unit/test_notifications_panel_deep.py::TestNotificationsPanelDeep::test_refresh_notifications_with_data
-============================= 1 failed in 26.75s ==============================
+FAILED tests/unit/test_prenota_bp_comprehensive.py::TestPrenotaBPBotComprehensive::test_init_and_properties
+============================= 1 failed in 11.47s ==============================
 
 ```
 </details>

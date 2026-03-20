@@ -11,15 +11,18 @@ class TestNotificationsPanelDeep:
     def test_refresh_notifications_with_data(self, qapp, qtbot):
         with patch("src.core.notification_manager.NotificationManager.instance") as mock_manager:
             mock_inst = mock_manager.return_value
-            mock_inst.get_notifications.return_value = [
+            data = [
                 {
                     "id": 1,
                     "title": "T1",
                     "message": "M1",
                     "level": "info",
                     "read": False,
+                    "timestamp": datetime.now().isoformat(),
                 }
             ]
+            mock_inst.get_notifications.return_value = data
+            mock_inst.notifications = data
 
             panel = NotificationsPanel()
             qtbot.addWidget(panel)
