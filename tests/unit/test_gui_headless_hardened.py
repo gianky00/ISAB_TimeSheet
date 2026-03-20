@@ -16,16 +16,14 @@ class TestGUIHeadlessHardened:
             return_value={"browser_headless": False, "browser_timeout": 30},
         )
         m_save = mocker.patch("src.gui.panels.settings.main_panel.config_manager.save_config")
-        mocker.patch(
-            "src.core.secrets_manager.SecretsManager.get_gemini_api_key",
-            return_value="fake_key",
-        )
         p = SettingsPanel()
         p._mock_save = m_save
         return p
 
-    def test_settings_auto_save_trigger(self, settings_panel, mocker):
+    def test_settings_auto_save_trigger(self, settings_panel, qtbot):
         """Verifica che i cambiamenti nella UI scatenino il salvataggio."""
+        # Attendi che il caricamento iniziale (QTimer) finisca
+        qtbot.wait(100)
         gen_page = settings_panel.config_tab.general_page
         gen_page.headless_check.setChecked(True)
         assert settings_panel._mock_save.called

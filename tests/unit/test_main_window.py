@@ -14,10 +14,11 @@ class TestMainWindow:
 
     @patch("src.gui.main_window.main.QTimer.singleShot")
     @patch("src.gui.main_window.main.ServiceController")
-    @patch("src.gui.main_window.main.LyraSentinel")
+    @patch("src.gui.main_window.main.WorkflowController")
+    @patch("src.gui.main_window.main.MonitoringController")
     @patch("src.gui.main_window.main.config_manager.load_config")
     @patch("src.gui.main_window.main.apply_theme")
-    def test_init(self, mock_theme, mock_conf, mock_sentinel, mock_service, mock_timer, app, qtbot):
+    def test_init(self, mock_theme, mock_conf, mock_mon, mock_workflow, mock_service, mock_timer, app, qtbot):
         mock_conf.return_value = {}
         window = MainWindow()
         qtbot.addWidget(window)
@@ -30,7 +31,8 @@ class TestMainWindow:
         with (
             patch("src.gui.main_window.main.QTimer.singleShot"),
             patch("src.gui.main_window.main.ServiceController"),
-            patch("src.gui.main_window.main.LyraSentinel"),
+            patch("src.gui.main_window.main.WorkflowController"),
+            patch("src.gui.main_window.main.MonitoringController"),
             patch("src.gui.panels.contabilita_panel.ContabilitaManager"),
             patch("src.gui.main_window.main.config_manager.load_config", return_value={}),
         ):
@@ -52,7 +54,8 @@ class TestMainWindow:
         with (
             patch("src.gui.main_window.main.QTimer.singleShot"),
             patch("src.gui.main_window.main.ServiceController"),
-            patch("src.gui.main_window.main.LyraSentinel"),
+            patch("src.gui.main_window.main.WorkflowController"),
+            patch("src.gui.main_window.main.MonitoringController"),
             patch("src.gui.main_window.main.config_manager.load_config", return_value={}),
         ):
             window = MainWindow()

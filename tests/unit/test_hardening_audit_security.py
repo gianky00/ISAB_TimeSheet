@@ -55,6 +55,7 @@ class TestHardeningAuditSecurity:
         manager.log_action("Action 1")
         manager.log_action("Action 2")
         manager.log_action("Action 3")
+        manager._log_queue.join() # Attendi scrittura asincrona
 
         assert manager.verify_integrity() is True
 
@@ -72,6 +73,7 @@ class TestHardeningAuditSecurity:
 
         manager.log_action("First")
         manager.log_action("Third")  # Questa sarà ID 2
+        manager._log_queue.join()
 
         with sqlite3.connect(db_path) as conn:
             # Recuperiamo l'ultimo hash per iniettare una riga "valida" a metà
@@ -106,6 +108,7 @@ class TestHardeningAuditSecurity:
         start_time = time.time()
         for i in range(500):
             manager.log_action(f"Performance Test {i}", category="stress")
+        manager._log_queue.join()
         duration = time.time() - start_time
 
         # Media accettabile per test

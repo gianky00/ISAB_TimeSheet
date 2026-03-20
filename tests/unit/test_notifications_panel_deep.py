@@ -24,7 +24,10 @@ class TestNotificationsPanelDeep:
             panel = NotificationsPanel()
             qtbot.addWidget(panel)
 
+            # Forza refresh immediato e attendi processamento eventi
             panel.refresh_notifications()
+            qtbot.wait(100)
+
             # Check if scroll layout has items (one data item + one stretch)
             # In refactored version it uses groups, so it should have at least 1 group header + 1 container + 1 stretch
             assert panel.scroll_layout.count() >= 2

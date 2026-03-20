@@ -4,7 +4,7 @@ Widget moderno per la visualizzazione di una singola notifica.
 Modularizzato per utilizzare il Notification Styling Engine.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, pyqtSignal

@@ -35,6 +35,7 @@ class TestAuditManager:
     def test_log_action(self, temp_audit_db):
         manager = temp_audit_db
         manager.log_action("Test Action", category="test", entity="user", params={"p": 1})
+        manager._log_queue.join()
 
         # Verify data
         logs = manager.get_logs(limit=1)
@@ -46,6 +47,7 @@ class TestAuditManager:
         manager = temp_audit_db
         manager.log_action("A1")
         manager.log_action("A2")
+        manager._log_queue.join()
 
         assert manager.verify_integrity() is True
 
@@ -61,6 +63,7 @@ class TestStatsManager:
     def test_increment_usage(self, mock_config_stats):
         manager, mock_cfg = mock_config_stats
         manager.increment_usage("bot_1")
+        manager._save_queue.join()
 
         stats = manager.get_all_stats()
         assert stats["bot_1"]["runs"] == 1
@@ -69,6 +72,7 @@ class TestStatsManager:
     def test_increment_error(self, mock_config_stats):
         manager, _mock_cfg = mock_config_stats
         manager.increment_error("bot_1")
+        manager._save_queue.join()
 
         stats = manager.get_all_stats()
         assert stats["bot_1"]["errors"] == 1

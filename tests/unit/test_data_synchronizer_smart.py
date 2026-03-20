@@ -51,3 +51,26 @@ class TestDataSynchronizerSmart:
         assert BaseSyncEngine._validate_identifier("my_table") == "my_table"
         with pytest.raises(ValueError):
             BaseSyncEngine._validate_identifier("table; DROP")
+
+    def test_sync_upsert_with_extra_columns(self, tmp_path):
+        """Verifica che le colonne extra non presenti nel sync vengano preservate via conflict_cols."""
+        db_path = tmp_path / "extra_cols.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE t (id TEXT PRIMARY KEY, sync_val TEXT, extra_val TEXT)")
+        conn.execute("INSERT INTO t VALUES ('1', 'old', 'keep_me')")
+        conn.commit()
+        conn.close()
+
+        # Nuovo dato (solo id e sync_val)
+        new_data = [("1", "new")]
+        columns = ["id", "sync_val"]
+
+        # Esegui sync con conflict_cols
+        SmartSyncEngine.sync_upsert_smart(db_path, "t", columns, new_data, conflict_cols=["id"])
+
+        # Verifica
+        conn = sqlite3.connect(db_path)
+        row = conn.execute("SELECT sync_val, extra_val FROM t WHERE id='1'").fetchone()
+        assert row[0] == "new"
+        assert row[1] == "keep_me"  # Deve essere preservato!
+        conn.close()

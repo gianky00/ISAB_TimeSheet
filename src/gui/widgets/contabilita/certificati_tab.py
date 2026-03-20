@@ -67,6 +67,9 @@ class CertificatiCampioneTab(QWidget):
         self.show_excluded_check = StandardCheckBox("Mostra esclusi")
         self.show_excluded_check.stateChanged.connect(self._on_show_excluded_changed)
 
+        self.include_history_check = StandardCheckBox("Includi storico")
+        self.include_history_check.setChecked(True)
+
         self.excluded_count_label = QLabel("")
         self.excluded_count_label.setStyleSheet(
             f"color: {COLORS['text_light']}; font-size: 12px; padding: 0 8px;"
@@ -81,11 +84,12 @@ class CertificatiCampioneTab(QWidget):
         self.btn_analyze.clicked.connect(self._run_analysis)
 
         for w in (btn_expand, btn_collapse):
-            toolbar.addWidget(w)
-        toolbar.addSpacing(20)
-        toolbar.addWidget(self.show_excluded_check)
-        toolbar.addWidget(self.excluded_count_label)
-        toolbar.addStretch()
+            toolbar.addWidget(btn_collapse)
+            toolbar.addSpacing(20)
+            toolbar.addWidget(self.show_excluded_check)
+            toolbar.addWidget(self.include_history_check)
+            toolbar.addWidget(self.excluded_count_label)
+            toolbar.addStretch()
         toolbar.addWidget(self.btn_export_pdf)
         toolbar.addWidget(self.btn_analyze)
         layout.addLayout(toolbar)
@@ -437,7 +441,9 @@ class CertificatiCampioneTab(QWidget):
         if not file_path:
             return
 
-        exporter = CertificatiPdfExporter(self.tree, self._show_excluded)
+        exporter = CertificatiPdfExporter(
+            self.tree, self._show_excluded, include_history=self.include_history_check.isChecked()
+        )
         success, message = exporter.export(file_path)
 
         if success:

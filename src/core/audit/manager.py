@@ -266,11 +266,13 @@ class AuditManager:
                         calc_hash_legacy = AuditIntegrity.calculate_hash(data_legacy, prev_hash)
 
                         if row["row_hash"] != calc_hash_legacy:
+                            print(f"DEBUG: Integrity check failed at ID {row['id']}. Row hash: {row['row_hash'][:10]}... Expected: {calc_hash[:10]}...")
                             return False
 
                     prev_hash = row["row_hash"]
                 return True
-        except Exception:
+        except Exception as e:
+            print(f"DEBUG: Exception in verify_integrity: {e}")
             return False
 
     def get_logs(self, limit: int = 200) -> list[dict[str, Any]]:

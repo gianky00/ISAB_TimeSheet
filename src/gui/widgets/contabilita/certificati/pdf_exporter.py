@@ -12,9 +12,10 @@ from src.core.version import __version__
 class CertificatiPdfExporter:
     """Genera report PDF professionale per i certificati campione."""
 
-    def __init__(self, tree: QTreeWidget, show_excluded: bool):
+    def __init__(self, tree: QTreeWidget, show_excluded: bool, include_history: bool = True):
         self.tree = tree
         self.show_excluded = show_excluded
+        self.include_history = include_history
 
     def export(self, file_path: str) -> tuple[bool, str]:
         """Esporta il TreeWidget in un file PDF con paginazione intelligente."""
@@ -253,6 +254,10 @@ class CertificatiPdfExporter:
             group_html_blocks = []
 
             for j in range(parent.childCount()):
+                # Se non vogliamo lo storico, esportiamo solo il primo certificato (quello corrente)
+                if not self.include_history and j > 0:
+                    break
+
                 child = parent.child(j)
                 if not child:
                     continue

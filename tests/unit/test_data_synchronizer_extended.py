@@ -39,7 +39,8 @@ class TestDataSynchronizerDetailed:
                 CREATE TABLE IF NOT EXISTS certificati_campione (
                     modello TEXT, costruttore TEXT, matricola TEXT, range_strumento TEXT,
                     errore_max TEXT, certificato TEXT, scadenza TEXT, emissione TEXT,
-                    id_coemi TEXT PRIMARY KEY, stato TEXT
+                    id_coemi TEXT, stato TEXT,
+                    PRIMARY KEY (matricola, certificato)
                 )
             """)
             # CONTABILITA: 15 colonne (year + 14 mappate)
