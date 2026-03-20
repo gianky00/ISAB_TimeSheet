@@ -160,11 +160,11 @@ class RicercaPDLPanel(BaseBotPanel):
         }
 
         from src.core.config_manager import load_config
+
         config = load_config()
 
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
-
 
         # Configura i parametri per il BotWorker (verranno passati a create_bot nel thread secondario)
         bot_params = {
@@ -192,6 +192,7 @@ class RicercaPDLPanel(BaseBotPanel):
         self.log_widget.append("Avvio Ricerca PDL SafeWork...")
         worker.start()
         self.bot_started.emit()
+
     def get_safework_credentials(self) -> tuple[str, str, str]:
         """Recupera le credenziali SafeWork configurate. Ritorna (user, pass, tipo)."""
         # Prende il default da safework_accounts

@@ -203,9 +203,7 @@ def run_pending_installer():
             "/c",
             f'timeout /t 3 /nobreak > NUL && "{_pending_installer_path}" /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS',
         ]
-        subprocess.Popen(
-            args, shell=False, creationflags=flags, close_fds=True, stdin=subprocess.DEVNULL
-        )
+        subprocess.Popen(args, shell=False, creationflags=flags, close_fds=True, stdin=subprocess.DEVNULL)
 
 
 def set_pending_installer(path: str):

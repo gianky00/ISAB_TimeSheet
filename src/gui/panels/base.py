@@ -354,6 +354,7 @@ class BaseBotPanel(QWidget):
         # Segnala inizio sync a SyncTracker
         if self.sync_module_id:
             from src.core.sync_tracker import SyncTracker
+
             SyncTracker.mark_start(self.sync_module_id)
 
         # Pulizia della tabella dagli esiti della sessione precedente (Asincrona per evitare blocchi UI)
@@ -453,6 +454,7 @@ class BaseBotPanel(QWidget):
         # Tracciamento fallimento tentativi sync
         if not success and self.sync_module_id:
             from src.core.sync_tracker import SyncTracker
+
             SyncTracker.mark_failure(self.sync_module_id)
 
         self.bot_finished.emit(success)

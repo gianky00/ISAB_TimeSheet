@@ -12,7 +12,13 @@ from src.core.version import __version__
 class CertificatiPdfExporter:
     """Genera report PDF professionale per i certificati campione."""
 
-    def __init__(self, tree: QTreeWidget, show_excluded: bool, include_history: bool = True, print_exclusions: set[str] | None = None):
+    def __init__(
+        self,
+        tree: QTreeWidget,
+        show_excluded: bool,
+        include_history: bool = True,
+        print_exclusions: set[str] | None = None,
+    ):
         self.tree = tree
         self.show_excluded = show_excluded
         self.include_history = include_history
@@ -313,9 +319,11 @@ class CertificatiPdfExporter:
                 ubicazione_raw = child.text(10).strip()
                 if "ASSEGNATO AL TECNICO" in ubicazione_raw:
                     # Lo trasformiamo in ASSEGNATO <br> AL TECNICO <br> (NOME)
-                    ubicazione = ubicazione_raw.replace("ASSEGNATO AL TECNICO ", "ASSEGNATO<br>AL TECNICO<br>")
-                    if ubicazione == ubicazione_raw: # Nessuno spazio dopo
-                         ubicazione = ubicazione_raw.replace("ASSEGNATO AL TECNICO", "ASSEGNATO<br>AL TECNICO")
+                    ubicazione = ubicazione_raw.replace(
+                        "ASSEGNATO AL TECNICO ", "ASSEGNATO<br>AL TECNICO<br>"
+                    )
+                    if ubicazione == ubicazione_raw:  # Nessuno spazio dopo
+                        ubicazione = ubicazione_raw.replace("ASSEGNATO AL TECNICO", "ASSEGNATO<br>AL TECNICO")
                 else:
                     ubicazione = ubicazione_raw
 
@@ -357,7 +365,9 @@ class CertificatiPdfExporter:
             group_est_height = 35 + (len(group_html_blocks) - 1) * 22
 
             if current_page_height + group_est_height > available_height and current_rows:
-                pages_html.append(style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html)
+                pages_html.append(
+                    style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html
+                )
                 current_rows = []
                 current_page_height = 0
 
@@ -365,6 +375,8 @@ class CertificatiPdfExporter:
             current_page_height += group_est_height
 
         if current_rows:
-            pages_html.append(style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html)
+            pages_html.append(
+                style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html
+            )
 
         return pages_html

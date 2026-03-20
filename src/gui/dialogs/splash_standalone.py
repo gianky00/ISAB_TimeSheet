@@ -19,7 +19,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - [SPLASH] - %(levelname)s - %(message)s",
     filename=str(log_path),
-    filemode="w"
+    filemode="w",
 )
 logger = logging.getLogger("StandaloneSplash")
 
@@ -64,6 +64,7 @@ def run_standalone():
     # Forza encoding UTF-8 per la comunicazione
     if sys.platform == "win32":
         import ctypes
+
         kernel32 = ctypes.windll.kernel32
         kernel32.SetConsoleCP(65001)
         kernel32.SetConsoleOutputCP(65001)
@@ -87,8 +88,9 @@ def run_standalone():
     def read_stdin():
         logger.info("Stdin reader thread active")
         import io
+
         # Usiamo il buffer binario per evitare problemi di encoding su Windows
-        input_stream = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8', line_buffering=True)
+        input_stream = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", line_buffering=True)
 
         while True:
             try:

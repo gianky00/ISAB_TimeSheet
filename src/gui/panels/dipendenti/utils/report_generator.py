@@ -234,7 +234,8 @@ class ReportGenerator:
 
         df_report = pd.DataFrame(excel_data)
         path = (
-            Path(os.environ["TEMP"]) / f"report Accessi ISAB {datetime.now(UTC).astimezone().strftime('%d-%m-%Y_%H-%M')}.xlsx"
+            Path(os.environ["TEMP"])
+            / f"report Accessi ISAB {datetime.now(UTC).astimezone().strftime('%d-%m-%Y_%H-%M')}.xlsx"
         )
         df_report.to_excel(path, index=False, sheet_name="Dipendenti")
         return path
@@ -242,7 +243,9 @@ class ReportGenerator:
     @staticmethod
     def _send_report_email(body_html, excel_path, data):
         """Gestisce l'invio fisico dell'email tramite Outlook o Browser."""
-        subject = f"Report Monitoraggio Accessi in ISAB - {datetime.now(UTC).astimezone().strftime('%d/%m/%Y')}"
+        subject = (
+            f"Report Monitoraggio Accessi in ISAB - {datetime.now(UTC).astimezone().strftime('%d/%m/%Y')}"
+        )
 
         if os.name == "nt":
             try:
@@ -287,7 +290,9 @@ class ReportGenerator:
         from PyQt6.QtCore import QUrl
         from PyQt6.QtGui import QDesktopServices
 
-        tmp_path = Path(os.environ["TEMP"]) / f"report_isab_{datetime.now(UTC).astimezone().strftime('%H%M%S')}.html"
+        tmp_path = (
+            Path(os.environ["TEMP"]) / f"report_isab_{datetime.now(UTC).astimezone().strftime('%H%M%S')}.html"
+        )
         try:
             tmp_path.write_text(body_html, encoding="utf-8")
             # Usa QDesktopServices per aprire il file con l'app predefinita del sistema

@@ -67,7 +67,6 @@ class DettagliOdABot(BaseBot):
         self.data_a = data_a or f"31.12.{current_year}"
         self.fornitore = fornitore or Business.DEFAULT_SUPPLIER
 
-
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """Validazione specifica per Dettagli OdA."""
         # Non chiamiamo super().validate_data(data) perché bloccherebbe se data è vuoto.
@@ -178,7 +177,9 @@ class DettagliOdABot(BaseBot):
         import concurrent.futures
 
         try:
-            self.log(f"📥 Avvio importazione in Storico OdA da {downloaded_path.name}... (Potrebbe richiedere alcuni secondi)")
+            self.log(
+                f"📥 Avvio importazione in Storico OdA da {downloaded_path.name}... (Potrebbe richiedere alcuni secondi)"
+            )
 
             # Utilizziamo ProcessPoolExecutor per aggirare il blocco del GIL causato dal parsing C di openpyxl/pandas
             with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:

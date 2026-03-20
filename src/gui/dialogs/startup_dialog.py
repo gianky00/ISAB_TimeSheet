@@ -53,7 +53,7 @@ class StartupDialog(QDialog):
 
     def __init__(self):
         super().__init__()
-        self.setMouseTracking(True) # Fondamentale per il Tilt 3D
+        self.setMouseTracking(True)  # Fondamentale per il Tilt 3D
         self._init_window()
         self._init_state()
         self._setup_container()
@@ -86,7 +86,9 @@ class StartupDialog(QDialog):
     def _setup_container(self):
         """Configura il container principale con particelle, bordo e shadow."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(self.SHADOW_MARGIN, self.SHADOW_MARGIN, self.SHADOW_MARGIN, self.SHADOW_MARGIN)
+        layout.setContentsMargins(
+            self.SHADOW_MARGIN, self.SHADOW_MARGIN, self.SHADOW_MARGIN, self.SHADOW_MARGIN
+        )
 
         self.container = QFrame()
         self.container.setObjectName("Container")
@@ -141,9 +143,10 @@ class StartupDialog(QDialog):
         # Blueprint olografico (dietro il logo)
         self.blueprint = TechBlueprint(header_container)
         self.blueprint.setFixedSize(100, 100)
-        self.blueprint.move(-8, -8) # Centratura rispetto al logo
+        self.blueprint.move(-8, -8)  # Centratura rispetto al logo
 
         from src.utils.helpers import get_asset_path
+
         icon_path = get_asset_path("assets/app.ico")
 
         self.logo = PulsingLogo(header_container)
@@ -163,8 +166,11 @@ class StartupDialog(QDialog):
         title_box.addWidget(self.title)
 
         from src.core.version import __version__
+
         self.version = QLabel(f"v{__version__}")
-        self.version.setStyleSheet(f"font-size:13px; color:{COLORS['primary_blue']}; opacity: 0.9; font-weight:600; letter-spacing:3px;")
+        self.version.setStyleSheet(
+            f"font-size:13px; color:{COLORS['primary_blue']}; opacity: 0.9; font-weight:600; letter-spacing:3px;"
+        )
         title_box.addWidget(self.version)
         header_layout.addLayout(title_box)
         header_layout.addStretch()
@@ -237,9 +243,7 @@ class StartupDialog(QDialog):
             lbl = TypewriterLabel()
             lbl.setWordWrap(False)
             lbl.setTextFormat(Qt.TextFormat.RichText)
-            lbl.setStyleSheet(
-                "font-size:10px; font-family:'Consolas','Fira Code',monospace; padding:1px 0;"
-            )
+            lbl.setStyleSheet("font-size:10px; font-family:'Consolas','Fira Code',monospace; padding:1px 0;")
             log_layout.addWidget(lbl)
             self.log_labels.append(lbl)
 
@@ -302,7 +306,7 @@ class StartupDialog(QDialog):
     def resizeEvent(self, event):
         """Gestisce il ridimensionamento dell'overlay della console."""
         super().resizeEvent(event)
-        if hasattr(self, 'console_overlay'):
+        if hasattr(self, "console_overlay"):
             self.console_overlay.setGeometry(self.log_frame.rect())
 
     def mousePressEvent(self, event):
@@ -350,7 +354,7 @@ class StartupDialog(QDialog):
         """Aggiorna UI e particelle per convergenza."""
         full_entry = f"> {message}"
         self.status.setText(message.upper())
-        self.particles.set_progress(prog) # Sincronizza convergenza particelle
+        self.particles.set_progress(prog)  # Sincronizza convergenza particelle
 
         if prog >= 90:
             self.indicator.setStyleSheet(f"background:{COLORS['success_green']}; border-radius:4px;")

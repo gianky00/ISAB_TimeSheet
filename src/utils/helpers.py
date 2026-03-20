@@ -88,8 +88,18 @@ def format_timestamp(dt: datetime | None = None) -> str:
 def get_months_list() -> list[str]:
     """Restituisce la lista dei mesi in italiano."""
     return [
-        "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
-        "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre",
+        "Gennaio",
+        "Febbraio",
+        "Marzo",
+        "Aprile",
+        "Maggio",
+        "Giugno",
+        "Luglio",
+        "Agosto",
+        "Settembre",
+        "Ottobre",
+        "Novembre",
+        "Dicembre",
     ]
 
 
@@ -208,17 +218,17 @@ def cleanup_bot_processes() -> None:
     logger = logging.getLogger("Cleanup")
 
     # 1. Terminazione Chromedriver
-    for proc in psutil.process_iter(['name']):
+    for proc in psutil.process_iter(["name"]):
         with suppress(Exception):
-            if proc.info['name'] == 'chromedriver.exe':
+            if proc.info["name"] == "chromedriver.exe":
                 proc.kill()
 
     # 2. Terminazione Chrome (Solo se utilizza il profilo dedicato di SyncroJob)
     profile_dir = "chrome_profile"
-    for proc in psutil.process_iter(['name', 'cmdline']):
+    for proc in psutil.process_iter(["name", "cmdline"]):
         with suppress(Exception):
-            if proc.info['name'] == 'chrome.exe':
-                cmdline = " ".join(proc.info['cmdline'] or [])
+            if proc.info["name"] == "chrome.exe":
+                cmdline = " ".join(proc.info["cmdline"] or [])
                 if profile_dir in cmdline.lower() and "syncrojob" in cmdline.lower():
                     proc.kill()
 

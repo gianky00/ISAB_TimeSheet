@@ -59,6 +59,7 @@ class StatsManager:
     def _worker_loop(self) -> None:
         """Loop per il salvataggio asincrono su disco."""
         import logging
+
         local_logger = logging.getLogger(__name__)
 
         while True:
@@ -79,6 +80,7 @@ class StatsManager:
         """Invia una richiesta di salvataggio al worker di background."""
         # Inviamo una copia dei dati per evitare race conditions
         import copy
+
         self._save_queue.put(copy.deepcopy(self.stats))
 
     def increment_usage(self, bot_id: str) -> None:

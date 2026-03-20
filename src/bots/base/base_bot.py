@@ -353,6 +353,7 @@ class BaseBot(ABC):
         # Fallback se è richiesto un force download o se il pre-warming è fallito
         try:
             from webdriver_manager.chrome import ChromeDriverManager
+
             self.log("Aggiornamento driver in corso...")
             d_path = ChromeDriverManager().install()
             if not d_path.lower().endswith(".exe") and (
@@ -362,6 +363,7 @@ class BaseBot(ABC):
 
             if Path(d_path).exists():
                 import shutil
+
                 p_dir = ResourceManager.get_writable_drivers_dir()
                 with suppress(Exception):
                     shutil.copy2(d_path, p_dir / "chromedriver.exe")

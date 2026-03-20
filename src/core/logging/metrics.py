@@ -189,7 +189,6 @@ class PerformanceTracker:
             "p99": sorted_durations[int(count * 0.99)],
         }
 
-
     def set_baseline(self, operation: str, baseline_ms: float) -> None:
         """
         Imposta baseline per operazione.

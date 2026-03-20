@@ -104,6 +104,7 @@ class ResourceManager:
         # Download silente se mancante
         try:
             from webdriver_manager.chrome import ChromeDriverManager
+
             # webdriver-manager gestisce internamente il lock e il download
             d_path = ChromeDriverManager().install()
 

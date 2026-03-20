@@ -317,6 +317,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             return
 
         from src.core.config_manager import load_config
+
         config = load_config()
 
         main_win = self.window()
@@ -356,6 +357,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.log_widget.append("Avvio Scarico PDL SafeWork...")
         worker.start()
         self.bot_started.emit()
+
     def _on_worker_finished(self, success: bool) -> None:
         """
         Gestisce il completamento del worker.

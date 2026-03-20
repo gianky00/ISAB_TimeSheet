@@ -377,7 +377,9 @@ class HealthPanel(QWidget):
             self._stat_runs_fail.set_value(str(health.get("bot_runs", {}).get("failed", 0)))
             self._stat_error_rate.set_value(f"{health.get('error_rate_percent', 0):.1f}%")
             self._stat_anomalies.set_value(str(len(report.anomalies)))
-            self._last_update.setText(f"Ultimo aggiornamento: {datetime.now(UTC).astimezone().strftime('%H:%M:%S')}")
+            self._last_update.setText(
+                f"Ultimo aggiornamento: {datetime.now(UTC).astimezone().strftime('%H:%M:%S')}"
+            )
             self._update_anomalies(report.anomalies)
         except Exception as e:
             self._last_update.setText(f"Errore: {str(e)[:30]}")

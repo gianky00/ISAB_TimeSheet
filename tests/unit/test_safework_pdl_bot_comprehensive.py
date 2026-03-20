@@ -48,7 +48,7 @@ class TestSafeWorkPDLBotComprehensive:
     def test_validate_data_scenarios(self, bot, mocker):
         """Verifica la validazione preventiva dei dati."""
         mocker.patch("src.bots.base.base_bot.BaseBot.validate_data", return_value=(True, ""))
-        ok, _msg = bot.validate_data([{"pdl_number": "123456/C"}])
+        ok, _msg = bot.validate_data([{"numero_pdl": "123456/C"}])
         assert ok is True
 
     def test_gestisci_ricerca_estesa_success(self, bot, mocker):
@@ -117,7 +117,7 @@ class TestSafeWorkPDLBotComprehensive:
         """Test unione PDF."""
         mocker.patch("src.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True)
         mocker.patch("os.rename")
-        item = {"pdl_number": "569157/C", "print_enabled": True}
+        item = {"numero_pdl": "569157/C", "print_enabled": True}
         all_paths = []
         res = bot._unisci_e_stampa("569157/C", "p1.pdf", "p2.pdf", item, all_paths)
         assert res is True
@@ -131,7 +131,7 @@ class TestSafeWorkPDLBotComprehensive:
         mocker.patch.object(bot, "_unisci_e_stampa", return_value=True)
         mocker.patch.object(bot, "_handle_session_merge")
 
-        data = [{"pdl_number": "569157/C"}, {"pdl_number": "123456/S"}]
+        data = [{"numero_pdl": "569157/C"}, {"numero_pdl": "123456/S"}]
         res = bot.run(data)
         assert res is True
 
@@ -144,6 +144,6 @@ class TestSafeWorkPDLBotComprehensive:
         mocker.patch.object(bot, "_scarica_parte_seconda", return_value="p2.pdf")
         mocker.patch.object(bot, "_unisci_e_stampa", return_value=True)
 
-        data = [{"pdl_number": "ERR"}, {"pdl_number": "OK"}]
+        data = [{"numero_pdl": "ERR"}, {"numero_pdl": "OK"}]
         res = bot.run(data)
         assert res is False

@@ -148,15 +148,15 @@ class CertificatiCampioneTab(QWidget):
             if not parent:
                 continue
             matricola = self.engine.parse_parent_label(parent.text(0))["matricola"]
-            
+
             is_mon_excluded = matricola in self.engine._exclusions
             is_print_excluded = matricola in self.engine._print_exclusions
-            
+
             # Nascondi se è escluso dal monitoraggio e non vogliamo vederlo
             hide_mon = is_mon_excluded and not self._show_excluded
             # Nascondi se è escluso dalla stampa e non vogliamo vederlo
             hide_print = is_print_excluded and not self._show_print_excluded
-            
+
             parent.setHidden(hide_mon or hide_print)
 
     def refresh_data(self) -> None:
@@ -274,12 +274,12 @@ class CertificatiCampioneTab(QWidget):
                     str(cert[3] if cert[3] is not None else ""),  # 3. Costruttore
                     str(cert[4] if cert[4] is not None else ""),  # 4. Matricola
                     str(cert[5] if cert[5] is not None else ""),  # 5. Range Strumento
-                    err_formatted,                                # 6. Err %
+                    err_formatted,  # 6. Err %
                     str(cert[7] if cert[7] is not None else ""),  # 7. Emissione
                     str(cert[8] if cert[8] is not None else ""),  # 8. Scadenza
                     str(cert[9] if cert[9] is not None else ""),  # 9. Stato
-                    str(cert[11] if len(cert) > 11 and cert[11] is not None else ""), # 10. Ubicazione
-                    str(cert[10] if len(cert) > 10 and cert[10] is not None else "")  # 11. Annotazioni
+                    str(cert[11] if len(cert) > 11 and cert[11] is not None else ""),  # 10. Ubicazione
+                    str(cert[10] if len(cert) > 10 and cert[10] is not None else ""),  # 11. Annotazioni
                 ]
 
                 row = SortableTreeWidgetItem(parent_item, row_data)
@@ -312,13 +312,13 @@ class CertificatiCampioneTab(QWidget):
         """Aggiorna il contatore degli strumenti esclusi nella toolbar."""
         mon_count = len(self.engine._exclusions)
         print_count = len(self.engine._print_exclusions)
-        
+
         parts = []
         if mon_count > 0:
             parts.append(f"{mon_count} monitoraggio")
         if print_count > 0:
             parts.append(f"{print_count} stampa")
-            
+
         text = f"({', '.join(parts)} esclusi)" if parts else ""
         self.excluded_count_label.setText(text)
 
@@ -493,7 +493,7 @@ class CertificatiCampioneTab(QWidget):
             self.tree,
             self._show_excluded,
             include_history=self.include_history_check.isChecked(),
-            print_exclusions=self.engine._print_exclusions
+            print_exclusions=self.engine._print_exclusions,
         )
         success, message = exporter.export(file_path)
 

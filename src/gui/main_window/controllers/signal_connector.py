@@ -55,7 +55,10 @@ class SignalConnector(QObject):
                 if ":" in msg:
                     title, msg = msg.split(":", 1)
                 self.main_window.tray_controller.show_message(
-                    title.strip(), msg.strip(), icon_map.get(level, QSystemTrayIcon.MessageIcon.Information), duration
+                    title.strip(),
+                    msg.strip(),
+                    icon_map.get(level, QSystemTrayIcon.MessageIcon.Information),
+                    duration,
                 )
 
             NotificationManager.instance().request_toast.connect(show_tray_msg)

@@ -85,6 +85,7 @@ class TimbratureStorage:
 
         except Exception as e:
             from src.core.logging import get_logger
+
             get_logger("storage").error(f"Errore durante ensure_columns in TimbratureStorage: {e}")
 
     def search_employees(self, query: str) -> list[dict[str, str]]:

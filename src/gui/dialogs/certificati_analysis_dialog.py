@@ -328,10 +328,14 @@ class ScadenzeAnalysisDialog(QDialog):
         lbl_h_mod.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
         lbl_h_cos = QLabel("COSTRUTTORE")
-        lbl_h_cos.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 9px; font-weight: bold; min-width: 100px;")
+        lbl_h_cos.setStyleSheet(
+            f"color: {COLORS['text_muted']}; font-size: 9px; font-weight: bold; min-width: 100px;"
+        )
 
         lbl_h_id = QLabel("ID-COEMI")
-        lbl_h_id.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 9px; font-weight: bold; min-width: 80px;")
+        lbl_h_id.setStyleSheet(
+            f"color: {COLORS['text_muted']}; font-size: 9px; font-weight: bold; min-width: 80px;"
+        )
 
         lbl_h_scad = QLabel("STATO SCADENZA")
         lbl_h_scad.setStyleSheet(f"color: {color}; font-size: 9px; font-weight: bold; min-width: 130px;")

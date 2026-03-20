@@ -53,6 +53,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
         # Forza inizializzazione timeline immediata per Dettagli OdA (Previene blocchi su _on_start)
         from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
+
         self.activity_timeline.set_steps(DettagliOdABot.STEPS)
 
         QTimer.singleShot(10, self._safe_load_data)
@@ -231,7 +232,7 @@ class DettagliOdAPanel(BaseBotPanel):
             "last_oda_fornitore": self.params_widget.get_fornitore(),
             "last_oda_date_da": date_da,
             "last_oda_date_a": date_a,
-            "path_dettagli_oda": self.params_widget.get_dest_path()
+            "path_dettagli_oda": self.params_widget.get_dest_path(),
         }
 
         config_manager.set_config_values(updates)
@@ -285,6 +286,7 @@ class DettagliOdAPanel(BaseBotPanel):
             self._save_data()
 
         from src.core.config_manager import load_config
+
         config = load_config()
 
         main_win = self.window()
@@ -317,6 +319,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
         # Reset pallini all'avvio (Asincrono per non bloccare il click)
         from PyQt6.QtCore import QTimer
+
         QTimer.singleShot(0, lambda: self._update_status_list(force=True))
 
         self.start_btn.setEnabled(False)

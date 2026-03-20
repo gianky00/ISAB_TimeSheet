@@ -142,6 +142,7 @@ class CaricoTSPanel(BaseBotPanel):
             self._save_data()
 
         from src.core.config_manager import load_config
+
         config = load_config()
 
         main_win = self.window()

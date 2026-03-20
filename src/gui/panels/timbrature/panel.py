@@ -87,6 +87,7 @@ class TimbratureDBPanel(QWidget):
             self.refresh_data()
         except Exception as e:
             from src.core.logging import get_logger
+
             get_logger(__name__).error(f"Error in deferred init: {e}")
 
     def _setup_ui(self):

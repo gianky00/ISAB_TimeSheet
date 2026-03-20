@@ -226,12 +226,7 @@ class PulsingLogo(QWidget):
 
             # 2. DISEGNO LOGO STATICO
             logo_size = 64
-            target_rect = QRect(
-                int(cx - logo_size / 2),
-                int(cy - logo_size / 2),
-                logo_size,
-                logo_size
-            )
+            target_rect = QRect(int(cx - logo_size / 2), int(cy - logo_size / 2), logo_size, logo_size)
             painter.drawPixmap(target_rect, self.pixmap)
 
         finally:

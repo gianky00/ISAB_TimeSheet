@@ -226,12 +226,16 @@ class ServiceController(QObject):
             m = out.CreateItem(0)
             m.To = "luca.riccio@coemi.it"
             m.CC = "isabsud@coemi.it"
-            m.Subject = f"[AUTO] Report Monitoraggio ISAB - {datetime.now(UTC).astimezone().strftime('%d/%m/%Y')}"
+            m.Subject = (
+                f"[AUTO] Report Monitoraggio ISAB - {datetime.now(UTC).astimezone().strftime('%d/%m/%Y')}"
+            )
             m.HTMLBody = body
             m.Send()
 
             ReportHistory.save_report(w_list, e_list)
-            config_manager.set_config_value("report_email_autopilot_last_sent", datetime.now(UTC).astimezone().isoformat())
+            config_manager.set_config_value(
+                "report_email_autopilot_last_sent", datetime.now(UTC).astimezone().isoformat()
+            )
             NotificationManager.instance().add_notification(
                 title="Report Email Inviato",
                 message=f"Inviati {len(w_list)} warning e {len(e_list)} expired.",

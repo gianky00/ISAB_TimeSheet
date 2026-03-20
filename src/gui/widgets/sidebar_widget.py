@@ -130,9 +130,14 @@ class SidebarWidget(QFrame):
         self.logo_badge.setStyleSheet("background: white; border-radius: 23px; border: 1px solid #e2e8f0;")
 
         from PyQt6.QtGui import QIcon
+
         pix = QIcon(get_asset_path("assets/app.ico")).pixmap(64, 64)
         if not pix.isNull():
-            self.logo_badge.setPixmap(pix.scaled(30, 30, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+            self.logo_badge.setPixmap(
+                pix.scaled(
+                    30, 30, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+                )
+            )
         self.h_lay.addWidget(self.logo_badge)
 
         self.logo_label = QLabel("SyncroJob")
@@ -162,7 +167,13 @@ class SidebarWidget(QFrame):
         self.group_db = SidebarGroup("Database", get_asset_path(Icons.DATABASE))
         self.group_contabilita = SidebarGroup("Contabilità", get_asset_path(Icons.BAR_CHART))
 
-        self.main_btns = (self.btn_palette, self.btn_home, self.group_automazioni, self.group_db, self.group_contabilita)
+        self.main_btns = (
+            self.btn_palette,
+            self.btn_home,
+            self.group_automazioni,
+            self.group_db,
+            self.group_contabilita,
+        )
         for main_btn in self.main_btns:
             self.menu_layout.addWidget(main_btn)
             if isinstance(main_btn, SidebarGroup):
@@ -170,7 +181,13 @@ class SidebarWidget(QFrame):
 
         # Level 3: Automations
         self.sub_fornitori = SidebarSubGroup("Portale Fornitori")
-        for n, i in (("Dettagli OdA", 0), ("Scarico TS", 1), ("Timbrature", 2), ("Prenota BP", 3), ("Carico TS", 4)):
+        for n, i in (
+            ("Dettagli OdA", 0),
+            ("Scarico TS", 1),
+            ("Timbrature", 2),
+            ("Prenota BP", 3),
+            ("Carico TS", 4),
+        ):
             btn = SidebarChildButton(n, "")
             btn.clicked.connect(lambda _, s=i: self.navigation_requested.emit(1, 0, s))
             self.sub_fornitori.add_child(btn)
@@ -195,12 +212,24 @@ class SidebarWidget(QFrame):
             btn.clicked.connect(lambda _, s=i: self.navigation_requested.emit(11, s, -1))
             self.sub_dipendenti.add_child(btn)
 
-        for db_btn in (self.btn_timbrature, self.btn_dataease, self.btn_pdl, self.sub_dipendenti, self.btn_storico_oda):
+        for db_btn in (
+            self.btn_timbrature,
+            self.btn_dataease,
+            self.btn_pdl,
+            self.sub_dipendenti,
+            self.btn_storico_oda,
+        ):
             self.group_db.add_child(db_btn)
 
         # Level 3: Contabilità
         self.sub_strumentale = SidebarSubGroup("Strumentale")
-        for n, i in (("Preventivi", 0), ("Giornaliere", 1), ("Attività Programmate", 2), ("Certificati", 3), ("KPI", 4)):
+        for n, i in (
+            ("Preventivi", 0),
+            ("Giornaliere", 1),
+            ("Attività Programmate", 2),
+            ("Certificati", 3),
+            ("KPI", 4),
+        ):
             btn = SidebarChildButton(n, "")
             btn.clicked.connect(lambda _, s=i: self.navigation_requested.emit(4, s, -1))
             self.sub_strumentale.add_child(btn)
@@ -299,11 +328,24 @@ class SidebarWidget(QFrame):
 
     def set_active_button(self, index: int, sub: int | None = None, bot: int | None = None) -> None:
         """Evidenzia il pulsante attivo."""
-        btns = {0: self.btn_home, 7: self.btn_settings, 8: self.btn_help, 3: self.btn_timbrature, 5: self.btn_dataease, 6: self.btn_pdl, 10: self.btn_storico_oda}
+        btns = {
+            0: self.btn_home,
+            7: self.btn_settings,
+            8: self.btn_help,
+            3: self.btn_timbrature,
+            5: self.btn_dataease,
+            6: self.btn_pdl,
+            10: self.btn_storico_oda,
+        }
         for i, b in btns.items():
             b.setChecked(i == index)
 
-        for g, indices in ((self.group_db, (3, 5, 6, 11, 10)), (self.group_contabilita, (4, 12)), (self.group_notifiche, (9,)), (self.group_automazioni, (1,))):
+        for g, indices in (
+            (self.group_db, (3, 5, 6, 11, 10)),
+            (self.group_contabilita, (4, 12)),
+            (self.group_notifiche, (9,)),
+            (self.group_automazioni, (1,)),
+        ):
             g.set_active_index(index, indices)
 
         if index == 1:

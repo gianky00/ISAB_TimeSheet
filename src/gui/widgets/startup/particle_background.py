@@ -231,8 +231,13 @@ class ParticleBackground(QWidget):
             op = 0.6 + 0.4 * math.sin(self.phase * 2.0 + p1.phase)
             painter.setOpacity(op * p1.opacity)
             target_size = p1.size * (8.0 if self.progress < 0.9 else 8.0 + (self.progress - 0.9) * 60)
-            painter.drawPixmap(int(p1.x - target_size / 2), int(p1.y - target_size / 2),
-                              int(target_size), int(target_size), self._sprite_cache)
+            painter.drawPixmap(
+                int(p1.x - target_size / 2),
+                int(p1.y - target_size / 2),
+                int(target_size),
+                int(target_size),
+                self._sprite_cache,
+            )
         painter.setOpacity(1.0)
 
     def _render_sprite_to_cache(self) -> None:

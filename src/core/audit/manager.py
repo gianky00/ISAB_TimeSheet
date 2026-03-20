@@ -66,7 +66,7 @@ class AuditManager:
                 self._log_queue.task_done()
             except Exception as e:
                 logger.error(f"Audit Worker Error: {e}")
-                time.sleep(1) # Evita busy loop in caso di errore persistente
+                time.sleep(1)  # Evita busy loop in caso di errore persistente
 
     @property
     def DB_PATH(self) -> Path:
@@ -280,14 +280,30 @@ class AuditManager:
 
                         if row["row_hash"] != calc_hash_legacy:
                             # Tentativo 3: Hash V2 Legacy (None -> "None" come da vecchi f-string)
-                            data_v2_old = "|".join([str(row[k]) for k in (
-                                "timestamp", "user_id", "action", "category", "entity", "params",
-                                "status", "severity", "duration_ms", "module", "error_code"
-                            )])
+                            data_v2_old = "|".join(
+                                [
+                                    str(row[k])
+                                    for k in (
+                                        "timestamp",
+                                        "user_id",
+                                        "action",
+                                        "category",
+                                        "entity",
+                                        "params",
+                                        "status",
+                                        "severity",
+                                        "duration_ms",
+                                        "module",
+                                        "error_code",
+                                    )
+                                ]
+                            )
                             calc_hash_v2_old = AuditIntegrity.calculate_hash(data_v2_old, prev_hash)
 
                             if row["row_hash"] != calc_hash_v2_old:
-                                print(f"DEBUG: Integrity check failed at ID {row['id']}. Row hash: {row['row_hash'][:10]}... Expected: {calc_hash[:10]}...")
+                                print(
+                                    f"DEBUG: Integrity check failed at ID {row['id']}. Row hash: {row['row_hash'][:10]}... Expected: {calc_hash[:10]}..."
+                                )
                                 return False
 
                     prev_hash = row["row_hash"]

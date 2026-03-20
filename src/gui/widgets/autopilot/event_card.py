@@ -259,7 +259,9 @@ class AutopilotEventCard(QFrame):
             # Ultimo tentativo fallito
             color = COLORS["error_red"]
             msg = f"Ultimo tentativo FALLITO! (Dati al: {status.get('timestamp')})"
-            self.status_dot.setStyleSheet(f"background-color: {color}; border-radius: 4px; border: 1px solid white;")
+            self.status_dot.setStyleSheet(
+                f"background-color: {color}; border-radius: 4px; border: 1px solid white;"
+            )
             self.status_dot.setToolTip(msg)
             return
 
