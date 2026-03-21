@@ -20,8 +20,9 @@ from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 from src.core import config_manager
 from src.core.audit_manager import AuditManager
 from src.core.constants import Icons
+from src.core.utils.formatters import format_date_it
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
-from src.gui.formatters import FastTableModel, format_date_it
+from src.gui.formatters import FastTableModel
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import (
     FilterComboBox,

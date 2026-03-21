@@ -35,7 +35,7 @@ class NavigationController(QObject):
 
     def __init__(self, main_window: Any) -> None:
         """
-        Inizializza il controller di navigazione.
+        Inizializza il controller di navigazione e le istanze dei controller CORE.
 
         Args:
             main_window: Riferimento alla MainWindow dell'applicazione.
@@ -44,6 +44,19 @@ class NavigationController(QObject):
         self.mw = main_window
         # Traccia i pannelli attualmente staccati (indice -> struct con panel nativo, placeholder, e finestra top-level)
         self._detached_panels: dict[int, dict[str, Any]] = {}
+
+        # === CORE CONTROLLERS (Singleton-like for UI context) ===
+        from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
+        from src.core.contabilita.scarico_ore.controller import ScaricoOreController
+        from src.core.dipendenti.anagrafica_controller import AnagraficaController
+        from src.core.oda.oda_controller import ODAController
+        from src.core.pdl.pdl_controller import PDLController
+
+        self.pdl_controller = PDLController()
+        self.oda_controller = ODAController()
+        self.anagrafica_controller = AnagraficaController()
+        self.scarico_ore_controller = ScaricoOreController()
+        self.consuntivo_controller = ConsuntivoController()
 
     def get_panel(self, index: int) -> QWidget | None:
         """
@@ -159,42 +172,43 @@ class NavigationController(QObject):
         return panel
 
     def _create_dataease(self) -> QWidget:
-        """Inizializza il visualizzatore virtualizzato Scarico Ore."""
+        """Inizializza il visualizzatore virtualizzato Scarico Ore con iniezione."""
         from src.gui.panels import ScaricoOrePanel
 
-        panel = ScaricoOrePanel()
+        panel = ScaricoOrePanel(controller=self.scarico_ore_controller)
         self.mw.scarico_ore_panel = panel
         return panel
 
     def _create_anagrafiche(self) -> QWidget:
-        """Inizializza il database anagrafiche PDL."""
+        """Inizializza il database anagrafiche PDL con iniezione."""
         from src.gui.panels import PDLDBPanel
 
-        panel = PDLDBPanel()
+        panel = PDLDBPanel(controller=self.pdl_controller)
         self.mw.pdl_db_panel = panel
         return panel
 
     def _create_storico_oda(self) -> QWidget:
-        """Inizializza la consultazione dello storico OdA."""
+        """Inizializza la consultazione dello storico OdA con iniezione."""
         from src.gui.panels import StoricoOdaPanel
 
-        panel = StoricoOdaPanel()
+        panel = StoricoOdaPanel(controller=self.oda_controller)
         self.mw.storico_oda_panel = panel
         return panel
 
     def _create_dipendenti(self) -> QWidget:
-        """Inizializza la gestione organica delle risorse umane."""
+        """Inizializza la gestione organica delle risorse umane con iniezione."""
         from src.gui.panels.dipendenti.main_panel import DipendentiPanel
 
-        panel = DipendentiPanel()
+        # DipendentiPanel inizializzerà le sue sottopagine passando il controller
+        panel = DipendentiPanel(controller=self.anagrafica_controller)
         self.mw.dipendenti_panel = panel
         return panel
 
     def _create_consuntivo(self) -> QWidget:
-        """Inizializza il pannello di gestione consuntivi."""
+        """Inizializza il pannello di gestione consuntivi con iniezione."""
         from src.gui.panels.consuntivo_panel import ConsuntivoPanel
 
-        panel = ConsuntivoPanel()
+        panel = ConsuntivoPanel(controller=self.consuntivo_controller)
         self.mw.consuntivo_panel = panel
         return panel
 

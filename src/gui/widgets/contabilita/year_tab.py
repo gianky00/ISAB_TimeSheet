@@ -10,10 +10,10 @@ from PyQt6.QtWidgets import (
 
 from src.core.config_manager import CONFIG_DIR
 from src.core.contabilita_queries import ContabilitaQueries
+from src.core.utils.formatters import format_date_it
 from src.gui.formatters import (
     FastTableModel,
     format_currency_smart,
-    format_date_it,
     format_number_smart,
 )
 from src.gui.styles import COLORS

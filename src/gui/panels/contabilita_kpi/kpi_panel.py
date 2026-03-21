@@ -280,6 +280,8 @@ class ContabilitaKPIPanel(QWidget):
             ]
             import pandas as pd
 
+            from src.core.stats.stats_service import StatsService
+
             df = pd.DataFrame(data, columns=cols)
             df["totale_prev"] = pd.to_numeric(df["totale_prev"], errors="coerce").fillna(0)
             df["ore_sp"] = pd.to_numeric(df["ore_sp"], errors="coerce").fillna(0)
@@ -304,6 +306,8 @@ class ContabilitaKPIPanel(QWidget):
             )
             self.card_val_ora.lbl_value.setText(f"€ {self._format_currency(val_ora)} / h")
 
-            self.charts_manager.plot_all(df)
+            # Process data for charts via StatsService (CORE)
+            kpi_data = StatsService.prepare_kpi_data(df, self.HOURLY_COST_STD)
+            self.charts_manager.plot_all(kpi_data)
         except Exception as e:
             print(f"Errore caricamento KPI: {e}")

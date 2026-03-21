@@ -23,10 +23,11 @@ logger = logging.getLogger(__name__)
 class TelegramIntentHandler(QObject):
     """Gestisce la logica di business derivante dagli intenti AI di Telegram."""
 
-    def __init__(self, main_window: "MainWindow", telegram_service: Any) -> None:
+    def __init__(self, main_window: "MainWindow", telegram_service: Any, system_handler: Any = None) -> None:
         super().__init__(main_window)
         self.mw = main_window
         self.telegram = telegram_service
+        self.system_handler = system_handler
         self.data_processor = TelegramDataProcessor(main_window, telegram_service)
 
     def handle_intent(self, chat_id: int, intent: dict[str, Any]) -> None:
@@ -46,14 +47,10 @@ class TelegramIntentHandler(QObject):
             self._handle_download_pdl(chat_id)
         elif action == "download":
             self._handle_generic_download(str(obj) if obj else "")
-        elif action == "status":
-            from .system_handler import TelegramSystemHandler
-
-            TelegramSystemHandler(self.mw, self.telegram).handle_status()
-        elif action == "restart":
-            from .system_handler import TelegramSystemHandler
-
-            TelegramSystemHandler(self.mw, self.telegram).handle_restart_app()
+        elif action == "status" and self.system_handler:
+            self.system_handler.handle_status()
+        elif action == "restart" and self.system_handler:
+            self.system_handler.handle_restart_app()
 
     def _process_intent_data(self, obj: str, items: list[Any]) -> None:
         """Aggiunge dati ai pannelli in base all'oggetto dell'intento."""

@@ -7,7 +7,6 @@ Utilizza PDLController per la logica di business e PDLTableView per la griglia.
 import logging
 import os
 from datetime import UTC, datetime
-from typing import Any
 
 from PyQt6.QtCore import QPoint, Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -21,11 +20,13 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Icons
 from src.core.database import pdl_queries
 from src.core.pdl.pdl_controller import PDLController
+from src.core.pdl.pdl_dto import PdlRowDTO
 from src.core.sync_tracker import SyncTracker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.formatters import FastTableModel
 from src.gui.panels.base import BotWorker  # noqa: TC001
 from src.gui.widgets import EmptyStateWidget
+from src.gui.workers.pdl_io_worker import PdlIOWorker
 
 from .pdl_detail_view import PDLDetailView
 from .pdl_filter_widget import PDLFilterWidget
@@ -38,17 +39,18 @@ logger = logging.getLogger(__name__)
 class PDLDBPanel(QWidget):
     """Orchestratore del modulo PDL con architettura Master-Detail modularizzata."""
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, controller: PDLController, parent: QWidget | None = None) -> None:
         """
-        Inizializza il pannello del database PDL.
+        Inizializza il pannello del database PDL con iniezione del controller.
 
         Args:
+            controller: Istanza del controller per la logica di business.
             parent: Widget genitore opzionale.
         """
         super().__init__(parent)
-        self.controller = PDLController()
+        self.controller = controller
         self.worker: BotWorker | None = None
-        self._raw_full_data: list[tuple[Any, ...]] = []
+        self._raw_full_data: list[PdlRowDTO] = []
 
         self.master_headers = [
             "Data Creazione",
@@ -246,12 +248,12 @@ class PDLDBPanel(QWidget):
 
         row_idx = idx[0].row()
         if row_idx < len(self._raw_full_data):
-            full_data = self._raw_full_data[row_idx]
+            pdl_dto = self._raw_full_data[row_idx]
             try:
-                interventions = pdl_queries.PDLQueries.get_pdl_interventions(str(full_data[1]))
+                interventions = pdl_queries.PDLQueries.get_pdl_interventions(pdl_dto.n_pdl)
             except Exception:
                 interventions = []
-            self.detail_view.update_details(full_data, interventions)
+            self.detail_view.update_details(pdl_dto.to_full_list(), interventions)
 
     def _toggle_detail_view(self) -> None:
         """Mostra o nasconde il pannello laterale di dettaglio."""
@@ -287,8 +289,7 @@ class PDLDBPanel(QWidget):
         for idx in indexes:
             row = idx.row()
             if row < len(self._raw_full_data):
-                # La colonna 1 è "N° PDL" nei full_headers
-                pdl_numbers.append(str(self._raw_full_data[row][1]))
+                pdl_numbers.append(self._raw_full_data[row].n_pdl)
 
         if pdl_numbers:
             main_win = self.window()
@@ -311,18 +312,34 @@ class PDLDBPanel(QWidget):
         # Logica bot delegata a BotController futuro, per ora rimane qui ma ripulita
 
     def _export_to_excel(self) -> None:
-        """Esporta l'intero set di dati filtrato in formato Excel."""
-        import pandas as pd
-
+        """Esporta i dati filtrati correnti in background."""
         if not self._raw_full_data:
             return
-        df = pd.DataFrame(self._raw_full_data, columns=self.full_headers)
+
         f, _ = QFileDialog.getSaveFileName(
             self,
             "Esporta PDL",
             f"Export_PDL_{datetime.now(UTC).astimezone().strftime('%Y%m%d')}.xlsx",
             "Excel (*.xlsx)",
         )
-        if f:
-            df.to_excel(f, index=False)
-            os.startfile(f)  # noqa: S606
+        if not f:
+            return
+
+        from src.gui.widgets.toast import ToastManager
+        ToastManager.instance().show("Esportazione PDL in corso...", "info")
+
+        self.io_worker = PdlIOWorker(f, self._raw_full_data, self.full_headers, parent=self)
+        self.io_worker.finished_signal.connect(self._on_export_finished)
+        self.io_worker.finished.connect(self.io_worker.deleteLater)
+        self.io_worker.start()
+
+    def _on_export_finished(self, success: bool, message: str, file_path: str) -> None:
+        """Gestisce il completamento dell'esportazione."""
+        from src.gui.widgets.toast import ToastManager
+        if success:
+            ToastManager.instance().show(message, "success")
+            if file_path:
+                os.startfile(file_path)  # noqa: S606
+        else:
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "Errore Esportazione", message)

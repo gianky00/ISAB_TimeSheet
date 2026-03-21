@@ -9,7 +9,6 @@ from contextlib import suppress
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QResizeEvent
 from PyQt6.QtWidgets import (
-    QApplication,
     QVBoxLayout,
     QWidget,
 )
@@ -34,15 +33,16 @@ class ScaricoOrePanel(QWidget):
     Gestisce il caricamento asincrono, il filtraggio avanzato e la visualizzazione delle ore.
     """
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, controller: ScaricoOreController, parent: QWidget | None = None) -> None:
         """
-        Inizializza il pannello dello scarico ore.
+        Inizializza il pannello dello scarico ore con iniezione del controller.
 
         Args:
+            controller: Istanza del controller per la logica di business.
             parent: Widget genitore opzionale.
         """
         super().__init__(parent)
-        self.controller = ScaricoOreController()
+        self.controller = controller
         self._current_col_filters: dict[int, set[str]] = {}
         self._last_update_status: str | None = None
 
@@ -230,12 +230,10 @@ class ScaricoOrePanel(QWidget):
             self.table_view.show()
 
         self.table_view.setDisabled(loading)
-        QApplication.processEvents()
 
     def _on_loading_progress(self, msg: str) -> None:
         """Aggiorna la label di stato durante le fasi del caricamento asincrono."""
         self.filters.status_label.setText(msg)
-        QApplication.processEvents()
 
     def resizeEvent(self, event: QResizeEvent | None) -> None:
         """

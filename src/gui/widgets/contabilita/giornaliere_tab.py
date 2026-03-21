@@ -17,7 +17,8 @@ from PyQt6.QtWidgets import (
 from src.core import config_manager
 from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
-from src.gui.formatters import format_date_it, format_number_smart
+from src.core.utils.formatters import format_date_it
+from src.gui.formatters import format_number_smart
 from src.gui.styles import COLORS
 from src.gui.widgets import ExcelTableWidget
 from src.gui.widgets.sortable_table_item import SortableTableWidgetItem

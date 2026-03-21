@@ -145,9 +145,9 @@ def main():
     server.newConnection.connect(handle_new_connection)
 
     # === SETUP STYLE ===
-    from src.core.app_initializer import AppInitializer
+    from src.gui.main_window.app_styler import AppStyler
 
-    AppInitializer.setup_app_style(app)
+    AppStyler.setup_app_style(app)
 
     # === SPLASH SCREEN (Standalone Process for Zero-Stutter) ===
     import json

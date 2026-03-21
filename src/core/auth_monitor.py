@@ -104,7 +104,7 @@ def check_expiring_isab_authorizations() -> list[dict[str, Any]]:
                         missing_cf_flag = True
 
             if match_found and delta is not None:
-                from src.gui.styles.constants import THRESHOLD_DAYS
+                from src.core.constants import THRESHOLD_DAYS
 
                 # Monitoraggio basato su soglie centralizzate
                 if delta <= THRESHOLD_DAYS["warning"]:

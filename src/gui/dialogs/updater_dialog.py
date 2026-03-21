@@ -1,6 +1,7 @@
 """
-SyncroJob - Updater GUI
+SyncroJob - Updater Dialog
 UI components for update notifications and progress.
+Moved from core/updater/gui.py to follow SRP.
 """
 
 import contextlib
@@ -16,8 +17,8 @@ from PyQt6.QtCore import Qt, pyqtSlot
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QMessageBox, QProgressBar, QVBoxLayout, QWidget
 
-from .. import version
-from .engine import (
+from src.core import version
+from src.core.updater.engine import (
     DownloadWorker,
     get_local_setup_path,
     get_network_update_info,
@@ -49,12 +50,10 @@ class UpdateProgressDialog(QDialog):
         self.worker.error.connect(self.on_error)
         self.worker.retrying.connect(self.on_retrying)
 
-        # Adjust label based on source
         if not url_or_path.startswith("http"):
             self.lbl_status.setText("Avvio trasferimento rete...")
 
     def setup_ui(self):
-        """Configura l'interfaccia grafica del dialogo."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(25, 25, 25, 25)
         self.lbl_status = QLabel("Avvio download...")
@@ -75,13 +74,11 @@ class UpdateProgressDialog(QDialog):
         layout.addWidget(self.lbl_retry)
 
     def start(self):
-        """Mostra il dialogo e avvia il worker."""
         self.show()
         self.worker.start()
 
     @pyqtSlot(int, int, float, float)
     def update_progress(self, downloaded, total, speed, eta):
-        """Aggiorna la barra di progresso e le etichette informative."""
         self.lbl_retry.setText("")
         if total > 0:
             self.pb.setMaximum(total)
@@ -101,29 +98,23 @@ class UpdateProgressDialog(QDialog):
 
     @pyqtSlot(int)
     def on_retrying(self, retry_count):
-        """Gestisce i tentativi di riconnessione."""
         self.lbl_retry.setText(f"⚠️ Connessione instabile. Tentativo #{retry_count}...")
 
     @pyqtSlot(str)
     def on_finished(self, setup_path):
-        """Gestisce il completamento del download."""
         self.close()
         show_install_prompt(setup_path, cast("QWidget", self.parent()))
 
     @pyqtSlot(str)
     def on_error(self, err_msg):
-        """Gestisce eventuali errori durante il download."""
         self.close()
         QMessageBox.critical(cast("QWidget", self.parent()), "Errore", f"Trasferimento interrotto: {err_msg}")
 
 
 def show_install_prompt(setup_path: str, parent: QWidget | None = None):
-    """Shows choices for immediate or delayed installation."""
     msg_box = QMessageBox(parent)
     msg_box.setWindowTitle("🔄 Aggiornamento Pronto")
-    msg_box.setText(
-        "L'aggiornamento è stato scaricato ed è pronto per l'installazione.\n\nCosa desideri fare?"
-    )
+    msg_box.setText("L'aggiornamento è stato scaricato ed è pronto per l'installazione.\n\nCosa desideri fare?")
     msg_box.setIcon(QMessageBox.Icon.Question)
     msg_box.setStyle(QApplication.style())
 
@@ -134,14 +125,7 @@ def show_install_prompt(setup_path: str, parent: QWidget | None = None):
     msg_box.setStyleSheet("""
         QMessageBox { background-color: white; }
         QLabel { color: black; font-size: 13px; }
-        QPushButton {
-            background-color: #f0f0f0;
-            color: black;
-            border: 1px solid #ccc;
-            padding: 6px 15px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
+        QPushButton { background-color: #f0f0f0; color: black; border: 1px solid #ccc; padding: 6px 15px; border-radius: 4px; font-weight: bold; }
         QPushButton:hover { background-color: #e0e0e0; }
     """)
 
@@ -150,9 +134,7 @@ def show_install_prompt(setup_path: str, parent: QWidget | None = None):
         run_installer_and_exit(setup_path)
     elif msg_box.clickedButton() == btn_later:
         set_pending_installer(setup_path)
-        QMessageBox.information(
-            parent, "ℹ️ Info", "L'aggiornamento partirà automaticamente alla chiusura dell'app."
-        )
+        QMessageBox.information(parent, "ℹ️ Info", "L'aggiornamento partirà automaticamente alla chiusura dell'app.")
 
 
 def check_for_updates(
@@ -160,9 +142,7 @@ def check_for_updates(
     silent: bool = True,
     callback: Callable[[str, str, str, bool, bool], Any] | None = None,
 ) -> None:
-    """Checks for new version availability from Web and Network share in parallel."""
     update_sources = []
-
     with ThreadPoolExecutor(max_workers=2) as executor:
         futures = {
             executor.submit(get_web_update_info): "Web",
@@ -175,12 +155,9 @@ def check_for_updates(
 
     if not update_sources:
         if not silent:
-            QMessageBox.information(
-                parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
-            )
+            QMessageBox.information(parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})")
         return
 
-    # Find the newest version among available sources
     latest_update = max(update_sources, key=lambda x: pkg_version.parse(x["version"]))
     remote_ver_str = latest_update["version"]
     download_url = latest_update.get("url")
@@ -188,23 +165,17 @@ def check_for_updates(
 
     if not download_url:
         if not silent:
-            QMessageBox.information(
-                parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
-            )
+            QMessageBox.information(parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})")
         return
 
     if pkg_version.parse(remote_ver_str) > pkg_version.parse(version.__version__):
         setup_path = get_local_setup_path(download_url)
-
-        # Verify if setup is already complete locally
-        is_complete = False
         remote_size = 0
         if download_url.startswith("http"):
             try:
                 head_resp = requests.head(download_url, timeout=5)
                 remote_size = int(head_resp.headers.get("content-length", 0))
-            except Exception as e:
-                logger.debug(f"Failed to get remote size: {e}")
+            except Exception as e: logger.debug(f"Failed to get remote size: {e}")
         else:
             with contextlib.suppress(Exception):
                 remote_size = Path(download_url).stat().st_size
@@ -220,37 +191,17 @@ def check_for_updates(
         if is_complete:
             show_install_prompt(setup_path, parent)
         else:
-            msg = _build_update_msg(remote_ver_str, changelog, is_partial, local_size, remote_size)
-            reply = QMessageBox.question(
-                parent,
-                "🔄 Aggiornamento",
-                msg,
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            )
+            msg = f"Nuova versione {remote_ver_str} disponibile!\n"
+            if changelog: msg += f"\nNovità:\n{changelog}\n"
+            msg += "\nVuoi aggiornare ora?"
+            reply = QMessageBox.question(parent, "🔄 Aggiornamento", msg, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             if reply == QMessageBox.StandardButton.Yes:
                 perform_auto_update(download_url, parent)
     elif not silent:
-        QMessageBox.information(
-            parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
-        )
-
-
-def _build_update_msg(ver, changelog, partial, local_s, remote_s) -> str:
-    if partial:
-        percent = (local_s / remote_s) * 100
-        return (
-            f"Rilevato trasferimento parziale ({int(percent)}%) della versione {ver}.\n\nVuoi completare ora?"
-        )
-
-    msg = f"Nuova versione {ver} disponibile!\n"
-    if changelog:
-        msg += f"\nNovità:\n{changelog}\n"
-    msg += "\nVuoi aggiornare ora?"
-    return msg
+        QMessageBox.information(parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})")
 
 
 def perform_auto_update(download_url: str, parent: QWidget | None = None):
-    """Starts asynchronous download/transfer in background."""
     if parent is None:
         for widget in QApplication.topLevelWidgets():
             if widget.isWindow() and not widget.parent():

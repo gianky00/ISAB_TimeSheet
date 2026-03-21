@@ -13,9 +13,10 @@ from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 
 from src.gui.components.scarico_ore.cache import CacheWorker
+from src.gui.components.scarico_ore.filter_worker import FilterWorker
 
 
-@dataclass
+@dataclass(slots=True)
 class ScaricoOreRow:
     """
     Modello dati che rappresenta una singola riga nella tabella 'Scarico Ore'.
@@ -79,7 +80,9 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._filtered_count: int = 0
 
         self._worker: CacheWorker | None = None
+        self._filter_worker: FilterWorker | None = None
         self.is_loading: bool = False
+        self.is_filtering: bool = False
 
         self._current_search_terms: list[str] = []
         self._current_col_filters: dict[int, set[str]] = {}
@@ -115,9 +118,14 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self.is_loading = True
         self.loading_progress.emit("Avvio..." if raw_data else "Caricamento Cache...")
 
-        self._worker = CacheWorker(self.CACHE_PATH, raw_data)
+        if self._worker and self._worker.isRunning():
+            self._worker.terminate() # CacheWorker could have cancel as well, but assuming less frequent
+            self._worker.wait()
+
+        self._worker = CacheWorker(self.CACHE_PATH, raw_data, parent=self)
         self._worker.progress.connect(self.loading_progress.emit)
         self._worker.finished.connect(self._on_worker_finished)
+        self._worker.finished.connect(self._worker.deleteLater)
         self._worker.start()
 
     def _on_worker_finished(
@@ -149,7 +157,6 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._global_cache["loaded"] = True
 
         self.is_loading = False
-        self._worker = None
         self.cache_loaded.emit()
 
     def update_data(self, new_data: list[tuple[Any, ...]]) -> None:
@@ -169,45 +176,26 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
     def set_filter(self, text: str, col_filters: dict[int, set[str]] | None = None) -> None:
         """
-        Applica filtri globali e per colonna al modello.
-
-        Args:
-            text: Testo per la ricerca globale.
-            col_filters: Dizionario {colonna: set di valori ammessi}.
+        Applica filtri globali e per colonna al modello in modo asincrono.
         """
-        text = text.lower().strip()
-        search_terms = text.split() if text else []
+        if self.is_filtering and self._filter_worker and self._filter_worker.isRunning():
+            self._filter_worker.cancel()
+            self._filter_worker.finished.disconnect() # Disconnette per evitare update fantasma
 
+        self.is_filtering = True
+        self._filter_worker = FilterWorker(self._search_index, self._display_data, text, col_filters, parent=self)
+        self._filter_worker.finished.connect(self._on_filter_finished)
+        self._filter_worker.finished.connect(self._filter_worker.deleteLater)
+        self._filter_worker.start()
+
+    def _on_filter_finished(self, visible_indices: list[int], filtered_count: int) -> None:
+        """Slot chiamato al termine del filtraggio per aggiornare la vista."""
         self.beginResetModel()
-
-        if not search_terms and not col_filters:
-            self._visible_indices = list(range(len(self._display_data)))
-        else:
-            indices = list(range(len(self._display_data)))
-            indices = self._apply_global_search(indices, search_terms)
-            indices = self._apply_column_filters(indices, col_filters)
-            self._visible_indices = indices
-
-        self._filtered_count = len(self._visible_indices)
+        self._visible_indices = visible_indices
+        self._filtered_count = filtered_count
         self.endResetModel()
-
-    def _apply_global_search(self, indices: list[int], terms: list[str]) -> list[int]:
-        """Esegue la ricerca testuale su tutte le colonne."""
-        if not terms:
-            return indices
-        s_idx = self._search_index
-        return [i for i in indices if all(t in s_idx[i] for t in terms)]
-
-    def _apply_column_filters(self, indices: list[int], col_filters: dict[int, set[str]] | None) -> list[int]:
-        """Esegue il filtraggio specifico sulle singole colonne."""
-        if not col_filters:
-            return indices
-
-        filtered = indices
-        d_data = self._display_data
-        for col, allowed in col_filters.items():
-            filtered = [i for i in filtered if d_data[i][col].lower() in allowed]
-        return filtered
+        self.is_filtering = False
+        self.cache_loaded.emit() # Riusiamo il segnale per notificare la UI
 
     def get_float_total_for_visible(self) -> float:
         """Calcola la somma delle ore per le sole righe visibili."""

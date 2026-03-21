@@ -4,7 +4,6 @@ Tab per la generazione di un nuovo consuntivo da template Master.
 """
 
 import os
-import threading
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -19,11 +18,13 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.core import config_manager
-from src.core.preventivi_manager import GeneratoreWorker, MacroWorker, PreventiviGeneratorManager
+from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
+from src.core.contabilita.consuntivo.consuntivo_dto import ConsuntivoDataDTO
+from src.core.preventivi_manager import GeneratoreWorker, MacroWorker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.consuntivo.log_widget import OperationLogWidget
+from src.gui.widgets.contabilita.consuntivo.workers import ProgWorker
 from src.gui.widgets.contabilita.consuntivo.workflow_widgets import WorkflowMapWidget, WorkflowStepButton
 from src.gui.widgets.core_widgets import FilterComboBox, PrimaryButton, StandardInput, StandardTextEdit
 from src.gui.widgets.modern_card import ModernContentCard
@@ -35,10 +36,13 @@ class CreaNuovoTab(QWidget):
     step_clicked = pyqtSignal(str)
     _prog_computed = pyqtSignal(str)
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, controller: ConsuntivoController, parent: QWidget | None = None) -> None:
+        """Inizializza il tab con iniezione del controller."""
         super().__init__(parent)
+        self.controller = controller
         self.worker: GeneratoreWorker | None = None
         self.macro_worker: MacroWorker | None = None
+        self.prog_worker: ProgWorker | None = None
         self.last_generated_file: str | None = None
         self._last_prog_check = 0.0
         self._cached_prog = ""
@@ -95,22 +99,9 @@ class CreaNuovoTab(QWidget):
         row1.addLayout(self._create_input_group("DATA (A5)", self.data_edit, width=120))
 
         self.tcl_combo = FilterComboBox()
-        # Carica dinamico da config se disponibile, altrimenti default
-        config = config_manager.load_config()
-        self.tcl_combo.addItems(
-            config.get(
-                "preventivi_tcl",
-                [
-                    "MESSINA I.",
-                    "AGUSTA D.",
-                    "CALDARELLA F.",
-                    "PREZZAVENTO M.",
-                    "BOSCO F.",
-                    "RUGGIERI F.",
-                    "BARBAGALLO G.",
-                ],
-            )
-        )
+        # Carica dinamico da controller (CORE)
+        opts = self.controller.get_config_options()
+        self.tcl_combo.addItems(opts["tcl"])
         row1.addLayout(self._create_input_group("TCL (A7)", self.tcl_combo, width=180))
 
         self.odc_edit = StandardInput()
@@ -128,27 +119,17 @@ class CreaNuovoTab(QWidget):
         row2.setSpacing(15)
 
         self.stato_combo = FilterComboBox()
-        self.stato_combo.addItems(
-            config.get(
-                "preventivi_stati",
-                [
-                    "ATTIVITA' DA COMPLETARE",
-                    "IN ATTESA TCL",
-                    "RICHIESTA ODC MIDOLO",
-                    "CONTABILIZZATA",
-                ],
-            )
-        )
+        self.stato_combo.addItems(opts["stati"])
         row2.addLayout(self._create_input_group("STATO ATTIVITÀ (D11)", self.stato_combo, width=220))
 
         self.tipo_prev_combo = FilterComboBox()
-        self.tipo_prev_combo.addItems(["MISURA", "SQUADRA", "CHIAMATA", "FORNITURA", "PREVENTIVO"])
+        self.tipo_prev_combo.addItems(opts["tipologie"])
         row2.addLayout(
             self._create_input_group("TIPOLOGIA PREVENTIVO (D13)", self.tipo_prev_combo, width=220)
         )
 
         self.tipo_econ_combo = FilterComboBox()
-        self.tipo_econ_combo.addItems(["SQUADRA GIORNALIERA", "SQUADRA SETTIMANALE", "CONSTATAZIONE PURA"])
+        self.tipo_econ_combo.addItems(opts["economie"])
         row2.addLayout(self._create_input_group("TIPOLOGIA ECONOMIA (E13)", self.tipo_econ_combo, width=220))
         row2.addStretch()
         id_layout.addLayout(row2)
@@ -232,37 +213,35 @@ class CreaNuovoTab(QWidget):
         return lay
 
     def _update_dynamic_path(self, force: bool = False) -> None:
-        """Aggiorna il percorso e calcola il progressivo con caching intelligente."""
+        """Aggiorna il percorso e calcola il progressivo in background."""
         now = time.time()
         year = self.anno_combo.currentText()
-        base_network = r"\\192.168.11.251\Database_Tecnico_SMI\Contabilita' strumentale"
-        dynamic_path = os.path.join(base_network, year, "CONSUNTIVI", year)
+        dynamic_path = self.controller.get_dynamic_path(year)
 
         self.dest_path_edit.setText(dynamic_path)
         self.dest_path_edit.setToolTip(dynamic_path)
 
-        # Se meno di 60 secondi dall'ultimo controllo e il percorso è uguale, non ricalcolare
         if not force and (now - self._last_prog_check < 60) and self._cached_prog:
             self.progressivo_edit.setText(self._cached_prog)
             return
 
         self._last_prog_check = now
 
-        # Esegue il calcolo in background per non bloccare l'UI durante la navigazione
-        def run_check():
-            try:
-                manager = PreventiviGeneratorManager("")
-                next_prog = manager.get_next_progressive(dynamic_path)
-                self._cached_prog = next_prog
-                # Aggiorna l'UI in modo sicuro tramite un signal
-                self._prog_computed.emit(next_prog)
-            except Exception:
-                self._prog_computed.emit("001")
+        if self.prog_worker and self.prog_worker.isRunning():
+            self.prog_worker.terminate()
+            self.prog_worker.wait()
 
-        threading.Thread(target=run_check, daemon=True).start()
+        self.prog_worker = ProgWorker(self.controller, year)
+        self.prog_worker.finished.connect(self._on_worker_prog_ready)
+        self.prog_worker.start()
+
+    def _on_worker_prog_ready(self, prog: str) -> None:
+        """Slot per l'aggiornamento UI dal worker."""
+        self._cached_prog = prog
+        self.progressivo_edit.setText(prog)
 
     def _on_generate(self) -> None:
-        master_path = config_manager.load_config().get("master_preventivi_path", "")
+        master_path = self.controller.get_master_path()
 
         if not master_path or not Path(master_path).exists():
             ConfirmationDialog.show_error(
@@ -272,26 +251,26 @@ class CreaNuovoTab(QWidget):
             )
             return
 
-        data = {
-            "progressivo": self.progressivo_edit.text(),
-            "anno_short": self.anno_combo.currentText()[-2:],
-            "data": self.data_edit.text(),
-            "tcl": self.tcl_combo.currentText(),
-            "odc": self.odc_edit.text(),
-            "avviso": self.avviso_edit.text(),
-            "ordine": self.ordine_edit.text(),
-            "stato_attivita": self.stato_combo.currentText(),
-            "tipologia_preventivo": self.tipo_prev_combo.currentText(),
-            "tipologia_economia": self.tipo_econ_combo.currentText(),
-            "descrizione_lavoro": self.desc_lavoro_edit.toPlainText(),
-            "descrizione_relazione": self.desc_relazione_edit.toPlainText(),
-        }
+        dto = ConsuntivoDataDTO(
+            progressivo=self.progressivo_edit.text(),
+            anno_short=self.anno_combo.currentText()[-2:],
+            data=self.data_edit.text(),
+            tcl=self.tcl_combo.currentText(),
+            odc=self.odc_edit.text(),
+            avviso=self.avviso_edit.text(),
+            ordine=self.ordine_edit.text(),
+            stato_attivita=self.stato_combo.currentText(),
+            tipologia_preventivo=self.tipo_prev_combo.currentText(),
+            tipologia_economia=self.tipo_econ_combo.currentText(),
+            descrizione_lavoro=self.desc_lavoro_edit.toPlainText(),
+            descrizione_relazione=self.desc_relazione_edit.toPlainText(),
+        )
 
         self.setEnabled(False)
         self.btn_generate.setText("GENERAZIONE IN CORSO...")
         self.log_widget.append_log("Generazione file in corso...", "step")
 
-        self.worker = GeneratoreWorker(master_path, data, self.dest_path_edit.text())
+        self.worker = GeneratoreWorker(master_path, dto.to_dict(), self.dest_path_edit.text())
         self.worker.finished_signal.connect(self._on_generate_finished)
         self.worker.start()
 

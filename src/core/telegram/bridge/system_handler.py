@@ -1,72 +1,56 @@
 """
-SyncroJob - Telegram Bridge System Handler
-Gestisce screenshot, report PDF, stati di sistema e restart.
+SyncroJob - Telegram Bridge System Handler (Refactored)
+Gestisce screenshot, report PDF e stati via interfacce agnostiche.
+Agnostico rispetto a PyQt6.
 """
 
 import logging
-import os
-import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
-
-from PyQt6.QtCore import QBuffer, QIODevice, QObject, QRect, Qt
-from PyQt6.QtGui import QGuiApplication, QPainter, QPixmap
-from PyQt6.QtWidgets import QApplication
+from typing import Any
 
 from src.core import config_manager
 from src.core.contabilita_manager import ContabilitaManager
+from src.core.telegram.bridge.interfaces import AppStatusProvider, ScreenshotProvider
 from src.utils.document_generator import generate_pdf_from_html
-
-if TYPE_CHECKING:
-    from src.gui.main_window.main import MainWindow
 
 logger = logging.getLogger(__name__)
 
-
-class TelegramSystemHandler(QObject):
+class TelegramSystemHandler:
     """Gestisce operazioni di sistema e generazione report per Telegram."""
 
-    def __init__(self, main_window: "MainWindow", telegram_service: Any) -> None:
-        super().__init__(main_window)
-        self.mw = main_window
+    def __init__(self,
+                 telegram_service: Any,
+                 screenshot_provider: ScreenshotProvider,
+                 app_status_provider: AppStatusProvider,
+                 # Supporto per fetch dati (provvisorio per mantenere funzionalita)
+                 data_bridge: Any = None
+                 ) -> None:
         self.telegram = telegram_service
+        self.screenshot_provider = screenshot_provider
+        self.status_provider = app_status_provider
+        self.data_bridge = data_bridge
 
     def handle_status(self) -> None:
         """Invia lo stato corrente dell'applicazione."""
-        panel = self.mw.bot_controller._get_active_bot_panel()
-        if panel and hasattr(panel, "get_current_status"):
-            status, msg = panel.get_current_status()
-            bot_name = getattr(panel, "bot_name", "Sconosciuto")
-            text = f"📊 **Stato Sistema**\n\nAttività: {bot_name}\nStato: {status}\nDettaglio: {msg}"
-        else:
+        bot_name, status, msg = self.status_provider.get_system_status()
+        if bot_name == "Idle":
             text = "📊 **Stato Sistema**\n\nIl sistema è in attesa (Idle)."
+        else:
+            text = f"📊 **Stato Sistema**\n\nAttività: {bot_name}\nStato: {status}\nDettaglio: {msg}"
         self.telegram.send_message_sync(text)
 
     def handle_screenshot(self, mode: str = "app") -> None:
-        """Cattura e invia uno screenshot."""
+        """Cattura e invia uno screenshot tramite il provider GUI."""
         try:
             if mode == "app":
-                pixmap = self.mw.grab()
+                data = self.screenshot_provider.capture_app_screenshot()
                 caption = "Solo App"
             else:
-                screens = QGuiApplication.screens()
-                total_rect = QRect()
-                for s in screens:
-                    total_rect = total_rect.united(s.geometry())
-                combined = QPixmap(total_rect.size())
-                combined.fill(Qt.GlobalColor.black)
-                p = QPainter(combined)
-                for s in screens:
-                    p.drawPixmap(s.geometry().topLeft() - total_rect.topLeft(), s.grabWindow(cast("Any", 0)))
-                p.end()
-                pixmap = combined
-                caption = f"Desktop ({len(screens)} monitor)"
+                data = self.screenshot_provider.capture_desktop_screenshot()
+                caption = "Desktop"
 
-            buf = QBuffer()
-            buf.open(QIODevice.OpenModeFlag.WriteOnly)
-            pixmap.save(buf, "PNG")
-            self.telegram.send_photo_sync(buf.data().data(), caption=f"📸 **Screenshot: {caption}**")
+            self.telegram.send_photo_sync(data, caption=f"📸 **Screenshot: {caption}**")
         except Exception as e:
             self.telegram.send_message_sync(f"❌ Errore screenshot: {e}")
 
@@ -90,8 +74,9 @@ class TelegramSystemHandler(QObject):
             self.telegram.send_message_sync(f"❌ Errore: {e}")
 
     def _fetch_report_data(self, db_type, query, year) -> Any:
-        if db_type == "timbrature":
-            panel = getattr(self.mw, "timbrature_db_panel", None)
+        # Se abbiamo il data_bridge (che punta alla MainWindow o Storage), lo usiamo
+        if db_type == "timbrature" and self.data_bridge:
+            panel = getattr(self.data_bridge, "timbrature_db_panel", None)
             if panel and hasattr(panel, "storage"):
                 return panel.storage.get_timbrature_with_reparto(limit=500, filter_text=query)
         if db_type == "strumentale":
@@ -106,7 +91,7 @@ class TelegramSystemHandler(QObject):
             return html + "</tbody></table>"
 
         if db_type == "strumentale":
-            if not data.get("GIORNALIERE"):
+            if not data or not data.get("GIORNALIERE"):
                 return ""
             html = "<h2>Report Contabilità</h2><h3>Giornaliere</h3><table>"
             for g in data["GIORNALIERE"]:
@@ -131,9 +116,5 @@ class TelegramSystemHandler(QObject):
             self.telegram.send_message_sync("❌ Errore generazione PDF.")
 
     def handle_restart_app(self) -> None:
-        """Riavvia l'applicazione."""
-        try:
-            subprocess.Popen(["cmd.exe", "/c", "start", os.path.abspath("avvio.bat")])
-            QApplication.quit()
-        except Exception as e:
-            self.telegram.send_message_sync(f"❌ Errore riavvio: {e}")
+        """Riavvia l'applicazione delegando alla GUI."""
+        self.status_provider.restart_application()

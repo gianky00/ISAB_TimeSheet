@@ -184,3 +184,29 @@ class Icons:
     SPLIT_WINDOW = "assets/icons/split-window.svg"
     FLAG_TGO_ON = "assets/icons/flag_tgo_on.svg"
     FLAG_TGO_OFF = "assets/icons/flag_tgo_off.svg"
+
+# =============================================================================
+# SOGLIE OPERATIVE (Business Logic)
+# =============================================================================
+
+from typing import Final
+
+THRESHOLD_DAYS: Final[dict[str, int]] = {
+    "warning": 20,
+    "expired": 30,
+    "critical": 60,
+}
+
+# Colori base usati dai servizi di reportistica (HTML export)
+REPORT_COLORS: Final[dict[str, str]] = {
+    "primary_dark": "#0d6efd",
+    "success_dark": "#198754",
+    "warning_orange": "#f39c12",
+    "error_red": "#dc3545",
+    "bg_light": "#f8f9fa",
+    "bg_white": "#ffffff",
+    "text_dark": "#212529",
+    "text_muted": "#6c757d",
+    "border_light": "#dee2e6",
+    "table_info_bg": "#E3F2FD",
+}

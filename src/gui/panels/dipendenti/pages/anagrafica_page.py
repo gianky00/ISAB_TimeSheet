@@ -14,10 +14,10 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.dipendenti.anagrafica_controller import AnagraficaController
+from src.core.dipendenti.data_helpers import format_db_date
 from src.core.sync_tracker import SyncTracker
 from src.gui.formatters import FastTableModel
 from src.gui.panels.base import BotWorker  # noqa: TC001
-from src.gui.panels.dipendenti.utils.data_helpers import format_db_date
 from src.gui.panels.dipendenti.utils.report_generator import ReportGenerator
 from src.gui.widgets.toast import ToastManager
 
@@ -31,8 +31,16 @@ logger = logging.getLogger(__name__)
 class AnagraficaPage(QWidget):
     """Pagina per la visualizzazione e gestione anagrafica dipendenti - Versione Modularizzata."""
 
-    def __init__(self, parent=None):
+    def __init__(self, controller: AnagraficaController, parent: QWidget | None = None):
+        """
+        Inizializza la pagina anagrafica con iniezione del controller.
+        
+        Args:
+            controller: Istanza del controller per la logica di business.
+            parent: Widget genitore opzionale.
+        """
         super().__init__(parent)
+        self.controller = controller
         self.worker: BotWorker | None = None
         self.current_filter = None
 
@@ -92,10 +100,14 @@ class AnagraficaPage(QWidget):
         full_rows = AnagraficaController.get_employees(self.header.search_input.text())
 
         # 2. Processing (Calcolo scadenze e filtri)
-        master_rows, counts = AnagraficaController.process_rows(full_rows, self.current_filter)
+        dtos, counts = AnagraficaController.process_rows(full_rows, self.current_filter)
 
-        # 3. Aggiornamento UI
-        self.model.update_data(master_rows)
+        # 3. Map DTOs to UI structure
+        master_rows = [d.to_table_row() for d in dtos]
+        metadata = [d.get_metadata() for d in dtos]
+
+        # 4. Aggiornamento UI
+        self.model.update_data(master_rows, metadata)
         self.model.set_column_formatter(0, self._inactivation_formatter)
         self.header.update_counts(counts)
         self.header.update_card_styles(self.current_filter)

@@ -17,7 +17,6 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
-from src.core.database import db_manager
 from src.gui.panels.dipendenti.shared import ColoredDotDelegate
 from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -121,14 +120,17 @@ class EmployeeTableView(QTableView):
 
         row_idx = indexes[0].row()
         model = self.model()
-        if not hasattr(model, "_data"):
+        if not model:
             return
 
-        id_risorsa = model._data[row_idx][1]  # type: ignore
+        # Recupero metadati via UserRole (senza query SQL sincrona)
+        metadata = model.data(model.index(row_idx, 0), Qt.ItemDataRole.UserRole)
 
-        query = "SELECT monitoraggio_attivo FROM dipendenti WHERE id_risorsa = ?"
-        result = db_manager.execute_query(db_manager.DB_DIPENDENTI, query, (id_risorsa,))
-        is_monitored = result[0][0] if result and result[0][0] is not None else 1
+        if not metadata or "id_risorsa" not in metadata:
+            return
+
+        id_risorsa = metadata["id_risorsa"]
+        is_monitored = metadata.get("is_monitored", True)
 
         menu = QMenu(self)
         if is_monitored:

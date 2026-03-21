@@ -24,8 +24,9 @@ class CacheWorker(QThread):
         self,
         cache_path: Path,
         data_source: list[tuple[Any, ...]] | Callable[[], list[tuple[Any, ...]]] | None = None,
+        parent=None,
     ) -> None:
-        super().__init__()
+        super().__init__(parent)
         # Use .json extension if not already present, for clarity
         if cache_path.suffix != ".json":
             self.cache_path = cache_path.with_suffix(".json")

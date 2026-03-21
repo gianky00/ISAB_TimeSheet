@@ -4,15 +4,16 @@ Provides high-level update management by delegating to engine and gui modules.
 This file is part of the refactoring to keep modules under 400 lines.
 """
 
+from src.gui.dialogs.updater_dialog import (
+    check_for_updates,
+    perform_auto_update,
+    show_install_prompt,
+)
+
 from .updater.engine import (
     get_local_setup_path,
     has_pending_update,
     run_pending_installer,
-)
-from .updater.gui import (
-    check_for_updates,
-    perform_auto_update,
-    show_install_prompt,
 )
 
 # Export for compatibility

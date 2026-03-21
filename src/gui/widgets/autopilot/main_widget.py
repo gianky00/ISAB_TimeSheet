@@ -19,7 +19,6 @@ from PyQt6.QtCore import (
     pyqtSignal,
 )
 from PyQt6.QtWidgets import (
-    QApplication,
     QGraphicsOpacityEffect,
     QGridLayout,
     QHBoxLayout,
@@ -269,7 +268,6 @@ class AutopilotWidget(QWidget):
                     if hasattr(widget, "cleanup"):
                         widget.cleanup()
                     widget.deleteLater()
-        QApplication.processEvents()
 
         config = config_manager.load_config()
         events: list[dict[str, Any]] = []
@@ -350,7 +348,6 @@ class AutopilotWidget(QWidget):
                     if hasattr(widget, "cleanup"):
                         widget.cleanup()
                     widget.deleteLater()
-        QApplication.processEvents()
 
         bots = [
             {

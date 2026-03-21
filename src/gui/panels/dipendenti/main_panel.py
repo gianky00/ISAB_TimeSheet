@@ -5,8 +5,12 @@ Funge da punto di ingresso unico per tutte le funzionalità relative ai dipenden
 """
 
 import logging
+from typing import TYPE_CHECKING
 
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
+
+if TYPE_CHECKING:
+    from src.core.dipendenti.anagrafica_controller import AnagraficaController
 
 from src.core.constants import Icons
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
@@ -26,14 +30,16 @@ class DipendentiPanel(QWidget):
     - Configurazione: Gestione anagrafica (CRUD).
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, controller: "AnagraficaController", parent: QWidget | None = None):
         """
-        Inizializza il pannello dipendenti e configura l'interfaccia a tab.
+        Inizializza il pannello dipendenti con iniezione del controller.
 
         Args:
+            controller: Istanza del controller per la logica di business.
             parent: Widget genitore.
         """
         super().__init__(parent)
+        self.controller = controller
         self._setup_ui()
 
     def _setup_ui(self):
@@ -45,7 +51,7 @@ class DipendentiPanel(QWidget):
         self.tabs = AnimatedTabWidget()
 
         # Tab 1: Monitoraggio
-        self.anagrafica_page = AnagraficaPage()
+        self.anagrafica_page = AnagraficaPage(controller=self.controller)
         self.tabs.addTab(
             self.anagrafica_page,
             get_colored_icon(get_asset_path(Icons.ACTIVITY), COLORS["primary_dark"]),

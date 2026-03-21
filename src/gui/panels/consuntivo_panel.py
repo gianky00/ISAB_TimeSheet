@@ -7,7 +7,7 @@ Struttura modulare che integra i widget specializzati per Nuovo, Esistente e Imp
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
-from src.core import config_manager
+from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.widgets.contabilita.consuntivo.crea_nuovo_tab import CreaNuovoTab
 from src.gui.widgets.contabilita.consuntivo.impostazioni_tab import ImpostazioniTab
@@ -17,8 +17,16 @@ from src.gui.widgets.contabilita.consuntivo.modifica_esistente_tab import Modifi
 class ConsuntivoPanel(QWidget):
     """Pannello Root che organizza la suite Premium dei Consuntivi."""
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, controller: ConsuntivoController, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il pannello consuntivo con iniezione del controller.
+        
+        Args:
+            controller: Istanza del controller per la logica di business.
+            parent: Widget genitore opzionale.
+        """
         super().__init__(parent)
+        self.controller = controller
         self._data_preloaded = False
         self._setup_ui()
         # Avvia il caricamento dei dati immediatamente all'istanza (Eager Loading)
@@ -33,8 +41,8 @@ class ConsuntivoPanel(QWidget):
         self.tabs = AnimatedTabWidget()
         self.tabs.currentChanged.connect(self._on_tab_changed)
 
-        self._tab_new = CreaNuovoTab()
-        self._tab_modify = ModificaEsistenteTab()
+        self._tab_new = CreaNuovoTab(controller=self.controller)
+        self._tab_modify = ModificaEsistenteTab() # TODO: Aggiungere iniezione se serve
         self._tab_settings = ImpostazioniTab()
 
         self.tabs.addTab(self._tab_new, "Crea Nuovo")
@@ -48,17 +56,28 @@ class ConsuntivoPanel(QWidget):
         if self._data_preloaded:
             return
 
-        # Carica configurazione per il tab Crea Nuovo
-        config = config_manager.load_config()
+        # Carica opzioni tramite controller (CORE)
+        opts = self.controller.get_config_options()
+
         self._tab_new.tcl_combo.blockSignals(True)
         self._tab_new.tcl_combo.clear()
-        self._tab_new.tcl_combo.addItems(config.get("preventivi_tcl", []))
+        self._tab_new.tcl_combo.addItems(opts["tcl"])
         self._tab_new.tcl_combo.blockSignals(False)
 
         self._tab_new.stato_combo.blockSignals(True)
         self._tab_new.stato_combo.clear()
-        self._tab_new.stato_combo.addItems(config.get("preventivi_stati", []))
+        self._tab_new.stato_combo.addItems(opts["stati"])
         self._tab_new.stato_combo.blockSignals(False)
+
+        self._tab_new.tipo_prev_combo.blockSignals(True)
+        self._tab_new.tipo_prev_combo.clear()
+        self._tab_new.tipo_prev_combo.addItems(opts["tipologie"])
+        self._tab_new.tipo_prev_combo.blockSignals(False)
+
+        self._tab_new.tipo_econ_combo.blockSignals(True)
+        self._tab_new.tipo_econ_combo.clear()
+        self._tab_new.tipo_econ_combo.addItems(opts["economie"])
+        self._tab_new.tipo_econ_combo.blockSignals(False)
 
         # Carica directory per il tab Modifica Esistente
         self._tab_modify._scan_directory()

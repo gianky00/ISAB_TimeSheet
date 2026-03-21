@@ -23,29 +23,31 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.core.oda.oda_controller import ODAController
-from src.core.oda_manager import OdaManager
 from src.core.sync_tracker import SyncTracker
 from src.gui.panels.base import BotWorker  # noqa: TC001
 from src.gui.widgets import EmptyStateWidget
 from src.gui.widgets.toast import ToastManager
+from src.gui.workers.oda_io_worker import OdaIOWorker
 
 from .oda_detail_view import OdaDetailView
 from .oda_filter_widget import OdaFilterWidget
+from .utils.oda_adapter import ODAAdapter
 from .widgets.oda_tree import ODATreeView
 
 
 class StoricoOdaPanel(QWidget):
     """Orchestratore dello Storico OdA con architettura Master-Detail modularizzata."""
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, controller: ODAController, parent: QWidget | None = None) -> None:
         """
-        Inizializza il pannello dello storico OdA.
+        Inizializza il pannello dello storico OdA con iniezione del controller.
 
         Args:
+            controller: Istanza del controller per la logica di business.
             parent: Widget genitore opzionale.
         """
         super().__init__(parent)
-        self.controller = ODAController()
+        self.controller = controller
         self.worker: BotWorker | None = None
         from PyQt6.QtGui import QStandardItem
 
@@ -148,12 +150,12 @@ class StoricoOdaPanel(QWidget):
 
         self.model.removeRows(0, self.model.rowCount())
         for oda_data in structured_data:
-            root_row = self.controller.create_root_item(oda_data)
+            root_row = ODAAdapter.create_root_row(oda_data)
             self.model.appendRow(root_row)
 
             parent_item = root_row[0]
             for pos in oda_data["positions"]:
-                parent_item.appendRow(self.controller.create_child_item(pos))
+                parent_item.appendRow(ODAAdapter.create_child_row(pos))
 
         self.empty_state.setVisible(not structured_data)
         if structured_data:
@@ -252,41 +254,48 @@ class StoricoOdaPanel(QWidget):
             mw.workflow_controller.run_dettagli_oda_update()
 
     def _on_import_clicked(self) -> None:
-        """Gestisce l'importazione manuale di un file Excel OdA."""
+        """Gestisce l'importazione manuale asincrona di un file Excel OdA."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Seleziona File Storico OdA", "", "Excel Files (*.xlsx *.xls)"
         )
         if not file_path:
             return
 
-        try:
-            success, message, added, removed = OdaManager.import_oda_from_excel(file_path)
-            if success:
-                ToastManager.instance().show(
-                    f"Importazione completata: +{added} OdA, -{removed} obsoleti", "success"
-                )
-                self.refresh_data()
-            else:
-                QMessageBox.warning(self, "Errore Importazione", message)
-        except Exception as e:
-            QMessageBox.critical(self, "Errore Critico", f"Errore durante l'importazione: {e}")
+        ToastManager.instance().show("Importazione OdA in corso...", "info")
+        self.io_worker = OdaIOWorker("import", file_path, parent=self)
+        self.io_worker.finished_signal.connect(self._on_io_finished)
+        self.io_worker.finished.connect(self.io_worker.deleteLater)
+        self.io_worker.start()
 
     def _export_to_excel(self) -> None:
-        """Esporta i dati filtrati correnti in un file Excel."""
-        import pandas as pd
-
-        search_text = self.filters.search_input.text()
-        raw_data = OdaManager.get_all_oda(search_text)
-        if not raw_data:
-            return
-
-        df = pd.DataFrame(raw_data, columns=self.full_headers)
+        """Esporta i dati filtrati correnti in background."""
         f, _ = QFileDialog.getSaveFileName(
             self,
             "Esporta OdA",
             f"Export_ODA_{datetime.now(UTC).astimezone().strftime('%Y%m%d')}.xlsx",
             "Excel (*.xlsx)",
         )
-        if f:
-            df.to_excel(f, index=False)
-            os.startfile(f)  # noqa: S606
+        if not f:
+            return
+
+        ToastManager.instance().show("Esportazione in corso...", "info")
+        search_text = self.filters.search_input.text()
+        self.io_worker = OdaIOWorker("export", f, {"search_text": search_text, "headers": self.full_headers}, parent=self)
+        self.io_worker.finished_signal.connect(self._on_io_finished)
+        self.io_worker.finished.connect(self.io_worker.deleteLater)
+        self.io_worker.start()
+
+    def _on_io_finished(self, success: bool, message: str, stats: dict[str, Any]) -> None:
+        """Gestisce il completamento delle operazioni di I/O."""
+        if success:
+            if "added" in stats:
+                ToastManager.instance().show(
+                    f"Importazione completata: +{stats['added']} OdA, -{stats['removed']} obsoleti", "success"
+                )
+                self.refresh_data()
+            else:
+                ToastManager.instance().show(message, "success")
+                if "path" in stats:
+                    os.startfile(stats["path"])  # noqa: S606
+        else:
+            QMessageBox.warning(self, "Operazione Fallita", message)

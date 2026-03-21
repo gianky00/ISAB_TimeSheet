@@ -7,6 +7,7 @@ import logging
 from typing import Any
 
 from src.core.database import db_manager
+from src.core.pdl.pdl_dto import PdlRowDTO
 
 logger = logging.getLogger(__name__)
 
@@ -15,11 +16,11 @@ class PDLController:
     """Controller per la gestione dei dati del database PDL."""
 
     def __init__(self):
-        self._cache: dict[str, list[tuple[Any, ...]]] = {}
+        self._cache: dict[str, list[PdlRowDTO]] = {}
 
     def get_pdl_data(
         self, filters: dict[str, Any], sort_col: int | None = None, sort_order: str = "DESC"
-    ) -> list[tuple[Any, ...]]:
+    ) -> list[PdlRowDTO]:
         """Costruisce la query, interroga il DB e gestisce la cache."""
         query, params = self._build_query(filters, sort_col, sort_order)
         cache_key = f"{query}_{params}"
@@ -29,8 +30,9 @@ class PDLController:
 
         try:
             results = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
-            self._cache[cache_key] = results
-            return results
+            dtos = [PdlRowDTO.from_db_row(r) for r in results]
+            self._cache[cache_key] = dtos
+            return dtos
         except Exception as e:
             logger.error(f"Errore caricamento PDL: {e}")
             return []
@@ -109,10 +111,6 @@ class PDLController:
         return query, params
 
     @staticmethod
-    def process_master_rows(full_rows: list[tuple[Any, ...]]) -> list[list[Any]]:
+    def process_master_rows(full_rows: list[PdlRowDTO]) -> list[list[Any]]:
         """Formatta le righe per la visualizzazione nella tabella master."""
-        master_rows = []
-        for r in full_rows:
-            row = [r[2], r[10], r[1], r[3], r[4], r[8], r[6]]
-            master_rows.append([("" if str(val).lower() in ("nan", "none") else val) for val in row])
-        return master_rows
+        return [r.to_master_list() for r in full_rows]

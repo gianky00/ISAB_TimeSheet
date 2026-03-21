@@ -7,13 +7,14 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
+from src.core.constants import THRESHOLD_DAYS
 from src.core.database import db_manager
-from src.gui.panels.dipendenti.utils.data_helpers import (
+from src.core.dipendenti.data_helpers import (
     build_timbrature_maps,
     compute_employee_status,
     normalize_name,
 )
-from src.gui.styles.constants import THRESHOLD_DAYS
+from src.core.dipendenti.employee_dto import EmployeeDTO
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class AnagraficaController:
 
     @staticmethod
     def get_employees(search_text: str = "") -> list[Any]:
-        """Recupera la lista dei dipendenti filtrata per testo."""
+        # ... (resta invariato per ora in attesa di refactor totale query)
         query = """
             SELECT id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale, monitoraggio_attivo
             FROM dipendenti WHERE 1=1
@@ -42,17 +43,17 @@ class AnagraficaController:
     @staticmethod
     def process_rows(
         full_rows: list[Any], current_filter: str | None = None
-    ) -> tuple[list[list[Any]], dict[str, int]]:
-        """Processa le righe del DB calcolando giorni di inattività e conteggi card."""
+    ) -> tuple[list[EmployeeDTO], dict[str, int]]:
+        """Processa le righe del DB restituendo una lista di DTO tipizzati."""
         query_timb = "SELECT cognome, nome, codice_fiscale, data FROM timbrature"
         accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
         last_by_cf, last_by_name, normalize = build_timbrature_maps(accessi)
 
-        master_rows = []
+        dtos: list[EmployeeDTO] = []
         counts = {"ok": 0, "warning": 0, "expired": 0, "excluded": 0}
 
         for r in full_rows:
-            is_monitored = r[8] if len(r) > 8 and r[8] is not None else 1
+            is_monitored = bool(r[8]) if len(r) > 8 and r[8] is not None else True
             diff_days, cf_warning, _, _, _ = compute_employee_status(r, last_by_cf, last_by_name, normalize)
 
             # Update Counts
@@ -70,7 +71,7 @@ class AnagraficaController:
             if current_filter:
                 skip = False
                 if current_filter == "excluded":
-                    skip = bool(is_monitored)
+                    skip = is_monitored
                 elif (
                     not is_monitored
                     or diff_days is None
@@ -87,13 +88,22 @@ class AnagraficaController:
                     continue
 
             inactivation_val = THRESHOLD_DAYS["expired"] - diff_days if diff_days is not None else None
-            display_cognome = f"⚠️ {r[1]}" if cf_warning else r[1]
 
-            master_rows.append(
-                [inactivation_val, r[0], display_cognome, r[2], r[7], r[4], r[5], r[3], r[6], r[1]]
+            dto = EmployeeDTO(
+                id_risorsa=str(r[0]),
+                cognome=str(r[1]),
+                nome=str(r[2]),
+                data_nascita=str(r[3]),
+                badge=str(r[4]),
+                data_assunzione=str(r[5]),
+                codice_fiscale=str(r[7]),
+                monitoraggio_attivo=is_monitored,
+                inactivation_days_left=inactivation_val,
+                cf_warning=cf_warning
             )
+            dtos.append(dto)
 
-        return master_rows, counts
+        return dtos, counts
 
     @staticmethod
     def get_last_isab_access(cognome: str, nome: str) -> tuple[str, int, str]:
@@ -105,7 +115,7 @@ class AnagraficaController:
               AND UPPER(REPLACE(REPLACE(TRIM(nome), '  ', ' '), '  ', ' ')) = ?
             ORDER BY data DESC LIMIT 1
         """
-        from src.gui.styles import COLORS
+        from src.core.constants import REPORT_COLORS as COLORS
 
         try:
             res = db_manager.execute_query(db_manager.DB_TIMBRATURE, query, (norm_cognome, norm_nome))
