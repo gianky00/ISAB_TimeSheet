@@ -41,7 +41,7 @@ class TestScaricoOreComponentsExtended:
         assert display[0][0] == "01/01/2024"  # Date formatted
         assert totals[0] == 8.0
 
-    def test_model_filtering(self, qapp):
+    def test_model_filtering(self, qtbot):
         model = ScaricoOreTableModel()
         # Manually inject data to test filter logic without async
         model._display_data = [
@@ -80,9 +80,11 @@ class TestScaricoOreComponentsExtended:
         model._filtered_count = 2
 
         # Filter for "Mario"
-        model.set_filter("mario")
+        with qtbot.waitSignal(model.cache_loaded, timeout=2000):
+            model.set_filter("mario")
         assert model.rowCount() == 1
 
         # Clear filter
-        model.set_filter("")
+        with qtbot.waitSignal(model.cache_loaded, timeout=2000):
+            model.set_filter("")
         assert model.rowCount() == 2

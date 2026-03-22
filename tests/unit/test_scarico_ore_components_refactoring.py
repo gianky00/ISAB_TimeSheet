@@ -3,13 +3,14 @@ Baseline tests for Scarico Ore Components.
 Ensures data processing and tree building logic remains consistent during refactoring.
 """
 
+from pathlib import Path
 from src.gui.components.scarico_ore.cache import CacheWorker
 from src.gui.components.scarico_ore.filters.popup_date import DateFilterPopupWidget
 
 
-def test_cache_worker_build_caches_logic():
+def test_cache_worker_build_caches_logic(tmp_path):
     """Test the internal logic of _build_caches for data formatting consistency."""
-    worker = CacheWorker(None)
+    worker = CacheWorker(tmp_path / "dummy.json")
     # raw_row: 0:data, 1:pers1, 2:pers2, 3:odc, 4:pos, 5:dalle, 6:alle, 7:totale_ore, 8:desc, 9:finito, 10:commessa, 11:style_json
     raw_data = [
         [

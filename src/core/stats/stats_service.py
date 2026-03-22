@@ -11,6 +11,7 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+
 class StatsService:
     """Servizio per l'elaborazione dei dati statistici e KPI."""
 
@@ -18,11 +19,11 @@ class StatsService:
     def prepare_kpi_data(df: pd.DataFrame, hourly_cost_std: float) -> dict[str, Any]:
         """
         Prepara tutti i dati necessari per i grafici KPI partendo dal dataframe grezzo.
-        
+
         Args:
             df: Dataframe contabilità.
             hourly_cost_std: Costo orario standard per calcoli margini.
-            
+
         Returns:
             Dict con i dati processati pronti per il rendering.
         """
@@ -34,7 +35,7 @@ class StatsService:
             "prev_ore_mese": StatsService._get_prev_ore_mese(df),
             "margine_tipologia": StatsService._get_margine_tipologia(df, hourly_cost_std),
             "andamento_resa": StatsService._get_andamento_resa(df),
-            "completamento": StatsService._get_completamento_stats(df)
+            "completamento": StatsService._get_completamento_stats(df),
         }
         return results
 
@@ -47,8 +48,18 @@ class StatsService:
     @staticmethod
     def _get_prev_ore_mese(df: pd.DataFrame) -> dict[str, Any]:
         months_order = [
-            "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
-            "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"
+            "gennaio",
+            "febbraio",
+            "marzo",
+            "aprile",
+            "maggio",
+            "giugno",
+            "luglio",
+            "agosto",
+            "settembre",
+            "ottobre",
+            "novembre",
+            "dicembre",
         ]
         temp_df = df.copy()
         temp_df["mese_lower"] = temp_df["mese"].str.lower().str.strip()
@@ -58,7 +69,7 @@ class StatsService:
         return {
             "labels": [m.capitalize()[:3] for m in grouped.index],
             "totale_prev": grouped["totale_prev"].tolist(),
-            "ore_sp": grouped["ore_sp"].tolist()
+            "ore_sp": grouped["ore_sp"].tolist(),
         }
 
     @staticmethod
@@ -78,14 +89,24 @@ class StatsService:
         return {
             "labels": grouped.index.tolist(),
             "ricavi": grouped["totale_prev"].tolist(),
-            "costi": grouped["Costo"].tolist()
+            "costi": grouped["Costo"].tolist(),
         }
 
     @staticmethod
     def _get_andamento_resa(df: pd.DataFrame) -> dict[str, Any]:
         months_order = [
-            "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
-            "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"
+            "gennaio",
+            "febbraio",
+            "marzo",
+            "aprile",
+            "maggio",
+            "giugno",
+            "luglio",
+            "agosto",
+            "settembre",
+            "ottobre",
+            "novembre",
+            "dicembre",
         ]
         temp_df = df.copy()
         temp_df["mese_lower"] = temp_df["mese"].str.lower().str.strip()
@@ -93,10 +114,7 @@ class StatsService:
         df_resa = temp_df[temp_df["resa"] > 0]
         grouped = df_resa.groupby("mese_cat", observed=True)["resa"].mean()
 
-        return {
-            "labels": [m.capitalize()[:3] for m in grouped.index],
-            "values": grouped.values.tolist()
-        }
+        return {"labels": [m.capitalize()[:3] for m in grouped.index], "values": grouped.values.tolist()}
 
     @staticmethod
     def _get_completamento_stats(df: pd.DataFrame) -> dict[str, float]:
@@ -113,5 +131,5 @@ class StatsService:
             "p_comp": (completed / total) * 100,
             "p_tcl": (pending_tcl / total) * 100,
             "p_todo": (to_complete / total) * 100,
-            "p_other": (other / total) * 100
+            "p_other": (other / total) * 100,
         }

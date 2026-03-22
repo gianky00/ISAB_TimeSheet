@@ -114,7 +114,9 @@ class UpdateProgressDialog(QDialog):
 def show_install_prompt(setup_path: str, parent: QWidget | None = None):
     msg_box = QMessageBox(parent)
     msg_box.setWindowTitle("🔄 Aggiornamento Pronto")
-    msg_box.setText("L'aggiornamento è stato scaricato ed è pronto per l'installazione.\n\nCosa desideri fare?")
+    msg_box.setText(
+        "L'aggiornamento è stato scaricato ed è pronto per l'installazione.\n\nCosa desideri fare?"
+    )
     msg_box.setIcon(QMessageBox.Icon.Question)
     msg_box.setStyle(QApplication.style())
 
@@ -134,7 +136,9 @@ def show_install_prompt(setup_path: str, parent: QWidget | None = None):
         run_installer_and_exit(setup_path)
     elif msg_box.clickedButton() == btn_later:
         set_pending_installer(setup_path)
-        QMessageBox.information(parent, "ℹ️ Info", "L'aggiornamento partirà automaticamente alla chiusura dell'app.")
+        QMessageBox.information(
+            parent, "ℹ️ Info", "L'aggiornamento partirà automaticamente alla chiusura dell'app."
+        )
 
 
 def check_for_updates(
@@ -155,7 +159,9 @@ def check_for_updates(
 
     if not update_sources:
         if not silent:
-            QMessageBox.information(parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})")
+            QMessageBox.information(
+                parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
+            )
         return
 
     latest_update = max(update_sources, key=lambda x: pkg_version.parse(x["version"]))
@@ -165,7 +171,9 @@ def check_for_updates(
 
     if not download_url:
         if not silent:
-            QMessageBox.information(parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})")
+            QMessageBox.information(
+                parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
+            )
         return
 
     if pkg_version.parse(remote_ver_str) > pkg_version.parse(version.__version__):
@@ -175,7 +183,8 @@ def check_for_updates(
             try:
                 head_resp = requests.head(download_url, timeout=5)
                 remote_size = int(head_resp.headers.get("content-length", 0))
-            except Exception as e: logger.debug(f"Failed to get remote size: {e}")
+            except Exception as e:
+                logger.debug(f"Failed to get remote size: {e}")
         else:
             with contextlib.suppress(Exception):
                 remote_size = Path(download_url).stat().st_size
@@ -192,13 +201,21 @@ def check_for_updates(
             show_install_prompt(setup_path, parent)
         else:
             msg = f"Nuova versione {remote_ver_str} disponibile!\n"
-            if changelog: msg += f"\nNovità:\n{changelog}\n"
+            if changelog:
+                msg += f"\nNovità:\n{changelog}\n"
             msg += "\nVuoi aggiornare ora?"
-            reply = QMessageBox.question(parent, "🔄 Aggiornamento", msg, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            reply = QMessageBox.question(
+                parent,
+                "🔄 Aggiornamento",
+                msg,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
             if reply == QMessageBox.StandardButton.Yes:
                 perform_auto_update(download_url, parent)
     elif not silent:
-        QMessageBox.information(parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})")
+        QMessageBox.information(
+            parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
+        )
 
 
 def perform_auto_update(download_url: str, parent: QWidget | None = None):

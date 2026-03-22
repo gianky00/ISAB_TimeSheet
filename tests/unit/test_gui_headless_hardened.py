@@ -26,7 +26,8 @@ class TestGUIHeadlessHardened:
         qtbot.wait(100)
         gen_page = settings_panel.config_tab.general_page
         gen_page.headless_check.setChecked(True)
-        assert settings_panel._mock_save.called
+        # Il salvataggio usa debouncing (500ms) e un QThread
+        qtbot.waitUntil(lambda: settings_panel._mock_save.called, timeout=2000)
 
     def test_toast_animation_lifecycle(self, qapp, mocker):
         """Verifica che il toast si mostri e avvii l'animazione."""

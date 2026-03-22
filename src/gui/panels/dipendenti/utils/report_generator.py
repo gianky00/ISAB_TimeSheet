@@ -18,6 +18,7 @@ from src.gui.workers.report_worker import ReportWorker
 
 logger = logging.getLogger(__name__)
 
+
 class ReportGenerator:
     """Gestisce l'orchestrazione asincrona dei report dipendenti."""
 
@@ -30,7 +31,7 @@ class ReportGenerator:
             ToastManager.instance().show("Generazione report già in corso...", "warning")
             return
 
-        ReportGenerator._worker = ReportWorker() # Senza parent perché statico
+        ReportGenerator._worker = ReportWorker()  # Senza parent perché statico
         ReportGenerator._worker.finished_signal.connect(
             lambda success, msg, data: ReportGenerator._on_report_finished(parent_widget, success, msg, data)
         )
@@ -48,7 +49,9 @@ class ReportGenerator:
             else:
                 logger.error(f"Errore generazione report: {message}")
                 if parent_widget:
-                    QMessageBox.critical(parent_widget, "Errore", f"Impossibile generare il report:\n{message}")
+                    QMessageBox.critical(
+                        parent_widget, "Errore", f"Impossibile generare il report:\n{message}"
+                    )
             return
 
         if message == "Nessun dato da segnalare":
@@ -69,12 +72,16 @@ class ReportGenerator:
 
         try:
             body_html = ReportService.build_report_html(data)
-            tmp_path = Path(os.environ["TEMP"]) / f"report_isab_{datetime.now(UTC).astimezone().strftime('%H%M%S')}.html"
+            tmp_path = (
+                Path(os.environ["TEMP"])
+                / f"report_isab_{datetime.now(UTC).astimezone().strftime('%H%M%S')}.html"
+            )
             tmp_path.write_text(body_html, encoding="utf-8")
 
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(tmp_path)))
 
             from src.core.report_history import ReportHistory
+
             ReportHistory.save_report(data["warning_list"], data["expired_list"])
 
             ToastManager.instance().show(message, "warning", duration=4000)

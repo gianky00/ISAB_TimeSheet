@@ -119,20 +119,16 @@ class TestTelegramHandlers:
         mock_service.data_received.emit.assert_called_with("pdl", ["123456"])
         assert mock_service.user_states[67890] is None
 
-    @patch("src.core.telegram.handlers.messages.process_with_ai")
     @pytest.mark.asyncio
-    async def test_handle_voice(self, mock_process_ai, mock_service, mock_update, mock_context):
+    async def test_handle_voice(self, mock_service, mock_update, mock_context):
         mock_update.message.voice = MagicMock()
         mock_update.message.voice.file_id = "voice_id"
 
-        mock_file = AsyncMock()
-        mock_file.download_as_bytearray = AsyncMock(return_value=b"audio data")
-        mock_context.bot.get_file.return_value = mock_file
-
         await handle_voice(mock_service, mock_update, mock_context)
 
-        mock_process_ai.assert_called_once()
-        # Verify call args if needed
+        mock_update.message.reply_text.assert_called_once()
+        args = mock_update.message.reply_text.call_args[0][0]
+        assert "non supportati" in args
 
     @pytest.mark.asyncio
     async def test_handle_photo(self, mock_service, mock_update, mock_context):

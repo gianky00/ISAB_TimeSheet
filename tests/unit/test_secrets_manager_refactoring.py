@@ -92,16 +92,13 @@ def test_get_license_key_priority():
 
 
 def test_is_available():
+    SecretsManager._keyring_available = None
     with patch("keyring.get_password", return_value="ok"):
         assert SecretsManager.is_available() is True
+    
+    SecretsManager._keyring_available = None
     with patch("keyring.get_password", side_effect=Exception()):
         assert SecretsManager.is_available() is False
-
-
-def test_credentials_wrappers():
-    with patch.object(SecretsManager, "get_credential", return_value="fake"):
-        assert SecretsManager.get_exa_api_key() == "fake"
-        assert SecretsManager.get_gemini_api_key() == "fake"
 
 
 def test_derive_key():

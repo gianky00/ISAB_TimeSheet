@@ -69,10 +69,8 @@ class TestControllersCoverage:
         """Verifica che la ricerca OdA inoltri i risultati correttamente."""
         ctrl = SearchController(mw)
         mock_menu = MagicMock()
-        mocker.patch(
-            "src.core.contabilita_manager.ContabilitaManager.search_oda",
-            return_value=[{"codice_oda": "123", "descrizione": "D"}],
-        )
-        count = ctrl._search_oda("123", mock_menu)
+        
+        matches = [{"codice_oda": "123", "descrizione": "D"}]
+        count = ctrl._add_oda_matches(matches, mock_menu)
         assert count == 1
         assert mock_menu.addAction.called

@@ -16,6 +16,7 @@ from src.core.database import db_manager
 
 logger = logging.getLogger(__name__)
 
+
 class SearchService:
     """Servizio per la ricerca globale tra i vari moduli del sistema."""
 
@@ -23,11 +24,11 @@ class SearchService:
     def search_all(query: str, limit: int = 10) -> dict[str, Any]:
         """
         Esegue la ricerca su tutti i database supportati.
-        
+
         Args:
             query: La stringa di ricerca.
             limit: Limite massimo di risultati per categoria.
-            
+
         Returns:
             Dict con i risultati raggruppati per categoria.
         """
@@ -38,7 +39,7 @@ class SearchService:
             "storico_oda": SearchService._search_storico_oda(query, limit),
             "attivita_programmate": SearchService._search_attivita_programmate(query, limit),
             "pdl": SearchService._search_pdl(query, limit),
-            "audit": SearchService._search_audit(query, limit)
+            "audit": SearchService._search_audit(query, limit),
         }
         return results
 
@@ -84,14 +85,14 @@ class SearchService:
                     """
                     SELECT oda, descrizione, pos_oda
                     FROM storico_oda
-                    WHERE CAST(oda AS TEXT) LIKE ? OR 
-                          descrizione LIKE ? OR 
-                          testo_breve LIKE ? OR 
-                          CAST(contratto AS TEXT) LIKE ? OR 
+                    WHERE CAST(oda AS TEXT) LIKE ? OR
+                          descrizione LIKE ? OR
+                          testo_breve LIKE ? OR
+                          CAST(contratto AS TEXT) LIKE ? OR
                           descrizione_fornitore LIKE ?
                     LIMIT ?
                     """,
-                    [search_pattern] * 5 + [limit]
+                    [search_pattern] * 5 + [limit],
                 )
                 return [dict(row) for row in cursor.fetchall()]
         except Exception as e:
@@ -113,14 +114,14 @@ class SearchService:
                     """
                     SELECT area, pdl, descrizione_attivita
                     FROM attivita_programmate
-                    WHERE area LIKE ? OR 
-                          pdl LIKE ? OR 
-                          descrizione_attivita LIKE ? OR 
-                          stato_pdl LIKE ? OR 
+                    WHERE area LIKE ? OR
+                          pdl LIKE ? OR
+                          descrizione_attivita LIKE ? OR
+                          stato_pdl LIKE ? OR
                           stato_attivita LIKE ?
                     LIMIT ?
                     """,
-                    [search_pattern] * 5 + [limit]
+                    [search_pattern] * 5 + [limit],
                 )
                 return [dict(row) for row in cursor.fetchall()]
         except Exception as e:
@@ -142,13 +143,13 @@ class SearchService:
                     """
                     SELECT odl, descrizione, unita_tecnica
                     FROM pdl
-                    WHERE CAST(odl AS TEXT) LIKE ? OR 
-                          descrizione LIKE ? OR 
-                          unita_tecnica LIKE ? OR 
+                    WHERE CAST(odl AS TEXT) LIKE ? OR
+                          descrizione LIKE ? OR
+                          unita_tecnica LIKE ? OR
                           stato LIKE ?
                     LIMIT ?
                     """,
-                    [search_pattern] * 4 + [limit]
+                    [search_pattern] * 4 + [limit],
                 )
                 return [dict(row) for row in cursor.fetchall()]
         except Exception as e:
@@ -160,7 +161,8 @@ class SearchService:
         try:
             audit_logs = AuditManager.instance().get_logs(limit=100)
             matches = [
-                log for log in audit_logs
+                log
+                for log in audit_logs
                 if query.lower() in str(log["action"]).lower() or query.lower() in str(log["entity"]).lower()
             ]
             return matches[:limit]

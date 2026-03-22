@@ -18,6 +18,7 @@ from src.core.report_history import ReportHistory
 
 logger = logging.getLogger(__name__)
 
+
 class ReportService:
     """Servizio per la logica di business dei report dipendenti."""
 
@@ -174,25 +175,33 @@ class ReportService:
         return html
 
     @staticmethod
-    def create_report_excel(warning_list: list[dict[str, Any]], expired_list: list[dict[str, Any]]) -> Path | None:
+    def create_report_excel(
+        warning_list: list[dict[str, Any]], expired_list: list[dict[str, Any]]
+    ) -> Path | None:
         """Crea il file Excel temporaneo."""
         excel_data = []
         for items, label in ((warning_list, "In Scadenza"), (expired_list, "Scaduto")):
             for dip in items:
-                excel_data.append({
-                    "Cognome": dip["cognome"],
-                    "Nome": dip["nome"],
-                    "Badge": dip["badge"],
-                    "Ultimo Accesso": dip["data"],
-                    "Giorni": dip["giorni"],
-                    "Stato": label,
-                })
+                excel_data.append(
+                    {
+                        "Cognome": dip["cognome"],
+                        "Nome": dip["nome"],
+                        "Badge": dip["badge"],
+                        "Ultimo Accesso": dip["data"],
+                        "Giorni": dip["giorni"],
+                        "Stato": label,
+                    }
+                )
 
         if not excel_data:
             return None
 
         import pandas as pd
+
         df_report = pd.DataFrame(excel_data)
-        path = Path(os.environ["TEMP"]) / f"report Accessi ISAB {datetime.now(UTC).astimezone().strftime('%d-%m-%Y_%H-%M')}.xlsx"
+        path = (
+            Path(os.environ["TEMP"])
+            / f"report Accessi ISAB {datetime.now(UTC).astimezone().strftime('%d-%m-%Y_%H-%M')}.xlsx"
+        )
         df_report.to_excel(path, index=False, sheet_name="Dipendenti")
         return path

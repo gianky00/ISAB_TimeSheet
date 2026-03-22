@@ -60,17 +60,6 @@ class TestAppInitializerCoverage:
 
         assert AppInitializer._core_initialized is False
 
-    def test_setup_app_style(self, mocker):
-        """Test: Configurazione stili e metadati app."""
-        mock_app = MagicMock()
-        mock_apply = mocker.patch("src.gui.styles.apply_theme")
-
-        AppInitializer.setup_app_style(mock_app)
-
-        mock_app.setStyle.assert_called_with("Fusion")
-        mock_apply.assert_called_with(mock_app, "light")
-        mock_app.setApplicationName.assert_called_with("SyncroJob")
-
     def test_init_generator_steps(self, mocker):
         """Test: Il generatore produce gli step attesi."""
         mock_mw = MagicMock()

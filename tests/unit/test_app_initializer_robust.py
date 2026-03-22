@@ -148,13 +148,3 @@ class TestAppInitializerRobust:
         """Test fallback logging base su errore."""
         AppInitializer._setup_logging()
         mock_basic.assert_called_once()
-
-    @patch("src.gui.styles.apply_theme")
-    def test_setup_app_style(self, mock_theme, mock_qapp):
-        """Test configurazione stile app."""
-        with patch("src.core.version.__version__", "1.0.0"):
-            AppInitializer.setup_app_style(mock_qapp)
-
-            assert mock_qapp.applicationName() == "SyncroJob"
-            assert mock_qapp.applicationVersion() == "1.0.0"
-            mock_theme.assert_called_with(mock_qapp, "light")

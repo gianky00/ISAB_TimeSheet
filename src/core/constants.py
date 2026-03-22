@@ -185,6 +185,7 @@ class Icons:
     FLAG_TGO_ON = "assets/icons/flag_tgo_on.svg"
     FLAG_TGO_OFF = "assets/icons/flag_tgo_off.svg"
 
+
 # =============================================================================
 # SOGLIE OPERATIVE (Business Logic)
 # =============================================================================

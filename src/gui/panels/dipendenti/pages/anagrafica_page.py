@@ -34,7 +34,7 @@ class AnagraficaPage(QWidget):
     def __init__(self, controller: AnagraficaController, parent: QWidget | None = None):
         """
         Inizializza la pagina anagrafica con iniezione del controller.
-        
+
         Args:
             controller: Istanza del controller per la logica di business.
             parent: Widget genitore opzionale.

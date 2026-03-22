@@ -17,10 +17,11 @@ from src.core.report_history import ReportHistory
 
 logger = logging.getLogger(__name__)
 
+
 class ReportWorker(QThread):
     """Worker per l'esecuzione asincrona del workflow di reporting."""
 
-    finished_signal = pyqtSignal(bool, str, dict) # success, message, data
+    finished_signal = pyqtSignal(bool, str, dict)  # success, message, data
 
     def __init__(self):
         super().__init__()
@@ -50,7 +51,9 @@ class ReportWorker(QThread):
             logger.error(f"ReportWorker Error: {e}", exc_info=True)
             self.finished_signal.emit(False, str(e), {})
 
-    def _handle_outlook(self, body_html: str, excel_path: Path | None, report_data: dict[str, Any]) -> tuple[bool, str]:
+    def _handle_outlook(
+        self, body_html: str, excel_path: Path | None, report_data: dict[str, Any]
+    ) -> tuple[bool, str]:
         """Gestisce l'automazione Outlook."""
         subject = f"Report Monitoraggio Accessi in ISAB - {datetime.now().strftime('%d/%m/%Y')}"
 

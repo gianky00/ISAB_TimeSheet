@@ -33,12 +33,15 @@ class TelegramUIBridge(QObject):
 
         # Bridge GUI per isolare PyQt dal CORE
         from src.gui.main_window.telegram_bridge import TelegramGUIBridge
+
         self.gui_bridge = TelegramGUIBridge(self.mw)
 
         # Inizializza gli handler modulari
         self.ui_commands = TelegramUICommands(self.mw, self.telegram)
         self.data_processor = TelegramDataProcessor(self.mw, self.telegram)
-        self.system_handler = TelegramSystemHandler(self.telegram, self.gui_bridge, self.gui_bridge, data_bridge=self.mw)
+        self.system_handler = TelegramSystemHandler(
+            self.telegram, self.gui_bridge, self.gui_bridge, data_bridge=self.mw
+        )
         self.intent_handler = TelegramIntentHandler(self.mw, self.telegram, self.system_handler)
 
     def setup_connections(self) -> None:

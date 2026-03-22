@@ -16,16 +16,18 @@ from src.utils.document_generator import generate_pdf_from_html
 
 logger = logging.getLogger(__name__)
 
+
 class TelegramSystemHandler:
     """Gestisce operazioni di sistema e generazione report per Telegram."""
 
-    def __init__(self,
-                 telegram_service: Any,
-                 screenshot_provider: ScreenshotProvider,
-                 app_status_provider: AppStatusProvider,
-                 # Supporto per fetch dati (provvisorio per mantenere funzionalita)
-                 data_bridge: Any = None
-                 ) -> None:
+    def __init__(
+        self,
+        telegram_service: Any,
+        screenshot_provider: ScreenshotProvider,
+        app_status_provider: AppStatusProvider,
+        # Supporto per fetch dati (provvisorio per mantenere funzionalita)
+        data_bridge: Any = None,
+    ) -> None:
         self.telegram = telegram_service
         self.screenshot_provider = screenshot_provider
         self.status_provider = app_status_provider

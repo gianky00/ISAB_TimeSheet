@@ -11,6 +11,7 @@ from typing import Any
 @dataclass(frozen=True, slots=True)
 class EmployeeDTO:
     """Rappresenta un dipendente con i relativi metadati di monitoraggio."""
+
     id_risorsa: str
     cognome: str
     nome: str
@@ -41,13 +42,10 @@ class EmployeeDTO:
             self.badge or "-",
             self.data_assunzione or "-",
             self.data_nascita or "-",
-            "", # created_at (placeholder if needed)
-            self.cognome # Original cognome for sorting/logic
+            "",  # created_at (placeholder if needed)
+            self.cognome,  # Original cognome for sorting/logic
         ]
 
     def get_metadata(self) -> dict[str, Any]:
         """Restituisce i metadati per il TableModel (UserRole)."""
-        return {
-            "id_risorsa": self.id_risorsa,
-            "is_monitored": self.monitoraggio_attivo
-        }
+        return {"id_risorsa": self.id_risorsa, "is_monitored": self.monitoraggio_attivo}

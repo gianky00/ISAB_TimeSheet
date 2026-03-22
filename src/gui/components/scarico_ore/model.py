@@ -119,7 +119,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self.loading_progress.emit("Avvio..." if raw_data else "Caricamento Cache...")
 
         if self._worker and self._worker.isRunning():
-            self._worker.terminate() # CacheWorker could have cancel as well, but assuming less frequent
+            self._worker.terminate()  # CacheWorker could have cancel as well, but assuming less frequent
             self._worker.wait()
 
         self._worker = CacheWorker(self.CACHE_PATH, raw_data, parent=self)
@@ -180,10 +180,12 @@ class ScaricoOreTableModel(QAbstractTableModel):
         """
         if self.is_filtering and self._filter_worker and self._filter_worker.isRunning():
             self._filter_worker.cancel()
-            self._filter_worker.finished.disconnect() # Disconnette per evitare update fantasma
+            self._filter_worker.finished.disconnect()  # Disconnette per evitare update fantasma
 
         self.is_filtering = True
-        self._filter_worker = FilterWorker(self._search_index, self._display_data, text, col_filters, parent=self)
+        self._filter_worker = FilterWorker(
+            self._search_index, self._display_data, text, col_filters, parent=self
+        )
         self._filter_worker.finished.connect(self._on_filter_finished)
         self._filter_worker.finished.connect(self._filter_worker.deleteLater)
         self._filter_worker.start()
@@ -195,7 +197,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._filtered_count = filtered_count
         self.endResetModel()
         self.is_filtering = False
-        self.cache_loaded.emit() # Riusiamo il segnale per notificare la UI
+        self.cache_loaded.emit()  # Riusiamo il segnale per notificare la UI
 
     def get_float_total_for_visible(self) -> float:
         """Calcola la somma delle ore per le sole righe visibili."""

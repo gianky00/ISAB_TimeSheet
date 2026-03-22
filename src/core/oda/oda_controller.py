@@ -13,6 +13,7 @@ from src.core.utils.formatters import format_date_it
 
 logger = logging.getLogger(__name__)
 
+
 class ODAController:
     """Servizio per gestire la logica di business dei dati OdA."""
 

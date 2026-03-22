@@ -234,7 +234,7 @@ class TestWaitHelpersRobust:
 
     def test_execute_with_wait(self):
         """Test execute with wait."""
-        action = MagicMock()
+        action = MagicMock(return_value=True)
         mock_driver = MagicMock()
 
         with patch(

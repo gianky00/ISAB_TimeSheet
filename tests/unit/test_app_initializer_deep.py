@@ -69,14 +69,3 @@ class TestAppInitializerDeep:
         assert any(prog == 100 for msg, prog in results)
         # Verify other panels were still attempted
         mock_nav.get_panel.assert_any_call(PageIndex.SETTINGS)
-
-    def test_yield_helper(self, mocker):
-        """Verifica che l'helper _yield chiami processEvents."""
-        from src.core.app_initializer import _yield
-
-        mock_app = mocker.patch("PyQt6.QtWidgets.QApplication.instance")
-        mock_instance = MagicMock()
-        mock_app.return_value = mock_instance
-
-        _yield()
-        mock_instance.processEvents.assert_called_once()

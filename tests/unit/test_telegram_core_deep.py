@@ -15,22 +15,14 @@ class TestTelegramCoreDeep:
     async def test_handle_voice_logic(self, service):
         mock_update = MagicMock()
         mock_context = MagicMock()
+        mock_update.message.reply_text = AsyncMock()
 
-        # Mock auth
-        with patch.object(service, "_check_auth", new_callable=AsyncMock, return_value=True):
-            mock_file = AsyncMock()
-            mock_file.download_as_bytearray = AsyncMock(return_value=bytearray(b"fake_audio"))
-            mock_context.bot.get_file = AsyncMock(return_value=mock_file)
-
-            mock_update.message.voice.file_id = "voice123"
-            mock_update.message.reply_chat_action = AsyncMock()
-
-            with patch(
-                "src.core.telegram.handlers.messages.process_with_ai",
-                new_callable=AsyncMock,
-            ) as mock_ai:
-                await messages.handle_voice(service, mock_update, mock_context)
-                mock_ai.assert_called_once()
+        await messages.handle_voice(service, mock_update, mock_context)
+        
+        # Verifica che risponda correttamente con il messaggio di non supporto
+        mock_update.message.reply_text.assert_called_once()
+        args = mock_update.message.reply_text.call_args[0][0]
+        assert "non supportati" in args
 
     @pytest.mark.asyncio
     async def test_handle_photo_emit(self, service):

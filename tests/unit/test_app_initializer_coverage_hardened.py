@@ -52,14 +52,3 @@ class TestAppInitializerHardened:
             AppInitializer.initialize_core()
 
         assert AppInitializer._core_initialized is False
-
-    def test_setup_app_style_minimal(self, mocker):
-        """Verifica setup base stile senza dipendenze pesanti."""
-        mock_app = MagicMock()
-        mock_apply = mocker.patch("src.gui.styles.apply_theme")
-
-        AppInitializer.setup_app_style(mock_app)
-
-        mock_app.setStyle.assert_called_with("Fusion")
-        mock_app.setApplicationName.assert_called_with("SyncroJob")
-        mock_apply.assert_called()

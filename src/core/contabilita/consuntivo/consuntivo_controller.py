@@ -12,6 +12,7 @@ from src.core.preventivi_manager import PreventiviGeneratorManager
 
 logger = logging.getLogger(__name__)
 
+
 class ConsuntivoController:
     """Controller per l'orchestrazione delle attività sui Consuntivi."""
 
@@ -39,7 +40,7 @@ class ConsuntivoController:
             "tcl": config.get("preventivi_tcl", []),
             "stati": config.get("preventivi_stati", []),
             "tipologie": ["MISURA", "SQUADRA", "CHIAMATA", "FORNITURA", "PREVENTIVO"],
-            "economie": ["SQUADRA GIORNALIERA", "SQUADRA SETTIMANALE", "CONSTATAZIONE PURA"]
+            "economie": ["SQUADRA GIORNALIERA", "SQUADRA SETTIMANALE", "CONSTATAZIONE PURA"],
         }
 
     def get_master_path(self) -> str:

@@ -139,9 +139,14 @@ class KPIChartsManager:
         )
 
         self.annot = ax.annotate(
-            "", xy=(0, 0), xytext=(0, 0), textcoords="offset points",
+            "",
+            xy=(0, 0),
+            xytext=(0, 0),
+            textcoords="offset points",
             bbox={"boxstyle": "round", "fc": "black", "ec": "none", "alpha": 0.9},
-            color="white", fontweight="bold", fontsize=10,
+            color="white",
+            fontweight="bold",
+            fontsize=10,
             arrowprops={"arrowstyle": "-", "color": "black"},
         )
         self.annot.set_visible(False)
@@ -149,7 +154,8 @@ class KPIChartsManager:
         total_sum = sum(values)
 
         def update_annot(wedge, idx):
-            if not self.annot: return
+            if not self.annot:
+                return
             ang = (wedge.theta2 - wedge.theta1) / 2.0 + wedge.theta1
             y = np.sin(np.deg2rad(ang))
             x = np.cos(np.deg2rad(ang))
@@ -165,7 +171,8 @@ class KPIChartsManager:
                     contains, _ = wedge.contains(event)
                     if contains:
                         update_annot(wedge, i)
-                        if self.annot: self.annot.set_visible(True)
+                        if self.annot:
+                            self.annot.set_visible(True)
                         self.fig1.canvas.draw_idle()
                         found = True
                         break
@@ -186,13 +193,21 @@ class KPIChartsManager:
 
         x = range(len(data["labels"]))
         ax.bar(
-            x, data["totale_prev"], width=0.4,
-            label="Totale Prev (\u20ac)", color=COLORS["success_dark"], alpha=0.8,
+            x,
+            data["totale_prev"],
+            width=0.4,
+            label="Totale Prev (\u20ac)",
+            color=COLORS["success_dark"],
+            alpha=0.8,
         )
         ax2 = ax.twinx()
         ax2.plot(
-            x, data["ore_sp"], label="Ore Spese",
-            color=COLORS["primary_blue"], marker="o", linewidth=3,
+            x,
+            data["ore_sp"],
+            label="Ore Spese",
+            color=COLORS["primary_blue"],
+            marker="o",
+            linewidth=3,
         )
         ax.set_xticks(x)
         ax.set_xticklabels(data["labels"], rotation=45)
@@ -215,21 +230,43 @@ class KPIChartsManager:
         y = np.arange(len(labels))
         height = 0.35
         ax.barh(
-            y + height / 2, data["ricavi"], height,
-            label="Ricavi (Prev.)", color=COLORS["success_dark"], alpha=0.8,
+            y + height / 2,
+            data["ricavi"],
+            height,
+            label="Ricavi (Prev.)",
+            color=COLORS["success_dark"],
+            alpha=0.8,
         )
         ax.barh(
-            y - height / 2, data["costi"], height,
-            label="Costi Stimati", color=COLORS["error_red"], alpha=0.7,
+            y - height / 2,
+            data["costi"],
+            height,
+            label="Costi Stimati",
+            color=COLORS["error_red"],
+            alpha=0.7,
         )
         ax.set_yticks(y)
         ax.set_yticklabels(labels)
         ax.legend(loc="lower right", framealpha=0.8)
 
         for i, val in enumerate(data["ricavi"]):
-            ax.text(val, i + height / 2, f" \u20ac {val / 1000:.1f}k", va="center", fontsize=9, color=COLORS["success_dark"])
+            ax.text(
+                val,
+                i + height / 2,
+                f" \u20ac {val / 1000:.1f}k",
+                va="center",
+                fontsize=9,
+                color=COLORS["success_dark"],
+            )
         for i, val in enumerate(data["costi"]):
-            ax.text(val, i - height / 2, f" \u20ac {val / 1000:.1f}k", va="center", fontsize=9, color=COLORS["error_red"])
+            ax.text(
+                val,
+                i - height / 2,
+                f" \u20ac {val / 1000:.1f}k",
+                va="center",
+                fontsize=9,
+                color=COLORS["error_red"],
+            )
 
         ax.grid(axis="x", linestyle="--", alpha=0.5)
         self.fig3.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.1)

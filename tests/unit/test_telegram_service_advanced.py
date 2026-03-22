@@ -116,25 +116,6 @@ class TestTelegramServiceAdvanced:
         }
         service.command_received.emit.assert_called_with("search_db_pdf", expected_params)
 
-    @patch(
-        "src.core.secrets_manager.SecretsManager.get_gemini_api_key",
-        return_value="fake_key",
-    )
-    @patch("src.core.lyra_client.LyraClient")
-    def test_process_with_ai_intent(self, mock_lyra_cls, mock_key, service):
-        """Verifica che Lyra AI venga invocata e l'intento riconosciuto emetta il segnale."""
-        mock_lyra = mock_lyra_cls.return_value
-        # Simula risposta JSON da Lyra
-        mock_lyra.ask.return_value = '```json\n{"action": "download", "object": "pdl", "items": ["123"]}\n```'
-
-        # Eseguiamo in modo sincrono per il test (sovrascrivendo l'executor)
-        with patch.object(service.ai_executor, "submit", side_effect=lambda f: f()):
-            asyncio.run(messages.process_with_ai(service, "123456", "scarica pdl 123"))
-
-            service.intent_received.emit.assert_called()
-            args, _ = service.intent_received.emit.call_args
-            assert args[1]["action"] == "download"
-
     def test_send_message_sync_safety(self, service):
         """Verifica la sicurezza del metodo di invio sincrono."""
         service.connected_chat_id = "123456"

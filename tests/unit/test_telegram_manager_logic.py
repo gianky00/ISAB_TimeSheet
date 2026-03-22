@@ -94,20 +94,18 @@ class TestTelegramManagerLogic:
         mock_signal.assert_called_with(str(chat_id), "How are you?")
 
     @pytest.mark.asyncio
-    async def test_handle_text_input_ai_trigger(self, telegram_service, mock_update):
+    async def test_handle_text_input_query_emission(self, telegram_service, mock_update):
         from src.core.telegram.handlers import messages
 
         chat_id = mock_update.effective_chat.id
         telegram_service.user_states[chat_id] = None
         mock_update.message.text = "Scarica PDL 123"
 
-        # Mock per rendere process_with_ai sincrono e testabile
-        with patch(
-            "src.core.telegram.handlers.messages.process_with_ai",
-            new_callable=AsyncMock,
-        ) as mock_ai:
-            await messages.handle_text_input(telegram_service, mock_update, None)
-            mock_ai.assert_called_with(telegram_service, chat_id, "Scarica PDL 123")
+        mock_signal = MagicMock()
+        telegram_service.query_received.connect(mock_signal)
+
+        await messages.handle_text_input(telegram_service, mock_update, None)
+        mock_signal.assert_called_with(str(chat_id), "Scarica PDL 123")
 
     @pytest.mark.asyncio
     async def test_handle_nav_actions_main(self, telegram_service):

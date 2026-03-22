@@ -58,5 +58,6 @@ class TestStatsManager:
 
     def test_persistence_via_config(self, manager):
         manager.increment_usage("bot_c")
+        manager._save_queue.join()
         # Verify it went to mock_config (simulating config_manager persistence)
         assert self.mock_config["statistics"]["bot_c"]["runs"] == 1

@@ -11,6 +11,7 @@ from typing import Any
 @dataclass(frozen=True, slots=True)
 class PdlRowDTO:
     """Rappresenta una riga completa del database PDL."""
+
     id: int
     n_pdl: str
     data_creazione: str
@@ -60,20 +61,44 @@ class PdlRowDTO:
             contratto=str(r[17]),
             ordine=str(r[18]),
             sito=str(r[19]),
-            importato_il=str(r[20])
+            importato_il=str(r[20]),
         )
 
     def to_master_list(self) -> list[Any]:
         """Restituisce i campi formattati per la tabella master della GUI."""
-        raw = [self.data_creazione, self.richiedente, self.n_pdl, self.area, self.unita, self.stato, self.descrizione]
+        raw = [
+            self.data_creazione,
+            self.richiedente,
+            self.n_pdl,
+            self.area,
+            self.unita,
+            self.stato,
+            self.descrizione,
+        ]
         return [("" if str(val).lower() in ("nan", "none") else val) for val in raw]
 
     def to_full_list(self) -> list[Any]:
         """Restituisce tutti i campi come lista (per compatibilità legacy se necessaria)."""
         return [
-            self.id, self.n_pdl, self.data_creazione, self.area, self.unita,
-            self.ditta, self.descrizione, self.tipologia, self.stato, self.apparecchiatura,
-            self.richiedente, self.data_richiesta, self.emittente, self.data_emissione,
-            self.aprente, self.data_apertura, self.priorita, self.contratto,
-            self.ordine, self.sito, self.importato_il
+            self.id,
+            self.n_pdl,
+            self.data_creazione,
+            self.area,
+            self.unita,
+            self.ditta,
+            self.descrizione,
+            self.tipologia,
+            self.stato,
+            self.apparecchiatura,
+            self.richiedente,
+            self.data_richiesta,
+            self.emittente,
+            self.data_emissione,
+            self.aprente,
+            self.data_apertura,
+            self.priorita,
+            self.contratto,
+            self.ordine,
+            self.sito,
+            self.importato_il,
         ]

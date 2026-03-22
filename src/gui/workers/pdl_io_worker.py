@@ -12,10 +12,11 @@ from src.core.pdl.pdl_dto import PdlRowDTO
 
 logger = logging.getLogger(__name__)
 
+
 class PdlIOWorker(QThread):
     """Worker per l'esportazione asincrona dei dati PDL."""
 
-    finished_signal = pyqtSignal(bool, str, str) # success, message, file_path
+    finished_signal = pyqtSignal(bool, str, str)  # success, message, file_path
 
     def __init__(self, file_path: str, data: list[PdlRowDTO], headers: list[str], parent=None):
         super().__init__(parent)

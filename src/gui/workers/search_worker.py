@@ -24,7 +24,8 @@ class SearchWorker(QThread):
 
     def run(self):
         """Esegue la ricerca tramite il SearchService e invia i risultati."""
-        if self._is_cancelled: return
+        if self._is_cancelled:
+            return
         results = SearchService.search_all(self.query, self.limit)
         if not self._is_cancelled:
             self.results_ready.emit(results)

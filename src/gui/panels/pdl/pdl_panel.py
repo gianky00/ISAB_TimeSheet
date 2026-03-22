@@ -326,6 +326,7 @@ class PDLDBPanel(QWidget):
             return
 
         from src.gui.widgets.toast import ToastManager
+
         ToastManager.instance().show("Esportazione PDL in corso...", "info")
 
         self.io_worker = PdlIOWorker(f, self._raw_full_data, self.full_headers, parent=self)
@@ -336,10 +337,12 @@ class PDLDBPanel(QWidget):
     def _on_export_finished(self, success: bool, message: str, file_path: str) -> None:
         """Gestisce il completamento dell'esportazione."""
         from src.gui.widgets.toast import ToastManager
+
         if success:
             ToastManager.instance().show(message, "success")
             if file_path:
                 os.startfile(file_path)  # noqa: S606
         else:
             from PyQt6.QtWidgets import QMessageBox
+
             QMessageBox.warning(self, "Errore Esportazione", message)

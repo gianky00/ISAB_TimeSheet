@@ -11,6 +11,7 @@ from typing import Any
 @dataclass(frozen=True, slots=True)
 class ConsuntivoDataDTO:
     """struttura dati per la generazione di un nuovo consuntivo."""
+
     progressivo: str
     anno_short: str
     data: str

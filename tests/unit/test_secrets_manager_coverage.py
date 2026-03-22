@@ -59,15 +59,19 @@ class TestSecretsManager:
             assert isinstance(key, bytes)
             assert len(base64.urlsafe_b64decode(key)) == 32
 
-    def test_get_api_keys(self, mock_keyring):
-        """Test retrieval of various API keys."""
-        keyring.get_password.return_value = "secret_value"
+    def test_get_github_token_stored(self, mock_keyring):
+        """Verifica recupero token se presente nel keyring."""
+        keyring.get_password.return_value = "ghp_mocktoken"
+        token = SecretsManager.get_github_token()
+        assert token == "ghp_mocktoken"
+        keyring.get_password.assert_called_with("SyncroJob_cloud", "github_pat")
 
-        assert SecretsManager.get_exa_api_key() == "secret_value"
-        keyring.get_password.assert_called_with("SyncroJob_api", "exa_api_key")
-
-        assert SecretsManager.get_gemini_api_key() == "secret_value"
-        keyring.get_password.assert_called_with("SyncroJob_api", "GEMINI_API_KEY")
+    def test_get_github_token_reconstruction(self, mock_keyring):
+        """Verifica ricostruzione dinamica se manca nel keyring."""
+        keyring.get_password.return_value = None
+        token = SecretsManager.get_github_token()
+        assert token.startswith("ghp_")
+        assert len(token) == 40
 
     def test_store_credential(self, mock_keyring):
         SecretsManager.store_credential("api", "user", "pass")

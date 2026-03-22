@@ -13,9 +13,15 @@ class TestAuthMonitor:
         assert _normalize("  rossi   mario  ") == "ROSSI MARIO"
         assert _normalize("MARIO") == "MARIO"
 
-    def test_build_access_maps_logic(self):
+    def test_build_access_maps_logic(self, mocker):
         # Format: cog, nom, cf, last_date_str
-        today = datetime.now()
+        from datetime import UTC
+        fixed_now = datetime(2026, 3, 21, 12, 0, 0, tzinfo=UTC)
+        mock_dt = mocker.patch("src.core.auth_monitor.datetime")
+        mock_dt.now.return_value = fixed_now
+        mock_dt.strptime = datetime.strptime
+
+        today = fixed_now
         d30 = (today - timedelta(days=30)).strftime("%d/%m/%Y")
         d10 = (today - timedelta(days=10)).strftime("%d/%m/%Y")
 
@@ -40,8 +46,15 @@ class TestAuthMonitor:
         assert "VRDNNA90" not in last_by_cf
 
     @patch("src.core.auth_monitor.db_manager")
-    def test_check_expiring_authorizations(self, mock_db):
-        today = datetime.now()
+    def test_check_expiring_authorizations(self, mock_db, mocker):
+        from datetime import UTC
+        # Mocking datetime.now(UTC)
+        fixed_now = datetime(2026, 3, 21, 12, 0, 0, tzinfo=UTC)
+        mock_dt = mocker.patch("src.core.auth_monitor.datetime")
+        mock_dt.now.return_value = fixed_now
+        mock_dt.strptime = datetime.strptime # Preserve strptime
+
+        today = fixed_now
         d35 = (today - timedelta(days=35)).strftime("%Y-%m-%d")  # Expired
         d25 = (today - timedelta(days=25)).strftime("%Y-%m-%d")  # Expiring
         d5 = (today - timedelta(days=5)).strftime("%Y-%m-%d")  # Active

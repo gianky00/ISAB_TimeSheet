@@ -99,7 +99,7 @@ class AnagraficaController:
                 codice_fiscale=str(r[7]),
                 monitoraggio_attivo=is_monitored,
                 inactivation_days_left=inactivation_val,
-                cf_warning=cf_warning
+                cf_warning=cf_warning,
             )
             dtos.append(dto)
 

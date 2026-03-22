@@ -13,15 +13,16 @@ from src.core.oda_manager import OdaManager
 
 logger = logging.getLogger(__name__)
 
+
 class OdaIOWorker(QThread):
     """Worker per operazioni pesanti di I/O su file Excel per gli OdA."""
 
-    finished_signal = pyqtSignal(bool, str, dict) # success, message, stats
+    finished_signal = pyqtSignal(bool, str, dict)  # success, message, stats
 
     def __init__(self, mode: str, file_path: str, extra_data: Any = None, parent=None):
         """
         Inizializza il worker.
-        
+
         Args:
             mode: 'import' o 'export'.
             file_path: Percorso del file Excel.

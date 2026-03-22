@@ -28,6 +28,8 @@ class TestSprintAAuditBackup:
         """Verifica che la catena di hash rilevi manomissioni."""
         # Eseguiamo un log controllato
         audit_mgr.log_action("TestIntegrity", category="test")
+        # Attendi il worker thread asincrono
+        audit_mgr._log_queue.join()
 
         assert audit_mgr.verify_integrity() is True
 
@@ -40,7 +42,7 @@ class TestSprintAAuditBackup:
 
     def test_audit_retention_policy(self, audit_mgr, mocker):
         """Verifica la pulizia dei log obsoleti."""
-        # 1. Inserimento manuale log VECCHIO (direttamente nel DB per bypassare integrità/segnali)
+        # 1. Inserimento manuale log VECCHIO
         with sqlite3.connect(audit_mgr.DB_PATH) as conn:
             past_date = "2020-01-01T10:00:00.000000"
             conn.execute(
@@ -49,19 +51,18 @@ class TestSprintAAuditBackup:
             )
             conn.commit()
 
-        # 2. Inserimento log NUOVO tramite manager (così appare in get_logs())
-        # Usiamo un'azione specifica per il test
+        # 2. Inserimento log NUOVO tramite manager (Asincrono)
         audit_mgr.log_action("NewAction", category="test")
+        audit_mgr._log_queue.join()
 
         # 3. Esegui pulizia
         audit_mgr.run_retention_policy(days=30)
+        audit_mgr._log_queue.join() # Anche la pulizia logga un'azione asincrona
 
         # 4. Verifica
         logs = audit_mgr.get_logs()
         actions = [log["action"] for log in logs]
 
-        # 'NewAction' deve esserci, 'Old' no.
-        # N.B. run_retention_policy aggiunge anche un log "Pulizia Log"
         assert "NewAction" in actions
         assert "Old" not in actions
 

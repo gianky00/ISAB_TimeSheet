@@ -32,7 +32,9 @@ def _print_exception_and_exit(exc_type, exc_value, exc_tb):
 
         crash_file = CONFIG_DIR / "crash.txt"
         with crash_file.open("a", encoding="utf-8") as f:
-            f.write(f"\n[{datetime.now(UTC).astimezone().strftime('%Y-%m-%d %H:%M:%S')}] NATIVE FATAL UNCAUGHT EXCEPTION:\n")
+            f.write(
+                f"\n[{datetime.now(UTC).astimezone().strftime('%Y-%m-%d %H:%M:%S')}] NATIVE FATAL UNCAUGHT EXCEPTION:\n"
+            )
             traceback.print_exception(exc_type, exc_value, exc_tb, file=f)
     sys.exit(1)
 
@@ -169,7 +171,7 @@ def main():
         text=True,
         bufsize=1,
         encoding="utf-8",
-        env=env
+        env=env,
     )
 
     def update_splash(msg: str, prog: int):
@@ -219,9 +221,7 @@ def main():
                 phase1_logger.info("Starting Phase 1 initialization")
 
                 # FASE 1 ora usa initialize_core con callback di progresso
-                success = AppInitializer.initialize_core(
-                    progress_callback=self.progress.emit
-                )
+                success = AppInitializer.initialize_core(progress_callback=self.progress.emit)
 
                 phase1_logger.info("Phase 1 completed", success=success)
                 if not success:
@@ -274,6 +274,7 @@ def main():
 
     # Visualizzazione Avvisi Accumulati (Non-Bloccanti ma importanti per l'utente)
     from src.core.app_initializer import AppInitializer
+
     for severity, message in AppInitializer.get_alerts():
         if severity in ("CRITICAL", "ERROR"):
             ConfirmationDialog.show_error(None, "Allerta Licenza", message, is_rich_text=True)

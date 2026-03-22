@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from src.gui.panels.scarico_ore_panel import ScaricoOrePanel
+from src.core.contabilita.scarico_ore.controller import ScaricoOreController
 
 
 class TestScaricoOrePanelDeep:
@@ -10,9 +11,9 @@ class TestScaricoOrePanelDeep:
     def panel(self, qapp, mocker):
         mocker.patch.object(ScaricoOrePanel, "_load_data")
         mocker.patch("src.core.contabilita_manager.ContabilitaManager.DB_PATH")
-        p = ScaricoOrePanel()
-        # Mock del controller per garantire formattazione prevedibile
-        p.controller.format_number = MagicMock(side_effect=lambda x: f"{x:.1f}".replace(".", ","))
+        mock_controller = MagicMock(spec=ScaricoOreController)
+        mock_controller.format_number.side_effect = lambda x: f"{x:.1f}".replace(".", ",")
+        p = ScaricoOrePanel(controller=mock_controller)
         return p
 
     def test_update_selection_totals(self, panel):

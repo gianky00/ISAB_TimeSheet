@@ -17,6 +17,7 @@ class ScreenshotProvider(Protocol):
         """Cattura lo screenshot dell'intero desktop (multi-monitor)."""
         ...
 
+
 class AppStatusProvider(Protocol):
     """Interfaccia per il recupero dello stato dell'app."""
 

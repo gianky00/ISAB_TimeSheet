@@ -280,7 +280,9 @@ class StoricoOdaPanel(QWidget):
 
         ToastManager.instance().show("Esportazione in corso...", "info")
         search_text = self.filters.search_input.text()
-        self.io_worker = OdaIOWorker("export", f, {"search_text": search_text, "headers": self.full_headers}, parent=self)
+        self.io_worker = OdaIOWorker(
+            "export", f, {"search_text": search_text, "headers": self.full_headers}, parent=self
+        )
         self.io_worker.finished_signal.connect(self._on_io_finished)
         self.io_worker.finished.connect(self.io_worker.deleteLater)
         self.io_worker.start()

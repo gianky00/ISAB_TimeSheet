@@ -28,7 +28,7 @@ def mock_update_url():
 @pytest.fixture
 def mock_msgbox(mocker):
     """Mock the whole QMessageBox class in the target module while preserving Enums."""
-    mock = mocker.patch("src.core.updater.gui.QMessageBox")
+    mock = mocker.patch("src.gui.dialogs.updater_dialog.QMessageBox")
     # Preserve StandardButton Enum for comparisons
     mock.StandardButton = QMessageBox.StandardButton
     return mock
@@ -38,8 +38,8 @@ def test_check_for_updates_no_url(mocker, mock_app_version, mock_msgbox):
     mocker.patch.object(version, "UPDATE_URL", None)
 
     # Patch functions in the GUI module
-    mocker.patch("src.core.updater.gui.get_web_update_info", return_value=None)
-    mocker.patch("src.core.updater.gui.get_network_update_info", return_value=None)
+    mocker.patch("src.gui.dialogs.updater_dialog.get_web_update_info", return_value=None)
+    mocker.patch("src.gui.dialogs.updater_dialog.get_network_update_info", return_value=None)
 
     check_for_updates(silent=False)
 
@@ -50,10 +50,10 @@ def test_check_for_updates_no_url(mocker, mock_app_version, mock_msgbox):
 def test_check_for_updates_no_new_version(mocker, mock_app_version, mock_update_url, mock_msgbox):
     # Simula versione uguale alla corrente
     mocker.patch(
-        "src.core.updater.gui.get_web_update_info",
+        "src.gui.dialogs.updater_dialog.get_web_update_info",
         return_value={"version": "1.0.0", "url": "http://download.url"},
     )
-    mocker.patch("src.core.updater.gui.get_network_update_info", return_value=None)
+    mocker.patch("src.gui.dialogs.updater_dialog.get_network_update_info", return_value=None)
 
     check_for_updates(silent=False)
 
@@ -67,20 +67,20 @@ def test_check_for_updates_no_new_version(mocker, mock_app_version, mock_update_
 def test_check_for_updates_new_version_download(mocker, mock_app_version, mock_update_url, mock_msgbox):
     # Simula versione nuova
     mocker.patch(
-        "src.core.updater.gui.get_web_update_info",
+        "src.gui.dialogs.updater_dialog.get_web_update_info",
         return_value={"version": "1.1.0", "url": "http://download.url"},
     )
-    mocker.patch("src.core.updater.gui.get_network_update_info", return_value=None)
+    mocker.patch("src.gui.dialogs.updater_dialog.get_network_update_info", return_value=None)
 
     # Mock delle dipendenze GUI/Sistema
     mock_msgbox.question.return_value = QMessageBox.StandardButton.Yes
     mocker.patch.object(AuditManager, "log_action")
-    mock_auto_update = mocker.patch("src.core.updater.gui.perform_auto_update")
+    mock_auto_update = mocker.patch("src.gui.dialogs.updater_dialog.perform_auto_update")
 
     # Mock HEAD request per la dimensione remota
     mock_resp = MagicMock()
     mock_resp.headers = {"content-length": "1000000"}
-    mocker.patch("src.core.updater.gui.requests.head", return_value=mock_resp)
+    mocker.patch("src.gui.dialogs.updater_dialog.requests.head", return_value=mock_resp)
 
     check_for_updates(silent=False)
 
@@ -90,17 +90,17 @@ def test_check_for_updates_new_version_download(mocker, mock_app_version, mock_u
 
 def test_check_for_updates_new_version_no_download(mocker, mock_app_version, mock_update_url, mock_msgbox):
     mocker.patch(
-        "src.core.updater.gui.get_web_update_info",
+        "src.gui.dialogs.updater_dialog.get_web_update_info",
         return_value={"version": "1.1.0", "url": "http://download.url"},
     )
-    mocker.patch("src.core.updater.gui.get_network_update_info", return_value=None)
+    mocker.patch("src.gui.dialogs.updater_dialog.get_network_update_info", return_value=None)
 
     mock_msgbox.question.return_value = QMessageBox.StandardButton.No
 
     # Mock HEAD request
     mock_resp = MagicMock()
     mock_resp.headers = {"content-length": "1000000"}
-    mocker.patch("src.core.updater.gui.requests.head", return_value=mock_resp)
+    mocker.patch("src.gui.dialogs.updater_dialog.requests.head", return_value=mock_resp)
 
     check_for_updates(silent=False)
 
@@ -108,8 +108,8 @@ def test_check_for_updates_new_version_no_download(mocker, mock_app_version, moc
 
 
 def test_check_for_updates_http_error(mocker, mock_app_version, mock_update_url, mock_msgbox):
-    mocker.patch("src.core.updater.gui.get_web_update_info", return_value=None)
-    mocker.patch("src.core.updater.gui.get_network_update_info", return_value=None)
+    mocker.patch("src.gui.dialogs.updater_dialog.get_web_update_info", return_value=None)
+    mocker.patch("src.gui.dialogs.updater_dialog.get_network_update_info", return_value=None)
 
     check_for_updates(silent=False)
 
@@ -118,10 +118,10 @@ def test_check_for_updates_http_error(mocker, mock_app_version, mock_update_url,
 
 def test_check_for_updates_silent_mode(mocker, mock_app_version, mock_update_url, mock_msgbox):
     mocker.patch(
-        "src.core.updater.gui.get_web_update_info",
+        "src.gui.dialogs.updater_dialog.get_web_update_info",
         return_value={"version": "1.0.0", "url": "http://download.url"},
     )
-    mocker.patch("src.core.updater.gui.get_network_update_info", return_value=None)
+    mocker.patch("src.gui.dialogs.updater_dialog.get_network_update_info", return_value=None)
 
     check_for_updates(silent=True)
 
@@ -130,10 +130,10 @@ def test_check_for_updates_silent_mode(mocker, mock_app_version, mock_update_url
 
 def test_check_for_updates_no_download_url_provided(mocker, mock_app_version, mock_update_url, mock_msgbox):
     mocker.patch(
-        "src.core.updater.gui.get_web_update_info",
+        "src.gui.dialogs.updater_dialog.get_web_update_info",
         return_value={"version": "1.1.0", "url": None},
     )
-    mocker.patch("src.core.updater.gui.get_network_update_info", return_value=None)
+    mocker.patch("src.gui.dialogs.updater_dialog.get_network_update_info", return_value=None)
 
     check_for_updates(silent=False)
 

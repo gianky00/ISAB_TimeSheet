@@ -20,7 +20,7 @@ class ConsuntivoPanel(QWidget):
     def __init__(self, controller: ConsuntivoController, parent: QWidget | None = None) -> None:
         """
         Inizializza il pannello consuntivo con iniezione del controller.
-        
+
         Args:
             controller: Istanza del controller per la logica di business.
             parent: Widget genitore opzionale.
@@ -42,7 +42,7 @@ class ConsuntivoPanel(QWidget):
         self.tabs.currentChanged.connect(self._on_tab_changed)
 
         self._tab_new = CreaNuovoTab(controller=self.controller)
-        self._tab_modify = ModificaEsistenteTab() # TODO: Aggiungere iniezione se serve
+        self._tab_modify = ModificaEsistenteTab()  # TODO: Aggiungere iniezione se serve
         self._tab_settings = ImpostazioniTab()
 
         self.tabs.addTab(self._tab_new, "Crea Nuovo")

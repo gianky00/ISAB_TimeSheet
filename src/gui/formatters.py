@@ -7,6 +7,7 @@ from PyQt6.QtCore import QAbstractTableModel, Qt
 
 # --- FORMATTERS ---
 
+
 def format_currency_smart(value: Any) -> str:
     """
     Formatta numeri in stile Euro contabile:

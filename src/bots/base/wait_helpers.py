@@ -13,9 +13,10 @@ Autore: Refactoring Sprint 2026-01
 
 import logging
 import time
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from contextlib import suppress
 from pathlib import Path
+from typing import Any
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -76,6 +77,101 @@ def wait_for_element_clickable(
     except TimeoutException:
         logger.warning(f"Element not clickable within timeout: {locator}")
         return None
+
+
+def wait_for_element_staleness(driver: WebDriver, element: WebElement, timeout: int = 10) -> bool:
+    """Attende che un elemento diventi stale (non più presente nel DOM)."""
+    try:
+        WebDriverWait(driver, timeout).until(EC.staleness_of(element))
+        return True
+    except TimeoutException:
+        return False
+
+
+# ============================================================================
+# CUSTOM CONDITIONS
+# ============================================================================
+
+
+def element_text_changes(locator: tuple[str, str], old_text: str) -> Callable[[WebDriver], bool]:
+    """Condition: il testo dell'elemento è diverso da quello fornito."""
+
+    def _predicate(driver: WebDriver) -> bool:
+        try:
+            element = driver.find_element(*locator)
+            return element.text.strip() != old_text.strip()
+        except Exception:
+            return True  # Se sparisce, consideriamo il testo cambiato
+
+    return _predicate
+
+
+def element_count_is(
+    locator: tuple[str, str],
+    exact_count: int | None = None,
+    min_count: int | None = None,
+    max_count: int | None = None,
+) -> Callable[[WebDriver], bool]:
+    """Condition: verifica il numero di elementi trovati."""
+
+    def _predicate(driver: WebDriver) -> bool:
+        elements = driver.find_elements(*locator)
+        count = len(elements)
+        if exact_count is not None:
+            return count == exact_count
+        if min_count is not None:
+            if max_count is not None:
+                return min_count <= count <= max_count
+            return count >= min_count
+        if max_count is not None:
+            return count <= max_count
+        return True
+
+    return _predicate
+
+
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
+
+
+def safe_click_with_retry(
+    driver: WebDriver,
+    locator: tuple[str, str],
+    retries: int = 3,
+    retry_delay: float = 1.0,
+    timeout: int = 10,
+) -> bool:
+    """
+    Tenta il click su un elemento gestendo overlay e intercettazioni temporanee.
+    """
+    from selenium.common.exceptions import ElementClickInterceptedException
+
+    for i in range(retries):
+        try:
+            element = wait_for_element_clickable(driver, locator, timeout)
+            if element:
+                element.click()
+                return True
+        except ElementClickInterceptedException:
+            logger.warning(f"Click intercettato su {locator}. Tentativo {i+1}/{retries}...")
+            time.sleep(retry_delay)
+        except Exception as e:
+            logger.error(f"Errore durante click su {locator}: {e}")
+            break
+    return False
+
+
+def execute_with_wait(
+    action: Callable[[], Any],
+    driver: WebDriver,
+    overlay_locator: tuple[str, str],
+    timeout: int = 30,
+) -> Any:
+    """Esegue un'azione e attende la scomparsa di un overlay."""
+    result = action()
+    wait_for_overlay_to_disappear(driver, overlay_locator, timeout)
+    return result
 
 
 # ============================================================================

@@ -26,6 +26,9 @@ class TestStatsManager:
         manager = StatsManager()
 
         manager.increment_usage("new_bot")
+        # Attendi il worker thread asincrono
+        manager._save_queue.join()
+
         assert manager.stats["new_bot"]["runs"] == 1
         assert manager.stats["new_bot"]["last_run"] is not None
         mock_set.assert_called_with("statistics", manager.stats)
@@ -37,6 +40,9 @@ class TestStatsManager:
         manager = StatsManager()
 
         manager.increment_error("bot1")
+        # Attendi il worker thread asincrono
+        manager._save_queue.join()
+
         assert manager.stats["bot1"]["errors"] == 2
         mock_set.assert_called_with("statistics", manager.stats)
 
