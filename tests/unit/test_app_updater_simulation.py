@@ -31,13 +31,14 @@ class TestAppUpdaterSimulation:
                 "version": "1.1.0",
                 "url": "http://download.exe",
                 "changelog": "Novità incredibili",
-            }
+            },
         )
         mocker.patch("src.gui.dialogs.updater_dialog.get_network_update_info", return_value=None)
 
         # Mock della UI
         mock_msg = mocker.patch("src.gui.dialogs.updater_dialog.QMessageBox.question")
         from PyQt6.QtWidgets import QMessageBox
+
         mock_msg.return_value = QMessageBox.StandardButton.Yes
 
         check_for_updates(silent=False)
@@ -54,7 +55,7 @@ class TestAppUpdaterSimulation:
         # Simula versione remota più vecchia
         mocker.patch(
             "src.gui.dialogs.updater_dialog.get_web_update_info",
-            return_value={"version": "0.9.0", "url": "http://old.exe"}
+            return_value={"version": "0.9.0", "url": "http://old.exe"},
         )
         mocker.patch("src.gui.dialogs.updater_dialog.get_network_update_info", return_value=None)
 

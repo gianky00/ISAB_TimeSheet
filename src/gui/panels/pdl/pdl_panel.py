@@ -7,6 +7,7 @@ Utilizza PDLController per la logica di business e PDLTableView per la griglia.
 import logging
 import os
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QPoint, Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -20,7 +21,6 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Icons
 from src.core.database import pdl_queries
 from src.core.pdl.pdl_controller import PDLController
-from src.core.pdl.pdl_dto import PdlRowDTO
 from src.core.sync_tracker import SyncTracker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.formatters import FastTableModel
@@ -32,6 +32,9 @@ from .pdl_detail_view import PDLDetailView
 from .pdl_filter_widget import PDLFilterWidget
 from .programmazione_tab import ProgrammazioneTab
 from .widgets.pdl_table import PDLTableView
+
+if TYPE_CHECKING:
+    from src.core.pdl.pdl_dto import PdlRowDTO
 
 logger = logging.getLogger(__name__)
 

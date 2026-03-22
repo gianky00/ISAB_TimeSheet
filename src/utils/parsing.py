@@ -36,22 +36,15 @@ def parse_currency(value: Any) -> float:
 
 def _normalize_string(s: str) -> tuple[str, bool]:
     """Rimuove simboli, testo inutile e gestisce il segno negativo."""
-    # Rimuovi simbolo valuta e testo "Euro"
-    s = s.replace("€", "").replace("$", "").replace("£", "")
-    s = re.sub(r"(?i)euro", "", s).strip()
-
-    # Gestione segno negativo
+    # Gestione segno negativo (cerca il meno prima di pulire tutto)
     is_negative = False
-    if s.startswith("-") or " - " in s or s.endswith("-"):
+    if "-" in s:
         is_negative = True
         s = s.replace("-", "").strip()
 
-    # Rimuovi caratteri invisibili
-    s = "".join(c for c in s if c.isprintable())
-
-    # Normalizza separatori multipli (es. ,, -> , o .. -> .)
-    s = re.sub(r",+", ",", s)
-    s = re.sub(r"\.+", ".", s)
+    # Rimuovi tutto ciò che non è numero, punto o virgola
+    # Manteniamo i separatori per il processing successivo
+    s = re.sub(r"[^0-9,.]", "", s).strip()
 
     return s, is_negative
 

@@ -55,7 +55,7 @@ class TestHardeningAuditSecurity:
         manager.log_action("Action 1")
         manager.log_action("Action 2")
         manager.log_action("Action 3")
-        manager._log_queue.join() # Attendi scrittura asincrona
+        manager._log_queue.join()  # Attendi scrittura asincrona
 
         assert manager.verify_integrity() is True
 

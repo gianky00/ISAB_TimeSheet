@@ -93,19 +93,19 @@ class ContabilitaSyncEngine(BaseSyncEngine):
     ) -> tuple[int, int]:
         """Calcola aggiunti e rimossi usando EXCEPT."""
         safe_table = cls._validate_identifier(table_name)
-        safe_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in columns])
+        ", ".join([f'"{cls._validate_identifier(c)}"' for c in columns])
         safe_cast_cols = ", ".join([f'CAST("{cls._validate_identifier(c)}" AS TEXT)' for c in columns])
 
         where_clause = "WHERE year = ?" if year is not None else ""
         params = (year,) if year is not None else ()
 
-        # Aggiunti
-        q_added = f"SELECT COUNT(*) FROM (SELECT {safe_cols} FROM temp_{safe_table} {where_clause} EXCEPT SELECT {safe_cast_cols} FROM {safe_table} {where_clause})"  # nosec B608
+        # Aggiunti: righe in TEMP che NON sono nel DB reale
+        q_added = f"SELECT COUNT(*) FROM (SELECT {safe_cast_cols} FROM temp_{safe_table} {where_clause} EXCEPT SELECT {safe_cast_cols} FROM {safe_table} {where_clause})"  # nosec B608
         cursor.execute(q_added, params + params)
         added = cursor.fetchone()[0]
 
-        # Rimossi
-        q_removed = f"SELECT COUNT(*) FROM (SELECT {safe_cast_cols} FROM {safe_table} {where_clause} EXCEPT SELECT {safe_cols} FROM temp_{safe_table} {where_clause})"  # nosec B608
+        # Rimossi: righe nel DB reale che NON sono in TEMP
+        q_removed = f"SELECT COUNT(*) FROM (SELECT {safe_cast_cols} FROM {safe_table} {where_clause} EXCEPT SELECT {safe_cast_cols} FROM temp_{safe_table} {where_clause})"  # nosec B608
         cursor.execute(q_removed, params + params)
         removed = cursor.fetchone()[0]
 

@@ -91,7 +91,9 @@ class TestDettagliOdaComprehensive:
         mock_driver = MagicMock()
 
         # Mock WebDriverWait prima dell'istanziazione
-        with patch("src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.WebDriverWait") as mock_wait:
+        with patch(
+            "src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.WebDriverWait"
+        ) as mock_wait:
             mock_wait.return_value.until.return_value = MagicMock()
             page = DettagliOdAPage(mock_driver)
             res = page.setup_supplier("COEMI")
@@ -100,7 +102,9 @@ class TestDettagliOdaComprehensive:
     def test_page_logout_flow(self):
         mock_driver = MagicMock()
 
-        with patch("src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.WebDriverWait") as mock_wait:
+        with patch(
+            "src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.WebDriverWait"
+        ) as mock_wait:
             mock_wait.return_value.until.return_value = MagicMock()
             page = DettagliOdAPage(mock_driver)
             res = page.logout()

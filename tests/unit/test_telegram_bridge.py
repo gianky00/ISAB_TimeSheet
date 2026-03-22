@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -20,7 +20,7 @@ class TestTelegramUIBridge:
         mocker.patch("src.core.telegram_bridge.TelegramDataProcessor")
         mocker.patch("src.core.telegram_bridge.TelegramSystemHandler")
         mocker.patch("src.core.telegram_bridge.TelegramIntentHandler")
-        
+
         return TelegramUIBridge(mock_mw)
 
     def test_setup_connections(self, bridge):

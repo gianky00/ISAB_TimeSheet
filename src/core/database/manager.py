@@ -165,7 +165,8 @@ class DatabaseManager:
                     self._write_lock.acquire()
 
                 try:
-                    with self.get_connection(db_path) as conn:
+                    # Passa read_only=not is_write per ottimizzare concorrenza
+                    with self.get_connection(db_path, read_only=not is_write) as conn:
                         cursor = conn.cursor()
                         cursor.execute(query, params)
                         if not is_write:
@@ -199,7 +200,8 @@ class DatabaseManager:
         try:
             res = conn.execute("PRAGMA user_version").fetchone()
             return int(res[0]) if res else 0
-        except Exception:
+        except Exception as e:
+            logger.error(f"Errore recupero versione database: {e}")
             return 0
 
     def _set_db_version(self, conn: sqlite3.Connection, version: int) -> None:

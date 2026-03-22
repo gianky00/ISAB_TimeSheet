@@ -14,6 +14,7 @@ def mock_gui_deps(mocker):
     mocker.patch("src.core.config_manager.load_config", return_value={})
     return mocker
 
+
 class TestScaricoPDLPanel:
     @patch("src.gui.panels.base.BotWorker")
     def test_telegram_send_after_finish(self, mock_worker_cls, qapp, qtbot, mock_gui_deps):

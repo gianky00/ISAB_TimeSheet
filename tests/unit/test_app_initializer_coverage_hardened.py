@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock
-
 import pytest
 
 from src.core.app_initializer import AppInitializer

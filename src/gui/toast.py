@@ -60,6 +60,8 @@ class ToastOverlay(QWidget):
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self.hide_toast)
 
+        self.anim.finished.connect(self.hide)
+
         self.hide()
 
     def show_toast(self, message: str, duration: int = 3000) -> None:
@@ -89,5 +91,3 @@ class ToastOverlay(QWidget):
         self.anim.setStartValue(1)
         self.anim.setEndValue(0)
         self.anim.start()
-        # In PyQt6, connect returns a connection object, but we just need to ensure the slot is called
-        self.anim.finished.connect(self.hide)

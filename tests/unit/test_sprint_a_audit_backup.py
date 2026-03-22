@@ -57,7 +57,7 @@ class TestSprintAAuditBackup:
 
         # 3. Esegui pulizia
         audit_mgr.run_retention_policy(days=30)
-        audit_mgr._log_queue.join() # Anche la pulizia logga un'azione asincrona
+        audit_mgr._log_queue.join()  # Anche la pulizia logga un'azione asincrona
 
         # 4. Verifica
         logs = audit_mgr.get_logs()

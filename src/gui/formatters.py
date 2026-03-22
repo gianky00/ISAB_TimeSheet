@@ -22,10 +22,14 @@ def format_currency_smart(value: Any) -> str:
         if isinstance(value, str):
             # Rimuove simboli valuta e spazi
             clean_val = value.replace("€", "").strip()
-            # Gestione formati IT (1.234,56) vs EN (1,234.56)
+            # Gestione intelligente formati IT (1.234,56) vs EN (1,234.56)
             if "," in clean_val and "." in clean_val:
-                # Se entrambi presenti, assumiamo IT (punto migliaia, virgola decimale)
-                clean_val = clean_val.replace(".", "").replace(",", ".")
+                if clean_val.find(".") < clean_val.find(","):
+                    # Punto prima della virgola -> IT (1.234,56)
+                    clean_val = clean_val.replace(".", "").replace(",", ".")
+                else:
+                    # Virgola prima del punto -> EN (1,234.56)
+                    clean_val = clean_val.replace(",", "")
             elif "," in clean_val:
                 # Solo virgola -> decimale IT
                 clean_val = clean_val.replace(",", ".")

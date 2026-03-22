@@ -69,7 +69,7 @@ class TestControllersCoverage:
         """Verifica che la ricerca OdA inoltri i risultati correttamente."""
         ctrl = SearchController(mw)
         mock_menu = MagicMock()
-        
+
         matches = [{"codice_oda": "123", "descrizione": "D"}]
         count = ctrl._add_oda_matches(matches, mock_menu)
         assert count == 1

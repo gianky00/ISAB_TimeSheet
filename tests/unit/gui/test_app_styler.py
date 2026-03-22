@@ -1,6 +1,7 @@
-import pytest
 from unittest.mock import MagicMock
+
 from src.gui.main_window.app_styler import AppStyler
+
 
 class TestAppStyler:
     """Test di copertura per la configurazione dello stile globale dell'applicazione."""

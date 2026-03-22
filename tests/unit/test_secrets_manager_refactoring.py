@@ -95,7 +95,7 @@ def test_is_available():
     SecretsManager._keyring_available = None
     with patch("keyring.get_password", return_value="ok"):
         assert SecretsManager.is_available() is True
-    
+
     SecretsManager._keyring_available = None
     with patch("keyring.get_password", side_effect=Exception()):
         assert SecretsManager.is_available() is False

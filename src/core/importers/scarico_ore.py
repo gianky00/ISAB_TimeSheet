@@ -230,8 +230,13 @@ class ScaricoOreImporter(BaseImporter):
         def _fmt(val: Any) -> str:
             if val is None:
                 return ""
-            s = str(val).strip()
-            return s.replace("\n", " ") if s else ""
+            # Se è un numero intero rappresentato come float (comune in Excel), converti in int
+            if isinstance(val, (float, int)) and float(val).is_integer():
+                val = int(val)
+            s = str(val)
+            # Sostituisce newline e sequence di spazi con un singolo spazio
+            s = re.sub(r"\s+", " ", s).strip()
+            return s if s else ""
 
         vals = []
         v_data = c_data.value

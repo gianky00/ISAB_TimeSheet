@@ -142,25 +142,51 @@ class ContabilitaImporter(BaseImporter):
 
             if not df.empty:
                 df = df.iloc[:-1]  # Rimuovi riga dei totali solitamente presente
+
+            # Pulizia preliminare righe vuote
             df.dropna(how="all", inplace=True)
 
             if df.empty:
                 return []
 
             df["year"] = year
-            df = cls._ensure_required_columns(cls._normalize_columns(df))
+            df = cls._normalize_columns(df)
+            df = cls._ensure_required_columns(df)
 
             # Preparazione finale dati
             target_columns = ["year", *list(cls.COLUMNS_MAPPING.values())]
             df = df[target_columns].copy()
 
             # --- Gestione Tipi Intelligente ---
+            def _clean_numeric(val: Any) -> float:
+                if pd_obj.isna(val) or val == "":
+                    return 0.0
+                if isinstance(val, (int, float)):
+                    return float(val)
+                # Gestione stringhe con formati IT/EN (1.234,56 o 1,234.56)
+                s = str(val).strip().replace("€", "").replace(" ", "")
+                if not s:
+                    return 0.0
+                try:
+                    # Se ha sia punto che virgola, determiniamo il formato
+                    if "." in s and "," in s:
+                        if s.find(".") < s.find(","):  # IT: 1.234,56
+                            s = s.replace(".", "").replace(",", ".")
+                        else:  # EN: 1,234.56
+                            s = s.replace(",", "")
+                    else:
+                        # Solo uno dei due: se è virgola, è decimale IT
+                        s = s.replace(",", ".")
+                    return float(s)
+                except ValueError:
+                    return 0.0
+
             for col in df.columns:
                 if col == "year":
                     continue
 
                 if col in ("totale_prev", "ore_sp"):
-                    df[col] = pd_obj.to_numeric(df[col], errors="coerce").fillna(0.0).astype(float)
+                    df[col] = df[col].apply(_clean_numeric)
                     df[col] = df[col].round(2)
 
                 elif col == "data_prev":
@@ -189,50 +215,59 @@ class ContabilitaImporter(BaseImporter):
             return list(df.itertuples(index=False, name=None))
         except Exception as e:
             logger.warning(f"Errore processamento foglio {sheet_name}: {e}")
+            import traceback
+
+            logger.debug(traceback.format_exc())
             return []
 
     @classmethod
     def _find_header_row(cls, xls: Any, sheet_name: str) -> int:
         """Cerca l'indice della riga di intestazione basandosi su colonne chiave."""
         preview_df = cls._get_pd().read_excel(xls, sheet_name=sheet_name, header=None, nrows=15)
+
+        # Normalizzazione aggressiva per il confronto
+        def _norm(v: Any) -> str:
+            return (
+                str(v)
+                .strip()
+                .upper()
+                .replace(" ", "")
+                .replace(".", "")
+                .replace("°", "")
+                .replace("Â", "")
+                .replace("N", "N")
+            )
+
         key_cols_norm = ["DATAPREV", "MESE", "NPREV", "TOTALEPREV", "ATTIVITA", "ODC"]
 
         for i_raw, row in preview_df.iterrows():
-            if (
-                sum(
-                    1
-                    for k in key_cols_norm
-                    if k
-                    in (
-                        str(val).strip().upper().replace(" ", "").replace(".", "").replace("Â°", "")
-                        for val in row.values
-                    )
-                )
-                >= 2
-            ):
+            row_vals = [_norm(val) for val in row.values]
+            if sum(1 for k in key_cols_norm if k in row_vals) >= 2:
                 return int(i_raw)
         return 0
 
     @classmethod
     def _normalize_columns(cls, df: pd.DataFrame) -> pd.DataFrame:
         """Rinomina le colonne del DataFrame usando la mappa interna."""
+
+        def _norm(v: Any) -> str:
+            return str(v).strip().upper().replace(" ", "").replace(".", "").replace("°", "").replace("Â", "")
+
         normalized_map = {}
         for k, v in cls.COLUMNS_MAPPING.items():
-            norm_k = k.upper().replace(" ", "").replace(".", "").replace("°", "")
-            normalized_map[norm_k] = v
+            normalized_map[_norm(k)] = v
 
         rename_map = {}
         for col in df.columns:
-            col_str = col.strip().upper()
-            norm_col = col_str.replace(" ", "").replace(".", "").replace("°", "")
-
+            norm_col = _norm(col)
             if norm_col in normalized_map:
                 rename_map[col] = normalized_map[norm_col]
             else:
                 if "PREV" in norm_col and "DATA" in norm_col:
                     rename_map[col] = "data_prev"
-                elif "PREV" in norm_col and ("NUM" in norm_col or "N." in norm_col):
+                elif "PREV" in norm_col and ("NUM" in norm_col or "N" in norm_col):
                     rename_map[col] = "n_prev"
+
         df.rename(columns=rename_map, inplace=True)
         return df
 

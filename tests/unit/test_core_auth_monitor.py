@@ -16,6 +16,7 @@ class TestAuthMonitor:
     def test_build_access_maps_logic(self, mocker):
         # Format: cog, nom, cf, last_date_str
         from datetime import UTC
+
         fixed_now = datetime(2026, 3, 21, 12, 0, 0, tzinfo=UTC)
         mock_dt = mocker.patch("src.core.auth_monitor.datetime")
         mock_dt.now.return_value = fixed_now
@@ -48,11 +49,12 @@ class TestAuthMonitor:
     @patch("src.core.auth_monitor.db_manager")
     def test_check_expiring_authorizations(self, mock_db, mocker):
         from datetime import UTC
+
         # Mocking datetime.now(UTC)
         fixed_now = datetime(2026, 3, 21, 12, 0, 0, tzinfo=UTC)
         mock_dt = mocker.patch("src.core.auth_monitor.datetime")
         mock_dt.now.return_value = fixed_now
-        mock_dt.strptime = datetime.strptime # Preserve strptime
+        mock_dt.strptime = datetime.strptime  # Preserve strptime
 
         today = fixed_now
         d35 = (today - timedelta(days=35)).strftime("%Y-%m-%d")  # Expired

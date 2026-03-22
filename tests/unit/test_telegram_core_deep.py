@@ -18,7 +18,7 @@ class TestTelegramCoreDeep:
         mock_update.message.reply_text = AsyncMock()
 
         await messages.handle_voice(service, mock_update, mock_context)
-        
+
         # Verifica che risponda correttamente con il messaggio di non supporto
         mock_update.message.reply_text.assert_called_once()
         args = mock_update.message.reply_text.call_args[0][0]

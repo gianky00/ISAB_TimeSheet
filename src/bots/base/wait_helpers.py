@@ -154,7 +154,7 @@ def safe_click_with_retry(
                 element.click()
                 return True
         except ElementClickInterceptedException:
-            logger.warning(f"Click intercettato su {locator}. Tentativo {i+1}/{retries}...")
+            logger.warning(f"Click intercettato su {locator}. Tentativo {i + 1}/{retries}...")
             time.sleep(retry_delay)
         except Exception as e:
             logger.error(f"Errore durante click su {locator}: {e}")

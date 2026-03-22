@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from telegram import CallbackQuery, Chat, Message, Update, User
 
-from src.core.telegram.handlers import callbacks, commands, messages
+from src.core.telegram.handlers import callbacks, messages
 from src.core.telegram_manager import TelegramService
 
 
