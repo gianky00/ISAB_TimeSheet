@@ -15,17 +15,17 @@ class TestFastTableModel:
     def headers(self):
         return ["Header1", "Header2"]
 
-    def test_init(self, sample_data, headers):
+    def test_init(self, sample_data, headers):  # noqa: ANN001
         model = FastTableModel(sample_data, headers)
-        assert model.rowCount() == 2
-        assert model.columnCount() == 2
+        assert model.rowCount() == 2  # noqa: PLR2004
+        assert model.columnCount() == 2  # noqa: PLR2004
 
     def test_init_empty(self):
         model = FastTableModel()
         assert model.rowCount() == 0
         assert model.columnCount() == 0
 
-    def test_data_display(self, sample_data, headers):
+    def test_data_display(self, sample_data, headers):  # noqa: ANN001
         model = FastTableModel(sample_data, headers)
 
         # Create index mock or use model.index if QApplication is active (but we want to avoid Qt dependence if possible)
@@ -37,18 +37,18 @@ class TestFastTableModel:
         # Let's try mocking the index object since FastTableModel.data just calls index.row() and index.column().
 
         class MockIndex:
-            def __init__(self, r, c, valid=True):
+            def __init__(self, r, c, valid=True):  # noqa: ANN001, ANN204
                 self._r = r
                 self._c = c
                 self._valid = valid
 
-            def row(self):
+            def row(self):  # noqa: ANN202
                 return self._r
 
-            def column(self):
+            def column(self):  # noqa: ANN202
                 return self._c
 
-            def isValid(self):
+            def isValid(self):  # noqa: ANN202, N802
                 return self._valid
 
         idx = MockIndex(0, 1)
@@ -60,28 +60,28 @@ class TestFastTableModel:
         # Test invalid role
         assert model.data(idx, Qt.ItemDataRole.ToolTipRole) is None
 
-    def test_data_alignment(self, sample_data):
+    def test_data_alignment(self, sample_data):  # noqa: ANN001
         model = FastTableModel(sample_data)
 
         class MockIndex:
-            def __init__(self, r, c):
+            def __init__(self, r, c):  # noqa: ANN001, ANN204
                 self._r = r
                 self._c = c
 
-            def row(self):
+            def row(self):  # noqa: ANN202
                 return self._r
 
-            def column(self):
+            def column(self):  # noqa: ANN202
                 return self._c
 
-            def isValid(self):
+            def isValid(self):  # noqa: ANN202, N802
                 return True
 
         idx = MockIndex(0, 0)
         align = model.data(idx, Qt.ItemDataRole.TextAlignmentRole)
         assert align == Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
-    def test_header_data(self, headers):
+    def test_header_data(self, headers):  # noqa: ANN001
         model = FastTableModel([], headers)
         assert model.headerData(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole) == "Header1"
         assert model.headerData(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole) == "Header2"
@@ -90,7 +90,7 @@ class TestFastTableModel:
         assert model.headerData(0, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole) is None
         assert model.headerData(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole) is None
 
-    def test_update_data(self, sample_data):
+    def test_update_data(self, sample_data):  # noqa: ANN001
         model = FastTableModel(sample_data)
         new_data = [["New1", "New2"]]
 

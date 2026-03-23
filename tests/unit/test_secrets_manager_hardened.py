@@ -10,7 +10,7 @@ from src.core.secrets_manager import SecretsManager
 
 
 class TestSecretsManagerHardened:
-    def test_get_license_key_env_priority(self, mocker):
+    def test_get_license_key_env_priority(self, mocker):  # noqa: ANN001
         """Verifica che la variabile d'ambiente abbia la priorità massima."""
         encoded_key = base64.urlsafe_b64encode(b"my_env_key").decode()
         mocker.patch.dict(os.environ, {"SYNCROJOB_LICENSE_KEY": encoded_key})
@@ -22,7 +22,7 @@ class TestSecretsManagerHardened:
         key = SecretsManager.get_license_key()
         assert key == encoded_key.encode("utf-8")
 
-    def test_get_license_key_fallback(self, mocker):
+    def test_get_license_key_fallback(self, mocker):  # noqa: ANN001
         """Verifica il fallback sulla chiave hardcoded se tutto il resto manca."""
         mocker.patch.dict(os.environ, {}, clear=True)
         mocker.patch.object(SecretsManager, "_get_key_from_env_file", return_value=None)
@@ -31,9 +31,9 @@ class TestSecretsManagerHardened:
         key = SecretsManager.get_license_key()
         assert key is not None
         # La chiave generata è in formato base64 urlsafe
-        assert len(base64.urlsafe_b64decode(key)) == 32
+        assert len(base64.urlsafe_b64decode(key)) == 32  # noqa: PLR2004
 
-    def test_keyring_store_retrieve(self, mocker):
+    def test_keyring_store_retrieve(self, mocker):  # noqa: ANN001
         """Testa l'integrazione con keyring (mocked)."""
         mock_keyring = mocker.patch("src.core.secrets_manager.keyring")
 
@@ -59,7 +59,7 @@ class TestSecretsManagerHardened:
         key3 = SecretsManager.derive_key("different", salt)
         assert key1 != key3
 
-    def test_delete_credential_handling(self, mocker):
+    def test_delete_credential_handling(self, mocker):  # noqa: ANN001
         """Verifica la gestione sicura dell'eliminazione (anche se fallisce)."""
         # Patchiamo keyring e la sua sottoclasse errors in modo che l'exception sia valida
         mock_keyring = mocker.patch("src.core.secrets_manager.keyring")

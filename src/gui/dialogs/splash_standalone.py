@@ -44,7 +44,7 @@ class SplashCommunicator(QObject):
 class StandaloneSplash(StartupDialog):
     """Estensione dello StartupDialog con logging aggiuntivo e fix visibilità."""
 
-    def __init__(self):
+    def __init__(self):  # noqa: ANN204
         super().__init__()
         # Forza opacità iniziale se l'animazione fallisse
         self.setWindowOpacity(1.0)
@@ -52,18 +52,18 @@ class StandaloneSplash(StartupDialog):
         self.raise_()
         self.activateWindow()
 
-    def update_status(self, message: str, progress: int):
+    def update_status(self, message: str, progress: int):  # noqa: ANN201
         logger.info(f"UI UPDATE EXEC: {message} | {progress}%")
         super().update_status(message, progress)
 
 
-def run_standalone():
+def run_standalone():  # noqa: ANN201
     """Main loop dello splash screen standalone."""
     logger.info("Splash standalone process starting...")
 
     # Forza encoding UTF-8 per la comunicazione
     if sys.platform == "win32":
-        import ctypes
+        import ctypes  # noqa: PLC0415
 
         kernel32 = ctypes.windll.kernel32
         kernel32.SetConsoleCP(65001)
@@ -85,9 +85,9 @@ def run_standalone():
     comm.update_signal.connect(splash.update_status)
     comm.close_signal.connect(splash.close)
 
-    def read_stdin():
+    def read_stdin():  # noqa: ANN202
         logger.info("Stdin reader thread active")
-        import io
+        import io  # noqa: PLC0415
 
         # Usiamo il buffer binario per evitare problemi di encoding su Windows
         input_stream = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", line_buffering=True)
@@ -109,14 +109,14 @@ def run_standalone():
                 if command == "update":
                     msg = data.get("msg", "")
                     prog = int(data.get("prog", 0))
-                    # logger.info(f"Signal emitted: {msg} ({prog}%)") # Troppo rumoroso
+                    # logger.info(f"Signal emitted: {msg} ({prog}%)") # Troppo rumoroso  # noqa: ERA001
                     comm.update_signal.emit(msg, prog)
                 elif command == "close":
                     logger.info("Close signal emitted")
                     comm.close_signal.emit()
                     break
             except Exception as e:
-                logger.error(f"Error in stdin reader: {e}")
+                logger.error(f"Error in stdin reader: {e}")  # noqa: TRY400
                 continue
 
     input_thread = threading.Thread(target=read_stdin, daemon=True)

@@ -19,7 +19,7 @@ class OdaIOWorker(QThread):
 
     finished_signal = pyqtSignal(bool, str, dict)  # success, message, stats
 
-    def __init__(self, mode: str, file_path: str, extra_data: Any = None, parent=None):
+    def __init__(self, mode: str, file_path: str, extra_data: Any = None, parent=None):  # noqa: ANN001, ANN204, ANN401
         """
         Inizializza il worker.
 
@@ -33,7 +33,7 @@ class OdaIOWorker(QThread):
         self.file_path = file_path
         self.extra_data = extra_data
 
-    def run(self):
+    def run(self):  # noqa: ANN201
         """Esegue l'operazione richiesta in background."""
         try:
             if self.mode == "import":
@@ -41,16 +41,16 @@ class OdaIOWorker(QThread):
             elif self.mode == "export":
                 self._run_export()
         except Exception as e:
-            logger.error(f"OdaIOWorker Error ({self.mode}): {e}")
+            logger.error(f"OdaIOWorker Error ({self.mode}): {e}")  # noqa: TRY400
             self.finished_signal.emit(False, str(e), {})
 
-    def _run_import(self):
+    def _run_import(self):  # noqa: ANN202
         """Esegue l'importazione Excel nel DB."""
         success, message, added, removed = OdaManager.import_oda_from_excel(self.file_path)
         stats = {"added": added, "removed": removed}
         self.finished_signal.emit(success, message, stats)
 
-    def _run_export(self):
+    def _run_export(self):  # noqa: ANN202
         """Esegue l'esportazione dal DB a Excel."""
         search_text = self.extra_data.get("search_text", "")
         headers = self.extra_data.get("headers", [])

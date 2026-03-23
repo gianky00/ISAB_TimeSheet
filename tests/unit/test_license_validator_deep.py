@@ -13,7 +13,7 @@ from src.core.license_validator import (
 class TestLicenseValidatorDeep:
     @patch("platform.system", return_value="Windows")
     @patch("subprocess.check_output")
-    def test_get_hardware_id_windows_wmic(self, mock_sub, mock_platform):
+    def test_get_hardware_id_windows_wmic(self, mock_sub, mock_platform):  # noqa: ANN001
         mock_sub.return_value = b"SerialNumber\nABC-123\n"
         hwid = get_hardware_id()
         assert hwid == "ABC-123"
@@ -21,15 +21,15 @@ class TestLicenseValidatorDeep:
     @patch("platform.system", return_value="Linux")
     @patch("subprocess.check_output")
     @patch("os.path.exists", return_value=True)
-    def test_get_hardware_id_linux_lsblk(self, mock_exists, mock_sub, mock_platform):
+    def test_get_hardware_id_linux_lsblk(self, mock_exists, mock_sub, mock_platform):  # noqa: ANN001, PLR0915
         mock_sub.return_value = b"SN-LINUX-456\n"
         hwid = get_hardware_id()
         assert hwid == "SN-LINUX-456"
 
         @patch("src.core.license_validator.SecretsManager.get_license_key")
         @patch("src.core.license_validator._get_license_paths")
-        def test_get_license_info_decryption(self, mock_paths, mock_get_key):
-            from pathlib import Path
+        def test_get_license_info_decryption(self, mock_paths, mock_get_key):  # noqa: ANN001, ANN202
+            from pathlib import Path  # noqa: PLC0415
 
             config_path = Path("fake.dat")
 
@@ -41,7 +41,7 @@ class TestLicenseValidatorDeep:
 
             mock_get_key.return_value = key
 
-            from cryptography.fernet import Fernet
+            from cryptography.fernet import Fernet  # noqa: PLC0415
 
             key_b64 = base64.urlsafe_b64encode(key)
 
@@ -62,8 +62,8 @@ class TestLicenseValidatorDeep:
                     assert info["Cliente"] == "Test Client"
 
         @patch("src.core.license_validator._get_license_paths")
-        def test_detailed_status_integrity_fail(self, mock_paths):
-            from pathlib import Path
+        def test_detailed_status_integrity_fail(self, mock_paths):  # noqa: ANN001, ANN202
+            from pathlib import Path  # noqa: PLC0415
 
             mock_paths.return_value = {
                 "dir": Path("dir"),
@@ -100,8 +100,8 @@ class TestLicenseValidatorDeep:
             "src.core.license_validator._check_integrity_with_manifest",
             return_value=(LicenseStatus.VALID, ""),
         )
-        def test_detailed_status_hardware_mismatch(self, mock_integrity, mock_hwid, mock_info):
-            from pathlib import Path
+        def test_detailed_status_hardware_mismatch(self, mock_integrity, mock_hwid, mock_info):  # noqa: ANN001, ANN202
+            from pathlib import Path  # noqa: PLC0415
 
             mock_info.return_value = {"Hardware ID": "OTHER-HW", "Cliente": "C1"}
 
@@ -119,9 +119,9 @@ class TestLicenseValidatorDeep:
             return_value=(LicenseStatus.VALID, ""),
         )
         @patch("src.core.license_validator.get_trusted_time")
-        def test_detailed_status_expired(self, mock_trusted_time, mock_integrity, mock_hwid, mock_info):
-            from datetime import datetime
-            from pathlib import Path
+        def test_detailed_status_expired(self, mock_trusted_time, mock_integrity, mock_hwid, mock_info):  # noqa: ANN001, ANN202
+            from datetime import datetime  # noqa: PLC0415
+            from pathlib import Path  # noqa: PLC0415
 
             mock_info.return_value = {
                 "Hardware ID": "MY-HW",
@@ -141,8 +141,8 @@ class TestLicenseValidatorDeep:
 
         @patch("platform.system", return_value="Linux")
         @patch("builtins.open", MagicMock())
-        def test_get_hardware_id_linux_machine_id(self, mock_platform):
-            from pathlib import Path
+        def test_get_hardware_id_linux_machine_id(self, mock_platform):  # noqa: ANN001, ANN202
+            from pathlib import Path  # noqa: PLC0415
 
             # Fail lsblk, fallback to machine-id
 

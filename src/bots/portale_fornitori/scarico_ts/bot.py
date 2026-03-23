@@ -13,7 +13,7 @@ from typing import Any, ClassVar
 
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 
 from src.bots.base import BaseBot, StepStatus
 from src.core.timesheet_processor import TimesheetProcessor
@@ -60,12 +60,12 @@ class ScaricaTSBot(BaseBot):
     def description(self) -> str:
         return "Scarica i timesheet dal portale ISAB"
 
-    def __init__(
+    def __init__(  # noqa: ANN204
         self,
         data_da: str | None = None,
         fornitore: str = "",
         elabora_ts: bool = False,
-        **kwargs,
+        **kwargs,  # noqa: ANN003
     ):
         """
         Inizializza il bot.
@@ -144,7 +144,7 @@ class ScaricaTSBot(BaseBot):
             self.log(f"❌ Errore imprevisto nel flusso run: {e}")
             return False
 
-    def _prepare_run_environment(self, data: Any) -> tuple[list[dict[str, Any]], Path]:
+    def _prepare_run_environment(self, data: Any) -> tuple[list[dict[str, Any]], Path]:  # noqa: ANN401
         """Estrae i dati e prepara la directory di destinazione."""
         rows: list[dict[str, Any]]
         if isinstance(data, dict):
@@ -237,12 +237,12 @@ class ScaricaTSBot(BaseBot):
             self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_cerca))).click()
 
             self._attendi_scomparsa_overlay(90)
-            return True
+            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"⚠️ Errore durante l'inserimento ricerca OdA {numero_oda}: {e}")
             return False
 
-    def _run_vba_processing(self, file_list: list[str], dest_dir: Path):
+    def _run_vba_processing(self, file_list: list[str], dest_dir: Path):  # noqa: ANN202
         """Esegue il post-processing stile VBA (TimesheetProcessor)."""
         self.log(f"⚙️ Avvio elaborazione TS (Logica VBA) su {len(file_list)} file...")
         processed = 0
@@ -278,7 +278,7 @@ class ScaricaTSBot(BaseBot):
             self.wait.until(EC.visibility_of_element_located((By.XPATH, fornitore_arrow_xpath)))
             self._attendi_scomparsa_overlay()
 
-            return True
+            return True  # noqa: TRY300
 
         except Exception as e:
             self.log(f"❌ Impossibile navigare al menu Timesheet: {e}")
@@ -314,7 +314,7 @@ class ScaricaTSBot(BaseBot):
             campo_data_da.clear()
             campo_data_da.send_keys(self.data_da)
 
-            return True
+            return True  # noqa: TRY300
 
         except Exception as e:
             self.log(f"❌ Errore nell'impostazione dei filtri: {e}")
@@ -367,7 +367,7 @@ class ScaricaTSBot(BaseBot):
         try:
             btn = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             btn.click()
-            return True
+            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"⚠️ Impossibile cliccare esportazione Excel: {e}")
             return False
@@ -425,7 +425,7 @@ class ScaricaTSBot(BaseBot):
             try:
                 shutil.move(str(src), str(dest))
                 self.log(f"✅ Scaricato: {dest.name}")
-                return dest
+                return dest  # noqa: TRY300
             except Exception as e:
                 self.log(f"⚠️ Tentativo spostamento {attempt + 1}/3 fallito: {e}")
                 time.sleep(1)

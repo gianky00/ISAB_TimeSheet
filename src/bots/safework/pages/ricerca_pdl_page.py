@@ -10,7 +10,7 @@ from contextlib import suppress
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.safework.common.locators import SafeWorkLocators
@@ -19,14 +19,14 @@ from src.bots.safework.common.locators import SafeWorkLocators
 class RicercaPDLPage:
     """Page Object per la pagina di ricerca PDL."""
 
-    def __init__(
+    def __init__(  # noqa: ANN204
         self, driver: webdriver.Chrome, wait: WebDriverWait[webdriver.Chrome], log_func: Callable[[str], None]
     ):
         self.driver = driver
         self.wait = wait
         self.log = log_func
 
-    def configura_filtro_chiusi(self, exclude_closed: bool):
+    def configura_filtro_chiusi(self, exclude_closed: bool):  # noqa: ANN201
         """Imposta il filtro 'Escludi chiusi'."""
         try:
             checkbox = self.wait.until(
@@ -71,12 +71,12 @@ class RicercaPDLPage:
             # 4. Attesa Overlay (Post-Search)
             self._attendi_scomparsa_overlay(timeout_secondi=300)
 
-            return True
+            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"❌ Errore selezione/ricerca (Main Logic): {e}")
             return False
 
-    def _attendi_scomparsa_overlay(self, timeout_secondi=300):
+    def _attendi_scomparsa_overlay(self, timeout_secondi=300):  # noqa: ANN001, ANN202
         """Attende la scomparsa dell'overlay di caricamento (GISWaitOverlay)."""
         with suppress(TimeoutException):
             # Verifica preliminare se l'overlay è visibile
@@ -90,7 +90,7 @@ class RicercaPDLPage:
         """Clicca sul pulsante Esporta."""
         try:
             self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.EXPORT_BUTTON)).click()
-            return True
+            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"❌ Errore click export: {e}")
             return False

@@ -100,7 +100,7 @@ class BugReporter:
                 included_files.append("system_info.json")
 
             logger.info(f"Bug report creato: {report_path} ({len(included_files)} file)")
-            return report_path, "Report generato con successo.", included_files
+            return report_path, "Report generato con successo.", included_files  # noqa: TRY300
 
         except Exception as e:
             logger.error("Errore durante la creazione del bug report", exc_info=True)
@@ -161,7 +161,7 @@ class BugReporter:
     def _add_analytics_report(zipf: zipfile.ZipFile, hours: int) -> list[str]:
         """Aggiunge report analytics con anomalie e health score."""
         try:
-            from src.core.logging import generate_analytics_report
+            from src.core.logging import generate_analytics_report  # noqa: PLC0415
 
             report = generate_analytics_report(hours=hours)
 
@@ -178,7 +178,7 @@ class BugReporter:
                 "analytics_report.json",
                 json.dumps(report_dict, indent=2, default=str),
             )
-            return ["analytics_report.json"]
+            return ["analytics_report.json"]  # noqa: TRY300
 
         except Exception as e:
             logger.warning(f"Impossibile generare analytics report: {e}")
@@ -188,7 +188,7 @@ class BugReporter:
     def _add_audit_trail(zipf: zipfile.ZipFile, limit: int = 50) -> list[str]:
         """Aggiunge audit trail recente."""
         try:
-            from src.core.audit import AuditManager
+            from src.core.audit import AuditManager  # noqa: PLC0415
 
             manager = AuditManager.instance()
             actions = manager.get_logs(limit=limit)
@@ -203,7 +203,7 @@ class BugReporter:
                 "audit_trail.json",
                 json.dumps(audit_data, indent=2, default=str),
             )
-            return ["audit_trail.json"]
+            return ["audit_trail.json"]  # noqa: TRY300
 
         except Exception as e:
             logger.warning(f"Impossibile generare audit trail: {e}")
@@ -213,7 +213,7 @@ class BugReporter:
     def _add_trace_timeline(zipf: zipfile.ZipFile, trace_id: str) -> list[str]:
         """Aggiunge timeline di un trace specifico."""
         try:
-            from src.core.logging import view_trace
+            from src.core.logging import view_trace  # noqa: PLC0415
 
             timeline = view_trace(trace_id)
 
@@ -263,7 +263,7 @@ class BugReporter:
 
         # Memory Info
         try:
-            import psutil
+            import psutil  # noqa: PLC0415
 
             mem = psutil.virtual_memory()
             sys_info["memory"] = {
@@ -295,7 +295,7 @@ class BugReporter:
         return sys_info
 
     @staticmethod
-    def cleanup_old_reports(max_reports: int = 5):
+    def cleanup_old_reports(max_reports: int = 5):  # noqa: ANN205
         """Mantiene solo gli ultimi N report per risparmiare spazio."""
         with suppress(Exception):
             reports_dir = CONFIG_DIR / "reports"
@@ -334,6 +334,6 @@ class BugReporter:
         if include_audit:
             size_kb += 20  # Audit JSON
 
-        if size_kb < 1024:
+        if size_kb < 1024:  # noqa: PLR2004
             return f"~{size_kb} KB"
         return f"~{size_kb / 1024:.1f} MB"

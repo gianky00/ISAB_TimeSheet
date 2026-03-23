@@ -11,7 +11,7 @@ from src.core.timesheet_processor import TimesheetProcessor
 
 class TestTimesheetProcessorHardened:
     @pytest.fixture
-    def sample_xlsx(self, tmp_path):
+    def sample_xlsx(self, tmp_path):  # noqa: ANN001
         """Crea un file Excel minimale compatibile con SafeWork."""
         path = tmp_path / "input.xlsx"
         wb = openpyxl.Workbook()
@@ -33,7 +33,7 @@ class TestTimesheetProcessorHardened:
         wb.save(path)
         return path
 
-    def test_process_and_move_success(self, sample_xlsx, tmp_path):
+    def test_process_and_move_success(self, sample_xlsx, tmp_path):  # noqa: ANN001
         """Verifica il flusso completo di trasformazione e spostamento."""
         dest_dir = tmp_path / "output"
 
@@ -61,10 +61,10 @@ class TestTimesheetProcessorHardened:
         # La cella B2 (row 2, col 2) originale conteneva 10.0
         # Dopo eliminazione col A, dovrebbe essere in colonna 1
         pos_val = ws.cell(row=2, column=1).value
-        assert pos_val == 10
+        assert pos_val == 10  # noqa: PLR2004
         assert not isinstance(pos_val, float)
 
-    def test_missing_sheet_failure(self, tmp_path):
+    def test_missing_sheet_failure(self, tmp_path):  # noqa: ANN001
         """Verifica fallimento se il foglio 'Timesheet' manca."""
         path = tmp_path / "bad.xlsx"
         wb = openpyxl.Workbook()
@@ -74,7 +74,7 @@ class TestTimesheetProcessorHardened:
         assert not success
         assert "non trovato" in msg
 
-    def test_missing_odc_failure(self, tmp_path):
+    def test_missing_odc_failure(self, tmp_path):  # noqa: ANN001
         """Verifica fallimento se ODC (A2) è vuoto."""
         path = tmp_path / "no_odc.xlsx"
         wb = openpyxl.Workbook()
@@ -87,7 +87,7 @@ class TestTimesheetProcessorHardened:
         assert not success
         assert "ODC" in msg
 
-    def test_multiple_pos_filename(self, tmp_path):
+    def test_multiple_pos_filename(self, tmp_path):  # noqa: ANN001
         """Verifica che con più POS il nome file non contenga il numero POS."""
         path = tmp_path / "multi_pos.xlsx"
         wb = openpyxl.Workbook()

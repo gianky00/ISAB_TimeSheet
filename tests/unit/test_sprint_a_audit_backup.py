@@ -13,7 +13,7 @@ from src.core.backup_manager import BackupManager
 
 class TestSprintAAuditBackup:
     @pytest.fixture
-    def audit_mgr(self, tmp_path, mocker):
+    def audit_mgr(self, tmp_path, mocker):  # noqa: ANN001
         db_path = tmp_path / "audit_test.db"
         # Patch the real location in AuditDatabase
         mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_path)
@@ -24,7 +24,7 @@ class TestSprintAAuditBackup:
         AuditManager._instance = None
         return AuditManager()
 
-    def test_audit_integrity_chain(self, audit_mgr):
+    def test_audit_integrity_chain(self, audit_mgr):  # noqa: ANN001
         """Verifica che la catena di hash rilevi manomissioni."""
         # Eseguiamo un log controllato
         audit_mgr.log_action("TestIntegrity", category="test")
@@ -40,7 +40,7 @@ class TestSprintAAuditBackup:
 
         assert audit_mgr.verify_integrity() is False
 
-    def test_audit_retention_policy(self, audit_mgr, mocker):
+    def test_audit_retention_policy(self, audit_mgr, mocker):  # noqa: ANN001
         """Verifica la pulizia dei log obsoleti."""
         # 1. Inserimento manuale log VECCHIO
         with sqlite3.connect(audit_mgr.DB_PATH) as conn:
@@ -66,7 +66,7 @@ class TestSprintAAuditBackup:
         assert "NewAction" in actions
         assert "Old" not in actions
 
-    def test_backup_creation_and_filtering(self, tmp_path, mocker):
+    def test_backup_creation_and_filtering(self, tmp_path, mocker):  # noqa: ANN001
         """Verifica creazione backup e filtraggio estensioni."""
         # Mock Config Manager e Audit Manager
         mocker.patch("src.core.backup_manager.CONFIG_DIR", tmp_path)
@@ -99,7 +99,7 @@ class TestSprintAAuditBackup:
                 assert any("settings.json" in f for f in files)
                 assert not any("app.log" in f for f in files)
 
-    def test_backup_cleanup_limit(self, tmp_path):
+    def test_backup_cleanup_limit(self, tmp_path):  # noqa: ANN001
         """Verifica mantenimento ultimi 5 backup con timestamp differenziati."""
         backup_dir = tmp_path / "CleanupTest"
         backup_dir.mkdir()
@@ -116,11 +116,11 @@ class TestSprintAAuditBackup:
         BackupManager._cleanup_old_backups(backup_dir, keep=5)
 
         remaining = sorted(backup_dir.glob("*.zip"), key=os.path.getmtime)
-        assert len(remaining) == 5
+        assert len(remaining) == 5  # noqa: PLR2004
         # Gli ultimi 5 devono essere quelli con i numeri più alti (6, 7, 8...)
         assert "20260107" in remaining[-1].name
 
-    def test_restore_error_handling(self, tmp_path):
+    def test_restore_error_handling(self, tmp_path):  # noqa: ANN001
         """Verifica che il ripristino fallisca correttamente con file invalidi."""
         # Caso 1: File inesistente
         s1, _m1 = BackupManager.restore_backup("missing.zip")

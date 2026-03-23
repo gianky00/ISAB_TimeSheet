@@ -47,12 +47,12 @@ class ROIEngine:
             "Sincronizzazione": 1.0,
             "Export Excel": 5.0,
         }
-        from typing import cast
+        from typing import cast  # noqa: PLC0415
 
         return cast("dict[str, float]", get_config_value("roi_weights", default_weights))
 
     @classmethod
-    def calculate_savings(cls) -> ROIMetrics:
+    def calculate_savings(cls) -> ROIMetrics:  # noqa: PLR0912, PLR0915
         """Esegue l'analisi dello storico audit per derivare le metriche di risparmio."""
         try:
             # Carichiamo i pesi dinamici
@@ -168,7 +168,7 @@ class ROIEngine:
                             elif row_date >= sixty_days_ago:
                                 prev_30d_ops += 1
                 except (IndexError, ValueError) as row_err:
-                    logger.error(f"ROIEngine: Errore processamento riga {row}: {row_err}")
+                    logger.error(f"ROIEngine: Errore processamento riga {row}: {row_err}")  # noqa: TRY400
                     continue
 
             # Calcolo giorni totali dallo storico reale
@@ -236,12 +236,12 @@ class ROIEngine:
     @classmethod
     def format_time_saved(cls, minutes: float) -> str:
         """Formatta i minuti in stringa leggibile (ore/minuti)."""
-        if minutes < 60:
+        if minutes < 60:  # noqa: PLR2004
             return f"{int(minutes)} min"
         hours = int(minutes // 60)
         rem_min = int(minutes % 60)
 
-        if hours > 24:
+        if hours > 24:  # noqa: PLR2004
             days = hours // 24
             rem_hours = hours % 24
             return f"{days}g {rem_hours}h"

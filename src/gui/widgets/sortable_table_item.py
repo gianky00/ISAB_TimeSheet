@@ -12,7 +12,7 @@ class SortableTableWidgetItem(QTableWidgetItem):
     per numeri (int, float) e date (formati comuni), con fallback alfabetico.
     """
 
-    def __init__(self, value: Any, alignment: Qt.AlignmentFlag | None = None) -> None:
+    def __init__(self, value: Any, alignment: Qt.AlignmentFlag | None = None) -> None:  # noqa: ANN401
         """
         Inizializza l'item.
         :param value: Il valore (str, int, float, datetime, o None).
@@ -25,7 +25,7 @@ class SortableTableWidgetItem(QTableWidgetItem):
         if alignment:
             self.setTextAlignment(alignment)
 
-    def __lt__(self, other: Any) -> bool:
+    def __lt__(self, other: Any) -> bool:  # noqa: ANN401, PLR0911
         """Override dell'operatore < per ordinamento personalizzato."""
         if not isinstance(other, QTableWidgetItem):
             return super().__lt__(other)
@@ -90,4 +90,4 @@ class SortableTableWidgetItem(QTableWidgetItem):
                 # Gestisce anche date parziali troncando il testo se necessario?
                 # Meglio match esatto per evitare falsi positivi
                 return datetime.strptime(text, fmt).replace(tzinfo=UTC)
-        raise ValueError("Not a date")
+        raise ValueError("Not a date")  # noqa: TRY003

@@ -6,7 +6,7 @@ from src.core.database import db_manager
 
 class TestDataSynchronizerDetailed:
     @pytest.fixture
-    def real_db(self, tmp_path):
+    def real_db(self, tmp_path):  # noqa: ANN001
         db_path = tmp_path / "test_sync_ext.db"
         with db_manager.get_connection(db_path) as conn:
             # GIORNALIERE: 12 colonne
@@ -54,18 +54,18 @@ class TestDataSynchronizerDetailed:
             """)
         return db_path
 
-    def test_sync_contabilita_dati_empty(self, real_db):
+    def test_sync_contabilita_dati_empty(self, real_db):  # noqa: ANN001
         added, removed = DataSynchronizer.sync_contabilita_dati(real_db, [], [])
         assert added == 0
         assert removed == 0
 
-    def test_sync_giornaliere_logic(self, real_db):
+    def test_sync_giornaliere_logic(self, real_db):  # noqa: ANN001
         new_rows = [(2024, "2024-01-01", "P", "D", "T", "O", "P", "08", "17", 8.0, "100", "f.xlsx")]
         added, removed = DataSynchronizer.sync_giornaliere(real_db, new_rows, [2024])
         assert added == 1
         assert removed == 0
 
-    def test_sync_attivita_programmate(self, real_db):
+    def test_sync_attivita_programmate(self, real_db):  # noqa: ANN001
         with db_manager.get_connection(real_db) as conn:
             conn.execute("INSERT INTO attivita_programmate (ps) VALUES ('old1')")
 
@@ -76,14 +76,14 @@ class TestDataSynchronizerDetailed:
         assert added == 0
         assert removed == 0
 
-    def test_sync_scarico_ore(self, real_db):
+    def test_sync_scarico_ore(self, real_db):  # noqa: ANN001
         # 12 colonne per scarico_ore
         new_rows = [("2024-01-01", "p1", "p2", "o1", "p1", "08", "17", 8.0, "d1", "f", "c1", "s")]
         added, removed = DataSynchronizer.sync_scarico_ore(real_db, new_rows)
         assert added == 1
         assert removed == 0
 
-    def test_sync_certificati_campione(self, real_db):
+    def test_sync_certificati_campione(self, real_db):  # noqa: ANN001
         # 10 colonne per certificati_campione
         new_rows = [("M", "C", "M1", "R", "E", "C1", "S", "E1", "ID1", "OK")]
         added, removed = DataSynchronizer.sync_certificati_campione(real_db, new_rows)

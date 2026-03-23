@@ -235,7 +235,7 @@ class ScaricoOrePanel(QWidget):
         """Aggiorna la label di stato durante le fasi del caricamento asincrono."""
         self.filters.status_label.setText(msg)
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:
+    def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
         """
         Aggiorna le dimensioni degli overlay (shimmer) al ridimensionamento del pannello.
 

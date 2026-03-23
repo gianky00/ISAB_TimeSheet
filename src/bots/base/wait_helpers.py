@@ -21,7 +21,7 @@ from typing import Any
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ def wait_for_overlay_to_disappear(
     """
     try:
         WebDriverWait(driver, timeout).until(EC.invisibility_of_element_located(locator))
-        return True
+        return True  # noqa: TRY300
     except TimeoutException:
         logger.warning(f"Timeout waiting for overlay: {locator}")
         return False
@@ -83,7 +83,7 @@ def wait_for_element_staleness(driver: WebDriver, element: WebElement, timeout: 
     """Attende che un elemento diventi stale (non più presente nel DOM)."""
     try:
         WebDriverWait(driver, timeout).until(EC.staleness_of(element))
-        return True
+        return True  # noqa: TRY300
     except TimeoutException:
         return False
 
@@ -145,7 +145,7 @@ def safe_click_with_retry(
     """
     Tenta il click su un elemento gestendo overlay e intercettazioni temporanee.
     """
-    from selenium.common.exceptions import ElementClickInterceptedException
+    from selenium.common.exceptions import ElementClickInterceptedException  # noqa: PLC0415
 
     for i in range(retries):
         try:
@@ -157,7 +157,7 @@ def safe_click_with_retry(
             logger.warning(f"Click intercettato su {locator}. Tentativo {i + 1}/{retries}...")
             time.sleep(retry_delay)
         except Exception as e:
-            logger.error(f"Errore durante click su {locator}: {e}")
+            logger.error(f"Errore durante click su {locator}: {e}")  # noqa: TRY400
             break
     return False
 
@@ -168,7 +168,7 @@ def execute_with_wait(
     overlay_locator: tuple[str, str] | None = None,
     timeout: int = 30,
     wait_locator: tuple[str, str] | None = None,
-) -> Any:
+) -> Any:  # noqa: ANN401
     """
     Esegue un'azione e attende la scomparsa di un overlay.
     Supporta sia overlay_locator che wait_locator (alias).
@@ -185,7 +185,7 @@ def execute_with_wait(
 # ============================================================================
 
 
-def poll_for_file(
+def poll_for_file(  # noqa: PLR0913
     directory: Path | str,
     pattern: str = "*",
     timeout: int = 60,
@@ -228,12 +228,12 @@ def poll_for_file(
         files = list(directory_path.glob(pattern))
 
         # DEBUG AGGRESSIVO (Richiesto da User per Troubleshooting)
-        if time.time() - start_time < 5:  # Logga solo nei primi 5 secondi per non spammare
+        if time.time() - start_time < 5:  # Logga solo nei primi 5 secondi per non spammare  # noqa: PLR2004
             all_files_in_dir = list(directory_path.glob("*"))
             logger.debug(
                 f"[DEBUG-POLL] Scanning '{directory_path}'. Total files: {len(all_files_in_dir)}. Matching '{pattern}': {len(files)}"
             )
-            if len(all_files_in_dir) < 20:
+            if len(all_files_in_dir) < 20:  # noqa: PLR2004
                 logger.debug(f"[DEBUG-POLL] Files: {[f.name for f in all_files_in_dir]}")
 
         # Filtra per esclusioni

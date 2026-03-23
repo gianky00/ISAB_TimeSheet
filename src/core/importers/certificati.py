@@ -87,7 +87,7 @@ class CertificatiImporter(BaseImporter):
                 max_matches = matches
                 header_row_idx = int(str(i))
 
-        if header_row_idx == -1 or max_matches < 3:
+        if header_row_idx == -1 or max_matches < 3:  # noqa: PLR2004
             header_row_idx = 5
 
         return header_row_idx
@@ -157,7 +157,7 @@ class CertificatiImporter(BaseImporter):
         """Applica formattazione date e calcolo giorni scadenza."""
         pd_obj = cls._get_pd()
 
-        def format_date_it(val: Any) -> str:
+        def format_date_it(val: Any) -> str:  # noqa: ANN401
             if pd_obj.isna(val) or val == "":
                 return ""
             try:
@@ -166,7 +166,7 @@ class CertificatiImporter(BaseImporter):
             except Exception:
                 return str(val)
 
-        def format_stato(val: Any) -> str:
+        def format_stato(val: Any) -> str:  # noqa: ANN401
             if pd_obj.isna(val) or val == "":
                 return ""
             try:
@@ -176,11 +176,11 @@ class CertificatiImporter(BaseImporter):
                     return f"Scade tra {days} giorni"
                 if days < 0:
                     return f"Scaduto da {abs(days)} giorni"
-                return "Scade oggi"
+                return "Scade oggi"  # noqa: TRY300
             except (ValueError, TypeError):
                 return str(val)
 
-        def format_errore_max(val: Any) -> str:
+        def format_errore_max(val: Any) -> str:  # noqa: ANN401
             if pd_obj.isna(val) or val == "":
                 return ""
             try:

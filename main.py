@@ -21,14 +21,14 @@ ROOT_DIR = Path(__file__).parent.resolve()
 sys.path.insert(0, str(ROOT_DIR / "src"))
 
 
-def _print_exception_and_exit(exc_type, exc_value, exc_tb):
+def _print_exception_and_exit(exc_type, exc_value, exc_tb):  # noqa: ANN001, ANN202
     print("FATAL UNCAUGHT EXCEPTION:")
     traceback.print_exception(exc_type, exc_value, exc_tb)
     # Salvataggio del crash di basso livello nativo
-    import contextlib
+    import contextlib  # noqa: PLC0415
 
     with contextlib.suppress(Exception):
-        from src.core.config_manager import CONFIG_DIR
+        from src.core.config_manager import CONFIG_DIR  # noqa: PLC0415
 
         crash_file = CONFIG_DIR / "crash.txt"
         with crash_file.open("a", encoding="utf-8") as f:
@@ -51,7 +51,7 @@ from src.core.logging import (
 )
 
 
-def setup_enterprise_logging():
+def setup_enterprise_logging():  # noqa: ANN201
     """Initialize enterprise logging system."""
     # Ensure config directory exists
     if not CONFIG_DIR.exists():
@@ -59,7 +59,7 @@ def setup_enterprise_logging():
 
     # Assicurati che il file crash esista e puliscilo per la nuova sessione
     crash_file = CONFIG_DIR / "crash.txt"
-    import contextlib
+    import contextlib  # noqa: PLC0415
 
     with contextlib.suppress(Exception):
         crash_file.write_text(
@@ -67,7 +67,7 @@ def setup_enterprise_logging():
         )
 
         # Abilita traceback a livello C/C++ (Segmentation Fault, Access Violation)
-        import faulthandler
+        import faulthandler  # noqa: PLC0415
 
         # Mantiene il file aperto per faulthandler in modo safely append
         crash_native_file = crash_file.open("a", encoding="utf-8")
@@ -89,13 +89,13 @@ def setup_enterprise_logging():
 startup_logger_global = setup_enterprise_logging()
 
 
-def main():
+def main():  # noqa: ANN201, PLR0915
     """Application entry point with three-phase startup architecture."""
-    import warnings
+    import warnings  # noqa: PLC0415
 
-    from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
-    from PyQt6.QtNetwork import QLocalServer, QLocalSocket
-    from PyQt6.QtWidgets import QApplication
+    from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal  # noqa: PLC0415
+    from PyQt6.QtNetwork import QLocalServer, QLocalSocket  # noqa: PLC0415
+    from PyQt6.QtWidgets import QApplication  # noqa: PLC0415
 
     # Get loggers
     logger = get_logger("main")
@@ -130,7 +130,7 @@ def main():
     server.listen(server_name)
     main_window_instance: MainWindow | None = None
 
-    def handle_new_connection():
+    def handle_new_connection():  # noqa: ANN202
         """Handle incoming connection from another instance to activate window."""
         client_socket = server.nextPendingConnection()
         if client_socket and client_socket.waitForReadyRead(500):
@@ -147,13 +147,13 @@ def main():
     server.newConnection.connect(handle_new_connection)
 
     # === SETUP STYLE ===
-    from src.gui.main_window.app_styler import AppStyler
+    from src.gui.main_window.app_styler import AppStyler  # noqa: PLC0415
 
     AppStyler.setup_app_style(app)
 
     # === SPLASH SCREEN (Standalone Process for Zero-Stutter) ===
-    import json
-    import subprocess
+    import json  # noqa: PLC0415
+    import subprocess  # noqa: PLC0415
 
     splash_script = str(ROOT_DIR / "src" / "gui" / "dialogs" / "splash_standalone.py")
     startup_logger_global.info(f"Launching standalone splash process: {splash_script}")
@@ -174,7 +174,7 @@ def main():
         env=env,
     )
 
-    def update_splash(msg: str, prog: int):
+    def update_splash(msg: str, prog: int):  # noqa: ANN202
         """Invia comando di aggiornamento allo splash process."""
         if splash_process.poll() is None and splash_process.stdin:
             try:
@@ -186,7 +186,7 @@ def main():
             except Exception as e:
                 startup_logger_global.warning(f"Failed to update splash process: {e}")
 
-    def close_splash():
+    def close_splash():  # noqa: ANN202
         """Chiude gentilmente lo splash process."""
         if splash_process.poll() is None and splash_process.stdin:
             try:
@@ -213,10 +213,10 @@ def main():
         progress = pyqtSignal(str, int)
         finished = pyqtSignal(bool, str)
 
-        def run(self):
+        def run(self):  # noqa: ANN202
             """Execute Phase 1 initialization in background thread."""
             try:
-                from src.core.app_initializer import AppInitializer
+                from src.core.app_initializer import AppInitializer  # noqa: PLC0415
 
                 phase1_logger.info("Starting Phase 1 initialization")
 
@@ -237,11 +237,11 @@ def main():
     phase1_success = [False]
     phase1_error_msg = [""]
 
-    def on_phase1_progress(msg, prog):
+    def on_phase1_progress(msg, prog):  # noqa: ANN001, ANN202
         """Update splash screen with Phase 1 progress."""
         update_splash(msg, prog)
 
-    def on_phase1_finished(success, error_msg):
+    def on_phase1_finished(success, error_msg):  # noqa: ANN001, ANN202
         """Handle Phase 1 completion and store result."""
         phase1_done[0] = True
         phase1_success[0] = success
@@ -264,7 +264,7 @@ def main():
     thread1.quit()
     thread1.wait(1000)
 
-    from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
+    from src.gui.dialogs.confirmation_dialog import ConfirmationDialog  # noqa: PLC0415
 
     if not phase1_success[0]:
         close_splash()
@@ -273,7 +273,7 @@ def main():
         sys.exit(1)
 
     # Visualizzazione Avvisi Accumulati (Non-Bloccanti ma importanti per l'utente)
-    from src.core.app_initializer import AppInitializer
+    from src.core.app_initializer import AppInitializer  # noqa: PLC0415
 
     for severity, message in AppInitializer.get_alerts():
         if severity in ("CRITICAL", "ERROR"):
@@ -287,7 +287,7 @@ def main():
     update_splash("Costruzione interfaccia...", 40)
     app.processEvents()
 
-    from src.gui.main_window.main import MainWindow
+    from src.gui.main_window.main import MainWindow  # noqa: PLC0415
 
     main_window_instance = MainWindow()
     app.processEvents()
@@ -297,7 +297,7 @@ def main():
     # Inizializza generatore
     gui_init_gen = AppInitializer.init_generator(main_window_instance)
 
-    def finalize_startup():
+    def finalize_startup():  # noqa: ANN202
         """Called when initialization is complete."""
         try:
             startup_logger.info("Finalizing startup sequence...")
@@ -325,7 +325,7 @@ def main():
         except Exception as e:
             startup_logger.exception("Error in finalize_startup", exc=e)
 
-    def process_next_step():
+    def process_next_step():  # noqa: ANN202
         """Execute one initialization step and yield to event loop."""
         try:
             # Esegue UN solo step e ritorna subito
@@ -383,7 +383,7 @@ def main():
         except Exception as io_error:
             print(f"Failed to write crash.txt: {io_error}")
 
-        from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
+        from src.gui.dialogs.confirmation_dialog import ConfirmationDialog  # noqa: PLC0415
 
         ConfirmationDialog.show_error(
             None,

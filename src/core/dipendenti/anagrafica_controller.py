@@ -53,7 +53,7 @@ class AnagraficaController:
         counts = {"ok": 0, "warning": 0, "expired": 0, "excluded": 0}
 
         for r in full_rows:
-            is_monitored = bool(r[8]) if len(r) > 8 and r[8] is not None else True
+            is_monitored = bool(r[8]) if len(r) > 8 and r[8] is not None else True  # noqa: PLR2004
             diff_days, cf_warning, _, _, _ = compute_employee_status(r, last_by_cf, last_by_name, normalize)
 
             # Update Counts
@@ -115,7 +115,7 @@ class AnagraficaController:
               AND UPPER(REPLACE(REPLACE(TRIM(nome), '  ', ' '), '  ', ' ')) = ?
             ORDER BY data DESC LIMIT 1
         """
-        from src.core.constants import REPORT_COLORS as COLORS
+        from src.core.constants import REPORT_COLORS as COLORS  # noqa: PLC0415
 
         try:
             res = db_manager.execute_query(db_manager.DB_TIMBRATURE, query, (norm_cognome, norm_nome))
@@ -145,7 +145,7 @@ class AnagraficaController:
 
             return f"{formatted_date} (SCADUTA - {delta} gg fa)", delta, COLORS["error_red"]
         except Exception as e:
-            logger.error(f"Errore recupero ultimo accesso: {e}")
+            logger.error(f"Errore recupero ultimo accesso: {e}")  # noqa: TRY400
             return "Errore", -1, COLORS["text_muted"]
 
     @staticmethod
@@ -154,6 +154,6 @@ class AnagraficaController:
         try:
             query = "UPDATE dipendenti SET monitoraggio_attivo = ? WHERE id_risorsa = ?"
             db_manager.execute_query(db_manager.DB_DIPENDENTI, query, (1 if enable else 0, id_risorsa))
-            return True
+            return True  # noqa: TRY300
         except Exception:
             return False

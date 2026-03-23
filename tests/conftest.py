@@ -22,23 +22,23 @@ try:
     from unittest.mock import MagicMock
 
     class MockCanvas(MagicMock):
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs):  # noqa: ANN002, ANN003, ANN204
             super().__init__(*args, **kwargs)
             self.figure = MagicMock()
 
-        def setParent(self, parent):
+        def setParent(self, parent):  # noqa: ANN001, N802
             pass
 
-        def setMinimumHeight(self, h):
+        def setMinimumHeight(self, h):  # noqa: ANN001, N802
             pass
 
-        def setSizePolicy(self, *args):
+        def setSizePolicy(self, *args):  # noqa: ANN002, N802
             pass
 
-        def setGraphicsEffect(self, effect):
+        def setGraphicsEffect(self, effect):  # noqa: ANN001, N802
             pass
 
-        def setStyleSheet(self, style):
+        def setStyleSheet(self, style):  # noqa: ANN001, N802
             pass
 
     mock_backend = MagicMock()
@@ -61,20 +61,20 @@ try:
 except (ImportError, RuntimeError):
     # If PyQt6 is missing or DLLs fail to load, provide a minimal mock infrastructure
     class MockQObject:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs):  # noqa: ANN002, ANN003, ANN204
             pass
 
-        def setParent(self, parent):
+        def setParent(self, parent):  # noqa: ANN001, N802
             pass
 
     class MockPyqtSignal:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs):  # noqa: ANN002, ANN003, ANN204
             pass
 
-        def emit(self, *args, **kwargs):
+        def emit(self, *args, **kwargs):  # noqa: ANN002, ANN003
             pass
 
-        def connect(self, slot):
+        def connect(self, slot):  # noqa: ANN001
             pass
 
     mock_qt_core = MagicMock()
@@ -106,17 +106,17 @@ except (ImportError, RuntimeError):
 
 
 # Set matplotlib backend to 'Agg' to avoid GUI issues during tests
-def pytest_sessionstart(session):
+def pytest_sessionstart(session):  # noqa: ANN001
     """
     Called after the Session object has been created and before performing collection and entering the run test loop.
     """
     with contextlib.suppress(ImportError):
-        import matplotlib
+        import matplotlib  # noqa: PLC0415
 
         matplotlib.use("Agg")
 
 
-def pytest_configure(config):
+def pytest_configure(config):  # noqa: ANN001
     """
     Prevents OSError: [Errno 25] Inappropriate ioctl for device in CI/CD.
     This error occurs because PasswordManager is initialized at module import
@@ -142,24 +142,24 @@ def pytest_configure(config):
 
 
 @pytest.fixture
-def temp_dir(tmp_path):
+def temp_dir(tmp_path):  # noqa: ANN001
     """Create a temporary directory for tests using pytest built-in tmp_path."""
     return tmp_path
 
 
 @pytest.fixture
-def mock_config(temp_dir):
+def mock_config(temp_dir):  # noqa: ANN001
     """Create a mock configuration file."""
     return temp_dir / "config.json"
 
 
 @pytest.fixture
-def setup_clean_config(tmp_path):
+def setup_clean_config(tmp_path):  # noqa: ANN001
     """
     Fixture to ensure a clean, isolated config for specific tests.
     This is more explicit than autouse for tests that heavily modify config.
     """
-    from src.core import config_manager
+    from src.core import config_manager  # noqa: PLC0415
 
     original_dir = config_manager.CONFIG_DIR
     original_file = config_manager.CONFIG_FILE
@@ -184,12 +184,12 @@ def setup_clean_config(tmp_path):
 
 
 @pytest.fixture(autouse=True)
-def _isolate_config(tmp_path):
+def _isolate_config(tmp_path):  # noqa: ANN001, ANN202
     """
     Global isolation for configuration.
     Ensures NO test ever writes to the real %LOCALAPPDATA% directory.
     """
-    from src.core import config_manager
+    from src.core import config_manager  # noqa: PLC0415
 
     # Clean cache
     config_manager._config_cache = None
@@ -222,10 +222,10 @@ def cleanup_widgets():
     """
     yield
 
-    import gc
+    import gc  # noqa: PLC0415
 
     try:
-        from PyQt6.QtWidgets import QApplication
+        from PyQt6.QtWidgets import QApplication  # noqa: PLC0415
     except (ImportError, RuntimeError):
         # PyQt6 not available or broken in this environment
         gc.collect()
@@ -255,7 +255,7 @@ def cleanup_widgets():
 
 
 @pytest.fixture
-def mock_ui_dependencies(mocker):
+def mock_ui_dependencies(mocker):  # noqa: ANN001
     """
     Mock massivo delle dipendenze UI per evitare I/O su disco e DB reali.
     Permette di istanziare Widget complessi in isolamento.
@@ -280,7 +280,7 @@ def mock_ui_dependencies(mocker):
     # Mock TimbratureStorage
     # Force import to avoid AttributeError: module 'src' has no attribute 'bots'
     with contextlib.suppress(ImportError):
-        import src.bots.portale_fornitori.timbrature.storage
+        import src.bots.portale_fornitori.timbrature.storage  # noqa: PLC0415
 
         mocker.patch.object(
             src.bots.portale_fornitori.timbrature.storage,
@@ -298,7 +298,7 @@ def mock_ui_dependencies(mocker):
 
 
 @pytest.fixture
-def mock_driver(mocker):
+def mock_driver(mocker):  # noqa: ANN001
     """
     Mock del driver Selenium per testare i Bot senza aprire il browser.
     """
@@ -311,12 +311,12 @@ def mock_driver(mocker):
 
 
 @pytest.fixture
-def create_mock_html(tmp_path):
+def create_mock_html(tmp_path):  # noqa: ANN001
     """
     Crea un file HTML temporaneo per testare i selettori.
     """
 
-    def _create(content, filename="test.html"):
+    def _create(content, filename="test.html"):  # noqa: ANN001, ANN202
         html_file = tmp_path / filename
         html_file.write_text(content, encoding="utf-8")
         return html_file

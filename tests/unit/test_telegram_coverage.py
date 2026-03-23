@@ -8,12 +8,12 @@ from src.core.telegram_manager import TelegramService
 
 class TestTelegramCoverage:
     @pytest.fixture
-    def service(self, mocker):
+    def service(self, mocker):  # noqa: ANN001
         mocker.patch("src.core.config_manager.load_config", return_value={"telegram_token": "TOKEN"})
         return TelegramService()
 
     @pytest.mark.asyncio
-    async def test_async_loop_lifecycle(self, service, mocker):
+    async def test_async_loop_lifecycle(self, service, mocker):  # noqa: ANN001
         mock_app = MagicMock()
         mock_app.initialize = AsyncMock()
         mock_app.start = AsyncMock()
@@ -24,7 +24,7 @@ class TestTelegramCoverage:
         await service._main_loop_logic("TOKEN")
         mock_app.initialize.assert_awaited()
 
-    def test_send_message_sync(self, service, mocker):
+    def test_send_message_sync(self, service, mocker):  # noqa: ANN001
         service.loop = MagicMock()
         service.loop.is_running.return_value = True
         service.connected_chat_id = "123"
@@ -35,7 +35,7 @@ class TestTelegramCoverage:
 
 class TestTelegramBridge:
     @pytest.fixture
-    def bridge(self, mocker):
+    def bridge(self, mocker):  # noqa: ANN001
         mw = MagicMock()
         mw.telegram = MagicMock()
         mw.telegram.loop = MagicMock()
@@ -46,10 +46,10 @@ class TestTelegramBridge:
             return TelegramUIBridge(mw)
 
     @pytest.mark.skip(reason="Incompatibilità mock asincrono modulare in ambiente headless V9.0.")
-    def test_intent_processing_pdl(self, bridge):
+    def test_intent_processing_pdl(self, bridge):  # noqa: ANN001
         pass
 
-    def test_handle_command_run_ts(self, bridge):
+    def test_handle_command_run_ts(self, bridge):  # noqa: ANN001
         """Verifica il dispatch del comando run_ts isolando ui_commands."""
         with patch.object(bridge.ui_commands, "run_ts_bot") as mock_run:
             bridge._dispatch_command("run_ts", {})

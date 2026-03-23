@@ -53,7 +53,7 @@ class SensitiveDataFilter(logging.Filter):
 
         return True
 
-    def _mask_value(self, value: Any) -> Any:
+    def _mask_value(self, value: Any) -> Any:  # noqa: ANN401
         if isinstance(value, str):
             for pattern, replacement in self.PATTERNS:
                 value = pattern.sub(replacement, value)

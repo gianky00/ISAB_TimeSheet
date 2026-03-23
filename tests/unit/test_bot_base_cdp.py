@@ -22,7 +22,7 @@ class ConcreteBot(BaseBot):
     def description(self) -> str:
         return "Description"
 
-    def run(self, data):
+    def run(self, data):  # noqa: ANN001
         return True
 
     def get_columns(self):
@@ -30,7 +30,7 @@ class ConcreteBot(BaseBot):
 
 
 class TestBaseBotCDP:
-    def test_setup_driver_instance_calls_cdp(self, mocker):
+    def test_setup_driver_instance_calls_cdp(self, mocker):  # noqa: ANN001
         """Verifica che _setup_driver_instance chiami Page.setDownloadBehavior via CDP."""
         # Setup mock driver
         mock_driver = MagicMock()
@@ -52,7 +52,7 @@ class TestBaseBotCDP:
         # Verifica anche l'anti-detection
         mock_driver.execute_cdp_cmd.assert_any_call("Page.addScriptToEvaluateOnNewDocument", mocker.ANY)
 
-    def test_setup_driver_no_download_path(self, mocker):
+    def test_setup_driver_no_download_path(self, mocker):  # noqa: ANN001
         """Verifica che venga usato il fallback Downloads se non c'è download_path."""
         mock_driver = MagicMock()
         mocker.patch("selenium.webdriver.Chrome", return_value=mock_driver)

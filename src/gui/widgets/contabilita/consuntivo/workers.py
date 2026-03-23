@@ -13,12 +13,12 @@ class ProgWorker(QThread):
 
     finished = pyqtSignal(str)
 
-    def __init__(self, controller: ConsuntivoController, year: str):
+    def __init__(self, controller: ConsuntivoController, year: str):  # noqa: ANN204
         super().__init__()
         self.controller = controller
         self.year = year
 
-    def run(self):
+    def run(self):  # noqa: ANN201
         """Esegue il calcolo via controller."""
         prog = self.controller.get_next_progressive(self.year)
         self.finished.emit(prog)

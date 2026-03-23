@@ -10,7 +10,7 @@ from tkinter import scrolledtext, ttk
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 # Setup path per import interni
@@ -39,7 +39,7 @@ class BotArchitect:
     Used for creating datasets for AI training or debugging Selenium workflows.
     """
 
-    def __init__(self):
+    def __init__(self):  # noqa: ANN204
         self.driver = None
         self.config = config_manager.load_config()
         self.state_counter = 0
@@ -48,7 +48,7 @@ class BotArchitect:
         self.workflow = []
         self.prepare_environment()
 
-    def prepare_environment(self):
+    def prepare_environment(self):  # noqa: ANN201
         """Prepara la cartella log_inspector pulendo sessioni precedenti."""
         if INSPECTOR_DIR.exists():
             shutil.rmtree(INSPECTOR_DIR)
@@ -59,7 +59,7 @@ class BotArchitect:
         """Visualizza un messaggio nel terminale con timestamp e formattazione standard."""
         print(f"[{datetime.now().strftime('%H:%M:%S')}] {text}")
 
-    def get_user_choice(self):
+    def get_user_choice(self):  # noqa: ANN201
         """Launches a Tkinter GUI to select the target portal and configuration."""
         root = tk.Tk()
         root.title("Universal Inspector - Setup")
@@ -84,7 +84,7 @@ class BotArchitect:
 
         ttk.Label(config_frame, text="Output: admin/log_inspector/", foreground="blue").pack(pady=10)
 
-        def on_confirm():
+        def on_confirm():  # noqa: ANN202
             root.quit()
             root.destroy()
 
@@ -130,14 +130,14 @@ class BotArchitect:
         root.mainloop()
         return selected_url.get(), URL_MAP.get(selected_url.get())
 
-    def init_driver(self):
+    def init_driver(self):  # noqa: ANN201
         """Initializes the Chrome WebDriver with anti-detection options."""
         chrome_options = Options()
         chrome_options.add_argument("--start-maximized")
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         self.driver = webdriver.Chrome(options=chrome_options)
 
-    def auto_login(self, portal_name, url):
+    def auto_login(self, portal_name, url):  # noqa: ANN001, ANN201
         """Performs automatic login to the selected portal using credentials from config."""
         self.driver.get(url)
         accounts = (
@@ -175,7 +175,7 @@ class BotArchitect:
         except Exception as e:
             self.log_to_console(f"⚠️ Errore durante il login automatico: {e}")
 
-    def capture_state(self, state_name):
+    def capture_state(self, state_name):  # noqa: ANN001, ANN201
         """
         Captures the current browser state (Screenshot, DOM, JSON mapping).
         Creates a new directory in log_inspector for the snapshot.
@@ -217,7 +217,7 @@ class BotArchitect:
         self.log_to_console(f"📝 AZIONE {self.action_counter}: {action_desc}")
         self._record_entry("ACTION", action_desc, self.last_state_folder)
 
-    def _record_entry(self, entry_type, description, ref_state):
+    def _record_entry(self, entry_type, description, ref_state):  # noqa: ANN001, ANN202
         """Helper to append an entry to the workflow JSON list."""
         self.workflow.append(
             {
@@ -232,7 +232,7 @@ class BotArchitect:
         with MANIFEST_FILE.open("w", encoding="utf-8") as f:
             json.dump(self.workflow, f, indent=4)
 
-    def _get_ultimate_scanner_js(self):
+    def _get_ultimate_scanner_js(self):  # noqa: ANN202
         """Returns the JS code for deep DOM scanning and element extraction."""
         return r"""
             function scan(root = document, framePath = "root") {
@@ -268,7 +268,7 @@ class BotArchitect:
             return scan();
         """
 
-    def run(self):
+    def run(self):  # noqa: ANN201
         """
         Main execution loop.
         Initializes driver, performs login, and enters interactive command loop.

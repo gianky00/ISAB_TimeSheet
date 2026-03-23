@@ -74,7 +74,7 @@ class DateFilterPopupWidget(QWidget):
                 continue
             with suppress(Exception):
                 parts = v.split("/")
-                if len(parts) == 3:
+                if len(parts) == 3:  # noqa: PLR2004
                     _, m, y = parts
                     if y not in structure:
                         structure[y] = {}
@@ -255,13 +255,12 @@ class DateFilterPopupWidget(QWidget):
                 if item.checkState() != Qt.CheckState.Checked:
                     all_checked = False
                 stack.extend([item.child(i) for i in range(item.rowCount())])
+            elif item.checkState() == Qt.CheckState.Checked:
+                # Rimuoviamo il cast Any se data ritorna Any correttamente
+                val = item.data(Qt.ItemDataRole.UserRole)
+                selected.append(str(val))
             else:
-                if item.checkState() == Qt.CheckState.Checked:
-                    # Rimuoviamo il cast Any se data ritorna Any correttamente
-                    val = item.data(Qt.ItemDataRole.UserRole)
-                    selected.append(str(val))
-                else:
-                    all_checked = False
+                all_checked = False
 
         if all_checked:
             return None

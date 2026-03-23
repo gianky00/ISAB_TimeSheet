@@ -25,7 +25,7 @@ class WorkflowController(QObject):
 
     def run_timbrature_bot(self, mode: str) -> None:
         """Avvia il bot delle timbrature in una modalità specifica."""
-        from src.gui.main_window.page_index import PageIndex
+        from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
 
         # Assicurati che il pannello sia inizializzato
         if not hasattr(self.mw, "timbrature_bot_panel"):
@@ -39,7 +39,7 @@ class WorkflowController(QObject):
                 )
                 panel._mw_signals_connected = True
 
-            from PyQt6.QtCore import QDate
+            from PyQt6.QtCore import QDate  # noqa: PLC0415
 
             data_da = QDate.currentDate().toString("dd.MM.yyyy")
             data_a = QDate.currentDate().toString("dd.MM.yyyy")
@@ -109,7 +109,7 @@ class WorkflowController(QObject):
 
     def run_sync_dataease(self) -> None:
         """Avvia la sincronizzazione DataEase."""
-        from src.gui.main_window.page_index import PageIndex
+        from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
 
         self.mw.navigation_controller.navigate_to(PageIndex.DATAEASE)
         panel = getattr(self.mw, "scarico_ore_panel", None)
@@ -118,7 +118,7 @@ class WorkflowController(QObject):
 
     def run_sync_strumentale(self) -> None:
         """Avvia la sincronizzazione contabilità strumentale."""
-        from src.gui.main_window.page_index import PageIndex
+        from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
 
         self.mw.navigation_controller.navigate_to(PageIndex.STRUMENTALE)
         panel = getattr(self.mw, "contabilita_panel", None)
@@ -127,13 +127,13 @@ class WorkflowController(QObject):
 
     def run_dettagli_oda_update(self) -> None:
         """Avvia l'aggiornamento massivo dello Storico OdA tramite il bot Dettagli OdA."""
-        from PyQt6.QtCore import QDate
+        from PyQt6.QtCore import QDate  # noqa: PLC0415
 
-        from src.gui.main_window.page_index import PageIndex
+        from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
 
         # 1. Recupera il pannello Automazioni (Lazy Loading) senza navigare
         automazioni_widget = self.mw.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
-        from src.gui.widgets.automazioni_widget import AutomazioniWidget
+        from src.gui.widgets.automazioni_widget import AutomazioniWidget  # noqa: PLC0415
 
         if isinstance(automazioni_widget, AutomazioniWidget):
             # 2. Imposta i tab corretti internamente

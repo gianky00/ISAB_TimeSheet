@@ -16,7 +16,7 @@ class ContextAwareSampler:
     4. Eventi normali: Sampling rate configurabile
     """
 
-    def __init__(
+    def __init__(  # noqa: ANN204
         self,
         default_rate: float = 1.0,
         error_rate: float = 1.0,
@@ -176,7 +176,7 @@ _sampler = None
 
 def get_sampler() -> ContextAwareSampler:
     """Restituisce istanza singleton del sampler."""
-    global _sampler
+    global _sampler  # noqa: PLW0603
     if _sampler is None:
         _sampler = ContextAwareSampler()
     return _sampler

@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
-from src.core.version import __version__ as VERSION
+from src.core.version import __version__ as VERSION  # noqa: N812
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import SearchInput, StandardListWidget
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -38,7 +38,7 @@ class HelpPanel(QWidget):
         # Selezione iniziale con leggero delay per caricamento layout
         QTimer.singleShot(100, lambda: self.index_list.setCurrentRow(0))
 
-    def _setup_ui(self) -> None:
+    def _setup_ui(self) -> None:  # noqa: PLR0915
         """Costruisce un layout 'Documentation Portal' con Sidebar Glass e Content Card."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -98,7 +98,7 @@ class HelpPanel(QWidget):
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
         self.splitter.setStyleSheet("QSplitter::handle { background-color: transparent; width: 0px; }")
 
-        # SIDEBAR (Navigation)
+        # SIDEBAR (Navigation)  # noqa: ERA001
         sidebar = QWidget()
         sidebar.setFixedWidth(300)
         sidebar.setStyleSheet(

@@ -8,11 +8,11 @@ from src.gui.widgets.contabilita.year_tab import ContabilitaYearTab
 
 class TestContabilitaTableLogic:
     @pytest.fixture
-    def app(self, qapp):
+    def app(self, qapp):  # noqa: ANN001
         return qapp
 
     @patch("src.gui.widgets.contabilita.year_tab.ContabilitaQueries.get_data_by_year")
-    def test_contabilita_year_tab_totals(self, mock_get_data, app, qtbot):
+    def test_contabilita_year_tab_totals(self, mock_get_data, app, qtbot):  # noqa: ANN001
         # Mock data: [visible cols...] + [indirizzo, nomefile]
         # visible cols: data, mese, n_prev, totale, attivita, tcl, odc, stato, tipologia, ore, resa, note
         mock_get_data.return_value = [
@@ -57,7 +57,7 @@ class TestContabilitaTableLogic:
             tab.deleteLater()
 
     @patch("src.core.contabilita_manager.ContabilitaManager.get_giornaliere_by_year")
-    def test_giornaliere_year_tab_format(self, mock_get_data, app, qtbot):
+    def test_giornaliere_year_tab_format(self, mock_get_data, app, qtbot):  # noqa: ANN001
         # Mock data: data, personale, tcl, descrizione, n_prev, odc, pdl, inizio, fine, ore, nome_file
         mock_get_data.return_value = [
             [

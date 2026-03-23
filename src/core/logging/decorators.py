@@ -58,7 +58,7 @@ def measure_time[F: Callable[..., Any]](
         """Decoratore effettivo che avvolge la funzione per la misurazione del tempo."""
 
         @functools.wraps(f)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
             """Wrapper interno per la misurazione del tempo."""
             if logger_name:
                 logger = get_logger(logger_name)
@@ -100,7 +100,7 @@ def measure_time[F: Callable[..., Any]](
                         },
                     )
 
-                    return result
+                    return result  # noqa: TRY300
 
                 except Exception as e:
                     duration_ms = (time.perf_counter() - start) * 1000
@@ -168,7 +168,7 @@ def log_entry_exit[F: Callable[..., Any]](
         """Decoratore effettivo che avvolge la funzione per il log entry/exit."""
 
         @functools.wraps(f)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
             """Wrapper interno per loggare entry/exit."""
             if logger_name:
                 logger = get_logger(logger_name)
@@ -188,10 +188,10 @@ def log_entry_exit[F: Callable[..., Any]](
                     logger.debug(exit_msg, extra={"result": result})
                 else:
                     logger.debug(exit_msg)
-                return result
+                return result  # noqa: TRY300
 
             except Exception as e:
-                logger.error(f"Exception in {f.__name__}: {e}")
+                logger.error(f"Exception in {f.__name__}: {e}")  # noqa: TRY400
                 raise
 
         return cast("F", wrapper)

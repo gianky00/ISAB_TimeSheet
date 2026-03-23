@@ -27,7 +27,7 @@ class AutomazioniWidget(QWidget):
     Centralizza l'accesso a tutti i processi di automazione web.
     """
 
-    def __init__(self, main_window) -> None:
+    def __init__(self, main_window) -> None:  # noqa: ANN001
         """
         Inizializza il widget delle automazioni.
 
@@ -141,11 +141,11 @@ class AutomazioniWidget(QWidget):
         target = self.tab_fornitori if main_idx == 0 else self.tab_safework
         target.setCurrentIndex(sub_idx)
 
-    def currentIndex(self) -> int:
+    def currentIndex(self) -> int:  # noqa: N802
         """Restituisce l'indice del portale attivo."""
         return self.main_tabs.currentIndex()
 
-    def setCurrentIndex(self, index: int) -> None:
+    def setCurrentIndex(self, index: int) -> None:  # noqa: N802
         """
         Cambia il portale attivo.
 

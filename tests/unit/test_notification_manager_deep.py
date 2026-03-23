@@ -8,7 +8,7 @@ from src.core.notification_manager import NotificationManager
 
 class TestNotificationManagerDeep:
     @pytest.fixture
-    def manager(self, tmp_path):
+    def manager(self, tmp_path):  # noqa: ANN001
         """Crea istanza con file temporaneo per i test."""
         with (
             patch.object(NotificationManager, "_instance", None),
@@ -18,12 +18,12 @@ class TestNotificationManagerDeep:
             nm.notifications_file = tmp_path / "notifications.json"
             yield nm
 
-    def test_add_notification_signals(self, manager, qtbot):
+    def test_add_notification_signals(self, manager, qtbot):  # noqa: ANN001
         with qtbot.waitSignal(manager.notification_added, timeout=1000):
             manager.add_notification("Test", "Messaggio di test", level="info")
         assert len(manager.notifications) == 1
 
-    def test_notification_persistence(self, manager, tmp_path):
+    def test_notification_persistence(self, manager, tmp_path):  # noqa: ANN001
         manager.add_notification("Persist", "Test persist", level="warning")
 
         # Reload to check persistence
@@ -31,7 +31,7 @@ class TestNotificationManagerDeep:
         assert len(data) == 1
         assert data[0]["title"] == "Persist"
 
-    def test_mark_as_read(self, manager):
+    def test_mark_as_read(self, manager):  # noqa: ANN001
         manager.add_notification("Read Test", "msg", level="error")
         notif_id = manager.notifications[0]["id"]
 
@@ -39,30 +39,30 @@ class TestNotificationManagerDeep:
         manager.mark_as_read(notif_id)
         assert manager.get_unread_count() == 0
 
-    def test_mark_all_as_read(self, manager):
+    def test_mark_all_as_read(self, manager):  # noqa: ANN001
         manager.add_notification("E1", "m1", level="error")
         manager.add_notification("E2", "m2", level="error")
-        assert manager.get_unread_count() == 2
+        assert manager.get_unread_count() == 2  # noqa: PLR2004
 
         manager.mark_all_as_read()
         assert manager.get_unread_count() == 0
 
-    def test_delete_notification(self, manager):
+    def test_delete_notification(self, manager):  # noqa: ANN001
         manager.add_notification("Del", "msg")
         notif_id = manager.notifications[0]["id"]
 
         manager.delete_notification(notif_id)
         assert len(manager.notifications) == 0
 
-    def test_clear_all(self, manager):
+    def test_clear_all(self, manager):  # noqa: ANN001
         for i in range(5):
             manager.add_notification(f"N{i}", f"m{i}")
-        assert len(manager.notifications) == 5
+        assert len(manager.notifications) == 5  # noqa: PLR2004
 
         manager.clear_all()
         assert len(manager.notifications) == 0
 
-    def test_migration_old_schema(self, manager):
+    def test_migration_old_schema(self, manager):  # noqa: ANN001
         old_notif = {"id": "123", "title": "Old", "message": "Msg"}
         migrated = manager._migrate_notification(old_notif)
 

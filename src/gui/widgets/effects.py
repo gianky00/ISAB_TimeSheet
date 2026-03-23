@@ -48,18 +48,18 @@ class HoverPulseFrame(QFrame):
 
     pulse_value = pyqtProperty(float, fget=get_pulse_value, fset=set_pulse_value)
 
-    def enterEvent(self, event: Any) -> None:
+    def enterEvent(self, event: Any) -> None:  # noqa: ANN401, N802
         """Avvia l'animazione pulsante all'ingresso del mouse."""
         self._anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any) -> None:
+    def leaveEvent(self, event: Any) -> None:  # noqa: ANN401, N802
         """Ferma l'animazione pulsante all'uscita del mouse."""
         self._anim.stop()
         self.set_pulse_value(1.0)
         super().leaveEvent(event)
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:
+    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
         """
         Disegna la linea pulsante alla base del widget.
 

@@ -14,7 +14,7 @@ def mock_db_manager():
         yield mock_db
 
 
-def test_pdl_controller_returns_dtos_with_mocked_db(mock_db_manager):
+def test_pdl_controller_returns_dtos_with_mocked_db(mock_db_manager):  # noqa: ANN001
     """Verifica che il controller agisca come ponte convertendo i dati grezzi in DTO."""
 
     # 1. Arrange (Preparazione Mock)
@@ -51,7 +51,7 @@ def test_pdl_controller_returns_dtos_with_mocked_db(mock_db_manager):
     results = controller.get_pdl_data(filters={})
 
     # 3. Assert (Verifiche)
-    assert len(results) == 10000, "Deve restituire tutte le 10.000 righe"
+    assert len(results) == 10000, "Deve restituire tutte le 10.000 righe"  # noqa: PLR2004
     assert isinstance(results[0], PdlRowDTO), "I risultati devono essere mappati come PdlRowDTO"
     assert results[0].n_pdl == "PDL001", "Il mapping del numero PDL deve essere corretto"
     assert results[0].area == "Area1", "Il mapping dell'area deve essere corretto"
@@ -61,7 +61,7 @@ def test_pdl_controller_returns_dtos_with_mocked_db(mock_db_manager):
 
     # Verifichiamo il sistema di cache
     results_cached = controller.get_pdl_data(filters={})
-    assert len(results_cached) == 10000
+    assert len(results_cached) == 10000  # noqa: PLR2004
     assert mock_db_manager.execute_query.call_count == 1, (
         "La seconda chiamata deve usare la cache interna, non il DB"
     )

@@ -30,7 +30,7 @@ class TestSafeWorkProgrammazioneComprehensive(unittest.TestCase):
     @patch("src.bots.safework.programmazione.bot.poll_for_new_file")
     @patch.object(SafeWorkProgrammazioneBot, "click_robusto")
     @patch.object(SafeWorkProgrammazioneBot, "_attendi_scomparsa_overlay")
-    def test_run_success_flow(self, mock_overlay, mock_click, mock_poll, mock_read_excel):
+    def test_run_success_flow(self, mock_overlay, mock_click, mock_poll, mock_read_excel):  # noqa: ANN001
         data = [{"requesters": ["RICH1"], "date_start": "01/01/2026", "date_end": "07/01/2026"}]
         mock_poll.return_value = "fake_report.xlsx"
 

@@ -43,7 +43,7 @@ class SyncTracker:
             try:
                 cls._cache = json.loads(cls.STATE_FILE.read_text(encoding="utf-8"))
             except Exception as e:
-                logger.error(f"Errore caricamento sync state: {e}")
+                logger.error(f"Errore caricamento sync state: {e}")  # noqa: TRY400
                 cls._cache = {}
         else:
             cls._cache, cls._loaded = {}, True
@@ -57,7 +57,7 @@ class SyncTracker:
             cls.STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
             cls.STATE_FILE.write_text(json.dumps(cls._cache, indent=4), encoding="utf-8")
         except Exception as e:
-            logger.error(f"Errore salvataggio sync state: {e}")
+            logger.error(f"Errore salvataggio sync state: {e}")  # noqa: TRY400
 
     @classmethod
     def update_status(cls, module: str, added: int, removed: int, duration: float = 0.0) -> None:
@@ -130,7 +130,7 @@ class SyncTracker:
             dict: Dizionario con timestamp, record aggiunti, rimossi e durata.
         """
         cls._load()
-        from typing import cast
+        from typing import cast  # noqa: PLC0415
 
         return cast("dict[str, Any]", cls._cache.get(module, {}))
 
@@ -156,6 +156,6 @@ class SyncTracker:
 
         added_str = f"<font color='green'><b>+{added}</b></font>"
         removed_str = f"<font color='red'><b>-{removed}</b></font>"
-        time_str = f"{duration:.1f}s" if duration < 60 else f"{int(duration // 60)}m {int(duration % 60)}s"
+        time_str = f"{duration:.1f}s" if duration < 60 else f"{int(duration // 60)}m {int(duration % 60)}s"  # noqa: PLR2004
 
         return f"{timestamp} {added_str} {removed_str} (Tempo: {time_str})"

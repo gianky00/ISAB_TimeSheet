@@ -12,7 +12,11 @@ class TestCertificatiImport(unittest.TestCase):
     @patch("pandas.read_excel")
     @patch("pathlib.Path.exists")
     def test_import_certificati_dynamic_header(
-        self, mock_exists, mock_read_excel, mock_excel_file, mock_read_sql
+        self,
+        mock_exists,  # noqa: ANN001
+        mock_read_excel,  # noqa: ANN001
+        mock_excel_file,  # noqa: ANN001
+        mock_read_sql,  # noqa: ANN001
     ):
         # Setup mocks
         mock_exists.return_value = True
@@ -72,8 +76,8 @@ class TestCertificatiImport(unittest.TestCase):
             # Configure side_effect for read_excel
             # First call: Preview (nrows=20)
             # Second call: Real read (header=5)
-            def read_excel_side_effect(*args, **kwargs):
-                if kwargs.get("nrows") == 20:
+            def read_excel_side_effect(*args, **kwargs):  # noqa: ANN002, ANN003, ANN202
+                if kwargs.get("nrows") == 20:  # noqa: PLR2004
                     return preview_df
                 return real_df
 
@@ -92,7 +96,7 @@ class TestCertificatiImport(unittest.TestCase):
             self.assertEqual(added, 1)  # Should import 1 row
 
             # Verify that it picked the correct sheet
-            # mock_read_excel.call_args_list[0] is preview
+            # mock_read_excel.call_args_list[0] is preview  # noqa: ERA001
             # mock_read_excel.call_args_list[1] is real read
             _args, kwargs = mock_read_excel.call_args_list[1]
             self.assertEqual(kwargs["sheet_name"], "Strumenti Campione ISAB SUD")

@@ -14,7 +14,7 @@ class TestLicenseUpdaterRobust:
         return SecretsManager.get_grace_period_key()
 
     @pytest.fixture
-    def mock_data_dir(self, tmp_path):
+    def mock_data_dir(self, tmp_path):  # noqa: ANN001
         data_dir = tmp_path / "AppData"
         license_dir = data_dir / "Licenza"
         license_dir.mkdir(parents=True)
@@ -33,8 +33,8 @@ class TestLicenseUpdaterRobust:
         with patch("requests.get") as mock:
             yield mock
 
-    def test_run_update_success(self, mock_requests, mock_data_dir, mock_time):
-        def side_effect(url, **kwargs):
+    def test_run_update_success(self, mock_requests, mock_data_dir, mock_time):  # noqa: ANN001
+        def side_effect(url, **kwargs):  # noqa: ANN001, ANN003, ANN202
             resp = MagicMock()
             resp.status_code = 200
             if "config.dat" in url:
@@ -51,15 +51,15 @@ class TestLicenseUpdaterRobust:
                 with patch("src.core.license_updater._save_license_files", return_value=True):
                     assert license_updater.run_update() is True
 
-    def test_grace_period_valid(self, mock_data_dir, mock_time, grace_key):
+    def test_grace_period_valid(self, mock_data_dir, mock_time, grace_key):  # noqa: ANN001
         cipher = Fernet(grace_key)
         yesterday = datetime.now(UTC) - timedelta(days=1)
         token = cipher.encrypt(yesterday.isoformat().encode("utf-8"))
         (mock_data_dir / "validity.token").write_bytes(token)
         assert license_updater.check_grace_period() is True
 
-    def test_emergency_grace_activation(self, mock_data_dir, mock_time):
+    def test_emergency_grace_activation(self, mock_data_dir, mock_time):  # noqa: ANN001
         success, _msg, days = license_updater.check_emergency_grace_period()
         assert success is True
         assert (mock_data_dir / "emergency_grace.token").exists()
-        assert days == 3
+        assert days == 3  # noqa: PLR2004

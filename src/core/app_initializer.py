@@ -47,61 +47,61 @@ class AppInitializer:
             AppInitializer._setup_logging()
 
             step("Verifica dipendenze critiche (Pandas/Numpy)...", 7)
-            import numpy
-            import pandas
+            import numpy  # noqa: PLC0415
+            import pandas  # noqa: PLC0415
 
             logger.info(f"Engine: Pandas {pandas.__version__} | Numpy {numpy.__version__}")
 
             step("Validazione Path di Sistema...", 13)
-            from src.core.config_manager import CONFIG_DIR
+            from src.core.config_manager import CONFIG_DIR  # noqa: PLC0415
 
             CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
             step("Verifica integrità WebDriver...", 19)
-            from src.utils.resource_manager import ResourceManager
+            from src.utils.resource_manager import ResourceManager  # noqa: PLC0415
 
             ResourceManager.ensure_automation_driver()
 
             step("Caricamento Registry Bot...", 22)
-            from src.bots import get_available_bots
+            from src.bots import get_available_bots  # noqa: PLC0415
 
             logger.info(f"Moduli bot rilevati: {len(get_available_bots())}")
 
             step("Verifica Identità Hardware (HWID)...", 25)
-            from src.core.license_validator import get_hardware_id
+            from src.core.license_validator import get_hardware_id  # noqa: PLC0415
 
             get_hardware_id()
 
             step("Handshake con Server Licenze...", 28)
-            from src.core.license_updater import run_update
+            from src.core.license_updater import run_update  # noqa: PLC0415
 
             with contextlib_suppress(Exception):
                 run_update()
 
             step("Validazione Certificati di Licenza...", 31)
-            from src.core.license_validator import LicenseStatus, get_detailed_license_status
+            from src.core.license_validator import LicenseStatus, get_detailed_license_status  # noqa: PLC0415
 
             status, msg = get_detailed_license_status()
             if status != LicenseStatus.VALID:
-                raise Exception(f"Licenza non valida: {msg}")
+                raise Exception(f"Licenza non valida: {msg}")  # noqa: TRY002, TRY003, TRY301
 
             step("Inizializzazione Engine SQLite3...", 34)
-            from src.core.database import db_manager
+            from src.core.database import db_manager  # noqa: PLC0415
 
             db_manager.init_db()
 
             AppInitializer._core_initialized = True
             step("Nucleo Sistema Operativo", 40)
-            return True
+            return True  # noqa: TRY300
 
         except Exception as e:
             if any(x in str(e) for x in ("REVOCATA", "Licenza non valida", "Errore Database")):
                 raise
             logger.critical(f"Unexpected startup error: {e}", exc_info=True)
-            raise Exception(f"Errore imprevisto durante l'avvio: {e}") from e
+            raise Exception(f"Errore imprevisto durante l'avvio: {e}") from e  # noqa: TRY002, TRY003
 
     @staticmethod
-    def init_generator(mw_instance: Any, yield_callback: Callable[[], None] | None = None):
+    def init_generator(mw_instance: Any, yield_callback: Callable[[], None] | None = None):  # noqa: ANN205, ANN401
         """Generatore per l'inizializzazione progressiva della GUI (Fase 2)."""
         tasks = [
             (0, "Preparazione Dashboard"),
@@ -138,15 +138,15 @@ class AppInitializer:
     @staticmethod
     def _setup_logging() -> None:
         try:
-            from src.core.logging import configure_logging
+            from src.core.logging import configure_logging  # noqa: PLC0415
 
             configure_logging()
         except Exception:
             logging.basicConfig(level=logging.INFO)
 
 
-def contextlib_suppress(*exceptions):
+def contextlib_suppress(*exceptions):  # noqa: ANN002, ANN201
     """Internal helper to avoid importing contextlib in core header."""
-    from contextlib import suppress
+    from contextlib import suppress  # noqa: PLC0415
 
     return suppress(*exceptions)

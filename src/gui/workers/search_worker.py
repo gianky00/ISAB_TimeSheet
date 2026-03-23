@@ -13,16 +13,16 @@ class SearchWorker(QThread):
 
     results_ready = pyqtSignal(dict)
 
-    def __init__(self, query: str, limit: int = 10, parent=None):
+    def __init__(self, query: str, limit: int = 10, parent=None):  # noqa: ANN001, ANN204
         super().__init__(parent)
         self.query = query
         self.limit = limit
         self._is_cancelled = False
 
-    def cancel(self):
+    def cancel(self):  # noqa: ANN201
         self._is_cancelled = True
 
-    def run(self):
+    def run(self):  # noqa: ANN201
         """Esegue la ricerca tramite il SearchService e invia i risultati."""
         if self._is_cancelled:
             return

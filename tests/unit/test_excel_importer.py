@@ -14,7 +14,12 @@ class TestExcelImporter:
     @patch("src.core.importers.contabilita.Path.exists", return_value=True)
     @patch("pandas.read_excel")
     def test_import_contabilita_dati_success(
-        self, mock_read_excel, mock_exists, mock_decrypt, mock_get_excel, mock_validate
+        self,
+        mock_read_excel,  # noqa: ANN001
+        mock_exists,  # noqa: ANN001
+        mock_decrypt,  # noqa: ANN001
+        mock_get_excel,  # noqa: ANN001
+        mock_validate,  # noqa: ANN001
     ):
         """Test importazione dati contabilità."""
         # Mock decryption
@@ -45,7 +50,7 @@ class TestExcelImporter:
             }
         )
 
-        def mock_read_excel_side_effect(*args, **kwargs):
+        def mock_read_excel_side_effect(*args, **kwargs):  # noqa: ANN002, ANN003, ANN202
             if kwargs.get("header") is None:
                 return pd.DataFrame([df.columns.tolist(), *df.values.tolist()])
             return df
@@ -56,10 +61,10 @@ class TestExcelImporter:
 
         assert success
         assert len(rows) > 0
-        assert 2024 in years
+        assert 2024 in years  # noqa: PLR2004
 
     @patch("src.core.importers.contabilita.Path.exists", return_value=False)
-    def test_import_contabilita_dati_file_not_found(self, mock_exists):
+    def test_import_contabilita_dati_file_not_found(self, mock_exists):  # noqa: ANN001
         success, msg, _rows, _years = ExcelImporter.import_contabilita_dati("missing.xlsx")
         assert not success
         assert "non trovato" in msg
@@ -69,9 +74,9 @@ class TestExcelImporter:
     @patch("src.core.importers.base.BaseImporter._decrypt_if_encrypted")
     @patch("src.core.importers.giornaliere.GiornaliereImporter._read_giornaliera_sheet")
     @patch("src.core.importers.giornaliere.ProcessPoolExecutor")
-    def test_import_giornaliere(self, mock_executor_cls, mock_read_sheet, mock_decrypt):
+    def test_import_giornaliere(self, mock_executor_cls, mock_read_sheet, mock_decrypt):  # noqa: ANN001
         # Mock file system
-        with patch("src.core.importers.giornaliere.Path") as MockPath:
+        with patch("src.core.importers.giornaliere.Path") as MockPath:  # noqa: N806
             root = MagicMock()
             MockPath.return_value = root
             root.exists.return_value = True
@@ -115,7 +120,7 @@ class TestExcelImporter:
             mock_executor = MagicMock()
             mock_executor_cls.return_value.__enter__.return_value = mock_executor
 
-            def side_effect_map(func, iterable):
+            def side_effect_map(func, iterable):  # noqa: ANN001, ANN202
                 return [func(item) for item in iterable]
 
             mock_executor.map.side_effect = side_effect_map
@@ -126,12 +131,12 @@ class TestExcelImporter:
 
             assert success
             assert len(rows) > 0
-            assert 2024 in years
+            assert 2024 in years  # noqa: PLR2004
 
     # --- Storico OdA ---
     @patch("pandas.read_excel")
     @patch("src.core.importers.storico_oda.Path.exists", return_value=True)
-    def test_import_storico_oda(self, mock_exists, mock_read):
+    def test_import_storico_oda(self, mock_exists, mock_read):  # noqa: ANN001
         # Mock columns matching STORICO_ODA_MAPPING
         data = {
             "Org. Acq.": ["OA1"],
@@ -163,7 +168,7 @@ class TestExcelImporter:
     # --- Attivita Programmate ---
     @patch("pandas.read_excel")
     @patch("src.core.importers.attivita.Path.exists", return_value=True)
-    def test_import_attivita_programmate(self, mock_exists, mock_read):
+    def test_import_attivita_programmate(self, mock_exists, mock_read):  # noqa: ANN001
         # Mapping: PS, AREA, PdL, IMP., DESCRIZIONE ATTIVITA', ...
         data = {
             "PS": ["PS1"],
@@ -185,7 +190,7 @@ class TestExcelImporter:
     # --- Scarico Ore (OpenPyXL) ---
     @patch("src.core.importers.scarico_ore.ScaricoOreImporter._load_scarico_workbook")
     @patch("src.core.importers.scarico_ore.Path.exists", return_value=True)
-    def test_import_scarico_ore_with_styles(self, mock_exists, mock_load_wb):
+    def test_import_scarico_ore_with_styles(self, mock_exists, mock_load_wb):  # noqa: ANN001
         # Mock Workbook and Worksheet
         wb = MagicMock()
         wb.sheetnames = ["SCARICO ORE"]
@@ -198,7 +203,7 @@ class TestExcelImporter:
         # iter_rows returns generator of tuples of cells
 
         # Mock Cell
-        def create_cell(value, color=None, bg=None):
+        def create_cell(value, color=None, bg=None):  # noqa: ANN001, ANN202
             cell = MagicMock()
             cell.value = value
             cell.font = MagicMock()
@@ -243,7 +248,7 @@ class TestExcelImporter:
         assert len(rows) == 1
 
         # Check styles JSON
-        import json
+        import json  # noqa: PLC0415
 
         styles = json.loads(rows[0][-1])
         assert styles["pers1"]["fg"] == "#FF0000"
@@ -253,7 +258,7 @@ class TestExcelImporter:
     @patch("pandas.read_excel")
     @patch("src.core.importers.certificati.pd.ExcelFile")
     @patch("src.core.importers.certificati.Path.exists", return_value=True)
-    def test_import_certificati_campione(self, mock_exists, mock_excel_file, mock_read):
+    def test_import_certificati_campione(self, mock_exists, mock_excel_file, mock_read):  # noqa: ANN001
         # Mock ExcelFile to return sheet names
         mock_excel = MagicMock()
         mock_excel.sheet_names = ["Strumenti Campione"]
@@ -280,7 +285,7 @@ class TestExcelImporter:
     # --- Scan Methods ---
     @patch("src.core.importers.scarico_ore.zipfile.ZipFile")
     @patch("src.core.importers.scarico_ore.Path.exists", return_value=True)
-    def test_scan_scarico_ore_rows(self, mock_exists, mock_zip):
+    def test_scan_scarico_ore_rows(self, mock_exists, mock_zip):  # noqa: ANN001
         # Mock ZipFile context manager
         z = MagicMock()
         mock_zip.return_value.__enter__.return_value = z
@@ -292,14 +297,14 @@ class TestExcelImporter:
         z.open.return_value.__enter__.return_value = f
 
         rows = ExcelImporter.scan_scarico_ore_rows("dummy.xlsx")
-        assert rows == 100
+        assert rows == 100  # noqa: PLR2004
 
     @patch(
         "src.core.importers.contabilita.ContabilitaImporter.scan_sheets",
         return_value=["S1", "S2"],
     )
     @patch("src.core.importers.giornaliere.GiornaliereImporter.scan_files", return_value=3)
-    def test_scan_workload(self, mock_scan_files, mock_scan_sheets):
+    def test_scan_workload(self, mock_scan_files, mock_scan_sheets):  # noqa: ANN001
         sheets, files = ExcelImporter.scan_workload("cont.xlsx", "root_giornaliere")
         # Returns (list, count) or (list, list)?
         # scan_sheets returns list. scan_files returns int.
@@ -309,4 +314,4 @@ class TestExcelImporter:
         # ContabilitaImporter.scan_sheets returns list.
         # So return value is (list, int).
         assert sheets == ["S1", "S2"]
-        assert files == 3
+        assert files == 3  # noqa: PLR2004

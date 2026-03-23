@@ -11,7 +11,7 @@ from src.core.license_validator import (
 class TestLicenseValidatorRobust:
     @patch("platform.system", return_value="Windows")
     @patch("src.core.license_validator._get_windows_hardware_id", return_value="MOCK_HWID")
-    def test_get_hardware_id_windows(self, mock_win, mock_plat):
+    def test_get_hardware_id_windows(self, mock_win, mock_plat):  # noqa: ANN001
         assert get_hardware_id() == "MOCK_HWID"
 
     @patch("src.core.license_validator._get_license_paths")
@@ -19,7 +19,7 @@ class TestLicenseValidatorRobust:
     @patch("src.core.license_validator._calculate_sha256", return_value="FAKE_HASH")
     @patch("src.core.license_validator.get_hardware_id", return_value="VALID_HWID")
     @patch("src.core.time_manager.get_trusted_time")
-    def test_verify_license_full_logic(self, mock_time, mock_hwid, mock_sha, mock_info, mock_paths):
+    def test_verify_license_full_logic(self, mock_time, mock_hwid, mock_sha, mock_info, mock_paths):  # noqa: ANN001
         # Setup percorsi mock
         paths = {"dir": MagicMock(), "config": MagicMock(), "manifest": MagicMock()}
         for p in paths.values():
@@ -53,7 +53,7 @@ class TestLicenseValidatorRobust:
             assert "Hardware ID" in msg
 
     @patch("src.core.license_validator._get_license_paths")
-    def test_verify_license_missing(self, mock_paths):
+    def test_verify_license_missing(self, mock_paths):  # noqa: ANN001
         paths = {"dir": MagicMock(), "config": MagicMock(), "manifest": MagicMock()}
         paths["dir"].exists.return_value = True
         paths["config"].exists.return_value = False  # Manca file config
@@ -68,7 +68,7 @@ class TestLicenseValidatorRobust:
         "src.core.license_validator._check_integrity_with_manifest",
         return_value=(LicenseStatus.VALID, ""),
     )
-    def test_verify_license_info_error(self, mock_integrity, mock_paths, mock_info):
+    def test_verify_license_info_error(self, mock_integrity, mock_paths, mock_info):  # noqa: ANN001
         paths = {"dir": MagicMock(), "config": MagicMock(), "manifest": MagicMock()}
         for p in paths.values():
             p.exists.return_value = True

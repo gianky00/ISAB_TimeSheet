@@ -52,13 +52,13 @@ class StatsManager:
                         config_manager.set_config_value("statistics", old_stats)
                         return old_stats
             return {}
-        from typing import cast
+        from typing import cast  # noqa: PLC0415
 
         return cast("dict[str, Any]", config.get("statistics", {}))
 
     def _worker_loop(self) -> None:
         """Loop per il salvataggio asincrono su disco."""
-        import logging
+        import logging  # noqa: PLC0415
 
         local_logger = logging.getLogger(__name__)
 
@@ -73,13 +73,13 @@ class StatsManager:
                 config_manager.set_config_value("statistics", stats_to_save)
                 self._save_queue.task_done()
             except Exception as e:
-                local_logger.error(f"Stats Save Error: {e}")
+                local_logger.error(f"Stats Save Error: {e}")  # noqa: TRY400
                 time.sleep(1)
 
     def _save_stats(self) -> None:
         """Invia una richiesta di salvataggio al worker di background."""
         # Inviamo una copia dei dati per evitare race conditions
-        import copy
+        import copy  # noqa: PLC0415
 
         self._save_queue.put(copy.deepcopy(self.stats))
 

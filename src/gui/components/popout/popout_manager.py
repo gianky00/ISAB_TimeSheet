@@ -45,12 +45,12 @@ class DetachedPanelWindow(QMainWindow):
         self.setCentralWidget(self.panel)
         self.panel.show()
 
-    def closeEvent(self, event: QCloseEvent | None) -> None:
+    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
         """
         Intercetta la chiusura della finestra per avviare il riaggancio.
         """
         if event:
-            import logging
+            import logging  # noqa: PLC0415
 
             logging.getLogger(__name__).info("Popout finestra esterna chiusa, innesco reattach...")
             self.panel_closed_signal.emit(self.original_index)
@@ -64,7 +64,7 @@ class PopoutPlaceholderWidget(QWidget):
         super().__init__(parent)
         self._setup_ui(title, on_reattach)
 
-    def _setup_ui(self, title: str, on_reattach: Callable[[], None]) -> None:
+    def _setup_ui(self, title: str, on_reattach: Callable[[], None]) -> None:  # noqa: PLR0915
         main_layout = QVBoxLayout(self)
         main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.setContentsMargins(40, 40, 40, 40)
@@ -82,7 +82,7 @@ class PopoutPlaceholderWidget(QWidget):
         """)
         self.card.setFixedWidth(560)
 
-        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+        from PyQt6.QtWidgets import QGraphicsDropShadowEffect  # noqa: PLC0415
 
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(30)
@@ -105,7 +105,7 @@ class PopoutPlaceholderWidget(QWidget):
         self.logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         try:
-            from PyQt6.QtGui import QIcon
+            from PyQt6.QtGui import QIcon  # noqa: PLC0415
 
             logo_path = get_asset_path("app.ico")
             icon = QIcon(logo_path)
@@ -166,8 +166,8 @@ class PopoutPlaceholderWidget(QWidget):
         main_layout.addWidget(self.card)
 
         # Animazioni
-        from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSequentialAnimationGroup
-        from PyQt6.QtWidgets import QGraphicsOpacityEffect
+        from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSequentialAnimationGroup  # noqa: PLC0415
+        from PyQt6.QtWidgets import QGraphicsOpacityEffect  # noqa: PLC0415
 
         self.opacity_effect = QGraphicsOpacityEffect(self.card)
         self.card.setGraphicsEffect(self.opacity_effect)

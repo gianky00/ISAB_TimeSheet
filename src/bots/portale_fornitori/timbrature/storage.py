@@ -44,7 +44,7 @@ class TimbratureStorage:
         "Sito Timbratura": "sito_timbratura",
     }
 
-    def __init__(self, db_path: Path = DB_PATH):
+    def __init__(self, db_path: Path = DB_PATH):  # noqa: ANN204
         """Inizializza il database delle timbrature configurando il percorso."""
         self.db_path = Path(db_path)
         # Lo schema viene inizializzato centralmente da DatabaseManager durante la Phase 1 (main.py)
@@ -84,7 +84,7 @@ class TimbratureStorage:
                     conn.commit()
 
         except Exception as e:
-            from src.core.logging import get_logger
+            from src.core.logging import get_logger  # noqa: PLC0415
 
             get_logger("storage").error(f"Errore durante ensure_columns in TimbratureStorage: {e}")
 
@@ -94,7 +94,7 @@ class TimbratureStorage:
         Returns: Lista di dizionari con info dipendente.
         """
         query = query.strip().lower()
-        if len(query) < 2:
+        if len(query) < 2:  # noqa: PLR2004
             return []
 
         results: list[dict[str, str]] = []
@@ -157,7 +157,7 @@ class TimbratureStorage:
 
             return employees
 
-    def update_employee_details(
+    def update_employee_details(  # noqa: ANN201
         self,
         nome: str,
         cognome: str,
@@ -252,14 +252,14 @@ class TimbratureStorage:
                 parts = clean_term.split("-")
 
                 # Caso DD-MM (es. 05/12 -> cerca 12 Dicembre)
-                if len(parts) == 2:
+                if len(parts) == 2:  # noqa: PLR2004
                     d, m = parts
                     # Ignoriamo se contengono testo
                     if d.isdigit() and m.isdigit():
                         return f"-{m.zfill(2)}-{d.zfill(2)}"
 
                 # Caso DD-MM-YYYY
-                if len(parts) == 3:
+                if len(parts) == 3:  # noqa: PLR2004
                     d, m, y = parts
 
                     # Se l'anno è incompleto (es. 202), non normalizzare ancora
@@ -270,7 +270,7 @@ class TimbratureStorage:
                         return term
 
                     # Gestione anno 2 cifre
-                    if len(y) == 2:
+                    if len(y) == 2:  # noqa: PLR2004
                         y = "20" + y
 
                     # Ricostruisci YYYY-MM-DD
@@ -293,9 +293,9 @@ class TimbratureStorage:
             emp = mappings.get(f"{nome}|{cognome}", {"reparto": "", "cantiere": ""})
             rep, cant = emp.get("reparto", ""), emp.get("cantiere", "")
 
-            if f_rep and f_rep != "Tutti" and rep != f_rep:
+            if f_rep and f_rep != "Tutti" and rep != f_rep:  # noqa: PLR1714
                 continue
-            if f_cant and f_cant != "Tutti" and cant != f_cant:
+            if f_cant and f_cant != "Tutti" and cant != f_cant:  # noqa: PLR1714
                 continue
 
             final.append((*r, rep, cant))
@@ -306,7 +306,7 @@ class TimbratureStorage:
     def import_excel(self, excel_path: str, log_callback: Callable[[str], None] | None = None) -> bool:
         """Imports an Excel file into the database."""
 
-        def log(m):
+        def log(m):  # noqa: ANN001, ANN202
             """Internal logging helper."""
             log_callback(m) if log_callback else print(m)
 
@@ -349,7 +349,7 @@ class TimbratureStorage:
             return True
         return False
 
-    def _process_excel_row(self, cursor, row, stats, log):
+    def _process_excel_row(self, cursor, row, stats, log):  # noqa: ANN001, ANN202
         try:
             # Data Normalization
             data_val = row.get("data")
@@ -398,7 +398,7 @@ class TimbratureStorage:
             old_path = self.db_path.parent / "timbrature_lists.json"
             if old_path.exists():
                 with suppress(Exception):
-                    import json
+                    import json  # noqa: PLC0415
 
                     old_data = json.loads(old_path.read_text(encoding="utf-8"))
                     if isinstance(old_data, dict):
@@ -411,7 +411,7 @@ class TimbratureStorage:
             "cantieri": config.get("cantieri", []),
         }
 
-    def save_lists(self, data: dict[str, list[str]]):
+    def save_lists(self, data: dict[str, list[str]]):  # noqa: ANN201
         """Salva le liste configurate in config.json."""
         config_manager.set_config_value("reparti", data.get("reparti", []))
         config_manager.set_config_value("cantieri", data.get("cantieri", []))

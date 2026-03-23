@@ -17,12 +17,12 @@ class PDLTableView(QTableView):
     selection_changed_custom = pyqtSignal()
     context_menu_requested = pyqtSignal(object)  # pos
 
-    def __init__(self, model, parent=None):
+    def __init__(self, model, parent=None):  # noqa: ANN001, ANN204
         super().__init__(parent)
         self.setModel(model)
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self):  # noqa: ANN202
         self.setAlternatingRowColors(True)
         self.setSortingEnabled(True)
         self.setWordWrap(True)
@@ -49,7 +49,7 @@ class PDLTableView(QTableView):
             h_header.setSectionsClickable(True)
             h_header.sectionClicked.connect(self.header_clicked.emit)
 
-    def optimize_columns(self, headers_count: int):
+    def optimize_columns(self, headers_count: int):  # noqa: ANN201
         """Ottimizza la larghezza delle colonne basandosi sul contenuto."""
         h = self.horizontalHeader()
         if not h:
@@ -60,7 +60,7 @@ class PDLTableView(QTableView):
         self.resizeColumnsToContents()
         # Limita larghezze troppo ampie tranne l'ultima (descrizione)
         for i in range(headers_count):
-            if i != 6 and h.sectionSize(i) > 200:
+            if i != 6 and h.sectionSize(i) > 200:  # noqa: PLR2004
                 h.resizeSection(i, 200)
 
         h.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)

@@ -74,7 +74,7 @@ class DocumentProcessor:
                                 continue
                             result.insert_pdf(pdf_doc)
                     except Exception as e:
-                        logger.error("Impossibile inserire il PDF %s nel merge: %s", pdf_path, e)
+                        logger.error("Impossibile inserire il PDF %s nel merge: %s", pdf_path, e)  # noqa: TRY400
                         continue
 
                 if len(result) > 0:

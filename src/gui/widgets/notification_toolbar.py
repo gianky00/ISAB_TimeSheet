@@ -144,7 +144,7 @@ class NotificationToolbar(QWidget):
         self._debounce_timer.timeout.connect(self._emit_search_query)
         self._setup_ui()
 
-    def _setup_ui(self) -> None:
+    def _setup_ui(self) -> None:  # noqa: PLR0915
         """Setup layout e componenti."""
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)

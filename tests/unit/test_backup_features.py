@@ -9,7 +9,7 @@ from src.core.backup_manager import BackupManager
 
 class TestBackupFeatures:
     @pytest.fixture
-    def mock_dirs(self, tmp_path):
+    def mock_dirs(self, tmp_path):  # noqa: ANN001
         """Prepara directory sorgente e destinazione per i test."""
         source = tmp_path / "source"
         source.mkdir()
@@ -26,7 +26,7 @@ class TestBackupFeatures:
 
         return source, target
 
-    def test_detect_cloud_paths_onedrive(self, mocker):
+    def test_detect_cloud_paths_onedrive(self, mocker):  # noqa: ANN001
         """Verifica rilevamento OneDrive tramite variabile d'ambiente."""
         # Setup: Mock Path.home() per restituire un oggetto Path che si comporta bene
         fake_home = Path("/home/user")
@@ -45,7 +45,7 @@ class TestBackupFeatures:
         # Su Windows i percorsi potrebbero venire normalizzati
         assert "/cloud/onedrive" in str(paths["OneDrive"]).replace("\\", "/")
 
-    def test_create_backup_logic(self, mock_dirs, mocker):
+    def test_create_backup_logic(self, mock_dirs, mocker):  # noqa: ANN001
         """Verifica che il backup contenga solo i file corretti."""
         source, target = mock_dirs
         mocker.patch("src.core.backup_manager.CONFIG_DIR", source)
@@ -65,7 +65,7 @@ class TestBackupFeatures:
             # Cache esclusa
             assert not any("cache" in n for n in names)
 
-    def test_cleanup_old_backups(self, mock_dirs):
+    def test_cleanup_old_backups(self, mock_dirs):  # noqa: ANN001
         """Verifica che vengano mantenuti solo gli ultimi N backup."""
         _, target = mock_dirs
 
@@ -79,9 +79,9 @@ class TestBackupFeatures:
         BackupManager._cleanup_old_backups(target, keep=5)
 
         remaining = list(target.glob("*.zip"))
-        assert len(remaining) == 5
+        assert len(remaining) == 5  # noqa: PLR2004
 
-    def test_restore_backup_safe_extraction(self, mock_dirs, mocker):
+    def test_restore_backup_safe_extraction(self, mock_dirs, mocker):  # noqa: ANN001
         """Verifica che il restore sovrascriva i dati nella sorgente."""
         source, target = mock_dirs
         mocker.patch("src.core.backup_manager.CONFIG_DIR", source)
@@ -97,7 +97,7 @@ class TestBackupFeatures:
         assert (source / "new_data.db").exists()
         assert (source / "new_data.db").read_text() == "restored content"
 
-    def test_restore_invalid_zip(self, tmp_path):
+    def test_restore_invalid_zip(self, tmp_path):  # noqa: ANN001
         """Verifica errore in caso di file non zip."""
         bad_file = tmp_path / "fake.zip"
         bad_file.write_text("not a zip")

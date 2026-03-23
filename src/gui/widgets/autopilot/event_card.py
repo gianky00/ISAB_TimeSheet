@@ -37,7 +37,7 @@ class AutopilotEventCard(QFrame):
 
     sync_requested = pyqtSignal(str)  # Segnale emesso quando l'utente preme il tasto sync
 
-    def __init__(
+    def __init__(  # noqa: PLR0913, PLR0915
         self,
         bot_id: str,
         bot_name: str,
@@ -272,7 +272,7 @@ class AutopilotEventCard(QFrame):
             if diff_days <= 1:
                 color = COLORS["success_green"]
                 msg = f"Database aggiornato ({status.get('timestamp')})"
-            elif diff_days == 2:
+            elif diff_days == 2:  # noqa: PLR2004
                 color = COLORS["warning_yellow"]
                 msg = f"Sincronizzazione consigliata (Ultima: {status.get('timestamp')})"
             else:

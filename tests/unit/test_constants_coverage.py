@@ -21,7 +21,7 @@ class TestConstantsCoverage:
         assert constants.BotStatus.IDLE.value == "idle"
         assert constants.BotStatus.ERROR.value == "error"
         assert constants.BotStatus.RUNNING in constants.BotStatus
-        assert len(constants.BotStatus) >= 5
+        assert len(constants.BotStatus) >= 5  # noqa: PLR2004
 
     def test_browser_config(self):
         """Test Browser configuration."""

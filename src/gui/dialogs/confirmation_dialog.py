@@ -143,7 +143,7 @@ class ConfirmationDialog(QDialog):
 
     def _sanitize_html(self, html: str) -> str:
         """Rimuove tag potenzialmente pericolosi (script, iframe, object) dall'HTML."""
-        import re
+        import re  # noqa: PLC0415
 
         # Rimuove blocchi script completi
         clean = re.sub(r"<script.*?>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)

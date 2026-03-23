@@ -21,7 +21,7 @@ class TestSearchControllerCoverage(unittest.TestCase):
         self.assertEqual(self.controller._last_query, "")
 
     @patch("src.gui.controllers.search_controller.QMenu")
-    def test_perform_search_no_results(self, MockMenu):
+    def test_perform_search_no_results(self, MockMenu):  # noqa: ANN001, N803
         mock_menu_instance = MockMenu.return_value
 
         # Mock all sub-searches to return 0
@@ -72,7 +72,7 @@ class TestSearchControllerCoverage(unittest.TestCase):
         menu.addAction.assert_any_call("AUDIT LOG:")
 
     @patch("src.gui.controllers.search_controller.QMenu")
-    def test_perform_search_integration(self, MockMenu):
+    def test_perform_search_integration(self, MockMenu):  # noqa: ANN001, N803
         mock_menu = MockMenu.return_value
 
         # Use simple return values for sub-methods to verify orchestration

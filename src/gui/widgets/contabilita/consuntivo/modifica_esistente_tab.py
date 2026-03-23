@@ -58,7 +58,7 @@ class ModificaEsistenteTab(QWidget):
     def _on_scan_error(self, msg: str) -> None:
         self.log_widget.append_log(msg, "error")
 
-    def _setup_ui(self) -> None:
+    def _setup_ui(self) -> None:  # noqa: PLR0915
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
@@ -207,7 +207,7 @@ class ModificaEsistenteTab(QWidget):
         self._dir_label.setText(directory)
 
         # Se meno di 30 secondi dall'ultima scansione e non forzato, usa la cache
-        if not force and (now - self._last_scan_time < 30) and self._cached_files:
+        if not force and (now - self._last_scan_time < 30) and self._cached_files:  # noqa: PLR2004
             self._update_combo_from_cache()
             return
 
@@ -217,7 +217,7 @@ class ModificaEsistenteTab(QWidget):
         self._is_scanning = True
         self._last_scan_time = now
 
-        def run_scan():
+        def run_scan():  # noqa: ANN202
             temp_files = []
             try:
                 dir_path = Path(directory)
@@ -280,7 +280,7 @@ class ModificaEsistenteTab(QWidget):
 
     def _auto_fill_from_file(self, file_path: str) -> None:
         try:
-            import openpyxl
+            import openpyxl  # noqa: PLC0415
 
             wb = openpyxl.load_workbook(file_path, read_only=True, data_only=True)
             sheet = None
@@ -347,7 +347,7 @@ class ModificaEsistenteTab(QWidget):
             return
 
         try:
-            import openpyxl
+            import openpyxl  # noqa: PLC0415
 
             wb = openpyxl.load_workbook(self.loaded_file, keep_vba=True)
 

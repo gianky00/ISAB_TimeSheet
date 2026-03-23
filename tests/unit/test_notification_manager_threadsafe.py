@@ -13,13 +13,13 @@ from src.core.notification_manager import NotificationManager
 
 class TestNotificationManagerThreadSafe:
     @pytest.fixture
-    def manager(self, tmp_path):
+    def manager(self, tmp_path):  # noqa: ANN001
         """Fixture per un manager isolato."""
         with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
             NotificationManager._instance = None  # Reset singleton
             return NotificationManager.instance()
 
-    def test_persistence(self, manager, tmp_path):
+    def test_persistence(self, manager, tmp_path):  # noqa: ANN001
         """Verifica che le notifiche siano salvate su disco."""
         manager.add_notification("Titolo", "Messaggio", level="success")
 
@@ -34,12 +34,12 @@ class TestNotificationManagerThreadSafe:
             assert data[0]["title"] == "Titolo"
             assert data[0]["level"] == "success"
 
-    def test_concurrent_additions(self, manager):
+    def test_concurrent_additions(self, manager):  # noqa: ANN001
         """Verifica la thread-safety aggiungendo notifiche da più thread."""
         num_threads = 5
         adds_per_thread = 20
 
-        def worker():
+        def worker():  # noqa: ANN202
             for i in range(adds_per_thread):
                 manager.add_notification(f"Thread {threading.get_ident()}", f"Msg {i}")
 
@@ -52,7 +52,7 @@ class TestNotificationManagerThreadSafe:
         # Verifica totale (inclusa la notifica di default se presente, ma qui è pulito)
         assert len(manager.get_notifications()) == num_threads * adds_per_thread
 
-    def test_unread_count_only_errors(self, manager):
+    def test_unread_count_only_errors(self, manager):  # noqa: ANN001
         """Verifica che unread_count conti solo le notifiche di livello 'error'."""
         manager.clear_all()
         manager.add_notification("Info", "Msg", level="info")
@@ -60,7 +60,7 @@ class TestNotificationManagerThreadSafe:
         manager.add_notification("Err 2", "Msg", level="error")
         manager.add_notification("Warn", "Msg", level="warning")
 
-        assert manager.get_unread_count() == 2
+        assert manager.get_unread_count() == 2  # noqa: PLR2004
 
         # Segna una come letta
         notifs = manager.get_notifications()
@@ -69,7 +69,7 @@ class TestNotificationManagerThreadSafe:
 
         assert manager.get_unread_count() == 1
 
-    def test_signals_emission(self, manager, qtbot):
+    def test_signals_emission(self, manager, qtbot):  # noqa: ANN001
         """Verifica l'emissione dei segnali Qt."""
         # Spy sui segnali
         with qtbot.waitSignal(manager.notification_added, timeout=1000) as blocker:
@@ -77,12 +77,12 @@ class TestNotificationManagerThreadSafe:
 
         assert blocker.args[0]["title"] == "Test Signal"
 
-    def test_toast_request_signal(self, manager, qtbot):
+    def test_toast_request_signal(self, manager, qtbot):  # noqa: ANN001
         """Verifica che venga emesso il segnale per il toast se richiesto."""
         with qtbot.waitSignal(manager.request_toast, timeout=1000) as blocker:
             manager.add_notification("Toast", "Message", level="warning", show_toast=True)
 
-        # args: (messaggio, tipo, durata)
+        # args: (messaggio, tipo, durata)  # noqa: ERA001
         assert "Toast" in blocker.args[0]
         assert blocker.args[1] == "warning"
-        assert blocker.args[2] == 10000  # Duration for warning
+        assert blocker.args[2] == 10000  # Duration for warning  # noqa: PLR2004

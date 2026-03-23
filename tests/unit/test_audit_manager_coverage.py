@@ -11,7 +11,7 @@ class TestAuditManager:
     """Test coverage for src/core/audit modular V2."""
 
     @pytest.fixture
-    def temp_db_manager(self, tmp_path, mocker):
+    def temp_db_manager(self, tmp_path, mocker):  # noqa: ANN001
         db_file = tmp_path / "audit_test.db"
         # Patch the actual location in AuditDatabase
         mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_file)
@@ -24,12 +24,12 @@ class TestAuditManager:
         yield manager
         AuditManager._instance = None
 
-    def test_singleton(self, temp_db_manager):
+    def test_singleton(self, temp_db_manager):  # noqa: ANN001
         m1 = AuditManager()
         m2 = AuditManager()
         assert m1 is m2
 
-    def test_init_db_creation(self, temp_db_manager):
+    def test_init_db_creation(self, temp_db_manager):  # noqa: ANN001
         # Verify table exists
         with sqlite3.connect(temp_db_manager.DB_PATH) as conn:
             cursor = conn.cursor()
@@ -41,7 +41,7 @@ class TestAuditManager:
             assert "severity" in columns
             assert "row_hash" in columns
 
-    def test_log_action_integrity(self, temp_db_manager):
+    def test_log_action_integrity(self, temp_db_manager):  # noqa: ANN001
         manager = temp_db_manager
 
         # Log action
@@ -62,7 +62,7 @@ class TestAuditManager:
         # Verify integrity
         assert manager.verify_integrity() is True
 
-    def test_integrity_failure(self, temp_db_manager):
+    def test_integrity_failure(self, temp_db_manager):  # noqa: ANN001
         manager = temp_db_manager
         manager.log_action("TEST", "test")
         manager._log_queue.join()
@@ -74,14 +74,14 @@ class TestAuditManager:
 
         assert manager.verify_integrity() is False
 
-    def test_get_current_user_env(self, temp_db_manager):
+    def test_get_current_user_env(self, temp_db_manager):  # noqa: ANN001
         # Patch os in manager.py
         with patch("src.core.audit.manager.os.environ.get") as mock_env:
             mock_env.return_value = "TEST_USER"
             assert temp_db_manager._get_current_user() == "TEST_USER"
 
     @patch("src.core.notification_manager.NotificationManager.instance")
-    def test_notification_trigger(self, mock_notify, temp_db_manager):
+    def test_notification_trigger(self, mock_notify, temp_db_manager):  # noqa: ANN001
         mock_instance = MagicMock()
         mock_notify.return_value = mock_instance
 
@@ -101,8 +101,8 @@ class TestAuditManager:
         assert kwargs["level"] == "success"
         assert "Versione aggiornata a 2.0" in args[1]
 
-    def test_retention_policy(self, temp_db_manager):
-        from datetime import datetime, timedelta
+    def test_retention_policy(self, temp_db_manager):  # noqa: ANN001
+        from datetime import datetime, timedelta  # noqa: PLC0415
 
         # Insert old record
         old_date = (datetime.now() - timedelta(days=100)).isoformat()

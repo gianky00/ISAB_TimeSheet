@@ -16,7 +16,7 @@ class AppEventHandler(QObject):
     e l'intercettazione delle scorciatoie da tastiera globali.
     """
 
-    def __init__(self, main_window):
+    def __init__(self, main_window):  # noqa: ANN001, ANN204
         """
         Inizializza l'event handler.
 
@@ -27,12 +27,12 @@ class AppEventHandler(QObject):
         self.main_window = main_window
         self._force_quit = False
 
-    def quit_application(self):
+    def quit_application(self):  # noqa: ANN201
         """Chiude l'applicazione completamente scavalcando la minimizzazione nel tray."""
         self._force_quit = True
         self.main_window.close()
 
-    def handle_close_event(self, event):
+    def handle_close_event(self, event):  # noqa: ANN001, ANN201
         """
         Gestisce l'evento di chiusura della finestra.
         Se la chiusura non è forzata, nasconde l'applicazione nel tray invece di terminarla.
@@ -41,11 +41,11 @@ class AppEventHandler(QObject):
         Args:
             event: QCloseEvent intercettato dalla MainWindow.
         """
-        from src.core.app_updater import has_pending_update, run_pending_installer
+        from src.core.app_updater import has_pending_update, run_pending_installer  # noqa: PLC0415
 
         # Se c'è un aggiornamento programmato e l'utente clicca la 'X'
         if not self._force_quit and has_pending_update():
-            from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
+            from src.gui.dialogs.confirmation_dialog import ConfirmationDialog  # noqa: PLC0415
 
             res = ConfirmationDialog.confirm(
                 self.main_window,
@@ -75,11 +75,11 @@ class AppEventHandler(QObject):
             self.main_window.hide()
             event.ignore()
 
-    def handle_f5(self):
+    def handle_f5(self):  # noqa: ANN201
         """Gestisce il tasto F5 innescando il refresh intelligente della pagina attiva."""
         self.main_window._handle_f5_action()
 
-    def handle_ctrl_f(self):
+    def handle_ctrl_f(self):  # noqa: ANN201
         """Gestisce Ctrl+F portando il focus sulla barra di ricerca globale."""
         if (
             hasattr(self.main_window, "tool_bar_component")

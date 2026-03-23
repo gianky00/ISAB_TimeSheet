@@ -14,14 +14,14 @@ from src.bots.safework.pdl.bot import SafeWorkPDLBot
 
 class TestBotRegressionShield:
     @pytest.fixture
-    def mock_driver_env(self, mocker):
+    def mock_driver_env(self, mocker):  # noqa: ANN001
         """Mocka l'ambiente driver completo per BaseBot."""
         # Patch specifically where it's used to avoid batch run interference
         m_chrome = mocker.patch("src.bots.base.base_bot.webdriver.Chrome")
         mocker.patch("webdriver_manager.chrome.ChromeDriverManager.install", return_value="chromedriver.exe")
         return m_chrome.return_value
 
-    def test_base_bot_cdp_enforcement(self, mock_driver_env, mocker):
+    def test_base_bot_cdp_enforcement(self, mock_driver_env, mocker):  # noqa: ANN001
         """Verifica che BaseBot forzi il download path tramite CDP (Regression Shield)."""
         bot = SafeWorkPDLBot("u", "p", download_path="C:/Downloads")
 
@@ -36,7 +36,7 @@ class TestBotRegressionShield:
             {"behavior": "allow", "downloadPath": mocker.ANY},
         )
 
-    def test_pdl_bot_execution_sequence(self, mocker):
+    def test_pdl_bot_execution_sequence(self, mocker):  # noqa: ANN001
         """Verifica la sequenza STRETTA di operazioni del bot PDL (Regression Shield)."""
         bot = SafeWorkPDLBot("u", "p", download_path="/tmp")
         bot.driver = MagicMock()
@@ -65,11 +65,11 @@ class TestBotRegressionShield:
         ]
         manager.assert_has_calls(expected_calls, any_order=False)
 
-    def test_safework_programmazione_parsing_robustness(self, mocker):
+    def test_safework_programmazione_parsing_robustness(self, mocker):  # noqa: ANN001
         """Verifica che il bot programmazione fallisca se gli indici Excel cambiano (Regression Shield)."""
-        import pandas as pd
+        import pandas as pd  # noqa: PLC0415
 
-        from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
+        from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot  # noqa: PLC0415
 
         bot = SafeWorkProgrammazioneBot("u", "p")
         bot.log = MagicMock()
@@ -86,7 +86,7 @@ class TestBotRegressionShield:
         # Dovrebbe aver loggato un avvertimento/errore di parsing
         assert any("Errore parsing" in str(c) or "Trovati 0" in str(c) for c in bot.log.call_args_list)
 
-    def test_scarico_ts_retry_logic_enforcement(self, mocker):
+    def test_scarico_ts_retry_logic_enforcement(self, mocker):  # noqa: ANN001
         """Verifica che la logica di retry per lo spostamento file sia attiva (Regression Shield)."""
         bot = ScaricaTSBot(username="u", password="p")
         bot.log = MagicMock()
@@ -100,13 +100,13 @@ class TestBotRegressionShield:
 
         assert res is None
         # Deve aver provato 3 volte (retry logic)
-        assert m_shutil.call_count == 3
+        assert m_shutil.call_count == 3  # noqa: PLR2004
         # Deve aver loggato l'errore finale
         assert any("Impossibile spostare" in str(c) for c in bot.log.call_args_list)
 
     def test_document_processor_crash_protection(self):
         """Verifica che il merge dei PDF non crashi l'app se fitz fallisce (Regression Shield)."""
-        from src.utils.document_processor import DocumentProcessor
+        from src.utils.document_processor import DocumentProcessor  # noqa: PLC0415
 
         with patch("fitz.open", side_effect=Exception("Corrupted PDF")):
             # Non deve sollevare eccezione ma ritornare False

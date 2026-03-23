@@ -33,13 +33,13 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         ("db", "Importazione Database"),
     ]
 
-    def __init__(
+    def __init__(  # noqa: ANN204, PLR0913
         self,
-        username,
-        password,
-        headless=False,
-        timeout=30,
-        download_path="",
+        username,  # noqa: ANN001
+        password,  # noqa: ANN001
+        headless=False,  # noqa: ANN001
+        timeout=30,  # noqa: ANN001
+        download_path="",  # noqa: ANN001
         account_type: str = "Esecutore",
     ):
         """
@@ -137,7 +137,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             self.log("🔍 Clic su Ricerca PdL...")
             self.wait.until(lambda d: d.find_element(*SafeWorkLocators.RICERCA_PDL_BUTTON)).click()
             self._attendi_scomparsa_overlay()
-            return True
+            return True  # noqa: TRY300
         except Exception:
             return False
 
@@ -151,7 +151,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         Returns:
             str | None: Percorso del file scaricato o None.
         """
-        from src.bots.base.wait_helpers import poll_for_new_file
+        from src.bots.base.wait_helpers import poll_for_new_file  # noqa: PLC0415
 
         files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*") if f.is_file()}
 
@@ -175,7 +175,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         except Exception:
             logger.debug(f"Impossibile rimuovere il file temporaneo: {file_path}")
 
-    def _import_to_db(self, file_path: str):
+    def _import_to_db(self, file_path: str):  # noqa: ANN202
         """
         Importazione massiva dei dati PDL dall'Excel nel database SQLite.
 

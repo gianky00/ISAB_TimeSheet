@@ -27,11 +27,11 @@ from src.utils.helpers import get_asset_path
 class UbicazioneDelegate(QStyledItemDelegate):
     """Delegate per la selezione dell'ubicazione tramite ComboBox."""
 
-    def __init__(self, parent: QWidget | None = None):
+    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
         super().__init__(parent)
         self.items = ["", "UFFICIO", "OFFICINA", "ASSEGNATO AL TECNICO"]
 
-    def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:
+    def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:  # noqa: N802
         """Crea l'editor per la colonna Ubicazione."""
         editor = QComboBox(parent)
         editor.addItems(self.items)
@@ -41,7 +41,7 @@ class UbicazioneDelegate(QStyledItemDelegate):
             editor.setCurrentText(current_text)
         return editor
 
-    def setEditorData(self, editor: QWidget | None, index: QModelIndex):
+    def setEditorData(self, editor: QWidget | None, index: QModelIndex):  # noqa: ANN201, N802
         """Popola l'editor con i dati correnti."""
         value = index.data(Qt.ItemDataRole.EditRole)
         if isinstance(editor, QComboBox):
@@ -49,7 +49,7 @@ class UbicazioneDelegate(QStyledItemDelegate):
             if idx >= 0:
                 editor.setCurrentIndex(idx)
 
-    def setModelData(self, editor: QWidget | None, model: object, index: QModelIndex):
+    def setModelData(self, editor: QWidget | None, model: object, index: QModelIndex):  # noqa: ANN201, N802
         """Salva i dati dall'editor al modello."""
         if isinstance(editor, QComboBox):
             value = editor.currentText()
@@ -59,18 +59,18 @@ class UbicazioneDelegate(QStyledItemDelegate):
 class AnnotazioniDelegate(QStyledItemDelegate):
     """Delegate per l'inserimento testo libero nelle annotazioni."""
 
-    def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:
+    def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:  # noqa: N802
         """Crea l'editor per la colonna Annotazioni."""
         editor = QLineEdit(parent)
         return editor
 
-    def setEditorData(self, editor: QWidget | None, index: QModelIndex):
+    def setEditorData(self, editor: QWidget | None, index: QModelIndex):  # noqa: ANN201, N802
         """Popola l'editor con i dati correnti."""
         value = index.data(Qt.ItemDataRole.EditRole)
         if isinstance(editor, QLineEdit):
             editor.setText(value)
 
-    def setModelData(self, editor: QWidget | None, model: object, index: QModelIndex):
+    def setModelData(self, editor: QWidget | None, model: object, index: QModelIndex):  # noqa: ANN201, N802
         """Salva i dati dall'editor al modello."""
         if isinstance(editor, QLineEdit):
             value = editor.text()
@@ -80,7 +80,7 @@ class AnnotazioniDelegate(QStyledItemDelegate):
 class CertificatiTreeWidget(StandardTreeWidget):
     """Tree Widget specializzato per la gestione dei certificati."""
 
-    itemEditedCustom = pyqtSignal(object, str, str)  # (item, col_name, new_value)
+    itemEditedCustom = pyqtSignal(object, str, str)  # (item, col_name, new_value)  # noqa: N815
 
     HEADERS: ClassVar[list[str]] = [
         "ID",
@@ -112,12 +112,12 @@ class CertificatiTreeWidget(StandardTreeWidget):
         IDX_ANNOTAZIONI,
     ) = range(12)
 
-    def __init__(self, parent: QWidget | None = None):
+    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
         super().__init__(parent)
         self._setup_ui()
         self.itemChanged.connect(self._on_item_changed)
 
-    def _setup_ui(self):
+    def _setup_ui(self):  # noqa: ANN202
         self.setHeaderLabels(self.HEADERS)
         self.setWordWrap(True)
         self.setAlternatingRowColors(True)
@@ -165,13 +165,13 @@ class CertificatiTreeWidget(StandardTreeWidget):
             }}
         """)
 
-    def apply_current_certificate_styling(
+    def apply_current_certificate_styling(  # noqa: ANN201
         self, item: SortableTreeWidgetItem, days_to_expiry: int | None, status_dot_icon: str
     ):
         """Applica lo styling specifico per il certificato più recente."""
         if days_to_expiry is None:
             status_text, bg_color, text_color = "N/D", COLORS["bg_alt"], COLORS["text_muted"]
-        elif days_to_expiry == -9999:
+        elif days_to_expiry == -9999:  # noqa: PLR2004
             status_text, bg_color, text_color = (
                 "GUASTO",
                 COLORS["bg_error_pastel"],
@@ -183,13 +183,13 @@ class CertificatiTreeWidget(StandardTreeWidget):
                 COLORS["bg_error_pastel"],
                 COLORS["error_red"],
             )
-        elif 0 <= days_to_expiry <= 15:
+        elif 0 <= days_to_expiry <= 15:  # noqa: PLR2004
             status_text, bg_color, text_color = (
                 f"Scade tra {days_to_expiry} giorni",
                 COLORS["bg_warning_pastel"],
                 COLORS["warning_orange"],
             )
-        elif 16 <= days_to_expiry <= 30:
+        elif 16 <= days_to_expiry <= 30:  # noqa: PLR2004
             status_text, bg_color, text_color = (
                 f"Scade tra {days_to_expiry} giorni",
                 COLORS["bg_attention_pastel"],
@@ -213,7 +213,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
         font.setBold(True)
         item.setFont(self.IDX_STATO, font)
 
-    def apply_historical_certificate_styling(self, item: SortableTreeWidgetItem):
+    def apply_historical_certificate_styling(self, item: SortableTreeWidgetItem):  # noqa: ANN201
         """Applica lo styling per i certificati storici."""
         bg_color = QColor(COLORS["bg_alt"])
         for col in range(self.columnCount()):
@@ -224,7 +224,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
         item.setForeground(self.IDX_STATO, QBrush(QColor(COLORS["text_light"])))
         item.setToolTip(self.IDX_STATO, "Certificato storico - Esiste un certificato più recente")
 
-    def _on_item_changed(self, item: QTreeWidgetItem, column: int):
+    def _on_item_changed(self, item: QTreeWidgetItem, column: int):  # noqa: ANN202
         """Gestisce il cambiamento di valore in una cella."""
         if column == self.IDX_ANNOTAZIONI:
             self.itemEditedCustom.emit(item, "annotazioni", item.text(column))

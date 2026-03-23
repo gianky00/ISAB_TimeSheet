@@ -19,7 +19,7 @@ from src.core import config_manager
 from src.core.audit_manager import AuditManager
 from src.core.telegram_bridge import TelegramUIBridge
 from src.core.telegram_manager import TelegramService
-from src.core.version import __version__ as VERSION
+from src.core.version import __version__ as VERSION  # noqa: N812
 from src.gui.components.animated_stack import SlidingStackedWidget
 from src.gui.controllers.bot_controller import BotController
 from src.gui.controllers.navigation_controller import NavigationController
@@ -113,8 +113,8 @@ class MainWindow(QMainWindow):
 
     def _check_license_heartbeat(self) -> None:
         """Esegue una sincronizzazione silente della licenza in background."""
-        from src.core.license_updater import run_update
-        from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
+        from src.core.license_updater import run_update  # noqa: PLC0415
+        from src.gui.dialogs.confirmation_dialog import ConfirmationDialog  # noqa: PLC0415
 
         try:
             # run_update() solleva Exception("REVOCATA...") se la licenza è stata rimossa
@@ -132,7 +132,7 @@ class MainWindow(QMainWindow):
 
     def finalize_init(self) -> None:
         """Metodo chiamato per finalizzare l'inizializzazione dopo la visualizzazione della finestra."""
-        import logging
+        import logging  # noqa: PLC0415
 
         logger = logging.getLogger("MainWindow")
 
@@ -168,7 +168,7 @@ class MainWindow(QMainWindow):
         self.monitoring_controller.start_monitoring()
 
         # 4. Notifica Licenza Validata (System Tray & In-App)
-        from src.core.notification_manager import NotificationManager
+        from src.core.notification_manager import NotificationManager  # noqa: PLC0415
 
         # Toast immediato in-app (questo dovrebbe vedersi sempre)
         NotificationManager.instance().add_notification(
@@ -180,13 +180,13 @@ class MainWindow(QMainWindow):
 
         # Notifica Windows nativa via Tray (Diretta + Ritardo)
         # Usiamo il controller tray direttamente per essere sicuri che il segnale non si perda
-        def force_tray_notify():
-            import logging
+        def force_tray_notify():  # noqa: ANN202
+            import logging  # noqa: PLC0415
 
             diag_logger = logging.getLogger("TrayDebug")
             diag_logger.info("Tentativo invio notifica Tray forzata...")
             if hasattr(self, "tray_controller") and self.tray_controller:
-                from PyQt6.QtWidgets import QSystemTrayIcon
+                from PyQt6.QtWidgets import QSystemTrayIcon  # noqa: PLC0415
 
                 try:
                     self.tray_controller.show_message(
@@ -196,7 +196,7 @@ class MainWindow(QMainWindow):
                     )
                     diag_logger.info("Notifica inviata al TrayController con successo.")
                 except Exception as e:
-                    diag_logger.error(f"Errore durante l'invio della notifica tray: {e}")
+                    diag_logger.error(f"Errore durante l'invio della notifica tray: {e}")  # noqa: TRY400
             else:
                 diag_logger.warning("TrayController non trovato o non inizializzato!")
 
@@ -234,7 +234,7 @@ class MainWindow(QMainWindow):
 
     def _setup_ui(self) -> None:
         """Configura il layout e i componenti UI principali usando un overlay per la sidebar."""
-        from PyQt6.QtWidgets import QGridLayout
+        from PyQt6.QtWidgets import QGridLayout  # noqa: PLC0415
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -269,7 +269,7 @@ class MainWindow(QMainWindow):
 
     def _setup_shortcuts(self) -> None:
         """Configura le scorciatoie da tastiera globali."""
-        from PyQt6.QtGui import QKeySequence, QShortcut
+        from PyQt6.QtGui import QKeySequence, QShortcut  # noqa: PLC0415
 
         self.shortcut_f5 = QShortcut(QKeySequence(Qt.Key.Key_F5), self)
         self.shortcut_f5.activated.connect(self._handle_f5)
@@ -313,7 +313,7 @@ class MainWindow(QMainWindow):
         """Chiude l'applicazione in modo sicuro."""
         self.app_event_handler.quit_application()
 
-    def closeEvent(self, event: Any) -> None:
+    def closeEvent(self, event: Any) -> None:  # noqa: ANN401, N802
         """Gestisce l'evento di chiusura della finestra."""
         self.app_event_handler.handle_close_event(event)
 
@@ -331,7 +331,11 @@ class MainWindow(QMainWindow):
 
     def _on_download_update_clicked(self, url: str) -> None:
         """Avvia il download asincrono dell'aggiornamento o lo installa se già pronto."""
-        from src.core.app_updater import get_local_setup_path, perform_auto_update, show_install_prompt
+        from src.core.app_updater import (  # noqa: PLC0415
+            get_local_setup_path,
+            perform_auto_update,
+            show_install_prompt,
+        )
 
         # Se il banner indica che è già completo, mostra direttamente la prompt di installazione
         if (
@@ -347,7 +351,7 @@ class MainWindow(QMainWindow):
 
     def _on_update_downloaded(self, setup_path: str) -> None:
         """Gestisce il completamento del download dell'aggiornamento."""
-        from src.core.app_updater import show_install_prompt
+        from src.core.app_updater import show_install_prompt  # noqa: PLC0415
 
         # Segnala al banner che il download è terminato per aggiornare lo stato visivo
         if hasattr(self, "update_banner") and self.update_banner:
@@ -423,7 +427,7 @@ class MainWindow(QMainWindow):
                 try:
                     panel._load_saved_data()
                 except Exception as e:
-                    import logging
+                    import logging  # noqa: PLC0415
 
                     logging.getLogger("MainWindow").warning(f"Errore hot-reload dati in {panel}: {e}")
 
@@ -432,7 +436,7 @@ class MainWindow(QMainWindow):
                 try:
                     panel.refresh_data()
                 except Exception as e:
-                    import logging
+                    import logging  # noqa: PLC0415
 
                     logging.getLogger("MainWindow").debug(f"Salto refresh database silente per {panel}: {e}")
 
@@ -448,7 +452,7 @@ class MainWindow(QMainWindow):
 
     def _show_hot_reload_toast(self) -> None:
         """Mostra il toast di conferma ricaricamento impostazioni."""
-        from src.gui.widgets.toast import ToastManager
+        from src.gui.widgets.toast import ToastManager  # noqa: PLC0415
 
         ToastManager.instance().show(
             "<center><b>Hot Reload Completato</b><br/>Tutte le impostazioni sono ora attive.</center>",
@@ -464,7 +468,7 @@ class MainWindow(QMainWindow):
 
     def open_bug_report_dialog(self) -> None:
         """Apre il dialogo per la segnalazione di un bug."""
-        from src.gui.dialogs.bug_report_dialog import BugReportDialog
+        from src.gui.dialogs.bug_report_dialog import BugReportDialog  # noqa: PLC0415
 
         dlg = BugReportDialog(self)
         dlg.exec()
@@ -480,31 +484,31 @@ class MainWindow(QMainWindow):
 
     # --- Properties per compatibilità ---
     @property
-    def footer_left(self) -> Any:
+    def footer_left(self) -> Any:  # noqa: ANN401
         """Restituisce il componente sinistro del footer."""
         return self.status_bar_component.footer_left
 
     @property
-    def footer_right(self) -> Any:
+    def footer_right(self) -> Any:  # noqa: ANN401
         """Restituisce il componente destro del footer."""
         return self.status_bar_component.footer_right
 
     @property
-    def status_portale(self) -> Any:
+    def status_portale(self) -> Any:  # noqa: ANN401
         """Restituisce l'indicatore di stato del Portale ISAB."""
         return self.status_bar_component.status_portale
 
     @property
-    def status_safework(self) -> Any:
+    def status_safework(self) -> Any:  # noqa: ANN401
         """Restituisce l'indicatore di stato di SafeWork."""
         return self.status_bar_component.status_safework
 
     @property
-    def startup_console(self) -> Any:
+    def startup_console(self) -> Any:  # noqa: ANN401
         """Restituisce la console di avvio."""
         return self.status_bar_component.startup_console
 
     @property
-    def boot_telemetry(self) -> Any:
+    def boot_telemetry(self) -> Any:  # noqa: ANN401
         """Restituisce il monitor di telemetria boot."""
         return self.status_bar_component.boot_telemetry

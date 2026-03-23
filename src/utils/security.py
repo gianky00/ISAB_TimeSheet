@@ -85,8 +85,8 @@ class PasswordManager:
 
     def _get_machine_entropy(self) -> bytes:
         """Genera entropia basata sulla macchina."""
-        import platform
-        import uuid
+        import platform  # noqa: PLC0415
+        import uuid  # noqa: PLC0415
 
         components = [
             platform.node(),

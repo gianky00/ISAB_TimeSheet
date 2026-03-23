@@ -29,7 +29,7 @@ class CaricoTSPanel(BaseBotPanel):
     Gestisce l'input dei dati e l'avvio del bot CaricoTSBot.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None):  # noqa: ANN001, ANN204
         """
         Inizializza il pannello Carico TS.
 
@@ -48,11 +48,11 @@ class CaricoTSPanel(BaseBotPanel):
 
     def get_bot_class(self) -> type["BaseBot"]:
         """Restituisce la classe CaricoTSBot associata."""
-        from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot
+        from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot  # noqa: PLC0415
 
         return CaricoTSBot
 
-    def _safe_load_data(self):
+    def _safe_load_data(self):  # noqa: ANN202
         """Carica i dati dai file di configurazione in modo sicuro."""
         try:
             self._load_saved_data()
@@ -60,7 +60,7 @@ class CaricoTSPanel(BaseBotPanel):
             print(f"[ERROR] Error loading data for CaricoTSPanel: {e}")
             traceback.print_exc()
 
-    def _setup_content(self):
+    def _setup_content(self):  # noqa: ANN202
         """Inizializza e posiziona i componenti UI del pannello (Tabella e Parametri)."""
         # Sezione Parametri (Senza QGroupBox per favorire il design Floating Card)
         params_container = QWidget()
@@ -92,17 +92,17 @@ class CaricoTSPanel(BaseBotPanel):
 
         self.content_layout.addWidget(params_container)
 
-    def _load_saved_data(self):
+    def _load_saved_data(self):  # noqa: ANN202
         """Carica l'ultima tabella TS salvata nella configurazione."""
         saved_data = config_manager.load_config().get("last_carico_ts_data", [])
         if saved_data:
             self.data_table.set_data(saved_data)
 
-    def _save_data(self):
+    def _save_data(self):  # noqa: ANN202
         """Salva i dati della tabella nella configurazione globale."""
         config_manager.set_config_value("last_carico_ts_data", self.data_table.get_data())
 
-    def _clear_table(self):
+    def _clear_table(self):  # noqa: ANN202
         """Svuota la tabella dati previa conferma."""
         if ConfirmationDialog.confirm(self, "Conferma", "Svuotare la tabella?"):
             self.data_table.clear()
@@ -122,7 +122,7 @@ class CaricoTSPanel(BaseBotPanel):
             return False, "Nessun dato inserito in tabella."
         return True, ""
 
-    def _on_start(self, params_override: dict[str, Any] | None = None):
+    def _on_start(self, params_override: dict[str, Any] | None = None):  # noqa: ANN202
         """Prepara e avvia il thread per il bot Carico TS."""
         super()._on_start(params_override)
         username, password = self.get_credentials()
@@ -141,7 +141,7 @@ class CaricoTSPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        from src.core.config_manager import load_config
+        from src.core.config_manager import load_config  # noqa: PLC0415
 
         config = load_config()
 

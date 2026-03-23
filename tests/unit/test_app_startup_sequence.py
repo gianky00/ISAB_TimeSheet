@@ -9,7 +9,7 @@ from src.core.license_validator import LicenseStatus
 
 
 class TestAppInitializer:
-    def test_initialize_core_idempotency(self, mocker):
+    def test_initialize_core_idempotency(self, mocker):  # noqa: ANN001
         """Verifica che l'inizializzazione core non venga rieseguita se gia' fatta."""
         AppInitializer._core_initialized = False  # Reset state
 
@@ -32,7 +32,7 @@ class TestAppInitializer:
             assert success2 is True
             assert not mock_init.called
 
-    def test_init_generator_steps(self, mocker):
+    def test_init_generator_steps(self, mocker):  # noqa: ANN001
         """Verifica che il generatore di inizializzazione GUI emetta gli step corretti."""
         mock_mw = MagicMock()
         mock_mw.navigation_controller.get_panel.return_value = MagicMock()
@@ -43,20 +43,20 @@ class TestAppInitializer:
 
         steps = list(gen)
         # Dovrebbe esserci uno step per ogni pannello + telegram + pronto
-        assert len(steps) > 5
+        assert len(steps) > 5  # noqa: PLR2004
 
         # Verifica che l'ultimo step sia "Sistema Pronto" al 100%
         last_name, last_prog = steps[-1]
         assert "Pronto" in last_name
-        assert last_prog == 100
+        assert last_prog == 100  # noqa: PLR2004
 
         # Verifica che il navigation controller sia stato chiamato per caricare i pannelli
         assert mock_mw.navigation_controller.get_panel.called
 
     @patch("src.core.database.db_manager.init_db", side_effect=Exception("DB Error"))
-    def test_initialize_core_failure_handling(self, mock_db_init, mocker):
+    def test_initialize_core_failure_handling(self, mock_db_init, mocker):  # noqa: ANN001
         """Verifica che un errore nel core sollevi eccezione."""
-        import pytest
+        import pytest  # noqa: PLC0415
 
         AppInitializer._core_initialized = False
         mocker.patch("src.core.app_initializer.AppInitializer._setup_logging")

@@ -54,7 +54,7 @@ class TimbratureBotPanel(BaseBotPanel):
 
     def get_bot_class(self) -> type["BaseBot"]:
         """Restituisce la classe bot specifica per la gestione delle timbrature."""
-        from src.bots.portale_fornitori.timbrature.bot import TimbratureBot
+        from src.bots.portale_fornitori.timbrature.bot import TimbratureBot  # noqa: PLC0415
 
         return TimbratureBot
 
@@ -153,7 +153,7 @@ class TimbratureBotPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        from src.core.config_manager import load_config
+        from src.core.config_manager import load_config  # noqa: PLC0415
 
         config = load_config()
 

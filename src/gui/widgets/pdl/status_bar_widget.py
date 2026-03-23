@@ -21,14 +21,14 @@ logger = logging.getLogger(__name__)
 class ProgrammingStatusWidget(QWidget):
     """Widget elegante che mostra una barra di stato verde/arancione per TCL e TGO."""
 
-    def __init__(
+    def __init__(  # noqa: ANN204, PLR0913
         self,
         tcl: bool,
         tgo: bool,
         connect_left: bool = False,
         connect_right: bool = False,
         is_today: bool = False,
-        parent=None,
+        parent=None,  # noqa: ANN001
     ):
         super().__init__(parent)
         self.tcl = tcl
@@ -49,10 +49,10 @@ class ProgrammingStatusWidget(QWidget):
                     encoded = base64.b64encode(f.read()).decode("utf-8")
                     return f"data:image/svg+xml;base64,{encoded}"
         except Exception as e:
-            logger.error(f"Errore caricamento icona base64: {e}")
+            logger.error(f"Errore caricamento icona base64: {e}")  # noqa: TRY400
         return ""
 
-    def _setup_tooltip(self):
+    def _setup_tooltip(self):  # noqa: ANN202
         """Crea un tooltip grafico con le icone di stato."""
         tcl_icon_path = get_asset_path(Icons.FLAG_TCL_ON if self.tcl else Icons.FLAG_TCL_OFF)
         tgo_icon_path = get_asset_path(Icons.FLAG_TGO_ON if self.tgo else Icons.FLAG_TGO_OFF)
@@ -68,7 +68,7 @@ class ProgrammingStatusWidget(QWidget):
         """
         self.setToolTip(html)
 
-    def paintEvent(self, event):
+    def paintEvent(self, event):  # noqa: ANN001, ANN201, N802, PLR0915
         """Disegna la barra di stato TCL/TGO nella cella."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

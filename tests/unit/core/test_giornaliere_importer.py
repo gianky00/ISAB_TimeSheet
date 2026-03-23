@@ -6,7 +6,7 @@ from src.core.importers.giornaliere import GiornaliereImporter
 
 
 class TestGiornaliereImporter:
-    def test_scan_files_filtering(self, tmp_path):
+    def test_scan_files_filtering(self, tmp_path):  # noqa: ANN001
         """Verifica che scan_files filtri correttamente anni e file temporanei."""
         g_dir = tmp_path / "Giornaliere"
         g_dir.mkdir()
@@ -55,7 +55,7 @@ class TestGiornaliereImporter:
 
         # iloc[:-1] toglie l'ultima riga
         # il filtro "Totale" dovrebbe togliere eventuali altre righe di riepilogo
-        assert len(cleaned) == 2
+        assert len(cleaned) == 2  # noqa: PLR2004
         assert "TOTALE GENERALE" not in cleaned["data"].values
 
     def test_enrich_giornaliera_odc_regex(self):
@@ -79,7 +79,7 @@ class TestGiornaliereImporter:
         assert df.loc[2, "odc"] == "54001234"
 
     @patch("src.core.importers.giornaliere.ProcessPoolExecutor")
-    def test_import_giornaliere_no_tasks(self, mock_executor, tmp_path):
+    def test_import_giornaliere_no_tasks(self, mock_executor, tmp_path):  # noqa: ANN001
         """Verifica comportamento se non ci sono file da processare."""
         success, msg, rows, _years = GiornaliereImporter.import_giornaliere(str(tmp_path), {})
         assert success is True

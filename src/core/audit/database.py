@@ -100,7 +100,7 @@ class AuditDatabase:
             conn.commit()
             return int(cursor.lastrowid) if cursor.lastrowid is not None else 0
 
-    def fetch_filtered(
+    def fetch_filtered(  # noqa: PLR0913
         self,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
@@ -169,7 +169,7 @@ class AuditDatabase:
                 cur.execute(query, params)
                 logs = [dict(r) for r in cur.fetchall()]
         except Exception as e:
-            logger.error(f"Audit DB Fetch Error: {e}")
+            logger.error(f"Audit DB Fetch Error: {e}")  # noqa: TRY400
         return logs, total
 
     def get_categories(self) -> list[str]:
@@ -196,5 +196,5 @@ class AuditDatabase:
                 res = conn.execute("DELETE FROM audit_logs WHERE timestamp < ?", (cutoff_iso,))
                 return int(res.rowcount)
         except Exception as e:
-            logger.error(f"Audit DB Retention Error: {e}")
+            logger.error(f"Audit DB Retention Error: {e}")  # noqa: TRY400
             return 0

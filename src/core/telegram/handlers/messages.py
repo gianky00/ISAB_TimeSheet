@@ -6,7 +6,7 @@ from telegram.ext import ContextTypes
 from src.core.telegram.ui.keyboards import TelegramUI
 
 
-async def handle_text_input(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_text_input(service, update: Update, context: ContextTypes.DEFAULT_TYPE):  # noqa: ANN001, ANN201
     """
     Main router for incoming text messages.
     Routes based on current user state (DB query, wizard) or passes to query dispatcher.
@@ -37,7 +37,7 @@ async def handle_text_input(service, update: Update, context: ContextTypes.DEFAU
     await _handle_sequential_input(service, chat_id, state, text, update)
 
 
-async def _handle_db_query_input(service, chat_id, state, text, update):
+async def _handle_db_query_input(service, chat_id, state, text, update):  # noqa: ANN001, ANN202
     """Processes search queries for the database browser."""
     parts = state.replace("WAITING_DB_QUERY_", "").split("_")
     params = {"db": parts[0].lower(), "query": text, "chat_id": str(chat_id)}
@@ -49,7 +49,7 @@ async def _handle_db_query_input(service, chat_id, state, text, update):
     service.user_states[chat_id] = None
 
 
-async def _handle_sequential_input(service, chat_id, state, text, update):
+async def _handle_sequential_input(service, chat_id, state, text, update):  # noqa: ANN001, ANN202
     """Handles multi-line or list inputs for specific wizards (PDL, OdA, Time)."""
     items = [i.strip() for i in text.replace(",", "\n").replace(";", "\n").split("\n") if i.strip()]
     if not items:
@@ -72,7 +72,7 @@ async def _handle_sequential_input(service, chat_id, state, text, update):
     await update.message.reply_text("✅ Operazione completata.", reply_markup=TelegramUI.get_main_keyboard())
 
 
-async def handle_voice(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_voice(service, update: Update, context: ContextTypes.DEFAULT_TYPE):  # noqa: ANN001, ANN201
     """
     Handles voice messages. (AI functionality removed)
     """
@@ -80,7 +80,7 @@ async def handle_voice(service, update: Update, context: ContextTypes.DEFAULT_TY
         await update.message.reply_text("🎤 Messaggi vocali non supportati in questa versione.")
 
 
-async def handle_photo(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_photo(service, update: Update, context: ContextTypes.DEFAULT_TYPE):  # noqa: ANN001, ANN201
     """
     Handles photo messages.
     Downloads the high-res photo and emits a 'photo_received' signal.

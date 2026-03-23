@@ -18,13 +18,13 @@ class PdlIOWorker(QThread):
 
     finished_signal = pyqtSignal(bool, str, str)  # success, message, file_path
 
-    def __init__(self, file_path: str, data: list[PdlRowDTO], headers: list[str], parent=None):
+    def __init__(self, file_path: str, data: list[PdlRowDTO], headers: list[str], parent=None):  # noqa: ANN001, ANN204
         super().__init__(parent)
         self.file_path = file_path
         self.data = data
         self.headers = headers
 
-    def run(self):
+    def run(self):  # noqa: ANN201
         """Esegue l'esportazione in background."""
         try:
             if not self.data:
@@ -39,5 +39,5 @@ class PdlIOWorker(QThread):
             self.finished_signal.emit(True, "Esportazione completata con successo", self.file_path)
 
         except Exception as e:
-            logger.error(f"PdlIOWorker Error: {e}")
+            logger.error(f"PdlIOWorker Error: {e}")  # noqa: TRY400
             self.finished_signal.emit(False, str(e), "")

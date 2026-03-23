@@ -33,7 +33,7 @@ class NavigationController(QObject):
     panel_detached = pyqtSignal(int, str)  # index, title
     panel_reattached = pyqtSignal(int)  # index
 
-    def __init__(self, main_window: Any) -> None:
+    def __init__(self, main_window: Any) -> None:  # noqa: ANN401
         """
         Inizializza il controller di navigazione e le istanze dei controller CORE.
 
@@ -46,11 +46,13 @@ class NavigationController(QObject):
         self._detached_panels: dict[int, dict[str, Any]] = {}
 
         # === CORE CONTROLLERS (Singleton-like for UI context) ===
-        from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
-        from src.core.contabilita.scarico_ore.controller import ScaricoOreController
-        from src.core.dipendenti.anagrafica_controller import AnagraficaController
-        from src.core.oda.oda_controller import ODAController
-        from src.core.pdl.pdl_controller import PDLController
+        from src.core.contabilita.consuntivo.consuntivo_controller import (  # noqa: PLC0415
+            ConsuntivoController,
+        )
+        from src.core.contabilita.scarico_ore.controller import ScaricoOreController  # noqa: PLC0415
+        from src.core.dipendenti.anagrafica_controller import AnagraficaController  # noqa: PLC0415
+        from src.core.oda.oda_controller import ODAController  # noqa: PLC0415
+        from src.core.pdl.pdl_controller import PDLController  # noqa: PLC0415
 
         self.pdl_controller = PDLController()
         self.oda_controller = ODAController()
@@ -58,7 +60,7 @@ class NavigationController(QObject):
         self.scarico_ore_controller = ScaricoOreController()
         self.consuntivo_controller = ConsuntivoController()
 
-    def get_panel(self, index: int) -> QWidget | None:
+    def get_panel(self, index: int) -> QWidget | None:  # noqa: PLR0911
         """
         Recupera un pannello in base al suo indice, creandolo dinamicamente se non ancora inizializzato.
 
@@ -118,7 +120,7 @@ class NavigationController(QObject):
 
     def _create_dashboard(self) -> QWidget:
         """Crea la dashboard e la collega al sistema di monitoraggio del footer."""
-        from src.gui.panels import DashboardPanel
+        from src.gui.panels import DashboardPanel  # noqa: PLC0415
 
         panel = DashboardPanel()
         self.mw.dashboard_panel = panel
@@ -149,7 +151,7 @@ class NavigationController(QObject):
 
     def _create_automazioni(self) -> QWidget:
         """Crea il selettore centralizzato per le automazioni bot."""
-        from src.gui.widgets.automazioni_widget import AutomazioniWidget
+        from src.gui.widgets.automazioni_widget import AutomazioniWidget  # noqa: PLC0415
 
         panel = AutomazioniWidget(self.mw)
         self.mw.automazioni_widget = panel
@@ -157,7 +159,7 @@ class NavigationController(QObject):
 
     def _create_timbrature(self) -> QWidget:
         """Inizializza il visualizzatore del database timbrature."""
-        from src.gui.panels import TimbratureDBPanel
+        from src.gui.panels import TimbratureDBPanel  # noqa: PLC0415
 
         panel = TimbratureDBPanel()
         self.mw.timbrature_db_panel = panel
@@ -165,7 +167,7 @@ class NavigationController(QObject):
 
     def _create_strumentale(self) -> QWidget:
         """Inizializza il pannello contabilità strumentale."""
-        from src.gui.panels import ContabilitaPanel
+        from src.gui.panels import ContabilitaPanel  # noqa: PLC0415
 
         panel = ContabilitaPanel()
         self.mw.contabilita_panel = panel
@@ -173,7 +175,7 @@ class NavigationController(QObject):
 
     def _create_dataease(self) -> QWidget:
         """Inizializza il visualizzatore virtualizzato Scarico Ore con iniezione."""
-        from src.gui.panels import ScaricoOrePanel
+        from src.gui.panels import ScaricoOrePanel  # noqa: PLC0415
 
         panel = ScaricoOrePanel(controller=self.scarico_ore_controller)
         self.mw.scarico_ore_panel = panel
@@ -181,7 +183,7 @@ class NavigationController(QObject):
 
     def _create_anagrafiche(self) -> QWidget:
         """Inizializza il database anagrafiche PDL con iniezione."""
-        from src.gui.panels import PDLDBPanel
+        from src.gui.panels import PDLDBPanel  # noqa: PLC0415
 
         panel = PDLDBPanel(controller=self.pdl_controller)
         self.mw.pdl_db_panel = panel
@@ -189,7 +191,7 @@ class NavigationController(QObject):
 
     def _create_storico_oda(self) -> QWidget:
         """Inizializza la consultazione dello storico OdA con iniezione."""
-        from src.gui.panels import StoricoOdaPanel
+        from src.gui.panels import StoricoOdaPanel  # noqa: PLC0415
 
         panel = StoricoOdaPanel(controller=self.oda_controller)
         self.mw.storico_oda_panel = panel
@@ -197,7 +199,7 @@ class NavigationController(QObject):
 
     def _create_dipendenti(self) -> QWidget:
         """Inizializza la gestione organica delle risorse umane con iniezione."""
-        from src.gui.panels.dipendenti.main_panel import DipendentiPanel
+        from src.gui.panels.dipendenti.main_panel import DipendentiPanel  # noqa: PLC0415
 
         # DipendentiPanel inizializzerà le sue sottopagine passando il controller
         panel = DipendentiPanel(controller=self.anagrafica_controller)
@@ -206,7 +208,7 @@ class NavigationController(QObject):
 
     def _create_consuntivo(self) -> QWidget:
         """Inizializza il pannello di gestione consuntivi con iniezione."""
-        from src.gui.panels.consuntivo_panel import ConsuntivoPanel
+        from src.gui.panels.consuntivo_panel import ConsuntivoPanel  # noqa: PLC0415
 
         panel = ConsuntivoPanel(controller=self.consuntivo_controller)
         self.mw.consuntivo_panel = panel
@@ -214,7 +216,7 @@ class NavigationController(QObject):
 
     def _create_help(self) -> QWidget:
         """Inizializza il pannello di aiuto e documentazione."""
-        from src.gui.panels import HelpPanel
+        from src.gui.panels import HelpPanel  # noqa: PLC0415
 
         panel = HelpPanel()
         self.mw.help_panel = panel
@@ -222,7 +224,7 @@ class NavigationController(QObject):
 
     def _create_notifications(self) -> QWidget:
         """Inizializza il centro notifiche e audit log."""
-        from src.gui.panels import NotificationsPanel
+        from src.gui.panels import NotificationsPanel  # noqa: PLC0415
 
         panel = NotificationsPanel()
         self.mw.notifications_panel = panel
@@ -230,7 +232,7 @@ class NavigationController(QObject):
 
     def _create_settings_panel(self) -> QWidget:
         """Crea il pannello impostazioni e collega i segnali di salvataggio e aiuto contestuale."""
-        from src.gui.panels import SettingsPanel
+        from src.gui.panels import SettingsPanel  # noqa: PLC0415
 
         panel = SettingsPanel()
         self.mw.settings_panel = panel
@@ -329,7 +331,7 @@ class NavigationController(QObject):
 
     def _handle_panel_error(self, index: int, e: Exception) -> None:
         """Notifica all'utente e logga il fallimento del caricamento di un modulo GUI."""
-        import traceback
+        import traceback  # noqa: PLC0415
 
         logger.error(f"❌ Critical Error loading panel {index}: {e}")
         logger.error(traceback.format_exc())
@@ -368,7 +370,7 @@ class NavigationController(QObject):
             self.mw.pdl_search_panel.data_updated.connect(self.mw.pdl_db_panel.refresh_data)
             self.mw._pdl_signals_connected = True
 
-    def navigate_to(self, index: int, sub_index: int | None = None, bot_index: int | None = None) -> None:
+    def navigate_to(self, index: int, sub_index: int | None = None, bot_index: int | None = None) -> None:  # noqa: PLR0912
         """
         Esegue la commutazione della pagina attiva, gestendo salvataggi pendenti e feedback della sidebar.
 
@@ -386,7 +388,7 @@ class NavigationController(QObject):
             return
 
         if (
-            self.mw._current_page_index == 7
+            self.mw._current_page_index == 7  # noqa: PLR2004
             and hasattr(self.mw, "settings_panel")
             and self.mw.settings_panel.has_unsaved_changes()
             and not self.mw.settings_panel.prompt_save_if_needed()
@@ -410,7 +412,7 @@ class NavigationController(QObject):
                         auto_widget.set_active_tab(norm_sub, norm_bot)
                     elif hasattr(auto_widget, "setCurrentIndex"):
                         auto_widget.setCurrentIndex(norm_sub)
-            elif index == 4:  # Strumentale
+            elif index == 4:  # Strumentale  # noqa: PLR2004
                 if hasattr(panel, "main_tabs"):
                     panel.main_tabs.setCurrentIndex(norm_sub)
             elif index in (9, 11, 12):  # Consuntivo, Dipendenti, Monitoraggio
@@ -421,7 +423,7 @@ class NavigationController(QObject):
 
     def navigate_to_pdl(self, site: str | None = None, area: str | None = None) -> None:
         """Naviga al database PDL applicando i filtri specificati."""
-        from src.gui.main_window.page_index import PageIndex
+        from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
 
         self.navigate_to(PageIndex.ANAGRAFICHE)
         panel = self.get_panel(PageIndex.ANAGRAFICHE)
@@ -478,7 +480,7 @@ class NavigationController(QObject):
 
     def refresh_current_page(self) -> None:
         """Esegue l'azione di refresh specifica per la pagina corrente (pattern F5)."""
-        from src.gui.main_window.page_index import PageIndex
+        from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
 
         idx = self.mw.page_stack.currentIndex()
         panel = self.mw.page_stack.currentWidget()
@@ -520,7 +522,7 @@ class NavigationController(QObject):
             title = panel.windowTitle()
 
         # Mapping manuale se i titoli sono vuoti (Dashboard, ecc)
-        from src.gui.main_window.page_index import PageIndex
+        from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
 
         titles = {
             PageIndex.DASHBOARD: "Dashboard",
@@ -539,7 +541,7 @@ class NavigationController(QObject):
         }
         if title == "Pannello" or not title:
             title = titles.get(idx, f"Modulo {idx}")
-        from PyQt6.QtCore import QTimer
+        from PyQt6.QtCore import QTimer  # noqa: PLC0415
 
         # Deferiamo il distacco di 100ms per permettere all'Event Loop di concludere
         # il click sul bottone 'split' (o altro meccanismo di chiamata) senza

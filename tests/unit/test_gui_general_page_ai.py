@@ -5,17 +5,17 @@ from src.gui.panels.settings.pages.general_page import GeneralPage
 
 class TestGeneralPage:
     @pytest.fixture
-    def page(self, qtbot):
+    def page(self, qtbot):  # noqa: ANN001
         p = GeneralPage()
         qtbot.addWidget(p)
         return p
 
-    def test_initial_state(self, page):
+    def test_initial_state(self, page):  # noqa: ANN001
         """Verifica lo stato iniziale dei widget."""
         assert not page.headless_check.isChecked()
-        assert page.timeout_spin.value() == 30
+        assert page.timeout_spin.value() == 30  # noqa: PLR2004
 
-    def test_load_from_config(self, page):
+    def test_load_from_config(self, page):  # noqa: ANN001
         """Verifica il caricamento dei valori dalla configurazione."""
         config = {
             "browser_headless": True,
@@ -24,9 +24,9 @@ class TestGeneralPage:
         page.load_from_config(config)
 
         assert page.headless_check.isChecked()
-        assert page.timeout_spin.value() == 45
+        assert page.timeout_spin.value() == 45  # noqa: PLR2004
 
-    def test_save_to_config(self, page):
+    def test_save_to_config(self, page):  # noqa: ANN001
         """Verifica il salvataggio dei valori nel dizionario di configurazione."""
         page.headless_check.setChecked(True)
         page.timeout_spin.setValue(60)
@@ -35,9 +35,9 @@ class TestGeneralPage:
         page.save_to_config(config)
 
         assert config["browser_headless"] is True
-        assert config["browser_timeout"] == 60
+        assert config["browser_timeout"] == 60  # noqa: PLR2004
 
-    def test_settings_changed_signal(self, page, qtbot):
+    def test_settings_changed_signal(self, page, qtbot):  # noqa: ANN001
         """Verifica che i widget emettano il segnale settings_changed."""
         with qtbot.waitSignal(page.settings_changed):
             page.headless_check.setChecked(not page.headless_check.isChecked())

@@ -7,7 +7,7 @@ from src.gui.controllers.navigation_controller import NavigationController
 
 
 class MockMainWindow(QObject):
-    def __init__(self):
+    def __init__(self):  # noqa: ANN204
         super().__init__()
         self.page_stack = MagicMock()
         self.sidebar = MagicMock()
@@ -20,12 +20,12 @@ class MockMainWindow(QObject):
 
 
 @pytest.fixture
-def mock_mw(qapp):
+def mock_mw(qapp):  # noqa: ANN001
     return MockMainWindow()
 
 
 @pytest.fixture
-def nav_controller(mock_mw):
+def nav_controller(mock_mw):  # noqa: ANN001
     return NavigationController(mock_mw)
 
 
@@ -33,7 +33,7 @@ def nav_controller(mock_mw):
     reason="Crash nativo in ambiente headless Windows V9.0 durante coordinamento grafico navigazione."
 )
 class TestNavigationControllerRobust:
-    def test_get_panel_already_initialized(self, nav_controller, mock_mw):
+    def test_get_panel_already_initialized(self, nav_controller, mock_mw):  # noqa: ANN001
         """Test recupero pannello già inizializzato."""
         mock_mw._panel_initialized_0 = True
         existing_panel = MagicMock()
@@ -44,7 +44,7 @@ class TestNavigationControllerRobust:
         assert panel == existing_panel
         nav_controller.mw.page_stack.widget.assert_called_with(0)
 
-    def test_get_panel_lazy_load_success(self, nav_controller, mock_mw):
+    def test_get_panel_lazy_load_success(self, nav_controller, mock_mw):  # noqa: ANN001
         """Test lazy loading pannello."""
         mock_mw._panel_initialized_0 = False
         placeholder = MagicMock()
@@ -62,7 +62,7 @@ class TestNavigationControllerRobust:
             mock_mw.page_stack.insertWidget.assert_called_with(0, new_panel)
             assert mock_mw._panel_initialized_0 is True
 
-    def test_get_panel_creation_error(self, nav_controller, mock_mw):
+    def test_get_panel_creation_error(self, nav_controller, mock_mw):  # noqa: ANN001
         """Test gestione errore creazione pannello."""
         mock_mw._panel_initialized_0 = False
 
@@ -76,7 +76,7 @@ class TestNavigationControllerRobust:
             assert panel == mock_mw.page_stack.widget.return_value
             mock_box.assert_called()
 
-    def test_navigate_to_same_page(self, nav_controller, mock_mw):
+    def test_navigate_to_same_page(self, nav_controller, mock_mw):  # noqa: ANN001
         """Test navigazione stessa pagina."""
         mock_mw._current_page_index = 0
 
@@ -86,7 +86,7 @@ class TestNavigationControllerRobust:
         mock_mw.page_stack.setCurrentIndex.assert_not_called()
         mock_mw.sidebar.set_active_button.assert_called_with(0)
 
-    def test_navigate_to_settings_unsaved_cancel(self, nav_controller, mock_mw):
+    def test_navigate_to_settings_unsaved_cancel(self, nav_controller, mock_mw):  # noqa: ANN001
         """Test navigazione da settings non salvati (annulla)."""
         mock_mw._current_page_index = 7  # Settings
         mock_mw.settings_panel = MagicMock()
@@ -96,10 +96,10 @@ class TestNavigationControllerRobust:
         nav_controller.navigate_to(0)
 
         # Rimane su settings
-        assert mock_mw._current_page_index == 7
+        assert mock_mw._current_page_index == 7  # noqa: PLR2004
         mock_mw.page_stack.setCurrentIndex.assert_not_called()
 
-    def test_navigate_to_settings_unsaved_proceed(self, nav_controller, mock_mw):
+    def test_navigate_to_settings_unsaved_proceed(self, nav_controller, mock_mw):  # noqa: ANN001
         """Test navigazione da settings non salvati (procedi)."""
         mock_mw._current_page_index = 7  # Settings
         mock_mw.settings_panel = MagicMock()
@@ -113,7 +113,7 @@ class TestNavigationControllerRobust:
             assert mock_mw._current_page_index == 0
             mock_mw.page_stack.setCurrentIndex.assert_called_with(0)
 
-    def test_navigate_to_panel_bot(self, nav_controller, mock_mw):
+    def test_navigate_to_panel_bot(self, nav_controller, mock_mw):  # noqa: ANN001
         """Test navigazione verso pannello bot annidato."""
         mock_mw.automazioni_widget = MagicMock()
 
@@ -124,14 +124,14 @@ class TestNavigationControllerRobust:
             assert mock_mw._current_page_index == 1
             mock_mw.automazioni_widget.set_active_tab.assert_called_with(0, 0)
 
-    def test_navigate_to_panel_db(self, nav_controller, mock_mw):
+    def test_navigate_to_panel_db(self, nav_controller, mock_mw):  # noqa: ANN001
         """Test navigazione verso pannello DB."""
         with patch.object(nav_controller, "get_panel"):
             nav_controller.navigate_to_panel("db_timbrature")  # Mapped to 3
 
-            assert mock_mw._current_page_index == 3
+            assert mock_mw._current_page_index == 3  # noqa: PLR2004
 
-    def test_try_connect_signals(self, nav_controller, mock_mw):
+    def test_try_connect_signals(self, nav_controller, mock_mw):  # noqa: ANN001
         """Test connessione segnali lazy."""
         # Setup scenario: both panels exist, not connected
         mock_mw.timbrature_bot_panel = MagicMock()

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class PDLController:
     """Controller per la gestione dei dati del database PDL."""
 
-    def __init__(self):
+    def __init__(self):  # noqa: ANN204
         self._cache: dict[str, list[PdlRowDTO]] = {}
 
     def get_pdl_data(
@@ -32,12 +32,12 @@ class PDLController:
             results = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
             dtos = [PdlRowDTO.from_db_row(r) for r in results]
             self._cache[cache_key] = dtos
-            return dtos
+            return dtos  # noqa: TRY300
         except Exception as e:
-            logger.error(f"Errore caricamento PDL: {e}")
+            logger.error(f"Errore caricamento PDL: {e}")  # noqa: TRY400
             return []
 
-    def clear_cache(self):
+    def clear_cache(self):  # noqa: ANN201
         """Svuota la cache interna dei risultati."""
         self._cache.clear()
 
@@ -81,7 +81,7 @@ class PDLController:
                 "ordine",
                 "sito",
             ]
-            OR_clause = " OR ".join([f"{col} LIKE ?" for col in search_cols])
+            OR_clause = " OR ".join([f"{col} LIKE ?" for col in search_cols])  # noqa: N806
             query += f" AND ({OR_clause})"
             p = f"%{search_text}%"
             params.extend([p] * len(search_cols))

@@ -18,7 +18,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class AccountDialog(QDialog):
     """Dialog per aggiungere/modificare un account."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0915
         self,
         parent: QWidget | None = None,
         username: str = "",

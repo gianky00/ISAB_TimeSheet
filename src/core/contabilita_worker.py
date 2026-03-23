@@ -13,7 +13,7 @@ class ContabilitaWorker(QThread):
     finished_signal = pyqtSignal(bool, str, int, int, float)
     progress_signal = pyqtSignal(str)
 
-    def __init__(
+    def __init__(  # noqa: ANN204
         self,
         file_path: str,
         giornaliere_path: str = "",
@@ -27,7 +27,7 @@ class ContabilitaWorker(QThread):
         self.certificati_path = certificati_path
         self.start_time: float = 0.0
 
-    def run(self):
+    def run(self):  # noqa: ANN201
         """Esegue il workflow di importazione completo in background."""
         try:
             ContabilitaManager.init_db()
@@ -82,7 +82,7 @@ class ContabilitaWorker(QThread):
             "est_certificati": certificati,
         }
 
-    def _update_progress_dynamic(self, current_in_phase, total_in_phase, state, phase_key):
+    def _update_progress_dynamic(self, current_in_phase, total_in_phase, state, phase_key):  # noqa: ANN001, ANN202
         """
         Aggiorna il totale operazioni se il numero effettivo differisce dalla stima.
 
@@ -121,7 +121,7 @@ class ContabilitaWorker(QThread):
         # Emissione
         self._emit_simple_progress(current_global, state)
 
-    def _emit_simple_progress(self, current, state):
+    def _emit_simple_progress(self, current, state):  # noqa: ANN001, ANN202
         """Emette il segnale di progresso calcolato."""
         elapsed = time.time() - self.start_time
         total = state["total_ops"]
@@ -148,7 +148,7 @@ class ContabilitaWorker(QThread):
             f"⏳ Importazione: {percent}% completato ({current}/{total}) • ETA: {m}m {s}s"
         )
 
-    def _phase_import_contabilita(self, state):
+    def _phase_import_contabilita(self, state):  # noqa: ANN001, ANN202
         if not self.file_path or not Path(self.file_path).exists():
             state["messages"].append("Contabilità: File non trovato.")
             return
@@ -166,7 +166,7 @@ class ContabilitaWorker(QThread):
             f"Err Contabilità: {msg}",
         )
 
-    def _phase_import_giornaliere(self, state):
+    def _phase_import_giornaliere(self, state):  # noqa: ANN001, ANN202
         if not self.giornaliere_path:
             return
 
@@ -184,7 +184,7 @@ class ContabilitaWorker(QThread):
             f"Err Giornaliere: {msg}",
         )
 
-    def _phase_import_attivita(self, state):
+    def _phase_import_attivita(self, state):  # noqa: ANN001, ANN202
         if not self.attivita_path:
             return
 
@@ -195,7 +195,7 @@ class ContabilitaWorker(QThread):
 
         self._update_state(state, success, added, removed, "Att. Prog: OK", f"Err Att. Prog: {msg}")
 
-    def _phase_import_certificati(self, state):
+    def _phase_import_certificati(self, state):  # noqa: ANN001, ANN202
         if not self.certificati_path:
             return
 
@@ -206,7 +206,7 @@ class ContabilitaWorker(QThread):
 
         self._update_state(state, success, added, removed, "Certificati: OK", f"Err Certificati: {msg}")
 
-    def _update_state(self, state, success, added, removed, ok_msg, err_msg):
+    def _update_state(self, state, success, added, removed, ok_msg, err_msg):  # noqa: ANN001, ANN202, PLR0913
         state["added"] += added
         state["removed"] += removed
         if success:

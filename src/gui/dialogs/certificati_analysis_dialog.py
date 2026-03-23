@@ -32,7 +32,7 @@ from src.gui.widgets.core_widgets import PrimaryButton
 class ScadenzeAnalysisDialog(QDialog):
     """Finestra di analisi scadenze certificati - Design professionale."""
 
-    def __init__(self, certificates_data: list[Any], show_excluded: bool = False, parent=None):
+    def __init__(self, certificates_data: list[Any], show_excluded: bool = False, parent=None):  # noqa: ANN001, ANN204
         super().__init__(parent)
         self.certificates_data = certificates_data
         self.show_excluded = show_excluded
@@ -45,7 +45,7 @@ class ScadenzeAnalysisDialog(QDialog):
 
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self):  # noqa: ANN202, PLR0915
         self.setWindowTitle(f"Analisi Scadenze Certificati - {__app_name__}")
         self.setMinimumSize(950, 650)
         self.setStyleSheet(
@@ -111,9 +111,9 @@ class ScadenzeAnalysisDialog(QDialog):
 
         # Calcola statistiche
         scaduti = [c for c in self.certificates_data if c["days"] is not None and c["days"] < 0]
-        urgenti = [c for c in self.certificates_data if c["days"] is not None and 0 <= c["days"] <= 15]
-        attenzione = [c for c in self.certificates_data if c["days"] is not None and 16 <= c["days"] <= 30]
-        attivi = [c for c in self.certificates_data if c["days"] is not None and c["days"] > 30]
+        urgenti = [c for c in self.certificates_data if c["days"] is not None and 0 <= c["days"] <= 15]  # noqa: PLR2004
+        attenzione = [c for c in self.certificates_data if c["days"] is not None and 16 <= c["days"] <= 30]  # noqa: PLR2004
+        attivi = [c for c in self.certificates_data if c["days"] is not None and c["days"] > 30]  # noqa: PLR2004
         non_disp = [c for c in self.certificates_data if c["days"] is None]
 
         stats_layout.addWidget(
@@ -285,7 +285,7 @@ class ScadenzeAnalysisDialog(QDialog):
 
         return card
 
-    def _create_section(self, title: str, items: list[Any], color: str, bg_color: str) -> QFrame:
+    def _create_section(self, title: str, items: list[Any], color: str, bg_color: str) -> QFrame:  # noqa: PLR0915
         """Crea una sezione con elenco certificati - Senza bordi pesanti per screenshot pulito."""
         section = QFrame()
         section.setStyleSheet(
@@ -400,10 +400,10 @@ class ScadenzeAnalysisDialog(QDialog):
 
         return section
 
-    def _send_email(self):
+    def _send_email(self):  # noqa: ANN202
         """Genera screenshot completo del report e apre il client email."""
-        import subprocess
-        import tempfile
+        import subprocess  # noqa: PLC0415
+        import tempfile  # noqa: PLC0415
 
         try:
             # Assicura che il layout sia aggiornato e calcolato prima del rendering
@@ -480,7 +480,7 @@ try {{
                     tmp.write(ps_script)
                     ps_path = tmp.name
 
-                CREATE_NO_WINDOW = 0x08000000
+                CREATE_NO_WINDOW = 0x08000000  # noqa: N806
                 subprocess.Popen(
                     ["powershell", "-ExecutionPolicy", "Bypass", "-File", ps_path],
                     creationflags=CREATE_NO_WINDOW,

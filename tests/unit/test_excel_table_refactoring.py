@@ -10,7 +10,7 @@ from src.gui.widgets.excel_table import ExcelTableWidget
 
 
 @pytest.fixture
-def table(qtbot):
+def table(qtbot):  # noqa: ANN001
     widget = ExcelTableWidget(10, 5)
     qtbot.addWidget(widget)
     # Fill some data
@@ -20,7 +20,7 @@ def table(qtbot):
     return widget
 
 
-def test_copy_selection_logic(table, qtbot):
+def test_copy_selection_logic(table, qtbot):  # noqa: ANN001
     """Test copying a range of cells to clipboard."""
     clipboard = QApplication.clipboard()
     clipboard.clear()
@@ -39,7 +39,7 @@ def test_copy_selection_logic(table, qtbot):
     assert text.strip() == expected
 
 
-def test_paste_selection_logic(table, qtbot):
+def test_paste_selection_logic(table, qtbot):  # noqa: ANN001
     """Test pasting TSV data from clipboard into table."""
     clipboard = QApplication.clipboard()
     data = "P1\tP2\nP3\tP4"
@@ -55,7 +55,7 @@ def test_paste_selection_logic(table, qtbot):
     assert table.item(3, 3).text() == "P4"
 
 
-def test_paste_into_combobox(table, qtbot):
+def test_paste_into_combobox(table, qtbot):  # noqa: ANN001
     """Test that pasting into a cell with a ComboBox updates the index."""
     combo = QComboBox()
     combo.addItems(["", "Option1", "Option2"])

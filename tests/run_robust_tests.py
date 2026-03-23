@@ -183,7 +183,7 @@ def _extract_failures(output: str, target: str) -> list[FailureDetail]:
     while i < len(lines):
         line = lines[i]
 
-        # Pattern: "FAILED tests/unit/test_foo.py::test_bar - ErrorType: msg"
+        # Pattern: "FAILED tests/unit/test_foo.py::test_bar - ErrorType: msg"  # noqa: ERA001
         failed_match = re.match(r"FAILED\s+([\S]+::\S+)\s*-?\s*(.*)", line)
         if failed_match:
             node_id = failed_match.group(1)
@@ -230,7 +230,7 @@ def _extract_failures(output: str, target: str) -> list[FailureDetail]:
     return failures
 
 
-def _classify_error(error_text: str, full_output: str, node_id: str) -> tuple[str, str, str]:
+def _classify_error(error_text: str, full_output: str, node_id: str) -> tuple[str, str, str]:  # noqa: PLR0911
     """Classifica un errore in tipo, messaggio e categoria semantica."""
     error_text = error_text.strip()
 
@@ -282,7 +282,7 @@ def _extract_traceback_block(lines: list[str], node_id: str) -> str:
         if in_block:
             tb_lines.append(line)
             # Fine blocco: riga di separazione lunga o riga vuota dopo "short test summary"
-            if line.startswith("=") and len(line) > 10 and in_block and len(tb_lines) > 2:
+            if line.startswith("=") and len(line) > 10 and in_block and len(tb_lines) > 2:  # noqa: PLR2004
                 break
 
     return "\n".join(tb_lines[-50:]) if tb_lines else ""
@@ -329,7 +329,7 @@ def _collect_tests_inprocess(mark: str | None = None) -> list[str]:
                 break
             if "::" in stripped:
                 node_ids.append(stripped)
-        return node_ids
+        return node_ids  # noqa: TRY300
     except subprocess.TimeoutExpired:
         Console.error("[!] Timeout nella discovery dei test (60s)")
         return []
@@ -449,7 +449,7 @@ class UltraRunner:
 
     # ── SNIPER ──
 
-    def _run_sniper(self, targets: list[str], args: argparse.Namespace) -> None:
+    def _run_sniper(self, targets: list[str], args: argparse.Namespace) -> None:  # noqa: PLR0912
         """Esecuzione diretta e live, ottimizzata per il debugging."""
         self.strategy = "SNIPER"
         Console.header(f"SNIPER MODE: Esecuzione mirata di {len(targets)} target")
@@ -543,7 +543,7 @@ class UltraRunner:
 
     # ── SHOTGUN ──
 
-    def _run_shotgun(self, args: argparse.Namespace) -> None:
+    def _run_shotgun(self, args: argparse.Namespace) -> None:  # noqa: PLR0912, PLR0915
         """Esecuzione massiva e parallela, ottimizzata per l'intera suite."""
         self.strategy = "SHOTGUN"
         Console.header("SHOTGUN MODE: Analisi massiva suite")
@@ -732,7 +732,7 @@ class UltraRunner:
                 status = (
                     f"{Console.GREEN}PASS{Console.ENDC}" if r.success else f"{Console.FAIL}FAIL{Console.ENDC}"
                 )
-                name = r.target if len(r.target) <= 58 else "..." + r.target[-55:]
+                name = r.target if len(r.target) <= 58 else "..." + r.target[-55:]  # noqa: PLR2004
                 print(f"  {name:<58} {status:<17} {r.passed:>4} {r.failed:>4} {r.duration:>6.2f}s")
 
         Console.print(
@@ -777,7 +777,7 @@ class UltraRunner:
 
         # Abilita ANSI su vecchi CMD Windows
         if sys.platform == "win32" and not self.ai_mode:
-            import ctypes
+            import ctypes  # noqa: PLC0415
 
             kernel32 = ctypes.windll.kernel32
             kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)

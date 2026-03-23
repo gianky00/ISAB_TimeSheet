@@ -35,7 +35,7 @@ class TestCaricoTSBotComprehensive(unittest.TestCase):
             self.assertTrue(valid)
 
     @patch("src.bots.portale_fornitori.carico_ts.bot.CaricoTSPage")
-    def test_run_success(self, mock_page_class):
+    def test_run_success(self, mock_page_class):  # noqa: ANN001
         mock_page = mock_page_class.return_value
         mock_page.navigate.return_value = True
         mock_page.select_supplier.return_value = True
@@ -60,7 +60,7 @@ class TestCaricoTSPageComprehensive(unittest.TestCase):
             self.page = CaricoTSPage(self.mock_driver, self.mock_log)
 
     @patch("src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.EC")
-    def test_navigate_success(self, mock_ec):
+    def test_navigate_success(self, mock_ec):  # noqa: ANN001
         mock_btn = MagicMock()
         self.mock_wait.until.return_value = mock_btn
 
@@ -74,7 +74,7 @@ class TestCaricoTSPageComprehensive(unittest.TestCase):
 
     @patch("src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.ActionChains")
     @patch("src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.EC")
-    def test_select_supplier_flow(self, mock_ec, mock_action_class):
+    def test_select_supplier_flow(self, mock_ec, mock_action_class):  # noqa: ANN001
         mock_arrow = MagicMock()
         mock_opt = MagicMock()
 
@@ -97,7 +97,7 @@ class TestCaricoTSPageComprehensive(unittest.TestCase):
             self.mock_driver.execute_script.assert_any_call("arguments[0].click();", mock_opt)
 
     @patch("src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.EC")
-    def test_process_oda_js_injection(self, mock_ec):
+    def test_process_oda_js_injection(self, mock_ec):  # noqa: ANN001
         mock_inp = MagicMock()
         mock_btn = MagicMock()
         self.mock_wait.until.side_effect = [mock_inp, mock_btn]
@@ -108,7 +108,7 @@ class TestCaricoTSPageComprehensive(unittest.TestCase):
         # Verifica iniezione JS complessa per input
         calls = self.mock_driver.execute_script.call_args_list
         self.assertTrue(any("el.dispatchEvent" in c[0][0] for c in calls))
-        self.assertTrue(any("ODA123" in str(c[0][2]) for c in calls if len(c[0]) > 2))
+        self.assertTrue(any("ODA123" in str(c[0][2]) for c in calls if len(c[0]) > 2))  # noqa: PLR2004
         mock_btn.click.assert_called_once()
 
 

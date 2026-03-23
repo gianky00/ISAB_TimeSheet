@@ -82,7 +82,7 @@ class ScaricoOreTableView(QTableView):
                 return
             total = 0.0
             for idx in idxs:
-                if idx.column() == 7:  # TOTALE ORE
+                if idx.column() == 7:  # TOTALE ORE  # noqa: PLR2004
                     with suppress(ValueError):
                         val = str(idx.data(Qt.ItemDataRole.DisplayRole)).replace(",", ".")
                         if val:
@@ -109,7 +109,7 @@ class ScaricoOreTableView(QTableView):
         self.setColumnWidth(9, 80)
         self.setColumnWidth(10, 130)
 
-    def keyPressEvent(self, event: Any) -> None:
+    def keyPressEvent(self, event: Any) -> None:  # noqa: ANN401, N802
         """Gestisce Ctrl+C per la copia dei dati."""
         if event.matches(QKeySequence.StandardKey.Copy):
             self._copy_selection()

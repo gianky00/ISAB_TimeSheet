@@ -10,7 +10,7 @@ class TestContabilitaLogic:
     def manager(self):
         return ContabilitaManager
 
-    def test_import_data_success(self, manager):
+    def test_import_data_success(self, manager):  # noqa: ANN001
         mock_rows = [{"year": 2024}]
         with (
             patch(
@@ -23,7 +23,7 @@ class TestContabilitaLogic:
             assert success is True
             assert added == 1
 
-    def test_get_year_stats(self, manager):
+    def test_get_year_stats(self, manager):  # noqa: ANN001
         # Mock dei dati restituiti dalle query (14 colonne per OdA, 11 per Giornaliere)
         # OdA mapping: data_prev(0), mese(1), n_prev(2), totale_prev(3), attivita(4), tcl(5), odc(6), stato_attivita(7), tipologia(8), ore_sp(9)...
         mock_oda = [
@@ -56,13 +56,13 @@ class TestContabilitaLogic:
         ):
             stats = manager.get_year_stats(2024)
 
-            assert stats["total_prev"] == 1000.0
-            assert stats["total_ore"] == 10.0
+            assert stats["total_prev"] == 1000.0  # noqa: PLR2004
+            assert stats["total_ore"] == 10.0  # noqa: PLR2004
             assert stats["status_counts"]["CHIUSO"] == 1
-            assert stats["ore_dirette"] == 8.0
+            assert stats["ore_dirette"] == 8.0  # noqa: PLR2004
             assert stats["ore_indirette"] == 0.0
 
-    def test_import_giornaliere(self, manager, tmp_path):
+    def test_import_giornaliere(self, manager, tmp_path):  # noqa: ANN001
         g_dir = tmp_path / "Giornaliere 2024"
         g_dir.mkdir()
         with (
@@ -77,13 +77,13 @@ class TestContabilitaLogic:
             assert success is True
             assert added == 1
 
-    def test_scan_workload(self, manager):
+    def test_scan_workload(self, manager):  # noqa: ANN001
         with patch("src.core.contabilita_manager.ExcelImporter.scan_workload", return_value=(10, 5)):
             rows, files = manager.scan_workload("fake.xlsx", "fake_dir")
-            assert rows == 10
-            assert files == 5
+            assert rows == 10  # noqa: PLR2004
+            assert files == 5  # noqa: PLR2004
 
-    def test_scan_scarico_ore_rows(self, manager):
+    def test_scan_scarico_ore_rows(self, manager):  # noqa: ANN001
         with patch("src.core.contabilita_manager.ExcelImporter.scan_scarico_ore_rows", return_value=100):
             rows = manager.scan_scarico_ore_rows("fake.xlsx")
-            assert rows == 100
+            assert rows == 100  # noqa: PLR2004

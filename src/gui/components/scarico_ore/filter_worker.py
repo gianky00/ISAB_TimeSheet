@@ -11,13 +11,13 @@ class FilterWorker(QThread):
 
     finished = pyqtSignal(list, int)  # visible_indices, filtered_count
 
-    def __init__(
+    def __init__(  # noqa: ANN204
         self,
         search_index: list[str],
         display_data: list[list[str]],
         text: str,
         col_filters: dict[int, set[str]] | None = None,
-        parent=None,
+        parent=None,  # noqa: ANN001
     ):
         super().__init__(parent)
         self.search_index = search_index
@@ -26,10 +26,10 @@ class FilterWorker(QThread):
         self.col_filters = col_filters
         self._is_cancelled = False
 
-    def cancel(self):
+    def cancel(self):  # noqa: ANN201
         self._is_cancelled = True
 
-    def run(self):
+    def run(self):  # noqa: ANN201
         """Esegue il filtraggio."""
         if self._is_cancelled:
             return

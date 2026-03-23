@@ -6,7 +6,7 @@ from src.gui.panels import DettagliOdAPanel, ScaricoPDLPanel, TimbratureDBPanel
 
 
 class TestBotPanelsFinal:
-    def test_dettagli_oda_panel_logic(self, qapp, qtbot):
+    def test_dettagli_oda_panel_logic(self, qapp, qtbot):  # noqa: ANN001
         with patch(
             "src.core.config_manager.load_config",
             return_value={"fornitori": ["F1"]},
@@ -19,7 +19,7 @@ class TestBotPanelsFinal:
             # If creds missing, it should be False
             assert "Credenziali" in msg or ready is True
 
-    def test_scarico_pdl_panel_ui(self, qapp, qtbot):
+    def test_scarico_pdl_panel_ui(self, qapp, qtbot):  # noqa: ANN001
         with patch("src.utils.printing.get_installed_printers", return_value=["Printer1"]):
             panel = ScaricoPDLPanel()
             qtbot.addWidget(panel)
@@ -28,7 +28,7 @@ class TestBotPanelsFinal:
             panel.check_stampa.setChecked(True)
             assert panel.check_stampa.isChecked()
 
-    def test_timbrature_db_panel_refresh(self, qapp, qtbot):
+    def test_timbrature_db_panel_refresh(self, qapp, qtbot):  # noqa: ANN001
         with patch("src.gui.panels.timbrature.panel.TimbratureStorage") as mock_storage:
             # Mock data matching the expected row structure (at least 18 elements)
             mock_row = [None] * 20

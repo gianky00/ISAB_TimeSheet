@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 try:
-    from src.core.version import __version__ as VERSION
+    from src.core.version import __version__ as VERSION  # noqa: N812
 except ImportError:
     VERSION = "unknown"
 
@@ -71,7 +71,7 @@ class MetadataEnricher:
 
         return metadata
 
-    def _detect_environment(self) -> str:
+    def _detect_environment(self) -> str:  # noqa: PLR0911
         """
         Rileva environment corrente.
 
@@ -88,7 +88,7 @@ class MetadataEnricher:
             return "test"
 
         # Euristica: se eseguito da pytest o unittest, è test
-        import sys
+        import sys  # noqa: PLC0415
 
         if "pytest" in sys.modules or "unittest" in sys.modules:
             return "test"
@@ -179,7 +179,7 @@ _enricher = None
 
 def get_enricher() -> MetadataEnricher:
     """Restituisce istanza singleton del metadata enricher."""
-    global _enricher
+    global _enricher  # noqa: PLW0603
     if _enricher is None:
         _enricher = MetadataEnricher()
     return _enricher

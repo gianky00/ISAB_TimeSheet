@@ -12,7 +12,7 @@ class TestCoreLogic:
 
     @patch("src.core.config_manager.set_config_value")
     @patch("src.core.config_manager.load_config", return_value={})
-    def test_stats_increment(self, mock_load, mock_set):
+    def test_stats_increment(self, mock_load, mock_set):  # noqa: ANN001
         mgr = StatsManager()
         mgr.stats = {}  # Clean state
 
@@ -23,17 +23,17 @@ class TestCoreLogic:
         assert mgr.stats["test_bot"]["errors"] == 1
 
     @patch("requests.head")
-    def test_network_time(self, mock_head):
+    def test_network_time(self, mock_head):  # noqa: ANN001
         mock_resp = MagicMock()
         mock_resp.headers = {"Date": "Wed, 21 Oct 2015 07:28:00 GMT"}
         mock_head.return_value = mock_resp
 
         dt = get_network_time()
-        assert dt.year == 2015
-        assert dt.month == 10
+        assert dt.year == 2015  # noqa: PLR2004
+        assert dt.month == 10  # noqa: PLR2004
 
     @patch("src.core.time_manager.get_network_time", return_value=None)
-    def test_trusted_time_fallback(self, mock_net):
+    def test_trusted_time_fallback(self, mock_net):  # noqa: ANN001
         dt, trusted = get_trusted_time()
         assert trusted is False
         assert dt is not None

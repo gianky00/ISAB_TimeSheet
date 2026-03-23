@@ -32,7 +32,7 @@ class DonutChart(QWidget):
         self.values = [success_count, error_count]
         self.update()  # Trigger repaint
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:
+    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
         """Disegna il grafico a ciambella basato sui dati correnti."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

@@ -35,13 +35,13 @@ def derive_license_key(hw_id: str) -> bytes:
     Deriva la chiave di cifratura dall'Hardware ID utilizzando la stessa logica del client.
     Garantisce che la chiave sia esattamente 32 byte url-safe base64-encoded.
     """
-    from cryptography.hazmat.primitives import hashes
-    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    from cryptography.hazmat.primitives import hashes  # noqa: PLC0415
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC  # noqa: PLC0415
 
     # Pulisce l'Hardware ID (rimuove spazi e punti finali)
     clean_hwid = hw_id.strip().rstrip(".")
     if not clean_hwid:
-        raise ValueError("Hardware ID vuoto")
+        raise ValueError("Hardware ID vuoto")  # noqa: TRY003
 
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
@@ -56,7 +56,7 @@ def derive_license_key(hw_id: str) -> bytes:
     return base64.urlsafe_b64encode(raw_key)
 
 
-def _calculate_sha256(filepath):
+def _calculate_sha256(filepath):  # noqa: ANN001, ANN202
     """Calcola l'hash SHA256 di un file."""
     sha256_hash = hashlib.sha256()
     with Path(filepath).open("rb") as f:
@@ -65,7 +65,7 @@ def _calculate_sha256(filepath):
     return sha256_hash.hexdigest()
 
 
-def load_clients():
+def load_clients():  # noqa: ANN201
     """Carica i clienti dal file JSON."""
     if CLIENTS_FILE.exists():
         with contextlib.suppress(Exception), CLIENTS_FILE.open(encoding="utf-8") as f:
@@ -77,7 +77,7 @@ def load_clients():
     }
 
 
-def save_clients(clients):
+def save_clients(clients):  # noqa: ANN001, ANN201
     """Salva i clienti nel file JSON."""
     with CLIENTS_FILE.open("w", encoding="utf-8") as f:
         json.dump(clients, f, indent=2, ensure_ascii=False)
@@ -86,7 +86,7 @@ def save_clients(clients):
 class LicenseAdminApp:
     """Applicazione GUI per la generazione e gestione delle licenze software SyncroJob."""
 
-    def __init__(self, root: tk.Tk):
+    def __init__(self, root: tk.Tk):  # noqa: ANN204, PLR0915
         """Inizializza l'interfaccia grafica e carica il database clienti locale."""
         self.root = root
         self.root.title("SyncroJob - Gestore Licenze (Admin)")
@@ -230,11 +230,11 @@ class LicenseAdminApp:
         )
         self.btn_gen.pack(fill="x", padx=20, pady=20, ipady=12)
 
-    def refresh_clients_combo(self):
+    def refresh_clients_combo(self):  # noqa: ANN201
         """Aggiorna la ComboBox dei clienti."""
         self.cmb_clients["values"] = list(self.clients.keys())
 
-    def on_client_selected(self, event=None):
+    def on_client_selected(self, event=None):  # noqa: ANN001, ANN201
         """Callback quando viene selezionato un cliente."""
         client_name = self.client_var.get()
         if client_name and client_name in self.clients:
@@ -244,7 +244,7 @@ class LicenseAdminApp:
             self.ent_name.delete(0, tk.END)
             self.ent_name.insert(0, client_name)
 
-    def add_client(self):
+    def add_client(self):  # noqa: ANN201
         """Aggiunge un nuovo cliente."""
         name = simpledialog.askstring("Nuovo Cliente", "Nome cliente:", parent=self.root)
         if not name:
@@ -261,7 +261,7 @@ class LicenseAdminApp:
         self.on_client_selected()
         messagebox.showinfo("Successo", f"Cliente '{name}' aggiunto!")
 
-    def edit_client(self):
+    def edit_client(self):  # noqa: ANN201
         """Modifica il cliente selezionato."""
         old_name = self.client_var.get()
         if not old_name:
@@ -297,7 +297,7 @@ class LicenseAdminApp:
         self.on_client_selected()
         messagebox.showinfo("Successo", f"Cliente '{new_name}' modificato!")
 
-    def delete_client(self):
+    def delete_client(self):  # noqa: ANN201
         """Elimina il cliente selezionato."""
         name = self.client_var.get()
         if not name:
@@ -313,21 +313,21 @@ class LicenseAdminApp:
             self.ent_name.delete(0, tk.END)
             messagebox.showinfo("Successo", f"Cliente '{name}' eliminato!")
 
-    def paste_disk(self):
+    def paste_disk(self):  # noqa: ANN201
         """Incolla dagli appunti."""
         with contextlib.suppress(Exception):
             self.ent_disk.delete(0, tk.END)
             self.ent_disk.insert(0, self.root.clipboard_get().strip())
 
-    def set_expiry_days(self, days):
+    def set_expiry_days(self, days):  # noqa: ANN001, ANN201
         """Imposta la data di scadenza."""
         expiry = (date.today() + timedelta(days=days)).strftime("%Y-%m-%d")
         self.ent_date.delete(0, tk.END)
         self.ent_date.insert(0, expiry)
 
-    def _get_git_binary(self):
+    def _get_git_binary(self):  # noqa: ANN202
         """Trova il percorso dell'eseguibile git."""
-        import shutil
+        import shutil  # noqa: PLC0415
 
         git_path = shutil.which("git")
         if git_path:
@@ -344,7 +344,7 @@ class LicenseAdminApp:
                 return p
         return "git"  # Speriamo nel meglio
 
-    def upload_to_github(self, hw_id, target_dir):
+    def upload_to_github(self, hw_id, target_dir):  # noqa: ANN001, ANN201
         """Carica i file su GitHub usando gh CLI."""
         try:
             # Trova l'eseguibile git
@@ -399,7 +399,7 @@ class LicenseAdminApp:
                 capture_output=True,
             )
 
-            return True, "Upload completato con successo!"
+            return True, "Upload completato con successo!"  # noqa: TRY300
 
         except subprocess.CalledProcessError as e:
             error_msg = e.stderr.decode() if e.stderr else str(e)
@@ -410,7 +410,7 @@ class LicenseAdminApp:
         except Exception as e:
             return False, f"Errore: {e!s}"
 
-    def generate(self):
+    def generate(self):  # noqa: ANN201, PLR0915
         """Genera i file di licenza."""
         disk_serial = self.ent_disk.get().strip()
         client_name = self.ent_name.get().strip()
@@ -514,7 +514,7 @@ class LicenseAdminApp:
             messagebox.showinfo("Successo", msg)
 
             # Apri cartella (Windows)
-            import os
+            import os  # noqa: PLC0415
 
             if os.name == "nt":
                 os.startfile(target_dir)  # noqa: S606

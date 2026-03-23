@@ -115,7 +115,7 @@ def create_position_animation(
     Returns:
         L'animazione creata (non avviata)
     """
-    from PyQt6.QtCore import QPoint
+    from PyQt6.QtCore import QPoint  # noqa: PLC0415
 
     anim = QPropertyAnimation(widget, b"pos")
     anim.setDuration(duration)

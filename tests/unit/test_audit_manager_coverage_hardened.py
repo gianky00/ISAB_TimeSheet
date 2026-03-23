@@ -8,7 +8,7 @@ from src.core.audit_manager import AuditManager
 
 class TestAuditManager:
     @pytest.fixture
-    def manager(self, tmp_path, mocker):
+    def manager(self, tmp_path, mocker):  # noqa: ANN001
         # Ensure data dir exists
         db_dir = tmp_path / "data"
         db_dir.mkdir()
@@ -26,7 +26,7 @@ class TestAuditManager:
         yield mgr
         AuditManager._instance = None
 
-    def test_log_action_and_integrity(self, manager):
+    def test_log_action_and_integrity(self, manager):  # noqa: ANN001
         """Test logging an action and verifying chain integrity."""
         manager.log_action("Test Action", "unit-test", entity="App", status=AuditManager.Status.SUCCESS)
         manager.log_action(
@@ -48,16 +48,16 @@ class TestAuditManager:
 
         assert manager.verify_integrity() is False
 
-    def test_get_logs(self, manager):
+    def test_get_logs(self, manager):  # noqa: ANN001
         manager.log_action("A1")
         manager.log_action("A2")
         manager._log_queue.join()
 
         logs = manager.get_logs()
-        assert len(logs) == 2
+        assert len(logs) == 2  # noqa: PLR2004
         assert logs[0]["action"] == "A2"  # Descending order
 
-    def test_retention_policy(self, manager):
+    def test_retention_policy(self, manager):  # noqa: ANN001
         manager.log_action("Old Action")
         manager._log_queue.join()
 
@@ -74,13 +74,13 @@ class TestAuditManager:
         assert len(logs) == 1
         assert logs[0]["action"] == "Pulizia Log"
 
-    def test_notification_emission(self, manager):
+    def test_notification_emission(self, manager):  # noqa: ANN001
         with patch("src.core.notification_manager.NotificationManager.instance") as mock_notif:
             manager.log_action("Action", notify=True)
             manager._log_queue.join()
             mock_notif.return_value.add_notification.assert_called_once()
 
-    def test_get_current_user(self, manager):
+    def test_get_current_user(self, manager):  # noqa: ANN001
         with patch.dict("os.environ", {"USERNAME": "TestUser"}):
             assert manager._get_current_user() == "TestUser"
 

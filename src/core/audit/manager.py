@@ -65,16 +65,16 @@ class AuditManager:
                 self._execute_log_internal(**task)
                 self._log_queue.task_done()
             except Exception as e:
-                logger.error(f"Audit Worker Error: {e}")
+                logger.error(f"Audit Worker Error: {e}")  # noqa: TRY400
                 time.sleep(1)  # Evita busy loop in caso di errore persistente
 
     @property
-    def DB_PATH(self) -> Path:
+    def DB_PATH(self) -> Path:  # noqa: N802
         """Compatibilità Legacy per test."""
         return self.db.DB_PATH
 
     @DB_PATH.setter
-    def DB_PATH(self, value: Path) -> None:
+    def DB_PATH(self, value: Path) -> None:  # noqa: N802
         self.db.DB_PATH = value
 
     def _get_current_user(self) -> str:
@@ -84,20 +84,20 @@ class AuditManager:
             if user and user.lower() != "none":
                 return user
         try:
-            import getpass
+            import getpass  # noqa: PLC0415
 
             return getpass.getuser()
         except Exception:
             return "unknown"
 
-    def log_action(
+    def log_action(  # noqa: PLR0913
         self,
         action: str,
         category: str = "general",
         entity: str = "",
-        params: Any = None,
-        status: Any = Status.SUCCESS,
-        severity: Any = Severity.LOW,
+        params: Any = None,  # noqa: ANN401
+        status: Any = Status.SUCCESS,  # noqa: ANN401
+        severity: Any = Severity.LOW,  # noqa: ANN401
         duration_ms: int = 0,
         module: str = "",
         error_code: str | None = None,
@@ -127,14 +127,14 @@ class AuditManager:
         }
         self._log_queue.put(task)
 
-    def _execute_log_internal(
+    def _execute_log_internal(  # noqa: PLR0913
         self,
         action: str,
         category: str,
         entity: str,
-        params: Any,
-        status: Any,
-        severity: Any,
+        params: Any,  # noqa: ANN401
+        status: Any,  # noqa: ANN401
+        severity: Any,  # noqa: ANN401
         duration_ms: int,
         module: str,
         error_code: str | None,
@@ -225,19 +225,24 @@ class AuditManager:
             if notify:
                 self._generate_notification(action, entity, status_val, severity_val, params)
 
-            return audit_id
+            return audit_id  # noqa: TRY300
 
         except Exception as e:
-            logger.error("Audit Log Error", exc=e, action=action, category=category)
+            logger.error("Audit Log Error", exc=e, action=action, category=category)  # noqa: TRY400
             traceback.print_exc()
             return None
 
     def _generate_notification(
-        self, action: str, entity: str, status_val: str, severity_val: str, params: Any
+        self,
+        action: str,
+        entity: str,
+        status_val: str,
+        severity_val: str,
+        params: Any,  # noqa: ANN401
     ) -> None:
         """Genera una notifica utente basata sull'esito dell'azione auditata."""
         try:
-            from src.core.notification_manager import NotificationManager
+            from src.core.notification_manager import NotificationManager  # noqa: PLC0415
 
             level = "info"
             if status_val == "error" or severity_val == "high":
@@ -253,12 +258,12 @@ class AuditManager:
 
             NotificationManager.instance().add_notification(f"{action}: {entity}", msg, level=level)
         except Exception as e:
-            logger.error(f"Notification error in Audit: {e}")
+            logger.error(f"Notification error in Audit: {e}")  # noqa: TRY400
 
     def verify_integrity(self) -> bool:
         """Verifica la catena di hash."""
         try:
-            import sqlite3
+            import sqlite3  # noqa: PLC0415
 
             with self.db.get_connection() as conn:
                 conn.row_factory = sqlite3.Row
@@ -317,7 +322,7 @@ class AuditManager:
         logs, _ = self.get_filtered_logs(limit=limit)
         return logs
 
-    def get_filtered_logs(self, **kwargs: Any) -> tuple[list[dict[str, Any]], int]:
+    def get_filtered_logs(self, **kwargs: Any) -> tuple[list[dict[str, Any]], int]:  # noqa: ANN401
         """Interroga il database dell'audit applicando i filtri specificati."""
         return self.db.fetch_filtered(**kwargs)
 
@@ -366,5 +371,5 @@ class AuditManager:
                             stats[day][s_key] = 0
                         stats[day][s_key] += count
         except Exception as e:
-            logger.error(f"Stats Error: {e}")
+            logger.error(f"Stats Error: {e}")  # noqa: TRY400
         return dict(sorted(stats.items()))

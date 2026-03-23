@@ -15,8 +15,8 @@ class TestAppInitializer:
     @patch("src.core.license_updater.run_update")
     @patch("src.core.license_validator.get_detailed_license_status")
     @patch("src.core.database.db_manager.init_db")
-    def test_initialize_core_success(self, mock_db_init, mock_license, mock_update):
-        from src.core.license_validator import LicenseStatus
+    def test_initialize_core_success(self, mock_db_init, mock_license, mock_update):  # noqa: ANN001
+        from src.core.license_validator import LicenseStatus  # noqa: PLC0415
 
         mock_license.return_value = (LicenseStatus.VALID, "OK")
 
@@ -30,8 +30,8 @@ class TestAppInitializer:
     @patch("src.core.license_updater.run_update")
     @patch("src.core.license_validator.get_detailed_license_status")
     @patch("src.core.database.db_manager.init_db")
-    def test_initialize_core_license_update(self, mock_db_init, mock_license, mock_update):
-        from src.core.license_validator import LicenseStatus
+    def test_initialize_core_license_update(self, mock_db_init, mock_license, mock_update):  # noqa: ANN001
+        from src.core.license_validator import LicenseStatus  # noqa: PLC0415
 
         mock_license.return_value = (LicenseStatus.EXPIRED, "License expired")
 
@@ -50,9 +50,9 @@ class TestAppInitializer:
 
     @patch("src.core.license_updater.run_update")
     @patch("src.core.database.db_manager.init_db", side_effect=Exception("DB Error"))
-    def test_initialize_core_failure(self, mock_db_init, mock_update):
+    def test_initialize_core_failure(self, mock_db_init, mock_update):  # noqa: ANN001
         # Patch license check to avoid other side effects
-        from src.core.license_validator import LicenseStatus
+        from src.core.license_validator import LicenseStatus  # noqa: PLC0415
 
         with patch(
             "src.core.license_validator.get_detailed_license_status",
@@ -71,32 +71,32 @@ class TestAppInitializer:
         assert hasattr(gen, "__next__")
 
     @patch("src.core.config_manager.load_config", return_value={})
-    def test_init_generator_yields_steps(self, mock_config):
+    def test_init_generator_yields_steps(self, mock_config):  # noqa: ANN001
         mock_mw = MagicMock()
 
         gen = AppInitializer.init_generator(mock_mw)
 
         first_step = next(gen)
         assert isinstance(first_step, tuple)
-        assert len(first_step) == 2
+        assert len(first_step) == 2  # noqa: PLR2004
         name, prog = first_step
         assert isinstance(name, str)
         assert isinstance(prog, int)
 
     @patch("src.core.logging.configure_logging")
-    def test_setup_logging_enterprise(self, mock_configure):
+    def test_setup_logging_enterprise(self, mock_configure):  # noqa: ANN001
         AppInitializer._setup_logging()
         mock_configure.assert_called_once()
 
     @patch("src.core.logging.configure_logging", side_effect=Exception("Logging error"))
-    def test_setup_logging_fallback(self, mock_configure):
+    def test_setup_logging_fallback(self, mock_configure):  # noqa: ANN001
         # Should not raise, falls back to basicConfig
         AppInitializer._setup_logging()
 
     @patch("src.gui.styles.theme_manager.apply_theme")
     @patch("PyQt6.QtGui.QFont")
     @patch("PyQt6.QtWidgets.QApplication.instance")
-    def test_setup_app_style(self, mock_instance, mock_font, mock_theme):
+    def test_setup_app_style(self, mock_instance, mock_font, mock_theme):  # noqa: ANN001
         mock_app = MagicMock()
         mock_instance.return_value = mock_app
 

@@ -34,7 +34,7 @@ class ServiceController(QObject):
     - Generazione e invio automatico dei report email via Outlook.
     """
 
-    def __init__(self, main_window: Any, telegram_service: Any) -> None:
+    def __init__(self, main_window: Any, telegram_service: Any) -> None:  # noqa: ANN401
         """
         Inizializza il controller dei servizi e le code di gestione del parallelismo.
 
@@ -130,11 +130,11 @@ class ServiceController(QObject):
         if should_send:
             self._send_scheduled_report_email()
 
-    def _send_scheduled_report_email(self) -> None:
+    def _send_scheduled_report_email(self) -> None:  # noqa: PLR0915
         """Esegue l'analisi degli accessi mancanti e invia il report HTML via Outlook dispatch."""
         try:
 
-            def norm(t: Any) -> str:
+            def norm(t: Any) -> str:  # noqa: ANN401
                 return re.sub(r"\s+", " ", str(t).strip().upper())
 
             def build_maps(acc: list[tuple[Any, ...]]) -> tuple[dict[str, int], dict[tuple[str, str], int]]:
@@ -186,9 +186,9 @@ class ServiceController(QObject):
                     "giorni": df,
                     "data": (datetime.now(UTC).astimezone() - timedelta(days=df)).strftime("%d/%m/%Y"),
                 }
-                if 21 <= df <= 30:
+                if 21 <= df <= 30:  # noqa: PLR2004
                     w_list.append(item)
-                elif df > 30:
+                elif df > 30:  # noqa: PLR2004
                     e_list.append(item)
 
             if not w_list and not e_list:
@@ -198,7 +198,7 @@ class ServiceController(QObject):
 
             if os.name != "nt":
                 return
-            import win32com.client
+            import win32com.client  # noqa: PLC0415
 
             body = f"<html><body style='font-family: Segoe UI;'><h2>Report Accessi ISAB</h2><p>Generato il {datetime.now(UTC).astimezone().strftime('%d/%m/%Y %H:%M')}</p>"
             body += (
@@ -242,18 +242,18 @@ class ServiceController(QObject):
                 level="success",
             )
         except Exception as e:
-            logger.error(f"Errore report email: {e}")
+            logger.error(f"Errore report email: {e}")  # noqa: TRY400
             NotificationManager.instance().add_notification(
                 title="Errore Report Email", message=str(e), level="error"
             )
 
-    def _prepare_scarico_oda_generale(self, panel: Any) -> None:
+    def _prepare_scarico_oda_generale(self, panel: Any) -> None:  # noqa: ANN401
         """Configura il pannello Dettagli OdA per uno scarico massivo senza filtri specifici."""
         if hasattr(panel, "data_table"):
             panel.data_table.set_data([])
             panel.log_widget.append("🧹 Tabella pulita per scarico generale (senza filtro OdA)")
 
-    def _schedule_bot_with_parallelism(self, bot_id: str, panel: Any, site: str, log_message: str) -> None:
+    def _schedule_bot_with_parallelism(self, bot_id: str, panel: Any, site: str, log_message: str) -> None:  # noqa: ANN401
         """Gestisce l'accodamento di un bot rispettando i vincoli di un'unica istanza Selenium per sito."""
         if self.running_bots_by_site[site]:
             self.pending_bots_by_site[site].append((bot_id, panel, log_message))
@@ -261,7 +261,7 @@ class ServiceController(QObject):
         else:
             self._start_bot(bot_id, panel, site, log_message)
 
-    def _start_bot(self, bot_id: str, panel: Any, site: str, log_message: str) -> None:
+    def _start_bot(self, bot_id: str, panel: Any, site: str, log_message: str) -> None:  # noqa: ANN401
         """Avvia l'esecuzione del bot e registra il callback per la gestione della coda al termine."""
         if not panel.start_btn.isEnabled():
             return
@@ -281,7 +281,7 @@ class ServiceController(QObject):
             panel.status_changed.connect(on_finished)
         panel._on_start()
 
-    def _on_bot_completed(self, bot_id: str, site: str, panel: Any) -> None:
+    def _on_bot_completed(self, bot_id: str, site: str, panel: Any) -> None:  # noqa: ANN401
         """Rimuove il bot concluso dalla lista attiva e avvia il prossimo elemento in coda per quel sito."""
         if bot_id in self.running_bots_by_site[site]:
             self.running_bots_by_site[site].remove(bot_id)

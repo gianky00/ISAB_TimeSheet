@@ -32,13 +32,13 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         ("parse", "Analisi Risultati"),
     ]
 
-    def __init__(
+    def __init__(  # noqa: ANN204, PLR0913
         self,
-        username,
-        password,
-        headless=False,
-        timeout=30,
-        download_path="",
+        username,  # noqa: ANN001
+        password,  # noqa: ANN001
+        headless=False,  # noqa: ANN001
+        timeout=30,  # noqa: ANN001
+        download_path="",  # noqa: ANN001
         account_type: str = "Esecutore",
     ):
         """
@@ -155,7 +155,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
             )
         return None
 
-    def _parse_excel_results(self, file_path: str):
+    def _parse_excel_results(self, file_path: str):  # noqa: ANN202
         """
         Legge i dati dall'Excel scaricato e popola self.results.
 
@@ -189,9 +189,9 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
                 if has_prog:
                     pdl = str(row.iloc[0]).strip() if len(row) > 0 else "N/D"
                     desc = str(row.iloc[1]).strip() if len(row) > 1 else ""
-                    richiedente = str(row.iloc[17]).strip() if len(row) > 17 else "N/D"
-                    unita = str(row.iloc[23]).strip() if len(row) > 23 else ""
-                    area = str(row.iloc[24]).strip() if len(row) > 24 else ""
+                    richiedente = str(row.iloc[17]).strip() if len(row) > 17 else "N/D"  # noqa: PLR2004
+                    unita = str(row.iloc[23]).strip() if len(row) > 23 else ""  # noqa: PLR2004
+                    area = str(row.iloc[24]).strip() if len(row) > 24 else ""  # noqa: PLR2004
 
                     self.results.append(
                         {

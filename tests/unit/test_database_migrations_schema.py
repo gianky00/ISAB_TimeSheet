@@ -16,7 +16,7 @@ class TestDatabaseMigrations:
         yield conn
         conn.close()
 
-    def test_migration_v1_tables(self, db_conn):
+    def test_migration_v1_tables(self, db_conn):  # noqa: ANN001
         mig_contabilita_v1(db_conn)
 
         cursor = db_conn.cursor()
@@ -33,7 +33,7 @@ class TestDatabaseMigrations:
         for t in expected:
             assert t in tables
 
-    def test_migration_v2_indexes(self, db_conn):
+    def test_migration_v2_indexes(self, db_conn):  # noqa: ANN001
         mig_contabilita_v1(db_conn)
         mig_contabilita_v2(db_conn)
 
@@ -44,7 +44,7 @@ class TestDatabaseMigrations:
         assert "idx_cont_n_prev" in indexes
         assert "idx_cont_odc" in indexes
 
-    def test_migration_v3_fts(self, db_conn):
+    def test_migration_v3_fts(self, db_conn):  # noqa: ANN001
         mig_contabilita_v1(db_conn)
         mig_contabilita_v3(db_conn)
 
@@ -63,7 +63,7 @@ class TestDatabaseMigrations:
         cursor.execute("SELECT * FROM contabilita_fts WHERE contabilita_fts MATCH 'Att1'")
         assert cursor.fetchone() is not None
 
-    def test_basic_crud_operations(self, db_conn):
+    def test_basic_crud_operations(self, db_conn):  # noqa: ANN001
         mig_contabilita_v1(db_conn)
         cursor = db_conn.cursor()
 

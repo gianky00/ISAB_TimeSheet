@@ -12,7 +12,7 @@ from src.gui.controllers.search_controller import SearchController
 class MockMainWindow(QObject):
     """Mock leggero che simula l'interfaccia di MainWindow senza caricare Qt reale."""
 
-    def __init__(self):
+    def __init__(self):  # noqa: ANN204
         super().__init__()
         self.page_stack = MagicMock()
         # Aggiungiamo slide_to_index che è usato in V9.0
@@ -29,10 +29,10 @@ class MockMainWindow(QObject):
 
 class TestControllersCoverage:
     @pytest.fixture
-    def mw(self, qapp):
+    def mw(self, qapp):  # noqa: ANN001
         return MockMainWindow()
 
-    def test_bot_controller_handle_results(self, mw, mocker):
+    def test_bot_controller_handle_results(self, mw, mocker):  # noqa: ANN001
         """Verifica inoltro risultati bot a Telegram."""
         mock_telegram = MagicMock()
         ctrl = BotController(mw, mock_telegram)
@@ -40,7 +40,7 @@ class TestControllersCoverage:
         ctrl._handle_bot_results("scarico_pdl", ["/pdl.pdf"])
         mock_telegram.send_document_sync.assert_called_once()
 
-    def test_navigation_controller_simple_logic(self, mw, mocker):
+    def test_navigation_controller_simple_logic(self, mw, mocker):  # noqa: ANN001
         """Verifica logica di navigazione senza caricare pannelli reali."""
         ctrl = NavigationController(mw)
         mocker.patch.object(ctrl, "get_panel", return_value=QWidget())
@@ -53,7 +53,7 @@ class TestControllersCoverage:
         # La sidebar ora riceve (index, sub_index, bot_index)
         mw.sidebar.set_active_button.assert_called_with(1, None, None)
 
-    def test_navigation_controller_settings_dirty_check(self, mw, mocker):
+    def test_navigation_controller_settings_dirty_check(self, mw, mocker):  # noqa: ANN001
         """Verifica blocco navigazione se impostazioni non salvate."""
         ctrl = NavigationController(mw)
         mw._current_page_index = 7
@@ -65,7 +65,7 @@ class TestControllersCoverage:
         mw.page_stack.slide_to_index.assert_not_called()
         mw.sidebar.set_active_button.assert_called_with(7)
 
-    def test_search_controller_routing(self, mw, mocker):
+    def test_search_controller_routing(self, mw, mocker):  # noqa: ANN001
         """Verifica che la ricerca OdA inoltri i risultati correttamente."""
         ctrl = SearchController(mw)
         mock_menu = MagicMock()

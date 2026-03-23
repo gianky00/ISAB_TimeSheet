@@ -73,7 +73,7 @@ class NotificationCard(QFrame):
         if not disable_animations:
             self._setup_animations()
 
-    def _setup_ui(self) -> None:
+    def _setup_ui(self) -> None:  # noqa: PLR0915
         """Configura il layout, gli stili e gli elementi interattivi della card."""
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -155,12 +155,12 @@ class NotificationCard(QFrame):
                 footer_lay.addWidget(btn)
             main_layout.addLayout(footer_lay)
 
-    def _format_timestamp(self, ts: Any) -> str:
+    def _format_timestamp(self, ts: Any) -> str:  # noqa: ANN401
         """Converte un timestamp in formato leggibile (HH:MM)."""
         if isinstance(ts, str):
             return ts
         if isinstance(ts, (int, float)):
-            from datetime import UTC
+            from datetime import UTC  # noqa: PLC0415
 
             return datetime.fromtimestamp(ts, tz=UTC).strftime("%H:%M")
         return datetime.now(UTC).astimezone().strftime("%H:%M")
@@ -175,7 +175,7 @@ class NotificationCard(QFrame):
         self.fade_in_animation.setEndValue(1.0)
         self.fade_in_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-    def showEvent(self, event: QShowEvent | None) -> None:
+    def showEvent(self, event: QShowEvent | None) -> None:  # noqa: N802
         """Avvia l'animazione di fade-in quando la card viene mostrata."""
         if not self._disable_animations:
             self.fade_in_animation.start()
@@ -192,7 +192,7 @@ class NotificationCard(QFrame):
         """Emette il segnale per la rimozione della notifica dal gestore."""
         self.card_deleted.emit(self.notification["id"])
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
         """Emette il segnale di clic sulla card per contrassegnarla come letta."""
         if event and event.button() == Qt.MouseButton.LeftButton:
             self.card_clicked.emit(self.notification["id"])

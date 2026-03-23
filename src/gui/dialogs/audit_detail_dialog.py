@@ -24,14 +24,14 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class AuditDetailDialog(QDialog):
     """Dialog per visualizzare i dettagli completi di un log."""
 
-    def __init__(self, log_data, parent=None):
+    def __init__(self, log_data, parent=None):  # noqa: ANN001, ANN204
         super().__init__(parent)
         self.log_data = log_data
         self.setWindowTitle("Dettagli Audit Log")
         self.setMinimumSize(700, 600)
         self._setup_ui(log_data)
 
-    def _setup_ui(self, data):
+    def _setup_ui(self, data):  # noqa: ANN001, ANN202
         layout = QVBoxLayout(self)
 
         # Header Info
@@ -41,7 +41,7 @@ class AuditDetailDialog(QDialog):
             ts = dt.strftime("%d/%m/%Y %H:%M:%S")
 
         dur_ms = data.get("duration_ms", 0) or 0
-        dur_str = f"{dur_ms}ms" if dur_ms < 1000 else f"{dur_ms / 1000:.2f}s"
+        dur_str = f"{dur_ms}ms" if dur_ms < 1000 else f"{dur_ms / 1000:.2f}s"  # noqa: PLR2004
 
         err_code = data.get("error_code") or "Nessuno"
         module = data.get("module") or "Generico"
@@ -114,7 +114,7 @@ class AuditDetailDialog(QDialog):
 
         layout.addLayout(btn_layout)
 
-    def _copy_to_clipboard(self):
+    def _copy_to_clipboard(self):  # noqa: ANN202
         cb = QGuiApplication.clipboard()
         if cb:
             cb.setText(self.text_edit.toPlainText())

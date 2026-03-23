@@ -23,10 +23,10 @@ class ReportWorker(QThread):
 
     finished_signal = pyqtSignal(bool, str, dict)  # success, message, data
 
-    def __init__(self):
+    def __init__(self):  # noqa: ANN204
         super().__init__()
 
-    def run(self):
+    def run(self):  # noqa: ANN201
         """Esegue il ciclo completo di generazione report."""
         try:
             # 1. Raccolta dati (CORE)
@@ -59,10 +59,10 @@ class ReportWorker(QThread):
 
         if os.name == "nt":
             try:
-                import pythoncom
-                import win32com.client
+                import pythoncom  # noqa: PLC0415
+                import win32com.client  # noqa: PLC0415
 
-                from src.core.constants import Emails
+                from src.core.constants import Emails  # noqa: PLC0415
 
                 pythoncom.CoInitialize()
                 try:

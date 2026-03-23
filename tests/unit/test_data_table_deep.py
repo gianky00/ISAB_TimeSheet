@@ -22,25 +22,25 @@ def sample_data():
     ]
 
 
-def test_data_table_init(qtbot, columns):
+def test_data_table_init(qtbot, columns):  # noqa: ANN001
     table = DataTable(columns)
     qtbot.addWidget(table)
 
-    assert table._table.columnCount() == 3
+    assert table._table.columnCount() == 3  # noqa: PLR2004
     assert table._table.horizontalHeaderItem(0).text() == "ID"
     # Column width might be affected by stretch mode if not explicitly set
     # but ID has width: 50
-    assert table._table.columnWidth(0) == 50
-    assert table._table.columnWidth(1) == 150
+    assert table._table.columnWidth(0) == 50  # noqa: PLR2004
+    assert table._table.columnWidth(1) == 150  # noqa: PLR2004
 
 
-def test_data_table_set_data(qtbot, columns, sample_data):
+def test_data_table_set_data(qtbot, columns, sample_data):  # noqa: ANN001
     table = DataTable(columns)
     qtbot.addWidget(table)
 
     table.setData(sample_data)
 
-    assert table._table.rowCount() == 4
+    assert table._table.rowCount() == 4  # noqa: PLR2004
     assert table._table.item(0, 0).text() == "1"
     assert table._table.item(0, 1).text() == "Test 1"
 
@@ -49,7 +49,7 @@ def test_data_table_set_data(qtbot, columns, sample_data):
     assert color == table.STATUS_COLORS["completato"]
 
 
-def test_data_table_filter(qtbot, columns, sample_data):
+def test_data_table_filter(qtbot, columns, sample_data):  # noqa: ANN001
     table = DataTable(columns)
     qtbot.addWidget(table)
     table.setData(sample_data)
@@ -68,7 +68,7 @@ def test_data_table_filter(qtbot, columns, sample_data):
     assert table._table.isRowHidden(0) is False
 
 
-def test_data_table_selection(qtbot, columns, sample_data):
+def test_data_table_selection(qtbot, columns, sample_data):  # noqa: ANN001
     table = DataTable(columns)
     qtbot.addWidget(table)
     table.setData(sample_data)
@@ -82,14 +82,14 @@ def test_data_table_selection(qtbot, columns, sample_data):
     assert selected[0]["nome"] == "Test 1"
 
 
-def test_data_table_double_click(qtbot, columns, sample_data):
+def test_data_table_double_click(qtbot, columns, sample_data):  # noqa: ANN001
     table = DataTable(columns)
     qtbot.addWidget(table)
     table.setData(sample_data)
 
     clicked_data = []
 
-    def on_double_click(idx, data):
+    def on_double_click(idx, data):  # noqa: ANN001, ANN202
         clicked_data.append(data)
 
     table.rowDoubleClicked.connect(on_double_click)
@@ -102,19 +102,19 @@ def test_data_table_double_click(qtbot, columns, sample_data):
     assert clicked_data[0]["id"] == "2"
 
 
-def test_data_table_get_row_color_prefix(qtbot, columns):
+def test_data_table_get_row_color_prefix(qtbot, columns):  # noqa: ANN001
     table = DataTable(columns)
     # Testing prefix match logic
     assert table._get_row_color("completato_con_successo") == table.STATUS_COLORS["completato"]
     assert table._get_row_color("unknown") is None
 
 
-def test_data_table_refresh(qtbot, columns):
+def test_data_table_refresh(qtbot, columns):  # noqa: ANN001
     table = DataTable(columns)
     # Simply calls refresh which does nothing in base class, just for coverage
     table.refresh()
 
 
-def test_data_table_get_widget(qtbot, columns):
+def test_data_table_get_widget(qtbot, columns):  # noqa: ANN001
     table = DataTable(columns)
     assert table.get_table_widget() == table._table

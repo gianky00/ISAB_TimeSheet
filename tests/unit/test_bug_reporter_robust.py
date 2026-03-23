@@ -7,7 +7,7 @@ from src.core.bug_reporter import BugReporter
 
 class TestBugReporterRobust:
     @pytest.fixture
-    def mock_config_dir(self, tmp_path):
+    def mock_config_dir(self, tmp_path):  # noqa: ANN001
         """Mocka CONFIG_DIR con una directory temporanea."""
         config_dir = tmp_path / "config"
         config_dir.mkdir()
@@ -24,7 +24,7 @@ class TestBugReporterRobust:
     @patch("src.core.bug_reporter.zipfile.ZipFile")
     @patch("src.core.bug_reporter.datetime")
     @patch("src.core.bug_reporter.BugReporter._collect_system_info")
-    def test_collect_diagnostics_success(self, mock_sys_info, mock_datetime, mock_zip, mock_config_dir):
+    def test_collect_diagnostics_success(self, mock_sys_info, mock_datetime, mock_zip, mock_config_dir):  # noqa: ANN001
         """Test creazione report con successo."""
         # Configura datetime per gestire now(UTC) e astimezone()
         mock_now = MagicMock()
@@ -56,7 +56,7 @@ class TestBugReporterRobust:
 
     @patch("src.core.logging.generate_analytics_report")
     @patch("src.core.bug_reporter.zipfile.ZipFile")
-    def test_add_analytics_report(self, mock_zip, mock_gen_report):
+    def test_add_analytics_report(self, mock_zip, mock_gen_report):  # noqa: ANN001
         """Test aggiunta report analytics."""
         mock_zip_instance = mock_zip.return_value
 
@@ -76,7 +76,7 @@ class TestBugReporterRobust:
 
     @patch("src.core.audit.AuditManager")
     @patch("src.core.bug_reporter.zipfile.ZipFile")
-    def test_add_audit_trail(self, mock_zip, mock_audit_cls):
+    def test_add_audit_trail(self, mock_zip, mock_audit_cls):  # noqa: ANN001
         """Test aggiunta audit trail."""
         mock_zip_instance = mock_zip.return_value
         mock_manager = mock_audit_cls.instance.return_value
@@ -98,7 +98,7 @@ class TestBugReporterRobust:
                 # Verifica filtro env
                 assert "env_filtered" in info
 
-    def test_cleanup_old_reports(self, mock_config_dir):
+    def test_cleanup_old_reports(self, mock_config_dir):  # noqa: ANN001
         """Test pulizia vecchi report."""
         reports_dir = mock_config_dir / "reports"
         reports_dir.mkdir(parents=True, exist_ok=True)
@@ -110,15 +110,15 @@ class TestBugReporterRobust:
         BugReporter.cleanup_old_reports(max_reports=5)
 
         remaining = list(reports_dir.glob("*.zip"))
-        assert len(remaining) == 5
+        assert len(remaining) == 5  # noqa: PLR2004
 
-    def test_get_estimated_size(self, mock_config_dir):
+    def test_get_estimated_size(self, mock_config_dir):  # noqa: ANN001
         """Test stima dimensione."""
         size_str = BugReporter.get_estimated_size()
         assert "KB" in size_str or "MB" in size_str
 
     @patch("src.core.bug_reporter.zipfile.ZipFile")
-    def test_collect_diagnostics_error(self, mock_zip, mock_config_dir):
+    def test_collect_diagnostics_error(self, mock_zip, mock_config_dir):  # noqa: ANN001
         """Test gestione errore durante creazione ZIP."""
         mock_zip.side_effect = Exception("Disk Full")
 
@@ -129,7 +129,7 @@ class TestBugReporterRobust:
         assert "Disk Full" in msg
 
     @patch("src.core.bug_reporter.zipfile.ZipFile")
-    def test_add_bot_errors(self, mock_zip, mock_config_dir):
+    def test_add_bot_errors(self, mock_zip, mock_config_dir):  # noqa: ANN001
         """Test aggiunta screenshot errori."""
         error_dir = mock_config_dir / "logs" / "errors"
         error_dir.mkdir(parents=True, exist_ok=True)

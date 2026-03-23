@@ -16,7 +16,7 @@ class SignalConnector(QObject):
     Si occupa di aggiornare badge, mostrare toast e gestire la navigazione dalla sidebar.
     """
 
-    def __init__(self, main_window):
+    def __init__(self, main_window):  # noqa: ANN001, ANN204
         """
         Inizializza il connettore di segnali.
 
@@ -26,7 +26,7 @@ class SignalConnector(QObject):
         super().__init__(main_window)
         self.main_window = main_window
 
-    def connect_global_signals(self):
+    def connect_global_signals(self):  # noqa: ANN201
         """
         Collega i segnali globali dei servizi core.
         - Notifiche -> Toast Manager & Tray Icon
@@ -41,7 +41,7 @@ class SignalConnector(QObject):
 
         # Tray Icon (System notification)
         if hasattr(self.main_window, "tray_controller"):
-            from PyQt6.QtWidgets import QSystemTrayIcon
+            from PyQt6.QtWidgets import QSystemTrayIcon  # noqa: PLC0415
 
             icon_map = {
                 "info": QSystemTrayIcon.MessageIcon.Information,
@@ -50,7 +50,7 @@ class SignalConnector(QObject):
                 "error": QSystemTrayIcon.MessageIcon.Critical,
             }
 
-            def show_tray_msg(msg, level, duration):
+            def show_tray_msg(msg, level, duration):  # noqa: ANN001, ANN202
                 title = "SyncroJob"
                 if ":" in msg:
                     title, msg = msg.split(":", 1)
@@ -71,7 +71,7 @@ class SignalConnector(QObject):
             )
             sidebar.group_notifiche.header_btn.set_badge(NotificationManager.instance().get_unread_count())
 
-    def connect_sidebar_signals(self):
+    def connect_sidebar_signals(self):  # noqa: ANN201
         """
         Collega i segnali di interazione della barra laterale ai controller di navigazione.
         Gestisce i cambi pagina, l'apertura di tab specifici e la Command Palette.

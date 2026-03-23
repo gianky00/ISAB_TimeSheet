@@ -23,7 +23,7 @@ OUTPUT_FILE = PROJECT_ROOT / "CI_CONTEXT.md"
 TEMP_REPORT = PROJECT_ROOT / "tests" / "temp_test_report.md"
 
 
-def run_command(cmd, label):
+def run_command(cmd, label):  # noqa: ANN001, ANN201
     """Esegue un comando e cattura l'output in modo sicuro."""
     print(f"Running {label}...")
     try:
@@ -36,12 +36,12 @@ def run_command(cmd, label):
             encoding="utf-8",
             errors="replace",
         )
-        return result.stdout, result.stderr, result.returncode
+        return result.stdout, result.stderr, result.returncode  # noqa: TRY300
     except Exception as e:
         return "", f"Error running {label}: {e}", 1
 
 
-def main():
+def main():  # noqa: ANN201, PLR0912, PLR0915
     """Aggregatore principale del contesto CI."""
     start_time = datetime.now()
 

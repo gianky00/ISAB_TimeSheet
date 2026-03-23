@@ -17,7 +17,7 @@ from src.core.config_manager import (
 
 class TestConfigManager:
     @pytest.fixture(autouse=True)
-    def setup_test(self, tmp_path, mocker):
+    def setup_test(self, tmp_path, mocker):  # noqa: ANN001
         # Reset cache before each test
         _reset_configuration_for_testing()
         # Mock paths
@@ -44,7 +44,7 @@ class TestConfigManager:
         set_config_value("custom_key", "custom_value")
         assert get_config_value("custom_key") == "custom_value"
 
-    def test_add_remove_account(self, mocker):
+    def test_add_remove_account(self, mocker):  # noqa: ANN001
         # Mock SecretsManager to avoid keyring issues
         mocker.patch("src.core.config.account_manager.SecretsManager.is_available", return_value=False)
         mocker.patch(
@@ -63,7 +63,7 @@ class TestConfigManager:
         assert accounts[0]["default"] is True
 
         add_account("user2", "pass2", is_default=False)
-        assert len(get_config_value("accounts")) == 2
+        assert len(get_config_value("accounts")) == 2  # noqa: PLR2004
 
         remove_account("user1")
         accounts = get_config_value("accounts")
@@ -71,7 +71,7 @@ class TestConfigManager:
         assert accounts[0]["username"] == "user2"
         assert accounts[0]["default"] is True  # user2 became default
 
-    def test_legacy_migration(self, tmp_path):
+    def test_legacy_migration(self, tmp_path):  # noqa: ANN001
         # Create legacy config file
         legacy_data = {
             "isab_username": "legacy_user",
@@ -87,8 +87,8 @@ class TestConfigManager:
         assert config["accounts"][0]["username"] == "legacy_user"
         assert config["accounts"][0]["default"] is True
 
-    def test_atomic_write_failure_cleanup(self, tmp_path, mocker):
-        from src.core.config_manager import _atomic_write_json
+    def test_atomic_write_failure_cleanup(self, tmp_path, mocker):  # noqa: ANN001
+        from src.core.config_manager import _atomic_write_json  # noqa: PLC0415
 
         target = tmp_path / "fail.json"
 

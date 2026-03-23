@@ -103,7 +103,7 @@ class SidebarWidget(QFrame):
             QScrollBar::handle:vertical {{ background: {sb_handle}; border-radius: 2px; }}
         """
 
-    def _setup_ui(self) -> None:
+    def _setup_ui(self) -> None:  # noqa: PLR0915
         """Inizializza l'interfaccia grafica e la struttura dei menu."""
         main_lay = QVBoxLayout(self)
         main_lay.setContentsMargins(0, 0, 0, 0)
@@ -129,7 +129,7 @@ class SidebarWidget(QFrame):
         # FIX: Rimosso bordo nero spesso, reso più elegante
         self.logo_badge.setStyleSheet("background: white; border-radius: 23px; border: 1px solid #e2e8f0;")
 
-        from PyQt6.QtGui import QIcon
+        from PyQt6.QtGui import QIcon  # noqa: PLC0415
 
         pix = QIcon(get_asset_path("assets/app.ico")).pixmap(64, 64)
         if not pix.isNull():
@@ -326,7 +326,7 @@ class SidebarWidget(QFrame):
                 return
         self.active_track.hide()
 
-    def set_active_button(self, index: int, sub: int | None = None, bot: int | None = None) -> None:
+    def set_active_button(self, index: int, sub: int | None = None, bot: int | None = None) -> None:  # noqa: PLR0912
         """Evidenzia il pulsante attivo."""
         btns = {
             0: self.btn_home,
@@ -355,30 +355,30 @@ class SidebarWidget(QFrame):
                 b.setChecked(sub == 0 and i == bot)
             for i, b in enumerate(self.sub_safework.children_btns):
                 b.setChecked(sub == 1 and i == bot)
-        elif index == 11:
+        elif index == 11:  # noqa: PLR2004
             self.sub_dipendenti.header_btn.setChecked(True)
             for i, b in enumerate(self.sub_dipendenti.children_btns):
                 b.setChecked(i == sub)
-        elif index == 4:
+        elif index == 4:  # noqa: PLR2004
             self.sub_strumentale.header_btn.setChecked(True)
             for i, b in enumerate(self.sub_strumentale.children_btns):
                 b.setChecked(i == sub)
-        elif index == 12:
+        elif index == 12:  # noqa: PLR2004
             self.sub_consuntivo.header_btn.setChecked(True)
             for i, b in enumerate(self.sub_consuntivo.children_btns):
                 b.setChecked(i == sub)
-        elif index == 9:
+        elif index == 9:  # noqa: PLR2004
             for i, b in enumerate(self.notif_child_btns):
                 b.setChecked(i == sub)
 
         QTimer.singleShot(150, self._update_track)
 
-    def enterEvent(self, e: Any) -> None:
+    def enterEvent(self, e: Any) -> None:  # noqa: ANN401, N802
         """Gestisce l'evento di entrata del mouse (espansione)."""
         self._set_collapsed(False)
         super().enterEvent(e)
 
-    def leaveEvent(self, e: Any) -> None:
+    def leaveEvent(self, e: Any) -> None:  # noqa: ANN401, N802
         """Gestisce l'evento di uscita del mouse (collasso)."""
         if getattr(self, "_drag_in_progress", False):
             super().leaveEvent(e)

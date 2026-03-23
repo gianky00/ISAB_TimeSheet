@@ -33,7 +33,7 @@ class PDLQueries:
 
             return sorted(clean_names)
         except Exception as e:
-            logger.error(f"Errore recupero richiedenti: {e}")
+            logger.error(f"Errore recupero richiedenti: {e}")  # noqa: TRY400
             return []
 
     @classmethod
@@ -44,9 +44,9 @@ class PDLQueries:
             try:
                 query_del = "DELETE FROM pdl_programmazione WHERE settimana_start = ? AND settimana_end = ?"
                 db_manager.execute_query(db_manager.DB_PDL, query_del, (start_date, end_date))
-                return True
+                return True  # noqa: TRY300
             except Exception as e:
-                logger.error(f"Errore pulizia programmazione vuota: {e}")
+                logger.error(f"Errore pulizia programmazione vuota: {e}")  # noqa: TRY400
                 return False
 
         try:
@@ -79,7 +79,7 @@ class PDLQueries:
                     row.extend([day["tcl"], day["tgo"]])
 
                 # Riempimento se mancano giorni (safety)
-                while len(row) < 19:
+                while len(row) < 19:  # noqa: PLR2004
                     row.append(False)
 
                 # Aggiungi date
@@ -89,9 +89,9 @@ class PDLQueries:
 
             with db_manager.get_connection(db_manager.DB_PDL) as conn:
                 conn.executemany(query, data_to_insert)
-            return True
+            return True  # noqa: TRY300
         except Exception as e:
-            logger.error(f"Errore salvataggio programmazione: {e}")
+            logger.error(f"Errore salvataggio programmazione: {e}")  # noqa: TRY400
             return False
 
     @classmethod
@@ -130,9 +130,9 @@ class PDLQueries:
                         ],
                     }
                 )
-            return results
+            return results  # noqa: TRY300
         except Exception as e:
-            logger.error(f"Errore recupero programmazione: {e}")
+            logger.error(f"Errore recupero programmazione: {e}")  # noqa: TRY400
             return []
 
     @classmethod
@@ -141,7 +141,7 @@ class PDLQueries:
         Recupera la cronologia degli interventi per un determinato PDL
         dal database dei Report Attività.
         """
-        from src.core import config_manager
+        from src.core import config_manager  # noqa: PLC0415
 
         config = config_manager.load_config()
         # Path di default storico (Cerca in folder parallela se non configurato)
@@ -205,5 +205,5 @@ class PDLQueries:
 
             return [dict(r) for r in rows]
         except Exception as e:
-            logger.error(f"Errore recupero cronologia interventi per PDL {n_pdl}: {e}")
+            logger.error(f"Errore recupero cronologia interventi per PDL {n_pdl}: {e}")  # noqa: TRY400
             return []

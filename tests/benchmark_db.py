@@ -5,7 +5,7 @@ from pathlib import Path
 DB_PATH = Path("benchmark_contabilita_db.db")
 
 
-def create_large_db(rows=200000):
+def create_large_db(rows=200000):  # noqa: ANN001
     if DB_PATH.exists():
         DB_PATH.unlink()
 

@@ -36,6 +36,6 @@ def generate_pdf_from_html(html_content: str, output_path: str, landscape: bool 
         printer.setPageOrientation(orientation)
 
         doc.print(printer)
-        return True
+        return True  # noqa: TRY300
     except Exception:
         return False

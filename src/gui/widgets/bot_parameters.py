@@ -72,18 +72,18 @@ class HoverPulseFrame(QFrame):
         self._pulse_val = v
         self.update()
 
-    def enterEvent(self, event) -> None:
+    def enterEvent(self, event) -> None:  # noqa: ANN001, N802
         """Avvia l'animazione di pulsazione del bordo all'ingresso del mouse."""
         self._anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event) -> None:
+    def leaveEvent(self, event) -> None:  # noqa: ANN001, N802
         """Interrompe l'animazione e ripristina lo stato solido all'uscita del mouse."""
         self._anim.stop()
         self.pulse_value = 1.0  # type: ignore[method-assign]
         super().leaveEvent(event)
 
-    def paintEvent(self, event) -> None:
+    def paintEvent(self, event) -> None:  # noqa: ANN001, N802
         """Disegna il bordo inferiore pulsante con il colore di accento configurato."""
         super().paintEvent(event)
         painter = QPainter(self)
@@ -138,7 +138,7 @@ class BotParametersWidget(QWidget):
         self._setup_ui()
         self.refresh_fornitori()
 
-    def _setup_ui(self) -> None:
+    def _setup_ui(self) -> None:  # noqa: PLR0915
         """Configura il layout orizzontale e i componenti interni con stile Neon & Shadow."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 15)
@@ -147,7 +147,7 @@ class BotParametersWidget(QWidget):
         # --- CONTAINER PRINCIPALE (La "Card" Modern Design) ---
         self.container = QFrame()
         self.container.setObjectName("filterBar")
-        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
+        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE  # noqa: PLC0415
 
         self.container.setStyleSheet(f"""
             QFrame#filterBar {{
@@ -225,7 +225,7 @@ class BotParametersWidget(QWidget):
             vbox_a.addWidget(self.date_a)
             container_layout.addLayout(vbox_a)
 
-        # Destinazione (opzionale)
+        # Destinazione (opzionale)  # noqa: ERA001
         if self.show_dest_path:
             # Divisore
             v_line2 = QFrame()
@@ -260,7 +260,7 @@ class BotParametersWidget(QWidget):
             self.browse_btn.setStyleSheet(self._get_icon_btn_style())
             hbox_dest.addWidget(self.browse_btn)
 
-            from src.gui.widgets.modern_button import ModernButton
+            from src.gui.widgets.modern_button import ModernButton  # noqa: PLC0415
 
             self.open_btn = ModernButton(
                 "APRI", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL
@@ -329,8 +329,8 @@ class BotParametersWidget(QWidget):
 
     def _open_folder(self) -> None:
         """Apre la cartella di destinazione nell'esplora risorse di sistema."""
-        import os
-        from pathlib import Path
+        import os  # noqa: PLC0415
+        from pathlib import Path  # noqa: PLC0415
 
         path_str = self.dest_path_edit.text()
         if not path_str:
@@ -341,11 +341,11 @@ class BotParametersWidget(QWidget):
             path.mkdir(parents=True, exist_ok=True)
 
         try:
-            import os
+            import os  # noqa: PLC0415
 
             os.startfile(str(path))  # noqa: S606
         except Exception:
-            from src.gui.widgets.toast import ToastManager
+            from src.gui.widgets.toast import ToastManager  # noqa: PLC0415
 
             ToastManager.instance().show(f"Impossibile aprire la cartella: {path}", "error")
 

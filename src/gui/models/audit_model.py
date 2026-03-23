@@ -63,15 +63,15 @@ class AuditTableModel(QAbstractTableModel):
         self._logs = logs
         self.endResetModel()
 
-    def rowCount(self, parent: QModelIndex | None = None) -> int:
+    def rowCount(self, parent: QModelIndex | None = None) -> int:  # noqa: N802
         """Restituisce il numero di log presenti."""
         return len(self._logs)
 
-    def columnCount(self, parent: QModelIndex | None = None) -> int:
+    def columnCount(self, parent: QModelIndex | None = None) -> int:  # noqa: N802
         """Restituisce il numero di colonne definite."""
         return len(self.COLUMNS)
 
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: ANN401, PLR0911
         """
         Fornisce i dati per la cella specificata in base al ruolo richiesto.
         Gestisce testo, icone, font e colori.
@@ -102,25 +102,25 @@ class AuditTableModel(QAbstractTableModel):
 
         return None
 
-    def _get_display_data(self, log: dict[str, Any], col: int) -> str | None:
+    def _get_display_data(self, log: dict[str, Any], col: int) -> str | None:  # noqa: PLR0911
         """Restituisce il testo da mostrare per ogni colonna."""
         if col == 0:
             return ""
         if col == 1:
             return self._format_timestamp(log.get("timestamp"))
-        if col == 2:
+        if col == 2:  # noqa: PLR2004
             return self._format_duration(log.get("duration_ms", 0))
-        if col == 3:
+        if col == 3:  # noqa: PLR2004
             return str(log.get("module", "-") or "-")
-        if col == 4:
+        if col == 4:  # noqa: PLR2004
             return str(log.get("category", "-"))
-        if col == 5:
+        if col == 5:  # noqa: PLR2004
             return str(log.get("action", "-"))
-        if col == 6:
+        if col == 6:  # noqa: PLR2004
             # Priorità a error_code se c'è, altrimenti entity
             err = log.get("error_code")
             return str(err) if err else str(log.get("entity", "-"))
-        if col == 7:
+        if col == 7:  # noqa: PLR2004
             return self._extract_message(log)
         return None
 
@@ -151,19 +151,19 @@ class AuditTableModel(QAbstractTableModel):
 
     def _get_foreground_data(self, log: dict[str, Any], col: int) -> QColor | None:
         """Evidenzia in rosso i codici errore e in arancione le operazioni lente."""
-        if col == 6 and log.get("error_code"):  # Error Code Red
+        if col == 6 and log.get("error_code"):  # Error Code Red  # noqa: PLR2004
             return QColor(COLORS["error_red"])
-        if col == 2 and (log.get("duration_ms", 0) or 0) > 5000:  # Slow ops
+        if col == 2 and (log.get("duration_ms", 0) or 0) > 5000:  # Slow ops  # noqa: PLR2004
             return QColor(COLORS["warning_orange"])
         return None
 
     def _get_font_data(self, log: dict[str, Any], col: int) -> QFont | None:
         """Applica il grassetto alle azioni e ai codici errore."""
-        if col == 5:  # Action Bold
+        if col == 5:  # Action Bold  # noqa: PLR2004
             f = QFont()
             f.setBold(True)
             return f
-        if col == 6 and log.get("error_code"):  # Error Code Bold
+        if col == 6 and log.get("error_code"):  # Error Code Bold  # noqa: PLR2004
             f = QFont()
             f.setBold(True)
             return f
@@ -175,15 +175,15 @@ class AuditTableModel(QAbstractTableModel):
             return Qt.AlignmentFlag.AlignCenter
         return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
-    def headerData(
+    def headerData(  # noqa: N802
         self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
-    ) -> Any:
+    ) -> Any:  # noqa: ANN401
         """Restituisce il nome della colonna per l'header orizzontale."""
         if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal:
             return self.COLUMNS[section]
         return None
 
-    def _format_timestamp(self, ts: Any) -> str:
+    def _format_timestamp(self, ts: Any) -> str:  # noqa: ANN401
         """Formatta il timestamp ISO in formato leggibile GG/MM HH:MM:SS."""
         try:
             dt = datetime.fromisoformat(str(ts))
@@ -191,12 +191,12 @@ class AuditTableModel(QAbstractTableModel):
         except Exception:
             return str(ts)
 
-    def _format_duration(self, ms: Any) -> str:
+    def _format_duration(self, ms: Any) -> str:  # noqa: ANN401
         """Formatta i millisecondi in secondi se superano il secondo."""
         if not ms:
             return "-"
         f_ms = float(ms)
-        if f_ms < 1000:
+        if f_ms < 1000:  # noqa: PLR2004
             return f"{f_ms:.0f}ms"
         return f"{f_ms / 1000.0:.1f}s"
 

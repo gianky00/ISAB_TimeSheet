@@ -10,7 +10,7 @@ class TestGUIMajorPanels:
         "src.gui.panels.carico_ts.config_manager.load_config",
         return_value={"fornitori": ["F1", "F2"]},
     )
-    def test_carico_ts_panel_deep(self, mock_conf, qapp, qtbot):
+    def test_carico_ts_panel_deep(self, mock_conf, qapp, qtbot):  # noqa: ANN001
         panel = CaricoTSPanel()
         qtbot.addWidget(panel)
 
@@ -30,7 +30,7 @@ class TestGUIMajorPanels:
         "src.gui.panels.scarico_ts.config_manager.load_config",
         return_value={"fornitori": ["F1"]},
     )
-    def test_scarica_ts_panel_logic(self, mock_conf, qapp, qtbot):
+    def test_scarica_ts_panel_logic(self, mock_conf, qapp, qtbot):  # noqa: ANN001
         panel = ScaricaTSPanel()
         qtbot.addWidget(panel)
 
@@ -42,7 +42,7 @@ class TestGUIMajorPanels:
             panel.params_widget.browse_btn.click()
             assert panel.params_widget.dest_path_edit.text() == "C:/Downloads"
 
-    def test_settings_panel_tabs(self, qapp, qtbot):
+    def test_settings_panel_tabs(self, qapp, qtbot):  # noqa: ANN001
         with patch(
             "src.gui.panels.settings.main_panel.config_manager.load_config",
             return_value={},

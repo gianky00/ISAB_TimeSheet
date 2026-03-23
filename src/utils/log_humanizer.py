@@ -19,9 +19,9 @@ def friendly_time_delta(dt: datetime) -> str:
         return dt.strftime("%d/%m")
 
     seconds = diff.total_seconds()
-    if seconds < 60:
+    if seconds < 60:  # noqa: PLR2004
         return "Adesso"
-    if seconds < 3600:
+    if seconds < 3600:  # noqa: PLR2004
         minutes = int(seconds / 60)
         return f"{minutes} min fa"
     hours = int(seconds / 3600)
@@ -70,7 +70,7 @@ class SmartLogTranslator:
         return human_msg, message, category
 
     @staticmethod
-    def _detect_category(message: str) -> str:
+    def _detect_category(message: str) -> str:  # noqa: PLR0911
         """Determina la categoria del messaggio basandosi sulle keyword."""
         lower_msg = message.lower()
 

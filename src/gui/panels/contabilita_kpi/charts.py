@@ -38,7 +38,7 @@ else:
 class ChartContainer(QWidget):
     """Container stilizzato per i grafici Matplotlib."""
 
-    def __init__(self, canvas, title="", height=450, info_callback=None, parent=None):
+    def __init__(self, canvas, title="", height=450, info_callback=None, parent=None):  # noqa: ANN001, ANN204
         super().__init__(parent)
         self.canvas = canvas
         self.setMinimumHeight(height)
@@ -87,7 +87,7 @@ class ChartContainer(QWidget):
 class KPIChartsManager:
     """Gestore per la creazione e l'aggiornamento dei grafici KPI."""
 
-    def __init__(self, HOURLY_COST_STD):
+    def __init__(self, HOURLY_COST_STD):  # noqa: ANN001, ANN204, N803
         self.HOURLY_COST_STD = HOURLY_COST_STD
         self.annot = None
 
@@ -98,13 +98,13 @@ class KPIChartsManager:
         self.fig4, self.canvas4 = self._init_figure()
         self.fig5, self.canvas5 = self._init_figure()
 
-    def _init_figure(self):
+    def _init_figure(self):  # noqa: ANN202
         fig = Figure(figsize=(5, 4), dpi=100)
         fig.patch.set_alpha(0)
         canvas = FigureCanvas(fig)
         return fig, canvas
 
-    def plot_all(self, kpi_data):
+    def plot_all(self, kpi_data):  # noqa: ANN001, ANN201
         """Aggiorna tutti i grafici con i dati pre-processati dal service."""
         self._plot_stato_attivita(kpi_data.get("stato_attivita", {}))
         self._plot_prev_ore_mese(kpi_data.get("prev_ore_mese", {}))
@@ -112,7 +112,7 @@ class KPIChartsManager:
         self._plot_andamento_resa(kpi_data.get("andamento_resa", {}))
         self._plot_completamento(kpi_data.get("completamento", {}))
 
-    def _plot_stato_attivita(self, counts):
+    def _plot_stato_attivita(self, counts):  # noqa: ANN001, ANN202
         self.fig1.clear()
         ax = self.fig1.add_subplot(111)
         if not counts:
@@ -153,7 +153,7 @@ class KPIChartsManager:
 
         total_sum = sum(values)
 
-        def update_annot(wedge, idx):
+        def update_annot(wedge, idx):  # noqa: ANN001, ANN202
             if not self.annot:
                 return
             ang = (wedge.theta2 - wedge.theta1) / 2.0 + wedge.theta1
@@ -164,7 +164,7 @@ class KPIChartsManager:
             percent = (count / total_sum) * 100
             self.annot.set_text(f"{labels[idx]}\n{percent:.1f}% ({count})")
 
-        def hover(event):
+        def hover(event):  # noqa: ANN001, ANN202
             if event.inaxes == ax:
                 found = False
                 for i, wedge in enumerate(wedges):
@@ -184,7 +184,7 @@ class KPIChartsManager:
         self.fig1.tight_layout()
         self.canvas1.draw()
 
-    def _plot_prev_ore_mese(self, data):
+    def _plot_prev_ore_mese(self, data):  # noqa: ANN001, ANN202
         self.fig2.clear()
         ax = self.fig2.add_subplot(111)
         if not data:
@@ -218,7 +218,7 @@ class KPIChartsManager:
         self.fig2.tight_layout()
         self.canvas2.draw()
 
-    def _plot_margine_tipologia(self, data):
+    def _plot_margine_tipologia(self, data):  # noqa: ANN001, ANN202
         self.fig3.clear()
         ax = self.fig3.add_subplot(111)
         if not data:
@@ -272,7 +272,7 @@ class KPIChartsManager:
         self.fig3.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.1)
         self.canvas3.draw()
 
-    def _plot_andamento_resa(self, data):
+    def _plot_andamento_resa(self, data):  # noqa: ANN001, ANN202
         self.fig4.clear()
         ax = self.fig4.add_subplot(111)
         if not data or not data["values"]:
@@ -289,7 +289,7 @@ class KPIChartsManager:
         self.fig4.tight_layout()
         self.canvas4.draw()
 
-    def _plot_completamento(self, data):
+    def _plot_completamento(self, data):  # noqa: ANN001, ANN202
         self.fig5.clear()
         ax = self.fig5.add_axes([0.05, 0.4, 0.9, 0.3])
         if not data:

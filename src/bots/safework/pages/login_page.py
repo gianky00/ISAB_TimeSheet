@@ -7,7 +7,7 @@ from collections.abc import Callable
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.safework.common.locators import SafeWorkLocators
@@ -16,14 +16,14 @@ from src.bots.safework.common.locators import SafeWorkLocators
 class SafeWorkLoginPage:
     """Gestisce l'accesso al portale SafeWork."""
 
-    def __init__(
+    def __init__(  # noqa: ANN204
         self, driver: webdriver.Chrome, wait: WebDriverWait[webdriver.Chrome], log_func: Callable[[str], None]
     ):
         self.driver = driver
         self.wait = wait
         self.log = log_func
 
-    def login(self, username, password, account_type: str = "Esecutore") -> bool:
+    def login(self, username, password, account_type: str = "Esecutore") -> bool:  # noqa: ANN001
         """
         Esegue il login con strategia differenziata in base al tipo di account.
         """
@@ -45,9 +45,9 @@ class SafeWorkLoginPage:
             self.log(f"❌ Errore critico durante il login: {e}")
             return False
 
-    def _procedura_comune_login(self, username, password):
+    def _procedura_comune_login(self, username, password):  # noqa: ANN001, ANN202
         """Passaggi comuni a tutti gli account prima della verifica accesso."""
-        MAX_RETRIES = 3
+        MAX_RETRIES = 3  # noqa: N806
         for tentativa in range(MAX_RETRIES):
             try:
                 self.log(f"⏳ Selezione sito 'ISAB Sud' (Tentativo {tentativa + 1}/3)...")
@@ -113,7 +113,7 @@ class SafeWorkLoginPage:
         try:
             WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable(SafeWorkLocators.HOME_BUTTON))
             self.log("✅ Accesso alla Dashboard completato.")
-            return True
+            return True  # noqa: TRY300
         except TimeoutException:
             self.log("❌ Dashboard non raggiunta.")
             return False

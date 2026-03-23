@@ -247,7 +247,7 @@ class WeatherWidget(ModernCard):
         body_h.addLayout(temp_v)
 
         # Animazione Don Ciro
-        from src.gui.widgets.dashboard.don_ciro_widget import DonCiroWidget
+        from src.gui.widgets.dashboard.don_ciro_widget import DonCiroWidget  # noqa: PLC0415
 
         self.don_ciro = DonCiroWidget()
         body_h.addWidget(self.don_ciro)
@@ -399,7 +399,7 @@ class WeatherWidget(ModernCard):
             if reply_aqi:
                 reply_aqi.finished.connect(self._on_aqi_received)
         except Exception as e:
-            logger.error(f"Parse error Weather: {e}")
+            logger.error(f"Parse error Weather: {e}")  # noqa: TRY400
             self._handle_api_error("Errore Parsing")
         finally:
             reply.deleteLater()
@@ -415,7 +415,7 @@ class WeatherWidget(ModernCard):
             try:
                 aqi_data = json.loads(reply.readAll().data().decode("utf-8"))
             except Exception as e:
-                logger.error(f"Errore caricamento dati AQI: {e}")
+                logger.error(f"Errore caricamento dati AQI: {e}")  # noqa: TRY400
 
         reply.deleteLater()
         self._is_loading = False
@@ -482,13 +482,13 @@ class WeatherWidget(ModernCard):
             self.lbl_updated.setText(f"Aggiornato alle {now}")
 
         except Exception as e:
-            logger.error(f"Render UI Error: {e}")
+            logger.error(f"Render UI Error: {e}")  # noqa: TRY400
             self._handle_api_error("Errore Visualizzazione")
 
     def _evaluate_alerts(self, code: int, gusts: float) -> None:
         """Mostra il banner di allerta se ci sono condizioni estreme."""
         alerts = []
-        if gusts > 45.0:
+        if gusts > 45.0:  # noqa: PLR2004
             alerts.append(f"Vento Forte (Raffiche {gusts} km/h)")
         if code in (65, 80, 81, 82, 95, 96, 99):
             alerts.append("Precipitazioni Estreme/Temporale")
@@ -499,7 +499,7 @@ class WeatherWidget(ModernCard):
         else:
             self.alert_frame.hide()
 
-    def _update_pills(self, wind: float, gusts: float, hum: int, uv: float, aqi: Any) -> None:
+    def _update_pills(self, wind: float, gusts: float, hum: int, uv: float, aqi: Any) -> None:  # noqa: ANN401
         w_lbl = self.pill_wind.findChild(QLabel, "pill_text")
         h_lbl = self.pill_hum.findChild(QLabel, "pill_text")
         u_lbl = self.pill_uv.findChild(QLabel, "pill_text")
@@ -518,11 +518,11 @@ class WeatherWidget(ModernCard):
             # Dinamismo colore AQI
             aqi_color = COLORS["success_green"]
             aqi_val = 0 if aqi == "--" else int(aqi)
-            if aqi_val > 40:
+            if aqi_val > 40:  # noqa: PLR2004
                 aqi_color = COLORS["warning_yellow"]
-            if aqi_val > 60:
+            if aqi_val > 60:  # noqa: PLR2004
                 aqi_color = COLORS["warning_orange"]
-            if aqi_val > 80:
+            if aqi_val > 80:  # noqa: PLR2004
                 aqi_color = COLORS["error_red"]
 
             i_lbl = self.pill_aqi.findChild(QLabel, "pill_icon")
@@ -577,7 +577,7 @@ class WeatherWidget(ModernCard):
             pop_val = pops[i] if i < len(pops) else 0
             lbl_pop = QLabel(f"💧 {pop_val}%" if pop_val > 0 else "")
             lbl_pop.setObjectName("forecast_pop")
-            pop_color = COLORS["primary_blue"] if pop_val > 40 else COLORS["text_muted"]
+            pop_color = COLORS["primary_blue"] if pop_val > 40 else COLORS["text_muted"]  # noqa: PLR2004
             lbl_pop.setStyleSheet(
                 f"#forecast_pop {{ color: {pop_color}; font-size: 9px; font-weight: 800; }}"
             )
@@ -611,9 +611,9 @@ class WeatherWidget(ModernCard):
             return "assets/icons/cloud-sun.svg", COLORS["primary_blue"]
         if code in (45, 48):
             return "assets/icons/cloud-fog.svg", COLORS["text_muted"]
-        if 50 <= code < 95:
+        if 50 <= code < 95:  # noqa: PLR2004
             return "assets/icons/cloud-rain.svg", COLORS["primary_blue"]
-        if code >= 95:
+        if code >= 95:  # noqa: PLR2004
             return "assets/icons/cloud-lightning.svg", COLORS["warning_yellow"]
         return "assets/icons/cloud.svg", COLORS["text_dark"]
 

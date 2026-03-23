@@ -49,7 +49,7 @@ class SearchService:
             matches = ContabilitaManager.search_oda(query)
             return matches[:limit]
         except Exception as e:
-            logger.error(f"SearchService ODA error: {e}")
+            logger.error(f"SearchService ODA error: {e}")  # noqa: TRY400
             return []
 
     @staticmethod
@@ -57,7 +57,7 @@ class SearchService:
         try:
             return ContabilitaManager.search_extended(query, limit=limit)
         except Exception as e:
-            logger.error(f"SearchService Extended error: {e}")
+            logger.error(f"SearchService Extended error: {e}")  # noqa: TRY400
             return {}
 
     @staticmethod
@@ -67,7 +67,7 @@ class SearchService:
             matches = TimbratureStorage().search_employees(query)
             return matches[:limit]
         except Exception as e:
-            logger.error(f"SearchService Employees error: {e}")
+            logger.error(f"SearchService Employees error: {e}")  # noqa: TRY400
             return []
 
     @staticmethod
@@ -96,7 +96,7 @@ class SearchService:
                 )
                 return [dict(row) for row in cursor.fetchall()]
         except Exception as e:
-            logger.error(f"SearchService Storico ODA error: {e}")
+            logger.error(f"SearchService Storico ODA error: {e}")  # noqa: TRY400
             return []
 
     @staticmethod
@@ -125,7 +125,7 @@ class SearchService:
                 )
                 return [dict(row) for row in cursor.fetchall()]
         except Exception as e:
-            logger.error(f"SearchService Attività Programmate error: {e}")
+            logger.error(f"SearchService Attività Programmate error: {e}")  # noqa: TRY400
             return []
 
     @staticmethod
@@ -153,7 +153,7 @@ class SearchService:
                 )
                 return [dict(row) for row in cursor.fetchall()]
         except Exception as e:
-            logger.error(f"SearchService PDL error: {e}")
+            logger.error(f"SearchService PDL error: {e}")  # noqa: TRY400
             return []
 
     @staticmethod
@@ -167,5 +167,5 @@ class SearchService:
             ]
             return matches[:limit]
         except Exception as e:
-            logger.error(f"SearchService Audit error: {e}")
+            logger.error(f"SearchService Audit error: {e}")  # noqa: TRY400
             return []

@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QTreeWidgetItem
 class SortableTreeWidgetItem(QTreeWidgetItem):
     """Custom QTreeWidgetItem che implementa l'ordinamento numerico e per data."""
 
-    def __lt__(self, other: Any) -> bool:
+    def __lt__(self, other: Any) -> bool:  # noqa: ANN401
         tw = self.treeWidget()
         if tw is None or not isinstance(other, QTreeWidgetItem):
             return super().__lt__(other)
@@ -16,7 +16,7 @@ class SortableTreeWidgetItem(QTreeWidgetItem):
         t1, t2 = self.text(column).strip(), other.text(column).strip()
 
         # 1. Date
-        if "/" in t1 and "/" in t2 and len(t1) <= 10:
+        if "/" in t1 and "/" in t2 and len(t1) <= 10:  # noqa: PLR2004
             res = self._compare_dates(t1, t2)
             if res is not None:
                 return res

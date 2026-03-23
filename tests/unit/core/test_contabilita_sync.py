@@ -7,7 +7,7 @@ from src.core.sync.contabilita_sync import ContabilitaSyncEngine
 
 class TestContabilitaSyncEngine:
     @pytest.fixture
-    def db_path(self, tmp_path):
+    def db_path(self, tmp_path):  # noqa: ANN001
         p = tmp_path / "sync_test.db"
         with sqlite3.connect(p) as conn:
             # Crea tabelle minime
@@ -20,7 +20,7 @@ class TestContabilitaSyncEngine:
             conn.commit()
         return p
 
-    def test_sync_giornaliere_update_logic(self, db_path):
+    def test_sync_giornaliere_update_logic(self, db_path):  # noqa: ANN001
         """Verifica che la sync delle giornaliere rilevi correttamente i cambiamenti."""
         # Nuovi dati per il 2024 (una riga uguale, una cambiata, una nuova)
         new_rows = [
@@ -46,20 +46,20 @@ class TestContabilitaSyncEngine:
 
         # Spiegazione: la riga 'Rossi' è considerata diversa perché nel DB originale mancavano colonne come nome_file (erano NULL)
         # Quindi: 2 aggiunte, 1 rimossa (la vecchia 'Rossi')
-        assert added == 2
+        assert added == 2  # noqa: PLR2004
         assert removed == 1
 
         with sqlite3.connect(db_path) as conn:
             count = conn.execute("SELECT COUNT(*) FROM giornaliere WHERE year=2024").fetchone()[0]
-            assert count == 2
+            assert count == 2  # noqa: PLR2004
 
-    def test_sync_giornaliere_empty_input(self, db_path):
+    def test_sync_giornaliere_empty_input(self, db_path):  # noqa: ANN001
         """Verifica che input vuoti non facciano nulla."""
         added, removed = ContabilitaSyncEngine.sync_giornaliere(db_path, [], [])
         assert added == 0
         assert removed == 0
 
-    def test_get_diff_count_logic(self, db_path):
+    def test_get_diff_count_logic(self, db_path):  # noqa: ANN001
         """Testa direttamente l'algoritmo di diff EXCEPT."""
         with sqlite3.connect(db_path) as conn:
             cursor = conn.cursor()

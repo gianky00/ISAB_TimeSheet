@@ -23,7 +23,7 @@ class AnimatedTabWidget(QWidget):
     grazie alla tecnica di snapshot rendering durante le transizioni.
     """
 
-    currentChanged = pyqtSignal(int)
+    currentChanged = pyqtSignal(int)  # noqa: N815
     """Segnale emesso quando il tab attivo cambia."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -94,7 +94,7 @@ class AnimatedTabWidget(QWidget):
 
         QTimer.singleShot(100, self._update_indicator_instant)
 
-    def showEvent(self, event: Any) -> None:
+    def showEvent(self, event: Any) -> None:  # noqa: ANN401, N802
         """Forza l'aggiornamento dello stile quando il widget viene mostrato."""
         super().showEvent(event)
         self._update_indicator_instant()
@@ -105,7 +105,7 @@ class AnimatedTabWidget(QWidget):
         else:
             self.tab_bar.setStyleSheet(self._get_default_style())
 
-    def setTabPosition(self, position: QTabWidget.TabPosition) -> None:
+    def setTabPosition(self, position: QTabWidget.TabPosition) -> None:  # noqa: N802
         """
         Imposta la posizione della barra dei tab.
 
@@ -133,7 +133,7 @@ class AnimatedTabWidget(QWidget):
 
         QTimer.singleShot(10, self._update_indicator_instant)
 
-    def addTab(self, widget: QWidget, *args) -> int:
+    def addTab(self, widget: QWidget, *args) -> int:  # noqa: ANN002, N802
         """
         Aggiunge un nuovo tab.
 
@@ -148,7 +148,7 @@ class AnimatedTabWidget(QWidget):
         self.stack.addWidget(widget)
         return index
 
-    def removeTab(self, index: int) -> None:
+    def removeTab(self, index: int) -> None:  # noqa: N802
         """
         Rimuove un tab e il relativo widget dallo stack.
 
@@ -229,20 +229,20 @@ class AnimatedTabWidget(QWidget):
         else:
             self.indicator.hide()
 
-    def resizeEvent(self, event) -> None:
+    def resizeEvent(self, event) -> None:  # noqa: ANN001, N802
         """Assicura che l'indicatore sia allineato dopo il ridimensionamento."""
         super().resizeEvent(event)
         self._update_indicator_instant()
 
-    def currentIndex(self) -> int:
+    def currentIndex(self) -> int:  # noqa: N802
         """Restituisce l'indice del tab corrente."""
         return self.tab_bar.currentIndex()
 
-    def currentWidget(self) -> QWidget | None:
+    def currentWidget(self) -> QWidget | None:  # noqa: N802
         """Restituisce il widget associato al tab corrente."""
         return self.stack.currentWidget()
 
-    def setCurrentIndex(self, index: int) -> None:
+    def setCurrentIndex(self, index: int) -> None:  # noqa: N802
         """
         Imposta programmaticamente il tab corrente.
 
@@ -257,7 +257,7 @@ class AnimatedTabWidget(QWidget):
         """Restituisce il numero totale di tab."""
         return self.tab_bar.count()
 
-    def tabText(self, index: int) -> str:
+    def tabText(self, index: int) -> str:  # noqa: N802
         """Restituisce il testo del tab all'indice specificato."""
         return self.tab_bar.tabText(index)
 
@@ -265,7 +265,7 @@ class AnimatedTabWidget(QWidget):
         """Restituisce il widget all'indice specificato."""
         return self.stack.widget(index)
 
-    def tabBar(self) -> QTabBar:
+    def tabBar(self) -> QTabBar:  # noqa: N802
         """Restituisce l'istanza della QTabBar interna."""
         return self.tab_bar
 

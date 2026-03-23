@@ -42,24 +42,24 @@ class DownloadWorker(QThread):
     error = pyqtSignal(str)
     retrying = pyqtSignal(int)
 
-    def __init__(self, url_or_path: str):
+    def __init__(self, url_or_path: str):  # noqa: ANN204
         super().__init__()
         self.url_or_path = url_or_path
         self._is_cancelled = False
         self.max_retries = 999
         self._ema_speed = 0.0
 
-    def stop(self):
+    def stop(self):  # noqa: ANN201
         """Richiede l'interruzione del download."""
         self._is_cancelled = True
 
-    def run(self):
+    def run(self):  # noqa: ANN201
         """Esegue il download o la copia del file."""
         setup_path = get_local_setup_path(self.url_or_path)
         start_time = time.time()
         self._ema_speed = 0.0
 
-        if Path(setup_path).exists() and time.time() - Path(setup_path).stat().st_mtime > 86400:
+        if Path(setup_path).exists() and time.time() - Path(setup_path).stat().st_mtime > 86400:  # noqa: PLR2004
             with contextlib.suppress(Exception):
                 Path(setup_path).unlink()
 
@@ -68,12 +68,12 @@ class DownloadWorker(QThread):
         else:
             self._run_network_copy(setup_path, start_time)
 
-    def _run_network_copy(self, setup_path, start_time):
+    def _run_network_copy(self, setup_path, start_time):  # noqa: ANN001, ANN202
         """Copies file from network path with progress feedback."""
         try:
             src_path = Path(self.url_or_path)
             if not src_path.exists():
-                raise FileNotFoundError(f"Percorso di rete non trovato: {self.url_or_path}")
+                raise FileNotFoundError(f"Percorso di rete non trovato: {self.url_or_path}")  # noqa: TRY003, TRY301
 
             total_size = src_path.stat().st_size
             downloaded = 0
@@ -101,7 +101,7 @@ class DownloadWorker(QThread):
         except Exception as e:
             self.error.emit(str(e))
 
-    def _run_http_download(self, setup_path):
+    def _run_http_download(self, setup_path):  # noqa: ANN001, ANN202, PLR0912, PLR0915
         """Existing HTTP download logic with resume support."""
         downloaded = 0
         total_size = 0
@@ -115,16 +115,16 @@ class DownloadWorker(QThread):
                 session = requests.Session()
                 response = session.get(self.url_or_path, headers=headers, stream=True, timeout=(10, 30))
 
-                if downloaded > 0 and response.status_code != 206:
+                if downloaded > 0 and response.status_code != 206:  # noqa: PLR2004
                     downloaded = 0
                     with open(setup_path, "wb"):
                         pass
 
                 if response.status_code not in (200, 206):
-                    if response.status_code == 416 and total_size > 0 and downloaded >= total_size:
+                    if response.status_code == 416 and total_size > 0 and downloaded >= total_size:  # noqa: PLR2004
                         self.finished_download.emit(setup_path)
                         return
-                    raise Exception(f"Server error: {response.status_code}")
+                    raise Exception(f"Server error: {response.status_code}")  # noqa: TRY002, TRY003, TRY301
 
                 if downloaded == 0:
                     total_size = int(response.headers.get("content-length", 0))
@@ -168,7 +168,7 @@ class DownloadWorker(QThread):
                     return
 
                 if not self._is_cancelled:
-                    raise requests.exceptions.ConnectionError("Stream interrupted")
+                    raise requests.exceptions.ConnectionError("Stream interrupted")  # noqa: TRY003, TRY301
 
             except Exception:
                 if self._is_cancelled:
@@ -178,7 +178,7 @@ class DownloadWorker(QThread):
                 time.sleep(min(retries * 2, 10))
 
 
-def run_installer_and_exit(setup_path: str):
+def run_installer_and_exit(setup_path: str):  # noqa: ANN201
     """Executes the installer and terminates the process (Fix B603)."""
     if Path(setup_path).exists():
         # Usa DETACHED_PROCESS su Windows per garantire che l'installer sopravviva alla chiusura dell'app
@@ -191,9 +191,9 @@ def run_installer_and_exit(setup_path: str):
         sys.exit(0)
 
 
-def run_pending_installer():
+def run_pending_installer():  # noqa: ANN201
     """Executes the installer stored at app closure in a separate process."""
-    global _pending_installer_path
+    global _pending_installer_path  # noqa: PLW0602
     if _pending_installer_path and Path(_pending_installer_path).exists():
         # Usa DETACHED_PROCESS per slegarsi dal ciclo di vita dell'app corrente
         flags = subprocess.DETACHED_PROCESS if os.name == "nt" else 0
@@ -206,33 +206,33 @@ def run_pending_installer():
         subprocess.Popen(args, shell=False, creationflags=flags, close_fds=True, stdin=subprocess.DEVNULL)
 
 
-def set_pending_installer(path: str):
+def set_pending_installer(path: str):  # noqa: ANN201
     """Sets the path for the installer to be run on closure."""
-    global _pending_installer_path
+    global _pending_installer_path  # noqa: PLW0603
     _pending_installer_path = path
 
 
 def has_pending_update() -> bool:
     """Returns True if there is an update ready to be installed."""
-    global _pending_installer_path
+    global _pending_installer_path  # noqa: PLW0602
     return bool(_pending_installer_path and Path(_pending_installer_path).exists())
 
 
-def get_web_update_info():
+def get_web_update_info():  # noqa: ANN201
     """Fetches version info from Web."""
     if not getattr(version, "UPDATE_URL", None):
         return None
 
     try:
         response = requests.get(version.UPDATE_URL, timeout=5)
-        if response.status_code == 200:
+        if response.status_code == 200:  # noqa: PLR2004
             return response.json()
     except Exception as e:
         logger.debug(f"Web update check failed: {e}")
     return None
 
 
-def get_network_update_info():
+def get_network_update_info():  # noqa: ANN201
     """Fetches version info from network share."""
     try:
         net_path = getattr(version, "NETWORK_UPDATE_PATH", None)

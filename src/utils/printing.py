@@ -24,22 +24,22 @@ def get_installed_printers() -> list[str]:
     try:
         return [str(printer[2]) for printer in win32print.EnumPrinters(2)]
     except Exception as e:
-        logger.error(f"Errore nel recupero stampanti: {e}")
+        logger.error(f"Errore nel recupero stampanti: {e}")  # noqa: TRY400
         return []
 
 
-def _run_powershell(command: str) -> Any:
+def _run_powershell(command: str) -> Any:  # noqa: ANN401
     """Esegue un comando PowerShell e restituisce l'output."""
     try:
         creation_flags = 0x08000000  # CREATE_NO_WINDOW
-        return subprocess.run(
+        return subprocess.run(  # noqa: PLW1510
             ["powershell", "-Command", command],
             capture_output=True,
             text=True,
             creationflags=creation_flags,
         )
     except Exception as e:
-        logger.error(f"Errore esecuzione PowerShell: {e}")
+        logger.error(f"Errore esecuzione PowerShell: {e}")  # noqa: TRY400
         return None
 
 
@@ -51,7 +51,7 @@ def _set_printer_duplex_powershell(printer_name: str, mode: str = "OneSided") ->
     try:
         cmd_set = f"Set-PrintConfiguration -PrinterName '{printer_name}' -DuplexingMode {mode}"
         _run_powershell(cmd_set)
-        return True
+        return True  # noqa: TRY300
     except Exception as e:
         logger.warning(f"Warning configurazione PS: {e}")
         return False
@@ -86,7 +86,7 @@ def print_pdf(file_path: str, printer_name: str) -> bool:
                 logger.debug(f"Invio pagina {page_num + 1} di {total_pages}...")
 
                 # 1. Crea un NUOVO contesto di stampa per ogni pagina
-                from typing import cast
+                from typing import cast  # noqa: PLC0415
 
                 hdc = cast("Any", win32ui).CreateDC()
                 hdc.CreatePrinterDC(target_printer)
@@ -119,9 +119,9 @@ def print_pdf(file_path: str, printer_name: str) -> bool:
                     dib.draw(hdc.GetHandleOutput(), (0, 0, horz_res, vert_res))
 
                 except Exception as render_err:
-                    logger.error(f"Errore rendering pagina {page_num + 1}: {render_err}")
+                    logger.error(f"Errore rendering pagina {page_num + 1}: {render_err}")  # noqa: TRY400
                     hdc.AbortDoc()
-                    raise render_err
+                    raise render_err  # noqa: TRY201
 
                 # 4. Chiudi Pagina e Documento -> FORZA ESPULSIONE FOGLIO
                 hdc.EndPage()
@@ -133,17 +133,17 @@ def print_pdf(file_path: str, printer_name: str) -> bool:
 
             doc.close()
             logger.info("Ciclo di stampa completato.")
-            return True
+            return True  # noqa: TRY300
 
         except Exception as e:
-            logger.error(f"Errore durante la stampa split: {e}")
-            raise e
+            logger.error(f"Errore durante la stampa split: {e}")  # noqa: TRY400
+            raise e  # noqa: TRY201
 
     except Exception as e:
-        logger.error(f"Errore critico stampa: {e}")
+        logger.error(f"Errore critico stampa: {e}")  # noqa: TRY400
         # Fallback disperato
         try:
             os.startfile(file_path, "print")  # noqa: S606
-            return True
+            return True  # noqa: TRY300
         except Exception:
             return False

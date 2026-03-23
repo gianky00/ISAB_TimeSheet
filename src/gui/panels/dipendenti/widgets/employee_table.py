@@ -30,7 +30,7 @@ class EmployeeTableView(QTableView):
     monitoring_toggled = pyqtSignal(str, bool)  # id_risorsa, enable
     employee_selected = pyqtSignal(int)  # row_idx
 
-    def __init__(self, model: Any, parent: QWidget | None = None) -> None:
+    def __init__(self, model: Any, parent: QWidget | None = None) -> None:  # noqa: ANN401
         """
         Inizializza la tabella dipendenti.
 
@@ -92,7 +92,7 @@ class EmployeeTableView(QTableView):
         total_w = sum(widths) + 20
         self.setFixedWidth(total_w)
 
-    def _on_selection_internal(self, selected: Any, deselected: Any) -> None:
+    def _on_selection_internal(self, selected: Any, deselected: Any) -> None:  # noqa: ANN401
         """Emette il segnale di selezione dipendente quando cambia la riga attiva."""
         sel_model = self.selectionModel()
         if not sel_model:
@@ -108,7 +108,7 @@ class EmployeeTableView(QTableView):
         Args:
             position: Posizione del clic del mouse.
         """
-        from PyQt6.QtGui import QAction
+        from PyQt6.QtGui import QAction  # noqa: PLC0415
 
         sel_model = self.selectionModel()
         if not sel_model:

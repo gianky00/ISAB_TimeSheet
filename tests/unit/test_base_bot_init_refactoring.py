@@ -27,10 +27,10 @@ class ConcreteBot(BaseBot):
     def get_columns() -> list[dict[str, Any]]:
         return []
 
-    def run(self, data):
+    def run(self, data):  # noqa: ANN001
         return True
 
-    def _handle_unsaved_changes_popup(self):
+    def _handle_unsaved_changes_popup(self):  # noqa: ANN202
         pass
 
 
@@ -39,7 +39,7 @@ def bot():
     return ConcreteBot("user", "pass")
 
 
-def test_init_driver_success(bot, mocker):
+def test_init_driver_success(bot, mocker):  # noqa: ANN001
     """Test standard driver initialization."""
     # Mocking external dependencies
     mocker.patch("src.bots.base.base_bot.Options")
@@ -56,7 +56,7 @@ def test_init_driver_success(bot, mocker):
     m_chrome.assert_called_once()
 
 
-def test_init_driver_headless_config(bot, mocker):
+def test_init_driver_headless_config(bot, mocker):  # noqa: ANN001
     """Test headless mode from config."""
     mocker.patch("src.core.config_manager.load_config", return_value={"browser_headless": True})
     m_options = mocker.patch("src.bots.base.base_bot.Options")
@@ -71,7 +71,7 @@ def test_init_driver_headless_config(bot, mocker):
     m_options.return_value.add_argument.assert_any_call("--headless=new")
 
 
-def test_init_driver_fallback_local(bot, mocker):
+def test_init_driver_fallback_local(bot, mocker):  # noqa: ANN001
     """Test fallback to local driver if manager fails."""
     mocker.patch("webdriver_manager.chrome.ChromeDriverManager").return_value.install.side_effect = Exception(
         "Network error"
@@ -93,7 +93,7 @@ def test_init_driver_fallback_local(bot, mocker):
     assert bot.driver is not None
 
 
-def test_init_driver_failure_handling(bot, mocker):
+def test_init_driver_failure_handling(bot, mocker):  # noqa: ANN001
     """Test error handling and suggestions when Chrome fails to start."""
     mocker.patch(
         "src.bots.base.base_bot.webdriver.Chrome",
@@ -114,7 +114,7 @@ def test_init_driver_failure_handling(bot, mocker):
     assert any("💡 SUGGERIMENTO: Assicurati che Chrome sia aggiornato" in log for log in logs)
 
 
-def test_init_driver_version_error(bot, mocker):
+def test_init_driver_version_error(bot, mocker):  # noqa: ANN001
     """Test handling of driver version mismatch."""
     # Mock driver setup to raise SessionNotCreatedException
     with patch("src.bots.base.base_bot.webdriver.Chrome") as mock_chrome:

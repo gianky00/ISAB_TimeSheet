@@ -14,25 +14,25 @@ from src.core.secrets_manager import SecretsManager
 
 
 @pytest.fixture(autouse=True)
-def mock_no_migration(mocker):
+def mock_no_migration(mocker):  # noqa: ANN001
     return mocker.patch("src.core.license_validator._check_and_migrate_local_license", return_value=False)
 
 
 @pytest.fixture
-def mock_license_dir(tmp_path):
+def mock_license_dir(tmp_path):  # noqa: ANN001
     d = tmp_path / "Licenza"
     d.mkdir()
     return d
 
 
 @pytest.fixture
-def mock_secrets_manager(mocker):
+def mock_secrets_manager(mocker):  # noqa: ANN001
     key_b64 = Fernet.generate_key()
     mocker.patch.object(SecretsManager, "get_license_key", return_value=key_b64)
     return key_b64
 
 
-def test_validate_license_data_expired_untrusted(mocker):
+def test_validate_license_data_expired_untrusted(mocker):  # noqa: ANN001
     """Verifica che una licenza scaduta venga rilevata anche con orario non fidato."""
     payload = {"Hardware ID": "SAME", "Scadenza Licenza": "01/01/2020"}
     mocker.patch("src.core.license_validator.get_license_info", return_value=payload)
@@ -49,7 +49,7 @@ def test_validate_license_data_expired_untrusted(mocker):
     assert "SCADUTA" in msg
 
 
-def test_get_detailed_license_status_valid(mocker, mock_license_dir, mock_secrets_manager):
+def test_get_detailed_license_status_valid(mocker, mock_license_dir, mock_secrets_manager):  # noqa: ANN001
     # Setup manuale per controllo totale
     paths = {
         "dir": mock_license_dir,

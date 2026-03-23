@@ -24,7 +24,7 @@ class MenuBarComponent(QObject):
     Coordina l'inizializzazione della Command Palette e la costruzione dell'albero dei comandi.
     """
 
-    def __init__(self, main_window):
+    def __init__(self, main_window):  # noqa: ANN001, ANN204
         """
         Inizializza il componente menu e registra le scorciatoie.
 
@@ -38,7 +38,7 @@ class MenuBarComponent(QObject):
         self._bug_dialog = None
         self._setup_shortcuts()
 
-    def open_bug_report_dialog(self):
+    def open_bug_report_dialog(self):  # noqa: ANN201
         """Visualizza il dialogo avanzato per la segnalazione di problemi tecnici."""
         try:
             self._bug_dialog = BugReportDialog(self.main_window)
@@ -48,7 +48,7 @@ class MenuBarComponent(QObject):
             if hasattr(self.main_window, "show_toast"):
                 self.main_window.show_toast(f"Errore apertura segnalazione: {e}", "error")
 
-    def _setup_shortcuts(self):
+    def _setup_shortcuts(self):  # noqa: ANN202
         """Configura le scorciatoie da tastiera (Ctrl+K, F1, Ctrl+Shift+P) per la Command Palette."""
         self.shortcut_palette = QShortcut(QKeySequence("Ctrl+K"), self.main_window)
         self.shortcut_palette.setContext(Qt.ShortcutContext.ApplicationShortcut)
@@ -62,10 +62,10 @@ class MenuBarComponent(QObject):
         self.shortcut_palette_f1.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self.shortcut_palette_f1.activated.connect(self.open_command_palette)
 
-    def open_command_palette(self):
+    def open_command_palette(self):  # noqa: ANN201
         """Apre o chiude la Command Palette con effetto a tendina e controllo anti-rimbalzo."""
         now = datetime.now(UTC).timestamp() * 1000
-        if (now - self._last_palette_toggle) < 300:
+        if (now - self._last_palette_toggle) < 300:  # noqa: PLR2004
             return
         self._last_palette_toggle = now
 
@@ -77,20 +77,20 @@ class MenuBarComponent(QObject):
         elif self.command_palette:
             self.command_palette.show_animated()
 
-    def _init_palette(self):
+    def _init_palette(self):  # noqa: ANN202
         """Inizializza l'istanza del dialogo Command Palette costruendo l'albero dei comandi."""
         try:
             root_nodes = self._build_menu_tree()
             self.command_palette = CommandPaletteDialog(self.main_window, root_nodes)
         except Exception as e:
-            import traceback
+            import traceback  # noqa: PLC0415
 
             print(f"Error opening palette: {e}")
             traceback.print_exc()
             if hasattr(self.main_window, "show_toast"):
                 self.main_window.show_toast(f"Error opening palette: {e}")
 
-    def _build_menu_tree(self):
+    def _build_menu_tree(self):  # noqa: ANN202
         """
         Costruisce dinamicamente la struttura gerarchica dei comandi disponibili nell'applicazione.
         Definisce azioni per esecuzione bot, navigazione pagine e manutenzione sistema.
@@ -99,16 +99,16 @@ class MenuBarComponent(QObject):
             list[CommandNode]: Lista dei nodi comando radice.
         """
 
-        def restart_app():
-            import subprocess
+        def restart_app():  # noqa: ANN202
+            import subprocess  # noqa: PLC0415
 
-            from PyQt6.QtWidgets import QApplication
+            from PyQt6.QtWidgets import QApplication  # noqa: PLC0415
 
             QApplication.quit()
             subprocess.Popen([sys.executable, *sys.argv])
             sys.exit()
 
-        def open_folder_path(path):
+        def open_folder_path(path):  # noqa: ANN001, ANN202
             if Path(path).exists():
                 QDesktopServices.openUrl(QUrl.fromLocalFile(path))
 
@@ -193,7 +193,7 @@ class MenuBarComponent(QObject):
             ],
         )
 
-        from src.gui.main_window.page_index import PageIndex
+        from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
 
         # 2. GO (Navigation Flow)
         menu_go = CommandNode(

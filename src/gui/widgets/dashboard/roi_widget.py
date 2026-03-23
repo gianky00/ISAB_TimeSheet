@@ -213,7 +213,7 @@ class BotSavingsWidget(ModernCard):
         badge.setPixmap(get_colored_icon(icon_path, icon_color).pixmap(14, 14))
         return badge
 
-    def _create_kpi_card(
+    def _create_kpi_card(  # noqa: PLR0913
         self,
         icon_key: str,
         icon_color: str,
@@ -289,13 +289,13 @@ class BotSavingsWidget(ModernCard):
     def refresh_stats(self) -> None:
         """Avvia il thread di calcolo delle statistiche in background per non bloccare la UI."""
 
-        def run():
+        def run():  # noqa: ANN202
             """Esegue il calcolo effettivo del ROI tramite ROIEngine."""
             try:
                 metrics = ROIEngine.calculate_savings()
                 self.stats_updated.emit(metrics)
             except Exception as e:
-                logger.error(f"Efficiency Update Error: {e}")
+                logger.error(f"Efficiency Update Error: {e}")  # noqa: TRY400
 
         threading.Thread(target=run, daemon=True).start()
 

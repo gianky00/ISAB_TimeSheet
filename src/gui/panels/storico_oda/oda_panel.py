@@ -49,7 +49,7 @@ class StoricoOdaPanel(QWidget):
         super().__init__(parent)
         self.controller = controller
         self.worker: BotWorker | None = None
-        from PyQt6.QtGui import QStandardItem
+        from PyQt6.QtGui import QStandardItem  # noqa: PLC0415
 
         self._last_selected_parent: QStandardItem | None = None
 
@@ -228,7 +228,7 @@ class StoricoOdaPanel(QWidget):
         if vp:
             menu.exec(vp.mapToGlobal(pos))
 
-    def _open_detail_for_index(self, index: Any) -> None:
+    def _open_detail_for_index(self, index: Any) -> None:  # noqa: ANN401
         """Recupera i dati e apre il pannello laterale."""
         item = self.model.itemFromIndex(index)
         if not item:
@@ -247,7 +247,7 @@ class StoricoOdaPanel(QWidget):
 
     def _on_update_clicked(self) -> None:
         """Esegue il workflow di aggiornamento del database tramite Dettagli OdA."""
-        from src.gui.main_window import MainWindow
+        from src.gui.main_window import MainWindow  # noqa: PLC0415
 
         mw = self.window()
         if isinstance(mw, MainWindow):

@@ -7,7 +7,7 @@ import re
 from typing import Any
 
 
-def parse_currency(value: Any) -> float:
+def parse_currency(value: Any) -> float:  # noqa: ANN401
     """
     Converte una stringa o numero in float, gestendo formati Italiani e Internazionali.
     Versione Enterprise V5: Bilanciamento perfetto tra tolleranza e precisione.
@@ -42,12 +42,12 @@ def parse_currency(value: Any) -> float:
     # 5. Conversione intelligente
     try:
         val = _smart_convert(s)
-        return -val if is_negative else val
+        return -val if is_negative else val  # noqa: TRY300
     except (ValueError, IndexError):
         return 0.0
 
 
-def _smart_convert(s: str) -> float:
+def _smart_convert(s: str) -> float:  # noqa: PLR0911
     """Determina il formato e converte in float."""
     # Se la stringa segue la notazione scientifica pura (es. 1.23e2)
     if "e" in s.lower() and s.count(".") <= 1 and "," not in s:
@@ -79,7 +79,7 @@ def _smart_convert(s: str) -> float:
 
         # Singolo punto: 1.234 (IT migliaia) o 10.50 (Decimale)
         parts = s.split(".")
-        if len(parts[1]) == 3 and len(parts[0]) > 0:
+        if len(parts[1]) == 3 and len(parts[0]) > 0:  # noqa: PLR2004
             return float(s.replace(".", ""))
         return float(s)
 

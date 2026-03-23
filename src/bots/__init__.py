@@ -139,7 +139,7 @@ def get_bot_info(bot_id: str) -> dict[str, Any] | None:
     return BOT_REGISTRY.get(bot_id)
 
 
-def create_bot(bot_id: str, **kwargs) -> BaseBot | None:
+def create_bot(bot_id: str, **kwargs) -> BaseBot | None:  # noqa: ANN003
     """
     Crea un'istanza di un bot.
 
@@ -152,7 +152,7 @@ def create_bot(bot_id: str, **kwargs) -> BaseBot | None:
     """
     bot_info = BOT_REGISTRY.get(bot_id)
     if bot_info:
-        from typing import cast
+        from typing import cast  # noqa: PLC0415
 
         bot_class = bot_info["class"]
         return cast("BaseBot", bot_class(**kwargs))

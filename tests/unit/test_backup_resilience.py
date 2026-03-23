@@ -10,7 +10,7 @@ from src.core.backup_manager import BackupManager
 
 class TestBackupResilience:
     @pytest.fixture
-    def setup_files(self, tmp_path):
+    def setup_files(self, tmp_path):  # noqa: ANN001
         """Prepara file finti da backuppare."""
         source_dir = tmp_path / "app_data"
         source_dir.mkdir()
@@ -30,7 +30,7 @@ class TestBackupResilience:
 
         return source_dir, backup_dir
 
-    def test_backup_creation_and_filtering(self, setup_files, mocker):
+    def test_backup_creation_and_filtering(self, setup_files, mocker):  # noqa: ANN001
         """Test: Creazione backup con filtri corretti."""
         source_dir, backup_dir = setup_files
 
@@ -56,7 +56,7 @@ class TestBackupResilience:
             assert "cache/temp.dat" not in names  # Escluso per directory
             assert "logs.txt" not in names  # Escluso per estensione
 
-    def test_backup_retention_policy(self, setup_files, mocker):
+    def test_backup_retention_policy(self, setup_files, mocker):  # noqa: ANN001
         """Test: Mantieni solo gli ultimi N backup."""
         _, backup_dir = setup_files
 
@@ -70,9 +70,9 @@ class TestBackupResilience:
         BackupManager._cleanup_old_backups(backup_dir, keep=5)
 
         remaining = list(backup_dir.glob("SyncroJob_Backup_*.zip"))
-        assert len(remaining) == 5
+        assert len(remaining) == 5  # noqa: PLR2004
 
-    def test_restore_backup(self, setup_files, mocker):
+    def test_restore_backup(self, setup_files, mocker):  # noqa: ANN001
         """Test: Ripristino sovrascrive i dati correnti."""
         source_dir, backup_dir = setup_files
 
@@ -89,7 +89,7 @@ class TestBackupResilience:
         assert success is True
         assert (source_dir / "database.db").read_text() == "restored_data"
 
-    def test_detect_cloud_paths_onedrive(self, mocker):
+    def test_detect_cloud_paths_onedrive(self, mocker):  # noqa: ANN001
         """Test: Rilevamento OneDrive tramite env var."""
         mocker.patch.dict(os.environ, {"OneDrive": "C:\\Users\\Test\\OneDrive"})
         mocker.patch("pathlib.Path.is_dir", return_value=True)

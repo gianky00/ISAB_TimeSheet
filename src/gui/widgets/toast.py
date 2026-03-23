@@ -49,7 +49,7 @@ class Toast(QWidget):
         Type.ERROR: (Icons.X_CIRCLE, "error"),
     }
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         message: str,
         toast_type: str = Type.INFO,
@@ -147,7 +147,7 @@ class Toast(QWidget):
 
     def _sanitize_html(self, html: str) -> str:
         """Rimuove tag pericolosi dall'HTML del toast."""
-        import re
+        import re  # noqa: PLC0415
 
         clean = re.sub(r"<script.*?>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
         clean = re.sub(
@@ -184,7 +184,7 @@ class Toast(QWidget):
             self._pulse_anim.setLoopCount(-1)
             self._pulse_anim.valueChanged.connect(self._apply_scale)
 
-    def _apply_scale(self, scale_factor: Any) -> None:
+    def _apply_scale(self, scale_factor: Any) -> None:  # noqa: ANN401
         """Applica la scala al container per l'effetto pulsazione."""
         if self._original_container_size is None:
             return
@@ -193,13 +193,13 @@ class Toast(QWidget):
         new_height = int(self._original_container_size.height() * f_scale)
         self.container.setFixedSize(new_width, new_height)
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:
+    def enterEvent(self, event: QEnterEvent | None) -> None:  # noqa: N802
         """Ferma il timer di chiusura quando il mouse entra nel toast."""
         if self._hide_timer.isActive():
             self._hide_timer.stop()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any) -> None:
+    def leaveEvent(self, event: Any) -> None:  # noqa: ANN401, N802
         """Riavvia il timer di chiusura quando il mouse esce dal toast."""
         self._hide_timer.start(self._duration)
         super().leaveEvent(event)
@@ -234,7 +234,7 @@ class ToastManager(QObject):
             cls._instance = cls()
         return cls._instance
 
-    def show(
+    def show(  # noqa: PLR0913
         self,
         message: str,
         toast_type: str = Toast.Type.INFO,
@@ -297,7 +297,7 @@ class ToastManager(QObject):
 # Funzioni helper globali con NUOVI TEMPI
 def toast_info(message: str, duration: int | None = None) -> None:
     """Visualizza un toast informativo."""
-    from src.gui.styles.constants import ANIMATION_TIMINGS
+    from src.gui.styles.constants import ANIMATION_TIMINGS  # noqa: PLC0415
 
     d = duration or ANIMATION_TIMINGS["toast_info"]
     ToastManager.instance().show(message, Toast.Type.INFO, d, is_rich_text=("<" in message))
@@ -305,7 +305,7 @@ def toast_info(message: str, duration: int | None = None) -> None:
 
 def toast_success(message: str, duration: int | None = None) -> None:
     """Visualizza un toast di successo (Veloce: 2s)."""
-    from src.gui.styles.constants import ANIMATION_TIMINGS
+    from src.gui.styles.constants import ANIMATION_TIMINGS  # noqa: PLC0415
 
     d = duration or ANIMATION_TIMINGS["toast_success"]
     ToastManager.instance().show(message, Toast.Type.SUCCESS, d, is_rich_text=("<" in message))
@@ -313,7 +313,7 @@ def toast_success(message: str, duration: int | None = None) -> None:
 
 def toast_warning(message: str, duration: int | None = None) -> None:
     """Visualizza un toast di avviso (Lungo: 10s)."""
-    from src.gui.styles.constants import ANIMATION_TIMINGS
+    from src.gui.styles.constants import ANIMATION_TIMINGS  # noqa: PLC0415
 
     d = duration or ANIMATION_TIMINGS["toast_warning"]
     ToastManager.instance().show(message, Toast.Type.WARNING, d, is_rich_text=("<" in message))
@@ -321,7 +321,7 @@ def toast_warning(message: str, duration: int | None = None) -> None:
 
 def toast_error(message: str, duration: int | None = None) -> None:
     """Visualizza un toast di errore (Lungo: 10s)."""
-    from src.gui.styles.constants import ANIMATION_TIMINGS
+    from src.gui.styles.constants import ANIMATION_TIMINGS  # noqa: PLC0415
 
     d = duration or ANIMATION_TIMINGS["toast_error"]
     ToastManager.instance().show(message, Toast.Type.ERROR, d, is_rich_text=("<" in message))

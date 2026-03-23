@@ -19,7 +19,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.base.login_page import LoginPage
@@ -254,7 +254,7 @@ class BaseBot(ABC):
         """Imposta una funzione esterna per ricevere i messaggi di log testuali."""
         self._log_callback = callback
 
-    def set_telegram_service(self, service: Any) -> None:
+    def set_telegram_service(self, service: Any) -> None:  # noqa: ANN401
         """Associa un servizio Telegram per l'inoltro dei messaggi di stato."""
         self._telegram_service = service
 
@@ -274,7 +274,7 @@ class BaseBot(ABC):
     def _check_stop(self) -> None:
         """Verifica se è stata richiesta l'interruzione; in caso affermativo, blocca l'esecuzione."""
         if self._stop_requested:
-            raise InterruptedError("Bot interrotto dall'utente")
+            raise InterruptedError("Bot interrotto dall'utente")  # noqa: TRY003
 
     @measure_time(threshold_ms=10000)
     def _init_driver(self) -> None:
@@ -294,7 +294,7 @@ class BaseBot(ABC):
             except Exception as e:
                 self._handle_driver_error(e)
         else:
-            raise RuntimeError("Chromedriver service non disponibile.")
+            raise RuntimeError("Chromedriver service non disponibile.")  # noqa: TRY003
 
     def _get_chrome_options(self) -> Options:
         """Configura le opzioni tecniche per Chrome (Sandboxing, Headless, Profile, Prefs)."""
@@ -342,7 +342,7 @@ class BaseBot(ABC):
 
     def _get_chromedriver_path(self) -> str | None:
         """Ricerca il path del driver Chrome tra cartelle persistenti, bundle e download automatico."""
-        from src.utils.resource_manager import ResourceManager
+        from src.utils.resource_manager import ResourceManager  # noqa: PLC0415
 
         if not getattr(self, "_force_download", False) and (
             d_path := ResourceManager.ensure_automation_driver()
@@ -352,7 +352,7 @@ class BaseBot(ABC):
 
         # Fallback se è richiesto un force download o se il pre-warming è fallito
         try:
-            from webdriver_manager.chrome import ChromeDriverManager
+            from webdriver_manager.chrome import ChromeDriverManager  # noqa: PLC0415
 
             self.log("Aggiornamento driver in corso...")
             d_path = ChromeDriverManager().install()
@@ -362,12 +362,12 @@ class BaseBot(ABC):
                 d_path = str(pot[0])
 
             if Path(d_path).exists():
-                import shutil
+                import shutil  # noqa: PLC0415
 
                 p_dir = ResourceManager.get_writable_drivers_dir()
                 with suppress(Exception):
                     shutil.copy2(d_path, p_dir / "chromedriver.exe")
-            return d_path
+            return d_path  # noqa: TRY300
         except Exception as e:
             self.log(f"⚠️ Errore download driver: {e}")
         return None
@@ -424,7 +424,7 @@ class BaseBot(ABC):
 
     def _force_driver_redownload(self) -> None:
         """Forza la rimozione del driver in cache per costringere il download al prossimo tentativo."""
-        from src.utils.resource_manager import ResourceManager
+        from src.utils.resource_manager import ResourceManager  # noqa: PLC0415
 
         self._force_download = True
         with suppress(Exception):
@@ -435,7 +435,7 @@ class BaseBot(ABC):
                 self.log("🗑️ Driver locale obsoleto rimosso dalla cache.")
 
     @measure_time(threshold_ms=5000)
-    def execute(self, data: list[dict[str, Any]]) -> bool:
+    def execute(self, data: list[dict[str, Any]]) -> bool:  # noqa: PLR0911
         """
         Orchestra il workflow principale del bot: Validazione -> Setup -> Run -> Cleanup.
         Garantisce il mantenimento del contesto di logging e la cattura di screenshot in caso di fallimento.
@@ -443,8 +443,8 @@ class BaseBot(ABC):
         self._stop_requested = False
 
         # --- SICUREZZA: Verifica Licenza JIT (Just-In-Time) ---
-        from src.core.license_updater import run_update
-        from src.core.license_validator import verify_license
+        from src.core.license_updater import run_update  # noqa: PLC0415
+        from src.core.license_validator import verify_license  # noqa: PLC0415
 
         try:
             # Tenta una sincronizzazione rapida cloud prima dell'avvio
@@ -489,7 +489,7 @@ class BaseBot(ABC):
                 self.status = BotStatus.RUNNING
                 result = self.run(data)
                 self.status = BotStatus.COMPLETED if result else BotStatus.ERROR
-                return result
+                return result  # noqa: TRY300
             except InterruptedError:
                 self.log("Bot interrotto", "WARNING")
                 self.status = BotStatus.STOPPED
@@ -572,7 +572,7 @@ class BaseBot(ABC):
     def cleanup(self) -> None:
         """Rilascia le risorse del driver, chiude il browser e rimuove file temporanei di Chrome."""
         if self.download_path:
-            from src.utils.helpers import cleanup_chrome_temp_files
+            from src.utils.helpers import cleanup_chrome_temp_files  # noqa: PLC0415
 
             with suppress(Exception):
                 cleanup_chrome_temp_files(self.download_path)

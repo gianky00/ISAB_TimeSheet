@@ -9,7 +9,7 @@ from datetime import UTC, datetime, timedelta
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.core.constants import Timeouts
@@ -23,24 +23,24 @@ class PrenotaBPPage:
     Gestisce la navigazione nei menu, il filtraggio e l'inserimento di nuove prenotazioni.
     """
 
-    def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None):
+    def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None):  # noqa: ANN204
         """Inizializza la pagina con il driver e configura i tempi di attesa."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.short_wait = WebDriverWait(driver, 5)
         self._log = log_callback or print
 
-    def log(self, message: str):
+    def log(self, message: str):  # noqa: ANN201
         """Inoltra i messaggi di log alla callback configurata."""
         self._log(message)
 
-    def _wait_for_overlay(self):
+    def _wait_for_overlay(self):  # noqa: ANN202
         """Attende la scomparsa di maschere di caricamento."""
         with suppress(TimeoutException):
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask') or contains(@class, 'full-loader')][not(contains(@style,'display: none'))]"
             self.short_wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
 
-    def wait_and_click(self, locator, timeout=None):
+    def wait_and_click(self, locator, timeout=None):  # noqa: ANN001, ANN201
         """
         Attende che un elemento sia cliccabile e vi clicca sopra, gestendo errori DOM.
 
@@ -68,17 +68,17 @@ class PrenotaBPPage:
                 except Exception:
                     # Backup click via Javascript
                     self.driver.execute_script("arguments[0].click();", el)
-                return el
+                return el  # noqa: TRY300
 
             except (TimeoutException, AttributeError, Exception) as e:
-                if attempt == 2:  # Ultimo tentativo fallito
+                if attempt == 2:  # Ultimo tentativo fallito  # noqa: PLR2004
                     self.log(f"⚠ Errore definitivo click su {locator}: {e}")
-                    raise e
+                    raise e  # noqa: TRY201
                 self.log(f"  (Riprovo click su {locator}...)")
                 self._wait_for_overlay()
         return None
 
-    def wait_and_fill(self, locator, text, timeout=None):
+    def wait_and_fill(self, locator, text, timeout=None):  # noqa: ANN001, ANN201
         """
         Attende un campo di input, lo pulisce e inserisce il testo.
 
@@ -95,7 +95,7 @@ class PrenotaBPPage:
         el.send_keys(text)
         return el
 
-    def login(self, username, password):
+    def login(self, username, password):  # noqa: ANN001, ANN201
         """Metodo legacy per compatibilità, il login è ora gestito da BaseBot."""
         # Check immediato sessione
         with suppress(Exception):
@@ -105,7 +105,7 @@ class PrenotaBPPage:
         # Logica minima se chiamato esplicitamente
         self.log("Verifica sessione in corso...")
 
-    def navigate_to_gestione_bp(self):
+    def navigate_to_gestione_bp(self):  # noqa: ANN201
         """Naviga verso la sezione Gestione Buono di Prelievo gestendo l'espansione dei menu."""
         self.log("Navigazione verso Gestione Buono di Prelievo...")
         self._wait_for_overlay()
@@ -137,7 +137,7 @@ class PrenotaBPPage:
         self.wait.until(EC.presence_of_element_located(PrenotaBPLocators.FILTER_FORNITORE))
         self.log("Sezione Gestione BP caricata.")
 
-    def filtra_buoni_prelievo(self, fornitore=None, numero_bp=None, data_da=None, data_a=None):
+    def filtra_buoni_prelievo(self, fornitore=None, numero_bp=None, data_da=None, data_a=None):  # noqa: ANN001, ANN201
         """Imposta i filtri di ricerca e clicca su Cerca."""
         self.log("Impostazione filtri di ricerca...")
 
@@ -145,7 +145,7 @@ class PrenotaBPPage:
             try:
                 self.log(f"  Selezione fornitore: '{fornitore}'...")
                 # 1. Click sulla freccia della combo (usando ActionChains per simulare click utente)
-                from selenium.webdriver.common.action_chains import ActionChains
+                from selenium.webdriver.common.action_chains import ActionChains  # noqa: PLC0415
 
                 arrow = self.wait.until(EC.element_to_be_clickable(PrenotaBPLocators.FILTER_FORNITORE_ARROW))
                 ActionChains(self.driver).move_to_element(arrow).click().perform()
@@ -174,7 +174,7 @@ class PrenotaBPPage:
         self._wait_for_overlay()
         self.log("Ricerca completata.")
 
-    def apri_dettagli_bp(self):
+    def apri_dettagli_bp(self):  # noqa: ANN201
         """Clicca sull'icona dettagli del primo BP in lista."""
         self.log("Apertura dettagli BP...")
         try:
@@ -184,7 +184,7 @@ class PrenotaBPPage:
             self.wait.until(EC.visibility_of_element_located(PrenotaBPLocators.WINDOW_DETTAGLI))
         except Exception as e:
             self.log(f"Impossibile aprire i dettagli: {e}")
-            raise e
+            raise e  # noqa: TRY201
 
     def verifica_disponibilita_materiali(self) -> bool:
         """
@@ -223,7 +223,7 @@ class PrenotaBPPage:
 
         return all_ok
 
-    def chiudi_dettagli_bp(self):
+    def chiudi_dettagli_bp(self):  # noqa: ANN201
         """Chiude la finestra dettagli."""
         self.log("Chiusura finestra dettagli...")
         try:
@@ -234,7 +234,7 @@ class PrenotaBPPage:
         except Exception as e:
             self.log(f"Errore chiusura dettagli: {e}")
 
-    def prenota_nuovo_bp(self, numero_bp, note):
+    def prenota_nuovo_bp(self, numero_bp, note):  # noqa: ANN001, ANN201
         """Esegue una singola prenotazione BP."""
         self.log(f"Inserimento nuova prenotazione: {numero_bp}")
 
@@ -254,11 +254,11 @@ class PrenotaBPPage:
             # Tenta di chiudere il popup in caso di errore per non bloccare i successivi
             with suppress(Exception):
                 self.wait_and_click(PrenotaBPLocators.BT_CHIUDI_POPUP, timeout=3)
-            raise e
+            raise e  # noqa: TRY201
 
         self._wait_for_overlay()
 
-    def gestisci_creazione_richiesta(self, note: str):
+    def gestisci_creazione_richiesta(self, note: str):  # noqa: ANN201
         """Gestisce la selezione dei materiali, la creazione della richiesta e la compilazione del form."""
         self.log("Gestione creazione richiesta...")
 
@@ -312,7 +312,7 @@ class PrenotaBPPage:
                 count_selected += 1
         return count_selected > 0
 
-    def _compila_form_richiesta(self, note: str):
+    def _compila_form_richiesta(self, note: str):  # noqa: ANN202
         """Compila e salva il form di richiesta."""
         self.log("Click su 'Crea Richiesta'...")
         try:
@@ -338,9 +338,9 @@ class PrenotaBPPage:
             self.log(f"Errore nel flusso 'Crea Richiesta': {e}")
             with suppress(Exception):
                 self.wait_and_click(PrenotaBPLocators.BT_CHIUDI_POPUP, timeout=3)
-            raise e
+            raise e  # noqa: TRY201
 
-    def _click_safe(self, element):
+    def _click_safe(self, element):  # noqa: ANN001, ANN202
         """Esegue un click sicuro tramite scroll e JS fallback."""
         try:
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)

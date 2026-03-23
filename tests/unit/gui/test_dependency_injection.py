@@ -20,7 +20,7 @@ from src.gui.panels.storico_oda.oda_panel import StoricoOdaPanel
 
 
 @pytest.fixture
-def mock_main_window(qtbot):
+def mock_main_window(qtbot):  # noqa: ANN001
     """Crea un finto MainWindow basato su QWidget per soddisfare PyQt C++ binding."""
     # Usiamo un vero QWidget per evitare l'errore type TypeError da QObject.__init__
     mock_mw = QWidget()
@@ -32,7 +32,7 @@ def mock_main_window(qtbot):
     return mock_mw
 
 
-def test_navigation_controller_dependency_injection(mock_main_window):
+def test_navigation_controller_dependency_injection(mock_main_window):  # noqa: ANN001
     """
     Test architetturale: Verifica che il NavigationController agisca correttamente come
     Dependency Injection Container (IoC).

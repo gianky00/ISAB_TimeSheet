@@ -1,7 +1,7 @@
 import re
 
 
-def main():
+def main():  # noqa: ANN201
     try:
         with open("tests/vulture_raw.txt", encoding="utf-8") as f:
             lines = f.readlines()

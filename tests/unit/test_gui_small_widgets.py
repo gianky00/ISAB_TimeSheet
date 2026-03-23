@@ -18,7 +18,7 @@ class TestSmallComponentsBoost:
             f.filter(record)
         assert "MASKED" in record.msg
 
-    def test_status_indicator_states(self, qapp):
+    def test_status_indicator_states(self, qapp):  # noqa: ANN001
         indicator = StatusIndicator()
         indicator.set_status("running", "In esecuzione")
         assert indicator.toolTip() == "In esecuzione"
@@ -27,7 +27,7 @@ class TestSmallComponentsBoost:
         indicator.set_status("error", "Errore")
         indicator.set_status("idle", "In attesa")
 
-    def test_modern_button_variants(self, qapp):
+    def test_modern_button_variants(self, qapp):  # noqa: ANN001
         btn = ModernButton("Click me", variant=ModernButton.Variant.PRIMARY)
         assert btn.text() == "Click me"
         btn.setEnabled(False)
@@ -35,7 +35,7 @@ class TestSmallComponentsBoost:
         btn.setEnabled(True)
         assert btn.isEnabled() is True
 
-    def test_notification_item_display(self, qapp):
+    def test_notification_item_display(self, qapp):  # noqa: ANN001
         data = {
             "title": "Titolo",
             "message": "Messaggio",

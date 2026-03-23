@@ -4,7 +4,7 @@ from src.core.contabilita_stats import ContabilitaStats
 
 
 class TestContabilitaStatsDeep:
-    def test_get_year_stats_calculations(self, mocker):
+    def test_get_year_stats_calculations(self, mocker):  # noqa: ANN001
         """Verifica i calcoli di base: somme, conteggi e stati."""
         # Mock dei dati restituiti dalle query
         # Mapping Contabilita (data_by_year):
@@ -72,13 +72,13 @@ class TestContabilitaStatsDeep:
 
         stats = ContabilitaStats.get_year_stats(Path("fake.db"), 2024)
 
-        assert stats["total_prev"] == 1500.50
-        assert stats["total_ore"] == 12.5
-        assert stats["count_total"] == 2
+        assert stats["total_prev"] == 1500.50  # noqa: PLR2004
+        assert stats["total_ore"] == 12.5  # noqa: PLR2004
+        assert stats["count_total"] == 2  # noqa: PLR2004
         assert stats["status_counts"]["COMPLETATO"] == 1
         assert stats["status_counts"]["IN CORSO"] == 1
 
-    def test_get_year_stats_top_commesse(self, mocker):
+    def test_get_year_stats_top_commesse(self, mocker):  # noqa: ANN001
         """Verifica l'ordinamento e il limite delle top commesse."""
         mock_data = [
             (
@@ -111,11 +111,11 @@ class TestContabilitaStatsDeep:
         stats = ContabilitaStats.get_year_stats(Path("fake.db"), 2024)
 
         top = stats["top_commesse"]
-        assert len(top) == 5
+        assert len(top) == 5  # noqa: PLR2004
         assert top[0][0] == "Att 9"  # Il valore più alto (900)
-        assert top[0][1] == 900.0
+        assert top[0][1] == 900.0  # noqa: PLR2004
 
-    def test_get_year_stats_dirette_indirette(self, mocker):
+    def test_get_year_stats_dirette_indirette(self, mocker):  # noqa: ANN001
         """Verifica la distinzione tra ore dirette e indirette nelle giornaliere."""
         # Mapping Giornaliere (giornaliere_by_year):
         # 0:data, 1:personale, 2:tcl, 3:descrizione, 4:n_prev, 5:odc, 6:pdl, 7:inizio, 8:fine, 9:ore, 10:nome_file
@@ -185,5 +185,5 @@ class TestContabilitaStatsDeep:
 
         stats = ContabilitaStats.get_year_stats(Path("fake.db"), 2024)
 
-        assert stats["ore_dirette"] == 13.5  # 9 + 4.5
-        assert stats["ore_indirette"] == 3.0  # 2 + 1
+        assert stats["ore_dirette"] == 13.5  # 9 + 4.5  # noqa: PLR2004
+        assert stats["ore_indirette"] == 3.0  # 2 + 1  # noqa: PLR2004

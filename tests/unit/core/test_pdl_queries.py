@@ -17,7 +17,7 @@ class TestPDLQueries:
             mock.conn = mock_conn  # Shortcut
             yield mock
 
-    def test_get_unique_requesters_normalization(self, mock_db):
+    def test_get_unique_requesters_normalization(self, mock_db):  # noqa: ANN001
         """Verifica la normalizzazione dei nomi dei richiedenti."""
         mock_db.execute_query.return_value = [
             ("  MARIO   ROSSI  ",),
@@ -35,10 +35,10 @@ class TestPDLQueries:
         assert "Mario Rossi" in results
         assert "Luigi Verdi" in results
         assert "Isab S.R.L." in results
-        assert len(results) == 3
+        assert len(results) == 3  # noqa: PLR2004
         assert results == sorted(results)
 
-    def test_save_programming_results_empty(self, mock_db):
+    def test_save_programming_results_empty(self, mock_db):  # noqa: ANN001
         """Verifica la cancellazione se i risultati sono vuoti."""
         success = PDLQueries.save_programming_results([], "01/01/2024", "07/01/2024")
         assert success is True
@@ -47,7 +47,7 @@ class TestPDLQueries:
         assert "DELETE FROM pdl_programmazione" in args[0][1]
         assert args[0][2] == ("01/01/2024", "07/01/2024")
 
-    def test_save_programming_results_success(self, mock_db):
+    def test_save_programming_results_success(self, mock_db):  # noqa: ANN001
         """Verifica l'inserimento corretto dei dati di programmazione."""
         results = [
             {
@@ -71,9 +71,9 @@ class TestPDLQueries:
         batch = insert_args[0][1]
         assert len(batch) == 1
         # 19 colonne base + 2 date = 21 (il codice estende TCL/TGO per 7 giorni = 14 + 5 base = 19)
-        assert len(batch[0]) == 21
+        assert len(batch[0]) == 21  # noqa: PLR2004
 
-    def test_get_programming_results_by_week(self, mock_db):
+    def test_get_programming_results_by_week(self, mock_db):  # noqa: ANN001
         """Verifica il recupero dei dati settimanali mappati in dizionari."""
         mock_cursor = mock_db.conn.cursor.return_value
         # Simula Row object (comportamento dict-like)
@@ -108,14 +108,14 @@ class TestPDLQueries:
         assert results[0]["programmazione"][0]["tcl"] is True
         assert results[0]["programmazione"][1]["tgo"] is True  # Mar TGO = 1
 
-    def test_get_pdl_interventions_db_missing(self, tmp_path):
+    def test_get_pdl_interventions_db_missing(self, tmp_path):  # noqa: ANN001
         """Verifica che torni lista vuota se il DB esterno non esiste."""
         with patch("src.core.config_manager.load_config") as mock_cfg:
             mock_cfg.return_value = {"activity_db_path": str(tmp_path / "non_existent.db")}
             res = PDLQueries.get_pdl_interventions("P123")
             assert res == []
 
-    def test_get_pdl_interventions_success(self, tmp_path):
+    def test_get_pdl_interventions_success(self, tmp_path):  # noqa: ANN001
         """Verifica la query UNION su DB esterno."""
         db_file = tmp_path / "ext.db"
         with sqlite3.connect(db_file) as conn:

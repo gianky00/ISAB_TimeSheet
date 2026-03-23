@@ -4,7 +4,7 @@ from src.core.contabilita_worker import ContabilitaWorker
 
 
 class TestContabilitaWorkerDeep:
-    def test_worker_run_success(self, qtbot):
+    def test_worker_run_success(self, qtbot):  # noqa: ANN001
         worker = ContabilitaWorker("fake_path.xlsx")
 
         with (
@@ -25,7 +25,7 @@ class TestContabilitaWorkerDeep:
             # import_data_from_excel should have been called
             mock_import.assert_called_once()
 
-    def test_worker_error_handling(self, qtbot):
+    def test_worker_error_handling(self, qtbot):  # noqa: ANN001
         worker = ContabilitaWorker("bad_path")
         # We test the logic of run() directly but mock everything inside to catch exception
         with (

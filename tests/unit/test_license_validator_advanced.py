@@ -15,7 +15,7 @@ from src.core.license_validator import (
 
 class TestLicenseValidatorAdvanced:
     @pytest.fixture
-    def license_env(self, tmp_path, mocker):
+    def license_env(self, tmp_path, mocker):  # noqa: ANN001
         """Setup ambiente licenza isolato."""
         lic_dir = tmp_path / "Licenza"
         lic_dir.mkdir()
@@ -32,7 +32,7 @@ class TestLicenseValidatorAdvanced:
 
         return lic_dir, config_file, manifest_file
 
-    def test_get_hardware_id_windows_wmic(self, mocker):
+    def test_get_hardware_id_windows_wmic(self, mocker):  # noqa: ANN001
         """Test: Recupero HWID su Windows tramite WMIC mockato."""
         mocker.patch("platform.system", return_value="Windows")
         mock_output = b"SerialNumber\nXYZ-123-SERIAL\n"
@@ -44,14 +44,14 @@ class TestLicenseValidatorAdvanced:
         hwid = get_hardware_id()
         assert hwid == "XYZ-123-SERIAL"
 
-    def test_calculate_sha256(self, tmp_path):
+    def test_calculate_sha256(self, tmp_path):  # noqa: ANN001
         """Test: Calcolo hash SHA256 di un file."""
         f = tmp_path / "test.txt"
         f.write_text("SyncroJob2026")
         expected = hashlib.sha256(b"SyncroJob2026").hexdigest()
         assert _calculate_sha256(str(f)) == expected
 
-    def test_license_integrity_failure(self, license_env, mocker):
+    def test_license_integrity_failure(self, license_env, mocker):  # noqa: ANN001
         """Test: Fallimento validazione se l'hash del file config non corrisponde al manifest."""
         _lic_dir, config_file, manifest_file = license_env
         config_file.write_text("tampered data")
@@ -62,7 +62,7 @@ class TestLicenseValidatorAdvanced:
         assert status == LicenseStatus.INVALID
         assert "Integrità" in msg
 
-    def test_license_data_validation_flow(self, license_env, mocker):
+    def test_license_data_validation_flow(self, license_env, mocker):  # noqa: ANN001
         """Test: Workflow completo di validazione (Integrity -> Decrypt -> Data)."""
         _lic_dir, config_file, manifest_file = license_env
 
@@ -95,7 +95,7 @@ class TestLicenseValidatorAdvanced:
         status, _msg = get_detailed_license_status()
         assert status == LicenseStatus.VALID
 
-    def test_license_hardware_mismatch(self, license_env, mocker):
+    def test_license_hardware_mismatch(self, license_env, mocker):  # noqa: ANN001
         """Test: Fallimento se HWID nella licenza è diverso da quello attuale."""
         _lic_dir, config_file, manifest_file = license_env
 

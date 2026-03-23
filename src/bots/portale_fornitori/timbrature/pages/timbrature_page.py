@@ -17,7 +17,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.portale_fornitori.timbrature.locators import TimbratureLocators
@@ -27,7 +27,7 @@ from src.core.constants import Timeouts
 class TimbraturePage:
     """Encapsulates interactions with the Timbrature page."""
 
-    def __init__(
+    def __init__(  # noqa: ANN204
         self,
         driver: WebDriver,
         log_callback: Callable[[str], None] | None = None,
@@ -39,11 +39,11 @@ class TimbraturePage:
         self._log = log_callback or print
         self.download_path = download_path
 
-    def log(self, msg: str):
+    def log(self, msg: str):  # noqa: ANN201
         """Proxy per il logging."""
         self._log(msg)
 
-    def _wait_for_overlay(self):
+    def _wait_for_overlay(self):  # noqa: ANN202
         """Waits for loading overlay to disappear."""
         try:
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
@@ -71,7 +71,7 @@ class TimbraturePage:
             actions.send_keys(Keys.ENTER).perform()
             # No sleep needed: _wait_for_overlay() handles wait
             self._wait_for_overlay()
-            return True
+            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"Errore navigazione: {e}")
             return False
@@ -133,13 +133,13 @@ class TimbraturePage:
             # No sleep needed: overlay wait is sufficient for UI update
 
             self.log("Caricamento terminato.")
-            return True
+            return True  # noqa: TRY300
 
         except Exception as e:
             self.log(f"Errore impostazione filtri: {e}")
             return False
 
-    def _select_supplier(self, fornitore: str):
+    def _select_supplier(self, fornitore: str):  # noqa: ANN202
         """
         Seleziona il fornitore dal menu a tendina del portale.
         Implementa logica di retry e click robusto (ActionChains + JS).
@@ -178,7 +178,7 @@ class TimbraturePage:
                         pass
 
             if not arrow_element:
-                raise Exception("Impossibile trovare la freccia del fornitore.")
+                raise Exception("Impossibile trovare la freccia del fornitore.")  # noqa: TRY002, TRY003, TRY301
             # No sleep needed: wait for option presence is next
 
             # Select option with retry
@@ -231,7 +231,7 @@ class TimbraturePage:
             self.log(f"⚠️ Errore download Excel: {e}")
             return ""
 
-    def _find_excel_button(self):
+    def _find_excel_button(self):  # noqa: ANN202
         """
         Tenta di individuare il pulsante di download Excel utilizzando diverse strategie di localizzazione.
 
@@ -257,7 +257,7 @@ class TimbraturePage:
         source_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
         self._log(f"[DEBUG] Cerco file in: {source_dir}")
 
-        from src.core.config_manager import CONFIG_DIR
+        from src.core.config_manager import CONFIG_DIR  # noqa: PLC0415
 
         dest_dir = CONFIG_DIR / "temp"
         dest_dir.mkdir(parents=True, exist_ok=True)
@@ -272,7 +272,7 @@ class TimbraturePage:
 
             if files:
                 latest_file = max(files, key=lambda f: f.stat().st_mtime)
-                if time.time() - latest_file.stat().st_mtime < 20:
+                if time.time() - latest_file.stat().st_mtime < 20:  # noqa: PLR2004
                     break
             time.sleep(1)
 

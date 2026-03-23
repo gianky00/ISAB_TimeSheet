@@ -16,7 +16,7 @@ class TestLastSimpleBoost:
             printers = get_installed_printers()
             assert "P1" in printers
 
-    def test_apply_theme_logic(self, qapp):
+    def test_apply_theme_logic(self, qapp):  # noqa: ANN001
         # Mock Path methods in theme_manager
         with (
             patch("src.gui.styles.theme_manager.get_asset_path", return_value="fake.qss"),
@@ -27,7 +27,7 @@ class TestLastSimpleBoost:
             apply_theme(qapp, "light")
             assert "color: red" in qapp.styleSheet()
 
-    def test_stats_manager_increment(self, tmp_path):
+    def test_stats_manager_increment(self, tmp_path):  # noqa: ANN001
         with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
             StatsManager._instance = None
             sm = StatsManager()
@@ -35,7 +35,7 @@ class TestLastSimpleBoost:
             stats = sm.get_all_stats()
             assert stats["test_bot"]["runs"] == 1
 
-    def test_toast_overlay_basic(self, qapp):
+    def test_toast_overlay_basic(self, qapp):  # noqa: ANN001
         parent = QWidget()
         toast = ToastOverlay(parent)
         assert toast is not None

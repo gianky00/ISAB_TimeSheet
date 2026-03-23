@@ -8,7 +8,7 @@ from src.core.backup_manager import BackupManager
 class TestBackupManager:
     @patch("src.core.backup_manager.Path.home")
     @patch("os.environ.get")
-    def test_detect_onedrive_logic(self, mock_env, mock_home, tmp_path):
+    def test_detect_onedrive_logic(self, mock_env, mock_home, tmp_path):  # noqa: ANN001
         """Verifica il rilevamento di OneDrive tramite ENV e home folder."""
         # 1. Tramite Variabile d'Ambiente
         mock_env.return_value = str(tmp_path / "FakeOneDrive")
@@ -27,7 +27,7 @@ class TestBackupManager:
 
     @patch("src.core.backup_manager.load_config")
     @patch("src.core.backup_manager.BackupManager.detect_cloud_paths")
-    def test_get_backup_dir_fallback(self, mock_clouds, mock_load, tmp_path):
+    def test_get_backup_dir_fallback(self, mock_clouds, mock_load, tmp_path):  # noqa: ANN001
         """Verifica il fallback alla cartella Documents se nessun cloud è trovato."""
         mock_load.return_value = {}
         mock_clouds.return_value = {}
@@ -39,7 +39,7 @@ class TestBackupManager:
 
     @patch("src.core.backup_manager.BackupManager.get_backup_dir")
     @patch("src.core.audit_manager.AuditManager.instance")
-    def test_create_backup_success(self, mock_audit, mock_get_dir, tmp_path):
+    def test_create_backup_success(self, mock_audit, mock_get_dir, tmp_path):  # noqa: ANN001
         """Testa il ciclo completo di creazione backup."""
         # Setup sorgenti (CONFIG_DIR reale per il test)
         src = tmp_path / "src"
@@ -61,7 +61,7 @@ class TestBackupManager:
                 assert Path(zip_path).exists()
                 assert zipfile.is_zipfile(zip_path)
 
-    def test_restore_backup_invalid_file(self, tmp_path):
+    def test_restore_backup_invalid_file(self, tmp_path):  # noqa: ANN001
         """Verifica errore se il file non è uno ZIP valido."""
         fake_file = tmp_path / "not_a_zip.txt"
         fake_file.write_text("dummy")

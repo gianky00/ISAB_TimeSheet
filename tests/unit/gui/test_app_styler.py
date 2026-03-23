@@ -6,7 +6,7 @@ from src.gui.main_window.app_styler import AppStyler
 class TestAppStyler:
     """Test di copertura per la configurazione dello stile globale dell'applicazione."""
 
-    def test_setup_app_style(self, mocker):
+    def test_setup_app_style(self, mocker):  # noqa: ANN001
         """Test: Configurazione stili e metadati app."""
         mock_app = MagicMock()
         mock_apply = mocker.patch("src.gui.main_window.app_styler.apply_theme")

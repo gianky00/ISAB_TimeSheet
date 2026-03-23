@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 class AnagraficaPage(QWidget):
     """Pagina per la visualizzazione e gestione anagrafica dipendenti - Versione Modularizzata."""
 
-    def __init__(self, controller: AnagraficaController, parent: QWidget | None = None):
+    def __init__(self, controller: AnagraficaController, parent: QWidget | None = None):  # noqa: ANN204
         """
         Inizializza la pagina anagrafica con iniezione del controller.
 
@@ -62,7 +62,7 @@ class AnagraficaPage(QWidget):
         self._setup_ui()
         QTimer.singleShot(50, self.refresh_data)
 
-    def _setup_ui(self):
+    def _setup_ui(self):  # noqa: ANN202
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(15)
@@ -92,7 +92,7 @@ class AnagraficaPage(QWidget):
 
         layout.addLayout(content_layout)
 
-    def refresh_data(self):
+    def refresh_data(self):  # noqa: ANN201
         """Sincronizza i dati tra DB, Controller e UI."""
         self.header.set_sync_status(f"Ultimo Sync: {SyncTracker.get_formatted_status('timbrature')}")
 
@@ -112,28 +112,28 @@ class AnagraficaPage(QWidget):
         self.header.update_counts(counts)
         self.header.update_card_styles(self.current_filter)
 
-    def _inactivation_formatter(self, value):
+    def _inactivation_formatter(self, value):  # noqa: ANN001, ANN202
         if value is None or value == "":
             return ""
         try:
             days = max(0, int(value))
-            return f"\u25cf {days}"
+            return f"\u25cf {days}"  # noqa: TRY300
         except Exception:
             return str(value)
 
-    def _on_card_filter(self, filter_type):
+    def _on_card_filter(self, filter_type):  # noqa: ANN001, ANN202
         if self.current_filter == filter_type:
             self.current_filter = None
         else:
             self.current_filter = filter_type
         self.refresh_data()
 
-    def _on_monitoring_toggled(self, id_risorsa, enable):
+    def _on_monitoring_toggled(self, id_risorsa, enable):  # noqa: ANN001, ANN202
         if AnagraficaController.toggle_monitoring(id_risorsa, enable):
             ToastManager.instance().show(f"Monitoraggio {'riattivato' if enable else 'escluso'}", "success")
             self.refresh_data()
 
-    def _on_selection_changed(self, row_idx):
+    def _on_selection_changed(self, row_idx):  # noqa: ANN001, ANN202
         row_data = self.model._data[row_idx]
         mapping = {
             "ID Risorsa": 1,
@@ -158,7 +158,7 @@ class AnagraficaPage(QWidget):
         access_info = AnagraficaController.get_last_isab_access(str(row_data[9]), str(row_data[3]))
         self.detail_view.update_data(details, access_info)
 
-    def _on_import_clicked(self):
+    def _on_import_clicked(self):  # noqa: ANN202
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Seleziona Anagrafica", "", "CSV Files (*.csv);;All Files (*)"
         )
@@ -166,10 +166,10 @@ class AnagraficaPage(QWidget):
             return
         # ... logica importazione delegata al controller ...
 
-    def _generate_email_report(self):
+    def _generate_email_report(self):  # noqa: ANN202
         """Richiama la generazione del report email."""
         ReportGenerator.generate_email_report(self)
 
-    def _on_update_bot_clicked(self):
+    def _on_update_bot_clicked(self):  # noqa: ANN202
         # ... logica bot delegata a BotController ...
         pass

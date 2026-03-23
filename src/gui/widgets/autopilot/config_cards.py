@@ -192,7 +192,7 @@ class AutopilotConfigCardWithInterval(QFrame):
     Usato per report email e altri task non giornalieri.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0915
         self, bot_id: str, bot_name: str, icon_path: str, color: str, parent: QWidget | None = None
     ) -> None:
         super().__init__(parent)

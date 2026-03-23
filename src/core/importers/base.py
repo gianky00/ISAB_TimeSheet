@@ -30,11 +30,11 @@ class BaseImporter:
     """Classe base per tutti gli importer Excel."""
 
     @staticmethod
-    def _get_pd() -> Any:
+    def _get_pd() -> Any:  # noqa: ANN401
         """Lazy load di pandas"""
-        global _pd
+        global _pd  # noqa: PLW0603
         if _pd is None:
-            import pandas as _pd
+            import pandas as _pd  # noqa: PLC0415
         return _pd
 
     @staticmethod
@@ -42,8 +42,8 @@ class BaseImporter:
         """Tenta di decifrare un file Excel se protetto da password."""
         if msoffcrypto:
             with suppress(Exception):
-                from src.core import config_manager
-                from src.core.constants import Business
+                from src.core import config_manager  # noqa: PLC0415
+                from src.core.constants import Business  # noqa: PLC0415
 
                 config = config_manager.load_config()
                 # Recupera password da config, default centralizzato
@@ -59,7 +59,7 @@ class BaseImporter:
         return file_path, False
 
     @classmethod
-    def _get_excel_file(cls, file_obj: Any) -> Any:
+    def _get_excel_file(cls, file_obj: Any) -> Any:  # noqa: ANN401
         """Tenta di aprire il file Excel con motore ottimizzato (calamine > default > openpyxl)."""
         pd = cls._get_pd()
         with warnings.catch_warnings():
@@ -81,7 +81,7 @@ class BaseImporter:
         match = re.search(r"(\d{4})", sheet_name)
         if match:
             year = int(match.group(1))
-            return year if 2000 <= year <= 2100 else None
+            return year if 2000 <= year <= 2100 else None  # noqa: PLR2004
 
         if sheet_name.lower() in ("dati", "preventivi", "riepilogo"):
             return datetime.now(UTC).year

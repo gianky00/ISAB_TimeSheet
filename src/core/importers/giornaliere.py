@@ -187,13 +187,13 @@ class GiornaliereImporter(BaseImporter):
                 "nome_file",
             ]
             rows = list(df[target_cols].itertuples(index=False, name=None))
-            return (year, rows, None)
+            return (year, rows, None)  # noqa: TRY300
 
         except Exception as e:
             return (year, [], str(e))
 
     @classmethod
-    def _read_giornaliera_sheet(cls, file_path: Any) -> pd.DataFrame | None:
+    def _read_giornaliera_sheet(cls, file_path: Any) -> pd.DataFrame | None:  # noqa: ANN401
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             pd_obj = cls._get_pd()
@@ -209,7 +209,7 @@ class GiornaliereImporter(BaseImporter):
                 except zipfile.BadZipFile:
                     return None
                 except Exception as e:
-                    raise e
+                    raise e  # noqa: TRY201
 
     @classmethod
     def _normalize_giornaliera_columns(cls, df: pd.DataFrame) -> pd.DataFrame | None:

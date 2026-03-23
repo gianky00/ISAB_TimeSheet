@@ -14,8 +14,8 @@ from src.core.logging import get_logger
 try:
     import win32com.client
 
-    xlCalculationManual = -4135
-    xlCalculationAutomatic = -4105
+    xlCalculationManual = -4135  # noqa: N816
+    xlCalculationAutomatic = -4105  # noqa: N816
     _win32com_found = True
 except ImportError:
     _win32com_found = False
@@ -28,7 +28,7 @@ class ProgrammingSyncManager:
 
     FOGLI_PDL: ClassVar[list[str]] = ["A1", "A2", "A3", "CTE", "BLENDING", "TAS", "IGCC"]
 
-    def __init__(self, master_path: str):
+    def __init__(self, master_path: str):  # noqa: ANN204
         self.master_path = master_path
         self.excel_app: Any = None
         self.wb_master: Any = None
@@ -56,12 +56,12 @@ class ProgrammingSyncManager:
             self.excel_app.Visible = False
             self.excel_app.DisplayAlerts = False
             self.wb_master = self.excel_app.Workbooks.Open(self.master_path, UpdateLinks=0)
-            return True
+            return True  # noqa: TRY300
         except Exception as e:
-            logger.error(f"Errore apertura Master Excel: {e}")
+            logger.error(f"Errore apertura Master Excel: {e}")  # noqa: TRY400
             return False
 
-    def run_sync_macros(self):
+    def run_sync_macros(self):  # noqa: ANN201
         """Esegue le macro di pulizia e formattazione nel file master."""
         if not self.wb_master or not self.excel_app:
             return
@@ -76,7 +76,7 @@ class ProgrammingSyncManager:
             except Exception as e:
                 logger.warning(f"⚠️ Impossibile eseguire macro '{m}': {e}")
 
-    def process_downloaded_report(self, downloaded_path: str):
+    def process_downloaded_report(self, downloaded_path: str):  # noqa: ANN201
         """Aggrega le modifiche dal report scaricato al file Master."""
         if (not self.wb_master or not self.excel_app) and not self._get_excel_workbook():
             return
@@ -109,7 +109,7 @@ class ProgrammingSyncManager:
         finally:
             self._prepare_excel_state(False)
 
-    def _prepare_excel_state(self, optimize: bool):
+    def _prepare_excel_state(self, optimize: bool):  # noqa: ANN202
         """Imposta o ripristina lo stato di ottimizzazione di Excel."""
         if not self.excel_app:
             return
@@ -131,7 +131,7 @@ class ProgrammingSyncManager:
         for nome_foglio in self.FOGLI_PDL:
             sheet = self.wb_master.Sheets(nome_foglio)
             last_row = sheet.Cells(sheet.Rows.Count, 5).End(-4162).Row  # xlUp col E
-            if last_row < 4:
+            if last_row < 4:  # noqa: PLR2004
                 continue
 
             data = sheet.Range(sheet.Cells(4, 1), sheet.Cells(last_row, 13)).Value
@@ -199,7 +199,7 @@ class ProgrammingSyncManager:
             wb_in.close()
         return nuovi_pdl, modif_x, modif_stato
 
-    def _apply_modifications_to_master(
+    def _apply_modifications_to_master(  # noqa: ANN202
         self, mappa_pdl: dict[str, Any], modif_x: dict[str, Any], modif_stato: dict[str, Any]
     ):
         """Applica le X dei giorni e i cambi di stato sul file Master."""
@@ -218,7 +218,7 @@ class ProgrammingSyncManager:
             info = mappa_pdl[pdl]
             self.wb_master.Sheets(info["foglio"]).Cells(info["riga"], 13).Value = stato
 
-    def _insert_new_pdls(self, nuovi_pdl: dict[str, Any]):
+    def _insert_new_pdls(self, nuovi_pdl: dict[str, Any]):  # noqa: ANN202
         """Inserisce i nuovi PDL nel foglio dedicato."""
         sh_new = self.wb_master.Sheets("nuovi PdL rilevati")
         riga_libera = 24
@@ -236,7 +236,7 @@ class ProgrammingSyncManager:
         target.Value = rows_data
         logger.info(f"Inseriti {len(rows_data)} nuovi PDL nel foglio dedicato.")
 
-    def cleanup(self):
+    def cleanup(self):  # noqa: ANN201
         """Chiude Excel se aperto dal manager."""
         if self.excel_app:
             if not self._is_already_open:

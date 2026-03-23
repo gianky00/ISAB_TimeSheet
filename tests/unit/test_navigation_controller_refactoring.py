@@ -17,7 +17,7 @@ def mock_mw():
 
 
 @pytest.fixture
-def controller(mock_mw):
+def controller(mock_mw):  # noqa: ANN001
     return NavigationController(mock_mw)
 
 
@@ -25,7 +25,7 @@ def controller(mock_mw):
     reason="Crash nativo in ambiente headless Windows V9.0 durante coordinamento grafico navigazione."
 )
 class TestNavigationControllerRefactoring:
-    def test_get_panel_already_initialized(self, controller, mock_mw):
+    def test_get_panel_already_initialized(self, controller, mock_mw):  # noqa: ANN001
         """Verifica il recupero di un pannello già caricato (Refactoring)."""
         mock_mw._panel_initialized_0 = True
         mock_widget = MagicMock()
@@ -34,7 +34,7 @@ class TestNavigationControllerRefactoring:
         res = controller.get_panel(0)
         assert res == mock_widget
 
-    def test_navigate_to_page_basic(self, controller, mock_mw):
+    def test_navigate_to_page_basic(self, controller, mock_mw):  # noqa: ANN001
         """Verifica la navigazione di base tra le pagine."""
         mock_mw._current_page_index = 0
         new_panel = MagicMock()
@@ -43,13 +43,13 @@ class TestNavigationControllerRefactoring:
             assert mock_mw._current_page_index == 1
             mock_mw.sidebar.set_active_button.assert_called_with(1, None, None)
 
-    def test_navigate_to_panel_deep_linking(self, controller, mock_mw):
+    def test_navigate_to_panel_deep_linking(self, controller, mock_mw):  # noqa: ANN001
         """Verifica il deep linking verso un bot specifico (Refactoring)."""
         with patch.object(controller, "get_panel", return_value=mock_mw.automazioni_widget):
             controller.navigate_to_panel("timbrature")
             mock_mw.automazioni_widget.set_active_tab.assert_called_with(0, 2)
 
-    def test_analyze_with_lyra_integration(self, controller, mock_mw):
+    def test_analyze_with_lyra_integration(self, controller, mock_mw):  # noqa: ANN001
         """Verifica l'inoltro a Lyra AI."""
         with patch.object(controller, "get_panel", return_value=mock_mw.lyra_panel):
             controller.analyze_with_lyra("data")

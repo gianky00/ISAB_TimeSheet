@@ -40,14 +40,14 @@ class PrenotaBPBot(BaseBot):
     def description(self) -> str:
         return "Prenotazione Badge Provvisori sul portale ISAB"
 
-    def __init__(
+    def __init__(  # noqa: ANN204
         self,
         username: str = "",
         password: str = "",
         data_da: str | None = None,
         data_a: str | None = None,
         fornitore: str | None = None,
-        **kwargs,
+        **kwargs,  # noqa: ANN003
     ):
         # Pulizia kwargs come in Scarico TS
         kwargs.pop("fornitore", None)
@@ -57,7 +57,7 @@ class PrenotaBPBot(BaseBot):
         # Passiamo i parametri richiesti a BaseBot
         super().__init__(username=username, password=password, **kwargs)
         current_year = datetime.now(UTC).astimezone().year
-        from src.core.constants import Business
+        from src.core.constants import Business  # noqa: PLC0415
 
         self.data_da = data_da or f"01.01.{current_year}"
         self.data_a = data_a or f"31.12.{current_year}"
@@ -67,7 +67,7 @@ class PrenotaBPBot(BaseBot):
     def _get_row_value(self, row: dict[str, Any], target_key: str) -> str:
         """Estrae un valore dalla riga in modo robusto (ignora case, spazi e underscore)."""
 
-        def normalize(s):
+        def normalize(s):  # noqa: ANN001, ANN202
             return str(s).upper().replace(" ", "").replace("_", "")
 
         target_norm = normalize(target_key)
@@ -76,7 +76,7 @@ class PrenotaBPBot(BaseBot):
                 return str(v) if v is not None else ""
         return ""
 
-    def run(self, data: Any):
+    def run(self, data: Any):  # noqa: ANN201, ANN401
         """Esecuzione principale del bot."""
         self.update_step("login", StepStatus.COMPLETED)
 
@@ -104,7 +104,7 @@ class PrenotaBPBot(BaseBot):
             self.log(f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
             self.update_step("cleanup", StepStatus.RUNNING)
             self.update_step("cleanup", StepStatus.COMPLETED)
-            return True
+            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"❗ Errore fatale durante l'esecuzione: {e}")
             self.update_step("nav", StepStatus.ERROR)
@@ -113,7 +113,7 @@ class PrenotaBPBot(BaseBot):
         finally:
             self.log("Fine sessione Prenota BP.")
 
-    def _init_run_data(self, data: Any) -> list[dict[str, Any]]:
+    def _init_run_data(self, data: Any) -> list[dict[str, Any]]:  # noqa: ANN401
         """Inizializza i parametri della sessione."""
         if isinstance(data, dict):
             self.data_da = data.get("data_da") or self.data_da
@@ -155,7 +155,7 @@ class PrenotaBPBot(BaseBot):
             if callback:
                 callback(index, True, "")
 
-            return True
+            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"✗ Errore su BP {num_bp}: {e}")
             self.update_step("reserve", StepStatus.ERROR)

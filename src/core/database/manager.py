@@ -138,12 +138,12 @@ class DatabaseManager:
                 conn.commit()
 
         except sqlite3.OperationalError as e:
-            logger.error(f"Database Operational Error ({db_path.name}): {e}")
+            logger.error(f"Database Operational Error ({db_path.name}): {e}")  # noqa: TRY400
             if conn:
                 conn.rollback()
             raise
         except Exception as e:
-            logger.error(f"Unexpected Database Error ({db_path.name}): {e}")
+            logger.error(f"Unexpected Database Error ({db_path.name}): {e}")  # noqa: TRY400
             if conn:
                 conn.rollback()
             raise
@@ -186,7 +186,7 @@ class DatabaseManager:
         logger.error(f"Failed to execute query after {retry_count} retries: {last_error}")
         if last_error:
             raise last_error
-        raise sqlite3.OperationalError(f"Failed to execute query after {retry_count} retries")
+        raise sqlite3.OperationalError(f"Failed to execute query after {retry_count} retries")  # noqa: TRY003
 
     def init_db(self) -> None:
         """Initializes schema for all databases using the migration system."""
@@ -201,7 +201,7 @@ class DatabaseManager:
             res = conn.execute("PRAGMA user_version").fetchone()
             return int(res[0]) if res else 0
         except Exception as e:
-            logger.error(f"Errore recupero versione database: {e}")
+            logger.error(f"Errore recupero versione database: {e}")  # noqa: TRY400
             return 0
 
     def _set_db_version(self, conn: sqlite3.Connection, version: int) -> None:

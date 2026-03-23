@@ -29,7 +29,7 @@ def test_get_key_from_env_invalid():
         assert res == b"!!!not_b64!!!"
 
 
-def test_get_key_from_env_file(tmp_path):
+def test_get_key_from_env_file(tmp_path):  # noqa: ANN001
     """Test caricamento da file .env."""
     test_key_bytes = b"file_test_key"
     test_key_b64 = base64.urlsafe_b64encode(test_key_bytes).decode()
@@ -88,7 +88,7 @@ def test_get_license_key_priority():
                 with patch.object(SecretsManager, "_get_key_from_keyring", return_value=None):
                     fallback = SecretsManager.get_license_key()
                     assert fallback is not None
-                    assert len(base64.urlsafe_b64decode(fallback)) == 32
+                    assert len(base64.urlsafe_b64decode(fallback)) == 32  # noqa: PLR2004
 
 
 def test_is_available():

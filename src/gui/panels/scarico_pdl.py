@@ -60,14 +60,14 @@ class ScaricoPDLPanel(BaseBotPanel):
         self._setup_content()
         QTimer.singleShot(10, self._safe_load_data)
 
-    def get_bot_class(self) -> Any:
+    def get_bot_class(self) -> Any:  # noqa: ANN401
         """
         Restituisce la classe del bot associata a questo pannello.
 
         Returns:
             Type[SafeWorkPDLBot]: La classe per l'automazione PDL.
         """
-        from src.bots.safework.pdl.bot import SafeWorkPDLBot
+        from src.bots.safework.pdl.bot import SafeWorkPDLBot  # noqa: PLC0415
 
         return SafeWorkPDLBot
 
@@ -76,9 +76,9 @@ class ScaricoPDLPanel(BaseBotPanel):
         try:
             self._load_saved_data()
         except Exception as e:
-            logger.error(f"Error loading data: {e}")
+            logger.error(f"Error loading data: {e}")  # noqa: TRY400
 
-    def _setup_content(self) -> None:
+    def _setup_content(self) -> None:  # noqa: PLR0915
         """Inizializza il contenuto specifico del pannello: filtri, opzioni stampa e tabella PDL."""
         # 1. Parametri
         self.params_container = QFrame()
@@ -134,7 +134,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
         """)
 
-        from src.gui.widgets.modern_button import ModernButton
+        from src.gui.widgets.modern_button import ModernButton  # noqa: PLC0415
 
         self.btn_open = ModernButton("APRI", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL)
         self.btn_open.setFixedSize(60, 38)
@@ -204,8 +204,8 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _on_open_clicked(self) -> None:
         """Apre la cartella di destinazione nell'esplora risorse di sistema."""
-        import os
-        from pathlib import Path
+        import os  # noqa: PLC0415
+        from pathlib import Path  # noqa: PLC0415
 
         path_str = self.edit_dest.text()
         if not path_str:
@@ -220,7 +220,7 @@ class ScaricoPDLPanel(BaseBotPanel):
                 return
 
         try:
-            import os
+            import os  # noqa: PLC0415
 
             os.startfile(str(path))  # noqa: S606
         except Exception:
@@ -316,14 +316,14 @@ class ScaricoPDLPanel(BaseBotPanel):
             self.stop_btn.setEnabled(False)
             return
 
-        from src.core.config_manager import load_config
+        from src.core.config_manager import load_config  # noqa: PLC0415
 
         config = load_config()
 
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        from src.gui.panels.base import BotWorker
+        from src.gui.panels.base import BotWorker  # noqa: PLC0415
 
         # Configura i parametri per il BotWorker
         bot_params = {

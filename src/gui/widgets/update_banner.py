@@ -23,7 +23,7 @@ class UpdateBanner(QFrame):
 
     download_requested = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None):  # noqa: ANN001, ANN204
         super().__init__(parent)
         self.setObjectName("updateBanner")
         # Forza Light Mode per il banner
@@ -42,7 +42,7 @@ class UpdateBanner(QFrame):
         self._is_complete = False
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self):  # noqa: ANN202
         self.main_layout = QHBoxLayout(self)
         self.main_layout.setContentsMargins(15, 10, 15, 10)
         self.main_layout.setSpacing(15)
@@ -94,7 +94,7 @@ class UpdateBanner(QFrame):
         self.download_btn.clicked.connect(self._on_download_clicked)
         self.main_layout.addWidget(self.download_btn)
 
-    def show_update(
+    def show_update(  # noqa: ANN201
         self,
         version: str,
         download_url: str,
@@ -126,7 +126,7 @@ class UpdateBanner(QFrame):
         self.setVisible(True)
 
     @pyqtSlot(int, int, float, float)
-    def update_progress(self, downloaded: int, total: int, speed: float, eta: float):
+    def update_progress(self, downloaded: int, total: int, speed: float, eta: float):  # noqa: ANN201
         """Aggiorna il progresso del download nel banner."""
         if not self.progress_container.isVisible():
             self.progress_container.setVisible(True)
@@ -153,7 +153,7 @@ class UpdateBanner(QFrame):
         else:
             self.progress_bar.setMaximum(0)
 
-    def _on_download_clicked(self):
+    def _on_download_clicked(self):  # noqa: ANN202
         if self._download_url:
             self.download_requested.emit(self._download_url)
             self.download_btn.setVisible(False)

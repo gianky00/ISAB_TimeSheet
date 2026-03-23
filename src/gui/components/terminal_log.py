@@ -16,7 +16,7 @@ class TerminalLogWidget(QWidget):
     Fornisce una visualizzazione testuale moderna e pulita delle attività del bot.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None):  # noqa: ANN001, ANN204
         """
         Inizializza il widget del terminale e configura l'editor di testo.
 
@@ -63,7 +63,7 @@ class TerminalLogWidget(QWidget):
 
     @pyqtSlot(str)
     @pyqtSlot(str, str)
-    def append(self, message: str, level: str = "INFO"):
+    def append(self, message: str, level: str = "INFO"):  # noqa: ANN201
         """
         Aggiunge un messaggio colorato alla console in base al livello di logging.
 
@@ -71,7 +71,7 @@ class TerminalLogWidget(QWidget):
             message: Testo del messaggio da loggare.
             level: Livello del log (es. INFO, ERROR, WARN, SUCCESS).
         """
-        from datetime import UTC, datetime
+        from datetime import UTC, datetime  # noqa: PLC0415
 
         timestamp = datetime.now(UTC).astimezone().strftime("%H:%M:%S")
 
@@ -110,6 +110,6 @@ class TerminalLogWidget(QWidget):
         if v_scroll:
             v_scroll.setValue(v_scroll.maximum())
 
-    def clear(self):
+    def clear(self):  # noqa: ANN201
         """Pulisce tutto il contenuto della console di log."""
         self.editor.clear()

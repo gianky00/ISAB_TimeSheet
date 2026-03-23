@@ -14,7 +14,7 @@ from selenium.common.exceptions import (
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By  # Explicit import for internal use
 from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.portale_fornitori.scarico_ts.locators import ScaricoTSLocators
@@ -24,7 +24,7 @@ from src.core.constants import Timeouts
 class ScaricoTSPage:
     """Encapsulates interactions with the Scarico TS page."""
 
-    def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None):
+    def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None):  # noqa: ANN204
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)
@@ -59,7 +59,7 @@ class ScaricoTSPage:
             # Wait for page load (check for supplier arrow)
             self.wait.until(EC.visibility_of_element_located(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW))
             self._wait_for_overlay()
-            return True
+            return True  # noqa: TRY300
 
         except Exception as e:
             self.log(f"✗ Errore navigazione menu: {e}")
@@ -86,7 +86,7 @@ class ScaricoTSPage:
             date_field.clear()
             date_field.send_keys(date_from)
 
-            return True
+            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"✗ Errore impostazione filtri: {e}")
             return False
@@ -133,7 +133,7 @@ class ScaricoTSPage:
             downloaded_file = self._wait_for_download(download_dir, files_before)
 
             # Pulizia residui Chromium (file 0 KB con nomi GUID)
-            from src.utils.helpers import cleanup_chrome_temp_files
+            from src.utils.helpers import cleanup_chrome_temp_files  # noqa: PLC0415
 
             removed = cleanup_chrome_temp_files(download_dir)
             for f_name in removed:
@@ -147,7 +147,7 @@ class ScaricoTSPage:
             new_path = self._resolve_unique_path(download_dir, oda_number, oda_position, downloaded_file)
             downloaded_file.rename(new_path)
             self.log(f"  ✓ File scaricato: {new_path.name}")
-            return True
+            return True  # noqa: TRY300
 
         except Exception as e:
             self.log(f"  ✗ Errore click download: {e}")

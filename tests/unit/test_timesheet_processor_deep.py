@@ -8,11 +8,11 @@ from src.core.timesheet_processor import TimesheetProcessor
 
 class TestTimesheetProcessorDeep:
     @pytest.fixture
-    def mock_excel(self, tmp_path):
+    def mock_excel(self, tmp_path):  # noqa: ANN001
         """Crea un file Excel finto per i test."""
         file_path = tmp_path / "timesheet.xlsx"
 
-        import openpyxl
+        import openpyxl  # noqa: PLC0415
 
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -27,13 +27,13 @@ class TestTimesheetProcessorDeep:
         wb.save(file_path)
         return file_path
 
-    def test_process_file_success(self, mock_excel, tmp_path):
+    def test_process_file_success(self, mock_excel, tmp_path):  # noqa: ANN001
         """Verifica elaborazione corretta con conteggio POS."""
         success, msg = TimesheetProcessor.process_and_move(mock_excel, dest_dir=tmp_path)
         assert success is True
         assert "Salvato in" in msg
 
-    def test_process_file_missing_sheet(self, tmp_path):
+    def test_process_file_missing_sheet(self, tmp_path):  # noqa: ANN001
         """Verifica errore se il foglio 'Timesheet' manca."""
         file_path = tmp_path / "wrong.xlsx"
         df = pd.DataFrame({"A": [1]})
@@ -43,11 +43,11 @@ class TestTimesheetProcessorDeep:
         assert success is False
         assert "non trovato" in msg
 
-    def test_process_file_no_pos_column(self, tmp_path):
+    def test_process_file_no_pos_column(self, tmp_path):  # noqa: ANN001
         """Verifica comportamento se la colonna POS manca."""
         file_path = tmp_path / "no_pos.xlsx"
 
-        import openpyxl
+        import openpyxl  # noqa: PLC0415
 
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -60,7 +60,7 @@ class TestTimesheetProcessorDeep:
         assert success is True
         assert "Salvato in" in msg
 
-    def test_process_file_not_found(self, tmp_path):
+    def test_process_file_not_found(self, tmp_path):  # noqa: ANN001
         """Verifica errore se il file non esiste."""
         success, msg = TimesheetProcessor.process_and_move(Path("ghost.xlsx"), dest_dir=tmp_path)
         assert success is False

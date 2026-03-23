@@ -50,18 +50,18 @@ class DettagliOdABot(BaseBot):
     def description(self) -> str:
         return "Scarica dettaglio OdA (o lista generale se OdA vuoto)"
 
-    def __init__(
+    def __init__(  # noqa: ANN204
         self,
         username: str,
         password: str,
         data_da: str | None = None,
         data_a: str | None = None,
         fornitore: str | None = None,
-        **kwargs,
+        **kwargs,  # noqa: ANN003
     ):
         super().__init__(username, password, **kwargs)
         current_year = datetime.now(UTC).astimezone().year
-        from src.core.constants import Business
+        from src.core.constants import Business  # noqa: PLC0415
 
         self.data_da = data_da or f"01.01.{current_year}"
         self.data_a = data_a or f"31.12.{current_year}"
@@ -113,7 +113,7 @@ class DettagliOdABot(BaseBot):
         self.log("✨ Procedura conclusa.")
         return success == len(rows)
 
-    def _prepare_rows(self, data: Any) -> list[dict[str, Any]]:
+    def _prepare_rows(self, data: Any) -> list[dict[str, Any]]:  # noqa: ANN401
         """Prepara la lista di righe da processare."""
         if isinstance(data, dict):
             self.data_da = data.get("data_da", self.data_da)
@@ -172,9 +172,9 @@ class DettagliOdABot(BaseBot):
             return True
         return False
 
-    def _import_oda_to_db(self, downloaded_path: Path):
+    def _import_oda_to_db(self, downloaded_path: Path):  # noqa: ANN202
         """Helper per l'importazione nel database. Utilizza un ProcessPool per non bloccare il GIL della GUI."""
-        import concurrent.futures
+        import concurrent.futures  # noqa: PLC0415
 
         try:
             self.log(

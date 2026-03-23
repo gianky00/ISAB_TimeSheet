@@ -9,7 +9,7 @@ from src.core.database import db_manager  # noqa: E402
 from src.core.employees import employee_manager  # noqa: E402
 
 
-def run_migration():
+def run_migration():  # noqa: ANN201
     print("--- Inizio Migrazione Anagrafica ---")
 
     # 1. Assicuriamoci che il DB sia inizializzato con lo schema corretto
@@ -38,7 +38,7 @@ def run_migration():
 
     except Exception as e:
         print(f"ERRORE CRITICO: {e}")
-        import traceback
+        import traceback  # noqa: PLC0415
 
         traceback.print_exc()
 

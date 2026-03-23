@@ -12,7 +12,7 @@ from src.core.version import __version__
 class CertificatiPdfExporter:
     """Genera report PDF professionale per i certificati campione."""
 
-    def __init__(
+    def __init__(  # noqa: ANN204
         self,
         tree: QTreeWidget,
         show_excluded: bool,
@@ -72,11 +72,11 @@ class CertificatiPdfExporter:
                 self._draw_footer(painter, page_idx + 1, total_pages, width_pt, paint_rect_pt.height())
 
             painter.end()
-            return True, "Esportazione PDF completata con successo."
+            return True, "Esportazione PDF completata con successo."  # noqa: TRY300
         except Exception as e:
             return False, f"Errore durante l'esportazione PDF: {e!s}"
 
-    def _draw_footer(self, painter: QPainter, current: int, total: int, width: float, height: float):
+    def _draw_footer(self, painter: QPainter, current: int, total: int, width: float, height: float):  # noqa: ANN202
         """Disegna il footer con la numerazione delle pagine."""
         painter.save()
         font = painter.font()
@@ -90,14 +90,14 @@ class CertificatiPdfExporter:
         painter.drawText(footer_rect, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, page_text)
         painter.restore()
 
-    def _build_paginated_html(self, doc: QTextDocument, width_pt: float, height_pt: float) -> list[str]:
+    def _build_paginated_html(self, doc: QTextDocument, width_pt: float, height_pt: float) -> list[str]:  # noqa: PLR0912, PLR0915
         """Costruisce i blocchi HTML divisi per pagina calcolandone l'altezza dinamicamente."""
         now_str = datetime.now().strftime("%d/%m/%Y alle %H:%M:%S")
         title = "Lista Strumenti Campione Secondari<br>assegnati al cantiere ISAB SUD"
         meta_info = f"Generato il: {now_str} dal software Syncrojob v{__version__}"
 
         # Helper per ordinamento naturale (alfanumerico)
-        def natural_sort_key(text: str):
+        def natural_sort_key(text: str):  # noqa: ANN202
             parts = re.split(r"(\d+)", text)
             # Usiamo tuple (is_int, value) per forzare confronti omogenei (bool con bool, int con int, str con str)
             return [(True, int(c)) if c.isdigit() else (False, c.lower()) for c in parts if c]
@@ -125,7 +125,7 @@ class CertificatiPdfExporter:
             all_parents.append(parent)
 
         # FIX ORDINAMENTO: Prendiamo l'ID-COEMI dal primo figlio (child 0, col 0)
-        def get_id_coemi(p):
+        def get_id_coemi(p):  # noqa: ANN001, ANN202
             if p.childCount() > 0:
                 child = p.child(0)
                 if child:
@@ -153,11 +153,11 @@ class CertificatiPdfExporter:
                     scadenza_str = child.text(8)
                     days, _ = CertificatiEngine.calculate_days_and_status(scadenza_str)
 
-                    if days == -9999:
+                    if days == -9999:  # noqa: PLR2004
                         tot_guasti += 1
                     elif days is None or days < 0:
                         tot_da_rinnovare += 1
-                    elif 0 <= days <= 30:
+                    elif 0 <= days <= 30:  # noqa: PLR2004
                         tot_in_scadenza += 1
                     else:
                         tot_attivi += 1
@@ -284,7 +284,7 @@ class CertificatiPdfExporter:
                 scadenza_str = child.text(8)
                 days, _ = CertificatiEngine.calculate_days_and_status(scadenza_str)
 
-                is_valid = days is not None and days != -9999 and days >= 0
+                is_valid = days is not None and days != -9999 and days >= 0  # noqa: PLR2004
                 utilizzato = "SI" if (is_current and is_valid) else "NO"
 
                 if is_current:
@@ -302,7 +302,7 @@ class CertificatiPdfExporter:
                         stato_display = stato_display.replace("Scade tra ", "In scadenza<br>tra ")
 
                     if utilizzato == "SI":
-                        row_class = "parent-warning" if days is not None and 0 <= days <= 30 else "parent-yes"
+                        row_class = "parent-warning" if days is not None and 0 <= days <= 30 else "parent-yes"  # noqa: PLR2004
                     else:
                         row_class = "parent-no"
                 else:

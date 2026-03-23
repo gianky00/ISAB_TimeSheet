@@ -10,7 +10,7 @@ from src.core.backup_manager import BackupManager
 
 class TestBackupManagerRobust:
     @pytest.fixture
-    def mock_config_dir(self, tmp_path):
+    def mock_config_dir(self, tmp_path):  # noqa: ANN001
         """Mocka CONFIG_DIR con una directory temporanea."""
         config_dir = tmp_path / "config"
         config_dir.mkdir()
@@ -31,7 +31,7 @@ class TestBackupManagerRobust:
             yield mock.instance.return_value
 
     @pytest.fixture
-    def mock_cloud_env(self, tmp_path):
+    def mock_cloud_env(self, tmp_path):  # noqa: ANN001
         """Simula ambiente con OneDrive."""
         onedrive_path = tmp_path / "OneDrive"
         onedrive_path.mkdir()
@@ -39,20 +39,20 @@ class TestBackupManagerRobust:
         with patch.dict(os.environ, {"OneDrive": str(onedrive_path)}):
             yield onedrive_path
 
-    def test_detect_cloud_paths(self, mock_cloud_env, tmp_path):
+    def test_detect_cloud_paths(self, mock_cloud_env, tmp_path):  # noqa: ANN001
         """Test rilevamento percorsi cloud."""
         paths = BackupManager.detect_cloud_paths()
         assert "OneDrive" in paths
         assert paths["OneDrive"] == mock_cloud_env
 
-    def test_get_backup_dir_onedrive(self, mock_cloud_env):
+    def test_get_backup_dir_onedrive(self, mock_cloud_env):  # noqa: ANN001
         """Test selezione automatica directory backup."""
         with patch("src.core.backup_manager.load_config", return_value={}):
             backup_dir = BackupManager.get_backup_dir()
             assert backup_dir == mock_cloud_env / "SyncroJob_Backups"
             assert backup_dir.exists()
 
-    def test_create_backup_success(self, mock_config_dir, mock_cloud_env, mock_audit):
+    def test_create_backup_success(self, mock_config_dir, mock_cloud_env, mock_audit):  # noqa: ANN001
         """Test creazione backup zip."""
         with patch("src.core.backup_manager.load_config", return_value={}):
             success, path_str = BackupManager.create_backup()
@@ -77,7 +77,7 @@ class TestBackupManagerRobust:
                 severity="low",
             )
 
-    def test_create_backup_empty(self, tmp_path, mock_audit):
+    def test_create_backup_empty(self, tmp_path, mock_audit):  # noqa: ANN001
         """Test backup senza file validi."""
         empty_conf = tmp_path / "empty_conf"
         empty_conf.mkdir()
@@ -93,7 +93,7 @@ class TestBackupManagerRobust:
             assert success is False
             assert "Nessun file" in msg
 
-    def test_cleanup_old_backups(self, tmp_path):
+    def test_cleanup_old_backups(self, tmp_path):  # noqa: ANN001
         """Test rotazione backup (keep=5)."""
         backup_dir = tmp_path / "backups"
         backup_dir.mkdir()
@@ -108,12 +108,12 @@ class TestBackupManagerRobust:
         BackupManager._cleanup_old_backups(backup_dir, keep=5)
 
         files = list(backup_dir.glob("*.zip"))
-        assert len(files) == 5
+        assert len(files) == 5  # noqa: PLR2004
         # I file rimasti devono essere quelli con i > 4 (i più recenti)
         dates = sorted([f.name for f in files])
         assert "20230109" in dates[-1]  # Il più recente
 
-    def test_restore_backup_success(self, mock_config_dir, tmp_path, mock_audit):
+    def test_restore_backup_success(self, mock_config_dir, tmp_path, mock_audit):  # noqa: ANN001
         """Test ripristino backup."""
         # 1. Crea uno zip valido
         zip_path = tmp_path / "restore_test.zip"
@@ -129,7 +129,7 @@ class TestBackupManagerRobust:
 
         mock_audit.log_action.assert_called()
 
-    def test_restore_backup_invalid(self, tmp_path):
+    def test_restore_backup_invalid(self, tmp_path):  # noqa: ANN001
         """Test ripristino file non valido."""
         bad_zip = tmp_path / "bad.zip"
         bad_zip.write_text("Not a zip")
@@ -138,7 +138,7 @@ class TestBackupManagerRobust:
         assert success is False
         assert "non valido" in msg
 
-    def test_list_backups(self, tmp_path):
+    def test_list_backups(self, tmp_path):  # noqa: ANN001
         """Test listaggio backup."""
         with patch(
             "src.core.backup_manager.BackupManager.get_backup_dir",

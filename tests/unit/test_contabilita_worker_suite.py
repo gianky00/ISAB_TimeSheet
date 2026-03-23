@@ -6,7 +6,7 @@ from src.core.contabilita_worker import ContabilitaWorker
 class TestContabilitaWorkerLogic:
     @patch("src.core.contabilita_worker.ContabilitaManager")
     @patch("src.core.contabilita_worker.Path.exists", return_value=True)
-    def test_worker_run_sequence(self, mock_exists, mock_manager, qtbot):
+    def test_worker_run_sequence(self, mock_exists, mock_manager, qtbot):  # noqa: ANN001
         worker = ContabilitaWorker("f.xlsx", "g_path", "a.xlsx", "c.xlsx")
 
         # Mock manager methods
@@ -22,16 +22,16 @@ class TestContabilitaWorkerLogic:
         worker.run()
 
         assert finished_mock.called
-        # overall_success (bool), final_msg (str), total_added (int), total_removed (int), total_duration (float)
+        # overall_success (bool), final_msg (str), total_added (int), total_removed (int), total_duration (float)  # noqa: ERA001
         args = finished_mock.call_args[0]
         assert args[0] is True
         assert "Contabilità: OK" in args[1]
         assert "Giornaliere: OK" in args[1]
-        assert args[2] == 37  # 10+20+5+2
+        assert args[2] == 37  # 10+20+5+2  # noqa: PLR2004
 
     @patch("src.core.contabilita_worker.ContabilitaManager")
     @patch("src.core.contabilita_worker.Path.exists", return_value=True)
-    def test_worker_error_handling(self, mock_exists, mock_manager):
+    def test_worker_error_handling(self, mock_exists, mock_manager):  # noqa: ANN001
         worker = ContabilitaWorker("f.xlsx")
         mock_manager.scan_workload.side_effect = Exception("Crash")
 

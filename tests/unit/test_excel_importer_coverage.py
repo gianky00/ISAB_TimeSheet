@@ -13,7 +13,7 @@ def importer():
     return ExcelImporter()
 
 
-def test_import_contabilita_file_not_found(importer):
+def test_import_contabilita_file_not_found(importer):  # noqa: ANN001
     """Test gestione file inesistente."""
     with patch("src.core.importers.contabilita.Path.exists", return_value=False):
         success, msg, rows, _years = importer.import_contabilita_dati("non_existent.xlsx")
@@ -22,7 +22,7 @@ def test_import_contabilita_file_not_found(importer):
         assert rows == []
 
 
-def test_import_contabilita_valid_data(importer):
+def test_import_contabilita_valid_data(importer):  # noqa: ANN001
     """Test importazione dati validi (Contabilità)."""
     # Actual DF (restituito da _process_single_sheet -> read_excel)
     # IMPORTANTE: Aggiungiamo una riga extra perché _process_single_sheet fa df.iloc[:-1]
@@ -63,16 +63,16 @@ def test_import_contabilita_valid_data(importer):
 
         assert success is True
         assert len(years) == 1
-        assert years[0] == 2025
+        assert years[0] == 2025  # noqa: PLR2004
         assert len(rows) == 1
 
-        assert rows[0][0] == 2025
+        assert rows[0][0] == 2025  # noqa: PLR2004
         row_str = str(rows[0])
         assert "2025-01-01" in row_str
         assert "Manutenzione" in row_str
 
 
-def test_import_contabilita_no_valid_sheets(importer):
+def test_import_contabilita_no_valid_sheets(importer):  # noqa: ANN001
     """Test file senza fogli validi."""
     mock_xls = MagicMock()
     mock_xls.sheet_names = ["Foglio1", "Foglio2"]
@@ -89,7 +89,7 @@ def test_import_contabilita_no_valid_sheets(importer):
         assert "Nessun anno importato" in msg
 
 
-def test_normalize_columns_logic(importer):
+def test_normalize_columns_logic(importer):  # noqa: ANN001
     """Test robustezza normalizzazione colonne."""
     # N.B. Il sorgente in src/core/importers/contabilita.py usa "NÂ° PREV." (con Â)
     df = pd.DataFrame(columns=[" DATA  PREV. ", "  MESE", "NÂ° PREV."])
@@ -101,7 +101,7 @@ def test_normalize_columns_logic(importer):
     assert "n_prev" in cols
 
 
-def test_import_giornaliere_collection(importer, tmp_path):
+def test_import_giornaliere_collection(importer, tmp_path):  # noqa: ANN001
     """Test logica raccolta file giornaliere."""
     root = tmp_path / "Giornaliere"
 

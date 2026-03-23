@@ -4,7 +4,7 @@ from src.utils.document_processor import DocumentProcessor
 
 
 class TestUtilsDeep:
-    def test_document_processor_text_extraction(self, tmp_path):
+    def test_document_processor_text_extraction(self, tmp_path):  # noqa: ANN001
         pdf_path = tmp_path / "test.pdf"
         pdf_path.touch()
 
@@ -23,7 +23,7 @@ class TestUtilsDeep:
             # but PyMuPDF's close() is often called by __exit__ or manually.
             # DocumentProcessor uses the 'with' statement.
 
-    def test_is_pdf_searchable(self, tmp_path):
+    def test_is_pdf_searchable(self, tmp_path):  # noqa: ANN001
         pdf_path = tmp_path / "searchable.pdf"
         pdf_path.touch()
 
@@ -36,7 +36,7 @@ class TestUtilsDeep:
         with patch("src.utils.document_processor.fitz.open", return_value=mock_doc):
             assert DocumentProcessor.is_pdf_searchable(pdf_path) is True
 
-    def test_document_processor_no_fitz(self, tmp_path):
+    def test_document_processor_no_fitz(self, tmp_path):  # noqa: ANN001
         """Test: Ritorna stringa vuota se fitz non è installato."""
         with patch("src.utils.document_processor.fitz", None):
             text = DocumentProcessor.extract_text(tmp_path / "any.pdf")

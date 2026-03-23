@@ -32,7 +32,7 @@ class PrenotaBPPanel(BaseBotPanel):
     Eredita da BaseBotPanel per la gestione standard di log e stati.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None):  # noqa: ANN001, ANN204
         """
         Inizializza il pannello e carica i dati salvati.
 
@@ -56,18 +56,18 @@ class PrenotaBPPanel(BaseBotPanel):
         Returns:
             Type[PrenotaBPBot]: Classe del bot.
         """
-        from src.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot
+        from src.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot  # noqa: PLC0415
 
         return PrenotaBPBot
 
-    def _safe_load_data(self):
+    def _safe_load_data(self):  # noqa: ANN202
         """Esegue il caricamento dei dati in modo sicuro gestendo eventuali eccezioni."""
         try:
             self._load_saved_data()
         except Exception as e:
             print(f"[ERROR] Error loading data for PrenotaBPPanel: {e}")
 
-    def _setup_content(self):
+    def _setup_content(self):  # noqa: ANN202
         """Configura il layout e i widget specifici per la prenotazione BP."""
         # Sezione Parametri
         params_container = QWidget()
@@ -155,13 +155,13 @@ class PrenotaBPPanel(BaseBotPanel):
             esito_text = "Completato" if success else f"Errore: {message}" if message else "Errore"
             self.data_table.update_cell(step_idx, col_idx, esito_text, emit_signal=False)
 
-    def _open_settings(self):
+    def _open_settings(self):  # noqa: ANN202
         """Richiede alla MainWindow di visualizzare la pagina delle impostazioni."""
         main_window = self.window()
         if main_window is not None and hasattr(main_window, "show_settings"):
             main_window.show_settings()
 
-    def _load_saved_data(self):
+    def _load_saved_data(self):  # noqa: ANN202
         """Carica l'ultima lista BP e i parametri temporali dalla configurazione."""
         config = config_manager.load_config()
         saved_data = config.get("last_prenota_bp_data", [])
@@ -174,7 +174,7 @@ class PrenotaBPPanel(BaseBotPanel):
         self.params_widget.set_dates(date_da, date_a)
         self._update_status_list()
 
-    def _save_data(self):
+    def _save_data(self):  # noqa: ANN202
         """Salva i dati correnti della tabella e i parametri temporali in configurazione."""
         data = self.data_table.get_data()
         config_manager.set_config_value("last_prenota_bp_data", data)
@@ -183,13 +183,13 @@ class PrenotaBPPanel(BaseBotPanel):
         config_manager.set_config_value("last_prenota_date_from", date_da)
         config_manager.set_config_value("last_prenota_date_to", date_a)
 
-    def _clear_table(self):
+    def _clear_table(self):  # noqa: ANN202
         """Svuota la tabella dei BP dopo conferma dell'utente."""
         if ConfirmationDialog.confirm(self, "Conferma", "Cancellare tutti i dati dalla lista?"):
             self.data_table.clear()
             self._save_data()
 
-    def _on_start(self, params_override: dict[str, Any] | None = None):
+    def _on_start(self, params_override: dict[str, Any] | None = None):  # noqa: ANN202
         """
         Prepara l'ambiente e avvia il worker del bot.
 
@@ -208,7 +208,7 @@ class PrenotaBPPanel(BaseBotPanel):
             return
 
         # Recupera dati e configura bot
-        from src.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot
+        from src.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot  # noqa: PLC0415
 
         username, password = self.get_credentials()
         config = config_manager.load_config()

@@ -42,7 +42,7 @@ class ExcelTableWidget(QTableWidget):
     _get_paste_start_pos = ClipboardMixin._get_paste_start_pos
     _paste_cell_data = ClipboardMixin._paste_cell_data
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
         """Inizializza la tabella configurando i trigger di modifica e la clipboard."""
         super().__init__(*args, **kwargs)
         self.auto_copy_headers = False
@@ -77,7 +77,7 @@ class ExcelTableWidget(QTableWidget):
                 it.setBackground(QBrush(color))
                 it.setForeground(QBrush(QColor("black")))
 
-    def keyPressEvent(self, event: Any) -> None:
+    def keyPressEvent(self, event: Any) -> None:  # noqa: ANN401, N802
         """Gestisce le scorciatoie da tastiera standard (Copia, Incolla, Canc)."""
         if event.matches(QKeySequence.StandardKey.Copy):
             self.copy_selection()  # type: ignore
@@ -101,7 +101,7 @@ class ExcelTableWidget(QTableWidget):
                         if it and (it.flags() & Qt.ItemFlag.ItemIsEditable):
                             it.setText("")
 
-    def contextMenuEvent(self, event: Any) -> None:
+    def contextMenuEvent(self, event: Any) -> None:  # noqa: ANN401, N802
         """Mostra il menu contestuale con opzioni di clipboard."""
         # Se riceve un QPoint (da customContextMenuRequested), lo gestisce
         if hasattr(event, "globalPos"):

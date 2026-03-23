@@ -5,7 +5,7 @@ class TelegramUI:
     """Static factory for creating Telegram Inline Keyboards."""
 
     @staticmethod
-    def get_main_keyboard():
+    def get_main_keyboard():  # noqa: ANN205
         """Returns the main menu keyboard."""
         return InlineKeyboardMarkup(
             [
@@ -21,12 +21,12 @@ class TelegramUI:
         )
 
     @staticmethod
-    def get_back_button(callback_data):
+    def get_back_button(callback_data):  # noqa: ANN001, ANN205
         """Returns a generic back button with dynamic callback."""
         return InlineKeyboardButton("🔙 Indietro", callback_data=callback_data)
 
     @staticmethod
-    def get_bots_menu():
+    def get_bots_menu():  # noqa: ANN205
         """Returns the Bots selection menu."""
         keyboard = [
             [InlineKeyboardButton("🏭 Portale Fornitori", callback_data="nav_portale")],
@@ -36,7 +36,7 @@ class TelegramUI:
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_db_menu():
+    def get_db_menu():  # noqa: ANN205
         """Returns the Database selection menu."""
         keyboard = [
             [InlineKeyboardButton("⏱️ Timbrature Isab", callback_data="db_info_timbrature")],
@@ -47,7 +47,7 @@ class TelegramUI:
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_utility_menu():
+    def get_utility_menu():  # noqa: ANN205
         """Returns the Utilities menu (Status, Screenshot, Settings)."""
         keyboard = [
             [
@@ -64,7 +64,7 @@ class TelegramUI:
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_portale_menu():
+    def get_portale_menu():  # noqa: ANN205
         """Returns the Portale Fornitori specific bot menu."""
         keyboard = [
             [InlineKeyboardButton("📥 Scarico TS", callback_data="menu_ts")],
@@ -77,7 +77,7 @@ class TelegramUI:
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_safework_menu():
+    def get_safework_menu():  # noqa: ANN205
         """Returns the SafeWork specific bot menu."""
         keyboard = [
             [InlineKeyboardButton("🛡️ Scarico PDL", callback_data="menu_pdl")],
@@ -86,18 +86,18 @@ class TelegramUI:
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_lyra_menu():
+    def get_lyra_menu():  # noqa: ANN205
         """Returns the Lyra AI menu."""
         return InlineKeyboardMarkup([[TelegramUI.get_back_button("menu_main")]])
 
     @staticmethod
-    def get_db_year_selection(years):
+    def get_db_year_selection(years):  # noqa: ANN001, ANN205
         """Returns a keyboard for selecting a year for DB queries."""
         keyboard = []
         row = []
         for y in sorted(years, reverse=True):
             row.append(InlineKeyboardButton(str(y), callback_data=f"db_year_strumentale_{y}"))
-            if len(row) == 3:
+            if len(row) == 3:  # noqa: PLR2004
                 keyboard.append(row)
                 row = []
         if row:
@@ -106,7 +106,7 @@ class TelegramUI:
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_pdl_menu(merge_all):
+    def get_pdl_menu(merge_all):  # noqa: ANN001, ANN205
         """Returns the PDL management menu with dynamic merge state."""
         merge_icon = "✅" if merge_all else "❌"
         keyboard = [
@@ -128,7 +128,7 @@ class TelegramUI:
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_ts_menu():
+    def get_ts_menu():  # noqa: ANN205
         """Returns the Timesheet (TS) management menu."""
         keyboard = [
             [InlineKeyboardButton("➕ OdA", callback_data="input_oda")],
@@ -142,7 +142,7 @@ class TelegramUI:
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_oda_details_menu():
+    def get_oda_details_menu():  # noqa: ANN205
         """Returns the OdA Details bot menu."""
         keyboard = [
             [InlineKeyboardButton("➕ OdA", callback_data="input_oda")],
@@ -156,7 +156,7 @@ class TelegramUI:
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_carico_menu():
+    def get_carico_menu():  # noqa: ANN205
         """Returns the Time Upload (Carico TS) menu."""
         return InlineKeyboardMarkup(
             [
@@ -166,7 +166,7 @@ class TelegramUI:
         )
 
     @staticmethod
-    def get_timbrature_menu():
+    def get_timbrature_menu():  # noqa: ANN205
         """Returns the Attendance (Timbrature) menu."""
         return InlineKeyboardMarkup(
             [
@@ -177,7 +177,7 @@ class TelegramUI:
         )
 
     @staticmethod
-    def get_prenota_bp_menu():
+    def get_prenota_bp_menu():  # noqa: ANN205
         """Returns the Buoni Pasto (BP) booking menu."""
         keyboard = [
             [InlineKeyboardButton("➕ Inserisci BP", callback_data="input_bp")],
@@ -187,7 +187,7 @@ class TelegramUI:
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_printer_selection_menu(printers, back_callback):
+    def get_printer_selection_menu(printers, back_callback):  # noqa: ANN001, ANN205
         """Returns a keyboard for selecting a printer."""
         keyboard = [
             [InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}")]
@@ -197,7 +197,7 @@ class TelegramUI:
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_confirm_merge_menu(noprint=False):
+    def get_confirm_merge_menu(noprint=False):  # noqa: ANN001, ANN205
         """Returns a confirmation dialog for merging files."""
         suffix = "_noprint" if noprint else "_print"
         return InlineKeyboardMarkup(
@@ -209,7 +209,7 @@ class TelegramUI:
         )
 
     @staticmethod
-    def get_screenshot_menu():
+    def get_screenshot_menu():  # noqa: ANN205
         """Returns the screenshot type selection menu."""
         keyboard = [
             [
@@ -221,7 +221,7 @@ class TelegramUI:
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_power_menu():
+    def get_power_menu():  # noqa: ANN205
         """Returns the system maintenance/power menu."""
         keyboard = [
             [InlineKeyboardButton("🔄 Riavvia App", callback_data="app_restart")],
@@ -231,7 +231,7 @@ class TelegramUI:
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_settings_menu(fornitori):
+    def get_settings_menu(fornitori):  # noqa: ANN001, ANN205
         """Returns the settings menu, including provider selection."""
         keyboard = [[InlineKeyboardButton(f"🏢 {f}", callback_data=f"set_forn_{f}")] for f in fornitori[:6]]
         keyboard.extend(
@@ -244,7 +244,7 @@ class TelegramUI:
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_autopilot_menu():
+    def get_autopilot_menu():  # noqa: ANN205
         """Returns the Autopilot configuration menu."""
         keyboard = [
             [InlineKeyboardButton("🔄 Toggle", callback_data="toggle_autopilot")],
@@ -254,7 +254,7 @@ class TelegramUI:
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_printers_menu(printers):
+    def get_printers_menu(printers):  # noqa: ANN001, ANN205
         """Returns list of printers for configuration."""
         keyboard = [
             [InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"set_print_{p[:30]}")] for p in printers[:6]

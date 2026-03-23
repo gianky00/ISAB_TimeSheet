@@ -45,7 +45,7 @@ class HoverPulseFrame(QFrame):
     Migliora il feedback visivo dell'interfaccia.
     """
 
-    def __init__(self, accent_color: str | None = None, parent=None):
+    def __init__(self, accent_color: str | None = None, parent=None):  # noqa: ANN001, ANN204
         """
         Inizializza il frame con il colore di accento specificato.
 
@@ -70,23 +70,23 @@ class HoverPulseFrame(QFrame):
         return self._pulse_val
 
     @pulse_value.setter  # type: ignore[no-redef]
-    def pulse_value(self, v: float):
+    def pulse_value(self, v: float):  # noqa: ANN202
         """Imposta il valore della pulsazione e aggiorna il widget."""
         self._pulse_val = v
         self.update()
 
-    def enterEvent(self, event):
+    def enterEvent(self, event):  # noqa: ANN001, ANN201, N802
         """Avvia l'animazione di pulsazione all'ingresso del mouse."""
         self._anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event):
+    def leaveEvent(self, event):  # noqa: ANN001, ANN201, N802
         """Ferma l'animazione di pulsazione all'uscita del mouse."""
         self._anim.stop()
         self.pulse_value = 1.0  # type: ignore[method-assign]
         super().leaveEvent(event)
 
-    def paintEvent(self, event):
+    def paintEvent(self, event):  # noqa: ANN001, ANN201, N802
         """Disegna il bordo inferiore pulsante."""
         super().paintEvent(event)
         painter = QPainter(self)
@@ -109,7 +109,7 @@ class DataTable(QWidget):
     Supporta il filtraggio in tempo reale e la colorazione semantica delle righe.
     """
 
-    rowDoubleClicked = pyqtSignal(int, dict)  # row_index, row_data
+    rowDoubleClicked = pyqtSignal(int, dict)  # row_index, row_data  # noqa: N815
     """Segnale emesso al doppio click su una riga."""
 
     # Status colors
@@ -252,7 +252,7 @@ class DataTable(QWidget):
     def _apply_table_style(self) -> None:
         """Applica stili specifici alla tabella (opzionale, gestito principalmente da QSS)."""
 
-    def setData(self, data: list[dict[str, Any]]) -> None:
+    def setData(self, data: list[dict[str, Any]]) -> None:  # noqa: N802
         """
         Popola la tabella con i dati forniti.
 
@@ -330,7 +330,7 @@ class DataTable(QWidget):
         if 0 <= row < len(self._data):
             self.rowDoubleClicked.emit(row, self._data[row])
 
-    def getSelectedRows(self) -> list[dict[str, Any]]:
+    def getSelectedRows(self) -> list[dict[str, Any]]:  # noqa: N802
         """
         Restituisce i dati di tutte le righe attualmente selezionate.
 

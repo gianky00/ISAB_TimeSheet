@@ -16,25 +16,25 @@ class MockBot(BaseBot):
     def description(self):
         return "Bot di test"
 
-    def run(self, data):
+    def run(self, data):  # noqa: ANN001
         return True
 
     @staticmethod
-    def get_columns():
+    def get_columns():  # noqa: ANN205
         return []
 
-    def _handle_unsaved_changes_popup(self):
+    def _handle_unsaved_changes_popup(self):  # noqa: ANN202
         pass
 
 
 class TestBotResilienceAdvanced:
     @pytest.fixture
-    def bot(self, tmp_path, mocker):
+    def bot(self, tmp_path, mocker):  # noqa: ANN001
         """Setup del bot con percorsi mockati."""
         mocker.patch("src.core.config_manager.CONFIG_DIR", tmp_path)
         return MockBot("user", "pass")
 
-    def test_save_error_state_generation(self, bot, tmp_path):
+    def test_save_error_state_generation(self, bot, tmp_path):  # noqa: ANN001
         """Test: Verifica la generazione fisica di screenshot e HTML al crash."""
         mock_driver = MagicMock()
         mock_driver.page_source = "<html>Error</html>"
@@ -58,7 +58,7 @@ class TestBotResilienceAdvanced:
         assert len(htmls) == 1
         assert htmls[0].read_text(encoding="utf-8") == "<html>Error</html>"
 
-    def test_safe_login_retry_logic(self, bot):
+    def test_safe_login_retry_logic(self, bot):  # noqa: ANN001
         """Test: Verifica che il bot riprovi il login in caso di fallimento temporaneo."""
         with (
             patch.object(bot, "_init_driver"),
@@ -71,10 +71,10 @@ class TestBotResilienceAdvanced:
             res = bot._safe_login_with_retry(max_retries=2)
 
             assert res is True
-            assert mock_login.call_count == 2
+            assert mock_login.call_count == 2  # noqa: PLR2004
             assert mock_cleanup.call_count == 1  # Chiamato dopo il primo fallimento
 
-    def test_execute_interrupted_error(self, bot):
+    def test_execute_interrupted_error(self, bot):  # noqa: ANN001
         """Test: Gestione corretta dell'interruzione manuale dell'utente."""
         with patch.object(bot, "_safe_login_with_retry", side_effect=InterruptedError("Stop")):
             result = bot.execute([{"data": 1}])
@@ -82,7 +82,7 @@ class TestBotResilienceAdvanced:
             assert result is False
             assert bot.status == BotStatus.STOPPED
 
-    def test_execute_fatal_error_handling(self, bot):
+    def test_execute_fatal_error_handling(self, bot):  # noqa: ANN001
         """Test: Un errore fatale deve attivare il salvataggio dello stato e impostare lo stato ERROR."""
         with (
             patch.object(bot, "_safe_login_with_retry", return_value=True),
@@ -95,13 +95,13 @@ class TestBotResilienceAdvanced:
                 assert bot.status == BotStatus.ERROR
                 mock_save.assert_called_once_with("Crash!")
 
-    def test_validate_data_empty(self, bot):
+    def test_validate_data_empty(self, bot):  # noqa: ANN001
         """Test: Validazione fallita se i dati sono vuoti."""
         valid, msg = bot.validate_data([])
         assert valid is False
         assert "Nessun dato" in msg
 
-    def test_check_stop_raises(self, bot):
+    def test_check_stop_raises(self, bot):  # noqa: ANN001
         """Test: _check_stop solleva InterruptedError se richiesto stop."""
         bot.request_stop()
         with pytest.raises(InterruptedError):

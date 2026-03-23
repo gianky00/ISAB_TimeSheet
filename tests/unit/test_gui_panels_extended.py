@@ -8,10 +8,10 @@ from src.gui.panels.notifications_panel import NotificationsPanel
 
 class TestGUIPanelsExtended:
     @pytest.fixture
-    def app(self, qapp):
+    def app(self, qapp):  # noqa: ANN001
         return qapp
 
-    def test_notifications_panel(self, qtbot):
+    def test_notifications_panel(self, qtbot):  # noqa: ANN001
         with patch("src.core.notification_manager.NotificationManager.instance") as mock_inst:
             mock_manager = MagicMock()
             mock_inst.return_value = mock_manager
@@ -31,7 +31,7 @@ class TestGUIPanelsExtended:
             # The layout has at least the notification and the spacer
             assert panel.scroll_layout.count() >= 1
 
-    def test_help_panel_navigation(self, qtbot):
+    def test_help_panel_navigation(self, qtbot):  # noqa: ANN001
         panel = HelpPanel()
         qtbot.addWidget(panel)
         assert panel.index_list.count() > 0
@@ -42,7 +42,7 @@ class TestGUIPanelsExtended:
         panel._filter_index("installazione")
         assert panel.search_edit.text() == "installazione"
 
-    def test_notifications_clear_all(self, qtbot):
+    def test_notifications_clear_all(self, qtbot):  # noqa: ANN001
         with patch("src.core.notification_manager.NotificationManager.instance") as mock_inst:
             mock_manager = MagicMock()
             mock_inst.return_value = mock_manager

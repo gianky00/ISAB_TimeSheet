@@ -60,14 +60,14 @@ class TimesheetProcessor:
 
             TimesheetProcessor._cleanup_source(file_path, dest_path)
 
-            return True, f"Salvato in: {dest_path.name}"
+            return True, f"Salvato in: {dest_path.name}"  # noqa: TRY300
 
         except Exception as e:
-            logger.error(f"Errore elaborazione {file_path.name}: {e}")
+            logger.error(f"Errore elaborazione {file_path.name}: {e}")  # noqa: TRY400
             return False, str(e)
 
     @staticmethod
-    def _analyze_pos_column(ws: Any) -> tuple[set[str], str]:
+    def _analyze_pos_column(ws: Any) -> tuple[set[str], str]:  # noqa: ANN401
         """Analizza la colonna B per contare i POS univoci e pulire il primo valore."""
         pos_values: set[str] = set()
         first_pos_cleaned = ""
@@ -104,7 +104,7 @@ class TimesheetProcessor:
         return dest_path
 
     @staticmethod
-    def _apply_transformations(ws: Any) -> None:
+    def _apply_transformations(ws: Any) -> None:  # noqa: ANN401
         """Applica tutte le modifiche strutturali al foglio di lavoro."""
         # 1. Rinomina Intestazioni
         headers = {
@@ -144,7 +144,7 @@ class TimesheetProcessor:
         TimesheetProcessor._autofit_columns(ws)
 
     @staticmethod
-    def _autofit_columns(ws: Any) -> None:
+    def _autofit_columns(ws: Any) -> None:  # noqa: ANN401
         """Regola la larghezza delle colonne in base al contenuto."""
         for col in ws.columns:
             max_len = 0
@@ -152,8 +152,7 @@ class TimesheetProcessor:
             for cell in col:
                 with suppress(Exception):
                     val_len = len(str(cell.value))
-                    if val_len > max_len:
-                        max_len = val_len
+                    max_len = max(max_len, val_len)
             ws.column_dimensions[col_letter].width = (max_len + 2) * 1.2
 
     @staticmethod

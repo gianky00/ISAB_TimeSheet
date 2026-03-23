@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class ConsuntivoController:
     """Controller per l'orchestrazione delle attività sui Consuntivi."""
 
-    def __init__(self):
+    def __init__(self):  # noqa: ANN204
         self.base_network = r"\\192.168.11.251\Database_Tecnico_SMI\Contabilita' strumentale"
 
     def get_dynamic_path(self, year: str) -> str:
@@ -30,7 +30,7 @@ class ConsuntivoController:
             manager = PreventiviGeneratorManager("")
             return manager.get_next_progressive(path)
         except Exception as e:
-            logger.error(f"Errore calcolo progressivo: {e}")
+            logger.error(f"Errore calcolo progressivo: {e}")  # noqa: TRY400
             return "001"
 
     def get_config_options(self) -> dict[str, list[str]]:

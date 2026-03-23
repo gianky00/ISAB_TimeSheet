@@ -26,13 +26,13 @@ class TelegramUIBridge(QObject):
     Delega l'esecuzione effettiva ai sottomoduli specializzati in src/core/telegram/bridge/.
     """
 
-    def __init__(self, main_window: Any) -> None:
+    def __init__(self, main_window: Any) -> None:  # noqa: ANN401
         super().__init__()
         self.mw = main_window
         self.telegram = main_window.telegram
 
         # Bridge GUI per isolare PyQt dal CORE
-        from src.gui.main_window.telegram_bridge import TelegramGUIBridge
+        from src.gui.main_window.telegram_bridge import TelegramGUIBridge  # noqa: PLC0415
 
         self.gui_bridge = TelegramGUIBridge(self.mw)
 

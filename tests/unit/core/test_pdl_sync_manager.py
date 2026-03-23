@@ -11,7 +11,7 @@ class TestProgrammingSyncManager:
         return ProgrammingSyncManager("master.xlsx")
 
     @patch("src.core.importers.pdl_sync_manager.win32com.client")
-    def test_get_excel_workbook_already_open(self, mock_win32, manager):
+    def test_get_excel_workbook_already_open(self, mock_win32, manager):  # noqa: ANN001
         """Verifica l'aggancio a un'istanza Excel già aperta."""
         mock_app = mock_win32.GetActiveObject.return_value
         mock_wb = MagicMock()
@@ -24,7 +24,7 @@ class TestProgrammingSyncManager:
         assert manager._is_already_open is True
         assert manager.wb_master == mock_wb
 
-    def test_map_master_pdls_logic(self, manager):
+    def test_map_master_pdls_logic(self, manager):  # noqa: ANN001
         """Verifica la mappatura dei PDL esistenti dai fogli Excel."""
         manager.excel_app = MagicMock()
         manager.wb_master = MagicMock()
@@ -45,11 +45,11 @@ class TestProgrammingSyncManager:
 
         assert "PDL_1" in mappa
         assert mappa["PDL_1"]["stato"] == "EMESSO"
-        assert mappa["PDL_1"]["riga"] == 4
-        assert mappa["PDL_2"]["riga"] == 5
+        assert mappa["PDL_1"]["riga"] == 4  # noqa: PLR2004
+        assert mappa["PDL_2"]["riga"] == 5  # noqa: PLR2004
 
     @patch("openpyxl.load_workbook")
-    def test_analyze_downloaded_file_diff(self, mock_load_wb, manager):
+    def test_analyze_downloaded_file_diff(self, mock_load_wb, manager):  # noqa: ANN001
         """Verifica il rilevamento delle differenze tra report e master."""
         # Setup Master Map
         mappa_pdl = {
@@ -77,7 +77,7 @@ class TestProgrammingSyncManager:
         assert "PDL_UPDATING" in modif_stato
         assert modif_stato["PDL_UPDATING"] == "RICHIESTO"
 
-    def test_cleanup_closes_excel(self, manager):
+    def test_cleanup_closes_excel(self, manager):  # noqa: ANN001
         """Verifica la chiusura dell'app Excel se aperta dal manager."""
         mock_app = MagicMock()
         mock_wb = MagicMock()

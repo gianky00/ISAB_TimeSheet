@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 
-def get_site_packages():
+def get_site_packages():  # noqa: ANN201
     """Retrieves the site-packages directory path from sys.path."""
     # Attempt to find site-packages directory
     for path_str in sys.path:
@@ -19,7 +19,7 @@ def get_site_packages():
     return None
 
 
-def clean_invalid_dists():
+def clean_invalid_dists():  # noqa: ANN201
     """Scans and removes invalid distributions (starting with ~) from site-packages."""
     site_pkg = get_site_packages()
     if not site_pkg:

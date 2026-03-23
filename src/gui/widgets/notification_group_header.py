@@ -24,7 +24,7 @@ class NotificationGroupHeader(QFrame):
     # Signal
     toggled = pyqtSignal(str, bool)  # group_key, is_expanded
 
-    def __init__(
+    def __init__(  # noqa: ANN204
         self,
         title: str,
         group_key: str,
@@ -120,7 +120,7 @@ class NotificationGroupHeader(QFrame):
         )
         layout.addWidget(self.arrow_btn)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
         """Toggle expanded state on click."""
         self._is_expanded = not self._is_expanded
         self.arrow_btn.setText("SCENDI" if self._is_expanded else "ESPANDI")

@@ -11,7 +11,7 @@ from src.utils.security import password_manager
 # Usa pytest invece di unittest
 class TestConfigSecurity:
     @pytest.fixture(autouse=True)
-    def setup_method(self, setup_clean_config):
+    def setup_method(self, setup_clean_config):  # noqa: ANN001
         """
         Questa fixture usa setup_clean_config per creare un ambiente pulito
         e applica patch aggiuntive necessarie per questo test.

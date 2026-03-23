@@ -35,7 +35,7 @@ class DashboardPanel(QWidget):
     Sostituisce le card statiche con indicatori dinamici di valore (ROI) e contesto (Meteo/PDL).
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None):  # noqa: ANN001, ANN204
         super().__init__(parent)
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -81,11 +81,11 @@ class DashboardPanel(QWidget):
         self.timer.timeout.connect(self.refresh_live_data)
         self.timer.start(30000)  # 30 seconds
 
-    def refresh_data(self):
+    def refresh_data(self):  # noqa: ANN201
         """Esegue un aggiornamento forzato di tutti i widget della dashboard."""
         self.refresh_live_data()
 
-    def refresh_live_data(self):
+    def refresh_live_data(self):  # noqa: ANN201
         """Aggiorna i dati dinamici dei widget senza ricostruire la UI."""
         with suppress(Exception):
             if hasattr(self, "activity_feed"):
@@ -103,7 +103,7 @@ class DashboardPanel(QWidget):
             if hasattr(self, "card_pdl") and hasattr(self.card_pdl, "refresh_stats"):
                 self.card_pdl.refresh_stats()
 
-    def _setup_ui(self):
+    def _setup_ui(self):  # noqa: ANN202
         """Inizializza e posiziona i widget della dashboard."""
         # -1. Multi Window Status Card
         self.multi_window_card = MultiWindowStatusWidget()
@@ -204,7 +204,7 @@ class DashboardPanel(QWidget):
 
             mw.service_controller._schedule_bot_with_parallelism(bot_id, panel, site, log_msg)
 
-    def _handle_quick_action(self, key):
+    def _handle_quick_action(self, key):  # noqa: ANN001, ANN202
         main_window = self.window()
         if main_window is None or not hasattr(main_window, "navigation_controller"):
             return

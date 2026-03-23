@@ -258,9 +258,9 @@ class QuickActions(QWidget):
 
     def _show_context_menu(self, pos: QPoint) -> None:
         """Mostra menu contestuale per personalizzare."""
-        from PyQt6.QtWidgets import QMenu
+        from PyQt6.QtWidgets import QMenu  # noqa: PLC0415
 
-        from src.gui.dialogs.quick_actions_config import QuickActionsConfigDialog
+        from src.gui.dialogs.quick_actions_config import QuickActionsConfigDialog  # noqa: PLC0415
 
         menu = QMenu(self)
 
@@ -324,7 +324,7 @@ class QuickActions(QWidget):
 
         # Calcola quanti pulsanti per riga (max 5 per riga per evitare scroll orizzontale)
         num_actions = len(saved_keys)
-        MAX_BUTTONS_PER_ROW = 5  # Limite per evitare scroll orizzontale
+        MAX_BUTTONS_PER_ROW = 5  # Limite per evitare scroll orizzontale  # noqa: N806
 
         buttons_per_row = min(num_actions, MAX_BUTTONS_PER_ROW)
 
@@ -347,6 +347,6 @@ class QuickActions(QWidget):
                     row += 1
                     # Nessun limite di righe, l'utente può vedere tutte le azioni configurate
 
-    def _create_action_handler(self, key: str) -> Any:
+    def _create_action_handler(self, key: str) -> Any:  # noqa: ANN401
         """Crea un handler per il click che cattura correttamente il valore di key."""
         return lambda: self.action_clicked.emit(key)

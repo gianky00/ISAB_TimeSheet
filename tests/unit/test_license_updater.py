@@ -23,7 +23,7 @@ def grace_key():
 
 
 @pytest.fixture
-def mock_license_dir(tmp_path):
+def mock_license_dir(tmp_path):  # noqa: ANN001
     license_dir = tmp_path / "Licenza"
     license_dir.mkdir()
     return license_dir
@@ -35,7 +35,7 @@ def test_get_github_token():
     assert len(token) > 0
 
 
-def test_get_license_dir(mocker):
+def test_get_license_dir(mocker):  # noqa: ANN001
     mocker.patch("src.core.config_manager.get_data_path", return_value="/fake/path")
     path = get_license_dir()
     # Convert to str for substring assertion
@@ -43,7 +43,7 @@ def test_get_license_dir(mocker):
     assert "Licenza" in str(path)
 
 
-def test_update_grace_timestamp(mocker, mock_license_dir, grace_key):
+def test_update_grace_timestamp(mocker, mock_license_dir, grace_key):  # noqa: ANN001
     mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
     fixed_now = datetime(2026, 1, 1, tzinfo=UTC)
     mocker.patch("src.core.time_manager.get_trusted_time", return_value=(fixed_now, True))
@@ -61,7 +61,7 @@ def test_update_grace_timestamp(mocker, mock_license_dir, grace_key):
     assert datetime.fromisoformat(decrypted_data) == fixed_now
 
 
-def test_check_grace_period_valid(mocker, mock_license_dir, grace_key):
+def test_check_grace_period_valid(mocker, mock_license_dir, grace_key):  # noqa: ANN001
     mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
 
     # Create valid token (1 day ago)
@@ -81,7 +81,7 @@ def test_check_grace_period_valid(mocker, mock_license_dir, grace_key):
     assert check_grace_period() is True
 
 
-def test_check_grace_period_expired(mocker, mock_license_dir, grace_key):
+def test_check_grace_period_expired(mocker, mock_license_dir, grace_key):  # noqa: ANN001
     mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
 
     # Create expired token (4 days ago)
@@ -102,7 +102,7 @@ def test_check_grace_period_expired(mocker, mock_license_dir, grace_key):
         check_grace_period()
 
 
-def test_check_emergency_grace_period_new(mocker, mock_license_dir):
+def test_check_emergency_grace_period_new(mocker, mock_license_dir):  # noqa: ANN001
     mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
     mocker.patch(
         "src.core.time_manager.get_trusted_time",
@@ -111,11 +111,11 @@ def test_check_emergency_grace_period_new(mocker, mock_license_dir):
 
     allowed, _msg, days = check_emergency_grace_period()
     assert allowed is True
-    assert days == 3
+    assert days == 3  # noqa: PLR2004
     assert os.path.exists(os.path.join(mock_license_dir, "emergency_grace.token"))
 
 
-def test_is_license_folder_empty(mocker, mock_license_dir):
+def test_is_license_folder_empty(mocker, mock_license_dir):  # noqa: ANN001
     mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
 
     # Initially empty
@@ -130,7 +130,7 @@ def test_is_license_folder_empty(mocker, mock_license_dir):
     assert is_license_folder_empty() is False
 
 
-def test_run_update_success(mocker, mock_license_dir):
+def test_run_update_success(mocker, mock_license_dir):  # noqa: ANN001
     mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
     mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE_HW_ID")
     # Mock status locale come EXPIRED per forzare il download
@@ -139,7 +139,7 @@ def test_run_update_success(mocker, mock_license_dir):
         return_value=("EXPIRED", "Expired"),
     )
 
-    def mock_requests_get(url, **kwargs):
+    def mock_requests_get(url, **kwargs):  # noqa: ANN001, ANN003, ANN202
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         if url.endswith("/manifest.json"):
@@ -165,7 +165,7 @@ def test_run_update_success(mocker, mock_license_dir):
     assert os.path.exists(os.path.join(mock_license_dir, "manifest.json"))
 
 
-def test_run_update_fail(mocker, mock_license_dir):
+def test_run_update_fail(mocker, mock_license_dir):  # noqa: ANN001
     mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
     mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE_HW_ID")
 

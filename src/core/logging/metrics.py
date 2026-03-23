@@ -14,7 +14,7 @@ from .config import get_config
 class PerformanceMetric:
     """Singola metrica di performance."""
 
-    def __init__(
+    def __init__(  # noqa: ANN204
         self,
         operation: str,
         duration_ms: float,
@@ -42,7 +42,7 @@ class MetricsSink:
     Scrive metriche in file JSONL (newline-delimited JSON).
     """
 
-    def __init__(self, config: Any = None) -> None:
+    def __init__(self, config: Any = None) -> None:  # noqa: ANN401
         self.config = config or get_config()
         self.metrics_file = self.config.metrics_dir / "performance.jsonl"
 
@@ -159,7 +159,7 @@ class PerformanceTracker:
         self._in_memory_metrics[operation].append(duration_ms)
 
         # Mantieni solo ultimi 1000 valori in memory
-        if len(self._in_memory_metrics[operation]) > 1000:
+        if len(self._in_memory_metrics[operation]) > 1000:  # noqa: PLR2004
             self._in_memory_metrics[operation] = self._in_memory_metrics[operation][-1000:]
 
     def get_statistics(self, operation: str) -> dict[str, float] | None:

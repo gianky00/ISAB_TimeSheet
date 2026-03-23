@@ -25,7 +25,7 @@ class WorkflowStepButton(QFrame):
         COMPLETED = "completed"
         ERROR = "error"
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         step_id: str,
         step_number: int,
@@ -110,7 +110,7 @@ class WorkflowStepButton(QFrame):
         self._glow_opacity = value
         self.update()
 
-    glowOpacity = pyqtProperty(float, fget=get_glow_opacity, fset=set_glow_opacity)
+    glowOpacity = pyqtProperty(float, fget=get_glow_opacity, fset=set_glow_opacity)  # noqa: N815
 
     def set_state(self, state: str) -> None:
         """
@@ -205,13 +205,13 @@ class WorkflowStepButton(QFrame):
         shadow.setColor(cast("QColor", s["shadow_color"]))
         self.setGraphicsEffect(shadow)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
         """Emette il segnale di clic quando viene premuto il tasto sinistro del mouse."""
         if event and event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self._step_id)
         super().mousePressEvent(event)
 
-    def enterEvent(self, event: Any) -> None:
+    def enterEvent(self, event: Any) -> None:  # noqa: ANN401, N802
         """Evidenzia lo step con un'ombra più marcata al passaggio del mouse."""
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(24)
@@ -220,7 +220,7 @@ class WorkflowStepButton(QFrame):
         self.setGraphicsEffect(shadow)
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any) -> None:
+    def leaveEvent(self, event: Any) -> None:  # noqa: ANN401, N802
         """Ripristina lo stile originale all'uscita del mouse."""
         self._apply_style()
         super().leaveEvent(event)
@@ -273,7 +273,7 @@ class WorkflowMapWidget(QWidget):
         self._step_buttons: dict[str, WorkflowStepButton] = {}
         self._setup_ui()
 
-    def _setup_ui(self) -> None:
+    def _setup_ui(self) -> None:  # noqa: PLR0915
         """Costruisce il layout della pipeline con step e azioni complesse."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)

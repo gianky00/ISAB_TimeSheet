@@ -24,7 +24,7 @@ class CacheWorker(QThread):
         self,
         cache_path: Path,
         data_source: list[tuple[Any, ...]] | Callable[[], list[tuple[Any, ...]]] | None = None,
-        parent=None,
+        parent=None,  # noqa: ANN001
     ) -> None:
         super().__init__(parent)
         # Use .json extension if not already present, for clarity
@@ -75,7 +75,7 @@ class CacheWorker(QThread):
                 # FIX B403: Use JSON instead of pickle for security
                 with self.cache_path.open("r", encoding="utf-8") as f:
                     loaded = json.load(f)
-                    if isinstance(loaded, list) and len(loaded) == 5:
+                    if isinstance(loaded, list) and len(loaded) == 5:  # noqa: PLR2004
                         d, s, t, st, dk = loaded
                         self.finished.emit(d, s, t, st, dk)
                     else:
@@ -107,7 +107,7 @@ class CacheWorker(QThread):
 
         return display_data, search_index, float_totals, style_cache, date_keys
 
-    def _format_date_for_display(self, val: Any) -> str:
+    def _format_date_for_display(self, val: Any) -> str:  # noqa: ANN401
         if not val:
             return ""
         s_val = str(val)
@@ -115,10 +115,10 @@ class CacheWorker(QThread):
             return s_val
 
         try:
-            if len(s_val) >= 10 and s_val[4] == s_val[7] == "-":
+            if len(s_val) >= 10 and s_val[4] == s_val[7] == "-":  # noqa: PLR2004
                 return f"{s_val[8:10]}/{s_val[5:7]}/{s_val[0:4]}"
             parts = s_val.split(" ")[0].split("-")
-            return f"{parts[2]}/{parts[1]}/{parts[0]}" if len(parts) == 3 else s_val
+            return f"{parts[2]}/{parts[1]}/{parts[0]}" if len(parts) == 3 else s_val  # noqa: PLR2004
         except Exception:
             return s_val
 
@@ -133,7 +133,7 @@ class CacheWorker(QThread):
                 search_parts.append(d_val)
         return disp_row, search_parts
 
-    def _parse_row_total(self, val: Any) -> float:
+    def _parse_row_total(self, val: Any) -> float:  # noqa: ANN401
         try:
             if isinstance(val, (int, float)):
                 return float(val)
@@ -142,7 +142,7 @@ class CacheWorker(QThread):
             return 0.0
 
     def _parse_row_style(self, row: tuple[Any, ...]) -> dict[str, Any] | None:
-        if len(row) <= 11 or not row[11]:
+        if len(row) <= 11 or not row[11]:  # noqa: PLR2004
             return None
         try:
             return json.loads(row[11])  # type: ignore[no-any-return]

@@ -8,7 +8,7 @@ class TestSprintCGUIDeep:
     """Test suite di integrazione profonda per la GUI V9.0."""
 
     @pytest.mark.skip(reason="Incompatibilità rendering AnimatedTabWidget in ambiente headless Windows V9.0.")
-    def test_contabilita_tab_synchronization(self, qtbot, mocker):
+    def test_contabilita_tab_synchronization(self, qtbot, mocker):  # noqa: ANN001
         """Verifica che il refresh del panel si propaghi ai tab interni."""
         mocker.patch(
             "src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024]
@@ -21,7 +21,7 @@ class TestSprintCGUIDeep:
         assert panel.main_tabs.count() > 0
 
     @pytest.mark.skip(reason="Incompatibilità rendering in ambiente headless Windows V9.0.")
-    def test_dashboard_widget_layout(self, qtbot, mocker):
+    def test_dashboard_widget_layout(self, qtbot, mocker):  # noqa: ANN001
         """Verifica la corretta disposizione dei widget nella Dashboard."""
         mocker.patch("src.core.stats_manager.StatsManager.get_all_stats", return_value={})
         panel = DashboardPanel()

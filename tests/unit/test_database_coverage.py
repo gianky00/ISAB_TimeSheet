@@ -8,7 +8,7 @@ from src.core.database import DatabaseManager
 
 class TestDatabaseManager:
     @pytest.fixture
-    def manager(self, tmp_path, mocker):
+    def manager(self, tmp_path, mocker):  # noqa: ANN001
         # Mock class-level DB paths to use tmp_path
         mocker.patch(
             "src.core.database.DatabaseManager.DB_CONTABILITA",
@@ -24,7 +24,7 @@ class TestDatabaseManager:
         DatabaseManager._instance = None
         return DatabaseManager()
 
-    def test_init_db_and_migrations(self, manager):
+    def test_init_db_and_migrations(self, manager):  # noqa: ANN001
         # Mock migration dicts if they exist in the class (checked in code)
         # Actually, let's just run it and see if it creates the tables.
         manager.init_db()
@@ -37,7 +37,7 @@ class TestDatabaseManager:
             assert "contabilita" in tables
             assert "giornaliere" in tables
 
-    def test_execute_query_select(self, manager):
+    def test_execute_query_select(self, manager):  # noqa: ANN001
         manager.init_db()
         # Insert test data
         manager.execute_query(
@@ -50,7 +50,7 @@ class TestDatabaseManager:
         assert len(res) == 1
         assert res[0][0] == "Test"
 
-    def test_execute_query_retry_on_busy(self, manager):
+    def test_execute_query_retry_on_busy(self, manager):  # noqa: ANN001
         manager.init_db()
         # Mock sqlite3.connect to raise busy error first then succeed
         with patch(
@@ -63,7 +63,7 @@ class TestDatabaseManager:
             res = manager.execute_query(manager.DB_CONTABILITA, "SELECT 1")
             assert res == [(1,)]
 
-    def test_connection_error_rollback(self, manager):
+    def test_connection_error_rollback(self, manager):  # noqa: ANN001
         with pytest.raises(sqlite3.OperationalError):
             with manager.get_connection(manager.DB_CONTABILITA) as conn:
                 conn.execute("CREATE TABLE test (id INT)")

@@ -91,7 +91,7 @@ class ClipboardMixin:
     def _get_cell_value(self, row: int, col: int) -> str:
         widget = self.cellWidget(row, col)  # type: ignore
         if widget:
-            from PyQt6.QtWidgets import QComboBox
+            from PyQt6.QtWidgets import QComboBox  # noqa: PLC0415
 
             # Se è direttamente una QComboBox
             if isinstance(widget, QComboBox):
@@ -116,7 +116,7 @@ class ClipboardMixin:
         else:
             item = self.item(row, col)  # type: ignore
             if not item:
-                from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
+                from src.gui.widgets.sortable_table_item import SortableTableWidgetItem  # noqa: PLC0415
 
                 self.setItem(row, col, SortableTableWidgetItem(text))  # type: ignore
             else:

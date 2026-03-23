@@ -37,7 +37,7 @@ class ReportHistory:
         cls._ensure_file()
         try:
             data: dict[str, Any] = json.loads(cls.HISTORY_FILE.read_text(encoding="utf-8"))
-            return data
+            return data  # noqa: TRY300
         except (json.JSONDecodeError, FileNotFoundError) as e:
             logger.warning(f"Errore caricamento storico report: {e}")
             return {"last_report": None, "history": []}
@@ -49,7 +49,7 @@ class ReportHistory:
         try:
             cls.HISTORY_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
         except Exception as e:
-            logger.error(f"Errore salvataggio storico report: {e}")
+            logger.error(f"Errore salvataggio storico report: {e}")  # noqa: TRY400
 
     @classmethod
     def save_report(cls, warning_list: list[dict[str, Any]], expired_list: list[dict[str, Any]]) -> None:
@@ -131,7 +131,7 @@ class ReportHistory:
                 "last_expired_count": last_report.get("expired_count", 0),
             }
         except Exception as e:
-            logger.error(f"Errore calcolo trend: {e}")
+            logger.error(f"Errore calcolo trend: {e}")  # noqa: TRY400
             return None
 
     @classmethod

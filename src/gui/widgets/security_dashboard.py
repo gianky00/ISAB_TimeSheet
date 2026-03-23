@@ -34,7 +34,7 @@ class SecurityDashboard(QWidget):
     Visualizza statistiche, grafici semplificati e log critici.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None):  # noqa: ANN001, ANN204
         super().__init__(parent)
         self.audit_manager = AuditManager.instance()
         self.setStyleSheet(TOOLTIP_CSS)
@@ -56,7 +56,7 @@ class SecurityDashboard(QWidget):
         # Timer single shot per caricamento iniziale
         QTimer.singleShot(100, self.refresh)
 
-    def _setup_ui(self):
+    def _setup_ui(self):  # noqa: ANN202
         layout = QVBoxLayout(self)
         layout.setSpacing(20)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -125,14 +125,14 @@ class SecurityDashboard(QWidget):
         )
         layout.addWidget(self.log_area)
 
-    def refresh(self):
+    def refresh(self):  # noqa: ANN201
         """Aggiorna tutti i componenti della dashboard (KPI, Grafico, Log)."""
         stats = self.audit_manager.get_stats_by_day(days=7)
         self._update_kpi(stats)
         self._update_chart(stats)
         self._update_logs()
 
-    def _update_kpi(self, stats):
+    def _update_kpi(self, stats):  # noqa: ANN001, ANN202
         # Calcola totali
         total_err = sum(d.get("error", 0) for d in stats.values())
         total_warn = sum(d.get("warning", 0) for d in stats.values())
@@ -157,7 +157,7 @@ class SecurityDashboard(QWidget):
             self._create_kpi_card("Warning (7gg)", str(total_warn), COLORS["warning_yellow"])
         )
 
-    def _create_kpi_card(self, title, value, color):
+    def _create_kpi_card(self, title, value, color):  # noqa: ANN001, ANN202
         card = QFrame()
         card.setStyleSheet(
             f"""
@@ -174,7 +174,7 @@ class SecurityDashboard(QWidget):
         layout.addWidget(v)
         return card
 
-    def _update_chart(self, stats):
+    def _update_chart(self, stats):  # noqa: ANN001, ANN202
         while self.chart_container.count():
             item = self.chart_container.takeAt(0)
             if item:
@@ -185,8 +185,7 @@ class SecurityDashboard(QWidget):
         max_val = 0
         for d in stats.values():
             tot = d.get("error", 0) + d.get("success", 0) + d.get("warning", 0)
-            if tot > max_val:
-                max_val = tot
+            max_val = max(max_val, tot)
 
         if max_val == 0:
             max_val = 1
@@ -203,8 +202,7 @@ class SecurityDashboard(QWidget):
 
             # Simple stack bar logic: we just show total height relative to max
             height = int((total / max_val) * 100)  # px relative
-            if height < 5:
-                height = 5
+            height = max(height, 5)
 
             bar = QFrame()
             bar.setFixedWidth(30)
@@ -229,7 +227,7 @@ class SecurityDashboard(QWidget):
 
             self.chart_container.addLayout(bar_cont)
 
-    def _update_logs(self):
+    def _update_logs(self):  # noqa: ANN202
         logs, _ = self.audit_manager.get_filtered_logs(
             limit=10,
             levels=["error", "high", "warning"],  # Show only bad stuff
@@ -263,7 +261,7 @@ class SecurityDashboard(QWidget):
 
             self.log_layout.addWidget(row)
 
-    def _run_integrity_check(self):
+    def _run_integrity_check(self):  # noqa: ANN202
         valid = self.audit_manager.verify_integrity()
         if valid:
             QMessageBox.information(

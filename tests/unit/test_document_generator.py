@@ -7,7 +7,7 @@ from src.utils.document_generator import generate_pdf_from_html
 class TestDocumentGenerator:
     @patch("src.utils.document_generator.QPrinter")
     @patch("src.utils.document_generator.QTextDocument")
-    def test_generate_pdf_from_html(self, mock_doc_class, mock_printer_class):
+    def test_generate_pdf_from_html(self, mock_doc_class, mock_printer_class):  # noqa: ANN001
         mock_doc = MagicMock()
         mock_doc_class.return_value = mock_doc
         mock_printer = MagicMock()
@@ -27,7 +27,7 @@ class TestDocumentGenerator:
 
     @patch("src.utils.document_generator.QPrinter")
     @patch("src.utils.document_generator.QTextDocument")
-    def test_generate_pdf_orientation_portrait(self, mock_doc_class, mock_printer_class):
+    def test_generate_pdf_orientation_portrait(self, mock_doc_class, mock_printer_class):  # noqa: ANN001
         mock_printer = MagicMock()
         mock_printer_class.return_value = mock_printer
 
@@ -38,7 +38,7 @@ class TestDocumentGenerator:
 
     @patch("src.utils.document_generator.QPrinter")
     @patch("src.utils.document_generator.QTextDocument")
-    def test_generate_pdf_injects_styles(self, mock_doc_class, mock_printer_class):
+    def test_generate_pdf_injects_styles(self, mock_doc_class, mock_printer_class):  # noqa: ANN001
         mock_doc = MagicMock()
         mock_doc_class.return_value = mock_doc
 

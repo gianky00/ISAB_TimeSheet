@@ -8,7 +8,7 @@ class TestAppInitializerHardened:
     """Test di inizializzazione con focus sulla resilienza e dipendenze."""
 
     @pytest.fixture
-    def mock_deps(self, mocker):
+    def mock_deps(self, mocker):  # noqa: ANN001
         return {
             "db_manager": mocker.patch("src.core.database.db_manager"),
             "get_status": mocker.patch("src.core.license_validator.get_detailed_license_status"),
@@ -17,7 +17,7 @@ class TestAppInitializerHardened:
             "exit": mocker.patch("sys.exit"),
         }
 
-    def test_initialize_success(self, mock_deps):
+    def test_initialize_success(self, mock_deps):  # noqa: ANN001
         """Workflow standard: tutto pronto e valido."""
         AppInitializer._core_initialized = False
         mock_deps["get_status"].return_value = (LicenseStatus.VALID, "Valid")
@@ -29,7 +29,7 @@ class TestAppInitializerHardened:
         # run_update viene ora chiamato SEMPRE all'inizio
         mock_deps["run_update"].assert_called_once()
 
-    def test_initialize_with_cloud_sync(self, mock_deps):
+    def test_initialize_with_cloud_sync(self, mock_deps):  # noqa: ANN001
         """Workflow con licenza da aggiornare (sync cloud)."""
         AppInitializer._core_initialized = False
         mock_deps["get_status"].return_value = (LicenseStatus.EXPIRED, "Expired")
@@ -40,7 +40,7 @@ class TestAppInitializerHardened:
 
         mock_deps["run_update"].assert_called_once()
 
-    def test_db_init_fatal_fail(self, mock_deps):
+    def test_db_init_fatal_fail(self, mock_deps):  # noqa: ANN001
         """Se il DB crasha durante init_db, initialize_core deve fallire con eccezione."""
         AppInitializer._core_initialized = False
         mock_deps["get_status"].return_value = (LicenseStatus.VALID, "Valid")

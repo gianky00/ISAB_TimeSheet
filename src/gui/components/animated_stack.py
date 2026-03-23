@@ -45,7 +45,7 @@ class SlidingStackedWidget(QStackedWidget):
         self.fade_label_old.hide()
         self.fade_label_new.hide()
 
-    def slide_to_index(self, index: int) -> None:
+    def slide_to_index(self, index: int) -> None:  # noqa: PLR0915
         """
         Esegue l'animazione di transizione premium verso l'indice specificato.
         Utilizza snapshot QPixmap per mantenere la fluidità indipendentemente dal carico dei widget.
@@ -140,7 +140,7 @@ class SlidingStackedWidget(QStackedWidget):
         self._is_animating = False
         self.animation_finished.emit()
 
-    def resizeEvent(self, event) -> None:
+    def resizeEvent(self, event) -> None:  # noqa: ANN001, N802
         """Sincronizza le dimensioni degli snapshot con il widget principale."""
         super().resizeEvent(event)
         size = event.size()

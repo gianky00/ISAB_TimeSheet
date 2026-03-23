@@ -65,14 +65,14 @@ class BootTelemetryWidget(QWidget):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._update_stats)
 
-    def showEvent(self, event: QShowEvent | None) -> None:
+    def showEvent(self, event: QShowEvent | None) -> None:  # noqa: N802
         """Avvia il timer di aggiornamento quando il widget viene mostrato."""
         if event is not None:
             super().showEvent(event)
         self.timer.start(1000)
         self._update_stats()
 
-    def hideEvent(self, event: QHideEvent | None) -> None:
+    def hideEvent(self, event: QHideEvent | None) -> None:  # noqa: N802
         """Ferma il timer di aggiornamento quando il widget viene nascosto per risparmiare risorse."""
         if event is not None:
             super().hideEvent(event)

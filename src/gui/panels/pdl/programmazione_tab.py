@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class ProgrammazioneTab(QWidget):
     """Orchestratore della programmazione settimanale PDL."""
 
-    def __init__(self, parent: QWidget | None = None):
+    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
         super().__init__(parent)
         self.worker: BotWorker | None = None
         self.last_results: list[dict[str, Any]] = []
@@ -44,7 +44,7 @@ class ProgrammazioneTab(QWidget):
         self._load_requesters()
         self._load_persisted_data()
 
-    def _setup_ui(self):
+    def _setup_ui(self):  # noqa: ANN202, PLR0915
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(15)
@@ -137,31 +137,31 @@ class ProgrammazioneTab(QWidget):
         self.scroll_area.setWidget(self.tables_container)
         layout.addWidget(self.scroll_area)
 
-    def _load_requesters(self):
+    def _load_requesters(self):  # noqa: ANN202
         try:
             reqs = PDLQueries.get_unique_requesters()
             self.req_filter.set_items(reqs)
             saved = config_manager.get_config_value("selected_programming_requesters", [])
             self.req_filter.set_selected(saved)
         except Exception as e:
-            logger.error(f"Errore richiedenti: {e}")
+            logger.error(f"Errore richiedenti: {e}")  # noqa: TRY400
 
-    def _on_week_changed(self, idx):
+    def _on_week_changed(self, idx):  # noqa: ANN001, ANN202
         config_manager.set_config_value("programming_selected_week", idx)
         s, e, _ = PDLPeriodManager.get_week_range(idx)
         self.week_label.setText(f"Monitoraggio Settimana: <b>{s} - {e}</b>")
         self._load_persisted_data()
 
-    def _load_persisted_data(self):
+    def _load_persisted_data(self):  # noqa: ANN202
         s, e, _ = PDLPeriodManager.get_week_range(self.week_selector.currentIndex())
         self.last_results = PDLQueries.get_programming_results_by_week(s, e)
         self._update_tables()
 
-    def _on_group_mode_changed(self, mode):
+    def _on_group_mode_changed(self, mode):  # noqa: ANN001, ANN202
         config_manager.set_config_value("programming_group_mode", mode)
         self._update_tables()
 
-    def _update_tables(self):
+    def _update_tables(self):  # noqa: ANN202
         while self.tables_layout.count() > 1:
             item = self.tables_layout.takeAt(0)
             if item and (w := item.widget()):
@@ -204,13 +204,13 @@ class ProgrammazioneTab(QWidget):
         self._apply_filters()
         self.btn_email.setEnabled(len(self.last_results) > 0)
 
-    def _deselect_others(self):
+    def _deselect_others(self):  # noqa: ANN202
         sender = self.sender()
         for t in self.tables:
             if t is not sender:
                 t.clearSelection()
 
-    def _apply_filters(self):
+    def _apply_filters(self):  # noqa: ANN202
         selected_reqs = self.view_filter.selected
         day_choice = self.day_selector.currentText()
         target_day = {
@@ -226,21 +226,21 @@ class ProgrammazioneTab(QWidget):
 
         for table in self.tables:
             for i in range(7):
-                table.setColumnHidden(5 + i, target_day != -1 and i != target_day)
+                table.setColumnHidden(5 + i, target_day != -1 and i != target_day)  # noqa: PLR1714
             for row in range(table.rowCount()):
                 it = table.item(row, 0)
                 req = it.text() if it else ""
                 visible = not selected_reqs or req in selected_reqs
                 if target_day != -1:
                     w = table.cellWidget(row, 5 + target_day)
-                    from src.gui.widgets.pdl.status_bar_widget import ProgrammingStatusWidget
+                    from src.gui.widgets.pdl.status_bar_widget import ProgrammingStatusWidget  # noqa: PLC0415
 
                     if isinstance(w, ProgrammingStatusWidget):
                         visible = visible and (w.tcl or w.tgo)
                 table.setRowHidden(row, not visible)
         self._refresh_heights()
 
-    def _refresh_heights(self):
+    def _refresh_heights(self):  # noqa: ANN202
         for table in self.tables:
             h = 25
             for r in range(table.rowCount()):
@@ -248,11 +248,11 @@ class ProgrammazioneTab(QWidget):
                     h += table.rowHeight(r)
             box = table.parentWidget()
             if isinstance(box, StandardGroupBox):
-                box.setVisible(h > 25)
-            table.setMinimumHeight(h + 20 if h > 25 else 0)
-            table.setMaximumHeight(h + 20 if h > 25 else 0)
+                box.setVisible(h > 25)  # noqa: PLR2004
+            table.setMinimumHeight(h + 20 if h > 25 else 0)  # noqa: PLR2004
+            table.setMaximumHeight(h + 20 if h > 25 else 0)  # noqa: PLR2004
 
-    def _on_run_clicked(self):
+    def _on_run_clicked(self):  # noqa: ANN202
         """Avvia il controllo programmazione tramite bot SafeWork."""
         # 1. Recupero credenziali
         username, password, account_type = self.get_safework_credentials()
@@ -269,7 +269,7 @@ class ProgrammazioneTab(QWidget):
         start_date, end_date, _ = PDLPeriodManager.get_week_range(self.week_selector.currentIndex())
 
         # 3. Istanza Bot
-        from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
+        from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot  # noqa: PLC0415
 
         config = config_manager.load_config()
         bot = SafeWorkProgrammazioneBot(
@@ -314,7 +314,7 @@ class ProgrammazioneTab(QWidget):
             default_acc.get("type", "Esecutore"),
         )
 
-    def _on_worker_finished(self, success: bool):
+    def _on_worker_finished(self, success: bool):  # noqa: ANN202
         """Gestisce il completamento del bot worker."""
         self.btn_run.setEnabled(True)
         if success and self.worker:
@@ -332,10 +332,10 @@ class ProgrammazioneTab(QWidget):
             self.worker.deleteLater()
             self.worker = None
 
-    def _on_log(self, message: str):
+    def _on_log(self, message: str):  # noqa: ANN202
         """Aggiunge un messaggio al widget dei log."""
         self.log_widget.append(message)
 
-    def _on_email_clicked(self):
+    def _on_email_clicked(self):  # noqa: ANN202
         """Gestione invio report via email (Placeholder)."""
         ToastManager.instance().show("Funzionalità Report Outlook in fase di implementazione.", "info")

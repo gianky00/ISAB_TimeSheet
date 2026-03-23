@@ -30,7 +30,7 @@ class DipendentiPanel(QWidget):
     - Configurazione: Gestione anagrafica (CRUD).
     """
 
-    def __init__(self, controller: "AnagraficaController", parent: QWidget | None = None):
+    def __init__(self, controller: "AnagraficaController", parent: QWidget | None = None):  # noqa: ANN204
         """
         Inizializza il pannello dipendenti con iniezione del controller.
 
@@ -42,7 +42,7 @@ class DipendentiPanel(QWidget):
         self.controller = controller
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self):  # noqa: ANN202
         """Configura il layout principale e inizializza i widget dei tab."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -71,7 +71,7 @@ class DipendentiPanel(QWidget):
 
         main_layout.addWidget(self.tabs)
 
-    def refresh_data(self):
+    def refresh_data(self):  # noqa: ANN201
         """
         Aggiorna i dati del pannello.
         Metodo pubblico chiamato dal NavigationController o in risposta ad eventi globali.

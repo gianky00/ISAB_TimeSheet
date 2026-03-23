@@ -150,7 +150,7 @@ class SidebarGroup(QWidget):
 
     def _set_arrow_icon(self, expanded: bool) -> None:
         """Imposta l'icona della freccia (espansa/contratta)."""
-        from src.utils.helpers import get_colored_icon
+        from src.utils.helpers import get_colored_icon  # noqa: PLC0415
 
         icon_enum = Icons.CHEVRON_DOWN if expanded else Icons.CHEVRON_RIGHT
         icon = get_colored_icon(get_asset_path(icon_enum), COLORS["bg_white"])

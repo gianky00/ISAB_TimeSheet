@@ -18,9 +18,9 @@ class TestSystemIntegrity:
         # Validiamo solo che sia un float non negativo.
         assert ram >= 0.0
 
-    def test_audit_retention_policy(self, mocker):
+    def test_audit_retention_policy(self, mocker):  # noqa: ANN001
         """Verifica che la policy di retention elimini i log vecchi."""
-        from datetime import UTC
+        from datetime import UTC  # noqa: PLC0415
 
         manager = AuditManager.instance()
         mock_db = MagicMock()
@@ -38,7 +38,7 @@ class TestSystemIntegrity:
         # La data di cutoff deve essere circa 30 giorni fa
         cutoff = datetime.fromisoformat(args[0])
         expected = datetime.now(UTC) - timedelta(days=30)
-        assert abs((expected - cutoff).total_seconds()) < 10  # Tolleranza 10s
+        assert abs((expected - cutoff).total_seconds()) < 10  # Tolleranza 10s  # noqa: PLR2004
 
         # Verifica che l'azione sia stata auditata
         mock_log.assert_called()

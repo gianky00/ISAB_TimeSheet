@@ -100,12 +100,15 @@ class ContabilitaImporter(BaseImporter):
             )
 
         except Exception as e:
-            logger.error(f"Errore importazione Excel: {e}")
+            logger.error(f"Errore importazione Excel: {e}")  # noqa: TRY400
             return False, f"Errore critico importazione: {e}", [], []
 
     @classmethod
     def _process_all_sheets(
-        cls, xls: Any, sheet_names: list[str], progress_callback: Callable[[int, int], None] | None
+        cls,
+        xls: Any,  # noqa: ANN401
+        sheet_names: list[str],
+        progress_callback: Callable[[int, int], None] | None,
     ) -> tuple[list[tuple[Any, ...]], list[int]]:
         """Cicla sui fogli e aggrega i risultati."""
         all_rows: list[tuple[Any, ...]] = []
@@ -128,7 +131,7 @@ class ContabilitaImporter(BaseImporter):
         return all_rows, imported_years
 
     @classmethod
-    def _process_single_sheet(cls, xls: Any, sheet_name: str, year: int) -> list[tuple[Any, ...]]:
+    def _process_single_sheet(cls, xls: Any, sheet_name: str, year: int) -> list[tuple[Any, ...]]:  # noqa: ANN401, PLR0915
         """Processa un singolo foglio del file Excel di contabilitÃ ."""
         try:
             pd_obj = cls._get_pd()
@@ -158,7 +161,7 @@ class ContabilitaImporter(BaseImporter):
             df = df[target_columns].copy()
 
             # --- Gestione Tipi Intelligente ---
-            def _clean_numeric(val: Any) -> float:
+            def _clean_numeric(val: Any) -> float:  # noqa: ANN401
                 if pd_obj.isna(val) or val == "":
                     return 0.0
                 if isinstance(val, (int, float)):
@@ -215,18 +218,18 @@ class ContabilitaImporter(BaseImporter):
             return list(df.itertuples(index=False, name=None))
         except Exception as e:
             logger.warning(f"Errore processamento foglio {sheet_name}: {e}")
-            import traceback
+            import traceback  # noqa: PLC0415
 
             logger.debug(traceback.format_exc())
             return []
 
     @classmethod
-    def _find_header_row(cls, xls: Any, sheet_name: str) -> int:
+    def _find_header_row(cls, xls: Any, sheet_name: str) -> int:  # noqa: ANN401
         """Cerca l'indice della riga di intestazione basandosi su colonne chiave."""
         preview_df = cls._get_pd().read_excel(xls, sheet_name=sheet_name, header=None, nrows=15)
 
         # Normalizzazione aggressiva per il confronto
-        def _norm(v: Any) -> str:
+        def _norm(v: Any) -> str:  # noqa: ANN401
             return (
                 str(v)
                 .strip()
@@ -242,7 +245,7 @@ class ContabilitaImporter(BaseImporter):
 
         for i_raw, row in preview_df.iterrows():
             row_vals = [_norm(val) for val in row.values]
-            if sum(1 for k in key_cols_norm if k in row_vals) >= 2:
+            if sum(1 for k in key_cols_norm if k in row_vals) >= 2:  # noqa: PLR2004
                 return int(i_raw)
         return 0
 
@@ -250,7 +253,7 @@ class ContabilitaImporter(BaseImporter):
     def _normalize_columns(cls, df: pd.DataFrame) -> pd.DataFrame:
         """Rinomina le colonne del DataFrame usando la mappa interna."""
 
-        def _norm(v: Any) -> str:
+        def _norm(v: Any) -> str:  # noqa: ANN401
             return str(v).strip().upper().replace(" ", "").replace(".", "").replace("°", "").replace("Â", "")
 
         normalized_map = {}
@@ -262,11 +265,10 @@ class ContabilitaImporter(BaseImporter):
             norm_col = _norm(col)
             if norm_col in normalized_map:
                 rename_map[col] = normalized_map[norm_col]
-            else:
-                if "PREV" in norm_col and "DATA" in norm_col:
-                    rename_map[col] = "data_prev"
-                elif "PREV" in norm_col and ("NUM" in norm_col or "N" in norm_col):
-                    rename_map[col] = "n_prev"
+            elif "PREV" in norm_col and "DATA" in norm_col:
+                rename_map[col] = "data_prev"
+            elif "PREV" in norm_col and ("NUM" in norm_col or "N" in norm_col):
+                rename_map[col] = "n_prev"
 
         df.rename(columns=rename_map, inplace=True)
         return df

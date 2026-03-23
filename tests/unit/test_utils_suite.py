@@ -62,17 +62,17 @@ class TestUtilsHelpers:
         dt = datetime.datetime(2023, 1, 1, 12, 30, 0)
         assert format_timestamp(dt) == "01/01/2023 12:30:00"
         now_str = format_timestamp()
-        assert len(now_str) == 19
+        assert len(now_str) == 19  # noqa: PLR2004
 
     def test_get_months_list(self):
         months = get_months_list()
-        assert len(months) == 12
+        assert len(months) == 12  # noqa: PLR2004
         assert months[0] == "Gennaio"
 
     def test_get_years_list(self):
         current_year = datetime.datetime.now().year
         years = get_years_list(-1, 1)
-        assert len(years) == 3
+        assert len(years) == 3  # noqa: PLR2004
         assert str(current_year) in years
 
     def test_is_windows(self):
@@ -109,15 +109,15 @@ class TestUtilsHelpers:
 
 class TestUtilsParsing:
     def test_parse_currency(self):
-        assert parse_currency("1.234,56") == 1234.56
-        assert parse_currency("1234,56") == 1234.56
-        assert parse_currency("€ 50,00") == 50.0
-        assert parse_currency("1,234.56") == 1234.56
+        assert parse_currency("1.234,56") == 1234.56  # noqa: PLR2004
+        assert parse_currency("1234,56") == 1234.56  # noqa: PLR2004
+        assert parse_currency("€ 50,00") == 50.0  # noqa: PLR2004
+        assert parse_currency("1,234.56") == 1234.56  # noqa: PLR2004
         assert parse_currency(None) == 0.0
         assert parse_currency("") == 0.0
         assert parse_currency("abc") == 0.0  # Error case
         # Printable chars only - In formato IT 1.000 è mille
-        assert parse_currency("€ 1.000\u200b") == 1000.0
+        assert parse_currency("€ 1.000\u200b") == 1000.0  # noqa: PLR2004
 
 
 class TestUtilsValidators:

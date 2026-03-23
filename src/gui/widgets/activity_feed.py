@@ -37,7 +37,7 @@ class ActivityItem(QFrame):
     opacity_effect: QGraphicsOpacityEffect | None
     fade_in_animation: QPropertyAnimation | None
 
-    def __init__(self, log_entry: dict[str, Any], parent: QWidget | None = None, animate: bool = True):
+    def __init__(self, log_entry: dict[str, Any], parent: QWidget | None = None, animate: bool = True):  # noqa: ANN204, PLR0915
         super().__init__(parent)
         self.log_entry = log_entry
         self.setFrameShape(QFrame.Shape.NoFrame)
@@ -185,11 +185,11 @@ class ActivityItem(QFrame):
             self.opacity_effect = None
             self.fade_in_animation = None
 
-    def _remove_opacity_effect(self):
+    def _remove_opacity_effect(self):  # noqa: ANN202
         """Rimuove l'effetto opacity dopo l'animazione per evitare interferenze."""
         self.setGraphicsEffect(None)
 
-    def showEvent(self, event):
+    def showEvent(self, event):  # noqa: ANN001, ANN201, N802
         """Avvia l'animazione quando il widget viene mostrato."""
         super().showEvent(event)
         if self.opacity_effect is not None and self.fade_in_animation is not None:
@@ -201,18 +201,18 @@ class ActivityFeed(QWidget):
     Widget che mostra una timeline orizzontale delle ultime attività.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None):  # noqa: ANN001, ANN204
         super().__init__(parent)
         self.setFixedHeight(90)  # Aumentato per le card più alte
         self._refreshing = False  # Flag per evitare refresh multipli
         self._setup_ui()
 
         # Connetti al segnale dell'AuditManager per aggiornamenti in tempo reale
-        from src.core.audit_manager import AuditManager
+        from src.core.audit_manager import AuditManager  # noqa: PLC0415
 
         AuditManager.instance().signals.log_added.connect(self._on_new_log_added)
 
-    def _setup_ui(self):
+    def _setup_ui(self):  # noqa: ANN202
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
@@ -264,12 +264,12 @@ class ActivityFeed(QWidget):
         # Caricamento differito per non bloccare lo splash screen
         QTimer.singleShot(800, self.refresh_feed)
 
-    def _on_new_log_added(self, log_entry: dict[str, Any]):
+    def _on_new_log_added(self, log_entry: dict[str, Any]):  # noqa: ANN202
         """Chiamato quando viene aggiunto un nuovo log all'AuditManager."""
         # Refresh della feed per mostrare il nuovo log
         self.refresh_feed()
 
-    def refresh_feed(self):
+    def refresh_feed(self):  # noqa: ANN201
         """Ricarica i log dall'AuditManager."""
         # Evita refresh multipli simultanei
         if self._refreshing:
@@ -290,7 +290,7 @@ class ActivityFeed(QWidget):
                         widget.deleteLater()
 
             # Limit to 10 latest
-            from src.core.audit_manager import AuditManager
+            from src.core.audit_manager import AuditManager  # noqa: PLC0415
 
             logs = AuditManager.instance().get_logs(limit=10)
 

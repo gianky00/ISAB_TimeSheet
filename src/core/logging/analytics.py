@@ -64,7 +64,7 @@ class AnomalyDetector:
     - High failure rate (tasso di fallimento bot elevato)
     """
 
-    def __init__(self, viewer: LogViewer | None = None):
+    def __init__(self, viewer: LogViewer | None = None):  # noqa: ANN204
         self.viewer = viewer or LogViewer()
 
         # Baseline thresholds (configurabili)
@@ -94,9 +94,9 @@ class AnomalyDetector:
 
         if error_rate > self.error_rate_threshold:
             severity: Literal["low", "medium", "high", "critical"] = "medium"
-            if error_rate > 15:
+            if error_rate > 15:  # noqa: PLR2004
                 severity = "high"
-            if error_rate > 25:
+            if error_rate > 25:  # noqa: PLR2004
                 severity = "critical"
 
             anomalies.append(
@@ -130,9 +130,9 @@ class AnomalyDetector:
             operation = op.get("operation", "unknown")
 
             severity: Literal["low", "medium", "high", "critical"] = "low"
-            if duration_ms > 60000:  # > 1min
+            if duration_ms > 60000:  # > 1min  # noqa: PLR2004
                 severity = "critical"
-            elif duration_ms > 30000:  # > 30s
+            elif duration_ms > 30000:  # > 30s  # noqa: PLR2004
                 severity = "high"
 
             anomalies.append(
@@ -168,9 +168,9 @@ class AnomalyDetector:
 
             if failure_rate > self.failure_rate_threshold:
                 severity: Literal["low", "medium", "high", "critical"] = "medium"
-                if failure_rate > 30:
+                if failure_rate > 30:  # noqa: PLR2004
                     severity = "high"
-                if failure_rate > 50:
+                if failure_rate > 50:  # noqa: PLR2004
                     severity = "critical"
 
                 anomalies.append(
@@ -200,7 +200,7 @@ class PatternDetector:
     - Correlazioni (errori che seguono sempre altri errori)
     """
 
-    def __init__(self, viewer: LogViewer | None = None):
+    def __init__(self, viewer: LogViewer | None = None):  # noqa: ANN204
         self.viewer = viewer or LogViewer()
         self.min_count = 3  # Minimo occorrenze per pattern
 
@@ -271,11 +271,11 @@ class HealthScorer:
                 score -= 5
 
         # Penalità per error rate
-        if error_rate > 5:
+        if error_rate > 5:  # noqa: PLR2004
             score -= min(20, int(error_rate))
 
         # Penalità per bot failures
-        if bot_success_rate < 90:
+        if bot_success_rate < 90:  # noqa: PLR2004
             score -= int((100 - bot_success_rate) / 2)
 
         return max(0, min(100, score))
@@ -316,7 +316,7 @@ def generate_analytics_report(hours: int = 24) -> AnalyticsReport:
     suggestions = [a.suggestion for a in anomalies if a.suggestion]
 
     # Suggerimenti generali basati su pattern
-    if any(p.count > 10 for p in patterns):
+    if any(p.count > 10 for p in patterns):  # noqa: PLR2004
         suggestions.append("Problema ricorrente rilevato: contatta il supporto tecnico")
 
     return AnalyticsReport(

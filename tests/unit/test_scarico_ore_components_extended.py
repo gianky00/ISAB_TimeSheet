@@ -5,13 +5,13 @@ from src.gui.components.scarico_ore.model import ScaricoOreTableModel
 
 
 class TestScaricoOreComponentsExtended:
-    def test_table_model_init(self, qapp):
+    def test_table_model_init(self, qapp):  # noqa: ANN001
         model = ScaricoOreTableModel()
-        assert model.columnCount() == 11
+        assert model.columnCount() == 11  # noqa: PLR2004
         assert model.rowCount() == 0
 
     @pytest.mark.asyncio
-    async def test_cache_worker_build(self, qapp, qtbot, tmp_path):
+    async def test_cache_worker_build(self, qapp, qtbot, tmp_path):  # noqa: ANN001
         # Sample data: 11 columns + style
         data = [
             (
@@ -39,9 +39,9 @@ class TestScaricoOreComponentsExtended:
         display, _search, totals, _styles, _dkeys = worker._build_caches(data)
         assert len(display) == 1
         assert display[0][0] == "01/01/2024"  # Date formatted
-        assert totals[0] == 8.0
+        assert totals[0] == 8.0  # noqa: PLR2004
 
-    def test_model_filtering(self, qtbot):
+    def test_model_filtering(self, qtbot):  # noqa: ANN001
         model = ScaricoOreTableModel()
         # Manually inject data to test filter logic without async
         model._display_data = [
@@ -87,4 +87,4 @@ class TestScaricoOreComponentsExtended:
         # Clear filter
         with qtbot.waitSignal(model.cache_loaded, timeout=2000):
             model.set_filter("")
-        assert model.rowCount() == 2
+        assert model.rowCount() == 2  # noqa: PLR2004

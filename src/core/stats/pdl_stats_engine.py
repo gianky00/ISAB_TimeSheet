@@ -40,7 +40,7 @@ class PDLStatsEngine:
     """Motore per l'analisi statistica dei PDL nel database locale."""
 
     @classmethod
-    def get_metrics(cls) -> PDLMetrics:
+    def get_metrics(cls) -> PDLMetrics:  # noqa: PLR0912, PLR0915
         """Calcola e restituisce le metriche complete per la dashboard."""
         try:
             # Usiamo DatabaseManager per ottenere il percorso corretto
@@ -145,7 +145,7 @@ class PDLStatsEngine:
 
             # 6. Elaborazione Aree (Filtrate e Ordinate come da specifica)
             # Mapping tra Nome Visualizzato e Nome nel Database
-            DISPLAY_TO_DB = {
+            DISPLAY_TO_DB = {  # noqa: N806
                 "Area 1": "Process Area 1",
                 "Area 2": "Process Area 2",
                 "Area 3": "Process Area 3",
@@ -168,7 +168,7 @@ class PDLStatsEngine:
 
             # 7. Ultimo Sync
             try:
-                from src.core.sync_tracker import SyncTracker
+                from src.core.sync_tracker import SyncTracker  # noqa: PLC0415
 
                 last_sync = SyncTracker.get_formatted_status("pdl")
             except ImportError:
@@ -187,5 +187,5 @@ class PDLStatsEngine:
             )
 
         except Exception as e:
-            logger.error(f"Errore calcolo PDL Stats WoW: {e}")
+            logger.error(f"Errore calcolo PDL Stats WoW: {e}")  # noqa: TRY400
             return PDLMetrics(0, 0, 0, 0.0, 0.0, [], "--")

@@ -33,7 +33,7 @@ class StatusBarComponent(QObject):
     Implementa logica di aggiornamento per licenza e countdown Autopilot.
     """
 
-    def __init__(self, main_window):
+    def __init__(self, main_window):  # noqa: ANN001, ANN204
         """
         Inizializza il componente della barra di stato.
 
@@ -46,7 +46,7 @@ class StatusBarComponent(QObject):
         self._setup_ui()
         self._init_timers()
 
-    def _setup_ui(self):
+    def _setup_ui(self):  # noqa: ANN202
         """Configura lo stile della barra di stato e inserisce i widget modulari."""
         self.status_bar = QStatusBar()
         self.status_bar.setStyleSheet(
@@ -90,14 +90,14 @@ class StatusBarComponent(QObject):
         self.footer_right = FooterRightWidget(self.status_portale, self.status_safework)
         self.status_bar.addPermanentWidget(self.footer_right)
 
-    def _init_timers(self):
+    def _init_timers(self):  # noqa: ANN202
         """Inizializza i timer per gli aggiornamenti ricorrenti dell'interfaccia."""
         self.autopilot_timer = QTimer(self)
         self.autopilot_timer.timeout.connect(self.update_autopilot_ui)
         self.autopilot_timer.start(10000)
         QTimer.singleShot(500, self.update_autopilot_ui)
 
-    def _toggle_footer_stats(self):
+    def _toggle_footer_stats(self):  # noqa: ANN202
         """Alterna la visualizzazione tra le informazioni di licenza e le metriche di sistema."""
         self._footer_stats_mode = not self._footer_stats_mode
 
@@ -113,7 +113,7 @@ class StatusBarComponent(QObject):
             if self.boot_telemetry.timer.isActive():
                 self.boot_telemetry.timer.stop()
 
-    def update_license_info(self):
+    def update_license_info(self):  # noqa: ANN201
         """Recupera le informazioni sulla licenza e aggiorna le etichette nel footer."""
         license_info = get_license_info()
         if license_info:
@@ -129,12 +129,12 @@ class StatusBarComponent(QObject):
             self.footer_left.update_info(client, expiry, last_login, hw_id)
             self.footer_left.setVisible(True)
 
-    def show_operational_state(self):
+    def show_operational_state(self):  # noqa: ANN201
         """
         Transiziona la barra di stato alla modalità operativa.
         Esegue animazioni di fade-out sui widget di avvio e attiva quelli di monitoraggio.
         """
-        import logging
+        import logging  # noqa: PLC0415
 
         logger = logging.getLogger("StatusBar")
 
@@ -159,7 +159,7 @@ class StatusBarComponent(QObject):
             telemetry_anim.setEndValue(0.0)
             telemetry_anim.setEasingCurve(QEasingCurve.Type.InCubic)
 
-            def hide_and_reset_telemetry():
+            def hide_and_reset_telemetry():  # noqa: ANN202
                 """Nasconde il widget di telemetria e ferma il timer al termine dell'animazione."""
                 self.boot_telemetry.setVisible(False)
                 self.boot_telemetry.setGraphicsEffect(None)
@@ -180,12 +180,12 @@ class StatusBarComponent(QObject):
         except Exception as e:
             logger.critical(f"Error in show_operational_state: {e}", exc_info=True)
 
-    def update_autopilot_ui(self):
+    def update_autopilot_ui(self):  # noqa: ANN201
         """
         Analizza i bot programmati nell'Autopilot e calcola il countdown per il task più imminente.
         Aggiorna le card di stato nella parte destra della barra.
         """
-        from PyQt6.QtCore import QTime
+        from PyQt6.QtCore import QTime  # noqa: PLC0415
 
         config = config_manager.load_config()
 
@@ -221,7 +221,7 @@ class StatusBarComponent(QObject):
                 elif site == "SW" and secs_to < min_secs_sw:
                     min_secs_sw, imminent_sw = secs_to, (name, secs_to)
 
-        def format_countdown(name, secs):
+        def format_countdown(name, secs):  # noqa: ANN001, ANN202
             """Formatta il tempo rimanente in una stringa leggibile (H/M)."""
             h, m = secs // 3600, (secs % 3600) // 60
             return f"{name}: {'TRA ' + str(h) + 'H ' + str(m) + 'M' if h > 0 else 'TRA ' + str(m) + 'M'}"

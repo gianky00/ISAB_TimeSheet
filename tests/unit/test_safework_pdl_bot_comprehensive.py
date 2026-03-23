@@ -16,7 +16,7 @@ from src.core.constants import BotStatus
 
 class TestSafeWorkPDLBotComprehensive:
     @pytest.fixture
-    def bot(self, mocker, tmp_path):
+    def bot(self, mocker, tmp_path):  # noqa: ANN001
         """Fixture per inizializzare il bot con driver e wait mockati."""
         mocker.patch("src.bots.base.base_bot.BaseBot.__init__", return_value=None)
 
@@ -39,19 +39,19 @@ class TestSafeWorkPDLBotComprehensive:
 
         return bot
 
-    def test_pdl_number_sanitization(self, bot):
+    def test_pdl_number_sanitization(self, bot):  # noqa: ANN001
         """Verifica la corretta formattazione dei numeri PdL."""
         assert bot._sanitizza_pdl_number("569157/c") == "569157/C"
         assert bot._sanitizza_pdl_number("569157") == "569157/C"
         assert bot._sanitizza_pdl_number("123456") == "123456/S"
 
-    def test_validate_data_scenarios(self, bot, mocker):
+    def test_validate_data_scenarios(self, bot, mocker):  # noqa: ANN001
         """Verifica la validazione preventiva dei dati."""
         mocker.patch("src.bots.base.base_bot.BaseBot.validate_data", return_value=(True, ""))
         ok, _msg = bot.validate_data([{"numero_pdl": "123456/C"}])
         assert ok is True
 
-    def test_gestisci_ricerca_estesa_success(self, bot, mocker):
+    def test_gestisci_ricerca_estesa_success(self, bot, mocker):  # noqa: ANN001
         """Test successo click su 'Si' nel popup di ricerca estesa."""
         mocker.patch("src.bots.safework.pdl.bot.WebDriverWait.until", return_value=True)
         mock_msg = MagicMock()
@@ -66,7 +66,7 @@ class TestSafeWorkPDLBotComprehensive:
         res = bot._gestisci_ricerca_estesa()
         assert res is False
 
-    def test_gestisci_ricerca_estesa_no_pdl(self, bot, mocker):
+    def test_gestisci_ricerca_estesa_no_pdl(self, bot, mocker):  # noqa: ANN001
         """Test caso PdL non trovato nemmeno con ricerca estesa."""
         # Forziamo il ritorno di True mockando i find_elements
         mocker.patch("src.bots.safework.pdl.bot.WebDriverWait.until", return_value=True)
@@ -84,7 +84,7 @@ class TestSafeWorkPDLBotComprehensive:
 
         assert res is True
 
-    def test_esegui_ricerca_pdl_full_flow(self, bot, mocker):
+    def test_esegui_ricerca_pdl_full_flow(self, bot, mocker):  # noqa: ANN001
         """Test del flusso completo di ricerca."""
         mocker.patch.object(bot, "_gestisci_ricerca_estesa", return_value=False)
         mocker.patch.object(bot, "_gestisci_alert_ricerca", return_value=False)
@@ -94,7 +94,7 @@ class TestSafeWorkPDLBotComprehensive:
         res = bot._esegui_ricerca_pdl("569157/C")
         assert res is True
 
-    def test_scarica_parte_prima_success(self, bot, mocker):
+    def test_scarica_parte_prima_success(self, bot, mocker):  # noqa: ANN001
         """Test scarico P1 con mock rename."""
         mocker.patch("src.bots.base.wait_helpers.poll_for_new_file", return_value="fake.pdf")
         mocker.patch.object(bot, "_clean_pdf")
@@ -104,7 +104,7 @@ class TestSafeWorkPDLBotComprehensive:
         res = bot._scarica_parte_prima("123")
         assert res is not None
 
-    def test_scarica_parte_seconda_accordion_strategies(self, bot, mocker):
+    def test_scarica_parte_seconda_accordion_strategies(self, bot, mocker):  # noqa: ANN001
         """Test scarico P2."""
         mocker.patch("src.bots.base.wait_helpers.poll_for_new_file", return_value="fake.pdf")
         mocker.patch.object(bot, "_espandi_parte_seconda", return_value=True)
@@ -113,7 +113,7 @@ class TestSafeWorkPDLBotComprehensive:
         res = bot._scarica_parte_seconda("123")
         assert res is not None
 
-    def test_unisci_e_stampa_logic(self, bot, mocker):
+    def test_unisci_e_stampa_logic(self, bot, mocker):  # noqa: ANN001
         """Test unione PDF."""
         mocker.patch("src.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True)
         mocker.patch("os.rename")
@@ -122,7 +122,7 @@ class TestSafeWorkPDLBotComprehensive:
         res = bot._unisci_e_stampa("569157/C", "p1.pdf", "p2.pdf", item, all_paths)
         assert res is True
 
-    def test_run_full_cycle_success(self, bot, mocker):
+    def test_run_full_cycle_success(self, bot, mocker):  # noqa: ANN001
         """Test del ciclo 'run' per più PDL con successo."""
         mocker.patch.object(bot, "_login", return_value=True)
         mocker.patch.object(bot, "_esegui_ricerca_pdl", return_value=True)
@@ -135,7 +135,7 @@ class TestSafeWorkPDLBotComprehensive:
         res = bot.run(data)
         assert res is True
 
-    def test_run_with_pdl_error_continues(self, bot, mocker):
+    def test_run_with_pdl_error_continues(self, bot, mocker):  # noqa: ANN001
         """Verifica che un errore su un PDL non blocchi gli altri."""
         mocker.patch.object(bot, "_login", return_value=True)
         mocker.patch.object(bot, "_handle_session_merge")

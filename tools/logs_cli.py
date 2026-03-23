@@ -251,7 +251,7 @@ def cmd_export(args: argparse.Namespace) -> None:
             json.dump(results, f, indent=2, ensure_ascii=False)
 
     elif args.format == "csv":
-        import csv
+        import csv  # noqa: PLC0415
 
         # Estrai colonne da primo record
         if results:

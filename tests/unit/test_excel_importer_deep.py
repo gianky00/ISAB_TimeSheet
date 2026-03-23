@@ -7,7 +7,7 @@ from src.core.importers.giornaliere import GiornaliereImporter
 
 
 class TestExcelImporterComprehensive:
-    def test_import_giornaliere_parsing(self, tmp_path):
+    def test_import_giornaliere_parsing(self, tmp_path):  # noqa: ANN001
         file1 = tmp_path / "file1.xlsx"
         file1.touch()
 
@@ -59,6 +59,6 @@ class TestExcelImporterComprehensive:
 
             assert err is None
             # Code does iloc[:-1], so "Totale" row is dropped. 2 rows remain.
-            assert len(rows) == 2
+            assert len(rows) == 2  # noqa: PLR2004
             assert rows[0][2] == "Mario Rossi"
             assert rows[1][2] == "Luigi Verdi"

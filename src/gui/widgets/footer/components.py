@@ -94,7 +94,7 @@ class StartupConsole(QLabel):
             f"color: {color}; font-family: 'Consolas', monospace; font-size: 13px; padding: 0 10px;"
         )
         self._log_queue.append((message, is_error))
-        if len(self._log_queue) > 100:
+        if len(self._log_queue) > 100:  # noqa: PLR2004
             self._log_queue.pop(0)
 
 
@@ -117,7 +117,7 @@ class ClickableLabel(QLabel):
         self._base_style = ""
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
-    def setBaseStyle(self, style: str) -> None:
+    def setBaseStyle(self, style: str) -> None:  # noqa: N802
         """
         Imposta lo stile base CSS.
 
@@ -127,7 +127,7 @@ class ClickableLabel(QLabel):
         self._base_style = style
         self.setStyleSheet(style)
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:
+    def enterEvent(self, event: QEnterEvent | None) -> None:  # noqa: N802
         """Gestisce l'evento hover-in cambiando lo sfondo."""
         self.setStyleSheet(
             self._base_style
@@ -135,12 +135,12 @@ class ClickableLabel(QLabel):
         )
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any | None) -> None:
+    def leaveEvent(self, event: Any | None) -> None:  # noqa: ANN401, N802
         """Gestisce l'evento hover-out ripristinando lo stile base."""
         self.setStyleSheet(self._base_style)
         super().leaveEvent(event)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
         """Gestisce il click del mouse emettendo il segnale 'clicked'."""
         if event and event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()
@@ -152,7 +152,7 @@ class StatsCard(QFrame):
     Widget card per la visualizzazione di una singola metrica statistica nel footer espandibile.
     """
 
-    def __init__(self, title: str, value: str, icon: Any, parent: QWidget | None = None) -> None:
+    def __init__(self, title: str, value: str, icon: Any, parent: QWidget | None = None) -> None:  # noqa: ANN401
         """
         Inizializza la card statistica.
 

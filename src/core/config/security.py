@@ -20,7 +20,7 @@ def _decrypt_account_list(accounts: list[dict[str, Any]], service_name: str) -> 
     if not accounts:
         return
 
-    from src.utils.security import password_manager
+    from src.utils.security import password_manager  # noqa: PLC0415
 
     for acc in accounts:
         username = acc.get("username")
@@ -54,7 +54,7 @@ def _encrypt_account_list(accounts: list[dict[str, Any]], service_name: str) -> 
     if not accounts:
         return
 
-    from src.utils.security import password_manager
+    from src.utils.security import password_manager  # noqa: PLC0415
 
     for acc in accounts:
         password = acc.get("password")

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 
-class PROCESS_MEMORY_COUNTERS_EX(Structure):
+class PROCESS_MEMORY_COUNTERS_EX(Structure):  # noqa: N801
     """Struttura Windows per i contatori di memoria del processo."""
 
     _fields_: ClassVar[list[tuple[str, Any]]] = [

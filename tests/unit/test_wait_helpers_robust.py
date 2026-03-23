@@ -49,7 +49,7 @@ class TestWaitHelpersRobust:
     # --- File Polling Tests (Mocked File System for Stability) ---
 
     @patch("src.bots.base.wait_helpers.Path.glob")
-    def test_poll_for_file_found(self, mock_glob, tmp_path):
+    def test_poll_for_file_found(self, mock_glob, tmp_path):  # noqa: ANN001
         """Test polling file trovato (mocked file object)."""
         # Mock file
         f = MagicMock()
@@ -61,7 +61,7 @@ class TestWaitHelpersRobust:
         f.absolute.return_value = expected_path
 
         # Mock glob intelligente
-        def glob_side_effect(pattern):
+        def glob_side_effect(pattern):  # noqa: ANN001, ANN202
             if any(ext in pattern for ext in [".crdownload", ".tmp", ".part"]):
                 return []
             if pattern == "*.xlsx":
@@ -75,7 +75,7 @@ class TestWaitHelpersRobust:
         assert found == expected_path
 
     @patch("src.bots.base.wait_helpers.Path.glob")
-    def test_poll_for_file_timeout(self, mock_glob, tmp_path):
+    def test_poll_for_file_timeout(self, mock_glob, tmp_path):  # noqa: ANN001
         """Test polling timeout (mocked glob)."""
         mock_glob.return_value = []  # Nessun file
 
@@ -85,7 +85,7 @@ class TestWaitHelpersRobust:
         assert found is None
 
     @patch("src.bots.base.wait_helpers.Path.glob")
-    def test_poll_for_file_exclude_temp(self, mock_glob, tmp_path):
+    def test_poll_for_file_exclude_temp(self, mock_glob, tmp_path):  # noqa: ANN001
         """Test esclusione file temporanei (mocked)."""
         f_ignore = MagicMock()
         f_ignore.is_file.return_value = True
@@ -115,7 +115,7 @@ class TestWaitHelpersRobust:
         assert found == expected_path
 
     @patch("src.bots.base.wait_helpers.Path.glob")
-    def test_poll_for_file_min_age(self, mock_glob, tmp_path):
+    def test_poll_for_file_min_age(self, mock_glob, tmp_path):  # noqa: ANN001
         """Test filtro per età minima (mocked stat)."""
         f = MagicMock()
         f.name = "old.txt"
@@ -130,7 +130,7 @@ class TestWaitHelpersRobust:
         f.stat.return_value = stat_old
         f.absolute.return_value = str(tmp_path / "old.txt")
 
-        def glob_side_effect(pattern):
+        def glob_side_effect(pattern):  # noqa: ANN001, ANN202
             # Vuoto per controlli temp file
             if any(ext in pattern for ext in [".crdownload", ".tmp", ".part"]):
                 return []
@@ -151,7 +151,7 @@ class TestWaitHelpersRobust:
         )
         assert found is not None
 
-    def test_poll_for_new_file(self, tmp_path):
+    def test_poll_for_new_file(self, tmp_path):  # noqa: ANN001
         """Test rilevamento nuovo file rispetto a snapshot."""
         # Snapshot iniziale
         f1 = tmp_path / "existing.txt"
@@ -230,7 +230,7 @@ class TestWaitHelpersRobust:
             res = wait_helpers.safe_click_with_retry(mock_driver, (By.ID, "btn"), retry_delay=0.01)
 
             assert res is True
-            assert mock_elem.click.call_count == 2
+            assert mock_elem.click.call_count == 2  # noqa: PLR2004
 
     def test_execute_with_wait(self):
         """Test execute with wait."""

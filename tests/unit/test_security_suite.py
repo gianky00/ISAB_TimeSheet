@@ -9,7 +9,7 @@ class TestSecuritySuite:
     """Test suite per src/utils/security.py"""
 
     @pytest.fixture(autouse=True)
-    def setup_security(self, tmp_path):
+    def setup_security(self, tmp_path):  # noqa: ANN001
         """Setup isolato."""
         # Reset Singleton
         PasswordManager._instance = None
@@ -56,7 +56,7 @@ class TestSecuritySuite:
         """Test decrypt vecchio formato ENC: (simulato)."""
         # Creiamo un ciphertext legacy valido
         # Per farlo, dobbiamo usare la stessa chiave del PM corrente
-        from cryptography.fernet import Fernet
+        from cryptography.fernet import Fernet  # noqa: PLC0415
 
         fernet = Fernet(self.pm._key)
         raw_enc = fernet.encrypt(b"LegacySecret").decode()
@@ -83,7 +83,7 @@ class TestSecuritySuite:
         # Il file chiave dovrebbe essere stato sovrascritto con una chiave valida
         content = new_pm._KEY_FILE.read_bytes()
         assert content != b"TrashData"
-        assert len(content) > 30  # Fernet key length base64 encoded
+        assert len(content) > 30  # Fernet key length base64 encoded  # noqa: PLR2004
 
     def test_decrypt_error_returns_empty(self):
         """Test gestione errori decrypt."""

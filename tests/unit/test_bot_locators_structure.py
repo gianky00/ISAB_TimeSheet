@@ -5,7 +5,7 @@ from src.bots.portale_fornitori.scarico_ts.locators import ScaricoTSLocators
 
 
 class TestBotLocators:
-    def _check_locators(self, locator_class):
+    def _check_locators(self, locator_class):  # noqa: ANN001, ANN202
         """Helper to check all attributes of a locator class."""
         for attr_name in dir(locator_class):
             if attr_name.startswith("__") or callable(getattr(locator_class, attr_name)):
@@ -13,7 +13,7 @@ class TestBotLocators:
 
             locator = getattr(locator_class, attr_name)
             assert isinstance(locator, tuple), f"{attr_name} should be a tuple"
-            assert len(locator) == 2, f"{attr_name} should have 2 elements"
+            assert len(locator) == 2, f"{attr_name} should have 2 elements"  # noqa: PLR2004
             assert locator[0] in [
                 By.ID,
                 By.XPATH,

@@ -10,7 +10,7 @@ class TestNotificationCoverage:
     """Test suite per src/core/notification_manager.py"""
 
     @pytest.fixture(autouse=True)
-    def setup_manager(self, tmp_path, qapp):  # qapp fixture from pytest-qt needed for signals
+    def setup_manager(self, tmp_path, qapp):  # qapp fixture from pytest-qt needed for signals  # noqa: ANN001
         """Setup isolato per NotificationManager."""
         # Reset Singleton
         NotificationManager._instance = None
@@ -28,7 +28,7 @@ class TestNotificationCoverage:
 
         NotificationManager._instance = None
 
-    def test_add_notification(self, qtbot):
+    def test_add_notification(self, qtbot):  # noqa: ANN001
         """Test aggiunta notifica e segnali."""
         with qtbot.waitSignal(self.manager.notification_added, timeout=1000) as blocker:
             self.manager.add_notification("Test Title", "Test Body", "warning")
@@ -70,7 +70,7 @@ class TestNotificationCoverage:
         loaded = self.manager._load_notifications()
 
         # Deve essere ordinato per timestamp desc (New prima di Old)
-        assert len(loaded) == 2
+        assert len(loaded) == 2  # noqa: PLR2004
         assert loaded[0]["title"] == "New"
         assert loaded[1]["title"] == "Old"
 
@@ -84,7 +84,7 @@ class TestNotificationCoverage:
         all_n = self.manager.get_notifications(filter_unread=False)
         unread_n = self.manager.get_notifications(filter_unread=True)
 
-        assert len(all_n) == 2
+        assert len(all_n) == 2  # noqa: PLR2004
         assert len(unread_n) == 1
         assert unread_n[0]["id"] == "2"
 
@@ -105,7 +105,7 @@ class TestNotificationCoverage:
         self.manager.add_notification("A", "B", level="error")
         self.manager.add_notification("C", "D", level="error")
 
-        assert self.manager.get_unread_count() == 2
+        assert self.manager.get_unread_count() == 2  # noqa: PLR2004
 
         self.manager.mark_all_as_read()
 

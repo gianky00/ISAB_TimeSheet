@@ -20,7 +20,7 @@ class TestStatsManager:
             return mgr
 
     @patch("src.core.config_manager.set_config_value")
-    def test_increment_usage(self, mock_save, manager):
+    def test_increment_usage(self, mock_save, manager):  # noqa: ANN001
         manager.increment_usage("bot_test")
 
         # Attendi il salvataggio asincrono (necessario in V2)
@@ -35,7 +35,7 @@ class TestStatsManager:
         mock_save.assert_called()
 
     @patch("src.core.config_manager.set_config_value")
-    def test_increment_error(self, mock_save, manager):
+    def test_increment_error(self, mock_save, manager):  # noqa: ANN001
         manager.increment_error("bot_test")
 
         manager._save_queue.join()
@@ -51,7 +51,7 @@ class TestStatsManager:
 
 class TestTimeManager:
     @patch("src.core.time_manager.requests.head")
-    def test_get_network_time_success(self, mock_head):
+    def test_get_network_time_success(self, mock_head):  # noqa: ANN001
         # Mock response
         mock_resp = MagicMock()
         mock_resp.headers = {"Date": "Wed, 21 Oct 2015 07:28:00 GMT"}
@@ -60,20 +60,20 @@ class TestTimeManager:
         dt = get_network_time()
 
         assert dt is not None
-        assert dt.year == 2015
-        assert dt.month == 10
-        assert dt.day == 21
+        assert dt.year == 2015  # noqa: PLR2004
+        assert dt.month == 10  # noqa: PLR2004
+        assert dt.day == 21  # noqa: PLR2004
         assert dt.tzinfo == UTC
 
     @patch("src.core.time_manager.requests.head")
-    def test_get_network_time_fail(self, mock_head):
+    def test_get_network_time_fail(self, mock_head):  # noqa: ANN001
         mock_head.side_effect = Exception("Timeout")
 
         dt = get_network_time()
         assert dt is None
 
     @patch("src.core.time_manager.get_network_time")
-    def test_get_trusted_time_fallback(self, mock_net):
+    def test_get_trusted_time_fallback(self, mock_net):  # noqa: ANN001
         mock_net.return_value = None
 
         dt, trusted = get_trusted_time()

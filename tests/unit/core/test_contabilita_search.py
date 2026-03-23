@@ -8,13 +8,13 @@ from src.core.contabilita_search import ContabilitaSearch
 
 class TestContabilitaSearch:
     @pytest.fixture
-    def db_path(self, tmp_path):
+    def db_path(self, tmp_path):  # noqa: ANN001
         p = tmp_path / "test_search.db"
         p.touch()
         return p
 
     @patch("src.core.database.db_manager.get_connection")
-    def test_search_oda_fts5_fallback_to_like(self, mock_get_conn, db_path):
+    def test_search_oda_fts5_fallback_to_like(self, mock_get_conn, db_path):  # noqa: ANN001
         """Verifica il fallback su LIKE se FTS5 fallisce (es. tabella non esistente)."""
         mock_conn = MagicMock()
         mock_get_conn.return_value.__enter__.return_value = mock_conn
@@ -30,10 +30,10 @@ class TestContabilitaSearch:
         assert len(results) == 1
         assert results[0]["codice_oda"] == "ODA1"
         # Verifica che siano state tentate entrambe le query
-        assert mock_cursor.execute.call_count == 2
+        assert mock_cursor.execute.call_count == 2  # noqa: PLR2004
 
     @patch("src.core.database.db_manager.get_connection")
-    def test_search_extended_with_year_filter(self, mock_get_conn, db_path):
+    def test_search_extended_with_year_filter(self, mock_get_conn, db_path):  # noqa: ANN001
         """Verifica che il filtro anno venga applicato correttamente nelle query estese."""
         mock_conn = MagicMock()
         mock_get_conn.return_value.__enter__.return_value = mock_conn

@@ -12,7 +12,7 @@ class TestTelegramCoreDeep:
         return TelegramService()
 
     @pytest.mark.asyncio
-    async def test_handle_voice_logic(self, service):
+    async def test_handle_voice_logic(self, service):  # noqa: ANN001
         mock_update = MagicMock()
         mock_context = MagicMock()
         mock_update.message.reply_text = AsyncMock()
@@ -25,7 +25,7 @@ class TestTelegramCoreDeep:
         assert "non supportati" in args
 
     @pytest.mark.asyncio
-    async def test_handle_photo_emit(self, service):
+    async def test_handle_photo_emit(self, service):  # noqa: ANN001
         mock_update = MagicMock()
         mock_context = MagicMock()
 
@@ -49,7 +49,7 @@ class TestTelegramCoreDeep:
             assert args[2] == "test caption"
 
     @pytest.mark.asyncio
-    async def test_handle_button_navigation_complex(self, service):
+    async def test_handle_button_navigation_complex(self, service):  # noqa: ANN001
         # Test full hierarchy navigation
         mock_update = MagicMock()
         mock_context = MagicMock()
@@ -70,7 +70,7 @@ class TestTelegramCoreDeep:
             await callbacks.handle_button(service, mock_update, mock_context)
             assert "🤖 *Seleziona Piattaforma*" in mock_query.edit_message_text.call_args[0][0]
 
-    def test_sync_send_methods(self, service):
+    def test_sync_send_methods(self, service):  # noqa: ANN001
         # Mock loop and app
         service.loop = MagicMock()
         service.loop.is_running.return_value = True
@@ -82,4 +82,4 @@ class TestTelegramCoreDeep:
             mock_run.assert_called_once()
 
             service.send_photo_sync(b"data", "caption")
-            assert mock_run.call_count == 2
+            assert mock_run.call_count == 2  # noqa: PLR2004

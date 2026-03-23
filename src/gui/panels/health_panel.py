@@ -49,24 +49,24 @@ class HealthScoreBadge(QWidget):
         self.update()
 
     def _get_gradient(self) -> QColor:
-        if self._score >= 80:
+        if self._score >= 80:  # noqa: PLR2004
             return QColor(COLORS["success_green"])
-        if self._score >= 60:
+        if self._score >= 60:  # noqa: PLR2004
             return QColor(COLORS["warning_yellow"])
-        if self._score >= 40:
+        if self._score >= 40:  # noqa: PLR2004
             return QColor(COLORS["warning_orange"])
         return QColor(COLORS["error_red"])
 
     def _get_status_text(self) -> str:
-        if self._score >= 80:
+        if self._score >= 80:  # noqa: PLR2004
             return "SISTEMA OTTIMO"
-        if self._score >= 60:
+        if self._score >= 60:  # noqa: PLR2004
             return "SISTEMA STABILE"
-        if self._score >= 40:
+        if self._score >= 40:  # noqa: PLR2004
             return "ATTENZIONE RICHIESTA"
         return "STATO CRITICO"
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:
+    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
         """Esegue il rendering del badge circolare."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -164,11 +164,11 @@ class StatCard(ModernCard):
 class AnomalyCard(ModernCard):
     """Card anomalia con design a lista orizzontale e badge di severità."""
 
-    def __init__(self, anomaly, parent: QWidget | None = None) -> None:
+    def __init__(self, anomaly, parent: QWidget | None = None) -> None:  # noqa: ANN001
         super().__init__(parent, elevation=6)
         self._setup_content(anomaly)
 
-    def _setup_content(self, anomaly) -> None:
+    def _setup_content(self, anomaly) -> None:  # noqa: ANN001
         color = self._get_severity_color(anomaly.severity)
         self.setObjectName("anomalyCard")
         self.setStyleSheet(f"QFrame#anomalyCard {{ border-left: 4px solid {color}; }}")
@@ -243,7 +243,7 @@ class HealthPanel(QWidget):
         self._alert_timer.start(1800000)
         QTimer.singleShot(500, self.refresh)
 
-    def _setup_ui(self) -> None:
+    def _setup_ui(self) -> None:  # noqa: PLR0915
         """Costruisce il layout a due colonne: statistiche a sinistra, anomalie a destra."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(25, 25, 25, 25)
@@ -365,8 +365,8 @@ class HealthPanel(QWidget):
     def refresh(self) -> None:
         """Interroga i motori di analytics e il LogViewer per aggiornare tutte le card e lo score."""
         try:
-            from src.core.logging.analytics import generate_analytics_report
-            from src.core.logging.viewer import LogViewer
+            from src.core.logging.analytics import generate_analytics_report  # noqa: PLC0415
+            from src.core.logging.viewer import LogViewer  # noqa: PLC0415
 
             report = generate_analytics_report(hours=24)
             self._score_badge.score = report.health_score
@@ -406,8 +406,8 @@ class HealthPanel(QWidget):
     def _send_telegram_alert(self) -> None:
         """Compone e invia un report di salute testuale al canale Telegram configurato."""
         try:
-            from src.core.logging.alert_manager import get_alert_manager
-            from src.core.logging.analytics import generate_analytics_report
+            from src.core.logging.alert_manager import get_alert_manager  # noqa: PLC0415
+            from src.core.logging.analytics import generate_analytics_report  # noqa: PLC0415
 
             report = generate_analytics_report(hours=24)
             if not report.anomalies:
@@ -426,7 +426,7 @@ class HealthPanel(QWidget):
     def _auto_check_alerts(self) -> None:
         """Esegue un controllo periodico e invia notifiche automatiche se vengono rilevate anomalie critiche."""
         with suppress(Exception):
-            from src.core.logging.alert_manager import get_alert_manager
+            from src.core.logging.alert_manager import get_alert_manager  # noqa: PLC0415
 
             if (sent := get_alert_manager().check_and_alert(hours=24)) > 0:
                 self._last_update.setText(f"🔔 {sent} alert inviati")
@@ -434,7 +434,7 @@ class HealthPanel(QWidget):
     def _show_toast(self, message: str, level: str = "info") -> None:
         """Inoltra una notifica interna al NotificationManager."""
         with suppress(Exception):
-            from src.core.notification_manager import NotificationManager
+            from src.core.notification_manager import NotificationManager  # noqa: PLC0415
 
             NotificationManager.instance().add_notification(
                 title="Health Panel", message=message, level=level

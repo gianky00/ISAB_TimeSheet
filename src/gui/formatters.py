@@ -8,7 +8,7 @@ from PyQt6.QtCore import QAbstractTableModel, Qt
 # --- FORMATTERS ---
 
 
-def format_currency_smart(value: Any) -> str:
+def format_currency_smart(value: Any) -> str:  # noqa: ANN401
     """
     Formatta numeri in stile Euro contabile:
     - 1200.00 -> 1.200
@@ -52,7 +52,7 @@ def format_currency_smart(value: Any) -> str:
         return str(value)
 
 
-def format_number_smart(value: Any) -> str:
+def format_number_smart(value: Any) -> str:  # noqa: ANN401
     """Identico a currency_smart, usato per ORE SP e RESA."""
     return format_currency_smart(value)
 
@@ -90,15 +90,15 @@ class FastTableModel(QAbstractTableModel):
         """Forza allineamento per una colonna."""
         self._alignments[col_idx] = alignment
 
-    def rowCount(self, parent: Any = None) -> int:
+    def rowCount(self, parent: Any = None) -> int:  # noqa: ANN401, N802
         """Restituisce il numero di righe nel modello."""
         return len(self._data)
 
-    def columnCount(self, parent: Any = None) -> int:
+    def columnCount(self, parent: Any = None) -> int:  # noqa: ANN401, N802
         """Restituisce il numero di colonne basato sull'header."""
         return len(self._headers)
 
-    def data(self, index: Any, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(self, index: Any, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: ANN401, PLR0911
         """Recupera il valore per una cella applicando formattazione e allineamento."""
         if not index.isValid():
             return None
@@ -127,9 +127,9 @@ class FastTableModel(QAbstractTableModel):
 
         return None
 
-    def headerData(
+    def headerData(  # noqa: N802
         self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
-    ) -> Any:
+    ) -> Any:  # noqa: ANN401
         """Restituisce l'intestazione della colonna."""
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return self._headers[section]
@@ -149,7 +149,7 @@ class FastTableModel(QAbstractTableModel):
             # Funzione chiave per gestire None e tipi misti ed evitare TypeError (int < str)
             # Restituisce una tupla (prioritÃ , valore)
             # PrioritÃ : 0 = None/Vuoto, 1 = Numeri/Date, 2 = Stringhe
-            def sort_key(row_tuple: tuple[list[Any], Any]) -> tuple[int, Any]:
+            def sort_key(row_tuple: tuple[list[Any], Any]) -> tuple[int, Any]:  # noqa: PLR0911
                 """Genera la chiave di ordinamento gestendo i tipi misti."""
                 row_data = row_tuple[0]
                 val = row_data[column]

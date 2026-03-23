@@ -154,7 +154,7 @@ class QuickActionsConfigDialog(QDialog):
                 root = self.tree.invisibleRootItem()
                 if root is None:
                     # Should not happen
-                    raise RuntimeError("Invisible root item is None")
+                    raise RuntimeError("Invisible root item is None")  # noqa: TRY003
                 return root
 
             parent_path = path_tuple[:-1]

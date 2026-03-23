@@ -15,7 +15,7 @@ class TrayIconComponent(QObject):
     Inizializza il TrayController e fornisce metodi di alto livello per l'invio di messaggi balloon.
     """
 
-    def __init__(self, main_window: Any) -> None:
+    def __init__(self, main_window: Any) -> None:  # noqa: ANN401
         """
         Inizializza il componente Tray.
 
@@ -24,7 +24,7 @@ class TrayIconComponent(QObject):
         """
         super().__init__(main_window)
         self.main_window = main_window
-        from src.gui.controllers.tray_controller import TrayController
+        from src.gui.controllers.tray_controller import TrayController  # noqa: PLC0415
 
         self.controller = TrayController(main_window)
 
@@ -50,7 +50,7 @@ class TrayIconComponent(QObject):
             message: Contenuto testuale della notifica.
             is_error: Se True, utilizza l'icona di errore critico.
         """
-        from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
+        from PyQt6.QtWidgets import QApplication, QSystemTrayIcon  # noqa: PLC0415
 
         is_active = self.main_window.isActiveWindow() and not self.main_window.isMinimized()
 

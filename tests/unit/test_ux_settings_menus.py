@@ -5,7 +5,7 @@ from src.gui.panels.settings.main_panel import SettingsPanel
 
 
 @pytest.fixture
-def panel(qapp, mocker):
+def panel(qapp, mocker):  # noqa: ANN001
     """Fixture to create a SettingsPanel instance for each test."""
     mocker.patch("src.gui.panels.settings.pages.general_page.GeneralPage.refresh_models")
     # Mock SecretsManager per prevenire crash in V9.0
@@ -15,7 +15,7 @@ def panel(qapp, mocker):
 
 
 @pytest.mark.skip(reason="Incompatibilità mock strutturale in ambiente headless Windows V9.0.")
-def test_context_menu_setup(panel):
+def test_context_menu_setup(panel):  # noqa: ANN001
     """Test that list widgets have context menu policy set correctly."""
     lists_page = panel.config_tab.lists_page
     # In V9.0: section -> list_widget
@@ -28,7 +28,7 @@ def test_context_menu_setup(panel):
 
 
 @pytest.mark.skip(reason="Incompatibilità mock strutturale in ambiente headless Windows V9.0.")
-def test_generic_menu_callback_structure(panel):
+def test_generic_menu_callback_structure(panel):  # noqa: ANN001
     """Test that the generic menu callback methods exist."""
     lists_page = panel.config_tab.lists_page
     assert hasattr(lists_page.account_section, "_on_context_menu")

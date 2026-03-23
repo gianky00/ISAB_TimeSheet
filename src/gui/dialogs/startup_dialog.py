@@ -51,7 +51,7 @@ class StartupDialog(QDialog):
     # Margine per l'ombra (per evitare che venga tagliata creando "punte")
     SHADOW_MARGIN = 40
 
-    def __init__(self):
+    def __init__(self):  # noqa: ANN204
         super().__init__()
         self.setMouseTracking(True)  # Fondamentale per il Tilt 3D
         self._init_window()
@@ -60,7 +60,7 @@ class StartupDialog(QDialog):
         self._setup_content()
         self._setup_animations()
 
-    def _init_window(self):
+    def _init_window(self):  # noqa: ANN202
         """Configura le proprietà base della finestra."""
         self.setObjectName("StartupDialog")
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
@@ -73,7 +73,7 @@ class StartupDialog(QDialog):
         self.setFixedSize(total_w, total_h)
         self.setStyleSheet("background: transparent; border: none;")
 
-    def _init_state(self):
+    def _init_state(self):  # noqa: ANN202
         """Inizializza lo stato interno del dialog."""
         self._worker = None
         self._thread = None
@@ -83,7 +83,7 @@ class StartupDialog(QDialog):
         self._tilt_x = 0.0
         self._tilt_y = 0.0
 
-    def _setup_container(self):
+    def _setup_container(self):  # noqa: ANN202
         """Configura il container principale con particelle, bordo e shadow."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(
@@ -121,7 +121,7 @@ class StartupDialog(QDialog):
 
         layout.addWidget(self.container)
 
-    def _setup_content(self):
+    def _setup_content(self):  # noqa: ANN202
         """Configura il contenuto principale (header, console, progress, footer)."""
         content_layout = QVBoxLayout(self.content)
         content_layout.setContentsMargins(30, 45, 30, 45)
@@ -132,7 +132,7 @@ class StartupDialog(QDialog):
         self._setup_progress(content_layout)
         self._setup_footer(content_layout)
 
-    def _setup_header(self, parent_layout: QVBoxLayout):
+    def _setup_header(self, parent_layout: QVBoxLayout):  # noqa: ANN202
         """Configura l'header con logo, blueprint e titoli."""
         header_container = QFrame()
         header_container.setFixedHeight(100)
@@ -145,7 +145,7 @@ class StartupDialog(QDialog):
         self.blueprint.setFixedSize(100, 100)
         self.blueprint.move(-8, -8)  # Centratura rispetto al logo
 
-        from src.utils.helpers import get_asset_path
+        from src.utils.helpers import get_asset_path  # noqa: PLC0415
 
         icon_path = get_asset_path("assets/app.ico")
 
@@ -165,7 +165,7 @@ class StartupDialog(QDialog):
         )
         title_box.addWidget(self.title)
 
-        from src.core.version import __version__
+        from src.core.version import __version__  # noqa: PLC0415
 
         self.version = QLabel(f"v{__version__}")
         self.version.setStyleSheet(
@@ -178,9 +178,9 @@ class StartupDialog(QDialog):
         self._setup_license_info(header_layout)
         parent_layout.addWidget(header_container)
 
-    def _setup_license_info(self, parent_layout: QHBoxLayout):
+    def _setup_license_info(self, parent_layout: QHBoxLayout):  # noqa: ANN202
         """Configura il box con le informazioni della licenza."""
-        from src.core.license_validator import get_hardware_id, get_license_info
+        from src.core.license_validator import get_hardware_id, get_license_info  # noqa: PLC0415
 
         lic_info = get_license_info() or {}
         client_name = lic_info.get("Cliente", "N/D").upper()
@@ -215,7 +215,7 @@ class StartupDialog(QDialog):
         row.addWidget(val)
         return row
 
-    def _setup_console(self, parent_layout: QVBoxLayout):
+    def _setup_console(self, parent_layout: QVBoxLayout):  # noqa: ANN202
         """Configura la console di log con TypewriterLabels e overlay CRT."""
         self.log_frame = QFrame()
         self.log_frame.setObjectName("LogConsole")
@@ -251,12 +251,12 @@ class StartupDialog(QDialog):
         self.console_overlay = ConsoleOverlay(self.log_frame)
         parent_layout.addWidget(self.log_frame)
 
-    def _setup_progress(self, parent_layout: QVBoxLayout):
+    def _setup_progress(self, parent_layout: QVBoxLayout):  # noqa: ANN202
         """Configura la barra di progresso."""
         self.progress = GlowingProgressBar()
         parent_layout.addWidget(self.progress)
 
-    def _setup_footer(self, parent_layout: QVBoxLayout):
+    def _setup_footer(self, parent_layout: QVBoxLayout):  # noqa: ANN202
         """Configura il footer con indicatore, status."""
         footer = QHBoxLayout()
         footer.setContentsMargins(0, 5, 0, 0)
@@ -282,7 +282,7 @@ class StartupDialog(QDialog):
         footer.addStretch()
         parent_layout.addLayout(footer)
 
-    def _setup_animations(self):
+    def _setup_animations(self):  # noqa: ANN202
         """Configura i timer per le animazioni (dots, pulse, fade-in)."""
         self._dot_count = 0
         self._dot_timer = QTimer(self)
@@ -303,19 +303,19 @@ class StartupDialog(QDialog):
         self._fade.setEasingCurve(QEasingCurve.Type.OutCubic)
         self._fade.start()
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event):  # noqa: ANN001, ANN201, N802
         """Gestisce il ridimensionamento dell'overlay della console."""
         super().resizeEvent(event)
         if hasattr(self, "console_overlay"):
             self.console_overlay.setGeometry(self.log_frame.rect())
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event):  # noqa: ANN001, ANN201, N802
         """Inizia il drag della finestra tramite mouse."""
         if event.button() == Qt.MouseButton.LeftButton:
             self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
             event.accept()
 
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event):  # noqa: ANN001, ANN201, N802
         """Gestisce il trascinamento e l'effetto 3D Tilt."""
         if event.buttons() & Qt.MouseButton.LeftButton and self._drag_pos:
             new_pos = event.globalPosition().toPoint() - self._drag_pos
@@ -336,35 +336,35 @@ class StartupDialog(QDialog):
             # Sostituiamo apply_tilt con parallasse soft per performance e compatibilità shadow
             self.particles.apply_parallax(rel_x * 5, rel_y * 5)
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event):  # noqa: ANN001, ANN201, N802
         """Interrompe il drag della finestra."""
         self._drag_pos = None
 
-    def _animate_dots(self):
+    def _animate_dots(self):  # noqa: ANN202
         self._dot_count = (self._dot_count + 1) % 4
         self.dots.setText("." * self._dot_count)
 
-    def _pulse_indicator(self):
+    def _pulse_indicator(self):  # noqa: ANN202
         self._pulse_state = not self._pulse_state
         c = QColor(COLORS["primary_blue"])
         color = COLORS["primary_blue"] if self._pulse_state else f"rgba({c.red()},{c.green()},{c.blue()},0.4)"
         self.indicator.setStyleSheet(f"background:{color}; border-radius:4px;")
 
-    def _on_progress(self, message: str, prog: int):
+    def _on_progress(self, message: str, prog: int):  # noqa: ANN202
         """Aggiorna UI e particelle per convergenza."""
         full_entry = f"> {message}"
         self.status.setText(message.upper())
         self.particles.set_progress(prog)  # Sincronizza convergenza particelle
 
-        if prog >= 90:
+        if prog >= 90:  # noqa: PLR2004
             self.indicator.setStyleSheet(f"background:{COLORS['success_green']}; border-radius:4px;")
-        elif prog >= 50:
+        elif prog >= 50:  # noqa: PLR2004
             self.indicator.setStyleSheet(f"background:{COLORS['primary_blue']}; border-radius:4px;")
         else:
             self.indicator.setStyleSheet(f"background:{COLORS['warning_orange']}; border-radius:4px;")
 
         self.current_logs.append(full_entry)
-        if len(self.current_logs) > 5:
+        if len(self.current_logs) > 5:  # noqa: PLR2004
             self.current_logs.pop(0)
 
         for i in range(5):
@@ -385,7 +385,7 @@ class StartupDialog(QDialog):
 
         self.progress.setValue(prog)
 
-    def _on_finished(self, success: bool):
+    def _on_finished(self, success: bool):  # noqa: ANN202
         self._init_result = success
         if self._thread:
             self._thread.quit()
@@ -396,11 +396,11 @@ class StartupDialog(QDialog):
         """Restituisce il risultato dell'inizializzazione dell'app."""
         return self._init_result
 
-    def update_status(self, message: str, progress: int):
+    def update_status(self, message: str, progress: int):  # noqa: ANN201
         """Metodo pubblico per aggiornare lo stato di caricamento dal worker."""
         self._on_progress(message, progress)
 
-    def closeEvent(self, event):
+    def closeEvent(self, event):  # noqa: ANN001, ANN201, N802
         """Cleanup - Stop all timers and threads safely."""
         with suppress(Exception):
             self.particles.timer.stop()

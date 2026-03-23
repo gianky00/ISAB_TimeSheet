@@ -222,19 +222,19 @@ class DonCiroWidget(QWidget):
             if self._weather == WeatherCond.RAINY:
                 speed *= 1.2
             self._walk_x += speed * self._look_dir
-            if 130 < self._walk_x < 150 and random.random() < 0.008:  # noqa: S311
+            if 130 < self._walk_x < 150 and random.random() < 0.008:  # noqa: PLR2004, S311
                 self._start_idle()
-            elif self._look_dir > 0 and self._walk_x >= 210:
+            elif self._look_dir > 0 and self._walk_x >= 210:  # noqa: PLR2004
                 self._turn(180.0)
-            elif self._look_dir < 0 and self._walk_x <= 70:
+            elif self._look_dir < 0 and self._walk_x <= 70:  # noqa: PLR2004
                 self._turn(0.0)
         elif self._state == DonState.IDLE:
             self._idle_time -= 16
             if self._idle_time <= 0:
                 r = random.random()  # noqa: S311
-                if r < 0.4:
+                if r < 0.4:  # noqa: PLR2004
                     self._start_action(DonState.ACTION_WATCH)
-                elif r < 0.8:
+                elif r < 0.8:  # noqa: PLR2004
                     self._start_action(DonState.ACTION_TIE)
                 else:
                     self._resume_walk()
@@ -253,7 +253,7 @@ class DonCiroWidget(QWidget):
 
     def _end_turn(self) -> None:
         """Conclude la rotazione e riprende la marcia."""
-        self._look_dir = 1.0 if self._yaw_angle < 90 else -1.0
+        self._look_dir = 1.0 if self._yaw_angle < 90 else -1.0  # noqa: PLR2004
         self._state = DonState.WALKING
 
     def _start_idle(self) -> None:
@@ -286,7 +286,7 @@ class DonCiroWidget(QWidget):
         self.ba.setEndValue(1.0)
         self.ba.start()
 
-    def paintEvent(self, event: Any) -> None:
+    def paintEvent(self, event: Any) -> None:  # noqa: ANN401, N802
         """Metodo di disegno principale."""
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -386,8 +386,7 @@ class DonCiroWidget(QWidget):
         dx, dy = f.x() - h.x(), f.y() - h.y()
         dist = math.sqrt(dx * dx + dy * dy)
         max_d = (self.THIGH_LEN + self.CALF_LEN) * 0.96
-        if dist > max_d:
-            dist = max_d
+        dist = min(dist, max_d)
         a, b, c = self.THIGH_LEN, self.CALF_LEN, dist
         try:
             co = (a * a + c * c - b * b) / (2 * a * c)
@@ -399,7 +398,7 @@ class DonCiroWidget(QWidget):
         ka = ba + (-al if cy >= 0 else al)
         return QPointF(h.x() + math.cos(ka) * a, h.y() + math.sin(ka) * a)
 
-    def _draw_leg(self, p: QPainter, h: QPointF, k: QPointF, f: QPointF, z: float, cy: float) -> None:
+    def _draw_leg(self, p: QPainter, h: QPointF, k: QPointF, f: QPointF, z: float, cy: float) -> None:  # noqa: PLR0913
         """Disegna una gamba 3D."""
         op = 0.8 if z < 0 else 1.0
         p.setOpacity(op)
@@ -468,7 +467,7 @@ class DonCiroWidget(QWidget):
             p.restore()
         p.setOpacity(1.0)
 
-    def _draw_torso(self, p: QPainter, hp: QPointF, sh: QPointF, cy: float, sy: float) -> None:
+    def _draw_torso(self, p: QPainter, hp: QPointF, sh: QPointF, cy: float, sy: float) -> None:  # noqa: PLR0915
         """Disegna il busto enterprise a V con collo e colletto."""
         s = self._scale
         w = 22 * s * (0.5 + 0.5 * abs(sy))
@@ -487,7 +486,7 @@ class DonCiroWidget(QWidget):
         p.drawPath(coll)
 
         # Flap Giacca
-        if self._jacket_flap != 0 and sy < 0.3:
+        if self._jacket_flap != 0 and sy < 0.3:  # noqa: PLR2004
             p.setBrush(QBrush(self.C_SUIT.darker(135)))
             j_path = QPainterPath()
             j_path.moveTo(hp.x() + ch, hp.y())
@@ -529,7 +528,7 @@ class DonCiroWidget(QWidget):
             p.drawPath(tie)
             p.restore()
 
-    def _draw_head(self, p: QPainter, pos: QPointF, cy: float, sy: float) -> None:
+    def _draw_head(self, p: QPainter, pos: QPointF, cy: float, sy: float) -> None:  # noqa: PLR0915
         """Disegna la testa 3D con prospettiva capelli e occhi."""
         s = self._scale
         ev = max(0.0, min(1.0, abs(sy) * 2.5))
@@ -577,7 +576,7 @@ class DonCiroWidget(QWidget):
         h_path.lineTo(pos.x() - 14 * s, pos.y() - 2 * s)
         p.drawPath(h_path)
         # Occhi
-        if sy > -0.2:
+        if sy > -0.2:  # noqa: PLR2004
             nx = pos.x() + 10 * s * cy
             gap = 5.5 * s * abs(sy)
             eh = 6 * s * self._blink
@@ -586,7 +585,7 @@ class DonCiroWidget(QWidget):
                 p.setBrush(QBrush(QColor("#111111")))
                 p.setPen(QPen(QColor(50, 50, 50), 1))
                 p.drawRect(QRectF(nx + gap - 4 * s, pos.y(), 8 * s, 6 * s))
-                if abs(sy) > 0.35:
+                if abs(sy) > 0.35:  # noqa: PLR2004
                     p.drawRect(QRectF(nx - gap - 4 * s, pos.y(), 8 * s, 6 * s))
                 p.drawLine(
                     QPointF(nx - gap + 4 * s, pos.y() + 2 * s),
@@ -594,13 +593,13 @@ class DonCiroWidget(QWidget):
                 )
             else:
                 p.drawEllipse(QRectF(nx + gap - 2.5 * s, pos.y() + 1 * s, 5 * s, eh))
-                if abs(sy) > 0.35:
+                if abs(sy) > 0.35:  # noqa: PLR2004
                     p.drawEllipse(QRectF(nx - gap - 2.5 * s, pos.y() + 1 * s, 5 * s, eh))
-                if self._blink > 0.3:
+                if self._blink > 0.3:  # noqa: PLR2004
                     p.setBrush(QBrush(Qt.GlobalColor.black))
                     poff = 1.5 * s * cy
                     p.drawEllipse(QRectF(nx + gap - 1.2 * s + poff, pos.y() + 2 * s, 2.5 * s, 2.5 * s))
-                    if abs(sy) > 0.35:
+                    if abs(sy) > 0.35:  # noqa: PLR2004
                         p.drawEllipse(QRectF(nx - gap - 1.2 * s + poff, pos.y() + 2 * s, 2.5 * s, 2.5 * s))
 
     def _draw_label(self, p: QPainter) -> None:

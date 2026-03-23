@@ -9,10 +9,10 @@ from src.gui.widgets.excel_table import EditableDataTable, ExcelTableWidget
 
 class TestExcelTableCoverage:
     @pytest.fixture
-    def app(self, qapp):
+    def app(self, qapp):  # noqa: ANN001
         return qapp
 
-    def test_excel_table_clear_selection(self, app):
+    def test_excel_table_clear_selection(self, app):  # noqa: ANN001
         """Verifica la cancellazione di celle e widget combo selezionati."""
         table = ExcelTableWidget()
         table.setRowCount(2)
@@ -36,7 +36,7 @@ class TestExcelTableCoverage:
         assert table.item(0, 0).text() == ""
         assert combo.currentIndex() == 0
 
-    def test_editable_data_table_basic_flow(self, app):
+    def test_editable_data_table_basic_flow(self, app):  # noqa: ANN001
         """Verifica caricamento e scaricamento dati in EditableDataTable."""
         cols = [
             {"name": "Col1", "type": "text"},
@@ -45,14 +45,14 @@ class TestExcelTableCoverage:
         data_table = EditableDataTable(cols)
 
         # Inizialmente 20 righe vuote
-        assert data_table.table.rowCount() == 20
+        assert data_table.table.rowCount() == 20  # noqa: PLR2004
 
         # Carica dati (matching flessibile)
         test_data = [{"col1": "Val1", "COL 2": "A"}]
         data_table.set_data(test_data)
 
         # La tabella ora padderà a 20 righe (initial_rows)
-        assert data_table.table.rowCount() == 20
+        assert data_table.table.rowCount() == 20  # noqa: PLR2004
         assert data_table.table.item(0, 0).text() == "Val1"
 
         # Recupera dati
@@ -60,7 +60,7 @@ class TestExcelTableCoverage:
         assert len(exported) == 1
         assert exported[0]["Col1"] == "Val1"
 
-    def test_set_row_status_colors(self, app):
+    def test_set_row_status_colors(self, app):  # noqa: ANN001
         """Verifica che i colori degli stati riga siano applicati correttamente."""
         table = ExcelTableWidget()
         table.setRowCount(1)
@@ -74,9 +74,9 @@ class TestExcelTableCoverage:
         expected = COLORS["table_success_bg"].upper()
         assert color == expected
 
-    def test_excel_table_context_menu_event_with_qpoint(self, app, mocker):
+    def test_excel_table_context_menu_event_with_qpoint(self, app, mocker):  # noqa: ANN001
         """Verifica che contextMenuEvent non crashi con un QPoint (CustomContextMenu)."""
-        from PyQt6.QtCore import QPoint
+        from PyQt6.QtCore import QPoint  # noqa: PLC0415
 
         table = ExcelTableWidget()
         pos = QPoint(10, 10)

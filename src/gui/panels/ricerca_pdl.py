@@ -34,7 +34,7 @@ class RicercaPDLPanel(BaseBotPanel):
 
     data_updated = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None):  # noqa: ANN001, ANN204
         """
         Inizializza il pannello Ricerca PDL.
 
@@ -53,11 +53,11 @@ class RicercaPDLPanel(BaseBotPanel):
 
     def get_bot_class(self) -> type["BaseBot"]:
         """Restituisce la classe SafeWorkPDLSearchBot associata."""
-        from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
+        from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot  # noqa: PLC0415
 
         return SafeWorkPDLSearchBot
 
-    def _setup_content(self):
+    def _setup_content(self):  # noqa: ANN202
         """Inizializza e posiziona i componenti UI di filtraggio e ricerca con design Modern Card."""
         # Sezione Parametri (Design Modern Card Uniformato)
         params_container = QFrame()
@@ -74,7 +74,7 @@ class RicercaPDLPanel(BaseBotPanel):
         params_layout.setContentsMargins(15, 10, 15, 10)
         params_layout.setSpacing(20)
 
-        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED
+        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED  # noqa: PLC0415
 
         # 1. Flag Escludi Chiusi
         vbox_check = QVBoxLayout()
@@ -122,14 +122,14 @@ class RicercaPDLPanel(BaseBotPanel):
         self.content_layout.addWidget(wrapper)
         self.content_layout.addStretch()
 
-    def _load_saved_data(self):
+    def _load_saved_data(self):  # noqa: ANN202
         """Carica le ultime impostazioni di ricerca salvate."""
         config = config_manager.load_config()
         self.exclude_closed_check.setChecked(config.get("pdl_search_exclude_closed", True))
         saved_site = config.get("pdl_search_site", "Seleziona tutto")
         self.site_combo.setCurrentText(saved_site)
 
-    def _save_data(self):
+    def _save_data(self):  # noqa: ANN202
         """Salva i filtri di ricerca correnti nella configurazione."""
         config_manager.set_config_value("pdl_search_exclude_closed", self.exclude_closed_check.isChecked())
         config_manager.set_config_value("pdl_search_site", self.site_combo.currentText())
@@ -141,11 +141,11 @@ class RicercaPDLPanel(BaseBotPanel):
 
         # Ensure UI elements are available
         if self.start_btn is None:
-            raise RuntimeError("Start button is None")
+            raise RuntimeError("Start button is None")  # noqa: TRY003
         if self.stop_btn is None:
-            raise RuntimeError("Stop button is None")
+            raise RuntimeError("Stop button is None")  # noqa: TRY003
         if self.log_widget is None:
-            raise RuntimeError("Log widget is None")
+            raise RuntimeError("Log widget is None")  # noqa: TRY003
 
         if not username or not password:
             ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
@@ -159,7 +159,7 @@ class RicercaPDLPanel(BaseBotPanel):
             "site_selection": self.site_combo.currentText(),
         }
 
-        from src.core.config_manager import load_config
+        from src.core.config_manager import load_config  # noqa: PLC0415
 
         config = load_config()
 
@@ -208,7 +208,7 @@ class RicercaPDLPanel(BaseBotPanel):
             default_acc.get("type", "Esecutore"),
         )
 
-    def _on_worker_finished(self, success: bool):
+    def _on_worker_finished(self, success: bool):  # noqa: ANN202
         """Emette il segnale data_updated al termine dell'operazione."""
         super()._on_worker_finished(success)
         if success:

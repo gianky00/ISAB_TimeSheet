@@ -34,7 +34,7 @@ class TestFastTableModel:
 
         # La logica sort_key attuale mette None a prioritÃ  0, numeri a 1, stringhe a 2
         assert sorted_data[0] is None
-        assert sorted_data[1] == 10 or sorted_data[1] == "2"  # Dipende da parsing
+        assert sorted_data[1] == 10 or sorted_data[1] == "2"  # Dipende da parsing  # noqa: PLR2004
         # Nota: "2" viene parsato come float 2.0 (priorità 1), "A" come stringa (priorità 2)
         assert sorted_data[-1] == "A"
 

@@ -18,7 +18,7 @@ class CertificatiEngine:
 
     EXCLUSIONS_FILE: Path = CONFIG_DIR / "data" / "certificati_exclusions.json"
 
-    def __init__(self):
+    def __init__(self):  # noqa: ANN204
         self._exclusions: set[str] = set()
         self._print_exclusions: set[str] = set()
         self.load_exclusions()
@@ -59,12 +59,12 @@ class CertificatiEngine:
                     indent=2,
                     ensure_ascii=False,
                 )
-            return True
+            return True  # noqa: TRY300
         except Exception:
             return False
 
     @staticmethod
-    def calculate_days_and_status(scadenza_str: str) -> tuple[int | None, str]:
+    def calculate_days_and_status(scadenza_str: str) -> tuple[int | None, str]:  # noqa: PLR0911
         """
         Calcola i giorni alla scadenza e determina l'icona di stato.
         Returns: (giorni_alla_scadenza, icona_pallino)
@@ -83,27 +83,27 @@ class CertificatiEngine:
 
             if days < 0:
                 return days, Icons.STATUS_DOT_RED
-            if 0 <= days <= 15:
+            if 0 <= days <= 15:  # noqa: PLR2004
                 return days, Icons.STATUS_DOT_ORANGE
-            if 16 <= days <= 30:
+            if 16 <= days <= 30:  # noqa: PLR2004
                 return days, Icons.STATUS_DOT_YELLOW
 
-            return days, Icons.STATUS_DOT_GREEN
+            return days, Icons.STATUS_DOT_GREEN  # noqa: TRY300
         except Exception:
             return None, Icons.STATUS_DOT_GRAY
 
     @staticmethod
     def format_days_text_short(days: int | None) -> str:
         """Ritorna una rappresentazione testuale breve dello stato scadenze."""
-        if days == -9999:
+        if days == -9999:  # noqa: PLR2004
             return "❌ STRUMENTO GUASTO"
         if days is None:
             return "N/D"
         if days < 0:
             return f"🔴 Scaduto ({abs(days)}gg fa)"
-        if 0 <= days <= 15:
+        if 0 <= days <= 15:  # noqa: PLR2004
             return f"🟠 Scade tra {days}gg"
-        if 16 <= days <= 30:
+        if 16 <= days <= 30:  # noqa: PLR2004
             return f"🟡 Scade tra {days}gg"
         return f"✅ Attivo ({days}gg rim.)"
 
@@ -118,7 +118,7 @@ class CertificatiEngine:
             perc = f_val * 100
             # Formattiamo con virgola come separatore decimale, rimuovendo ,00 se superfluo
             res = f"{perc:.4f}".rstrip(".0").replace(".", ",")
-            return f"{res}%" if res else "0%"
+            return f"{res}%" if res else "0%"  # noqa: TRY300
         except (ValueError, TypeError):
             return str(val)
 
@@ -152,6 +152,6 @@ class CertificatiEngine:
         return {
             "matricola": parts[0].strip() if parts else "",
             "costruttore": parts[1].strip() if len(parts) > 1 else "N/D",
-            "modello": parts[2].strip() if len(parts) > 2 else "N/D",
-            "range": parts[3].strip() if len(parts) > 3 and "Digital" in parts[2] else "",
+            "modello": parts[2].strip() if len(parts) > 2 else "N/D",  # noqa: PLR2004
+            "range": parts[3].strip() if len(parts) > 3 and "Digital" in parts[2] else "",  # noqa: PLR2004
         }

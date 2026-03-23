@@ -28,7 +28,7 @@ class ContabilitaSearch:
             return []
 
         query = query.strip().lower()
-        if len(query) < 2:
+        if len(query) < 2:  # noqa: PLR2004
             return []  # Minimo 2 caratteri
 
         results: list[dict[str, Any]] = []
@@ -77,7 +77,7 @@ class ContabilitaSearch:
                     for row in rows
                 )
         except Exception as e:
-            logger.error(f"Search Error: {e}")
+            logger.error(f"Search Error: {e}")  # noqa: TRY400
 
         return results
 
@@ -86,7 +86,7 @@ class ContabilitaSearch:
         cls, db_path: Path, query: str, year: int | None = None, limit: int = 100
     ) -> dict[str, list[dict[str, Any]]]:
         """Ricerca estesa in tutti i moduli (Giornaliere, Scarico Ore, Certificati)."""
-        if not db_path.exists() or len(query.strip()) < 2:
+        if not db_path.exists() or len(query.strip()) < 2:  # noqa: PLR2004
             return {}
 
         query = query.strip().lower()
@@ -108,19 +108,19 @@ class ContabilitaSearch:
                 out["CERTIFICATI"] = cls._search_certificati(cursor, query, limit)
 
         except Exception as e:
-            logger.error(f"Extended Search Error: {e}")
+            logger.error(f"Extended Search Error: {e}")  # noqa: TRY400
 
         return out
 
     @staticmethod
-    def _fmt_date(val: Any) -> str:
+    def _fmt_date(val: Any) -> str:  # noqa: ANN401
         """Helper per formattazione date ISO in IT."""
         try:
             if not val:
                 return ""
             parts = str(val).split()[0].split("-")
             # Verifica che sia un formato YYYY-MM-DD plausibile
-            if len(parts) == 3 and len(parts[0]) == 4 and parts[0].isdigit():
+            if len(parts) == 3 and len(parts[0]) == 4 and parts[0].isdigit():  # noqa: PLR2004
                 return f"{parts[2]}/{parts[1]}/{parts[0]}"
             return str(val)
         except Exception:

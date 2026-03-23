@@ -71,12 +71,12 @@ class ContabilitaPanel(QWidget):
         try:
             self.refresh_tabs()
         except Exception as e:
-            import traceback
+            import traceback  # noqa: PLC0415
 
             print(f"❌ Error refreshing tabs for ContabilitaPanel: {e}")
             traceback.print_exc()
 
-    def _setup_ui(self) -> None:
+    def _setup_ui(self) -> None:  # noqa: PLR0915
         """Costruisce l'architettura dei tab e la toolbar unificata."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
@@ -90,7 +90,7 @@ class ContabilitaPanel(QWidget):
         toolbar_layout.setContentsMargins(15, 10, 15, 10)
         toolbar_layout.setSpacing(15)
 
-        from src.gui.styles import LABEL_MUTED, LINEEDIT_STYLE
+        from src.gui.styles import LABEL_MUTED, LINEEDIT_STYLE  # noqa: PLC0415
 
         # Sezione Statistiche Rapide
         stats_h = QHBoxLayout()
@@ -210,7 +210,7 @@ class ContabilitaPanel(QWidget):
             "Certificati Campione",
         )
 
-        from src.gui.panels.contabilita_kpi import ContabilitaKPIPanel
+        from src.gui.panels.contabilita_kpi import ContabilitaKPIPanel  # noqa: PLC0415
 
         self.kpi_panel = ContabilitaKPIPanel()
         self.main_tabs.addTab(
@@ -418,7 +418,7 @@ class ContabilitaPanel(QWidget):
             timestamp = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
             added_str = f"<font color='{COLORS['success_dark']}'><b>+{added}</b></font>"
             removed_str = f"<font color='{COLORS['error_red']}'><b>-{removed}</b></font>"
-            if duration < 60:
+            if duration < 60:  # noqa: PLR2004
                 time_str = f"{duration:.1f}s"
             else:
                 time_str = f"{int(duration // 60)}m {int(duration % 60)}s"

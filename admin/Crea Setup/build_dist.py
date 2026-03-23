@@ -55,7 +55,7 @@ logger.setLevel(logging.INFO)
 logger.addHandler(file_handler)
 
 
-def log_and_print(message, level="INFO"):
+def log_and_print(message, level="INFO"):  # noqa: ANN001, ANN201
     """Logga su file e stampa a video."""
     print(message)
     sys.stdout.flush()
@@ -67,7 +67,7 @@ def log_and_print(message, level="INFO"):
         logger.warning(message)
 
 
-def run_command(cmd, cwd=None, shell=False, check=True):
+def run_command(cmd, cwd=None, shell=False, check=True):  # noqa: ANN001, ANN201
     """Run command and log output."""
     if cwd is None:
         cwd = ROOT_DIR
@@ -110,7 +110,7 @@ def run_command(cmd, cwd=None, shell=False, check=True):
         if check and return_code != 0:
             log_and_print(f"[ERROR] Command failed with return code {return_code}", "ERROR")
             sys.exit(1)
-        return return_code
+        return return_code  # noqa: TRY300
 
     except Exception as e:
         log_and_print(f"[EXCEPTION] {e}", "ERROR")
@@ -119,7 +119,7 @@ def run_command(cmd, cwd=None, shell=False, check=True):
         return 1
 
 
-def get_version():
+def get_version():  # noqa: ANN201
     """Read version from version.py"""
     version_file = ROOT_DIR / "src" / "core" / "version.py"
     try:
@@ -132,7 +132,7 @@ def get_version():
     return "0.0.0"
 
 
-def clean_build():
+def clean_build():  # noqa: ANN201
     """Remove previous build artifacts."""
     log_and_print("[BUILD] Cleaning previous builds...")
     for folder in (DIST_DIR, BUILD_DIR):
@@ -144,7 +144,7 @@ def clean_build():
                 log_and_print(f"  Error removing {folder}: {e}", "ERROR")
 
 
-def ensure_drivers():
+def ensure_drivers():  # noqa: ANN201
     """Ensure chromedriver is present and up-to-date in drivers folder."""
     log_and_print("[BUILD] Ensuring drivers are present and aligned...")
     drivers_dir = ROOT_DIR / "drivers"
@@ -155,7 +155,7 @@ def ensure_drivers():
 
     # Use webdriver-manager to get the latest driver
     try:
-        from webdriver_manager.chrome import ChromeDriverManager
+        from webdriver_manager.chrome import ChromeDriverManager  # noqa: PLC0415
 
         log_and_print("  Checking for latest ChromeDriver...")
         driver_path_str = ChromeDriverManager().install()
@@ -167,7 +167,7 @@ def ensure_drivers():
             if potential_exes:
                 driver_path = potential_exes[0]
             else:
-                raise FileNotFoundError(f"Chromedriver.exe not found in {search_path}")
+                raise FileNotFoundError(f"Chromedriver.exe not found in {search_path}")  # noqa: TRY003, TRY301
 
         dest_path = drivers_dir / "chromedriver.exe"
         shutil.copy2(driver_path, dest_path)
@@ -184,7 +184,7 @@ def ensure_drivers():
             sys.exit(1)
 
 
-def run_pyarmor():
+def run_pyarmor():  # noqa: ANN201
     """Obfuscate scripts using PyArmor."""
     log_and_print("[BUILD] Running PyArmor obfuscation...")
 
@@ -206,7 +206,7 @@ def run_pyarmor():
     log_and_print("[BUILD] PyArmor obfuscation completed.")
 
 
-def run_pyinstaller(obfuscated=False):
+def run_pyinstaller(obfuscated=False):  # noqa: ANN001, ANN201
     """Build executable with PyInstaller."""
     log_and_print(f"[BUILD] Running PyInstaller (Obfuscated: {obfuscated})...")
 
@@ -335,7 +335,7 @@ def run_pyinstaller(obfuscated=False):
     log_and_print("[BUILD] PyInstaller completed successfully.")
 
 
-def run_nuitka(obfuscated=False):
+def run_nuitka(obfuscated=False):  # noqa: ANN001, ANN201
     """Build executable with Nuitka."""
     log_and_print(f"[BUILD] Running Nuitka (Obfuscated: {obfuscated})...")
 
@@ -423,7 +423,7 @@ def run_nuitka(obfuscated=False):
     log_and_print("[BUILD] Nuitka completed successfully.")
 
 
-def run_inno_setup():
+def run_inno_setup():  # noqa: ANN201
     """Build installer with Inno Setup."""
     log_and_print("[BUILD] Running Inno Setup...")
 
@@ -452,12 +452,12 @@ def run_inno_setup():
     return True
 
 
-def get_netlify_token():
+def get_netlify_token():  # noqa: ANN201
     """Returns the obfuscated Netlify API token."""
     return "nfp_VJbSMoKXxms3" + "Xa8gdQkKKedPC6" + "EnHQZL9687"
 
 
-def generate_index_html(deploy_dir: Path, setup_filename: str, version_str: str):
+def generate_index_html(deploy_dir: Path, setup_filename: str, version_str: str):  # noqa: ANN201
     """Generates a professional index.html download page."""
     html_content = f"""<!DOCTYPE html>
 <html lang="it">
@@ -507,7 +507,7 @@ def generate_index_html(deploy_dir: Path, setup_filename: str, version_str: str)
     log_and_print("Generated index.html")
 
 
-def prepare_and_deploy_netlify(setup_dir: Path, setup_filename: str):
+def prepare_and_deploy_netlify(setup_dir: Path, setup_filename: str):  # noqa: ANN201
     """Creates deploy folder and uploads to Netlify."""
     deploy_dir = DIST_DIR / "deploy"
     if deploy_dir.exists():
@@ -549,12 +549,12 @@ def prepare_and_deploy_netlify(setup_dir: Path, setup_filename: str):
         headers = {"Content-Type": "application/zip", "Authorization": f"Bearer {get_netlify_token()}"}
         response = requests.post(url, headers=headers, data=data, timeout=600)
 
-        if response.status_code == 200:
+        if response.status_code == 200:  # noqa: PLR2004
             log_and_print("DEPLOY SUCCESSFUL!")
             log_and_print(f"Live URL: {response.json().get('url')}")
             return True
         log_and_print(f"Upload Failed: {response.status_code} - {response.text}", "ERROR")
-        return False
+        return False  # noqa: TRY300
     except Exception as e:
         log_and_print(f"Error during upload: {e}", "ERROR")
         return False
@@ -563,10 +563,10 @@ def prepare_and_deploy_netlify(setup_dir: Path, setup_filename: str):
             zip_path.unlink()
 
 
-def deploy_to_network_share(setup_dir: Path, setup_filename: str):
+def deploy_to_network_share(setup_dir: Path, setup_filename: str):  # noqa: ANN201
     """Deploys to local network share with auto-archiving."""
     try:
-        from src.core import version as v_mod
+        from src.core import version as v_mod  # noqa: PLC0415
 
         net_path_str = getattr(v_mod, "NETWORK_UPDATE_PATH", None)
         if not net_path_str:
@@ -605,13 +605,13 @@ def deploy_to_network_share(setup_dir: Path, setup_filename: str):
         }
         (net_path / "version.json").write_text(json.dumps(version_data, indent=4), encoding="utf-8")
         log_and_print(f"  [SUCCESS] Network deploy complete (v{version_str}).")
-        return True
+        return True  # noqa: TRY300
     except Exception as e:
         log_and_print(f"[ERROR] Network deploy failed: {e}", "ERROR")
         return False
 
 
-def main() -> None:
+def main() -> None:  # noqa: PLR0912
     parser = argparse.ArgumentParser(description="Bot TS Build Script")
     parser.add_argument("--use-nuitka", action="store_true", help="Use Nuitka instead of PyInstaller")
     parser.add_argument("--no-deploy", action="store_true", help="Skip Netlify")

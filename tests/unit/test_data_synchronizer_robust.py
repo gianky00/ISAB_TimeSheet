@@ -19,5 +19,5 @@ class TestDataSynchronizerRobust:
 
     def test_clean_value(self):
         assert BaseSyncEngine._clean_value(None) == ""
-        assert BaseSyncEngine._clean_value(10) == 10
+        assert BaseSyncEngine._clean_value(10) == 10  # noqa: PLR2004
         assert BaseSyncEngine._clean_value("  text  ") == "text"

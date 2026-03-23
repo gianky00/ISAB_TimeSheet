@@ -25,7 +25,7 @@ class ReportGenerator:
     _worker: ReportWorker | None = None
 
     @staticmethod
-    def generate_email_report(parent_widget=None):
+    def generate_email_report(parent_widget=None):  # noqa: ANN001, ANN205
         """Avvia la generazione del report in background."""
         if ReportGenerator._worker and ReportGenerator._worker.isRunning():
             ToastManager.instance().show("Generazione report già in corso...", "warning")
@@ -41,7 +41,7 @@ class ReportGenerator:
         ReportGenerator._worker.start()
 
     @staticmethod
-    def _on_report_finished(parent_widget, success, message, data):
+    def _on_report_finished(parent_widget, success, message, data):  # noqa: ANN001, ANN205
         """Callback al completamento del worker."""
         if not success:
             if "Outlook non disponibile" in message:
@@ -66,9 +66,9 @@ class ReportGenerator:
         ToastManager.instance().show(message, "success")
 
     @staticmethod
-    def _fallback_browser(message, data):
+    def _fallback_browser(message, data):  # noqa: ANN001, ANN205
         """Gestisce l'apertura del report nel browser se Outlook fallisce."""
-        from src.core.dipendenti.report_service import ReportService
+        from src.core.dipendenti.report_service import ReportService  # noqa: PLC0415
 
         try:
             body_html = ReportService.build_report_html(data)
@@ -80,11 +80,11 @@ class ReportGenerator:
 
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(tmp_path)))
 
-            from src.core.report_history import ReportHistory
+            from src.core.report_history import ReportHistory  # noqa: PLC0415
 
             ReportHistory.save_report(data["warning_list"], data["expired_list"])
 
             ToastManager.instance().show(message, "warning", duration=4000)
         except Exception as e:
-            logger.error(f"Errore fallback report browser: {e}")
+            logger.error(f"Errore fallback report browser: {e}")  # noqa: TRY400
             ToastManager.instance().show("Impossibile aprire il report nel browser", "error")

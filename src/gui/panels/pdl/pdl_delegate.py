@@ -8,11 +8,11 @@ from PyQt6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
 class PDLDelegate(QStyledItemDelegate):
     """Delegate per gestire il wrap selettivo e l'allineamento nelle celle PDL."""
 
-    def __init__(self, date_columns: Sequence[int], parent: Any | None = None) -> None:
+    def __init__(self, date_columns: Sequence[int], parent: Any | None = None) -> None:  # noqa: ANN401
         super().__init__(parent)
         self.date_columns = date_columns
 
-    def initStyleOption(self, option: QStyleOptionViewItem | None, index: QModelIndex) -> None:
+    def initStyleOption(self, option: QStyleOptionViewItem | None, index: QModelIndex) -> None:  # noqa: N802
         """Configura le opzioni di stile per la cella, gestendo il wrap del testo."""
         super().initStyleOption(option, index)
         if not option:

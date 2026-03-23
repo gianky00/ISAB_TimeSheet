@@ -22,7 +22,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class AnimatedSplitButton(QPushButton):
     """Pulsante Split personalizzato con sfondo bianco, massimo contrasto e animazione al passaggio del mouse."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None):  # noqa: ANN001, ANN204
         super().__init__(parent)
         self.setFixedWidth(45)
         self.setFixedHeight(40)
@@ -36,7 +36,7 @@ class AnimatedSplitButton(QPushButton):
 
         self.set_state(False)
 
-    def set_state(self, is_detached: bool):
+    def set_state(self, is_detached: bool):  # noqa: ANN201
         """Aggiorna l'aspetto del pulsante in base allo stato del pannello corrente."""
         self.is_detached_mode = is_detached
         if is_detached:
@@ -80,7 +80,7 @@ class AnimatedSplitButton(QPushButton):
 
         self.setIconSize(QSize(20, 20))
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:
+    def enterEvent(self, event: QEnterEvent | None) -> None:  # noqa: N802
         """Animazione di ingrandimento dell'icona al passaggio del mouse."""
         self.anim.stop()
         self.anim.setStartValue(QSize(20, 20))
@@ -88,7 +88,7 @@ class AnimatedSplitButton(QPushButton):
         self.anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any | None) -> None:
+    def leaveEvent(self, event: Any | None) -> None:  # noqa: ANN401, N802
         """Ritorno alla dimensione normale."""
         self.anim.stop()
         self.anim.setStartValue(self.iconSize())
@@ -103,7 +103,7 @@ class ToolBarComponent(QObject):
     Gestisce la comunicazione tra la barra di ricerca globale e il SearchController.
     """
 
-    def __init__(self, main_window: Any) -> None:
+    def __init__(self, main_window: Any) -> None:  # noqa: ANN401
         """
         Inizializza il componente ToolBar.
 
@@ -172,7 +172,7 @@ class ToolBarComponent(QObject):
 
         return self.update_banner, self.global_search
 
-    def _handle_split_click(self):
+    def _handle_split_click(self):  # noqa: ANN202
         """Gestisce il click sul pulsante split, eseguendo detach o reattach in base allo stato."""
         idx = self.main_window.page_stack.currentIndex()
         if self.detach_btn.is_detached_mode:
@@ -180,7 +180,7 @@ class ToolBarComponent(QObject):
         else:
             self.main_window.navigation_controller.detach_current_panel()
 
-    def _update_split_button_state(self, *args):
+    def _update_split_button_state(self, *args):  # noqa: ANN002, ANN202
         """Aggiorna lo stile e l'azione del pulsante split verificando se il pannello corrente è sganciato."""
         idx = self.main_window.page_stack.currentIndex()
         is_detached = idx in self.main_window.navigation_controller._detached_panels

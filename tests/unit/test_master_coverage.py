@@ -5,7 +5,7 @@ from src.gui.components.scarico_ore.filters.popup_list import ListFilterPopupWid
 
 
 class TestMasterCoverage:
-    def test_list_filter_popup_logic(self, qapp):
+    def test_list_filter_popup_logic(self, qapp):  # noqa: ANN001
         values = ["Alfa", "Beta", "Gamma"]
         widget = ListFilterPopupWidget(values)
 
@@ -20,26 +20,26 @@ class TestMasterCoverage:
         widget._filter_list("Al")
         assert not widget.list_view.isRowHidden(0)
 
-    def test_date_filter_popup_logic(self, qapp):
+    def test_date_filter_popup_logic(self, qapp):  # noqa: ANN001
         dates = ["01/01/2024", "05/02/2024", "10/01/2023"]
         widget = DateFilterPopupWidget(dates)
 
         # Check tree structure
-        assert widget.model.rowCount() == 2  # 2024 and 2023
+        assert widget.model.rowCount() == 2  # 2024 and 2023  # noqa: PLR2004
 
         selected = widget.get_selected_values()
         assert selected is None  # Initial state is all selected
 
-    def test_audit_manager_integrity(self, tmp_path):
-        from src.core.audit_manager import AuditManager
+    def test_audit_manager_integrity(self, tmp_path):  # noqa: ANN001
+        from src.core.audit_manager import AuditManager  # noqa: PLC0415
 
         with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
             am = AuditManager()
             am.log_action("Test", "User1")
             assert am.verify_integrity() is True
 
-    def test_contabilita_queries_years(self, tmp_path):
-        from src.core.contabilita_queries import ContabilitaQueries
+    def test_contabilita_queries_years(self, tmp_path):  # noqa: ANN001
+        from src.core.contabilita_queries import ContabilitaQueries  # noqa: PLC0415
 
         # Just test the method doesn't crash with empty db
         db = tmp_path / "test.db"

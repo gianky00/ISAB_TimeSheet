@@ -35,7 +35,7 @@ class TestPrenotaBPBotComprehensive(unittest.TestCase):
         self.assertEqual(self.bot._get_row_value(row, "Inesistente"), "")
 
     @patch("src.bots.portale_fornitori.prenota_bp.bot.PrenotaBPPage")
-    def test_run_success(self, mock_page_class):
+    def test_run_success(self, mock_page_class):  # noqa: ANN001
         """Test di esecuzione completata con successo."""
         mock_page = mock_page_class.return_value
         data = {"rows": [{"numero_bp": "BP001", "note_ritiro": "Nota 1"}]}
@@ -51,7 +51,7 @@ class TestPrenotaBPBotComprehensive(unittest.TestCase):
         self.assertEqual(self.bot.results[0]["STATO"], "OK")
 
     @patch("src.bots.portale_fornitori.prenota_bp.bot.PrenotaBPPage")
-    def test_run_stop_requested(self, mock_page_class):
+    def test_run_stop_requested(self, mock_page_class):  # noqa: ANN001
         """Verifica che il bot si fermi se richiesto dall'utente."""
         self.bot._stop_requested = True
         data = {"rows": [{"numero_bp": "BP001"}]}
@@ -79,7 +79,7 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
             self.page = PrenotaBPPage(self.mock_driver, self.mock_log)
 
     @patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
-    def test_wait_and_click_retry_logic(self, mock_ec):
+    def test_wait_and_click_retry_logic(self, mock_ec):  # noqa: ANN001
         """Verifica la logica di retry di wait_and_click."""
         with patch(
             "src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait"
@@ -91,7 +91,7 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
             # Primo tentativo fallisce (TimeoutException), secondo ha successo
             mock_local_wait.until.side_effect = [TimeoutException(), mock_el]
 
-            # overlay (short_wait)
+            # overlay (short_wait)  # noqa: ERA001
             self.mock_short_wait.until.return_value = True
 
             locator = (By.ID, "test-id")
@@ -102,7 +102,7 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
             mock_el.click.assert_called_once()
 
     @patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
-    def test_wait_and_click_js_fallback(self, mock_ec):
+    def test_wait_and_click_js_fallback(self, mock_ec):  # noqa: ANN001
         """Verifica il fallback JS se il click standard fallisce."""
         with patch(
             "src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.WebDriverWait"
@@ -121,7 +121,7 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
             self.mock_driver.execute_script.assert_any_call("arguments[0].click();", mock_el)
 
     @patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
-    def test_navigate_to_gestione_bp_expansion(self, mock_ec):
+    def test_navigate_to_gestione_bp_expansion(self, mock_ec):  # noqa: ANN001
         """Verifica l'espansione del menu se il sottomenu non è subito visibile."""
         self.mock_driver.find_elements.return_value = []
 
@@ -146,7 +146,7 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
 
     @patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
     @patch("selenium.webdriver.common.action_chains.ActionChains")
-    def test_filtra_buoni_prelievo_vendor_selection(self, mock_action_class, mock_ec):
+    def test_filtra_buoni_prelievo_vendor_selection(self, mock_action_class, mock_ec):  # noqa: ANN001
         """Verifica la selezione del fornitore tramite freccia e lista."""
         mock_arrow = MagicMock()
         mock_option = MagicMock()
@@ -182,7 +182,7 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
         self.assertEqual(mock_input.clear.call_count, 3)
 
     @patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
-    def test_gestisci_creazione_richiesta_select_all(self, mock_ec):
+    def test_gestisci_creazione_richiesta_select_all(self, mock_ec):  # noqa: ANN001
         """Test del flusso di creazione richiesta con selezione 'Tutti i materiali'."""
         mock_row = MagicMock()
         mock_row.find_element.return_value = MagicMock()
@@ -200,7 +200,7 @@ class TestPrenotaBPPageComprehensive(unittest.TestCase):
                 mock_wc.assert_any_call(PrenotaBPLocators.BT_SALVA)
 
     @patch("src.bots.portale_fornitori.prenota_bp.pages.prenota_bp_page.EC")
-    def test_gestisci_creazione_richiesta_partial_selection(self, mock_ec):
+    def test_gestisci_creazione_richiesta_partial_selection(self, mock_ec):  # noqa: ANN001
         """Test della selezione puntuale se solo alcuni materiali sono disponibili."""
         mock_row_ok = MagicMock()
         mock_row_err = MagicMock()

@@ -38,7 +38,7 @@ class AuditFilterBar(ModernCard):
         super().__init__(parent, elevation=8)
         self._setup_ui()
 
-    def _setup_ui(self) -> None:
+    def _setup_ui(self) -> None:  # noqa: PLR0915
         """Configura il layout orizzontale e inizializza i widget dei filtri."""
         layout = QHBoxLayout(self)
         layout.setContentsMargins(15, 10, 15, 10)
@@ -153,9 +153,9 @@ class AuditFilterBar(ModernCard):
         levels = None
         if lvl_idx == 1:
             levels = ["low"]
-        elif lvl_idx == 2:
+        elif lvl_idx == 2:  # noqa: PLR2004
             levels = ["medium"]
-        elif lvl_idx == 3:
+        elif lvl_idx == 3:  # noqa: PLR2004
             levels = ["high"]
 
         self.filters_applied.emit(
@@ -185,7 +185,7 @@ class AuditFilterBar(ModernCard):
         Returns:
             dict: Dizionario contenente date convertite in datetime, categoria, livelli e testo di ricerca.
         """
-        from datetime import datetime
+        from datetime import datetime  # noqa: PLC0415
 
         start_dt = datetime.combine(self.date_from.date().toPyDate(), datetime.min.time())
         end_dt = datetime.combine(self.date_to.date().toPyDate(), datetime.max.time())
@@ -193,9 +193,9 @@ class AuditFilterBar(ModernCard):
         levels = None
         if lvl_idx == 1:
             levels = ["low"]
-        elif lvl_idx == 2:
+        elif lvl_idx == 2:  # noqa: PLR2004
             levels = ["medium"]
-        elif lvl_idx == 3:
+        elif lvl_idx == 3:  # noqa: PLR2004
             levels = ["high"]
 
         return {

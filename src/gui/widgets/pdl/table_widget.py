@@ -27,11 +27,11 @@ class ProgrammazioneTableWidget(StandardTable):
     row_expanded = pyqtSignal(int, bool)  # row, is_expanded
     selection_changed_custom = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None):  # noqa: ANN001, ANN204
         super().__init__(0, 0, parent)
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self):  # noqa: ANN202
         self.setColumnCount(12)
         self.setAlternatingRowColors(True)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -60,8 +60,8 @@ class ProgrammazioneTableWidget(StandardTable):
         self.cellDoubleClicked.connect(self._handle_double_click)
         self.cellClicked.connect(self.selection_changed_custom.emit)
 
-    def _handle_double_click(self, row: int, column: int):
-        from src.gui.widgets.pdl_timeline import PDLTimelineWidget
+    def _handle_double_click(self, row: int, column: int):  # noqa: ANN202
+        from src.gui.widgets.pdl_timeline import PDLTimelineWidget  # noqa: PLC0415
 
         # Se la riga sotto è già una timeline, la rimuoviamo (collasso)
         next_row = row + 1
@@ -82,7 +82,7 @@ class ProgrammazioneTableWidget(StandardTable):
         try:
             interventions = PDLQueries.get_pdl_interventions(pdl_code)
         except Exception as e:
-            logger.error(f"Errore timeline PDL {pdl_code}: {e}")
+            logger.error(f"Errore timeline PDL {pdl_code}: {e}")  # noqa: TRY400
             interventions = []
 
         timeline = PDLTimelineWidget(interventions)
@@ -91,7 +91,7 @@ class ProgrammazioneTableWidget(StandardTable):
         self.setRowHeight(next_row, timeline.sizeHint().height())
         self.row_expanded.emit(row, True)
 
-    def populate_results(self, results: list[dict[str, Any]], today_idx: int = -1):
+    def populate_results(self, results: list[dict[str, Any]], today_idx: int = -1):  # noqa: ANN201
         """Popola la tabella con i risultati forniti."""
         self.setRowCount(len(results))
         for row_idx, res in enumerate(results):

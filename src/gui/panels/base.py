@@ -51,12 +51,12 @@ class BotWorker(QThread):
     step_changed_signal = pyqtSignal(int, str, object)  # Bridge for timeline
     critical_error_signal = pyqtSignal(str, str)  # Bridge for license/fatal errors
 
-    def __init__(
+    def __init__(  # noqa: ANN204
         self,
         bot_id: str | BaseBot,
         bot_params: dict[str, Any] | None = None,
-        data: Any = None,
-        telegram_service: Any = None,
+        data: Any = None,  # noqa: ANN401
+        telegram_service: Any = None,  # noqa: ANN401
     ):
         """
         Inizializza il worker del bot.
@@ -75,11 +75,11 @@ class BotWorker(QThread):
         self.telegram_service = telegram_service
         self.bot: BaseBot | None = None
 
-    def run(self):
+    def run(self):  # noqa: ANN201
         """Avvia l'esecuzione del bot nel thread dedicato."""
         try:
             # 1. Inizializzazione Differita (Background)
-            from src.bots import create_bot
+            from src.bots import create_bot  # noqa: PLC0415
 
             if isinstance(self.bot_id, str):
                 self.log_signal.emit("🔧 Preparazione ambiente bot...")
@@ -133,7 +133,7 @@ class BotWorker(QThread):
         event.wait()
         return result_container.get("value", "")
 
-    def stop(self):
+    def stop(self):  # noqa: ANN201
         """Interrompe l'esecuzione del bot segnalando la richiesta di stop."""
         self._is_running = False
         if self.bot and hasattr(self.bot, "request_stop"):
@@ -154,7 +154,7 @@ class BaseBotPanel(QWidget):
     status_changed = pyqtSignal(str, str)  # status, message
     autopilot_changed = pyqtSignal()  # Segnale per aggiornamento UI Autopilot
 
-    def __init__(self, bot_id: str, bot_name: str, bot_description: str, parent=None):
+    def __init__(self, bot_id: str, bot_name: str, bot_description: str, parent=None):  # noqa: ANN001, ANN204
         """
         Inizializza il pannello base.
 
@@ -184,7 +184,7 @@ class BaseBotPanel(QWidget):
         """Restituisce la classe del bot associata al pannello. Da implementare nelle sottoclassi."""
         return None
 
-    def _init_ghost_timeline(self):
+    def _init_ghost_timeline(self):  # noqa: ANN202
         """Inizializza gli step della timeline utilizzando i metadati della classe del bot."""
         try:
             # 1. Tenta di ottenere la classe direttamente dal pannello (Più robusto)
@@ -192,7 +192,7 @@ class BaseBotPanel(QWidget):
 
             # 2. Fallback al registro se la classe non è fornita
             if not bot_class:
-                from src.bots import BOT_REGISTRY
+                from src.bots import BOT_REGISTRY  # noqa: PLC0415
 
                 bot_info = BOT_REGISTRY.get(self.bot_id)
                 if bot_info:
@@ -205,12 +205,12 @@ class BaseBotPanel(QWidget):
         except Exception as e:
             self._logger.warning(f"Impossibile inizializzare timeline ghost per {self.bot_id}: {e}")
 
-    def showEvent(self, event):
+    def showEvent(self, event):  # noqa: ANN001, ANN201, N802
         """Forza l'inizializzazione della timeline all'apertura del pannello."""
         super().showEvent(event)
         QTimer.singleShot(100, self._init_ghost_timeline)
 
-    def _setup_base_ui(self):
+    def _setup_base_ui(self):  # noqa: ANN202
         """Inizializza l'interfaccia utente di base comune a tutti i pannelli bot."""
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(Spacing.md, Spacing.xs, Spacing.md, Spacing.md)
@@ -275,14 +275,14 @@ class BaseBotPanel(QWidget):
         self.log_widget = TimelineWidget()
         self.main_layout.addWidget(self.log_widget, stretch=2)
 
-    def _setup_ui(self):
+    def _setup_ui(self):  # noqa: ANN202
         """
         Inizializza l'interfaccia utente.
         Deve essere sovrascritto nelle sottoclassi se necessario.
         """
         self._setup_base_ui()
 
-    def _update_status(self, color: str, message: str = ""):
+    def _update_status(self, color: str, message: str = ""):  # noqa: ANN202
         """Aggiorna la card di stato con colore e messaggio."""
         if not message:
             # Map standard colors to messages
@@ -297,10 +297,10 @@ class BaseBotPanel(QWidget):
         self.status_card.setStatus(message, color)
         self.status_changed.emit(color, message)
 
-    def _connect_signals(self):
+    def _connect_signals(self):  # noqa: ANN202
         """Connette i segnali comuni ai callback del pannello."""
 
-    def get_bot_instance(self):
+    def get_bot_instance(self):  # noqa: ANN201
         """Restituisce un'istanza del bot. Da implementare nelle sottoclassi."""
 
     def get_current_status(self) -> tuple[str, str]:
@@ -315,7 +315,7 @@ class BaseBotPanel(QWidget):
         """
         return True, ""
 
-    def run_externally(self, params: dict[str, Any] | None = None):
+    def run_externally(self, params: dict[str, Any] | None = None):  # noqa: ANN201
         """
         Avvia il bot programmaticamente con parametri opzionali che sovrascrivono quelli UI.
 
@@ -324,7 +324,7 @@ class BaseBotPanel(QWidget):
         """
         self._on_start(params_override=params)
 
-    def add_rows_simple(self, new_rows: list[Any]):
+    def add_rows_simple(self, new_rows: list[Any]):  # noqa: ANN201
         """Aggiunge righe alla tabella dati esistente (se presente)."""
         if hasattr(self, "data_table"):
             current_data = self.data_table.get_data()
@@ -333,7 +333,7 @@ class BaseBotPanel(QWidget):
             if hasattr(self, "_save_data"):
                 self._save_data()
 
-    def clear_rows_simple(self):
+    def clear_rows_simple(self):  # noqa: ANN201
         """Svuota la tabella dati."""
         if hasattr(self, "data_table"):
             self.data_table.set_data([])
@@ -346,14 +346,14 @@ class BaseBotPanel(QWidget):
             return len(self.data_table.get_data())
         return 0
 
-    def _on_start(self, params_override: dict[str, Any] | None = None):
+    def _on_start(self, params_override: dict[str, Any] | None = None):  # noqa: ANN202
         """Gestisce l'avvio del bot. Da implementare nelle sottoclassi."""
         self.start_time = datetime.now(UTC)
         self._update_status(STATUS_COLORS["running"])
 
         # Segnala inizio sync a SyncTracker
         if self.sync_module_id:
-            from src.core.sync_tracker import SyncTracker
+            from src.core.sync_tracker import SyncTracker  # noqa: PLC0415
 
             SyncTracker.mark_start(self.sync_module_id)
 
@@ -373,7 +373,7 @@ class BaseBotPanel(QWidget):
         # Audit & Stats (Defer to next event loop to avoid UI blocking on DB contention)
         QTimer.singleShot(0, self._log_startup_telemetry)
 
-    def _log_startup_telemetry(self):
+    def _log_startup_telemetry(self):  # noqa: ANN202
         """Esegue il logging di avvio in modo asincrono rispetto all'evento click UI."""
         try:
             AuditManager.instance().log_action(
@@ -386,14 +386,14 @@ class BaseBotPanel(QWidget):
         except Exception as e:
             self._logger.warning(f"Errore durante il logging della telemetria: {e}")
 
-    def _on_stop(self):
+    def _on_stop(self):  # noqa: ANN202
         """Gestisce lo stop del bot."""
         if self.worker:
             self.worker.stop()
             self.log_widget.append("[AVVISO] Stop richiesto...")
             self._update_status(STATUS_COLORS["pending"], "Arresto richiesto...")
 
-    def _on_worker_finished(self, success: bool):
+    def _on_worker_finished(self, success: bool):  # noqa: ANN202
         """Gestisce il completamento del worker."""
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
@@ -425,7 +425,7 @@ class BaseBotPanel(QWidget):
         m, s = divmod(int(delta.total_seconds()), 60)
         return f"{m}m {s}s"
 
-    def _log_mission_report(self, duration: str, success: bool):
+    def _log_mission_report(self, duration: str, success: bool):  # noqa: ANN202
         """Gestisce la UI del report e l'audit."""
         status_text = "SUCCESS" if success else "ERROR"
         self.log_widget.append(f"MISSION REPORT: Duration {duration} | Status: {status_text}", status_text)
@@ -444,7 +444,7 @@ class BaseBotPanel(QWidget):
             ),
         )
 
-    def _handle_worker_completion_signals(self, success: bool):
+    def _handle_worker_completion_signals(self, success: bool):  # noqa: ANN202
         """Invia segnali e gestisce risultati per Telegram."""
         if self.worker and self.worker.bot and hasattr(self.worker.bot, "downloaded_files"):
             files = getattr(self.worker.bot, "downloaded_files", [])
@@ -453,14 +453,14 @@ class BaseBotPanel(QWidget):
 
         # Tracciamento fallimento tentativi sync
         if not success and self.sync_module_id:
-            from src.core.sync_tracker import SyncTracker
+            from src.core.sync_tracker import SyncTracker  # noqa: PLC0415
 
             SyncTracker.mark_failure(self.sync_module_id)
 
         self.bot_finished.emit(success)
         self.autopilot_changed.emit()
 
-    def _notify_completion(self, success: bool):
+    def _notify_completion(self, success: bool):  # noqa: ANN202
         """Gestisce le notifiche di sistema e background."""
         win = self.window()
         if win and hasattr(win, "show_background_notification"):
@@ -476,16 +476,16 @@ class BaseBotPanel(QWidget):
         else:
             QApplication.alert(self, 0)
 
-    def _on_bot_finished(self, success: bool):
+    def _on_bot_finished(self, success: bool):  # noqa: ANN202
         """Alias per _on_worker_finished (compatibilità test)."""
         self._on_worker_finished(success)
 
-    def _on_log(self, message: str):
+    def _on_log(self, message: str):  # noqa: ANN202
         """Aggiunge un messaggio al log."""
         if hasattr(self, "log_widget") and self.log_widget:
             self.log_widget.append(message)
 
-    def _on_status(self, status: str):
+    def _on_status(self, status: str):  # noqa: ANN202
         """Aggiorna lo stato (messaggio custom)."""
         # Map string status to StatusCard if possible, or just update message
         # Often bots send generic strings like "Downloading..."
@@ -495,7 +495,7 @@ class BaseBotPanel(QWidget):
         # Using current status enum, but updating message
         self.status_changed.emit(self.status_card._status, status)
 
-    def _ask_user_input(self, prompt: str, result_container: dict[str, Any], event: threading.Event):
+    def _ask_user_input(self, prompt: str, result_container: dict[str, Any], event: threading.Event):  # noqa: ANN202
         """Callback per input utente dal worker (thread-safe via signal)."""
         text, ok = StandardInputDialog.get_input(self, "Richiesta Input", prompt)
         if ok:
@@ -504,7 +504,7 @@ class BaseBotPanel(QWidget):
             result_container["value"] = ""
         event.set()
 
-    def _setup_worker_connections(self, worker: BotWorker):
+    def _setup_worker_connections(self, worker: BotWorker):  # noqa: ANN202
         """Connette tutti i segnali standard del worker ai callback del pannello."""
         worker.log_signal.connect(self._on_log)
         worker.status_signal.connect(self._on_status)

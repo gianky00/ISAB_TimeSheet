@@ -50,7 +50,7 @@ class ModernButton(QPushButton):
         self._apply_style()
 
         if icon:
-            from src.gui.styles import COLORS
+            from src.gui.styles import COLORS  # noqa: PLC0415
 
             self.setIcon(get_colored_icon(icon, COLORS["text_dark"]))
             # Increase padding for icon
@@ -62,7 +62,7 @@ class ModernButton(QPushButton):
         self._anim.setDuration(150)
         self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-    def showEvent(self, event: Any) -> None:
+    def showEvent(self, event: Any) -> None:  # noqa: ANN401, N802
         """Forza l'aggiornamento dello stile quando il widget viene mostrato."""
         super().showEvent(event)
         self._apply_style()
@@ -76,16 +76,16 @@ class ModernButton(QPushButton):
         self._hover_opacity = value
         self._apply_style()
 
-    hoverOpacity = pyqtProperty(float, fget=get_hover_opacity, fset=set_hover_opacity)
+    hoverOpacity = pyqtProperty(float, fget=get_hover_opacity, fset=set_hover_opacity)  # noqa: N815
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:
+    def enterEvent(self, event: QEnterEvent | None) -> None:  # noqa: N802
         """Avvia l'animazione hover all'ingresso del mouse."""
         self._anim.setStartValue(0.0)
         self._anim.setEndValue(0.1)
         self._anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any | None) -> None:
+    def leaveEvent(self, event: Any | None) -> None:  # noqa: ANN401, N802
         """Avvia l'animazione di uscita al movimento del mouse."""
         self._anim.setStartValue(0.1)
         self._anim.setEndValue(0.0)
@@ -95,7 +95,7 @@ class ModernButton(QPushButton):
     def _get_colors(self) -> tuple[str, str]:
         """Restituisce la coppia di colori (sfondo, testo) in base alla variante."""
         p = self._palette
-        from src.gui.styles import COLORS
+        from src.gui.styles import COLORS  # noqa: PLC0415
 
         return {
             self.Variant.PRIMARY: (p.primary, p.on_primary),

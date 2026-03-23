@@ -18,7 +18,7 @@ from src.core.telegram.bridge.interfaces import AppStatusProvider, ScreenshotPro
 class TelegramGUIBridge(ScreenshotProvider, AppStatusProvider):
     """Bridge tra la GUI e il sistema Telegram."""
 
-    def __init__(self, main_window: Any) -> None:
+    def __init__(self, main_window: Any) -> None:  # noqa: ANN401
         self.mw = main_window
 
     def capture_app_screenshot(self) -> bytes:
@@ -61,5 +61,5 @@ class TelegramGUIBridge(ScreenshotProvider, AppStatusProvider):
         try:
             subprocess.Popen(["cmd.exe", "/c", "start", os.path.abspath("avvio.bat")])
             QApplication.quit()
-        except Exception:
+        except Exception:  # noqa: S110
             pass

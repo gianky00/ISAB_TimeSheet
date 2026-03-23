@@ -22,7 +22,7 @@ class BotController(QObject):
     - Identificare il pannello bot attualmente attivo per operazioni contestuali.
     """
 
-    def __init__(self, main_window: Any, telegram_service: Any) -> None:
+    def __init__(self, main_window: Any, telegram_service: Any) -> None:  # noqa: ANN401
         """
         Inizializza il bot controller.
 
@@ -83,9 +83,8 @@ class BotController(QObject):
         if bot_id in safework_bots:
             if hasattr(self.mw, "status_safework"):
                 self.mw.status_safework.setStatus(message, status)
-        else:
-            if hasattr(self.mw, "status_portale"):
-                self.mw.status_portale.setStatus(message, status)
+        elif hasattr(self.mw, "status_portale"):
+            self.mw.status_portale.setStatus(message, status)
 
     def _on_autopilot_trigger(self) -> None:
         """Aggiorna globalmente la UI dell'Autopilot (Barra di stato e Dashboard)."""

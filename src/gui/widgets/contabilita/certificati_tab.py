@@ -108,7 +108,7 @@ class CertificatiCampioneTab(QWidget):
         self.tree.itemEditedCustom.connect(self._on_item_edited)
         layout.addWidget(self.tree)
 
-    def _create_toolbar_btn(self, text: str, icon_enum: str, callback: Any) -> PrimaryButton:
+    def _create_toolbar_btn(self, text: str, icon_enum: str, callback: Any) -> PrimaryButton:  # noqa: ANN401
         """Helper per creare pulsanti della toolbar con stile coerente."""
         btn = PrimaryButton(text)
         btn.setIcon(QIcon(get_asset_path(icon_enum)))
@@ -185,7 +185,7 @@ class CertificatiCampioneTab(QWidget):
                         if matricola in expanded_matricole:
                             item.setExpanded(True)
 
-    def _load_data(self) -> None:
+    def _load_data(self) -> None:  # noqa: PLR0915
         """Popola l'albero delegando i calcoli all'engine."""
         data = ContabilitaManager.get_certificati_campione_data()
         self.tree.clear()
@@ -200,7 +200,7 @@ class CertificatiCampioneTab(QWidget):
         groups_with_priority = []
         for matricola, certificates in matricola_groups.items():
             # Ordina per emissione (più recente in alto)
-            def parse_date(c: Any) -> datetime:
+            def parse_date(c: Any) -> datetime:  # noqa: ANN401
                 d = c[self.tree.IDX_EMISSIONE] or ""
                 try:
                     return (
@@ -278,14 +278,18 @@ class CertificatiCampioneTab(QWidget):
                     str(cert[7] if cert[7] is not None else ""),  # 7. Emissione
                     str(cert[8] if cert[8] is not None else ""),  # 8. Scadenza
                     str(cert[9] if cert[9] is not None else ""),  # 9. Stato
-                    str(cert[11] if len(cert) > 11 and cert[11] is not None else ""),  # 10. Ubicazione
-                    str(cert[10] if len(cert) > 10 and cert[10] is not None else ""),  # 11. Annotazioni
+                    str(
+                        cert[11] if len(cert) > 11 and cert[11] is not None else ""  # noqa: PLR2004
+                    ),  # 10. Ubicazione
+                    str(
+                        cert[10] if len(cert) > 10 and cert[10] is not None else ""  # noqa: PLR2004
+                    ),  # 11. Annotazioni
                 ]
 
                 row = SortableTreeWidgetItem(parent_item, row_data)
 
                 # Salviamo l'ID nel ruolo user per poterlo aggiornare
-                record_id = cert[12] if len(cert) > 12 else None
+                record_id = cert[12] if len(cert) > 12 else None  # noqa: PLR2004
                 row.setData(0, Qt.ItemDataRole.UserRole, record_id)
 
                 # Permettiamo l'editing solo delle ultime due colonne
@@ -477,7 +481,9 @@ class CertificatiCampioneTab(QWidget):
     def _export_pdf(self) -> None:
         """Esporta la lista dei certificati in un PDF formattato professionalmente."""
         # Creiamo un modulo separato o usiamo una classe dedicata all'esportazione per mantenere SRP
-        from src.gui.widgets.contabilita.certificati.pdf_exporter import CertificatiPdfExporter
+        from src.gui.widgets.contabilita.certificati.pdf_exporter import (  # noqa: PLC0415
+            CertificatiPdfExporter,
+        )
 
         file_path, _ = QFileDialog.getSaveFileName(
             self,

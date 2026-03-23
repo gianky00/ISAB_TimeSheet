@@ -17,7 +17,7 @@ from src.core.importers.scarico_ore import ScaricoOreImporter
 
 
 @pytest.fixture
-def mock_xls_file(tmp_path):
+def mock_xls_file(tmp_path):  # noqa: ANN001
     """Crea un file Excel reale per i test di contabilità."""
     path = tmp_path / "test_contabilita.xlsx"
     df2025 = pd.DataFrame(
@@ -58,21 +58,21 @@ def test_import_contabilita_dati_file_not_found():
     assert "File non trovato" in msg
 
 
-def test_import_contabilita_dati_success(mock_xls_file):
+def test_import_contabilita_dati_success(mock_xls_file):  # noqa: ANN001
     mock_cb = MagicMock()
     success, _msg, rows, years = ExcelImporter.import_contabilita_dati(
         str(mock_xls_file), progress_callback=mock_cb
     )
     assert success is True
-    assert 2025 in years
-    assert 2026 in years
-    assert len(rows) >= 2
-    row2025 = next(r for r in rows if r[0] == 2025)
+    assert 2025 in years  # noqa: PLR2004
+    assert 2026 in years  # noqa: PLR2004
+    assert len(rows) >= 2  # noqa: PLR2004
+    row2025 = next(r for r in rows if r[0] == 2025)  # noqa: PLR2004
     assert "P123" in row2025
     assert mock_cb.called
 
 
-def test_import_contabilita_dati_no_valid_sheets(tmp_path):
+def test_import_contabilita_dati_no_valid_sheets(tmp_path):  # noqa: ANN001
     path = tmp_path / "invalid.xlsx"
     pd.DataFrame({"A": [1]}).to_excel(path, sheet_name="NoYear", index=False)
     success, msg, _rows, _years = ExcelImporter.import_contabilita_dati(str(path))
@@ -80,7 +80,7 @@ def test_import_contabilita_dati_no_valid_sheets(tmp_path):
     assert "Nessun anno importato" in msg
 
 
-def test_import_contabilita_dati_empty_sheet(tmp_path):
+def test_import_contabilita_dati_empty_sheet(tmp_path):  # noqa: ANN001
     path = tmp_path / "empty.xlsx"
     df = pd.DataFrame()
     with pd.ExcelWriter(path) as writer:
@@ -99,7 +99,7 @@ def test_import_contabilita_dati_critical_error():
         assert "Errore critico" in msg
 
 
-def test_find_header_row_coverage(mock_xls_file):
+def test_find_header_row_coverage(mock_xls_file):  # noqa: ANN001
     xls = pd.ExcelFile(mock_xls_file)
     with patch(
         "src.core.importers.contabilita.pd.read_excel",
@@ -116,7 +116,7 @@ def test_normalize_columns_extra_heuristics():
     assert "n_prev" in df.columns
 
 
-def test_import_giornaliere_success(tmp_path):
+def test_import_giornaliere_success(tmp_path):  # noqa: ANN001
     """Test prioritario: Importazione giornaliere da directory strutturata."""
     root = tmp_path / "Giornaliere"
     root.mkdir()
@@ -179,7 +179,7 @@ def test_import_giornaliere_success(tmp_path):
             str(root), lookup_map, progress_callback=mock_cb
         )
         assert success is True
-        assert 2025 in years
+        assert 2025 in years  # noqa: PLR2004
         assert len(rows) > 0
         assert rows[0][5] == "5400999"
         assert rows[0][11] == "test_giornaliera.xlsx"
@@ -191,7 +191,7 @@ def test_import_giornaliere_directory_not_found():
     assert "non trovata" in msg
 
 
-def test_process_single_giornaliera_extraction_logic(tmp_path):
+def test_process_single_giornaliera_extraction_logic(tmp_path):  # noqa: ANN001
     # Patch diretta per evitare logica di parsing che fallisce con i mock
     mock_rows = [
         (
@@ -244,13 +244,13 @@ def test_process_single_giornaliera_extraction_logic(tmp_path):
     ):
         args = (2025, Path("test.xlsx"), {})
         _, rows, _ = GiornaliereImporter._process_single_giornaliera(args)
-        assert len(rows) >= 3
+        assert len(rows) >= 3  # noqa: PLR2004
         assert rows[0][5] == "22/123"
         assert rows[1][5] == "540012345"
         assert "CANONE" in rows[2][5].upper()
 
 
-def test_process_single_giornaliera_invalid_sheet(tmp_path):
+def test_process_single_giornaliera_invalid_sheet(tmp_path):  # noqa: ANN001
     file_path = tmp_path / "no_riassunto.xlsx"
     pd.DataFrame({"A": [1]}).to_excel(file_path, sheet_name="Sheet1")
     args = (2025, Path(file_path), {})
@@ -259,13 +259,13 @@ def test_process_single_giornaliera_invalid_sheet(tmp_path):
     assert err is None
 
 
-def test_import_scarico_ore_success(tmp_path):
+def test_import_scarico_ore_success(tmp_path):  # noqa: ANN001
     """Test: Importazione scarico ore con openpyxl e stili."""
     path = tmp_path / "scarico_ore.xlsx"
 
     # Creiamo un file excel con openpyxl per avere stili reali
-    import openpyxl
-    from openpyxl.styles import Font, PatternFill
+    import openpyxl  # noqa: PLC0415
+    from openpyxl.styles import Font, PatternFill  # noqa: PLC0415
 
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -305,9 +305,9 @@ def test_import_scarico_ore_success(tmp_path):
     ]
     for i, v in enumerate(data, start=2):
         cell = ws.cell(row=6, column=i, value=v)
-        if i == 5:  # ODC: Blue foreground
+        if i == 5:  # ODC: Blue foreground  # noqa: PLR2004
             cell.font = Font(color="0000FF")
-        if i == 10:  # Desc: Red background
+        if i == 10:  # Desc: Red background  # noqa: PLR2004
             cell.fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
 
     wb.save(path)
@@ -317,7 +317,7 @@ def test_import_scarico_ore_success(tmp_path):
     assert len(rows) == 1
 
     # Verify row and styles
-    # row: (data, pers1, pers2, odc, pos, dalle, alle, totale_ore, descrizione, finito, commessa, styles_json)
+    # row: (data, pers1, pers2, odc, pos, dalle, alle, totale_ore, descrizione, finito, commessa, styles_json)  # noqa: ERA001
     row = rows[0]
     assert row[3] == "54001"
 
@@ -326,7 +326,7 @@ def test_import_scarico_ore_success(tmp_path):
     assert styles["descrizione"]["bg"] == "#FF0000"
 
 
-def test_import_scarico_ore_missing_sheet(tmp_path):
+def test_import_scarico_ore_missing_sheet(tmp_path):  # noqa: ANN001
     path = tmp_path / "wrong_sheet.xlsx"
     pd.DataFrame({"A": [1]}).to_excel(path, sheet_name="Wrong")
     success, msg, _rows = ExcelImporter.import_scarico_ore(str(path))
@@ -339,7 +339,7 @@ def test_process_scarico_ore_row_validation():
 
     # Mocking cell objects from openpyxl
     class MockCell:
-        def __init__(self, value, font=None, fill=None):
+        def __init__(self, value, font=None, fill=None):  # noqa: ANN001, ANN204
             self.value = value
             self.font = font
             self.fill = fill
@@ -410,7 +410,7 @@ def test_process_scarico_ore_row_validation():
     assert res is None
 
 
-def test_import_attivita_programmate_success(tmp_path):
+def test_import_attivita_programmate_success(tmp_path):  # noqa: ANN001
     """Test: Importazione attività programmate con mapping colonne complesso."""
     path = tmp_path / "attivita.xlsx"
 
@@ -443,7 +443,7 @@ def test_import_attivita_programmate_success(tmp_path):
     success, _msg, rows = ExcelImporter.import_attivita_programmate(str(path))
     assert success is True
     assert len(rows) == 1
-    # row: (ps, area, pdl, imp, descrizione, lun, mar, mer, gio, ven, stato_pdl, stato_attivita, data_controllo, personale, po, avviso, styles)
+    # row: (ps, area, pdl, imp, descrizione, lun, mar, mer, gio, ven, stato_pdl, stato_attivita, data_controllo, personale, po, avviso, styles)  # noqa: ERA001
     assert rows[0][0] == "PS1"
     assert rows[0][4] == "Pulizia"
     assert rows[0][16] == ""  # styles default
@@ -455,7 +455,7 @@ def test_import_attivita_programmate_not_found():
     assert "non trovato" in msg
 
 
-def test_import_attivita_programmate_missing_sheet(tmp_path):
+def test_import_attivita_programmate_missing_sheet(tmp_path):  # noqa: ANN001
     path = tmp_path / "wrong.xlsx"
     pd.DataFrame({"A": [1]}).to_excel(path, sheet_name="Sheet1", index=False)
     success, msg, _rows = ExcelImporter.import_attivita_programmate(str(path))
@@ -463,7 +463,7 @@ def test_import_attivita_programmate_missing_sheet(tmp_path):
     assert "non trovato" in msg
 
 
-def test_import_attivita_programmate_no_columns(tmp_path):
+def test_import_attivita_programmate_no_columns(tmp_path):  # noqa: ANN001
     path = tmp_path / "no_cols.xlsx"
     pd.DataFrame({"Wrong": [1]}).to_excel(path, sheet_name="Riepilogo", startrow=2, index=False)
     success, msg, _rows = ExcelImporter.import_attivita_programmate(str(path))
@@ -471,7 +471,7 @@ def test_import_attivita_programmate_no_columns(tmp_path):
     assert "Colonne non trovate" in msg
 
 
-def test_import_certificati_campione_success(tmp_path):
+def test_import_certificati_campione_success(tmp_path):  # noqa: ANN001
     """Test: Importazione certificati campione."""
     path = tmp_path / "certificati.xlsx"
     df = pd.DataFrame(
@@ -496,7 +496,7 @@ def test_import_certificati_campione_success(tmp_path):
     success, _msg, rows = ExcelImporter.import_certificati_campione(str(path))
     assert success is True
     assert len(rows) == 1
-    # row: (id_coemi(0), certificato(1), modello(2), costruttore(3), matricola(4), range(5), errore(6), emissione(7), scadenza(8), stato(9))
+    # row: (id_coemi(0), certificato(1), modello(2), costruttore(3), matricola(4), range(5), errore(6), emissione(7), scadenza(8), stato(9))  # noqa: ERA001
     assert rows[0][2] == "M1"
     assert "31/12/2026" in rows[0][8]
     assert "Scade tra 30 giorni" in rows[0][9]
@@ -508,7 +508,7 @@ def test_import_certificati_campione_not_found():
     assert "non trovato" in msg
 
 
-def test_scan_workload_coverage(tmp_path):
+def test_scan_workload_coverage(tmp_path):  # noqa: ANN001
     """Test delle funzioni di scansione rapida workload."""
     # Stima rapida (basata su zip/regex)
     path = tmp_path / "workload.xlsx"

@@ -20,7 +20,7 @@ class JSONFormatter:
     Produce log in formato JSON parsabile, ottimizzato per AI analysis.
     """
 
-    def __init__(self, mask_sensitive: bool = True):
+    def __init__(self, mask_sensitive: bool = True):  # noqa: ANN204
         """
         Inizializza formatter.
 
@@ -29,7 +29,7 @@ class JSONFormatter:
         """
         self.mask_sensitive = mask_sensitive
 
-    def format(
+    def format(  # noqa: PLR0913
         self,
         level: str,
         logger_name: str,
@@ -85,7 +85,7 @@ class JSONFormatter:
 
         # Exception info
         if exception:
-            import traceback
+            import traceback  # noqa: PLC0415
 
             entry["exception"] = {
                 "type": type(exception).__name__,
@@ -147,7 +147,7 @@ class HumanFormatter:
     Produce log in formato leggibile per troubleshooting manuale.
     """
 
-    def __init__(self, colorize: bool = True, show_context: bool = True):
+    def __init__(self, colorize: bool = True, show_context: bool = True):  # noqa: ANN204
         """
         Inizializza formatter.
 
@@ -166,7 +166,7 @@ class HumanFormatter:
 
         return "ANSICON" in os.environ or "WT_SESSION" in os.environ
 
-    def format(
+    def format(  # noqa: PLR0913
         self,
         level: str,
         logger_name: str,

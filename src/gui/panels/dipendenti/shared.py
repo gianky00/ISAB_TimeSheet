@@ -59,10 +59,10 @@ class ColoredDotDelegate(QStyledItemDelegate):
 
         try:
             parts = str(value).split()
-            if len(parts) >= 2:
+            if len(parts) >= 2:  # noqa: PLR2004
                 days = int(parts[1])
 
-                if days >= 10:
+                if days >= 10:  # noqa: PLR2004
                     color = QColor(COLORS["success_dark"])
                 elif days >= 0:
                     color = QColor(COLORS["warning_orange"])
@@ -84,7 +84,7 @@ class ColoredDotDelegate(QStyledItemDelegate):
                 text_rect = option.rect.adjusted(10, 0, 0, 0)
                 painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, str(days))
         except Exception as e:
-            logger.error(f"Errore rendering pallino: {e}")
+            logger.error(f"Errore rendering pallino: {e}")  # noqa: TRY400
             super().paint(painter, option, index)
 
         painter.restore()
@@ -98,7 +98,7 @@ class InteractiveStatusCard(QFrame):
 
     clicked = pyqtSignal(str)
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         label: str,
         color: str,
@@ -199,25 +199,25 @@ class InteractiveStatusCard(QFrame):
 
         layout.addLayout(right_layout)
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:
+    def enterEvent(self, event: QEnterEvent | None) -> None:  # noqa: N802
         """Aumenta l'ombra all'ingresso del mouse."""
         self.shadow.setBlurRadius(15)
         self.shadow.setYOffset(4)
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any | None) -> None:
+    def leaveEvent(self, event: Any | None) -> None:  # noqa: ANN401, N802
         """Ripristina l'ombra all'uscita del mouse."""
         self.shadow.setBlurRadius(10)
         self.shadow.setYOffset(2)
         super().leaveEvent(event)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
         """Emette il segnale 'clicked' con il tipo di filtro."""
         if event and event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self.filter_type)
         super().mousePressEvent(event)
 
-    def setValue(self, val: Any) -> None:
+    def setValue(self, val: Any) -> None:  # noqa: ANN401, N802
         """
         Aggiorna il valore numerico visualizzato sulla card.
 

@@ -100,7 +100,7 @@ class NotificationManager(QObject):
         except Exception as e:
             print(f"Errore salvataggio notifiche: {e}")
 
-    def add_notification(
+    def add_notification(  # noqa: PLR0913
         self,
         title: str,
         message: str,
@@ -162,7 +162,7 @@ class NotificationManager(QObject):
             duration_map = {"success": 2000, "warning": 10000, "error": 10000, "info": 3000}
             duration = duration_map.get(level, 3000)
             clean_msg = message.replace("<b>", "").replace("</b>", "").replace("<br>", " ")
-            if len(clean_msg) > 120:
+            if len(clean_msg) > 120:  # noqa: PLR2004
                 clean_msg = clean_msg[:117] + "..."
             self.request_toast.emit(f"{title}: {clean_msg}", level, duration)
 

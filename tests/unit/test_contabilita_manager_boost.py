@@ -8,7 +8,7 @@ from src.core.database import DatabaseManager
 
 class TestContabilitaManagerBoost:
     @pytest.fixture
-    def db_setup(self, tmp_path, mocker):
+    def db_setup(self, tmp_path, mocker):  # noqa: ANN001
         db_path = tmp_path / "contabilita.db"
         # Patch dei path sia nel manager che nel DatabaseManager
         mocker.patch.object(DatabaseManager, "DB_CONTABILITA", db_path)
@@ -16,7 +16,7 @@ class TestContabilitaManagerBoost:
         DatabaseManager().init_db()
         return db_path
 
-    def test_import_giornaliere_lookup_logic(self, db_setup, mocker):
+    def test_import_giornaliere_lookup_logic(self, db_setup, mocker):  # noqa: ANN001
         """Verifica che l'importazione giornaliere usi correttamente la mappa ODC dai preventivi."""
         db_path = db_setup
 
@@ -27,7 +27,7 @@ class TestContabilitaManagerBoost:
         manager.execute_query(db_path, query)
 
         # 2. Mock Importer per restituire una riga con n_prev ma senza ODC
-        # Riga: (year, data, personale, descrizione, tcl, odc, pdl, inizio, fine, ore, n_prev, nome_file)
+        # Riga: (year, data, personale, descrizione, tcl, odc, pdl, inizio, fine, ore, n_prev, nome_file)  # noqa: ERA001
         mock_row = (
             2024,
             "01/01/2024",
@@ -80,7 +80,7 @@ class TestContabilitaManagerBoost:
         assert count_cont == 0
         assert count_giorn == 0
 
-    def test_import_data_from_excel_failure_handling(self, db_setup, mocker):
+    def test_import_data_from_excel_failure_handling(self, db_setup, mocker):  # noqa: ANN001
         """Verifica gestione fallimento dell'importer Excel."""
         m_import = mocker.patch("src.core.excel_importer.ExcelImporter.import_contabilita_dati")
         m_import.return_value = (False, "File Corrotto", [], [])
@@ -89,13 +89,13 @@ class TestContabilitaManagerBoost:
         assert success is False
         assert "Corrotto" in msg
 
-    def test_get_available_years_logic(self, db_setup):
+    def test_get_available_years_logic(self, db_setup):  # noqa: ANN001
         """Verifica il recupero degli anni da entrambe le tabelle."""
         manager = DatabaseManager()
         manager.execute_query(db_setup, "INSERT INTO contabilita (year) VALUES (2022)")
         manager.execute_query(db_setup, "INSERT INTO giornaliere (year) VALUES (2024)")
 
         years = ContabilitaManager.get_available_years()
-        assert 2024 in years
-        assert 2022 in years
-        assert len(years) == 2
+        assert 2024 in years  # noqa: PLR2004
+        assert 2022 in years  # noqa: PLR2004
+        assert len(years) == 2  # noqa: PLR2004

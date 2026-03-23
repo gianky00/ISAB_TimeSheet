@@ -205,19 +205,19 @@ class ScaricoOreTableModel(QAbstractTableModel):
             return 0.0
         return sum(self._float_totals[i] for i in self._visible_indices)
 
-    def rowCount(self, parent: QModelIndex | None = None) -> int:
+    def rowCount(self, parent: QModelIndex | None = None) -> int:  # noqa: N802
         """Restituisce il numero di righe filtrate."""
         if parent is None:
             parent = QModelIndex()
         return self._filtered_count
 
-    def columnCount(self, parent: QModelIndex | None = None) -> int:
+    def columnCount(self, parent: QModelIndex | None = None) -> int:  # noqa: N802
         """Restituisce il numero di colonne del modello."""
         if parent is None:
             parent = QModelIndex()
         return len(self.COLUMNS)
 
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: ANN401, PLR0911
         """Restituisce i dati per una specifica cella e ruolo."""
         if not index.isValid():
             return None
@@ -253,12 +253,12 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
         reverse = order == Qt.SortOrder.DescendingOrder
 
-        def get_key(idx: int) -> Any:
+        def get_key(idx: int) -> Any:  # noqa: ANN401
             """Estrae la chiave di ordinamento per una riga e colonna specifica."""
             try:
                 if column == 0:
                     return self._date_keys[idx]
-                if column == 7:
+                if column == 7:  # noqa: PLR2004
                     return self._float_totals[idx]
                 val = self._display_data[idx][column]
                 return val.lower() if val else ""
@@ -268,9 +268,9 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._visible_indices.sort(key=get_key, reverse=reverse)
         self.layoutChanged.emit()
 
-    def headerData(
+    def headerData(  # noqa: N802
         self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
-    ) -> Any:
+    ) -> Any:  # noqa: ANN401
         """Restituisce l'header per le colonne."""
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return self.COLUMNS[section]

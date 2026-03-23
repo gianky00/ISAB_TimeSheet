@@ -32,10 +32,10 @@ class TestAuthMonitorRobust:
             last_by_cf, _last_by_name = _build_access_maps(raw)
 
             assert "CF1" in last_by_cf
-            assert last_by_cf["CF1"][0] == 9  # delta days
+            assert last_by_cf["CF1"][0] == 9  # delta days  # noqa: PLR2004
 
             assert "CF2" in last_by_cf
-            assert last_by_cf["CF2"][0] == 9
+            assert last_by_cf["CF2"][0] == 9  # noqa: PLR2004
 
             assert "CF3" not in last_by_cf
 
@@ -54,10 +54,10 @@ class TestAuthMonitorRobust:
 
             last_by_cf, _ = _build_access_maps(raw)
 
-            assert last_by_cf["CF1"][0] == 5  # 5 giorni (il più recente)
+            assert last_by_cf["CF1"][0] == 5  # 5 giorni (il più recente)  # noqa: PLR2004
 
     @patch("src.core.database.db_manager.execute_query")
-    def test_check_expiring_authorizations_logic(self, mock_query):
+    def test_check_expiring_authorizations_logic(self, mock_query):  # noqa: ANN001
         """Test logica business (soglie e fallback)."""
         # 1. Dipendenti
         # A: OK (10 giorni)
@@ -105,18 +105,18 @@ class TestAuthMonitorRobust:
 
             assert "B" in res_map
             assert res_map["B"]["stato"] == "IN SCADENZA"
-            assert res_map["B"]["giorni_trascorsi"] == 25
+            assert res_map["B"]["giorni_trascorsi"] == 25  # noqa: PLR2004
 
             assert "C" in res_map
             assert res_map["C"]["stato"] == "SCADUTA"
-            assert res_map["C"]["giorni_trascorsi"] == 40
+            assert res_map["C"]["giorni_trascorsi"] == 40  # noqa: PLR2004
 
             assert "E" in res_map
             assert res_map["E"]["stato"] == "SCADUTA"
             assert res_map["E"]["cf_mancante"] is True
 
     @patch("src.core.database.db_manager.execute_query")
-    def test_check_expiring_authorizations_error(self, mock_query):
+    def test_check_expiring_authorizations_error(self, mock_query):  # noqa: ANN001
         """Test gestione errore DB."""
         mock_query.side_effect = Exception("DB Error")
 

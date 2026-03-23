@@ -41,7 +41,7 @@ class AuditLogWidget(QWidget):
 
     PAGE_SIZE = 50
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None):  # noqa: ANN001, ANN204
         super().__init__(parent)
         self.manager = AuditManager.instance()
         self.current_page = 0
@@ -56,7 +56,7 @@ class AuditLogWidget(QWidget):
         self._load_categories()
         self.refresh()
 
-    def _setup_ui(self):
+    def _setup_ui(self):  # noqa: ANN202, PLR0915
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(15)
@@ -129,11 +129,11 @@ class AuditLogWidget(QWidget):
         self.pagination_bar.page_changed.connect(self._on_page_changed)
         layout.addWidget(self.pagination_bar)
 
-    def _load_categories(self):
+    def _load_categories(self):  # noqa: ANN202
         cats = self.manager.get_categories()
         self.filter_bar.set_categories(cats)
 
-    def _toggle_live_mode(self, state):
+    def _toggle_live_mode(self, state):  # noqa: ANN001, ANN202
         is_live = state in (Qt.CheckState.Checked, 2)  # Supporta sia Enum che Int
         if is_live:
             self.refresh(reset_page=True)
@@ -146,14 +146,14 @@ class AuditLogWidget(QWidget):
         if not is_live:
             self.refresh()
 
-    def _on_live_refresh(self):
+    def _on_live_refresh(self):  # noqa: ANN202
         self.refresh(reset_page=True)
 
-    def _on_page_changed(self, delta):
+    def _on_page_changed(self, delta):  # noqa: ANN001, ANN202
         self.current_page += delta
         self.refresh()
 
-    def refresh(self, reset_page=False):
+    def refresh(self, reset_page=False):  # noqa: ANN001, ANN201
         """
         Rinfresca i dati visualizzati applicando i filtri correnti.
 
@@ -178,7 +178,7 @@ class AuditLogWidget(QWidget):
         if self.current_page == 0:
             self._check_integrity()
 
-    def _check_integrity(self):
+    def _check_integrity(self):  # noqa: ANN202
         valid = self.manager.verify_integrity()
         color = COLORS["success_dark"] if valid else COLORS["error_red"]
         text = "Integro" if valid else "Legacy/Manomesso"
@@ -188,7 +188,7 @@ class AuditLogWidget(QWidget):
         self.integrity_lbl.setText(text)
         self.integrity_lbl.setStyleSheet(f"color: {color}; font-weight: bold;")
 
-    def _on_row_double_click(self, index):
+    def _on_row_double_click(self, index):  # noqa: ANN001, ANN202
         log = self.model.get_log_at(index.row())
         if log:
             AuditDetailDialog(log, self).exec()

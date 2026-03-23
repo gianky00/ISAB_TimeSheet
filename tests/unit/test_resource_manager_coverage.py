@@ -5,7 +5,7 @@ from src.utils.resource_manager import ResourceManager
 
 class TestResourceManager:
     @pytest.fixture(autouse=True)
-    def setup_test(self, tmp_path, mocker):
+    def setup_test(self, tmp_path, mocker):  # noqa: ANN001
         # Mock PROJECT_ROOT
         mocker.patch("src.utils.resource_manager.ResourceManager.PROJECT_ROOT", tmp_path)
         # Mock _get_config_dir to return our tmp config path
@@ -26,13 +26,13 @@ class TestResourceManager:
         mocker.patch("src.utils.resource_manager.ResourceManager.TEMP_DIR", tmp_path / "temp")
         yield
 
-    def test_ensure_structure(self, tmp_path):
+    def test_ensure_structure(self, tmp_path):  # noqa: ANN001
         ResourceManager.ensure_structure()
         assert (tmp_path / "temp").exists()
         assert (tmp_path / "config" / "data").exists()
         assert (tmp_path / "config" / "logs").exists()
 
-    def test_get_icon(self, tmp_path):
+    def test_get_icon(self, tmp_path):  # noqa: ANN001
         icon_dir = tmp_path / "assets" / "icons"
         icon_dir.mkdir(parents=True)
         (icon_dir / "test.svg").touch()
@@ -43,7 +43,7 @@ class TestResourceManager:
         # Non existent
         assert ResourceManager.get_icon("missing") == ""
 
-    def test_get_style(self, tmp_path):
+    def test_get_style(self, tmp_path):  # noqa: ANN001
         style_dir = tmp_path / "assets" / "styles"
         style_dir.mkdir(parents=True)
         (style_dir / "dark.qss").touch()
@@ -51,7 +51,7 @@ class TestResourceManager:
         path = ResourceManager.get_style("dark")
         assert path.endswith("dark.qss")
 
-    def test_get_temp_path(self, tmp_path):
+    def test_get_temp_path(self, tmp_path):  # noqa: ANN001
         path = ResourceManager.get_temp_path("session.tmp")
         assert str(path).startswith(str(tmp_path / "temp"))
         assert path.name == "session.tmp"

@@ -44,7 +44,7 @@ _config_lock = threading.RLock()
 
 def _reset_configuration_for_testing() -> None:
     """Resetta la cache della configurazione (solo per unit test)."""
-    global _config_cache
+    global _config_cache  # noqa: PLW0603
     with _config_lock:
         _config_cache = None
 
@@ -61,7 +61,7 @@ def ensure_config_dir() -> None:
 
 def load_config() -> dict[str, Any]:
     """Carica la configurazione dal file, la decripta e la mette in cache."""
-    global _config_cache
+    global _config_cache  # noqa: PLW0603
     with _config_lock:
         if _config_cache is not None:
             return copy.deepcopy(_config_cache)
@@ -113,7 +113,7 @@ def _load_base_config() -> dict[str, Any]:
 
 def save_config(config: dict[str, Any]) -> None:
     """Salva la configurazione in modo atomico."""
-    global _config_cache
+    global _config_cache  # noqa: PLW0603
     with _config_lock:
         ensure_config_dir()
         config_to_save = copy.deepcopy(config)
@@ -147,12 +147,12 @@ def _atomic_write_json(data: dict[str, Any], target_path: Path) -> None:
 _migrate_legacy_config = check_and_migrate_local_config
 
 
-def get_config_value(key: str, default: Any = None) -> Any:
+def get_config_value(key: str, default: Any = None) -> Any:  # noqa: ANN401
     """Ottiene un valore dalla configurazione."""
     return load_config().get(key, default)
 
 
-def set_config_value(key: str, value: Any) -> None:
+def set_config_value(key: str, value: Any) -> None:  # noqa: ANN401
     """Imposta un valore nella configurazione."""
     set_config_values({key: value})
 
@@ -249,14 +249,14 @@ def export_configuration(export_path: str) -> tuple[bool, str]:
             "type": "syncrojob_config_backup",
         }
         Path(export_path).write_text(json.dumps(export_data, indent=4, ensure_ascii=False), encoding="utf-8")
-        return True, "Esportazione completata con successo."
+        return True, "Esportazione completata con successo."  # noqa: TRY300
     except Exception as e:
         return False, f"Errore durante l'esportazione: {e}"
 
 
 def reset_to_defaults() -> None:
     """Ripristina la configurazione predefinita."""
-    global _config_cache
+    global _config_cache  # noqa: PLW0603
     with _config_lock:
         _config_cache = copy.deepcopy(DEFAULT_CONFIG)
         save_config(_config_cache)
@@ -283,7 +283,7 @@ def import_configuration(import_path: str | Path) -> tuple[bool, str]:
         merged_config.update(new_config)
         save_config(merged_config)
 
-        return (
+        return (  # noqa: TRY300
             True,
             f"Configurazione importata con successo.\nBackup precedente salvato in: {backup_file.name}",
         )

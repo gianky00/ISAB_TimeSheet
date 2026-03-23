@@ -103,7 +103,7 @@ class ThemeManager:
                 qss_content = qss_path.read_text(encoding="utf-8")
                 qss_content = self._process_qss(qss_content)
             except Exception as e:
-                logger.error(f"Errore lettura QSS {qss_path}: {e}")
+                logger.error(f"Errore lettura QSS {qss_path}: {e}")  # noqa: TRY400
 
         if not qss_content:
             qss_content = f"QMainWindow {{ background-color: {self.palette.background}; }}"
@@ -116,7 +116,7 @@ class ThemeManager:
                 overrides_content = overrides_path.read_text(encoding="utf-8")
                 overrides_content = self._process_qss(overrides_content)
             except Exception as e:
-                logger.error(f"Errore lettura Overrides QSS: {e}")
+                logger.error(f"Errore lettura Overrides QSS: {e}")  # noqa: TRY400
 
         # 3. Applica la combinazione degli stili
         app.setStyleSheet(qss_content + overrides_content)
@@ -124,7 +124,7 @@ class ThemeManager:
     def _process_qss(self, content: str) -> str:
         """Sostituisce i segnaposto {{key}} con i valori della palette e delle costanti."""
         p = self.palette
-        from src.gui.styles.constants import COLORS, FONT_SIZES, UI_SIZES
+        from src.gui.styles.constants import COLORS, FONT_SIZES, UI_SIZES  # noqa: PLC0415
 
         # Mapping di base dalla ColorPalette
         mapping: dict[str, Any] = {

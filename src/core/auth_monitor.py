@@ -14,7 +14,7 @@ from src.core.database import db_manager
 logger = logging.getLogger(__name__)
 
 
-def _normalize(t: Any) -> str:
+def _normalize(t: Any) -> str:  # noqa: ANN401
     return re.sub(r"\s+", " ", str(t).strip().upper())
 
 
@@ -104,7 +104,7 @@ def check_expiring_isab_authorizations() -> list[dict[str, Any]]:
                         missing_cf_flag = True
 
             if match_found and delta is not None:
-                from src.core.constants import THRESHOLD_DAYS
+                from src.core.constants import THRESHOLD_DAYS  # noqa: PLC0415
 
                 # Monitoraggio basato su soglie centralizzate
                 if delta <= THRESHOLD_DAYS["warning"]:
@@ -125,8 +125,8 @@ def check_expiring_isab_authorizations() -> list[dict[str, Any]]:
                     }
                 )
 
-        return results
+        return results  # noqa: TRY300
 
     except Exception as e:
-        logger.error(f"Errore durante il controllo autorizzazioni ISAB: {e}")
+        logger.error(f"Errore durante il controllo autorizzazioni ISAB: {e}")  # noqa: TRY400
         return []

@@ -14,11 +14,11 @@ class BaseSyncEngine:
     def _validate_identifier(name: str) -> str:
         """Valida che un identificatore SQL sia sicuro."""
         if not re.match(r"^[a-zA-Z0-9_]+$", name):
-            raise ValueError(f"Identificatore SQL non sicuro: {name}")
+            raise ValueError(f"Identificatore SQL non sicuro: {name}")  # noqa: TRY003
         return name
 
     @classmethod
-    def _create_temp_table(cls, cursor: Any, table_name: str, columns: list[str]) -> str:
+    def _create_temp_table(cls, cursor: Any, table_name: str, columns: list[str]) -> str:  # noqa: ANN401
         """Crea una tabella temporanea e restituisce il suo nome sicuro."""
         safe_name = cls._validate_identifier(table_name)
         temp_name = f"temp_{safe_name}"
@@ -28,7 +28,7 @@ class BaseSyncEngine:
         return temp_name
 
     @staticmethod
-    def _clean_value(x: Any) -> Any:
+    def _clean_value(x: Any) -> Any:  # noqa: ANN401
         """Pulisce il valore per l'inserimento nel DB."""
         if x is None:
             return ""

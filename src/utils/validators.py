@@ -61,9 +61,9 @@ class InputValidator:
         sanitized = value.strip().upper().replace(" ", "")
 
         # Intelligenza PDL: se sono solo 6 cifre, aggiungi suffisso automatico
-        if sanitized.isdigit() and len(sanitized) == 6:
+        if sanitized.isdigit() and len(sanitized) == 6:  # noqa: PLR2004
             num = int(sanitized)
-            suffix = "/S" if num < 400000 else "/C"
+            suffix = "/S" if num < 400000 else "/C"  # noqa: PLR2004
             sanitized = f"{sanitized}{suffix}"
 
         if not re.match(cls.PATTERNS["pdl_number"], sanitized):
@@ -90,7 +90,7 @@ class InputValidator:
 
         sanitized = value.strip().upper()
 
-        if len(sanitized) > 20:
+        if len(sanitized) > 20:  # noqa: PLR2004
             return ValidationResult(False, "Numero OdA troppo lungo (max 20 caratteri)")
 
         if not re.match(cls.PATTERNS["oda_number"], sanitized):
@@ -114,7 +114,7 @@ class InputValidator:
 
         sanitized = value.strip().upper()
 
-        if len(sanitized) != 16:
+        if len(sanitized) != 16:  # noqa: PLR2004
             return ValidationResult(False, "Codice Fiscale deve essere di 16 caratteri")
 
         if not re.match(cls.PATTERNS["codice_fiscale"], sanitized):
@@ -245,7 +245,7 @@ class InputValidator:
 
         # Verifica data valida
         try:
-            from datetime import UTC, datetime
+            from datetime import UTC, datetime  # noqa: PLC0415
 
             datetime.strptime(sanitized, "%d.%m.%Y").replace(tzinfo=UTC)
         except ValueError:

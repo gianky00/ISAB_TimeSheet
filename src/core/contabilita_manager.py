@@ -38,7 +38,7 @@ class ContabilitaManager:
         return ExcelImporter.scan_workload(file_path, giornaliere_path)
 
     @classmethod
-    def init_db(cls):
+    def init_db(cls):  # noqa: ANN206
         """Inizializza il database tramite DatabaseManager."""
         db_manager.init_db()
 
@@ -207,9 +207,9 @@ class ContabilitaManager:
         try:
             query = f"UPDATE certificati_campione SET {field} = ? WHERE id = ?"  # nosec B608
             db_manager.execute_query(cls.DB_PATH, query, (value, record_id))
-            return True
+            return True  # noqa: TRY300
         except Exception as e:
-            logger.error(f"Errore aggiornamento certificato ({field}): {e}")
+            logger.error(f"Errore aggiornamento certificato ({field}): {e}")  # noqa: TRY400
             return False
 
     @classmethod

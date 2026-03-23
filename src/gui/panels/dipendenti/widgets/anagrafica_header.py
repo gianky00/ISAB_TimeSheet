@@ -37,7 +37,7 @@ class AnagraficaHeaderWidget(QWidget):
         super().__init__(parent)
         self._setup_ui()
 
-    def _setup_ui(self) -> None:
+    def _setup_ui(self) -> None:  # noqa: PLR0915
         """Configura il layout dei filtri, della ricerca e delle card statistiche."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

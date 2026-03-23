@@ -13,7 +13,7 @@ from selenium.common.exceptions import (
 )
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.portale_fornitori.common.locators import CommonLocators, LoginLocators
@@ -48,7 +48,7 @@ class LoginPage:
             overlay_wait.until(EC.invisibility_of_element_located((By.XPATH, xpath_combined)))
             self.log(" -> Overlay di caricamento scomparso.")
             time.sleep(0.3)
-            return True
+            return True  # noqa: TRY300
         except TimeoutException:
             self.log(f"⚠ Timeout ({timeout_secondi}s) attesa overlay. Proseguo con cautela.")
             return False
@@ -102,7 +102,7 @@ class LoginPage:
             return True
         return False
 
-    def login(self, username: str, password: str) -> bool:
+    def login(self, username: str, password: str) -> bool:  # noqa: PLR0911
         """
         Performs login to ISAB portal.
         Returns False if Proxy Error is detected.
@@ -138,13 +138,13 @@ class LoginPage:
 
                 try:
                     self._perform_login_form_action(username, password)
-                    return True
+                    return True  # noqa: TRY300
                 except Exception as e:
                     self.log(f"✗ Fallito recupero sessione: {e}")
                     return False
 
             self.log("✓ Login completato con successo")
-            return True
+            return True  # noqa: TRY300
 
         except TimeoutException:
             self.log("✗ Timeout durante il login")

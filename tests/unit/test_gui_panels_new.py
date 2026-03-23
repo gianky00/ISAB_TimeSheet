@@ -5,17 +5,17 @@ from src.gui.panels import BaseBotPanel, ScaricaTSPanel
 
 class TestBotPanels:
     @pytest.fixture
-    def app(self, qapp):
+    def app(self, qapp):  # noqa: ANN001
         return qapp
 
-    def test_base_bot_panel(self, app, qtbot):
+    def test_base_bot_panel(self, app, qtbot):  # noqa: ANN001
         panel = BaseBotPanel("test_bot", "Bot Name", "Bot Desc")
         qtbot.addWidget(panel)
 
         assert panel.bot_id == "test_bot"
         assert panel.start_btn.text() == "Avvia"
 
-    def test_scarica_ts_panel(self, app, qtbot):
+    def test_scarica_ts_panel(self, app, qtbot):  # noqa: ANN001
         panel = ScaricaTSPanel()
         qtbot.addWidget(panel)
 

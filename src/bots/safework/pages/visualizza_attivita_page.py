@@ -9,7 +9,7 @@ from collections.abc import Callable
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.safework.common.locators import SafeWorkLocators
@@ -18,20 +18,20 @@ from src.bots.safework.common.locators import SafeWorkLocators
 class VisualizzaAttivitaPage:
     """Gestisce le interazioni con la pagina Visualizza Attività."""
 
-    def __init__(
+    def __init__(  # noqa: ANN204
         self, driver: webdriver.Chrome, wait: WebDriverWait[webdriver.Chrome], log_func: Callable[[str], None]
     ):
         self.driver = driver
         self.wait = wait
         self.log = log_func
 
-    def pulisci_pdl(self):
+    def pulisci_pdl(self):  # noqa: ANN201
         """Pulisce il campo PDL/Permesso se necessario."""
         with contextlib.suppress(Exception):
             fld = self.wait.until(EC.visibility_of_element_located(SafeWorkLocators.NUM_PERMESSO_FIELD))
             fld.clear()
 
-    def imposta_date(self, data_dal: str, data_al: str):
+    def imposta_date(self, data_dal: str, data_al: str):  # noqa: ANN201
         """Imposta il range date."""
         try:
             self.driver.execute_script(f"document.getElementById('programmazioneDal').value = '{data_dal}';")
@@ -39,7 +39,7 @@ class VisualizzaAttivitaPage:
         except Exception as e:
             self.log(f"⚠️ Errore impostazione date JS: {e}")
 
-    def seleziona_ditta(self, nome_ditta: str):
+    def seleziona_ditta(self, nome_ditta: str):  # noqa: ANN201
         """Seleziona la ditta dal dropdown custom."""
         self._seleziona_da_dropdown(SafeWorkLocators.DITTA_BUTTON, nome_ditta)
 
@@ -47,7 +47,7 @@ class VisualizzaAttivitaPage:
         """Seleziona uno o più richiedenti nel dropdown."""
         return self._seleziona_da_dropdown(SafeWorkLocators.RICHIEDENTE_BUTTON, items)
 
-    def esegui_ricerca(self):
+    def esegui_ricerca(self):  # noqa: ANN201
         """Clicca 'Avvia Ricerca'."""
         self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.SEARCH_START_BUTTON)).click()
 
@@ -56,19 +56,19 @@ class VisualizzaAttivitaPage:
         try:
             btn = self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.EXPORT_BUTTON))
             btn.click()
-            return True
+            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"❌ Errore clic export: {e}")
             return False
 
-    def get_rows(self):
+    def get_rows(self):  # noqa: ANN201
         """Restituisce le righe della tabella risultati."""
         try:
             return self.driver.find_elements(*SafeWorkLocators.ROWS)
         except Exception:
             return []
 
-    def _seleziona_da_dropdown(self, button_locator, items: str | list[str]) -> bool:
+    def _seleziona_da_dropdown(self, button_locator, items: str | list[str]) -> bool:  # noqa: ANN001
         """Helper per i dropdown ms-choice di SafeWork con supporto selezione multipla."""
         if isinstance(items, str):
             items = [items]
@@ -98,7 +98,7 @@ class VisualizzaAttivitaPage:
 
             # 4. Chiudi cliccando fuori
             self.driver.find_element(By.TAG_NAME, "body").click()
-            return True
+            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"❌ Errore selezione dropdown: {e}")
             return False

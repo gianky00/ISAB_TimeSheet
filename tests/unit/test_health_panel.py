@@ -8,29 +8,29 @@ from src.gui.styles import COLORS
 class TestHealthScoreBadge:
     """Test per HealthScoreBadge widget."""
 
-    def test_badge_initialization(self, qtbot):
-        from src.gui.panels.health_panel import HealthScoreBadge
+    def test_badge_initialization(self, qtbot):  # noqa: ANN001
+        from src.gui.panels.health_panel import HealthScoreBadge  # noqa: PLC0415
 
         badge = HealthScoreBadge(size=160)
         qtbot.addWidget(badge)
-        assert badge._score == 100
-        assert badge._size == 160
+        assert badge._score == 100  # noqa: PLR2004
+        assert badge._size == 160  # noqa: PLR2004
 
-    def test_badge_score_setter(self, qtbot):
-        from src.gui.panels.health_panel import HealthScoreBadge
+    def test_badge_score_setter(self, qtbot):  # noqa: ANN001
+        from src.gui.panels.health_panel import HealthScoreBadge  # noqa: PLC0415
 
         badge = HealthScoreBadge()
         qtbot.addWidget(badge)
         badge.score = 75
-        assert badge.score == 75
+        assert badge.score == 75  # noqa: PLR2004
         badge.score = 150
-        assert badge.score == 100
+        assert badge.score == 100  # noqa: PLR2004
         badge.score = -10
         assert badge.score == 0
 
-    def test_badge_color_thresholds(self, qtbot):
+    def test_badge_color_thresholds(self, qtbot):  # noqa: ANN001
         """Testa i colori basati su soglie V9.0."""
-        from src.gui.panels.health_panel import HealthScoreBadge
+        from src.gui.panels.health_panel import HealthScoreBadge  # noqa: PLC0415
 
         badge = HealthScoreBadge()
         qtbot.addWidget(badge)
@@ -47,9 +47,9 @@ class TestHealthScoreBadge:
         badge.score = 30
         assert badge._get_gradient() == QColor(COLORS["error_red"])
 
-    def test_badge_status_text(self, qtbot):
+    def test_badge_status_text(self, qtbot):  # noqa: ANN001
         """Testa i testi di stato V9.0."""
-        from src.gui.panels.health_panel import HealthScoreBadge
+        from src.gui.panels.health_panel import HealthScoreBadge  # noqa: PLC0415
 
         badge = HealthScoreBadge()
         qtbot.addWidget(badge)
@@ -61,15 +61,15 @@ class TestHealthScoreBadge:
 
 
 class TestStatCard:
-    def test_statcard_initialization(self, qtbot):
-        from src.gui.panels.health_panel import StatCard
+    def test_statcard_initialization(self, qtbot):  # noqa: ANN001
+        from src.gui.panels.health_panel import StatCard  # noqa: PLC0415
 
         card = StatCard("Test", "42")
         qtbot.addWidget(card)
         assert card.val_lbl.text() == "42"
 
-    def test_statcard_set_value(self, qtbot):
-        from src.gui.panels.health_panel import StatCard
+    def test_statcard_set_value(self, qtbot):  # noqa: ANN001
+        from src.gui.panels.health_panel import StatCard  # noqa: PLC0415
 
         card = StatCard("Test", "0")
         qtbot.addWidget(card)
@@ -78,10 +78,10 @@ class TestStatCard:
 
 
 class TestAnomalyCard:
-    def test_anomaly_card_initialization(self, qtbot):
-        from dataclasses import dataclass
+    def test_anomaly_card_initialization(self, qtbot):  # noqa: ANN001
+        from dataclasses import dataclass  # noqa: PLC0415
 
-        from src.gui.panels.health_panel import AnomalyCard
+        from src.gui.panels.health_panel import AnomalyCard  # noqa: PLC0415
 
         @dataclass
         class MockAnomaly:
@@ -93,10 +93,10 @@ class TestAnomalyCard:
         qtbot.addWidget(card)
         assert card is not None
 
-    def test_anomaly_severity_colors(self, qtbot):
-        from dataclasses import dataclass
+    def test_anomaly_severity_colors(self, qtbot):  # noqa: ANN001
+        from dataclasses import dataclass  # noqa: PLC0415
 
-        from src.gui.panels.health_panel import AnomalyCard
+        from src.gui.panels.health_panel import AnomalyCard  # noqa: PLC0415
 
         @dataclass
         class MockAnomaly:
@@ -111,8 +111,8 @@ class TestAnomalyCard:
 
 class TestHealthPanel:
     @patch("src.gui.panels.health_panel.QTimer")
-    def test_panel_initialization(self, mock_timer, qtbot):
-        from src.gui.panels.health_panel import HealthPanel
+    def test_panel_initialization(self, mock_timer, qtbot):  # noqa: ANN001
+        from src.gui.panels.health_panel import HealthPanel  # noqa: PLC0415
 
         panel = HealthPanel()
         qtbot.addWidget(panel)
@@ -122,17 +122,17 @@ class TestHealthPanel:
     @patch("src.gui.panels.health_panel.QTimer")
     @patch("src.core.logging.analytics.generate_analytics_report")
     @patch("src.core.logging.viewer.LogViewer")
-    def test_panel_refresh(self, mock_viewer, mock_report, mock_timer, qtbot):
-        from dataclasses import dataclass
+    def test_panel_refresh(self, mock_viewer, mock_report, mock_timer, qtbot):  # noqa: ANN001
+        from dataclasses import dataclass  # noqa: PLC0415
 
-        from src.gui.panels.health_panel import HealthPanel
+        from src.gui.panels.health_panel import HealthPanel  # noqa: PLC0415
 
         @dataclass
         class MockReport:
             health_score: int = 85
             anomalies: list = None
 
-            def __post_init__(self):
+            def __post_init__(self):  # noqa: ANN204
                 if self.anomalies is None:
                     self.anomalies = []
 
@@ -144,5 +144,5 @@ class TestHealthPanel:
 
         panel = HealthPanel()
         panel.refresh()
-        assert panel._score_badge.score == 85
+        assert panel._score_badge.score == 85  # noqa: PLR2004
         assert panel._stat_runs_ok.val_lbl.text() == "10"

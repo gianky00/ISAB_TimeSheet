@@ -48,7 +48,7 @@ class ResourceManager:
         Returns:
             Path: Il percorso della cartella di configurazione utente.
         """
-        from src.core.config_manager import CONFIG_DIR
+        from src.core.config_manager import CONFIG_DIR  # noqa: PLC0415
 
         return CONFIG_DIR
 
@@ -103,7 +103,7 @@ class ResourceManager:
 
         # Download silente se mancante
         try:
-            from webdriver_manager.chrome import ChromeDriverManager
+            from webdriver_manager.chrome import ChromeDriverManager  # noqa: PLC0415
 
             # webdriver-manager gestisce internamente il lock e il download
             d_path = ChromeDriverManager().install()
@@ -118,7 +118,7 @@ class ResourceManager:
                 with suppress(Exception):
                     shutil.copy2(d_path, d_exe)
                     return str(d_exe.resolve())
-            return d_path
+            return d_path  # noqa: TRY300
         except Exception:
             # Fallback ai driver bundle se presenti
             if getattr(sys, "frozen", False):

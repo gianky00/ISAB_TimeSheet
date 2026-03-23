@@ -7,7 +7,7 @@ from src.core.contabilita_stats import ContabilitaStats
 class TestContabilitaStats:
     @patch("src.core.contabilita_queries.ContabilitaQueries.get_data_by_year")
     @patch("src.core.contabilita_queries.ContabilitaQueries.get_giornaliere_by_year")
-    def test_get_year_stats_full_logic(self, mock_giorn, mock_data):
+    def test_get_year_stats_full_logic(self, mock_giorn, mock_data):  # noqa: ANN001
         """Verifica il calcolo aggregato di tutte le statistiche annuali."""
         # Setup Dati OdA
         # row format: [?, ?, n_prev, v_prev, attivita, ?, ?, status, ?, v_ore, ...]
@@ -27,17 +27,17 @@ class TestContabilitaStats:
         stats = ContabilitaStats.get_year_stats(Path("fake.db"), 2025)
 
         # Verifiche OdA
-        assert stats["total_prev"] == 1500.0
-        assert stats["total_ore"] == 15.0
-        assert stats["count_total"] == 2
+        assert stats["total_prev"] == 1500.0  # noqa: PLR2004
+        assert stats["total_ore"] == 15.0  # noqa: PLR2004
+        assert stats["count_total"] == 2  # noqa: PLR2004
         assert stats["status_counts"]["CONTABILIZZATA"] == 1
 
         # Verifiche Ore Dirette/Indirette
-        assert stats["ore_dirette"] == 8.0
-        assert stats["ore_indirette"] == 4.0
+        assert stats["ore_dirette"] == 8.0  # noqa: PLR2004
+        assert stats["ore_indirette"] == 4.0  # noqa: PLR2004
 
         # Verifiche Top Commesse
-        assert len(stats["top_commesse"]) == 2
+        assert len(stats["top_commesse"]) == 2  # noqa: PLR2004
         assert stats["top_commesse"][0] == ("Lavoro A", 1000.0)
 
     def test_process_main_data_empty(self):

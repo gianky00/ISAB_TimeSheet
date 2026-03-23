@@ -9,8 +9,8 @@ class TestContabilitaExtra:
     Uses extensive mocking to avoid instantiating heavy child tabs.
     """
 
-    def test_contabilita_panel_init(self, qapp, qtbot):
-        from src.gui.panels.contabilita_panel import ContabilitaPanel
+    def test_contabilita_panel_init(self, qapp, qtbot):  # noqa: ANN001
+        from src.gui.panels.contabilita_panel import ContabilitaPanel  # noqa: PLC0415
 
         # We mock EVERYTHING inside the panel to isolate the container logic
         with (
@@ -23,7 +23,7 @@ class TestContabilitaExtra:
         ):
             # Setup Mocks to behave like QWidgets without strictly being fully initialized ones
             # We use a real simple QWidget as base for the return value to satisfy addTab types
-            def create_mock_widget(*args, **kwargs):
+            def create_mock_widget(*args, **kwargs):  # noqa: ANN002, ANN003, ANN202
                 w = QWidget()
                 w.refresh_years = MagicMock()
                 w.refresh_data = MagicMock()
@@ -45,7 +45,7 @@ class TestContabilitaExtra:
 
             # Instantiate Panel without qtbot.addWidget (to avoid strict integration)
             panel = ContabilitaPanel()
-            # panel.show() # Not strictly needed for logic test if we trigger methods manually
+            # panel.show() # Not strictly needed for logic test if we trigger methods manually  # noqa: ERA001
 
             try:
                 # Manually trigger deferred loading (simulating the QTimer callback)
@@ -59,8 +59,8 @@ class TestContabilitaExtra:
                 panel.close()
                 panel.deleteLater()
 
-    def test_contabilita_panel_tab_switch(self, qapp, qtbot):
-        from src.gui.panels.contabilita_panel import ContabilitaPanel
+    def test_contabilita_panel_tab_switch(self, qapp, qtbot):  # noqa: ANN001
+        from src.gui.panels.contabilita_panel import ContabilitaPanel  # noqa: PLC0415
 
         with (
             patch("src.gui.panels.contabilita_panel.ContabilitaManager") as mock_manager,
@@ -71,7 +71,7 @@ class TestContabilitaExtra:
             patch("src.gui.panels.contabilita_panel.CertificatiCampioneTab") as mock_cert_tab,
         ):
 
-            def create_mock_widget(*args, **kwargs):
+            def create_mock_widget(*args, **kwargs):  # noqa: ANN002, ANN003, ANN202
                 w = QWidget()
                 w.refresh_years = MagicMock()
                 w.refresh_data = MagicMock()
@@ -87,7 +87,7 @@ class TestContabilitaExtra:
             mock_manager.get_available_years.return_value = [2024]  # Single year for simplicity
 
             panel = ContabilitaPanel()
-            # panel.show()
+            # panel.show()  # noqa: ERA001
 
             try:
                 panel._safe_refresh_tabs()
@@ -98,7 +98,7 @@ class TestContabilitaExtra:
 
                 # Switch to "KPI" (Index 4)
                 panel.main_tabs.setCurrentIndex(4)
-                assert panel.main_tabs.currentIndex() == 4
+                assert panel.main_tabs.currentIndex() == 4  # noqa: PLR2004
             finally:
                 panel.close()
                 panel.deleteLater()

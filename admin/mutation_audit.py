@@ -41,7 +41,7 @@ def print_banner() -> None:
     print(f"{Colors.END}")
 
 
-def get_mutatest_path():
+def get_mutatest_path():  # noqa: ANN201
     """Trova il percorso dell'eseguibile mutatest."""
     candidates = [
         Path(r"C:\Users\gianc\AppData\Roaming\Python\Python312\Scripts\mutatest.exe"),
@@ -55,19 +55,19 @@ def get_mutatest_path():
     return "mutatest"  # Fallback al PATH
 
 
-def check_mutatest():
+def check_mutatest():  # noqa: ANN201
     """Verifica se mutatest è installato."""
     mutatest_path = get_mutatest_path()
     try:
         # Usiamo -h invece di --version perché mutatest non supporta --version
         subprocess.run([mutatest_path, "-h"], capture_output=True, check=True)
-        return True
+        return True  # noqa: TRY300
     except (subprocess.CalledProcessError, FileNotFoundError):
         print(f"{Colors.RED}[ERRORE] 'mutatest' non trovato.{Colors.END}")
         return False
 
 
-def get_subpackages():
+def get_subpackages():  # noqa: ANN201
     """Ritorna la lista dei subpackage in src/."""
     return [
         p.name
@@ -76,7 +76,7 @@ def get_subpackages():
     ]
 
 
-def run_mutation(target: str, trials: int, mode: str):
+def run_mutation(target: str, trials: int, mode: str):  # noqa: ANN201
     """Esegue mutatest su un target specifico."""
     target_path = SRC_DIR / target
     mutatest_path = get_mutatest_path()
@@ -102,7 +102,7 @@ def run_mutation(target: str, trials: int, mode: str):
 
     start_time = time.time()
     # Usiamo shell=False per sicurezza, passando la lista
-    process = subprocess.run(cmd, capture_output=True, text=True)
+    process = subprocess.run(cmd, capture_output=True, text=True)  # noqa: PLW1510
     duration = time.time() - start_time
 
     return {
@@ -114,7 +114,7 @@ def run_mutation(target: str, trials: int, mode: str):
     }
 
 
-def parse_results(output: str):
+def parse_results(output: str):  # noqa: ANN201
     """Parsing dell'output di mutatest per estrarre le statistiche e i dettagli."""
     stats = {"killed": 0, "survived": 0, "incompetent": 0, "timeout": 0}
     details = []
@@ -140,7 +140,7 @@ def parse_results(output: str):
     return stats, details
 
 
-def generate_final_report(results: list):
+def generate_final_report(results: list):  # noqa: ANN201
     """Genera un report markdown dettagliato."""
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -180,7 +180,7 @@ def generate_final_report(results: list):
                 f.write(f"- **Problema:** {s['survived']} mutanti sono sopravvissuti.\n")
                 f.write("- **Locazioni critiche:**\n")
                 f.writelines(f"  - `{d}`\n" for d in details[:10])  # Limitiamo i primi 10 per leggibilità
-                if len(details) > 10:
+                if len(details) > 10:  # noqa: PLR2004
                     f.write(f"  - ... e altri {len(details) - 10} mutanti.\n")
 
                 f.write(

@@ -14,14 +14,14 @@ class FilterHeaderView(QHeaderView):
     Permette di cliccare sulle intestazioni per aprire popup di filtro specifici per colonna.
     """
 
-    filterChanged = pyqtSignal(int, object)  # col, values
+    filterChanged = pyqtSignal(int, object)  # col, values  # noqa: N815
 
-    def __init__(self, orientation: Qt.Orientation, parent: Any | None = None) -> None:
+    def __init__(self, orientation: Qt.Orientation, parent: Any | None = None) -> None:  # noqa: ANN401
         super().__init__(orientation, parent)
         self.setSectionsClickable(True)
         self.setHighlightSections(True)
 
-    def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:
+    def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
         """Gestisce il rilascio del mouse per mostrare il menu di filtro sulla colonna cliccata."""
         if event is not None:
             idx = self.logicalIndexAt(event.pos())

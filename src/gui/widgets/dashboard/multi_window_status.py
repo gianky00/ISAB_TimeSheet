@@ -36,7 +36,7 @@ class DetachedModuleItem(QFrame):
 
     reattach_requested = pyqtSignal(int)
 
-    def __init__(self, index: int, title: str, parent: QWidget | None = None):
+    def __init__(self, index: int, title: str, parent: QWidget | None = None):  # noqa: ANN204
         super().__init__(parent)
         self.index = index
         self.title = title

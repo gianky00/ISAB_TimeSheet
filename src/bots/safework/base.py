@@ -2,7 +2,7 @@ from contextlib import suppress
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.base.base_bot import BaseBot
@@ -21,13 +21,13 @@ class SafeworkBaseBot(BaseBot):
     SAFEWORK_URL = URLs.SAFEWORK_URL
     ISAB_URL = SAFEWORK_URL
 
-    def __init__(
+    def __init__(  # noqa: ANN204, PLR0913
         self,
-        username,
-        password,
-        headless=False,
-        timeout=30,
-        download_path="",
+        username,  # noqa: ANN001
+        password,  # noqa: ANN001
+        headless=False,  # noqa: ANN001
+        timeout=30,  # noqa: ANN001
+        download_path="",  # noqa: ANN001
         account_type: str = "Esecutore",
     ):
         super().__init__(username, password, headless, timeout, download_path)
@@ -36,7 +36,7 @@ class SafeworkBaseBot(BaseBot):
         self.ricerca_pdl_page: RicercaPDLPage | None = None
         self.attivita_page: VisualizzaAttivitaPage | None = None
 
-    def _configure_waits_and_pages(self):
+    def _configure_waits_and_pages(self):  # noqa: ANN202
         """Inizializza le Page Objects specifiche di SafeWork."""
         super()._configure_waits_and_pages()
         if self.driver and self.wait:
@@ -53,7 +53,7 @@ class SafeworkBaseBot(BaseBot):
             )
         return False
 
-    def click_robusto(self, locator: tuple[str, str], timeout: int = 10, label: str | None = None):
+    def click_robusto(self, locator: tuple[str, str], timeout: int = 10, label: str | None = None):  # noqa: ANN201
         """
         Tenta di cliccare un elemento gestendo overlay e intercettazioni.
         """
@@ -116,7 +116,7 @@ class SafeworkBaseBot(BaseBot):
         # No sleep needed: invisibility check is sufficient
         return True
 
-    def _attendi_caricamento_sistema(self, timeout: int = 420):
+    def _attendi_caricamento_sistema(self, timeout: int = 420):  # noqa: ANN202
         """
         Attesa specifica per SafeWork: rileva lo span 'Caricamento...'
         e ne attende la scomparsa completa.

@@ -7,7 +7,7 @@ from src.core.excel_importer import ExcelImporter
 
 
 class TestCoreLogicRefined:
-    def test_audit_manager_singleton_and_init(self, tmp_path):
+    def test_audit_manager_singleton_and_init(self, tmp_path):  # noqa: ANN001
         db_path = tmp_path / "audit.db"
         # Reset singleton
         AuditManager._instance = None
@@ -26,7 +26,7 @@ class TestCoreLogicRefined:
             am._log_queue.join()
             assert len(am.get_logs()) == 1
 
-    def test_contabilita_stats_calculation_real(self, tmp_path):
+    def test_contabilita_stats_calculation_real(self, tmp_path):  # noqa: ANN001
         db_path = tmp_path / "stats.db"
         with sqlite3.connect(db_path) as conn:
             # Create table with all required columns
@@ -60,6 +60,6 @@ class TestCoreLogicRefined:
             conn.execute("INSERT INTO giornaliere (year, n_prev, odc, ore) VALUES (2024, 'PREV1', '', '5,0')")
 
         stats = ContabilitaStats.get_year_stats(db_path, 2024)
-        assert stats["total_prev"] == 1000.0
-        assert stats["ore_dirette"] == 5.0
+        assert stats["total_prev"] == 1000.0  # noqa: PLR2004
+        assert stats["ore_dirette"] == 5.0  # noqa: PLR2004
         assert stats["status_counts"]["COMPLETATO"] == 1

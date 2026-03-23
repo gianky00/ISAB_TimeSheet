@@ -6,7 +6,7 @@ from src.core.timesheet_processor import TimesheetProcessor
 
 class TestTimesheetProcessor:
     @pytest.fixture
-    def sample_xlsx(self, tmp_path):
+    def sample_xlsx(self, tmp_path):  # noqa: ANN001
         """Crea un file Excel di test con la struttura attesa."""
         path = tmp_path / "source.xlsx"
         wb = openpyxl.Workbook()
@@ -27,7 +27,7 @@ class TestTimesheetProcessor:
         wb.save(path)
         return path
 
-    def test_process_and_move_success(self, sample_xlsx, tmp_path):
+    def test_process_and_move_success(self, sample_xlsx, tmp_path):  # noqa: ANN001
         """Verifica il ciclo completo di elaborazione e rinomina."""
         dest_dir = tmp_path / "processed"
 
@@ -59,7 +59,7 @@ class TestTimesheetProcessor:
 
         # 10, 20, 10.0 (stringhe) -> 3 valori univoci se non normalizzati prima del set
         # Ma nel codice: val = str(row[0].value).strip()
-        assert len(pos_values) == 3
+        assert len(pos_values) == 3  # noqa: PLR2004
         assert first_cleaned == "10"
 
     def test_clean_pos_value(self):
@@ -67,7 +67,7 @@ class TestTimesheetProcessor:
         assert TimesheetProcessor._clean_pos_value("5") == "5"
         assert TimesheetProcessor._clean_pos_value("abc") == "abc"
 
-    def test_get_destination_path_conflict(self, tmp_path):
+    def test_get_destination_path_conflict(self, tmp_path):  # noqa: ANN001
         """Verifica la gestione del conflitto se il file esiste già."""
         dest_dir = tmp_path
         odc = "5400123"

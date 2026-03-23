@@ -65,7 +65,7 @@ console = Console(
 class CheckResult:
     """Rappresenta l'esito di un singolo controllo di integrità o qualità."""
 
-    def __init__(self, label: str, success: bool, msg: str, duration: float, name: str):
+    def __init__(self, label: str, success: bool, msg: str, duration: float, name: str):  # noqa: ANN204
         """Inizializza il risultato con metadati e timestamp."""
         self.label = label
         self.success = success
@@ -142,7 +142,7 @@ def run_tool(name: str, cmd: list[str], label: str, cwd: Path = PROJECT_ROOT) ->
             f"CMD: {' '.join(cmd)}\nEXIT: {result.returncode}\n{'=' * 40}\n{result.stdout}\n{'=' * 40}\n{result.stderr}",
             encoding="utf-8",
         )
-        return (
+        return (  # noqa: TRY300
             (result.returncode == 0),
             result.stdout if result.returncode != 0 else "",
             duration,
@@ -223,7 +223,7 @@ def _run_tests_ai(reset: bool = True) -> tuple[bool, str, float]:
             f" -> {f.get('error_type', '?')}: {f.get('error_message', '')[:100]}"
             for f in failures[:10]
         )
-        if len(failures) > 10:
+        if len(failures) > 10:  # noqa: PLR2004
             msg_lines.append(f"  ... e altri {len(failures) - 10} errori")
 
         return False, "\n".join(msg_lines), duration
@@ -234,7 +234,7 @@ def _run_tests_ai(reset: bool = True) -> tuple[bool, str, float]:
         return False, f"Eccezione: {e}", time.time() - start_t
 
 
-def find_git_executable():
+def find_git_executable():  # noqa: ANN201
     """Tenta di trovare l'eseguibile git in percorsi comuni su Windows."""
     git_bin = shutil.which("git")
     if git_bin:
@@ -264,14 +264,14 @@ def find_git_executable():
 class ApexAudit:
     """Motore di audit principale che esegue una suite completa di test e controlli statici."""
 
-    def __init__(
+    def __init__(  # noqa: ANN204, PLR0913
         self,
-        fix=False,
-        fast=False,
-        incremental=False,
-        test_only=False,
+        fix=False,  # noqa: ANN001
+        fast=False,  # noqa: ANN001
+        incremental=False,  # noqa: ANN001
+        test_only=False,  # noqa: ANN001
         target: str | None = None,
-        force=False,
+        force=False,  # noqa: ANN001
     ):
         """Inizializza l'audit configurando le modalità di esecuzione."""
         self.fix = fix
@@ -360,7 +360,7 @@ class ApexAudit:
 
     def _check_db_integrity(self) -> tuple[bool, str, float]:
         start_t = time.time()
-        from platformdirs import user_data_dir
+        from platformdirs import user_data_dir  # noqa: PLC0415
 
         data_dir = Path(user_data_dir("SyncroJob", appauthor=False)) / "data"
         if not data_dir.exists():
@@ -395,7 +395,7 @@ class ApexAudit:
             time.time() - start_t,
         )
 
-    def _run_parallel(self, parallel_checks):
+    def _run_parallel(self, parallel_checks):  # noqa: ANN001, ANN202
         is_dumb = os.environ.get("TERM") == "dumb"
 
         if is_dumb:
@@ -408,7 +408,7 @@ class ApexAudit:
                     console.print(f"[[dim]{ts}[/dim]] [dim] -> Avvio {label}...[/dim]")
                     futures[executor.submit(func)] = (label, name, always_show)
 
-                for future in futures:
+                for future in futures:  # noqa: PLC0206
                     label, name, always_show = futures[future]
                     success, msg, dur = future.result()
                     self._add_res(label, success, msg, dur, name, always_show)
@@ -441,7 +441,7 @@ class ApexAudit:
                         self._add_res(label, success, msg, dur, name, always_show)
                         prog.update(tasks[label], completed=100, description=f"[green][OK] {label}")
 
-    def run_all(self):
+    def run_all(self):  # noqa: ANN201, PLR0912
         console.print(
             Panel.fit(
                 "[bold cyan]SYNCROJOB APEX AUDIT ENGINE[/bold cyan]",
@@ -451,7 +451,7 @@ class ApexAudit:
         )
 
         # Helper to wrap commands
-        def cmd(tool, args):
+        def cmd(tool, args):  # noqa: ANN001, ANN202
             return lambda: run_tool(tool, args, tool)
 
         all_checks = [
@@ -608,7 +608,7 @@ class ApexAudit:
         if not self.target:  # Only show summary score if running full/default audit
             self.summary()
 
-    def _add_res(self, label, success, msg, dur, name, always_show):
+    def _add_res(self, label, success, msg, dur, name, always_show):  # noqa: ANN001, ANN202, PLR0913
         res = CheckResult(label, success, msg, dur, name)
         self.results.append(res)
         if not success:
@@ -648,7 +648,7 @@ class ApexAudit:
             )
 
         self._export_html(score)
-        if score < 80 and not self.force:
+        if score < 80 and not self.force:  # noqa: PLR2004
             sys.exit(1)
 
     def _get_score(self) -> int:
@@ -669,7 +669,7 @@ class ApexAudit:
                 score -= weights.get(r.name, 5)
         return max(0, score)
 
-    def _export_html(self, score):
+    def _export_html(self, score):  # noqa: ANN001, ANN202
         REPORT_DIR.mkdir(parents=True, exist_ok=True)
         rows = "".join(
             [

@@ -174,10 +174,10 @@ class BackupManager:
 
             if zip_path.exists():
                 zip_path.unlink()
-            return False, "Nessun file da backuppare trovato."
+            return False, "Nessun file da backuppare trovato."  # noqa: TRY300
 
         except Exception as e:
-            logger.error(f"Backup Error: {e}")
+            logger.error(f"Backup Error: {e}")  # noqa: TRY400
             AuditManager.instance().log_action(
                 "Errore Backup",
                 category="sistema",
@@ -188,7 +188,7 @@ class BackupManager:
             return False, str(e)
 
     @staticmethod
-    def _cleanup_old_backups(target_dir: Path, keep: int = 5):
+    def _cleanup_old_backups(target_dir: Path, keep: int = 5):  # noqa: ANN205
         """
         Mantiene solo gli ultimi N backup nel database, eliminando i più vecchi.
 
@@ -219,7 +219,7 @@ class BackupManager:
                 reverse=True,
             )
         except Exception as e:
-            logger.error(f"Error listing backups: {e}")
+            logger.error(f"Error listing backups: {e}")  # noqa: TRY400
             return []
 
     @staticmethod
@@ -244,7 +244,7 @@ class BackupManager:
                 params={"file": zip_p.name},
                 severity="high",
             )
-            return True, "Ripristino completato. Riavviare l'applicazione."
+            return True, "Ripristino completato. Riavviare l'applicazione."  # noqa: TRY300
 
         except Exception as e:
             return False, str(e)

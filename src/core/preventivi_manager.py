@@ -34,7 +34,7 @@ class GeneratoreWorker(QThread):
 
     finished_signal = pyqtSignal(bool, str)
 
-    def __init__(self, master_path: str, data: dict[str, Any], dest_path: str):
+    def __init__(self, master_path: str, data: dict[str, Any], dest_path: str):  # noqa: ANN204
         """
         Inizializza il worker per la generazione del preventivo.
 
@@ -55,7 +55,7 @@ class GeneratoreWorker(QThread):
             success, result = manager.generate_preventivo(self.data, self.dest_path)
             self.finished_signal.emit(success, result)
         except Exception as e:
-            logger.error(f"Errore critico thread generatore: {e}")
+            logger.error(f"Errore critico thread generatore: {e}")  # noqa: TRY400
             self.finished_signal.emit(False, f"Errore critico thread: {e}")
 
 
@@ -66,7 +66,7 @@ class MacroWorker(QThread):
     macro_started = pyqtSignal(str)  # Emesso quando inizia una macro
     macro_progress = pyqtSignal(str, bool)  # Emesso quando finisce una singola macro (nome, successo)
 
-    def __init__(self, file_path: str, macros: list[str]):
+    def __init__(self, file_path: str, macros: list[str]):  # noqa: ANN204
         """
         Inizializza il worker per l'esecuzione delle macro.
 
@@ -82,7 +82,7 @@ class MacroWorker(QThread):
         """Esegue le macro VBA sequenzialmente tramite Win32COM."""
         try:
             pythoncom.CoInitialize()
-            import win32com.client
+            import win32com.client  # noqa: PLC0415
 
             excel_app = win32com.client.Dispatch("Excel.Application")
             excel_app.Visible = True
@@ -97,7 +97,7 @@ class MacroWorker(QThread):
                     excel_app.Run(f"'{wb.Name}'!{macro}")
                     self.macro_progress.emit(macro, True)
                 except Exception as me:
-                    logger.error(f"Errore durante macro {macro}: {me}")
+                    logger.error(f"Errore durante macro {macro}: {me}")  # noqa: TRY400
                     self.macro_progress.emit(macro, False)
                     # Fermiamo il loop se una macro critica fallisce
                     self.finished_signal.emit(False, f"Errore nell'esecuzione della macro '{macro}':\n{me}")
@@ -107,7 +107,7 @@ class MacroWorker(QThread):
             wb.Save()
             self.finished_signal.emit(True, "Operazioni macro completate.")
         except Exception as e:
-            logger.error(f"Errore thread macro: {e}")
+            logger.error(f"Errore thread macro: {e}")  # noqa: TRY400
             self.finished_signal.emit(False, f"Errore macro: {e}")
         finally:
             pythoncom.CoUninitialize()
@@ -116,7 +116,7 @@ class MacroWorker(QThread):
 class PreventiviGeneratorManager:
     """Manager avanzato per la generazione di preventivi basati su template Excel Master."""
 
-    def __init__(self, master_path: str = ""):
+    def __init__(self, master_path: str = ""):  # noqa: ANN204
         """
         Inizializza il manager dei preventivi.
 
@@ -148,8 +148,7 @@ class PreventiviGeneratorManager:
                 match = pattern.search(f)
                 if match:
                     num = int(match.group(1))
-                    if num > max_num:
-                        max_num = num
+                    max_num = max(max_num, num)
 
             return f"{max_num + 1:03d}"
         except Exception as e:
@@ -201,7 +200,7 @@ class PreventiviGeneratorManager:
                 app.Quit()
                 pythoncom.CoUninitialize()
         except Exception as e:
-            logger.error(f"Errore lettura dati esistenti: {e}")
+            logger.error(f"Errore lettura dati esistenti: {e}")  # noqa: TRY400
         return data
 
     def _sanitize_excel_file(self, filepath: str) -> None:
@@ -238,7 +237,7 @@ class PreventiviGeneratorManager:
 
             shutil.move(temp_zip, filepath)
         except Exception as e:
-            logger.error(f"Errore sanitizzazione: {e}")
+            logger.error(f"Errore sanitizzazione: {e}")  # noqa: TRY400
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -301,7 +300,7 @@ class PreventiviGeneratorManager:
                 vba_ref.Range("A6").Value = data.get("data", "")
 
             self.wb.Save()
-            return True, "OK"
+            return True, "OK"  # noqa: TRY300
         except Exception as e:
             return False, str(e)
         finally:

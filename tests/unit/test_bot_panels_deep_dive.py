@@ -6,7 +6,7 @@ from src.gui.panels.scarico_pdl import ScaricoPDLPanel
 
 
 @pytest.fixture
-def mock_gui_deps(mocker):
+def mock_gui_deps(mocker):  # noqa: ANN001
     # Mocking external services
     mocker.patch("src.core.database.db_manager", MagicMock())
     # Note: LyraSentinel might not exist or be needed here, keeping it generic
@@ -17,7 +17,7 @@ def mock_gui_deps(mocker):
 
 class TestScaricoPDLPanel:
     @patch("src.gui.panels.base.BotWorker")
-    def test_telegram_send_after_finish(self, mock_worker_cls, qapp, qtbot, mock_gui_deps):
+    def test_telegram_send_after_finish(self, mock_worker_cls, qapp, qtbot, mock_gui_deps):  # noqa: ANN001
         panel = ScaricoPDLPanel()
         mock_win = MagicMock()
         mock_tg = MagicMock()
@@ -54,7 +54,7 @@ class TestScaricoPDLPanel:
             args = mock_tg.send_document_sync.call_args[0]
             assert args[0] == "/path/to/report.pdf"
 
-    def test_validate_ready(self, qtbot, mock_gui_deps):
+    def test_validate_ready(self, qtbot, mock_gui_deps):  # noqa: ANN001
         panel = ScaricoPDLPanel()
         qtbot.addWidget(panel)
 
@@ -72,7 +72,7 @@ class TestScaricoPDLPanel:
         assert ready is True
 
     @patch("src.gui.panels.base.BotWorker")
-    def test_on_start_workflow(self, mock_worker_cls, qtbot, mock_gui_deps):
+    def test_on_start_workflow(self, mock_worker_cls, qtbot, mock_gui_deps):  # noqa: ANN001
         panel = ScaricoPDLPanel()
         qtbot.addWidget(panel)
         panel.data_table.set_data([{"numero_pdl": "123"}])

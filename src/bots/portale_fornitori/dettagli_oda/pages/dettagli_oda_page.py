@@ -12,7 +12,7 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.portale_fornitori.common.locators import CommonLocators, LoginLocators
@@ -27,18 +27,18 @@ class DettagliOdAPage:
     Fornisce metodi per navigare, filtrare ed esportare i dettagli degli ordini.
     """
 
-    def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None):
+    def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None):  # noqa: ANN204
         """Inizializza la pagina con il driver Selenium e la callback di log."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)
         self._log = log_callback or print
 
-    def log(self, msg: str):
+    def log(self, msg: str):  # noqa: ANN201
         """Inoltra un messaggio alla callback di log configurata."""
         self._log(msg)
 
-    def _wait_for_overlay(self):
+    def _wait_for_overlay(self):  # noqa: ANN202
         """Attende che gli overlay di caricamento di ExtJS (maschere) siano invisibili."""
         with suppress(TimeoutException):
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
@@ -65,7 +65,7 @@ class DettagliOdAPage:
 
             self.wait.until(EC.visibility_of_element_located(DettagliOdALocators.SUPPLIER_ARROW))
             self._wait_for_overlay()
-            return True
+            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"✗ Navigazione fallita: {e}")
             return False
@@ -82,7 +82,7 @@ class DettagliOdAPage:
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
             self.driver.execute_script("arguments[0].click();", option)
             self._wait_for_overlay()
-            return True
+            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"✗ Selezione fornitore fallita: {e}")
             return False
@@ -109,7 +109,7 @@ class DettagliOdAPage:
                 self.log("  Conferma cliccata.")
                 self.wait.until(EC.visibility_of_element_located(LoginLocators.USERNAME_FIELD))
                 self.log("✓ Logout completato con successo.")
-                return True
+                return True  # noqa: TRY300
             except TimeoutException:
                 self.log("⚠️ Popup conferma non apparso o timeout.")
                 return False
@@ -117,7 +117,7 @@ class DettagliOdAPage:
             self.log(f"⚠️ Errore durante logout: {e}")
             return False
 
-    def expand_sidebar_if_collapsed(self):
+    def expand_sidebar_if_collapsed(self):  # noqa: ANN201
         """Espande la sidebar se collassata per rendere visibile il menu Report."""
         with suppress(Exception):
             expand_btn = self.driver.find_element(*DettagliOdALocators.SIDEBAR_EXPAND_BUTTON)
@@ -126,7 +126,7 @@ class DettagliOdAPage:
                 self.driver.execute_script("arguments[0].click();", expand_btn)
                 self.log("  Menu espanso.")
 
-    def process_oda(
+    def process_oda(  # noqa: PLR0913
         self,
         oda: str,
         contract: str,
@@ -204,7 +204,7 @@ class DettagliOdAPage:
 
             final_path = self._download(source_dir, dest_dir, target_filename, export_btn_locator)
             self._close_all_tabs()
-            return final_path
+            return final_path  # noqa: TRY300
 
         except Exception as e:
             self.log(f"  ✗ Errore processamento: {e}")
@@ -212,7 +212,7 @@ class DettagliOdAPage:
                 self._close_all_tabs()
             return None
 
-    def _close_all_tabs(self):
+    def _close_all_tabs(self):  # noqa: ANN202
         """Chiude tutte le schede aperte nel portale cliccando sull'icona X."""
         try:
             while True:
@@ -255,13 +255,13 @@ class DettagliOdAPage:
 
             # Pulizia aggressiva residui 0 KB (post-download)
             time.sleep(0.5)
-            from src.utils.helpers import cleanup_chrome_temp_files
+            from src.utils.helpers import cleanup_chrome_temp_files  # noqa: PLC0415
 
             removed = cleanup_chrome_temp_files(source_dir)
             for f_name in removed:
                 self.log(f"  [DEBUG] Rimosso residuo download: {f_name}")
 
-            return final_path
+            return final_path  # noqa: TRY300
         except Exception as e:
             self.log(f"  ✗ Errore download: {e}")
             return None
@@ -275,7 +275,7 @@ class DettagliOdAPage:
                 btn.click()
             except Exception:
                 self.driver.execute_script("arguments[0].click();", btn)
-            return True
+            return True  # noqa: TRY300
         except Exception:
             return False
 
@@ -293,7 +293,7 @@ class DettagliOdAPage:
 
     def _finalize_download(self, src: Path, dest_dir: Path, target_name: str) -> Path | None:
         """Sposta il file scaricato nella destinazione finale rinominandolo."""
-        import shutil
+        import shutil  # noqa: PLC0415
 
         dest_dir.mkdir(parents=True, exist_ok=True)
         target_path = dest_dir / target_name

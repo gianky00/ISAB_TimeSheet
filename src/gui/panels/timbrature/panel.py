@@ -41,7 +41,7 @@ class TimbratureDBPanel(QWidget):
     Refactored: usa componenti modulari.
     """
 
-    def __init__(self, parent: QWidget | None = None):
+    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
         super().__init__(parent)
 
         # Member declarations
@@ -69,7 +69,7 @@ class TimbratureDBPanel(QWidget):
         # Caricamento differito per massimizzare la fluidità dello splash screen
         QTimer.singleShot(150, self._deferred_init)
 
-    def _deferred_init(self):
+    def _deferred_init(self):  # noqa: ANN202
         """Carica le liste e i dati iniziali dopo la creazione del widget."""
         try:
             lists = self.storage.get_lists()
@@ -87,11 +87,11 @@ class TimbratureDBPanel(QWidget):
 
             self.refresh_data()
         except Exception as e:
-            from src.core.logging import get_logger
+            from src.core.logging import get_logger  # noqa: PLC0415
 
             get_logger(__name__).error(f"Error in deferred init: {e}")
 
-    def _setup_ui(self):
+    def _setup_ui(self):  # noqa: ANN202
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(10, 10, 10, 10)
         self.main_layout.setSpacing(15)
@@ -102,7 +102,7 @@ class TimbratureDBPanel(QWidget):
 
         # Tabs
         self.tabs = AnimatedTabWidget()
-        # self.tabs.setProperty("class", "Level2Tabs") # Stile gestito dal componente
+        # self.tabs.setProperty("class", "Level2Tabs") # Stile gestito dal componente  # noqa: ERA001
 
         # Tab 1: Database
         self.tab_database = QWidget()
@@ -127,7 +127,7 @@ class TimbratureDBPanel(QWidget):
         # Signals from Settings Tab
         self.settings_tab.settings_changed.connect(self._on_settings_changed)
 
-    def _setup_toolbar(self):
+    def _setup_toolbar(self):  # noqa: ANN202, PLR0915
         self.toolbar_container = QFrame()
         self.toolbar_container.setObjectName("filterBar")
         self.toolbar_container.setStyleSheet(f"""
@@ -144,7 +144,7 @@ class TimbratureDBPanel(QWidget):
         # Sezione Ricerca
         search_v = QVBoxLayout()
         search_v.setSpacing(4)
-        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
+        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE  # noqa: PLC0415
 
         lbl_search = QLabel("CERCA PERSONALE")
         lbl_search.setStyleSheet(LABEL_MUTED)
@@ -200,7 +200,7 @@ class TimbratureDBPanel(QWidget):
 
         self._update_filter_combos()
 
-        from src.gui.widgets.modern_button import ModernButton
+        from src.gui.widgets.modern_button import ModernButton  # noqa: PLC0415
 
         import_btn = ModernButton(
             "IMPORTA EXCEL",
@@ -211,7 +211,7 @@ class TimbratureDBPanel(QWidget):
         import_btn.clicked.connect(self._import_excel_manually)
         toolbar_layout.addWidget(import_btn, alignment=Qt.AlignmentFlag.AlignBottom)
 
-    def _setup_database_tab(self, parent):
+    def _setup_database_tab(self, parent):  # noqa: ANN001, ANN202
         layout = QVBoxLayout(parent)
         layout.setContentsMargins(0, 5, 0, 0)
 
@@ -235,7 +235,7 @@ class TimbratureDBPanel(QWidget):
 
         header = self.db_table.horizontalHeader()
         if header is None:
-            raise RuntimeError("Table horizontal header is None")
+            raise RuntimeError("Table horizontal header is None")  # noqa: TRY003
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setStretchLastSection(True)
 
@@ -254,7 +254,7 @@ class TimbratureDBPanel(QWidget):
         splitter.setStretchFactor(1, 2)
         layout.addWidget(splitter)
 
-    def _update_filter_combos(self):
+    def _update_filter_combos(self):  # noqa: ANN202
         # Cache reload
         self.lists = self.storage.get_lists()
         self.reparti = self.lists.get("reparti", [])
@@ -274,7 +274,7 @@ class TimbratureDBPanel(QWidget):
             self.cantiere_filter.addItem(cant, cant)
         self.cantiere_filter.blockSignals(False)
 
-    def refresh_data(self):
+    def refresh_data(self):  # noqa: ANN201
         """Carica i dati dal DB e aggiorna il modello virtuale."""
         text = self.search_input.text()
         reparto = self.reparto_filter.currentData()
@@ -313,7 +313,7 @@ class TimbratureDBPanel(QWidget):
         # Reset detail
         self.detail_view.clear_fields()
 
-    def _on_selection_changed(self, selected, _deselected):
+    def _on_selection_changed(self, selected, _deselected):  # noqa: ANN001, ANN202
         # Protezione contro selectionModel None
         selection_model = self.db_table.selectionModel()
         if not selection_model:
@@ -335,7 +335,7 @@ class TimbratureDBPanel(QWidget):
             print(f"Errore in _on_selection_changed: {e}")
             self.detail_view.clear_fields()
 
-    def _on_tab_changed(self, index):
+    def _on_tab_changed(self, index):  # noqa: ANN001, ANN202
         if index == 0:  # Database
             if hasattr(self, "toolbar_container"):
                 self.toolbar_container.show()
@@ -345,12 +345,12 @@ class TimbratureDBPanel(QWidget):
                 self.toolbar_container.hide()
             self.settings_tab.load_data()
 
-    def _on_settings_changed(self):
+    def _on_settings_changed(self):  # noqa: ANN202
         """Reagisce al cambio di impostazioni aggiornando i filtri di reparto e cantiere."""
         # Settings updated (data storage updated), we might need to refresh options
         self._update_filter_combos()
 
-    def _import_excel_manually(self):
+    def _import_excel_manually(self):  # noqa: ANN202
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Seleziona File Excel Timbrature",
@@ -377,6 +377,6 @@ class TimbratureDBPanel(QWidget):
             ToastManager.instance().show(f"Errore importazione: {e}", "error")
 
     # Exposed for external calls (compatibility)
-    def refresh_fornitori(self):
+    def refresh_fornitori(self):  # noqa: ANN201
         """Aggiorna le liste dei fornitori nei menu a tendina dei filtri."""
         self._update_filter_combos()

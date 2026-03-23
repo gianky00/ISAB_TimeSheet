@@ -17,7 +17,7 @@ class MockHealthReport:
     bot_runs: dict = None
     operations: list = None
 
-    def __post_init__(self):
+    def __post_init__(self):  # noqa: ANN204
         if self.level_distribution is None:
             self.level_distribution = {"ERROR": 10, "WARNING": 20, "INFO": 100}
         if self.bot_runs is None:
@@ -25,7 +25,7 @@ class MockHealthReport:
         if self.operations is None:
             self.operations = []
 
-    def get(self, key, default=None):
+    def get(self, key, default=None):  # noqa: ANN001
         return getattr(self, key, default)
 
 
@@ -34,17 +34,17 @@ class TestAnomalyDetector:
 
     def test_detector_initialization(self):
         """Testa l'inizializzazione del detector."""
-        from src.core.logging.analytics import AnomalyDetector
+        from src.core.logging.analytics import AnomalyDetector  # noqa: PLC0415
 
         detector = AnomalyDetector()
 
-        assert detector.error_rate_threshold == 5.0
-        assert detector.slow_op_threshold_ms == 10000
+        assert detector.error_rate_threshold == 5.0  # noqa: PLR2004
+        assert detector.slow_op_threshold_ms == 10000  # noqa: PLR2004
 
     @patch("src.core.logging.analytics.LogViewer")
-    def test_detect_error_rate_spike_user_friendly_suggestion(self, mock_viewer):
+    def test_detect_error_rate_spike_user_friendly_suggestion(self, mock_viewer):  # noqa: ANN001
         """Testa che i suggerimenti siano user-friendly (no CLI commands)."""
-        from src.core.logging.analytics import AnomalyDetector
+        from src.core.logging.analytics import AnomalyDetector  # noqa: PLC0415
 
         # Mock viewer con error rate alto
         mock_instance = MagicMock()
@@ -67,9 +67,9 @@ class TestAnomalyDetector:
             assert "Audit" in anomaly.suggestion or "sezione" in anomaly.suggestion.lower()
 
     @patch("src.core.logging.analytics.LogViewer")
-    def test_detect_slow_operations_user_friendly_suggestion(self, mock_viewer):
+    def test_detect_slow_operations_user_friendly_suggestion(self, mock_viewer):  # noqa: ANN001
         """Testa i suggerimenti per operazioni lente."""
-        from src.core.logging.analytics import AnomalyDetector
+        from src.core.logging.analytics import AnomalyDetector  # noqa: PLC0415
 
         mock_instance = MagicMock()
         mock_instance.generate_health_report.return_value = {
@@ -94,9 +94,9 @@ class TestAnomalyDetector:
             assert "python" not in anomaly.suggestion.lower()
 
     @patch("src.core.logging.analytics.LogViewer")
-    def test_detect_bot_failures_user_friendly_suggestion(self, mock_viewer):
+    def test_detect_bot_failures_user_friendly_suggestion(self, mock_viewer):  # noqa: ANN001
         """Testa i suggerimenti per fallimenti bot."""
-        from src.core.logging.analytics import AnomalyDetector
+        from src.core.logging.analytics import AnomalyDetector  # noqa: PLC0415
 
         mock_instance = MagicMock()
         mock_instance.generate_health_report.return_value = {
@@ -130,9 +130,9 @@ class TestAnalyticsReport:
 
     @patch("src.core.logging.analytics.LogViewer")
     @patch("src.core.logging.analytics.AnomalyDetector")
-    def test_generate_analytics_report(self, mock_detector, mock_viewer):
+    def test_generate_analytics_report(self, mock_detector, mock_viewer):  # noqa: ANN001
         """Testa la generazione del report."""
-        from src.core.logging.analytics import generate_analytics_report
+        from src.core.logging.analytics import generate_analytics_report  # noqa: PLC0415
 
         # Mock viewer
         mock_viewer_instance = MagicMock()
@@ -156,7 +156,7 @@ class TestAnalyticsReport:
 
     def test_anomaly_dataclass(self):
         """Testa la dataclass Anomaly."""
-        from src.core.logging.analytics import Anomaly
+        from src.core.logging.analytics import Anomaly  # noqa: PLC0415
 
         anomaly = Anomaly(
             type="test_type",

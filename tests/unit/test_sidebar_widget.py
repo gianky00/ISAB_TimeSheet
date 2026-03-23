@@ -7,18 +7,18 @@ class TestSidebarWidget:
     """Test suite per SidebarWidget V9.0 (Navigazione Profonda)."""
 
     @patch("src.gui.widgets.sidebar_widget.get_asset_path")
-    def test_sidebar_initialization(self, mock_asset, qapp, qtbot):
+    def test_sidebar_initialization(self, mock_asset, qapp, qtbot):  # noqa: ANN001
         mock_asset.return_value = ""
-        from src.gui.widgets.sidebar_widget import SidebarWidget
+        from src.gui.widgets.sidebar_widget import SidebarWidget  # noqa: PLC0415
 
         sidebar = SidebarWidget()
         qtbot.addWidget(sidebar)
         assert sidebar._is_collapsed is True
 
     @patch("src.gui.widgets.sidebar_widget.get_asset_path")
-    def test_sidebar_palette_click_emits_signal(self, mock_asset, qapp, qtbot):
+    def test_sidebar_palette_click_emits_signal(self, mock_asset, qapp, qtbot):  # noqa: ANN001
         mock_asset.return_value = ""
-        from src.gui.widgets.sidebar_widget import SidebarWidget
+        from src.gui.widgets.sidebar_widget import SidebarWidget  # noqa: PLC0415
 
         sidebar = SidebarWidget()
         qtbot.addWidget(sidebar)
@@ -27,9 +27,9 @@ class TestSidebarWidget:
             qtbot.mouseClick(sidebar.btn_palette, Qt.MouseButton.LeftButton)
 
     @patch("src.gui.widgets.sidebar_widget.get_asset_path")
-    def test_sidebar_monitoraggio_group_exists(self, mock_asset, qapp, qtbot):
+    def test_sidebar_monitoraggio_group_exists(self, mock_asset, qapp, qtbot):  # noqa: ANN001
         mock_asset.return_value = ""
-        from src.gui.widgets.sidebar_widget import SidebarWidget
+        from src.gui.widgets.sidebar_widget import SidebarWidget  # noqa: PLC0415
 
         sidebar = SidebarWidget()
         qtbot.addWidget(sidebar)
@@ -39,12 +39,12 @@ class TestSidebarWidget:
 
         # In V9.0 i bottoni child sono in notif_child_btns
         # Verifichiamo che il numero di bottoni aggiunti al gruppo sia 3
-        assert len(sidebar.notif_child_btns) == 3
+        assert len(sidebar.notif_child_btns) == 3  # noqa: PLR2004
 
     @patch("src.gui.widgets.sidebar_widget.get_asset_path")
-    def test_sidebar_navigation_signal(self, mock_asset, qapp, qtbot):
+    def test_sidebar_navigation_signal(self, mock_asset, qapp, qtbot):  # noqa: ANN001
         mock_asset.return_value = ""
-        from src.gui.widgets.sidebar_widget import SidebarWidget
+        from src.gui.widgets.sidebar_widget import SidebarWidget  # noqa: PLC0415
 
         sidebar = SidebarWidget()
         qtbot.addWidget(sidebar)
@@ -57,9 +57,9 @@ class TestSidebarWidget:
         assert blocker.args == [0, -1, -1]
 
     @patch("src.gui.widgets.sidebar_widget.get_asset_path")
-    def test_sidebar_expand_collapse_state(self, mock_asset, qapp, qtbot):
+    def test_sidebar_expand_collapse_state(self, mock_asset, qapp, qtbot):  # noqa: ANN001
         mock_asset.return_value = ""
-        from src.gui.widgets.sidebar_widget import SidebarWidget
+        from src.gui.widgets.sidebar_widget import SidebarWidget  # noqa: PLC0415
 
         sidebar = SidebarWidget()
         qtbot.addWidget(sidebar)

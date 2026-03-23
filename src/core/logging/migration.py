@@ -22,44 +22,44 @@ class LoggingAdapter:
         # Funziona sia con vecchio che nuovo sistema!
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str):  # noqa: ANN204
         self._structured_logger = get_new_logger(name)
         self._std_logger = logging.getLogger(name)
 
-    def debug(self, msg, *args, **kwargs):
+    def debug(self, msg, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003, ANN201
         """Debug log."""
         # Estrai extra da kwargs se presente
         extra = kwargs.pop("extra", {})
         formatted_msg = msg % args if args else msg
         self._structured_logger.debug(formatted_msg, **extra)
 
-    def info(self, msg, *args, **kwargs):
+    def info(self, msg, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003, ANN201
         """Info log."""
         extra = kwargs.pop("extra", {})
         formatted_msg = msg % args if args else msg
         self._structured_logger.info(formatted_msg, **extra)
 
-    def warning(self, msg, *args, **kwargs):
+    def warning(self, msg, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003, ANN201
         """Warning log."""
         extra = kwargs.pop("extra", {})
         formatted_msg = msg % args if args else msg
         self._structured_logger.warning(formatted_msg, **extra)
 
-    def error(self, msg, *args, **kwargs):
+    def error(self, msg, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003, ANN201
         """Error log."""
         extra = kwargs.pop("extra", {})
         formatted_msg = msg % args if args else msg
         self._structured_logger.error(formatted_msg, **extra)
 
-    def critical(self, msg, *args, **kwargs):
+    def critical(self, msg, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003, ANN201
         """Critical log."""
         extra = kwargs.pop("extra", {})
         formatted_msg = msg % args if args else msg
         self._structured_logger.critical(formatted_msg, **extra)
 
-    def exception(self, msg, *args, exc_info=True, **kwargs):
+    def exception(self, msg, *args, exc_info=True, **kwargs):  # noqa: ANN001, ANN002, ANN003, ANN201
         """Exception log."""
-        import sys
+        import sys  # noqa: PLC0415
 
         extra = kwargs.pop("extra", {})
         formatted_msg = msg % args if args else msg

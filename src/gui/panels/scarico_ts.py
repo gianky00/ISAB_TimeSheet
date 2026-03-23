@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 class ScaricaTSPanel(BaseBotPanel):
     """Pannello per il bot Scarico TS."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None):  # noqa: ANN001, ANN204
         """
         Inizializza il pannello Scarico TS.
 
@@ -43,7 +43,7 @@ class ScaricaTSPanel(BaseBotPanel):
         )
         self._setup_content()
         # Forza inizializzazione timeline immediata per Scarico TS
-        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
+        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot  # noqa: PLC0415
 
         self.activity_timeline.set_steps(ScaricaTSBot.STEPS)
 
@@ -54,11 +54,11 @@ class ScaricaTSPanel(BaseBotPanel):
         """
         Restituisce la classe ScaricaTSBot associata a questo pannello.
         """
-        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
+        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot  # noqa: PLC0415
 
         return ScaricaTSBot
 
-    def _safe_load_data(self):
+    def _safe_load_data(self):  # noqa: ANN202
         """Carica i dati dai file di configurazione in modo sicuro."""
         try:
             self._load_saved_data()
@@ -66,7 +66,7 @@ class ScaricaTSPanel(BaseBotPanel):
             print(f"[ERROR] Error loading data for ScaricaTSPanel: {e}")
             traceback.print_exc()
 
-    def _setup_content(self):
+    def _setup_content(self):  # noqa: ANN202
         """Inizializza e posiziona i componenti UI specifici del pannello."""
         # Sezione Parametri (Senza QGroupBox per favorire il design Floating Card)
         params_container = QWidget()
@@ -123,31 +123,31 @@ class ScaricaTSPanel(BaseBotPanel):
 
         self.content_layout.addWidget(params_container)
 
-    def _update_status_list(self, force=False):
+    def _update_status_list(self, force=False):  # noqa: ANN001, ANN202
         """Aggiorna il numero di righe nella lista degli stati."""
         count = self.data_table.table.rowCount()
         if force or self.status_list.count() != count:
             self.status_list.initialize_rows(count, self.data_table.table.rowHeight(0) or 30)
 
-    def on_step_completed(self, step_idx, success, message=""):
+    def on_step_completed(self, step_idx, success, message=""):  # noqa: ANN001, ANN201
         """Aggiorna lo stato della riga quando il bot termina l'elaborazione."""
         self.status_list.update_status(step_idx, success)
 
         # Se abbiamo una colonna ESITO, aggiorniamola
         # ... logic if needed ...
 
-    def _open_settings(self):
+    def _open_settings(self):  # noqa: ANN202
         """Apre il pannello impostazioni."""
         main_window = self.window()
         if main_window and hasattr(main_window, "show_settings"):
             main_window.show_settings()
 
-    def refresh_fornitori(self):
+    def refresh_fornitori(self):  # noqa: ANN201
         """Ricarica l'elenco dei fornitori."""
         if hasattr(self, "params_widget"):
             self.params_widget.refresh_fornitori()
 
-    def _load_saved_data(self):
+    def _load_saved_data(self):  # noqa: ANN202
         """Carica i dati salvati."""
         config = config_manager.load_config()
         self.refresh_fornitori()
@@ -161,7 +161,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
         self._update_status_list()
 
-    def _save_data(self):
+    def _save_data(self):  # noqa: ANN202
         """Salva i dati correnti."""
         if not hasattr(self, "params_widget"):
             return
@@ -170,7 +170,7 @@ class ScaricaTSPanel(BaseBotPanel):
         config_manager.set_config_value("path_scarico_ts", self.params_widget.get_dest_path())
         config_manager.set_config_value("last_scarico_ts_elabora", self.elabora_ts_check.isChecked())
 
-    def _clear_table(self):
+    def _clear_table(self):  # noqa: ANN202
         """Svuota la tabella."""
         if ConfirmationDialog.confirm(self, "Conferma", "Svuotare la tabella?"):
             self.data_table.clear()
@@ -187,7 +187,7 @@ class ScaricaTSPanel(BaseBotPanel):
             return False, "Nessun dato OdA inserito in tabella."
         return True, ""
 
-    def _on_start(self, params_override: dict[str, Any] | None = None):
+    def _on_start(self, params_override: dict[str, Any] | None = None):  # noqa: ANN202
         """
         Avvia l'esecuzione del bot Scarico TS gestendo il worker e i segnali.
 
@@ -218,7 +218,7 @@ class ScaricaTSPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        from src.core.config_manager import load_config
+        from src.core.config_manager import load_config  # noqa: PLC0415
 
         config = load_config()
 
@@ -262,7 +262,7 @@ class ScaricaTSPanel(BaseBotPanel):
         self.worker.start()
         self.bot_started.emit()
 
-    def _on_worker_finished(self, success: bool):
+    def _on_worker_finished(self, success: bool):  # noqa: ANN202
         """Chiamato al termine del bot."""
         super()._on_worker_finished(success)
         # Se successo, potremmo voler aggiornare altri componenti

@@ -19,10 +19,10 @@ class TestNavigationControllerCoverage:
         return mock_mw
 
     @pytest.fixture
-    def controller(self, mw):
+    def controller(self, mw):  # noqa: ANN001
         return NavigationController(mw)
 
-    def test_get_panel_already_initialized(self, controller, mw):
+    def test_get_panel_already_initialized(self, controller, mw):  # noqa: ANN001
         """Verifica il recupero di un pannello già caricato."""
         mw._panel_initialized_0 = True
         mock_widget = MagicMock()
@@ -31,7 +31,7 @@ class TestNavigationControllerCoverage:
         res = controller.get_panel(0)
         assert res == mock_widget
 
-    def test_get_panel_lazy_loading(self, controller, mw):
+    def test_get_panel_lazy_loading(self, controller, mw):  # noqa: ANN001
         """Verifica il caricamento differito (lazy) di un pannello."""
         mw._panel_initialized_1 = False
         new_widget = MagicMock()
@@ -43,7 +43,7 @@ class TestNavigationControllerCoverage:
             assert res == new_widget
             mock_init.assert_called_with(1, new_widget)
 
-    def test_navigate_to_different_page(self, controller, mw):
+    def test_navigate_to_different_page(self, controller, mw):  # noqa: ANN001
         """Verifica il routing verso una pagina differente (different)."""
         mw._current_page_index = 0
         new_panel = MagicMock()
@@ -52,7 +52,7 @@ class TestNavigationControllerCoverage:
             assert mw._current_page_index == 1
             mw.sidebar.set_active_button.assert_called_with(1, None, None)
 
-    def test_navigate_to_panel_nested_bot(self, controller, mw):
+    def test_navigate_to_panel_nested_bot(self, controller, mw):  # noqa: ANN001
         """Verifica la navigazione verso un bot specifico."""
         with patch.object(controller, "get_panel", return_value=mw.automazioni_widget):
             controller.navigate_to_panel("scarico_ts")

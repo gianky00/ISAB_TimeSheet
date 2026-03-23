@@ -79,14 +79,14 @@ class ReportService:
     @staticmethod
     def build_report_html(data: dict[str, Any]) -> str:
         """Costruisce il template HTML per l'email."""
-        from src.core.version import __version__
+        from src.core.version import __version__  # noqa: PLC0415
 
         current_date = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
         font_family = "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif"
         header_color = COLORS["primary_dark"]
         border_color = COLORS["border_light"]
 
-        urgenti = len([d for d in data["expired_list"] if d["giorni"] > 60])
+        urgenti = len([d for d in data["expired_list"] if d["giorni"] > 60])  # noqa: PLR2004
         tot_attenzione = len(data["warning_list"]) + len(data["expired_list"])
 
         if urgenti > 0:
@@ -182,7 +182,7 @@ class ReportService:
         excel_data = []
         for items, label in ((warning_list, "In Scadenza"), (expired_list, "Scaduto")):
             for dip in items:
-                excel_data.append(
+                excel_data.append(  # noqa: PERF401
                     {
                         "Cognome": dip["cognome"],
                         "Nome": dip["nome"],
@@ -196,7 +196,7 @@ class ReportService:
         if not excel_data:
             return None
 
-        import pandas as pd
+        import pandas as pd  # noqa: PLC0415
 
         df_report = pd.DataFrame(excel_data)
         path = (

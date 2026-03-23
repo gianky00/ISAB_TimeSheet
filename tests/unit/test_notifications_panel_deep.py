@@ -8,7 +8,7 @@ from src.gui.widgets.audit_log_widget import AuditLogWidget
 
 
 class TestNotificationsPanelDeep:
-    def test_refresh_notifications_with_data(self, qapp, qtbot):
+    def test_refresh_notifications_with_data(self, qapp, qtbot):  # noqa: ANN001
         with patch("src.core.notification_manager.NotificationManager.instance") as mock_manager:
             mock_inst = mock_manager.return_value
             data = [
@@ -33,9 +33,9 @@ class TestNotificationsPanelDeep:
 
             # Check if scroll layout has items (one data item + one stretch)
             # In refactored version it uses groups, so it should have at least 1 group header + 1 container + 1 stretch
-            assert panel.scroll_layout.count() >= 2
+            assert panel.scroll_layout.count() >= 2  # noqa: PLR2004
 
-    def test_set_filter(self, qapp, qtbot):
+    def test_set_filter(self, qapp, qtbot):  # noqa: ANN001
         panel = NotificationsPanel()
         qtbot.addWidget(panel)
 
@@ -54,7 +54,7 @@ class TestNotificationsPanelDeep:
         assert panel.current_filter == "error"
         assert panel.toolbar._filter_chips["error"].isChecked() is True
 
-    def test_filter_errors_logic(self, qapp, qtbot):
+    def test_filter_errors_logic(self, qapp, qtbot):  # noqa: ANN001
         with patch("src.core.notification_manager.NotificationManager.instance") as mock_manager:
             mock_inst = mock_manager.return_value
             now_iso = datetime.now().isoformat()
@@ -87,7 +87,7 @@ class TestNotificationsPanelDeep:
 
             # La logica del pannello usa un timer per il refresh
             # Attendiamo che venga renderizzato il gruppo corretto
-            def check_found():
+            def check_found():  # noqa: ANN202
                 # Deve esserci almeno un gruppo
                 if not panel._group_widgets:
                     return False
@@ -104,7 +104,7 @@ class TestNotificationsPanelDeep:
 
             qtbot.waitUntil(check_found, timeout=3000)
 
-    def test_clear_notifications_confirm(self, qapp, qtbot):
+    def test_clear_notifications_confirm(self, qapp, qtbot):  # noqa: ANN001
         with patch("src.core.notification_manager.NotificationManager.instance") as mock_manager:
             mock_inst = mock_manager.return_value
             panel = NotificationsPanel()
@@ -117,7 +117,7 @@ class TestNotificationsPanelDeep:
                 panel._clear_notifications()
                 assert mock_inst.clear_all.called
 
-    def test_audit_log_widget_refresh(self, qapp, qtbot):
+    def test_audit_log_widget_refresh(self, qapp, qtbot):  # noqa: ANN001
         # Patch AuditManager in the correct module where AuditLogWidget is defined
         with patch("src.gui.widgets.audit_log_widget.AuditManager.instance") as mock_audit:
             mock_inst = mock_audit.return_value

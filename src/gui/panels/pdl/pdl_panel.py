@@ -153,7 +153,7 @@ class PDLDBPanel(QWidget):
         """Popola i menu a tendina dei filtri con i dati unici presenti nel DB."""
         # Logica di popolamento spostata parzialmente nel controller in futuro
         try:
-            from src.core.database import db_manager
+            from src.core.database import db_manager  # noqa: PLC0415
 
             q = "SELECT DISTINCT SUBSTR(n_pdl, INSTR(n_pdl, '/') + 1) as grp FROM pdl WHERE n_pdl LIKE '%/%' ORDER BY grp"
             rows = db_manager.execute_query(db_manager.DB_PDL, q)
@@ -228,7 +228,7 @@ class PDLDBPanel(QWidget):
             q += " AND sito = ?"
             p.append(site)
         q += " ORDER BY area"
-        from src.core.database import db_manager
+        from src.core.database import db_manager  # noqa: PLC0415
 
         rows = db_manager.execute_query(db_manager.DB_PDL, q, tuple(p))
         self.filters.area_filter.blockSignals(True)
@@ -328,7 +328,7 @@ class PDLDBPanel(QWidget):
         if not f:
             return
 
-        from src.gui.widgets.toast import ToastManager
+        from src.gui.widgets.toast import ToastManager  # noqa: PLC0415
 
         ToastManager.instance().show("Esportazione PDL in corso...", "info")
 
@@ -339,13 +339,13 @@ class PDLDBPanel(QWidget):
 
     def _on_export_finished(self, success: bool, message: str, file_path: str) -> None:
         """Gestisce il completamento dell'esportazione."""
-        from src.gui.widgets.toast import ToastManager
+        from src.gui.widgets.toast import ToastManager  # noqa: PLC0415
 
         if success:
             ToastManager.instance().show(message, "success")
             if file_path:
                 os.startfile(file_path)  # noqa: S606
         else:
-            from PyQt6.QtWidgets import QMessageBox
+            from PyQt6.QtWidgets import QMessageBox  # noqa: PLC0415
 
             QMessageBox.warning(self, "Errore Esportazione", message)

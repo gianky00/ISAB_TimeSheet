@@ -78,7 +78,7 @@ class OdaManager:
 
             # Fix: Conversione data per ricerca smart (DD/MM/YYYY -> YYYY-MM-DD)
             search_pattern = search_text
-            if "/" in search_text and len(search_text) >= 8:
+            if "/" in search_text and len(search_text) >= 8:  # noqa: PLR2004
                 with contextlib.suppress(Exception):
                     d_obj = datetime.strptime(search_text, "%d/%m/%Y").replace(tzinfo=UTC)
                     search_pattern = d_obj.strftime("%Y-%m-%d")
@@ -95,9 +95,9 @@ class OdaManager:
         cls, file_path: str, progress_callback: Callable[[int, int], None] | None = None
     ) -> tuple[bool, str, int, int]:
         """Importa dati da Excel e sincronizza il DB."""
-        import time
+        import time  # noqa: PLC0415
 
-        from src.core.sync_tracker import SyncTracker
+        from src.core.sync_tracker import SyncTracker  # noqa: PLC0415
 
         start_time = time.time()
         # Nota: Usiamo StoricoOdaImporter direttamente per coerenza

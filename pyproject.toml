@@ -130,23 +130,28 @@ exclude = [
 select = [
     "E",     # pycodestyle errors
     "W",     # pycodestyle warnings
-    "F",     # Pyflakes (import/nome undefined)
-    "I",     # isort (ordinamento import)
-    "B",     # flake8-bugbear (bug comuni)
-    "SIM",   # flake8-simplify (semplificazioni)
-    "UP",    # pyupgrade (sintassi moderna py312)
-    "C4",    # flake8-comprehensions (list/dict comp migliori)
-    "PERF",  # perflint (performance antipattern)
-    "FURB",  # refurb (modernizzazione codice)
-    "RUF",   # regole ruff-specifiche
-    "TCH",   # flake8-type-checking (import solo per type hints → TYPE_CHECKING)
-    "PTH",   # flake8-use-pathlib (Path invece di os.path)
-    "DTZ",   # flake8-datetimez (timezone-aware datetime)
-    "RET",   # flake8-return (return inutili/mancanti)
-    "PIE",   # flake8-pie (antipattern vari)
-    "T20",   # flake8-print (print() rimasti nel codice)
-    "LOG",   # flake8-logging (logging antipattern)
-    "S",     # flake8-bandit (security checks, sostituisce bandit standalone)
+    "F",     # Pyflakes
+    "I",     # isort
+    "B",     # flake8-bugbear
+    "SIM",   # flake8-simplify
+    "UP",    # pyupgrade
+    "C4",    # flake8-comprehensions
+    "PERF",  # perflint
+    "FURB",  # refurb
+    "RUF",   # ruff-specific
+    "TCH",   # flake8-type-checking
+    "PTH",   # flake8-use-pathlib
+    "DTZ",   # flake8-datetimez
+    "RET",   # flake8-return
+    "PIE",   # flake8-pie
+    "T20",   # flake8-print
+    "LOG",   # flake8-logging
+    "S",     # flake8-bandit
+    "ANN",   # flake8-annotations
+    "ERA",   # eradicate
+    "N",     # pep8-naming
+    "TRY",   # tryceratops
+    "PL",    # pylint
 ]
 ignore = [
     "E501",   # line-too-long: gestito dal formatter
@@ -193,6 +198,15 @@ exclude = ["build", "dist", "config/vulture_whitelist.py", "admin", "tests", "mu
 
 # Ogni funzione DEVE avere type hints (elimina Any implicito)
 disallow_untyped_defs = false
+# Impedisce la definizione di funzioni parzialmente tipizzate
+disallow_incomplete_defs = false
+# Impedisce chiamate a funzioni non tipizzate da contesti tipizzati
+disallow_untyped_calls = false
+# Impedisce di ereditare da classi definite come Any
+disallow_subclassing_any = true
+# Avvisa su configurazioni in pyproject non più valide
+warn_unused_configs = true
+
 # Controlla anche il body delle funzioni non ancora tipizzate
 check_untyped_defs = true
 # Impedisce di decorare funzioni tipizzate con decoratori non tipizzati
@@ -302,7 +316,7 @@ DEP004 = ["pytest", "pyfakefs", "rich"]
 
 [tool.codespell]
 skip = "*.pyc,*.ico,*.qss,*.lock,*.db,*.iss,*.csv,*.js,*.html,*.css,*.map,*.pem,./build/*,./dist/*,./temp/*,./.venv/*,./.git/*,./.ruff_cache/*,./.pytest_cache/*,./.hypothesis/*,./data/*,./htmlcov/*,./claude/*,./site/*,./admin/Crea Setup/*,./admin/Crea Licenze/*"
-ignore-words-list = "nome,ore,impossibile,stati,reparti,cantieri,fornitori,contratti,registrate,invalide,cliente,fase,accumulato,termine,momento,visuale,allo,rende,alle,classe,normale,visibile,ignora,configurate,comando,categorie,valide,celle,limite,installate,macchine,possibile,foto,tre,datas,distribuite,compatibile,accessibile,separato,cant,te,vai,variante,accumulare,generare,processore,somme,validata,probabile,quantit,mis,invisibile,applicato,appropriato,incluse,aggressivo,forse,incompatibile,sensibile,contro,compilate"
+ignore-words-list = "nome,ore,impossibile,stati,reparti,cantieri,fornitori,contratti,registrate,invalide,cliente,fase,accumulato,termine,momento,visuale,allo,rende,alle,classe,normale,visibile,ignora,configurate,comando,categorie,valide,celle,limite,installate,macchine,possibile,foto,tre,datas,distribuite,compatibile,accessibile,separato,cant,te,vai,variante,accumulare,generare,processore,somme,validata,probabile,quantit,mis,invisibile,applicato,appropriato,incluse,aggressivo,forse,incompatibile,sensibile,contro,compilate,aggregatore,interfacce,differente"
 check-filenames = true
 
 [tool.interrogate]

@@ -26,16 +26,16 @@ class LoggingContext:
             self._local.context = ctx
         return self._local.context  # type: ignore[no-any-return]
 
-    def set(self, key: str, value: Any) -> None:
+    def set(self, key: str, value: Any) -> None:  # noqa: ANN401
         """Imposta un valore nel context."""
         context = self._get_context()
         context[key] = value
 
-    def get(self, key: str, default: Any = None) -> Any:
+    def get(self, key: str, default: Any = None) -> Any:  # noqa: ANN401
         """Ottiene un valore dal context."""
         return self._get_context().get(key, default)
 
-    def update(self, **kwargs: Any) -> None:
+    def update(self, **kwargs: Any) -> None:  # noqa: ANN401
         """Aggiorna context con multipli valori."""
         context = self._get_context()
         context.update(kwargs)
@@ -64,7 +64,7 @@ def get_context() -> LoggingContext:
 
 
 @contextmanager
-def with_context(**context_data: Any) -> Generator[None, None, None]:
+def with_context(**context_data: Any) -> Generator[None, None, None]:  # noqa: ANN401
     """
     Context manager per aggiungere metadata temporanei ai log.
 

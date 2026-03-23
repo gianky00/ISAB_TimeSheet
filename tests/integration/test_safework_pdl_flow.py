@@ -11,7 +11,7 @@ from src.bots.safework.pdl.bot import SafeWorkPDLBot
 class TestSafeWorkPDLIntegration:
     @patch("src.bots.base.base_bot.webdriver.Chrome")
     @patch("webdriver_manager.chrome.ChromeDriverManager")
-    def test_full_pdl_flow_simulation(self, mock_dm, mock_chrome, mocker):
+    def test_full_pdl_flow_simulation(self, mock_dm, mock_chrome, mocker):  # noqa: ANN001
         """Simulazione end-to-end del flusso PDL."""
         # 1. Setup Driver e Mocks
         mock_driver = MagicMock()
@@ -40,9 +40,9 @@ class TestSafeWorkPDLIntegration:
         bot._login.assert_called_once()
         bot._esegui_ricerca_pdl.assert_called_with("566360/C")
         bot._unisci_e_stampa.assert_called()
-        bot._handle_session_merge.assert_called_with(data, ANY_LIST := mocker.ANY)
+        bot._handle_session_merge.assert_called_with(data, ANY_LIST := mocker.ANY)  # noqa: N806
 
-    def test_pdl_flow_with_search_failure(self, mocker):
+    def test_pdl_flow_with_search_failure(self, mocker):  # noqa: ANN001
         """Verifica gestione fallimento ricerca nel flusso integrato."""
         bot = SafeWorkPDLBot("u", "p")
         mocker.patch.object(bot, "_login", return_value=True)

@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 
-def format_date_it(value: Any) -> str:
+def format_date_it(value: Any) -> str:  # noqa: ANN401
     """
     Converte stringa ISO YYYY-MM-DD o datetime in DD/MM/YYYY.
     """

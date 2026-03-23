@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QLabel
 from src.gui.widgets.timeline_widget import TimelineWidget
 
 
-def test_timeline_functionality(qtbot):
+def test_timeline_functionality(qtbot):  # noqa: ANN001
     """Verifica l'aggiunta di log nella nuova TimelineWidget V9.0."""
     widget = TimelineWidget()
     qtbot.addWidget(widget)
@@ -27,7 +27,7 @@ def test_timeline_functionality(qtbot):
         assert any(log in t for t in texts)
 
 
-def test_timeline_autoscroll_safe(qtbot):
+def test_timeline_autoscroll_safe(qtbot):  # noqa: ANN001
     """Verifica che l'aggiunta massiva di log non crashi (autoscroll safe)."""
     widget = TimelineWidget()
     qtbot.addWidget(widget)

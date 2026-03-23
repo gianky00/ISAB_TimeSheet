@@ -21,7 +21,7 @@ class LogQuery:
     Permette di concatenare filtri per livello, messaggio, contesto, trace_id e range temporale.
     """
 
-    def __init__(self, log_file: Path):
+    def __init__(self, log_file: Path):  # noqa: ANN204
         """
         Inizializza il query builder su un file specifico.
 
@@ -58,7 +58,7 @@ class LogQuery:
             LogQuery: L'istanza corrente.
         """
 
-        def filter_fn(entry):
+        def filter_fn(entry):  # noqa: ANN001, ANN202
             """Filtra per contenuto del messaggio."""
             message = entry.get("message", "")
             if not case_sensitive:
@@ -68,7 +68,7 @@ class LogQuery:
         self.filters.append(filter_fn)
         return self
 
-    def context_match(self, **kwargs) -> "LogQuery":
+    def context_match(self, **kwargs) -> "LogQuery":  # noqa: ANN003
         """
         Filtra in base ai campi contenuti nell'oggetto 'context' del log JSON.
 
@@ -79,7 +79,7 @@ class LogQuery:
             LogQuery: L'istanza corrente.
         """
 
-        def filter_fn(entry):
+        def filter_fn(entry):  # noqa: ANN001, ANN202
             """Filtra per corrispondenza dei campi nel contesto."""
             context = entry.get("context", {})
             return all(context.get(key) == value for key, value in kwargs.items())
@@ -107,7 +107,7 @@ class LogQuery:
             LogQuery: L'istanza corrente.
         """
 
-        def filter_fn(entry):
+        def filter_fn(entry):  # noqa: ANN001, ANN202
             """Filtra per finestra temporale."""
             timestamp_str = entry.get("timestamp", "")
             try:
@@ -199,7 +199,7 @@ class LogViewer:
     Fornisce metodi aggregati per statistiche, analisi errori e monitoraggio performance.
     """
 
-    def __init__(self, config=None):
+    def __init__(self, config=None):  # noqa: ANN001, ANN204
         """Inizializza il viewer con la configurazione di logging corrente."""
         self.config = config or get_config()
 
@@ -218,7 +218,7 @@ class LogViewer:
         elif log_type == "errors":
             log_file = self.config.errors_log_file
         else:
-            raise ValueError(f"Unknown log_type: {log_type}")
+            raise ValueError(f"Unknown log_type: {log_type}")  # noqa: TRY003
         return LogQuery(log_file)
 
     def get_level_stats(self) -> dict[str, int]:

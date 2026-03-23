@@ -200,7 +200,7 @@ class CommandPaletteDialog(QDialog):
             self.anim.finished.disconnect(self._finish_close)
         self.closed.emit()
 
-    def eventFilter(self, obj: Any | None, event: Any | None) -> bool:
+    def eventFilter(self, obj: Any | None, event: Any | None) -> bool:  # noqa: ANN401, N802
         """Gestisce la navigazione da tastiera (frecce, invio, esc) intercettando gli eventi della search bar."""
         if event is None:
             return False
@@ -221,7 +221,7 @@ class CommandPaletteDialog(QDialog):
             return True
         return False
 
-    def _handle_standard_key(self, event: QKeyEvent) -> bool:
+    def _handle_standard_key(self, event: QKeyEvent) -> bool:  # noqa: PLR0911
         """Gestisce i tasti durante la navigazione standard dei menu."""
         key = event.key()
         if key == Qt.Key.Key_Down:

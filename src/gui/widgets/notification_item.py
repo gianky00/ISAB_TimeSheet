@@ -28,7 +28,7 @@ class NotificationItem(QFrame):
         self.manager = NotificationManager.instance()
         self._setup_ui()
 
-    def _setup_ui(self) -> None:
+    def _setup_ui(self) -> None:  # noqa: PLR0915
         self.setFrameShape(QFrame.Shape.StyledPanel)
 
         # Determine colors based on level
@@ -132,7 +132,7 @@ class NotificationItem(QFrame):
         )
         layout.addWidget(msg_lbl)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
         """Segna la notifica come letta quando l'utente ci clicca sopra."""
         if not self.notification.get("read", False):
             self.manager.mark_as_read(self.notification["id"])

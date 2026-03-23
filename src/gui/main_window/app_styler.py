@@ -26,7 +26,7 @@ class AppStyler:
             try:
                 myappid = f"Coemi.SyncroJob.Enterprise.{__version__}"
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
 
         app.setStyle("Fusion")

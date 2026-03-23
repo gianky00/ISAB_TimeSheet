@@ -84,7 +84,7 @@ class StatusCard(ModernCard):
         self._meta_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self._meta_label)
 
-    def setStatus(self, message: str, status_id: str | None = None) -> None:
+    def setStatus(self, message: str, status_id: str | None = None) -> None:  # noqa: N802
         """Aggiorna il messaggio di stato e il colore della barra laterale."""
         self._status_label.setText(message)
         if status_id:
@@ -93,7 +93,7 @@ class StatusCard(ModernCard):
                 f"background-color: {status_id if status_id.startswith('#') else self._palette.primary}; border-radius: 2px;"
             )
 
-    def setAutopilot(self, active: bool, text: str = "") -> None:
+    def setAutopilot(self, active: bool, text: str = "") -> None:  # noqa: N802
         """Mostra o nasconde l'indicatore Autopilot."""
         if active:
             self._meta_label.setText(text.upper() or "AUTO")
@@ -116,7 +116,7 @@ class StatusCard(ModernCard):
         """Metodo di compatibilità per l'aggiornamento rapido dello stato."""
         self._status_label.setText(message)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
         """Emette il segnale di click."""
         self.clicked.emit()
         super().mousePressEvent(event)

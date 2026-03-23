@@ -79,7 +79,7 @@ _config: LoggingConfig | None = None
 
 def get_config() -> LoggingConfig:
     """Restituisce configurazione singleton."""
-    global _config
+    global _config  # noqa: PLW0603
     if _config is None:
         _config = LoggingConfig()
         _config.ensure_directories()

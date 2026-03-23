@@ -150,7 +150,7 @@ class SensitiveDataFilter:
         return masked
 
     @classmethod
-    def mask(cls, data: Any) -> Any:
+    def mask(cls, data: Any) -> Any:  # noqa: ANN401
         """
         Maschera dati sensibili in qualsiasi tipo di dato.
 
@@ -176,7 +176,7 @@ class SamplingFilter:
     Utile per log ad alto volume (es: ogni riga processata).
     """
 
-    def __init__(self, sample_rate: float = 1.0):
+    def __init__(self, sample_rate: float = 1.0):  # noqa: ANN204
         """
         Inizializza filter.
 

@@ -47,8 +47,7 @@ class AuditPaginationBar(QWidget):
         Aggiorna lo stato visivo della barra (label e abilitazione pulsanti).
         """
         total_pages = (total_logs + page_size - 1) // page_size
-        if total_pages < 1:
-            total_pages = 1
+        total_pages = max(total_pages, 1)
 
         disp = current_page + 1
         self.page_lbl.setText(f"PAGINA {disp} DI {total_pages} (TOTALE LOG: {total_logs})")

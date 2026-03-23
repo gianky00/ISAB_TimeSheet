@@ -17,7 +17,7 @@ import pandas as pd
 from src.core import config_manager
 
 
-def debug_giornaliere():
+def debug_giornaliere():  # noqa: ANN201, PLR0912, PLR0915
     print("=" * 70)
     print("DEBUG IMPORTAZIONE GIORNALIERE")
     print("=" * 70)
@@ -93,7 +93,7 @@ def debug_giornaliere():
                 headers_found = sum(1 for h in expected_headers if any(h in c for c in first_cols))
                 print(f"        Header validi trovati: {headers_found}/4 ({expected_headers})")
 
-                if headers_found < 2:
+                if headers_found < 2:  # noqa: PLR2004
                     print("        ATTENZIONE: Header probabilmente in riga diversa!")
                     print("        Prime 3 righe del file:")
                     df_raw = pd.read_excel(file_path, sheet_name="RIASSUNTO", header=None, nrows=5)
@@ -128,7 +128,7 @@ def debug_giornaliere():
             except Exception as e:
                 print(f"        ERRORE lettura: {e}")
 
-        if len(excel_files) > 3:
+        if len(excel_files) > 3:  # noqa: PLR2004
             print(f"\n    ... e altri {len(excel_files) - 3} file")
 
     print("\n" + "=" * 70)
@@ -136,16 +136,16 @@ def debug_giornaliere():
     print("=" * 70)
 
 
-def debug_import_simulation():
+def debug_import_simulation():  # noqa: ANN201
     """Simula l'importazione per capire dove si perdono i dati."""
     print("\n" + "=" * 70)
     print("DEBUG SIMULAZIONE IMPORTAZIONE")
     print("=" * 70)
 
-    from pathlib import Path
+    from pathlib import Path  # noqa: PLC0415
 
-    from src.core import config_manager
-    from src.core.importers.giornaliere import GiornaliereImporter
+    from src.core import config_manager  # noqa: PLC0415
+    from src.core.importers.giornaliere import GiornaliereImporter  # noqa: PLC0415
 
     giornaliere_path = config_manager.load_config().get("giornaliere_path", "")
 
@@ -171,7 +171,7 @@ def debug_import_simulation():
 
     # Prova a processare un file 2025
     print("\n[3] Test processamento file 2025...")
-    tasks_2025 = [(y, p, lm) for y, p, lm in tasks if y == 2025]
+    tasks_2025 = [(y, p, lm) for y, p, lm in tasks if y == 2025]  # noqa: PLR2004
 
     if not tasks_2025:
         print("    Nessun file 2025 trovato!")
@@ -191,13 +191,13 @@ def debug_import_simulation():
             print(f"    {rows[0][:5]}...")  # Prime 5 colonne
     except Exception as e:
         print(f"    ERRORE: {e}")
-        import traceback
+        import traceback  # noqa: PLC0415
 
         traceback.print_exc()
 
     # Controlla database attuale
     print("\n[4] Stato database attuale...")
-    from src.core.contabilita_manager import ContabilitaManager
+    from src.core.contabilita_manager import ContabilitaManager  # noqa: PLC0415
 
     for year in (2025, 2026):
         data = ContabilitaManager.get_giornaliere_by_year(year)

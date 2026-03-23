@@ -31,7 +31,7 @@ class StructuredLogger:
     - PII masking
     """
 
-    def __init__(self, name: str, config: Any = None) -> None:
+    def __init__(self, name: str, config: Any = None) -> None:  # noqa: ANN401
         """
         Inizializza logger.
 
@@ -100,7 +100,7 @@ class StructuredLogger:
         level_value = self._parse_level(level)
         return level_value >= self.min_level
 
-    def _write_to_sinks(
+    def _write_to_sinks(  # noqa: PLR0912
         self,
         level: str,
         message: str,
@@ -142,7 +142,7 @@ class StructuredLogger:
 
             # Se c'è exception, stampa anche lo stack trace
             if exception:
-                import traceback
+                import traceback  # noqa: PLC0415
 
                 with suppress(Exception):
                     print(traceback.format_exc())
@@ -167,7 +167,7 @@ class StructuredLogger:
 
                     # Stack trace separato
                     if exception:
-                        import traceback
+                        import traceback  # noqa: PLC0415
 
                         f.write(traceback.format_exc() + "\n")
             except Exception as e:
@@ -209,27 +209,27 @@ class StructuredLogger:
 
         self._write_to_sinks(level, message, extra, exception)
 
-    def debug(self, message: str, **extra: Any) -> None:
+    def debug(self, message: str, **extra: Any) -> None:  # noqa: ANN401
         """Log a livello DEBUG."""
         self.log("DEBUG", message, extra=extra or None)
 
-    def info(self, message: str, **extra: Any) -> None:
+    def info(self, message: str, **extra: Any) -> None:  # noqa: ANN401
         """Log a livello INFO."""
         self.log("INFO", message, extra=extra or None)
 
-    def warning(self, message: str, **extra: Any) -> None:
+    def warning(self, message: str, **extra: Any) -> None:  # noqa: ANN401
         """Log a livello WARNING."""
         self.log("WARNING", message, extra=extra or None)
 
-    def error(self, message: str, **extra: Any) -> None:
+    def error(self, message: str, **extra: Any) -> None:  # noqa: ANN401
         """Log a livello ERROR."""
         self.log("ERROR", message, extra=extra or None)
 
-    def critical(self, message: str, **extra: Any) -> None:
+    def critical(self, message: str, **extra: Any) -> None:  # noqa: ANN401
         """Log a livello CRITICAL."""
         self.log("CRITICAL", message, extra=extra or None)
 
-    def exception(self, message: str, exc: Exception, **extra: Any) -> None:
+    def exception(self, message: str, exc: Exception, **extra: Any) -> None:  # noqa: ANN401
         """
         Log exception con stack trace completo.
 
@@ -241,7 +241,7 @@ class StructuredLogger:
         self.log("ERROR", message, extra=extra or None, exception=exc)
 
 
-def configure_logging(config: Any = None) -> None:
+def configure_logging(config: Any = None) -> None:  # noqa: ANN401
     """
     Configura il sistema di logging globale.
 
@@ -252,7 +252,7 @@ def configure_logging(config: Any = None) -> None:
         Questa funzione dovrebbe essere chiamata una volta all'avvio
         dell'applicazione.
     """
-    global _initialized
+    global _initialized  # noqa: PLW0603
 
     if _initialized:
         return
@@ -266,7 +266,7 @@ def configure_logging(config: Any = None) -> None:
     _initialized = True
 
 
-def get_logger(name: str, config: Any = None) -> StructuredLogger:
+def get_logger(name: str, config: Any = None) -> StructuredLogger:  # noqa: ANN401
     """
     Factory per ottenere logger.
 

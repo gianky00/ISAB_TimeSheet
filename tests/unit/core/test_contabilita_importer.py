@@ -20,7 +20,7 @@ class TestContabilitaImporter:
             }
         )
 
-    def test_normalize_columns_mapping(self, sample_df):
+    def test_normalize_columns_mapping(self, sample_df):  # noqa: ANN001
         """Verifica che le colonne vengano mappate correttamente ai nomi DB."""
         # Aggiungiamo una colonna con nome leggermente diverso
         sample_df["DATA PREVENTIVO"] = sample_df["DATA PREV."]
@@ -33,7 +33,7 @@ class TestContabilitaImporter:
         assert "n_prev" in normalized_df.columns
         assert "totale_prev" in normalized_df.columns
 
-    def test_find_header_row_success(self, sample_df, tmp_path):
+    def test_find_header_row_success(self, sample_df, tmp_path):  # noqa: ANN001
         """Verifica il rilevamento automatico della riga di intestazione."""
         # Creiamo un file excel dove l'header è alla riga 5 (indice 4)
         file_path = tmp_path / "test_header.xlsx"
@@ -48,7 +48,7 @@ class TestContabilitaImporter:
         xls = pd.ExcelFile(file_path)
         header_idx = ContabilitaImporter._find_header_row(xls, "2024")
 
-        assert header_idx == 4
+        assert header_idx == 4  # noqa: PLR2004
 
     def test_process_single_sheet_numeric_conversion(self):
         """Verifica che totale_prev e ore_sp siano convertiti correttamente in float."""
@@ -95,11 +95,11 @@ class TestContabilitaImporter:
             # 9: tipologia
             # 10: ore_sp -> 10.5
 
-            assert row[0] == 2024
-            assert row[4] == 1234.56  # Verifichiamo conversione IT
-            assert row[10] == 10.5  # ORE SP (indice 10)
+            assert row[0] == 2024  # noqa: PLR2004
+            assert row[4] == 1234.56  # Verifichiamo conversione IT  # noqa: PLR2004
+            assert row[10] == 10.5  # ORE SP (indice 10)  # noqa: PLR2004
 
-    def test_import_contabilita_dati_no_valid_sheets(self, tmp_path):
+    def test_import_contabilita_dati_no_valid_sheets(self, tmp_path):  # noqa: ANN001
         """Verifica errore se non ci sono fogli con anni nel nome."""
         file_path = tmp_path / "empty.xlsx"
         pd.DataFrame().to_excel(file_path, sheet_name="Foglio1")
@@ -108,7 +108,7 @@ class TestContabilitaImporter:
         assert success is False
         assert "Nessun anno" in msg
 
-    def test_scan_sheets_fast(self, tmp_path):
+    def test_scan_sheets_fast(self, tmp_path):  # noqa: ANN001
         """Verifica il conteggio veloce dei fogli tramite XML."""
         file_path = tmp_path / "fast_scan.xlsx"
         # Creiamo un file con 2 fogli "annuali" e 1 no
@@ -118,4 +118,4 @@ class TestContabilitaImporter:
             pd.DataFrame().to_excel(writer, sheet_name="Note")
 
         count = ContabilitaImporter.scan_sheets(str(file_path))
-        assert count == 2
+        assert count == 2  # noqa: PLR2004

@@ -46,29 +46,29 @@ class AlertManager:
     _instance = None
 
     @classmethod
-    def instance(cls):
+    def instance(cls):  # noqa: ANN206
         """Singleton instance."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
-    def __init__(self, config: AlertConfig | None = None):
+    def __init__(self, config: AlertConfig | None = None):  # noqa: ANN204
         self.config = config or AlertConfig()
         self._last_alerts: dict[str, datetime] = {}
         self._telegram_service: Any = None
         self._lock = threading.Lock()
 
     @property
-    def telegram(self):
+    def telegram(self):  # noqa: ANN201
         """Lazy load TelegramService."""
         if self._telegram_service is None:
             with suppress(ImportError):
-                from src.core.telegram import TelegramService
+                from src.core.telegram import TelegramService  # noqa: PLC0415
 
                 self._telegram_service = TelegramService()
         return self._telegram_service
 
-    def configure(
+    def configure(  # noqa: ANN201, PLR0913
         self,
         enabled: bool | None = None,
         error_rate_threshold: float | None = None,
@@ -112,7 +112,7 @@ class AlertManager:
 
         return True
 
-    def _record_alert(self, anomaly: Anomaly):
+    def _record_alert(self, anomaly: Anomaly):  # noqa: ANN202
         """Registra che un alert è stato inviato."""
         alert_key = f"{anomaly.type}:{anomaly.message[:50]}"
         with self._lock:
@@ -176,7 +176,7 @@ class AlertManager:
 
         try:
             self.telegram.send_message_sync(formatted)
-            return True
+            return True  # noqa: TRY300
         except Exception:
             return False
 

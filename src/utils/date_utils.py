@@ -132,7 +132,7 @@ def get_status_by_days(days: int | None, thresholds: tuple[int, int] | None = No
     Returns:
         Tuple (status_type, color_hex)
     """
-    from src.gui.styles.constants import STATUS_COLORS, THRESHOLD_DAYS
+    from src.gui.styles.constants import STATUS_COLORS, THRESHOLD_DAYS  # noqa: PLC0415
 
     if days is None:
         return ("unknown", STATUS_COLORS["excluded"])
@@ -225,9 +225,9 @@ def get_month_name_it(month: int, full: bool = False) -> str:
     Returns:
         Nome del mese
     """
-    from src.gui.styles.constants import MONTHS_IT, MONTHS_IT_FULL
+    from src.gui.styles.constants import MONTHS_IT, MONTHS_IT_FULL  # noqa: PLC0415
 
-    if not 1 <= month <= 12:
+    if not 1 <= month <= 12:  # noqa: PLR2004
         return ""
 
     months = MONTHS_IT_FULL if full else MONTHS_IT

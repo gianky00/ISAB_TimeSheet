@@ -33,7 +33,7 @@ class StandardTimelineFrame(QFrame):
         super().__init__(parent)
         self.setStyleSheet(f"background-color: {COLORS['bg_white']}; border-radius: 12px;")
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:
+    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
         """Disegna un bordo sottile e professionale intorno alla console."""
         painter = QPainter(self)
         try:
@@ -142,7 +142,7 @@ class EnterpriseLogConsole(QWidget):
         bar = self.scroll_container.verticalScrollBar()
         if bar:
             # Fix: Ensure bar is not deleted when timer fires (prevents RuntimeError in tests)
-            from PyQt6.sip import isdeleted
+            from PyQt6.sip import isdeleted  # noqa: PLC0415
 
             def safe_scroll() -> None:
                 """Esegue lo scroll in modo sicuro per evitare crash UI."""

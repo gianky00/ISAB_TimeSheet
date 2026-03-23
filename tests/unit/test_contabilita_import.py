@@ -8,7 +8,7 @@ class TestContabilitaImport(unittest.TestCase):
     @patch("src.core.contabilita_manager.DataSynchronizer")
     @patch("src.core.contabilita_manager.ExcelImporter")
     @patch("src.core.contabilita_manager.Path.exists")
-    def test_import_preventivi_dynamic_header(self, mock_exists, mock_excel_importer, mock_data_synchronizer):
+    def test_import_preventivi_dynamic_header(self, mock_exists, mock_excel_importer, mock_data_synchronizer):  # noqa: ANN001
         # Setup mocks
         mock_exists.return_value = True
 

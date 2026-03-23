@@ -12,7 +12,7 @@ from src.core import license_validator
 
 
 @pytest.fixture
-def mock_paths(tmp_path):
+def mock_paths(tmp_path):  # noqa: ANN001
     """Mocks file system paths for license files."""
     license_dir = tmp_path / "Licenza"
     license_dir.mkdir()
@@ -33,7 +33,7 @@ def mock_secrets():
     """Mocks SecretsManager to return a fixed key."""
     with patch("src.core.license_validator.SecretsManager") as mock_sm:
         # Generate a real key for Fernet to use
-        from cryptography.fernet import Fernet
+        from cryptography.fernet import Fernet  # noqa: PLC0415
 
         key = Fernet.generate_key()
         # SecretsManager.get_license_key() returns base64 encoded bytes
@@ -41,9 +41,9 @@ def mock_secrets():
         yield key
 
 
-def create_mock_license(config_path, manifest_path, key, payload):
+def create_mock_license(config_path, manifest_path, key, payload):  # noqa: ANN001
     """Helper to create valid license files."""
-    from cryptography.fernet import Fernet
+    from cryptography.fernet import Fernet  # noqa: PLC0415
 
     # Encrypt payload
     cipher = Fernet(key)
@@ -60,12 +60,12 @@ def create_mock_license(config_path, manifest_path, key, payload):
 
 @patch("src.core.license_validator.get_hardware_id", return_value="HW123")
 @patch("src.core.license_validator.get_trusted_time")
-def test_valid_license(mock_time, mock_hw, mock_paths, mock_secrets):
+def test_valid_license(mock_time, mock_hw, mock_paths, mock_secrets):  # noqa: ANN001
     config_path, manifest_path = mock_paths
     key = mock_secrets
 
     # Set time to be before expiry
-    from datetime import datetime
+    from datetime import datetime  # noqa: PLC0415
 
     mock_time.return_value = (datetime(2025, 1, 1), True)
 
@@ -84,7 +84,7 @@ def test_valid_license(mock_time, mock_hw, mock_paths, mock_secrets):
 
 @patch("src.core.license_validator.get_hardware_id", return_value="HW_DIFFERENT")
 @patch("src.core.license_validator.get_trusted_time")
-def test_invalid_hardware_id(mock_time, mock_hw, mock_paths, mock_secrets):
+def test_invalid_hardware_id(mock_time, mock_hw, mock_paths, mock_secrets):  # noqa: ANN001
     config_path, manifest_path = mock_paths
     key = mock_secrets
 
@@ -99,12 +99,12 @@ def test_invalid_hardware_id(mock_time, mock_hw, mock_paths, mock_secrets):
 
 @patch("src.core.license_validator.get_hardware_id", return_value="HW123")
 @patch("src.core.license_validator.get_trusted_time")
-def test_expired_license(mock_time, mock_hw, mock_paths, mock_secrets):
+def test_expired_license(mock_time, mock_hw, mock_paths, mock_secrets):  # noqa: ANN001
     config_path, manifest_path = mock_paths
     key = mock_secrets
 
     # Set time to be AFTER expiry
-    from datetime import datetime
+    from datetime import datetime  # noqa: PLC0415
 
     mock_time.return_value = (datetime(2027, 1, 1), True)
 
@@ -116,7 +116,7 @@ def test_expired_license(mock_time, mock_hw, mock_paths, mock_secrets):
     assert "SCADUTA" in msg
 
 
-def test_tampered_license(mock_paths, mock_secrets):
+def test_tampered_license(mock_paths, mock_secrets):  # noqa: ANN001
     config_path, manifest_path = mock_paths
     key = mock_secrets
 

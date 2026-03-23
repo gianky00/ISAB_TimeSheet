@@ -8,7 +8,7 @@ from src.core.sync.smart_sync import SmartSyncEngine
 
 class TestDataSynchronizerSmart:
     @pytest.fixture
-    def db_path(self, tmp_path):
+    def db_path(self, tmp_path):  # noqa: ANN001
         path = tmp_path / "sync_test_smart.db"
         conn = sqlite3.connect(path)
         # Usiamo tipi consistenti per evitare ambiguità di cast
@@ -19,7 +19,7 @@ class TestDataSynchronizerSmart:
         conn.close()
         return path
 
-    def test_sync_upsert_smart_calculation(self, db_path):
+    def test_sync_upsert_smart_calculation(self, db_path):  # noqa: ANN001
         """Verifica che vengano contati solo i record effettivamente diversi."""
         # 1. '1', 'new', '10.5'  -> MODIFICATO (contato)
         # 2. '2', 'same', '20.0' -> IDENTICO (non contato)
@@ -30,7 +30,7 @@ class TestDataSynchronizerSmart:
         # Chiamata diretta all'engine V9.0
         added, removed = SmartSyncEngine.sync_upsert_smart(db_path, "test_table", columns, new_data)
 
-        assert added == 2
+        assert added == 2  # noqa: PLR2004
         assert removed == 0
 
         # Verifica persistenza
@@ -38,10 +38,10 @@ class TestDataSynchronizerSmart:
         res = conn.execute("SELECT val FROM test_table WHERE id='1'").fetchone()
         assert res[0] == "new"
         res_count = conn.execute("SELECT COUNT(*) FROM test_table").fetchone()[0]
-        assert res_count == 3
+        assert res_count == 3  # noqa: PLR2004
         conn.close()
 
-    def test_sync_upsert_smart_empty(self, db_path):
+    def test_sync_upsert_smart_empty(self, db_path):  # noqa: ANN001
         added, removed = SmartSyncEngine.sync_upsert_smart(db_path, "test_table", ["id"], [])
         assert added == 0
         assert removed == 0
@@ -52,7 +52,7 @@ class TestDataSynchronizerSmart:
         with pytest.raises(ValueError):
             BaseSyncEngine._validate_identifier("table; DROP")
 
-    def test_sync_upsert_with_extra_columns(self, tmp_path):
+    def test_sync_upsert_with_extra_columns(self, tmp_path):  # noqa: ANN001
         """Verifica che le colonne extra non presenti nel sync vengano preservate via conflict_cols."""
         db_path = tmp_path / "extra_cols.db"
         conn = sqlite3.connect(db_path)

@@ -72,7 +72,7 @@ class StatusIndicator(QWidget):
             self.opacity_effect.setOpacity(1.0)
         self.update()
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:
+    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
         """Disegna il cerchio colorato dell'indicatore."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

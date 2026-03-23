@@ -13,7 +13,7 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
         super().__init__(tree_view)
         self.tree = tree_view
 
-    def paint(self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+    def paint(self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex) -> None:  # noqa: PLR0912
         """Personalizza il disegno delle celle, applicando colori di stato e merge testuale per le righe figlie."""
         if not painter:
             super().paint(painter, option, index)
@@ -27,8 +27,8 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
                 if data_item:
                     full_data = data_item.data(Qt.ItemDataRole.UserRole)
                     if full_data:
-                        stato = str(full_data[4]) if len(full_data) > 4 else ""
-                        ind_rilascio = str(full_data[24]) if len(full_data) > 24 else ""
+                        stato = str(full_data[4]) if len(full_data) > 4 else ""  # noqa: PLR2004
+                        ind_rilascio = str(full_data[24]) if len(full_data) > 24 else ""  # noqa: PLR2004
 
                         # Logica colorazione
                         if "Cancellato" in stato or "cancellato" in stato:

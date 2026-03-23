@@ -62,7 +62,7 @@ class DetailedInfoDialog(QDialog):
         lbl_close.setStyleSheet(f"color: {COLORS['text_light']}; font-size: 11px;")
         layout.addWidget(lbl_close)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
         """Chiude il dialogo al click del mouse."""
         self.accept()
 

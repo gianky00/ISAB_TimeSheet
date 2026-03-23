@@ -69,15 +69,15 @@ class AutopilotWidget(QWidget):
         self.refresh_timer.timeout.connect(self.refresh_events)
         self.refresh_timer.start(60000)
 
-    def set_footer_widget(self, footer_left_widget: Any) -> None:
+    def set_footer_widget(self, footer_left_widget: Any) -> None:  # noqa: ANN401
         """Collega il widget del footer per aggiornamenti contestuali."""
         self.footer_left_widget = footer_left_widget
 
-    def set_status_bar(self, status_bar: Any) -> None:
+    def set_status_bar(self, status_bar: Any) -> None:  # noqa: ANN401
         """Collega la barra di stato per segnalare attività dell'autopilot."""
         self.status_bar = status_bar
 
-    def _setup_ui(self) -> None:
+    def _setup_ui(self) -> None:  # noqa: PLR0915
         """Configura il layout, l'header LIVE e i container per le card."""
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
         self.setMinimumWidth(600)

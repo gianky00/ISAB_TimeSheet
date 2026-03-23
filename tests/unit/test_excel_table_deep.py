@@ -2,7 +2,7 @@ from src.gui.widgets.excel_table import EditableDataTable, ExcelTableWidget
 
 
 class TestExcelTableWidgetDeep:
-    def test_basic_table_operations(self, qapp, qtbot):
+    def test_basic_table_operations(self, qapp, qtbot):  # noqa: ANN001
         table = ExcelTableWidget()
         qtbot.addWidget(table)
 
@@ -16,7 +16,7 @@ class TestExcelTableWidgetDeep:
         # Test clear selection
         table.clear_selection()
 
-    def test_editable_data_table(self, qapp, qtbot):
+    def test_editable_data_table(self, qapp, qtbot):  # noqa: ANN001
         cols = [
             {"name": "Col1", "type": "text"},
             {"name": "Col2", "type": "combo", "options": ["A", "B"]},
@@ -39,12 +39,12 @@ class TestExcelTableWidgetDeep:
         assert data[0]["Col1"] == "val1"
         assert data[0]["Col2"] == "A"
 
-    def test_row_status_coloring(self, qapp, qtbot):
+    def test_row_status_coloring(self, qapp, qtbot):  # noqa: ANN001
         table = ExcelTableWidget()
         qtbot.addWidget(table)
         table.setColumnCount(1)
         table.setRowCount(1)
-        from PyQt6.QtWidgets import QTableWidgetItem
+        from PyQt6.QtWidgets import QTableWidgetItem  # noqa: PLC0415
 
         table.setItem(0, 0, QTableWidgetItem("Test"))
 
