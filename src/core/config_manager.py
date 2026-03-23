@@ -144,6 +144,9 @@ def _atomic_write_json(data: dict[str, Any], target_path: Path) -> None:
 
 
 # Public API helpers
+_migrate_legacy_config = check_and_migrate_local_config
+
+
 def get_config_value(key: str, default: Any = None) -> Any:
     """Ottiene un valore dalla configurazione."""
     return load_config().get(key, default)

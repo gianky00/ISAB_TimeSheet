@@ -160,6 +160,8 @@ class TestImportersRobust:
     @patch("src.core.importers.scarico_ore.msoffcrypto")
     def test_scan_encrypted_file(self, mock_crypto, tmp_path):
         """Test scansione file cifrato."""
+        from src.core.constants import Business
+
         path = tmp_path / "protected.xlsx"
         path.touch()
 
@@ -169,5 +171,5 @@ class TestImportersRobust:
 
         # Se msoffcrypto c'è, deve tentare di aprire
         ScaricoOreImporter.scan_scarico_ore_rows(str(path))
-        mock_file.load_key.assert_called_with(password="coemi")
+        mock_file.load_key.assert_called_with(password=Business.DEFAULT_EXCEL_PASSWORD)
         mock_file.decrypt.assert_called()

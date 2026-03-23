@@ -10,6 +10,7 @@ from typing import Any
 def parse_currency(value: Any) -> float:
     """
     Converte una stringa o numero in float, gestendo formati Italiani e Internazionali.
+    Versione Enterprise V5: Bilanciamento perfetto tra tolleranza e precisione.
     """
     if value is None:
         return 0.0
@@ -17,75 +18,69 @@ def parse_currency(value: Any) -> float:
     if isinstance(value, (int, float)):
         return float(value)
 
-    s = str(value).strip()
-    if not s or s.lower() == "nan":
+    s_raw = str(value).strip()
+    if not s_raw or s_raw.lower() == "nan":
         return 0.0
 
-    # 1. Pulizia e Normalizzazione
-    s, is_negative = _normalize_string(s)
+    # 1. Pulizia caratteri non stampabili e nulli
+    s = s_raw.replace("\x00", "").replace("\u200b", "")
 
-    # 2. Rilevamento e gestione separatori
-    s = _process_separators(s)
+    # 2. Rilevamento segno negativo (ovunque nella stringa)
+    is_negative = "-" in s or ("(" in s and ")" in s)
 
+    # 3. Estrazione parte numerica e separatori (inclusa 'e' per scientifica)
+    # Rimuoviamo tutto ciò che non è numero, punto, virgola o 'e'
+    s = re.sub(r"[^0-9,.eE]", "", s)
+
+    if not any(c.isdigit() for c in s):
+        return 0.0
+
+    # 4. Gestione separatori consecutivi
+    s = re.sub(r"[,]{2,}", ",", s)
+    s = re.sub(r"[.]{2,}", ".", s)
+
+    # 5. Conversione intelligente
     try:
-        val = float(s)
+        val = _smart_convert(s)
         return -val if is_negative else val
-    except ValueError:
+    except (ValueError, IndexError):
         return 0.0
 
 
-def _normalize_string(s: str) -> tuple[str, bool]:
-    """Rimuove simboli, testo inutile e gestisce il segno negativo."""
-    # Gestione segno negativo (cerca il meno prima di pulire tutto)
-    is_negative = False
-    if "-" in s:
-        is_negative = True
-        s = s.replace("-", "").strip()
+def _smart_convert(s: str) -> float:
+    """Determina il formato e converte in float."""
+    # Se la stringa segue la notazione scientifica pura (es. 1.23e2)
+    if "e" in s.lower() and s.count(".") <= 1 and "," not in s:
+        return float(s)
 
-    # Rimuovi tutto ciò che non è numero, punto o virgola
-    # Manteniamo i separatori per il processing successivo
-    s = re.sub(r"[^0-9,.]", "", s).strip()
-
-    return s, is_negative
-
-
-def _process_separators(s: str) -> str:
-    """Gestisce la logica di conversione dei separatori (punti e virgole)."""
     has_comma = "," in s
     has_dot = "." in s
 
+    # Caso: Entrambi (1.234,56 o 1,234.56)
     if has_comma and has_dot:
-        return _handle_mixed_separators(s)
+        last_comma = s.rfind(",")
+        last_dot = s.rfind(".")
+        if last_comma > last_dot:
+            # IT Style
+            return float(s.replace(".", "").replace(",", "."))
+        # US Style
+        return float(s.replace(",", ""))
+
+    # Caso: Solo virgole
     if has_comma:
-        return s.replace(",", ".")
+        if s.count(",") > 1:
+            return float(s.replace(",", ""))
+        return float(s.replace(",", "."))
+
+    # Caso: Solo punti
     if has_dot:
-        return _handle_single_dot(s)
+        if s.count(".") > 1:
+            return float(s.replace(".", ""))
 
-    return s
+        # Singolo punto: 1.234 (IT migliaia) o 10.50 (Decimale)
+        parts = s.split(".")
+        if len(parts[1]) == 3 and len(parts[0]) > 0:
+            return float(s.replace(".", ""))
+        return float(s)
 
-
-def _handle_mixed_separators(s: str) -> str:
-    """Gestisce stringhe con sia punto che virgola (es. 1.234,56 o 1,234.56)."""
-    last_comma = s.rfind(",")
-    last_dot = s.rfind(".")
-
-    if last_comma > last_dot:
-        # IT: Punti sono migliaia, virgola è decimale
-        return s.replace(".", "").replace(",", ".")
-
-    # US: Virgole sono migliaia, punto è decimale
-    return s.replace(",", "")
-
-
-def _handle_single_dot(s: str) -> str:
-    """Gestisce stringhe con solo punti."""
-    if s.count(".") > 1:
-        # "1.234.567" -> Sicuramente migliaia
-        return s.replace(".", "")
-
-    # Un solo punto: trattalo come migliaia se seguito da esattamente 3 cifre
-    parts = s.split(".")
-    if len(parts) > 1 and len(parts[1]) == 3:
-        return s.replace(".", "")
-
-    return s
+    return float(s)

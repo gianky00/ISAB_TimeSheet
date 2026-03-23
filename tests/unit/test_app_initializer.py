@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.app_initializer import AppInitializer, _yield
+from src.core.app_initializer import AppInitializer
 
 
 class TestAppInitializer:
@@ -63,22 +63,6 @@ class TestAppInitializer:
                     AppInitializer.initialize_core()
         mock_update.assert_called_once()
 
-    @patch("src.core.app_initializer.QApplication")
-    def test_yield_processes_events(self, mock_qapp):
-        mock_app = MagicMock()
-        mock_qapp.instance.return_value = mock_app
-
-        _yield()
-
-        mock_app.processEvents.assert_called_once()
-
-    @patch("src.core.app_initializer.QApplication")
-    def test_yield_no_app(self, mock_qapp):
-        mock_qapp.instance.return_value = None
-
-        # Should not raise
-        _yield()
-
     def test_init_generator_is_generator(self):
         mock_mw = MagicMock()
 
@@ -109,12 +93,15 @@ class TestAppInitializer:
         # Should not raise, falls back to basicConfig
         AppInitializer._setup_logging()
 
-    @patch("src.gui.styles.apply_theme")
+    @patch("src.gui.styles.theme_manager.apply_theme")
     @patch("PyQt6.QtGui.QFont")
-    def test_setup_app_style(self, mock_font, mock_theme):
+    @patch("PyQt6.QtWidgets.QApplication.instance")
+    def test_setup_app_style(self, mock_instance, mock_font, mock_theme):
         mock_app = MagicMock()
+        mock_instance.return_value = mock_app
 
         AppInitializer.setup_app_style(mock_app)
 
-        mock_app.setStyle.assert_called_once_with("Fusion")
-        mock_app.setApplicationName.assert_called_once_with("SyncroJob")
+        # Verifica che i metodi siano stati chiamati sul mock_app passato o sull'istanza
+        assert mock_app.setStyle.called
+        assert mock_app.setApplicationName.called

@@ -9,6 +9,7 @@ import argparse
 import contextlib
 import datetime
 import io
+import json
 import os
 import re
 import shutil
@@ -149,6 +150,86 @@ def run_tool(name: str, cmd: list[str], label: str, cwd: Path = PROJECT_ROOT) ->
     except subprocess.TimeoutExpired:
         duration = time.time() - start_t
         return False, f"Timeout superato ({duration:.1f}s). Il processo si era bloccato.", duration
+    except Exception as e:
+        return False, f"Eccezione: {e}", time.time() - start_t
+
+
+def _run_tests_ai(reset: bool = True) -> tuple[bool, str, float]:
+    """Esegue il runner V5.0 in modalita' AI e parsa il report JSON strutturato.
+
+    Returns:
+        tuple: (successo, messaggio_strutturato, durata).
+    """
+    cmd = [
+        sys.executable,
+        str(PROJECT_ROOT / "tests" / "run_robust_tests.py"),
+        "--ai",
+    ]
+    if reset:
+        cmd.append("--reset")
+
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
+    start_t = time.time()
+
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+            env=env,
+            timeout=300,
+        )
+        duration = time.time() - start_t
+
+        # Salva log grezzo
+        (LOG_DIR / "pytest.log").write_text(
+            f"CMD: {' '.join(cmd)}\nEXIT: {result.returncode}\n{'=' * 40}\n{result.stdout}\n{result.stderr}",
+            encoding="utf-8",
+        )
+
+        # Prova a leggere il report JSON (dal file o dallo stdout)
+        report_file = PROJECT_ROOT / "tests" / ".test_results.json"
+        report: dict | None = None
+        if report_file.exists():
+            with contextlib.suppress(Exception):
+                report = json.loads(report_file.read_text(encoding="utf-8"))
+        if report is None:
+            with contextlib.suppress(Exception):
+                report = json.loads(result.stdout)
+
+        if report is None:
+            # Fallback: nessun JSON parsabile
+            return result.returncode == 0, result.stdout[:500], duration
+
+        # Costruisci messaggio strutturato
+        passed = report.get("total_passed", 0)
+        failed = report.get("total_failed", 0)
+        failures = report.get("failures", [])
+
+        if not failures:
+            return True, f"{passed} passed in {report.get('duration', duration):.1f}s", duration
+
+        # Messaggio con dettagli dei fallimenti
+        msg_lines = [f"{passed} passed, {failed} failed:"]
+        msg_lines.extend(
+            f"  [{f.get('category', '?')}] {f.get('file', '?')}::{f.get('test_name', '?')}"
+            f" -> {f.get('error_type', '?')}: {f.get('error_message', '')[:100]}"
+            for f in failures[:10]
+        )
+        if len(failures) > 10:
+            msg_lines.append(f"  ... e altri {len(failures) - 10} errori")
+
+        return False, "\n".join(msg_lines), duration
+
+    except subprocess.TimeoutExpired:
+        return False, "Timeout (300s)", time.time() - start_t
     except Exception as e:
         return False, f"Eccezione: {e}", time.time() - start_t
 
@@ -468,14 +549,7 @@ class ApexAudit:
             ),
             (
                 "Robust Tests",
-                cmd(
-                    "pytest",
-                    [
-                        sys.executable,
-                        str(PROJECT_ROOT / "tests" / "run_robust_tests.py"),
-                        "--reset",
-                    ],
-                ),
+                _run_tests_ai,
                 "pytest",
                 False,
             ),

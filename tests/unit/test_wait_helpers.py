@@ -265,6 +265,7 @@ class TestExecuteWithWait:
         def test_action():
             nonlocal action_called
             action_called = True
+            return True
 
         result = execute_with_wait(
             action=test_action,

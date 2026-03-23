@@ -39,6 +39,9 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 coverage.xml
+.test_results.json
+.test_session_state.json
+.collected_tests.json
 
 # Logs and debug
 *.log

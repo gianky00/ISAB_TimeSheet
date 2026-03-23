@@ -6,7 +6,6 @@ import pytest
 from cryptography.fernet import Fernet
 
 from src.core.license_updater import (
-    GRACE_PERIOD_KEY,
     check_emergency_grace_period,
     check_grace_period,
     get_github_token,
@@ -15,6 +14,12 @@ from src.core.license_updater import (
     run_update,
     update_grace_timestamp,
 )
+from src.core.secrets_manager import SecretsManager
+
+
+@pytest.fixture
+def grace_key():
+    return SecretsManager.get_grace_period_key()
 
 
 @pytest.fixture
@@ -38,7 +43,7 @@ def test_get_license_dir(mocker):
     assert "Licenza" in str(path)
 
 
-def test_update_grace_timestamp(mocker, mock_license_dir):
+def test_update_grace_timestamp(mocker, mock_license_dir, grace_key):
     mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
     fixed_now = datetime(2026, 1, 1, tzinfo=UTC)
     mocker.patch("src.core.time_manager.get_trusted_time", return_value=(fixed_now, True))
@@ -51,17 +56,17 @@ def test_update_grace_timestamp(mocker, mock_license_dir):
     with open(token_path, "rb") as f:
         encrypted_data = f.read()
 
-    cipher = Fernet(GRACE_PERIOD_KEY)
+    cipher = Fernet(grace_key)
     decrypted_data = cipher.decrypt(encrypted_data).decode("utf-8")
     assert datetime.fromisoformat(decrypted_data) == fixed_now
 
 
-def test_check_grace_period_valid(mocker, mock_license_dir):
+def test_check_grace_period_valid(mocker, mock_license_dir, grace_key):
     mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
 
     # Create valid token (1 day ago)
     last_online = datetime.now(UTC) - timedelta(days=1)
-    cipher = Fernet(GRACE_PERIOD_KEY)
+    cipher = Fernet(grace_key)
     encrypted_time = cipher.encrypt(last_online.isoformat().encode("utf-8"))
 
     token_path = os.path.join(mock_license_dir, "validity.token")
@@ -76,12 +81,12 @@ def test_check_grace_period_valid(mocker, mock_license_dir):
     assert check_grace_period() is True
 
 
-def test_check_grace_period_expired(mocker, mock_license_dir):
+def test_check_grace_period_expired(mocker, mock_license_dir, grace_key):
     mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
 
     # Create expired token (4 days ago)
     last_online = datetime.now(UTC) - timedelta(days=4)
-    cipher = Fernet(GRACE_PERIOD_KEY)
+    cipher = Fernet(grace_key)
     encrypted_time = cipher.encrypt(last_online.isoformat().encode("utf-8"))
 
     token_path = os.path.join(mock_license_dir, "validity.token")

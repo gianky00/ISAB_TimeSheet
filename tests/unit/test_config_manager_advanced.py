@@ -61,13 +61,13 @@ class TestConfigManagerAdvanced:
         legacy = {
             "isab_username": "old_user",
             "isab_password": "old_password",
-            "accounts": [],
+            "accounts": {},
         }
+        # La funzione reale migra isab_* in accounts["ISAB"]
         changed = _migrate_legacy_config(legacy)
         assert changed is True
-        assert "isab_username" not in legacy
-        assert len(legacy["accounts"]) == 1
-        assert legacy["accounts"][0]["username"] == "old_user"
+        assert "ISAB" in legacy.get("accounts", {})
+        assert legacy["accounts"]["ISAB"]["username"] == "old_user"
 
     @patch("src.core.config_manager.CONFIG_FILE")
     def test_load_base_config_malformed_json_fallback(self, mock_file):

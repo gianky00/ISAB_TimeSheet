@@ -165,12 +165,18 @@ def safe_click_with_retry(
 def execute_with_wait(
     action: Callable[[], Any],
     driver: WebDriver,
-    overlay_locator: tuple[str, str],
+    overlay_locator: tuple[str, str] | None = None,
     timeout: int = 30,
+    wait_locator: tuple[str, str] | None = None,
 ) -> Any:
-    """Esegue un'azione e attende la scomparsa di un overlay."""
+    """
+    Esegue un'azione e attende la scomparsa di un overlay.
+    Supporta sia overlay_locator che wait_locator (alias).
+    """
+    locator = wait_locator or overlay_locator
     result = action()
-    wait_for_overlay_to_disappear(driver, overlay_locator, timeout)
+    if locator:
+        wait_for_overlay_to_disappear(driver, locator, timeout)
     return result
 
 
@@ -346,3 +352,7 @@ def poll_for_new_file(
 
     logger.warning("Timeout attesa nuovo file / aggiornamento.")
     return None
+
+
+# Alias per retrocompatibilità
+poll_for_download_complete = poll_for_file
