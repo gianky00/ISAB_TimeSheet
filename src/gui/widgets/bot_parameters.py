@@ -72,18 +72,18 @@ class HoverPulseFrame(QFrame):
         self._pulse_val = v
         self.update()
 
-    def enterEvent(self, event) -> None:  # noqa: ANN001, N802
+    def enterEvent(self, event) -> None:  # noqa: ANN001
         """Avvia l'animazione di pulsazione del bordo all'ingresso del mouse."""
         self._anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event) -> None:  # noqa: ANN001, N802
+    def leaveEvent(self, event) -> None:  # noqa: ANN001
         """Interrompe l'animazione e ripristina lo stato solido all'uscita del mouse."""
         self._anim.stop()
         self.pulse_value = 1.0  # type: ignore[method-assign]
         super().leaveEvent(event)
 
-    def paintEvent(self, event) -> None:  # noqa: ANN001, N802
+    def paintEvent(self, event) -> None:  # noqa: ANN001
         """Disegna il bordo inferiore pulsante con il colore di accento configurato."""
         super().paintEvent(event)
         painter = QPainter(self)

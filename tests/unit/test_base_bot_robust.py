@@ -17,10 +17,10 @@ class ConcreteBot(BaseBot):
         return "A bot for testing BaseBot"
 
     @staticmethod
-    def get_columns():  # noqa: ANN205
+    def get_columns():
         return []
 
-    def run(self, data):  # noqa: ANN001
+    def run(self, data):
         return True
 
 
@@ -55,7 +55,7 @@ class TestBaseBotRobust:
 
     # --- Init Tests ---
 
-    def test_init_defaults(self, bot):  # noqa: ANN001
+    def test_init_defaults(self, bot):
         """Test inizializzazione default."""
         assert bot.username == "user"
         assert bot.password == "pass"
@@ -66,7 +66,7 @@ class TestBaseBotRobust:
 
     # --- Driver Init Tests ---
 
-    def test_init_driver_success(self, bot, mock_driver_cls, mock_service, mock_chrome_manager, mock_options):  # noqa: ANN001
+    def test_init_driver_success(self, bot, mock_driver_cls, mock_service, mock_chrome_manager, mock_options):
         """Test inizializzazione driver con successo."""
         # Mock chromedriver path
         mock_chrome_manager.return_value.install.return_value = "C:/drivers/chromedriver.exe"
@@ -92,7 +92,7 @@ class TestBaseBotRobust:
         )
         assert bot.status == BotStatus.INITIALIZING
 
-    def test_init_driver_headless_config(self, mock_driver_cls, mock_service, mock_chrome_manager):  # noqa: ANN001
+    def test_init_driver_headless_config(self, mock_driver_cls, mock_service, mock_chrome_manager):
         """Test configurazione headless."""
         bot = ConcreteBot("user", "pass", headless=True)
 
@@ -110,7 +110,7 @@ class TestBaseBotRobust:
             # Siccome non ho mockato Options in questo test specifico, uso un altro approccio
             # (Il test precedente copriva le chiamate generiche, per headless specifico meglio mockare Options)
 
-    def test_get_chrome_options_headless(self, bot):  # noqa: ANN001
+    def test_get_chrome_options_headless(self, bot):
         """Test _get_chrome_options logica headless."""
         bot.headless = True
         with patch("src.bots.base.base_bot.config_manager.load_config", return_value={}):
@@ -126,7 +126,7 @@ class TestBaseBotRobust:
             assert "--headless=new" in args
             assert "--no-sandbox" in args
 
-    def test_driver_error_handling(self, bot, mock_chrome_manager):  # noqa: ANN001
+    def test_driver_error_handling(self, bot, mock_chrome_manager):
         """Test gestione errore init driver."""
         mock_chrome_manager.return_value.install.side_effect = Exception("Download failed")
 
@@ -140,7 +140,7 @@ class TestBaseBotRobust:
     @patch("src.core.license_validator.verify_license", return_value=(True, "OK"))
     @patch("src.core.license_updater.run_update")
     @patch("src.bots.base.base_bot.LoginPage")
-    def test_execute_success(self, mock_login_page_cls, mock_update, mock_verify, bot):  # noqa: ANN001
+    def test_execute_success(self, mock_login_page_cls, mock_update, mock_verify, bot):
         """Test flusso execute completo con successo."""
         # Setup mocks
         bot._init_driver = MagicMock()
@@ -164,7 +164,7 @@ class TestBaseBotRobust:
 
     @patch("src.core.license_validator.verify_license", return_value=(True, "OK"))
     @patch("src.core.license_updater.run_update")
-    def test_execute_validation_fail(self, mock_update, mock_verify, bot):  # noqa: ANN001
+    def test_execute_validation_fail(self, mock_update, mock_verify, bot):
         """Test fallimento validazione."""
         bot.validate_data = MagicMock(return_value=(False, "Bad data"))
         bot.cleanup = MagicMock()
@@ -179,7 +179,7 @@ class TestBaseBotRobust:
     @patch("src.core.license_validator.verify_license", return_value=(True, "OK"))
     @patch("src.core.license_updater.run_update")
     @patch("src.bots.base.base_bot.LoginPage")
-    def test_execute_login_fail(self, mock_login_page_cls, mock_update, mock_verify, bot):  # noqa: ANN001
+    def test_execute_login_fail(self, mock_login_page_cls, mock_update, mock_verify, bot):
         """Test fallimento login."""
         bot._init_driver = MagicMock()
         bot._login = MagicMock(return_value=False)
@@ -193,7 +193,7 @@ class TestBaseBotRobust:
 
     @patch("src.core.license_validator.verify_license", return_value=(True, "OK"))
     @patch("src.core.license_updater.run_update")
-    def test_execute_exception_during_run(self, mock_update, mock_verify, bot):  # noqa: ANN001
+    def test_execute_exception_during_run(self, mock_update, mock_verify, bot):
         """Test eccezione durante run."""
         bot._init_driver = MagicMock()
         bot._login = MagicMock(return_value=True)
@@ -208,7 +208,7 @@ class TestBaseBotRobust:
 
     # --- Stop Mechanism Tests ---
 
-    def test_request_stop(self, bot):  # noqa: ANN001
+    def test_request_stop(self, bot):
         """Test richiesta stop."""
         bot.request_stop()
         assert bot._stop_requested is True
@@ -218,7 +218,7 @@ class TestBaseBotRobust:
 
     # --- Cleanup Tests ---
 
-    def test_cleanup(self, bot):  # noqa: ANN001
+    def test_cleanup(self, bot):
         """Test cleanup chiude driver."""
         mock_driver = MagicMock()
         bot.driver = mock_driver
@@ -228,7 +228,7 @@ class TestBaseBotRobust:
         mock_driver.quit.assert_called_once()
         assert bot.driver is None
 
-    def test_cleanup_safe(self, bot):  # noqa: ANN001
+    def test_cleanup_safe(self, bot):
         """Test cleanup non esplode se driver è None o quit fallisce."""
         bot.driver = None
         bot.cleanup()  # No error
@@ -241,7 +241,7 @@ class TestBaseBotRobust:
 
     # --- Safe Login Tests ---
 
-    def test_safe_login_retry_success(self, bot):  # noqa: ANN001
+    def test_safe_login_retry_success(self, bot):
         """Test login riesce al secondo tentativo."""
         bot._init_driver = MagicMock()
         # Primo tentativo fallisce (raise Exception), secondo riesce (return None), poi _login True
@@ -258,11 +258,11 @@ class TestBaseBotRobust:
         res = bot._safe_login_with_retry(max_retries=2)
 
         assert res is True
-        assert bot._init_driver.call_count == 2  # noqa: PLR2004
-        assert bot._login.call_count == 2  # noqa: PLR2004
+        assert bot._init_driver.call_count == 2
+        assert bot._login.call_count == 2
         assert bot.cleanup.call_count == 1  # Chiamato dopo il primo fallimento
 
-    def test_safe_login_retry_fail(self, bot):  # noqa: ANN001
+    def test_safe_login_retry_fail(self, bot):
         """Test login fallisce dopo tutti i tentativi."""
         bot._init_driver = MagicMock()
         bot._login = MagicMock(return_value=False)
@@ -271,6 +271,6 @@ class TestBaseBotRobust:
         res = bot._safe_login_with_retry(max_retries=2)
 
         assert res is False
-        assert bot._init_driver.call_count == 2  # noqa: PLR2004
-        assert bot._login.call_count == 2  # noqa: PLR2004
-        assert bot.cleanup.call_count == 2  # Chiamato dopo ogni fallimento  # noqa: PLR2004
+        assert bot._init_driver.call_count == 2
+        assert bot._login.call_count == 2
+        assert bot.cleanup.call_count == 2  # Chiamato dopo ogni fallimento

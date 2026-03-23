@@ -7,7 +7,7 @@ class TestSystemTelemetry:
     @patch("src.utils.system_telemetry.ctypes")
     @patch("src.utils.system_telemetry.sizeof")
     @patch("src.utils.system_telemetry.byref")
-    def test_get_current_process_ram_mb_success(self, mock_byref, mock_sizeof, mock_ctypes):  # noqa: ANN001
+    def test_get_current_process_ram_mb_success(self, mock_byref, mock_sizeof, mock_ctypes):
         # Setup mocks
         mock_psapi = MagicMock()
         mock_kernel32 = MagicMock()
@@ -27,15 +27,15 @@ class TestSystemTelemetry:
             mock_byref.return_value = "byref_obj"
 
             ram = get_current_process_ram_mb()
-            assert ram == 100.0  # noqa: PLR2004
+            assert ram == 100.0
 
     @patch("src.utils.system_telemetry.ctypes")
-    def test_get_current_process_ram_mb_failure(self, mock_ctypes):  # noqa: ANN001
+    def test_get_current_process_ram_mb_failure(self, mock_ctypes):
         mock_ctypes.windll.psapi.GetProcessMemoryInfo.return_value = False
         assert get_current_process_ram_mb() == 0.0
 
     @patch("src.utils.system_telemetry.ctypes")
-    def test_get_current_process_ram_mb_no_windll(self, mock_ctypes):  # noqa: ANN001
+    def test_get_current_process_ram_mb_no_windll(self, mock_ctypes):
         # hasattr(ctypes, "windll")  # noqa: ERA001
         # We need to make it return False.
         # For a MagicMock, we can use spec or just delete the attribute

@@ -6,12 +6,12 @@ from src.gui.toast import ToastOverlay
 
 class TestToast:
     @pytest.fixture
-    def parent(self, qapp):  # noqa: ANN001
+    def parent(self, qapp):
         w = QWidget()
         w.resize(800, 600)
         return w
 
-    def test_toast_show_logic(self, qtbot, parent):  # noqa: ANN001
+    def test_toast_show_logic(self, qtbot, parent):
         """Verifica che il toast mostri il testo e si posizioni correttamente."""
         parent.show()
         toast = ToastOverlay(parent)
@@ -30,7 +30,7 @@ class TestToast:
         expected_x = (parent_rect.width() - toast.width()) // 2
         assert toast.x() == expected_x
 
-    def test_toast_hide_after_duration(self, qtbot, parent):  # noqa: ANN001
+    def test_toast_hide_after_duration(self, qtbot, parent):
         """Verifica che il toast sparisca dopo il timeout."""
         toast = ToastOverlay(parent)
         qtbot.addWidget(toast)

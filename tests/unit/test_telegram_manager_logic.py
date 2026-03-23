@@ -34,24 +34,24 @@ def mock_update():
 
 
 class TestTelegramManagerLogic:
-    def test_initialization(self, telegram_service):  # noqa: ANN001
+    def test_initialization(self, telegram_service):
         assert telegram_service.connected_chat_id == "12345"
         assert telegram_service.user_states == {}
 
     @pytest.mark.asyncio
-    async def test_auth_success(self, telegram_service, mock_update):  # noqa: ANN001
+    async def test_auth_success(self, telegram_service, mock_update):
         result = await telegram_service._check_auth(mock_update)
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_auth_fail(self, telegram_service, mock_update):  # noqa: ANN001
+    async def test_auth_fail(self, telegram_service, mock_update):
         mock_update.effective_user.id = 99999
         result = await telegram_service._check_auth(mock_update)
         assert result is False
         mock_update.message.reply_text.assert_called_with("⛔ Accesso Negato")
 
     @pytest.mark.asyncio
-    async def test_cmd_stop(self, telegram_service, mock_update):  # noqa: ANN001
+    async def test_cmd_stop(self, telegram_service, mock_update):
         from src.core.telegram.handlers import commands  # noqa: PLC0415
 
         mock_signal = MagicMock()
@@ -63,7 +63,7 @@ class TestTelegramManagerLogic:
         mock_update.message.reply_text.assert_called()
 
     @pytest.mark.asyncio
-    async def test_handle_text_input_waiting_pdl(self, telegram_service, mock_update):  # noqa: ANN001
+    async def test_handle_text_input_waiting_pdl(self, telegram_service, mock_update):
         from src.core.telegram.handlers import messages  # noqa: PLC0415
 
         chat_id = mock_update.effective_chat.id
@@ -79,7 +79,7 @@ class TestTelegramManagerLogic:
         assert telegram_service.user_states[chat_id] is None
 
     @pytest.mark.asyncio
-    async def test_handle_text_input_query(self, telegram_service, mock_update):  # noqa: ANN001
+    async def test_handle_text_input_query(self, telegram_service, mock_update):
         from src.core.telegram.handlers import messages  # noqa: PLC0415
 
         chat_id = mock_update.effective_chat.id
@@ -94,7 +94,7 @@ class TestTelegramManagerLogic:
         mock_signal.assert_called_with(str(chat_id), "How are you?")
 
     @pytest.mark.asyncio
-    async def test_handle_text_input_query_emission(self, telegram_service, mock_update):  # noqa: ANN001
+    async def test_handle_text_input_query_emission(self, telegram_service, mock_update):
         from src.core.telegram.handlers import messages  # noqa: PLC0415
 
         chat_id = mock_update.effective_chat.id
@@ -108,7 +108,7 @@ class TestTelegramManagerLogic:
         mock_signal.assert_called_with(str(chat_id), "Scarica PDL 123")
 
     @pytest.mark.asyncio
-    async def test_handle_nav_actions_main(self, telegram_service):  # noqa: ANN001
+    async def test_handle_nav_actions_main(self, telegram_service):
         from src.core.telegram.handlers import callbacks  # noqa: PLC0415
 
         mock_query = AsyncMock()
@@ -126,7 +126,7 @@ class TestTelegramManagerLogic:
         assert "🤖 Bot" in str(kwargs["reply_markup"])
 
     @pytest.mark.asyncio
-    async def test_handle_nav_actions_bots(self, telegram_service):  # noqa: ANN001
+    async def test_handle_nav_actions_bots(self, telegram_service):
         from src.core.telegram.handlers import callbacks  # noqa: PLC0415
 
         mock_query = AsyncMock()
@@ -143,7 +143,7 @@ class TestTelegramManagerLogic:
         assert "SafeWork" in str(kwargs["reply_markup"])
 
     @pytest.mark.asyncio
-    async def test_handle_db_actions_strumentale(self, telegram_service):  # noqa: ANN001
+    async def test_handle_db_actions_strumentale(self, telegram_service):
         from src.core.telegram.handlers import callbacks  # noqa: PLC0415
 
         mock_query = AsyncMock()
@@ -163,7 +163,7 @@ class TestTelegramManagerLogic:
             assert "Seleziona Anno" in text
 
     @pytest.mark.asyncio
-    async def test_handle_utility_actions_status(self, telegram_service):  # noqa: ANN001
+    async def test_handle_utility_actions_status(self, telegram_service):
         from src.core.telegram.handlers import callbacks  # noqa: PLC0415
 
         mock_query = AsyncMock()
@@ -181,7 +181,7 @@ class TestTelegramManagerLogic:
         mock_signal.assert_called_with("12345")
 
     @pytest.mark.asyncio
-    async def test_handle_button_dispatcher(self, telegram_service, mock_update):  # noqa: ANN001
+    async def test_handle_button_dispatcher(self, telegram_service, mock_update):
         from src.core.telegram.handlers import callbacks  # noqa: PLC0415
 
         mock_query = AsyncMock()

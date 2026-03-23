@@ -14,14 +14,14 @@ class ConcreteDummyBot(BaseBot):
     def description(self):
         return "Desc"
 
-    def run(self, data):  # noqa: ANN001
+    def run(self, data):
         return True
 
     @staticmethod
-    def get_columns():  # noqa: ANN205
+    def get_columns():
         return []
 
-    def _handle_unsaved_changes_popup(self):  # noqa: ANN202
+    def _handle_unsaved_changes_popup(self):
         pass
 
 

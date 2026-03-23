@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QLabel
 from src.gui.layouts.responsive import ResponsiveContainer
 
 
-def test_responsive_mode_detection(qtbot):  # noqa: ANN001
+def test_responsive_mode_detection(qtbot):
     """Test that the correct mode is detected based on width."""
     container = ResponsiveContainer()
     qtbot.addWidget(container)
@@ -17,7 +17,7 @@ def test_responsive_mode_detection(qtbot):  # noqa: ANN001
     assert container._get_mode(1200) == "desktop"
 
 
-def test_layout_rebuilding(qtbot):  # noqa: ANN001
+def test_layout_rebuilding(qtbot):
     """Test that widgets are correctly added back after a resize/rebuild."""
     container = ResponsiveContainer()
     qtbot.addWidget(container)
@@ -30,7 +30,7 @@ def test_layout_rebuilding(qtbot):  # noqa: ANN001
     # Force mobile (stack)
     container._current_mode = "mobile"
     container._rebuild_layout()
-    assert container._main_layout.count() == 2  # noqa: PLR2004
+    assert container._main_layout.count() == 2
 
     # Force desktop (grid)
     container._current_mode = "desktop"

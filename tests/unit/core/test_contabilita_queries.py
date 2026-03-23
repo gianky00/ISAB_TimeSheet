@@ -8,13 +8,13 @@ from src.core.contabilita_queries import ContabilitaQueries
 
 class TestContabilitaQueries:
     @pytest.fixture
-    def db_path(self, tmp_path):  # noqa: ANN001
+    def db_path(self, tmp_path):
         p = tmp_path / "test_contabilita.db"
         p.touch()
         return p
 
     @patch("src.core.database.db_manager.get_connection")
-    def test_get_available_years_success(self, mock_get_conn, db_path):  # noqa: ANN001
+    def test_get_available_years_success(self, mock_get_conn, db_path):
         mock_conn = MagicMock()
         mock_get_conn.return_value.__enter__.return_value = mock_conn
         mock_cursor = mock_conn.cursor.return_value
@@ -31,7 +31,7 @@ class TestContabilitaQueries:
         assert years == []
 
     @patch("src.core.database.db_manager.get_connection")
-    def test_get_data_by_year_db_error(self, mock_get_conn, db_path):  # noqa: ANN001
+    def test_get_data_by_year_db_error(self, mock_get_conn, db_path):
         mock_get_conn.side_effect = Exception("SQLite locked")
 
         # Non deve sollevare eccezioni, ma ritornare lista vuota (SOP attuale)
@@ -39,7 +39,7 @@ class TestContabilitaQueries:
         assert data == []
 
     @patch("src.core.database.db_manager.get_connection")
-    def test_get_certificati_campione_logic(self, mock_get_conn, db_path):  # noqa: ANN001
+    def test_get_certificati_campione_logic(self, mock_get_conn, db_path):
         mock_conn = MagicMock()
         mock_get_conn.return_value.__enter__.return_value = mock_conn
         mock_cursor = mock_conn.cursor.return_value

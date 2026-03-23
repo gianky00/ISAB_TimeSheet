@@ -45,7 +45,7 @@ class TestAttivitaImporter:
         assert success is False
         assert "non trovato" in msg
 
-    def test_import_attivita_programmate_success(self, tmp_path):  # noqa: ANN001
+    def test_import_attivita_programmate_success(self, tmp_path):
         """Test di integrazione finto con file Excel reale creato al volo."""
         file_path = tmp_path / "attivita.xlsx"
 

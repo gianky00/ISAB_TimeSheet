@@ -14,7 +14,7 @@ from src.core.database import DatabaseManager
 
 # --- CONFIG MANAGER ---
 @pytest.fixture(autouse=True)
-def mock_config(tmp_path):  # noqa: ANN001
+def mock_config(tmp_path):
     """Mocks the config file location and ensures clean state."""
     config_manager._config_cache = None  # Force reset BEFORE test
     fake_dir = tmp_path / "config"
@@ -31,7 +31,7 @@ def mock_config(tmp_path):  # noqa: ANN001
     config_manager._config_cache = None  # Force reset AFTER test
 
 
-def test_config_manager_defaults(mock_config):  # noqa: ANN001
+def test_config_manager_defaults(mock_config):
     # Test default retrieval
     val = config_manager.get_config_value("theme", "light")
     assert val == "light"
@@ -46,7 +46,7 @@ def test_config_manager_defaults(mock_config):  # noqa: ANN001
         assert data["theme"] == "dark"
 
 
-def test_config_accounts(mock_config):  # noqa: ANN001
+def test_config_accounts(mock_config):
     # Test adding account
     config_manager.add_account("user1", "pass1", is_default=True)
     accounts = config_manager.get_accounts()
@@ -71,7 +71,7 @@ def test_database_manager_singleton():
     assert db1 is db2
 
 
-def test_database_manager_connection(tmp_path):  # noqa: ANN001
+def test_database_manager_connection(tmp_path):
     db_path = tmp_path / "test_db.sqlite"
     manager = DatabaseManager()
 

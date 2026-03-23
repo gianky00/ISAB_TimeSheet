@@ -16,25 +16,25 @@ class DummyBot(BaseBot):
     def description(self):
         return "Test Bot"
 
-    def run(self, data):  # noqa: ANN001
+    def run(self, data):
         return True
 
     @staticmethod
-    def get_columns():  # noqa: ANN205
+    def get_columns():
         return []
 
-    def _handle_unsaved_changes_popup(self):  # noqa: ANN202
+    def _handle_unsaved_changes_popup(self):
         pass
 
 
 class TestSprintDBotResilience:
     @pytest.fixture
-    def bot(self, mocker, tmp_path):  # noqa: ANN001
+    def bot(self, mocker, tmp_path):
         mocker.patch("src.core.config_manager.CONFIG_DIR", tmp_path)
         mocker.patch("src.core.config_manager.load_config", return_value={})
         return DummyBot("user", "pass")
 
-    def test_bot_retry_logic_on_login_failure(self, bot, mocker):  # noqa: ANN001
+    def test_bot_retry_logic_on_login_failure(self, bot, mocker):
         """Verifica che il bot riprovi il login in caso di fallimento iniziale."""
         # Mocking _init_driver per non aprire browser reali
         mocker.patch.object(bot, "_init_driver")
@@ -46,10 +46,10 @@ class TestSprintDBotResilience:
         result = bot._safe_login_with_retry(max_retries=2)
 
         assert result is True
-        assert mock_login.call_count == 2  # noqa: PLR2004
+        assert mock_login.call_count == 2
         assert bot.cleanup.call_count == 1  # Chiamato dopo il primo fallimento
 
-    def test_bot_error_capture_screenshot(self, bot, mocker, tmp_path):  # noqa: ANN001
+    def test_bot_error_capture_screenshot(self, bot, mocker, tmp_path):
         """Verifica che il bot salvi screenshot e HTML in caso di errore fatale."""
         mocker.patch("src.core.config_manager.CONFIG_DIR", tmp_path)
 
@@ -59,7 +59,7 @@ class TestSprintDBotResilience:
         bot.driver = mock_driver
 
         # Make save_screenshot create a dummy file so glob finds it
-        def dummy_save(path):  # noqa: ANN001, ANN202
+        def dummy_save(path):
             from pathlib import Path  # noqa: PLC0415
 
             Path(path).write_text("fake png")
@@ -80,7 +80,7 @@ class TestSprintDBotResilience:
         assert html_files[0].read_text() == "<html>Error</html>"
         mock_driver.save_screenshot.assert_called_once()
 
-    def test_bot_user_interruption(self, bot, mocker):  # noqa: ANN001
+    def test_bot_user_interruption(self, bot, mocker):
         """Verifica che la richiesta di stop interrompa il flusso."""
         bot.request_stop()
 
@@ -95,7 +95,7 @@ class TestSprintDBotResilience:
         assert success is False
         assert bot.status == BotStatus.STOPPED
 
-    def test_bot_driver_initialization_failure_handling(self, bot, mocker):  # noqa: ANN001
+    def test_bot_driver_initialization_failure_handling(self, bot, mocker):
         """Verifica la gestione di errori critici durante l'init del driver (es. version mismatch)."""
         # Simula errore di versione driver
         mocker.patch(

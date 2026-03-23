@@ -193,13 +193,13 @@ class Toast(QWidget):
         new_height = int(self._original_container_size.height() * f_scale)
         self.container.setFixedSize(new_width, new_height)
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:  # noqa: N802
+    def enterEvent(self, event: QEnterEvent | None) -> None:
         """Ferma il timer di chiusura quando il mouse entra nel toast."""
         if self._hide_timer.isActive():
             self._hide_timer.stop()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any) -> None:  # noqa: ANN401, N802
+    def leaveEvent(self, event: Any) -> None:  # noqa: ANN401
         """Riavvia il timer di chiusura quando il mouse esce dal toast."""
         self._hide_timer.start(self._duration)
         super().leaveEvent(event)

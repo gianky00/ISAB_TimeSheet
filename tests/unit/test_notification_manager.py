@@ -10,7 +10,7 @@ from src.core.notification_manager import NotificationManager
 
 
 @pytest.fixture
-def notification_manager(tmp_path):  # noqa: ANN001
+def notification_manager(tmp_path):
     """Fixture per il NotificationManager con file temporaneo."""
     # Reset singleton
     NotificationManager._instance = None
@@ -21,7 +21,7 @@ def notification_manager(tmp_path):  # noqa: ANN001
     NotificationManager._instance = None
 
 
-def test_add_notification(notification_manager):  # noqa: ANN001
+def test_add_notification(notification_manager):
     notification_manager.add_notification("Test Title", "Test Message", level="info")
     notifications = notification_manager.get_notifications()
     assert len(notifications) == 1
@@ -31,7 +31,7 @@ def test_add_notification(notification_manager):  # noqa: ANN001
     assert notifications[0]["read"] is False
 
 
-def test_mark_as_read(notification_manager):  # noqa: ANN001
+def test_mark_as_read(notification_manager):
     notification_manager.add_notification("Test", "Msg", level="error")
     notifications = notification_manager.get_notifications()
     n_id = notifications[0]["id"]
@@ -45,18 +45,18 @@ def test_mark_as_read(notification_manager):  # noqa: ANN001
     assert notifications[0]["read"] is True
 
 
-def test_mark_all_as_read(notification_manager):  # noqa: ANN001
+def test_mark_all_as_read(notification_manager):
     notification_manager.add_notification("1", "1", level="error")
     notification_manager.add_notification("2", "2", level="error")
 
-    assert notification_manager.get_unread_count() == 2  # noqa: PLR2004
+    assert notification_manager.get_unread_count() == 2
 
     notification_manager.mark_all_as_read()
 
     assert notification_manager.get_unread_count() == 0
 
 
-def test_delete_notification(notification_manager):  # noqa: ANN001
+def test_delete_notification(notification_manager):
     notification_manager.add_notification("1", "1")
     notifications = notification_manager.get_notifications()
     n_id = notifications[0]["id"]
@@ -66,7 +66,7 @@ def test_delete_notification(notification_manager):  # noqa: ANN001
     assert len(notification_manager.get_notifications()) == 0
 
 
-def test_persistence(notification_manager, tmp_path):  # noqa: ANN001
+def test_persistence(notification_manager, tmp_path):
     notification_manager.add_notification("Persistent", "Data")
 
     # Simulate app restart

@@ -75,18 +75,18 @@ class HoverPulseFrame(QFrame):
         self._pulse_val = v
         self.update()
 
-    def enterEvent(self, event):  # noqa: ANN001, ANN201, N802
+    def enterEvent(self, event):  # noqa: ANN001, ANN201
         """Avvia l'animazione di pulsazione all'ingresso del mouse."""
         self._anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event):  # noqa: ANN001, ANN201, N802
+    def leaveEvent(self, event):  # noqa: ANN001, ANN201
         """Ferma l'animazione di pulsazione all'uscita del mouse."""
         self._anim.stop()
         self.pulse_value = 1.0  # type: ignore[method-assign]
         super().leaveEvent(event)
 
-    def paintEvent(self, event):  # noqa: ANN001, ANN201, N802
+    def paintEvent(self, event):  # noqa: ANN001, ANN201
         """Disegna il bordo inferiore pulsante."""
         super().paintEvent(event)
         painter = QPainter(self)
@@ -252,7 +252,7 @@ class DataTable(QWidget):
     def _apply_table_style(self) -> None:
         """Applica stili specifici alla tabella (opzionale, gestito principalmente da QSS)."""
 
-    def setData(self, data: list[dict[str, Any]]) -> None:  # noqa: N802
+    def setData(self, data: list[dict[str, Any]]) -> None:
         """
         Popola la tabella con i dati forniti.
 
@@ -330,7 +330,7 @@ class DataTable(QWidget):
         if 0 <= row < len(self._data):
             self.rowDoubleClicked.emit(row, self._data[row])
 
-    def getSelectedRows(self) -> list[dict[str, Any]]:  # noqa: N802
+    def getSelectedRows(self) -> list[dict[str, Any]]:
         """
         Restituisce i dati di tutte le righe attualmente selezionate.
 

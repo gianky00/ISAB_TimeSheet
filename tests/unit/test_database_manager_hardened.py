@@ -14,7 +14,7 @@ from src.core.database.manager import DatabaseManager
 
 class TestDatabaseManagerHardened:
     @pytest.fixture
-    def db_path(self, tmp_path):  # noqa: ANN001
+    def db_path(self, tmp_path):
         return tmp_path / "test.db"
 
     @pytest.fixture
@@ -23,13 +23,13 @@ class TestDatabaseManagerHardened:
         DatabaseManager._instance = None
         return DatabaseManager()
 
-    def test_wal_mode_enabled(self, manager, db_path):  # noqa: ANN001
+    def test_wal_mode_enabled(self, manager, db_path):
         """Verifica che la connessione attivi la modalità WAL."""
         with manager.get_connection(db_path) as conn:
             mode = conn.execute("PRAGMA journal_mode").fetchone()[0]
             assert mode.lower() == "wal"
 
-    def test_write_serialization(self, manager, db_path):  # noqa: ANN001
+    def test_write_serialization(self, manager, db_path):
         """Verifica che execute_query usi il lock per le scritture."""
         # Creiamo la tabella
         manager.execute_query(db_path, "CREATE TABLE test (val TEXT)")
@@ -40,7 +40,7 @@ class TestDatabaseManagerHardened:
             assert mock_lock.acquire.called
             assert mock_lock.release.called
 
-    def test_retry_logic_on_locked(self, manager, db_path):  # noqa: ANN001
+    def test_retry_logic_on_locked(self, manager, db_path):
         """Verifica che il manager riprovi se il database è occupato."""
         # 1. Blocca il DB con una connessione esterna
         conn_ext = sqlite3.connect(db_path)
@@ -51,7 +51,7 @@ class TestDatabaseManagerHardened:
         # Usiamo un timeout brevissimo per get_connection altrimenti attende 30s per ogni tentativo
         original_get_conn = manager.get_connection
 
-        def mock_get_conn(path, read_only=False, timeout=0.1):  # noqa: ANN001, ANN202
+        def mock_get_conn(path, read_only=False, timeout=0.1):
             return original_get_conn(path, read_only=read_only, timeout=timeout)
 
         with patch.object(manager, "get_connection", side_effect=mock_get_conn):
@@ -64,12 +64,12 @@ class TestDatabaseManagerHardened:
             # Tentativo 0: fail -> sleep 0.1
             # Tentativo 1: fail -> sleep 0.2
             # Totale attesa minima ~0.3s
-            assert end_time - start_time >= 0.3  # noqa: PLR2004
+            assert end_time - start_time >= 0.3
 
         conn_ext.rollback()
         conn_ext.close()
 
-    def test_migration_sequence(self, manager, db_path):  # noqa: ANN001
+    def test_migration_sequence(self, manager, db_path):
         """Verifica l'esecuzione sequenziale delle migrazioni."""
         # Mock delle funzioni di migrazione
         m1 = MagicMock()
@@ -85,9 +85,9 @@ class TestDatabaseManagerHardened:
         # Verifica versione nel DB
         with manager.get_connection(db_path) as conn:
             ver = conn.execute("PRAGMA user_version").fetchone()[0]
-            assert ver == 2  # noqa: PLR2004
+            assert ver == 2
 
-    def test_migration_skips_if_up_to_date(self, manager, db_path):  # noqa: ANN001
+    def test_migration_skips_if_up_to_date(self, manager, db_path):
         """Verifica che le migrazioni già fatte non vengano rieseguite."""
         # Setup versione a 1
         with manager.get_connection(db_path) as conn:

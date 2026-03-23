@@ -17,7 +17,7 @@ from src.core.license_validator import (
 
 class TestLicenseValidatorHardened:
     @pytest.fixture
-    def license_setup(self, tmp_path, mocker):  # noqa: ANN001
+    def license_setup(self, tmp_path, mocker):
         """Setup base per i file di licenza."""
         license_dir = tmp_path / "Licenza"
         license_dir.mkdir()
@@ -35,7 +35,7 @@ class TestLicenseValidatorHardened:
 
         return paths, fake_key
 
-    def _create_license_files(self, paths, key, payload):  # noqa: ANN001, ANN202
+    def _create_license_files(self, paths, key, payload):
         cipher = Fernet(key)
         encrypted = cipher.encrypt(json.dumps(payload).encode())
 
@@ -46,7 +46,7 @@ class TestLicenseValidatorHardened:
         manifest = {"config.dat": _calculate_sha256(paths["config"])}
         paths["manifest"].write_text(json.dumps(manifest))
 
-    def test_valid_license(self, license_setup, mocker):  # noqa: ANN001
+    def test_valid_license(self, license_setup, mocker):
         """Verifica una licenza perfettamente valida."""
         paths, key = license_setup
         payload = {"Hardware ID": "MY-HW-ID", "Scadenza Licenza": "31/12/2099", "Cliente": "Test User"}
@@ -60,7 +60,7 @@ class TestLicenseValidatorHardened:
         assert status == LicenseStatus.VALID
         assert "Test User" in msg
 
-    def test_hardware_mismatch(self, license_setup, mocker):  # noqa: ANN001
+    def test_hardware_mismatch(self, license_setup, mocker):
         """Verifica il blocco se l'hardware ID è diverso."""
         paths, key = license_setup
         payload = {"Hardware ID": "EXPECTED-ID", "Scadenza Licenza": "31/12/2099"}
@@ -77,7 +77,7 @@ class TestLicenseValidatorHardened:
         # Deve aver loggato l'azione di violazione
         assert mock_audit.return_value.log_action.called
 
-    def test_expired_license(self, license_setup, mocker):  # noqa: ANN001
+    def test_expired_license(self, license_setup, mocker):
         """Verifica il blocco se la licenza è scaduta."""
         paths, key = license_setup
         payload = {"Hardware ID": "ID", "Scadenza Licenza": "01/01/2020"}
@@ -90,7 +90,7 @@ class TestLicenseValidatorHardened:
         assert status == LicenseStatus.EXPIRED
         assert "SCADUTA" in msg
 
-    def test_manifest_tampering(self, license_setup, mocker):  # noqa: ANN001
+    def test_manifest_tampering(self, license_setup, mocker):
         """Verifica il rilevamento di manomissione del file config.dat."""
         paths, key = license_setup
         payload = {"Hardware ID": "ID", "Scadenza Licenza": "31/12/2099"}

@@ -21,7 +21,7 @@ from src.core.constants import BotStatus
 
 class TestScaricoTSComprehensive:
     @pytest.fixture
-    def bot(self, mocker):  # noqa: ANN001
+    def bot(self, mocker):
         """Inizializza bot con mock totali per isolamento."""
         with patch("src.bots.base.base_bot.BaseBot.__init__", return_value=None):
             bot = ScaricaTSBot()
@@ -38,7 +38,7 @@ class TestScaricoTSComprehensive:
             return bot
 
     @pytest.fixture
-    def page(self, bot):  # noqa: ANN001
+    def page(self, bot):
         """Inizializza Page Object."""
         with patch("src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page.WebDriverWait") as mock_wait:
             page = ScaricoTSPage(bot.driver, bot.log)
@@ -51,7 +51,7 @@ class TestScaricoTSComprehensive:
     # 1. BOT LOGIC & PROCESSOR INTEGRATION
     # ========================================================================
 
-    def test_bot_validate_data(self, bot):  # noqa: ANN001
+    def test_bot_validate_data(self, bot):
         """Verifica validazione input specifica per Scarico TS."""
         with patch("src.bots.base.base_bot.BaseBot.validate_data", return_value=(True, "")):
             # Fallimento: manca fornitore (data è dict, self.fornitore è vuoto)
@@ -64,7 +64,7 @@ class TestScaricoTSComprehensive:
             ok, _ = bot.validate_data({"rows": [{"numero_oda": "123"}]})
             assert ok is True
 
-    def test_bot_validate_data_missing_fornitore_in_data(self, bot):  # noqa: ANN001
+    def test_bot_validate_data_missing_fornitore_in_data(self, bot):
         """Verifica validazione quando il fornitore manca sia nel bot che nel dict."""
         with patch("src.bots.base.base_bot.BaseBot.validate_data", return_value=(True, "")):
             bot.fornitore = ""
@@ -73,7 +73,7 @@ class TestScaricoTSComprehensive:
             assert ok is False
             assert "fornitore" in msg.lower()
 
-    def test_bot_process_oda_rows_success(self, bot, mocker):  # noqa: ANN001
+    def test_bot_process_oda_rows_success(self, bot, mocker):
         """Test loop di elaborazione OdA con successo."""
         mocker.patch.object(bot, "_search_oda", return_value=True)
         mocker.patch.object(bot, "_download_excel", return_value=Path("final.xlsx"))
@@ -81,18 +81,18 @@ class TestScaricoTSComprehensive:
         rows = [{"numero_oda": "ODA1", "posizione_oda": "10"}, {"numero_oda": "ODA2", "posizione_oda": "20"}]
         count, files = bot._process_oda_rows(rows, Path("C:/Dest"))
 
-        assert count == 2  # noqa: PLR2004
-        assert len(files) == 2  # noqa: PLR2004
-        assert bot._search_oda.call_count == 2  # noqa: PLR2004
+        assert count == 2
+        assert len(files) == 2
+        assert bot._search_oda.call_count == 2
 
-    def test_bot_process_oda_rows_empty_oda(self, bot, mocker):  # noqa: ANN001
+    def test_bot_process_oda_rows_empty_oda(self, bot, mocker):
         """Verifica che righe senza numero OdA vengano saltate."""
         rows = [{"note": "riga inutile"}]
         count, files = bot._process_oda_rows(rows, Path("."))
         assert count == 0
         assert len(files) == 0
 
-    def test_bot_process_oda_rows_exception(self, bot, mocker):  # noqa: ANN001
+    def test_bot_process_oda_rows_exception(self, bot, mocker):
         """Verifica che un errore su una OdA non blocchi il loop."""
         mocker.patch.object(bot, "_search_oda", side_effect=[Exception("Err"), True])
         mocker.patch.object(bot, "_download_excel", return_value=Path("ok.xlsx"))
@@ -100,9 +100,9 @@ class TestScaricoTSComprehensive:
         data = [{"numero_oda": "ERR"}, {"numero_oda": "OK"}]
         count, _ = bot._process_oda_rows(data, Path("."))
         assert count == 1
-        assert bot._search_oda.call_count == 2  # noqa: PLR2004
+        assert bot._search_oda.call_count == 2
 
-    def test_bot_vba_processing_integration(self, bot, mocker):  # noqa: ANN001
+    def test_bot_vba_processing_integration(self, bot, mocker):
         """Verifica chiamata al processore VBA."""
         mock_proc = mocker.patch("src.bots.portale_fornitori.scarico_ts.bot.TimesheetProcessor")
         mock_proc.process_and_move.return_value = (True, "OK")
@@ -112,7 +112,7 @@ class TestScaricoTSComprehensive:
 
         mock_proc.process_and_move.assert_called_once()
 
-    def test_bot_run_vba_processing_failure(self, bot, mocker):  # noqa: ANN001
+    def test_bot_run_vba_processing_failure(self, bot, mocker):
         """Verifica gestione errore VBA."""
         mocker.patch(
             "src.bots.portale_fornitori.scarico_ts.bot.TimesheetProcessor.process_and_move",
@@ -126,12 +126,12 @@ class TestScaricoTSComprehensive:
     # 2. PAGE OBJECT & NAVIGATION
     # ========================================================================
 
-    def test_page_navigate_to_timesheet_exception(self, page):  # noqa: ANN001
+    def test_page_navigate_to_timesheet_exception(self, page):
         """Verifica cattura errore navigazione."""
         page.wait.until.side_effect = Exception("Nav Error")
         assert page.navigate_to_timesheet() is False
 
-    def test_page_setup_filters(self, page, mocker):  # noqa: ANN001
+    def test_page_setup_filters(self, page, mocker):
         """Verifica setup filtri con interazione complessa (Combo Arrow + Date)."""
         page._wait_for_overlay = MagicMock()
         # Mock ActionChains
@@ -153,12 +153,12 @@ class TestScaricoTSComprehensive:
 
         assert res is True
 
-    def test_page_setup_filters_exception(self, page):  # noqa: ANN001
+    def test_page_setup_filters_exception(self, page):
         """Verifica cattura errore filtri."""
         page.wait.until.side_effect = Exception("Filter Error")
         assert page.setup_filters("V", "D") is False
 
-    def test_page_search_and_download_exception(self, page):  # noqa: ANN001
+    def test_page_search_and_download_exception(self, page):
         """Verifica cattura errore ricerca."""
         page.wait.until.side_effect = Exception("Search Error")
         assert page.search_and_download("ODA", "POS", Path(".")) is False
@@ -167,7 +167,7 @@ class TestScaricoTSComprehensive:
     # 3. FILE SYSTEM & UNIQUE PATHS
     # ========================================================================
 
-    def test_resolve_unique_path_logic(self, page):  # noqa: ANN001
+    def test_resolve_unique_path_logic(self, page):
         """Verifica generazione path unico ODA-POS.xlsx."""
         with patch("pathlib.Path.exists", return_value=False):
             dest_dir = Path("C:/Dest")
@@ -175,7 +175,7 @@ class TestScaricoTSComprehensive:
             res = page._resolve_unique_path(dest_dir, "ODA1", "10", current_file)
             assert res.name == "ODA1-10.xlsx"
 
-    def test_resolve_unique_path_fallback_locked(self, page):  # noqa: ANN001
+    def test_resolve_unique_path_fallback_locked(self, page):
         """Verifica fallback con timestamp se il file base esiste (es. ricaricamento)."""
         with patch("pathlib.Path.exists") as mock_exists:
             mock_exists.side_effect = [True, False]
@@ -191,7 +191,7 @@ class TestScaricoTSComprehensive:
     # 4. FULL RUN & LIFECYCLE
     # ========================================================================
 
-    def test_bot_run_success_cycle(self, bot, mocker):  # noqa: ANN001
+    def test_bot_run_success_cycle(self, bot, mocker):
         """Test di esecuzione bot completo con una riga."""
         mocker.patch.object(bot, "_login", return_value=True)
         mocker.patch.object(bot, "_navigate_to_timesheet", return_value=True)
@@ -203,7 +203,7 @@ class TestScaricoTSComprehensive:
         assert bot.run(data) is True
         bot._process_oda_rows.assert_called_once()
 
-    def test_bot_run_filter_failure(self, bot, mocker):  # noqa: ANN001
+    def test_bot_run_filter_failure(self, bot, mocker):
         """Test fallimento setup iniziale filtri."""
         mocker.patch.object(bot, "_login", return_value=True)
         mocker.patch.object(bot, "_navigate_to_timesheet", return_value=True)
@@ -211,7 +211,7 @@ class TestScaricoTSComprehensive:
 
         assert bot.run([{"numero_oda": "1"}]) is False
 
-    def test_bot_search_oda_exception(self, bot, mocker):  # noqa: ANN001
+    def test_bot_search_oda_exception(self, bot, mocker):
         """Verifica hardening _search_oda con blocco try/except."""
         mocker.patch.object(bot, "_attendi_scomparsa_overlay")
         # Simulo errore nel driver durante l'inserimento campi
@@ -221,13 +221,13 @@ class TestScaricoTSComprehensive:
         res = bot._search_oda("123", "10")
         assert res is False
 
-    def test_page_wait_for_download_timeout(self, page, mocker):  # noqa: ANN001
+    def test_page_wait_for_download_timeout(self, page, mocker):
         """Verifica timeout download."""
         mocker.patch("time.time", side_effect=[0, 1000])  # Forza superamento timeout
         res = page._wait_for_download(Path("."), set())
         assert res is None
 
-    def test_page_download_cleanup_integration(self, page, tmp_path, mocker):  # noqa: ANN001
+    def test_page_download_cleanup_integration(self, page, tmp_path, mocker):
         """Verifica cleanup Chromium residui (marker GUID) durante download."""
         download_dir = tmp_path / "downloads"
         download_dir.mkdir()

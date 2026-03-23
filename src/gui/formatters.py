@@ -90,11 +90,11 @@ class FastTableModel(QAbstractTableModel):
         """Forza allineamento per una colonna."""
         self._alignments[col_idx] = alignment
 
-    def rowCount(self, parent: Any = None) -> int:  # noqa: ANN401, N802
+    def rowCount(self, parent: Any = None) -> int:  # noqa: ANN401
         """Restituisce il numero di righe nel modello."""
         return len(self._data)
 
-    def columnCount(self, parent: Any = None) -> int:  # noqa: ANN401, N802
+    def columnCount(self, parent: Any = None) -> int:  # noqa: ANN401
         """Restituisce il numero di colonne basato sull'header."""
         return len(self._headers)
 
@@ -127,7 +127,7 @@ class FastTableModel(QAbstractTableModel):
 
         return None
 
-    def headerData(  # noqa: N802
+    def headerData(
         self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
     ) -> Any:  # noqa: ANN401
         """Restituisce l'intestazione della colonna."""

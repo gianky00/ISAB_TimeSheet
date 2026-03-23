@@ -8,7 +8,7 @@ from src.gui.panels.settings.main_panel import SettingsPanel
 @pytest.mark.skip(reason="Incompatibilità mock strutturale in ambiente headless Windows V9.0.")
 class TestSettingsPanelComplete:
     @pytest.fixture
-    def panel(self, qapp, mocker):  # noqa: ANN001
+    def panel(self, qapp, mocker):
         # Mock refresh_models to avoid background thread starting during tests
         mocker.patch("src.gui.panels.settings.pages.general_page.GeneralPage.refresh_models")
 
@@ -24,16 +24,16 @@ class TestSettingsPanelComplete:
         ):
             return SettingsPanel()
 
-    def test_settings_navigation(self, panel, qtbot):  # noqa: ANN001
+    def test_settings_navigation(self, panel, qtbot):
         qtbot.addWidget(panel)
         # 0: Configurazione, 1: Backup, 2: Statistiche, 3: Telegram
-        assert panel.tabs.count() >= 4  # noqa: PLR2004
+        assert panel.tabs.count() >= 4
 
         # Go to Telegram Tab
         panel.tabs.setCurrentIndex(3)
         assert "Telegram" in panel.tabs.tabText(3)
 
-    def test_account_settings_logic(self, panel, qtbot):  # noqa: ANN001
+    def test_account_settings_logic(self, panel, qtbot):
         qtbot.addWidget(panel)
         panel.tabs.setCurrentIndex(0)  # Configurazione
 
@@ -54,7 +54,7 @@ class TestSettingsPanelComplete:
             panel._save_settings()
             mock_save.assert_called()
 
-    def test_telegram_settings_change(self, panel, qtbot):  # noqa: ANN001
+    def test_telegram_settings_change(self, panel, qtbot):
         qtbot.addWidget(panel)
         panel.tabs.setCurrentIndex(3)  # Telegram
 
@@ -64,13 +64,13 @@ class TestSettingsPanelComplete:
             panel._save_settings()
             mock_save.assert_called()
 
-    def test_open_data_folder(self, panel, qtbot):  # noqa: ANN001
+    def test_open_data_folder(self, panel, qtbot):
         qtbot.addWidget(panel)
         with patch("src.gui.panels.settings.pages.diag_page.open_folder") as mock_open:
             panel.config_tab.diag_page._open_data_folder()
             mock_open.assert_called()
 
-    def test_backup_manual(self, panel, qtbot):  # noqa: ANN001
+    def test_backup_manual(self, panel, qtbot):
         qtbot.addWidget(panel)
         panel.tabs.setCurrentIndex(1)  # Backup
         with patch(

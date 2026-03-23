@@ -13,7 +13,7 @@ class TestAuthMonitor:
         assert _normalize("  rossi   mario  ") == "ROSSI MARIO"
         assert _normalize("MARIO") == "MARIO"
 
-    def test_build_access_maps_logic(self, mocker):  # noqa: ANN001
+    def test_build_access_maps_logic(self, mocker):
         # Format: cog, nom, cf, last_date_str
         from datetime import UTC  # noqa: PLC0415
 
@@ -35,19 +35,19 @@ class TestAuthMonitor:
         last_by_cf, last_by_name = _build_access_maps(accessi)
 
         assert "RSSMRA80" in last_by_cf
-        assert last_by_cf["RSSMRA80"][0] == 30  # noqa: PLR2004
+        assert last_by_cf["RSSMRA80"][0] == 30
         assert ("ROSSI", "MARIO") in last_by_name
-        assert last_by_name[("ROSSI", "MARIO")][0] == 30  # noqa: PLR2004
+        assert last_by_name[("ROSSI", "MARIO")][0] == 30
 
         # BIANCHI only in by_name
         assert ("BIANCHI", "LUIGI") in last_by_name
-        assert last_by_name[("BIANCHI", "LUIGI")][0] == 10  # noqa: PLR2004
+        assert last_by_name[("BIANCHI", "LUIGI")][0] == 10
 
         # VERDI should be ignored due to invalid date
         assert "VRDNNA90" not in last_by_cf
 
     @patch("src.core.auth_monitor.db_manager")
-    def test_check_expiring_authorizations(self, mock_db, mocker):  # noqa: ANN001
+    def test_check_expiring_authorizations(self, mock_db, mocker):
         from datetime import UTC  # noqa: PLC0415
 
         # Mocking datetime.now(UTC)
@@ -84,17 +84,17 @@ class TestAuthMonitor:
         results = check_expiring_isab_authorizations()
 
         # Should contain ROSSI, BIANCHI, and NERI. VERDI is active (5 days).
-        assert len(results) == 3  # noqa: PLR2004
+        assert len(results) == 3
 
         # Check ROSSI (Expired)
         rossi = next(r for r in results if r["cognome"] == "ROSSI")
         assert rossi["stato"] == "SCADUTA"
-        assert rossi["giorni_trascorsi"] == 35  # noqa: PLR2004
+        assert rossi["giorni_trascorsi"] == 35
 
         # Check BIANCHI (Expiring)
         bianchi = next(r for r in results if r["cognome"] == "BIANCHI")
         assert bianchi["stato"] == "IN SCADENZA"
-        assert bianchi["giorni_trascorsi"] == 25  # noqa: PLR2004
+        assert bianchi["giorni_trascorsi"] == 25
 
         # Check NERI (No CF, matched by name)
         neri = next(r for r in results if r["cognome"] == "NERI")
@@ -102,7 +102,7 @@ class TestAuthMonitor:
         assert neri["stato"] == "SCADUTA"
 
     @patch("src.core.auth_monitor.db_manager")
-    def test_check_expiring_error_handling(self, mock_db):  # noqa: ANN001
+    def test_check_expiring_error_handling(self, mock_db):
         mock_db.execute_query.side_effect = Exception("DB Error")
         results = check_expiring_isab_authorizations()
         assert results == []

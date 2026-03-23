@@ -87,7 +87,7 @@ class ChartContainer(QWidget):
 class KPIChartsManager:
     """Gestore per la creazione e l'aggiornamento dei grafici KPI."""
 
-    def __init__(self, HOURLY_COST_STD):  # noqa: ANN001, ANN204, N803
+    def __init__(self, HOURLY_COST_STD):  # noqa: ANN001, ANN204
         self.HOURLY_COST_STD = HOURLY_COST_STD
         self.annot = None
 

@@ -9,7 +9,7 @@ from src.core.sync_tracker import SyncTracker
 
 class TestSyncTrackerRobust:
     @pytest.fixture(autouse=True)
-    def reset_tracker(self, tmp_path):  # noqa: ANN001
+    def reset_tracker(self, tmp_path):
         """Fixture che resetta lo stato del tracker e mocka il path del file."""
         # Reset stato interno
         SyncTracker._cache = {}
@@ -21,24 +21,24 @@ class TestSyncTrackerRobust:
         with patch("src.core.sync_tracker.SyncTracker.STATE_FILE", test_state_file):
             yield test_state_file
 
-    def test_update_and_get_status(self, reset_tracker):  # noqa: ANN001
+    def test_update_and_get_status(self, reset_tracker):
         """Test flusso base: aggiornamento e recupero stato."""
         SyncTracker.update_status("module_a", added=10, removed=5, duration=1.5)
 
         # Verifica Cache interna
         status = SyncTracker.get_status("module_a")
-        assert status["added"] == 10  # noqa: PLR2004
-        assert status["removed"] == 5  # noqa: PLR2004
-        assert status["duration"] == 1.5  # noqa: PLR2004
+        assert status["added"] == 10
+        assert status["removed"] == 5
+        assert status["duration"] == 1.5
         assert "timestamp" in status
         assert "last_ts" in status
 
         # Verifica persistenza su file
         assert reset_tracker.exists()
         data = json.loads(reset_tracker.read_text(encoding="utf-8"))
-        assert data["module_a"]["added"] == 10  # noqa: PLR2004
+        assert data["module_a"]["added"] == 10
 
-    def test_persistence_reload(self, reset_tracker):  # noqa: ANN001
+    def test_persistence_reload(self, reset_tracker):
         """Test ricaricamento stato da file."""
         # 1. Scrivi dati
         SyncTracker.update_status("module_b", added=1, removed=0)
@@ -52,7 +52,7 @@ class TestSyncTrackerRobust:
         assert status["added"] == 1
         assert status["removed"] == 0
 
-    def test_load_corrupted_file(self, reset_tracker):  # noqa: ANN001
+    def test_load_corrupted_file(self, reset_tracker):
         """Test resilienza con file JSON corrotto."""
         # Crea file corrotto
         reset_tracker.parent.mkdir(parents=True, exist_ok=True)
@@ -89,7 +89,7 @@ class TestSyncTrackerRobust:
         formatted = SyncTracker.get_formatted_status("unknown_module")
         assert formatted == "Mai sincronizzato"
 
-    def test_save_permission_error(self, reset_tracker):  # noqa: ANN001
+    def test_save_permission_error(self, reset_tracker):
         """Test gestione errore permessi in scrittura."""
         # Mock Path.write_text per lanciare eccezione durante il save
         with patch.object(Path, "write_text", side_effect=PermissionError("Access Denied")):

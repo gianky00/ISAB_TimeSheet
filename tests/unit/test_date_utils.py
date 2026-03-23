@@ -51,8 +51,8 @@ class TestDateUtils:
         d2 = date(2024, 1, 10)
 
         # Diff is from_date - date_obj
-        assert calculate_days_diff(d2, from_date=d1) == 5  # noqa: PLR2004
-        assert calculate_days_diff(d1, from_date=d2) == -5  # noqa: PLR2004
+        assert calculate_days_diff(d2, from_date=d1) == 5
+        assert calculate_days_diff(d1, from_date=d2) == -5
         assert calculate_days_diff(None) is None
 
     def test_get_status_by_days(self):

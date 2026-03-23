@@ -12,7 +12,7 @@ class TestTelegramDeepDive:
         return TelegramService()
 
     @pytest.mark.asyncio
-    async def test_all_nav_menus(self, service):  # noqa: ANN001
+    async def test_all_nav_menus(self, service):
         mock_query = MagicMock()
         mock_query.edit_message_text = AsyncMock()
 
@@ -30,7 +30,7 @@ class TestTelegramDeepDive:
             assert mock_query.edit_message_text.called
 
     @pytest.mark.asyncio
-    async def test_db_actions_flow(self, service):  # noqa: ANN001
+    async def test_db_actions_flow(self, service):
         mock_query = MagicMock()
         mock_query.edit_message_text = AsyncMock()
 
@@ -43,7 +43,7 @@ class TestTelegramDeepDive:
             assert "Seleziona Anno" in mock_query.edit_message_text.call_args[0][0]
 
     @pytest.mark.asyncio
-    async def test_bot_actions_menus(self, service):  # noqa: ANN001
+    async def test_bot_actions_menus(self, service):
         mock_query = MagicMock()
         mock_query.edit_message_text = AsyncMock()
 
@@ -60,7 +60,7 @@ class TestTelegramDeepDive:
             assert mock_query.edit_message_text.called
 
     @pytest.mark.asyncio
-    async def test_utility_actions_complex(self, service):  # noqa: ANN001
+    async def test_utility_actions_complex(self, service):
         mock_query = MagicMock()
         mock_query.edit_message_text = AsyncMock()
 

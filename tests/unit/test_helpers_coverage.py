@@ -32,7 +32,7 @@ class TestHelpers:
 
     def test_get_months_list(self):
         months = get_months_list()
-        assert len(months) == 12  # noqa: PLR2004
+        assert len(months) == 12
         assert months[0] == "Gennaio"
 
     def test_get_years_list(self):
@@ -41,7 +41,7 @@ class TestHelpers:
         assert str(current_year) in years
         assert str(current_year - 1) in years
         assert str(current_year + 1) in years
-        assert len(years) == 3  # noqa: PLR2004
+        assert len(years) == 3
 
     def test_safe_str(self):
         assert safe_str(None, "default") == "default"
@@ -61,7 +61,7 @@ class TestHelpers:
         assert sanitize_filename("   spaced file   ") == "spaced file"
         assert sanitize_filename(None) == "unnamed_file"
 
-    def test_setup_logging(self, tmp_path):  # noqa: ANN001
+    def test_setup_logging(self, tmp_path):
         log_file_path = tmp_path / "test.log"
         logger = setup_logging("TestLogger", str(log_file_path))
 

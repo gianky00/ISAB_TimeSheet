@@ -6,7 +6,7 @@ from src.core.database import DatabaseManager
 
 class TestContabilitaQueriesCoverage:
     @pytest.fixture
-    def db_path(self, tmp_path, mocker):  # noqa: ANN001
+    def db_path(self, tmp_path, mocker):
         p_cont = tmp_path / "queries_cont.db"
         p_timb = tmp_path / "queries_timb.db"
         # Patch dei path globali prima di init_db
@@ -19,7 +19,7 @@ class TestContabilitaQueriesCoverage:
         DatabaseManager().init_db()
         return p_cont
 
-    def test_get_data_by_year_columns_alignment(self, db_path):  # noqa: ANN001
+    def test_get_data_by_year_columns_alignment(self, db_path):
         """Verifica che la query per anno restituisca tutte le colonne mappate."""
         manager = DatabaseManager()
         # Inserisci riga completa (15 colonne previste dal mapping)
@@ -35,12 +35,12 @@ class TestContabilitaQueriesCoverage:
 
         assert len(rows[0]) == len(ExcelImporter.COLUMNS_MAPPING)
 
-    def test_get_available_years_empty_db(self, tmp_path):  # noqa: ANN001
+    def test_get_available_years_empty_db(self, tmp_path):
         """Verifica recupero anni su DB vuoto o inesistente."""
         p = tmp_path / "non_existent.db"
         assert ContabilitaQueries.get_available_years(p) == []
 
-    def test_get_scarico_ore_data_sorting(self, db_path):  # noqa: ANN001
+    def test_get_scarico_ore_data_sorting(self, db_path):
         """Verifica ordinamento decrescente (id DESC) per scarico ore."""
         manager = DatabaseManager()
         manager.execute_query(db_path, "INSERT INTO scarico_ore (descrizione) VALUES ('Prima')")

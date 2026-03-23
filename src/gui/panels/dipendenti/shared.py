@@ -199,25 +199,25 @@ class InteractiveStatusCard(QFrame):
 
         layout.addLayout(right_layout)
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:  # noqa: N802
+    def enterEvent(self, event: QEnterEvent | None) -> None:
         """Aumenta l'ombra all'ingresso del mouse."""
         self.shadow.setBlurRadius(15)
         self.shadow.setYOffset(4)
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any | None) -> None:  # noqa: ANN401, N802
+    def leaveEvent(self, event: Any | None) -> None:  # noqa: ANN401
         """Ripristina l'ombra all'uscita del mouse."""
         self.shadow.setBlurRadius(10)
         self.shadow.setYOffset(2)
         super().leaveEvent(event)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Emette il segnale 'clicked' con il tipo di filtro."""
         if event and event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self.filter_type)
         super().mousePressEvent(event)
 
-    def setValue(self, val: Any) -> None:  # noqa: ANN401, N802
+    def setValue(self, val: Any) -> None:  # noqa: ANN401
         """
         Aggiorna il valore numerico visualizzato sulla card.
 

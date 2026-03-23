@@ -19,7 +19,7 @@ class ConcreteScaricaTSBot(ScaricaTSBot):
         return "Desc"
 
     @staticmethod
-    def get_columns():  # noqa: ANN205
+    def get_columns():
         return []
 
 
@@ -33,7 +33,7 @@ class ConcreteTimbratureBot(TimbratureBot):
         return "Desc"
 
     @staticmethod
-    def get_columns():  # noqa: ANN205
+    def get_columns():
         return []
 
 
@@ -47,7 +47,7 @@ class ConcreteSafeWorkPDLBot(SafeWorkPDLBot):
         return "Desc"
 
     @staticmethod
-    def get_columns():  # noqa: ANN205
+    def get_columns():
         return []
 
 
@@ -95,7 +95,7 @@ class TestBotTimingSequences:
             bot.long_wait = MagicMock()
             return bot
 
-    def test_scarico_ts_filters_timing(self, mock_scarico_bot):  # noqa: ANN001
+    def test_scarico_ts_filters_timing(self, mock_scarico_bot):
         """Verifica la corretta attesa durante l'impostazione dei filtri in Scarico TS."""
         mock_el = MagicMock()
         mock_scarico_bot.wait.until.return_value = mock_el
@@ -112,7 +112,7 @@ class TestBotTimingSequences:
             # Verifichiamo invece che venga chiamato il metodo corretto di attesa overlay.
             assert mock_wait_overlay.called
 
-    def test_safework_pdl_search_timing(self, mock_safework_bot):  # noqa: ANN001
+    def test_safework_pdl_search_timing(self, mock_safework_bot):
         """Verifica la pausa critica dopo la ricerca di un PDL."""
         with (
             patch("time.sleep"),
@@ -127,7 +127,7 @@ class TestBotTimingSequences:
             # Verifichiamo che venga chiamato il metodo corretto di attesa overlay invece dello sleep fisso
             assert mock_wait_overlay.called
 
-    def test_timbrature_navigation_timing(self, mock_timbrature_bot):  # noqa: ANN001
+    def test_timbrature_navigation_timing(self, mock_timbrature_bot):
         """Verifica le attese durante la navigazione nel bot Timbrature."""
         from src.bots.portale_fornitori.timbrature.pages.timbrature_page import (  # noqa: PLC0415
             TimbraturePage,
@@ -149,7 +149,7 @@ class TestBotTimingSequences:
             # Verifichiamo che _wait_for_overlay sia stato chiamato invece di time.sleep espliciti
             assert mock_wait_overlay.called
 
-    def test_timbrature_supplier_selection_timing(self, mock_timbrature_bot):  # noqa: ANN001
+    def test_timbrature_supplier_selection_timing(self, mock_timbrature_bot):
         """Verifica l'attesa durante la selezione del fornitore."""
         from src.bots.portale_fornitori.timbrature.pages.timbrature_page import (  # noqa: PLC0415
             TimbraturePage,
@@ -175,7 +175,7 @@ class TestBotTimingSequences:
             # Verifichiamo che _wait_for_overlay sia stato chiamato invece di time.sleep espliciti
             assert mock_wait_overlay.called
 
-    def test_regression_protection_scarico_ts(self, mock_scarico_bot):  # noqa: ANN001
+    def test_regression_protection_scarico_ts(self, mock_scarico_bot):
         """Verifica che il polling di download esegua gli sleep."""
         source_dir = Path("source")
         files_before = set()
@@ -189,4 +189,4 @@ class TestBotTimingSequences:
             mock_iter.side_effect = [[Path("f.crdownload")], [], []]
 
             mock_scarico_bot._wait_for_new_file(source_dir, files_before, timeout=10)
-            assert any(c.args[0] == 0.5 for c in mock_sleep.call_args_list)  # noqa: PLR2004
+            assert any(c.args[0] == 0.5 for c in mock_sleep.call_args_list)

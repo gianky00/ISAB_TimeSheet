@@ -18,7 +18,7 @@ from src.core.config_manager import (
 
 
 @pytest.fixture(autouse=True)
-def clean_config_env(tmp_path):  # noqa: ANN001
+def clean_config_env(tmp_path):
     """Fixture to isolate config environment for each test."""
     _reset_configuration_for_testing()
 
@@ -36,7 +36,7 @@ def clean_config_env(tmp_path):  # noqa: ANN001
         yield mock_dir, mock_file
 
 
-def test_load_config_default(clean_config_env):  # noqa: ANN001
+def test_load_config_default(clean_config_env):
     """Test loading config when file doesn't exist."""
     _mock_dir, mock_file = clean_config_env
     if mock_file.exists():
@@ -45,7 +45,7 @@ def test_load_config_default(clean_config_env):  # noqa: ANN001
     assert config["accounts"] == []
 
 
-def test_load_config_from_file(clean_config_env):  # noqa: ANN001
+def test_load_config_from_file(clean_config_env):
     """Test loading config from an existing file."""
     _mock_dir, mock_file = clean_config_env
     data = {"browser_headless": True}
@@ -54,10 +54,10 @@ def test_load_config_from_file(clean_config_env):  # noqa: ANN001
     config = load_config()
     assert config["browser_headless"] is True
     # Default values should still be there
-    assert config["browser_timeout"] == 30  # noqa: PLR2004
+    assert config["browser_timeout"] == 30
 
 
-def test_load_config_corrupted_file(clean_config_env):  # noqa: ANN001
+def test_load_config_corrupted_file(clean_config_env):
     """Test loading config from a corrupted file."""
     _mock_dir, mock_file = clean_config_env
     mock_file.write_text("invalid json{", encoding="utf-8")
@@ -66,7 +66,7 @@ def test_load_config_corrupted_file(clean_config_env):  # noqa: ANN001
     assert config == DEFAULT_CONFIG
 
 
-def test_load_config_with_credentials_keyring(clean_config_env):  # noqa: ANN001
+def test_load_config_with_credentials_keyring(clean_config_env):
     """Test loading config with credentials stored in keyring."""
     _mock_dir, mock_file = clean_config_env
     data = {
@@ -77,7 +77,7 @@ def test_load_config_with_credentials_keyring(clean_config_env):  # noqa: ANN001
 
     with patch("src.core.secrets_manager.SecretsManager.get_credential") as mock_get:
 
-        def side_effect(service, username):  # noqa: ANN001, ANN202
+        def side_effect(service, username):
             if service == "isab_portal" and username == "user1":
                 return "keyring_password"
             if service == "safework_portal" and username == "sw_user":
@@ -91,7 +91,7 @@ def test_load_config_with_credentials_keyring(clean_config_env):  # noqa: ANN001
         assert config["safework_accounts"][0]["password"] == "sw_keyring_pw"
 
 
-def test_load_config_with_credentials_fallback(clean_config_env):  # noqa: ANN001
+def test_load_config_with_credentials_fallback(clean_config_env):
     """Test loading config with credentials decrypted from file (fallback)."""
     _mock_dir, mock_file = clean_config_env
     data = {
@@ -110,7 +110,7 @@ def test_load_config_with_credentials_fallback(clean_config_env):  # noqa: ANN00
         assert config["accounts"][0]["password"] == "decrypted_ENC:v2:encrypted_pw"
 
 
-def test_load_config_legacy_migration(clean_config_env):  # noqa: ANN001
+def test_load_config_legacy_migration(clean_config_env):
     """Test migration from old config keys."""
     _mock_dir, mock_file = clean_config_env
     data = {"isab_username": "legacy_user", "isab_password": "legacy_password"}
@@ -123,7 +123,7 @@ def test_load_config_legacy_migration(clean_config_env):  # noqa: ANN001
         assert mock_save.called
 
 
-def test_save_config_with_keyring(clean_config_env):  # noqa: ANN001
+def test_save_config_with_keyring(clean_config_env):
     """Test saving config when keyring is available."""
     _mock_dir, mock_file = clean_config_env
     config = {
@@ -147,7 +147,7 @@ def test_save_config_with_keyring(clean_config_env):  # noqa: ANN001
         assert "password" not in saved_data["safework_accounts"][0]
 
 
-def test_save_config_fallback_encryption(clean_config_env):  # noqa: ANN001
+def test_save_config_fallback_encryption(clean_config_env):
     """Test saving config when keyring is NOT available (fallback to encryption)."""
     _mock_dir, mock_file = clean_config_env
     config = {"accounts": [{"username": "user1", "password": "plain_password"}]}
@@ -162,21 +162,21 @@ def test_save_config_fallback_encryption(clean_config_env):  # noqa: ANN001
         assert saved_data["accounts"][0]["password"] == "encrypted_val"
 
 
-def test_save_config_io_error(clean_config_env):  # noqa: ANN001
+def test_save_config_io_error(clean_config_env):
     """Test handling of IO errors during save."""
     config = {"test": "data"}
     with patch("os.replace", side_effect=OSError("Permission denied")):
         save_config(config)
 
 
-def test_save_config_critical_exception(clean_config_env):  # noqa: ANN001
+def test_save_config_critical_exception(clean_config_env):
     """Test handling of unexpected exceptions during save."""
     config = {"test": "data"}
     with patch("src.core.config_manager.json.dump", side_effect=Exception("Critical Failure")):
         save_config(config)
 
 
-def test_cache_logic(clean_config_env):  # noqa: ANN001
+def test_cache_logic(clean_config_env):
     """Test that cache is used correctly."""
     _reset_configuration_for_testing()
     config1 = load_config()

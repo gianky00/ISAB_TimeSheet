@@ -25,7 +25,7 @@ def bot():
 
 
 class TestDettagliOdaComprehensive:
-    def test_bot_validate_data(self, bot):  # noqa: ANN001
+    def test_bot_validate_data(self, bot):
         """Verifica validazione parametri input."""
         # Case 1: Dati validi (lista OdA)
         ok, _msg = bot.validate_data([{"numero_oda": "123"}])
@@ -36,7 +36,7 @@ class TestDettagliOdaComprehensive:
         assert ok is True
 
     @patch("src.bots.portale_fornitori.dettagli_oda.bot.DettagliOdAPage")
-    def test_bot_run_loop_success(self, mock_page_cls, bot, mocker):  # noqa: ANN001
+    def test_bot_run_loop_success(self, mock_page_cls, bot, mocker):
         """Test ciclo principale con successo."""
         mock_page = mock_page_cls.return_value
         mock_page.navigate_to_dettagli.return_value = True
@@ -57,7 +57,7 @@ class TestDettagliOdaComprehensive:
         # Verifichiamo il log o i segnali se possibile, o semplicemente l'esito
         assert success is True
 
-    def test_bot_import_oda_to_db(self, bot, mocker):  # noqa: ANN001
+    def test_bot_import_oda_to_db(self, bot, mocker):
         """Verifica l'integrazione con OdaManager (bypassando il multiprocess)."""
         mock_manager = mocker.patch("src.bots.portale_fornitori.dettagli_oda.bot.OdaManager")
         mock_manager.import_oda_from_excel.return_value = (True, "OK", 5, [])
@@ -87,7 +87,7 @@ class TestDettagliOdaComprehensive:
         mock_driver.execute_script.assert_called()
 
     @patch("src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.ActionChains")
-    def test_page_setup_supplier_success(self, mock_action_chains):  # noqa: ANN001
+    def test_page_setup_supplier_success(self, mock_action_chains):
         mock_driver = MagicMock()
 
         # Mock WebDriverWait prima dell'istanziazione
@@ -127,7 +127,7 @@ class TestDettagliOdaComprehensive:
         assert res == file_mock
 
     @patch("src.bots.portale_fornitori.dettagli_oda.bot.DettagliOdAPage")
-    def test_bot_run_no_oda_list_general(self, mock_page_cls, bot, mocker):  # noqa: ANN001
+    def test_bot_run_no_oda_list_general(self, mock_page_cls, bot, mocker):
         """Test scarico lista generale."""
         mock_page = mock_page_cls.return_value
         mock_page.navigate_to_dettagli.return_value = True
@@ -144,7 +144,7 @@ class TestDettagliOdaComprehensive:
         args = mock_page.process_oda.call_args[0]
         assert args[0] == ""
 
-    def test_bot_import_oda_to_db_failure(self, bot, mocker):  # noqa: ANN001
+    def test_bot_import_oda_to_db_failure(self, bot, mocker):
         """Test gestione errore durante importazione DB."""
         mock_executor = MagicMock()
         mock_future = MagicMock()
@@ -157,7 +157,7 @@ class TestDettagliOdaComprehensive:
 
         mock_executor.submit.assert_called_once()
 
-    def test_base_bot_final_cleanup(self, bot):  # noqa: ANN001
+    def test_base_bot_final_cleanup(self, bot):
         """Verifica cleanup finale."""
         mock_driver = MagicMock()
         bot.driver = mock_driver

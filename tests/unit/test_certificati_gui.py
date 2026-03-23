@@ -13,7 +13,7 @@ from src.gui.widgets.contabilita.certificati_tab import (
 
 class TestCertificatiGUI:
     @pytest.fixture(autouse=True)
-    def setup_qt(self, qtbot):  # noqa: ANN001
+    def setup_qt(self, qtbot):
         self.qtbot = qtbot
 
     @pytest.fixture
@@ -40,12 +40,12 @@ class TestCertificatiGUI:
 
             # In Scadenza (10gg)
             days, icon = CertificatiEngine.calculate_days_and_status("11/01/2024")
-            assert days is not None and 0 <= days <= 15  # noqa: PLR2004
+            assert days is not None and 0 <= days <= 15
             assert icon == Icons.STATUS_DOT_ORANGE
 
             # Attivo
             days, icon = CertificatiEngine.calculate_days_and_status("01/03/2024")
-            assert days is not None and days > 30  # noqa: PLR2004
+            assert days is not None and days > 30
             assert icon == Icons.STATUS_DOT_GREEN
 
     def test_format_days_text_short(self):
@@ -55,7 +55,7 @@ class TestCertificatiGUI:
         assert "Attivo" in CertificatiEngine.format_days_text_short(60)
         assert CertificatiEngine.format_days_text_short(None) == "N/D"
 
-    def test_exclusions_engine_io(self, tmp_path):  # noqa: ANN001
+    def test_exclusions_engine_io(self, tmp_path):
         """Testa il caricamento e salvataggio delle esclusioni nell'Engine."""
         test_file = tmp_path / "exclusions.json"
 
@@ -83,7 +83,7 @@ class TestCertificatiGUI:
         assert "Analisi Scadenze" in dialog.windowTitle()
         assert dialog.header is not None
 
-    def test_load_data_grouping(self, cert_tab):  # noqa: ANN001
+    def test_load_data_grouping(self, cert_tab):
         """Testa il raggruppamento dei certificati nel Tab UI."""
         # Mock data: 2 certificati per la stessa matricola
         mock_data = [
@@ -126,4 +126,4 @@ class TestCertificatiGUI:
             assert "MAT-1" in parent.text(0)
 
             # Dovrebbe avere 2 figli
-            assert parent.childCount() == 2  # noqa: PLR2004
+            assert parent.childCount() == 2

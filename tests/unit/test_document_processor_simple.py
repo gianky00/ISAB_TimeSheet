@@ -5,13 +5,13 @@ from src.utils.document_processor import DocumentProcessor
 
 
 class TestDocumentProcessorSimple:
-    def test_extract_text_exception_handling(self, tmp_path):  # noqa: ANN001
+    def test_extract_text_exception_handling(self, tmp_path):
         # Path non esistente deve ritornare stringa vuota senza crash tramite exception block
         assert DocumentProcessor.extract_text(Path("missing.pdf")) == ""
 
     @patch("src.utils.document_processor.Path")
     @patch("src.utils.document_processor.fitz")
-    def test_merge_pdfs_logic(self, mock_fitz, mock_path_cls, tmp_path):  # noqa: ANN001
+    def test_merge_pdfs_logic(self, mock_fitz, mock_path_cls, tmp_path):
         # Mock Path() per simulare file esistenti
         mock_path_instance = MagicMock()
         mock_path_instance.exists.return_value = True

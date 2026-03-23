@@ -12,7 +12,7 @@ from src.core.app_updater import check_for_updates
 
 class TestAppUpdaterSimulation:
     @pytest.fixture(autouse=True)
-    def setup_mocks(self, mocker):  # noqa: ANN001
+    def setup_mocks(self, mocker):
         # Mock della versione locale (es. v1.0.0)
         mocker.patch("src.gui.dialogs.updater_dialog.version.__version__", "1.0.0")
         # Mock perform_auto_update per evitare download reali
@@ -22,7 +22,7 @@ class TestAppUpdaterSimulation:
         mock_head_resp.headers = {"content-length": "1000000"}
         mocker.patch("src.gui.dialogs.updater_dialog.requests.head", return_value=mock_head_resp)
 
-    def test_check_for_updates_found(self, mocker):  # noqa: ANN001
+    def test_check_for_updates_found(self, mocker):
         """Verifica la logica quando viene trovata una nuova versione."""
         # Patch diretto delle funzioni dell'engine nel modulo GUI
         mocker.patch(
@@ -50,7 +50,7 @@ class TestAppUpdaterSimulation:
         # Deve aver chiamato perform_auto_update
         self.mock_perform.assert_called_once()
 
-    def test_check_for_updates_already_updated(self, mocker):  # noqa: ANN001
+    def test_check_for_updates_already_updated(self, mocker):
         """Verifica che non faccia nulla se la versione locale è uguale o maggiore."""
         # Simula versione remota più vecchia
         mocker.patch(
@@ -67,7 +67,7 @@ class TestAppUpdaterSimulation:
         assert not mock_msg.called
         assert not self.mock_perform.called
 
-    def test_check_for_updates_http_error(self, mocker):  # noqa: ANN001
+    def test_check_for_updates_http_error(self, mocker):
         """Verifica che gli errori di rete non causino crash (silent=True)."""
         # Simula errore engine che ritorna None
         mocker.patch("src.gui.dialogs.updater_dialog.get_web_update_info", return_value=None)

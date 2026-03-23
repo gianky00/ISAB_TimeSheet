@@ -17,7 +17,7 @@ class TestSimpleCoverage:
     def test_font_sizes(self):
         """Verifica che i font size siano caricate."""
         assert "md" in FONT_SIZES
-        assert FONT_SIZES["md"] >= 10  # noqa: PLR2004
+        assert FONT_SIZES["md"] >= 10
 
 
 class TestLogHumanizer:

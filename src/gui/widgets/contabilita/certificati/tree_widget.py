@@ -31,7 +31,7 @@ class UbicazioneDelegate(QStyledItemDelegate):
         super().__init__(parent)
         self.items = ["", "UFFICIO", "OFFICINA", "ASSEGNATO AL TECNICO"]
 
-    def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:  # noqa: N802
+    def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:
         """Crea l'editor per la colonna Ubicazione."""
         editor = QComboBox(parent)
         editor.addItems(self.items)
@@ -41,7 +41,7 @@ class UbicazioneDelegate(QStyledItemDelegate):
             editor.setCurrentText(current_text)
         return editor
 
-    def setEditorData(self, editor: QWidget | None, index: QModelIndex):  # noqa: ANN201, N802
+    def setEditorData(self, editor: QWidget | None, index: QModelIndex):  # noqa: ANN201
         """Popola l'editor con i dati correnti."""
         value = index.data(Qt.ItemDataRole.EditRole)
         if isinstance(editor, QComboBox):
@@ -49,7 +49,7 @@ class UbicazioneDelegate(QStyledItemDelegate):
             if idx >= 0:
                 editor.setCurrentIndex(idx)
 
-    def setModelData(self, editor: QWidget | None, model: object, index: QModelIndex):  # noqa: ANN201, N802
+    def setModelData(self, editor: QWidget | None, model: object, index: QModelIndex):  # noqa: ANN201
         """Salva i dati dall'editor al modello."""
         if isinstance(editor, QComboBox):
             value = editor.currentText()
@@ -59,18 +59,18 @@ class UbicazioneDelegate(QStyledItemDelegate):
 class AnnotazioniDelegate(QStyledItemDelegate):
     """Delegate per l'inserimento testo libero nelle annotazioni."""
 
-    def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:  # noqa: N802
+    def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:
         """Crea l'editor per la colonna Annotazioni."""
         editor = QLineEdit(parent)
         return editor
 
-    def setEditorData(self, editor: QWidget | None, index: QModelIndex):  # noqa: ANN201, N802
+    def setEditorData(self, editor: QWidget | None, index: QModelIndex):  # noqa: ANN201
         """Popola l'editor con i dati correnti."""
         value = index.data(Qt.ItemDataRole.EditRole)
         if isinstance(editor, QLineEdit):
             editor.setText(value)
 
-    def setModelData(self, editor: QWidget | None, model: object, index: QModelIndex):  # noqa: ANN201, N802
+    def setModelData(self, editor: QWidget | None, model: object, index: QModelIndex):  # noqa: ANN201
         """Salva i dati dall'editor al modello."""
         if isinstance(editor, QLineEdit):
             value = editor.text()

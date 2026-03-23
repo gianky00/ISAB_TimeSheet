@@ -4,7 +4,7 @@ from src.gui.panels import BaseBotPanel, BotWorker
 
 
 class TestGUIWorkerAndBase:
-    def test_bot_worker_run(self, qtbot):  # noqa: ANN001
+    def test_bot_worker_run(self, qtbot):
         mock_bot = MagicMock()
         mock_bot.execute.return_value = True
         worker = BotWorker(mock_bot, {"data": 1})
@@ -16,7 +16,7 @@ class TestGUIWorkerAndBase:
         assert blocker.args[0] is True
         mock_bot.execute.assert_called_once()
 
-    def test_bot_worker_exception(self, qtbot):  # noqa: ANN001
+    def test_bot_worker_exception(self, qtbot):
         mock_bot = MagicMock()
         mock_bot.execute.side_effect = Exception("Fatal")
         worker = BotWorker(mock_bot, {})
@@ -26,7 +26,7 @@ class TestGUIWorkerAndBase:
 
         assert blocker.args[0] is False
 
-    def test_base_bot_panel_status_updates(self, qapp, qtbot):  # noqa: ANN001
+    def test_base_bot_panel_status_updates(self, qapp, qtbot):
         panel = BaseBotPanel("test_id", "TestBot", "Desc")
         qtbot.addWidget(panel)
 
@@ -37,7 +37,7 @@ class TestGUIWorkerAndBase:
         panel._update_status("running", "In corso...")
         mock_signal.emit.assert_called_with("running", "In corso...")
 
-    def test_base_bot_panel_rows_management(self, qapp, qtbot):  # noqa: ANN001
+    def test_base_bot_panel_rows_management(self, qapp, qtbot):
         panel = BaseBotPanel("test_id", "TestBot", "Desc")
         qtbot.addWidget(panel)
         panel.data_table = MagicMock()

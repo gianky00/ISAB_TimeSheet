@@ -10,7 +10,7 @@ from src.gui.widgets.quick_actions import QuickActions
 
 
 class TestDashboardComponents:
-    def test_quick_actions_signals(self, qapp, qtbot):  # noqa: ANN001
+    def test_quick_actions_signals(self, qapp, qtbot):
         widget = QuickActions()
         qtbot.addWidget(widget)
         with qtbot.waitSignal(widget.action_clicked, timeout=1000) as blocker:
@@ -25,7 +25,7 @@ class TestDashboardComponents:
             qtbot.mouseClick(tgt_btn, Qt.MouseButton.LeftButton)
         assert blocker.args is not None
 
-    def test_activity_feed_refresh(self, qapp, mocker):  # noqa: ANN001
+    def test_activity_feed_refresh(self, qapp, mocker):
         # Patch corretta della fonte del singleton
         mock_audit = mocker.patch("src.core.audit_manager.AuditManager.instance")
         mock_audit.return_value.get_logs.return_value = [
@@ -39,7 +39,7 @@ class TestDashboardComponents:
 
 class TestDashboardPanelFull:
     @pytest.fixture
-    def mock_dashboard_deps(self, mocker):  # noqa: ANN001
+    def mock_dashboard_deps(self, mocker):
         # Patch centralizzato della configurazione
         mocker.patch("src.core.config_manager.get_config_value", return_value={})
         mocker.patch("src.core.audit_manager.AuditManager.get_logs", return_value=[])
@@ -55,7 +55,7 @@ class TestDashboardPanelFull:
     @pytest.mark.skip(
         reason="Crash nativo in ambiente headless Windows dovuto a rendering complesso (Don Ciro/Weather)."
     )
-    def test_dashboard_initialization(self, qapp, mock_dashboard_deps, qtbot):  # noqa: ANN001
+    def test_dashboard_initialization(self, qapp, mock_dashboard_deps, qtbot):
         """Verifica che la dashboard si inizializzi senza crash."""
         panel = DashboardPanel()
         qtbot.addWidget(panel)
@@ -65,7 +65,7 @@ class TestDashboardPanelFull:
     @pytest.mark.skip(
         reason="Crash nativo in ambiente headless Windows dovuto a rendering complesso (Don Ciro/Weather)."
     )
-    def test_dashboard_quick_action_integration(self, qapp, mock_dashboard_deps, qtbot, mocker):  # noqa: ANN001
+    def test_dashboard_quick_action_integration(self, qapp, mock_dashboard_deps, qtbot, mocker):
         """Verifica l'integrazione della navigazione tramite Quick Action."""
         panel = DashboardPanel()
         mw_mock = MagicMock()

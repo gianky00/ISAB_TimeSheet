@@ -8,7 +8,7 @@ class TestTimeManager:
     """Test coverage for src/core/time_manager.py"""
 
     @patch("src.core.time_manager.requests.head")
-    def test_get_network_time_success(self, mock_head):  # noqa: ANN001
+    def test_get_network_time_success(self, mock_head):
         # Mock successful response
         mock_resp = Mock()
         mock_resp.headers = {"Date": "Wed, 21 Oct 2015 07:28:00 GMT"}
@@ -16,14 +16,14 @@ class TestTimeManager:
 
         dt = get_network_time()
         assert dt is not None
-        assert dt.year == 2015  # noqa: PLR2004
-        assert dt.month == 10  # noqa: PLR2004
-        assert dt.day == 21  # noqa: PLR2004
-        assert dt.hour == 7  # noqa: PLR2004
+        assert dt.year == 2015
+        assert dt.month == 10
+        assert dt.day == 21
+        assert dt.hour == 7
         assert dt.tzinfo == UTC
 
     @patch("src.core.time_manager.requests.head")
-    def test_get_network_time_failure_no_header(self, mock_head):  # noqa: ANN001
+    def test_get_network_time_failure_no_header(self, mock_head):
         # Mock response without Date header
         mock_resp = Mock()
         mock_resp.headers = {}
@@ -33,7 +33,7 @@ class TestTimeManager:
         assert dt is None
 
     @patch("src.core.time_manager.requests.head")
-    def test_get_network_time_exception(self, mock_head):  # noqa: ANN001
+    def test_get_network_time_exception(self, mock_head):
         # Mock connection error
         mock_head.side_effect = Exception("Connection Refused")
 
@@ -41,7 +41,7 @@ class TestTimeManager:
         assert dt is None
 
     @patch("src.core.time_manager.get_network_time")
-    def test_get_trusted_time_network(self, mock_get_net):  # noqa: ANN001
+    def test_get_trusted_time_network(self, mock_get_net):
         fake_time = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
         mock_get_net.return_value = fake_time
 
@@ -50,7 +50,7 @@ class TestTimeManager:
         assert trusted is True
 
     @patch("src.core.time_manager.get_network_time")
-    def test_get_trusted_time_fallback(self, mock_get_net):  # noqa: ANN001
+    def test_get_trusted_time_fallback(self, mock_get_net):
         mock_get_net.return_value = None
 
         dt, trusted = get_trusted_time()

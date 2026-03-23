@@ -5,7 +5,7 @@ from pathlib import Path
 from src.core.data_synchronizer import DataSynchronizer
 
 
-def setup_test_db(db_path, num_rows=10000):  # noqa: ANN001
+def setup_test_db(db_path, num_rows=10000):
     if db_path.exists():
         db_path.unlink()
 

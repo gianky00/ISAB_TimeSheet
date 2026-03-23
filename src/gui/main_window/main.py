@@ -313,7 +313,7 @@ class MainWindow(QMainWindow):
         """Chiude l'applicazione in modo sicuro."""
         self.app_event_handler.quit_application()
 
-    def closeEvent(self, event: Any) -> None:  # noqa: ANN401, N802
+    def closeEvent(self, event: Any) -> None:  # noqa: ANN401
         """Gestisce l'evento di chiusura della finestra."""
         self.app_event_handler.handle_close_event(event)
 

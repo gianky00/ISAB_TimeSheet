@@ -23,25 +23,25 @@ class TestValidatorsAndParsingDeep:
     def test_parse_currency_comprehensive(self):
         """Test: Parsing valuta con vari separatori e simboli (IT, US, Misto)."""
         # Standard IT
-        assert parse_currency("1.234,56 €") == 1234.56  # noqa: PLR2004
-        assert parse_currency("50,00") == 50.0  # noqa: PLR2004
+        assert parse_currency("1.234,56 €") == 1234.56
+        assert parse_currency("50,00") == 50.0
 
         # Standard US/International
-        assert parse_currency("1,234.56 $") == 1234.56  # noqa: PLR2004
-        assert parse_currency("50.00") == 50.0  # noqa: PLR2004
+        assert parse_currency("1,234.56 $") == 1234.56
+        assert parse_currency("50.00") == 50.0
 
         # Segni negativi (anche staccati)
-        assert parse_currency("  - 10,00 ") == -10.0  # noqa: PLR2004
-        assert parse_currency("10,00 -") == -10.0  # noqa: PLR2004
+        assert parse_currency("  - 10,00 ") == -10.0
+        assert parse_currency("10,00 -") == -10.0
 
         # Separatori multipli (migliaia)
-        assert parse_currency("1.234.567,89") == 1234567.89  # noqa: PLR2004
-        assert parse_currency("1,234,567.89") == 1234567.89  # noqa: PLR2004
+        assert parse_currency("1.234.567,89") == 1234567.89
+        assert parse_currency("1,234,567.89") == 1234567.89
 
         # Casi ambigui (punto singolo)
         # Se ha esattamente 3 cifre dopo, la logica italiana lo tratta come migliaia (1.234 -> 1234.0)
-        assert parse_currency("1.234") == 1234.0  # noqa: PLR2004
-        assert parse_currency("1.23") == 1.23  # noqa: PLR2004
+        assert parse_currency("1.234") == 1234.0
+        assert parse_currency("1.23") == 1.23
 
         # Null/Invalid
         assert parse_currency(None) == 0.0

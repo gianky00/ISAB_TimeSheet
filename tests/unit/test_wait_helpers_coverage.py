@@ -12,22 +12,22 @@ from src.bots.base.wait_helpers import poll_for_file, poll_for_new_file
 
 
 class AutoIncrementalTime:
-    def __init__(self, start=0, step=1):  # noqa: ANN001, ANN204
+    def __init__(self, start=0, step=1):
         self.current = start
         self.step = step
 
-    def __call__(self):  # noqa: ANN204
+    def __call__(self):
         self.current += self.step
         return self.current
 
 
 class TestWaitHelpersCoverageFinal:
     @pytest.fixture
-    def fs_setup(self, fs):  # noqa: ANN001
+    def fs_setup(self, fs):
         fs.create_dir("/downloads")
         return fs
 
-    def test_poll_for_file_with_incremental_time(self, fs_setup):  # noqa: ANN001
+    def test_poll_for_file_with_incremental_time(self, fs_setup):
         dir_path = Path("/downloads")
         target_file = dir_path / "report.xlsx"
 
@@ -38,7 +38,7 @@ class TestWaitHelpersCoverageFinal:
                 res = poll_for_file(dir_path, pattern="*.xlsx", timeout=100)
                 assert res is not None
 
-    def test_poll_for_new_file_update_incremental(self, fs_setup):  # noqa: ANN001
+    def test_poll_for_new_file_update_incremental(self, fs_setup):
         import os  # noqa: PLC0415
 
         dir_path = Path("/downloads")
@@ -52,7 +52,7 @@ class TestWaitHelpersCoverageFinal:
         # Mock tempo incrementale
         timer = AutoIncrementalTime(start=1000)
 
-        def update_file_on_sleep(*args, **kwargs):  # noqa: ANN002, ANN003, ANN202
+        def update_file_on_sleep(*args, **kwargs):
             os.utime(str(f1), (5000, 5000))
 
         with patch("time.time", side_effect=timer):

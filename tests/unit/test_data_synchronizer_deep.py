@@ -7,7 +7,7 @@ from src.core.database.migrations.contabilita import mig_contabilita_v1
 
 class TestDataSynchronizerDeep:
     @pytest.fixture
-    def db_path(self, tmp_path):  # noqa: ANN001
+    def db_path(self, tmp_path):
         p = tmp_path / "test_sync.db"
         # Inizializza schema minimo per il test
         manager = DatabaseManager()
@@ -15,7 +15,7 @@ class TestDataSynchronizerDeep:
             mig_contabilita_v1(conn)
         return p
 
-    def test_sync_contabilita_dati_incremental(self, db_path):  # noqa: ANN001
+    def test_sync_contabilita_dati_incremental(self, db_path):
         """Verifica il calcolo corretto di aggiunte e rimozioni in contabilità."""
         # 1. Popolamento iniziale (Stato A)
         initial_data = [
@@ -82,15 +82,15 @@ class TestDataSynchronizerDeep:
 
         added, removed = DataSynchronizer.sync_contabilita_dati(db_path, new_data, [2024])
 
-        assert added == 2  # noqa: PLR2004
+        assert added == 2
         assert removed == 1
 
         # Verifica persistenza
         with DatabaseManager().get_connection(db_path) as conn:
             count = conn.execute("SELECT COUNT(*) FROM contabilita WHERE year = 2024").fetchone()[0]
-            assert count == 2  # noqa: PLR2004
+            assert count == 2
 
-    def test_sync_giornaliere_by_year_isolation(self, db_path):  # noqa: ANN001
+    def test_sync_giornaliere_by_year_isolation(self, db_path):
         """Verifica che la sincronizzazione per anno non influenzi altri anni."""
         # Setup: dati per 2023 e 2024
         data_2023 = [
@@ -157,7 +157,7 @@ class TestDataSynchronizerDeep:
             count_23 = conn.execute("SELECT COUNT(*) FROM giornaliere WHERE year = 2023").fetchone()[0]
             assert count_23 == 1
 
-    def test_sync_generic_scarico_ore(self, db_path):  # noqa: ANN001
+    def test_sync_generic_scarico_ore(self, db_path):
         """Verifica la sincronizzazione totale della tabella scarico ore."""
         # 11 colonne + styles = 12 totali come da SCARICO_ORE_COLS
         initial_row = (
@@ -217,9 +217,9 @@ class TestDataSynchronizerDeep:
 
         with DatabaseManager().get_connection(db_path) as conn:
             count = conn.execute("SELECT COUNT(*) FROM scarico_ore").fetchone()[0]
-            assert count == 2  # noqa: PLR2004
+            assert count == 2
 
-    def test_normalization_strip_logic(self, db_path):  # noqa: ANN001
+    def test_normalization_strip_logic(self, db_path):
         """Verifica che la sincronizzazione faccia lo strip dei valori per il confronto."""
         # Dato nel DB con spazi
         initial = [

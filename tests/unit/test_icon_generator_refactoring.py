@@ -12,7 +12,7 @@ sys.path.append(str(script_path))
 from generate_icons import generate_icons  # noqa: E402
 
 
-def test_icon_generation_output(tmp_path, monkeypatch):  # noqa: ANN001
+def test_icon_generation_output(tmp_path, monkeypatch):
     """Test that the icon files are physically created in the assets directory."""
     # Mock get_assets_path to use tmp_path
     monkeypatch.setattr("generate_icons.get_assets_path", lambda: tmp_path)

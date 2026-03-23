@@ -45,7 +45,7 @@ class DetachedPanelWindow(QMainWindow):
         self.setCentralWidget(self.panel)
         self.panel.show()
 
-    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         """
         Intercetta la chiusura della finestra per avviare il riaggancio.
         """

@@ -22,13 +22,13 @@ class TestConfigManagerAdvanced:
         "src.core.config_manager.os.environ",
         {"SYNCROJOB_BROWSER_HEADLESS": "true", "SYNCROJOB_BROWSER_TIMEOUT": "60"},
     )
-    def test_load_base_config_env_override(self, mock_file):  # noqa: ANN001
+    def test_load_base_config_env_override(self, mock_file):
         mock_file.exists.return_value = False
         config = _load_base_config()
         assert config["browser_headless"] is True
-        assert config["browser_timeout"] == 60  # noqa: PLR2004
+        assert config["browser_timeout"] == 60
 
-    def test_atomic_write_json_safety(self, tmp_path):  # noqa: ANN001
+    def test_atomic_write_json_safety(self, tmp_path):
         target = tmp_path / "config.json"
         data = {"key": "val"}
 
@@ -48,7 +48,7 @@ class TestConfigManagerAdvanced:
     @patch("src.core.config.security.SecretsManager.is_available", return_value=True)
     @patch("src.core.config.security.SecretsManager.store_credential")
     @patch("src.core.config_manager._atomic_write_json")
-    def test_save_config_credential_protection(self, mock_atomic, mock_store, mock_is_avail, mock_file):  # noqa: ANN001
+    def test_save_config_credential_protection(self, mock_atomic, mock_store, mock_is_avail, mock_file):
         config = {"accounts": [{"username": "user1", "password": "clear_password"}]}
         save_config(config)
 
@@ -70,10 +70,10 @@ class TestConfigManagerAdvanced:
         assert legacy["accounts"]["ISAB"]["username"] == "old_user"
 
     @patch("src.core.config_manager.CONFIG_FILE")
-    def test_load_base_config_malformed_json_fallback(self, mock_file):  # noqa: ANN001
+    def test_load_base_config_malformed_json_fallback(self, mock_file):
         mock_file.exists.return_value = True
         mock_file.read_text.return_value = "{ incomplete json"
 
         config = _load_base_config()
         # Should return defaults due to suppress(json.JSONDecodeError)
-        assert config["browser_timeout"] == 30  # noqa: PLR2004
+        assert config["browser_timeout"] == 30

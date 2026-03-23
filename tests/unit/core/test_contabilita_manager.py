@@ -6,7 +6,7 @@ from src.core.contabilita_manager import ContabilitaManager
 class TestContabilitaManager:
     @patch("src.core.contabilita_manager.ExcelImporter")
     @patch("src.core.contabilita_manager.DataSynchronizer")
-    def test_import_data_from_excel_success(self, mock_sync, mock_importer):  # noqa: ANN001
+    def test_import_data_from_excel_success(self, mock_sync, mock_importer):
         """Verifica la delega corretta per l'importazione dei dati contabili."""
         mock_importer.import_contabilita_dati.return_value = (True, "OK", [("row",)], [2024])
         mock_sync.sync_contabilita_dati.return_value = (1, 0)
@@ -20,7 +20,7 @@ class TestContabilitaManager:
     @patch("src.core.contabilita_manager.db_manager")
     @patch("src.core.contabilita_manager.ExcelImporter")
     @patch("src.core.contabilita_manager.DataSynchronizer")
-    def test_import_giornaliere_full_workflow(self, mock_sync, mock_importer, mock_db, tmp_path):  # noqa: ANN001
+    def test_import_giornaliere_full_workflow(self, mock_sync, mock_importer, mock_db, tmp_path):
         """Testa il ciclo completo di import giornaliere con preparazione lookup map."""
         # 1. Setup root path
         root = tmp_path / "Giornaliere"
@@ -38,14 +38,14 @@ class TestContabilitaManager:
         success, msg, added, _removed = ContabilitaManager.import_giornaliere(str(root))
 
         assert success is True
-        assert added == 5  # noqa: PLR2004
+        assert added == 5
         assert "2025" in msg
         # Verifica che il lookup_map sia stato passato all'importer
         args = mock_importer.import_giornaliere.call_args[0]
         assert args[1] == {"P1": "ODC1"}
 
     @patch("src.core.contabilita_manager.db_manager")
-    def test_update_certificato_field_logic(self, mock_db):  # noqa: ANN001
+    def test_update_certificato_field_logic(self, mock_db):
         """Verifica la validazione e l'esecuzione dell'update certificato."""
         # Caso valido
         res = ContabilitaManager.update_certificato_field(1, "annotazioni", "Nuova Nota")
@@ -57,7 +57,7 @@ class TestContabilitaManager:
         assert res_invalid is False
 
     @patch("src.core.contabilita_manager.ContabilitaSearch")
-    def test_search_oda_delegation(self, mock_search):  # noqa: ANN001
+    def test_search_oda_delegation(self, mock_search):
         mock_search.search_oda.return_value = []
         ContabilitaManager.search_oda("query")
         mock_search.search_oda.assert_called_once()

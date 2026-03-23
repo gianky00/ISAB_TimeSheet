@@ -102,7 +102,7 @@ class ParticleBackground(QWidget):
         for p in self.particles:
             p.apply_force(dx, dy)
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
         self._bg_cache = None
         self._circuit_cache = None
         super().resizeEvent(event)
@@ -180,7 +180,7 @@ class ParticleBackground(QWidget):
                         p.drawEllipse(QPoint(x, y), 2, 2)
         p.end()
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         if event is None or self.width() <= 0 or self.height() <= 0:
             return
         painter = QPainter(self)

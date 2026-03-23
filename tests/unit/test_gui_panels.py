@@ -10,10 +10,10 @@ from src.gui.panels.settings.main_panel import SettingsPanel
 
 class TestGUIPanels:
     @pytest.fixture
-    def app(self, qapp):  # noqa: ANN001
+    def app(self, qapp):
         return qapp
 
-    def test_scarica_ts_panel_init(self, app, qtbot):  # noqa: ANN001
+    def test_scarica_ts_panel_init(self, app, qtbot):
         panel = ScaricaTSPanel()
         qtbot.addWidget(panel)
         QApplication.processEvents()
@@ -29,7 +29,7 @@ class TestGUIPanels:
 
     @patch("src.gui.panels.scarico_ts.config_manager.set_config_value")
     @patch("src.gui.panels.scarico_ts.config_manager.load_config")
-    def test_scarica_ts_panel_save(self, mock_load, mock_save, app, qtbot):  # noqa: ANN001
+    def test_scarica_ts_panel_save(self, mock_load, mock_save, app, qtbot):
         mock_load.return_value = {}
         panel = ScaricaTSPanel()
         qtbot.addWidget(panel)
@@ -41,7 +41,7 @@ class TestGUIPanels:
 
     @pytest.mark.skip(reason="Incompatibilità mock strutturale in ambiente headless Windows V9.0.")
     @patch("src.gui.panels.settings.main_panel.config_manager.load_config")
-    def test_settings_panel_init(self, mock_load, app, qtbot):  # noqa: ANN001
+    def test_settings_panel_init(self, mock_load, app, qtbot):
         test_config = {
             "browser_headless": True,
             "browser_timeout": 60,
@@ -65,7 +65,7 @@ class TestGUIPanels:
         lists_page = config_tab.lists_page
 
         assert gen_page.headless_check.isChecked() is True
-        assert gen_page.timeout_spin.value() == 60  # noqa: PLR2004
+        assert gen_page.timeout_spin.value() == 60
 
         # Verifica caricamento account nel widget modulare
         acc_widget = lists_page.account_section
@@ -74,7 +74,7 @@ class TestGUIPanels:
     @pytest.mark.skip(reason="Incompatibilità mock strutturale in ambiente headless Windows V9.0.")
     @patch("src.gui.panels.settings.main_panel.config_manager.save_config")
     @patch("src.gui.panels.settings.main_panel.config_manager.load_config")
-    def test_settings_panel_save(self, mock_load, mock_save, app, qtbot):  # noqa: ANN001
+    def test_settings_panel_save(self, mock_load, mock_save, app, qtbot):
         mock_load.return_value = {}
         panel = SettingsPanel()
         qtbot.addWidget(panel)
@@ -84,7 +84,7 @@ class TestGUIPanels:
         panel.save_settings()
         assert mock_save.called
 
-    def test_carico_ts_panel_structure(self, app, qtbot):  # noqa: ANN001
+    def test_carico_ts_panel_structure(self, app, qtbot):
         panel = CaricoTSPanel()
         qtbot.addWidget(panel)
         QApplication.processEvents()

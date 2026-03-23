@@ -9,7 +9,7 @@ from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
 
 
 class TestCoreHelpersBoost:
-    def test_sortable_item_logic(self, qapp):  # noqa: ANN001
+    def test_sortable_item_logic(self, qapp):
         tw = QTreeWidget()
         item1 = SortableTreeWidgetItem(["01/01/2024"])
         item2 = SortableTreeWidgetItem(["02/01/2024"])
@@ -17,7 +17,7 @@ class TestCoreHelpersBoost:
         tw.addTopLevelItem(item2)
         assert item1.__lt__(item2) is True
 
-    def test_data_synchronizer_sync_contabilita(self, tmp_path):  # noqa: ANN001
+    def test_data_synchronizer_sync_contabilita(self, tmp_path):
         db_path = tmp_path / "test.db"
         # Init DB with table
         with sqlite3.connect(db_path) as conn:
@@ -33,6 +33,6 @@ class TestCoreHelpersBoost:
             assert added == 1
             assert removed == 0
 
-    def test_data_synchronizer_empty(self, tmp_path):  # noqa: ANN001
+    def test_data_synchronizer_empty(self, tmp_path):
         res = DataSynchronizer.sync_contabilita_dati(Path("nonexistent"), [], [])
         assert res == (0, 0)

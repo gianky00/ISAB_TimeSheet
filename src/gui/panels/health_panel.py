@@ -66,7 +66,7 @@ class HealthScoreBadge(QWidget):
             return "ATTENZIONE RICHIESTA"
         return "STATO CRITICO"
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         """Esegue il rendering del badge circolare."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

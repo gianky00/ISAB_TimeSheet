@@ -6,7 +6,7 @@ from src.core import config_manager
 
 
 @pytest.fixture(autouse=True)
-def reset_config_state(tmp_path):  # noqa: ANN001
+def reset_config_state(tmp_path):
     """Isolamento totale: reset cache e path temporanei."""
     config_manager._config_cache = None
     config_path = tmp_path / "config.json"
@@ -25,21 +25,21 @@ def reset_config_state(tmp_path):  # noqa: ANN001
 
 
 class TestConfigManager:
-    def test_load_default_config(self, reset_config_state):  # noqa: ANN001
+    def test_load_default_config(self, reset_config_state):
         config = config_manager.load_config()
-        assert config["browser_timeout"] == 30  # noqa: PLR2004
+        assert config["browser_timeout"] == 30
         assert config["accounts"] == []
 
-    def test_save_load_config(self, reset_config_state):  # noqa: ANN001
+    def test_save_load_config(self, reset_config_state):
         config = config_manager.load_config()
         config["browser_timeout"] = 99
         config_manager.save_config(config)
 
         config_manager._config_cache = None
         new_config = config_manager.load_config()
-        assert new_config["browser_timeout"] == 99  # noqa: PLR2004
+        assert new_config["browser_timeout"] == 99
 
-    def test_add_remove_account(self, reset_config_state):  # noqa: ANN001
+    def test_add_remove_account(self, reset_config_state):
         # Clear any residue
         config_manager._config_cache = None
 
@@ -47,7 +47,7 @@ class TestConfigManager:
         config_manager.add_account("user2", "pass2", is_default=False)
 
         accounts = config_manager.get_accounts()
-        assert len(accounts) == 2  # noqa: PLR2004
+        assert len(accounts) == 2
 
         config_manager.set_default_account("user2")
         assert config_manager.get_default_account()["username"] == "user2"
@@ -55,10 +55,10 @@ class TestConfigManager:
         config_manager.remove_account("user1")
         assert len(config_manager.get_accounts()) == 1
 
-    def test_get_download_path(self, reset_config_state, tmp_path):  # noqa: ANN001
+    def test_get_download_path(self, reset_config_state, tmp_path):
         config_manager.set_config_value("download_path", str(tmp_path))
         assert config_manager.get_download_path() == str(tmp_path)
 
-    def test_get_data_path(self, reset_config_state, tmp_path):  # noqa: ANN001
+    def test_get_data_path(self, reset_config_state, tmp_path):
         path = config_manager.get_data_path()
         assert str(tmp_path) in path

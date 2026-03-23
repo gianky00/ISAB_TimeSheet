@@ -9,7 +9,7 @@ class TestSearchService:
     @patch("src.core.search.search_service.AuditManager")
     @patch("src.core.search.search_service.db_manager")
     @patch("src.core.search.search_service.CONFIG_DIR")
-    def test_search_all_success(self, mock_config, mock_db, mock_audit, mock_timbrature, mock_contabilita):  # noqa: ANN001
+    def test_search_all_success(self, mock_config, mock_db, mock_audit, mock_timbrature, mock_contabilita):
         """Test di successo su tutte le categorie di ricerca."""
         # Setup Mocks
         mock_contabilita.search_oda.return_value = [{"codice_oda": "123", "descrizione": "test"}]
@@ -48,7 +48,7 @@ class TestSearchService:
 
     @patch("src.core.search.search_service.db_manager")
     @patch("src.core.search.search_service.CONFIG_DIR")
-    def test_search_storico_oda_no_file(self, mock_config, mock_db):  # noqa: ANN001
+    def test_search_storico_oda_no_file(self, mock_config, mock_db):
         """Verifica comportamento se il file database non esiste."""
         mock_config.__truediv__.return_value.__truediv__.return_value.exists.return_value = False
         results = SearchService._search_storico_oda("query", 10)
@@ -57,7 +57,7 @@ class TestSearchService:
 
     @patch("src.core.search.search_service.db_manager")
     @patch("src.core.search.search_service.CONFIG_DIR")
-    def test_search_pdl_query_logic(self, mock_config, mock_db):  # noqa: ANN001
+    def test_search_pdl_query_logic(self, mock_config, mock_db):
         """Verifica la costruzione della query SQL per PDL."""
         mock_config.__truediv__.return_value.__truediv__.return_value.exists.return_value = True
         mock_conn = MagicMock()
@@ -75,7 +75,7 @@ class TestSearchService:
         results = SearchService._search_pdl("123", 5)
 
         assert len(results) == 1
-        assert results[0]["odl"] == 123  # noqa: PLR2004
+        assert results[0]["odl"] == 123
         assert mock_cursor.execute.called
         # Verifica che il pattern LIKE sia stato passato correttamente
         query_args = mock_cursor.execute.call_args[0][1]

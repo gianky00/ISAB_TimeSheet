@@ -8,7 +8,7 @@ from src.gui.panels.contabilita_panel import ContabilitaPanel
 
 class TestContabilitaPanelRefactoring:
     @pytest.fixture
-    def panel(self, qtbot):  # noqa: ANN001
+    def panel(self, qtbot):
         with (
             patch("src.gui.panels.contabilita_panel.ContabilitaPanel.refresh_tabs"),
             patch("src.gui.panels.contabilita_panel.ContabilitaPanel._connect_selection_signal"),
@@ -21,7 +21,7 @@ class TestContabilitaPanelRefactoring:
     @pytest.mark.skip(
         reason="Incompatibilità mock in ambiente headless Windows. Logica da spostare in utility."
     )
-    def test_update_selection_total_table(self, panel, qtbot):  # noqa: ANN001
+    def test_update_selection_total_table(self, panel, qtbot):
         """Test calculation of totals in a QTableWidget."""
         table = QTableWidget(3, 3)
         table.setItem(0, 0, QTableWidgetItem("10,5"))
@@ -49,7 +49,7 @@ class TestContabilitaPanelRefactoring:
     @pytest.mark.skip(
         reason="Incompatibilità mock in ambiente headless Windows. Logica da spostare in utility."
     )
-    def test_update_selection_total_tree(self, panel):  # noqa: ANN001
+    def test_update_selection_total_tree(self, panel):
         """Test selection count in a QTreeWidget."""
         from PyQt6.QtWidgets import QTreeWidget, QTreeWidgetItem  # noqa: PLC0415
 

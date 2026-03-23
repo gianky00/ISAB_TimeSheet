@@ -8,7 +8,7 @@ from src.core.stats_manager import StatsManager
 
 
 @pytest.fixture
-def temp_audit_db(tmp_path, mocker):  # noqa: ANN001
+def temp_audit_db(tmp_path, mocker):
     db_file = tmp_path / "audit_log.db"
     # Patch the real DB_PATH in AuditDatabase
     mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_file)
@@ -32,7 +32,7 @@ def mock_config_stats():
 
 
 class TestAuditManager:
-    def test_log_action(self, temp_audit_db):  # noqa: ANN001
+    def test_log_action(self, temp_audit_db):
         manager = temp_audit_db
         manager.log_action("Test Action", category="test", entity="user", params={"p": 1})
         manager._log_queue.join()
@@ -43,7 +43,7 @@ class TestAuditManager:
         assert logs[0]["action"] == "Test Action"
         assert logs[0]["category"] == "test"
 
-    def test_integrity_check(self, temp_audit_db):  # noqa: ANN001
+    def test_integrity_check(self, temp_audit_db):
         manager = temp_audit_db
         manager.log_action("A1")
         manager.log_action("A2")
@@ -60,7 +60,7 @@ class TestAuditManager:
 
 
 class TestStatsManager:
-    def test_increment_usage(self, mock_config_stats):  # noqa: ANN001
+    def test_increment_usage(self, mock_config_stats):
         manager, mock_cfg = mock_config_stats
         manager.increment_usage("bot_1")
         manager._save_queue.join()
@@ -69,7 +69,7 @@ class TestStatsManager:
         assert stats["bot_1"]["runs"] == 1
         mock_cfg.set_config_value.assert_called()
 
-    def test_increment_error(self, mock_config_stats):  # noqa: ANN001
+    def test_increment_error(self, mock_config_stats):
         manager, _mock_cfg = mock_config_stats
         manager.increment_error("bot_1")
         manager._save_queue.join()

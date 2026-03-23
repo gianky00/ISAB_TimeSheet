@@ -11,12 +11,12 @@ from src.utils.security import password_manager
 
 class TestDatabaseSecurityStress:
     @pytest.fixture
-    def db_mgr(self, tmp_path, mocker):  # noqa: ANN001
+    def db_mgr(self, tmp_path, mocker):
         # Patch CONFIG_DIR per usare tmp_path
         mocker.patch("src.core.database.manager.CONFIG_DIR", tmp_path)
         return DatabaseManager()
 
-    def test_database_wal_mode_concurrency(self, db_mgr, tmp_path):  # noqa: ANN001
+    def test_database_wal_mode_concurrency(self, db_mgr, tmp_path):
         """Verifica la resilienza della scrittura concorrente in WAL mode."""
         db_path = tmp_path / "stress_test.db"
 
@@ -26,14 +26,14 @@ class TestDatabaseSecurityStress:
 
         errors = []
 
-        def writer_task():  # noqa: ANN202
+        def writer_task():
             try:
                 for i in range(20):
                     db_mgr.execute_query(db_path, "INSERT INTO test (val) VALUES (?)", (f"val_{i}",))
             except Exception as e:
                 errors.append(f"Writer error: {e}")
 
-        def reader_task():  # noqa: ANN202
+        def reader_task():
             try:
                 for _ in range(50):
                     db_mgr.execute_query(db_path, "SELECT COUNT(*) FROM test")
@@ -49,9 +49,9 @@ class TestDatabaseSecurityStress:
 
         assert len(errors) == 0, f"Rilevati errori di concorrenza: {errors}"
         res = db_mgr.execute_query(db_path, "SELECT COUNT(*) FROM test")
-        assert res[0][0] == 21  # noqa: PLR2004
+        assert res[0][0] == 21
 
-    def test_database_retry_on_locked(self, db_mgr, tmp_path):  # noqa: ANN001
+    def test_database_retry_on_locked(self, db_mgr, tmp_path):
         """Verifica che il manager gestisca il database occupato senza crashare."""
         db_path = tmp_path / "locked_real.db"
         db_mgr.execute_query(db_path, "CREATE TABLE t (id int)")
@@ -61,7 +61,7 @@ class TestDatabaseSecurityStress:
 
         errors = []
 
-        def attempt_write():  # noqa: ANN202
+        def attempt_write():
             try:
                 db_mgr.execute_query(db_path, "INSERT INTO t VALUES (1)", retry_count=5)
             except Exception as e:
@@ -77,7 +77,7 @@ class TestDatabaseSecurityStress:
 
         assert len(errors) == 0, f"Query fallita nonostante lo sblocco: {errors}"
 
-    def test_password_manager_encryption_flow(self, tmp_path, mocker):  # noqa: ANN001
+    def test_password_manager_encryption_flow(self, tmp_path, mocker):
         """Verifica il ciclo completo di sicurezza delle password."""
         mocker.patch("src.utils.security.CONFIG_DIR", tmp_path)
         plaintext = "SuperSecret123!"
@@ -88,7 +88,7 @@ class TestDatabaseSecurityStress:
         decrypted = password_manager.decrypt(encrypted)
         assert decrypted == plaintext
 
-    def test_security_key_stability(self, tmp_path, mocker):  # noqa: ANN001
+    def test_security_key_stability(self, tmp_path, mocker):
         """Verifica che la chiave sia persistente e non cambi tra i riavvii."""
         sec_dir = tmp_path / "security"
         sec_dir.mkdir(parents=True, exist_ok=True)

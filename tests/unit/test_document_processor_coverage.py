@@ -8,11 +8,11 @@ from src.utils.document_processor import DocumentProcessor
 
 class TestDocumentProcessorCoverage:
     @pytest.fixture
-    def mock_fitz(self, mocker):  # noqa: ANN001
+    def mock_fitz(self, mocker):
         """Mock della libreria PyMuPDF."""
         return mocker.patch("src.utils.document_processor.fitz")
 
-    def test_extract_text_success(self, mock_fitz):  # noqa: ANN001
+    def test_extract_text_success(self, mock_fitz):
         """Verifica estrazione testo da più pagine."""
         mock_doc = MagicMock()
         mock_doc.__enter__.return_value = mock_doc
@@ -28,7 +28,7 @@ class TestDocumentProcessorCoverage:
         text = DocumentProcessor.extract_text(Path("test.pdf"))
         assert text == "Pagina 1Pagina 2"
 
-    def test_is_pdf_searchable_true(self, mock_fitz):  # noqa: ANN001
+    def test_is_pdf_searchable_true(self, mock_fitz):
         """Verifica rilevamento PDF con testo."""
         mock_doc = MagicMock()
         mock_doc.__enter__.return_value = mock_doc
@@ -40,7 +40,7 @@ class TestDocumentProcessorCoverage:
 
         assert DocumentProcessor.is_pdf_searchable(Path("test.pdf")) is True
 
-    def test_is_pdf_searchable_false(self, mock_fitz):  # noqa: ANN001
+    def test_is_pdf_searchable_false(self, mock_fitz):
         """Verifica rilevamento PDF immagine (senza testo)."""
         mock_doc = MagicMock()
         mock_doc.__enter__.return_value = mock_doc
@@ -52,7 +52,7 @@ class TestDocumentProcessorCoverage:
 
         assert DocumentProcessor.is_pdf_searchable(Path("test.pdf")) is False
 
-    def test_merge_pdfs_logic(self, mock_fitz, mocker):  # noqa: ANN001
+    def test_merge_pdfs_logic(self, mock_fitz, mocker):
         """Verifica la sequenza di unione dei file."""
         # Mock Path.exists() e Path.stat() per simulare file esistenti
         mock_path = mocker.patch("src.utils.document_processor.Path", wraps=Path)
@@ -82,10 +82,10 @@ class TestDocumentProcessorCoverage:
         success = DocumentProcessor.merge_pdfs(paths, "out.pdf")
 
         assert success is True
-        assert mock_result_doc.insert_pdf.call_count == 2  # noqa: PLR2004
+        assert mock_result_doc.insert_pdf.call_count == 2
         mock_result_doc.save.assert_called_with("out.pdf")
 
-    def test_merge_pdfs_missing_fitz(self, mocker):  # noqa: ANN001
+    def test_merge_pdfs_missing_fitz(self, mocker):
         """Verifica gestione errore se fitz non è installato."""
         with patch("src.utils.document_processor.fitz", None):
             success = DocumentProcessor.merge_pdfs(["f1.pdf"], "out.pdf")

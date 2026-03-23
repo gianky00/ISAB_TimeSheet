@@ -200,7 +200,7 @@ class CommandPaletteDialog(QDialog):
             self.anim.finished.disconnect(self._finish_close)
         self.closed.emit()
 
-    def eventFilter(self, obj: Any | None, event: Any | None) -> bool:  # noqa: ANN401, N802
+    def eventFilter(self, obj: Any | None, event: Any | None) -> bool:  # noqa: ANN401
         """Gestisce la navigazione da tastiera (frecce, invio, esc) intercettando gli eventi della search bar."""
         if event is None:
             return False

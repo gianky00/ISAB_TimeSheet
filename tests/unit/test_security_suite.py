@@ -9,7 +9,7 @@ class TestSecuritySuite:
     """Test suite per src/utils/security.py"""
 
     @pytest.fixture(autouse=True)
-    def setup_security(self, tmp_path):  # noqa: ANN001
+    def setup_security(self, tmp_path):
         """Setup isolato."""
         # Reset Singleton
         PasswordManager._instance = None
@@ -83,7 +83,7 @@ class TestSecuritySuite:
         # Il file chiave dovrebbe essere stato sovrascritto con una chiave valida
         content = new_pm._KEY_FILE.read_bytes()
         assert content != b"TrashData"
-        assert len(content) > 30  # Fernet key length base64 encoded  # noqa: PLR2004
+        assert len(content) > 30  # Fernet key length base64 encoded
 
     def test_decrypt_error_returns_empty(self):
         """Test gestione errori decrypt."""

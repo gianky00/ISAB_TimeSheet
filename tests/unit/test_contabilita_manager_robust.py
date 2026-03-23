@@ -7,14 +7,14 @@ from src.core.contabilita_manager import ContabilitaManager
 
 class TestContabilitaManagerRobust:
     @pytest.fixture
-    def mock_db_path(self, tmp_path):  # noqa: ANN001
+    def mock_db_path(self, tmp_path):
         path = tmp_path / "contabilita.db"
         with patch("src.core.contabilita_manager.ContabilitaManager.DB_PATH", path):
             yield path
 
     @patch("src.core.contabilita_manager.ExcelImporter")
     @patch("src.core.contabilita_manager.DataSynchronizer")
-    def test_import_data_from_excel_success(self, mock_sync, mock_importer):  # noqa: ANN001
+    def test_import_data_from_excel_success(self, mock_sync, mock_importer):
         """Test importazione dati contabilità successo."""
         mock_importer.import_contabilita_dati.return_value = (
             True,
@@ -27,13 +27,13 @@ class TestContabilitaManagerRobust:
         success, _msg, added, _removed = ContabilitaManager.import_data_from_excel("file.xlsx")
 
         assert success is True
-        assert added == 10  # noqa: PLR2004
+        assert added == 10
         mock_importer.import_contabilita_dati.assert_called_with("file.xlsx", None)
         mock_sync.sync_contabilita_dati.assert_called()
 
     @patch("src.core.contabilita_manager.ExcelImporter")
     @patch("src.core.contabilita_manager.DataSynchronizer")
-    def test_import_data_from_excel_failure(self, mock_sync, mock_importer):  # noqa: ANN001
+    def test_import_data_from_excel_failure(self, mock_sync, mock_importer):
         """Test importazione dati contabilità fallimento."""
         mock_importer.import_contabilita_dati.return_value = (False, "Error", [], [])
 
@@ -46,7 +46,7 @@ class TestContabilitaManagerRobust:
     @patch("src.core.contabilita_manager.ExcelImporter")
     @patch("src.core.contabilita_manager.DataSynchronizer")
     @patch("src.core.contabilita_manager.db_manager")
-    def test_import_giornaliere_flow(self, mock_db_mgr, mock_sync, mock_importer, mock_db_path, tmp_path):  # noqa: ANN001
+    def test_import_giornaliere_flow(self, mock_db_mgr, mock_sync, mock_importer, mock_db_path, tmp_path):
         """Test flusso complesso importazione giornaliere."""
         # 1. Setup Mock DB per Lookup Map
         mock_conn = MagicMock()
@@ -73,8 +73,8 @@ class TestContabilitaManagerRobust:
         success, _msg, added, removed = ContabilitaManager.import_giornaliere(str(root_path))
 
         assert success is True
-        assert added == 5  # noqa: PLR2004
-        assert removed == 2  # noqa: PLR2004
+        assert added == 5
+        assert removed == 2
 
         # Verifica che sia stato passato il lookup map corretto
         args = mock_importer.import_giornaliere.call_args
@@ -88,7 +88,7 @@ class TestContabilitaManagerRobust:
 
     @patch("src.core.contabilita_manager.ExcelImporter")
     @patch("src.core.contabilita_manager.DataSynchronizer")
-    def test_import_scarico_ore(self, mock_sync, mock_importer):  # noqa: ANN001
+    def test_import_scarico_ore(self, mock_sync, mock_importer):
         """Test importazione scarico ore."""
         mock_importer.import_scarico_ore.return_value = (True, "OK", [("row",)])
         mock_sync.sync_scarico_ore.return_value = (100, 0)
@@ -96,11 +96,11 @@ class TestContabilitaManagerRobust:
         success, _msg, added, _removed = ContabilitaManager.import_scarico_ore("file.xlsx")
 
         assert success is True
-        assert added == 100  # noqa: PLR2004
+        assert added == 100
         mock_sync.sync_scarico_ore.assert_called()
 
     @patch("src.core.contabilita_manager.ContabilitaQueries")
-    def test_getters_delegation(self, mock_queries):  # noqa: ANN001
+    def test_getters_delegation(self, mock_queries):
         """Test delega ai metodi di query."""
         ContabilitaManager.get_available_years()
         mock_queries.get_available_years.assert_called()
@@ -109,7 +109,7 @@ class TestContabilitaManagerRobust:
         mock_queries.get_data_by_year.assert_called_with(ContabilitaManager.DB_PATH, 2024)
 
     @patch("src.core.contabilita_manager.ContabilitaSearch")
-    def test_search_delegation(self, mock_search):  # noqa: ANN001
+    def test_search_delegation(self, mock_search):
         """Test delega ricerca."""
         ContabilitaManager.search_oda("test")
         mock_search.search_oda.assert_called()
@@ -118,7 +118,7 @@ class TestContabilitaManagerRobust:
         mock_search.search_extended.assert_called()
 
     @patch("src.core.contabilita_manager.ContabilitaStats")
-    def test_stats_delegation(self, mock_stats):  # noqa: ANN001
+    def test_stats_delegation(self, mock_stats):
         """Test delega statistiche."""
         ContabilitaManager.get_year_stats(2024)
         mock_stats.get_year_stats.assert_called()

@@ -22,14 +22,14 @@ class TestTelegramManagerCoverage:
         self.service.photo_received = MagicMock()
 
     @patch("src.core.telegram.service.config_manager.load_config")
-    def test_start_service_no_token(self, mock_load):  # noqa: ANN001
+    def test_start_service_no_token(self, mock_load):
         mock_load.return_value = {"telegram_token": ""}
         self.service.start_service()
         assert self.service.log_signal.emit.called
 
     @patch("src.core.telegram.service.config_manager.load_config")
     @patch("threading.Thread")
-    def test_start_service_success(self, mock_thread, mock_load):  # noqa: ANN001
+    def test_start_service_success(self, mock_thread, mock_load):
         mock_load.return_value = {
             "telegram_token": "TEST_TOKEN",
             "telegram_chat_id": "123",
@@ -46,7 +46,7 @@ class TestTelegramManagerCoverage:
         self.service.stop_service()
         mock_thread.join.assert_called()
 
-    async def async_mock_update(self, text=None, chat_id=123, user_id=123, data=None):  # noqa: ANN001
+    async def async_mock_update(self, text=None, chat_id=123, user_id=123, data=None):
         update = MagicMock(spec=Update)
         update.effective_chat = MagicMock(spec=Chat)
         update.effective_chat.id = chat_id

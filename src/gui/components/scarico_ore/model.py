@@ -205,13 +205,13 @@ class ScaricoOreTableModel(QAbstractTableModel):
             return 0.0
         return sum(self._float_totals[i] for i in self._visible_indices)
 
-    def rowCount(self, parent: QModelIndex | None = None) -> int:  # noqa: N802
+    def rowCount(self, parent: QModelIndex | None = None) -> int:
         """Restituisce il numero di righe filtrate."""
         if parent is None:
             parent = QModelIndex()
         return self._filtered_count
 
-    def columnCount(self, parent: QModelIndex | None = None) -> int:  # noqa: N802
+    def columnCount(self, parent: QModelIndex | None = None) -> int:
         """Restituisce il numero di colonne del modello."""
         if parent is None:
             parent = QModelIndex()
@@ -268,7 +268,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._visible_indices.sort(key=get_key, reverse=reverse)
         self.layoutChanged.emit()
 
-    def headerData(  # noqa: N802
+    def headerData(
         self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
     ) -> Any:  # noqa: ANN401
         """Restituisce l'header per le colonne."""

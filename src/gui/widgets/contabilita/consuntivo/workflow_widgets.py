@@ -205,13 +205,13 @@ class WorkflowStepButton(QFrame):
         shadow.setColor(cast("QColor", s["shadow_color"]))
         self.setGraphicsEffect(shadow)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Emette il segnale di clic quando viene premuto il tasto sinistro del mouse."""
         if event and event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self._step_id)
         super().mousePressEvent(event)
 
-    def enterEvent(self, event: Any) -> None:  # noqa: ANN401, N802
+    def enterEvent(self, event: Any) -> None:  # noqa: ANN401
         """Evidenzia lo step con un'ombra più marcata al passaggio del mouse."""
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(24)
@@ -220,7 +220,7 @@ class WorkflowStepButton(QFrame):
         self.setGraphicsEffect(shadow)
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any) -> None:  # noqa: ANN401, N802
+    def leaveEvent(self, event: Any) -> None:  # noqa: ANN401
         """Ripristina lo stile originale all'uscita del mouse."""
         self._apply_style()
         super().leaveEvent(event)

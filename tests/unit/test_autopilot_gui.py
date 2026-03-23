@@ -15,7 +15,7 @@ from src.gui.widgets.autopilot.main_widget import AutopilotWidget
 
 class TestAutopilotGUI:
     @pytest.fixture(autouse=True)
-    def setup_qt(self, qtbot):  # noqa: ANN001
+    def setup_qt(self, qtbot):
         self.qtbot = qtbot
 
     @pytest.fixture
@@ -27,14 +27,14 @@ class TestAutopilotGUI:
             self.qtbot.addWidget(widget)
             return widget
 
-    def test_initial_state(self, autopilot):  # noqa: ANN001
+    def test_initial_state(self, autopilot):
         """Verifica lo stato iniziale del widget."""
         assert not autopilot.view_widget.isHidden()
         assert autopilot.config_widget.isHidden()
         # Verifica indicator LIVE
         assert autopilot.live_text.text() == "LIVE"
 
-    def test_toggle_mode(self, autopilot):  # noqa: ANN001
+    def test_toggle_mode(self, autopilot):
         """Testa il passaggio tra modalità visualizzazione e configurazione."""
         # Mock animazioni per velocità ed evitare side effects
         with patch.object(autopilot, "_animate_transition"):
@@ -49,7 +49,7 @@ class TestAutopilotGUI:
             autopilot._toggle_mode()
             assert autopilot._config_mode is False
 
-    def test_refresh_events_dynamic(self, autopilot):  # noqa: ANN001
+    def test_refresh_events_dynamic(self, autopilot):
         """Testa che le card degli eventi vengano create in base alla configurazione."""
         mock_config = {
             "timbrature_autopilot_enabled": True,
@@ -68,12 +68,12 @@ class TestAutopilotGUI:
                 if isinstance(w, AutopilotEventCard):
                     cards.append(w)
 
-            assert len(cards) == 2  # noqa: PLR2004
+            assert len(cards) == 2
             # Verifica dettagli di una card tramite attributi
             assert any("Timbrature" in c.bot_name for c in cards)
             assert any(c.target_time_str == "10:30" for c in cards)
 
-    def test_config_card_loading(self, qtbot, mocker):  # noqa: ANN001
+    def test_config_card_loading(self, qtbot, mocker):
         """Testa il caricamento dei dati in una config card."""
         # Creiamo un dizionario di configurazione ad hoc
         test_config = {
@@ -94,7 +94,7 @@ class TestAutopilotGUI:
         # Verifica time
         assert card.time_edit.time().toString("HH:mm") == "11:45"
 
-    def test_config_card_save(self, qtbot):  # noqa: ANN001
+    def test_config_card_save(self, qtbot):
         """Testa il salvataggio dei dati quando la card viene modificata."""
         with (
             patch("src.core.config_manager.load_config", return_value={}),
@@ -112,7 +112,7 @@ class TestAutopilotGUI:
             card.time_edit.setTime(new_time)
             mock_set.assert_any_call("test_bot_autopilot_time", "15:30")
 
-    def test_config_card_interval_save(self, qtbot):  # noqa: ANN001
+    def test_config_card_interval_save(self, qtbot):
         """Testa il salvataggio per la card con intervallo."""
         with (
             patch("src.core.config_manager.load_config", return_value={}),
@@ -124,7 +124,7 @@ class TestAutopilotGUI:
             card.interval_spin.setValue(10)
             mock_set.assert_any_call("report_autopilot_interval_days", 10)
 
-    def test_empty_events_placeholder(self, autopilot):  # noqa: ANN001
+    def test_empty_events_placeholder(self, autopilot):
         """Verifica il placeholder quando non ci sono bot programmati."""
         with patch("src.core.config_manager.load_config", return_value={}):
             autopilot.refresh_events()

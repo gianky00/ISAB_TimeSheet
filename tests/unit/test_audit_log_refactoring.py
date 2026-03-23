@@ -13,7 +13,7 @@ from src.gui.widgets.audit_log_widget import AuditLogWidget
 
 
 @pytest.fixture
-def audit_widget(qtbot, mocker):  # noqa: ANN001
+def audit_widget(qtbot, mocker):
     # Mock manager to avoid real DB access
     # Path is now src.gui.widgets.audit_log_widget.AuditManager
     m_manager_class = mocker.patch("src.gui.widgets.audit_log_widget.AuditManager")
@@ -74,11 +74,11 @@ def audit_widget(qtbot, mocker):  # noqa: ANN001
 
 
 @pytest.mark.skipif(os.environ.get("CI") == "true", reason="Skipping Qt heavy test in CI")
-def test_audit_refresh_population(audit_widget):  # noqa: ANN001
+def test_audit_refresh_population(audit_widget):
     """Test that logs are correctly populated in the table."""
     audit_widget.refresh()
     model = audit_widget.model
-    assert model.rowCount() == 2  # noqa: PLR2004
+    assert model.rowCount() == 2
 
     # Check first row (Action is col 2 in AuditTableModel - verify this)
     # Looking at audit_model.py or previous tests, col 5 was action.
@@ -88,7 +88,7 @@ def test_audit_refresh_population(audit_widget):  # noqa: ANN001
 
 
 @pytest.mark.skipif(os.environ.get("CI") == "true", reason="Skipping Qt heavy test in CI")
-def test_integrity_display(audit_widget, mocker):  # noqa: ANN001
+def test_integrity_display(audit_widget, mocker):
     """Test integrity label updates."""
     # Test valid
     audit_widget.manager.verify_integrity.return_value = True

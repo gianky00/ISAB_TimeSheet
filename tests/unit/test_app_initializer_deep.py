@@ -7,7 +7,7 @@ from src.gui.main_window.page_index import PageIndex
 class TestAppInitializerDeep:
     """Test approfonditi sul generatore di avvio e logiche di idempotenza."""
 
-    def test_initialize_core_idempotency(self, mocker):  # noqa: ANN001
+    def test_initialize_core_idempotency(self, mocker):
         """Verifica che chiamate successive a initialize_core non rieseguano i compiti."""
         # Reset state
         AppInitializer._core_initialized = True
@@ -20,7 +20,7 @@ class TestAppInitializerDeep:
         m_log.assert_not_called()
         m_db.assert_not_called()
 
-    def test_init_generator_full_flow(self, mocker):  # noqa: ANN001
+    def test_init_generator_full_flow(self, mocker):
         """Verifica il flusso completo del generatore di inizializzazione GUI."""
         # Mock main window and navigation controller
         mock_mw = MagicMock()
@@ -39,21 +39,21 @@ class TestAppInitializerDeep:
         # Verify yields
         assert len(results) > 0
         assert any("Dashboard" in msg for msg, prog in results)
-        assert any(prog == 100 for msg, prog in results)  # noqa: PLR2004
+        assert any(prog == 100 for msg, prog in results)
 
         # Verify that get_panel was called for the expected indices
         # We check some key indices from PageIndex
         mock_nav.get_panel.assert_any_call(PageIndex.DASHBOARD)
         mock_nav.get_panel.assert_any_call(PageIndex.SETTINGS)
 
-    def test_init_generator_panel_failure_resilience(self, mocker):  # noqa: ANN001
+    def test_init_generator_panel_failure_resilience(self, mocker):
         """Verifica che il generatore prosegua anche se un pannello crasha."""
         mock_mw = MagicMock()
         mock_nav = MagicMock()
         mock_mw.navigation_controller = mock_nav
 
         # Simulate failure for DASHBOARD
-        def side_effect(idx):  # noqa: ANN001, ANN202
+        def side_effect(idx):
             if idx == PageIndex.DASHBOARD:
                 raise Exception("Dashboard Crash")  # noqa: TRY002, TRY003
             return MagicMock()
@@ -66,6 +66,6 @@ class TestAppInitializerDeep:
         results = list(gen)
 
         # Verify we still reached the end
-        assert any(prog == 100 for msg, prog in results)  # noqa: PLR2004
+        assert any(prog == 100 for msg, prog in results)
         # Verify other panels were still attempted
         mock_nav.get_panel.assert_any_call(PageIndex.SETTINGS)

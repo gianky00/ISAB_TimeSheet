@@ -15,7 +15,7 @@ def service():
 
 class TestTelegramHandlersDeep:
     @pytest.mark.asyncio
-    async def test_db_actions_strumentale_flow(self, service):  # noqa: ANN001
+    async def test_db_actions_strumentale_flow(self, service):
         mock_query = MagicMock()
         mock_query.edit_message_text = AsyncMock()
 
@@ -41,7 +41,7 @@ class TestTelegramHandlersDeep:
             assert found_2024
 
     @pytest.mark.asyncio
-    async def test_utility_maintenance_actions(self, service):  # noqa: ANN001
+    async def test_utility_maintenance_actions(self, service):
         mock_query = MagicMock()
         mock_query.edit_message_text = AsyncMock()
 

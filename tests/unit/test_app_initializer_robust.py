@@ -23,7 +23,7 @@ class TestAppInitializerRobust:
     @patch("src.core.database.db_manager.init_db")
     @patch("src.core.license_validator.get_detailed_license_status")
     @patch("src.core.license_updater.run_update")
-    def test_initialize_core_success(self, mock_update, mock_status, mock_db, mock_log):  # noqa: ANN001
+    def test_initialize_core_success(self, mock_update, mock_status, mock_db, mock_log):
         """Test inizializzazione core completa con successo."""
         from src.core.license_validator import LicenseStatus  # noqa: PLC0415
 
@@ -43,7 +43,7 @@ class TestAppInitializerRobust:
     @patch("src.core.database.db_manager.init_db")
     @patch("src.core.license_validator.get_detailed_license_status")
     @patch("src.core.license_updater.run_update")
-    def test_initialize_core_license_invalid(self, mock_update, mock_status, mock_db, mock_log):  # noqa: ANN001
+    def test_initialize_core_license_invalid(self, mock_update, mock_status, mock_db, mock_log):
         """Test blocco inizializzazione se licenza invalida."""
         from src.core.license_validator import LicenseStatus  # noqa: PLC0415
 
@@ -59,7 +59,7 @@ class TestAppInitializerRobust:
     @patch("src.core.app_initializer.logger")
     @patch("src.core.database.db_manager.init_db")
     @patch("src.core.license_updater.run_update")
-    def test_initialize_core_failure(self, mock_update, mock_db_init, mock_logger):  # noqa: ANN001
+    def test_initialize_core_failure(self, mock_update, mock_db_init, mock_logger):
         """Test gestione errore critico in init core (DB failure)."""
         from src.core.license_validator import LicenseStatus  # noqa: PLC0415
 
@@ -108,8 +108,8 @@ class TestAppInitializerRobust:
                 steps.append((name, prog))
 
             # Verifiche
-            assert len(steps) > 5  # noqa: PLR2004
-            assert steps[-1][1] == 100  # Ultimo step 100%  # noqa: PLR2004
+            assert len(steps) > 5
+            assert steps[-1][1] == 100  # Ultimo step 100%
 
             # Verifica chiamate ai pannelli
             # Ci aspettiamo chiamate a get_panel per ogni indice nella lista tasks di AppInitializer
@@ -137,14 +137,14 @@ class TestAppInitializerRobust:
             # Se siamo arrivati qui senza crash, test passato
 
     @patch("src.core.logging.configure_logging")
-    def test_setup_logging_success(self, mock_conf):  # noqa: ANN001
+    def test_setup_logging_success(self, mock_conf):
         """Test configurazione logging."""
         AppInitializer._setup_logging()
         mock_conf.assert_called_once()
 
     @patch("src.core.logging.configure_logging", side_effect=Exception("Log Fail"))
     @patch("logging.basicConfig")
-    def test_setup_logging_fallback(self, mock_basic, mock_conf):  # noqa: ANN001
+    def test_setup_logging_fallback(self, mock_basic, mock_conf):
         """Test fallback logging base su errore."""
         AppInitializer._setup_logging()
         mock_basic.assert_called_once()

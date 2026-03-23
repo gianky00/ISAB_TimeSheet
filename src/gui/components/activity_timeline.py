@@ -123,7 +123,7 @@ class ActivityTimelineWidget(QWidget):
         self._border_pulse_anim.setLoopCount(-1)
         self._border_pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
 
-    def enterEvent(self, event):  # noqa: ANN001, ANN201, N802
+    def enterEvent(self, event):  # noqa: ANN001, ANN201
         """
         Avvia la pulsazione del bordo al passaggio del mouse.
 
@@ -133,7 +133,7 @@ class ActivityTimelineWidget(QWidget):
         self._border_pulse_anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event):  # noqa: ANN001, ANN201, N802
+    def leaveEvent(self, event):  # noqa: ANN001, ANN201
         """
         Ferma la pulsazione e ripristina il bordo solido.
 
@@ -218,7 +218,7 @@ class ActivityTimelineWidget(QWidget):
                 self._pulse_value = 1.0
             self.update()
 
-    def paintEvent(self, event):  # noqa: ANN001, ANN201, N802
+    def paintEvent(self, event):  # noqa: ANN001, ANN201
         """
         Gestisce il disegno personalizzato del widget (Grid, Connectors, Nodes).
 

@@ -9,7 +9,7 @@ from src.core.bug_reporter import BugReporter
 
 class TestBugReporter:
     @pytest.fixture
-    def mock_structure(self, tmp_path):  # noqa: ANN001
+    def mock_structure(self, tmp_path):
         """Crea una struttura fittizia di log per il report."""
         log_dir = tmp_path / "logs"
         log_dir.mkdir()
@@ -30,7 +30,7 @@ class TestBugReporter:
     @patch("src.core.bug_reporter.CONFIG_DIR")
     @patch("src.core.bug_reporter.BugReporter._add_analytics_report")
     @patch("src.core.bug_reporter.BugReporter._add_audit_trail")
-    def test_collect_diagnostics_success(self, mock_audit, mock_analytics, mock_config, mock_structure):  # noqa: ANN001
+    def test_collect_diagnostics_success(self, mock_audit, mock_analytics, mock_config, mock_structure):
         """Verifica la creazione corretta dello ZIP con file attesi."""
         mock_config.__truediv__.side_effect = lambda x: mock_structure / x
         mock_analytics.return_value = ["analytics_report.json"]
@@ -60,7 +60,7 @@ class TestBugReporter:
             assert "API_KEY" not in env  # Deve essere filtrato
 
     @patch("src.core.bug_reporter.CONFIG_DIR")
-    def test_cleanup_old_reports(self, mock_config, tmp_path):  # noqa: ANN001
+    def test_cleanup_old_reports(self, mock_config, tmp_path):
         """Verifica che vengano mantenuti solo gli ultimi N report."""
         reports_dir = tmp_path / "reports"
         reports_dir.mkdir()
@@ -77,4 +77,4 @@ class TestBugReporter:
         BugReporter.cleanup_old_reports(max_reports=5)
 
         remaining = list(reports_dir.glob("*.zip"))
-        assert len(remaining) == 5  # noqa: PLR2004
+        assert len(remaining) == 5

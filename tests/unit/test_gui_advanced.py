@@ -5,12 +5,12 @@ from src.gui.panels.contabilita_kpi.kpi_panel import ContabilitaKPIPanel
 
 class TestGUIAdvanced:
     @pytest.fixture
-    def app(self, qtbot):  # noqa: ANN001
+    def app(self, qtbot):
         """Fixture per l'applicazione Qt."""
         # qtbot gestisce automaticamente il loop eventi
 
     @pytest.fixture
-    def mock_manager(self, mocker):  # noqa: ANN001
+    def mock_manager(self, mocker):
         """Mock per ContabilitaManager."""
         mock_charts = mocker.patch("src.gui.panels.contabilita_kpi.kpi_panel.KPIChartsManager")
         instance = mock_charts.return_value
@@ -21,7 +21,7 @@ class TestGUIAdvanced:
         return mocker.patch("src.gui.panels.contabilita_kpi.kpi_panel.ContabilitaManager")
 
     @pytest.mark.skip(reason="Unknown environment error with Matplotlib in this test")
-    def test_kpi_panel_initialization(self, qtbot, mock_manager):  # noqa: ANN001
+    def test_kpi_panel_initialization(self, qtbot, mock_manager):
         """Test: Inizializzazione del pannello e caricamento anni."""
         mock_manager.get_available_years.return_value = [2026, 2025]
 
@@ -32,11 +32,11 @@ class TestGUIAdvanced:
         panel = ContabilitaKPIPanel()
         qtbot.addWidget(panel)
 
-        assert panel.year_combo.count() == 2  # noqa: PLR2004
+        assert panel.year_combo.count() == 2
         assert panel.year_combo.itemText(0) == "2026"
 
     @pytest.mark.skip(reason="Unknown environment error with Matplotlib in this test")
-    def test_kpi_card_updates_on_year_change(self, qtbot, mock_manager):  # noqa: ANN001
+    def test_kpi_card_updates_on_year_change(self, qtbot, mock_manager):
         """Test: Verifica che le card si aggiornino al cambio dell'anno."""
         mock_manager.get_available_years.return_value = [2026, 2025]
 
@@ -65,7 +65,7 @@ class TestGUIAdvanced:
         assert panel.card_count.lbl_value.text() == "5"
 
     @pytest.mark.skip(reason="Unknown environment error with Matplotlib")
-    def test_kpi_colors_reflect_margin(self, qtbot, mock_manager):  # noqa: ANN001
+    def test_kpi_colors_reflect_margin(self, qtbot, mock_manager):
         """Test: Il colore del margine deve cambiare (Verde se > 0, Rosso se < 0)."""
         mock_manager.get_available_years.return_value = [2026]
 
@@ -98,10 +98,10 @@ class TestGUIAdvanced:
         # Rosso (#dc3545)
         assert "#dc3545" in panel.card_margine.lbl_value.styleSheet()
 
-    def test_info_label_callback(self, qtbot):  # noqa: ANN001
+    def test_info_label_callback(self, qtbot):
         """Test: Verifica che l'icona info mostri il contenuto corretto."""
 
-        def test_callback():  # noqa: ANN202
+        def test_callback():
             return "Info Dettagliata Test"
 
         from src.gui.widgets import KPIBigCard  # noqa: PLC0415

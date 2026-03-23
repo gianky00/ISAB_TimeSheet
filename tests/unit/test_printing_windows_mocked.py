@@ -4,7 +4,7 @@ from src.utils.printing import get_installed_printers, print_pdf
 
 
 class TestPrintingWindowsMocked:
-    def test_get_installed_printers_mocked(self, mocker):  # noqa: ANN001
+    def test_get_installed_printers_mocked(self, mocker):
         """Verifica il recupero nomi stampanti tramite win32print."""
         # EnumPrinters restituisce tuple (flags, description, name, comment)
         mocker.patch(
@@ -15,7 +15,7 @@ class TestPrintingWindowsMocked:
         printers = get_installed_printers()
         assert printers == ["Printer1", "Printer2"]
 
-    def test_print_pdf_split_jobs_sequence(self, mocker, tmp_path):  # noqa: ANN001
+    def test_print_pdf_split_jobs_sequence(self, mocker, tmp_path):
         """Verifica la logica atomica: una pagina = un job di stampa."""
         # 1. Mock file PDF
         dummy_pdf = tmp_path / "test.pdf"
@@ -43,11 +43,11 @@ class TestPrintingWindowsMocked:
 
         assert success is True
         # Deve aver creato 2 DC (uno per pagina) e avviato 2 documenti
-        assert mock_hdc.CreatePrinterDC.call_count == 2  # noqa: PLR2004
-        assert mock_hdc.StartDoc.call_count == 2  # noqa: PLR2004
-        assert mock_hdc.EndDoc.call_count == 2  # noqa: PLR2004
+        assert mock_hdc.CreatePrinterDC.call_count == 2
+        assert mock_hdc.StartDoc.call_count == 2
+        assert mock_hdc.EndDoc.call_count == 2
 
-    def test_print_pdf_fallback_on_direct_failure(self, mocker, tmp_path):  # noqa: ANN001
+    def test_print_pdf_fallback_on_direct_failure(self, mocker, tmp_path):
         """Verifica il fallback su os.startfile se fitz/win32 fallisce."""
         dummy_pdf = tmp_path / "fail.pdf"
         dummy_pdf.write_text("data")

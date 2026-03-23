@@ -42,7 +42,7 @@ class AnimatedBorder(QWidget):
             self.phase -= math.pi * 2
         self.update()
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         """Disegna il bordo con effetti glow e conici, rispettando rigorosamente gli angoli arrotondati."""
         painter = QPainter(self)
         try:
@@ -147,7 +147,7 @@ class GlowingProgressBar(QWidget):
         self._phase += 0.08
         self.update()
 
-    def setValue(self, val: int) -> None:  # noqa: N802
+    def setValue(self, val: int) -> None:
         """
         Imposta il valore del progresso (0-100).
 
@@ -156,7 +156,7 @@ class GlowingProgressBar(QWidget):
         """
         self._value = max(0, min(100, val))
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         """Disegna la barra di progresso con effetto gradiente e shimmer."""
         painter = QPainter(self)
         try:
@@ -203,7 +203,7 @@ class PulsingLogo(QWidget):
         self.pixmap = pm
         self.update()
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         """Disegna il logo e il bagliore in modo statico."""
         if not self.pixmap:
             return
@@ -249,7 +249,7 @@ class TechBlueprint(QWidget):
         self.phase += 0.01
         self.update()
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         w, h = self.width(), self.height()
@@ -336,7 +336,7 @@ class ConsoleOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         """Disegna scanline orizzontali e griglia di punti sottile."""
         painter = QPainter(self)
         try:

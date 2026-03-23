@@ -13,7 +13,7 @@ def qapp():
     yield app
 
 
-def test_dipendenti_panel_creation(qapp):  # noqa: ANN001
+def test_dipendenti_panel_creation(qapp):
     """Verifica che il pannello Dipendenti si crei senza errori."""
     panel = DipendentiManagerPanel()
     assert panel is not None
@@ -25,4 +25,4 @@ def test_dipendenti_panel_creation(qapp):  # noqa: ANN001
     assert panel.btn_add is not None
 
     # Verifica colonne tabella
-    assert panel.table.columnCount() == 6  # noqa: PLR2004
+    assert panel.table.columnCount() == 6

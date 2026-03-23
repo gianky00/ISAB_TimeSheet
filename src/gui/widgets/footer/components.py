@@ -117,7 +117,7 @@ class ClickableLabel(QLabel):
         self._base_style = ""
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
-    def setBaseStyle(self, style: str) -> None:  # noqa: N802
+    def setBaseStyle(self, style: str) -> None:
         """
         Imposta lo stile base CSS.
 
@@ -127,7 +127,7 @@ class ClickableLabel(QLabel):
         self._base_style = style
         self.setStyleSheet(style)
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:  # noqa: N802
+    def enterEvent(self, event: QEnterEvent | None) -> None:
         """Gestisce l'evento hover-in cambiando lo sfondo."""
         self.setStyleSheet(
             self._base_style
@@ -135,12 +135,12 @@ class ClickableLabel(QLabel):
         )
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any | None) -> None:  # noqa: ANN401, N802
+    def leaveEvent(self, event: Any | None) -> None:  # noqa: ANN401
         """Gestisce l'evento hover-out ripristinando lo stile base."""
         self.setStyleSheet(self._base_style)
         super().leaveEvent(event)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Gestisce il click del mouse emettendo il segnale 'clicked'."""
         if event and event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()

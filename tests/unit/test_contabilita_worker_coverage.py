@@ -7,11 +7,11 @@ from src.core.contabilita_worker import ContabilitaWorker
 
 class TestContabilitaWorker:
     @pytest.fixture
-    def mock_manager(self, mocker):  # noqa: ANN001
+    def mock_manager(self, mocker):
         return mocker.patch("src.core.contabilita_worker.ContabilitaManager")
 
     @pytest.fixture
-    def worker(self, mocker):  # noqa: ANN001
+    def worker(self, mocker):
         mocker.patch("PyQt6.QtCore.QThread.__init__", return_value=None)
         # Mock signals explicitly since QThread init is mocked
         w = ContabilitaWorker("test.xlsx")
@@ -26,7 +26,7 @@ class TestContabilitaWorker:
         assert worker.attivita_path == ""
         assert worker.certificati_path == ""
 
-    def test_run_success_all_phases(self, worker, mock_manager, tmp_path):  # noqa: ANN001
+    def test_run_success_all_phases(self, worker, mock_manager, tmp_path):
         """Test full run with all phases successful."""
         # Setup paths
         worker.giornaliere_path = str(tmp_path / "giornaliere")
@@ -60,9 +60,9 @@ class TestContabilitaWorker:
         assert "Giornaliere: OK" in args[1]
         assert "Att. Prog: OK" in args[1]
         assert "Certificati: OK" in args[1]
-        assert args[2] == 17  # Added (10 + 5 + 1 + 1)  # noqa: PLR2004
+        assert args[2] == 17  # Added (10 + 5 + 1 + 1)
 
-    def test_run_critical_error(self, worker, mock_manager):  # noqa: ANN001
+    def test_run_critical_error(self, worker, mock_manager):
         """Test handling of exception during run."""
         mock_manager.init_db.side_effect = Exception("DB Error")
 
@@ -71,11 +71,11 @@ class TestContabilitaWorker:
         worker.finished_signal.emit.assert_called_with(False, "Errore critico: DB Error", 0, 0, 0.0)
 
     @pytest.mark.skip(reason="Instability in Path.exists patching in this environment")
-    def test_phases_skipped_if_path_missing(self, worker, mock_manager):  # noqa: ANN001
+    def test_phases_skipped_if_path_missing(self, worker, mock_manager):
         """Test that phases are skipped if paths are not provided or files don't exist."""
         # worker has only file_path set from init ("test.xlsx")
 
-        def mock_exists(p_obj):  # noqa: ANN001, ANN202
+        def mock_exists(p_obj):
             return str(p_obj) == "test.xlsx"
 
         # Patch directly where it is used (in contabilita_worker)
@@ -91,7 +91,7 @@ class TestContabilitaWorker:
             mock_manager.import_attivita_programmate.assert_not_called()
             mock_manager.import_certificati_campione.assert_not_called()
 
-    def test_progress_calculation(self, worker, mock_manager):  # noqa: ANN001
+    def test_progress_calculation(self, worker, mock_manager):
         """Test internal total ops calculation."""
         worker.attivita_path = "exists"
         with (
@@ -100,4 +100,4 @@ class TestContabilitaWorker:
             mock_manager.scan_workload.return_value = (5, 5)
             # 5 sheets + 5 files + 1 attivita + 0 certificati = 11
             res = worker._calculate_total_ops()
-            assert res["total"] == 11  # noqa: PLR2004
+            assert res["total"] == 11

@@ -205,7 +205,7 @@ class BaseBotPanel(QWidget):
         except Exception as e:
             self._logger.warning(f"Impossibile inizializzare timeline ghost per {self.bot_id}: {e}")
 
-    def showEvent(self, event):  # noqa: ANN001, ANN201, N802
+    def showEvent(self, event):  # noqa: ANN001, ANN201
         """Forza l'inizializzazione della timeline all'apertura del pannello."""
         super().showEvent(event)
         QTimer.singleShot(100, self._init_ghost_timeline)

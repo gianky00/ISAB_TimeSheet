@@ -109,7 +109,7 @@ class ScaricoOreTableView(QTableView):
         self.setColumnWidth(9, 80)
         self.setColumnWidth(10, 130)
 
-    def keyPressEvent(self, event: Any) -> None:  # noqa: ANN401, N802
+    def keyPressEvent(self, event: Any) -> None:  # noqa: ANN401
         """Gestisce Ctrl+C per la copia dei dati."""
         if event.matches(QKeySequence.StandardKey.Copy):
             self._copy_selection()

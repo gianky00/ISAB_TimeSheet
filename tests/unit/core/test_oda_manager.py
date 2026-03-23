@@ -5,7 +5,7 @@ from src.core.oda_manager import OdaManager
 
 class TestOdaManager:
     @patch("src.core.oda_manager.db_manager")
-    def test_get_all_oda_search_date_conversion(self, mock_db):  # noqa: ANN001
+    def test_get_all_oda_search_date_conversion(self, mock_db):
         """Verifica la conversione smart delle date nella ricerca OdA."""
         mock_db.execute_query.return_value = []
 
@@ -23,7 +23,7 @@ class TestOdaManager:
     @patch("src.core.oda_manager.StoricoOdaImporter")
     @patch("src.core.oda_manager.DataSynchronizer")
     @patch("src.core.sync_tracker.SyncTracker.update_status")
-    def test_import_oda_from_excel_failure(self, mock_tracker, mock_sync, mock_importer):  # noqa: ANN001
+    def test_import_oda_from_excel_failure(self, mock_tracker, mock_sync, mock_importer):
         """Verifica gestione errore se l'importer Excel fallisce."""
         mock_importer.import_storico_oda.return_value = (False, "File Corrotto", [])
 

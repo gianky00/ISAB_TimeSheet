@@ -175,7 +175,7 @@ class NotificationCard(QFrame):
         self.fade_in_animation.setEndValue(1.0)
         self.fade_in_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-    def showEvent(self, event: QShowEvent | None) -> None:  # noqa: N802
+    def showEvent(self, event: QShowEvent | None) -> None:
         """Avvia l'animazione di fade-in quando la card viene mostrata."""
         if not self._disable_animations:
             self.fade_in_animation.start()
@@ -192,7 +192,7 @@ class NotificationCard(QFrame):
         """Emette il segnale per la rimozione della notifica dal gestore."""
         self.card_deleted.emit(self.notification["id"])
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Emette il segnale di clic sulla card per contrassegnarla come letta."""
         if event and event.button() == Qt.MouseButton.LeftButton:
             self.card_clicked.emit(self.notification["id"])

@@ -10,7 +10,7 @@ from src.core.telegram.service import TelegramService
 
 class TestTelegramServiceAdvanced:
     @pytest.fixture
-    def service(self, qtbot):  # noqa: ANN001
+    def service(self, qtbot):
         # Patching QObject.__init__ to avoid event loop issues in pure unit tests
         with patch("src.core.telegram.service.QObject.__init__"):
             svc = TelegramService()
@@ -41,7 +41,7 @@ class TestTelegramServiceAdvanced:
         return context
 
     @pytest.mark.asyncio
-    async def test_pairing_flow_success(self, service, mock_update, mock_context):  # noqa: ANN001
+    async def test_pairing_flow_success(self, service, mock_update, mock_context):
         """Verifica l'accoppiamento con codice OTP corretto."""
         mock_config = {"telegram_chat_id": "", "telegram_pairing_code": "999888"}
         mock_context.args = ["999888"]
@@ -62,7 +62,7 @@ class TestTelegramServiceAdvanced:
             assert any("SyncroJob Command Center" in msg for msg in all_messages)
 
     @pytest.mark.asyncio
-    async def test_pairing_flow_wrong_code(self, service, mock_update, mock_context):  # noqa: ANN001
+    async def test_pairing_flow_wrong_code(self, service, mock_update, mock_context):
         """Verifica che un codice OTP errato venga rifiutato."""
         mock_config = {"telegram_chat_id": "", "telegram_pairing_code": "999888"}
         mock_context.args = ["wrong"]
@@ -75,7 +75,7 @@ class TestTelegramServiceAdvanced:
             assert "Inserisci il codice" in args[0]
 
     @pytest.mark.asyncio
-    async def test_unauthorized_user_blocked(self, service, mock_update):  # noqa: ANN001
+    async def test_unauthorized_user_blocked(self, service, mock_update):
         """Verifica che utenti non autorizzati siano bloccati."""
         service.connected_chat_id = "999999"  # Utente autorizzato diverso
         mock_update.effective_user.id = 123456  # Utente attuale
@@ -85,7 +85,7 @@ class TestTelegramServiceAdvanced:
         mock_update.message.reply_text.assert_called_with("⛔ Accesso Negato")
 
     @pytest.mark.asyncio
-    async def test_sequential_input_pdl(self, service, mock_update, mock_context):  # noqa: ANN001
+    async def test_sequential_input_pdl(self, service, mock_update, mock_context):
         """Testa l'inserimento di una lista di PDL separata da virgole."""
         service.connected_chat_id = "123456"
         service.user_states[123456] = "WAITING_PDL"
@@ -98,7 +98,7 @@ class TestTelegramServiceAdvanced:
         assert service.user_states[123456] is None
 
     @pytest.mark.asyncio
-    async def test_db_query_routing(self, service, mock_update, mock_context):  # noqa: ANN001
+    async def test_db_query_routing(self, service, mock_update, mock_context):
         """Verifica il routing delle query al database browser."""
         service.connected_chat_id = "123456"
         service.user_states[123456] = "WAITING_DB_QUERY_CONTABILITA_2025"
@@ -115,7 +115,7 @@ class TestTelegramServiceAdvanced:
         }
         service.command_received.emit.assert_called_with("search_db_pdf", expected_params)
 
-    def test_send_message_sync_safety(self, service):  # noqa: ANN001
+    def test_send_message_sync_safety(self, service):
         """Verifica la sicurezza del metodo di invio sincrono."""
         service.connected_chat_id = "123456"
         # Senza loop attivo non deve crashare

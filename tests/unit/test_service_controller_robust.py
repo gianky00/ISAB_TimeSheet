@@ -16,18 +16,18 @@ class TestServiceControllerRobust:
         return mock_mw
 
     @pytest.fixture
-    def controller(self, mw):  # noqa: ANN001
+    def controller(self, mw):
         mock_tg = MagicMock()
         mock_sentinel = MagicMock()
         return ServiceController(mw, mock_tg, mock_sentinel)
 
     @patch("src.gui.controllers.service_controller.QTimer.singleShot")
-    def test_start_all(self, mock_ss, controller, mw):  # noqa: ANN001
+    def test_start_all(self, mock_ss, controller, mw):
         controller.start_all()
         assert mock_ss.called
         assert controller.scheduler_timer is not None
 
-    def test_schedule_parallelism_free_site(self, controller):  # noqa: ANN001
+    def test_schedule_parallelism_free_site(self, controller):
         """Verifica avvio immediato se il sito è libero."""
         mock_panel = MagicMock()
         mock_panel.start_btn.isEnabled.return_value = True
@@ -36,7 +36,7 @@ class TestServiceControllerRobust:
         assert "bot1" in controller.running_bots_by_site["portale_fornitori"]
         assert mock_panel._on_start.called
 
-    def test_schedule_parallelism_busy_site(self, controller):  # noqa: ANN001
+    def test_schedule_parallelism_busy_site(self, controller):
         """Verifica accodamento se il sito è occupato."""
         controller.running_bots_by_site["portale_fornitori"] = ["other_bot"]
         mock_panel = MagicMock()
@@ -46,7 +46,7 @@ class TestServiceControllerRobust:
         assert "bot1" not in controller.running_bots_by_site["portale_fornitori"]
         assert len(controller.pending_bots_by_site["portale_fornitori"]) == 1
 
-    def test_on_bot_completed_triggers_next(self, controller):  # noqa: ANN001
+    def test_on_bot_completed_triggers_next(self, controller):
         """Verifica che il completamento di un bot avvii il successivo in coda."""
         controller.running_bots_by_site["portale_fornitori"] = ["bot1"]
         next_panel = MagicMock()
@@ -61,7 +61,7 @@ class TestServiceControllerRobust:
 
     @patch("src.gui.controllers.service_controller.datetime")
     @patch("src.core.config_manager.load_config")
-    def test_check_scheduled_tasks_timbrature(self, mock_load, mock_dt, controller, mw):  # noqa: ANN001
+    def test_check_scheduled_tasks_timbrature(self, mock_load, mock_dt, controller, mw):
         mock_dt.now.return_value.strftime.return_value = "09:00"
         mock_load.return_value = {"timbrature_autopilot_enabled": True, "timbrature_autopilot_time": "09:00"}
 
@@ -73,7 +73,7 @@ class TestServiceControllerRobust:
         assert "timbrature" in controller.running_bots_by_site["portale_fornitori"]
 
     @patch("src.gui.controllers.service_controller.datetime")
-    def test_check_report_email_schedule_interval(self, mock_dt, controller):  # noqa: ANN001
+    def test_check_report_email_schedule_interval(self, mock_dt, controller):
         mock_dt.now.return_value.strftime.return_value = "08:00"
         config = {
             "report_email_autopilot_enabled": True,
@@ -86,7 +86,7 @@ class TestServiceControllerRobust:
             controller._check_report_email_schedule(config, "08:00")
             assert mock_send.called
 
-    def test_prepare_scarico_oda(self, controller):  # noqa: ANN001
+    def test_prepare_scarico_oda(self, controller):
         """Verifica la pulizia del pannello OdA (V9.0 naming)."""
         mock_panel = MagicMock()
         # In V9.0 il metodo è _prepare_scarico_oda_generale

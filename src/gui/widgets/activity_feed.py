@@ -189,7 +189,7 @@ class ActivityItem(QFrame):
         """Rimuove l'effetto opacity dopo l'animazione per evitare interferenze."""
         self.setGraphicsEffect(None)
 
-    def showEvent(self, event):  # noqa: ANN001, ANN201, N802
+    def showEvent(self, event):  # noqa: ANN001, ANN201
         """Avvia l'animazione quando il widget viene mostrato."""
         super().showEvent(event)
         if self.opacity_effect is not None and self.fade_in_animation is not None:

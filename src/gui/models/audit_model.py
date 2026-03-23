@@ -63,11 +63,11 @@ class AuditTableModel(QAbstractTableModel):
         self._logs = logs
         self.endResetModel()
 
-    def rowCount(self, parent: QModelIndex | None = None) -> int:  # noqa: N802
+    def rowCount(self, parent: QModelIndex | None = None) -> int:
         """Restituisce il numero di log presenti."""
         return len(self._logs)
 
-    def columnCount(self, parent: QModelIndex | None = None) -> int:  # noqa: N802
+    def columnCount(self, parent: QModelIndex | None = None) -> int:
         """Restituisce il numero di colonne definite."""
         return len(self.COLUMNS)
 
@@ -175,7 +175,7 @@ class AuditTableModel(QAbstractTableModel):
             return Qt.AlignmentFlag.AlignCenter
         return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
-    def headerData(  # noqa: N802
+    def headerData(
         self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
     ) -> Any:  # noqa: ANN401
         """Restituisce il nome della colonna per l'header orizzontale."""

@@ -80,7 +80,7 @@ class AnimatedSplitButton(QPushButton):
 
         self.setIconSize(QSize(20, 20))
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:  # noqa: N802
+    def enterEvent(self, event: QEnterEvent | None) -> None:
         """Animazione di ingrandimento dell'icona al passaggio del mouse."""
         self.anim.stop()
         self.anim.setStartValue(QSize(20, 20))
@@ -88,7 +88,7 @@ class AnimatedSplitButton(QPushButton):
         self.anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any | None) -> None:  # noqa: ANN401, N802
+    def leaveEvent(self, event: Any | None) -> None:  # noqa: ANN401
         """Ritorno alla dimensione normale."""
         self.anim.stop()
         self.anim.setStartValue(self.iconSize())

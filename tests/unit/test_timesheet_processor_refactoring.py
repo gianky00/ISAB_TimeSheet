@@ -13,7 +13,7 @@ from src.core.timesheet_processor import TimesheetProcessor
 
 
 @pytest.fixture
-def sample_timesheet(tmp_path):  # noqa: ANN001
+def sample_timesheet(tmp_path):
     """Crea un file Excel timesheet di test."""
     path = tmp_path / "original_ts.xlsx"
     wb = openpyxl.Workbook()
@@ -42,7 +42,7 @@ def test_process_and_move_file_not_found():
     assert "non trovato" in msg
 
 
-def test_process_and_move_missing_sheet(tmp_path):  # noqa: ANN001
+def test_process_and_move_missing_sheet(tmp_path):
     path = tmp_path / "wrong_sheet.xlsx"
     wb = openpyxl.Workbook()
     wb.save(path)
@@ -51,7 +51,7 @@ def test_process_and_move_missing_sheet(tmp_path):  # noqa: ANN001
     assert "non trovato" in msg
 
 
-def test_process_and_move_missing_odc(tmp_path):  # noqa: ANN001
+def test_process_and_move_missing_odc(tmp_path):
     path = tmp_path / "no_odc.xlsx"
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -63,7 +63,7 @@ def test_process_and_move_missing_odc(tmp_path):  # noqa: ANN001
     assert "mancante" in msg
 
 
-def test_process_and_move_success_single_pos(sample_timesheet, tmp_path):  # noqa: ANN001
+def test_process_and_move_success_single_pos(sample_timesheet, tmp_path):
     dest_dir = tmp_path / "dest"
     success, _msg = TimesheetProcessor.process_and_move(sample_timesheet, dest_dir)
 
@@ -74,7 +74,7 @@ def test_process_and_move_success_single_pos(sample_timesheet, tmp_path):  # noq
     assert not sample_timesheet.exists()
 
 
-def test_process_and_move_success_multiple_pos(tmp_path):  # noqa: ANN001
+def test_process_and_move_success_multiple_pos(tmp_path):
     path = tmp_path / "multi_pos.xlsx"
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -92,7 +92,7 @@ def test_process_and_move_success_multiple_pos(tmp_path):  # noqa: ANN001
     assert (dest_dir / "ODCMULTI_TS.xlsx").exists()
 
 
-def test_process_and_move_conflict_handling(sample_timesheet, tmp_path):  # noqa: ANN001
+def test_process_and_move_conflict_handling(sample_timesheet, tmp_path):
     dest_dir = tmp_path / "dest"
     dest_dir.mkdir()
     # Create conflict for ODC123_10_TS.xlsx
@@ -104,10 +104,10 @@ def test_process_and_move_conflict_handling(sample_timesheet, tmp_path):  # noqa
 
     # It should have created a second file with timestamp
     files = list(dest_dir.glob("ODC123_10_TS*.xlsx"))
-    assert len(files) >= 2  # noqa: PLR2004
+    assert len(files) >= 2
 
 
-def test_process_and_move_mkdir_error(tmp_path):  # noqa: ANN001
+def test_process_and_move_mkdir_error(tmp_path):
     src = tmp_path / "src.xlsx"
     wb = openpyxl.Workbook()
     wb.save(src)
@@ -118,7 +118,7 @@ def test_process_and_move_mkdir_error(tmp_path):  # noqa: ANN001
         assert "Impossibile creare dest_dir" in msg
 
 
-def test_process_and_move_critical_exception(sample_timesheet, tmp_path):  # noqa: ANN001
+def test_process_and_move_critical_exception(sample_timesheet, tmp_path):
     with patch("openpyxl.load_workbook", side_effect=Exception("Memory Error")):
         success, msg = TimesheetProcessor.process_and_move(sample_timesheet, tmp_path / "dest")
         assert success is False

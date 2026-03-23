@@ -17,7 +17,7 @@ from src.core.config_manager import (
 
 class TestConfigManagerRobust:
     @pytest.fixture(autouse=True)
-    def setup_config(self, tmp_path):  # noqa: ANN001
+    def setup_config(self, tmp_path):
         """Setup ambiente di test per ConfigManager."""
         # 1. Reset cache
         _reset_configuration_for_testing()
@@ -40,7 +40,7 @@ class TestConfigManagerRobust:
     def test_load_config_defaults(self):
         """Test caricamento configurazione di default."""
         config = load_config()
-        assert config["browser_timeout"] == 30  # noqa: PLR2004
+        assert config["browser_timeout"] == 30
         assert config["reparti"] == ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]
         assert self.mock_config_dir.exists()
 
@@ -52,10 +52,10 @@ class TestConfigManagerRobust:
         _reset_configuration_for_testing()
         config = load_config()
 
-        assert config["browser_timeout"] == 60  # noqa: PLR2004
+        assert config["browser_timeout"] == 60
         # Verifica su file
         data = json.loads(self.mock_config_file.read_text(encoding="utf-8"))
-        assert data["browser_timeout"] == 60  # noqa: PLR2004
+        assert data["browser_timeout"] == 60
 
     def test_env_var_override(self):
         """Test override tramite variabili d'ambiente."""
@@ -67,7 +67,7 @@ class TestConfigManagerRobust:
             config = load_config()
 
             assert config["browser_headless"] is True
-            assert config["browser_timeout"] == 120  # noqa: PLR2004
+            assert config["browser_timeout"] == 120
 
     def test_account_management(self):
         """Test aggiunta, default e rimozione account."""
@@ -81,7 +81,7 @@ class TestConfigManagerRobust:
         # Add second
         add_account("user2", "pass2")
         config = load_config()
-        assert len(config["accounts"]) == 2  # noqa: PLR2004
+        assert len(config["accounts"]) == 2
         assert config["accounts"][1]["username"] == "user2"
         assert config["accounts"][1]["default"] is False  # user1 ancora default
 
@@ -112,7 +112,7 @@ class TestConfigManagerRobust:
         # Password decriptata (qui simulata come plain perché mockata)
         assert config["accounts"][0]["password"] == "legacy_pass"
 
-    def test_import_configuration(self, tmp_path):  # noqa: ANN001
+    def test_import_configuration(self, tmp_path):
         """Test importazione configurazione da file esterno."""
         import_file = tmp_path / "import.json"
         import_file.write_text(json.dumps({"browser_timeout": 999, "accounts": []}), encoding="utf-8")
@@ -125,13 +125,13 @@ class TestConfigManagerRobust:
         # Verifica applicazione
         _reset_configuration_for_testing()
         config = load_config()
-        assert config["browser_timeout"] == 999  # noqa: PLR2004
+        assert config["browser_timeout"] == 999
 
         # Verifica backup creato
         backups = list(self.mock_config_dir.glob("config_backup_*.json"))
         assert len(backups) == 1
 
-    def test_import_invalid_json(self, tmp_path):  # noqa: ANN001
+    def test_import_invalid_json(self, tmp_path):
         """Test importazione file corrotto."""
         bad_file = tmp_path / "bad.json"
         bad_file.write_text("{bad")
@@ -153,7 +153,7 @@ class TestConfigManagerRobust:
         assert Path(logs_path).exists()
 
     @patch("src.core.config.security.SecretsManager")
-    def test_credential_encryption_fallback(self, mock_sec):  # noqa: ANN001
+    def test_credential_encryption_fallback(self, mock_sec):
         """Test crittografia locale password se keyring non disponibile."""
         mock_sec.is_available.return_value = False
         mock_sec.get_credential.return_value = None  # Force fallback to file

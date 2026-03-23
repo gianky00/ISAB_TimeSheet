@@ -33,7 +33,7 @@ class StandardTimelineFrame(QFrame):
         super().__init__(parent)
         self.setStyleSheet(f"background-color: {COLORS['bg_white']}; border-radius: 12px;")
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         """Disegna un bordo sottile e professionale intorno alla console."""
         painter = QPainter(self)
         try:

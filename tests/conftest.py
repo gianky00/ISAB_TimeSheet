@@ -22,23 +22,23 @@ try:
     from unittest.mock import MagicMock
 
     class MockCanvas(MagicMock):
-        def __init__(self, *args, **kwargs):  # noqa: ANN002, ANN003, ANN204
+        def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.figure = MagicMock()
 
-        def setParent(self, parent):  # noqa: ANN001, N802
+        def setParent(self, parent):  # noqa: N802
             pass
 
-        def setMinimumHeight(self, h):  # noqa: ANN001, N802
+        def setMinimumHeight(self, h):  # noqa: N802
             pass
 
-        def setSizePolicy(self, *args):  # noqa: ANN002, N802
+        def setSizePolicy(self, *args):  # noqa: N802
             pass
 
-        def setGraphicsEffect(self, effect):  # noqa: ANN001, N802
+        def setGraphicsEffect(self, effect):  # noqa: N802
             pass
 
-        def setStyleSheet(self, style):  # noqa: ANN001, N802
+        def setStyleSheet(self, style):  # noqa: N802
             pass
 
     mock_backend = MagicMock()
@@ -61,20 +61,20 @@ try:
 except (ImportError, RuntimeError):
     # If PyQt6 is missing or DLLs fail to load, provide a minimal mock infrastructure
     class MockQObject:
-        def __init__(self, *args, **kwargs):  # noqa: ANN002, ANN003, ANN204
+        def __init__(self, *args, **kwargs):
             pass
 
-        def setParent(self, parent):  # noqa: ANN001, N802
+        def setParent(self, parent):  # noqa: N802
             pass
 
     class MockPyqtSignal:
-        def __init__(self, *args, **kwargs):  # noqa: ANN002, ANN003, ANN204
+        def __init__(self, *args, **kwargs):
             pass
 
-        def emit(self, *args, **kwargs):  # noqa: ANN002, ANN003
+        def emit(self, *args, **kwargs):
             pass
 
-        def connect(self, slot):  # noqa: ANN001
+        def connect(self, slot):
             pass
 
     mock_qt_core = MagicMock()
@@ -106,7 +106,7 @@ except (ImportError, RuntimeError):
 
 
 # Set matplotlib backend to 'Agg' to avoid GUI issues during tests
-def pytest_sessionstart(session):  # noqa: ANN001
+def pytest_sessionstart(session):
     """
     Called after the Session object has been created and before performing collection and entering the run test loop.
     """
@@ -116,7 +116,7 @@ def pytest_sessionstart(session):  # noqa: ANN001
         matplotlib.use("Agg")
 
 
-def pytest_configure(config):  # noqa: ANN001
+def pytest_configure(config):
     """
     Prevents OSError: [Errno 25] Inappropriate ioctl for device in CI/CD.
     This error occurs because PasswordManager is initialized at module import
@@ -142,19 +142,19 @@ def pytest_configure(config):  # noqa: ANN001
 
 
 @pytest.fixture
-def temp_dir(tmp_path):  # noqa: ANN001
+def temp_dir(tmp_path):
     """Create a temporary directory for tests using pytest built-in tmp_path."""
     return tmp_path
 
 
 @pytest.fixture
-def mock_config(temp_dir):  # noqa: ANN001
+def mock_config(temp_dir):
     """Create a mock configuration file."""
     return temp_dir / "config.json"
 
 
 @pytest.fixture
-def setup_clean_config(tmp_path):  # noqa: ANN001
+def setup_clean_config(tmp_path):
     """
     Fixture to ensure a clean, isolated config for specific tests.
     This is more explicit than autouse for tests that heavily modify config.
@@ -184,7 +184,7 @@ def setup_clean_config(tmp_path):  # noqa: ANN001
 
 
 @pytest.fixture(autouse=True)
-def _isolate_config(tmp_path):  # noqa: ANN001, ANN202
+def _isolate_config(tmp_path):
     """
     Global isolation for configuration.
     Ensures NO test ever writes to the real %LOCALAPPDATA% directory.
@@ -255,7 +255,7 @@ def cleanup_widgets():
 
 
 @pytest.fixture
-def mock_ui_dependencies(mocker):  # noqa: ANN001
+def mock_ui_dependencies(mocker):
     """
     Mock massivo delle dipendenze UI per evitare I/O su disco e DB reali.
     Permette di istanziare Widget complessi in isolamento.
@@ -298,7 +298,7 @@ def mock_ui_dependencies(mocker):  # noqa: ANN001
 
 
 @pytest.fixture
-def mock_driver(mocker):  # noqa: ANN001
+def mock_driver(mocker):
     """
     Mock del driver Selenium per testare i Bot senza aprire il browser.
     """
@@ -311,12 +311,12 @@ def mock_driver(mocker):  # noqa: ANN001
 
 
 @pytest.fixture
-def create_mock_html(tmp_path):  # noqa: ANN001
+def create_mock_html(tmp_path):
     """
     Crea un file HTML temporaneo per testare i selettori.
     """
 
-    def _create(content, filename="test.html"):  # noqa: ANN001, ANN202
+    def _create(content, filename="test.html"):
         html_file = tmp_path / filename
         html_file.write_text(content, encoding="utf-8")
         return html_file

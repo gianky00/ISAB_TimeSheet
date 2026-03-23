@@ -13,7 +13,7 @@ from src.core.contabilita_manager import ContabilitaManager
 
 
 @pytest.fixture
-def mock_db(tmp_path):  # noqa: ANN001
+def mock_db(tmp_path):
     """Creates a temporary database with sample data for testing search."""
     db_path = tmp_path / "test_contabilita.db"
     ContabilitaManager.DB_PATH = db_path
@@ -48,7 +48,7 @@ def mock_db(tmp_path):  # noqa: ANN001
 
 
 @pytest.fixture
-def mock_timbrature_db(tmp_path):  # noqa: ANN001
+def mock_timbrature_db(tmp_path):
     """Creates a temporary timbrature database."""
     db_path = tmp_path / "test_timbrature.db"
 
@@ -77,7 +77,7 @@ def mock_timbrature_db(tmp_path):  # noqa: ANN001
     return db_path
 
 
-def test_search_oda_found(mock_db):  # noqa: ANN001
+def test_search_oda_found(mock_db):
     """Test searching for OdA by code."""
     results = ContabilitaManager.search_oda("123")
     assert len(results) == 1
@@ -85,35 +85,35 @@ def test_search_oda_found(mock_db):  # noqa: ANN001
     assert results[0]["type"] == "ODA"
 
 
-def test_search_oda_description(mock_db):  # noqa: ANN001
+def test_search_oda_description(mock_db):
     """Test searching for OdA by description (case insensitive)."""
     results = ContabilitaManager.search_oda("valvole")
     assert len(results) == 1
     assert "Manutenzione" in results[0]["descrizione"]
 
 
-def test_search_extended_giornaliere(mock_db):  # noqa: ANN001
+def test_search_extended_giornaliere(mock_db):
     """Test searching in Giornaliere."""
     results = ContabilitaManager.search_extended("Rossi")
     assert len(results["GIORNALIERE"]) == 1
     assert results["GIORNALIERE"][0]["personale"] == "Mario Rossi"
 
 
-def test_search_extended_cantiere(mock_db):  # noqa: ANN001
+def test_search_extended_cantiere(mock_db):
     """Test searching in Scarico Ore (Cantiere)."""
     results = ContabilitaManager.search_extended("Cablaggio")
     assert len(results["CANTIERE"]) == 1
     assert "Verdi" in results["CANTIERE"][0]["personale"]
 
 
-def test_search_extended_certificati(mock_db):  # noqa: ANN001
+def test_search_extended_certificati(mock_db):
     """Test searching in Certificati."""
     results = ContabilitaManager.search_extended("Fluke")
     assert len(results["CERTIFICATI"]) == 1
     assert results["CERTIFICATI"][0]["matricola"] == "SN-8888"
 
 
-def test_search_employees(mock_timbrature_db):  # noqa: ANN001
+def test_search_employees(mock_timbrature_db):
     """Test searching for employees in TimbratureStorage."""
     with patch(
         "src.bots.portale_fornitori.timbrature.storage.TimbratureStorage.DB_PATH",
@@ -126,7 +126,7 @@ def test_search_employees(mock_timbrature_db):  # noqa: ANN001
         assert results[0]["nome"] == "Giuseppe"
 
 
-def test_search_empty_query(mock_db):  # noqa: ANN001
+def test_search_empty_query(mock_db):
     """Test behavior with empty or short queries."""
     assert ContabilitaManager.search_oda("") == []
     assert ContabilitaManager.search_extended("a") == {}

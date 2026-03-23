@@ -14,7 +14,7 @@ from src.gui.controllers.navigation_controller import NavigationController
 class MockMainWindow(QObject):
     """Vero QObject per evitare TypeError in NavigationController."""
 
-    def __init__(self):  # noqa: ANN204
+    def __init__(self):
         super().__init__()
         self.page_stack = QStackedWidget()
         for _i in range(12):
@@ -27,10 +27,10 @@ class MockMainWindow(QObject):
 
 class TestNavigationStability:
     @pytest.fixture
-    def mw(self, qtbot):  # noqa: ANN001
+    def mw(self, qtbot):
         return MockMainWindow()
 
-    def test_lazy_loading_persistence(self, mw):  # noqa: ANN001
+    def test_lazy_loading_persistence(self, mw):
         """Verifica che il pannello venga creato una sola volta."""
         ctrl = NavigationController(mw)
 
@@ -48,7 +48,7 @@ class TestNavigationStability:
                 assert p2 is p1
                 assert not mock_factory.called
 
-    def test_navigate_to_with_settings_unsaved(self, mw):  # noqa: ANN001
+    def test_navigate_to_with_settings_unsaved(self, mw):
         """Verifica che la navigazione venga bloccata se ci sono modifiche non salvate in settings."""
         ctrl = NavigationController(mw)
         mw._current_page_index = 7  # SETTINGS
@@ -61,10 +61,10 @@ class TestNavigationStability:
         ctrl.navigate_to(0)  # Prova ad andare alla dashboard
 
         # Deve essere rimasto a 7
-        assert mw._current_page_index == 7  # noqa: PLR2004
+        assert mw._current_page_index == 7
         mw.sidebar.set_active_button.assert_called_with(7)
 
-    def test_handle_panel_error_resilience(self, mw):  # noqa: ANN001
+    def test_handle_panel_error_resilience(self, mw):
         """Verifica che un errore in un pannello mostri un messaggio e non crashi il controller."""
         ctrl = NavigationController(mw)
 

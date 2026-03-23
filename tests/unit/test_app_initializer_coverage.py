@@ -10,7 +10,7 @@ class TestAppInitializerCoverage:
     """Test di copertura per la nuova architettura di AppInitializer."""
 
     @pytest.fixture
-    def mock_core_deps(self, mocker):  # noqa: ANN001
+    def mock_core_deps(self, mocker):
         """Mock per le dipendenze pesanti di initialize_core."""
         return {
             "get_status": mocker.patch("src.core.license_validator.get_detailed_license_status"),
@@ -19,7 +19,7 @@ class TestAppInitializerCoverage:
             "setup_logging": mocker.patch.object(AppInitializer, "_setup_logging"),
         }
 
-    def test_initialize_core_success(self, mock_core_deps):  # noqa: ANN001
+    def test_initialize_core_success(self, mock_core_deps):
         """Test: Inizializzazione core completa con licenza valida."""
         AppInitializer._core_initialized = False
         mock_core_deps["get_status"].return_value = (LicenseStatus.VALID, "OK")
@@ -32,14 +32,14 @@ class TestAppInitializerCoverage:
         mock_core_deps["db_init"].assert_called_once()
         mock_core_deps["run_update"].assert_called_once()
 
-    def test_initialize_core_already_done(self, mock_core_deps):  # noqa: ANN001
+    def test_initialize_core_already_done(self, mock_core_deps):
         """Test: Ritorna True subito se già inizializzato."""
         AppInitializer._core_initialized = True
         res = AppInitializer.initialize_core()
         assert res is True
         mock_core_deps["setup_logging"].assert_not_called()
 
-    def test_initialize_core_with_license_update(self, mock_core_deps):  # noqa: ANN001
+    def test_initialize_core_with_license_update(self, mock_core_deps):
         """Test: Tenta update licenza e solleva eccezione se ancora non valida."""
         AppInitializer._core_initialized = False
         mock_core_deps["get_status"].return_value = (LicenseStatus.INVALID, "Expired")
@@ -49,7 +49,7 @@ class TestAppInitializerCoverage:
 
         mock_core_deps["run_update"].assert_called_once()
 
-    def test_initialize_core_exception(self, mock_core_deps):  # noqa: ANN001
+    def test_initialize_core_exception(self, mock_core_deps):
         """Test: Gestione eccezioni durante inizializzazione (DB crash)."""
         AppInitializer._core_initialized = False
         mock_core_deps["db_init"].side_effect = Exception("Crash")
@@ -60,7 +60,7 @@ class TestAppInitializerCoverage:
 
         assert AppInitializer._core_initialized is False
 
-    def test_init_generator_steps(self, mocker):  # noqa: ANN001
+    def test_init_generator_steps(self, mocker):
         """Test: Il generatore produce gli step attesi."""
         mock_mw = MagicMock()
         # Mock per evitare caricamento pannelli reali
@@ -72,5 +72,5 @@ class TestAppInitializerCoverage:
         steps = list(gen)
         # Verifica che ci siano step e che l'ultimo sia al 100%
         assert len(steps) > 0
-        assert steps[-1][1] == 100  # noqa: PLR2004
+        assert steps[-1][1] == 100
         assert "Sistema Pronto" in steps[-1][0]

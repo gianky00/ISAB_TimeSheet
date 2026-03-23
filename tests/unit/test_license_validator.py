@@ -12,7 +12,7 @@ from src.core import license_validator
 
 
 @pytest.fixture
-def mock_paths(tmp_path):  # noqa: ANN001
+def mock_paths(tmp_path):
     """Mocks file system paths for license files."""
     license_dir = tmp_path / "Licenza"
     license_dir.mkdir()
@@ -41,7 +41,7 @@ def mock_secrets():
         yield key
 
 
-def create_mock_license(config_path, manifest_path, key, payload):  # noqa: ANN001
+def create_mock_license(config_path, manifest_path, key, payload):
     """Helper to create valid license files."""
     from cryptography.fernet import Fernet  # noqa: PLC0415
 
@@ -60,7 +60,7 @@ def create_mock_license(config_path, manifest_path, key, payload):  # noqa: ANN0
 
 @patch("src.core.license_validator.get_hardware_id", return_value="HW123")
 @patch("src.core.license_validator.get_trusted_time")
-def test_valid_license(mock_time, mock_hw, mock_paths, mock_secrets):  # noqa: ANN001
+def test_valid_license(mock_time, mock_hw, mock_paths, mock_secrets):
     config_path, manifest_path = mock_paths
     key = mock_secrets
 
@@ -84,7 +84,7 @@ def test_valid_license(mock_time, mock_hw, mock_paths, mock_secrets):  # noqa: A
 
 @patch("src.core.license_validator.get_hardware_id", return_value="HW_DIFFERENT")
 @patch("src.core.license_validator.get_trusted_time")
-def test_invalid_hardware_id(mock_time, mock_hw, mock_paths, mock_secrets):  # noqa: ANN001
+def test_invalid_hardware_id(mock_time, mock_hw, mock_paths, mock_secrets):
     config_path, manifest_path = mock_paths
     key = mock_secrets
 
@@ -99,7 +99,7 @@ def test_invalid_hardware_id(mock_time, mock_hw, mock_paths, mock_secrets):  # n
 
 @patch("src.core.license_validator.get_hardware_id", return_value="HW123")
 @patch("src.core.license_validator.get_trusted_time")
-def test_expired_license(mock_time, mock_hw, mock_paths, mock_secrets):  # noqa: ANN001
+def test_expired_license(mock_time, mock_hw, mock_paths, mock_secrets):
     config_path, manifest_path = mock_paths
     key = mock_secrets
 
@@ -116,7 +116,7 @@ def test_expired_license(mock_time, mock_hw, mock_paths, mock_secrets):  # noqa:
     assert "SCADUTA" in msg
 
 
-def test_tampered_license(mock_paths, mock_secrets):  # noqa: ANN001
+def test_tampered_license(mock_paths, mock_secrets):
     config_path, manifest_path = mock_paths
     key = mock_secrets
 

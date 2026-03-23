@@ -13,7 +13,7 @@ from src.utils.security import PasswordManager
 
 class TestHardeningAuditSecurity:
     @pytest.fixture
-    def audit_env(self, tmp_path, mocker):  # noqa: ANN001
+    def audit_env(self, tmp_path, mocker):
         """Setup isolato per AuditManager modular V2."""
         db_path = tmp_path / "audit_hardening.db"
         # Patch the real location in AuditDatabase
@@ -26,7 +26,7 @@ class TestHardeningAuditSecurity:
             yield manager, db_path
 
     @pytest.fixture
-    def db_env(self, tmp_path, mocker):  # noqa: ANN001
+    def db_env(self, tmp_path, mocker):
         """Setup isolato per DatabaseManager e FTS5."""
         # Patch CONFIG_DIR per altri usi
         mocker.patch("src.core.database.manager.CONFIG_DIR", tmp_path)
@@ -47,7 +47,7 @@ class TestHardeningAuditSecurity:
 
     # --- AUDIT HARDENING TESTS ---
 
-    def test_audit_deletion_integrity_break(self, audit_env):  # noqa: ANN001
+    def test_audit_deletion_integrity_break(self, audit_env):
         """Test: La cancellazione di una riga intermedia deve rompere la catena."""
         manager, db_path = audit_env
 
@@ -67,7 +67,7 @@ class TestHardeningAuditSecurity:
         # L'integrità deve fallire perché l'hash della riga 3 si aspetta l'hash della 2 come prev_hash
         assert manager.verify_integrity() is False
 
-    def test_audit_insertion_integrity_break(self, audit_env):  # noqa: ANN001
+    def test_audit_insertion_integrity_break(self, audit_env):
         """Test: L'inserimento di una riga valida (ma non sequenziale) rompe la catena."""
         manager, db_path = audit_env
 
@@ -101,7 +101,7 @@ class TestHardeningAuditSecurity:
         # ha un row_hash calcolato sul prev_hash della riga 1, non della riga fake.
         assert manager.verify_integrity() is False
 
-    def test_audit_performance_stress(self, audit_env):  # noqa: ANN001
+    def test_audit_performance_stress(self, audit_env):
         """Test: Performance e stabilità con 500 inserimenti rapidi."""
         manager, _ = audit_env
 
@@ -112,12 +112,12 @@ class TestHardeningAuditSecurity:
         duration = time.time() - start_time
 
         # Media accettabile per test
-        assert duration < 25.0  # noqa: PLR2004
+        assert duration < 25.0
         assert manager.verify_integrity() is True
 
     # --- SECURITY MIGRATION TESTS ---
 
-    def test_password_migration_v1_to_v2(self, tmp_path, mocker):  # noqa: ANN001
+    def test_password_migration_v1_to_v2(self, tmp_path, mocker):
         """Test: Migrazione fluida dal formato ENC: al formato ENC:v2:."""
         sec_dir = tmp_path / "security"
         sec_dir.mkdir(parents=True, exist_ok=True)
@@ -140,7 +140,7 @@ class TestHardeningAuditSecurity:
             new_encrypted = pm.encrypt(plaintext)
             assert new_encrypted.startswith("ENC:v2:")
 
-    def test_security_corrupted_key_regeneration(self, tmp_path, mocker):  # noqa: ANN001
+    def test_security_corrupted_key_regeneration(self, tmp_path, mocker):
         """Test: Se il file della chiave è corrotto, deve rigenerarlo (self-healing)."""
         sec_dir = tmp_path / "security"
         sec_dir.mkdir(parents=True, exist_ok=True)
@@ -161,7 +161,7 @@ class TestHardeningAuditSecurity:
 
     # --- DATABASE FTS5 INTEGRITY TESTS ---
 
-    def test_fts5_sync_on_update_delete(self, db_env):  # noqa: ANN001
+    def test_fts5_sync_on_update_delete(self, db_env):
         """Test: L'indice FTS5 deve restare sincronizzato dopo UPDATE e DELETE."""
         mgr, db_path = db_env
 

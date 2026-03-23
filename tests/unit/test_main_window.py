@@ -9,7 +9,7 @@ from src.gui.main_window.page_index import PageIndex
 
 class TestMainWindow:
     @pytest.fixture
-    def app(self, qapp):  # noqa: ANN001
+    def app(self, qapp):
         return qapp
 
     @patch("src.gui.main_window.main.QTimer.singleShot")
@@ -18,16 +18,16 @@ class TestMainWindow:
     @patch("src.gui.main_window.main.MonitoringController")
     @patch("src.gui.main_window.main.config_manager.load_config")
     @patch("src.gui.main_window.main.apply_theme")
-    def test_init(self, mock_theme, mock_conf, mock_mon, mock_workflow, mock_service, mock_timer, app, qtbot):  # noqa: ANN001, PLR0913
+    def test_init(self, mock_theme, mock_conf, mock_mon, mock_workflow, mock_service, mock_timer, app, qtbot):  # noqa: PLR0913
         mock_conf.return_value = {}
         window = MainWindow()
         qtbot.addWidget(window)
 
         assert "SyncroJob" in window.windowTitle()
-        assert window.page_stack.count() >= 13  # noqa: PLR2004
+        assert window.page_stack.count() >= 13
         assert window.sidebar.btn_home.isChecked()
 
-    def test_navigation(self, app, qtbot):  # noqa: ANN001
+    def test_navigation(self, app, qtbot):
         with (
             patch("src.gui.main_window.main.QTimer.singleShot"),
             patch("src.gui.main_window.main.ServiceController"),
@@ -49,7 +49,7 @@ class TestMainWindow:
             qtbot.waitUntil(lambda: window.page_stack.currentIndex() == PageIndex.DASHBOARD, timeout=2000)
             assert window.sidebar.btn_home.isChecked()
 
-    def test_navigate_to_panel(self, app, qtbot):  # noqa: ANN001
+    def test_navigate_to_panel(self, app, qtbot):
         """Test deep link navigation naming matching the runner expectation."""
         with (
             patch("src.gui.main_window.main.QTimer.singleShot"),
@@ -72,4 +72,4 @@ class TestMainWindow:
             # Verifica tab Fornitori attivo
             assert automazioni_panel.main_tabs.currentIndex() == 0
             # Verifica tab Timbrature (bot) attivo
-            assert automazioni_panel.tab_fornitori.currentIndex() == 2  # noqa: PLR2004
+            assert automazioni_panel.tab_fornitori.currentIndex() == 2

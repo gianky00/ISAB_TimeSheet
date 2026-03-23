@@ -27,7 +27,7 @@ class TestSafeWorkProgrammazioneSyncComprehensive(unittest.TestCase):
 
     @patch("src.bots.safework.programmazione_sync.bot.poll_for_new_file")
     @patch.object(SafeWorkProgrammazioneSyncBot, "_attendi_scomparsa_overlay")
-    def test_run_success_flow(self, mock_overlay, mock_poll):  # noqa: ANN001
+    def test_run_success_flow(self, mock_overlay, mock_poll):
         """Test del flusso di sincronizzazione (download excel)."""
         data = [{"date_start": "01/01/2026", "date_end": "07/01/2026", "requesters": ["R1"]}]
         mock_poll.return_value = "C:/fake/downloads/Programmazione_2026.xlsx"

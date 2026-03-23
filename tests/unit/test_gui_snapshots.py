@@ -8,7 +8,7 @@ from src.gui.panels.scarico_ore_panel import ScaricoOrePanel
 
 class TestGuiSnapshots:
     @pytest.fixture
-    def mock_deps(self, mocker):  # noqa: ANN001
+    def mock_deps(self, mocker):
         # Mock per ContabilitaManager (evita chiamate DB in refresh_tabs)
         mocker.patch(
             "src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024, 2025]
@@ -22,7 +22,7 @@ class TestGuiSnapshots:
         mocker.patch("src.core.config_manager.load_config", return_value={})
 
     @pytest.mark.skip(reason="Incompatibilità rendering AnimatedTabWidget in ambiente headless Windows.")
-    def test_contabilita_panel_structure(self, qtbot, mock_deps):  # noqa: ANN001
+    def test_contabilita_panel_structure(self, qtbot, mock_deps):
         """
         Snapshot-like test: verify ContabilitaPanel has the expected structure
         (TabWidget, Buttons) without actually running data logic.
@@ -32,12 +32,12 @@ class TestGuiSnapshots:
         QApplication.processEvents()
 
         # Check Tabs (Preventivi, Giornaliere, Attività, Certificati, KPI)
-        assert panel.main_tabs.count() >= 5  # noqa: PLR2004
+        assert panel.main_tabs.count() >= 5
         assert panel.search_input is not None
         assert panel.update_btn is not None
 
     @pytest.mark.skip(reason="Incompatibilità rendering in ambiente headless Windows.")
-    def test_scarico_ore_panel_instantiation(self, qtbot, mock_deps):  # noqa: ANN001
+    def test_scarico_ore_panel_instantiation(self, qtbot, mock_deps):
         """Verify ScaricoOrePanel can be instantiated with its new controller-based structure."""
         panel = ScaricoOrePanel()
         qtbot.addWidget(panel)

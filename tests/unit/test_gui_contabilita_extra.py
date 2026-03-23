@@ -9,7 +9,7 @@ class TestContabilitaExtra:
     Uses extensive mocking to avoid instantiating heavy child tabs.
     """
 
-    def test_contabilita_panel_init(self, qapp, qtbot):  # noqa: ANN001
+    def test_contabilita_panel_init(self, qapp, qtbot):
         from src.gui.panels.contabilita_panel import ContabilitaPanel  # noqa: PLC0415
 
         # We mock EVERYTHING inside the panel to isolate the container logic
@@ -23,7 +23,7 @@ class TestContabilitaExtra:
         ):
             # Setup Mocks to behave like QWidgets without strictly being fully initialized ones
             # We use a real simple QWidget as base for the return value to satisfy addTab types
-            def create_mock_widget(*args, **kwargs):  # noqa: ANN002, ANN003, ANN202
+            def create_mock_widget(*args, **kwargs):
                 w = QWidget()
                 w.refresh_years = MagicMock()
                 w.refresh_data = MagicMock()
@@ -59,7 +59,7 @@ class TestContabilitaExtra:
                 panel.close()
                 panel.deleteLater()
 
-    def test_contabilita_panel_tab_switch(self, qapp, qtbot):  # noqa: ANN001
+    def test_contabilita_panel_tab_switch(self, qapp, qtbot):
         from src.gui.panels.contabilita_panel import ContabilitaPanel  # noqa: PLC0415
 
         with (
@@ -71,7 +71,7 @@ class TestContabilitaExtra:
             patch("src.gui.panels.contabilita_panel.CertificatiCampioneTab") as mock_cert_tab,
         ):
 
-            def create_mock_widget(*args, **kwargs):  # noqa: ANN002, ANN003, ANN202
+            def create_mock_widget(*args, **kwargs):
                 w = QWidget()
                 w.refresh_years = MagicMock()
                 w.refresh_data = MagicMock()
@@ -98,7 +98,7 @@ class TestContabilitaExtra:
 
                 # Switch to "KPI" (Index 4)
                 panel.main_tabs.setCurrentIndex(4)
-                assert panel.main_tabs.currentIndex() == 4  # noqa: PLR2004
+                assert panel.main_tabs.currentIndex() == 4
             finally:
                 panel.close()
                 panel.deleteLater()

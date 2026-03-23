@@ -20,7 +20,7 @@ def telegram_service():
 
 
 @pytest.mark.asyncio
-async def test_handle_error_conflict(telegram_service):  # noqa: ANN001
+async def test_handle_error_conflict(telegram_service):
     context = MagicMock()
     context.error = telegram.error.Conflict("test")
     telegram_service.stop_event = MagicMock()
@@ -33,7 +33,7 @@ async def test_handle_error_conflict(telegram_service):  # noqa: ANN001
 
 
 @pytest.mark.asyncio
-async def test_handle_error_network(telegram_service):  # noqa: ANN001
+async def test_handle_error_network(telegram_service):
     context = MagicMock()
     context.error = telegram.error.NetworkError("test")
 
@@ -43,7 +43,7 @@ async def test_handle_error_network(telegram_service):  # noqa: ANN001
 
 
 @pytest.mark.asyncio
-async def test_handle_error_other(telegram_service):  # noqa: ANN001
+async def test_handle_error_other(telegram_service):
     context = MagicMock()
     context.error = Exception("generic")
 
@@ -53,7 +53,7 @@ async def test_handle_error_other(telegram_service):  # noqa: ANN001
 
 
 @pytest.mark.asyncio
-async def test_handle_run_pdl_on(telegram_service):  # noqa: ANN001
+async def test_handle_run_pdl_on(telegram_service):
     from src.core.telegram.handlers import callbacks  # noqa: PLC0415
 
     with patch(
@@ -77,7 +77,7 @@ async def test_handle_run_pdl_on(telegram_service):  # noqa: ANN001
 
 
 @pytest.mark.asyncio
-async def test_handle_run_pdl_off(telegram_service):  # noqa: ANN001
+async def test_handle_run_pdl_off(telegram_service):
     from src.core.telegram.handlers import callbacks  # noqa: PLC0415
 
     update = MagicMock()
@@ -96,7 +96,7 @@ async def test_handle_run_pdl_off(telegram_service):  # noqa: ANN001
 
 
 @pytest.mark.asyncio
-async def test_handle_printer_selection(telegram_service):  # noqa: ANN001
+async def test_handle_printer_selection(telegram_service):
     from src.core.telegram.handlers import callbacks  # noqa: PLC0415
 
     with patch(
@@ -112,7 +112,7 @@ async def test_handle_printer_selection(telegram_service):  # noqa: ANN001
 
 
 @pytest.mark.asyncio
-async def test_handle_run_pdl_confirm_print_yes(telegram_service):  # noqa: ANN001
+async def test_handle_run_pdl_confirm_print_yes(telegram_service):
     from src.core.telegram.handlers import callbacks  # noqa: PLC0415
 
     query = AsyncMock()
@@ -129,7 +129,7 @@ async def test_handle_run_pdl_confirm_print_yes(telegram_service):  # noqa: ANN0
 
 
 @pytest.mark.asyncio
-async def test_handle_run_pdl_confirm_noprint_no(telegram_service):  # noqa: ANN001
+async def test_handle_run_pdl_confirm_noprint_no(telegram_service):
     from src.core.telegram.handlers import callbacks  # noqa: PLC0415
 
     query = AsyncMock()
@@ -143,7 +143,7 @@ async def test_handle_run_pdl_confirm_noprint_no(telegram_service):  # noqa: ANN
 
 
 @pytest.mark.asyncio
-async def test_handle_utility_actions_status(telegram_service):  # noqa: ANN001
+async def test_handle_utility_actions_status(telegram_service):
     from src.core.telegram.handlers import callbacks  # noqa: PLC0415
 
     telegram_service.status_requested = MagicMock()
@@ -152,7 +152,7 @@ async def test_handle_utility_actions_status(telegram_service):  # noqa: ANN001
 
 
 @pytest.mark.asyncio
-async def test_handle_utility_actions_screenshot(telegram_service):  # noqa: ANN001
+async def test_handle_utility_actions_screenshot(telegram_service):
     from src.core.telegram.handlers import callbacks  # noqa: PLC0415
 
     query = AsyncMock()
@@ -161,7 +161,7 @@ async def test_handle_utility_actions_screenshot(telegram_service):  # noqa: ANN
 
 
 @pytest.mark.asyncio
-async def test_handle_utility_actions_snap(telegram_service):  # noqa: ANN001
+async def test_handle_utility_actions_snap(telegram_service):
     from src.core.telegram.handlers import callbacks  # noqa: PLC0415
 
     telegram_service.screenshot_requested = MagicMock()
@@ -170,7 +170,7 @@ async def test_handle_utility_actions_snap(telegram_service):  # noqa: ANN001
 
 
 @pytest.mark.asyncio
-async def test_async_send_methods(telegram_service):  # noqa: ANN001
+async def test_async_send_methods(telegram_service):
     await telegram_service._send_message_async("123", "text")
     telegram_service.app.bot.send_message.assert_called()
 
@@ -184,7 +184,7 @@ async def test_async_send_methods(telegram_service):  # noqa: ANN001
 
 
 @pytest.mark.asyncio
-async def test_shutdown_application(telegram_service):  # noqa: ANN001
+async def test_shutdown_application(telegram_service):
     telegram_service.app.updater = AsyncMock()
     telegram_service.app.updater.is_running = True
     telegram_service.app.running = True
@@ -196,7 +196,7 @@ async def test_shutdown_application(telegram_service):  # noqa: ANN001
     telegram_service.app.shutdown.assert_called()
 
 
-def test_get_full_printer_name(telegram_service):  # noqa: ANN001
+def test_get_full_printer_name(telegram_service):
     from src.core.telegram.handlers import callbacks  # noqa: PLC0415
 
     with patch("src.core.telegram.handlers.callbacks.get_installed_printers") as mock_p:

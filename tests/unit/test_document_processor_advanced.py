@@ -8,11 +8,11 @@ from src.utils.document_processor import DocumentProcessor
 
 class TestDocumentProcessorAdvanced:
     @pytest.fixture
-    def mock_fitz(self, mocker):  # noqa: ANN001
+    def mock_fitz(self, mocker):
         """Mock globale per fitz (PyMuPDF)."""
         return mocker.patch("src.utils.document_processor.fitz")
 
-    def test_extract_text_success(self, mock_fitz):  # noqa: ANN001
+    def test_extract_text_success(self, mock_fitz):
         """Test: Estrazione testo corretta da più pagine."""
         mock_doc = MagicMock()
         mock_doc.__enter__.return_value = mock_doc
@@ -31,7 +31,7 @@ class TestDocumentProcessorAdvanced:
         assert "Pagina 1" in text
         assert "Pagina 2" in text
 
-    def test_is_pdf_searchable_true(self, mock_fitz):  # noqa: ANN001
+    def test_is_pdf_searchable_true(self, mock_fitz):
         """Test: PDF riconosciuto come ricercabile se ha testo."""
         mock_doc = MagicMock()
         mock_doc.__enter__.return_value = mock_doc
@@ -43,7 +43,7 @@ class TestDocumentProcessorAdvanced:
 
         assert DocumentProcessor.is_pdf_searchable(Path("text.pdf")) is True
 
-    def test_is_pdf_searchable_false(self, mock_fitz):  # noqa: ANN001
+    def test_is_pdf_searchable_false(self, mock_fitz):
         """Test: PDF riconosciuto come NON ricercabile se vuoto o solo immagine."""
         mock_doc = MagicMock()
         mock_doc.__enter__.return_value = mock_doc
@@ -55,7 +55,7 @@ class TestDocumentProcessorAdvanced:
 
         assert DocumentProcessor.is_pdf_searchable(Path("scanned.pdf")) is False
 
-    def test_merge_pdfs_logic(self, mock_fitz, mocker):  # noqa: ANN001
+    def test_merge_pdfs_logic(self, mock_fitz, mocker):
         """Test: Logica di unione PDF."""
         # Mock Path.exists() e Path.stat() per simulare file esistenti
         mock_path = mocker.patch("src.utils.document_processor.Path", wraps=Path)
@@ -92,10 +92,10 @@ class TestDocumentProcessorAdvanced:
         success = DocumentProcessor.merge_pdfs(["f1.pdf", "f2.pdf"], "merged.pdf")
 
         assert success is True
-        assert mock_out_doc.insert_pdf.call_count == 2  # noqa: PLR2004
+        assert mock_out_doc.insert_pdf.call_count == 2
         mock_out_doc.save.assert_called_with("merged.pdf")
 
-    def test_extract_text_exception_handling(self, mock_fitz):  # noqa: ANN001
+    def test_extract_text_exception_handling(self, mock_fitz):
         """Test: Gestione graziosa degli errori di apertura file."""
         mock_fitz.open.side_effect = Exception("Corrupted File")
 

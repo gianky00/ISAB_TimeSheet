@@ -6,7 +6,7 @@ from src.core.timesheet_processor import TimesheetProcessor
 class TestTimesheetProcessorSimple:
     """Test suite per TimesheetProcessor (logica di base senza dipendenze complesse)."""
 
-    def test_process_file_logic(self, tmp_path):  # noqa: ANN001
+    def test_process_file_logic(self, tmp_path):
         """Verifica la logica di process_file mockando le operazioni su file."""
         # Create a real file on disk so .exists() passes
         file_path = tmp_path / "fake.xlsx"
@@ -20,7 +20,7 @@ class TestTimesheetProcessorSimple:
             mock_wb.sheetnames = ["Timesheet"]
 
             # Important: __getitem__ should return different mocks for different cells
-            def get_cell_mock(key):  # noqa: ANN001, ANN202
+            def get_cell_mock(key):
                 cell = MagicMock()
                 if key == "A2":
                     cell.value = "ODC123"

@@ -67,7 +67,7 @@ class AnimatedProgressBar(QWidget):
         """
         self.setValue(value)
 
-    def setValue(self, value: int) -> None:  # noqa: N802
+    def setValue(self, value: int) -> None:
         """
         Imposta il valore di avanzamento della barra.
 
@@ -81,12 +81,12 @@ class AnimatedProgressBar(QWidget):
         """Restituisce il valore corrente della barra."""
         return self._value
 
-    def showEvent(self, event: QShowEvent | None) -> None:  # noqa: N802
+    def showEvent(self, event: QShowEvent | None) -> None:
         """Avvia l'animazione quando il widget viene mostrato."""
         super().showEvent(event)
         self._anim_timer.start()
 
-    def hideEvent(self, event: QHideEvent | None) -> None:  # noqa: N802
+    def hideEvent(self, event: QHideEvent | None) -> None:
         """Ferma l'animazione quando il widget viene nascosto per risparmiare risorse."""
         super().hideEvent(event)
         self._anim_timer.stop()
@@ -105,7 +105,7 @@ class AnimatedProgressBar(QWidget):
             self._border_direction = -5
         self.update()
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         """
         Renderizza graficamente la barra di progresso con effetti avanzati.
 

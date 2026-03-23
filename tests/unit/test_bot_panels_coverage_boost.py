@@ -7,7 +7,7 @@ from src.gui.panels import TimbratureDBPanel
 
 
 @pytest.fixture
-def timbrature_db_panel(qtbot, mocker):  # noqa: ANN001
+def timbrature_db_panel(qtbot, mocker):
     # Mock dependencies BEFORE creating the panel
     mock_storage_class = mocker.patch("src.gui.panels.timbrature.panel.TimbratureStorage")
     mock_storage_instance = mock_storage_class.return_value
@@ -21,7 +21,7 @@ def timbrature_db_panel(qtbot, mocker):  # noqa: ANN001
     return panel
 
 
-def test_load_settings_data_filter(timbrature_db_panel, qtbot):  # noqa: ANN001
+def test_load_settings_data_filter(timbrature_db_panel, qtbot):
     panel = timbrature_db_panel
     # Mock storage return
     panel.storage.get_employees.return_value = [
@@ -32,7 +32,7 @@ def test_load_settings_data_filter(timbrature_db_panel, qtbot):  # noqa: ANN001
     # Filter OFF
     panel.settings_tab.filter_empty_cb.setChecked(False)
     panel.settings_tab.load_data()
-    assert panel.settings_tab.settings_table.rowCount() == 2  # noqa: PLR2004
+    assert panel.settings_tab.settings_table.rowCount() == 2
 
     # Filter ON
     panel.settings_tab.filter_empty_cb.setChecked(True)
@@ -41,7 +41,7 @@ def test_load_settings_data_filter(timbrature_db_panel, qtbot):  # noqa: ANN001
     assert panel.settings_tab.settings_table.item(0, 0).text() == "Luca"
 
 
-def test_employee_detail_update(timbrature_db_panel, qtbot):  # noqa: ANN001
+def test_employee_detail_update(timbrature_db_panel, qtbot):
     panel = timbrature_db_panel
     panel.storage.get_employees.return_value = [
         {"nome": "Mario", "cognome": "Rossi", "reparto": "", "cantiere": ""}
@@ -66,7 +66,7 @@ def test_employee_detail_update(timbrature_db_panel, qtbot):  # noqa: ANN001
     panel.storage.update_employee_details.assert_called_with("Mario", "Rossi", reparto="NUOVO_REPARTO")
 
 
-def test_import_excel_manually_success(timbrature_db_panel, qtbot, mocker):  # noqa: ANN001
+def test_import_excel_manually_success(timbrature_db_panel, qtbot, mocker):
     panel = timbrature_db_panel
     mocker.patch(
         "PyQt6.QtWidgets.QFileDialog.getOpenFileName",
@@ -83,7 +83,7 @@ def test_import_excel_manually_success(timbrature_db_panel, qtbot, mocker):  # n
         mock_toast.return_value.show.assert_called_with(ANY, "success")
 
 
-def test_import_excel_manually_fail(timbrature_db_panel, qtbot, mocker):  # noqa: ANN001
+def test_import_excel_manually_fail(timbrature_db_panel, qtbot, mocker):
     panel = timbrature_db_panel
     mocker.patch(
         "PyQt6.QtWidgets.QFileDialog.getOpenFileName",
@@ -96,18 +96,18 @@ def test_import_excel_manually_fail(timbrature_db_panel, qtbot, mocker):  # noqa
         mock_toast.return_value.show.assert_called_with(ANY, "error")
 
 
-def test_update_combo_boxes(timbrature_db_panel, qtbot):  # noqa: ANN001
+def test_update_combo_boxes(timbrature_db_panel, qtbot):
     panel = timbrature_db_panel
     panel.storage.get_lists.return_value = {"reparti": ["R1"], "cantieri": ["C1"]}
     panel._update_filter_combos()
 
-    assert panel.reparto_filter.count() == 2  # Tutti + R1  # noqa: PLR2004
-    assert panel.cantiere_filter.count() == 2  # Tutti + C1  # noqa: PLR2004
+    assert panel.reparto_filter.count() == 2  # Tutti + R1
+    assert panel.cantiere_filter.count() == 2  # Tutti + C1
 
 
 @patch("PyQt6.QtWidgets.QDialog.exec")
 @patch("PyQt6.QtWidgets.QInputDialog.getText")
-def test_manage_list_add_item(mock_get_text, mock_exec, timbrature_db_panel, qtbot):  # noqa: ANN001
+def test_manage_list_add_item(mock_get_text, mock_exec, timbrature_db_panel, qtbot):
     # Nota: _manage_list è stato rimosso in favore delle impostazioni generali.
     # Questo test è obsoleto per TimbratureDBPanel ma lo manteniamo come stub se necessario.
     pass

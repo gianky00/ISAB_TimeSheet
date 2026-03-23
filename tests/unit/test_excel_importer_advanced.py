@@ -22,7 +22,7 @@ class TestExcelImporterAdvanced:
 
     # --- CONTABILITA DATI TESTS ---
 
-    def test_import_contabilita_dati_mapping_resilience(self, mock_xls, mocker):  # noqa: ANN001
+    def test_import_contabilita_dati_mapping_resilience(self, mock_xls, mocker):
         """Test: Riconoscimento colonne con nomi leggermente diversi o sporchi."""
         # Patch diretta del metodo interno per evitare problemi con la logica complessa di read_excel/preview
         mock_data = [
@@ -61,7 +61,7 @@ class TestExcelImporterAdvanced:
         success, _msg, rows, years = ExcelImporter.import_contabilita_dati("fake.xlsx")
 
         assert success is True
-        assert 2026 in years  # noqa: PLR2004
+        assert 2026 in years
         # rows format: (year, data_prev, mese, n_prev, ...)
         assert rows[0][3] == "P123"
 
@@ -87,7 +87,7 @@ class TestExcelImporterAdvanced:
         with patch("src.core.importers.giornaliere.pd.read_excel", return_value=df_giorn):
             _year, rows, err = GiornaliereImporter._process_single_giornaliera((2026, Path("test.xlsx"), {}))
             assert err is None
-            assert len(rows) == 2  # noqa: PLR2004
+            assert len(rows) == 2
             assert rows[0][2] == "Mario Rossi"
 
     def test_giornaliera_odc_lookup(self):
@@ -164,7 +164,7 @@ class TestExcelImporterAdvanced:
 
     # --- ATTIVITA PROGRAMMATE TESTS ---
 
-    def test_import_attivita_programmate_not_found(self, tmp_path):  # noqa: ANN001
+    def test_import_attivita_programmate_not_found(self, tmp_path):
         """Test: Gestione file mancante per Attività Programmate."""
         success, msg, _rows = ExcelImporter.import_attivita_programmate(str(tmp_path / "missing.xlsx"))
         assert success is False
@@ -174,7 +174,7 @@ class TestExcelImporterAdvanced:
 
     def test_identify_sheet_year(self):
         """Test: Estrazione anno da nomi fogli."""
-        assert ContabilitaImporter._identify_sheet_year("Dati 2026") == 2026  # noqa: PLR2004
-        assert ContabilitaImporter._identify_sheet_year("2024_Riepilogo") == 2024  # noqa: PLR2004
+        assert ContabilitaImporter._identify_sheet_year("Dati 2026") == 2026
+        assert ContabilitaImporter._identify_sheet_year("2024_Riepilogo") == 2024
         assert ContabilitaImporter._identify_sheet_year("Dati") == datetime.now().year
         assert ContabilitaImporter._identify_sheet_year("Foglio1") is None

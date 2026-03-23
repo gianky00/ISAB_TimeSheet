@@ -7,11 +7,11 @@ from src.core.contabilita_stats import ContabilitaStats
 
 class TestBusinessIntelligenceKPI:
     @pytest.fixture
-    def mock_queries(self, mocker):  # noqa: ANN001
+    def mock_queries(self, mocker):
         """Mock per ContabilitaQueries."""
         return mocker.patch("src.core.contabilita_stats.ContabilitaQueries")
 
-    def test_get_year_stats_calculation(self, mock_queries):  # noqa: ANN001
+    def test_get_year_stats_calculation(self, mock_queries):
         """Test: Calcolo corretto delle statistiche annuali con dati misti."""
         # Setup dati finti per Contabilita (Tabella Dati)
         # row[2]=n_prev, row[3]=totale_prev, row[4]=attivita, row[7]=stato_attivita, row[9]=ore_sp  # noqa: ERA001
@@ -127,22 +127,22 @@ class TestBusinessIntelligenceKPI:
         stats = ContabilitaStats.get_year_stats(Path("fake.db"), 2026)
 
         # Verifiche Dati Contabilità
-        assert stats["count_total"] == 2  # Solo P001 e P002  # noqa: PLR2004
-        assert stats["total_prev"] == 3500.50  # 1000 + 2500.50  # noqa: PLR2004
-        assert stats["total_ore"] == 30.0  # 10 + 20  # noqa: PLR2004
+        assert stats["count_total"] == 2  # Solo P001 e P002
+        assert stats["total_prev"] == 3500.50  # 1000 + 2500.50
+        assert stats["total_ore"] == 30.0  # 10 + 20
         assert stats["status_counts"]["APERTO"] == 1
         assert stats["status_counts"]["CHIUSO"] == 1
 
         # Verifiche Top Commesse
-        assert len(stats["top_commesse"]) == 2  # noqa: PLR2004
+        assert len(stats["top_commesse"]) == 2
         assert stats["top_commesse"][0][0] == "Installazione B"
-        assert stats["top_commesse"][0][1] == 2500.50  # noqa: PLR2004
+        assert stats["top_commesse"][0][1] == 2500.50
 
         # Verifiche Ore Dirette/Indirette
-        assert stats["ore_dirette"] == 8.0  # 4 + 4  # noqa: PLR2004
+        assert stats["ore_dirette"] == 8.0  # 4 + 4
         assert stats["ore_indirette"] == 1.0  # 1
 
-    def test_get_year_stats_empty_data(self, mock_queries):  # noqa: ANN001
+    def test_get_year_stats_empty_data(self, mock_queries):
         """Test: Gestione graziosa di database vuoto o anno inesistente."""
         mock_queries.get_data_by_year.return_value = []
         mock_queries.get_giornaliere_by_year.return_value = None
@@ -155,7 +155,7 @@ class TestBusinessIntelligenceKPI:
         assert stats["ore_dirette"] == 0.0
         assert stats["ore_indirette"] == 0.0
 
-    def test_get_year_stats_malformed_currency(self, mock_queries):  # noqa: ANN001
+    def test_get_year_stats_malformed_currency(self, mock_queries):
         """Test: Resilienza a valori monetari o ore malformati."""
         mock_data = [
             (

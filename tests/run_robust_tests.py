@@ -282,7 +282,7 @@ def _extract_traceback_block(lines: list[str], node_id: str) -> str:
         if in_block:
             tb_lines.append(line)
             # Fine blocco: riga di separazione lunga o riga vuota dopo "short test summary"
-            if line.startswith("=") and len(line) > 10 and in_block and len(tb_lines) > 2:  # noqa: PLR2004
+            if line.startswith("=") and len(line) > 10 and in_block and len(tb_lines) > 2:
                 break
 
     return "\n".join(tb_lines[-50:]) if tb_lines else ""
@@ -732,7 +732,7 @@ class UltraRunner:
                 status = (
                     f"{Console.GREEN}PASS{Console.ENDC}" if r.success else f"{Console.FAIL}FAIL{Console.ENDC}"
                 )
-                name = r.target if len(r.target) <= 58 else "..." + r.target[-55:]  # noqa: PLR2004
+                name = r.target if len(r.target) <= 58 else "..." + r.target[-55:]
                 print(f"  {name:<58} {status:<17} {r.passed:>4} {r.failed:>4} {r.duration:>6.2f}s")
 
         Console.print(

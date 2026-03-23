@@ -34,7 +34,7 @@ class TestImportersRobust:
         }
         return pd.DataFrame(data)
 
-    def test_process_single_giornaliera_success(self, mock_giornaliera_df, tmp_path):  # noqa: ANN001
+    def test_process_single_giornaliera_success(self, mock_giornaliera_df, tmp_path):
         """Test processamento completo singola giornaliera."""
         path = tmp_path / "Giornaliera_2024.xlsx"
         path.touch()
@@ -48,9 +48,9 @@ class TestImportersRobust:
         ):
             year, rows, err = GiornaliereImporter._process_single_giornaliera(args)
 
-            assert year == 2024  # noqa: PLR2004
+            assert year == 2024
             assert err is None
-            assert len(rows) == 2  # noqa: PLR2004
+            assert len(rows) == 2
 
             # Verifica mapping ODC
             # Riga 1: 540012345 (presente e valido)
@@ -67,13 +67,13 @@ class TestImportersRobust:
         assert "personale" in norm_df.columns
         assert "Unknown" in norm_df.columns
 
-    def test_giornaliera_clean_data(self, mock_giornaliera_df):  # noqa: ANN001
+    def test_giornaliera_clean_data(self, mock_giornaliera_df):
         """Test pulizia dati (rimozione totali)."""
         # Necessaria normalizzazione prima della pulizia (che si aspetta colonne minuscole)
         norm_df = GiornaliereImporter._normalize_giornaliera_columns(mock_giornaliera_df)
         clean_df = GiornaliereImporter._clean_giornaliera_data(norm_df)
 
-        assert len(clean_df) == 2  # noqa: PLR2004
+        assert len(clean_df) == 2
         assert "Totale" not in clean_df["data"].values
 
     # --- Scarico Ore Tests (OpenPyXL based) ---
@@ -109,7 +109,7 @@ class TestImportersRobust:
             if val:
                 c = ws.cell(row=6, column=col, value=val)
                 # Aggiungi stile
-                if col == 5:  # ODC  # noqa: PLR2004
+                if col == 5:  # ODC
                     c.font = Font(color="FF0000")  # Red
 
         # Riga 7: Dati invalidi (manca ODC e POS)
@@ -133,7 +133,7 @@ class TestImportersRobust:
 
         return wb
 
-    def test_scarico_ore_parsing_logic(self, mock_scarico_wb):  # noqa: ANN001
+    def test_scarico_ore_parsing_logic(self, mock_scarico_wb):
         """Test logica parsing Scarico Ore con workbook reale."""
         ws = mock_scarico_wb["SCARICO ORE"]
 
@@ -158,7 +158,7 @@ class TestImportersRobust:
         assert "non trovato" in msg
 
     @patch("src.core.importers.scarico_ore.msoffcrypto")
-    def test_scan_encrypted_file(self, mock_crypto, tmp_path):  # noqa: ANN001
+    def test_scan_encrypted_file(self, mock_crypto, tmp_path):
         """Test scansione file cifrato."""
         from src.core.constants import Business  # noqa: PLC0415
 

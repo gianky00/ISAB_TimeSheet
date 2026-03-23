@@ -31,7 +31,7 @@ class TestTimbratureBotComprehensive(unittest.TestCase):
         self.assertEqual(self.bot.name, "Timbrature")
 
     @patch("src.bots.portale_fornitori.timbrature.bot.TimbraturePage")
-    def test_run_success(self, mock_page_class):  # noqa: ANN001
+    def test_run_success(self, mock_page_class):
         mock_page = mock_page_class.return_value
         mock_page.navigate_to_timbrature.return_value = True
         mock_page.set_filters.return_value = True
@@ -65,7 +65,7 @@ class TestTimbraturePageComprehensive(unittest.TestCase):
 
     @patch("src.bots.portale_fornitori.timbrature.pages.timbrature_page.time.sleep")
     @patch("src.bots.portale_fornitori.timbrature.pages.timbrature_page.time.time")
-    def test_rename_latest_download_success(self, mock_time, mock_sleep):  # noqa: ANN001
+    def test_rename_latest_download_success(self, mock_time, mock_sleep):
         """Test download con filesystem reale per evitare problemi di mocking Path."""
         # 1. Crea un file finto nella cartella download
         fake_file = self.download_dir / "report.xlsx"
@@ -97,7 +97,7 @@ class TestTimbratureStorageComprehensive(unittest.TestCase):
     @patch("pandas.read_excel")
     @patch("src.core.database.db_manager.get_connection")
     @patch("src.core.sync_tracker.SyncTracker.update_status")
-    def test_import_excel_data_flow(self, mock_sync, mock_get_conn, mock_read_excel):  # noqa: ANN001
+    def test_import_excel_data_flow(self, mock_sync, mock_get_conn, mock_read_excel):
         import pandas as pd  # noqa: PLC0415
 
         mock_read_excel.return_value = pd.DataFrame(

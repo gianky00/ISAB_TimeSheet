@@ -62,7 +62,7 @@ class ModernButton(QPushButton):
         self._anim.setDuration(150)
         self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-    def showEvent(self, event: Any) -> None:  # noqa: ANN401, N802
+    def showEvent(self, event: Any) -> None:  # noqa: ANN401
         """Forza l'aggiornamento dello stile quando il widget viene mostrato."""
         super().showEvent(event)
         self._apply_style()
@@ -78,14 +78,14 @@ class ModernButton(QPushButton):
 
     hoverOpacity = pyqtProperty(float, fget=get_hover_opacity, fset=set_hover_opacity)  # noqa: N815
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:  # noqa: N802
+    def enterEvent(self, event: QEnterEvent | None) -> None:
         """Avvia l'animazione hover all'ingresso del mouse."""
         self._anim.setStartValue(0.0)
         self._anim.setEndValue(0.1)
         self._anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any | None) -> None:  # noqa: ANN401, N802
+    def leaveEvent(self, event: Any | None) -> None:  # noqa: ANN401
         """Avvia l'animazione di uscita al movimento del mouse."""
         self._anim.setStartValue(0.1)
         self._anim.setEndValue(0.0)

@@ -48,7 +48,7 @@ def mock_element():
 
 
 @pytest.fixture
-def temp_download_dir(tmp_path):  # noqa: ANN001
+def temp_download_dir(tmp_path):
     """Directory temporanea per test download."""
     download_dir = tmp_path / "downloads"
     download_dir.mkdir()
@@ -64,7 +64,7 @@ class TestWaitForOverlay:
     """Test wait_for_overlay_to_disappear()."""
 
     @patch("src.bots.base.wait_helpers.WebDriverWait")
-    def test_overlay_disappears_success(self, mock_wait_class, mock_driver):  # noqa: ANN001
+    def test_overlay_disappears_success(self, mock_wait_class, mock_driver):
         mock_wait = MagicMock()
         mock_wait_class.return_value = mock_wait
         mock_wait.until.return_value = True
@@ -73,7 +73,7 @@ class TestWaitForOverlay:
         assert result is True
 
     @patch("src.bots.base.wait_helpers.WebDriverWait")
-    def test_overlay_timeout(self, mock_wait_class, mock_driver):  # noqa: ANN001
+    def test_overlay_timeout(self, mock_wait_class, mock_driver):
         mock_wait = MagicMock()
         mock_wait_class.return_value = mock_wait
         mock_wait.until.side_effect = TimeoutException()
@@ -86,7 +86,7 @@ class TestWaitForElementClickable:
     """Test wait_for_element_clickable()."""
 
     @patch("src.bots.base.wait_helpers.WebDriverWait")
-    def test_element_clickable(self, mock_wait_class, mock_driver, mock_element):  # noqa: ANN001
+    def test_element_clickable(self, mock_wait_class, mock_driver, mock_element):
         mock_wait = MagicMock()
         mock_wait_class.return_value = mock_wait
         mock_wait.until.return_value = mock_element
@@ -95,7 +95,7 @@ class TestWaitForElementClickable:
         assert result == mock_element
 
     @patch("src.bots.base.wait_helpers.WebDriverWait")
-    def test_element_not_clickable_timeout(self, mock_wait_class, mock_driver):  # noqa: ANN001
+    def test_element_not_clickable_timeout(self, mock_wait_class, mock_driver):
         mock_wait = MagicMock()
         mock_wait_class.return_value = mock_wait
         mock_wait.until.side_effect = TimeoutException()
@@ -108,7 +108,7 @@ class TestWaitForElementStaleness:
     """Test wait_for_element_staleness()."""
 
     @patch("src.bots.base.wait_helpers.WebDriverWait")
-    def test_element_becomes_stale(self, mock_wait_class, mock_driver, mock_element):  # noqa: ANN001
+    def test_element_becomes_stale(self, mock_wait_class, mock_driver, mock_element):
         mock_wait = MagicMock()
         mock_wait_class.return_value = mock_wait
         mock_wait.until.return_value = True
@@ -125,7 +125,7 @@ class TestWaitForElementStaleness:
 class TestPollForFile:
     """Test poll_for_file()."""
 
-    def test_file_not_found_timeout(self, temp_download_dir):  # noqa: ANN001
+    def test_file_not_found_timeout(self, temp_download_dir):
         """Test timeout se file non appare."""
         result = poll_for_file(temp_download_dir, pattern="nonexistent.txt", timeout=1, poll_interval=0.1)
         assert result is None
@@ -134,7 +134,7 @@ class TestPollForFile:
 class TestPollForDownloadComplete:
     """Test poll_for_download_complete()."""
 
-    def test_download_complete(self, temp_download_dir):  # noqa: ANN001
+    def test_download_complete(self, temp_download_dir):
         (temp_download_dir / "report.xlsx").write_text("data")
         result = poll_for_download_complete(
             temp_download_dir, pattern="report.xlsx", timeout=2, poll_interval=0.1
@@ -142,7 +142,7 @@ class TestPollForDownloadComplete:
         assert result is not None
         assert result.endswith("report.xlsx")
 
-    def test_download_incomplete_excluded(self, temp_download_dir):  # noqa: ANN001
+    def test_download_incomplete_excluded(self, temp_download_dir):
         (temp_download_dir / "report.xlsx.crdownload").write_text("partial")
         result = poll_for_download_complete(
             temp_download_dir, pattern="report.xlsx*", timeout=1, poll_interval=0.1
@@ -158,14 +158,14 @@ class TestPollForDownloadComplete:
 class TestPollForNewFile:
     """Test poll_for_new_file()."""
 
-    def test_detects_new_file(self, temp_download_dir):  # noqa: ANN001
+    def test_detects_new_file(self, temp_download_dir):
         """Rileva file non presente nello snapshot."""
         # 1. Snapshot iniziale
         (temp_download_dir / "existing.txt").write_text("old")
         files_before = {str(f.resolve()) for f in temp_download_dir.glob("*")}
 
         # 2. Crea file nuovo in thread
-        def create_new():  # noqa: ANN202
+        def create_new():
             time.sleep(0.3)
             (temp_download_dir / "new.txt").write_text("new")
 
@@ -183,7 +183,7 @@ class TestPollForNewFile:
         assert result is not None
         assert Path(result).name == "new.txt"
 
-    def test_detects_overwrite_file(self, temp_download_dir):  # noqa: ANN001
+    def test_detects_overwrite_file(self, temp_download_dir):
         """Rileva file esistente ma aggiornato (overwrite)."""
         target_file = temp_download_dir / "updated.txt"
         target_file.write_text("version1")
@@ -192,7 +192,7 @@ class TestPollForNewFile:
         files_before = {str(f.resolve()) for f in temp_download_dir.glob("*")}
 
         # Modifica file in thread (simulate overwrite)
-        def overwrite_file():  # noqa: ANN202
+        def overwrite_file():
             time.sleep(1.2)  # Sleep > 1s per garantire cambio mtime rilevabile (tolleranza è 1.0s)
             target_file.write_text("version2")
 
@@ -210,7 +210,7 @@ class TestPollForNewFile:
         assert Path(result).name == "updated.txt"
         assert Path(result).read_text() == "version2"
 
-    def test_timeout_no_change(self, temp_download_dir):  # noqa: ANN001
+    def test_timeout_no_change(self, temp_download_dir):
         """Nessun cambiamento -> timeout."""
         files_before = {str(f.resolve()) for f in temp_download_dir.glob("*")}
 
@@ -227,7 +227,7 @@ class TestSafeClickWithRetry:
     """Test safe_click_with_retry()."""
 
     @patch("src.bots.base.wait_helpers.wait_for_element_clickable")
-    def test_click_success_first_try(self, mock_wait_clickable, mock_driver):  # noqa: ANN001
+    def test_click_success_first_try(self, mock_wait_clickable, mock_driver):
         mock_element = MagicMock()
         mock_wait_clickable.return_value = mock_element
 
@@ -237,7 +237,7 @@ class TestSafeClickWithRetry:
 
     @patch("src.bots.base.wait_helpers.wait_for_element_clickable")
     @patch("src.bots.base.wait_helpers.time.sleep")
-    def test_click_retry_on_intercept(self, mock_sleep, mock_wait_clickable, mock_driver):  # noqa: ANN001
+    def test_click_retry_on_intercept(self, mock_sleep, mock_wait_clickable, mock_driver):
         from selenium.common.exceptions import ElementClickInterceptedException  # noqa: PLC0415
 
         mock_element = MagicMock()
@@ -251,18 +251,18 @@ class TestSafeClickWithRetry:
 
         result = safe_click_with_retry(mock_driver, (By.ID, "button"), retries=3, retry_delay=0.1)
         assert result is True
-        assert mock_element.click.call_count == 2  # noqa: PLR2004
+        assert mock_element.click.call_count == 2
 
 
 class TestExecuteWithWait:
     """Test execute_with_wait()."""
 
     @patch("src.bots.base.wait_helpers.wait_for_overlay_to_disappear")
-    def test_execute_action_with_wait(self, mock_wait_overlay, mock_driver):  # noqa: ANN001
+    def test_execute_action_with_wait(self, mock_wait_overlay, mock_driver):
         mock_wait_overlay.return_value = True
         action_called = False
 
-        def test_action():  # noqa: ANN202
+        def test_action():
             nonlocal action_called
             action_called = True
             return True

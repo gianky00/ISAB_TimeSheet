@@ -15,15 +15,15 @@ class ConcreteBot(BaseBot):
     def description(self):
         return "Test Description"
 
-    def run(self, data):  # noqa: ANN001
+    def run(self, data):
         self._check_stop()
         return True
 
     @staticmethod
-    def get_columns():  # noqa: ANN205
+    def get_columns():
         return []
 
-    def _handle_unsaved_changes_popup(self):  # noqa: ANN202
+    def _handle_unsaved_changes_popup(self):
         pass
 
 
@@ -101,7 +101,7 @@ class TestBaseBot:
         assert "Credenziali" in msg
 
     @patch.object(ConcreteBot, "_safe_login_with_retry", return_value=True)
-    def test_execute_workflow_success(self, mock_login, mock_bot_deps):  # noqa: ANN001
+    def test_execute_workflow_success(self, mock_login, mock_bot_deps):
         bot = ConcreteBot("u", "p")
         result = bot.execute([{"data": 1}])
 
@@ -111,7 +111,7 @@ class TestBaseBot:
         mock_bot_deps["run_update"].assert_called_once()
 
     @patch.object(ConcreteBot, "_safe_login_with_retry", return_value=False)
-    def test_execute_workflow_login_fail(self, mock_login, mock_bot_deps):  # noqa: ANN001
+    def test_execute_workflow_login_fail(self, mock_login, mock_bot_deps):
         bot = ConcreteBot("u", "p")
         result = bot.execute([{"data": 1}])
 
@@ -119,14 +119,14 @@ class TestBaseBot:
         assert bot.status == BotStatus.ERROR
 
     @patch.object(ConcreteBot, "_safe_login_with_retry", return_value=True)
-    def test_execute_workflow_run_fail(self, mock_login, mock_bot_deps):  # noqa: ANN001
+    def test_execute_workflow_run_fail(self, mock_login, mock_bot_deps):
         bot = ConcreteBot("u", "p")
         with patch.object(bot, "run", return_value=False):
             result = bot.execute([{"data": 1}])
             assert result is False
             assert bot.status == BotStatus.ERROR
 
-    def test_safe_login_retry_logic(self, mock_bot_deps):  # noqa: ANN001
+    def test_safe_login_retry_logic(self, mock_bot_deps):
         bot = ConcreteBot("u", "p")
 
         # Mock _init_driver and _login
@@ -140,10 +140,10 @@ class TestBaseBot:
             result = bot._safe_login_with_retry(max_retries=2)
 
             assert result is True
-            assert mock_init.call_count == 2  # noqa: PLR2004
-            assert mock_login.call_count == 2  # noqa: PLR2004
+            assert mock_init.call_count == 2
+            assert mock_login.call_count == 2
 
-    def test_save_error_state(self, mock_bot_deps):  # noqa: ANN001
+    def test_save_error_state(self, mock_bot_deps):
         bot = ConcreteBot("u", "p")
         mock_driver = MagicMock()
         mock_driver.page_source = "<html></html>"

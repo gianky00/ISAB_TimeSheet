@@ -9,7 +9,7 @@ from src.gui.widgets.toast import Toast
 
 class TestGUIHeadlessHardened:
     @pytest.fixture
-    def settings_panel(self, qapp, mocker):  # noqa: ANN001
+    def settings_panel(self, qapp, mocker):
         # Mocking config_manager per evitare scritture su disco
         mocker.patch(
             "src.gui.panels.settings.main_panel.config_manager.load_config",
@@ -20,7 +20,7 @@ class TestGUIHeadlessHardened:
         p._mock_save = m_save
         return p
 
-    def test_settings_auto_save_trigger(self, settings_panel, qtbot):  # noqa: ANN001
+    def test_settings_auto_save_trigger(self, settings_panel, qtbot):
         """Verifica che i cambiamenti nella UI scatenino il salvataggio."""
         # Attendi che il caricamento iniziale (QTimer) finisca
         qtbot.wait(100)
@@ -29,7 +29,7 @@ class TestGUIHeadlessHardened:
         # Il salvataggio usa debouncing (500ms) e un QThread
         qtbot.waitUntil(lambda: settings_panel._mock_save.called, timeout=2000)
 
-    def test_toast_animation_lifecycle(self, qapp, mocker):  # noqa: ANN001
+    def test_toast_animation_lifecycle(self, qapp, mocker):
         """Verifica che il toast si mostri e avvii l'animazione."""
         parent = QWidget()
         toast = Toast("Test Message", parent=parent)
@@ -38,7 +38,7 @@ class TestGUIHeadlessHardened:
         toast.show_at(0, 0)
         assert m_anim.start.called
 
-    def test_settings_account_addition_flow(self, settings_panel, mocker):  # noqa: ANN001
+    def test_settings_account_addition_flow(self, settings_panel, mocker):
         """Verifica il flusso di aggiunta account tramite widget dedicato."""
         mock_dlg = MagicMock()
         mock_dlg.exec.return_value = True
@@ -64,7 +64,7 @@ class TestGUIHeadlessHardened:
         )
         assert found
 
-    def test_settings_tab_change_logic(self, settings_panel):  # noqa: ANN001
+    def test_settings_tab_change_logic(self, settings_panel):
         """Verifica la navigazione tra i tab delle impostazioni."""
         assert settings_panel.tabs.currentIndex() == 0
         settings_panel.tabs.setCurrentIndex(1)

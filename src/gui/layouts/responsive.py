@@ -25,12 +25,12 @@ class ResponsiveContainer(QWidget):
         self._main_layout = QVBoxLayout(self)
         self._main_layout.setContentsMargins(0, 0, 0, 0)
 
-    def addWidget(self, widget: QWidget) -> None:  # noqa: N802
+    def addWidget(self, widget: QWidget) -> None:
         """Aggiunge un widget alla lista interna e aggiorna la visualizzazione."""
         self._widgets.append(widget)
         self._rebuild_layout()
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
         """Gestisce il cambio di dimensioni della finestra aggiornando il layout se necessario."""
         if event is not None:
             super().resizeEvent(event)

@@ -165,8 +165,8 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# Test: permettiamo assert, password fittizie, print, temp files e nested with
-"tests/**/*.py" = ["S101", "S105", "S106", "S108", "ANN201", "T201", "DTZ", "SIM117", "F821", "F841"]
+# Test: permettiamo assert, password fittizie, print, temp files, nested with, magic numbers e type hint non espliciti
+"tests/**/*.py" = ["S101", "S105", "S106", "S108", "T201", "DTZ", "SIM117", "F821", "F841", "PLR2004", "ANN", "SLF001", "PT011"]
 # __init__.py: re-export senza uso diretto
 "**/__init__.py" = ["F401"]
 # Script e admin: meno severi
@@ -175,6 +175,8 @@ ignore = [
 # main.py: entry point
 "main.py" = ["T201", "E402"]
 "tools/**/*.py" = ["T201", "PTH"]
+# GUI: Metodi ereditati da PyQt (es. paintEvent) violano il Naming PEP8
+"src/gui/**/*.py" = ["N802", "N803"]
 "*.py" = ["PTH"]
 
 [tool.ruff.lint.isort]

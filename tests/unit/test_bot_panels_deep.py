@@ -6,7 +6,7 @@ from src.gui.panels import BaseBotPanel, CaricoTSPanel, DettagliOdAPanel, Scaric
 
 
 @pytest.fixture
-def mock_ui_deps(mocker):  # noqa: ANN001
+def mock_ui_deps(mocker):
     # Mocking external managers used in panels
     mocker.patch("src.core.config_manager.load_config", return_value={})
     mocker.patch("src.core.config_manager.set_config_value")
@@ -20,7 +20,7 @@ def mock_ui_deps(mocker):  # noqa: ANN001
     return mocker
 
 
-def test_base_bot_panel_logic(qtbot, mock_ui_deps):  # noqa: ANN001
+def test_base_bot_panel_logic(qtbot, mock_ui_deps):
     """Test BaseBotPanel logic without actually creating complex widgets."""
     panel = BaseBotPanel("test_bot", "Test Bot", "Description")
     qtbot.addWidget(panel)
@@ -38,7 +38,7 @@ def test_base_bot_panel_logic(qtbot, mock_ui_deps):  # noqa: ANN001
     assert panel.stop_btn.isEnabled() is False
 
 
-def test_scarica_ts_panel_deep(qtbot, mock_ui_deps):  # noqa: ANN001
+def test_scarica_ts_panel_deep(qtbot, mock_ui_deps):
     panel = ScaricaTSPanel()
     qtbot.addWidget(panel)
 
@@ -55,7 +55,7 @@ def test_scarica_ts_panel_deep(qtbot, mock_ui_deps):  # noqa: ANN001
     assert ready is True
 
 
-def test_carico_ts_panel_deep(qtbot, mock_ui_deps):  # noqa: ANN001
+def test_carico_ts_panel_deep(qtbot, mock_ui_deps):
     panel = CaricoTSPanel()
     qtbot.addWidget(panel)
 
@@ -74,7 +74,7 @@ def test_carico_ts_panel_deep(qtbot, mock_ui_deps):  # noqa: ANN001
     panel._on_stop()  # Should stop worker if exists
 
 
-def test_dettagli_oda_panel_deep(qtbot, mock_ui_deps):  # noqa: ANN001
+def test_dettagli_oda_panel_deep(qtbot, mock_ui_deps):
     panel = DettagliOdAPanel()
     qtbot.addWidget(panel)
 
@@ -87,7 +87,7 @@ def test_dettagli_oda_panel_deep(qtbot, mock_ui_deps):  # noqa: ANN001
 
 
 @patch("src.gui.panels.scarico_ts.BotWorker")
-def test_bot_worker_integration(mock_worker_cls, qtbot, mock_ui_deps):  # noqa: ANN001
+def test_bot_worker_integration(mock_worker_cls, qtbot, mock_ui_deps):
     panel = ScaricaTSPanel()
     qtbot.addWidget(panel)
 

@@ -31,7 +31,7 @@ class MultiColumnFilterProxyModel(QSortFilterProxyModel):
         self._filter_text = text.lower().strip()
         self.invalidateFilter()
 
-    def filterAcceptsRow(self, source_row: int, _source_parent) -> bool:  # noqa: ANN001, N802
+    def filterAcceptsRow(self, source_row: int, _source_parent) -> bool:  # noqa: ANN001
         """Determina se una riga del modello sorgente deve essere inclusa nel filtro."""
         if not self._filter_text:
             return True

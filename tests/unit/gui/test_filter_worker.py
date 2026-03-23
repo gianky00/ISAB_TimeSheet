@@ -1,7 +1,7 @@
 from src.gui.components.scarico_ore.filter_worker import FilterWorker
 
 
-def test_filter_worker_basic(qtbot):  # noqa: ANN001
+def test_filter_worker_basic(qtbot):
     """Testa che il QThread esegua correttamente il filtraggio ed emetta il segnale finished."""
     # Arrange
     search_index = ["mario rossi isab", "luigi bianchi erg"]
@@ -18,7 +18,7 @@ def test_filter_worker_basic(qtbot):  # noqa: ANN001
     assert blocker.args == [[0], 1], "Deve trovare solo l'indice 0 (Mario Rossi)"
 
 
-def test_filter_worker_cancellation(qtbot):  # noqa: ANN001
+def test_filter_worker_cancellation(qtbot):
     """Testa che la chiamata a cancel() interrompa il thread senza DB lock e prevenga segnali fantasma."""
     # Arrange (dataset grosso per dare tempo al thread di farsi cancellare)
     search_index = ["test string"] * 500000

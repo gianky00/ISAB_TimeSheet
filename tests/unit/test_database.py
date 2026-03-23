@@ -7,7 +7,7 @@ from src.core.database import DatabaseManager
 
 class TestDatabaseManager:
     @pytest.fixture
-    def db_path(self, tmp_path):  # noqa: ANN001
+    def db_path(self, tmp_path):
         return tmp_path / "test.db"
 
     @pytest.fixture
@@ -23,7 +23,7 @@ class TestDatabaseManager:
         m2 = DatabaseManager()
         assert m1 is m2
 
-    def test_init_db(self, manager, tmp_path):  # noqa: ANN001
+    def test_init_db(self, manager, tmp_path):
         # Override constants for test
         # We can't easily override DB_CONTABILITA on the class if it's already used.
         # But we can pass the path to get_connection.
@@ -50,7 +50,7 @@ class TestDatabaseManager:
             assert "giornaliere" in tables
             assert "scarico_ore" in tables
 
-    def test_execute_query(self, manager, db_path):  # noqa: ANN001
+    def test_execute_query(self, manager, db_path):
         # Create table
         manager.execute_query(db_path, "CREATE TABLE test (id INTEGER PRIMARY KEY, val TEXT)")
 

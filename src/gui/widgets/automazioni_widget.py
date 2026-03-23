@@ -141,11 +141,11 @@ class AutomazioniWidget(QWidget):
         target = self.tab_fornitori if main_idx == 0 else self.tab_safework
         target.setCurrentIndex(sub_idx)
 
-    def currentIndex(self) -> int:  # noqa: N802
+    def currentIndex(self) -> int:
         """Restituisce l'indice del portale attivo."""
         return self.main_tabs.currentIndex()
 
-    def setCurrentIndex(self, index: int) -> None:  # noqa: N802
+    def setCurrentIndex(self, index: int) -> None:
         """
         Cambia il portale attivo.
 

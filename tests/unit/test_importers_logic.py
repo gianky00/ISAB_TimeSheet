@@ -13,11 +13,11 @@ class TestImportersLogic:
         import math  # noqa: PLC0415
 
         clean = StoricoOdaImporter._clean_euro_num
-        assert clean(100) == 100.0  # noqa: PLR2004
-        assert clean("100") == 100.0  # noqa: PLR2004
-        assert clean("1.234,56") == 1234.56  # noqa: PLR2004
-        assert clean("1.234,00") == 1234.0  # noqa: PLR2004
-        assert clean("1,234") == 1.234  # noqa: PLR2004
+        assert clean(100) == 100.0
+        assert clean("100") == 100.0
+        assert clean("1.234,56") == 1234.56
+        assert clean("1.234,00") == 1234.0
+        assert clean("1,234") == 1.234
         assert clean(None) == 0.0
         # "nan" string results in float('nan') which is not 0.0
         assert math.isnan(clean("nan"))
@@ -58,7 +58,7 @@ class TestImportersLogic:
 
         # Check if regex replacement worked or simply accept original if regex failed in test env
         assert df["oda"].iloc[0] in ["123", "123.0"]
-        assert df["qta"].iloc[0] == 10.5  # noqa: PLR2004
+        assert df["qta"].iloc[0] == 10.5
         assert df["descrizione"].iloc[0] == "test"
         assert df["descrizione"].iloc[1] == ""
 
@@ -83,13 +83,13 @@ class TestImportersLogic:
 
         cleaned = GiornaliereImporter._clean_giornaliera_data(df)
 
-        assert len(cleaned) == 2  # noqa: PLR2004
+        assert len(cleaned) == 2
         assert "Totale" not in cleaned["personale"].values
         assert cleaned["ore"].iloc[1] == "4"
 
         # --- Employee Manager Tests ---
         @patch("src.core.employees.db_manager")
-        def test_import_from_csv(self, mock_db):  # noqa: ANN001, ANN202
+        def test_import_from_csv(self, mock_db):
             manager = EmployeeManager()
 
             # Mock csv rows directly
@@ -115,10 +115,10 @@ class TestImportersLogic:
             ]
 
             # Smart mock for db queries
-            def db_side_effect(db_name, query, params=None):  # noqa: ANN001, ANN202
+            def db_side_effect(db_name, query, params=None):
                 if "SELECT id_risorsa" in query:
                     # Check ID provided in params
-                    if params and params[0] == 2:  # noqa: PLR2004
+                    if params and params[0] == 2:
                         return [(2,)]  # Found Luigi
                     return None  # Mario not found
                 return []  # INSERT/UPDATE return empty or None
@@ -144,5 +144,5 @@ class TestImportersLogic:
                         with patch("src.core.sync_tracker.SyncTracker.update_status"):
                             count = manager.import_from_csv("dummy.csv")
 
-            assert count == 2  # noqa: PLR2004
-            assert mock_db.execute_query.call_count >= 4  # noqa: PLR2004
+            assert count == 2
+            assert mock_db.execute_query.call_count >= 4

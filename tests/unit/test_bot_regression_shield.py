@@ -14,14 +14,14 @@ from src.bots.safework.pdl.bot import SafeWorkPDLBot
 
 class TestBotRegressionShield:
     @pytest.fixture
-    def mock_driver_env(self, mocker):  # noqa: ANN001
+    def mock_driver_env(self, mocker):
         """Mocka l'ambiente driver completo per BaseBot."""
         # Patch specifically where it's used to avoid batch run interference
         m_chrome = mocker.patch("src.bots.base.base_bot.webdriver.Chrome")
         mocker.patch("webdriver_manager.chrome.ChromeDriverManager.install", return_value="chromedriver.exe")
         return m_chrome.return_value
 
-    def test_base_bot_cdp_enforcement(self, mock_driver_env, mocker):  # noqa: ANN001
+    def test_base_bot_cdp_enforcement(self, mock_driver_env, mocker):
         """Verifica che BaseBot forzi il download path tramite CDP (Regression Shield)."""
         bot = SafeWorkPDLBot("u", "p", download_path="C:/Downloads")
 
@@ -36,7 +36,7 @@ class TestBotRegressionShield:
             {"behavior": "allow", "downloadPath": mocker.ANY},
         )
 
-    def test_pdl_bot_execution_sequence(self, mocker):  # noqa: ANN001
+    def test_pdl_bot_execution_sequence(self, mocker):
         """Verifica la sequenza STRETTA di operazioni del bot PDL (Regression Shield)."""
         bot = SafeWorkPDLBot("u", "p", download_path="/tmp")
         bot.driver = MagicMock()
@@ -65,7 +65,7 @@ class TestBotRegressionShield:
         ]
         manager.assert_has_calls(expected_calls, any_order=False)
 
-    def test_safework_programmazione_parsing_robustness(self, mocker):  # noqa: ANN001
+    def test_safework_programmazione_parsing_robustness(self, mocker):
         """Verifica che il bot programmazione fallisca se gli indici Excel cambiano (Regression Shield)."""
         import pandas as pd  # noqa: PLC0415
 
@@ -86,7 +86,7 @@ class TestBotRegressionShield:
         # Dovrebbe aver loggato un avvertimento/errore di parsing
         assert any("Errore parsing" in str(c) or "Trovati 0" in str(c) for c in bot.log.call_args_list)
 
-    def test_scarico_ts_retry_logic_enforcement(self, mocker):  # noqa: ANN001
+    def test_scarico_ts_retry_logic_enforcement(self, mocker):
         """Verifica che la logica di retry per lo spostamento file sia attiva (Regression Shield)."""
         bot = ScaricaTSBot(username="u", password="p")
         bot.log = MagicMock()
@@ -100,7 +100,7 @@ class TestBotRegressionShield:
 
         assert res is None
         # Deve aver provato 3 volte (retry logic)
-        assert m_shutil.call_count == 3  # noqa: PLR2004
+        assert m_shutil.call_count == 3
         # Deve aver loggato l'errore finale
         assert any("Impossibile spostare" in str(c) for c in bot.log.call_args_list)
 

@@ -18,7 +18,7 @@ class TestBaseBotLogic:
         driver.page_source = "<html></html>"
         return driver
 
-    def test_selenium_retry_logic(self, mock_driver):  # noqa: ANN001
+    def test_selenium_retry_logic(self, mock_driver):
         """
         Test that a function simulating a bot action retries on failure.
         """
@@ -38,9 +38,9 @@ class TestBaseBotLogic:
                 continue
 
         assert success is True
-        assert mock_action.call_count == 3  # noqa: PLR2004
+        assert mock_action.call_count == 3
 
-    def test_element_wait_timeout(self, mock_driver):  # noqa: ANN001
+    def test_element_wait_timeout(self, mock_driver):
         """Test handling of timeouts."""
         # This simulates WebDriverWait(driver, timeout).until(...)
 
@@ -52,7 +52,7 @@ class TestBaseBotLogic:
             with pytest.raises(TimeoutException):
                 instance.until(lambda d: d.find_element("id", "test"))
 
-    def test_screenshot_on_failure(self, mock_driver, tmp_path):  # noqa: ANN001
+    def test_screenshot_on_failure(self, mock_driver, tmp_path):
         """Verify logic that captures screenshot on error."""
         # Setup
         screenshot_path = tmp_path / "error.png"

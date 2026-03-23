@@ -34,7 +34,7 @@ class TestScaricoOreImporter:
         """Verifica che i valori estratti dalle celle siano formattati correttamente."""
 
         # Creiamo dei mock per le celle
-        def mock_cell(val):  # noqa: ANN001, ANN202
+        def mock_cell(val):
             m = MagicMock()
             m.value = val
             return m

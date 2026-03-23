@@ -140,7 +140,7 @@ class SlidingStackedWidget(QStackedWidget):
         self._is_animating = False
         self.animation_finished.emit()
 
-    def resizeEvent(self, event) -> None:  # noqa: ANN001, N802
+    def resizeEvent(self, event) -> None:  # noqa: ANN001
         """Sincronizza le dimensioni degli snapshot con il widget principale."""
         super().resizeEvent(event)
         size = event.size()

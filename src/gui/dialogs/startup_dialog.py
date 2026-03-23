@@ -303,19 +303,19 @@ class StartupDialog(QDialog):
         self._fade.setEasingCurve(QEasingCurve.Type.OutCubic)
         self._fade.start()
 
-    def resizeEvent(self, event):  # noqa: ANN001, ANN201, N802
+    def resizeEvent(self, event):  # noqa: ANN001, ANN201
         """Gestisce il ridimensionamento dell'overlay della console."""
         super().resizeEvent(event)
         if hasattr(self, "console_overlay"):
             self.console_overlay.setGeometry(self.log_frame.rect())
 
-    def mousePressEvent(self, event):  # noqa: ANN001, ANN201, N802
+    def mousePressEvent(self, event):  # noqa: ANN001, ANN201
         """Inizia il drag della finestra tramite mouse."""
         if event.button() == Qt.MouseButton.LeftButton:
             self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
             event.accept()
 
-    def mouseMoveEvent(self, event):  # noqa: ANN001, ANN201, N802
+    def mouseMoveEvent(self, event):  # noqa: ANN001, ANN201
         """Gestisce il trascinamento e l'effetto 3D Tilt."""
         if event.buttons() & Qt.MouseButton.LeftButton and self._drag_pos:
             new_pos = event.globalPosition().toPoint() - self._drag_pos
@@ -336,7 +336,7 @@ class StartupDialog(QDialog):
             # Sostituiamo apply_tilt con parallasse soft per performance e compatibilità shadow
             self.particles.apply_parallax(rel_x * 5, rel_y * 5)
 
-    def mouseReleaseEvent(self, event):  # noqa: ANN001, ANN201, N802
+    def mouseReleaseEvent(self, event):  # noqa: ANN001, ANN201
         """Interrompe il drag della finestra."""
         self._drag_pos = None
 
@@ -400,7 +400,7 @@ class StartupDialog(QDialog):
         """Metodo pubblico per aggiornare lo stato di caricamento dal worker."""
         self._on_progress(message, progress)
 
-    def closeEvent(self, event):  # noqa: ANN001, ANN201, N802
+    def closeEvent(self, event):  # noqa: ANN001, ANN201
         """Cleanup - Stop all timers and threads safely."""
         with suppress(Exception):
             self.particles.timer.stop()

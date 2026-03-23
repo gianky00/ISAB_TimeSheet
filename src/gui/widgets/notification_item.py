@@ -132,7 +132,7 @@ class NotificationItem(QFrame):
         )
         layout.addWidget(msg_lbl)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Segna la notifica come letta quando l'utente ci clicca sopra."""
         if not self.notification.get("read", False):
             self.manager.mark_as_read(self.notification["id"])

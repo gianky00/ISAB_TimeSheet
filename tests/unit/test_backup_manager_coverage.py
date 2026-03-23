@@ -10,20 +10,20 @@ from src.core.backup_manager import BackupManager
 
 class TestBackupManager:
     @pytest.fixture
-    def manager(self, tmp_path, mocker):  # noqa: ANN001
+    def manager(self, tmp_path, mocker):
         # Mock CONFIG_DIR
         mocker.patch("src.core.backup_manager.CONFIG_DIR", tmp_path)
         # Mock load_config
         mocker.patch("src.core.backup_manager.load_config", return_value={})
         return BackupManager
 
-    def test_detect_cloud_paths(self, manager, tmp_path):  # noqa: ANN001
+    def test_detect_cloud_paths(self, manager, tmp_path):
         with patch.dict(os.environ, {"OneDrive": str(tmp_path / "OneDrive")}):
             (tmp_path / "OneDrive").mkdir()
             paths = manager.detect_cloud_paths()
             assert "OneDrive" in paths
 
-    def test_get_backup_dir_default(self, manager, tmp_path):  # noqa: ANN001
+    def test_get_backup_dir_default(self, manager, tmp_path):
         # Ensure detect_cloud_paths returns empty
         with patch.object(manager, "detect_cloud_paths", return_value={}):
             with patch("pathlib.Path.home", return_value=tmp_path):
@@ -31,7 +31,7 @@ class TestBackupManager:
                 assert "Documents" in str(target)
                 assert target.exists()
 
-    def test_create_backup_success(self, manager, tmp_path, mocker):  # noqa: ANN001
+    def test_create_backup_success(self, manager, tmp_path, mocker):
         # Create dummy data in CONFIG_DIR (which is mocked to tmp_path)
         data_dir = tmp_path / "data"
         data_dir.mkdir()
@@ -54,7 +54,7 @@ class TestBackupManager:
             assert Path(msg).exists()
             mock_audit.return_value.log_action.assert_called()
 
-    def test_create_backup_no_files(self, manager, tmp_path):  # noqa: ANN001
+    def test_create_backup_no_files(self, manager, tmp_path):
         # Empty CONFIG_DIR (tmp_path has no relevant files by default)
         backup_dir = tmp_path / "backups"
         backup_dir.mkdir()
@@ -64,7 +64,7 @@ class TestBackupManager:
             assert success is False
             assert "Nessun file" in msg
 
-    def test_restore_backup_success(self, manager, tmp_path, mocker):  # noqa: ANN001
+    def test_restore_backup_success(self, manager, tmp_path, mocker):
         # Create a zip
         zip_path = tmp_path / "backup.zip"
         with zipfile.ZipFile(zip_path, "w") as z:
@@ -74,7 +74,7 @@ class TestBackupManager:
         assert success is True
         assert (tmp_path / "restored.json").exists()
 
-    def test_restore_backup_invalid(self, manager, tmp_path):  # noqa: ANN001
+    def test_restore_backup_invalid(self, manager, tmp_path):
         bad_zip = tmp_path / "bad.zip"
         bad_zip.write_text("not a zip")
 
@@ -82,7 +82,7 @@ class TestBackupManager:
         assert success is False
         assert "non valido" in msg
 
-    def test_cleanup_old_backups(self, manager, tmp_path):  # noqa: ANN001
+    def test_cleanup_old_backups(self, manager, tmp_path):
         # Create 10 dummy zip files
         for i in range(10):
             p = tmp_path / f"SyncroJob_Backup_{i}.zip"
@@ -93,13 +93,13 @@ class TestBackupManager:
         manager._cleanup_old_backups(tmp_path, keep=5)
 
         remaining = list(tmp_path.glob("*.zip"))
-        assert len(remaining) == 5  # noqa: PLR2004
+        assert len(remaining) == 5
         # Should be 5, 6, 7, 8, 9 (newest)
         names = [p.name for p in remaining]
         assert "SyncroJob_Backup_9.zip" in names
         assert "SyncroJob_Backup_0.zip" not in names
 
-    def test_list_backups(self, manager, tmp_path):  # noqa: ANN001
+    def test_list_backups(self, manager, tmp_path):
         backup_dir = tmp_path / "list_test"
         backup_dir.mkdir()
         (backup_dir / "SyncroJob_Backup_A.zip").touch()

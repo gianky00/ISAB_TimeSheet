@@ -9,7 +9,7 @@ from src.core.timesheet_processor import TimesheetProcessor
 
 class TestTimesheetProcessorRobust:
     @pytest.fixture
-    def sample_workbook(self, tmp_path):  # noqa: ANN001
+    def sample_workbook(self, tmp_path):
         """Crea un file Excel di test valido."""
         file_path = tmp_path / "test_source.xlsx"
         wb = openpyxl.Workbook()
@@ -32,12 +32,12 @@ class TestTimesheetProcessorRobust:
         return file_path
 
     @pytest.fixture
-    def dest_dir(self, tmp_path):  # noqa: ANN001
+    def dest_dir(self, tmp_path):
         d = tmp_path / "processed"
         d.mkdir()
         return d
 
-    def test_process_and_move_success_single_pos(self, sample_workbook, dest_dir):  # noqa: ANN001
+    def test_process_and_move_success_single_pos(self, sample_workbook, dest_dir):
         """Test happy path con un singolo POS."""
         success, msg = TimesheetProcessor.process_and_move(sample_workbook, dest_dir)
 
@@ -56,7 +56,7 @@ class TestTimesheetProcessorRobust:
         # Verifica che il sorgente sia stato rimosso
         assert not sample_workbook.exists()
 
-    def test_process_and_move_multiple_pos(self, tmp_path, dest_dir):  # noqa: ANN001
+    def test_process_and_move_multiple_pos(self, tmp_path, dest_dir):
         """Test happy path con POS multipli -> Nome file generico."""
         file_path = tmp_path / "multi_pos.xlsx"
         wb = openpyxl.Workbook()
@@ -74,13 +74,13 @@ class TestTimesheetProcessorRobust:
         expected_file = dest_dir / "ODC999_TS.xlsx"
         assert expected_file.exists()
 
-    def test_file_not_found(self, dest_dir):  # noqa: ANN001
+    def test_file_not_found(self, dest_dir):
         """Test file inesistente."""
         success, msg = TimesheetProcessor.process_and_move(Path("non_existent.xlsx"), dest_dir)
         assert success is False
         assert "non trovato" in msg
 
-    def test_missing_sheet(self, tmp_path, dest_dir):  # noqa: ANN001
+    def test_missing_sheet(self, tmp_path, dest_dir):
         """Test foglio 'Timesheet' mancante."""
         file_path = tmp_path / "wrong_sheet.xlsx"
         wb = openpyxl.Workbook()
@@ -93,7 +93,7 @@ class TestTimesheetProcessorRobust:
         assert success is False
         assert "Foglio 'Timesheet' non trovato" in msg
 
-    def test_missing_odc(self, tmp_path, dest_dir):  # noqa: ANN001
+    def test_missing_odc(self, tmp_path, dest_dir):
         """Test ODC mancante in cella A2."""
         file_path = tmp_path / "no_odc.xlsx"
         wb = openpyxl.Workbook()
@@ -107,7 +107,7 @@ class TestTimesheetProcessorRobust:
         assert success is False
         assert "Valore ODC" in msg
 
-    def test_transformations_applied(self, sample_workbook, dest_dir):  # noqa: ANN001
+    def test_transformations_applied(self, sample_workbook, dest_dir):
         """Verifica che le trasformazioni (header, delete cols) siano avvenute."""
         TimesheetProcessor.process_and_move(sample_workbook, dest_dir)
 
@@ -132,7 +132,7 @@ class TestTimesheetProcessorRobust:
 
         wb.close()
 
-    def test_filename_collision(self, sample_workbook, dest_dir):  # noqa: ANN001
+    def test_filename_collision(self, sample_workbook, dest_dir):
         """Test gestione collisione nomi file (timestamp)."""
         # Crea un file esistente che confligge
         (dest_dir / "ODC123_10_TS.xlsx").touch()
@@ -145,7 +145,7 @@ class TestTimesheetProcessorRobust:
         expected_file = dest_dir / "ODC123_10_TS_20230101-120000.xlsx"
         assert expected_file.exists()
 
-    def test_permission_error_dest_dir(self, sample_workbook):  # noqa: ANN001
+    def test_permission_error_dest_dir(self, sample_workbook):
         """Test errore permessi creazione directory."""
         # Usiamo un path che sicuramente fallisce o mockiamo mkdir
         with patch("pathlib.Path.mkdir", side_effect=PermissionError("Access Denied")):

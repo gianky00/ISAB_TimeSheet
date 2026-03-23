@@ -27,8 +27,8 @@ class TestDateUtilsRobust:
         dt_str = "15/01/2024 14:30:00"
         res = date_utils.parse_datetime_flexible(dt_str)
         assert isinstance(res, datetime)
-        assert res.hour == 14  # noqa: PLR2004
-        assert res.minute == 30  # noqa: PLR2004
+        assert res.hour == 14
+        assert res.minute == 30
         # Deve essere aware (UTC)
         assert res.tzinfo is not None
 
@@ -55,7 +55,7 @@ class TestDateUtilsRobust:
         d_ref = date(2024, 1, 10)
 
         # Test con data di riferimento esplicita
-        assert date_utils.calculate_days_diff(d_past, from_date=d_ref) == 9  # noqa: PLR2004
+        assert date_utils.calculate_days_diff(d_past, from_date=d_ref) == 9
 
         # Test con oggi (mockato)
         # Mocking datetime.now(UTC).date()
@@ -64,7 +64,7 @@ class TestDateUtilsRobust:
             mock_dt.now.return_value.date.return_value = d_ref
 
             res = date_utils.calculate_days_diff(d_past)
-            assert res == 9  # noqa: PLR2004
+            assert res == 9
 
     def test_get_status_by_days(self):
         """Test logica soglie (OK, Warning, Expired)."""

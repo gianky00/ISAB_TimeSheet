@@ -12,7 +12,7 @@ from src.gui.widgets import ModernButton
 
 class TestBaseBotPanel:
     @pytest.fixture(autouse=True)
-    def setup_method(self, qapp):  # noqa: ANN001
+    def setup_method(self, qapp):
         """Setup method using pytest-qt's qapp fixture."""
         # Mock dependencies
         self.mock_parent = MagicMock(spec=QWidget)
@@ -76,9 +76,9 @@ class TestBaseBotPanel:
         # Verify that set_data was called with the cumulative list
         self.panel.data_table.set_data.assert_called_once()
         args, _ = self.panel.data_table.set_data.call_args
-        assert len(args[0]) == 2  # noqa: PLR2004
+        assert len(args[0]) == 2
         assert args[0][0]["id"] == 1
-        assert args[0][1]["id"] == 2  # noqa: PLR2004
+        assert args[0][1]["id"] == 2
 
     def test_clear_rows_simple(self):
         self.panel.data_table = MagicMock()
@@ -87,7 +87,7 @@ class TestBaseBotPanel:
         self.panel.data_table.set_data.assert_called_with([])
 
     @patch("src.gui.panels.base.datetime")
-    def test_on_start(self, mock_dt):  # noqa: ANN001
+    def test_on_start(self, mock_dt):
         mock_dt.now.return_value = datetime(2025, 1, 1)
         self.panel.activity_timeline = MagicMock()
         self.panel._update_status = MagicMock()

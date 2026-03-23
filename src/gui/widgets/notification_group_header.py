@@ -120,7 +120,7 @@ class NotificationGroupHeader(QFrame):
         )
         layout.addWidget(self.arrow_btn)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Toggle expanded state on click."""
         self._is_expanded = not self._is_expanded
         self.arrow_btn.setText("SCENDI" if self._is_expanded else "ESPANDI")

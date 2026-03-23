@@ -15,7 +15,7 @@ class TestConfigSafeWork:
     @patch("src.core.config.security.SecretsManager")
     @patch("src.core.config_manager._load_base_config")
     @patch("src.core.config_manager.save_config")
-    def test_load_save_safework_accounts(self, mock_save, mock_load_base, mock_secrets):  # noqa: ANN001
+    def test_load_save_safework_accounts(self, mock_save, mock_load_base, mock_secrets):
         # Force SecretsManager to return None (simulate not found in keyring)
         mock_secrets.get_credential.return_value = None
 
@@ -41,7 +41,7 @@ class TestConfigSafeWork:
     @patch("src.core.config_manager.CONFIG_FILE", new=MagicMock())
     @patch("builtins.open", new_callable=MagicMock)
     @patch("json.dump")
-    def test_save_safework_config(self, mock_dump, mock_open, mock_secrets):  # noqa: ANN001
+    def test_save_safework_config(self, mock_dump, mock_open, mock_secrets):
         # Force SecretsManager unavailable to test file encryption fallback
         mock_secrets.is_available.return_value = False
 

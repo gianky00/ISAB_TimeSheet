@@ -8,14 +8,14 @@ from src.core.database.manager import DatabaseManager
 
 class TestDBManager:
     @pytest.fixture
-    def db_manager(self, tmp_path):  # noqa: ANN001
+    def db_manager(self, tmp_path):
         manager = DatabaseManager()
         # Mocking CONFIG_DIR to use tmp_path
         manager.DB_DIPENDENTI = tmp_path / "dipendenti.db"
         return manager
 
     @patch("sqlite3.connect")
-    def test_get_db_version_error_handling(self, mock_connect, db_manager):  # noqa: ANN001
+    def test_get_db_version_error_handling(self, mock_connect, db_manager):
         """Verifica che un errore nel recupero versione ritorni 0 (SOP) ma sia isolato."""
         mock_conn = MagicMock()
         mock_connect.return_value = mock_conn
@@ -25,7 +25,7 @@ class TestDBManager:
         version = db_manager._get_db_version(mock_conn)
         assert version == 0
 
-    def test_init_db_creates_files(self, db_manager):  # noqa: ANN001
+    def test_init_db_creates_files(self, db_manager):
         """Verifica che init_db crei effettivamente i file database."""
         # Non mockiamo sqlite3 qui per vedere l'effetto reale su filesystem
         db_manager.init_db()

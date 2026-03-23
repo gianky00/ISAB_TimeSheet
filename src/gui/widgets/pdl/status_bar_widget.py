@@ -68,7 +68,7 @@ class ProgrammingStatusWidget(QWidget):
         """
         self.setToolTip(html)
 
-    def paintEvent(self, event):  # noqa: ANN001, ANN201, N802, PLR0915
+    def paintEvent(self, event):  # noqa: ANN001, ANN201, PLR0915
         """Disegna la barra di stato TCL/TGO nella cella."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

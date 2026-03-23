@@ -11,7 +11,7 @@ class TestTelegramServiceUltraFixed:
         return TelegramService()
 
     @pytest.mark.asyncio
-    async def test_handle_text_input_states(self, service):  # noqa: ANN001
+    async def test_handle_text_input_states(self, service):
         from src.core.telegram.handlers.messages import handle_text_input  # noqa: PLC0415
 
         # Create a proper Update mock with effective_user
@@ -35,7 +35,7 @@ class TestTelegramServiceUltraFixed:
             mock_signal.emit.assert_called_with("pdl", ["123456/S"])
 
     @pytest.mark.asyncio
-    async def test_error_handling_auth_fail(self, service):  # noqa: ANN001
+    async def test_error_handling_auth_fail(self, service):
         mock_update = MagicMock()
         # effective_user is None
         mock_update.effective_user = None

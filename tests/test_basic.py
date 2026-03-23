@@ -26,7 +26,7 @@ class TestVersion:
         from src.core.version import __version__  # noqa: PLC0415
 
         parts = __version__.split(".")
-        assert len(parts) == 3  # noqa: PLR2004
+        assert len(parts) == 3
         assert all(part.isdigit() for part in parts)
 
     def test_update_url_exists(self):
@@ -112,7 +112,7 @@ class TestBotRegistry:
 
         bots = get_available_bots()
         assert isinstance(bots, dict)
-        assert len(bots) >= 3  # noqa: PLR2004
+        assert len(bots) >= 3
 
 
 class TestBaseBot:
@@ -137,7 +137,7 @@ class TestScaricaTSBot:
         from src.bots.portale_fornitori.scarico_ts import ScaricaTSBot  # noqa: PLC0415
 
         columns = ScaricaTSBot.get_columns()
-        assert len(columns) == 2  # noqa: PLR2004
+        assert len(columns) == 2
 
         column_labels = [col["label"] for col in columns]
         assert "Numero OdA" in column_labels
@@ -159,7 +159,7 @@ class TestDettagliOdABot:
         from src.bots.portale_fornitori.dettagli_oda import DettagliOdABot  # noqa: PLC0415
 
         columns = DettagliOdABot.get_columns()
-        assert len(columns) == 2  # noqa: PLR2004
+        assert len(columns) == 2
 
         column_labels = [col["label"] for col in columns]
         assert "Numero OdA" in column_labels
@@ -181,7 +181,7 @@ class TestCaricoTSBot:
         from src.bots.portale_fornitori.carico_ts import CaricoTSBot  # noqa: PLC0415
 
         columns = CaricoTSBot.get_columns()
-        assert len(columns) == 16  # noqa: PLR2004
+        assert len(columns) == 16
 
         column_labels = [col["label"] for col in columns]
         assert "Numero OdA" in column_labels

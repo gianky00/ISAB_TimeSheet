@@ -30,13 +30,13 @@ class TestStatsService:
         # 2. Prev ore mese
         prev_mese = results["prev_ore_mese"]
         assert "Gen" in prev_mese["labels"]
-        assert 1000.0 in prev_mese["totale_prev"]  # noqa: PLR2004
+        assert 1000.0 in prev_mese["totale_prev"]
 
         # 3. Margine tipologia
         margine = results["margine_tipologia"]
         assert "SQUADRA" in margine["labels"]
         # Costo SQUADRA = 10 ore * 30.0 = 300.0
-        assert 300.0 in margine["costi"]  # noqa: PLR2004
+        assert 300.0 in margine["costi"]
 
     def test_completamento_stats_logic(self):
         """Verifica le percentuali di completamento."""
@@ -44,7 +44,7 @@ class TestStatsService:
         df = pd.DataFrame(data)
         stats = StatsService._get_completamento_stats(df)
 
-        assert stats["p_comp"] == 25.0  # noqa: PLR2004
-        assert stats["p_tcl"] == 25.0  # noqa: PLR2004
-        assert stats["p_todo"] == 25.0  # noqa: PLR2004
-        assert stats["p_other"] == 25.0  # noqa: PLR2004
+        assert stats["p_comp"] == 25.0
+        assert stats["p_tcl"] == 25.0
+        assert stats["p_todo"] == 25.0
+        assert stats["p_other"] == 25.0

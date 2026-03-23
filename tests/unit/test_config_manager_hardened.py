@@ -14,7 +14,7 @@ from src.core.config_manager import (
 
 class TestConfigManagerHardened:
     @pytest.fixture(autouse=True)
-    def setup_config(self, tmp_path, mocker):  # noqa: ANN001
+    def setup_config(self, tmp_path, mocker):
         """Setup isolato per ogni test."""
         # Patch delle directory di configurazione
         mock_config_dir = tmp_path / "syncrojob_config"
@@ -27,22 +27,22 @@ class TestConfigManagerHardened:
         config_manager._reset_configuration_for_testing()
         return mock_config_file
 
-    def test_load_config_defaults(self, setup_config):  # noqa: ANN001
+    def test_load_config_defaults(self, setup_config):
         """Verifica caricamento dei valori di default se il file non esiste."""
         config = load_config()
-        assert config["browser_timeout"] == 30  # noqa: PLR2004
+        assert config["browser_timeout"] == 30
         assert setup_config.parent.exists()  # Verifica creazione directory
 
-    def test_load_config_corrupted_json(self, setup_config):  # noqa: ANN001
+    def test_load_config_corrupted_json(self, setup_config):
         """Verifica resilienza a file JSON corrotto."""
         setup_config.parent.mkdir(parents=True, exist_ok=True)
         setup_config.write_text("{ invalid json ...")
 
         config = load_config()
         # Deve tornare ai default senza crashare
-        assert config["browser_timeout"] == 30  # noqa: PLR2004
+        assert config["browser_timeout"] == 30
 
-    def test_atomic_save_mechanism(self, setup_config, mocker):  # noqa: ANN001
+    def test_atomic_save_mechanism(self, setup_config, mocker):
         """Verifica il meccanismo di salvataggio atomico tramite file .tmp."""
         m_replace = mocker.patch("os.replace", side_effect=os.replace)
         mocker.patch("os.fsync")
@@ -60,7 +60,7 @@ class TestConfigManagerHardened:
             saved = json.load(f)
             assert saved["test_key"] == "test_val"
 
-    def test_legacy_migration(self, setup_config):  # noqa: ANN001
+    def test_legacy_migration(self, setup_config):
         """Verifica migrazione automatica dai vecchi campi isab_username."""
         setup_config.parent.mkdir(parents=True, exist_ok=True)
         old_data = {
@@ -77,7 +77,7 @@ class TestConfigManagerHardened:
         assert len(config["accounts"]) == 1
         assert config["accounts"][0]["username"] == "old_user"
 
-    def test_concurrent_access_thread_safety(self, setup_config):  # noqa: ANN001
+    def test_concurrent_access_thread_safety(self, setup_config):
         """Verifica che l'accesso multithread alla config sia sicuro."""
         setup_config.parent.mkdir(parents=True, exist_ok=True)
         initial_data = {"base_key": "base_val"}
@@ -88,7 +88,7 @@ class TestConfigManagerHardened:
         results = []
         errors = []
 
-        def thread_task():  # noqa: ANN202
+        def thread_task():
             try:
                 conf = load_config()
                 results.append(conf.get("base_key"))
@@ -105,10 +105,10 @@ class TestConfigManagerHardened:
             t.join()
 
         assert len(errors) == 0, f"Errori rilevati: {errors}"
-        assert len(results) == 20  # noqa: PLR2004
+        assert len(results) == 20
         assert all(v == "base_val" for v in results)
 
-    def test_credential_storage_priority(self, mocker):  # noqa: ANN001
+    def test_credential_storage_priority(self, mocker):
         """Verifica che il keyring abbia priorità sul file."""
         mocker.patch("src.core.secrets_manager.SecretsManager.is_available", return_value=True)
         m_store = mocker.patch("src.core.secrets_manager.SecretsManager.store_credential")

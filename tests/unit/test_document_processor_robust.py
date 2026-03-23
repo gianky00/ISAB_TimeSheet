@@ -11,17 +11,17 @@ from src.utils.document_processor import DocumentProcessor
 
 class TestDocumentProcessorRobust:
     @pytest.fixture
-    def mock_fitz(self, mocker):  # noqa: ANN001
+    def mock_fitz(self, mocker):
         mock = MagicMock()
         mocker.patch("src.utils.document_processor.fitz", mock)
         return mock
 
     @pytest.fixture
-    def mock_path(self, mocker):  # noqa: ANN001
+    def mock_path(self, mocker):
         # Patch the Path class within the module to avoid global pollution
         return mocker.patch("src.utils.document_processor.Path")
 
-    def test_merge_pdfs_all_valid(self, mock_fitz, mock_path):  # noqa: ANN001
+    def test_merge_pdfs_all_valid(self, mock_fitz, mock_path):
         """Test merge standard con file validi."""
         # Setup mock path behavior
         mock_path.return_value.exists.return_value = True
@@ -46,9 +46,9 @@ class TestDocumentProcessorRobust:
 
         assert success is True
         mock_result.save.assert_called_with("out.pdf")
-        assert mock_result.insert_pdf.call_count == 2  # noqa: PLR2004
+        assert mock_result.insert_pdf.call_count == 2
 
-    def test_merge_pdfs_missing_file(self, mock_fitz, mock_path):  # noqa: ANN001
+    def test_merge_pdfs_missing_file(self, mock_fitz, mock_path):
         """Verifica che i file mancanti vengano saltati."""
         # Primo file esiste, secondo no
         m1 = MagicMock()
@@ -77,12 +77,12 @@ class TestDocumentProcessorRobust:
         assert success is True
         assert mock_result.insert_pdf.call_count == 1
 
-    def test_merge_pdfs_empty_input(self, mock_fitz):  # noqa: ANN001
+    def test_merge_pdfs_empty_input(self, mock_fitz):
         """Verifica fallimento se non ci sono file validi."""
         success = DocumentProcessor.merge_pdfs([], "out.pdf")
         assert success is False
 
-    def test_merge_pdfs_corrupt_file(self, mock_fitz, mock_path):  # noqa: ANN001
+    def test_merge_pdfs_corrupt_file(self, mock_fitz, mock_path):
         """Verifica che un file corrotto non blocchi l'intero merge."""
         mock_path.return_value.exists.return_value = True
         mock_path.return_value.stat.return_value.st_size = 100

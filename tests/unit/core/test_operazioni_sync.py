@@ -7,7 +7,7 @@ from src.core.sync.operazioni_sync import OperazioniSyncEngine
 
 class TestOperazioniSyncEngine:
     @pytest.fixture
-    def db_path(self, tmp_path):  # noqa: ANN001
+    def db_path(self, tmp_path):
         p = tmp_path / "ops_test.db"
         with sqlite3.connect(p) as conn:
             # Crea tabella con tutte le colonne previste da SCARICO_ORE_COLS
@@ -25,7 +25,7 @@ class TestOperazioniSyncEngine:
             conn.commit()
         return p
 
-    def test_sync_scarico_ore_full_replace(self, db_path):  # noqa: ANN001
+    def test_sync_scarico_ore_full_replace(self, db_path):
         """Verifica la sostituzione completa dei dati scarico ore."""
         # Creiamo righe con 11 colonne come previsto dallo schema
         new_data = [
@@ -42,19 +42,19 @@ class TestOperazioniSyncEngine:
 
         with sqlite3.connect(db_path) as conn:
             count = conn.execute("SELECT COUNT(*) FROM scarico_ore").fetchone()[0]
-            assert count == 2  # noqa: PLR2004
+            assert count == 2
             # Verifica che la vecchia riga 'Rossi' sia sparita
             rossi = conn.execute("SELECT * FROM scarico_ore WHERE pers1='Rossi'").fetchone()
             assert rossi is None
 
-    def test_sync_scarico_ore_batching(self, db_path):  # noqa: ANN001
+    def test_sync_scarico_ore_batching(self, db_path):
         """Verifica che il batching funzioni con molte righe (simulato con 100)."""
         # Creiamo 100 righe con 12 colonne
         large_data = [("2024-01-01", "P", "", "ODC", "10", "08", "17", 1.0, "D", "NO", "C", "")] * 100
 
         added, _removed = OperazioniSyncEngine.sync_scarico_ore(db_path, large_data)
 
-        assert added == 99  # 100 new - 1 old  # noqa: PLR2004
+        assert added == 99  # 100 new - 1 old
         with sqlite3.connect(db_path) as conn:
             count = conn.execute("SELECT COUNT(*) FROM scarico_ore").fetchone()[0]
-            assert count == 100  # noqa: PLR2004
+            assert count == 100

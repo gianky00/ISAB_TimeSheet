@@ -6,7 +6,7 @@ from src.utils.document_generator import generate_pdf_from_html
 
 
 class TestDocumentGeneratorSimple:
-    def test_generate_pdf_from_html(self, qapp):  # noqa: ANN001
+    def test_generate_pdf_from_html(self, qapp):
         # We test the logic without real printing by mocking QPrinter and QTextDocument.print
         with patch("src.utils.document_generator.QPrinter") as mock_printer:
             with patch.object(QTextDocument, "print") as mock_print_method:
