@@ -68,6 +68,16 @@ class ServiceController(QObject):
         self.scheduler_timer.timeout.connect(self._check_scheduled_tasks)
         self.scheduler_timer.start(60000)
 
+    def stop_all(self) -> None:
+        """Ferma tutti i servizi e i timer attivi."""
+        if self.scheduler_timer:
+            self.scheduler_timer.stop()
+
+        if self.telegram:
+            self.telegram.stop_service()
+
+        logger.info("Tutti i servizi di background sono stati arrestati.")
+
     def _check_scheduled_tasks(self) -> None:
         """
         Verifica il match orario per i bot configurati in modalità Autopilot.

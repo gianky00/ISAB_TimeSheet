@@ -12,6 +12,7 @@ from src.gui.dialogs.updater_dialog import (
 
 from .updater.engine import (
     get_local_setup_path,
+    get_pending_installer_path,
     has_pending_update,
     run_pending_installer,
 )
@@ -20,6 +21,7 @@ from .updater.engine import (
 __all__ = [
     "check_for_updates",
     "get_local_setup_path",
+    "get_pending_installer_path",
     "has_pending_update",
     "perform_auto_update",
     "run_pending_installer",

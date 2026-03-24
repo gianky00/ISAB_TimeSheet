@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.bug_reporter import BugReporter
-from src.core.config_manager import get_version
+from src.core.paths import get_version
 from src.gui.design.colors import get_palette
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import (

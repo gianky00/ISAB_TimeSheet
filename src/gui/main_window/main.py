@@ -20,7 +20,9 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.core.app_updater import (
+    get_pending_installer_path,
     has_pending_update,
+    perform_auto_update,
     run_pending_installer,
     show_install_prompt,
 )
@@ -81,9 +83,9 @@ class MainWindow(QMainWindow):
 
         # === 3. CONTROLLERS (Orchestration) ===
         self.navigation_controller = NavigationController(self)
-        self.bot_controller = BotController(self)
+        self.bot_controller = BotController(self, self.telegram)
         self.search_controller = SearchController(self)
-        self.service_controller = ServiceController(self)
+        self.service_controller = ServiceController(self, self.telegram)
         self.workflow_controller = WorkflowController(self)
         self.monitoring_controller = MonitoringController(self)
         self.app_event_handler = AppEventHandler(self)
@@ -95,7 +97,9 @@ class MainWindow(QMainWindow):
         self.telegram_bridge.setup_connections()
 
         # Applica Tema Default
-        apply_theme(QApplication.instance(), config_manager.get_config_value("theme", "light"))
+        # In PyQt6, instances of QCoreApplication might be returned, so we use Any for casting if needed
+        app_instance: Any = QApplication.instance()
+        apply_theme(app_instance, config_manager.get_config_value("theme", "light"))
 
         # Setup Shortcuts
         self._setup_shortcuts()
@@ -205,7 +209,23 @@ class MainWindow(QMainWindow):
     def _check_updates_startup(self) -> None:
         """Controlla se ci sono aggiornamenti pendenti o nuovi al boot."""
         if has_pending_update():
-            show_install_prompt(self)
+            path = get_pending_installer_path()
+            if path:
+                show_install_prompt(path, self)
+
+    def _show_update_banner(self, version_info: dict[str, Any]) -> None:
+        """Mostra il banner di aggiornamento nella toolbar."""
+        if hasattr(self, "tool_bar_component") and self.tool_bar_component.update_banner:
+            self.tool_bar_component.update_banner.show_update(version_info)
+
+    def _on_download_update_clicked(self, download_url: str) -> None:
+        """Avvia il processo di download dell'aggiornamento."""
+        perform_auto_update(download_url, self)
+
+    def show_background_notification(self, title: str, message: str, is_error: bool = False) -> None:
+        """Mostra una notifica balloon se l'app è in background."""
+        if hasattr(self, "tray_icon_component"):
+            self.tray_icon_component.show_background_notification(title, message, is_error)
 
     def _switch_account(self, bot_type: str) -> None:
         """Ruota l'account attivo per il portale specificato."""

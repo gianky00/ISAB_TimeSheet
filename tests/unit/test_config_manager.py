@@ -60,5 +60,7 @@ class TestConfigManager:
         assert config_manager.get_download_path() == str(tmp_path)
 
     def test_get_data_path(self, reset_config_state, tmp_path):
-        path = config_manager.get_data_path()
+        from src.core.paths import get_data_path  # noqa: PLC0415
+
+        path = get_data_path()
         assert str(tmp_path) in path

@@ -248,6 +248,12 @@ def set_pending_installer(path: str) -> None:
     _pending_installer_path = path
 
 
+def get_pending_installer_path() -> str | None:
+    """Returns the path of the pending installer."""
+    global _pending_installer_path  # noqa: PLW0602
+    return _pending_installer_path
+
+
 def has_pending_update() -> bool:
     """Returns True if there is an update ready to be installed."""
     global _pending_installer_path  # noqa: PLW0602

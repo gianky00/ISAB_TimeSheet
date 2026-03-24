@@ -11,9 +11,10 @@ import threading
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from src.core.paths import BASE_DIR, CONFIG_DIR, CONFIG_FILE
+from src.core.version import __version__
 
 # Modular imports
 from .config.account_manager import (
@@ -38,6 +39,11 @@ def _reset_configuration_for_testing() -> None:
     global _config_cache  # noqa: PLW0603
     with _config_lock:
         _config_cache = None
+
+
+def get_version() -> str:
+    """Restituisce la versione corrente dell'applicazione."""
+    return __version__
 
 
 def ensure_config_dir() -> None:
@@ -123,8 +129,9 @@ def _atomic_write_json(path: Path, data: dict[str, Any]) -> bool:
         ensure_config_dir()
         with open(temp_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
-        # Flush e sync per essere sicuri che i dati siano su disco
-        os.fsync(f.fileno())
+            # Flush e sync per essere sicuri che i dati siano su disco prima di chiudere
+            f.flush()
+            os.fsync(f.fileno())
 
         if path.exists():
             os.replace(temp_path, path)
@@ -152,29 +159,39 @@ def set_config_value(key: str, value: Any) -> bool:  # noqa: ANN401
     return save_config(config)
 
 
+def set_config_values(updates: dict[str, Any]) -> bool:
+    """Imposta e salva più valori contemporaneamente nella configurazione."""
+    config = load_config()
+    config.update(updates)
+    return save_config(config)
+
+
 # --- ACCOUNT MANAGEMENT HELPERS ---
 
 
 def add_account(bot_type: str, account_data: dict[str, Any]) -> bool:
     """Aggiunge un nuovo account alla configurazione."""
     config = load_config()
-    if add_account_logic(config, bot_type, account_data):
-        return save_config(config)
-    return False
+    username = account_data.get("username", "")
+    password = account_data.get("password", "")
+    is_default = account_data.get("is_default", False)
+    account_type = account_data.get("type", "") if bot_type != "isab" else ""
+
+    add_account_logic(config, username, password, is_default, account_type)
+    return save_config(config)
 
 
 def remove_account(bot_type: str, username: str) -> bool:
     """Rimuove un account dalla configurazione."""
     config = load_config()
-    if remove_account_logic(config, bot_type, username):
-        return save_config(config)
-    return False
+    remove_account_logic(config, username)
+    return save_config(config)
 
 
 def set_default_account(bot_type: str, username: str) -> bool:
     """Imposta l'account di default per un tipo di bot."""
     config = load_config()
-    if set_default_account_logic(config, bot_type, username):
+    if set_default_account_logic(config, username):
         return save_config(config)
     return False
 
@@ -182,7 +199,8 @@ def set_default_account(bot_type: str, username: str) -> bool:
 def switch_default_account(bot_type: str) -> bool:
     """Ruota l'account di default per un tipo di bot (Round Robin)."""
     config = load_config()
-    if switch_default_account_logic(config, bot_type):
+    success, _ = switch_default_account_logic(config, bot_type)
+    if success:
         return save_config(config)
     return False
 
@@ -197,15 +215,15 @@ def get_default_account(bot_type: str) -> dict[str, Any] | None:
 
     # Se c'è solo un account, è quello di default
     if len(accounts) == 1:
-        return accounts[0]
+        return cast("dict[str, Any]", accounts[0])
 
-    # Altrimenti cerchiamo il flag is_default
+    # Altrimenti cerchiamo il flag default (o is_default per legacy)
     for acc in accounts:
-        if acc.get("is_default"):
-            return acc
+        if acc.get("default") or acc.get("is_default"):
+            return cast("dict[str, Any]", acc)
 
     # Se nessun account ha il flag, restituiamo il primo
-    return accounts[0]
+    return cast("dict[str, Any]", accounts[0])
 
 
 def import_config_from_file(file_path: Path) -> tuple[bool, str]:
@@ -220,7 +238,10 @@ def import_config_from_file(file_path: Path) -> tuple[bool, str]:
 
         # Salva nuova (passando per save_config per criptare)
         if save_config(new_data):
-            return True, f"Configurazione importata con successo.\nBackup precedente salvato in: {backup_file.name}"
+            return (
+                True,
+                f"Configurazione importata con successo.\nBackup precedente salvato in: {backup_file.name}",
+            )
     except json.JSONDecodeError:
         return False, "Il file non è un JSON valido."
     except Exception as e:

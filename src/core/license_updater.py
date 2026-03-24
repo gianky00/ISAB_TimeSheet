@@ -14,7 +14,7 @@ from cryptography.fernet import Fernet
 from src.core.logging import get_logger
 from src.core.secrets_manager import SecretsManager
 
-from . import config_manager, license_validator, time_manager
+from . import license_validator, time_manager
 
 logger = get_logger(__name__)
 
@@ -36,7 +36,9 @@ def get_license_dir() -> Path:
     Returns:
         Path: Oggetto Path della directory licenza.
     """
-    base_dir = Path(config_manager.get_data_path())
+    from src.core.paths import get_data_path  # noqa: PLC0415
+
+    base_dir = Path(get_data_path())
     return base_dir / "Licenza"
 
 

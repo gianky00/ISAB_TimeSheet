@@ -43,20 +43,33 @@ class NavigationController(QObject):
         # Traccia i pannelli attualmente staccati (indice -> struct con panel nativo, placeholder, e finestra top-level)
         self._detached_panels: dict[int, dict[str, Any]] = {}
 
-        # === CORE CONTROLLERS (Singleton-like for UI context) ===
+        # 1. Inizializza i controller CORE
+        self._init_core_controllers()
+
+        # 2. Prepara lo stack con i segnaposto
+        self._setup_stack_placeholders()
+
+    def _init_core_controllers(self) -> None:
+        """Inizializza i controller core per i dati."""
         from src.core.contabilita.consuntivo.consuntivo_controller import (  # noqa: PLC0415
             ConsuntivoController,
         )
+        from src.core.contabilita.scarico_ore.controller import ScaricoOreController  # noqa: PLC0415
         from src.core.dipendenti.anagrafica_controller import AnagraficaController  # noqa: PLC0415
         from src.core.oda.oda_controller import ODAController  # noqa: PLC0415
         from src.core.pdl.pdl_controller import PDLController  # noqa: PLC0415
-        from src.core.scarico_ore.controller import ScaricoOreController  # noqa: PLC0415
 
         self.oda_controller = ODAController()
         self.anagrafica_controller = AnagraficaController()
         self.pdl_controller = PDLController()
         self.scarico_ore_controller = ScaricoOreController()
         self.consuntivo_controller = ConsuntivoController()
+
+    def _setup_stack_placeholders(self) -> None:
+        """Popola lo stack con QWidget vuoti per supportare il lazy loading basato su indici."""
+        num_pages = len(PageIndex)
+        for _ in range(num_pages):
+            self.stack.addWidget(QWidget())
 
     @property
     def stack(self) -> QStackedWidget:
@@ -87,12 +100,21 @@ class NavigationController(QObject):
         self.stack.setCurrentIndex(index)
 
         # 4. Sincronizzazione Sidebar
-        self.mw.sidebar.set_active_index(index)
+        if hasattr(self.mw.sidebar, "set_active_button"):
+            self.mw.sidebar.set_active_button(index)
 
         # 5. Notifica il pannello del focus (opzionale)
         panel = self.stack.widget(index)
         if hasattr(panel, "on_focus_received") and callable(panel.on_focus_received):
             panel.on_focus_received()
+
+    def get_panel(self, index: int) -> QWidget | None:
+        """
+        Restituisce l'istanza del pannello all'indice specificato.
+        Inizializza il pannello se necessario.
+        """
+        self._ensure_panel_initialized(index)
+        return self.stack.widget(index)
 
     def detach_panel(self, index: int) -> None:
         """
@@ -176,9 +198,9 @@ class NavigationController(QObject):
                 return DashboardPanel()
 
             if index == PageIndex.AUTOMAZIONI:
-                from src.gui.panels.automazioni_panel import AutomazioniPanel  # noqa: PLC0415
+                from src.gui.widgets.automazioni_widget import AutomazioniWidget  # noqa: PLC0415
 
-                return AutomazioniPanel()
+                return AutomazioniWidget(main_window=self.mw)
 
             if index == PageIndex.RESERVED_AI:
                 # Placeholder per future espansioni
@@ -197,15 +219,15 @@ class NavigationController(QObject):
             if index == PageIndex.DATAEASE:
                 from src.gui.panels.scarico_ore_panel import ScaricoOrePanel  # noqa: PLC0415
 
-                return ScaricoOrePanel()
+                return ScaricoOrePanel(controller=self.scarico_ore_controller)
 
             if index == PageIndex.ANAGRAFICHE:
-                from src.gui.panels.anagrafica_page import AnagraficaPage  # noqa: PLC0415
+                from src.gui.panels.dipendenti.pages.anagrafica_page import AnagraficaPage  # noqa: PLC0415
 
-                return AnagraficaPage()
+                return AnagraficaPage(controller=self.anagrafica_controller)
 
             if index == PageIndex.SETTINGS:
-                from src.gui.panels.settings_panel import SettingsPanel  # noqa: PLC0415
+                from src.gui.panels.settings.main_panel import SettingsPanel  # noqa: PLC0415
 
                 return SettingsPanel()
 
@@ -220,19 +242,19 @@ class NavigationController(QObject):
                 return NotificationsPanel()
 
             if index == PageIndex.STORICO_ODA:
-                from src.gui.panels.storico_oda_panel import StoricoOdaPanel  # noqa: PLC0415
+                from src.gui.panels.storico_oda import StoricoOdaPanel  # noqa: PLC0415
 
-                return StoricoOdaPanel()
+                return StoricoOdaPanel(controller=self.oda_controller)
 
             if index == PageIndex.DIPENDENTI:
-                from src.gui.panels.dipendenti_manager_panel import DipendentiManagerPanel  # noqa: PLC0415
+                from src.gui.panels.dipendenti.main_panel import DipendentiPanel  # noqa: PLC0415
 
-                return DipendentiManagerPanel()
+                return DipendentiPanel(controller=self.anagrafica_controller)
 
             if index == PageIndex.CONSUNTIVO:
                 from src.gui.panels.consuntivo_panel import ConsuntivoPanel  # noqa: PLC0415
 
-                return ConsuntivoPanel()
+                return ConsuntivoPanel(controller=self.consuntivo_controller)
 
         except Exception:
             logger.exception("Errore fatale creazione pannello %s", index)
@@ -250,6 +272,7 @@ class NavigationController(QObject):
         window.raise_()
         window.activateWindow()
         # Sincronizza comunque la sidebar
-        self.mw.sidebar.set_active_index(index)
+        if hasattr(self.mw.sidebar, "set_active_button"):
+            self.mw.sidebar.set_active_button(index)
         # Sostituisce la navigazione nello stack con il placeholder (già presente)
         self.stack.setCurrentIndex(index)

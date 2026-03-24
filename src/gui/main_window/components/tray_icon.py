@@ -28,6 +28,18 @@ class TrayIconComponent(QObject):
 
         self.controller = TrayController(main_window)
 
+    def show_message(self, title: str, message: str, icon: Any = None, duration: int = 5000) -> None:  # noqa: ANN401
+        """
+        Inoltra la richiesta di visualizzazione messaggio al controller.
+
+        Args:
+            title: Titolo del messaggio.
+            message: Testo del messaggio.
+            icon: Icona opzionale.
+            duration: Durata della notifica in ms.
+        """
+        self.controller.show_message(title, message, icon, duration)
+
     def show_update_message(self, new_version: str) -> None:
         """
         Mostra una notifica di sistema per segnalare la disponibilità di una nuova versione.
