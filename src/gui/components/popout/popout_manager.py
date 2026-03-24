@@ -3,12 +3,22 @@ Componenti per la gestione dei pannelli sganciati (Pop-out).
 Consente di separare i widget dallo stack centrale della MainWindow e renderizzarli in finestre di livello OS.
 """
 
+import logging
 from collections.abc import Callable
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSignal
-from PyQt6.QtGui import QCloseEvent
+from PyQt6.QtCore import (
+    QEasingCurve,
+    QPoint,
+    QPropertyAnimation,
+    QSequentialAnimationGroup,
+    Qt,
+    pyqtSignal,
+)
+from PyQt6.QtGui import QCloseEvent, QIcon
 from PyQt6.QtWidgets import (
     QFrame,
+    QGraphicsDropShadowEffect,
+    QGraphicsOpacityEffect,
     QLabel,
     QMainWindow,
     QVBoxLayout,
@@ -20,11 +30,13 @@ from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path
 
+logger = logging.getLogger(__name__)
+
 
 class DetachedPanelWindow(QMainWindow):
     """
     Finestra indipendente che ospita un pannello precedentemente residente nello SlidingStackedWidget.
-    Utiilzza il frame di sistema OS per prevenire il noto crash PyQt6 (Access Violation) durante il reparenting C++.
+    Utilizza il frame di sistema OS per prevenire il noto crash PyQt6 (Access Violation) durante il reparenting C++.
     """
 
     panel_closed_signal = pyqtSignal(int)  # Indice originale del pannello
@@ -50,9 +62,7 @@ class DetachedPanelWindow(QMainWindow):
         Intercetta la chiusura della finestra per avviare il riaggancio.
         """
         if event:
-            import logging  # noqa: PLC0415
-
-            logging.getLogger(__name__).info("Popout finestra esterna chiusa, innesco reattach...")
+            logger.info("Popout finestra esterna chiusa, innesco reattach...")
             self.panel_closed_signal.emit(self.original_index)
             super().closeEvent(event)
 
@@ -64,7 +74,7 @@ class PopoutPlaceholderWidget(QWidget):
         super().__init__(parent)
         self._setup_ui(title, on_reattach)
 
-    def _setup_ui(self, title: str, on_reattach: Callable[[], None]) -> None:  # noqa: PLR0915
+    def _setup_ui(self, title: str, on_reattach: Callable[[], None]) -> None:
         main_layout = QVBoxLayout(self)
         main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.setContentsMargins(40, 40, 40, 40)
@@ -82,8 +92,6 @@ class PopoutPlaceholderWidget(QWidget):
         """)
         self.card.setFixedWidth(560)
 
-        from PyQt6.QtWidgets import QGraphicsDropShadowEffect  # noqa: PLC0415
-
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(30)
         shadow.setColor(Qt.GlobalColor.black)
@@ -95,6 +103,15 @@ class PopoutPlaceholderWidget(QWidget):
         card_layout.setSpacing(20)
         card_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+        self._setup_logo(card_layout)
+        self._setup_labels(card_layout, title)
+        self._setup_button(card_layout, on_reattach)
+
+        main_layout.addWidget(self.card)
+        self._setup_animations()
+
+    def _setup_logo(self, layout: QVBoxLayout) -> None:
+        """Configura l'area del logo nell'header della card."""
         self.logo_container = QWidget()
         self.logo_container.setFixedSize(140, 140)
         logo_layout = QVBoxLayout(self.logo_container)
@@ -105,8 +122,6 @@ class PopoutPlaceholderWidget(QWidget):
         self.logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         try:
-            from PyQt6.QtGui import QIcon  # noqa: PLC0415
-
             logo_path = get_asset_path("app.ico")
             icon = QIcon(logo_path)
             pixmap = icon.pixmap(256, 256)
@@ -127,7 +142,10 @@ class PopoutPlaceholderWidget(QWidget):
             self.logo_label.setStyleSheet("font-size: 72px;")
 
         logo_layout.addWidget(self.logo_label)
+        layout.addWidget(self.logo_container, alignment=Qt.AlignmentFlag.AlignHCenter)
 
+    def _setup_labels(self, layout: QVBoxLayout, title: str) -> None:
+        """Inizializza le label di testo informative."""
         badge_label = QLabel("IN ESECUZIONE")
         badge_label.setStyleSheet(
             f"background-color: {COLORS['bg_hover']}; color: {COLORS['primary_blue']}; padding: 6px 12px; border-radius: 12px; font-weight: 800; font-size: 11px; letter-spacing: 1px;"
@@ -145,6 +163,13 @@ class PopoutPlaceholderWidget(QWidget):
         desc_label.setWordWrap(True)
         desc_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+        layout.addWidget(badge_label, alignment=Qt.AlignmentFlag.AlignHCenter)
+        layout.addSpacing(5)
+        layout.addWidget(title_label)
+        layout.addWidget(desc_label)
+
+    def _setup_button(self, layout: QVBoxLayout, on_reattach: Callable[[], None]) -> None:
+        """Configura il pulsante di riaggancio."""
         self.reattach_btn = ModernButton(
             "TORNA ALLA VISTA PRINCIPALE",
             icon=get_asset_path(Icons.CHEVRON_DOWN),
@@ -155,20 +180,11 @@ class PopoutPlaceholderWidget(QWidget):
         self.reattach_btn.setMinimumHeight(50)
         self.reattach_btn.clicked.connect(on_reattach)
 
-        card_layout.addWidget(self.logo_container, alignment=Qt.AlignmentFlag.AlignHCenter)
-        card_layout.addWidget(badge_label, alignment=Qt.AlignmentFlag.AlignHCenter)
-        card_layout.addSpacing(5)
-        card_layout.addWidget(title_label)
-        card_layout.addWidget(desc_label)
-        card_layout.addSpacing(25)
-        card_layout.addWidget(self.reattach_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
+        layout.addSpacing(25)
+        layout.addWidget(self.reattach_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        main_layout.addWidget(self.card)
-
-        # Animazioni
-        from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSequentialAnimationGroup  # noqa: PLC0415
-        from PyQt6.QtWidgets import QGraphicsOpacityEffect  # noqa: PLC0415
-
+    def _setup_animations(self) -> None:
+        """Configura le animazioni visive della card."""
         self.opacity_effect = QGraphicsOpacityEffect(self.card)
         self.card.setGraphicsEffect(self.opacity_effect)
         self.opacity_effect.setOpacity(0.0)

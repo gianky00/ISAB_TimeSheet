@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Any
 
 from src.core.paths import BASE_DIR, CONFIG_DIR, CONFIG_FILE
-from src.core.version import __version__
 
 # Modular imports
 from .config.account_manager import (
@@ -39,11 +38,6 @@ def _reset_configuration_for_testing() -> None:
     global _config_cache  # noqa: PLW0603
     with _config_lock:
         _config_cache = None
-
-
-def get_version() -> str:
-    """Restituisce la versione corrente dell'applicazione."""
-    return __version__
 
 
 def ensure_config_dir() -> None:

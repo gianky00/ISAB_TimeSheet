@@ -18,7 +18,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class AccountDialog(QDialog):
     """Dialog per aggiungere/modificare un account."""
 
-    def __init__(  # noqa: PLR0915
+    def __init__(
         self,
         parent: QWidget | None = None,
         username: str = "",
@@ -30,6 +30,18 @@ class AccountDialog(QDialog):
         self.setWindowTitle("Account")
         self.setFixedWidth(350)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
+        self._apply_dialog_style()
+
+        # Main Layout
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(15)
+
+        self._setup_form(main_layout, username, password, account_type, show_type)
+        self._setup_buttons(main_layout)
+
+    def _apply_dialog_style(self) -> None:
+        """Applica lo stile QSS al dialogo."""
         self.setStyleSheet(f"""
             QDialog {{
                 background-color: {COLORS["bg_white"]};
@@ -42,11 +54,10 @@ class AccountDialog(QDialog):
             }}
         """)
 
-        # Main Layout (Vertical) instead of Form for better control
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(15)
-
+    def _setup_form(
+        self, layout: QVBoxLayout, username: str, password: str, account_type: str, show_type: bool
+    ) -> None:
+        """Configura il form con i campi di input."""
         form = QFormLayout()
         form.setSpacing(10)
 
@@ -55,16 +66,32 @@ class AccountDialog(QDialog):
         self.username_edit.setMinimumHeight(35)
         form.addRow("Username:", self.username_edit)
 
-        # Password
+        # Password logic
+        self._setup_password_field(form, password)
+
+        # Account Type (Optional)
+        self.type_combo = FilterComboBox()
+        self.type_combo.addItems(["Esecutore", "ISAB"])
+        self.type_combo.setMinimumHeight(35)
+        if account_type:
+            self.type_combo.setCurrentText(account_type)
+
+        if not show_type:
+            self.type_combo.hide()
+        else:
+            form.addRow("Tipo Account:", self.type_combo)
+
+        layout.addLayout(form)
+
+    def _setup_password_field(self, form: QFormLayout, password: str) -> None:
+        """Configura il campo password con il pulsante di visibilità."""
         self.password_edit = StandardInput(password)
         self.password_edit.setMinimumHeight(35)
         self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
 
-        # Password layout with toggle
         pass_layout = QHBoxLayout()
         pass_layout.setContentsMargins(0, 0, 0, 0)
         pass_layout.setSpacing(5)
-
         pass_layout.addWidget(self.password_edit)
 
         self.toggle_pass_btn = IconButton()
@@ -73,8 +100,7 @@ class AccountDialog(QDialog):
         self.toggle_pass_btn.setToolTip("Mostra/Nascondi password")
         self.toggle_pass_btn.setFixedSize(35, 35)
         self.toggle_pass_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.toggle_pass_btn.setStyleSheet(
-            f"""
+        self.toggle_pass_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {COLORS["bg_white"]};
                 border: 1px solid {COLORS["border_medium"]};
@@ -84,29 +110,14 @@ class AccountDialog(QDialog):
                 background-color: {COLORS["bg_light"]};
                 border-color: {COLORS["border_dark"]};
             }}
-        """
-        )
+        """)
         self.toggle_pass_btn.clicked.connect(self._toggle_password_visibility)
         pass_layout.addWidget(self.toggle_pass_btn)
 
         form.addRow("Password:", pass_layout)
 
-        # Account Type (Optional, shown for SafeWork)
-        self.type_combo = FilterComboBox()
-        self.type_combo.addItems(["Esecutore", "ISAB"])
-        self.type_combo.setMinimumHeight(35)
-        if account_type:
-            self.type_combo.setCurrentText(account_type)
-
-        self.type_label = "Tipo Account:"
-        if not show_type:
-            self.type_combo.hide()
-        else:
-            form.addRow(self.type_label, self.type_combo)
-
-        main_layout.addLayout(form)
-
-        # Buttons
+    def _setup_buttons(self, layout: QVBoxLayout) -> None:
+        """Configura i pulsanti di conferma/annullamento."""
         btns = QHBoxLayout()
         btns.setSpacing(10)
         btns.addStretch()
@@ -119,8 +130,7 @@ class AccountDialog(QDialog):
 
         btns.addWidget(cancel_btn)
         btns.addWidget(ok_btn)
-
-        main_layout.addLayout(btns)
+        layout.addLayout(btns)
 
     def _toggle_password_visibility(self) -> None:
         if self.password_edit.echoMode() == QLineEdit.EchoMode.Password:

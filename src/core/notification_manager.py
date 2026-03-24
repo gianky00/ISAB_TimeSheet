@@ -11,12 +11,12 @@ import uuid
 from collections.abc import Sequence
 from contextlib import suppress
 from datetime import UTC, datetime
-from typing import Any, Optional
+from typing import Any, Final, Optional
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
-from src.core import config_manager
 from src.core.constants import FileNames
+from src.core.paths import CONFIG_DIR
 
 
 class NotificationManager(QObject):
@@ -42,6 +42,9 @@ class NotificationManager(QObject):
     request_toast = pyqtSignal(str, str, int)
     """Segnale emesso per richiedere la visualizzazione di un toast (msg, livello, ms)."""
 
+    MAX_MESSAGE_LEN: Final[int] = 120
+    TRUNCATE_SUFFIX_LEN: Final[int] = 3
+
     @classmethod
     def instance(cls) -> "NotificationManager":
         """
@@ -59,7 +62,7 @@ class NotificationManager(QObject):
     def __init__(self) -> None:
         """Inizializza il manager caricando le notifiche salvate su disco."""
         super().__init__()
-        self.notifications_file = config_manager.CONFIG_DIR / FileNames.NOTIFICATIONS
+        self.notifications_file = CONFIG_DIR / FileNames.NOTIFICATIONS
         if not hasattr(self, "_lock"):
             self._lock = threading.RLock()
         self.notifications: list[dict[str, Any]] = self._load_notifications()
@@ -162,8 +165,9 @@ class NotificationManager(QObject):
             duration_map = {"success": 2000, "warning": 10000, "error": 10000, "info": 3000}
             duration = duration_map.get(level, 3000)
             clean_msg = message.replace("<b>", "").replace("</b>", "").replace("<br>", " ")
-            if len(clean_msg) > 120:  # noqa: PLR2004
-                clean_msg = clean_msg[:117] + "..."
+            if len(clean_msg) > self.MAX_MESSAGE_LEN:
+                cutoff = self.MAX_MESSAGE_LEN - self.TRUNCATE_SUFFIX_LEN
+                clean_msg = clean_msg[:cutoff] + "..."
             self.request_toast.emit(f"{title}: {clean_msg}", level, duration)
 
     def get_notifications(self, filter_unread: bool = False) -> list[dict[str, Any]]:

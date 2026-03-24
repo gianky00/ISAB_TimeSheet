@@ -4,7 +4,7 @@ Widget moderno per la visualizzazione di una singola notifica.
 Modularizzato per utilizzare il Notification Styling Engine.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, pyqtSignal
@@ -73,14 +73,13 @@ class NotificationCard(QFrame):
         if not disable_animations:
             self._setup_animations()
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Configura il layout, gli stili e gli elementi interattivi della card."""
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
         level = self.notification.get("level", "info").lower()
         is_read = self.notification.get("read", False)
-        is_pinned = self.notification.get("pinned", False)
 
         # Applica lo stile dal motore esterno
         self.setStyleSheet(get_notification_qss(level, is_read))
@@ -90,18 +89,22 @@ class NotificationCard(QFrame):
         main_layout.setContentsMargins(12, 10, 12, 10)
         main_layout.setSpacing(6)
 
-        # --- HEADER ---
+        self._setup_header(main_layout, style_meta)
+        self._setup_message(main_layout)
+        self._setup_actions(main_layout)
+
+    def _setup_header(self, layout: QVBoxLayout, style_meta: dict[str, Any]) -> None:
+        """Configura l'area superiore della card con pin, icona e titoli."""
         header_layout = QHBoxLayout()
         header_layout.setSpacing(12)
 
-        # Pin
+        is_pinned = self.notification.get("pinned", False)
         self.pin_btn = IconButton()
         self.pin_btn.setText("📌" if is_pinned else "📍")
         self.pin_btn.setFixedSize(24, 24)
         self.pin_btn.clicked.connect(self._toggle_pin)
         header_layout.addWidget(self.pin_btn)
 
-        # Icon Badge
         badge = QLabel()
         badge.setFixedSize(36, 36)
         badge.setPixmap(
@@ -111,7 +114,6 @@ class NotificationCard(QFrame):
         badge.setStyleSheet(f"background: {style_meta['badge_bg']}; border-radius: 18px;")
         header_layout.addWidget(badge)
 
-        # Info
         info_v = QVBoxLayout()
         info_v.setSpacing(0)
         self.title_lbl = QLabel(self.notification.get("title", "Notifica"))
@@ -124,22 +126,23 @@ class NotificationCard(QFrame):
         info_v.addWidget(self.time_lbl)
         header_layout.addLayout(info_v, stretch=1)
 
-        # Delete
         self.del_btn = IconButton()
         self.del_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), COLORS["text_muted"]))
         self.del_btn.setToolTip("Elimina")
         self.del_btn.clicked.connect(self._delete_notification)
         header_layout.addWidget(self.del_btn)
-        main_layout.addLayout(header_layout)
+        layout.addLayout(header_layout)
 
-        # --- MESSAGE ---
+    def _setup_message(self, layout: QVBoxLayout) -> None:
+        """Inizializza il widget per il corpo del messaggio."""
         msg_text = self.notification.get("message", "")
         self.message_widget = QLabel(msg_text)
         self.message_widget.setWordWrap(True)
         self.message_widget.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 13px; padding: 2px 5px;")
-        main_layout.addWidget(self.message_widget)
+        layout.addWidget(self.message_widget)
 
-        # --- FOOTER (Actions) ---
+    def _setup_actions(self, layout: QVBoxLayout) -> None:
+        """Aggiunge pulsanti di azione dinamici se presenti nella notifica."""
         actions = self.notification.get("actions", [])
         if actions:
             footer_lay = QHBoxLayout()
@@ -153,16 +156,14 @@ class NotificationCard(QFrame):
                     lambda _, k=act["key"]: self.action_triggered.emit(self.notification["id"], k)
                 )
                 footer_lay.addWidget(btn)
-            main_layout.addLayout(footer_lay)
+            layout.addLayout(footer_lay)
 
     def _format_timestamp(self, ts: Any) -> str:  # noqa: ANN401
         """Converte un timestamp in formato leggibile (HH:MM)."""
         if isinstance(ts, str):
             return ts
         if isinstance(ts, (int, float)):
-            from datetime import UTC  # noqa: PLC0415
-
-            return datetime.fromtimestamp(ts, tz=UTC).strftime("%H:%M")
+            return datetime.fromtimestamp(ts, tz=UTC).astimezone().strftime("%H:%M")
         return datetime.now(UTC).astimezone().strftime("%H:%M")
 
     def _setup_animations(self) -> None:

@@ -56,7 +56,7 @@ class TestConfigManager:
 
     def test_get_data_path(self):
         """Data path should be a valid directory path."""
-        from src.core.config_manager import get_data_path  # noqa: PLC0415
+        from src.core.paths import get_data_path  # noqa: PLC0415
 
         path = get_data_path()
         assert path is not None

@@ -12,7 +12,8 @@ from pathlib import Path
 from typing import ClassVar
 
 from src.core.audit_manager import AuditManager
-from src.core.paths import CONFIG_DIR, load_config
+from src.core.config_manager import load_config
+from src.core.paths import CONFIG_DIR
 
 logger = logging.getLogger(__name__)
 

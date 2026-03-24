@@ -3,7 +3,7 @@ NotificationToolbar - Barra degli strumenti per filtrare, cercare e ordinare not
 Include filter chips, search bar, sort dropdown e bulk actions menu.
 """
 
-from typing import Any
+from typing import Any, Final
 
 from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -135,6 +135,8 @@ class NotificationToolbar(QWidget):
     sort_changed = pyqtSignal(str)  # sort_key
     bulk_action_triggered = pyqtSignal(str)  # action_key
 
+    SEARCH_DEBOUNCE_MS: Final[int] = 300
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._filter_chips: dict[str, FilterChip] = {}
@@ -144,7 +146,7 @@ class NotificationToolbar(QWidget):
         self._debounce_timer.timeout.connect(self._emit_search_query)
         self._setup_ui()
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Setup layout e componenti."""
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -158,7 +160,17 @@ class NotificationToolbar(QWidget):
         layout.setContentsMargins(15, 10, 15, 10)
         layout.setSpacing(15)
 
-        # === SEARCH BAR ===
+        self._setup_search_section(layout)
+        self._setup_divider(layout)
+        self._setup_filter_section(layout)
+
+        layout.addStretch()
+        self._setup_sort_section(layout)
+
+        main_layout.addWidget(self.container)
+
+    def _setup_search_section(self, layout: QHBoxLayout) -> None:
+        """Configura la barra di ricerca."""
         search_v = QVBoxLayout()
         search_v.setSpacing(4)
         lbl_search = QLabel("CERCA NOTIFICHE")
@@ -174,14 +186,16 @@ class NotificationToolbar(QWidget):
         search_v.addWidget(self.search_input)
         layout.addLayout(search_v)
 
-        # Divisore
+    def _setup_divider(self, layout: QHBoxLayout) -> None:
+        """Aggiunge un separatore verticale."""
         v_line = QFrame()
         v_line.setFrameShape(QFrame.Shape.VLine)
         v_line.setFrameShadow(QFrame.Shadow.Plain)
         v_line.setStyleSheet(f"color: {COLORS['border_light']};")
         layout.addWidget(v_line)
 
-        # === FILTER CHIPS ===
+    def _setup_filter_section(self, layout: QHBoxLayout) -> None:
+        """Configura i chips per il filtraggio."""
         chips_layout = QHBoxLayout()
         chips_layout.setSpacing(8)
 
@@ -198,9 +212,9 @@ class NotificationToolbar(QWidget):
                 label=str(config["label"]),
                 key=str(config["key"]),
                 icon=config["icon"],
-                count=0,  # Will be updated dynamically
+                count=0,
             )
-            chip.clicked.connect(lambda checked, k=str(config["key"]): self._on_filter_clicked(k))
+            chip.clicked.connect(lambda _, k=str(config["key"]): self._on_filter_clicked(k))
             self._filter_chips[str(config["key"])] = chip
             chips_layout.addWidget(chip)
 
@@ -208,9 +222,8 @@ class NotificationToolbar(QWidget):
         self._filter_chips["all"].setChecked(True)
         layout.addLayout(chips_layout)
 
-        layout.addStretch()
-
-        # === SORT DROPDOWN ===
+    def _setup_sort_section(self, layout: QHBoxLayout) -> None:
+        """Configura il menu a tendina per l'ordinamento."""
         sort_v = QVBoxLayout()
         sort_v.setSpacing(4)
         lbl_sort = QLabel("ORDINA")
@@ -229,13 +242,10 @@ class NotificationToolbar(QWidget):
         sort_v.addWidget(self.sort_combo)
         layout.addLayout(sort_v)
 
-        main_layout.addWidget(self.container)
-
     def _on_search_text_changed(self, text: str) -> None:
         """Handle search input change with debounce."""
-        # Debounce: wait 300ms before emitting signal
         self._debounce_timer.stop()
-        self._debounce_timer.start(300)
+        self._debounce_timer.start(self.SEARCH_DEBOUNCE_MS)
 
     def _emit_search_query(self) -> None:
         """Emit search query signal after debounce."""

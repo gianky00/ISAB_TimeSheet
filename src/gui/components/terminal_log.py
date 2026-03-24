@@ -3,6 +3,8 @@ Standard Terminal Log Widget per SyncroJob.
 Sostituisce la vecchia timeline orizzontale con un visualizzatore testuale pulito e moderno in Light Mode.
 """
 
+from datetime import UTC, datetime
+
 from PyQt6.QtCore import pyqtSlot
 from PyQt6.QtGui import QColor, QFont, QTextCharFormat, QTextCursor
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPlainTextEdit, QVBoxLayout, QWidget
@@ -16,7 +18,7 @@ class TerminalLogWidget(QWidget):
     Fornisce una visualizzazione testuale moderna e pulita delle attività del bot.
     """
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il widget del terminale e configura l'editor di testo.
 
@@ -63,7 +65,7 @@ class TerminalLogWidget(QWidget):
 
     @pyqtSlot(str)
     @pyqtSlot(str, str)
-    def append(self, message: str, level: str = "INFO"):  # noqa: ANN201
+    def append(self, message: str, level: str = "INFO") -> None:
         """
         Aggiunge un messaggio colorato alla console in base al livello di logging.
 
@@ -71,8 +73,6 @@ class TerminalLogWidget(QWidget):
             message: Testo del messaggio da loggare.
             level: Livello del log (es. INFO, ERROR, WARN, SUCCESS).
         """
-        from datetime import UTC, datetime  # noqa: PLC0415
-
         timestamp = datetime.now(UTC).astimezone().strftime("%H:%M:%S")
 
         self.editor.moveCursor(QTextCursor.MoveOperation.End)
@@ -110,6 +110,6 @@ class TerminalLogWidget(QWidget):
         if v_scroll:
             v_scroll.setValue(v_scroll.maximum())
 
-    def clear(self):  # noqa: ANN201
+    def clear(self) -> None:
         """Pulisce tutto il contenuto della console di log."""
         self.editor.clear()

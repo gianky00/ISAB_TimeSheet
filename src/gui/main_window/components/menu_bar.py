@@ -11,8 +11,8 @@ from pathlib import Path
 from PyQt6.QtCore import QObject, Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut
 
-from src.core.config_manager import get_data_path, get_logs_path
 from src.core.constants import Icons
+from src.core.paths import get_data_path, get_logs_path
 from src.gui.controllers.command_registry import CommandNode
 from src.gui.dialogs.bug_report_dialog import BugReportDialog
 from src.gui.dialogs.command_palette import CommandPaletteDialog

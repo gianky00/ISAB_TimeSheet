@@ -3,7 +3,7 @@ SyncroJob - Bots Module
 Registry e factory per tutti i bot disponibili.
 """
 
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from src.bots.base import BaseBot, BotStatus
 from src.bots.portale_fornitori.carico_ts import CaricoTSBot
@@ -139,7 +139,7 @@ def get_bot_info(bot_id: str) -> dict[str, Any] | None:
     return BOT_REGISTRY.get(bot_id)
 
 
-def create_bot(bot_id: str, **kwargs) -> BaseBot | None:  # noqa: ANN003
+def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:  # noqa: ANN401
     """
     Crea un'istanza di un bot.
 
@@ -152,8 +152,6 @@ def create_bot(bot_id: str, **kwargs) -> BaseBot | None:  # noqa: ANN003
     """
     bot_info = BOT_REGISTRY.get(bot_id)
     if bot_info:
-        from typing import cast  # noqa: PLC0415
-
         bot_class = bot_info["class"]
         return cast("BaseBot", bot_class(**kwargs))
     return None

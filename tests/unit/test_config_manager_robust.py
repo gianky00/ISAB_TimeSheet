@@ -142,7 +142,7 @@ class TestConfigManagerRobust:
 
     def test_path_getters(self):
         """Test getter dei percorsi."""
-        from src.core.config_manager import get_data_path, get_logs_path  # noqa: PLC0415
+        from src.core.paths import get_data_path, get_logs_path  # noqa: PLC0415
 
         data_path = get_data_path()
         logs_path = get_logs_path()

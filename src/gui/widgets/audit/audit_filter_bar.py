@@ -4,7 +4,8 @@ Widget per la configurazione dei filtri di ricerca e visualizzazione all'interno
 """
 
 from collections.abc import Sequence
-from typing import Any
+from datetime import datetime
+from typing import Any, Final
 
 from PyQt6.QtCore import QDate, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -34,17 +35,30 @@ class AuditFilterBar(ModernCard):
 
     filters_applied = pyqtSignal(dict)
 
+    LEVEL_INFO_IDX: Final[int] = 1
+    LEVEL_WARN_IDX: Final[int] = 2
+    LEVEL_ERR_IDX: Final[int] = 3
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent, elevation=8)
         self._setup_ui()
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Configura il layout orizzontale e inizializza i widget dei filtri."""
         layout = QHBoxLayout(self)
         layout.setContentsMargins(15, 10, 15, 10)
         layout.setSpacing(15)
 
-        # 1. Date Range
+        self._setup_date_range(layout)
+        self._add_divider(layout)
+        self._setup_category_level(layout)
+        self._setup_search(layout)
+
+        layout.addStretch()
+        self._setup_apply_button(layout)
+
+    def _setup_date_range(self, layout: QHBoxLayout) -> None:
+        """Configura i selettori di intervallo temporale."""
         range_h = QHBoxLayout()
         range_h.setSpacing(8)
 
@@ -74,14 +88,16 @@ class AuditFilterBar(ModernCard):
 
         layout.addLayout(range_h)
 
-        # Vertical Divider
-        v_line1 = QFrame()
-        v_line1.setFrameShape(QFrame.Shape.VLine)
-        v_line1.setFrameShadow(QFrame.Shadow.Plain)
-        v_line1.setStyleSheet(f"color: {COLORS['border_light']};")
-        layout.addWidget(v_line1)
+    def _add_divider(self, layout: QHBoxLayout) -> None:
+        """Aggiunge un separatore verticale."""
+        v_line = QFrame()
+        v_line.setFrameShape(QFrame.Shape.VLine)
+        v_line.setFrameShadow(QFrame.Shadow.Plain)
+        v_line.setStyleSheet(f"color: {COLORS['border_light']};")
+        layout.addWidget(v_line)
 
-        # 2. Categoria & Livello
+    def _setup_category_level(self, layout: QHBoxLayout) -> None:
+        """Configura i menu a tendina per categoria e livello."""
         filter_group = QHBoxLayout()
         filter_group.setSpacing(12)
 
@@ -111,7 +127,8 @@ class AuditFilterBar(ModernCard):
 
         layout.addLayout(filter_group)
 
-        # 3. Search
+    def _setup_search(self, layout: QHBoxLayout) -> None:
+        """Configura il campo di ricerca testuale."""
         search_v = QVBoxLayout()
         search_v.setSpacing(4)
         lbl_search = QLabel("TESTO")
@@ -124,9 +141,8 @@ class AuditFilterBar(ModernCard):
         search_v.addWidget(self.search_edit)
         layout.addLayout(search_v)
 
-        layout.addStretch()
-
-        # 4. Btn Applica
+    def _setup_apply_button(self, layout: QHBoxLayout) -> None:
+        """Inizializza il pulsante di applicazione filtri."""
         self.apply_btn = ModernButton(
             "FILTRA",
             variant=ModernButton.Variant.PRIMARY,
@@ -137,12 +153,7 @@ class AuditFilterBar(ModernCard):
         layout.addWidget(self.apply_btn, alignment=Qt.AlignmentFlag.AlignBottom)
 
     def set_categories(self, categories: Sequence[str]) -> None:
-        """
-        Popola il menu a tendina delle categorie.
-
-        Args:
-            categories: Lista di stringhe rappresentanti le categorie di log disponibili.
-        """
+        """Popola il menu a tendina delle categorie."""
         self.cat_combo.clear()
         self.cat_combo.addItem("Tutte")
         self.cat_combo.addItems(categories)
@@ -150,13 +161,7 @@ class AuditFilterBar(ModernCard):
     def _emit_filters(self) -> None:
         """Raccoglie i valori correnti dei filtri ed emette il segnale 'filters_applied'."""
         lvl_idx = self.level_combo.currentIndex()
-        levels = None
-        if lvl_idx == 1:
-            levels = ["low"]
-        elif lvl_idx == 2:  # noqa: PLR2004
-            levels = ["medium"]
-        elif lvl_idx == 3:  # noqa: PLR2004
-            levels = ["high"]
+        levels = self._get_levels_from_index(lvl_idx)
 
         self.filters_applied.emit(
             {
@@ -168,35 +173,27 @@ class AuditFilterBar(ModernCard):
             }
         )
 
-    def set_enabled_dates(self, enabled: bool) -> None:
-        """
-        Abilita o disabilita i campi di selezione data.
+    def _get_levels_from_index(self, index: int) -> list[str] | None:
+        """Mappa l'indice del combo livello ai valori del database."""
+        if index == self.LEVEL_INFO_IDX:
+            return ["low"]
+        if index == self.LEVEL_WARN_IDX:
+            return ["medium"]
+        if index == self.LEVEL_ERR_IDX:
+            return ["high"]
+        return None
 
-        Args:
-            enabled: Stato di abilitazione.
-        """
+    def set_enabled_dates(self, enabled: bool) -> None:
+        """Abilita o disabilita i campi di selezione data."""
         self.date_from.setEnabled(enabled)
         self.date_to.setEnabled(enabled)
 
     def get_filters(self) -> dict[str, Any]:
-        """
-        Restituisce i parametri di filtraggio correnti in un formato pronto per le query.
-
-        Returns:
-            dict: Dizionario contenente date convertite in datetime, categoria, livelli e testo di ricerca.
-        """
-        from datetime import datetime  # noqa: PLC0415
-
+        """Restituisce i parametri di filtraggio correnti per le query."""
         start_dt = datetime.combine(self.date_from.date().toPyDate(), datetime.min.time())
         end_dt = datetime.combine(self.date_to.date().toPyDate(), datetime.max.time())
         lvl_idx = self.level_combo.currentIndex()
-        levels = None
-        if lvl_idx == 1:
-            levels = ["low"]
-        elif lvl_idx == 2:  # noqa: PLR2004
-            levels = ["medium"]
-        elif lvl_idx == 3:  # noqa: PLR2004
-            levels = ["high"]
+        levels = self._get_levels_from_index(lvl_idx)
 
         return {
             "start_date": start_dt,

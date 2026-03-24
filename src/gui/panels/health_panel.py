@@ -7,7 +7,7 @@ e un elenco dettagliato di anomalie rilevate, con integrazione diretta per gli a
 
 from contextlib import suppress
 from datetime import UTC, datetime
-from typing import Any
+from typing import Final
 
 from PyQt6.QtCore import QRectF, Qt, QTimer
 from PyQt6.QtGui import QColor, QFont, QPainter, QPaintEvent, QPen
@@ -22,6 +22,10 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.core.logging.alert_manager import get_alert_manager
+from src.core.logging.analytics import Anomaly, generate_analytics_report
+from src.core.logging.viewer import LogViewer
+from src.core.notification_manager import NotificationManager
 from src.gui.styles import COLORS
 from src.gui.widgets import ModernButton, ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -32,6 +36,10 @@ class HealthScoreBadge(QWidget):
     Widget circolare (Gauge) Premium per l'Health Score.
     Implementa gradienti dinamici e ombre interne per un look Next-Gen.
     """
+
+    GOOD_THRESHOLD: Final[int] = 80
+    STABLE_THRESHOLD: Final[int] = 60
+    ATTENTION_THRESHOLD: Final[int] = 40
 
     def __init__(self, parent: QWidget | None = None, size: int = 180) -> None:
         super().__init__(parent)
@@ -49,20 +57,20 @@ class HealthScoreBadge(QWidget):
         self.update()
 
     def _get_gradient(self) -> QColor:
-        if self._score >= 80:  # noqa: PLR2004
+        if self._score >= self.GOOD_THRESHOLD:
             return QColor(COLORS["success_green"])
-        if self._score >= 60:  # noqa: PLR2004
+        if self._score >= self.STABLE_THRESHOLD:
             return QColor(COLORS["warning_yellow"])
-        if self._score >= 40:  # noqa: PLR2004
+        if self._score >= self.ATTENTION_THRESHOLD:
             return QColor(COLORS["warning_orange"])
         return QColor(COLORS["error_red"])
 
     def _get_status_text(self) -> str:
-        if self._score >= 80:  # noqa: PLR2004
+        if self._score >= self.GOOD_THRESHOLD:
             return "SISTEMA OTTIMO"
-        if self._score >= 60:  # noqa: PLR2004
+        if self._score >= self.STABLE_THRESHOLD:
             return "SISTEMA STABILE"
-        if self._score >= 40:  # noqa: PLR2004
+        if self._score >= self.ATTENTION_THRESHOLD:
             return "ATTENZIONE RICHIESTA"
         return "STATO CRITICO"
 
@@ -164,11 +172,11 @@ class StatCard(ModernCard):
 class AnomalyCard(ModernCard):
     """Card anomalia con design a lista orizzontale e badge di severità."""
 
-    def __init__(self, anomaly, parent: QWidget | None = None) -> None:  # noqa: ANN001
+    def __init__(self, anomaly: Anomaly, parent: QWidget | None = None) -> None:
         super().__init__(parent, elevation=6)
         self._setup_content(anomaly)
 
-    def _setup_content(self, anomaly) -> None:  # noqa: ANN001
+    def _setup_content(self, anomaly: Anomaly) -> None:
         color = self._get_severity_color(anomaly.severity)
         self.setObjectName("anomalyCard")
         self.setStyleSheet(f"QFrame#anomalyCard {{ border-left: 4px solid {color}; }}")
@@ -231,24 +239,32 @@ class HealthPanel(QWidget):
     Integra timer di auto-refresh per mantenere i dati sempre aggiornati.
     """
 
+    REFRESH_INTERVAL_MS: Final[int] = 120000  # 2 min
+    ALERT_CHECK_INTERVAL_MS: Final[int] = 1800000  # 30 min
+
     def __init__(self, parent: QWidget | None = None) -> None:
         """Inizializza l'interfaccia e avvia gli scheduler di monitoraggio."""
         super().__init__(parent)
         self._setup_ui()
         self._refresh_timer = QTimer(self)
         self._refresh_timer.timeout.connect(self.refresh)
-        self._refresh_timer.start(120000)
+        self._refresh_timer.start(self.REFRESH_INTERVAL_MS)
         self._alert_timer = QTimer(self)
         self._alert_timer.timeout.connect(self._auto_check_alerts)
-        self._alert_timer.start(1800000)
+        self._alert_timer.start(self.ALERT_CHECK_INTERVAL_MS)
         QTimer.singleShot(500, self.refresh)
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Costruisce il layout a due colonne: statistiche a sinistra, anomalie a destra."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(25, 25, 25, 25)
         layout.setSpacing(25)
 
+        self._setup_header(layout)
+        self._setup_content(layout)
+
+    def _setup_header(self, parent_layout: QVBoxLayout) -> None:
+        """Configura l'header del pannello."""
         header = QHBoxLayout()
         header.setContentsMargins(0, 0, 0, 10)
 
@@ -274,11 +290,20 @@ class HealthPanel(QWidget):
         )
         self._refresh_btn.clicked.connect(self.refresh)
         header.addWidget(self._refresh_btn)
-        layout.addLayout(header)
+        parent_layout.addLayout(header)
 
+    def _setup_content(self, parent_layout: QVBoxLayout) -> None:
+        """Configura l'area contenuto principale."""
         content = QHBoxLayout()
         content.setSpacing(30)
 
+        self._setup_left_panel(content)
+        self._setup_right_panel(content)
+
+        parent_layout.addLayout(content)
+
+    def _setup_left_panel(self, parent_layout: QHBoxLayout) -> None:
+        """Configura il pannello di sinistra con score e mini stats."""
         left_panel = QVBoxLayout()
         left_panel.setSpacing(25)
 
@@ -325,9 +350,10 @@ class HealthPanel(QWidget):
         stats_grid.addWidget(self._stat_anomalies, 1, 1)
         left_panel.addLayout(stats_grid)
         left_panel.addStretch()
-        content.addLayout(left_panel, stretch=1)
+        parent_layout.addLayout(left_panel, stretch=1)
 
-        # 3. Anomalies Panel (Right)
+    def _setup_right_panel(self, parent_layout: QHBoxLayout) -> None:
+        """Configura il pannello di destra con la lista anomalie."""
         right_panel = QVBoxLayout()
         right_panel.setSpacing(15)
 
@@ -359,15 +385,11 @@ class HealthPanel(QWidget):
         scroll.setWidget(self._anomalies_container)
         right_panel.addWidget(scroll)
 
-        content.addLayout(right_panel, stretch=2)
-        layout.addLayout(content)
+        parent_layout.addLayout(right_panel, stretch=2)
 
     def refresh(self) -> None:
         """Interroga i motori di analytics e il LogViewer per aggiornare tutte le card e lo score."""
         try:
-            from src.core.logging.analytics import generate_analytics_report  # noqa: PLC0415
-            from src.core.logging.viewer import LogViewer  # noqa: PLC0415
-
             report = generate_analytics_report(hours=24)
             self._score_badge.score = report.health_score
             self._status_label.setText(self._score_badge._get_status_text())
@@ -384,7 +406,7 @@ class HealthPanel(QWidget):
         except Exception as e:
             self._last_update.setText(f"Errore: {str(e)[:30]}")
 
-    def _update_anomalies(self, anomalies: list[Any]) -> None:
+    def _update_anomalies(self, anomalies: list[Anomaly]) -> None:
         """Rigenera dinamicamente la lista delle card anomalia nella colonna di destra."""
         while self._anomalies_layout.count() > 1:
             if (item := self._anomalies_layout.takeAt(0)) and (w := item.widget()):
@@ -406,9 +428,6 @@ class HealthPanel(QWidget):
     def _send_telegram_alert(self) -> None:
         """Compone e invia un report di salute testuale al canale Telegram configurato."""
         try:
-            from src.core.logging.alert_manager import get_alert_manager  # noqa: PLC0415
-            from src.core.logging.analytics import generate_analytics_report  # noqa: PLC0415
-
             report = generate_analytics_report(hours=24)
             if not report.anomalies:
                 self._show_toast("ℹ️ Nessuna anomalia da segnalare", "info")
@@ -426,16 +445,12 @@ class HealthPanel(QWidget):
     def _auto_check_alerts(self) -> None:
         """Esegue un controllo periodico e invia notifiche automatiche se vengono rilevate anomalie critiche."""
         with suppress(Exception):
-            from src.core.logging.alert_manager import get_alert_manager  # noqa: PLC0415
-
             if (sent := get_alert_manager().check_and_alert(hours=24)) > 0:
                 self._last_update.setText(f"🔔 {sent} alert inviati")
 
     def _show_toast(self, message: str, level: str = "info") -> None:
         """Inoltra una notifica interna al NotificationManager."""
         with suppress(Exception):
-            from src.core.notification_manager import NotificationManager  # noqa: PLC0415
-
             NotificationManager.instance().add_notification(
                 title="Health Panel", message=message, level=level
             )

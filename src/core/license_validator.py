@@ -131,9 +131,9 @@ def _get_linux_hardware_id() -> str | None:
 
 def _get_license_paths() -> dict[str, Path]:
     """Restituisce la mappatura dei percorsi file per la licenza."""
-    from src.core import config_manager  # noqa: PLC0415
+    from src.core.paths import get_data_path  # noqa: PLC0415
 
-    base_data_dir = Path(config_manager.get_data_path())
+    base_data_dir = Path(get_data_path())
     license_dir = base_data_dir / "Licenza"
     return {
         "dir": license_dir,

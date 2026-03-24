@@ -5,9 +5,11 @@ Integra reportistica annuale, dati giornalieri, attività programmate e certific
 Include un motore di ricerca unificato e l'accesso al pannello di analisi KPI.
 """
 
+import logging
 from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Final
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -27,7 +29,8 @@ from src.core.contabilita_manager import ContabilitaManager
 from src.core.contabilita_worker import ContabilitaWorker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
-from src.gui.styles import COLORS
+from src.gui.panels.contabilita_kpi import ContabilitaKPIPanel
+from src.gui.styles import COLORS, LABEL_MUTED, LINEEDIT_STYLE
 from src.gui.widgets.contabilita.attivita_tab import AttivitaProgrammateTab
 from src.gui.widgets.contabilita.certificati_tab import CertificatiCampioneTab
 from src.gui.widgets.contabilita.giornaliere_tab import GiornaliereYearTab
@@ -39,6 +42,8 @@ from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 
+logger = logging.getLogger(__name__)
+
 
 class ContabilitaPanel(QWidget):
     """
@@ -49,6 +54,8 @@ class ContabilitaPanel(QWidget):
     - Sincronizzazione background con file Excel esterni.
     - Visualizzazione grafica dei KPI.
     """
+
+    SECONDS_IN_MINUTE: Final[int] = 60
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
@@ -70,19 +77,20 @@ class ContabilitaPanel(QWidget):
         """Tenta il caricamento dei tab gestendo eventuali errori critici del DB."""
         try:
             self.refresh_tabs()
-        except Exception as e:
-            import traceback  # noqa: PLC0415
+        except Exception:
+            logger.exception("Error refreshing tabs for ContabilitaPanel")
 
-            print(f"❌ Error refreshing tabs for ContabilitaPanel: {e}")
-            traceback.print_exc()
-
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Costruisce l'architettura dei tab e la toolbar unificata."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(15)
 
-        # --- UNIFIED TOOLBAR (Design Modern Card) ---
+        self._setup_toolbar(layout)
+        self._setup_tabs(layout)
+
+    def _setup_toolbar(self, parent_layout: QVBoxLayout) -> None:
+        """Configura la barra degli strumenti superiore."""
         self.toolbar_card = ModernCard(elevation=10)
         self.toolbar_card.setObjectName("filterBar")
 
@@ -90,9 +98,28 @@ class ContabilitaPanel(QWidget):
         toolbar_layout.setContentsMargins(15, 10, 15, 10)
         toolbar_layout.setSpacing(15)
 
-        from src.gui.styles import LABEL_MUTED, LINEEDIT_STYLE  # noqa: PLC0415
-
         # Sezione Statistiche Rapide
+        self._setup_stats_section(toolbar_layout)
+
+        # Divisore
+        v_line = QFrame()
+        v_line.setFrameShape(QFrame.Shape.VLine)
+        v_line.setFrameShadow(QFrame.Shadow.Plain)
+        v_line.setStyleSheet(f"color: {COLORS['border_light']};")
+        toolbar_layout.addWidget(v_line)
+
+        # Sezione Ricerca
+        self._setup_search_section(toolbar_layout)
+
+        toolbar_layout.addStretch()
+
+        # Info & Actions
+        self._setup_actions_section(toolbar_layout)
+
+        parent_layout.addWidget(self.toolbar_card)
+
+    def _setup_stats_section(self, layout: QHBoxLayout) -> None:
+        """Configura la sezione statistiche della toolbar."""
         stats_h = QHBoxLayout()
         stats_h.setSpacing(20)
 
@@ -120,16 +147,10 @@ class ContabilitaPanel(QWidget):
         hours_v.addWidget(self.selection_sum_label)
         stats_h.addLayout(hours_v)
 
-        toolbar_layout.addLayout(stats_h)
+        layout.addLayout(stats_h)
 
-        # Divisore
-        v_line = QFrame()
-        v_line.setFrameShape(QFrame.Shape.VLine)
-        v_line.setFrameShadow(QFrame.Shadow.Plain)
-        v_line.setStyleSheet(f"color: {COLORS['border_light']};")
-        toolbar_layout.addWidget(v_line)
-
-        # Sezione Ricerca
+    def _setup_search_section(self, layout: QHBoxLayout) -> None:
+        """Configura la sezione di ricerca della toolbar."""
         search_v = QVBoxLayout()
         search_v.setSpacing(4)
         lbl_search = QLabel("CERCA NEI DATI")
@@ -142,11 +163,10 @@ class ContabilitaPanel(QWidget):
         self.search_input.textChanged.connect(self._on_search_changed)
         search_v.addWidget(lbl_search)
         search_v.addWidget(self.search_input)
-        toolbar_layout.addLayout(search_v)
+        layout.addLayout(search_v)
 
-        toolbar_layout.addStretch()
-
-        # Info & Actions
+    def _setup_actions_section(self, layout: QHBoxLayout) -> None:
+        """Configura la sezione azioni della toolbar."""
         info_v = QVBoxLayout()
         info_v.setSpacing(4)
         info_v.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -169,15 +189,13 @@ class ContabilitaPanel(QWidget):
 
         info_v.addWidget(self.status_lbl)
         info_v.addLayout(btn_h)
-        toolbar_layout.addLayout(info_v)
+        layout.addLayout(info_v)
 
-        layout.addWidget(self.toolbar_card)
-
-        # --- TABS ---
+    def _setup_tabs(self, parent_layout: QVBoxLayout) -> None:
+        """Inizializza i tab principali dell'interfaccia."""
         self.main_tabs = AnimatedTabWidget()
         self.main_tabs.currentChanged.connect(self._on_main_tab_changed)
 
-        # --- TABS ---
         self.year_tabs_widget = AnimatedTabWidget()
         self.year_tabs_widget.setTabPosition(QTabWidget.TabPosition.North)
         self.year_tabs_widget.currentChanged.connect(self._on_tab_changed)
@@ -210,8 +228,6 @@ class ContabilitaPanel(QWidget):
             "Certificati Campione",
         )
 
-        from src.gui.panels.contabilita_kpi import ContabilitaKPIPanel  # noqa: PLC0415
-
         self.kpi_panel = ContabilitaKPIPanel()
         self.main_tabs.addTab(
             self.kpi_panel,
@@ -219,26 +235,15 @@ class ContabilitaPanel(QWidget):
             "Analisi KPI",
         )
 
-        layout.addWidget(self.main_tabs)
+        parent_layout.addWidget(self.main_tabs)
 
     def _on_search_changed(self, text: str) -> None:
         """Inoltra la stringa di ricerca al widget o al tab attualmente attivo."""
         current_widget = self.main_tabs.currentWidget()
         if isinstance(current_widget, (QTabWidget, AnimatedTabWidget)):
             current_widget = current_widget.currentWidget()
-        if current_widget and hasattr(current_widget, "filter_data"):
+        if current_widget and hasattr(current_widget, "filter_data") and callable(current_widget.filter_data):
             current_widget.filter_data(text)
-
-    def _get_subtab_style(self) -> str:
-        """Restituisce il QSS per i tab secondari posizionati in basso."""
-        return f"""
-            QTabWidget::pane {{ border: none; border-top: 1px solid {COLORS["border_light"]}; }}
-            QTabBar::tab {{
-                background: transparent; color: {COLORS["text_muted"]}; padding: 6px 16px; margin-bottom: -1px;
-                border-bottom: 2px solid transparent; font-size: 13px; font-weight: 600;
-            }}
-            QTabBar::tab:selected {{ color: {COLORS["teal_accent"]}; border-bottom: 2px solid {COLORS["teal_accent"]}; background-color: {COLORS["bg_light"]}; }}
-        """
 
     def _on_main_tab_changed(self, index: int) -> None:
         """Nasconde o mostra gli strumenti di ricerca in base al tab selezionato."""
@@ -269,13 +274,13 @@ class ContabilitaPanel(QWidget):
         self._sync_tab_widget(self.giornaliere_tabs_widget, years, GiornaliereYearTab)
         self._connect_selection_signal()
 
-        if hasattr(self.kpi_panel, "refresh_years"):
+        if hasattr(self.kpi_panel, "refresh_years") and callable(self.kpi_panel.refresh_years):
             self.kpi_panel.refresh_years()
 
-        if hasattr(self.attivita_widget, "refresh_data"):
+        if hasattr(self.attivita_widget, "refresh_data") and callable(self.attivita_widget.refresh_data):
             self.attivita_widget.refresh_data()
 
-        if hasattr(self.certificati_widget, "refresh_data"):
+        if hasattr(self.certificati_widget, "refresh_data") and callable(self.certificati_widget.refresh_data):
             self.certificati_widget.refresh_data()
 
         # Riapplica il filtro di ricerca se presente
@@ -284,7 +289,7 @@ class ContabilitaPanel(QWidget):
             self._on_search_changed(search_text)
 
     def _sync_tab_widget(
-        self, tab_widget: AnimatedTabWidget, target_years: list[int], tab_class: type
+        self, tab_widget: AnimatedTabWidget, target_years: list[int], tab_class: type[QWidget]
     ) -> None:
         """Aggiorna i tab di un AnimatedTabWidget senza distruggere i widget esistenti per gli stessi anni."""
         existing_years = {}
@@ -301,7 +306,7 @@ class ContabilitaPanel(QWidget):
         for year in target_years:
             if year in existing_years:
                 widget = tab_widget.widget(existing_years[year])
-                if widget and hasattr(widget, "refresh_data"):
+                if widget and hasattr(widget, "refresh_data") and callable(widget.refresh_data):
                     widget.refresh_data()
             else:
                 tab_widget.addTab(tab_class(year), str(year))
@@ -418,10 +423,12 @@ class ContabilitaPanel(QWidget):
             timestamp = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
             added_str = f"<font color='{COLORS['success_dark']}'><b>+{added}</b></font>"
             removed_str = f"<font color='{COLORS['error_red']}'><b>-{removed}</b></font>"
-            if duration < 60:  # noqa: PLR2004
+
+            if duration < self.SECONDS_IN_MINUTE:
                 time_str = f"{duration:.1f}s"
             else:
-                time_str = f"{int(duration // 60)}m {int(duration % 60)}s"
+                time_str = f"{int(duration // self.SECONDS_IN_MINUTE)}m {int(duration % self.SECONDS_IN_MINUTE)}s"
+
             final_status = f"{timestamp} {added_str} {removed_str} (Tempo: {time_str})"
             self._last_status_html = final_status
             self.status_lbl.setText(final_status)

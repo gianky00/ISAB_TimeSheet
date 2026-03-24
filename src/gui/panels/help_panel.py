@@ -38,13 +38,17 @@ class HelpPanel(QWidget):
         # Selezione iniziale con leggero delay per caricamento layout
         QTimer.singleShot(100, lambda: self.index_list.setCurrentRow(0))
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Costruisce un layout 'Documentation Portal' con Sidebar Glass e Content Card."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # --- HEADER HERO (Professional Gradient) ---
+        self._setup_header(layout)
+        self._setup_splitter(layout)
+
+    def _setup_header(self, parent_layout: QVBoxLayout) -> None:
+        """Inizializza l'header hero con gradiente e titolo."""
         header = QFrame()
         header.setFixedHeight(120)
         header.setStyleSheet(f"""
@@ -92,13 +96,22 @@ class HelpPanel(QWidget):
         badge_layout.addWidget(icon_lbl)
         header_layout.addWidget(icon_badge)
 
-        layout.addWidget(header)
+        parent_layout.addWidget(header)
 
-        # --- AREA CONTENUTI (Splitter) ---
+    def _setup_splitter(self, parent_layout: QVBoxLayout) -> None:
+        """Inizializza l'area contenuti divisa tra sidebar e browser."""
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
         self.splitter.setStyleSheet("QSplitter::handle { background-color: transparent; width: 0px; }")
 
-        # SIDEBAR (Navigation)  # noqa: ERA001
+        sidebar = self._create_sidebar()
+        content = self._create_content_browser()
+
+        self.splitter.addWidget(sidebar)
+        self.splitter.addWidget(content)
+        parent_layout.addWidget(self.splitter)
+
+    def _create_sidebar(self) -> QWidget:
+        """Crea il widget sidebar per la navigazione interna."""
         sidebar = QWidget()
         sidebar.setFixedWidth(300)
         sidebar.setStyleSheet(
@@ -108,7 +121,7 @@ class HelpPanel(QWidget):
         sidebar_layout.setContentsMargins(20, 30, 20, 20)
         sidebar_layout.setSpacing(20)
 
-        # Search Bar High-End
+        # Search Bar
         search_container = QFrame()
         search_container.setStyleSheet(
             f"background: {COLORS['bg_white']}; border: 1px solid {COLORS['border_medium']}; border-radius: 10px;"
@@ -146,7 +159,6 @@ class HelpPanel(QWidget):
         self.index_list.currentRowChanged.connect(self._on_index_changed)
         sidebar_layout.addWidget(self.index_list)
 
-        # Footer Sidebar (Version & Status)
         sb_footer = QLabel("SyncroJob Hub • Built for Excellence")
         sb_footer.setStyleSheet(
             f"color: {COLORS['text_muted']}; font-size: 11px; font-weight: 700; text-transform: uppercase;"
@@ -154,7 +166,10 @@ class HelpPanel(QWidget):
         sb_footer.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sidebar_layout.addWidget(sb_footer)
 
-        # CONTENT BROWSER
+        return sidebar
+
+    def _create_content_browser(self) -> QWidget:
+        """Crea il visualizzatore di contenuti Markdown."""
         content_container = QWidget()
         content_container.setStyleSheet(f"background-color: {COLORS['bg_white']};")
         content_layout = QVBoxLayout(content_container)
@@ -171,10 +186,7 @@ class HelpPanel(QWidget):
             }}
         """)
         content_layout.addWidget(self.browser)
-
-        self.splitter.addWidget(sidebar)
-        self.splitter.addWidget(content_container)
-        layout.addWidget(self.splitter)
+        return content_container
 
     def _load_documentation(self) -> None:
         """Carica contenuti professionali e dettagliati."""

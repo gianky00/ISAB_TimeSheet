@@ -28,52 +28,54 @@ class NotificationItem(QFrame):
         self.manager = NotificationManager.instance()
         self._setup_ui()
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
+        """Configura il layout e gli stili dell'item."""
         self.setFrameShape(QFrame.Shape.StyledPanel)
+        self._apply_base_style()
 
-        # Determine colors based on level
+        layout = QVBoxLayout(self)
+        self._setup_header(layout)
+        self._setup_body(layout)
+
+    def _apply_base_style(self) -> None:
+        """Determina e applica lo stile base (colori, bordi)."""
         level = self.notification.get("level", "info").lower()
         bg_color = COLORS["bg_white"]
         border_color = COLORS["border_light"]
-        icon_path = Icons.HELP
 
         if level == "success":
             border_color = COLORS["success_dark"]
-            icon_path = Icons.CHECK_CIRCLE
         elif level == "warning":
             border_color = COLORS["warning_yellow"]
-            icon_path = Icons.ALERT
         elif level == "error":
             border_color = COLORS["error_red"]
-            icon_path = Icons.X_CIRCLE
 
         if not self.notification.get("read", False):
             bg_color = COLORS["bg_light"]
-            # Thicker border for unread
-            self.setStyleSheet(
-                f"""
-                NotificationItem {{
-                    background-color: {bg_color};
-                    border: 1px solid {border_color};
-                    border-left: 5px solid {border_color};
-                    border-radius: 6px;
-                }}
-            """
-            )
+            left_border = f"5px solid {border_color}"
         else:
-            self.setStyleSheet(
-                f"""
-                NotificationItem {{
-                    background-color: {bg_color};
-                    border: 1px solid {border_color};
-                    border-radius: 6px;
-                }}
-            """
-            )
+            left_border = f"1px solid {border_color}"
 
-        layout = QVBoxLayout(self)
+        self.setStyleSheet(
+            f"""
+            NotificationItem {{
+                background-color: {bg_color};
+                border: 1px solid {border_color};
+                border-left: {left_border};
+                border-radius: 6px;
+            }}
+        """
+        )
 
+    def _setup_header(self, layout: QVBoxLayout) -> None:
+        """Inizializza l'header con icona, titolo, timestamp e pulsante elimina."""
         header_layout = QHBoxLayout()
+        level = self.notification.get("level", "info").lower()
+        icon_path = {
+            "success": Icons.CHECK_CIRCLE,
+            "warning": Icons.ALERT,
+            "error": Icons.X_CIRCLE,
+        }.get(level, Icons.HELP)
 
         # Icon
         icon_lbl = QLabel()
@@ -124,7 +126,8 @@ class NotificationItem(QFrame):
 
         layout.addLayout(header_layout)
 
-        # Message
+    def _setup_body(self, layout: QVBoxLayout) -> None:
+        """Configura il corpo del messaggio."""
         msg_lbl = QLabel(self.notification.get("message", ""))
         msg_lbl.setWordWrap(True)
         msg_lbl.setStyleSheet(

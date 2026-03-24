@@ -5,6 +5,7 @@ Modularizzato per una migliore manutenibilità.
 """
 
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -21,9 +22,9 @@ from PyQt6.QtWidgets import (
 from src.core import config_manager
 from src.core.constants import Icons
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
-from src.gui.panels.base import BaseBotPanel
+from src.gui.panels.base import BaseBotPanel, BotWorker
 from src.gui.styles import COLORS, COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE, STATUS_COLORS
-from src.gui.widgets import EditableDataTable
+from src.gui.widgets import EditableDataTable, ModernButton
 from src.gui.widgets.core_widgets import (
     FilterComboBox,
     IconButton,
@@ -57,7 +58,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             bot_description="Scarica e stampa i Permessi di Lavoro da SafeWork.",
             parent=parent,
         )
-        self._setup_content()
+        self._setup_content_area()
         QTimer.singleShot(10, self._safe_load_data)
 
     def get_bot_class(self) -> Any:  # noqa: ANN401
@@ -75,22 +76,37 @@ class ScaricoPDLPanel(BaseBotPanel):
         """Carica i dati salvati dall'ultima sessione gestendo eventuali eccezioni."""
         try:
             self._load_saved_data()
-        except Exception as e:
-            logger.error(f"Error loading data: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Error loading saved data for ScaricoPDLPanel")
 
-    def _setup_content(self) -> None:  # noqa: PLR0915
+    def _setup_content_area(self) -> None:
         """Inizializza il contenuto specifico del pannello: filtri, opzioni stampa e tabella PDL."""
-        # 1. Parametri
+        self._setup_params_bar()
+        self._setup_table_section()
+
+    def _setup_params_bar(self) -> None:
+        """Configura la barra dei parametri superiore."""
         self.params_container = QFrame()
         self.params_container.setObjectName("filterBar")
-        self.params_container.setStyleSheet(
-            f"QFrame#filterBar {{ background: {COLORS['bg_white']}; border: 1px solid {COLORS['border_light']}; border-radius: 12px; }}"
-        )
+        self.params_container.setStyleSheet(f"""
+            QFrame#filterBar {{
+                background: {COLORS['bg_white']};
+                border: 1px solid {COLORS['border_light']};
+                border-radius: 12px;
+            }}
+        """)
         params_lay = QHBoxLayout(self.params_container)
         params_lay.setContentsMargins(15, 10, 15, 10)
         params_lay.setSpacing(20)
 
-        # Stampa
+        self._setup_print_options(params_lay)
+        self._setup_dest_options(params_lay)
+
+        params_lay.addStretch()
+        self.content_layout.addWidget(self.params_container)
+
+    def _setup_print_options(self, layout: QHBoxLayout) -> None:
+        """Configura i controlli di stampa."""
         v_print = QVBoxLayout()
         v_print.setSpacing(4)
         lbl_p = QLabel("OPZIONI STAMPA")
@@ -102,12 +118,13 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.combo_stampanti = FilterComboBox()
         self.combo_stampanti.addItems(get_installed_printers())
         self.combo_stampanti.setStyleSheet(COMBOBOX_STYLE)
-        for w in (self.check_stampa, self.combo_stampanti):
-            h_p.addWidget(w)
+        h_p.addWidget(self.check_stampa)
+        h_p.addWidget(self.combo_stampanti)
         v_print.addLayout(h_p)
-        params_lay.addLayout(v_print)
+        layout.addLayout(v_print)
 
-        # Destinazione
+    def _setup_dest_options(self, layout: QHBoxLayout) -> None:
+        """Configura i controlli per la cartella di destinazione."""
         v_dest = QVBoxLayout()
         v_dest.setSpacing(4)
         lbl_d = QLabel("CARTELLA DESTINAZIONE")
@@ -118,35 +135,18 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.edit_dest = StandardInput()
         self.edit_dest.setPlaceholderText("Seleziona cartella...")
         self.edit_dest.setStyleSheet(LINEEDIT_STYLE)
+
         self.btn_browse = IconButton()
         self.btn_browse.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
         self.btn_browse.setIconSize(QSize(20, 20))
         self.btn_browse.setFixedSize(38, 38)
         self.btn_browse.setToolTip("Sfoglia...")
         self.btn_browse.clicked.connect(self._on_browse_clicked)
-        self.btn_browse.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_medium"]};
-                border-radius: 6px;
-                padding: 2px;
-            }}
-            QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
-        """)
-
-        from src.gui.widgets.modern_button import ModernButton  # noqa: PLC0415
+        self.btn_browse.setStyleSheet(self._get_icon_btn_style())
 
         self.btn_open = ModernButton("APRI", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL)
         self.btn_open.setFixedSize(60, 38)
-        self.btn_open.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {COLORS["bg_white"]};
-                color: {COLORS["text_dark"]};
-                border: 1px solid {COLORS["border_medium"]};
-                font-weight: bold;
-            }}
-            QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
-        """)
+        self.btn_open.setStyleSheet(self._get_ghost_btn_style())
         self.btn_open.setToolTip("Apri cartella nel file system")
         self.btn_open.clicked.connect(self._on_open_clicked)
 
@@ -154,14 +154,32 @@ class ScaricoPDLPanel(BaseBotPanel):
         h_d.addWidget(self.btn_browse)
         h_d.addWidget(self.btn_open)
         v_dest.addLayout(h_d)
-        params_lay.addLayout(v_dest)
+        layout.addLayout(v_dest)
 
-        params_lay.addStretch()
+    def _get_icon_btn_style(self) -> str:
+        return f"""
+            QPushButton {{
+                background-color: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_medium"]};
+                border-radius: 6px;
+                padding: 2px;
+            }}
+            QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
+        """
 
-        # Inserisci nel layout del contenuto anziché nel layout principale
-        self.content_layout.addWidget(self.params_container)
+    def _get_ghost_btn_style(self) -> str:
+        return f"""
+            QPushButton {{
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
+                border: 1px solid {COLORS["border_medium"]};
+                font-weight: bold;
+            }}
+            QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
+        """
 
-        # 2. Tabella e Stati
+    def _setup_table_section(self) -> None:
+        """Configura la sezione tabella e indicatori di stato."""
         content_lay = QHBoxLayout()
         content_lay.setSpacing(10)
 
@@ -173,7 +191,6 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.data_table.data_changed.connect(self._update_status_list)
 
         v_status = QVBoxLayout()
-        # 56px offset = 10px (EditableDataTable margin) + 5px (container inner margin) + ~41px (table header)
         v_status.setContentsMargins(0, 56, 0, 0)
         self.status_list = StatusListWidget()
         self.status_list.setFixedWidth(40)
@@ -182,16 +199,10 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         content_lay.addWidget(self.data_table)
         content_lay.addLayout(v_status)
-
         self.content_layout.addLayout(content_lay)
 
     def _update_status_list(self, force: bool = False) -> None:
-        """
-        Sincronizza il contatore visivo dello stato con il numero di righe della tabella.
-
-        Args:
-            force: Se True, reinizializza sempre la lista (usato all'avvio bot).
-        """
+        """Sincronizza il contatore visivo dello stato con il numero di righe della tabella."""
         count = self.data_table.table.rowCount()
         if force or self.status_list.count() != count:
             self.status_list.initialize_rows(count, self.data_table.table.rowHeight(0) or 30)
@@ -204,9 +215,6 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _on_open_clicked(self) -> None:
         """Apre la cartella di destinazione nell'esplora risorse di sistema."""
-        import os  # noqa: PLC0415
-        from pathlib import Path  # noqa: PLC0415
-
         path_str = self.edit_dest.text()
         if not path_str:
             path_str = str(Path.home() / "Downloads")
@@ -220,8 +228,6 @@ class ScaricoPDLPanel(BaseBotPanel):
                 return
 
         try:
-            import os  # noqa: PLC0415
-
             os.startfile(str(path))  # noqa: S606
         except Exception:
             ToastManager.instance().show(f"Impossibile aprire la cartella: {path}", "error")
@@ -241,12 +247,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self._update_status_list()
 
     def _get_bot_data(self) -> list[dict[str, Any]] | None:
-        """
-        Prepara e salva i dati da passare al bot per l'esecuzione.
-
-        Returns:
-            list[dict[str, Any]] | None: Lista di configurazioni riga o None se tabella vuota.
-        """
+        """Prepara e salva i dati da passare al bot per l'esecuzione."""
         items = self.data_table.get_data()
         if not items:
             ConfirmationDialog.show_warning(
@@ -288,10 +289,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         )
 
     def validate_ready(self) -> tuple[bool, str]:
-        """
-        Verifica se il bot è pronto per l'avvio.
-        Richiede almeno un numero PDL in tabella.
-        """
+        """Verifica se il bot è pronto per l'avvio."""
         data = self.data_table.get_data()
         if not data:
             return False, "Nessun numero PDL inserito nella tabella."
@@ -316,14 +314,9 @@ class ScaricoPDLPanel(BaseBotPanel):
             self.stop_btn.setEnabled(False)
             return
 
-        from src.core.config_manager import load_config  # noqa: PLC0415
-
-        config = load_config()
-
+        config = config_manager.load_config()
         main_win = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
-
-        from src.gui.panels.base import BotWorker  # noqa: PLC0415
 
         # Configura i parametri per il BotWorker
         bot_params = {
@@ -359,13 +352,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.bot_started.emit()
 
     def _on_worker_finished(self, success: bool) -> None:
-        """
-        Gestisce il completamento del worker.
-        Se richiesto da Telegram, unisce i PDF e invia il risultato.
-
-        Args:
-            success: Esito dell'operazione.
-        """
+        """Gestisce il completamento del worker."""
         # Recupera i file scaricati prima che il worker venga distrutto dal super()
         downloaded_files: list[str] = []
         if self.worker and hasattr(self.worker.bot, "downloaded_files"):
@@ -391,9 +378,8 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.log_widget.append("📦 Elaborazione report per Telegram...")
 
         try:
-            # Semplice invio del primo file o logica di merge (mockata per ora se non disponibile)
-            # In produzione qui andrebbe il PDF Merger
-            report_path = files[0]  # Fallback
+            # Semplice invio del primo file o logica di merge
+            report_path = files[0]
             if len(files) > 1:
                 self.log_widget.append(f"📎 Inviando {len(files)} file a Telegram...")
 
@@ -405,14 +391,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             self.log_widget.append(f"⚠️ Errore invio Telegram: {e}", "ERROR")
 
     def on_step_completed(self, step_idx: int, success: bool, message: str = "") -> None:
-        """
-        Aggiorna lo stato visivo di una specifica riga PDL al termine del suo processing.
-
-        Args:
-            step_idx: Indice della riga processata.
-            success: Esito del processing della riga.
-            message: Messaggio di errore opzionale.
-        """
+        """Aggiorna lo stato visivo di una specifica riga PDL."""
         self.status_list.update_status(step_idx, success)
 
         # Trova dinamicamente l'indice della colonna 'esito'
@@ -427,20 +406,17 @@ class ScaricoPDLPanel(BaseBotPanel):
             self.data_table.update_cell(step_idx, col_idx, esito_text, emit_signal=False)
 
         if not success:
-            logger.error(f"Errore riga {step_idx}: {message}")
+            logger.error("Errore riga %s: %s", step_idx, message)
 
     def set_pdl_list(self, pdl_numbers: list[str]) -> None:
-        """
-        Popola la tabella con i numeri PDL forniti e avvia automaticamente lo scarico.
-        Utilizzato per l'integrazione con il Database PDL.
-        """
+        """Popola la tabella con i numeri PDL forniti e avvia automaticamente lo scarico."""
         if not pdl_numbers:
             return
 
         # 1. Pulisci tabella
         self.data_table.clear()
 
-        # 2. Prepara dati per la tabella (Formato: [{"numero_pdl": "...", "esito": ""}])
+        # 2. Prepara dati per la tabella
         rows = [{"numero_pdl": num, "esito": ""} for num in pdl_numbers]
         self.data_table.set_data(rows)
 
