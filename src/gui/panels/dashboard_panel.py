@@ -4,7 +4,10 @@ Pannello di controllo principale (Home) dell'applicazione.
 Refactored V9.7: Integrated PDL Stats Widget with Trends and Interactive Areas.
 """
 
+from __future__ import annotations
+
 from contextlib import suppress
+from typing import Any
 
 from PyQt6.QtCore import (
     Qt,
@@ -35,7 +38,7 @@ class DashboardPanel(QWidget):
     Sostituisce le card statiche con indicatori dinamici di valore (ROI) e contesto (Meteo/PDL).
     """
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -74,6 +77,15 @@ class DashboardPanel(QWidget):
 
         self.main_layout.addWidget(self.main_container)
 
+        # Widget attributes
+        self.multi_window_card: MultiWindowStatusWidget
+        self.weather_widget: WeatherWidget
+        self.roi_widget: BotSavingsWidget
+        self.card_pdl: PDLStatsWidget
+        self.quick_actions: QuickActions
+        self.autopilot_widget: AutopilotWidget
+        self.activity_feed: ActivityFeed
+
         self._setup_ui()
 
         # Refresh Timer (Live Dashboard)
@@ -81,29 +93,29 @@ class DashboardPanel(QWidget):
         self.timer.timeout.connect(self.refresh_live_data)
         self.timer.start(30000)  # 30 seconds
 
-    def refresh_data(self):  # noqa: ANN201
+    def refresh_data(self) -> None:
         """Esegue un aggiornamento forzato di tutti i widget della dashboard."""
         self.refresh_live_data()
 
-    def refresh_live_data(self):  # noqa: ANN201
+    def refresh_live_data(self) -> None:
         """Aggiorna i dati dinamici dei widget senza ricostruire la UI."""
         with suppress(Exception):
-            if hasattr(self, "activity_feed"):
+            if hasattr(self, "activity_feed") and self.activity_feed:
                 self.activity_feed.refresh_feed()
 
-            if hasattr(self, "quick_actions"):
+            if hasattr(self, "quick_actions") and self.quick_actions:
                 self.quick_actions.refresh_actions()
 
-            if hasattr(self, "autopilot_widget"):
+            if hasattr(self, "autopilot_widget") and self.autopilot_widget:
                 self.autopilot_widget.refresh_events()
 
-            if hasattr(self, "roi_widget"):
+            if hasattr(self, "roi_widget") and self.roi_widget:
                 self.roi_widget.refresh_stats()
 
-            if hasattr(self, "card_pdl") and hasattr(self.card_pdl, "refresh_stats"):
+            if hasattr(self, "card_pdl") and self.card_pdl:
                 self.card_pdl.refresh_stats()
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
         """Inizializza e posiziona i widget della dashboard."""
         # -1. Multi Window Status Card
         self.multi_window_card = MultiWindowStatusWidget()
@@ -154,7 +166,7 @@ class DashboardPanel(QWidget):
 
     def _handle_pdl_area_click(self, area_name: str) -> None:
         """Gestisce il click su un'area specifica dei PDL, navigando alla vista filtrata."""
-        main_window = self.window()
+        main_window: Any = self.window()
         if main_window is None or not hasattr(main_window, "navigation_controller"):
             return
 
@@ -173,7 +185,7 @@ class DashboardPanel(QWidget):
 
     def _handle_bot_sync_requested(self, bot_id: str) -> None:
         """Avvia manualmente un bot dell'autopilot dal controller centrale."""
-        mw = self.window()
+        mw: Any = self.window()
         if mw is None or not hasattr(mw, "service_controller"):
             return
 
@@ -204,8 +216,9 @@ class DashboardPanel(QWidget):
 
             mw.service_controller._schedule_bot_with_parallelism(bot_id, panel, site, log_msg)
 
-    def _handle_quick_action(self, key):  # noqa: ANN001, ANN202
-        main_window = self.window()
+    def _handle_quick_action(self, key: str) -> None:
+        """Gestisce il click su un'azione rapida della dashboard."""
+        main_window: Any = self.window()
         if main_window is None or not hasattr(main_window, "navigation_controller"):
             return
 

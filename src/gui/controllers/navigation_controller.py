@@ -5,6 +5,8 @@ Implementa una strategia di 'Lazy Loading' (caricamento differito) per ridurre d
 dell'applicazione, inizializzando i moduli funzionali solo quando vengono effettivamente richiesti dall'utente.
 """
 
+from __future__ import annotations
+
 import functools
 import logging
 from typing import TYPE_CHECKING, Any
@@ -16,6 +18,11 @@ from src.gui.components.popout.popout_manager import DetachedPanelWindow, Popout
 from src.gui.main_window.page_index import PageIndex
 
 if TYPE_CHECKING:
+    from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
+    from src.core.contabilita.scarico_ore.controller import ScaricoOreController
+    from src.core.dipendenti.anagrafica_controller import AnagraficaController
+    from src.core.oda.oda_controller import ODAController
+    from src.core.pdl.pdl_controller import PDLController
     from src.gui.main_window.main import MainWindow
 
 logger = logging.getLogger(__name__)
@@ -31,7 +38,7 @@ class NavigationController(QObject):
     panel_detached = pyqtSignal(int, str)  # index, title
     panel_reattached = pyqtSignal(int)  # index
 
-    def __init__(self, main_window: "MainWindow") -> None:
+    def __init__(self, main_window: MainWindow) -> None:
         """
         Inizializza il controller di navigazione e le istanze dei controller CORE.
 
@@ -42,6 +49,13 @@ class NavigationController(QObject):
         self.mw = main_window
         # Traccia i pannelli attualmente staccati (indice -> struct con panel nativo, placeholder, e finestra top-level)
         self._detached_panels: dict[int, dict[str, Any]] = {}
+
+        # Controller attributes (inizializzati in _init_core_controllers)
+        self.oda_controller: ODAController
+        self.anagrafica_controller: AnagraficaController
+        self.pdl_controller: PDLController
+        self.scarico_ore_controller: ScaricoOreController
+        self.consuntivo_controller: ConsuntivoController
 
         # 1. Inizializza i controller CORE
         self._init_core_controllers()
@@ -76,13 +90,14 @@ class NavigationController(QObject):
         """Restituisce il widget stack della MainWindow."""
         return self.mw.stacked_widget
 
-    def navigate_to(self, index: int) -> None:
+    def navigate_to(self, index: int, sub_index: int | None = None) -> None:
         """
         Cambia la pagina attiva nel container principale.
         Inizializza il pannello se non ancora creato.
 
         Args:
             index: Indice numerico della pagina (vedi PageIndex).
+            sub_index: Indice opzionale per i pannelli che supportano tab interni.
         """
         if index < 0 or index >= self.stack.count():
             logger.warning("Tentativo di navigazione verso indice non valido: %s", index)
@@ -103,10 +118,47 @@ class NavigationController(QObject):
         if hasattr(self.mw.sidebar, "set_active_button"):
             self.mw.sidebar.set_active_button(index)
 
-        # 5. Notifica il pannello del focus (opzionale)
+        # 5. Gestione sub-index (es. per pannelli tabulati)
         panel = self.stack.widget(index)
-        if hasattr(panel, "on_focus_received") and callable(panel.on_focus_received):
+        if sub_index is not None and hasattr(panel, "set_current_tab"):
+            panel.set_current_tab(sub_index)
+
+        # 6. Notifica il pannello del focus (opzionale)
+        if panel and hasattr(panel, "on_focus_received") and callable(panel.on_focus_received):
             panel.on_focus_received()
+
+    def navigate_to_panel(self, panel_key: str) -> None:
+        """Naviga verso un pannello specifico tramite chiave logica (bridge per AutomazioniWidget)."""
+        mapping = {
+            "scarico_ts": PageIndex.AUTOMAZIONI,
+            "carico_ts": PageIndex.AUTOMAZIONI,
+            "prenota_bp": PageIndex.AUTOMAZIONI,
+            "dettagli_oda": PageIndex.AUTOMAZIONI,
+            "scarico_pdl": PageIndex.AUTOMAZIONI,
+            "ricerca_pdl": PageIndex.AUTOMAZIONI,
+            "timbrature": PageIndex.AUTOMAZIONI,
+        }
+
+        # Sub-mapping per AutomazioniWidget (tab index)
+        sub_mapping = {
+            "scarico_ts": 0,
+            "dettagli_oda": 1,
+            "scarico_pdl": 2,
+            "prenota_bp": 3,
+            "carico_ts": 4,
+            "ricerca_pdl": 5,
+            "timbrature": 6,
+        }
+
+        if panel_key in mapping:
+            self.navigate_to(mapping[panel_key], sub_index=sub_mapping.get(panel_key))
+
+    def navigate_to_pdl(self, site: str | None = None, area: str | None = None) -> None:
+        """Naviga alla vista PDL applicando filtri specifici."""
+        self.navigate_to(PageIndex.DATAEASE)
+        panel = self.get_panel(PageIndex.DATAEASE)
+        if panel and hasattr(panel, "apply_external_filters"):
+            panel.apply_external_filters(site=site, area=area)
 
     def get_panel(self, index: int) -> QWidget | None:
         """
@@ -130,7 +182,7 @@ class NavigationController(QObject):
             return
 
         # Recupera il titolo dal pannello
-        title = getattr(native_panel, "TITLE", f"Modulo {index}")
+        title = str(getattr(native_panel, "TITLE", f"Modulo {index}"))
 
         # Rimuovi il pannello dallo stack e inserisci il placeholder
         self.stack.removeWidget(native_panel)
@@ -140,8 +192,8 @@ class NavigationController(QObject):
         self.stack.insertWidget(index, placeholder)
 
         # Crea e mostra la finestra esterna
-        detached_window = DetachedPanelWindow(native_panel, title)
-        detached_window.reattach_requested.connect(functools.partial(self.reattach_panel, index))
+        detached_window = DetachedPanelWindow(index, native_panel, title)
+        detached_window.panel_closed_signal.connect(self.reattach_panel)
         detached_window.show()
 
         self._detached_panels[index] = {

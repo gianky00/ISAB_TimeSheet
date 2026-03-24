@@ -4,16 +4,20 @@ Thread worker per la generazione asincrona dei report.
 Gestisce l'integrazione con Outlook nel thread dedicato.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from datetime import datetime
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from src.core.dipendenti.report_service import ReportService
 from src.core.report_history import ReportHistory
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +27,11 @@ class ReportWorker(QThread):
 
     finished_signal = pyqtSignal(bool, str, dict)  # success, message, data
 
-    def __init__(self):  # noqa: ANN204
+    def __init__(self) -> None:
+        """Inizializza il worker."""
         super().__init__()
 
-    def run(self):  # noqa: ANN201
+    def run(self) -> None:
         """Esegue il ciclo completo di generazione report."""
         try:
             # 1. Raccolta dati (CORE)
@@ -54,7 +59,17 @@ class ReportWorker(QThread):
     def _handle_outlook(
         self, body_html: str, excel_path: Path | None, report_data: dict[str, Any]
     ) -> tuple[bool, str]:
-        """Gestisce l'automazione Outlook."""
+        """
+        Gestisce l'automazione Outlook.
+
+        Args:
+            body_html: Corpo dell'email in formato HTML.
+            excel_path: Percorso del file Excel da allegare.
+            report_data: Dati del report.
+
+        Returns:
+            Tuple containing success boolean and status message.
+        """
         subject = f"Report Monitoraggio Accessi in ISAB - {datetime.now().strftime('%d/%m/%Y')}"
 
         if os.name == "nt":

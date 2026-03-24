@@ -6,6 +6,8 @@ sul portale fornitori ISAB. Consente di inserire una lista di BP, configurare
 il fornitore e l'intervallo temporale, e avviare l'automazione.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
@@ -32,7 +34,7 @@ class PrenotaBPPanel(BaseBotPanel):
     Eredita da BaseBotPanel per la gestione standard di log e stati.
     """
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il pannello e carica i dati salvati.
 
@@ -45,11 +47,17 @@ class PrenotaBPPanel(BaseBotPanel):
             bot_description="Gestisce la prenotazione dei Badge Provvisori sul portale.",
             parent=parent,
         )
+
+        self.params_widget: BotParametersWidget
+        self.clear_btn: ModernButton
+        self.data_table: EditableDataTable
+        self.status_list: StatusListWidget
+
         self._setup_content()
         # Caricamento dati differito per non rallentare l'avvio GUI
         QTimer.singleShot(10, self._safe_load_data)
 
-    def get_bot_class(self) -> type["BaseBot"]:
+    def get_bot_class(self) -> type[BaseBot]:
         """
         Restituisce la classe del bot associata al pannello.
 
@@ -60,14 +68,14 @@ class PrenotaBPPanel(BaseBotPanel):
 
         return PrenotaBPBot
 
-    def _safe_load_data(self):  # noqa: ANN202
+    def _safe_load_data(self) -> None:
         """Esegue il caricamento dei dati in modo sicuro gestendo eventuali eccezioni."""
         try:
             self._load_saved_data()
         except Exception as e:
             print(f"[ERROR] Error loading data for PrenotaBPPanel: {e}")
 
-    def _setup_content(self):  # noqa: ANN202
+    def _setup_content(self) -> None:
         """Configura il layout e i widget specifici per la prenotazione BP."""
         # Sezione Parametri
         params_container = QWidget()
@@ -101,12 +109,13 @@ class PrenotaBPPanel(BaseBotPanel):
         table_h.setSpacing(10)
 
         # Recupera le colonne dal bot e aggiunge la colonna ESITO
-        cols = list(self.get_bot_class().get_columns())
+        bot_class = self.get_bot_class()
+        cols = list(bot_class.get_columns())
         cols.append({"name": "esito", "label": "ESITO", "type": "text", "default": "", "readonly": True})
 
         self.data_table = EditableDataTable(cols)
         self.data_table.setMinimumHeight(200)
-        self.data_table.data_changed.connect(self._update_status_list)
+        self.data_table.data_changed.connect(lambda: self._update_status_list())
         self.data_table.data_changed.connect(self._save_data)
 
         v_status = QVBoxLayout()
@@ -155,13 +164,13 @@ class PrenotaBPPanel(BaseBotPanel):
             esito_text = "Completato" if success else f"Errore: {message}" if message else "Errore"
             self.data_table.update_cell(step_idx, col_idx, esito_text, emit_signal=False)
 
-    def _open_settings(self):  # noqa: ANN202
+    def _open_settings(self) -> None:
         """Richiede alla MainWindow di visualizzare la pagina delle impostazioni."""
-        main_window = self.window()
+        main_window: Any = self.window()
         if main_window is not None and hasattr(main_window, "show_settings"):
             main_window.show_settings()
 
-    def _load_saved_data(self):  # noqa: ANN202
+    def _load_saved_data(self) -> None:
         """Carica l'ultima lista BP e i parametri temporali dalla configurazione."""
         config = config_manager.load_config()
         saved_data = config.get("last_prenota_bp_data", [])
@@ -174,7 +183,7 @@ class PrenotaBPPanel(BaseBotPanel):
         self.params_widget.set_dates(date_da, date_a)
         self._update_status_list()
 
-    def _save_data(self):  # noqa: ANN202
+    def _save_data(self) -> None:
         """Salva i dati correnti della tabella e i parametri temporali in configurazione."""
         data = self.data_table.get_data()
         config_manager.set_config_value("last_prenota_bp_data", data)
@@ -183,13 +192,13 @@ class PrenotaBPPanel(BaseBotPanel):
         config_manager.set_config_value("last_prenota_date_from", date_da)
         config_manager.set_config_value("last_prenota_date_to", date_a)
 
-    def _clear_table(self):  # noqa: ANN202
+    def _clear_table(self) -> None:
         """Svuota la tabella dei BP dopo conferma dell'utente."""
         if ConfirmationDialog.confirm(self, "Conferma", "Cancellare tutti i dati dalla lista?"):
             self.data_table.clear()
             self._save_data()
 
-    def _on_start(self, params_override: dict[str, Any] | None = None):  # noqa: ANN202
+    def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
         """
         Prepara l'ambiente e avvia il worker del bot.
 
@@ -214,7 +223,7 @@ class PrenotaBPPanel(BaseBotPanel):
         config = config_manager.load_config()
 
         fornitore = self.params_widget.get_fornitore()
-        date_da, date_a = self.params_widget.get_dates()
+        date_da, _ = self.params_widget.get_dates()
 
         # Gestione Overrides
         rows = self.data_table.get_data()
@@ -223,8 +232,6 @@ class PrenotaBPPanel(BaseBotPanel):
                 fornitore = params_override["fornitore"]
             if "data_da" in params_override:
                 date_da = params_override["data_da"]
-            if "data_a" in params_override:
-                date_a = params_override["data_a"]
 
             if "single_item" in params_override:
                 item = params_override["single_item"]
@@ -252,7 +259,7 @@ class PrenotaBPPanel(BaseBotPanel):
             "data_a": date_a,
         }
 
-        main_win = self.window()
+        main_win: Any = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
         worker = BotWorker(bot, data=bot_data, telegram_service=tg_service)

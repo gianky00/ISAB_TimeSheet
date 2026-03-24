@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QGraphicsOpacityEffect, QWidget
 class SidebarAnimationManager(QObject):
     """Orchestratore delle animazioni per la Sidebar Widget."""
 
-    def __init__(self, sidebar: QWidget):  # noqa: ANN204
+    def __init__(self, sidebar: QWidget) -> None:
         super().__init__(sidebar)
         self.sidebar = sidebar
 
@@ -29,20 +29,20 @@ class SidebarAnimationManager(QObject):
         self.track_anim.setDuration(250)
         self.track_anim.setEasingCurve(QEasingCurve.Type.OutQuint)
 
-    def animate_width(self, target_width: int):  # noqa: ANN201
+    def animate_width(self, target_width: int) -> None:
         """Esegue l'animazione di espansione/collasso."""
         self.width_anim.stop()
         self.width_anim.setEndValue(target_width)
         self.width_anim.start()
 
-    def animate_content(self, effect: QGraphicsOpacityEffect, target_opacity: float):  # noqa: ANN201
+    def animate_content(self, effect: QGraphicsOpacityEffect, target_opacity: float) -> None:
         """Esegue l'animazione di dissolvenza per i contenuti della sidebar."""
         self.content_anim.stop()
         self.content_anim.setTargetObject(effect)
         self.content_anim.setEndValue(target_opacity)
         self.content_anim.start()
 
-    def move_track(self, track_widget: QWidget, target_widget: QWidget):  # noqa: ANN201
+    def move_track(self, track_widget: QWidget, target_widget: QWidget) -> None:
         """Sposta l'indicatore magnetico verso il widget target."""
         if not target_widget or not target_widget.isVisible():
             return

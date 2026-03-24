@@ -4,18 +4,31 @@ UI components for update notifications and progress.
 Moved from core/updater/gui.py to follow SRP.
 """
 
+from __future__ import annotations
+
 import contextlib
 import logging
-from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import requests
 from packaging import version as pkg_version
 from PyQt6.QtCore import Qt, pyqtSlot
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QMessageBox, QProgressBar, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QApplication,
+    QDialog,
+    QLabel,
+    QMessageBox,
+    QProgressBar,
+    QVBoxLayout,
+    QWidget,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 from src.core import version
 from src.core.updater.engine import (
@@ -30,19 +43,25 @@ from src.core.updater.engine import (
 logger = logging.getLogger(__name__)
 
 # Store active worker to prevent garbage collection
-_active_update_worker = None
-_active_update_dialog = None
+_active_update_worker: DownloadWorker | None = None
+_active_update_dialog: UpdateProgressDialog | None = None
 
 
 class UpdateProgressDialog(QDialog):
     """Progress dialog for update downloads or network transfers."""
 
-    def __init__(self, url_or_path: str, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, url_or_path: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Aggiornamento SyncroJob")
         self.setFixedSize(450, 200)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint)
+
+        self.lbl_status = QLabel("Avvio download...")
+        self.pb = QProgressBar()
+        self.lbl_details = QLabel("Preparazione...")
+        self.lbl_retry = QLabel("")
+
         self.setup_ui()
         self.worker = DownloadWorker(url_or_path)
         self.worker.progress.connect(self.update_progress)
@@ -53,32 +72,31 @@ class UpdateProgressDialog(QDialog):
         if not url_or_path.startswith("http"):
             self.lbl_status.setText("Avvio trasferimento rete...")
 
-    def setup_ui(self):  # noqa: ANN201
+    def setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(25, 25, 25, 25)
-        self.lbl_status = QLabel("Avvio download...")
         self.lbl_status.setFont(QFont("Segoe UI", 10))
         layout.addWidget(self.lbl_status)
-        self.pb = QProgressBar()
+
         self.pb.setFixedHeight(24)
         self.pb.setStyleSheet(
             "QProgressBar { border: 1px solid #CCCCCC; border-radius: 6px; text-align: center; background-color: #F0F0F0; } QProgressBar::chunk { background-color: #0D6EFD; border-radius: 5px; }"
         )
         layout.addWidget(self.pb)
-        self.lbl_details = QLabel("Preparazione...")
+
         self.lbl_details.setFont(QFont("Segoe UI", 9))
         layout.addWidget(self.lbl_details)
-        self.lbl_retry = QLabel("")
+
         self.lbl_retry.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
         self.lbl_retry.setStyleSheet("color: #DC3545;")
         layout.addWidget(self.lbl_retry)
 
-    def start(self):  # noqa: ANN201
+    def start(self) -> None:
         self.show()
         self.worker.start()
 
     @pyqtSlot(int, int, float, float)
-    def update_progress(self, downloaded, total, speed, eta):  # noqa: ANN001, ANN201
+    def update_progress(self, downloaded: int, total: int, speed: float, eta: float) -> None:
         self.lbl_retry.setText("")
         if total > 0:
             self.pb.setMaximum(total)
@@ -97,21 +115,21 @@ class UpdateProgressDialog(QDialog):
             self.lbl_status.setText("Operazione in corso...")
 
     @pyqtSlot(int)
-    def on_retrying(self, retry_count):  # noqa: ANN001, ANN201
+    def on_retrying(self, retry_count: int) -> None:
         self.lbl_retry.setText(f"⚠️ Connessione instabile. Tentativo #{retry_count}...")
 
     @pyqtSlot(str)
-    def on_finished(self, setup_path):  # noqa: ANN001, ANN201
+    def on_finished(self, setup_path: str) -> None:
         self.close()
         show_install_prompt(setup_path, cast("QWidget", self.parent()))
 
     @pyqtSlot(str)
-    def on_error(self, err_msg):  # noqa: ANN001, ANN201
+    def on_error(self, err_msg: str) -> None:
         self.close()
         QMessageBox.critical(cast("QWidget", self.parent()), "Errore", f"Trasferimento interrotto: {err_msg}")
 
 
-def show_install_prompt(setup_path: str, parent: QWidget | None = None):  # noqa: ANN201
+def show_install_prompt(setup_path: str, parent: QWidget | None = None) -> None:
     msg_box = QMessageBox(parent)
     msg_box.setWindowTitle("🔄 Aggiornamento Pronto")
     msg_box.setText(
@@ -144,7 +162,7 @@ def show_install_prompt(setup_path: str, parent: QWidget | None = None):  # noqa
 def check_for_updates(  # noqa: PLR0912
     parent: QWidget | None = None,
     silent: bool = True,
-    callback: Callable[[str, str, str, bool, bool], Any] | None = None,
+    callback: Callable[[dict[str, Any]], None] | None = None,
 ) -> None:
     update_sources = []
     with ThreadPoolExecutor(max_workers=2) as executor:
@@ -184,17 +202,16 @@ def check_for_updates(  # noqa: PLR0912
                 head_resp = requests.head(download_url, timeout=5)
                 remote_size = int(head_resp.headers.get("content-length", 0))
             except Exception as e:
-                logger.debug(f"Failed to get remote size: {e}")
+                logger.debug("Failed to get remote size: %s", e)
         else:
             with contextlib.suppress(Exception):
                 remote_size = Path(download_url).stat().st_size
 
         local_size = Path(setup_path).stat().st_size if Path(setup_path).exists() else 0
-        is_partial = 0 < local_size < remote_size
         is_complete = remote_size > 0 and local_size >= remote_size
 
         if callback:
-            callback(remote_ver_str, download_url, changelog, is_partial, is_complete)
+            callback(latest_update)
             return
 
         if is_complete:
@@ -218,7 +235,7 @@ def check_for_updates(  # noqa: PLR0912
         )
 
 
-def perform_auto_update(download_url: str, parent: QWidget | None = None):  # noqa: ANN201
+def perform_auto_update(download_url: str, parent: QWidget | None = None) -> None:
     if parent is None:
         for widget in QApplication.topLevelWidgets():
             if widget.isWindow() and not widget.parent():
@@ -229,9 +246,10 @@ def perform_auto_update(download_url: str, parent: QWidget | None = None):  # no
     _active_update_worker = DownloadWorker(download_url)
 
     if parent and hasattr(parent, "update_banner") and parent.update_banner:
-        _active_update_worker.progress.connect(parent.update_banner.update_progress)
+        parent_with_banner: Any = parent
+        _active_update_worker.progress.connect(parent_with_banner.update_banner.update_progress)
         if hasattr(parent, "_on_update_downloaded"):
-            _active_update_worker.finished_download.connect(parent._on_update_downloaded)
+            _active_update_worker.finished_download.connect(parent_with_banner._on_update_downloaded)
     else:
         global _active_update_dialog  # noqa: PLW0603
         _active_update_dialog = UpdateProgressDialog(download_url, parent)

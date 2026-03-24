@@ -57,8 +57,8 @@ class BotWorker(QThread):
         self,
         bot_id: str | BaseBot,
         bot_params: dict[str, Any] | None = None,
-        data: Any = None,  # noqa: ANN401
-        telegram_service: Any = None,  # noqa: ANN401
+        data: object | None = None,
+        telegram_service: object | None = None,
     ) -> None:
         """
         Inizializza il worker del bot.
@@ -175,6 +175,19 @@ class BaseBotPanel(QWidget):
 
         self.worker: BotWorker | None = None
         self.start_time: datetime | None = None
+
+        self.main_layout: QVBoxLayout
+        self.controls_widget: QWidget
+        self.controls_layout: QHBoxLayout
+        self.start_btn: ModernButton
+        self.stop_btn: ModernButton
+        self.header_layout: QHBoxLayout
+        self.status_card: StatusCard
+        self.content_widget: QWidget
+        self.content_layout: QVBoxLayout
+        self.activity_timeline: ActivityTimelineWidget
+        self.log_widget: TimelineWidget
+
         self._setup_ui()
         self._connect_signals()
 
@@ -201,13 +214,13 @@ class BaseBotPanel(QWidget):
             if bot_class and hasattr(bot_class, "STEPS") and bot_class.STEPS:
                 self.activity_timeline.set_steps(bot_class.STEPS)
             else:
-                self._logger.debug("Nessun set di STEPS trovato per il bot_id: %s", self.bot_id)
+                self._logger.debug("Nessun set di STEPS trovato", bot_id=self.bot_id)
         except Exception as e:
-            self._logger.warning("Impossibile inizializzare timeline ghost per %s: %s", self.bot_id, e)
+            self._logger.warning("Impossibile inizializzare timeline ghost", bot_id=self.bot_id, error=str(e))
 
-    def showEvent(self, event: Any) -> None:  # noqa: ANN401
+    def showEvent(self, event: object) -> None:
         """Forza l'inizializzazione della timeline all'apertura del pannello."""
-        super().showEvent(event)
+        super().showEvent(event)  # type: ignore[arg-type]
         QTimer.singleShot(100, self._init_ghost_timeline)
 
     def _setup_base_ui(self) -> None:
@@ -328,23 +341,26 @@ class BaseBotPanel(QWidget):
     def add_rows_simple(self, new_rows: list[Any]) -> None:
         """Aggiunge righe alla tabella dati esistente (se presente)."""
         if hasattr(self, "data_table"):
-            current_data = self.data_table.get_data()
+            data_table: Any = self.data_table
+            current_data = data_table.get_data()
             current_data.extend(new_rows)
-            self.data_table.set_data(current_data)
+            data_table.set_data(current_data)
             if hasattr(self, "_save_data"):
                 self._save_data()
 
     def clear_rows_simple(self) -> None:
         """Svuota la tabella dati."""
         if hasattr(self, "data_table"):
-            self.data_table.set_data([])
+            data_table: Any = self.data_table
+            data_table.set_data([])
             if hasattr(self, "_save_data"):
                 self._save_data()
 
     def get_rows_count(self) -> int:
         """Ritorna il numero di righe nella tabella."""
         if hasattr(self, "data_table"):
-            return len(self.data_table.get_data())
+            data_table: Any = self.data_table
+            return len(data_table.get_data())
         return 0
 
     def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
@@ -357,8 +373,10 @@ class BaseBotPanel(QWidget):
             SyncTracker.mark_start(self.sync_module_id)
 
         # Pulizia della tabella dagli esiti della sessione precedente (Asincrona per evitare blocchi UI)
-        if hasattr(self, "data_table") and hasattr(self.data_table, "clear_status_columns"):
-            QTimer.singleShot(0, self.data_table.clear_status_columns)
+        if hasattr(self, "data_table"):
+            data_table: Any = self.data_table
+            if hasattr(data_table, "clear_status_columns"):
+                QTimer.singleShot(0, data_table.clear_status_columns)
 
         # Attiva Cyber-Mood per il log
         if hasattr(self.log_widget, "set_mood"):
@@ -383,7 +401,7 @@ class BaseBotPanel(QWidget):
             )
             StatsManager().increment_usage(self.bot_id)
         except Exception as e:
-            self._logger.warning("Errore durante il logging della telemetria: %s", e)
+            self._logger.warning("Errore durante il logging della telemetria", error=str(e))
 
     def _on_stop(self) -> None:
         """Gestisce lo stop del bot."""

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
@@ -21,12 +23,20 @@ class PDLTimelineWidget(QWidget):
     Progettato per essere inserito in una riga espansa della tabella Programmazione.
     """
 
-    def __init__(self, interventions: list[dict[str, Any]], parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, interventions: list[dict[str, Any]], parent: QWidget | None = None) -> None:
+        """
+        Inizializza il widget della timeline.
+
+        Args:
+            interventions: Lista di dizionari contenenti i dati degli interventi.
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self.interventions = interventions
         self._setup_ui()
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
+        """Configura l'interfaccia utente."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(20, 10, 20, 10)
         main_layout.setSpacing(15)
@@ -60,7 +70,16 @@ class PDLTimelineWidget(QWidget):
         main_layout.addStretch()
 
     def _create_event_card(self, data: dict[str, Any], is_last: bool) -> QWidget:  # noqa: PLR0915
-        """Crea una singola card per un evento nella timeline."""
+        """
+        Crea una singola card per un evento nella timeline.
+
+        Args:
+            data: Dati dell'evento.
+            is_last: Se è l'ultimo evento della lista.
+
+        Returns:
+            Il widget della card creato.
+        """
         container = QWidget()
         layout = QHBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)

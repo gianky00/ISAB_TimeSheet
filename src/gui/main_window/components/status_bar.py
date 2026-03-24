@@ -4,7 +4,10 @@ Gestore della barra di stato principale che coordina telemetria, info licenza e 
 Gestisce le transizioni visive tra la fase di avvio e quella operativa dell'applicazione.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QSize, Qt, QTimer
 from PyQt6.QtWidgets import QGraphicsOpacityEffect, QStatusBar
@@ -25,6 +28,9 @@ from src.gui.widgets.footer import (
 from src.gui.widgets.status_card import StatusCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 
+if TYPE_CHECKING:
+    from src.gui.main_window.main import MainWindow
+
 
 class StatusBarComponent(QObject):
     """
@@ -33,7 +39,7 @@ class StatusBarComponent(QObject):
     Implementa logica di aggiornamento per licenza e countdown Autopilot.
     """
 
-    def __init__(self, main_window):  # noqa: ANN001, ANN204
+    def __init__(self, main_window: MainWindow) -> None:
         """
         Inizializza il componente della barra di stato.
 
@@ -43,10 +49,25 @@ class StatusBarComponent(QObject):
         super().__init__(main_window)
         self.main_window = main_window
         self._footer_stats_mode = False
+
+        # Animations
+        self._console_anim: QPropertyAnimation | None = None
+        self._telemetry_anim: QPropertyAnimation | None = None
+
+        # UI Attributes
+        self.status_bar: QStatusBar
+        self.footer_toggle_btn: IconButton
+        self.footer_left: FooterLeftWidget
+        self.boot_telemetry: BootTelemetryWidget
+        self.startup_console: StartupConsole
+        self.status_portale: StatusCard
+        self.status_safework: StatusCard
+        self.footer_right: FooterRightWidget
+
         self._setup_ui()
         self._init_timers()
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
         """Configura lo stile della barra di stato e inserisce i widget modulari."""
         self.status_bar = QStatusBar()
         self.status_bar.setStyleSheet(
@@ -90,14 +111,14 @@ class StatusBarComponent(QObject):
         self.footer_right = FooterRightWidget(self.status_portale, self.status_safework)
         self.status_bar.addPermanentWidget(self.footer_right)
 
-    def _init_timers(self):  # noqa: ANN202
+    def _init_timers(self) -> None:
         """Inizializza i timer per gli aggiornamenti ricorrenti dell'interfaccia."""
         self.autopilot_timer = QTimer(self)
         self.autopilot_timer.timeout.connect(self.update_autopilot_ui)
         self.autopilot_timer.start(10000)
         QTimer.singleShot(500, self.update_autopilot_ui)
 
-    def _toggle_footer_stats(self):  # noqa: ANN202
+    def _toggle_footer_stats(self) -> None:
         """Alterna la visualizzazione tra le informazioni di licenza e le metriche di sistema."""
         self._footer_stats_mode = not self._footer_stats_mode
 
@@ -113,15 +134,15 @@ class StatusBarComponent(QObject):
             if self.boot_telemetry.timer.isActive():
                 self.boot_telemetry.timer.stop()
 
-    def update_license_info(self):  # noqa: ANN201
+    def update_license_info(self) -> None:
         """Recupera le informazioni sulla licenza e aggiorna le etichette nel footer."""
         license_info = get_license_info()
         if license_info:
-            client = license_info.get("Cliente", "N/D")
-            expiry = license_info.get("Scadenza Licenza", "N/D")
-            hw_id = license_info.get("Hardware ID", "N/D")
+            client = str(license_info.get("Cliente", "N/D"))
+            expiry = str(license_info.get("Scadenza Licenza", "N/D"))
+            hw_id = str(license_info.get("Hardware ID", "N/D"))
             config = config_manager.load_config()
-            last_login = config.get("last_login_date", "N/D")
+            last_login = str(config.get("last_login_date", "N/D"))
 
             now_str = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
             config_manager.set_config_value("last_login_date", now_str)
@@ -129,7 +150,7 @@ class StatusBarComponent(QObject):
             self.footer_left.update_info(client, expiry, last_login, hw_id)
             self.footer_left.setVisible(True)
 
-    def show_operational_state(self):  # noqa: ANN201
+    def show_operational_state(self) -> None:
         """
         Transiziona la barra di stato alla modalità operativa.
         Esegue animazioni di fade-out sui widget di avvio e attiva quelli di monitoraggio.
@@ -142,35 +163,32 @@ class StatusBarComponent(QObject):
             # Animazione console
             console_effect = QGraphicsOpacityEffect(self.startup_console)
             self.startup_console.setGraphicsEffect(console_effect)
-            console_anim = QPropertyAnimation(console_effect, b"opacity")
-            console_anim.setDuration(600)
-            console_anim.setStartValue(1.0)
-            console_anim.setEndValue(0.0)
-            console_anim.setEasingCurve(QEasingCurve.Type.InCubic)
-            console_anim.finished.connect(lambda: self.startup_console.setVisible(False))
-            console_anim.start()
+            self._console_anim = QPropertyAnimation(console_effect, b"opacity")
+            self._console_anim.setDuration(600)
+            self._console_anim.setStartValue(1.0)
+            self._console_anim.setEndValue(0.0)
+            self._console_anim.setEasingCurve(QEasingCurve.Type.InCubic)
+            self._console_anim.finished.connect(lambda: self.startup_console.setVisible(False))
+            self._console_anim.start()
 
             # Animazione telemetria
             telemetry_effect = QGraphicsOpacityEffect(self.boot_telemetry)
             self.boot_telemetry.setGraphicsEffect(telemetry_effect)
-            telemetry_anim = QPropertyAnimation(telemetry_effect, b"opacity")
-            telemetry_anim.setDuration(600)
-            telemetry_anim.setStartValue(1.0)
-            telemetry_anim.setEndValue(0.0)
-            telemetry_anim.setEasingCurve(QEasingCurve.Type.InCubic)
+            self._telemetry_anim = QPropertyAnimation(telemetry_effect, b"opacity")
+            self._telemetry_anim.setDuration(600)
+            self._telemetry_anim.setStartValue(1.0)
+            self._telemetry_anim.setEndValue(0.0)
+            self._telemetry_anim.setEasingCurve(QEasingCurve.Type.InCubic)
 
-            def hide_and_reset_telemetry():  # noqa: ANN202
+            def hide_and_reset_telemetry() -> None:
                 """Nasconde il widget di telemetria e ferma il timer al termine dell'animazione."""
                 self.boot_telemetry.setVisible(False)
                 self.boot_telemetry.setGraphicsEffect(None)
                 if self.boot_telemetry.timer.isActive():
                     self.boot_telemetry.timer.stop()
 
-            telemetry_anim.finished.connect(hide_and_reset_telemetry)
-            telemetry_anim.start()
-
-            self._console_anim = console_anim
-            self._telemetry_anim = telemetry_anim
+            self._telemetry_anim.finished.connect(hide_and_reset_telemetry)
+            self._telemetry_anim.start()
 
             self.status_bar.clearMessage()
             self.footer_right.show_operational()
@@ -180,7 +198,7 @@ class StatusBarComponent(QObject):
         except Exception as e:
             logger.critical(f"Error in show_operational_state: {e}", exc_info=True)
 
-    def update_autopilot_ui(self):  # noqa: ANN201
+    def update_autopilot_ui(self) -> None:
         """
         Analizza i bot programmati nell'Autopilot e calcola il countdown per il task più imminente.
         Aggiorna le card di stato nella parte destra della barra.
@@ -201,14 +219,16 @@ class StatusBarComponent(QObject):
         ]
 
         now = QTime.currentTime()
-        imminent_pf, imminent_sw = None, None
+        imminent_pf: tuple[str, int] | None = None
+        imminent_sw: tuple[str, int] | None = None
         min_secs_pf, min_secs_sw = float("inf"), float("inf")
 
         for site, name, enabled_key, time_key in tasks:
             if config.get(enabled_key, False):
-                target_time = QTime.fromString(config.get(time_key, "09:00"), "HH:mm")
+                time_str = str(config.get(time_key, "09:00"))
+                target_time = QTime.fromString(time_str, "HH:mm")
                 if not target_time.isValid():
-                    target_time = QTime.fromString(config.get(time_key, "09:00"), "H:mm")
+                    target_time = QTime.fromString(time_str, "H:mm")
                 if not target_time.isValid():
                     continue
 
@@ -221,7 +241,7 @@ class StatusBarComponent(QObject):
                 elif site == "SW" and secs_to < min_secs_sw:
                     min_secs_sw, imminent_sw = secs_to, (name, secs_to)
 
-        def format_countdown(name, secs):  # noqa: ANN001, ANN202
+        def format_countdown(name: str, secs: int) -> str:
             """Formatta il tempo rimanente in una stringa leggibile (H/M)."""
             h, m = secs // 3600, (secs % 3600) // 60
             return f"{name}: {'TRA ' + str(h) + 'H ' + str(m) + 'M' if h > 0 else 'TRA ' + str(m) + 'M'}"

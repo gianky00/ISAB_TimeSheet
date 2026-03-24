@@ -3,6 +3,10 @@ SyncroJob - Ultra Smooth Animated Stacked Widget
 Gestisce transizioni tra widget usando snapshot e cross-fade per performance massime.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from PyQt6.QtCore import (
     QEasingCurve,
     QParallelAnimationGroup,
@@ -11,6 +15,9 @@ from PyQt6.QtCore import (
     pyqtSignal,
 )
 from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel, QStackedWidget, QWidget
+
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QResizeEvent
 
 
 class SlidingStackedWidget(QStackedWidget):
@@ -140,9 +147,10 @@ class SlidingStackedWidget(QStackedWidget):
         self._is_animating = False
         self.animation_finished.emit()
 
-    def resizeEvent(self, event) -> None:  # noqa: ANN001
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
         """Sincronizza le dimensioni degli snapshot con il widget principale."""
         super().resizeEvent(event)
-        size = event.size()
-        self.fade_label_old.resize(size)
-        self.fade_label_new.resize(size)
+        if event:
+            size = event.size()
+            self.fade_label_old.resize(size)
+            self.fade_label_new.resize(size)

@@ -3,6 +3,8 @@ SyncroJob - Ricerca PDL Panel
 Pannello per il bot Ricerca PDL (SafeWork).
 """
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QTimer, pyqtSignal
@@ -34,7 +36,7 @@ class RicercaPDLPanel(BaseBotPanel):
 
     data_updated = pyqtSignal()
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il pannello Ricerca PDL.
 
@@ -48,16 +50,20 @@ class RicercaPDLPanel(BaseBotPanel):
             parent=parent,
         )
         self.sync_module_id = "pdl"
+
+        self.exclude_closed_check: StandardCheckBox
+        self.site_combo: FilterComboBox
+
         self._setup_content()
         QTimer.singleShot(10, self._load_saved_data)
 
-    def get_bot_class(self) -> type["BaseBot"]:
+    def get_bot_class(self) -> type[BaseBot]:
         """Restituisce la classe SafeWorkPDLSearchBot associata."""
         from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot  # noqa: PLC0415
 
         return SafeWorkPDLSearchBot
 
-    def _setup_content(self):  # noqa: ANN202
+    def _setup_content(self) -> None:
         """Inizializza e posiziona i componenti UI di filtraggio e ricerca con design Modern Card."""
         # Sezione Parametri (Design Modern Card Uniformato)
         params_container = QFrame()
@@ -122,14 +128,14 @@ class RicercaPDLPanel(BaseBotPanel):
         self.content_layout.addWidget(wrapper)
         self.content_layout.addStretch()
 
-    def _load_saved_data(self):  # noqa: ANN202
+    def _load_saved_data(self) -> None:
         """Carica le ultime impostazioni di ricerca salvate."""
         config = config_manager.load_config()
         self.exclude_closed_check.setChecked(config.get("pdl_search_exclude_closed", True))
         saved_site = config.get("pdl_search_site", "Seleziona tutto")
         self.site_combo.setCurrentText(saved_site)
 
-    def _save_data(self):  # noqa: ANN202
+    def _save_data(self) -> None:
         """Salva i filtri di ricerca correnti nella configurazione."""
         config_manager.set_config_value("pdl_search_exclude_closed", self.exclude_closed_check.isChecked())
         config_manager.set_config_value("pdl_search_site", self.site_combo.currentText())
@@ -163,7 +169,7 @@ class RicercaPDLPanel(BaseBotPanel):
 
         config = load_config()
 
-        main_win = self.window()
+        main_win: Any = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
         # Configura i parametri per il BotWorker (verranno passati a create_bot nel thread secondario)
@@ -208,7 +214,7 @@ class RicercaPDLPanel(BaseBotPanel):
             default_acc.get("type", "Esecutore"),
         )
 
-    def _on_worker_finished(self, success: bool):  # noqa: ANN202
+    def _on_worker_finished(self, success: bool) -> None:
         """Emette il segnale data_updated al termine dell'operazione."""
         super()._on_worker_finished(success)
         if success:

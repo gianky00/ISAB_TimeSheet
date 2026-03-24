@@ -4,6 +4,10 @@ Pannello raggruppato per i Bot con animazioni integrate e controlli locali.
 Gestisce l'orchestrazione dei bot Selenium per Portale Fornitori e SafeWork.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from PyQt6.QtWidgets import QTabWidget, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
@@ -20,6 +24,9 @@ from src.gui.panels import (
 from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
+if TYPE_CHECKING:
+    from src.gui.main_window import MainWindow
+
 
 class AutomazioniWidget(QWidget):
     """
@@ -27,7 +34,7 @@ class AutomazioniWidget(QWidget):
     Centralizza l'accesso a tutti i processi di automazione web.
     """
 
-    def __init__(self, main_window) -> None:  # noqa: ANN001
+    def __init__(self, main_window: MainWindow) -> None:
         """
         Inizializza il widget delle automazioni.
 

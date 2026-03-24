@@ -166,6 +166,19 @@ def set_config_values(updates: dict[str, Any]) -> bool:
     return save_config(config)
 
 
+def get_download_path() -> str:
+    """Restituisce il percorso della cartella download configurata o quella predefinita di sistema."""
+    path = get_config_value("browser_download_path")
+    if not path:
+        path = str(Path.home() / "Downloads")
+    return str(path)
+
+
+def reset_to_defaults() -> bool:
+    """Ripristina la configurazione ai valori predefiniti di fabbrica."""
+    return save_config(copy.deepcopy(DEFAULT_CONFIG))
+
+
 # --- ACCOUNT MANAGEMENT HELPERS ---
 
 

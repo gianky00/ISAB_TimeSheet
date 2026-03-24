@@ -4,9 +4,12 @@ Componente responsabile della gestione delle scorciatoie globali e della Command
 Implementa il sistema di navigazione gerarchica 'Spotlight' per l'accesso rapido a tutte le funzioni.
 """
 
+from __future__ import annotations
+
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QObject, Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut
@@ -17,6 +20,9 @@ from src.gui.controllers.command_registry import CommandNode
 from src.gui.dialogs.bug_report_dialog import BugReportDialog
 from src.gui.dialogs.command_palette import CommandPaletteDialog
 
+if TYPE_CHECKING:
+    from src.gui.main_window.main import MainWindow
+
 
 class MenuBarComponent(QObject):
     """
@@ -24,7 +30,7 @@ class MenuBarComponent(QObject):
     Coordina l'inizializzazione della Command Palette e la costruzione dell'albero dei comandi.
     """
 
-    def __init__(self, main_window):  # noqa: ANN001, ANN204
+    def __init__(self, main_window: MainWindow) -> None:
         """
         Inizializza il componente menu e registra le scorciatoie.
 
@@ -33,12 +39,18 @@ class MenuBarComponent(QObject):
         """
         super().__init__(main_window)
         self.main_window = main_window
-        self.command_palette = None
+        self.command_palette: CommandPaletteDialog | None = None
         self._last_palette_toggle: float = 0
-        self._bug_dialog = None
+        self._bug_dialog: BugReportDialog | None = None
+
+        # Shortcuts
+        self.shortcut_palette: QShortcut
+        self.shortcut_palette_sec: QShortcut
+        self.shortcut_palette_f1: QShortcut
+
         self._setup_shortcuts()
 
-    def open_bug_report_dialog(self):  # noqa: ANN201
+    def open_bug_report_dialog(self) -> None:
         """Visualizza il dialogo avanzato per la segnalazione di problemi tecnici."""
         try:
             self._bug_dialog = BugReportDialog(self.main_window)
@@ -48,7 +60,7 @@ class MenuBarComponent(QObject):
             if hasattr(self.main_window, "show_toast"):
                 self.main_window.show_toast(f"Errore apertura segnalazione: {e}", "error")
 
-    def _setup_shortcuts(self):  # noqa: ANN202
+    def _setup_shortcuts(self) -> None:
         """Configura le scorciatoie da tastiera (Ctrl+K, F1, Ctrl+Shift+P) per la Command Palette."""
         self.shortcut_palette = QShortcut(QKeySequence("Ctrl+K"), self.main_window)
         self.shortcut_palette.setContext(Qt.ShortcutContext.ApplicationShortcut)
@@ -62,7 +74,7 @@ class MenuBarComponent(QObject):
         self.shortcut_palette_f1.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self.shortcut_palette_f1.activated.connect(self.open_command_palette)
 
-    def open_command_palette(self):  # noqa: ANN201
+    def open_command_palette(self) -> None:
         """Apre o chiude la Command Palette con effetto a tendina e controllo anti-rimbalzo."""
         now = datetime.now(UTC).timestamp() * 1000
         if (now - self._last_palette_toggle) < 300:  # noqa: PLR2004
@@ -77,7 +89,7 @@ class MenuBarComponent(QObject):
         elif self.command_palette:
             self.command_palette.show_animated()
 
-    def _init_palette(self):  # noqa: ANN202
+    def _init_palette(self) -> None:
         """Inizializza l'istanza del dialogo Command Palette costruendo l'albero dei comandi."""
         try:
             root_nodes = self._build_menu_tree()
@@ -90,7 +102,7 @@ class MenuBarComponent(QObject):
             if hasattr(self.main_window, "show_toast"):
                 self.main_window.show_toast(f"Error opening palette: {e}")
 
-    def _build_menu_tree(self):  # noqa: ANN202
+    def _build_menu_tree(self) -> list[CommandNode]:
         """
         Costruisce dinamicamente la struttura gerarchica dei comandi disponibili nell'applicazione.
         Definisce azioni per esecuzione bot, navigazione pagine e manutenzione sistema.
@@ -99,7 +111,7 @@ class MenuBarComponent(QObject):
             list[CommandNode]: Lista dei nodi comando radice.
         """
 
-        def restart_app():  # noqa: ANN202
+        def restart_app() -> None:
             import subprocess  # noqa: PLC0415
 
             from PyQt6.QtWidgets import QApplication  # noqa: PLC0415
@@ -108,9 +120,9 @@ class MenuBarComponent(QObject):
             subprocess.Popen([sys.executable, *sys.argv])
             sys.exit()
 
-        def open_folder_path(path):  # noqa: ANN001, ANN202
+        def open_folder_path(path: str | Path) -> None:
             if Path(path).exists():
-                QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+                QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
 
         mw = self.main_window
         wc = mw.workflow_controller
@@ -205,55 +217,55 @@ class MenuBarComponent(QObject):
                     "Dashboard",
                     "KPI e Stato",
                     Icons.ACTIVITY,
-                    action=lambda: mw._navigate_to(PageIndex.DASHBOARD),
+                    action=lambda: mw.navigation_controller.navigate_to(PageIndex.DASHBOARD),
                 ),
                 CommandNode(
                     "Notifiche & Audit",
                     "Log sistema",
                     Icons.BELL,
-                    action=lambda: mw._navigate_to(PageIndex.NOTIFICATIONS),
+                    action=lambda: mw.navigation_controller.navigate_to(PageIndex.NOTIFICATIONS),
                 ),
                 CommandNode(
                     "Timbrature",
                     "Gestione Presenze",
                     Icons.CLOCK,
-                    action=lambda: mw._navigate_to(PageIndex.TIMBRATURE),
+                    action=lambda: mw.navigation_controller.navigate_to(PageIndex.TIMBRATURE),
                 ),
                 CommandNode(
                     "Strumentale",
                     "Contabilità & OdA",
                     Icons.FOLDER,
-                    action=lambda: mw._navigate_to(PageIndex.STRUMENTALE),
+                    action=lambda: mw.navigation_controller.navigate_to(PageIndex.STRUMENTALE),
                 ),
                 CommandNode(
                     "DataEase",
                     "Importazione Dati",
                     Icons.DATABASE,
-                    action=lambda: mw._navigate_to(PageIndex.DATAEASE),
+                    action=lambda: mw.navigation_controller.navigate_to(PageIndex.DATAEASE),
                 ),
                 CommandNode(
                     "Dipendenti",
                     "Anagrafica Risorse",
                     Icons.USERS,
-                    action=lambda: mw._navigate_to(PageIndex.DIPENDENTI),
+                    action=lambda: mw.navigation_controller.navigate_to(PageIndex.DIPENDENTI),
                 ),
                 CommandNode(
                     "Storico OdA",
                     "Database Ordini",
                     Icons.ARCHIVE,
-                    action=lambda: mw._navigate_to(PageIndex.STORICO_ODA),
+                    action=lambda: mw.navigation_controller.navigate_to(PageIndex.STORICO_ODA),
                 ),
                 CommandNode(
                     "Impostazioni",
                     "Configurazione",
                     Icons.SETTINGS_DARK,
-                    action=lambda: mw._navigate_to(PageIndex.SETTINGS),
+                    action=lambda: mw.navigation_controller.navigate_to(PageIndex.SETTINGS),
                 ),
                 CommandNode(
                     "Automazioni",
                     "Scheduler",
                     Icons.SMART_TOY,
-                    action=lambda: mw._navigate_to(PageIndex.AUTOMAZIONI),
+                    action=lambda: mw.navigation_controller.navigate_to(PageIndex.AUTOMAZIONI),
                 ),
             ],
         )
@@ -289,11 +301,14 @@ class MenuBarComponent(QObject):
                             "Toggle Stats",
                             "Mostra telemetria",
                             Icons.TERMINAL,
-                            action=mw._toggle_footer_stats,
+                            action=mw.status_bar_component._toggle_footer_stats,
                             close_on_execute=False,
                         ),
                         CommandNode(
-                            "Aggiorna Dati (F5)", "Refresh view", Icons.REFRESH, action=mw._handle_f5
+                            "Aggiorna Dati (F5)",
+                            "Refresh view",
+                            Icons.REFRESH,
+                            action=mw.app_event_handler.handle_f5,
                         ),
                     ],
                 ),
@@ -309,7 +324,7 @@ class MenuBarComponent(QObject):
                     "Guida utente",
                     "Manuale operativo",
                     Icons.HELP,
-                    action=lambda: mw._navigate_to(PageIndex.HELP),
+                    action=lambda: mw.navigation_controller.navigate_to(PageIndex.HELP),
                 ),
                 CommandNode(
                     "Segnala Bug",
@@ -329,22 +344,24 @@ class MenuBarComponent(QObject):
                 "Nav",
                 Icons.CLOCK,
                 shortcut="Alt+2",
-                action=lambda: mw._navigate_to(PageIndex.TIMBRATURE),
+                action=lambda: mw.navigation_controller.navigate_to(PageIndex.TIMBRATURE),
             ),
             CommandNode(
                 "Vai a Strumentale",
                 "Nav",
                 Icons.FOLDER,
                 shortcut="Alt+3",
-                action=lambda: mw._navigate_to(PageIndex.STRUMENTALE),
+                action=lambda: mw.navigation_controller.navigate_to(PageIndex.STRUMENTALE),
             ),
             CommandNode(
                 "Vai a DataEase",
                 "Nav",
                 Icons.DATABASE,
                 shortcut="Alt+4",
-                action=lambda: mw._navigate_to(PageIndex.DATAEASE),
+                action=lambda: mw.navigation_controller.navigate_to(PageIndex.DATAEASE),
             ),
             menu_set,
-            CommandNode("Esci", "Chiudi applicazione", Icons.LOG_OUT, action=mw._quit_application),
+            CommandNode(
+                "Esci", "Chiudi applicazione", Icons.LOG_OUT, action=mw.app_event_handler.quit_application
+            ),
         ]

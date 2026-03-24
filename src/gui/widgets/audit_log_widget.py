@@ -4,9 +4,11 @@ Widget riutilizzato per la visualizzazione dell'audit log.
 Refactoring modulare V2.
 """
 
+from __future__ import annotations
+
 import logging
 
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import QModelIndex, Qt, QTimer
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QFrame,
@@ -41,7 +43,8 @@ class AuditLogWidget(QWidget):
 
     PAGE_SIZE = 50
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza il widget."""
         super().__init__(parent)
         self.manager = AuditManager.instance()
         self.current_page = 0
@@ -56,7 +59,8 @@ class AuditLogWidget(QWidget):
         self._load_categories()
         self.refresh()
 
-    def _setup_ui(self):  # noqa: ANN202, PLR0915
+    def _setup_ui(self) -> None:  # noqa: PLR0915
+        """Configura l'interfaccia utente."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(15)
@@ -129,11 +133,18 @@ class AuditLogWidget(QWidget):
         self.pagination_bar.page_changed.connect(self._on_page_changed)
         layout.addWidget(self.pagination_bar)
 
-    def _load_categories(self):  # noqa: ANN202
+    def _load_categories(self) -> None:
+        """Carica le categorie dal manager."""
         cats = self.manager.get_categories()
         self.filter_bar.set_categories(cats)
 
-    def _toggle_live_mode(self, state):  # noqa: ANN001, ANN202
+    def _toggle_live_mode(self, state: int | Qt.CheckState) -> None:
+        """
+        Attiva o disattiva la modalità live.
+
+        Args:
+            state: Stato della checkbox.
+        """
         is_live = state in (Qt.CheckState.Checked, 2)  # Supporta sia Enum che Int
         if is_live:
             self.refresh(reset_page=True)
@@ -146,14 +157,21 @@ class AuditLogWidget(QWidget):
         if not is_live:
             self.refresh()
 
-    def _on_live_refresh(self):  # noqa: ANN202
+    def _on_live_refresh(self) -> None:
+        """Esegue il refresh periodico in modalità live."""
         self.refresh(reset_page=True)
 
-    def _on_page_changed(self, delta):  # noqa: ANN001, ANN202
+    def _on_page_changed(self, delta: int) -> None:
+        """
+        Gestisce il cambio pagina.
+
+        Args:
+            delta: Spostamento pagina (+1 o -1).
+        """
         self.current_page += delta
         self.refresh()
 
-    def refresh(self, reset_page=False):  # noqa: ANN001, ANN201
+    def refresh(self, reset_page: bool = False) -> None:
         """
         Rinfresca i dati visualizzati applicando i filtri correnti.
 
@@ -178,7 +196,8 @@ class AuditLogWidget(QWidget):
         if self.current_page == 0:
             self._check_integrity()
 
-    def _check_integrity(self):  # noqa: ANN202
+    def _check_integrity(self) -> None:
+        """Verifica l'integrità dei log e aggiorna l'interfaccia."""
         valid = self.manager.verify_integrity()
         color = COLORS["success_dark"] if valid else COLORS["error_red"]
         text = "Integro" if valid else "Legacy/Manomesso"
@@ -188,7 +207,13 @@ class AuditLogWidget(QWidget):
         self.integrity_lbl.setText(text)
         self.integrity_lbl.setStyleSheet(f"color: {color}; font-weight: bold;")
 
-    def _on_row_double_click(self, index):  # noqa: ANN001, ANN202
+    def _on_row_double_click(self, index: QModelIndex) -> None:
+        """
+        Gestisce il doppio click su una riga.
+
+        Args:
+            index: Indice della cella cliccata.
+        """
         log = self.model.get_log_at(index.row())
         if log:
             AuditDetailDialog(log, self).exec()

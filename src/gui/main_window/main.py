@@ -4,6 +4,8 @@ Finestra principale dell'applicazione che coordina tutti i servizi, i controller
 Refactored V9.0: Orchestration with modular Workflow and Monitoring Controllers.
 """
 
+from __future__ import annotations
+
 import logging
 from typing import Any
 
@@ -74,6 +76,25 @@ class MainWindow(QMainWindow):
         self.audit_manager = AuditManager.instance()
         self.telegram = TelegramService()
 
+        # UI Layout Attributes
+        self.central_widget: QWidget
+        self.main_layout: QVBoxLayout
+        self.content_container: QWidget
+        self.content_layout: QGridLayout
+        self.sidebar: QWidget  # SidebarWidget
+        self.stacked_widget: SlidingStackedWidget
+
+        # Bot Panels (Injected by AutomazioniWidget)
+        self.dettagli_panel: Any = None
+        self.prenota_panel: Any = None
+        self.scarico_panel: Any = None
+        self.timbrature_bot_panel: Any = None
+        self.carico_panel: Any = None
+        self.pdl_panel: Any = None
+        self.pdl_search_panel: Any = None
+        self.tab_fornitori: Any = None
+        self.tab_safework: Any = None
+
         # === 2. UI COMPONENTS (Modular) ===
         self._setup_ui_layout()
         self.menu_bar_component = MenuBarComponent(self)
@@ -97,7 +118,6 @@ class MainWindow(QMainWindow):
         self.telegram_bridge.setup_connections()
 
         # Applica Tema Default
-        # In PyQt6, instances of QCoreApplication might be returned, so we use Any for casting if needed
         app_instance: Any = QApplication.instance()
         apply_theme(app_instance, config_manager.get_config_value("theme", "light"))
 
@@ -172,7 +192,6 @@ class MainWindow(QMainWindow):
         self.content_layout.setSpacing(0)
 
         # Sidebar (Placeholder, verrà inizializzata dal NavigationController se necessario)
-        # In realtà la Sidebar è fissa
         from src.gui.widgets.sidebar_widget import SidebarWidget  # noqa: PLC0415
 
         self.sidebar = SidebarWidget(self)
@@ -216,7 +235,11 @@ class MainWindow(QMainWindow):
     def _show_update_banner(self, version_info: dict[str, Any]) -> None:
         """Mostra il banner di aggiornamento nella toolbar."""
         if hasattr(self, "tool_bar_component") and self.tool_bar_component.update_banner:
-            self.tool_bar_component.update_banner.show_update(version_info)
+            # Allineamento firma show_update(download_url, version_str)
+            download_url = version_info.get("url", "")
+            version_str = version_info.get("version", "")
+            if download_url and version_str:
+                self.tool_bar_component.update_banner.show_update(download_url, version_str)
 
     def _on_download_update_clicked(self, download_url: str) -> None:
         """Avvia il processo di download dell'aggiornamento."""
@@ -231,7 +254,7 @@ class MainWindow(QMainWindow):
         """Ruota l'account attivo per il portale specificato."""
         if config_manager.switch_default_account(bot_type):
             self.status_bar_component.show_operational_state()
-            ToastManager.instance().show(f"Account {bot_type.upper()} ruotato con successo.", "success")
+            ToastManager.instance().show(f"Account {bot_type.upper()} ruotate con successo.", "success")
         else:
             ToastManager.instance().show(f"Impossibile ruotare account {bot_type.upper()}.", "warning")
 

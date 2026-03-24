@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -16,6 +18,9 @@ from src.core.constants import Icons
 from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 from src.utils.log_humanizer import friendly_time_delta
+
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QShowEvent
 
 # Stile forzato per i tooltip in Light Mode
 TOOLTIP_CSS = """
@@ -34,10 +39,9 @@ class ActivityItem(QFrame):
     Rappresenta una singola voce nella timeline orizzontale (Compact) con animazioni moderne.
     """
 
-    opacity_effect: QGraphicsOpacityEffect | None
-    fade_in_animation: QPropertyAnimation | None
-
-    def __init__(self, log_entry: dict[str, Any], parent: QWidget | None = None, animate: bool = True):  # noqa: ANN204, PLR0915
+    def __init__(  # noqa: PLR0915
+        self, log_entry: dict[str, Any], parent: QWidget | None = None, animate: bool = True
+    ) -> None:
         super().__init__(parent)
         self.log_entry = log_entry
         self.setFrameShape(QFrame.Shape.NoFrame)
@@ -68,17 +72,13 @@ class ActivityItem(QFrame):
             ActivityItem:hover {{
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_hover"]}, stop:1 {COLORS["bg_white"]});
                 border-left: 4px solid {self.border_color};
-                border-top: 1px solid {COLORS["border_medium"]};
+                border-top: 1 solid {COLORS["border_medium"]};
                 border-right: 1px solid {COLORS["border_medium"]};
                 border-bottom: 1px solid {COLORS["border_medium"]};
             }}
         """
         )
         self.setFixedWidth(300)  # Leggermente più largo
-
-        # Ombra moderna (box-shadow simulato con QGraphicsDropShadowEffect)
-        # Non possiamo usare direttamente box-shadow in Qt, ma possiamo simularlo
-        # con l'effetto opacity
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 10, 12, 10)
@@ -169,10 +169,12 @@ class ActivityItem(QFrame):
         layout.addLayout(text_layout)
 
         # Animazione fade-in (solo se richiesta)
+        self.opacity_effect: QGraphicsOpacityEffect | None = None
+        self.fade_in_animation: QPropertyAnimation | None = None
+
         if animate:
             self.opacity_effect = QGraphicsOpacityEffect(self)
-            # DEBUG: Disabling effect to check painter error
-
+            self.setGraphicsEffect(self.opacity_effect)
             self.fade_in_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
             self.fade_in_animation.setDuration(600)
             self.fade_in_animation.setStartValue(0.0)
@@ -185,11 +187,11 @@ class ActivityItem(QFrame):
             self.opacity_effect = None
             self.fade_in_animation = None
 
-    def _remove_opacity_effect(self):  # noqa: ANN202
+    def _remove_opacity_effect(self) -> None:
         """Rimuove l'effetto opacity dopo l'animazione per evitare interferenze."""
         self.setGraphicsEffect(None)
 
-    def showEvent(self, event):  # noqa: ANN001, ANN201
+    def showEvent(self, event: QShowEvent | None) -> None:
         """Avvia l'animazione quando il widget viene mostrato."""
         super().showEvent(event)
         if self.opacity_effect is not None and self.fade_in_animation is not None:
@@ -201,7 +203,7 @@ class ActivityFeed(QWidget):
     Widget che mostra una timeline orizzontale delle ultime attività.
     """
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setFixedHeight(90)  # Aumentato per le card più alte
         self._refreshing = False  # Flag per evitare refresh multipli
@@ -212,7 +214,7 @@ class ActivityFeed(QWidget):
 
         AuditManager.instance().signals.log_added.connect(self._on_new_log_added)
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
@@ -264,12 +266,12 @@ class ActivityFeed(QWidget):
         # Caricamento differito per non bloccare lo splash screen
         QTimer.singleShot(800, self.refresh_feed)
 
-    def _on_new_log_added(self, log_entry: dict[str, Any]):  # noqa: ANN202
+    def _on_new_log_added(self, log_entry: dict[str, Any]) -> None:
         """Chiamato quando viene aggiunto un nuovo log all'AuditManager."""
         # Refresh della feed per mostrare il nuovo log
         self.refresh_feed()
 
-    def refresh_feed(self):  # noqa: ANN201
+    def refresh_feed(self) -> None:
         """Ricarica i log dall'AuditManager."""
         # Evita refresh multipli simultanei
         if self._refreshing:

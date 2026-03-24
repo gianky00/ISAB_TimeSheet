@@ -3,10 +3,17 @@ SyncroJob - App Event Handler
 Controller dedicato alla gestione degli eventi globali dell'applicazione (chiusura, shortcut, backup).
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 from PyQt6.QtCore import QObject
 
 from src.core import config_manager
 from src.core.backup_manager import BackupManager
+
+if TYPE_CHECKING:
+    from src.gui.main_window.main import MainWindow
 
 
 class AppEventHandler(QObject):
@@ -16,7 +23,7 @@ class AppEventHandler(QObject):
     e l'intercettazione delle scorciatoie da tastiera globali.
     """
 
-    def __init__(self, main_window):  # noqa: ANN001, ANN204
+    def __init__(self, main_window: MainWindow) -> None:
         """
         Inizializza l'event handler.
 
@@ -27,12 +34,12 @@ class AppEventHandler(QObject):
         self.main_window = main_window
         self._force_quit = False
 
-    def quit_application(self):  # noqa: ANN201
+    def quit_application(self) -> None:
         """Chiude l'applicazione completamente scavalcando la minimizzazione nel tray."""
         self._force_quit = True
         self.main_window.close()
 
-    def handle_close_event(self, event):  # noqa: ANN001, ANN201
+    def handle_close_event(self, event: Any) -> None:  # noqa: ANN401
         """
         Gestisce l'evento di chiusura della finestra.
         Se la chiusura non è forzata, nasconde l'applicazione nel tray invece di terminarla.
@@ -75,16 +82,19 @@ class AppEventHandler(QObject):
             self.main_window.hide()
             event.ignore()
 
-    def handle_f5(self):  # noqa: ANN201
+    def handle_f5(self) -> None:
         """Gestisce il tasto F5 innescando il refresh intelligente della pagina attiva."""
-        self.main_window._handle_f5_action()
+        # Chiamata al metodo interno della MainWindow (che a sua volta delega al pannello attivo)
+        if hasattr(self.main_window, "_handle_f5_action"):
+            self.main_window._handle_f5_action()
 
-    def handle_ctrl_f(self):  # noqa: ANN201
+    def handle_ctrl_f(self) -> None:
         """Gestisce Ctrl+F portando il focus sulla barra di ricerca globale."""
         if (
             hasattr(self.main_window, "tool_bar_component")
             and self.main_window.tool_bar_component.global_search
         ):
             search_box = self.main_window.tool_bar_component.global_search
-            search_box.setFocus()
-            search_box.selectAll()
+            if search_box:
+                search_box.setFocus()
+                search_box.selectAll()

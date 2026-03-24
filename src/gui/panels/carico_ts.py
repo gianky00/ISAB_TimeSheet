@@ -3,6 +3,8 @@ SyncroJob - Carico TS Panel
 Pannello per il bot Carico TS.
 """
 
+from __future__ import annotations
+
 import traceback
 from typing import TYPE_CHECKING, Any
 
@@ -29,7 +31,7 @@ class CaricoTSPanel(BaseBotPanel):
     Gestisce l'input dei dati e l'avvio del bot CaricoTSBot.
     """
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il pannello Carico TS.
 
@@ -42,17 +44,21 @@ class CaricoTSPanel(BaseBotPanel):
             bot_description="Upload automatico dei Timesheet sul portale ISAB",
             parent=parent,
         )
+
+        self.clear_btn: ModernButton
+        self.data_table: EditableDataTable
+
         self._setup_content()
         # Defer data loading
         QTimer.singleShot(10, self._safe_load_data)
 
-    def get_bot_class(self) -> type["BaseBot"]:
+    def get_bot_class(self) -> type[BaseBot]:
         """Restituisce la classe CaricoTSBot associata."""
         from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot  # noqa: PLC0415
 
         return CaricoTSBot
 
-    def _safe_load_data(self):  # noqa: ANN202
+    def _safe_load_data(self) -> None:
         """Carica i dati dai file di configurazione in modo sicuro."""
         try:
             self._load_saved_data()
@@ -60,7 +66,7 @@ class CaricoTSPanel(BaseBotPanel):
             print(f"[ERROR] Error loading data for CaricoTSPanel: {e}")
             traceback.print_exc()
 
-    def _setup_content(self):  # noqa: ANN202
+    def _setup_content(self) -> None:
         """Inizializza e posiziona i componenti UI del pannello (Tabella e Parametri)."""
         # Sezione Parametri (Senza QGroupBox per favorire il design Floating Card)
         params_container = QWidget()
@@ -92,17 +98,17 @@ class CaricoTSPanel(BaseBotPanel):
 
         self.content_layout.addWidget(params_container)
 
-    def _load_saved_data(self):  # noqa: ANN202
+    def _load_saved_data(self) -> None:
         """Carica l'ultima tabella TS salvata nella configurazione."""
         saved_data = config_manager.load_config().get("last_carico_ts_data", [])
         if saved_data:
             self.data_table.set_data(saved_data)
 
-    def _save_data(self):  # noqa: ANN202
+    def _save_data(self) -> None:
         """Salva i dati della tabella nella configurazione globale."""
         config_manager.set_config_value("last_carico_ts_data", self.data_table.get_data())
 
-    def _clear_table(self):  # noqa: ANN202
+    def _clear_table(self) -> None:
         """Svuota la tabella dati previa conferma."""
         if ConfirmationDialog.confirm(self, "Conferma", "Svuotare la tabella?"):
             self.data_table.clear()
@@ -122,7 +128,7 @@ class CaricoTSPanel(BaseBotPanel):
             return False, "Nessun dato inserito in tabella."
         return True, ""
 
-    def _on_start(self, params_override: dict[str, Any] | None = None):  # noqa: ANN202
+    def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
         """Prepara e avvia il thread per il bot Carico TS."""
         super()._on_start(params_override)
         username, password = self.get_credentials()
@@ -145,7 +151,7 @@ class CaricoTSPanel(BaseBotPanel):
 
         config = load_config()
 
-        main_win = self.window()
+        main_win: Any = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
         # Configura i parametri per il BotWorker (avvio asincrono)

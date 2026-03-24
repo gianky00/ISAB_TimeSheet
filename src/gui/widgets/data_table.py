@@ -3,6 +3,8 @@ Tabella dati con sorting, filtering e row styling, basata su ExcelTableWidget.
 Fornisce un'interfaccia ad alto livello con ricerca e pulsante di aggiornamento.
 """
 
+from __future__ import annotations
+
 from typing import Any, ClassVar
 
 from PyQt6.QtCore import (  # type: ignore[attr-defined]
@@ -13,7 +15,7 @@ from PyQt6.QtCore import (  # type: ignore[attr-defined]
     pyqtProperty,
     pyqtSignal,
 )
-from PyQt6.QtGui import QBrush, QColor, QPainter, QPen
+from PyQt6.QtGui import QBrush, QColor, QEnterEvent, QLeaveEvent, QPainter, QPaintEvent, QPen
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
@@ -45,7 +47,7 @@ class HoverPulseFrame(QFrame):
     Migliora il feedback visivo dell'interfaccia.
     """
 
-    def __init__(self, accent_color: str | None = None, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, accent_color: str | None = None, parent: QWidget | None = None) -> None:
         """
         Inizializza il frame con il colore di accento specificato.
 
@@ -70,23 +72,23 @@ class HoverPulseFrame(QFrame):
         return self._pulse_val
 
     @pulse_value.setter  # type: ignore[no-redef]
-    def pulse_value(self, v: float):  # noqa: ANN202
+    def pulse_value(self, v: float) -> None:
         """Imposta il valore della pulsazione e aggiorna il widget."""
         self._pulse_val = v
         self.update()
 
-    def enterEvent(self, event):  # noqa: ANN001, ANN201
+    def enterEvent(self, event: QEnterEvent) -> None:
         """Avvia l'animazione di pulsazione all'ingresso del mouse."""
         self._anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event):  # noqa: ANN001, ANN201
+    def leaveEvent(self, event: QLeaveEvent) -> None:
         """Ferma l'animazione di pulsazione all'uscita del mouse."""
         self._anim.stop()
         self.pulse_value = 1.0  # type: ignore[method-assign]
         super().leaveEvent(event)
 
-    def paintEvent(self, event):  # noqa: ANN001, ANN201
+    def paintEvent(self, event: QPaintEvent) -> None:
         """Disegna il bordo inferiore pulsante."""
         super().paintEvent(event)
         painter = QPainter(self)
