@@ -7,12 +7,16 @@ Include un Query Builder fluido e utility per generare report sulla salute del s
 import json
 import operator
 from collections import defaultdict
+from collections.abc import Callable  # noqa: TC003
 from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, Final
 
 from .config import get_config
+
+if TYPE_CHECKING:
+    from .config import LoggingConfig
 
 
 class LogQuery:
@@ -21,7 +25,7 @@ class LogQuery:
     Permette di concatenare filtri per livello, messaggio, contesto, trace_id e range temporale.
     """
 
-    def __init__(self, log_file: Path):  # noqa: ANN204
+    def __init__(self, log_file: Path) -> None:
         """
         Inizializza il query builder su un file specifico.
 
@@ -29,7 +33,7 @@ class LogQuery:
             log_file: Percorso del file .json o .log da interrogare.
         """
         self.log_file = log_file
-        self.filters: list[Any] = []
+        self.filters: list[Callable[[dict[str, Any]], bool]] = []
         self._limit: int | None = None
         self._offset: int = 0
 
@@ -58,9 +62,9 @@ class LogQuery:
             LogQuery: L'istanza corrente.
         """
 
-        def filter_fn(entry):  # noqa: ANN001, ANN202
+        def filter_fn(entry: dict[str, Any]) -> bool:
             """Filtra per contenuto del messaggio."""
-            message = entry.get("message", "")
+            message = str(entry.get("message", ""))
             if not case_sensitive:
                 return text.lower() in message.lower()
             return text in message
@@ -68,7 +72,7 @@ class LogQuery:
         self.filters.append(filter_fn)
         return self
 
-    def context_match(self, **kwargs) -> "LogQuery":  # noqa: ANN003
+    def context_match(self, **kwargs: object) -> "LogQuery":
         """
         Filtra in base ai campi contenuti nell'oggetto 'context' del log JSON.
 
@@ -79,7 +83,7 @@ class LogQuery:
             LogQuery: L'istanza corrente.
         """
 
-        def filter_fn(entry):  # noqa: ANN001, ANN202
+        def filter_fn(entry: dict[str, Any]) -> bool:
             """Filtra per corrispondenza dei campi nel contesto."""
             context = entry.get("context", {})
             return all(context.get(key) == value for key, value in kwargs.items())
@@ -107,15 +111,12 @@ class LogQuery:
             LogQuery: L'istanza corrente.
         """
 
-        def filter_fn(entry):  # noqa: ANN001, ANN202
+        def filter_fn(entry: dict[str, Any]) -> bool:
             """Filtra per finestra temporale."""
-            timestamp_str = entry.get("timestamp", "")
+            timestamp_str = str(entry.get("timestamp", ""))
             try:
                 # Supporta sia formati con 'Z' che senza
-                if timestamp_str.endswith("Z"):
-                    timestamp = datetime.fromisoformat(timestamp_str)
-                else:
-                    timestamp = datetime.fromisoformat(timestamp_str)
+                timestamp = datetime.fromisoformat(timestamp_str.replace("Z", ""))
 
                 # Se il timestamp è naive, assumiamo UTC per coerenza con i log JSON
                 if timestamp.tzinfo is None:
@@ -161,7 +162,7 @@ class LogQuery:
         """
         if not self.log_file.exists():
             return []
-        results = []
+        results: list[dict[str, Any]] = []
         skipped = 0
         with suppress(Exception), self.log_file.open("r", encoding="utf-8") as f:
             for line in f:
@@ -199,7 +200,10 @@ class LogViewer:
     Fornisce metodi aggregati per statistiche, analisi errori e monitoraggio performance.
     """
 
-    def __init__(self, config=None):  # noqa: ANN001, ANN204
+    DEFAULT_LIMIT: Final[int] = 10
+    HEALTH_PERIOD_HOURS: Final[int] = 24
+
+    def __init__(self, config: "LoggingConfig | None" = None) -> None:
         """Inizializza il viewer con la configurazione di logging corrente."""
         self.config = config or get_config()
 
@@ -218,7 +222,8 @@ class LogViewer:
         elif log_type == "errors":
             log_file = self.config.errors_log_file
         else:
-            raise ValueError(f"Unknown log_type: {log_type}")  # noqa: TRY003
+            err_msg = f"Unknown log_type: {log_type}"
+            raise ValueError(err_msg)
         return LogQuery(log_file)
 
     def get_level_stats(self) -> dict[str, int]:
@@ -226,16 +231,16 @@ class LogViewer:
         stats: dict[str, int] = defaultdict(int)
         results = self.query().execute()
         for entry in results:
-            stats[entry.get("level", "UNKNOWN")] += 1
-        return stats.copy()
+            stats[str(entry.get("level", "UNKNOWN"))] += 1
+        return dict(stats)
 
-    def get_error_summary(self, limit: int = 10) -> list[dict[str, Any]]:
+    def get_error_summary(self, limit: int = DEFAULT_LIMIT) -> list[dict[str, Any]]:
         """Analizza i log di errore e raggruppa i messaggi più frequenti."""
         error_messages: dict[str, int] = defaultdict(int)
-        error_details = {}
+        error_details: dict[str, dict[str, Any]] = {}
         results = self.query("errors").execute()
         for entry in results:
-            message = entry.get("message", "")
+            message = str(entry.get("message", ""))
             error_messages[message] += 1
             if message not in error_details:
                 error_details[message] = {
@@ -245,9 +250,13 @@ class LogViewer:
                     "count": 0,
                 }
             error_details[message]["count"] = error_messages[message]
-        return sorted(error_details.values(), key=operator.itemgetter("count"), reverse=True)[:limit]
 
-    def get_slow_operations(self, threshold_ms: float = 5000, limit: int = 10) -> list[dict[str, Any]]:
+        sorted_errors = sorted(error_details.values(), key=operator.itemgetter("count"), reverse=True)
+        return sorted_errors[:limit]
+
+    def get_slow_operations(
+        self, threshold_ms: float = 5000, limit: int = DEFAULT_LIMIT
+    ) -> list[dict[str, Any]]:
         """Identifica le funzioni la cui esecuzione ha superato la soglia di millisecondi specificata."""
         slow_ops = []
         results = self.query().execute()
@@ -269,10 +278,12 @@ class LogViewer:
     def reconstruct_trace(self, trace_id: str) -> list[dict[str, Any]]:
         """Ricostruisce la sequenza cronologica di tutti i log appartenenti a un singolo trace_id."""
         results = self.query().trace_id(trace_id).execute()
-        results.sort(key=lambda x: x.get("timestamp", ""))
+        results.sort(key=lambda x: str(x.get("timestamp", "")))
         return results
 
-    def get_bot_runs_summary(self, bot_type: str | None = None, hours: int = 24) -> list[dict[str, Any]]:
+    def get_bot_runs_summary(
+        self, bot_type: str | None = None, hours: int = HEALTH_PERIOD_HOURS
+    ) -> list[dict[str, Any]]:
         """Genera un riepilogo delle esecuzioni bot nelle ultime ore, raggruppate per trace_id."""
         end = datetime.now(UTC)
         start = end - timedelta(hours=hours)
@@ -281,7 +292,7 @@ class LogViewer:
             query = query.bot_type(bot_type)
         results = query.execute()
 
-        traces = defaultdict(list)
+        traces: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for entry in results:
             trace_id = entry.get("context", {}).get("trace_id")
             if trace_id:
@@ -289,13 +300,13 @@ class LogViewer:
 
         summaries = []
         for trace_id, entries in traces.items():
-            entries.sort(key=lambda x: x.get("timestamp", ""))
+            entries.sort(key=lambda x: str(x.get("timestamp", "")))
             try:
-                start_time = datetime.fromisoformat(entries[0].get("timestamp", "").replace("Z", ""))
-                end_time = datetime.fromisoformat(entries[-1].get("timestamp", "").replace("Z", ""))
+                start_time = datetime.fromisoformat(str(entries[0].get("timestamp", "")).replace("Z", ""))
+                end_time = datetime.fromisoformat(str(entries[-1].get("timestamp", "")).replace("Z", ""))
                 duration_sec = (end_time - start_time).total_seconds()
             except Exception:
-                duration_sec = 0
+                duration_sec = 0.0
             has_error = any(e.get("level") == "ERROR" for e in entries)
             summaries.append(
                 {
@@ -312,7 +323,7 @@ class LogViewer:
         summaries.sort(key=operator.itemgetter("start_time"), reverse=True)
         return summaries
 
-    def generate_health_report(self, hours: int = 24) -> dict[str, Any]:
+    def generate_health_report(self, hours: int = HEALTH_PERIOD_HOURS) -> dict[str, Any]:
         """Esegue un'analisi completa dei log recenti per determinare il punteggio di salute (Health Score) del sistema."""
         end = datetime.now(UTC)
         start = end - timedelta(hours=hours)
@@ -320,11 +331,11 @@ class LogViewer:
 
         level_stats: dict[str, int] = defaultdict(int)
         for entry in results:
-            level_stats[entry.get("level", "UNKNOWN")] += 1
+            level_stats[str(entry.get("level", "UNKNOWN"))] += 1
 
         total = len(results)
         errors = level_stats.get("ERROR", 0) + level_stats.get("CRITICAL", 0)
-        error_rate = (errors / total * 100) if total > 0 else 0
+        error_rate = (errors / total * 100) if total > 0 else 0.0
 
         bot_runs = self.get_bot_runs_summary(hours=hours)
         successful_runs = sum(1 for run in bot_runs if run["success"])
@@ -334,13 +345,15 @@ class LogViewer:
             "timestamp": datetime.now(UTC).isoformat() + "Z",
             "period_hours": hours,
             "total_events": total,
-            "level_distribution": level_stats.copy(),
+            "level_distribution": dict(level_stats),
             "error_rate_percent": round(error_rate, 2),
             "bot_runs": {
                 "total": len(bot_runs),
                 "successful": successful_runs,
                 "failed": failed_runs,
-                "success_rate_percent": (round(successful_runs / len(bot_runs) * 100, 2) if bot_runs else 0),
+                "success_rate_percent": (
+                    round(successful_runs / len(bot_runs) * 100, 2) if bot_runs else 0.0
+                ),
             },
             "top_errors": self.get_error_summary(limit=5),
             "slow_operations": self.get_slow_operations(limit=5),
@@ -357,6 +370,6 @@ def view_trace(trace_id: str) -> list[dict[str, Any]]:
     return LogViewer().reconstruct_trace(trace_id)
 
 
-def health_report(hours: int = 24) -> dict[str, Any]:
+def health_report(hours: int = LogViewer.HEALTH_PERIOD_HOURS) -> dict[str, Any]:
     """Helper per generare un report di salute rapido."""
     return LogViewer().generate_health_report(hours=hours)

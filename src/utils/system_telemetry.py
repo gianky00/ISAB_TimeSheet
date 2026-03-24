@@ -33,7 +33,7 @@ class ProcessMemoryCountersEx(Structure):
     ]
 
 
-class FileTime(Structure):
+class FILETIME(Structure):
     """Struttura Windows per timestamp di sistema."""
 
     _fields_: ClassVar[list[tuple[str, Any]]] = [

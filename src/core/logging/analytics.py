@@ -6,7 +6,7 @@ Anomaly detection, pattern detection e health scoring per log analysis.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Final, Literal
 
 from .viewer import LogViewer
 
@@ -64,7 +64,16 @@ class AnomalyDetector:
     - High failure rate (tasso di fallimento bot elevato)
     """
 
-    def __init__(self, viewer: LogViewer | None = None):  # noqa: ANN204
+    ERROR_HIGH_THRESHOLD: Final[float] = 15.0
+    ERROR_CRITICAL_THRESHOLD: Final[float] = 25.0
+
+    SLOW_OP_HIGH_THRESHOLD: Final[int] = 30000
+    SLOW_OP_CRITICAL_THRESHOLD: Final[int] = 60000
+
+    FAILURE_HIGH_THRESHOLD: Final[float] = 30.0
+    FAILURE_CRITICAL_THRESHOLD: Final[float] = 50.0
+
+    def __init__(self, viewer: LogViewer | None = None) -> None:
         self.viewer = viewer or LogViewer()
 
         # Baseline thresholds (configurabili)
@@ -90,13 +99,13 @@ class AnomalyDetector:
         anomalies = []
         report = self.viewer.generate_health_report()
 
-        error_rate = report.get("error_rate_percent", 0)
+        error_rate = float(report.get("error_rate_percent", 0))
 
         if error_rate > self.error_rate_threshold:
             severity: Literal["low", "medium", "high", "critical"] = "medium"
-            if error_rate > 15:  # noqa: PLR2004
+            if error_rate > self.ERROR_HIGH_THRESHOLD:
                 severity = "high"
-            if error_rate > 25:  # noqa: PLR2004
+            if error_rate > self.ERROR_CRITICAL_THRESHOLD:
                 severity = "critical"
 
             anomalies.append(
@@ -126,13 +135,13 @@ class AnomalyDetector:
         slow_ops = self.viewer.get_slow_operations(threshold_ms=self.slow_op_threshold_ms, limit=5)
 
         for op in slow_ops:
-            duration_ms = op.get("duration_ms", 0)
-            operation = op.get("operation", "unknown")
+            duration_ms = int(op.get("duration_ms", 0))
+            operation = str(op.get("operation", "unknown"))
 
             severity: Literal["low", "medium", "high", "critical"] = "low"
-            if duration_ms > 60000:  # > 1min  # noqa: PLR2004
+            if duration_ms > self.SLOW_OP_CRITICAL_THRESHOLD:
                 severity = "critical"
-            elif duration_ms > 30000:  # > 30s  # noqa: PLR2004
+            elif duration_ms > self.SLOW_OP_HIGH_THRESHOLD:
                 severity = "high"
 
             anomalies.append(
@@ -162,15 +171,15 @@ class AnomalyDetector:
         bot_summary = self.viewer.get_bot_runs_summary(hours=hours)
 
         for bot_run in bot_summary:
-            bot_type = bot_run.get("bot_type", "unknown")
-            success_rate = bot_run.get("success_rate", 100)
-            failure_rate = 100 - success_rate
+            bot_type = str(bot_run.get("bot_type", "unknown"))
+            success_rate = float(bot_run.get("success_rate", 100))
+            failure_rate = 100.0 - success_rate
 
             if failure_rate > self.failure_rate_threshold:
                 severity: Literal["low", "medium", "high", "critical"] = "medium"
-                if failure_rate > 30:  # noqa: PLR2004
+                if failure_rate > self.FAILURE_HIGH_THRESHOLD:
                     severity = "high"
-                if failure_rate > 50:  # noqa: PLR2004
+                if failure_rate > self.FAILURE_CRITICAL_THRESHOLD:
                     severity = "critical"
 
                 anomalies.append(
@@ -200,7 +209,7 @@ class PatternDetector:
     - Correlazioni (errori che seguono sempre altri errori)
     """
 
-    def __init__(self, viewer: LogViewer | None = None):  # noqa: ANN204
+    def __init__(self, viewer: LogViewer | None = None) -> None:
         self.viewer = viewer or LogViewer()
         self.min_count = 3  # Minimo occorrenze per pattern
 
@@ -218,19 +227,19 @@ class PatternDetector:
             Lista di pattern di errori ripetuti
         """
         patterns = []
-        min_count = min_count or self.min_count
+        target_min_count = min_count or self.min_count
 
         error_summary = self.viewer.get_error_summary(limit=20)
 
         for error in error_summary:
-            count = error.get("count", 0)
-            if count >= min_count:
+            count = int(error.get("count", 0))
+            if count >= target_min_count:
                 patterns.append(
                     Pattern(
                         type="repeated_error",
-                        message=error.get("message", "Unknown error"),
+                        message=str(error.get("message", "Unknown error")),
                         count=count,
-                        examples=[error.get("message", "")[:100]],
+                        examples=[str(error.get("message", ""))[:100]],
                     )
                 )
 
@@ -239,6 +248,9 @@ class PatternDetector:
 
 class HealthScorer:
     """Calcola health score 0-100 basato su anomalie e metriche."""
+
+    ERROR_NORMAL_LIMIT: Final[float] = 5.0
+    SUCCESS_TARGET: Final[float] = 90.0
 
     def calculate(
         self,
@@ -271,11 +283,11 @@ class HealthScorer:
                 score -= 5
 
         # Penalità per error rate
-        if error_rate > 5:  # noqa: PLR2004
+        if error_rate > self.ERROR_NORMAL_LIMIT:
             score -= min(20, int(error_rate))
 
         # Penalità per bot failures
-        if bot_success_rate < 90:  # noqa: PLR2004
+        if bot_success_rate < self.SUCCESS_TARGET:
             score -= int((100 - bot_success_rate) / 2)
 
         return max(0, min(100, score))
@@ -303,10 +315,10 @@ def generate_analytics_report(hours: int = 24) -> AnalyticsReport:
 
     # Calcola health score
     health_report = viewer.generate_health_report()
-    error_rate = health_report.get("error_rate_percent", 0)
+    error_rate = float(health_report.get("error_rate_percent", 0))
 
     # Bot success rate medio
-    bot_success_rate = health_report.get("bot_runs", {}).get("success_rate_percent", 100)
+    bot_success_rate = float(health_report.get("bot_runs", {}).get("success_rate_percent", 100))
 
     health_score = health_scorer.calculate(
         anomalies=anomalies, error_rate=error_rate, bot_success_rate=bot_success_rate
@@ -316,7 +328,8 @@ def generate_analytics_report(hours: int = 24) -> AnalyticsReport:
     suggestions = [a.suggestion for a in anomalies if a.suggestion]
 
     # Suggerimenti generali basati su pattern
-    if any(p.count > 10 for p in patterns):  # noqa: PLR2004
+    pattern_alert_threshold = 10
+    if any(p.count > pattern_alert_threshold for p in patterns):
         suggestions.append("Problema ricorrente rilevato: contatta il supporto tecnico")
 
     return AnalyticsReport(

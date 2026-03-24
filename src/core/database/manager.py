@@ -12,7 +12,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, ClassVar, Optional
 
-from src.core.config_manager import CONFIG_DIR
+import src.core.config_manager
 from src.core.constants import FileNames
 from src.core.database.migrations.contabilita import (
     mig_contabilita_v1,
@@ -50,14 +50,6 @@ class DatabaseManager:
     _instance: Optional["DatabaseManager"] = None
     _write_lock = threading.Lock()
 
-    # Predefined Paths
-    DB_CONTABILITA: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.DB_CONTABILITA
-    DB_TIMBRATURE: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.DB_TIMBRATURE
-    DB_PDL: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.DB_PDL
-    DB_STORICO_ODA: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.DB_STORICO_ODA
-    DB_DIPENDENTI: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.DB_DIPENDENTI
-    DB_AUDIT: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.DB_AUDIT_LOG
-
     # Dizionari di Migrazione
     MIGRATIONS_CONTABILITA: ClassVar[dict[int, Callable[[sqlite3.Connection], None]]] = {
         1: mig_contabilita_v1,
@@ -93,6 +85,38 @@ class DatabaseManager:
         3: mig_dipendenti_v3,
     }
 
+    # --- DYNAMIC DATABASE PATHS ---
+    # These properties ensure that if CONFIG_DIR is patched (e.g. during tests),
+    # the database paths will automatically point to the new location.
+
+    @property
+    def DB_CONTABILITA(self) -> Path:  # noqa: N802
+        return self._get_db_path(FileNames.DB_CONTABILITA)
+
+    @property
+    def DB_TIMBRATURE(self) -> Path:  # noqa: N802
+        return self._get_db_path(FileNames.DB_TIMBRATURE)
+
+    @property
+    def DB_PDL(self) -> Path:  # noqa: N802
+        return self._get_db_path(FileNames.DB_PDL)
+
+    @property
+    def DB_STORICO_ODA(self) -> Path:  # noqa: N802
+        return self._get_db_path(FileNames.DB_STORICO_ODA)
+
+    @property
+    def DB_DIPENDENTI(self) -> Path:  # noqa: N802
+        return self._get_db_path(FileNames.DB_DIPENDENTI)
+
+    @property
+    def DB_AUDIT(self) -> Path:  # noqa: N802
+        return self._get_db_path(FileNames.DB_AUDIT_LOG)
+
+    def _get_db_path(self, filename: str) -> Path:
+        """Resolves the database path using the current CONFIG_DIR."""
+        return src.core.config_manager.CONFIG_DIR / "data" / filename
+
     def __new__(cls) -> "DatabaseManager":
         """Pattern Singleton per il gestore database."""
         if cls._instance is None:
@@ -102,7 +126,7 @@ class DatabaseManager:
 
     def _ensure_dirs(self) -> None:
         """Ensures the data directory exists."""
-        (CONFIG_DIR / "data").mkdir(parents=True, exist_ok=True)
+        (src.core.config_manager.CONFIG_DIR / "data").mkdir(parents=True, exist_ok=True)
 
     @contextmanager
     def get_connection(

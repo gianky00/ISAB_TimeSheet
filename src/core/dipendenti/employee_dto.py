@@ -5,7 +5,6 @@ Garantisce l'incapsulamento e previene la data leakage verso la GUI.
 """
 
 from dataclasses import dataclass
-from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,7 +30,7 @@ class EmployeeDTO:
         cog = f"⚠️ {self.cognome}" if self.cf_warning else self.cognome
         return f"{cog} {self.nome}"
 
-    def to_table_row(self) -> list[Any]:
+    def to_table_row(self) -> list[str | int | None]:
         """Restituisce i campi per la riga della tabella anagrafica."""
         return [
             self.inactivation_days_left,
@@ -46,6 +45,6 @@ class EmployeeDTO:
             self.cognome,  # Original cognome for sorting/logic
         ]
 
-    def get_metadata(self) -> dict[str, Any]:
+    def get_metadata(self) -> dict[str, str | bool]:
         """Restituisce i metadati per il TableModel (UserRole)."""
         return {"id_risorsa": self.id_risorsa, "is_monitored": self.monitoraggio_attivo}

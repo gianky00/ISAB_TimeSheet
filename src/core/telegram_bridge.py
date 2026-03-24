@@ -5,7 +5,7 @@ Refactored V9.5: Modularized into specialized handlers.
 """
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QObject
 
@@ -17,6 +17,9 @@ from .telegram.bridge.intent_handler import TelegramIntentHandler
 from .telegram.bridge.system_handler import TelegramSystemHandler
 from .telegram.bridge.ui_commands import TelegramUICommands
 
+if TYPE_CHECKING:
+    from src.gui.main_window.main import MainWindow
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,7 +29,7 @@ class TelegramUIBridge(QObject):
     Delega l'esecuzione effettiva ai sottomoduli specializzati in src/core/telegram/bridge/.
     """
 
-    def __init__(self, main_window: Any) -> None:  # noqa: ANN401
+    def __init__(self, main_window: "MainWindow") -> None:
         super().__init__()
         self.mw = main_window
         self.telegram = main_window.telegram

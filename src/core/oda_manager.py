@@ -9,7 +9,6 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
-from src.core.config_manager import CONFIG_DIR
 from src.core.data_synchronizer import DataSynchronizer
 from src.core.database import db_manager
 from src.core.importers.storico_oda import StoricoOdaImporter
@@ -20,8 +19,6 @@ class OdaManager:
     Controller per le operazioni CRUD e di ricerca sullo Storico OdA.
     Centralizza l'accesso ai dati degli ordini, permettendo ricerche testuali complesse.
     """
-
-    DB_PATH = CONFIG_DIR / "data" / "storico_oda.db"
 
     @classmethod
     def init_db(cls) -> None:
@@ -88,7 +85,7 @@ class OdaManager:
             params.extend([f"%{search_pattern}%"] * len(columns))
 
         query += " ORDER BY data_oda DESC, oda DESC, CAST(pos_oda AS INTEGER) ASC, CAST(num_riga AS INTEGER) ASC LIMIT 3000"
-        return db_manager.execute_query(cls.DB_PATH, query, tuple(params))
+        return db_manager.execute_query(db_manager.DB_STORICO_ODA, query, tuple(params))
 
     @classmethod
     def import_oda_from_excel(
@@ -105,7 +102,9 @@ class OdaManager:
         if not success:
             return False, message, 0, 0
 
-        total_added, total_removed = DataSynchronizer.sync_storico_oda(cls.DB_PATH, imported_rows)
+        total_added, total_removed = DataSynchronizer.sync_storico_oda(
+            db_manager.DB_STORICO_ODA, imported_rows
+        )
         duration = time.time() - start_time
         SyncTracker.update_status("oda", total_added, total_removed, duration)
 

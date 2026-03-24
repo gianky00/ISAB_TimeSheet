@@ -6,12 +6,16 @@ Replica fedelmente la logica VBA "ProcessTimesheetFiles" per elaborazione, puliz
 import time
 from contextlib import suppress
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, cast
 
 import openpyxl
 from openpyxl.utils import column_index_from_string, get_column_letter
 
 from src.utils.secure_logger import get_secure_logger
+
+if TYPE_CHECKING:
+    from openpyxl.cell.cell import Cell
+    from openpyxl.worksheet.worksheet import Worksheet
 
 logger = get_secure_logger("TimesheetProcessor")
 
@@ -32,18 +36,16 @@ class TimesheetProcessor:
         except Exception as e:
             return False, f"Impossibile creare dest_dir: {e}"
 
+        wb = openpyxl.load_workbook(file_path)
         try:
-            wb = openpyxl.load_workbook(file_path)
             if "Timesheet" not in wb.sheetnames:
-                wb.close()
                 return False, "Foglio 'Timesheet' non trovato."
 
-            ws: Any = wb["Timesheet"]
+            ws: Worksheet = wb["Timesheet"]
 
             # 1. Estrazione Metadata (ODC, POS)
             odc = str(ws["A2"].value).strip() if ws["A2"].value else ""
             if not odc:
-                wb.close()
                 return False, "Valore ODC (cella A2) mancante."
 
             pos_values, first_pos_cleaned = TimesheetProcessor._analyze_pos_column(ws)
@@ -56,18 +58,19 @@ class TimesheetProcessor:
 
             # 4. Salvataggio e Pulizia
             wb.save(dest_path)
-            wb.close()
 
             TimesheetProcessor._cleanup_source(file_path, dest_path)
 
-            return True, f"Salvato in: {dest_path.name}"  # noqa: TRY300
-
         except Exception as e:
-            logger.error(f"Errore elaborazione {file_path.name}: {e}")  # noqa: TRY400
+            logger.exception("Errore elaborazione %s", file_path.name)
             return False, str(e)
+        finally:
+            wb.close()
+
+        return True, f"Salvato in: {dest_path.name}"
 
     @staticmethod
-    def _analyze_pos_column(ws: Any) -> tuple[set[str], str]:  # noqa: ANN401
+    def _analyze_pos_column(ws: "Worksheet") -> tuple[set[str], str]:
         """Analizza la colonna B per contare i POS univoci e pulire il primo valore."""
         pos_values: set[str] = set()
         first_pos_cleaned = ""
@@ -104,7 +107,7 @@ class TimesheetProcessor:
         return dest_path
 
     @staticmethod
-    def _apply_transformations(ws: Any) -> None:  # noqa: ANN401
+    def _apply_transformations(ws: "Worksheet") -> None:
         """Applica tutte le modifiche strutturali al foglio di lavoro."""
         # 1. Rinomina Intestazioni
         headers = {
@@ -121,12 +124,12 @@ class TimesheetProcessor:
             "V1": "ORE_FEST_NOT",
             "W1": "ORE_FEST_DIU",
         }
-        for cell, val in headers.items():
-            ws[cell].value = val
+        for cell_coord, val in headers.items():
+            ws[cell_coord].value = val
 
         # 2. Pulizia numerica colonna B
         for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=2, max_col=2):
-            cell = row[0]
+            cell = cast("Cell", row[0])
             if cell.value is not None:
                 s_val = str(cell.value).strip()
                 if s_val.replace(".", "", 1).isdigit():
@@ -144,16 +147,20 @@ class TimesheetProcessor:
         TimesheetProcessor._autofit_columns(ws)
 
     @staticmethod
-    def _autofit_columns(ws: Any) -> None:  # noqa: ANN401
+    def _autofit_columns(ws: "Worksheet") -> None:
         """Regola la larghezza delle colonne in base al contenuto."""
         for col in ws.columns:
             max_len = 0
-            col_letter = get_column_letter(col[0].column)
-            for cell in col:
-                with suppress(Exception):
-                    val_len = len(str(cell.value))
-                    max_len = max(max_len, val_len)
-            ws.column_dimensions[col_letter].width = (max_len + 2) * 1.2
+            # col is a sequence of cells in the column
+            first_cell = cast("Cell", col[0])
+            column_idx = first_cell.column
+            if isinstance(column_idx, int):
+                col_letter = get_column_letter(column_idx)
+                for cell in col:
+                    with suppress(Exception):
+                        val_len = len(str(cell.value))
+                        max_len = max(max_len, val_len)
+                ws.column_dimensions[col_letter].width = (max_len + 2) * 1.2
 
     @staticmethod
     def _cleanup_source(src: Path, dest: Path) -> None:

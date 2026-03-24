@@ -5,10 +5,9 @@ Funzioni di formattazione agnostiche rispetto alla GUI, usate per il processing 
 
 from contextlib import suppress
 from datetime import UTC, datetime
-from typing import Any
 
 
-def format_date_it(value: Any) -> str:  # noqa: ANN401
+def format_date_it(value: object) -> str:
     """
     Converte stringa ISO YYYY-MM-DD o datetime in DD/MM/YYYY.
     """

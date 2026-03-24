@@ -1,4 +1,4 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from telegram import Update, constants
 from telegram.ext import ContextTypes
@@ -8,8 +8,15 @@ from src.core.contabilita_manager import ContabilitaManager
 from src.core.telegram.ui.keyboards import TelegramUI
 from src.utils.printing import get_installed_printers
 
+if TYPE_CHECKING:
+    from telegram import CallbackQuery
 
-async def handle_button(service, update: Update, context: ContextTypes.DEFAULT_TYPE):  # noqa: ANN001, ANN201
+    from src.core.telegram import TelegramService
+
+
+async def handle_button(
+    service: "TelegramService", update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     """Gestisce tutti i callback dei bottoni inline."""
     query = update.callback_query
     if not await _validate_button_query(service, update, query):
@@ -31,7 +38,9 @@ async def handle_button(service, update: Update, context: ContextTypes.DEFAULT_T
         await _handle_utility_actions(service, data, query, chat_id)
 
 
-async def _validate_button_query(service, update: Update, query: Any) -> bool:  # noqa: ANN001, ANN401
+async def _validate_button_query(
+    service: "TelegramService", update: Update, query: "CallbackQuery | None"
+) -> bool:
     if not query or not query.message:
         return False
 
@@ -57,7 +66,7 @@ def _is_utility_data(data: str) -> bool:
     return data in items or any(data.startswith(p) for p in prefixes)
 
 
-async def _handle_nav_actions(service, data, query):  # noqa: ANN001, ANN202
+async def _handle_nav_actions(service: "TelegramService", data: str, query: "CallbackQuery") -> None:
     if data == "menu_main":
         await query.edit_message_text(
             "🚀 *Command Center*",
@@ -102,7 +111,9 @@ async def _handle_nav_actions(service, data, query):  # noqa: ANN001, ANN202
         )
 
 
-async def _handle_db_actions(service, data, query, chat_id):  # noqa: ANN001, ANN202
+async def _handle_db_actions(
+    service: "TelegramService", data: str, query: "CallbackQuery", chat_id: int
+) -> None:
     if data == "db_select_year_strumentale":
         years = ContabilitaManager.get_available_years()
         if not years:
@@ -123,7 +134,7 @@ async def _handle_db_actions(service, data, query, chat_id):  # noqa: ANN001, AN
         service.user_states[chat_id] = f"WAITING_DB_QUERY_{db_name.upper()}_{year}"
         await query.edit_message_text(
             f"📊 **Strumentale {year}**\nCosa stai cercando? (es. nome fornitore, descrizione...)",
-            reply_markup=TelegramUI.get_back_button("db_select_year_strumentale"),
+            reply_markup=TelegramUI.get_back_keyboard("db_select_year_strumentale"),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
     elif data.startswith("db_info_"):
@@ -131,12 +142,19 @@ async def _handle_db_actions(service, data, query, chat_id):  # noqa: ANN001, AN
         service.user_states[chat_id] = f"WAITING_DB_QUERY_{db_name.upper()}"
         await query.edit_message_text(
             f"🗄️ **DB {db_name.capitalize()}**\nScrivi cosa cercare, Lyra risponderà.",
-            reply_markup=TelegramUI.get_back_button("nav_db"),
+            reply_markup=TelegramUI.get_back_keyboard("nav_db"),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
 
 
-async def _handle_bot_actions(service, data, query, chat_id, update, context):  # noqa: ANN001, ANN202, PLR0913
+async def _handle_bot_actions(  # noqa: PLR0913
+    service: "TelegramService",
+    data: str,
+    query: "CallbackQuery",
+    chat_id: int,
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> None:
     if await _handle_menu_and_input_dispatch(service, data, query, chat_id, update, context):
         return
 
@@ -148,8 +166,15 @@ async def _handle_bot_actions(service, data, query, chat_id, update, context):  
         _handle_direct_bot_commands(service, data, chat_id)
 
 
-async def _handle_menu_and_input_dispatch(service, data, query, chat_id, update, context):  # noqa: ANN001, ANN202, PLR0913
-    async def handle_menu_pdl():  # noqa: ANN202
+async def _handle_menu_and_input_dispatch(  # noqa: PLR0913
+    service: "TelegramService",
+    data: str,
+    query: "CallbackQuery",
+    chat_id: int,
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> bool:
+    async def handle_menu_pdl() -> None:
         merge_all = service.pdl_settings.get(chat_id, {}).get("merge_all", False)
         await query.edit_message_text(
             "🛡️ *SafeWork PDL*",
@@ -157,7 +182,7 @@ async def _handle_menu_and_input_dispatch(service, data, query, chat_id, update,
             parse_mode=constants.ParseMode.MARKDOWN,
         )
 
-    async def handle_toggle_merge_all_pdl():  # noqa: ANN202
+    async def handle_toggle_merge_all_pdl() -> None:
         if chat_id not in service.pdl_settings:
             service.pdl_settings[chat_id] = {}
         current = service.pdl_settings[chat_id].get("merge_all", False)
@@ -165,63 +190,63 @@ async def _handle_menu_and_input_dispatch(service, data, query, chat_id, update,
         query.data = "menu_pdl"
         await handle_button(service, update, context)
 
-    async def handle_menu_ts():  # noqa: ANN202
+    async def handle_menu_ts() -> None:
         await query.edit_message_text(
             "📥 *Portale TS*",
             reply_markup=TelegramUI.get_ts_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
 
-    async def handle_menu_oda_details():  # noqa: ANN202
+    async def handle_menu_oda_details() -> None:
         await query.edit_message_text(
             "📋 *Dettagli OdA*",
             reply_markup=TelegramUI.get_oda_details_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
 
-    async def handle_menu_carico():  # noqa: ANN202
+    async def handle_menu_carico() -> None:
         await query.edit_message_text(
             "📤 *Carico TS*",
             reply_markup=TelegramUI.get_carico_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
 
-    async def handle_menu_timbrature():  # noqa: ANN202
+    async def handle_menu_timbrature() -> None:
         await query.edit_message_text(
             "⏱️ *Timbrature*",
             reply_markup=TelegramUI.get_timbrature_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
 
-    async def handle_menu_prenota_bp():  # noqa: ANN202
+    async def handle_menu_prenota_bp() -> None:
         await query.edit_message_text(
             "📦 *Prenota BP*",
             reply_markup=TelegramUI.get_prenota_bp_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
 
-    async def handle_input_pdl():  # noqa: ANN202
+    async def handle_input_pdl() -> None:
         service.user_states[chat_id] = "WAITING_PDL"
         await query.edit_message_text("⌨️ Inserisci PDL:")
 
-    async def handle_input_oda():  # noqa: ANN202
+    async def handle_input_oda() -> None:
         service.user_states[chat_id] = "WAITING_ODA"
         await query.edit_message_text("⌨️ Inserisci OdA:")
 
-    async def handle_input_bp():  # noqa: ANN202
+    async def handle_input_bp() -> None:
         service.user_states[chat_id] = "WAITING_BP"
         await query.edit_message_text(
             "⌨️ Inserisci BP (Formato: NUMERO [NOTE]):\nEs: `123456 Urgente`\nEs: `987654`"
         )
 
-    async def handle_run_pdl_on():  # noqa: ANN202
+    async def handle_run_pdl_on() -> None:
         printers = get_installed_printers()
         await query.edit_message_text(
             "Seleziona la stampante:",
             reply_markup=TelegramUI.get_printer_selection_menu(printers, "menu_pdl"),
         )
 
-    async def handle_run_pdl_off():  # noqa: ANN202
+    async def handle_run_pdl_off() -> None:
         await query.edit_message_text(
             "Vuoi ricevere il PDF unito in chat?",
             reply_markup=TelegramUI.get_confirm_merge_menu(noprint=True),
@@ -248,7 +273,9 @@ async def _handle_menu_and_input_dispatch(service, data, query, chat_id, update,
     return False
 
 
-async def _handle_printer_selection(service, data, query, chat_id):  # noqa: ANN001, ANN202
+async def _handle_printer_selection(
+    service: "TelegramService", data: str, query: "CallbackQuery", chat_id: int
+) -> None:
     sn = data.replace("sel_print_run_", "")
     fpn = _get_full_printer_name(sn)
     service.user_states[chat_id] = {"printer": fpn}
@@ -259,11 +286,14 @@ async def _handle_printer_selection(service, data, query, chat_id):  # noqa: ANN
     )
 
 
-async def _handle_run_pdl_confirm(service, data, query, chat_id):  # noqa: ANN001, ANN202
-    p = service.user_states.pop(chat_id, {}).get("printer", "")
+async def _handle_run_pdl_confirm(
+    service: "TelegramService", data: str, query: "CallbackQuery", chat_id: int
+) -> None:
+    state = service.user_states.pop(chat_id, {})
+    p = state.get("printer", "") if isinstance(state, dict) else ""
     merge_all = service.pdl_settings.get(chat_id, {}).get("merge_all", False)
 
-    params = {"merge_all": merge_all}
+    params: dict[str, Any] = {"merge_all": merge_all}
 
     if "_print" in data and "_noprint" not in data:
         if not p:
@@ -286,7 +316,7 @@ def _get_full_printer_name(short_name: str) -> str:
     return short_name
 
 
-def _handle_direct_bot_commands(service, data, chat_id):  # noqa: ANN001, ANN202
+def _handle_direct_bot_commands(service: "TelegramService", data: str, chat_id: int) -> None:
     direct_map = {
         "run_ts": ("run_ts", {}),
         "run_timbrature_yesterday": ("run_timbrature", {"period": "yesterday"}),
@@ -303,7 +333,9 @@ def _handle_direct_bot_commands(service, data, chat_id):  # noqa: ANN001, ANN202
         service.command_received.emit(cmd[0], cmd[1])
 
 
-async def _handle_utility_actions(service, data, query, chat_id):  # noqa: ANN001, ANN202
+async def _handle_utility_actions(
+    service: "TelegramService", data: str, query: "CallbackQuery", chat_id: int
+) -> None:
     if data == "status":
         service.status_requested.emit(str(chat_id))
     elif data == "screenshot":
@@ -325,7 +357,7 @@ async def _handle_utility_actions(service, data, query, chat_id):  # noqa: ANN00
         await _handle_setting_changes(service, data, query, chat_id)
 
 
-async def _handle_utility_menus(service, data, query):  # noqa: ANN001, ANN202
+async def _handle_utility_menus(service: "TelegramService", data: str, query: "CallbackQuery") -> None:
     if data == "menu_settings":
         config = config_manager.load_config()
         fornitori = config.get("fornitori", [])
@@ -337,7 +369,9 @@ async def _handle_utility_menus(service, data, query):  # noqa: ANN001, ANN202
         await query.edit_message_text("🖨️ Stampanti:", reply_markup=TelegramUI.get_printers_menu(printers))
 
 
-async def _handle_setting_changes(service, data, query, chat_id):  # noqa: ANN001, ANN202
+async def _handle_setting_changes(
+    service: "TelegramService", data: str, query: "CallbackQuery", chat_id: int
+) -> None:
     if data.startswith("set_forn_"):
         service.command_received.emit("set_fornitore", {"fornitore": data.replace("set_forn_", "")})
     elif data == "toggle_autopilot":

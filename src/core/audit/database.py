@@ -2,10 +2,10 @@ import logging
 import sqlite3
 from contextlib import suppress
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any
 
-from src.core.config_manager import CONFIG_DIR
-from src.core.constants import FileNames
+from src.core.database import db_manager
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +13,10 @@ logger = logging.getLogger(__name__)
 class AuditDatabase:
     """Gestisce il database SQLite per l'Audit Log."""
 
-    DB_PATH = CONFIG_DIR / "data" / FileNames.DB_AUDIT_LOG
+    @property
+    def DB_PATH(self) -> Path:  # noqa: N802
+        """Restituisce il percorso dinamico del database Audit."""
+        return db_manager.DB_AUDIT
 
     def __init__(self) -> None:
         self._init_db()

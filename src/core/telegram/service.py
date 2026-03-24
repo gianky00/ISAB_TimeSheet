@@ -46,8 +46,8 @@ class TelegramService(QObject):
         self.stop_event = threading.Event()
         self._service_thread: threading.Thread | None = None
         self.connected_chat_id: str | None = None
-        self.user_states: dict[int, str] = {}
-        self.pdl_settings: dict[str, Any] = {}  # Settings specifici per PDL (es. merge_all)
+        self.user_states: dict[int, Any] = {}
+        self.pdl_settings: dict[int, Any] = {}  # Settings specifici per PDL (es. merge_all)
         self.pending_data: dict[str, Any] = {}
         self._start_lock = threading.Lock()
         self.ai_executor = ThreadPoolExecutor(max_workers=3, thread_name_prefix="Telegram_AI")

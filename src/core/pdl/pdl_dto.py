@@ -41,7 +41,7 @@ class PdlRowDTO:
     def from_db_row(cls, r: tuple[Any, ...]) -> "PdlRowDTO":
         """Factory method per creare un DTO da una riga grezza del DB."""
         return cls(
-            id=r[0],
+            id=int(r[0]),
             n_pdl=str(r[1]),
             data_creazione=str(r[2]),
             area=str(r[3]),
@@ -64,7 +64,7 @@ class PdlRowDTO:
             importato_il=str(r[20]),
         )
 
-    def to_master_list(self) -> list[Any]:
+    def to_master_list(self) -> list[str]:
         """Restituisce i campi formattati per la tabella master della GUI."""
         raw = [
             self.data_creazione,
@@ -75,9 +75,9 @@ class PdlRowDTO:
             self.stato,
             self.descrizione,
         ]
-        return [("" if str(val).lower() in ("nan", "none") else val) for val in raw]
+        return [("" if str(val).lower() in ("nan", "none") else str(val)) for val in raw]
 
-    def to_full_list(self) -> list[Any]:
+    def to_full_list(self) -> list[str | int]:
         """Restituisce tutti i campi come lista (per compatibilità legacy se necessaria)."""
         return [
             self.id,

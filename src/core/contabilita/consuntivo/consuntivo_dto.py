@@ -5,7 +5,6 @@ Garantisce l'incapsulamento e la separazione CORE-GUI.
 """
 
 from dataclasses import dataclass
-from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,7 +24,7 @@ class ConsuntivoDataDTO:
     descrizione_lavoro: str
     descrizione_relazione: str
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, str]:
         """Converte il DTO in un dizionario per i worker legacy."""
         return {
             "progressivo": self.progressivo,

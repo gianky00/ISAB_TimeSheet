@@ -5,12 +5,16 @@ Gestisce invio automatico alert su Telegram per anomalie e eventi critici.
 """
 
 import threading
+from collections.abc import Sequence
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Final, Literal
 
 from .analytics import Anomaly, get_anomalies
+
+if TYPE_CHECKING:
+    from src.core.telegram import TelegramService
 
 
 @dataclass
@@ -43,23 +47,24 @@ class AlertManager:
     - Integrazione con TelegramService
     """
 
-    _instance = None
+    _instance: "AlertManager | None" = None
+    SEVERITY_ORDER: Final[Sequence[str]] = ["low", "medium", "high", "critical"]
 
     @classmethod
-    def instance(cls):  # noqa: ANN206
+    def instance(cls) -> "AlertManager":
         """Singleton instance."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
-    def __init__(self, config: AlertConfig | None = None):  # noqa: ANN204
+    def __init__(self, config: AlertConfig | None = None) -> None:
         self.config = config or AlertConfig()
         self._last_alerts: dict[str, datetime] = {}
-        self._telegram_service: Any = None
+        self._telegram_service: TelegramService | None = None
         self._lock = threading.Lock()
 
     @property
-    def telegram(self):  # noqa: ANN201
+    def telegram(self) -> "TelegramService | None":
         """Lazy load TelegramService."""
         if self._telegram_service is None:
             with suppress(ImportError):
@@ -68,7 +73,7 @@ class AlertManager:
                 self._telegram_service = TelegramService()
         return self._telegram_service
 
-    def configure(  # noqa: ANN201, PLR0913
+    def configure(  # noqa: PLR0913
         self,
         enabled: bool | None = None,
         error_rate_threshold: float | None = None,
@@ -76,7 +81,7 @@ class AlertManager:
         slow_operation_ms: int | None = None,
         cooldown_minutes: int | None = None,
         min_severity: Literal["low", "medium", "high", "critical"] | None = None,
-    ):
+    ) -> None:
         """Aggiorna configurazione alert."""
         if enabled is not None:
             self.config.enabled = enabled
@@ -97,8 +102,7 @@ class AlertManager:
             return False
 
         # Check severity minimo
-        severity_order = ["low", "medium", "high", "critical"]
-        if severity_order.index(anomaly.severity) < severity_order.index(self.config.min_severity):
+        if self.SEVERITY_ORDER.index(anomaly.severity) < self.SEVERITY_ORDER.index(self.config.min_severity):
             return False
 
         # Check cooldown
@@ -112,7 +116,7 @@ class AlertManager:
 
         return True
 
-    def _record_alert(self, anomaly: Anomaly):  # noqa: ANN202
+    def _record_alert(self, anomaly: Anomaly) -> None:
         """Registra che un alert è stato inviato."""
         alert_key = f"{anomaly.type}:{anomaly.message[:50]}"
         with self._lock:
@@ -146,7 +150,8 @@ class AlertManager:
             for key, value in list(anomaly.details.items())[:3]:
                 lines.append(f"• {key}: {value}")
 
-        lines.extend(("", f"<code>{datetime.now(UTC).astimezone().strftime('%Y-%m-%d %H:%M:%S')}</code>"))
+        timestamp_str = datetime.now(UTC).astimezone().strftime("%Y-%m-%d %H:%M:%S")
+        lines.extend(("", f"<code>{timestamp_str}</code>"))
 
         return "\n".join(lines)
 
@@ -167,7 +172,8 @@ class AlertManager:
         Returns:
             True se inviato con successo
         """
-        if not self.telegram:
+        telegram = self.telegram
+        if not telegram:
             return False
 
         emoji = {"info": "ℹ️", "warning": "⚠️", "error": "🔴", "critical": "🚨"}.get(level, "📢")
@@ -175,10 +181,11 @@ class AlertManager:
         formatted = f"{emoji} <b>{title}</b>\n\n{message}"
 
         try:
-            self.telegram.send_message_sync(formatted)
-            return True  # noqa: TRY300
+            telegram.send_message_sync(formatted)
         except Exception:
             return False
+        else:
+            return True
 
     def check_and_alert(self, hours: int = 24) -> int:
         """
@@ -193,7 +200,8 @@ class AlertManager:
         if not self.config.enabled:
             return 0
 
-        if not self.telegram:
+        telegram = self.telegram
+        if not telegram:
             return 0
 
         anomalies = get_anomalies(hours)
@@ -203,7 +211,7 @@ class AlertManager:
             if self._should_alert(anomaly):
                 message = self._format_alert_message(anomaly)
                 with suppress(Exception):
-                    self.telegram.send_message_sync(message)
+                    telegram.send_message_sync(message)
                     self._record_alert(anomaly)
                     alerts_sent += 1
 
@@ -219,7 +227,8 @@ class AlertManager:
         Returns:
             True se alert inviato
         """
-        if not self.telegram:
+        telegram = self.telegram
+        if not telegram:
             return False
 
         if anomaly.severity != "critical":
@@ -227,7 +236,7 @@ class AlertManager:
 
         message = self._format_alert_message(anomaly)
         with suppress(Exception):
-            self.telegram.send_message_sync(message)
+            telegram.send_message_sync(message)
             self._record_alert(anomaly)
             return True
         return False
@@ -236,5 +245,4 @@ class AlertManager:
 # Singleton helper
 def get_alert_manager() -> AlertManager:
     """Restituisce istanza singleton AlertManager."""
-    result: AlertManager = AlertManager.instance()
-    return result
+    return AlertManager.instance()
