@@ -10,6 +10,8 @@ import sys
 from contextlib import suppress
 from pathlib import Path
 
+from src.core.config_manager import CONFIG_DIR
+
 
 class ResourceManager:
     """
@@ -43,13 +45,9 @@ class ResourceManager:
     @classmethod
     def _get_config_dir(cls) -> Path:
         """
-        Importazione lazy di CONFIG_DIR per evitare dipendenze circolari.
-
         Returns:
             Path: Il percorso della cartella di configurazione utente.
         """
-        from src.core.config_manager import CONFIG_DIR  # noqa: PLC0415
-
         return CONFIG_DIR
 
     @classmethod
@@ -103,6 +101,7 @@ class ResourceManager:
 
         # Download silente se mancante
         try:
+            # Import lazy per evitare dipendenza pesante all'avvio se non necessaria
             from webdriver_manager.chrome import ChromeDriverManager  # noqa: PLC0415
 
             # webdriver-manager gestisce internamente il lock e il download
@@ -118,7 +117,6 @@ class ResourceManager:
                 with suppress(Exception):
                     shutil.copy2(d_path, d_exe)
                     return str(d_exe.resolve())
-            return d_path  # noqa: TRY300
         except Exception:
             # Fallback ai driver bundle se presenti
             if getattr(sys, "frozen", False):
@@ -129,6 +127,9 @@ class ResourceManager:
             bndl = Path(cls.PROJECT_ROOT) / "drivers" / "chromedriver.exe"
             if bndl.exists():
                 return str(bndl.resolve())
+        else:
+            return d_path
+
         return None
 
     @classmethod

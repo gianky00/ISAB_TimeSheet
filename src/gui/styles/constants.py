@@ -117,11 +117,6 @@ ANIMATION_TIMINGS: Final[dict[str, int]] = {
     "pulse_duration": 800,
     "pulse_slow": 2000,
     # Toast Durations
-    "toast_info": 3000,
-    "toast_success": 2000,
-    "toast_warning": 10000,
-    "toast_error": 10000,
-    # Intervals
     "countdown_update": 60000,  # 1 minuto
     "dot_cycle": 350,
     "status_refresh": 5000,
@@ -132,38 +127,10 @@ ANIMATION_TIMINGS: Final[dict[str, int]] = {
 
 
 # =============================================================================
-# MESI ITALIANI (usato in grafici e report)
+# MESI ITALIANI (re-export per retrocompatibilità)
 # =============================================================================
 
-MONTHS_IT: Final[list[str]] = [
-    "Gen",
-    "Feb",
-    "Mar",
-    "Apr",
-    "Mag",
-    "Giu",
-    "Lug",
-    "Ago",
-    "Set",
-    "Ott",
-    "Nov",
-    "Dic",
-]
-
-MONTHS_IT_FULL: Final[list[str]] = [
-    "Gennaio",
-    "Febbraio",
-    "Marzo",
-    "Aprile",
-    "Maggio",
-    "Giugno",
-    "Luglio",
-    "Agosto",
-    "Settembre",
-    "Ottobre",
-    "Novembre",
-    "Dicembre",
-]
+# MONTHS_IT e MONTHS_IT_FULL sono importati da src.utils.date_utils
 
 
 # =============================================================================

@@ -19,12 +19,15 @@ def friendly_time_delta(dt: datetime) -> str:
         return dt.strftime("%d/%m")
 
     seconds = diff.total_seconds()
-    if seconds < 60:  # noqa: PLR2004
+    seconds_in_minute = 60
+    seconds_in_hour = 3600
+
+    if seconds < seconds_in_minute:
         return "Adesso"
-    if seconds < 3600:  # noqa: PLR2004
-        minutes = int(seconds / 60)
+    if seconds < seconds_in_hour:
+        minutes = int(seconds / seconds_in_minute)
         return f"{minutes} min fa"
-    hours = int(seconds / 3600)
+    hours = int(seconds / seconds_in_hour)
     return f"{hours}h fa"
 
 
@@ -70,31 +73,26 @@ class SmartLogTranslator:
         return human_msg, message, category
 
     @staticmethod
-    def _detect_category(message: str) -> str:  # noqa: PLR0911
+    def _detect_category(message: str) -> str:
         """Determina la categoria del messaggio basandosi sulle keyword."""
         lower_msg = message.lower()
+        category = "info"
 
         # Priorità a categorie specifiche di business
         if any(kw in lower_msg for kw in ("scaric", "download", "⬇️")):
-            return "download"
-
-        if any(
+            category = "download"
+        elif any(
             kw in lower_msg
             for kw in ("errore", "fallit", "falliment", "fail", "exception", "eccezion", "critico", "❌")
         ):
-            return "error"
+            category = "error"
+        elif any(kw in lower_msg for kw in ("successo", "completat", "compiut", "fatto", "✅", "✨")):
+            category = "success"
+        elif any(kw in lower_msg for kw in ("click", "premuto", "selezion", "🖱️")):
+            category = "action"
+        elif any(kw in lower_msg for kw in ("ricerca", "cerca", "🔍")):
+            category = "search"
+        elif any(kw in lower_msg for kw in ("attesa", "attendi", "aspetto", "polling", "caricamento", "⏳")):
+            category = "wait"
 
-        if any(kw in lower_msg for kw in ("successo", "completat", "compiut", "fatto", "✅", "✨")):
-            return "success"
-
-        if any(kw in lower_msg for kw in ("click", "premuto", "selezion", "🖱️")):
-            return "action"
-
-        if any(kw in lower_msg for kw in ("ricerca", "cerca", "🔍")):
-            return "search"
-
-        # Categorie speciali per animazioni o colori
-        if any(kw in lower_msg for kw in ("attesa", "attendi", "aspetto", "polling", "caricamento", "⏳")):
-            return "wait"
-
-        return "info"
+        return category

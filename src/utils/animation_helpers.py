@@ -9,6 +9,7 @@ from contextlib import suppress
 from PyQt6.QtCore import (
     QAbstractAnimation,
     QEasingCurve,
+    QPoint,
     QPropertyAnimation,
     QTimer,
 )
@@ -115,8 +116,6 @@ def create_position_animation(
     Returns:
         L'animazione creata (non avviata)
     """
-    from PyQt6.QtCore import QPoint  # noqa: PLC0415
-
     anim = QPropertyAnimation(widget, b"pos")
     anim.setDuration(duration)
     anim.setStartValue(QPoint(*start_pos))
@@ -242,7 +241,7 @@ def create_animation_timer(
         single_shot: Se True, esegue una sola volta
 
     Returns:
-        Il timer creato (non avviato)
+        Il timer creato (non avviata)
     """
     timer = QTimer(parent)
     timer.timeout.connect(callback)
@@ -261,6 +260,9 @@ def delayed_call(callback: Callable[[], None], delay: int = 100, parent: QWidget
         delay: Ritardo in millisecondi
         parent: Parent opzionale per il timer
     """
+    # In PyQt6 QTimer.singleShot(msec, slot) è la firma standard.
+    # L'uso di un parent è gestito internamente se il timer è creato come istanza,
+    # ma il metodo statico accetta solo 2 o 3 argomenti (msec, timerType, slot).
     QTimer.singleShot(delay, callback)
 
 

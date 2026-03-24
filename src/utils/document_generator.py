@@ -2,10 +2,14 @@
 Generatore di documenti PDF da HTML.
 """
 
+import logging
+
 from PyQt6.QtGui import QPageLayout, QPageSize, QTextDocument
 from PyQt6.QtPrintSupport import QPrinter
 
 from src.gui.styles import COLORS
+
+logger = logging.getLogger(__name__)
 
 
 def generate_pdf_from_html(html_content: str, output_path: str, landscape: bool = True) -> bool:
@@ -36,6 +40,8 @@ def generate_pdf_from_html(html_content: str, output_path: str, landscape: bool 
         printer.setPageOrientation(orientation)
 
         doc.print(printer)
-        return True  # noqa: TRY300
     except Exception:
+        logger.exception("Errore generazione PDF")
         return False
+    else:
+        return True

@@ -4,10 +4,9 @@ Utility per il parsing robusto di valute e numeri.
 """
 
 import re
-from typing import Any
 
 
-def parse_currency(value: Any) -> float:  # noqa: ANN401
+def parse_currency(value: float | int | str | None) -> float:
     """
     Converte una stringa o numero in float, gestendo formati Italiani e Internazionali.
     Versione Enterprise V5: Bilanciamento perfetto tra tolleranza e precisione.
@@ -42,12 +41,13 @@ def parse_currency(value: Any) -> float:  # noqa: ANN401
     # 5. Conversione intelligente
     try:
         val = _smart_convert(s)
-        return -val if is_negative else val  # noqa: TRY300
     except (ValueError, IndexError):
         return 0.0
+    else:
+        return -val if is_negative else val
 
 
-def _smart_convert(s: str) -> float:  # noqa: PLR0911
+def _smart_convert(s: str) -> float:
     """Determina il formato e converte in float."""
     # Se la stringa segue la notazione scientifica pura (es. 1.23e2)
     if "e" in s.lower() and s.count(".") <= 1 and "," not in s:
@@ -58,29 +58,38 @@ def _smart_convert(s: str) -> float:  # noqa: PLR0911
 
     # Caso: Entrambi (1.234,56 o 1,234.56)
     if has_comma and has_dot:
-        last_comma = s.rfind(",")
-        last_dot = s.rfind(".")
-        if last_comma > last_dot:
-            # IT Style
-            return float(s.replace(".", "").replace(",", "."))
-        # US Style
-        return float(s.replace(",", ""))
+        return _convert_both_separators(s)
 
     # Caso: Solo virgole
     if has_comma:
-        if s.count(",") > 1:
-            return float(s.replace(",", ""))
-        return float(s.replace(",", "."))
+        return float(s.replace(",", "")) if s.count(",") > 1 else float(s.replace(",", "."))
 
     # Caso: Solo punti
     if has_dot:
-        if s.count(".") > 1:
-            return float(s.replace(".", ""))
+        return _convert_only_dots(s)
 
-        # Singolo punto: 1.234 (IT migliaia) o 10.50 (Decimale)
-        parts = s.split(".")
-        if len(parts[1]) == 3 and len(parts[0]) > 0:  # noqa: PLR2004
-            return float(s.replace(".", ""))
-        return float(s)
+    return float(s)
 
+
+def _convert_both_separators(s: str) -> float:
+    """Helper per stringhe con sia virgola che punto."""
+    last_comma = s.rfind(",")
+    last_dot = s.rfind(".")
+    if last_comma > last_dot:
+        # IT Style (1.234,56)
+        return float(s.replace(".", "").replace(",", "."))
+    # US Style (1,234.56)
+    return float(s.replace(",", ""))
+
+
+def _convert_only_dots(s: str) -> float:
+    """Helper per stringhe con solo punti."""
+    if s.count(".") > 1:
+        return float(s.replace(".", ""))
+
+    # Singolo punto: 1.234 (IT migliaia) o 10.50 (Decimale)
+    parts = s.split(".")
+    it_thousands_len = 3
+    if len(parts[1]) == it_thousands_len and len(parts[0]) > 0:
+        return float(s.replace(".", ""))
     return float(s)

@@ -5,7 +5,7 @@ Logger sicuro che maschera informazioni sensibili.
 import logging
 import re
 from re import Pattern
-from typing import Any, ClassVar
+from typing import ClassVar
 
 
 class SensitiveDataFilter(logging.Filter):
@@ -53,10 +53,13 @@ class SensitiveDataFilter(logging.Filter):
 
         return True
 
-    def _mask_value(self, value: Any) -> Any:  # noqa: ANN401
+    def _mask_value(self, value: object) -> object:
+        """Maschera una singola stringa se contiene dati sensibili."""
         if isinstance(value, str):
+            masked_value = value
             for pattern, replacement in self.PATTERNS:
-                value = pattern.sub(replacement, value)
+                masked_value = pattern.sub(replacement, masked_value)
+            return masked_value
         return value
 
 

@@ -6,6 +6,7 @@ Include controlli per OdA, PDL, Codici Fiscali e date.
 
 import re
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import ClassVar
 
 
@@ -30,6 +31,12 @@ class InputValidator:
     Validatore centralizzato per tutti gli input utente.
     Contiene pattern regex standard e logica di validazione complessa (es. checksum CF).
     """
+
+    # Costanti di validazione
+    PDL_DIGITS_ONLY = 6
+    PDL_SUFFIX_THRESHOLD = 400000
+    ODA_MAX_LENGTH = 20
+    CF_LENGTH = 16
 
     # Pattern comuni
     PATTERNS: ClassVar[dict[str, str]] = {
@@ -61,9 +68,9 @@ class InputValidator:
         sanitized = value.strip().upper().replace(" ", "")
 
         # Intelligenza PDL: se sono solo 6 cifre, aggiungi suffisso automatico
-        if sanitized.isdigit() and len(sanitized) == 6:  # noqa: PLR2004
+        if sanitized.isdigit() and len(sanitized) == cls.PDL_DIGITS_ONLY:
             num = int(sanitized)
-            suffix = "/S" if num < 400000 else "/C"  # noqa: PLR2004
+            suffix = "/S" if num < cls.PDL_SUFFIX_THRESHOLD else "/C"
             sanitized = f"{sanitized}{suffix}"
 
         if not re.match(cls.PATTERNS["pdl_number"], sanitized):
@@ -90,8 +97,8 @@ class InputValidator:
 
         sanitized = value.strip().upper()
 
-        if len(sanitized) > 20:  # noqa: PLR2004
-            return ValidationResult(False, "Numero OdA troppo lungo (max 20 caratteri)")
+        if len(sanitized) > cls.ODA_MAX_LENGTH:
+            return ValidationResult(False, f"Numero OdA troppo lungo (max {cls.ODA_MAX_LENGTH} caratteri)")
 
         if not re.match(cls.PATTERNS["oda_number"], sanitized):
             return ValidationResult(False, "Numero OdA contiene caratteri non validi")
@@ -114,8 +121,8 @@ class InputValidator:
 
         sanitized = value.strip().upper()
 
-        if len(sanitized) != 16:  # noqa: PLR2004
-            return ValidationResult(False, "Codice Fiscale deve essere di 16 caratteri")
+        if len(sanitized) != cls.CF_LENGTH:
+            return ValidationResult(False, f"Codice Fiscale deve essere di {cls.CF_LENGTH} caratteri")
 
         if not re.match(cls.PATTERNS["codice_fiscale"], sanitized):
             return ValidationResult(False, "Formato Codice Fiscale non valido")
@@ -245,8 +252,6 @@ class InputValidator:
 
         # Verifica data valida
         try:
-            from datetime import UTC, datetime  # noqa: PLC0415
-
             datetime.strptime(sanitized, "%d.%m.%Y").replace(tzinfo=UTC)
         except ValueError:
             return ValidationResult(False, "Data non esistente")

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 
-class PROCESS_MEMORY_COUNTERS_EX(Structure):  # noqa: N801
+class ProcessMemoryCountersEx(Structure):
     """Struttura Windows per i contatori di memoria del processo."""
 
     _fields_: ClassVar[list[tuple[str, Any]]] = [
@@ -33,7 +33,7 @@ class PROCESS_MEMORY_COUNTERS_EX(Structure):  # noqa: N801
     ]
 
 
-class FILETIME(Structure):
+class FileTime(Structure):
     """Struttura Windows per timestamp di sistema."""
 
     _fields_: ClassVar[list[tuple[str, Any]]] = [
@@ -58,14 +58,14 @@ def get_current_process_ram_mb() -> float:
         if not hasattr(psapi.GetProcessMemoryInfo, "argtypes"):
             psapi.GetProcessMemoryInfo.argtypes = (
                 wintypes.HANDLE,
-                ctypes.POINTER(PROCESS_MEMORY_COUNTERS_EX),
+                ctypes.POINTER(ProcessMemoryCountersEx),
                 wintypes.DWORD,
             )
             psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
 
         process = kernel32.GetCurrentProcess()
-        counters = PROCESS_MEMORY_COUNTERS_EX()
-        counters.cb = sizeof(PROCESS_MEMORY_COUNTERS_EX)
+        counters = ProcessMemoryCountersEx()
+        counters.cb = sizeof(ProcessMemoryCountersEx)
 
         if psapi.GetProcessMemoryInfo(process, byref(counters), sizeof(counters)):
             return float(counters.WorkingSetSize) / 1024 / 1024

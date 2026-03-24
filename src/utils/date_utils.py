@@ -4,15 +4,49 @@ Funzioni centralizzate per parsing, formattazione e calcoli su date.
 """
 
 from datetime import UTC, date, datetime, timedelta
+from typing import Final
 
 # Formati di data comunemente usati nell'applicazione
-DATE_FORMATS = [
+DATE_FORMATS: Final[list[str]] = [
     "%Y-%m-%d",  # ISO format (2024-01-15)
     "%d/%m/%Y",  # Italian format (15/01/2024)
     "%d\\%m\\%Y",  # Escaped backslash format
     "%Y-%m-%d %H:%M:%S",  # ISO with time
     "%d/%m/%Y %H:%M:%S",  # Italian with time
 ]
+
+# MESI ITALIANI (usato in grafici e report)
+MONTHS_IT: Final[list[str]] = [
+    "Gen",
+    "Feb",
+    "Mar",
+    "Apr",
+    "Mag",
+    "Giu",
+    "Lug",
+    "Ago",
+    "Set",
+    "Ott",
+    "Nov",
+    "Dic",
+]
+
+MONTHS_IT_FULL: Final[list[str]] = [
+    "Gennaio",
+    "Febbraio",
+    "Marzo",
+    "Aprile",
+    "Maggio",
+    "Giugno",
+    "Luglio",
+    "Agosto",
+    "Settembre",
+    "Ottobre",
+    "Novembre",
+    "Dicembre",
+]
+
+MAX_MONTHS: Final[int] = 12
 
 
 def parse_date_flexible(date_str: str | None, formats: list[str] | None = None) -> date | None:
@@ -29,9 +63,9 @@ def parse_date_flexible(date_str: str | None, formats: list[str] | None = None) 
     if not date_str or date_str in ("None", "-", ""):
         return None
 
-    formats = formats or DATE_FORMATS
+    formats_to_try = formats or DATE_FORMATS
 
-    for fmt in formats:
+    for fmt in formats_to_try:
         try:
             return datetime.strptime(date_str.strip(), fmt).replace(tzinfo=UTC).date()
         except ValueError:
@@ -54,9 +88,9 @@ def parse_datetime_flexible(date_str: str | None, formats: list[str] | None = No
     if not date_str or date_str in ("None", "-", ""):
         return None
 
-    formats = formats or DATE_FORMATS
+    formats_to_try = formats or DATE_FORMATS
 
-    for fmt in formats:
+    for fmt in formats_to_try:
         try:
             return datetime.strptime(date_str.strip(), fmt).replace(tzinfo=UTC)
         except ValueError:
@@ -117,8 +151,8 @@ def calculate_days_diff(date_obj: date | None, from_date: date | None = None) ->
 
     # Use aware datetime for calculation
     now = datetime.now(UTC).date()
-    from_date = from_date or now
-    return (from_date - date_obj).days
+    ref_date = from_date or now
+    return (ref_date - date_obj).days
 
 
 def get_status_by_days(days: int | None, thresholds: tuple[int, int] | None = None) -> tuple[str, str]:
@@ -132,7 +166,9 @@ def get_status_by_days(days: int | None, thresholds: tuple[int, int] | None = No
     Returns:
         Tuple (status_type, color_hex)
     """
-    from src.gui.styles.constants import STATUS_COLORS, THRESHOLD_DAYS  # noqa: PLC0415
+    # Importazione lazy per evitare dipendenze circolari tra core/utils e gui/styles
+    from src.core.constants import THRESHOLD_DAYS  # noqa: PLC0415
+    from src.gui.styles.constants import STATUS_COLORS  # noqa: PLC0415
 
     if days is None:
         return ("unknown", STATUS_COLORS["excluded"])
@@ -197,7 +233,8 @@ def format_datetime_for_filename(dt: datetime | None = None) -> str:
     Returns:
         Stringa tipo "15-01-2024_14-30"
     """
-    return (dt or datetime.now(UTC)).strftime("%d-%m-%Y_%H-%M")
+    target_dt = dt or datetime.now(UTC)
+    return target_dt.strftime("%d-%m-%Y_%H-%M")
 
 
 def is_same_day(dt1: datetime, dt2: datetime) -> bool:
@@ -225,9 +262,7 @@ def get_month_name_it(month: int, full: bool = False) -> str:
     Returns:
         Nome del mese
     """
-    from src.gui.styles.constants import MONTHS_IT, MONTHS_IT_FULL  # noqa: PLC0415
-
-    if not 1 <= month <= 12:  # noqa: PLR2004
+    if not 1 <= month <= MAX_MONTHS:
         return ""
 
     months = MONTHS_IT_FULL if full else MONTHS_IT

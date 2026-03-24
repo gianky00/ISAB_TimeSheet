@@ -7,11 +7,19 @@ Include una robusta logica di terminazione per processi Chrome/Chromedriver "zom
 import logging
 import os
 import re
+import subprocess
 import sys
 from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING
+
+import psutil
+
+from src.utils.resource_manager import ResourceManager
+
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QIcon
 
 
 def get_asset_path(relative_path: str) -> str:
@@ -20,8 +28,6 @@ def get_asset_path(relative_path: str) -> str:
     Funziona sia in sviluppo che nell'app installata.
     Utilizza ResourceManager come fonte unica di verità.
     """
-    from src.utils.resource_manager import ResourceManager  # noqa: PLC0415
-
     return ResourceManager.get_asset_path(relative_path)
 
 
@@ -80,9 +86,8 @@ def format_timestamp(dt: datetime | None = None) -> str:
     Returns:
         Stringa formattata
     """
-    if dt is None:
-        dt = datetime.now(UTC).astimezone()
-    return dt.strftime("%d/%m/%Y %H:%M:%S")
+    target_dt = dt or datetime.now(UTC).astimezone()
+    return target_dt.strftime("%d/%m/%Y %H:%M:%S")
 
 
 def get_months_list() -> list[str]:
@@ -133,8 +138,6 @@ def open_folder(path: str) -> bool:
     Returns:
         bool: True se la cartella è stata aperta correttamente, False altrimenti.
     """
-    import subprocess  # noqa: PLC0415
-
     path_obj = Path(path)
     if not path_obj.exists():
         return False
@@ -146,12 +149,13 @@ def open_folder(path: str) -> bool:
             subprocess.run(["open", str(path_obj)], check=False)
         else:
             subprocess.run(["xdg-open", str(path_obj)], check=False)
-        return True  # noqa: TRY300
     except Exception:
         return False
+    else:
+        return True
 
 
-def safe_str(value: Any, default: str = "") -> str:  # noqa: ANN401
+def safe_str(value: object, default: str = "") -> str:
     """
     Esegue una conversione sicura a stringa gestendo i valori None.
     """
@@ -210,8 +214,6 @@ def cleanup_bot_processes() -> None:
     Termina forzatamente le istanze 'zombie' di Chrome e Chromedriver legate all'applicazione.
     Rimuove i file di lock del profilo per prevenire errori di sessione (SessionNotCreated).
     """
-    import psutil  # noqa: PLC0415
-
     from src.core.config_manager import CONFIG_DIR  # noqa: PLC0415
     from src.core.constants import BrowserConfig  # noqa: PLC0415
 
@@ -245,7 +247,7 @@ def cleanup_bot_processes() -> None:
                     logger.info(f"Removed stale lock file: {lock_file}")
 
 
-def get_colored_icon(icon_path: str, color: str = "#000000") -> Any:  # noqa: ANN401
+def get_colored_icon(icon_path: str, color: str = "#000000") -> "QIcon":
     """
     Applica un colore personalizzato a un'icona SVG tramite QPainter.
     """

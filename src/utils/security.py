@@ -6,7 +6,9 @@ Usa Argon2/Scrypt per key derivation.
 import base64
 import logging
 import os
+import platform
 import secrets
+import uuid
 from contextlib import suppress
 
 from cryptography.fernet import Fernet
@@ -85,9 +87,6 @@ class PasswordManager:
 
     def _get_machine_entropy(self) -> bytes:
         """Genera entropia basata sulla macchina."""
-        import platform  # noqa: PLC0415
-        import uuid  # noqa: PLC0415
-
         components = [
             platform.node(),
             str(uuid.getnode()),  # MAC address
@@ -107,7 +106,7 @@ class PasswordManager:
             encrypted = self._cipher.encrypt(plaintext.encode())
             return f"ENC:v2:{encrypted.decode()}"
         except Exception:
-            logger.error("Encryption error", exc_info=True)
+            logger.exception("Encryption error")
             return ""
 
     def decrypt(self, ciphertext: str) -> str:
@@ -120,7 +119,7 @@ class PasswordManager:
                 encrypted_data = ciphertext[7:].encode()
                 return self._cipher.decrypt(encrypted_data).decode()
             except Exception:
-                logger.error("Decryption error (v2)", exc_info=True)
+                logger.exception("Decryption error (v2)")
                 return ""
 
         # Legacy format (ENC:) - migra a v2
@@ -129,7 +128,7 @@ class PasswordManager:
                 encrypted_data = ciphertext[4:].encode()
                 return self._cipher.decrypt(encrypted_data).decode()
             except Exception:
-                logger.error("Decryption error (legacy)", exc_info=True)
+                logger.exception("Decryption error (legacy)")
                 return ""
 
         # Plaintext legacy (potrebbe essere una vecchia config non criptata)

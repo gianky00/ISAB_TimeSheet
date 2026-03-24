@@ -27,7 +27,7 @@ class DocumentProcessor:
                 full_text = "".join(page.get_text() for page in doc)
             return full_text.strip()
         except Exception:
-            logger.error("Errore estrazione testo PDF: %s", file_path, exc_info=True)
+            logger.exception("Errore estrazione testo PDF: %s", file_path)
             return ""
 
     @staticmethod
@@ -73,8 +73,8 @@ class DocumentProcessor:
                                 logger.warning("File PDF non valido o senza pagine: %s", pdf_path)
                                 continue
                             result.insert_pdf(pdf_doc)
-                    except Exception as e:
-                        logger.error("Impossibile inserire il PDF %s nel merge: %s", pdf_path, e)  # noqa: TRY400
+                    except Exception:
+                        logger.exception("Impossibile inserire il PDF %s nel merge", pdf_path)
                         continue
 
                 if len(result) > 0:
@@ -85,5 +85,5 @@ class DocumentProcessor:
                 return False
 
         except Exception:
-            logger.error("Errore critico durante l'unione dei PDF in %s", output_path, exc_info=True)
+            logger.exception("Errore critico durante l'unione dei PDF in %s", output_path)
             return False
