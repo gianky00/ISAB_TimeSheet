@@ -12,7 +12,6 @@ from typing import Any, ClassVar, cast
 import pandas as pd
 
 from src.core import config_manager
-from src.core.config_manager import CONFIG_DIR
 from src.core.database import db_manager
 from src.core.logging import get_logger
 from src.core.sync_tracker import SyncTracker
@@ -22,8 +21,6 @@ logger = get_logger(__name__)
 
 class TimbratureStorage:
     """Manages SQLite database for Timbrature."""
-
-    DB_PATH: ClassVar[Path] = CONFIG_DIR / "data" / "timbrature_Isab.db"
 
     COLUMNS_MAP: ClassVar[dict[str, str]] = {
         "Id Dipendente": "id_dipendente",
@@ -44,16 +41,26 @@ class TimbratureStorage:
         "Sito Timbratura": "sito_timbratura",
     }
 
-    def __init__(self, db_path: Path = DB_PATH):  # noqa: ANN204
-        """Inizializza il database delle timbrature configurando il percorso."""
-        self.db_path = Path(db_path)
-        # Lo schema viene inizializzato centralmente da DatabaseManager durante la Phase 1 (main.py)
+    @property
+    def db_path(self) -> Path:
+        """Restituisce il percorso dinamico del database timbrature."""
+        return db_manager.DB_TIMBRATURE
+
+    def __init__(self, db_path: Path | None = None) -> None:
+        """Inizializza il database delle timbrature."""
+        # Se db_path è fornito esplicitamente, usalo (principalmente per test mirati),
+        # altrimenti usa la proprietà dinamica.
+        self._custom_db_path = db_path
         self._ensure_columns()
+
+    @property
+    def _active_db_path(self) -> Path:
+        return self._custom_db_path if self._custom_db_path else self.db_path
 
     def _ensure_columns(self) -> None:
         """Failsafe per garantire che le colonne critiche esistano (es. codice_fiscale)."""
         try:
-            with db_manager.get_connection(self.db_path) as conn:
+            with db_manager.get_connection(self._active_db_path) as conn:
                 cursor = conn.cursor()
                 cursor.execute("PRAGMA table_info(timbrature)")
                 columns = [row[1] for row in cursor.fetchall()]
@@ -76,17 +83,15 @@ class TimbratureStorage:
                 added = False
                 for col, col_type in critical_cols.items():
                     if col not in columns:
-                        logger.info(f"Failsafe: aggiunta colonna {col} a {self.db_path.name}")
+                        logger.info(f"Failsafe: aggiunta colonna {col} a {self._active_db_path.name}")
                         cursor.execute(f"ALTER TABLE timbrature ADD COLUMN {col} {col_type}")
                         added = True
 
                 if added:
                     conn.commit()
 
-        except Exception as e:
-            from src.core.logging import get_logger  # noqa: PLC0415
-
-            get_logger("storage").error(f"Errore durante ensure_columns in TimbratureStorage: {e}")
+        except Exception:
+            logger.exception("Errore durante ensure_columns in TimbratureStorage")
 
     def search_employees(self, query: str) -> list[dict[str, str]]:
         """
@@ -98,7 +103,7 @@ class TimbratureStorage:
             return []
 
         results: list[dict[str, str]] = []
-        with suppress(Exception), db_manager.get_connection(self.db_path, read_only=True) as conn:
+        with suppress(Exception), db_manager.get_connection(self._active_db_path, read_only=True) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             # Cerca dipendenti unici
@@ -128,7 +133,7 @@ class TimbratureStorage:
         """
         mappings = config_manager.load_config().get("employee_mappings", {})
 
-        with db_manager.get_connection(self.db_path) as conn:
+        with db_manager.get_connection(self._active_db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
 
@@ -157,22 +162,16 @@ class TimbratureStorage:
 
             return employees
 
-    def update_employee_details(  # noqa: ANN201
+    def update_employee_details(
         self,
         nome: str,
         cognome: str,
         reparto: str | None = None,
         cantiere: str | None = None,
-    ):
+    ) -> None:
         """
         Aggiorna le informazioni di reparto e cantiere per un dipendente specifico.
         I dati vengono salvati nel file di configurazione globale.
-
-        Args:
-            nome: Nome del dipendente.
-            cognome: Cognome del dipendente.
-            reparto: Nome del reparto opzionale.
-            cantiere: Nome del cantiere opzionale.
         """
         mappings = config_manager.load_config().get("employee_mappings", {})
 
@@ -197,7 +196,7 @@ class TimbratureStorage:
         """Recupera le timbrature e le arricchisce con i dati da config.json."""
         mappings: dict[str, dict[str, str]] = config_manager.load_config().get("employee_mappings", {})
 
-        with db_manager.get_connection(self.db_path) as conn:
+        with db_manager.get_connection(self._active_db_path) as conn:
             cursor = conn.cursor()
             sql, params = self._build_timb_query(filter_text, limit)
             raw_rows = cursor.execute(sql, params).fetchall()
@@ -261,19 +260,10 @@ class TimbratureStorage:
                 # Caso DD-MM-YYYY
                 if len(parts) == 3:  # noqa: PLR2004
                     d, m, y = parts
-
-                    # Se l'anno è incompleto (es. 202), non normalizzare ancora
-                    # Ritorna il termine originale parziale per permettere like testuale se serve,
-                    # ma probabilmente fallirà il match su YYYY-MM-DD.
-                    # Ma meglio che fallire convertendo in "202-12-05".
                     if len(y) not in (2, 4):
                         return term
-
-                    # Gestione anno 2 cifre
                     if len(y) == 2:  # noqa: PLR2004
                         y = "20" + y
-
-                    # Ricostruisci YYYY-MM-DD
                     return f"{y}-{m.zfill(2)}-{d.zfill(2)}"
 
         return term
@@ -288,7 +278,7 @@ class TimbratureStorage:
     ) -> list[tuple[Any, ...]]:
         final: list[tuple[Any, ...]] = []
         for r in rows:
-            # Indices: 0:data, 1:ingresso, 2:uscita, 3:nome, 4:cognome, ...
+            # Indices: 3:nome, 4:cognome
             nome, cognome = r[3], r[4]
             emp = mappings.get(f"{nome}|{cognome}", {"reparto": "", "cantiere": ""})
             rep, cant = emp.get("reparto", ""), emp.get("cantiere", "")
@@ -306,18 +296,13 @@ class TimbratureStorage:
     def import_excel(self, excel_path: str, log_callback: Callable[[str], None] | None = None) -> bool:
         """Imports an Excel file into the database."""
 
-        def log(m):  # noqa: ANN001, ANN202
+        def log(m: str) -> None:
             """Internal logging helper."""
             log_callback(m) if log_callback else print(m)
 
         with suppress(Exception):
             df = pd.read_excel(excel_path, engine="openpyxl")
             df.columns = df.columns.str.strip()
-
-            missing = [c for c in self.COLUMNS_MAP if c not in df.columns]
-            if missing:
-                log(f"⚠️ Colonne mancanti: {missing}")
-                # return False - Non bloccare se mancano CF o Ore Effettive (vecchi file)
 
             # Filtriamo solo le colonne presenti
             cols_to_use = [c for c in self.COLUMNS_MAP if c in df.columns]
@@ -330,7 +315,7 @@ class TimbratureStorage:
                     df_filtered[db_col] = ""
 
             stats = {"added": 0, "skipped": 0}
-            with db_manager.get_connection(self.db_path) as conn:
+            with db_manager.get_connection(self._active_db_path) as conn:
                 cursor = conn.cursor()
                 for _, row in df_filtered.iterrows():
                     self._process_excel_row(cursor, row, stats, log)
@@ -343,25 +328,23 @@ class TimbratureStorage:
                 module="timbrature",
                 added=stats["added"],
                 removed=0,
-                duration=0.0,  # La durata viene gestita meglio dal bot se necessario, qui mettiamo 0 per ora
+                duration=0.0,
             )
 
             return True
         return False
 
-    def _process_excel_row(self, cursor, row, stats, log):  # noqa: ANN001, ANN202
+    def _process_excel_row(self, cursor: sqlite3.Cursor, row: pd.Series, stats: dict[str, int], log: Callable[[str], None]) -> None:
         try:
             # Data Normalization
             data_val = row.get("data")
             if pd.notna(data_val):
                 if hasattr(data_val, "date") and callable(getattr(data_val, "date", None)):
-                    # Explicitly strip time
                     with suppress(Exception):
                         date_func = data_val.date
                         row["data"] = date_func().isoformat()
                 else:
                     with suppress(Exception):
-                        # Attempt to parse and standardise with Italian format preference
                         dt = pd.to_datetime(data_val, dayfirst=True)
                         row["data"] = dt.date().isoformat()
 
@@ -390,19 +373,18 @@ class TimbratureStorage:
             log(f"Errore riga: {e}")
 
     def get_lists(self) -> dict[str, list[str]]:
-        """Recupera le liste configurate (Reparti, Cantieri) da config.json con migrazione automatica."""
+        """Recupera le liste configurate (Reparti, Cantieri) da config.json."""
         config = config_manager.load_config()
 
         # Logica di migrazione se mancano i dati nel config ma esiste il vecchio file
         if "reparti" not in config or (not config.get("reparti") and not config.get("cantieri")):
-            old_path = self.db_path.parent / "timbrature_lists.json"
+            old_path = self._active_db_path.parent / "timbrature_lists.json"
             if old_path.exists():
                 with suppress(Exception):
                     import json  # noqa: PLC0415
 
                     old_data = json.loads(old_path.read_text(encoding="utf-8"))
                     if isinstance(old_data, dict):
-                        # Migrazione sicura
                         self.save_lists(old_data)
                         return cast("dict[str, list[str]]", old_data)
 
@@ -411,7 +393,7 @@ class TimbratureStorage:
             "cantieri": config.get("cantieri", []),
         }
 
-    def save_lists(self, data: dict[str, list[str]]):  # noqa: ANN201
+    def save_lists(self, data: dict[str, list[str]]) -> None:
         """Salva le liste configurate in config.json."""
         config_manager.set_config_value("reparti", data.get("reparti", []))
         config_manager.set_config_value("cantieri", data.get("cantieri", []))

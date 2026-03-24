@@ -10,9 +10,9 @@ from typing import Any
 
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 from src.core.audit_manager import AuditManager
-from src.core.config_manager import CONFIG_DIR
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.database import db_manager
+from src.core.paths import CONFIG_DIR
 
 logger = logging.getLogger(__name__)
 

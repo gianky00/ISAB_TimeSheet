@@ -12,7 +12,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, ClassVar, Optional
 
-import src.core.config_manager
 from src.core.constants import FileNames
 from src.core.database.migrations.contabilita import (
     mig_contabilita_v1,
@@ -37,6 +36,7 @@ from src.core.database.migrations.timbrature import (
     mig_timbrature_v3,
     mig_timbrature_v4,
 )
+from src.core.paths import DB_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -114,8 +114,8 @@ class DatabaseManager:
         return self._get_db_path(FileNames.DB_AUDIT_LOG)
 
     def _get_db_path(self, filename: str) -> Path:
-        """Resolves the database path using the current CONFIG_DIR."""
-        return src.core.config_manager.CONFIG_DIR / "data" / filename
+        """Resolves the database path using the current DB_DIR."""
+        return DB_DIR / filename
 
     def __new__(cls) -> "DatabaseManager":
         """Pattern Singleton per il gestore database."""
@@ -126,7 +126,7 @@ class DatabaseManager:
 
     def _ensure_dirs(self) -> None:
         """Ensures the data directory exists."""
-        (src.core.config_manager.CONFIG_DIR / "data").mkdir(parents=True, exist_ok=True)
+        DB_DIR.mkdir(parents=True, exist_ok=True)
 
     @contextmanager
     def get_connection(
@@ -224,8 +224,8 @@ class DatabaseManager:
         try:
             res = conn.execute("PRAGMA user_version").fetchone()
             return int(res[0]) if res else 0
-        except Exception as e:
-            logger.error(f"Errore recupero versione database: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Errore recupero versione database")
             return 0
 
     def _set_db_version(self, conn: sqlite3.Connection, version: int) -> None:

@@ -3,9 +3,12 @@ SyncroJob - Bot Parameters Widget
 Widget riutilizzabile per la configurazione dei parametri comuni a tutti i bot (Fornitore, Date, Percorso).
 """
 
+import os
 from contextlib import suppress
+from pathlib import Path
+from typing import Any
 
-from PyQt6.QtCore import (  # type: ignore[attr-defined]
+from PyQt6.QtCore import (
     QDate,
     QEasingCurve,
     QPropertyAnimation,
@@ -25,12 +28,14 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.core.constants import Icons
-from src.gui.styles import COLORS
+from src.gui.styles import COLORS, COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
 from src.gui.widgets.core_widgets import (
     FilterComboBox,
     IconButton,
     StandardInput,
 )
+from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .calendar_date_edit import CalendarDateEdit
@@ -66,24 +71,24 @@ class HoverPulseFrame(QFrame):
         """Restituisce il valore corrente della pulsazione per l'animazione del bordo."""
         return self._pulse_val
 
-    @pulse_value.setter  # type: ignore[no-redef]
+    @pulse_value.setter
     def pulse_value(self, v: float) -> None:
         """Imposta il valore della pulsazione e forza il ridisegno del widget."""
         self._pulse_val = v
         self.update()
 
-    def enterEvent(self, event) -> None:  # noqa: ANN001
+    def enterEvent(self, event: Any) -> None:  # noqa: ANN401
         """Avvia l'animazione di pulsazione del bordo all'ingresso del mouse."""
         self._anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event) -> None:  # noqa: ANN001
+    def leaveEvent(self, event: Any) -> None:  # noqa: ANN401
         """Interrompe l'animazione e ripristina lo stato solido all'uscita del mouse."""
         self._anim.stop()
-        self.pulse_value = 1.0  # type: ignore[method-assign]
+        self.pulse_value = 1.0
         super().leaveEvent(event)
 
-    def paintEvent(self, event) -> None:  # noqa: ANN001
+    def paintEvent(self, event: Any) -> None:  # noqa: ANN401
         """Disegna il bordo inferiore pulsante con il colore di accento configurato."""
         super().paintEvent(event)
         painter = QPainter(self)
@@ -138,7 +143,7 @@ class BotParametersWidget(QWidget):
         self._setup_ui()
         self.refresh_fornitori()
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Configura il layout orizzontale e i componenti interni con stile Neon & Shadow."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 15)
@@ -147,7 +152,6 @@ class BotParametersWidget(QWidget):
         # --- CONTAINER PRINCIPALE (La "Card" Modern Design) ---
         self.container = QFrame()
         self.container.setObjectName("filterBar")
-        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE  # noqa: PLC0415
 
         self.container.setStyleSheet(f"""
             QFrame#filterBar {{
@@ -157,28 +161,38 @@ class BotParametersWidget(QWidget):
             }}
         """)
 
-        container_layout = QHBoxLayout(self.container)
-        container_layout.setContentsMargins(15, 10, 15, 10)
-        container_layout.setSpacing(20)
+        self.main_row_layout = QHBoxLayout(self.container)
+        self.main_row_layout.setContentsMargins(15, 10, 15, 10)
+        self.main_row_layout.setSpacing(20)
 
-        # --- Elementi: Fornitore, Date, Destinazione ---
-        # Fornitore
-        vbox_forn = QVBoxLayout()
-        vbox_forn.setSpacing(4)
-        lbl_forn = QLabel("FORNITORE")
-        lbl_forn.setStyleSheet(LABEL_MUTED)
-        vbox_forn.addWidget(lbl_forn)
+        self._setup_fornitore_section()
+        self._add_divider()
+        self._setup_date_section()
 
-        hbox_forn = QHBoxLayout()
-        hbox_forn.setSpacing(8)
+        if self.show_dest_path:
+            self._add_divider()
+            self._setup_dest_path_section()
+
+        self.main_row_layout.addStretch()
+        main_layout.addWidget(self.container)
+
+    def _setup_fornitore_section(self) -> None:
+        """Configura la sezione di selezione fornitore."""
+        vbox = QVBoxLayout()
+        vbox.setSpacing(4)
+        lbl = QLabel("FORNITORE")
+        lbl.setStyleSheet(LABEL_MUTED)
+        vbox.addWidget(lbl)
+
+        hbox = QHBoxLayout()
+        hbox.setSpacing(8)
         self.fornitore_combo = FilterComboBox()
         self.fornitore_combo.setMinimumHeight(38)
         self.fornitore_combo.setMinimumWidth(200)
         self.fornitore_combo.setStyleSheet(COMBOBOX_STYLE)
         self.fornitore_combo.currentIndexChanged.connect(self.changed.emit)
-        hbox_forn.addWidget(self.fornitore_combo)
+        hbox.addWidget(self.fornitore_combo)
 
-        # Pulsante Settings
         self.settings_btn = IconButton()
         self.settings_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), COLORS["text_dark"]))
         self.settings_btn.setIconSize(QSize(20, 20))
@@ -186,19 +200,13 @@ class BotParametersWidget(QWidget):
         self.settings_btn.setToolTip("Gestisci fornitori")
         self.settings_btn.clicked.connect(self.settings_requested.emit)
         self.settings_btn.setStyleSheet(self._get_icon_btn_style())
-        hbox_forn.addWidget(self.settings_btn)
+        hbox.addWidget(self.settings_btn)
 
-        vbox_forn.addLayout(hbox_forn)
-        container_layout.addLayout(vbox_forn)
+        vbox.addLayout(hbox)
+        self.main_row_layout.addLayout(vbox)
 
-        # Divisore
-        v_line1 = QFrame()
-        v_line1.setFrameShape(QFrame.Shape.VLine)
-        v_line1.setFrameShadow(QFrame.Shadow.Plain)
-        v_line1.setStyleSheet(f"color: {COLORS['border_light']};")
-        container_layout.addWidget(v_line1)
-
-        # Data Da
+    def _setup_date_section(self) -> None:
+        """Configura la sezione delle date."""
         vbox_da = QVBoxLayout()
         vbox_da.setSpacing(4)
         lbl_da = QLabel("DATA INIZIO")
@@ -206,12 +214,11 @@ class BotParametersWidget(QWidget):
         vbox_da.addWidget(lbl_da)
         self.date_da = CalendarDateEdit()
         self.date_da.setMinimumHeight(38)
-        self.date_da.setStyleSheet(COMBOBOX_STYLE)  # CalendarDateEdit inherits styles
+        self.date_da.setStyleSheet(COMBOBOX_STYLE)
         self.date_da.dateChanged.connect(self.changed.emit)
         vbox_da.addWidget(self.date_da)
-        container_layout.addLayout(vbox_da)
+        self.main_row_layout.addLayout(vbox_da)
 
-        # Data A (opzionale)
         if self.show_date_range:
             vbox_a = QVBoxLayout()
             vbox_a.setSpacing(4)
@@ -223,68 +230,62 @@ class BotParametersWidget(QWidget):
             self.date_a.setStyleSheet(COMBOBOX_STYLE)
             self.date_a.dateChanged.connect(self.changed.emit)
             vbox_a.addWidget(self.date_a)
-            container_layout.addLayout(vbox_a)
+            self.main_row_layout.addLayout(vbox_a)
 
-        # Destinazione (opzionale)  # noqa: ERA001
-        if self.show_dest_path:
-            # Divisore
-            v_line2 = QFrame()
-            v_line2.setFrameShape(QFrame.Shape.VLine)
-            v_line2.setFrameShadow(QFrame.Shadow.Plain)
-            v_line2.setStyleSheet(f"color: {COLORS['border_light']};")
-            container_layout.addWidget(v_line2)
+    def _setup_dest_path_section(self) -> None:
+        """Configura la sezione del percorso di destinazione."""
+        vbox = QVBoxLayout()
+        vbox.setSpacing(4)
+        lbl = QLabel("CARTELLA DESTINAZIONE")
+        lbl.setStyleSheet(LABEL_MUTED)
+        vbox.addWidget(lbl)
 
-            vbox_dest = QVBoxLayout()
-            vbox_dest.setSpacing(4)
-            lbl_dest = QLabel("CARTELLA DESTINAZIONE")
-            lbl_dest.setStyleSheet(LABEL_MUTED)
-            vbox_dest.addWidget(lbl_dest)
+        hbox = QHBoxLayout()
+        hbox.setSpacing(8)
+        self.dest_path_edit = StandardInput()
+        self.dest_path_edit.setPlaceholderText("Download utente (default)")
+        self.dest_path_edit.setReadOnly(True)
+        self.dest_path_edit.setMinimumWidth(200)
+        self.dest_path_edit.setMinimumHeight(38)
+        self.dest_path_edit.setStyleSheet(LINEEDIT_STYLE)
+        self.dest_path_edit.textChanged.connect(self.changed.emit)
+        hbox.addWidget(self.dest_path_edit)
 
-            hbox_dest = QHBoxLayout()
-            hbox_dest.setSpacing(8)
-            self.dest_path_edit = StandardInput()
-            self.dest_path_edit.setPlaceholderText("Download utente (default)")
-            self.dest_path_edit.setReadOnly(True)
-            self.dest_path_edit.setMinimumWidth(200)
-            self.dest_path_edit.setMinimumHeight(38)
-            self.dest_path_edit.setStyleSheet(LINEEDIT_STYLE)
-            self.dest_path_edit.textChanged.connect(self.changed.emit)
-            hbox_dest.addWidget(self.dest_path_edit)
+        self.browse_btn = IconButton()
+        self.browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
+        self.browse_btn.setIconSize(QSize(20, 20))
+        self.browse_btn.setFixedSize(38, 38)
+        self.browse_btn.setToolTip("Seleziona cartella")
+        self.browse_btn.clicked.connect(self._browse_path)
+        self.browse_btn.setStyleSheet(self._get_icon_btn_style())
+        hbox.addWidget(self.browse_btn)
 
-            self.browse_btn = IconButton()
-            self.browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), COLORS["text_dark"]))
-            self.browse_btn.setIconSize(QSize(20, 20))
-            self.browse_btn.setFixedSize(38, 38)
-            self.browse_btn.setToolTip("Seleziona cartella")
-            self.browse_btn.clicked.connect(self._browse_path)
-            self.browse_btn.setStyleSheet(self._get_icon_btn_style())
-            hbox_dest.addWidget(self.browse_btn)
+        self.open_btn = ModernButton(
+            "APRI", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL
+        )
+        self.open_btn.setFixedSize(60, 38)
+        self.open_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS["bg_white"]};
+                color: {COLORS["text_dark"]};
+                border: 1px solid {COLORS["border_medium"]};
+                font-weight: bold;
+            }}
+            QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
+        """)
+        self.open_btn.setToolTip("Apri cartella nel file system")
+        self.open_btn.clicked.connect(self._open_folder)
+        hbox.addWidget(self.open_btn)
+        vbox.addLayout(hbox)
+        self.main_row_layout.addLayout(vbox)
 
-            from src.gui.widgets.modern_button import ModernButton  # noqa: PLC0415
-
-            self.open_btn = ModernButton(
-                "APRI", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL
-            )
-            self.open_btn.setFixedSize(60, 38)
-            self.open_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {COLORS["bg_white"]};
-                    color: {COLORS["text_dark"]};
-                    border: 1px solid {COLORS["border_medium"]};
-                    font-weight: bold;
-                }}
-                QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
-            """)
-            self.open_btn.setToolTip("Apri cartella nel file system")
-            self.open_btn.clicked.connect(self._open_folder)
-            hbox_dest.addWidget(self.open_btn)
-            vbox_dest.addLayout(hbox_dest)
-            container_layout.addLayout(vbox_dest)
-
-        container_layout.addStretch()
-        self.main_row_layout = container_layout  # Referenza per add_widget_to_row
-
-        main_layout.addWidget(self.container)
+    def _add_divider(self) -> None:
+        """Aggiunge una linea di divisione verticale."""
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.VLine)
+        line.setFrameShadow(QFrame.Shadow.Plain)
+        line.setStyleSheet(f"color: {COLORS['border_light']};")
+        self.main_row_layout.addWidget(line)
 
     def add_widget_to_row(self, widget: QWidget) -> None:
         """
@@ -329,9 +330,6 @@ class BotParametersWidget(QWidget):
 
     def _open_folder(self) -> None:
         """Apre la cartella di destinazione nell'esplora risorse di sistema."""
-        import os  # noqa: PLC0415
-        from pathlib import Path  # noqa: PLC0415
-
         path_str = self.dest_path_edit.text()
         if not path_str:
             path_str = str(Path.home() / "Downloads")
@@ -341,12 +339,8 @@ class BotParametersWidget(QWidget):
             path.mkdir(parents=True, exist_ok=True)
 
         try:
-            import os  # noqa: PLC0415
-
             os.startfile(str(path))  # noqa: S606
         except Exception:
-            from src.gui.widgets.toast import ToastManager  # noqa: PLC0415
-
             ToastManager.instance().show(f"Impossibile aprire la cartella: {path}", "error")
 
     def refresh_fornitori(self) -> None:

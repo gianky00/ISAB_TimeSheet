@@ -16,6 +16,8 @@ from typing import TYPE_CHECKING
 
 import psutil
 
+from src.core.constants import BrowserConfig
+from src.core.paths import CONFIG_DIR
 from src.utils.resource_manager import ResourceManager
 
 if TYPE_CHECKING:
@@ -214,10 +216,7 @@ def cleanup_bot_processes() -> None:
     Termina forzatamente le istanze 'zombie' di Chrome e Chromedriver legate all'applicazione.
     Rimuove i file di lock del profilo per prevenire errori di sessione (SessionNotCreated).
     """
-    from src.core.config_manager import CONFIG_DIR  # noqa: PLC0415
-    from src.core.constants import BrowserConfig  # noqa: PLC0415
-
-    logger = logging.getLogger("Cleanup")
+    cleanup_logger = logging.getLogger("Cleanup")
 
     # 1. Terminazione Chromedriver
     for proc in psutil.process_iter(["name"]):
@@ -244,7 +243,7 @@ def cleanup_bot_processes() -> None:
             if f_path.exists():
                 with suppress(Exception):
                     f_path.unlink()
-                    logger.info(f"Removed stale lock file: {lock_file}")
+                    cleanup_logger.info(f"Removed stale lock file: {lock_file}")
 
 
 def get_colored_icon(icon_path: str, color: str = "#000000") -> "QIcon":

@@ -7,18 +7,27 @@ import json
 import os
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Final
 
 from src.core import config_manager
-from src.core.config_manager import CONFIG_DIR
 from src.core.constants import Icons
+from src.core.paths import DB_DIR
 
 
 class CertificatiEngine:
     """Motore logico per la gestione dei certificati campione."""
 
-    EXCLUSIONS_FILE: Path = CONFIG_DIR / "data" / "certificati_exclusions.json"
+    # Costanti per il calcolo delle scadenze
+    WARNING_THRESHOLD: Final[int] = 15
+    EXPIRING_THRESHOLD: Final[int] = 30
+    FAULTY_MARKER: Final[int] = -9999
 
-    def __init__(self):  # noqa: ANN204
+    @property
+    def exclusions_file(self) -> Path:
+        """Restituisce il percorso dinamico del file delle esclusioni."""
+        return DB_DIR / "certificati_exclusions.json"
+
+    def __init__(self) -> None:
         self._exclusions: set[str] = set()
         self._print_exclusions: set[str] = set()
         self.load_exclusions()
@@ -26,8 +35,8 @@ class CertificatiEngine:
     def load_exclusions(self) -> set[str]:
         """Carica le matricole escluse dal monitoraggio e dalla stampa."""
         try:
-            if self.EXCLUSIONS_FILE.exists():
-                with self.EXCLUSIONS_FILE.open("r", encoding="utf-8") as f:
+            if self.exclusions_file.exists():
+                with self.exclusions_file.open("r", encoding="utf-8") as f:
                     data = json.load(f)
                     self._exclusions = {str(x).strip() for x in data.get("excluded_matricole", [])}
                     self._print_exclusions = {
@@ -48,8 +57,8 @@ class CertificatiEngine:
             if print_exclusions is not None:
                 self._print_exclusions = print_exclusions
 
-            self.EXCLUSIONS_FILE.parent.mkdir(parents=True, exist_ok=True)
-            with self.EXCLUSIONS_FILE.open("w", encoding="utf-8") as f:
+            self.exclusions_file.parent.mkdir(parents=True, exist_ok=True)
+            with self.exclusions_file.open("w", encoding="utf-8") as f:
                 json.dump(
                     {
                         "excluded_matricole": list(self._exclusions),
@@ -59,12 +68,13 @@ class CertificatiEngine:
                     indent=2,
                     ensure_ascii=False,
                 )
-            return True  # noqa: TRY300
         except Exception:
             return False
+        else:
+            return True
 
-    @staticmethod
-    def calculate_days_and_status(scadenza_str: str) -> tuple[int | None, str]:  # noqa: PLR0911
+    @classmethod
+    def calculate_days_and_status(cls, scadenza_str: str) -> tuple[int | None, str]:
         """
         Calcola i giorni alla scadenza e determina l'icona di stato.
         Returns: (giorni_alla_scadenza, icona_pallino)
@@ -73,7 +83,7 @@ class CertificatiEngine:
             return None, Icons.STATUS_DOT_GRAY
 
         if "GUASTO" in scadenza_str.upper():
-            return -9999, Icons.STATUS_DOT_RED
+            return cls.FAULTY_MARKER, Icons.STATUS_DOT_RED
 
         try:
             scadenza_date = datetime.strptime(scadenza_str, "%d/%m/%Y").replace(tzinfo=UTC)
@@ -81,29 +91,33 @@ class CertificatiEngine:
             delta = scadenza_date - today
             days = delta.days
 
-            if days < 0:
-                return days, Icons.STATUS_DOT_RED
-            if 0 <= days <= 15:  # noqa: PLR2004
-                return days, Icons.STATUS_DOT_ORANGE
-            if 16 <= days <= 30:  # noqa: PLR2004
-                return days, Icons.STATUS_DOT_YELLOW
-
-            return days, Icons.STATUS_DOT_GREEN  # noqa: TRY300
+            return days, cls._get_status_icon(days)
         except Exception:
             return None, Icons.STATUS_DOT_GRAY
 
-    @staticmethod
-    def format_days_text_short(days: int | None) -> str:
+    @classmethod
+    def _get_status_icon(cls, days: int) -> str:
+        """Determina l'icona basandosi sui giorni rimasti."""
+        if days < 0:
+            return Icons.STATUS_DOT_RED
+        if days <= cls.WARNING_THRESHOLD:
+            return Icons.STATUS_DOT_ORANGE
+        if days <= cls.EXPIRING_THRESHOLD:
+            return Icons.STATUS_DOT_YELLOW
+        return Icons.STATUS_DOT_GREEN
+
+    @classmethod
+    def format_days_text_short(cls, days: int | None) -> str:
         """Ritorna una rappresentazione testuale breve dello stato scadenze."""
-        if days == -9999:  # noqa: PLR2004
+        if days == cls.FAULTY_MARKER:
             return "❌ STRUMENTO GUASTO"
         if days is None:
             return "N/D"
         if days < 0:
             return f"🔴 Scaduto ({abs(days)}gg fa)"
-        if 0 <= days <= 15:  # noqa: PLR2004
+        if days <= cls.WARNING_THRESHOLD:
             return f"🟠 Scade tra {days}gg"
-        if 16 <= days <= 30:  # noqa: PLR2004
+        if days <= cls.EXPIRING_THRESHOLD:
             return f"🟡 Scade tra {days}gg"
         return f"✅ Attivo ({days}gg rim.)"
 
@@ -114,18 +128,17 @@ class CertificatiEngine:
             return ""
         try:
             f_val = float(val)
-            # Moltiplichiamo per 100 per avere la percentuale
             perc = f_val * 100
-            # Formattiamo con virgola come separatore decimale, rimuovendo ,00 se superfluo
             res = f"{perc:.4f}".rstrip(".0").replace(".", ",")
-            return f"{res}%" if res else "0%"  # noqa: TRY300
         except (ValueError, TypeError):
             return str(val)
+        else:
+            return f"{res}%" if res else "0%"
 
     @staticmethod
     def find_certificate_path(cert_number: str) -> str | None:
         """Cerca il file PDF del certificato nel server in modo ricorsivo."""
-        cert_root = config_manager.load_config().get("certificati_root_path", "")
+        cert_root = config_manager.get_config_value("certificati_root_path", "")
         if not cert_root or not Path(cert_root).exists():
             return None
 
@@ -138,7 +151,6 @@ class CertificatiEngine:
 
         for root, _, files in os.walk(cert_root):
             for file in files:
-                # Match esatto o parziale intelligente
                 is_match = any(file.lower() == p.lower() for p in search_patterns)
                 is_partial = cert_number.lower() in file.lower() and file.lower().endswith(".pdf")
                 if is_match or is_partial:

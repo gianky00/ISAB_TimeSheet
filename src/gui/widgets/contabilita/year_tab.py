@@ -8,8 +8,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.core.config_manager import CONFIG_DIR
 from src.core.contabilita_queries import ContabilitaQueries
+from src.core.paths import CONFIG_DIR
 from src.core.utils.formatters import format_date_it
 from src.gui.formatters import (
     FastTableModel,

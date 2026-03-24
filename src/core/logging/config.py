@@ -3,9 +3,10 @@ Configurazione sistema di logging.
 """
 
 from pathlib import Path
+from typing import Final
 
-from src.core import config_manager
 from src.core.constants import FileNames
+from src.core.paths import LOGS_DIR
 
 
 class LoggingConfig:
@@ -13,38 +14,38 @@ class LoggingConfig:
 
     def __init__(self) -> None:
         # Base directory: C:\Users\gianc\AppData\Local\SyncroJob\logs
-        self.base_dir = config_manager.CONFIG_DIR / "logs"
+        self.base_dir: Final[Path] = LOGS_DIR
 
         # Sottodirectory per tipo log
-        self.application_dir = self.base_dir / "application"
-        self.errors_dir = self.base_dir / "errors"
-        self.metrics_dir = self.base_dir / "metrics"
-        self.bots_dir = self.base_dir / "bots"
+        self.application_dir: Final[Path] = self.base_dir / "application"
+        self.errors_dir: Final[Path] = self.base_dir / "errors"
+        self.metrics_dir: Final[Path] = self.base_dir / "metrics"
+        self.bots_dir: Final[Path] = self.base_dir / "bots"
 
         # File paths
-        self.json_log_file = self.application_dir / FileNames.LOG_JSON
-        self.human_log_file = self.application_dir / FileNames.LOG_HUMAN
-        self.errors_log_file = self.errors_dir / FileNames.LOG_ERRORS
+        self.json_log_file: Final[Path] = self.application_dir / FileNames.LOG_JSON
+        self.human_log_file: Final[Path] = self.application_dir / FileNames.LOG_HUMAN
+        self.errors_log_file: Final[Path] = self.errors_dir / FileNames.LOG_ERRORS
 
         # Rotation settings
-        self.rotation_size = "10 MB"  # Rotazione quando file raggiunge 10MB
-        self.rotation_time = "00:00"  # Rotazione giornaliera a mezzanotte
-        self.retention = "30 days"  # Mantieni log per 30 giorni
-        self.errors_retention = "90 days"  # Errori mantenuti 90 giorni
-        self.compression = "zip"  # Comprimi log vecchi
+        self.rotation_size: Final[str] = "10 MB"  # Rotazione quando file raggiunge 10MB
+        self.rotation_time: Final[str] = "00:00"  # Rotazione giornaliera a mezzanotte
+        self.retention: Final[str] = "30 days"  # Mantieni log per 30 giorni
+        self.errors_retention: Final[str] = "90 days"  # Errori mantenuti 90 giorni
+        self.compression: Final[str] = "zip"  # Comprimi log vecchi
 
         # Performance settings
-        self.performance_threshold_ms = 5000  # Alert se operazione > 5sec
-        self.sampling_rate = 1.0  # 1.0 = log tutto (100%), 0.01 = log 1%
+        self.performance_threshold_ms: Final[int] = 5000  # Alert se operazione > 5sec
+        self.sampling_rate: Final[float] = 1.0  # 1.0 = log tutto (100%), 0.01 = log 1%
 
         # Console output
-        self.console_enabled = True
-        self.console_level = "DEBUG"
+        self.console_enabled: Final[bool] = True
+        self.console_level: Final[str] = "DEBUG"
 
         # Levels
-        self.default_level = "INFO"
-        self.file_level = "DEBUG"
-        self.errors_level = "ERROR"
+        self.default_level: Final[str] = "INFO"
+        self.file_level: Final[str] = "DEBUG"
+        self.errors_level: Final[str] = "ERROR"
 
     def ensure_directories(self) -> None:
         """Crea tutte le directory necessarie."""

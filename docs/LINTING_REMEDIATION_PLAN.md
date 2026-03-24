@@ -46,4 +46,7 @@ Il layer della GUI (`src/gui`) interagisce massicciamente con PyQt, rendendo la 
 *   **[Completata]** Fase 1: Riduzione rumore test e GUI tramite configurazione e auto-fix. (~1800 warning rimossi).
 *   **[Completata]** Fase 2 (Parte 1): Remediazione completa `src/utils/`. Tutti i file in questa directory sono ora 100% Type-Safe (MyPy Strict) e Ruff-compliant.
 *   **[Completata]** Fase 2 (Parte 2): Remediazione DTOs e core engines (`src/core/stats/`, `src/core/logging/`, `src/core/updater/`, `src/core/pdl/pdl_dto.py`, `src/core/dipendenti/employee_dto.py`).
-*   **[In corso]** Fase 3: Architettura Modulare e Import (`PLC0415`, `PLR0915`) - Risoluzione dipendenze circolari e scomposizione moduli.
+*   **[In corso]** Fase 3: Architettura Modulare e Import (`PLC0415`, `PLR0915`).
+    *   Creato `src/core/paths.py` per centralizzare la gestione dei percorsi ed eliminare dipendenze circolari tra `utils` e `core`.
+    *   Bonifica `src/gui/main_window/main.py`, `NavigationController`, `WorkflowController` e `SidebarWidget` (scomposizione layout e rimozione import locali).
+    *   Bonifica `BotParametersWidget` (scomposizione e typing).

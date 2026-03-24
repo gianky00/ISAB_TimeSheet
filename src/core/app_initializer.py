@@ -53,7 +53,7 @@ class AppInitializer:
             logger.info(f"Engine: Pandas {pandas.__version__} | Numpy {numpy.__version__}")
 
             step("Validazione Path di Sistema...", 13)
-            from src.core.config_manager import CONFIG_DIR  # noqa: PLC0415
+            from src.core.paths import CONFIG_DIR  # noqa: PLC0415
 
             CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 

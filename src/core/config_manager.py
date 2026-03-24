@@ -9,13 +9,11 @@ import json
 import os
 import threading
 from contextlib import suppress
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from platformdirs import user_data_dir
-
-from src.core.constants import FileNames
+from src.core.paths import BASE_DIR, CONFIG_DIR, CONFIG_FILE
 from src.core.version import __version__
 
 # Modular imports
@@ -31,12 +29,6 @@ from .config.migration import (
     migrate_legacy_keys,
 )
 from .config.security import decrypt_all_credentials, encrypt_all_credentials
-
-# Path del file di configurazione
-APP_NAME = "SyncroJob"
-CONFIG_DIR = Path(user_data_dir(APP_NAME, appauthor=False))
-CONFIG_FILE = CONFIG_DIR / FileNames.CONFIG
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 _config_cache: dict[str, Any] | None = None
 _config_lock = threading.RLock()
@@ -98,8 +90,7 @@ def _load_base_config() -> dict[str, Any]:
     for key, default_val in DEFAULT_CONFIG.items():
         env_key = f"{prefix}{key.upper()}"
         env_val = os.environ.get(env_key)
-
-        if env_val is not None:
+        if env_val:
             if isinstance(default_val, bool):
                 config[key] = env_val.lower() in ("true", "1", "yes")
             elif isinstance(default_val, int):
@@ -107,187 +98,138 @@ def _load_base_config() -> dict[str, Any]:
                     config[key] = int(env_val)
             else:
                 config[key] = env_val
-
     return config
 
 
-def save_config(config: dict[str, Any]) -> None:
-    """Salva la configurazione in modo atomico."""
+def save_config(config: dict[str, Any]) -> bool:
+    """Salva la configurazione su file, criptando le credenziali prima del write."""
     global _config_cache  # noqa: PLW0603
-    with _config_lock:
-        ensure_config_dir()
+    try:
         config_to_save = copy.deepcopy(config)
 
-        # Cripta credenziali prima del salvataggio
+        # Cripta credenziali per il salvataggio
         encrypt_all_credentials(config_to_save)
 
-        try:
-            _atomic_write_json(config_to_save, CONFIG_FILE)
-            _config_cache = copy.deepcopy(config)
-        except Exception as e:
-            print(f"Errore critico durante il salvataggio: {e}")
+        # Scrittura atomica
+        if _atomic_write_json(CONFIG_FILE, config_to_save):
+            with _config_lock:
+                _config_cache = copy.deepcopy(config)
+            return True
+    except Exception as e:
+        print(f"Error saving config: {e}")
+        return False
+    else:
+        return False
 
 
-def _atomic_write_json(data: dict[str, Any], target_path: Path) -> None:
-    """Scrittura atomica del file JSON."""
-    temp_file = target_path.with_suffix(".tmp")
+def _atomic_write_json(path: Path, data: dict[str, Any]) -> bool:
+    """Scrive un file JSON in modo atomico usando un file temporaneo."""
+    temp_path = path.with_suffix(".tmp")
     try:
-        with temp_file.open("w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-            f.flush()
-            os.fsync(f.fileno())
-        temp_file.replace(target_path)
-    finally:
-        with suppress(Exception):
-            if temp_file.exists():
-                temp_file.unlink()
+        ensure_config_dir()
+        with open(temp_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+        # Flush e sync per essere sicuri che i dati siano su disco
+        os.fsync(f.fileno())
 
-
-# Public API helpers
-_migrate_legacy_config = check_and_migrate_local_config
+        if path.exists():
+            os.replace(temp_path, path)
+        else:
+            temp_path.rename(path)
+    except Exception as e:
+        print(f"Atomic write failed for {path}: {e}")
+        if temp_path.exists():
+            with suppress(OSError):
+                temp_path.unlink()
+        return False
+    else:
+        return True
 
 
 def get_config_value(key: str, default: Any = None) -> Any:  # noqa: ANN401
-    """Ottiene un valore dalla configurazione."""
+    """Recupera un singolo valore dalla configurazione."""
     return load_config().get(key, default)
 
 
-def set_config_value(key: str, value: Any) -> None:  # noqa: ANN401
-    """Imposta un valore nella configurazione."""
-    set_config_values({key: value})
-
-
-def set_config_values(updates: dict[str, Any]) -> None:
-    """
-    Aggiorna più valori nella configurazione in un'unica operazione atomica.
-    Riduce il numero di operazioni di cifratura e IO su disco.
-    """
+def set_config_value(key: str, value: Any) -> bool:  # noqa: ANN401
+    """Imposta e salva un singolo valore nella configurazione."""
     config = load_config()
-    config.update(updates)
-    save_config(config)
+    config[key] = value
+    return save_config(config)
 
 
-def get_accounts() -> list[dict[str, Any]]:
-    """Restituisce la lista degli account configurati."""
-    return get_config_value("accounts", [])  # type: ignore[no-any-return]
+# --- ACCOUNT MANAGEMENT HELPERS ---
 
 
-def add_account(username: str, password: str, is_default: bool = False, account_type: str = "") -> None:
-    """Aggiunge o aggiorna un account."""
+def add_account(bot_type: str, account_data: dict[str, Any]) -> bool:
+    """Aggiunge un nuovo account alla configurazione."""
     config = load_config()
-    config = add_account_logic(config, username, password, is_default, account_type)
-    save_config(config)
+    if add_account_logic(config, bot_type, account_data):
+        return save_config(config)
+    return False
 
 
-def remove_account(username: str) -> None:
-    """Rimuove un account e le credenziali associate."""
+def remove_account(bot_type: str, username: str) -> bool:
+    """Rimuove un account dalla configurazione."""
     config = load_config()
-    config = remove_account_logic(config, username)
-    save_config(config)
+    if remove_account_logic(config, bot_type, username):
+        return save_config(config)
+    return False
 
 
-def set_default_account(username: str) -> None:
-    """Imposta un account come default."""
+def set_default_account(bot_type: str, username: str) -> bool:
+    """Imposta l'account di default per un tipo di bot."""
     config = load_config()
-    if set_default_account_logic(config, username):
-        save_config(config)
+    if set_default_account_logic(config, bot_type, username):
+        return save_config(config)
+    return False
 
 
-def switch_default_account(service_type: str = "isab") -> tuple[bool, str | None]:
-    """Switcha l'account di default in modo circolare."""
+def switch_default_account(bot_type: str) -> bool:
+    """Ruota l'account di default per un tipo di bot (Round Robin)."""
     config = load_config()
-    success, new_user = switch_default_account_logic(config, service_type)
-    if success:
-        save_config(config)
-    return success, new_user
+    if switch_default_account_logic(config, bot_type):
+        return save_config(config)
+    return False
 
 
-def get_default_account() -> dict[str, str] | None:
-    """Restituisce l'account di default."""
-    accounts = get_accounts()
+def get_default_account(bot_type: str) -> dict[str, Any] | None:
+    """Restituisce i dati dell'account di default per un tipo di bot."""
+    config = load_config()
+    acc_key = "accounts" if bot_type == "isab" else "safework_accounts"
+    accounts = config.get(acc_key, [])
     if not accounts:
         return None
-    return next((acc for acc in accounts if acc.get("default")), accounts[0])
+
+    # Se c'è solo un account, è quello di default
+    if len(accounts) == 1:
+        return accounts[0]
+
+    # Altrimenti cerchiamo il flag is_default
+    for acc in accounts:
+        if acc.get("is_default"):
+            return acc
+
+    # Se nessun account ha il flag, restituiamo il primo
+    return accounts[0]
 
 
-def get_data_path() -> str:
-    """Restituisce il percorso base per i dati."""
-    data_dir = CONFIG_DIR / "data"
-    data_dir.mkdir(parents=True, exist_ok=True)
-    return str(data_dir)
-
-
-def get_logs_path() -> str:
-    """Restituisce il percorso per i file di log."""
-    logs_dir = CONFIG_DIR / "logs"
-    logs_dir.mkdir(parents=True, exist_ok=True)
-    return str(logs_dir)
-
-
-def get_download_path() -> str:
-    """Restituisce il path di download configurato."""
-    path_str: str = get_config_value("download_path", "")
-    if path_str:
-        path = Path(path_str)
-        if path.is_dir():
-            return str(path)
-
-    default_download = Path.home() / "Downloads"
-    if default_download.exists():
-        return str(default_download)
-    return str(Path.home())
-
-
-def export_configuration(export_path: str) -> tuple[bool, str]:
-    """Esporta la configurazione corrente in un file JSON."""
+def import_config_from_file(file_path: Path) -> tuple[bool, str]:
+    """Importa una configurazione da un file esterno (backup)."""
     try:
-        config = load_config()
-        export_data = copy.deepcopy(config)
-        export_data["_meta"] = {
-            "exported_at": str(datetime.now(UTC)),
-            "app_version": __version__,
-            "type": "syncrojob_config_backup",
-        }
-        Path(export_path).write_text(json.dumps(export_data, indent=4, ensure_ascii=False), encoding="utf-8")
-        return True, "Esportazione completata con successo."  # noqa: TRY300
-    except Exception as e:
-        return False, f"Errore durante l'esportazione: {e}"
+        new_data = json.loads(file_path.read_text(encoding="utf-8"))
 
+        # Backup attuale
+        if CONFIG_FILE.exists():
+            backup_file = CONFIG_DIR / f"config_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            CONFIG_FILE.rename(backup_file)
 
-def reset_to_defaults() -> None:
-    """Ripristina la configurazione predefinita."""
-    global _config_cache  # noqa: PLW0603
-    with _config_lock:
-        _config_cache = copy.deepcopy(DEFAULT_CONFIG)
-        save_config(_config_cache)
-
-
-def import_configuration(import_path: str | Path) -> tuple[bool, str]:
-    """Importa la configurazione da un file JSON."""
-    try:
-        path = Path(import_path)
-        if not path.exists():
-            return False, "File di importazione non trovato."
-
-        new_config = json.loads(path.read_text(encoding="utf-8"))
-        critical_keys = ["accounts", "browser_timeout", "fornitori"]
-        if not any(k in new_config for k in critical_keys):
-            return False, "Il file selezionato non sembra una configurazione valida di SyncroJob."
-
-        new_config.pop("_meta", None)
-        backup_file = CONFIG_DIR / f"config_backup_pre_import_{int(datetime.now(UTC).timestamp())}.json"
-        current_config = load_config()
-        backup_file.write_text(json.dumps(current_config, indent=2), encoding="utf-8")
-
-        merged_config = copy.deepcopy(DEFAULT_CONFIG)
-        merged_config.update(new_config)
-        save_config(merged_config)
-
-        return (  # noqa: TRY300
-            True,
-            f"Configurazione importata con successo.\nBackup precedente salvato in: {backup_file.name}",
-        )
+        # Salva nuova (passando per save_config per criptare)
+        if save_config(new_data):
+            return True, f"Configurazione importata con successo.\nBackup precedente salvato in: {backup_file.name}"
     except json.JSONDecodeError:
         return False, "Il file non è un JSON valido."
     except Exception as e:
         return False, f"Errore critico importazione: {e}"
+    else:
+        return False, "Errore durante il salvataggio della nuova configurazione."

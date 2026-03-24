@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from PyQt6.QtCore import Qt, QTimer, pyqtProperty, pyqtSignal  # type: ignore[attr-defined]
+from PyQt6.QtCore import Qt, QTimer, pyqtProperty, pyqtSignal
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
@@ -103,7 +104,7 @@ class SidebarWidget(QFrame):
             QScrollBar::handle:vertical {{ background: {sb_handle}; border-radius: 2px; }}
         """
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Inizializza l'interfaccia grafica e la struttura dei menu."""
         main_lay = QVBoxLayout(self)
         main_lay.setContentsMargins(0, 0, 0, 0)
@@ -116,7 +117,23 @@ class SidebarWidget(QFrame):
         self.content_layout.setContentsMargins(0, 7, 0, 20)
         self.content_layout.setSpacing(0)
 
-        # Header
+        self._setup_header()
+        self._setup_scroll_area()
+        self._setup_footer()
+
+        self.active_track = QWidget(self)
+        self.active_track.setFixedWidth(5)
+        self.active_track.setStyleSheet(f"background: {COLORS['teal_accent']}; border-radius: 2px;")
+        self.active_track.hide()
+
+        # Stato iniziale visibilità
+        self.scroll_area.setVisible(not self._is_collapsed)
+        self.footer.setVisible(not self._is_collapsed)
+
+        self._setup_connections()
+
+    def _setup_header(self) -> None:
+        """Inizializza l'header con il logo."""
         self.h_container = QWidget()
         self.h_lay = QHBoxLayout(self.h_container)
         self.h_lay.setContentsMargins(0, 8, 0, 15)
@@ -126,10 +143,7 @@ class SidebarWidget(QFrame):
         self.logo_badge = QLabel()
         self.logo_badge.setFixedSize(46, 46)
         self.logo_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        # FIX: Rimosso bordo nero spesso, reso più elegante
         self.logo_badge.setStyleSheet("background: white; border-radius: 23px; border: 1px solid #e2e8f0;")
-
-        from PyQt6.QtGui import QIcon  # noqa: PLC0415
 
         pix = QIcon(get_asset_path("assets/app.ico")).pixmap(64, 64)
         if not pix.isNull():
@@ -146,12 +160,11 @@ class SidebarWidget(QFrame):
         self.logo_label.setGraphicsEffect(self.logo_opacity)
         self.h_lay.addWidget(self.logo_label)
 
-        # Opacità logo iniziale
         self.logo_opacity.setOpacity(0.0 if self._is_collapsed else 1.0)
-
         self.content_layout.addWidget(self.h_container)
 
-        # Scroll Area
+    def _setup_scroll_area(self) -> None:
+        """Inizializza l'area a scorrimento con i menu."""
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_content = QWidget()
@@ -160,7 +173,7 @@ class SidebarWidget(QFrame):
         self.menu_layout.setContentsMargins(5, 0, 5, 0)
         self.menu_layout.setSpacing(6)
 
-        # Level 1
+        # Main groups
         self.btn_palette = SidebarButton("Apri Palette", get_asset_path(Icons.COMMAND_PALETTE))
         self.btn_home = SidebarButton("Home", get_asset_path(Icons.HOME))
         self.group_automazioni = SidebarGroup("Automazioni", get_asset_path(Icons.CPU))
@@ -179,7 +192,16 @@ class SidebarWidget(QFrame):
             if isinstance(main_btn, SidebarGroup):
                 main_btn.expanded.connect(self._on_group_expanded)
 
-        # Level 3: Automations
+        self._setup_automations_menu()
+        self._setup_database_menu()
+        self._setup_accounting_menu()
+
+        self.menu_layout.addStretch()
+        self.scroll_area.setWidget(self.scroll_content)
+        self.content_layout.addWidget(self.scroll_area)
+
+    def _setup_automations_menu(self) -> None:
+        """Configura il sottomenu delle automazioni."""
         self.sub_fornitori = SidebarSubGroup("Portale Fornitori")
         for n, i in (
             ("Dettagli OdA", 0),
@@ -201,7 +223,8 @@ class SidebarWidget(QFrame):
         self.group_automazioni.add_child(self.sub_fornitori)
         self.group_automazioni.add_child(self.sub_safework)
 
-        # Level 3: Database
+    def _setup_database_menu(self) -> None:
+        """Configura il sottomenu dei database."""
         self.btn_timbrature = SidebarChildButton("Timbrature", get_asset_path(Icons.CLOCK))
         self.btn_dataease = SidebarChildButton("DataEase", get_asset_path(Icons.DOWNLOAD))
         self.btn_pdl = SidebarChildButton("PDL", get_asset_path(Icons.PDL))
@@ -221,7 +244,8 @@ class SidebarWidget(QFrame):
         ):
             self.group_db.add_child(db_btn)
 
-        # Level 3: Contabilità
+    def _setup_accounting_menu(self) -> None:
+        """Configura il sottomenu della contabilità."""
         self.sub_strumentale = SidebarSubGroup("Strumentale")
         for n, i in (
             ("Preventivi", 0),
@@ -243,11 +267,8 @@ class SidebarWidget(QFrame):
         self.group_contabilita.add_child(self.sub_strumentale)
         self.group_contabilita.add_child(self.sub_consuntivo)
 
-        self.menu_layout.addStretch()
-        self.scroll_area.setWidget(self.scroll_content)
-        self.content_layout.addWidget(self.scroll_area)
-
-        # Footer
+    def _setup_footer(self) -> None:
+        """Inizializza il footer della sidebar."""
         self.footer = QWidget()
         f_lay = QVBoxLayout(self.footer)
         f_lay.setContentsMargins(5, 10, 5, 0)
@@ -270,17 +291,6 @@ class SidebarWidget(QFrame):
             self.notif_child_btns.append(btn)
 
         self.content_layout.addWidget(self.footer)
-
-        self.active_track = QWidget(self)
-        self.active_track.setFixedWidth(5)
-        self.active_track.setStyleSheet(f"background: {COLORS['teal_accent']}; border-radius: 2px;")
-        self.active_track.hide()
-
-        # Stato iniziale visibilità
-        self.scroll_area.setVisible(not self._is_collapsed)
-        self.footer.setVisible(not self._is_collapsed)
-
-        self._setup_connections()
 
     def _setup_connections(self) -> None:
         """Configura i collegamenti dei segnali."""
@@ -326,7 +336,7 @@ class SidebarWidget(QFrame):
                 return
         self.active_track.hide()
 
-    def set_active_button(self, index: int, sub: int | None = None, bot: int | None = None) -> None:  # noqa: PLR0912
+    def set_active_button(self, index: int, sub: int | None = None, bot: int | None = None) -> None:
         """Evidenzia il pulsante attivo."""
         btns = {
             0: self.btn_home,
@@ -348,6 +358,11 @@ class SidebarWidget(QFrame):
         ):
             g.set_active_index(index, indices)
 
+        self._set_sub_button_active(index, sub, bot)
+        QTimer.singleShot(150, self._update_track)
+
+    def _set_sub_button_active(self, index: int, sub: int | None, bot: int | None) -> None:
+        """Gestisce l'evidenziazione dei pulsanti di terzo livello."""
         if index == 1:
             self.sub_fornitori.header_btn.setChecked(sub == 0)
             self.sub_safework.header_btn.setChecked(sub == 1)
@@ -370,8 +385,6 @@ class SidebarWidget(QFrame):
         elif index == 9:  # noqa: PLR2004
             for i, b in enumerate(self.notif_child_btns):
                 b.setChecked(i == sub)
-
-        QTimer.singleShot(150, self._update_track)
 
     def enterEvent(self, e: Any) -> None:  # noqa: ANN401
         """Gestisce l'evento di entrata del mouse (espansione)."""
@@ -401,27 +414,10 @@ class SidebarWidget(QFrame):
 
         if not c:
             # ESPANSIONE
-            self.scroll_area.show()
-            self.footer.show()
-            self.h_lay.setContentsMargins(14, 8, 14, 15)
-            self.h_lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-
-            p = self.parentWidget()
-            ph = p.height() if p else 800
-            self.setMinimumHeight(ph - 20)
-            self.setMaximumHeight(ph - 20)
-            self.bg_frame.setProperty("state", "expanded")
+            self._handle_expansion()
         else:
             # COLLASSO
-            self.h_lay.setContentsMargins(0, 8, 0, 15)
-            self.h_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.bg_frame.setProperty("state", "collapsed")
-
-            # Nascondiamo SUBITO le aree pesanti per evitare l'overlap (GUI.png)
-            self.scroll_area.hide()
-            self.footer.hide()
-            self.setMinimumHeight(100)
-            self.setMaximumHeight(100)
+            self._handle_collapse()
 
         # Refresh stile per lo sfondo (OBBLIGATORIO per QSS property)
         if style := self.bg_frame.style():
@@ -441,6 +437,31 @@ class SidebarWidget(QFrame):
 
         # Riposizionamento track a fine corsa
         QTimer.singleShot(250, self._update_track)
+
+    def _handle_expansion(self) -> None:
+        """Logica specifica per l'espansione della sidebar."""
+        self.scroll_area.show()
+        self.footer.show()
+        self.h_lay.setContentsMargins(14, 8, 14, 15)
+        self.h_lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
+        p = self.parentWidget()
+        ph = p.height() if p else 800
+        self.setMinimumHeight(ph - 20)
+        self.setMaximumHeight(ph - 20)
+        self.bg_frame.setProperty("state", "expanded")
+
+    def _handle_collapse(self) -> None:
+        """Logica specifica per il collasso della sidebar."""
+        self.h_lay.setContentsMargins(0, 8, 0, 15)
+        self.h_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.bg_frame.setProperty("state", "collapsed")
+
+        # Nascondiamo SUBITO le aree pesanti per evitare l'overlap (GUI.png)
+        self.scroll_area.hide()
+        self.footer.hide()
+        self.setMinimumHeight(100)
+        self.setMaximumHeight(100)
 
     def _update_ui_state(self) -> None:
         """Sincronizza lo stato dei gruppi."""

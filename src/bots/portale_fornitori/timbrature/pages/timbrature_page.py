@@ -257,7 +257,7 @@ class TimbraturePage:
         source_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
         self._log(f"[DEBUG] Cerco file in: {source_dir}")
 
-        from src.core.config_manager import CONFIG_DIR  # noqa: PLC0415
+        from src.core.paths import CONFIG_DIR  # noqa: PLC0415
 
         dest_dir = CONFIG_DIR / "temp"
         dest_dir.mkdir(parents=True, exist_ok=True)

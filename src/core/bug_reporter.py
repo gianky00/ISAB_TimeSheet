@@ -19,7 +19,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from src.core.config_manager import CONFIG_DIR, get_version
+from src.core.paths import CONFIG_DIR, get_version
 
 logger = logging.getLogger(__name__)
 

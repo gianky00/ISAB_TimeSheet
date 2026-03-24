@@ -10,7 +10,7 @@ import sys
 from contextlib import suppress
 from pathlib import Path
 
-from src.core.config_manager import CONFIG_DIR
+from src.core.paths import BASE_DIR, CONFIG_DIR
 
 
 class ResourceManager:
@@ -34,7 +34,7 @@ class ResourceManager:
         else:
             PROJECT_ROOT = meipass_path
     else:
-        PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+        PROJECT_ROOT = BASE_DIR
 
     # Directory Standard (Sola Lettura Asset)
     ASSETS_DIR = PROJECT_ROOT / "assets"

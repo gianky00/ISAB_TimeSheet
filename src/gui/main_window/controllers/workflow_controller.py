@@ -5,8 +5,9 @@ Gestisce i flussi di lavoro complessi e le interazioni Command Palette -> Bot.
 
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QObject, QTimer
+from PyQt6.QtCore import QDate, QObject, QTimer
 
+from src.gui.main_window.page_index import PageIndex
 from src.gui.widgets.toast import ToastManager
 
 if TYPE_CHECKING:
@@ -25,8 +26,6 @@ class WorkflowController(QObject):
 
     def run_timbrature_bot(self, mode: str) -> None:
         """Avvia il bot delle timbrature in una modalità specifica."""
-        from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
-
         # Assicurati che il pannello sia inizializzato
         if not hasattr(self.mw, "timbrature_bot_panel"):
             self.mw.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
@@ -38,8 +37,6 @@ class WorkflowController(QObject):
                     lambda color, msg: self.mw.status_bar_component.status_portale.setStatus(msg, color)
                 )
                 panel._mw_signals_connected = True
-
-            from PyQt6.QtCore import QDate  # noqa: PLC0415
 
             data_da = QDate.currentDate().toString("dd.MM.yyyy")
             data_a = QDate.currentDate().toString("dd.MM.yyyy")
@@ -109,8 +106,6 @@ class WorkflowController(QObject):
 
     def run_sync_dataease(self) -> None:
         """Avvia la sincronizzazione DataEase."""
-        from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
-
         self.mw.navigation_controller.navigate_to(PageIndex.DATAEASE)
         panel = getattr(self.mw, "scarico_ore_panel", None)
         if panel and hasattr(panel, "_start_update"):
@@ -118,8 +113,6 @@ class WorkflowController(QObject):
 
     def run_sync_strumentale(self) -> None:
         """Avvia la sincronizzazione contabilità strumentale."""
-        from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
-
         self.mw.navigation_controller.navigate_to(PageIndex.STRUMENTALE)
         panel = getattr(self.mw, "contabilita_panel", None)
         if panel and hasattr(panel, "refresh_tabs"):
@@ -127,12 +120,10 @@ class WorkflowController(QObject):
 
     def run_dettagli_oda_update(self) -> None:
         """Avvia l'aggiornamento massivo dello Storico OdA tramite il bot Dettagli OdA."""
-        from PyQt6.QtCore import QDate  # noqa: PLC0415
-
-        from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
-
         # 1. Recupera il pannello Automazioni (Lazy Loading) senza navigare
         automazioni_widget = self.mw.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
+
+        # Import lazy per evitare dipendenza circolare
         from src.gui.widgets.automazioni_widget import AutomazioniWidget  # noqa: PLC0415
 
         if isinstance(automazioni_widget, AutomazioniWidget):

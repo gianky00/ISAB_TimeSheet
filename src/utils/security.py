@@ -10,11 +10,13 @@ import platform
 import secrets
 import uuid
 from contextlib import suppress
+from pathlib import Path
+from typing import ClassVar
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 
-from src.core.config_manager import CONFIG_DIR
+from src.core.paths import SECURITY_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +24,22 @@ logger = logging.getLogger(__name__)
 class PasswordManager:
     """Gestisce encryption/decryption password con best practice moderne."""
 
-    _instance = None
-    # Percorso standard: %LOCALAPPDATA%\SyncroJob\security
-    _KEY_DIR = CONFIG_DIR / "security"
+    _instance: ClassVar["PasswordManager | None"] = None
 
-    _KEY_FILE = _KEY_DIR / "secret.key"
-    _SALT_FILE = _KEY_DIR / "encryption.salt"
+    @property
+    def key_dir(self) -> Path:
+        """Percorso dinamico della directory chiavi."""
+        return SECURITY_DIR
+
+    @property
+    def key_file(self) -> Path:
+        """Percorso dinamico del file chiave."""
+        return self.key_dir / "secret.key"
+
+    @property
+    def salt_file(self) -> Path:
+        """Percorso dinamico del file salt."""
+        return self.key_dir / "encryption.salt"
 
     def __new__(cls) -> "PasswordManager":
         """Pattern Singleton per il gestore delle password."""
@@ -38,22 +50,26 @@ class PasswordManager:
 
     def _initialize(self) -> None:
         """Inizializza chiave e cipher."""
-        self._KEY_DIR.mkdir(parents=True, exist_ok=True)
+        self.key_dir.mkdir(parents=True, exist_ok=True)
 
         # Imposta permessi restrittivi (solo owner)
         if os.name != "nt":  # Unix
             with suppress(Exception):
-                os.chmod(self._KEY_DIR, 0o700)
+                os.chmod(self.key_dir, 0o700)
 
         self._key = self._load_or_create_key()
         self._cipher = Fernet(self._key)
 
+    def _reset_for_testing(self) -> None:
+        """Resetta l'istanza per i test (re-inizializza con nuovi path)."""
+        self._initialize()
+
     def _load_or_create_key(self) -> bytes:
         """Carica o genera chiave derivata da password macchina."""
-        if self._KEY_FILE.exists():
+        if self.key_file.exists():
             # Se esiste solo la chiave (legacy), usala
             # Se esiste anche il salt (v2), verifica se dobbiamo rigenerare o caricare
-            key = self._KEY_FILE.read_bytes()
+            key = self.key_file.read_bytes()
             # Verifica validità chiave Fernet (32 url-safe base64-encoded bytes)
             with suppress(Exception):
                 Fernet(key)
@@ -74,14 +90,14 @@ class PasswordManager:
         key = base64.urlsafe_b64encode(kdf.derive(machine_id))
 
         # Salva
-        self._SALT_FILE.write_bytes(salt)
-        self._KEY_FILE.write_bytes(key)
+        self.salt_file.write_bytes(salt)
+        self.key_file.write_bytes(key)
 
         # Permessi restrittivi
         if os.name != "nt":
             with suppress(Exception):
-                os.chmod(self._KEY_FILE, 0o600)
-                os.chmod(self._SALT_FILE, 0o600)
+                os.chmod(self.key_file, 0o600)
+                os.chmod(self.salt_file, 0o600)
 
         return key
 

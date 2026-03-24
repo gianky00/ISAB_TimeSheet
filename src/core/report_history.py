@@ -7,10 +7,11 @@ Salva snapshot di ogni report inviato e permette il confronto con il precedente.
 import json
 import logging
 from datetime import UTC, datetime
-from typing import Any
+from pathlib import Path
+from typing import Any, Final
 
-from src.core.config_manager import CONFIG_DIR
 from src.core.constants import FileNames
+from src.core.paths import DB_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +19,8 @@ logger = logging.getLogger(__name__)
 class ReportHistory:
     """Gestisce lo storico dei report email per il calcolo dei trend."""
 
-    HISTORY_FILE = CONFIG_DIR / "data" / FileNames.REPORT_HISTORY
-    MAX_HISTORY_ENTRIES = 30  # Mantieni ultimi 30 report
+    MAX_HISTORY_ENTRIES: Final[int] = 30  # Mantieni ultimi 30 report
+    HISTORY_FILE: Final[Path] = DB_DIR / FileNames.REPORT_HISTORY
 
     @classmethod
     def _ensure_file(cls) -> None:
@@ -36,10 +37,9 @@ class ReportHistory:
         """Carica i dati dallo storico."""
         cls._ensure_file()
         try:
-            data: dict[str, Any] = json.loads(cls.HISTORY_FILE.read_text(encoding="utf-8"))
-            return data  # noqa: TRY300
-        except (json.JSONDecodeError, FileNotFoundError) as e:
-            logger.warning(f"Errore caricamento storico report: {e}")
+            return json.loads(cls.HISTORY_FILE.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, FileNotFoundError):
+            logger.exception("Errore caricamento storico report")
             return {"last_report": None, "history": []}
 
     @classmethod
@@ -48,8 +48,8 @@ class ReportHistory:
         cls._ensure_file()
         try:
             cls.HISTORY_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-        except Exception as e:
-            logger.error(f"Errore salvataggio storico report: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Errore salvataggio storico report")
 
     @classmethod
     def save_report(cls, warning_list: list[dict[str, Any]], expired_list: list[dict[str, Any]]) -> None:
@@ -84,7 +84,7 @@ class ReportHistory:
         data["last_report"] = new_report
 
         cls._save_data(data)
-        logger.info(f"Report salvato: {len(warning_list)} warning, {len(expired_list)} expired")
+        logger.info("Report salvato: %s warning, %s expired", len(warning_list), len(expired_list))
 
     @classmethod
     def get_last_report(cls) -> dict[str, Any] | None:
@@ -130,8 +130,8 @@ class ReportHistory:
                 "last_warning_count": last_report.get("warning_count", 0),
                 "last_expired_count": last_report.get("expired_count", 0),
             }
-        except Exception as e:
-            logger.error(f"Errore calcolo trend: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Errore calcolo trend")
             return None
 
     @classmethod

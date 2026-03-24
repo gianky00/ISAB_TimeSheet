@@ -10,10 +10,10 @@ import logging
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Final
 
-from src.core.config_manager import CONFIG_DIR
 from src.core.constants import FileNames
+from src.core.paths import DB_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -25,13 +25,13 @@ class SyncTracker:
     Fornisce metodi statici per aggiornare e recuperare i metadati delle operazioni di sync.
     """
 
-    STATE_FILE: ClassVar[Path] = CONFIG_DIR / "data" / FileNames.SYNC_STATE
-    """Percorso del file JSON contenente lo stato di sincronizzazione."""
+    STATE_FILE: Final[Path] = DB_DIR / FileNames.SYNC_STATE
+    SECONDS_IN_MINUTE: Final[int] = 60
 
     _cache: ClassVar[dict[str, Any]] = {}
     """Cache interna per evitare letture ridondanti da disco."""
 
-    _loaded = False
+    _loaded: ClassVar[bool] = False
     """Flag per indicare se lo stato è già stato caricato in memoria."""
 
     @classmethod
@@ -42,8 +42,8 @@ class SyncTracker:
         if cls.STATE_FILE.exists():
             try:
                 cls._cache = json.loads(cls.STATE_FILE.read_text(encoding="utf-8"))
-            except Exception as e:
-                logger.error(f"Errore caricamento sync state: {e}")  # noqa: TRY400
+            except Exception:
+                logger.exception("Errore caricamento sync state")
                 cls._cache = {}
         else:
             cls._cache, cls._loaded = {}, True
@@ -56,8 +56,8 @@ class SyncTracker:
         try:
             cls.STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
             cls.STATE_FILE.write_text(json.dumps(cls._cache, indent=4), encoding="utf-8")
-        except Exception as e:
-            logger.error(f"Errore salvataggio sync state: {e}")  # noqa: TRY400
+        except Exception:
+            logger.exception("Errore salvataggio sync state")
 
     @classmethod
     def update_status(cls, module: str, added: int, removed: int, duration: float = 0.0) -> None:
@@ -130,9 +130,7 @@ class SyncTracker:
             dict: Dizionario con timestamp, record aggiunti, rimossi e durata.
         """
         cls._load()
-        from typing import cast  # noqa: PLC0415
-
-        return cast("dict[str, Any]", cls._cache.get(module, {}))
+        return cls._cache.get(module, {})
 
     @classmethod
     def get_formatted_status(cls, module: str) -> str:
@@ -156,6 +154,10 @@ class SyncTracker:
 
         added_str = f"<font color='green'><b>+{added}</b></font>"
         removed_str = f"<font color='red'><b>-{removed}</b></font>"
-        time_str = f"{duration:.1f}s" if duration < 60 else f"{int(duration // 60)}m {int(duration % 60)}s"  # noqa: PLR2004
+
+        if duration < cls.SECONDS_IN_MINUTE:
+            time_str = f"{duration:.1f}s"
+        else:
+            time_str = f"{int(duration // cls.SECONDS_IN_MINUTE)}m {int(duration % cls.SECONDS_IN_MINUTE)}s"
 
         return f"{timestamp} {added_str} {removed_str} (Tempo: {time_str})"
