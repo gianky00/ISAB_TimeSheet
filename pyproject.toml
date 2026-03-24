@@ -199,11 +199,11 @@ exclude = ["build", "dist", "config/vulture_whitelist.py", "admin", "tests", "mu
 # ── Strict Core ──────────────────────────────────────────────
 
 # Ogni funzione DEVE avere type hints (elimina Any implicito)
-disallow_untyped_defs = false
+disallow_untyped_defs = true
 # Impedisce la definizione di funzioni parzialmente tipizzate
-disallow_incomplete_defs = false
+disallow_incomplete_defs = true
 # Impedisce chiamate a funzioni non tipizzate da contesti tipizzati
-disallow_untyped_calls = false
+disallow_untyped_calls = true
 # Impedisce di ereditare da classi definite come Any
 disallow_subclassing_any = true
 # Avvisa su configurazioni in pyproject non più valide
