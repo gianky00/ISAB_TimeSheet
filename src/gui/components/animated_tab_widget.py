@@ -4,10 +4,10 @@ Componente universale con animazioni di lusso, gradienti e glow effect.
 Fornisce una navigazione tra schede fluida con indicatore di selezione dinamico.
 """
 
-from typing import Any
+from __future__ import annotations
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QRect, QTimer, pyqtSignal
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QResizeEvent, QShowEvent
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QHBoxLayout, QTabBar, QTabWidget, QVBoxLayout, QWidget
 
 from src.gui.components.animated_stack import SlidingStackedWidget
@@ -94,7 +94,7 @@ class AnimatedTabWidget(QWidget):
 
         QTimer.singleShot(100, self._update_indicator_instant)
 
-    def showEvent(self, event: Any) -> None:  # noqa: ANN401
+    def showEvent(self, event: QShowEvent | None) -> None:
         """Forza l'aggiornamento dello stile quando il widget viene mostrato."""
         super().showEvent(event)
         self._update_indicator_instant()
@@ -229,7 +229,7 @@ class AnimatedTabWidget(QWidget):
         else:
             self.indicator.hide()
 
-    def resizeEvent(self, event) -> None:  # noqa: ANN001
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
         """Assicura che l'indicatore sia allineato dopo il ridimensionamento."""
         super().resizeEvent(event)
         self._update_indicator_instant()

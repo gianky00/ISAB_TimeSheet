@@ -1,365 +1,191 @@
 """
-Tabella dati con sorting, filtering e row styling, basata su ExcelTableWidget.
-Fornisce un'interfaccia ad alto livello con ricerca e pulsante di aggiornamento.
+SyncroJob - Editable Data Table
+Widget universale per la visualizzazione e modifica di dati tabellari.
+Implementa feedback visivo avanzato, menu contestuali e validazione.
 """
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 
-from PyQt6.QtCore import (  # type: ignore[attr-defined]
-    QEasingCurve,
-    QModelIndex,
-    QPropertyAnimation,
-    Qt,
-    pyqtProperty,
-    pyqtSignal,
-)
-from PyQt6.QtGui import QBrush, QColor, QEnterEvent, QLeaveEvent, QPainter, QPaintEvent, QPen
+from PyQt6.QtCore import QEvent, QPoint, Qt, pyqtSignal
+from PyQt6.QtGui import QBrush, QColor, QEnterEvent, QPainter, QPaintEvent, QPen
 from PyQt6.QtWidgets import (
-    QFrame,
-    QGraphicsDropShadowEffect,
-    QHBoxLayout,
+    QAbstractItemView,
     QHeaderView,
+    QMenu,
+    QTableWidget,
+    QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
-from src.gui.widgets.core_widgets import (
-    PrimaryButton,
-    SearchInput,
-)
-from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
+from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 
-from ..design.colors import get_palette
-from ..design.spacing import Spacing
 
-# Use explicit import from new modular widget to avoid circular dependency
-from .excel_table import ExcelTableWidget
-
-
-class HoverPulseFrame(QFrame):
+class EditableDataTable(QWidget):
     """
-    Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
-    Migliora il feedback visivo dell'interfaccia.
+    Una tabella interattiva che consente la modifica diretta delle celle.
+    Supporta il salvataggio automatico e fornisce segnali per il tracciamento dei cambiamenti.
     """
 
-    def __init__(self, accent_color: str | None = None, parent: QWidget | None = None) -> None:
-        """
-        Inizializza il frame con il colore di accento specificato.
-
-        Args:
-            accent_color: Colore del bordo pulsante.
-            parent: Widget genitore.
-        """
-        super().__init__(parent)
-        self._accent_color = QColor(accent_color or COLORS["text_dark"])
-        self._pulse_val = 1.0
-
-        self._anim = QPropertyAnimation(self, b"pulse_value")
-        self._anim.setDuration(1500)
-        self._anim.setStartValue(0.4)
-        self._anim.setEndValue(1.0)
-        self._anim.setLoopCount(-1)
-        self._anim.setEasingCurve(QEasingCurve.Type.InOutSine)
-
-    @pyqtProperty(float)
-    def pulse_value(self) -> float:
-        """Restituisce il valore corrente della pulsazione."""
-        return self._pulse_val
-
-    @pulse_value.setter  # type: ignore[no-redef]
-    def pulse_value(self, v: float) -> None:
-        """Imposta il valore della pulsazione e aggiorna il widget."""
-        self._pulse_val = v
-        self.update()
-
-    def enterEvent(self, event: QEnterEvent) -> None:
-        """Avvia l'animazione di pulsazione all'ingresso del mouse."""
-        self._anim.start()
-        super().enterEvent(event)
-
-    def leaveEvent(self, event: QLeaveEvent) -> None:
-        """Ferma l'animazione di pulsazione all'uscita del mouse."""
-        self._anim.stop()
-        self.pulse_value = 1.0  # type: ignore[method-assign]
-        super().leaveEvent(event)
-
-    def paintEvent(self, event: QPaintEvent) -> None:
-        """Disegna il bordo inferiore pulsante."""
-        super().paintEvent(event)
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        alpha = int(100 + (self._pulse_val * 155))
-        pen = QPen(
-            QColor(self._accent_color.red(), self._accent_color.green(), self._accent_color.blue(), alpha)
-        )
-        pen.setWidth(3)
-        painter.setPen(pen)
-
-        rect = self.rect()
-        painter.drawLine(12, rect.height() - 2, rect.width() - 12, rect.height() - 2)
-
-
-class DataTable(QWidget):
-    """
-    Tabella dati con funzionalità avanzate (search, refresh) che wrappa ExcelTableWidget.
-    Supporta il filtraggio in tempo reale e la colorazione semantica delle righe.
-    """
-
-    rowDoubleClicked = pyqtSignal(int, dict)  # row_index, row_data  # noqa: N815
-    """Segnale emesso al doppio click su una riga."""
-
-    # Status colors
-    STATUS_COLORS: ClassVar[dict[str, str]] = {
-        "completato": COLORS["table_success_bg"],  # Green
-        "errore": COLORS["table_error_bg"],  # Red
-        "in_corso": COLORS["table_warning_bg"],  # Yellow
-        "pending": COLORS["table_info_bg"],  # Blue
-        "da_processare": COLORS["bg_white"],  # White
-    }
+    data_changed = pyqtSignal()
+    """Segnale emesso ogni volta che i dati nella tabella vengono modificati."""
 
     def __init__(self, columns: list[dict[str, Any]], parent: QWidget | None = None) -> None:
         """
-        Inizializza la DataTable con le colonne specificate.
+        Inizializza la tabella con le colonne specificate.
 
         Args:
-            columns: Lista di dict con keys: 'name', 'key', 'width', 'editable'.
+            columns: Lista di dizionari definenti le colonne (name, label, type, etc.).
             parent: Widget genitore.
         """
         super().__init__(parent)
-        self._columns = columns
-        self._data: list[dict[str, Any]] = []
-        self._palette = get_palette()
+        self.columns = columns
+        self._is_hovered = False
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        """Configura il layout, la toolbar di ricerca e la card contenente la tabella."""
+        """Configura il layout e lo stile della tabella."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(Spacing.xs)
 
-        # Toolbar
-        toolbar = QHBoxLayout()
+        # Container Card per elevazione
+        self.card = ModernCard(elevation=8)
+        card_layout = QVBoxLayout(self.card)
+        card_layout.setContentsMargins(2, 2, 2, 2)
 
-        # Search
-        self._search_input = SearchInput()
-        self._search_input.setPlaceholderText("Cerca...")
-        self._search_input.setClearButtonEnabled(True)
-        self._search_input.textChanged.connect(self._filter_rows)
-        # Apply modern style
-        self._search_input.setStyleSheet(
-            f"""
-            QLineEdit {{
-                border: 1px solid {self._palette.border};
-                border-radius: 6px;
-                padding: 6px 10px;
-                background: {self._palette.surface};
-            }}
-            QLineEdit:focus {{
-                border: 2px solid {COLORS["text_dark"]};
-            }}
-        """
+        self.table = QTableWidget()
+        self.table.setColumnCount(len(self.columns))
+        self.table.setHorizontalHeaderLabels([col["label"] for col in self.columns])
+
+        # Style & Configuration
+        self.table.setFrameShape(QTableWidget.Shape.NoFrame)
+        self.table.setAlternatingRowColors(True)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setEditTriggers(
+            QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed
         )
-        toolbar.addWidget(self._search_input, 1)
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._show_context_menu)
+        self.table.itemChanged.connect(lambda: self.data_changed.emit())
 
-        # Actions
-        self._refresh_btn = PrimaryButton(" Aggiorna")
-        self._refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), COLORS["text_dark"]))
-        self._refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._refresh_btn.clicked.connect(self.refresh)
-        self._refresh_btn.setStyleSheet(
-            f"""
-            QPushButton {{
-                background-color: {self._palette.surface};
-                border: 1px solid {self._palette.border};
-                border-radius: 6px;
-                padding: 6px 12px;
-                color: {self._palette.on_surface};
-            }}
-            QPushButton:hover {{
-                background-color: {self._palette.hover};
-            }}
-        """
-        )
-        toolbar.addWidget(self._refresh_btn)
+        header = self.table.horizontalHeader()
+        if header:
+            header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+            header.setStretchLastSection(True)
 
-        layout.addLayout(toolbar)
+        card_layout.addWidget(self.table)
+        layout.addWidget(self.card)
 
-        # --- CONTAINER PRINCIPALE (Card con ombra e accento scuro pulsante) ---
-        self.container = HoverPulseFrame(COLORS["text_dark"])
-        self.container.setObjectName("tableContainer")
-        self.container.setStyleSheet(f"""
-            QFrame#tableContainer {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                /* border-bottom rimosso perché gestito da HoverPulseFrame */
-                border-radius: 12px;
-            }}
-            QTableWidget {{
-                background-color: transparent;
-                border: none;
-                gridline-color: {COLORS["bg_alt"]};
-                selection-background-color: {COLORS["table_selection_bg"]};
-                selection-color: {COLORS["text_dark"]};
-                outline: none;
-            }}
-            QHeaderView::section {{
-                background-color: {COLORS["bg_light"]};
-                color: {COLORS["text_dark"]};
-                padding: 10px;
-                font-weight: bold;
-                border: none;
-                border-bottom: 1px solid {COLORS["border_light"]};
-            }}
-        """)
+    def enterEvent(self, event: QEnterEvent | None) -> None:
+        """Attiva l'effetto di evidenziazione della tabella."""
+        self._is_hovered = True
+        self.update()
+        super().enterEvent(event)
 
-        # Shadow Effect
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(25)
-        shadow.setXOffset(0)
-        shadow.setYOffset(8)
-        shadow.setColor(QColor(0, 0, 0, 40))
-        self.container.setGraphicsEffect(shadow)
+    def leaveEvent(self, event: QEvent | None) -> None:
+        """Disattiva l'effetto di evidenziazione."""
+        self._is_hovered = False
+        self.update()
+        super().leaveEvent(event)
 
-        container_layout = QVBoxLayout(self.container)
-        container_layout.setContentsMargins(5, 5, 5, 5)
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        """Disegna un bordo sottile di accento se la tabella è in focus o hovered."""
+        super().paintEvent(event)
+        if self._is_hovered:
+            painter = QPainter(self)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            pen = QPen(QColor(COLORS["primary_blue"]), 2)
+            painter.setPen(pen)
+            painter.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 12, 12)
 
-        self._table = ExcelTableWidget()
-        self._table.setColumnCount(len(self._columns))
-        self._table.setHorizontalHeaderLabels([str(c.get("label", c["name"])) for c in self._columns])
-        # ExcelTableWidget handles SelectionBehavior and SelectionMode already
-        self._table.setAlternatingRowColors(True)
-        self._table.setSortingEnabled(True)
-        self._table.doubleClicked.connect(self._on_double_click)
+    def _show_context_menu(self, pos: QPoint) -> None:
+        """Visualizza il menu contestuale per l'aggiunta/rimozione di righe."""
+        menu = QMenu(self)
+        add_action = menu.addAction("Aggiungi Riga")
+        if add_action:
+            add_action.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), COLORS["success_dark"]))
 
-        # Header sizing
-        header = self._table.horizontalHeader()
-        if header is not None:
-            header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+        remove_action = menu.addAction("Rimuovi Riga")
+        if remove_action:
+            remove_action.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), COLORS["error_red"]))
+            if not self.table.itemAt(pos):
+                remove_action.setEnabled(False)
 
-        for i, col in enumerate(self._columns):
-            if "width" in col:
-                self._table.setColumnWidth(i, int(col["width"]))
-            elif header is not None:
-                header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
+        viewport = self.table.viewport()
+        if viewport:
+            action = menu.exec(viewport.mapToGlobal(pos))
+            if action == add_action:
+                self.add_row()
+            elif action == remove_action:
+                item = self.table.itemAt(pos)
+                if item:
+                    self.remove_row(item.row())
 
-        container_layout.addWidget(self._table)
-        layout.addWidget(self.container)
+    def add_row(self, data: dict[str, Any] | None = None) -> None:
+        """Aggiunge una nuova riga alla tabella con dati opzionali."""
+        row_idx = self.table.rowCount()
+        self.table.insertRow(row_idx)
 
-    def _apply_table_style(self) -> None:
-        """Applica stili specifici alla tabella (opzionale, gestito principalmente da QSS)."""
+        for col_idx, col in enumerate(self.columns):
+            val = data.get(col["name"], col.get("default", "")) if data else col.get("default", "")
+            item = QTableWidgetItem(str(val))
+            if col.get("readonly", False):
+                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                item.setForeground(QBrush(QColor(COLORS["text_muted"])))
+            self.table.setItem(row_idx, col_idx, item)
 
-    def setData(self, data: list[dict[str, Any]]) -> None:
-        """
-        Popola la tabella con i dati forniti.
+        self.data_changed.emit()
 
-        Args:
-            data: Lista di dizionari contenenti i dati delle righe.
-        """
-        self._data = data
-        self._populate_table(data)
+    def remove_row(self, row_idx: int) -> None:
+        """Rimuove la riga all'indice specificato."""
+        self.table.removeRow(row_idx)
+        self.data_changed.emit()
 
-    def _populate_table(self, data: list[dict[str, Any]]) -> None:
-        """Riempie fisicamente il widget QTableWidget con i dati."""
-        self._table.setSortingEnabled(False)  # Optimization
-        self._table.setRowCount(len(data))
+    def get_data(self) -> list[dict[str, Any]]:
+        """Restituisce tutti i dati della tabella come lista di dizionari."""
+        data_list = []
+        for row in range(self.table.rowCount()):
+            row_data = {}
+            for col_idx, col in enumerate(self.columns):
+                item = self.table.item(row, col_idx)
+                row_data[col["name"]] = item.text() if item else ""
+            data_list.append(row_data)
+        return data_list
 
-        for row_idx, row_data in enumerate(data):
-            # Determina colore riga basato su stato
-            status = str(row_data.get("stato", "")).lower()
-            row_color = self._get_row_color(status)
+    def set_data(self, data_list: list[dict[str, Any]]) -> None:
+        """Popola la tabella con la lista di dati fornita."""
+        self.table.blockSignals(True)
+        self.table.setRowCount(0)
+        for data in data_list:
+            self.add_row(data)
+        self.table.blockSignals(False)
+        self.data_changed.emit()
 
-            for col_idx, col in enumerate(self._columns):
-                # Usa 'name' come chiave dati (standard programmatico)
-                key = col["name"]
-                value = str(row_data.get(key, ""))
+    def clear(self) -> None:
+        """Svuota completamente la tabella."""
+        self.table.setRowCount(0)
+        self.data_changed.emit()
 
-                item = SortableTableWidgetItem(value)
+    def update_cell(self, row: int, col: int, value: str, emit_signal: bool = True) -> None:
+        """Aggiorna il valore di una specifica cella."""
+        item = self.table.item(row, col)
+        if item:
+            if not emit_signal:
+                self.table.blockSignals(True)
+            item.setText(value)
+            if not emit_signal:
+                self.table.blockSignals(False)
 
-                # Editabilità
-                if not col.get("editable", True):
-                    item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-
-                # Colore sfondo
-                if row_color:
-                    item.setBackground(QBrush(QColor(row_color)))
-                    item.setForeground(QBrush(QColor("black")))  # Force contrast
-
-                self._table.setItem(row_idx, col_idx, item)
-
-        self._table.setSortingEnabled(True)
-
-    def _get_row_color(self, status: str) -> str | None:
-        """Restituisce il codice colore esadecimale per uno stato specifico."""
-        if status in self.STATUS_COLORS:
-            return self.STATUS_COLORS[status]
-        # Check prefix
-        for key, color in self.STATUS_COLORS.items():
-            if status.startswith(key):
-                return color
-        return None
-
-    def _filter_rows(self, text: str) -> None:
-        """
-        Filtra le righe della tabella in base al testo di ricerca (case-insensitive).
-
-        Args:
-            text: Testo da cercare in tutte le colonne.
-        """
-        text = text.lower()
-        for row in range(self._table.rowCount()):
-            match = False
-            for col in range(self._table.columnCount()):
-                item = self._table.item(row, col)
-                if item and text in item.text().lower():
-                    match = True
-                    break
-            self._table.setRowHidden(row, not match)
-
-    def _on_double_click(self, index: QModelIndex) -> None:
-        """
-        Gestisce l'evento di doppio click emettendo il segnale rowDoubleClicked.
-
-        Args:
-            index: Indice del modello dell'elemento cliccato.
-        """
-        row = index.row()
-        if 0 <= row < len(self._data):
-            self.rowDoubleClicked.emit(row, self._data[row])
-
-    def getSelectedRows(self) -> list[dict[str, Any]]:
-        """
-        Restituisce i dati di tutte le righe attualmente selezionate.
-
-        Returns:
-            list: Lista di dizionari rappresentanti le righe selezionate.
-        """
-        rows = {item.row() for item in self._table.selectedItems()}
-
-        selected_data = []
-        for r in rows:
-            row_dict: dict[str, Any] = {}
-            for c, col in enumerate(self._columns):
-                item = self._table.item(r, c)
-                key = col["name"]
-                row_dict[key] = item.text() if item else ""
-            selected_data.append(row_dict)
-
-        return selected_data
-
-    def refresh(self) -> None:
-        """Metodo per ricaricare i dati. Da connettere esternamente."""
-
-    def get_table_widget(self) -> ExcelTableWidget:
-        """
-        Restituisce il widget QTableWidget interno.
-
-        Returns:
-            ExcelTableWidget: Il widget della tabella.
-        """
-        return self._table
+    def clear_status_columns(self) -> None:
+        """Pulisce le colonne di sola lettura (solitamente usate per gli esiti)."""
+        self.table.blockSignals(True)
+        for row in range(self.table.rowCount()):
+            for col_idx, col in enumerate(self.columns):
+                if col.get("readonly", False) and (item := self.table.item(row, col_idx)):
+                    item.setText("")
+        self.table.blockSignals(False)

@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import os
 from contextlib import suppress
 from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QColor, QFont
@@ -24,6 +26,9 @@ from src.gui.widgets import ExcelTableWidget
 from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
+if TYPE_CHECKING:
+    from PyQt6.QtCore import QPoint
+
 
 class GiornaliereYearTab(QWidget):
     """Tab per un singolo anno (Giornaliere)."""
@@ -40,18 +45,18 @@ class GiornaliereYearTab(QWidget):
         "FINE",
         "ORE",
     ]
-    COL_DATA = 0
-    COL_ORE = 9
-    COL_DESC = 3
-    IDX_NOMEFILE = 10
+    COL_DATA: int = 0
+    COL_ORE: int = 9
+    COL_DESC: int = 3
+    IDX_NOMEFILE: int = 10
 
-    def __init__(self, year: int, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, year: int, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.year = year
         self._setup_ui()
         self._load_data()
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
         """Inizializza l'interfaccia utente del tab per l'anno specifico."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 10, 0, 0)
@@ -96,11 +101,11 @@ class GiornaliereYearTab(QWidget):
             v_header.setVisible(False)
         layout.addWidget(self.table)
 
-    def refresh_data(self):  # noqa: ANN201
+    def refresh_data(self) -> None:
         """Metodo pubblico per rinfrescare i dati del tab."""
         self._load_data()
 
-    def _load_data(self):  # noqa: ANN202
+    def _load_data(self) -> None:
         data = ContabilitaManager.get_giornaliere_by_year(self.year)
         self.table.setSortingEnabled(False)
         self.table.blockSignals(True)
@@ -130,7 +135,7 @@ class GiornaliereYearTab(QWidget):
             self.table.blockSignals(False)
             self.table.setSortingEnabled(True)
 
-    def _format_value(self, col_idx, val):  # noqa: ANN001, ANN202
+    def _format_value(self, col_idx: int, val: object) -> str:
         if val is None or str(val).lower() == "nan":
             return ""
 
@@ -140,11 +145,11 @@ class GiornaliereYearTab(QWidget):
             return format_number_smart(val)
         return str(val).strip()
 
-    def _format_number(self, val):  # noqa: ANN001, ANN202
+    def _format_number(self, val: float) -> str:
         """Usa il formattatore smart per i totali."""
         return format_number_smart(val)
 
-    def _add_totals_row(self):  # noqa: ANN202
+    def _add_totals_row(self) -> None:
         rows = self.table.rowCount()
         if rows > 0:
             last_item = self.table.item(rows - 1, 0)
@@ -168,7 +173,7 @@ class GiornaliereYearTab(QWidget):
                 it.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             self.table.setItem(row_idx, c, it)
 
-    def _update_totals(self):  # noqa: ANN202
+    def _update_totals(self) -> None:
         rows = self.table.rowCount()
         total_row_idx = -1
         if rows > 0:
@@ -191,7 +196,7 @@ class GiornaliereYearTab(QWidget):
         if total_item := self.table.item(total_row_idx, self.COL_ORE):
             total_item.setText(self._format_number(sum_ore))
 
-    def filter_data(self, text):  # noqa: ANN001, ANN201
+    def filter_data(self, text: str) -> None:
         """Filtra i dati dell'anno corrente in base alla ricerca testuale."""
         rows = self.table.rowCount()
         total_row_found = False
@@ -214,14 +219,14 @@ class GiornaliereYearTab(QWidget):
             self.table.setRowHidden(r, not all(term in row_text for term in search_terms))
         self._update_totals()
 
-    def _show_context_menu(self, pos):  # noqa: ANN001, ANN202
+    def _show_context_menu(self, pos: QPoint) -> None:
         item = self.table.itemAt(pos)
         if not item or (item and item.text() == "TOTALI"):
             return
 
         row_idx = item.row()
         item_0 = self.table.item(row_idx, 0)
-        filename = item_0.data(Qt.ItemDataRole.UserRole) if item_0 else None
+        filename: str | None = item_0.data(Qt.ItemDataRole.UserRole) if item_0 else None
 
         menu = QMenu(self)
         if filename:
@@ -237,12 +242,12 @@ class GiornaliereYearTab(QWidget):
         if viewport := self.table.viewport():
             menu.exec(viewport.mapToGlobal(pos))
 
-    def _open_giornaliera(self, filename):  # noqa: ANN001, ANN202
+    def _open_giornaliera(self, filename: str) -> None:
         config = config_manager.load_config()
-        root = os.path.normpath(config.get("giornaliere_path", ""))
+        root: str = os.path.normpath(config.get("giornaliere_path", ""))
         if not root:
             return
-        found = None
+        found: str | None = None
         year_folder = os.path.join(root, f"Giornaliere {self.year}")
         if Path(year_folder).joinpath(filename).exists():
             found = os.path.join(year_folder, filename)

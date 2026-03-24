@@ -1,56 +1,45 @@
 """
-SyncroJob - GUI Widgets
-Widget personalizzati riutilizzabili.
+SyncroJob - GUI Widgets Registry
 """
 
-from .activity_feed import ActivityFeed
-from .animated_progress_bar import AnimatedProgressBar
+from .activity_timeline import ActivityTimelineWidget
 from .bot_parameters import BotParametersWidget
-from .calendar_date_edit import CalendarDateEdit
-from .dashboard_stat_card import DashboardStatCard
-from .data_table import DataTable
-from .empty_state import EmptyStateWidget
-from .excel_table import EditableDataTable, ExcelTableWidget
-from .info_widgets import DetailedInfoDialog, InfoLabel, KPIBigCard
+from .core_widgets import (
+    FilterComboBox,
+    IconButton,
+    PrimaryButton,
+    SearchInput,
+    StandardCheckBox,
+)
+from .data_table import EditableDataTable
+from .editable_data_table import EditableDataTable as LegacyEditableDataTable
+from .excel_table import ExcelTableWidget
+from .loading_overlay import LoadingOverlay
 from .modern_button import ModernButton
 from .modern_card import ModernCard, ModernContentCard
-from .multi_select_filter import MultiSelectFilter
-from .notification_item import NotificationItem
-from .shimmer_widget import ShimmerSkeleton
 from .status_card import StatusCard
-from .status_indicator import StatusIndicator
-from .timeline_widget import (
-    HorizontalLogItem,
-    HorizontalTimelineContainer,
-    HorizontalTimelineWidget,
-    MissionReportCard,
-    TimelineWidget,
-)
-from .toast import Toast, ToastManager
+from .timeline_widget import TimelineWidget
+from .toast import ToastManager, toast_error, toast_info, toast_success, toast_warning
 
 __all__ = [
+    "ActivityTimelineWidget",
     "BotParametersWidget",
-    "CalendarDateEdit",
-    "DashboardStatCard",
-    "DataTable",
-    "DetailedInfoDialog",
     "EditableDataTable",
-    "EmptyStateWidget",
     "ExcelTableWidget",
-    "HorizontalLogItem",
-    "HorizontalTimelineContainer",
-    "HorizontalTimelineWidget",
-    "InfoLabel",
-    "KPIBigCard",
-    "MissionReportCard",
+    "FilterComboBox",
+    "IconButton",
+    "LoadingOverlay",
     "ModernButton",
     "ModernCard",
     "ModernContentCard",
-    "NotificationItem",
-    "ShimmerSkeleton",
+    "PrimaryButton",
+    "SearchInput",
+    "StandardCheckBox",
     "StatusCard",
-    "StatusIndicator",
     "TimelineWidget",
-    "Toast",
     "ToastManager",
+    "toast_error",
+    "toast_info",
+    "toast_success",
+    "toast_warning",
 ]

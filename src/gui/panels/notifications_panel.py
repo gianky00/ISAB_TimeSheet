@@ -4,6 +4,8 @@ Pannello per la visualizzazione delle notifiche di sistema, Audit Log e Health S
 Gestisce il filtraggio, la ricerca e il raggruppamento temporale dei messaggi.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -60,7 +62,7 @@ class NotificationsPanel(QWidget):
     - Health: Indicatori di salute e performance del sistema.
     """
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il pannello notifiche e collega il manager globale.
 
@@ -72,17 +74,28 @@ class NotificationsPanel(QWidget):
         self.current_search = ""
         self.current_sort = "date_desc"
         self.manager = NotificationManager.instance()
-        self._group_widgets = {}
-        self._cached_filter_result = None
-        self._last_filter_state = None
+        self._group_widgets: dict[str, dict[str, Any]] = {}
+        self._cached_filter_result: list[dict[str, Any]] | None = None
+        self._last_filter_state: tuple[str, str, str, int] | None = None
         self._refresh_timer = QTimer()
         self._refresh_timer.setSingleShot(True)
         self._refresh_timer.timeout.connect(self._do_refresh)
+
+        # UI Elements
+        self.tabs: AnimatedTabWidget
+        self.notif_tab: QWidget
+        self.toolbar: NotificationToolbar
+        self.scroll_area: QScrollArea
+        self.scroll_content: QWidget
+        self.scroll_layout: QVBoxLayout
+        self.audit_tab: AuditLogWidget
+        self.health_tab: HealthPanel
+
         self._setup_ui()
         self.manager.notifications_updated.connect(self._schedule_refresh)
         self.refresh_notifications()
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
         """Configura il layout principale e inizializza i tab."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(15, 15, 15, 15)
@@ -160,7 +173,7 @@ class NotificationsPanel(QWidget):
 
         self.tabs.currentChanged.connect(self._on_tab_changed)
 
-    def _on_tab_changed(self, index):  # noqa: ANN001, ANN202
+    def _on_tab_changed(self, index: int) -> None:
         """Aggiorna i dati del tab selezionato."""
         tab_text = self.tabs.tabText(index)
         if tab_text == "Audit":
@@ -168,39 +181,39 @@ class NotificationsPanel(QWidget):
         elif tab_text == "Health":
             self.health_tab.refresh()
 
-    def _on_search_changed(self, query: str):  # noqa: ANN202
+    def _on_search_changed(self, query: str) -> None:
         """Reagisce alla modifica del testo nella barra di ricerca."""
         self.current_search = query.lower()
         self._invalidate_cache()
         self._schedule_refresh()
 
-    def _on_filter_changed(self, filter_key: str):  # noqa: ANN202
+    def _on_filter_changed(self, filter_key: str) -> None:
         """Applica il filtro selezionato (es. Errori, Non letti)."""
         self.current_filter = filter_key
         self._invalidate_cache()
         self._schedule_refresh()
 
-    def _on_sort_changed(self, sort_key: str):  # noqa: ANN202
+    def _on_sort_changed(self, sort_key: str) -> None:
         """Cambia l'ordinamento della lista (Data, Priorità)."""
         self.current_sort = sort_key
         self._invalidate_cache()
         self._schedule_refresh()
 
-    def _schedule_refresh(self):  # noqa: ANN202
+    def _schedule_refresh(self) -> None:
         """Pianifica un aggiornamento della UI con debounce."""
         self._refresh_timer.stop()
         self._refresh_timer.start(50)
 
-    def _invalidate_cache(self):  # noqa: ANN202
+    def _invalidate_cache(self) -> None:
         """Invalida i risultati filtrati salvati in cache."""
         self._cached_filter_result = None
         self._last_filter_state = None
 
-    def _do_refresh(self):  # noqa: ANN202
+    def _do_refresh(self) -> None:
         """Esegue l'aggiornamento effettivo della UI."""
         self.refresh_notifications()
 
-    def _clear_notifications(self):  # noqa: ANN202
+    def _clear_notifications(self) -> None:
         """Svuota tutte le notifiche previa conferma dell'utente."""
         if (
             QMessageBox.question(self, "Conferma", "Vuoi svuotare i messaggi?")
@@ -208,7 +221,7 @@ class NotificationsPanel(QWidget):
         ):
             self.manager.clear_all()
 
-    def refresh_notifications(self):  # noqa: ANN201
+    def refresh_notifications(self) -> None:
         """
         Ricarica la lista delle notifiche applicando filtri, ricerca e raggruppamento.
         Ottimizza il rendering utilizzando la cache del filtraggio.
@@ -262,7 +275,7 @@ class NotificationsPanel(QWidget):
 
         return self._sort_notifications(notifs)
 
-    def _render_groups(self, grouped: dict[str, dict[str, Any]], disable_animations: bool):  # noqa: ANN202
+    def _render_groups(self, grouped: dict[str, dict[str, Any]], disable_animations: bool) -> None:
         """Crea i widget per i gruppi temporali e inserisce le card notifiche."""
         for group_key, group_data in grouped.items():
             if not group_data["notifications"]:
@@ -290,7 +303,7 @@ class NotificationsPanel(QWidget):
             self.scroll_layout.insertWidget(self.scroll_layout.count() - 1, group_container)
             self._group_widgets[group_key] = {"header": header, "container": group_container}
 
-    def _clear_scroll_area(self):  # noqa: ANN202
+    def _clear_scroll_area(self) -> None:
         """Rimuove tutti i widget correnti dall'area scrollabile."""
         self._group_widgets.clear()
         while self.scroll_layout.count() > 1:
@@ -299,7 +312,7 @@ class NotificationsPanel(QWidget):
                 widget.setParent(None)
                 widget.deleteLater()
 
-    def _invalidate_and_refresh(self):  # noqa: ANN202
+    def _invalidate_and_refresh(self) -> None:
         """Invalida cache e pianifica refresh (callback per eliminazione singola card)."""
         self._invalidate_cache()
         self._schedule_refresh()
@@ -348,12 +361,12 @@ class NotificationsPanel(QWidget):
                 groups["older"]["notifications"].append(notif)
         return groups
 
-    def _on_group_toggled(self, group_key: str, is_expanded: bool):  # noqa: ANN202
+    def _on_group_toggled(self, group_key: str, is_expanded: bool) -> None:
         """Mostra o nasconde il container di un gruppo."""
         if group_key in self._group_widgets:
             self._group_widgets[group_key]["container"].setVisible(is_expanded)
 
-    def _update_toolbar_counts(self):  # noqa: ANN202
+    def _update_toolbar_counts(self) -> None:
         """Aggiorna i contatori numerici sulle chip dei filtri."""
         all_notifs = self.manager.notifications
         counts = {"all": len(all_notifs), "unread": 0, "error": 0, "warning": 0, "info": 0}
@@ -365,7 +378,7 @@ class NotificationsPanel(QWidget):
                 counts[level] += 1
         self.toolbar.update_filter_counts(counts)
 
-    def _show_empty_state(self):  # noqa: ANN202
+    def _show_empty_state(self) -> None:
         """Visualizza un widget informativo quando non ci sono notifiche per il filtro corrente."""
         empty_widget = QWidget()
         empty_layout = QVBoxLayout(empty_widget)

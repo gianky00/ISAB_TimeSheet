@@ -1,6 +1,8 @@
-from typing import ClassVar
+from __future__ import annotations
 
-from PyQt6.QtCore import QSortFilterProxyModel, Qt, QTimer
+from typing import TYPE_CHECKING, ClassVar
+
+from PyQt6.QtCore import QModelIndex, QSortFilterProxyModel, Qt, QTimer
 from PyQt6.QtWidgets import (
     QHeaderView,
     QTableView,
@@ -18,20 +20,23 @@ from src.gui.formatters import (
 )
 from src.gui.styles import COLORS
 
+if TYPE_CHECKING:
+    from PyQt6.QtCore import QObject
+
 
 class MultiColumnFilterProxyModel(QSortFilterProxyModel):
     """Proxy model che filtra su tutte le colonne con supporto multi-termine."""
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._filter_text = ""
 
-    def set_filter_text(self, text: str):  # noqa: ANN201
+    def set_filter_text(self, text: str) -> None:
         """Imposta il testo di filtro (supporta termini multipli separati da spazio)."""
         self._filter_text = text.lower().strip()
         self.invalidateFilter()
 
-    def filterAcceptsRow(self, source_row: int, _source_parent) -> bool:  # noqa: ANN001
+    def filterAcceptsRow(self, source_row: int, _source_parent: QModelIndex) -> bool:
         """Determina se una riga del modello sorgente deve essere inclusa nel filtro."""
         if not self._filter_text:
             return True
@@ -71,7 +76,7 @@ class ContabilitaYearTab(QWidget):
         "ANNOTAZIONI",
     ]
 
-    def __init__(self, year: int, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, year: int, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.year = year
         self.model = FastTableModel([], self.COLUMNS)
@@ -94,7 +99,7 @@ class ContabilitaYearTab(QWidget):
         # Defer data loading for better responsiveness
         QTimer.singleShot(10, self._load_data)
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 10, 0, 0)
 
@@ -156,11 +161,11 @@ class ContabilitaYearTab(QWidget):
 
         layout.addWidget(self.table)
 
-    def refresh_data(self):  # noqa: ANN201
+    def refresh_data(self) -> None:
         """Metodo pubblico per rinfrescare i dati del tab."""
         self._load_data()
 
-    def _load_data(self):  # noqa: ANN202
+    def _load_data(self) -> None:
         """Carica i dati dal DB e aggiorna il modello virtuale."""
         try:
             db_path = CONFIG_DIR / "data" / "contabilita.db"
@@ -184,7 +189,7 @@ class ContabilitaYearTab(QWidget):
         except Exception as e:
             print(f"Error loading data for year {self.year}: {e}")
 
-    def _adjust_column_widths(self):  # noqa: ANN202
+    def _adjust_column_widths(self) -> None:
         """Adatta le larghezze delle colonne al contenuto, mantenendo un minimo leggibile."""
         header = self.table.horizontalHeader()
         if header is None:
@@ -219,10 +224,10 @@ class ContabilitaYearTab(QWidget):
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # ATTIVITA'
         header.setSectionResizeMode(11, QHeaderView.ResizeMode.Stretch)  # ANNOTAZIONI
 
-    def set_search_query(self, query):  # noqa: ANN001, ANN201
+    def set_search_query(self, query: str) -> None:
         """Applica il filtro di ricerca."""
         self.filter_data(query)
 
-    def filter_data(self, text):  # noqa: ANN001, ANN201
+    def filter_data(self, text: str) -> None:
         """Filtra i dati in base al testo di ricerca."""
         self.proxy_model.set_filter_text(text)

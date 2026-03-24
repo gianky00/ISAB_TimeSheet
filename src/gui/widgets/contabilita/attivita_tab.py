@@ -4,6 +4,8 @@ Tab specializzato per la visualizzazione delle attività programmate settimanali
 Include filtri avanzati per PS, PO, Area e Stato PdL.
 """
 
+from __future__ import annotations
+
 import json
 from contextlib import suppress
 from datetime import UTC, datetime
@@ -60,7 +62,7 @@ class AttivitaProgrammateTab(QWidget):
         "AVVISO",
     ]
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il tab delle attività programmate.
 
@@ -78,7 +80,7 @@ class AttivitaProgrammateTab(QWidget):
         self._setup_ui()
         self._load_data()
 
-    def _setup_ui(self):  # noqa: ANN202, PLR0915
+    def _setup_ui(self) -> None:  # noqa: PLR0915
         """Configura l'interfaccia utente del tab, inclusi i filtri e la tabella."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 10, 0, 0)
@@ -153,11 +155,11 @@ class AttivitaProgrammateTab(QWidget):
         v_header.setVisible(False)
         layout.addWidget(self.table)
 
-    def refresh_data(self):  # noqa: ANN201
+    def refresh_data(self) -> None:
         """Ricarica i dati dal database e aggiorna la tabella."""
         self._load_data()
 
-    def _load_data(self):  # noqa: ANN202
+    def _load_data(self) -> None:
         """Esegue il caricamento effettivo dei dati nel modello della tabella."""
         data = ContabilitaManager.get_attivita_programmate_data()
         self.table.setSortingEnabled(False)
@@ -176,7 +178,7 @@ class AttivitaProgrammateTab(QWidget):
             self.table.blockSignals(False)
             self.table.setSortingEnabled(True)
 
-    def _adjust_column_widths(self):  # noqa: ANN202
+    def _adjust_column_widths(self) -> None:
         """Adatta le larghezze delle colonne al contenuto, mantenendo un minimo leggibile."""
         header = self.table.horizontalHeader()
         if header is None:
@@ -193,10 +195,10 @@ class AttivitaProgrammateTab(QWidget):
         header.setSectionResizeMode(11, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(15, QHeaderView.ResizeMode.Stretch)
 
-    def _populate_table_row(self, row_idx: int, row_data: tuple[Any, ...], db_keys: list[str]):  # noqa: ANN202
+    def _populate_table_row(self, row_idx: int, row_data: tuple[Any, ...], db_keys: list[str]) -> None:
         """Popola una riga della tabella con i dati e applica gli stili salvati."""
         styles_idx = len(self.COLUMNS)
-        row_styles = (
+        row_styles: dict[str, Any] = (
             json.loads(row_data[styles_idx]) if len(row_data) > styles_idx and row_data[styles_idx] else {}
         )
 
@@ -208,7 +210,7 @@ class AttivitaProgrammateTab(QWidget):
                 self._apply_item_style(item, row_styles.get(db_keys[col_idx]))
             self.table.setItem(row_idx, col_idx, item)
 
-    def _format_cell_text(self, col_idx: int, val: Any) -> str:  # noqa: ANN401
+    def _format_cell_text(self, col_idx: int, val: object) -> str:
         """Formatta il testo della cella in base al tipo di dato (es. date)."""
         s = str(val).strip() if val is not None else ""
         if s.lower() == "nan":
@@ -218,7 +220,7 @@ class AttivitaProgrammateTab(QWidget):
                 return datetime.strptime(s.split(" ")[0], "%Y-%m-%d").replace(tzinfo=UTC).strftime("%d/%m/%Y")
         return s
 
-    def _apply_item_style(self, item: QTableWidgetItem, style: dict[str, Any] | None):  # noqa: ANN202
+    def _apply_item_style(self, item: QTableWidgetItem, style: dict[str, Any] | None) -> None:
         """Applica colori di testo e sfondo all'item in base ai metadati di stile."""
         if not style:
             return
@@ -227,7 +229,7 @@ class AttivitaProgrammateTab(QWidget):
         if "bg" in style:
             item.setBackground(QColor(style["bg"]))
 
-    def _populate_filters(self):  # noqa: ANN202
+    def _populate_filters(self) -> None:
         """Aggiorna le opzioni dei menu a tendina dei filtri in base ai dati presenti in tabella."""
         areas, stati = set(), set()
         for r in range(self.table.rowCount()):
@@ -240,7 +242,7 @@ class AttivitaProgrammateTab(QWidget):
             (self.combo_area, areas, "Tutte"),
             (self.combo_stato, stati, "Tutti"),
         ):
-            curr = combo.current_text() if hasattr(combo, "current_text") else combo.currentText()
+            curr: str = combo.current_text() if hasattr(combo, "current_text") else combo.currentText()
             combo.blockSignals(True)
             combo.clear()
             combo.addItem(all_text)
@@ -249,7 +251,7 @@ class AttivitaProgrammateTab(QWidget):
                 combo.setCurrentText(curr)
             combo.blockSignals(False)
 
-    def apply_filters(self):  # noqa: ANN201
+    def apply_filters(self, *args: object) -> None:
         """Applica i filtri correnti (Checkbox e ComboBox) nascondendo le righe non corrispondenti."""
         f_ps, f_po = self.chk_ps.isChecked(), self.chk_po.isChecked()
         f_area, f_stato = self.combo_area.currentText(), self.combo_stato.currentText()
@@ -294,7 +296,7 @@ class AttivitaProgrammateTab(QWidget):
         it = self.table.item(row, 10)
         return not it or it.text() != stato
 
-    def _reset_filters(self):  # noqa: ANN202
+    def _reset_filters(self) -> None:
         """Ripristina i filtri ai valori predefiniti."""
         self.chk_ps.setChecked(False)
         self.chk_po.setChecked(False)
@@ -302,7 +304,7 @@ class AttivitaProgrammateTab(QWidget):
         self.combo_stato.setCurrentIndex(0)
         self.apply_filters()
 
-    def filter_data(self, text):  # noqa: ANN001, ANN201
+    def filter_data(self, text: str) -> None:
         """
         Esegue una ricerca testuale globale su tutte le righe non già nascoste dai filtri.
 

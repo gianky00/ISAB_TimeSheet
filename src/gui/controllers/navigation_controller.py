@@ -120,7 +120,7 @@ class NavigationController(QObject):
 
         # 5. Gestione sub-index (es. per pannelli tabulati)
         panel = self.stack.widget(index)
-        if sub_index is not None and hasattr(panel, "set_current_tab"):
+        if panel and sub_index is not None and hasattr(panel, "set_current_tab"):
             panel.set_current_tab(sub_index)
 
         # 6. Notifica il pannello del focus (opzionale)

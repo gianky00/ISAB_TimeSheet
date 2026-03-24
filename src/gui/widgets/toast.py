@@ -2,10 +2,13 @@
 Sistema di notifiche toast non-blocking con supporto hover e tempi differenziati.
 """
 
-from typing import Any, ClassVar, Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from PyQt6.QtCore import (
     QEasingCurve,
+    QEvent,
     QObject,
     QPropertyAnimation,
     QSize,
@@ -13,7 +16,6 @@ from PyQt6.QtCore import (
     QTimer,
     QVariantAnimation,
 )
-from PyQt6.QtGui import QEnterEvent
 from PyQt6.QtWidgets import (
     QApplication,
     QGraphicsOpacityEffect,
@@ -29,6 +31,9 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 from ..design.colors import get_palette
 from ..design.spacing import BorderRadius
+
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QEnterEvent
 
 
 class Toast(QWidget):
@@ -199,7 +204,7 @@ class Toast(QWidget):
             self._hide_timer.stop()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any) -> None:  # noqa: ANN401
+    def leaveEvent(self, event: QEvent | None) -> None:
         """Riavvia il timer di chiusura quando il mouse esce dal toast."""
         self._hide_timer.start(self._duration)
         super().leaveEvent(event)
@@ -224,11 +229,11 @@ class Toast(QWidget):
 class ToastManager(QObject):
     """Singleton per la gestione del posizionamento e dello stacking dei toast."""
 
-    _instance: ClassVar[Optional["ToastManager"]] = None
+    _instance: ClassVar[ToastManager | None] = None
     _active_toasts: ClassVar[list[Toast]] = []
 
     @classmethod
-    def instance(cls) -> "ToastManager":
+    def instance(cls) -> ToastManager:
         """Restituisce l'istanza singleton di ToastManager."""
         if cls._instance is None:
             cls._instance = cls()

@@ -2,15 +2,19 @@
 Pulsante moderno con varianti e stati.
 """
 
-from typing import Any
+from __future__ import annotations
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtProperty  # type: ignore[attr-defined]
-from PyQt6.QtGui import QEnterEvent
+from typing import TYPE_CHECKING, Any
+
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtProperty
 from PyQt6.QtWidgets import QPushButton, QWidget
 
 from src.utils.helpers import get_colored_icon
 
 from ..design.colors import get_palette
+
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QEnterEvent, QShowEvent
 
 
 class ModernButton(QPushButton):
@@ -46,6 +50,9 @@ class ModernButton(QPushButton):
         self._palette = get_palette()
         self._hover_opacity = 0.0
 
+        # Animation attributes
+        self._anim: QPropertyAnimation
+
         self._setup_animation()
         self._apply_style()
 
@@ -62,7 +69,7 @@ class ModernButton(QPushButton):
         self._anim.setDuration(150)
         self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-    def showEvent(self, event: Any) -> None:  # noqa: ANN401
+    def showEvent(self, event: QShowEvent | None) -> None:
         """Forza l'aggiornamento dello stile quando il widget viene mostrato."""
         super().showEvent(event)
         self._apply_style()

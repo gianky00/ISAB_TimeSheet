@@ -3,10 +3,10 @@ SyncroJob - UI Effects Widgets.
 Include componenti grafici con animazioni avanzate per il feedback visivo.
 """
 
-from typing import Any
+from __future__ import annotations
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtProperty  # type: ignore[attr-defined]
-from PyQt6.QtGui import QColor, QPainter, QPaintEvent, QPen
+from PyQt6.QtGui import QColor, QEnterEvent, QLeaveEvent, QPainter, QPaintEvent, QPen
 from PyQt6.QtWidgets import QFrame, QWidget
 
 from src.gui.styles import COLORS
@@ -48,12 +48,12 @@ class HoverPulseFrame(QFrame):
 
     pulse_value = pyqtProperty(float, fget=get_pulse_value, fset=set_pulse_value)
 
-    def enterEvent(self, event: Any) -> None:  # noqa: ANN401
+    def enterEvent(self, event: QEnterEvent | None) -> None:
         """Avvia l'animazione pulsante all'ingresso del mouse."""
         self._anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any) -> None:  # noqa: ANN401
+    def leaveEvent(self, event: QLeaveEvent | None) -> None:
         """Ferma l'animazione pulsante all'uscita del mouse."""
         self._anim.stop()
         self.set_pulse_value(1.0)

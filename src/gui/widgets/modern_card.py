@@ -3,13 +3,18 @@ SyncroJob - Modern Card Widget
 Un contenitore elegante con ombre morbide, angoli arrotondati e animazioni hover.
 """
 
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QFrame, QGraphicsDropShadowEffect, QVBoxLayout, QWidget
 
 from src.gui.styles import COLORS
+
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QEnterEvent
 
 
 class ModernCard(QFrame):
@@ -22,6 +27,11 @@ class ModernCard(QFrame):
         """Inizializza la card con un livello di elevazione personalizzabile."""
         super().__init__(parent)
         self.elevation = elevation
+
+        # Attributes
+        self.shadow: QGraphicsDropShadowEffect
+        self.shadow_anim: QPropertyAnimation
+
         self._setup_base_style()
         self._setup_shadow()
 
@@ -50,7 +60,7 @@ class ModernCard(QFrame):
         self.shadow_anim.setDuration(200)
         self.shadow_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-    def enterEvent(self, event: Any) -> None:  # noqa: ANN401
+    def enterEvent(self, event: QEnterEvent | None) -> None:
         """Gestisce l'effetto hover aumentando l'ombra e cambiando il bordo."""
         self.shadow_anim.setEndValue(self.elevation + 10)
         self.shadow_anim.start()

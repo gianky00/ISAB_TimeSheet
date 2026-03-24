@@ -5,11 +5,13 @@ Integra reportistica annuale, dati giornalieri, attività programmate e certific
 Include un motore di ricerca unificato e l'accesso al pannello di analisi KPI.
 """
 
+from __future__ import annotations
+
 import logging
 from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Final
+from typing import Any, Final
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -69,6 +71,21 @@ class ContabilitaPanel(QWidget):
         self.status_labels: list[QLabel] = []
         self.update_buttons: list[ModernButton] = []
         self._last_status_html = "Pronto"
+
+        # UI Elements
+        self.toolbar_card: ModernCard
+        self.selection_count_label: QLabel
+        self.selection_sum_label: QLabel
+        self.search_input: SearchInput
+        self.status_lbl: QLabel
+        self.update_btn: ModernButton
+        self.main_tabs: AnimatedTabWidget
+        self.year_tabs_widget: AnimatedTabWidget
+        self.giornaliere_tabs_widget: AnimatedTabWidget
+        self.attivita_widget: AttivitaProgrammateTab
+        self.certificati_widget: CertificatiCampioneTab
+        self.kpi_panel: ContabilitaKPIPanel
+
         self._setup_ui()
         # Aumentato il ritardo per non interferire con lo splash screen
         QTimer.singleShot(800, self._safe_refresh_tabs)
@@ -280,7 +297,9 @@ class ContabilitaPanel(QWidget):
         if hasattr(self.attivita_widget, "refresh_data") and callable(self.attivita_widget.refresh_data):
             self.attivita_widget.refresh_data()
 
-        if hasattr(self.certificati_widget, "refresh_data") and callable(self.certificati_widget.refresh_data):
+        if hasattr(self.certificati_widget, "refresh_data") and callable(
+            self.certificati_widget.refresh_data
+        ):
             self.certificati_widget.refresh_data()
 
         # Riapplica il filtro di ricerca se presente
@@ -331,13 +350,13 @@ class ContabilitaPanel(QWidget):
 
         if target:
             if hasattr(target, "table"):
-                table = target.table
+                table: Any = target.table
                 if model := table.selectionModel():
                     with suppress(Exception):
                         model.selectionChanged.disconnect()
                     model.selectionChanged.connect(lambda s, d: self._update_selection_total(table))
             elif hasattr(target, "tree"):
-                tree = target.tree
+                tree: Any = target.tree
                 with suppress(Exception):
                     tree.itemSelectionChanged.disconnect()
                 tree.itemSelectionChanged.connect(lambda: self._update_selection_total(tree))
@@ -427,7 +446,9 @@ class ContabilitaPanel(QWidget):
             if duration < self.SECONDS_IN_MINUTE:
                 time_str = f"{duration:.1f}s"
             else:
-                time_str = f"{int(duration // self.SECONDS_IN_MINUTE)}m {int(duration % self.SECONDS_IN_MINUTE)}s"
+                time_str = (
+                    f"{int(duration // self.SECONDS_IN_MINUTE)}m {int(duration % self.SECONDS_IN_MINUTE)}s"
+                )
 
             final_status = f"{timestamp} {added_str} {removed_str} (Tempo: {time_str})"
             self._last_status_html = final_status

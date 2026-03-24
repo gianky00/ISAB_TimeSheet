@@ -3,9 +3,12 @@ SyncroJob - PDL Programming Status Widget
 Widget elegante che mostra una barra di stato verde/arancione per TCL e TGO nelle celle Gantt.
 """
 
+from __future__ import annotations
+
 import base64
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QRectF, Qt
 from PyQt6.QtGui import QColor, QPainter, QPainterPath
@@ -15,21 +18,24 @@ from src.core.constants import Icons
 from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path
 
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QPaintEvent
+
 logger = logging.getLogger(__name__)
 
 
 class ProgrammingStatusWidget(QWidget):
     """Widget elegante che mostra una barra di stato verde/arancione per TCL e TGO."""
 
-    def __init__(  # noqa: ANN204, PLR0913
+    def __init__(  # noqa: PLR0913
         self,
         tcl: bool,
         tgo: bool,
         connect_left: bool = False,
         connect_right: bool = False,
         is_today: bool = False,
-        parent=None,  # noqa: ANN001
-    ):
+        parent: QWidget | None = None,
+    ) -> None:
         super().__init__(parent)
         self.tcl = tcl
         self.tgo = tgo
@@ -52,7 +58,7 @@ class ProgrammingStatusWidget(QWidget):
             logger.error(f"Errore caricamento icona base64: {e}")  # noqa: TRY400
         return ""
 
-    def _setup_tooltip(self):  # noqa: ANN202
+    def _setup_tooltip(self) -> None:
         """Crea un tooltip grafico con le icone di stato."""
         tcl_icon_path = get_asset_path(Icons.FLAG_TCL_ON if self.tcl else Icons.FLAG_TCL_OFF)
         tgo_icon_path = get_asset_path(Icons.FLAG_TGO_ON if self.tgo else Icons.FLAG_TGO_OFF)
@@ -68,7 +74,7 @@ class ProgrammingStatusWidget(QWidget):
         """
         self.setToolTip(html)
 
-    def paintEvent(self, event):  # noqa: ANN001, ANN201, PLR0915
+    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: PLR0915
         """Disegna la barra di stato TCL/TGO nella cella."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

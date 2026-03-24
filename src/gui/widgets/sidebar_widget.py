@@ -6,7 +6,7 @@ Risolti bug di sovrapposizione e artefatti grafici. Massima fluidità garantita.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import Qt, QTimer, pyqtProperty, pyqtSignal
 from PyQt6.QtGui import QIcon
@@ -29,6 +29,9 @@ from src.utils.helpers import get_asset_path
 from .sidebar.animations import SidebarAnimationManager
 from .sidebar.components import SidebarChildButton, SidebarGroup, SidebarSubGroup
 
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QEnterEvent
+
 
 class SidebarWidget(QFrame):
     """
@@ -39,7 +42,7 @@ class SidebarWidget(QFrame):
     navigation_requested = pyqtSignal(int, int, int)  # (page, sub, bot)
     palette_requested = pyqtSignal()
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:  # noqa: PLR0915
         """
         Inizializza il componente sidebar.
 
@@ -63,6 +66,42 @@ class SidebarWidget(QFrame):
         self.setMinimumHeight(100)
         self.setMaximumHeight(100)
         self.setMouseTracking(True)
+
+        # UI Elements
+        self.bg_frame: QFrame
+        self.content_layout: QVBoxLayout
+        self.h_container: QWidget
+        self.h_lay: QHBoxLayout
+        self.logo_badge: QLabel
+        self.logo_label: QLabel
+        self.logo_opacity: QGraphicsOpacityEffect
+        self.scroll_area: QScrollArea
+        self.scroll_content: QWidget
+        self.menu_layout: QVBoxLayout
+        self.active_track: QWidget
+        self.footer: QWidget
+
+        # Menu Elements
+        self.btn_palette: SidebarButton
+        self.btn_home: SidebarButton
+        self.group_automazioni: SidebarGroup
+        self.group_db: SidebarGroup
+        self.group_contabilita: SidebarGroup
+        self.group_notifiche: SidebarGroup
+        self.btn_timbrature: SidebarChildButton
+        self.btn_dataease: SidebarChildButton
+        self.btn_pdl: SidebarChildButton
+        self.btn_storico_oda: SidebarChildButton
+        self.sub_dipendenti: SidebarSubGroup
+        self.sub_strumentale: SidebarSubGroup
+        self.sub_consuntivo: SidebarSubGroup
+        self.sub_fornitori: SidebarSubGroup
+        self.sub_safework: SidebarSubGroup
+        self.btn_help: SidebarButton
+        self.btn_settings: SidebarButton
+        self.main_btns: tuple[SidebarButton, ...]
+        self.footer_btns: tuple[Any, ...]
+        self.notif_child_btns: list[SidebarChildButton]
 
         self._setup_ui()
         # Inizializziamo lo stile base
@@ -386,18 +425,18 @@ class SidebarWidget(QFrame):
             for i, b in enumerate(self.notif_child_btns):
                 b.setChecked(i == sub)
 
-    def enterEvent(self, e: Any) -> None:  # noqa: ANN401
+    def enterEvent(self, event: QEnterEvent | None) -> None:
         """Gestisce l'evento di entrata del mouse (espansione)."""
         self._set_collapsed(False)
-        super().enterEvent(e)
+        super().enterEvent(event)
 
-    def leaveEvent(self, e: Any) -> None:  # noqa: ANN401
+    def leaveEvent(self, event: Any) -> None:  # noqa: ANN401
         """Gestisce l'evento di uscita del mouse (collasso)."""
         if getattr(self, "_drag_in_progress", False):
-            super().leaveEvent(e)
+            super().leaveEvent(event)
             return
         self._set_collapsed(True)
-        super().leaveEvent(e)
+        super().leaveEvent(event)
 
     def _set_collapsed(self, c: bool) -> None:
         """Gestisce espansione e contrazione senza rompere il layout."""

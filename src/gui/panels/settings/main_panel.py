@@ -5,6 +5,8 @@ Organizza le impostazioni in tab tematici: Configurazione, Backup, Statistiche e
 Gestisce il salvataggio automatico e l'import/export della configurazione.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Any
 
@@ -32,11 +34,11 @@ class ConfigSaveWorker(QThread):
 
     finished = pyqtSignal(bool, str)
 
-    def __init__(self, config: dict[str, Any]):  # noqa: ANN204
+    def __init__(self, config: dict[str, Any]) -> None:
         super().__init__()
         self.config = config
 
-    def run(self):  # noqa: ANN201
+    def run(self) -> None:
         try:
             config_manager.save_config(self.config)
             self.finished.emit(True, "")
@@ -70,6 +72,16 @@ class SettingsPanel(QWidget):
         self._save_timer.setInterval(500)  # 500ms debounce
         self._save_timer.timeout.connect(self._execute_async_save)
         self._save_worker: ConfigSaveWorker | None = None
+
+        # UI Elements
+        self.tabs: AnimatedTabWidget
+        self.config_tab: ConfigTab
+        self.roi_tab: ROITab
+        self.backup_tab: BackupTab
+        self.telegram_tab: TelegramTab
+        self.btn_import: PrimaryButton
+        self.btn_export: PrimaryButton
+        self.btn_reset: PrimaryButton
 
         self._setup_ui()
         QTimer.singleShot(50, self.load_settings)
@@ -233,7 +245,7 @@ class SettingsPanel(QWidget):
 
         path, _ = QFileDialog.getOpenFileName(self, "Importa Configurazione", "", "JSON Files (*.json)")
         if path:
-            success, msg = config_manager.import_configuration(Path(path))
+            success, msg = config_manager.import_config_from_file(Path(path))
             if success:
                 ToastManager.instance().show("Configurazione importata!", "success")
                 self.load_settings()

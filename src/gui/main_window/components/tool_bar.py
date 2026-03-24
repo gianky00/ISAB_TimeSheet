@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QSize, Qt
+from PyQt6.QtCore import QEasingCurve, QEvent, QObject, QPropertyAnimation, QSize, Qt
 from PyQt6.QtWidgets import QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
@@ -86,7 +86,7 @@ class AnimatedSplitButton(QPushButton):
 
         self.setIconSize(QSize(20, 20))
 
-    def enterEvent(self, event: QEnterEvent) -> None:
+    def enterEvent(self, event: QEnterEvent | None) -> None:
         """Animazione di ingrandimento dell'icona al passaggio del mouse."""
         self.anim.stop()
         self.anim.setStartValue(QSize(20, 20))
@@ -94,13 +94,13 @@ class AnimatedSplitButton(QPushButton):
         self.anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: object) -> None:
+    def leaveEvent(self, event: QEvent | None) -> None:
         """Ritorno alla dimensione normale."""
         self.anim.stop()
         self.anim.setStartValue(self.iconSize())
         self.anim.setEndValue(QSize(20, 20))
         self.anim.start()
-        super().leaveEvent(event)  # type: ignore[arg-type]
+        super().leaveEvent(event)
 
 
 class ToolBarComponent(QObject):

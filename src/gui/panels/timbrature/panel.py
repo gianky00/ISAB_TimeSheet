@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -34,6 +37,9 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 from .components.detail_view import TimbratureDetailView
 from .components.settings_tab import TimbratureSettingsTab
 
+if TYPE_CHECKING:
+    from PyQt6.QtCore import QItemSelection
+
 
 class TimbratureDBPanel(QWidget):
     """
@@ -41,7 +47,7 @@ class TimbratureDBPanel(QWidget):
     Refactored: usa componenti modulari.
     """
 
-    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
 
         # Member declarations
@@ -69,7 +75,7 @@ class TimbratureDBPanel(QWidget):
         # Caricamento differito per massimizzare la fluidità dello splash screen
         QTimer.singleShot(150, self._deferred_init)
 
-    def _deferred_init(self):  # noqa: ANN202
+    def _deferred_init(self) -> None:
         """Carica le liste e i dati iniziali dopo la creazione del widget."""
         try:
             lists = self.storage.get_lists()
@@ -91,7 +97,7 @@ class TimbratureDBPanel(QWidget):
 
             get_logger(__name__).error(f"Error in deferred init: {e}")
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(10, 10, 10, 10)
         self.main_layout.setSpacing(15)
@@ -127,7 +133,7 @@ class TimbratureDBPanel(QWidget):
         # Signals from Settings Tab
         self.settings_tab.settings_changed.connect(self._on_settings_changed)
 
-    def _setup_toolbar(self):  # noqa: ANN202, PLR0915
+    def _setup_toolbar(self) -> None:  # noqa: PLR0915
         self.toolbar_container = QFrame()
         self.toolbar_container.setObjectName("filterBar")
         self.toolbar_container.setStyleSheet(f"""
@@ -211,7 +217,7 @@ class TimbratureDBPanel(QWidget):
         import_btn.clicked.connect(self._import_excel_manually)
         toolbar_layout.addWidget(import_btn, alignment=Qt.AlignmentFlag.AlignBottom)
 
-    def _setup_database_tab(self, parent):  # noqa: ANN001, ANN202
+    def _setup_database_tab(self, parent: QWidget) -> None:
         layout = QVBoxLayout(parent)
         layout.setContentsMargins(0, 5, 0, 0)
 
@@ -254,11 +260,11 @@ class TimbratureDBPanel(QWidget):
         splitter.setStretchFactor(1, 2)
         layout.addWidget(splitter)
 
-    def _update_filter_combos(self):  # noqa: ANN202
+    def _update_filter_combos(self) -> None:
         # Cache reload
-        self.lists = self.storage.get_lists()
-        self.reparti = self.lists.get("reparti", [])
-        self.cantieri = self.lists.get("cantieri", [])
+        lists = self.storage.get_lists()
+        self.reparti = lists.get("reparti", [])
+        self.cantieri = lists.get("cantieri", [])
 
         self.reparto_filter.blockSignals(True)
         self.reparto_filter.clear()
@@ -274,7 +280,7 @@ class TimbratureDBPanel(QWidget):
             self.cantiere_filter.addItem(cant, cant)
         self.cantiere_filter.blockSignals(False)
 
-    def refresh_data(self):  # noqa: ANN201
+    def refresh_data(self) -> None:
         """Carica i dati dal DB e aggiorna il modello virtuale."""
         text = self.search_input.text()
         reparto = self.reparto_filter.currentData()
@@ -313,7 +319,7 @@ class TimbratureDBPanel(QWidget):
         # Reset detail
         self.detail_view.clear_fields()
 
-    def _on_selection_changed(self, selected, _deselected):  # noqa: ANN001, ANN202
+    def _on_selection_changed(self, selected: QItemSelection, _deselected: QItemSelection) -> None:
         # Protezione contro selectionModel None
         selection_model = self.db_table.selectionModel()
         if not selection_model:
@@ -335,7 +341,7 @@ class TimbratureDBPanel(QWidget):
             print(f"Errore in _on_selection_changed: {e}")
             self.detail_view.clear_fields()
 
-    def _on_tab_changed(self, index):  # noqa: ANN001, ANN202
+    def _on_tab_changed(self, index: int) -> None:
         if index == 0:  # Database
             if hasattr(self, "toolbar_container"):
                 self.toolbar_container.show()
@@ -345,12 +351,12 @@ class TimbratureDBPanel(QWidget):
                 self.toolbar_container.hide()
             self.settings_tab.load_data()
 
-    def _on_settings_changed(self):  # noqa: ANN202
+    def _on_settings_changed(self) -> None:
         """Reagisce al cambio di impostazioni aggiornando i filtri di reparto e cantiere."""
         # Settings updated (data storage updated), we might need to refresh options
         self._update_filter_combos()
 
-    def _import_excel_manually(self):  # noqa: ANN202
+    def _import_excel_manually(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Seleziona File Excel Timbrature",
@@ -377,6 +383,6 @@ class TimbratureDBPanel(QWidget):
             ToastManager.instance().show(f"Errore importazione: {e}", "error")
 
     # Exposed for external calls (compatibility)
-    def refresh_fornitori(self):  # noqa: ANN201
+    def refresh_fornitori(self) -> None:
         """Aggiorna le liste dei fornitori nei menu a tendina dei filtri."""
         self._update_filter_combos()
