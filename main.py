@@ -91,6 +91,59 @@ startup_logger_global = setup_enterprise_logging()
 
 def main():  # noqa: ANN201, PLR0915
     """Application entry point with three-phase startup architecture."""
+    # CRITICAL: Redirect stdout/stderr to devnull in frozen/noconsole mode
+    # This prevents crashes when libraries try to print to a non-existent console
+    if getattr(sys, "frozen", False) and getattr(sys, "stderr", None) is None:
+        sys.stdout = open(os.devnull, "w")  # noqa: SIM115
+        sys.stderr = open(os.devnull, "w")  # noqa: SIM115
+
+    # === SPLASH SCREEN (Standalone Process for Zero-Stutter) ===
+    # Lancia lo splash immediatamente prima di ogni altro import Qt/Pesante
+    import json
+    import subprocess
+
+    splash_script = str(ROOT_DIR / "src" / "gui" / "dialogs" / "splash_standalone.py")
+    startup_logger_global.info(f"Launching standalone splash process: {splash_script}")
+
+    env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
+    env["PYTHONPATH"] = str(ROOT_DIR)
+
+    splash_process = subprocess.Popen(
+        [sys.executable, splash_script],
+        stdin=subprocess.PIPE,
+        text=True,
+        bufsize=1,
+        encoding="utf-8",
+        env=env,
+    )
+
+    def update_splash(msg: str, prog: int):  # noqa: ANN202
+        if splash_process.poll() is None and splash_process.stdin:
+            try:
+                clean_msg = msg.replace("\n", " ").replace("\r", "").strip()
+                data = json.dumps({"cmd": "update", "msg": clean_msg, "prog": prog}, ensure_ascii=False)
+                splash_process.stdin.write(data + "\n")
+                splash_process.stdin.flush()
+            except Exception as e:
+                startup_logger_global.warning(f"Failed to update splash process: {e}")
+
+    def close_splash():  # noqa: ANN202
+        if splash_process.poll() is None and splash_process.stdin:
+            try:
+                data = json.dumps({"cmd": "close"})
+                splash_process.stdin.write(data + "\n")
+                splash_process.stdin.flush()
+                splash_process.stdin.close()
+                try:
+                    splash_process.wait(timeout=1.5)
+                except subprocess.TimeoutExpired:
+                    splash_process.kill()
+            except Exception:
+                splash_process.kill()
+
+    update_splash("Inizializzazione Nucleo...", 5)
+
     import warnings  # noqa: PLC0415
 
     from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal  # noqa: PLC0415
@@ -103,15 +156,8 @@ def main():  # noqa: ANN201, PLR0915
     startup_logger = get_logger("startup")
     crash_logger = get_logger("crash")
 
-    # Application trace ID per questa sessione
     app_trace_id = generate_trace_id()
     logger.info("Application starting", app_trace_id=app_trace_id)
-
-    # CRITICAL: Redirect stdout/stderr to devnull in frozen/noconsole mode
-    # This prevents crashes when libraries try to print to a non-existent console
-    if getattr(sys, "frozen", False) and getattr(sys, "stderr", None) is None:
-        sys.stdout = open(os.devnull, "w")  # noqa: SIM115
-        sys.stderr = open(os.devnull, "w")  # noqa: SIM115
 
     warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
     app = QApplication(sys.argv)
@@ -131,10 +177,8 @@ def main():  # noqa: ANN201, PLR0915
     main_window_instance: MainWindow | None = None
 
     def handle_new_connection():  # noqa: ANN202
-        """Handle incoming connection from another instance to activate window."""
         client_socket = server.nextPendingConnection()
         if client_socket and client_socket.waitForReadyRead(500):
-            # Limita la lettura a 1024 byte per prevenire Local DoS via memoria
             data = client_socket.read(1024)
             msg = data.decode("utf-8", errors="ignore")
             if msg == "ACTIVATE" and main_window_instance:
@@ -148,62 +192,7 @@ def main():  # noqa: ANN201, PLR0915
 
     # === SETUP STYLE ===
     from src.gui.main_window.app_styler import AppStyler  # noqa: PLC0415
-
     AppStyler.setup_app_style(app)
-
-    # === SPLASH SCREEN (Standalone Process for Zero-Stutter) ===
-    import json  # noqa: PLC0415
-    import subprocess  # noqa: PLC0415
-
-    splash_script = str(ROOT_DIR / "src" / "gui" / "dialogs" / "splash_standalone.py")
-    startup_logger_global.info(f"Launching standalone splash process: {splash_script}")
-
-    # Forza comunicazione non bufferizzata e PYTHONPATH corretto
-    env = os.environ.copy()
-    env["PYTHONUNBUFFERED"] = "1"
-    env["PYTHONPATH"] = str(ROOT_DIR)
-
-    # Avvia lo splash in un processo separato
-    # Rimuoviamo creationflags per assicurarci che la finestra sia visibile
-    splash_process = subprocess.Popen(
-        [sys.executable, splash_script],
-        stdin=subprocess.PIPE,
-        text=True,
-        bufsize=1,
-        encoding="utf-8",
-        env=env,
-    )
-
-    def update_splash(msg: str, prog: int):  # noqa: ANN202
-        """Invia comando di aggiornamento allo splash process."""
-        if splash_process.poll() is None and splash_process.stdin:
-            try:
-                # Sanitizzazione messaggio per evitare rotture JSON
-                clean_msg = msg.replace("\n", " ").replace("\r", "").strip()
-                data = json.dumps({"cmd": "update", "msg": clean_msg, "prog": prog}, ensure_ascii=False)
-                splash_process.stdin.write(data + "\n")
-                splash_process.stdin.flush()
-            except Exception as e:
-                startup_logger_global.warning(f"Failed to update splash process: {e}")
-
-    def close_splash():  # noqa: ANN202
-        """Chiude gentilmente lo splash process."""
-        if splash_process.poll() is None and splash_process.stdin:
-            try:
-                data = json.dumps({"cmd": "close"})
-                splash_process.stdin.write(data + "\n")
-                splash_process.stdin.flush()
-                splash_process.stdin.close()
-                # Attendi un po' che si chiuda, poi killa se necessario
-                try:
-                    splash_process.wait(timeout=1.5)
-                except subprocess.TimeoutExpired:
-                    splash_process.kill()
-            except Exception:
-                splash_process.kill()
-
-    # Inizializza stato splash
-    update_splash("Inizializzazione Nucleo...", 5)
     app.processEvents()
 
     # === WORKER PER FASE 1 (Import pesanti) - Thread separato ===

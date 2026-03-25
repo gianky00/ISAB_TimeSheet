@@ -90,6 +90,11 @@ class ContabilitaPanel(QWidget):
         # Aumentato il ritardo per non interferire con lo splash screen
         QTimer.singleShot(800, self._safe_refresh_tabs)
 
+    def set_current_tab(self, index: int | None = None) -> None:
+        """Cambia il tab visualizzato in base all'indice."""
+        if index is not None and 0 <= index < self.main_tabs.count():
+            self.main_tabs.setCurrentIndex(index)
+
     def _safe_refresh_tabs(self) -> None:
         """Tenta il caricamento dei tab gestendo eventuali errori critici del DB."""
         try:

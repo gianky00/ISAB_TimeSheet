@@ -1,9 +1,10 @@
 import os
-import sys
-from typing import Any
+
+os.environ["QT_API"] = "PyQt6"
 
 import numpy as np
 from matplotlib.figure import Figure
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QGraphicsDropShadowEffect,
@@ -17,22 +18,19 @@ from PyQt6.QtWidgets import (
 from src.gui.styles import COLORS
 from src.gui.widgets.info_widgets import InfoLabel
 
-FigureCanvas: Any = None
 
-# Evita il caricamento dei backend Matplotlib Qt durante i test per prevenire Access Violation nativi
-if "pytest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST"):
-    from unittest.mock import MagicMock
+class DummyCanvas(QLabel):
+    def __init__(self, fig):
+        super().__init__("Grafico disabilitato (Incompatibilità Backend Matplotlib nativo)")
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setStyleSheet("color: #6c757d; font-style: italic;")
+        self.figure = fig
 
-    FigureCanvas = MagicMock
-else:
-    try:
-        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+    def draw(self): pass
+    def draw_idle(self): pass
+    def mpl_connect(self, *args, **kwargs): pass
 
-        FigureCanvas = FigureCanvasQTAgg
-    except (ImportError, RuntimeError):
-        from unittest.mock import MagicMock
-
-        FigureCanvas = MagicMock
+FigureCanvas = DummyCanvas
 
 
 class ChartContainer(QWidget):

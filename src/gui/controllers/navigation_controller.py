@@ -90,7 +90,7 @@ class NavigationController(QObject):
         """Restituisce il widget stack della MainWindow."""
         return self.mw.stacked_widget
 
-    def navigate_to(self, index: int, sub_index: int | None = None) -> None:
+    def navigate_to(self, index: int, sub_index: int | None = None, bot_index: int | None = None) -> None:
         """
         Cambia la pagina attiva nel container principale.
         Inizializza il pannello se non ancora creato.
@@ -98,6 +98,7 @@ class NavigationController(QObject):
         Args:
             index: Indice numerico della pagina (vedi PageIndex).
             sub_index: Indice opzionale per i pannelli che supportano tab interni.
+            bot_index: Indice opzionale per la navigazione a 3 livelli (es. Automazioni).
         """
         if index < 0 or index >= self.stack.count():
             logger.warning("Tentativo di navigazione verso indice non valido: %s", index)
@@ -116,12 +117,17 @@ class NavigationController(QObject):
 
         # 4. Sincronizzazione Sidebar
         if hasattr(self.mw.sidebar, "set_active_button"):
-            self.mw.sidebar.set_active_button(index)
+            self.mw.sidebar.set_active_button(index, sub_index, bot_index)
 
         # 5. Gestione sub-index (es. per pannelli tabulati)
         panel = self.stack.widget(index)
-        if panel and sub_index is not None and hasattr(panel, "set_current_tab"):
-            panel.set_current_tab(sub_index)
+        if panel and hasattr(panel, "set_current_tab"):
+            try:
+                # Prova a passare entrambi gli argomenti per pannelli a 3 livelli
+                panel.set_current_tab(sub_index, bot_index)
+            except TypeError:
+                # Fallback per pannelli a 2 livelli
+                panel.set_current_tab(sub_index)
 
         # 6. Notifica il pannello del focus (opzionale)
         if panel and hasattr(panel, "on_focus_received") and callable(panel.on_focus_received):
@@ -273,10 +279,10 @@ class NavigationController(QObject):
 
                 return ScaricoOrePanel(controller=self.scarico_ore_controller)
 
-            if index == PageIndex.ANAGRAFICHE:
-                from src.gui.panels.dipendenti.pages.anagrafica_page import AnagraficaPage  # noqa: PLC0415
+            if index == PageIndex.PDL_DB:
+                from src.gui.panels.pdl.pdl_panel import PDLDBPanel  # noqa: PLC0415
 
-                return AnagraficaPage(controller=self.anagrafica_controller)
+                return PDLDBPanel(controller=self.pdl_controller)
 
             if index == PageIndex.SETTINGS:
                 from src.gui.panels.settings.main_panel import SettingsPanel  # noqa: PLC0415

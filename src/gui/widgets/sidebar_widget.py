@@ -175,20 +175,20 @@ class SidebarWidget(QFrame):
         """Inizializza l'header con il logo."""
         self.h_container = QWidget()
         self.h_lay = QHBoxLayout(self.h_container)
-        self.h_lay.setContentsMargins(0, 0, 0, 15)
+        self.h_lay.setContentsMargins(0, 18, 0, 15)
         self.h_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.h_lay.setSpacing(10)
 
         self.logo_badge = QLabel()
         self.logo_badge.setFixedSize(46, 46)
         self.logo_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.logo_badge.setStyleSheet("background: white; border-radius: 23px; border: 1px solid #e2e8f0;")
+        self.logo_badge.setStyleSheet("background: transparent; border: none;")
 
         pix = QIcon(get_asset_path("assets/app.ico")).pixmap(64, 64)
         if not pix.isNull():
             self.logo_badge.setPixmap(
                 pix.scaled(
-                    30, 30, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+                    36, 36, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
                 )
             )
         self.h_lay.addWidget(self.logo_badge)
@@ -450,6 +450,7 @@ class SidebarWidget(QFrame):
         # Animazioni
         self.anim_manager.animate_width(self.collapsed_width if c else self.expanded_width)
         self.anim_manager.animate_content(self.logo_opacity, 0.0 if c else 1.0)
+        self.logo_label.setVisible(not c)
 
         if not c:
             # ESPANSIONE
@@ -481,7 +482,7 @@ class SidebarWidget(QFrame):
         """Logica specifica per l'espansione della sidebar."""
         self.scroll_area.show()
         self.footer.show()
-        self.h_lay.setContentsMargins(14, 0, 14, 15)
+        self.h_lay.setContentsMargins(14, 18, 14, 15)
         self.h_lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         p = self.parentWidget()
@@ -492,7 +493,7 @@ class SidebarWidget(QFrame):
 
     def _handle_collapse(self) -> None:
         """Logica specifica per il collasso della sidebar."""
-        self.h_lay.setContentsMargins(0, 0, 0, 15)
+        self.h_lay.setContentsMargins(0, 8, 0, 15)
         self.h_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.bg_frame.setProperty("state", "collapsed")
 
@@ -505,4 +506,4 @@ class SidebarWidget(QFrame):
     def _update_ui_state(self) -> None:
         """Sincronizza lo stato dei gruppi."""
         for g in (self.group_db, self.group_automazioni, self.group_contabilita, self.group_notifiche):
-            g.set_collapsed(self._is_collapsed)
+                 g.set_collapsed(self._is_collapsed)

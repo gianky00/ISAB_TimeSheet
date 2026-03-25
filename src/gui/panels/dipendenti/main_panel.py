@@ -71,6 +71,11 @@ class DipendentiPanel(QWidget):
 
         main_layout.addWidget(self.tabs)
 
+    def set_current_tab(self, index: int | None = None) -> None:
+        """Cambia il tab visualizzato in base all'indice fornito."""
+        if index is not None and 0 <= index < self.tabs.count():
+            self.tabs.setCurrentIndex(index)
+
     def refresh_data(self) -> None:
         """
         Aggiorna i dati del pannello.

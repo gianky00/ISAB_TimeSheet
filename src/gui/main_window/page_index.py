@@ -31,8 +31,8 @@ class PageIndex(IntEnum):
     DATAEASE = 5
     """Visualizzatore avanzato Scarico Ore Cantiere."""
 
-    ANAGRAFICHE = 6
-    """Gestione anagrafiche e directory aziendale."""
+    PDL_DB = 6
+    """Gestione programmazione e visualizzazione Database PDL SafeWork."""
 
     SETTINGS = 7
     """Configurazione globale dell'applicazione."""

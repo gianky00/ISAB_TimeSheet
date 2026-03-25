@@ -51,6 +51,11 @@ class ConsuntivoPanel(QWidget):
 
         layout.addWidget(self.tabs)
 
+    def set_current_tab(self, index: int | None = None) -> None:
+        """Cambia il tab visualizzato in base all'indice."""
+        if index is not None and 0 <= index < self.tabs.count():
+            self.tabs.setCurrentIndex(index)
+
     def _pre_load_data(self) -> None:
         """Esegue il caricamento pesante dei dati in background all'avvio dell'app."""
         if self._data_preloaded:

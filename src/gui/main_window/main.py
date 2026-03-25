@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
@@ -96,9 +96,12 @@ class MainWindow(QMainWindow):
         self.tab_safework: Any = None
 
         # === 2. UI COMPONENTS (Modular) ===
-        self._setup_ui_layout()
-        self.menu_bar_component = MenuBarComponent(self)
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+        self.stacked_widget = SlidingStackedWidget()
+
         self.tool_bar_component = ToolBarComponent(self)
+        self.menu_bar_component = MenuBarComponent(self)
         self.status_bar_component = StatusBarComponent(self)
         self.tray_icon_component = TrayIconComponent(self)
 
@@ -111,6 +114,8 @@ class MainWindow(QMainWindow):
         self.monitoring_controller = MonitoringController(self)
         self.app_event_handler = AppEventHandler(self)
         self.telegram_bridge = TelegramUIBridge(self)
+
+        self._setup_ui_layout()
 
         # === 4. WIRING & INITIALIZATION ===
         self.signal_connector = SignalConnector(self)
@@ -177,34 +182,29 @@ class MainWindow(QMainWindow):
             logger.exception("Errore durante la finalizzazione dell'interfaccia")
 
     def _setup_ui_layout(self) -> None:
-        """Configura il layout principale con lo StackedWidget animato."""
-        self.central_widget = QWidget()
-        self.setCentralWidget(self.central_widget)
-
-        self.main_layout = QVBoxLayout(self.central_widget)
+        """Configura il layout principale con lo StackedWidget animato come overlay."""
+        self.main_layout = QGridLayout(self.central_widget)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
 
-        # Container per Sidebar + Content
-        self.content_container = QWidget()
-        self.content_layout = QGridLayout(self.content_container)
-        self.content_layout.setContentsMargins(0, 0, 0, 0)
-        self.content_layout.setSpacing(0)
+        # 1. Content Area
+        self.content_area = QWidget()
+        self.content_layout = QVBoxLayout(self.content_area)
+        self.content_layout.setContentsMargins(10, 10, 10, 10)
 
-        # Sidebar (Placeholder, verrà inizializzata dal NavigationController se necessario)
+        (
+            self.update_banner,
+            self.global_search,
+        ) = self.tool_bar_component.setup_content_toolbar(self.content_layout)
+
+        self.content_layout.addWidget(self.stacked_widget)
+        self.main_layout.addWidget(self.content_area, 0, 0)
+
+        # 2. Sidebar come Overlay
         from src.gui.widgets.sidebar_widget import SidebarWidget  # noqa: PLC0415
-
-        self.sidebar = SidebarWidget(self)
-        self.content_layout.addWidget(self.sidebar, 0, 0)
-
-        # Stacked Widget per le pagine
-        self.stacked_widget = SlidingStackedWidget()
-        self.content_layout.addWidget(self.stacked_widget, 0, 1)
-
-        # Layout Stretch
-        self.content_layout.setColumnStretch(1, 1)
-
-        self.main_layout.addWidget(self.content_container, 1)
+        self.sidebar = SidebarWidget(self.central_widget)
+        self.main_layout.addWidget(self.sidebar, 0, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.sidebar.raise_()
 
     def _setup_shortcuts(self) -> None:
         """Configura gli shortcut globali dell'applicazione."""

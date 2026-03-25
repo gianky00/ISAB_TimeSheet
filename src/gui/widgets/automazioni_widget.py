@@ -136,6 +136,14 @@ class AutomazioniWidget(QWidget):
                 ]
             )
 
+    def set_current_tab(self, sub_index: int | None = None, bot_index: int | None = None) -> None:
+        """Metodo standard per il NavigationController per impostare i tab interni."""
+        if sub_index is not None:
+            self.main_tabs.setCurrentIndex(sub_index)
+            if bot_index is not None and bot_index != -1:
+                target = self.tab_fornitori if sub_index == 0 else self.tab_safework
+                target.setCurrentIndex(bot_index)
+
     def set_active_tab(self, main_idx: int, sub_idx: int) -> None:
         """
         Imposta programmaticamente il tab e il sottomenu attivi.
