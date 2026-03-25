@@ -210,4 +210,5 @@ REPORT_COLORS: Final[dict[str, str]] = {
     "error_red": "#dc3545",
     "bg_light": "#f8f9fa",
     "border_gray": "#dee2e6",
+    "text_muted": "#6c757d",
 }

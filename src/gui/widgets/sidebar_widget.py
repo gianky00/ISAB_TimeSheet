@@ -175,7 +175,7 @@ class SidebarWidget(QFrame):
         """Inizializza l'header con il logo."""
         self.h_container = QWidget()
         self.h_lay = QHBoxLayout(self.h_container)
-        self.h_lay.setContentsMargins(0, 8, 0, 15)
+        self.h_lay.setContentsMargins(0, 0, 0, 15)
         self.h_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.h_lay.setSpacing(10)
 
@@ -481,7 +481,7 @@ class SidebarWidget(QFrame):
         """Logica specifica per l'espansione della sidebar."""
         self.scroll_area.show()
         self.footer.show()
-        self.h_lay.setContentsMargins(14, 8, 14, 15)
+        self.h_lay.setContentsMargins(14, 0, 14, 15)
         self.h_lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         p = self.parentWidget()
@@ -492,7 +492,7 @@ class SidebarWidget(QFrame):
 
     def _handle_collapse(self) -> None:
         """Logica specifica per il collasso della sidebar."""
-        self.h_lay.setContentsMargins(0, 8, 0, 15)
+        self.h_lay.setContentsMargins(0, 0, 0, 15)
         self.h_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.bg_frame.setProperty("state", "collapsed")
 

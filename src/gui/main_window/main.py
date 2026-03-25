@@ -254,6 +254,8 @@ class MainWindow(QMainWindow):
         """Ruota l'account attivo per il portale specificato."""
         if config_manager.switch_default_account(bot_type):
             self.status_bar_component.show_operational_state()
+            if hasattr(self.status_bar_component, "footer_left") and hasattr(self.status_bar_component.footer_left, "refresh_accounts"):
+                self.status_bar_component.footer_left.refresh_accounts()
             ToastManager.instance().show(f"Account {bot_type.upper()} ruotate con successo.", "success")
         else:
             ToastManager.instance().show(f"Impossibile ruotare account {bot_type.upper()}.", "warning")
