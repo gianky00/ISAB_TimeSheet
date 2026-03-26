@@ -68,7 +68,11 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle(f"SyncroJob v{VERSION}")
-        self.resize(1280, 850)
+        # Responsive sizing to prevent screen overflow
+        screen_geom = QApplication.primaryScreen().availableGeometry()
+        width = min(1280, screen_geom.width() - 50)
+        height = min(850, screen_geom.height() - 80)
+        self.resize(width, height)
 
         # Inizializzazione State
         self._force_quit = False
