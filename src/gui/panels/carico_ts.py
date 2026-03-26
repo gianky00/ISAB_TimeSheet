@@ -49,8 +49,15 @@ class CaricoTSPanel(BaseBotPanel):
         self.data_table: EditableDataTable
 
         self._setup_content()
-        # Defer data loading
-        QTimer.singleShot(10, self._safe_load_data)
+        self._data_loaded = False
+        # Il caricamento dati viene differito a showEvent
+
+    def showEvent(self, event: Any) -> None:
+        """Esegue il primo caricamento dati solo quando il pannello diventa visibile."""
+        super().showEvent(event)
+        if not self._data_loaded:
+            self._data_loaded = True
+            QTimer.singleShot(10, self._safe_load_data)
 
     def get_bot_class(self) -> type[BaseBot]:
         """Restituisce la classe CaricoTSBot associata."""

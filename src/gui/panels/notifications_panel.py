@@ -91,9 +91,17 @@ class NotificationsPanel(QWidget):
         self.audit_tab: AuditLogWidget
         self.health_tab: HealthPanel
 
+        self._first_refresh_done = False
         self._setup_ui()
         self.manager.notifications_updated.connect(self._schedule_refresh)
-        self.refresh_notifications()
+        # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
+
+    def showEvent(self, event: Any) -> None:
+        """Esegue il primo refresh solo quando il pannello diventa visibile."""
+        super().showEvent(event)
+        if not self._first_refresh_done:
+            self._first_refresh_done = True
+            QTimer.singleShot(50, self.refresh_notifications)
 
     def _setup_ui(self) -> None:
         """Configura il layout principale e inizializza i tab."""

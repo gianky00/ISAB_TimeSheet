@@ -68,39 +68,29 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle(f"SyncroJob v{VERSION}")
-        # Responsive sizing to prevent screen overflow
-        screen_geom = QApplication.primaryScreen().availableGeometry()
-        width = min(1280, screen_geom.width() - 50)
-        height = min(850, screen_geom.height() - 80)
-        self.resize(width, height)
 
-        # Inizializzazione State
+        # Responsive sizing
+        if screen := QApplication.primaryScreen():
+            screen_geom = screen.availableGeometry()
+            width = min(1280, screen_geom.width() - 50)
+            height = min(850, screen_geom.height() - 80)
+            self.resize(width, height)
+
         self._force_quit = False
+        self._init_core_services()
+        self._init_ui_components()
+        self._init_controllers()
 
-        # === 1. CORE SERVICES ===
+        self._setup_ui_layout()
+        self._init_ui_final()
+
+    def _init_core_services(self) -> None:
+        """Inizializzazione dei servizi fondamentali."""
         self.audit_manager = AuditManager.instance()
         self.telegram = TelegramService()
 
-        # UI Layout Attributes
-        self.central_widget: QWidget
-        self.main_layout: QVBoxLayout
-        self.content_container: QWidget
-        self.content_layout: QGridLayout
-        self.sidebar: QWidget  # SidebarWidget
-        self.stacked_widget: SlidingStackedWidget
-
-        # Bot Panels (Injected by AutomazioniWidget)
-        self.dettagli_panel: Any = None
-        self.prenota_panel: Any = None
-        self.scarico_panel: Any = None
-        self.timbrature_bot_panel: Any = None
-        self.carico_panel: Any = None
-        self.pdl_panel: Any = None
-        self.pdl_search_panel: Any = None
-        self.tab_fornitori: Any = None
-        self.tab_safework: Any = None
-
-        # === 2. UI COMPONENTS (Modular) ===
+    def _init_ui_components(self) -> None:
+        """Inizializzazione dei componenti UI modulari."""
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.stacked_widget = SlidingStackedWidget()
@@ -110,7 +100,8 @@ class MainWindow(QMainWindow):
         self.status_bar_component = StatusBarComponent(self)
         self.tray_icon_component = TrayIconComponent(self)
 
-        # === 3. CONTROLLERS (Orchestration) ===
+    def _init_controllers(self) -> None:
+        """Inizializzazione dei controller di orchestrazione."""
         self.navigation_controller = NavigationController(self)
         self.bot_controller = BotController(self, self.telegram)
         self.search_controller = SearchController(self)
@@ -120,30 +111,23 @@ class MainWindow(QMainWindow):
         self.app_event_handler = AppEventHandler(self)
         self.telegram_bridge = TelegramUIBridge(self)
 
-        self._setup_ui_layout()
-
-        # === 4. WIRING & INITIALIZATION ===
+    def _init_ui_final(self) -> None:
+        """Wiring finale, shortcuts e avvio servizi."""
         self.signal_connector = SignalConnector(self)
         self.signal_connector.connect_all()
         self.telegram_bridge.setup_connections()
 
         # Applica Tema Default
-        app_instance: Any = QApplication.instance()
-        apply_theme(app_instance, config_manager.get_config_value("theme", "light"))
+        if app_instance := QApplication.instance():
+            apply_theme(app_instance, config_manager.get_config_value("theme", "light"))
 
-        # Setup Shortcuts
         self._setup_shortcuts()
-
-        # Avvio servizi
         self.service_controller.start_all()
-
-        # Navigazione iniziale (Dashboard)
         self.navigation_controller.navigate_to(PageIndex.DASHBOARD)
 
-        # --- LICENSE HEARTBEAT (Real-time enforcement) ---
+        # License Heartbeat
         self._license_timer = QTimer(self)
         self._license_timer.timeout.connect(self._check_license_heartbeat)
-        # Controllo ogni 4 ore (4 * 60 * 60 * 1000 ms)
         self._license_timer.start(14400000)
 
     def _check_license_heartbeat(self) -> None:

@@ -127,7 +127,7 @@ def _atomic_write_json(path: Path, data: dict[str, Any]) -> bool:
     temp_path = path.with_suffix(".tmp")
     try:
         ensure_config_dir()
-        with open(temp_path, "w", encoding="utf-8") as f:
+        with temp_path.open("w", encoding="utf-8") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
             # Flush e sync per essere sicuri che i dati siano su disco prima di chiudere
             f.flush()

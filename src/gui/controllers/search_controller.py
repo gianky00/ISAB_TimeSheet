@@ -133,11 +133,11 @@ class SearchController(QObject):
 
     def _add_extended_matches(self, ext_results: dict[str, Any], menu: QMenu) -> int:
         count = 0
-        for cat, label, _nav_idx in [
+        for cat, label, _nav_idx in (
             ("GIORNALIERE", "GIORNALIERE:", 1),
             ("CANTIERE", "CANTIERE (Scarico Ore):", None),
             ("CERTIFICATI", "CERTIFICATI:", 3),
-        ]:
+        ):
             matches = ext_results.get(cat, [])
             if matches:
                 self._add_disabled_action(menu, label)

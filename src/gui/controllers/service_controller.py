@@ -243,16 +243,14 @@ class ServiceController(QObject):
         """Utilizza le API COM di Windows per inviare l'email tramite Outlook."""
         import win32com.client  # noqa: PLC0415
 
-        body = f"<html><body style='font-family: Segoe UI;'><h2>Report Accessi ISAB</h2><p>Generato il {datetime.now(UTC).astimezone().strftime('%d/%m/%Y %H:%M')}</p>"
-        body += (
-            "<h3>In Scadenza (21-30 gg)</h3><ul>"
+        body = (
+            f"<html><body style='font-family: Segoe UI;'><h2>Report Accessi ISAB</h2><p>Generato il {datetime.now(UTC).astimezone().strftime('%d/%m/%Y %H:%M')}</p>"
+            + "<h3>In Scadenza (21-30 gg)</h3><ul>"
             + "".join(
                 [f"<li>{x['cognome']} {x['nome']} - {x['giorni']}gg ({x['data']})</li>" for x in w_list[:20]]
             )
             + "</ul>"
-        )
-        body += (
-            "<h3>Scaduti (&gt; 30 gg)</h3><ul>"
+            + "<h3>Scaduti (&gt; 30 gg)</h3><ul>"
             + "".join(
                 [f"<li>{x['cognome']} {x['nome']} - {x['giorni']}gg ({x['data']})</li>" for x in e_list[:20]]
             )

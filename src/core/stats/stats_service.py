@@ -43,7 +43,7 @@ class StatsService:
     def _get_stato_attivita_counts(df: pd.DataFrame) -> dict[str, int]:
         df_filtered = df[~df["stato_attivita"].str.contains("FORNITURA", case=False, na=False)]
         raw_counts = df_filtered["stato_attivita"].value_counts().to_dict()
-        return {str(k): int(v) for k, v in raw_counts.items()}
+        return {str(k): v for k, v in raw_counts.items()}
 
     @staticmethod
     def _get_prev_ore_mese(df: pd.DataFrame) -> dict[str, Any]:

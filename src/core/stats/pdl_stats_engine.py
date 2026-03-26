@@ -130,7 +130,7 @@ class PDLStatsEngine:
         fourteen_days_ago = now - timedelta(days=cls.DAYS_IN_FORTNIGHT)
 
         stats_map: dict[str, dict[str, int]] = {}
-        curr_mtd, prev_mtd, last_7d, prev_7d = 0, 0, 0, 0
+        curr_mtd = prev_mtd = last_7d = prev_7d = 0
 
         for area, date_str in rows:
             try:

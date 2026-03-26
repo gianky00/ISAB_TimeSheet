@@ -191,10 +191,7 @@ class BaseBotPanel(QWidget):
 
         self._setup_ui()
         self._connect_signals()
-
-        # Inizializza timeline attività in modo differito (Ghost Mode)
-        # Usiamo un timer per assicurarci che la sottoclasse abbia completato l'init
-        QTimer.singleShot(50, self._init_ghost_timeline)
+        # La timeline ghost viene inizializzata in showEvent (evita inquinamento event loop allo startup)
 
     def get_bot_class(self) -> type[BaseBot] | None:
         """Restituisce la classe del bot associata al pannello. Da implementare nelle sottoclassi."""

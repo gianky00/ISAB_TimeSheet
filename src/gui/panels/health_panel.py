@@ -7,7 +7,7 @@ e un elenco dettagliato di anomalie rilevate, con integrazione diretta per gli a
 
 from contextlib import suppress
 from datetime import UTC, datetime
-from typing import Final
+from typing import Any, Final
 
 from PyQt6.QtCore import QRectF, Qt, QTimer
 from PyQt6.QtGui import QColor, QFont, QPainter, QPaintEvent, QPen
@@ -245,6 +245,7 @@ class HealthPanel(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         """Inizializza l'interfaccia e avvia gli scheduler di monitoraggio."""
         super().__init__(parent)
+        self._first_refresh_done = False
         self._setup_ui()
         self._refresh_timer = QTimer(self)
         self._refresh_timer.timeout.connect(self.refresh)
@@ -252,7 +253,14 @@ class HealthPanel(QWidget):
         self._alert_timer = QTimer(self)
         self._alert_timer.timeout.connect(self._auto_check_alerts)
         self._alert_timer.start(self.ALERT_CHECK_INTERVAL_MS)
-        QTimer.singleShot(500, self.refresh)
+        # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
+
+    def showEvent(self, event: Any) -> None:
+        """Esegue il primo refresh solo quando il pannello diventa visibile."""
+        super().showEvent(event)
+        if not self._first_refresh_done:
+            self._first_refresh_done = True
+            QTimer.singleShot(100, self.refresh)
 
     def _setup_ui(self) -> None:
         """Costruisce il layout a due colonne: statistiche a sinistra, anomalie a destra."""

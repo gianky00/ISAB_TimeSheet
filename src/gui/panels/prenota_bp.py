@@ -54,8 +54,15 @@ class PrenotaBPPanel(BaseBotPanel):
         self.status_list: StatusListWidget
 
         self._setup_content()
-        # Caricamento dati differito per non rallentare l'avvio GUI
-        QTimer.singleShot(10, self._safe_load_data)
+        self._data_loaded = False
+        # Il caricamento dati viene differito a showEvent
+
+    def showEvent(self, event: Any) -> None:
+        """Esegue il primo caricamento dati solo quando il pannello diventa visibile."""
+        super().showEvent(event)
+        if not self._data_loaded:
+            self._data_loaded = True
+            QTimer.singleShot(10, self._safe_load_data)
 
     def get_bot_class(self) -> type[BaseBot]:
         """
@@ -115,7 +122,7 @@ class PrenotaBPPanel(BaseBotPanel):
 
         self.data_table = EditableDataTable(cols)
         self.data_table.setMinimumHeight(200)
-        self.data_table.data_changed.connect(lambda: self._update_status_list())
+        self.data_table.data_changed.connect(self._update_status_list)
         self.data_table.data_changed.connect(self._save_data)
 
         v_status = QVBoxLayout()

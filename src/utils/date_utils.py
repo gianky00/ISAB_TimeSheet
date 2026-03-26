@@ -265,5 +265,4 @@ def get_month_name_it(month: int, full: bool = False) -> str:
     if not 1 <= month <= MAX_MONTHS:
         return ""
 
-    months = MONTHS_IT_FULL if full else MONTHS_IT
-    return months[month - 1]
+    return (MONTHS_IT_FULL if full else MONTHS_IT)[month - 1]

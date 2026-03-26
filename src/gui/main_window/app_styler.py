@@ -6,6 +6,7 @@ Estratto da AppInitializer per seguire l'SRP.
 
 import ctypes
 import os
+from contextlib import suppress
 
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication
@@ -23,11 +24,9 @@ class AppStyler:
         Configura il tema, il font e i metadati per Windows.
         """
         if os.name == "nt":
-            try:
+            with suppress(Exception):
                 myappid = f"Coemi.SyncroJob.Enterprise.{__version__}"
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-            except Exception:  # noqa: S110
-                pass
 
         app.setStyle("Fusion")
         apply_theme(app, "light")

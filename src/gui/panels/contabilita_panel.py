@@ -87,9 +87,16 @@ class ContabilitaPanel(QWidget):
         self.certificati_widget: CertificatiCampioneTab
         self.kpi_panel: ContabilitaKPIPanel
 
+        self._first_refresh_done = False
         self._setup_ui()
-        # Aumentato il ritardo per non interferire con lo splash screen
-        QTimer.singleShot(800, self._safe_refresh_tabs)
+        # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
+
+    def showEvent(self, event):  # noqa: ANN001
+        """Esegue il primo refresh solo quando il pannello diventa visibile."""
+        super().showEvent(event)
+        if not self._first_refresh_done:
+            self._first_refresh_done = True
+            QTimer.singleShot(100, self._safe_refresh_tabs)
 
     def set_current_tab(self, index: int | None = None) -> None:
         """Cambia il tab visualizzato in base all'indice."""

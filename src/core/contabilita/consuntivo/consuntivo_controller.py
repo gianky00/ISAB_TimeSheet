@@ -28,7 +28,7 @@ class ConsuntivoController:
         path = self.get_dynamic_path(year)
         try:
             manager = PreventiviGeneratorManager("")
-            return str(manager.get_next_progressive(path))
+            return manager.get_next_progressive(path)
         except Exception as e:
             logger.error(f"Errore calcolo progressivo: {e}")  # noqa: TRY400
             return "001"

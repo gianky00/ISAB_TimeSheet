@@ -90,6 +90,6 @@ def _convert_only_dots(s: str) -> float:
     # Singolo punto: 1.234 (IT migliaia) o 10.50 (Decimale)
     parts = s.split(".")
     it_thousands_len = 3
-    if len(parts[1]) == it_thousands_len and len(parts[0]) > 0:
+    if len(parts[1]) == it_thousands_len and parts[0]:
         return float(s.replace(".", ""))
     return float(s)

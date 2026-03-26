@@ -232,7 +232,7 @@ class LogViewer:
         results = self.query().execute()
         for entry in results:
             stats[str(entry.get("level", "UNKNOWN"))] += 1
-        return dict(stats)
+        return stats.copy()
 
     def get_error_summary(self, limit: int = DEFAULT_LIMIT) -> list[dict[str, Any]]:
         """Analizza i log di errore e raggruppa i messaggi più frequenti."""
@@ -345,7 +345,7 @@ class LogViewer:
             "timestamp": datetime.now(UTC).isoformat() + "Z",
             "period_hours": hours,
             "total_events": total,
-            "level_distribution": dict(level_stats),
+            "level_distribution": level_stats.copy(),
             "error_rate_percent": round(error_rate, 2),
             "bot_runs": {
                 "total": len(bot_runs),

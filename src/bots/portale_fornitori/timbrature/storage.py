@@ -55,7 +55,7 @@ class TimbratureStorage:
 
     @property
     def _active_db_path(self) -> Path:
-        return self._custom_db_path if self._custom_db_path else self.db_path
+        return self._custom_db_path or self.db_path
 
     def _ensure_columns(self) -> None:
         """Failsafe per garantire che le colonne critiche esistano (es. codice_fiscale)."""

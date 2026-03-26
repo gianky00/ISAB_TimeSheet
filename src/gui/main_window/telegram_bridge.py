@@ -6,6 +6,7 @@ Segue SRP isolando PyQt6.
 
 import os
 import subprocess
+from contextlib import suppress
 from typing import Any, cast
 
 from PyQt6.QtCore import QBuffer, QIODevice, QRect, Qt
@@ -58,8 +59,6 @@ class TelegramGUIBridge(ScreenshotProvider, AppStatusProvider):
 
     def restart_application(self) -> None:
         """Esegue il restart fisico."""
-        try:
+        with suppress(Exception):
             subprocess.Popen(["cmd.exe", "/c", "start", os.path.abspath("avvio.bat")])
             QApplication.quit()
-        except Exception:  # noqa: S110
-            pass

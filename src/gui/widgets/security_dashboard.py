@@ -39,6 +39,7 @@ class SecurityDashboard(QWidget):
         super().__init__(parent)
         self.audit_manager = AuditManager.instance()
         self.setStyleSheet(TOOLTIP_CSS)
+        self._first_refresh_done = False
 
         # Widget members (Strict Typing - Option D)
         self.kpi_layout: QHBoxLayout
@@ -54,8 +55,14 @@ class SecurityDashboard(QWidget):
         self.timer.timeout.connect(self.refresh)
         self.timer.start(60000)
 
-        # Timer single shot per caricamento iniziale
-        QTimer.singleShot(100, self.refresh)
+        # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
+
+    def showEvent(self, event):  # noqa: ANN001
+        """Esegue il primo refresh solo quando il widget diventa visibile."""
+        super().showEvent(event)
+        if not self._first_refresh_done:
+            self._first_refresh_done = True
+            QTimer.singleShot(100, self.refresh)
 
     def _setup_ui(self):  # noqa: ANN202
         layout = QVBoxLayout(self)

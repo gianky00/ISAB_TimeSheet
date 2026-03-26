@@ -106,9 +106,16 @@ class StoricoOdaPanel(QWidget):
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self.refresh_data)
 
+        self._first_refresh_done = False
         self._setup_ui()
-        # Aumentato il ritardo per non bloccare lo splash screen durante il caricamento massivo iniziale
-        QTimer.singleShot(1000, self.refresh_data)
+        # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
+
+    def showEvent(self, event):  # noqa: ANN001
+        """Esegue il primo refresh solo quando il pannello diventa visibile."""
+        super().showEvent(event)
+        if not self._first_refresh_done:
+            self._first_refresh_done = True
+            QTimer.singleShot(50, self.refresh_data)
 
     def _setup_ui(self) -> None:
         """Inizializza l'interfaccia utente del pannello."""

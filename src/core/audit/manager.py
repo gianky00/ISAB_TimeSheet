@@ -1,6 +1,7 @@
 import json
 import os
 import queue
+import sqlite3
 import threading
 import time
 import traceback
@@ -263,59 +264,64 @@ class AuditManager:
     def verify_integrity(self) -> bool:
         """Verifica la catena di hash."""
         try:
-            import sqlite3  # noqa: PLC0415
-
+            # Leggiamo tutto e chiudiamo la connessione SQLite subitaneamente
+            # per non bloccare i log (INSERT) eseguiti dal Main Thread.
             with self.db.get_connection() as conn:
                 conn.row_factory = sqlite3.Row
-                rows = conn.execute("SELECT * FROM audit_logs ORDER BY id ASC").fetchall()
+                db_rows = conn.execute("SELECT * FROM audit_logs ORDER BY id ASC").fetchall()
+                rows = [dict(r) for r in db_rows]
 
-                prev_hash = "0" * 64
-                for row in rows:
-                    if not row["row_hash"]:
-                        continue
+            prev_hash = "0" * 64
+            for i, row in enumerate(rows):
+                if i % 1000 == 0:
+                    time.sleep(0.005)  # Yield al Python GIL per far respirare la UI
 
-                    # Tentativo 1: Hash V2
-                    data = AuditIntegrity.build_hash_string_v2(row)
-                    calc_hash = AuditIntegrity.calculate_hash(data, prev_hash)
+                if not row["row_hash"]:
+                    continue
 
-                    if row["row_hash"] != calc_hash:
-                        # Tentativo 2: Hash Legacy
-                        data_legacy = AuditIntegrity.build_hash_string_legacy(row)
-                        calc_hash_legacy = AuditIntegrity.calculate_hash(data_legacy, prev_hash)
+                # Tentativo 1: Hash V2
+                data = AuditIntegrity.build_hash_string_v2(row)
+                calc_hash = AuditIntegrity.calculate_hash(data, prev_hash)
 
-                        if row["row_hash"] != calc_hash_legacy:
-                            # Tentativo 3: Hash V2 Legacy (None -> "None" come da vecchi f-string)
-                            data_v2_old = "|".join(
-                                [
-                                    str(row[k])
-                                    for k in (
-                                        "timestamp",
-                                        "user_id",
-                                        "action",
-                                        "category",
-                                        "entity",
-                                        "params",
-                                        "status",
-                                        "severity",
-                                        "duration_ms",
-                                        "module",
-                                        "error_code",
-                                    )
-                                ]
-                            )
-                            calc_hash_v2_old = AuditIntegrity.calculate_hash(data_v2_old, prev_hash)
+                if row["row_hash"] != calc_hash:
+                    # Tentativo 2: Hash Legacy
+                    data_legacy = AuditIntegrity.build_hash_string_legacy(row)
+                    calc_hash_legacy = AuditIntegrity.calculate_hash(data_legacy, prev_hash)
 
-                            if row["row_hash"] != calc_hash_v2_old:
-                                print(
-                                    f"DEBUG: Integrity check failed at ID {row['id']}. Row hash: {row['row_hash'][:10]}... Expected: {calc_hash[:10]}..."
+                    if row["row_hash"] != calc_hash_legacy:
+                        # Tentativo 3: Hash V2 Legacy (None -> "None" come da vecchi f-string)
+                        data_v2_old = "|".join(
+                            [
+                                str(row[k])
+                                for k in (
+                                    "timestamp",
+                                    "user_id",
+                                    "action",
+                                    "category",
+                                    "entity",
+                                    "params",
+                                    "status",
+                                    "severity",
+                                    "duration_ms",
+                                    "module",
+                                    "error_code",
                                 )
-                                return False
+                            ]
+                        )
+                        calc_hash_v2_old = AuditIntegrity.calculate_hash(data_v2_old, prev_hash)
 
-                    prev_hash = row["row_hash"]
-                return True
+                        if row["row_hash"] != calc_hash_v2_old:
+                            print(
+                                f"DEBUG: Integrity check failed at ID {row['id']}. Row hash: {row['row_hash'][:10]}... Expected: {calc_hash[:10]}..."
+                            )
+                            return False
+
+                prev_hash = row["row_hash"]
         except Exception as e:
             print(f"DEBUG: Exception in verify_integrity: {e}")
             return False
+        else:
+            return True
 
     def get_logs(self, limit: int = 200) -> list[dict[str, Any]]:
         """Recupera gli ultimi N log di audit (senza filtri avanzati)."""

@@ -8,8 +8,9 @@ Refactoring modulare V2.
 from __future__ import annotations
 
 import logging
+from typing import Any
 
-from PyQt6.QtCore import QModelIndex, Qt, QTimer
+from PyQt6.QtCore import QModelIndex, QObject, QRunnable, Qt, QThreadPool, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QFrame,
@@ -36,6 +37,21 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 logger = logging.getLogger(__name__)
 
 
+class IntegrityWorkerSignals(QObject):
+    finished = pyqtSignal(bool)
+
+
+class IntegrityWorker(QRunnable):
+    def __init__(self, manager: AuditManager) -> None:
+        super().__init__()
+        self.manager = manager
+        self.signals = IntegrityWorkerSignals()
+
+    def run(self) -> None:
+        valid = self.manager.verify_integrity()
+        self.signals.finished.emit(valid)
+
+
 class AuditLogWidget(QWidget):
     """
     Dashboard avanzata per l'Audit Log V2.
@@ -50,6 +66,7 @@ class AuditLogWidget(QWidget):
         self.manager = AuditManager.instance()
         self.current_page = 0
         self.total_logs = 0
+        self._first_refresh_done = False
 
         # Timer per Live View
         self.live_timer = QTimer()
@@ -58,7 +75,14 @@ class AuditLogWidget(QWidget):
 
         self._setup_ui()
         self._load_categories()
-        self.refresh()
+        # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
+
+    def showEvent(self, event: Any) -> None:  # type: ignore[override]
+        """Esegue il primo refresh solo quando il widget diventa visibile."""
+        super().showEvent(event)
+        if not self._first_refresh_done:
+            self._first_refresh_done = True
+            QTimer.singleShot(50, self.refresh)
 
     def _setup_ui(self) -> None:  # noqa: PLR0915
         """Configura l'interfaccia utente."""
@@ -198,8 +222,16 @@ class AuditLogWidget(QWidget):
             self._check_integrity()
 
     def _check_integrity(self) -> None:
-        """Verifica l'integrità dei log e aggiorna l'interfaccia."""
-        valid = self.manager.verify_integrity()
+        """Verifica l'integrità dei log in background e aggiorna l'interfaccia tramite segnali."""
+        self.integrity_lbl.setText("Verifica integrità in corso...")
+        self.integrity_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-weight: 600;")
+
+        worker = IntegrityWorker(self.manager)
+        worker.signals.finished.connect(self._on_integrity_checked)
+        QThreadPool.globalInstance().start(worker)
+
+    def _on_integrity_checked(self, valid: bool) -> None:
+        """Callback al termine della verifica in background."""
         color = COLORS["success_dark"] if valid else COLORS["error_red"]
         text = "Integro" if valid else "Legacy/Manomesso"
         icon = Icons.SHIELD if valid else Icons.ALERT_TRIANGLE
