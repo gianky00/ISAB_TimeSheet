@@ -21,22 +21,22 @@ class SafeworkBaseBot(BaseBot):
     SAFEWORK_URL = URLs.SAFEWORK_URL
     ISAB_URL = SAFEWORK_URL
 
-    def __init__(  # noqa: ANN204, PLR0913
+    def __init__(  # noqa: PLR0913
         self,
-        username,  # noqa: ANN001
-        password,  # noqa: ANN001
-        headless=False,  # noqa: ANN001
-        timeout=30,  # noqa: ANN001
-        download_path="",  # noqa: ANN001
+        username: str,
+        password: str,
+        headless: bool = False,
+        timeout: int = 30,
+        download_path: str = "",
         account_type: str = "Esecutore",
-    ):
+    ) -> None:
         super().__init__(username, password, headless, timeout, download_path)
         self.account_type = account_type
         self.safework_login_page: SafeWorkLoginPage | None = None
         self.ricerca_pdl_page: RicercaPDLPage | None = None
         self.attivita_page: VisualizzaAttivitaPage | None = None
 
-    def _configure_waits_and_pages(self):  # noqa: ANN202
+    def _configure_waits_and_pages(self) -> None:
         """Inizializza le Page Objects specifiche di SafeWork."""
         super()._configure_waits_and_pages()
         if self.driver and self.wait:
@@ -53,7 +53,7 @@ class SafeworkBaseBot(BaseBot):
             )
         return False
 
-    def click_robusto(self, locator: tuple[str, str], timeout: int = 10, label: str | None = None):  # noqa: ANN201
+    def click_robusto(self, locator: tuple[str, str], timeout: int = 10, label: str | None = None) -> None:
         """
         Tenta di cliccare un elemento gestendo overlay e intercettazioni.
         """
@@ -116,7 +116,7 @@ class SafeworkBaseBot(BaseBot):
         # No sleep needed: invisibility check is sufficient
         return True
 
-    def _attendi_caricamento_sistema(self, timeout: int = 420):  # noqa: ANN202
+    def _attendi_caricamento_sistema(self, timeout: int = 420) -> None:
         """
         Attesa specifica per SafeWork: rileva lo span 'Caricamento...'
         e ne attende la scomparsa completa.

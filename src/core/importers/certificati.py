@@ -157,7 +157,7 @@ class CertificatiImporter(BaseImporter):
         """Applica formattazione date e calcolo giorni scadenza."""
         pd_obj = cls._get_pd()
 
-        def format_date_it(val: Any) -> str:  # noqa: ANN401
+        def format_date_it(val: Any) -> str:
             if pd_obj.isna(val) or val == "":
                 return ""
             try:
@@ -166,7 +166,7 @@ class CertificatiImporter(BaseImporter):
             except Exception:
                 return str(val)
 
-        def format_stato(val: Any) -> str:  # noqa: ANN401
+        def format_stato(val: Any) -> str:
             if pd_obj.isna(val) or val == "":
                 return ""
             try:
@@ -180,7 +180,7 @@ class CertificatiImporter(BaseImporter):
             except (ValueError, TypeError):
                 return str(val)
 
-        def format_errore_max(val: Any) -> str:  # noqa: ANN401
+        def format_errore_max(val: Any) -> str:
             if pd_obj.isna(val) or val == "":
                 return ""
             try:

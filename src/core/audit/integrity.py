@@ -11,7 +11,7 @@ class AuditIntegrity:
     _SALT = "SyncroJob_Secure_Audit_2026"
 
     @classmethod
-    def _n(cls, val: Any) -> str:  # noqa: ANN401
+    def _n(cls, val: Any) -> str:
         """Normalizza un valore in stringa, gestendo i None come stringa vuota."""
         if val is None:
             return ""

@@ -113,7 +113,7 @@ class ContabilitaSearch:
         return out
 
     @staticmethod
-    def _fmt_date(val: Any) -> str:  # noqa: ANN401
+    def _fmt_date(val: Any) -> str:
         """Helper per formattazione date ISO in IT."""
         try:
             if not val:

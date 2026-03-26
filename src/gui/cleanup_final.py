@@ -106,7 +106,7 @@ def process_file(filepath: str) -> None:
         print(f"  ERROR: {os.path.basename(filepath)} -> {e}")
 
 
-def main():  # noqa: ANN201
+def main() -> None:
     """Punto di ingresso dello script: scansiona la directory GUI ed esegue la pulizia."""
     count = 0
     for root, _dirs, files in os.walk(GUI_DIR):

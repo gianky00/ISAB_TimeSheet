@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class TelegramDataProcessor(QObject):
     """Gestisce la validazione e l'inserimento dei dati nelle tabelle della UI."""
 
-    def __init__(self, main_window: "MainWindow", telegram_service: Any) -> None:  # noqa: ANN401
+    def __init__(self, main_window: "MainWindow", telegram_service: Any) -> None:
         super().__init__(main_window)
         self.mw = main_window
         self.telegram = telegram_service
@@ -84,7 +84,7 @@ class TelegramDataProcessor(QObject):
 
         self._send_data_feedback(len(valid_items), duplicates, [])
 
-    def _validate_and_filter_items(self, items, field, validator_func, panel):  # noqa: ANN001, ANN202
+    def _validate_and_filter_items(self, items: list[str], field: str, validator_func: Any, panel: Any) -> tuple[list[str], int, list[str]]:
         """Valida e filtra i dati in ingresso rispetto a quelli esistenti nel pannello."""
         valid_items, duplicates, errors = [], 0, []
 
@@ -104,7 +104,7 @@ class TelegramDataProcessor(QObject):
                 errors.append(f"❌ `{item}`: {res.error}")
         return valid_items, duplicates, errors
 
-    def _send_data_feedback(self, count_valid, duplicates, errors):  # noqa: ANN001, ANN202
+    def _send_data_feedback(self, count_valid: int, duplicates: int, errors: list[str]) -> None:
         """Invia il feedback dell'operazione al bot Telegram."""
         feedback = []
         if count_valid:

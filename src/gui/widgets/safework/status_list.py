@@ -14,7 +14,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class StatusListWidget(QListWidget):
     """Widget per visualizzare lo stato di elaborazione riga per riga della tabella bot."""
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Inizializza la lista degli stati."""
         super().__init__(parent)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -25,7 +25,7 @@ class StatusListWidget(QListWidget):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-    def initialize_rows(self, count: int, row_height: int = 30):  # noqa: ANN201
+    def initialize_rows(self, count: int, row_height: int = 30) -> None:
         """Prepara n righe con stato 'Pending' (pallino grigio)."""
         # Ottimizzazione: Se il numero di righe è lo stesso, resetta solo le icone esistenti
         if self.count() == count:
@@ -56,7 +56,7 @@ class StatusListWidget(QListWidget):
         finally:
             self.setUpdatesEnabled(True)
 
-    def _reset_row_icon(self, index: int):  # noqa: ANN202
+    def _reset_row_icon(self, index: int) -> None:
         """Ripristina l'icona di una riga allo stato 'Pending'."""
         item = self.item(index)
         widget = self.itemWidget(item)
@@ -68,7 +68,7 @@ class StatusListWidget(QListWidget):
                     f"background-color: {COLORS['border_light']}; border-radius: 12px; border: 1px solid {COLORS['border_medium']};"
                 )
 
-    def update_status(self, index: int, success: bool):  # noqa: ANN201
+    def update_status(self, index: int, success: bool) -> None:
         """Aggiorna l'icona della riga specificata (Verde successo, Rosso errore)."""
         if index < 0 or index >= self.count():
             return

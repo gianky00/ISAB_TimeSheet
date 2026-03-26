@@ -128,7 +128,7 @@ class ResourceManager:
             if bndl.exists():
                 return str(bndl.resolve())
         else:
-            return d_path
+            return d_path  # type: ignore[no-any-return]
 
         return None
 

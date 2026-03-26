@@ -42,7 +42,7 @@ class MetricsSink:
     Scrive metriche in file JSONL (newline-delimited JSON).
     """
 
-    def __init__(self, config: Any = None) -> None:  # noqa: ANN401
+    def __init__(self, config: Any = None) -> None:
         self.config = config or get_config()
         self.metrics_file = self.config.metrics_dir / "performance.jsonl"
 

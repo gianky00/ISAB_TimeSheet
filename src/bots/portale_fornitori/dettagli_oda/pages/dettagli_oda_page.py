@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-any-unimported"
 """
 SyncroJob - Dettagli OdA Page
 Page Object Model for Dettagli OdA.
@@ -27,18 +28,18 @@ class DettagliOdAPage:
     Fornisce metodi per navigare, filtrare ed esportare i dettagli degli ordini.
     """
 
-    def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None):  # noqa: ANN204
+    def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None) -> None:
         """Inizializza la pagina con il driver Selenium e la callback di log."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)
         self._log = log_callback or print
 
-    def log(self, msg: str):  # noqa: ANN201
+    def log(self, msg: str) -> None:
         """Inoltra un messaggio alla callback di log configurata."""
         self._log(msg)
 
-    def _wait_for_overlay(self):  # noqa: ANN202
+    def _wait_for_overlay(self) -> None:
         """Attende che gli overlay di caricamento di ExtJS (maschere) siano invisibili."""
         with suppress(TimeoutException):
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
@@ -117,7 +118,7 @@ class DettagliOdAPage:
             self.log(f"⚠️ Errore durante logout: {e}")
             return False
 
-    def expand_sidebar_if_collapsed(self):  # noqa: ANN201
+    def expand_sidebar_if_collapsed(self) -> None:
         """Espande la sidebar se collassata per rendere visibile il menu Report."""
         with suppress(Exception):
             expand_btn = self.driver.find_element(*DettagliOdALocators.SIDEBAR_EXPAND_BUTTON)
@@ -212,7 +213,7 @@ class DettagliOdAPage:
                 self._close_all_tabs()
             return None
 
-    def _close_all_tabs(self):  # noqa: ANN202
+    def _close_all_tabs(self) -> None:
         """Chiude tutte le schede aperte nel portale cliccando sull'icona X."""
         try:
             while True:

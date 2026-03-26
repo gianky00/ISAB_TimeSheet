@@ -133,7 +133,7 @@ class PasswordManager:
         if ciphertext.startswith("ENC:v2:"):
             try:
                 encrypted_data = ciphertext[7:].encode()
-                return self._cipher.decrypt(encrypted_data).decode()
+                return self._cipher.decrypt(encrypted_data).decode()  # type: ignore[no-any-return]
             except Exception:
                 logger.exception("Decryption error (v2)")
                 return ""
@@ -142,7 +142,7 @@ class PasswordManager:
         if ciphertext.startswith("ENC:"):
             try:
                 encrypted_data = ciphertext[4:].encode()
-                return self._cipher.decrypt(encrypted_data).decode()
+                return self._cipher.decrypt(encrypted_data).decode()  # type: ignore[no-any-return]
             except Exception:
                 logger.exception("Decryption error (legacy)")
                 return ""

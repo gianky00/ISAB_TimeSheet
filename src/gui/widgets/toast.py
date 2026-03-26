@@ -189,7 +189,7 @@ class Toast(QWidget):
             self._pulse_anim.setLoopCount(-1)
             self._pulse_anim.valueChanged.connect(self._apply_scale)
 
-    def _apply_scale(self, scale_factor: Any) -> None:  # noqa: ANN401
+    def _apply_scale(self, scale_factor: Any) -> None:
         """Applica la scala al container per l'effetto pulsazione."""
         if self._original_container_size is None:
             return

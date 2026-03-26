@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class TelegramIntentHandler(QObject):
     """Gestisce la logica di business derivante dagli intenti AI di Telegram."""
 
-    def __init__(self, main_window: "MainWindow", telegram_service: Any, system_handler: Any = None) -> None:  # noqa: ANN401
+    def __init__(self, main_window: "MainWindow", telegram_service: Any, system_handler: Any = None) -> None:
         super().__init__(main_window)
         self.mw = main_window
         self.telegram = telegram_service
@@ -111,11 +111,11 @@ class TelegramIntentHandler(QObject):
         else:
             self.telegram.send_message_sync(f"⚠️ Non so come scaricare '{obj}'.")
 
-    def _run_coroutine(self, coro: Any) -> None:  # noqa: ANN401
+    def _run_coroutine(self, coro: Any) -> None:
         """Helper per eseguire coroutine in modo sicuro anche durante i test."""
         if not asyncio.iscoroutine(coro):
 
-            async def _fake():  # noqa: ANN202
+            async def _fake() -> None:
                 return None
 
             coro = _fake()

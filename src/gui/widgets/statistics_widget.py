@@ -95,7 +95,7 @@ class StatisticsWidget(QWidget):
     def _create_summary_card(
         self,
         title: str,
-        value: Any,  # noqa: ANN401
+        value: Any,
         color: str,
         icon_path: str | None = None,
     ) -> QFrame:

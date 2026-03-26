@@ -286,7 +286,7 @@ class DonCiroWidget(QWidget):
         self.ba.setEndValue(1.0)
         self.ba.start()
 
-    def paintEvent(self, event: Any) -> None:  # noqa: ANN401
+    def paintEvent(self, event: Any) -> None:
         """Metodo di disegno principale."""
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)

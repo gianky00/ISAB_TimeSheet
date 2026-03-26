@@ -73,7 +73,7 @@ class ModernCard(QFrame):
         """)
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any) -> None:  # noqa: ANN401
+    def leaveEvent(self, event: Any) -> None:
         """Ripristina lo stile originale all'uscita del mouse."""
         self.shadow_anim.setEndValue(self.elevation)
         self.shadow_anim.start()

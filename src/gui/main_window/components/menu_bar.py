@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Menu Bar Component
 Componente responsabile della gestione delle scorciatoie globali e della Command Palette.

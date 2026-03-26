@@ -95,9 +95,9 @@ class AuditManager:
         action: str,
         category: str = "general",
         entity: str = "",
-        params: Any = None,  # noqa: ANN401
-        status: Any = Status.SUCCESS,  # noqa: ANN401
-        severity: Any = Severity.LOW,  # noqa: ANN401
+        params: Any = None,
+        status: Any = Status.SUCCESS,
+        severity: Any = Severity.LOW,
         duration_ms: int = 0,
         module: str = "",
         error_code: str | None = None,
@@ -132,9 +132,9 @@ class AuditManager:
         action: str,
         category: str,
         entity: str,
-        params: Any,  # noqa: ANN401
-        status: Any,  # noqa: ANN401
-        severity: Any,  # noqa: ANN401
+        params: Any,
+        status: Any,
+        severity: Any,
         duration_ms: int,
         module: str,
         error_code: str | None,
@@ -238,7 +238,7 @@ class AuditManager:
         entity: str,
         status_val: str,
         severity_val: str,
-        params: Any,  # noqa: ANN401
+        params: Any,
     ) -> None:
         """Genera una notifica utente basata sull'esito dell'azione auditata."""
         try:
@@ -322,7 +322,7 @@ class AuditManager:
         logs, _ = self.get_filtered_logs(limit=limit)
         return logs
 
-    def get_filtered_logs(self, **kwargs: Any) -> tuple[list[dict[str, Any]], int]:  # noqa: ANN401
+    def get_filtered_logs(self, **kwargs: Any) -> tuple[list[dict[str, Any]], int]:
         """Interroga il database dell'audit applicando i filtri specificati."""
         return self.db.fetch_filtered(**kwargs)
 

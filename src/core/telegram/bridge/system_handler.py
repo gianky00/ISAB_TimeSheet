@@ -22,11 +22,11 @@ class TelegramSystemHandler:
 
     def __init__(
         self,
-        telegram_service: Any,  # noqa: ANN401
+        telegram_service: Any,
         screenshot_provider: ScreenshotProvider,
         app_status_provider: AppStatusProvider,
         # Supporto per fetch dati (provvisorio per mantenere funzionalita)
-        data_bridge: Any = None,  # noqa: ANN401
+        data_bridge: Any = None,
     ) -> None:
         self.telegram = telegram_service
         self.screenshot_provider = screenshot_provider
@@ -75,7 +75,7 @@ class TelegramSystemHandler:
         except Exception as e:
             self.telegram.send_message_sync(f"❌ Errore: {e}")
 
-    def _fetch_report_data(self, db_type, query, year) -> Any:  # noqa: ANN001, ANN401
+    def _fetch_report_data(self, db_type: str, query: str, year: int | str | None) -> Any:
         # Se abbiamo il data_bridge (che punta alla MainWindow o Storage), lo usiamo
         if db_type == "timbrature" and self.data_bridge:
             panel = getattr(self.data_bridge, "timbrature_db_panel", None)
@@ -85,7 +85,7 @@ class TelegramSystemHandler:
             return ContabilitaManager.search_extended(query, year=(int(year) if year else None), limit=500)
         return None
 
-    def _generate_report_html(self, db_type, data) -> str:  # noqa: ANN001
+    def _generate_report_html(self, db_type: str, data: Any) -> str:
         if db_type == "timbrature":
             html = "<h2>Report Timbrature</h2><table><thead><tr><th>Data</th><th>Ingresso</th><th>Uscita</th><th>Nominativo</th></tr></thead><tbody>"
             for r in data:
@@ -101,7 +101,7 @@ class TelegramSystemHandler:
             return html + "</table>"
         return ""
 
-    def _send_pdf_report(self, db_type, html):  # noqa: ANN001, ANN202
+    def _send_pdf_report(self, db_type: str, html: str) -> None:
         if not html:
             self.telegram.send_message_sync("❌ Errore: Dati non validi per il report.")
             return

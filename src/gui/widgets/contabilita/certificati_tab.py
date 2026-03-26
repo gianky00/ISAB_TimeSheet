@@ -108,7 +108,7 @@ class CertificatiCampioneTab(QWidget):
         self.tree.itemEditedCustom.connect(self._on_item_edited)
         layout.addWidget(self.tree)
 
-    def _create_toolbar_btn(self, text: str, icon_enum: str, callback: Any) -> PrimaryButton:  # noqa: ANN401
+    def _create_toolbar_btn(self, text: str, icon_enum: str, callback: Any) -> PrimaryButton:
         """Helper per creare pulsanti della toolbar con stile coerente."""
         btn = PrimaryButton(text)
         btn.setIcon(QIcon(get_asset_path(icon_enum)))
@@ -200,7 +200,7 @@ class CertificatiCampioneTab(QWidget):
         groups_with_priority = []
         for matricola, certificates in matricola_groups.items():
             # Ordina per emissione (più recente in alto)
-            def parse_date(c: Any) -> datetime:  # noqa: ANN401
+            def parse_date(c: Any) -> datetime:
                 d = c[self.tree.IDX_EMISSIONE] or ""
                 try:
                     return (

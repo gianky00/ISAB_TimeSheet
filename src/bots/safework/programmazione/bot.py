@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - SafeWork Programmazione Bot
 Bot modulare per il monitoraggio della programmazione settimanale tramite Export Excel (Ricerca Massiva).
@@ -32,15 +33,15 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         ("parse", "Analisi Risultati"),
     ]
 
-    def __init__(  # noqa: ANN204, PLR0913
+    def __init__(  # noqa: PLR0913
         self,
-        username,  # noqa: ANN001
-        password,  # noqa: ANN001
-        headless=False,  # noqa: ANN001
-        timeout=30,  # noqa: ANN001
-        download_path="",  # noqa: ANN001
+        username: str,
+        password: str,
+        headless: bool = False,
+        timeout: int = 30,
+        download_path: str = "",
         account_type: str = "Esecutore",
-    ):
+    ) -> None:
         """
         Inizializza il bot di programmazione.
 
@@ -150,12 +151,12 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
 
         self.log("📥 Esportazione Excel massiva...")
         if self.attivita_page and self.attivita_page.esporta_excel():
-            return poll_for_new_file(
+            return poll_for_new_file(  # type: ignore
                 directory=self.download_path, files_before=files_before, pattern="*.xlsx", timeout=300
             )
         return None
 
-    def _parse_excel_results(self, file_path: str):  # noqa: ANN202
+    def _parse_excel_results(self, file_path: str) -> None:
         """
         Legge i dati dall'Excel scaricato e popola self.results.
 

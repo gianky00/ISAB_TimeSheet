@@ -3,7 +3,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QObject, QThread, pyqtSignal
 
 from src.utils.parsing import parse_currency
 
@@ -24,7 +24,7 @@ class CacheWorker(QThread):
         self,
         cache_path: Path,
         data_source: list[tuple[Any, ...]] | Callable[[], list[tuple[Any, ...]]] | None = None,
-        parent=None,  # noqa: ANN001
+        parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
         # Use .json extension if not already present, for clarity
@@ -107,7 +107,7 @@ class CacheWorker(QThread):
 
         return display_data, search_index, float_totals, style_cache, date_keys
 
-    def _format_date_for_display(self, val: Any) -> str:  # noqa: ANN401
+    def _format_date_for_display(self, val: Any) -> str:
         if not val:
             return ""
         s_val = str(val)
@@ -133,7 +133,7 @@ class CacheWorker(QThread):
                 search_parts.append(d_val)
         return disp_row, search_parts
 
-    def _parse_row_total(self, val: Any) -> float:  # noqa: ANN401
+    def _parse_row_total(self, val: Any) -> float:
         try:
             if isinstance(val, (int, float)):
                 return float(val)

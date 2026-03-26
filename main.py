@@ -99,8 +99,8 @@ def main():  # noqa: ANN201, PLR0915
 
     # === SPLASH SCREEN (Standalone Process for Zero-Stutter) ===
     # Lancia lo splash immediatamente prima di ogni altro import Qt/Pesante
-    import json
-    import subprocess
+    import json  # noqa: PLC0415
+    import subprocess  # noqa: PLC0415
 
     splash_script = str(ROOT_DIR / "src" / "gui" / "dialogs" / "splash_standalone.py")
     startup_logger_global.info(f"Launching standalone splash process: {splash_script}")

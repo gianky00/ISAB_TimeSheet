@@ -90,7 +90,7 @@ class ContabilitaSyncEngine(BaseSyncEngine):
     @classmethod
     def _get_diff_count(
         cls,
-        cursor: Any,  # noqa: ANN401
+        cursor: Any,
         table_name: str,
         columns: list[str],
         year: int | None = None,
@@ -116,7 +116,7 @@ class ContabilitaSyncEngine(BaseSyncEngine):
         return added, removed
 
     @classmethod
-    def _replace_data(cls, cursor: Any, table_name: str, columns: list[str], year: int | None = None) -> None:  # noqa: ANN401
+    def _replace_data(cls, cursor: Any, table_name: str, columns: list[str], year: int | None = None) -> None:
         """Sostituisce i dati per anno."""
         safe_table = cls._validate_identifier(table_name)
         safe_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in columns])

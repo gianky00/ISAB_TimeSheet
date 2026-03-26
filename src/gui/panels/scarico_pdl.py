@@ -61,7 +61,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self._setup_content_area()
         QTimer.singleShot(10, self._safe_load_data)
 
-    def get_bot_class(self) -> Any:  # noqa: ANN401
+    def get_bot_class(self) -> Any:
         """
         Restituisce la classe del bot associata a questo pannello.
 

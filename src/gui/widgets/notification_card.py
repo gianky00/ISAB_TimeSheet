@@ -158,7 +158,7 @@ class NotificationCard(QFrame):
                 footer_lay.addWidget(btn)
             layout.addLayout(footer_lay)
 
-    def _format_timestamp(self, ts: Any) -> str:  # noqa: ANN401
+    def _format_timestamp(self, ts: Any) -> str:
         """Converte un timestamp in formato leggibile (HH:MM)."""
         if isinstance(ts, str):
             return ts

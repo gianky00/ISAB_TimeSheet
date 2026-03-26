@@ -101,7 +101,7 @@ class AppInitializer:
             raise Exception(f"Errore imprevisto durante l'avvio: {e}") from e  # noqa: TRY002, TRY003
 
     @staticmethod
-    def init_generator(mw_instance: Any, yield_callback: Callable[[], None] | None = None):  # noqa: ANN205, ANN401
+    def init_generator(mw_instance: Any, yield_callback: Callable[[], None] | None = None) -> Any:
         """Generatore per l'inizializzazione progressiva della GUI (Fase 2)."""
         tasks = [
             (0, "Preparazione Dashboard"),
@@ -145,7 +145,7 @@ class AppInitializer:
             logging.basicConfig(level=logging.INFO)
 
 
-def contextlib_suppress(*exceptions):  # noqa: ANN002, ANN201
+def contextlib_suppress(*exceptions: Any) -> Any:
     """Internal helper to avoid importing contextlib in core header."""
     from contextlib import suppress  # noqa: PLC0415
 

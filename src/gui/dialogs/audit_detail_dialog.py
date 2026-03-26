@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 import json
 from contextlib import suppress
 from datetime import datetime

@@ -10,7 +10,7 @@ class AuditSignals:
     _instance: Any = None
 
     @classmethod
-    def instance(cls) -> Any:  # noqa: ANN401
+    def instance(cls) -> Any:
         """Restituisce l'istanza singleton del contenitore segnali."""
         if cls._instance is None:
             try:
@@ -29,16 +29,16 @@ class AuditSignals:
                 class _MockSignals:
                     """Mock per i segnali in assenza di ambiente GUI."""
 
-                    def emit(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
+                    def emit(self, *args: Any, **kwargs: Any) -> None:
                         """Simula l'emissione di un segnale."""
 
                     class _Signal:
                         """Simula un singolo segnale Qt."""
 
-                        def connect(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
+                        def connect(self, *args: Any, **kwargs: Any) -> None:
                             """Simula la connessione di uno slot."""
 
-                        def emit(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
+                        def emit(self, *args: Any, **kwargs: Any) -> None:
                             """Simula l'emissione del segnale."""
 
                     log_added = _Signal()

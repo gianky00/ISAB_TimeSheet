@@ -135,7 +135,7 @@ class ClickableLabel(QLabel):
         )
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any | None) -> None:  # noqa: ANN401
+    def leaveEvent(self, event: Any | None) -> None:
         """Gestisce l'evento hover-out ripristinando lo stile base."""
         self.setStyleSheet(self._base_style)
         super().leaveEvent(event)
@@ -152,7 +152,7 @@ class StatsCard(QFrame):
     Widget card per la visualizzazione di una singola metrica statistica nel footer espandibile.
     """
 
-    def __init__(self, title: str, value: str, icon: Any, parent: QWidget | None = None) -> None:  # noqa: ANN401
+    def __init__(self, title: str, value: str, icon: Any, parent: QWidget | None = None) -> None:
         """
         Inizializza la card statistica.
 

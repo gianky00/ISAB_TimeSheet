@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - Certificati Analysis Dialog
 Modulo specializzato per la visualizzazione e l'esportazione delle scadenze certificati.

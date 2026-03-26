@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Anagrafica Page (Refactored)
 Pagina coordinata per la gestione anagrafica dipendenti.

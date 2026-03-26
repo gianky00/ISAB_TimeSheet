@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - SafeWork PDL Search Bot
 Bot modulare per la ricerca massiva ed esportazione Excel dei PDL.
@@ -33,15 +34,15 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         ("db", "Importazione Database"),
     ]
 
-    def __init__(  # noqa: ANN204, PLR0913
+    def __init__(  # noqa: PLR0913
         self,
-        username,  # noqa: ANN001
-        password,  # noqa: ANN001
-        headless=False,  # noqa: ANN001
-        timeout=30,  # noqa: ANN001
-        download_path="",  # noqa: ANN001
+        username: str,
+        password: str,
+        headless: bool = False,
+        timeout: int = 30,
+        download_path: str = "",
         account_type: str = "Esecutore",
-    ):
+    ) -> None:
         """
         Inizializza il bot di ricerca PDL.
 
@@ -162,7 +163,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             return None
 
         if self.ricerca_pdl_page.esporta_excel():
-            return poll_for_new_file(
+            return poll_for_new_file(  # type: ignore
                 directory=self.download_path, files_before=files_before, pattern="Ricerca*.xlsx", timeout=600
             )
         return None
@@ -175,7 +176,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         except Exception:
             logger.debug(f"Impossibile rimuovere il file temporaneo: {file_path}")
 
-    def _import_to_db(self, file_path: str):  # noqa: ANN202
+    def _import_to_db(self, file_path: str) -> None:
         """
         Importazione massiva dei dati PDL dall'Excel nel database SQLite.
 

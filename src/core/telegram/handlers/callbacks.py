@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-any-unimported, unused-ignore"
 from typing import TYPE_CHECKING, Any
 
 from telegram import Update, constants

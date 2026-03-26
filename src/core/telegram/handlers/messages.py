@@ -1,12 +1,19 @@
-import re
+# mypy: disable-error-code="no-any-unimported, unused-ignore"
+from __future__ import annotations
 
-from telegram import Update
-from telegram.ext import ContextTypes
+import re
+from typing import TYPE_CHECKING
 
 from src.core.telegram.ui.keyboards import TelegramUI
 
+if TYPE_CHECKING:
+    from telegram import Update
+    from telegram.ext import ContextTypes
 
-async def handle_text_input(service, update: Update, context: ContextTypes.DEFAULT_TYPE):  # noqa: ANN001, ANN201
+    from src.core.telegram.service import TelegramService
+
+
+async def handle_text_input(service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Main router for incoming text messages.
     Routes based on current user state (DB query, wizard) or passes to query dispatcher.
@@ -37,19 +44,20 @@ async def handle_text_input(service, update: Update, context: ContextTypes.DEFAU
     await _handle_sequential_input(service, chat_id, state, text, update)
 
 
-async def _handle_db_query_input(service, chat_id, state, text, update):  # noqa: ANN001, ANN202
+async def _handle_db_query_input(service: TelegramService, chat_id: int, state: str, text: str, update: Update) -> None:
     """Processes search queries for the database browser."""
     parts = state.replace("WAITING_DB_QUERY_", "").split("_")
     params = {"db": parts[0].lower(), "query": text, "chat_id": str(chat_id)}
     if len(parts) > 1:
         params["year"] = parts[1]
 
-    await update.message.reply_chat_action("typing")
+    if update.message:
+        await update.message.reply_chat_action("typing")
     service.command_received.emit("search_db_pdf", params)
     service.user_states[chat_id] = None
 
 
-async def _handle_sequential_input(service, chat_id, state, text, update):  # noqa: ANN001, ANN202
+async def _handle_sequential_input(service: TelegramService, chat_id: int, state: str, text: str, update: Update) -> None:
     """Handles multi-line or list inputs for specific wizards (PDL, OdA, Time)."""
     items = [i.strip() for i in text.replace(",", "\n").replace(";", "\n").split("\n") if i.strip()]
     if not items:
@@ -65,14 +73,16 @@ async def _handle_sequential_input(service, chat_id, state, text, update):  # no
         if re.match(r"^([01]?[0-9]|2[0-3]):[0-5][0-9]$", items[0]):
             service.command_received.emit("set_autopilot", {"time": items[0]})
         else:
-            await update.message.reply_text("❌ Formato non valido. Usa HH:MM.")
+            if update.message:
+                await update.message.reply_text("❌ Formato non valido. Usa HH:MM.")
             return
 
     service.user_states[chat_id] = None
-    await update.message.reply_text("✅ Operazione completata.", reply_markup=TelegramUI.get_main_keyboard())
+    if update.message:
+        await update.message.reply_text("✅ Operazione completata.", reply_markup=TelegramUI.get_main_keyboard())
 
 
-async def handle_voice(service, update: Update, context: ContextTypes.DEFAULT_TYPE):  # noqa: ANN001, ANN201
+async def handle_voice(service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handles voice messages. (AI functionality removed)
     """
@@ -80,7 +90,7 @@ async def handle_voice(service, update: Update, context: ContextTypes.DEFAULT_TY
         await update.message.reply_text("🎤 Messaggi vocali non supportati in questa versione.")
 
 
-async def handle_photo(service, update: Update, context: ContextTypes.DEFAULT_TYPE):  # noqa: ANN001, ANN201
+async def handle_photo(service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handles photo messages.
     Downloads the high-res photo and emits a 'photo_received' signal.

@@ -8,6 +8,7 @@ import logging
 import os
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices
@@ -25,7 +26,7 @@ class ReportGenerator:
     _worker: ReportWorker | None = None
 
     @staticmethod
-    def generate_email_report(parent_widget=None):  # noqa: ANN001, ANN205
+    def generate_email_report(parent_widget: Any = None) -> None:
         """Avvia la generazione del report in background."""
         if ReportGenerator._worker and ReportGenerator._worker.isRunning():
             ToastManager.instance().show("Generazione report già in corso...", "warning")
@@ -41,7 +42,7 @@ class ReportGenerator:
         ReportGenerator._worker.start()
 
     @staticmethod
-    def _on_report_finished(parent_widget, success, message, data):  # noqa: ANN001, ANN205
+    def _on_report_finished(parent_widget: Any, success: bool, message: str, data: dict[str, Any]) -> None:
         """Callback al completamento del worker."""
         if not success:
             if "Outlook non disponibile" in message:
@@ -66,7 +67,7 @@ class ReportGenerator:
         ToastManager.instance().show(message, "success")
 
     @staticmethod
-    def _fallback_browser(message, data):  # noqa: ANN001, ANN205
+    def _fallback_browser(message: str, data: dict[str, Any]) -> None:
         """Gestisce l'apertura del report nel browser se Outlook fallisce."""
         from src.core.dipendenti.report_service import ReportService  # noqa: PLC0415
 

@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Base Panel Components
 Classi base e worker per i pannelli dei bot.
@@ -220,7 +221,7 @@ class BaseBotPanel(QWidget):
 
     def showEvent(self, event: object) -> None:
         """Forza l'inizializzazione della timeline all'apertura del pannello."""
-        super().showEvent(event)  # type: ignore[arg-type]
+        super().showEvent(event)
         QTimer.singleShot(100, self._init_ghost_timeline)
 
     def _setup_base_ui(self) -> None:

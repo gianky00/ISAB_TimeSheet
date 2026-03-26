@@ -26,15 +26,15 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         ("search", "Ricerca ed Esportazione"),
     ]
 
-    def __init__(  # noqa: ANN204, PLR0913
+    def __init__(  # noqa: PLR0913
         self,
-        username,  # noqa: ANN001
-        password,  # noqa: ANN001
-        headless=False,  # noqa: ANN001
-        timeout=30,  # noqa: ANN001
-        download_path="",  # noqa: ANN001
+        username: str,
+        password: str,
+        headless: bool = False,
+        timeout: int = 30,
+        download_path: str = "",
         account_type: str = "Esecutore",
-    ):
+    ) -> None:
         """
         Inizializza il bot di sincronizzazione programmazione.
 

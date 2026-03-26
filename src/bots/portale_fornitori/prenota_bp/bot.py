@@ -40,15 +40,15 @@ class PrenotaBPBot(BaseBot):
     def description(self) -> str:
         return "Prenotazione Badge Provvisori sul portale ISAB"
 
-    def __init__(  # noqa: ANN204
+    def __init__(
         self,
         username: str = "",
         password: str = "",
         data_da: str | None = None,
         data_a: str | None = None,
         fornitore: str | None = None,
-        **kwargs,  # noqa: ANN003
-    ):
+        **kwargs: Any,
+    ) -> None:
         # Pulizia kwargs come in Scarico TS
         kwargs.pop("fornitore", None)
         kwargs.pop("data_a", None)
@@ -67,7 +67,7 @@ class PrenotaBPBot(BaseBot):
     def _get_row_value(self, row: dict[str, Any], target_key: str) -> str:
         """Estrae un valore dalla riga in modo robusto (ignora case, spazi e underscore)."""
 
-        def normalize(s):  # noqa: ANN001, ANN202
+        def normalize(s: Any) -> str:
             return str(s).upper().replace(" ", "").replace("_", "")
 
         target_norm = normalize(target_key)
@@ -76,7 +76,7 @@ class PrenotaBPBot(BaseBot):
                 return str(v) if v is not None else ""
         return ""
 
-    def run(self, data: Any):  # noqa: ANN201, ANN401
+    def run(self, data: Any) -> bool:
         """Esecuzione principale del bot."""
         self.update_step("login", StepStatus.COMPLETED)
 
@@ -113,7 +113,7 @@ class PrenotaBPBot(BaseBot):
         finally:
             self.log("Fine sessione Prenota BP.")
 
-    def _init_run_data(self, data: Any) -> list[dict[str, Any]]:  # noqa: ANN401
+    def _init_run_data(self, data: Any) -> list[dict[str, Any]]:
         """Inizializza i parametri della sessione."""
         if isinstance(data, dict):
             self.data_da = data.get("data_da") or self.data_da

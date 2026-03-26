@@ -35,15 +35,15 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         ("session", "Chiusura Sessione"),
     ]
 
-    def __init__(  # noqa: ANN204, PLR0913
+    def __init__(  # noqa: PLR0913
         self,
-        username,  # noqa: ANN001
-        password,  # noqa: ANN001
-        headless=False,  # noqa: ANN001
-        timeout=30,  # noqa: ANN001
-        download_path="",  # noqa: ANN001
+        username: str,
+        password: str,
+        headless: bool = False,
+        timeout: int = 30,
+        download_path: str = "",
         account_type: str = "Esecutore",
-    ):
+    ) -> None:
         """Inizializza il bot SafeWork PDL."""
         super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
         self.downloaded_files: list[str] = []
@@ -162,7 +162,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self.log(f"✨ Completato: {success_count}/{total} PDL.")
         return success_count == total
 
-    def _sanitizza_pdl_number(self, pdl_raw: Any) -> str:  # noqa: ANN401
+    def _sanitizza_pdl_number(self, pdl_raw: Any) -> str:
         """Formatta il numero PDL aggiungendo i suffissi /S o /C se necessario."""
         num = str(pdl_raw).strip().upper().replace(" ", "")
         if num.isdigit() and len(num) == 6:  # noqa: PLR2004
@@ -384,7 +384,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 num_res_el = self.driver.find_elements(By.ID, "numPermessiTrovati")
                 if num_res_el:
                     num_res = num_res_el[0].text.strip()
-                    return num_res == "0"
+                    return bool(num_res == "0")
 
             return False  # Proseguiamo comunque, la verifica finale la fa _esegui_ricerca_pdl  # noqa: TRY300
         except Exception:
@@ -407,7 +407,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 return True
         return False
 
-    def _gestisci_dialogo_stampa_tutte(self):  # noqa: ANN202
+    def _gestisci_dialogo_stampa_tutte(self) -> None:
         """Seleziona 'Stampa Tutte' nel popup se appare."""
         if not self.driver or not self.wait:
             return

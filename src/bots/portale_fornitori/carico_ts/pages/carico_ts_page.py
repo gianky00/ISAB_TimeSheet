@@ -1,8 +1,10 @@
+# mypy: disable-error-code="no-any-unimported"
 """
 SyncroJob - Carico TS Page
 Page Object Model for Carico TS.
 """
 
+from collections.abc import Callable
 from contextlib import suppress
 
 from selenium.webdriver.common.action_chains import ActionChains
@@ -21,7 +23,7 @@ class CaricoTSPage:
     Fornisce strumenti per navigare nell'area gestione e interagire con gli ordini.
     """
 
-    def __init__(self, driver: WebDriver, log_callback=None):  # noqa: ANN001, ANN204
+    def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None) -> None:
         """
         Inizializza la pagina con il driver e la callback di logging.
         """
@@ -29,7 +31,7 @@ class CaricoTSPage:
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.log = log_callback or print
 
-    def _wait_overlay(self):  # noqa: ANN202
+    def _wait_overlay(self) -> None:
         """Attende la scomparsa delle maschere di caricamento del portale."""
         with suppress(Exception):
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"

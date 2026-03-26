@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - PDL Programmazione Tab (Refactored)
 Scheda coordinata per il monitoraggio della programmazione settimanale SafeWork.

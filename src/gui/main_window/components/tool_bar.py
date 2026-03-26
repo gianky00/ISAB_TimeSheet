@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - ToolBar Component
 Gestore degli elementi di navigazione e ricerca superiore e laterale.

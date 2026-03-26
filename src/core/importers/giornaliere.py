@@ -193,7 +193,7 @@ class GiornaliereImporter(BaseImporter):
             return (year, [], str(e))
 
     @classmethod
-    def _read_giornaliera_sheet(cls, file_path: Any) -> pd.DataFrame | None:  # noqa: ANN401
+    def _read_giornaliera_sheet(cls, file_path: Any) -> pd.DataFrame | None:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             pd_obj = cls._get_pd()

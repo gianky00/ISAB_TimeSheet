@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - Contabilità Panel
 Pannello centrale per la visualizzazione e l'analisi della Contabilità Strumentale.

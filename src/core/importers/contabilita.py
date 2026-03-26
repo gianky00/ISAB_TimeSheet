@@ -106,7 +106,7 @@ class ContabilitaImporter(BaseImporter):
     @classmethod
     def _process_all_sheets(
         cls,
-        xls: Any,  # noqa: ANN401
+        xls: Any,
         sheet_names: list[str],
         progress_callback: Callable[[int, int], None] | None,
     ) -> tuple[list[tuple[Any, ...]], list[int]]:
@@ -131,7 +131,7 @@ class ContabilitaImporter(BaseImporter):
         return all_rows, imported_years
 
     @classmethod
-    def _process_single_sheet(cls, xls: Any, sheet_name: str, year: int) -> list[tuple[Any, ...]]:  # noqa: ANN401, PLR0915
+    def _process_single_sheet(cls, xls: Any, sheet_name: str, year: int) -> list[tuple[Any, ...]]:  # noqa: PLR0915
         """Processa un singolo foglio del file Excel di contabilitÃ ."""
         try:
             pd_obj = cls._get_pd()
@@ -161,7 +161,7 @@ class ContabilitaImporter(BaseImporter):
             df = df[target_columns].copy()
 
             # --- Gestione Tipi Intelligente ---
-            def _clean_numeric(val: Any) -> float:  # noqa: ANN401
+            def _clean_numeric(val: Any) -> float:
                 if pd_obj.isna(val) or val == "":
                     return 0.0
                 if isinstance(val, (int, float)):
@@ -224,12 +224,12 @@ class ContabilitaImporter(BaseImporter):
             return []
 
     @classmethod
-    def _find_header_row(cls, xls: Any, sheet_name: str) -> int:  # noqa: ANN401
+    def _find_header_row(cls, xls: Any, sheet_name: str) -> int:
         """Cerca l'indice della riga di intestazione basandosi su colonne chiave."""
         preview_df = cls._get_pd().read_excel(xls, sheet_name=sheet_name, header=None, nrows=15)
 
         # Normalizzazione aggressiva per il confronto
-        def _norm(v: Any) -> str:  # noqa: ANN401
+        def _norm(v: Any) -> str:
             return (
                 str(v)
                 .strip()
@@ -253,7 +253,7 @@ class ContabilitaImporter(BaseImporter):
     def _normalize_columns(cls, df: pd.DataFrame) -> pd.DataFrame:
         """Rinomina le colonne del DataFrame usando la mappa interna."""
 
-        def _norm(v: Any) -> str:  # noqa: ANN401
+        def _norm(v: Any) -> str:
             return str(v).strip().upper().replace(" ", "").replace(".", "").replace("°", "").replace("Â", "")
 
         normalized_map = {}

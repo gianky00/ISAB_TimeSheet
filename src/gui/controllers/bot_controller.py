@@ -22,7 +22,7 @@ class BotController(QObject):
     - Identificare il pannello bot attualmente attivo per operazioni contestuali.
     """
 
-    def __init__(self, main_window: Any, telegram_service: Any) -> None:  # noqa: ANN401
+    def __init__(self, main_window: Any, telegram_service: Any) -> None:
         """
         Inizializza il bot controller.
 

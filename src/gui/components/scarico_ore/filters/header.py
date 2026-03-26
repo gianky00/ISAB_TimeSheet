@@ -16,7 +16,7 @@ class FilterHeaderView(QHeaderView):
 
     filterChanged = pyqtSignal(int, object)  # col, values  # noqa: N815
 
-    def __init__(self, orientation: Qt.Orientation, parent: Any | None = None) -> None:  # noqa: ANN401
+    def __init__(self, orientation: Qt.Orientation, parent: Any | None = None) -> None:
         super().__init__(orientation, parent)
         self.setSectionsClickable(True)
         self.setHighlightSections(True)

@@ -3,6 +3,7 @@ Bot TS - Scarico TS Page
 Page Object Model for the Scarico TS section.
 """
 
+# mypy: disable-error-code="no-any-unimported"
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -24,7 +25,7 @@ from src.core.constants import Timeouts
 class ScaricoTSPage:
     """Encapsulates interactions with the Scarico TS page."""
 
-    def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None):  # noqa: ANN204
+    def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None) -> None:
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)

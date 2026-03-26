@@ -6,6 +6,8 @@ Fornisce una navigazione tra schede fluida con indicatore di selezione dinamico.
 
 from __future__ import annotations
 
+from typing import Any
+
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QRect, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QResizeEvent, QShowEvent
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QHBoxLayout, QTabBar, QTabWidget, QVBoxLayout, QWidget
@@ -133,7 +135,7 @@ class AnimatedTabWidget(QWidget):
 
         QTimer.singleShot(10, self._update_indicator_instant)
 
-    def addTab(self, widget: QWidget, *args) -> int:  # noqa: ANN002
+    def addTab(self, widget: QWidget, *args: Any) -> int:
         """
         Aggiunge un nuovo tab.
 

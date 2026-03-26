@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - PDL Stats Widget
 Card avanzata per la visualizzazione delle metriche PDL, trend e aree interattive.

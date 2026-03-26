@@ -43,7 +43,7 @@ class LoggingConfig:
         self.console_level: Final[str] = "DEBUG"
 
         # Levels
-        self.default_level: Final[str] = "INFO"
+        self.default_level: str = "INFO"
         self.file_level: Final[str] = "DEBUG"
         self.errors_level: Final[str] = "ERROR"
 

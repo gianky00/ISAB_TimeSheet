@@ -150,7 +150,7 @@ class SensitiveDataFilter:
         return masked
 
     @classmethod
-    def mask(cls, data: Any) -> Any:  # noqa: ANN401
+    def mask(cls, data: Any) -> Any:
         """
         Maschera dati sensibili in qualsiasi tipo di dato.
 

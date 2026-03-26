@@ -91,7 +91,7 @@ class PriorityBadge(QWidget):
         self.pulse_anim.valueChanged.connect(self._on_pulse_value_changed)
         self.pulse_anim.start()
 
-    def _on_pulse_value_changed(self, value: Any) -> None:  # noqa: ANN401
+    def _on_pulse_value_changed(self, value: Any) -> None:
         """Apply pulse scale to dot."""
         f_value = float(value)
         self._pulse_scale = f_value

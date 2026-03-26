@@ -39,7 +39,7 @@ class AppEventHandler(QObject):
         self._force_quit = True
         self.main_window.close()
 
-    def handle_close_event(self, event: Any) -> None:  # noqa: ANN401
+    def handle_close_event(self, event: Any) -> None:
         """
         Gestisce l'evento di chiusura della finestra.
         Se la chiusura non è forzata, nasconde l'applicazione nel tray invece di terminarla.

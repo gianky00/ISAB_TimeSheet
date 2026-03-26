@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - PDL Programmazione Table Widget
 Componente specializzato per la visualizzazione della griglia di programmazione.

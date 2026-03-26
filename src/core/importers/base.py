@@ -30,7 +30,7 @@ class BaseImporter:
     """Classe base per tutti gli importer Excel."""
 
     @staticmethod
-    def _get_pd() -> Any:  # noqa: ANN401
+    def _get_pd() -> Any:
         """Lazy load di pandas"""
         global _pd  # noqa: PLW0603
         if _pd is None:
@@ -59,7 +59,7 @@ class BaseImporter:
         return file_path, False
 
     @classmethod
-    def _get_excel_file(cls, file_obj: Any) -> Any:  # noqa: ANN401
+    def _get_excel_file(cls, file_obj: Any) -> Any:
         """Tenta di aprire il file Excel con motore ottimizzato (calamine > default > openpyxl)."""
         pd = cls._get_pd()
         with warnings.catch_warnings():

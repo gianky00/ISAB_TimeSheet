@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 
-def normalize_name(text: Any) -> str:  # noqa: ANN401
+def normalize_name(text: Any) -> str:
     """Normalizza una stringa rimuovendo spazi multipli e convertendola in maiuscolo."""
     if not text:
         return ""
@@ -28,7 +28,7 @@ def build_timbrature_maps(
     last_by_cf: dict[str, int] = {}
     last_by_name: dict[tuple[str, str], int] = {}
 
-    def normalize(t: Any) -> str:  # noqa: ANN401
+    def normalize(t: Any) -> str:
         """Funzione locale di normalizzazione rapida."""
         return normalize_name(t)
 

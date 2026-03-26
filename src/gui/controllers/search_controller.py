@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class SearchController(QObject):
     """Controller per la ricerca universale e la navigazione ai risultati."""
 
-    def __init__(self, main_window: Any) -> None:  # noqa: ANN401
+    def __init__(self, main_window: Any) -> None:
         """
         Inizializza il controller di ricerca.
 

@@ -18,7 +18,7 @@ class ProgWorker(QThread):
         self.controller = controller
         self.year = year
 
-    def run(self):  # noqa: ANN201
+    def run(self) -> None:
         """Esegue il calcolo via controller."""
         prog = self.controller.get_next_progressive(self.year)
         self.finished.emit(prog)

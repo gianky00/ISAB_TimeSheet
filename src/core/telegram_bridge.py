@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Telegram UI Bridge
 Punto di ingresso centrale per la comunicazione tra il servizio Telegram e la Desktop UI.

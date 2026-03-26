@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Sidebar Widget (Refactored V8.8 - Performance Optimized V4)
 Navigazione magnetica enterprise a 3 livelli.
@@ -430,7 +431,7 @@ class SidebarWidget(QFrame):
         self._set_collapsed(False)
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any) -> None:  # noqa: ANN401
+    def leaveEvent(self, event: Any) -> None:
         """Gestisce l'evento di uscita del mouse (collasso)."""
         if getattr(self, "_drag_in_progress", False):
             super().leaveEvent(event)

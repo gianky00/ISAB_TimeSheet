@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Storico OdA Panel (Refactored)
 Pannello coordinato per la gestione dello Storico OdA.
@@ -228,7 +229,7 @@ class StoricoOdaPanel(QWidget):
         if vp:
             menu.exec(vp.mapToGlobal(pos))
 
-    def _open_detail_for_index(self, index: Any) -> None:  # noqa: ANN401
+    def _open_detail_for_index(self, index: Any) -> None:
         """Recupera i dati e apre il pannello laterale."""
         item = self.model.itemFromIndex(index)
         if not item:

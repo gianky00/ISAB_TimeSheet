@@ -27,7 +27,7 @@ class TimbratureSettingsTab(QWidget):
 
     settings_changed = pyqtSignal()  # Emesso quando cambiano le liste o i dati
 
-    def __init__(self, storage: Any, parent: QWidget | None = None) -> None:  # noqa: ANN401
+    def __init__(self, storage: Any, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.storage = storage
         self.lists = self.storage.get_lists()

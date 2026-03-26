@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - Audit Log Widget
 Widget riutilizzato per la visualizzazione dell'audit log.

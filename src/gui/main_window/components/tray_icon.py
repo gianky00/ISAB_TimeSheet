@@ -15,7 +15,7 @@ class TrayIconComponent(QObject):
     Inizializza il TrayController e fornisce metodi di alto livello per l'invio di messaggi balloon.
     """
 
-    def __init__(self, main_window: Any) -> None:  # noqa: ANN401
+    def __init__(self, main_window: Any) -> None:
         """
         Inizializza il componente Tray.
 
@@ -28,7 +28,7 @@ class TrayIconComponent(QObject):
 
         self.controller = TrayController(main_window)
 
-    def show_message(self, title: str, message: str, icon: Any = None, duration: int = 5000) -> None:  # noqa: ANN401
+    def show_message(self, title: str, message: str, icon: Any = None, duration: int = 5000) -> None:
         """
         Inoltra la richiesta di visualizzazione messaggio al controller.
 

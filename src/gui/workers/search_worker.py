@@ -3,6 +3,8 @@ SyncroJob - Search Worker
 Thread worker per l'esecuzione asincrona delle ricerche universali.
 """
 
+from typing import Any
+
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from src.core.search.search_service import SearchService
@@ -13,16 +15,16 @@ class SearchWorker(QThread):
 
     results_ready = pyqtSignal(dict)
 
-    def __init__(self, query: str, limit: int = 10, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, query: str, limit: int = 10, parent: Any = None) -> None:
         super().__init__(parent)
         self.query = query
         self.limit = limit
         self._is_cancelled = False
 
-    def cancel(self):  # noqa: ANN201
+    def cancel(self) -> None:
         self._is_cancelled = True
 
-    def run(self):  # noqa: ANN201
+    def run(self) -> None:
         """Esegue la ricerca tramite il SearchService e invia i risultati."""
         if self._is_cancelled:
             return

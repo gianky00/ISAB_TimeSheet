@@ -71,7 +71,7 @@ class AuditTableModel(QAbstractTableModel):
         """Restituisce il numero di colonne definite."""
         return len(self.COLUMNS)
 
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: ANN401, PLR0911
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: PLR0911
         """
         Fornisce i dati per la cella specificata in base al ruolo richiesto.
         Gestisce testo, icone, font e colori.
@@ -177,13 +177,13 @@ class AuditTableModel(QAbstractTableModel):
 
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
-    ) -> Any:  # noqa: ANN401
+    ) -> Any:
         """Restituisce il nome della colonna per l'header orizzontale."""
         if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal:
             return self.COLUMNS[section]
         return None
 
-    def _format_timestamp(self, ts: Any) -> str:  # noqa: ANN401
+    def _format_timestamp(self, ts: Any) -> str:
         """Formatta il timestamp ISO in formato leggibile GG/MM HH:MM:SS."""
         try:
             dt = datetime.fromisoformat(str(ts))
@@ -191,7 +191,7 @@ class AuditTableModel(QAbstractTableModel):
         except Exception:
             return str(ts)
 
-    def _format_duration(self, ms: Any) -> str:  # noqa: ANN401
+    def _format_duration(self, ms: Any) -> str:
         """Formatta i millisecondi in secondi se superano il secondo."""
         if not ms:
             return "-"

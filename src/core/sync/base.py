@@ -18,7 +18,7 @@ class BaseSyncEngine:
         return name
 
     @classmethod
-    def _create_temp_table(cls, cursor: Any, table_name: str, columns: list[str]) -> str:  # noqa: ANN401
+    def _create_temp_table(cls, cursor: Any, table_name: str, columns: list[str]) -> str:
         """Crea una tabella temporanea e restituisce il suo nome sicuro."""
         safe_name = cls._validate_identifier(table_name)
         temp_name = f"temp_{safe_name}"
@@ -28,7 +28,7 @@ class BaseSyncEngine:
         return temp_name
 
     @staticmethod
-    def _clean_value(x: Any) -> Any:  # noqa: ANN401
+    def _clean_value(x: Any) -> Any:
         """Pulisce il valore per l'inserimento nel DB."""
         if x is None:
             return ""

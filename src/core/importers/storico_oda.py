@@ -163,7 +163,7 @@ class StoricoOdaImporter(BaseImporter):
                 df[col] = df[col].fillna("").astype(str).str.strip()
 
     @staticmethod
-    def _clean_euro_num(x: Any) -> float:  # noqa: ANN401
+    def _clean_euro_num(x: Any) -> float:
         """Helper for European numbers (1.234,56 -> 1234.56).
 
         Always returns float to match SQLite REAL column behavior (5.0 -> '5.0').

@@ -499,7 +499,7 @@ class WeatherWidget(ModernCard):
         else:
             self.alert_frame.hide()
 
-    def _update_pills(self, wind: float, gusts: float, hum: int, uv: float, aqi: Any) -> None:  # noqa: ANN401
+    def _update_pills(self, wind: float, gusts: float, hum: int, uv: float, aqi: Any) -> None:
         w_lbl = self.pill_wind.findChild(QLabel, "pill_text")
         h_lbl = self.pill_hum.findChild(QLabel, "pill_text")
         u_lbl = self.pill_uv.findChild(QLabel, "pill_text")

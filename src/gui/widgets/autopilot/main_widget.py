@@ -69,11 +69,11 @@ class AutopilotWidget(QWidget):
         self.refresh_timer.timeout.connect(self.refresh_events)
         self.refresh_timer.start(60000)
 
-    def set_footer_widget(self, footer_left_widget: Any) -> None:  # noqa: ANN401
+    def set_footer_widget(self, footer_left_widget: Any) -> None:
         """Collega il widget del footer per aggiornamenti contestuali."""
         self.footer_left_widget = footer_left_widget
 
-    def set_status_bar(self, status_bar: Any) -> None:  # noqa: ANN401
+    def set_status_bar(self, status_bar: Any) -> None:
         """Collega la barra di stato per segnalare attività dell'autopilot."""
         self.status_bar = status_bar
 

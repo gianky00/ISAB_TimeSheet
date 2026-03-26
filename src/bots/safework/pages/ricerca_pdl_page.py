@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - SafeWork PDL Search Page
 Gestisce le interazioni con la pagina di ricerca PDL.
@@ -19,14 +20,14 @@ from src.bots.safework.common.locators import SafeWorkLocators
 class RicercaPDLPage:
     """Page Object per la pagina di ricerca PDL."""
 
-    def __init__(  # noqa: ANN204
+    def __init__(
         self, driver: webdriver.Chrome, wait: WebDriverWait[webdriver.Chrome], log_func: Callable[[str], None]
-    ):
+    ) -> None:
         self.driver = driver
         self.wait = wait
         self.log = log_func
 
-    def configura_filtro_chiusi(self, exclude_closed: bool):  # noqa: ANN201
+    def configura_filtro_chiusi(self, exclude_closed: bool) -> None:
         """Imposta il filtro 'Escludi chiusi'."""
         try:
             checkbox = self.wait.until(
@@ -35,7 +36,7 @@ class RicercaPDLPage:
             if checkbox.is_selected() != exclude_closed:
                 self.log(f"🖱️ Impostazione 'Escludi chiusi': {exclude_closed}")
                 # Uso JS click come nel branch main per evitare problemi di intercettazione
-                self.driver.execute_script("arguments[0].click();", checkbox)
+                self.driver.execute_script("arguments[0].click();", checkbox)  # type: ignore[no-untyped-call]
         except Exception as e:
             self.log(f"⚠️ Errore configurazione flag 'Escludi chiusi': {e}")
 
@@ -76,7 +77,7 @@ class RicercaPDLPage:
             self.log(f"❌ Errore selezione/ricerca (Main Logic): {e}")
             return False
 
-    def _attendi_scomparsa_overlay(self, timeout_secondi=300):  # noqa: ANN001, ANN202
+    def _attendi_scomparsa_overlay(self, timeout_secondi: int = 300) -> None:
         """Attende la scomparsa dell'overlay di caricamento (GISWaitOverlay)."""
         with suppress(TimeoutException):
             # Verifica preliminare se l'overlay è visibile

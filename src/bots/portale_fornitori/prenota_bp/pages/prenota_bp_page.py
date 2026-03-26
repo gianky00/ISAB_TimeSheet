@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-any-unimported"
 """
 Page Object per la gestione Prenotazioni BP sul Portale Fornitori.
 """
@@ -5,6 +6,7 @@ Page Object per la gestione Prenotazioni BP sul Portale Fornitori.
 from collections.abc import Callable
 from contextlib import suppress
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -23,24 +25,24 @@ class PrenotaBPPage:
     Gestisce la navigazione nei menu, il filtraggio e l'inserimento di nuove prenotazioni.
     """
 
-    def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None):  # noqa: ANN204
+    def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None) -> None:
         """Inizializza la pagina con il driver e configura i tempi di attesa."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.short_wait = WebDriverWait(driver, 5)
         self._log = log_callback or print
 
-    def log(self, message: str):  # noqa: ANN201
+    def log(self, message: str) -> None:
         """Inoltra i messaggi di log alla callback configurata."""
         self._log(message)
 
-    def _wait_for_overlay(self):  # noqa: ANN202
+    def _wait_for_overlay(self) -> None:
         """Attende la scomparsa di maschere di caricamento."""
         with suppress(TimeoutException):
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask') or contains(@class, 'full-loader')][not(contains(@style,'display: none'))]"
             self.short_wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
 
-    def wait_and_click(self, locator, timeout=None):  # noqa: ANN001, ANN201
+    def wait_and_click(self, locator: tuple[str, str], timeout: int | float | None = None) -> Any:
         """
         Attende che un elemento sia cliccabile e vi clicca sopra, gestendo errori DOM.
 
@@ -78,7 +80,7 @@ class PrenotaBPPage:
                 self._wait_for_overlay()
         return None
 
-    def wait_and_fill(self, locator, text, timeout=None):  # noqa: ANN001, ANN201
+    def wait_and_fill(self, locator: tuple[str, str], text: str, timeout: int | float | None = None) -> Any:
         """
         Attende un campo di input, lo pulisce e inserisce il testo.
 
@@ -95,7 +97,7 @@ class PrenotaBPPage:
         el.send_keys(text)
         return el
 
-    def login(self, username, password):  # noqa: ANN001, ANN201
+    def login(self, username: str, password: str) -> None:
         """Metodo legacy per compatibilità, il login è ora gestito da BaseBot."""
         # Check immediato sessione
         with suppress(Exception):
@@ -105,7 +107,7 @@ class PrenotaBPPage:
         # Logica minima se chiamato esplicitamente
         self.log("Verifica sessione in corso...")
 
-    def navigate_to_gestione_bp(self):  # noqa: ANN201
+    def navigate_to_gestione_bp(self) -> None:
         """Naviga verso la sezione Gestione Buono di Prelievo gestendo l'espansione dei menu."""
         self.log("Navigazione verso Gestione Buono di Prelievo...")
         self._wait_for_overlay()
@@ -137,7 +139,7 @@ class PrenotaBPPage:
         self.wait.until(EC.presence_of_element_located(PrenotaBPLocators.FILTER_FORNITORE))
         self.log("Sezione Gestione BP caricata.")
 
-    def filtra_buoni_prelievo(self, fornitore=None, numero_bp=None, data_da=None, data_a=None):  # noqa: ANN001, ANN201
+    def filtra_buoni_prelievo(self, fornitore: str | None = None, numero_bp: str | None = None, data_da: str | None = None, data_a: str | None = None) -> None:
         """Imposta i filtri di ricerca e clicca su Cerca."""
         self.log("Impostazione filtri di ricerca...")
 
@@ -174,7 +176,7 @@ class PrenotaBPPage:
         self._wait_for_overlay()
         self.log("Ricerca completata.")
 
-    def apri_dettagli_bp(self):  # noqa: ANN201
+    def apri_dettagli_bp(self) -> None:
         """Clicca sull'icona dettagli del primo BP in lista."""
         self.log("Apertura dettagli BP...")
         try:
@@ -223,7 +225,7 @@ class PrenotaBPPage:
 
         return all_ok
 
-    def chiudi_dettagli_bp(self):  # noqa: ANN201
+    def chiudi_dettagli_bp(self) -> None:
         """Chiude la finestra dettagli."""
         self.log("Chiusura finestra dettagli...")
         try:
@@ -234,7 +236,7 @@ class PrenotaBPPage:
         except Exception as e:
             self.log(f"Errore chiusura dettagli: {e}")
 
-    def prenota_nuovo_bp(self, numero_bp, note):  # noqa: ANN001, ANN201
+    def prenota_nuovo_bp(self, numero_bp: str, note: str) -> None:
         """Esegue una singola prenotazione BP."""
         self.log(f"Inserimento nuova prenotazione: {numero_bp}")
 
@@ -258,7 +260,7 @@ class PrenotaBPPage:
 
         self._wait_for_overlay()
 
-    def gestisci_creazione_richiesta(self, note: str):  # noqa: ANN201
+    def gestisci_creazione_richiesta(self, note: str) -> None:
         """Gestisce la selezione dei materiali, la creazione della richiesta e la compilazione del form."""
         self.log("Gestione creazione richiesta...")
 
@@ -312,7 +314,7 @@ class PrenotaBPPage:
                 count_selected += 1
         return count_selected > 0
 
-    def _compila_form_richiesta(self, note: str):  # noqa: ANN202
+    def _compila_form_richiesta(self, note: str) -> None:
         """Compila e salva il form di richiesta."""
         self.log("Click su 'Crea Richiesta'...")
         try:
@@ -340,7 +342,7 @@ class PrenotaBPPage:
                 self.wait_and_click(PrenotaBPLocators.BT_CHIUDI_POPUP, timeout=3)
             raise e  # noqa: TRY201
 
-    def _click_safe(self, element):  # noqa: ANN001, ANN202
+    def _click_safe(self, element: Any) -> None:
         """Esegue un click sicuro tramite scroll e JS fallback."""
         try:
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)

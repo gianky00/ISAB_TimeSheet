@@ -3,7 +3,7 @@ SyncroJob - Filter Worker
 Thread worker per l'esecuzione asincrona dei filtri su grandi volumi di dati.
 """
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QObject, QThread, pyqtSignal
 
 
 class FilterWorker(QThread):
@@ -11,14 +11,14 @@ class FilterWorker(QThread):
 
     finished = pyqtSignal(list, int)  # visible_indices, filtered_count
 
-    def __init__(  # noqa: ANN204
+    def __init__(
         self,
         search_index: list[str],
         display_data: list[list[str]],
         text: str,
         col_filters: dict[int, set[str]] | None = None,
-        parent=None,  # noqa: ANN001
-    ):
+        parent: QObject | None = None,
+    ) -> None:
         super().__init__(parent)
         self.search_index = search_index
         self.display_data = display_data
@@ -26,10 +26,10 @@ class FilterWorker(QThread):
         self.col_filters = col_filters
         self._is_cancelled = False
 
-    def cancel(self):  # noqa: ANN201
+    def cancel(self) -> None:
         self._is_cancelled = True
 
-    def run(self):  # noqa: ANN201
+    def run(self) -> None:
         """Esegue il filtraggio."""
         if self._is_cancelled:
             return

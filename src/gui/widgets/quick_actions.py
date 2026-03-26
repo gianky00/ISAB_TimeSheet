@@ -347,6 +347,6 @@ class QuickActions(QWidget):
                     row += 1
                     # Nessun limite di righe, l'utente può vedere tutte le azioni configurate
 
-    def _create_action_handler(self, key: str) -> Any:  # noqa: ANN401
+    def _create_action_handler(self, key: str) -> Any:
         """Crea un handler per il click che cattura correttamente il valore di key."""
         return lambda: self.action_clicked.emit(key)

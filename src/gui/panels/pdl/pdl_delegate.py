@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
 class PDLDelegate(QStyledItemDelegate):
     """Delegate per gestire il wrap selettivo e l'allineamento nelle celle PDL."""
 
-    def __init__(self, date_columns: Sequence[int], parent: Any | None = None) -> None:  # noqa: ANN401
+    def __init__(self, date_columns: Sequence[int], parent: Any | None = None) -> None:
         super().__init__(parent)
         self.date_columns = date_columns
 

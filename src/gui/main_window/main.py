@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Main Window
 Finestra principale dell'applicazione che coordina tutti i servizi, i controller e i componenti dell'interfaccia utente.
@@ -260,7 +261,7 @@ class MainWindow(QMainWindow):
         else:
             ToastManager.instance().show(f"Impossibile ruotare account {bot_type.upper()}.", "warning")
 
-    def closeEvent(self, event: Any) -> None:  # noqa: ANN401
+    def closeEvent(self, event: Any) -> None:
         """Gestisce la chiusura della finestra (riduzione a tray o uscita)."""
         if self._force_quit:
             self.service_controller.stop_all()

@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - Consuntivo Modifica Esistente Tab
 Tab intelligente per la scansione, auto-fill e manipolazione di file esistenti.

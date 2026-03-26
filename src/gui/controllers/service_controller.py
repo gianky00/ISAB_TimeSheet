@@ -38,7 +38,7 @@ class ServiceController(QObject):
     REPORT_EXPIRED_MIN: Final[int] = 30
     DEFAULT_INTERVAL_DAYS: Final[int] = 7
 
-    def __init__(self, main_window: Any, telegram_service: Any) -> None:  # noqa: ANN401
+    def __init__(self, main_window: Any, telegram_service: Any) -> None:
         """
         Inizializza il controller dei servizi e le code di gestione del parallelismo.
 
@@ -235,7 +235,7 @@ class ServiceController(QObject):
                             l_nm[nk] = df
         return l_cf, l_nm
 
-    def _norm_text(self, t: Any) -> str:  # noqa: ANN401
+    def _norm_text(self, t: Any) -> str:
         """Normalizza il testo rimuovendo spazi extra e convertendo in maiuscolo."""
         return re.sub(r"\s+", " ", str(t).strip().upper())
 
@@ -267,13 +267,13 @@ class ServiceController(QObject):
         m.HTMLBody = body
         m.Send()
 
-    def _prepare_scarico_oda_generale(self, panel: Any) -> None:  # noqa: ANN401
+    def _prepare_scarico_oda_generale(self, panel: Any) -> None:
         """Configura il pannello Dettagli OdA per uno scarico massivo senza filtri specifici."""
         if hasattr(panel, "data_table"):
             panel.data_table.set_data([])
             panel.log_widget.append("🧹 Tabella pulita per scarico generale (senza filtro OdA)")
 
-    def _schedule_bot_with_parallelism(self, bot_id: str, panel: Any, site: str, log_message: str) -> None:  # noqa: ANN401
+    def _schedule_bot_with_parallelism(self, bot_id: str, panel: Any, site: str, log_message: str) -> None:
         """Gestisce l'accodamento di un bot rispettando i vincoli di un'unica istanza Selenium per sito."""
         if self.running_bots_by_site[site]:
             self.pending_bots_by_site[site].append((bot_id, panel, log_message))
@@ -281,7 +281,7 @@ class ServiceController(QObject):
         else:
             self._start_bot(bot_id, panel, site, log_message)
 
-    def _start_bot(self, bot_id: str, panel: Any, site: str, log_message: str) -> None:  # noqa: ANN401
+    def _start_bot(self, bot_id: str, panel: Any, site: str, log_message: str) -> None:
         """Avvia l'esecuzione del bot e registra il callback per la gestione della coda al termine."""
         if not panel.start_btn.isEnabled():
             return
@@ -301,7 +301,7 @@ class ServiceController(QObject):
             panel.status_changed.connect(on_finished)
         panel._on_start()
 
-    def _on_bot_completed(self, bot_id: str, site: str, panel: Any) -> None:  # noqa: ANN401
+    def _on_bot_completed(self, bot_id: str, site: str, panel: Any) -> None:
         """Rimuove il bot concluso dalla lista attiva e avvia il prossimo elemento in coda per quel sito."""
         if bot_id in self.running_bots_by_site[site]:
             self.running_bots_by_site[site].remove(bot_id)

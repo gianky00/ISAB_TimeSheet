@@ -77,7 +77,7 @@ class AccountListWidget(QWidget):
         btns.addStretch()
         layout.addLayout(btns)
 
-    def _add_btn(self, layout: QHBoxLayout, icon: str, color: str, callback: Any, tooltip: str) -> None:  # noqa: ANN401
+    def _add_btn(self, layout: QHBoxLayout, icon: str, color: str, callback: Any, tooltip: str) -> None:
         """Helper per aggiungere un pulsante icona alla barra delle azioni."""
         btn = IconButton()
         btn.setIcon(get_colored_icon(get_asset_path(icon), COLORS["text_dark"]))

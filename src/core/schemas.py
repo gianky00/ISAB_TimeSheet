@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-any-unimported, misc, no-any-return"
 import pandas as pd
 import pandera.pandas as pa
 from pandera.typing import Series

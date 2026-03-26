@@ -217,7 +217,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
             parent = QModelIndex()
         return len(self.COLUMNS)
 
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: ANN401, PLR0911
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: PLR0911
         """Restituisce i dati per una specifica cella e ruolo."""
         if not index.isValid():
             return None
@@ -253,7 +253,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
         reverse = order == Qt.SortOrder.DescendingOrder
 
-        def get_key(idx: int) -> Any:  # noqa: ANN401
+        def get_key(idx: int) -> Any:
             """Estrae la chiave di ordinamento per una riga e colonna specifica."""
             try:
                 if column == 0:
@@ -270,7 +270,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
-    ) -> Any:  # noqa: ANN401
+    ) -> Any:
         """Restituisce l'header per le colonne."""
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return self.COLUMNS[section]

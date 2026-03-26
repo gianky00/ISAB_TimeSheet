@@ -289,7 +289,7 @@ class BotSavingsWidget(ModernCard):
     def refresh_stats(self) -> None:
         """Avvia il thread di calcolo delle statistiche in background per non bloccare la UI."""
 
-        def run():  # noqa: ANN202
+        def run() -> None:
             """Esegue il calcolo effettivo del ROI tramite ROIEngine."""
             try:
                 metrics = ROIEngine.calculate_savings()

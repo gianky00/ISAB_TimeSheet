@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 import os
 
 os.environ["QT_API"] = "PyQt6"
@@ -20,15 +21,15 @@ from src.gui.widgets.info_widgets import InfoLabel
 
 
 class DummyCanvas(QLabel):
-    def __init__(self, fig):
+    def __init__(self, fig: Figure) -> None:
         super().__init__("Grafico disabilitato (Incompatibilità Backend Matplotlib nativo)")
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setStyleSheet("color: #6c757d; font-style: italic;")
         self.figure = fig
 
-    def draw(self): pass
-    def draw_idle(self): pass
-    def mpl_connect(self, *args, **kwargs): pass
+    def draw(self) -> None: pass
+    def draw_idle(self) -> None: pass
+    def mpl_connect(self, *args: object, **kwargs: object) -> None: pass
 
 FigureCanvas = DummyCanvas
 

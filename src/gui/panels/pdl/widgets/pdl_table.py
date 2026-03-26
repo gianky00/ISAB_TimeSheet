@@ -3,8 +3,8 @@ SyncroJob - PDL Table Widget
 Widget specializzato per la visualizzazione della griglia PDL SafeWork.
 """
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QAbstractItemView, QHeaderView, QTableView
+from PyQt6.QtCore import QAbstractItemModel, Qt, pyqtSignal
+from PyQt6.QtWidgets import QAbstractItemView, QHeaderView, QTableView, QWidget
 
 from src.gui.panels.pdl.pdl_delegate import PDLDelegate
 
@@ -17,12 +17,12 @@ class PDLTableView(QTableView):
     selection_changed_custom = pyqtSignal()
     context_menu_requested = pyqtSignal(object)  # pos
 
-    def __init__(self, model, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, model: QAbstractItemModel, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setModel(model)
         self._setup_ui()
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
         self.setAlternatingRowColors(True)
         self.setSortingEnabled(True)
         self.setWordWrap(True)
@@ -49,7 +49,7 @@ class PDLTableView(QTableView):
             h_header.setSectionsClickable(True)
             h_header.sectionClicked.connect(self.header_clicked.emit)
 
-    def optimize_columns(self, headers_count: int):  # noqa: ANN201
+    def optimize_columns(self, headers_count: int) -> None:
         """Ottimizza la larghezza delle colonne basandosi sul contenuto."""
         h = self.horizontalHeader()
         if not h:

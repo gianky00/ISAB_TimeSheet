@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtProperty
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtProperty  # type: ignore[attr-defined]
 from PyQt6.QtWidgets import QPushButton, QWidget
 
 from src.utils.helpers import get_colored_icon
@@ -92,7 +92,7 @@ class ModernButton(QPushButton):
         self._anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any | None) -> None:  # noqa: ANN401
+    def leaveEvent(self, event: Any | None) -> None:
         """Avvia l'animazione di uscita al movimento del mouse."""
         self._anim.setStartValue(0.1)
         self._anim.setEndValue(0.0)

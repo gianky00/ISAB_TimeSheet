@@ -36,7 +36,7 @@ class ContabilitaManager:
         return ExcelImporter.scan_workload(file_path, giornaliere_path)
 
     @classmethod
-    def init_db(cls):  # noqa: ANN206
+    def init_db(cls) -> None:
         """Inizializza il database tramite DatabaseManager."""
         db_manager.init_db()
 

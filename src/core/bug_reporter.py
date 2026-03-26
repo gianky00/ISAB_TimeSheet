@@ -295,7 +295,7 @@ class BugReporter:
         return sys_info
 
     @staticmethod
-    def cleanup_old_reports(max_reports: int = 5):  # noqa: ANN205
+    def cleanup_old_reports(max_reports: int = 5) -> None:
         """Mantiene solo gli ultimi N report per risparmiare spazio."""
         with suppress(Exception):
             reports_dir = CONFIG_DIR / "reports"

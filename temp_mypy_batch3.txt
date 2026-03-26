@@ -1,0 +1,1257 @@
+src\bots\safework\pages\visualizza_attivita_page.py:22:5: error: Argument 2 to
+"__init__" becomes "Any" due to an unfollowed import  [no-any-unimported]
+        def __init__(
+        ^~~~~~~~~~~~~
+src\bots\safework\pages\visualizza_attivita_page.py:22:5: error: Argument 3 to
+"__init__" becomes "Any" due to an unfollowed import  [no-any-unimported]
+        def __init__(
+        ^~~~~~~~~~~~~
+src\bots\safework\pages\ricerca_pdl_page.py:22:5: error: Argument 2 to
+"__init__" becomes "Any" due to an unfollowed import  [no-any-unimported]
+        def __init__(
+        ^~~~~~~~~~~~~
+src\bots\safework\pages\ricerca_pdl_page.py:22:5: error: Argument 3 to
+"__init__" becomes "Any" due to an unfollowed import  [no-any-unimported]
+        def __init__(
+        ^~~~~~~~~~~~~
+src\bots\safework\pages\ricerca_pdl_page.py:38: error: Unused "type: ignore"
+comment  [unused-ignore]
+                    self.driver.execute_script("arguments[0].click();", ch...
+                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\bots\safework\pages\login_page.py:19:5: error: Argument 2 to "__init__"
+becomes "Any" due to an unfollowed import  [no-any-unimported]
+        def __init__(
+        ^~~~~~~~~~~~~
+src\bots\safework\pages\login_page.py:19:5: error: Argument 3 to "__init__"
+becomes "Any" due to an unfollowed import  [no-any-unimported]
+        def __init__(
+        ^~~~~~~~~~~~~
+src\core\telegram\ui\keyboards.py:109:29: error: Name "Any" is not defined 
+[name-defined]
+            keyboard: list[list[Any]] = []
+                                ^
+src\core\telegram\ui\keyboards.py:109:29: note: Did you forget to import it from "typing"? (Suggestion: "from typing import Any")
+src\core\telegram\ui\keyboards.py:110:19: error: Name "Any" is not defined 
+[name-defined]
+            row: list[Any] = []
+                      ^
+src\core\telegram\ui\keyboards.py:110:19: note: Did you forget to import it from "typing"? (Suggestion: "from typing import Any")
+src\core\telegram\handlers\messages.py:15:1: error: Argument 2 to
+"handle_text_input" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def handle_text_input(service: TelegramService, update: Update, ...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\telegram\handlers\messages.py:15:1: error: Argument 3 to
+"handle_text_input" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def handle_text_input(service: TelegramService, update: Update, ...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\telegram\handlers\messages.py:46:1: error: Argument 5 to
+"_handle_db_query_input" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_db_query_input(service: TelegramService, chat_id: in...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\telegram\handlers\messages.py:59:1: error: Argument 5 to
+"_handle_sequential_input" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_sequential_input(service: TelegramService, chat_id: ...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\telegram\handlers\messages.py:84:1: error: Argument 2 to
+"handle_voice" becomes "Any" due to an unfollowed import  [no-any-unimported]
+    async def handle_voice(service: TelegramService, update: Update, conte...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\telegram\handlers\messages.py:84:1: error: Argument 3 to
+"handle_voice" becomes "Any" due to an unfollowed import  [no-any-unimported]
+    async def handle_voice(service: TelegramService, update: Update, conte...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\telegram\handlers\messages.py:92:1: error: Argument 2 to
+"handle_photo" becomes "Any" due to an unfollowed import  [no-any-unimported]
+    async def handle_photo(service: TelegramService, update: Update, conte...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\telegram\handlers\messages.py:92:1: error: Argument 3 to
+"handle_photo" becomes "Any" due to an unfollowed import  [no-any-unimported]
+    async def handle_photo(service: TelegramService, update: Update, conte...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\secrets_manager.py:149:17: error: Returning Any from function declared
+to return "bytes | None"  [no-any-return]
+                    return stored.encode("utf-8")
+                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\secrets_manager.py:185:13: error: Returning Any from function declared
+to return "str | None"  [no-any-return]
+                return keyring.get_password(f"{cls.APP_NAME}_{service}", u...
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\utils\security.py:136:17: error: Returning Any from function declared to
+return "str"  [no-any-return]
+                    return self._cipher.decrypt(encrypted_data).decode()
+                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\utils\security.py:145:17: error: Returning Any from function declared to
+return "str"  [no-any-return]
+                    return self._cipher.decrypt(encrypted_data).decode()
+                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\utils\resource_manager.py:131:13: error: Returning Any from function
+declared to return "str | None"  [no-any-return]
+                return d_path
+                ^~~~~~~~~~~~~
+src\core\telegram\handlers\commands.py:16:1: error: Argument 2 to "cmd_start"
+becomes "Any" due to an unfollowed import  [no-any-unimported]
+    async def cmd_start(service: TelegramService, update: Update, context:...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\telegram\handlers\commands.py:16:1: error: Argument 3 to "cmd_start"
+becomes "Any" due to an unfollowed import  [no-any-unimported]
+    async def cmd_start(service: TelegramService, update: Update, context:...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\telegram\handlers\commands.py:47:1: error: Argument 2 to
+"_handle_initial_pairing" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_initial_pairing(
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\commands.py:47:1: error: Argument 3 to
+"_handle_initial_pairing" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_initial_pairing(
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\commands.py:82:1: error: Argument 2 to "cmd_status"
+becomes "Any" due to an unfollowed import  [no-any-unimported]
+    async def cmd_status(service: TelegramService, update: Update, context...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\telegram\handlers\commands.py:82:1: error: Argument 3 to "cmd_status"
+becomes "Any" due to an unfollowed import  [no-any-unimported]
+    async def cmd_status(service: TelegramService, update: Update, context...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\telegram\handlers\commands.py:93:1: error: Argument 2 to "cmd_stop"
+becomes "Any" due to an unfollowed import  [no-any-unimported]
+    async def cmd_stop(service: TelegramService, update: Update, context: ...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\telegram\handlers\commands.py:93:1: error: Argument 3 to "cmd_stop"
+becomes "Any" due to an unfollowed import  [no-any-unimported]
+    async def cmd_stop(service: TelegramService, update: Update, context: ...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\telegram\handlers\callbacks.py:17:1: error: Argument 2 to
+"handle_button" becomes "Any" due to an unfollowed import  [no-any-unimported]
+    async def handle_button(
+    ^~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\callbacks.py:17:1: error: Argument 3 to
+"handle_button" becomes "Any" due to an unfollowed import  [no-any-unimported]
+    async def handle_button(
+    ^~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\callbacks.py:41:1: error: Argument 2 to
+"_validate_button_query" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _validate_button_query(
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\callbacks.py:41:1: error: Argument 3 to
+"_validate_button_query" becomes "Any | None" due to an unfollowed import 
+[no-any-unimported]
+    async def _validate_button_query(
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\callbacks.py:69:1: error: Argument 3 to
+"_handle_nav_actions" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_nav_actions(service: "TelegramService", data: str, q...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\telegram\handlers\callbacks.py:114:1: error: Argument 3 to
+"_handle_db_actions" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_db_actions(
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\callbacks.py:150:1: error: Argument 3 to
+"_handle_bot_actions" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_bot_actions(  # noqa: PLR0913
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\callbacks.py:150:1: error: Argument 5 to
+"_handle_bot_actions" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_bot_actions(  # noqa: PLR0913
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\callbacks.py:150:1: error: Argument 6 to
+"_handle_bot_actions" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_bot_actions(  # noqa: PLR0913
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\callbacks.py:169:1: error: Argument 3 to
+"_handle_menu_and_input_dispatch" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_menu_and_input_dispatch(  # noqa: PLR0913
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\callbacks.py:169:1: error: Argument 5 to
+"_handle_menu_and_input_dispatch" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_menu_and_input_dispatch(  # noqa: PLR0913
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\callbacks.py:169:1: error: Argument 6 to
+"_handle_menu_and_input_dispatch" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_menu_and_input_dispatch(  # noqa: PLR0913
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\callbacks.py:276:1: error: Argument 3 to
+"_handle_printer_selection" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_printer_selection(
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\callbacks.py:289:1: error: Argument 3 to
+"_handle_run_pdl_confirm" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_run_pdl_confirm(
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\callbacks.py:336:1: error: Argument 3 to
+"_handle_utility_actions" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_utility_actions(
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram\handlers\callbacks.py:360:1: error: Argument 3 to
+"_handle_utility_menus" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_utility_menus(service: "TelegramService", data: str,...
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\core\telegram\handlers\callbacks.py:372:1: error: Argument 3 to
+"_handle_setting_changes" becomes "Any" due to an unfollowed import 
+[no-any-unimported]
+    async def _handle_setting_changes(
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\bots\portale_fornitori\timbrature\storage.py:94:13: error: Missing
+positional argument "exc" in call to "exception" of "StructuredLogger" 
+[call-arg]
+                logger.exception("Errore durante ensure_columns in Timbrat...
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\contabilita\certificati\pdf_exporter.py:134:21: error:
+Returning Any from function declared to return "str"  [no-any-return]
+                        return child.text(0)
+                        ^~~~~~~~~~~~~~~~~~~~
+src\bots\base\base_bot.py:100:9: error: Type of variable becomes "Any | None"
+due to an unfollowed import  [no-any-unimported]
+            self.driver: webdriver.Chrome | None = None
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\bots\base\base_bot.py:101:9: error: Type of variable becomes "Any | None"
+due to an unfollowed import  [no-any-unimported]
+            self.wait: WebDriverWait[webdriver.Chrome] | None = None
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\bots\base\base_bot.py:102:9: error: Type of variable becomes "Any | None"
+due to an unfollowed import  [no-any-unimported]
+            self.popup_wait: WebDriverWait[webdriver.Chrome] | None = None
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\bots\base\base_bot.py:103:9: error: Type of variable becomes "Any | None"
+due to an unfollowed import  [no-any-unimported]
+            self.long_wait: WebDriverWait[webdriver.Chrome] | None = None
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\bots\base\base_bot.py:299:5: error: Return type becomes "Any" due to an
+unfollowed import  [no-any-unimported]
+        def _get_chrome_options(self) -> Options:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\bots\base\base_bot.py:375:5: error: Argument 2 to "_setup_driver_instance"
+becomes "Any" due to an unfollowed import  [no-any-unimported]
+        def _setup_driver_instance(self, service: Service, options: Option...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\bots\base\base_bot.py:375:5: error: Argument 3 to "_setup_driver_instance"
+becomes "Any" due to an unfollowed import  [no-any-unimported]
+        def _setup_driver_instance(self, service: Service, options: Option...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\bots\portale_fornitori\timbrature\bot.py:55:5: error: Function is missing a
+type annotation for one or more arguments  [no-untyped-def]
+        def __init__(self, data_da: str = "", data_a: str = "", fornitore:...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\bots\portale_fornitori\timbrature\bot.py:152:5: error: Function is missing
+a return type annotation  [no-untyped-def]
+        def import_to_db_static(excel_path: str, db_path: Path, log_callba...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\bots\portale_fornitori\timbrature\bot.py:152:5: error: Function is missing
+a type annotation for one or more arguments  [no-untyped-def]
+        def import_to_db_static(excel_path: str, db_path: Path, log_callba...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\bots\safework\programmazione\bot.py:153: error: Unused "type: ignore"
+comment  [unused-ignore]
+                return poll_for_new_file(  # type: ignore
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\bots\safework\pdl\search_bot.py:165: error: Unused "type: ignore" comment 
+[unused-ignore]
+                return poll_for_new_file(  # type: ignore
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\contabilita\consuntivo\workers.py:21:5: error: Function is
+missing a return type annotation  [no-untyped-def]
+        def run(self):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\contabilita\consuntivo\workers.py:21:5: note: Use "-> None" if function does not return a value
+src\gui\workers\search_worker.py:16:5: error: Function is missing a type
+annotation for one or more arguments  [no-untyped-def]
+        def __init__(self, query: str, limit: int = 10, parent=None):  # n...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\workers\search_worker.py:22:5: error: Function is missing a return type
+annotation  [no-untyped-def]
+        def cancel(self):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\workers\search_worker.py:22:5: note: Use "-> None" if function does not return a value
+src\gui\workers\search_worker.py:25:5: error: Function is missing a return type
+annotation  [no-untyped-def]
+        def run(self):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\workers\search_worker.py:25:5: note: Use "-> None" if function does not return a value
+src\gui\dialogs\startup_dialog.py:81:9: error: Need type annotation for
+"current_logs" (hint: "current_logs: list[<type>] = ...")  [var-annotated]
+            self.current_logs = []
+            ^~~~~~~~~~~~~~~~~
+src\gui\dialogs\startup_dialog.py:306:34: error: Name "Any" is not defined 
+[name-defined]
+        def resizeEvent(self, event: Any) -> None:
+                                     ^
+src\gui\dialogs\startup_dialog.py:306:34: note: Did you forget to import it from "typing"? (Suggestion: "from typing import Any")
+src\gui\dialogs\startup_dialog.py:312:38: error: Name "Any" is not defined 
+[name-defined]
+        def mousePressEvent(self, event: Any) -> None:
+                                         ^
+src\gui\dialogs\startup_dialog.py:312:38: note: Did you forget to import it from "typing"? (Suggestion: "from typing import Any")
+src\gui\dialogs\startup_dialog.py:318:37: error: Name "Any" is not defined 
+[name-defined]
+        def mouseMoveEvent(self, event: Any) -> None:
+                                        ^
+src\gui\dialogs\startup_dialog.py:318:37: note: Did you forget to import it from "typing"? (Suggestion: "from typing import Any")
+src\gui\dialogs\startup_dialog.py:321:13: error: Statement is unreachable 
+[unreachable]
+                new_pos = event.globalPosition().toPoint() - self._drag_po...
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\startup_dialog.py:339:40: error: Name "Any" is not defined 
+[name-defined]
+        def mouseReleaseEvent(self, event: Any) -> None:
+                                           ^
+src\gui\dialogs\startup_dialog.py:339:40: note: Did you forget to import it from "typing"? (Suggestion: "from typing import Any")
+src\gui\dialogs\startup_dialog.py:391:13: error: Statement is unreachable 
+[unreachable]
+                self._thread.quit()
+                ^~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\startup_dialog.py:403:33: error: Name "Any" is not defined 
+[name-defined]
+        def closeEvent(self, event: Any) -> None:
+                                    ^
+src\gui\dialogs\startup_dialog.py:403:33: note: Did you forget to import it from "typing"? (Suggestion: "from typing import Any")
+src\gui\dialogs\startup_dialog.py:413:33: error: Right operand of "and" is
+never evaluated  [unreachable]
+                if self._thread and self._thread.isRunning():
+                                    ^~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\startup_dialog.py:414:17: error: Statement is unreachable 
+[unreachable]
+                    self._thread.quit()
+                    ^~~~~~~~~~~~~~~~~~~
+src\gui\components\animated_tab_widget.py:245: error: Unused "type: ignore"
+comment  [unused-ignore]
+            return self.stack.currentWidget()  # type: ignore[no-any-retur...
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\animated_tab_widget.py:268: error: Unused "type: ignore"
+comment  [unused-ignore]
+            return self.stack.widget(index)  # type: ignore[no-any-return]
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\activity_timeline.py:59:5: error: Function is missing a type
+annotation  [no-untyped-def]
+        def __init__(self, parent=None):  # noqa: ANN001, ANN204
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\activity_timeline.py:77:9: error: Call to untyped function
+"_setup_animations" in typed context  [no-untyped-call]
+            self._setup_animations()
+            ^~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\activity_timeline.py:109:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _setup_animations(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\activity_timeline.py:109:5: note: Use "-> None" if function does not return a value
+src\gui\components\activity_timeline.py:126:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def enterEvent(self, event):  # noqa: ANN001, ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\activity_timeline.py:136:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def leaveEvent(self, event):  # noqa: ANN001, ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\activity_timeline.py:151:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def set_border_pulse(self, value: float):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\activity_timeline.py:158:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _tick(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\activity_timeline.py:158:5: note: Use "-> None" if function does not return a value
+src\gui\components\activity_timeline.py:171:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def set_pulse_value(self, value: float):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\activity_timeline.py:178:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def set_steps(self, steps: list[tuple[str, str]]):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\activity_timeline.py:189:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def on_step_changed(self, index: int, name: str, status):  # noqa:...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\components\activity_timeline.py:189:5: error: Function is missing a
+type annotation for one or more arguments  [no-untyped-def]
+        def on_step_changed(self, index: int, name: str, status):  # noqa:...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\components\activity_timeline.py:221:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def paintEvent(self, event):  # noqa: ANN001, ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\activity_timeline.py:240:13: error: Call to untyped function
+"_draw_grid" in typed context  [no-untyped-call]
+                self._draw_grid(painter, rect)
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\activity_timeline.py:250:17: error: Call to untyped function
+"_draw_empty" in typed context  [no-untyped-call]
+                    self._draw_empty(painter)
+                    ^~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\activity_timeline.py:269:17: error: Call to untyped function
+"_draw_connector_v5" in typed context  [no-untyped-call]
+                    self._draw_connector_v5(
+                    ^~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\activity_timeline.py:280:17: error: Call to untyped function
+"_draw_node_v5" in typed context  [no-untyped-call]
+                    self._draw_node_v5(painter, x_axis, y_start + i * spac...
+                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\components\activity_timeline.py:284:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def _draw_grid(self, painter, rect):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\components\activity_timeline.py:306:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def _draw_connector_v5(self, painter, x, y1, y2, n1, n2):  # noqa:...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\components\activity_timeline.py:333:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def _draw_node_v5(self, painter, x, y, node, container_rect):  # n...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\components\activity_timeline.py:396:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def _draw_empty(self, painter):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\controllers\search_controller.py:60:13: error: Call to untyped function
+"cancel" in typed context  [no-untyped-call]
+                self.worker.cancel()
+                ^~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\dashboard\pdl_stats_widget.py:190:9: error: Function is missing
+a return type annotation  [no-untyped-def]
+            def run():  # noqa: ANN202
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\dashboard\pdl_stats_widget.py:190:9: note: Use "-> None" if function does not return a value
+src\gui\widgets\dashboard\pdl_stats_widget.py:205:9: error: Function is missing
+a type annotation  [no-untyped-def]
+            def set_trend_style(label, trend, prefix):  # noqa: ANN001, AN...
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\dashboard\pdl_stats_widget.py:220:9: error: Call to untyped
+function "set_trend_style" in typed context  [no-untyped-call]
+            set_trend_style(self.lbl_trend_month, metrics.trend_percentage...
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\dashboard\pdl_stats_widget.py:221:9: error: Call to untyped
+function "set_trend_style" in typed context  [no-untyped-call]
+            set_trend_style(self.lbl_trend_week, metrics.weekly_trend_perc...
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\panels\contabilita_kpi\charts.py:39:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def __init__(self, canvas, title="", height=450, info_callback=Non...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\panels\contabilita_kpi\charts.py:88:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def __init__(self, HOURLY_COST_STD):  # noqa: ANN001, ANN204
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:93:35: error: Call to untyped function
+"_init_figure" in typed context  [no-untyped-call]
+            self.fig1, self.canvas1 = self._init_figure()
+                                      ^~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:94:35: error: Call to untyped function
+"_init_figure" in typed context  [no-untyped-call]
+            self.fig2, self.canvas2 = self._init_figure()
+                                      ^~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:95:35: error: Call to untyped function
+"_init_figure" in typed context  [no-untyped-call]
+            self.fig3, self.canvas3 = self._init_figure()
+                                      ^~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:96:35: error: Call to untyped function
+"_init_figure" in typed context  [no-untyped-call]
+            self.fig4, self.canvas4 = self._init_figure()
+                                      ^~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:97:35: error: Call to untyped function
+"_init_figure" in typed context  [no-untyped-call]
+            self.fig5, self.canvas5 = self._init_figure()
+                                      ^~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:99:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _init_figure(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:105:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def plot_all(self, kpi_data):  # noqa: ANN001, ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:107:9: error: Call to untyped function
+"_plot_stato_attivita" in typed context  [no-untyped-call]
+            self._plot_stato_attivita(kpi_data.get("stato_attivita", {}))
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:108:9: error: Call to untyped function
+"_plot_prev_ore_mese" in typed context  [no-untyped-call]
+            self._plot_prev_ore_mese(kpi_data.get("prev_ore_mese", {}))
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:109:9: error: Call to untyped function
+"_plot_margine_tipologia" in typed context  [no-untyped-call]
+            self._plot_margine_tipologia(kpi_data.get("margine_tipologia",...
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\panels\contabilita_kpi\charts.py:110:9: error: Call to untyped function
+"_plot_andamento_resa" in typed context  [no-untyped-call]
+            self._plot_andamento_resa(kpi_data.get("andamento_resa", {}))
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:111:9: error: Call to untyped function
+"_plot_completamento" in typed context  [no-untyped-call]
+            self._plot_completamento(kpi_data.get("completamento", {}))
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:113:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def _plot_stato_attivita(self, counts):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:154:9: error: Function is missing a
+type annotation  [no-untyped-def]
+            def update_annot(wedge, idx):  # noqa: ANN001, ANN202
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:165:9: error: Function is missing a
+type annotation  [no-untyped-def]
+            def hover(event):  # noqa: ANN001, ANN202
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:171:25: error: Call to untyped
+function "update_annot" in typed context  [no-untyped-call]
+                            update_annot(wedge, i)
+                            ^~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:185:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def _plot_prev_ore_mese(self, data):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:219:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def _plot_margine_tipologia(self, data):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:273:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def _plot_andamento_resa(self, data):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\charts.py:290:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def _plot_completamento(self, data):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\dashboard\roi_widget.py:292:9: error: Function is missing a
+return type annotation  [no-untyped-def]
+            def run():  # noqa: ANN202
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\dashboard\roi_widget.py:292:9: note: Use "-> None" if function does not return a value
+src\gui\panels\storico_oda\widgets\oda_tree.py:20:5: error: Function is missing
+a type annotation  [no-untyped-def]
+        def __init__(self, model, parent=None):  # noqa: ANN001, ANN204
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\storico_oda\widgets\oda_tree.py:23:9: error: Call to untyped
+function "_setup_ui" in typed context  [no-untyped-call]
+            self._setup_ui()
+            ^~~~~~~~~~~~~~~~
+src\gui\panels\storico_oda\widgets\oda_tree.py:25:5: error: Function is missing
+a return type annotation  [no-untyped-def]
+        def _setup_ui(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\storico_oda\widgets\oda_tree.py:50:5: error: Function is missing
+a type annotation  [no-untyped-def]
+        def _on_double_clicked(self, index):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\storico_oda\widgets\oda_tree.py:64:5: error: Function is missing
+a type annotation  [no-untyped-def]
+        def _on_expanded(self, index):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\storico_oda\widgets\oda_tree.py:88:5: error: Function is missing
+a return type annotation  [no-untyped-def]
+        def configure_headers(self):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\storico_oda\widgets\oda_tree.py:88:5: note: Use "-> None" if function does not return a value
+src\gui\dialogs\splash_standalone.py:47:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def __init__(self):  # noqa: ANN204
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\splash_standalone.py:47:5: note: Use "-> None" if function does not return a value
+src\gui\dialogs\splash_standalone.py:55:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def update_status(self, message: str, progress: int):  # noqa: ANN...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\splash_standalone.py:60:1: error: Function is missing a return
+type annotation  [no-untyped-def]
+    def run_standalone():  # noqa: ANN201
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\splash_standalone.py:60:1: note: Use "-> None" if function does not return a value
+src\gui\dialogs\splash_standalone.py:75:14: error: Call to untyped function
+"StandaloneSplash" in typed context  [no-untyped-call]
+        splash = StandaloneSplash()
+                 ^~~~~~~~~~~~~~~~~~
+src\gui\dialogs\splash_standalone.py:88:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def read_stdin():  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\splash_standalone.py:88:5: note: Use "-> None" if function does not return a value
+src\gui\dialogs\splash_standalone.py:132:9: error: Call to untyped function
+"run_standalone" in typed context  [no-untyped-call]
+            run_standalone()
+            ^~~~~~~~~~~~~~~~
+src\gui\widgets\sidebar_widget.py:11:1: error: Module "PyQt6.QtCore" has no
+attribute "pyqtProperty"  [attr-defined]
+    from PyQt6.QtCore import Qt, QTimer, pyqtProperty, pyqtSignal
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\update_banner.py:26:5: error: Function is missing a type
+annotation  [no-untyped-def]
+        def __init__(self, parent=None):  # noqa: ANN001, ANN204
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\update_banner.py:43:9: error: Call to untyped function
+"_setup_ui" in typed context  [no-untyped-call]
+            self._setup_ui()
+            ^~~~~~~~~~~~~~~~
+src\gui\widgets\update_banner.py:45:5: error: Function is missing a return type
+annotation  [no-untyped-def]
+        def _setup_ui(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\update_banner.py:45:5: note: Use "-> None" if function does not return a value
+src\gui\widgets\update_banner.py:97:5: error: Function is missing a return type
+annotation  [no-untyped-def]
+        def show_update(  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\update_banner.py:129:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def update_progress(self, downloaded: int, total: int, speed: floa...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\update_banner.py:156:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def _on_download_clicked(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\update_banner.py:156:5: note: Use "-> None" if function does not return a value
+src\gui\widgets\security_dashboard.py:37:5: error: Function is missing a type
+annotation  [no-untyped-def]
+        def __init__(self, parent=None):  # noqa: ANN001, ANN204
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\security_dashboard.py:49:9: error: Call to untyped function
+"_setup_ui" in typed context  [no-untyped-call]
+            self._setup_ui()
+            ^~~~~~~~~~~~~~~~
+src\gui\widgets\security_dashboard.py:59:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def _setup_ui(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\security_dashboard.py:59:5: note: Use "-> None" if function does not return a value
+src\gui\widgets\security_dashboard.py:128:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def refresh(self):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\security_dashboard.py:128:5: note: Use "-> None" if function does not return a value
+src\gui\widgets\security_dashboard.py:131:9: error: Call to untyped function
+"_update_kpi" in typed context  [no-untyped-call]
+            self._update_kpi(stats)
+            ^~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\security_dashboard.py:132:9: error: Call to untyped function
+"_update_chart" in typed context  [no-untyped-call]
+            self._update_chart(stats)
+            ^~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\security_dashboard.py:133:9: error: Call to untyped function
+"_update_logs" in typed context  [no-untyped-call]
+            self._update_logs()
+            ^~~~~~~~~~~~~~~~~~~
+src\gui\widgets\security_dashboard.py:135:5: error: Function is missing a type
+annotation  [no-untyped-def]
+        def _update_kpi(self, stats):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\security_dashboard.py:153:13: error: Call to untyped function
+"_create_kpi_card" in typed context  [no-untyped-call]
+                self._create_kpi_card("Success Rate", f"{rate:.1f}%", COLO...
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\security_dashboard.py:155:35: error: Call to untyped function
+"_create_kpi_card" in typed context  [no-untyped-call]
+            self.kpi_layout.addWidget(self._create_kpi_card("Errori (7gg)"...
+                                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\security_dashboard.py:157:13: error: Call to untyped function
+"_create_kpi_card" in typed context  [no-untyped-call]
+                self._create_kpi_card("Warning (7gg)", str(total_warn), CO...
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\security_dashboard.py:160:5: error: Function is missing a type
+annotation  [no-untyped-def]
+        def _create_kpi_card(self, title, value, color):  # noqa: ANN001, ...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\security_dashboard.py:177:5: error: Function is missing a type
+annotation  [no-untyped-def]
+        def _update_chart(self, stats):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\security_dashboard.py:230:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _update_logs(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\security_dashboard.py:230:5: note: Use "-> None" if function does not return a value
+src\gui\widgets\security_dashboard.py:264:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _run_integrity_check(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\security_dashboard.py:264:5: note: Use "-> None" if function does not return a value
+src\gui\widgets\multi_select_filter.py:82:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _filter_items(self, text: str):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\multi_select_filter.py:89:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _set_all_checks(self, state: Qt.CheckState):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\multi_select_filter.py:135:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def set_items(self, items: list[str]):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\multi_select_filter.py:145:9: error: Call to untyped function
+"_update_button_text" in typed context  [no-untyped-call]
+            self._update_button_text()
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\multi_select_filter.py:147:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def set_selected(self, selected: list[str]):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\multi_select_filter.py:155:9: error: Call to untyped function
+"_update_button_text" in typed context  [no-untyped-call]
+            self._update_button_text()
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\multi_select_filter.py:157:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _update_button_text(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\multi_select_filter.py:157:5: note: Use "-> None" if function does not return a value
+src\gui\widgets\multi_select_filter.py:163:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _open_dialog(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\multi_select_filter.py:163:5: note: Use "-> None" if function does not return a value
+src\gui\widgets\multi_select_filter.py:167:13: error: Call to untyped function
+"_update_button_text" in typed context  [no-untyped-call]
+                self._update_button_text()
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\excel_table.py:83: error: Unused "type: ignore" comment 
+[unused-ignore]
+                self.copy_selection()  # type: ignore
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\excel_table.py:85: error: Unused "type: ignore" comment 
+[unused-ignore]
+                self.paste_selection()  # type: ignore
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\excel_table.py:118: error: Unused "type: ignore" comment 
+[unused-ignore]
+            copy_act.triggered.connect(self.copy_selection)  # type: ignor...
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\excel_table.py:240: error: Unused "type: ignore" comment 
+[unused-ignore]
+            copy_act.triggered.connect(self.table.copy_selection)  # type:...
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\excel_table.py:254: error: Unused "type: ignore" comment 
+[unused-ignore]
+                    val = self.table._get_cell_value(r, c)  # type: ignore
+                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\bot_parameters.py:11:1: error: Module "PyQt6.QtCore" has no
+attribute "pyqtProperty"  [attr-defined]
+    from PyQt6.QtCore import (
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\bot_parameters.py:74:6: error: Name "pulse_value" already
+defined on line 69  [no-redef]
+        @pulse_value.setter
+         ^~~~~~~~~~~~~~~~~~
+src\gui\widgets\bot_parameters.py:88:9: error: Cannot assign to a method 
+[method-assign]
+            self.pulse_value = 1.0
+            ^~~~~~~~~~~~~~~~
+src\gui\widgets\pdl\table_widget.py:30:5: error: Function is missing a type
+annotation  [no-untyped-def]
+        def __init__(self, parent=None):  # noqa: ANN001, ANN204
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\pdl\table_widget.py:32:9: error: Call to untyped function
+"_setup_ui" in typed context  [no-untyped-call]
+            self._setup_ui()
+            ^~~~~~~~~~~~~~~~
+src\gui\widgets\pdl\table_widget.py:34:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def _setup_ui(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\pdl\table_widget.py:34:5: note: Use "-> None" if function does not return a value
+src\gui\widgets\pdl\table_widget.py:63:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def _handle_double_click(self, row: int, column: int):  # noqa: AN...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\pdl\table_widget.py:94:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def populate_results(self, results: list[dict[str, Any]], today_id...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\contabilita\certificati\tree_widget.py:44:5: error: Function is
+missing a return type annotation  [no-untyped-def]
+        def setEditorData(self, editor: QWidget | None, index: QModelIndex...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\contabilita\certificati\tree_widget.py:52:5: error: Function is
+missing a return type annotation  [no-untyped-def]
+        def setModelData(self, editor: QWidget | None, model: object, inde...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\contabilita\certificati\tree_widget.py:67:5: error: Function is
+missing a return type annotation  [no-untyped-def]
+        def setEditorData(self, editor: QWidget | None, index: QModelIndex...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\contabilita\certificati\tree_widget.py:73:5: error: Function is
+missing a return type annotation  [no-untyped-def]
+        def setModelData(self, editor: QWidget | None, model: object, inde...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\contabilita\certificati\tree_widget.py:117:9: error: Call to
+untyped function "_setup_ui" in typed context  [no-untyped-call]
+            self._setup_ui()
+            ^~~~~~~~~~~~~~~~
+src\gui\widgets\contabilita\certificati\tree_widget.py:120:5: error: Function
+is missing a return type annotation  [no-untyped-def]
+        def _setup_ui(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\contabilita\certificati\tree_widget.py:120:5: note: Use "-> None" if function does not return a value
+src\gui\widgets\contabilita\certificati\tree_widget.py:168:5: error: Function
+is missing a return type annotation  [no-untyped-def]
+        def apply_current_certificate_styling(  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\contabilita\certificati\tree_widget.py:216:5: error: Function
+is missing a return type annotation  [no-untyped-def]
+        def apply_historical_certificate_styling(self, item: SortableTreeW...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\widgets\contabilita\certificati\tree_widget.py:227:5: error: Function
+is missing a return type annotation  [no-untyped-def]
+        def _on_item_changed(self, item: QTreeWidgetItem, column: int):  #...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\dialogs\certificati_analysis_dialog.py:35:5: error: Function is missing
+a type annotation for one or more arguments  [no-untyped-def]
+        def __init__(self, certificates_data: list[Any], show_excluded: bo...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\dialogs\certificati_analysis_dialog.py:46:9: error: Call to untyped
+function "_setup_ui" in typed context  [no-untyped-call]
+            self._setup_ui()
+            ^~~~~~~~~~~~~~~~
+src\gui\dialogs\certificati_analysis_dialog.py:48:5: error: Function is missing
+a return type annotation  [no-untyped-def]
+        def _setup_ui(self):  # noqa: ANN202, PLR0915
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\certificati_analysis_dialog.py:48:5: note: Use "-> None" if function does not return a value
+src\gui\dialogs\certificati_analysis_dialog.py:403:5: error: Function is
+missing a return type annotation  [no-untyped-def]
+        def _send_email(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\certificati_analysis_dialog.py:403:5: note: Use "-> None" if function does not return a value
+src\gui\dialogs\bug_report_dialog.py:71:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def run(self):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\bug_report_dialog.py:71:5: note: Use "-> None" if function does not return a value
+src\gui\dialogs\bug_report_dialog.py:92:5: error: Function is missing a type
+annotation  [no-untyped-def]
+        def __init__(self, parent=None):  # noqa: ANN001, ANN204
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\bug_report_dialog.py:102:9: error: Call to untyped function
+"setup_ui" in typed context  [no-untyped-call]
+            self.setup_ui()
+            ^~~~~~~~~~~~~~~
+src\gui\dialogs\bug_report_dialog.py:104:9: error: Call to untyped function
+"_update_size_estimate" in typed context  [no-untyped-call]
+            self._update_size_estimate()
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\bug_report_dialog.py:106:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def setup_ui(self):  # noqa: ANN201, PLR0915
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\bug_report_dialog.py:106:5: note: Use "-> None" if function does not return a value
+src\gui\dialogs\bug_report_dialog.py:252:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def _update_size_estimate(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\bug_report_dialog.py:252:5: note: Use "-> None" if function does not return a value
+src\gui\dialogs\bug_report_dialog.py:264:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def start_generation(self):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\bug_report_dialog.py:264:5: note: Use "-> None" if function does not return a value
+src\gui\dialogs\bug_report_dialog.py:295:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def on_report_generated(self, success: bool, msg: str, file_path: ...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\dialogs\bug_report_dialog.py:301:9: error: Call to untyped function
+"_enable_ui" in typed context  [no-untyped-call]
+            self._enable_ui()
+            ^~~~~~~~~~~~~~~~~
+src\gui\dialogs\bug_report_dialog.py:324:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def _enable_ui(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\bug_report_dialog.py:324:5: note: Use "-> None" if function does not return a value
+src\gui\dialogs\bug_report_dialog.py:435:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def save_manually(self, source_path: str):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\audit_detail_dialog.py:27:5: error: Function is missing a type
+annotation  [no-untyped-def]
+        def __init__(self, log_data, parent=None):  # noqa: ANN001, ANN204
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\audit_detail_dialog.py:32:9: error: Call to untyped function
+"_setup_ui" in typed context  [no-untyped-call]
+            self._setup_ui(log_data)
+            ^~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\audit_detail_dialog.py:34:5: error: Function is missing a type
+annotation  [no-untyped-def]
+        def _setup_ui(self, data):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\audit_detail_dialog.py:117:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _copy_to_clipboard(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\dialogs\audit_detail_dialog.py:117:5: note: Use "-> None" if function does not return a value
+src\gui\widgets\contabilita\consuntivo\modifica_esistente_tab.py:220:9: error:
+Function is missing a return type annotation  [no-untyped-def]
+            def run_scan():  # noqa: ANN202
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\contabilita\consuntivo\modifica_esistente_tab.py:220:9: note: Use "-> None" if function does not return a value
+src\gui\panels\dipendenti_manager_panel.py:30:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def __init__(self, parent=None, employee_data=None):  # noqa: ANN0...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\panels\dipendenti_manager_panel.py:76:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def get_data(self):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:88:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def __init__(self, parent=None):  # noqa: ANN001, ANN204
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:104:9: error: Call to untyped
+function "_setup_header" in typed context  [no-untyped-call]
+            self._setup_header()
+            ^~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:105:9: error: Call to untyped
+function "_setup_toolbar" in typed context  [no-untyped-call]
+            self._setup_toolbar()
+            ^~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:106:9: error: Call to untyped
+function "_setup_table" in typed context  [no-untyped-call]
+            self._setup_table()
+            ^~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:111:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _setup_header(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:111:5: note: Use "-> None" if function does not return a value
+src\gui\panels\dipendenti_manager_panel.py:139:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _setup_toolbar(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:139:5: note: Use "-> None" if function does not return a value
+src\gui\panels\dipendenti_manager_panel.py:205:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _setup_table(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:205:5: note: Use "-> None" if function does not return a value
+src\gui\panels\dipendenti_manager_panel.py:234:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def refresh_data(self):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:234:5: note: Use "-> None" if function does not return a value
+src\gui\panels\dipendenti_manager_panel.py:262:13: error: Call to untyped
+function "_filter_table" in typed context  [no-untyped-call]
+                self._filter_table(self.search_bar.text())  # Riapplica fi...
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:267:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def _filter_table(self, text):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:288:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _sync_from_csv(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:288:5: note: Use "-> None" if function does not return a value
+src\gui\panels\dipendenti_manager_panel.py:303:13: error: Call to untyped
+function "refresh_data" in typed context  [no-untyped-call]
+                self.refresh_data()
+                ^~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:311:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _add_employee(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:311:5: note: Use "-> None" if function does not return a value
+src\gui\panels\dipendenti_manager_panel.py:312:18: error: Call to untyped
+function "EmployeeEditorDialog" in typed context  [no-untyped-call]
+            dialog = EmployeeEditorDialog(self)
+                     ^~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:315:20: error: Call to untyped
+function "get_data" in typed context  [no-untyped-call]
+                data = dialog.get_data()
+                       ^~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:324:17: error: Call to untyped
+function "refresh_data" in typed context  [no-untyped-call]
+                    self.refresh_data()
+                    ^~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:333:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _edit_selected(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:348:9: error: Function is missing a
+type annotation  [no-untyped-def]
+            def get_item_text(r, c):  # noqa: ANN001, ANN202
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:354:24: error: Call to untyped
+function "get_item_text" in typed context  [no-untyped-call]
+                "cognome": get_item_text(row_idx, 1),
+                           ^~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:355:21: error: Call to untyped
+function "get_item_text" in typed context  [no-untyped-call]
+                "nome": get_item_text(row_idx, 2),
+                        ^~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:356:22: error: Call to untyped
+function "get_item_text" in typed context  [no-untyped-call]
+                "badge": get_item_text(row_idx, 3),
+                         ^~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:357:31: error: Call to untyped
+function "get_item_text" in typed context  [no-untyped-call]
+                "codice_fiscale": get_item_text(row_idx, 4),
+                                  ^~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:358:32: error: Call to untyped
+function "get_item_text" in typed context  [no-untyped-call]
+                "data_assunzione": get_item_text(row_idx, 5),
+                                   ^~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:361:15: error: Call to untyped
+function "EmployeeEditorDialog" in typed context  [no-untyped-call]
+            dlg = EmployeeEditorDialog(self, current_data)
+                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:363:24: error: Call to untyped
+function "get_data" in typed context  [no-untyped-call]
+                new_data = dlg.get_data()
+                           ^~~~~~~~~~~~~~
+src\gui\panels\dipendenti_manager_panel.py:365:17: error: Call to untyped
+function "refresh_data" in typed context  [no-untyped-call]
+                    self.refresh_data()
+                    ^~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\kpi_panel.py:62:31: error: Call to untyped
+function "KPIChartsManager" in typed context  [no-untyped-call]
+            self.charts_manager = KPIChartsManager(self.HOURLY_COST_STD)
+                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\kpi_panel.py:63:9: error: Call to untyped
+function "_setup_ui" in typed context  [no-untyped-call]
+            self._setup_ui()
+            ^~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\kpi_panel.py:66:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _setup_ui(self):  # noqa: ANN202, PLR0915
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\kpi_panel.py:143:27: error: Call to untyped
+function "ChartContainer" in typed context  [no-untyped-call]
+            self.container1 = ChartContainer(
+                              ^~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\kpi_panel.py:148:27: error: Call to untyped
+function "ChartContainer" in typed context  [no-untyped-call]
+            self.container2 = ChartContainer(
+                              ^~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\kpi_panel.py:153:27: error: Call to untyped
+function "ChartContainer" in typed context  [no-untyped-call]
+            self.container3 = ChartContainer(
+                              ^~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\kpi_panel.py:158:27: error: Call to untyped
+function "ChartContainer" in typed context  [no-untyped-call]
+            self.container4 = ChartContainer(
+                              ^~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\kpi_panel.py:163:27: error: Call to untyped
+function "ChartContainer" in typed context  [no-untyped-call]
+            self.container5 = ChartContainer(
+                              ^~~~~~~~~~~~~~~
+src\gui\panels\contabilita_kpi\kpi_panel.py:311:13: error: Call to untyped
+function "plot_all" in typed context  [no-untyped-call]
+                self.charts_manager.plot_all(kpi_data)
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\widgets\audit_log_widget.py:219:13: error: Call to untyped function
+"AuditDetailDialog" in typed context  [no-untyped-call]
+                AuditDetailDialog(log, self).exec()
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\base.py:110:39: error: Argument 1 to "execute" of "BaseBot" has
+incompatible type "object | None"; expected "list[dict[str, Any]]"  [arg-type]
+                result = self.bot.execute(self.data)
+                                          ^~~~~~~~~
+src\gui\panels\base.py:281:34: error: Call to untyped function
+"ActivityTimelineWidget" in typed context  [no-untyped-call]
+            self.activity_timeline = ActivityTimelineWidget()
+                                     ^~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\contabilita_panel.py:336:45: error: Argument 1 to "QWidget" has
+incompatible type "int"; expected "QWidget | None"  [arg-type]
+                    tab_widget.addTab(tab_class(year), str(year))
+                                                ^~~~
+src\gui\panels\pdl\programmazione_tab.py:43:9: error: Call to untyped function
+"_setup_ui" in typed context  [no-untyped-call]
+            self._setup_ui()
+            ^~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:44:9: error: Call to untyped function
+"_load_requesters" in typed context  [no-untyped-call]
+            self._load_requesters()
+            ^~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:45:9: error: Call to untyped function
+"_load_persisted_data" in typed context  [no-untyped-call]
+            self._load_persisted_data()
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:47:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _setup_ui(self):  # noqa: ANN202, PLR0915
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:81:52: error: Call to untyped function
+"_apply_filters" in typed context  [no-untyped-call]
+    ...      self.view_filter.changed.connect(lambda _: self._apply_filters()...
+                                                        ^~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:99:64: error: Call to untyped function
+"_apply_filters" in typed context  [no-untyped-call]
+    ...ay_selector.currentTextChanged.connect(lambda _: self._apply_filters()...
+                                                        ^~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:140:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _load_requesters(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:140:5: note: Use "-> None" if function does not return a value
+src\gui\panels\pdl\programmazione_tab.py:149:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def _on_week_changed(self, idx):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:153:9: error: Call to untyped function
+"_load_persisted_data" in typed context  [no-untyped-call]
+            self._load_persisted_data()
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:155:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _load_persisted_data(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:155:5: note: Use "-> None" if function does not return a value
+src\gui\panels\pdl\programmazione_tab.py:158:9: error: Call to untyped function
+"_update_tables" in typed context  [no-untyped-call]
+            self._update_tables()
+            ^~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:160:5: error: Function is missing a
+type annotation  [no-untyped-def]
+        def _on_group_mode_changed(self, mode):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:162:9: error: Call to untyped function
+"_update_tables" in typed context  [no-untyped-call]
+            self._update_tables()
+            ^~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:164:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _update_tables(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:194:21: error: Call to untyped
+function "ProgrammazioneTableWidget" in typed context  [no-untyped-call]
+                table = ProgrammazioneTableWidget()
+                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:204:9: error: Call to untyped function
+"_apply_filters" in typed context  [no-untyped-call]
+            self._apply_filters()
+            ^~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:207:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _deselect_others(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:207:5: note: Use "-> None" if function does not return a value
+src\gui\panels\pdl\programmazione_tab.py:213:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _apply_filters(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:213:5: note: Use "-> None" if function does not return a value
+src\gui\panels\pdl\programmazione_tab.py:241:9: error: Call to untyped function
+"_refresh_heights" in typed context  [no-untyped-call]
+            self._refresh_heights()
+            ^~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:243:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _refresh_heights(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:243:5: note: Use "-> None" if function does not return a value
+src\gui\panels\pdl\programmazione_tab.py:255:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _on_run_clicked(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:255:5: note: Use "-> None" if function does not return a value
+src\gui\panels\pdl\programmazione_tab.py:317:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _on_worker_finished(self, success: bool):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:327:13: error: Call to untyped
+function "_load_persisted_data" in typed context  [no-untyped-call]
+                self._load_persisted_data()
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:335:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _on_log(self, message: str):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:339:5: error: Function is missing a
+return type annotation  [no-untyped-def]
+        def _on_email_clicked(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\pdl\programmazione_tab.py:339:5: note: Use "-> None" if function does not return a value
+src\gui\panels\dipendenti\pages\anagrafica_page.py:62:9: error: Call to untyped
+function "_setup_ui" in typed context  [no-untyped-call]
+            self._setup_ui()
+            ^~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti\pages\anagrafica_page.py:65:5: error: Function is
+missing a return type annotation  [no-untyped-def]
+        def _setup_ui(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti\pages\anagrafica_page.py:95:5: error: Function is
+missing a return type annotation  [no-untyped-def]
+        def refresh_data(self):  # noqa: ANN201
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti\pages\anagrafica_page.py:95:5: note: Use "-> None" if function does not return a value
+src\gui\panels\dipendenti\pages\anagrafica_page.py:115:5: error: Function is
+missing a type annotation  [no-untyped-def]
+        def _inactivation_formatter(self, value):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti\pages\anagrafica_page.py:124:5: error: Function is
+missing a type annotation  [no-untyped-def]
+        def _on_card_filter(self, filter_type):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti\pages\anagrafica_page.py:129:9: error: Call to
+untyped function "refresh_data" in typed context  [no-untyped-call]
+            self.refresh_data()
+            ^~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti\pages\anagrafica_page.py:131:5: error: Function is
+missing a type annotation  [no-untyped-def]
+        def _on_monitoring_toggled(self, id_risorsa, enable):  # noqa: ANN...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+src\gui\panels\dipendenti\pages\anagrafica_page.py:134:13: error: Call to
+untyped function "refresh_data" in typed context  [no-untyped-call]
+                self.refresh_data()
+                ^~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti\pages\anagrafica_page.py:136:5: error: Function is
+missing a type annotation  [no-untyped-def]
+        def _on_selection_changed(self, row_idx):  # noqa: ANN001, ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti\pages\anagrafica_page.py:161:5: error: Function is
+missing a return type annotation  [no-untyped-def]
+        def _on_import_clicked(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti\pages\anagrafica_page.py:161:5: note: Use "-> None" if function does not return a value
+src\gui\panels\dipendenti\pages\anagrafica_page.py:169:5: error: Function is
+missing a return type annotation  [no-untyped-def]
+        def _generate_email_report(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti\pages\anagrafica_page.py:169:5: note: Use "-> None" if function does not return a value
+src\gui\panels\dipendenti\pages\anagrafica_page.py:173:5: error: Function is
+missing a return type annotation  [no-untyped-def]
+        def _on_update_bot_clicked(self):  # noqa: ANN202
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\dipendenti\pages\anagrafica_page.py:173:5: note: Use "-> None" if function does not return a value
+src\gui\panels\dipendenti\main_panel.py:62:29: error: Call to untyped function
+"DipendentiManagerPanel" in typed context  [no-untyped-call]
+            self.manager_page = DipendentiManagerPanel()
+                                ^~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\main_window\components\tool_bar.py:150:30: error: Call to untyped
+function "UpdateBanner" in typed context  [no-untyped-call]
+            self.update_banner = UpdateBanner()
+                                 ^~~~~~~~~~~~~~
+src\gui\main_window\components\menu_bar.py:56:32: error: Call to untyped
+function "BugReportDialog" in typed context  [no-untyped-call]
+                self._bug_dialog = BugReportDialog(self.main_window)
+                                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\core\telegram_bridge.py:84:13: error: Call to untyped function (unknown) in
+typed context  [no-untyped-call]
+                handler(params)
+                ^~~~~~~~~~~~~~~
+src\gui\panels\storico_oda\oda_panel.py:126:21: error: Call to untyped function
+"ODATreeView" in typed context  [no-untyped-call]
+            self.tree = ODATreeView(self.model)
+                        ^~~~~~~~~~~~~~~~~~~~~~~
+src\gui\panels\storico_oda\oda_panel.py:127:9: error: Call to untyped function
+"configure_headers" in typed context  [no-untyped-call]
+            self.tree.configure_headers()
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src\gui\main_window\main.py:225:18: error: Call to untyped function
+"BugReportDialog" in typed context  [no-untyped-call]
+            dialog = BugReportDialog(self)
+                     ^~~~~~~~~~~~~~~~~~~~~
+Found 295 errors in 52 files (checked 368 source files)

@@ -211,7 +211,7 @@ class WorkflowStepButton(QFrame):
             self.clicked.emit(self._step_id)
         super().mousePressEvent(event)
 
-    def enterEvent(self, event: Any) -> None:  # noqa: ANN401
+    def enterEvent(self, event: Any) -> None:
         """Evidenzia lo step con un'ombra più marcata al passaggio del mouse."""
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(24)
@@ -220,7 +220,7 @@ class WorkflowStepButton(QFrame):
         self.setGraphicsEffect(shadow)
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any) -> None:  # noqa: ANN401
+    def leaveEvent(self, event: Any) -> None:
         """Ripristina lo stile originale all'uscita del mouse."""
         self._apply_style()
         super().leaveEvent(event)

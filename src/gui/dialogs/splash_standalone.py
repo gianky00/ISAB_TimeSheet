@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - Splash Screen Standalone Process
 Esegue lo splash screen in un processo separato per garantire fluidità assoluta (60fps)

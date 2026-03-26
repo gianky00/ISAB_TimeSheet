@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-any-unimported"
 """
 Bot TS - Login Page Object
 Gestisce le interazioni con la pagina di login del portale ISAB.

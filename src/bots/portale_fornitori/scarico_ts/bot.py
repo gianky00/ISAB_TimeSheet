@@ -60,13 +60,13 @@ class ScaricaTSBot(BaseBot):
     def description(self) -> str:
         return "Scarica i timesheet dal portale ISAB"
 
-    def __init__(  # noqa: ANN204
+    def __init__(
         self,
         data_da: str | None = None,
         fornitore: str = "",
         elabora_ts: bool = False,
-        **kwargs,  # noqa: ANN003
-    ):
+        **kwargs: Any,
+    ) -> None:
         """
         Inizializza il bot.
         """
@@ -78,7 +78,7 @@ class ScaricaTSBot(BaseBot):
     def _ask_user(self, prompt: str) -> str:
         """Richiede input all'utente."""
         if self._input_callback:
-            return self._input_callback(prompt)
+            return str(self._input_callback(prompt))
         return ""
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
@@ -144,7 +144,7 @@ class ScaricaTSBot(BaseBot):
             self.log(f"❌ Errore imprevisto nel flusso run: {e}")
             return False
 
-    def _prepare_run_environment(self, data: Any) -> tuple[list[dict[str, Any]], Path]:  # noqa: ANN401
+    def _prepare_run_environment(self, data: Any) -> tuple[list[dict[str, Any]], Path]:
         """Estrae i dati e prepara la directory di destinazione."""
         rows: list[dict[str, Any]]
         if isinstance(data, dict):
@@ -242,7 +242,7 @@ class ScaricaTSBot(BaseBot):
             self.log(f"⚠️ Errore durante l'inserimento ricerca OdA {numero_oda}: {e}")
             return False
 
-    def _run_vba_processing(self, file_list: list[str], dest_dir: Path):  # noqa: ANN202
+    def _run_vba_processing(self, file_list: list[str], dest_dir: Path) -> None:
         """Esegue il post-processing stile VBA (TimesheetProcessor)."""
         self.log(f"⚙️ Avvio elaborazione TS (Logica VBA) su {len(file_list)} file...")
         processed = 0

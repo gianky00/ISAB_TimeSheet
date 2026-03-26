@@ -1,13 +1,20 @@
-from typing import Any
+# mypy: disable-error-code="no-any-unimported, unused-ignore"
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from telegram import Update, constants
-from telegram.ext import ContextTypes
 
 from src.core import config_manager
 from src.core.telegram.ui.keyboards import TelegramUI
 
+if TYPE_CHECKING:
+    from telegram.ext import ContextTypes
 
-async def cmd_start(service, update: Update, context: ContextTypes.DEFAULT_TYPE):  # noqa: ANN001, ANN201
+    from src.core.telegram.service import TelegramService
+
+
+async def cmd_start(service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handles the /start command.
     Checks authentication status and displays the main menu or pairing prompt.
@@ -39,7 +46,7 @@ async def cmd_start(service, update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def _handle_initial_pairing(
-    service,  # noqa: ANN001
+    service: TelegramService,
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
     config: dict[str, Any],
@@ -73,7 +80,7 @@ async def _handle_initial_pairing(
     return False
 
 
-async def cmd_status(service, update: Update, context: ContextTypes.DEFAULT_TYPE):  # noqa: ANN001, ANN201
+async def cmd_status(service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handles the /status command.
     Triggers a status report request to the desktop application to be sent back via callback.
@@ -84,7 +91,7 @@ async def cmd_status(service, update: Update, context: ContextTypes.DEFAULT_TYPE
         service.status_requested.emit(str(update.effective_chat.id))
 
 
-async def cmd_stop(service, update: Update, context: ContextTypes.DEFAULT_TYPE):  # noqa: ANN001, ANN201
+async def cmd_stop(service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handles the /stop command.
     Sends a 'stop_all' signal to the desktop application to halt all running operations.

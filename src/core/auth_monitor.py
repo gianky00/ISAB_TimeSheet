@@ -14,7 +14,7 @@ from src.core.database import db_manager
 logger = logging.getLogger(__name__)
 
 
-def _normalize(t: Any) -> str:  # noqa: ANN401
+def _normalize(t: Any) -> str:
     return re.sub(r"\s+", " ", str(t).strip().upper())
 
 

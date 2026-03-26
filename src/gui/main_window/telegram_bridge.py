@@ -18,7 +18,7 @@ from src.core.telegram.bridge.interfaces import AppStatusProvider, ScreenshotPro
 class TelegramGUIBridge(ScreenshotProvider, AppStatusProvider):
     """Bridge tra la GUI e il sistema Telegram."""
 
-    def __init__(self, main_window: Any) -> None:  # noqa: ANN401
+    def __init__(self, main_window: Any) -> None:
         self.mw = main_window
 
     def capture_app_screenshot(self) -> bytes:

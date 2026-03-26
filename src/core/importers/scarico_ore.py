@@ -62,7 +62,7 @@ class ScaricoOreImporter(BaseImporter):
         if not path.exists():
             return 0
 
-        def _scan_zip(zip_file_obj: Any) -> int:  # noqa: ANN401
+        def _scan_zip(zip_file_obj: Any) -> int:
             try:
                 cnt = 0
                 with zipfile.ZipFile(zip_file_obj, "r") as z:
@@ -137,7 +137,7 @@ class ScaricoOreImporter(BaseImporter):
             return False, f"Errore importazione Scarico Ore: {e}", []
 
     @classmethod
-    def _load_scarico_workbook(cls, path: Path) -> Any:  # noqa: ANN401
+    def _load_scarico_workbook(cls, path: Path) -> Any:
         from src.core.constants import Business  # noqa: PLC0415
 
         wb_file = io.BytesIO()
@@ -168,7 +168,7 @@ class ScaricoOreImporter(BaseImporter):
     @classmethod
     def _process_all_scarico_rows(
         cls,
-        ws: Any,  # noqa: ANN401
+        ws: Any,
         progress_callback: Callable[[int, int], None] | None,
     ) -> list[tuple[Any, ...]]:
         start_row = 6
@@ -205,7 +205,7 @@ class ScaricoOreImporter(BaseImporter):
         return rows_to_insert
 
     @classmethod
-    def _extract_row_values(cls, row: Any) -> list[str] | None:  # noqa: ANN401
+    def _extract_row_values(cls, row: Any) -> list[str] | None:
         (
             c_data,
             c_p1,
@@ -226,7 +226,7 @@ class ScaricoOreImporter(BaseImporter):
         if v_odc is v_pos is None:
             return None
 
-        def _fmt(val: Any) -> str:  # noqa: ANN401
+        def _fmt(val: Any) -> str:
             if val is None:
                 return ""
             # Se è un numero intero rappresentato come float (comune in Excel), converti in int
@@ -281,7 +281,7 @@ class ScaricoOreImporter(BaseImporter):
         return vals
 
     @classmethod
-    def _process_scarico_ore_row(cls, row: Any, col_keys: list[str]) -> tuple[Any, ...] | None:  # noqa: ANN401
+    def _process_scarico_ore_row(cls, row: Any, col_keys: list[str]) -> tuple[Any, ...] | None:
         vals = cls._extract_row_values(row)
         if not vals:
             return None
@@ -313,7 +313,7 @@ class ScaricoOreImporter(BaseImporter):
         return bool(vals[1] or vals[2])
 
     @staticmethod
-    def _extract_row_styles(row: Any, col_keys: list[str], vals: list[str]) -> str:  # noqa: ANN401
+    def _extract_row_styles(row: Any, col_keys: list[str], vals: list[str]) -> str:
         row_styles: dict[str, dict[str, str]] = {}
         for i, key in enumerate(col_keys):
             if vals[i] == "":

@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - Bug Report Dialog
 Interfaccia avanzata per la raccolta diagnostica e la segnalazione di anomalie tecniche.

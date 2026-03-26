@@ -139,7 +139,7 @@ def get_bot_info(bot_id: str) -> dict[str, Any] | None:
     return BOT_REGISTRY.get(bot_id)
 
 
-def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:  # noqa: ANN401
+def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:
     """
     Crea un'istanza di un bot.
 

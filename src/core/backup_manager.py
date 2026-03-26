@@ -189,7 +189,7 @@ class BackupManager:
             return False, str(e)
 
     @staticmethod
-    def _cleanup_old_backups(target_dir: Path, keep: int = 5):  # noqa: ANN205
+    def _cleanup_old_backups(target_dir: Path, keep: int = 5) -> None:
         """
         Mantiene solo gli ultimi N backup nel database, eliminando i più vecchi.
 

@@ -205,7 +205,7 @@ class InteractiveStatusCard(QFrame):
         self.shadow.setYOffset(4)
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any | None) -> None:  # noqa: ANN401
+    def leaveEvent(self, event: Any | None) -> None:
         """Ripristina l'ombra all'uscita del mouse."""
         self.shadow.setBlurRadius(10)
         self.shadow.setYOffset(2)
@@ -217,7 +217,7 @@ class InteractiveStatusCard(QFrame):
             self.clicked.emit(self.filter_type)
         super().mousePressEvent(event)
 
-    def setValue(self, val: Any) -> None:  # noqa: ANN401
+    def setValue(self, val: Any) -> None:
         """
         Aggiorna il valore numerico visualizzato sulla card.
 

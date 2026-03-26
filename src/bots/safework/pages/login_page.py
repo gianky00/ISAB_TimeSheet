@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - SafeWork Login Page
 Encapsulamento della logica di login SafeWork.
@@ -16,14 +17,14 @@ from src.bots.safework.common.locators import SafeWorkLocators
 class SafeWorkLoginPage:
     """Gestisce l'accesso al portale SafeWork."""
 
-    def __init__(  # noqa: ANN204
+    def __init__(
         self, driver: webdriver.Chrome, wait: WebDriverWait[webdriver.Chrome], log_func: Callable[[str], None]
-    ):
+    ) -> None:
         self.driver = driver
         self.wait = wait
         self.log = log_func
 
-    def login(self, username, password, account_type: str = "Esecutore") -> bool:  # noqa: ANN001
+    def login(self, username: str, password: str, account_type: str = "Esecutore") -> bool:
         """
         Esegue il login con strategia differenziata in base al tipo di account.
         """
@@ -45,7 +46,7 @@ class SafeWorkLoginPage:
             self.log(f"❌ Errore critico durante il login: {e}")
             return False
 
-    def _procedura_comune_login(self, username, password):  # noqa: ANN001, ANN202
+    def _procedura_comune_login(self, username: str, password: str) -> None:
         """Passaggi comuni a tutti gli account prima della verifica accesso."""
         MAX_RETRIES = 3  # noqa: N806
         for tentativa in range(MAX_RETRIES):

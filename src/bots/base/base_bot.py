@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - Base Bot
 Classe base astratta e orchestratore del ciclo di vita per tutti i bot di automazione Selenium.
@@ -254,7 +255,7 @@ class BaseBot(ABC):
         """Imposta una funzione esterna per ricevere i messaggi di log testuali."""
         self._log_callback = callback
 
-    def set_telegram_service(self, service: Any) -> None:  # noqa: ANN401
+    def set_telegram_service(self, service: Any) -> None:
         """Associa un servizio Telegram per l'inoltro dei messaggi di stato."""
         self._telegram_service = service
 

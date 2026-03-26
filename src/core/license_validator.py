@@ -151,13 +151,11 @@ def _check_and_migrate_local_license(target_paths: dict[str, Any]) -> bool:
 
     from platformdirs import user_data_dir  # noqa: PLC0415
 
-    from src.core.config_manager import APP_NAME  # noqa: PLC0415
-
     local_appdata = Path(os.environ.get("LOCALAPPDATA", ""))
     potential_dirs = [
         app_dir / "Licenza",
         app_dir,
-        Path(user_data_dir(APP_NAME, appauthor=False, roaming=True)) / "Licenza",
+        Path(user_data_dir("SyncroJob", appauthor=False, roaming=True)) / "Licenza",
     ]
 
     if local_appdata:

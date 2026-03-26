@@ -8,7 +8,7 @@ from PyQt6.QtCore import QAbstractTableModel, Qt
 # --- FORMATTERS ---
 
 
-def format_currency_smart(value: Any) -> str:  # noqa: ANN401
+def format_currency_smart(value: Any) -> str:
     """
     Formatta numeri in stile Euro contabile:
     - 1200.00 -> 1.200
@@ -52,7 +52,7 @@ def format_currency_smart(value: Any) -> str:  # noqa: ANN401
         return str(value)
 
 
-def format_number_smart(value: Any) -> str:  # noqa: ANN401
+def format_number_smart(value: Any) -> str:
     """Identico a currency_smart, usato per ORE SP e RESA."""
     return format_currency_smart(value)
 
@@ -90,15 +90,15 @@ class FastTableModel(QAbstractTableModel):
         """Forza allineamento per una colonna."""
         self._alignments[col_idx] = alignment
 
-    def rowCount(self, parent: Any = None) -> int:  # noqa: ANN401
+    def rowCount(self, parent: Any = None) -> int:
         """Restituisce il numero di righe nel modello."""
         return len(self._data)
 
-    def columnCount(self, parent: Any = None) -> int:  # noqa: ANN401
+    def columnCount(self, parent: Any = None) -> int:
         """Restituisce il numero di colonne basato sull'header."""
         return len(self._headers)
 
-    def data(self, index: Any, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: ANN401, PLR0911
+    def data(self, index: Any, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: PLR0911
         """Recupera il valore per una cella applicando formattazione e allineamento."""
         if not index.isValid():
             return None
@@ -129,7 +129,7 @@ class FastTableModel(QAbstractTableModel):
 
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
-    ) -> Any:  # noqa: ANN401
+    ) -> Any:
         """Restituisce l'intestazione della colonna."""
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return self._headers[section]

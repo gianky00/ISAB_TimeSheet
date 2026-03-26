@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class PDLController:
     """Controller per la gestione dei dati del database PDL."""
 
-    def __init__(self):  # noqa: ANN204
+    def __init__(self) -> None:
         self._cache: dict[str, list[PdlRowDTO]] = {}
 
     def get_pdl_data(
@@ -37,7 +37,7 @@ class PDLController:
             logger.error(f"Errore caricamento PDL: {e}")  # noqa: TRY400
             return []
 
-    def clear_cache(self):  # noqa: ANN201
+    def clear_cache(self) -> None:
         """Svuota la cache interna dei risultati."""
         self._cache.clear()
 

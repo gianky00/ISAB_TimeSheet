@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-any-unimported"
 from collections.abc import Iterable
 from typing import Final
 

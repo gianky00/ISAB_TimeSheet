@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-any-unimported, name-defined"
 """
 SyncroJob - Timbrature Page
 Page Object Model for the Timbrature section of the ISAB portal.
@@ -8,6 +9,7 @@ import time
 from collections.abc import Callable
 from contextlib import suppress
 from pathlib import Path
+from typing import Any
 
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
@@ -27,23 +29,23 @@ from src.core.constants import Timeouts
 class TimbraturePage:
     """Encapsulates interactions with the Timbrature page."""
 
-    def __init__(  # noqa: ANN204
+    def __init__(
         self,
         driver: WebDriver,
         log_callback: Callable[[str], None] | None = None,
         download_path: str = "",
-    ):
+    ) -> None:
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)
         self._log = log_callback or print
         self.download_path = download_path
 
-    def log(self, msg: str):  # noqa: ANN201
+    def log(self, msg: str) -> None:
         """Proxy per il logging."""
         self._log(msg)
 
-    def _wait_for_overlay(self):  # noqa: ANN202
+    def _wait_for_overlay(self) -> None:
         """Waits for loading overlay to disappear."""
         try:
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
@@ -139,7 +141,7 @@ class TimbraturePage:
             self.log(f"Errore impostazione filtri: {e}")
             return False
 
-    def _select_supplier(self, fornitore: str):  # noqa: ANN202
+    def _select_supplier(self, fornitore: str) -> None:
         """
         Seleziona il fornitore dal menu a tendina del portale.
         Implementa logica di retry e click robusto (ActionChains + JS).
@@ -231,7 +233,7 @@ class TimbraturePage:
             self.log(f"⚠️ Errore download Excel: {e}")
             return ""
 
-    def _find_excel_button(self):  # noqa: ANN202
+    def _find_excel_button(self) -> Any:
         """
         Tenta di individuare il pulsante di download Excel utilizzando diverse strategie di localizzazione.
 

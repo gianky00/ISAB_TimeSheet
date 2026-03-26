@@ -147,12 +147,12 @@ def _atomic_write_json(path: Path, data: dict[str, Any]) -> bool:
         return True
 
 
-def get_config_value(key: str, default: Any = None) -> Any:  # noqa: ANN401
+def get_config_value(key: str, default: Any = None) -> Any:
     """Recupera un singolo valore dalla configurazione."""
     return load_config().get(key, default)
 
 
-def set_config_value(key: str, value: Any) -> bool:  # noqa: ANN401
+def set_config_value(key: str, value: Any) -> bool:
     """Imposta e salva un singolo valore nella configurazione."""
     config = load_config()
     config[key] = value

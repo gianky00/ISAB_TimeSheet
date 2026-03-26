@@ -13,10 +13,18 @@ logger = logging.getLogger(__name__)
 class AuditDatabase:
     """Gestisce il database SQLite per l'Audit Log."""
 
+    _db_path_override: Path | None = None
+
     @property
     def DB_PATH(self) -> Path:  # noqa: N802
         """Restituisce il percorso dinamico del database Audit."""
+        if self._db_path_override is not None:
+            return self._db_path_override
         return db_manager.DB_AUDIT
+
+    @DB_PATH.setter
+    def DB_PATH(self, value: Path) -> None:  # noqa: N802
+        self._db_path_override = value
 
     def __init__(self) -> None:
         self._init_db()

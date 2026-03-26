@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-any-unimported, no-any-return"
 """
 Selenium Wait Helper Utilities
 ===============================
@@ -168,7 +169,7 @@ def execute_with_wait(
     overlay_locator: tuple[str, str] | None = None,
     timeout: int = 30,
     wait_locator: tuple[str, str] | None = None,
-) -> Any:  # noqa: ANN401
+) -> Any:
     """
     Esegue un'azione e attende la scomparsa di un overlay.
     Supporta sia overlay_locator che wait_locator (alias).

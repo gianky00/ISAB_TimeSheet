@@ -37,10 +37,12 @@ class ReportHistory:
         """Carica i dati dallo storico."""
         cls._ensure_file()
         try:
-            return json.loads(cls.HISTORY_FILE.read_text(encoding="utf-8"))
+            result: dict[str, Any] = json.loads(cls.HISTORY_FILE.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, FileNotFoundError):
             logger.exception("Errore caricamento storico report")
             return {"last_report": None, "history": []}
+        else:
+            return result
 
     @classmethod
     def _save_data(cls, data: dict[str, Any]) -> None:

@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from typing import Any
 
 from PyQt6.QtCore import QMarginsF, QRectF, Qt
 from PyQt6.QtGui import QPageLayout, QPageSize, QPainter, QPdfWriter, QTextDocument
@@ -76,7 +77,7 @@ class CertificatiPdfExporter:
         except Exception as e:
             return False, f"Errore durante l'esportazione PDF: {e!s}"
 
-    def _draw_footer(self, painter: QPainter, current: int, total: int, width: float, height: float):  # noqa: ANN202
+    def _draw_footer(self, painter: QPainter, current: int, total: int, width: float, height: float) -> None:
         """Disegna il footer con la numerazione delle pagine."""
         painter.save()
         font = painter.font()
@@ -97,7 +98,7 @@ class CertificatiPdfExporter:
         meta_info = f"Generato il: {now_str} dal software Syncrojob v{__version__}"
 
         # Helper per ordinamento naturale (alfanumerico)
-        def natural_sort_key(text: str):  # noqa: ANN202
+        def natural_sort_key(text: str) -> list[Any]:
             parts = re.split(r"(\d+)", text)
             # Usiamo tuple (is_int, value) per forzare confronti omogenei (bool con bool, int con int, str con str)
             return [(True, int(c)) if c.isdigit() else (False, c.lower()) for c in parts if c]
@@ -125,11 +126,11 @@ class CertificatiPdfExporter:
             all_parents.append(parent)
 
         # FIX ORDINAMENTO: Prendiamo l'ID-COEMI dal primo figlio (child 0, col 0)
-        def get_id_coemi(p):  # noqa: ANN001, ANN202
+        def get_id_coemi(p: Any) -> str:
             if p.childCount() > 0:
                 child = p.child(0)
                 if child:
-                    return child.text(0)
+                    return str(child.text(0))
             return ""
 
         # Ordinamento GLOBALE per ID-COEMI crescente

@@ -43,7 +43,7 @@ class ScaricoOreWorker(QThread):
         except Exception:
             total_rows = 1000
 
-        def progress_cb(current, total):  # noqa: ANN001, ANN202
+        def progress_cb(current: int, total: int) -> None:
             """Callback per l'aggiornamento dello stato di avanzamento e calcolo ETA."""
             real_total = max(total if total > 0 else total_rows, current)
             elapsed = time.time() - self.start_time

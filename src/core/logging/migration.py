@@ -3,6 +3,7 @@ Helper per migrare dal vecchio sistema di logging al nuovo.
 """
 
 import logging
+from typing import Any
 
 from .logger import get_logger as get_new_logger
 
@@ -26,38 +27,38 @@ class LoggingAdapter:
         self._structured_logger = get_new_logger(name)
         self._std_logger = logging.getLogger(name)
 
-    def debug(self, msg, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003, ANN201
+    def debug(self, msg: Any, *args: Any, **kwargs: Any) -> None:
         """Debug log."""
         # Estrai extra da kwargs se presente
         extra = kwargs.pop("extra", {})
         formatted_msg = msg % args if args else msg
         self._structured_logger.debug(formatted_msg, **extra)
 
-    def info(self, msg, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003, ANN201
+    def info(self, msg: Any, *args: Any, **kwargs: Any) -> None:
         """Info log."""
         extra = kwargs.pop("extra", {})
         formatted_msg = msg % args if args else msg
         self._structured_logger.info(formatted_msg, **extra)
 
-    def warning(self, msg, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003, ANN201
+    def warning(self, msg: Any, *args: Any, **kwargs: Any) -> None:
         """Warning log."""
         extra = kwargs.pop("extra", {})
         formatted_msg = msg % args if args else msg
         self._structured_logger.warning(formatted_msg, **extra)
 
-    def error(self, msg, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003, ANN201
+    def error(self, msg: Any, *args: Any, **kwargs: Any) -> None:
         """Error log."""
         extra = kwargs.pop("extra", {})
         formatted_msg = msg % args if args else msg
         self._structured_logger.error(formatted_msg, **extra)
 
-    def critical(self, msg, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003, ANN201
+    def critical(self, msg: Any, *args: Any, **kwargs: Any) -> None:
         """Critical log."""
         extra = kwargs.pop("extra", {})
         formatted_msg = msg % args if args else msg
         self._structured_logger.critical(formatted_msg, **extra)
 
-    def exception(self, msg, *args, exc_info=True, **kwargs):  # noqa: ANN001, ANN002, ANN003, ANN201
+    def exception(self, msg: Any, *args: Any, exc_info: bool = True, **kwargs: Any) -> None:
         """Exception log."""
         import sys  # noqa: PLC0415
 

@@ -130,7 +130,8 @@ class SyncTracker:
             dict: Dizionario con timestamp, record aggiunti, rimossi e durata.
         """
         cls._load()
-        return cls._cache.get(module, {})
+        result: dict[str, Any] = cls._cache.get(module, {})
+        return result
 
     @classmethod
     def get_formatted_status(cls, module: str) -> str:
