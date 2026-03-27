@@ -206,10 +206,6 @@ class MainWindow(QMainWindow):
         self.quit_shortcut = QShortcut(QKeySequence("Alt+X"), self)
         self.quit_shortcut.activated.connect(self.close)
 
-        # F1 per Help
-        self.help_shortcut = QShortcut(QKeySequence("F1"), self)
-        self.help_shortcut.activated.connect(lambda: self.navigation_controller.navigate_to(PageIndex.HELP))
-
         # Ctrl+Shift+B per segnalazione bug rapida
         self.bug_shortcut = QShortcut(QKeySequence("Ctrl+Shift+B"), self)
         self.bug_shortcut.activated.connect(self._open_bug_reporter)

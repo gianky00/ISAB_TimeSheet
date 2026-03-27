@@ -175,6 +175,7 @@ class CommandPaletteDialog(QDialog):
         self.setGeometry(x, start_y, self.width(), 0)
         self.show()
         self.raise_()
+        self.activateWindow()
 
         self.anim.setStartValue(QRect(x, start_y, self.width(), 0))
         self.anim.setEndValue(QRect(x, start_y, self.width(), self.target_height))

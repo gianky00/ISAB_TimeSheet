@@ -94,14 +94,24 @@ class MenuBarComponent(QObject):
         """Inizializza l'istanza del dialogo Command Palette costruendo l'albero dei comandi."""
         try:
             root_nodes = self._build_menu_tree()
+            if not root_nodes:
+                if hasattr(self.main_window, "show_toast"):
+                    self.main_window.show_toast("Errore: l'albero dei comandi è vuoto", "error")
+                return
+
             self.command_palette = CommandPaletteDialog(self.main_window, root_nodes)
         except Exception as e:
             import traceback  # noqa: PLC0415
 
-            print(f"Error opening palette: {e}")
+            print(f"Error initializing palette: {e}")
             traceback.print_exc()
+
+            # Feedback visivo critico per l'utente
             if hasattr(self.main_window, "show_toast"):
-                self.main_window.show_toast(f"Error opening palette: {e}")
+                self.main_window.show_toast(f"Errore critico Palette: {e}", "error")
+
+            # Reset per riprovare al prossimo clic
+            self.command_palette = None
 
     def _build_menu_tree(self) -> list[CommandNode]:
         """
@@ -336,33 +346,37 @@ class MenuBarComponent(QObject):
             ],
         )
 
-        return [
-            menu_run,
-            menu_go,
-            menu_help,
-            CommandNode(
-                "Vai a Timbrature",
-                "Nav",
-                Icons.CLOCK,
-                shortcut="Alt+2",
-                action=lambda: mw.navigation_controller.navigate_to(PageIndex.TIMBRATURE),
-            ),
-            CommandNode(
-                "Vai a Strumentale",
-                "Nav",
-                Icons.FOLDER,
-                shortcut="Alt+3",
-                action=lambda: mw.navigation_controller.navigate_to(PageIndex.STRUMENTALE),
-            ),
-            CommandNode(
-                "Vai a DataEase",
-                "Nav",
-                Icons.DATABASE,
-                shortcut="Alt+4",
-                action=lambda: mw.navigation_controller.navigate_to(PageIndex.DATAEASE),
-            ),
-            menu_set,
-            CommandNode(
-                "Esci", "Chiudi applicazione", Icons.LOG_OUT, action=mw.app_event_handler.quit_application
-            ),
-        ]
+        try:
+            return [
+                menu_run,
+                menu_go,
+                menu_help,
+                CommandNode(
+                    "Vai a Timbrature",
+                    "Nav",
+                    Icons.CLOCK,
+                    shortcut="Alt+2",
+                    action=lambda: mw.navigation_controller.navigate_to(PageIndex.TIMBRATURE),
+                ),
+                CommandNode(
+                    "Vai a Strumentale",
+                    "Nav",
+                    Icons.FOLDER,
+                    shortcut="Alt+3",
+                    action=lambda: mw.navigation_controller.navigate_to(PageIndex.STRUMENTALE),
+                ),
+                CommandNode(
+                    "Vai a DataEase",
+                    "Nav",
+                    Icons.DATABASE,
+                    shortcut="Alt+4",
+                    action=lambda: mw.navigation_controller.navigate_to(PageIndex.DATAEASE),
+                ),
+                menu_set,
+                CommandNode(
+                    "Esci", "Chiudi applicazione", Icons.LOG_OUT, action=mw.app_event_handler.quit_application
+                ),
+            ]
+        except Exception as e:
+            print(f"Error building menu tree: {e}")
+            return []
