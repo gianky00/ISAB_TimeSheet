@@ -455,7 +455,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         from src.utils.document_processor import DocumentProcessor  # noqa: PLC0415
 
         nome = f"PDL_{pdl_num.replace('/', '-')}.pdf"
-        out = Path(self.download_path) / nome
+        output_dir = item.get("output_dir") or self.download_path
+        out = Path(output_dir) / nome
         if DocumentProcessor.merge_pdfs([p1, p2], str(out)):
             self.downloaded_files.append(str(out))
             all_paths.append(str(out))  # Aggiunto per il merge sessione

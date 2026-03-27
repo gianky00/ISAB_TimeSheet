@@ -119,9 +119,12 @@ class ScaricaTSPanel(BaseBotPanel):
         table_h = QHBoxLayout()
         table_h.setSpacing(10)
 
-        # Tabella con tutte le colonne del database Scarico TS
+        # Tabella con tutte le colonne del database Scarico TS + ESITO
         bot_class = self.get_bot_class()
-        self.data_table = EditableDataTable(bot_class.get_columns())
+        cols = list(bot_class.get_columns())
+        cols.append({"name": "esito", "label": "ESITO", "type": "text", "default": "", "readonly": True})
+
+        self.data_table = EditableDataTable(cols)
         self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._update_status_list)
         self.data_table.data_changed.connect(self._save_data)
@@ -149,6 +152,17 @@ class ScaricaTSPanel(BaseBotPanel):
     def on_step_completed(self, step_idx: int, success: bool, message: str = "") -> None:
         """Aggiorna lo stato della riga quando il bot termina l'elaborazione."""
         self.status_list.update_status(step_idx, success)
+
+        # Trova dinamicamente l'indice della colonna 'esito'
+        col_idx = -1
+        for i, col in enumerate(self.data_table.columns):
+            if col["name"] == "esito":
+                col_idx = i
+                break
+
+        if col_idx != -1:
+            esito_text = "Completato" if success else f"Errore: {message}" if message else "Errore"
+            self.data_table.update_cell(step_idx, col_idx, esito_text, emit_signal=False)
 
     def _open_settings(self) -> None:
         """Apre il pannello impostazioni."""

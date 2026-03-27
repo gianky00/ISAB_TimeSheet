@@ -7,7 +7,7 @@ Utilizza PDLController per la logica di business e PDLTableView per la griglia.
 import logging
 import os
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QPoint, Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -112,7 +112,7 @@ class PDLDBPanel(QWidget):
         self.filters = PDLFilterWidget()
         self.filters.filter_changed.connect(self.refresh_data)
         self.filters.site_changed.connect(self._on_site_changed)
-        self.filters.area_changed.connect(self.refresh_data)
+        self.filters.area_changed.connect(self._on_area_changed)
         self.filters.update_clicked.connect(self._on_update_bot_clicked)
         self.filters.reset_clicked.connect(self._reset_filters)
         self.filters.export_clicked.connect(self._export_to_excel)
@@ -151,7 +151,6 @@ class PDLDBPanel(QWidget):
 
     def _populate_initial_filters(self) -> None:
         """Popola i menu a tendina dei filtri con i dati unici presenti nel DB."""
-        # Logica di popolamento spostata parzialmente nel controller in futuro
         try:
             from src.core.database import db_manager  # noqa: PLC0415
 
@@ -165,6 +164,7 @@ class PDLDBPanel(QWidget):
                     self.filters.group_filter.addItem(str(r[0]))
             self.filters.group_filter.blockSignals(False)
             self._update_areas()
+            self._update_units()
         except Exception:
             logger.warning("Impossibile caricare i filtri PDL.")
 
@@ -207,6 +207,7 @@ class PDLDBPanel(QWidget):
 
         if area:
             self.filters.area_filter.setCurrentText(area)
+            self._update_units()
 
         if search is not None:
             self.filters.search_input.setText(search)
@@ -216,11 +217,16 @@ class PDLDBPanel(QWidget):
     def _on_site_changed(self) -> None:
         """Gestisce il cambio del filtro Sito e aggiorna le Aree disponibili."""
         self._update_areas()
+        self._update_units()
+        self.refresh_data()
+
+    def _on_area_changed(self) -> None:
+        """Gestisce il cambio del filtro Area e aggiorna le Unità disponibili."""
+        self._update_units()
         self.refresh_data()
 
     def _update_areas(self) -> None:
         """Aggiorna dinamicamente il filtro Area basandosi sul Sito selezionato."""
-        # Delega query leggera a helper futuro
         site = self.filters.site_filter.currentText()
         q = "SELECT DISTINCT area FROM pdl WHERE 1=1"
         p = []
@@ -238,6 +244,31 @@ class PDLDBPanel(QWidget):
             if r[0]:
                 self.filters.area_filter.addItem(str(r[0]))
         self.filters.area_filter.blockSignals(False)
+
+    def _update_units(self) -> None:
+        """Aggiorna dinamicamente il filtro Unità basandosi su Sito e Area selezionati."""
+        site = self.filters.site_filter.currentText()
+        area = self.filters.area_filter.currentText()
+        q = "SELECT DISTINCT unita FROM pdl WHERE 1=1"
+        p = []
+        if site != "Tutti i siti":
+            q += " AND sito = ?"
+            p.append(site)
+        if area != "Tutte":
+            q += " AND area = ?"
+            p.append(area)
+        q += " ORDER BY unita"
+
+        from src.core.database import db_manager  # noqa: PLC0415
+        rows = db_manager.execute_query(db_manager.DB_PDL, q, tuple(p))
+
+        self.filters.unit_filter.blockSignals(True)
+        self.filters.unit_filter.clear()
+        self.filters.unit_filter.addItem("Tutte")
+        for r in rows:
+            if r[0]:
+                self.filters.unit_filter.addItem(str(r[0]))
+        self.filters.unit_filter.blockSignals(False)
 
     def _on_selection_changed(self) -> None:
         """Aggiorna la vista di dettaglio quando viene selezionata una riga."""
@@ -308,11 +339,21 @@ class PDLDBPanel(QWidget):
         self.filters.search_input.clear()
         self.filters.group_filter.setCurrentIndex(0)
         self.filters.site_filter.setCurrentIndex(0)
+        self.filters.area_filter.setCurrentIndex(0)
+        self.filters.unit_filter.setCurrentIndex(0)
         self.refresh_data()
 
     def _on_update_bot_clicked(self) -> None:
-        """Avvia il bot di aggiornamento per i PDL (implementazione delegata)."""
-        # Logica bot delegata a BotController futuro, per ora rimane qui ma ripulita
+        """Avvia il bot di aggiornamento per i PDL navigando alla vista ricerca."""
+        main_win: Any = self.window()
+        if main_win and hasattr(main_win, "navigation_controller"):
+            # Naviga al pannello Ricerca PDL
+            main_win.navigation_controller.navigate_to_panel("ricerca_pdl")
+
+            # Tenta di avviare il bot sul pannello ricerca se disponibile
+            search_panel = getattr(main_win, "pdl_search_panel", None)
+            if search_panel and hasattr(search_panel, "_on_start"):
+                QTimer.singleShot(200, search_panel._on_start)
 
     def _export_to_excel(self) -> None:
         """Esporta i dati filtrati correnti in background."""
@@ -347,5 +388,4 @@ class PDLDBPanel(QWidget):
                 os.startfile(file_path)  # noqa: S606
         else:
             from PyQt6.QtWidgets import QMessageBox  # noqa: PLC0415
-
             QMessageBox.warning(self, "Errore Esportazione", message)
