@@ -146,7 +146,7 @@ class SecretsManager:
         with suppress(Exception):
             stored = keyring.get_password(cls.APP_NAME, "license_key")
             if stored:
-                return stored.encode("utf-8")  # type: ignore[no-any-return]
+                return stored.encode("utf-8")
         return None
 
     _keyring_available: bool | None = None
@@ -182,7 +182,7 @@ class SecretsManager:
     def get_credential(cls, service: str, username: str) -> str | None:
         """Recupera password dal keyring di sistema."""
         try:
-            return keyring.get_password(f"{cls.APP_NAME}_{service}", username)  # type: ignore[no-any-return]
+            return keyring.get_password(f"{cls.APP_NAME}_{service}", username)
         except Exception as e:
             logger.warning(f"Could not retrieve credential for {service}: {e}")
             return None

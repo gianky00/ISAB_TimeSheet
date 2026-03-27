@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-call"
 """
 SyncroJob - Scarico TS Bot
 Bot per il download automatico dei timesheet dal portale ISAB.

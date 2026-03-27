@@ -88,8 +88,7 @@ def format_timestamp(dt: datetime | None = None) -> str:
     Returns:
         Stringa formattata
     """
-    target_dt = dt or datetime.now(UTC).astimezone()
-    return target_dt.strftime("%d/%m/%Y %H:%M:%S")
+    return (dt or datetime.now(UTC).astimezone()).strftime("%d/%m/%Y %H:%M:%S")
 
 
 def get_months_list() -> list[str]:

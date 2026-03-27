@@ -110,7 +110,7 @@ class StoricoOdaPanel(QWidget):
         self._setup_ui()
         # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
 
-    def showEvent(self, event):  # noqa: ANN001
+    def showEvent(self, event) -> None:  # noqa: ANN001
         """Esegue il primo refresh solo quando il pannello diventa visibile."""
         super().showEvent(event)
         if not self._first_refresh_done:

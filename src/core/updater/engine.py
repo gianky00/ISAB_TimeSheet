@@ -149,8 +149,7 @@ class DownloadWorker(QThread):
         downloaded = Path(setup_path).stat().st_size if Path(setup_path).exists() else 0
         headers = {"Range": f"bytes={downloaded}-"} if downloaded > 0 else {}
 
-        session = requests.Session()
-        response = session.get(self.url_or_path, headers=headers, stream=True, timeout=(10, 30))
+        response = requests.get(self.url_or_path, headers=headers, stream=True, timeout=(10, 30))
 
         if downloaded > 0 and response.status_code != HTTP_PARTIAL_CONTENT:
             downloaded = 0

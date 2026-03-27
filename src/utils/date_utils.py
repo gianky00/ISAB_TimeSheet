@@ -233,8 +233,7 @@ def format_datetime_for_filename(dt: datetime | None = None) -> str:
     Returns:
         Stringa tipo "15-01-2024_14-30"
     """
-    target_dt = dt or datetime.now(UTC)
-    return target_dt.strftime("%d-%m-%Y_%H-%M")
+    return (dt or datetime.now(UTC)).strftime("%d-%m-%Y_%H-%M")
 
 
 def is_same_day(dt1: datetime, dt2: datetime) -> bool:

@@ -257,8 +257,7 @@ class ServiceController(QObject):
             + "</ul></body></html>"
         )
 
-        out = win32com.client.Dispatch("Outlook.Application")
-        m = out.CreateItem(0)
+        m = win32com.client.Dispatch("Outlook.Application").CreateItem(0)
         m.To = "luca.riccio@coemi.it"
         m.CC = "isabsud@coemi.it"
         m.Subject = f"[AUTO] Report Monitoraggio ISAB - {datetime.now(UTC).astimezone().strftime('%d/%m/%Y')}"

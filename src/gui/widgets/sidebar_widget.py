@@ -100,8 +100,8 @@ class SidebarWidget(QFrame):
         self.sub_safework: SidebarSubGroup
         self.btn_help: SidebarButton
         self.btn_settings: SidebarButton
-        self.main_btns: tuple[SidebarButton, ...]
-        self.footer_btns: tuple[Any, ...]
+        self.main_btns: tuple[QWidget, ...]
+        self.footer_btns: tuple[QWidget, ...]
         self.notif_child_btns: list[SidebarChildButton]
 
         self._setup_ui()

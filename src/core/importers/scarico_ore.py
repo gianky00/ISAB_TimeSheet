@@ -235,7 +235,7 @@ class ScaricoOreImporter(BaseImporter):
             s = str(val)
             # Sostituisce newline e sequence di spazi con un singolo spazio
             s = re.sub(r"\s+", " ", s).strip()
-            return s or ""
+            return s
 
         vals = []
         v_data = c_data.value

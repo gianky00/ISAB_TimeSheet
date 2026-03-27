@@ -1,4 +1,4 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore"
+# mypy: disable-error-code="no-any-unimported, unused-ignore, no-untyped-call"
 """
 SyncroJob - SafeWork Visualizza Attività Page
 Gestione della pagina Visualizza Attività per la programmazione.

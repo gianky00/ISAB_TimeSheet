@@ -228,7 +228,8 @@ class AuditLogWidget(QWidget):
 
         worker = IntegrityWorker(self.manager)
         worker.signals.finished.connect(self._on_integrity_checked)
-        QThreadPool.globalInstance().start(worker)
+        if pool := QThreadPool.globalInstance():
+            pool.start(worker)
 
     def _on_integrity_checked(self, valid: bool) -> None:
         """Callback al termine della verifica in background."""

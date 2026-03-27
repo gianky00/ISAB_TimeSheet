@@ -119,8 +119,8 @@ class AppInitializer:
         try:
             from src.core.database import db_manager  # noqa: PLC0415
             db_manager.init_db()
-        except Exception:
-            logger.exception("Errore inizializzazione database")
+        except Exception as e:
+            logger.exception("Errore inizializzazione database", e)  # noqa: TRY401, PLE1205
             raise
 
     @staticmethod

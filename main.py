@@ -292,8 +292,7 @@ def main():  # noqa: ANN201, PLR0915
             startup_logger.info("Finalizing startup sequence...")
             update_splash("Avvio completato", 100)
 
-            startup_logger.info("Showing main window...")
-            # Show main window FIRST (hidden behind splash)
+            # Show main window sequences (from main branch)
             main_window_instance.show()
             main_window_instance.showMaximized()
             main_window_instance.raise_()

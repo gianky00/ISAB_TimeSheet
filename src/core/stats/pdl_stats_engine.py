@@ -109,8 +109,7 @@ class PDLStatsEngine:
         """Recupera le righe grezze per l'analisi dei trend."""
         now = datetime.now().astimezone()
         month_curr_str = now.strftime("/%m/%Y")
-        last_day_prev = now.replace(day=1) - timedelta(days=1)
-        month_prev_str = last_day_prev.strftime("/%m/%Y")
+        month_prev_str = (now.replace(day=1) - timedelta(days=1)).strftime("/%m/%Y")
 
         cursor.execute(
             "SELECT area, data_creazione FROM pdl WHERE sito LIKE '%ISAB Sud%' "

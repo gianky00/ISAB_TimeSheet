@@ -65,17 +65,22 @@ class MainWindow(QMainWindow):
     Coordina i componenti modulari e i controller, fungendo da punto centrale di orchestrazione.
     """
 
+    # Pannelli registrati dinamicamente (per static analysis)
+    dettagli_panel: Any
+    prenota_panel: Any
+    scarico_panel: Any
+    timbrature_bot_panel: Any
+    carico_panel: Any
+    pdl_panel: Any
+    pdl_search_panel: Any
+    tab_fornitori: Any
+    tab_safework: Any
+
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle(f"SyncroJob v{VERSION}")
 
-        # Responsive sizing
-        if screen := QApplication.primaryScreen():
-            screen_geom = screen.availableGeometry()
-            width = min(1280, screen_geom.width() - 50)
-            height = min(850, screen_geom.height() - 80)
-            self.resize(width, height)
-
+        self.setMinimumSize(1200, 800)
         self._force_quit = False
         self._init_core_services()
         self._init_ui_components()
@@ -248,6 +253,16 @@ class MainWindow(QMainWindow):
             ToastManager.instance().show(f"Account {bot_type.upper()} ruotate con successo.", "success")
         else:
             ToastManager.instance().show(f"Impossibile ruotare account {bot_type.upper()}.", "warning")
+
+    def show_toast(self, message: str, level: str = "info") -> None:
+        """
+        Visualizza un messaggio toast.
+
+        Args:
+            message: Il messaggio da visualizzare.
+            level: Livello del messaggio (info, success, warning, error).
+        """
+        ToastManager.instance().show(message, level)
 
     def closeEvent(self, event: Any) -> None:
         """Gestisce la chiusura della finestra (riduzione a tray o uscita)."""
