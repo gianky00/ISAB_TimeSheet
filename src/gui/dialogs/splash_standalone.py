@@ -24,10 +24,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger("StandaloneSplash")
 
-# Aggiungi la root del progetto al path per gli import
-project_root = str(Path(__file__).parent.parent.parent.parent)
+# Aggiungi la root del progetto al path per gli import tramite ResourceManager
+from src.utils.resource_manager import ResourceManager
+project_root = str(ResourceManager.PROJECT_ROOT)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
+
+# Assicura che src sia nel path
+src_path = str(ResourceManager.PROJECT_ROOT / "src")
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
 
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal  # noqa: E402
 from PyQt6.QtWidgets import QApplication  # noqa: E402

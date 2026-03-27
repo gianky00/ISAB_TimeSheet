@@ -44,11 +44,17 @@ sys.excepthook = _print_exception_and_exit
 from src.core.config_manager import CONFIG_DIR
 
 # Now we can import our logging system
+from src.utils.resource_manager import ResourceManager
 from src.core.logging import (
     configure_logging,
     generate_trace_id,
     get_logger,
 )
+
+# Setup path (ResourceManager handles frozen vs dev)
+ROOT_DIR = ResourceManager.PROJECT_ROOT
+if str(ROOT_DIR / "src") not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR / "src"))
 
 
 def setup_enterprise_logging():  # noqa: ANN201
@@ -86,6 +92,12 @@ def setup_enterprise_logging():  # noqa: ANN201
 
 
 # Initialize enterprise logging
+if "--splash-mode" in sys.argv:
+    # Lancia lo splash e termina immediatamente (processo isolato)
+    from src.gui.dialogs.splash_standalone import run_standalone  # noqa: PLC0415
+    run_standalone()
+    sys.exit(0)
+
 startup_logger_global = setup_enterprise_logging()
 
 
@@ -102,15 +114,22 @@ def main():  # noqa: ANN201, PLR0915
     import json  # noqa: PLC0415
     import subprocess  # noqa: PLC0415
 
-    splash_script = str(ROOT_DIR / "src" / "gui" / "dialogs" / "splash_standalone.py")
-    startup_logger_global.info(f"Launching standalone splash process: {splash_script}")
+    if getattr(sys, "frozen", False):
+        # In modalità bundle l'eseguibile stesso agisce da launcher per lo splash (flag routing)
+        splash_cmd = [sys.executable, "--splash-mode"]
+    else:
+        # In modalità sviluppo l'interprete esegue lo script standalone
+        splash_script = str(ROOT_DIR / "src" / "gui" / "dialogs" / "splash_standalone.py")
+        splash_cmd = [sys.executable, splash_script]
+
+    startup_logger_global.info(f"Launching standalone splash process: {splash_cmd}")
 
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
     env["PYTHONPATH"] = str(ROOT_DIR)
 
     splash_process = subprocess.Popen(
-        [sys.executable, splash_script],
+        splash_cmd,
         stdin=subprocess.PIPE,
         text=True,
         bufsize=1,

@@ -14,7 +14,7 @@
 ; Paths (relative to this script location)
 #define SourcePath "dist\SyncroJob"
 #define OutputPath "Setup"
-#define AssetsPath "..\assets"
+#define AssetsPath "..\..\assets"
 
 [Setup]
 ; Application identification

@@ -240,16 +240,26 @@ class DettagliOdAPage:
             source_dir = Path(source_dir).resolve()
             if not source_dir.exists():
                 self.log(f"  ✗ Cartella non esiste: {source_dir}")
-                return None
+                # Tentiamo di crearla se possibile
+                try:
+                    source_dir.mkdir(parents=True, exist_ok=True)
+                    self.log(f"  ✓ Cartella creata: {source_dir}")
+                except Exception:
+                    return None
 
-            files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
+            self.log(f"  🔍 Monitoraggio download in: {source_dir}")
+            allowed_extensions = {".xlsx", ".xls"}
+            files_before = {
+                f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() in allowed_extensions
+            }
 
             if not self._click_export_button(button_locator):
+                self.log("  ✗ Impossibile cliccare il pulsante di esportazione.")
                 return None
 
             downloaded_file = self._wait_for_download(source_dir, files_before)
             if not downloaded_file:
-                self.log("  ✗ File non trovato nella cartella Download.")
+                self.log(f"  ✗ Nessun nuovo file Excel trovato in {source_dir} dopo {Timeouts.DOWNLOAD}s.")
                 return None
 
             final_path = self._finalize_download(downloaded_file, dest_dir, target_filename)
@@ -272,24 +282,38 @@ class DettagliOdAPage:
         try:
             btn = self.wait.until(EC.presence_of_element_located(locator))
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
+            # Piccola attesa post-scroll
+            time.sleep(0.5)
             try:
                 btn.click()
             except Exception:
                 self.driver.execute_script("arguments[0].click();", btn)
             return True  # noqa: TRY300
-        except Exception:
+        except Exception as e:
+            self.log(f"  ⚠️ Errore click esportazione: {e}")
             return False
 
     def _wait_for_download(self, source_dir: Path, files_before: set[Path]) -> Path | None:
         """Attende il completamento del download monitorando la directory sorgente."""
         start = time.time()
+        allowed_extensions = {".xlsx", ".xls"}
         while time.time() - start < Timeouts.DOWNLOAD:
-            if any(f.suffix == ".crdownload" for f in source_dir.iterdir()):
-                continue
-            current = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
-            new_files = current - files_before
-            if new_files:
-                return max(list(new_files), key=lambda f: f.stat().st_mtime)
+            # Check for partial files
+            try:
+                files = list(source_dir.iterdir())
+                if any(f.suffix in {".crdownload", ".tmp"} for f in files):
+                    time.sleep(1)
+                    continue
+
+                current = {f for f in files if f.is_file() and f.suffix.lower() in allowed_extensions}
+                new_files = current - files_before
+                if new_files:
+                    # Prendi il file più recente tra i nuovi
+                    return max(list(new_files), key=lambda f: f.stat().st_mtime)
+            except Exception as e:
+                self._log(f"  [DEBUG] Errore scansione: {e}")
+
+            time.sleep(1)
         return None
 
     def _finalize_download(self, src: Path, dest_dir: Path, target_name: str) -> Path | None:

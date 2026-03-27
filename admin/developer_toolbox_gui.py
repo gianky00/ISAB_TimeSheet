@@ -265,6 +265,11 @@ class DeveloperToolboxGUI(QMainWindow):
                 ),
                 ("Full Release", self._full_release, "Build EXE totale (con test)"),
                 ("Fast Release", self._fast_release, "Build EXE rapida (salta test)"),
+                (
+                    "Emergency Setup",
+                    self._emergency_setup,
+                    "Build EXE immediata (salta test, audit, git e bump)",
+                ),
                 ("Full Deploy", self._full_deploy, "Release + Caricamento su server"),
             ],
         )
@@ -617,6 +622,14 @@ class DeveloperToolboxGUI(QMainWindow):
         self._run_command(
             [str(VENV_PYTHON), "admin/release.py", "auto", "--skip-tests"],
             "Fast Release",
+        )
+
+    def _emergency_setup(self):  # noqa: ANN202
+        """Opzione 15b: Emergency Setup - solo build, no audit, no git, no bump"""
+        build_script = str(PROJECT_ROOT / "admin" / "Crea Setup" / "build_dist.py")
+        self._run_command(
+            [str(VENV_PYTHON), build_script, "--no-deploy", "--no-network"],
+            "Emergency Setup (Build Only)",
         )
 
     def _full_deploy(self):  # noqa: ANN202

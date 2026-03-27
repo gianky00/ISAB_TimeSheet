@@ -17,6 +17,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 
 from src.bots.base import BaseBot, StepStatus
+from src.core.constants import Timeouts
 from src.core.timesheet_processor import TimesheetProcessor
 from src.utils.helpers import sanitize_filename
 
@@ -330,32 +331,50 @@ class ScaricaTSBot(BaseBot):
 
         # Normalize path
         source_dir_path = Path(source_dir).resolve()
-        self.log(f"[DEBUG] Cerco file in: {source_dir_path}")
+        self.log(f"🔍 Monitoraggio download in: {source_dir_path}")
 
         if not source_dir_path.exists():
             self.log(f"✗ Cartella non esiste: {source_dir_path}")
             return None
 
-        # 1. Cattura file pre-esistenti
-        files_before = {f for f in source_dir_path.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
-        self.log(f"[DEBUG] File .xlsx prima del download: {len(files_before)}")
+        # 1. Cattura file pre-esistenti (.xlsx e .xls)
+        allowed_ext = {".xlsx", ".xls"}
+        files_before = {
+            f for f in source_dir_path.iterdir() if f.is_file() and f.suffix.lower() in allowed_ext
+        }
+        self.log(f"[DEBUG] File Excel pre-esistenti in {source_dir_path.name}: {len(files_before)}")
 
         # 2. Click pulsante Excel (Logica Main Branch con micro-attesa)
+        # Registriamo il timestamp del click per filtrare solo i file veramente nuovi
+        click_time = time.time()
         time.sleep(1)
         if not self._click_excel_export_button():
             return None
 
         # 3. Attendi download
-        downloaded_file = self._wait_for_new_file(source_dir_path, files_before)
+        downloaded_file = self._wait_for_new_file(source_dir_path, files_before, click_time)
         if not downloaded_file:
-            # Debug: lista file attuali
-            current_files = list(source_dir_path.iterdir()) if source_dir_path.exists() else []
-            self.log(f"[DEBUG] File attuali nella cartella: {[f.name for f in current_files[:10]]}")
-            self.log("⚠️ File non scaricato nel tempo stabilito.")
+            # Debug avanzato: mostra gli ultimi file con i loro timestamp
+            try:
+                all_files = sorted(
+                    list(source_dir_path.iterdir()), key=lambda x: x.stat().st_mtime, reverse=True
+                )
+                debug_info = [
+                    f"{f.name} ({time.strftime('%H:%M:%S', time.localtime(f.stat().st_mtime))})"
+                    for f in all_files[:5]
+                ]
+                self.log(f"[DEBUG] Ultimi file trovati: {debug_info}")
+            except Exception:
+                pass
+            self.log(f"⚠️ Nessun nuovo file rilevato dopo il click ({Timeouts.DOWNLOAD}s).")
             return None
 
         # 4. Finalizzazione (Determina nome e Sposta)
-        final_path = self._get_final_download_path(source_dir_path, dest_dir, numero_oda, posizione_oda)
+        # Manteniamo l'estensione originale del file scaricato
+        extension = downloaded_file.suffix.lower()
+        final_path = self._get_final_download_path(
+            source_dir_path, dest_dir, numero_oda, posizione_oda, extension
+        )
         return self._move_to_destination(downloaded_file, final_path)
 
     def _click_excel_export_button(self) -> bool:
@@ -367,34 +386,43 @@ class ScaricaTSBot(BaseBot):
         xpath = "//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]"
         try:
             btn = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            # Piccolo scroll per sicurezza
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
+            time.sleep(0.5)
             btn.click()
             return True  # noqa: TRY300
         except Exception as e:
             self.log(f"⚠️ Impossibile cliccare esportazione Excel: {e}")
             return False
 
-    def _wait_for_new_file(self, source_dir: Path, files_before: set[Path], timeout: int = 35) -> Path | None:
-        """Attende la comparsa di un nuovo file .xlsx (Logica Main Branch)."""
-        start_time = time.time()
-        while time.time() - start_time < timeout:
+    def _wait_for_new_file(
+        self, source_dir: Path, files_before: set[Path], click_time: float, timeout: int = 45
+    ) -> Path | None:
+        """Attende la comparsa di un nuovo file .xlsx o .xls creato dopo click_time."""
+        start_wait = time.time()
+        allowed_ext = {".xlsx", ".xls"}
+        while time.time() - start_wait < timeout:
             with suppress(Exception):
-                # Se c'è un download in corso (.crdownload), continua l'attesa
-                if any(f.suffix == ".crdownload" for f in source_dir.iterdir()):
+                files = list(source_dir.iterdir())
+                # Se c'è un download in corso (.crdownload o .tmp), continua l'attesa
+                if any(f.suffix.lower() in {".crdownload", ".tmp"} for f in files):
                     time.sleep(1)
                     continue
 
-                current_files = {
-                    f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"
-                }
+                current_files = {f for f in files if f.is_file() and f.suffix.lower() in allowed_ext}
                 new_files = current_files - files_before
                 if new_files:
-                    # Restituisce il più recente tra i nuovi
-                    return max(list(new_files), key=lambda f: f.stat().st_mtime)
+                    # Tra i nuovi file, prendi solo quelli modificati DOPO il click (tolleranza 2s)
+                    valid_files = [f for f in new_files if f.stat().st_mtime > (click_time - 2)]
+                    if valid_files:
+                        return max(valid_files, key=lambda f: f.stat().st_mtime)
 
-            time.sleep(0.5)
+            time.sleep(1)
         return None
 
-    def _get_final_download_path(self, source_dir: Path, dest_dir: Path, oda: str, pos: str) -> Path:
+    def _get_final_download_path(
+        self, source_dir: Path, dest_dir: Path, oda: str, pos: str, extension: str = ".xlsx"
+    ) -> Path:
         """Costruisce il percorso finale basato su ODA/POS."""
         safe_oda = sanitize_filename(oda)
         safe_pos = sanitize_filename(pos)
@@ -402,7 +430,7 @@ class ScaricaTSBot(BaseBot):
         base_name = (
             f"TS_{safe_oda}-{safe_pos}" if safe_pos and safe_pos != "unnamed_file" else f"TS_{safe_oda}"
         )
-        filename = f"{base_name}.xlsx"
+        filename = f"{base_name}{extension}"
 
         # Se elabora_ts, il file resta in temp (Downloads) rinominato
         target_dir = source_dir if self.elabora_ts else dest_dir
@@ -414,7 +442,7 @@ class ScaricaTSBot(BaseBot):
 
             if final_path.exists():
                 ts = time.strftime("%Y%m%d-%H%M%S")
-                final_path = target_dir / f"{base_name}_{ts}.xlsx"
+                final_path = target_dir / f"{base_name}_{ts}{extension}"
 
         return final_path
 
