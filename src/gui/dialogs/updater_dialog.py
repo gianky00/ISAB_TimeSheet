@@ -245,11 +245,15 @@ def perform_auto_update(download_url: str, parent: QWidget | None = None) -> Non
     global _active_update_worker  # noqa: PLW0603
     _active_update_worker = DownloadWorker(download_url)
 
-    if parent and hasattr(parent, "update_banner") and parent.update_banner:
-        parent_with_banner: Any = parent
-        _active_update_worker.progress.connect(parent_with_banner.update_banner.update_progress)
+    # Rilevamento banner robusto (MainWindow lo ha in tool_bar_component o come alias)
+    banner = getattr(parent, "update_banner", None)
+    if not banner and hasattr(parent, "tool_bar_component"):
+        banner = getattr(cast("Any", parent).tool_bar_component, "update_banner", None)
+
+    if banner:
+        _active_update_worker.progress.connect(banner.update_progress)
         if hasattr(parent, "_on_update_downloaded"):
-            _active_update_worker.finished_download.connect(parent_with_banner._on_update_downloaded)
+            _active_update_worker.finished_download.connect(cast("Any", parent)._on_update_downloaded)
     else:
         global _active_update_dialog  # noqa: PLW0603
         _active_update_dialog = UpdateProgressDialog(download_url, parent)

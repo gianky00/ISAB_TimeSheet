@@ -229,7 +229,7 @@ class MainWindow(QMainWindow):
             download_url = version_info.get("url", "")
             version_str = version_info.get("version", "")
             if download_url and version_str:
-                self.tool_bar_component.update_banner.show_update(download_url, version_str)
+                self.update_banner.show_update(version_str, download_url)
 
     def _on_download_update_clicked(self, download_url: str) -> None:
         """Avvia il processo di download dell'aggiornamento."""
