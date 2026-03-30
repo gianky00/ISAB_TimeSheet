@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "syncrojob"
-version = "1.40.1"
+version = "1.40.2"
 description = "ISAB TimeSheet application"
 authors = ["Giancarlo Allegretti"]
 packages = [
@@ -342,7 +342,7 @@ exclude = ["src/bots/safework/pdl/search_bot.py"]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.40.1"
+version = "1.40.2"
 tag_format = "v$version"
 version_files = [
     "src/core/version.py:__version__",
