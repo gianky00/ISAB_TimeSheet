@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.core.app_updater import (
+    get_local_setup_path,
     get_pending_installer_path,
     has_pending_update,
     perform_auto_update,
@@ -194,6 +195,9 @@ class MainWindow(QMainWindow):
         self.content_layout.addWidget(self.stacked_widget)
         self.main_layout.addWidget(self.content_area, 0, 0)
 
+        # Connessione Segnali Banner
+        self.update_banner.download_requested.connect(self._on_download_update_clicked)
+
         # 2. Sidebar come Overlay
         from src.gui.widgets.sidebar_widget import SidebarWidget  # noqa: PLC0415
         self.sidebar = SidebarWidget(self.central_widget)
@@ -233,7 +237,24 @@ class MainWindow(QMainWindow):
 
     def _on_download_update_clicked(self, download_url: str) -> None:
         """Avvia il processo di download dell'aggiornamento."""
+        # Se il banner indica che è già completo, mostra direttamente la prompt di installazione
+        if hasattr(self, "update_banner") and getattr(self.update_banner, "_is_complete", False):
+            setup_path = get_local_setup_path(download_url)
+            show_install_prompt(setup_path, self)
+            return
+
         perform_auto_update(download_url, self)
+
+    def _on_update_downloaded(self, setup_path: str) -> None:
+        """Gestisce il completamento del download dell'aggiornamento."""
+        if hasattr(self, "update_banner"):
+            self.update_banner._is_complete = True
+            self.update_banner.update_label.setText("Aggiornamento Pronto!")
+            self.update_banner.download_btn.setText("Installa Ora")
+            self.update_banner.download_btn.setVisible(True)
+            self.update_banner.progress_container.setVisible(False)
+
+        show_install_prompt(setup_path, self)
 
     def show_background_notification(self, title: str, message: str, is_error: bool = False) -> None:
         """Mostra una notifica balloon se l'app è in background."""

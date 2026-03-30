@@ -132,7 +132,7 @@ class UpdateBanner(QFrame):
         if not self.progress_container.isVisible():
             self.progress_container.setVisible(True)
             self.download_btn.setVisible(False)
-            self.update_label.setText("Aggiornamento in corso...")
+            self.update_label.setText("Scaricamento in corso...")
 
         if total > 0:
             self.progress_bar.setMaximum(total)
@@ -150,7 +150,7 @@ class UpdateBanner(QFrame):
             else:
                 eta_str = ""
 
-            self.details_label.setText(f"{mb_down:.1f}/{mb_total:.1f} MB ({speed_mb:.2f} MB/s{eta_str})")
+            self.details_label.setText(f"{mb_down:.2f}/{mb_total:.2f} MB ({speed_mb:.2f} MB/s{eta_str})")
         else:
             self.progress_bar.setMaximum(0)
 
@@ -159,4 +159,4 @@ class UpdateBanner(QFrame):
             self.download_requested.emit(self._download_url)
             self.download_btn.setVisible(False)
             self.progress_container.setVisible(True)
-            self.update_label.setText("Inizializzazione...")
+            self.update_label.setText("Scaricamento...")
