@@ -160,3 +160,11 @@ class UpdateBanner(QFrame):
             self.download_btn.setVisible(False)
             self.progress_container.setVisible(True)
             self.update_label.setText("Scaricamento...")
+
+    def show_error(self, message: str) -> None:
+        """Mostra un messaggio di errore nel banner e ripristina il pulsante."""
+        self.progress_container.setVisible(False)
+        self.download_btn.setVisible(True)
+        self.download_btn.setText("Riprova")
+        self.update_label.setText(f"Errore: {message}")
+        self.update_label.setStyleSheet(f"color: {COLORS['status_error']}; font-weight: bold; font-size: 13px;")

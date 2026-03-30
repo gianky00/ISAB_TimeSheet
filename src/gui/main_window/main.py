@@ -195,9 +195,6 @@ class MainWindow(QMainWindow):
         self.content_layout.addWidget(self.stacked_widget)
         self.main_layout.addWidget(self.content_area, 0, 0)
 
-        # Connessione Segnali Banner
-        self.update_banner.download_requested.connect(self._on_download_update_clicked)
-
         # 2. Sidebar come Overlay
         from src.gui.widgets.sidebar_widget import SidebarWidget  # noqa: PLC0415
         self.sidebar = SidebarWidget(self.central_widget)
@@ -236,14 +233,24 @@ class MainWindow(QMainWindow):
                 self.update_banner.show_update(version_str, download_url)
 
     def _on_download_update_clicked(self, download_url: str) -> None:
-        """Avvia il processo di download dell'aggiornamento."""
-        # Se il banner indica che è già completo, mostra direttamente la prompt di installazione
-        if hasattr(self, "update_banner") and getattr(self.update_banner, "_is_complete", False):
-            setup_path = get_local_setup_path(download_url)
-            show_install_prompt(setup_path, self)
-            return
+        """Avvia il processo di download dell'aggiornamento con protezione da eccezioni."""
+        try:
+            # Se il banner indica che è già completo, mostra direttamente la prompt di installazione
+            if hasattr(self, "update_banner") and getattr(self.update_banner, "_is_complete", False):
+                setup_path = get_local_setup_path(download_url)
+                show_install_prompt(setup_path, self)
+                return
 
-        perform_auto_update(download_url, self)
+            perform_auto_update(download_url, self)
+        except Exception as e:
+            logger.exception("Inizializzazione download fallita")
+            ToastManager.instance().show(f"Errore inizializzazione update: {e}", "error")
+
+    def _on_update_error(self, message: str) -> None:
+        """Gestisce errori durante lo scaricamento dell'aggiornamento."""
+        if hasattr(self, "update_banner"):
+            self.update_banner.show_error(message)
+        ToastManager.instance().show(f"Errore download: {message}", "error")
 
     def _on_update_downloaded(self, setup_path: str) -> None:
         """Gestisce il completamento del download dell'aggiornamento."""

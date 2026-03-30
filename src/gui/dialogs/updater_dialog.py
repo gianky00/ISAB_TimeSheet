@@ -254,6 +254,8 @@ def perform_auto_update(download_url: str, parent: QWidget | None = None) -> Non
         _active_update_worker.progress.connect(banner.update_progress)
         if hasattr(parent, "_on_update_downloaded"):
             _active_update_worker.finished_download.connect(cast("Any", parent)._on_update_downloaded)
+        if hasattr(parent, "_on_update_error"):
+            _active_update_worker.error.connect(cast("Any", parent)._on_update_error)
     else:
         global _active_update_dialog  # noqa: PLW0603
         _active_update_dialog = UpdateProgressDialog(download_url, parent)
