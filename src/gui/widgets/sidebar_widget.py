@@ -183,13 +183,12 @@ class SidebarWidget(QFrame):
         self.logo_badge = QLabel()
         self.logo_badge.setFixedSize(46, 46)
         self.logo_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.logo_badge.setStyleSheet("background: transparent; border: none;")
-
+        self.logo_badge.setStyleSheet("background: white; border-radius: 23px; border: 1px solid #e2e8f0;")
         pix = QIcon(get_asset_path("assets/app.ico")).pixmap(64, 64)
         if not pix.isNull():
             self.logo_badge.setPixmap(
                 pix.scaled(
-                    36, 36, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+                    30, 30, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
                 )
             )
         self.h_lay.addWidget(self.logo_badge)
