@@ -26,6 +26,7 @@ class Particle:
     """Singola particella animata con profondità."""
 
     def __init__(self, w: int, h: int) -> None:
+        """Inizializza una particella con coordinate casuali."""
         self.x: float = 0.0
         self.y: float = 0.0
         self.size: float = 0.0
@@ -71,6 +72,7 @@ class ParticleBackground(QWidget):
     BORDER_RADIUS = 28
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza il widget di sfondo particellare."""
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -93,12 +95,15 @@ class ParticleBackground(QWidget):
         self._circuit_cache: QPixmap | None = None
 
     def init_particles(self, count: int = 65) -> None:
+        """Crea il pool iniziale di particelle animate."""
         self.particles = [Particle(self.width(), self.height()) for _ in range(count)]
 
     def set_progress(self, val: float) -> None:
+        """Aggiorna il progresso dell'animazione di convergenza."""
         self.progress = val / 100.0
 
     def apply_parallax(self, dx: float, dy: float) -> None:
+        """Applica un effetto parallasse alle particelle basato sul movimento mouse/finestra."""
         for p in self.particles:
             p.apply_force(dx, dy)
 

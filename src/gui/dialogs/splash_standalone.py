@@ -53,6 +53,7 @@ class StandaloneSplash(StartupDialog):
     """Estensione dello StartupDialog con logging aggiuntivo e fix visibilità."""
 
     def __init__(self) -> None:
+        """Configura lo splash screen standalone con parametri di visibilità forzati."""
         super().__init__()
         # Forza opacità iniziale se l'animazione fallisse
         self.setWindowOpacity(1.0)
@@ -61,6 +62,7 @@ class StandaloneSplash(StartupDialog):
         self.activateWindow()
 
     def update_status(self, message: str, progress: int) -> None:
+        """Aggiorna il messaggio e la barra di avanzamento nella UI dello splash."""
         logger.info(f"UI UPDATE EXEC: {message} | {progress}%")
         super().update_status(message, progress)
 

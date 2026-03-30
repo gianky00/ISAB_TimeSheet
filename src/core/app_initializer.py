@@ -23,10 +23,12 @@ class AppInitializer:
 
     @staticmethod
     def add_alert(severity: str, message: str) -> None:
+        """Registra un avviso (alert) da mostrare all'avvio dell'applicazione."""
         AppInitializer._startup_alerts.append((severity, message))
 
     @staticmethod
     def get_alerts() -> list[tuple[str, str]]:
+        """Restituisce la lista degli avvisi accumulati durante l'inizializzazione."""
         return AppInitializer._startup_alerts
 
     @staticmethod
@@ -203,6 +205,7 @@ class AppInitializer:
 
     @staticmethod
     def _setup_logging() -> None:
+        """Configura il sottosistema di logging caricando le impostazioni dal config."""
         try:
             from src.core.logging import configure_logging  # noqa: PLC0415
 

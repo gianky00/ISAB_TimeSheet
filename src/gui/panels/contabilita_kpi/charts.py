@@ -21,7 +21,9 @@ from src.gui.widgets.info_widgets import InfoLabel
 
 
 class DummyCanvas(QLabel):
+    """Fallback canvas utilizzato quando il backend Matplotlib Qt non è disponibile."""
     def __init__(self, fig: Figure) -> None:
+        """Inizializza il canvas di fallback."""
         super().__init__("Grafico disabilitato (Incompatibilità Backend Matplotlib nativo)")
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setStyleSheet("color: #6c757d; font-style: italic;")
@@ -38,6 +40,16 @@ class ChartContainer(QWidget):
     """Container stilizzato per i grafici Matplotlib."""
 
     def __init__(self, canvas, title="", height=450, info_callback=None, parent=None):  # noqa: ANN001, ANN204
+        """
+        Inizializza il container stilizzato.
+
+        Args:
+            canvas: Il widget contenente il grafico Matplotlib.
+            title: Titolo del grafico.
+            height: Altezza minima del widget.
+            info_callback: Funzione chiamata al click sull'icona info.
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self.canvas = canvas
         self.setMinimumHeight(height)
@@ -87,6 +99,12 @@ class KPIChartsManager:
     """Gestore per la creazione e l'aggiornamento dei grafici KPI."""
 
     def __init__(self, HOURLY_COST_STD):  # noqa: ANN001, ANN204
+        """
+        Inizializza il manager dei grafici.
+
+        Args:
+            HOURLY_COST_STD: Costo orario standard per il calcolo dei margini.
+        """
         self.HOURLY_COST_STD = HOURLY_COST_STD
         self.annot = None
 
@@ -98,6 +116,7 @@ class KPIChartsManager:
         self.fig5, self.canvas5 = self._init_figure()
 
     def _init_figure(self):  # noqa: ANN202
+        """Crea una nuova figura Matplotlib e il relativo canvas."""
         fig = Figure(figsize=(5, 4), dpi=100)
         fig.patch.set_alpha(0)
         canvas = FigureCanvas(fig)

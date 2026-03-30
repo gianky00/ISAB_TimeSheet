@@ -19,6 +19,16 @@ class FilterWorker(QThread):
         col_filters: dict[int, set[str]] | None = None,
         parent: QObject | None = None,
     ) -> None:
+        """
+        Inizializza il worker per il filtraggio.
+
+        Args:
+            search_index: Indice di ricerca globalizzato.
+            display_data: Dati visualizzati nella tabella.
+            text: Testo cercato nella barra di ricerca.
+            col_filters: Filtri applicati alle singole colonne.
+            parent: Oggetto genitore Qt.
+        """
         super().__init__(parent)
         self.search_index = search_index
         self.display_data = display_data
@@ -27,6 +37,7 @@ class FilterWorker(QThread):
         self._is_cancelled = False
 
     def cancel(self) -> None:
+        """Annulla l'operazione di filtraggio corrente."""
         self._is_cancelled = True
 
     def run(self) -> None:

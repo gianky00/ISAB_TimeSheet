@@ -61,6 +61,7 @@ class SignalConnector(QObject):
             }
 
             def show_tray_msg(msg: str, level: str, duration: int) -> None:
+                """Formatta e mostra un messaggio nella tray icon di sistema."""
                 title = "SyncroJob"
                 if ":" in msg:
                     title, msg = msg.split(":", 1)

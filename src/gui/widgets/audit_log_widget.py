@@ -38,16 +38,20 @@ logger = logging.getLogger(__name__)
 
 
 class IntegrityWorkerSignals(QObject):
+    """Segnali emessi dal worker di verifica integrità dei log."""
     finished = pyqtSignal(bool)
 
 
 class IntegrityWorker(QRunnable):
+    """Worker per la verifica asincrona dell'hash di integrità del database di audit."""
     def __init__(self, manager: AuditManager) -> None:
+        """Inizializza il worker comunicando con l'AuditManager."""
         super().__init__()
         self.manager = manager
         self.signals = IntegrityWorkerSignals()
 
     def run(self) -> None:
+        """Esegue il controllo crittografico dell'integrità."""
         valid = self.manager.verify_integrity()
         self.signals.finished.emit(valid)
 

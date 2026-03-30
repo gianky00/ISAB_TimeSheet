@@ -35,6 +35,7 @@ class ConfigSaveWorker(QThread):
     finished = pyqtSignal(bool, str)
 
     def __init__(self, config: dict[str, Any]) -> None:
+        """Inizializza il worker comunicando la configurazione da salvare."""
         super().__init__()
         self.config = config
 

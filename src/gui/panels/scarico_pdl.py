@@ -251,7 +251,10 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.check_stampa.setChecked(p_cfg.get("stampa", False))
         if p_cfg.get("stampante"):
             self.combo_stampanti.setCurrentText(p_cfg["stampante"])
-        self.edit_dest.setText(p_cfg.get("destinazione", str(Path.home() / "Downloads")))
+        dest_path = p_cfg.get("destinazione")
+        if not dest_path or not Path(dest_path).exists():
+            dest_path = str(Path.home() / "Downloads")
+        self.edit_dest.setText(dest_path)
         self._update_status_list()
 
     def _get_bot_data(self) -> list[dict[str, Any]] | None:
@@ -333,7 +336,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             "account_type": account_type,
             "headless": config.get("browser_headless", False),
             "timeout": config.get("browser_timeout", 30),
-            "download_path": config_manager.get_download_path(),
+            "download_path": self.edit_dest.text() or config_manager.get_download_path(),
         }
 
         # Inizializza il worker in modo asincrono

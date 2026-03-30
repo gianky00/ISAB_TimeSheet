@@ -27,6 +27,7 @@ class AnimatedBorder(QWidget):
     BORDER_RADIUS = 28
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza il componente del bordo animato."""
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)

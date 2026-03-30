@@ -51,6 +51,13 @@ class UpdateProgressDialog(QDialog):
     """Progress dialog for update downloads or network transfers."""
 
     def __init__(self, url_or_path: str, parent: QWidget | None = None) -> None:
+        """
+        Inizializza il dialog di progresso.
+
+        Args:
+            url_or_path: URL o percorso locale del file da scaricare/trasferire.
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self.setWindowTitle("Aggiornamento SyncroJob")
         self.setFixedSize(450, 200)
@@ -73,6 +80,7 @@ class UpdateProgressDialog(QDialog):
             self.lbl_status.setText("Avvio trasferimento rete...")
 
     def setup_ui(self) -> None:
+        """Configura gli elementi grafici del dialog."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(25, 25, 25, 25)
         self.lbl_status.setFont(QFont("Segoe UI", 10))
@@ -92,11 +100,13 @@ class UpdateProgressDialog(QDialog):
         layout.addWidget(self.lbl_retry)
 
     def start(self) -> None:
+        """Mostra il dialog e avvia il worker di download."""
         self.show()
         self.worker.start()
 
     @pyqtSlot(int, int, float, float)
     def update_progress(self, downloaded: int, total: int, speed: float, eta: float) -> None:
+        """Aggiorna la barra di progresso e le label informative."""
         self.lbl_retry.setText("")
         if total > 0:
             self.pb.setMaximum(total)
@@ -116,20 +126,24 @@ class UpdateProgressDialog(QDialog):
 
     @pyqtSlot(int)
     def on_retrying(self, retry_count: int) -> None:
+        """Mostra un avviso in caso di tentativi di riconnessione."""
         self.lbl_retry.setText(f"⚠️ Connessione instabile. Tentativo #{retry_count}...")
 
     @pyqtSlot(str)
     def on_finished(self, setup_path: str) -> None:
+        """Gestisce il completamento del download chiudendo il dialog e proponendo l'installazione."""
         self.close()
         show_install_prompt(setup_path, cast("QWidget", self.parent()))
 
     @pyqtSlot(str)
     def on_error(self, err_msg: str) -> None:
+        """Mostra un messaggio d'errore critico in caso di fallimento."""
         self.close()
         QMessageBox.critical(cast("QWidget", self.parent()), "Errore", f"Trasferimento interrotto: {err_msg}")
 
 
 def show_install_prompt(setup_path: str, parent: QWidget | None = None) -> None:
+    """Mostra un messaggio all'utente per decidere se installare subito o alla chiusura."""
     msg_box = QMessageBox(parent)
     msg_box.setWindowTitle("🔄 Aggiornamento Pronto")
     msg_box.setText(
@@ -164,6 +178,7 @@ def check_for_updates(  # noqa: PLR0912
     silent: bool = True,
     callback: Callable[[dict[str, Any]], None] | None = None,
 ) -> None:
+    """Controlla se sono disponibili aggiornamenti su Web e Rete Locale."""
     update_sources = []
     with ThreadPoolExecutor(max_workers=2) as executor:
         futures = {
@@ -236,6 +251,7 @@ def check_for_updates(  # noqa: PLR0912
 
 
 def perform_auto_update(download_url: str, parent: QWidget | None = None) -> None:
+    """Avvia la procedura di download e installazione automatica dell'aggiornamento."""
     if parent is None:
         for widget in QApplication.topLevelWidgets():
             if widget.isWindow() and not widget.parent():

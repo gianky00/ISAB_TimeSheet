@@ -167,10 +167,17 @@ def set_config_values(updates: dict[str, Any]) -> bool:
 
 
 def get_download_path() -> str:
-    """Restituisce il percorso della cartella download configurata o quella predefinita di sistema."""
-    path = get_config_value("browser_download_path")
-    if not path:
+    """
+    Restituisce il percorso della cartella download configurata o quella predefinita di sistema.
+    Esegue una validazione di esistenza per evitare percorsi hardcoded da altri PC (es. Coemi).
+    """
+    # Supporta sia la vecchia chiave che quella corretta per retrocompatibilità
+    path = get_config_value("download_path") or get_config_value("browser_download_path")
+
+    # Se il path non esiste o non è impostato, usa Downloads dell'utente corrente
+    if not path or not Path(str(path)).exists():
         path = str(Path.home() / "Downloads")
+
     return str(path)
 
 
