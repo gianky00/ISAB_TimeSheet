@@ -22,6 +22,7 @@ from src.gui.widgets.info_widgets import InfoLabel
 
 class DummyCanvas(QLabel):
     """Fallback canvas utilizzato quando il backend Matplotlib Qt non è disponibile."""
+
     def __init__(self, fig: Figure) -> None:
         """Inizializza il canvas di fallback."""
         super().__init__("Grafico disabilitato (Incompatibilità Backend Matplotlib nativo)")
@@ -29,9 +30,15 @@ class DummyCanvas(QLabel):
         self.setStyleSheet("color: #6c757d; font-style: italic;")
         self.figure = fig
 
-    def draw(self) -> None: pass
-    def draw_idle(self) -> None: pass
-    def mpl_connect(self, *args: object, **kwargs: object) -> None: pass
+    def draw(self) -> None:
+        pass
+
+    def draw_idle(self) -> None:
+        pass
+
+    def mpl_connect(self, *args: object, **kwargs: object) -> None:
+        pass
+
 
 FigureCanvas = DummyCanvas
 

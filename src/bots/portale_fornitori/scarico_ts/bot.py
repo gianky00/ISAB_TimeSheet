@@ -356,9 +356,7 @@ class ScaricaTSBot(BaseBot):
         if not downloaded_file:
             # Debug avanzato: mostra gli ultimi file con i loro timestamp
             try:
-                all_files = sorted(
-                    source_dir_path.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True
-                )
+                all_files = sorted(source_dir_path.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True)
                 debug_info = [
                     f"{f.name} ({time.strftime('%H:%M:%S', time.localtime(f.stat().st_mtime))})"
                     for f in all_files[:5]

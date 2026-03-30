@@ -1,10 +1,18 @@
 # mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QProgressBar
+from PyQt6.QtCore import (  # type: ignore
+    QEasingCurve,
+    QPropertyAnimation,
+    Qt,
+    pyqtProperty,
+    pyqtSignal,
+    pyqtSlot,
+)
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import PrimaryButton
+from src.gui.widgets.wave_progress import WaveProgressBar
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 # Stile forzato per i tooltip in Light Mode
@@ -41,7 +49,13 @@ class UpdateBanner(QFrame):
         self.setVisible(False)
         self._download_url = ""
         self._is_complete = False
+
         self._setup_ui()
+
+        # Inizializza animazione per progressione fluida
+        self.animation = QPropertyAnimation(self, b"current_value")
+        self.animation.setDuration(400)
+        self.animation.setEasingCurve(QEasingCurve.Type.OutQuad)
 
     def _setup_ui(self):  # noqa: ANN202
         self.main_layout = QHBoxLayout(self)
@@ -69,21 +83,10 @@ class UpdateBanner(QFrame):
         self.details_label.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 11px; font-weight: bold;")
         prog_layout.addWidget(self.details_label)
 
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setFixedHeight(10)
-        self.progress_bar.setTextVisible(False)
-        self.progress_bar.setStyleSheet(f"""
-            QProgressBar {{
-                background-color: {COLORS["bg_alt"]};
-                border: 1px solid {COLORS["border_medium"]};
-                border-radius: 5px;
-                min-width: 150px;
-            }}
-            QProgressBar::chunk {{
-                background-color: {COLORS["primary_dark"]};
-                border-radius: 4px;
-            }}
-        """)
+        self.progress_bar = WaveProgressBar()
+        self.progress_bar.setFixedHeight(22)  # Altezza ottimizzata per il banner
+        self.progress_bar.setMinimumWidth(200)
+        self.progress_bar.setValue(0)
         prog_layout.addWidget(self.progress_bar, 1)
 
         self.main_layout.addWidget(self.progress_container, 1)
@@ -135,8 +138,15 @@ class UpdateBanner(QFrame):
             self.update_label.setText("Scaricamento in corso...")
 
         if total > 0:
-            self.progress_bar.setMaximum(total)
-            self.progress_bar.setValue(downloaded)
+            self.progress_bar.setMaximum(100)
+            percentage = int((downloaded / total) * 100)
+
+            # Avvia animazione fluida
+            if self.animation.state() == QPropertyAnimation.State.Running:
+                self.animation.stop()
+            self.animation.setStartValue(self.progress_bar.value())
+            self.animation.setEndValue(percentage)
+            self.animation.start()
 
             mb_down = downloaded / (1024 * 1024)
             mb_total = total / (1024 * 1024)
@@ -167,4 +177,17 @@ class UpdateBanner(QFrame):
         self.download_btn.setVisible(True)
         self.download_btn.setText("Riprova")
         self.update_label.setText(f"Errore: {message}")
-        self.update_label.setStyleSheet(f"color: {COLORS['status_error']}; font-weight: bold; font-size: 13px;")
+        self.update_label.setStyleSheet(
+            f"color: {COLORS['status_error']}; font-weight: bold; font-size: 13px;"
+        )
+
+    def get_current_value(self) -> int:
+        """Getter per QPropertyAnimation."""
+        return self.progress_bar.value()
+
+    def set_current_value(self, val: int) -> None:
+        """Setter per QPropertyAnimation."""
+        self.progress_bar.setValue(val)
+
+    # Proprietà Qt per l'animazione (NECESSARIA per QPropertyAnimation in PyQt6)
+    current_value = pyqtProperty(int, fget=get_current_value, fset=set_current_value)

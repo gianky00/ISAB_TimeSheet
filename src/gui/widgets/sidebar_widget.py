@@ -506,4 +506,4 @@ class SidebarWidget(QFrame):
     def _update_ui_state(self) -> None:
         """Sincronizza lo stato dei gruppi."""
         for g in (self.group_db, self.group_automazioni, self.group_contabilita, self.group_notifiche):
-                 g.set_collapsed(self._is_collapsed)
+            g.set_collapsed(self._is_collapsed)

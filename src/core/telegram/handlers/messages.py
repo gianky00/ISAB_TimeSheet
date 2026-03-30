@@ -13,7 +13,9 @@ if TYPE_CHECKING:
     from src.core.telegram.service import TelegramService
 
 
-async def handle_text_input(service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def handle_text_input(
+    service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     """
     Main router for incoming text messages.
     Routes based on current user state (DB query, wizard) or passes to query dispatcher.
@@ -44,7 +46,9 @@ async def handle_text_input(service: TelegramService, update: Update, context: C
     await _handle_sequential_input(service, chat_id, state, text, update)
 
 
-async def _handle_db_query_input(service: TelegramService, chat_id: int, state: str, text: str, update: Update) -> None:
+async def _handle_db_query_input(
+    service: TelegramService, chat_id: int, state: str, text: str, update: Update
+) -> None:
     """Processes search queries for the database browser."""
     parts = state.replace("WAITING_DB_QUERY_", "").split("_")
     params = {"db": parts[0].lower(), "query": text, "chat_id": str(chat_id)}
@@ -57,7 +61,9 @@ async def _handle_db_query_input(service: TelegramService, chat_id: int, state: 
     service.user_states[chat_id] = None
 
 
-async def _handle_sequential_input(service: TelegramService, chat_id: int, state: str, text: str, update: Update) -> None:
+async def _handle_sequential_input(
+    service: TelegramService, chat_id: int, state: str, text: str, update: Update
+) -> None:
     """Handles multi-line or list inputs for specific wizards (PDL, OdA, Time)."""
     items = [i.strip() for i in text.replace(",", "\n").replace(";", "\n").split("\n") if i.strip()]
     if not items:
@@ -79,7 +85,9 @@ async def _handle_sequential_input(service: TelegramService, chat_id: int, state
 
     service.user_states[chat_id] = None
     if update.message:
-        await update.message.reply_text("✅ Operazione completata.", reply_markup=TelegramUI.get_main_keyboard())
+        await update.message.reply_text(
+            "✅ Operazione completata.", reply_markup=TelegramUI.get_main_keyboard()
+        )
 
 
 async def handle_voice(service: TelegramService, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

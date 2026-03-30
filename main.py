@@ -28,7 +28,9 @@ ROOT_DIR = Path(__file__).parent.resolve()
 sys.path.insert(0, str(ROOT_DIR / "src"))
 
 
-def _print_exception_and_exit(exc_type: type[BaseException], exc_value: BaseException, exc_tb: Any) -> NoReturn:
+def _print_exception_and_exit(
+    exc_type: type[BaseException], exc_value: BaseException, exc_tb: Any
+) -> NoReturn:
     """Gestore globale delle eccezioni non catturate."""
     print("FATAL UNCAUGHT EXCEPTION:")
     traceback.print_exception(exc_type, exc_value, exc_tb)
@@ -74,6 +76,7 @@ def setup_enterprise_logging() -> Any:
             "=== SYNCROJOB CRASH LOG ===\nNessun crash rilevato in questa sessione.\n", encoding="utf-8"
         )
         import faulthandler  # noqa: PLC0415
+
         crash_native_file = crash_file.open("a", encoding="utf-8")
         crash_native_file.write("\n[DEBUG] Native C++ faulthandler engine enabled.\n")
         crash_native_file.flush()
@@ -87,6 +90,7 @@ def setup_enterprise_logging() -> Any:
 
 if "--splash-mode" in sys.argv:
     from src.gui.dialogs.splash_standalone import run_standalone
+
     run_standalone()
     sys.exit(0)
 
@@ -129,7 +133,10 @@ def _check_single_instance() -> None:
 
 
 def _run_phase1(
-    app: QApplication, update_splash: Callable[[str, int], None], close_splash: Callable[[], None], logger: Any
+    app: QApplication,
+    update_splash: Callable[[str, int], None],
+    close_splash: Callable[[], None],
+    logger: Any,
 ) -> None:
     """Esegue la fase 1 di inizializzazione (import pesanti) in un thread separato."""
     from PyQt6.QtCore import QObject, QThread, pyqtSignal  # noqa: PLC0415
@@ -141,6 +148,7 @@ def _run_phase1(
         def run(self) -> None:
             try:
                 from src.core.app_initializer import AppInitializer  # noqa: PLC0415
+
                 logger.info("Starting Phase 1 initialization")
                 success = AppInitializer.initialize_core(progress_callback=self.progress.emit)
                 logger.info("Phase 1 completed", success=success)
@@ -173,11 +181,14 @@ def _run_phase1(
     if not phase1_res[0]:
         close_splash()
         from src.gui.dialogs.confirmation_dialog import ConfirmationDialog  # noqa: PLC0415
+
         ConfirmationDialog.show_error(None, "Errore Avvio", cast("str", phase1_res[1]))
         sys.exit(1)
 
 
-def _run_phase3(app: QApplication, mw: MainWindow, update: Callable[[str, int], None], close: Callable[[], None], log: Any) -> None:
+def _run_phase3(
+    app: QApplication, mw: MainWindow, update: Callable[[str, int], None], close: Callable[[], None], log: Any
+) -> None:
     """Esegue la fase 3 di precaricamento GUI."""
     from PyQt6.QtCore import QTimer  # noqa: PLC0415
 
@@ -213,6 +224,7 @@ def _run_phase3(app: QApplication, mw: MainWindow, update: Callable[[str, int], 
 def _start_instance_server() -> Any:
     """Avvia il server per la gestione della singola istanza."""
     from PyQt6.QtNetwork import QLocalServer  # noqa: PLC0415
+
     server = QLocalServer()
     server.listen("SyncroJob_Instance_Connector")
     return server
@@ -220,8 +232,19 @@ def _start_instance_server() -> Any:
 
 def _init_splash() -> tuple[Callable[[str, int], None], Callable[[], None]]:
     """Inizializza il processo splash e restituisce le funzioni di controllo."""
-    cmd = [sys.executable, "--splash-mode"] if getattr(sys, "frozen", False) else [sys.executable, str(ROOT_DIR / "src" / "gui" / "dialogs" / "splash_standalone.py")]
-    sp = subprocess.Popen(cmd, stdin=subprocess.PIPE, text=True, bufsize=1, encoding="utf-8", env=os.environ | {"PYTHONUNBUFFERED": "1", "PYTHONPATH": str(ROOT_DIR)})
+    cmd = (
+        [sys.executable, "--splash-mode"]
+        if getattr(sys, "frozen", False)
+        else [sys.executable, str(ROOT_DIR / "src" / "gui" / "dialogs" / "splash_standalone.py")]
+    )
+    sp = subprocess.Popen(
+        cmd,
+        stdin=subprocess.PIPE,
+        text=True,
+        bufsize=1,
+        encoding="utf-8",
+        env=os.environ | {"PYTHONUNBUFFERED": "1", "PYTHONPATH": str(ROOT_DIR)},
+    )
 
     def upd(m: str, p: int) -> None:
         if sp.poll() is None and sp.stdin:
@@ -275,6 +298,7 @@ def main() -> None:
 
     from src.core.app_initializer import AppInitializer  # noqa: PLC0415
     from src.gui.dialogs.confirmation_dialog import ConfirmationDialog  # noqa: PLC0415
+
     for s, m in AppInitializer.get_alerts():
         if s in ("CRITICAL", "ERROR"):
             ConfirmationDialog.show_error(None, "Licenza", m, is_rich_text=True)

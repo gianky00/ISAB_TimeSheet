@@ -334,7 +334,9 @@ class TimbratureStorage:
             return True
         return False
 
-    def _process_excel_row(self, cursor: sqlite3.Cursor, row: pd.Series, stats: dict[str, int], log: Callable[[str], None]) -> None:
+    def _process_excel_row(
+        self, cursor: sqlite3.Cursor, row: pd.Series, stats: dict[str, int], log: Callable[[str], None]
+    ) -> None:
         try:
             # Data Normalization
             data_val = row.get("data")

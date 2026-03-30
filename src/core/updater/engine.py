@@ -57,6 +57,11 @@ class DownloadWorker(QThread):
         self._is_cancelled = False
         self.max_retries = 999
         self._ema_speed = 0.0
+        self._last_progress_time = 0.0
+
+    # Costanti per il controllo del flusso (Ottimizzazione GUI)
+    PROGRESS_INTERVAL = 0.1  # 10 Hz (100ms)
+    EMA_ALPHA = 0.1  # Coefficiente di smoothing per la velocità
 
     def stop(self) -> None:
         """Richiede l'interruzione del download."""
@@ -65,7 +70,6 @@ class DownloadWorker(QThread):
     def run(self) -> None:
         """Esegue le operazioni di aggiornamento nel thread dedicato."""
         setup_path = get_local_setup_path(self.url_or_path)
-        start_time = time.time()
         self._ema_speed = 0.0
 
         if Path(setup_path).exists() and time.time() - Path(setup_path).stat().st_mtime > SECONDS_IN_DAY:
@@ -75,9 +79,9 @@ class DownloadWorker(QThread):
         if self.url_or_path.startswith("http"):
             self._run_http_download(setup_path)
         else:
-            self._run_network_copy(setup_path, start_time)
+            self._run_network_copy(setup_path)
 
-    def _run_network_copy(self, setup_path: str, start_time: float) -> None:
+    def _run_network_copy(self, setup_path: str) -> None:
         """Copies file from network path with progress feedback."""
         try:
             src_path = Path(self.url_or_path)
@@ -86,25 +90,39 @@ class DownloadWorker(QThread):
 
             total_size = src_path.stat().st_size
             downloaded = 0
-            chunk_size = 1024 * 1024
+            # Granularità a 128KB (molto fluida anche su connessioni lente ~0.6MB/s)
+            chunk_size = 128 * 1024
 
             with open(self.url_or_path, "rb") as f_src, open(setup_path, "wb") as f_dst:
+                last_time = time.time()
                 while not self._is_cancelled:
                     chunk = f_src.read(chunk_size)
                     if not chunk:
                         break
 
-                    f_dst.write(chunk)
-                    downloaded += len(chunk)
+                    current_time = time.time()
+                    elapsed = current_time - last_time
+                    last_time = current_time
 
-                    # Update EMA Speed
-                    elapsed_total = time.time() - start_time
-                    current_speed = downloaded / elapsed_total if elapsed_total > 0 else 0
-                    self._ema_speed = current_speed
+                    real_chunk_size = len(chunk)
+                    f_dst.write(chunk)
+                    downloaded += real_chunk_size
+
+                    # Calcolo Velocità Dinamico (EMA)
+                    current_speed = real_chunk_size / elapsed if elapsed > 0 else 0
+                    if self._ema_speed == 0.0:
+                        self._ema_speed = current_speed
+                    else:
+                        self._ema_speed = (self.EMA_ALPHA * current_speed) + ((1 - self.EMA_ALPHA) * self._ema_speed)
 
                     remaining_bytes = total_size - downloaded
                     eta = remaining_bytes / self._ema_speed if self._ema_speed > 0 else 0.0
-                    self.progress.emit(downloaded, total_size, self._ema_speed, eta)
+
+                    # Throttling emissione segnali progress (max 10 Hz)
+                    now = time.time()
+                    if now - self._last_progress_time >= self.PROGRESS_INTERVAL or downloaded >= total_size:
+                        self.progress.emit(downloaded, total_size, self._ema_speed, eta)
+                        self._last_progress_time = now
 
             if not self._is_cancelled:
                 self.finished_download.emit(setup_path)
@@ -178,8 +196,9 @@ class DownloadWorker(QThread):
         self, response: requests.Response, setup_path: str, downloaded: int, total_size: int
     ) -> None:
         mode = "ab" if downloaded > 0 else "wb"
-        with open(setup_path, mode) as f:
-            content_iterator = response.iter_content(chunk_size=131072)
+        # Buffer scrittura OS di 2MB per HTTP
+        with open(setup_path, mode, buffering=2 * 1024 * 1024) as f:
+            content_iterator = response.iter_content(chunk_size=1024 * 1024)
             last_time = time.time()
 
             while not self._is_cancelled:
@@ -196,15 +215,19 @@ class DownloadWorker(QThread):
                     downloaded += chunk_size
 
                     current_speed = chunk_size / elapsed if elapsed > 0 else 0
-                    alpha = 0.1
                     if self._ema_speed == 0.0:
                         self._ema_speed = current_speed
                     else:
-                        self._ema_speed = (alpha * current_speed) + ((1 - alpha) * self._ema_speed)
+                        self._ema_speed = (self.EMA_ALPHA * current_speed) + ((1 - self.EMA_ALPHA) * self._ema_speed)
 
                     remaining_bytes = total_size - downloaded
                     eta = remaining_bytes / self._ema_speed if self._ema_speed > 0 else 0.0
-                    self.progress.emit(downloaded, total_size, self._ema_speed, eta)
+
+                    # Throttling emissione segnali progress (max 10 Hz)
+                    now = time.time()
+                    if now - self._last_progress_time >= self.PROGRESS_INTERVAL or downloaded >= total_size:
+                        self.progress.emit(downloaded, total_size, self._ema_speed, eta)
+                        self._last_progress_time = now
                 except StopIteration:
                     break
 

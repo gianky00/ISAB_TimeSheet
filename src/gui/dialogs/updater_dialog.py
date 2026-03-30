@@ -14,14 +14,13 @@ from typing import TYPE_CHECKING, Any, cast
 
 import requests
 from packaging import version as pkg_version
-from PyQt6.QtCore import Qt, pyqtSlot
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, pyqtProperty, pyqtSlot  # type: ignore
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QApplication,
     QDialog,
     QLabel,
     QMessageBox,
-    QProgressBar,
     QVBoxLayout,
     QWidget,
 )
@@ -39,6 +38,7 @@ from src.core.updater.engine import (
     run_installer_and_exit,
     set_pending_installer,
 )
+from src.gui.widgets.wave_progress import WaveProgressBar
 
 logger = logging.getLogger(__name__)
 
@@ -65,9 +65,17 @@ class UpdateProgressDialog(QDialog):
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint)
 
         self.lbl_status = QLabel("Avvio download...")
-        self.pb = QProgressBar()
+        self.pb = WaveProgressBar()
+        # Nota: le impostazioni standard sono ora gestite internamente da WaveProgressBar
+
         self.lbl_details = QLabel("Preparazione...")
         self.lbl_retry = QLabel("")
+
+        # Inizializza animazione per fluidità estrema della barra
+        self.animation = QPropertyAnimation(self, b"current_value")
+        self.animation.setDuration(350)
+        self.animation.setEasingCurve(QEasingCurve.Type.OutQuad)
+        self._val_proxy = 0
 
         self.setup_ui()
         self.worker = DownloadWorker(url_or_path)
@@ -86,10 +94,7 @@ class UpdateProgressDialog(QDialog):
         self.lbl_status.setFont(QFont("Segoe UI", 10))
         layout.addWidget(self.lbl_status)
 
-        self.pb.setFixedHeight(24)
-        self.pb.setStyleSheet(
-            "QProgressBar { border: 1px solid #CCCCCC; border-radius: 6px; text-align: center; background-color: #F0F0F0; } QProgressBar::chunk { background-color: #0D6EFD; border-radius: 5px; }"
-        )
+        # La barra WaveProgressBar gestisce internamente stile e dimensioni
         layout.addWidget(self.pb)
 
         self.lbl_details.setFont(QFont("Segoe UI", 9))
@@ -106,23 +111,49 @@ class UpdateProgressDialog(QDialog):
 
     @pyqtSlot(int, int, float, float)
     def update_progress(self, downloaded: int, total: int, speed: float, eta: float) -> None:
-        """Aggiorna la barra di progresso e le label informative."""
+        """Aggiorna la barra di progresso con animazione e le label informative."""
         self.lbl_retry.setText("")
-        if total > 0:
-            self.pb.setMaximum(total)
-            self.pb.setValue(downloaded)
-            percent = (downloaded / total) * 100
-            mb_down = downloaded / (1024 * 1024)
-            mb_total = total / (1024 * 1024)
-            speed_mb = speed / (1024 * 1024)
-            action = "Scaricamento" if self.worker.url_or_path.startswith("http") else "Trasferimento"
-            self.lbl_status.setText(f"{action}: {int(percent)}% completato")
-            self.lbl_details.setText(
-                f"{mb_down:.1f} MB di {mb_total:.1f} MB ({speed_mb:.2f} MB/s) - ETA: {int(eta)}s"
-            )
-        else:
+        if total <= 0:
             self.pb.setMaximum(0)
             self.lbl_status.setText("Operazione in corso...")
+            return
+
+        self.pb.setMaximum(100)
+        percentage = int((downloaded / total) * 100)
+
+        # Avvia l'animazione verso il nuovo valore %
+        if self.animation.state() == QPropertyAnimation.State.Running:
+            self.animation.stop()
+
+        self.animation.setStartValue(self.pb.value())
+        self.animation.setEndValue(percentage)
+        self.animation.start()
+
+        # Formattazione dettagli
+        speed_mb = speed / (1024 * 1024)
+        mb_down = downloaded / (1024 * 1024)
+        mb_total = total / (1024 * 1024)
+
+        eta_str = (
+            f"{int(eta // 60)}m {int(eta % 60)}s" if eta >= 60 else f"{int(eta)}s"  # noqa: PLR2004
+        )
+        action = "Scaricamento" if self.worker.url_or_path.startswith("http") else "Trasferimento"
+
+        self.lbl_status.setText(f"🚀 {action} in corso...")
+        self.lbl_details.setText(
+            f"📦 <b>{mb_down:.1f} / {mb_total:.1f} MB</b>  •  ⚡ <b>{speed_mb:.2f} MB/s</b>  •  ⏳ <b>{eta_str}</b>"
+        )
+
+    def get_current_value(self) -> int:
+        """Getter per QPropertyAnimation."""
+        return self.pb.value()
+
+    def set_current_value(self, val: int) -> None:
+        """Setter per QPropertyAnimation."""
+        self.pb.setValue(val)
+
+    # Proprietà Qt per l'animazione
+    current_value = pyqtProperty(int, fget=get_current_value, fset=set_current_value)
 
     @pyqtSlot(int)
     def on_retrying(self, retry_count: int) -> None:

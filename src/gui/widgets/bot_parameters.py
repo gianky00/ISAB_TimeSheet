@@ -261,9 +261,7 @@ class BotParametersWidget(QWidget):
         self.browse_btn.setStyleSheet(self._get_icon_btn_style())
         hbox.addWidget(self.browse_btn)
 
-        self.open_btn = ModernButton(
-            "APRI", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL
-        )
+        self.open_btn = ModernButton("APRI", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL)
         self.open_btn.setFixedSize(60, 38)
         self.open_btn.setStyleSheet(f"""
             QPushButton {{

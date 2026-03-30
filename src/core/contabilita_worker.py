@@ -82,7 +82,9 @@ class ContabilitaWorker(QThread):
             "est_certificati": certificati,
         }
 
-    def _update_progress_dynamic(self, current_in_phase: int, total_in_phase: int, state: Any, phase_key: str) -> None:
+    def _update_progress_dynamic(
+        self, current_in_phase: int, total_in_phase: int, state: Any, phase_key: str
+    ) -> None:
         """
         Aggiorna il totale operazioni se il numero effettivo differisce dalla stima.
 
@@ -206,7 +208,9 @@ class ContabilitaWorker(QThread):
 
         self._update_state(state, success, added, removed, "Certificati: OK", f"Err Certificati: {msg}")
 
-    def _update_state(self, state: Any, success: bool, added: int, removed: int, ok_msg: str, err_msg: str) -> None:  # noqa: PLR0913
+    def _update_state(  # noqa: PLR0913
+        self, state: Any, success: bool, added: int, removed: int, ok_msg: str, err_msg: str
+    ) -> None:
         state["added"] += added
         state["removed"] += removed
         if success:

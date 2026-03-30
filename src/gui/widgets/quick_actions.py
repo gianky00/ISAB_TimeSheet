@@ -113,31 +113,31 @@ AVAILABLE_ACTIONS: dict[str, dict[str, Any]] = {
         "text": "Preventivi",
         "icon": Icons.FOLDER,
         "color": COLORS["warning_orange"],
-        "path": ["DataBase", "Strumentale"],
+        "path": ["Strumentale"],
     },
     "nav_sub_strumentale_1": {
         "text": "Giornaliere",
-        "icon": Icons.FOLDER,
+        "icon": Icons.CLOCK,
         "color": COLORS["warning_orange"],
-        "path": ["DataBase", "Strumentale"],
+        "path": ["Strumentale"],
     },
     "nav_sub_strumentale_2": {
         "text": "Attività Programmate",
         "icon": Icons.CALENDAR,
         "color": COLORS["warning_orange"],
-        "path": ["DataBase", "Strumentale"],
+        "path": ["Strumentale"],
     },
     "nav_sub_strumentale_3": {
         "text": "Certificati Campione",
         "icon": Icons.FILE_TEXT,
         "color": COLORS["warning_orange"],
-        "path": ["DataBase", "Strumentale"],
+        "path": ["Strumentale"],
     },
     "nav_sub_strumentale_4": {
         "text": "Analisi KPI",
         "icon": Icons.BAR_CHART,
         "color": COLORS["warning_orange"],
-        "path": ["DataBase", "Strumentale"],
+        "path": ["Strumentale"],
     },
     # ============================================================
     # PRIMO LIVELLO: DataBase > SECONDO LIVELLO: DataEase

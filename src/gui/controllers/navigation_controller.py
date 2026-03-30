@@ -135,29 +135,24 @@ class NavigationController(QObject):
 
     def navigate_to_panel(self, panel_key: str) -> None:
         """Naviga verso un pannello specifico tramite chiave logica (bridge per AutomazioniWidget)."""
-        mapping = {
-            "scarico_ts": PageIndex.AUTOMAZIONI,
-            "carico_ts": PageIndex.AUTOMAZIONI,
-            "prenota_bp": PageIndex.AUTOMAZIONI,
-            "dettagli_oda": PageIndex.AUTOMAZIONI,
-            "scarico_pdl": PageIndex.AUTOMAZIONI,
-            "ricerca_pdl": PageIndex.AUTOMAZIONI,
-            "timbrature": PageIndex.AUTOMAZIONI,
+        # Mapping bot -> (PortalIndex, BotIndex)
+        # Portal 0: Fornitori, Portal 1: SafeWork
+        automation_sub_mapping = {
+            "dettagli_oda": (0, 0),
+            "scarico_ts": (0, 1),
+            "timbrature": (0, 2),
+            "prenota_bp": (0, 3),
+            "carico_ts": (0, 4),
+            "scarico_pdl": (1, 0),
+            "ricerca_pdl": (1, 1),
         }
 
-        # Sub-mapping per AutomazioniWidget (tab index)
-        sub_mapping = {
-            "scarico_ts": 0,
-            "dettagli_oda": 1,
-            "scarico_pdl": 2,
-            "prenota_bp": 3,
-            "carico_ts": 4,
-            "ricerca_pdl": 5,
-            "timbrature": 6,
-        }
-
-        if panel_key in mapping:
-            self.navigate_to(mapping[panel_key], sub_index=sub_mapping.get(panel_key))
+        if panel_key in automation_sub_mapping:
+            portal_idx, bot_idx = automation_sub_mapping[panel_key]
+            self.navigate_to(PageIndex.AUTOMAZIONI, sub_index=portal_idx, bot_index=bot_idx)
+        else:
+            # Fallback per altre pagine dirette se necessario
+            logger.debug("Tentativo di navigazione diretta non mappata: %s", panel_key)
 
     def navigate_to_pdl(self, site: str | None = None, area: str | None = None) -> None:
         """Naviga alla vista PDL applicando filtri specifici."""

@@ -39,6 +39,7 @@ class TrayIconComponent(QObject):
             duration: Durata della notifica in ms.
         """
         from PyQt6.QtWidgets import QSystemTrayIcon  # noqa: PLC0415
+
         if icon is None:
             icon = QSystemTrayIcon.MessageIcon.Information
         self.controller.show_message(title, message, icon, duration)

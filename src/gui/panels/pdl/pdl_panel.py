@@ -260,6 +260,7 @@ class PDLDBPanel(QWidget):
         q += " ORDER BY unita"
 
         from src.core.database import db_manager  # noqa: PLC0415
+
         rows = db_manager.execute_query(db_manager.DB_PDL, q, tuple(p))
 
         self.filters.unit_filter.blockSignals(True)
@@ -388,4 +389,5 @@ class PDLDBPanel(QWidget):
                 os.startfile(file_path)  # noqa: S606
         else:
             from PyQt6.QtWidgets import QMessageBox  # noqa: PLC0415
+
             QMessageBox.warning(self, "Errore Esportazione", message)

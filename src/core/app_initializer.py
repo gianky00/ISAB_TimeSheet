@@ -66,18 +66,22 @@ class AppInitializer:
         step("Verifica dipendenze critiche (Pandas/Numpy)...", 7)
         import numpy  # noqa: PLC0415
         import pandas  # noqa: PLC0415
+
         logger.info(f"Engine: Pandas {pandas.__version__} | Numpy {numpy.__version__}")
 
         step("Validazione Path di Sistema...", 13)
         from src.core.paths import CONFIG_DIR  # noqa: PLC0415
+
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
         step("Verifica integrità WebDriver...", 19)
         from src.utils.resource_manager import ResourceManager  # noqa: PLC0415
+
         ResourceManager.ensure_automation_driver()
 
         step("Caricamento Registry Bot...", 22)
         from src.bots import get_available_bots  # noqa: PLC0415
+
         logger.info(f"Moduli bot rilevati: {len(get_available_bots())}")
 
     @staticmethod
@@ -85,6 +89,7 @@ class AppInitializer:
         """Verifica HWID e stato licenza."""
         step("Verifica Identità Hardware (HWID)...", 25)
         from src.core.license_validator import get_hardware_id  # noqa: PLC0415
+
         get_hardware_id()
 
         step("Handshake con Server Licenze in Background...", 28)
@@ -120,6 +125,7 @@ class AppInitializer:
         step("Inizializzazione Engine SQLite3...", 34)
         try:
             from src.core.database import db_manager  # noqa: PLC0415
+
             db_manager.init_db()
         except Exception as e:
             logger.exception("Errore inizializzazione database", e)  # noqa: TRY401, PLE1205
@@ -175,6 +181,7 @@ class AppInitializer:
         Viene chiamato dal background thread: usa QTimer.singleShot(0) per
         eseguire il dialog e il sys.exit sul main thread Qt (thread-safe).
         """
+
         def _force_shutdown() -> None:
             import sys  # noqa: PLC0415
 

@@ -139,7 +139,13 @@ class PrenotaBPPage:
         self.wait.until(EC.presence_of_element_located(PrenotaBPLocators.FILTER_FORNITORE))
         self.log("Sezione Gestione BP caricata.")
 
-    def filtra_buoni_prelievo(self, fornitore: str | None = None, numero_bp: str | None = None, data_da: str | None = None, data_a: str | None = None) -> None:
+    def filtra_buoni_prelievo(
+        self,
+        fornitore: str | None = None,
+        numero_bp: str | None = None,
+        data_da: str | None = None,
+        data_a: str | None = None,
+    ) -> None:
         """Imposta i filtri di ricerca e clicca su Cerca."""
         self.log("Impostazione filtri di ricerca...")
 

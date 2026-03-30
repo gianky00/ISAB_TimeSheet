@@ -197,6 +197,7 @@ class MainWindow(QMainWindow):
 
         # 2. Sidebar come Overlay
         from src.gui.widgets.sidebar_widget import SidebarWidget  # noqa: PLC0415
+
         self.sidebar = SidebarWidget(self.central_widget)
         self.main_layout.addWidget(self.sidebar, 0, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self.sidebar.raise_()
@@ -272,7 +273,9 @@ class MainWindow(QMainWindow):
         """Ruota l'account attivo per il portale specificato."""
         if config_manager.switch_default_account(bot_type):
             self.status_bar_component.show_operational_state()
-            if hasattr(self.status_bar_component, "footer_left") and hasattr(self.status_bar_component.footer_left, "refresh_accounts"):
+            if hasattr(self.status_bar_component, "footer_left") and hasattr(
+                self.status_bar_component.footer_left, "refresh_accounts"
+            ):
                 self.status_bar_component.footer_left.refresh_accounts()
             ToastManager.instance().show(f"Account {bot_type.upper()} ruotate con successo.", "success")
         else:

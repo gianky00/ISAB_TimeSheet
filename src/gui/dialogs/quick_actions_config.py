@@ -99,7 +99,7 @@ class QuickActionsConfigDialog(QDialog):
 
         # Populate Tree
         self._populate_tree()
-        # NON espandere di default - l'utente espande manualmente
+        self.tree.expandAll()
 
         # Buttons (Salva e Annulla)
         buttons = QDialogButtonBox(

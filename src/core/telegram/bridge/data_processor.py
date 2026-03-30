@@ -84,7 +84,9 @@ class TelegramDataProcessor(QObject):
 
         self._send_data_feedback(len(valid_items), duplicates, [])
 
-    def _validate_and_filter_items(self, items: list[str], field: str, validator_func: Any, panel: Any) -> tuple[list[str], int, list[str]]:
+    def _validate_and_filter_items(
+        self, items: list[str], field: str, validator_func: Any, panel: Any
+    ) -> tuple[list[str], int, list[str]]:
         """Valida e filtra i dati in ingresso rispetto a quelli esistenti nel pannello."""
         valid_items, duplicates, errors = [], 0, []
 

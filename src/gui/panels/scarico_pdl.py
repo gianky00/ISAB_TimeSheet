@@ -98,8 +98,8 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.params_container.setObjectName("filterBar")
         self.params_container.setStyleSheet(f"""
             QFrame#filterBar {{
-                background: {COLORS['bg_white']};
-                border: 1px solid {COLORS['border_light']};
+                background: {COLORS["bg_white"]};
+                border: 1px solid {COLORS["border_light"]};
                 border-radius: 12px;
             }}
         """)
