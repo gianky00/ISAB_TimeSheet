@@ -1,4 +1,4 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
+# mypy: disable-error-code="unused-ignore, arg-type"
 """
 SyncroJob - Splash Screen Standalone Process
 Esegue lo splash screen in un processo separato per garantire fluidità assoluta (60fps)
@@ -25,7 +25,8 @@ logging.basicConfig(
 logger = logging.getLogger("StandaloneSplash")
 
 # Aggiungi la root del progetto al path per gli import tramite ResourceManager
-from src.utils.resource_manager import ResourceManager
+from src.utils.resource_manager import ResourceManager  # noqa: E402
+
 project_root = str(ResourceManager.PROJECT_ROOT)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
@@ -51,7 +52,7 @@ class SplashCommunicator(QObject):
 class StandaloneSplash(StartupDialog):
     """Estensione dello StartupDialog con logging aggiuntivo e fix visibilità."""
 
-    def __init__(self):  # noqa: ANN204
+    def __init__(self) -> None:
         super().__init__()
         # Forza opacità iniziale se l'animazione fallisse
         self.setWindowOpacity(1.0)
@@ -59,12 +60,12 @@ class StandaloneSplash(StartupDialog):
         self.raise_()
         self.activateWindow()
 
-    def update_status(self, message: str, progress: int):  # noqa: ANN201
+    def update_status(self, message: str, progress: int) -> None:
         logger.info(f"UI UPDATE EXEC: {message} | {progress}%")
         super().update_status(message, progress)
 
 
-def run_standalone():  # noqa: ANN201
+def run_standalone() -> None:
     """Main loop dello splash screen standalone."""
     logger.info("Splash standalone process starting...")
 
@@ -92,7 +93,7 @@ def run_standalone():  # noqa: ANN201
     comm.update_signal.connect(splash.update_status)
     comm.close_signal.connect(splash.close)
 
-    def read_stdin():  # noqa: ANN202
+    def read_stdin() -> None:
         logger.info("Stdin reader thread active")
         import io  # noqa: PLC0415
 

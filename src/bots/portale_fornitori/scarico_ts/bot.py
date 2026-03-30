@@ -357,15 +357,15 @@ class ScaricaTSBot(BaseBot):
             # Debug avanzato: mostra gli ultimi file con i loro timestamp
             try:
                 all_files = sorted(
-                    list(source_dir_path.iterdir()), key=lambda x: x.stat().st_mtime, reverse=True
+                    source_dir_path.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True
                 )
                 debug_info = [
                     f"{f.name} ({time.strftime('%H:%M:%S', time.localtime(f.stat().st_mtime))})"
                     for f in all_files[:5]
                 ]
                 self.log(f"[DEBUG] Ultimi file trovati: {debug_info}")
-            except Exception:
-                pass
+            except Exception as e:
+                self.log(f"[DEBUG] Errore nel recupero degli ultimi file: {e}")
             self.log(f"⚠️ Nessun nuovo file rilevato dopo il click ({Timeouts.DOWNLOAD}s).")
             return None
 
@@ -379,7 +379,7 @@ class ScaricaTSBot(BaseBot):
 
     def _click_excel_export_button(self) -> bool:
         """Individua e clicca il pulsante di esportazione Excel usando il selettore stabile del branch main."""
-        if not self.wait:
+        if not self.wait or not self.driver:
             return False
 
         # XPath ESATTO dal branch main

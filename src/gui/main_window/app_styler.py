@@ -4,9 +4,6 @@ Configura l'aspetto visivo e i metadati dell'applicazione.
 Estratto da AppInitializer per seguire l'SRP.
 """
 
-import ctypes
-import os
-from contextlib import suppress
 
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication
@@ -23,14 +20,11 @@ class AppStyler:
         """
         Configura il tema, il font e i metadati per Windows.
         """
-        if os.name == "nt":
-            with suppress(Exception):
-                myappid = f"Coemi.SyncroJob.Enterprise.{__version__}"
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-
         app.setStyle("Fusion")
         apply_theme(app, "light")
         app.setFont(QFont("Segoe UI", 10))
+
+        # Metadati applicazione
         app.setApplicationName("SyncroJob")
         app.setApplicationVersion(__version__)
         app.setDesktopFileName(f"Coemi.SyncroJob.Enterprise.{__version__}")

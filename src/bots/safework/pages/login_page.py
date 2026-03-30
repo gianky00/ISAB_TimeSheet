@@ -52,6 +52,12 @@ class SafeWorkLoginPage:
         for tentativa in range(MAX_RETRIES):
             try:
                 self.log(f"⏳ Selezione sito 'ISAB Sud' (Tentativo {tentativa + 1}/3)...")
+
+                # Attesa dinamica: aspetta che il loader in sovrimpressione scompaia
+                WebDriverWait(self.driver, 20).until(
+                    EC.invisibility_of_element_located(SafeWorkLocators.OVERLAY)
+                )
+
                 btn_sito = WebDriverWait(self.driver, 15).until(
                     EC.element_to_be_clickable(SafeWorkLocators.SITO_BUTTON)
                 )
