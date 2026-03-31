@@ -39,13 +39,27 @@ class DettagliOdAPage:
         """Inoltra un messaggio alla callback di log configurata."""
         self._log(msg)
 
-    def _wait_for_overlay(self) -> None:
-        """Attende che gli overlay di caricamento di ExtJS (maschere) siano invisibili."""
+    def _wait_for_overlay(self, timeout: int | None = None, wait_for_appearance: bool = False) -> None:
+        """
+        Attende che gli overlay di caricamento di ExtJS (maschere) siano invisibili.
+
+        Args:
+            timeout: Secondi massimi di attesa. Default: Timeouts.OVERLAY.
+            wait_for_appearance: Se True, attende prima che l'overlay appaia (max 2s)
+                                 e poi che scompaia. Evita race conditions.
+        """
+        t = timeout or Timeouts.OVERLAY
+        xpath = (
+            "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')]"
+            "[not(contains(@style,'display: none'))]"
+        )
+
+        if wait_for_appearance:
+            with suppress(TimeoutException):
+                WebDriverWait(self.driver, 2).until(EC.visibility_of_element_located((By.XPATH, xpath)))
+
         with suppress(TimeoutException):
-            xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
-            WebDriverWait(self.driver, Timeouts.OVERLAY).until(
-                EC.invisibility_of_element_located((By.XPATH, xpath))
-            )
+            WebDriverWait(self.driver, t).until(EC.invisibility_of_element_located((By.XPATH, xpath)))
 
     def navigate_to_dettagli(self, is_first_row: bool = True) -> bool:
         """Naviga nel menu del portale fino alla pagina dei Dettagli OdA."""
@@ -172,7 +186,7 @@ class DettagliOdAPage:
                 self.driver.execute_script("arguments[0].click();", checkbox)
             self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.SEARCH_BUTTON)).click()
             self.log("  Cerca cliccato...")
-            self._wait_for_overlay()
+            self._wait_for_overlay(wait_for_appearance=True)
 
             try:
                 count_label = self.wait.until(
@@ -256,6 +270,9 @@ class DettagliOdAPage:
             if not self._click_export_button(button_locator):
                 self.log("  ✗ Impossibile cliccare il pulsante di esportazione.")
                 return None
+
+            # Attesa overlay post-click esportazione (generazione file sul portale)
+            self._wait_for_overlay(wait_for_appearance=True)
 
             downloaded_file = self._wait_for_download(source_dir, files_before)
             if not downloaded_file:

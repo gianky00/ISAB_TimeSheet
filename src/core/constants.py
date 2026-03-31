@@ -52,7 +52,7 @@ class Timeouts:
     MEDIUM = 15
     LONG = 60
     EXTREME = 600
-    OVERLAY = 45
+    OVERLAY = 90
     DOWNLOAD = 25
     PAGE_LOAD = 15
     ELEMENT_WAIT = 20
