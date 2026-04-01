@@ -85,7 +85,7 @@ class WaveProgressBar(QProgressBar):
         wavelength2 = width / 6
         for x in range(0, width + 1, 2):
             y = water_level + amplitude2 * math.sin(x / wavelength2 + self._phase2)
-            wave2_path.lineTo(float(x), float(y))
+            wave2_path.lineTo(float(x), y)
         wave2_path.lineTo(float(width), float(height))
         wave2_path.closeSubpath()
 
@@ -100,7 +100,7 @@ class WaveProgressBar(QProgressBar):
         wavelength = width / 5
         for x in range(0, width + 1, 2):
             y = water_level + amplitude * math.sin(x / wavelength + self._phase)
-            wave_path.lineTo(float(x), float(y))
+            wave_path.lineTo(float(x), y)
         wave_path.lineTo(float(width), float(height))
         wave_path.closeSubpath()
 

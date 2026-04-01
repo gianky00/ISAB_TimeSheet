@@ -113,7 +113,9 @@ class DownloadWorker(QThread):
                     if self._ema_speed == 0.0:
                         self._ema_speed = current_speed
                     else:
-                        self._ema_speed = (self.EMA_ALPHA * current_speed) + ((1 - self.EMA_ALPHA) * self._ema_speed)
+                        self._ema_speed = (self.EMA_ALPHA * current_speed) + (
+                            (1 - self.EMA_ALPHA) * self._ema_speed
+                        )
 
                     remaining_bytes = total_size - downloaded
                     eta = remaining_bytes / self._ema_speed if self._ema_speed > 0 else 0.0
@@ -218,7 +220,9 @@ class DownloadWorker(QThread):
                     if self._ema_speed == 0.0:
                         self._ema_speed = current_speed
                     else:
-                        self._ema_speed = (self.EMA_ALPHA * current_speed) + ((1 - self.EMA_ALPHA) * self._ema_speed)
+                        self._ema_speed = (self.EMA_ALPHA * current_speed) + (
+                            (1 - self.EMA_ALPHA) * self._ema_speed
+                        )
 
                     remaining_bytes = total_size - downloaded
                     eta = remaining_bytes / self._ema_speed if self._ema_speed > 0 else 0.0
