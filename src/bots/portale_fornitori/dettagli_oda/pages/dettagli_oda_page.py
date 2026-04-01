@@ -16,6 +16,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
+from src.bots.base.wait_helpers import poll_for_new_file
 from src.bots.portale_fornitori.common.locators import CommonLocators, LoginLocators
 from src.bots.portale_fornitori.dettagli_oda.locators import DettagliOdALocators
 from src.core.constants import Timeouts
@@ -274,11 +275,19 @@ class DettagliOdAPage:
             # Attesa overlay post-click esportazione (generazione file sul portale)
             self._wait_for_overlay(wait_for_appearance=True)
 
-            downloaded_file = self._wait_for_download(source_dir, files_before)
-            if not downloaded_file:
+            # Attesa download tramite helper centralizzato robusto
+            res_path = poll_for_new_file(
+                directory=source_dir,
+                files_before=files_before,
+                pattern=["*.xlsx", "*.xls"],
+                timeout=Timeouts.DOWNLOAD,
+            )
+
+            if not res_path:
                 self.log(f"  ✗ Nessun nuovo file Excel trovato in {source_dir} dopo {Timeouts.DOWNLOAD}s.")
                 return None
 
+            downloaded_file = Path(res_path)
             final_path = self._finalize_download(downloaded_file, dest_dir, target_filename)
 
             # Pulizia aggressiva residui 0 KB (post-download)
@@ -309,29 +318,6 @@ class DettagliOdAPage:
         except Exception as e:
             self.log(f"  ⚠️ Errore click esportazione: {e}")
             return False
-
-    def _wait_for_download(self, source_dir: Path, files_before: set[Path]) -> Path | None:
-        """Attende il completamento del download monitorando la directory sorgente."""
-        start = time.time()
-        allowed_extensions = {".xlsx", ".xls"}
-        while time.time() - start < Timeouts.DOWNLOAD:
-            # Check for partial files
-            try:
-                files = list(source_dir.iterdir())
-                if any(f.suffix in {".crdownload", ".tmp"} for f in files):
-                    time.sleep(1)
-                    continue
-
-                current = {f for f in files if f.is_file() and f.suffix.lower() in allowed_extensions}
-                new_files = current - files_before
-                if new_files:
-                    # Prendi il file più recente tra i nuovi
-                    return max(list(new_files), key=lambda f: f.stat().st_mtime)
-            except Exception as e:
-                self._log(f"  [DEBUG] Errore scansione: {e}")
-
-            time.sleep(1)
-        return None
 
     def _finalize_download(self, src: Path, dest_dir: Path, target_name: str) -> Path | None:
         """Sposta il file scaricato nella destinazione finale rinominandolo."""

@@ -275,29 +275,19 @@ def poll_for_file(  # noqa: PLR0913
     return None
 
 
-def poll_for_new_file(
+def poll_for_new_file(  # noqa: PLR0912
     directory: Path | str,
     files_before: Iterable[Path | str],
-    pattern: str = "*.xlsx",
+    pattern: str | list[str] = "*.xlsx",
     timeout: int = 120,
     poll_interval: float = 1.0,
 ) -> str | None:
     """
     Attende che appaia un NUOVO file rispetto a uno snapshot precedente.
-    Strategia ROBUSTA: immune a timestamp errati del server.
-
-    Args:
-        directory: Directory da monitorare.
-        files_before: Set di Path o stringhe (snapshot pre-click).
-        pattern: Pattern glob opzionale.
-        timeout: Timeout in secondi.
-
-    Returns:
-        Path del nuovo file o None.
+    Supporta pattern multipli e ignora file temporanei pre-esistenti.
     """
     directory_path = Path(directory)
-    # Crea dizionario {path: mtime} per lo snapshot
-    # Questo permette di rilevare sia NUOVI file che FILE AGGIORNATI (overwrite)
+    # Snapshot map per rilevare NUOVI o AGGIORNATI
     snapshot_map: dict[Path, float] = {}
     for f_path in files_before:
         with suppress(Exception):
@@ -308,50 +298,64 @@ def poll_for_new_file(
             if p.exists():
                 snapshot_map[p] = p.stat().st_mtime
 
+    patterns = [pattern] if isinstance(pattern, str) else pattern
     start_time = time.time()
-    logger.info(f"Monitoraggio files in {directory_path} (Snapshot: {len(snapshot_map)} files)...")
+    logger.info(f"Monitoraggio files in {directory_path} (Snapshot: {len(snapshot_map)} files, Patterns: {patterns})...")
+
+    # Snapshot iniziale dei file temporanei per ignorare quelli già presenti
+    temp_exts = (".crdownload", ".tmp", ".part")
+    temp_snapshot = {f.name.lower() for f in directory_path.iterdir() if any(f.name.lower().endswith(ext) for ext in temp_exts)}
 
     while time.time() - start_time < timeout:
-        # 1. Check download in corso
-        if any(directory_path.glob("*.crdownload")) or any(directory_path.glob("*.tmp")):
-            time.sleep(poll_interval)
-            continue
+        try:
+            # 1. Check download in corso (solo per NUOVI file temporanei)
+            current_temps = {f.name.lower() for f in directory_path.iterdir() if any(f.name.lower().endswith(ext) for ext in temp_exts)}
+            new_temps = current_temps - temp_snapshot
 
-        # 2. Get current files matching pattern
-        current_files = list(directory_path.glob(pattern))
+            if new_temps:
+                if int(time.time() - start_time) % 5 == 0:
+                    logger.debug(f"[POLL] Download in corso: {list(new_temps)}")
+                time.sleep(poll_interval)
+                continue
 
-        # 3. Check for New or Modified files
-        detected_file = None
+            # 2. Get current files matching patterns
+            current_files: list[Path] = []
+            for p_str in patterns:
+                current_files.extend(list(directory_path.glob(p_str)))
 
-        for f in current_files:
-            with suppress(Exception):
-                f_res = f.resolve()
-                if not f_res.is_file():
-                    continue
+            # 3. Check for New or Modified files
+            detected_file = None
+            for f in current_files:
+                with suppress(Exception):
+                    f_res = f.resolve()
+                    if not f_res.is_file():
+                        continue
 
-                # Caso 1: File Nuovo (non era nello snapshot)
-                if f_res not in snapshot_map:
-                    detected_file = f_res
-                    logger.info(f"✅ FILE NUOVO RILEVATO: {f_res.name}")
-                    break
+                    # Caso 1: File Nuovo (non era nello snapshot)
+                    if f_res not in snapshot_map:
+                        detected_file = f_res
+                        logger.info(f"✅ FILE NUOVO RILEVATO: {f_res.name}")
+                        break
 
-                # Caso 2: File Aggiornato (era nello snapshot ma mtime è cambiato)
-                # Tolleranza 1 secondo
-                if f_res.stat().st_mtime > snapshot_map[f_res] + 1.0:
-                    detected_file = f_res
-                    logger.info(f"✅ FILE AGGIORNATO RILEVATO: {f_res.name}")
-                    break
+                    # Caso 2: File Aggiornato (era nello snapshot ma mtime è cambiato)
+                    # Tolleranza 1 secondo per filesystem instabili
+                    if f_res.stat().st_mtime > snapshot_map[f_res] + 1.0:
+                        detected_file = f_res
+                        logger.info(f"✅ FILE AGGIORNATO RILEVATO: {f_res.name}")
+                        break
 
-        if detected_file:
-            return str(detected_file)
+            if detected_file:
+                return str(detected_file)
 
-        # Log di debug periodico (ogni 5 secondi)
-        if int(time.time() - start_time) % 5 == 0:
-            logger.debug(f"[POLL] Scanning... Found {len(current_files)} matches.")
+            if int(time.time() - start_time) % 10 == 0:
+                logger.debug(f"[POLL] Scanning {directory_path}... Matches: {len(current_files)}")
+
+        except Exception as e:
+            logger.debug(f"Errore durante scansione: {e}")
 
         time.sleep(poll_interval)
 
-    logger.warning("Timeout attesa nuovo file / aggiornamento.")
+    logger.warning(f"Timeout attesa nuovo file in {directory_path} (Pattern: {patterns}, Timeout: {timeout}s).")
     return None
 
 

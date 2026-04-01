@@ -22,8 +22,10 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
+from src.bots.base.wait_helpers import poll_for_new_file
 from src.bots.portale_fornitori.timbrature.locators import TimbratureLocators
 from src.core.constants import Timeouts
+from src.core.paths import CONFIG_DIR
 
 
 class TimbraturePage:
@@ -53,7 +55,6 @@ class TimbraturePage:
             WebDriverWait(self.driver, Timeouts.OVERLAY).until(
                 EC.invisibility_of_element_located((By.XPATH, xpath))
             )
-            # No sleep needed: invisibility check is sufficient
         except TimeoutException:
             self.log("⚠️ Timeout attesa overlay.")
 
@@ -63,7 +64,6 @@ class TimbraturePage:
             self.log("Navigazione verso pagina Timbrature...")
             report_element = self.wait.until(EC.element_to_be_clickable(TimbratureLocators.REPORT_MENU))
             report_element.click()
-            # No sleep needed: keyboard actions have built-in pauses
 
             # Keyboard navigation to tab
             actions = ActionChains(self.driver)
@@ -71,7 +71,6 @@ class TimbraturePage:
             actions.send_keys(Keys.TAB).pause(0.3)
             actions.send_keys(Keys.TAB).pause(0.3)
             actions.send_keys(Keys.ENTER).perform()
-            # No sleep needed: _wait_for_overlay() handles wait
             self._wait_for_overlay()
             return True  # noqa: TRY300
         except Exception as e:
@@ -87,21 +86,6 @@ class TimbraturePage:
 
             self.log("Imposto filtri data e flag...")
 
-            # Explicitly wait for elements instead of blind TABS
-
-            # 2. Select Date From
-            # Assuming 'Data Da' is the first input after Supplier combo or identified by name/placeholder
-            # Since we don't have the exact ID, we might stick to TABs if we can't find selectors,
-            # BUT we should use waits.
-            # However, looking at the code, it relies on focus order.
-            # To improve reliability without selectors, we ensure the previous action is done.
-
-            # Let's try to improve the interaction with pauses by using Explicit Waits for "active element"
-            # if we can't find the ID.
-            # But the best fix is using the locators if available.
-            # Since I don't have the HTML source, I will make the ActionChains more robust
-            # by adding small waits and checks.
-
             actions = ActionChains(self.driver)
 
             # Focus Date From
@@ -115,8 +99,6 @@ class TimbraturePage:
                 actions.send_keys(data_a).pause(0.5)
 
             # Checkbox "Verifica Presenza Timesheet"
-            # Instead of 5 TABs, we should try to find it by text or structure if possible.
-            # If not, we keep TABs but increase safety.
             for _ in range(5):
                 actions.send_keys(Keys.TAB).pause(0.3)
 
@@ -132,7 +114,6 @@ class TimbraturePage:
 
             self.log("Attendo caricamento risultati...")
             self._wait_for_overlay()
-            # No sleep needed: overlay wait is sufficient for UI update
 
             self.log("Caricamento terminato.")
             return True  # noqa: TRY300
@@ -142,20 +123,12 @@ class TimbraturePage:
             return False
 
     def _select_supplier(self, fornitore: str) -> None:
-        """
-        Seleziona il fornitore dal menu a tendina del portale.
-        Implementa logica di retry e click robusto (ActionChains + JS).
-
-        Args:
-            fornitore: Nome del fornitore da selezionare.
-        """
+        """Seleziona il fornitore dal menu a tendina."""
         self.log(f"Seleziono fornitore: {fornitore}")
         try:
-            # Ensure overlay is gone before starting interaction
             self._wait_for_overlay()
 
             arrow_element = None
-            # Retry mechanism for finding the arrow
             for _attempt in range(3):
                 try:
                     try:
@@ -168,56 +141,50 @@ class TimbraturePage:
                         )
 
                     if arrow_element:
-                        # Use JS click if mouse interaction is flaky
                         try:
                             ActionChains(self.driver).move_to_element(arrow_element).click().perform()
                         except Exception:
                             self.driver.execute_script("arguments[0].click();", arrow_element)
                         break
                 except Exception:
-                    # Retry loop - no sleep needed, immediate retry is fine
                     with suppress(Exception):
                         pass
 
             if not arrow_element:
                 raise Exception("Impossibile trovare la freccia del fornitore.")  # noqa: TRY002, TRY003, TRY301
-            # No sleep needed: wait for option presence is next
 
-            # Select option with retry
             option_xpath = f"//li[contains(text(), '{fornitore}')]"
-
-            # Wait specifically for the option to be visible
             option = WebDriverWait(self.driver, 5).until(
                 EC.presence_of_element_located((By.XPATH, option_xpath))
             )
 
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
-            # No sleep needed: scrollIntoView is synchronous
 
             try:
                 option.click()
             except (ElementClickInterceptedException, Exception):
                 self.driver.execute_script("arguments[0].click();", option)
-            # No sleep needed: _wait_for_overlay() checks completion
             self._wait_for_overlay()
 
         except Exception as e:
             self.log(f"⚠️ Errore selezione fornitore: {e}")
-            # Non-blocking, might work anyway if default is correct, but logged.
 
     def download_excel(self) -> str:
         """Finds and clicks the Excel download button, returning the file path."""
         try:
             self.log("Cerco pulsante Excel...")
-            # No sleep needed: _find_excel_button() has internal waits
             excel_btn = self._find_excel_button()
 
             if not excel_btn:
                 self.log("⚠️ Pulsante Excel non trovato.")
                 return ""
 
+            # Snapshot dei file esistenti prima del click
+            source_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
+            allowed_ext = {".xlsx", ".xls"}
+            files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() in allowed_ext}
+
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", excel_btn)
-            # No sleep needed: scrollIntoView is synchronous
 
             self.log("Clicco su Excel...")
             try:
@@ -226,20 +193,36 @@ class TimbraturePage:
                 self.driver.execute_script("arguments[0].click();", excel_btn)
 
             self.log("Attendo download...")
-            # No sleep needed: _rename_latest_download() should use polling
-            return self._rename_latest_download("timbrature_temp")
+
+            # Utilizza helper centralizzato robusto
+            res_path = poll_for_new_file(
+                directory=source_dir,
+                files_before=files_before,
+                pattern=["*.xlsx", "*.xls"],
+                timeout=Timeouts.DOWNLOAD,
+            )
+
+            if not res_path:
+                self.log("✗ Download non rilevato o timeout.")
+                return ""
+
+            # Spostamento in cartella temp per elaborazione
+            dest_dir = CONFIG_DIR / "temp"
+            dest_dir.mkdir(parents=True, exist_ok=True)
+
+            downloaded_file = Path(res_path)
+            new_path = dest_dir / f"timbrature_{int(time.time())}.xlsx"
+
+            shutil.move(str(downloaded_file), str(new_path))
+            self.log(f"✓ File scaricato e preparato: {new_path.name}")
+            return str(new_path)
 
         except Exception as e:
             self.log(f"⚠️ Errore download Excel: {e}")
             return ""
 
     def _find_excel_button(self) -> Any:
-        """
-        Tenta di individuare il pulsante di download Excel utilizzando diverse strategie di localizzazione.
-
-        Returns:
-            WebElement | None: L'elemento del pulsante se trovato, altrimenti None.
-        """
+        """Tenta di individuare il pulsante di download Excel."""
         strategies = [
             TimbratureLocators.DOWNLOAD_BTN_TEXT,
             TimbratureLocators.DOWNLOAD_BTN_ICON,
@@ -252,43 +235,3 @@ class TimbraturePage:
             except TimeoutException:
                 continue
         return None
-
-    def _rename_latest_download(self, new_name_base: str) -> str:
-        """Finds latest download in configured download folder and moves it to temp folder."""
-        # Chrome downloads directly to download_path (if configured)
-        source_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
-        self._log(f"[DEBUG] Cerco file in: {source_dir}")
-
-        from src.core.paths import CONFIG_DIR  # noqa: PLC0415
-
-        dest_dir = CONFIG_DIR / "temp"
-        dest_dir.mkdir(parents=True, exist_ok=True)
-
-        timeout = Timeouts.DOWNLOAD
-        start_time = time.time()
-        latest_file = None
-
-        while time.time() - start_time < timeout:
-            files = list(source_dir.glob("*"))
-            files = [f for f in files if not f.name.endswith((".crdownload", ".tmp")) and f.is_file()]
-
-            if files:
-                latest_file = max(files, key=lambda f: f.stat().st_mtime)
-                if time.time() - latest_file.stat().st_mtime < 20:  # noqa: PLR2004
-                    break
-            time.sleep(1)
-
-        if not latest_file:
-            # Debug: lista file attuali
-            current_files = list(source_dir.glob("*")) if source_dir.exists() else []
-            self._log(f"[DEBUG] File attuali nella cartella: {[f.name for f in current_files[:10]]}")
-            return ""
-
-        try:
-            ext = latest_file.suffix
-            new_path = dest_dir / f"{new_name_base}_{int(time.time())}{ext}"
-            shutil.move(str(latest_file), str(new_path))
-            return str(new_path)
-        except Exception as e:
-            self.log(f"Errore spostamento file: {e}")
-            return ""

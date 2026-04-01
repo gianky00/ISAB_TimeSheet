@@ -17,6 +17,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 
 from src.bots.base import BaseBot, StepStatus
+from src.bots.base.wait_helpers import poll_for_new_file
 from src.core.constants import Timeouts
 from src.core.timesheet_processor import TimesheetProcessor
 from src.utils.helpers import sanitize_filename
@@ -345,27 +346,23 @@ class ScaricaTSBot(BaseBot):
         self.log(f"[DEBUG] File Excel pre-esistenti in {source_dir_path.name}: {len(files_before)}")
 
         # 2. Click pulsante Excel (Logica Main Branch con micro-attesa)
-        # Registriamo il timestamp del click per filtrare solo i file veramente nuovi
-        click_time = time.time()
         time.sleep(1)
         if not self._click_excel_export_button():
             return None
 
-        # 3. Attendi download
-        downloaded_file = self._wait_for_new_file(source_dir_path, files_before, click_time)
-        if not downloaded_file:
-            # Debug avanzato: mostra gli ultimi file con i loro timestamp
-            try:
-                all_files = sorted(source_dir_path.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True)
-                debug_info = [
-                    f"{f.name} ({time.strftime('%H:%M:%S', time.localtime(f.stat().st_mtime))})"
-                    for f in all_files[:5]
-                ]
-                self.log(f"[DEBUG] Ultimi file trovati: {debug_info}")
-            except Exception as e:
-                self.log(f"[DEBUG] Errore nel recupero degli ultimi file: {e}")
+        # 3. Attendi download (Utilizza helper centralizzato robusto)
+        res_path = poll_for_new_file(
+            directory=source_dir_path,
+            files_before=files_before,
+            pattern=["*.xlsx", "*.xls"],
+            timeout=Timeouts.DOWNLOAD,
+        )
+
+        if not res_path:
             self.log(f"⚠️ Nessun nuovo file rilevato dopo il click ({Timeouts.DOWNLOAD}s).")
             return None
+
+        downloaded_file = Path(res_path)
 
         # 4. Finalizzazione (Determina nome e Sposta)
         # Manteniamo l'estensione originale del file scaricato
@@ -392,31 +389,6 @@ class ScaricaTSBot(BaseBot):
         except Exception as e:
             self.log(f"⚠️ Impossibile cliccare esportazione Excel: {e}")
             return False
-
-    def _wait_for_new_file(
-        self, source_dir: Path, files_before: set[Path], click_time: float, timeout: int = 45
-    ) -> Path | None:
-        """Attende la comparsa di un nuovo file .xlsx o .xls creato dopo click_time."""
-        start_wait = time.time()
-        allowed_ext = {".xlsx", ".xls"}
-        while time.time() - start_wait < timeout:
-            with suppress(Exception):
-                files = list(source_dir.iterdir())
-                # Se c'è un download in corso (.crdownload o .tmp), continua l'attesa
-                if any(f.suffix.lower() in {".crdownload", ".tmp"} for f in files):
-                    time.sleep(1)
-                    continue
-
-                current_files = {f for f in files if f.is_file() and f.suffix.lower() in allowed_ext}
-                new_files = current_files - files_before
-                if new_files:
-                    # Tra i nuovi file, prendi solo quelli modificati DOPO il click (tolleranza 2s)
-                    valid_files = [f for f in new_files if f.stat().st_mtime > (click_time - 2)]
-                    if valid_files:
-                        return max(valid_files, key=lambda f: f.stat().st_mtime)
-
-            time.sleep(1)
-        return None
 
     def _get_final_download_path(
         self, source_dir: Path, dest_dir: Path, oda: str, pos: str, extension: str = ".xlsx"
