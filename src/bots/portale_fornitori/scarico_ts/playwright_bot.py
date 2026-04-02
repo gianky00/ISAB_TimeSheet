@@ -4,6 +4,7 @@ SyncroJob - Playwright Scarico TS Bot
 Versione Playwright del bot per il download dei timesheet dal portale ISAB.
 """
 
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
@@ -15,6 +16,8 @@ from src.bots.base.playwright_base_bot import PlaywrightBaseBot
 from src.core.constants import Timeouts
 from src.core.timesheet_processor import TimesheetProcessor
 from src.utils.helpers import sanitize_filename
+
+from .locators import ScaricoTSLocators
 
 
 class PlaywrightScaricaTSBot(PlaywrightBaseBot):
@@ -197,38 +200,75 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             return False
 
     def _setup_filters(self) -> bool:
+        """Imposta i filtri iniziali (Fornitore, Data)."""
         if not self.page:
             return False
-        self._check_stop()
         try:
-            fornitore_arrow_xpath = "xpath=//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
-            self.page.click(fornitore_arrow_xpath)
+            self.log(f"Impostazione filtri per fornitore: {self.fornitore}")
+            arrow_sel = self._get_selector(ScaricoTSLocators.FORNITORE_ARROW)
+            self.page.click(arrow_sel)
 
             fornitore_option_xpath = f"xpath=//li[normalize-space(text())='{self.fornitore}']"
             self.page.click(fornitore_option_xpath)
             self._wait_for_overlay()
 
-            self.page.fill("name=DataTimesheetDa", self.data_da)
+            data_da_sel = self._get_selector(ScaricoTSLocators.DATE_FROM_FIELD)
+            self.page.fill(data_da_sel, self.data_da)
             return True
         except Exception as e:
             self.log(f"❌ Errore nell'impostazione dei filtri: {e}")
             return False
 
     def _search_oda(self, numero_oda: str, posizione_oda: str) -> bool:
+        """Esegue la ricerca per un specifico OdA."""
         if not self.page:
             return False
         try:
-            self.page.fill("name=NumeroOda", numero_oda)
-            # Posizione OdA: prima pulisci poi scrivi (Playwright fill lo fa già, ma per sicurezza su ExtJS)
-            self.page.locator("name=PosizioneOda").fill("")
-            self.page.locator("name=PosizioneOda").fill(posizione_oda)
+            num_oda_sel = self._get_selector(ScaricoTSLocators.ODA_NUMBER_FIELD)
+            pos_oda_sel = self._get_selector(ScaricoTSLocators.ODA_POSITION_FIELD)
+
+            self.page.fill(num_oda_sel, numero_oda)
+            # Posizione OdA: prima pulisci poi scrivi
+            self.page.locator(pos_oda_sel).fill("")
+            self.page.locator(pos_oda_sel).fill(posizione_oda)
 
             xpath_cerca = "xpath=//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Cerca']]"
             self.page.click(xpath_cerca)
             self._wait_for_overlay()
+
+            # Verifica se ci sono risultati
+            xpath_empty = "//div[contains(@class, 'x-grid-empty')]"
+            if self.page.locator(f"xpath={xpath_empty}").is_visible():
+                self.log(f"⚠ Nessun TimeSheet trovato per OdA {numero_oda} / {posizione_oda}")
+                return False
             return True
         except Exception as e:
-            self.log(f"⚠️ Errore durante l'inserimento ricerca OdA {numero_oda}: {e}")
+            self.log(f"❌ Errore nella ricerca OdA: {e}")
+            return False
+
+    def _select_all_and_download(self, filename: str) -> bool:
+        """Seleziona tutti i record e clicca Scarica."""
+        if not self.page:
+            return False
+        try:
+            # Seleziona tutto tramite la checkbox nell'header
+            xpath_check_all = "//div[contains(@class, 'x-column-header-checkbox')]//span[contains(@class, 'x-column-header-text')]"
+            self.page.click(f"xpath={xpath_check_all}")
+
+            # Pulsante Scarica
+            xpath_scarica = "//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Scarica']]"
+
+            with self.page.expect_download() as download_info:
+                self.page.click(f"xpath={xpath_scarica}")
+
+            download = download_info.value
+            download_path = os.path.join(self.download_dir, filename)
+            download.save_as(download_path)
+
+            self.log(f"✓ Download completato: {filename}")
+            return True
+        except Exception as e:
+            self.log(f"❌ Errore durante il download: {e}")
             return False
 
     def _download_excel(self, dest_dir: Path, numero_oda: str, posizione_oda: str) -> Path | None:

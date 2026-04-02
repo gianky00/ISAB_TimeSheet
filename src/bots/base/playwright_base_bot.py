@@ -42,17 +42,17 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
     @measure_time(threshold_ms=10000)
     def _init_driver(self) -> None:
-        """Inizializza Playwright e il browser."""
-        self.log("🧹 Cleanup processi stale...")
-        with suppress(Exception):
-            cleanup_bot_processes()
+        """Inizializza Playwright e il browser con logica di persistenza, stabilità e recovery."""
+        from src.utils.browser_diagnostics import (  # noqa: PLC0415
+            emergency_profile_reset,
+            run_browser_diagnostic,
+        )
 
-        self.log("🌐 Inizializzazione Playwright...")
         self.status = BotStatus.INITIALIZING
-
-        self.playwright = sync_playwright().start()
-
         user_data_dir = config_manager.CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
+
+        # Assicura esistenza directory dati
+        user_data_dir.parent.mkdir(parents=True, exist_ok=True)
 
         cfg = config_manager.load_config()
         headless = self.headless or cfg.get("browser_headless", False)
@@ -63,17 +63,67 @@ class PlaywrightBaseBot(BaseBot, ABC):
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
                 "--disable-dev-shm-usage",
+                "--disable-gpu",  # Stabilità su Windows
+                "--disable-software-rasterizer",
+                "--disable-infobars",
+                "--no-first-run",
             ],
         }
 
-        self.context = self.playwright.chromium.launch_persistent_context(
-            user_data_dir=str(user_data_dir),
-            no_viewport=False,
-            viewport={"width": 1920, "height": 1080},
-            user_agent=BrowserConfig.USER_AGENT,
-            accept_downloads=True,
-            **launch_options,
-        )
+        # Tentativi di inizializzazione (Aumentati a 3 per includere la recovery)
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                self.log(f"🧹 Setup ambiente browser (Tentativo {attempt + 1}/{max_retries})...")
+
+                # Pulizia preventiva ad ogni tentativo
+                with suppress(Exception):
+                    cleanup_bot_processes()
+
+                if not self.playwright:
+                    self.log("🌐 Inizializzazione Playwright Core...")
+                    self.playwright = sync_playwright().start()
+
+                self.log(f"🚀 Lancio Chromium con profilo persistente: {user_data_dir.name}")
+                self.context = self.playwright.chromium.launch_persistent_context(
+                    user_data_dir=str(user_data_dir),
+                    no_viewport=False,
+                    viewport={"width": 1920, "height": 1080},
+                    user_agent=BrowserConfig.USER_AGENT,
+                    accept_downloads=True,
+                    **launch_options,
+                )
+                break  # Successo
+
+            except Exception as e:
+                err_msg = str(e)
+                self.log(f"⚠️ Errore inizializzazione (T{attempt + 1}): {err_msg}", "WARNING")
+
+                # Pulizia forzata dello stato interno ad ogni fallimento
+                self._stop_playwright_internal()
+
+                # Se siamo al secondo fallimento, eseguiamo diagnostica e tentiamo il reset del profilo
+                if attempt == 1:
+                    self.log("🔍 Esecuzione diagnostica browser per isolare il problema...")
+                    diag = run_browser_diagnostic(user_data_dir)
+
+                    # Se Playwright barebone funziona, ma il lancio persistente fallisce, resettiamo il profilo
+                    if diag["checks"]["playwright_launch"]["status"] == "PASS":
+                        self.log(
+                            "♻️ Binari Playwright OK, ma profilo instabile. Eseguo Emergency Reset...",
+                            "WARNING",
+                        )
+                        if emergency_profile_reset(user_data_dir):
+                            self.log("✅ Profilo resettato. Ultimo tentativo con sessione pulita.")
+                            continue
+
+                # Se è l'ultimo tentativo, rilanciamo l'errore definitivo
+                if attempt == max_retries - 1:
+                    self.log("❌ Impossibile inizializzare il browser dopo molteplici tentativi.", "ERROR")
+                    raise
+
+        if self.context is None:
+            raise RuntimeError("BrowserInitFailed")
 
         self.page = self.context.pages[0] if self.context.pages else self.context.new_page()
         # Playwright usa millisecondi per il timeout
@@ -81,6 +131,17 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
         self.page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         self.login_page = PlaywrightLoginPage(self.page, self.log, self.ISAB_URL)
+
+    def _stop_playwright_internal(self) -> None:
+        """Ferma Playwright internamente senza loggare errori se già fermo."""
+        if self.context:
+            with suppress(Exception):
+                self.context.close()
+        if self.playwright:
+            with suppress(Exception):
+                self.playwright.stop()
+        self.context = None
+        self.playwright = None
 
     def _save_error_state(self, error_msg: str) -> None:
         if not self.page:
@@ -98,6 +159,12 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
     def _login(self) -> bool:
         return self.login_page.login(self.username, self.password) if self.login_page else False
+
+    def _get_selector(self, locator: tuple[str, str]) -> str:
+        """Converte un locatore Selenium (By, value) in un selettore Playwright."""
+        from .playwright_utils import get_playwright_selector  # noqa: PLC0415
+
+        return get_playwright_selector(locator)
 
     def cleanup(self) -> None:
         if self.context:

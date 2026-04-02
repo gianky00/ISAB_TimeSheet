@@ -26,14 +26,10 @@ class PlaywrightDettagliOdAPage:
         self._log(msg)
 
     def _get_selector(self, locator: tuple[str, str]) -> str:
-        _by, value = locator
-        if value.startswith(("//", "(")):
-            return f"xpath={value}"
-        if _by == "id":
-            return f"id={value}"
-        if _by == "css selector":
-            return value
-        return value
+        """Converte un locatore Selenium (By, value) in un selettore Playwright."""
+        from src.bots.base.playwright_utils import get_playwright_selector  # noqa: PLC0415
+
+        return get_playwright_selector(locator)
 
     def _wait_for_overlay(self, timeout_ms: int | None = None) -> None:
         t = timeout_ms or (Timeouts.OVERLAY * 1000)

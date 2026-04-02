@@ -20,10 +20,10 @@ class PlaywrightPrenotaBPPage:
         self.log = log_callback or print
 
     def _get_selector(self, locator: tuple[str, str]) -> str:
-        _by, value = locator
-        if value.startswith(("//", "(")):
-            return f"xpath={value}"
-        return value
+        """Converte un locatore Selenium (By, value) in un selettore Playwright."""
+        from src.bots.base.playwright_utils import get_playwright_selector  # noqa: PLC0415
+
+        return get_playwright_selector(locator)
 
     def _wait_for_overlay(self) -> None:
         """Attende la scomparsa di maschere di caricamento."""

@@ -214,27 +214,44 @@ def cleanup_bot_processes() -> None:
     """
     Termina forzatamente le istanze 'zombie' di Chrome e Chromedriver legate all'applicazione.
     Rimuove i file di lock del profilo per prevenire errori di sessione (SessionNotCreated).
+    Include anche processi Playwright/Node se rimasti appesi.
     """
     cleanup_logger = logging.getLogger("Cleanup")
 
-    # 1. Terminazione Chromedriver
-    for proc in psutil.process_iter(["name"]):
+    # 1. Terminazione Chromedriver e Binari Playwright
+    target_procs = ["chromedriver.exe", "msedge.exe", "playwright.exe", "node.exe"]
+    for proc in psutil.process_iter(["name", "cmdline"]):
         with suppress(Exception):
-            if proc.info["name"] == "chromedriver.exe":
+            pname = proc.info["name"]
+            if any(tp.lower() == pname.lower() for tp in target_procs):
+                # Se è node o playwright, verifichiamo che sia della nostra app
+                cmdline = " ".join(proc.info["cmdline"] or [])
+                if pname.lower() in ("node.exe", "playwright.exe") and "playwright" not in cmdline.lower():
+                    continue
                 proc.kill()
+                cleanup_logger.info(f"Terminated zombie process: {pname}")
 
-    # 2. Terminazione Chrome (Solo se utilizza il profilo dedicato di SyncroJob)
-    profile_dir = "chrome_profile"
+    # 2. Terminazione Chrome (Solo se utilizza il profilo dedicato di SyncroJob o se è orfano)
+    profile_dir = BrowserConfig.CACHE_DIR_NAME
     for proc in psutil.process_iter(["name", "cmdline"]):
         with suppress(Exception):
             if proc.info["name"] == "chrome.exe":
                 cmdline = " ".join(proc.info["cmdline"] or [])
-                if profile_dir in cmdline.lower() and "syncrojob" in cmdline.lower():
+                # Terminiamo solo processi che puntano al nostro profilo o che hanno flag di automazione
+                if profile_dir in cmdline or "remote-debugging-port" in cmdline:
                     proc.kill()
+                    cleanup_logger.info(f"Terminated automation chrome instance (PID: {proc.pid})")
 
     # 3. Rimozione file di lock nel profilo
     profile_path = CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
-    lock_files = ["SingletonLock", "SingletonSocket", "SingletonCookie"]
+    lock_files = [
+        "SingletonLock",
+        "SingletonSocket",
+        "SingletonCookie",
+        "DevToolsActivePort",
+        "Lock",
+        "LOCK",
+    ]
 
     if profile_path.exists():
         for lock_file in lock_files:
@@ -243,6 +260,13 @@ def cleanup_bot_processes() -> None:
                 with suppress(Exception):
                     f_path.unlink()
                     cleanup_logger.info(f"Removed stale lock file: {lock_file}")
+            # Cerca anche in sottocartelle comuni (es. Local State)
+            for sub in ["Default", "Network"]:
+                f_sub_path = profile_path / sub / lock_file
+                if f_sub_path.exists():
+                    with suppress(Exception):
+                        f_sub_path.unlink()
+                        cleanup_logger.info(f"Removed stale lock file in {sub}: {lock_file}")
 
 
 def get_colored_icon(icon_path: str, color: str = "#000000") -> "QIcon":
