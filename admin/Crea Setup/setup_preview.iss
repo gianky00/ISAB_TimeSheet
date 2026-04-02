@@ -127,7 +127,7 @@ const
   // Flag per animazioni cinematiche tramite user32.dll
   AW_HIDE = $00010000;
   AW_BLEND = $00080000;
-  
+
   // Flag per l'effetto Glass (Trasparenza via Acrylic/Alpha)
   GWL_EXSTYLE = -20;
   WS_EX_LAYERED = $00080000;
@@ -204,7 +204,7 @@ begin
   // 1. TITOLO FINESTRA PERSONALIZZATO E FLAT UI
   // -----------------------------------------------------------------------
   WizardForm.Caption := '{#MyAppName} — Installazione Guidata';
-  
+
   // FLAT UI: Rimuove le linee 3D (Bevels) forzate da Windows/InnoSetup
   WizardForm.Bevel.Visible := False;
   WizardForm.Bevel1.Visible := False;
@@ -260,7 +260,7 @@ begin
   // 7. FOOTER CON COPYRIGHT E VERSIONE
   // -----------------------------------------------------------------------
   // Ancoriamo direttamente alla WizardForm, allineato coi bottoni
-  
+
   // Copyright a sinistra (Link Interattivo)
   CopyrightLabel := TNewStaticText.Create(WizardForm);
   CopyrightLabel.Parent := WizardForm;
@@ -302,10 +302,10 @@ begin
   // Applica il backdrop di sistema chiaro (Mica) e angoli arrotondati (Win 11)
   BackdropType := 2; // DWMSBT_MAINWINDOW (Mica)
   DwmSetWindowAttribute(WizardForm.Handle, DWMWA_SYSTEMBACKDROP_TYPE, BackdropType, SizeOf(BackdropType));
-  
+
   BackdropType := 1; // Fallback legacy per Mica (su vecchie build Windows 11)
   DwmSetWindowAttribute(WizardForm.Handle, DWMWA_MICA_EFFECT, BackdropType, SizeOf(BackdropType));
-  
+
   CornerPref := 2; // DWMWCP_ROUND (Angoli stondati nativi)
   DwmSetWindowAttribute(WizardForm.Handle, DWMWA_WINDOW_CORNER_PREFERENCE, CornerPref, SizeOf(CornerPref));
 
@@ -317,26 +317,26 @@ begin
   // 10. SYSTEM HEALTH CHECK CUSTOM PAGE
   // -----------------------------------------------------------------------
   HealthPage := CreateCustomPage(wpWelcome, 'Verifica di Sistema', 'Controllo dei requisiti ottimali per l''installazione in corso...');
-  
+
   HealthCheckDesc := TNewStaticText.Create(WizardForm);
   HealthCheckDesc.Parent := HealthPage.Surface;
   HealthCheckDesc.Top := 10;
   HealthCheckDesc.Caption := 'Il programma di installazione verificherà che il tuo computer soddisfi i requisiti minimi.';
   HealthCheckDesc.Font.Size := 9;
   HealthCheckDesc.Font.Color := $444444;
-  
+
   HealthLabelRAM := TNewStaticText.Create(WizardForm);
   HealthLabelRAM.Parent := HealthPage.Surface;
   HealthLabelRAM.Top := HealthCheckDesc.Top + 40;
   HealthLabelRAM.Font.Size := 10;
   HealthLabelRAM.Font.Style := [fsBold];
-  
+
   HealthLabelRes := TNewStaticText.Create(WizardForm);
   HealthLabelRes.Parent := HealthPage.Surface;
   HealthLabelRes.Top := HealthLabelRAM.Top + 30;
   HealthLabelRes.Font.Size := 10;
   HealthLabelRes.Font.Style := [fsBold];
-  
+
   HealthLabelOS := TNewStaticText.Create(WizardForm);
   HealthLabelOS.Parent := HealthPage.Surface;
   HealthLabelOS.Top := HealthLabelRes.Top + 30;
@@ -371,13 +371,13 @@ begin
     if GlobalMemoryStatusEx(MemStatus) then
     begin
       TotalRAM := MemStatus.ullTotalPhys / (1024 * 1024 * 1024) + 1; // GB arrotondati per eccesso (es. 15.8 -> 16 GB)
-      
+
       HealthLabelRAM.Caption := '✓ RAM sufficiente rilevata (' + IntToStr(TotalRAM) + ' GB)';
       HealthLabelRAM.Font.Color := $1A6B4A;
-      
+
       HealthLabelRes.Caption := '✓ Risoluzione ottimale dello schermo';
       HealthLabelRes.Font.Color := $1A6B4A;
-      
+
       HealthLabelOS.Caption := '✓ Sistema Windows a 64-bit verificato con successo';
       HealthLabelOS.Font.Color := $1A6B4A;
     end;
@@ -417,10 +417,10 @@ var
   ErrorCode: Integer;
 begin
   // SMART APP KILLER
-  // Prima ancora che il setup appaia, uccidiamo silenziosamente SyncroJob e tutti 
+  // Prima ancora che il setup appaia, uccidiamo silenziosamente SyncroJob e tutti
   // i suoi processi figli (es. bot Chrome) per evitare l'odioso errore "File in uso".
   Exec('taskkill.exe', '/F /T /IM {#MyAppExeName}', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
-  
+
   Result := True;
 end;
 

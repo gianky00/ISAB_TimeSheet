@@ -207,7 +207,13 @@ class BaseBotPanel(QWidget):
             if not bot_class:
                 bot_info = BOT_REGISTRY.get(self.bot_id)
                 if bot_info:
-                    bot_class = bot_info["class"]
+                    # Rispetta il motore configurato per i metadati
+                    config = config_manager.load_config()
+                    engine = config.get("automation_engine", "selenium").lower()
+                    if engine == "playwright" and bot_info.get("class_pw"):
+                        bot_class = bot_info["class_pw"]
+                    else:
+                        bot_class = bot_info["class"]
 
             if bot_class and hasattr(bot_class, "STEPS") and bot_class.STEPS:
                 self.activity_timeline.set_steps(bot_class.STEPS)

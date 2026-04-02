@@ -1,0 +1,231 @@
+# mypy: disable-error-code="no-any-unimported, unused-ignore"
+"""
+SyncroJob - Selenium Base Bot
+Implementazione della classe base per i bot Selenium.
+"""
+
+from abc import ABC
+from contextlib import suppress
+from pathlib import Path
+from typing import Any
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+
+from src.bots.base.base_bot import BaseBot
+from src.bots.base.login_page import LoginPage
+from src.core import config_manager
+from src.core.constants import BotStatus, BrowserConfig, Timeouts
+from src.core.logging import measure_time
+from src.utils.helpers import cleanup_bot_processes
+
+
+class SeleniumBaseBot(BaseBot, ABC):
+    """
+    Classe base per i bot basati su Selenium.
+    """
+
+    def __init__(
+        self,
+        username: str,
+        password: str,
+        headless: bool = False,
+        timeout: int = Timeouts.DEFAULT,
+        download_path: str = "",
+    ) -> None:
+        super().__init__(username, password, headless, timeout, download_path)
+        self.driver: webdriver.Chrome | None = None
+        self.wait: WebDriverWait[webdriver.Chrome] | None = None
+        self.popup_wait: WebDriverWait[webdriver.Chrome] | None = None
+        self.long_wait: WebDriverWait[webdriver.Chrome] | None = None
+        self.login_page: LoginPage | None = None
+        self._force_download = False
+
+    @measure_time(threshold_ms=10000)
+    def _init_driver(self) -> None:
+        """Inizializza il browser Chrome."""
+        self.log("🧹 Cleanup processi stale...")
+        with suppress(Exception):
+            cleanup_bot_processes()
+
+        self.log("🌐 Inizializzazione browser (Selenium)...")
+        self.status = BotStatus.INITIALIZING
+        options = self._get_chrome_options()
+        if d_path := self._get_chromedriver_path():
+            try:
+                service = Service(d_path)
+                self._setup_driver_instance(service, options)
+                self._configure_waits_and_pages()
+            except Exception as e:
+                self._handle_driver_error(e)
+        else:
+            raise RuntimeError("Chromedriver service non disponibile.")
+
+    def _get_chrome_options(self) -> Options:
+        opt = Options()
+        args = [
+            "--disable-features=DownloadBubble,DownloadBubbleV2",
+            "--disable-notifications",
+            "--disable-infobars",
+            "--disable-popup-blocking",
+            "--disable-blink-features=AutomationControlled",
+            "--no-sandbox",
+            "--start-maximized",
+            "--no-restore-session-state",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--remote-debugging-port=0",
+            "--disable-software-rasterizer",
+        ]
+        for a in args:
+            opt.add_argument(a)
+
+        opt.add_experimental_option("excludeSwitches", ["enable-automation"])
+        opt.add_experimental_option("useAutomationExtension", False)
+
+        cfg = config_manager.load_config()
+        if self.headless or cfg.get("browser_headless", False):
+            self.headless = True
+            opt.add_argument("--headless=new")
+            opt.add_argument(f"--window-size={BrowserConfig.WINDOW_SIZE}")
+
+        opt.add_argument(
+            f"--user-data-dir={config_manager.CONFIG_DIR / 'data' / BrowserConfig.CACHE_DIR_NAME}"
+        )
+
+        prefs: dict[str, Any] = {
+            "profile.default_content_setting_values.automatic_downloads": 1,
+            "plugins.always_open_pdf_externally": True,
+            "download.prompt_for_download": False,
+        }
+        if self.download_path:
+            prefs["download.default_directory"] = str(Path(self.download_path).resolve())
+
+        opt.add_experimental_option("prefs", prefs)
+        return opt
+
+    def _get_chromedriver_path(self) -> str | None:
+        from src.utils.resource_manager import ResourceManager  # noqa: PLC0415
+
+        if not getattr(self, "_force_download", False) and (
+            d_path := ResourceManager.ensure_automation_driver()
+        ):
+            return d_path
+
+        try:
+            from webdriver_manager.chrome import ChromeDriverManager  # noqa: PLC0415
+
+            self.log("Aggiornamento driver in corso...")
+            d_path = ChromeDriverManager().install()
+            if not d_path.lower().endswith(".exe") and (
+                pot := list(Path(d_path).parent.rglob("chromedriver.exe"))
+            ):
+                d_path = str(pot[0])
+
+            if Path(d_path).exists():
+                import shutil  # noqa: PLC0415
+
+                p_dir = ResourceManager.get_writable_drivers_dir()
+                with suppress(Exception):
+                    shutil.copy2(d_path, p_dir / "chromedriver.exe")
+            return d_path
+        except Exception as e:
+            self.log(f"⚠️ Errore download driver: {e}")
+        return None
+
+    def _setup_driver_instance(self, service: Service, options: Options) -> None:
+        self.driver = webdriver.Chrome(service=service, options=options)
+        target_download = (
+            Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
+        )
+        if not target_download.exists():
+            with suppress(Exception):
+                target_download.mkdir(parents=True, exist_ok=True)
+
+        self.log(f"📁 Cartella download forzata: {target_download}")
+        self.driver.execute_cdp_cmd(
+            "Page.setDownloadBehavior",
+            {"behavior": "allow", "downloadPath": str(target_download)},
+        )
+        self.driver.execute_cdp_cmd(
+            "Page.addScriptToEvaluateOnNewDocument",
+            {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"},
+        )
+
+    def _configure_waits_and_pages(self) -> None:
+        if not self.driver:
+            return
+        self.wait = WebDriverWait(self.driver, self.timeout)
+        self.popup_wait = WebDriverWait(self.driver, Timeouts.SHORT)
+        self.long_wait = WebDriverWait(self.driver, Timeouts.PAGE_LOAD)
+        self.login_page = LoginPage(self.driver, self.wait, self.log, self.ISAB_URL)
+
+    def _handle_driver_error(self, e: Exception) -> None:
+        msg = str(e).lower()
+        if "chrome instance exited" in msg:
+            self.log("❌ CRASH: Chrome si è chiuso all'avvio", "ERROR")
+            self._force_driver_redownload()
+        elif "version" in msg or "sessionnotcreated" in msg:
+            self.log("❌ ERRORE CRITICO DRIVER: Versione incompatibile", "ERROR")
+            self._force_driver_redownload()
+        else:
+            self.log(f"❌ ERRORE DRIVER: {e}", "ERROR")
+        raise e
+
+    def _force_driver_redownload(self) -> None:
+        from src.utils.resource_manager import ResourceManager  # noqa: PLC0415
+
+        self._force_download = True
+        with suppress(Exception):
+            p_dir = ResourceManager.get_writable_drivers_dir()
+            d_exe = p_dir / "chromedriver.exe"
+            if d_exe.exists():
+                d_exe.unlink()
+                self.log("🗑️ Driver locale obsoleto rimosso dalla cache.")
+
+    def _save_error_state(self, error_msg: str) -> None:
+        if not self.driver:
+            return
+        with suppress(Exception):
+            import re
+            from datetime import UTC, datetime
+
+            edir = config_manager.CONFIG_DIR / "logs" / "errors"
+            edir.mkdir(parents=True, exist_ok=True)
+            ts = datetime.now(UTC).astimezone().strftime("%Y%m%d_%H%M%S")
+            sn = re.sub(r"[^\w\-]", "_", self.name.lower())
+            self.driver.save_screenshot(str(edir / f"error_{sn}_{ts}.png"))
+
+            raw_source = self.driver.page_source
+            clean_source = re.sub(
+                r"<script.*?>.*?</script>",
+                "<!-- SCRIPT REMOVED FOR SECURITY -->",
+                raw_source,
+                flags=re.DOTALL | re.IGNORECASE,
+            )
+            (edir / f"error_{sn}_{ts}.html").write_text(clean_source, encoding="utf-8")
+            self.log(f"📸 Stato errore salvato in: {edir.name}")
+
+    def _login(self) -> bool:
+        return self.login_page.login(self.username, self.password) if self.login_page else False
+
+    def _attendi_scomparsa_overlay(self, timeout: int | None = None) -> bool:
+        """Attende che gli overlay grafici (loading) del portale ISAB vengano rimossi dal DOM."""
+        if self.login_page:
+            if timeout is not None:
+                return self.login_page._attendi_scomparsa_overlay(timeout)
+            return self.login_page._attendi_scomparsa_overlay()
+        return True
+
+    def cleanup(self) -> None:
+        if self.download_path:
+            from src.utils.helpers import cleanup_chrome_temp_files  # noqa: PLC0415
+
+            with suppress(Exception):
+                cleanup_chrome_temp_files(self.download_path)
+        if self.driver:
+            with suppress(Exception):
+                self.driver.quit()
+            self.driver = None

@@ -12,6 +12,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "safework_accounts": [],
     "contracts": [],
     "default_contract": "",
+    "automation_engine": "selenium",  # Motore di automazione (selenium o playwright)
     "browser_headless": False,
     "browser_timeout": 30,
     "download_path": "",
@@ -25,7 +26,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "enable_auto_update_contabilita": True,
     "certificati_campione_path": "",
     "master_preventivi_path": "",
-    "base_network_path_preventivi": r"\192.168.11.251\Database_Tecnico_SMI\Contabilita' strumentale",
+    "base_network_path_preventivi": r"\\192.168.11.251\Database_Tecnico_SMI\Contabilita' strumentale",
     "preventivi_tcl": [
         "MESSINA I.",
         "AGUSTA D.",

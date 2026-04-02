@@ -16,14 +16,15 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 
-from src.bots.base import BaseBot, StepStatus
+from src.bots.base import StepStatus
+from src.bots.base.selenium_base_bot import SeleniumBaseBot
 from src.bots.base.wait_helpers import poll_for_new_file
 from src.core.constants import Timeouts
 from src.core.timesheet_processor import TimesheetProcessor
 from src.utils.helpers import sanitize_filename
 
 
-class ScaricaTSBot(BaseBot):
+class ScaricaTSBot(SeleniumBaseBot):
     """
     Bot per lo scarico automatico dei timesheet dal portale ISAB.
     """

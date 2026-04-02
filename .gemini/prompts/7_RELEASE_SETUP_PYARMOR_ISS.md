@@ -1,7 +1,7 @@
 # 7 — Release Engineering: Offuscamento & Packaging (PyArmor + Inno Setup)
 
 > Prompt universale per implementare un workflow di rilascio professionale su progetti Python.
-> Include l'offuscamento del codice sorgente (PyArmor), la creazione di un pacchetto 
+> Include l'offuscamento del codice sorgente (PyArmor), la creazione di un pacchetto
 > standalone (PyInstaller) e la generazione di un installer Windows (.exe) con Inno Setup.
 >
 > Compatibile con qualsiasi LLM che abbia accesso al filesystem e al terminale.
@@ -80,16 +80,16 @@ Trasforma il codice offuscato in una directory standalone con tutte le dipendenz
 
 1. CONFIGURA il comando PyInstaller puntando al codice offuscato:
    ```bash
-   pyinstaller --name "NOME_APP" 
-               --onedir 
-               --windowed 
-               --noconfirm 
-               --clean 
-               --distpath "dist" 
-               --workpath "build" 
-               --icon "assets/app.ico" 
-               --add-data "build/obf/src;src" 
-               --add-data "assets;assets" 
+   pyinstaller --name "NOME_APP"
+               --onedir
+               --windowed
+               --noconfirm
+               --clean
+               --distpath "dist"
+               --workpath "build"
+               --icon "assets/app.ico"
+               --add-data "build/obf/src;src"
+               --add-data "assets;assets"
                build/obf/main.py
    ```
 
@@ -162,13 +162,13 @@ def build():
     # 1. Cleanup
     for folder in ['build', 'dist', 'Setup']:
         if os.path.exists(folder): shutil.rmtree(folder)
-    
+
     # 2. PyArmor
     run("pyarmor gen --output build/obf --recursive src/ main.py")
-    
+
     # 3. PyInstaller
     run("pyinstaller --onedir --windowed --noconfirm --add-data "build/obf/src;src" build/obf/main.py")
-    
+
     # 4. Inno Setup
     iscc = r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
     if os.path.exists(iscc):

@@ -1,7 +1,7 @@
 # mypy: disable-error-code="no-any-unimported, unused-ignore, no-untyped-def, no-untyped-call"
 """
-SyncroJob - Timbrature Bot
-Bot for accessing Timbrature section using Page Object Model.
+SyncroJob - Playwright Timbrature Bot
+Versione Playwright del bot per lo scarico delle timbrature.
 """
 
 from contextlib import suppress
@@ -9,13 +9,13 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 from src.bots.base.base_bot import StepStatus
-from src.bots.base.selenium_base_bot import SeleniumBaseBot
-from src.bots.portale_fornitori.timbrature.pages.timbrature_page import TimbraturePage
+from src.bots.base.playwright_base_bot import PlaywrightBaseBot
+from src.bots.portale_fornitori.timbrature.playwright_page import PlaywrightTimbraturePage
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
 
-class TimbratureBot(SeleniumBaseBot):
-    """Bot per lo scarico e l'archiviazione automatica delle timbrature dal Portale Fornitori."""
+class PlaywrightTimbratureBot(PlaywrightBaseBot):
+    """Bot per lo scarico e l'archiviazione automatica delle timbrature usando Playwright."""
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login Portale ISAB"),
@@ -27,34 +27,21 @@ class TimbratureBot(SeleniumBaseBot):
 
     @property
     def name(self) -> str:
-        """Restituisce il nome del bot."""
-        return "Timbrature"
+        return "Timbrature (PW)"
 
     @property
     def description(self) -> str:
-        """Restituisce una descrizione delle funzionalità del bot."""
-        return "Scarica e archivia le timbrature dal portale ISAB"
-
-    @staticmethod
-    def get_name() -> str:
-        """Metodo statico che restituisce il nome del bot."""
-        return "Timbrature"
-
-    @staticmethod
-    def get_description() -> str:
-        """Metodo statico che restituisce la descrizione del bot."""
-        return "Scarica e archivia le timbrature dal portale ISAB"
+        return "Scarica e archivia le timbrature dal portale ISAB (Playwright)"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
-        """Restituisce le colonne per la visualizzazione dei dati."""
         return [
             {"name": "fornitore", "label": "Fornitore", "width": 150},
             {"name": "data_da", "label": "Data Da", "width": 100},
             {"name": "data_a", "label": "Data A", "width": 100},
         ]
 
-    def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs):  # noqa: ANN003, ANN204
+    def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.data_da = data_da
         self.data_a = data_a
@@ -62,12 +49,10 @@ class TimbratureBot(SeleniumBaseBot):
         self.storage = TimbratureStorage()
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
-        """Validazione specifica per Timbrature."""
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:
             return False, base_msg
 
-        # Extract rows from dict if needed
         rows: list[dict[str, Any]]
         if isinstance(data, dict):
             rows = data.get("rows", [])
@@ -89,7 +74,7 @@ class TimbratureBot(SeleniumBaseBot):
 
     def run(self, data: list[dict[str, Any]]) -> bool:
         """
-        Executes the Timbrature workflow: Navigate -> Filter -> Download -> Import.
+        Esegue il workflow Timbrature con Playwright.
         """
         self.update_step("login", StepStatus.COMPLETED)
 
@@ -99,16 +84,18 @@ class TimbratureBot(SeleniumBaseBot):
             self.data_a = row.get("data_a", self.data_a)
             self.fornitore = row.get("fornitore", self.fornitore)
 
-        self.log(f"🚀 Inizio recupero timbrature per {self.fornitore} ({self.data_da} - {self.data_a})...")
+        self.log(
+            f"🚀 Inizio recupero timbrature (PW) per {self.fornitore} ({self.data_da} - {self.data_a})..."
+        )
 
-        if not self.driver:
+        if not self.page:
             return False
 
-        page = TimbraturePage(self.driver, self.log, self.download_path)
+        page_obj = PlaywrightTimbraturePage(self.page, self.log, self.download_path)
 
         # 1. Navigation
         self.update_step("nav", StepStatus.RUNNING)
-        if not page.navigate_to_timbrature():
+        if not page_obj.navigate_to_timbrature():
             self.log("❌ Non riesco a raggiungere la sezione Timbrature.")
             self.update_step("nav", StepStatus.ERROR)
             return False
@@ -116,14 +103,14 @@ class TimbratureBot(SeleniumBaseBot):
 
         # 2. Filter & Download
         self.update_step("filter", StepStatus.RUNNING)
-        if not page.set_filters(self.fornitore, self.data_da, self.data_a):
+        if not page_obj.set_filters(self.fornitore, self.data_da, self.data_a):
             self.log("❌ Filtri non applicati correttamente.")
             self.update_step("filter", StepStatus.ERROR)
             return False
         self.update_step("filter", StepStatus.COMPLETED)
 
         self.update_step("download", StepStatus.RUNNING)
-        excel_path = page.download_excel()
+        excel_path = page_obj.download_excel()
 
         # 3. Process File
         if excel_path:
@@ -138,7 +125,6 @@ class TimbratureBot(SeleniumBaseBot):
                 self.log(f"❌ Errore durante il salvataggio: {e}")
                 self.update_step("import", StepStatus.ERROR)
             finally:
-                # Cleanup
                 p = Path(excel_path)
                 if p.exists():
                     with suppress(Exception):
@@ -149,10 +135,3 @@ class TimbratureBot(SeleniumBaseBot):
 
         self.log("✨ Procedura conclusa.")
         return True
-
-    @staticmethod
-    def import_to_db_static(excel_path: str, db_path: Path, log_callback=None):  # noqa: ANN001, ANN205
-        """
-        Static method for manual import (GUI).
-        """
-        return TimbratureStorage(db_path).import_excel(excel_path, log_callback)

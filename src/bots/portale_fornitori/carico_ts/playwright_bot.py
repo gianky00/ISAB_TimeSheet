@@ -1,18 +1,19 @@
+# mypy: disable-error-code="no-untyped-call"
 """
-SyncroJob - Carico TS Bot
-Bot for Carico TS using POM.
+SyncroJob - Playwright Carico TS Bot
+Versione Playwright del bot per il caricamento dei timesheet.
 """
 
 from typing import Any, ClassVar
 
 from src.bots.base.base_bot import StepStatus
-from src.bots.base.selenium_base_bot import SeleniumBaseBot
-from src.bots.portale_fornitori.carico_ts.pages.carico_ts_page import CaricoTSPage
+from src.bots.base.playwright_base_bot import PlaywrightBaseBot
+from src.bots.portale_fornitori.carico_ts.playwright_page import PlaywrightCaricoTSPage
 from src.core.constants import Business
 
 
-class CaricoTSBot(SeleniumBaseBot):
-    """Bot per l'estrazione e il caricamento dei dati Timesheet sul Portale Fornitori."""
+class PlaywrightCaricoTSBot(PlaywrightBaseBot):
+    """Bot per l'estrazione e il caricamento dei dati Timesheet usando Playwright."""
 
     FORNITORE = Business.DEFAULT_SUPPLIER
 
@@ -24,19 +25,16 @@ class CaricoTSBot(SeleniumBaseBot):
         ("cleanup", "Chiusura Sessione"),
     ]
 
-    @staticmethod
-    def get_name() -> str:
-        """Restituisce il nome del bot."""
-        return "Carico TS"
+    @property
+    def name(self) -> str:
+        return "Carico TS (PW)"
 
-    @staticmethod
-    def get_description() -> str:
-        """Restituisce una descrizione sintetica del bot."""
-        return "Caricamento automatico timesheet"
+    @property
+    def description(self) -> str:
+        return "Caricamento automatico timesheet (Playwright)"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
-        """Definisce le colonne richieste per l'input dei dati."""
         return [
             {"name": "numero_oda", "label": "Numero OdA", "type": "text"},
             {"name": "codice_fiscale", "label": "Codice Fiscale", "type": "text"},
@@ -56,24 +54,7 @@ class CaricoTSBot(SeleniumBaseBot):
             {"name": "gt", "label": "G T", "type": "text"},
         ]
 
-    @property
-    def name(self) -> str:
-        return "Carico TS"
-
-    @property
-    def description(self) -> str:
-        return "Caricamento automatico timesheet"
-
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
-        """
-        Esegue la validazione dei dati pre-caricamento.
-
-        Args:
-            data: Lista di righe o dizionario dati.
-
-        Returns:
-            tuple: (bool successo, str messaggio errore)
-        """
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:
             return False, base_msg
@@ -89,45 +70,34 @@ class CaricoTSBot(SeleniumBaseBot):
         return True, ""
 
     def run(self, data: list[dict[str, Any]]) -> bool:
-        """
-        Esegue il workflow principale di caricamento TS.
-
-        Args:
-            data: Dati da caricare.
-
-        Returns:
-            bool: True se l'operazione è completata con successo.
-        """
+        """Esegue il workflow principale di caricamento TS con Playwright."""
         self.update_step("login", StepStatus.COMPLETED)
 
-        # Il driver è garantito da execute()
         rows = data if isinstance(data, list) else data.get("rows", [])
-
-        # Original logic: process ONLY the first row
         row = rows[0]
         oda = str(row.get("numero_oda", "")).strip()
 
-        self.log(f"Avvio estrazione Carico TS per OdA: {oda}")
+        self.log(f"Avvio estrazione (PW) Carico TS per OdA: {oda}")
 
-        if not self.driver:
+        if not self.page:
             return False
 
         self.update_step("nav", StepStatus.RUNNING)
-        page = CaricoTSPage(self.driver, self.log)
+        page_obj = PlaywrightCaricoTSPage(self.page, self.log)
 
-        if not page.navigate():
+        if not page_obj.navigate():
             self.update_step("nav", StepStatus.ERROR)
             return False
         self.update_step("nav", StepStatus.COMPLETED)
 
         self.update_step("supplier", StepStatus.RUNNING)
-        if not page.select_supplier(self.FORNITORE):
+        if not page_obj.select_supplier(self.FORNITORE):
             self.update_step("supplier", StepStatus.ERROR)
             return False
         self.update_step("supplier", StepStatus.COMPLETED)
 
         self.update_step("extract", StepStatus.RUNNING)
-        if page.process_oda(oda):
+        if page_obj.process_oda(oda):
             self.log("✅ OdA estratta con successo.")
             self.update_step("extract", StepStatus.COMPLETED)
             self.update_step("cleanup", StepStatus.RUNNING)

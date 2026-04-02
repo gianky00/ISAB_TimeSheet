@@ -32,7 +32,7 @@ QMessageBox QPushButton:pressed {
 }
 
 /* Evidenzia il pulsante predefinito o di conferma */
-QMessageBox QPushButton:default, 
+QMessageBox QPushButton:default,
 QMessageBox QPushButton#qt_msgbox_buttonbox_yes,
 QMessageBox QPushButton[text="Installa Ora"],
 QMessageBox QPushButton[text="Scarica ora"] {

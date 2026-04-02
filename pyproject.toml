@@ -45,6 +45,7 @@ numpy = ">=1.26.0"
 psutil = ">=5.9.0"
 jaraco-text = "^4.0.0"
 jaraco-context = "^6.1.0"
+playwright = "^1.58.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "8.0.2"
@@ -81,6 +82,7 @@ eradicate = "^3.0.1"
 yesqa = "^1.5.0"
 pyfakefs = "^6.1.1"
 nuitka = "^4.0.5"
+pytest-playwright = "^0.7.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

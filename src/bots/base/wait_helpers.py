@@ -300,16 +300,26 @@ def poll_for_new_file(  # noqa: PLR0912
 
     patterns = [pattern] if isinstance(pattern, str) else pattern
     start_time = time.time()
-    logger.info(f"Monitoraggio files in {directory_path} (Snapshot: {len(snapshot_map)} files, Patterns: {patterns})...")
+    logger.info(
+        f"Monitoraggio files in {directory_path} (Snapshot: {len(snapshot_map)} files, Patterns: {patterns})..."
+    )
 
     # Snapshot iniziale dei file temporanei per ignorare quelli già presenti
     temp_exts = (".crdownload", ".tmp", ".part")
-    temp_snapshot = {f.name.lower() for f in directory_path.iterdir() if any(f.name.lower().endswith(ext) for ext in temp_exts)}
+    temp_snapshot = {
+        f.name.lower()
+        for f in directory_path.iterdir()
+        if any(f.name.lower().endswith(ext) for ext in temp_exts)
+    }
 
     while time.time() - start_time < timeout:
         try:
             # 1. Check download in corso (solo per NUOVI file temporanei)
-            current_temps = {f.name.lower() for f in directory_path.iterdir() if any(f.name.lower().endswith(ext) for ext in temp_exts)}
+            current_temps = {
+                f.name.lower()
+                for f in directory_path.iterdir()
+                if any(f.name.lower().endswith(ext) for ext in temp_exts)
+            }
             new_temps = current_temps - temp_snapshot
 
             if new_temps:
@@ -355,7 +365,9 @@ def poll_for_new_file(  # noqa: PLR0912
 
         time.sleep(poll_interval)
 
-    logger.warning(f"Timeout attesa nuovo file in {directory_path} (Pattern: {patterns}, Timeout: {timeout}s).")
+    logger.warning(
+        f"Timeout attesa nuovo file in {directory_path} (Pattern: {patterns}, Timeout: {timeout}s)."
+    )
     return None
 
 

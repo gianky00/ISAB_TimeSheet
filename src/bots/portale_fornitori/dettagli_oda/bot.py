@@ -6,14 +6,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
-from src.bots.base.base_bot import BaseBot, StepStatus
+from src.bots.base.base_bot import StepStatus
+from src.bots.base.selenium_base_bot import SeleniumBaseBot
 from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
     DettagliOdAPage,
 )
 from src.core.oda_manager import OdaManager
 
 
-class DettagliOdABot(BaseBot):
+class DettagliOdABot(SeleniumBaseBot):
     """Bot per lo scarico dei dettagli degli Ordini di Acquisto (OdA) dal Portale Fornitori."""
 
     STEPS: ClassVar[list[tuple[str, str]]] = [

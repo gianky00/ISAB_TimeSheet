@@ -6,14 +6,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
-from src.bots.base.base_bot import BaseBot
+from src.bots.base.selenium_base_bot import SeleniumBaseBot
 from src.bots.safework.pages.login_page import SafeWorkLoginPage
 from src.bots.safework.pages.ricerca_pdl_page import RicercaPDLPage
 from src.bots.safework.pages.visualizza_attivita_page import VisualizzaAttivitaPage
 from src.core.constants import URLs
 
 
-class SafeworkBaseBot(BaseBot):
+class SafeworkBaseBot(SeleniumBaseBot):
     """
     Classe base specifica per SafeWork.
     Isola le logiche SafeWork da quelle del Portale Fornitori.

@@ -1,5 +1,7 @@
+# mypy: disable-error-code="no-untyped-call"
 """
-Bot per la prenotazione automatica dei Badge Provvisori (BP) sul Portale Fornitori ISAB.
+SyncroJob - Playwright Prenota BP Bot
+Versione Playwright del bot per la prenotazione automatica dei Badge Provvisori (BP).
 """
 
 import traceback
@@ -8,13 +10,13 @@ from datetime import UTC, datetime
 from typing import Any, ClassVar
 
 from src.bots.base.base_bot import StepStatus
-from src.bots.base.selenium_base_bot import SeleniumBaseBot
+from src.bots.base.playwright_base_bot import PlaywrightBaseBot
 
-from .pages.prenota_bp_page import PrenotaBPPage
+from .playwright_page import PlaywrightPrenotaBPPage
 
 
-class PrenotaBPBot(SeleniumBaseBot):
-    """Bot per la prenotazione massiva di Badge Provvisori (BP) sul Portale Fornitori."""
+class PlaywrightPrenotaBPBot(PlaywrightBaseBot):
+    """Bot per la prenotazione massiva di Badge Provvisori (BP) usando Playwright."""
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login Portale ISAB"),
@@ -25,21 +27,20 @@ class PrenotaBPBot(SeleniumBaseBot):
         ("cleanup", "Chiusura Sessione"),
     ]
 
+    @property
+    def name(self) -> str:
+        return "Prenota BP (PW)"
+
+    @property
+    def description(self) -> str:
+        return "Prenotazione Badge Provvisori sul portale ISAB (Playwright)"
+
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
-        """Definisce le colonne richieste per l'input dei dati (Numero BP, Note)."""
         return [
             {"name": "numero_bp", "label": "Numero BP", "type": "text"},
             {"name": "note_ritiro", "label": "Note di Ritiro", "type": "text"},
         ]
-
-    @property
-    def name(self) -> str:
-        return "Prenota BP"
-
-    @property
-    def description(self) -> str:
-        return "Prenotazione Badge Provvisori sul portale ISAB"
 
     def __init__(
         self,
@@ -50,12 +51,10 @@ class PrenotaBPBot(SeleniumBaseBot):
         fornitore: str | None = None,
         **kwargs: Any,
     ) -> None:
-        # Pulizia kwargs come in Scarico TS
         kwargs.pop("fornitore", None)
         kwargs.pop("data_a", None)
         kwargs.pop("data_da", None)
 
-        # Passiamo i parametri richiesti a BaseBot
         super().__init__(username=username, password=password, **kwargs)
         current_year = datetime.now(UTC).astimezone().year
         from src.core.constants import Business  # noqa: PLC0415
@@ -65,67 +64,51 @@ class PrenotaBPBot(SeleniumBaseBot):
         self.fornitore = fornitore or Business.DEFAULT_SUPPLIER
         self.results: list[dict[str, Any]] = []
 
-    def _get_row_value(self, row: dict[str, Any], target_key: str) -> str:
-        """Estrae un valore dalla riga in modo robusto (ignora case, spazi e underscore)."""
-
-        def normalize(s: Any) -> str:
-            return str(s).upper().replace(" ", "").replace("_", "")
-
-        target_norm = normalize(target_key)
-        for k, v in row.items():
-            if normalize(k) == target_norm:
-                return str(v) if v is not None else ""
-        return ""
-
     def run(self, data: Any) -> bool:
-        """Esecuzione principale del bot."""
+        """Esecuzione principale del bot con Playwright."""
         self.update_step("login", StepStatus.COMPLETED)
 
         rows = self._init_run_data(data)
         if not rows:
             return True
-        if not self.driver:
+        if not self.page:
             return False
 
-        self.log(f"Avvio elaborazione per {len(rows)} BP (Fornitore: {self.fornitore})")
+        self.log(f"Avvio elaborazione (PW) per {len(rows)} BP (Fornitore: {self.fornitore})")
         self.update_step("nav", StepStatus.RUNNING)
-        page = PrenotaBPPage(self.driver, self.log)
+        page_obj = PlaywrightPrenotaBPPage(self.page, self.log)
 
         try:
-            page.navigate_to_gestione_bp()
+            page_obj.navigate_to_gestione_bp()
             self.update_step("nav", StepStatus.COMPLETED)
+
             processed_count = 0
             for i, row in enumerate(rows):
-                if self._stop_requested:
-                    self.log("⚠️ Stop richiesto dall'utente.")
-                    break
-                if self._process_single_bp(page, i, row):
+                self._check_stop()
+                if self._process_single_bp(page_obj, i, row):
                     processed_count += 1
 
             self.log(f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
             self.update_step("cleanup", StepStatus.RUNNING)
             self.update_step("cleanup", StepStatus.COMPLETED)
-            return True  # noqa: TRY300
+            return True
         except Exception as e:
             self.log(f"❗ Errore fatale durante l'esecuzione: {e}")
             self.update_step("nav", StepStatus.ERROR)
             traceback.print_exc()
             return False
         finally:
-            self.log("Fine sessione Prenota BP.")
+            self.log("Fine sessione Prenota BP (PW).")
 
     def _init_run_data(self, data: Any) -> list[dict[str, Any]]:
-        """Inizializza i parametri della sessione."""
         if isinstance(data, dict):
             self.data_da = data.get("data_da") or self.data_da
             self.data_a = data.get("data_a") or self.data_a
             self.fornitore = data.get("fornitore") or self.fornitore
-            result: list[dict[str, Any]] = data.get("rows", [])
-            return result
+            return list(data.get("rows", []))
         return list(data)
 
-    def _process_single_bp(self, page: PrenotaBPPage, index: int, row: dict[str, Any]) -> bool:
-        """Elabora un singolo buono prelievo."""
+    def _process_single_bp(self, page_obj: PlaywrightPrenotaBPPage, index: int, row: dict[str, Any]) -> bool:
         num_bp = str(row.get("numero_bp", "")).strip()
         note = str(row.get("note_ritiro", "")).strip()
 
@@ -135,36 +118,34 @@ class PrenotaBPBot(SeleniumBaseBot):
 
         try:
             self.update_step("filter", StepStatus.RUNNING)
-            page.filtra_buoni_prelievo(self.fornitore, num_bp, self.data_da, self.data_a)
+            page_obj.filtra_buoni_prelievo(self.fornitore, num_bp, self.data_da, self.data_a)
             self.update_step("filter", StepStatus.COMPLETED)
 
             self.update_step("details", StepStatus.RUNNING)
-            page.apri_dettagli_bp()
+            page_obj.apri_dettagli_bp()
             self.update_step("details", StepStatus.COMPLETED)
 
             self.update_step("reserve", StepStatus.RUNNING)
-            page.gestisci_creazione_richiesta(note)
+            page_obj.gestisci_creazione_richiesta(note)
             self.update_step("reserve", StepStatus.COMPLETED)
 
             with suppress(Exception):
-                page.chiudi_dettagli_bp()
+                page_obj.chiudi_dettagli_bp()
 
             self.results.append({"NUMERO BP": num_bp, "STATO": "OK"})
 
-            # Notifica progresso alla GUI (index, success, message)
             callback = getattr(self, "_progress_callback", None)
             if callback:
                 callback(index, True, "")
 
-            return True  # noqa: TRY300
+            return True
         except Exception as e:
             self.log(f"✗ Errore su BP {num_bp}: {e}")
             self.update_step("reserve", StepStatus.ERROR)
             with suppress(Exception):
-                page.chiudi_dettagli_bp()
+                page_obj.chiudi_dettagli_bp()
             self.results.append({"NUMERO BP": num_bp, "STATO": "ERRORE", "MSG": str(e)})
 
-            # Notifica progresso alla GUI (index, success, message)
             callback = getattr(self, "_progress_callback", None)
             if callback:
                 callback(index, False, str(e))

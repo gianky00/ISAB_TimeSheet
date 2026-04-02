@@ -180,9 +180,13 @@ class TimbraturePage:
                 return ""
 
             # Snapshot dei file esistenti prima del click
-            source_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
+            source_dir = (
+                Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
+            )
             allowed_ext = {".xlsx", ".xls"}
-            files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() in allowed_ext}
+            files_before = {
+                f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() in allowed_ext
+            }
 
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", excel_btn)
 
