@@ -9,7 +9,7 @@ from datetime import UTC, datetime, timedelta
 
 from playwright.sync_api import Page, TimeoutError
 
-from ..locators import PrenotaBPLocators
+from .locators import PrenotaBPLocators
 
 
 class PlaywrightPrenotaBPPage:

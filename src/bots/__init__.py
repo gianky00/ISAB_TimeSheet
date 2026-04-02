@@ -4,11 +4,13 @@ Registry e factory per tutti i bot disponibili.
 Supporta motori di automazione multipli (Selenium, Playwright).
 """
 
-from typing import Any, Optional, cast
+import logging
+from typing import Any, cast
 
 from src.bots.base import BaseBot, BotStatus
+from src.core.config_manager import load_config
 
-# Import Bot Selenium
+# --- IMPORT BOT SELENIUM (Sempre disponibili come fallback) ---
 from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot
 from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
 from src.bots.portale_fornitori.prenota_bp import PrenotaBPBot
@@ -18,29 +20,38 @@ from src.bots.safework.pdl.bot import SafeWorkPDLBot
 from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
 from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
 from src.bots.safework.programmazione_sync.bot import SafeWorkProgrammazioneSyncBot
-from src.core.config_manager import load_config
 
-# Import Bot Playwright
-try:
-    from src.bots.portale_fornitori.carico_ts.playwright_bot import PlaywrightCaricoTSBot
-    from src.bots.portale_fornitori.dettagli_oda.playwright_bot import PlaywrightDettagliOdABot
-    from src.bots.portale_fornitori.prenota_bp.playwright_bot import PlaywrightPrenotaBPBot
-    from src.bots.portale_fornitori.scarico_ts.playwright_bot import PlaywrightScaricaTSBot
-    from src.bots.portale_fornitori.timbrature.playwright_bot import PlaywrightTimbratureBot
-    from src.bots.safework.pdl.playwright_bot import PlaywrightSafeWorkPDLBot
-    from src.bots.safework.pdl.playwright_search_bot import PlaywrightSafeWorkPDLSearchBot
-    from src.bots.safework.programmazione.playwright_bot import PlaywrightSafeWorkProgrammazioneBot
-    from src.bots.safework.programmazione_sync.playwright_bot import PlaywrightSafeWorkProgrammazioneSyncBot
+logger = logging.getLogger(__name__)
 
-    PLAYWRIGHT_AVAILABLE = True
-except ImportError:
-    PLAYWRIGHT_AVAILABLE = False
+# --- IMPORT BOT PLAYWRIGHT (Caricamento Granulare) ---
+def _safe_import_pw(module_path: str, class_name: str) -> Any | None:
+    """Tenta di importare una classe Playwright in modo sicuro."""
+    try:
+        import importlib
+        module = importlib.import_module(module_path)
+        return getattr(module, class_name)
+    except (ImportError, AttributeError) as e:
+        logger.debug(f"Playwright bot '{class_name}' non disponibile: {e}")
+        return None
+
+# Caricamento individuale per massima robustezza
+PW_BOTS = {
+    "carico_ts": _safe_import_pw("src.bots.portale_fornitori.carico_ts.playwright_bot", "PlaywrightCaricoTSBot"),
+    "dettagli_oda": _safe_import_pw("src.bots.portale_fornitori.dettagli_oda.playwright_bot", "PlaywrightDettagliOdABot"),
+    "prenota_bp": _safe_import_pw("src.bots.portale_fornitori.prenota_bp.playwright_bot", "PlaywrightPrenotaBPBot"),
+    "scarico_ts": _safe_import_pw("src.bots.portale_fornitori.scarico_ts.playwright_bot", "PlaywrightScaricaTSBot"),
+    "timbrature": _safe_import_pw("src.bots.portale_fornitori.timbrature.playwright_bot", "PlaywrightTimbratureBot"),
+    "scarico_pdl": _safe_import_pw("src.bots.safework.pdl.playwright_bot", "PlaywrightSafeWorkPDLBot"),
+    "ricerca_pdl": _safe_import_pw("src.bots.safework.pdl.playwright_search_bot", "PlaywrightSafeWorkPDLSearchBot"),
+    "programmazione_pdl": _safe_import_pw("src.bots.safework.programmazione.playwright_bot", "PlaywrightSafeWorkProgrammazioneBot"),
+    "programmazione_sync": _safe_import_pw("src.bots.safework.programmazione_sync.playwright_bot", "PlaywrightSafeWorkProgrammazioneSyncBot"),
+}
 
 # Registry dei bot disponibili
 BOT_REGISTRY: dict[str, dict[str, Any]] = {
     "scarico_ts": {
         "class": ScaricaTSBot,
-        "class_pw": PlaywrightScaricaTSBot if PLAYWRIGHT_AVAILABLE else None,
+        "class_pw": PW_BOTS["scarico_ts"],
         "name": "Scarico TS",
         "description": "Scarica i timesheet dal portale ISAB",
         "icon": "📥",
@@ -52,7 +63,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
     },
     "carico_ts": {
         "class": CaricoTSBot,
-        "class_pw": PlaywrightCaricoTSBot if PLAYWRIGHT_AVAILABLE else None,
+        "class_pw": PW_BOTS["carico_ts"],
         "name": "Carico TS",
         "description": "Carica i timesheet sul portale ISAB",
         "icon": "📤",
@@ -79,7 +90,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
     },
     "dettagli_oda": {
         "class": DettagliOdABot,
-        "class_pw": PlaywrightDettagliOdABot if PLAYWRIGHT_AVAILABLE else None,
+        "class_pw": PW_BOTS["dettagli_oda"],
         "name": "Dettagli OdA",
         "description": "Accede ai Dettagli OdA - browser rimane aperto",
         "icon": "📋",
@@ -92,7 +103,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
     },
     "prenota_bp": {
         "class": PrenotaBPBot,
-        "class_pw": PlaywrightPrenotaBPBot if PLAYWRIGHT_AVAILABLE else None,
+        "class_pw": PW_BOTS["prenota_bp"],
         "name": "Prenota BP",
         "description": "Prenotazione Badge Provvisori sul portale ISAB",
         "icon": "🎫",
@@ -104,7 +115,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
     },
     "timbrature": {
         "class": TimbratureBot,
-        "class_pw": PlaywrightTimbratureBot if PLAYWRIGHT_AVAILABLE else None,
+        "class_pw": PW_BOTS["timbrature"],
         "name": "Timbrature",
         "description": "Scarica e archivia le timbrature dal portale ISAB",
         "icon": "⏱️",
@@ -113,7 +124,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
     },
     "scarico_pdl": {
         "class": SafeWorkPDLBot,
-        "class_pw": PlaywrightSafeWorkPDLBot if PLAYWRIGHT_AVAILABLE else None,
+        "class_pw": PW_BOTS["scarico_pdl"],
         "name": "Scarico PDL",
         "description": "Scarica e stampa Permessi di Lavoro da SafeWork",
         "icon": "🛡️",
@@ -122,7 +133,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
     },
     "ricerca_pdl": {
         "class": SafeWorkPDLSearchBot,
-        "class_pw": PlaywrightSafeWorkPDLSearchBot if PLAYWRIGHT_AVAILABLE else None,
+        "class_pw": PW_BOTS["ricerca_pdl"],
         "name": "Ricerca PDL",
         "description": "Ricerca massiva e aggiornamento database PDL",
         "icon": "🔍",
@@ -131,7 +142,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
     },
     "programmazione_pdl": {
         "class": SafeWorkProgrammazioneBot,
-        "class_pw": PlaywrightSafeWorkProgrammazioneBot if PLAYWRIGHT_AVAILABLE else None,
+        "class_pw": PW_BOTS["programmazione_pdl"],
         "name": "Programmazione PDL",
         "description": "Monitoraggio programmazione settimanale SafeWork",
         "icon": "📅",
@@ -140,7 +151,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
     },
     "programmazione_sync": {
         "class": SafeWorkProgrammazioneSyncBot,
-        "class_pw": PlaywrightSafeWorkProgrammazioneSyncBot if PLAYWRIGHT_AVAILABLE else None,
+        "class_pw": PW_BOTS["programmazione_sync"],
         "name": "Sincronizzazione Programmazione",
         "description": "Download massivo report attività SafeWork",
         "icon": "🔄",
@@ -156,28 +167,13 @@ def get_available_bots() -> dict[str, dict[str, Any]]:
 
 
 def get_bot_info(bot_id: str) -> dict[str, Any] | None:
-    """
-    Restituisce le informazioni di un bot specifico.
-
-    Args:
-        bot_id: ID del bot
-
-    Returns:
-        Dict con le informazioni del bot o None
-    """
+    """Restituisce le informazioni di un bot specifico."""
     return BOT_REGISTRY.get(bot_id)
 
 
 def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:
     """
     Crea un'istanza di un bot, scegliendo il motore in base alla configurazione.
-
-    Args:
-        bot_id: ID del bot da creare
-        **kwargs: Parametri per il costruttore del bot
-
-    Returns:
-        Istanza del bot o None se non trovato
     """
     bot_info = BOT_REGISTRY.get(bot_id)
     if not bot_info:
@@ -186,12 +182,13 @@ def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:
     config = load_config()
     engine = config.get("automation_engine", "selenium").lower()
 
-    from src.core.logging import get_logger  # noqa: PLC0415
-    get_logger(__name__).info(f"Factory: Creazione bot '{bot_id}' con motore: {engine}")
+    logger.info(f"Factory: Creazione bot '{bot_id}' con motore: {engine}")
 
     bot_class = bot_info["class"]
     if engine == "playwright" and bot_info.get("class_pw"):
         bot_class = bot_info["class_pw"]
+    elif engine == "playwright":
+        logger.warning(f"Motore Playwright richiesto ma non disponibile per '{bot_id}'. Fallback Selenium.")
 
     return cast("BaseBot", bot_class(**kwargs))
 
