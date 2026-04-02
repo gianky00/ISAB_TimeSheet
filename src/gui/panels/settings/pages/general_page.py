@@ -2,6 +2,7 @@ from typing import Any
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
+    QComboBox,
     QHBoxLayout,
     QLabel,
     QVBoxLayout,
@@ -32,6 +33,22 @@ class GeneralPage(QWidget):
         # Generale Group
         self.general_group = create_group_box("Generale")
         gen_layout = QVBoxLayout(self.general_group)
+
+        # Motore di Automazione
+        engine_layout = QHBoxLayout()
+        engine_label = QLabel("Motore Automazione:")
+        engine_label.setStyleSheet("font-size: 15px; font-weight: bold;")
+        engine_layout.addWidget(engine_label)
+
+        self.engine_combo = QComboBox()
+        self.engine_combo.addItems(["Selenium", "Playwright"])
+        self.engine_combo.setMinimumHeight(40)
+        self.engine_combo.setMinimumWidth(150)
+        style_input(self.engine_combo)
+        self.engine_combo.currentIndexChanged.connect(self.settings_changed.emit)
+        engine_layout.addWidget(self.engine_combo)
+        engine_layout.addStretch()
+        gen_layout.addLayout(engine_layout)
 
         self.headless_check = StandardCheckBox("Nascondi browser dei bot")
         self.headless_check.setToolTip(
@@ -70,10 +87,15 @@ class GeneralPage(QWidget):
 
     def load_from_config(self, config: dict[str, Any]) -> None:
         """Carica i valori dalla configurazione."""
+        engine = config.get("automation_engine", "selenium").lower()
+        index = 1 if engine == "playwright" else 0
+        self.engine_combo.setCurrentIndex(index)
+
         self.headless_check.setChecked(bool(config.get("browser_headless", False)))
         self.timeout_spin.setValue(int(config.get("browser_timeout", 30)))
 
     def save_to_config(self, config: dict[str, Any]) -> None:
         """Salva i valori nel dizionario di configurazione."""
+        config["automation_engine"] = self.engine_combo.currentText().lower()
         config["browser_headless"] = self.headless_check.isChecked()
         config["browser_timeout"] = self.timeout_spin.value()

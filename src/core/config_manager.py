@@ -113,13 +113,20 @@ def save_config(config: dict[str, Any]) -> bool:
         # Scrittura atomica
         if _atomic_write_json(CONFIG_FILE, config_to_save):
             with _config_lock:
-                _config_cache = copy.deepcopy(config)
+                # Forza l'invalidazione della cache per garantire che load_config() rilegga da disco
+                _config_cache = None
             return True
     except Exception as e:
         print(f"Error saving config: {e}")
         return False
-    else:
-        return False
+    return False
+
+
+def invalidate_config_cache() -> None:
+    """Invalida forzatamente la cache della configurazione in memoria."""
+    global _config_cache  # noqa: PLW0603
+    with _config_lock:
+        _config_cache = None
 
 
 def _atomic_write_json(path: Path, data: dict[str, Any]) -> bool:

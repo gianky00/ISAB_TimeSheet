@@ -186,6 +186,9 @@ def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:
     config = load_config()
     engine = config.get("automation_engine", "selenium").lower()
 
+    from src.core.logging import get_logger  # noqa: PLC0415
+    get_logger(__name__).info(f"Factory: Creazione bot '{bot_id}' con motore: {engine}")
+
     bot_class = bot_info["class"]
     if engine == "playwright" and bot_info.get("class_pw"):
         bot_class = bot_info["class_pw"]
