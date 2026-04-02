@@ -205,7 +205,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             return False
         try:
             self.log(f"Impostazione filtri per fornitore: {self.fornitore}")
-            arrow_sel = self._get_selector(ScaricoTSLocators.FORNITORE_ARROW)
+            arrow_sel = self._get_selector(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW)
             self.page.click(arrow_sel)
 
             fornitore_option_xpath = f"xpath=//li[normalize-space(text())='{self.fornitore}']"
