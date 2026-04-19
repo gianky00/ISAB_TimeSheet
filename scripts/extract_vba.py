@@ -40,7 +40,7 @@ def extract_vba_no_excel(file_path: str, output_md: str) -> None:
 
 
 if __name__ == "__main__":
-    target = r"C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\master_consuntivo_Automatico.xlsm"
+    target = "data/master_consuntivo_Automatico.xlsm"
     output = r"docs/VBA_KNOW_HOW.md"
     Path("docs").mkdir(parents=True, exist_ok=True)
     extract_vba_no_excel(target, output)
