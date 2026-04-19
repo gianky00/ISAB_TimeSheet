@@ -67,6 +67,9 @@ class PlaywrightBaseBot(BaseBot, ABC):
                 "--disable-software-rasterizer",
                 "--disable-infobars",
                 "--no-first-run",
+                "--password-store=basic",
+                "--disable-features=PasswordLeakDetection,SafeBrowsingPasswordCheck",
+                "--disable-save-password-bubble",
             ],
         }
 

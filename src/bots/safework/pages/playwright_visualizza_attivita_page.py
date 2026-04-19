@@ -10,23 +10,15 @@ from contextlib import suppress
 
 from playwright.sync_api import Page
 
+from src.bots.base.playwright_base_page import PlaywrightBasePage
 from src.bots.safework.common.locators import SafeWorkLocators
 
 
-class PlaywrightVisualizzaAttivitaPage:
+class PlaywrightVisualizzaAttivitaPage(PlaywrightBasePage):
     """Gestisce le interazioni con la pagina Visualizza Attività usando Playwright."""
 
     def __init__(self, page: Page, log_func: Callable[[str], None]) -> None:
-        self.page = page
-        self.log = log_func
-
-    def _get_selector(self, locator: tuple[str, str]) -> str:
-        _by, value = locator
-        if value.startswith(("//", "(")):
-            return f"xpath={value}"
-        if _by == "id":
-            return f"id={value}"
-        return value
+        super().__init__(page, log_func)
 
     def pulisci_pdl(self) -> None:
         """Pulisce il campo PDL/Permesso."""
@@ -37,8 +29,10 @@ class PlaywrightVisualizzaAttivitaPage:
     def imposta_date(self, data_dal: str, data_al: str) -> None:
         """Imposta il range date."""
         try:
-            self.page.evaluate(f"document.getElementById('programmazioneDal').value = '{data_dal}';")
-            self.page.evaluate(f"document.getElementById('programmazioneAl').value = '{data_al}';")
+            dal_id = SafeWorkLocators.DATE_FROM_PROG[1]
+            al_id = SafeWorkLocators.DATE_TO_PROG[1]
+            self.page.evaluate(f"document.getElementById('{dal_id}').value = '{data_dal}';")
+            self.page.evaluate(f"document.getElementById('{al_id}').value = '{data_al}';")
         except Exception as e:
             self.log(f"⚠️ Errore impostazione date JS: {e}")
 
@@ -60,10 +54,11 @@ class PlaywrightVisualizzaAttivitaPage:
         try:
             sel = self._get_selector(SafeWorkLocators.EXPORT_BUTTON)
             self.page.click(sel)
-            return True
         except Exception as e:
             self.log(f"❌ Errore clic export: {e}")
             return False
+        else:
+            return True
 
     def _seleziona_da_dropdown(self, button_locator: tuple[str, str], items: str | list[str]) -> bool:
         """Helper per i dropdown ms-choice di SafeWork."""
@@ -78,7 +73,9 @@ class PlaywrightVisualizzaAttivitaPage:
             dropdown_sel = self._get_selector(SafeWorkLocators.DROPDOWN_OPEN)
             self.page.wait_for_selector(dropdown_sel, state="visible")
 
-            inp_sel = f"{dropdown_sel} {self._get_selector(SafeWorkLocators.SEARCH_INPUT_IN_DROPDOWN)}"
+            sub_inp_sel = self._get_selector(SafeWorkLocators.SEARCH_INPUT_IN_DROPDOWN)
+            # Combinazione selettori per precisione (Playwright supporta CSS nesting)
+            inp_sel = f"{dropdown_sel} {sub_inp_sel}"
 
             for item in items:
                 # 3. Cerca e seleziona ogni elemento
@@ -91,9 +88,10 @@ class PlaywrightVisualizzaAttivitaPage:
                 except Exception:
                     self.log(f"⚠️ Elemento '{item}' non trovato nel dropdown.")
 
-            # 4. Chiudi cliccando fuori (sulla home icon o body)
+            # 4. Chiudi cliccando fuori (sul body)
             self.page.click("body")
-            return True
         except Exception as e:
             self.log(f"❌ Errore selezione dropdown: {e}")
             return False
+        else:
+            return True

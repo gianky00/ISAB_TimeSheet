@@ -165,6 +165,8 @@ class MainWindow(QMainWindow):
             self.status_bar_component.footer_left.safework_clicked.connect(
                 lambda: self._switch_account("safework")
             )
+            self.status_bar_component.footer_left.engine_clicked.connect(self._switch_engine)
+            self.status_bar_component.footer_left.headless_clicked.connect(self._switch_headless)
 
             # Check for system tray support
             if not QSystemTrayIcon.isSystemTrayAvailable():
@@ -280,6 +282,35 @@ class MainWindow(QMainWindow):
             ToastManager.instance().show(f"Account {bot_type.upper()} ruotate con successo.", "success")
         else:
             ToastManager.instance().show(f"Impossibile ruotare account {bot_type.upper()}.", "warning")
+
+    def _switch_engine(self) -> None:
+        """Ruota il motore di automazione attivo tra Selenium e Playwright."""
+        current = config_manager.get_config_value("automation_engine", "selenium").lower()
+        new_engine = "playwright" if current == "selenium" else "selenium"
+
+        if config_manager.set_config_value("automation_engine", new_engine):
+            if hasattr(self.status_bar_component, "footer_left") and hasattr(
+                self.status_bar_component.footer_left, "refresh_accounts"
+            ):
+                self.status_bar_component.footer_left.refresh_accounts()
+            ToastManager.instance().show(f"Motore automazione: {new_engine.upper()}", "success")
+        else:
+            ToastManager.instance().show("Errore cambio motore.", "error")
+
+    def _switch_headless(self) -> None:
+        """Ruota la modalità browser tra visibile e nascosta (headless)."""
+        current = config_manager.get_config_value("browser_headless", False)
+        new_state = not current
+
+        if config_manager.set_config_value("browser_headless", new_state):
+            if hasattr(self.status_bar_component, "footer_left") and hasattr(
+                self.status_bar_component.footer_left, "refresh_accounts"
+            ):
+                self.status_bar_component.footer_left.refresh_accounts()
+            mode = "NASCOSTO" if new_state else "VISIBILE"
+            ToastManager.instance().show(f"Browser: {mode}", "success")
+        else:
+            ToastManager.instance().show("Errore cambio modalità browser.", "error")
 
     def show_toast(self, message: str, level: str = "info") -> None:
         """

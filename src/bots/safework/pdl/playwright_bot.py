@@ -13,6 +13,7 @@ import fitz
 from playwright.sync_api import TimeoutError
 
 from src.bots.base.base_bot import StepStatus
+from src.bots.safework.common.locators import SafeWorkLocators
 from src.bots.safework.playwright_base import PlaywrightSafeworkBaseBot
 from src.utils.document_processor import DocumentProcessor
 from src.utils.printing import print_pdf
@@ -20,6 +21,7 @@ from src.utils.printing import print_pdf
 # Costanti per soglie e limiti
 MAX_PDL_DIGITS: Final[int] = 6
 PDL_THRESHOLD_NORTH_SOUTH: Final[int] = 400000
+MIN_PAGES_FOR_CLEANUP: Final[int] = 2
 
 
 class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
@@ -59,6 +61,7 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
         return [{"name": "numero_pdl", "label": "Numero PDL", "type": "text"}]
 
     def run(self, data: list[dict[str, Any]]) -> bool:
+        """Esegue il workflow principale del bot."""
         self.update_step("login", StepStatus.COMPLETED)
 
         success_count = 0
@@ -69,63 +72,79 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
         self.log(f"🚀 Inizio elaborazione (PW) di {total} PDL...")
 
         for index, item in enumerate(data):
-            pdl_raw = "N/A"
-            try:
-                self._check_stop()
-                val = item.get("numero_pdl")
-                pdl_raw = str(val) if val else ""
-                if not pdl_raw:
-                    continue
-
-                pdl_num = self._sanitizza_pdl_number(pdl_raw)
-                self.log(f"📋 PDL {index + 1}/{total}: {pdl_num}")
-
-                self.update_step("search", StepStatus.RUNNING)
-                if self._esegui_ricerca_pdl(pdl_num):
-                    self.update_step("search", StepStatus.COMPLETED)
-
-                    self.update_step("download_p1", StepStatus.RUNNING)
-                    path_p1 = self._scarica_parte_prima(pdl_num)
-
-                    path_p2 = None
-                    if path_p1:
-                        self.update_step("download_p1", StepStatus.COMPLETED)
-                        self.update_step("download_p2", StepStatus.RUNNING)
-                        path_p2 = self._scarica_parte_seconda(pdl_num)
-
-                    if path_p1 and path_p2:
-                        self.update_step("download_p2", StepStatus.COMPLETED)
-                        self.update_step("merge", StepStatus.RUNNING)
-                        if self._unisci_e_stampa(pdl_num, path_p1, path_p2, item, all_pdl_paths):
-                            self.update_step("merge", StepStatus.COMPLETED)
-                            success_count += 1
-                        else:
-                            self.update_step("merge", StepStatus.ERROR)
-                    else:
-                        if not path_p1:
-                            self.update_step("download_p1", StepStatus.ERROR)
-                        if not path_p2:
-                            self.update_step("download_p2", StepStatus.ERROR)
-
-                    self._safe_remove(path_p1)
-                    self._safe_remove(path_p2)
-                else:
-                    self.update_step("search", StepStatus.ERROR)
-
-                callback = getattr(self, "_progress_callback", None)
-                if callback:
-                    callback(index, True, "")
-            except Exception as e:
-                self.log(f"❌ Errore PDL {pdl_raw}: {e}")
-                callback = getattr(self, "_progress_callback", None)
-                if callback:
-                    callback(index, False, str(e))
+            if self._process_single_pdl(index, total, item, all_pdl_paths):
+                success_count += 1
 
         self.update_step("session", StepStatus.RUNNING)
         self._handle_session_merge(data, all_pdl_paths)
         self.update_step("session", StepStatus.COMPLETED)
 
         return success_count == total
+
+    def _process_single_pdl(
+        self, index: int, total: int, item: dict[str, Any], all_pdl_paths: list[str]
+    ) -> bool:
+        """Elabora un singolo PDL."""
+        pdl_raw = "N/A"
+        try:
+            self._check_stop()
+            val = item.get("numero_pdl")
+            pdl_raw = str(val) if val else ""
+            if not pdl_raw:
+                return False
+
+            pdl_num = self._sanitizza_pdl_number(pdl_raw)
+            self.log(f"📋 PDL {index + 1}/{total}: {pdl_num}")
+
+            self.update_step("search", StepStatus.RUNNING)
+            if not self._esegui_ricerca_pdl(pdl_num):
+                self.update_step("search", StepStatus.ERROR)
+                return False
+
+            self.update_step("search", StepStatus.COMPLETED)
+            success = self._download_and_handle_pdl(pdl_num, item, all_pdl_paths)
+
+            callback = getattr(self, "_progress_callback", None)
+            if callback:
+                callback(index, success, "" if success else "Errore download/merge")
+        except Exception as e:
+            self.log(f"❌ Errore PDL {pdl_raw}: {e}")
+            callback = getattr(self, "_progress_callback", None)
+            if callback:
+                callback(index, False, str(e))
+            return False
+        else:
+            return success
+
+    def _download_and_handle_pdl(self, pdl_num: str, item: dict[str, Any], all_pdl_paths: list[str]) -> bool:
+        """Gestisce lo scarico delle due parti e l'unione."""
+        self.update_step("download_p1", StepStatus.RUNNING)
+        path_p1 = self._scarica_parte_prima(pdl_num)
+        if not path_p1:
+            self.update_step("download_p1", StepStatus.ERROR)
+            return False
+
+        self.update_step("download_p1", StepStatus.COMPLETED)
+        self.update_step("download_p2", StepStatus.RUNNING)
+        path_p2 = self._scarica_parte_seconda(pdl_num)
+
+        if not path_p2:
+            self.update_step("download_p2", StepStatus.ERROR)
+            self._safe_remove(path_p1)
+            return False
+
+        self.update_step("download_p2", StepStatus.COMPLETED)
+        self.update_step("merge", StepStatus.RUNNING)
+
+        success = self._unisci_e_stampa(pdl_num, path_p1, path_p2, item, all_pdl_paths)
+        if success:
+            self.update_step("merge", StepStatus.COMPLETED)
+        else:
+            self.update_step("merge", StepStatus.ERROR)
+
+        self._safe_remove(path_p1)
+        self._safe_remove(path_p2)
+        return success
 
     def _sanitizza_pdl_number(self, pdl_raw: str) -> str:
         num = pdl_raw.strip().upper().replace(" ", "")
@@ -140,48 +159,51 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
         try:
             self._attendi_scomparsa_overlay()
 
-            # Ricerca veloce
-            self.page.fill("#txtRicercaVelocePdL", pdl_num)
-            self.page.press("#txtRicercaVelocePdL", "Enter")
+            search_sel = self._get_selector(SafeWorkLocators.RICERCA_VELOCE_PDL)
+            self.page.fill(search_sel, pdl_num)
+            self.page.press(search_sel, "Enter")
 
             if self._gestisci_ricerca_estesa():
                 return False
 
             self._attendi_scomparsa_overlay()
 
-            # Verifica caricamento
-            self.page.wait_for_selector("#topIcon-acticonAnteprimaStampaMenu", state="visible", timeout=30000)
-            return True
+            preview_menu_sel = self._get_selector(SafeWorkLocators.PRINT_PREVIEW_MENU)
+            self.page.wait_for_selector(preview_menu_sel, state="visible", timeout=30000)
         except Exception as e:
             self.log(f"❌ Errore ricerca PDL {pdl_num}: {e}")
             return False
+        else:
+            return True
 
     def _gestisci_ricerca_estesa(self) -> bool:
         if not self.page:
             return False
         try:
-            # Popup "estenderla?"
             popup_xpath = "//p[contains(text(), 'estenderla')]"
             if self.page.is_visible(f"xpath={popup_xpath}", timeout=5000):
                 self.log("🖱️ Estensione ricerca...")
-                self.page.click("span[idtxt='E421C594']")  # 'Si' button
+                yes_btn_sel = self._get_selector(SafeWorkLocators.EXTEND_SEARCH_YES)
+                self.page.click(yes_btn_sel)
                 self._attendi_scomparsa_overlay()
 
-                # Verifica se ancora nulla
                 if self.page.is_visible("xpath=//div[contains(text(), 'nessun dato trovato')]", timeout=5000):
                     return True
-            return False
         except Exception:
             return False
+
+        return False
 
     def _scarica_parte_prima(self, pdl_num: str) -> str | None:
         if not self.page:
             return None
         try:
-            self.page.click("#topIcon-acticonAnteprimaStampaMenu")
+            preview_menu_sel = self._get_selector(SafeWorkLocators.PRINT_PREVIEW_MENU)
+            self.page.click(preview_menu_sel)
 
             with self.page.expect_download(timeout=60000) as download_info:
-                self.page.click("#appItaliano")
+                ita_sel = self._get_selector(SafeWorkLocators.DOWNLOAD_ITALIANO)
+                self.page.click(ita_sel)
 
             download = download_info.value
             dest = Path(self.download_path) / f"temp_p1_{int(time.time())}.pdf"
@@ -196,17 +218,22 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
         if not self.page:
             return None
         try:
-            # Espandi Parte Seconda
-            if not self.page.is_visible("#lblPAFoglio"):
-                self.page.click("#lblTitoloParteSeconda")
-                self.page.wait_for_selector("#lblPAFoglio", state="visible", timeout=10000)
+            title_p2_sel = self._get_selector(SafeWorkLocators.TITLE_PARTE_SECONDA)
+            label_pa_sel = self._get_selector(SafeWorkLocators.LABEL_PA_FOGLIO)
+
+            if not self.page.is_visible(label_pa_sel):
+                self.page.click(title_p2_sel)
+                self.page.wait_for_selector(label_pa_sel, state="visible", timeout=10000)
 
             with self.page.expect_download(timeout=90000) as download_info:
-                self.page.click("#btnPrintPS")
-                # Gestione eventuale popup 'Stampa Tutte'
+                print_ps_sel = self._get_selector(SafeWorkLocators.PRINT_PS_BUTTON)
+                self.page.click(print_ps_sel)
+
+                radio_all_sel = self._get_selector(SafeWorkLocators.RADIO_PRINT_ALL)
+                preview_btn_sel = self._get_selector(SafeWorkLocators.PREVIEW_BUTTON)
                 with suppress(TimeoutError):
-                    self.page.click("#rbStampaTutte", timeout=3000)
-                    self.page.click("#btnAnteprima")
+                    self.page.click(radio_all_sel, timeout=3000)
+                    self.page.click(preview_btn_sel)
 
             download = download_info.value
             dest = Path(self.download_path) / f"temp_p2_{int(time.time())}.pdf"
@@ -219,7 +246,7 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
     def _clean_pdf(self, path: str) -> None:
         try:
             doc = fitz.open(path)
-            if doc.page_count >= 2:  # noqa: PLR2004
+            if doc.page_count >= MIN_PAGES_FOR_CLEANUP:
                 doc.delete_page(1)
                 doc.save(path + ".tmp")
                 doc.close()
@@ -227,8 +254,8 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
                 Path(path + ".tmp").rename(path)
             else:
                 doc.close()
-        except Exception:
-            pass
+        except Exception as e:
+            self.log(f"⚠️ Errore pulizia PDF: {e}", level="DEBUG")
 
     def _unisci_e_stampa(
         self, pdl_num: str, p1: str, p2: str, item: dict[str, Any], all_paths: list[str]
@@ -252,8 +279,8 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
                 if DocumentProcessor.merge_pdfs(all_paths, str(path_merge)):
                     self.log(f"✅ PDF Unico Sessione creato: {path_merge.name}")
                     self.downloaded_files.append(str(path_merge))
-            except Exception:
-                pass
+            except Exception as e:
+                self.log(f"⚠️ Errore merge sessione: {e}", level="DEBUG")
 
     def _safe_remove(self, path: str | None) -> None:
         if path and Path(path).exists():

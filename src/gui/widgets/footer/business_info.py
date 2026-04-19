@@ -29,6 +29,8 @@ class FooterLeftWidget(QWidget):
 
     portale_clicked = pyqtSignal()
     safework_clicked = pyqtSignal()
+    engine_clicked = pyqtSignal()
+    headless_clicked = pyqtSignal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
@@ -45,53 +47,77 @@ class FooterLeftWidget(QWidget):
         self._opacity_effect = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self._opacity_effect)
 
-        # Colonna 1: Cliente / Scadenza
-        col1 = QWidget()
-        v1 = QVBoxLayout(col1)
-        v1.setContentsMargins(0, 0, 0, 0)
-        v1.setSpacing(2)
+        # Configurazione Colonne
+        self._setup_client_col(layout)
+        self._add_separator(layout)
+        self._setup_hw_col(layout)
+        self._add_separator(layout)
+        self._setup_portals_col(layout)
+        self._add_separator(layout)
+        self._setup_engine_col(layout)
+
+        layout.addStretch()
+        self.refresh_accounts()
+
+    def _setup_client_col(self, layout: QHBoxLayout) -> None:
+        """Configura la colonna Cliente / Scadenza."""
+        col = QWidget()
+        v = QVBoxLayout(col)
+        v.setContentsMargins(0, 0, 0, 0)
+        v.setSpacing(2)
         self.client_item = QLabel()
         self.client_item.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 13px;")
         self.expiry_item = QLabel()
         self.expiry_item.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 13px;")
-        v1.addWidget(self.client_item)
-        v1.addWidget(self.expiry_item)
-        layout.addWidget(col1)
+        v.addWidget(self.client_item)
+        v.addWidget(self.expiry_item)
+        layout.addWidget(col)
 
-        self._add_separator(layout)
-
-        # Colonna 2: HW ID / Login
-        col2 = QWidget()
-        v2 = QVBoxLayout(col2)
-        v2.setContentsMargins(0, 0, 0, 0)
-        v2.setSpacing(2)
+    def _setup_hw_col(self, layout: QHBoxLayout) -> None:
+        """Configura la colonna HW ID / Login."""
+        col = QWidget()
+        v = QVBoxLayout(col)
+        v.setContentsMargins(0, 0, 0, 0)
+        v.setSpacing(2)
         self.hw_id_item = QLabel()
         self.hw_id_item.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 13px;")
         self.last_login_item = QLabel()
         self.last_login_item.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 13px;")
-        v2.addWidget(self.hw_id_item)
-        v2.addWidget(self.last_login_item)
-        layout.addWidget(col2)
+        v.addWidget(self.hw_id_item)
+        v.addWidget(self.last_login_item)
+        layout.addWidget(col)
 
-        self._add_separator(layout)
-
-        # Colonna 3: Portali
-        col3 = QWidget()
-        v3 = QVBoxLayout(col3)
-        v3.setContentsMargins(0, 0, 0, 0)
-        v3.setSpacing(2)
+    def _setup_portals_col(self, layout: QHBoxLayout) -> None:
+        """Configura la colonna Portali."""
+        col = QWidget()
+        v = QVBoxLayout(col)
+        v.setContentsMargins(0, 0, 0, 0)
+        v.setSpacing(2)
         self.portale_item = ClickableLabel()
         self.portale_item.setBaseStyle(f"color: {COLORS['text_dark']}; font-size: 13px;")
         self.portale_item.clicked.connect(self.portale_clicked.emit)
         self.safe_item = ClickableLabel()
         self.safe_item.setBaseStyle(f"color: {COLORS['text_dark']}; font-size: 13px;")
         self.safe_item.clicked.connect(self.safework_clicked.emit)
-        v3.addWidget(self.portale_item)
-        v3.addWidget(self.safe_item)
-        layout.addWidget(col3)
+        v.addWidget(self.portale_item)
+        v.addWidget(self.safe_item)
+        layout.addWidget(col)
 
-        layout.addStretch()
-        self.refresh_accounts()
+    def _setup_engine_col(self, layout: QHBoxLayout) -> None:
+        """Configura la colonna Motore Automazione."""
+        col = QWidget()
+        v = QVBoxLayout(col)
+        v.setContentsMargins(0, 0, 0, 0)
+        v.setSpacing(2)
+        self.engine_item = ClickableLabel()
+        self.engine_item.setBaseStyle(f"color: {COLORS['text_dark']}; font-size: 13px;")
+        self.engine_item.clicked.connect(self.engine_clicked.emit)
+        v.addWidget(self.engine_item)
+        self.headless_item = ClickableLabel()
+        self.headless_item.setBaseStyle(f"color: {COLORS['text_muted']}; font-size: 12px;")
+        self.headless_item.clicked.connect(self.headless_clicked.emit)
+        v.addWidget(self.headless_item)
+        layout.addWidget(col)
 
     def _add_separator(self, layout: QHBoxLayout) -> None:
         """Aggiunge una linea verticale di separazione al layout."""
@@ -122,12 +148,20 @@ class FooterLeftWidget(QWidget):
             self.last_login_item.setText(f"<b>Ultimo Accesso:</b> {last_login}")
 
     def refresh_accounts(self) -> None:
-        """Ricarica i nomi utente degli account di default dai file di configurazione."""
+        """Ricarica i nomi utente degli account, il motore e la modalità dai file di configurazione."""
         config = config_manager.load_config()
         portale = self._get_def(config.get("accounts", []))
         safe = self._get_def(config.get("safework_accounts", []))
+        engine = config.get("automation_engine", "selenium").capitalize()
+
         self.portale_item.setText(f"<b>🌐 Portale:</b> {portale or 'N.C.'}")
         self.safe_item.setText(f"<b>🛡️ SafeWork:</b> {safe or 'N.C.'}")
+        self.engine_item.setText(f"<b>⚙️ Motore:</b> {engine}")
+
+        is_headless = config.get("browser_headless", False)
+        mode_text = "Nascosto" if is_headless else "Visibile"
+        mode_icon = "👁️‍🗨️" if is_headless else "👁️"
+        self.headless_item.setText(f"{mode_icon} Browser: {mode_text}")
 
     def _get_def(self, accounts: list[dict[str, Any]]) -> str | None:
         """Helper per estrarre l'username dell'account predefinito."""

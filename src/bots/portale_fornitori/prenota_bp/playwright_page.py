@@ -7,36 +7,23 @@ Page Object Model per la gestione Prenotazioni BP usando Playwright.
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
-from playwright.sync_api import Page, TimeoutError
+from playwright.sync_api import Page
+
+from src.bots.base.playwright_base_page import PlaywrightBasePage
 
 from .locators import PrenotaBPLocators
 
 
-class PlaywrightPrenotaBPPage:
+class PlaywrightPrenotaBPPage(PlaywrightBasePage):
     """Gestisce le interazioni con la pagina Prenotazioni BP usando Playwright."""
 
     def __init__(self, page: Page, log_callback: Callable[[str], None] | None = None) -> None:
-        self.page = page
-        self.log = log_callback or print
-
-    def _get_selector(self, locator: tuple[str, str]) -> str:
-        """Converte un locatore Selenium (By, value) in un selettore Playwright."""
-        from src.bots.base.playwright_utils import get_playwright_selector  # noqa: PLC0415
-
-        return get_playwright_selector(locator)
-
-    def _wait_for_overlay(self) -> None:
-        """Attende la scomparsa di maschere di caricamento."""
-        try:
-            xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask') or contains(@class, 'full-loader')][not(contains(@style,'display: none'))]"
-            self.page.wait_for_selector(f"xpath={xpath}", state="hidden", timeout=5000)
-        except TimeoutError:
-            pass
+        super().__init__(page, log_callback)
 
     def navigate_to_gestione_bp(self) -> None:
         """Naviga verso la sezione Gestione Buono di Prelievo."""
         self.log("Navigazione verso Gestione Buono di Prelievo...")
-        self._wait_for_overlay()
+        self._wait_overlay()
 
         filter_sel = self._get_selector(PrenotaBPLocators.FILTER_FORNITORE)
         if self.page.is_visible(filter_sel):
@@ -53,7 +40,7 @@ class PlaywrightPrenotaBPPage:
             self.page.wait_for_selector(submenu_sel, state="visible")
             self.page.click(submenu_sel)
 
-        self._wait_for_overlay()
+        self._wait_overlay()
         self.page.wait_for_selector(filter_sel, state="visible")
         self.log("Sezione Gestione BP caricata.")
 
@@ -76,7 +63,7 @@ class PlaywrightPrenotaBPPage:
                 option_xpath = f"xpath=//li[normalize-space(text())='{fornitore}']"
                 self.page.wait_for_selector(option_xpath, state="visible", timeout=5000)
                 self.page.click(option_xpath)
-                self._wait_for_overlay()
+                self._wait_overlay()
             except Exception as e:
                 self.log(f"  ⚠ Avviso: Selezione fornitore fallita ({e}), tento inserimento manuale.")
                 self.page.fill(self._get_selector(PrenotaBPLocators.FILTER_FORNITORE), fornitore)
@@ -91,21 +78,21 @@ class PlaywrightPrenotaBPPage:
             self.page.fill(self._get_selector(PrenotaBPLocators.FILTER_DATA_A), data_a)
 
         self.page.click(self._get_selector(PrenotaBPLocators.BT_CERCA))
-        self._wait_for_overlay()
+        self._wait_overlay()
         self.log("Ricerca completata.")
 
     def apri_dettagli_bp(self) -> None:
         """Apre i dettagli del primo BP."""
         self.log("Apertura dettagli BP...")
         self.page.click(self._get_selector(PrenotaBPLocators.ICON_DETTAGLI))
-        self._wait_for_overlay()
+        self._wait_overlay()
         self.page.wait_for_selector(self._get_selector(PrenotaBPLocators.WINDOW_DETTAGLI), state="visible")
 
     def chiudi_dettagli_bp(self) -> None:
         """Chiude la finestra dettagli."""
         self.log("Chiusura finestra dettagli...")
         self.page.click(self._get_selector(PrenotaBPLocators.BT_CHIUDI_POPUP))
-        self._wait_for_overlay()
+        self._wait_overlay()
 
     def gestisci_creazione_richiesta(self, note: str) -> None:
         """Gestisce il flusso di creazione richiesta bondo."""
@@ -160,7 +147,7 @@ class PlaywrightPrenotaBPPage:
     def _compila_form_richiesta(self, note: str) -> None:
         self.log("Click su 'Crea Richiesta'...")
         self.page.click(self._get_selector(PrenotaBPLocators.BT_CREA_RICHIESTA))
-        self._wait_for_overlay()
+        self._wait_overlay()
 
         now = datetime.now(UTC).astimezone()
         data_oggi = now.strftime("%d/%m/%Y")
@@ -177,5 +164,5 @@ class PlaywrightPrenotaBPPage:
 
         self.log("Salvataggio richiesta...")
         self.page.click(self._get_selector(PrenotaBPLocators.BT_SALVA))
-        self._wait_for_overlay()
+        self._wait_overlay()
         self.log("Richiesta creata e salvata con successo.")

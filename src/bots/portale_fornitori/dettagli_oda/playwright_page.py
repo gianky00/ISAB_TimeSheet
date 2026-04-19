@@ -8,39 +8,19 @@ from collections.abc import Callable
 from contextlib import suppress
 from pathlib import Path
 
-from playwright.sync_api import Page, TimeoutError
+from playwright.sync_api import Page
 
+from src.bots.base.playwright_base_page import PlaywrightBasePage
 from src.bots.portale_fornitori.dettagli_oda.locators import DettagliOdALocators
 from src.core.constants import Timeouts
 from src.utils.helpers import sanitize_filename
 
 
-class PlaywrightDettagliOdAPage:
+class PlaywrightDettagliOdAPage(PlaywrightBasePage):
     """Gestisce le interazioni con la pagina Dettagli OdA usando Playwright."""
 
     def __init__(self, page: Page, log_callback: Callable[[str], None] | None = None) -> None:
-        self.page = page
-        self._log = log_callback or print
-
-    def log(self, msg: str) -> None:
-        self._log(msg)
-
-    def _get_selector(self, locator: tuple[str, str]) -> str:
-        """Converte un locatore Selenium (By, value) in un selettore Playwright."""
-        from src.bots.base.playwright_utils import get_playwright_selector  # noqa: PLC0415
-
-        return get_playwright_selector(locator)
-
-    def _wait_for_overlay(self, timeout_ms: int | None = None) -> None:
-        t = timeout_ms or (Timeouts.OVERLAY * 1000)
-        xpath = (
-            "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')]"
-            "[not(contains(@style,'display: none'))]"
-        )
-        try:
-            self.page.wait_for_selector(f"xpath={xpath}", state="hidden", timeout=t)
-        except TimeoutError:
-            self.log("⚠️ Timeout attesa overlay.")
+        super().__init__(page, log_callback)
 
     def navigate_to_dettagli(self, is_first_row: bool = True) -> bool:
         """Naviga nel menu del portale fino alla pagina dei Dettagli OdA."""
@@ -53,21 +33,21 @@ class PlaywrightDettagliOdAPage:
 
             if not is_first_row:
                 # Se non è la prima riga, il menu potrebbe essere già aperto o richiedere un click per refresh
-                # Mantengo logica originale
                 self.page.click(report_sel)
 
-            self._wait_for_overlay()
+            self._wait_overlay()
 
             oda_sel = self._get_selector(DettagliOdALocators.DETTAGLI_MENU)
             self.page.click(oda_sel)
 
             supplier_arrow_sel = self._get_selector(DettagliOdALocators.SUPPLIER_ARROW)
             self.page.wait_for_selector(supplier_arrow_sel, state="visible")
-            self._wait_for_overlay()
-            return True
+            self._wait_overlay()
         except Exception as e:
             self.log(f"✗ Navigazione fallita: {e}")
             return False
+        else:
+            return True
 
     def setup_supplier(self, supplier: str) -> bool:
         """Seleziona il fornitore dal menu a discesa."""
@@ -79,11 +59,12 @@ class PlaywrightDettagliOdAPage:
             option_xpath = f"xpath=//li[contains(text(), '{supplier}')]"
             self.page.wait_for_selector(option_xpath, state="visible", timeout=15000)
             self.page.click(option_xpath)
-            self._wait_for_overlay()
-            return True
+            self._wait_overlay()
         except Exception as e:
             self.log(f"✗ Selezione fornitore fallita: {e}")
             return False
+        else:
+            return True
 
     def expand_sidebar_if_collapsed(self) -> None:
         """Espande la sidebar se necessario."""
@@ -114,13 +95,12 @@ class PlaywrightDettagliOdAPage:
                 self.page.fill(self._get_selector(DettagliOdALocators.CONTRACT_FIELD), contract)
 
             checkbox_sel = self._get_selector(DettagliOdALocators.CHECKBOX_FIELD)
-            # ExtJS checkboxes possono essere ostiche, usiamo click se non selezionato
             if not self.page.is_checked("input[name='GetItemServiceInfo']"):
                 self.page.click(checkbox_sel)
 
             self.page.click(self._get_selector(DettagliOdALocators.SEARCH_BUTTON))
             self.log("  Cerca cliccato...")
-            self._wait_for_overlay()
+            self._wait_overlay()
 
             try:
                 count_sel = self._get_selector(DettagliOdALocators.RESULTS_COUNT_LABEL)
@@ -139,7 +119,7 @@ class PlaywrightDettagliOdAPage:
             if oda:
                 self.log("  Apertura dettagli (OdA specifico)...")
                 self.page.click(self._get_selector(DettagliOdALocators.DETAILS_ICON))
-                self._wait_for_overlay()
+                self._wait_overlay()
                 export_btn_sel = self._get_selector(DettagliOdALocators.EXPORT_EXCEL_TEXT)
                 target_filename = f"dettaglio_oda_{sanitize_filename(oda)}.xlsx"
             else:
@@ -150,13 +130,13 @@ class PlaywrightDettagliOdAPage:
 
             final_path = self._download(dest_dir, target_filename, export_btn_sel)
             self._close_all_tabs()
-            return final_path
-
         except Exception as e:
             self.log(f"  ✗ Errore processamento: {e}")
             with suppress(Exception):
                 self._close_all_tabs()
             return None
+        else:
+            return final_path
 
     def _close_all_tabs(self) -> None:
         """Chiude le schede aperte."""
@@ -164,7 +144,7 @@ class PlaywrightDettagliOdAPage:
             close_sel = self._get_selector(DettagliOdALocators.TAB_CLOSE_BTN)
             while self.page.is_visible(close_sel):
                 self.page.click(close_sel)
-                self._wait_for_overlay(timeout_ms=2000)
+                self._wait_overlay(timeout_ms=2000)
         except Exception as e:
             self.log(f"  ⚠️ Errore chiusura tab: {e}")
 
@@ -191,7 +171,8 @@ class PlaywrightDettagliOdAPage:
 
             download.save_as(str(target_path))
             self.log(f"  ✓ Scaricato: {target_path.name}")
-            return target_path
         except Exception as e:
             self.log(f"  ✗ Errore download: {e}")
             return None
+        else:
+            return target_path

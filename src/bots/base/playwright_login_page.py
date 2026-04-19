@@ -9,11 +9,12 @@ from collections.abc import Callable
 
 from playwright.sync_api import Page, TimeoutError
 
+from src.bots.base.playwright_base_page import PlaywrightBasePage
 from src.bots.portale_fornitori.common.locators import CommonLocators, LoginLocators
 from src.core.constants import Timeouts
 
 
-class PlaywrightLoginPage:
+class PlaywrightLoginPage(PlaywrightBasePage):
     """
     Page Object per la gestione della pagina di login con Playwright.
     """
@@ -24,33 +25,8 @@ class PlaywrightLoginPage:
         logger: Callable[[str], None] | None = None,
         isab_url: str = "",
     ) -> None:
-        self.page = page
-        self.log = logger or print
+        super().__init__(page, logger)
         self.isab_url = isab_url
-
-    def _get_selector(self, locator: tuple[str, str]) -> str:
-        """Converte un locatore Selenium (By, value) in un selettore Playwright."""
-        from .playwright_utils import get_playwright_selector  # noqa: PLC0415
-
-        return get_playwright_selector(locator)
-
-    def _attendi_scomparsa_overlay(self, timeout_ms: int = Timeouts.OVERLAY * 1000) -> bool:
-        """
-        Attende che gli overlay di caricamento Ext JS scompaiano.
-        """
-        try:
-            # Selettore combinato per maschere generiche e testi di caricamento
-            xpath_combined = f"{CommonLocators.LOADING_MASK[1]} | {CommonLocators.LOADING_TEXT[1]}"
-            selector = f"xpath={xpath_combined}"
-
-            # Attendi che non ci siano più elementi visibili che bloccano la UI
-            self.page.wait_for_selector(selector, state="hidden", timeout=timeout_ms)
-            self.log(" -> Overlay di caricamento risolto.")
-        except TimeoutError:
-            self.log(f"⚠ Timeout ({timeout_ms / 1000}s) attesa overlay. Proseguo sperando sia interagibile.")
-            return False
-        else:
-            return True
 
     def _perform_login_form_action(self, username: str, password: str) -> None:
         """Riempie il form di login e preme Accedi con interazioni robuste."""
@@ -75,7 +51,7 @@ class PlaywrightLoginPage:
         self._check_and_handle_session_popup()
 
         self.log("Accesso inviato. Monitoraggio caricamento...")
-        self._attendi_scomparsa_overlay(Timeouts.LONG * 1000)
+        self._wait_overlay(Timeouts.LONG * 1000)
 
     def _check_and_handle_session_popup(self) -> None:
         """Controlla se appare il popup 'Sessione attiva' e clicca su Si."""
@@ -115,7 +91,7 @@ class PlaywrightLoginPage:
                 self.log(f"⚠ Errore HTTP {response.status}")
                 return False
 
-            self._attendi_scomparsa_overlay(timeout_ms=15000)
+            self._wait_overlay(timeout_ms=15000)
 
             # Controllo se siamo già loggati (sessione persistente chrome_profile)
             if self._verify_logged_in_via_ui():
@@ -128,18 +104,17 @@ class PlaywrightLoginPage:
             except TimeoutError:
                 self.log("⚠️ Campi login non trovati or overlay bloccante. Ricarico pagina...")
                 self.page.reload()
-                self._attendi_scomparsa_overlay(15000)
+                self._wait_overlay(15000)
                 # Secondo tentativo post-refresh
                 self._perform_login_form_action(username, password)
 
             # Verifica finale
-            if self._verify_logged_in_via_ui():
-                self.log("✓ Login completato con successo")
-                return True
-
-            self.log("✗ Login fallito: pagina non caricata correttamente dopo accesso.")
-            return False
-
+            if not self._verify_logged_in_via_ui():
+                self.log("✗ Login fallito: pagina non caricata correttamente dopo accesso.")
+                return False
         except Exception as e:
             self.log(f"✗ Errore critico durante il login: {e}")
             return False
+        else:
+            self.log("✓ Login completato con successo")
+            return True

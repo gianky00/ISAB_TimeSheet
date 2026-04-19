@@ -9,23 +9,15 @@ from contextlib import suppress
 
 from playwright.sync_api import Page, TimeoutError
 
+from src.bots.base.playwright_base_page import PlaywrightBasePage
 from src.bots.safework.common.locators import SafeWorkLocators
 
 
-class PlaywrightRicercaPDLPage:
+class PlaywrightRicercaPDLPage(PlaywrightBasePage):
     """Page Object per la pagina di ricerca PDL usando Playwright."""
 
     def __init__(self, page: Page, log_func: Callable[[str], None]) -> None:
-        self.page = page
-        self.log = log_func
-
-    def _get_selector(self, locator: tuple[str, str]) -> str:
-        _by, value = locator
-        if value.startswith(("//", "(")):
-            return f"xpath={value}"
-        if _by == "id":
-            return f"id={value}"
-        return value
+        super().__init__(page, log_func)
 
     def configura_filtro_chiusi(self, exclude_closed: bool) -> None:
         """Imposta il filtro 'Escludi chiusi'."""
@@ -52,26 +44,28 @@ class PlaywrightRicercaPDLPage:
             self.page.wait_for_selector(option_sel, state="visible", timeout=5000)
             self.page.click(option_sel)
 
-            # 3. Clic Cerca
+            # 3. Clic Cerca - Usa il selettore generico centralizzato
             self.log("🖱️ Clic su Cerca...")
-            self.page.click("#btnCerca")
+            search_btn_sel = self._get_selector(SafeWorkLocators.SEARCH_GENERIC_BUTTON)
+            self.page.click(search_btn_sel)
 
             # 4. Attesa Overlay
             self._attendi_scomparsa_overlay(timeout_ms=300000)
-
-            return True
         except Exception as e:
             self.log(f"❌ Errore selezione/ricerca: {e}")
             return False
+        else:
+            return True
 
     def _attendi_scomparsa_overlay(self, timeout_ms: int = 300000) -> None:
         """Attende la scomparsa dell'overlay GISWaitOverlay."""
         try:
+            overlay_sel = self._get_selector(SafeWorkLocators.OVERLAY)
             # Verifica se appare e poi attendi scomparsa
             with suppress(TimeoutError):
-                self.page.wait_for_selector("#GISWaitOverlay", state="visible", timeout=2000)
+                self.page.wait_for_selector(overlay_sel, state="visible", timeout=2000)
 
-            self.page.wait_for_selector("#GISWaitOverlay", state="hidden", timeout=timeout_ms)
+            self.page.wait_for_selector(overlay_sel, state="hidden", timeout=timeout_ms)
         except TimeoutError:
             pass
 
@@ -80,7 +74,8 @@ class PlaywrightRicercaPDLPage:
         try:
             sel = self._get_selector(SafeWorkLocators.EXPORT_BUTTON)
             self.page.click(sel)
-            return True
         except Exception as e:
             self.log(f"❌ Errore click export: {e}")
             return False
+        else:
+            return True

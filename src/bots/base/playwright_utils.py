@@ -22,6 +22,10 @@ def get_playwright_selector(locator: tuple[str, str]) -> str:
     if value.startswith(("xpath=", "id=", "css=", "text=")):
         return value
 
+    # PRIORITÀ: Rilevamento automatico XPath per robustezza
+    if value.startswith(("//", "(")):
+        return f"xpath={value}"
+
     if by == By.XPATH:
         result = f"xpath={value}"
     elif by == By.NAME:
@@ -33,8 +37,5 @@ def get_playwright_selector(locator: tuple[str, str]) -> str:
         result = f".{value.replace(' ', '.')}"
     elif by == By.CSS_SELECTOR:
         result = value
-    elif value.startswith(("//", "(")):
-        # Fallback: se inizia con // o ( assume XPATH
-        result = f"xpath={value}"
 
     return result

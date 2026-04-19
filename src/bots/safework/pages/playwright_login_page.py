@@ -9,23 +9,15 @@ from contextlib import suppress
 
 from playwright.sync_api import Page, TimeoutError
 
+from src.bots.base.playwright_base_page import PlaywrightBasePage
 from src.bots.safework.common.locators import SafeWorkLocators
 
 
-class PlaywrightSafeWorkLoginPage:
+class PlaywrightSafeWorkLoginPage(PlaywrightBasePage):
     """Gestisce l'accesso al portale SafeWork usando Playwright."""
 
     def __init__(self, page: Page, log_func: Callable[[str], None]) -> None:
-        self.page = page
-        self.log = log_func
-
-    def _get_selector(self, locator: tuple[str, str]) -> str:
-        _by, value = locator
-        if value.startswith(("//", "(")):
-            return f"xpath={value}"
-        if _by == "id":
-            return f"id={value}"
-        return value
+        super().__init__(page, log_func)
 
     def login(self, username: str, password: str, account_type: str = "Esecutore") -> bool:
         """
@@ -109,7 +101,8 @@ class PlaywrightSafeWorkLoginPage:
             home_btn_sel = self._get_selector(SafeWorkLocators.HOME_BUTTON)
             self.page.wait_for_selector(home_btn_sel, state="visible", timeout=30000)
             self.log("✅ Accesso alla Dashboard completato.")
-            return True
         except TimeoutError:
             self.log("❌ Dashboard non raggiunta.")
             return False
+        else:
+            return True
