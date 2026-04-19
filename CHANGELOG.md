@@ -1,3 +1,22 @@
+## v1.42.1 (2026-04-19)
+
+### Fix
+
+- **test-runner**: V5.1 - fix doppio conteggio passed/failed nella fase isolamento SHOTGUN (BUG-1)
+- **test-runner**: `_parse_pytest_summary` ora cattura sia `failed` che `error` con `findall` (BUG-2)
+- **test-runner**: SNIPER retry usa `--last-failed` invece di rieseguire tutti i target (BUG-4)
+- **test-runner**: pattern E-prefix non piu' limitato a `not failures` (BUG-5)
+- **test-runner**: `_extract_traceback_block` matching preciso con delimitatori pytest (BUG-6)
+
+### Refactor
+
+- **test-runner**: `sys.exit()` centralizzato in `__main__`, metodi usano `_exit_code` (ARCH-2)
+- **test-runner**: report IA troncato a `MAX_OUTPUT_CHARS` per ridurre dimensione ~80% (ARCH-4)
+
+### Tests
+
+- **test-runner**: aggiunta suite completa `test_runner_internals.py` (34 unit test di regressione)
+
 ## v1.42.0 (2026-04-19)
 
 ### Refactor

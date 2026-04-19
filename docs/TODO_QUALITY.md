@@ -32,8 +32,19 @@ Le seguenti funzioni/moduli hanno superato la soglia di complessità desiderata 
 ## 🛡️ Sicurezza (Bandit)
 - [ ] Valutare l'uso di un Query Builder o ORM leggero per `DataSynchronizer` per eliminare definitivamente gli avvisi B608 (SQL Injection) senza usare `# nosec`.
 
+## 🧪 Infrastruttura Test
+- [x] Fix doppio conteggio passed/failed in fase isolamento SHOTGUN (V5.1)
+- [x] Fix parsing incompleto summary pytest (failed+error)
+- [x] SNIPER retry mirato con `--last-failed`
+- [x] `sys.exit()` centralizzato, runner utilizzabile come libreria
+- [x] Report IA troncato a 2000 char per file (-80% dimensione)
+- [x] Suite test per il runner: 34 unit test di regressione
+- [ ] Valutare sostituzione parallelismo custom con `pytest-xdist` (work-stealing nativo)
+- [ ] Parallelizzare per nodo singolo invece che per file (riduzione effetto straggler)
+- [ ] Collection in-process con API pytest (`pytest.main()`) invece di subprocess
+
 ## 📖 Documentazione (Interrogate)
 - [ ] Portare la copertura delle docstring dal attuale ~80% al 95%.
 
 ---
-*Ultimo aggiornamento: 13 Marzo 2026*
+*Ultimo aggiornamento: 19 Aprile 2026*
