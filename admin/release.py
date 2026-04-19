@@ -252,6 +252,10 @@ def main():  # noqa: ANN201
 
     # 4. Version Bump
     run_command([str(VENV_PYTHON), "admin/bump_version.py", bump_type], f"Bumping {bump_type}")
+
+    # 4.1 Update Changelog
+    run_command([str(VENV_PYTHON), "-m", "commitizen", "changelog"], "Updating CHANGELOG.md via Commitizen")
+
     new_version = get_current_version()
 
     # 5. Git Operations

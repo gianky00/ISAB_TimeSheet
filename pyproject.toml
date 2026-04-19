@@ -346,6 +346,8 @@ exclude = ["src/bots/safework/pdl/search_bot.py"]
 name = "cz_conventional_commits"
 version = "1.41.2"
 tag_format = "v$version"
+changelog_file = "CHANGELOG.md"
+update_changelog_on_bump = true
 version_files = [
     "src/core/version.py:__version__",
     "pyproject.toml:version"
