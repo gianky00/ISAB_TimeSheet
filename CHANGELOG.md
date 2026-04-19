@@ -1,14 +1,63 @@
-## v1.33.0 (2026-04-19)
+## v1.42.0 (2026-04-19)
 
 ### Refactor
 
-- **dependencies**: rimozione integrale di `requirements.txt` e consolidamento su Poetry per la gestione dell'ambiente virtuale
-- **root**: pulizia radicale della directory principale (rimozione di `drivers/`, `main.build/`, `test.db` e altri file temporanei)
-- **data**: riorganizzazione dei file di input e certificati all'interno della cartella dedicata `data/`
+- **dependencies**: rimozione integrale di `requirements.txt` e consolidamento definitivo su Poetry per la gestione dell'ambiente virtuale
+- **root**: pulizia radicale della directory principale con rimozione di cartelle obsolete (`drivers/`, `main.build/`) e file temporanei
+- **data**: riorganizzazione strutturale dei file di input e certificati nella cartella dedicata `data/`
 
 ### Fix
 
-- **scripts**: aggiornamento di `scripts/extract_vba.py` per supportare percorsi relativi, garantendo la compatibilità cross-machine tramite GitHub
+- **scripts**: aggiornamento di `scripts/extract_vba.py` con percorsi relativi per garantire la compatibilità cross-machine via GitHub
+
+## v1.41.2 (2026-04-19)
+
+### Feat
+
+- **automation**: migrazione strutturale a Playwright con supporto dual-engine per tutti i bot principali
+- **automation**: aggiunto selettore SOCIETA' (ISAB/PSER) per la gestione multi-portale
+- **gui**: implementato metodo `show_settings` per l'accesso rapido ai parametri bot dalla MainWindow
+
+### Fix
+
+- **automation**: risoluzione errore 'Unknown engine name' e centralizzazione selettori Playwright
+- **automation**: fix locatori SafeWork e miglioramento robustezza login
+- **gui**: stabilizzazione footer con controlli dinamici e soppressione popup Chromium
+
+## v1.41.0 (2026-04-18)
+
+### Feat
+
+- **ui**: integrazione animazioni "Premium Wave" e ottimizzazione generale del motore grafico
+
+## v1.40.0 (2026-04-12)
+
+### Refactor
+
+- **architecture**: grande refactoring modulare (Phase 1-4) con disaccoppiamento completo tra Core e GUI
+- **quality**: attivazione modalità "Strict Typing" globale (100% type-safe via Mypy)
+- **quality**: bonifica totale del debito tecnico tramite Ruff, Mypy e Refurb su tutto il progetto
+
+### Fix
+
+- **gui**: risoluzione conflitti Command Palette (F1) e ottimizzazione startup path
+
+## v1.35.0 (2026-04-01)
+
+### Feat
+
+- **splash**: implementazione animazioni high-tech avanzate a 60fps
+- **splash**: implementazione architettura Zero-Stutter tramite processo standalone per il caricamento GUI
+
+## v1.33.0 (2026-03-20)
+
+### Feat
+
+- **contabilita**: gestione avanzata dei certificati campione con editing inline e export PDF professionale
+
+### Security
+
+- **core**: risoluzione vulnerabilità SQL Injection (B608) nel modulo contabilità
 
 ## v1.32.1 (2026-03-14)
 
