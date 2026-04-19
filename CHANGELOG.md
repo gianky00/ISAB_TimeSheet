@@ -1,3 +1,15 @@
+## v1.33.0 (2026-04-19)
+
+### Refactor
+
+- **dependencies**: rimozione integrale di `requirements.txt` e consolidamento su Poetry per la gestione dell'ambiente virtuale
+- **root**: pulizia radicale della directory principale (rimozione di `drivers/`, `main.build/`, `test.db` e altri file temporanei)
+- **data**: riorganizzazione dei file di input e certificati all'interno della cartella dedicata `data/`
+
+### Fix
+
+- **scripts**: aggiornamento di `scripts/extract_vba.py` per supportare percorsi relativi, garantendo la compatibilità cross-machine tramite GitHub
+
 ## v1.32.1 (2026-03-14)
 
 ### Refactor
