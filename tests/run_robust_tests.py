@@ -1,5 +1,5 @@
 """
-SyncroJob Enterprise - Ultra Test Runner V5.0 (The Apex Runner)
+SyncroJob Enterprise - Ultra Test Runner V5.1 (The Apex Runner)
 ================================================================
 Sistema ibrido di orchestrazione test, ottimizzato per consumo IA.
 
@@ -40,6 +40,7 @@ DEFAULT_TIMEOUT: Final[int] = 120
 MAX_WORKERS: Final[int] = max(1, multiprocessing.cpu_count() - 1)
 SNIPER_THRESHOLD: Final[int] = 5
 AI_REPORT_FILE: Final[Path] = Path(__file__).parent / ".test_results.json"
+MAX_OUTPUT_CHARS: Final[int] = 2000  # Limite output per file nel report IA
 
 
 # ─── Console ──────────────────────────────────────────────────────────────────
@@ -153,18 +154,23 @@ def _build_env() -> dict[str, str]:
 
 
 def _parse_pytest_summary(output: str) -> tuple[int, int]:
-    """Estrae (passed, failed) dalla riga di summary di pytest."""
+    """Estrae (passed, failed) dalla riga di summary di pytest.
+
+    Gestisce correttamente righe con sia 'failed' che 'error',
+    es: '3 failed, 2 error, 10 passed in 5.2s'.
+    """
     passed = 0
     failed = 0
     for line in reversed(output.splitlines()):
         if "passed" in line or "failed" in line or "error" in line:
             p_match = re.search(r"(\d+)\s+passed", line)
-            f_match = re.search(r"(\d+)\s+(?:failed|error)", line)
+            # BUG-2 FIX: Usa findall per catturare SIA failed CHE error
+            f_matches = re.findall(r"(\d+)\s+(?:failed|error)", line)
             if p_match:
                 passed = int(p_match.group(1))
-            if f_match:
-                failed += int(f_match.group(1))
-            if p_match or f_match:
+            for fm in f_matches:
+                failed += int(fm)
+            if p_match or f_matches:
                 break
     return passed, failed
 
@@ -210,7 +216,9 @@ def _extract_failures(output: str, target: str) -> list[FailureDetail]:
             continue
 
         # Pattern alternativo: "E   ImportError: ..." o "E   AssertionError: ..."
-        if line.strip().startswith("E ") and not failures:
+        # BUG-5 FIX: Rimosso 'not failures' — cattura tutti gli errori E-prefix,
+        # la deduplica avviene in _finish_ai() per node_id.
+        if line.strip().startswith("E ") and re.match(r"E\s+\w+Error|E\s+\w+Exception", line.strip()):
             error_line = line.strip()[2:].strip()
             error_type, error_message, category = _classify_error(error_line, output, target)
             tb = _extract_traceback_block(lines, target)
@@ -239,6 +247,7 @@ def _classify_error(error_text: str, full_output: str, node_id: str) -> tuple[st
         return "ImportError", error_text, "import_error"
 
     # AssertionError
+    # BUG-3 FIX: Python usa 'AssertionError', non 'AssertionError'
     if "AssertionError" in error_text or "assert " in error_text.lower():
         return "AssertionError", error_text, "assertion"
 
@@ -267,22 +276,29 @@ def _classify_error(error_text: str, full_output: str, node_id: str) -> tuple[st
 
 
 def _extract_traceback_block(lines: list[str], node_id: str) -> str:
-    """Estrae il blocco di traceback rilevante per un test specifico."""
-    # Cerca il blocco delimitato da "_ _ _ _" o "= FAILURES ="
+    """Estrae il blocco di traceback rilevante per un test specifico.
+
+    BUG-6 FIX: Matching piu' preciso — usa i delimitatori pytest
+    (riga di '=' o '_') che contengono il nome del test, invece di
+    matchare qualsiasi riga con il nome del test + '='.
+    """
     in_block = False
     tb_lines: list[str] = []
     test_name = node_id.split("::")[-1] if "::" in node_id else node_id
 
     for line in lines:
-        # Inizio blocco fallimento
-        if test_name in line and ("FAILED" in line or "_ " in line or "=" in line):
+        # Inizio blocco: header pytest delimitato (es. "___ test_foo ___" o "=== FAILURES ===")
+        if test_name in line and (
+            re.match(r"^[_= ]{5,}", line)  # Riga di delimitazione pytest
+            or "FAILED" in line
+        ):
             in_block = True
             tb_lines = [line]
             continue
         if in_block:
             tb_lines.append(line)
-            # Fine blocco: riga di separazione lunga o riga vuota dopo "short test summary"
-            if line.startswith("=") and len(line) > 10 and in_block and len(tb_lines) > 2:
+            # Fine blocco: nuova riga di separazione lunga (almeno 10 '=' o '_')
+            if re.match(r"^[=]{10,}", line) and len(tb_lines) > 2:
                 break
 
     return "\n".join(tb_lines[-50:]) if tb_lines else ""
@@ -417,6 +433,7 @@ class UltraRunner:
         self.start_time = 0.0
         self.ai_mode = False
         self.strategy = "SHOTGUN"
+        self._exit_code = 0  # ARCH-2: Exit code centralizzato
 
     # ── Dashboard ANSI ──
 
@@ -498,10 +515,11 @@ class UltraRunner:
                 # Estrai dettagli dei fallimenti
                 for target in targets:
                     self.failure_details.extend(_extract_failures(output, target))
-                # Retry
+                # BUG-4 FIX: Retry con --last-failed per rieseguire solo i falliti
+                retry_cmd = [*cmd, "--last-failed", "--no-header"]
                 for _attempt in range(1, args.retry + 1):
                     res_retry = subprocess.run(
-                        cmd,
+                        retry_cmd,
                         cwd=ROOT_DIR,
                         check=False,
                         env=env,
@@ -525,21 +543,24 @@ class UltraRunner:
 
             if res_human.returncode == 0:
                 Console.success(f"\nSNIPER SHOT: Successo in {dur:.2f}s")
-                sys.exit(0)
+                self._exit_code = 0
             else:
+                # BUG-4 FIX: Retry con --last-failed
+                retry_cmd = [*cmd, "--last-failed", "--no-header"]
                 if args.retry > 0:
                     Console.header(f"RETRY: Riesecuzione ({args.retry} tentativi rimanenti)")
                     for attempt in range(1, args.retry + 1):
                         Console.print(f"  Tentativo {attempt}/{args.retry}...", Console.WARNING)
-                        res_retry = subprocess.run(cmd, cwd=ROOT_DIR, check=False, env=env)
-                        if res_retry.returncode == 0:
+                        res_human_retry = subprocess.run(retry_cmd, cwd=ROOT_DIR, check=False, env=env)
+                        if res_human_retry.returncode == 0:
                             dur_total = time.time() - self.start_time
                             Console.success(
                                 f"\nSNIPER SHOT: Successo al tentativo {attempt + 1} in {dur_total:.2f}s"
                             )
-                            sys.exit(0)
+                            self._exit_code = 0
+                            return
                 Console.error(f"\nSNIPER SHOT: Fallito in {dur:.2f}s")
-                sys.exit(1)
+                self._exit_code = 1
 
     # ── SHOTGUN ──
 
@@ -606,13 +627,17 @@ class UltraRunner:
                             res = future.result()
                             completed += 1
                             self.file_results.append(res)
-                            self.total_passed += res.passed
-                            self.total_failed += res.failed
                             if not res.success:
+                                # BUG-1 FIX: NON contare qui i file che vanno in isolamento.
+                                # I conteggi verranno fatti nella fase di isolamento.
                                 isolation_queue.append(target)
                                 # Estrai dettagli fallimento per IA
                                 if self.ai_mode and res.full_output:
                                     self.failure_details.extend(_extract_failures(res.full_output, target))
+                            else:
+                                # Conta solo i file che hanno avuto successo definitivo
+                                self.total_passed += res.passed
+                                self.total_failed += res.failed
                             self._draw_dashboard(completed, total_files)
                         except Exception as e:
                             completed += 1
@@ -651,19 +676,25 @@ class UltraRunner:
                         if res.success:
                             label = "PASS" if attempt == 0 else f"FIXED (attempt {attempt + 1})"
                             Console.success(label)
-                            self.total_passed += 1
+                            # BUG-1 FIX: Conta dal risultato effettivo dell'isolamento
+                            self.total_passed += res.passed
                             self.file_results.append(res)
                             final_res = res
                             break
                         final_res = res
                     else:
                         Console.error("FAIL")
-                        self.total_failed += 1
+                        # BUG-1 FIX: Conta dal risultato effettivo dell'isolamento
                         if final_res is not None:
+                            self.total_passed += final_res.passed
+                            self.total_failed += final_res.failed
                             self.failed_list.append({"id": node, "error": final_res.error_msg})
                             self.file_results.append(final_res)
                             if self.ai_mode and final_res.full_output:
                                 self.failure_details.extend(_extract_failures(final_res.full_output, node))
+                        else:
+                            self.total_failed += 1
+                            self.failed_list.append({"id": node, "error": "No result captured"})
 
         if self.ai_mode:
             self._finish_ai(total_files)
@@ -692,6 +723,7 @@ class UltraRunner:
             strategy=self.strategy,
             total_files=total_files,
             failures=[asdict(f) for f in unique_failures],
+            # ARCH-4 FIX: Escludi full_output dal report, tronca error_msg
             file_results=[
                 {
                     "target": r.target,
@@ -699,7 +731,7 @@ class UltraRunner:
                     "duration": round(r.duration, 3),
                     "passed": r.passed,
                     "failed": r.failed,
-                    "error_msg": r.error_msg,
+                    "error_msg": (r.error_msg[:MAX_OUTPUT_CHARS] if r.error_msg else None),
                 }
                 for r in sorted(self.file_results, key=lambda x: x.duration, reverse=True)
             ],
@@ -716,7 +748,8 @@ class UltraRunner:
         # Output JSON su stdout per consumo diretto
         print(json.dumps(report_dict, indent=2, ensure_ascii=False))
 
-        sys.exit(0 if report.success else 1)
+        # ARCH-2 FIX: Salva exit code invece di chiamare sys.exit() direttamente
+        self._exit_code = 0 if report.success else 1
 
     # ── Report Finale (Umano) ──
 
@@ -751,10 +784,11 @@ class UltraRunner:
             Console.error(f"\n  Suite fallita con {len(self.failed_list)} errori:")
             for f in self.failed_list:
                 Console.error(f"    - {f['id']}: {f['error']}")
-            sys.exit(1)
+            # ARCH-2 FIX: Salva exit code invece di sys.exit()
+            self._exit_code = 1
         else:
             Console.success("\n  Suite completata con successo!")
-            sys.exit(0)
+            self._exit_code = 0
 
     # ── Entry Point ──
 
@@ -796,4 +830,7 @@ class UltraRunner:
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
-    UltraRunner().run()
+    runner = UltraRunner()
+    runner.run()
+    # ARCH-2 FIX: Unico punto di exit del processo
+    sys.exit(runner._exit_code)
