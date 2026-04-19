@@ -28,10 +28,11 @@ class PlaywrightLoginPage(PlaywrightBasePage):
         super().__init__(page, logger)
         self.isab_url = isab_url
 
-    def _perform_login_form_action(self, username: str, password: str) -> None:
+    def _perform_login_form_action(self, username: str, password: str, company: str) -> None:
         """Riempie il form di login e preme Accedi con interazioni robuste."""
         user_sel = self._get_selector(LoginLocators.USERNAME_FIELD)
         pass_sel = self._get_selector(LoginLocators.PASSWORD_FIELD)
+        comp_sel = self._get_selector(LoginLocators.COMPANY_FIELD)
         btn_sel = self._get_selector(LoginLocators.LOGIN_BUTTON)
 
         # Attesa esplicita per visibilità e interattività
@@ -43,6 +44,22 @@ class PlaywrightLoginPage(PlaywrightBasePage):
 
         self.page.click(pass_sel)
         self.page.fill(pass_sel, password)
+
+        # Selezione Società (ISAB/PSER)
+        try:
+            self.log(f"Selezione società: {company}...")
+            # Click sull'input società per aprire il dropdown o attivare il focus
+            self.page.click(comp_sel)
+            # Tentativo di inserimento testo (spesso i combo ExtJS caricano l'id corrispondente al testo digitato)
+            self.page.fill(comp_sel, company)
+            # Micro attesa per permettere al sistema di validare l'input
+            time.sleep(0.5)
+            # Se è un vero dropdown, potremmo dover cliccare l'opzione nella lista che appare
+            option_xpath = f"xpath=//li[normalize-space(text())='{company}']"
+            if self.page.locator(option_xpath).count() > 0:
+                self.page.click(option_xpath)
+        except Exception as e:
+            self.log(f"⚠️ Avviso: Selezione società '{company}' non riuscita, proseguo: {e}")
 
         self.log("Credenziali inserite. Clicco Accedi...")
         self.page.click(btn_sel)
@@ -78,7 +95,7 @@ class PlaywrightLoginPage(PlaywrightBasePage):
         else:
             return True
 
-    def login(self, username: str, password: str) -> bool:
+    def login(self, username: str, password: str, company: str = "ISAB") -> bool:
         """
         Esegue il login al portale ISAB.
         """
@@ -100,13 +117,13 @@ class PlaywrightLoginPage(PlaywrightBasePage):
 
             try:
                 # Primo tentativo di inserimento
-                self._perform_login_form_action(username, password)
+                self._perform_login_form_action(username, password, company)
             except TimeoutError:
                 self.log("⚠️ Campi login non trovati or overlay bloccante. Ricarico pagina...")
                 self.page.reload()
                 self._wait_overlay(15000)
                 # Secondo tentativo post-refresh
-                self._perform_login_form_action(username, password)
+                self._perform_login_form_action(username, password, company)
 
             # Verifica finale
             if not self._verify_logged_in_via_ui():

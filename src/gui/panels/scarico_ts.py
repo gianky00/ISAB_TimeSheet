@@ -179,6 +179,7 @@ class ScaricaTSPanel(BaseBotPanel):
         """Carica i dati salvati."""
         config = config_manager.load_config()
         self.refresh_fornitori()
+        self.params_widget.set_societa(config.get("last_scarico_ts_societa", "ISAB"))
         self.params_widget.set_fornitore(config.get("last_scarico_ts_fornitore", ""))
         self.params_widget.set_dest_path(config.get("path_scarico_ts", ""))
         self.elabora_ts_check.setChecked(config.get("last_scarico_ts_elabora", True))
@@ -194,6 +195,7 @@ class ScaricaTSPanel(BaseBotPanel):
         if not hasattr(self, "params_widget"):
             return
         config_manager.set_config_value("last_scarico_ts_data", self.data_table.get_data())
+        config_manager.set_config_value("last_scarico_ts_societa", self.params_widget.get_societa())
         config_manager.set_config_value("last_scarico_ts_fornitore", self.params_widget.get_fornitore())
         config_manager.set_config_value("path_scarico_ts", self.params_widget.get_dest_path())
         config_manager.set_config_value("last_scarico_ts_elabora", self.elabora_ts_check.isChecked())
@@ -226,6 +228,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
         username, password = self.get_credentials()
         data = self.data_table.get_data()
+        societa = self.params_widget.get_societa()
         fornitore = self.params_widget.get_fornitore()
         data_da, _ = self.params_widget.get_dates()
         download_path = self.params_widget.get_dest_path() or config_manager.get_download_path()
@@ -262,6 +265,7 @@ class ScaricaTSPanel(BaseBotPanel):
             "download_path": download_path,
             "data_da": data_da,
             "fornitore": fornitore,
+            "company": societa,
             "elabora_ts": elabora_ts,
         }
 
@@ -270,6 +274,7 @@ class ScaricaTSPanel(BaseBotPanel):
             "rows": data,
             "data_da": data_da,
             "fornitore": fornitore,
+            "company": societa,
             "elabora_ts": elabora_ts,
         }
 

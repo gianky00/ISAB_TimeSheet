@@ -31,13 +31,14 @@ class SeleniumBaseBot(BaseBot, ABC):
     Gestisce l'inizializzazione di ChromeDriver, le opzioni del browser e le attese.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         username: str,
         password: str,
         headless: bool = False,
         timeout: int = Timeouts.DEFAULT,
         download_path: str = "",
+        company: str = "ISAB",
     ) -> None:
         """
         Inizializza le proprietà fondamentali del bot Selenium.
@@ -48,8 +49,9 @@ class SeleniumBaseBot(BaseBot, ABC):
             headless: Se True, avvia il browser in modalità nascosta.
             timeout: Tempo massimo di attesa per le operazioni (secondi).
             download_path: Percorso per il salvataggio dei file scaricati.
+            company: Società da selezionare al login (ISAB o PSER).
         """
-        super().__init__(username, password, headless, timeout, download_path)
+        super().__init__(username, password, headless, timeout, download_path, company=company)
         self.driver: webdriver.Chrome | None = None
         self.wait: WebDriverWait[webdriver.Chrome] | None = None
         self.popup_wait: WebDriverWait[webdriver.Chrome] | None = None
@@ -226,7 +228,7 @@ class SeleniumBaseBot(BaseBot, ABC):
 
     def _login(self) -> bool:
         """Esegue il login al portale ISAB."""
-        return self.login_page.login(self.username, self.password) if self.login_page else False
+        return self.login_page.login(self.username, self.password, self.company) if self.login_page else False
 
     def _attendi_scomparsa_overlay(self, timeout: int | None = None) -> bool:
         """Attende che gli overlay grafici (loading) del portale ISAB vengano rimossi dal DOM."""

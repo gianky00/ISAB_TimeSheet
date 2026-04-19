@@ -109,6 +109,7 @@ class TimbratureBotPanel(BaseBotPanel):
         try:
             self.refresh_fornitori()
             config = config_manager.load_config()
+            self.params_widget.set_societa(config.get("last_timbrature_societa", "ISAB"))
             self.params_widget.set_fornitore(config.get("last_timbrature_fornitore", ""))
             yesterday = QDate.currentDate().addDays(-1)
             self.params_widget.set_dates(yesterday.toString("dd.MM.yyyy"), yesterday.toString("dd.MM.yyyy"))
@@ -120,6 +121,7 @@ class TimbratureBotPanel(BaseBotPanel):
         if getattr(self, "_is_loading", False) or not hasattr(self, "params_widget"):
             return
         date_da, date_a = self.params_widget.get_dates()
+        config_manager.set_config_value("last_timbrature_societa", self.params_widget.get_societa())
         config_manager.set_config_value("last_timbrature_fornitore", self.params_widget.get_fornitore())
         config_manager.set_config_value("last_timbrature_date_da", date_da)
         config_manager.set_config_value("last_timbrature_date_a", date_a)
@@ -145,11 +147,13 @@ class TimbratureBotPanel(BaseBotPanel):
             self._load_saved_data()
 
         username, password = self.get_credentials()
+        societa = self.params_widget.get_societa()
         fornitore, (data_da, data_a) = self.params_widget.get_fornitore(), self.params_widget.get_dates()
 
         if params_override:
             fornitore = params_override.get("fornitore", fornitore)
             data_da, data_a = params_override.get("data_da", data_da), params_override.get("data_a", data_a)
+            societa = params_override.get("societa", societa)
 
         if not all([username, password, fornitore]):
             ToastManager.instance().show("Verifica i parametri (Fornitore mancante).", "warning")
@@ -178,10 +182,16 @@ class TimbratureBotPanel(BaseBotPanel):
             "data_da": data_da,
             "data_a": data_a,
             "fornitore": fornitore,
+            "societa": societa,
         }
 
         # Dati da elaborare
-        bot_data = {"fornitore": fornitore, "data_da": data_da, "data_a": data_a}
+        bot_data = {
+            "fornitore": fornitore,
+            "societa": societa,
+            "data_da": data_da,
+            "data_a": data_a,
+        }
 
         # Inizializza il worker (nessuna importazione pesante Selenium qui)
         self.worker = BotWorker(

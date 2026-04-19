@@ -26,13 +26,14 @@ class PlaywrightBaseBot(BaseBot, ABC):
     Centralizza la gestione del browser Chromium, la persistenza del profilo e i flag di sicurezza.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         username: str,
         password: str,
         headless: bool = False,
         timeout: int = Timeouts.DEFAULT,
         download_path: str = "",
+        company: str = "ISAB",
     ) -> None:
         """
         Inizializza le proprietà fondamentali del bot Playwright.
@@ -43,8 +44,9 @@ class PlaywrightBaseBot(BaseBot, ABC):
             headless: Se True, avvia il browser in modalità nascosta.
             timeout: Tempo massimo di attesa per le operazioni (secondi).
             download_path: Percorso per il salvataggio dei file scaricati.
+            company: Società da selezionare al login (ISAB o PSER).
         """
-        super().__init__(username, password, headless, timeout, download_path)
+        super().__init__(username, password, headless, timeout, download_path, company=company)
         self.playwright: Any = None
         self.browser: Browser | None = None
         self.context: BrowserContext | None = None
@@ -195,7 +197,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
     def _login(self) -> bool:
         """Esegue il login delegandolo alla pagina di login specifica."""
-        return self.login_page.login(self.username, self.password) if self.login_page else False
+        return self.login_page.login(self.username, self.password, self.company) if self.login_page else False
 
     def _get_selector(self, locator: tuple[str, str]) -> str:
         """Converte un locatore Selenium (By, value) in un selettore Playwright."""

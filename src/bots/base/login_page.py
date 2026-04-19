@@ -33,6 +33,7 @@ class LoginPage:
         logger: Callable[[str], None] | None = None,
         isab_url: str = "",
     ) -> None:
+        """Inizializza il Page Object di login."""
         self.driver = driver
         self.wait = wait
         self.log = logger or print
@@ -54,8 +55,8 @@ class LoginPage:
             self.log(f"⚠ Timeout ({timeout_secondi}s) attesa overlay. Proseguo con cautela.")
             return False
 
-    def _perform_login_form_action(self, username: str, password: str) -> None:
-        """Fills login form and clicks Enter."""
+    def _perform_login_form_action(self, username: str, password: str, company: str) -> None:
+        """Riempie il form di login, seleziona la società e preme Accedi."""
         username_field = self.wait.until(EC.element_to_be_clickable(LoginLocators.USERNAME_FIELD))
         username_field.clear()
         username_field.send_keys(username)
@@ -63,6 +64,29 @@ class LoginPage:
         password_field = self.wait.until(EC.element_to_be_clickable(LoginLocators.PASSWORD_FIELD))
         password_field.clear()
         password_field.send_keys(password)
+
+        # Selezione Società (ISAB/PSER)
+        try:
+            self.log(f"Selezione società: {company}...")
+            comp_field = self.wait.until(EC.element_to_be_clickable(LoginLocators.COMPANY_FIELD))
+            comp_field.click()
+            comp_field.clear()
+            comp_field.send_keys(company)
+            time.sleep(0.5)
+
+            # Se è un vero dropdown, tentiamo di cliccare l'opzione
+            option_xpath = f"//li[normalize-space(text())='{company}']"
+            try:
+                # Usiamo una attesa breve
+                opt_el = WebDriverWait(self.driver, 3).until(
+                    EC.element_to_be_clickable((By.XPATH, option_xpath))
+                )
+                self.driver.execute_script("arguments[0].click();", opt_el)
+            except Exception:  # noqa: S110
+                # Se fallisce il click opzione, speriamo che l'invio testo sia bastato
+                pass
+        except Exception as e:
+            self.log(f"⚠️ Avviso: Selezione società '{company}' non riuscita, proseguo: {e}")
 
         try:
             accedi_btn = self.wait.until(EC.element_to_be_clickable(LoginLocators.LOGIN_BUTTON))
@@ -95,7 +119,7 @@ class LoginPage:
             self.log(f"Nota: Controllo popup sessione ignorato ({e})")
 
     def _verify_logged_in_via_ui(self) -> bool:
-        """Checks for post-login UI elements."""
+        """Verifica se l'utente è loggato controllando elementi UI post-login."""
         with suppress(Exception):
             WebDriverWait(self.driver, 5).until(
                 EC.presence_of_element_located(CommonLocators.SETTINGS_BUTTON)
@@ -103,10 +127,10 @@ class LoginPage:
             return True
         return False
 
-    def login(self, username: str, password: str) -> bool:  # noqa: PLR0911
+    def login(self, username: str, password: str, company: str = "ISAB") -> bool:  # noqa: PLR0911
         """
-        Performs login to ISAB portal.
-        Returns False if Proxy Error is detected.
+        Esegue il login al portale ISAB.
+        Ritorna False se viene rilevato un Proxy Error.
         """
         self.log(f"Navigazione a: {self.isab_url}")
 
@@ -125,7 +149,7 @@ class LoginPage:
                 WebDriverWait(self.driver, 5).until(
                     EC.presence_of_element_located(LoginLocators.USERNAME_FIELD)
                 )
-                self._perform_login_form_action(username, password)
+                self._perform_login_form_action(username, password, company)
             except TimeoutException:
                 # 2. Se il form non c'è, controlla se siamo già loggati (fast-skip)
                 if self._verify_logged_in_via_ui():
@@ -138,7 +162,7 @@ class LoginPage:
                 self._attendi_scomparsa_overlay(10)
 
                 try:
-                    self._perform_login_form_action(username, password)
+                    self._perform_login_form_action(username, password, company)
                     return True  # noqa: TRY300
                 except Exception as e:
                     self.log(f"✗ Fallito recupero sessione: {e}")

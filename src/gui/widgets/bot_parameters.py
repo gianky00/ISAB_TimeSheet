@@ -166,6 +166,8 @@ class BotParametersWidget(QWidget):
         self.main_row_layout.setContentsMargins(15, 10, 15, 10)
         self.main_row_layout.setSpacing(20)
 
+        self._setup_societa_section()
+        self._add_divider()
         self._setup_fornitore_section()
         self._add_divider()
         self._setup_date_section()
@@ -176,6 +178,24 @@ class BotParametersWidget(QWidget):
 
         self.main_row_layout.addStretch()
         main_layout.addWidget(self.container)
+
+    def _setup_societa_section(self) -> None:
+        """Configura la sezione di selezione della società (ISAB/PSER)."""
+        vbox = QVBoxLayout()
+        vbox.setSpacing(4)
+        lbl = QLabel("SOCIETÀ")
+        lbl.setStyleSheet(LABEL_MUTED)
+        vbox.addWidget(lbl)
+
+        self.societa_combo = FilterComboBox()
+        self.societa_combo.addItems(["ISAB", "PSER"])
+        self.societa_combo.setMinimumHeight(38)
+        self.societa_combo.setFixedWidth(100)
+        self.societa_combo.setStyleSheet(COMBOBOX_STYLE)
+        self.societa_combo.currentIndexChanged.connect(self.changed.emit)
+        vbox.addWidget(self.societa_combo)
+
+        self.main_row_layout.addLayout(vbox)
 
     def _setup_fornitore_section(self) -> None:
         """Configura la sezione di selezione fornitore."""
@@ -363,6 +383,16 @@ class BotParametersWidget(QWidget):
         index = self.fornitore_combo.findText(fornitore)
         if index >= 0:
             self.fornitore_combo.setCurrentIndex(index)
+
+    def get_societa(self) -> str:
+        """Restituisce la società selezionata (ISAB o PSER)."""
+        return self.societa_combo.currentText()
+
+    def set_societa(self, societa: str) -> None:
+        """Imposta la società selezionata."""
+        index = self.societa_combo.findText(societa)
+        if index >= 0:
+            self.societa_combo.setCurrentIndex(index)
 
     def get_dates(self) -> tuple[str, str | None]:
         """Restituisce il range di date selezionato."""

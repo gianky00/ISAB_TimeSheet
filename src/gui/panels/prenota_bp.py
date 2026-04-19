@@ -180,6 +180,7 @@ class PrenotaBPPanel(BaseBotPanel):
     def _load_saved_data(self) -> None:
         """Carica l'ultima lista BP e i parametri temporali dalla configurazione."""
         config = config_manager.load_config()
+        self.params_widget.set_societa(config.get("last_prenota_societa", "ISAB"))
         saved_data = config.get("last_prenota_bp_data", [])
         if saved_data:
             self.data_table.set_data(saved_data)
@@ -194,6 +195,7 @@ class PrenotaBPPanel(BaseBotPanel):
         """Salva i dati correnti della tabella e i parametri temporali in configurazione."""
         data = self.data_table.get_data()
         config_manager.set_config_value("last_prenota_bp_data", data)
+        config_manager.set_config_value("last_prenota_societa", self.params_widget.get_societa())
 
         date_da, date_a = self.params_widget.get_dates()
         config_manager.set_config_value("last_prenota_date_from", date_da)
@@ -224,19 +226,21 @@ class PrenotaBPPanel(BaseBotPanel):
             return
 
         # Recupera dati e configura bot
-        from src.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot  # noqa: PLC0415
-
         username, password = self.get_credentials()
         config = config_manager.load_config()
 
+        societa = self.params_widget.get_societa()
         fornitore = self.params_widget.get_fornitore()
-        date_da, _ = self.params_widget.get_dates()
+        date_da, date_a_opt = self.params_widget.get_dates()
+        date_a = date_a_opt or ""
 
         # Gestione Overrides
         rows = self.data_table.get_data()
         if params_override:
             if "fornitore" in params_override:
                 fornitore = params_override["fornitore"]
+            if "societa" in params_override:
+                societa = params_override["societa"]
             if "data_da" in params_override:
                 date_da = params_override["data_da"]
 
@@ -246,22 +250,22 @@ class PrenotaBPPanel(BaseBotPanel):
                     rows = [item]
                     self.log_widget.append(f"ℹ️ Esecuzione singola per BP: {item.get('numero_bp', 'N/D')}")
 
-        date_da, date_a_opt = self.params_widget.get_dates()
-        date_a = date_a_opt or ""
-
-        bot = PrenotaBPBot(
-            username=username,
-            password=password,
-            headless=config.get("browser_headless", False),
-            timeout=config.get("browser_timeout", 30),
-            fornitore=fornitore,
-            data_da=date_da,
-            data_a=date_a,
-        )
+        bot_params = {
+            "username": username,
+            "password": password,
+            "headless": config.get("browser_headless", False),
+            "timeout": config.get("browser_timeout", 30),
+            "download_path": config_manager.get_download_path(),
+            "fornitore": fornitore,
+            "company": societa,
+            "data_da": date_da,
+            "data_a": date_a,
+        }
 
         bot_data = {
             "rows": rows,
             "fornitore": fornitore,
+            "company": societa,
             "data_da": date_da,
             "data_a": date_a,
         }
@@ -269,9 +273,14 @@ class PrenotaBPPanel(BaseBotPanel):
         main_win: Any = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        worker = BotWorker(bot, data=bot_data, telegram_service=tg_service)
-        self.worker = worker
-        self._setup_worker_connections(worker)
+        # Inizializza il worker tramite BotWorker standard (registrato in BOT_REGISTRY)
+        self.worker = BotWorker(
+            bot_id="prenota_bp",
+            bot_params=bot_params,
+            data=bot_data,
+            telegram_service=tg_service,
+        )
+        self._setup_worker_connections(self.worker)
 
         # Reset pallini all'avvio
         self._update_status_list(force=True)
@@ -282,5 +291,5 @@ class PrenotaBPPanel(BaseBotPanel):
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
         self.log_widget.append("Avvio bot Prenota BP...")
-        worker.start()
+        self.worker.start()
         self.bot_started.emit()

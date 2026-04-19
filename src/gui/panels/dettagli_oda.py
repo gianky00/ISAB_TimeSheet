@@ -206,6 +206,7 @@ class DettagliOdAPanel(BaseBotPanel):
         """Ripristina lo stato del pannello (date, fornitori, tabella) dall'ultimo salvataggio."""
         config = config_manager.load_config()
         self.refresh_fornitori()
+        self.params_widget.set_societa(config.get("last_oda_societa", "ISAB"))
         self.params_widget.set_fornitore(config.get("last_oda_fornitore", ""))
         current_year = datetime.now(UTC).year
         self.params_widget.set_dates(
@@ -237,6 +238,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
         updates = {
             "last_oda_data": self.data_table.get_data(),
+            "last_oda_societa": self.params_widget.get_societa(),
             "last_oda_fornitore": self.params_widget.get_fornitore(),
             "last_oda_date_da": date_da,
             "last_oda_date_a": date_a,
@@ -269,6 +271,7 @@ class DettagliOdAPanel(BaseBotPanel):
         """Inizializza il bot e avvia il thread di esecuzione (Worker)."""
         super()._on_start(params_override)
         username, password = self.get_credentials()
+        societa = self.params_widget.get_societa()
         fornitore = self.params_widget.get_fornitore()
         data_da, data_a = self.params_widget.get_dates()
         download_path = self.params_widget.get_dest_path() or str(Path.home() / "Downloads")
@@ -308,12 +311,19 @@ class DettagliOdAPanel(BaseBotPanel):
             "timeout": config.get("browser_timeout", 30),
             "download_path": download_path,
             "fornitore": fornitore,
+            "company": societa,
             "data_da": data_da,
             "data_a": data_a,
         }
 
         # Dati da elaborare (verranno passati a bot.execute() nel thread secondario)
-        data = {"rows": rows, "fornitore": fornitore, "data_da": data_da, "data_a": data_a}
+        data = {
+            "rows": rows,
+            "fornitore": fornitore,
+            "company": societa,
+            "data_da": data_da,
+            "data_a": data_a,
+        }
 
         # Inizializza il worker (nessuna importazione pesante Selenium qui)
         self.worker = BotWorker(

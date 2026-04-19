@@ -52,13 +52,14 @@ class BaseBot(ABC):
     ISAB_URL = URLs.ISAB_PORTAL
     """URL base del portale fornitori ISAB."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         username: str,
         password: str,
         headless: bool = False,
         timeout: int = Timeouts.DEFAULT,
         download_path: str = "",
+        company: str = "ISAB",
     ) -> None:
         """
         Inizializza le proprietà fondamentali del bot.
@@ -66,15 +67,17 @@ class BaseBot(ABC):
         Args:
             username: Nome utente per il login.
             password: Password per il login.
-            headless: Se True, avvia il browser in modalità nascosta.
+            headless: Se True, avvia le browser in modalità nascosta.
             timeout: Tempo massimo di attesa per le operazioni (secondi).
             download_path: Percorso per il salvataggio dei file scaricati.
+            company: Società da selezionare al login (ISAB o PSER).
         """
         self.username = username
         self.password = password
         self.headless = headless
         self.timeout = timeout
         self.download_path = download_path
+        self.company = company
         self._status = BotStatus.IDLE
         self._stop_requested = False
         self._log_callback: Callable[[str], None] | None = None
