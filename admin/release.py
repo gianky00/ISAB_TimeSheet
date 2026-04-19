@@ -241,9 +241,6 @@ def main():  # noqa: ANN201
 
     run_command(pre_flight_cmd, "Pre-Flight Safety Check")
 
-    # 2. Sync Requirements
-    run_command([str(VENV_PYTHON), "admin/sync_requirements.py"], "Syncing Requirements")
-
     # 3. Resolve Bump Type
     bump_type = args.type
     if bump_type == "auto":
