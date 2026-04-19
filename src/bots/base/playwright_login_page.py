@@ -48,15 +48,22 @@ class PlaywrightLoginPage(PlaywrightBasePage):
         # Selezione Società (ISAB/PSER)
         try:
             self.log(f"Selezione società: {company}...")
+            # Attesa visibilità campo società
+            self.page.wait_for_selector(comp_sel, state="visible", timeout=5000)
+
             # Click sull'input società per aprire il dropdown o attivare il focus
             self.page.click(comp_sel)
-            # Tentativo di inserimento testo (spesso i combo ExtJS caricano l'id corrispondente al testo digitato)
+            # Pulizia e inserimento testo
+            self.page.fill(comp_sel, "")
             self.page.fill(comp_sel, company)
             # Micro attesa per permettere al sistema di validare l'input
             time.sleep(0.5)
-            # Se è un vero dropdown, potremmo dover cliccare l'opzione nella lista che appare
+            # Simula pressione INVIO per confermare la selezione nel combo
+            self.page.press(comp_sel, "Enter")
+
+            # Se è un vero dropdown ExtJS, tentiamo anche il click sull'opzione se visibile
             option_xpath = f"xpath=//li[normalize-space(text())='{company}']"
-            if self.page.locator(option_xpath).count() > 0:
+            if self.page.locator(option_xpath).is_visible():
                 self.page.click(option_xpath)
         except Exception as e:
             self.log(f"⚠️ Avviso: Selezione società '{company}' non riuscita, proseguo: {e}")

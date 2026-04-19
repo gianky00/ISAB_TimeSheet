@@ -11,7 +11,7 @@ class LoginLocators:
 
     USERNAME_FIELD = (By.NAME, "Username")
     PASSWORD_FIELD = (By.NAME, "Password")
-    COMPANY_FIELD = (By.NAME, "Societa")
+    COMPANY_FIELD = (By.NAME, "Company")
     LOGIN_BUTTON = (
         By.XPATH,
         "//span[text()='Accedi' and contains(@class, 'x-btn-inner')]",
