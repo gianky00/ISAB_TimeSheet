@@ -322,6 +322,10 @@ class MainWindow(QMainWindow):
         """
         ToastManager.instance().show(message, level)
 
+    def show_settings(self) -> None:
+        """Naviga alla pagina delle impostazioni globali."""
+        self.navigation_controller.navigate_to(PageIndex.SETTINGS)
+
     def closeEvent(self, event: Any) -> None:
         """Gestisce la chiusura della finestra (riduzione a tray o uscita)."""
         if self._force_quit:
