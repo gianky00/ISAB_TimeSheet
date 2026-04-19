@@ -282,6 +282,7 @@ def main() -> None:
     mw_inst: MainWindow | None = None
 
     def handle_conn() -> None:
+        """Gestisce le connessioni in entrata per l'attivazione della singola istanza."""
         c = server.nextPendingConnection()
         if c and c.waitForReadyRead(500) and c.read(1024).decode() == "ACTIVATE" and mw_inst:
             mw_inst.show()

@@ -7,33 +7,49 @@ from selenium.webdriver.common.by import By
 
 
 class TimbratureLocators:
-    """Locators for the Timbrature page and elements."""
+    """
+    Locators for the Timbrature page and elements.
+    Definisce i puntatori agli elementi dell'interfaccia Report Timbrature.
+    """
 
     # Navigation
     REPORT_MENU = (By.XPATH, "//*[normalize-space(text())='Report']")
+    """Pulsante menu Report nell'header."""
 
     # Filters
     # Generic combo box arrow for ExtJS
     COMBO_ARROW_GENERIC = (By.XPATH, "//div[contains(@class, 'x-form-arrow-trigger')]")
+    """Freccia generica per l'apertura delle combo box ExtJS."""
+
     # Specific ID pattern for Supplier combo
     COMBO_ARROW_SUPPLIER = (
         By.XPATH,
         "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]",
     )
+    """Freccia specifica per la combo box di selezione del fornitore."""
 
-    FILTER_DATA_DA = (By.NAME, "DataDa")  # Example name, verified by logic
-    FILTER_DATA_A = (By.NAME, "DataA")  # Example name, verified by logic
+    FILTER_DATA_DA = (By.NAME, "DataDa")
+    """Campo input per la data di inizio ricerca."""
+
+    FILTER_DATA_A = (By.NAME, "DataA")
+    """Campo input per la data di fine ricerca."""
 
     # Grid
     GRID_ROWS = (By.XPATH, "//tr[contains(@class, 'x-grid-row')]")
+    """Righe della griglia dei risultati."""
 
     # Download Buttons (Multiple strategies)
     DOWNLOAD_BTN_TEXT = (By.XPATH, "//*[contains(text(), 'Esporta in Excel')]")
+    """Pulsante di export identificato tramite testo."""
+
     DOWNLOAD_BTN_ICON = (
         By.XPATH,
         "//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]",
     )
+    """Pulsante di export identificato tramite icona tecnica (FontAwesome)."""
+
     DOWNLOAD_BTN_ARIA = (
         By.XPATH,
         "//*[contains(@title, 'Excel') or contains(@aria-label, 'Excel') or contains(@data-qtip, 'Excel')]",
     )
+    """Pulsante di export identificato tramite attributi ARIA o titoli Excel."""

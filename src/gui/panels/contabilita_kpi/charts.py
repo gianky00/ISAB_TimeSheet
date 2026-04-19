@@ -1,4 +1,9 @@
 # mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
+"""
+SyncroJob - KPI Charts
+Gestione dei grafici KPI per la contabilità tramite Matplotlib.
+"""
+
 import os
 
 os.environ["QT_API"] = "PyQt6"
@@ -31,13 +36,13 @@ class DummyCanvas(QLabel):
         self.figure = fig
 
     def draw(self) -> None:
-        pass
+        """Metodo dummy per il disegno."""
 
     def draw_idle(self) -> None:
-        pass
+        """Metodo dummy per il disegno in idle."""
 
     def mpl_connect(self, *args: object, **kwargs: object) -> None:
-        pass
+        """Metodo dummy per la connessione eventi Matplotlib."""
 
 
 FigureCanvas = DummyCanvas
@@ -138,6 +143,7 @@ class KPIChartsManager:
         self._plot_completamento(kpi_data.get("completamento", {}))
 
     def _plot_stato_attivita(self, counts):  # noqa: ANN001, ANN202
+        """Genera il grafico a torta per lo stato delle attività."""
         self.fig1.clear()
         ax = self.fig1.add_subplot(111)
         if not counts:
@@ -210,6 +216,7 @@ class KPIChartsManager:
         self.canvas1.draw()
 
     def _plot_prev_ore_mese(self, data):  # noqa: ANN001, ANN202
+        """Genera il grafico a barre per i ricavi previsti e ore spese per mese."""
         self.fig2.clear()
         ax = self.fig2.add_subplot(111)
         if not data:
@@ -244,6 +251,7 @@ class KPIChartsManager:
         self.canvas2.draw()
 
     def _plot_margine_tipologia(self, data):  # noqa: ANN001, ANN202
+        """Genera il grafico a barre orizzontali per i ricavi e costi per tipologia."""
         self.fig3.clear()
         ax = self.fig3.add_subplot(111)
         if not data:
@@ -298,6 +306,7 @@ class KPIChartsManager:
         self.canvas3.draw()
 
     def _plot_andamento_resa(self, data):  # noqa: ANN001, ANN202
+        """Genera il grafico ad area per l'andamento della resa mensile."""
         self.fig4.clear()
         ax = self.fig4.add_subplot(111)
         if not data or not data["values"]:
@@ -315,6 +324,7 @@ class KPIChartsManager:
         self.canvas4.draw()
 
     def _plot_completamento(self, data):  # noqa: ANN001, ANN202
+        """Genera il grafico a barre segmentato per lo stato di completamento."""
         self.fig5.clear()
         ax = self.fig5.add_axes([0.05, 0.4, 0.9, 0.3])
         if not data:

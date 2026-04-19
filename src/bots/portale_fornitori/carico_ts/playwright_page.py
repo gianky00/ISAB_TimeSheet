@@ -16,10 +16,17 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
     """Gestisce le interazioni con la pagina Carico TS usando Playwright."""
 
     def __init__(self, page: Page, log_callback: Callable[[str], None] | None = None) -> None:
+        """
+        Inizializza la pagina di caricamento timesheet.
+
+        Args:
+            page: Oggetto Page di Playwright.
+            log_callback: Funzione per l'invio dei log.
+        """
         super().__init__(page, log_callback)
 
     def navigate(self) -> bool:
-        """Naviga verso il menu Gestione Timesheet."""
+        """Naviga verso il menu Gestione Timesheet tramite click diretto."""
         try:
             self.log("Navigazione Gestione Timesheet...")
             sel = self._get_selector(CaricoTSLocators.MANAGEMENT_MENU)
@@ -32,7 +39,15 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
             return True
 
     def select_supplier(self, supplier: str) -> bool:
-        """Seleziona il fornitore dal menu a discesa."""
+        """
+        Seleziona il fornitore dal menu a discesa della pagina.
+
+        Args:
+            supplier: Nome del fornitore da selezionare.
+
+        Returns:
+            True se la selezione è riuscita.
+        """
         try:
             self.log(f"Selezione {supplier}...")
             arrow_sel = self._get_selector(CaricoTSLocators.SUPPLIER_ARROW)
@@ -49,7 +64,15 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
             return True
 
     def process_oda(self, oda: str) -> bool:
-        """Inserisce il numero OdA e avvia l'estrazione."""
+        """
+        Inserisce il numero OdA nel campo di input e avvia l'estrazione.
+
+        Args:
+            oda: Numero dell'ordine di acquisto da processare.
+
+        Returns:
+            True se l'operazione è stata avviata.
+        """
         try:
             self.log(f"Inserimento OdA: {oda}")
             inp_sel = self._get_selector(CaricoTSLocators.ODA_INPUT)

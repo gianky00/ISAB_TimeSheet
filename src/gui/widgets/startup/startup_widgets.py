@@ -140,6 +140,7 @@ class GlowingProgressBar(QWidget):
         self.timer.start(16)
 
     def _tick(self) -> None:
+        """Aggiorna il progresso e l'effetto shimmer."""
         diff = self._value - self._display_value
         self._display_value += diff * 0.15
         self._shimmer += 4.0
@@ -238,6 +239,7 @@ class TechBlueprint(QWidget):
     """Overlay olografico tecnico con cerchi rotanti e griglie polari."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza l'overlay tecnico."""
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -247,43 +249,46 @@ class TechBlueprint(QWidget):
         self.timer.start(16)
 
     def _tick(self) -> None:
+        """Aggiorna la rotazione del blueprint."""
         self.phase += 0.01
         self.update()
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
+        """Disegna i cerchi tecnici e la griglia polare."""
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        w, h = self.width(), self.height()
-        cx, cy = w / 2.0, h / 2.0
+        try:
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            w, h = self.width(), self.height()
+            cx, cy = w / 2.0, h / 2.0
 
-        painter.setPen(QPen(QColor(52, 152, 219, 40), 1, Qt.PenStyle.DotLine))
+            painter.setPen(QPen(QColor(52, 152, 219, 40), 1, Qt.PenStyle.DotLine))
 
-        # 1. Cerchi rotanti concentrici
-        for i in range(3):
-            radius = 40 + i * 25
-            speed = (i + 1) * 0.5
-            angle = math.degrees(self.phase * speed)
+            # 1. Cerchi rotanti concentrici
+            for i in range(3):
+                radius = 40 + i * 25
+                speed = (i + 1) * 0.5
+                angle = math.degrees(self.phase * speed)
 
-            painter.save()
-            painter.translate(cx, cy)
-            painter.rotate(angle if i % 2 == 0 else -angle)
+                painter.save()
+                painter.translate(cx, cy)
+                painter.rotate(angle if i % 2 == 0 else -angle)
 
-            # Arco parziale per effetto "blueprint"
-            painter.drawArc(-radius, -radius, radius * 2, radius * 2, 0, 240 * 16)
+                # Arco parziale per effetto "blueprint"
+                painter.drawArc(-radius, -radius, radius * 2, radius * 2, 0, 240 * 16)
 
-            # Piccoli marcatori sui cerchi
-            painter.setPen(QPen(QColor(52, 152, 219, 80), 2))
-            painter.drawPoint(radius, 0)
-            painter.restore()
-        # 2. Griglia polare sottile
-        painter.setPen(QColor(52, 152, 219, 20))
-        for angle in range(0, 360, 45):
-            rad = math.radians(angle + math.degrees(self.phase * 0.2))
-            x2 = cx + 100 * math.cos(rad)
-            y2 = cy + 100 * math.sin(rad)
-            painter.drawLine(int(cx), int(cy), int(x2), int(y2))
-
-        painter.end()
+                # Piccoli marcatori sui cerchi
+                painter.setPen(QPen(QColor(52, 152, 219, 80), 2))
+                painter.drawPoint(radius, 0)
+                painter.restore()
+            # 2. Griglia polare sottile
+            painter.setPen(QColor(52, 152, 219, 20))
+            for angle in range(0, 360, 45):
+                rad = math.radians(angle + math.degrees(self.phase * 0.2))
+                x2 = cx + 100 * math.cos(rad)
+                y2 = cy + 100 * math.sin(rad)
+                painter.drawLine(int(cx), int(cy), int(x2), int(y2))
+        finally:
+            painter.end()
 
 
 class TypewriterLabel(QLabel):
@@ -333,6 +338,7 @@ class ConsoleOverlay(QWidget):
     """Overlay per la console con effetto scanline e griglia CRT."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Inizializza l'overlay della console."""
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)

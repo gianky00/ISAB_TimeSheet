@@ -148,62 +148,109 @@ class RicercaPDLPanel(BaseBotPanel):
         config_manager.set_config_value("pdl_search_exclude_closed", self.exclude_closed_check.isChecked())
         config_manager.set_config_value("pdl_search_site", self.site_combo.currentText())
 
+    def _validate_and_switch_account(
+        self, username: str, password: str, account_type: str
+    ) -> tuple[str, str, str, bool]:
+        """Verifica se l'account è di tipo ISAB e propone lo switch a Esecutore."""
+        if account_type != "ISAB":
+            return username, password, account_type, True
+
+        config = config_manager.load_config()
+        sw_accounts = config.get("safework_accounts", [])
+        esecutore_acc = next((a for a in sw_accounts if a.get("type") == "Esecutore"), None)
+
+        if esecutore_acc:
+            msg = (
+                "L'account SafeWork attualmente selezionato è di tipo <b>ISAB</b>.<br><br>"
+                "La Ricerca PDL massiva richiede solitamente un account <b>Esecutore</b> per funzionare correttamente.<br><br>"
+                f"Vuoi passare all'account Esecutore <b>{esecutore_acc.get('username')}</b> e proseguire?"
+            )
+            from src.gui.dialogs.confirmation_dialog import ConfirmationDialog  # noqa: PLC0415
+
+            if ConfirmationDialog.confirm(self, "Tipo Account Incompatibile", msg, is_rich_text=True):
+                if config_manager.set_default_account("safework", esecutore_acc.get("username", "")):
+                    from src.gui.main_window.main import MainWindow  # noqa: PLC0415
+
+                    main_win = self.window()
+                    if isinstance(main_win, MainWindow):
+                        main_win.status_bar_component.footer_left.refresh_accounts()
+                    return (
+                        esecutore_acc.get("username", ""),
+                        esecutore_acc.get("password", ""),
+                        "Esecutore",
+                        True,
+                    )
+                ToastManager.instance().show("Errore durante lo switch dell'account.", "error")
+        else:
+            from src.gui.dialogs.confirmation_dialog import ConfirmationDialog  # noqa: PLC0415
+
+            ConfirmationDialog.show_warning(
+                self,
+                "Account non idoneo",
+                "Questo bot richiede un account <b>Esecutore</b> e non sono stati trovati account alternativi.",
+                is_rich_text=True,
+            )
+        return username, password, account_type, False
+
     def _on_start(self, params_override: dict[str, Any] | None = None) -> None:
         """Avvia l'esecuzione del bot Ricerca PDL configurando worker e segnali."""
         super()._on_start(params_override)
-        username, password, account_type = self.get_safework_credentials()
+        user, pwd, acc_type = self.get_safework_credentials()
 
-        # Ensure UI elements are available
-        if self.start_btn is None:
-            raise RuntimeError("Start button is None")  # noqa: TRY003
-        if self.stop_btn is None:
-            raise RuntimeError("Stop button is None")  # noqa: TRY003
-        if self.log_widget is None:
-            raise RuntimeError("Log widget is None")  # noqa: TRY003
-
-        if not username or not password:
-            ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
-            self._update_status(STATUS_COLORS["error"], "Credenziali mancanti")
-            self.start_btn.setEnabled(True)
-            self.stop_btn.setEnabled(False)
+        user, pwd, acc_type, ok = self._validate_and_switch_account(user, pwd, acc_type)
+        if not ok:
+            self._update_status(STATUS_COLORS["idle"], "Pronto")
+            self._reset_buttons()
             return
 
+        if not user or not pwd:
+            ToastManager.instance().show("Configura le credenziali SafeWork.", "warning")
+            self._update_status(STATUS_COLORS["error"], "Credenziali mancanti")
+            self._reset_buttons()
+            return
+
+        self._start_bot_worker(user, pwd, acc_type)
+
+    def _reset_buttons(self) -> None:
+        """Ripristina lo stato dei pulsanti Start/Stop."""
+        if self.start_btn:
+            self.start_btn.setEnabled(True)
+        if self.stop_btn:
+            self.stop_btn.setEnabled(False)
+
+    def _start_bot_worker(self, user: str, pwd: str, acc_type: str) -> None:
+        """Inizializza e avvia il worker per il bot."""
         bot_data = {
             "exclude_closed": self.exclude_closed_check.isChecked(),
             "site_selection": self.site_combo.currentText(),
         }
+        cfg = config_manager.load_config()
 
-        from src.core.config_manager import load_config  # noqa: PLC0415
-
-        config = load_config()
+        bot_params = {
+            "username": user,
+            "password": pwd,
+            "account_type": acc_type,
+            "headless": cfg.get("browser_headless", False),
+            "timeout": cfg.get("browser_timeout", 30),
+            "download_path": config_manager.get_download_path(),
+        }
 
         main_win: Any = self.window()
         tg_service = getattr(main_win, "telegram", None) if main_win else None
 
-        # Configura i parametri per il BotWorker (verranno passati a create_bot nel thread secondario)
-        bot_params = {
-            "username": username,
-            "password": password,
-            "account_type": account_type,
-            "headless": config.get("browser_headless", False),
-            "timeout": config.get("browser_timeout", 30),
-            "download_path": config_manager.get_download_path(),
-        }
-
-        # Inizializza il worker in modo asincrono
         worker = BotWorker(
-            bot_id="ricerca_pdl",
-            bot_params=bot_params,
-            data=[bot_data],
-            telegram_service=tg_service,
+            bot_id="ricerca_pdl", bot_params=bot_params, data=[bot_data], telegram_service=tg_service
         )
         self.worker = worker
         self._setup_worker_connections(worker)
 
-        self.start_btn.setEnabled(False)
-        self.stop_btn.setEnabled(True)
-        self.log_widget.clear()
-        self.log_widget.append("Avvio Ricerca PDL SafeWork...")
+        if self.start_btn:
+            self.start_btn.setEnabled(False)
+        if self.stop_btn:
+            self.stop_btn.setEnabled(True)
+        if self.log_widget:
+            self.log_widget.clear()
+            self.log_widget.append("Avvio Ricerca PDL SafeWork...")
         worker.start()
         self.bot_started.emit()
 

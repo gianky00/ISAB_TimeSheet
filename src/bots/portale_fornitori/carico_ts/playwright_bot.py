@@ -13,9 +13,13 @@ from src.core.constants import Business
 
 
 class PlaywrightCaricoTSBot(PlaywrightBaseBot):
-    """Bot per l'estrazione e il caricamento dei dati Timesheet usando Playwright."""
+    """
+    Bot per l'estrazione e il caricamento dei dati Timesheet usando Playwright.
+    Automatizza la selezione dell'OdA e il caricamento massivo delle ore lavorate.
+    """
 
     FORNITORE = Business.DEFAULT_SUPPLIER
+    """Fornitore predefinito per il caricamento."""
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login Portale ISAB"),
@@ -24,17 +28,21 @@ class PlaywrightCaricoTSBot(PlaywrightBaseBot):
         ("extract", "Estrazione OdA"),
         ("cleanup", "Chiusura Sessione"),
     ]
+    """Timeline operativa del bot."""
 
     @property
     def name(self) -> str:
+        """Restituisce il nome visualizzato del bot."""
         return "Carico TS (PW)"
 
     @property
     def description(self) -> str:
+        """Restituisce la descrizione estesa."""
         return "Caricamento automatico timesheet (Playwright)"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
+        """Restituisce lo schema delle colonne per la visualizzazione tabellare."""
         return [
             {"name": "numero_oda", "label": "Numero OdA", "type": "text"},
             {"name": "codice_fiscale", "label": "Codice Fiscale", "type": "text"},
@@ -55,6 +63,7 @@ class PlaywrightCaricoTSBot(PlaywrightBaseBot):
         ]
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
+        """Valida la presenza del numero OdA nei dati di input."""
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:
             return False, base_msg

@@ -23,6 +23,7 @@ from .locators import ScaricoTSLocators
 class PlaywrightScaricaTSBot(PlaywrightBaseBot):
     """
     Bot per lo scarico automatico dei timesheet dal portale ISAB usando Playwright.
+    Gestisce la navigazione, il filtraggio per OdA e l'esportazione Excel massiva.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
@@ -33,17 +34,21 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
         ("process", "Elaborazione VBA"),
         ("cleanup", "Chiusura Sessione"),
     ]
+    """Timeline operativa del bot."""
 
     @property
     def name(self) -> str:
+        """Restituisce il nome visualizzato del bot."""
         return "Scarico TS (PW)"
 
     @property
     def description(self) -> str:
+        """Restituisce la descrizione estesa."""
         return "Scarica i timesheet dal portale ISAB (Playwright)"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
+        """Restituisce lo schema delle colonne per l'input dati."""
         return [
             {"name": "numero_oda", "label": "Numero OdA", "type": "text"},
             {"name": "posizione_oda", "label": "Posizione OdA", "type": "text"},
@@ -56,12 +61,14 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
         elabora_ts: bool = False,
         **kwargs: Any,
     ) -> None:
+        """Inizializza il bot con parametri di data e fornitore."""
         super().__init__(**kwargs)
         self.data_da = data_da or f"01.01.{datetime.now(UTC).year}"
         self.fornitore = fornitore
         self.elabora_ts = elabora_ts
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
+        """Valida la presenza del fornitore e degli OdA da scaricare."""
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:
             return False, base_msg
@@ -116,13 +123,14 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
 
             self.update_step("cleanup", StepStatus.RUNNING)
             self.update_step("cleanup", StepStatus.COMPLETED)
-            return success_count == len(rows)
-
         except Exception as e:
             self.log(f"❌ Errore imprevisto nel flusso run: {e}")
             return False
+        else:
+            return success_count == len(rows)
 
     def _prepare_run_environment(self, data: Any) -> tuple[list[dict[str, Any]], Path]:
+        """Inizializza i parametri di esecuzione e la cartella di destinazione."""
         rows: list[dict[str, Any]]
         if isinstance(data, dict):
             rows = data.get("rows", [])
@@ -139,6 +147,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
         return rows, dest_dir
 
     def _process_oda_rows(self, rows: list[dict[str, Any]], dest_dir: Path) -> tuple[int, list[str]]:
+        """Esegue l'iterazione sulle righe degli OdA per la ricerca e il download."""
         success_count = 0
         downloaded_files = []
 
@@ -174,6 +183,9 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
         return success_count, downloaded_files
 
     def _wait_for_overlay(self) -> None:
+        """Attende che gli overlay grafici vengano rimossi dal DOM."""
+        if not self.page:
+            return
         try:
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
             self.page.wait_for_selector(f"xpath={xpath}", state="hidden", timeout=Timeouts.OVERLAY * 1000)
@@ -181,6 +193,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             self.log("⚠️ Timeout attesa overlay.")
 
     def _navigate_to_timesheet(self) -> bool:
+        """Naviga verso il menu Report -> Timesheet."""
         if not self.page:
             return False
         self._check_stop()
@@ -194,10 +207,11 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             fornitore_arrow_xpath = "xpath=//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
             self.page.wait_for_selector(fornitore_arrow_xpath, state="visible")
             self._wait_for_overlay()
-            return True
         except Exception as e:
             self.log(f"❌ Impossibile navigare al menu Timesheet: {e}")
             return False
+        else:
+            return True
 
     def _setup_filters(self) -> bool:
         """Imposta i filtri iniziali (Fornitore, Data)."""
@@ -214,10 +228,11 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
 
             data_da_sel = self._get_selector(ScaricoTSLocators.DATE_FROM_FIELD)
             self.page.fill(data_da_sel, self.data_da)
-            return True
         except Exception as e:
             self.log(f"❌ Errore nell'impostazione dei filtri: {e}")
             return False
+        else:
+            return True
 
     def _search_oda(self, numero_oda: str, posizione_oda: str) -> bool:
         """Esegue la ricerca per un specifico OdA."""
@@ -241,13 +256,14 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             if self.page.locator(f"xpath={xpath_empty}").is_visible():
                 self.log(f"⚠ Nessun TimeSheet trovato per OdA {numero_oda} / {posizione_oda}")
                 return False
-            return True
         except Exception as e:
             self.log(f"❌ Errore nella ricerca OdA: {e}")
             return False
+        else:
+            return True
 
     def _select_all_and_download(self, filename: str) -> bool:
-        """Seleziona tutti i record e clicca Scarica."""
+        """Seleziona tutti i record nella griglia e clicca Scarica."""
         if not self.page:
             return False
         try:
@@ -262,16 +278,18 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
                 self.page.click(f"xpath={xpath_scarica}")
 
             download = download_info.value
-            download_path = os.path.join(self.download_dir, filename)
+            download_path = os.path.join(str(self.download_path), filename)
             download.save_as(download_path)
 
             self.log(f"✓ Download completato: {filename}")
-            return True
         except Exception as e:
             self.log(f"❌ Errore durante il download: {e}")
             return False
+        else:
+            return True
 
     def _download_excel(self, dest_dir: Path, numero_oda: str, posizione_oda: str) -> Path | None:
+        """Esegue l'export Excel specifico per un OdA tramite il pulsante tecnico."""
         if not self.page:
             return None
         try:
@@ -288,12 +306,14 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             download.save_as(str(final_path))
 
             self.log(f"✅ Scaricato: {final_path.name}")
-            return final_path
         except Exception as e:
             self.log(f"⚠️ Impossibile scaricare esportazione Excel: {e}")
             return None
+        else:
+            return final_path
 
     def _get_final_download_path(self, dest_dir: Path, oda: str, pos: str, extension: str) -> Path:
+        """Calcola il percorso finale di salvataggio del file, gestendo eventuali duplicati."""
         safe_oda = sanitize_filename(oda)
         safe_pos = sanitize_filename(pos)
         base_name = (
@@ -313,6 +333,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
         return final_path
 
     def _run_vba_processing(self, file_list: list[str], dest_dir: Path) -> None:
+        """Avvia la logica di processamento VBA (TimesheetProcessor) sui file scaricati."""
         self.log(f"⚙️ Avvio elaborazione TS (Logica VBA) su {len(file_list)} file...")
         processed = 0
         for f in file_list:

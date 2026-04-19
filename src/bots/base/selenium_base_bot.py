@@ -4,8 +4,11 @@ SyncroJob - Selenium Base Bot
 Implementazione della classe base per i bot Selenium.
 """
 
+import re
+import shutil
 from abc import ABC
 from contextlib import suppress
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +28,7 @@ from src.utils.helpers import cleanup_bot_processes
 class SeleniumBaseBot(BaseBot, ABC):
     """
     Classe base per i bot basati su Selenium.
+    Gestisce l'inizializzazione di ChromeDriver, le opzioni del browser e le attese.
     """
 
     def __init__(
@@ -35,6 +39,16 @@ class SeleniumBaseBot(BaseBot, ABC):
         timeout: int = Timeouts.DEFAULT,
         download_path: str = "",
     ) -> None:
+        """
+        Inizializza le proprietà fondamentali del bot Selenium.
+
+        Args:
+            username: Nome utente per il login.
+            password: Password per il login.
+            headless: Se True, avvia il browser in modalità nascosta.
+            timeout: Tempo massimo di attesa per le operazioni (secondi).
+            download_path: Percorso per il salvataggio dei file scaricati.
+        """
         super().__init__(username, password, headless, timeout, download_path)
         self.driver: webdriver.Chrome | None = None
         self.wait: WebDriverWait[webdriver.Chrome] | None = None
@@ -45,7 +59,7 @@ class SeleniumBaseBot(BaseBot, ABC):
 
     @measure_time(threshold_ms=10000)
     def _init_driver(self) -> None:
-        """Inizializza il browser Chrome."""
+        """Inizializza il browser Chrome con gestione dei processi stale e caricamento driver."""
         self.log("🧹 Cleanup processi stale...")
         with suppress(Exception):
             cleanup_bot_processes()
@@ -61,9 +75,10 @@ class SeleniumBaseBot(BaseBot, ABC):
             except Exception as e:
                 self._handle_driver_error(e)
         else:
-            raise RuntimeError("Chromedriver service non disponibile.")
+            raise RuntimeError("DriverUnavailable")
 
     def _get_chrome_options(self) -> Options:
+        """Configura le opzioni di riga di comando per l'istanza Chrome."""
         opt = Options()
         args = [
             "--disable-features=DownloadBubble,DownloadBubbleV2",
@@ -107,6 +122,7 @@ class SeleniumBaseBot(BaseBot, ABC):
         return opt
 
     def _get_chromedriver_path(self) -> str | None:
+        """Recupera il percorso del driver locale o ne innesca il download automatico."""
         from src.utils.resource_manager import ResourceManager  # noqa: PLC0415
 
         if not getattr(self, "_force_download", False) and (
@@ -125,17 +141,16 @@ class SeleniumBaseBot(BaseBot, ABC):
                 d_path = str(pot[0])
 
             if Path(d_path).exists():
-                import shutil  # noqa: PLC0415
-
                 p_dir = ResourceManager.get_writable_drivers_dir()
                 with suppress(Exception):
                     shutil.copy2(d_path, p_dir / "chromedriver.exe")
-            return d_path
+                return d_path
         except Exception as e:
             self.log(f"⚠️ Errore download driver: {e}")
         return None
 
     def _setup_driver_instance(self, service: Service, options: Options) -> None:
+        """Crea l'istanza del WebDriver e configura i comportamenti di download e script."""
         self.driver = webdriver.Chrome(service=service, options=options)
         target_download = (
             Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
@@ -155,6 +170,7 @@ class SeleniumBaseBot(BaseBot, ABC):
         )
 
     def _configure_waits_and_pages(self) -> None:
+        """Inizializza gli oggetti WebDriverWait e il Page Object Model di login."""
         if not self.driver:
             return
         self.wait = WebDriverWait(self.driver, self.timeout)
@@ -163,6 +179,7 @@ class SeleniumBaseBot(BaseBot, ABC):
         self.login_page = LoginPage(self.driver, self.wait, self.log, self.ISAB_URL)
 
     def _handle_driver_error(self, e: Exception) -> None:
+        """Gestisce gli errori specifici del driver proponendo soluzioni come il download forzato."""
         msg = str(e).lower()
         if "chrome instance exited" in msg:
             self.log("❌ CRASH: Chrome si è chiuso all'avvio", "ERROR")
@@ -175,6 +192,7 @@ class SeleniumBaseBot(BaseBot, ABC):
         raise e
 
     def _force_driver_redownload(self) -> None:
+        """Elimina il driver locale e imposta il flag per scaricarlo nuovamente al prossimo avvio."""
         from src.utils.resource_manager import ResourceManager  # noqa: PLC0415
 
         self._force_download = True
@@ -186,12 +204,10 @@ class SeleniumBaseBot(BaseBot, ABC):
                 self.log("🗑️ Driver locale obsoleto rimosso dalla cache.")
 
     def _save_error_state(self, error_msg: str) -> None:
+        """Cattura lo stato visuale e il sorgente pulito (senza script) in caso di errore."""
         if not self.driver:
             return
         with suppress(Exception):
-            import re
-            from datetime import UTC, datetime
-
             edir = config_manager.CONFIG_DIR / "logs" / "errors"
             edir.mkdir(parents=True, exist_ok=True)
             ts = datetime.now(UTC).astimezone().strftime("%Y%m%d_%H%M%S")
@@ -209,6 +225,7 @@ class SeleniumBaseBot(BaseBot, ABC):
             self.log(f"📸 Stato errore salvato in: {edir.name}")
 
     def _login(self) -> bool:
+        """Esegue il login al portale ISAB."""
         return self.login_page.login(self.username, self.password) if self.login_page else False
 
     def _attendi_scomparsa_overlay(self, timeout: int | None = None) -> bool:
@@ -220,6 +237,7 @@ class SeleniumBaseBot(BaseBot, ABC):
         return True
 
     def cleanup(self) -> None:
+        """Rilascia le risorse del WebDriver e pulisce i file temporanei di Chrome."""
         if self.download_path:
             from src.utils.helpers import cleanup_chrome_temp_files  # noqa: PLC0415
 

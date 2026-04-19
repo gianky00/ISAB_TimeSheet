@@ -218,7 +218,7 @@ def remove_account(bot_type: str, username: str) -> bool:
 def set_default_account(bot_type: str, username: str) -> bool:
     """Imposta l'account di default per un tipo di bot."""
     config = load_config()
-    if set_default_account_logic(config, username):
+    if set_default_account_logic(config, username, bot_type):
         return save_config(config)
     return False
 

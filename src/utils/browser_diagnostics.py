@@ -54,7 +54,7 @@ def run_browser_diagnostic(user_data_dir: Path | str) -> dict[str, Any]:
 
 def _check_filesystem(path: Path) -> dict[str, Any]:
     """Verifica accesso e permessi sulla cartella del profilo."""
-    result = {"status": "PASS", "details": []}
+    result: dict[str, Any] = {"status": "PASS", "details": []}
 
     if not path.exists():
         try:
@@ -89,7 +89,7 @@ def _check_processes(path: Path) -> dict[str, Any]:
     """Rileva processi che potrebbero bloccare la directory."""
     import psutil  # noqa: PLC0415
 
-    result = {"status": "PASS", "details": []}
+    result: dict[str, Any] = {"status": "PASS", "details": []}
     blocking_procs = []
 
     for proc in psutil.process_iter(["name", "cmdline"]):
@@ -110,7 +110,7 @@ def _check_processes(path: Path) -> dict[str, Any]:
 
 def _test_bare_launch() -> dict[str, Any]:
     """Tenta un avvio barebone di Playwright per escludere problemi ai binari."""
-    result = {"status": "PASS", "details": []}
+    result: dict[str, Any] = {"status": "PASS", "details": []}
     try:
         with sync_playwright() as p:
             # Avvio rapido senza profilo persistente

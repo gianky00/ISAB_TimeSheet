@@ -8,7 +8,6 @@ import logging
 from typing import Any, cast
 
 from src.bots.base import BaseBot, BotStatus
-from src.core.config_manager import load_config
 
 # --- IMPORT BOT SELENIUM (Sempre disponibili come fallback) ---
 from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot
@@ -20,31 +19,51 @@ from src.bots.safework.pdl.bot import SafeWorkPDLBot
 from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
 from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
 from src.bots.safework.programmazione_sync.bot import SafeWorkProgrammazioneSyncBot
+from src.core.config_manager import load_config
 
 logger = logging.getLogger(__name__)
+
 
 # --- IMPORT BOT PLAYWRIGHT (Caricamento Granulare) ---
 def _safe_import_pw(module_path: str, class_name: str) -> Any | None:
     """Tenta di importare una classe Playwright in modo sicuro."""
     try:
-        import importlib
+        import importlib  # noqa: PLC0415
+
         module = importlib.import_module(module_path)
         return getattr(module, class_name)
     except (ImportError, AttributeError) as e:
         logger.debug(f"Playwright bot '{class_name}' non disponibile: {e}")
         return None
 
+
 # Caricamento individuale per massima robustezza
 PW_BOTS = {
-    "carico_ts": _safe_import_pw("src.bots.portale_fornitori.carico_ts.playwright_bot", "PlaywrightCaricoTSBot"),
-    "dettagli_oda": _safe_import_pw("src.bots.portale_fornitori.dettagli_oda.playwright_bot", "PlaywrightDettagliOdABot"),
-    "prenota_bp": _safe_import_pw("src.bots.portale_fornitori.prenota_bp.playwright_bot", "PlaywrightPrenotaBPBot"),
-    "scarico_ts": _safe_import_pw("src.bots.portale_fornitori.scarico_ts.playwright_bot", "PlaywrightScaricaTSBot"),
-    "timbrature": _safe_import_pw("src.bots.portale_fornitori.timbrature.playwright_bot", "PlaywrightTimbratureBot"),
+    "carico_ts": _safe_import_pw(
+        "src.bots.portale_fornitori.carico_ts.playwright_bot", "PlaywrightCaricoTSBot"
+    ),
+    "dettagli_oda": _safe_import_pw(
+        "src.bots.portale_fornitori.dettagli_oda.playwright_bot", "PlaywrightDettagliOdABot"
+    ),
+    "prenota_bp": _safe_import_pw(
+        "src.bots.portale_fornitori.prenota_bp.playwright_bot", "PlaywrightPrenotaBPBot"
+    ),
+    "scarico_ts": _safe_import_pw(
+        "src.bots.portale_fornitori.scarico_ts.playwright_bot", "PlaywrightScaricaTSBot"
+    ),
+    "timbrature": _safe_import_pw(
+        "src.bots.portale_fornitori.timbrature.playwright_bot", "PlaywrightTimbratureBot"
+    ),
     "scarico_pdl": _safe_import_pw("src.bots.safework.pdl.playwright_bot", "PlaywrightSafeWorkPDLBot"),
-    "ricerca_pdl": _safe_import_pw("src.bots.safework.pdl.playwright_search_bot", "PlaywrightSafeWorkPDLSearchBot"),
-    "programmazione_pdl": _safe_import_pw("src.bots.safework.programmazione.playwright_bot", "PlaywrightSafeWorkProgrammazioneBot"),
-    "programmazione_sync": _safe_import_pw("src.bots.safework.programmazione_sync.playwright_bot", "PlaywrightSafeWorkProgrammazioneSyncBot"),
+    "ricerca_pdl": _safe_import_pw(
+        "src.bots.safework.pdl.playwright_search_bot", "PlaywrightSafeWorkPDLSearchBot"
+    ),
+    "programmazione_pdl": _safe_import_pw(
+        "src.bots.safework.programmazione.playwright_bot", "PlaywrightSafeWorkProgrammazioneBot"
+    ),
+    "programmazione_sync": _safe_import_pw(
+        "src.bots.safework.programmazione_sync.playwright_bot", "PlaywrightSafeWorkProgrammazioneSyncBot"
+    ),
 }
 
 # Registry dei bot disponibili

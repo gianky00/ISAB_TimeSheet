@@ -24,17 +24,21 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
         ("download", "Download Report"),
         ("import", "Importazione Database"),
     ]
+    """Timeline operativa del bot."""
 
     @property
     def name(self) -> str:
+        """Restituisce il nome visualizzato del bot."""
         return "Timbrature (PW)"
 
     @property
     def description(self) -> str:
+        """Restituisce la descrizione estesa."""
         return "Scarica e archivia le timbrature dal portale ISAB (Playwright)"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
+        """Restituisce lo schema delle colonne per i dati di input."""
         return [
             {"name": "fornitore", "label": "Fornitore", "width": 150},
             {"name": "data_da", "label": "Data Da", "width": 100},
@@ -42,6 +46,7 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
         ]
 
     def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs: Any) -> None:
+        """Inizializza il bot con i parametri temporali e il fornitore."""
         super().__init__(**kwargs)
         self.data_da = data_da
         self.data_a = data_a
@@ -49,6 +54,7 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
         self.storage = TimbratureStorage()
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
+        """Valida la presenza della data di inizio e del fornitore."""
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:
             return False, base_msg
@@ -73,9 +79,7 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
         return True, ""
 
     def run(self, data: list[dict[str, Any]]) -> bool:
-        """
-        Esegue il workflow Timbrature con Playwright.
-        """
+        """Esegue il workflow completo di recupero e importazione delle timbrature."""
         self.update_step("login", StepStatus.COMPLETED)
 
         if data and isinstance(data, list):

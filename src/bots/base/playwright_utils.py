@@ -10,6 +10,12 @@ def get_playwright_selector(locator: tuple[str, str]) -> str:
     """
     Converte un locatore Selenium (By, value) in un selettore Playwright CSS/XPath valido.
 
+    Args:
+        locator: Tupla (By, valore) del locatore Selenium.
+
+    Returns:
+        Stringa del selettore compatibile con Playwright.
+
     Esempio:
       - (By.NAME, "NumeroOda") -> '[name="NumeroOda"]'
       - (By.XPATH, "//div")   -> 'xpath=//div'

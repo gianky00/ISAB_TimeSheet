@@ -18,10 +18,17 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
     """Gestisce le interazioni con la pagina Prenotazioni BP usando Playwright."""
 
     def __init__(self, page: Page, log_callback: Callable[[str], None] | None = None) -> None:
+        """
+        Inizializza la pagina di prenotazione BP.
+
+        Args:
+            page: Oggetto Page di Playwright.
+            log_callback: Funzione per l'invio dei log.
+        """
         super().__init__(page, log_callback)
 
     def navigate_to_gestione_bp(self) -> None:
-        """Naviga verso la sezione Gestione Buono di Prelievo."""
+        """Naviga verso la sezione Gestione Buono di Prelievo espandendo il menu se necessario."""
         self.log("Navigazione verso Gestione Buono di Prelievo...")
         self._wait_overlay()
 
@@ -51,7 +58,15 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
         data_da: str | None = None,
         data_a: str | None = None,
     ) -> None:
-        """Imposta i filtri di ricerca."""
+        """
+        Imposta i filtri di ricerca per individuare il buono di prelievo.
+
+        Args:
+            fornitore: Nome del fornitore da selezionare.
+            numero_bp: Numero del BP da cercare.
+            data_da: Data inizio intervallo.
+            data_a: Data fine intervallo.
+        """
         self.log("Impostazione filtri di ricerca...")
 
         if fornitore:
@@ -82,20 +97,25 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
         self.log("Ricerca completata.")
 
     def apri_dettagli_bp(self) -> None:
-        """Apre i dettagli del primo BP."""
+        """Apre la finestra di dettaglio del primo buono di prelievo trovato."""
         self.log("Apertura dettagli BP...")
         self.page.click(self._get_selector(PrenotaBPLocators.ICON_DETTAGLI))
         self._wait_overlay()
         self.page.wait_for_selector(self._get_selector(PrenotaBPLocators.WINDOW_DETTAGLI), state="visible")
 
     def chiudi_dettagli_bp(self) -> None:
-        """Chiude la finestra dettagli."""
+        """Chiude la finestra dei dettagli attualmente aperta."""
         self.log("Chiusura finestra dettagli...")
         self.page.click(self._get_selector(PrenotaBPLocators.BT_CHIUDI_POPUP))
         self._wait_overlay()
 
     def gestisci_creazione_richiesta(self, note: str) -> None:
-        """Gestisce il flusso di creazione richiesta bondo."""
+        """
+        Orchestra il flusso di analisi disponibilità, selezione materiali e creazione richiesta.
+
+        Args:
+            note: Testo da inserire nel campo note della richiesta.
+        """
         self.log("Gestione creazione richiesta...")
 
         available_indices, total_rows = self._analizza_disponibilita()
@@ -108,6 +128,7 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
         self._compila_form_richiesta(note)
 
     def _analizza_disponibilita(self) -> tuple[list[int], int]:
+        """Scansiona le righe dei dettagli per identificare i materiali disponibili."""
         rows_sel = self._get_selector(PrenotaBPLocators.GRID_ROWS_DETTAGLI)
         self.page.wait_for_selector(rows_sel, state="visible")
         rows = self.page.locator(rows_sel).all()
@@ -123,6 +144,7 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
         return indices, len(rows)
 
     def _esegui_selezione(self, available_indices: list[int], total_rows: int) -> bool:
+        """Seleziona i materiali disponibili nella griglia."""
         count_available = len(available_indices)
         if count_available == 0:
             self.log("⚠ Nessun materiale disponibile.")
@@ -145,6 +167,7 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
         return count_selected > 0
 
     def _compila_form_richiesta(self, note: str) -> None:
+        """Compila e salva il modulo di richiesta ritiro materiale."""
         self.log("Click su 'Crea Richiesta'...")
         self.page.click(self._get_selector(PrenotaBPLocators.BT_CREA_RICHIESTA))
         self._wait_overlay()

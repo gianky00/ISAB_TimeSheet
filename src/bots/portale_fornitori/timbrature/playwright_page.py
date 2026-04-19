@@ -23,14 +23,24 @@ class PlaywrightTimbraturePage:
         log_callback: Callable[[str], None] | None = None,
         download_path: str = "",
     ) -> None:
+        """
+        Inizializza la pagina delle timbrature.
+
+        Args:
+            page: Oggetto Page di Playwright.
+            log_callback: Funzione per l'invio dei log.
+            download_path: Percorso per il salvataggio dei file.
+        """
         self.page = page
         self._log = log_callback or print
         self.download_path = download_path
 
     def log(self, msg: str) -> None:
+        """Invia un messaggio al sistema di log."""
         self._log(msg)
 
     def _get_selector(self, locator: tuple[str, str]) -> str:
+        """Converte locatore in selettore Playwright."""
         _by, value = locator
         if value.startswith(("//", "(")):
             return f"xpath={value}"
@@ -62,13 +72,14 @@ class PlaywrightTimbraturePage:
             self.page.keyboard.press("Enter")
 
             self._wait_for_overlay()
-            return True
         except Exception as e:
             self.log(f"Errore navigazione: {e}")
             return False
+        else:
+            return True
 
     def set_filters(self, fornitore: str, data_da: str, data_a: str) -> bool:
-        """Imposta i filtri di ricerca."""
+        """Imposta i filtri di ricerca (fornitore e date)."""
         try:
             if fornitore:
                 self._select_supplier(fornitore)
@@ -102,11 +113,11 @@ class PlaywrightTimbraturePage:
 
             self.log("Eseguita sequenza tasti. Attendo caricamento...")
             self._wait_for_overlay()
-            return True
-
         except Exception as e:
             self.log(f"Errore impostazione filtri: {e}")
             return False
+        else:
+            return True
 
     def _select_supplier(self, fornitore: str) -> None:
         """Seleziona il fornitore dal menu a tendina."""
@@ -166,8 +177,8 @@ class PlaywrightTimbraturePage:
 
             download.save_as(str(new_path))
             self.log(f"✓ File scaricato e salvato: {new_path.name}")
-            return str(new_path)
-
         except Exception as e:
             self.log(f"⚠️ Errore download Excel: {e}")
             return ""
+        else:
+            return str(new_path)

@@ -98,6 +98,8 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
         return True
 
     def _naviga_a_ricerca(self) -> bool:
+        if not self.page:
+            return False
         try:
             self.log("🏠 Clic su Home Page...")
             self.page.click(self._get_selector(SafeWorkLocators.HOME_BUTTON))
@@ -106,9 +108,10 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
             self.log("🔍 Clic su Ricerca PdL...")
             self.page.click(self._get_selector(SafeWorkLocators.RICERCA_PDL_BUTTON))
             self._attendi_scomparsa_overlay()
-            return True
         except Exception:
             return False
+        else:
+            return True
 
     def _get_selector(self, locator: tuple[str, str]) -> str:
         _by, value = locator

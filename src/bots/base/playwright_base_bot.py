@@ -23,6 +23,7 @@ from src.utils.helpers import cleanup_bot_processes
 class PlaywrightBaseBot(BaseBot, ABC):
     """
     Classe base per i bot basati su Playwright.
+    Centralizza la gestione del browser Chromium, la persistenza del profilo e i flag di sicurezza.
     """
 
     def __init__(
@@ -33,6 +34,16 @@ class PlaywrightBaseBot(BaseBot, ABC):
         timeout: int = Timeouts.DEFAULT,
         download_path: str = "",
     ) -> None:
+        """
+        Inizializza le proprietà fondamentali del bot Playwright.
+
+        Args:
+            username: Nome utente per il login.
+            password: Password per il login.
+            headless: Se True, avvia il browser in modalità nascosta.
+            timeout: Tempo massimo di attesa per le operazioni (secondi).
+            download_path: Percorso per il salvataggio dei file scaricati.
+        """
         super().__init__(username, password, headless, timeout, download_path)
         self.playwright: Any = None
         self.browser: Browser | None = None
@@ -67,14 +78,30 @@ class PlaywrightBaseBot(BaseBot, ABC):
                 "--disable-software-rasterizer",
                 "--disable-infobars",
                 "--no-first-run",
+                "--no-default-browser-check",
+                "--no-pings",
                 "--password-store=basic",
-                "--disable-features=PasswordLeakDetection,SafeBrowsingPasswordCheck",
+                "--use-mock-keychain",
+                "--disable-component-update",
+                "--disable-background-networking",
+                "--disable-client-side-phishing-detection",
+                "--disable-sync",
+                # Disabilitazioni Mirate per il Gestore Password e Autocompletamento
+                "--disable-features=PasswordLeakDetection,PasswordCheck,SafeBrowsingPasswordCheck,AutofillServerCommunication,AutofillAccountWalletStorage,OptimizationHints,OptimizationGuideFetching,OptimizationTargetPrediction,CredentialProviderExtension",
                 "--disable-save-password-bubble",
+                "--disable-single-click-autofill",
+                "--disable-autofill",
+                "--disable-password-generation",
+                "--disable-password-manager-reauthentication",
+                "--hide-crash-restore-bubble",
+                "--disable-notifications",
             ],
         }
 
         # Tentativi di inizializzazione (Aumentati a 3 per includere la recovery)
         max_retries = 3
+        from src.utils.browser_profile_patcher import patch_browser_profile  # noqa: PLC0415
+
         for attempt in range(max_retries):
             try:
                 self.log(f"🧹 Setup ambiente browser (Tentativo {attempt + 1}/{max_retries})...")
@@ -82,6 +109,11 @@ class PlaywrightBaseBot(BaseBot, ABC):
                 # Pulizia preventiva ad ogni tentativo
                 with suppress(Exception):
                     cleanup_bot_processes()
+
+                # Patching preventivo del profilo per sopprimere popup sicurezza
+                if user_data_dir.exists():
+                    self.log("🛡️ Applicazione patch di sicurezza al profilo...")
+                    patch_browser_profile(user_data_dir)
 
                 if not self.playwright:
                     self.log("🌐 Inizializzazione Playwright Core...")
@@ -147,6 +179,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
         self.playwright = None
 
     def _save_error_state(self, error_msg: str) -> None:
+        """Cattura lo stato del browser in caso di errore (Screenshot + HTML)."""
         if not self.page:
             return
         with suppress(Exception):
@@ -161,6 +194,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
             self.log(f"📸 Stato errore salvato in: {edir.name}")
 
     def _login(self) -> bool:
+        """Esegue il login delegandolo alla pagina di login specifica."""
         return self.login_page.login(self.username, self.password) if self.login_page else False
 
     def _get_selector(self, locator: tuple[str, str]) -> str:
@@ -170,6 +204,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
         return get_playwright_selector(locator)
 
     def cleanup(self) -> None:
+        """Rilascia tutte le risorse Playwright (contesto, browser, core)."""
         if self.context:
             with suppress(Exception):
                 self.context.close()

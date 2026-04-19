@@ -53,9 +53,11 @@ def remove_account_logic(config: dict[str, Any], username: str) -> dict[str, Any
     return config
 
 
-def set_default_account_logic(config: dict[str, Any], username: str) -> bool:
-    """Logica per impostare un account come default."""
-    accounts = config.get("accounts", [])
+def set_default_account_logic(config: dict[str, Any], username: str, bot_type: str = "isab") -> bool:
+    """Logica per impostare un account come default per il tipo specificato."""
+    key = "accounts" if bot_type == "isab" else "safework_accounts"
+    accounts = config.get(key, [])
+
     found = False
     for acc in accounts:
         acc["default"] = acc.get("username") == username

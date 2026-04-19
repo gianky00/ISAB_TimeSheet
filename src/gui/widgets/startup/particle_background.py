@@ -108,11 +108,13 @@ class ParticleBackground(QWidget):
             p.apply_force(dx, dy)
 
     def resizeEvent(self, event: QResizeEvent | None) -> None:
+        """Resetta le cache al ridimensionamento del widget."""
         self._bg_cache = None
         self._circuit_cache = None
         super().resizeEvent(event)
 
     def _tick(self) -> None:
+        """Aggiorna lo stato di tutte le componenti animate (particelle, impulsi)."""
         self.phase += 0.015
         cx, cy = self.width() / 2.0, self.height() / 2.0
 
@@ -141,6 +143,7 @@ class ParticleBackground(QWidget):
         self.update()
 
     def _render_background_to_cache(self) -> None:
+        """Disegna il gradiente di sfondo statico nella pixmap di cache."""
         w, h = self.width(), self.height()
         r = float(self.BORDER_RADIUS)
         self._bg_cache = QPixmap(w, h)
@@ -186,6 +189,7 @@ class ParticleBackground(QWidget):
         p.end()
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
+        """Renderizza l'intero sfondo combinando cache, circuiti e particelle."""
         if event is None or self.width() <= 0 or self.height() <= 0:
             return
         painter = QPainter(self)
@@ -217,6 +221,7 @@ class ParticleBackground(QWidget):
         painter.end()
 
     def _draw_particles(self, painter: QPainter) -> None:
+        """Disegna le particelle e le loro connessioni basate sulla distanza."""
         if self._sprite_cache is None:
             self._render_sprite_to_cache()
         if self._sprite_cache is None:
@@ -246,6 +251,7 @@ class ParticleBackground(QWidget):
         painter.setOpacity(1.0)
 
     def _render_sprite_to_cache(self) -> None:
+        """Disegna lo sprite radiale della particella nella cache."""
         size = 64
         self._sprite_cache = QPixmap(size, size)
         self._sprite_cache.fill(Qt.GlobalColor.transparent)
@@ -262,6 +268,7 @@ class ParticleBackground(QWidget):
         pt.end()
 
     def _draw_neural_streams(self, painter: QPainter) -> None:
+        """Disegna gli impulsi luminosi che viaggiano tra le particelle."""
         for p1_idx_f, p2_idx_f, t in self._pulses:
             p1_idx, p2_idx = int(p1_idx_f), int(p2_idx_f)
             if p1_idx >= len(self.particles) or p2_idx >= len(self.particles):
@@ -278,6 +285,7 @@ class ParticleBackground(QWidget):
             painter.drawEllipse(QPoint(int(ix), int(iy)), 12, 12)
 
     def _draw_glow_orbs(self, painter: QPainter, w: int, h: int) -> None:
+        """Disegna globi luminosi ambientali soffusi sugli angoli."""
         intensity = 0.5 + 0.5 * math.sin(self.phase)
         for cx, cy, color, rad in (
             (w * 0.85, h * 0.15, QColor(52, 152, 219), 200),

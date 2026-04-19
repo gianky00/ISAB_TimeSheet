@@ -26,17 +26,21 @@ class PlaywrightPrenotaBPBot(PlaywrightBaseBot):
         ("reserve", "Prenotazione BP"),
         ("cleanup", "Chiusura Sessione"),
     ]
+    """Timeline operativa del bot."""
 
     @property
     def name(self) -> str:
+        """Restituisce il nome visualizzato del bot."""
         return "Prenota BP (PW)"
 
     @property
     def description(self) -> str:
+        """Restituisce la descrizione estesa."""
         return "Prenotazione Badge Provvisori sul portale ISAB (Playwright)"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
+        """Restituisce lo schema delle colonne per i dati di input."""
         return [
             {"name": "numero_bp", "label": "Numero BP", "type": "text"},
             {"name": "note_ritiro", "label": "Note di Ritiro", "type": "text"},
@@ -51,6 +55,7 @@ class PlaywrightPrenotaBPBot(PlaywrightBaseBot):
         fornitore: str | None = None,
         **kwargs: Any,
     ) -> None:
+        """Inizializza il bot con i parametri di filtraggio BP."""
         kwargs.pop("fornitore", None)
         kwargs.pop("data_a", None)
         kwargs.pop("data_da", None)
@@ -91,16 +96,18 @@ class PlaywrightPrenotaBPBot(PlaywrightBaseBot):
             self.log(f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
             self.update_step("cleanup", StepStatus.RUNNING)
             self.update_step("cleanup", StepStatus.COMPLETED)
-            return True
         except Exception as e:
             self.log(f"❗ Errore fatale durante l'esecuzione: {e}")
             self.update_step("nav", StepStatus.ERROR)
             traceback.print_exc()
             return False
+        else:
+            return True
         finally:
             self.log("Fine sessione Prenota BP (PW).")
 
     def _init_run_data(self, data: Any) -> list[dict[str, Any]]:
+        """Prepara i dati per l'esecuzione, supportando sia liste che dizionari di parametri."""
         if isinstance(data, dict):
             self.data_da = data.get("data_da") or self.data_da
             self.data_a = data.get("data_a") or self.data_a
@@ -109,6 +116,7 @@ class PlaywrightPrenotaBPBot(PlaywrightBaseBot):
         return list(data)
 
     def _process_single_bp(self, page_obj: PlaywrightPrenotaBPPage, index: int, row: dict[str, Any]) -> bool:
+        """Esegue il ciclo di filtraggio, apertura e prenotazione per un singolo BP."""
         num_bp = str(row.get("numero_bp", "")).strip()
         note = str(row.get("note_ritiro", "")).strip()
 
@@ -138,7 +146,6 @@ class PlaywrightPrenotaBPBot(PlaywrightBaseBot):
             if callback:
                 callback(index, True, "")
 
-            return True
         except Exception as e:
             self.log(f"✗ Errore su BP {num_bp}: {e}")
             self.update_step("reserve", StepStatus.ERROR)
@@ -151,3 +158,5 @@ class PlaywrightPrenotaBPBot(PlaywrightBaseBot):
                 callback(index, False, str(e))
 
             return False
+        else:
+            return True

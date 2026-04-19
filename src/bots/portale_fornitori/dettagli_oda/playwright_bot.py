@@ -17,7 +17,10 @@ from src.core.oda_manager import OdaManager
 
 
 class PlaywrightDettagliOdABot(PlaywrightBaseBot):
-    """Bot per lo scarico dei dettagli degli Ordini di Acquisto (OdA) usando Playwright."""
+    """
+    Bot per lo scarico dei dettagli degli Ordini di Acquisto (OdA) usando Playwright.
+    Supporta sia la ricerca granulare che lo scarico massivo della lista OdA per il database.
+    """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login Portale ISAB"),
@@ -26,17 +29,21 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
         ("download", "Download OdA"),
         ("db", "Importazione Database"),
     ]
+    """Timeline operativa del bot."""
 
     @property
     def name(self) -> str:
+        """Restituisce il nome visualizzato del bot."""
         return "Dettagli OdA (PW)"
 
     @property
     def description(self) -> str:
+        """Restituisce la descrizione estesa."""
         return "Scarica dettaglio OdA (Playwright)"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
+        """Restituisce lo schema delle colonne per i dati di input."""
         return [
             {"name": "numero_oda", "label": "Numero OdA", "type": "text"},
             {"name": "numero_contratto", "label": "Numero Contratto", "type": "combo", "options": []},
@@ -51,6 +58,7 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
         fornitore: str | None = None,
         **kwargs: Any,
     ) -> None:
+        """Inizializza il bot con credenziali e filtri temporali."""
         super().__init__(username, password, **kwargs)
         current_year = datetime.now(UTC).astimezone().year
         from src.core.constants import Business  # noqa: PLC0415
@@ -60,6 +68,7 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
         self.fornitore = fornitore or Business.DEFAULT_SUPPLIER
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
+        """Verifica la validità dei parametri e la presenza delle credenziali."""
         if not self.username or not self.password:
             return False, "Credenziali mancanti nelle impostazioni."
         if not self.fornitore:
@@ -67,7 +76,7 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
         return True, ""
 
     def run(self, data: list[dict[str, Any]]) -> bool:
-        """Esegue lo scarico dei dettagli con Playwright."""
+        """Esegue il ciclo di scarico dettagli con Playwright."""
         self.update_step("login", StepStatus.COMPLETED)
 
         rows = self._prepare_rows(data)
@@ -95,6 +104,7 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
         return success == len(rows)
 
     def _prepare_rows(self, data: Any) -> list[dict[str, Any]]:
+        """Prepara e normalizza le righe degli OdA da processare."""
         if isinstance(data, dict):
             self.data_da = data.get("data_da", self.data_da)
             self.data_a = data.get("data_a", self.data_a)
@@ -116,6 +126,7 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
         index: int,
         dest_dir: Path,
     ) -> bool:
+        """Gestisce la navigazione, il filtraggio e il download per un singolo ordine."""
         self._check_stop()
         oda = str(row.get("numero_oda", "")).strip()
         contract = str(row.get("numero_contratto", "")).strip()
@@ -145,6 +156,7 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
         return False
 
     def _import_oda_to_db(self, downloaded_path: Path) -> None:
+        """Innesca l'importazione dei dati Excel nel database Storico OdA."""
         import concurrent.futures  # noqa: PLC0415
 
         try:

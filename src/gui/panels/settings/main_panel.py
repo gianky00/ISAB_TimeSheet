@@ -33,6 +33,7 @@ class ConfigSaveWorker(QThread):
     """Worker thread per il salvataggio asincrono della configurazione."""
 
     finished = pyqtSignal(bool, str)
+    """Segnale emesso al termine del salvataggio con esito e messaggio errore."""
 
     def __init__(self, config: dict[str, Any]) -> None:
         """Inizializza il worker comunicando la configurazione da salvare."""
@@ -40,6 +41,7 @@ class ConfigSaveWorker(QThread):
         self.config = config
 
     def run(self) -> None:
+        """Esegue il salvataggio su disco tramite il config_manager."""
         try:
             config_manager.save_config(self.config)
             self.finished.emit(True, "")
@@ -180,7 +182,7 @@ class SettingsPanel(QWidget):
         self._save_timer.start()
 
     def _execute_async_save(self) -> None:
-        """Raccoglie i dati e avvia il thread di salvataggio."""
+        """Raccoglie i dati dai tab e avvia il thread di salvataggio asincrono."""
         # Se c'è già un salvataggio in corso, lo ignoriamo per ora
         # Il debouncing gestisce la maggior parte dei casi.
         if self._save_worker and self._save_worker.isRunning():
@@ -197,7 +199,13 @@ class SettingsPanel(QWidget):
         self._save_worker.start()
 
     def _on_save_finished(self, success: bool, error_msg: str) -> None:
-        """Gestisce l'esito del salvataggio asincrono."""
+        """
+        Gestisce l'esito del salvataggio asincrono.
+
+        Args:
+            success: True se il salvataggio è riuscito.
+            error_msg: Eventuale messaggio di errore.
+        """
         if success:
             self.settings_saved.emit()
         else:
@@ -212,7 +220,7 @@ class SettingsPanel(QWidget):
         return True
 
     def _reset_to_defaults(self) -> None:
-        """Ripristina la configurazione predefinita previa conferma."""
+        """Ripristina la configurazione predefinita previa conferma dell'utente."""
         from src.gui.dialogs.confirmation_dialog import ConfirmationDialog  # noqa: PLC0415
 
         if ConfirmationDialog.confirm(
@@ -241,7 +249,7 @@ class SettingsPanel(QWidget):
                 ToastManager.instance().show(f"Errore export: {e}", "error")
 
     def _import_config(self) -> None:
-        """Importa un file di configurazione JSON esterno."""
+        """Importa un file di configurazione JSON esterno sovrascrivendo quella attuale."""
         from PyQt6.QtWidgets import QFileDialog  # noqa: PLC0415
 
         path, _ = QFileDialog.getOpenFileName(self, "Importa Configurazione", "", "JSON Files (*.json)")
