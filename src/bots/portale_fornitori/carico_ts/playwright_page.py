@@ -52,10 +52,15 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
             self.log(f"Selezione {supplier}...")
             arrow_sel = self._get_selector(CaricoTSLocators.SUPPLIER_ARROW)
             self.page.click(arrow_sel)
+            self.page.wait_for_timeout(1000)
 
-            opt_xpath = f"xpath=//li[contains(text(), '{supplier}')]"
-            self.page.wait_for_selector(opt_xpath, state="visible", timeout=5000)
-            self.page.click(opt_xpath)
+            # Pattern robusto: attendi che sia presente nel DOM, scrolla e clicca via JS
+            option_xpath = f"xpath=//li[normalize-space(text())='{supplier}']"
+            self.page.wait_for_selector(option_xpath, state="attached", timeout=15000)
+
+            # Scroll into view e clic forzato
+            self.page.locator(option_xpath).evaluate("el => { el.scrollIntoView({block: 'nearest'}); el.click(); }")
+
             self._wait_overlay()
         except Exception as e:
             self.log(f"Errore fornitore: {e}")
@@ -74,16 +79,19 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
             True se l'operazione è stata avviata.
         """
         try:
-            self.log(f"Inserimento OdA: {oda}")
+            # Inserimento OdA forzato via JS per garantire l'aggiornamento del modello ExtJS
             inp_sel = self._get_selector(CaricoTSLocators.ODA_INPUT)
-
-            # Playwright fill handles input events automatically
-            self.page.fill(inp_sel, oda)
+            self.page.locator(inp_sel).evaluate(
+                "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
+                oda,
+            )
             self.page.press(inp_sel, "Enter")
 
+            # Clic sul pulsante di estrazione
             btn_sel = self._get_selector(CaricoTSLocators.EXTRACT_BUTTON)
-            self.page.click(btn_sel)
+            self.page.locator(btn_sel).evaluate("el => el.click()")
             self.log("Estrai OdA cliccato.")
+
         except Exception as e:
             self.log(f"Errore processo OdA: {e}")
             return False

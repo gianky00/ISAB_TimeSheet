@@ -7,14 +7,15 @@ Page Object Model per la sezione Timbrature usando Playwright.
 import time
 from collections.abc import Callable
 
-from playwright.sync_api import Page, TimeoutError
+from playwright.sync_api import Page
 
+from src.bots.base.playwright_base_page import PlaywrightBasePage
 from src.bots.portale_fornitori.timbrature.locators import TimbratureLocators
 from src.core.constants import Timeouts
 from src.core.paths import CONFIG_DIR
 
 
-class PlaywrightTimbraturePage:
+class PlaywrightTimbraturePage(PlaywrightBasePage):
     """Gestisce le interazioni con la pagina Timbrature usando Playwright."""
 
     def __init__(
@@ -31,28 +32,8 @@ class PlaywrightTimbraturePage:
             log_callback: Funzione per l'invio dei log.
             download_path: Percorso per il salvataggio dei file.
         """
-        self.page = page
-        self._log = log_callback or print
+        super().__init__(page, log_callback)
         self.download_path = download_path
-
-    def log(self, msg: str) -> None:
-        """Invia un messaggio al sistema di log."""
-        self._log(msg)
-
-    def _get_selector(self, locator: tuple[str, str]) -> str:
-        """Converte locatore in selettore Playwright."""
-        _by, value = locator
-        if value.startswith(("//", "(")):
-            return f"xpath={value}"
-        return value
-
-    def _wait_for_overlay(self) -> None:
-        """Attende che l'overlay di caricamento scompaia."""
-        try:
-            xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
-            self.page.wait_for_selector(f"xpath={xpath}", state="hidden", timeout=Timeouts.OVERLAY * 1000)
-        except TimeoutError:
-            self.log("⚠️ Timeout attesa overlay.")
 
     def navigate_to_timbrature(self) -> bool:
         """Naviga verso Report -> Timbrature."""
@@ -64,14 +45,14 @@ class PlaywrightTimbraturePage:
 
             # Navigazione da tastiera (come nell'originale)
             self.page.keyboard.press("Tab")
-            time.sleep(0.3)
+            self.page.wait_for_timeout(300)
             self.page.keyboard.press("Tab")
-            time.sleep(0.3)
+            self.page.wait_for_timeout(300)
             self.page.keyboard.press("Tab")
-            time.sleep(0.3)
+            self.page.wait_for_timeout(300)
             self.page.keyboard.press("Enter")
 
-            self._wait_for_overlay()
+            self._wait_overlay()
         except Exception as e:
             self.log(f"Errore navigazione: {e}")
             return False
@@ -88,31 +69,31 @@ class PlaywrightTimbraturePage:
 
             # Sequenza Tab per raggiungere i campi data (come originale)
             self.page.keyboard.press("Tab")
-            time.sleep(0.5)
+            self.page.wait_for_timeout(500)
             if data_da:
                 self.page.keyboard.type(data_da, delay=50)
 
             self.page.keyboard.press("Tab")
-            time.sleep(0.5)
+            self.page.wait_for_timeout(500)
             if data_a:
                 self.page.keyboard.type(data_a, delay=50)
 
             # Checkbox "Verifica Presenza Timesheet" (5 Tab)
             for _ in range(5):
                 self.page.keyboard.press("Tab")
-                time.sleep(0.1)
+                self.page.wait_for_timeout(100)
 
             # Toggle check (Space)
             self.page.keyboard.press("Space")
-            time.sleep(0.5)
+            self.page.wait_for_timeout(500)
 
             # Bottone Cerca (1 Tab + Enter)
             self.page.keyboard.press("Tab")
-            time.sleep(0.5)
+            self.page.wait_for_timeout(500)
             self.page.keyboard.press("Enter")
 
             self.log("Eseguita sequenza tasti. Attendo caricamento...")
-            self._wait_for_overlay()
+            self._wait_overlay()
         except Exception as e:
             self.log(f"Errore impostazione filtri: {e}")
             return False
@@ -120,10 +101,10 @@ class PlaywrightTimbraturePage:
             return True
 
     def _select_supplier(self, fornitore: str) -> None:
-        """Seleziona il fornitore dal menu a tendina."""
+        """Seleziona il fornitore dal menu a tendina con pattern stabilità."""
         self.log(f"Seleziono fornitore: {fornitore}")
         try:
-            self._wait_for_overlay()
+            self._wait_overlay()
 
             arrow_sel = self._get_selector(TimbratureLocators.COMBO_ARROW_SUPPLIER)
             # Tenta locator specifico o generico
@@ -131,14 +112,18 @@ class PlaywrightTimbraturePage:
                 arrow_sel = self._get_selector(TimbratureLocators.COMBO_ARROW_GENERIC)
 
             self.page.click(arrow_sel)
+            self.page.wait_for_timeout(1000)  # Delay rendering lista ExtJS
 
-            option_xpath = f"xpath=//li[contains(text(), '{fornitore}')]"
-            self.page.wait_for_selector(option_xpath, state="visible", timeout=15000)
-            self.page.click(option_xpath)
+            # Pattern robusto: attendi che sia presente nel DOM, scrolla e clicca via JS
+            option_xpath = f"xpath=//li[normalize-space(text())='{fornitore}']"
+            self.page.wait_for_selector(option_xpath, state="attached", timeout=15000)
 
-            self._wait_for_overlay()
+            # Scroll into view e clic forzato
+            self.page.locator(option_xpath).evaluate("el => { el.scrollIntoView({block: 'nearest'}); el.click(); }")
+
+            self._wait_overlay()
         except Exception as e:
-            self.log(f"⚠️ Errore selezione fornitore: {e}")
+            self.log(f"⚠️ Erreore selezione fornitore: {e}")
 
     def download_excel(self) -> str:
         """Individua e clicca il pulsante Excel, gestendo il download."""
@@ -166,7 +151,8 @@ class PlaywrightTimbraturePage:
 
             # Playwright gestisce il download in modo nativo e sicuro
             with self.page.expect_download(timeout=Timeouts.DOWNLOAD * 1000) as download_info:
-                self.page.click(excel_sel)
+                # Clic JavaScript per evitare blocchi da overlay invisibili
+                self.page.locator(excel_sel).evaluate("el => el.click()")
 
             download = download_info.value
             self.log(f"Download avviato: {download.suggested_filename}")

@@ -74,25 +74,42 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
                 self.log(f"  Selezione fornitore: '{fornitore}'...")
                 arrow_sel = self._get_selector(PrenotaBPLocators.FILTER_FORNITORE_ARROW)
                 self.page.click(arrow_sel)
+                self.page.wait_for_timeout(1000)
 
+                # Pattern robusto: attendi che sia presente nel DOM, scrolla e clicca via JS
                 option_xpath = f"xpath=//li[normalize-space(text())='{fornitore}']"
-                self.page.wait_for_selector(option_xpath, state="visible", timeout=5000)
-                self.page.click(option_xpath)
+                self.page.wait_for_selector(option_xpath, state="attached", timeout=15000)
+
+                # Scroll into view e clic forzato
+                self.page.locator(option_xpath).evaluate("el => { el.scrollIntoView({block: 'nearest'}); el.click(); }")
+
                 self._wait_overlay()
             except Exception as e:
                 self.log(f"  ⚠ Avviso: Selezione fornitore fallita ({e}), tento inserimento manuale.")
                 self.page.fill(self._get_selector(PrenotaBPLocators.FILTER_FORNITORE), fornitore)
 
         if numero_bp:
-            self.page.fill(self._get_selector(PrenotaBPLocators.FILTER_NUMERO_BP), numero_bp)
+            num_sel = self._get_selector(PrenotaBPLocators.FILTER_NUMERO_BP)
+            self.page.locator(num_sel).evaluate(
+                "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
+                numero_bp,
+            )
 
         if data_da:
-            self.page.fill(self._get_selector(PrenotaBPLocators.FILTER_DATA_DA), data_da)
+            da_sel = self._get_selector(PrenotaBPLocators.FILTER_DATA_DA)
+            self.page.locator(da_sel).evaluate(
+                "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
+                data_da,
+            )
 
         if data_a:
-            self.page.fill(self._get_selector(PrenotaBPLocators.FILTER_DATA_A), data_a)
+            a_sel = self._get_selector(PrenotaBPLocators.FILTER_DATA_A)
+            self.page.locator(a_sel).evaluate(
+                "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
+                data_a,
+            )
 
-        self.page.click(self._get_selector(PrenotaBPLocators.BT_CERCA))
+        self.page.locator(self._get_selector(PrenotaBPLocators.BT_CERCA)).evaluate("el => el.click()")
         self._wait_overlay()
         self.log("Ricerca completata.")
 
@@ -180,12 +197,24 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
         form_sel = self._get_selector(PrenotaBPLocators.FORM_DATA_RITIRO)
         self.page.wait_for_selector(form_sel, state="visible")
 
-        self.page.fill(form_sel, data_oggi)
-        self.page.fill(self._get_selector(PrenotaBPLocators.FORM_ORA_INIZIO), ora_attuale)
-        self.page.fill(self._get_selector(PrenotaBPLocators.FORM_ORA_FINE), ora_fine)
-        self.page.fill(self._get_selector(PrenotaBPLocators.FORM_NOTE), note)
+        self.page.locator(form_sel).evaluate(
+            "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
+            data_oggi,
+        )
+        self.page.locator(self._get_selector(PrenotaBPLocators.FORM_ORA_INIZIO)).evaluate(
+            "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
+            ora_attuale,
+        )
+        self.page.locator(self._get_selector(PrenotaBPLocators.FORM_ORA_FINE)).evaluate(
+            "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
+            ora_fine,
+        )
+        self.page.locator(self._get_selector(PrenotaBPLocators.FORM_NOTE)).evaluate(
+            "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
+            note,
+        )
 
         self.log("Salvataggio richiesta...")
-        self.page.click(self._get_selector(PrenotaBPLocators.BT_SALVA))
+        self.page.locator(self._get_selector(PrenotaBPLocators.BT_SALVA)).evaluate("el => el.click()")
         self._wait_overlay()
         self.log("Richiesta creata e salvata con successo.")

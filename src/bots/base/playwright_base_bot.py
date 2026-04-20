@@ -56,10 +56,8 @@ class PlaywrightBaseBot(BaseBot, ABC):
     @measure_time(threshold_ms=10000)
     def _init_driver(self) -> None:
         """Inizializza Playwright e il browser con logica di persistenza, stabilità e recovery."""
-        from src.utils.browser_diagnostics import (  # noqa: PLC0415
-            emergency_profile_reset,
-            run_browser_diagnostic,
-        )
+        from src.utils.browser_diagnostics import emergency_profile_reset  # noqa: PLC0415
+        from src.utils.browser_profile_patcher import patch_browser_profile  # noqa: PLC0415
 
         self.status = BotStatus.INITIALIZING
         user_data_dir = config_manager.CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
@@ -100,22 +98,24 @@ class PlaywrightBaseBot(BaseBot, ABC):
             ],
         }
 
-        # Tentativi di inizializzazione (Aumentati a 3 per includere la recovery)
+        # 1. Reset profilato preventivo per garantire tabula rasa (Standard per stabilità richiesto dall'utente)
+        self.log("♻️ Esecuzione Reset Profilo Standard per avvio pulito...")
+        with suppress(Exception):
+            cleanup_bot_processes()
+        emergency_profile_reset(user_data_dir)
+
+        # 2. Patching preventivo del profilo per sopprimere popup sicurezza
+        with suppress(Exception):
+            if user_data_dir.exists():
+                self.log("🛡️ Applicazione patch di sicurezza al profilo...")
+                patch_browser_profile(user_data_dir)
+
+        # 3. Tentativi di inizializzazione
         max_retries = 3
-        from src.utils.browser_profile_patcher import patch_browser_profile  # noqa: PLC0415
 
         for attempt in range(max_retries):
             try:
                 self.log(f"🧹 Setup ambiente browser (Tentativo {attempt + 1}/{max_retries})...")
-
-                # Pulizia preventiva ad ogni tentativo
-                with suppress(Exception):
-                    cleanup_bot_processes()
-
-                # Patching preventivo del profilo per sopprimere popup sicurezza
-                if user_data_dir.exists():
-                    self.log("🛡️ Applicazione patch di sicurezza al profilo...")
-                    patch_browser_profile(user_data_dir)
 
                 if not self.playwright:
                     self.log("🌐 Inizializzazione Playwright Core...")
@@ -138,21 +138,6 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
                 # Pulizia forzata dello stato interno ad ogni fallimento
                 self._stop_playwright_internal()
-
-                # Se siamo al secondo fallimento, eseguiamo diagnostica e tentiamo il reset del profilo
-                if attempt == 1:
-                    self.log("🔍 Esecuzione diagnostica browser per isolare il problema...")
-                    diag = run_browser_diagnostic(user_data_dir)
-
-                    # Se Playwright barebone funziona, ma il lancio persistente fallisce, resettiamo il profilo
-                    if diag["checks"]["playwright_launch"]["status"] == "PASS":
-                        self.log(
-                            "♻️ Binari Playwright OK, ma profilo instabile. Eseguo Emergency Reset...",
-                            "WARNING",
-                        )
-                        if emergency_profile_reset(user_data_dir):
-                            self.log("✅ Profilo resettato. Ultimo tentativo con sessione pulita.")
-                            continue
 
                 # Se è l'ultimo tentativo, rilanciamo l'errore definitivo
                 if attempt == max_retries - 1:

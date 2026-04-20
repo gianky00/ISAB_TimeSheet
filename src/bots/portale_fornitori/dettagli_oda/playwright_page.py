@@ -50,15 +50,28 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
             return True
 
     def setup_supplier(self, supplier: str) -> bool:
-        """Seleziona il fornitore dal menu a discesa."""
+        """
+        Imposta il fornitore per il filtering dei dati.
+
+        Args:
+            supplier: Ragione sociale del fornitore.
+
+        Returns:
+            True se la selezione è avvenuta, False altrimenti.
+        """
         try:
             self.log(f"Selezione fornitore: {supplier}")
             arrow_sel = self._get_selector(DettagliOdALocators.SUPPLIER_ARROW)
             self.page.click(arrow_sel)
+            self.page.wait_for_timeout(1000)
 
-            option_xpath = f"xpath=//li[contains(text(), '{supplier}')]"
-            self.page.wait_for_selector(option_xpath, state="visible", timeout=15000)
-            self.page.click(option_xpath)
+            # Pattern robusto: attendi che sia presente nel DOM, scrolla e clicca via JS
+            option_xpath = f"xpath=//li[normalize-space(text())='{supplier}']"
+            self.page.wait_for_selector(option_xpath, state="attached", timeout=15000)
+
+            # Scroll into view e clic forzato
+            self.page.locator(option_xpath).evaluate("el => { el.scrollIntoView({block: 'nearest'}); el.click(); }")
+
             self._wait_overlay()
         except Exception as e:
             self.log(f"✗ Selezione fornitore fallita: {e}")
@@ -85,20 +98,37 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
         """Compila il form e avvia l'esportazione."""
         try:
             if oda:
-                self.page.fill(self._get_selector(DettagliOdALocators.ODA_NUMBER_FIELD), oda)
+                oda_sel = self._get_selector(DettagliOdALocators.ODA_NUMBER_FIELD)
+                self.page.locator(oda_sel).evaluate(
+                    "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
+                    oda,
+                )
 
-            self.page.fill(self._get_selector(DettagliOdALocators.DATE_FROM_FIELD), date_da)
-            self.page.fill(self._get_selector(DettagliOdALocators.DATE_A_FIELD), date_a)
+            da_sel = self._get_selector(DettagliOdALocators.DATE_FROM_FIELD)
+            self.page.locator(da_sel).evaluate(
+                "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
+                date_da,
+            )
+
+            a_sel = self._get_selector(DettagliOdALocators.DATE_A_FIELD)
+            self.page.locator(a_sel).evaluate(
+                "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
+                date_a,
+            )
 
             if contract:
                 self.log(f"  Inserimento contratto: {contract}")
-                self.page.fill(self._get_selector(DettagliOdALocators.CONTRACT_FIELD), contract)
+                contract_sel = self._get_selector(DettagliOdALocators.CONTRACT_FIELD)
+                self.page.locator(contract_sel).evaluate(
+                    "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
+                    contract,
+                )
 
             checkbox_sel = self._get_selector(DettagliOdALocators.CHECKBOX_FIELD)
             if not self.page.is_checked("input[name='GetItemServiceInfo']"):
-                self.page.click(checkbox_sel)
+                self.page.locator(checkbox_sel).evaluate("el => el.click()")
 
-            self.page.click(self._get_selector(DettagliOdALocators.SEARCH_BUTTON))
+            self.page.locator(self._get_selector(DettagliOdALocators.SEARCH_BUTTON)).evaluate("el => el.click()")
             self.log("  Cerca cliccato...")
             self._wait_overlay()
 
@@ -160,7 +190,7 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
             self.log(f"  Attendo download in: {dest_dir}")
 
             with self.page.expect_download(timeout=Timeouts.DOWNLOAD * 1000) as download_info:
-                self.page.click(selector)
+                self.page.locator(selector).evaluate("el => el.click()")
 
             download = download_info.value
             target_path = dest_dir / target_filename

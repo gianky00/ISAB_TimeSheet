@@ -198,11 +198,11 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             return False
         self._check_stop()
         try:
-            self.page.click("xpath=//*[normalize-space(text())='Report']")
+            self.page.wait_for_selector("xpath=//*[normalize-space(text())='Report']", state="attached").evaluate("el => el.click()")
             self._wait_for_overlay()
 
             timesheet_menu_xpath = "xpath=//span[contains(@id, 'generic_menu_button-') and contains(@id, '-btnEl')][.//span[text()='Timesheet']]"
-            self.page.click(timesheet_menu_xpath)
+            self.page.wait_for_selector(timesheet_menu_xpath, state="attached").evaluate("el => el.click()")
 
             fornitore_arrow_xpath = "xpath=//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
             self.page.wait_for_selector(fornitore_arrow_xpath, state="visible")
@@ -220,14 +220,21 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
         try:
             self.log(f"Impostazione filtri per fornitore: {self.fornitore}")
             arrow_sel = self._get_selector(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW)
-            self.page.click(arrow_sel)
+            self.page.wait_for_selector(arrow_sel, state="attached").evaluate("el => el.click()")
+            self.page.wait_for_timeout(1000)  # Attesa rendering lista ExtJS
 
-            fornitore_option_xpath = f"xpath=//li[normalize-space(text())='{self.fornitore}']"
-            self.page.click(fornitore_option_xpath)
+            option_xpath = f"//li[normalize-space(text())='{self.fornitore}']"
+            # Pattern Robusto: Attendiamo che sia nel DOM, scrolliamo e clicchiamo via JS
+            option = self.page.wait_for_selector(f"xpath={option_xpath}", state="attached")
+            option.evaluate("el => { el.scrollIntoView({block: 'nearest'}); el.click(); }")
             self._wait_for_overlay()
 
             data_da_sel = self._get_selector(ScaricoTSLocators.DATE_FROM_FIELD)
-            self.page.fill(data_da_sel, self.data_da)
+            # Inserimento via JS per robustezza (allineamento con Selenium)
+            self.page.locator(data_da_sel).evaluate(
+                "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); }",
+                self.data_da,
+            )
         except Exception as e:
             self.log(f"❌ Errore nell'impostazione dei filtri: {e}")
             return False
@@ -242,13 +249,14 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             num_oda_sel = self._get_selector(ScaricoTSLocators.ODA_NUMBER_FIELD)
             pos_oda_sel = self._get_selector(ScaricoTSLocators.ODA_POSITION_FIELD)
 
-            self.page.fill(num_oda_sel, numero_oda)
-            # Posizione OdA: prima pulisci poi scrivi
-            self.page.locator(pos_oda_sel).fill("")
-            self.page.locator(pos_oda_sel).fill(posizione_oda)
+            # Inserimento via JS per robustezza (come Selenium) per bypassare controlli di visibilità restrittivi
+            js_script = "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); }"
+
+            self.page.locator(num_oda_sel).evaluate(js_script, numero_oda)
+            self.page.locator(pos_oda_sel).evaluate(js_script, posizione_oda)
 
             xpath_cerca = "xpath=//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Cerca']]"
-            self.page.click(xpath_cerca)
+            self.page.wait_for_selector(xpath_cerca, state="attached").evaluate("el => el.click()")
             self._wait_for_overlay()
 
             # Verifica se ci sono risultati
@@ -269,13 +277,13 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
         try:
             # Seleziona tutto tramite la checkbox nell'header
             xpath_check_all = "//div[contains(@class, 'x-column-header-checkbox')]//span[contains(@class, 'x-column-header-text')]"
-            self.page.click(f"xpath={xpath_check_all}")
+            self.page.wait_for_selector(f"xpath={xpath_check_all}", state="attached").evaluate("el => el.click()")
 
             # Pulsante Scarica
             xpath_scarica = "//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Scarica']]"
 
             with self.page.expect_download() as download_info:
-                self.page.click(f"xpath={xpath_scarica}")
+                self.page.wait_for_selector(f"xpath={xpath_scarica}", state="attached").evaluate("el => el.click()")
 
             download = download_info.value
             download_path = os.path.join(self.download_path, filename)
@@ -297,7 +305,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             xpath_export = "xpath=//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]"
 
             with self.page.expect_download(timeout=Timeouts.DOWNLOAD * 1000) as download_info:
-                self.page.click(xpath_export)
+                self.page.wait_for_selector(xpath_export, state="attached").evaluate("el => el.click()")
 
             download = download_info.value
             extension = Path(download.suggested_filename).suffix.lower() or ".xlsx"
