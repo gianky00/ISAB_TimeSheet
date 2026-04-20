@@ -97,7 +97,9 @@ def test_init_driver_fallback_local(bot, mocker):
 
 def test_init_driver_failure_handling(bot, mocker):
     """Test error handling and suggestions when Chrome fails to start."""
-    mocker.patch("src.utils.resource_manager.ResourceManager.ensure_automation_driver", return_value="chromedriver.exe")
+    mocker.patch(
+        "src.utils.resource_manager.ResourceManager.ensure_automation_driver", return_value="chromedriver.exe"
+    )
     mocker.patch(
         "src.bots.base.selenium_base_bot.webdriver.Chrome",
         side_effect=Exception("chrome instance exited"),
@@ -116,7 +118,9 @@ def test_init_driver_failure_handling(bot, mocker):
 
 def test_init_driver_version_error(bot, mocker):
     """Test handling of driver version mismatch."""
-    mocker.patch("src.utils.resource_manager.ResourceManager.ensure_automation_driver", return_value="chromedriver.exe")
+    mocker.patch(
+        "src.utils.resource_manager.ResourceManager.ensure_automation_driver", return_value="chromedriver.exe"
+    )
     fake_dir = Path("/tmp/drivers")
     mocker.patch("src.utils.resource_manager.ResourceManager.get_writable_drivers_dir", return_value=fake_dir)
 
@@ -138,6 +142,4 @@ def test_init_driver_version_error(bot, mocker):
 
     # Verify error logging
     assert any("❌ ERRORE CRITICO DRIVER: Versione incompatibile" in log for log in logs)
-    assert any(
-        "🗑️ Driver locale obsoleto rimosso dalla cache." in log for log in logs
-    )
+    assert any("🗑️ Driver locale obsoleto rimosso dalla cache." in log for log in logs)

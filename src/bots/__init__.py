@@ -198,8 +198,7 @@ def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:
     if not bot_info:
         return None
 
-    config = load_config()
-    engine = config.get("automation_engine", "selenium").lower()
+    engine = load_config().get("automation_engine", "selenium").lower()
 
     logger.info(f"Factory: Creazione bot '{bot_id}' con motore: {engine}")
 
@@ -207,7 +206,9 @@ def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:
     if engine == "playwright" and bot_info.get("class_pw"):
         bot_class = bot_info["class_pw"]
     elif engine == "playwright":
-        logger.warning(f"Motore Playwright richiesto ma non disponibile per '{bot_id}'. Fallback Selenium.")
+        msg = f"⚠️ Motore Playwright richiesto ma non disponibile per '{bot_id}' (class_pw è None). Eseguo fallback su Selenium."
+        logger.warning(msg)
+        print(f"[!] {msg}")  # Output visibile se eseguito da console
 
     return cast("BaseBot", bot_class(**kwargs))
 

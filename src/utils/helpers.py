@@ -261,7 +261,7 @@ def cleanup_bot_processes() -> None:
                     f_path.unlink()
                     cleanup_logger.info(f"Removed stale lock file: {lock_file}")
             # Cerca anche in sottocartelle comuni (es. Local State)
-            for sub in ["Default", "Network"]:
+            for sub in ("Default", "Network"):
                 f_sub_path = profile_path / sub / lock_file
                 if f_sub_path.exists():
                     with suppress(Exception):

@@ -19,14 +19,15 @@ class TestLicenseUpdater:
         license_dir.mkdir(parents=True)
         with patch("src.core.paths.get_data_path", return_value=str(data_dir)):
             yield license_dir
+
     @patch("src.core.license_validator.get_hardware_id", return_value="HWID")
     @patch("src.core.license_validator.get_detailed_license_status")
     @patch("requests.get")
     def test_run_update_success(self, mock_get, mock_status, mock_hwid, mock_paths):
-        # noqa: PLC0415
-        import json
-        # noqa: PLC0415
-        from cryptography.fernet import Fernet
+        import json  # noqa: PLC0415
+
+        from cryptography.fernet import Fernet  # noqa: PLC0415
+
         fake_key = Fernet.generate_key().decode()
         cipher = Fernet(fake_key.encode())
 
@@ -54,7 +55,7 @@ class TestLicenseUpdater:
         # Patch interna per evitare download reali e fornire chiave
         with (
             patch("src.core.license_updater._save_license_files", return_value=True),
-            patch("src.core.secrets_manager.SecretsManager.get_license_key", return_value=fake_key)
+            patch("src.core.secrets_manager.SecretsManager.get_license_key", return_value=fake_key),
         ):
             assert run_update() is True
 

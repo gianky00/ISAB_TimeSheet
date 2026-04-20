@@ -115,13 +115,18 @@ def temp_dir(tmp_path):
 
 
 @pytest.fixture(autouse=True)
-def _isolate_config(tmp_path):
+def _isolate_config(tmp_path, monkeypatch):
     """
     Global isolation for configuration and data.
     Ensures NO test ever writes to real user directories.
     """
-    from src.core import config_manager  # noqa: PLC0415
-    from src.core.database import db_manager  # noqa: PLC0415
+    from src.core import (  # noqa: PLC0415
+        config_manager,
+        paths,
+    )
+    from src.core.audit_manager import AuditManager  # noqa: PLC0415
+    from src.core.database.manager import DatabaseManager  # noqa: PLC0415
+    from src.core.stats_manager import StatsManager  # noqa: PLC0415
     from src.utils.security import password_manager  # noqa: PLC0415
 
     # 1. Setup fake paths
@@ -132,22 +137,38 @@ def _isolate_config(tmp_path):
     (fake_dir / "security").mkdir(exist_ok=True)
     fake_file = fake_dir / "config.json"
 
-    # 2. Apply patches
+    # 2. Inject environment variable for subprocesses/late imports
+    monkeypatch.setenv("SYNCROJOB_CONFIG_DIR", str(fake_dir))
+
+    # 3. Apply patches to global path constants
     with (
+        patch("src.core.paths.CONFIG_DIR", fake_dir),
+        patch("src.core.paths.CONFIG_FILE", fake_file),
+        patch("src.core.paths.DB_DIR", fake_dir / "data"),
+        patch("src.core.paths.LOGS_DIR", fake_dir / "logs"),
         patch("src.core.config_manager.CONFIG_DIR", fake_dir),
         patch("src.core.config_manager.CONFIG_FILE", fake_file),
         patch("src.core.config_manager.check_and_migrate_local_config", return_value=False),
     ):
-        # 3. Reset Singletons to use new paths
+        # 4. Reset Singletons to use new paths
         config_manager._config_cache = None
         password_manager._reset_for_testing()
-        # db_manager uses dynamic properties, but we ensure directories exist
-        db_manager._ensure_dirs()
+
+        # Reset Audit, DB and Stats Managers to force re-initialization with patched paths
+        AuditManager._instance = None
+        DatabaseManager._instance = None
+        StatsManager._instance = None
+
+        # Re-ensure dirs in the new fake path
+        paths.DB_DIR.mkdir(parents=True, exist_ok=True)
 
         yield fake_file
 
-        # 4. Cleanup after test
+        # 5. Cleanup after test
         config_manager._config_cache = None
+        AuditManager._instance = None
+        DatabaseManager._instance = None
+        StatsManager._instance = None
 
 
 @pytest.fixture(autouse=True)

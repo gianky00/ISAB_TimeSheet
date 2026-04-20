@@ -48,14 +48,13 @@ class TestControllersCoverage:
         mocker.patch.object(ctrl, "get_panel", return_value=QWidget())
 
         ctrl.navigate_to(1)
-        mw._current_page_index = 1 # Aggiorna manualmente lo stato nel mock
+        mw._current_page_index = 1  # Aggiorna manualmente lo stato nel mock
 
         assert mw._current_page_index == 1
         # In V9.0 usa slide_to_index se presente
         mw.page_stack.slide_to_index.assert_called_with(1)
         # La sidebar ora riceve (index, sub_index, bot_index)
         mw.sidebar.set_active_button.assert_called_with(1, None, None)
-
 
     def test_search_controller_routing(self, mw, mocker):
         """Verifica che la ricerca OdA inoltri i risultati correttamente."""

@@ -23,6 +23,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -151,6 +152,13 @@ def _build_env() -> dict[str, str]:
     env["QT_QPA_PLATFORM"] = "offscreen"
     env["PYTHONUTF8"] = "1"
     env["PYTHONIOENCODING"] = "utf-8"
+
+    # Assicura che i test non usino MAI la directory reale dell'utente
+    if "SYNCROJOB_CONFIG_DIR" not in env:
+        # Usiamo una sottocartella in temp per isolamento globale
+        base_temp = Path(tempfile.gettempdir()) / "syncrojob_global_test_env"
+        env["SYNCROJOB_CONFIG_DIR"] = str(base_temp)
+
     return env
 
 
@@ -365,9 +373,14 @@ def _worker_task(
     """Funzione stand-alone per il pool di processi (SHOTGUN)."""
     env = _build_env()
 
-    # FIX: Isolamento Coverage su Windows
-    # Usiamo un file unico per worker per evitare PermissionError (WinError 32)
+    # FIX: Isolamento totale (Config + Coverage) su Windows
+    # Usiamo una directory dedicata per worker per evitare conflitti e PermissionError
     worker_id = f"{os.getpid()}_{int(time.time() * 1000)}"
+    temp_config_dir = Path(tempfile.gettempdir()) / f"syncrojob_test_{worker_id}"
+    temp_config_dir.mkdir(parents=True, exist_ok=True)
+
+    env["SYNCROJOB_CONFIG_DIR"] = str(temp_config_dir)
+
     if with_cov:
         env["COVERAGE_FILE"] = f".coverage.worker.{worker_id}"
 

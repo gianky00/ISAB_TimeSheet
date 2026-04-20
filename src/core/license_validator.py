@@ -23,6 +23,7 @@ from cryptography.fernet import Fernet
 
 from src.core.audit_manager import AuditManager
 from src.core.logging import get_logger
+from src.core.paths import CONFIG_DIR as PATHS_CONFIG_DIR, get_data_path
 from src.core.secrets_manager import SecretsManager
 from src.core.time_manager import get_trusted_time
 
@@ -131,8 +132,6 @@ def _get_linux_hardware_id() -> str | None:
 
 def _get_license_paths() -> dict[str, Path]:
     """Restituisce la mappatura dei percorsi file per la licenza."""
-    from src.core.paths import get_data_path  # noqa: PLC0415
-
     base_data_dir = Path(get_data_path())
     license_dir = base_data_dir / "Licenza"
     return {
@@ -149,13 +148,11 @@ def _check_and_migrate_local_license(target_paths: dict[str, Any]) -> bool:
     else:
         app_dir = Path(__file__).parent.parent.parent.resolve()
 
-    from platformdirs import user_data_dir  # noqa: PLC0415
-
     local_appdata = Path(os.environ.get("LOCALAPPDATA", ""))
     potential_dirs = [
         app_dir / "Licenza",
         app_dir,
-        Path(user_data_dir("SyncroJob", appauthor=False, roaming=True)) / "Licenza",
+        PATHS_CONFIG_DIR / "Licenza",
     ]
 
     if local_appdata:

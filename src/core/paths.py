@@ -3,6 +3,7 @@ SyncroJob - Path Management
 Centralized path definitions for the application.
 """
 
+import os
 from pathlib import Path
 from typing import Final
 
@@ -11,8 +12,11 @@ from platformdirs import user_data_dir
 from src.core.constants import FileNames
 from src.core.version import APP_NAME, __version__
 
-# Configuration Directory (OS-dependent standard path)
-CONFIG_DIR: Final[Path] = Path(user_data_dir(APP_NAME, appauthor=False))
+# Configuration Directory (OS-dependent standard path with Environment Override)
+_CONFIG_DIR_EV = os.environ.get("SYNCROJOB_CONFIG_DIR")
+CONFIG_DIR: Final[Path] = (
+    Path(_CONFIG_DIR_EV) if _CONFIG_DIR_EV else Path(user_data_dir(APP_NAME, appauthor=False))
+)
 
 # Main Configuration File
 CONFIG_FILE: Final[Path] = CONFIG_DIR / FileNames.CONFIG

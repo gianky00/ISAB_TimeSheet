@@ -23,6 +23,7 @@ class TestDatabaseManager:
         m1 = DatabaseManager()
         m2 = DatabaseManager()
         assert m1 is m2
+
     def test_init_db(self, manager, tmp_path):
         # Override constants for test
         test_db_cont = tmp_path / "contabilita_test.db"
@@ -32,7 +33,7 @@ class TestDatabaseManager:
         with (
             patch("src.core.database.manager.DB_DIR", tmp_path),
             patch("src.core.database.manager.DB_CONTABILITA", test_db_cont),
-            patch("src.core.database.manager.DB_TIMBRATURE", test_db_timb)
+            patch("src.core.database.manager.DB_TIMBRATURE", test_db_timb),
         ):
             manager._init_contabilita()
             assert test_db_cont.exists()

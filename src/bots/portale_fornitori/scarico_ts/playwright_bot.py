@@ -278,7 +278,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
                 self.page.click(f"xpath={xpath_scarica}")
 
             download = download_info.value
-            download_path = os.path.join(str(self.download_path), filename)
+            download_path = os.path.join(self.download_path, filename)
             download.save_as(download_path)
 
             self.log(f"✓ Download completato: {filename}")

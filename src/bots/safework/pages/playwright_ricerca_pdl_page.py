@@ -59,15 +59,13 @@ class PlaywrightRicercaPDLPage(PlaywrightBasePage):
 
     def _attendi_scomparsa_overlay(self, timeout_ms: int = 300000) -> None:
         """Attende la scomparsa dell'overlay GISWaitOverlay."""
-        try:
+        with suppress(TimeoutError):
             overlay_sel = self._get_selector(SafeWorkLocators.OVERLAY)
             # Verifica se appare e poi attendi scomparsa
             with suppress(TimeoutError):
                 self.page.wait_for_selector(overlay_sel, state="visible", timeout=2000)
 
             self.page.wait_for_selector(overlay_sel, state="hidden", timeout=timeout_ms)
-        except TimeoutError:
-            pass
 
     def esporta_excel(self) -> bool:
         """Clicca sul pulsante Esporta."""

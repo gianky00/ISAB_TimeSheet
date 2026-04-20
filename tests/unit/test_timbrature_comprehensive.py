@@ -19,9 +19,9 @@ class TestTimbratureBotComprehensive(unittest.TestCase):
                     password="pass",
                     data_da="01/01/2026",
                     data_a="31/01/2026",
-                    fornitore="VENDOR"
+                    fornitore="VENDOR",
                 )
-                self.bot.signals = MagicMock() # FIX: Inizializza signals manualmente
+                self.bot.signals = MagicMock()  # FIX: Inizializza signals manualmente
                 self.bot.driver = self.mock_driver
                 self.bot._log_callback = MagicMock()
                 self.bot._logger = MagicMock()

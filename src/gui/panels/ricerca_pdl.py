@@ -155,8 +155,7 @@ class RicercaPDLPanel(BaseBotPanel):
         if account_type != "ISAB":
             return username, password, account_type, True
 
-        config = config_manager.load_config()
-        sw_accounts = config.get("safework_accounts", [])
+        sw_accounts = config_manager.load_config().get("safework_accounts", [])
         esecutore_acc = next((a for a in sw_accounts if a.get("type") == "Esecutore"), None)
 
         if esecutore_acc:

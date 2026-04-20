@@ -76,15 +76,12 @@ class LoginPage:
 
             # Se è un vero dropdown, tentiamo di cliccare l'opzione
             option_xpath = f"//li[normalize-space(text())='{company}']"
-            try:
+            with suppress(Exception):
                 # Usiamo una attesa breve
                 opt_el = WebDriverWait(self.driver, 3).until(
                     EC.element_to_be_clickable((By.XPATH, option_xpath))
                 )
                 self.driver.execute_script("arguments[0].click();", opt_el)
-            except Exception:  # noqa: S110
-                # Se fallisce il click opzione, speriamo che l'invio testo sia bastato
-                pass
         except Exception as e:
             self.log(f"⚠️ Avviso: Selezione società '{company}' non riuscita, proseguo: {e}")
 

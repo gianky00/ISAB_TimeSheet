@@ -13,9 +13,10 @@ from typing import Any
 from platformdirs import user_data_dir
 
 from src.core.constants import FileNames
+from src.core.paths import CONFIG_DIR as PATHS_CONFIG_DIR
 
 APP_NAME = "SyncroJob"
-CONFIG_DIR = Path(user_data_dir(APP_NAME, appauthor=False))
+CONFIG_DIR = PATHS_CONFIG_DIR
 
 
 def deep_update_paths(data: Any, old_path: str, new_path: str) -> Any:

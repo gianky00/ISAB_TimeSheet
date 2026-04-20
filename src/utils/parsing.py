@@ -4,6 +4,7 @@ Utility per il parsing robusto di valute e numeri.
 """
 
 import re
+from contextlib import suppress
 
 
 def parse_currency(value: float | int | str | None) -> float:  # noqa: PLR0911
@@ -49,10 +50,8 @@ def parse_currency(value: float | int | str | None) -> float:  # noqa: PLR0911
     # Se è notazione scientifica, la isoliamo
     sci_match = re.search(r"[-+]?\d*\.?\d+[eE][-+]?\d+", s.replace(",", "."))
     if sci_match:
-        try:
+        with suppress(ValueError):
             return float(sci_match.group(0))
-        except ValueError:
-            pass  # Fallback al parsing standard
 
     # Altrimenti procediamo con il parsing valuta standard
     s = re.sub(r"[^0-9,.]", "", s)
