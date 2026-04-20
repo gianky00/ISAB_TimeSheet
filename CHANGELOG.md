@@ -1,82 +1,159 @@
-## v1.42.1 (2026-04-19)
+## Unreleased
+
+### Feat
+
+- automate CHANGELOG.md generation in release process via Commitizen
+- aggiunto selettore SOCIETA' (ISAB/PSER) per login portale fornitori e aggiornata logica bot (Selenium/Playwright)
+- consolidamento architettura Playwright, fix locatori SafeWork e controlli dinamici nel footer
+- migrazione strutturale a Playwright con supporto dual-engine e migrazione di tutti i bot principali
 
 ### Fix
 
-- **test-runner**: V5.1 - fix doppio conteggio passed/failed nella fase isolamento SHOTGUN (BUG-1)
-- **test-runner**: `_parse_pytest_summary` ora cattura sia `failed` che `error` con `findall` (BUG-2)
-- **test-runner**: SNIPER retry usa `--last-failed` invece di rieseguire tutti i target (BUG-4)
-- **test-runner**: pattern E-prefix non piu' limitato a `not failures` (BUG-5)
-- **test-runner**: `_extract_traceback_block` matching preciso con delimitatori pytest (BUG-6)
+- **runner**: V5.3.1 - Fail-Fast aggressivo, isolamento coverage e bonifica suite test
+- **runner**: V5.1 - Fix 6 bug + 2 miglioramenti architetturali\n\nBUG-1: Fix doppio conteggio passed/failed nella fase isolamento SHOTGUN\nBUG-2: _parse_pytest_summary ora cattura sia 'failed' che 'error' con findall\nBUG-3: Commento correttivo su AssertionError match\nBUG-4: SNIPER retry usa --last-failed invece di rieseguire tutti i target\nBUG-5: Pattern E-prefix non piu' limitato a 'not failures'\nBUG-6: _extract_traceback_block matching preciso con delimitatori pytest\nARCH-2: sys.exit() centralizzato in __main__, metodi usano _exit_code\nARCH-4: Report IA troncato a MAX_OUTPUT_CHARS, -80% dimensione\n\nAggiunto test suite: tests/unit/test_runner_internals.py (34 test)"
+- implementato metodo show_settings in MainWindow per attivare l'ingranaggio dei parametri bot
+- corretto locatore Società in 'Company' e migliorata robustezza login Playwright/Selenium
+- Correzione nome attributo locatore ScaricoTSLocators
+- Risoluzione errore 'Unknown engine name' e centralizzazione selettori Playwright
+- risolto errore importazione PrenotaBP e implementato caricamento granulare bot Playwright
+- risolto problema switch motore automazione invalidando la cache config
 
 ### Refactor
 
-- **test-runner**: `sys.exit()` centralizzato in `__main__`, metodi usano `_exit_code` (ARCH-2)
-- **test-runner**: report IA troncato a `MAX_OUTPUT_CHARS` per ridurre dimensione ~80% (ARCH-4)
+- allineamento suite di test, fix linting ruff/mypy e aggiornamento componenti GUI
+- stabilizzazione Playwright, soppressione popup Chromium, bugfix switch account e 100% qualità (Ruff/MyPy/Interrogate)
 
-### Tests
+## v1.41.2 (2026-04-01)
 
-- **test-runner**: aggiunta suite completa `test_runner_internals.py` (34 unit test di regressione)
+## v1.41.1 (2026-04-01)
 
-## v1.42.0 (2026-04-19)
+## v1.41.0 (2026-03-31)
+
+### Feat
+
+- update engine optimization and premium wave animation integration
+
+## v1.40.3 (2026-03-30)
+
+### Fix
+
+- resolve updater crash by removing duplicate signal connections and adding error handling
+- update banner labels, progress formatting and completion handler
+- resolve update banner version display and initialization hang; reset version to 1.40.1
+
+## v1.40.2 (2026-03-30)
+
+### Fix
+
+- resolve command palette opening issue and F1 shortcut conflict
+- add ESITO to Scarico TS, dynamic PDL filters and bot path fix
 
 ### Refactor
 
-- **dependencies**: rimozione integrale di `requirements.txt` e consolidamento definitivo su Poetry per la gestione dell'ambiente virtuale
-- **root**: pulizia radicale della directory principale con rimozione di cartelle obsolete (`drivers/`, `main.build/`) e file temporanei
-- **data**: riorganizzazione strutturale dei file di input e certificati nella cartella dedicata `data/`
+- QA cleanup main.py, splash_standalone and quality tools enforcement (ruff, mypy, refurb)
+- optimize startup path, bot logic and GUI components
+
+## v1.40.1 (2026-03-27)
 
 ### Fix
 
-- **scripts**: aggiornamento di `scripts/extract_vba.py` con percorsi relativi per garantire la compatibilità cross-machine via GitHub
-
-## v1.41.2 (2026-04-19)
-
-### Feat
-
-- **automation**: migrazione strutturale a Playwright con supporto dual-engine per tutti i bot principali
-- **automation**: aggiunto selettore SOCIETA' (ISAB/PSER) per la gestione multi-portale
-- **gui**: implementato metodo `show_settings` per l'accesso rapido ai parametri bot dalla MainWindow
-
-### Fix
-
-- **automation**: risoluzione errore 'Unknown engine name' e centralizzazione selettori Playwright
-- **automation**: fix locatori SafeWork e miglioramento robustezza login
-- **gui**: stabilizzazione footer con controlli dinamici e soppressione popup Chromium
-
-## v1.41.0 (2026-04-18)
-
-### Feat
-
-- **ui**: integrazione animazioni "Premium Wave" e ottimizzazione generale del motore grafico
-
-## v1.40.0 (2026-04-12)
+- **gui**: restore main branch sizing and fix all static analysis issues (ruff, mypy, refurb)
+- **gui**: responsive startup sizing and tray icon type crash
+- layout sidebar, startup sequence, menu routing and KPI charts crash
+- resolve E402 and final startup tweaks
 
 ### Refactor
 
-- **architecture**: grande refactoring modulare (Phase 1-4) con disaccoppiamento completo tra Core e GUI
-- **quality**: attivazione modalità "Strict Typing" globale (100% type-safe via Mypy)
-- **quality**: bonifica totale del debito tecnico tramite Ruff, Mypy e Refurb su tutto il progetto
+- **core,gui**: disaccoppiamento completo, DIP e ottimizzazione memoria
+
+## v1.40.0 (2026-03-20)
+
+### Feat
+
+- **contabilita**: aggiunta opzione per esportare PDF certificati senza storico e fix robustezza
 
 ### Fix
 
-- **gui**: risoluzione conflitti Command Palette (F1) e ottimizzazione startup path
+- risoluzione bug critici e miglioramento integrità sistema
 
-## v1.35.0 (2026-04-01)
+## v1.39.0 (2026-03-19)
+
+## v1.38.0 (2026-03-19)
+
+## v1.37.0 (2026-03-19)
+
+### Fix
+
+- risolto bug perdita dati in Certificati e migliorata qualità codice
+
+## v1.36.0 (2026-03-18)
+
+### Fix
+
+- risolto problema avvio installer e riavvio post-aggiornamento
+
+## v1.35.0 (2026-03-18)
+
+## v1.34.0 (2026-03-18)
 
 ### Feat
 
-- **splash**: implementazione animazioni high-tech avanzate a 60fps
-- **splash**: implementazione architettura Zero-Stutter tramite processo standalone per il caricamento GUI
+- **splash**: implementazione animazioni high-tech avanzate
+- **splash**: implementazione Zero-Stutter e look Enterprise finale
+- **splash**: potenziamento log tecnici reali e fix import
+- **setup**: permette all'utente di scegliere se avviare l'app dopo l'aggiornamento
 
-## v1.33.0 (2026-03-20)
+### Fix
+
+- **splash**: eliminati artefatti grafici negli angoli e rifinitura finale
+
+### Perf
+
+- **splash**: implementazione Zero-Stutter via processo standalone
+
+## v1.33.1 (2026-03-17)
+
+### Fix
+
+- **sidebar**: risolte sovrapposizioni e artefatti grafici
+- **sidebar**: ripristinato sfondo e ottimizzata fluidità animazione
+
+### Refactor
+
+- **sidebar**: pulizia codice e risoluzione segnalazioni linter
+
+### Perf
+
+- **sidebar**: ottimizzazione grafica aggressiva e rimozione ombre
+- **sidebar**: eliminazione lag e ottimizzazione rendering
+- **sidebar**: ottimizzazione reattività e fluidità animazioni
+
+## v1.33.0 (2026-03-17)
 
 ### Feat
 
-- **contabilita**: gestione avanzata dei certificati campione con editing inline e export PDF professionale
+- **contabilita**: advanced certificate management with inline editing and professional PDF export
 
-### Security
+### Fix
 
-- **core**: risoluzione vulnerabilità SQL Injection (B608) nel modulo contabilità
+- **certificati**: ordinamento globale ID-COEMI e fix troncamento PDF
+- **certificati**: implementata dashboard riassuntiva e ordinamento naturale PDF
+- **certificati**: forza larghezza colonne PDF con attributi HTML
+- **certificati**: risolto wrap anomalo su colonne PDF
+- **certificati**: migliora UI, export PDF e ordinamento colonne
+- **core/gui**: persistent filters and duplicate removal for Certificati Campione
+- **gui**: initialize footer_btns in SidebarWidget to resolve AttributeError
+- **gui**: risolto AttributeError e ripristinata visibilità contenuti sidebar
+- **gui**: ripristinata visibilità sidebar e ottimizzata fluidità animazione
+- **gui**: corretto ordine chiamate animazione sidebar per evitare warning Qt
+- **startup**: risolto freeze splash screen tramite caricamento differito e asincrono dei pannelli pesanti
+- risolti errori critici di inizializzazione, NameError AuditManager e ImportError utils. Implementato sistema di cleanup processi stale per Selenium e riscrittura di sicurezza per conformita' Regola #1.
+- **bot**: offload dell'importazione massiva storico OdA su ProcessPoolExecutor per evitare GIL freeze della GUI
+- **gui**: rimozione type hint e migrazione completa asincrona pannelli per evitare freeze
+
+### Refactor
+
+- **core/gui**: code hardening via Ruff, Mypy and Refurb optimization
 
 ## v1.32.1 (2026-03-14)
 
@@ -198,6 +275,16 @@
 - **ui**: implementazione avanzata multi-window con custom title bar, pin-to-top, memory state e drag&drop
 - **ui**: implementazione contestuale dello split button e dashboard card moduli esterni
 - **ui**: restyling radicale placeholder popout con logo animato ad alta risoluzione e copywriting migliorato per codespell
+
+### Fix
+
+- **ui**: rimosso drag&drop da sidebar e ripristinato popout_manager nativo per risolvere crash C++ (Access Violation)
+- **ui**: risolto AttributeError durante l'inizializzazione del componente toolbar e page_stack
+
+## v1.24.0 (2026-03-01)
+
+### Feat
+
 - **ui**: centralizzazione split window nella TopBar e restyling professionale placeholder con logo SyncroJob. Uniformati tooltip globali in light mode alta visibilità. Fix crash importazioni e tipizzazione.
 - **dashboard**: implementazione widget Meteo Cantiere e Bot ROI con fix stabilità e qualità
 - **refactor**: scomposizione modulare core e UI con conformità V9.5
@@ -205,11 +292,6 @@
 - **refactor**: modularizzazione avanzata UI e risoluzione type warnings
 - **gui**: implementazione navigazione a 3 livelli, ottimizzazione avvio e standardizzazione Consuntivo
 - **contabilita**: implementazione Generatore Consuntivi con UI a card e automazione Macro VBA
-
-### Fix
-
-- **ui**: rimosso drag&drop da sidebar e ripristinato popout_manager nativo per risolvere crash C++ (Access Violation)
-- **ui**: risolto AttributeError durante l'inizializzazione del componente toolbar e page_stack
 
 ### Refactor
 
