@@ -10,12 +10,14 @@ class TestNotificationManagerDeep:
     @pytest.fixture
     def manager(self, tmp_path):
         """Crea istanza con file temporaneo per i test."""
-        with (
-            patch.object(NotificationManager, "_instance", None),
-            patch("src.core.notification_manager.config_manager.CONFIG_DIR", tmp_path),
-        ):
-            nm = NotificationManager()
+        # Reset istanza globale per isolamento
+        NotificationManager._reset_instance_for_testing()
+
+        with patch("src.core.notification_manager.CONFIG_DIR", tmp_path):
+            nm = NotificationManager.instance()
+            # Assicuriamoci che il file sia quello temporaneo
             nm.notifications_file = tmp_path / "notifications.json"
+            nm.clear_all()
             yield nm
 
     def test_add_notification_signals(self, manager, qtbot):

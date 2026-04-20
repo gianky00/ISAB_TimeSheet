@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 import pytest
 
@@ -10,9 +10,13 @@ class TestContabilitaManagerBoost:
     @pytest.fixture
     def db_setup(self, tmp_path, mocker):
         db_path = tmp_path / "contabilita.db"
-        # Patch dei path sia nel manager che nel DatabaseManager
-        mocker.patch.object(DatabaseManager, "DB_CONTABILITA", db_path)
-        mocker.patch.object(ContabilitaManager, "DB_PATH", db_path)
+        # Patch DatabaseManager properties on the CLASS
+        mocker.patch(
+            "src.core.database.manager.DatabaseManager.DB_CONTABILITA",
+            new_callable=PropertyMock,
+            return_value=db_path,
+        )
+
         DatabaseManager().init_db()
         return db_path
 

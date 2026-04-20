@@ -255,7 +255,7 @@ class StoricoOdaPanel(QWidget):
 
     def _on_update_clicked(self) -> None:
         """Esegue il workflow di aggiornamento del database tramite Dettagli OdA."""
-        from src.gui.main_window import MainWindow  # noqa: PLC0415
+        from src.gui.main_window.main import MainWindow  # noqa: PLC0415
 
         mw = self.window()
         if isinstance(mw, MainWindow):

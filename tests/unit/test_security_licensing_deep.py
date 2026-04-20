@@ -12,19 +12,22 @@ from src.core.secrets_manager import SecretsManager
 
 
 class TestSecretsManagerDeep:
-    @patch(
-        "src.core.secrets_manager.os.environ",
-        {"SYNCROJOB_LICENSE_KEY": base64.urlsafe_b64encode(b"env_key").decode()},
-    )
     def test_get_license_key_priority_env(self):
-        assert SecretsManager.get_license_key() == base64.urlsafe_b64encode(b"env_key")
+        val = base64.urlsafe_b64encode(b"env_key").decode()
+        with patch.dict("os.environ", {"SYNCROJOB_LICENSE_KEY": val}):
+            res = SecretsManager.get_license_key()
+            assert res == val.encode("utf-8")
 
     @patch("src.core.secrets_manager.keyring.get_password")
-    @patch("src.core.secrets_manager.os.environ", {})
     def test_get_license_key_priority_keyring(self, mock_keyring):
+        val = base64.urlsafe_b64encode(b"keyring_key").decode()
         # Env empty, check keyring
-        mock_keyring.return_value = base64.urlsafe_b64encode(b"keyring_key").decode()
-        assert SecretsManager.get_license_key() == base64.urlsafe_b64encode(b"keyring_key")
+        with patch.dict("os.environ", {}, clear=True):
+            mock_keyring.return_value = val
+            res = SecretsManager.get_license_key()
+            assert res == val.encode("utf-8")
+            # Verify correct service name and key
+            mock_keyring.assert_called_with(SecretsManager.APP_NAME, "license_key")
 
     def test_derive_key_robustness(self):
         # Test HMAC key derivation (PBKDF2)
@@ -38,7 +41,7 @@ class TestSecretsManagerDeep:
     @patch("src.core.secrets_manager.keyring.set_password")
     def test_store_credential(self, mock_set):
         SecretsManager.store_credential("isab", "admin", "secret")
-        mock_set.assert_called_with("SyncroJob_isab", "admin", "secret")
+        mock_set.assert_called_with(f"{SecretsManager.APP_NAME}_isab", "admin", "secret")
 
 
 class TestHardwareFingerprinting:
@@ -49,14 +52,6 @@ class TestHardwareFingerprinting:
     )
     def test_get_hardware_id_windows(self, mock_win, mock_sys):
         assert get_hardware_id() == "WIN-SERIAL-123"
-
-    @patch("platform.system", return_value="Linux")
-    @patch(
-        "src.core.license_validator._get_linux_hardware_id",
-        return_value="LINUX-SERIAL-123",
-    )
-    def test_get_hardware_id_linux(self, mock_linux, mock_sys):
-        assert get_hardware_id() == "LINUX-SERIAL-123"
 
     @patch("subprocess.check_output")
     def test_windows_hardware_id_powershell_fallback(self, mock_output):

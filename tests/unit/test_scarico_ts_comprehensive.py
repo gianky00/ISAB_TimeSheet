@@ -27,6 +27,7 @@ class TestScaricoTSComprehensive:
             bot = ScaricaTSBot()
             bot.driver = MagicMock()
             bot.wait = MagicMock()
+            bot.signals = MagicMock()  # FIX: Inizializza mock per i segnali
             bot._log_callback = MagicMock()
             bot._logger = MagicMock()
             bot._trace_id = "test-trace"

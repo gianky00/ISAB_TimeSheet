@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import pytest
 
 from src.utils.security import PasswordManager
@@ -9,32 +7,25 @@ class TestSecuritySuite:
     """Test suite per src/utils/security.py"""
 
     @pytest.fixture(autouse=True)
-    def setup_security(self, tmp_path):
+    def setup_security(self, tmp_path, mocker):
         """Setup isolato."""
         # Reset Singleton
         PasswordManager._instance = None
 
-        # Patch paths directly on the class
+        # Patch paths via the module-level SECURITY_DIR
         fake_key_dir = tmp_path / "security"
-        fake_key_file = fake_key_dir / "secret.key"
-        fake_salt_file = fake_key_dir / "encryption.salt"
+        mocker.patch("src.utils.security.SECURITY_DIR", fake_key_dir)
 
-        # Patching class attributes
-        with (
-            patch.object(PasswordManager, "_KEY_DIR", fake_key_dir),
-            patch.object(PasswordManager, "_KEY_FILE", fake_key_file),
-            patch.object(PasswordManager, "_SALT_FILE", fake_salt_file),
-        ):
-            self.pm = PasswordManager()
-            yield
+        self.pm = PasswordManager()
+        yield
 
         PasswordManager._instance = None
 
     def test_key_files_creation(self):
         """Verifica creazione file chiavi."""
-        assert self.pm._KEY_DIR.exists()
-        assert self.pm._KEY_FILE.exists()
-        assert self.pm._SALT_FILE.exists()
+        assert self.pm.key_dir.exists()
+        assert self.pm.key_file.exists()
+        assert self.pm.salt_file.exists()
 
     def test_encrypt_decrypt_cycle(self):
         """Test roundtrip encrypt -> decrypt."""
@@ -55,7 +46,6 @@ class TestSecuritySuite:
     def test_decrypt_legacy(self):
         """Test decrypt vecchio formato ENC: (simulato)."""
         # Creiamo un ciphertext legacy valido
-        # Per farlo, dobbiamo usare la stessa chiave del PM corrente
         from cryptography.fernet import Fernet  # noqa: PLC0415
 
         fernet = Fernet(self.pm._key)
@@ -69,19 +59,22 @@ class TestSecuritySuite:
         """Se non ha tag, restituisce plaintext."""
         assert self.pm.decrypt("PlainData") == "PlainData"
 
-    def test_corrupted_key_regeneration(self):
+    def test_corrupted_key_regeneration(self, tmp_path, mocker):
         """Se il file chiave è corrotto, deve rigenerarlo."""
         # Corrompiamo il file
-        self.pm._KEY_FILE.write_bytes(b"TrashData")
+        self.pm.key_file.write_bytes(b"TrashData")
 
         # Resettiamo singleton per forzare ricaricamento
         PasswordManager._instance = None
 
-        # Re-inizializzazione (i patch sono ancora attivi nel setup)
+        # Riapplichiamo il patch per il nuovo setup
+        mocker.patch("src.utils.security.SECURITY_DIR", tmp_path / "security")
+
+        # Re-inizializzazione
         new_pm = PasswordManager()
 
         # Il file chiave dovrebbe essere stato sovrascritto con una chiave valida
-        content = new_pm._KEY_FILE.read_bytes()
+        content = new_pm.key_file.read_bytes()
         assert content != b"TrashData"
         assert len(content) > 30  # Fernet key length base64 encoded
 

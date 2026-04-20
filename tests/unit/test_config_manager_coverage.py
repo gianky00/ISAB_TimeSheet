@@ -56,16 +56,17 @@ class TestConfigManager:
             side_effect=lambda x: x.replace("enc_", ""),
         )
 
-        add_account("user1", "pass1", is_default=True)
+        # Nuova firma: add_account(bot_type, account_data)
+        add_account("isab", {"username": "user1", "password": "pass1", "is_default": True})
         accounts = get_config_value("accounts")
         assert len(accounts) == 1
         assert accounts[0]["username"] == "user1"
         assert accounts[0]["default"] is True
 
-        add_account("user2", "pass2", is_default=False)
+        add_account("isab", {"username": "user2", "password": "pass2", "is_default": False})
         assert len(get_config_value("accounts")) == 2
 
-        remove_account("user1")
+        remove_account("isab", "user1")
         accounts = get_config_value("accounts")
         assert len(accounts) == 1
         assert accounts[0]["username"] == "user2"
@@ -93,8 +94,10 @@ class TestConfigManager:
         target = tmp_path / "fail.json"
 
         # Mock Path.open to fail (since we use temp_file.open)
-        with patch("pathlib.Path.open", side_effect=OSError("Disk full")), pytest.raises(OSError):
-            _atomic_write_json({"data": 1}, target)
+        # La funzione cattura l'errore e torna False invece di propagare
+        with patch("pathlib.Path.open", side_effect=OSError("Disk full")):
+            res = _atomic_write_json(target, {"data": 1})
+            assert res is False
 
         assert not target.exists()
         assert not (tmp_path / "fail.tmp").exists()

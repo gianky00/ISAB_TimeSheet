@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -6,12 +6,15 @@ from src.core.notification_manager import NotificationManager
 
 
 class TestNotificationManager:
+    @pytest.fixture(autouse=True)
+    def reset_singleton(self, mocker, tmp_path):
+        """Reset automatico dell'istanza per ogni test."""
+        mocker.patch("src.core.notification_manager.CONFIG_DIR", tmp_path)
+        NotificationManager._reset_instance_for_testing()
+        yield
+
     @pytest.fixture
-    def manager(self, tmp_path, mocker):
-        # Mock CONFIG_DIR to use tmp_path
-        mocker.patch("src.core.config_manager.CONFIG_DIR", tmp_path)
-        # Reset singleton for testing
-        NotificationManager._instance = None
+    def manager(self):
         return NotificationManager.instance()
 
     def test_singleton(self, manager):
@@ -68,21 +71,22 @@ class TestNotificationManager:
         manager.clear_all()
         assert len(manager.notifications) == 0
 
-    def test_persistence(self, manager, tmp_path):
+    def test_persistence(self, manager, tmp_path, mocker):
         manager.add_notification("Persist Me", "Important")
 
         # Create new instance, should load from file
-        NotificationManager._instance = None
+        # Dobbiamo ri-mockare CONFIG_DIR per la nuova istanza se non autouse
+        NotificationManager._reset_instance_for_testing()
         new_manager = NotificationManager.instance()
 
         assert len(new_manager.notifications) == 1
         assert new_manager.notifications[0]["title"] == "Persist Me"
 
-    def test_load_corrupted_file(self, tmp_path):
+    def test_load_corrupted_file(self, tmp_path, mocker):
         notif_file = tmp_path / "notifications.json"
         notif_file.write_text("invalid json")
 
-        with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
-            NotificationManager._instance = None
-            manager = NotificationManager.instance()
-            assert manager.notifications == []
+        # CONFIG_DIR è già mockato da reset_singleton autouse
+        NotificationManager._reset_instance_for_testing()
+        manager = NotificationManager.instance()
+        assert manager.notifications == []

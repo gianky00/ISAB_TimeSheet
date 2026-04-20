@@ -31,6 +31,7 @@ class TestSafeWorkPDLBotComprehensive:
         bot.username = "u"
         bot.password = "p"
         bot.download_path = str(tmp_path)
+        bot.signals = MagicMock()  # FIX: Inizializza mock segnali
 
         # Patch common methods
         mocker.patch.object(bot, "_attendi_scomparsa_overlay")

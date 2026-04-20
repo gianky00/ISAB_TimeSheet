@@ -120,8 +120,8 @@ class TestHealthPanel:
         assert panel._stat_runs_ok is not None
 
     @patch("src.gui.panels.health_panel.QTimer")
-    @patch("src.core.logging.analytics.generate_analytics_report")
-    @patch("src.core.logging.viewer.LogViewer")
+    @patch("src.gui.panels.health_panel.generate_analytics_report")
+    @patch("src.gui.panels.health_panel.LogViewer")
     def test_panel_refresh(self, mock_viewer, mock_report, mock_timer, qtbot):
         from dataclasses import dataclass  # noqa: PLC0415
 

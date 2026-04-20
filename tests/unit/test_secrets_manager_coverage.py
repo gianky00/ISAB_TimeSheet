@@ -98,5 +98,7 @@ class TestSecretsManager:
         assert SecretsManager.is_available() is True
 
     def test_is_available_false(self, mock_keyring):
+        # Reset cache statica per test
+        SecretsManager._keyring_available = None
         keyring.get_password.side_effect = Exception("Backend unavailable")
         assert SecretsManager.is_available() is False

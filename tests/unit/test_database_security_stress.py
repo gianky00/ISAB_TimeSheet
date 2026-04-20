@@ -6,14 +6,14 @@ from unittest.mock import patch
 import pytest
 
 from src.core.database import DatabaseManager
-from src.utils.security import password_manager
+from src.utils.security import PasswordManager
 
 
 class TestDatabaseSecurityStress:
     @pytest.fixture
     def db_mgr(self, tmp_path, mocker):
-        # Patch CONFIG_DIR per usare tmp_path
-        mocker.patch("src.core.database.manager.CONFIG_DIR", tmp_path)
+        # Patch DB_DIR per usare tmp_path
+        mocker.patch("src.core.database.manager.DB_DIR", tmp_path)
         return DatabaseManager()
 
     def test_database_wal_mode_concurrency(self, db_mgr, tmp_path):
@@ -79,26 +79,25 @@ class TestDatabaseSecurityStress:
 
     def test_password_manager_encryption_flow(self, tmp_path, mocker):
         """Verifica il ciclo completo di sicurezza delle password."""
-        mocker.patch("src.utils.security.CONFIG_DIR", tmp_path)
-        plaintext = "SuperSecret123!"
+        # Patch SECURITY_DIR nel modulo security
+        mocker.patch("src.utils.security.SECURITY_DIR", tmp_path / "security")
 
-        encrypted = password_manager.encrypt(plaintext)
-        assert encrypted.startswith("ENC:v2:")
-
-        decrypted = password_manager.decrypt(encrypted)
-        assert decrypted == plaintext
+        # Re-inizializzazione per il test
+        with patch("src.utils.security.PasswordManager._instance", None):
+            pm = PasswordManager()
+            plaintext = "SuperSecret123!"
+            encrypted = pm.encrypt(plaintext)
+            assert encrypted.startswith("ENC:v2:")
+            decrypted = pm.decrypt(encrypted)
+            assert decrypted == plaintext
 
     def test_security_key_stability(self, tmp_path, mocker):
         """Verifica che la chiave sia persistente e non cambi tra i riavvii."""
         sec_dir = tmp_path / "security"
         sec_dir.mkdir(parents=True, exist_ok=True)
 
-        # Patching paths in PasswordManager class
-        mocker.patch("src.utils.security.PasswordManager._KEY_DIR", sec_dir)
-        mocker.patch("src.utils.security.PasswordManager._KEY_FILE", sec_dir / "secret.key")
-        mocker.patch("src.utils.security.PasswordManager._SALT_FILE", sec_dir / "encryption.salt")
-
-        from src.utils.security import PasswordManager  # noqa: PLC0415
+        # Patching SECURITY_DIR
+        mocker.patch("src.utils.security.SECURITY_DIR", sec_dir)
 
         # 1. Primo avvio
         with patch("src.utils.security.PasswordManager._instance", None):

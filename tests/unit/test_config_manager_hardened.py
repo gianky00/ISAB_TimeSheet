@@ -44,6 +44,10 @@ class TestConfigManagerHardened:
 
     def test_atomic_save_mechanism(self, setup_config, mocker):
         """Verifica il meccanismo di salvataggio atomico tramite file .tmp."""
+        # Creiamo il file inizialmente per forzare os.replace invece di rename
+        setup_config.parent.mkdir(parents=True, exist_ok=True)
+        setup_config.write_text("{}")
+
         m_replace = mocker.patch("os.replace", side_effect=os.replace)
         mocker.patch("os.fsync")
 
@@ -51,7 +55,7 @@ class TestConfigManagerHardened:
         config["test_key"] = "test_val"
         save_config(config)
 
-        # Verifica che os.replace sia stato chiamato (ultimo step atomico)
+        # Ora m_replace DEVE essere chiamato perché il file esisteva
         assert m_replace.called
         assert setup_config.exists()
 

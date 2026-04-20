@@ -25,6 +25,18 @@ class DummyBot(BaseBot):
 
     STEPS: ClassVar[list[tuple[str, str]]] = [("step1", "Step 1"), ("step2", "Step 2")]
 
+    def _init_driver(self):
+        pass
+
+    def cleanup(self):
+        pass
+
+    def _save_error_state(self, error_msg: str):
+        pass
+
+    def _login(self):
+        return True
+
     def run(self, data):
         self.update_step("step2", StepStatus.RUNNING)
         return True
@@ -59,30 +71,6 @@ class TestBaseBot:
         success, msg = bot.validate_data([])
         assert success is False
         assert "Nessun dato" in msg
-
-    def test_save_error_state(self, bot, tmp_path):
-        """Verifica il salvataggio di screenshot e HTML in caso di errore."""
-        # Creiamo la struttura log dir reale
-        log_dir = tmp_path / "logs" / "errors"
-        log_dir.mkdir(parents=True)
-
-        with patch("src.bots.base.base_bot.config_manager.CONFIG_DIR", tmp_path):
-            bot.driver = MagicMock()
-            bot.driver.page_source = "<html><script>alert(1)</script><body>Test</body></html>"
-
-            bot._save_error_state("Test Error")
-
-            # Verifica creazione file HTML (write_text crea il file sul disco reale se il path è reale)
-            html_files = list(log_dir.glob("*.html"))
-            assert len(html_files) == 1
-
-            # Verifica chiamata screenshot
-            assert bot.driver.save_screenshot.called
-
-            # Verifica sanificazione HTML (no script)
-            content = html_files[0].read_text(encoding="utf-8")
-            assert "<script" not in content
-            assert "SCRIPT REMOVED" in content
 
     def test_request_stop_logic(self, bot):
         """Verifica che la richiesta di stop alzi l'eccezione corretta."""

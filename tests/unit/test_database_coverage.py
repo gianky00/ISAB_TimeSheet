@@ -9,24 +9,17 @@ from src.core.database import DatabaseManager
 class TestDatabaseManager:
     @pytest.fixture
     def manager(self, tmp_path, mocker):
-        # Mock class-level DB paths to use tmp_path
-        mocker.patch(
-            "src.core.database.DatabaseManager.DB_CONTABILITA",
-            tmp_path / "contabilita.db",
-        )
-        mocker.patch(
-            "src.core.database.DatabaseManager.DB_TIMBRATURE",
-            tmp_path / "timbrature.db",
-        )
-        mocker.patch("src.core.database.manager.CONFIG_DIR", tmp_path)
+        # Mock DB_DIR in src.core.database.manager to use tmp_path
+        mocker.patch("src.core.database.manager.DB_DIR", tmp_path)
 
         # Reset singleton
         DatabaseManager._instance = None
-        return DatabaseManager()
+        mgr = DatabaseManager()
+        yield mgr
+        DatabaseManager._instance = None
 
     def test_init_db_and_migrations(self, manager):
-        # Mock migration dicts if they exist in the class (checked in code)
-        # Actually, let's just run it and see if it creates the tables.
+        """Verifica che init_db crei le tabelle tramite il sistema di migrazione."""
         manager.init_db()
 
         # Verify tables in contabilita.db
@@ -38,6 +31,7 @@ class TestDatabaseManager:
             assert "giornaliere" in tables
 
     def test_execute_query_select(self, manager):
+        """Verifica esecuzione query SELECT."""
         manager.init_db()
         # Insert test data
         manager.execute_query(
@@ -51,34 +45,34 @@ class TestDatabaseManager:
         assert res[0][0] == "Test"
 
     def test_execute_query_retry_on_busy(self, manager):
+        """Verifica logica di retry in caso di DB locked."""
         manager.init_db()
-        # Mock sqlite3.connect to raise busy error first then succeed
+
+        # Simuliamo un fallimento temporaneo
+        # Nota: usiamo un helper per la connessione reale
+        real_conn = sqlite3.connect(manager.DB_CONTABILITA)
+
         with patch(
-            "sqlite3.connect",
+            "src.core.database.manager.sqlite3.connect",
             side_effect=[
                 sqlite3.OperationalError("database is locked"),
-                sqlite3.connect(f"file:{manager.DB_CONTABILITA.absolute()}?mode=rw", uri=True),
+                real_conn,
             ],
         ):
             res = manager.execute_query(manager.DB_CONTABILITA, "SELECT 1")
             assert res == [(1,)]
 
     def test_connection_error_rollback(self, manager):
-        with pytest.raises(sqlite3.OperationalError):
-            with manager.get_connection(manager.DB_CONTABILITA) as conn:
-                conn.execute("CREATE TABLE test (id INT)")
-                # Force an error
-                conn.execute("INVALID SQL")
-
-        # Verify table was NOT created (or rolled back if it was in transaction)
-        # SQLite autocommits DDL, so let's test with DML
+        """Verifica rollback in caso di errore durante la transazione."""
+        # SQLite autocommits DDL, quindi testiamo con DML
         with manager.get_connection(manager.DB_CONTABILITA) as conn:
-            conn.execute("CREATE TABLE test2 (id INT)")
+            conn.execute("CREATE TABLE test_rollback (id INT)")
 
         with pytest.raises(sqlite3.OperationalError):
             with manager.get_connection(manager.DB_CONTABILITA) as conn:
-                conn.execute("INSERT INTO test2 VALUES (1)")
-                conn.execute("INVALID SQL")
+                conn.execute("INSERT INTO test_rollback VALUES (1)")
+                conn.execute("INVALID SQL")  # Fallimento qui
 
-        res = manager.execute_query(manager.DB_CONTABILITA, "SELECT * FROM test2")
+        # La riga non deve essere presente (rollback)
+        res = manager.execute_query(manager.DB_CONTABILITA, "SELECT * FROM test_rollback")
         assert len(res) == 0

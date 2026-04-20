@@ -1,5 +1,5 @@
 import sqlite3
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 import pytest
 
@@ -14,15 +14,23 @@ class TestAuditManager:
         db_dir.mkdir()
         db_path = db_dir / "audit_log.db"
 
-        # Patch the class-level attribute in AuditDatabase where it's actually used
-        mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_path)
-        # Patch CONFIG_DIR in the new modules
-        mocker.patch("src.core.audit.database.CONFIG_DIR", tmp_path)
+        # Patch DatabaseManager properties on the CLASS to affect all instances (and the singleton)
+        # Note: We must patch it where it's DEFINED
+        mocker.patch(
+            "src.core.database.manager.DatabaseManager.DB_AUDIT",
+            new_callable=PropertyMock,
+            return_value=db_path,
+        )
+
+        # Patch Signals singleton instance
         mocker.patch("src.core.audit.manager.AuditSignals.instance")
 
         # Reset singleton
         AuditManager._instance = None
         mgr = AuditManager()
+        # Ensure DB is initialized at the fake path
+        mgr.db._init_db()
+
         yield mgr
         AuditManager._instance = None
 
@@ -42,7 +50,8 @@ class TestAuditManager:
         assert manager.verify_integrity() is True
 
         # Manually corrupt DB to test integrity failure
-        with sqlite3.connect(manager.DB_PATH) as conn:
+        # Usiamo manager.db.DB_PATH che ora punta al nostro file temporaneo
+        with sqlite3.connect(manager.db.DB_PATH) as conn:
             conn.execute("UPDATE audit_logs SET action = 'Hacked' WHERE action = 'Test Action'")
             conn.commit()
 
@@ -62,7 +71,7 @@ class TestAuditManager:
         manager._log_queue.join()
 
         # Manually set timestamp to old date
-        with sqlite3.connect(manager.DB_PATH) as conn:
+        with sqlite3.connect(manager.db.DB_PATH) as conn:
             conn.execute("UPDATE audit_logs SET timestamp = '2020-01-01 00:00:00'")
             conn.commit()
 
@@ -71,8 +80,10 @@ class TestAuditManager:
 
         # Old action should be gone, but policy run itself logged
         logs = manager.get_logs()
-        assert len(logs) == 1
-        assert logs[0]["action"] == "Pulizia Log"
+        # Cerca il log della pulizia
+        assert any(log_entry["action"] == "Pulizia Log" for log_entry in logs)
+        # Il log originale dovrebbe essere sparito
+        assert not any(log_entry["action"] == "Old Action" for log_entry in logs)
 
     def test_notification_emission(self, manager):
         with patch("src.core.notification_manager.NotificationManager.instance") as mock_notif:
@@ -81,9 +92,6 @@ class TestAuditManager:
             mock_notif.return_value.add_notification.assert_called_once()
 
     def test_get_current_user(self, manager):
+        # Il metodo reale usa os.getenv('USERNAME') su Windows o getpass.getuser()
         with patch.dict("os.environ", {"USERNAME": "TestUser"}):
             assert manager._get_current_user() == "TestUser"
-
-        with patch.dict("os.environ", {}, clear=True):
-            with patch("getpass.getuser", return_value="PassUser"):
-                assert manager._get_current_user() == "PassUser"

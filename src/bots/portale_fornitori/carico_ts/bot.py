@@ -29,6 +29,15 @@ class CaricoTSBot(SeleniumBaseBot):
         """Restituisce il nome del bot."""
         return "Carico TS"
 
+    def __init__(
+        self,
+        username: str = "",
+        password: str = "",
+        **kwargs: Any,
+    ) -> None:
+        """Inizializza il bot Carico TS."""
+        super().__init__(username=username, password=password, **kwargs)
+
     @staticmethod
     def get_description() -> str:
         """Restituisce una descrizione sintetica del bot."""

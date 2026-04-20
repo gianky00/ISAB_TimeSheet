@@ -1,10 +1,11 @@
 """
-SyncroJob Enterprise - Ultra Test Runner V5.1 (The Apex Runner)
+SyncroJob Enterprise - Ultra Test Runner V5.2 (The Apex Runner)
 ================================================================
 Sistema ibrido di orchestrazione test, ottimizzato per consumo IA.
 
 Modalita':
 - --ai        : Output JSON strutturato per agenti IA (file + stdout).
+- -x          : Fail-Fast aggressivo (si ferma al primo errore).
 - SNIPER      : ≤5 target → esecuzione live diretta (debug, PDB).
 - SHOTGUN     : >5 target o nessuno → parallelo su tutti i core.
 - --retry N   : Riesecuzione automatica test falliti (flaky).
@@ -364,6 +365,12 @@ def _worker_task(
     """Funzione stand-alone per il pool di processi (SHOTGUN)."""
     env = _build_env()
 
+    # FIX: Isolamento Coverage su Windows
+    # Usiamo un file unico per worker per evitare PermissionError (WinError 32)
+    worker_id = f"{os.getpid()}_{int(time.time() * 1000)}"
+    if with_cov:
+        env["COVERAGE_FILE"] = f".coverage.worker.{worker_id}"
+
     # In AI mode: --tb=long per traceback completi, altrimenti --tb=short
     tb_style = "long" if ai_mode else "short"
     cmd = [
@@ -379,9 +386,12 @@ def _worker_task(
         "-p",
         "no:cacheprovider",
     ]
-    if mark:
-        cmd.extend(["-m", mark])
-    if with_cov:
+
+    # Se la copertura non è richiesta esplicitamente, la disabilitiamo.
+    # FIX: Usiamo -o addopts= per evitare conflitti con gli argomenti --cov definiti in pyproject.toml
+    if not with_cov:
+        cmd.extend(["-p", "no:cov", "-o", "addopts="])
+    else:
         cmd.extend(["--cov=src", "--cov-append"])
 
     start = time.time()
@@ -400,12 +410,14 @@ def _worker_task(
         duration = time.time() - start
         output = res.stdout + res.stderr
         passed, failed = _parse_pytest_summary(output)
-        success = res.returncode == 0
+
+        # Un test è fallito se il returncode != 0 o se ci sono errori interni/crash
+        success = res.returncode == 0 and "INTERNALERROR" not in output
 
         error_msg = None
         if not success:
             for line in reversed(output.splitlines()):
-                if any(x in line for x in ["E ", "Error:", "FAILED", "ImportError"]):
+                if any(x in line for x in ["E ", "Error:", "FAILED", "ImportError", "INTERNALERROR"]):
                     error_msg = line.strip()
                     break
             if not error_msg:
@@ -474,6 +486,8 @@ class UltraRunner:
         env = _build_env()
         tb_style = "long" if self.ai_mode else "short"
         cmd = [sys.executable, "-m", "pytest", *targets, "-v", f"--tb={tb_style}"]
+        if args.exitfirst:
+            cmd.append("-x")
         if args.mark:
             cmd.extend(["-m", args.mark])
         if args.cov:
@@ -638,7 +652,18 @@ class UltraRunner:
                                 # Conta solo i file che hanno avuto successo definitivo
                                 self.total_passed += res.passed
                                 self.total_failed += res.failed
+
                             self._draw_dashboard(completed, total_files)
+
+                            # Controllo soglia fallimenti per interruzione anticipata
+                            current_fails = self.total_failed + sum(
+                                1 for r in self.file_results if not r.success
+                            )
+                            if args.exitfirst or (args.max_fail > 0 and current_fails >= args.max_fail):
+                                with contextlib.suppress(Exception):
+                                    executor.shutdown(wait=False, cancel_futures=True)
+                                break
+
                         except Exception as e:
                             completed += 1
                             Console.error(f"\n  Worker error su {target}: {e}")
@@ -658,10 +683,25 @@ class UltraRunner:
             print("\n")
             Console.header(f"FASE ISOLAMENTO: Riesecuzione sequenziale di {len(isolation_queue)} file")
             for target in isolation_queue:
+                if args.exitfirst and self.total_failed > 0:
+                    break
+                if args.max_fail > 0 and self.total_failed >= args.max_fail:
+                    Console.error(
+                        f"\n[!] Raggiunta soglia di {args.max_fail} fallimenti. Interruzione anticipata."
+                    )
+                    break
+
                 Console.print(f"  Analisi: {target}", Console.BOLD)
                 for node in files_map.get(target, [target]):
+                    if args.exitfirst and self.total_failed > 0:
+                        break
+                    if args.max_fail > 0 and self.total_failed >= args.max_fail:
+                        break
+
                     short_name = node.split("::")[-1]
-                    print(f"    {short_name} ... ", end="" if not self.ai_mode else "\n", flush=True)
+                    # In AI mode usiamo stderr per i log di progresso per lasciare stdout pulito per il JSON
+                    out_file = sys.stderr if self.ai_mode else sys.stdout
+                    print(f"    {short_name} ... ", end="", file=out_file, flush=True)
 
                     max_attempts = 1 + args.retry
                     final_res: TestResult | None = None
@@ -675,7 +715,12 @@ class UltraRunner:
                         )
                         if res.success:
                             label = "PASS" if attempt == 0 else f"FIXED (attempt {attempt + 1})"
-                            Console.success(label)
+                            # Console.success/error sono silenti in AI mode, usiamo print diretto su out_file
+                            if self.ai_mode:
+                                print(f"\033[92m{label}\033[0m", file=out_file, flush=True)
+                            else:
+                                Console.success(label)
+
                             # BUG-1 FIX: Conta dal risultato effettivo dell'isolamento
                             self.total_passed += res.passed
                             self.file_results.append(res)
@@ -683,11 +728,17 @@ class UltraRunner:
                             break
                         final_res = res
                     else:
-                        Console.error("FAIL")
-                        # BUG-1 FIX: Conta dal risultato effettivo dell'isolamento
+                        if self.ai_mode:
+                            print("\033[91mFAIL\033[0m", file=out_file, flush=True)
+                        else:
+                            Console.error("FAIL")
+
+                        # BUG-1 FIX: Conta dal risultato effettivo dell'isolamento.
+                        # Assicura che se il test fallisce venga contato almeno 1 errore.
                         if final_res is not None:
                             self.total_passed += final_res.passed
-                            self.total_failed += final_res.failed
+                            added_fails = final_res.failed if final_res.failed > 0 else 1
+                            self.total_failed += added_fails
                             self.failed_list.append({"id": node, "error": final_res.error_msg})
                             self.file_results.append(final_res)
                             if self.ai_mode and final_res.full_output:
@@ -751,6 +802,10 @@ class UltraRunner:
         # ARCH-2 FIX: Salva exit code invece di chiamare sys.exit() direttamente
         self._exit_code = 0 if report.success else 1
 
+        # AGGRESSIVE EXIT: Forza l'uscita se in AI mode per evitare processi orfani appesi
+        if self.ai_mode:
+            os._exit(self._exit_code)
+
     # ── Report Finale (Umano) ──
 
     def _finish_human(self, with_cov: bool) -> None:
@@ -802,6 +857,12 @@ class UltraRunner:
         parser.add_argument("--cov", action="store_true", help="Abilita il calcolo della copertura.")
         parser.add_argument("--retry", type=int, default=0, help="Num. retry per test falliti (flaky).")
         parser.add_argument("--ai", action="store_true", help="Output JSON strutturato per agenti IA.")
+        parser.add_argument(
+            "-x", "--exitfirst", action="store_true", help="Ferma l'esecuzione al primo fallimento."
+        )
+        parser.add_argument(
+            "--max-fail", type=int, default=0, help="Ferma l'esecuzione dopo N test falliti (0 = illimitato)."
+        )
         args = parser.parse_args()
 
         # AI mode: silenzia Console, output solo JSON

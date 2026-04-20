@@ -6,10 +6,10 @@ Utility per il parsing robusto di valute e numeri.
 import re
 
 
-def parse_currency(value: float | int | str | None) -> float:
+def parse_currency(value: float | int | str | None) -> float:  # noqa: PLR0911
     """
     Converte una stringa o numero in float, gestendo formati Italiani e Internazionali.
-    Versione Enterprise V5: Bilanciamento perfetto tra tolleranza e precisione.
+    Versione Enterprise V5.1: Gestione robusta di rumore e notazione scientifica.
     """
     if value is None:
         return 0.0
@@ -21,24 +21,49 @@ def parse_currency(value: float | int | str | None) -> float:
     if not s_raw or s_raw.lower() == "nan":
         return 0.0
 
-    # 1. Pulizia caratteri non stampabili e nulli
+    # 1. Pulizia caratteri nulli/invisibili
     s = s_raw.replace("\x00", "").replace("\u200b", "")
 
     # 2. Rilevamento segno negativo (ovunque nella stringa)
-    is_negative = "-" in s or ("(" in s and ")" in s)
+    # Nota: Escludiamo il trattino se fa parte della notazione scientifica (es. e-2)
+    has_explicit_neg = "-" in s and not re.search(r"[eE]-", s)
+    is_negative = has_explicit_neg or ("(" in s and ")" in s)
 
-    # 3. Estrazione parte numerica e separatori (inclusa 'e' per scientifica)
-    # Rimuoviamo tutto ciò che non è numero, punto, virgola o 'e'
-    s = re.sub(r"[^0-9,.eE]", "", s)
+    # 3. Validazione integrità: se ci sono lettere, devono essere simboli o parole chiave permesse
+    if re.search(r"[a-zA-Z]", s):
+        # Caso 1: Notazione scientifica (es. 1.23e-2)
+        if re.search(r"^-?\d*\.?\d+[eE][-+]?\d+$", s.replace(" ", "")):
+            pass  # Valido
+        else:
+            # Caso 2: Rimuoviamo simboli e parole chiave comuni (whitelist)
+            # Permettiamo: EUR, Euro, USD, Dollari, GBP, Sterline, JPY, CHF, Prezzo, Totale, Importo, ODA, POS, Valuta, Netto, Lordo, Sconto, Circa
+            allowed_terms = r"(?i)\b(Euro|EUR|Dollari|USD|Sterline|GBP|JPY|CHF|Prezzo|Totale|Importo|ODA|POS|Valuta|Netto|Lordo|Sconto|Circa)\b"
+            clean_check = re.sub(allowed_terms, "", s)
 
+            noise = re.sub(r"[0-9,.\s€$£%\-+:]", "", clean_check)
+            if noise and re.search(r"[a-zA-Z]", noise):
+                # Se rimane ancora testo alfabetico sconosciuto, è probabilmente rumore invalido
+                return 0.0
+
+    # 4. Estrazione parte numerica pulita
+    # Se è notazione scientifica, la isoliamo
+    sci_match = re.search(r"[-+]?\d*\.?\d+[eE][-+]?\d+", s.replace(",", "."))
+    if sci_match:
+        try:
+            return float(sci_match.group(0))
+        except ValueError:
+            pass  # Fallback al parsing standard
+
+    # Altrimenti procediamo con il parsing valuta standard
+    s = re.sub(r"[^0-9,.]", "", s)
     if not any(c.isdigit() for c in s):
         return 0.0
 
-    # 4. Gestione separatori consecutivi
+    # 5. Gestione separatori consecutivi
     s = re.sub(r"[,]{2,}", ",", s)
     s = re.sub(r"[.]{2,}", ".", s)
 
-    # 5. Conversione intelligente
+    # 6. Conversione intelligente
     try:
         val = _smart_convert(s)
     except (ValueError, IndexError):
@@ -49,10 +74,6 @@ def parse_currency(value: float | int | str | None) -> float:
 
 def _smart_convert(s: str) -> float:
     """Determina il formato e converte in float."""
-    # Se la stringa segue la notazione scientifica pura (es. 1.23e2)
-    if "e" in s.lower() and s.count(".") <= 1 and "," not in s:
-        return float(s)
-
     has_comma = "," in s
     has_dot = "." in s
 

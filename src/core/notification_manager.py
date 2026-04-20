@@ -59,6 +59,12 @@ class NotificationManager(QObject):
                     cls._instance = NotificationManager()
         return cls._instance
 
+    @classmethod
+    def _reset_instance_for_testing(cls) -> None:
+        """Resetta l'istanza singleton (Solo per testing)."""
+        with cls._lock:
+            cls._instance = None
+
     def __init__(self) -> None:
         """Inizializza il manager caricando le notifiche salvate su disco."""
         super().__init__()

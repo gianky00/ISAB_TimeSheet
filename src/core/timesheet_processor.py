@@ -24,7 +24,7 @@ class TimesheetProcessor:
     """Classe per elaborare i file timesheet sostituendo la macro VBA."""
 
     @staticmethod
-    def process_and_move(file_path: Path, dest_dir: Path) -> tuple[bool, str]:
+    def process_and_move(file_path: Path, dest_dir: Path) -> tuple[bool, str]:  # noqa: PLR0911
         """
         Elabora il file Excel secondo la logica VBA e lo salva nella cartella di destinazione.
         """
@@ -32,40 +32,46 @@ class TimesheetProcessor:
             return False, f"File sorgente non trovato: {file_path}"
 
         try:
-            dest_dir.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            return False, f"Impossibile creare dest_dir: {e}"
+            try:
+                dest_dir.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                return False, f"Impossibile creare dest_dir: {e}"
 
-        wb = openpyxl.load_workbook(file_path)
-        try:
-            if "Timesheet" not in wb.sheetnames:
-                return False, "Foglio 'Timesheet' non trovato."
+            wb = openpyxl.load_workbook(file_path)
+            try:
+                if "Timesheet" not in wb.sheetnames:
+                    return False, "Foglio 'Timesheet' non trovato."
 
-            ws: Worksheet = wb["Timesheet"]
+                ws: Worksheet = wb["Timesheet"]
 
-            # 1. Estrazione Metadata (ODC, POS)
-            odc = str(ws["A2"].value).strip() if ws["A2"].value else ""
-            if not odc:
-                return False, "Valore ODC (cella A2) mancante."
+                # 1. Estrazione Metadata (ODC, POS)
+                odc = str(ws["A2"].value).strip() if ws["A2"].value else ""
+                if not odc:
+                    return False, "Valore ODC (cella A2) mancante."
 
-            pos_values, first_pos_cleaned = TimesheetProcessor._analyze_pos_column(ws)
+                pos_values, first_pos_cleaned = TimesheetProcessor._analyze_pos_column(ws)
 
-            # 2. Generazione Percorso Destinazione
-            dest_path = TimesheetProcessor._get_destination_path(dest_dir, odc, pos_values, first_pos_cleaned)
+                # 2. Generazione Percorso Destinazione
+                dest_path = TimesheetProcessor._get_destination_path(
+                    dest_dir, odc, pos_values, first_pos_cleaned
+                )
 
-            # 3. Trasformazione Foglio (Headers, Pulizia, Eliminazione, Autofit)
-            TimesheetProcessor._apply_transformations(ws)
+                # 3. Trasformazione Foglio (Headers, Pulizia, Eliminazione, Autofit)
+                TimesheetProcessor._apply_transformations(ws)
 
-            # 4. Salvataggio e Pulizia
-            wb.save(dest_path)
+                # 4. Salvataggio e Pulizia
+                wb.save(dest_path)
 
-            TimesheetProcessor._cleanup_source(file_path, dest_path)
+                TimesheetProcessor._cleanup_source(file_path, dest_path)
 
-        except Exception as e:
-            logger.exception("Errore elaborazione %s", file_path.name)
-            return False, str(e)
-        finally:
-            wb.close()
+            except Exception as e:
+                logger.exception("Errore elaborazione %s", file_path.name)
+                return False, str(e)
+            finally:
+                wb.close()
+        except Exception as outer_e:
+            logger.exception("Errore critico apertura file %s", file_path.name)
+            return False, str(outer_e)
 
         return True, f"Salvato in: {dest_path.name}"
 

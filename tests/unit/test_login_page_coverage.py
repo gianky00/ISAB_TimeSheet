@@ -40,34 +40,37 @@ class TestLoginPageCoverage(unittest.TestCase):
         mock_user = MagicMock()
         mock_pass = MagicMock()
         mock_btn = MagicMock()
+        mock_comp = MagicMock()
 
         # Mock wait.until logic sequence
-        # 1. user field, 2. pass field, 3. login btn
-        self.mock_wait.until.side_effect = [mock_user, mock_pass, mock_btn]
+        # 1. user field, 2. pass field, 3. company field, 4. login btn
+        self.mock_wait.until.side_effect = [mock_user, mock_pass, mock_comp, mock_btn]
 
         # Patch internal calls
         self.page._check_and_handle_session_popup = MagicMock()
         self.page._attendi_scomparsa_overlay = MagicMock()
 
-        self.page._perform_login_form_action("u", "p")
+        self.page._perform_login_form_action("u", "p", "ISAB")
 
         mock_user.send_keys.assert_called_with("u")
         mock_pass.send_keys.assert_called_with("p")
+        mock_comp.send_keys.assert_called_with("ISAB")
         mock_btn.click.assert_called()
         self.page._check_and_handle_session_popup.assert_called()
 
     def test_perform_login_form_action_fallback_js(self):
         mock_user = MagicMock()
         mock_pass = MagicMock()
+        mock_comp = MagicMock()
 
-        # 1. user, 2. pass, 3. btn (raises)
-        self.mock_wait.until.side_effect = [mock_user, mock_pass, TimeoutException()]
+        # 1. user, 2. pass, 3. comp, 4. btn (raises)
+        self.mock_wait.until.side_effect = [mock_user, mock_pass, mock_comp, TimeoutException()]
 
         self.mock_driver.find_element.return_value = "fallback_element"
         self.page._check_and_handle_session_popup = MagicMock()
         self.page._attendi_scomparsa_overlay = MagicMock()
 
-        self.page._perform_login_form_action("u", "p")
+        self.page._perform_login_form_action("u", "p", "ISAB")
 
         self.mock_driver.execute_script.assert_called_with("arguments[0].click();", "fallback_element")
 
@@ -91,7 +94,7 @@ class TestLoginPageCoverage(unittest.TestCase):
 
     def test_login_proxy_error(self):
         self.mock_driver.title = "Proxy Error"
-        res = self.page.login("u", "p")
+        res = self.page.login("u", "p", "ISAB")
         self.assertFalse(res)
         self.logger_mock.assert_any_call("⚠ Rilevato 'Proxy Error' durante l'accesso iniziale.")
 
@@ -103,7 +106,7 @@ class TestLoginPageCoverage(unittest.TestCase):
         with patch("src.bots.base.login_page.WebDriverWait") as MockWait:  # noqa: N806
             MockWait.return_value.until.side_effect = TimeoutException()
 
-            res = self.page.login("u", "p")
+            res = self.page.login("u", "p", "ISAB")
             self.assertTrue(res)
             self.logger_mock.assert_any_call("✓ Rilevata sessione attiva (skip login).")
 
@@ -116,10 +119,10 @@ class TestLoginPageCoverage(unittest.TestCase):
         with patch("src.bots.base.login_page.WebDriverWait") as MockWait:  # noqa: N806
             MockWait.return_value.until.side_effect = TimeoutException()
 
-            res = self.page.login("u", "p")
+            res = self.page.login("u", "p", "ISAB")
 
             self.mock_driver.refresh.assert_called()
-            self.page._perform_login_form_action.assert_called_with("u", "p")
+            self.page._perform_login_form_action.assert_called_with("u", "p", "ISAB")
             self.assertTrue(res)
 
     def test_login_timeout_general(self):
@@ -131,11 +134,11 @@ class TestLoginPageCoverage(unittest.TestCase):
             self.page._verify_logged_in_via_ui = MagicMock(return_value=False)
             self.page._perform_login_form_action = MagicMock(side_effect=Exception("Refresh failed"))
 
-            res = self.page.login("u", "p")
+            res = self.page.login("u", "p", "ISAB")
             self.assertFalse(res)
 
     def test_login_exception_generic(self):
         self.mock_driver.get.side_effect = Exception("Boom")
-        res = self.page.login("u", "p")
+        res = self.page.login("u", "p", "ISAB")
         self.assertFalse(res)
         self.logger_mock.assert_any_call("✗ Errore login: Boom")

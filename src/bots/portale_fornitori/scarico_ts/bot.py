@@ -69,12 +69,14 @@ class ScaricaTSBot(SeleniumBaseBot):
         data_da: str | None = None,
         fornitore: str = "",
         elabora_ts: bool = False,
+        username: str = "",
+        password: str = "",
         **kwargs: Any,
     ) -> None:
         """
         Inizializza il bot.
         """
-        super().__init__(**kwargs)
+        super().__init__(username=username, password=password, **kwargs)
         self.data_da = data_da or f"01.01.{datetime.now(UTC).year}"
         self.fornitore = fornitore
         self.elabora_ts = elabora_ts

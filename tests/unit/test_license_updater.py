@@ -36,7 +36,7 @@ def test_get_github_token():
 
 
 def test_get_license_dir(mocker):
-    mocker.patch("src.core.config_manager.get_data_path", return_value="/fake/path")
+    mocker.patch("src.core.paths.get_data_path", return_value="/fake/path")
     path = get_license_dir()
     # Convert to str for substring assertion
     assert "/fake/path" in str(path).replace("\\", "/")

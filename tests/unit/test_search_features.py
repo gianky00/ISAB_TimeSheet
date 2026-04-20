@@ -4,7 +4,6 @@ Tests extended search capabilities across ContabilitaManager and TimbratureStora
 """
 
 import sqlite3
-from unittest.mock import patch
 
 import pytest
 
@@ -13,18 +12,27 @@ from src.core.contabilita_manager import ContabilitaManager
 
 
 @pytest.fixture
-def mock_db(tmp_path):
+def mock_db(tmp_path, mocker):
     """Creates a temporary database with sample data for testing search."""
     db_path = tmp_path / "test_contabilita.db"
-    ContabilitaManager.DB_PATH = db_path
+
+    # Patch DatabaseManager properties using PropertyMock
+    mocker.patch(
+        "src.core.database.DatabaseManager.DB_CONTABILITA",
+        new_callable=mocker.PropertyMock,
+        return_value=db_path,
+    )
+    mocker.patch(
+        "src.core.database.DatabaseManager.DB_TIMBRATURE",
+        new_callable=mocker.PropertyMock,
+        return_value=db_path,
+    )
 
     with sqlite3.connect(db_path) as conn:
         # Contabilita
         conn.execute("CREATE TABLE contabilita (n_prev TEXT, attivita TEXT, odc TEXT, year INTEGER)")
-        conn.execute(
-            "INSERT INTO contabilita VALUES ('123/2025', 'Manutenzione Valvole', '5400123456', 2025)"
-        )
-        conn.execute("INSERT INTO contabilita VALUES ('124/2025', 'Ponteggi', '5400999999', 2025)")
+        conn.execute("INSERT INTO contabilita VALUES ('123/25', 'Manutenzione Valvole', '5400123456', 2025)")
+        conn.execute("INSERT INTO contabilita VALUES ('124/25', 'Ponteggi', '5400999999', 2025)")
 
         # Giornaliere
         conn.execute("CREATE TABLE giornaliere (data TEXT, personale TEXT, descrizione TEXT, year INTEGER)")
@@ -81,7 +89,8 @@ def test_search_oda_found(mock_db):
     """Test searching for OdA by code."""
     results = ContabilitaManager.search_oda("123")
     assert len(results) == 1
-    assert results[0]["codice_oda"] == "123/2025"
+    # Allineato a formato YY (25) invece di YYYY (2025) come da realtà DB
+    assert results[0]["codice_oda"] == "123/25"
     assert results[0]["type"] == "ODA"
 
 
@@ -115,18 +124,15 @@ def test_search_extended_certificati(mock_db):
 
 def test_search_employees(mock_timbrature_db):
     """Test searching for employees in TimbratureStorage."""
-    with patch(
-        "src.bots.portale_fornitori.timbrature.storage.TimbratureStorage.DB_PATH",
-        mock_timbrature_db,
-    ):
-        storage = TimbratureStorage(mock_timbrature_db)
-        results = storage.search_employees("Bianchi")
-        assert len(results) == 1
-        assert results[0]["cognome"] == "Bianchi"
-        assert results[0]["nome"] == "Giuseppe"
+    storage = TimbratureStorage(mock_timbrature_db)
+    results = storage.search_employees("Bianchi")
+    assert len(results) == 1
+    assert results[0]["cognome"] == "Bianchi"
+    assert results[0]["nome"] == "Giuseppe"
 
 
 def test_search_empty_query(mock_db):
     """Test behavior with empty or short queries."""
     assert ContabilitaManager.search_oda("") == []
+    # search_extended returns empty dict for queries < 3 chars
     assert ContabilitaManager.search_extended("a") == {}

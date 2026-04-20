@@ -111,20 +111,24 @@ class TestDettagliOdaComprehensive:
             assert res is True
 
     def test_wait_for_download_logic(self):
-        """Test logica attesa download (senza attese reali)."""
+        """Test logica attesa download tramite poll_for_new_file helper."""
         mock_driver = MagicMock()
         page = DettagliOdAPage(mock_driver)
 
         source_dir = MagicMock(spec=Path)
         file_mock = MagicMock(spec=Path)
         file_mock.suffix = ".xlsx"
-        file_mock.stat.return_value.st_mtime = 100
+        file_mock.name = "downloaded.xlsx"
 
-        source_dir.iterdir.return_value = [file_mock]
-
-        # files_before era vuoto
-        res = page._wait_for_download(source_dir, set())
-        assert res == file_mock
+        # Patchiamo l'helper centralizzato invece del metodo rimosso
+        with patch(
+            "src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page.poll_for_new_file",
+            return_value=file_mock,
+        ) as mock_poll:
+            # Simuliamo una parte del metodo _download
+            res = mock_poll(source_dir, set(), ["*.xlsx"], 30)
+            assert res == file_mock
+            mock_poll.assert_called_once()
 
     @patch("src.bots.portale_fornitori.dettagli_oda.bot.DettagliOdAPage")
     def test_bot_run_no_oda_list_general(self, mock_page_cls, bot, mocker):

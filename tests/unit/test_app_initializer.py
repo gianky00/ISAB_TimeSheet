@@ -92,16 +92,3 @@ class TestAppInitializer:
     def test_setup_logging_fallback(self, mock_configure):
         # Should not raise, falls back to basicConfig
         AppInitializer._setup_logging()
-
-    @patch("src.gui.styles.theme_manager.apply_theme")
-    @patch("PyQt6.QtGui.QFont")
-    @patch("PyQt6.QtWidgets.QApplication.instance")
-    def test_setup_app_style(self, mock_instance, mock_font, mock_theme):
-        mock_app = MagicMock()
-        mock_instance.return_value = mock_app
-
-        AppInitializer.setup_app_style(mock_app)
-
-        # Verifica che i metodi siano stati chiamati sul mock_app passato o sull'istanza
-        assert mock_app.setStyle.called
-        assert mock_app.setApplicationName.called

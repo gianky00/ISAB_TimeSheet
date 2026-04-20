@@ -8,20 +8,19 @@ from src.utils.security import PasswordManager
 class TestSecurity:
     @pytest.fixture
     def manager(self, tmp_path, mocker):
-        # Mock class-level attributes to use tmp_path
-        key_dir = tmp_path / "security"
-        mocker.patch("src.utils.security.PasswordManager._KEY_DIR", key_dir)
-        mocker.patch("src.utils.security.PasswordManager._KEY_FILE", key_dir / "secret.key")
-        mocker.patch("src.utils.security.PasswordManager._SALT_FILE", key_dir / "encryption.salt")
-
         # Reset singleton
         PasswordManager._instance = None
+
+        # Patch paths via the module-level SECURITY_DIR
+        fake_key_dir = tmp_path / "security"
+        mocker.patch("src.utils.security.SECURITY_DIR", fake_key_dir)
+
         return PasswordManager()
 
     def test_key_creation_persistence(self, manager, tmp_path):
         """Test that keys are created and persisted."""
-        key_file = tmp_path / "security" / "secret.key"
-        salt_file = tmp_path / "security" / "encryption.salt"
+        key_file = manager.key_file
+        salt_file = manager.salt_file
 
         assert key_file.exists()
         assert salt_file.exists()

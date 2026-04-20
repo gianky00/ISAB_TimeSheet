@@ -10,6 +10,7 @@ class TestCaricoTSBotComprehensive(unittest.TestCase):
         self.mock_driver = MagicMock()
         with patch("src.bots.base.base_bot.BaseBot.__init__", return_value=None):
             self.bot = CaricoTSBot()
+            self.bot.signals = MagicMock()  # FIX: Inizializza mock segnali
             self.bot.driver = self.mock_driver
             self.bot._log_callback = MagicMock()
             self.bot._logger = MagicMock()

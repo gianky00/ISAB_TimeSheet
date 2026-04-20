@@ -25,7 +25,7 @@ from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 if TYPE_CHECKING:
-    from src.gui.main_window import MainWindow
+    from src.gui.main_window.main import MainWindow
 
 
 class AutomazioniWidget(QWidget):
