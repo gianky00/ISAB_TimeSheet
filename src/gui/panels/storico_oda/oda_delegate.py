@@ -32,10 +32,10 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
 
                         # Logica colorazione
                         if "Cancellato" in stato or "cancellato" in stato:
-                            # 🔴 ROSSO per stato Cancellato
+                            # [ROSSO] ROSSO per stato Cancellato
                             painter.fillRect(option.rect, QColor(COLORS["bg_error_pastel"]))
                         elif "In attesa di Rilascio" in ind_rilascio or "in attesa" in ind_rilascio.lower():
-                            # 🟠 ARANCIONE per In attesa di Rilascio
+                            # [ARANCIONE] ARANCIONE per In attesa di Rilascio
                             painter.fillRect(option.rect, QColor(COLORS["bg_warning_pastel"]))
 
         # 2. Verifica se siamo in una riga figlia (ha un genitore valido)

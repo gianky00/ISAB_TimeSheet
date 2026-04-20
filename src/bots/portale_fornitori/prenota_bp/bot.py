@@ -97,7 +97,7 @@ class PrenotaBPBot(SeleniumBaseBot):
             processed_count = 0
             for i, row in enumerate(rows):
                 if self._stop_requested:
-                    self.log("⚠️ Stop richiesto dall'utente.")
+                    self.log("[ATTENZIONE] Stop richiesto dall'utente.")
                     break
                 if self._process_single_bp(page, i, row):
                     processed_count += 1

@@ -218,7 +218,7 @@ class StoricoOdaPanel(QWidget):
         menu = QMenu(self)
 
         # Azione Dettaglio
-        detail_act = menu.addAction("🔍 Mostra dettaglio completo")
+        detail_act = menu.addAction("[CERCA] Mostra dettaglio completo")
         if detail_act:
             detail_act.triggered.connect(lambda: self._open_detail_for_index(idx))
 

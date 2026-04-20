@@ -108,11 +108,11 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             self.update_step("download", StepStatus.RUNNING)
             success_count, downloaded_files = self._process_oda_rows(rows, dest_dir)
 
-            self.log(f"✨ Download completati: {success_count}/{len(rows)}.")
+            self.log(f"[INFO] Download completati: {success_count}/{len(rows)}.")
 
             status_download = StepStatus.COMPLETED if success_count == len(rows) else StepStatus.ERROR
             if 0 < success_count < len(rows):
-                self.log(f"⚠️ Scarico parziale: {success_count} su {len(rows)}")
+                self.log(f"[ATTENZIONE] Scarico parziale: {success_count} su {len(rows)}")
 
             self.update_step("download", status_download)
 
@@ -124,7 +124,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             self.update_step("cleanup", StepStatus.RUNNING)
             self.update_step("cleanup", StepStatus.COMPLETED)
         except Exception as e:
-            self.log(f"❌ Errore imprevisto nel flusso run: {e}")
+            self.log(f"[ERRORE] Errore imprevisto nel flusso run: {e}")
             return False
         else:
             return success_count == len(rows)
@@ -142,7 +142,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
         else:
             rows = list(data)
 
-        self.log(f"🚀 Inizio scarico TS (PW) per {len(rows)} OdA (Fornitore: {self.fornitore})...")
+        self.log(f"[AVVIO] Inizio scarico TS (PW) per {len(rows)} OdA (Fornitore: {self.fornitore})...")
         dest_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
         return rows, dest_dir
 
@@ -173,7 +173,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
                 else:
                     msg = "OdA non trovato"
             except Exception as e:
-                self.log(f"❌ Errore OdA {numero_oda}: {e}")
+                self.log(f"[ERRORE] Errore OdA {numero_oda}: {e}")
                 msg = str(e)
 
             callback = getattr(self, "_progress_callback", None)
@@ -190,7 +190,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
             self.page.wait_for_selector(f"xpath={xpath}", state="hidden", timeout=Timeouts.OVERLAY * 1000)
         except TimeoutError:
-            self.log("⚠️ Timeout attesa overlay.")
+            self.log("[ATTENZIONE] Timeout attesa overlay.")
 
     def _navigate_to_timesheet(self) -> bool:
         """Naviga verso il menu Report -> Timesheet."""
@@ -208,7 +208,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             self.page.wait_for_selector(fornitore_arrow_xpath, state="visible")
             self._wait_for_overlay()
         except Exception as e:
-            self.log(f"❌ Impossibile navigare al menu Timesheet: {e}")
+            self.log(f"[ERRORE] Impossibile navigare al menu Timesheet: {e}")
             return False
         else:
             return True
@@ -236,7 +236,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
                 self.data_da,
             )
         except Exception as e:
-            self.log(f"❌ Errore nell'impostazione dei filtri: {e}")
+            self.log(f"[ERRORE] Errore nell'impostazione dei filtri: {e}")
             return False
         else:
             return True
@@ -265,7 +265,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
                 self.log(f"⚠ Nessun TimeSheet trovato per OdA {numero_oda} / {posizione_oda}")
                 return False
         except Exception as e:
-            self.log(f"❌ Errore nella ricerca OdA: {e}")
+            self.log(f"[ERRORE] Errore nella ricerca OdA: {e}")
             return False
         else:
             return True
@@ -291,7 +291,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
 
             self.log(f"✓ Download completato: {filename}")
         except Exception as e:
-            self.log(f"❌ Errore durante il download: {e}")
+            self.log(f"[ERRORE] Errore durante il download: {e}")
             return False
         else:
             return True
@@ -313,9 +313,9 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             final_path = self._get_final_download_path(dest_dir, numero_oda, posizione_oda, extension)
             download.save_as(str(final_path))
 
-            self.log(f"✅ Scaricato: {final_path.name}")
+            self.log(f"[OK] Scaricato: {final_path.name}")
         except Exception as e:
-            self.log(f"⚠️ Impossibile scaricare esportazione Excel: {e}")
+            self.log(f"[ATTENZIONE] Impossibile scaricare esportazione Excel: {e}")
             return None
         else:
             return final_path
@@ -347,8 +347,8 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
         for f in file_list:
             ok, msg = TimesheetProcessor.process_and_move(Path(f), dest_dir)
             if ok:
-                self.log(f"  ✅ {msg}")
+                self.log(f"  [OK] {msg}")
                 processed += 1
             else:
-                self.log(f"  ❌ Errore elaborazione {Path(f).name}: {msg}")
+                self.log(f"  [ERRORE] Errore elaborazione {Path(f).name}: {msg}")
         self.log(f"🏁 Elaborazione conclusa: {processed}/{len(file_list)} completati.")

@@ -80,7 +80,7 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
         self.update_step("login", StepStatus.COMPLETED)
 
         rows = self._prepare_rows(data)
-        self.log(f"🚀 Avvio scarico dettagli (PW) per {len(rows)} OdA...")
+        self.log(f"[AVVIO] Avvio scarico dettagli (PW) per {len(rows)} OdA...")
 
         if not self.page:
             return False
@@ -100,7 +100,7 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
                 callback(i, res, "" if res else "Errore download")
 
         self.update_step("download", StepStatus.COMPLETED if success == len(rows) else StepStatus.ERROR)
-        self.log("✨ Procedura conclusa.")
+        self.log("[INFO] Procedura conclusa.")
         return success == len(rows)
 
     def _prepare_rows(self, data: Any) -> list[dict[str, Any]]:
@@ -114,7 +114,7 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
             rows = data
 
         if not rows:
-            self.log("ℹ️ Nessun OdA specificato. Avvio ricerca per lista generale.")
+            self.log("[INFO] Nessun OdA specificato. Avvio ricerca per lista generale.")
             return [{"numero_oda": "", "numero_contratto": ""}]
 
         return list(rows)
@@ -133,14 +133,14 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
 
         self.update_step("nav", StepStatus.RUNNING)
         if not page_obj.navigate_to_dettagli(is_first_row=(index == 1)):
-            self.log("❌ Problema nella navigazione.")
+            self.log("[ERRORE] Problema nella navigazione.")
             self.update_step("nav", StepStatus.ERROR)
             return False
         self.update_step("nav", StepStatus.COMPLETED)
 
         self.update_step("supplier", StepStatus.RUNNING)
         if not page_obj.setup_supplier(self.fornitore):
-            self.log("❌ Fornitore non selezionabile.")
+            self.log("[ERRORE] Fornitore non selezionabile.")
             self.update_step("supplier", StepStatus.ERROR)
             return False
         self.update_step("supplier", StepStatus.COMPLETED)
@@ -166,8 +166,8 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
                 ok, msg, added, _ = future.result()
 
             if ok:
-                self.log(f"✅ Importazione completata: {msg} (Upd/Ins: {added})")
+                self.log(f"[OK] Importazione completata: {msg} (Upd/Ins: {added})")
             else:
-                self.log(f"⚠️ Errore importazione: {msg}")
+                self.log(f"[ATTENZIONE] Errore importazione: {msg}")
         except Exception as e:
-            self.log(f"❌ Errore critico durante l'importazione database: {e}")
+            self.log(f"[ERRORE] Errore critico durante l'importazione database: {e}")

@@ -306,7 +306,7 @@ class CreaNuovoTab(QWidget):
 
         self.workflow_map.set_step_state(step_id, WorkflowStepButton.State.ACTIVE)
         self.log_widget.append_log(
-            f"🔄 Esecuzione: {', '.join(macros)} su {os.path.basename(self.last_generated_file)}",
+            f"[SYNC] Esecuzione: {', '.join(macros)} su {os.path.basename(self.last_generated_file)}",
             "step",
         )
 
@@ -319,9 +319,9 @@ class CreaNuovoTab(QWidget):
         self.setEnabled(True)
         if success:
             self.workflow_map.set_step_state(step_id, WorkflowStepButton.State.COMPLETED)
-            self.log_widget.append_log(f"✅ {result}", "success")
+            self.log_widget.append_log(f"[OK] {result}", "success")
             ConfirmationDialog.show_info(self, "Macro Eseguite", result)
         else:
             self.workflow_map.set_step_state(step_id, WorkflowStepButton.State.ERROR)
-            self.log_widget.append_log(f"❌ {result}", "error")
+            self.log_widget.append_log(f"[ERRORE] {result}", "error")
             ConfirmationDialog.show_error(self, "Errore Macro", result)

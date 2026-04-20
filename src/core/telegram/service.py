@@ -205,7 +205,7 @@ class TelegramService(QObject):
         if self.connected_chat_id and user_id != self.connected_chat_id:
             with suppress(Exception):
                 if hasattr(update, "message") and update.message:
-                    await update.message.reply_text("⛔ Accesso Negato")
+                    await update.message.reply_text("[BLOCCO] Accesso Negato")
             return False
         return True
 

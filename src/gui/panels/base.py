@@ -83,13 +83,13 @@ class BotWorker(QThread):
         try:
             # 1. Inizializzazione Differita (Background)
             if isinstance(self.bot_id, str):
-                self.log_signal.emit("🔧 Preparazione ambiente bot...")
+                self.log_signal.emit("[SETUP] Preparazione ambiente bot...")
                 self.bot = create_bot(self.bot_id, **self.bot_params)
             else:
                 self.bot = self.bot_id
 
             if not self.bot:
-                self.log_signal.emit("❌ Errore critico: Impossibile creare l'istanza del bot.")
+                self.log_signal.emit("[ERRORE] Errore critico: Impossibile creare l'istanza del bot.")
                 self.finished_signal.emit(False)
                 return
 

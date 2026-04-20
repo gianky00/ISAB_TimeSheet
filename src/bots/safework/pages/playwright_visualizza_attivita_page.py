@@ -34,7 +34,7 @@ class PlaywrightVisualizzaAttivitaPage(PlaywrightBasePage):
             self.page.evaluate(f"document.getElementById('{dal_id}').value = '{data_dal}';")
             self.page.evaluate(f"document.getElementById('{al_id}').value = '{data_al}';")
         except Exception as e:
-            self.log(f"⚠️ Errore impostazione date JS: {e}")
+            self.log(f"[ATTENZIONE] Errore impostazione date JS: {e}")
 
     def seleziona_ditta(self, nome_ditta: str) -> None:
         """Seleziona la ditta dal dropdown custom."""
@@ -55,7 +55,7 @@ class PlaywrightVisualizzaAttivitaPage(PlaywrightBasePage):
             sel = self._get_selector(SafeWorkLocators.EXPORT_BUTTON)
             self.page.click(sel)
         except Exception as e:
-            self.log(f"❌ Errore clic export: {e}")
+            self.log(f"[ERRORE] Errore clic export: {e}")
             return False
         else:
             return True
@@ -86,12 +86,12 @@ class PlaywrightVisualizzaAttivitaPage(PlaywrightBasePage):
                     opt_sel = f"xpath=//div[contains(@class, 'ms-drop')]//li[not(contains(@class, 'ms-no-results'))]//span[contains(text(), '{item}')]"
                     self.page.click(opt_sel)
                 except Exception:
-                    self.log(f"⚠️ Elemento '{item}' non trovato nel dropdown.")
+                    self.log(f"[ATTENZIONE] Elemento '{item}' non trovato nel dropdown.")
 
             # 4. Chiudi cliccando fuori (sul body)
             self.page.click("body")
         except Exception as e:
-            self.log(f"❌ Errore selezione dropdown: {e}")
+            self.log(f"[ERRORE] Errore selezione dropdown: {e}")
             return False
         else:
             return True

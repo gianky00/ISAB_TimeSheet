@@ -283,7 +283,7 @@ SyncroJob utilizza un motore database SQLite ottimizzato per gestire centinaia d
 *   **DataEase**: Integrazione con lo scarico ore cantiere per analisi di resa.
 *   **Dipendenti**: Gestione anagrafica, scadenze abilitazioni e badge.
 
-#### 🔍 Ricerca Avanzata
+#### [CERCA] Ricerca Avanzata
 Utilizza la **Ricerca Universale** in alto (Ctrl+F) per trovare istantaneamente un Badge, un Cognome o un numero OdA in tutto l'ecosistema.
 """
 
@@ -294,7 +294,7 @@ Utilizza la **Ricerca Universale** in alto (Ctrl+F) per trovare istantaneamente 
 
 Il modulo PDL permette di monitorare l'intero ciclo di vita dei Permessi di Lavoro.
 
-#### 🔄 Ciclo Operativo
+#### [SYNC] Ciclo Operativo
 1.  **Sync Bot**: Il bot interroga SafeWork e aggiorna il database locale.
 2.  **Programmazione**: Gestione settimanale dei flag TCL/TGO per ogni PDL.
 3.  **Storico Interventi**: Recupero della cronologia tecnica dai database esterni.
@@ -363,12 +363,12 @@ SyncroJob Enterprise è protetto da un sistema di licenza hardware univoco.
 # 🛠️ Troubleshooting & Risoluzione Problemi
 ### Guida rapida ai problemi comuni.
 
-#### ❌ Il Bot non parte?
+#### [ERRORE] Il Bot non parte?
 1.  Verifica che **Chrome** sia aggiornato all'ultima versione.
 2.  Controlla che la **VPN ISAB** sia connessa.
 3.  Assicurati che non ci siano altre istanze di Chrome aperte dal bot.
 
-#### ❌ Errore Login Portale?
+#### [ERRORE] Errore Login Portale?
 *   Verifica le credenziali in `Impostazioni > Account`.
 *   Prova ad accedere manualmente dal browser per sbloccare eventuali Captcha.
 """

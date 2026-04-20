@@ -9,9 +9,9 @@ def test_timeline_functionality(qtbot):
     qtbot.addWidget(widget)
 
     logs_to_add = [
-        "🚀 Avvio sistema",
+        "[AVVIO] Avvio sistema",
         "🔐 Login in corso...",
-        "✅ Accesso effettuato",
+        "[OK] Accesso effettuato",
     ]
 
     for log_message in logs_to_add:

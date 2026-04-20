@@ -56,7 +56,7 @@ class TimbraturePage:
                 EC.invisibility_of_element_located((By.XPATH, xpath))
             )
         except TimeoutException:
-            self.log("⚠️ Timeout attesa overlay.")
+            self.log("[ATTENZIONE] Timeout attesa overlay.")
 
     def navigate_to_timbrature(self) -> bool:
         """Navigates to Report -> Timbrature."""
@@ -167,7 +167,7 @@ class TimbraturePage:
             self._wait_for_overlay()
 
         except Exception as e:
-            self.log(f"⚠️ Errore selezione fornitore: {e}")
+            self.log(f"[ATTENZIONE] Errore selezione fornitore: {e}")
 
     def download_excel(self) -> str:
         """Finds and clicks the Excel download button, returning the file path."""
@@ -176,7 +176,7 @@ class TimbraturePage:
             excel_btn = self._find_excel_button()
 
             if not excel_btn:
-                self.log("⚠️ Pulsante Excel non trovato.")
+                self.log("[ATTENZIONE] Pulsante Excel non trovato.")
                 return ""
 
             # Snapshot dei file esistenti prima del click
@@ -222,7 +222,7 @@ class TimbraturePage:
             return str(new_path)
 
         except Exception as e:
-            self.log(f"⚠️ Errore download Excel: {e}")
+            self.log(f"[ATTENZIONE] Errore download Excel: {e}")
             return ""
 
     def _find_excel_button(self) -> Any:

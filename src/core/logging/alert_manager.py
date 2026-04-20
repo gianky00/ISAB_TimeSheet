@@ -124,7 +124,7 @@ class AlertManager:
 
     def _format_alert_message(self, anomaly: Anomaly) -> str:
         """Formatta messaggio alert per Telegram."""
-        emoji = {"low": "ℹ️", "medium": "⚠️", "high": "🔴", "critical": "🚨"}.get(anomaly.severity, "📢")
+        emoji = {"low": "[INFO]", "medium": "[ATTENZIONE]", "high": "[ROSSO]", "critical": "🚨"}.get(anomaly.severity, "📢")
 
         type_names = {
             "error_spike": "Error Rate Spike",
@@ -176,7 +176,7 @@ class AlertManager:
         if not telegram:
             return False
 
-        emoji = {"info": "ℹ️", "warning": "⚠️", "error": "🔴", "critical": "🚨"}.get(level, "📢")
+        emoji = {"info": "[INFO]", "warning": "[ATTENZIONE]", "error": "[ROSSO]", "critical": "🚨"}.get(level, "📢")
 
         formatted = f"{emoji} <b>{title}</b>\n\n{message}"
 

@@ -54,7 +54,7 @@ class TelegramSystemHandler:
 
             self.telegram.send_photo_sync(data, caption=f"📸 **Screenshot: {caption}**")
         except Exception as e:
-            self.telegram.send_message_sync(f"❌ Errore screenshot: {e}")
+            self.telegram.send_message_sync(f"[ERRORE] Errore screenshot: {e}")
 
     def handle_search_db_pdf(self, params: dict[str, Any]) -> None:
         """Genera e invia un report PDF."""
@@ -62,18 +62,18 @@ class TelegramSystemHandler:
         query_text = params.get("query", "")
         year_filter = params.get("year")
 
-        self.telegram.send_message_sync(f"🔍 Ricerca in corso in **{db_type}** per: `{query_text}`...")
+        self.telegram.send_message_sync(f"[CERCA] Ricerca in corso in **{db_type}** per: `{query_text}`...")
 
         try:
             report_data = self._fetch_report_data(db_type, query_text, year_filter)
             if not report_data:
-                self.telegram.send_message_sync("❌ Nessun risultato trovato.")
+                self.telegram.send_message_sync("[ERRORE] Nessun risultato trovato.")
                 return
 
             html = self._generate_report_html(db_type, report_data)
             self._send_pdf_report(db_type, html)
         except Exception as e:
-            self.telegram.send_message_sync(f"❌ Errore: {e}")
+            self.telegram.send_message_sync(f"[ERRORE] Errore: {e}")
 
     def _fetch_report_data(self, db_type: str, query: str, year: int | str | None) -> Any:
         # Se abbiamo il data_bridge (che punta alla MainWindow o Storage), lo usiamo
@@ -103,7 +103,7 @@ class TelegramSystemHandler:
 
     def _send_pdf_report(self, db_type: str, html: str) -> None:
         if not html:
-            self.telegram.send_message_sync("❌ Errore: Dati non validi per il report.")
+            self.telegram.send_message_sync("[ERRORE] Errore: Dati non validi per il report.")
             return
 
         filename = f"report_{db_type}_{int(datetime.now(UTC).timestamp())}.pdf"
@@ -115,7 +115,7 @@ class TelegramSystemHandler:
         if Path(path).exists():
             self.telegram.send_document_sync(path, caption=f"📄 Report {db_type}")
         else:
-            self.telegram.send_message_sync("❌ Errore generazione PDF.")
+            self.telegram.send_message_sync("[ERRORE] Errore generazione PDF.")
 
     def handle_restart_app(self) -> None:
         """Riavvia l'applicazione delegando alla GUI."""

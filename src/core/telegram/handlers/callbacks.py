@@ -70,7 +70,7 @@ def _is_utility_data(data: str) -> bool:
 async def _handle_nav_actions(service: "TelegramService", data: str, query: "CallbackQuery") -> None:
     if data == "menu_main":
         await query.edit_message_text(
-            "🚀 *Command Center*",
+            "[AVVIO] *Command Center*",
             reply_markup=TelegramUI.get_main_keyboard(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
@@ -88,7 +88,7 @@ async def _handle_nav_actions(service: "TelegramService", data: str, query: "Cal
         )
     elif data == "nav_lyra":
         await query.edit_message_text(
-            "✨ **Lyra AI Assistant**\n\nPuoi inviare vocali, foto di rapportini o domande sui dati.\n_Scrivi o parla direttamente qui!_",
+            "[INFO] **Lyra AI Assistant**\n\nPuoi inviare vocali, foto di rapportini o domande sui dati.\n_Scrivi o parla direttamente qui!_",
             reply_markup=TelegramUI.get_lyra_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
@@ -119,7 +119,7 @@ async def _handle_db_actions(
         years = ContabilitaManager.get_available_years()
         if not years:
             await query.edit_message_text(
-                "⚠️ Nessun anno disponibile nel database.",
+                "[ATTENZIONE] Nessun anno disponibile nel database.",
                 reply_markup=TelegramUI.get_db_menu(),
             )
             return
@@ -228,16 +228,16 @@ async def _handle_menu_and_input_dispatch(  # noqa: PLR0913
 
     async def handle_input_pdl() -> None:
         service.user_states[chat_id] = "WAITING_PDL"
-        await query.edit_message_text("⌨️ Inserisci PDL:")
+        await query.edit_message_text("[INPUT] Inserisci PDL:")
 
     async def handle_input_oda() -> None:
         service.user_states[chat_id] = "WAITING_ODA"
-        await query.edit_message_text("⌨️ Inserisci OdA:")
+        await query.edit_message_text("[INPUT] Inserisci OdA:")
 
     async def handle_input_bp() -> None:
         service.user_states[chat_id] = "WAITING_BP"
         await query.edit_message_text(
-            "⌨️ Inserisci BP (Formato: NUMERO [NOTE]):\nEs: `123456 Urgente`\nEs: `987654`"
+            "[INPUT] Inserisci BP (Formato: NUMERO [NOTE]):\nEs: `123456 Urgente`\nEs: `987654`"
         )
 
     async def handle_run_pdl_on() -> None:
@@ -301,10 +301,10 @@ async def _handle_run_pdl_confirm(
             return
         service.command_received.emit("set_printer", {"printer": p})
         params.update({"print": True, "merge_and_send": ("_yes_" in data)})
-        msg = f"✅ Avvio con stampa su `{p}`"
+        msg = f"[OK] Avvio con stampa su `{p}`"
     else:
         params.update({"print": False, "merge_and_send": ("_yes_" in data)})
-        msg = "✅ Avvio scarico"
+        msg = "[OK] Avvio scarico"
 
     service.command_received.emit("run_pdl", params)
     await query.edit_message_text(f"{msg}, invio PDF={params['merge_and_send']}, merge finale={merge_all}.")

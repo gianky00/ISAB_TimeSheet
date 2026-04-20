@@ -1,6 +1,6 @@
 # 🕵️ Analisi Fallimento Test - 2026-03-09
 
-## ❌ Test Falliti e Risolti
+## [ERRORE] Test Falliti e Risolti
 
 ### 1. `tests/unit/test_sprint_d_bot_resilience.py::test_bot_driver_initialization_failure_handling`
 - **Causa:** Messaggio di log suggerito cambiato nel codice sorgente (`BaseBot`).

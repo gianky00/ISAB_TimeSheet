@@ -123,7 +123,7 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
 
             self._wait_overlay()
         except Exception as e:
-            self.log(f"⚠️ Erreore selezione fornitore: {e}")
+            self.log(f"[ATTENZIONE] Erreore selezione fornitore: {e}")
 
     def download_excel(self) -> str:
         """Individua e clicca il pulsante Excel, gestendo il download."""
@@ -144,7 +144,7 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
                     break
 
             if not excel_sel:
-                self.log("⚠️ Pulsante Excel non trovato.")
+                self.log("[ATTENZIONE] Pulsante Excel non trovato.")
                 return ""
 
             self.log("Clicco su Excel...")
@@ -164,7 +164,7 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
             download.save_as(str(new_path))
             self.log(f"✓ File scaricato e salvato: {new_path.name}")
         except Exception as e:
-            self.log(f"⚠️ Errore download Excel: {e}")
+            self.log(f"[ATTENZIONE] Errore download Excel: {e}")
             return ""
         else:
             return str(new_path)

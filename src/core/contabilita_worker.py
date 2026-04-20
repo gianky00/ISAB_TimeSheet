@@ -64,7 +64,7 @@ class ContabilitaWorker(QThread):
 
     def _calculate_total_ops(self) -> dict[str, Any]:
         """Calcola il totale operazioni e ritorna il dettaglio per stime accurate."""
-        self.progress_signal.emit("⏳ Analisi carico di lavoro...")
+        self.progress_signal.emit("[ATTESA] Analisi carico di lavoro...")
         sheets, files = ContabilitaManager.scan_workload(self.file_path, self.giornaliere_path)
 
         attivita = 1 if self.attivita_path and Path(self.attivita_path).exists() else 0
@@ -147,7 +147,7 @@ class ContabilitaWorker(QThread):
         m, s = divmod(int(eta_s), 60)
 
         self.progress_signal.emit(
-            f"⏳ Importazione: {percent}% completato ({current}/{total}) • ETA: {m}m {s}s"
+            f"[ATTESA] Importazione: {percent}% completato ({current}/{total}) • ETA: {m}m {s}s"
         )
 
     def _phase_import_contabilita(self, state: Any) -> None:

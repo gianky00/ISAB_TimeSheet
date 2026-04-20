@@ -59,7 +59,7 @@ def test_check_for_updates_no_new_version(mocker, mock_app_version, mock_update_
 
     mock_msgbox.information.assert_called_once_with(
         None,
-        "✅ Aggiornamento",
+        "[OK] Aggiornamento",
         f"L'applicazione è aggiornata (v{version.__version__})",
     )
 

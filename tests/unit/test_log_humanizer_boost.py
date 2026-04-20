@@ -8,12 +8,12 @@ class TestLogHumanizerBoost:
         """Verifica la traduzione di messaggi comuni."""
         msg = "avvio automazione"
         human, tech, _cat = SmartLogTranslator.humanize(msg)
-        assert human == "🚀 Avvio automazione in corso..."
+        assert human == "[AVVIO] Avvio automazione in corso..."
         assert tech == msg
 
     def test_humanize_preserve_icons(self):
         """Verifica che i messaggi con icone non vengano alterati."""
-        msg = "✅ Operazione conclusa"
+        msg = "[OK] Operazione conclusa"
         human, _tech, cat = SmartLogTranslator.humanize(msg)
         assert human == msg
         assert cat == "success"
@@ -23,34 +23,34 @@ class TestLogHumanizerBoost:
         # 'attendi' è presente, 'attendo' no.
         assert SmartLogTranslator._detect_category("Attendi un attimo") == "wait"
         assert SmartLogTranslator._detect_category("caricamento in corso") == "wait"
-        assert SmartLogTranslator._detect_category("⏳ Polling") == "wait"
+        assert SmartLogTranslator._detect_category("[ATTESA] Polling") == "wait"
 
     def test_detect_category_error(self):
         """Verifica rilevamento categoria errore."""
         assert SmartLogTranslator._detect_category("Errore di connessione") == "error"
         assert SmartLogTranslator._detect_category("Login fallito") == "error"
-        assert SmartLogTranslator._detect_category("❌ Eccezione") == "error"
+        assert SmartLogTranslator._detect_category("[ERRORE] Eccezione") == "error"
 
     def test_detect_category_success(self):
         """Verifica rilevamento categoria successo."""
         assert SmartLogTranslator._detect_category("Completato con successo") == "success"
-        assert SmartLogTranslator._detect_category("✅ Fatto") == "success"
-        assert SmartLogTranslator._detect_category("✨ Ottimo") == "success"
+        assert SmartLogTranslator._detect_category("[OK] Fatto") == "success"
+        assert SmartLogTranslator._detect_category("[INFO] Ottimo") == "success"
 
     def test_detect_category_action(self):
         """Verifica rilevamento categoria azione utente/bot."""
         assert SmartLogTranslator._detect_category("Click sul pulsante") == "action"
-        assert SmartLogTranslator._detect_category("🖱️ Seleziono") == "action"
+        assert SmartLogTranslator._detect_category("[CLICK] Seleziono") == "action"
 
     def test_detect_category_search(self):
         """Verifica rilevamento categoria ricerca."""
         assert SmartLogTranslator._detect_category("Ricerca documenti") == "search"
-        assert SmartLogTranslator._detect_category("🔍 Analisi") == "search"
+        assert SmartLogTranslator._detect_category("[CERCA] Analisi") == "search"
 
     def test_detect_category_download(self):
         """Verifica rilevamento categoria download."""
         assert SmartLogTranslator._detect_category("Scaricamento file") == "download"
-        assert SmartLogTranslator._detect_category("⬇️ Download") == "download"
+        assert SmartLogTranslator._detect_category("[DOWNLOAD] Download") == "download"
 
     def test_fallback_info(self):
         """Verifica fallback su info per messaggi neutri."""
@@ -60,4 +60,4 @@ class TestLogHumanizerBoost:
         """Verifica pulizia spazi e punti nei messaggi per il mapping."""
         msg = "  MISSIONE COMPIUTA.  "
         human, _, _ = SmartLogTranslator.humanize(msg)
-        assert human == "✨ Missione completata con successo!"
+        assert human == "[INFO] Missione completata con successo!"

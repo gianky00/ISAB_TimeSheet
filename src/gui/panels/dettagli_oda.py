@@ -200,7 +200,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
         if contract_col_idx != -1:
             self.data_table.update_column_options(contract_col_idx, contracts)
-            self._on_log("🔄 Elenco contratti aggiornato (Hot Reload).")
+            self._on_log("[SYNC] Elenco contratti aggiornato (Hot Reload).")
 
     def _load_saved_data(self) -> None:
         """Ripristina lo stato del pannello (date, fornitori, tabella) dall'ultimo salvataggio."""
@@ -284,7 +284,7 @@ class DettagliOdAPanel(BaseBotPanel):
                 rows = params_override["rows"]
             elif item := params_override.get("single_item"):
                 rows = [item]
-                self.log_widget.append(f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}")
+                self.log_widget.append(f"[INFO] Esecuzione singola per: {item.get('Numero OdA', 'N/D')}")
 
         if not all([username, password, fornitore]):
             ToastManager.instance().show("Verifica i parametri.", "warning")
@@ -358,4 +358,4 @@ class DettagliOdAPanel(BaseBotPanel):
             and hasattr(storico, "refresh_data")
         ):
             storico.refresh_data()
-            self._on_log("🔄 Aggiornamento Storico OdA avviato.")
+            self._on_log("[SYNC] Aggiornamento Storico OdA avviato.")

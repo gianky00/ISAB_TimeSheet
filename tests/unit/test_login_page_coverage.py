@@ -84,7 +84,7 @@ class TestLoginPageCoverage(unittest.TestCase):
                 self.page._check_and_handle_session_popup()
                 mock_yes.click.assert_called()
                 self.logger_mock.assert_any_call(
-                    "⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso."
+                    "[ATTENZIONE] Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso."
                 )
 
     def test_verify_logged_in_via_ui_false(self):

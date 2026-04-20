@@ -128,12 +128,12 @@ class ScaricaTSBot(SeleniumBaseBot):
             self.update_step("download", StepStatus.RUNNING)
             success_count, downloaded_files = self._process_oda_rows(rows, dest_dir)
 
-            self.log(f"✨ Download completati: {success_count}/{len(rows)}.")
+            self.log(f"[INFO] Download completati: {success_count}/{len(rows)}.")
 
             # Se almeno uno è stato scaricato, consideriamo lo step riuscito (o parziale)
             status_download = StepStatus.COMPLETED if success_count == len(rows) else StepStatus.ERROR
             if success_count > 0 and success_count < len(rows):
-                self.log(f"⚠️ Scarico parziale: {success_count} su {len(rows)}")
+                self.log(f"[ATTENZIONE] Scarico parziale: {success_count} su {len(rows)}")
 
             self.update_step("download", status_download)
 
@@ -147,7 +147,7 @@ class ScaricaTSBot(SeleniumBaseBot):
             return success_count == len(rows)
 
         except Exception as e:
-            self.log(f"❌ Errore imprevisto nel flusso run: {e}")
+            self.log(f"[ERRORE] Errore imprevisto nel flusso run: {e}")
             return False
 
     def _prepare_run_environment(self, data: Any) -> tuple[list[dict[str, Any]], Path]:
@@ -163,7 +163,7 @@ class ScaricaTSBot(SeleniumBaseBot):
         else:
             rows = list(data)
 
-        self.log(f"🚀 Inizio scarico TS per {len(rows)} OdA (Fornitore: {self.fornitore})...")
+        self.log(f"[AVVIO] Inizio scarico TS per {len(rows)} OdA (Fornitore: {self.fornitore})...")
 
         # Chrome downloads directly to download_path (if configured)
         # Forza la risoluzione del path per coerenza con BaseBot
@@ -203,7 +203,7 @@ class ScaricaTSBot(SeleniumBaseBot):
                 else:
                     msg = "OdA non trovato"
             except Exception as e:
-                self.log(f"❌ Errore OdA {numero_oda}: {e}")
+                self.log(f"[ERRORE] Errore OdA {numero_oda}: {e}")
                 msg = str(e)
 
             # Notifica progresso alla GUI (index, success, message)
@@ -245,7 +245,7 @@ class ScaricaTSBot(SeleniumBaseBot):
             self._attendi_scomparsa_overlay(90)
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"⚠️ Errore durante l'inserimento ricerca OdA {numero_oda}: {e}")
+            self.log(f"[ATTENZIONE] Errore durante l'inserimento ricerca OdA {numero_oda}: {e}")
             return False
 
     def _run_vba_processing(self, file_list: list[str], dest_dir: Path) -> None:
@@ -255,10 +255,10 @@ class ScaricaTSBot(SeleniumBaseBot):
         for f in file_list:
             ok, msg = TimesheetProcessor.process_and_move(Path(f), dest_dir)
             if ok:
-                self.log(f"  ✅ {msg}")
+                self.log(f"  [OK] {msg}")
                 processed += 1
             else:
-                self.log(f"  ❌ Errore elaborazione {Path(f).name}: {msg}")
+                self.log(f"  [ERRORE] Errore elaborazione {Path(f).name}: {msg}")
         self.log(f"🏁 Elaborazione conclusa: {processed}/{len(file_list)} completati.")
 
     def _navigate_to_timesheet(self) -> bool:
@@ -287,7 +287,7 @@ class ScaricaTSBot(SeleniumBaseBot):
             return True  # noqa: TRY300
 
         except Exception as e:
-            self.log(f"❌ Impossibile navigare al menu Timesheet: {e}")
+            self.log(f"[ERRORE] Impossibile navigare al menu Timesheet: {e}")
             return False
 
     def _setup_filters(self) -> bool:
@@ -323,7 +323,7 @@ class ScaricaTSBot(SeleniumBaseBot):
             return True  # noqa: TRY300
 
         except Exception as e:
-            self.log(f"❌ Errore nell'impostazione dei filtri: {e}")
+            self.log(f"[ERRORE] Errore nell'impostazione dei filtri: {e}")
             return False
 
     def _download_excel(
@@ -335,7 +335,7 @@ class ScaricaTSBot(SeleniumBaseBot):
 
         # Normalize path
         source_dir_path = Path(source_dir).resolve()
-        self.log(f"🔍 Monitoraggio download in: {source_dir_path}")
+        self.log(f"[CERCA] Monitoraggio download in: {source_dir_path}")
 
         if not source_dir_path.exists():
             self.log(f"✗ Cartella non esiste: {source_dir_path}")
@@ -362,7 +362,7 @@ class ScaricaTSBot(SeleniumBaseBot):
         )
 
         if not res_path:
-            self.log(f"⚠️ Nessun nuovo file rilevato dopo il click ({Timeouts.DOWNLOAD}s).")
+            self.log(f"[ATTENZIONE] Nessun nuovo file rilevato dopo il click ({Timeouts.DOWNLOAD}s).")
             return None
 
         downloaded_file = Path(res_path)
@@ -390,7 +390,7 @@ class ScaricaTSBot(SeleniumBaseBot):
             btn.click()
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"⚠️ Impossibile cliccare esportazione Excel: {e}")
+            self.log(f"[ATTENZIONE] Impossibile cliccare esportazione Excel: {e}")
             return False
 
     def _get_final_download_path(
@@ -426,10 +426,10 @@ class ScaricaTSBot(SeleniumBaseBot):
         for attempt in range(3):
             try:
                 shutil.move(str(src), str(dest))
-                self.log(f"✅ Scaricato: {dest.name}")
+                self.log(f"[OK] Scaricato: {dest.name}")
                 return dest  # noqa: TRY300
             except Exception as e:
-                self.log(f"⚠️ Tentativo spostamento {attempt + 1}/3 fallito: {e}")
+                self.log(f"[ATTENZIONE] Tentativo spostamento {attempt + 1}/3 fallito: {e}")
                 time.sleep(1)
-        self.log(f"❌ Impossibile spostare il file in: {dest}")
+        self.log(f"[ERRORE] Impossibile spostare il file in: {dest}")
         return None

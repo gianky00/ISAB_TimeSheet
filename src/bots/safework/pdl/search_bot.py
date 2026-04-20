@@ -98,7 +98,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
 
         # 2. Configurazione Filtri
         if not self.ricerca_pdl_page:
-            self.log("❌ Pagina Ricerca PDL non inizializzata.")
+            self.log("[ERRORE] Pagina Ricerca PDL non inizializzata.")
             return False
 
         self.update_step("filter", StepStatus.RUNNING)
@@ -127,7 +127,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
     def _naviga_a_ricerca(self) -> bool:
         """Gestisce la navigazione dalla Home alla pagina di ricerca PDL."""
         if not self.wait:
-            self.log("❌ Wait non inizializzato.")
+            self.log("[ERRORE] Wait non inizializzato.")
             return False
 
         try:
@@ -135,7 +135,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             self.wait.until(lambda d: d.find_element(*SafeWorkLocators.HOME_BUTTON)).click()
             self._attendi_scomparsa_overlay()
 
-            self.log("🔍 Clic su Ricerca PdL...")
+            self.log("[CERCA] Clic su Ricerca PdL...")
             self.wait.until(lambda d: d.find_element(*SafeWorkLocators.RICERCA_PDL_BUTTON)).click()
             self._attendi_scomparsa_overlay()
             return True  # noqa: TRY300
@@ -159,7 +159,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         self.log(f"📥 Esportazione Excel per {site_name}...")
 
         if not self.ricerca_pdl_page:
-            self.log("❌ Pagina Ricerca PDL non inizializzata per export.")
+            self.log("[ERRORE] Pagina Ricerca PDL non inizializzata per export.")
             return None
 
         if self.ricerca_pdl_page.esporta_excel():
@@ -224,6 +224,6 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
                 conn.executemany(query, data_to_insert)
 
             SyncTracker.update_status("pdl", len(data_to_insert), 0, time.time() - start_time)
-            self.log(f"✅ Importazione completata: {len(data_to_insert)} record processati.")
+            self.log(f"[OK] Importazione completata: {len(data_to_insert)} record processati.")
         except Exception as e:
-            self.log(f"❌ Errore importazione: {e}")
+            self.log(f"[ERRORE] Errore importazione: {e}")

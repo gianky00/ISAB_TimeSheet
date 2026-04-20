@@ -82,7 +82,7 @@ class TestTelegramServiceAdvanced:
 
         is_auth = await service._check_auth(mock_update)
         assert is_auth is False
-        mock_update.message.reply_text.assert_called_with("⛔ Accesso Negato")
+        mock_update.message.reply_text.assert_called_with("[BLOCCO] Accesso Negato")
 
     @pytest.mark.asyncio
     async def test_sequential_input_pdl(self, service, mock_update, mock_context):

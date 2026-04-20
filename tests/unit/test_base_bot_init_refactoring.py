@@ -113,7 +113,7 @@ def test_init_driver_failure_handling(bot, mocker):
         bot._init_driver()
 
     # Verifica che venga dato il suggerimento corretto
-    assert any("❌ CRASH: Chrome si è chiuso all'avvio" in log for log in logs)
+    assert any("[ERRORE] CRASH: Chrome si è chiuso all'avvio" in log for log in logs)
 
 
 def test_init_driver_version_error(bot, mocker):
@@ -141,5 +141,5 @@ def test_init_driver_version_error(bot, mocker):
             bot._init_driver()
 
     # Verify error logging
-    assert any("❌ ERRORE CRITICO DRIVER: Versione incompatibile" in log for log in logs)
+    assert any("[ERRORE] ERRORE CRITICO DRIVER: Versione incompatibile" in log for log in logs)
     assert any("🗑️ Driver locale obsoleto rimosso dalla cache." in log for log in logs)

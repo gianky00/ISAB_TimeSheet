@@ -376,7 +376,7 @@ class CertificatiCampioneTab(QWidget):
 
             # Monitoraggio
             is_excluded = matricola in self.engine._exclusions
-            mon_text = "✅ Includi nel monitoraggio" if is_excluded else "🚫 Escludi dal monitoraggio"
+            mon_text = "[OK] Includi nel monitoraggio" if is_excluded else "🚫 Escludi dal monitoraggio"
             mon_act = QAction(mon_text, self)
             mon_act.triggered.connect(lambda: self._toggle_exclusion(matricola))
             menu.addAction(mon_act)

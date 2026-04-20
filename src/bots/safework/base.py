@@ -59,11 +59,11 @@ class SafeworkBaseBot(SeleniumBaseBot):
         Tenta di cliccare un elemento gestendo overlay e intercettazioni.
         """
         if not self.driver:
-            self.log("❌ Driver non inizializzato.")
+            self.log("[ERRORE] Driver non inizializzato.")
             return
 
         if label:
-            self.log(f"🖱️ Click su {label}...")
+            self.log(f"[CLICK] Click su {label}...")
 
         try:
             self._attendi_scomparsa_overlay()
@@ -75,7 +75,7 @@ class SafeworkBaseBot(SeleniumBaseBot):
                 el = self.driver.find_element(*locator)
                 self.driver.execute_script("arguments[0].click();", el)
             except Exception as e:
-                self.log(f"❌ Errore click su {label or locator}: {e}")
+                self.log(f"[ERRORE] Errore click su {label or locator}: {e}")
                 raise
 
     def _attendi_scomparsa_overlay(self, timeout_secondi: int | None = 120) -> bool:
@@ -90,7 +90,7 @@ class SafeworkBaseBot(SeleniumBaseBot):
                 EC.invisibility_of_element_located((By.ID, "GISWaitOverlay"))
             )
         except TimeoutException:
-            self.log("⏳ Overlay ancora presente (proseguo...)")
+            self.log("[ATTESA] Overlay ancora presente (proseguo...)")
 
         # Gestione modale OK/Annulla se appare
         with suppress(Exception):
@@ -108,11 +108,11 @@ class SafeworkBaseBot(SeleniumBaseBot):
                     By.XPATH,
                     ".//*[self::button or self::span or self::a][contains(text(), 'OK') or contains(text(), 'Si') or contains(text(), 'Yes') or @data-dismiss='modal']",
                 ).click()
-                self.log("ℹ️ Modale gestita (OK/Annulla/Si/Yes).")
+                self.log("[INFO] Modale gestita (OK/Annulla/Si/Yes).")
             except Exception:
                 # Fallback per idtxt E421C594 (Si della ricerca estesa che a volte riappare)
                 modale.find_element(By.CSS_SELECTOR, "*[idtxt='E421C594']").click()
-                self.log("ℹ️ Modale gestita via idtxt (Si).")
+                self.log("[INFO] Modale gestita via idtxt (Si).")
 
         # No sleep needed: invisibility check is sufficient
         return True
@@ -137,7 +137,7 @@ class SafeworkBaseBot(SeleniumBaseBot):
                 EC.invisibility_of_element_located((By.XPATH, xpath_caricamento))
             )
         except TimeoutException:
-            self.log("⚠️ Timeout attesa caricamento sistema (proseguo...)")
+            self.log("[ATTENZIONE] Timeout attesa caricamento sistema (proseguo...)")
 
         self._attendi_scomparsa_overlay()
 

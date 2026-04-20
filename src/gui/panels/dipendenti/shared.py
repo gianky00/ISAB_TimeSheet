@@ -161,7 +161,7 @@ class InteractiveStatusCard(QFrame):
         left_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Emoji per contesto visivo
-        emoji_map = {"ok": "✅", "warning": "⚠️", "expired": "🚫"}
+        emoji_map = {"ok": "[OK]", "warning": "[ATTENZIONE]", "expired": "🚫"}
         emoji_label = QLabel(emoji_map.get(filter_type, "📊"))
         emoji_label.setStyleSheet("font-size: 24px; border: none;")
         emoji_label.setAlignment(Qt.AlignmentFlag.AlignCenter)

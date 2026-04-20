@@ -123,4 +123,4 @@ with Diagram(
     tg_bridge >> Edge(label="Telegram Sync", color="cyan", penwidth="2.0") >> tg_ext
     tg_bridge >> core
 
-print(f"✅ Architettura High-Res v1.30 generata in: {OUTPUT_DIR / OUTPUT_FILE}.png")
+print(f"[OK] Architettura High-Res v1.30 generata in: {OUTPUT_DIR / OUTPUT_FILE}.png")

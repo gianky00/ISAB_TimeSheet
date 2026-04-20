@@ -98,7 +98,7 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
 
         # 3. Ricerca ed Export
         self.update_step("search", StepStatus.RUNNING)
-        self.log("🔍 Avvio ricerca massiva...")
+        self.log("[CERCA] Avvio ricerca massiva...")
         self.attivita_page.esegui_ricerca()
         self._attendi_scomparsa_overlay()
 
@@ -111,7 +111,7 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
             self.update_step("parse", StepStatus.COMPLETED)
             self._cleanup_temp_file(excel_file)
         else:
-            self.log("❌ Impossibile scaricare il file Excel dei risultati.")
+            self.log("[ERRORE] Impossibile scaricare il file Excel dei risultati.")
             self.update_step("search", StepStatus.ERROR)
             return False
 
@@ -137,7 +137,7 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
                     download.save_as(str(dest))
                     return str(dest)
         except Exception as e:
-            self.log(f"❌ Errore download Excel: {e}")
+            self.log(f"[ERRORE] Errore download Excel: {e}")
         return None
 
     def _parse_excel_results(self, file_path: str) -> None:
@@ -179,9 +179,9 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
                         }
                     )
                     count_pdl += 1
-            self.log(f"✅ Trovati {count_pdl} record programmati.")
+            self.log(f"[OK] Trovati {count_pdl} record programmati.")
         except Exception as e:
-            self.log(f"⚠️ Errore parsing Excel: {e}")
+            self.log(f"[ATTENZIONE] Errore parsing Excel: {e}")
 
     def _cleanup_temp_file(self, file_path: str) -> None:
         with suppress(Exception):

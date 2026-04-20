@@ -80,13 +80,13 @@ async def _handle_sequential_input(
             service.command_received.emit("set_autopilot", {"time": items[0]})
         else:
             if update.message:
-                await update.message.reply_text("❌ Formato non valido. Usa HH:MM.")
+                await update.message.reply_text("[ERRORE] Formato non valido. Usa HH:MM.")
             return
 
     service.user_states[chat_id] = None
     if update.message:
         await update.message.reply_text(
-            "✅ Operazione completata.", reply_markup=TelegramUI.get_main_keyboard()
+            "[OK] Operazione completata.", reply_markup=TelegramUI.get_main_keyboard()
         )
 
 

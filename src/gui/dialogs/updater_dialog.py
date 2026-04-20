@@ -139,9 +139,9 @@ class UpdateProgressDialog(QDialog):
         )
         action = "Scaricamento" if self.worker.url_or_path.startswith("http") else "Trasferimento"
 
-        self.lbl_status.setText(f"🚀 {action} in corso...")
+        self.lbl_status.setText(f"[AVVIO] {action} in corso...")
         self.lbl_details.setText(
-            f"📦 <b>{mb_down:.1f} / {mb_total:.1f} MB</b>  •  ⚡ <b>{speed_mb:.2f} MB/s</b>  •  ⏳ <b>{eta_str}</b>"
+            f"📦 <b>{mb_down:.1f} / {mb_total:.1f} MB</b>  •  ⚡ <b>{speed_mb:.2f} MB/s</b>  •  [ATTESA] <b>{eta_str}</b>"
         )
 
     def get_current_value(self) -> int:
@@ -158,7 +158,7 @@ class UpdateProgressDialog(QDialog):
     @pyqtSlot(int)
     def on_retrying(self, retry_count: int) -> None:
         """Mostra un avviso in caso di tentativi di riconnessione."""
-        self.lbl_retry.setText(f"⚠️ Connessione instabile. Tentativo #{retry_count}...")
+        self.lbl_retry.setText(f"[ATTENZIONE] Connessione instabile. Tentativo #{retry_count}...")
 
     @pyqtSlot(str)
     def on_finished(self, setup_path: str) -> None:
@@ -176,7 +176,7 @@ class UpdateProgressDialog(QDialog):
 def show_install_prompt(setup_path: str, parent: QWidget | None = None) -> None:
     """Mostra un messaggio all'utente per decidere se installare subito o alla chiusura."""
     msg_box = QMessageBox(parent)
-    msg_box.setWindowTitle("🔄 Aggiornamento Pronto")
+    msg_box.setWindowTitle("[SYNC] Aggiornamento Pronto")
     msg_box.setText(
         "L'aggiornamento è stato scaricato ed è pronto per l'installazione.\n\nCosa desideri fare?"
     )
@@ -200,7 +200,7 @@ def show_install_prompt(setup_path: str, parent: QWidget | None = None) -> None:
     elif msg_box.clickedButton() == btn_later:
         set_pending_installer(setup_path)
         QMessageBox.information(
-            parent, "ℹ️ Info", "L'aggiornamento partirà automaticamente alla chiusura dell'app."
+            parent, "[INFO] Info", "L'aggiornamento partirà automaticamente alla chiusura dell'app."
         )
 
 
@@ -224,7 +224,7 @@ def check_for_updates(  # noqa: PLR0912
     if not update_sources:
         if not silent:
             QMessageBox.information(
-                parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
+                parent, "[OK] Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
             )
         return
 
@@ -236,7 +236,7 @@ def check_for_updates(  # noqa: PLR0912
     if not download_url:
         if not silent:
             QMessageBox.information(
-                parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
+                parent, "[OK] Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
             )
         return
 
@@ -269,7 +269,7 @@ def check_for_updates(  # noqa: PLR0912
             msg += "\nVuoi aggiornare ora?"
             reply = QMessageBox.question(
                 parent,
-                "🔄 Aggiornamento",
+                "[SYNC] Aggiornamento",
                 msg,
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
@@ -277,7 +277,7 @@ def check_for_updates(  # noqa: PLR0912
                 perform_auto_update(download_url, parent)
     elif not silent:
         QMessageBox.information(
-            parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
+            parent, "[OK] Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
         )
 
 

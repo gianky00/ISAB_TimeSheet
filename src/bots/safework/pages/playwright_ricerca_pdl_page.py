@@ -25,10 +25,10 @@ class PlaywrightRicercaPDLPage(PlaywrightBasePage):
             sel = self._get_selector(SafeWorkLocators.ESCLUDI_CHIUSI_CHECKBOX)
             is_checked = self.page.is_checked(sel)
             if is_checked != exclude_closed:
-                self.log(f"🖱️ Impostazione 'Escludi chiusi': {exclude_closed}")
+                self.log(f"[CLICK] Impostazione 'Escludi chiusi': {exclude_closed}")
                 self.page.click(sel)
         except Exception as e:
-            self.log(f"⚠️ Errore configurazione flag 'Escludi chiusi': {e}")
+            self.log(f"[ATTENZIONE] Errore configurazione flag 'Escludi chiusi': {e}")
 
     def seleziona_sito_e_cerca(self, site_name: str) -> bool:
         """Seleziona il sito e clicca Cerca."""
@@ -45,14 +45,14 @@ class PlaywrightRicercaPDLPage(PlaywrightBasePage):
             self.page.click(option_sel)
 
             # 3. Clic Cerca - Usa il selettore generico centralizzato
-            self.log("🖱️ Clic su Cerca...")
+            self.log("[CLICK] Clic su Cerca...")
             search_btn_sel = self._get_selector(SafeWorkLocators.SEARCH_GENERIC_BUTTON)
             self.page.click(search_btn_sel)
 
             # 4. Attesa Overlay
             self._attendi_scomparsa_overlay(timeout_ms=300000)
         except Exception as e:
-            self.log(f"❌ Errore selezione/ricerca: {e}")
+            self.log(f"[ERRORE] Errore selezione/ricerca: {e}")
             return False
         else:
             return True
@@ -73,7 +73,7 @@ class PlaywrightRicercaPDLPage(PlaywrightBasePage):
             sel = self._get_selector(SafeWorkLocators.EXPORT_BUTTON)
             self.page.click(sel)
         except Exception as e:
-            self.log(f"❌ Errore click export: {e}")
+            self.log(f"[ERRORE] Errore click export: {e}")
             return False
         else:
             return True

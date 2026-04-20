@@ -1,7 +1,7 @@
 # 📊 Test Report - 2026-03-22
 Durata: 4117.2s | Successo: 1356 | Falliti: 21
 
-## ❌ Dettaglio Errori
+## [ERRORE] Dettaglio Errori
 ### `tests/unit/test_parsing_comprehensive.py::TestParsingComprehensive::test_parse_currency_symbols`
 - **Errore:** FAILED tests/unit/test_parsing_comprehensive.py::TestParsingComprehensive::test_parse_currency_symbols
 

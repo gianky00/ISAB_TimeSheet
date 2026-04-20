@@ -275,11 +275,11 @@ class SecurityDashboard(QWidget):
             QMessageBox.information(
                 self,
                 "Integrità",
-                "✅ Il registro di Audit è integro e non compromesso.",
+                "[OK] Il registro di Audit è integro e non compromesso.",
             )
         else:
             QMessageBox.warning(
                 self,
                 "Integrità",
-                "⚠️ Rilevata possibile manomissione nel registro di Audit!",
+                "[ATTENZIONE] Rilevata possibile manomissione nel registro di Audit!",
             )

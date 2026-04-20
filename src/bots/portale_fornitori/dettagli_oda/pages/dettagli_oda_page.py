@@ -127,10 +127,10 @@ class DettagliOdAPage:
                 self.log("✓ Logout completato con successo.")
                 return True  # noqa: TRY300
             except TimeoutException:
-                self.log("⚠️ Popup conferma non apparso o timeout.")
+                self.log("[ATTENZIONE] Popup conferma non apparso o timeout.")
                 return False
         except Exception as e:
-            self.log(f"⚠️ Errore durante logout: {e}")
+            self.log(f"[ATTENZIONE] Errore durante logout: {e}")
             return False
 
     def expand_sidebar_if_collapsed(self) -> None:
@@ -202,7 +202,7 @@ class DettagliOdAPage:
                         self._close_all_tabs()
                         return None
             except Exception as e:
-                self.log(f"  ⚠️ Errore lettura conteggio: {e}")
+                self.log(f"  [ATTENZIONE] Errore lettura conteggio: {e}")
 
             target_filename = ""
             if oda:
@@ -241,7 +241,7 @@ class DettagliOdAPage:
                 except Exception:
                     break
         except Exception as e:
-            self.log(f"  ⚠️ Errore chiusura tab: {e}")
+            self.log(f"  [ATTENZIONE] Errore chiusura tab: {e}")
 
     def _download(
         self,
@@ -262,7 +262,7 @@ class DettagliOdAPage:
                 except Exception:
                     return None
 
-            self.log(f"  🔍 Monitoraggio download in: {source_dir}")
+            self.log(f"  [CERCA] Monitoraggio download in: {source_dir}")
             allowed_extensions = {".xlsx", ".xls"}
             files_before = {
                 f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() in allowed_extensions
@@ -316,7 +316,7 @@ class DettagliOdAPage:
                 self.driver.execute_script("arguments[0].click();", btn)
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"  ⚠️ Errore click esportazione: {e}")
+            self.log(f"  [ATTENZIONE] Errore click esportazione: {e}")
             return False
 
     def _finalize_download(self, src: Path, dest_dir: Path, target_name: str) -> Path | None:

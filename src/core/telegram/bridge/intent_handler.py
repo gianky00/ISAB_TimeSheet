@@ -78,10 +78,10 @@ class TelegramIntentHandler(QObject):
             [InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}")] for p in printers
         ]
 
-        self.telegram.send_message_sync("✅ Ho aggiunto i PDL. **Quale stampante utilizzo?**")
+        self.telegram.send_message_sync("[OK] Ho aggiunto i PDL. **Quale stampante utilizzo?**")
         coro = self.telegram.app.bot.send_message(
             chat_id=chat_id,
-            text=f"✅ PDL {', '.join(items)} pronti. **Quale stampante uso?**",
+            text=f"[OK] PDL {', '.join(items)} pronti. **Quale stampante uso?**",
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
         self._run_coroutine(coro)
@@ -89,8 +89,8 @@ class TelegramIntentHandler(QObject):
     def _handle_download_pdl(self, chat_id: int) -> None:
         keyboard = [
             [
-                InlineKeyboardButton("✅ Sì, stampa", callback_data="confirm_print_yes"),
-                InlineKeyboardButton("❌ No, solo download", callback_data="confirm_print_no"),
+                InlineKeyboardButton("[OK] Sì, stampa", callback_data="confirm_print_yes"),
+                InlineKeyboardButton("[ERRORE] No, solo download", callback_data="confirm_print_no"),
             ]
         ]
         coro = self.telegram.app.bot.send_message(
@@ -109,7 +109,7 @@ class TelegramIntentHandler(QObject):
         elif obj == "timbrature":
             cmds.run_timbrature_bot({"period": "today"})
         else:
-            self.telegram.send_message_sync(f"⚠️ Non so come scaricare '{obj}'.")
+            self.telegram.send_message_sync(f"[ATTENZIONE] Non so come scaricare '{obj}'.")
 
     def _run_coroutine(self, coro: Any) -> None:
         """Helper per eseguire coroutine in modo sicuro anche durante i test."""

@@ -110,16 +110,16 @@ class CertificatiEngine:
     def format_days_text_short(cls, days: int | None) -> str:
         """Ritorna una rappresentazione testuale breve dello stato scadenze."""
         if days == cls.FAULTY_MARKER:
-            return "❌ STRUMENTO GUASTO"
+            return "[ERRORE] STRUMENTO GUASTO"
         if days is None:
             return "N/D"
         if days < 0:
-            return f"🔴 Scaduto ({abs(days)}gg fa)"
+            return f"[ROSSO] Scaduto ({abs(days)}gg fa)"
         if days <= cls.WARNING_THRESHOLD:
-            return f"🟠 Scade tra {days}gg"
+            return f"[ARANCIONE] Scade tra {days}gg"
         if days <= cls.EXPIRING_THRESHOLD:
-            return f"🟡 Scade tra {days}gg"
-        return f"✅ Attivo ({days}gg rim.)"
+            return f"[GIALLO] Scade tra {days}gg"
+        return f"[OK] Attivo ({days}gg rim.)"
 
     @staticmethod
     def format_errore_max(val: float | str | None) -> str:

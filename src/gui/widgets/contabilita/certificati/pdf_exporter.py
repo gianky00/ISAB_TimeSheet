@@ -290,7 +290,7 @@ class CertificatiPdfExporter:
 
                 if is_current:
                     stato_display = CertificatiEngine.format_days_text_short(days)
-                    for emoji in ("✅", "🔴", "🟠", "🟡", "❌"):
+                    for emoji in ("[OK]", "[ROSSO]", "[ARANCIONE]", "[GIALLO]", "[ERRORE]"):
                         stato_display = stato_display.replace(emoji, "")
                     stato_display = stato_display.strip()
 

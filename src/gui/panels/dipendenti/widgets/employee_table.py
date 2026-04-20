@@ -143,7 +143,7 @@ class EmployeeTableView(QTableView):
         else:
             act = QAction(
                 get_colored_icon(get_asset_path(Icons.CHECK_CIRCLE), COLORS["success_dark"]),
-                "✅ Riattiva monitoraggio",
+                "[OK] Riattiva monitoraggio",
                 self,
             )
             act.triggered.connect(lambda: self.monitoring_toggled.emit(id_risorsa, True))

@@ -66,7 +66,7 @@ class PlaywrightLoginPage(PlaywrightBasePage):
             if self.page.locator(option_xpath).is_visible():
                 self.page.click(option_xpath)
         except Exception as e:
-            self.log(f"⚠️ Avviso: Selezione società '{company}' non riuscita, proseguo: {e}")
+            self.log(f"[ATTENZIONE] Avviso: Selezione società '{company}' non riuscita, proseguo: {e}")
 
         self.log("Credenziali inserite. Clicco Accedi...")
         self.page.click(btn_sel)
@@ -83,7 +83,7 @@ class PlaywrightLoginPage(PlaywrightBasePage):
             yes_sel = self._get_selector(CommonLocators.POPUP_SESSION_YES)
             # Attesa breve per il popup di sessione già aperta
             self.page.wait_for_selector(yes_sel, state="visible", timeout=5000)
-            self.log("⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.")
+            self.log("[ATTENZIONE] Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.")
             self.page.click(yes_sel, force=True)
             time.sleep(1)
         except TimeoutError:
@@ -126,7 +126,7 @@ class PlaywrightLoginPage(PlaywrightBasePage):
                 # Primo tentativo di inserimento
                 self._perform_login_form_action(username, password, company)
             except TimeoutError:
-                self.log("⚠️ Campi login non trovati or overlay bloccante. Ricarico pagina...")
+                self.log("[ATTENZIONE] Campi login non trovati or overlay bloccante. Ricarico pagina...")
                 self.page.reload()
                 self._wait_overlay(15000)
                 # Secondo tentativo post-refresh

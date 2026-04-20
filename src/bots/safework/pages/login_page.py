@@ -43,7 +43,7 @@ class SafeWorkLoginPage:
             return self._login_flow_coemi()
 
         except Exception as e:
-            self.log(f"❌ Errore critico durante il login: {e}")
+            self.log(f"[ERRORE] Errore critico durante il login: {e}")
             return False
 
     def _procedura_comune_login(self, username: str, password: str) -> None:
@@ -51,7 +51,7 @@ class SafeWorkLoginPage:
         MAX_RETRIES = 3  # noqa: N806
         for tentativa in range(MAX_RETRIES):
             try:
-                self.log(f"⏳ Selezione sito 'ISAB Sud' (Tentativo {tentativa + 1}/3)...")
+                self.log(f"[ATTESA] Selezione sito 'ISAB Sud' (Tentativo {tentativa + 1}/3)...")
 
                 # Attesa dinamica: aspetta che il loader in sovrimpressione scompaia
                 WebDriverWait(self.driver, 20).until(
@@ -82,10 +82,10 @@ class SafeWorkLoginPage:
 
             except (TimeoutException, Exception) as e:
                 if "stale" in str(e).lower() and tentativa < MAX_RETRIES - 1:
-                    self.log("⚠️ Rilevato elemento non più valido. Ricaricamento...")
+                    self.log("[ATTENZIONE] Rilevato elemento non più valido. Ricaricamento...")
                     self.driver.refresh()
                     continue
-                self.log(f"❌ Errore fase preliminare login: {e}")
+                self.log(f"[ERRORE] Errore fase preliminare login: {e}")
                 raise
 
     def _login_flow_coemi(self) -> bool:
@@ -95,20 +95,20 @@ class SafeWorkLoginPage:
         - DEVE attendere la sua scomparsa.
         """
         try:
-            self.log("⏳ In attesa dello spinner di sistema...")
+            self.log("[ATTESA] In attesa dello spinner di sistema...")
             WebDriverWait(self.driver, 60).until(
                 EC.visibility_of_element_located(SafeWorkLocators.CARICAMENTO_SPAN)
             )
-            self.log("⏳ Sistema in caricamento (attesa completamento)...")
+            self.log("[ATTESA] Sistema in caricamento (attesa completamento)...")
 
             WebDriverWait(self.driver, 300).until(
                 EC.invisibility_of_element_located(SafeWorkLocators.CARICAMENTO_SPAN)
             )
-            self.log("✅ Caricamento sistema completato.")
+            self.log("[OK] Caricamento sistema completato.")
 
             return self._attendi_dashboard()
         except TimeoutException:
-            self.log("⚠️ Timeout caricamento. Verifica diretta dashboard...")
+            self.log("[ATTENZIONE] Timeout caricamento. Verifica diretta dashboard...")
             return self._attendi_dashboard()
 
     def _login_flow_tcl(self) -> bool:
@@ -119,8 +119,8 @@ class SafeWorkLoginPage:
         """Verifica finale comune."""
         try:
             WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable(SafeWorkLocators.HOME_BUTTON))
-            self.log("✅ Accesso alla Dashboard completato.")
+            self.log("[OK] Accesso alla Dashboard completato.")
             return True  # noqa: TRY300
         except TimeoutException:
-            self.log("❌ Dashboard non raggiunta.")
+            self.log("[ERRORE] Dashboard non raggiunta.")
             return False

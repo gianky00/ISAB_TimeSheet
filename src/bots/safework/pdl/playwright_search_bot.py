@@ -105,7 +105,7 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
             self.page.click(self._get_selector(SafeWorkLocators.HOME_BUTTON))
             self._attendi_scomparsa_overlay()
 
-            self.log("🔍 Clic su Ricerca PdL...")
+            self.log("[CERCA] Clic su Ricerca PdL...")
             self.page.click(self._get_selector(SafeWorkLocators.RICERCA_PDL_BUTTON))
             self._attendi_scomparsa_overlay()
         except Exception:
@@ -134,7 +134,7 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
                     download.save_as(str(dest))
                     return str(dest)
         except Exception as e:
-            self.log(f"❌ Errore export: {e}")
+            self.log(f"[ERRORE] Errore export: {e}")
         return None
 
     def _cleanup_temp_file(self, file_path: str) -> None:
@@ -184,6 +184,6 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
                 conn.executemany(query, data_to_insert)
 
             SyncTracker.update_status("pdl", len(data_to_insert), 0, time.time() - start_time)
-            self.log(f"✅ Importazione completata: {len(data_to_insert)} record processati.")
+            self.log(f"[OK] Importazione completata: {len(data_to_insert)} record processati.")
         except Exception as e:
-            self.log(f"❌ Errore importazione: {e}")
+            self.log(f"[ERRORE] Errore importazione: {e}")

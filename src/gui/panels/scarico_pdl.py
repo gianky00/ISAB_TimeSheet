@@ -395,11 +395,11 @@ class ScaricoPDLPanel(BaseBotPanel):
                 self.log_widget.append(f"📎 Inviando {len(files)} file a Telegram...")
 
             tg_service.send_document_sync(
-                report_path, caption=f"✅ Scarico PDL completato ({len(files)} file)"
+                report_path, caption=f"[OK] Scarico PDL completato ({len(files)} file)"
             )
             self.log_widget.append("📤 Report inviato correttamente a Telegram.")
         except Exception as e:
-            self.log_widget.append(f"⚠️ Errore invio Telegram: {e}", "ERROR")
+            self.log_widget.append(f"[ATTENZIONE] Errore invio Telegram: {e}", "ERROR")
 
     def on_step_completed(self, step_idx: int, success: bool, message: str = "") -> None:
         """Aggiorna lo stato visivo di una specifica riga PDL."""

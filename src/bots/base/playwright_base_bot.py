@@ -121,7 +121,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
                     self.log("🌐 Inizializzazione Playwright Core...")
                     self.playwright = sync_playwright().start()
 
-                self.log(f"🚀 Lancio Chromium con profilo persistente: {user_data_dir.name}")
+                self.log(f"[AVVIO] Lancio Chromium con profilo persistente: {user_data_dir.name}")
                 self.context = self.playwright.chromium.launch_persistent_context(
                     user_data_dir=str(user_data_dir),
                     no_viewport=False,
@@ -134,14 +134,14 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
             except Exception as e:
                 err_msg = str(e)
-                self.log(f"⚠️ Errore inizializzazione (T{attempt + 1}): {err_msg}", "WARNING")
+                self.log(f"[ATTENZIONE] Errore inizializzazione (T{attempt + 1}): {err_msg}", "WARNING")
 
                 # Pulizia forzata dello stato interno ad ogni fallimento
                 self._stop_playwright_internal()
 
                 # Se è l'ultimo tentativo, rilanciamo l'errore definitivo
                 if attempt == max_retries - 1:
-                    self.log("❌ Impossibile inizializzare il browser dopo molteplici tentativi.", "ERROR")
+                    self.log("[ERRORE] Impossibile inizializzare il browser dopo molteplici tentativi.", "ERROR")
                     raise
 
         if self.context is None:

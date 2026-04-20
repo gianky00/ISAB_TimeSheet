@@ -297,7 +297,7 @@ class ActivityFeed(QWidget):
             logs = AuditManager.instance().get_logs(limit=10)
 
             if not logs:
-                empty_lbl = QLabel("✨ Nessuna attività recente")
+                empty_lbl = QLabel("[INFO] Nessuna attività recente")
                 empty_lbl.setStyleSheet(
                     f"""
                     QLabel {{

@@ -43,7 +43,7 @@ class ScaricoTSPage:
                 EC.invisibility_of_element_located((By.XPATH, xpath))
             )
         except TimeoutException:
-            self.log("⚠️ Timeout attesa overlay.")
+            self.log("[ATTENZIONE] Timeout attesa overlay.")
 
     def navigate_to_timesheet(self) -> bool:
         """Navigates to Report -> Timesheet."""

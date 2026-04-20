@@ -56,13 +56,13 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
             return
 
         if label:
-            self.log(f"🖱️ Click su {label}...")
+            self.log(f"[CLICK] Click su {label}...")
 
         try:
             self._attendi_scomparsa_overlay()
             self.page.click(selector, timeout=timeout_ms)
         except Exception as e:
-            self.log(f"❌ Errore click su {label or selector}: {e}")
+            self.log(f"[ERRORE] Errore click su {label or selector}: {e}")
             raise
 
     def _attendi_scomparsa_overlay(self, timeout_ms: int = 120000) -> bool:
@@ -73,14 +73,14 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
             # GISWaitOverlay
             self.page.wait_for_selector("#GISWaitOverlay", state="hidden", timeout=timeout_ms)
         except TimeoutError:
-            self.log("⏳ Overlay ancora presente (proseguo...)")
+            self.log("[ATTESA] Overlay ancora presente (proseguo...)")
 
         with suppress(Exception):
             modale_xpath = "//div[contains(@class, 'modal') and contains(@style, 'display: block')]"
             if self.page.is_visible(f"xpath={modale_xpath}", timeout=3000):
                 btn_xpath = ".//*[self::button or self::span or self::a][contains(text(), 'OK') or contains(text(), 'Si') or contains(text(), 'Yes') or @data-dismiss='modal']"
                 self.page.click(f"xpath={modale_xpath}{btn_xpath}")
-                self.log("ℹ️ Modale gestita (OK/Annulla/Si/Yes).")
+                self.log("[INFO] Modale gestita (OK/Annulla/Si/Yes).")
 
         return True
 
@@ -95,6 +95,6 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
 
             self.page.wait_for_selector(xpath_caricamento, state="hidden", timeout=timeout_ms)
         except TimeoutError:
-            self.log("⚠️ Timeout attesa caricamento sistema.")
+            self.log("[ATTENZIONE] Timeout attesa caricamento sistema.")
 
         self._attendi_scomparsa_overlay()

@@ -135,10 +135,10 @@ class PopoutPlaceholderWidget(QWidget):
                     )
                 )
             else:
-                self.logo_label.setText("🚀")
+                self.logo_label.setText("[AVVIO]")
                 self.logo_label.setStyleSheet("font-size: 72px;")
         except Exception:
-            self.logo_label.setText("🚀")
+            self.logo_label.setText("[AVVIO]")
             self.logo_label.setStyleSheet("font-size: 72px;")
 
         logo_layout.addWidget(self.logo_label)

@@ -344,14 +344,14 @@ def poll_for_new_file(  # noqa: PLR0912
                     # Caso 1: File Nuovo (non era nello snapshot)
                     if f_res not in snapshot_map:
                         detected_file = f_res
-                        logger.info(f"✅ FILE NUOVO RILEVATO: {f_res.name}")
+                        logger.info(f"[OK] FILE NUOVO RILEVATO: {f_res.name}")
                         break
 
                     # Caso 2: File Aggiornato (era nello snapshot ma mtime è cambiato)
                     # Tolleranza 1 secondo per filesystem instabili
                     if f_res.stat().st_mtime > snapshot_map[f_res] + 1.0:
                         detected_file = f_res
-                        logger.info(f"✅ FILE AGGIORNATO RILEVATO: {f_res.name}")
+                        logger.info(f"[OK] FILE AGGIORNATO RILEVATO: {f_res.name}")
                         break
 
             if detected_file:

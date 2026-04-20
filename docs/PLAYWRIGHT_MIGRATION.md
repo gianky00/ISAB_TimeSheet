@@ -1,4 +1,4 @@
-# Migrazione Selenium -> Playwright 🚀
+# Migrazione Selenium -> Playwright [AVVIO]
 
 ## Obiettivo
 Migrare l'intera infrastruttura di automazione da Selenium a Playwright per migliorare affidabilità, velocità e manutenibilità.

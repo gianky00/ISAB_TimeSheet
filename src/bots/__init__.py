@@ -118,7 +118,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
             {"name": "Posizione OdA", "type": "text"},
         ],
         "config_key": "last_oda_data",
-        "warning": "⚠️ Il browser rimarrà aperto dopo l'esecuzione",
+        "warning": "[ATTENZIONE] Il browser rimarrà aperto dopo l'esecuzione",
     },
     "prenota_bp": {
         "class": PrenotaBPBot,
@@ -155,7 +155,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
         "class_pw": PW_BOTS["ricerca_pdl"],
         "name": "Ricerca PDL",
         "description": "Ricerca massiva e aggiornamento database PDL",
-        "icon": "🔍",
+        "icon": "[CERCA]",
         "columns": [],
         "config_key": "last_pdl_search_data",
     },
@@ -173,7 +173,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
         "class_pw": PW_BOTS["programmazione_sync"],
         "name": "Sincronizzazione Programmazione",
         "description": "Download massivo report attività SafeWork",
-        "icon": "🔄",
+        "icon": "[SYNC]",
         "columns": [],
         "config_key": "last_prog_sync_data",
     },
@@ -206,7 +206,7 @@ def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:
     if engine == "playwright" and bot_info.get("class_pw"):
         bot_class = bot_info["class_pw"]
     elif engine == "playwright":
-        msg = f"⚠️ Motore Playwright richiesto ma non disponibile per '{bot_id}' (class_pw è None). Eseguo fallback su Selenium."
+        msg = f"[ATTENZIONE] Motore Playwright richiesto ma non disponibile per '{bot_id}' (class_pw è None). Eseguo fallback su Selenium."
         logger.warning(msg)
         print(f"[!] {msg}")  # Output visibile se eseguito da console
 

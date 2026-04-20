@@ -22,7 +22,7 @@ class TelegramUI:
                     InlineKeyboardButton("🗄️ Database", callback_data="nav_db"),
                 ],
                 [
-                    InlineKeyboardButton("✨ Lyra AI", callback_data="nav_lyra"),
+                    InlineKeyboardButton("[INFO] Lyra AI", callback_data="nav_lyra"),
                     InlineKeyboardButton("⚙️ Utility & Stato", callback_data="nav_utility"),
                 ],
             ]
@@ -121,7 +121,7 @@ class TelegramUI:
     @staticmethod
     def get_pdl_menu(merge_all: bool) -> InlineKeyboardMarkup:
         """Returns the PDL management menu with dynamic merge state."""
-        merge_icon = "✅" if merge_all else "❌"
+        merge_icon = "[OK]" if merge_all else "[ERRORE]"
         keyboard = [
             [InlineKeyboardButton("➕ Inserisci", callback_data="input_pdl")],
             [
@@ -130,7 +130,7 @@ class TelegramUI:
             ],
             [
                 InlineKeyboardButton(
-                    f"🔗 Unisci Tutto: {merge_icon}",
+                    f"[LINK] Unisci Tutto: {merge_icon}",
                     callback_data="toggle_merge_all_pdl",
                 )
             ],
@@ -215,8 +215,8 @@ class TelegramUI:
         suffix = "_noprint" if noprint else "_print"
         return InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("✅ Sì, invia", callback_data=f"confirm_merge_yes{suffix}")],
-                [InlineKeyboardButton("❌ No", callback_data=f"confirm_merge_no{suffix}")],
+                [InlineKeyboardButton("[OK] Sì, invia", callback_data=f"confirm_merge_yes{suffix}")],
+                [InlineKeyboardButton("[ERRORE] No", callback_data=f"confirm_merge_no{suffix}")],
                 [TelegramUI.get_back_button("menu_pdl")],
             ]
         )
@@ -237,7 +237,7 @@ class TelegramUI:
     def get_power_menu() -> InlineKeyboardMarkup:
         """Returns the system maintenance/power menu."""
         keyboard = [
-            [InlineKeyboardButton("🔄 Riavvia App", callback_data="app_restart")],
+            [InlineKeyboardButton("[SYNC] Riavvia App", callback_data="app_restart")],
             [InlineKeyboardButton("🔌 Test Net", callback_data="app_conn_test")],
             [TelegramUI.get_back_button("nav_utility")],
         ]
@@ -263,7 +263,7 @@ class TelegramUI:
     def get_autopilot_menu() -> InlineKeyboardMarkup:
         """Returns the Autopilot configuration menu."""
         keyboard = [
-            [InlineKeyboardButton("🔄 Toggle", callback_data="toggle_autopilot")],
+            [InlineKeyboardButton("[SYNC] Toggle", callback_data="toggle_autopilot")],
             [InlineKeyboardButton("🕒 Orario", callback_data="input_autopilot_time")],
             [TelegramUI.get_back_button("menu_settings")],
         ]

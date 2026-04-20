@@ -137,7 +137,7 @@ class CaricoTSBot(SeleniumBaseBot):
 
         self.update_step("extract", StepStatus.RUNNING)
         if page.process_oda(oda):
-            self.log("✅ OdA estratta con successo.")
+            self.log("[OK] OdA estratta con successo.")
             self.update_step("extract", StepStatus.COMPLETED)
             self.update_step("cleanup", StepStatus.RUNNING)
             self.update_step("cleanup", StepStatus.COMPLETED)

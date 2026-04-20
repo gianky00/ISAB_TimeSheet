@@ -240,8 +240,8 @@ class WorkflowMapWidget(QWidget):
     ]
 
     ACTIONS: ClassVar[list[tuple[str, int, str, str]]] = [
-        ("esegui_1_4", 6, "🚀 ESEGUI\n1→4", "Carica → Elabora → Compila → Verifica"),
-        ("esegui_1_5", 7, "🚀 ESEGUI\n1→5", "Intero workflow completo"),
+        ("esegui_1_4", 6, "[AVVIO] ESEGUI\n1→4", "Carica → Elabora → Compila → Verifica"),
+        ("esegui_1_5", 7, "[AVVIO] ESEGUI\n1→5", "Intero workflow completo"),
     ]
 
     # Mapping step_id → lista macro VBA da eseguire

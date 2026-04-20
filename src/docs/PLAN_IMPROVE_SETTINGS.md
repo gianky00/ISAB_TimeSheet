@@ -13,7 +13,7 @@ Questo piano descrive gli step per evolvere il sistema di configurazione attuale
 ### 1. UX & Navigazione
 
 - [ ] **Ricerca Rapida**: Aggiungere una barra di ricerca in alto nel pannello impostazioni per trovare rapidamente un'opzione (es. "token", "timeout") senza aprire tutti i tab.
-* [ ] **Indicatore Validità**: Aggiungere icone di stato (✅/❌) accanto ai campi percorso (File Path) che verificano in tempo reale se il file/cartella esiste.
+* [ ] **Indicatore Validità**: Aggiungere icone di stato ([OK]/[ERRORE]) accanto ai campi percorso (File Path) che verificano in tempo reale se il file/cartella esiste.
 
 ### 2. Gestione Dati (Import/Export)
 

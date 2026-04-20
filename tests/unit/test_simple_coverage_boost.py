@@ -32,11 +32,11 @@ class TestLogHumanizer:
         assert cat == "error"
 
         # Success
-        _, _, cat = SmartLogTranslator.humanize("✅ missione compiuta")
+        _, _, cat = SmartLogTranslator.humanize("[OK] missione compiuta")
         assert cat == "success"
 
         # Wait
-        _, _, cat = SmartLogTranslator.humanize("⏳ attendi un attimo")
+        _, _, cat = SmartLogTranslator.humanize("[ATTESA] attendi un attimo")
         assert cat == "wait"
 
     def test_humanize_cleaning_logic(self):

@@ -33,7 +33,7 @@ class TestScaricoOrePanelDeep:
 
     def test_worker_progress_format(self, panel):
         """Verifica che il pannello accetti i messaggi di progresso."""
-        msg = "⏳ Test Progress"
+        msg = "[ATTESA] Test Progress"
         panel._on_loading_progress(msg)
         assert panel.filters.status_label.text() == msg
 

@@ -69,7 +69,7 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
         self.downloaded_files = []
         all_pdl_paths: list[str] = []
 
-        self.log(f"🚀 Inizio elaborazione (PW) di {total} PDL...")
+        self.log(f"[AVVIO] Inizio elaborazione (PW) di {total} PDL...")
 
         for index, item in enumerate(data):
             if self._process_single_pdl(index, total, item, all_pdl_paths):
@@ -108,7 +108,7 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
             if callback:
                 callback(index, success, "" if success else "Errore download/merge")
         except Exception as e:
-            self.log(f"❌ Errore PDL {pdl_raw}: {e}")
+            self.log(f"[ERRORE] Errore PDL {pdl_raw}: {e}")
             callback = getattr(self, "_progress_callback", None)
             if callback:
                 callback(index, False, str(e))
@@ -171,7 +171,7 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
             preview_menu_sel = self._get_selector(SafeWorkLocators.PRINT_PREVIEW_MENU)
             self.page.wait_for_selector(preview_menu_sel, state="visible", timeout=30000)
         except Exception as e:
-            self.log(f"❌ Errore ricerca PDL {pdl_num}: {e}")
+            self.log(f"[ERRORE] Errore ricerca PDL {pdl_num}: {e}")
             return False
         else:
             return True
@@ -182,7 +182,7 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
         try:
             popup_xpath = "//p[contains(text(), 'estenderla')]"
             if self.page.is_visible(f"xpath={popup_xpath}", timeout=5000):
-                self.log("🖱️ Estensione ricerca...")
+                self.log("[CLICK] Estensione ricerca...")
                 yes_btn_sel = self._get_selector(SafeWorkLocators.EXTEND_SEARCH_YES)
                 self.page.click(yes_btn_sel)
                 self._attendi_scomparsa_overlay()
@@ -211,7 +211,7 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
             self._clean_pdf(str(dest))
             return str(dest)
         except Exception as e:
-            self.log(f"❌ Errore scarico Parte Prima: {e}")
+            self.log(f"[ERRORE] Errore scarico Parte Prima: {e}")
             return None
 
     def _scarica_parte_seconda(self, pdl_num: str) -> str | None:
@@ -240,7 +240,7 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
             download.save_as(str(dest))
             return str(dest)
         except Exception as e:
-            self.log(f"❌ Errore scarico Parte Seconda: {e}")
+            self.log(f"[ERRORE] Errore scarico Parte Seconda: {e}")
             return None
 
     def _clean_pdf(self, path: str) -> None:
@@ -255,7 +255,7 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
             else:
                 doc.close()
         except Exception as e:
-            self.log(f"⚠️ Errore pulizia PDF: {e}", level="DEBUG")
+            self.log(f"[ATTENZIONE] Errore pulizia PDF: {e}", level="DEBUG")
 
     def _unisci_e_stampa(
         self, pdl_num: str, p1: str, p2: str, item: dict[str, Any], all_paths: list[str]
@@ -277,10 +277,10 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
                 ts = time.strftime("%d-%m-%Y_%H-%M")
                 path_merge = Path(self.download_path) / f"PDL_SESSIONE_{ts}.pdf"
                 if DocumentProcessor.merge_pdfs(all_paths, str(path_merge)):
-                    self.log(f"✅ PDF Unico Sessione creato: {path_merge.name}")
+                    self.log(f"[OK] PDF Unico Sessione creato: {path_merge.name}")
                     self.downloaded_files.append(str(path_merge))
             except Exception as e:
-                self.log(f"⚠️ Errore merge sessione: {e}", level="DEBUG")
+                self.log(f"[ATTENZIONE] Errore merge sessione: {e}", level="DEBUG")
 
     def _safe_remove(self, path: str | None) -> None:
         if path and Path(path).exists():

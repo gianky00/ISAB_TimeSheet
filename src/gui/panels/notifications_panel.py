@@ -346,7 +346,7 @@ class NotificationsPanel(QWidget):
             "pinned": {"title": "Fissate", "icon": "📌", "notifications": []},
             "today": {"title": "Oggi", "icon": "📅", "notifications": []},
             "yesterday": {"title": "Ieri", "icon": "📆", "notifications": []},
-            "week": {"title": "Ultimi 7 giorni", "icon": "📂", "notifications": []},
+            "week": {"title": "Ultimi 7 giorni", "icon": "[FILE]", "notifications": []},
             "older": {"title": "Più vecchie", "icon": "🗂️", "notifications": []},
         }
 
@@ -396,7 +396,7 @@ class NotificationsPanel(QWidget):
         if self.current_filter == "all":
             icon_text, title, subtitle = "📭", "Nessuna notifica", "Le tue notifiche appariranno qui"
         elif self.current_filter == "unread":
-            icon_text, title, subtitle = "✅", "Tutto a posto!", "Nessuna notifica da leggere"
+            icon_text, title, subtitle = "[OK]", "Tutto a posto!", "Nessuna notifica da leggere"
         elif self.current_filter == "error":
             icon_text, title, subtitle = "🎉", "Sistema funzionante!", "Nessun errore registrato"
         else:

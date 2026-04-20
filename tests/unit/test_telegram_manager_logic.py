@@ -48,7 +48,7 @@ class TestTelegramManagerLogic:
         mock_update.effective_user.id = 99999
         result = await telegram_service._check_auth(mock_update)
         assert result is False
-        mock_update.message.reply_text.assert_called_with("⛔ Accesso Negato")
+        mock_update.message.reply_text.assert_called_with("[BLOCCO] Accesso Negato")
 
     @pytest.mark.asyncio
     async def test_cmd_stop(self, telegram_service, mock_update):

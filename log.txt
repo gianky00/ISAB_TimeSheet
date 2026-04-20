@@ -1,0 +1,70 @@
+[INFO] Pulizia dei log di crash precedenti...
+=============================================
+   SyncroJob - Avvio da codici sorgenti
+=============================================
+
+[INFO] Verifica dipendenze...
+Requirement already satisfied: pip in .\.venv\Lib\site-packages (26.0.1)
+ERROR: Could not open requirements file: [Errno 2] No such file or directory: 'requirements.txt'
+
+[INFO] Avvio applicazione...
+
+[2026-04-20 12:45:49] INFO     - startup                        - Enterprise logging system initialized
+[2026-04-20 12:45:51] INFO     - phase1                         - Starting Phase 1 initialization
+[2026-04-20 12:45:51] INFO     - AppInitializer                 - [INIT CORE] Inizializzazione Sottosistema Logging...
+[2026-04-20 12:45:51] INFO     - AppInitializer                 - [INIT CORE] Verifica dipendenze critiche (Pandas/Numpy)...
+[2026-04-20 12:45:51] INFO     - AppInitializer                 - Engine: Pandas 2.2.1 | Numpy 1.26.4
+[2026-04-20 12:45:51] INFO     - AppInitializer                 - [INIT CORE] Validazione Path di Sistema...
+[2026-04-20 12:45:51] INFO     - AppInitializer                 - [INIT CORE] Verifica integrità WebDriver...
+[2026-04-20 12:45:51] INFO     - AppInitializer                 - [INIT CORE] Caricamento Registry Bot...
+[2026-04-20 12:45:51] INFO     - AppInitializer                 - Moduli bot rilevati: 9
+[2026-04-20 12:45:52] INFO     - AppInitializer                 - [INIT CORE] Verifica Identità Hardware (HWID)...
+[2026-04-20 12:45:52] INFO     - AppInitializer                 - [INIT CORE] Handshake con Server Licenze in Background...
+[2026-04-20 12:45:52] INFO     - src.core.license_updater       - Verifica stato licenza cloud...
+[2026-04-20 12:45:52] INFO     - AppInitializer                 - [INIT CORE] Validazione Certificati di Licenza (CacheLocale)...
+[2026-04-20 12:45:53] INFO     - AppInitializer                 - [INIT CORE] Inizializzazione Engine SQLite3...
+[2026-04-20 12:45:53] INFO     - AppInitializer                 - [INIT CORE] Nucleo Sistema Operativo
+[2026-04-20 12:45:53] INFO     - phase1                         - Phase 1 completed | success=True
+[2026-04-20 12:45:56] INFO     - src.core.license_updater       - ✓ Licenza locale già aggiornata.
+[2026-04-20 12:45:57] INFO     - AppInitializer                 - [PERF] Panel 'Preparazione Dashboard' (idx=0) loaded in 0.00s
+[2026-04-20 12:45:59] INFO     - AppInitializer                 - [PERF] Panel 'Scheduler Attività' (idx=1) loaded in 1.92s
+[2026-04-20 12:46:00] INFO     - AppInitializer                 - [PERF] Panel 'Archivio Storico OdA' (idx=10) loaded in 0.28s
+[2026-04-20 12:46:01] INFO     - AppInitializer                 - [PERF] Panel 'Caricamento Repository Ore' (idx=3) loaded in 0.29s
+[2026-04-20 12:46:04] INFO     - AppInitializer                 - [PERF] Panel 'Registro Asset Aziendali' (idx=4) loaded in 3.23s
+[2026-04-20 12:46:04] INFO     - AppInitializer                 - [PERF] Panel 'Centro Notifiche' (idx=9) loaded in 0.24s
+[2026-04-20 12:46:05] INFO     - AppInitializer                 - [PERF] Panel 'DataEase Sync Bridge' (idx=5) loaded in0.05s
+[2026-04-20 12:46:06] INFO     - AppInitializer                 - [PERF] Panel 'Directory Personale' (idx=6) loaded in 0.57s
+[2026-04-20 12:46:08] INFO     - AppInitializer                 - [PERF] Panel 'Configurazione Utente' (idx=7) loaded in 0.75s
+[2026-04-20 12:46:08] INFO     - AppInitializer                 - [PERF] Panel 'Gestione Schede Dipendenti' (idx=11) loaded in 0.26s
+[2026-04-20 12:46:08] INFO     - AppInitializer                 - [PERF] Panel 'Manuale Operativo' (idx=8) loaded in 0.04s
+[2026-04-20 12:46:09] INFO     - AppInitializer                 - [PERF] Panel 'Consuntivo' (idx=12) loaded in 0.69s
+[2026-04-20 12:46:09] INFO     - AppInitializer                 - [PERF] init_generator total: 12.25s
+[2026-04-20 12:46:09] INFO     - startup                        - Finalizing startup...
+[2026-04-20 12:46:49] INFO     - src.core.license_updater       - Verifica stato licenza cloud... | trace=trace_876782... | span=span_1f3fc5e3
+[2026-04-20 12:46:51] INFO     - src.core.license_updater       - ✓ Licenza locale già aggiornata. | trace=trace_876782... | span=span_1f3fc5e3
+[2026-04-20 12:46:52] INFO     - bot.PlaywrightScaricaTSBot     - ⚙️ Avvio Scarico TS (PW) | Headless: False | Timeout:30s | trace=trace_f63f0e... | span=span_1f3fc5e3 | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=IDLE | current_step= | step_index=-1
+[2026-04-20 12:46:52] INFO     - bot.PlaywrightScaricaTSBot     - ⏳ Avvio: Login Portale ISAB | trace=trace_f63f0e... | span=span_1f3fc5e3 | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=IDLE | current_step=Login Portale ISAB | step_index=0
+[2026-04-20 12:46:52] INFO     - bot.PlaywrightScaricaTSBot     - ♻️ Esecuzione Reset Profilo Standard per avvio pulito... | trace=trace_f63f0e... | span=span_0662aabf | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=INITIALIZING | current_step=Login Portale ISAB | step_index=0
+Profilo corrotto isolato in: chrome_profile_corrupted_20260420_124659
+[2026-04-20 12:46:59] INFO     - bot.PlaywrightScaricaTSBot     - 🧹 Setup ambiente browser (Tentativo 1/3)... | trace=trace_f63f0e... | span=span_0662aabf | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=INITIALIZING | current_step=Login Portale ISAB | step_index=0
+[2026-04-20 12:46:59] INFO     - bot.PlaywrightScaricaTSBot     - 🌐 Inizializzazione Playwright Core... | trace=trace_f63f0e... | span=span_0662aabf | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=INITIALIZING | current_step=Login Portale ISAB | step_index=0
+[2026-04-20 12:46:59] INFO     - bot.PlaywrightScaricaTSBot     - 🚀 Lancio Chromium con profilo persistente: chrome_profile | trace=trace_f63f0e... | span=span_0662aabf | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=INITIALIZING | current_step=Login Portale ISAB | step_index=0
+[2026-04-20 12:47:00] INFO     - bot.PlaywrightScaricaTSBot     - Navigazione a: https://portalefornitori.isab.com/Ui/ | trace=trace_f63f0e... | span=span_1f3fc5e3 | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=INITIALIZING | current_step=Login Portale ISAB | step_index=0
+[2026-04-20 12:47:09] INFO     - bot.PlaywrightScaricaTSBot     - Selezione società: ISAB... | trace=trace_f63f0e... | span=span_1f3fc5e3 | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=INITIALIZING | current_step=Login Portale ISAB | step_index=0
+[2026-04-20 12:47:09] INFO     - bot.PlaywrightScaricaTSBot     - Credenziali inserite. Clicco Accedi... | trace=trace_f63f0e... | span=span_1f3fc5e3 | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=INITIALIZING | current_step=Login Portale ISAB | step_index=0
+[2026-04-20 12:47:10] INFO     - bot.PlaywrightScaricaTSBot     - ⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso. | trace=trace_f63f0e... | span=span_1f3fc5e3 | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 |bot_type=scarico_ts_(pw) | bot_status=INITIALIZING | current_step=Login Portale ISAB | step_index=0
+[2026-04-20 12:47:11] INFO     - bot.PlaywrightScaricaTSBot     - Accesso inviato. Monitoraggio caricamento... | trace=trace_f63f0e... | span=span_1f3fc5e3 | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=INITIALIZING | current_step=Login Portale ISAB | step_index=0
+[2026-04-20 12:47:11] INFO     - bot.PlaywrightScaricaTSBot     - ✓ Login completato con successo | trace=trace_f63f0e... | span=span_1f3fc5e3 | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=INITIALIZING | current_step=Login Portale ISAB | step_index=0
+[2026-04-20 12:47:11] INFO     - bot.PlaywrightScaricaTSBot     - 🚀 Inizio scarico TS (PW) per 1 OdA (Fornitore: KK10608 - COEMI S.R.L.)... | trace=trace_f63f0e... | span=span_1f3fc5e3 | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=RUNNING | current_step=Login Portale ISAB | step_index=0
+[2026-04-20 12:47:11] INFO     - bot.PlaywrightScaricaTSBot     - ⏳ Avvio: Navigazione Portale | trace=trace_f63f0e...| span=span_1f3fc5e3 | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=RUNNING | current_step=Navigazione Portale | step_index=1
+[2026-04-20 12:47:12] INFO     - bot.PlaywrightScaricaTSBot     - ⏳ Avvio: Impostazione Filtri | trace=trace_f63f0e...| span=span_1f3fc5e3 | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=RUNNING | current_step=Impostazione Filtri | step_index=2
+[2026-04-20 12:47:12] INFO     - bot.PlaywrightScaricaTSBot     - Impostazione filtri per fornitore: KK10608 - COEMI S.R.L. | trace=trace_f63f0e... | span=span_1f3fc5e3 | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=RUNNING | current_step=Impostazione Filtri | step_index=2
+[2026-04-20 12:47:17] INFO     - src.core.audit.manager         - Audit: Avvio Automazione | audit_id=585 | trace_id=None | category=automazione | entity=Scarico TS | status=success | severity=low | duration_ms=0
+[2026-04-20 12:47:43] INFO     - bot.PlaywrightScaricaTSBot     - ❌ Errore nell'impostazione dei filtri: Locator.evaluate: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("//li[normalize-space(text())='KK10608 - COEMI S.R.L.']")
+ | trace=trace_f63f0e... | span=span_1f3fc5e3 | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=RUNNING | current_step=Impostazione Filtri | step_index=2
+[2026-04-20 12:47:43] ERROR    - bot.PlaywrightScaricaTSBot     - ❌ ERRORE: Impostazione Filtri | trace=trace_f63f0e... | span=span_1f3fc5e3 | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=RUNNING | current_step=Impostazione Filtri | step_index=2
+[2026-04-20 12:47:43] INFO     - bot.PlaywrightScaricaTSBot     - 🏁 Stato finale: ERROR | trace=trace_f63f0e... | span=span_1f3fc5e3 | bot=scarico_ts_(pw) | trace_id=trace_f63f0e87669742f4 | bot_type=scarico_ts_(pw) | bot_status=ERROR | current_step=Impostazione Filtri | step_index=2
+[2026-04-20 12:47:43] WARNING  - src.bots.base.base_bot.BaseBot.execute - Function execute completed | trace=trace_876782... | span=span_1f3fc5e3 | duration_ms=53685.27 | threshold_ms=5000 | threshold_exceeded=True
+[2026-04-20 12:47:43] ERROR    - src.core.audit.manager         - Audit: Completamento Automazione | audit_id=586 | trace_id=None | category=automazione | entity=Scarico TS | status=error | severity=low | duration_ms=0

@@ -426,7 +426,7 @@ class HealthPanel(QWidget):
                 f"QFrame {{ background: {COLORS['bg_success_pastel']}; border-radius: 12px; border: 1px dashed {COLORS['success_green']}; }}"
             )
             el = QVBoxLayout(empty)
-            el.addWidget(QLabel("✨"), alignment=Qt.AlignmentFlag.AlignCenter)
+            el.addWidget(QLabel("[INFO]"), alignment=Qt.AlignmentFlag.AlignCenter)
             el.addWidget(QLabel("Nessuna anomalia"), alignment=Qt.AlignmentFlag.AlignCenter)
             self._anomalies_layout.insertWidget(0, empty)
         else:
@@ -438,7 +438,7 @@ class HealthPanel(QWidget):
         try:
             report = generate_analytics_report(hours=24)
             if not report.anomalies:
-                self._show_toast("ℹ️ Nessuna anomalia da segnalare", "info")
+                self._show_toast("[INFO] Nessuna anomalia da segnalare", "info")
                 return
 
             am = get_alert_manager()
@@ -446,9 +446,9 @@ class HealthPanel(QWidget):
             for a in report.anomalies[:5]:
                 summary += f"• {a.message}\n"
             am.send_alert("Health Report", summary, "info")
-            self._show_toast("✅ Alert inviato su Telegram", "success")
+            self._show_toast("[OK] Alert inviato su Telegram", "success")
         except Exception as e:
-            self._show_toast(f"❌ Errore invio: {str(e)[:50]}", "error")
+            self._show_toast(f"[ERRORE] Errore invio: {str(e)[:50]}", "error")
 
     def _auto_check_alerts(self) -> None:
         """Esegue un controllo periodico e invia notifiche automatiche se vengono rilevate anomalie critiche."""

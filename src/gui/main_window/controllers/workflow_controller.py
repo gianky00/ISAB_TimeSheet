@@ -48,7 +48,7 @@ class WorkflowController(QObject):
             elif mode == "mese":
                 data_da = QDate.currentDate().toString("01.MM.yyyy")
 
-            ToastManager.instance().show(f"🚀 Avvio Timbrature ({mode})...", "info")
+            ToastManager.instance().show(f"[AVVIO] Avvio Timbrature ({mode})...", "info")
             panel.run_externally({"data_da": data_da, "data_a": data_a})
 
     def handle_scarico_ts_input(self, args: list[Any]) -> None:
@@ -137,7 +137,7 @@ class WorkflowController(QObject):
             if panel:
                 # Feedback visivo nello Storico OdA
                 ToastManager.instance().show(
-                    "🚀 Sincronizzazione database OdA avviata in background...", "info"
+                    "[AVVIO] Sincronizzazione database OdA avviata in background...", "info"
                 )
 
                 # Calcola la data odierna nel formato richiesto: GG.MM.AAAA

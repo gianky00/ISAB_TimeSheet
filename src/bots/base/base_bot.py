@@ -131,9 +131,9 @@ class BaseBot(ABC):
             if message:
                 self.log(f"[{step_name}] {message}", current_step=step_name, step_index=index)
             elif status == StepStatus.RUNNING:
-                self.log(f"⏳ Avvio: {step_name}", current_step=step_name, step_index=index)
+                self.log(f"[ATTESA] Avvio: {step_name}", current_step=step_name, step_index=index)
             elif status == StepStatus.ERROR:
-                self.log(f"❌ ERRORE: {step_name}", "ERROR", current_step=step_name, step_index=index)
+                self.log(f"[ERRORE] ERRORE: {step_name}", "ERROR", current_step=step_name, step_index=index)
 
     @property
     @abstractmethod
@@ -240,7 +240,7 @@ class BaseBot(ABC):
     def request_stop(self) -> None:
         """Richiede l'interruzione immediata del bot al termine della sotto-operazione corrente."""
         self._stop_requested = True
-        self.log("⚠️ Interruzione richiesta...")
+        self.log("[ATTENZIONE] Interruzione richiesta...")
 
     def _check_stop(self) -> None:
         """Verifica se è stata richiesta un'interruzione e solleva InterruptedError."""
@@ -281,7 +281,7 @@ class BaseBot(ABC):
                     return True
                 self.cleanup()
             except Exception as e:
-                self.log(f"⚠️ Errore tentativo: {e}")
+                self.log(f"[ATTENZIONE] Errore tentativo: {e}")
                 self.cleanup()
         return False
 
@@ -291,14 +291,14 @@ class BaseBot(ABC):
             run_update()
         except Exception as le:
             if "REVOCATA" in str(le):
-                self.log(f"❌ ACCESSO NEGATO: {le}", "ERROR")
+                self.log(f"[ERRORE] ACCESSO NEGATO: {le}", "ERROR")
                 self.signals.critical_error.emit("Licenza Revocata", str(le))
                 self.status = BotStatus.ERROR
                 return False
 
         valid, msg = verify_license()
         if not valid:
-            self.log(f"❌ AVVIO NEGATO: {msg}", "ERROR")
+            self.log(f"[ERRORE] AVVIO NEGATO: {msg}", "ERROR")
             self.status = BotStatus.ERROR
             return False
         return True
@@ -328,7 +328,7 @@ class BaseBot(ABC):
             self.log(f"⚙️ Avvio {self.name} | Headless: {self.headless} | Timeout: {self.timeout}s")
             valid_res, valid_msg = self.validate_data(data)
             if not valid_res:
-                self.log(f"❌ Validazione fallita: {valid_msg}", "ERROR")
+                self.log(f"[ERRORE] Validazione fallita: {valid_msg}", "ERROR")
                 self.status = BotStatus.ERROR
                 return False
 

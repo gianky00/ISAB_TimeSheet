@@ -95,7 +95,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self.downloaded_files = []
         all_pdl_paths: list[str] = []
 
-        self.log(f"🚀 Inizio elaborazione di {total} PDL...")
+        self.log(f"[AVVIO] Inizio elaborazione di {total} PDL...")
 
         for index, item in enumerate(data):
             pdl_raw = "N/A"
@@ -149,7 +149,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             except InterruptedError:
                 raise
             except Exception as e:
-                self.log(f"❌ Errore critico PDL {pdl_raw}: {e}")
+                self.log(f"[ERRORE] Errore critico PDL {pdl_raw}: {e}")
                 # Notifica errore alla GUI
                 callback = getattr(self, "_progress_callback", None)
                 if callback:
@@ -160,7 +160,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self._handle_session_merge(data, all_pdl_paths)
         self.update_step("session", StepStatus.COMPLETED)
 
-        self.log(f"✨ Completato: {success_count}/{total} PDL.")
+        self.log(f"[INFO] Completato: {success_count}/{total} PDL.")
         return success_count == total
 
     def _sanitizza_pdl_number(self, pdl_raw: Any) -> str:
@@ -183,15 +183,15 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self._attendi_scomparsa_overlay(timeout_secondi=10)
 
             campo = self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.RICERCA_VELOCE_PDL))
-            self.log(f"⌨️ Inserimento numero PdL {pdl_num}...")
+            self.log(f"[INPUT] Inserimento numero PdL {pdl_num}...")
             campo.clear()
             campo.send_keys(pdl_num + Keys.ENTER)
         except Exception as e:
-            self.log(f"❌ Campo ricerca veloce non trovato o non interagibile: {e}", "ERROR")
+            self.log(f"[ERRORE] Campo ricerca veloce non trovato o non interagibile: {e}", "ERROR")
             return False
 
         if self._gestisci_ricerca_estesa():
-            self.log(f"ℹ️ PdL {pdl_num} inesistente. Salto.")
+            self.log(f"[INFO] PdL {pdl_num} inesistente. Salto.")
             return False
 
         if self._gestisci_alert_ricerca():
@@ -204,10 +204,10 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         try:
             self.wait.until(EC.visibility_of_element_located((By.ID, "topIcon-acticonAnteprimaStampaMenu")))
             self._attendi_scomparsa_overlay(timeout_secondi=4)
-            self.log(f"✅ PdL {pdl_num} caricato correttamente.")
+            self.log(f"[OK] PdL {pdl_num} caricato correttamente.")
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"❌ PDL {pdl_num} non caricato correttamente: {e}", "ERROR")
+            self.log(f"[ERRORE] PDL {pdl_num} non caricato correttamente: {e}", "ERROR")
             return False
 
     def _scarica_parte_prima(self, pdl_num: str) -> str | None:
@@ -237,16 +237,16 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self.click_robusto((By.ID, "appItaliano"), label="'Lingua Italiano'")
 
             # Cerchiamo il file
-            self.log(f"⏳ Polling per file PDF di {pdl_num}...")
+            self.log(f"[ATTESA] Polling per file PDF di {pdl_num}...")
             f = poll_for_new_file(self.download_path, files_before, pattern="*.pdf", timeout=60)
             if f:
                 dest = Path(self.download_path) / f"temp_p1_{int(ts)}.pdf"
                 Path(f).rename(dest)
                 self._clean_pdf(str(dest))
                 return str(dest)
-            self.log("❌ Timeout: nessun PDF generato per la Parte Prima.", "ERROR")
+            self.log("[ERRORE] Timeout: nessun PDF generato per la Parte Prima.", "ERROR")
         except Exception as e:
-            self.log(f"❌ Errore scarico Parte Prima: {e}", "ERROR")
+            self.log(f"[ERRORE] Errore scarico Parte Prima: {e}", "ERROR")
             logger.exception("Dettaglio crash Parte Prima:")
         return None
 
@@ -258,7 +258,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             return None
 
         if not self._espandi_parte_seconda():
-            self.log(f"❌ Impossibile espandere la sezione Parte Seconda per {pdl_num}.", "ERROR")
+            self.log(f"[ERRORE] Impossibile espandere la sezione Parte Seconda per {pdl_num}.", "ERROR")
             return None
 
         self._attendi_scomparsa_overlay()
@@ -275,15 +275,15 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self.click_robusto((By.ID, "btnPrintPS"), label="'Stampa Parte Seconda'")
             self._gestisci_dialogo_stampa_tutte()
 
-            self.log(f"⏳ Polling per file PDF Parte Seconda di {pdl_num}...")
+            self.log(f"[ATTESA] Polling per file PDF Parte Seconda di {pdl_num}...")
             f = poll_for_new_file(self.download_path, files_before, pattern="*.pdf", timeout=90)
             if f:
                 dest = Path(self.download_path) / f"temp_p2_{int(ts)}.pdf"
                 Path(f).rename(dest)
                 return str(dest)
-            self.log("❌ Timeout: nessun PDF generato per la Parte Seconda.", "ERROR")
+            self.log("[ERRORE] Timeout: nessun PDF generato per la Parte Seconda.", "ERROR")
         except Exception as e:
-            self.log(f"❌ Errore scarico Parte Seconda: {e}", "ERROR")
+            self.log(f"[ERRORE] Errore scarico Parte Seconda: {e}", "ERROR")
             logger.exception("Dettaglio crash Parte Seconda:")
         return None
 
@@ -298,7 +298,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             # Verifica visibilità senza lanciare eccezioni se l'elemento non esiste ancora
             elementi = self.driver.find_elements(By.ID, "lblPAFoglio")
             if not elementi or not elementi[0].is_displayed():
-                self.log("📂 Espansione sezione 'Parte Seconda'...")
+                self.log("[FILE] Espansione sezione 'Parte Seconda'...")
                 clicked = False
 
                 # Strategia 1: ID Label
@@ -324,7 +324,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self.wait.until(EC.visibility_of_element_located((By.ID, "lblPAFoglio")))
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"⚠️ Errore apertura Parte Seconda: {e}")
+            self.log(f"[ATTENZIONE] Errore apertura Parte Seconda: {e}")
             return False
 
     def _gestisci_ricerca_estesa(self) -> bool:
@@ -334,7 +334,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         try:
             # Aumentato timeout a 10s per reattività SafeWork
             try:
-                self.log("🔍 Controllo presenza popup 'Ricerca Estesa'...")
+                self.log("[CERCA] Controllo presenza popup 'Ricerca Estesa'...")
                 WebDriverWait(self.driver, 10).until(
                     EC.visibility_of_element_located((By.XPATH, "//p[contains(text(), 'estenderla')]"))
                 )
@@ -342,14 +342,14 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 # Fallback idtxt
                 try:
                     self.driver.find_element(By.CSS_SELECTOR, "p[idtxt='1C51D77B']")
-                    self.log("ℹ️ Popup 'Ricerca Estesa' rilevato via idtxt.")
+                    self.log("[INFO] Popup 'Ricerca Estesa' rilevato via idtxt.")
                 except Exception:
-                    self.log("ℹ️ Nessun popup di ricerca estesa rilevato.")
+                    self.log("[INFO] Nessun popup di ricerca estesa rilevato.")
                     return False
 
             # Click robusto su 'Si' (cerca span o button con classe btn-ok)
             clicked = False
-            self.log("🖱️ Tentativo click su 'Si' per estensione ricerca...")
+            self.log("[CLICK] Tentativo click su 'Si' per estensione ricerca...")
             for selector in (
                 "span[idtxt='E421C594']",
                 "//button[contains(@class, 'btn-ok') and contains(., 'Si')]",
@@ -359,7 +359,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     by = By.XPATH if selector.startswith("/") else By.CSS_SELECTOR
                     el = self.driver.find_element(by, selector)
                     el.click()
-                    self.log(f"✅ Click su 'Si' riuscito (selector: {selector})")
+                    self.log(f"[OK] Click su 'Si' riuscito (selector: {selector})")
                     clicked = True
                     break
                 except Exception as e:
@@ -368,17 +368,17 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     continue
 
             if clicked:
-                self.log("✅ Ricerca PdL estesa agli altri siti.")
+                self.log("[OK] Ricerca PdL estesa agli altri siti.")
                 self._attendi_scomparsa_overlay()
             else:
-                self.log("⚠️ Popup ricerca estesa rilevato ma impossibile cliccare 'Si'.", "WARNING")
+                self.log("[ATTENZIONE] Popup ricerca estesa rilevato ma impossibile cliccare 'Si'.", "WARNING")
 
             # Verifica Risultati (se 0, PdL inesistente)
             with suppress(Exception):
-                self.log("🔍 Verifica se PdL inesistente dopo estensione...")
+                self.log("[CERCA] Verifica se PdL inesistente dopo estensione...")
                 msg = self.driver.find_element(By.XPATH, "//div[contains(text(), 'nessun dato trovato')]")
                 if msg.is_displayed():
-                    self.log("ℹ️ PdL non trovato nemmeno con ricerca estesa.")
+                    self.log("[INFO] PdL non trovato nemmeno con ricerca estesa.")
                     return True
             # Se siamo finiti direttamente nella pagina dettaglio, numPermessiTrovati non ci sarà
             with suppress(Exception):
@@ -436,14 +436,14 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         """Crea un unico PDF con tutti i PDL della sessione se configurato."""
         if any(i.get("merge_all_session") for i in data) and all_paths:
             try:
-                self.log(f"🔗 Unione sessione ({len(all_paths)} PDL)...")
+                self.log(f"[LINK] Unione sessione ({len(all_paths)} PDL)...")
                 ts = time.strftime("%d-%m-%Y_%H-%M")
                 path_merge = Path(self.download_path) / f"PDL_SESSIONE_{ts}.pdf"
 
                 from src.utils.document_processor import DocumentProcessor  # noqa: PLC0415
 
                 if DocumentProcessor.merge_pdfs(all_paths, str(path_merge)):
-                    self.log(f"✅ PDF Unico Sessione creato: {path_merge.name}")
+                    self.log(f"[OK] PDF Unico Sessione creato: {path_merge.name}")
                     self.downloaded_files.append(str(path_merge))
             except Exception as e:
                 logger.error("Errore unione sessione: %s", e)  # noqa: TRY400
