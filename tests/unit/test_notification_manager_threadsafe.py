@@ -15,7 +15,7 @@ class TestNotificationManagerThreadSafe:
     @pytest.fixture
     def manager(self, tmp_path):
         """Fixture per un manager isolato."""
-        with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
+        with patch("src.core.notification_manager.CONFIG_DIR", tmp_path):
             NotificationManager._instance = None  # Reset singleton
             return NotificationManager.instance()
 

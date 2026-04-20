@@ -10,7 +10,6 @@ class TestScaricoOrePanelDeep:
     @pytest.fixture
     def panel(self, qapp, mocker):
         mocker.patch.object(ScaricoOrePanel, "_load_data")
-        mocker.patch("src.core.contabilita_manager.ContabilitaManager.DB_PATH")
         mock_controller = MagicMock(spec=ScaricoOreController)
         mock_controller.format_number.side_effect = lambda x: f"{x:.1f}".replace(".", ",")
         p = ScaricoOrePanel(controller=mock_controller)
@@ -40,7 +39,6 @@ class TestScaricoOrePanelDeep:
 
     def test_update_finished_ui_restore(self, panel, mocker):
         """Verifica il ripristino della UI dopo l'aggiornamento."""
-        mocker.patch("src.gui.panels.scarico_ore_panel.ContabilitaManager.DB_PATH")
         mocker.patch("src.gui.panels.scarico_ore_panel.ScaricoOreTableModel.CACHE_PATH")
 
         panel._on_update_finished(True, "OK")

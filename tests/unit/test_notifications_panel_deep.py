@@ -141,4 +141,5 @@ class TestNotificationsPanelDeep:
             widget.refresh()
 
             assert widget.model.rowCount() == 1
-            assert "Integro" in widget.integrity_lbl.text()
+            # Attendiamo che il worker asincrono finisca e aggiorni la label
+            qtbot.waitUntil(lambda: "Integro" in widget.integrity_lbl.text(), timeout=2000)

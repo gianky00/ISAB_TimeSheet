@@ -17,7 +17,7 @@ class TestBotRegressionShield:
     def mock_driver_env(self, mocker):
         """Mocka l'ambiente driver completo per BaseBot."""
         # Patch specifically where it's used to avoid batch run interference
-        m_chrome = mocker.patch("src.bots.base.base_bot.webdriver.Chrome")
+        m_chrome = mocker.patch("src.bots.base.selenium_base_bot.webdriver.Chrome")
         mocker.patch("webdriver_manager.chrome.ChromeDriverManager.install", return_value="chromedriver.exe")
         return m_chrome.return_value
 

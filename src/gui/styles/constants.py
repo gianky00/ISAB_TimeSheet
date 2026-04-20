@@ -93,6 +93,7 @@ STATUS_COLORS: Final[dict[str, str]] = {
     "pending": "#ffc107",
     "error": "#C62828",
     "stopped": "#6c757d",
+    "idle": "#6c757d",
     # Employee/Access status
     "ok": "#198754",
     "warning": "#fd7e14",

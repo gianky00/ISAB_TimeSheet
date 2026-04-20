@@ -21,14 +21,15 @@ def mock_config(tmp_path):
     fake_dir.mkdir(parents=True, exist_ok=True)
     fake_file = fake_dir / "config.json"
 
-    # Patch both the DIR and FILE constants in the module
+    # Patch sia la DIR che la FILE sia in paths che direttamente in config_manager
+    # per evitare che gli import precoci usino i valori reali.
     with (
+        patch("src.core.paths.CONFIG_DIR", fake_dir),
+        patch("src.core.paths.CONFIG_FILE", fake_file),
         patch("src.core.config_manager.CONFIG_DIR", fake_dir),
         patch("src.core.config_manager.CONFIG_FILE", fake_file),
     ):
         yield fake_file
-
-    config_manager._config_cache = None  # Force reset AFTER test
 
 
 def test_config_manager_defaults(mock_config):
@@ -48,20 +49,18 @@ def test_config_manager_defaults(mock_config):
 
 def test_config_accounts(mock_config):
     # Test adding account
-    config_manager.add_account("user1", "pass1", is_default=True)
-    accounts = config_manager.get_accounts()
+    config_manager.add_account("isab", {"username": "user1", "password": "pass1", "is_default": True})
+    accounts = config_manager.load_config().get("accounts", [])
     assert len(accounts) == 1
     assert accounts[0]["username"] == "user1"
-    # Password might be stripped if keyring mocked, or encrypted.
-    # Let's check logic flow mostly.
 
     # Test default
-    default = config_manager.get_default_account()
+    default = config_manager.get_default_account("isab")
     assert default["username"] == "user1"
 
     # Test removal
-    config_manager.remove_account("user1")
-    assert len(config_manager.get_accounts()) == 0
+    config_manager.remove_account("isab", "user1")
+    assert len(config_manager.load_config().get("accounts", [])) == 0
 
 
 # --- DATABASE MANAGER ---

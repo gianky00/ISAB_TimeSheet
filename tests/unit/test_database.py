@@ -1,4 +1,5 @@
 import sqlite3
+from unittest.mock import patch
 
 import pytest
 
@@ -22,33 +23,31 @@ class TestDatabaseManager:
         m1 = DatabaseManager()
         m2 = DatabaseManager()
         assert m1 is m2
-
     def test_init_db(self, manager, tmp_path):
         # Override constants for test
-        # We can't easily override DB_CONTABILITA on the class if it's already used.
-        # But we can pass the path to get_connection.
-        # _init_contabilita uses self.DB_CONTABILITA. Let's patch it.
-
         test_db_cont = tmp_path / "contabilita_test.db"
         test_db_timb = tmp_path / "timbrature_test.db"
 
-        # Patch paths
-        manager.DB_CONTABILITA = test_db_cont
-        manager.DB_TIMBRATURE = test_db_timb
+        # Patch i path nel modulo paths importato da manager
+        with (
+            patch("src.core.database.manager.DB_DIR", tmp_path),
+            patch("src.core.database.manager.DB_CONTABILITA", test_db_cont),
+            patch("src.core.database.manager.DB_TIMBRATURE", test_db_timb)
+        ):
+            manager._init_contabilita()
+            assert test_db_cont.exists()
 
-        manager.init_db()
+            manager._init_timbrature()
+            assert test_db_timb.exists()
 
-        assert test_db_cont.exists()
-        assert test_db_timb.exists()
-
-        # Verify schema
-        with sqlite3.connect(test_db_cont) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-            tables = [row[0] for row in cursor.fetchall()]
-            assert "contabilita" in tables
-            assert "giornaliere" in tables
-            assert "scarico_ore" in tables
+            # Verify schema
+            with sqlite3.connect(test_db_cont) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                tables = [row[0] for row in cursor.fetchall()]
+                assert "contabilita" in tables
+                assert "giornaliere" in tables
+                assert "scarico_ore" in tables
 
     def test_execute_query(self, manager, db_path):
         # Create table

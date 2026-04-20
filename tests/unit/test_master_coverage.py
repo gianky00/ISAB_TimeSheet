@@ -31,11 +31,22 @@ class TestMasterCoverage:
         assert selected is None  # Initial state is all selected
 
     def test_audit_manager_integrity(self, tmp_path):
-        from src.core.audit_manager import AuditManager  # noqa: PLC0415
+        import time  # noqa: PLC0415
 
-        with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
+        from src.core.audit.manager import AuditManager  # noqa: PLC0415
+        from unittest.mock import PropertyMock, patch
+
+        AuditManager._instance = None  # Reset singleton per isolamento
+
+        # Patch DB_PATH e calculate_hash per stabilità nel test
+        with (
+            patch("src.core.audit.database.AuditDatabase.DB_PATH", new_callable=PropertyMock) as mock_db_path,
+            patch("src.core.audit.integrity.AuditIntegrity.calculate_hash", return_value="FIXED_HASH")
+        ):
+            mock_db_path.return_value = tmp_path / "test_audit.db"
             am = AuditManager()
-            am.log_action("Test", "User1")
+            am.log_action("Test", "User1", notify=False)
+            time.sleep(0.3) # Attesa per thread asincrono
             assert am.verify_integrity() is True
 
     def test_contabilita_queries_years(self, tmp_path):

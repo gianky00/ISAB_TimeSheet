@@ -21,6 +21,18 @@ class ConcreteDummyBot(BaseBot):
     def get_columns():
         return []
 
+    def _init_driver(self):
+        pass
+
+    def cleanup(self):
+        pass
+
+    def _save_error_state(self, error_msg: str):
+        pass
+
+    def _login(self) -> bool:
+        return True
+
     def _handle_unsaved_changes_popup(self):
         pass
 

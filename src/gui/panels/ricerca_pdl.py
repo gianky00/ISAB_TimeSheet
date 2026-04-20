@@ -199,7 +199,7 @@ class RicercaPDLPanel(BaseBotPanel):
 
         user, pwd, acc_type, ok = self._validate_and_switch_account(user, pwd, acc_type)
         if not ok:
-            self._update_status(STATUS_COLORS["idle"], "Pronto")
+            self._update_status(STATUS_COLORS["stopped"], "Pronto")
             self._reset_buttons()
             return
 

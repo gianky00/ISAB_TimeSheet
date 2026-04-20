@@ -23,6 +23,18 @@ class DummyBot(BaseBot):
     def get_columns():
         return []
 
+    def _init_driver(self):
+        pass
+
+    def cleanup(self):
+        pass
+
+    def _save_error_state(self, error_msg: str):
+        pass
+
+    def _login(self) -> bool:
+        return True
+
     def _handle_unsaved_changes_popup(self):
         pass
 
@@ -32,7 +44,12 @@ class TestSprintDBotResilience:
     def bot(self, mocker, tmp_path):
         mocker.patch("src.core.config_manager.CONFIG_DIR", tmp_path)
         mocker.patch("src.core.config_manager.load_config", return_value={})
-        return DummyBot("user", "pass")
+        b = DummyBot("user", "pass")
+        b.signals = MagicMock()
+        b.signals.critical_error = MagicMock()
+        b._log_callback = MagicMock()
+        b._trace_id = "test-trace"
+        return b
 
     def test_bot_retry_logic_on_login_failure(self, bot, mocker):
         """Verifica che il bot riprovi il login in caso di fallimento iniziale."""
@@ -51,7 +68,9 @@ class TestSprintDBotResilience:
 
     def test_bot_error_capture_screenshot(self, bot, mocker, tmp_path):
         """Verifica che il bot salvi screenshot e HTML in caso di errore fatale."""
-        mocker.patch("src.core.config_manager.CONFIG_DIR", tmp_path)
+        mocker.patch("src.bots.base.selenium_base_bot.config_manager.CONFIG_DIR", tmp_path)
+        error_dir = tmp_path / "logs" / "errors"
+        error_dir.mkdir(parents=True, exist_ok=True)
 
         # Mock Driver
         mock_driver = MagicMock()
@@ -68,7 +87,6 @@ class TestSprintDBotResilience:
 
         bot._save_error_state("Test Error")
 
-        error_dir = tmp_path / "logs" / "errors"
         assert error_dir.exists()
 
         # Verifica presenza file (usa glob per via del timestamp nel nome)
@@ -115,6 +133,6 @@ class TestSprintDBotResilience:
             bot._init_driver()
 
         assert any(
-            "💡 SUGGERIMENTO: Al prossimo avvio verrà scaricato un driver aggiornato." in m for m in logs
+            "💡 SUGGERIMENTO: Assicurati che Chrome sia aggiornato" in m for m in logs
         )
         assert bot.status == BotStatus.INITIALIZING

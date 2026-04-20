@@ -17,21 +17,45 @@ class TestLicenseUpdater:
         data_dir = tmp_path / "AppData"
         license_dir = data_dir / "Licenza"
         license_dir.mkdir(parents=True)
-        with patch("src.core.config_manager.get_data_path", return_value=str(data_dir)):
+        with patch("src.core.paths.get_data_path", return_value=str(data_dir)):
             yield license_dir
-
     @patch("src.core.license_validator.get_hardware_id", return_value="HWID")
     @patch("src.core.license_validator.get_detailed_license_status")
     @patch("requests.get")
     def test_run_update_success(self, mock_get, mock_status, mock_hwid, mock_paths):
-        mock_status.return_value = ("VALID", "OK")
-        mock_res = MagicMock()
-        mock_res.status_code = 200
-        mock_res.content = b"fake_data"
-        mock_get.return_value = mock_res
+        # noqa: PLC0415
+        import json
+        # noqa: PLC0415
+        from cryptography.fernet import Fernet
+        fake_key = Fernet.generate_key().decode()
+        cipher = Fernet(fake_key.encode())
 
-        # Patch interna per evitare download reali
-        with patch("src.core.license_updater._save_license_files", return_value=True):
+        # Payload JSON valido con HWID per superare validazione
+        payload = json.dumps({"Hardware ID": "HWID"}).encode("utf-8")
+        fake_license_content = cipher.encrypt(payload)
+
+        mock_status.return_value = ("VALID", "OK")
+
+        # Mock per la lista directory, manifest.json e config.dat
+        res_dir = MagicMock()
+        res_dir.status_code = 200
+        res_dir.json.return_value = [{"name": "manifest.json", "download_url": "url"}]
+
+        res_man = MagicMock()
+        res_man.status_code = 200
+        res_man.content = b'{"config.dat": "hash"}'
+
+        res_conf = MagicMock()
+        res_conf.status_code = 200
+        res_conf.content = fake_license_content
+
+        mock_get.side_effect = [res_dir, res_man, res_conf]
+
+        # Patch interna per evitare download reali e fornire chiave
+        with (
+            patch("src.core.license_updater._save_license_files", return_value=True),
+            patch("src.core.secrets_manager.SecretsManager.get_license_key", return_value=fake_key)
+        ):
             assert run_update() is True
 
     def test_save_license_files(self, mock_paths):

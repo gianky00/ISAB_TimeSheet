@@ -12,6 +12,7 @@ class TestSafeWorkProgrammazioneComprehensive(unittest.TestCase):
         self.mock_driver = MagicMock()
         with patch("src.bots.safework.base.SafeworkBaseBot.__init__", return_value=None):
             self.bot = SafeWorkProgrammazioneBot("user", "pass")
+            self.bot.signals = MagicMock()  # Inizializza manualmente signals
             self.bot.driver = self.mock_driver
             self.bot._log_callback = MagicMock()
             self.bot._logger = MagicMock()

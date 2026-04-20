@@ -59,7 +59,7 @@ class TestCertificatiGUI:
         """Testa il caricamento e salvataggio delle esclusioni nell'Engine."""
         test_file = tmp_path / "exclusions.json"
 
-        with patch("src.core.contabilita.certificati_engine.CertificatiEngine.EXCLUSIONS_FILE", test_file):
+        with patch("src.core.contabilita.certificati_engine.CertificatiEngine.exclusions_file", test_file):
             engine = CertificatiEngine()
             # Salva
             engine.save_exclusions({"MAT-001", "MAT-002"})

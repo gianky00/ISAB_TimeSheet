@@ -1,4 +1,3 @@
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -175,18 +174,23 @@ class TestBotTimingSequences:
             # Verifichiamo che _wait_for_overlay sia stato chiamato invece di time.sleep espliciti
             assert mock_wait_overlay.called
 
-    def test_regression_protection_scarico_ts(self, mock_scarico_bot):
+    def test_regression_protection_scarico_ts(self, mock_scarico_bot, tmp_path):
         """Verifica che il polling di download esegua gli sleep."""
-        source_dir = Path("source")
+        source_dir = tmp_path / "source"
+        source_dir.mkdir()
         files_before = set()
 
         with (
-            patch("time.sleep") as mock_sleep,
-            patch("time.time", side_effect=[0, 1, 2, 3, 4, 5, 40]),
-            patch("pathlib.Path.iterdir") as mock_iter,
+            patch("src.bots.portale_fornitori.scarico_ts.bot.poll_for_new_file") as mock_poll,
+            patch("src.bots.portale_fornitori.scarico_ts.bot.sanitize_filename", return_value="safe"),
+            patch.object(mock_scarico_bot, "_move_to_destination") as mock_move,
+            patch.object(mock_scarico_bot, "_click_excel_export_button", return_value=True),
         ):
-            # Simula: prima iterazione vede .crdownload, seconda iterazione vede solo file_before, terza timeout o successo
-            mock_iter.side_effect = [[Path("f.crdownload")], [], []]
+            mock_poll.return_value = source_dir / "f.xlsx"
+            mock_move.return_value = tmp_path / "dest" / "f.xlsx"
 
-            mock_scarico_bot._wait_for_new_file(source_dir, files_before, timeout=10)
-            assert any(c.args[0] == 0.5 for c in mock_sleep.call_args_list)
+            mock_scarico_bot._download_excel(source_dir, source_dir, "ODA", "POS")
+
+            # Verifica che il polling sia stato chiamato
+            assert mock_poll.called
+            assert mock_poll.call_args[1]["directory"] == source_dir.resolve()

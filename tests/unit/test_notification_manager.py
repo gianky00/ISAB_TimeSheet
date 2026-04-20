@@ -14,7 +14,8 @@ def notification_manager(tmp_path):
     """Fixture per il NotificationManager con file temporaneo."""
     # Reset singleton
     NotificationManager._instance = None
-    with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
+    # Patch CONFIG_DIR direttamente nel modulo dove viene usato per caricare/salvare
+    with patch("src.core.notification_manager.CONFIG_DIR", tmp_path):
         manager = NotificationManager.instance()
         yield manager
     # Cleanup
@@ -71,7 +72,7 @@ def test_persistence(notification_manager, tmp_path):
 
     # Simulate app restart
     NotificationManager._instance = None
-    with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
+    with patch("src.core.notification_manager.CONFIG_DIR", tmp_path):
         new_manager = NotificationManager.instance()
         assert len(new_manager.get_notifications()) == 1
         assert new_manager.get_notifications()[0]["title"] == "Persistent"

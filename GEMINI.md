@@ -26,8 +26,10 @@ Sei Gemini CLI, l'architetto senior di SyncroJob. Il tuo compito è far evolvere
     *   Le nuove feature devono avere unit test dedicati.
 
 6.  **DOCUMENTAZIONE PERSISTENTE**:
-    *   **Ogni** cambiamento strutturale, scoperta tecnica o fix architetturale deve essere immediatamente registrato nel file pertinente in `.gemini/`.
-    *   Non lasciare mai le scoperte solo nel contesto della chat. La "memoria" del progetto risiede nei file MD di questa cartella.
+---
+
+## 🧠 PROJECT MEMORIES (ULTIME MODIFICHE)
+- ⚠️ **MANDATORIO:** Usare SOLO `tests/run_robust_tests.py` o `scripts/avvio_test.bat`. Vietato `pytest` diretto.
 
 ## 📂 MAPPA DEI CONTENUTI
 *   `.gemini/index.md`: Hub centrale della documentazione IA.
