@@ -20,6 +20,9 @@ class ScaricoTSLocators:
     """Voce di menu Timesheet sotto Report."""
 
     # Filters
+    SUPPLIER_INPUT = (By.XPATH, "//input[@name='CodiceFornitore' or @name='Fornitore']")
+    """Campo input del fornitore (supporta nomi multipli ExtJS)."""
+
     SUPPLIER_DROPDOWN_ARROW = (
         By.XPATH,
         "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]",

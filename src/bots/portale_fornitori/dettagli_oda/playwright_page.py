@@ -51,7 +51,7 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
 
     def setup_supplier(self, supplier: str) -> bool:
         """
-        Imposta il fornitore per il filtering dei dati.
+        Imposta il fornitore per il filtering dei dati in modo robusto.
 
         Args:
             supplier: Ragione sociale del fornitore.
@@ -61,31 +61,30 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
         """
         try:
             self.log(f"Selezione fornitore: {supplier}")
+            input_sel = self._get_selector(DettagliOdALocators.SUPPLIER_INPUT)
             arrow_sel = self._get_selector(DettagliOdALocators.SUPPLIER_ARROW)
-            self.page.click(arrow_sel)
-            self.page.wait_for_timeout(1000)
 
-            # Pattern robusto: attendi che sia presente nel DOM, scrolla e clicca via JS
-            option_xpath = f"xpath=//li[normalize-space(text())='{supplier}']"
-            self.page.wait_for_selector(option_xpath, state="attached", timeout=15000)
-
-            # Scroll into view e clic forzato
-            self.page.locator(option_xpath).evaluate("el => { el.scrollIntoView({block: 'nearest'}); el.click(); }")
+            if not self._select_combobox_item(input_sel, arrow_sel, supplier):
+                self.log("  ⚠ Avviso: Selezione fornitore fallita, tento inserimento manuale forzato.")
+                self.page.fill(input_sel, supplier)
+                self.page.press(input_sel, "Enter")
 
             self._wait_overlay()
+            return True
         except Exception as e:
             self.log(f"✗ Selezione fornitore fallita: {e}")
             return False
-        else:
-            return True
 
     def expand_sidebar_if_collapsed(self) -> None:
-        """Espande la sidebar se necessario."""
+        """Espande la sidebar se necessario in modo istantaneo."""
         with suppress(Exception):
             expand_sel = self._get_selector(DettagliOdALocators.SIDEBAR_EXPAND_BUTTON)
-            if self.page.is_visible(expand_sel):
-                self.log("  Menu laterale collassato, espansione in corso...")
-                self.page.click(expand_sel)
+            btn = self.page.locator(expand_sel)
+            if btn.is_visible():
+                self.log("  Espansione sidebar rapida...")
+                # Dispatch event bypassa l'attesa di actionability di Playwright
+                btn.evaluate("el => el.dispatchEvent(new MouseEvent('click', {bubbles: true}))")
+                self.page.wait_for_timeout(300)
 
     def process_oda(
         self,
@@ -184,13 +183,22 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
         target_filename: str,
         selector: str,
     ) -> Path | None:
-        """Esegue il download con Playwright."""
+        """Esegue il download con Playwright in modo ultra-robusto."""
         try:
             dest_dir.mkdir(parents=True, exist_ok=True)
             self.log(f"  Attendo download in: {dest_dir}")
 
+            # 1. Attendi che almeno uno dei pulsanti sia nel DOM
+            btn = self.page.locator(selector).first
+            btn.wait_for(state="attached", timeout=5000)
+
+            # Micro-pausa per stabilità framework (richiesta utente)
+            self.page.wait_for_timeout(1000)
+
+            # 2. Cattura il download scatenando un click JS forzato
+            # Usiamo dispatchEvent per bypassare sovrapposizioni e attributi unselectable
             with self.page.expect_download(timeout=Timeouts.DOWNLOAD * 1000) as download_info:
-                self.page.locator(selector).evaluate("el => el.click()")
+                btn.evaluate("el => el.dispatchEvent(new MouseEvent('click', {bubbles: true}))")
 
             download = download_info.value
             target_path = dest_dir / target_filename

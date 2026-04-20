@@ -106,24 +106,20 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
         try:
             self._wait_overlay()
 
+            input_sel = self._get_selector(TimbratureLocators.SUPPLIER_INPUT)
             arrow_sel = self._get_selector(TimbratureLocators.COMBO_ARROW_SUPPLIER)
             # Tenta locator specifico o generico
             if not self.page.is_visible(arrow_sel):
                 arrow_sel = self._get_selector(TimbratureLocators.COMBO_ARROW_GENERIC)
 
-            self.page.click(arrow_sel)
-            self.page.wait_for_timeout(1000)  # Delay rendering lista ExtJS
-
-            # Pattern robusto: attendi che sia presente nel DOM, scrolla e clicca via JS
-            option_xpath = f"xpath=//li[normalize-space(text())='{fornitore}']"
-            self.page.wait_for_selector(option_xpath, state="attached", timeout=15000)
-
-            # Scroll into view e clic forzato
-            self.page.locator(option_xpath).evaluate("el => { el.scrollIntoView({block: 'nearest'}); el.click(); }")
+            if not self._select_combobox_item(input_sel, arrow_sel, fornitore):
+                self.log("  ⚠ Avviso: Selezione fornitore fallita, tento inserimento manuale forzato.")
+                self.page.fill(input_sel, fornitore)
+                self.page.press(input_sel, "Enter")
 
             self._wait_overlay()
         except Exception as e:
-            self.log(f"[ATTENZIONE] Erreore selezione fornitore: {e}")
+            self.log(f"[ATTENZIONE] Errore selezione fornitore: {e}")
 
     def download_excel(self) -> str:
         """Individua e clicca il pulsante Excel, gestendo il download."""

@@ -14,6 +14,7 @@ from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
 
 from src.bots.base.base_bot import BaseBot
 from src.bots.base.playwright_login_page import PlaywrightLoginPage
+from src.bots.portale_fornitori.common.locators import CommonLocators
 from src.core import config_manager
 from src.core.constants import BotStatus, BrowserConfig, Timeouts
 from src.core.logging import measure_time
@@ -204,3 +205,124 @@ class PlaywrightBaseBot(BaseBot, ABC):
         self.browser = None
         self.playwright = None
         self.login_page = None
+
+    def _wait_overlay(self, timeout_ms: int = Timeouts.OVERLAY * 1000) -> None:
+        """Attende la scomparsa delle maschere di caricamento del portale."""
+        if not self.page:
+            return
+        try:
+            xpath_combined = f"{CommonLocators.LOADING_MASK[1]} | {CommonLocators.LOADING_TEXT[1]}"
+            self.page.wait_for_selector(f"xpath={xpath_combined}", state="hidden", timeout=timeout_ms)
+        except Exception:
+            pass
+
+    def _select_combobox_item(
+        self, input_selector: str, arrow_selector: str, item_text: str, timeout_ms: int = 15000
+    ) -> bool:
+        """
+        Seleziona un elemento in modo ultra-robusto emulando Selenium.
+        Gestisce i duplicati nelle tab prendendo sempre il primo elemento visibile.
+        """
+        if not self.page:
+            return False
+
+        try:
+            self.log(f"  [COMBO] Selezione: '{item_text}'")
+
+            # 1. Trigger freccia (usiamo .first per i duplicati ExtJS)
+            try:
+                # Puntiamo al primo elemento visibile se ce ne sono multipli (come Selenium)
+                arrow = self.page.locator(arrow_selector).first
+                arrow.evaluate("el => el.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}))")
+                arrow.evaluate("el => el.dispatchEvent(new MouseEvent('click', {bubbles: true}))")
+            except Exception:
+                self.log("  [COMBO] Trigger freccia fallito, procedo con fallback.")
+
+            # 2. Ricerca opzione nella lista (le liste ExtJS sono a fine body)
+            option_xpath = f"xpath=//li[normalize-space(text())='{item_text}']"
+            
+            try:
+                # Attesa breve per la comparsa dell'opzione (.first gestisce ambiguità)
+                option = self.page.locator(option_xpath).first
+                option.wait_for(state="attached", timeout=2000)
+            except Exception:
+                # 3. Fallback: Digitazione nell'input (sempre il primo visibile)
+                self.log(f"  [COMBO] Opzione non trovata, digito nell'input...")
+                inp = self.page.locator(input_selector).first
+                
+                inp.evaluate("el => { el.value = ''; el.dispatchEvent(new Event('input', {bubbles: true})); el.focus(); }")
+                inp.type(item_text, delay=20)
+                self.page.wait_for_timeout(500)
+                option = self.page.locator(option_xpath).first
+
+            # 4. Click finale forzato via JS
+            option.wait_for(state="attached", timeout=5000)
+            option.evaluate("el => { el.scrollIntoView({block: 'nearest'}); el.click(); }")
+            
+            self._wait_overlay(timeout_ms=2000)
+            return True
+
+        except Exception as e:
+            self.log(f"  [COMBO] Errore: {str(e)[:50]}...")
+            return False
+
+    def _debug_dump_page(self, suffix: str = "debug") -> str:
+        """
+        Esegue una scansione profonda della pagina corrente e salva un report tecnico.
+        Utilissimo per mappare campi dinamici di ExtJS.
+        """
+        if not self.page:
+            return ""
+
+        try:
+            self.log(f"🔍 Avvio scansione diagnostica pagina ({suffix})...")
+            report_dir = config_manager.CONFIG_DIR / "logs" / "debug_dumps"
+            report_dir.mkdir(parents=True, exist_ok=True)
+
+            ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+            filename = f"dump_{suffix}_{ts}.txt"
+            filepath = report_dir / filename
+
+            # Script JS per estrarre informazioni rilevanti da ExtJS e dal DOM
+            scan_script = """
+            () => {
+                let info = "--- SYNCROJOB PAGE DUMP ---\\n";
+                info += "URL: " + window.location.href + "\\n\\n";
+
+                // 1. Cerca input e loro attributi
+                info += "[INPUT FIELDS]\\n";
+                document.querySelectorAll('input, textarea, select').forEach(el => {
+                    info += `- ID: ${el.id} | NAME: ${el.name} | TYPE: ${el.type} | VALUE: ${el.value} | VISIBLE: ${el.offsetParent !== null}\\n`;
+                });
+
+                // 2. Cerca trigger di combobox (le freccette)
+                info += "\\n[COMBOBOX TRIGGERS]\\n";
+                document.querySelectorAll('.x-form-trigger').forEach(el => {
+                    let parent = el.closest('.x-field') || {id: 'unknown'};
+                    info += `- ID: ${el.id} | CLASS: ${el.className} | FIELD_ID: ${parent.id}\\n`;
+                });
+
+                // 3. Cerca elementi della lista (gli li che compaiono nei dropdown)
+                info += "\\n[VISIBLE LIST ITEMS]\\n";
+                document.querySelectorAll('li.x-boundlist-item').forEach(el => {
+                    info += `- TEXT: ${el.innerText.trim()} | ID: ${el.id} | VISIBLE: ${el.offsetParent !== null}\\n`;
+                });
+
+                // 4. Struttura dei bottoni
+                info += "\\n[BUTTONS]\\n";
+                document.querySelectorAll('.x-btn').forEach(el => {
+                    info += `- TEXT: ${el.innerText.trim()} | ID: ${el.id} | ROLE: ${el.getAttribute('role')}\\n`;
+                });
+
+                return info;
+            }
+            """
+
+            content = self.page.evaluate(scan_script)
+            filepath.write_text(content, encoding="utf-8")
+            self.log(f"✅ Scansione completata. Report salvato in: {filepath.name}")
+            return content
+
+        except Exception as e:
+            self.log(f"❌ Errore durante il dump diagnostico: {e}")
+            return ""

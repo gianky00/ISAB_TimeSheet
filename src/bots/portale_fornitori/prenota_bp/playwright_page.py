@@ -70,23 +70,13 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
         self.log("Impostazione filtri di ricerca...")
 
         if fornitore:
-            try:
-                self.log(f"  Selezione fornitore: '{fornitore}'...")
-                arrow_sel = self._get_selector(PrenotaBPLocators.FILTER_FORNITORE_ARROW)
-                self.page.click(arrow_sel)
-                self.page.wait_for_timeout(1000)
+            input_sel = self._get_selector(PrenotaBPLocators.FILTER_FORNITORE)
+            arrow_sel = self._get_selector(PrenotaBPLocators.FILTER_FORNITORE_ARROW)
 
-                # Pattern robusto: attendi che sia presente nel DOM, scrolla e clicca via JS
-                option_xpath = f"xpath=//li[normalize-space(text())='{fornitore}']"
-                self.page.wait_for_selector(option_xpath, state="attached", timeout=15000)
-
-                # Scroll into view e clic forzato
-                self.page.locator(option_xpath).evaluate("el => { el.scrollIntoView({block: 'nearest'}); el.click(); }")
-
-                self._wait_overlay()
-            except Exception as e:
-                self.log(f"  ⚠ Avviso: Selezione fornitore fallita ({e}), tento inserimento manuale.")
-                self.page.fill(self._get_selector(PrenotaBPLocators.FILTER_FORNITORE), fornitore)
+            if not self._select_combobox_item(input_sel, arrow_sel, fornitore):
+                self.log("  ⚠ Avviso: Selezione fornitore fallita, tento inserimento manuale forzato.")
+                self.page.fill(input_sel, fornitore)
+                self.page.press(input_sel, "Enter")
 
         if numero_bp:
             num_sel = self._get_selector(PrenotaBPLocators.FILTER_NUMERO_BP)

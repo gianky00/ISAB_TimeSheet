@@ -219,17 +219,18 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             return False
         try:
             self.log(f"Impostazione filtri per fornitore: {self.fornitore}")
+            input_sel = self._get_selector(ScaricoTSLocators.SUPPLIER_INPUT)
             arrow_sel = self._get_selector(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW)
-            self.page.wait_for_selector(arrow_sel, state="attached").evaluate("el => el.click()")
-            self.page.wait_for_timeout(1000)  # Attesa rendering lista ExtJS
 
-            option_xpath = f"//li[normalize-space(text())='{self.fornitore}']"
-            # Pattern Robusto: Attendiamo che sia nel DOM, scrolliamo e clicchiamo via JS
-            option = self.page.wait_for_selector(f"xpath={option_xpath}", state="attached")
-            option.evaluate("el => { el.scrollIntoView({block: 'nearest'}); el.click(); }")
-            self._wait_for_overlay()
+            if not self._select_combobox_item(input_sel, arrow_sel, self.fornitore):
+                self.log("  ⚠ Avviso: Selezione fornitore fallita, tento inserimento manuale forzato.")
+                self.page.fill(input_sel, self.fornitore)
+                self.page.press(input_sel, "Enter")
+
+            self._wait_overlay()
 
             data_da_sel = self._get_selector(ScaricoTSLocators.DATE_FROM_FIELD)
+
             # Inserimento via JS per robustezza (allineamento con Selenium)
             self.page.locator(data_da_sel).evaluate(
                 "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); }",

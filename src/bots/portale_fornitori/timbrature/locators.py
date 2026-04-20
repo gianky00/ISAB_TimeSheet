@@ -17,6 +17,9 @@ class TimbratureLocators:
     """Pulsante menu Report nell'header."""
 
     # Filters
+    SUPPLIER_INPUT = (By.XPATH, "//input[@name='CodiceFornitore' or @name='Fornitore']")
+    """Campo input del fornitore (supporta nomi multipli ExtJS)."""
+
     # Generic combo box arrow for ExtJS
     COMBO_ARROW_GENERIC = (By.XPATH, "//div[contains(@class, 'x-form-arrow-trigger')]")
     """Freccia generica per l'apertura delle combo box ExtJS."""

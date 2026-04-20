@@ -14,14 +14,18 @@ class DettagliOdALocators:
     REPORT_MENU = (By.XPATH, "//*[normalize-space(text())='Report']")
     DETTAGLI_MENU = (
         By.XPATH,
-        "//span[contains(@class, 'x-btn-inner') and normalize-space(text())='Oda']",
+        "//span[contains(@class, 'x-btn-inner')][text()='Oda']",
     )
 
     # Filters
+    SUPPLIER_INPUT = (By.NAME, "CodiceFornitore")
+    """Campo input del fornitore (rilevato: CodiceFornitore)."""
+
     SUPPLIER_ARROW = (
         By.XPATH,
         "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]",
     )
+
 
     # Input Fields (Specific to Portale ISAB)
     ODA_NUMBER_FIELD = (By.CSS_SELECTOR, "input[name='NumeroOdA']")
@@ -44,7 +48,12 @@ class DettagliOdALocators:
     DETAILS_ICON = (By.XPATH, "//div[contains(@class, 'fa-info-circle')]")
 
     # Export
-    EXPORT_EXCEL_TEXT = (By.XPATH, "//span[contains(text(), 'Esporta in Excel')]")
+    # Puntiamo al pulsante Esporta in Excel solo se contenuto nella tab attiva (visibile)
+    EXPORT_EXCEL_TEXT = (
+        By.XPATH,
+        "//div[contains(@class, 'x-tabpanel-child') and not(contains(@class, 'x-hidden-offsets'))]//span[contains(@class, 'x-btn-inner') and contains(text(), 'Esporta in Excel')]",
+    )
+    """Pulsante di export identificato nella scheda attiva per evitare ambiguità."""
     GENERAL_EXPORT_BUTTON = (
         By.XPATH,
         "//div[contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]",

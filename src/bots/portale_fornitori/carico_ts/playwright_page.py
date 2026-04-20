@@ -40,7 +40,7 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
 
     def select_supplier(self, supplier: str) -> bool:
         """
-        Seleziona il fornitore dal menu a discesa della pagina.
+        Seleziona il fornitore dal menu a discesa della pagina in modo robusto.
 
         Args:
             supplier: Nome del fornitore da selezionare.
@@ -50,23 +50,19 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
         """
         try:
             self.log(f"Selezione {supplier}...")
+            input_sel = self._get_selector(CaricoTSLocators.SUPPLIER_INPUT)
             arrow_sel = self._get_selector(CaricoTSLocators.SUPPLIER_ARROW)
-            self.page.click(arrow_sel)
-            self.page.wait_for_timeout(1000)
 
-            # Pattern robusto: attendi che sia presente nel DOM, scrolla e clicca via JS
-            option_xpath = f"xpath=//li[normalize-space(text())='{supplier}']"
-            self.page.wait_for_selector(option_xpath, state="attached", timeout=15000)
-
-            # Scroll into view e clic forzato
-            self.page.locator(option_xpath).evaluate("el => { el.scrollIntoView({block: 'nearest'}); el.click(); }")
+            if not self._select_combobox_item(input_sel, arrow_sel, supplier):
+                self.log("  ⚠ Avviso: Selezione fornitore fallita, tento inserimento manuale forzato.")
+                self.page.fill(input_sel, supplier)
+                self.page.press(input_sel, "Enter")
 
             self._wait_overlay()
+            return True
         except Exception as e:
             self.log(f"Errore fornitore: {e}")
             return False
-        else:
-            return True
 
     def process_oda(self, oda: str) -> bool:
         """
