@@ -1,5 +1,15 @@
 ## Unreleased
 
+### Fix
+
+- **portale-fornitori**: implement robust interaction pattern for PW bots and fix scarico_ts timeout
+
+### Refactor
+
+- rimozione globale emoji per risolvere l'errore di encoding charmap / cp1252
+
+## v1.42.0 (2026-04-20)
+
 ### Feat
 
 - automate CHANGELOG.md generation in release process via Commitizen
