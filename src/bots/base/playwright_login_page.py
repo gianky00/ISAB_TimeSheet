@@ -41,6 +41,11 @@ class PlaywrightLoginPage(PlaywrightBasePage):
         self.page.fill(user_sel, username)
         self.page.fill(pass_sel, password)
 
+        # HACK DEFINITIVO: Cambiamo il tipo del campo in 'text' per accecare Chromium
+        # Questo impedisce nativamente l'attivazione del "Password Manager" e di "Safebrowsing"
+        with suppress(Exception):
+            self.page.locator(pass_sel).evaluate("el => el.type = 'text'")
+
         # Selezione Società (ISAB/PSER) rapida
         try:
             self.log(f"Selezione società: {company}...")
