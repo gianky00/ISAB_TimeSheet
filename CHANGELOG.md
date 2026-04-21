@@ -1,17 +1,13 @@
-## v1.42.7 (2026-04-21)
+## Unreleased
 
-## v1.42.6 (2026-04-21)
+### Feat
 
-## v1.42.5 (2026-04-21)
-
-## v1.42.4 (2026-04-21)
-
-## v1.42.3 (2026-04-21)
-
-## v1.42.2 (2026-04-20)
+- align project and improve browser security (removed large binaries)
 
 ### Fix
 
+- **pw**: change password input type to text before submit to completely bypass chromium password compromised alert
+- **pw**: ultra-aggressive alert handling and hardened password suppression
 - **portale-fornitori**: implement ultra-robust PW interaction pattern and accelerate login
 
 ## v1.42.1 (2026-04-20)
