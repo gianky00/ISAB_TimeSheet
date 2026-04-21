@@ -1,4 +1,4 @@
-﻿"""
+"""
 Bot TS - Build & Distribution Script
 Compila l'applicazione con PyInstaller, crea l'installer con Inno Setup,
 e deploya su Netlify tramite API (ZIP deploy).
@@ -352,6 +352,7 @@ def run_pyinstaller(obfuscated=False):  # noqa: ANN001, ANN201
         "lxml",
         "openpyxl",
         "PIL",
+        "playwright",
     ]
     for pkg in force_collect:
         cmd.extend(["--collect-all", pkg])
@@ -429,6 +430,7 @@ def run_nuitka(obfuscated=False):  # noqa: ANN001, ANN201
         "PIL",
         "selenium",
         "webdriver_manager",
+        "playwright",
     ]
     cmd.extend([f"--include-package={pkg}" for pkg in force_include_pkgs])
 
