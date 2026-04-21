@@ -53,12 +53,20 @@ def _patch_file(path: Path) -> bool:
 
         # Mappa delle preferenze critiche da forzare a False
         overrides = {
-            "profile.password_manager_leak_detection": False,
-            "profile.password_manager_enabled": False,
-            "credentials_enable_service": False,
+            # Gestione Password (Root e Profile)
             "password_manager.enabled": False,
+            "password_manager.google_password_manager_enabled": False,
             "password_manager.leak_detection_check_enabled": False,
+            "password_manager.password_leak_detection_enabled": False,
+            "password_manager.password_check_enabled": False,
             "password_manager.compromised_credentials_check_enabled": False,
+            "profile.password_manager_enabled": False,
+            "profile.password_manager_leak_detection": False,
+            "profile.password_manager_leak_detection_check_enabled": False,
+            "credentials_enable_service": False,
+            "credentials_enable_autosignin": False,
+
+            # Autofill e Privacy
             "autofill.profile_enabled": False,
             "autofill.credit_card_enabled": False,
             "autofill.enabled": False,
@@ -67,6 +75,7 @@ def _patch_file(path: Path) -> bool:
             "signin.allowed": False,
             "sync.managed": True,  # Blocca la sincronizzazione
             "profile.nickname": "SyncroJob-Bot",
+            "plugins.always_open_pdf_externally": True,
         }
 
         modified = False

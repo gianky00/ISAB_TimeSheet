@@ -189,14 +189,14 @@ def ensure_drivers():  # noqa: ANN201
             if chromium_dirs:
                 latest_chromium = max(chromium_dirs, key=os.path.getmtime)
                 target_pw_dir = pw_dest_dir / latest_chromium.name
-                
+
                 if not target_pw_dir.exists():
                     log_and_print(f"  Copying {latest_chromium.name} to drivers folder (this may take a while)...")
                     shutil.copytree(latest_chromium, target_pw_dir, dirs_exist_ok=True)
                     log_and_print(f"  [SUCCESS] Playwright Chromium aligned: {target_pw_dir}")
                 else:
                     log_and_print(f"  [INFO] Playwright Chromium already present: {latest_chromium.name}")
-                
+
                 # File sentinel per confermare a runtime l'integrità
                 (pw_dest_dir / "bundled.txt").write_text(f"Version: {latest_chromium.name}\nDate: {time.ctime()}")
             else:

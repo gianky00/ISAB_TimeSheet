@@ -76,11 +76,57 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
             self.log("[ATTESA] Overlay ancora presente (proseguo...)")
 
         with suppress(Exception):
-            modale_xpath = "//div[contains(@class, 'modal') and contains(@style, 'display: block')]"
-            if self.page.is_visible(f"xpath={modale_xpath}", timeout=3000):
-                btn_xpath = ".//*[self::button or self::span or self::a][contains(text(), 'OK') or contains(text(), 'Si') or contains(text(), 'Yes') or @data-dismiss='modal']"
-                self.page.click(f"xpath={modale_xpath}{btn_xpath}")
-                self.log("[INFO] Modale gestita (OK/Annulla/Si/Yes).")
+            # 1. Controllo specifico per Ricerca Estesa (Richiesto in Safework)
+            self.log("[CERCA] Controllo presenza popup 'Ricerca Estesa'...")
+            popup_xpath = "//p[contains(text(), 'estenderla')]"
+
+            # Usiamo wait_for_selector per attendere la comparsa reale (timeout breve)
+            search_popup_visible = False
+            with suppress(TimeoutError):
+                self.page.wait_for_selector(f"xpath={popup_xpath}", state="visible", timeout=1500)
+                search_popup_visible = True
+
+            if search_popup_visible:
+                self.log("[CLICK] Estensione ricerca...")
+                for sel in ["span[idtxt='E421C594']", "//button[contains(., 'Si')]", "xpath=//button[contains(@class, 'btn-ok')]"]:
+                    with suppress(Exception):
+                        xpath_full = sel if sel.startswith("/") else f"css={sel}"
+                        if self.page.is_visible(xpath_full):
+                            self.page.click(xpath_full, timeout=2000)
+                            self.log("[OK] Click su 'Si' riuscito (Ricerca Estesa)")
+                            self.page.wait_for_timeout(1000)
+                            return True
+            else:
+                self.log("[INFO] Nessun popup di ricerca estesa rilevato.")
+
+            # 2. Gestione Modali Generiche (es. Alert "Il PdL non è in programmazione")
+            # Usiamo un ciclo di tentativi per gestire animazioni e caricamenti asincroni
+            self.log("[ATTESA] Controllo Alert/Modali residue...")
+
+            # Selettori pulsante robusti: classe btn-ok (standard), dialog-btn (Safework), o testo OK/Si/Yes
+            btn_selectors = [
+                "//button[contains(@class, 'btn-ok')]",
+                "//button[contains(@class, 'dialog-btn')]",
+                "//button[contains(., 'OK')]",
+                "//span[contains(text(), 'OK')]",
+                "//button[contains(., 'Si')]",
+                "//a[contains(@class, 'btn-ok') or @data-dismiss='modal']"
+            ]
+
+            tentativi_max = 3
+            for i in range(tentativi_max):  # Tentativi con mini-pause
+                for b_sel in btn_selectors:
+                    with suppress(Exception):
+                        if self.page.is_visible(f"xpath={b_sel}", timeout=800):
+                            self.page.click(f"xpath={b_sel}")
+                            self.log(f"[OK] Alert gestito cliccando su: {b_sel}")
+                            self.page.wait_for_timeout(1000)
+                            return True # Chiudiamo al primo pulsante di conferma trovato
+
+                if i < (tentativi_max - 1):
+                    self.page.wait_for_timeout(500)
+
+            self.log("[INFO] Nessun Alert/Modale bloccante rilevata.")
 
         return True
 

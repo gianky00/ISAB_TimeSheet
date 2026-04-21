@@ -108,8 +108,8 @@ class PlaywrightBaseBot(BaseBot, ABC):
                 "--disable-background-networking",
                 "--disable-client-side-phishing-detection",
                 "--disable-sync",
-                # Disabilitazioni Mirate per il Gestore Password e Autocompletamento
-                "--disable-features=PasswordLeakDetection,PasswordCheck,SafeBrowsingPasswordCheck,AutofillServerCommunication,AutofillAccountWalletStorage,OptimizationHints,OptimizationGuideFetching,OptimizationTargetPrediction,CredentialProviderExtension",
+                "--disable-features=LeakDetection,PasswordLeakDetection,PasswordCheck,SafeBrowsingPasswordCheck,AutofillServerCommunication,AutofillAccountWalletStorage,OptimizationHints,OptimizationGuideFetching,OptimizationTargetPrediction,CredentialProviderExtension,BackgroundPasswordCheck,InsecureDownloadWarnings,PasswordManager,PasswordGeneration",
+                "--no-manage-passwords",
                 "--disable-save-password-bubble",
                 "--disable-single-click-autofill",
                 "--disable-autofill",
@@ -117,6 +117,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
                 "--disable-password-manager-reauthentication",
                 "--hide-crash-restore-bubble",
                 "--disable-notifications",
+                "--disable-search-engine-choice-screen",
             ],
         }
 
@@ -195,7 +196,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
         if self.playwright:
             with suppress(Exception):
                 self.playwright.stop()
-        
+
         self.page = None
         self.context = None
         self.playwright = None

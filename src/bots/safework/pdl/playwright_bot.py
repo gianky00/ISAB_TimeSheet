@@ -167,9 +167,6 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
             self.page.fill(search_sel, pdl_num)
             self.page.press(search_sel, "Enter")
 
-            if self._gestisci_ricerca_estesa():
-                return False
-
             self._attendi_scomparsa_overlay()
 
             preview_menu_sel = self._get_selector(SafeWorkLocators.PRINT_PREVIEW_MENU)
@@ -179,24 +176,6 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
             return False
         else:
             return True
-
-    def _gestisci_ricerca_estesa(self) -> bool:
-        if not self.page:
-            return False
-        try:
-            popup_xpath = "//p[contains(text(), 'estenderla')]"
-            if self.page.is_visible(f"xpath={popup_xpath}", timeout=5000):
-                self.log("[CLICK] Estensione ricerca...")
-                yes_btn_sel = self._get_selector(SafeWorkLocators.EXTEND_SEARCH_YES)
-                self.page.click(yes_btn_sel)
-                self._attendi_scomparsa_overlay()
-
-                if self.page.is_visible("xpath=//div[contains(text(), 'nessun dato trovato')]", timeout=5000):
-                    return True
-        except Exception:
-            return False
-
-        return False
 
     def _scarica_parte_prima(self, pdl_num: str) -> str | None:
         if not self.page:
