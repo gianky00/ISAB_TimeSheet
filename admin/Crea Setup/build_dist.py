@@ -1,4 +1,4 @@
-"""
+﻿"""
 Bot TS - Build & Distribution Script
 Compila l'applicazione con PyInstaller, crea l'installer con Inno Setup,
 e deploya su Netlify tramite API (ZIP deploy).
@@ -67,8 +67,8 @@ def log_and_print(message, level="INFO"):  # noqa: ANN001, ANN201
         logger.warning(message)
 
 
-def run_command(cmd, cwd=None, shell=False, check=True):  # noqa: ANN001, ANN201
-    """Run command and log output."""
+def run_command(cmd, cwd=None, shell=False, check=True, input_str=None):  # noqa: ANN001, ANN201
+    """Run command and log output. Supports sending input to stdin."""
     if cwd is None:
         cwd = ROOT_DIR
 
@@ -88,6 +88,7 @@ def run_command(cmd, cwd=None, shell=False, check=True):  # noqa: ANN001, ANN201
             cmd,
             cwd=cwd,
             shell=shell,
+            stdin=subprocess.PIPE if input_str else None,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -95,6 +96,12 @@ def run_command(cmd, cwd=None, shell=False, check=True):  # noqa: ANN001, ANN201
             errors="replace",
             creationflags=creationflags,
         )
+
+        if input_str and process.stdin:
+            log_and_print(f"[INPUT] Sending: {input_str.strip()}")
+            process.stdin.write(input_str)
+            process.stdin.flush()
+            process.stdin.close()
 
         if process.stdout:
             for line in iter(process.stdout.readline, ""):
@@ -145,22 +152,18 @@ def clean_build():  # noqa: ANN201
 
 
 def ensure_drivers():  # noqa: ANN201
-    """Ensure chromedriver is present and up-to-date in drivers folder."""
-    log_and_print("[BUILD] Ensuring drivers are present and aligned...")
+    """Ensure chromedriver and Playwright browsers are present and aligned."""
+    log_and_print("[BUILD] Ensuring drivers and Playwright browsers are present...")
     drivers_dir = ROOT_DIR / "drivers"
     drivers_dir.mkdir(parents=True, exist_ok=True)
 
-    # Crea un file sentinel per assicurare che PyInstaller includa sempre la cartella
+    # 1. Selenium ChromeDriver
     (drivers_dir / ".exists").write_text("Sentinel file for PyInstaller")
-
-    # Use webdriver-manager to get the latest driver
     try:
         from webdriver_manager.chrome import ChromeDriverManager  # noqa: PLC0415
-
         log_and_print("  Checking for latest ChromeDriver...")
         driver_path_str = ChromeDriverManager().install()
         driver_path = Path(driver_path_str)
-
         if not driver_path.is_file() or driver_path.suffix.lower() != ".exe":
             search_path = driver_path.parent if driver_path.is_file() else driver_path
             potential_exes = list(search_path.rglob("chromedriver.exe"))
@@ -168,21 +171,43 @@ def ensure_drivers():  # noqa: ANN201
                 driver_path = potential_exes[0]
             else:
                 raise FileNotFoundError(f"Chromedriver.exe not found in {search_path}")  # noqa: TRY003, TRY301
-
         dest_path = drivers_dir / "chromedriver.exe"
         shutil.copy2(driver_path, dest_path)
-        log_and_print(f"  [SUCCESS] Driver aligned: {dest_path}")
+        log_and_print(f"  [SUCCESS] ChromeDriver aligned: {dest_path}")
+    except Exception as e:
+        log_and_print(f"  [WARNING] Could not update ChromeDriver: {e}", "WARNING")
+
+    # 2. Playwright Chromium
+    try:
+        pw_source_dir = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
+        pw_dest_dir = drivers_dir / "ms-playwright"
+
+        if pw_source_dir.exists():
+            log_and_print(f"  Syncing Playwright browsers from {pw_source_dir}...")
+            # Non cancelliamo tutto ogni volta per velocizzare, ma verifichiamo se chromium esiste
+            chromium_dirs = list(pw_source_dir.glob("chromium-*"))
+            if chromium_dirs:
+                latest_chromium = max(chromium_dirs, key=os.path.getmtime)
+                target_pw_dir = pw_dest_dir / latest_chromium.name
+                
+                if not target_pw_dir.exists():
+                    log_and_print(f"  Copying {latest_chromium.name} to drivers folder (this may take a while)...")
+                    shutil.copytree(latest_chromium, target_pw_dir, dirs_exist_ok=True)
+                    log_and_print(f"  [SUCCESS] Playwright Chromium aligned: {target_pw_dir}")
+                else:
+                    log_and_print(f"  [INFO] Playwright Chromium already present: {latest_chromium.name}")
+                
+                # File sentinel per confermare a runtime l'integrità
+                (pw_dest_dir / "bundled.txt").write_text(f"Version: {latest_chromium.name}\nDate: {time.ctime()}")
+            else:
+                log_and_print("  [WARNING] No Playwright Chromium folder found!", "WARNING")
+        else:
+            log_and_print(f"  [WARNING] Playwright source dir not found: {pw_source_dir}", "WARNING")
 
     except Exception as e:
-        log_and_print(f"  [WARNING] Could not automatically update driver: {e}", "WARNING")
-        if (drivers_dir / "chromedriver.exe").exists():
-            log_and_print("  [INFO] Using existing driver as fallback.")
-        else:
-            log_and_print(
-                "  [CRITICAL ERROR] Driver missing and auto-download failed! Build aborted.", "ERROR"
-            )
-            sys.exit(1)
-
+        log_and_print(f"  [ERROR] Playwright browser sync failed: {e}", "ERROR")
+        if not pw_dest_dir.exists():
+            log_and_print("  [CRITICAL] Playwright browsers missing for build!", "ERROR")
 
 def run_pyarmor():  # noqa: ANN201
     """Obfuscate scripts using PyArmor."""
@@ -202,7 +227,8 @@ def run_pyarmor():  # noqa: ANN201
         str(MAIN_SCRIPT),
     ]
 
-    run_command(cmd, cwd=ROOT_DIR)
+    # Invia 'c' (continue) per gestire il prompt della licenza di PyArmor 9 in ambienti non interattivi
+    run_command(cmd, cwd=ROOT_DIR, input_str="c\n")
     log_and_print("[BUILD] PyArmor obfuscation completed.")
 
 

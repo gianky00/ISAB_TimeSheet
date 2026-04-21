@@ -82,8 +82,16 @@ class SeleniumBaseBot(BaseBot, ABC):
     def _get_chrome_options(self) -> Options:
         """Configura le opzioni di riga di comando per l'istanza Chrome."""
         opt = Options()
+
+        # Flag aggressivi per sopprimere popup di sicurezza, password e aggiornamenti
         args = [
-            "--disable-features=DownloadBubble,DownloadBubbleV2",
+            # Disabilitazione feature di riga di comando (Password e SafeBrowsing)
+            "--disable-features=PasswordLeakDetection,PasswordCheck,SafeBrowsingPasswordCheck,AutofillServerCommunication,AutofillAccountWalletStorage",
+            "--disable-save-password-bubble",
+            "--disable-password-manager-reauthentication",
+            "--disable-password-generation",
+            "--disable-single-click-autofill",
+            "--disable-autofill",
             "--disable-notifications",
             "--disable-infobars",
             "--disable-popup-blocking",
@@ -95,6 +103,9 @@ class SeleniumBaseBot(BaseBot, ABC):
             "--disable-gpu",
             "--remote-debugging-port=0",
             "--disable-software-rasterizer",
+            "--disable-component-update",
+            "--no-first-run",
+            "--no-default-browser-check",
         ]
         for a in args:
             opt.add_argument(a)
@@ -102,20 +113,30 @@ class SeleniumBaseBot(BaseBot, ABC):
         opt.add_experimental_option("excludeSwitches", ["enable-automation"])
         opt.add_experimental_option("useAutomationExtension", False)
 
+        user_data_dir = config_manager.CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
+        opt.add_argument(f"--user-data-dir={user_data_dir}")
+
+        # Patching preventivo del profilo (file Preferences) per Selenium
+        from src.utils.browser_profile_patcher import patch_browser_profile  # noqa: PLC0415
+        with suppress(Exception):
+            patch_browser_profile(user_data_dir)
+
         cfg = config_manager.load_config()
         if self.headless or cfg.get("browser_headless", False):
             self.headless = True
             opt.add_argument("--headless=new")
             opt.add_argument(f"--window-size={BrowserConfig.WINDOW_SIZE}")
 
-        opt.add_argument(
-            f"--user-data-dir={config_manager.CONFIG_DIR / 'data' / BrowserConfig.CACHE_DIR_NAME}"
-        )
-
+        # Preferenze sperimentali forzate
         prefs: dict[str, Any] = {
             "profile.default_content_setting_values.automatic_downloads": 1,
             "plugins.always_open_pdf_externally": True,
             "download.prompt_for_download": False,
+            "credentials_enable_service": False,
+            "profile.password_manager_enabled": False,
+            "profile.password_manager_leak_detection": False,
+            "password_manager.enabled": False,
+            "password_manager.leak_detection_check_enabled": False,
         }
         if self.download_path:
             prefs["download.default_directory"] = str(Path(self.download_path).resolve())

@@ -5,9 +5,11 @@ Implementazione della classe base per i bot Playwright.
 """
 
 import re
+import sys
 from abc import ABC
 from contextlib import suppress
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
@@ -57,10 +59,29 @@ class PlaywrightBaseBot(BaseBot, ABC):
     @measure_time(threshold_ms=10000)
     def _init_driver(self) -> None:
         """Inizializza Playwright e il browser con logica di persistenza, stabilità e recovery."""
+        import os  # noqa: PLC0415
+
         from src.utils.browser_diagnostics import emergency_profile_reset  # noqa: PLC0415
         from src.utils.browser_profile_patcher import patch_browser_profile  # noqa: PLC0415
 
         self.status = BotStatus.INITIALIZING
+
+        # --- CONFIGURAZIONE BINARI BUNDLED ---
+        # Determina la cartella base (src se in dev, root se bundle)
+        if getattr(sys, "frozen", False):
+            # Percorso dell'eseguibile (PyInstaller/Nuitka)
+            bundle_dir = Path(sys._MEIPASS) if hasattr(sys, "_MEIPASS") else Path(sys.executable).parent
+            drivers_pw_path = bundle_dir / "drivers" / "ms-playwright"
+
+            if drivers_pw_path.exists():
+                self.log(f"[BUNDLE] Utilizzo binari Playwright inclusi nel pacchetto: {drivers_pw_path}")
+                os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(drivers_pw_path)
+            else:
+                self.log(
+                    "[WARNING] Binari Playwright bundled non trovati, uso percorso di sistema.", "WARNING"
+                )
+        # -------------------------------------
+
         user_data_dir = config_manager.CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
 
         # Assicura esistenza directory dati
@@ -100,7 +121,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
         }
 
         # 1. Reset profilato preventivo per garantire tabula rasa (Standard per stabilità richiesto dall'utente)
-        self.log("♻️ Esecuzione Reset Profilo Standard per avvio pulito...")
+        self.log("[AVVIO] Esecuzione Reset Profilo Standard per avvio pulito...")
         with suppress(Exception):
             cleanup_bot_processes()
         emergency_profile_reset(user_data_dir)
@@ -108,7 +129,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
         # 2. Patching preventivo del profilo per sopprimere popup sicurezza
         with suppress(Exception):
             if user_data_dir.exists():
-                self.log("🛡️ Applicazione patch di sicurezza al profilo...")
+                self.log("[AVVIO] Applicazione patch di sicurezza al profilo...")
                 patch_browser_profile(user_data_dir)
 
         # 3. Tentativi di inizializzazione
@@ -116,10 +137,10 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
         for attempt in range(max_retries):
             try:
-                self.log(f"🧹 Setup ambiente browser (Tentativo {attempt + 1}/{max_retries})...")
+                self.log(f"[AVVIO] Setup ambiente browser (Tentativo {attempt + 1}/{max_retries})...")
 
                 if not self.playwright:
-                    self.log("🌐 Inizializzazione Playwright Core...")
+                    self.log("[AVVIO] Inizializzazione Playwright Core...")
                     self.playwright = sync_playwright().start()
 
                 self.log(f"[AVVIO] Lancio Chromium con profilo persistente: {user_data_dir.name}")
@@ -142,7 +163,9 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
                 # Se è l'ultimo tentativo, rilanciamo l'errore definitivo
                 if attempt == max_retries - 1:
-                    self.log("[ERRORE] Impossibile inizializzare il browser dopo molteplici tentativi.", "ERROR")
+                    self.log(
+                        "[ERRORE] Impossibile inizializzare il browser dopo molteplici tentativi.", "ERROR"
+                    )
                     raise
 
         if self.context is None:
@@ -155,16 +178,28 @@ class PlaywrightBaseBot(BaseBot, ABC):
         self.page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         self.login_page = PlaywrightLoginPage(self.page, self.log, self.ISAB_URL)
 
+    def cleanup(self) -> None:
+        """Rilascia le risorse di Playwright e chiude il browser."""
+        self.log("🧹 Cleanup risorse Playwright...")
+        self._stop_playwright_internal()
+
     def _stop_playwright_internal(self) -> None:
         """Ferma Playwright internamente senza loggare errori se già fermo."""
         if self.context:
             with suppress(Exception):
+                # Chiude tutte le pagine prima del contesto
+                for page in self.context.pages:
+                    with suppress(Exception):
+                        page.close()
                 self.context.close()
         if self.playwright:
             with suppress(Exception):
                 self.playwright.stop()
+        
+        self.page = None
         self.context = None
         self.playwright = None
+        self.status = BotStatus.IDLE
 
     def _save_error_state(self, error_msg: str) -> None:
         """Cattura lo stato del browser in caso di errore (Screenshot + HTML)."""
@@ -179,7 +214,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
             self.page.screenshot(path=str(edir / f"error_{sn}_{ts}.png"))
             content = self.page.content()
             (edir / f"error_{sn}_{ts}.html").write_text(content, encoding="utf-8")
-            self.log(f"📸 Stato errore salvato in: {edir.name}")
+            self.log(f"[DIAGNOSTICA] Stato errore salvato in: {edir.name}")
 
     def _login(self) -> bool:
         """Esegue il login delegandolo alla pagina di login specifica."""
@@ -191,30 +226,13 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
         return get_playwright_selector(locator)
 
-    def cleanup(self) -> None:
-        """Rilascia tutte le risorse Playwright (contesto, browser, core)."""
-        if self.context:
-            with suppress(Exception):
-                self.context.close()
-        if self.playwright:
-            with suppress(Exception):
-                self.playwright.stop()
-
-        self.page = None
-        self.context = None
-        self.browser = None
-        self.playwright = None
-        self.login_page = None
-
     def _wait_overlay(self, timeout_ms: int = Timeouts.OVERLAY * 1000) -> None:
         """Attende la scomparsa delle maschere di caricamento del portale."""
         if not self.page:
             return
-        try:
+        with suppress(Exception):
             xpath_combined = f"{CommonLocators.LOADING_MASK[1]} | {CommonLocators.LOADING_TEXT[1]}"
             self.page.wait_for_selector(f"xpath={xpath_combined}", state="hidden", timeout=timeout_ms)
-        except Exception:
-            pass
 
     def _select_combobox_item(
         self, input_selector: str, arrow_selector: str, item_text: str, timeout_ms: int = 15000
@@ -230,27 +248,27 @@ class PlaywrightBaseBot(BaseBot, ABC):
             self.log(f"  [COMBO] Selezione: '{item_text}'")
 
             # 1. Trigger freccia (usiamo .first per i duplicati ExtJS)
-            try:
+            with suppress(Exception):
                 # Puntiamo al primo elemento visibile se ce ne sono multipli (come Selenium)
                 arrow = self.page.locator(arrow_selector).first
                 arrow.evaluate("el => el.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}))")
                 arrow.evaluate("el => el.dispatchEvent(new MouseEvent('click', {bubbles: true}))")
-            except Exception:
-                self.log("  [COMBO] Trigger freccia fallito, procedo con fallback.")
 
             # 2. Ricerca opzione nella lista (le liste ExtJS sono a fine body)
             option_xpath = f"xpath=//li[normalize-space(text())='{item_text}']"
-            
+
             try:
                 # Attesa breve per la comparsa dell'opzione (.first gestisce ambiguità)
                 option = self.page.locator(option_xpath).first
                 option.wait_for(state="attached", timeout=2000)
             except Exception:
                 # 3. Fallback: Digitazione nell'input (sempre il primo visibile)
-                self.log(f"  [COMBO] Opzione non trovata, digito nell'input...")
+                self.log("  [COMBO] Opzione non trovata, digito nell'input...")
                 inp = self.page.locator(input_selector).first
-                
-                inp.evaluate("el => { el.value = ''; el.dispatchEvent(new Event('input', {bubbles: true})); el.focus(); }")
+
+                inp.evaluate(
+                    "el => { el.value = ''; el.dispatchEvent(new Event('input', {bubbles: true})); el.focus(); }"
+                )
                 inp.type(item_text, delay=20)
                 self.page.wait_for_timeout(500)
                 option = self.page.locator(option_xpath).first
@@ -258,13 +276,13 @@ class PlaywrightBaseBot(BaseBot, ABC):
             # 4. Click finale forzato via JS
             option.wait_for(state="attached", timeout=5000)
             option.evaluate("el => { el.scrollIntoView({block: 'nearest'}); el.click(); }")
-            
-            self._wait_overlay(timeout_ms=2000)
-            return True
 
+            self._wait_overlay(timeout_ms=2000)
         except Exception as e:
             self.log(f"  [COMBO] Errore: {str(e)[:50]}...")
             return False
+        else:
+            return True
 
     def _debug_dump_page(self, suffix: str = "debug") -> str:
         """
@@ -275,7 +293,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
             return ""
 
         try:
-            self.log(f"🔍 Avvio scansione diagnostica pagina ({suffix})...")
+            self.log(f"[DEBUG] Avvio scansione diagnostica pagina ({suffix})...")
             report_dir = config_manager.CONFIG_DIR / "logs" / "debug_dumps"
             report_dir.mkdir(parents=True, exist_ok=True)
 
@@ -318,11 +336,11 @@ class PlaywrightBaseBot(BaseBot, ABC):
             }
             """
 
-            content = self.page.evaluate(scan_script)
+            content = str(self.page.evaluate(scan_script))
             filepath.write_text(content, encoding="utf-8")
-            self.log(f"✅ Scansione completata. Report salvato in: {filepath.name}")
-            return content
-
+            self.log(f"[DEBUG] Scansione completata. Report salvato in: {filepath.name}")
         except Exception as e:
-            self.log(f"❌ Errore durante il dump diagnostico: {e}")
+            self.log(f"[DEBUG] Errore durante il dump diagnostico: {e}")
             return ""
+        else:
+            return content

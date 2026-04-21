@@ -60,6 +60,10 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
     def get_columns() -> list[dict[str, Any]]:
         return [{"name": "numero_pdl", "label": "Numero PDL", "type": "text"}]
 
+    def cleanup(self) -> None:
+        """Rilascia le risorse del bot."""
+        super().cleanup()
+
     def run(self, data: list[dict[str, Any]]) -> bool:
         """Esegue il workflow principale del bot."""
         self.update_step("login", StepStatus.COMPLETED)

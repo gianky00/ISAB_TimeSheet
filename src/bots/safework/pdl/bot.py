@@ -371,7 +371,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 self.log("[OK] Ricerca PdL estesa agli altri siti.")
                 self._attendi_scomparsa_overlay()
             else:
-                self.log("[ATTENZIONE] Popup ricerca estesa rilevato ma impossibile cliccare 'Si'.", "WARNING")
+                self.log(
+                    "[ATTENZIONE] Popup ricerca estesa rilevato ma impossibile cliccare 'Si'.", "WARNING"
+                )
 
             # Verifica Risultati (se 0, PdL inesistente)
             with suppress(Exception):

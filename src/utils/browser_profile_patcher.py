@@ -21,24 +21,35 @@ def patch_browser_profile(user_data_dir: Path | str) -> bool:
 
     # In launch_persistent_context di Playwright, il file Preferences è solitamente
     # in 'Default/Preferences' o direttamente nella root se il profilo è minimale.
-    preferences_paths = [user_data_path / "Default" / "Preferences", user_data_path / "Preferences"]
+    # Proviamo a patchare entrambi, o a creare 'Default/Preferences' se nessuno esiste.
+    preferred_path = user_data_path / "Default" / "Preferences"
+    preferences_paths = [
+        preferred_path,
+        user_data_path / "Preferences",
+        user_data_path / "Local State",  # Alcune impostazioni sono globali
+    ]
+
+    # Se nessuno dei due file di preferenze esiste, forziamo la creazione di quello standard
+    if not any((user_data_path / "Default" / "Preferences").exists() or (user_data_path / "Preferences").exists() for p in preferences_paths):
+        _patch_file(preferred_path)
 
     success = False
     for pref_path in preferences_paths:
-        if pref_path.exists() and _patch_file(pref_path):
+        if _patch_file(pref_path):
             success = True
 
     return success
 
 
 def _patch_file(path: Path) -> bool:
-    """Legge, modifica e sovrascrive il file JSON delle preferenze."""
+    """Legge, modifica e sovrascrive il file JSON delle preferenze. Crea il file se non esiste."""
     try:
-        if not path.exists():
-            return False
-
-        with path.open("r", encoding="utf-8") as f:
-            data = json.load(f)
+        data: dict[str, Any] = {}
+        if path.exists():
+            with path.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+        else:
+            path.parent.mkdir(parents=True, exist_ok=True)
 
         # Mappa delle preferenze critiche da forzare a False
         overrides = {
@@ -55,6 +66,7 @@ def _patch_file(path: Path) -> bool:
             "safebrowsing.enhanced": False,
             "signin.allowed": False,
             "sync.managed": True,  # Blocca la sincronizzazione
+            "profile.nickname": "SyncroJob-Bot",
         }
 
         modified = False
@@ -62,16 +74,15 @@ def _patch_file(path: Path) -> bool:
             if _set_nested_value(data, key, value):
                 modified = True
 
-        if modified:
+        if modified or not path.exists():
             with path.open("w", encoding="utf-8") as f:
                 json.dump(data, f, indent=4, ensure_ascii=False)
-            logger.info(f"[OK] Patch applicata con successo a: {path.name}")
+            logger.info(f"[OK] Patch applicata con successo a: {path}")
             return True
     except Exception:
         logger.exception(f"[ERRORE] Errore durante il patching di {path}")
         return False
-    else:
-        return False
+    return False
 
 
 def _set_nested_value(dic: dict[str, Any], keys: str, value: Any) -> bool:

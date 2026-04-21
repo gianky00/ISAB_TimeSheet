@@ -1,4 +1,20 @@
-## Unreleased
+## v1.42.7 (2026-04-21)
+
+## v1.42.6 (2026-04-21)
+
+## v1.42.5 (2026-04-21)
+
+## v1.42.4 (2026-04-21)
+
+## v1.42.3 (2026-04-21)
+
+## v1.42.2 (2026-04-20)
+
+### Fix
+
+- **portale-fornitori**: implement ultra-robust PW interaction pattern and accelerate login
+
+## v1.42.1 (2026-04-20)
 
 ### Fix
 

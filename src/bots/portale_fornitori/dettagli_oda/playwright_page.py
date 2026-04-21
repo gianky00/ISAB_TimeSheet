@@ -70,10 +70,11 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
                 self.page.press(input_sel, "Enter")
 
             self._wait_overlay()
-            return True
         except Exception as e:
             self.log(f"✗ Selezione fornitore fallita: {e}")
             return False
+        else:
+            return True
 
     def expand_sidebar_if_collapsed(self) -> None:
         """Espande la sidebar se necessario in modo istantaneo."""
@@ -127,7 +128,9 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
             if not self.page.is_checked("input[name='GetItemServiceInfo']"):
                 self.page.locator(checkbox_sel).evaluate("el => el.click()")
 
-            self.page.locator(self._get_selector(DettagliOdALocators.SEARCH_BUTTON)).evaluate("el => el.click()")
+            self.page.locator(self._get_selector(DettagliOdALocators.SEARCH_BUTTON)).evaluate(
+                "el => el.click()"
+            )
             self.log("  Cerca cliccato...")
             self._wait_overlay()
 

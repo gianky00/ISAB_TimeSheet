@@ -99,7 +99,9 @@ class TimbratureBot(SeleniumBaseBot):
             self.data_a = row.get("data_a", self.data_a)
             self.fornitore = row.get("fornitore", self.fornitore)
 
-        self.log(f"[AVVIO] Inizio recupero timbrature per {self.fornitore} ({self.data_da} - {self.data_a})...")
+        self.log(
+            f"[AVVIO] Inizio recupero timbrature per {self.fornitore} ({self.data_da} - {self.data_a})..."
+        )
 
         if not self.driver:
             return False

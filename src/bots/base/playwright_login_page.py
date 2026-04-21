@@ -4,14 +4,13 @@ SyncroJob - Playwright Login Page Object
 Gestisce le interazioni con la pagina di login del portale ISAB usando Playwright.
 """
 
-import time
 from collections.abc import Callable
+from contextlib import suppress
 
 from playwright.sync_api import Page, TimeoutError
 
 from src.bots.base.playwright_base_page import PlaywrightBasePage
 from src.bots.portale_fornitori.common.locators import CommonLocators, LoginLocators
-from src.core.constants import Timeouts
 
 
 class PlaywrightLoginPage(PlaywrightBasePage):
@@ -63,14 +62,13 @@ class PlaywrightLoginPage(PlaywrightBasePage):
 
     def _check_and_handle_session_popup(self) -> None:
         """Controlla se appare il popup 'Sessione attiva' e clicca su Si."""
-        try:
+        with suppress(Exception):
             yes_sel = self._get_selector(CommonLocators.POPUP_SESSION_YES)
             # Attesa brevissima per il popup (max 2s)
             btn = self.page.wait_for_selector(yes_sel, state="visible", timeout=2000)
-            self.log("[ATTENZIONE] Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.")
-            btn.click(force=True)
-        except Exception:
-            pass # Popup non presente, procediamo
+            if btn:
+                self.log("[ATTENZIONE] Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.")
+                btn.click(force=True)
 
     def _verify_logged_in_via_ui(self) -> bool:
         """Verifica se siamo loggati tramite elementi UI post-login."""

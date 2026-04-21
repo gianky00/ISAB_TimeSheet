@@ -26,7 +26,6 @@ class DettagliOdALocators:
         "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]",
     )
 
-
     # Input Fields (Specific to Portale ISAB)
     ODA_NUMBER_FIELD = (By.CSS_SELECTOR, "input[name='NumeroOdA']")
     CONTRACT_FIELD = (By.CSS_SELECTOR, "input[name='NumeroContratto']")

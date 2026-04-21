@@ -61,7 +61,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
         elabora_ts: bool = False,
         **kwargs: Any,
     ) -> None:
-        """Inizializza il bot con parametri di data e fornitore."""
+        """Inizializza le proprietà del bot Playwright."""
         super().__init__(**kwargs)
         self.data_da = data_da or f"01.01.{datetime.now(UTC).year}"
         self.fornitore = fornitore
@@ -198,11 +198,18 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             return False
         self._check_stop()
         try:
-            self.page.wait_for_selector("xpath=//*[normalize-space(text())='Report']", state="attached").evaluate("el => el.click()")
+            el_report = self.page.wait_for_selector(
+                "xpath=//*[normalize-space(text())='Report']", state="attached"
+            )
+            if el_report:
+                el_report.evaluate("el => el.click()")
+
             self._wait_for_overlay()
 
             timesheet_menu_xpath = "xpath=//span[contains(@id, 'generic_menu_button-') and contains(@id, '-btnEl')][.//span[text()='Timesheet']]"
-            self.page.wait_for_selector(timesheet_menu_xpath, state="attached").evaluate("el => el.click()")
+            el_ts = self.page.wait_for_selector(timesheet_menu_xpath, state="attached")
+            if el_ts:
+                el_ts.evaluate("el => el.click()")
 
             fornitore_arrow_xpath = "xpath=//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
             self.page.wait_for_selector(fornitore_arrow_xpath, state="visible")
@@ -257,7 +264,9 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             self.page.locator(pos_oda_sel).evaluate(js_script, posizione_oda)
 
             xpath_cerca = "xpath=//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Cerca']]"
-            self.page.wait_for_selector(xpath_cerca, state="attached").evaluate("el => el.click()")
+            el_cerca = self.page.wait_for_selector(xpath_cerca, state="attached")
+            if el_cerca:
+                el_cerca.evaluate("el => el.click()")
             self._wait_for_overlay()
 
             # Verifica se ci sono risultati
@@ -278,13 +287,17 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
         try:
             # Seleziona tutto tramite la checkbox nell'header
             xpath_check_all = "//div[contains(@class, 'x-column-header-checkbox')]//span[contains(@class, 'x-column-header-text')]"
-            self.page.wait_for_selector(f"xpath={xpath_check_all}", state="attached").evaluate("el => el.click()")
+            el_check = self.page.wait_for_selector(f"xpath={xpath_check_all}", state="attached")
+            if el_check:
+                el_check.evaluate("el => el.click()")
 
             # Pulsante Scarica
             xpath_scarica = "//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Scarica']]"
 
             with self.page.expect_download() as download_info:
-                self.page.wait_for_selector(f"xpath={xpath_scarica}", state="attached").evaluate("el => el.click()")
+                el_download = self.page.wait_for_selector(f"xpath={xpath_scarica}", state="attached")
+                if el_download:
+                    el_download.evaluate("el => el.click()")
 
             download = download_info.value
             download_path = os.path.join(self.download_path, filename)
@@ -306,7 +319,9 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             xpath_export = "xpath=//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]"
 
             with self.page.expect_download(timeout=Timeouts.DOWNLOAD * 1000) as download_info:
-                self.page.wait_for_selector(xpath_export, state="attached").evaluate("el => el.click()")
+                el_export = self.page.wait_for_selector(xpath_export, state="attached")
+                if el_export:
+                    el_export.evaluate("el => el.click()")
 
             download = download_info.value
             extension = Path(download.suggested_filename).suffix.lower() or ".xlsx"

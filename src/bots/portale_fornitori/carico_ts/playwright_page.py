@@ -59,10 +59,11 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
                 self.page.press(input_sel, "Enter")
 
             self._wait_overlay()
-            return True
         except Exception as e:
             self.log(f"Errore fornitore: {e}")
             return False
+        else:
+            return True
 
     def process_oda(self, oda: str) -> bool:
         """

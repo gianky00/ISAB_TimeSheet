@@ -80,6 +80,9 @@ test_output.txt
 temp_pytest_run/
 temp_pytest_panel/
 
+# Automation Drivers
+drivers/
+
 # Mutation testing (mutmut)
 .mutmutrc
 mutants/

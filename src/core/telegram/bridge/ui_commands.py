@@ -37,7 +37,9 @@ class TelegramUICommands(QObject):
         if hasattr(panel, "validate_ready"):
             ready, msg = panel.validate_ready()
             if not ready:
-                self.telegram.send_message_sync(f"[ATTENZIONE] Impossibile avviare Scarico PDL.\nMotivo: {msg}")
+                self.telegram.send_message_sync(
+                    f"[ATTENZIONE] Impossibile avviare Scarico PDL.\nMotivo: {msg}"
+                )
                 return
 
         if hasattr(panel, "start_btn"):
@@ -99,7 +101,9 @@ class TelegramUICommands(QObject):
         if hasattr(panel, "validate_ready"):
             ready, msg = panel.validate_ready()
             if not ready:
-                self.telegram.send_message_sync(f"[ATTENZIONE] Impossibile avviare Prenota BP.\nMotivo: {msg}")
+                self.telegram.send_message_sync(
+                    f"[ATTENZIONE] Impossibile avviare Prenota BP.\nMotivo: {msg}"
+                )
                 return
 
         if hasattr(panel, "start_btn"):
@@ -126,7 +130,9 @@ class TelegramUICommands(QObject):
         if hasattr(panel, "validate_ready"):
             ready, msg = panel.validate_ready()
             if not ready:
-                self.telegram.send_message_sync(f"[ATTENZIONE] Impossibile avviare Timbrature.\nMotivo: {msg}")
+                self.telegram.send_message_sync(
+                    f"[ATTENZIONE] Impossibile avviare Timbrature.\nMotivo: {msg}"
+                )
                 return
 
         if hasattr(panel, "start_btn"):

@@ -62,7 +62,22 @@ class SmartLogTranslator:
         # (es. "[CLICK] Click su", "[FILE] Verifica")
         if any(
             message.startswith(icon)
-            for icon in ("[CLICK]", "[FILE]", "[CERCA]", "[ATTESA]", "[OK]", "[ERRORE]", "[ATTENZIONE]", "[AVVIO]", "[INFO]", "[DOWNLOAD]", "[LINK]", "[INPUT]", "[SYNC]", "[INFO]")
+            for icon in (
+                "[CLICK]",
+                "[FILE]",
+                "[CERCA]",
+                "[ATTESA]",
+                "[OK]",
+                "[ERRORE]",
+                "[ATTENZIONE]",
+                "[AVVIO]",
+                "[INFO]",
+                "[DOWNLOAD]",
+                "[LINK]",
+                "[INPUT]",
+                "[SYNC]",
+                "[INFO]",
+            )
         ):
             human_msg = message
         else:
@@ -83,7 +98,16 @@ class SmartLogTranslator:
             category = "download"
         elif any(
             kw in lower_msg
-            for kw in ("errore", "fallit", "falliment", "fail", "exception", "eccezion", "critico", "[ERRORE]")
+            for kw in (
+                "errore",
+                "fallit",
+                "falliment",
+                "fail",
+                "exception",
+                "eccezion",
+                "critico",
+                "[ERRORE]",
+            )
         ):
             category = "error"
         elif any(kw in lower_msg for kw in ("successo", "completat", "compiut", "fatto", "[OK]", "[INFO]")):
@@ -92,7 +116,9 @@ class SmartLogTranslator:
             category = "action"
         elif any(kw in lower_msg for kw in ("ricerca", "cerca", "[CERCA]")):
             category = "search"
-        elif any(kw in lower_msg for kw in ("attesa", "attendi", "aspetto", "polling", "caricamento", "[ATTESA]")):
+        elif any(
+            kw in lower_msg for kw in ("attesa", "attendi", "aspetto", "polling", "caricamento", "[ATTESA]")
+        ):
             category = "wait"
 
         return category
