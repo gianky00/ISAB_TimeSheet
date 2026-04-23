@@ -49,13 +49,14 @@ class DataSynchronizer:
     def sync_certificati_campione(
         cls, db_path: Path, rows_to_insert: list[tuple[Any, ...]]
     ) -> tuple[int, int]:
-        """Sincronizza i certificati campione via Upsert intelligente."""
-        return SmartSyncEngine.sync_upsert_smart(
+        """Sincronizzazione 'Tale e Quale' (Full Replace) con conservazione metadati."""
+        return SmartSyncEngine.sync_full_replace_with_metadata(
             db_path,
             "certificati_campione",
             ExcelImporter.CERTIFICATI_CAMPIONE_COLS,
             rows_to_insert,
-            conflict_cols=["matricola", "certificato"],
+            key_cols=["id_coemi"],
+            metadata_cols=["annotazioni", "ubicazione"],
         )
 
     @classmethod

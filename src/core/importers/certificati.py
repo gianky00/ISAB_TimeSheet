@@ -74,20 +74,24 @@ class CertificatiImporter(BaseImporter):
 
     @classmethod
     def _detect_certificati_header(cls, df_preview: pd.DataFrame) -> int:
-        """Detects the header row index for Certificati Campione."""
+        """Detects the header row index for Certificati Campione, prioritizing ID-COEMI."""
         header_row_idx = -1
         max_matches = 0
         target_columns = set(cls.CERTIFICATI_CAMPIONE_MAPPING.keys())
 
         for i, row in df_preview.iterrows():
             row_values = [str(val).strip() for val in row.values]
-            matches = sum(1 for col in target_columns if col in row_values)
+            # Diamo peso doppio all'ID-COEMI nel rilevamento
+            matches = sum(2 if col == "ID-COEMI" and col in row_values else 1 
+                         for col in target_columns if col in row_values)
 
             if matches > max_matches:
                 max_matches = matches
                 header_row_idx = int(str(i))
 
-        if header_row_idx == -1 or max_matches < 3:  # noqa: PLR2004
+        # Se non rilevato o incerto, impostiamo riga 5 (che corrisponde alla riga 6 di Excel)
+        # In questo modo i dati iniziano dalla riga 7.
+        if header_row_idx == -1 or max_matches < 2:  # noqa: PLR2004
             header_row_idx = 5
 
         return header_row_idx

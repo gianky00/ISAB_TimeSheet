@@ -152,7 +152,6 @@ class ContabilitaWorker(QThread):
 
     def _phase_import_contabilita(self, state: Any) -> None:
         if not self.file_path or not Path(self.file_path).exists():
-            state["messages"].append("Contabilità: File non trovato.")
             return
 
         success, msg, added, removed = ContabilitaManager.import_data_from_excel(

@@ -30,7 +30,7 @@ class UbicazioneDelegate(QStyledItemDelegate):
 
     def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
         super().__init__(parent)
-        self.items = ["", "UFFICIO", "OFFICINA", "ASSEGNATO AL TECNICO"]
+        self.items = ["ASSENTE", "UFFICIO", "OFFICINA", "ASSEGNATO AL TECNICO"]
 
     def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:
         """Crea l'editor per la colonna Ubicazione."""
@@ -84,7 +84,6 @@ class CertificatiTreeWidget(StandardTreeWidget):
     itemEditedCustom = pyqtSignal(object, str, str)  # (item, col_name, new_value)  # noqa: N815
 
     HEADERS: ClassVar[list[str]] = [
-        "ID",
         "Certificato",
         "Modello /\nTipo",
         "Costruttore",
@@ -99,7 +98,6 @@ class CertificatiTreeWidget(StandardTreeWidget):
     ]
 
     (
-        IDX_ID,
         IDX_CERTIFICATO,
         IDX_MODELLO,
         IDX_COSTRUTTORE,
@@ -111,7 +109,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
         IDX_STATO,
         IDX_UBICAZIONE,
         IDX_ANNOTAZIONI,
-    ) = range(12)
+    ) = range(11)
 
     def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
         super().__init__(parent)
@@ -135,7 +133,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
 
         h = self.header()
         if h:
-            for col in range(12):
+            for col in range(11):
                 h.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
             h.setStretchLastSection(True)
 

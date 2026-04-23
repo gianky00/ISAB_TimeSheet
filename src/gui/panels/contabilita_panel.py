@@ -440,9 +440,9 @@ class ContabilitaPanel(QWidget):
         self.status_lbl.setText("Aggiornamento...")
 
         self.worker = ContabilitaWorker(
-            path,
-            config.get("giornaliere_path", ""),
-            config.get("attivita_programmate_path", ""),
+            "",  # Svuotiamo il path principale per non aggiornare Preventivi/Giornaliere
+            "",
+            "",
             config.get("certificati_campione_path", ""),
         )
         self.worker.finished_signal.connect(self._on_import_finished)

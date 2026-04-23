@@ -51,6 +51,7 @@ class CertificatiCampioneTab(QWidget):
         self.engine = CertificatiEngine()
         self._show_excluded = False
         self._show_print_excluded = False
+        self._only_excluded = False
         self._setup_ui()
         self._load_data()
 
@@ -70,6 +71,9 @@ class CertificatiCampioneTab(QWidget):
 
         self.show_print_excluded_check = StandardCheckBox("Mostra esclusi stampa")
         self.show_print_excluded_check.stateChanged.connect(self._on_show_print_excluded_changed)
+
+        self.only_excluded_check = StandardCheckBox("Solo esclusi")
+        self.only_excluded_check.stateChanged.connect(self._on_only_excluded_changed)
 
         self.include_history_check = StandardCheckBox("Includi storico")
         self.include_history_check.setChecked(True)
@@ -92,6 +96,7 @@ class CertificatiCampioneTab(QWidget):
         toolbar.addSpacing(20)
         toolbar.addWidget(self.show_excluded_check)
         toolbar.addWidget(self.show_print_excluded_check)
+        toolbar.addWidget(self.only_excluded_check)
         toolbar.addWidget(self.include_history_check)
         toolbar.addWidget(self.excluded_count_label)
         toolbar.addStretch()
@@ -139,6 +144,17 @@ class CertificatiCampioneTab(QWidget):
     def _on_show_print_excluded_changed(self, state: int) -> None:
         """Gestisce il cambiamento della checkbox 'Mostra esclusi stampa'."""
         self._show_print_excluded = state in (Qt.CheckState.Checked.value, 2)
+        if self._show_print_excluded:
+            self.only_excluded_check.setChecked(False)
+        self._apply_exclusion_visibility()
+
+    def _on_only_excluded_changed(self, state: int) -> None:
+        """Gestisce il cambiamento della checkbox 'Solo esclusi'."""
+        self._only_excluded = state in (Qt.CheckState.Checked.value, 2)
+        if self._only_excluded:
+            # Se vogliamo vedere SOLO gli esclusi, resettiamo gli altri filtri di "mostra" per coerenza
+            self.show_excluded_check.setChecked(True)
+            self.show_print_excluded_check.setChecked(True)
         self._apply_exclusion_visibility()
 
     def _apply_exclusion_visibility(self) -> None:
@@ -151,13 +167,16 @@ class CertificatiCampioneTab(QWidget):
 
             is_mon_excluded = matricola in self.engine._exclusions
             is_print_excluded = matricola in self.engine._print_exclusions
+            is_any_excluded = is_mon_excluded or is_print_excluded
 
-            # Nascondi se è escluso dal monitoraggio e non vogliamo vederlo
-            hide_mon = is_mon_excluded and not self._show_excluded
-            # Nascondi se è escluso dalla stampa e non vogliamo vederlo
-            hide_print = is_print_excluded and not self._show_print_excluded
-
-            parent.setHidden(hide_mon or hide_print)
+            if self._only_excluded:
+                # Modalità "Solo esclusi": nascondi tutto ciò che NON è escluso
+                parent.setHidden(not is_any_excluded)
+            else:
+                # Modalità standard: nascondi in base ai filtri di "mostra"
+                hide_mon = is_mon_excluded and not self._show_excluded
+                hide_print = is_print_excluded and not self._show_print_excluded
+                parent.setHidden(hide_mon or hide_print)
 
     def refresh_data(self) -> None:
         """Ricarica i dati dal database e aggiorna la vista preservando lo stato."""
@@ -185,23 +204,44 @@ class CertificatiCampioneTab(QWidget):
                         if matricola in expanded_matricole:
                             item.setExpanded(True)
 
-    def _load_data(self) -> None:  # noqa: PLR0915
-        """Popola l'albero delegando i calcoli all'engine."""
+    def _load_data(self) -> None:  # noqa: PLR2004, PLR0915
+        """Popola l'albero raggruppando i certificati per ID-COEMI."""
         data = ContabilitaManager.get_certificati_campione_data()
         self.tree.clear()
         self.tree.setSortingEnabled(False)
 
-        # Raggruppa per matricola
-        matricola_groups = defaultdict(list)
+        # Indici fissi del risultato DB (definiti in ContabilitaQueries)
+        DB_ID_COEMI = 0
+        DB_CERTIFICATO = 1
+        DB_MODELLO = 2
+        DB_COSTRUTTORE = 3
+        DB_MATRICOLA = 4
+        DB_RANGE = 5
+        DB_ERRORE = 6
+        DB_EMISSIONE = 7
+        DB_SCADENZA = 8
+        DB_STATO = 9
+        DB_ANNOTAZIONI = 10
+        DB_UBICAZIONE = 11
+        DB_ID = 12
+
+        # Raggruppa per ID-COEMI (o Matricola/Certificato se manca)
+        id_coemi_groups = defaultdict(list)
         for r in data:
-            matricola = r[self.tree.IDX_MATRICOLA] or "N/D"
-            matricola_groups[matricola].append(r)
+            # Chiave di raggruppamento: ID-COEMI > Matricola > Certificato
+            key = (
+                str(r[DB_ID_COEMI]).strip()
+                or str(r[DB_MATRICOLA]).strip()
+                or str(r[DB_CERTIFICATO]).strip()
+                or "Sconosciuto"
+            )
+            id_coemi_groups[key].append(r)
 
         groups_with_priority = []
-        for matricola, certificates in matricola_groups.items():
+        for group_key, certificates in id_coemi_groups.items():
             # Ordina per emissione (più recente in alto)
             def parse_date(c: Any) -> datetime:
-                d = c[self.tree.IDX_EMISSIONE] or ""
+                d = c[DB_EMISSIONE] or ""
                 try:
                     return (
                         datetime.strptime(d, "%d/%m/%Y").replace(tzinfo=UTC)
@@ -213,14 +253,16 @@ class CertificatiCampioneTab(QWidget):
 
             certs_sorted = sorted(certificates, key=parse_date, reverse=True)
             latest = certs_sorted[0]
-            days, icon = self.engine.calculate_days_and_status(latest[self.tree.IDX_SCADENZA])
+            days, icon = self.engine.calculate_days_and_status(latest[DB_SCADENZA])
 
             groups_with_priority.append(
                 {
-                    "matricola": matricola,
-                    "costruttore": latest[self.tree.IDX_COSTRUTTORE] or "N/D",
-                    "modello": latest[self.tree.IDX_MODELLO] or "N/D",
-                    "range_strumento": latest[self.tree.IDX_RANGE] or "",
+                    "group_key": group_key,
+                    "id_coemi": latest[DB_ID_COEMI] or "",
+                    "matricola": latest[DB_MATRICOLA] or "N/D",
+                    "costruttore": latest[DB_COSTRUTTORE] or "N/D",
+                    "modello": latest[DB_MODELLO] or "N/D",
+                    "range_strumento": latest[DB_RANGE] or "",
                     "certificates": certs_sorted,
                     "days": days,
                     "icon": icon,
@@ -231,6 +273,8 @@ class CertificatiCampioneTab(QWidget):
         groups_with_priority.sort(key=operator.itemgetter("priority"))
 
         for g in groups_with_priority:
+            # Per l'esclusione usiamo la matricola o l'ID-COEMI?
+            # Manteniamo la matricola per compatibilità con il file esclusioni
             is_excluded = g["matricola"] in self.engine._exclusions
             is_print_excluded = g["matricola"] in self.engine._print_exclusions
             days_val: int | None = g["days"]  # type: ignore
@@ -242,7 +286,9 @@ class CertificatiCampioneTab(QWidget):
             excluded_marker = "  [ESCLUSO]" if is_excluded else ""
             print_excluded_marker = "  [NON STAMPARE]" if is_print_excluded else ""
 
-            label = f"{g['matricola']}  •  {g['costruttore']}  •  {g['modello']}{range_part}  •  {days_text}{excluded_marker}{print_excluded_marker}"
+            # Label Padre: ID-COEMI • Costruttore • Modello • Matricola • Stato
+            id_part = f"{g['id_coemi']}  •  " if g["id_coemi"] else ""
+            label = f"{id_part}{g['costruttore']}  •  {g['modello']}{range_part}  •  {g['matricola']}  •  {days_text}{excluded_marker}{print_excluded_marker}"
             parent_item = SortableTreeWidgetItem(self.tree, [label])
             parent_item.setFirstColumnSpanned(True)
 
@@ -258,38 +304,32 @@ class CertificatiCampioneTab(QWidget):
 
             cert_list: list[Any] = g["certificates"]  # type: ignore
             for i, cert in enumerate(cert_list):
-                # La tupla ha 13 elementi dal DB in ordine:
-                # 0: id_coemi, 1: certificato, 2: modello, 3: costruttore, 4: matricola
-                # 5: range, 6: errore_max, 7: emissione, 8: scadenza, 9: stato
-                # 10: annotazioni, 11: ubicazione, 12: id
-
                 # Format errore_max (index 6)
-                err_val = cert[6]
+                err_val = cert[DB_ERRORE]
                 err_formatted = self.engine.format_errore_max(err_val) if err_val is not None else ""
 
                 row_data = [
-                    str(cert[0] if cert[0] is not None else ""),  # 0. ID
-                    str(cert[1] if cert[1] is not None else ""),  # 1. Certificato
-                    str(cert[2] if cert[2] is not None else ""),  # 2. Modello
-                    str(cert[3] if cert[3] is not None else ""),  # 3. Costruttore
-                    str(cert[4] if cert[4] is not None else ""),  # 4. Matricola
-                    str(cert[5] if cert[5] is not None else ""),  # 5. Range Strumento
-                    err_formatted,  # 6. Err %
-                    str(cert[7] if cert[7] is not None else ""),  # 7. Emissione
-                    str(cert[8] if cert[8] is not None else ""),  # 8. Scadenza
-                    str(cert[9] if cert[9] is not None else ""),  # 9. Stato
+                    str(cert[DB_CERTIFICATO] if cert[DB_CERTIFICATO] is not None else ""),  # 0. Certificato
+                    str(cert[DB_MODELLO] if cert[DB_MODELLO] is not None else ""),  # 1. Modello
+                    str(cert[DB_COSTRUTTORE] if cert[DB_COSTRUTTORE] is not None else ""),  # 2. Costruttore
+                    str(cert[DB_MATRICOLA] if cert[DB_MATRICOLA] is not None else ""),  # 3. Matricola
+                    str(cert[DB_RANGE] if cert[DB_RANGE] is not None else ""),  # 4. Range Strumento
+                    err_formatted,  # 5. Err %
+                    str(cert[DB_EMISSIONE] if cert[DB_EMISSIONE] is not None else ""),  # 6. Emissione
+                    str(cert[DB_SCADENZA] if cert[DB_SCADENZA] is not None else ""),  # 7. Scadenza
+                    str(cert[DB_STATO] if cert[DB_STATO] is not None else ""),  # 8. Stato
                     str(
-                        cert[11] if len(cert) > 11 and cert[11] is not None else ""  # noqa: PLR2004
-                    ),  # 10. Ubicazione
+                        cert[DB_UBICAZIONE] if cert[DB_UBICAZIONE] not in (None, "") else "ASSENTE"
+                    ),  # 9. Ubicazione
                     str(
-                        cert[10] if len(cert) > 10 and cert[10] is not None else ""  # noqa: PLR2004
-                    ),  # 11. Annotazioni
+                        cert[DB_ANNOTAZIONI] if cert[DB_ANNOTAZIONI] is not None else ""
+                    ),  # 10. Annotazioni
                 ]
 
                 row = SortableTreeWidgetItem(parent_item, row_data)
 
                 # Salviamo l'ID nel ruolo user per poterlo aggiornare
-                record_id = cert[12] if len(cert) > 12 else None  # noqa: PLR2004
+                record_id = cert[DB_ID]
                 row.setData(0, Qt.ItemDataRole.UserRole, record_id)
 
                 # Permettiamo l'editing solo delle ultime due colonne
@@ -301,6 +341,10 @@ class CertificatiCampioneTab(QWidget):
                     self.tree.apply_current_certificate_styling(row, days_val, icon_val)
                 else:
                     self.tree.apply_historical_certificate_styling(row)
+
+        self.tree.collapseAll()
+        self._apply_exclusion_visibility()
+        self._update_excluded_count_label()
 
         self.tree.collapseAll()
         self._apply_exclusion_visibility()
@@ -352,15 +396,26 @@ class CertificatiCampioneTab(QWidget):
             parent = self.tree.topLevelItem(i)
             if not parent:
                 continue
-            parent_visible = False
+
+            # Controlliamo se la query è nel testo del PADRE (ID-COEMI, Matricola, etc.)
+            parent_match = query in parent.text(0).lower()
+            
+            parent_visible = parent_match
             for j in range(parent.childCount()):
                 child = parent.child(j)
                 if not child:
                     continue
-                match = any(query in child.text(c).lower() for c in range(self.tree.columnCount()))
-                child.setHidden(not match)
-                if match:
+                
+                # Se il padre non matcha, controlliamo i figli
+                child_match = any(query in child.text(c).lower() for c in range(self.tree.columnCount()))
+                
+                # Se siamo in modalità ricerca, nascondiamo i figli che non matchano
+                # A MENO CHE non abbia matchato il padre (in quel caso mostriamo tutto lo strumento)
+                child.setHidden(not (parent_match or child_match))
+                
+                if child_match:
                     parent_visible = True
+            
             parent.setHidden(not parent_visible)
 
     def _show_context_menu(self, pos: QPoint) -> None:

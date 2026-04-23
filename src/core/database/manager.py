@@ -19,6 +19,7 @@ from src.core.database.migrations.contabilita import (
     mig_contabilita_v3,
     mig_contabilita_v4,
     mig_contabilita_v5,
+    mig_contabilita_v6,
 )
 from src.core.database.migrations.dipendenti import (
     mig_dipendenti_v1,
@@ -57,6 +58,7 @@ class DatabaseManager:
         3: mig_contabilita_v3,
         4: mig_contabilita_v4,
         5: mig_contabilita_v5,
+        6: mig_contabilita_v6,
     }
 
     MIGRATIONS_TIMBRATURE: ClassVar[dict[int, Callable[[sqlite3.Connection], None]]] = {

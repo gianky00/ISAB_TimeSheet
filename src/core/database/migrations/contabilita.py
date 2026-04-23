@@ -152,3 +152,9 @@ def mig_contabilita_v5(conn: sqlite3.Connection) -> None:
         cursor.execute("ALTER TABLE certificati_campione ADD COLUMN annotazioni TEXT DEFAULT ''")
     with contextlib.suppress(sqlite3.OperationalError):
         cursor.execute("ALTER TABLE certificati_campione ADD COLUMN ubicazione TEXT DEFAULT ''")
+
+
+def mig_contabilita_v6(conn: sqlite3.Connection) -> None:
+    """Rimozione vincolo UNIQUE per permettere importazione 'Tale e Quale' (v6)"""
+    cursor = conn.cursor()
+    cursor.execute("DROP INDEX IF EXISTS idx_cert_unique")
