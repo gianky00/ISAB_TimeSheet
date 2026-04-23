@@ -242,19 +242,39 @@ class CertificatiPdfExporter:
         <table width="100%">
         <thead>
         <tr>
-        <th width="8%" class='text-center'>ID-COEMI</th>
-        <th width="8%">Certificato</th>
+        <th width="6%" class='text-center'>ID-COEMI</th>
+        <th width="6%">Certificato</th>
         <th width="10%">Modello / Tipo</th>
-        <th width="8.5%">Costruttore</th>
-        <th width="8.5%">Matricola</th>
-        <th width="8.5%">Range Strumento</th>
+        <th width="8%">Costruttore</th>
+        <th width="8%">Matricola</th>
+        <th width="8%">Range Strumento</th>
         <th width="4%" class='text-center col-err'>Err %</th>
         <th width="7%">Emissione</th>
         <th width="7%">Scadenza</th>
         <th width="8%">Stato</th>
-        <th width="11%">Ubicazione</th>
-        <th width="8%">Annotazioni</th>
-        <th width="6%" class='text-center'>Utilizzato</th>
+        <th width="10%">Ubicazione</th>
+        <th width="18%">Annotazioni</th>
+        </tr>
+        </thead>
+        <tbody>
+        """
+
+        page_header_html_no_id = """
+        <table width="100%">
+        <thead>
+        <tr>
+        <th width="0%"></th>
+        <th width="7%">Certificato</th>
+        <th width="11%">Modello / Tipo</th>
+        <th width="9%">Costruttore</th>
+        <th width="9%">Matricola</th>
+        <th width="9%">Range Strumento</th>
+        <th width="5%" class='text-center col-err'>Err %</th>
+        <th width="8%">Emissione</th>
+        <th width="8%">Scadenza</th>
+        <th width="9%">Stato</th>
+        <th width="12%">Ubicazione</th>
+        <th width="13%">Annotazioni</th>
         </tr>
         </thead>
         <tbody>
@@ -285,9 +305,6 @@ class CertificatiPdfExporter:
                 scadenza_str = child.text(8)
                 days, _ = CertificatiEngine.calculate_days_and_status(scadenza_str)
 
-                is_valid = days is not None and days != -9999 and days >= 0  # noqa: PLR2004
-                utilizzato = "SI" if (is_current and is_valid) else "NO"
-
                 if is_current:
                     stato_display = CertificatiEngine.format_days_text_short(days)
                     for emoji in ("[OK]", "[ROSSO]", "[ARANCIONE]", "[GIALLO]", "[ERRORE]"):
@@ -302,7 +319,10 @@ class CertificatiPdfExporter:
                     elif stato_display.startswith("Scade tra "):
                         stato_display = stato_display.replace("Scade tra ", "In scadenza<br>tra ")
 
-                    if utilizzato == "SI":
+                    # Identificazione riga principale per styling
+                    is_valid = days is not None and days != -9999 and days >= 0  # noqa: PLR2004
+                    utilizzato_si = (is_current and is_valid)
+                    if utilizzato_si:
                         row_class = "parent-warning" if days is not None and 0 <= days <= 30 else "parent-yes"  # noqa: PLR2004
                     else:
                         row_class = "parent-no"
@@ -316,14 +336,13 @@ class CertificatiPdfExporter:
                     parts = modello.split(" ", 1)
                     modello = f"{parts[0]}<br>{parts[1]}"
 
-                # Fix Ubicazione formatting per evitare ASSEGNAT O AL TECNICO
+                # Fix Ubicazione formatting
                 ubicazione_raw = child.text(10).strip()
                 if "ASSEGNATO AL TECNICO" in ubicazione_raw:
-                    # Lo trasformiamo in ASSEGNATO <br> AL TECNICO <br> (NOME)
                     ubicazione = ubicazione_raw.replace(
                         "ASSEGNATO AL TECNICO ", "ASSEGNATO<br>AL TECNICO<br>"
                     )
-                    if ubicazione == ubicazione_raw:  # Nessuno spazio dopo
+                    if ubicazione == ubicazione_raw:
                         ubicazione = ubicazione_raw.replace("ASSEGNATO AL TECNICO", "ASSEGNATO<br>AL TECNICO")
                 else:
                     ubicazione = ubicazione_raw
@@ -343,7 +362,6 @@ class CertificatiPdfExporter:
                     row_html += f"<td class='col-stato'>{stato_display}</td>"
                     row_html += f"<td>{ubicazione}</td>"
                     row_html += f"<td>{child.text(11)}</td>"
-                    row_html += f"<td class='text-center'>{'SI' if utilizzato == 'SI' else 'NO'}</td>"
                 else:
                     row_html += "<td></td>"
                     row_html += f"<td>&raquo; {child.text(1)}</td>"
@@ -355,7 +373,6 @@ class CertificatiPdfExporter:
                     row_html += f"<td>{child.text(7)}</td>"
                     row_html += f"<td>{child.text(8)}</td>"
                     row_html += f"<td class='col-stato'>{stato_display}</td>"
-                    row_html += "<td></td>"
                     row_html += "<td></td>"
                     row_html += "<td></td>"
 

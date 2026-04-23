@@ -309,21 +309,22 @@ class CertificatiCampioneTab(QWidget):
                 err_formatted = self.engine.format_errore_max(err_val) if err_val is not None else ""
 
                 row_data = [
-                    str(cert[DB_CERTIFICATO] if cert[DB_CERTIFICATO] is not None else ""),  # 0. Certificato
-                    str(cert[DB_MODELLO] if cert[DB_MODELLO] is not None else ""),  # 1. Modello
-                    str(cert[DB_COSTRUTTORE] if cert[DB_COSTRUTTORE] is not None else ""),  # 2. Costruttore
-                    str(cert[DB_MATRICOLA] if cert[DB_MATRICOLA] is not None else ""),  # 3. Matricola
-                    str(cert[DB_RANGE] if cert[DB_RANGE] is not None else ""),  # 4. Range Strumento
-                    err_formatted,  # 5. Err %
-                    str(cert[DB_EMISSIONE] if cert[DB_EMISSIONE] is not None else ""),  # 6. Emissione
-                    str(cert[DB_SCADENZA] if cert[DB_SCADENZA] is not None else ""),  # 7. Scadenza
-                    str(cert[DB_STATO] if cert[DB_STATO] is not None else ""),  # 8. Stato
+                    str(cert[DB_ID_COEMI] if cert[DB_ID_COEMI] is not None else ""),  # 0. ID-COEMI
+                    str(cert[DB_CERTIFICATO] if cert[DB_CERTIFICATO] is not None else ""),  # 1. Certificato
+                    str(cert[DB_MODELLO] if cert[DB_MODELLO] is not None else ""),  # 2. Modello
+                    str(cert[DB_COSTRUTTORE] if cert[DB_COSTRUTTORE] is not None else ""),  # 3. Costruttore
+                    str(cert[DB_MATRICOLA] if cert[DB_MATRICOLA] is not None else ""),  # 4. Matricola
+                    str(cert[DB_RANGE] if cert[DB_RANGE] is not None else ""),  # 5. Range Strumento
+                    err_formatted,  # 6. Err %
+                    str(cert[DB_EMISSIONE] if cert[DB_EMISSIONE] is not None else ""),  # 7. Emissione
+                    str(cert[DB_SCADENZA] if cert[DB_SCADENZA] is not None else ""),  # 8. Scadenza
+                    str(cert[DB_STATO] if cert[DB_STATO] is not None else ""),  # 9. Stato
                     str(
                         cert[DB_UBICAZIONE] if cert[DB_UBICAZIONE] not in (None, "") else "ASSENTE"
-                    ),  # 9. Ubicazione
+                    ),  # 10. Ubicazione
                     str(
                         cert[DB_ANNOTAZIONI] if cert[DB_ANNOTAZIONI] is not None else ""
-                    ),  # 10. Annotazioni
+                    ),  # 11. Annotazioni
                 ]
 
                 row = SortableTreeWidgetItem(parent_item, row_data)
@@ -517,7 +518,7 @@ class CertificatiCampioneTab(QWidget):
             if parent.childCount() > 0:
                 child = parent.child(0)
                 if child:
-                    id_coemi = child.text(self.tree.IDX_ID)
+                    id_coemi = child.text(self.tree.IDX_ID_COEMI)
 
             certs_data.append(
                 {

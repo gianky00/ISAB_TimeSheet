@@ -84,6 +84,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
     itemEditedCustom = pyqtSignal(object, str, str)  # (item, col_name, new_value)  # noqa: N815
 
     HEADERS: ClassVar[list[str]] = [
+        "ID-COEMI",
         "Certificato",
         "Modello /\nTipo",
         "Costruttore",
@@ -98,6 +99,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
     ]
 
     (
+        IDX_ID_COEMI,
         IDX_CERTIFICATO,
         IDX_MODELLO,
         IDX_COSTRUTTORE,
@@ -109,7 +111,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
         IDX_STATO,
         IDX_UBICAZIONE,
         IDX_ANNOTAZIONI,
-    ) = range(11)
+    ) = range(12)
 
     def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
         super().__init__(parent)
@@ -133,7 +135,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
 
         h = self.header()
         if h:
-            for col in range(11):
+            for col in range(12):
                 h.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
             h.setStretchLastSection(True)
 
