@@ -141,6 +141,7 @@ class CertificatiPdfExporter:
         tot_in_scadenza = 0
         tot_da_rinnovare = 0
         tot_guasti = 0
+        tot_senza_data = 0
         tot_ufficio = 0
         tot_officina = 0
         tot_campo = 0
@@ -156,7 +157,9 @@ class CertificatiPdfExporter:
 
                     if days == -9999:  # noqa: PLR2004
                         tot_guasti += 1
-                    elif days is None or days < 0:
+                    elif days is None:
+                        tot_senza_data += 1
+                    elif days < 0:
                         tot_da_rinnovare += 1
                     elif 0 <= days <= 30:  # noqa: PLR2004
                         tot_in_scadenza += 1
@@ -223,13 +226,14 @@ class CertificatiPdfExporter:
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
                                 <span style="color: #15803d;">&#11044;</span> Attivi: <b>{tot_attivi}</b><br>
                                 <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{tot_in_scadenza}</b><br>
-                                <span style="color: #b91c1c;">&#11044;</span> Da rinnovare: <b>{tot_da_rinnovare}</b><br>
-                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{tot_guasti}</b>
+                                <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{tot_da_rinnovare}</b><br>
+                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{tot_guasti}</b><br>
+                                <span style="color: #64748b;">&#11044;</span> Senza Data: <b>{tot_senza_data}</b>
                             </td>
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
                                 &#127970; Ufficio: <b>{tot_ufficio}</b><br>
                                 &#128736; Officina: <b>{tot_officina}</b><br>
-                                &#128119; In campo: <b>{tot_campo}</b>
+                                &#128119; Tecnico: <b>{tot_campo}</b>
                             </td>
                         </tr>
                     </table>
@@ -306,18 +310,16 @@ class CertificatiPdfExporter:
                 days, _ = CertificatiEngine.calculate_days_and_status(scadenza_str)
 
                 if is_current:
-                    stato_display = CertificatiEngine.format_days_text_short(days)
-                    for emoji in ("[OK]", "[ROSSO]", "[ARANCIONE]", "[GIALLO]", "[ERRORE]"):
-                        stato_display = stato_display.replace(emoji, "")
-                    stato_display = stato_display.strip()
-
-                    # Add line break after Attivo/Scaduto/Scade
-                    if stato_display.startswith("Scaduto ("):
-                        stato_display = stato_display.replace("Scaduto (", "Scaduto da<br>").replace(")", "")
-                    elif stato_display.startswith("Attivo ("):
-                        stato_display = stato_display.replace("Attivo (", "Attivo<br>").replace(")", "")
-                    elif stato_display.startswith("Scade tra "):
-                        stato_display = stato_display.replace("Scade tra ", "In scadenza<br>tra ")
+                    if days == -9999:  # noqa: PLR2004
+                        stato_display = "GUASTO"
+                    elif days is None:
+                        stato_display = "N/D"
+                    elif days < 0:
+                        stato_display = f"Scaduto da<br>{abs(days)} giorni"
+                    elif 0 <= days <= 30:  # noqa: PLR2004
+                        stato_display = f"In scadenza<br>tra {days} giorni"
+                    else:
+                        stato_display = f"{days} giorni<br>rimanenti"
 
                     # Identificazione riga principale per styling
                     is_valid = days is not None and days != -9999 and days >= 0  # noqa: PLR2004
