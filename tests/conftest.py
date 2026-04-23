@@ -9,6 +9,21 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+import keyring
+import keyring.backend
+
+class InMemoryKeyring(keyring.backend.KeyringBackend):
+    """Backend per i test che mantiene le credenziali solo in memoria."""
+    priority = 10
+    def __init__(self):
+        self.passwords = {}
+    def get_password(self, service, username):
+        return self.passwords.get((service, username))
+    def set_password(self, service, username, password):
+        self.passwords[(service, username)] = password
+    def delete_password(self, service, username):
+        self.passwords.pop((service, username), None)
+
 
 # Add src to path
 ROOT_DIR = Path(__file__).parent.parent.resolve()
@@ -103,6 +118,9 @@ def pytest_configure(config):
     selenium_patcher.start()
     manager_patcher.start()
 
+    # 4. Isolare il Keyring
+    keyring.set_keyring(InMemoryKeyring())
+
     config.add_cleanup(patcher.stop)
     config.add_cleanup(selenium_patcher.stop)
     config.add_cleanup(manager_patcher.stop)
@@ -127,6 +145,7 @@ def _isolate_config(tmp_path, monkeypatch):
     from src.core.audit_manager import AuditManager  # noqa: PLC0415
     from src.core.database.manager import DatabaseManager  # noqa: PLC0415
     from src.core.stats_manager import StatsManager  # noqa: PLC0415
+    from src.core.secrets_manager import SecretsManager  # noqa: PLC0415
     from src.utils.security import password_manager  # noqa: PLC0415
 
     # 1. Setup fake paths
@@ -158,6 +177,7 @@ def _isolate_config(tmp_path, monkeypatch):
         AuditManager._instance = None
         DatabaseManager._instance = None
         StatsManager._instance = None
+        SecretsManager._keyring_available = None
 
         # Re-ensure dirs in the new fake path
         paths.DB_DIR.mkdir(parents=True, exist_ok=True)
@@ -169,6 +189,7 @@ def _isolate_config(tmp_path, monkeypatch):
         AuditManager._instance = None
         DatabaseManager._instance = None
         StatsManager._instance = None
+        SecretsManager._keyring_available = None
 
 
 @pytest.fixture(autouse=True)

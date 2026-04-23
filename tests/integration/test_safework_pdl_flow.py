@@ -9,13 +9,12 @@ from src.bots.safework.pdl.bot import SafeWorkPDLBot
 
 
 class TestSafeWorkPDLIntegration:
-    @patch("src.bots.base.base_bot.webdriver.Chrome")
     @patch("webdriver_manager.chrome.ChromeDriverManager")
-    def test_full_pdl_flow_simulation(self, mock_dm, mock_chrome, mocker):
+    def test_full_pdl_flow_simulation(self, mock_dm, mocker):
         """Simulazione end-to-end del flusso PDL."""
         # 1. Setup Driver e Mocks
         mock_driver = MagicMock()
-        mock_chrome.return_value = mock_driver
+        mock_chrome = mocker.patch("selenium.webdriver.Chrome", return_value=mock_driver)
 
         bot = SafeWorkPDLBot("username", "password", download_path="/tmp/downloads")
 

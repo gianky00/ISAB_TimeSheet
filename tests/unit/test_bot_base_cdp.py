@@ -8,11 +8,11 @@ from unittest.mock import MagicMock
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 
-from src.bots.base.base_bot import BaseBot
+from src.bots.base.selenium_base_bot import SeleniumBaseBot
 
 
-class ConcreteBot(BaseBot):
-    """Sottoclasse concreta per testare BaseBot."""
+class ConcreteBot(SeleniumBaseBot):
+    """Sottoclasse concreta per testare SeleniumBaseBot."""
 
     @property
     def name(self) -> str:
@@ -27,6 +27,9 @@ class ConcreteBot(BaseBot):
 
     def get_columns(self):
         return []
+
+    def _login(self):
+        return True
 
 
 class TestBaseBotCDP:

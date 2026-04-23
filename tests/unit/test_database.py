@@ -25,20 +25,13 @@ class TestDatabaseManager:
         assert m1 is m2
 
     def test_init_db(self, manager, tmp_path):
-        # Override constants for test
-        test_db_cont = tmp_path / "contabilita_test.db"
-        test_db_timb = tmp_path / "timbrature_test.db"
+        # Patch DB_DIR nel modulo manager per usare tmp_path
+        with patch("src.core.database.manager.DB_DIR", tmp_path):
+            test_db_cont = manager.DB_CONTABILITA
+            test_db_timb = manager.DB_TIMBRATURE
 
-        # Patch i path nel modulo paths importato da manager
-        with (
-            patch("src.core.database.manager.DB_DIR", tmp_path),
-            patch("src.core.database.manager.DB_CONTABILITA", test_db_cont),
-            patch("src.core.database.manager.DB_TIMBRATURE", test_db_timb),
-        ):
-            manager._init_contabilita()
+            manager.init_db()
             assert test_db_cont.exists()
-
-            manager._init_timbrature()
             assert test_db_timb.exists()
 
             # Verify schema

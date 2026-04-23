@@ -94,7 +94,7 @@ class SmartLogTranslator:
         category = "info"
 
         # Priorità a categorie specifiche di business
-        if any(kw in lower_msg for kw in ("scaric", "download", "[DOWNLOAD]")):
+        if any(kw in lower_msg for kw in ("scaric", "download", "[download]")):
             category = "download"
         elif any(
             kw in lower_msg
@@ -106,18 +106,18 @@ class SmartLogTranslator:
                 "exception",
                 "eccezion",
                 "critico",
-                "[ERRORE]",
+                "[errore]",
             )
         ):
             category = "error"
-        elif any(kw in lower_msg for kw in ("successo", "completat", "compiut", "fatto", "[OK]", "[INFO]")):
+        elif any(kw in lower_msg for kw in ("successo", "completat", "compiut", "fatto", "[ok]", "[info]")):
             category = "success"
-        elif any(kw in lower_msg for kw in ("click", "premuto", "selezion", "[CLICK]")):
+        elif any(kw in lower_msg for kw in ("click", "premuto", "selezion", "[click]")):
             category = "action"
-        elif any(kw in lower_msg for kw in ("ricerca", "cerca", "[CERCA]")):
+        elif any(kw in lower_msg for kw in ("ricerca", "cerca", "[cerca]")):
             category = "search"
         elif any(
-            kw in lower_msg for kw in ("attesa", "attendi", "aspetto", "polling", "caricamento", "[ATTESA]")
+            kw in lower_msg for kw in ("attesa", "attendi", "aspetto", "polling", "caricamento", "[attesa]")
         ):
             category = "wait"
 

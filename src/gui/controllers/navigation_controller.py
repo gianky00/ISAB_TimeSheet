@@ -113,7 +113,10 @@ class NavigationController(QObject):
             return
 
         # 3. Cambio pagina reale nello stack
-        self.stack.setCurrentIndex(index)
+        if hasattr(self.stack, "slide_to_index"):
+            self.stack.slide_to_index(index)
+        else:
+            self.stack.setCurrentIndex(index)
 
         # 4. Sincronizzazione Sidebar
         if hasattr(self.mw.sidebar, "set_active_button"):
@@ -231,16 +234,19 @@ class NavigationController(QObject):
 
     def _ensure_panel_initialized(self, index: int) -> None:
         """Strategia di Lazy Loading: crea il pannello solo alla prima richiesta."""
-        panel = self.stack.widget(index)
+        try:
+            panel = self.stack.widget(index)
 
-        # Se il pannello è ancora uno QWidget base (vuoto), va inizializzato
-        if type(panel) is QWidget:
-            logger.info("Inizializzazione lazy del pannello indice: %s", index)
-            new_panel = self._create_panel_instance(index)
-            if new_panel:
-                self.stack.removeWidget(panel)
-                panel.deleteLater()
-                self.stack.insertWidget(index, new_panel)
+            # Se il pannello è ancora uno QWidget base (vuoto), va inizializzato
+            if type(panel) is QWidget:
+                logger.info("Inizializzazione lazy del pannello indice: %s", index)
+                new_panel = self._create_panel_instance(index)
+                if new_panel:
+                    self.stack.removeWidget(panel)
+                    panel.deleteLater()
+                    self.stack.insertWidget(index, new_panel)
+        except Exception:
+            logger.exception("Errore imprevisto durante inizializzazione pannello %s", index)
 
     def _create_panel_instance(self, index: int) -> QWidget | None:  # noqa: PLR0911, PLR0912
         """Factory interna per la creazione dei pannelli."""

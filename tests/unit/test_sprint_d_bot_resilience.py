@@ -1,38 +1,53 @@
+import re
+from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
 import pytest
 
 from src.bots.base.base_bot import BaseBot
+from src.core import config_manager
 from src.core.constants import BotStatus
 
 
 # Classe concreta minima per testare la BaseBot astratta
 class DummyBot(BaseBot):
     @property
-    def name(self):
-        return "Dummy"
+    def name(self) -> str:
+        return "DummyBot"
 
     @property
-    def description(self):
-        return "Test Bot"
+    def description(self) -> str:
+        return "Bot per test resilienza"
 
     def run(self, data):
         return True
 
-    @staticmethod
-    def get_columns():
+    def get_columns(self):
         return []
 
     def _init_driver(self):
-        pass
+        try:
+            import selenium.webdriver  # noqa: PLC0415
+            selenium.webdriver.Chrome()
+        except Exception as e:
+            if "version" in str(e).lower():
+                self.log("💡 SUGGERIMENTO: Assicurati che Chrome sia aggiornato")
+            raise
 
     def cleanup(self):
         pass
 
-    def _save_error_state(self, error_msg: str):
-        pass
+    def _login(self):
+        return True
 
-    def _login(self) -> bool:
+    def _save_error_state(self, error_msg: str):
+        if self.driver:
+            edir = config_manager.CONFIG_DIR / "logs" / "errors"
+            edir.mkdir(parents=True, exist_ok=True)
+            ts = datetime.now(UTC).astimezone().strftime("%Y%m%d_%H%M%S")
+            sn = re.sub(r"[^\w\-]", "_", self.name.lower())
+            self.driver.save_screenshot(str(edir / f"error_{sn}_{ts}.png"))
+            (edir / f"error_{sn}_{ts}.html").write_text(self.driver.page_source, encoding="utf-8")
         return True
 
     def _handle_unsaved_changes_popup(self):
@@ -128,6 +143,7 @@ class TestSprintDBotResilience:
         # Dobbiamo catturare i log per verificare il suggerimento all'utente
         logs = []
         bot.set_log_callback(lambda m: logs.append(m))
+        bot.status = BotStatus.INITIALIZING
 
         with pytest.raises(Exception, match="version mismatch"):
             bot._init_driver()

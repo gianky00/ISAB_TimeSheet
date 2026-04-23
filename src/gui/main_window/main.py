@@ -77,6 +77,11 @@ class MainWindow(QMainWindow):
     tab_fornitori: Any
     tab_safework: Any
 
+    @property
+    def page_stack(self) -> SlidingStackedWidget:
+        """Alias per stacked_widget (retrocompatibilità test)."""
+        return self.stacked_widget
+
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle(f"SyncroJob v{VERSION}")

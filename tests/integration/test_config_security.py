@@ -11,22 +11,18 @@ from src.utils.security import password_manager
 # Usa pytest invece di unittest
 class TestConfigSecurity:
     @pytest.fixture(autouse=True)
-    def setup_method(self, setup_clean_config):
+    def setup_method(self, _isolate_config):
         """
-        Questa fixture usa setup_clean_config per creare un ambiente pulito
+        Questa fixture usa _isolate_config per creare un ambiente pulito
         e applica patch aggiuntive necessarie per questo test.
         """
-        # Patch password_manager per usare la directory temporanea
+        fake_file = _isolate_config
+        # Patch SECURITY_DIR per usare la directory temporanea
         with (
-            patch.object(password_manager, "_KEY_DIR", new=setup_clean_config.parent),
-            patch.object(
-                password_manager,
-                "_KEY_FILE",
-                new=setup_clean_config.parent / "secret.key",
-            ),
+            patch("src.utils.security.SECURITY_DIR", fake_file.parent),
         ):
             # Forza il ricaricamento della chiave nel contesto patchato
-            password_manager._key = password_manager._load_or_create_key()
+            password_manager._reset_for_testing()
 
             # Mock SecretsManager per essere non disponibile
             with patch.object(SecretsManager, "is_available", return_value=False):
@@ -38,19 +34,22 @@ class TestConfigSecurity:
         password = "secret_password"
 
         # Usa add_account che chiama save_config
-        config_manager.add_account(username, password)
+        config_manager.add_account("isab", {"username": username, "password": password})
 
         # 2. Verifica che il file sia criptato
         with open(config_manager.CONFIG_FILE) as f:
             saved_data = json.load(f)
 
-        saved_password = saved_data["accounts"][0]["password"]
+        # Cerca l'account creato (nella chiave 'accounts' per bot_type 'isab')
+        saved_account = next(a for a in saved_data["accounts"] if a["username"] == username)
+        saved_password = saved_account["password"]
         assert saved_password != password
         assert saved_password.startswith("ENC:")
 
         # 3. Carica la config - deve essere in chiaro
         loaded_config = config_manager.load_config()
-        loaded_password = loaded_config["accounts"][0]["password"]
+        loaded_account = next(a for a in loaded_config["accounts"] if a["username"] == username)
+        loaded_password = loaded_account["password"]
 
         assert loaded_password == password
 

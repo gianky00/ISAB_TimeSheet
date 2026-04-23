@@ -88,9 +88,12 @@ def test_audit_refresh_population(audit_widget):
 
 
 @pytest.mark.skipif(os.environ.get("CI") == "true", reason="Skipping Qt heavy test in CI")
-def test_integrity_display(audit_widget, mocker):
+def test_integrity_display(audit_widget, mocker, qtbot):
     """Test integrity label updates."""
     # Test valid
     audit_widget.manager.verify_integrity.return_value = True
     audit_widget.refresh()
+
+    # Aspetta che il worker in background finisca (asincrono via thread pool)
+    qtbot.waitUntil(lambda: "Integro" in audit_widget.integrity_lbl.text(), timeout=2000)
     assert "Integro" in audit_widget.integrity_lbl.text()

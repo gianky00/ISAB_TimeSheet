@@ -12,6 +12,8 @@ class TestSafeWorkProgrammazioneSyncComprehensive(unittest.TestCase):
         with patch("src.bots.safework.base.SafeworkBaseBot.__init__", return_value=None):
             self.bot = SafeWorkProgrammazioneSyncBot("user", "pass")
             self.bot.driver = self.mock_driver
+            self.bot.signals = MagicMock()
+            self.bot.signals.log_message = MagicMock()
             self.bot._log_callback = MagicMock()
             self.bot._logger = MagicMock()
             self.bot._trace_id = "test-trace"

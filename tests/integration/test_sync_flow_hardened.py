@@ -1,11 +1,12 @@
 import contextlib
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.data_synchronizer import DataSynchronizer
 from src.core.database import db_manager
+from src.core.database.manager import DatabaseManager
 
 
 class TestSyncFlowHardened(unittest.TestCase):
@@ -20,8 +21,7 @@ class TestSyncFlowHardened(unittest.TestCase):
 
         # Patch del path del DB in tutti i moduli interessati
         self.patchers = [
-            patch("src.core.contabilita_manager.ContabilitaManager.DB_PATH", self.test_db),
-            patch("src.core.database.manager.DatabaseManager.DB_CONTABILITA", self.test_db),
+            patch.object(DatabaseManager, "DB_CONTABILITA", new_callable=PropertyMock, return_value=self.test_db),
         ]
         for p in self.patchers:
             p.start()

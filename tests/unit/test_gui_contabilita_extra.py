@@ -17,7 +17,7 @@ class TestContabilitaExtra:
             patch("src.gui.panels.contabilita_panel.ContabilitaManager") as mock_manager,
             patch("src.gui.panels.contabilita_panel.ContabilitaYearTab") as mock_year_tab,
             patch("src.gui.panels.contabilita_panel.GiornaliereYearTab") as mock_giorn_tab,
-            patch("src.gui.panels.contabilita_kpi.ContabilitaKPIPanel") as mock_kpi_class,
+            patch("src.gui.panels.contabilita_panel.ContabilitaKPIPanel") as mock_kpi_class,
             patch("src.gui.panels.contabilita_panel.AttivitaProgrammateTab") as mock_att_tab,
             patch("src.gui.panels.contabilita_panel.CertificatiCampioneTab") as mock_cert_tab,
         ):
@@ -66,7 +66,7 @@ class TestContabilitaExtra:
             patch("src.gui.panels.contabilita_panel.ContabilitaManager") as mock_manager,
             patch("src.gui.panels.contabilita_panel.ContabilitaYearTab") as mock_year_tab,
             patch("src.gui.panels.contabilita_panel.GiornaliereYearTab") as mock_giorn_tab,
-            patch("src.gui.panels.contabilita_kpi.ContabilitaKPIPanel") as mock_kpi_class,
+            patch("src.gui.panels.contabilita_panel.ContabilitaKPIPanel") as mock_kpi_class,
             patch("src.gui.panels.contabilita_panel.AttivitaProgrammateTab") as mock_att_tab,
             patch("src.gui.panels.contabilita_panel.CertificatiCampioneTab") as mock_cert_tab,
         ):

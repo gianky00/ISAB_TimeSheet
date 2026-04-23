@@ -16,7 +16,7 @@ def mock_gui_deps(mocker):
 
 
 class TestScaricoPDLPanel:
-    @patch("src.gui.panels.base.BotWorker")
+    @patch("src.gui.panels.scarico_pdl.BotWorker")
     def test_telegram_send_after_finish(self, mock_worker_cls, qapp, qtbot, mock_gui_deps):
         panel = ScaricoPDLPanel()
         mock_win = MagicMock()
@@ -71,7 +71,7 @@ class TestScaricoPDLPanel:
         ready, msg = panel.validate_ready()
         assert ready is True
 
-    @patch("src.gui.panels.base.BotWorker")
+    @patch("src.gui.panels.scarico_pdl.BotWorker")
     def test_on_start_workflow(self, mock_worker_cls, qtbot, mock_gui_deps):
         panel = ScaricoPDLPanel()
         qtbot.addWidget(panel)

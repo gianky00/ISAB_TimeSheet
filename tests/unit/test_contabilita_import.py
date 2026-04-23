@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import ANY, patch
 
 from src.core.contabilita_manager import ContabilitaManager
+from src.core.database import db_manager
 
 
 class TestContabilitaImport(unittest.TestCase):
@@ -58,7 +59,7 @@ class TestContabilitaImport(unittest.TestCase):
 
         # Verifica che DataSynchronizer.sync_contabilita_dati sia stato chiamato con i dati corretti
         mock_data_synchronizer.sync_contabilita_dati.assert_called_once_with(
-            ContabilitaManager.DB_PATH, imported_rows, imported_years
+            db_manager.DB_CONTABILITA, imported_rows, imported_years
         )
 
         print(f"\nImport Result: {msg}")

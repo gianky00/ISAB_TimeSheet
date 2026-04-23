@@ -9,10 +9,11 @@ from src.core.database.manager import DatabaseManager
 class TestDBManager:
     @pytest.fixture
     def db_manager(self, tmp_path):
-        manager = DatabaseManager()
-        # Mocking CONFIG_DIR to use tmp_path
-        manager.DB_DIPENDENTI = tmp_path / "dipendenti.db"
-        return manager
+        # Mocking DB_DIR to use tmp_path
+        with patch("src.core.database.manager.DB_DIR", tmp_path):
+            manager = DatabaseManager()
+            # Reinforce paths since it's a singleton (though reset in conftest)
+            return manager
 
     @patch("sqlite3.connect")
     def test_get_db_version_error_handling(self, mock_connect, db_manager):
