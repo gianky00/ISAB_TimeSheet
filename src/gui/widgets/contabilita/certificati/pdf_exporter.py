@@ -157,6 +157,7 @@ class CertificatiPdfExporter:
         tot_ufficio_cc = 0
         tot_officina = 0
         tot_campo = 0
+        tot_assenti = 0
         tot_strumenti = 0
 
         for parent in all_parents:
@@ -187,6 +188,8 @@ class CertificatiPdfExporter:
                         tot_officina += 1
                     elif "TECNICO" in ubicazione:
                         tot_campo += 1
+                    elif "ASSENTE" in ubicazione:
+                        tot_assenti += 1
         style_html = """
         <html>
         <head>
@@ -249,7 +252,8 @@ class CertificatiPdfExporter:
                                 &#127970; Ufficio STRU: <b>{tot_ufficio_stru}</b><br>
                                 &#128203; Ufficio Capo Cantiere: <b>{tot_ufficio_cc}</b><br>
                                 &#128736; Officina: <b>{tot_officina}</b><br>
-                                &#128119; In campo: <b>{tot_campo}</b>
+                                &#128119; In campo: <b>{tot_campo}</b><br>
+                                &#10060; Assenti: <b>{tot_assenti}</b>
                             </td>
                         </tr>
                     </table>
