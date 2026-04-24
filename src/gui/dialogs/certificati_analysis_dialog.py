@@ -406,6 +406,11 @@ class ScadenzeAnalysisDialog(QDialog):
 
         return section
 
+    def _handle_generation_error(self) -> None:
+        """Helper per lanciare eccezioni di generazione report."""
+        msg = "Nessuna immagine generata."
+        raise ValueError(msg)
+
     def _send_email(self):  # noqa: ANN202
         """Genera screenshot separati per ogni sezione e li invia via email per evitare troncamenti."""
         import subprocess  # noqa: PLC0415
@@ -443,8 +448,7 @@ class ScadenzeAnalysisDialog(QDialog):
                     image_paths.append(path)
 
             if not image_paths:
-                msg = "Nessuna immagine generata."
-                raise ValueError(msg)
+                self._handle_generation_error()
 
             # 3. Prepariamo lo script PowerShell per Outlook
             # Creiamo una lista di percorsi file sicura per PowerShell

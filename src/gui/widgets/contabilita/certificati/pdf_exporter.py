@@ -268,6 +268,7 @@ class CertificatiPdfExporter:
                                         <td style="width: 40%; text-align: center; border: none; border-left: 0.5pt solid #cbd5e1; vertical-align: middle;">
                                             Totale Strumenti<br>
                                             <span style="font-size: 9pt; font-weight: bold;">{s['totale']}</span>
+                                            {f'<div style="margin-top: 5px; border-top: 0.5pt solid #cbd5e1; padding-top: 3px; color: #b91c1c; font-size: 4.5pt; text-align: left;">⚠️ <b>Picco imminente:</b><br>{s["picco_imminente"]["inizio"]} - {s["picco_imminente"]["fine"]} ({s["picco_imminente"]["count"]} tarature)</div>' if s.get('picco_imminente') else ''}
                                         </td>
                                     </tr>
                                 </table>

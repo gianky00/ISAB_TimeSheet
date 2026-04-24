@@ -5,13 +5,30 @@ Motore di business per il calcolo delle scadenze, ricerca file e gestione esclus
 
 import json
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Final
+from typing import Any, Final, TypedDict
 
 from src.core import config_manager
 from src.core.constants import Icons, StatoCertificatoLabel, UbicazioneStrumenti
 from src.core.paths import DB_DIR
+
+
+class CertificatiStats(TypedDict):
+    """Statistiche aggregate dei certificati."""
+    attivi: int
+    in_scadenza: int
+    scaduti: int
+    senza_data: int
+    guasti: int
+    ufficio_stru: int
+    ufficio_cc: int
+    officina: int
+    tecnico: int
+    assenti: int
+    totale: int
+    prossime_tarature: dict[str, int]
+    picco_imminente: dict[str, Any]
 
 
 class CertificatiEngine:
@@ -130,77 +147,113 @@ class CertificatiEngine:
 
     @classmethod
     def get_statistics(cls, data: list[Any]) -> dict[str, Any]:
-        """
-        Calcola le statistiche aggregate per un set di dati certificati.
-        Args:
-            data: Lista di tuple/record (formato ContabilitaQueries)
-        """
-        # Tipizzazione esplicita per evitare errori Mypy su dict[str, Any]
+        """Calcola le statistiche aggregate per un set di dati certificati."""
         stats: dict[str, Any] = {
-            "attivi": 0,
-            "in_scadenza": 0,
-            "scaduti": 0,
-            "senza_data": 0,
-            "guasti": 0,
-            "ufficio_stru": 0,
-            "ufficio_cc": 0,
-            "officina": 0,
-            "tecnico": 0,
-            "assenti": 0,
+            "attivi": 0, "in_scadenza": 0, "scaduti": 0, "senza_data": 0, "guasti": 0,
+            "ufficio_stru": 0, "ufficio_cc": 0, "officina": 0, "tecnico": 0, "assenti": 0,
             "totale": 0,
-            "prossime_tarature": {
-                "30": 0,
-                "60": 0,
-                "90": 0,
-                "oltre": 0
-            }
+            "prossime_tarature": {"30": 0, "60": 0, "90": 0, "oltre": 0},
+            "picco_imminente": {}
         }
+        expiration_map: dict[datetime, int] = {}
 
         for r in data:
             stats["totale"] += 1
-            # Indice scadenza: 8, Ubicazione: 10
             scadenza_str = str(r[cls.IDX_SCADENZA]) if len(r) > cls.IDX_SCADENZA else ""
             days, _ = cls.calculate_days_and_status(scadenza_str)
 
-            if days == cls.FAULTY_MARKER:
-                stats["guasti"] += 1
-            elif days is None:
-                stats["senza_data"] += 1
-            elif days < 0:
-                stats["scaduti"] += 1
-            elif 0 <= days <= cls.EXPIRING_THRESHOLD:
-                stats["in_scadenza"] += 1
-            else:
-                stats["attivi"] += 1
+            cls._process_status_stats(stats, days, scadenza_str, expiration_map)
+            cls._process_location_stats(stats, r)
 
-            # Raggruppamento temporale (Prossime tarature) - Solo per strumenti validi
-            if days is not None and days >= 0:
-                if days <= 30:  # noqa: PLR2004
-                    stats["prossime_tarature"]["30"] += 1
-                elif days <= 60:  # noqa: PLR2004
-                    stats["prossime_tarature"]["60"] += 1
-                elif days <= 90:  # noqa: PLR2004
-                    stats["prossime_tarature"]["90"] += 1
-                else:
-                    stats["prossime_tarature"]["oltre"] += 1
-
-            ubicazione = str(r[cls.IDX_UBICAZIONE]).upper() if len(r) > cls.IDX_UBICAZIONE else ""
-            if UbicazioneStrumenti.UFFICIO_STRU.value in ubicazione:
-                stats["ufficio_stru"] += 1
-            elif UbicazioneStrumenti.UFFICIO_CC.value in ubicazione:
-                stats["ufficio_cc"] += 1
-            elif "OFFICINA" in ubicazione:
-                stats["officina"] += 1
-            elif "TECNICO" in ubicazione:
-                stats["tecnico"] += 1
-            elif UbicazioneStrumenti.ASSENTE.value in ubicazione:
-                stats["assenti"] += 1
-
+        cls._analyze_bottlenecks(stats, expiration_map)
         return stats
+
+    @classmethod
+    def _process_status_stats(cls, stats: dict[str, Any], days: int | None,
+                            scadenza_str: str, expiration_map: dict[datetime, int]) -> None:
+        """Aggiorna i conteggi di stato e mappa le scadenze temporali."""
+        if days == cls.FAULTY_MARKER:
+            stats["guasti"] += 1
+        elif days is None:
+            stats["senza_data"] += 1
+        elif days < 0:
+            stats["scaduti"] += 1
+        elif days <= cls.EXPIRING_THRESHOLD:
+            stats["in_scadenza"] += 1
+        else:
+            stats["attivi"] += 1
+
+        if days is not None and days >= 0:
+            cls._update_timer_buckets(stats, days)
+            try:
+                dt = datetime.strptime(scadenza_str, "%d/%m/%Y").replace(
+                    hour=0, minute=0, second=0, microsecond=0, tzinfo=UTC
+                )
+                expiration_map[dt] = expiration_map.get(dt, 0) + 1
+            except Exception: # noqa: S110
+                pass
+
+    @classmethod
+    def _update_timer_buckets(cls, stats: dict[str, Any], days: int) -> None:
+        """Incrementa i bucket temporali per le tarature future."""
+        limit_30, limit_60, limit_90 = 30, 60, 90
+        if days <= limit_30:
+            stats["prossime_tarature"]["30"] += 1
+        elif days <= limit_60:
+            stats["prossime_tarature"]["60"] += 1
+        elif days <= limit_90:
+            stats["prossime_tarature"]["90"] += 1
+        else:
+            stats["prossime_tarature"]["oltre"] += 1
+
+    @classmethod
+    def _process_location_stats(cls, stats: dict[str, Any], record: Any) -> None:
+        """Aggiorna i conteggi basati sull'ubicazione fisica degli strumenti."""
+        ubicazione = str(record[cls.IDX_UBICAZIONE]).upper() if len(record) > cls.IDX_UBICAZIONE else ""
+        if UbicazioneStrumenti.UFFICIO_STRU.value in ubicazione:
+            stats["ufficio_stru"] += 1
+        elif UbicazioneStrumenti.UFFICIO_CC.value in ubicazione:
+            stats["ufficio_cc"] += 1
+        elif "OFFICINA" in ubicazione:
+            stats["officina"] += 1
+        elif "TECNICO" in ubicazione:
+            stats["tecnico"] += 1
+        elif UbicazioneStrumenti.ASSENTE.value in ubicazione:
+            stats["assenti"] += 1
+
+    @classmethod
+    def _analyze_bottlenecks(cls, stats: dict[str, Any], expiration_map: dict[datetime, int]) -> None:
+        """Identifica picchi di scadenze in finestre mobili di 5 giorni."""
+        if not expiration_map:
+            return
+
+        sorted_dates = sorted(expiration_map.keys())
+        max_count = 0
+        best_window: tuple[datetime | None, datetime | None] = (None, None)
+        window_size_days = 5
+
+        for i, start_date in enumerate(sorted_dates):
+            current_count = 0
+            end_window = start_date + timedelta(days=window_size_days)
+            for j in range(i, len(sorted_dates)):
+                if sorted_dates[j] <= end_window:
+                    current_count += expiration_map[sorted_dates[j]]
+                else:
+                    break
+
+            if current_count > max_count:
+                max_count = current_count
+                best_window = (start_date, end_window)
+
+        if max_count > 0 and best_window[0] and best_window[1]:
+            stats["picco_imminente"] = {
+                "count": max_count,
+                "periodo": f"{best_window[0].strftime('%d/%m')} - {best_window[1].strftime('%d/%m/%Y')}"
+            }
 
     @staticmethod
     def format_errore_max(val: float | str | None) -> str:
-        """Formatta il valore decimale di errore in percentuale localizzata (es. 0.0005 -> 0,05%)."""
+        """Formatta il valore decimale di errore in percentuale localizzata."""
         if val is None or val == "":
             return ""
         try:
@@ -238,9 +291,10 @@ class CertificatiEngine:
     def parse_parent_label(text: str) -> dict[str, str]:
         """Estrae i metadati dalla stringa del nodo padre del TreeWidget."""
         parts = text.split("  •  ")
+        idx_mat, idx_cos, idx_mod, idx_range = 0, 1, 2, 3
         return {
-            "matricola": parts[0].strip() if parts else "",
-            "costruttore": parts[1].strip() if len(parts) > 1 else "N/D",
-            "modello": parts[2].strip() if len(parts) > 2 else "N/D",
-            "range": parts[3].strip() if len(parts) > 3 and "Digital" in parts[2] else "",
+            "matricola": parts[idx_mat].strip() if len(parts) > idx_mat else "",
+            "costruttore": parts[idx_cos].strip() if len(parts) > idx_cos else "N/D",
+            "modello": parts[idx_mod].strip() if len(parts) > idx_mod else "N/D",
+            "range": parts[idx_range].strip() if len(parts) > idx_range and "Digital" in parts[idx_mod] else "",
         }
