@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
+from src.core.constants import Icons, StatoCertificatoLabel, UbicazioneStrumenti
 from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
 from src.gui.widgets.core_widgets import StandardTreeWidget
@@ -30,7 +30,13 @@ class UbicazioneDelegate(QStyledItemDelegate):
 
     def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
         super().__init__(parent)
-        self.items = ["ASSENTE", "UFFICIO", "OFFICINA", "ASSEGNATO AL TECNICO"]
+        self.items = [
+            UbicazioneStrumenti.ASSENTE.value,
+            UbicazioneStrumenti.UFFICIO_STRU.value,
+            UbicazioneStrumenti.UFFICIO_CC.value,
+            UbicazioneStrumenti.OFFICINA.value,
+            UbicazioneStrumenti.TECNICO.value,
+        ]
 
     def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:
         """Crea l'editor per la colonna Ubicazione."""
@@ -171,7 +177,11 @@ class CertificatiTreeWidget(StandardTreeWidget):
     ):
         """Applica lo styling specifico per il certificato più recente."""
         if days_to_expiry is None:
-            status_text, bg_color, text_color = "N/D", COLORS["bg_alt"], COLORS["text_muted"]
+            status_text, bg_color, text_color = (
+                "N/D (Senza Scadenza)",
+                COLORS["bg_alt"],
+                COLORS["text_light"],
+            )
         elif days_to_expiry == -9999:  # noqa: PLR2004
             status_text, bg_color, text_color = (
                 "GUASTO",

@@ -6,6 +6,7 @@ from PyQt6.QtCore import QMarginsF, QRectF, Qt
 from PyQt6.QtGui import QPageLayout, QPageSize, QPainter, QPdfWriter, QTextDocument
 from PyQt6.QtWidgets import QTreeWidget
 
+from src.core.constants import StatoCertificatoLabel, UbicazioneStrumenti
 from src.core.contabilita.certificati_engine import CertificatiEngine
 from src.core.version import __version__
 
@@ -105,27 +106,41 @@ class CertificatiPdfExporter:
 
         # Estraiamo e filtriamo i top level items per il calcolo globale e l'ordinamento
         all_parents = []
+        raw_data_for_stats = []
+
         for i in range(self.tree.topLevelItemCount()):
             parent = self.tree.topLevelItem(i)
             if not parent or parent.isHidden():
                 continue
 
-            # Parsing matricola dalla label del padre per il check esclusioni
-            # La label ha formato: MATRICOLA  •  COSTRUTTORE  •  MODELLO  •  STATO
             label_text = parent.text(0)
-            matricola = label_text.split("  •  ")[0].strip()
+
+            # Parsing matricola dalla label del padre
+            data_user = parent.data(0, Qt.ItemDataRole.UserRole)
+            matricola = data_user.get("matricola", "") if isinstance(data_user, dict) else ""
+
+            if not matricola:
+                parts = label_text.split("  •  ")
+                if parent.childCount() > 0:
+                    matricola = parent.child(0).text(4)
 
             is_excluded = "[ESCLUSO]" in label_text.upper()
             if is_excluded and not self.show_excluded:
                 continue
 
-            # Filtro Esclusione Stampa
             if matricola in self.print_exclusions:
                 continue
 
             all_parents.append(parent)
 
-        # FIX ORDINAMENTO: Prendiamo l'ID-COEMI dal primo figlio (child 0, col 0)
+            # Dati per statistiche (usiamo i dati del primo figlio che sono i più aggiornati)
+            if parent.childCount() > 0:
+                child = parent.child(0)
+                if child:
+                    row_tuple = tuple(child.text(col) for col in range(12))
+                    raw_data_for_stats.append(row_tuple)
+
+        # Ordinamento GLOBALE per ID-COEMI crescente
         def get_id_coemi(p: Any) -> str:
             if p.childCount() > 0:
                 child = p.child(0)
@@ -133,46 +148,11 @@ class CertificatiPdfExporter:
                     return str(child.text(0))
             return ""
 
-        # Ordinamento GLOBALE per ID-COEMI crescente
         all_parents.sort(key=lambda x: natural_sort_key(get_id_coemi(x)))
 
-        # Calcolo Statistiche
-        tot_attivi = 0
-        tot_in_scadenza = 0
-        tot_da_rinnovare = 0
-        tot_guasti = 0
-        tot_senza_data = 0
-        tot_ufficio = 0
-        tot_officina = 0
-        tot_campo = 0
-        tot_strumenti = 0
+        # Calcolo Statistiche Centralizzato via Engine
+        s = CertificatiEngine.get_statistics(raw_data_for_stats)
 
-        for parent in all_parents:
-            tot_strumenti += 1
-            if parent.childCount() > 0:
-                child = parent.child(0)
-                if child is not None:
-                    scadenza_str = child.text(8)
-                    days, _ = CertificatiEngine.calculate_days_and_status(scadenza_str)
-
-                    if days == -9999:  # noqa: PLR2004
-                        tot_guasti += 1
-                    elif days is None:
-                        tot_senza_data += 1
-                    elif days < 0:
-                        tot_da_rinnovare += 1
-                    elif 0 <= days <= 30:  # noqa: PLR2004
-                        tot_in_scadenza += 1
-                    else:
-                        tot_attivi += 1
-
-                    ubicazione = child.text(10).upper()
-                    if "UFFICIO" in ubicazione:
-                        tot_ufficio += 1
-                    elif "OFFICINA" in ubicazione:
-                        tot_officina += 1
-                    elif "TECNICO" in ubicazione:
-                        tot_campo += 1
         style_html = """
         <html>
         <head>
@@ -187,6 +167,7 @@ class CertificatiPdfExporter:
         .parent-yes td { background-color: #dcfce7; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
         .parent-no td { background-color: #fee2e2; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
         .parent-warning td { background-color: #fef3c7; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
+        .parent-nd td { background-color: #f1f5f9; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
         .status-yes { color: #15803d; font-weight: bold; text-align: center; }
         .status-no { color: #b91c1c; font-weight: bold; text-align: center; }
         .status-warning { color: #b45309; font-weight: bold; text-align: center; }
@@ -205,35 +186,37 @@ class CertificatiPdfExporter:
         <div class='timestamp'>{meta_info}</div>
         <table width="100%" style="border: none; margin-bottom: 8px;">
             <tr>
-                <td style="border: none; vertical-align: middle; width: 45%;">
+                <td style="border: none; vertical-align: middle; width: 40%;">
                     <h1>{title}</h1>
                 </td>
-                <td style="border: none; vertical-align: top; width: 55%;">
+                <td style="border: none; vertical-align: top; width: 60%;">
                     <table class="summary-table">
                         <tr>
-                            <td style="width: 35%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                <div class="summary-title">CERTIFICATI</div>
+                            <td style="width: 30%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
+                                <div class="summary-title">STATO CERTIFICATI</div>
                             </td>
-                            <td style="width: 40%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
+                            <td style="width: 45%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
                                 <div class="summary-title">UBICAZIONE</div>
                             </td>
                             <td style="width: 25%; vertical-align: middle; text-align: center;" rowspan="2">
                                 Totale Strumenti<br>
-                                <span style="font-size: 9pt; font-weight: bold;">{tot_strumenti}</span>
+                                <span style="font-size: 9pt; font-weight: bold;">{s['totale']}</span>
                             </td>
                         </tr>
                         <tr>
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                <span style="color: #15803d;">&#11044;</span> Attivi: <b>{tot_attivi}</b><br>
-                                <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{tot_in_scadenza}</b><br>
-                                <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{tot_da_rinnovare}</b><br>
-                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{tot_guasti}</b><br>
-                                <span style="color: #64748b;">&#11044;</span> Senza Data: <b>{tot_senza_data}</b>
+                                <span style="color: #15803d;">&#11044;</span> Attivi: <b>{s['attivi']}</b><br>
+                                <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{s['in_scadenza']}</b><br>
+                                <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{s['scaduti']}</b><br>
+                                <span style="color: #64748b;">&#11044;</span> Senza Scadenza: <b>{s['senza_data']}</b><br>
+                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{s['guasti']}</b>
                             </td>
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                &#127970; Ufficio: <b>{tot_ufficio}</b><br>
-                                &#128736; Officina: <b>{tot_officina}</b><br>
-                                &#128119; Tecnico: <b>{tot_campo}</b>
+                                &#127970; {UbicazioneStrumenti.UFFICIO_STRU.value}: <b>{s['ufficio_stru']}</b><br>
+                                &#128203; {UbicazioneStrumenti.UFFICIO_CC.value}: <b>{s['ufficio_cc']}</b><br>
+                                &#128736; {UbicazioneStrumenti.OFFICINA.value}: <b>{s['officina']}</b><br>
+                                &#128119; Assegnati ai Tecnici: <b>{s['tecnico']}</b><br>
+                                &#10060; {UbicazioneStrumenti.ASSENTE.value}: <b>{s['assenti']}</b>
                             </td>
                         </tr>
                     </table>
@@ -289,24 +272,35 @@ class CertificatiPdfExporter:
                 days, _ = CertificatiEngine.calculate_days_and_status(scadenza_str)
 
                 if is_current:
-                    if days == -9999:  # noqa: PLR2004
-                        stato_display = "GUASTO"
-                    elif days is None:
+                    stato_display = CertificatiEngine.format_days_text_short(days)
+                    for emoji in ("[OK]", "[ROSSO]", "[ARANCIONE]", "[GIALLO]", "[ERRORE]"):
+                        stato_display = stato_display.replace(emoji, "")
+                    stato_display = stato_display.strip()
+
+                    # Ripristino formattazione compatta con interruzioni di riga e nuove diciture
+                    if stato_display.startswith(StatoCertificatoLabel.SCADUTO):
+                        # "Scaduto (9gg fa)" -> "Scaduto da<br>9 giorni"
+                        stato_display = stato_display.replace(f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>").replace("gg fa)", " giorni")
+                    elif stato_display.startswith(StatoCertificatoLabel.ATTIVO):
+                        # "Attivo (292gg rim.)" -> "Attivo per<br>292 giorni"
+                        stato_display = stato_display.replace(f"{StatoCertificatoLabel.ATTIVO} (", "Attivo per<br>").replace("gg rim.)", " giorni")
+                    elif stato_display.startswith(StatoCertificatoLabel.IN_SCADENZA):
+                        # "In scadenza (5gg)" -> "In scadenza<br>5 giorni<br>rimanenti"
+                        stato_display = stato_display.replace(f"{StatoCertificatoLabel.IN_SCADENZA} (", "In scadenza<br>").replace("gg)", " giorni<br>rimanenti")
+                    elif StatoCertificatoLabel.SENZA_SCADENZA in stato_display:
                         stato_display = "N/D"
-                    elif days < 0:
-                        stato_display = f"Scaduto da<br>{abs(days)} giorni"
-                    elif 0 <= days <= 30:  # noqa: PLR2004
-                        stato_display = f"In scadenza<br>tra {days} giorni"
-                    else:
-                        stato_display = f"{days} giorni<br>rimanenti"
 
                     # Identificazione riga principale per styling
-                    is_valid = days is not None and days != -9999 and days >= 0  # noqa: PLR2004
-                    utilizzato_si = (is_current and is_valid)
-                    if utilizzato_si:
-                        row_class = "parent-warning" if days is not None and 0 <= days <= 30 else "parent-yes"  # noqa: PLR2004
-                    else:
+                    if days == -9999:  # noqa: PLR2004
                         row_class = "parent-no"
+                    elif days is None:
+                        row_class = "parent-nd" # Stile grigio ma grassetto
+                    elif days < 0:
+                        row_class = "parent-no"
+                    elif 0 <= days <= 30:  # noqa: PLR2004
+                        row_class = "parent-warning"
+                    else:
+                        row_class = "parent-yes"
                 else:
                     stato_display = "STORICO"
                     row_class = "historical-row"
@@ -319,12 +313,12 @@ class CertificatiPdfExporter:
 
                 # Fix Ubicazione formatting
                 ubicazione_raw = child.text(10).strip()
-                if "ASSEGNATO AL TECNICO" in ubicazione_raw:
+                if UbicazioneStrumenti.TECNICO.value in ubicazione_raw:
                     ubicazione = ubicazione_raw.replace(
-                        "ASSEGNATO AL TECNICO ", "ASSEGNATO<br>AL TECNICO<br>"
+                        f"{UbicazioneStrumenti.TECNICO.value} ", "ASSEGNATO<br>AL TECNICO<br>"
                     )
                     if ubicazione == ubicazione_raw:
-                        ubicazione = ubicazione_raw.replace("ASSEGNATO AL TECNICO", "ASSEGNATO<br>AL TECNICO")
+                        ubicazione = ubicazione_raw.replace(UbicazioneStrumenti.TECNICO.value, "ASSEGNATO<br>AL TECNICO")
                 else:
                     ubicazione = ubicazione_raw
 
