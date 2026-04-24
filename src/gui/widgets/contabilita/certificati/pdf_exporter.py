@@ -230,7 +230,7 @@ class CertificatiPdfExporter:
                     <table class="summary-table">
                         <tr>
                             <td style="width: 30%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                <div class="summary-title">CERTIFICATI</div>
+                                <div class="summary-title">STATO CERTIFICATI</div>
                             </td>
                             <td style="width: 45%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
                                 <div class="summary-title">UBICAZIONE</div>
