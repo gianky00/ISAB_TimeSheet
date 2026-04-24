@@ -30,7 +30,7 @@ class UbicazioneDelegate(QStyledItemDelegate):
 
     def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
         super().__init__(parent)
-        self.items = ["ASSENTE", "UFFICIO", "OFFICINA", "ASSEGNATO AL TECNICO"]
+        self.items = ["ASSENTE", "UFFICIO STRU", "UFFICIO CAPO CANTIERE", "OFFICINA", "ASSEGNATO AL TECNICO"]
 
     def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:
         """Crea l'editor per la colonna Ubicazione."""
