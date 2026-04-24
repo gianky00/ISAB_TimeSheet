@@ -252,7 +252,7 @@ class CertificatiPdfExporter:
                                 &#127970; Ufficio STRU: <b>{tot_ufficio_stru}</b><br>
                                 &#128203; Ufficio Capo Cantiere: <b>{tot_ufficio_cc}</b><br>
                                 &#128736; Officina: <b>{tot_officina}</b><br>
-                                &#128119; In campo: <b>{tot_campo}</b><br>
+                                &#128119; Assegnati ai Tecnici: <b>{tot_campo}</b><br>
                                 &#10060; Assenti: <b>{tot_assenti}</b>
                             </td>
                         </tr>
