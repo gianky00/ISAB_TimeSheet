@@ -355,10 +355,6 @@ class CertificatiCampioneTab(QWidget):
         self._apply_exclusion_visibility()
         self._update_excluded_count_label()
 
-        self.tree.collapseAll()
-        self._apply_exclusion_visibility()
-        self._update_excluded_count_label()
-
     def _on_item_edited(self, item: QTreeWidgetItem, col_name: str, new_value: str) -> None:
         """Salva nel database quando un utente modifica Annotazioni o Ubicazione."""
         record_id = item.data(0, Qt.ItemDataRole.UserRole)

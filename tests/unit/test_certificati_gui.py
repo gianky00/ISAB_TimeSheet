@@ -51,9 +51,9 @@ class TestCertificatiGUI:
     def test_format_days_text_short(self):
         """Testa la formattazione breve del testo giorni nell'Engine."""
         assert "Scaduto" in CertificatiEngine.format_days_text_short(-10)
-        assert "Scade tra 5gg" in CertificatiEngine.format_days_text_short(5)
+        assert "In scadenza" in CertificatiEngine.format_days_text_short(5)
         assert "Attivo" in CertificatiEngine.format_days_text_short(60)
-        assert CertificatiEngine.format_days_text_short(None) == "N/D"
+        assert "Senza Scadenza" in CertificatiEngine.format_days_text_short(None)
 
     def test_exclusions_engine_io(self, tmp_path):
         """Testa il caricamento e salvataggio delle esclusioni nell'Engine."""

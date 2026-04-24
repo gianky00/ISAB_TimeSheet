@@ -110,10 +110,21 @@ class CertificatiPdfExporter:
             if not parent or parent.isHidden():
                 continue
 
-            # Parsing matricola dalla label del padre per il check esclusioni
-            # La label ha formato: MATRICOLA  •  COSTRUTTORE  •  MODELLO  •  STATO
             label_text = parent.text(0)
-            matricola = label_text.split("  •  ")[0].strip()
+
+            # Parsing matricola dalla label del padre
+            # La label ha formato: [ID-COEMI  •]  COSTRUTTORE  •  MODELLO  •  MATRICOLA  •  STATO
+            # Recuperiamo i dati dall'ItemDataRole che è più affidabile
+            data_user = parent.data(0, Qt.ItemDataRole.UserRole)
+            matricola = data_user.get("matricola", "") if isinstance(data_user, dict) else ""
+
+            if not matricola:
+                # Fallback parsing se per qualche motivo i dati user mancano
+                parts = label_text.split("  •  ")
+                # Se abbiamo l'ID-COEMI all'inizio, la matricola è il 4° elemento (index 3)
+                # Altrimenti è il 3° elemento (index 2)
+                if parent.childCount() > 0:
+                    matricola = parent.child(0).text(4)
 
             is_excluded = "[ESCLUSO]" in label_text.upper()
             if is_excluded and not self.show_excluded:
@@ -139,9 +150,11 @@ class CertificatiPdfExporter:
         # Calcolo Statistiche
         tot_attivi = 0
         tot_in_scadenza = 0
-        tot_da_rinnovare = 0
+        tot_scaduti = 0
+        tot_senza_data = 0
         tot_guasti = 0
-        tot_ufficio = 0
+        tot_ufficio_stru = 0
+        tot_ufficio_cc = 0
         tot_officina = 0
         tot_campo = 0
         tot_strumenti = 0
@@ -156,16 +169,20 @@ class CertificatiPdfExporter:
 
                     if days == -9999:  # noqa: PLR2004
                         tot_guasti += 1
-                    elif days is None or days < 0:
-                        tot_da_rinnovare += 1
+                    elif days is None:
+                        tot_senza_data += 1
+                    elif days < 0:
+                        tot_scaduti += 1
                     elif 0 <= days <= 30:  # noqa: PLR2004
                         tot_in_scadenza += 1
                     else:
                         tot_attivi += 1
 
                     ubicazione = child.text(10).upper()
-                    if "UFFICIO" in ubicazione:
-                        tot_ufficio += 1
+                    if "UFFICIO STRU" in ubicazione:
+                        tot_ufficio_stru += 1
+                    elif "UFFICIO CAPO CANTIERE" in ubicazione:
+                        tot_ufficio_cc += 1
                     elif "OFFICINA" in ubicazione:
                         tot_officina += 1
                     elif "TECNICO" in ubicazione:
@@ -202,16 +219,16 @@ class CertificatiPdfExporter:
         <div class='timestamp'>{meta_info}</div>
         <table width="100%" style="border: none; margin-bottom: 8px;">
             <tr>
-                <td style="border: none; vertical-align: middle; width: 45%;">
+                <td style="border: none; vertical-align: middle; width: 40%;">
                     <h1>{title}</h1>
                 </td>
-                <td style="border: none; vertical-align: top; width: 55%;">
+                <td style="border: none; vertical-align: top; width: 60%;">
                     <table class="summary-table">
                         <tr>
-                            <td style="width: 35%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
+                            <td style="width: 30%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
                                 <div class="summary-title">CERTIFICATI</div>
                             </td>
-                            <td style="width: 40%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
+                            <td style="width: 45%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
                                 <div class="summary-title">UBICAZIONE</div>
                             </td>
                             <td style="width: 25%; vertical-align: middle; text-align: center;" rowspan="2">
@@ -223,11 +240,13 @@ class CertificatiPdfExporter:
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
                                 <span style="color: #15803d;">&#11044;</span> Attivi: <b>{tot_attivi}</b><br>
                                 <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{tot_in_scadenza}</b><br>
-                                <span style="color: #b91c1c;">&#11044;</span> Da rinnovare: <b>{tot_da_rinnovare}</b><br>
+                                <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{tot_scaduti}</b><br>
+                                <span style="color: #64748b;">&#11044;</span> Senza Scadenza: <b>{tot_senza_data}</b><br>
                                 <span style="color: #000000;">&#11044;</span> Guasti: <b>{tot_guasti}</b>
                             </td>
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                &#127970; Ufficio: <b>{tot_ufficio}</b><br>
+                                &#127970; Ufficio STRU: <b>{tot_ufficio_stru}</b><br>
+                                &#128203; Ufficio Capo Cantiere: <b>{tot_ufficio_cc}</b><br>
                                 &#128736; Officina: <b>{tot_officina}</b><br>
                                 &#128119; In campo: <b>{tot_campo}</b>
                             </td>
@@ -290,21 +309,30 @@ class CertificatiPdfExporter:
                         stato_display = stato_display.replace(emoji, "")
                     stato_display = stato_display.strip()
 
-                    # Add line break after Attivo/Scaduto/Scade
+                    # Ripristino formattazione compatta con interruzioni di riga e nuove diciture
                     if stato_display.startswith("Scaduto ("):
-                        stato_display = stato_display.replace("Scaduto (", "Scaduto da<br>").replace(")", "")
+                        # "Scaduto (9gg fa)" -> "Scaduto da<br>9 giorni"
+                        stato_display = stato_display.replace("Scaduto (", "Scaduto da<br>").replace("gg fa)", " giorni")
                     elif stato_display.startswith("Attivo ("):
+                        # "Attivo (339gg rim.)" -> "Attivo<br>339gg rim."
                         stato_display = stato_display.replace("Attivo (", "Attivo<br>").replace(")", "")
-                    elif stato_display.startswith("Scade tra "):
-                        stato_display = stato_display.replace("Scade tra ", "In scadenza<br>tra ")
+                    elif stato_display.startswith("In scadenza ("):
+                        # "In scadenza (5gg)" -> "In scadenza<br>5 giorni<br>rimanenti"
+                        stato_display = stato_display.replace("In scadenza (", "In scadenza<br>").replace("gg)", " giorni<br>rimanenti")
+                    elif "Senza Scadenza" in stato_display:
+                        stato_display = stato_display.replace(" (", "<br>(")
 
                     # Identificazione riga principale per styling
-                    is_valid = days is not None and days != -9999 and days >= 0  # noqa: PLR2004
-                    utilizzato_si = (is_current and is_valid)
-                    if utilizzato_si:
-                        row_class = "parent-warning" if days is not None and 0 <= days <= 30 else "parent-yes"  # noqa: PLR2004
-                    else:
+                    if days == -9999:  # noqa: PLR2004
                         row_class = "parent-no"
+                    elif days is None:
+                        row_class = "historical-row" # Colore neutro/grigio
+                    elif days < 0:
+                        row_class = "parent-no"
+                    elif 0 <= days <= 30:  # noqa: PLR2004
+                        row_class = "parent-warning"
+                    else:
+                        row_class = "parent-yes"
                 else:
                     stato_display = "STORICO"
                     row_class = "historical-row"

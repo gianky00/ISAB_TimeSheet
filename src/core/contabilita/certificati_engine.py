@@ -112,13 +112,13 @@ class CertificatiEngine:
         if days == cls.FAULTY_MARKER:
             return "[ERRORE] STRUMENTO GUASTO"
         if days is None:
-            return "N/D"
+            return "N/D (Senza Scadenza)"
         if days < 0:
             return f"[ROSSO] Scaduto ({abs(days)}gg fa)"
         if days <= cls.WARNING_THRESHOLD:
-            return f"[ARANCIONE] Scade tra {days}gg"
+            return f"[ARANCIONE] In scadenza ({days}gg)"
         if days <= cls.EXPIRING_THRESHOLD:
-            return f"[GIALLO] Scade tra {days}gg"
+            return f"[GIALLO] In scadenza ({days}gg)"
         return f"[OK] Attivo ({days}gg rim.)"
 
     @staticmethod

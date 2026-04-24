@@ -171,7 +171,11 @@ class CertificatiTreeWidget(StandardTreeWidget):
     ):
         """Applica lo styling specifico per il certificato più recente."""
         if days_to_expiry is None:
-            status_text, bg_color, text_color = "N/D", COLORS["bg_alt"], COLORS["text_muted"]
+            status_text, bg_color, text_color = (
+                "N/D (Senza Scadenza)",
+                COLORS["bg_alt"],
+                COLORS["text_light"],
+            )
         elif days_to_expiry == -9999:  # noqa: PLR2004
             status_text, bg_color, text_color = (
                 "GUASTO",
