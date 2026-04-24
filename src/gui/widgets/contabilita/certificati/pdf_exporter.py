@@ -201,6 +201,7 @@ class CertificatiPdfExporter:
         .parent-yes td { background-color: #dcfce7; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
         .parent-no td { background-color: #fee2e2; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
         .parent-warning td { background-color: #fef3c7; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
+        .parent-nd td { background-color: #f1f5f9; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
         .status-yes { color: #15803d; font-weight: bold; text-align: center; }
         .status-no { color: #b91c1c; font-weight: bold; text-align: center; }
         .status-warning { color: #b45309; font-weight: bold; text-align: center; }
@@ -314,19 +315,19 @@ class CertificatiPdfExporter:
                         # "Scaduto (9gg fa)" -> "Scaduto da<br>9 giorni"
                         stato_display = stato_display.replace("Scaduto (", "Scaduto da<br>").replace("gg fa)", " giorni")
                     elif stato_display.startswith("Attivo ("):
-                        # "Attivo (339gg rim.)" -> "Attivo<br>339gg rim."
-                        stato_display = stato_display.replace("Attivo (", "Attivo<br>").replace(")", "")
+                        # "Attivo (292gg rim.)" -> "Attivo per<br>292 giorni"
+                        stato_display = stato_display.replace("Attivo (", "Attivo per<br>").replace("gg rim.)", " giorni")
                     elif stato_display.startswith("In scadenza ("):
                         # "In scadenza (5gg)" -> "In scadenza<br>5 giorni<br>rimanenti"
                         stato_display = stato_display.replace("In scadenza (", "In scadenza<br>").replace("gg)", " giorni<br>rimanenti")
                     elif "Senza Scadenza" in stato_display:
-                        stato_display = stato_display.replace(" (", "<br>(")
+                        stato_display = "N/D"
 
                     # Identificazione riga principale per styling
                     if days == -9999:  # noqa: PLR2004
                         row_class = "parent-no"
                     elif days is None:
-                        row_class = "historical-row" # Colore neutro/grigio
+                        row_class = "parent-nd" # Stile grigio ma grassetto
                     elif days < 0:
                         row_class = "parent-no"
                     elif 0 <= days <= 30:  # noqa: PLR2004
