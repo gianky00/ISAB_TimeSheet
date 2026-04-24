@@ -60,7 +60,7 @@ Prima di installare qualsiasi cosa, analizza il progetto:
    - Identifica configurazioni tool già presenti ([tool.ruff], [tool.mypy], ecc.)
 
 2. SE NON esiste pyproject.toml:
-   - Cerca setup.py, setup.cfg, requirements.txt
+   - Cerca setup.py o setup.cfg
    - Se nessuno esiste, CHIEDERE all'utente la versione Python target
    - Creare pyproject.toml minimo con [build-system] e [project]
 

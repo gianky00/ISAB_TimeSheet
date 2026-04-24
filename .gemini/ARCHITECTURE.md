@@ -72,7 +72,7 @@ Get-ChildItem -Path src -Filter "__pycache__" -Recurse | Remove-Item -Recurse -F
 ### 2. Build Pipeline
 Il processo di release è automatizzato via `admin/release.py` e include:
 - Version Bumping.
-- Sync dipendenze (`requirements.txt` vs `Poetry`).
+- Gestione dipendenze via Poetry.
 - Esecuzione Test Robustezza.
 - Compilazione setup via Inno Setup.
 

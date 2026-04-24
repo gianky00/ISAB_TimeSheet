@@ -244,7 +244,7 @@ class CertificatiCampioneTab(QWidget):
                 # Guardia sulla lunghezza per evitare crash con dati mockati incompleti
                 if len(c) <= idx_emissione:
                     return datetime.min.replace(tzinfo=UTC)
-                    
+
                 d = c[idx_emissione] or ""
                 try:
                     return (
@@ -257,7 +257,7 @@ class CertificatiCampioneTab(QWidget):
 
             certs_sorted = sorted(certificates, key=parse_date, reverse=True)
             latest = certs_sorted[0]
-            
+
             # Guardia sulla lunghezza per scadenza
             scadenza = latest[idx_scadenza] if len(latest) > idx_scadenza else ""
             days, icon = self.engine.calculate_days_and_status(scadenza)
@@ -315,8 +315,8 @@ class CertificatiCampioneTab(QWidget):
                 err_val = cert[idx_errore] if len(cert) > idx_errore else None
                 err_formatted = self.engine.format_errore_max(err_val) if err_val is not None else ""
 
-                def get_val(idx: int) -> str:
-                    return str(cert[idx]) if len(cert) > idx and cert[idx] is not None else ""
+                def get_val(idx: int, c: Any = cert) -> str:
+                    return str(c[idx]) if len(c) > idx and c[idx] is not None else ""
 
                 row_data = [
                     get_val(idx_id_coemi),  # 0. ID-COEMI
@@ -557,7 +557,7 @@ class CertificatiCampioneTab(QWidget):
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Esporta Certificati in PDF",
-            f"Certificati_Campione_{datetime.now().strftime('%Y%m%d')}.pdf",
+            f"Report Certificati Campione Secondari ISAB SUD al {datetime.now().strftime('%d-%m-%Y')}.pdf",
             "PDF Files (*.pdf)",
         )
 

@@ -25,8 +25,8 @@ FASE 0 — RICOGNIZIONE DEL PROGETTO
 
 Prima di analizzare la sicurezza, comprendi il progetto:
 
-1. LEGGI pyproject.toml / setup.py / requirements.txt:
-   - Identifica TUTTE le dipendenze di produzione
+1. LEGGI pyproject.toml o setup.py:
+   - Identifica TUTTE le dipendenze di produzione via Poetry o setuptools
    - Identifica la versione Python target
    - Nota eventuali dipendenze pinned a versioni vecchie
 

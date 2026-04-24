@@ -29,8 +29,9 @@ Le seguenti funzioni/moduli hanno superato la soglia di complessità desiderata 
 - [ ] `src/gui/widgets/contabilita/helpers.py`: Intero modulo (media C)
 - [ ] `src/utils/log_humanizer.py`: Intero modulo (media C)
 
-## 🛡️ Sicurezza (Bandit)
-- [ ] Valutare l'uso di un Query Builder o ORM leggero per `DataSynchronizer` per eliminare definitivamente gli avvisi B608 (SQL Injection) senza usare `# nosec`.
+## 🛡️ Sicurezza
+- [x] Migrazione a `pip-audit` per scansione vulnerabilità (integrato in Toolbox GUI)
+- [ ] Valutare l'uso di un Query Builder o ORM leggero per `DataSynchronizer` per eliminare definitivamente gli avvisi B608 (SQL Injection).
 
 ## 🧪 Infrastruttura Test
 - [x] Fix doppio conteggio passed/failed in fase isolamento SHOTGUN (V5.1)
@@ -39,12 +40,12 @@ Le seguenti funzioni/moduli hanno superato la soglia di complessità desiderata 
 - [x] `sys.exit()` centralizzato, runner utilizzabile come libreria
 - [x] Report IA troncato a 2000 char per file (-80% dimensione)
 - [x] Suite test per il runner: 34 unit test di regressione
+- [x] Allineamento a Poetry e script batch `avvio_test.bat`
 - [ ] Valutare sostituzione parallelismo custom con `pytest-xdist` (work-stealing nativo)
-- [ ] Parallelizzare per nodo singolo invece che per file (riduzione effetto straggler)
 - [ ] Collection in-process con API pytest (`pytest.main()`) invece di subprocess
 
 ## 📖 Documentazione (Interrogate)
 - [ ] Portare la copertura delle docstring dal attuale ~80% al 95%.
 
 ---
-*Ultimo aggiornamento: 19 Aprile 2026*
+*Ultimo aggiornamento: 24 Aprile 2026*

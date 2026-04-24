@@ -443,7 +443,8 @@ class ScadenzeAnalysisDialog(QDialog):
                     image_paths.append(path)
 
             if not image_paths:
-                raise ValueError("Nessuna immagine generata.")
+                msg = "Nessuna immagine generata."
+                raise ValueError(msg)
 
             # 3. Prepariamo lo script PowerShell per Outlook
             # Creiamo una lista di percorsi file sicura per PowerShell

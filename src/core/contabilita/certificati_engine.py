@@ -22,6 +22,13 @@ class CertificatiEngine:
     EXPIRING_THRESHOLD: Final[int] = 30
     FAULTY_MARKER: Final[int] = -9999
 
+    # Indici colonne dati certificati
+    IDX_CERTIFICATO: Final[int] = 1
+    IDX_MATRICOLA: Final[int] = 4
+    IDX_EMISSIONE: Final[int] = 7
+    IDX_SCADENZA: Final[int] = 8
+    IDX_UBICAZIONE: Final[int] = 10
+
     @property
     def exclusions_file(self) -> Path:
         """Restituisce il percorso dinamico del file delle esclusioni."""
@@ -122,13 +129,14 @@ class CertificatiEngine:
         return f"[OK] {StatoCertificatoLabel.ATTIVO} ({days}gg rim.)"
 
     @classmethod
-    def get_statistics(cls, data: list[Any]) -> dict[str, int]:
+    def get_statistics(cls, data: list[Any]) -> dict[str, Any]:
         """
         Calcola le statistiche aggregate per un set di dati certificati.
         Args:
             data: Lista di tuple/record (formato ContabilitaQueries)
         """
-        stats = {
+        # Tipizzazione esplicita per evitare errori Mypy su dict[str, Any]
+        stats: dict[str, Any] = {
             "attivi": 0,
             "in_scadenza": 0,
             "scaduti": 0,
@@ -140,12 +148,18 @@ class CertificatiEngine:
             "tecnico": 0,
             "assenti": 0,
             "totale": 0,
+            "prossime_tarature": {
+                "30": 0,
+                "60": 0,
+                "90": 0,
+                "oltre": 0
+            }
         }
 
         for r in data:
             stats["totale"] += 1
             # Indice scadenza: 8, Ubicazione: 10
-            scadenza_str = str(r[8]) if len(r) > 8 else ""
+            scadenza_str = str(r[cls.IDX_SCADENZA]) if len(r) > cls.IDX_SCADENZA else ""
             days, _ = cls.calculate_days_and_status(scadenza_str)
 
             if days == cls.FAULTY_MARKER:
@@ -159,14 +173,25 @@ class CertificatiEngine:
             else:
                 stats["attivi"] += 1
 
-            ubicazione = str(r[10]).upper() if len(r) > 10 else ""
+            # Raggruppamento temporale (Prossime tarature) - Solo per strumenti validi
+            if days is not None and days >= 0:
+                if days <= 30:  # noqa: PLR2004
+                    stats["prossime_tarature"]["30"] += 1
+                elif days <= 60:  # noqa: PLR2004
+                    stats["prossime_tarature"]["60"] += 1
+                elif days <= 90:  # noqa: PLR2004
+                    stats["prossime_tarature"]["90"] += 1
+                else:
+                    stats["prossime_tarature"]["oltre"] += 1
+
+            ubicazione = str(r[cls.IDX_UBICAZIONE]).upper() if len(r) > cls.IDX_UBICAZIONE else ""
             if UbicazioneStrumenti.UFFICIO_STRU.value in ubicazione:
                 stats["ufficio_stru"] += 1
             elif UbicazioneStrumenti.UFFICIO_CC.value in ubicazione:
                 stats["ufficio_cc"] += 1
-            elif UbicazioneStrumenti.OFFICINA.value in ubicazione:
+            elif "OFFICINA" in ubicazione:
                 stats["officina"] += 1
-            elif UbicazioneStrumenti.TECNICO.value in ubicazione:
+            elif "TECNICO" in ubicazione:
                 stats["tecnico"] += 1
             elif UbicazioneStrumenti.ASSENTE.value in ubicazione:
                 stats["assenti"] += 1
@@ -216,6 +241,6 @@ class CertificatiEngine:
         return {
             "matricola": parts[0].strip() if parts else "",
             "costruttore": parts[1].strip() if len(parts) > 1 else "N/D",
-            "modello": parts[2].strip() if len(parts) > 2 else "N/D",  # noqa: PLR2004
-            "range": parts[3].strip() if len(parts) > 3 and "Digital" in parts[2] else "",  # noqa: PLR2004
+            "modello": parts[2].strip() if len(parts) > 2 else "N/D",
+            "range": parts[3].strip() if len(parts) > 3 and "Digital" in parts[2] else "",
         }

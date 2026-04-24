@@ -48,7 +48,7 @@ class TestMainWindow:
         with patch("src.gui.controllers.navigation_controller.NavigationController._create_panel_instance") as mock_create:
             mock_create.return_value = QWidget()
             window = MainWindow()
-            
+
             # Navigazione verso Automazioni
             window.navigation_controller.navigate_to(PageIndex.AUTOMAZIONI)
             assert window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI
@@ -60,12 +60,12 @@ class TestMainWindow:
             mock_panel = QWidget()
             mock_panel.set_current_tab = MagicMock()
             mock_create.return_value = mock_panel
-            
+
             window = MainWindow()
-            
+
             # 'timbrature' -> Fornitori (0), Bot Index (2)
             window.navigation_controller.navigate_to_panel("timbrature")
-            
+
             assert window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI
             mock_panel.set_current_tab.assert_called_with(0, 2)
             window.close()

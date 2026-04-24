@@ -1,5 +1,7 @@
+import os
 import re
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from PyQt6.QtCore import QMarginsF, QRectF, Qt
@@ -78,11 +80,67 @@ class CertificatiPdfExporter:
         except Exception as e:
             return False, f"Errore durante l'esportazione PDF: {e!s}"
 
+    def _get_certificate_link(self, cert_name: str) -> str:
+        """
+        Cerca il file del certificato nella cartella di rete e restituisce l'URI per l'href.
+        Versione ultra-robusta per percorsi UNC e varianti di estensione.
+        """
+        if not cert_name:
+            return ""
+
+        # Pulizia profonda: strip, normalizzazione trattini e rimozione caratteri invisibili
+        cert_name = cert_name.strip().replace('–', '-').replace('—', '-').replace(' ', '')
+        if not cert_name or cert_name.upper() in ("N/D", "NESSUNO"):
+            return ""
+
+        base_path_str = r"\\192.168.11.251\Database_Tecnico_SMI\CERTIFICATI CAMPIONE"
+
+        # Tentativo veloce basato sull'anno
+        parts = cert_name.split('-')
+        year = ""
+        min_parts = 2
+        short_year_len = 2
+        if len(parts) >= min_parts:
+            year_part = parts[-1]
+            if year_part.isdigit():
+                year = f"20{year_part}" if len(year_part) == short_year_len else year_part
+
+        # Lista di possibili percorsi relativi (prioritari)
+        possible_rel_paths = []
+        if year:
+            possible_rel_paths.append(os.path.join(year, f"{cert_name}.pdf"))
+            possible_rel_paths.append(os.path.join(year, f"{cert_name}.PDF"))
+            possible_rel_paths.append(os.path.join(year, cert_name, f"{cert_name}.pdf"))
+            possible_rel_paths.append(os.path.join(year, cert_name, f"{cert_name}.PDF"))
+
+        possible_rel_paths.append(f"{cert_name}.pdf")
+        possible_rel_paths.append(f"{cert_name}.PDF")
+
+        # Verifica fisica dei file
+        for rel in possible_rel_paths:
+            full_path = os.path.join(base_path_str, rel)
+            if os.path.exists(full_path):
+                return Path(full_path).as_uri()
+
+        # Fallback finale: ricerca ricorsiva limitata se abbiamo l'anno
+        try:
+            search_root = os.path.join(base_path_str, year) if year else base_path_str
+            if os.path.exists(search_root):
+                target_file_lower = f"{cert_name}.pdf".lower()
+                for root, _, files in os.walk(search_root):
+                    for f in files:
+                        if f.lower() == target_file_lower:
+                            found_path = os.path.join(root, f)
+                            return Path(found_path).as_uri()
+        except Exception:  # noqa: S110
+            pass
+
+        return ""
+
     def _draw_footer(self, painter: QPainter, current: int, total: int, width: float, height: float) -> None:
         """Disegna il footer con la numerazione delle pagine."""
         painter.save()
         font = painter.font()
-        # setPixelSize garantisce la dimensione esatta indipendentemente dalla scalatura
         font.setPixelSize(8)
         painter.setFont(font)
         painter.setPen(Qt.GlobalColor.darkGray)
@@ -98,13 +156,10 @@ class CertificatiPdfExporter:
         title = "Lista Strumenti Campione Secondari<br>assegnati al cantiere ISAB SUD"
         meta_info = f"Generato il: {now_str} dal software Syncrojob v{__version__}"
 
-        # Helper per ordinamento naturale (alfanumerico)
         def natural_sort_key(text: str) -> list[Any]:
             parts = re.split(r"(\d+)", text)
-            # Usiamo tuple (is_int, value) per forzare confronti omogenei (bool con bool, int con int, str con str)
             return [(True, int(c)) if c.isdigit() else (False, c.lower()) for c in parts if c]
 
-        # Estraiamo e filtriamo i top level items per il calcolo globale e l'ordinamento
         all_parents = []
         raw_data_for_stats = []
 
@@ -114,16 +169,13 @@ class CertificatiPdfExporter:
                 continue
 
             label_text = parent.text(0)
-
-            # Parsing matricola dalla label del padre
             data_user = parent.data(0, Qt.ItemDataRole.UserRole)
             matricola = data_user.get("matricola", "") if isinstance(data_user, dict) else ""
 
-            if not matricola:
-                parts = label_text.split("  •  ")
-                if parent.childCount() > 0:
-                    matricola = parent.child(0).text(4)
-
+            if not matricola and parent.childCount() > 0:
+                child_0 = parent.child(0)
+                if child_0:
+                    matricola = child_0.text(4)
             is_excluded = "[ESCLUSO]" in label_text.upper()
             if is_excluded and not self.show_excluded:
                 continue
@@ -133,14 +185,12 @@ class CertificatiPdfExporter:
 
             all_parents.append(parent)
 
-            # Dati per statistiche (usiamo i dati del primo figlio che sono i più aggiornati)
             if parent.childCount() > 0:
                 child = parent.child(0)
                 if child:
                     row_tuple = tuple(child.text(col) for col in range(12))
                     raw_data_for_stats.append(row_tuple)
 
-        # Ordinamento GLOBALE per ID-COEMI crescente
         def get_id_coemi(p: Any) -> str:
             if p.childCount() > 0:
                 child = p.child(0)
@@ -150,8 +200,13 @@ class CertificatiPdfExporter:
 
         all_parents.sort(key=lambda x: natural_sort_key(get_id_coemi(x)))
 
-        # Calcolo Statistiche Centralizzato via Engine
         s = CertificatiEngine.get_statistics(raw_data_for_stats)
+        cert_links_cache: dict[str, str] = {}
+
+        def get_cached_cert_link(c_name: str) -> str:
+            if c_name not in cert_links_cache:
+                cert_links_cache[c_name] = self._get_certificate_link(c_name)
+            return cert_links_cache[c_name]
 
         style_html = """
         <html>
@@ -192,15 +247,30 @@ class CertificatiPdfExporter:
                 <td style="border: none; vertical-align: top; width: 60%;">
                     <table class="summary-table">
                         <tr>
-                            <td style="width: 30%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
+                            <td style="width: 25%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
                                 <div class="summary-title">STATO CERTIFICATI</div>
                             </td>
-                            <td style="width: 45%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
+                            <td style="width: 40%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
                                 <div class="summary-title">UBICAZIONE</div>
                             </td>
-                            <td style="width: 25%; vertical-align: middle; text-align: center;" rowspan="2">
-                                Totale Strumenti<br>
-                                <span style="font-size: 9pt; font-weight: bold;">{s['totale']}</span>
+                            <td style="width: 35%; vertical-align: top; text-align: center;" rowspan="2">
+                                <table width="100%" style="border: none;">
+                                    <tr>
+                                        <td style="width: 60%; text-align: left; border: none; padding-right: 5px;">
+                                            <div style="font-size: 5pt;">
+                                                <b>Prossime tarature:</b><br>
+                                                &bull; Entro 30gg: <b>{s['prossime_tarature']['30']}</b><br>
+                                                &bull; 31-60gg: <b>{s['prossime_tarature']['60']}</b><br>
+                                                &bull; 61-90gg: <b>{s['prossime_tarature']['90']}</b><br>
+                                                &bull; Oltre 90gg: <b>{s['prossime_tarature']['oltre']}</b>
+                                            </div>
+                                        </td>
+                                        <td style="width: 40%; text-align: center; border: none; border-left: 0.5pt solid #cbd5e1; vertical-align: middle;">
+                                            Totale Strumenti<br>
+                                            <span style="font-size: 9pt; font-weight: bold;">{s['totale']}</span>
+                                        </td>
+                                    </tr>
+                                </table>
                             </td>
                         </tr>
                         <tr>
@@ -215,7 +285,7 @@ class CertificatiPdfExporter:
                                 &#127970; {UbicazioneStrumenti.UFFICIO_STRU.value}: <b>{s['ufficio_stru']}</b><br>
                                 &#128203; {UbicazioneStrumenti.UFFICIO_CC.value}: <b>{s['ufficio_cc']}</b><br>
                                 &#128736; {UbicazioneStrumenti.OFFICINA.value}: <b>{s['officina']}</b><br>
-                                &#128119; Assegnati ai Tecnici: <b>{s['tecnico']}</b><br>
+                                &#128119; {UbicazioneStrumenti.TECNICO.value}: <b>{s['tecnico']}</b><br>
                                 &#10060; {UbicazioneStrumenti.ASSENTE.value}: <b>{s['assenti']}</b>
                             </td>
                         </tr>
@@ -247,22 +317,16 @@ class CertificatiPdfExporter:
         """
 
         page_footer_html = "</tbody></table></body></html>"
-
-        # FIX PAGINAZIONE: Riserva molto spazio per header e footer (circa 180pt)
         available_height = height_pt - 180
-
         pages_html: list[str] = []
         current_rows: list[str] = []
         current_page_height = 0
 
         for parent in all_parents:
             group_html_blocks = []
-
             for j in range(parent.childCount()):
-                # Se non vogliamo lo storico, esportiamo solo il primo certificato (quello corrente)
                 if not self.include_history and j > 0:
                     break
-
                 child = parent.child(j)
                 if not child:
                     continue
@@ -277,24 +341,19 @@ class CertificatiPdfExporter:
                         stato_display = stato_display.replace(emoji, "")
                     stato_display = stato_display.strip()
 
-                    # Ripristino formattazione compatta con interruzioni di riga e nuove diciture
                     if stato_display.startswith(StatoCertificatoLabel.SCADUTO):
-                        # "Scaduto (9gg fa)" -> "Scaduto da<br>9 giorni"
                         stato_display = stato_display.replace(f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>").replace("gg fa)", " giorni")
                     elif stato_display.startswith(StatoCertificatoLabel.ATTIVO):
-                        # "Attivo (292gg rim.)" -> "Attivo per<br>292 giorni"
                         stato_display = stato_display.replace(f"{StatoCertificatoLabel.ATTIVO} (", "Attivo per<br>").replace("gg rim.)", " giorni")
                     elif stato_display.startswith(StatoCertificatoLabel.IN_SCADENZA):
-                        # "In scadenza (5gg)" -> "In scadenza<br>5 giorni<br>rimanenti"
                         stato_display = stato_display.replace(f"{StatoCertificatoLabel.IN_SCADENZA} (", "In scadenza<br>").replace("gg)", " giorni<br>rimanenti")
                     elif StatoCertificatoLabel.SENZA_SCADENZA in stato_display:
                         stato_display = "N/D"
 
-                    # Identificazione riga principale per styling
                     if days == -9999:  # noqa: PLR2004
                         row_class = "parent-no"
                     elif days is None:
-                        row_class = "parent-nd" # Stile grigio ma grassetto
+                        row_class = "parent-nd"
                     elif days < 0:
                         row_class = "parent-no"
                     elif 0 <= days <= 30:  # noqa: PLR2004
@@ -305,28 +364,33 @@ class CertificatiPdfExporter:
                     stato_display = "STORICO"
                     row_class = "historical-row"
 
-                # Fix Modello/Tipo formatting
                 modello = child.text(2).strip()
                 if " " in modello:
                     parts = modello.split(" ", 1)
                     modello = f"{parts[0]}<br>{parts[1]}"
 
-                # Fix Ubicazione formatting
                 ubicazione_raw = child.text(10).strip()
                 if UbicazioneStrumenti.TECNICO.value in ubicazione_raw:
-                    ubicazione = ubicazione_raw.replace(
-                        f"{UbicazioneStrumenti.TECNICO.value} ", "ASSEGNATO<br>AL TECNICO<br>"
-                    )
+                    ubicazione = ubicazione_raw.replace(f"{UbicazioneStrumenti.TECNICO.value} ", "ASSEGNATO<br>AL TECNICO<br>")
                     if ubicazione == ubicazione_raw:
                         ubicazione = ubicazione_raw.replace(UbicazioneStrumenti.TECNICO.value, "ASSEGNATO<br>AL TECNICO")
                 else:
                     ubicazione = ubicazione_raw
 
                 row_html = f"<tr class='{row_class}'>"
+                cert_name = child.text(1)
+                cert_link = get_cached_cert_link(cert_name)
+
+                if cert_link:
+                    cert_display = f"<a href='{cert_link}' style='color: #2563eb; text-decoration: underline;'>{cert_name}</a>"
+                    storico_display = f"&raquo; <a href='{cert_link}' style='color: #64748b; text-decoration: underline;'>{cert_name}</a>"
+                else:
+                    cert_display = cert_name
+                    storico_display = f"&raquo; {cert_name}"
 
                 if is_current:
                     row_html += f"<td class='text-center'>{child.text(0)}</td>"
-                    row_html += f"<td>{child.text(1)}</td>"
+                    row_html += f"<td>{cert_display}</td>"
                     row_html += f"<td>{modello}</td>"
                     row_html += f"<td>{child.text(3)}</td>"
                     row_html += f"<td>{child.text(4)}</td>"
@@ -339,7 +403,7 @@ class CertificatiPdfExporter:
                     row_html += f"<td>{child.text(11)}</td>"
                 else:
                     row_html += "<td></td>"
-                    row_html += f"<td>&raquo; {child.text(1)}</td>"
+                    row_html += f"<td>{storico_display}</td>"
                     row_html += "<td></td>"
                     row_html += "<td></td>"
                     row_html += "<td></td>"
@@ -354,13 +418,9 @@ class CertificatiPdfExporter:
                 row_html += "</tr>"
                 group_html_blocks.append(row_html)
 
-            # Stima altezza: 35pt per padre, 22pt per figlio (conservativa)
             group_est_height = 35 + (len(group_html_blocks) - 1) * 22
-
             if current_page_height + group_est_height > available_height and current_rows:
-                pages_html.append(
-                    style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html
-                )
+                pages_html.append(style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html)
                 current_rows = []
                 current_page_height = 0
 
@@ -368,8 +428,6 @@ class CertificatiPdfExporter:
             current_page_height += group_est_height
 
         if current_rows:
-            pages_html.append(
-                style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html
-            )
+            pages_html.append(style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html)
 
         return pages_html

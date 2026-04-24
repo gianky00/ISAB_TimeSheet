@@ -30,7 +30,7 @@ call .venv\Scripts\activate.bat
 
 echo [INFO] Verifica dipendenze...
 python.exe -m pip install --upgrade pip
-pip install -r requirements.txt -q
+pip install -e . -q
 
 echo.
 echo [INFO] Avvio applicazione...

@@ -89,7 +89,7 @@ python admin/developer_toolbox_gui.py
 
 **La GUI non si avvia**:
 - Verifica che l'ambiente virtuale sia attivo
-- Esegui: `poetry install` o `pip install -r requirements.txt`
+- Esegui: `poetry install` o `pip install -e .`
 
 **Il comando non produce output**:
 - Alcuni comandi potrebbero richiedere tempo prima di mostrare output

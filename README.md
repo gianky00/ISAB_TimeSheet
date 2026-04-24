@@ -61,8 +61,8 @@ cd bot-ts
 
 # Installazione dipendenze (Poetry consigliato)
 poetry install
-# Oppure via pip
-pip install -r requirements.txt
+# Oppure via pip (modalità editabile)
+pip install -e .
 ```
 
 ### Comandi Utili

@@ -8,13 +8,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-### Running the Application
+### Setup Ambiente
 ```bash
-# Standard launch (from repository root)
-python main.py
+# Installazione dipendenze e venv (Poetry consigliato)
+poetry install
 
-# Launch with batch script (Windows)
-scripts\avvio.bat
+# Oppure via pip (modalità editabile)
+pip install -e .
 ```
 
 ### Testing
@@ -242,3 +242,4 @@ UI is Italian language. Key terms:
 5. **Bot credentials**: Load from config, never hardcode
 6. **Download paths**: Always use `Path` objects and ensure parent dirs exist
 7. **WebDriver waits**: Use `WebDriverWait` with explicit conditions, not `time.sleep()`
+river waits**: Use `WebDriverWait` with explicit conditions, not `time.sleep()`

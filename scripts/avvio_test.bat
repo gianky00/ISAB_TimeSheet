@@ -10,12 +10,27 @@ cd /d "%~dp0\.."
 
 echo [TEST] Inizializzazione ambiente...
 
-set VENV_PYTHON=.venv\Scripts\python.exe
-if not exist "!VENV_PYTHON!" (
-    set VENV_PYTHON=python
-    echo [WARNING] .venv non trovato, uso python di sistema.
+REM Verifica che Python sia installato
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] Python non trovato!
+    pause
+    exit /b 1
 )
 
+:: Controllo se esiste l'ambiente virtuale
+if not exist ".venv" (
+    echo [INFO] Ambiente virtuale non trovato. Creazione in corso...
+    python -m venv .venv
+)
+
+set VENV_PYTHON=.venv\Scripts\python.exe
+
+echo [INFO] Verifica dipendenze...
+"!VENV_PYTHON!" -m pip install --upgrade pip -q
+"!VENV_PYTHON!" -m pip install -e . -q
+
+echo.
 echo [TEST] Avvio Robust Test Runner...
 echo.
 
