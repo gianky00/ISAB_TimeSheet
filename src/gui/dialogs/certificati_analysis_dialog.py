@@ -6,11 +6,9 @@ Modulo specializzato per la visualizzazione e l'esportazione delle scadenze cert
 
 import os
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QPainter, QPixmap
 from PyQt6.QtWidgets import (
     QDialog,
     QFrame,
@@ -23,7 +21,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.core import config_manager
 from src.core.version import __app_name__, __version__
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
@@ -287,7 +284,7 @@ class ScadenzeAnalysisDialog(QDialog):
         return card
 
     def _create_section(self, title: str, items: list[Any], color: str, bg_color: str) -> QFrame:  # noqa: PLR0915
-        """Crea una sezione con elenco certificati - Senza bordi pesanti per screenshot pulito."""
+        """Crea una sezione con elenco certificati."""
         section = QFrame()
         section.setStyleSheet(
             f"""
@@ -321,31 +318,37 @@ class ScadenzeAnalysisDialog(QDialog):
         header_row_layout = QHBoxLayout()
         header_row_layout.setSpacing(15)
 
-        lbl_h_mat = QLabel("MATRICOLA")
-        lbl_h_mat.setStyleSheet(f"color: {color}; font-size: 9px; font-weight: bold; min-width: 120px;")
-
-        lbl_h_mod = QLabel("MODELLO / TIPO")
-        lbl_h_mod.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 9px; font-weight: bold;")
-        lbl_h_mod.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        lbl_h_id = QLabel("ID-COEMI")
+        lbl_h_id.setStyleSheet(
+            f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: bold; min-width: 80px;"
+        )
 
         lbl_h_cos = QLabel("COSTRUTTORE")
         lbl_h_cos.setStyleSheet(
-            f"color: {COLORS['text_muted']}; font-size: 9px; font-weight: bold; min-width: 100px;"
+            f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: bold; min-width: 100px;"
         )
 
-        lbl_h_id = QLabel("ID-COEMI")
-        lbl_h_id.setStyleSheet(
-            f"color: {COLORS['text_muted']}; font-size: 9px; font-weight: bold; min-width: 80px;"
+        lbl_h_mod = QLabel("MODELLO / TIPO")
+        lbl_h_mod.setStyleSheet(
+            f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: bold;"
+        )
+        lbl_h_mod.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+
+        lbl_h_mat = QLabel("MATRICOLA")
+        lbl_h_mat.setStyleSheet(
+            f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: bold; min-width: 110px;"
         )
 
         lbl_h_scad = QLabel("STATO SCADENZA")
-        lbl_h_scad.setStyleSheet(f"color: {color}; font-size: 9px; font-weight: bold; min-width: 130px;")
+        lbl_h_scad.setStyleSheet(
+            f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: bold; min-width: 130px;"
+        )
         lbl_h_scad.setAlignment(Qt.AlignmentFlag.AlignRight)
 
-        header_row_layout.addWidget(lbl_h_mat)
-        header_row_layout.addWidget(lbl_h_mod)
-        header_row_layout.addWidget(lbl_h_cos)
         header_row_layout.addWidget(lbl_h_id)
+        header_row_layout.addWidget(lbl_h_cos)
+        header_row_layout.addWidget(lbl_h_mod)
+        header_row_layout.addWidget(lbl_h_mat)
         header_row_layout.addWidget(lbl_h_scad)
         section_layout.addLayout(header_row_layout)
 
@@ -354,14 +357,21 @@ class ScadenzeAnalysisDialog(QDialog):
             item_layout = QHBoxLayout()
             item_layout.setSpacing(15)
 
-            # Matricola
-            matricola_label = QLabel(item["matricola"])
-            matricola_label.setStyleSheet(
-                f"color: {color}; font-weight: 600; font-size: 13px; min-width: 120px;"
+            # 1. ID-COEMI
+            id_label = QLabel(item.get("id_coemi", ""))
+            id_label.setStyleSheet(
+                f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: 600; min-width: 80px;"
             )
-            item_layout.addWidget(matricola_label)
+            item_layout.addWidget(id_label)
 
-            # Modello + Range (per manometri)
+            # 2. Costruttore
+            costruttore_label = QLabel(item["costruttore"])
+            costruttore_label.setStyleSheet(
+                f"color: {COLORS['text_muted']}; font-size: 12px; min-width: 100px;"
+            )
+            item_layout.addWidget(costruttore_label)
+
+            # 3. Modello + Range (per manometri)
             modello_text = item["modello"]
             if "MANOMETRO DIGITALE" in modello_text.upper() and item.get("range"):
                 modello_text += f" ({item['range']})"
@@ -370,21 +380,14 @@ class ScadenzeAnalysisDialog(QDialog):
             modello_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
             item_layout.addWidget(modello_label)
 
-            # Costruttore
-            costruttore_label = QLabel(item["costruttore"])
-            costruttore_label.setStyleSheet(
-                f"color: {COLORS['text_muted']}; font-size: 12px; min-width: 100px;"
+            # 4. Matricola
+            matricola_label = QLabel(item["matricola"])
+            matricola_label.setStyleSheet(
+                f"color: {COLORS['text_dark']}; font-weight: 600; font-size: 13px; min-width: 110px;"
             )
-            item_layout.addWidget(costruttore_label)
+            item_layout.addWidget(matricola_label)
 
-            # ID-COEMI
-            id_label = QLabel(item.get("id_coemi", ""))
-            id_label.setStyleSheet(
-                f"color: {COLORS['text_muted']}; font-size: 12px; font-weight: 500; min-width: 80px;"
-            )
-            item_layout.addWidget(id_label)
-
-            # Scadenza
+            # 5. Scadenza
             if item["days"] is not None:
                 if item["days"] < 0:
                     days_text = f"Scaduto da {abs(item['days'])} gg"
@@ -393,7 +396,9 @@ class ScadenzeAnalysisDialog(QDialog):
             else:
                 days_text = "N/D"
             days_label = QLabel(days_text)
-            days_label.setStyleSheet(f"color: {color}; font-weight: 500; font-size: 12px; min-width: 130px;")
+            days_label.setStyleSheet(
+                f"color: {color}; font-weight: bold; font-size: 13px; min-width: 130px;"
+            )
             days_label.setAlignment(Qt.AlignmentFlag.AlignRight)
             item_layout.addWidget(days_label)
 
@@ -402,102 +407,96 @@ class ScadenzeAnalysisDialog(QDialog):
         return section
 
     def _send_email(self):  # noqa: ANN202
-        """Genera screenshot completo del report e apre il client email."""
+        """Genera screenshot separati per ogni sezione e li invia via email per evitare troncamenti."""
         import subprocess  # noqa: PLC0415
         import tempfile  # noqa: PLC0415
 
         try:
-            # Assicura che il layout sia aggiornato e calcolato prima del rendering
-            self.header.adjustSize()
-            self.stats_frame.adjustSize()
-            self.content_widget.adjustSize()
-            self.footer.adjustSize()
+            # 1. Identifichiamo i widget da catturare in ordine
+            widgets_to_capture = [self.header, self.stats_frame]
 
-            # Calcola l'altezza totale del contenuto con margini di sicurezza
-            header_height = self.header.height()
-            stats_height = self.stats_frame.height()
-            content_height = self.content_widget.height()
-            footer_height = self.footer.height()
+            # Recuperiamo tutte le sezioni dal content_widget
+            layout = self.content_widget.layout()
+            if layout:
+                for i in range(layout.count()):
+                    item = layout.itemAt(i)
+                    if item and item.widget():
+                        widgets_to_capture.append(item.widget())
 
-            total_height = header_height + stats_height + content_height + footer_height + 40
+            widgets_to_capture.append(self.footer)
 
-            # Limite di sicurezza per evitare allocazioni pixmap troppo grandi
-            total_height = min(total_height, 15000)
-            total_width = max(1100, self.width())
+            # 2. Generiamo e salviamo i pixmap
+            image_paths = []
+            temp_dir = tempfile.gettempdir()
 
-            # Crea un pixmap per il report completo
-            pixmap = QPixmap(total_width, total_height)
-            pixmap.fill(QColor(COLORS["bg_light"]))
+            for idx, widget in enumerate(widgets_to_capture):
+                # Assicuriamoci che il widget sia renderizzato correttamente
+                widget.adjustSize()
 
-            painter = QPainter(pixmap)
-            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+                # Catturiamo il widget
+                pixmap = widget.grab()
+                if pixmap.isNull():
+                    continue
 
-            # Header
-            self.header.render(painter, targetOffset=self.header.pos())
+                path = os.path.join(temp_dir, f"syncro_report_part_{idx}.png")
+                if pixmap.save(path, "PNG"):
+                    image_paths.append(path)
 
-            # Stats
-            self.stats_frame.render(
-                painter,
-                targetOffset=self.stats_frame.mapTo(self, self.stats_frame.rect().topLeft()),
-            )
+            if not image_paths:
+                raise ValueError("Nessuna immagine generata.")
 
-            # Content
-            self.content_widget.render(
-                painter,
-                targetOffset=self.content_widget.mapTo(self, self.content_widget.rect().topLeft()),
-            )
+            # 3. Prepariamo lo script PowerShell per Outlook
+            # Creiamo una lista di percorsi file sicura per PowerShell
+            ps_image_list = "@('" + "','".join(p.replace(chr(92), chr(92)*2) for p in image_paths) + "')"
 
-            painter.end()
-
-            # Salva come PNG temporaneo
-            temp_path = os.path.join(tempfile.gettempdir(), "syncrojob_scadenze_report.png")
-            pixmap.save(temp_path, "PNG")
-
-            # Tenta di usare la macro Excel se configurata
-            excel_path = config_manager.load_config().get("certificati_campione_path", "")
-
-            if excel_path and Path(excel_path).exists():
-                ps_script = f"""
-$xl = New-Object -ComObject Excel.Application
-$xl.Visible = $false
+            ps_script = f"""
+$images = {ps_image_list}
 try {{
-    $wb = $xl.Workbooks.Open("{excel_path.replace(chr(92), chr(92) + chr(92))}")
-    try {{
-        # La macro originale accetta solo il percorso del file.
-        $xl.Run("'" + $wb.Name + "'!InviaEmailConScreenshotDaPS", "{temp_path.replace(chr(92), chr(92) + chr(92))}")
-    }} catch {{
-        # In caso di errore macro, apriamo lo screenshot come fallback
-        Start-Process "{temp_path.replace(chr(92), chr(92) + chr(92))}"
+    $outlook = New-Object -ComObject Outlook.Application
+    $mail = $outlook.CreateItem(0)
+    $mail.Subject = "Report Analisi Scadenze Certificati - {datetime.now().strftime('%d/%m/%Y')}"
+
+    # Prepariamo l'HTML con le immagini embedded
+    $htmlBody = "<html><body>"
+    $htmlBody += "<h3>Report Scadenze Certificati Campione</h3>"
+
+    $idx = 0
+    foreach ($img in $images) {{
+        $fileName = [System.IO.Path]::GetFileName($img)
+        $attachment = $mail.Attachments.Add($img)
+        $attachment.PropertyAccessor.SetProperty("http://schemas.microsoft.com/mapi/proptag/0x3712001E", "img_$idx")
+        $htmlBody += "<div style='margin-bottom: 10px;'><img src='cid:img_$idx' style='max-width: 100%; height: auto;'></div>"
+        $idx++
     }}
-    $wb.Close($false)
-}} finally {{
-    $xl.Quit()
-    [System.Runtime.Interopservices.Marshal]::ReleaseComObject($xl) | Out-Null
+
+    $htmlBody += "<p style='font-size: 10px; color: #666;'>Generato automaticamente da SyncroJob v{__version__}</p>"
+    $htmlBody += "</body></html>"
+
+    $mail.HTMLBody = $htmlBody
+    $mail.Display()
+}} catch {{
+    # Fallback: apri la cartella dei file se Outlook fallisce
+    Start-Process "explorer.exe" (Split-Path $images[0])
 }}
 """
-                with tempfile.NamedTemporaryFile(
-                    mode="w", suffix=".ps1", delete=False, encoding="utf-8"
-                ) as tmp:
-                    tmp.write(ps_script)
-                    ps_path = tmp.name
+            # Salviamo ed eseguiamo il PS1
+            ps_path = ""
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".ps1", delete=False, encoding="utf-8") as tmp:
+                tmp.write(ps_script)
+                ps_path = tmp.name
 
-                CREATE_NO_WINDOW = 0x08000000  # noqa: N806
-                subprocess.Popen(
-                    ["powershell", "-ExecutionPolicy", "Bypass", "-File", ps_path],
-                    creationflags=CREATE_NO_WINDOW,
-                )
+            create_no_window = 0x08000000
+            subprocess.Popen(
+                ["powershell", "-ExecutionPolicy", "Bypass", "-File", ps_path],
+                creationflags=create_no_window
+            )
 
-                QMessageBox.information(
-                    self,
-                    "Email in preparazione",
-                    "Lo screenshot del report è stato generato.\n\n"
-                    f"Percorso: {temp_path}\n\n"
-                    "La macro Excel è stata avviata. Se il destinatario non è corretto, "
-                    "è necessario aggiornare il codice della macro VBA nel file Excel.",
-                )
-            else:
-                # Se non c'è excel, apri solo lo screenshot
-                os.startfile(temp_path)  # noqa: S606
+            QMessageBox.information(
+                self,
+                "Email in preparazione",
+                "Il report è stato suddiviso in sezioni separate per una migliore leggibilità.\n\n"
+                "Le immagini sono state inserite nel corpo di una nuova email Outlook."
+            )
 
         except Exception as e:
             QMessageBox.critical(self, "Errore invio email", f"Impossibile generare il report:\n{e}")

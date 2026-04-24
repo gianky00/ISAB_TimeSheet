@@ -259,27 +259,6 @@ class CertificatiPdfExporter:
         <tbody>
         """
 
-        page_header_html_no_id = """
-        <table width="100%">
-        <thead>
-        <tr>
-        <th width="0%"></th>
-        <th width="7%">Certificato</th>
-        <th width="11%">Modello / Tipo</th>
-        <th width="9%">Costruttore</th>
-        <th width="9%">Matricola</th>
-        <th width="9%">Range Strumento</th>
-        <th width="5%" class='text-center col-err'>Err %</th>
-        <th width="8%">Emissione</th>
-        <th width="8%">Scadenza</th>
-        <th width="9%">Stato</th>
-        <th width="12%">Ubicazione</th>
-        <th width="13%">Annotazioni</th>
-        </tr>
-        </thead>
-        <tbody>
-        """
-
         page_footer_html = "</tbody></table></body></html>"
 
         # FIX PAGINAZIONE: Riserva molto spazio per header e footer (circa 180pt)

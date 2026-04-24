@@ -204,35 +204,35 @@ class CertificatiCampioneTab(QWidget):
                         if matricola in expanded_matricole:
                             item.setExpanded(True)
 
-    def _load_data(self) -> None:  # noqa: PLR2004, PLR0915
+    def _load_data(self) -> None:  # noqa: PLR0915
         """Popola l'albero raggruppando i certificati per ID-COEMI."""
         data = ContabilitaManager.get_certificati_campione_data()
         self.tree.clear()
         self.tree.setSortingEnabled(False)
 
         # Indici fissi del risultato DB (definiti in ContabilitaQueries)
-        DB_ID_COEMI = 0
-        DB_CERTIFICATO = 1
-        DB_MODELLO = 2
-        DB_COSTRUTTORE = 3
-        DB_MATRICOLA = 4
-        DB_RANGE = 5
-        DB_ERRORE = 6
-        DB_EMISSIONE = 7
-        DB_SCADENZA = 8
-        DB_STATO = 9
-        DB_ANNOTAZIONI = 10
-        DB_UBICAZIONE = 11
-        DB_ID = 12
+        idx_id_coemi = 0
+        idx_certificato = 1
+        idx_modello = 2
+        idx_costruttore = 3
+        idx_matricola = 4
+        idx_range = 5
+        idx_errore = 6
+        idx_emissione = 7
+        idx_scadenza = 8
+        idx_stato = 9
+        idx_annotazioni = 10
+        idx_ubicazione = 11
+        idx_id = 12
 
         # Raggruppa per ID-COEMI (o Matricola/Certificato se manca)
         id_coemi_groups = defaultdict(list)
         for r in data:
             # Chiave di raggruppamento: ID-COEMI > Matricola > Certificato
             key = (
-                str(r[DB_ID_COEMI]).strip()
-                or str(r[DB_MATRICOLA]).strip()
-                or str(r[DB_CERTIFICATO]).strip()
+                str(r[idx_id_coemi]).strip()
+                or str(r[idx_matricola]).strip()
+                or str(r[idx_certificato]).strip()
                 or "Sconosciuto"
             )
             id_coemi_groups[key].append(r)
@@ -241,7 +241,11 @@ class CertificatiCampioneTab(QWidget):
         for group_key, certificates in id_coemi_groups.items():
             # Ordina per emissione (più recente in alto)
             def parse_date(c: Any) -> datetime:
-                d = c[DB_EMISSIONE] or ""
+                # Guardia sulla lunghezza per evitare crash con dati mockati incompleti
+                if len(c) <= idx_emissione:
+                    return datetime.min.replace(tzinfo=UTC)
+                    
+                d = c[idx_emissione] or ""
                 try:
                     return (
                         datetime.strptime(d, "%d/%m/%Y").replace(tzinfo=UTC)
@@ -253,16 +257,19 @@ class CertificatiCampioneTab(QWidget):
 
             certs_sorted = sorted(certificates, key=parse_date, reverse=True)
             latest = certs_sorted[0]
-            days, icon = self.engine.calculate_days_and_status(latest[DB_SCADENZA])
+            
+            # Guardia sulla lunghezza per scadenza
+            scadenza = latest[idx_scadenza] if len(latest) > idx_scadenza else ""
+            days, icon = self.engine.calculate_days_and_status(scadenza)
 
             groups_with_priority.append(
                 {
                     "group_key": group_key,
-                    "id_coemi": latest[DB_ID_COEMI] or "",
-                    "matricola": latest[DB_MATRICOLA] or "N/D",
-                    "costruttore": latest[DB_COSTRUTTORE] or "N/D",
-                    "modello": latest[DB_MODELLO] or "N/D",
-                    "range_strumento": latest[DB_RANGE] or "",
+                    "id_coemi": (latest[idx_id_coemi] if len(latest) > idx_id_coemi else "") or "",
+                    "matricola": (latest[idx_matricola] if len(latest) > idx_matricola else "") or "N/D",
+                    "costruttore": (latest[idx_costruttore] if len(latest) > idx_costruttore else "") or "N/D",
+                    "modello": (latest[idx_modello] if len(latest) > idx_modello else "") or "N/D",
+                    "range_strumento": (latest[idx_range] if len(latest) > idx_range else "") or "",
                     "certificates": certs_sorted,
                     "days": days,
                     "icon": icon,
@@ -305,32 +312,33 @@ class CertificatiCampioneTab(QWidget):
             cert_list: list[Any] = g["certificates"]  # type: ignore
             for i, cert in enumerate(cert_list):
                 # Format errore_max (index 6)
-                err_val = cert[DB_ERRORE]
+                err_val = cert[idx_errore] if len(cert) > idx_errore else None
                 err_formatted = self.engine.format_errore_max(err_val) if err_val is not None else ""
 
+                def get_val(idx: int) -> str:
+                    return str(cert[idx]) if len(cert) > idx and cert[idx] is not None else ""
+
                 row_data = [
-                    str(cert[DB_ID_COEMI] if cert[DB_ID_COEMI] is not None else ""),  # 0. ID-COEMI
-                    str(cert[DB_CERTIFICATO] if cert[DB_CERTIFICATO] is not None else ""),  # 1. Certificato
-                    str(cert[DB_MODELLO] if cert[DB_MODELLO] is not None else ""),  # 2. Modello
-                    str(cert[DB_COSTRUTTORE] if cert[DB_COSTRUTTORE] is not None else ""),  # 3. Costruttore
-                    str(cert[DB_MATRICOLA] if cert[DB_MATRICOLA] is not None else ""),  # 4. Matricola
-                    str(cert[DB_RANGE] if cert[DB_RANGE] is not None else ""),  # 5. Range Strumento
+                    get_val(idx_id_coemi),  # 0. ID-COEMI
+                    get_val(idx_certificato),  # 1. Certificato
+                    get_val(idx_modello),  # 2. Modello
+                    get_val(idx_costruttore),  # 3. Costruttore
+                    get_val(idx_matricola),  # 4. Matricola
+                    get_val(idx_range),  # 5. Range Strumento
                     err_formatted,  # 6. Err %
-                    str(cert[DB_EMISSIONE] if cert[DB_EMISSIONE] is not None else ""),  # 7. Emissione
-                    str(cert[DB_SCADENZA] if cert[DB_SCADENZA] is not None else ""),  # 8. Scadenza
-                    str(cert[DB_STATO] if cert[DB_STATO] is not None else ""),  # 9. Stato
+                    get_val(idx_emissione),  # 7. Emissione
+                    get_val(idx_scadenza),  # 8. Scadenza
+                    get_val(idx_stato),  # 9. Stato
                     str(
-                        cert[DB_UBICAZIONE] if cert[DB_UBICAZIONE] not in (None, "") else "ASSENTE"
+                        cert[idx_ubicazione] if len(cert) > idx_ubicazione and cert[idx_ubicazione] not in (None, "") else "ASSENTE"
                     ),  # 10. Ubicazione
-                    str(
-                        cert[DB_ANNOTAZIONI] if cert[DB_ANNOTAZIONI] is not None else ""
-                    ),  # 11. Annotazioni
+                    get_val(idx_annotazioni),  # 11. Annotazioni
                 ]
 
                 row = SortableTreeWidgetItem(parent_item, row_data)
 
                 # Salviamo l'ID nel ruolo user per poterlo aggiornare
-                record_id = cert[DB_ID]
+                record_id = cert[idx_id] if len(cert) > idx_id else None
                 row.setData(0, Qt.ItemDataRole.UserRole, record_id)
 
                 # Permettiamo l'editing solo delle ultime due colonne
@@ -400,23 +408,23 @@ class CertificatiCampioneTab(QWidget):
 
             # Controlliamo se la query è nel testo del PADRE (ID-COEMI, Matricola, etc.)
             parent_match = query in parent.text(0).lower()
-            
+
             parent_visible = parent_match
             for j in range(parent.childCount()):
                 child = parent.child(j)
                 if not child:
                     continue
-                
+
                 # Se il padre non matcha, controlliamo i figli
                 child_match = any(query in child.text(c).lower() for c in range(self.tree.columnCount()))
-                
+
                 # Se siamo in modalità ricerca, nascondiamo i figli che non matchano
                 # A MENO CHE non abbia matchato il padre (in quel caso mostriamo tutto lo strumento)
                 child.setHidden(not (parent_match or child_match))
-                
+
                 if child_match:
                     parent_visible = True
-            
+
             parent.setHidden(not parent_visible)
 
     def _show_context_menu(self, pos: QPoint) -> None:
@@ -513,19 +521,28 @@ class CertificatiCampioneTab(QWidget):
 
             user_data = parent.data(0, Qt.ItemDataRole.UserRole)
 
-            # Recuperiamo l'ID-COEMI dal certificato corrente (primo figlio)
+            # Recuperiamo i dati reali dalle colonne del primo figlio
             id_coemi = ""
+            matricola = ""
+            costruttore = meta["costruttore"]
+            modello = meta["modello"]
+            range_val = meta["range"]
+
             if parent.childCount() > 0:
                 child = parent.child(0)
                 if child:
                     id_coemi = child.text(self.tree.IDX_ID_COEMI)
+                    matricola = child.text(self.tree.IDX_MATRICOLA)
+                    costruttore = child.text(self.tree.IDX_COSTRUTTORE)
+                    modello = child.text(self.tree.IDX_MODELLO)
+                    range_val = child.text(self.tree.IDX_RANGE)
 
             certs_data.append(
                 {
-                    "matricola": meta["matricola"],
-                    "costruttore": meta["costruttore"],
-                    "modello": meta["modello"],
-                    "range": meta["range"],
+                    "matricola": matricola,
+                    "costruttore": costruttore,
+                    "modello": modello,
+                    "range": range_val,
                     "id_coemi": id_coemi,
                     "days": user_data.get("days") if user_data else None,
                 }
