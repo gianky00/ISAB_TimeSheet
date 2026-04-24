@@ -7,10 +7,10 @@ import json
 import os
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Final
+from typing import Any, Final
 
 from src.core import config_manager
-from src.core.constants import Icons
+from src.core.constants import Icons, StatoCertificatoLabel, UbicazioneStrumenti
 from src.core.paths import DB_DIR
 
 
@@ -110,16 +110,68 @@ class CertificatiEngine:
     def format_days_text_short(cls, days: int | None) -> str:
         """Ritorna una rappresentazione testuale breve dello stato scadenze."""
         if days == cls.FAULTY_MARKER:
-            return "[ERRORE] STRUMENTO GUASTO"
+            return f"[ERRORE] {StatoCertificatoLabel.GUASTO}"
         if days is None:
-            return "N/D (Senza Scadenza)"
+            return StatoCertificatoLabel.SENZA_SCADENZA
         if days < 0:
-            return f"[ROSSO] Scaduto ({abs(days)}gg fa)"
+            return f"[ROSSO] {StatoCertificatoLabel.SCADUTO} ({abs(days)}gg fa)"
         if days <= cls.WARNING_THRESHOLD:
-            return f"[ARANCIONE] In scadenza ({days}gg)"
+            return f"[ARANCIONE] {StatoCertificatoLabel.IN_SCADENZA} ({days}gg)"
         if days <= cls.EXPIRING_THRESHOLD:
-            return f"[GIALLO] In scadenza ({days}gg)"
-        return f"[OK] Attivo ({days}gg rim.)"
+            return f"[GIALLO] {StatoCertificatoLabel.IN_SCADENZA} ({days}gg)"
+        return f"[OK] {StatoCertificatoLabel.ATTIVO} ({days}gg rim.)"
+
+    @classmethod
+    def get_statistics(cls, data: list[Any]) -> dict[str, int]:
+        """
+        Calcola le statistiche aggregate per un set di dati certificati.
+        Args:
+            data: Lista di tuple/record (formato ContabilitaQueries)
+        """
+        stats = {
+            "attivi": 0,
+            "in_scadenza": 0,
+            "scaduti": 0,
+            "senza_data": 0,
+            "guasti": 0,
+            "ufficio_stru": 0,
+            "ufficio_cc": 0,
+            "officina": 0,
+            "tecnico": 0,
+            "assenti": 0,
+            "totale": 0,
+        }
+
+        for r in data:
+            stats["totale"] += 1
+            # Indice scadenza: 8, Ubicazione: 10
+            scadenza_str = str(r[8]) if len(r) > 8 else ""
+            days, _ = cls.calculate_days_and_status(scadenza_str)
+
+            if days == cls.FAULTY_MARKER:
+                stats["guasti"] += 1
+            elif days is None:
+                stats["senza_data"] += 1
+            elif days < 0:
+                stats["scaduti"] += 1
+            elif 0 <= days <= cls.EXPIRING_THRESHOLD:
+                stats["in_scadenza"] += 1
+            else:
+                stats["attivi"] += 1
+
+            ubicazione = str(r[10]).upper() if len(r) > 10 else ""
+            if UbicazioneStrumenti.UFFICIO_STRU.value in ubicazione:
+                stats["ufficio_stru"] += 1
+            elif UbicazioneStrumenti.UFFICIO_CC.value in ubicazione:
+                stats["ufficio_cc"] += 1
+            elif UbicazioneStrumenti.OFFICINA.value in ubicazione:
+                stats["officina"] += 1
+            elif UbicazioneStrumenti.TECNICO.value in ubicazione:
+                stats["tecnico"] += 1
+            elif UbicazioneStrumenti.ASSENTE.value in ubicazione:
+                stats["assenti"] += 1
+
+        return stats
 
     @staticmethod
     def format_errore_max(val: float | str | None) -> str:

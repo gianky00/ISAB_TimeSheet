@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
+from src.core.constants import Icons, StatoCertificatoLabel, UbicazioneStrumenti
 from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
 from src.gui.widgets.core_widgets import StandardTreeWidget
@@ -30,7 +30,13 @@ class UbicazioneDelegate(QStyledItemDelegate):
 
     def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
         super().__init__(parent)
-        self.items = ["ASSENTE", "UFFICIO STRU", "UFFICIO CAPO CANTIERE", "OFFICINA", "ASSEGNATO AL TECNICO"]
+        self.items = [
+            UbicazioneStrumenti.ASSENTE.value,
+            UbicazioneStrumenti.UFFICIO_STRU.value,
+            UbicazioneStrumenti.UFFICIO_CC.value,
+            UbicazioneStrumenti.OFFICINA.value,
+            UbicazioneStrumenti.TECNICO.value,
+        ]
 
     def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:
         """Crea l'editor per la colonna Ubicazione."""

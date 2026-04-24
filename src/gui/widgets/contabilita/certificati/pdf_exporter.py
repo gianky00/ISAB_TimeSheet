@@ -6,6 +6,7 @@ from PyQt6.QtCore import QMarginsF, QRectF, Qt
 from PyQt6.QtGui import QPageLayout, QPageSize, QPainter, QPdfWriter, QTextDocument
 from PyQt6.QtWidgets import QTreeWidget
 
+from src.core.constants import StatoCertificatoLabel, UbicazioneStrumenti
 from src.core.contabilita.certificati_engine import CertificatiEngine
 from src.core.version import __version__
 
@@ -105,6 +106,8 @@ class CertificatiPdfExporter:
 
         # Estraiamo e filtriamo i top level items per il calcolo globale e l'ordinamento
         all_parents = []
+        raw_data_for_stats = []
+
         for i in range(self.tree.topLevelItemCount()):
             parent = self.tree.topLevelItem(i)
             if not parent or parent.isHidden():
@@ -113,16 +116,11 @@ class CertificatiPdfExporter:
             label_text = parent.text(0)
 
             # Parsing matricola dalla label del padre
-            # La label ha formato: [ID-COEMI  •]  COSTRUTTORE  •  MODELLO  •  MATRICOLA  •  STATO
-            # Recuperiamo i dati dall'ItemDataRole che è più affidabile
             data_user = parent.data(0, Qt.ItemDataRole.UserRole)
             matricola = data_user.get("matricola", "") if isinstance(data_user, dict) else ""
 
             if not matricola:
-                # Fallback parsing se per qualche motivo i dati user mancano
                 parts = label_text.split("  •  ")
-                # Se abbiamo l'ID-COEMI all'inizio, la matricola è il 4° elemento (index 3)
-                # Altrimenti è il 3° elemento (index 2)
                 if parent.childCount() > 0:
                     matricola = parent.child(0).text(4)
 
@@ -130,13 +128,19 @@ class CertificatiPdfExporter:
             if is_excluded and not self.show_excluded:
                 continue
 
-            # Filtro Esclusione Stampa
             if matricola in self.print_exclusions:
                 continue
 
             all_parents.append(parent)
 
-        # FIX ORDINAMENTO: Prendiamo l'ID-COEMI dal primo figlio (child 0, col 0)
+            # Dati per statistiche (usiamo i dati del primo figlio che sono i più aggiornati)
+            if parent.childCount() > 0:
+                child = parent.child(0)
+                if child:
+                    row_tuple = tuple(child.text(col) for col in range(12))
+                    raw_data_for_stats.append(row_tuple)
+
+        # Ordinamento GLOBALE per ID-COEMI crescente
         def get_id_coemi(p: Any) -> str:
             if p.childCount() > 0:
                 child = p.child(0)
@@ -144,52 +148,11 @@ class CertificatiPdfExporter:
                     return str(child.text(0))
             return ""
 
-        # Ordinamento GLOBALE per ID-COEMI crescente
         all_parents.sort(key=lambda x: natural_sort_key(get_id_coemi(x)))
 
-        # Calcolo Statistiche
-        tot_attivi = 0
-        tot_in_scadenza = 0
-        tot_scaduti = 0
-        tot_senza_data = 0
-        tot_guasti = 0
-        tot_ufficio_stru = 0
-        tot_ufficio_cc = 0
-        tot_officina = 0
-        tot_campo = 0
-        tot_assenti = 0
-        tot_strumenti = 0
+        # Calcolo Statistiche Centralizzato via Engine
+        s = CertificatiEngine.get_statistics(raw_data_for_stats)
 
-        for parent in all_parents:
-            tot_strumenti += 1
-            if parent.childCount() > 0:
-                child = parent.child(0)
-                if child is not None:
-                    scadenza_str = child.text(8)
-                    days, _ = CertificatiEngine.calculate_days_and_status(scadenza_str)
-
-                    if days == -9999:  # noqa: PLR2004
-                        tot_guasti += 1
-                    elif days is None:
-                        tot_senza_data += 1
-                    elif days < 0:
-                        tot_scaduti += 1
-                    elif 0 <= days <= 30:  # noqa: PLR2004
-                        tot_in_scadenza += 1
-                    else:
-                        tot_attivi += 1
-
-                    ubicazione = child.text(10).upper()
-                    if "UFFICIO STRU" in ubicazione:
-                        tot_ufficio_stru += 1
-                    elif "UFFICIO CAPO CANTIERE" in ubicazione:
-                        tot_ufficio_cc += 1
-                    elif "OFFICINA" in ubicazione:
-                        tot_officina += 1
-                    elif "TECNICO" in ubicazione:
-                        tot_campo += 1
-                    elif "ASSENTE" in ubicazione:
-                        tot_assenti += 1
         style_html = """
         <html>
         <head>
@@ -237,23 +200,23 @@ class CertificatiPdfExporter:
                             </td>
                             <td style="width: 25%; vertical-align: middle; text-align: center;" rowspan="2">
                                 Totale Strumenti<br>
-                                <span style="font-size: 9pt; font-weight: bold;">{tot_strumenti}</span>
+                                <span style="font-size: 9pt; font-weight: bold;">{s['totale']}</span>
                             </td>
                         </tr>
                         <tr>
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                <span style="color: #15803d;">&#11044;</span> Attivi: <b>{tot_attivi}</b><br>
-                                <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{tot_in_scadenza}</b><br>
-                                <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{tot_scaduti}</b><br>
-                                <span style="color: #64748b;">&#11044;</span> Senza Scadenza: <b>{tot_senza_data}</b><br>
-                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{tot_guasti}</b>
+                                <span style="color: #15803d;">&#11044;</span> Attivi: <b>{s['attivi']}</b><br>
+                                <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{s['in_scadenza']}</b><br>
+                                <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{s['scaduti']}</b><br>
+                                <span style="color: #64748b;">&#11044;</span> Senza Scadenza: <b>{s['senza_data']}</b><br>
+                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{s['guasti']}</b>
                             </td>
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                &#127970; Ufficio STRU: <b>{tot_ufficio_stru}</b><br>
-                                &#128203; Ufficio Capo Cantiere: <b>{tot_ufficio_cc}</b><br>
-                                &#128736; Officina: <b>{tot_officina}</b><br>
-                                &#128119; Assegnati ai Tecnici: <b>{tot_campo}</b><br>
-                                &#10060; Assenti: <b>{tot_assenti}</b>
+                                &#127970; {UbicazioneStrumenti.UFFICIO_STRU.value}: <b>{s['ufficio_stru']}</b><br>
+                                &#128203; {UbicazioneStrumenti.UFFICIO_CC.value}: <b>{s['ufficio_cc']}</b><br>
+                                &#128736; {UbicazioneStrumenti.OFFICINA.value}: <b>{s['officina']}</b><br>
+                                &#128119; Assegnati ai Tecnici: <b>{s['tecnico']}</b><br>
+                                &#10060; {UbicazioneStrumenti.ASSENTE.value}: <b>{s['assenti']}</b>
                             </td>
                         </tr>
                     </table>
@@ -315,16 +278,16 @@ class CertificatiPdfExporter:
                     stato_display = stato_display.strip()
 
                     # Ripristino formattazione compatta con interruzioni di riga e nuove diciture
-                    if stato_display.startswith("Scaduto ("):
+                    if stato_display.startswith(StatoCertificatoLabel.SCADUTO):
                         # "Scaduto (9gg fa)" -> "Scaduto da<br>9 giorni"
-                        stato_display = stato_display.replace("Scaduto (", "Scaduto da<br>").replace("gg fa)", " giorni")
-                    elif stato_display.startswith("Attivo ("):
+                        stato_display = stato_display.replace(f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>").replace("gg fa)", " giorni")
+                    elif stato_display.startswith(StatoCertificatoLabel.ATTIVO):
                         # "Attivo (292gg rim.)" -> "Attivo per<br>292 giorni"
-                        stato_display = stato_display.replace("Attivo (", "Attivo per<br>").replace("gg rim.)", " giorni")
-                    elif stato_display.startswith("In scadenza ("):
+                        stato_display = stato_display.replace(f"{StatoCertificatoLabel.ATTIVO} (", "Attivo per<br>").replace("gg rim.)", " giorni")
+                    elif stato_display.startswith(StatoCertificatoLabel.IN_SCADENZA):
                         # "In scadenza (5gg)" -> "In scadenza<br>5 giorni<br>rimanenti"
-                        stato_display = stato_display.replace("In scadenza (", "In scadenza<br>").replace("gg)", " giorni<br>rimanenti")
-                    elif "Senza Scadenza" in stato_display:
+                        stato_display = stato_display.replace(f"{StatoCertificatoLabel.IN_SCADENZA} (", "In scadenza<br>").replace("gg)", " giorni<br>rimanenti")
+                    elif StatoCertificatoLabel.SENZA_SCADENZA in stato_display:
                         stato_display = "N/D"
 
                     # Identificazione riga principale per styling
@@ -350,12 +313,12 @@ class CertificatiPdfExporter:
 
                 # Fix Ubicazione formatting
                 ubicazione_raw = child.text(10).strip()
-                if "ASSEGNATO AL TECNICO" in ubicazione_raw:
+                if UbicazioneStrumenti.TECNICO.value in ubicazione_raw:
                     ubicazione = ubicazione_raw.replace(
-                        "ASSEGNATO AL TECNICO ", "ASSEGNATO<br>AL TECNICO<br>"
+                        f"{UbicazioneStrumenti.TECNICO.value} ", "ASSEGNATO<br>AL TECNICO<br>"
                     )
                     if ubicazione == ubicazione_raw:
-                        ubicazione = ubicazione_raw.replace("ASSEGNATO AL TECNICO", "ASSEGNATO<br>AL TECNICO")
+                        ubicazione = ubicazione_raw.replace(UbicazioneStrumenti.TECNICO.value, "ASSEGNATO<br>AL TECNICO")
                 else:
                     ubicazione = ubicazione_raw
 

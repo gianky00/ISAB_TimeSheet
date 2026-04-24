@@ -96,6 +96,26 @@ class BotStatus(Enum):
     PAUSED = "paused"
 
 
+class UbicazioneStrumenti(Enum):
+    """Costanti per le ubicazioni degli strumenti campione."""
+
+    ASSENTE = "ASSENTE"
+    UFFICIO_STRU = "UFFICIO STRU"
+    UFFICIO_CC = "UFFICIO CAPO CANTIERE"
+    OFFICINA = "OFFICINA"
+    TECNICO = "ASSEGNATO AL TECNICO"
+
+
+class StatoCertificatoLabel:
+    """Etichette testuali definitive per gli stati dei certificati."""
+
+    SCADUTO = "Scaduto"
+    IN_SCADENZA = "In scadenza"
+    ATTIVO = "Attivo"
+    SENZA_SCADENZA = "N/D (Senza Scadenza)"
+    GUASTO = "STRUMENTO GUASTO"
+
+
 class BrowserConfig:
     """Browser configuration constants."""
 
