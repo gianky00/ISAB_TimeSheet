@@ -15,7 +15,7 @@ class SmartSyncEngine(BaseSyncEngine):
     """Motore di sync intelligente per tabelle con chiavi primarie (Certificati, ODA)."""
 
     @classmethod
-    def sync_upsert_smart(
+    def sync_upsert_smart(  # noqa: PLR0913
         cls,
         db_path: Path,
         table_name: str,
@@ -105,7 +105,7 @@ class SmartSyncEngine(BaseSyncEngine):
             return added_or_updated, deleted_count
 
     @classmethod
-    def sync_full_replace_with_metadata(
+    def sync_full_replace_with_metadata(  # noqa: PLR0913
         cls,
         db_path: Path,
         table_name: str,
@@ -147,7 +147,7 @@ class SmartSyncEngine(BaseSyncEngine):
             for r in new_data:
                 # Trasformiamo la riga in una lista per poterla modificare
                 row_list = list(r)
-                
+
                 # Cerchiamo se abbiamo metadati salvati per questa riga
                 # Assumiamo che l'ordine in r corrisponda a columns
                 keys_val = []
@@ -155,7 +155,7 @@ class SmartSyncEngine(BaseSyncEngine):
                     if k in columns:
                         idx = columns.index(k)
                         keys_val.append(str(r[idx]).strip())
-                
+
                 match_key = tuple(keys_val)
                 saved_meta = current_metadata.get(match_key)
 
@@ -166,7 +166,7 @@ class SmartSyncEngine(BaseSyncEngine):
                 for m in metadata_cols:
                     val = saved_meta.get(m) if saved_meta else ""
                     meta_values.append(val)
-                
+
                 final_rows.append(tuple(row_list) + tuple(meta_values))
 
             # 4. Inserimento massivo
@@ -174,11 +174,11 @@ class SmartSyncEngine(BaseSyncEngine):
             all_db_cols = columns + metadata_cols
             safe_db_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in all_db_cols])
             placeholders = ", ".join(["?"] * len(all_db_cols))
-            
+
             cursor.executemany(
-                f"INSERT INTO {safe_table} ({safe_db_cols}) VALUES ({placeholders})", 
+                f"INSERT INTO {safe_table} ({safe_db_cols}) VALUES ({placeholders})",
                 final_rows
             )
-            
+
             conn.commit()
             return len(final_rows), 0

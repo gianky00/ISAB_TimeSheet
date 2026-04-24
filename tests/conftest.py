@@ -8,9 +8,10 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 import keyring
 import keyring.backend
+import pytest
+
 
 class InMemoryKeyring(keyring.backend.KeyringBackend):
     """Backend per i test che mantiene le credenziali solo in memoria."""
@@ -144,8 +145,8 @@ def _isolate_config(tmp_path, monkeypatch):
     )
     from src.core.audit_manager import AuditManager  # noqa: PLC0415
     from src.core.database.manager import DatabaseManager  # noqa: PLC0415
-    from src.core.stats_manager import StatsManager  # noqa: PLC0415
     from src.core.secrets_manager import SecretsManager  # noqa: PLC0415
+    from src.core.stats_manager import StatsManager  # noqa: PLC0415
     from src.utils.security import password_manager  # noqa: PLC0415
 
     # 1. Setup fake paths
