@@ -213,7 +213,7 @@ class CertificatiPdfExporter:
         <head>
         <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 7pt; color: #1e293b; margin: 10px; margin-bottom: 0px; }
-        h1 { color: #1e3a8a; text-align: left; margin-top: 5px; margin-bottom: 5px; font-size: 6.5pt; font-weight: bold; }
+        h1 { color: #1e3a8a; text-align: left; margin-top: 5px; margin-bottom: 5px; font-size: 3.0pt; font-weight: bold; white-space: nowrap; }
         .timestamp { text-align: right; color: #64748b; font-size: 7pt; margin-bottom: 5px; margin-right: 5px; }
         table { border-collapse: collapse; }
         th { background-color: #f8fafc; color: #0f172a; font-weight: bold; padding: 4px 3px; border-bottom: 1.5pt solid #cbd5e1; text-align: left; font-size: 6pt; }
@@ -242,7 +242,7 @@ class CertificatiPdfExporter:
         <table width="100%" style="border: none; margin-bottom: 8px;">
             <tr>
                 <td style="border: none; vertical-align: middle; width: 40%;">
-                    <h1>{title}</h1>
+                    <h1 style="font-size: 4.5pt;">{title}</h1>
                 </td>
                 <td style="border: none; vertical-align: top; width: 60%;">
                     <table class="summary-table">
@@ -268,7 +268,7 @@ class CertificatiPdfExporter:
                                         <td style="width: 40%; text-align: center; border: none; border-left: 0.5pt solid #cbd5e1; vertical-align: middle;">
                                             Totale Strumenti<br>
                                             <span style="font-size: 9pt; font-weight: bold;">{s['totale']}</span>
-                                            {f'<div style="margin-top: 5px; border-top: 0.5pt solid #cbd5e1; padding-top: 3px; color: #b91c1c; font-size: 4.5pt; text-align: left;">⚠️ <b>Picco imminente:</b><br>{s["picco_imminente"]["inizio"]} - {s["picco_imminente"]["fine"]} ({s["picco_imminente"]["count"]} tarature)</div>' if s.get('picco_imminente') else ''}
+                                            {f'<div style="margin-top: 5px; border-top: 0.5pt solid #cbd5e1; padding-top: 3px; color: #b91c1c; font-size: 4.5pt; text-align: left;">⚠️ <b>Picco prossime tarature:</b><br>{s["picco_imminente"]["inizio"]} - {s["picco_imminente"]["fine"]} ({s["picco_imminente"]["count"]} tarature programmate)</div>' if s.get('picco_imminente') else ''}
                                         </td>
                                     </tr>
                                 </table>
@@ -286,6 +286,7 @@ class CertificatiPdfExporter:
                                 &#127970; {UbicazioneStrumenti.UFFICIO_STRU.value}: <b>{s['ufficio_stru']}</b><br>
                                 &#128203; {UbicazioneStrumenti.UFFICIO_CC.value}: <b>{s['ufficio_cc']}</b><br>
                                 &#128736; {UbicazioneStrumenti.OFFICINA.value}: <b>{s['officina']}</b><br>
+                                &#127984; {UbicazioneStrumenti.SEDE.value}: <b>{s['sede']}</b><br>
                                 &#128119; {UbicazioneStrumenti.TECNICO.value}: <b>{s['tecnico']}</b><br>
                                 &#10060; {UbicazioneStrumenti.ASSENTE.value}: <b>{s['assenti']}</b>
                             </td>

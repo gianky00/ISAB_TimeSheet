@@ -24,14 +24,15 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.core.constants import Icons
+from src.core.config_manager import get_config_value, set_config_value
+from src.core.constants import Icons, UbicazioneStrumenti
 from src.core.contabilita.certificati_engine import CertificatiEngine
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.notification_manager import NotificationManager
 from src.gui.dialogs.certificati_analysis_dialog import ScadenzeAnalysisDialog
 from src.gui.styles import COLORS
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
-from src.gui.widgets.core_widgets import PrimaryButton, StandardCheckBox
+from src.gui.widgets.core_widgets import PrimaryButton
 from src.utils.helpers import get_asset_path
 
 from .certificati.tree_widget import CertificatiTreeWidget
@@ -42,67 +43,32 @@ class CertificatiCampioneTab(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
-        Inizializza il tab dei certificati.
+        Inizializza il tab dei certificati caricano i filtri persistenti.
 
         Args:
             parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self.engine = CertificatiEngine()
-        self._show_excluded = False
-        self._show_print_excluded = False
-        self._only_excluded = False
+
+        # Caricamento Filtri Persistenti
+        self._show_excluded = get_config_value("cert_filter_mon", False)
+        self._show_print_excluded = get_config_value("cert_filter_print", False)
+        self._only_excluded = get_config_value("cert_filter_only_ex", False)
+        self._hide_absent = get_config_value("cert_filter_hide_absent", False)
+        self._include_history = get_config_value("cert_filter_history", True)
+
         self._setup_ui()
         self._load_data()
 
     def _setup_ui(self) -> None:
         """Configura il layout, la toolbar e l'albero dei certificati."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 10, 0, 0)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
 
-        # Toolbar
-        toolbar = QHBoxLayout()
-
-        btn_expand = self._create_toolbar_btn("Espandi Tutto", Icons.FOLDER_OPEN, self._expand_all)
-        btn_collapse = self._create_toolbar_btn("Comprimi Tutto", Icons.FOLDER, self._collapse_all)
-
-        self.show_excluded_check = StandardCheckBox("Mostra esclusi monitoraggio")
-        self.show_excluded_check.stateChanged.connect(self._on_show_excluded_changed)
-
-        self.show_print_excluded_check = StandardCheckBox("Mostra esclusi stampa")
-        self.show_print_excluded_check.stateChanged.connect(self._on_show_print_excluded_changed)
-
-        self.only_excluded_check = StandardCheckBox("Solo esclusi")
-        self.only_excluded_check.stateChanged.connect(self._on_only_excluded_changed)
-
-        self.include_history_check = StandardCheckBox("Includi storico")
-        self.include_history_check.setChecked(True)
-
-        self.excluded_count_label = QLabel("")
-        self.excluded_count_label.setStyleSheet(
-            f"color: {COLORS['text_light']}; font-size: 12px; padding: 0 8px;"
-        )
-
-        self.btn_export_pdf = PrimaryButton("Esporta PDF")
-        self.btn_export_pdf.setIcon(QIcon(get_asset_path(Icons.FILE_TEXT)))
-        self.btn_export_pdf.clicked.connect(self._export_pdf)
-
-        self.btn_analyze = PrimaryButton("Analizza Scadenze")
-        self.btn_analyze.setIcon(QIcon(get_asset_path(Icons.BAR_CHART)))
-        self.btn_analyze.clicked.connect(self._run_analysis)
-
-        for w in (btn_expand, btn_collapse):
-            toolbar.addWidget(w)
-        toolbar.addSpacing(20)
-        toolbar.addWidget(self.show_excluded_check)
-        toolbar.addWidget(self.show_print_excluded_check)
-        toolbar.addWidget(self.only_excluded_check)
-        toolbar.addWidget(self.include_history_check)
-        toolbar.addWidget(self.excluded_count_label)
-        toolbar.addStretch()
-        toolbar.addWidget(self.btn_export_pdf)
-        toolbar.addWidget(self.btn_analyze)
-        layout.addLayout(toolbar)
+        # Configurazione Componenti
+        layout.addLayout(self._setup_toolbar())
 
         # Tree Widget
         self.tree = CertificatiTreeWidget()
@@ -113,18 +79,135 @@ class CertificatiCampioneTab(QWidget):
         self.tree.itemEditedCustom.connect(self._on_item_edited)
         layout.addWidget(self.tree)
 
-    def _create_toolbar_btn(self, text: str, icon_enum: str, callback: Any) -> PrimaryButton:
+    def _setup_toolbar(self) -> QHBoxLayout:
+        """Configura la toolbar superiore con azioni, ricerca e menu Mostra/Escludi."""
+        toolbar = QHBoxLayout()
+        toolbar.setSpacing(8)
+
+        # Azioni Rapide (Espandi/Comprimi)
+        toolbar.addWidget(self._create_toolbar_btn("", Icons.MAXIMIZE, self._expand_all, "Espandi Tutto"))
+        toolbar.addWidget(self._create_toolbar_btn("", Icons.MINIMIZE, self._collapse_all, "Comprimi Tutto"))
+        toolbar.addSpacing(10)
+
+        # Campo di Ricerca Moderno
+        from src.gui.widgets.core_widgets import SearchInput  # noqa: PLC0415
+        self.search_input = SearchInput("Cerca per Matricola, Modello o ID...")
+        self.search_input.setFixedWidth(350)
+        self.search_input.textChanged.connect(self._apply_filters)
+        toolbar.addWidget(self.search_input)
+
+        # Menu Mostra/Escludi (Professionale)
+        self.btn_view_options = PrimaryButton("Mostra/Escludi")
+        self.btn_view_options.setIcon(QIcon(get_asset_path(Icons.EYE)))
+        self.btn_view_options.setMenu(self._create_view_menu())
+        toolbar.addWidget(self.btn_view_options)
+
+        self.excluded_count_label = QLabel("")
+        self.excluded_count_label.setStyleSheet(
+            f"color: {COLORS['text_light']}; font-size: 11px; font-style: italic; margin-left: 5px;"
+        )
+        toolbar.addWidget(self.excluded_count_label)
+
+        toolbar.addStretch()
+
+        self.btn_export_pdf = PrimaryButton("Esporta PDF")
+        self.btn_export_pdf.setIcon(QIcon(get_asset_path(Icons.FILE_TEXT)))
+        self.btn_export_pdf.clicked.connect(self._export_pdf)
+
+        self.btn_analyze = PrimaryButton("Analizza Scadenze")
+        self.btn_analyze.setIcon(QIcon(get_asset_path(Icons.BAR_CHART)))
+        self.btn_analyze.clicked.connect(self._run_analysis)
+
+        toolbar.addWidget(self.btn_export_pdf)
+        toolbar.addWidget(self.btn_analyze)
+        return toolbar
+
+    def _create_view_menu(self) -> QMenu:
+        """Crea il menu a discesa per i filtri di visualizzazione."""
+        menu = QMenu(self)
+        menu.setStyleSheet(f"""
+            QMenu {{ background-color: {COLORS["bg_white"]}; border: 1px solid {COLORS["border_medium"]}; padding: 5px; }}
+            QMenu::item {{ padding: 6px 30px 6px 30px; color: {COLORS["text_dark"]}; }}
+            QMenu::item:selected {{ background-color: {COLORS["bg_hover"]}; color: {COLORS["primary_dark"]}; }}
+            QMenu::separator {{ height: 1px; background: {COLORS["border_light"]}; margin: 5px 10px; }}
+        """)
+
+        # Azioni Checkable
+        self.act_mon = QAction("Monitoraggio (Esclusi)", self)
+        self.act_mon.setCheckable(True)
+        self.act_mon.setChecked(self._show_excluded)
+        self.act_mon.triggered.connect(self._on_view_action_toggled)
+
+        self.act_print = QAction("Stampa (Esclusi)", self)
+        self.act_print.setCheckable(True)
+        self.act_print.setChecked(self._show_print_excluded)
+        self.act_print.triggered.connect(self._on_view_action_toggled)
+
+        self.act_absent = QAction("Strumenti ASSENTI", self)
+        self.act_absent.setCheckable(True)
+        self.act_absent.setChecked(not self._hide_absent)
+        self.act_absent.triggered.connect(self._on_view_action_toggled)
+
+        self.act_history = QAction("Includi Storico", self)
+        self.act_history.setCheckable(True)
+        self.act_history.setChecked(self._include_history)
+        self.act_history.triggered.connect(self._on_view_action_toggled)
+
+        self.act_only_ex = QAction("Solo Esclusi", self)
+        self.act_only_ex.setCheckable(True)
+        self.act_only_ex.setChecked(self._only_excluded)
+        self.act_only_ex.triggered.connect(self._on_only_excluded_toggled)
+
+        menu.addAction(self.act_mon)
+        menu.addAction(self.act_print)
+        menu.addAction(self.act_absent)
+        menu.addSeparator()
+        menu.addAction(self.act_only_ex)
+        menu.addAction(self.act_history)
+        return menu
+
+    def _on_view_action_toggled(self) -> None:
+        """Sincronizza lo stato dai parametri del menu, salva su disco e riapplica i filtri."""
+        self._show_excluded = self.act_mon.isChecked()
+        self._show_print_excluded = self.act_print.isChecked()
+        self._hide_absent = not self.act_absent.isChecked()
+        self._include_history = self.act_history.isChecked()
+
+        # Salvataggio Persistente
+        set_config_value("cert_filter_mon", self._show_excluded)
+        set_config_value("cert_filter_print", self._show_print_excluded)
+        set_config_value("cert_filter_hide_absent", self._hide_absent)
+        set_config_value("cert_filter_history", self._include_history)
+
+        self._apply_filters()
+
+    def _on_only_excluded_toggled(self, checked: bool) -> None:
+        """Gestisce la logica specifica per il filtro 'Solo Esclusi' e salva lo stato."""
+        self._only_excluded = checked
+        if checked:
+            # Se vogliamo vedere SOLO gli esclusi, abilitiamo per coerenza la loro visualizzazione
+            self.act_mon.setChecked(True)
+            self.act_print.setChecked(True)
+            self._show_excluded = True
+            self._show_print_excluded = True
+
+        set_config_value("cert_filter_only_ex", checked)
+        self._apply_filters()
+
+    def _create_toolbar_btn(self, text: str, icon_enum: str, callback: Any, tooltip: str = "") -> PrimaryButton:
         """Helper per creare pulsanti della toolbar con stile coerente."""
         btn = PrimaryButton(text)
         btn.setIcon(QIcon(get_asset_path(icon_enum)))
         btn.clicked.connect(callback)
+        btn.setToolTip(tooltip)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.setStyleSheet(f"""
             QPushButton {{
-                padding: 8px 16px; background-color: {COLORS["bg_alt"]};
+                padding: 6px; background-color: {COLORS["bg_alt"]};
                 border: 1px solid {COLORS["border_medium"]}; border-radius: 6px;
-                font-weight: 500; color: {COLORS["text_dark"]};
+                min-width: 32px;
             }}
-            QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; }}
+            QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; border-color: {COLORS["primary_dark"]}; }}
         """)
         return btn
 
@@ -136,47 +219,60 @@ class CertificatiCampioneTab(QWidget):
         """Contrae tutti i rami dell'albero."""
         self.tree.collapseAll()
 
-    def _on_show_excluded_changed(self, state: int) -> None:
-        """Gestisce il cambiamento della checkbox 'Mostra esclusi monitoraggio'."""
-        self._show_excluded = state in (Qt.CheckState.Checked.value, 2)
-        self._apply_exclusion_visibility()
+    def _apply_filters(self) -> None:
+        """Applica tutti i filtri (ricerca, esclusioni, assenti, storico) in un unico ciclo."""
+        query = self.search_input.text().lower().strip()
 
-    def _on_show_print_excluded_changed(self, state: int) -> None:
-        """Gestisce il cambiamento della checkbox 'Mostra esclusi stampa'."""
-        self._show_print_excluded = state in (Qt.CheckState.Checked.value, 2)
-        if self._show_print_excluded:
-            self.only_excluded_check.setChecked(False)
-        self._apply_exclusion_visibility()
-
-    def _on_only_excluded_changed(self, state: int) -> None:
-        """Gestisce il cambiamento della checkbox 'Solo esclusi'."""
-        self._only_excluded = state in (Qt.CheckState.Checked.value, 2)
-        if self._only_excluded:
-            # Se vogliamo vedere SOLO gli esclusi, resettiamo gli altri filtri di "mostra" per coerenza
-            self.show_excluded_check.setChecked(True)
-            self.show_print_excluded_check.setChecked(True)
-        self._apply_exclusion_visibility()
-
-    def _apply_exclusion_visibility(self) -> None:
-        """Applica la visibilità agli strumenti esclusi (monitoraggio/stampa) in base allo stato dei filtri."""
         for i in range(self.tree.topLevelItemCount()):
             parent = self.tree.topLevelItem(i)
             if not parent:
                 continue
-            matricola = self.engine.parse_parent_label(parent.text(0))["matricola"]
 
-            is_mon_excluded = matricola in self.engine._exclusions
-            is_print_excluded = matricola in self.engine._print_exclusions
-            is_any_excluded = is_mon_excluded or is_print_excluded
+            # 1. Recupero dati e stati base
+            label_text = parent.text(0)
+            matricola = self.engine.parse_parent_label(label_text)["matricola"]
+            is_mon_ex = matricola in self.engine._exclusions
+            is_print_ex = matricola in self.engine._print_exclusions
+            is_any_ex = is_mon_ex or is_print_ex
 
+            is_absent = False
+            if parent.childCount() > 0 and (first_child := parent.child(0)):
+                child_loc = first_child.text(self.tree.IDX_UBICAZIONE).upper()
+                is_absent = UbicazioneStrumenti.ASSENTE.value in child_loc
+
+            # 2. Calcolo Visibilità Primaria (Padre)
+            visible = True
             if self._only_excluded:
-                # Modalità "Solo esclusi": nascondi tutto ciò che NON è escluso
-                parent.setHidden(not is_any_excluded)
-            else:
-                # Modalità standard: nascondi in base ai filtri di "mostra"
-                hide_mon = is_mon_excluded and not self._show_excluded
-                hide_print = is_print_excluded and not self._show_print_excluded
-                parent.setHidden(hide_mon or hide_print)
+                visible = is_any_ex
+            elif (is_mon_ex and not self._show_excluded) or (is_print_ex and not self._show_print_excluded):
+                visible = False
+
+            if visible and self._hide_absent and is_absent:
+                visible = False
+
+            # 3. Gestione Figli (Storico) e Ricerca
+            found_in_visible_child = False
+            for j in range(parent.childCount()):
+                if child := parent.child(j):
+                    # Il primo figlio è sempre 'ammesso' (se lo è il padre), gli altri dipendono dallo storico
+                    is_child_allowed = (j == 0) or self._include_history
+                    child.setHidden(not is_child_allowed)
+
+                    if (
+                        is_child_allowed
+                        and query
+                        and not found_in_visible_child
+                        and any(query in child.text(c).lower() for c in range(self.tree.columnCount()))
+                    ):
+                        found_in_visible_child = True
+
+            # 4. Verifica Finale con Ricerca
+            if visible and query:
+                visible = (query in label_text.lower()) or found_in_visible_child
+
+            parent.setHidden(not visible)
+
+        self._update_excluded_count_label()
 
     def refresh_data(self) -> None:
         """Ricarica i dati dal database e aggiorna la vista preservando lo stato."""
@@ -352,7 +448,7 @@ class CertificatiCampioneTab(QWidget):
                     self.tree.apply_historical_certificate_styling(row)
 
         self.tree.collapseAll()
-        self._apply_exclusion_visibility()
+        self._apply_filters()
         self._update_excluded_count_label()
 
     def _on_item_edited(self, item: QTreeWidgetItem, col_name: str, new_value: str) -> None:
@@ -388,40 +484,6 @@ class CertificatiCampioneTab(QWidget):
             font = item.font(0)
             font.setBold(False)
             item.setFont(0, font)
-
-    def filter_data(self, text: str) -> None:
-        """
-        Filtra i certificati in base alla stringa di ricerca.
-
-        Args:
-            text: Testo da cercare in tutte le colonne.
-        """
-        query = text.lower()
-        for i in range(self.tree.topLevelItemCount()):
-            parent = self.tree.topLevelItem(i)
-            if not parent:
-                continue
-
-            # Controlliamo se la query è nel testo del PADRE (ID-COEMI, Matricola, etc.)
-            parent_match = query in parent.text(0).lower()
-
-            parent_visible = parent_match
-            for j in range(parent.childCount()):
-                child = parent.child(j)
-                if not child:
-                    continue
-
-                # Se il padre non matcha, controlliamo i figli
-                child_match = any(query in child.text(c).lower() for c in range(self.tree.columnCount()))
-
-                # Se siamo in modalità ricerca, nascondiamo i figli che non matchano
-                # A MENO CHE non abbia matchato il padre (in quel caso mostriamo tutto lo strumento)
-                child.setHidden(not (parent_match or child_match))
-
-                if child_match:
-                    parent_visible = True
-
-            parent.setHidden(not parent_visible)
 
     def _show_context_menu(self, pos: QPoint) -> None:
         """Mostra il menu contestuale per includere/escludere o visualizzare certificati."""
@@ -567,7 +629,7 @@ class CertificatiCampioneTab(QWidget):
         exporter = CertificatiPdfExporter(
             self.tree,
             self._show_excluded,
-            include_history=self.include_history_check.isChecked(),
+            include_history=self._include_history,
             print_exclusions=self.engine._print_exclusions,
         )
         success, message = exporter.export(file_path)

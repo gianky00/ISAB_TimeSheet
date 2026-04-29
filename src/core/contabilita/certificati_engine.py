@@ -24,6 +24,7 @@ class CertificatiStats(TypedDict):
     ufficio_stru: int
     ufficio_cc: int
     officina: int
+    sede: int
     tecnico: int
     assenti: int
     totale: int
@@ -150,7 +151,7 @@ class CertificatiEngine:
         """Calcola le statistiche aggregate per un set di dati certificati."""
         stats: dict[str, Any] = {
             "attivi": 0, "in_scadenza": 0, "scaduti": 0, "senza_data": 0, "guasti": 0,
-            "ufficio_stru": 0, "ufficio_cc": 0, "officina": 0, "tecnico": 0, "assenti": 0,
+            "ufficio_stru": 0, "ufficio_cc": 0, "officina": 0, "sede": 0, "tecnico": 0, "assenti": 0,
             "totale": 0,
             "prossime_tarature": {"30": 0, "60": 0, "90": 0, "oltre": 0},
             "picco_imminente": {}
@@ -214,8 +215,10 @@ class CertificatiEngine:
             stats["ufficio_stru"] += 1
         elif UbicazioneStrumenti.UFFICIO_CC.value in ubicazione:
             stats["ufficio_cc"] += 1
-        elif "OFFICINA" in ubicazione:
+        elif UbicazioneStrumenti.OFFICINA.value in ubicazione:
             stats["officina"] += 1
+        elif UbicazioneStrumenti.SEDE.value in ubicazione:
+            stats["sede"] += 1
         elif "TECNICO" in ubicazione:
             stats["tecnico"] += 1
         elif UbicazioneStrumenti.ASSENTE.value in ubicazione:
@@ -248,7 +251,8 @@ class CertificatiEngine:
         if max_count > 0 and best_window[0] and best_window[1]:
             stats["picco_imminente"] = {
                 "count": max_count,
-                "periodo": f"{best_window[0].strftime('%d/%m')} - {best_window[1].strftime('%d/%m/%Y')}"
+                "inizio": best_window[0].strftime("%d/%m"),
+                "fine": best_window[1].strftime("%d/%m/%Y"),
             }
 
     @staticmethod

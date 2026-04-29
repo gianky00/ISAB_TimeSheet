@@ -103,6 +103,7 @@ class UbicazioneStrumenti(Enum):
     UFFICIO_STRU = "UFFICIO STRU"
     UFFICIO_CC = "UFFICIO CAPO CANTIERE"
     OFFICINA = "OFFICINA STRU"
+    SEDE = "SEDE"
     TECNICO = "ASSEGNATO AL TECNICO"
 
 
@@ -142,6 +143,8 @@ class Icons:
     EDIT = "assets/icons/edit.svg"
     FOLDER = "assets/icons/folder.svg"
     FOLDER_OPEN = "assets/icons/folder-open.svg"
+    MAXIMIZE = "assets/icons/maximize.svg"
+    MINIMIZE = "assets/icons/minimize.svg"
     CLOUD = "assets/icons/cloud.svg"
     CLOUD_UPLOAD = "assets/icons/cloud-upload.svg"
     UNDO = "assets/icons/undo.svg"

@@ -35,6 +35,7 @@ class UbicazioneDelegate(QStyledItemDelegate):
             UbicazioneStrumenti.UFFICIO_STRU.value,
             UbicazioneStrumenti.UFFICIO_CC.value,
             UbicazioneStrumenti.OFFICINA.value,
+            UbicazioneStrumenti.SEDE.value,
             UbicazioneStrumenti.TECNICO.value,
         ]
 
