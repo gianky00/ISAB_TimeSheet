@@ -1,5 +1,6 @@
 import os
 import re
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -89,14 +90,14 @@ class CertificatiPdfExporter:
             return ""
 
         # Pulizia profonda: strip, normalizzazione trattini e rimozione caratteri invisibili
-        cert_name = cert_name.strip().replace('–', '-').replace('—', '-').replace(' ', '')
+        cert_name = cert_name.strip().replace("–", "-").replace("—", "-").replace(" ", "")
         if not cert_name or cert_name.upper() in ("N/D", "NESSUNO"):
             return ""
 
         base_path_str = r"\\192.168.11.251\Database_Tecnico_SMI\CERTIFICATI CAMPIONE"
 
         # Tentativo veloce basato sull'anno
-        parts = cert_name.split('-')
+        parts = cert_name.split("-")
         year = ""
         min_parts = 2
         short_year_len = 2
@@ -106,34 +107,35 @@ class CertificatiPdfExporter:
                 year = f"20{year_part}" if len(year_part) == short_year_len else year_part
 
         # Lista di possibili percorsi relativi (prioritari)
-        possible_rel_paths = []
+        possible_rel_paths: list[str] = []
         if year:
-            possible_rel_paths.append(os.path.join(year, f"{cert_name}.pdf"))
-            possible_rel_paths.append(os.path.join(year, f"{cert_name}.PDF"))
-            possible_rel_paths.append(os.path.join(year, cert_name, f"{cert_name}.pdf"))
-            possible_rel_paths.append(os.path.join(year, cert_name, f"{cert_name}.PDF"))
+            possible_rel_paths.extend(
+                (
+                    os.path.join(year, f"{cert_name}.pdf"),
+                    os.path.join(year, f"{cert_name}.PDF"),
+                    os.path.join(year, cert_name, f"{cert_name}.pdf"),
+                    os.path.join(year, cert_name, f"{cert_name}.PDF"),
+                )
+            )
 
-        possible_rel_paths.append(f"{cert_name}.pdf")
-        possible_rel_paths.append(f"{cert_name}.PDF")
+        possible_rel_paths.extend((f"{cert_name}.pdf", f"{cert_name}.PDF"))
 
         # Verifica fisica dei file
         for rel in possible_rel_paths:
             full_path = os.path.join(base_path_str, rel)
-            if os.path.exists(full_path):
+            if Path(full_path).exists():
                 return Path(full_path).as_uri()
 
         # Fallback finale: ricerca ricorsiva limitata se abbiamo l'anno
-        try:
+        with suppress(Exception):
             search_root = os.path.join(base_path_str, year) if year else base_path_str
-            if os.path.exists(search_root):
+            if Path(search_root).exists():
                 target_file_lower = f"{cert_name}.pdf".lower()
                 for root, _, files in os.walk(search_root):
                     for f in files:
                         if f.lower() == target_file_lower:
                             found_path = os.path.join(root, f)
                             return Path(found_path).as_uri()
-        except Exception:  # noqa: S110
-            pass
 
         return ""
 
@@ -259,16 +261,16 @@ class CertificatiPdfExporter:
                                         <td style="width: 60%; text-align: left; border: none; padding-right: 5px;">
                                             <div style="font-size: 5pt;">
                                                 <b>Prossime tarature:</b><br>
-                                                &bull; Entro 30gg: <b>{s['prossime_tarature']['30']}</b><br>
-                                                &bull; 31-60gg: <b>{s['prossime_tarature']['60']}</b><br>
-                                                &bull; 61-90gg: <b>{s['prossime_tarature']['90']}</b><br>
-                                                &bull; Oltre 90gg: <b>{s['prossime_tarature']['oltre']}</b>
+                                                &bull; Entro 30gg: <b>{s["prossime_tarature"]["30"]}</b><br>
+                                                &bull; 31-60gg: <b>{s["prossime_tarature"]["60"]}</b><br>
+                                                &bull; 61-90gg: <b>{s["prossime_tarature"]["90"]}</b><br>
+                                                &bull; Oltre 90gg: <b>{s["prossime_tarature"]["oltre"]}</b>
                                             </div>
                                         </td>
                                         <td style="width: 40%; text-align: center; border: none; border-left: 0.5pt solid #cbd5e1; vertical-align: middle;">
                                             Totale Strumenti<br>
-                                            <span style="font-size: 9pt; font-weight: bold;">{s['totale']}</span>
-                                            {f'<div style="margin-top: 5px; border-top: 0.5pt solid #cbd5e1; padding-top: 3px; color: #b91c1c; font-size: 4.5pt; text-align: left;">⚠️ <b>Picco prossime tarature:</b><br>{s["picco_imminente"]["inizio"]} - {s["picco_imminente"]["fine"]} ({s["picco_imminente"]["count"]} tarature programmate)</div>' if s.get('picco_imminente') else ''}
+                                            <span style="font-size: 9pt; font-weight: bold;">{s["totale"]}</span>
+                                            {f'<div style="margin-top: 5px; border-top: 0.5pt solid #cbd5e1; padding-top: 3px; color: #b91c1c; font-size: 4.5pt; text-align: left;">⚠️ <b>Picco prossime tarature:</b><br>{s["picco_imminente"]["inizio"]} - {s["picco_imminente"]["fine"]} ({s["picco_imminente"]["count"]} tarature programmate)</div>' if s.get("picco_imminente") else ""}
                                         </td>
                                     </tr>
                                 </table>
@@ -276,19 +278,19 @@ class CertificatiPdfExporter:
                         </tr>
                         <tr>
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                <span style="color: #15803d;">&#11044;</span> Attivi: <b>{s['attivi']}</b><br>
-                                <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{s['in_scadenza']}</b><br>
-                                <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{s['scaduti']}</b><br>
-                                <span style="color: #64748b;">&#11044;</span> Senza Scadenza: <b>{s['senza_data']}</b><br>
-                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{s['guasti']}</b>
+                                <span style="color: #15803d;">&#11044;</span> Attivi: <b>{s["attivi"]}</b><br>
+                                <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{s["in_scadenza"]}</b><br>
+                                <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{s["scaduti"]}</b><br>
+                                <span style="color: #64748b;">&#11044;</span> Senza Scadenza: <b>{s["senza_data"]}</b><br>
+                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{s["guasti"]}</b>
                             </td>
                             <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                &#127970; {UbicazioneStrumenti.UFFICIO_STRU.value}: <b>{s['ufficio_stru']}</b><br>
-                                &#128203; {UbicazioneStrumenti.UFFICIO_CC.value}: <b>{s['ufficio_cc']}</b><br>
-                                &#128736; {UbicazioneStrumenti.OFFICINA.value}: <b>{s['officina']}</b><br>
-                                &#127984; {UbicazioneStrumenti.SEDE.value}: <b>{s['sede']}</b><br>
-                                &#128119; {UbicazioneStrumenti.TECNICO.value}: <b>{s['tecnico']}</b><br>
-                                &#10060; {UbicazioneStrumenti.ASSENTE.value}: <b>{s['assenti']}</b>
+                                &#127970; {UbicazioneStrumenti.UFFICIO_STRU.value}: <b>{s["ufficio_stru"]}</b><br>
+                                &#128203; {UbicazioneStrumenti.UFFICIO_CC.value}: <b>{s["ufficio_cc"]}</b><br>
+                                &#128736; {UbicazioneStrumenti.OFFICINA.value}: <b>{s["officina"]}</b><br>
+                                &#127984; {UbicazioneStrumenti.SEDE.value}: <b>{s["sede"]}</b><br>
+                                &#128119; {UbicazioneStrumenti.TECNICO.value}: <b>{s["tecnico"]}</b><br>
+                                &#10060; {UbicazioneStrumenti.ASSENTE.value}: <b>{s["assenti"]}</b>
                             </td>
                         </tr>
                     </table>
@@ -344,11 +346,17 @@ class CertificatiPdfExporter:
                     stato_display = stato_display.strip()
 
                     if stato_display.startswith(StatoCertificatoLabel.SCADUTO):
-                        stato_display = stato_display.replace(f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>").replace("gg fa)", " giorni")
+                        stato_display = stato_display.replace(
+                            f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>"
+                        ).replace("gg fa)", " giorni")
                     elif stato_display.startswith(StatoCertificatoLabel.ATTIVO):
-                        stato_display = stato_display.replace(f"{StatoCertificatoLabel.ATTIVO} (", "Attivo per<br>").replace("gg rim.)", " giorni")
+                        stato_display = stato_display.replace(
+                            f"{StatoCertificatoLabel.ATTIVO} (", "Attivo per<br>"
+                        ).replace("gg rim.)", " giorni")
                     elif stato_display.startswith(StatoCertificatoLabel.IN_SCADENZA):
-                        stato_display = stato_display.replace(f"{StatoCertificatoLabel.IN_SCADENZA} (", "In scadenza<br>").replace("gg)", " giorni<br>rimanenti")
+                        stato_display = stato_display.replace(
+                            f"{StatoCertificatoLabel.IN_SCADENZA} (", "In scadenza<br>"
+                        ).replace("gg)", " giorni<br>rimanenti")
                     elif StatoCertificatoLabel.SENZA_SCADENZA in stato_display:
                         stato_display = "N/D"
 
@@ -373,9 +381,13 @@ class CertificatiPdfExporter:
 
                 ubicazione_raw = child.text(10).strip()
                 if UbicazioneStrumenti.TECNICO.value in ubicazione_raw:
-                    ubicazione = ubicazione_raw.replace(f"{UbicazioneStrumenti.TECNICO.value} ", "ASSEGNATO<br>AL TECNICO<br>")
+                    ubicazione = ubicazione_raw.replace(
+                        f"{UbicazioneStrumenti.TECNICO.value} ", "ASSEGNATO<br>AL TECNICO<br>"
+                    )
                     if ubicazione == ubicazione_raw:
-                        ubicazione = ubicazione_raw.replace(UbicazioneStrumenti.TECNICO.value, "ASSEGNATO<br>AL TECNICO")
+                        ubicazione = ubicazione_raw.replace(
+                            UbicazioneStrumenti.TECNICO.value, "ASSEGNATO<br>AL TECNICO"
+                        )
                 else:
                     ubicazione = ubicazione_raw
 
@@ -422,7 +434,9 @@ class CertificatiPdfExporter:
 
             group_est_height = 35 + (len(group_html_blocks) - 1) * 22
             if current_page_height + group_est_height > available_height and current_rows:
-                pages_html.append(style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html)
+                pages_html.append(
+                    style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html
+                )
                 current_rows = []
                 current_page_height = 0
 
@@ -430,6 +444,8 @@ class CertificatiPdfExporter:
             current_page_height += group_est_height
 
         if current_rows:
-            pages_html.append(style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html)
+            pages_html.append(
+                style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html
+            )
 
         return pages_html

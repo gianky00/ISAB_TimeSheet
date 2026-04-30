@@ -11,7 +11,9 @@ from src.gui.main_window.page_index import PageIndex
 SKIP_UI_TESTS = os.environ.get("QT_QPA_PLATFORM") == "offscreen"
 
 
-@pytest.mark.skipif(SKIP_UI_TESTS, reason="I test MainWindow causano deadlock in modalità offscreen su Windows")
+@pytest.mark.skipif(
+    SKIP_UI_TESTS, reason="I test MainWindow causano deadlock in modalità offscreen su Windows"
+)
 class TestMainWindow:
     @pytest.fixture(autouse=True)
     def mock_all_core(self):
@@ -45,7 +47,9 @@ class TestMainWindow:
 
     def test_navigation_logic(self, qapp):
         """Verifica la navigazione tra le pagine (Senza QtBot)."""
-        with patch("src.gui.controllers.navigation_controller.NavigationController._create_panel_instance") as mock_create:
+        with patch(
+            "src.gui.controllers.navigation_controller.NavigationController._create_panel_instance"
+        ) as mock_create:
             mock_create.return_value = QWidget()
             window = MainWindow()
 
@@ -56,7 +60,9 @@ class TestMainWindow:
 
     def test_deep_link_logic(self, qapp):
         """Verifica che i deep link (navigate_to_panel) richiamino i pannelli corretti (Senza QtBot)."""
-        with patch("src.gui.controllers.navigation_controller.NavigationController._create_panel_instance") as mock_create:
+        with patch(
+            "src.gui.controllers.navigation_controller.NavigationController._create_panel_instance"
+        ) as mock_create:
             mock_panel = QWidget()
             mock_panel.set_current_tab = MagicMock()
             mock_create.return_value = mock_panel

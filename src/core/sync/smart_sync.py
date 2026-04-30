@@ -132,14 +132,14 @@ class SmartSyncEngine(BaseSyncEngine):
                 all_cols = key_cols + metadata_cols
                 safe_all_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in all_cols])
                 with suppress(Exception):
-                    cursor.execute(f"SELECT {safe_all_cols} FROM {safe_table}")
+                    cursor.execute(f"SELECT {safe_all_cols} FROM {safe_table}")  # nosec B608
                     for row in cursor.fetchall():
                         keys = tuple(str(row[i]).strip() for i in range(len(key_cols)))
                         meta = {metadata_cols[i]: row[len(key_cols) + i] for i in range(len(metadata_cols))}
                         current_metadata[keys] = meta
 
             # 2. Svuota la tabella
-            cursor.execute(f"DELETE FROM {safe_table}")
+            cursor.execute(f"DELETE FROM {safe_table}")  # nosec B608
 
             # 3. Prepara i nuovi dati applicando i metadati salvati (se corrispondono)
             # Dobbiamo mappare le colonne di input alle colonne finali del DB
@@ -176,8 +176,8 @@ class SmartSyncEngine(BaseSyncEngine):
             placeholders = ", ".join(["?"] * len(all_db_cols))
 
             cursor.executemany(
-                f"INSERT INTO {safe_table} ({safe_db_cols}) VALUES ({placeholders})",
-                final_rows
+                f"INSERT INTO {safe_table} ({safe_db_cols}) VALUES ({placeholders})",  # nosec B608
+                final_rows,
             )
 
             conn.commit()

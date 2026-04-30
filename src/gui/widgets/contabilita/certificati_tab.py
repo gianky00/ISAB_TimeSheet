@@ -91,6 +91,7 @@ class CertificatiCampioneTab(QWidget):
 
         # Campo di Ricerca Moderno
         from src.gui.widgets.core_widgets import SearchInput  # noqa: PLC0415
+
         self.search_input = SearchInput("Cerca per Matricola, Modello o ID...")
         self.search_input.setFixedWidth(350)
         self.search_input.textChanged.connect(self._apply_filters)
@@ -194,7 +195,9 @@ class CertificatiCampioneTab(QWidget):
         set_config_value("cert_filter_only_ex", checked)
         self._apply_filters()
 
-    def _create_toolbar_btn(self, text: str, icon_enum: str, callback: Any, tooltip: str = "") -> PrimaryButton:
+    def _create_toolbar_btn(
+        self, text: str, icon_enum: str, callback: Any, tooltip: str = ""
+    ) -> PrimaryButton:
         """Helper per creare pulsanti della toolbar con stile coerente."""
         btn = PrimaryButton(text)
         btn.setIcon(QIcon(get_asset_path(icon_enum)))
@@ -363,7 +366,8 @@ class CertificatiCampioneTab(QWidget):
                     "group_key": group_key,
                     "id_coemi": (latest[idx_id_coemi] if len(latest) > idx_id_coemi else "") or "",
                     "matricola": (latest[idx_matricola] if len(latest) > idx_matricola else "") or "N/D",
-                    "costruttore": (latest[idx_costruttore] if len(latest) > idx_costruttore else "") or "N/D",
+                    "costruttore": (latest[idx_costruttore] if len(latest) > idx_costruttore else "")
+                    or "N/D",
                     "modello": (latest[idx_modello] if len(latest) > idx_modello else "") or "N/D",
                     "range_strumento": (latest[idx_range] if len(latest) > idx_range else "") or "",
                     "certificates": certs_sorted,
@@ -426,7 +430,9 @@ class CertificatiCampioneTab(QWidget):
                     get_val(idx_scadenza),  # 8. Scadenza
                     get_val(idx_stato),  # 9. Stato
                     str(
-                        cert[idx_ubicazione] if len(cert) > idx_ubicazione and cert[idx_ubicazione] not in (None, "") else "ASSENTE"
+                        cert[idx_ubicazione]
+                        if len(cert) > idx_ubicazione and cert[idx_ubicazione] not in (None, "")
+                        else "ASSENTE"
                     ),  # 10. Ubicazione
                     get_val(idx_annotazioni),  # 11. Annotazioni
                 ]

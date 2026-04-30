@@ -1,3 +1,24 @@
+## Unreleased
+
+### Feat
+
+- **certificati**: implement professional toolbar and layout optimization
+- **pdf**: aggiunta categoria strumenti Assenti e perfezionamento layout padri
+- **certificati**: ripristino logica scadenze e ottimizzazione report PDF
+- **certificati**: aggiornamento elenco ubicazioni e migrazione dati
+- **certificati**: implementazione full mirroring 1:1, ripristino metadati da PDF e ricerca avanzata per ID-COEMI
+
+### Fix
+
+- **certificati**: ottimizzazione layout PDF e risoluzione crash in analisi scadenze
+
+### Refactor
+
+- scomposizione logica statistiche e fix qualità core
+- **certificati**: centralizzazione costanti e separazione logica statistiche
+
+## v1.43.2 (2026-04-21)
+
 ## v1.43.1 (2026-04-21)
 
 ## v1.43.0 (2026-04-21)

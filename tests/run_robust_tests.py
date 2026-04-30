@@ -273,7 +273,7 @@ def _classify_error(error_text: str, full_output: str, node_id: str) -> tuple[st
         return "TimeoutError", error_text, "timeout"
 
     # Crash nativo (segfault, access violation)
-    if any(x in full_output.lower() for x in ["segfault", "access violation", "fatal"]):
+    if any(x in full_output.lower() for x in ("segfault", "access violation", "fatal")):
         return "NativeCrash", error_text, "crash"
 
     # Generico
@@ -430,7 +430,7 @@ def _worker_task(
         error_msg = None
         if not success:
             for line in reversed(output.splitlines()):
-                if any(x in line for x in ["E ", "Error:", "FAILED", "ImportError", "INTERNALERROR"]):
+                if any(x in line for x in ("E ", "Error:", "FAILED", "ImportError", "INTERNALERROR")):
                     error_msg = line.strip()
                     break
             if not error_msg:
@@ -470,7 +470,7 @@ class UltraRunner:
         eta = (total - completed) / speed if speed > 0 else 0
 
         bar_len = 30
-        filled = int(bar_len * completed // total) if total > 0 else 0
+        filled = bar_len * completed // total if total > 0 else 0
         bar = "\u2588" * filled + "\u2591" * (bar_len - filled)
 
         green = Console.GREEN if self.total_passed > 0 else ""

@@ -39,54 +39,63 @@ PW_BOTS: dict[str, Any] = {
 
 try:
     from src.bots.portale_fornitori.carico_ts.playwright_bot import PlaywrightCaricoTSBot
+
     PW_BOTS["carico_ts"] = PlaywrightCaricoTSBot
 except ImportError as e:
     logger.debug(f"Playwright bot 'PlaywrightCaricoTSBot' non disponibile: {e}")
 
 try:
     from src.bots.portale_fornitori.dettagli_oda.playwright_bot import PlaywrightDettagliOdABot
+
     PW_BOTS["dettagli_oda"] = PlaywrightDettagliOdABot
 except ImportError as e:
     logger.debug(f"Playwright bot 'PlaywrightDettagliOdABot' non disponibile: {e}")
 
 try:
     from src.bots.portale_fornitori.prenota_bp.playwright_bot import PlaywrightPrenotaBPBot
+
     PW_BOTS["prenota_bp"] = PlaywrightPrenotaBPBot
 except ImportError as e:
     logger.debug(f"Playwright bot 'PlaywrightPrenotaBPBot' non disponibile: {e}")
 
 try:
     from src.bots.portale_fornitori.scarico_ts.playwright_bot import PlaywrightScaricaTSBot
+
     PW_BOTS["scarico_ts"] = PlaywrightScaricaTSBot
 except ImportError as e:
     logger.debug(f"Playwright bot 'PlaywrightScaricaTSBot' non disponibile: {e}")
 
 try:
     from src.bots.portale_fornitori.timbrature.playwright_bot import PlaywrightTimbratureBot
+
     PW_BOTS["timbrature"] = PlaywrightTimbratureBot
 except ImportError as e:
     logger.debug(f"Playwright bot 'PlaywrightTimbratureBot' non disponibile: {e}")
 
 try:
     from src.bots.safework.pdl.playwright_bot import PlaywrightSafeWorkPDLBot
+
     PW_BOTS["scarico_pdl"] = PlaywrightSafeWorkPDLBot
 except ImportError as e:
     logger.debug(f"Playwright bot 'PlaywrightSafeWorkPDLBot' non disponibile: {e}")
 
 try:
     from src.bots.safework.pdl.playwright_search_bot import PlaywrightSafeWorkPDLSearchBot
+
     PW_BOTS["ricerca_pdl"] = PlaywrightSafeWorkPDLSearchBot
 except ImportError as e:
     logger.debug(f"Playwright bot 'PlaywrightSafeWorkPDLSearchBot' non disponibile: {e}")
 
 try:
     from src.bots.safework.programmazione.playwright_bot import PlaywrightSafeWorkProgrammazioneBot
+
     PW_BOTS["programmazione_pdl"] = PlaywrightSafeWorkProgrammazioneBot
 except ImportError as e:
     logger.debug(f"Playwright bot 'PlaywrightSafeWorkProgrammazioneBot' non disponibile: {e}")
 
 try:
     from src.bots.safework.programmazione_sync.playwright_bot import PlaywrightSafeWorkProgrammazioneSyncBot
+
     PW_BOTS["programmazione_sync"] = PlaywrightSafeWorkProgrammazioneSyncBot
 except ImportError as e:
     logger.debug(f"Playwright bot 'PlaywrightSafeWorkProgrammazioneSyncBot' non disponibile: {e}")

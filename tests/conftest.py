@@ -15,24 +15,30 @@ import pytest
 
 class InMemoryKeyring(keyring.backend.KeyringBackend):
     """Backend per i test che mantiene le credenziali solo in memoria."""
+
     priority = 10
+
     def __init__(self):
         self.passwords = {}
+
     def get_password(self, service, username):
         return self.passwords.get((service, username))
+
     def set_password(self, service, username, password):
         self.passwords[(service, username)] = password
+
     def delete_password(self, service, username):
         self.passwords.pop((service, username), None)
 
 
-# Add src to path
+# Add project root to path to support src.* imports
 ROOT_DIR = Path(__file__).parent.parent.resolve()
-sys.path.insert(0, str(ROOT_DIR / "src"))
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 
 # --- GLOBAL MATPLOTLIB MOCK FOR HEADLESS ENVIRONMENTS ---
-try:
+with contextlib.suppress(Exception):
     import sys
     from unittest.mock import MagicMock
 
@@ -64,8 +70,6 @@ try:
     sys.modules["matplotlib.backends.backend_qt5agg"] = mock_backend
     sys.modules["matplotlib.backends.backend_qt"] = mock_backend
     sys.modules["matplotlib.backends.qt_compat"] = MagicMock()
-except Exception:  # noqa: S110
-    pass
 # --------------------------------------------------------
 
 
@@ -199,7 +203,7 @@ def cleanup_widgets():
     yield
     import gc  # noqa: PLC0415
 
-    try:
+    with contextlib.suppress(ImportError, RuntimeError):
         from PyQt6.QtWidgets import QApplication  # noqa: PLC0415
 
         if QApplication.instance():
@@ -208,8 +212,6 @@ def cleanup_widgets():
                     widget.close()
                     widget.deleteLater()
             QApplication.processEvents()
-    except (ImportError, RuntimeError):
-        pass
     gc.collect()
 
 

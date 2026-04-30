@@ -1,6 +1,6 @@
 import sqlite3
 
-db_path = r'C:\Users\Coemi\AppData\Local\SyncroJob\data\contabilita.db'
+db_path = r"C:\Users\Coemi\AppData\Local\SyncroJob\data\contabilita.db"
 
 try:
     conn = sqlite3.connect(db_path)

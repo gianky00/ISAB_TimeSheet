@@ -5,6 +5,7 @@ Motore di business per il calcolo delle scadenze, ricerca file e gestione esclus
 
 import json
 import os
+from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Final, TypedDict
@@ -16,6 +17,7 @@ from src.core.paths import DB_DIR
 
 class CertificatiStats(TypedDict):
     """Statistiche aggregate dei certificati."""
+
     attivi: int
     in_scadenza: int
     scaduti: int
@@ -150,11 +152,20 @@ class CertificatiEngine:
     def get_statistics(cls, data: list[Any]) -> dict[str, Any]:
         """Calcola le statistiche aggregate per un set di dati certificati."""
         stats: dict[str, Any] = {
-            "attivi": 0, "in_scadenza": 0, "scaduti": 0, "senza_data": 0, "guasti": 0,
-            "ufficio_stru": 0, "ufficio_cc": 0, "officina": 0, "sede": 0, "tecnico": 0, "assenti": 0,
+            "attivi": 0,
+            "in_scadenza": 0,
+            "scaduti": 0,
+            "senza_data": 0,
+            "guasti": 0,
+            "ufficio_stru": 0,
+            "ufficio_cc": 0,
+            "officina": 0,
+            "sede": 0,
+            "tecnico": 0,
+            "assenti": 0,
             "totale": 0,
             "prossime_tarature": {"30": 0, "60": 0, "90": 0, "oltre": 0},
-            "picco_imminente": {}
+            "picco_imminente": {},
         }
         expiration_map: dict[datetime, int] = {}
 
@@ -170,8 +181,9 @@ class CertificatiEngine:
         return stats
 
     @classmethod
-    def _process_status_stats(cls, stats: dict[str, Any], days: int | None,
-                            scadenza_str: str, expiration_map: dict[datetime, int]) -> None:
+    def _process_status_stats(
+        cls, stats: dict[str, Any], days: int | None, scadenza_str: str, expiration_map: dict[datetime, int]
+    ) -> None:
         """Aggiorna i conteggi di stato e mappa le scadenze temporali."""
         if days == cls.FAULTY_MARKER:
             stats["guasti"] += 1
@@ -186,13 +198,11 @@ class CertificatiEngine:
 
         if days is not None and days >= 0:
             cls._update_timer_buckets(stats, days)
-            try:
+            with suppress(Exception):
                 dt = datetime.strptime(scadenza_str, "%d/%m/%Y").replace(
                     hour=0, minute=0, second=0, microsecond=0, tzinfo=UTC
                 )
                 expiration_map[dt] = expiration_map.get(dt, 0) + 1
-            except Exception: # noqa: S110
-                pass
 
     @classmethod
     def _update_timer_buckets(cls, stats: dict[str, Any], days: int) -> None:
@@ -300,5 +310,7 @@ class CertificatiEngine:
             "matricola": parts[idx_mat].strip() if len(parts) > idx_mat else "",
             "costruttore": parts[idx_cos].strip() if len(parts) > idx_cos else "N/D",
             "modello": parts[idx_mod].strip() if len(parts) > idx_mod else "N/D",
-            "range": parts[idx_range].strip() if len(parts) > idx_range and "Digital" in parts[idx_mod] else "",
+            "range": parts[idx_range].strip()
+            if len(parts) > idx_range and "Digital" in parts[idx_mod]
+            else "",
         }

@@ -30,7 +30,10 @@ def patch_browser_profile(user_data_dir: Path | str) -> bool:
     ]
 
     # Se nessuno dei due file di preferenze esiste, forziamo la creazione di quello standard
-    if not any((user_data_path / "Default" / "Preferences").exists() or (user_data_path / "Preferences").exists() for p in preferences_paths):
+    if not any(
+        (user_data_path / "Default" / "Preferences").exists() or (user_data_path / "Preferences").exists()
+        for p in preferences_paths
+    ):
         _patch_file(preferred_path)
 
     success = False
@@ -65,7 +68,6 @@ def _patch_file(path: Path) -> bool:
             "profile.password_manager_leak_detection_check_enabled": False,
             "credentials_enable_service": False,
             "credentials_enable_autosignin": False,
-
             # Autofill e Privacy
             "autofill.profile_enabled": False,
             "autofill.credit_card_enabled": False,

@@ -329,9 +329,7 @@ class ScadenzeAnalysisDialog(QDialog):
         )
 
         lbl_h_mod = QLabel("MODELLO / TIPO")
-        lbl_h_mod.setStyleSheet(
-            f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: bold;"
-        )
+        lbl_h_mod.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: bold;")
         lbl_h_mod.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
         lbl_h_mat = QLabel("MATRICOLA")
@@ -396,9 +394,7 @@ class ScadenzeAnalysisDialog(QDialog):
             else:
                 days_text = "N/D"
             days_label = QLabel(days_text)
-            days_label.setStyleSheet(
-                f"color: {color}; font-weight: bold; font-size: 13px; min-width: 130px;"
-            )
+            days_label.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 13px; min-width: 130px;")
             days_label.setAlignment(Qt.AlignmentFlag.AlignRight)
             item_layout.addWidget(days_label)
 
@@ -452,14 +448,14 @@ class ScadenzeAnalysisDialog(QDialog):
 
             # 3. Prepariamo lo script PowerShell per Outlook
             # Creiamo una lista di percorsi file sicura per PowerShell
-            ps_image_list = "@('" + "','".join(p.replace(chr(92), chr(92)*2) for p in image_paths) + "')"
+            ps_image_list = "@('" + "','".join(p.replace(chr(92), chr(92) * 2) for p in image_paths) + "')"
 
             ps_script = f"""
 $images = {ps_image_list}
 try {{
     $outlook = New-Object -ComObject Outlook.Application
     $mail = $outlook.CreateItem(0)
-    $mail.Subject = "Report Analisi Scadenze Certificati - {datetime.now().strftime('%d/%m/%Y')}"
+    $mail.Subject = "Report Analisi Scadenze Certificati - {datetime.now().strftime("%d/%m/%Y")}"
 
     # Prepariamo l'HTML con le immagini embedded
     $htmlBody = "<html><body>"
@@ -492,15 +488,14 @@ try {{
 
             create_no_window = 0x08000000
             subprocess.Popen(
-                ["powershell", "-ExecutionPolicy", "Bypass", "-File", ps_path],
-                creationflags=create_no_window
+                ["powershell", "-ExecutionPolicy", "Bypass", "-File", ps_path], creationflags=create_no_window
             )
 
             QMessageBox.information(
                 self,
                 "Email in preparazione",
                 "Il report è stato suddiviso in sezioni separate per una migliore leggibilità.\n\n"
-                "Le immagini sono state inserite nel corpo di una nuova email Outlook."
+                "Le immagini sono state inserite nel corpo di una nuova email Outlook.",
             )
 
         except Exception as e:

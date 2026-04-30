@@ -118,6 +118,7 @@ class SeleniumBaseBot(BaseBot, ABC):
 
         # Patching preventivo del profilo (file Preferences) per Selenium
         from src.utils.browser_profile_patcher import patch_browser_profile  # noqa: PLC0415
+
         with suppress(Exception):
             patch_browser_profile(user_data_dir)
 

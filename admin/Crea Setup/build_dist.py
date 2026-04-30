@@ -161,6 +161,7 @@ def ensure_drivers():  # noqa: ANN201
     (drivers_dir / ".exists").write_text("Sentinel file for PyInstaller")
     try:
         from webdriver_manager.chrome import ChromeDriverManager  # noqa: PLC0415
+
         log_and_print("  Checking for latest ChromeDriver...")
         driver_path_str = ChromeDriverManager().install()
         driver_path = Path(driver_path_str)
@@ -191,14 +192,18 @@ def ensure_drivers():  # noqa: ANN201
                 target_pw_dir = pw_dest_dir / latest_chromium.name
 
                 if not target_pw_dir.exists():
-                    log_and_print(f"  Copying {latest_chromium.name} to drivers folder (this may take a while)...")
+                    log_and_print(
+                        f"  Copying {latest_chromium.name} to drivers folder (this may take a while)..."
+                    )
                     shutil.copytree(latest_chromium, target_pw_dir, dirs_exist_ok=True)
                     log_and_print(f"  [SUCCESS] Playwright Chromium aligned: {target_pw_dir}")
                 else:
                     log_and_print(f"  [INFO] Playwright Chromium already present: {latest_chromium.name}")
 
                 # File sentinel per confermare a runtime l'integrità
-                (pw_dest_dir / "bundled.txt").write_text(f"Version: {latest_chromium.name}\nDate: {time.ctime()}")
+                (pw_dest_dir / "bundled.txt").write_text(
+                    f"Version: {latest_chromium.name}\nDate: {time.ctime()}"
+                )
             else:
                 log_and_print("  [WARNING] No Playwright Chromium folder found!", "WARNING")
         else:
@@ -208,6 +213,7 @@ def ensure_drivers():  # noqa: ANN201
         log_and_print(f"  [ERROR] Playwright browser sync failed: {e}", "ERROR")
         if not pw_dest_dir.exists():
             log_and_print("  [CRITICAL] Playwright browsers missing for build!", "ERROR")
+
 
 def run_pyarmor():  # noqa: ANN201
     """Obfuscate scripts using PyArmor."""

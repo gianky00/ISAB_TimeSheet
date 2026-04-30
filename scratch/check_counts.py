@@ -3,8 +3,9 @@ import warnings
 
 import pandas as pd
 
-db_path = r'C:\Users\Coemi\AppData\Local\SyncroJob\data\contabilita.db'
-excel_path = r'c:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\File certificati campione (Excel).xlsx'
+db_path = r"C:\Users\Coemi\AppData\Local\SyncroJob\data\contabilita.db"
+excel_path = r"c:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\File certificati campione (Excel).xlsx"
+
 
 def check_counts() -> None:
     # 1. Conteggio DB
@@ -41,16 +42,17 @@ def check_counts() -> None:
             # Cerchiamo la riga che contiene 'Matricola'
             header_idx = 0
             for i, row in df.iterrows():
-                if 'Matricola' in [str(x).strip() for x in row.values]:
+                if "Matricola" in [str(x).strip() for x in row.values]:
                     header_idx = i
                     break
 
             df_data = pd.read_excel(excel_path, sheet_name=sheet_name, header=header_idx)
-            df_data = df_data.dropna(how='all') # Rimuoviamo righe completamente vuote
+            df_data = df_data.dropna(how="all")  # Rimuoviamo righe completamente vuote
             print(f"Righe DATI rilevate (dopo header riga {header_idx}): {len(df_data)}")
 
     except Exception as e:
         print(f"Errore lettura Excel: {e}")
+
 
 if __name__ == "__main__":
     check_counts()

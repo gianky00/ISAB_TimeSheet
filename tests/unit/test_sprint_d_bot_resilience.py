@@ -28,6 +28,7 @@ class DummyBot(BaseBot):
     def _init_driver(self):
         try:
             import selenium.webdriver  # noqa: PLC0415
+
             selenium.webdriver.Chrome()
         except Exception as e:
             if "version" in str(e).lower():

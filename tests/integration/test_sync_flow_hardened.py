@@ -21,7 +21,9 @@ class TestSyncFlowHardened(unittest.TestCase):
 
         # Patch del path del DB in tutti i moduli interessati
         self.patchers = [
-            patch.object(DatabaseManager, "DB_CONTABILITA", new_callable=PropertyMock, return_value=self.test_db),
+            patch.object(
+                DatabaseManager, "DB_CONTABILITA", new_callable=PropertyMock, return_value=self.test_db
+            ),
         ]
         for p in self.patchers:
             p.start()

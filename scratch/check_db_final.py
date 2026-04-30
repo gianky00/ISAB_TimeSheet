@@ -1,6 +1,7 @@
 import sqlite3
 
-db_path = r'C:\Users\Coemi\AppData\Local\SyncroJob\data\contabilita.db'
+db_path = r"C:\Users\Coemi\AppData\Local\SyncroJob\data\contabilita.db"
+
 
 def check_db_final() -> None:
     try:
@@ -22,6 +23,7 @@ def check_db_final() -> None:
         conn.close()
     except Exception as e:
         print(f"Errore: {e}")
+
 
 if __name__ == "__main__":
     check_db_final()

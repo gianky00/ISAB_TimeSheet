@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 # Percorso reale dal config
-excel_path = r'C:\Users\Coemi\Desktop\CERTIFICATI CAMPIONE\Registro calibrazioni\STRUMENTI CAMPIONE ISAB SUD AGGIORNATO.xlsm'
+excel_path = r"C:\Users\Coemi\Desktop\CERTIFICATI CAMPIONE\Registro calibrazioni\STRUMENTI CAMPIONE ISAB SUD AGGIORNATO.xlsm"
 
 MAPPING = {
     "ID-COEMI": "id_coemi",
@@ -18,6 +18,7 @@ MAPPING = {
     "Scadenza Certificato": "scadenza",
     "Stato Certificato": "stato",
 }
+
 
 def debug_import() -> None:
     try:
@@ -53,11 +54,11 @@ def debug_import() -> None:
             print(f"Righe lette da Pandas (da riga 7 in poi): {len(df)}")
 
             # Pulizia come nel programma
-            df_cleaned = df.dropna(how='all')
+            df_cleaned = df.dropna(how="all")
             print(f"Righe dopo rimozione righe COMPLETAMENTE vuote: {len(df_cleaned)}")
 
             # Se ne abbiamo meno di 165, stampiamo le ultime righe per vedere dove si ferma
-            if len(df_cleaned) < 165:
+            if len(df_cleaned) < 165:  # noqa: PLR2004
                 print("\nUltime 5 righe caricate:")
                 print(df_cleaned.tail())
 
@@ -68,6 +69,7 @@ def debug_import() -> None:
 
     except Exception as e:
         print(f"Errore durante l'analisi: {e}")
+
 
 if __name__ == "__main__":
     debug_import()

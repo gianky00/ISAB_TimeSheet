@@ -1,4 +1,3 @@
-
 import os
 import sys
 import time
@@ -20,16 +19,18 @@ try:
     print("Importazione MainWindow...")
     # Mockiamo AuditManager per evitare il thread di background
     from unittest.mock import patch
+
     with patch("src.core.audit_manager.AuditManager.instance"):
         from src.gui.main_window.main import MainWindow
 
         print("Istanziazione MainWindow...")
         mstart = time.time()
         # Mockiamo tutto ciò che può bloccare
-        with patch("src.gui.main_window.main.run_update"), \
-             patch("src.gui.main_window.main.perform_auto_update"), \
-             patch("src.gui.main_window.main.config_manager.load_config", return_value={}):
-
+        with (
+            patch("src.gui.main_window.main.run_update"),
+            patch("src.gui.main_window.main.perform_auto_update"),
+            patch("src.gui.main_window.main.config_manager.load_config", return_value={}),
+        ):
             window = MainWindow()
             print(f"MainWindow istanziata in {time.time() - mstart:.2f}s")
 
@@ -40,6 +41,7 @@ try:
 except Exception as e:
     print(f"ERRORE: {e}")
     import traceback
+
     traceback.print_exc()
 
 print(f"--- DEBUG QT INIT END (Total: {time.time() - start:.2f}s) ---")

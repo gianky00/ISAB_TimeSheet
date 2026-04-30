@@ -25,7 +25,8 @@ if TYPE_CHECKING:
 
 # Setup path FIRST (before any other imports)
 ROOT_DIR = Path(__file__).parent.resolve()
-sys.path.insert(0, str(ROOT_DIR / "src"))
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 
 def _print_exception_and_exit(
@@ -59,8 +60,8 @@ from src.utils.resource_manager import ResourceManager
 
 # Setup path (ResourceManager handles frozen vs dev)
 ROOT_DIR = ResourceManager.PROJECT_ROOT
-if str(ROOT_DIR / "src") not in sys.path:
-    sys.path.insert(0, str(ROOT_DIR / "src"))
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 
 def setup_enterprise_logging() -> Any:

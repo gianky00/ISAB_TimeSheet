@@ -88,7 +88,11 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
 
             if search_popup_visible:
                 self.log("[CLICK] Estensione ricerca...")
-                for sel in ["span[idtxt='E421C594']", "//button[contains(., 'Si')]", "xpath=//button[contains(@class, 'btn-ok')]"]:
+                for sel in (
+                    "span[idtxt='E421C594']",
+                    "//button[contains(., 'Si')]",
+                    "xpath=//button[contains(@class, 'btn-ok')]",
+                ):
                     with suppress(Exception):
                         xpath_full = sel if sel.startswith("/") else f"css={sel}"
                         if self.page.is_visible(xpath_full):
@@ -110,7 +114,7 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
                 "//button[contains(., 'OK')]",
                 "//span[contains(text(), 'OK')]",
                 "//button[contains(., 'Si')]",
-                "//a[contains(@class, 'btn-ok') or @data-dismiss='modal']"
+                "//a[contains(@class, 'btn-ok') or @data-dismiss='modal']",
             ]
 
             tentativi_max = 3
@@ -121,7 +125,7 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
                             self.page.click(f"xpath={b_sel}")
                             self.log(f"[OK] Alert gestito cliccando su: {b_sel}")
                             self.page.wait_for_timeout(1000)
-                            return True # Chiudiamo al primo pulsante di conferma trovato
+                            return True  # Chiudiamo al primo pulsante di conferma trovato
 
                 if i < (tentativi_max - 1):
                     self.page.wait_for_timeout(500)

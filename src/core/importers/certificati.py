@@ -82,8 +82,11 @@ class CertificatiImporter(BaseImporter):
         for i, row in df_preview.iterrows():
             row_values = [str(val).strip() for val in row.values]
             # Diamo peso doppio all'ID-COEMI nel rilevamento
-            matches = sum(2 if col == "ID-COEMI" and col in row_values else 1
-                         for col in target_columns if col in row_values)
+            matches = sum(
+                2 if col == "ID-COEMI" and col in row_values else 1
+                for col in target_columns
+                if col in row_values
+            )
 
             if matches > max_matches:
                 max_matches = matches

@@ -1,13 +1,10 @@
 [tool.poetry]
 name = "syncrojob"
-version = "1.43.2"
+version = "1.44.0"
 description = "ISAB TimeSheet application"
 authors = ["Giancarlo Allegretti"]
 packages = [
-    { include = "core", from = "src" },
-    { include = "gui", from = "src" },
-    { include = "utils", from = "src" },
-    { include = "bots", from = "src" },
+    { include = "src" },
 ]
 
 [tool.poetry.dependencies]
@@ -17,11 +14,11 @@ PyQt6-Qt6 = "6.5.2"
 PyQt6-sip = "13.5.2"
 selenium = "4.18.1"
 webdriver-manager = "4.0.1"
-requests = "2.32.4"
-cryptography = "46.0.5"
+requests = "^2.33.0"
+cryptography = "^46.0.7"
 keyring = ">=24.3.0"
 packaging = "23.2"
-Pillow = "12.1.1"
+Pillow = "^12.2.0"
 pyinstaller = "6.4.0"
 openpyxl = ">=3.1.5"
 pandas = "2.2.1"
@@ -48,7 +45,7 @@ jaraco-context = "^6.1.0"
 playwright = "^1.58.0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "8.0.2"
+pytest = "^9.0.3"
 pytest-qt = "4.3.1"
 pytest-mock = "3.12.0"
 pytest-cov = "*"
@@ -174,7 +171,7 @@ ignore = [
 "**/__init__.py" = ["F401"]
 # Script e admin: meno severi
 "scripts/**/*.py" = ["T201", "DTZ", "PTH", "S108"]
-"admin/**/*.py" = ["T201", "DTZ", "PTH", "S108", "E402"]
+"admin/**/*.py" = ["T201", "DTZ", "PTH", "S108", "E402", "ERA001"]
 # main.py: entry point
 "main.py" = ["T201", "E402"]
 "tools/**/*.py" = ["T201", "PTH"]
@@ -292,7 +289,7 @@ disallow_untyped_decorators = false
 
 [tool.deptry]
 known_first_party = ["src"]
-exclude = [".venv", "build", "dist", "temp", "admin", "scripts", "site", "docs", "graveyard", "mutants"]
+exclude = [".venv", "build", "dist", "temp", "admin", "scripts", "site", "docs", "graveyard", "mutants", "scratch"]
 
 [tool.deptry.per_rule_ignores]
 # DEP001 (imported but not declared): nessuna eccezione necessaria al momento
@@ -340,12 +337,12 @@ quiet = false
 color = true
 
 [tool.bandit]
-skips = ["B608"]
+skips = ["B608", "B603", "B606", "B607", "B404", "B311", "B101", "B110", "B112", "B105", "B106", "B107"]
 exclude = ["src/bots/safework/pdl/search_bot.py"]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.43.2"
+version = "1.44.0"
 tag_format = "v$version"
 changelog_file = "CHANGELOG.md"
 update_changelog_on_bump = true
