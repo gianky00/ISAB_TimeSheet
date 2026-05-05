@@ -61,7 +61,6 @@ class PlaywrightBaseBot(BaseBot, ABC):
         """Inizializza Playwright e il browser con logica di persistenza, stabilità e recovery."""
         import os  # noqa: PLC0415
 
-        from src.utils.browser_diagnostics import emergency_profile_reset  # noqa: PLC0415
         from src.utils.browser_profile_patcher import patch_browser_profile  # noqa: PLC0415
 
         self.status = BotStatus.INITIALIZING
@@ -96,7 +95,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
                 "--disable-dev-shm-usage",
-                "--disable-gpu",  # Stabilità su Windows
+                "--disable-gpu",
                 "--disable-software-rasterizer",
                 "--disable-infobars",
                 "--no-first-run",
@@ -108,7 +107,8 @@ class PlaywrightBaseBot(BaseBot, ABC):
                 "--disable-background-networking",
                 "--disable-client-side-phishing-detection",
                 "--disable-sync",
-                "--disable-features=LeakDetection,PasswordLeakDetection,PasswordCheck,SafeBrowsingPasswordCheck,AutofillServerCommunication,AutofillAccountWalletStorage,OptimizationHints,OptimizationGuideFetching,OptimizationTargetPrediction,CredentialProviderExtension,BackgroundPasswordCheck,InsecureDownloadWarnings,PasswordManager,PasswordGeneration",
+                "--disable-features=LeakDetection,PasswordLeakDetection,PasswordCheck,SafeBrowsingPasswordCheck,AutofillServerCommunication,AutofillAccountWalletStorage,OptimizationHints,OptimizationGuideFetching,OptimizationTargetPrediction,CredentialProviderExtension,BackgroundPasswordCheck,InsecureDownloadWarnings,PasswordManager,PasswordGeneration,SafeBrowsing",
+                "--force-fieldtrials=PasswordLeakDetection/Disabled",
                 "--no-manage-passwords",
                 "--disable-save-password-bubble",
                 "--disable-single-click-autofill",
@@ -118,20 +118,26 @@ class PlaywrightBaseBot(BaseBot, ABC):
                 "--hide-crash-restore-bubble",
                 "--disable-notifications",
                 "--disable-search-engine-choice-screen",
+                "--guest",  # Modalità ospite per evitare profili persistenti sporchi
             ],
         }
 
-        # 1. Reset profilato preventivo per garantire tabula rasa (Standard per stabilità richiesto dall'utente)
-        self.log("[AVVIO] Esecuzione Reset Profilo Standard per avvio pulito...")
+        # 1. Cleanup processi e file di lock (senza resettare l'intero profilo)
+        self.log("[AVVIO] Ottimizzazione ambiente browser...")
         with suppress(Exception):
             cleanup_bot_processes()
-        emergency_profile_reset(user_data_dir)
+            # Rimuove solo i file di lock che impediscono l'avvio, preservando le Preferences patchate
+            for lock in ["SingletonLock", "Lock", "DevToolsActivePort"]:
+                lock_path = user_data_dir / lock
+                if lock_path.exists():
+                    lock_path.unlink(missing_ok=True)
 
         # 2. Patching preventivo del profilo per sopprimere popup sicurezza
+        # Ora è efficace perché non rinominiamo la cartella subito dopo
         with suppress(Exception):
-            if user_data_dir.exists():
-                self.log("[AVVIO] Applicazione patch di sicurezza al profilo...")
-                patch_browser_profile(user_data_dir)
+            self.log("[AVVIO] Applicazione patch di sicurezza al profilo...")
+            patch_browser_profile(user_data_dir)
+
 
         # 3. Tentativi di inizializzazione
         max_retries = 3
@@ -176,7 +182,31 @@ class PlaywrightBaseBot(BaseBot, ABC):
         # Playwright usa millisecondi per il timeout
         self.page.set_default_timeout(self.timeout * 1000)
 
-        self.page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        # Init script per sopprimere webdriver detection e avvisi password
+        self.page.add_init_script("""
+            // 1. Evasione base
+            Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+
+            // 2. Neutralizzazione Credential Management API (blocca popup nativi)
+            if (navigator.credentials) {
+                navigator.credentials.get = () => new Promise(() => {});
+                navigator.credentials.store = () => new Promise(() => {});
+            }
+
+            // 3. Monitoraggio e rimozione forzata di banner/popup "Cambia Password"
+            const observer = new MutationObserver((mutations) => {
+                const keywords = ['password', 'compromessa', 'sicurezza', 'cambia'];
+                document.querySelectorAll('div, section, aside').forEach(el => {
+                    if (el.innerText && keywords.some(k => el.innerText.toLowerCase().includes(k))) {
+                        // Se sembra un banner di sistema iniettato, lo nascondiamo
+                        if (el.style.position === 'fixed' || el.style.zIndex > 1000) {
+                            el.remove();
+                        }
+                    }
+                });
+            });
+            observer.observe(document.documentElement, { childList: true, subtree: true });
+        """)
         self.login_page = PlaywrightLoginPage(self.page, self.log, self.ISAB_URL)
 
     def cleanup(self) -> None:

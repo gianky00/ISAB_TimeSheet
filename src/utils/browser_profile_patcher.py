@@ -63,6 +63,7 @@ def _patch_file(path: Path) -> bool:
             "password_manager.password_leak_detection_enabled": False,
             "password_manager.password_check_enabled": False,
             "password_manager.compromised_credentials_check_enabled": False,
+            "password_manager.leak_detection_enabled": False,
             "profile.password_manager_enabled": False,
             "profile.password_manager_leak_detection": False,
             "profile.password_manager_leak_detection_check_enabled": False,
@@ -78,6 +79,9 @@ def _patch_file(path: Path) -> bool:
             "sync.managed": True,  # Blocca la sincronizzazione
             "profile.nickname": "SyncroJob-Bot",
             "plugins.always_open_pdf_externally": True,
+            # Blocco esplicito dei popup di sicurezza e password
+            "profile.default_content_setting_values.notifications": 2,
+            "profile.default_content_setting_values.password_manager": 2,
         }
 
         modified = False
