@@ -259,15 +259,17 @@ def import_config_from_file(file_path: Path) -> tuple[bool, str]:
         new_data = json.loads(file_path.read_text(encoding="utf-8"))
 
         # Backup attuale
+        backup_msg = ""
         if CONFIG_FILE.exists():
             backup_file = CONFIG_DIR / f"config_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
             CONFIG_FILE.rename(backup_file)
+            backup_msg = f"\nBackup precedente salvato in: {backup_file.name}"
 
         # Salva nuova (passando per save_config per criptare)
         if save_config(new_data):
             return (
                 True,
-                f"Configurazione importata con successo.\nBackup precedente salvato in: {backup_file.name}",
+                f"Configurazione importata con successo.{backup_msg}",
             )
     except json.JSONDecodeError:
         return False, "Il file non è un JSON valido."

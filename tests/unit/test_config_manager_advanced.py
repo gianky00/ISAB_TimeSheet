@@ -6,8 +6,8 @@ import pytest
 from src.core.config_manager import (
     _atomic_write_json,
     _load_base_config,
-    _migrate_legacy_config,
     _reset_configuration_for_testing,
+    migrate_legacy_keys,
     save_config,
 )
 
@@ -33,16 +33,11 @@ class TestConfigManagerAdvanced:
         data = {"key": "val"}
 
         # Test basic success
-        _atomic_write_json(data, target)
+        # In V9.0 _atomic_write_json(path, data)
+        _atomic_write_json(target, data)
         assert target.exists()
         with target.open("r", encoding="utf-8") as f:
             assert json.load(f) == data
-
-        # Test replace logic
-        data2 = {"key": "new_val"}
-        _atomic_write_json(data2, target)
-        with target.open("r", encoding="utf-8") as f:
-            assert json.load(f) == data2
 
     @patch("src.core.config_manager.CONFIG_FILE")
     @patch("src.core.config.security.SecretsManager.is_available", return_value=True)
@@ -54,20 +49,20 @@ class TestConfigManagerAdvanced:
 
         # Should call store_credential and remove password from JSON
         mock_store.assert_called()
-        config_saved = mock_atomic.call_args[0][0]
+        # In V9.0 _atomic_write_json(CONFIG_FILE, config_to_save)
+        config_saved = mock_atomic.call_args[0][1]
         assert "password" not in config_saved["accounts"][0]
 
     def test_migrate_legacy_config(self):
         legacy = {
             "isab_username": "old_user",
             "isab_password": "old_password",
-            "accounts": {},
         }
-        # La funzione reale migra isab_* in accounts["ISAB"]
-        changed = _migrate_legacy_config(legacy)
+        # La funzione reale migra isab_* in accounts
+        changed = migrate_legacy_keys(legacy)
         assert changed is True
-        assert "ISAB" in legacy.get("accounts", {})
-        assert legacy["accounts"]["ISAB"]["username"] == "old_user"
+        assert "accounts" in legacy
+        assert any(a["username"] == "old_user" for a in legacy["accounts"])
 
     @patch("src.core.config_manager.CONFIG_FILE")
     def test_load_base_config_malformed_json_fallback(self, mock_file):

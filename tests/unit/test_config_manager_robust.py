@@ -9,7 +9,7 @@ from src.core.config_manager import (
     _reset_configuration_for_testing,
     add_account,
     get_default_account,
-    import_configuration,
+    import_config_from_file,
     load_config,
     set_config_value,
 )
@@ -27,14 +27,23 @@ class TestConfigManagerRobust:
         self.mock_config_dir.mkdir()
         self.mock_config_file = self.mock_config_dir / "config.json"
 
-        # Patch variabili globali
+        # Patch variabili globali in entrambi i moduli che le usano
         with (
             patch("src.core.config_manager.CONFIG_DIR", self.mock_config_dir),
             patch("src.core.config_manager.CONFIG_FILE", self.mock_config_file),
+            patch("src.core.paths.CONFIG_DIR", self.mock_config_dir),
+            patch("src.core.paths.CONFIG_FILE", self.mock_config_file),
+            patch("src.core.paths.DB_DIR", self.mock_config_dir / "data"),
+            patch("src.core.paths.LOGS_DIR", self.mock_config_dir / "logs"),
             patch("src.core.config.security.SecretsManager") as mock_sec,
         ):
-            # Mock SecretsManager per evitare keyring
-            mock_sec.is_available.return_value = False  # Force file encryption fallback
+            # Crea fisicamente le directory per i path getters
+            (self.mock_config_dir / "data").mkdir(parents=True, exist_ok=True)
+            (self.mock_config_dir / "logs").mkdir(parents=True, exist_ok=True)
+
+            # Mock SecretsManager per evitare keyring e MagicMock nel JSON
+            mock_sec.is_available.return_value = False
+            mock_sec.get_credential.return_value = None
             yield
 
     def test_load_config_defaults(self):
@@ -72,31 +81,33 @@ class TestConfigManagerRobust:
     def test_account_management(self):
         """Test aggiunta, default e rimozione account."""
         # Add first (default)
-        add_account("user1", "pass1")
+        add_account("isab", {"username": "user1", "password": "pass1", "is_default": True})
         config = load_config()
         assert len(config["accounts"]) == 1
         assert config["accounts"][0]["username"] == "user1"
         assert config["accounts"][0]["default"] is True
 
         # Add second
-        add_account("user2", "pass2")
+        add_account("isab", {"username": "user2", "password": "pass2", "is_default": False})
         config = load_config()
         assert len(config["accounts"]) == 2
         assert config["accounts"][1]["username"] == "user2"
-        assert config["accounts"][1]["default"] is False  # user1 ancora default
+        # In V9.0 il flag 'default' viene gestito internamente
+        assert config["accounts"][1].get("default", False) is False
 
         # Get Default
-        acc = get_default_account()
+        acc = get_default_account("isab")
         assert acc["username"] == "user1"
 
         # Remove user1
         from src.core.config_manager import remove_account  # noqa: PLC0415
 
-        remove_account("user1")
+        remove_account("isab", "user1")
         config = load_config()
         assert len(config["accounts"]) == 1
         assert config["accounts"][0]["username"] == "user2"
-        assert config["accounts"][0]["default"] is True  # user2 promosso default
+        # user2 dovrebbe essere diventato default essendo l'unico
+        assert get_default_account("isab")["username"] == "user2"
 
     def test_legacy_migration(self):
         """Test migrazione vecchia configurazione."""
@@ -114,13 +125,18 @@ class TestConfigManagerRobust:
 
     def test_import_configuration(self, tmp_path):
         """Test importazione configurazione da file esterno."""
+        # Crea un file pre-esistente per forzare il backup
+        self.mock_config_file.write_text(json.dumps({"old": "data"}), encoding="utf-8")
+
         import_file = tmp_path / "import.json"
         import_file.write_text(json.dumps({"browser_timeout": 999, "accounts": []}), encoding="utf-8")
 
-        success, msg = import_configuration(str(import_file))
+        # Passa l'oggetto Path, non la stringa (firma V9.0)
+        success, msg = import_config_from_file(import_file)
 
         assert success is True
         assert "successo" in msg
+        assert "Backup precedente" in msg
 
         # Verifica applicazione
         _reset_configuration_for_testing()
@@ -136,7 +152,7 @@ class TestConfigManagerRobust:
         bad_file = tmp_path / "bad.json"
         bad_file.write_text("{bad")
 
-        success, msg = import_configuration(str(bad_file))
+        success, msg = import_config_from_file(bad_file)
         assert success is False
         assert "non è un JSON" in msg
 
@@ -147,6 +163,7 @@ class TestConfigManagerRobust:
         data_path = get_data_path()
         logs_path = get_logs_path()
 
+        # In V9.0 i path sono basati sulla CONFIG_DIR mockata
         assert str(self.mock_config_dir / "data") == data_path
         assert str(self.mock_config_dir / "logs") == logs_path
         assert Path(data_path).exists()
@@ -169,7 +186,7 @@ class TestConfigManagerRobust:
                 side_effect=lambda x: x.replace("ENC:v2:", ""),
             ),
         ):
-            add_account("user_enc", "secret")
+            add_account("isab", {"username": "user_enc", "password": "secret"})
 
             # Verifica su disco che sia criptata
             disk_data = json.loads(self.mock_config_file.read_text(encoding="utf-8"))
