@@ -8,7 +8,7 @@ Le seguenti classi/file presentano responsabilità multiple mischiate (UI, Dati,
 - [x] `src/gui/widgets/dashboard/weather_widget.py`
 - [x] `src/bots/base/base_bot.py`
 - [x] `src/gui/controllers/navigation_controller.py`
-- [ ] `src/gui/panels/base.py` (Monitorare: ~400 LOC)
+- [x] `src/gui/panels/base.py`
 - [ ] `src/bots/safework/pdl/bot.py` (Monitorare: complessità logica)
 
 ## 🏗️ Refactoring Complessità (Xenon Grade C -> B)
