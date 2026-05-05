@@ -2,6 +2,32 @@
 
 ### Feat
 
+- **admin**: add HWID detection script and automated batch tool
+
+### Fix
+
+- **test**: align unit tests to BaseBot refactor and sync logic
+- **admin**: make HWID detection standalone and generic
+- **gui**: implement trigger_pdl_print in MainWindow
+- **test**: align test suite to V9.0 architecture and fix import_config bug
+
+### Refactor
+
+- finalize SRP and complexity improvements across bots and GUI
+- **bot**: reduce complexity in ScaricaTSBot
+- **core**: reduce complexity in ContabilitaImporter
+- **core**: reduce complexity in AuditManager
+- reduce complexity in TreeWidget helpers and Log Humanizer
+- **bot**: reduce complexity in SafeWorkPDLBot
+- **gui**: finalize BaseBotPanel SRP decomposition
+- **core**: reduce complexity in DataSynchronizer and ContabilitaSyncEngine
+- **gui**: apply SRP to DonCiroWidget and integrate real weather
+- **gui**: apply SRP to WeatherWidget and NavigationController
+
+## v1.44.0 (2026-04-30)
+
+### Feat
+
 - **certificati**: implement professional toolbar and layout optimization
 - **pdf**: aggiunta categoria strumenti Assenti e perfezionamento layout padri
 - **certificati**: ripristino logica scadenze e ottimizzazione report PDF
