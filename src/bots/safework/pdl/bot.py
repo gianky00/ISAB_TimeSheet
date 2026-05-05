@@ -86,8 +86,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         return True, ""
 
-    def run(self, data: list[dict[str, Any]]) -> bool:  # noqa: PLR0912, PLR0915
-        """Ciclo principale di scarico PDL con gestione sessione."""
+    def run(self, data: list[dict[str, Any]]) -> bool:
+        """Ciclo principale di scarico PDL con gestione sessione orchestrata."""
         self.update_step("login", StepStatus.COMPLETED)
 
         success_count = 0
@@ -98,70 +98,90 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self.log(f"[AVVIO] Inizio elaborazione di {total} PDL...")
 
         for index, item in enumerate(data):
-            pdl_raw = "N/A"
             try:
                 self._check_stop()
-                val = item.get("numero_pdl")
-                pdl_raw = str(val) if val else "N/A"
-                if not pdl_raw:
-                    continue
-
-                pdl_num = self._sanitizza_pdl_number(pdl_raw)
-                self.log(f"📋 PDL {index + 1}/{total}: {pdl_num}")
-
-                # Pipeline per singolo PDL
-                self.update_step("search", StepStatus.RUNNING)
-                if self._esegui_ricerca_pdl(pdl_num):
-                    self.update_step("search", StepStatus.COMPLETED)
-
-                    self.update_step("download_p1", StepStatus.RUNNING)
-                    path_p1 = self._scarica_parte_prima(pdl_num)
-
-                    path_p2 = None
-                    if path_p1:
-                        self.update_step("download_p1", StepStatus.COMPLETED)
-                        self.update_step("download_p2", StepStatus.RUNNING)
-                        path_p2 = self._scarica_parte_seconda(pdl_num)
-
-                    if path_p1 and path_p2:
-                        self.update_step("download_p2", StepStatus.COMPLETED)
-                        self.update_step("merge", StepStatus.RUNNING)
-                        if self._unisci_e_stampa(pdl_num, path_p1, path_p2, item, all_pdl_paths):
-                            self.update_step("merge", StepStatus.COMPLETED)
-                            success_count += 1
-                        else:
-                            self.update_step("merge", StepStatus.ERROR)
-                    else:
-                        if not path_p1:
-                            self.update_step("download_p1", StepStatus.ERROR)
-                        if not path_p2:
-                            self.update_step("download_p2", StepStatus.ERROR)
-
-                    self._safe_remove(path_p1)
-                    self._safe_remove(path_p2)
-                else:
-                    self.update_step("search", StepStatus.ERROR)
-
-                # Notifica progresso alla GUI (index, success, message)
-                callback = getattr(self, "_progress_callback", None)
-                if callback:
-                    callback(index, True, "")
+                if self._process_pdl_pipeline(item, index, total, all_pdl_paths):
+                    success_count += 1
             except InterruptedError:
                 raise
             except Exception as e:
+                pdl_raw = item.get("numero_pdl", "N/A")
                 self.log(f"[ERRORE] Errore critico PDL {pdl_raw}: {e}")
-                # Notifica errore alla GUI
-                callback = getattr(self, "_progress_callback", None)
-                if callback:
+                if callback := getattr(self, "_progress_callback", None):
                     callback(index, False, str(e))
 
-        # Unione finale di sessione se richiesto
+        # Unione finale di sessione
         self.update_step("session", StepStatus.RUNNING)
         self._handle_session_merge(data, all_pdl_paths)
         self.update_step("session", StepStatus.COMPLETED)
 
         self.log(f"[INFO] Completato: {success_count}/{total} PDL.")
         return success_count == total
+
+    def _process_pdl_pipeline(
+        self, item: dict[str, Any], index: int, total: int, all_pdl_paths: list[str]
+    ) -> bool:
+        """Gestisce l'intera pipeline per un singolo PDL."""
+        pdl_raw = item.get("numero_pdl")
+        if not pdl_raw:
+            return False
+
+        pdl_num = self._sanitizza_pdl_number(pdl_raw)
+        self.log(f"📋 PDL {index + 1}/{total}: {pdl_num}")
+
+        # 1. Ricerca
+        self.update_step("search", StepStatus.RUNNING)
+        if not self._esegui_ricerca_pdl(pdl_num):
+            self.update_step("search", StepStatus.ERROR)
+            return False
+        self.update_step("search", StepStatus.COMPLETED)
+
+        # 2. Scarico e Merge
+        success = self._handle_pdl_download(pdl_num, item, all_pdl_paths)
+
+        # 3. Notifica GUI
+        if callback := getattr(self, "_progress_callback", None):
+            callback(index, success, "")
+        
+        return success
+
+    def _handle_pdl_download(
+        self, pdl_num: str, item: dict[str, Any], all_pdl_paths: list[str]
+    ) -> bool:
+        """Coordina lo scarico delle parti del PDL e l'unione."""
+        path_p1, path_p2 = None, None
+        success = False
+        
+        try:
+            # Parte Prima
+            self.update_step("download_p1", StepStatus.RUNNING)
+            path_p1 = self._scarica_parte_prima(pdl_num)
+            if not path_p1:
+                self.update_step("download_p1", StepStatus.ERROR)
+                return False
+            self.update_step("download_p1", StepStatus.COMPLETED)
+
+            # Parte Seconda
+            self.update_step("download_p2", StepStatus.RUNNING)
+            path_p2 = self._scarica_parte_seconda(pdl_num)
+            if not path_p2:
+                self.update_step("download_p2", StepStatus.ERROR)
+                return False
+            self.update_step("download_p2", StepStatus.COMPLETED)
+
+            # Merge e Stampa
+            self.update_step("merge", StepStatus.RUNNING)
+            if self._unisci_e_stampa(pdl_num, path_p1, path_p2, item, all_pdl_paths):
+                self.update_step("merge", StepStatus.COMPLETED)
+                success = True
+            else:
+                self.update_step("merge", StepStatus.ERROR)
+
+        finally:
+            self._safe_remove(path_p1)
+            self._safe_remove(path_p2)
+            
+        return success
 
     def _sanitizza_pdl_number(self, pdl_raw: Any) -> str:
         """Formatta il numero PDL aggiungendo i suffissi /S o /C se necessario."""
