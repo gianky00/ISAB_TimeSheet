@@ -431,9 +431,11 @@ class ScaricoPDLPanel(BaseBotPanel):
         rows = [{"numero_pdl": num, "esito": ""} for num in pdl_numbers]
         self.data_table.set_data(rows)
 
-        # 3. Attiva stampa di default per questa modalità
-        self.check_stampa.setChecked(True)
+        # 3. Forza l'attivazione della stampa (UI e logica)
+        if not self.check_stampa.isChecked():
+            self.check_stampa.setChecked(True)
+            self._on_log("Sincronizzazione: Flag 'Attiva Stampa' abilitato automaticamente.")
 
         # 4. Avvia bot dopo un delay di rendering
-        self._on_log(f"📥 Ricevuti {len(pdl_numbers)} PDL dal database. Avvio stampa automatica...")
+        self._on_log(f"📥 Ricevuti {len(pdl_numbers)} PDL dal database. Avvio processo automatico...")
         QTimer.singleShot(500, self._on_start)

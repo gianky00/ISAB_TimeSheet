@@ -12,9 +12,10 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QObject, pyqtSignal
-from PyQt6.QtWidgets import QMessageBox, QStackedWidget, QWidget
+from PyQt6.QtWidgets import QStackedWidget, QWidget
 
 from src.gui.components.popout.popout_manager import DetachedPanelWindow, PopoutPlaceholderWidget
+from src.gui.controllers.panel_factory import PanelFactory
 from src.gui.main_window.page_index import PageIndex
 
 if TYPE_CHECKING:
@@ -31,8 +32,7 @@ logger = logging.getLogger(__name__)
 class NavigationController(QObject):
     """
     Controller responsabile della commutazione tra le pagine nel QStackedWidget della MainWindow.
-    Gestisce il ciclo di vita dei pannelli (creazione, inizializzazione segnali, visualizzazione)
-    e garantisce la sincronizzazione con lo stato della Sidebar e della Command Palette.
+    Gestisce il routing e delega la creazione dei pannelli alla PanelFactory.
     """
 
     panel_detached = pyqtSignal(int, str)  # index, title
@@ -40,14 +40,18 @@ class NavigationController(QObject):
 
     def __init__(self, main_window: MainWindow) -> None:
         """
-        Inizializza il controller di navigazione e le istanze dei controller CORE.
+        Inizializza il controller di navigazione e i componenti associati.
 
         Args:
             main_window: Riferimento alla MainWindow dell'applicazione.
         """
         super().__init__(main_window)
         self.mw = main_window
-        # Traccia i pannelli attualmente staccati (indice -> struct con panel nativo, placeholder, e finestra top-level)
+
+        # Inizializza la factory per i pannelli (SRP)
+        self.panel_factory = PanelFactory(self)
+
+        # Traccia i pannelli attualmente staccati
         self._detached_panels: dict[int, dict[str, Any]] = {}
 
         # Controller attributes (inizializzati in _init_core_controllers)
@@ -65,7 +69,7 @@ class NavigationController(QObject):
 
     def _init_core_controllers(self) -> None:
         """Inizializza i controller core per i dati."""
-        from src.core.contabilita.consuntivo.consuntivo_controller import (  # noqa: PLC0415
+        from src.core.contabilita.consuntivo.consuntivo_controller import (
             ConsuntivoController,
         )
         from src.core.contabilita.scarico_ore.controller import ScaricoOreController  # noqa: PLC0415
@@ -94,17 +98,12 @@ class NavigationController(QObject):
         """
         Cambia la pagina attiva nel container principale.
         Inizializza il pannello se non ancora creato.
-
-        Args:
-            index: Indice numerico della pagina (vedi PageIndex).
-            sub_index: Indice opzionale per i pannelli che supportano tab interni.
-            bot_index: Indice opzionale per la navigazione a 3 livelli (es. Automazioni).
         """
         if index < 0 or index >= self.stack.count():
             logger.warning("Tentativo di navigazione verso indice non valido: %s", index)
             return
 
-        # 1. Assicurati che il pannello sia inizializzato
+        # 1. Assicurati che il pannello sia inizializzato via Factory
         self._ensure_panel_initialized(index)
 
         # 2. Gestione pannelli staccati (Popout)
@@ -126,20 +125,16 @@ class NavigationController(QObject):
         panel = self.stack.widget(index)
         if panel and hasattr(panel, "set_current_tab"):
             try:
-                # Prova a passare entrambi gli argomenti per pannelli a 3 livelli
                 panel.set_current_tab(sub_index, bot_index)
             except TypeError:
-                # Fallback per pannelli a 2 livelli
                 panel.set_current_tab(sub_index)
 
-        # 6. Notifica il pannello del focus (opzionale)
+        # 6. Notifica il pannello del focus
         if panel and hasattr(panel, "on_focus_received") and callable(panel.on_focus_received):
             panel.on_focus_received()
 
     def navigate_to_panel(self, panel_key: str) -> None:
-        """Naviga verso un pannello specifico tramite chiave logica (bridge per AutomazioniWidget)."""
-        # Mapping bot -> (PortalIndex, BotIndex)
-        # Portal 0: Fornitori, Portal 1: SafeWork
+        """Naviga verso un pannello specifico tramite chiave logica."""
         automation_sub_mapping = {
             "dettagli_oda": (0, 0),
             "scarico_ts": (0, 1),
@@ -154,29 +149,22 @@ class NavigationController(QObject):
             portal_idx, bot_idx = automation_sub_mapping[panel_key]
             self.navigate_to(PageIndex.AUTOMAZIONI, sub_index=portal_idx, bot_index=bot_idx)
         else:
-            # Fallback per altre pagine dirette se necessario
             logger.debug("Tentativo di navigazione diretta non mappata: %s", panel_key)
 
     def navigate_to_pdl(self, site: str | None = None, area: str | None = None) -> None:
         """Naviga alla vista PDL applicando filtri specifici."""
-        self.navigate_to(PageIndex.DATAEASE)
-        panel = self.get_panel(PageIndex.DATAEASE)
+        self.navigate_to(PageIndex.PDL_DB)
+        panel = self.get_panel(PageIndex.PDL_DB)
         if panel and hasattr(panel, "apply_external_filters"):
             panel.apply_external_filters(site=site, area=area)
 
     def get_panel(self, index: int) -> QWidget | None:
-        """
-        Restituisce l'istanza del pannello all'indice specificato.
-        Inizializza il pannello se necessario.
-        """
+        """Restituisce l'istanza del pannello, inizializzandolo se necessario."""
         self._ensure_panel_initialized(index)
         return self.stack.widget(index)
 
     def detach_panel(self, index: int) -> None:
-        """
-        Sposta un pannello dallo Stack principale in una finestra separata.
-        Lascia un segnaposto (PopoutPlaceholderWidget) nello stack originale.
-        """
+        """Sposta un pannello dallo Stack principale in una finestra separata."""
         if index in self._detached_panels:
             return
 
@@ -185,7 +173,6 @@ class NavigationController(QObject):
         if not native_panel:
             return
 
-        # Recupera il titolo dal pannello
         title = str(getattr(native_panel, "TITLE", f"Modulo {index}"))
 
         # Rimuovi il pannello dallo stack e inserisci il placeholder
@@ -219,7 +206,6 @@ class NavigationController(QObject):
         placeholder = data["placeholder"]
         window = data["window"]
 
-        # Chiudi finestra senza distruggere il pannello (già rimosso nel window.closeEvent personalizzato)
         window.close()
 
         # Sostituisci placeholder con pannello reale
@@ -233,95 +219,20 @@ class NavigationController(QObject):
         logger.info("Pannello index %s reintegrato nello stack.", index)
 
     def _ensure_panel_initialized(self, index: int) -> None:
-        """Strategia di Lazy Loading: crea il pannello solo alla prima richiesta."""
+        """Strategia di Lazy Loading basata sulla PanelFactory."""
         try:
             panel = self.stack.widget(index)
 
-            # Se il pannello è ancora uno QWidget base (vuoto), va inizializzato
+            # Se il pannello è ancora uno QWidget base (vuoto), delega alla factory
             if type(panel) is QWidget:
                 logger.info("Inizializzazione lazy del pannello indice: %s", index)
-                new_panel = self._create_panel_instance(index)
+                new_panel = self.panel_factory.create_panel(index)
                 if new_panel:
                     self.stack.removeWidget(panel)
                     panel.deleteLater()
                     self.stack.insertWidget(index, new_panel)
         except Exception:
             logger.exception("Errore imprevisto durante inizializzazione pannello %s", index)
-
-    def _create_panel_instance(self, index: int) -> QWidget | None:  # noqa: PLR0911, PLR0912
-        """Factory interna per la creazione dei pannelli."""
-        try:
-            if index == PageIndex.DASHBOARD:
-                from src.gui.panels.dashboard_panel import DashboardPanel  # noqa: PLC0415
-
-                return DashboardPanel()
-
-            if index == PageIndex.AUTOMAZIONI:
-                from src.gui.widgets.automazioni_widget import AutomazioniWidget  # noqa: PLC0415
-
-                return AutomazioniWidget(main_window=self.mw)
-
-            if index == PageIndex.RESERVED_AI:
-                # Placeholder per future espansioni
-                return QWidget()
-
-            if index == PageIndex.TIMBRATURE:
-                from src.gui.panels.timbrature_db import TimbratureDBPanel  # noqa: PLC0415
-
-                return TimbratureDBPanel()
-
-            if index == PageIndex.STRUMENTALE:
-                from src.gui.panels.contabilita_panel import ContabilitaPanel  # noqa: PLC0415
-
-                return ContabilitaPanel()
-
-            if index == PageIndex.DATAEASE:
-                from src.gui.panels.scarico_ore_panel import ScaricoOrePanel  # noqa: PLC0415
-
-                return ScaricoOrePanel(controller=self.scarico_ore_controller)
-
-            if index == PageIndex.PDL_DB:
-                from src.gui.panels.pdl.pdl_panel import PDLDBPanel  # noqa: PLC0415
-
-                return PDLDBPanel(controller=self.pdl_controller)
-
-            if index == PageIndex.SETTINGS:
-                from src.gui.panels.settings.main_panel import SettingsPanel  # noqa: PLC0415
-
-                return SettingsPanel()
-
-            if index == PageIndex.HELP:
-                from src.gui.panels.help_panel import HelpPanel  # noqa: PLC0415
-
-                return HelpPanel()
-
-            if index == PageIndex.NOTIFICATIONS:
-                from src.gui.panels.notifications_panel import NotificationsPanel  # noqa: PLC0415
-
-                return NotificationsPanel()
-
-            if index == PageIndex.STORICO_ODA:
-                from src.gui.panels.storico_oda import StoricoOdaPanel  # noqa: PLC0415
-
-                return StoricoOdaPanel(controller=self.oda_controller)
-
-            if index == PageIndex.DIPENDENTI:
-                from src.gui.panels.dipendenti.main_panel import DipendentiPanel  # noqa: PLC0415
-
-                return DipendentiPanel(controller=self.anagrafica_controller)
-
-            if index == PageIndex.CONSUNTIVO:
-                from src.gui.panels.consuntivo_panel import ConsuntivoPanel  # noqa: PLC0415
-
-                return ConsuntivoPanel(controller=self.consuntivo_controller)
-
-        except Exception:
-            logger.exception("Errore fatale creazione pannello %s", index)
-            QMessageBox.critical(
-                None, "Errore Caricamento", f"Impossibile caricare il modulo {index}. Controlla i log."
-            )
-
-        return None
 
     def _handle_detached_navigation(self, index: int) -> None:
         """Porta in primo piano la finestra del pannello distaccato."""
@@ -330,8 +241,6 @@ class NavigationController(QObject):
         window.show()
         window.raise_()
         window.activateWindow()
-        # Sincronizza comunque la sidebar
         if hasattr(self.mw.sidebar, "set_active_button"):
             self.mw.sidebar.set_active_button(index)
-        # Sostituisce la navigazione nello stack con il placeholder (già presente)
         self.stack.setCurrentIndex(index)
