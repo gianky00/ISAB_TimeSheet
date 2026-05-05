@@ -4,7 +4,6 @@ import queue
 import sqlite3
 import threading
 import time
-import traceback
 from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -144,9 +143,8 @@ class AuditManager:
     ) -> int | None:
         """Esecuzione effettiva della scrittura su DB (eseguita nel Worker Thread)."""
         try:
+            # 1. Normalizzazione e Setup
             user_id = self._get_current_user()
-
-            # Normalizzazione
             status_val = status.value if isinstance(status, Status) else str(status)
             severity_val = severity.value if isinstance(severity, Severity) else str(severity)
 
@@ -157,10 +155,8 @@ class AuditManager:
             params_json = json.dumps(params, ensure_ascii=False) if params else "{}"
             timestamp = datetime.now(UTC).isoformat()
 
-            prev_hash = self.db.get_last_hash()
-
-            # Costruiamo un dict temporaneo per usare la stessa logica di hashing della verifica
-            temp_row = {
+            # 2. Integrità (Hashing)
+            row_data = {
                 "timestamp": timestamp,
                 "user_id": user_id,
                 "action": action,
@@ -173,9 +169,11 @@ class AuditManager:
                 "module": module,
                 "error_code": error_code,
             }
-            data_to_hash = AuditIntegrity.build_hash_string_v2(temp_row)
+            prev_hash = self.db.get_last_hash()
+            data_to_hash = AuditIntegrity.build_hash_string_v2(row_data)
             current_hash = AuditIntegrity.calculate_hash(data_to_hash, prev_hash)
 
+            # 3. Persistenza
             audit_id = self.db.insert_log(
                 (
                     timestamp,
@@ -193,34 +191,13 @@ class AuditManager:
                 )
             )
 
-            # Log strutturato correlato all'audit entry
-            log_level = "error" if status_val == "error" else "info"
-            getattr(logger, log_level)(
-                f"Audit: {action}",
-                audit_id=audit_id,
-                trace_id=trace_id,
-                category=category,
-                entity=entity,
-                status=status_val,
-                severity=severity_val,
-                duration_ms=duration_ms,
+            # 4. Logging Enterprise e Segnali
+            self._log_enterprise_audit(
+                action, audit_id, trace_id, category, entity, status_val, severity_val, duration_ms
             )
 
-            # Segnali (PyQt gestirà la traduzione tra thread se collegati a widget)
-            log_entry = {
-                "timestamp": timestamp,
-                "user_id": user_id,
-                "action": action,
-                "category": category,
-                "entity": entity,
-                "params": params_json,
-                "status": status_val,
-                "severity": severity_val,
-                "duration_ms": duration_ms,
-                "module": module,
-                "error_code": error_code,
-            }
-            self.signals.log_added.emit(log_entry)
+            row_data["id"] = audit_id  # Per compatibilità segnali
+            self.signals.log_added.emit(row_data)
             self.signals.logs_updated.emit()
 
             if notify:
@@ -230,8 +207,31 @@ class AuditManager:
 
         except Exception as e:
             logger.error("Audit Log Error", exc=e, action=action, category=category)  # noqa: TRY400
-            traceback.print_exc()
             return None
+
+    def _log_enterprise_audit(  # noqa: PLR0913
+        self,
+        action: str,
+        audit_id: Any,
+        trace_id: Any,
+        category: str,
+        entity: str,
+        status: str,
+        severity: str,
+        duration: int,
+    ) -> None:
+        """Emette il log strutturato dell'audit."""
+        log_level = "error" if status == "error" else "info"
+        getattr(logger, log_level)(
+            f"Audit: {action}",
+            audit_id=audit_id,
+            trace_id=trace_id,
+            category=category,
+            entity=entity,
+            status=status,
+            severity=severity,
+            duration_ms=duration,
+        )
 
     def _generate_notification(
         self,
@@ -245,14 +245,7 @@ class AuditManager:
         try:
             from src.core.notification_manager import NotificationManager  # noqa: PLC0415
 
-            level = "info"
-            if status_val == "error" or severity_val == "high":
-                level = "error"
-            elif status_val == "warning" or severity_val == "medium":
-                level = "warning"
-            elif status_val == "success":
-                level = "success"
-
+            level = self._map_status_to_notif_level(status_val, severity_val)
             msg = f"Esito: {status_val.upper()}"
             if params and isinstance(params, dict) and "error_details" in params:
                 msg = params["error_details"]
@@ -261,67 +254,72 @@ class AuditManager:
         except Exception as e:
             logger.error(f"Notification error in Audit: {e}")  # noqa: TRY400
 
+    def _map_status_to_notif_level(self, status: str, severity: str) -> str:
+        """Mappa stato e severità al livello di notifica."""
+        if status == "error" or severity == "high":
+            return "error"
+        if status == "warning" or severity == "medium":
+            return "warning"
+        if status == "success":
+            return "success"
+        return "info"
+
     def verify_integrity(self) -> bool:
-        """Verifica la catena di hash."""
+        """Verifica la catena di hash dell'intero database."""
         try:
-            # Leggiamo tutto e chiudiamo la connessione SQLite subitaneamente
-            # per non bloccare i log (INSERT) eseguiti dal Main Thread.
             with self.db.get_connection() as conn:
                 conn.row_factory = sqlite3.Row
-                db_rows = conn.execute("SELECT * FROM audit_logs ORDER BY id ASC").fetchall()
-                rows = [dict(r) for r in db_rows]
+                rows = [
+                    dict(r) for r in conn.execute("SELECT * FROM audit_logs ORDER BY id ASC").fetchall()
+                ]
 
             prev_hash = "0" * 64
             for i, row in enumerate(rows):
                 if i % 1000 == 0:
-                    time.sleep(0.005)  # Yield al Python GIL per far respirare la UI
+                    time.sleep(0.005)  # Yield
 
                 if not row["row_hash"]:
                     continue
 
-                # Tentativo 1: Hash V2
-                data = AuditIntegrity.build_hash_string_v2(row)
-                calc_hash = AuditIntegrity.calculate_hash(data, prev_hash)
-
-                if row["row_hash"] != calc_hash:
-                    # Tentativo 2: Hash Legacy
-                    data_legacy = AuditIntegrity.build_hash_string_legacy(row)
-                    calc_hash_legacy = AuditIntegrity.calculate_hash(data_legacy, prev_hash)
-
-                    if row["row_hash"] != calc_hash_legacy:
-                        # Tentativo 3: Hash V2 Legacy (None -> "None" come da vecchi f-string)
-                        data_v2_old = "|".join(
-                            [
-                                str(row[k])
-                                for k in (
-                                    "timestamp",
-                                    "user_id",
-                                    "action",
-                                    "category",
-                                    "entity",
-                                    "params",
-                                    "status",
-                                    "severity",
-                                    "duration_ms",
-                                    "module",
-                                    "error_code",
-                                )
-                            ]
-                        )
-                        calc_hash_v2_old = AuditIntegrity.calculate_hash(data_v2_old, prev_hash)
-
-                        if row["row_hash"] != calc_hash_v2_old:
-                            print(
-                                f"DEBUG: Integrity check failed at ID {row['id']}. Row hash: {row['row_hash'][:10]}... Expected: {calc_hash[:10]}..."
-                            )
-                            return False
+                if not self._check_row_integrity(row, prev_hash):
+                    logger.error(f"Integrity check failed at ID {row['id']}")
+                    return False
 
                 prev_hash = row["row_hash"]
         except Exception as e:
-            print(f"DEBUG: Exception in verify_integrity: {e}")
+            logger.exception("Integrity verification crash", exc=e)
             return False
         else:
             return True
+
+    def _check_row_integrity(self, row: dict[str, Any], prev_hash: str) -> bool:
+        """Verifica la validità dell'hash di una singola riga (supporta versioni multiple)."""
+        # Tentativo 1: Hash V2
+        data = AuditIntegrity.build_hash_string_v2(row)
+        if row["row_hash"] == AuditIntegrity.calculate_hash(data, prev_hash):
+            return True
+
+        # Tentativo 2: Hash Legacy
+        data_legacy = AuditIntegrity.build_hash_string_legacy(row)
+        if row["row_hash"] == AuditIntegrity.calculate_hash(data_legacy, prev_hash):
+            return True
+
+        # Tentativo 3: Hash V2 Legacy (None -> "None")
+        keys = (
+            "timestamp",
+            "user_id",
+            "action",
+            "category",
+            "entity",
+            "params",
+            "status",
+            "severity",
+            "duration_ms",
+            "module",
+            "error_code",
+        )
+        data_v2_old = "|".join([str(row[k]) for k in keys])
+        return bool(row["row_hash"] == AuditIntegrity.calculate_hash(data_v2_old, prev_hash))
 
     def get_logs(self, limit: int = 200) -> list[dict[str, Any]]:
         """Recupera gli ultimi N log di audit (senza filtri avanzati)."""
