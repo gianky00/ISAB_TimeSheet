@@ -4,10 +4,10 @@ Questo file tiene traccia dei debiti tecnici e dei miglioramenti necessari per m
 
 ## 🧩 Refactoring Architetturale (Violazioni SRP)
 Le seguenti classi/file presentano responsabilità multiple mischiate (UI, Dati, API) e devono essere scomposte in componenti specializzati (Single Responsibility Principle):
-- [ ] `src/gui/widgets/dashboard/don_ciro_widget.py`
+- [x] `src/gui/widgets/dashboard/don_ciro_widget.py`
 - [x] `src/gui/widgets/dashboard/weather_widget.py`
 - [ ] `src/bots/base/base_bot.py`
-- [ ] `src/gui/controllers/navigation_controller.py`
+- [x] `src/gui/controllers/navigation_controller.py`
 - [ ] `src/gui/panels/base.py` (Monitorare: ~400 LOC)
 - [ ] `src/bots/safework/pdl/bot.py` (Monitorare: complessità logica)
 
