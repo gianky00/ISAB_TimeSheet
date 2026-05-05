@@ -16,7 +16,7 @@ Le seguenti funzioni/moduli hanno superato la soglia di complessità desiderata 
 
 ### Bots
 - [ ] `src/bots/portale_fornitori/prenota_bp/bot.py`: Metodo `run`
-- [ ] `src/bots/portale_fornitori/scarico_ts/bot.py`: Metodo `_download_excel`
+- [x] `src/bots/portale_fornitori/scarico_ts/bot.py`: Metodo `_download_excel`
 - [ ] `src/bots/portale_fornitori/scarico_ts/pages/scarico_ts_page.py`: Metodo `_download_excel`
 
 ### Core
