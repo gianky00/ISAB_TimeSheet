@@ -384,4 +384,6 @@ class ScaricaTSBot(SeleniumBaseBot):
             except Exception as e:
                 self.log(f"[ATTENZIONE] Tentativo {attempt + 1}/3 fallito: {e}")
                 time.sleep(1)
+
+        self.log(f"[ERRORE] Impossibile spostare il file in: {dest}")
         return None

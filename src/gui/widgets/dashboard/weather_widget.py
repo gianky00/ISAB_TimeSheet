@@ -46,11 +46,11 @@ class WeatherWidget(ModernCard):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(elevation=5, parent=parent)
         self.setMinimumWidth(350)
-        
+
         # Inizializza il servizio (SRP: Logica delegata)
         self.weather_service = WeatherService.instance()
         self._is_loading = False
-        
+
         self._setup_ui()
         self._connect_signals()
 
@@ -361,7 +361,7 @@ class WeatherWidget(ModernCard):
         try:
             self._is_loading = False
             self.btn_refresh.setEnabled(True)
-            
+
             curr = weather.get("current", {})
             daily = weather.get("daily", {})
             aqi_curr = aqi_res.get("current", {})

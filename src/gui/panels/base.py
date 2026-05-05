@@ -8,7 +8,7 @@ Refactored V9.5: SRP Compliance via Composition.
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -33,6 +33,7 @@ from src.gui.widgets.status_card import StatusCard
 
 if TYPE_CHECKING:
     import threading
+
     from src.bots.base.base_bot import BaseBot
     from src.gui.controllers.bot_worker import BotWorker
 
@@ -60,10 +61,10 @@ class BaseBotPanel(QWidget):
         self.bot_name = bot_name
         self.bot_description = bot_description
         self._logger = get_logger(f"gui.panel.{bot_id}")
-        self.sync_module_id: Optional[str] = None
+        self.sync_module_id: str | None = None
 
-        self.worker: Optional[BotWorker] = None
-        self.start_time: Optional[datetime] = None
+        self.worker: BotWorker | None = None
+        self.start_time: datetime | None = None
 
         # Componenti Core (Composition)
         self.controls = BotControlComponent()
@@ -230,7 +231,7 @@ class BaseBotPanel(QWidget):
     def _log_mission_report(self, duration: str, success: bool) -> None:
         status_text = "SUCCESS" if success else "ERROR"
         self.log_widget.append(f"MISSION REPORT: Duration {duration} | Status: {status_text}", status_text)
-        
+
         QTimer.singleShot(0, lambda: AuditManager.instance().log_action(
             action="Completamento Automazione",
             category="automazione",
@@ -254,7 +255,7 @@ class BaseBotPanel(QWidget):
         worker.step_changed_signal.connect(self.activity_timeline.on_step_changed)
         worker.critical_error_signal.connect(lambda t, m: ConfirmationDialog.show_error(self, t, m))
         worker.request_input_signal.connect(self._ask_user_input)
-        
+
         if hasattr(self, "on_step_completed"):
             worker.row_status_signal.connect(self.on_step_completed)
 
@@ -266,7 +267,7 @@ class BaseBotPanel(QWidget):
         event.set()
 
     # --- Compatibility Methods for Subclasses and Tests ---
-    
+
     def _on_log(self, message: str) -> None:
         """Bridge per il widget log."""
         self.log_widget.append(message)

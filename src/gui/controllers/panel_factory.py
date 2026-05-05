@@ -5,7 +5,7 @@ Garantisce il disaccoppiamento tra la logica di navigazione e la creazione degli
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from PyQt6.QtWidgets import QMessageBox, QWidget
 
@@ -34,7 +34,7 @@ class PanelFactory:
         self.nav = navigation_controller
         self.mw: MainWindow = navigation_controller.mw
 
-    def create_panel(self, index: int) -> Optional[QWidget]:  # noqa: PLR0911, PLR0912
+    def create_panel(self, index: int) -> QWidget | None:  # noqa: PLR0911, PLR0912
         """
         Crea un'istanza del pannello corrispondente all'indice specificato.
 

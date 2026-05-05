@@ -142,7 +142,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         # 3. Notifica GUI
         if callback := getattr(self, "_progress_callback", None):
             callback(index, success, "")
-        
+
         return success
 
     def _handle_pdl_download(
@@ -151,7 +151,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         """Coordina lo scarico delle parti del PDL e l'unione."""
         path_p1, path_p2 = None, None
         success = False
-        
+
         try:
             # Parte Prima
             self.update_step("download_p1", StepStatus.RUNNING)
@@ -180,7 +180,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         finally:
             self._safe_remove(path_p1)
             self._safe_remove(path_p2)
-            
+
         return success
 
     def _sanitizza_pdl_number(self, pdl_raw: Any) -> str:

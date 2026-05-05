@@ -49,10 +49,10 @@ class WeatherService(QObject):
             return
 
         self._is_loading = True
-        
+
         # Coordinate Priolo Gargallo (SR)
         lat, lon = 37.15, 15.18
-        
+
         url_weather = (
             f"https://api.open-meteo.com/v1/forecast?"
             f"latitude={lat}&longitude={lon}&"
@@ -60,7 +60,7 @@ class WeatherService(QObject):
             f"daily=temperature_2m_max,temperature_2m_min,weather_code,uv_index_max,precipitation_probability_max,sunrise,sunset&"
             f"timezone=Europe%2FRome"
         )
-        
+
         req = QNetworkRequest(QUrl(url_weather))
         reply = self.network_manager.get(req)
         if reply:
@@ -82,7 +82,7 @@ class WeatherService(QObject):
         try:
             raw_data = reply.readAll().data()
             self._temp_weather_data = json.loads(raw_data.decode("utf-8"))
-            
+
             # Step 2: Recupero Qualità dell'Aria (AQI)
             lat, lon = 37.15, 15.18
             url_aqi = (
@@ -91,13 +91,13 @@ class WeatherService(QObject):
                 f"current=european_aqi,pm10,pm2_5&"
                 f"timezone=Europe%2FRome"
             )
-            
+
             req_aqi = QNetworkRequest(QUrl(url_aqi))
             reply_aqi = self.network_manager.get(req_aqi)
             if reply_aqi:
                 reply_aqi.finished.connect(self._on_aqi_received)
-                
-        except Exception as e:
+
+        except Exception:
             logger.exception("Errore parsing dati Weather")
             self.error_occurred.emit("Errore Dati Meteo")
             self._is_loading = False
@@ -119,7 +119,7 @@ class WeatherService(QObject):
                 logger.warning(f"AQI API Error (Non-fatal): {reply.errorString()}")
         except Exception:
             logger.exception("Errore silenzioso nel parsing AQI")
-        
+
         self._is_loading = False
         self.weather_data_ready.emit(self._temp_weather_data, aqi_data)
         reply.deleteLater()
