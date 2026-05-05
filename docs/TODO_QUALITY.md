@@ -6,7 +6,7 @@ Questo file tiene traccia dei debiti tecnici e dei miglioramenti necessari per m
 Le seguenti classi/file presentano responsabilità multiple mischiate (UI, Dati, API) e devono essere scomposte in componenti specializzati (Single Responsibility Principle):
 - [x] `src/gui/widgets/dashboard/don_ciro_widget.py`
 - [x] `src/gui/widgets/dashboard/weather_widget.py`
-- [ ] `src/bots/base/base_bot.py`
+- [x] `src/bots/base/base_bot.py`
 - [x] `src/gui/controllers/navigation_controller.py`
 - [ ] `src/gui/panels/base.py` (Monitorare: ~400 LOC)
 - [ ] `src/bots/safework/pdl/bot.py` (Monitorare: complessità logica)
@@ -22,7 +22,7 @@ Le seguenti funzioni/moduli hanno superato la soglia di complessità desiderata 
 ### Core
 - [ ] `src/core/audit/manager.py`: Metodi `_generate_notification` e `_get_current_user`
 - [ ] `src/core/backup_manager.py`: Metodo `detect_cloud_paths`
-- [ ] `src/core/data_synchronizer.py`: Metodi `sync_giornaliere` e `sync_contabilita_dati`
+- [x] `src/core/data_synchronizer.py`: Metodi `sync_giornaliere` e `sync_contabilita_dati`
 - [ ] `src/core/importers/`: Moduli e metodi complessi (es. `scan_workload` in `__init__.py`, `import_certificati_campione` in `certificati.py`)
 
 ### UI & Utils
