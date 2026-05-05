@@ -91,34 +91,19 @@ class SmartLogTranslator:
     def _detect_category(message: str) -> str:
         """Determina la categoria del messaggio basandosi sulle keyword."""
         lower_msg = message.lower()
-        category = "info"
 
-        # Priorità a categorie specifiche di business
-        if any(kw in lower_msg for kw in ("scaric", "download", "[download]")):
-            category = "download"
-        elif any(
-            kw in lower_msg
-            for kw in (
-                "errore",
-                "fallit",
-                "falliment",
-                "fail",
-                "exception",
-                "eccezion",
-                "critico",
-                "[errore]",
-            )
-        ):
-            category = "error"
-        elif any(kw in lower_msg for kw in ("successo", "completat", "compiut", "fatto", "[ok]", "[info]")):
-            category = "success"
-        elif any(kw in lower_msg for kw in ("click", "premuto", "selezion", "[click]")):
-            category = "action"
-        elif any(kw in lower_msg for kw in ("ricerca", "cerca", "[cerca]")):
-            category = "search"
-        elif any(
-            kw in lower_msg for kw in ("attesa", "attendi", "aspetto", "polling", "caricamento", "[attesa]")
-        ):
-            category = "wait"
+        # Mappatura keyword -> categoria
+        categories_map = {
+            "download": ("scaric", "download", "[download]"),
+            "error": ("errore", "fallit", "falliment", "fail", "exception", "eccezion", "critico", "[errore]"),
+            "success": ("successo", "completat", "compiut", "fatto", "[ok]", "[info]"),
+            "action": ("click", "premuto", "selezion", "[click]"),
+            "search": ("ricerca", "cerca", "[cerca]"),
+            "wait": ("attesa", "attendi", "aspetto", "polling", "caricamento", "[attesa]"),
+        }
 
-        return category
+        for category, keywords in categories_map.items():
+            if any(kw in lower_msg for kw in keywords):
+                return category
+
+        return "info"

@@ -13,9 +13,10 @@ class SortableTreeWidgetItem(QTreeWidgetItem):
             return super().__lt__(other)
 
         column = tw.sortColumn()
-        t1, t2 = self.text(column).strip(), other.text(column).strip()
+        t1 = self.text(column).strip()
+        t2 = other.text(column).strip()
 
-        # 1. Date
+        # 1. Date (DD/MM/YYYY o YYYY/MM/DD)
         if "/" in t1 and "/" in t2 and len(t1) <= 10:  # noqa: PLR2004
             res = self._compare_dates(t1, t2)
             if res is not None:
@@ -23,9 +24,7 @@ class SortableTreeWidgetItem(QTreeWidgetItem):
 
         # 2. Percentage
         if "%" in t1 and "%" in t2:
-            res = self._compare_numeric(t1.replace("%", ""), t2.replace("%", ""))
-            if res is not None:
-                return res
+            return self._compare_percentage(t1, t2)
 
         # 3. Numeric
         res = self._compare_numeric(t1, t2)
@@ -33,6 +32,13 @@ class SortableTreeWidgetItem(QTreeWidgetItem):
             return res
 
         return t1.lower() < t2.lower()
+
+    def _compare_percentage(self, t1: str, t2: str) -> bool:
+        """Confronta due stringhe di percentuale."""
+        v1 = t1.replace("%", "").strip()
+        v2 = t2.replace("%", "").strip()
+        res = self._compare_numeric(v1, v2)
+        return res if res is not None else t1 < t2
 
     def _compare_dates(self, t1: str, t2: str) -> bool | None:
         for fmt in ("%d/%m/%Y", "%Y/%m/%d"):

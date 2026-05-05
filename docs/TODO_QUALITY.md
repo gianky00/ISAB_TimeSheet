@@ -9,7 +9,7 @@ Le seguenti classi/file presentano responsabilità multiple mischiate (UI, Dati,
 - [x] `src/bots/base/base_bot.py`
 - [x] `src/gui/controllers/navigation_controller.py`
 - [x] `src/gui/panels/base.py`
-- [ ] `src/bots/safework/pdl/bot.py` (Monitorare: complessità logica)
+- [x] `src/bots/safework/pdl/bot.py`
 
 ## 🏗️ Refactoring Complessità (Xenon Grade C -> B)
 Le seguenti funzioni/moduli hanno superato la soglia di complessità desiderata (B) e devono essere spezzettate:
@@ -26,8 +26,8 @@ Le seguenti funzioni/moduli hanno superato la soglia di complessità desiderata 
 - [ ] `src/core/importers/`: Moduli e metodi complessi (es. `scan_workload` in `__init__.py`, `import_certificati_campione` in `certificati.py`)
 
 ### UI & Utils
-- [ ] `src/gui/widgets/contabilita/helpers.py`: Intero modulo (media C)
-- [ ] `src/utils/log_humanizer.py`: Intero modulo (media C)
+- [x] `src/gui/widgets/contabilita/helpers.py`: Intero modulo (media C)
+- [x] `src/utils/log_humanizer.py`: Intero modulo (media C)
 
 ## 🛡️ Sicurezza
 - [x] Migrazione a `pip-audit` per scansione vulnerabilità (integrato in Toolbox GUI)
