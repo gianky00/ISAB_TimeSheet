@@ -131,11 +131,12 @@ class ContabilitaImporter(BaseImporter):
         return all_rows, imported_years
 
     @classmethod
-    def _process_single_sheet(cls, xls: Any, sheet_name: str, year: int) -> list[tuple[Any, ...]]:  # noqa: PLR0915
+    def _process_single_sheet(cls, xls: Any, sheet_name: str, year: int) -> list[tuple[Any, ...]]:
         """Processa un singolo foglio del file Excel di contabilitÃ ."""
         try:
             pd_obj = cls._get_pd()
             header_row_idx = cls._find_header_row(xls, sheet_name)
+
             try:
                 df = pd_obj.read_excel(xls, sheet_name=sheet_name, header=header_row_idx, usecols="A:AZ")
             except Exception:
@@ -146,9 +147,7 @@ class ContabilitaImporter(BaseImporter):
             if not df.empty:
                 df = df.iloc[:-1]  # Rimuovi riga dei totali solitamente presente
 
-            # Pulizia preliminare righe vuote
             df.dropna(how="all", inplace=True)
-
             if df.empty:
                 return []
 
@@ -156,60 +155,13 @@ class ContabilitaImporter(BaseImporter):
             df = cls._normalize_columns(df)
             df = cls._ensure_required_columns(df)
 
-            # Preparazione finale dati
+            # Selezione e ordinamento colonne
             target_columns = ["year", *list(cls.COLUMNS_MAPPING.values())]
             df = df[target_columns].copy()
 
-            # --- Gestione Tipi Intelligente ---
-            def _clean_numeric(val: Any) -> float:
-                if pd_obj.isna(val) or val == "":
-                    return 0.0
-                if isinstance(val, (int, float)):
-                    return float(val)
-                # Gestione stringhe con formati IT/EN (1.234,56 o 1,234.56)
-                s = str(val).strip().replace("€", "").replace(" ", "")
-                if not s:
-                    return 0.0
-                try:
-                    # Se ha sia punto che virgola, determiniamo il formato
-                    if "." in s and "," in s:
-                        if s.find(".") < s.find(","):  # IT: 1.234,56
-                            s = s.replace(".", "").replace(",", ".")
-                        else:  # EN: 1,234.56
-                            s = s.replace(",", "")
-                    else:
-                        # Solo uno dei due: se è virgola, è decimale IT
-                        s = s.replace(",", ".")
-                    return float(s)
-                except ValueError:
-                    return 0.0
+            # Pulizia e validazione
+            df = cls._clean_dataframe_types(df)
 
-            for col in df.columns:
-                if col == "year":
-                    continue
-
-                if col in ("totale_prev", "ore_sp"):
-                    df[col] = df[col].apply(_clean_numeric)
-                    df[col] = df[col].round(2)
-
-                elif col == "data_prev":
-                    df[col] = pd_obj.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m-%d").fillna("")
-
-                elif col == "resa":
-                    df[col] = df[col].apply(
-                        lambda x: (
-                            str(round(float(x), 2))
-                            if pd_obj.notna(x)
-                            and str(x).replace(".", "").replace(",", "").replace("-", "").isdigit()
-                            else str(x).strip()
-                            if pd_obj.notna(x)
-                            else ""
-                        )
-                    )
-                else:
-                    df[col] = df[col].astype(str).str.strip().replace(r"(?i)^nan$", "", regex=True).fillna("")
-
-            # Validazione Pandera finale su dati puliti
             try:
                 df = validate_contabilita(df)
             except Exception as e:
@@ -218,10 +170,77 @@ class ContabilitaImporter(BaseImporter):
             return list(df.itertuples(index=False, name=None))
         except Exception as e:
             logger.warning(f"Errore processamento foglio {sheet_name}: {e}")
-            import traceback  # noqa: PLC0415
-
-            logger.debug(traceback.format_exc())
+            logger.debug(f"Traceback: {e}", exc_info=True)
             return []
+
+    @classmethod
+    def _clean_dataframe_types(cls, df: pd.DataFrame) -> pd.DataFrame:
+        """Pulisce e tipizza le colonne del DataFrame di contabilitÃ ."""
+        pd_obj = cls._get_pd()
+
+        for col in df.columns:
+            if col == "year":
+                continue
+
+            if col in ("totale_prev", "ore_sp"):
+                df[col] = df[col].apply(cls._clean_numeric).round(2)
+
+            elif col == "data_prev":
+                df[col] = pd_obj.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m-%d").fillna("")
+
+            elif col == "resa":
+                df[col] = df[col].apply(cls._clean_resa_value)
+            else:
+                df[col] = df[col].astype(str).str.strip().replace(r"(?i)^nan$", "", regex=True).fillna("")
+
+        return df
+
+    @classmethod
+    def _clean_numeric(cls, val: Any) -> float:
+        """Converte un valore generico in float gestendo formati IT/EN."""
+        if pd.isna(val) or val == "":
+            return 0.0
+        if isinstance(val, (int, float)):
+            return float(val)
+
+        s = str(val).strip().replace("€", "").replace(" ", "")
+        if not s:
+            return 0.0
+
+        try:
+            # Se ha sia punto che virgola, determiniamo il formato
+            if "." in s and "," in s:
+                s = (
+                    s.replace(".", "").replace(",", ".")
+                    if s.find(".") < s.find(",")
+                    else s.replace(",", "")
+                )
+            else:
+                # Solo uno dei due: se è virgola, è decimale IT
+                s = s.replace(",", ".")
+            return float(s)
+        except ValueError:
+            return 0.0
+
+    @staticmethod
+    def _clean_resa_value(val: Any) -> str:
+        """Pulisce il valore della colonna Resa."""
+        if pd.isna(val):
+            return ""
+        s_val = str(val).strip()
+        if not s_val:
+            return ""
+
+        # Rimuove separatori comuni per controllare se è numerico
+        clean_s = s_val.replace(".", "").replace(",", "").replace("-", "")
+        if clean_s.isdigit():
+            try:
+                # Se è un numero, lo arrotondiamo a 2 decimali e lo stringiamo
+                num = float(s_val.replace(",", "."))
+                return str(round(num, 2))
+            except ValueError:
+                pass
+        return s_val
 
     @classmethod
     def _find_header_row(cls, xls: Any, sheet_name: str) -> int:

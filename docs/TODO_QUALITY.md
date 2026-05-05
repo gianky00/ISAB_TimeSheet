@@ -21,9 +21,9 @@ Le seguenti funzioni/moduli hanno superato la soglia di complessità desiderata 
 
 ### Core
 - [x] `src/core/audit/manager.py`: Metodi `_generate_notification` e `_get_current_user`
-- [ ] `src/core/backup_manager.py`: Metodo `detect_cloud_paths`
+- [x] `src/core/backup_manager.py`: Metodo `detect_cloud_paths`
 - [x] `src/core/data_synchronizer.py`: Metodi `sync_giornaliere` e `sync_contabilita_dati`
-- [ ] `src/core/importers/`: Moduli e metodi complessi (es. `scan_workload` in `__init__.py`, `import_certificati_campione` in `certificati.py`)
+- [x] `src/core/importers/`: Moduli e metodi complessi (es. `_process_single_sheet` in `contabilita.py`)
 
 ### UI & Utils
 - [x] `src/gui/widgets/contabilita/helpers.py`: Intero modulo (media C)
