@@ -331,6 +331,29 @@ class MainWindow(QMainWindow):
         """Naviga alla pagina delle impostazioni globali."""
         self.navigation_controller.navigate_to(PageIndex.SETTINGS)
 
+    def trigger_pdl_print(self, pdl_numbers: list[str]) -> None:
+        """
+        Coordina la stampa dei PDL selezionati navigando al bot di scarico.
+
+        Args:
+            pdl_numbers: Lista di numeri PDL da stampare.
+        """
+        if not pdl_numbers:
+            return
+
+        # Naviga al pannello Scarico PDL (Sotto-tab di Automazioni)
+        self.navigation_controller.navigate_to_panel("scarico_pdl")
+
+        # Recupera il pannello (già inizializzato dalla navigazione) e inietta i dati
+        if hasattr(self, "pdl_panel") and self.pdl_panel:
+            self.pdl_panel.set_pdl_list(pdl_numbers)
+        else:
+            # Fallback se non ancora registrato (molto improbabile dopo navigazione)
+            from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
+            automazioni = self.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
+            if automazioni and hasattr(automazioni, "panel_pdl"):
+                automazioni.panel_pdl.set_pdl_list(pdl_numbers)
+
     def closeEvent(self, event: Any) -> None:
         """Gestisce la chiusura della finestra (riduzione a tray o uscita)."""
         if self._force_quit:
