@@ -48,13 +48,15 @@ class TestBaseBot:
         return DummyBot("user", "pass")
 
     def test_initialize_steps(self, bot):
-        bot._initialize_steps()
-        assert len(bot._steps_state) == 2
-        assert bot._steps_state[0] == StepStatus.PENDING
+        bot.step_manager.reset()
+        assert len(bot.step_manager.steps) == 2
+        # Accediamo a _states per verifica interna del reset
+        assert bot.step_manager._states[0] == StepStatus.PENDING
 
-    @patch("src.core.license_validator.verify_license", return_value=(True, "OK"))
-    @patch("src.core.license_updater.run_update")
-    def test_execute_workflow_success(self, mock_upd, mock_lic, bot):
+    @patch(
+        "src.bots.base.execution_guard.ExecutionGuard.check_environment", return_value=(True, "")
+    )
+    def test_execute_workflow_success(self, mock_guard, bot):
         """Verifica il flusso completo di esecuzione: login -> run -> cleanup."""
         # Mocking internal methods
         bot._safe_login_with_retry = MagicMock(return_value=True)
@@ -66,6 +68,7 @@ class TestBaseBot:
         assert bot.status == BotStatus.COMPLETED
         bot._safe_login_with_retry.assert_called_once()
         bot.cleanup.assert_called_once()
+        mock_guard.assert_called_once()
 
     def test_validate_data_empty(self, bot):
         success, msg = bot.validate_data([])

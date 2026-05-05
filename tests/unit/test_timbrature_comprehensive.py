@@ -22,8 +22,17 @@ class TestTimbratureBotComprehensive(unittest.TestCase):
                     fornitore="VENDOR",
                 )
                 self.bot.signals = MagicMock()  # FIX: Inizializza signals manualmente
+                
+                # Inizializza mock per step_manager (necessario dopo refactoring SRP)
+                self.bot.step_manager = MagicMock()
+                self.bot.step_manager.update_step.return_value = (0, "test-step")
+                self.bot.step_manager.current_step_name = "test-step"
+                self.bot.step_manager.current_index = 0
+                
                 self.bot.driver = self.mock_driver
-                self.bot._log_callback = MagicMock()
+                self.bot._log_callback = None
+                self.bot._input_callback = None
+                self.bot._progress_callback = None
                 self.bot._logger = MagicMock()
                 self.bot._trace_id = "test-trace"
                 self.bot._status = MagicMock()

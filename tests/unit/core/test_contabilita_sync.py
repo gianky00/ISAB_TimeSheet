@@ -60,16 +60,25 @@ class TestContabilitaSyncEngine:
         assert removed == 0
 
     def test_get_diff_count_logic(self, db_path):
-        """Testa direttamente l'algoritmo di diff EXCEPT."""
+        """Testa l'algoritmo di diff tramite l'orchestrazione base."""
         with sqlite3.connect(db_path) as conn:
             cursor = conn.cursor()
             cols = ["year", "personale", "ore"]
-            # Crea temp table manuale per il test
-            cursor.execute("CREATE TEMP TABLE temp_giornaliere (year INTEGER, personale TEXT, ore REAL)")
-            cursor.execute("INSERT INTO temp_giornaliere VALUES (2024, 'Rossi', 8.0)")  # Uguale
-            cursor.execute("INSERT INTO temp_giornaliere VALUES (2024, 'Nuovo', 4.0)")  # Nuova
+            # Dati attuali nel DB (da fixture): (2024, 'Rossi', 8.0)
+            
+            # Nuovi dati: uno uguale, uno nuovo
+            new_data = [
+                (2024, "Rossi", 8.0),  # Uguale
+                (2024, "Nuovo", 4.0),  # Nuova
+            ]
+            
+            # Eseguiamo la sync partizionata per l'anno 2024
+            added, removed = ContabilitaSyncEngine._sync_partitioned_table(
+                cursor, "giornaliere", cols, "year", [2024], new_data
+            )
 
-            added, removed = ContabilitaSyncEngine._get_diff_count(cursor, "giornaliere", cols, 2024)
-
-            assert added == 1
-            assert removed == 0
+            # Rossi originale viene rimosso e riaggiunto (perché facciamo full replace della partizione)
+            # ma il conteggio diff (EXCEPT) dovrebbe rilevare solo le differenze reali di contenuto.
+            # In realtà _sync_partitioned_table calcola diff prima del replace.
+            assert added == 1  # Solo 'Nuovo' è nuovo
+            assert removed == 0 # 'Rossi' era già lì (identico)

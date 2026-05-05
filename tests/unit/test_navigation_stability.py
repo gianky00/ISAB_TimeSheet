@@ -43,14 +43,14 @@ class TestNavigationStability:
 
         # Simula factory che ritorna un widget di tipo MockPanel
         mock_panel = MockPanel()
-        with patch.object(ctrl, "_create_panel_instance", return_value=mock_panel):
+        with patch.object(ctrl.panel_factory, "create_panel", return_value=mock_panel):
             # Prima chiamata: inizializza (indice 1: AUTOMAZIONI)
             p1 = ctrl.get_panel(PageIndex.AUTOMAZIONI)
             assert p1 is mock_panel
             assert isinstance(p1, MockPanel)
 
             # Seconda chiamata: ritorna dalla cache (non chiama factory perché type(p1) is not QWidget)
-            with patch.object(ctrl, "_create_panel_instance") as mock_factory:
+            with patch.object(ctrl.panel_factory, "create_panel") as mock_factory:
                 p2 = ctrl.get_panel(PageIndex.AUTOMAZIONI)
                 assert p2 is p1
                 assert not mock_factory.called
@@ -72,8 +72,8 @@ class TestNavigationStability:
         ctrl = NavigationController(mw)
 
         with (
-            patch.object(ctrl, "_create_panel_instance", side_effect=Exception("Panel Crash")),
-            patch("src.gui.controllers.navigation_controller.QMessageBox.critical") as mock_msg,
+            patch.object(ctrl.panel_factory, "create_panel", side_effect=Exception("Panel Crash")),
+            patch("src.gui.controllers.panel_factory.QMessageBox.critical") as mock_msg,
         ):
             # Tenta di caricare un pannello che crasha
             p = ctrl.get_panel(PageIndex.DASHBOARD)
@@ -82,9 +82,3 @@ class TestNavigationStability:
             assert p is not None
             assert type(p) is QWidget
             assert not isinstance(p, MockPanel)
-
-            # QMessageBox deve essere stato chiamato da _create_panel_instance (se non fosse mockato)
-            # Ma qui stiamo mockando _create_panel_instance direttamente con side_effect.
-            # Il nostro _ensure_panel_initialized cattura l'eccezione e logga.
-            # Quindi qui mock_msg NON viene chiamato perché side_effect bypassa il try-except interno di _create_panel_instance.
-            # Ma il controller sopravvive!

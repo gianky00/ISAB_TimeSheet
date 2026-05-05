@@ -45,14 +45,13 @@ def mock_bot_deps():
     with (
         patch("src.bots.base.base_bot.get_logger") as mock_logger,
         patch("src.bots.base.base_bot.generate_trace_id", return_value="test-trace"),
-        patch("src.bots.base.base_bot.run_update") as mock_update,
-        patch("src.bots.base.base_bot.verify_license") as mock_verify,
+        patch(
+            "src.bots.base.execution_guard.ExecutionGuard.check_environment", return_value=(True, "")
+        ) as mock_guard,
     ):
-        mock_verify.return_value = (True, "OK")
         yield {
             "logger": mock_logger,
-            "run_update": mock_update,
-            "verify_license": mock_verify,
+            "guard": mock_guard,
         }
 
 
@@ -115,7 +114,7 @@ class TestBaseBot:
         assert result is True
         assert bot.status == BotStatus.COMPLETED
         mock_login.assert_called_once()
-        mock_bot_deps["run_update"].assert_called_once()
+        mock_bot_deps["guard"].assert_called_once()
 
     @patch.object(ConcreteBot, "_safe_login_with_retry", return_value=False)
     def test_execute_workflow_login_fail(self, mock_login, mock_bot_deps):

@@ -111,10 +111,11 @@ class TestBaseBotRobust:
 
     # --- Execution Flow Tests ---
 
-    @patch("src.bots.base.base_bot.verify_license", return_value=(True, "OK"))
-    @patch("src.bots.base.base_bot.run_update")
+    @patch(
+        "src.bots.base.execution_guard.ExecutionGuard.check_environment", return_value=(True, "")
+    )
     @patch("src.bots.base.selenium_base_bot.LoginPage")
-    def test_execute_success(self, mock_login_page_cls, mock_update, mock_verify, bot):
+    def test_execute_success(self, mock_login_page_cls, mock_guard, bot):
         """Test flusso execute completo con successo."""
         # Setup mocks
         bot._init_driver = MagicMock()
