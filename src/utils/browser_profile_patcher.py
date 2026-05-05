@@ -79,6 +79,11 @@ def _patch_file(path: Path) -> bool:
             "sync.managed": True,  # Blocca la sincronizzazione
             "profile.nickname": "SyncroJob-Bot",
             "plugins.always_open_pdf_externally": True,
+            # Configurazione Download (Silenzioso e Automatico)
+            "download.prompt_for_download": False,
+            "download.directory_upgrade": True,
+            "download.default_directory": str(Path.home() / "Downloads"),  # Fallback sicuro
+            "savefile.default_directory": str(Path.home() / "Downloads"),
             # Blocco esplicito dei popup di sicurezza e password
             "profile.default_content_setting_values.notifications": 2,
             "profile.default_content_setting_values.password_manager": 2,

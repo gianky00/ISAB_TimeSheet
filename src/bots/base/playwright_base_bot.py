@@ -107,7 +107,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
                 "--disable-background-networking",
                 "--disable-client-side-phishing-detection",
                 "--disable-sync",
-                "--disable-features=LeakDetection,PasswordLeakDetection,PasswordCheck,SafeBrowsingPasswordCheck,AutofillServerCommunication,AutofillAccountWalletStorage,OptimizationHints,OptimizationGuideFetching,OptimizationTargetPrediction,CredentialProviderExtension,BackgroundPasswordCheck,InsecureDownloadWarnings,PasswordManager,PasswordGeneration,SafeBrowsing",
+                "--disable-features=LeakDetection,PasswordLeakDetection,PasswordCheck,SafeBrowsingPasswordCheck,AutofillServerCommunication,AutofillAccountWalletStorage,OptimizationHints,OptimizationGuideFetching,OptimizationTargetPrediction,CredentialProviderExtension,BackgroundPasswordCheck,InsecureDownloadWarnings,PasswordManager,PasswordGeneration,SafeBrowsing,DownloadBubble,DownloadBubbleV2",
                 "--force-fieldtrials=PasswordLeakDetection/Disabled",
                 "--no-manage-passwords",
                 "--disable-save-password-bubble",
@@ -159,7 +159,13 @@ class PlaywrightBaseBot(BaseBot, ABC):
                     accept_downloads=True,
                     **launch_options,
                 )
+
+                # Gestione automatica download per evitare prompt "Salva con nome"
+                if self.download_path:
+                    self.context.on("download", lambda download: download.save_as(Path(self.download_path) / download.suggested_filename))
+
                 break  # Successo
+
 
             except Exception as e:
                 err_msg = str(e)
