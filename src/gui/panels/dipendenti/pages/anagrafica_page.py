@@ -17,8 +17,8 @@ from PyQt6.QtWidgets import (
 from src.core.dipendenti.anagrafica_controller import AnagraficaController
 from src.core.dipendenti.data_helpers import format_db_date
 from src.core.sync_tracker import SyncTracker
+from src.gui.controllers.bot_worker import BotWorker  # noqa: TC001
 from src.gui.formatters import FastTableModel
-from src.gui.panels.base import BotWorker  # noqa: TC001
 from src.gui.panels.dipendenti.utils.report_generator import ReportGenerator
 from src.gui.widgets.toast import ToastManager
 

@@ -23,8 +23,8 @@ from src.core.database import pdl_queries
 from src.core.pdl.pdl_controller import PDLController
 from src.core.sync_tracker import SyncTracker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
+from src.gui.controllers.bot_worker import BotWorker  # noqa: TC001
 from src.gui.formatters import FastTableModel
-from src.gui.panels.base import BotWorker  # noqa: TC001
 from src.gui.widgets import EmptyStateWidget
 from src.gui.workers.pdl_io_worker import PdlIOWorker
 

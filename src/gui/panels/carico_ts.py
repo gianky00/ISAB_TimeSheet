@@ -13,8 +13,9 @@ from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.core.constants import Icons
+from src.gui.controllers.bot_worker import BotWorker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
-from src.gui.panels.base import BaseBotPanel, BotWorker
+from src.gui.panels.base import BaseBotPanel
 from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import EditableDataTable
 from src.gui.widgets.modern_button import ModernButton

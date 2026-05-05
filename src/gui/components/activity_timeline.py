@@ -27,7 +27,7 @@ from PyQt6.QtGui import (
 )
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QWidget
 
-from src.bots.base.base_bot import StepStatus
+from src.bots.base.step_manager import StepStatus
 from src.gui.styles import COLORS
 from src.gui.styles.constants import UI_SIZES
 

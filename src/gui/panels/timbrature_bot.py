@@ -12,7 +12,8 @@ from PyQt6.QtCore import QDate, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
 from src.core import config_manager
-from src.gui.panels.base import BaseBotPanel, BotWorker
+from src.gui.controllers.bot_worker import BotWorker
+from src.gui.panels.base import BaseBotPanel
 from src.gui.styles import STATUS_COLORS
 from src.gui.widgets import BotParametersWidget
 from src.gui.widgets.toast import ToastManager

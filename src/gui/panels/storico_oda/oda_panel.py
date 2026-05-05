@@ -25,7 +25,7 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Icons
 from src.core.oda.oda_controller import ODAController
 from src.core.sync_tracker import SyncTracker
-from src.gui.panels.base import BotWorker  # noqa: TC001
+from src.gui.controllers.bot_worker import BotWorker  # noqa: TC001
 from src.gui.widgets import EmptyStateWidget
 from src.gui.widgets.toast import ToastManager
 from src.gui.workers.oda_io_worker import OdaIOWorker

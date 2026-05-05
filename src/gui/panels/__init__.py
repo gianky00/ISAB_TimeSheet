@@ -3,7 +3,8 @@ SyncroJob - GUI Panels Module
 Facade per retrocompatibilità.
 """
 
-from src.gui.panels.base import BaseBotPanel, BotWorker
+from src.gui.controllers.bot_worker import BotWorker
+from src.gui.panels.base import BaseBotPanel
 from src.gui.panels.carico_ts import CaricoTSPanel
 from src.gui.panels.consuntivo_panel import ConsuntivoPanel
 from src.gui.panels.contabilita_kpi import ContabilitaKPIPanel

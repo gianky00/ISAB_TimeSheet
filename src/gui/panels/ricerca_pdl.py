@@ -17,7 +17,8 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
-from src.gui.panels.base import BaseBotPanel, BotWorker
+from src.gui.controllers.bot_worker import BotWorker
+from src.gui.panels.base import BaseBotPanel
 from src.gui.styles import COLORS, STATUS_COLORS
 from src.gui.widgets.core_widgets import (
     FilterComboBox,

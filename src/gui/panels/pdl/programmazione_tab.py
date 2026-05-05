@@ -21,7 +21,7 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.core.database.pdl_queries import PDLQueries
 from src.core.pdl.period_manager import PDLPeriodManager
-from src.gui.panels.base import BotWorker
+from src.gui.controllers.bot_worker import BotWorker
 from src.gui.styles import COLORS
 from src.gui.widgets import MultiSelectFilter, TimelineWidget
 from src.gui.widgets.core_widgets import FilterComboBox, StandardGroupBox
