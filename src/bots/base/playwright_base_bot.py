@@ -4,6 +4,7 @@ SyncroJob - Playwright Base Bot
 Implementazione della classe base per i bot Playwright.
 """
 
+import os
 import re
 import sys
 from abc import ABC
@@ -12,7 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
+from playwright.sync_api import Browser, BrowserContext, Page, Playwright, sync_playwright
 
 from src.bots.base.base_bot import BaseBot
 from src.bots.base.playwright_login_page import PlaywrightLoginPage
@@ -20,6 +21,8 @@ from src.bots.portale_fornitori.common.locators import CommonLocators
 from src.core import config_manager
 from src.core.constants import BotStatus, BrowserConfig, Timeouts
 from src.core.logging import measure_time
+from src.utils.browser_diagnostics import emergency_profile_reset
+from src.utils.browser_profile_patcher import patch_browser_profile
 from src.utils.helpers import cleanup_bot_processes
 
 
@@ -50,49 +53,23 @@ class PlaywrightBaseBot(BaseBot, ABC):
             company: Società da selezionare al login (ISAB o PSER).
         """
         super().__init__(username, password, headless, timeout, download_path, company=company)
-        self.playwright: Any = None
+        self.playwright: Playwright | None = None
         self.browser: Browser | None = None
         self.context: BrowserContext | None = None
         self.page: Page | None = None
         self.login_page: PlaywrightLoginPage | None = None
 
     @measure_time(threshold_ms=10000)
-    def _init_driver(self) -> None:  # noqa: PLR0915
+    def _init_driver(self) -> None:
         """Inizializza Playwright e il browser con logica di persistenza, stabilità e recovery."""
-        import os  # noqa: PLC0415
-
-        from src.utils.browser_profile_patcher import patch_browser_profile  # noqa: PLC0415
-
         self.status = BotStatus.INITIALIZING
 
-        # --- CONFIGURAZIONE BINARI BUNDLED ---
-        # Determina la cartella base (src se in dev, root se bundle)
-        if getattr(sys, "frozen", False):
-            # Percorso dell'eseguibile (PyInstaller/Nuitka)
-            bundle_dir = Path(sys._MEIPASS) if hasattr(sys, "_MEIPASS") else Path(sys.executable).parent
-            drivers_pw_path = bundle_dir / "drivers" / "ms-playwright"
+        # 1. Configurazione ambiente e binari
+        self._setup_playwright_env()
 
-            if drivers_pw_path.exists():
-                self.log(f"[BUNDLE] Utilizzo binari Playwright inclusi nel pacchetto: {drivers_pw_path}")
-                os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(drivers_pw_path)
-
-                # Debug log per verificare i contenuti della cartella driver (utile per diagnosticare shell headless mancanti)
-                with suppress(Exception):
-                    contents = [p.name for p in drivers_pw_path.iterdir() if p.is_dir()]
-                    self.log(f"[BUNDLE] Contenuto driver rilevato: {', '.join(contents)}")
-            else:
-                self.log(
-                    "[WARNING] Binari Playwright bundled non trovati, uso percorso di sistema.", "WARNING"
-                )
-        # -------------------------------------
-
+        # 2. Preparazione percorsi e opzioni
         user_data_dir = config_manager.CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
-
-        # Assicura esistenza directory dati
         user_data_dir.parent.mkdir(parents=True, exist_ok=True)
-
-        cfg = config_manager.load_config()
-        headless = self.headless or cfg.get("browser_headless", False)
 
         downloads_dir = (
             Path(self.download_path).resolve()
@@ -101,7 +78,43 @@ class PlaywrightBaseBot(BaseBot, ABC):
         )
         downloads_dir.mkdir(parents=True, exist_ok=True)
 
-        launch_options = {
+        cfg = config_manager.load_config()
+        headless = self.headless or cfg.get("browser_headless", False)
+        launch_options = self._get_browser_launch_options(headless)
+
+        # 3. Ottimizzazione e Patching profilo
+        self._apply_pre_launch_patches(user_data_dir, downloads_dir)
+
+        # 4. Tentativi di lancio
+        self._launch_browser_with_retry(user_data_dir, downloads_dir, launch_options)
+
+        self._setup_page_context()
+
+        if self.context is None or self.page is None:
+            raise RuntimeError("BrowserInitFailed: Page or Context not initialized")
+
+        self.login_page = PlaywrightLoginPage(self.page, self.log, self.ISAB_URL)
+
+    def _setup_playwright_env(self) -> None:
+        """Configura le variabili d'ambiente per i binari bundled di Playwright."""
+        if not getattr(sys, "frozen", False):
+            return
+
+        bundle_dir = Path(sys._MEIPASS) if hasattr(sys, "_MEIPASS") else Path(sys.executable).parent
+        drivers_pw_path = bundle_dir / "drivers" / "ms-playwright"
+
+        if drivers_pw_path.exists():
+            self.log(f"[BUNDLE] Utilizzo binari Playwright inclusi: {drivers_pw_path}")
+            os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(drivers_pw_path)
+            with suppress(Exception):
+                contents = [p.name for p in drivers_pw_path.iterdir() if p.is_dir()]
+                self.log(f"[BUNDLE] Driver rilevati: {', '.join(contents)}")
+        else:
+            self.log("[WARNING] Binari Playwright bundled non trovati.", "WARNING")
+
+    def _get_browser_launch_options(self, headless: bool) -> dict[str, Any]:
+        """Restituisce le opzioni di lancio per Chromium ottimizzate per l'evasione."""
+        return {
             "headless": headless,
             "args": [
                 "--disable-blink-features=AutomationControlled",
@@ -133,35 +146,31 @@ class PlaywrightBaseBot(BaseBot, ABC):
             ],
         }
 
-        # 1. Cleanup processi e file di lock (senza resettare l'intero profilo)
+    def _apply_pre_launch_patches(self, user_data_dir: Path, downloads_dir: Path) -> None:
+        """Esegue il cleanup e il patching del profilo prima del lancio."""
         self.log("[AVVIO] Ottimizzazione ambiente browser...")
         with suppress(Exception):
             cleanup_bot_processes()
-            # Rimuove solo i file di lock che impediscono l'avvio, preservando le Preferences patchate
             for lock in ("SingletonLock", "Lock", "DevToolsActivePort"):
-                lock_path = user_data_dir / lock
-                if lock_path.exists():
-                    lock_path.unlink(missing_ok=True)
+                (user_data_dir / lock).unlink(missing_ok=True)
 
-        # 2. Patching preventivo del profilo per sopprimere popup sicurezza
-        # Ora è efficace perché non rinominiamo la cartella subito dopo
         with suppress(Exception):
             self.log("[AVVIO] Applicazione patch di sicurezza al profilo...")
             patch_browser_profile(user_data_dir, download_dir=downloads_dir)
 
-
-        # 3. Tentativi di inizializzazione
+    def _launch_browser_with_retry(
+        self, user_data_dir: Path, downloads_dir: Path, launch_options: dict[str, Any]
+    ) -> None:
+        """Tenta il lancio del browser con logica di recovery automatica."""
         max_retries = 3
 
         for attempt in range(max_retries):
             try:
-                self.log(f"[AVVIO] Setup ambiente browser (Tentativo {attempt + 1}/{max_retries})...")
+                self.log(f"[AVVIO] Lancio Chromium (Tentativo {attempt + 1}/{max_retries})...")
 
                 if not self.playwright:
-                    self.log("[AVVIO] Inizializzazione Playwright Core...")
                     self.playwright = sync_playwright().start()
 
-                self.log(f"[AVVIO] Lancio Chromium con profilo persistente: {user_data_dir.name}")
                 self.context = self.playwright.chromium.launch_persistent_context(
                     user_data_dir=str(user_data_dir),
                     no_viewport=False,
@@ -171,62 +180,42 @@ class PlaywrightBaseBot(BaseBot, ABC):
                     downloads_path=str(downloads_dir),
                     **launch_options,
                 )
-
-                break  # Successo
-
-
             except Exception as e:
                 err_msg = str(e)
                 self.log(f"[ATTENZIONE] Errore inizializzazione (T{attempt + 1}): {err_msg}", "WARNING")
-
-                # Pulizia forzata dello stato interno ad ogni fallimento
                 self._stop_playwright_internal()
 
-                # Recovery automatico: alcuni profili persistenti corrotti causano
-                # "Browser.getWindowForTarget: Browser window not found" all'avvio.
                 if "Browser.getWindowForTarget" in err_msg:
                     with suppress(Exception):
-                        from src.utils.browser_diagnostics import emergency_profile_reset  # noqa: PLC0415
-
-                        self.log("[RECOVERY] Profilo browser instabile, reset automatico in corso...", "WARNING")
+                        self.log("[RECOVERY] Profilo instabile, reset in corso...", "WARNING")
                         if emergency_profile_reset(user_data_dir):
                             patch_browser_profile(user_data_dir, download_dir=downloads_dir)
-                            self.log("[RECOVERY] Nuovo profilo creato e patchato. Riprovo avvio browser...")
 
-                # Se è l'ultimo tentativo, rilanciamo l'errore definitivo
                 if attempt == max_retries - 1:
-                    self.log(
-                        "[ERRORE] Impossibile inizializzare il browser dopo molteplici tentativi.", "ERROR"
-                    )
+                    self.log("[ERRORE] Fallimento definitivo inizializzazione browser.", "ERROR")
                     raise
+            else:
+                return
 
-        if self.context is None:
-            raise RuntimeError("BrowserInitFailed")
+    def _setup_page_context(self) -> None:
+        """Configura la pagina e inietta gli script di evasione."""
+        if not self.context:
+            return
 
         self.page = self.context.pages[0] if self.context.pages else self.context.new_page()
-        # Playwright usa millisecondi per il timeout
         self.page.set_default_timeout(self.timeout * 1000)
 
-        # Init script per sopprimere webdriver detection e avvisi password
         self.page.add_init_script("""
-            // 1. Evasione base
             Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
-
-            // 2. Neutralizzazione Credential Management API (blocca popup nativi)
             if (navigator.credentials) {
                 navigator.credentials.get = () => new Promise(() => {});
                 navigator.credentials.store = () => new Promise(() => {});
             }
-
-            // 3. Monitoraggio e rimozione forzata di banner/popup "Cambia Password"
             const observer = new MutationObserver((mutations) => {
                 const keywords = ['password', 'compromessa', 'sicurezza', 'cambia'];
                 document.querySelectorAll('div, section, aside').forEach(el => {
                     if (el.innerText && keywords.some(k => el.innerText.toLowerCase().includes(k))) {
-                        // Se sembra un banner di sistema iniettato, lo nascondiamo
-                        if (el.style.position === 'fixed' || el.style.zIndex > 1000) {
-                            el.remove();
-                        }
+                        if (el.style.position === 'fixed' || el.style.zIndex > 1000) { el.remove(); }
                     }
                 });
             });

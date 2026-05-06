@@ -99,8 +99,7 @@ def process_file(filepath: str) -> None:
         return
 
     try:
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(content)
+        Path(filepath).write_text(content, encoding="utf-8")
         print(f"  OK: {os.path.relpath(filepath, GUI_DIR)}")
     except Exception as e:
         print(f"  ERROR: {os.path.basename(filepath)} -> {e}")

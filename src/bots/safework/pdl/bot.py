@@ -18,7 +18,10 @@ from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.base.base_bot import StepStatus
+from src.bots.base.wait_helpers import poll_for_new_file
 from src.bots.safework.base import SafeworkBaseBot
+from src.bots.safework.common.locators import SafeWorkLocators
+from src.utils.document_processor import DocumentProcessor
 from src.utils.printing import print_pdf
 
 logger = logging.getLogger(__name__)
@@ -76,7 +79,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             return False, "Nessun dato da elaborare."
 
         found_pdl = False
-        for _i, item in enumerate(rows):
+        for item in rows:
             if item.get("numero_pdl"):
                 found_pdl = True
                 break
@@ -197,8 +200,6 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             return False
 
         try:
-            from src.bots.safework.common.locators import SafeWorkLocators  # noqa: PLC0415
-
             # CRITICAL: Assicurarsi che l'overlay di caricamento sia sparito
             self._attendi_scomparsa_overlay(timeout_secondi=10)
 
@@ -206,34 +207,29 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self.log(f"[INPUT] Inserimento numero PdL {pdl_num}...")
             campo.clear()
             campo.send_keys(pdl_num + Keys.ENTER)
-        except Exception as e:
-            self.log(f"[ERRORE] Campo ricerca veloce non trovato o non interagibile: {e}", "ERROR")
-            return False
 
-        if self._gestisci_ricerca_estesa():
-            self.log(f"[INFO] PdL {pdl_num} inesistente. Salto.")
-            return False
+            if self._gestisci_ricerca_estesa():
+                self.log(f"[INFO] PdL {pdl_num} inesistente. Salto.")
+                return False
 
-        if self._gestisci_alert_ricerca():
-            with contextlib.suppress(Exception):
-                self._attendi_scomparsa_overlay(timeout_secondi=5)
-        else:
-            self._attendi_scomparsa_overlay()
+            if self._gestisci_alert_ricerca():
+                with contextlib.suppress(Exception):
+                    self._attendi_scomparsa_overlay(timeout_secondi=5)
+            else:
+                self._attendi_scomparsa_overlay()
 
-        # Verifica finale caricamento (indipendente da alert)
-        try:
+            # Verifica finale caricamento (indipendente da alert)
             self.wait.until(EC.visibility_of_element_located((By.ID, "topIcon-acticonAnteprimaStampaMenu")))
             self._attendi_scomparsa_overlay(timeout_secondi=4)
             self.log(f"[OK] PdL {pdl_num} caricato correttamente.")
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"[ERRORE] PDL {pdl_num} non caricato correttamente: {e}", "ERROR")
             return False
+        else:
+            return True
 
     def _scarica_parte_prima(self, pdl_num: str) -> str | None:
         """Scarica la parte prima del PDL con attese robuste e pulizia preventiva."""
-        from src.bots.base.wait_helpers import poll_for_new_file  # noqa: PLC0415
-
         if not self.driver or not self.wait:
             return None
 
@@ -272,8 +268,6 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def _scarica_parte_seconda(self, pdl_num: str) -> str | None:
         """Gestisce il download della Parte Seconda con pulizia preventiva."""
-        from src.bots.base.wait_helpers import poll_for_new_file  # noqa: PLC0415
-
         if not self.driver or not self.wait:
             return None
 
@@ -340,78 +334,50 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                         self.driver.find_element(By.CSS_SELECTOR, "span[idtxt='2E20B56F']").click()
                         clicked = True
 
-            # Attesa conferma visibilità
-            self.wait.until(EC.visibility_of_element_located((By.ID, "lblPAFoglio")))
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"[ATTENZIONE] Errore apertura Parte Seconda: {e}")
             return False
+        else:
+            return True
 
     def _gestisci_ricerca_estesa(self) -> bool:
         """Gestisce il popup 'La ricerca veloce... estenderla?'."""
         if not self.driver:
             return False
-        try:
-            # Aumentato timeout a 10s per reattività SafeWork
-            try:
-                self.log("[CERCA] Controllo presenza popup 'Ricerca Estesa'...")
-                WebDriverWait(self.driver, 10).until(
-                    EC.visibility_of_element_located((By.XPATH, "//p[contains(text(), 'estenderla')]"))
-                )
-            except Exception:
-                # Fallback idtxt
-                try:
-                    self.driver.find_element(By.CSS_SELECTOR, "p[idtxt='1C51D77B']")
-                    self.log("[INFO] Popup 'Ricerca Estesa' rilevato via idtxt.")
-                except Exception:
-                    self.log("[INFO] Nessun popup di ricerca estesa rilevato.")
-                    return False
 
-            # Click robusto su 'Si' (cerca span o button con classe btn-ok)
-            clicked = False
-            self.log("[CLICK] Tentativo click su 'Si' per estensione ricerca...")
+        with suppress(Exception):
+            # 1. Controllo presenza popup
+            self.log("[CERCA] Controllo presenza popup 'Ricerca Estesa'...")
+            WebDriverWait(self.driver, 10).until(
+                EC.visibility_of_element_located((By.XPATH, "//p[contains(text(), 'estenderla')]"))
+            )
+
+            # 2. Click su 'Si'
             for selector in (
                 "span[idtxt='E421C594']",
                 "//button[contains(@class, 'btn-ok') and contains(., 'Si')]",
                 "//button[contains(., 'Si')]",
             ):
-                try:
+                with suppress(Exception):
                     by = By.XPATH if selector.startswith("/") else By.CSS_SELECTOR
-                    el = self.driver.find_element(by, selector)
-                    el.click()
+                    self.driver.find_element(by, selector).click()
                     self.log(f"[OK] Click su 'Si' riuscito (selector: {selector})")
-                    clicked = True
+                    self._attendi_scomparsa_overlay()
                     break
-                except Exception as e:
-                    # Strategia di click multipla: ignoriamo l'errore e proviamo il selettore successivo
-                    self.log(f"DEBUG: Fallito click su {selector}: {e}")
-                    continue
 
-            if clicked:
-                self.log("[OK] Ricerca PdL estesa agli altri siti.")
-                self._attendi_scomparsa_overlay()
-            else:
-                self.log(
-                    "[ATTENZIONE] Popup ricerca estesa rilevato ma impossibile cliccare 'Si'.", "WARNING"
-                )
-
-            # Verifica Risultati (se 0, PdL inesistente)
+            # 3. Verifica Risultati
             with suppress(Exception):
-                self.log("[CERCA] Verifica se PdL inesistente dopo estensione...")
                 msg = self.driver.find_element(By.XPATH, "//div[contains(text(), 'nessun dato trovato')]")
                 if msg.is_displayed():
                     self.log("[INFO] PdL non trovato nemmeno con ricerca estesa.")
                     return True
-            # Se siamo finiti direttamente nella pagina dettaglio, numPermessiTrovati non ci sarà
+
             with suppress(Exception):
                 num_res_el = self.driver.find_elements(By.ID, "numPermessiTrovati")
-                if num_res_el:
-                    num_res = num_res_el[0].text.strip()
-                    return bool(num_res == "0")
+                if num_res_el and num_res_el[0].text.strip() == "0":
+                    return True
 
-            return False  # Proseguiamo comunque, la verifica finale la fa _esegui_ricerca_pdl  # noqa: TRY300
-        except Exception:
-            return False
+        return False
 
     def _gestisci_alert_ricerca(self) -> bool:
         """Chiude popup informativi che bloccano l'interfaccia."""
@@ -462,8 +428,6 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 ts = time.strftime("%d-%m-%Y_%H-%M")
                 path_merge = Path(self.download_path) / f"PDL_SESSIONE_{ts}.pdf"
 
-                from src.utils.document_processor import DocumentProcessor  # noqa: PLC0415
-
                 if DocumentProcessor.merge_pdfs(all_paths, str(path_merge)):
                     self.log(f"[OK] PDF Unico Sessione creato: {path_merge.name}")
                     self.downloaded_files.append(str(path_merge))
@@ -474,8 +438,6 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self, pdl_num: str, p1: str, p2: str, item: dict[str, Any], all_paths: list[str]
     ) -> bool:
         """Esegue il merge delle due parti e l'eventuale stampa."""
-        from src.utils.document_processor import DocumentProcessor  # noqa: PLC0415
-
         nome = f"PDL_{pdl_num.replace('/', '-')}.pdf"
         output_dir = item.get("output_dir") or self.download_path
         out = Path(output_dir) / nome

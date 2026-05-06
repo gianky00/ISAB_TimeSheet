@@ -133,7 +133,7 @@ def _save_report(report: dict[str, Any]) -> None:
         log_dir.mkdir(parents=True, exist_ok=True)
         report_path = log_dir / "browser_debug.json"
         with report_path.open("w", encoding="utf-8") as f:
-            json.dump(report, f, indent=4)
+            json.dump(report, f, indent=4, ensure_ascii=False)
         logger.info(f"Report diagnostico salvato in: {report_path}")
     except Exception:
         logger.exception("Errore salvataggio report")

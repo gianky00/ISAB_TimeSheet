@@ -357,7 +357,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
 
         final_path = target_dir / f"{base_name}{extension}"
         if final_path.exists():
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             final_path = target_dir / f"{base_name}_{ts}{extension}"
         return final_path
 
