@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import re
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from contextlib import suppress
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
@@ -14,6 +13,9 @@ from src.core.constants import BotStatus, Timeouts, URLs
 from src.core.logging import generate_trace_id, get_logger, measure_time, with_context
 
 logger = get_logger(__name__)
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class BotSignals(QObject):

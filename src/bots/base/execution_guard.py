@@ -21,7 +21,7 @@ class ExecutionGuard:
     def check_environment() -> tuple[bool, str]:
         """
         Esegue i controlli preliminari (Licenza e Aggiornamenti).
-        
+
         Returns:
             Tuple (esito, messaggio_errore).
         """
@@ -30,7 +30,7 @@ class ExecutionGuard:
             run_update()
         except Exception as e:
             if "REVOCATA" in str(e):
-                logger.error("Licenza revocata rilevata durante pre-check.")
+                logger.exception("Licenza revocata rilevata durante pre-check.")
                 return False, f"ACCESSO NEGATO: {e}"
             logger.warning("Errore silente durante run_update: %s", e)
 

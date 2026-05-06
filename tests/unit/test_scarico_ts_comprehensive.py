@@ -28,13 +28,13 @@ class TestScaricoTSComprehensive:
             bot.driver = MagicMock()
             bot.wait = MagicMock()
             bot.signals = MagicMock()  # FIX: Inizializza mock per i segnali
-            
+
             # Inizializza mock per step_manager (necessario dopo refactoring SRP)
             bot.step_manager = MagicMock()
             bot.step_manager.update_step.return_value = (0, "test-step")
             bot.step_manager.current_step_name = "test-step"
             bot.step_manager.current_index = 0
-            
+
             bot._log_callback = None
             bot._input_callback = None
             bot._progress_callback = None

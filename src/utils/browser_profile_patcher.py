@@ -12,12 +12,13 @@ from typing import Any
 logger = logging.getLogger("ProfilePatcher")
 
 
-def patch_browser_profile(user_data_dir: Path | str) -> bool:
+def patch_browser_profile(user_data_dir: Path | str, download_dir: Path | str | None = None) -> bool:
     """
     Applica patch aggressive al file Preferences del profilo Chromium per disabilitare
     il gestore password, il rilevamento dei leak e altre notifiche bloccanti.
     """
     user_data_path = Path(user_data_dir)
+    download_path = Path(download_dir).resolve() if download_dir else (Path.home() / "Downloads").resolve()
 
     # In launch_persistent_context di Playwright, il file Preferences è solitamente
     # in 'Default/Preferences' o direttamente nella root se il profilo è minimale.
@@ -34,17 +35,17 @@ def patch_browser_profile(user_data_dir: Path | str) -> bool:
         (user_data_path / "Default" / "Preferences").exists() or (user_data_path / "Preferences").exists()
         for p in preferences_paths
     ):
-        _patch_file(preferred_path)
+        _patch_file(preferred_path, download_path=download_path)
 
     success = False
     for pref_path in preferences_paths:
-        if _patch_file(pref_path):
+        if _patch_file(pref_path, download_path=download_path):
             success = True
 
     return success
 
 
-def _patch_file(path: Path) -> bool:
+def _patch_file(path: Path, download_path: Path) -> bool:
     """Legge, modifica e sovrascrive il file JSON delle preferenze. Crea il file se non esiste."""
     try:
         data: dict[str, Any] = {}
@@ -82,8 +83,8 @@ def _patch_file(path: Path) -> bool:
             # Configurazione Download (Silenzioso e Automatico)
             "download.prompt_for_download": False,
             "download.directory_upgrade": True,
-            "download.default_directory": str(Path.home() / "Downloads"),  # Fallback sicuro
-            "savefile.default_directory": str(Path.home() / "Downloads"),
+            "download.default_directory": str(download_path),
+            "savefile.default_directory": str(download_path),
             # Blocco esplicito dei popup di sicurezza e password
             "profile.default_content_setting_values.notifications": 2,
             "profile.default_content_setting_values.password_manager": 2,

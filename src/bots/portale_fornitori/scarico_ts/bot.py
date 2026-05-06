@@ -262,7 +262,8 @@ class ScaricaTSBot(SeleniumBaseBot):
 
     def _navigate_to_timesheet(self) -> bool:
         """Naviga a Report -> Timesheet."""
-        if not self.wait: return False
+        if not self.wait:
+            return False
         self._check_stop()
 
         try:
@@ -282,7 +283,8 @@ class ScaricaTSBot(SeleniumBaseBot):
 
     def _setup_filters(self) -> bool:
         """Imposta Fornitore e Data Da."""
-        if not self.driver or not self.wait or not self.long_wait: return False
+        if not self.driver or not self.wait or not self.long_wait:
+            return False
         self._check_stop()
 
         try:
@@ -308,7 +310,8 @@ class ScaricaTSBot(SeleniumBaseBot):
         self, source_dir: Path, dest_dir: Path, numero_oda: str, posizione_oda: str
     ) -> Path | None:
         """Scarica il file Excel, lo rinomina e lo sposta."""
-        if not self.wait or not self.driver: return None
+        if not self.wait or not self.driver:
+            return None
 
         source_dir_path = Path(source_dir).resolve()
         if not source_dir_path.exists():
@@ -321,7 +324,8 @@ class ScaricaTSBot(SeleniumBaseBot):
 
         # Trigger
         time.sleep(1)
-        if not self._click_excel_export_button(): return None
+        if not self._click_excel_export_button():
+            return None
 
         # Polling
         res_path = poll_for_new_file(
@@ -343,7 +347,8 @@ class ScaricaTSBot(SeleniumBaseBot):
 
     def _click_excel_export_button(self) -> bool:
         """Clicca il pulsante di esportazione Excel."""
-        if not self.wait or not self.driver: return False
+        if not self.wait or not self.driver:
+            return False
         xpath = "//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]"
         try:
             btn = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
@@ -367,7 +372,8 @@ class ScaricaTSBot(SeleniumBaseBot):
         final_path = target_dir / filename
 
         if final_path.exists():
-            with suppress(Exception): final_path.unlink()
+            with suppress(Exception):
+                final_path.unlink()
             if final_path.exists():
                 ts = time.strftime("%Y%m%d-%H%M%S")
                 final_path = target_dir / f"{base_name}_{ts}{extension}"

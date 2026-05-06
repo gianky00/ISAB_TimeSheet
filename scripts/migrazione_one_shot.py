@@ -9,7 +9,7 @@ from src.core.database import db_manager  # noqa: E402
 from src.core.employees import employee_manager  # noqa: E402
 
 
-def run_migration():  # noqa: ANN201
+def run_migration() -> None:
     print("--- Inizio Migrazione Anagrafica ---")
 
     # 1. Assicuriamoci che il DB sia inizializzato con lo schema corretto

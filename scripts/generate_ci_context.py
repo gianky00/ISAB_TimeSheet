@@ -9,6 +9,7 @@ import contextlib
 import os
 import subprocess
 import sys
+from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
 
@@ -23,7 +24,7 @@ OUTPUT_FILE = PROJECT_ROOT / "CI_CONTEXT.md"
 TEMP_REPORT = PROJECT_ROOT / "tests" / "temp_test_report.md"
 
 
-def run_command(cmd, label):  # noqa: ANN001, ANN201
+def run_command(cmd: Sequence[str], label: str) -> tuple[str, str, int]:
     """Esegue un comando e cattura l'output in modo sicuro."""
     print(f"Running {label}...")
     try:
@@ -41,7 +42,7 @@ def run_command(cmd, label):  # noqa: ANN001, ANN201
         return "", f"Error running {label}: {e}", 1
 
 
-def main():  # noqa: ANN201, PLR0912, PLR0915
+def main() -> None:  # noqa: PLR0912, PLR0915
     """Aggregatore principale del contesto CI."""
     start_time = datetime.now()
 

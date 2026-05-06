@@ -5,7 +5,7 @@ import coverage
 import pytest
 
 
-def run_coverage_for_bot(test_file, source_file, bot_name):  # noqa: ANN001, ANN201
+def run_coverage_for_bot(test_file: Path, source_file: Path, bot_name: str) -> float:
     print("\n" + "=" * 50)
     print(f"ANALISI COVERAGE PER: {bot_name}")
     print("=" * 50)

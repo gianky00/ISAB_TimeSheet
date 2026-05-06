@@ -57,7 +57,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
         self.login_page: PlaywrightLoginPage | None = None
 
     @measure_time(threshold_ms=10000)
-    def _init_driver(self) -> None:
+    def _init_driver(self) -> None:  # noqa: PLR0915
         """Inizializza Playwright e il browser con logica di persistenza, stabilità e recovery."""
         import os  # noqa: PLC0415
 
@@ -89,6 +89,13 @@ class PlaywrightBaseBot(BaseBot, ABC):
         cfg = config_manager.load_config()
         headless = self.headless or cfg.get("browser_headless", False)
 
+        downloads_dir = (
+            Path(self.download_path).resolve()
+            if self.download_path
+            else (Path.home() / "Downloads").resolve()
+        )
+        downloads_dir.mkdir(parents=True, exist_ok=True)
+
         launch_options = {
             "headless": headless,
             "args": [
@@ -118,7 +125,6 @@ class PlaywrightBaseBot(BaseBot, ABC):
                 "--hide-crash-restore-bubble",
                 "--disable-notifications",
                 "--disable-search-engine-choice-screen",
-                "--guest",  # Modalità ospite per evitare profili persistenti sporchi
             ],
         }
 
@@ -136,7 +142,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
         # Ora è efficace perché non rinominiamo la cartella subito dopo
         with suppress(Exception):
             self.log("[AVVIO] Applicazione patch di sicurezza al profilo...")
-            patch_browser_profile(user_data_dir)
+            patch_browser_profile(user_data_dir, download_dir=downloads_dir)
 
 
         # 3. Tentativi di inizializzazione
@@ -157,12 +163,9 @@ class PlaywrightBaseBot(BaseBot, ABC):
                     viewport={"width": 1920, "height": 1080},
                     user_agent=BrowserConfig.USER_AGENT,
                     accept_downloads=True,
+                    downloads_path=str(downloads_dir),
                     **launch_options,
                 )
-
-                # Gestione automatica download per evitare prompt "Salva con nome"
-                if self.download_path:
-                    self.context.on("download", lambda download: download.save_as(Path(self.download_path) / download.suggested_filename))
 
                 break  # Successo
 
@@ -173,6 +176,17 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
                 # Pulizia forzata dello stato interno ad ogni fallimento
                 self._stop_playwright_internal()
+
+                # Recovery automatico: alcuni profili persistenti corrotti causano
+                # "Browser.getWindowForTarget: Browser window not found" all'avvio.
+                if "Browser.getWindowForTarget" in err_msg:
+                    with suppress(Exception):
+                        from src.utils.browser_diagnostics import emergency_profile_reset  # noqa: PLC0415
+
+                        self.log("[RECOVERY] Profilo browser instabile, reset automatico in corso...", "WARNING")
+                        if emergency_profile_reset(user_data_dir):
+                            patch_browser_profile(user_data_dir, download_dir=downloads_dir)
+                            self.log("[RECOVERY] Nuovo profilo creato e patchato. Riprovo avvio browser...")
 
                 # Se è l'ultimo tentativo, rilanciamo l'errore definitivo
                 if attempt == max_retries - 1:

@@ -47,11 +47,11 @@ class BotStepManager(QObject):
     def update_step(self, step_id: Any, status: StepStatus) -> tuple[int, str]:
         """
         Aggiorna lo stato di uno step.
-        
+
         Args:
             step_id: Stringa (id) o intero (indice).
             status: Nuovo stato.
-            
+
         Returns:
             Tuple (indice, nome_step) per logging.
         """

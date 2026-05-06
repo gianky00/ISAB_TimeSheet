@@ -17,7 +17,7 @@ import pandas as pd
 from src.core import config_manager
 
 
-def debug_giornaliere():  # noqa: ANN201, PLR0912, PLR0915
+def debug_giornaliere() -> None:  # noqa: PLR0912, PLR0915
     print("=" * 70)
     print("DEBUG IMPORTAZIONE GIORNALIERE")
     print("=" * 70)
@@ -136,7 +136,7 @@ def debug_giornaliere():  # noqa: ANN201, PLR0912, PLR0915
     print("=" * 70)
 
 
-def debug_import_simulation():  # noqa: ANN201
+def debug_import_simulation() -> None:
     """Simula l'importazione per capire dove si perdono i dati."""
     print("\n" + "=" * 70)
     print("DEBUG SIMULAZIONE IMPORTAZIONE")

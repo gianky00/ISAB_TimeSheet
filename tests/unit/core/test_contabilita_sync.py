@@ -65,13 +65,13 @@ class TestContabilitaSyncEngine:
             cursor = conn.cursor()
             cols = ["year", "personale", "ore"]
             # Dati attuali nel DB (da fixture): (2024, 'Rossi', 8.0)
-            
+
             # Nuovi dati: uno uguale, uno nuovo
             new_data = [
                 (2024, "Rossi", 8.0),  # Uguale
                 (2024, "Nuovo", 4.0),  # Nuova
             ]
-            
+
             # Eseguiamo la sync partizionata per l'anno 2024
             added, removed = ContabilitaSyncEngine._sync_partitioned_table(
                 cursor, "giornaliere", cols, "year", [2024], new_data

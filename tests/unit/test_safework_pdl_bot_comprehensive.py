@@ -23,13 +23,13 @@ class TestSafeWorkPDLBotComprehensive:
         bot = SafeWorkPDLBot(username="u", password="p", download_path=str(tmp_path))
         bot.driver = MagicMock()
         bot.wait = MagicMock()
-        
+
         # Inizializza mock per step_manager (necessario dopo refactoring SRP)
         bot.step_manager = MagicMock()
         bot.step_manager.update_step.return_value = (0, "test-step")
         bot.step_manager.current_step_name = "test-step"
         bot.step_manager.current_index = 0
-        
+
         bot._log_callback = None
         bot._input_callback = None
         bot._progress_callback = None
@@ -46,7 +46,6 @@ class TestSafeWorkPDLBotComprehensive:
         # Patch common methods
         mocker.patch.object(bot, "_attendi_scomparsa_overlay")
         mocker.patch.object(bot, "click_robusto", return_value=True)
-        # mocker.patch.object(bot, "log") # Rimosso per testare la logica log con step_manager
 
         return bot
 

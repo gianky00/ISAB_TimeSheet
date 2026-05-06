@@ -4,7 +4,6 @@ SyncroJob - Playwright Scarico TS Bot
 Versione Playwright del bot per il download dei timesheet dal portale ISAB.
 """
 
-import os
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
@@ -300,8 +299,14 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
                     el_download.evaluate("el => el.click()")
 
             download = download_info.value
-            download_path = os.path.join(self.download_path, filename)
-            download.save_as(download_path)
+            base_dir = (
+                Path(self.download_path).resolve()
+                if self.download_path
+                else (Path.home() / "Downloads").resolve()
+            )
+            base_dir.mkdir(parents=True, exist_ok=True)
+            download_path = base_dir / filename
+            download.save_as(str(download_path))
 
             self.log(f"✓ Download completato: {filename}")
         except Exception as e:

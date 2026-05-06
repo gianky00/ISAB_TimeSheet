@@ -69,7 +69,7 @@ class NavigationController(QObject):
 
     def _init_core_controllers(self) -> None:
         """Inizializza i controller core per i dati."""
-        from src.core.contabilita.consuntivo.consuntivo_controller import (
+        from src.core.contabilita.consuntivo.consuntivo_controller import (  # noqa: PLC0415
             ConsuntivoController,
         )
         from src.core.contabilita.scarico_ore.controller import ScaricoOreController  # noqa: PLC0415

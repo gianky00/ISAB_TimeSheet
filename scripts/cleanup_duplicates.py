@@ -12,7 +12,7 @@ from src.core.config_manager import CONFIG_DIR
 from src.core.database import db_manager
 
 
-def cleanup_attivita_duplicates():  # noqa: ANN201
+def cleanup_attivita_duplicates() -> None:
     db_path = CONFIG_DIR / "data" / "contabilita.db"
 
     if not db_path.exists():

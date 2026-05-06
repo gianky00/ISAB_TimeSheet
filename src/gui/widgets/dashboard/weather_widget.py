@@ -1,3 +1,4 @@
+# ruff: noqa: E701, PLR2004, DTZ007
 """
 SyncroJob - Weather Widget
 Visualizza le previsioni meteo locali (Priolo Gargallo) utilizzando il servizio dedicato.
@@ -409,8 +410,8 @@ class WeatherWidget(ModernCard):
             now = datetime.now().strftime("%H:%M")
             self.lbl_updated.setText(f"Aggiornato alle {now}")
 
-        except Exception as e:
-            logger.error(f"Render UI Error: {e}")
+        except Exception:
+            logger.exception("Render UI Error")
             self._handle_api_error("Errore Visualizzazione")
 
     def _evaluate_alerts(self, code: int, gusts: float) -> None:

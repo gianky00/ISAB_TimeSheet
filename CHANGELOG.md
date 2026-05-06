@@ -1,5 +1,12 @@
 ## Unreleased
 
+### Fix
+
+- automate downloads and suppress 'Save As' dialog
+- suppress 'change password' security alerts in Playwright
+
+## v1.45.0 (2026-05-05)
+
 ### Feat
 
 - **admin**: add HWID detection script and automated batch tool
