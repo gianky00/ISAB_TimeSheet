@@ -96,6 +96,7 @@ def run_standalone() -> None:
     comm.close_signal.connect(splash.close)
 
     def read_stdin() -> None:
+        """Legge i comandi JSON da stdin e aggiorna la splash standalone."""
         logger.info("Stdin reader thread active")
         import io  # noqa: PLC0415
 

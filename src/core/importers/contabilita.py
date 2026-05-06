@@ -2,6 +2,7 @@ import logging
 import re
 import zipfile
 from collections.abc import Callable
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -234,12 +235,10 @@ class ContabilitaImporter(BaseImporter):
         # Rimuove separatori comuni per controllare se è numerico
         clean_s = s_val.replace(".", "").replace(",", "").replace("-", "")
         if clean_s.isdigit():
-            try:
-                # Se è un numero, lo arrotondiamo a 2 decimali e lo stringiamo
+            # Se è un numero, lo arrotondiamo a 2 decimali e lo stringiamo
+            with suppress(ValueError):
                 num = float(s_val.replace(",", "."))
                 return str(round(num, 2))
-            except ValueError:
-                pass
         return s_val
 
     @classmethod

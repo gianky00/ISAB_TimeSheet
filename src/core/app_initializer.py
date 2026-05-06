@@ -38,6 +38,7 @@ class AppInitializer:
             return True
 
         def step(msg: str, perc: int) -> None:
+            """Propaga lo stato avanzamento dell'inizializzazione core."""
             logger.info(f"[INIT CORE] {msg}")
             if progress_callback:
                 progress_callback(msg, perc)

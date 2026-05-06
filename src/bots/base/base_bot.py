@@ -173,15 +173,19 @@ class BaseBot(ABC):
     # ── Callbacks ──────────────────────────────────────────────────────
 
     def set_log_callback(self, callback: Callable[[str], None]) -> None:
+        """Registra il callback UI usato per ricevere i log del bot."""
         self._log_callback = callback
 
     def set_telegram_service(self, service: Any) -> None:
+        """Imposta il servizio Telegram opzionale per notifiche runtime."""
         self._telegram_service = service
 
     def set_input_callback(self, callback: Callable[[str], str]) -> None:
+        """Registra il callback per richieste input bloccanti all'utente."""
         self._input_callback = callback
 
     def set_progress_callback(self, callback: Callable[[int, bool, str], None]) -> None:
+        """Registra il callback di avanzamento per risultati per-riga."""
         self._progress_callback = callback
 
     # ── Controllo Flusso ───────────────────────────────────────────────

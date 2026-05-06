@@ -57,9 +57,11 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
+        """Nessuna tabella input: i filtri arrivano dai parametri del pannello."""
         return []
 
     def run(self, data: list[dict[str, Any]]) -> bool:
+        """Esegue il monitoraggio settimanale e aggiorna i risultati aggregati."""
         self.update_step("login", StepStatus.COMPLETED)
 
         params = data[0] if data else {}

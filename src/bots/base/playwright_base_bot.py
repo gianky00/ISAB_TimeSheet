@@ -133,7 +133,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
         with suppress(Exception):
             cleanup_bot_processes()
             # Rimuove solo i file di lock che impediscono l'avvio, preservando le Preferences patchate
-            for lock in ["SingletonLock", "Lock", "DevToolsActivePort"]:
+            for lock in ("SingletonLock", "Lock", "DevToolsActivePort"):
                 lock_path = user_data_dir / lock
                 if lock_path.exists():
                     lock_path.unlink(missing_ok=True)

@@ -78,12 +78,15 @@ class BotLogComponent(TimelineWidget):
         super().__init__(parent)
 
     def log_success(self, message: str) -> None:
+        """Scrive un messaggio positivo nella console del bot."""
         self.append(message, "SUCCESS")
 
     def log_error(self, message: str) -> None:
+        """Scrive un messaggio di errore nella console del bot."""
         self.append(message, "ERROR")
 
     def log_warning(self, message: str) -> None:
+        """Scrive un messaggio di avviso nella console del bot."""
         self.append(message, "WARNING")
 
     def set_mood(self, mood: str) -> None:

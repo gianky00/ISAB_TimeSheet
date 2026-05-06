@@ -47,9 +47,11 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
+        """Nessun input a righe: il bot usa solo i filtri data/richiedenti."""
         return []
 
     def run(self, data: list[dict[str, Any]]) -> bool:
+        """Esegue download massivo report e sincronizzazione sul database locale."""
         self.update_step("login", StepStatus.COMPLETED)
 
         params = data[0] if data else {}

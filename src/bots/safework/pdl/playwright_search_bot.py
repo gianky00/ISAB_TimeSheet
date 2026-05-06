@@ -55,6 +55,7 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
+        """Nessun input tabellare richiesto per la ricerca massiva PDL."""
         return []
 
     def run(self, data: list[dict[str, Any]]) -> bool:

@@ -58,6 +58,7 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
+        """Restituisce lo schema input richiesto per la lista PDL."""
         return [{"name": "numero_pdl", "label": "Numero PDL", "type": "text"}]
 
     def cleanup(self) -> None:

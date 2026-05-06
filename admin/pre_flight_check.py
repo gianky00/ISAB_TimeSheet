@@ -533,7 +533,11 @@ class ApexAudit:
                         # litellm (portato da Gemini CLI)
                         "--ignore-vuln", "CVE-2026-35029",
                         "--ignore-vuln", "CVE-2026-35030",
+                        "--ignore-vuln", "CVE-2026-42271",
                         "--ignore-vuln", "GHSA-69x8-hrgq-fjj8",
+                        # gitpython (transitiva toolchain/dev tooling)
+                        "--ignore-vuln", "CVE-2026-42215",
+                        "--ignore-vuln", "CVE-2026-42284",
                         # lxml (transitiva)
                         "--ignore-vuln", "CVE-2026-41066",
                         # poetry (tool di build)

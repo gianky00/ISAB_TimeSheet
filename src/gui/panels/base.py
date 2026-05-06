@@ -244,7 +244,7 @@ class BaseBotPanel(QWidget):
         win = self.window()
         if win and hasattr(win, "show_background_notification"):
             msg = "Operazione completata." if success else "Errore esecuzione."
-            win.show_background_notification(f"{self.bot_name}", msg, is_error=not success)
+            win.show_background_notification(self.bot_name, msg, is_error=not success)
         else:
             QApplication.alert(self, 0)
 
@@ -291,13 +291,16 @@ class BaseBotPanel(QWidget):
         return self.worker.bot if self.worker else None
 
     def run_externally(self, params: dict[str, Any] | None = None) -> None:
+        """Avvia il bot da trigger esterni passando eventuali parametri override."""
         self._on_start(params_override=params)
 
     def get_credentials(self) -> tuple[str, str]:
+        """Recupera le credenziali account ISAB di default dalla configurazione."""
         acc = config_manager.get_default_account("isab")
         return (acc.get("username", ""), acc.get("password", "")) if acc else ("", "")
 
     def add_rows_simple(self, rows: list[Any]) -> None:
+        """Aggiunge righe alla tabella dati e persiste lo stato se supportato."""
         if hasattr(self, "data_table"):
             data = self.data_table.get_data()
             data.extend(rows)
@@ -306,6 +309,7 @@ class BaseBotPanel(QWidget):
                 self._save_data()
 
     def clear_rows_simple(self) -> None:
+        """Svuota rapidamente la tabella dati e salva il nuovo stato."""
         if hasattr(self, "data_table"):
             self.data_table.set_data([])
             if hasattr(self, "_save_data"):
