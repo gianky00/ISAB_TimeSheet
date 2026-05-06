@@ -174,7 +174,7 @@ def _ensure_selenium_driver(drivers_dir: Path) -> None:
         log_and_print(f"  [WARNING] Could not update ChromeDriver: {e}", "WARNING")
 
 
-def _ensure_playwright_browsers(drivers_dir: Path):  # noqa: ANN201
+def _ensure_playwright_browsers(drivers_dir: Path) -> None:
     """Sincronizza i binari di Playwright (Chromium, Headless Shell, FFmpeg)."""
     pw_source_dir = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
     pw_dest_dir = drivers_dir / "ms-playwright"
