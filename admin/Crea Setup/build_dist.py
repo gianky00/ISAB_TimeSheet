@@ -151,13 +151,8 @@ def clean_build():  # noqa: ANN201
                 log_and_print(f"  Error removing {folder}: {e}", "ERROR")
 
 
-def ensure_drivers():  # noqa: ANN201
-    """Ensure chromedriver and Playwright browsers are present and aligned."""
-    log_and_print("[BUILD] Ensuring drivers and Playwright browsers are present...")
-    drivers_dir = ROOT_DIR / "drivers"
-    drivers_dir.mkdir(parents=True, exist_ok=True)
-
-    # 1. Selenium ChromeDriver
+def _ensure_selenium_driver(drivers_dir: Path) -> None:
+    """Scarica e allinea il ChromeDriver per Selenium."""
     (drivers_dir / ".exists").write_text("Sentinel file for PyInstaller")
     try:
         from webdriver_manager.chrome import ChromeDriverManager  # noqa: PLC0415
@@ -178,42 +173,59 @@ def ensure_drivers():  # noqa: ANN201
     except Exception as e:
         log_and_print(f"  [WARNING] Could not update ChromeDriver: {e}", "WARNING")
 
-    # 2. Playwright Chromium
-    try:
-        pw_source_dir = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
-        pw_dest_dir = drivers_dir / "ms-playwright"
 
-        if pw_source_dir.exists():
-            log_and_print(f"  Syncing Playwright browsers from {pw_source_dir}...")
-            # Non cancelliamo tutto ogni volta per velocizzare, ma verifichiamo se chromium esiste
-            chromium_dirs = list(pw_source_dir.glob("chromium-*"))
-            if chromium_dirs:
-                latest_chromium = max(chromium_dirs, key=os.path.getmtime)
-                target_pw_dir = pw_dest_dir / latest_chromium.name
+def _ensure_playwright_browsers(drivers_dir: Path):  # noqa: ANN201
+    """Sincronizza i binari di Playwright (Chromium, Headless Shell, FFmpeg)."""
+    pw_source_dir = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
+    pw_dest_dir = drivers_dir / "ms-playwright"
+
+    try:
+        if not pw_source_dir.exists():
+            log_and_print(f"  [WARNING] Playwright source dir not found: {pw_source_dir}", "WARNING")
+            return
+
+        log_and_print(f"  Syncing Playwright browsers from {pw_source_dir}...")
+
+        # Pattern di binari da includere (Chromium standard, Headless Shell e FFmpeg per codec)
+        browser_patterns = ["chromium-*", "chromium_headless_shell-*", "ffmpeg-*"]
+        found_any = False
+
+        for pattern in browser_patterns:
+            for src_dir in pw_source_dir.glob(pattern):
+                target_pw_dir = pw_dest_dir / src_dir.name
 
                 if not target_pw_dir.exists():
                     log_and_print(
-                        f"  Copying {latest_chromium.name} to drivers folder (this may take a while)..."
+                        f"  Copying {src_dir.name} to drivers folder (this may take a while)..."
                     )
-                    shutil.copytree(latest_chromium, target_pw_dir, dirs_exist_ok=True)
-                    log_and_print(f"  [SUCCESS] Playwright Chromium aligned: {target_pw_dir}")
+                    shutil.copytree(src_dir, target_pw_dir, dirs_exist_ok=True)
+                    log_and_print(f"  [SUCCESS] Playwright {src_dir.name} aligned.")
                 else:
-                    log_and_print(f"  [INFO] Playwright Chromium already present: {latest_chromium.name}")
+                    log_and_print(f"  [INFO] Playwright {src_dir.name} already present.")
+                found_any = True
 
-                # File sentinel per confermare a runtime l'integrità
-                (pw_dest_dir / "bundled.txt").write_text(
-                    f"Version: {latest_chromium.name}\nDate: {time.ctime()}"
-                )
-            else:
-                log_and_print("  [WARNING] No Playwright Chromium folder found!", "WARNING")
+        if found_any:
+            # File sentinel per confermare a runtime l'integrità
+            (pw_dest_dir / "bundled.txt").write_text(
+                f"Last sync: {time.ctime()}\nPatterns: {', '.join(browser_patterns)}"
+            )
         else:
-            log_and_print(f"  [WARNING] Playwright source dir not found: {pw_source_dir}", "WARNING")
+            log_and_print("  [WARNING] No Playwright browsers found in source!", "WARNING")
 
     except Exception as e:
         log_and_print(f"  [ERROR] Playwright browser sync failed: {e}", "ERROR")
         if not pw_dest_dir.exists():
             log_and_print("  [CRITICAL] Playwright browsers missing for build!", "ERROR")
 
+
+def ensure_drivers():  # noqa: ANN201
+    """Ensure chromedriver and Playwright browsers are present and aligned."""
+    log_and_print("[BUILD] Ensuring drivers and Playwright browsers are present...")
+    drivers_dir = ROOT_DIR / "drivers"
+    drivers_dir.mkdir(parents=True, exist_ok=True)
+
+    _ensure_selenium_driver(drivers_dir)
+    _ensure_playwright_browsers(drivers_dir)
 
 def run_pyarmor():  # noqa: ANN201
     """Obfuscate scripts using PyArmor."""

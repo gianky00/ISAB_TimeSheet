@@ -75,6 +75,11 @@ class PlaywrightBaseBot(BaseBot, ABC):
             if drivers_pw_path.exists():
                 self.log(f"[BUNDLE] Utilizzo binari Playwright inclusi nel pacchetto: {drivers_pw_path}")
                 os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(drivers_pw_path)
+
+                # Debug log per verificare i contenuti della cartella driver (utile per diagnosticare shell headless mancanti)
+                with suppress(Exception):
+                    contents = [p.name for p in drivers_pw_path.iterdir() if p.is_dir()]
+                    self.log(f"[BUNDLE] Contenuto driver rilevato: {', '.join(contents)}")
             else:
                 self.log(
                     "[WARNING] Binari Playwright bundled non trovati, uso percorso di sistema.", "WARNING"
