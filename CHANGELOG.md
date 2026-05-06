@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v1.45.1 (2026-05-06)
+
 ### Fix
 
 - automate downloads and suppress 'Save As' dialog

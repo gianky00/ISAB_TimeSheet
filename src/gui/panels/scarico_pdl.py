@@ -243,6 +243,11 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _load_saved_data(self) -> None:
         """Ripristina i dati e i parametri dell'ultima sessione dalla configurazione locale."""
+        # Se la tabella ha già dati (es. iniettati da set_pdl_list), evita il caricamento dei vecchi dati
+        if self.data_table.table.rowCount() > 0:
+            logger.debug("Salto caricamento dati salvati: tabella già popolata.")
+            return
+
         config = config_manager.load_config()
         data = config.get("last_pdl_data", [])
         if data:
@@ -433,9 +438,8 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.data_table.set_data(rows)
 
         # 3. Forza l'attivazione della stampa (UI e logica)
-        if not self.check_stampa.isChecked():
-            self.check_stampa.setChecked(True)
-            self._on_log("Sincronizzazione: Flag 'Attiva Stampa' abilitato automaticamente.")
+        self.check_stampa.setChecked(True)
+        self._on_log("Sincronizzazione: Flag 'Attiva Stampa' abilitato forzatamente per stampa richiesta.")
 
         # 4. Avvia bot dopo un delay di rendering
         self._on_log(f"📥 Ricevuti {len(pdl_numbers)} PDL dal database. Avvio processo automatico...")
