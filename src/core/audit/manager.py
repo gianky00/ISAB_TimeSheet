@@ -269,9 +269,7 @@ class AuditManager:
         try:
             with self.db.get_connection() as conn:
                 conn.row_factory = sqlite3.Row
-                rows = [
-                    dict(r) for r in conn.execute("SELECT * FROM audit_logs ORDER BY id ASC").fetchall()
-                ]
+                rows = [dict(r) for r in conn.execute("SELECT * FROM audit_logs ORDER BY id ASC").fetchall()]
 
             prev_hash = "0" * 64
             for i, row in enumerate(rows):

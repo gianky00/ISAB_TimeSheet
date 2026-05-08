@@ -95,7 +95,16 @@ class SmartLogTranslator:
         # Mappatura keyword -> categoria
         categories_map = {
             "download": ("scaric", "download", "[download]"),
-            "error": ("errore", "fallit", "falliment", "fail", "exception", "eccezion", "critico", "[errore]"),
+            "error": (
+                "errore",
+                "fallit",
+                "falliment",
+                "fail",
+                "exception",
+                "eccezion",
+                "critico",
+                "[errore]",
+            ),
             "success": ("successo", "completat", "compiut", "fatto", "[ok]", "[info]"),
             "action": ("click", "premuto", "selezion", "[click]"),
             "search": ("ricerca", "cerca", "[cerca]"),

@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class StepStatus(Enum):
     """Stati possibili per un singolo step della timeline."""
+
     PENDING = auto()
     RUNNING = auto()
     COMPLETED = auto()

@@ -148,9 +148,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         return success
 
-    def _handle_pdl_download(
-        self, pdl_num: str, item: dict[str, Any], all_pdl_paths: list[str]
-    ) -> bool:
+    def _handle_pdl_download(self, pdl_num: str, item: dict[str, Any], all_pdl_paths: list[str]) -> bool:
         """Coordina lo scarico delle parti del PDL e l'unione."""
         path_p1, path_p2 = None, None
         success = False

@@ -178,10 +178,7 @@ class DonCiroWidget(QWidget):
             self._trigger_ui_action()
         elif state == DonState.IDLE:
             self.walk_anim.pause()
-        elif (
-            state == DonState.WALKING
-            and self.walk_anim.state() == QPropertyAnimation.State.Paused
-        ):
+        elif state == DonState.WALKING and self.walk_anim.state() == QPropertyAnimation.State.Paused:
             self.walk_anim.resume()
 
     def _on_real_weather_received(self, weather: dict[str, Any], aqi: dict[str, Any]) -> None:
@@ -273,7 +270,9 @@ class DonCiroWidget(QWidget):
         rad = math.radians(self._yaw_angle)
         cos_y, sin_y = math.cos(rad), math.sin(rad)
         sq = 1.0 - 0.03 * max(0.0, math.sin(f * 2)) if self.engine.state == DonState.WALKING else 1.0
-        by = (-68 - (abs(math.sin(f * 2)) * 6 if self.engine.state == DonState.WALKING else 0)) * self.engine.scale
+        by = (
+            -68 - (abs(math.sin(f * 2)) * 6 if self.engine.state == DonState.WALKING else 0)
+        ) * self.engine.scale
         ln = (0.08 if self.engine.state == DonState.WALKING else 0.0) * cos_y
 
         hp_c = QPointF(0, by)
@@ -304,16 +303,26 @@ class DonCiroWidget(QWidget):
             al_p.setX(al_p.x() + asw)
         elif self.engine.state == DonState.ACTION_WATCH:
             ap = math.sin(self._action_phase * math.pi)
-            al_p = QPointF(l_sh.x() + 10 * self.engine.scale * cos_y, sy + 10 * self.engine.scale - 10 * self.engine.scale * ap)
+            al_p = QPointF(
+                l_sh.x() + 10 * self.engine.scale * cos_y,
+                sy + 10 * self.engine.scale - 10 * self.engine.scale * ap,
+            )
             hd_p.setX(hd_p.x() + 5 * self.engine.scale * ap * cos_y)
             hd_p.setY(hd_p.y() + 5 * self.engine.scale * ap)
         elif self.engine.state == DonState.ACTION_TIE:
             ap = math.sin(self._action_phase * math.pi)
-            ar_p = QPointF(r_sh.x() - 5 * self.engine.scale * cos_y, sy + 15 * self.engine.scale - 12 * self.engine.scale * ap)
+            ar_p = QPointF(
+                r_sh.x() - 5 * self.engine.scale * cos_y,
+                sy + 15 * self.engine.scale - 12 * self.engine.scale * ap,
+            )
 
         rq = [
-            RenderItem(-wo * cos_y, self._draw_leg, (r_hp, kn_r, QPointF(r_hp.x() + frx, fry), wo * cos_y, cos_y)),
-            RenderItem(wo * cos_y, self._draw_leg, (l_hp, kn_l, QPointF(l_hp.x() + flx, fly), -wo * cos_y, cos_y)),
+            RenderItem(
+                -wo * cos_y, self._draw_leg, (r_hp, kn_r, QPointF(r_hp.x() + frx, fry), wo * cos_y, cos_y)
+            ),
+            RenderItem(
+                wo * cos_y, self._draw_leg, (l_hp, kn_l, QPointF(l_hp.x() + flx, fly), -wo * cos_y, cos_y)
+            ),
             RenderItem(-wo * cos_y, self._draw_arm, (r_sh, ar_p, wo * cos_y, True)),
             RenderItem(wo * cos_y, self._draw_arm, (l_sh, al_p, -wo * cos_y, False)),
             RenderItem(0.0, self._draw_torso, (hp_c, sc, cos_y, sin_y)),
@@ -364,7 +373,14 @@ class DonCiroWidget(QWidget):
     def _draw_arm(self, p: QPainter, sh: QPointF, hand: QPointF, z: float, is_right: bool) -> None:
         """Disegna un braccio."""
         p.setOpacity(0.8 if z < 0 else 1.0)
-        p.setPen(QPen(self.C_SUIT.darker(105 if z < 0 else 100), 7 * self.engine.scale, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+        p.setPen(
+            QPen(
+                self.C_SUIT.darker(105 if z < 0 else 100),
+                7 * self.engine.scale,
+                Qt.PenStyle.SolidLine,
+                Qt.PenCapStyle.RoundCap,
+            )
+        )
         p.drawLine(sh, hand)
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(QBrush(self.C_SKIN.darker(105 if z < 0 else 100)))
@@ -376,7 +392,16 @@ class DonCiroWidget(QWidget):
             p.drawLine(QPointF(0, 0), QPointF(0, -35 * self.engine.scale))
             p.setPen(Qt.PenStyle.NoPen)
             p.setBrush(QBrush(QColor("#111111")))
-            p.drawChord(QRectF(-20 * self.engine.scale, -45 * self.engine.scale, 40 * self.engine.scale, 20 * self.engine.scale), 0, 180 * 16)
+            p.drawChord(
+                QRectF(
+                    -20 * self.engine.scale,
+                    -45 * self.engine.scale,
+                    40 * self.engine.scale,
+                    20 * self.engine.scale,
+                ),
+                0,
+                180 * 16,
+            )
             p.restore()
         p.setOpacity(1.0)
 
@@ -499,12 +524,20 @@ class DonCiroWidget(QWidget):
         font.setLetterSpacing(QFont.SpacingType.PercentageSpacing, int(sp))
         p.setFont(font)
         p.setPen(QColor(0, 0, 0, 80))
-        p.drawText(self.rect().adjusted(2, 12, 2, 12), Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter, "DON CIRO")
+        p.drawText(
+            self.rect().adjusted(2, 12, 2, 12),
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter,
+            "DON CIRO",
+        )
         grad = QLinearGradient(0, 10, 0, 35)
         grad.setColorAt(0, QColor("#D4AF37"))
         grad.setColorAt(0.5, QColor("#BDB76B"))
         grad.setColorAt(1, QColor("#223344"))
         p.setPen(QPen(grad, 0.5))
         p.setBrush(QBrush(grad))
-        p.drawText(self.rect().adjusted(0, 10, 0, 10), Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter, "DON CIRO")
+        p.drawText(
+            self.rect().adjusted(0, 10, 0, 10),
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter,
+            "DON CIRO",
+        )
         p.restore()

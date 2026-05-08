@@ -234,8 +234,9 @@ class ScaricaTSBot(SeleniumBaseBot):
             self.driver.execute_script(js_dispatch, campo_num)
 
             campo_pos = self.wait.until(EC.presence_of_element_located((By.NAME, "PosizioneOda")))
-            self.driver.execute_script("arguments[0].value = ''; arguments[0].value = arguments[1];",
-                campo_pos, posizione_oda)
+            self.driver.execute_script(
+                "arguments[0].value = ''; arguments[0].value = arguments[1];", campo_pos, posizione_oda
+            )
             self.driver.execute_script(js_dispatch, campo_pos)
 
             xpath_cerca = "//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Cerca']]"
@@ -267,7 +268,9 @@ class ScaricaTSBot(SeleniumBaseBot):
         self._check_stop()
 
         try:
-            self.wait.until(EC.element_to_be_clickable((By.XPATH, "//*[normalize-space(text())='Report']"))).click()
+            self.wait.until(
+                EC.element_to_be_clickable((By.XPATH, "//*[normalize-space(text())='Report']"))
+            ).click()
             self._attendi_scomparsa_overlay()
 
             timesheet_menu_xpath = "//span[contains(@id, 'generic_menu_button-') and contains(@id, '-btnEl')][.//span[text()='Timesheet']]"
@@ -320,7 +323,9 @@ class ScaricaTSBot(SeleniumBaseBot):
 
         # Snapshot file esistenti
         allowed_ext = {".xlsx", ".xls"}
-        files_before = {f for f in source_dir_path.iterdir() if f.is_file() and f.suffix.lower() in allowed_ext}
+        files_before = {
+            f for f in source_dir_path.iterdir() if f.is_file() and f.suffix.lower() in allowed_ext
+        }
 
         # Trigger
         time.sleep(1)
@@ -365,7 +370,9 @@ class ScaricaTSBot(SeleniumBaseBot):
     ) -> Path:
         """Costruisce il percorso finale basato su ODA/POS."""
         safe_oda, safe_pos = sanitize_filename(oda), sanitize_filename(pos)
-        base_name = f"TS_{safe_oda}-{safe_pos}" if safe_pos and safe_pos != "unnamed_file" else f"TS_{safe_oda}"
+        base_name = (
+            f"TS_{safe_oda}-{safe_pos}" if safe_pos and safe_pos != "unnamed_file" else f"TS_{safe_oda}"
+        )
         filename = f"{base_name}{extension}"
 
         target_dir = source_dir if self.elabora_ts else dest_dir

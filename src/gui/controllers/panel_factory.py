@@ -48,10 +48,12 @@ class PanelFactory:
         try:
             if index == PageIndex.DASHBOARD:
                 from src.gui.panels.dashboard_panel import DashboardPanel  # noqa: PLC0415
+
                 return DashboardPanel()
 
             if index == PageIndex.AUTOMAZIONI:
                 from src.gui.widgets.automazioni_widget import AutomazioniWidget  # noqa: PLC0415
+
                 return AutomazioniWidget(main_window=self.mw)
 
             if index == PageIndex.RESERVED_AI:
@@ -59,42 +61,52 @@ class PanelFactory:
 
             if index == PageIndex.TIMBRATURE:
                 from src.gui.panels.timbrature_db import TimbratureDBPanel  # noqa: PLC0415
+
                 return TimbratureDBPanel()
 
             if index == PageIndex.STRUMENTALE:
                 from src.gui.panels.contabilita_panel import ContabilitaPanel  # noqa: PLC0415
+
                 return ContabilitaPanel()
 
             if index == PageIndex.DATAEASE:
                 from src.gui.panels.scarico_ore_panel import ScaricoOrePanel  # noqa: PLC0415
+
                 return ScaricoOrePanel(controller=self.nav.scarico_ore_controller)
 
             if index == PageIndex.PDL_DB:
                 from src.gui.panels.pdl.pdl_panel import PDLDBPanel  # noqa: PLC0415
+
                 return PDLDBPanel(controller=self.nav.pdl_controller)
 
             if index == PageIndex.SETTINGS:
                 from src.gui.panels.settings.main_panel import SettingsPanel  # noqa: PLC0415
+
                 return SettingsPanel()
 
             if index == PageIndex.HELP:
                 from src.gui.panels.help_panel import HelpPanel  # noqa: PLC0415
+
                 return HelpPanel()
 
             if index == PageIndex.NOTIFICATIONS:
                 from src.gui.panels.notifications_panel import NotificationsPanel  # noqa: PLC0415
+
                 return NotificationsPanel()
 
             if index == PageIndex.STORICO_ODA:
                 from src.gui.panels.storico_oda import StoricoOdaPanel  # noqa: PLC0415
+
                 return StoricoOdaPanel(controller=self.nav.oda_controller)
 
             if index == PageIndex.DIPENDENTI:
                 from src.gui.panels.dipendenti.main_panel import DipendentiPanel  # noqa: PLC0415
+
                 return DipendentiPanel(controller=self.nav.anagrafica_controller)
 
             if index == PageIndex.CONSUNTIVO:
                 from src.gui.panels.consuntivo_panel import ConsuntivoPanel  # noqa: PLC0415
+
                 return ConsuntivoPanel(controller=self.nav.consuntivo_controller)
 
         except Exception:
@@ -102,7 +114,7 @@ class PanelFactory:
             QMessageBox.critical(
                 None,
                 "Errore Caricamento",
-                f"Impossibile caricare il modulo {index}. Controlla i log di sistema."
+                f"Impossibile caricare il modulo {index}. Controlla i log di sistema.",
             )
 
         return None

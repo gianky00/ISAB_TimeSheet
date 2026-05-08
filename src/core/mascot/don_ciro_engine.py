@@ -29,6 +29,7 @@ ACTION_TIE_THRESHOLD = 0.8
 
 class DonState(Enum):
     """Stati della macchina a stati di Don Ciro."""
+
     WALKING = auto()
     TURNING = auto()
     IDLE = auto()
@@ -38,6 +39,7 @@ class DonState(Enum):
 
 class WeatherCond(Enum):
     """Condizioni meteorologiche simulate/reali per la mascotte."""
+
     NORMAL = auto()
     SUNNY = auto()
     RAINY = auto()
@@ -127,8 +129,7 @@ class DonCiroEngine(QObject):
 
         # 1. Fisica Cravatta (Molla)
         target_t = (
-            math.sin(self._walk_phase * 2 * math.pi) * 12 * cos_y
-            if self._state == DonState.WALKING else 0.0
+            math.sin(self._walk_phase * 2 * math.pi) * 12 * cos_y if self._state == DonState.WALKING else 0.0
         )
         if self._weather == WeatherCond.WINDY:
             target_t += 20 * self._look_dir
@@ -139,7 +140,8 @@ class DonCiroEngine(QObject):
         # 2. Fisica Giacca (Flap)
         target_j = (
             -abs(math.sin(self._walk_phase * 2 * math.pi)) * 6 * cos_y
-            if self._state == DonState.WALKING else 0.0
+            if self._state == DonState.WALKING
+            else 0.0
         )
         if self._weather == WeatherCond.WINDY:
             target_j -= 10 * self._look_dir

@@ -232,13 +232,16 @@ class BaseBotPanel(QWidget):
         status_text = "SUCCESS" if success else "ERROR"
         self.log_widget.append(f"MISSION REPORT: Duration {duration} | Status: {status_text}", status_text)
 
-        QTimer.singleShot(0, lambda: AuditManager.instance().log_action(
-            action="Completamento Automazione",
-            category="automazione",
-            entity=self.bot_name,
-            params={"durata": duration, "success": success},
-            status="success" if success else "error",
-        ))
+        QTimer.singleShot(
+            0,
+            lambda: AuditManager.instance().log_action(
+                action="Completamento Automazione",
+                category="automazione",
+                entity=self.bot_name,
+                params={"durata": duration, "success": success},
+                status="success" if success else "error",
+            ),
+        )
 
     def _notify_system(self, success: bool) -> None:
         win = self.window()

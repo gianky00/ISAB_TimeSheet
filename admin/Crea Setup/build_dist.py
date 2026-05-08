@@ -67,7 +67,7 @@ def log_and_print(message, level="INFO"):  # noqa: ANN001, ANN201
         logger.warning(message)
 
 
-def run_command(cmd, cwd=None, shell=False, check=True, input_str=None):  # noqa: ANN001, ANN201
+def run_command(cmd, cwd=None, shell=False, check=True, input_str=None):  # noqa: ANN001, ANN201, C901
     """Run command and log output. Supports sending input to stdin."""
     if cwd is None:
         cwd = ROOT_DIR
@@ -195,9 +195,7 @@ def _ensure_playwright_browsers(drivers_dir: Path) -> None:
                 target_pw_dir = pw_dest_dir / src_dir.name
 
                 if not target_pw_dir.exists():
-                    log_and_print(
-                        f"  Copying {src_dir.name} to drivers folder (this may take a while)..."
-                    )
+                    log_and_print(f"  Copying {src_dir.name} to drivers folder (this may take a while)...")
                     shutil.copytree(src_dir, target_pw_dir, dirs_exist_ok=True)
                     log_and_print(f"  [SUCCESS] Playwright {src_dir.name} aligned.")
                 else:
@@ -226,6 +224,7 @@ def ensure_drivers():  # noqa: ANN201
 
     _ensure_selenium_driver(drivers_dir)
     _ensure_playwright_browsers(drivers_dir)
+
 
 def run_pyarmor():  # noqa: ANN201
     """Obfuscate scripts using PyArmor."""
@@ -657,7 +656,7 @@ def deploy_to_network_share(setup_dir: Path, setup_filename: str):  # noqa: ANN2
         return False
 
 
-def main() -> None:  # noqa: PLR0912
+def main() -> None:  # noqa: PLR0912, C901
     parser = argparse.ArgumentParser(description="Bot TS Build Script")
     parser.add_argument("--use-nuitka", action="store_true", help="Use Nuitka instead of PyInstaller")
     parser.add_argument("--no-deploy", action="store_true", help="Skip Netlify")

@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-import coverage
+import coverage  # type: ignore[import-untyped]
 import pytest
 
 
@@ -26,7 +26,7 @@ def run_coverage_for_bot(test_file: Path, source_file: Path, bot_name: str) -> f
     cov.report(show_missing=True)
 
     # Restituisce la percentuale per controllo finale
-    return cov.report()
+    return float(cov.report())
 
 
 if __name__ == "__main__":

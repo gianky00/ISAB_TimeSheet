@@ -211,11 +211,7 @@ class ContabilitaImporter(BaseImporter):
         try:
             # Se ha sia punto che virgola, determiniamo il formato
             if "." in s and "," in s:
-                s = (
-                    s.replace(".", "").replace(",", ".")
-                    if s.find(".") < s.find(",")
-                    else s.replace(",", "")
-                )
+                s = s.replace(".", "").replace(",", ".") if s.find(".") < s.find(",") else s.replace(",", "")
             else:
                 # Solo uno dei due: se è virgola, è decimale IT
                 s = s.replace(",", ".")

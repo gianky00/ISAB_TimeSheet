@@ -81,4 +81,4 @@ class TestContabilitaSyncEngine:
             # ma il conteggio diff (EXCEPT) dovrebbe rilevare solo le differenze reali di contenuto.
             # In realtà _sync_partitioned_table calcola diff prima del replace.
             assert added == 1  # Solo 'Nuovo' è nuovo
-            assert removed == 0 # 'Rossi' era già lì (identico)
+            assert removed == 0  # 'Rossi' era già lì (identico)

@@ -20,6 +20,7 @@ from src.bots.base.playwright_login_page import PlaywrightLoginPage
 from src.bots.portale_fornitori.common.locators import CommonLocators
 from src.core import config_manager
 from src.core.constants import BotStatus, BrowserConfig, Timeouts
+from src.core.exceptions import BrowserInitError
 from src.core.logging import measure_time
 from src.utils.browser_diagnostics import emergency_profile_reset
 from src.utils.browser_profile_patcher import patch_browser_profile
@@ -91,7 +92,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
         self._setup_page_context()
 
         if self.context is None or self.page is None:
-            raise RuntimeError("BrowserInitFailed: Page or Context not initialized")
+            raise BrowserInitError("Page or Context not initialized")
 
         self.login_page = PlaywrightLoginPage(self.page, self.log, self.ISAB_URL)
 

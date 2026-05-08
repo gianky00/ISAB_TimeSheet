@@ -350,6 +350,7 @@ class MainWindow(QMainWindow):
         else:
             # Fallback se non ancora registrato (molto improbabile dopo navigazione)
             from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
+
             automazioni = self.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
             if automazioni and hasattr(automazioni, "panel_pdl"):
                 automazioni.panel_pdl.set_pdl_list(pdl_numbers)

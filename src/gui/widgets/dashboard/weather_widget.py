@@ -1,4 +1,4 @@
-# ruff: noqa: E701, PLR2004, DTZ007
+# ruff: noqa: PLR2004, DTZ007
 """
 SyncroJob - Weather Widget
 Visualizza le previsioni meteo locali (Priolo Gargallo) utilizzando il servizio dedicato.
@@ -256,6 +256,7 @@ class WeatherWidget(ModernCard):
         body_h.addLayout(temp_v)
 
         from src.gui.widgets.dashboard.don_ciro_widget import DonCiroWidget  # noqa: PLC0415
+
         self.don_ciro = DonCiroWidget()
         body_h.addWidget(self.don_ciro)
 
@@ -263,10 +264,18 @@ class WeatherWidget(ModernCard):
         pills_v.setSpacing(3)
         pills_v.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
-        self.pill_wind = self._create_info_pill(Icons.ACTIVITY, "-- km/h", COLORS["info_blue"], "<b>Vento</b><br/>Velocità attuale")
-        self.pill_hum = self._create_info_pill(Icons.CLOUD, "--% UR", COLORS["teal_accent"], "<b>Umidità</b><br/>Umidità relativa")
-        self.pill_uv = self._create_info_pill(Icons.SPARKLES, "UV: --", COLORS["warning_orange"], "<b>Indice UV</b><br/>Radiazioni UV")
-        self.pill_aqi = self._create_info_pill(Icons.GLOBE, "AQI: --", COLORS["success_green"], "<b>Qualità Aria</b><br/>Indice EU (0-100+)")
+        self.pill_wind = self._create_info_pill(
+            Icons.ACTIVITY, "-- km/h", COLORS["info_blue"], "<b>Vento</b><br/>Velocità attuale"
+        )
+        self.pill_hum = self._create_info_pill(
+            Icons.CLOUD, "--% UR", COLORS["teal_accent"], "<b>Umidità</b><br/>Umidità relativa"
+        )
+        self.pill_uv = self._create_info_pill(
+            Icons.SPARKLES, "UV: --", COLORS["warning_orange"], "<b>Indice UV</b><br/>Radiazioni UV"
+        )
+        self.pill_aqi = self._create_info_pill(
+            Icons.GLOBE, "AQI: --", COLORS["success_green"], "<b>Qualità Aria</b><br/>Indice EU (0-100+)"
+        )
 
         pills_v.addWidget(self.pill_wind)
         pills_v.addWidget(self.pill_hum)
@@ -279,7 +288,9 @@ class WeatherWidget(ModernCard):
     def _build_forecast_area(self) -> None:
         self.forecast_container = QWidget()
         self.forecast_container.setObjectName("forecast_container")
-        self.forecast_container.setStyleSheet("#forecast_container { background: transparent; border: none; }")
+        self.forecast_container.setStyleSheet(
+            "#forecast_container { background: transparent; border: none; }"
+        )
         self.forecast_h = QHBoxLayout(self.forecast_container)
         self.forecast_h.setContentsMargins(0, 4, 0, 0)
         self.forecast_h.setSpacing(0)
@@ -304,7 +315,9 @@ class WeatherWidget(ModernCard):
         badge.setFixedSize(28, 28)
         badge.setObjectName("icon_badge")
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        badge.setStyleSheet(f"#icon_badge {{ background-color: {bg_color}; border-radius: 14px; border: none; }}")
+        badge.setStyleSheet(
+            f"#icon_badge {{ background-color: {bg_color}; border-radius: 14px; border: none; }}"
+        )
         badge.setPixmap(get_colored_icon(get_asset_path(icon_key), icon_color).pixmap(14, 14))
         return badge
 
@@ -312,7 +325,9 @@ class WeatherWidget(ModernCard):
         pill = QFrame()
         pill.setObjectName("info_pill")
         pill.setToolTip(tooltip)
-        pill.setStyleSheet(f"{TOOLTIP_CSS}\n#info_pill {{ background-color: {COLORS['bg_light']}; border-radius: 10px; border: 1px solid {COLORS['border_light']}; padding: 0px; }}")
+        pill.setStyleSheet(
+            f"{TOOLTIP_CSS}\n#info_pill {{ background-color: {COLORS['bg_light']}; border-radius: 10px; border: 1px solid {COLORS['border_light']}; padding: 0px; }}"
+        )
         pill.setFixedHeight(22)
 
         h = QHBoxLayout(pill)
@@ -327,7 +342,9 @@ class WeatherWidget(ModernCard):
 
         lbl = QLabel(text)
         lbl.setObjectName("pill_text")
-        lbl.setStyleSheet(f"#pill_text {{ color: {COLORS['text_dark']}; font-size: 10px; font-weight: 700; background: transparent; border: none; }}")
+        lbl.setStyleSheet(
+            f"#pill_text {{ color: {COLORS['text_dark']}; font-size: 10px; font-weight: 700; background: transparent; border: none; }}"
+        )
         h.addWidget(lbl)
         return pill
 
@@ -335,7 +352,9 @@ class WeatherWidget(ModernCard):
         sep = QFrame()
         sep.setObjectName("gradient_sep")
         sep.setFixedHeight(1)
-        sep.setStyleSheet(f"#gradient_sep {{ background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 transparent, stop:0.2 {COLORS['border_light']}, stop:0.8 {COLORS['border_light']}, stop:1 transparent); border: none; }}")
+        sep.setStyleSheet(
+            f"#gradient_sep {{ background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 transparent, stop:0.2 {COLORS['border_light']}, stop:0.8 {COLORS['border_light']}, stop:1 transparent); border: none; }}"
+        )
         self.main_layout.addWidget(sep)
 
     def fetch_weather(self) -> None:
@@ -416,8 +435,10 @@ class WeatherWidget(ModernCard):
 
     def _evaluate_alerts(self, code: int, gusts: float) -> None:
         alerts = []
-        if gusts > 45.0: alerts.append(f"Vento Forte ({gusts} km/h)")
-        if code in (65, 80, 81, 82, 95, 96, 99): alerts.append("Precipitazioni Estreme")
+        if gusts > 45.0:
+            alerts.append(f"Vento Forte ({gusts} km/h)")
+        if code in (65, 80, 81, 82, 95, 96, 99):
+            alerts.append("Precipitazioni Estreme")
 
         if alerts:
             self.lbl_alert_msg.setText(" - ".join(alerts))
@@ -434,22 +455,29 @@ class WeatherWidget(ModernCard):
         if w_lbl:
             w_lbl.setText(f"{wind} km/h")
             self.pill_wind.setToolTip(f"<b>Vento</b><br/>Medio: {wind} km/h<br/>Raffiche max: {gusts} km/h")
-        if h_lbl: h_lbl.setText(f"{hum}% UR")
-        if u_lbl: u_lbl.setText(f"UV: {uv}")
+        if h_lbl:
+            h_lbl.setText(f"{hum}% UR")
+        if u_lbl:
+            u_lbl.setText(f"UV: {uv}")
         if a_lbl:
             a_lbl.setText(f"AQI: {aqi}")
             aqi_color = COLORS["success_green"]
             aqi_val = 0 if aqi == "--" else int(aqi)
-            if aqi_val > 40: aqi_color = COLORS["warning_yellow"]
-            if aqi_val > 60: aqi_color = COLORS["warning_orange"]
-            if aqi_val > 80: aqi_color = COLORS["error_red"]
+            if aqi_val > 40:
+                aqi_color = COLORS["warning_yellow"]
+            if aqi_val > 60:
+                aqi_color = COLORS["warning_orange"]
+            if aqi_val > 80:
+                aqi_color = COLORS["error_red"]
             i_lbl = self.pill_aqi.findChild(QLabel, "pill_icon")
-            if i_lbl: i_lbl.setPixmap(get_colored_icon(get_asset_path(Icons.GLOBE), aqi_color).pixmap(11, 11))
+            if i_lbl:
+                i_lbl.setPixmap(get_colored_icon(get_asset_path(Icons.GLOBE), aqi_color).pixmap(11, 11))
 
     def _update_forecast(self, daily: dict[str, Any]) -> None:
         while self.forecast_h.count():
             child = self.forecast_h.takeAt(0)
-            if child and (w := child.widget()): w.deleteLater()
+            if child and (w := child.widget()):
+                w.deleteLater()
 
         t_max = daily.get("temperature_2m_max", [])
         t_min = daily.get("temperature_2m_min", [])
@@ -458,10 +486,13 @@ class WeatherWidget(ModernCard):
         dates = daily.get("time", [])
 
         for i in range(1, 5):
-            if i >= len(dates): break
+            if i >= len(dates):
+                break
             item = QWidget()
             item.setObjectName(f"forecast_item_{i}")
-            item.setStyleSheet(f"{TOOLTIP_CSS}\n#forecast_item_{i} {{ background: transparent; border: none; }}")
+            item.setStyleSheet(
+                f"{TOOLTIP_CSS}\n#forecast_item_{i} {{ background: transparent; border: none; }}"
+            )
             v = QVBoxLayout(item)
             v.setContentsMargins(0, 0, 0, 0)
             v.setSpacing(1)
@@ -471,7 +502,9 @@ class WeatherWidget(ModernCard):
             days = ["LUN", "MAR", "MER", "GIO", "VEN", "SAB", "DOM"]
             lbl_d = QLabel(days[dt.weekday()])
             lbl_d.setObjectName("forecast_day")
-            lbl_d.setStyleSheet(f"#forecast_day {{ color: {COLORS['text_muted']}; font-size: 10px; font-weight: 800; }}")
+            lbl_d.setStyleSheet(
+                f"#forecast_day {{ color: {COLORS['text_muted']}; font-size: 10px; font-weight: 800; }}"
+            )
             lbl_d.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             f_code = codes[i] if i < len(codes) else 0
@@ -481,7 +514,7 @@ class WeatherWidget(ModernCard):
             lbl_i.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             pop_val = pops[i] if i < len(pops) else 0
-            lbl_pop = QLabel(f"💧 {pop_val}%" if pop_val > 40 else "") # Solo se rilevante
+            lbl_pop = QLabel(f"💧 {pop_val}%" if pop_val > 40 else "")  # Solo se rilevante
             lbl_pop.setStyleSheet(f"color: {COLORS['primary_blue']}; font-size: 9px; font-weight: 800;")
             lbl_pop.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -497,16 +530,28 @@ class WeatherWidget(ModernCard):
             self.forecast_h.addWidget(item)
 
     def _get_weather_style(self, code: int) -> tuple[str, str]:
-        if code == 0: return "assets/icons/sun.svg", COLORS["warning_yellow"]
-        if code in (1, 2, 3): return "assets/icons/cloud-sun.svg", COLORS["primary_blue"]
-        if code in (45, 48): return "assets/icons/cloud-fog.svg", COLORS["text_muted"]
-        if 50 <= code < 95: return "assets/icons/cloud-rain.svg", COLORS["primary_blue"]
-        if code >= 95: return "assets/icons/cloud-lightning.svg", COLORS["warning_yellow"]
+        if code == 0:
+            return "assets/icons/sun.svg", COLORS["warning_yellow"]
+        if code in (1, 2, 3):
+            return "assets/icons/cloud-sun.svg", COLORS["primary_blue"]
+        if code in (45, 48):
+            return "assets/icons/cloud-fog.svg", COLORS["text_muted"]
+        if 50 <= code < 95:
+            return "assets/icons/cloud-rain.svg", COLORS["primary_blue"]
+        if code >= 95:
+            return "assets/icons/cloud-lightning.svg", COLORS["warning_yellow"]
         return "assets/icons/cloud.svg", COLORS["text_dark"]
 
     def _get_condition_text(self, code: int) -> str:
         return {
-            0: "Sereno", 1: "Quasi Sereno", 2: "Parz. Nuvoloso", 3: "Coperto",
-            45: "Nebbia", 51: "Pioggerellina", 61: "Pioggia", 65: "Pioggia Forte",
-            80: "Rovesci", 95: "Temporale",
+            0: "Sereno",
+            1: "Quasi Sereno",
+            2: "Parz. Nuvoloso",
+            3: "Coperto",
+            45: "Nebbia",
+            51: "Pioggerellina",
+            61: "Pioggia",
+            65: "Pioggia Forte",
+            80: "Rovesci",
+            95: "Temporale",
         }.get(code, "Variabile")

@@ -53,9 +53,7 @@ class TestBaseBot:
         # Accediamo a _states per verifica interna del reset
         assert bot.step_manager._states[0] == StepStatus.PENDING
 
-    @patch(
-        "src.bots.base.execution_guard.ExecutionGuard.check_environment", return_value=(True, "")
-    )
+    @patch("src.bots.base.execution_guard.ExecutionGuard.check_environment", return_value=(True, ""))
     def test_execute_workflow_success(self, mock_guard, bot):
         """Verifica il flusso completo di esecuzione: login -> run -> cleanup."""
         # Mocking internal methods
