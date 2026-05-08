@@ -231,51 +231,69 @@ class CertificatiCampioneTab(QWidget):
             if not parent:
                 continue
 
-            # 1. Recupero dati e stati base
-            label_text = parent.text(0)
-            matricola = self.engine.parse_parent_label(label_text)["matricola"]
-            is_mon_ex = matricola in self.engine._exclusions
-            is_print_ex = matricola in self.engine._print_exclusions
-            is_any_ex = is_mon_ex or is_print_ex
-
-            is_absent = False
-            if parent.childCount() > 0 and (first_child := parent.child(0)):
-                child_loc = first_child.text(self.tree.IDX_UBICAZIONE).upper()
-                is_absent = UbicazioneStrumenti.ASSENTE.value in child_loc
+            # 1. Recupero stati base
+            is_any_ex = self._is_any_excluded(parent)
+            is_absent = self._is_instrument_absent(parent)
 
             # 2. Calcolo Visibilità Primaria (Padre)
-            visible = True
-            if self._only_excluded:
-                visible = is_any_ex
-            elif (is_mon_ex and not self._show_excluded) or (is_print_ex and not self._show_print_excluded):
-                visible = False
-
-            if visible and self._hide_absent and is_absent:
-                visible = False
+            visible = self._calculate_parent_visibility(parent, is_any_ex, is_absent)
 
             # 3. Gestione Figli (Storico) e Ricerca
-            found_in_visible_child = False
-            for j in range(parent.childCount()):
-                if child := parent.child(j):
-                    # Il primo figlio è sempre 'ammesso' (se lo è il padre), gli altri dipendono dallo storico
-                    is_child_allowed = (j == 0) or self._include_history
-                    child.setHidden(not is_child_allowed)
-
-                    if (
-                        is_child_allowed
-                        and query
-                        and not found_in_visible_child
-                        and any(query in child.text(c).lower() for c in range(self.tree.columnCount()))
-                    ):
-                        found_in_visible_child = True
+            found_in_child = self._filter_child_items(parent, query)
 
             # 4. Verifica Finale con Ricerca
             if visible and query:
-                visible = (query in label_text.lower()) or found_in_visible_child
+                visible = (query in parent.text(0).lower()) or found_in_child
 
             parent.setHidden(not visible)
 
         self._update_excluded_count_label()
+
+    def _is_any_excluded(self, parent: QTreeWidgetItem) -> bool:
+        """Verifica se lo strumento è escluso (monitoraggio o stampa)."""
+        matricola = self.engine.parse_parent_label(parent.text(0))["matricola"]
+        return matricola in self.engine._exclusions or matricola in self.engine._print_exclusions
+
+    def _is_instrument_absent(self, parent: QTreeWidgetItem) -> bool:
+        """Verifica se lo strumento è marcato come ASSENTE."""
+        if parent.childCount() > 0 and (first_child := parent.child(0)):
+            child_loc = first_child.text(self.tree.IDX_UBICAZIONE).upper()
+            return UbicazioneStrumenti.ASSENTE.value in child_loc
+        return False
+
+    def _calculate_parent_visibility(
+        self, parent: QTreeWidgetItem, is_any_ex: bool, is_absent: bool
+    ) -> bool:
+        """Determina la visibilità dell'item padre basandosi sui filtri di stato."""
+        if self._only_excluded:
+            return is_any_ex
+
+        # Esclusione basata sui singoli flag di monitoraggio/stampa
+        matricola = self.engine.parse_parent_label(parent.text(0))["matricola"]
+        if (matricola in self.engine._exclusions and not self._show_excluded) or (
+            matricola in self.engine._print_exclusions and not self._show_print_excluded
+        ):
+            return False
+
+        return not (self._hide_absent and is_absent)
+
+    def _filter_child_items(self, parent: QTreeWidgetItem, query: str) -> bool:
+        """Filtra i figli (storico) e verifica se la query match almeno uno di essi."""
+        found_in_visible_child = False
+        for j in range(parent.childCount()):
+            if child := parent.child(j):
+                is_allowed = (j == 0) or self._include_history
+                child.setHidden(not is_allowed)
+
+                if (
+                    is_allowed
+                    and query
+                    and not found_in_visible_child
+                    and any(query in child.text(c).lower() for c in range(self.tree.columnCount()))
+                ):
+                    found_in_visible_child = True
+        return found_in_visible_child
+
 
     def refresh_data(self) -> None:
         """Ricarica i dati dal database e aggiorna la vista preservando lo stato."""
@@ -303,159 +321,178 @@ class CertificatiCampioneTab(QWidget):
                         if matricola in expanded_matricole:
                             item.setExpanded(True)
 
-    def _load_data(self) -> None:  # noqa: PLR0915
+    def _load_data(self) -> None:
         """Popola l'albero raggruppando i certificati per ID-COEMI."""
         data = ContabilitaManager.get_certificati_campione_data()
         self.tree.clear()
         self.tree.setSortingEnabled(False)
 
-        # Indici fissi del risultato DB (definiti in ContabilitaQueries)
-        idx_id_coemi = 0
-        idx_certificato = 1
-        idx_modello = 2
-        idx_costruttore = 3
-        idx_matricola = 4
-        idx_range = 5
-        idx_errore = 6
-        idx_emissione = 7
-        idx_scadenza = 8
-        idx_stato = 9
-        idx_annotazioni = 10
-        idx_ubicazione = 11
-        idx_id = 12
+        # 1. Raggruppamento dati
+        id_coemi_groups = self._group_data_by_id_coemi(data)
 
-        # Raggruppa per ID-COEMI (o Matricola/Certificato se manca)
-        id_coemi_groups = defaultdict(list)
+        # 2. Preparazione gruppi con metadati e priorità
+        groups_with_priority = self._prepare_groups_with_priority(id_coemi_groups)
+        groups_with_priority.sort(key=operator.itemgetter("priority"))
+
+        # 3. Popolamento Tree
+        for g in groups_with_priority:
+            parent_item = self._create_parent_item(g)
+            self._add_child_items(parent_item, g)
+
+        self.tree.collapseAll()
+        self._apply_filters()
+        self._update_excluded_count_label()
+
+    def _group_data_by_id_coemi(self, data: list[tuple[Any, ...]]) -> dict[str, list[tuple[Any, ...]]]:
+        """Raggruppa le righe del DB per ID-COEMI o fallback (Matricola/Certificato)."""
+        from src.core.contabilita_queries import ContabilitaQueries  # noqa: PLC0415
+
+        idx_id_coemi = ContabilitaQueries.CERT_IDX_ID_COEMI
+        idx_matricola = ContabilitaQueries.CERT_IDX_MATRICOLA
+        idx_certificato = ContabilitaQueries.CERT_IDX_CERTIFICATO
+
+        groups = defaultdict(list)
         for r in data:
-            # Chiave di raggruppamento: ID-COEMI > Matricola > Certificato
             key = (
                 str(r[idx_id_coemi]).strip()
                 or str(r[idx_matricola]).strip()
                 or str(r[idx_certificato]).strip()
                 or "Sconosciuto"
             )
-            id_coemi_groups[key].append(r)
+            groups[key].append(r)
+        return groups
 
-        groups_with_priority = []
-        for group_key, certificates in id_coemi_groups.items():
-            # Ordina per emissione (più recente in alto)
-            def parse_date(c: Any) -> datetime:
-                # Guardia sulla lunghezza per evitare crash con dati mockati incompleti
-                if len(c) <= idx_emissione:
-                    return datetime.min.replace(tzinfo=UTC)
+    def _prepare_groups_with_priority(self, groups: dict[str, list[tuple[Any, ...]]]) -> list[dict[str, Any]]:
+        """Calcola stati e priorità per ogni gruppo di certificati."""
+        from src.core.contabilita_queries import ContabilitaQueries  # noqa: PLC0415
 
-                d = c[idx_emissione] or ""
-                try:
-                    return (
-                        datetime.strptime(d, "%d/%m/%Y").replace(tzinfo=UTC)
-                        if "/" in d
-                        else datetime.min.replace(tzinfo=UTC)
-                    )
-                except Exception:
-                    return datetime.min.replace(tzinfo=UTC)
-
-            certs_sorted = sorted(certificates, key=parse_date, reverse=True)
+        processed_groups = []
+        for group_key, certificates in groups.items():
+            certs_sorted = sorted(certificates, key=self._parse_emission_date, reverse=True)
             latest = certs_sorted[0]
 
-            # Guardia sulla lunghezza per scadenza
-            scadenza = latest[idx_scadenza] if len(latest) > idx_scadenza else ""
+            scadenza = (
+                latest[ContabilitaQueries.CERT_IDX_SCADENZA]
+                if len(latest) > ContabilitaQueries.CERT_IDX_SCADENZA
+                else ""
+            )
             days, icon = self.engine.calculate_days_and_status(scadenza)
 
-            groups_with_priority.append(
+            processed_groups.append(
                 {
                     "group_key": group_key,
-                    "id_coemi": (latest[idx_id_coemi] if len(latest) > idx_id_coemi else "") or "",
-                    "matricola": (latest[idx_matricola] if len(latest) > idx_matricola else "") or "N/D",
-                    "costruttore": (latest[idx_costruttore] if len(latest) > idx_costruttore else "")
+                    "id_coemi": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_ID_COEMI),
+                    "matricola": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_MATRICOLA) or "N/D",
+                    "costruttore": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_COSTRUTTORE)
                     or "N/D",
-                    "modello": (latest[idx_modello] if len(latest) > idx_modello else "") or "N/D",
-                    "range_strumento": (latest[idx_range] if len(latest) > idx_range else "") or "",
+                    "modello": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_MODELLO) or "N/D",
+                    "range_strumento": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_RANGE),
                     "certificates": certs_sorted,
                     "days": days,
                     "icon": icon,
                     "priority": days if days is not None else 9999,
                 }
             )
+        return processed_groups
 
-        groups_with_priority.sort(key=operator.itemgetter("priority"))
+    def _parse_emission_date(self, row: tuple[Any, ...]) -> datetime:
+        """Helper per il parsing sicuro della data di emissione per l'ordinamento."""
+        from src.core.contabilita_queries import ContabilitaQueries  # noqa: PLC0415
 
-        for g in groups_with_priority:
-            # Per l'esclusione usiamo la matricola o l'ID-COEMI?
-            # Manteniamo la matricola per compatibilità con il file esclusioni
-            is_excluded = g["matricola"] in self.engine._exclusions
-            is_print_excluded = g["matricola"] in self.engine._print_exclusions
-            days_val: int | None = g["days"]  # type: ignore
-            days_text = self.engine.format_days_text_short(days_val)
+        idx = ContabilitaQueries.CERT_IDX_EMISSIONE
+        if len(row) <= idx:
+            return datetime.min.replace(tzinfo=UTC)
 
-            modello_str: str = g["modello"]  # type: ignore
-            is_digital = "MANOMETRO DIGITALE" in modello_str.upper()
-            range_part = f"  •  {g['range_strumento']}" if is_digital and g["range_strumento"] else ""
-            excluded_marker = "  [ESCLUSO]" if is_excluded else ""
-            print_excluded_marker = "  [NON STAMPARE]" if is_print_excluded else ""
+        d = row[idx] or ""
+        try:
+            return (
+                datetime.strptime(d, "%d/%m/%Y").replace(tzinfo=UTC)
+                if "/" in d
+                else datetime.min.replace(tzinfo=UTC)
+            )
+        except Exception:
+            return datetime.min.replace(tzinfo=UTC)
 
-            # Label Padre: ID-COEMI • Costruttore • Modello • Matricola • Stato
-            id_part = f"{g['id_coemi']}  •  " if g["id_coemi"] else ""
-            label = f"{id_part}{g['costruttore']}  •  {g['modello']}{range_part}  •  {g['matricola']}  •  {days_text}{excluded_marker}{print_excluded_marker}"
-            parent_item = SortableTreeWidgetItem(self.tree, [label])
-            parent_item.setFirstColumnSpanned(True)
+    def _get_col_safe(self, row: tuple[Any, ...], idx: int) -> str:
+        """Ritorna il valore della colonna in modo sicuro."""
+        return str(row[idx]).strip() if len(row) > idx and row[idx] is not None else ""
 
-            status_icon: str = Icons.STATUS_DOT_GRAY if is_excluded else g["icon"]  # type: ignore
-            parent_item.setIcon(0, QIcon(get_asset_path(status_icon)))
-            parent_item.setData(0, Qt.ItemDataRole.UserRole, {"days": days_val, "matricola": g["matricola"]})
+    def _create_parent_item(self, g: dict[str, Any]) -> SortableTreeWidgetItem:
+        """Crea e configura l'elemento padre nell'albero."""
+        is_excluded = g["matricola"] in self.engine._exclusions
+        is_print_excluded = g["matricola"] in self.engine._print_exclusions
+        days_val: int | None = g["days"]
+        days_text = self.engine.format_days_text_short(days_val)
 
-            if is_excluded:
-                font = parent_item.font(0)
-                font.setStrikeOut(True)
-                parent_item.setFont(0, font)
-                parent_item.setForeground(0, QBrush(QColor(COLORS["text_light"])))
+        is_digital = "MANOMETRO DIGITALE" in str(g["modello"]).upper()
+        range_part = f"  •  {g['range_strumento']}" if is_digital and g["range_strumento"] else ""
+        ex_marker = "  [ESCLUSO]" if is_excluded else ""
+        pr_marker = "  [NON STAMPARE]" if is_print_excluded else ""
 
-            cert_list: list[Any] = g["certificates"]  # type: ignore
-            for i, cert in enumerate(cert_list):
-                # Format errore_max (index 6)
-                err_val = cert[idx_errore] if len(cert) > idx_errore else None
-                err_formatted = self.engine.format_errore_max(err_val) if err_val is not None else ""
+        id_part = f"{g['id_coemi']}  •  " if g["id_coemi"] else ""
+        label = f"{id_part}{g['costruttore']}  •  {g['modello']}{range_part}  •  {g['matricola']}  •  {days_text}{ex_marker}{pr_marker}"
 
-                def get_val(idx: int, c: Any = cert) -> str:
-                    return str(c[idx]) if len(c) > idx and c[idx] is not None else ""
+        parent_item = SortableTreeWidgetItem(self.tree, [label])
+        parent_item.setFirstColumnSpanned(True)
 
-                row_data = [
-                    get_val(idx_id_coemi),  # 0. ID-COEMI
-                    get_val(idx_certificato),  # 1. Certificato
-                    get_val(idx_modello),  # 2. Modello
-                    get_val(idx_costruttore),  # 3. Costruttore
-                    get_val(idx_matricola),  # 4. Matricola
-                    get_val(idx_range),  # 5. Range Strumento
-                    err_formatted,  # 6. Err %
-                    get_val(idx_emissione),  # 7. Emissione
-                    get_val(idx_scadenza),  # 8. Scadenza
-                    get_val(idx_stato),  # 9. Stato
-                    str(
-                        cert[idx_ubicazione]
-                        if len(cert) > idx_ubicazione and cert[idx_ubicazione] not in (None, "")
-                        else "ASSENTE"
-                    ),  # 10. Ubicazione
-                    get_val(idx_annotazioni),  # 11. Annotazioni
-                ]
+        status_icon: str = Icons.STATUS_DOT_GRAY if is_excluded else g["icon"]
+        parent_item.setIcon(0, QIcon(get_asset_path(status_icon)))
+        parent_item.setData(0, Qt.ItemDataRole.UserRole, {"days": days_val, "matricola": g["matricola"]})
 
-                row = SortableTreeWidgetItem(parent_item, row_data)
+        if is_excluded:
+            font = parent_item.font(0)
+            font.setStrikeOut(True)
+            parent_item.setFont(0, font)
+            parent_item.setForeground(0, QBrush(QColor(COLORS["text_light"])))
 
-                # Salviamo l'ID nel ruolo user per poterlo aggiornare
-                record_id = cert[idx_id] if len(cert) > idx_id else None
-                row.setData(0, Qt.ItemDataRole.UserRole, record_id)
+        return parent_item
 
-                # Permettiamo l'editing solo delle ultime due colonne
-                flags = row.flags() | Qt.ItemFlag.ItemIsEditable
-                row.setFlags(flags)
+    def _add_child_items(self, parent: SortableTreeWidgetItem, g: dict[str, Any]) -> None:
+        """Aggiunge i certificati (corrente e storico) come figli dell'item padre."""
+        from src.core.contabilita_queries import ContabilitaQueries  # noqa: PLC0415
 
-                if i == 0:
-                    icon_val: str = g["icon"]  # type: ignore
-                    self.tree.apply_current_certificate_styling(row, days_val, icon_val)
-                else:
-                    self.tree.apply_historical_certificate_styling(row)
+        for i, cert in enumerate(g["certificates"]):
+            err_val = (
+                cert[ContabilitaQueries.CERT_IDX_ERRORE]
+                if len(cert) > ContabilitaQueries.CERT_IDX_ERRORE
+                else None
+            )
+            err_formatted = self.engine.format_errore_max(err_val) if err_val is not None else ""
 
-        self.tree.collapseAll()
-        self._apply_filters()
-        self._update_excluded_count_label()
+            row_data = [
+                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_ID_COEMI),
+                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_CERTIFICATO),
+                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_MODELLO),
+                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_COSTRUTTORE),
+                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_MATRICOLA),
+                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_RANGE),
+                err_formatted,
+                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_EMISSIONE),
+                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_SCADENZA),
+                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_STATO),
+                self._get_ubicazione_safe(cert),
+                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_ANNOTAZIONI),
+            ]
+
+            row = SortableTreeWidgetItem(parent, row_data)
+            record_id = (
+                cert[ContabilitaQueries.CERT_IDX_ID] if len(cert) > ContabilitaQueries.CERT_IDX_ID else None
+            )
+            row.setData(0, Qt.ItemDataRole.UserRole, record_id)
+            row.setFlags(row.flags() | Qt.ItemFlag.ItemIsEditable)
+
+            if i == 0:
+                self.tree.apply_current_certificate_styling(row, g["days"], g["icon"])
+            else:
+                self.tree.apply_historical_certificate_styling(row)
+
+    def _get_ubicazione_safe(self, cert: tuple[Any, ...]) -> str:
+        """Ritorna l'ubicazione con fallback su ASSENTE."""
+        from src.core.contabilita_queries import ContabilitaQueries  # noqa: PLC0415
+
+        idx = ContabilitaQueries.CERT_IDX_UBICAZIONE
+        val = cert[idx] if len(cert) > idx else None
+        return str(val) if val not in (None, "") else "ASSENTE"
 
     def _on_item_edited(self, item: QTreeWidgetItem, col_name: str, new_value: str) -> None:
         """Salva nel database quando un utente modifica Annotazioni o Ubicazione."""

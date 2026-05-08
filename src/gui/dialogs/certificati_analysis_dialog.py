@@ -5,6 +5,8 @@ Modulo specializzato per la visualizzazione e l'esportazione delle scadenze cert
 """
 
 import os
+import subprocess
+import tempfile
 from datetime import UTC, datetime
 from typing import Any
 
@@ -43,460 +45,383 @@ class ScadenzeAnalysisDialog(QDialog):
 
         self._setup_ui()
 
-    def _setup_ui(self):  # noqa: ANN202, PLR0915
+    def _setup_ui(self):  # noqa: ANN202
+        """Inizializzazione principale dell'interfaccia."""
         self.setWindowTitle(f"Analisi Scadenze Certificati - {__app_name__}")
         self.setMinimumSize(950, 650)
-        self.setStyleSheet(
-            f"""
-            QDialog {{
-                background-color: {COLORS["bg_light"]};
-            }}
-            """
-        )
+        self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_light']}; }}")
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # === HEADER ===
-        header = self.header = QFrame()
-        header.setStyleSheet(
-            f"""
-            QFrame {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {COLORS["glass_dark"]}, stop:1 {COLORS["glass_deep"]});
-                border: none;
-            }}
-            """
-        )
-        header_layout = QVBoxLayout(header)
-        header_layout.setContentsMargins(30, 25, 30, 25)
+        # Componenti principali
+        layout.addWidget(self._build_header())
+        layout.addWidget(self._build_stats_frame())
+        layout.addWidget(self._build_scroll_area())
+        layout.addWidget(self._build_footer())
 
-        # Titolo e versione
+    def _build_header(self) -> QFrame:
+        """Costruisce la sezione header con titolo e data."""
+        self.header = QFrame()
+        self.header.setStyleSheet(
+            f"QFrame {{ background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {COLORS['glass_dark']}, stop:1 {COLORS['glass_deep']}); border: none; }}"
+        )
+        layout = QVBoxLayout(self.header)
+        layout.setContentsMargins(30, 25, 30, 25)
+
         title_row = QHBoxLayout()
         title_label = QLabel("Analisi Scadenze Certificati")
         title_label.setStyleSheet(f"color: {COLORS['bg_white']}; font-size: 24px; font-weight: bold;")
         title_row.addWidget(title_label)
         title_row.addStretch()
 
-        version_label = QLabel(f"{__app_name__} v{__version__}")
-        version_label.setStyleSheet(f"color: {hex_to_rgba(COLORS['bg_white'], 0.7)}; font-size: 13px;")
-        title_row.addWidget(version_label)
-        header_layout.addLayout(title_row)
+        v_label = QLabel(f"{__app_name__} v{__version__}")
+        v_label.setStyleSheet(f"color: {hex_to_rgba(COLORS['bg_white'], 0.7)}; font-size: 13px;")
+        title_row.addWidget(v_label)
+        layout.addLayout(title_row)
 
-        # Data analisi
-        date_label = QLabel(f"Generato il {datetime.now(UTC).astimezone().strftime('%d/%m/%Y alle %H:%M')}")
+        d_str = datetime.now(UTC).astimezone().strftime("%d/%m/%Y alle %H:%M")
+        date_label = QLabel(f"Generato il {d_str}")
         date_label.setStyleSheet(
             f"color: {hex_to_rgba(COLORS['bg_white'], 0.6)}; font-size: 12px; margin-top: 5px;"
         )
-        header_layout.addWidget(date_label)
+        layout.addWidget(date_label)
 
-        layout.addWidget(header)
+        return self.header
 
-        # === STATISTICHE ===
-        stats_frame = self.stats_frame = QFrame()
-        stats_frame.setStyleSheet(
-            f"""
-            QFrame {{
-                background-color: {COLORS["bg_white"]};
-                border-bottom: 1px solid {COLORS["border_light"]};
-            }}
-            """
+    def _build_stats_frame(self) -> QFrame:
+        """Costruisce il frame delle statistiche riepilogative."""
+        self.stats_frame = QFrame()
+        self.stats_frame.setStyleSheet(
+            f"QFrame {{ background-color: {COLORS['bg_white']}; border-bottom: 1px solid {COLORS['border_light']}; }}"
         )
-        stats_layout = QHBoxLayout(stats_frame)
-        stats_layout.setContentsMargins(30, 20, 30, 20)
-        stats_layout.setSpacing(40)
+        layout = QHBoxLayout(self.stats_frame)
+        layout.setContentsMargins(30, 20, 30, 20)
+        layout.setSpacing(40)
 
-        # Calcola statistiche
-        scaduti = [c for c in self.certificates_data if c["days"] is not None and c["days"] < 0]
-        urgenti = [c for c in self.certificates_data if c["days"] is not None and 0 <= c["days"] <= 15]  # noqa: PLR2004
-        attenzione = [c for c in self.certificates_data if c["days"] is not None and 16 <= c["days"] <= 30]  # noqa: PLR2004
-        attivi = [c for c in self.certificates_data if c["days"] is not None and c["days"] > 30]  # noqa: PLR2004
-        non_disp = [c for c in self.certificates_data if c["days"] is None]
+        # Calcoli
+        stats = self._calculate_metrics()
 
-        stats_layout.addWidget(
-            self._create_stat_card("Totale Monitorati", len(self.certificates_data), COLORS["info_blue"])
+        layout.addWidget(self._create_stat_card("Totale Monitorati", stats["total"], COLORS["info_blue"]))
+        layout.addWidget(self._create_stat_card("Scaduti", stats["scaduti"], COLORS["error_red"]))
+        layout.addWidget(
+            self._create_stat_card("Urgenti (0-15gg)", stats["urgenti"], COLORS["warning_orange"])
         )
-        stats_layout.addWidget(self._create_stat_card("Scaduti", len(scaduti), COLORS["error_red"]))
-        stats_layout.addWidget(
-            self._create_stat_card("Urgenti (0-15gg)", len(urgenti), COLORS["warning_orange"])
+        layout.addWidget(
+            self._create_stat_card("Attenzione (16-30gg)", stats["attenzione"], COLORS["warning_yellow"])
         )
-        stats_layout.addWidget(
-            self._create_stat_card("Attenzione (16-30gg)", len(attenzione), COLORS["warning_yellow"])
-        )
-        stats_layout.addWidget(self._create_stat_card("Attivi (>30gg)", len(attivi), COLORS["success_dark"]))
-        stats_layout.addStretch()
+        layout.addWidget(self._create_stat_card("Attivi (>30gg)", stats["attivi"], COLORS["success_dark"]))
+        layout.addStretch()
 
-        layout.addWidget(stats_frame)
+        return self.stats_frame
 
-        # === CONTENUTO SCROLLABILE ===
+    def _calculate_metrics(self) -> dict[str, int]:
+        """Esegue il conteggio dei certificati per categoria."""
+        data = self.certificates_data
+        return {
+            "total": len(data),
+            "scaduti": self._count_by_condition(lambda d: d is not None and d < 0),
+            "urgenti": self._count_by_condition(lambda d: d is not None and 0 <= d <= 15),  # noqa: PLR2004
+            "attenzione": self._count_by_condition(lambda d: d is not None and 16 <= d <= 30),  # noqa: PLR2004
+            "attivi": self._count_by_condition(lambda d: d is not None and d > 30),  # noqa: PLR2004
+        }
+
+    def _count_by_condition(self, condition: Any) -> int:
+        """Helper per contare elementi che soddisfano una condizione sui giorni."""
+        return len([c for c in self.certificates_data if condition(c["days"])])
+
+    def _build_scroll_area(self) -> QScrollArea:
+        """Costruisce l'area di contenuto scrollabile."""
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet(
-            f"""
-            QScrollArea {{
-                border: none;
-                background-color: {COLORS["bg_light"]};
-            }}
-            """
-        )
+        scroll.setStyleSheet(f"QScrollArea {{ border: none; background-color: {COLORS['bg_light']}; }}")
 
-        content = self.content_widget = QWidget()
-        content_layout = QVBoxLayout(content)
-        content_layout.setContentsMargins(30, 20, 30, 20)
-        content_layout.setSpacing(20)
+        self.content_widget = QWidget()
+        layout = QVBoxLayout(self.content_widget)
+        layout.setContentsMargins(30, 20, 30, 20)
+        layout.setSpacing(20)
 
-        # Sezioni per stato
-        if scaduti:
-            content_layout.addWidget(
-                self._create_section("SCADUTI", scaduti, COLORS["error_red"], COLORS["bg_error_pastel"])
-            )
-        if urgenti:
-            content_layout.addWidget(
-                self._create_section(
-                    "IN SCADENZA (0-15 giorni)",
-                    urgenti,
-                    COLORS["warning_orange"],
-                    COLORS["bg_warning_pastel"],
-                )
-            )
-        if attenzione:
-            content_layout.addWidget(
-                self._create_section(
-                    "ATTENZIONE (16-30 giorni)",
-                    attenzione,
-                    COLORS["warning_yellow"],
-                    COLORS["bg_attention_pastel"],
-                )
-            )
-        if attivi:
-            content_layout.addWidget(
-                self._create_section(
-                    "ATTIVI (oltre 30 giorni)", attivi, COLORS["success_dark"], COLORS["bg_success_pastel"]
-                )
-            )
-        if non_disp:
-            content_layout.addWidget(
-                self._create_section("DATA NON DISPONIBILE", non_disp, COLORS["text_muted"], COLORS["bg_alt"])
-            )
+        self._add_sections_to_layout(layout)
 
         if not self.certificates_data:
-            empty_label = QLabel("Nessun certificato in monitoraggio.")
-            empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            empty_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 16px; padding: 40px;")
-            content_layout.addWidget(empty_label)
+            empty = QLabel("Nessun certificato in monitoraggio.")
+            empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            empty.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 16px; padding: 40px;")
+            layout.addWidget(empty)
 
-        content_layout.addStretch()
-        scroll.setWidget(content)
-        layout.addWidget(scroll)
+        layout.addStretch()
+        scroll.setWidget(self.content_widget)
+        return scroll
 
-        # === FOOTER ===
-        footer = self.footer = QFrame()
-        footer.setStyleSheet(
-            f"""
-            QFrame {{
-                background-color: {COLORS["bg_white"]};
-                border-top: 1px solid {COLORS["border_light"]};
-            }}
-            """
+    def _add_sections_to_layout(self, layout: QVBoxLayout) -> None:
+        """Aggiunge le sezioni filtrate per stato al layout."""
+        for title, condition, color, bg in self._get_section_configs():
+            items = [c for c in self.certificates_data if condition(c["days"])]
+            if items:
+                layout.addWidget(self._create_section(title, items, color, bg))
+
+    def _get_section_configs(self) -> list[tuple[str, Any, str, str]]:
+        """Ritorna la configurazione delle sezioni (Titolo, Condizione, Colore, BG)."""
+        return [
+            ("SCADUTI", lambda d: d is not None and d < 0, COLORS["error_red"], COLORS["bg_error_pastel"]),
+            (
+                "IN SCADENZA (0-15 giorni)",
+                lambda d: d is not None and 0 <= d <= 15,
+                COLORS["warning_orange"],
+                COLORS["bg_warning_pastel"],
+            ),
+            (
+                "ATTENZIONE (16-30 giorni)",
+                lambda d: d is not None and 16 <= d <= 30,
+                COLORS["warning_yellow"],
+                COLORS["bg_attention_pastel"],
+            ),
+            (
+                "ATTIVI (oltre 30 giorni)",
+                lambda d: d is not None and d > 30,
+                COLORS["success_dark"],
+                COLORS["bg_success_pastel"],
+            ),
+            ("DATA NON DISPONIBILE", lambda d: d is None, COLORS["text_muted"], COLORS["bg_alt"]),
+        ]
+
+    def _build_footer(self) -> QFrame:
+        """Costruisce la sezione footer con i pulsanti di azione."""
+        self.footer = QFrame()
+        self.footer.setStyleSheet(
+            f"QFrame {{ background-color: {COLORS['bg_white']}; border-top: 1px solid {COLORS['border_light']}; }}"
         )
-        footer_layout = QHBoxLayout(footer)
-        footer_layout.setContentsMargins(30, 15, 30, 15)
+        layout = QHBoxLayout(self.footer)
+        layout.setContentsMargins(30, 15, 30, 15)
 
-        footer_info = QLabel(f"Report generato da {__app_name__} v{__version__}")
-        footer_info.setStyleSheet(f"color: {COLORS['text_light']}; font-size: 11px;")
-        footer_layout.addWidget(footer_info)
-        footer_layout.addStretch()
+        info = QLabel(f"Report generato da {__app_name__} v{__version__}")
+        info.setStyleSheet(f"color: {COLORS['text_light']}; font-size: 11px;")
+        layout.addWidget(info)
+        layout.addStretch()
 
-        # Pulsante Invia Email
+        # Email Button
         email_btn = PrimaryButton("Invia Email")
-        email_btn.setStyleSheet(
-            f"""
-            QPushButton {{
-                background-color: {COLORS["success_dark"]};
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 10px 25px;
-                font-weight: 600;
-                font-size: 14px;
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS["success_green"]};
-            }}
-        """
-        )
+        email_btn.setStyleSheet(self._get_btn_style(COLORS["success_dark"], COLORS["success_green"]))
         email_btn.clicked.connect(self._send_email)
-        footer_layout.addWidget(email_btn)
+        layout.addWidget(email_btn)
 
-        footer_layout.addSpacing(10)
+        layout.addSpacing(10)
 
+        # Close Button
         close_btn = PrimaryButton("Chiudi")
-        close_btn.setStyleSheet(
-            f"""
-            QPushButton {{
-                background-color: {COLORS["primary_blue"]};
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 10px 30px;
-                font-weight: 600;
-                font-size: 14px;
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS["primary_dark"]};
-            }}
-            """
-        )
+        close_btn.setStyleSheet(self._get_btn_style(COLORS["primary_blue"], COLORS["primary_dark"]))
         close_btn.clicked.connect(self.accept)
-        footer_layout.addWidget(close_btn)
+        layout.addWidget(close_btn)
 
-        layout.addWidget(footer)
+        return self.footer
+
+    def _get_btn_style(self, main_color: str, hover_color: str) -> str:
+        """Ritorna lo stile CSS per i pulsanti del footer."""
+        return f"""
+            QPushButton {{ background-color: {main_color}; color: white; border: none; border-radius: 6px; padding: 10px 25px; font-weight: 600; font-size: 14px; }}
+            QPushButton:hover {{ background-color: {hover_color}; }}
+        """
 
     def _create_stat_card(self, title: str, value: int, color: str) -> QFrame:
         """Crea una card per le statistiche."""
         card = QFrame()
         card.setStyleSheet(
-            f"""
-            QFrame {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 8px;
-                padding: 10px;
-            }}
-            """
+            f"QFrame {{ background-color: {COLORS['bg_white']}; border: 1px solid {COLORS['border_light']}; border-radius: 8px; padding: 10px; }}"
         )
-        card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(15, 10, 15, 10)
-        card_layout.setSpacing(5)
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(15, 10, 15, 10)
+        layout.setSpacing(5)
 
-        value_label = QLabel(str(value))
-        value_label.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: bold;")
-        value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        val_lbl = QLabel(str(value))
+        val_lbl.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: bold;")
+        val_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        title_label = QLabel(title)
-        title_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; font-weight: 500;")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        tit_lbl = QLabel(title)
+        tit_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; font-weight: 500;")
+        tit_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        card_layout.addWidget(value_label)
-        card_layout.addWidget(title_label)
-
+        layout.addWidget(val_lbl)
+        layout.addWidget(tit_lbl)
         return card
 
-    def _create_section(self, title: str, items: list[Any], color: str, bg_color: str) -> QFrame:  # noqa: PLR0915
+    def _create_section(self, title: str, items: list[Any], color: str, bg_color: str) -> QFrame:
         """Crea una sezione con elenco certificati."""
         section = QFrame()
-        section.setStyleSheet(
-            f"""
-            QFrame {{
-                background-color: {bg_color};
-                border: none;
-                border-radius: 8px;
-            }}
-            """
-        )
-        section_layout = QVBoxLayout(section)
-        section_layout.setContentsMargins(20, 15, 20, 15)
-        section_layout.setSpacing(10)
+        section.setStyleSheet(f"QFrame {{ background-color: {bg_color}; border: none; border-radius: 8px; }}")
+        layout = QVBoxLayout(section)
+        layout.setContentsMargins(20, 15, 20, 15)
+        layout.setSpacing(10)
 
-        # Header sezione
-        header_layout = QHBoxLayout()
-        title_label = QLabel(f"{title} ({len(items)})")
-        title_label.setStyleSheet(f"color: {color}; font-size: 14px; font-weight: bold;")
-        header_layout.addWidget(title_label)
-        header_layout.addStretch()
-        section_layout.addLayout(header_layout)
+        # Header
+        h_layout = QHBoxLayout()
+        t_label = QLabel(f"{title} ({len(items)})")
+        t_label.setStyleSheet(f"color: {color}; font-size: 14px; font-weight: bold;")
+        h_layout.addWidget(t_label)
+        h_layout.addStretch()
+        layout.addLayout(h_layout)
 
         # Separator
         sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet(f"background-color: {color}30;")
         sep.setFixedHeight(1)
-        section_layout.addWidget(sep)
+        sep.setStyleSheet(f"background-color: {color}30;")
+        layout.addWidget(sep)
 
-        # Riga Intestazione Colonne
-        header_row_layout = QHBoxLayout()
-        header_row_layout.setSpacing(15)
+        # Columns
+        layout.addLayout(self._build_section_columns_header())
 
-        lbl_h_id = QLabel("ID-COEMI")
-        lbl_h_id.setStyleSheet(
-            f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: bold; min-width: 80px;"
-        )
-
-        lbl_h_cos = QLabel("COSTRUTTORE")
-        lbl_h_cos.setStyleSheet(
-            f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: bold; min-width: 100px;"
-        )
-
-        lbl_h_mod = QLabel("MODELLO / TIPO")
-        lbl_h_mod.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: bold;")
-        lbl_h_mod.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-
-        lbl_h_mat = QLabel("MATRICOLA")
-        lbl_h_mat.setStyleSheet(
-            f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: bold; min-width: 110px;"
-        )
-
-        lbl_h_scad = QLabel("STATO SCADENZA")
-        lbl_h_scad.setStyleSheet(
-            f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: bold; min-width: 130px;"
-        )
-        lbl_h_scad.setAlignment(Qt.AlignmentFlag.AlignRight)
-
-        header_row_layout.addWidget(lbl_h_id)
-        header_row_layout.addWidget(lbl_h_cos)
-        header_row_layout.addWidget(lbl_h_mod)
-        header_row_layout.addWidget(lbl_h_mat)
-        header_row_layout.addWidget(lbl_h_scad)
-        section_layout.addLayout(header_row_layout)
-
-        # Items
+        # Rows
         for item in items:
-            item_layout = QHBoxLayout()
-            item_layout.setSpacing(15)
-
-            # 1. ID-COEMI
-            id_label = QLabel(item.get("id_coemi", ""))
-            id_label.setStyleSheet(
-                f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: 600; min-width: 80px;"
-            )
-            item_layout.addWidget(id_label)
-
-            # 2. Costruttore
-            costruttore_label = QLabel(item["costruttore"])
-            costruttore_label.setStyleSheet(
-                f"color: {COLORS['text_muted']}; font-size: 12px; min-width: 100px;"
-            )
-            item_layout.addWidget(costruttore_label)
-
-            # 3. Modello + Range (per manometri)
-            modello_text = item["modello"]
-            if "MANOMETRO DIGITALE" in modello_text.upper() and item.get("range"):
-                modello_text += f" ({item['range']})"
-            modello_label = QLabel(modello_text)
-            modello_label.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 12px;")
-            modello_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-            item_layout.addWidget(modello_label)
-
-            # 4. Matricola
-            matricola_label = QLabel(item["matricola"])
-            matricola_label.setStyleSheet(
-                f"color: {COLORS['text_dark']}; font-weight: 600; font-size: 13px; min-width: 110px;"
-            )
-            item_layout.addWidget(matricola_label)
-
-            # 5. Scadenza
-            if item["days"] is not None:
-                if item["days"] < 0:
-                    days_text = f"Scaduto da {abs(item['days'])} gg"
-                else:
-                    days_text = f"Scade tra {item['days']} gg"
-            else:
-                days_text = "N/D"
-            days_label = QLabel(days_text)
-            days_label.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 13px; min-width: 130px;")
-            days_label.setAlignment(Qt.AlignmentFlag.AlignRight)
-            item_layout.addWidget(days_label)
-
-            section_layout.addLayout(item_layout)
+            layout.addLayout(self._build_item_row(item, color))
 
         return section
 
-    def _handle_generation_error(self) -> None:
-        """Helper per lanciare eccezioni di generazione report."""
-        msg = "Nessuna immagine generata."
-        raise ValueError(msg)
+    def _build_section_columns_header(self) -> QHBoxLayout:
+        """Crea l'intestazione delle colonne per una sezione."""
+        layout = QHBoxLayout()
+        layout.setSpacing(15)
 
-    def _send_email(self):  # noqa: ANN202
-        """Genera screenshot separati per ogni sezione e li invia via email per evitare troncamenti."""
-        import subprocess  # noqa: PLC0415
-        import tempfile  # noqa: PLC0415
+        def add_h(
+            txt: str,
+            min_w: int | None = None,
+            policy: QSizePolicy.Policy | None = None,
+            align: Qt.AlignmentFlag | None = None,
+        ) -> None:
+            lbl = QLabel(txt)
+            lbl.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: bold;")
+            if min_w:
+                lbl.setFixedWidth(min_w)
+            if policy:
+                lbl.setSizePolicy(policy, QSizePolicy.Policy.Preferred)
+            if align:
+                lbl.setAlignment(align)
+            layout.addWidget(lbl)
 
+        add_h("ID-COEMI", 80)
+        add_h("COSTRUTTORE", 100)
+        add_h("MODELLO / TIPO", policy=QSizePolicy.Policy.Expanding)
+        add_h("MATRICOLA", 110)
+        add_h("STATO SCADENZA", 130, align=Qt.AlignmentFlag.AlignRight)
+        return layout
+
+    def _build_item_row(self, item: dict[str, Any], color: str) -> QHBoxLayout:
+        """Costruisce una riga di dati per un certificato."""
+        layout = QHBoxLayout()
+        layout.setSpacing(15)
+
+        def add_l(  # noqa: PLR0913
+            txt: Any,
+            color_v: str,
+            weight: str = "normal",
+            size: int = 12,
+            min_w: int | None = None,
+            policy: QSizePolicy.Policy | None = None,
+            align: Qt.AlignmentFlag | None = None,
+        ) -> None:
+            lbl = QLabel(str(txt))
+            lbl.setStyleSheet(f"color: {color_v}; font-size: {size}px; font-weight: {weight};")
+            if min_w:
+                lbl.setFixedWidth(min_w)
+            if policy:
+                lbl.setSizePolicy(policy, QSizePolicy.Policy.Preferred)
+            if align:
+                lbl.setAlignment(align)
+            layout.addWidget(lbl)
+
+        add_l(item.get("id_coemi", ""), COLORS["text_dark"], "600", 13, 80)
+        add_l(item["costruttore"], COLORS["text_muted"], min_w=100)
+
+        mod_text = item["modello"]
+        if "MANOMETRO DIGITALE" in mod_text.upper() and item.get("range"):
+            mod_text += f" ({item['range']})"
+        add_l(mod_text, COLORS["text_dark"], policy=QSizePolicy.Policy.Expanding)
+
+        add_l(item["matricola"], COLORS["text_dark"], "600", 13, 110)
+
+        days = item["days"]
+        if days is not None:
+            txt = f"Scaduto da {abs(days)} gg" if days < 0 else f"Scade tra {days} gg"
+        else:
+            txt = "N/D"
+        add_l(txt, color, "bold", 13, 130, align=Qt.AlignmentFlag.AlignRight)
+
+        return layout
+
+    def _send_email(self) -> None:
+        """Genera e invia il report via Outlook."""
         try:
-            # 1. Identifichiamo i widget da catturare in ordine
-            widgets_to_capture = [self.header, self.stats_frame]
-
-            # Recuperiamo tutte le sezioni dal content_widget
-            layout = self.content_widget.layout()
-            if layout:
-                for i in range(layout.count()):
-                    item = layout.itemAt(i)
-                    if item and item.widget():
-                        widgets_to_capture.append(item.widget())
-
-            widgets_to_capture.append(self.footer)
-
-            # 2. Generiamo e salviamo i pixmap
-            image_paths = []
-            temp_dir = tempfile.gettempdir()
-
-            for idx, widget in enumerate(widgets_to_capture):
-                # Assicuriamoci che il widget sia renderizzato correttamente
-                widget.adjustSize()
-
-                # Catturiamo il widget
-                pixmap = widget.grab()
-                if pixmap.isNull():
-                    continue
-
-                path = os.path.join(temp_dir, f"syncro_report_part_{idx}.png")
-                if pixmap.save(path, "PNG"):
-                    image_paths.append(path)
-
+            image_paths = self._capture_widgets_as_images()
             if not image_paths:
-                self._handle_generation_error()
+                self._raise_no_images()
 
-            # 3. Prepariamo lo script PowerShell per Outlook
-            # Creiamo una lista di percorsi file sicura per PowerShell
-            ps_image_list = "@('" + "','".join(p.replace(chr(92), chr(92) * 2) for p in image_paths) + "')"
-
-            ps_script = f"""
-$images = {ps_image_list}
-try {{
-    $outlook = New-Object -ComObject Outlook.Application
-    $mail = $outlook.CreateItem(0)
-    $mail.Subject = "Report Analisi Scadenze Certificati - {datetime.now().strftime("%d/%m/%Y")}"
-
-    # Prepariamo l'HTML con le immagini embedded
-    $htmlBody = "<html><body>"
-    $htmlBody += "<h3>Report Scadenze Certificati Campione</h3>"
-
-    $idx = 0
-    foreach ($img in $images) {{
-        $fileName = [System.IO.Path]::GetFileName($img)
-        $attachment = $mail.Attachments.Add($img)
-        $attachment.PropertyAccessor.SetProperty("http://schemas.microsoft.com/mapi/proptag/0x3712001E", "img_$idx")
-        $htmlBody += "<div style='margin-bottom: 10px;'><img src='cid:img_$idx' style='max-width: 100%; height: auto;'></div>"
-        $idx++
-    }}
-
-    $htmlBody += "<p style='font-size: 10px; color: #666;'>Generato automaticamente da SyncroJob v{__version__}</p>"
-    $htmlBody += "</body></html>"
-
-    $mail.HTMLBody = $htmlBody
-    $mail.Display()
-}} catch {{
-    # Fallback: apri la cartella dei file se Outlook fallisce
-    Start-Process "explorer.exe" (Split-Path $images[0])
-}}
-"""
-            # Salviamo ed eseguiamo il PS1
-            ps_path = ""
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ps1", delete=False, encoding="utf-8") as tmp:
-                tmp.write(ps_script)
-                ps_path = tmp.name
-
-            create_no_window = 0x08000000
-            subprocess.Popen(
-                ["powershell", "-ExecutionPolicy", "Bypass", "-File", ps_path], creationflags=create_no_window
-            )
+            self._execute_outlook_powershell(image_paths)
 
             QMessageBox.information(
                 self,
                 "Email in preparazione",
-                "Il report è stato suddiviso in sezioni separate per una migliore leggibilità.\n\n"
-                "Le immagini sono state inserite nel corpo di una nuova email Outlook.",
+                "Il report è stato suddiviso in sezioni ed inserito in una nuova email Outlook.",
             )
 
         except Exception as e:
             QMessageBox.critical(self, "Errore invio email", f"Impossibile generare il report:\n{e}")
+
+    def _raise_no_images(self) -> None:
+        """Lancia eccezione per mancanza immagini."""
+        msg = "Nessuna immagine generata."
+        raise ValueError(msg)
+
+    def _capture_widgets_as_images(self) -> list[str]:
+        """Cattura tutti i componenti visuali come immagini PNG temporanee."""
+        widgets = [self.header, self.stats_frame]
+
+        layout = self.content_widget.layout()
+        if layout:
+            for i in range(layout.count()):
+                item = layout.itemAt(i)
+                if item and (w := item.widget()):
+                    widgets.append(w)
+
+        widgets.append(self.footer)
+
+        paths = []
+        temp_dir = tempfile.gettempdir()
+        for i, w in enumerate(widgets):
+            w.adjustSize()
+            px = w.grab()
+            if not px.isNull():
+                p = os.path.join(temp_dir, f"syncro_report_part_{i}.png")
+                if px.save(p, "PNG"):
+                    paths.append(p)
+        return paths
+
+    def _execute_outlook_powershell(self, images: list[str]) -> None:
+        """Esegue lo script PowerShell per generare l'email con immagini embedded."""
+        img_list = "@('" + "','".join(p.replace("\\", "\\\\") for p in images) + "')"
+
+        ps = f"""
+        $images = {img_list}
+        try {{
+            $o = New-Object -ComObject Outlook.Application
+            $m = $o.CreateItem(0)
+            $m.Subject = "Report Analisi Scadenze Certificati - $(Get-Date -Format 'dd/MM/yyyy')"
+            $html = "<html><body><h3>Report Scadenze Certificati Campione</h3>"
+            $idx = 0
+            foreach ($img in $images) {{
+                $att = $m.Attachments.Add($img)
+                $att.PropertyAccessor.SetProperty("http://schemas.microsoft.com/mapi/proptag/0x3712001E", "img_$idx")
+                $html += "<div style='margin-bottom:10px;'><img src='cid:img_$idx' style='max-width:100%;'></div>"
+                $idx++
+            }}
+            $html += "<p style='font-size:10px;color:#666;'>Generato da SyncroJob v{__version__}</p></body></html>"
+            $m.HTMLBody = $html
+            $m.Display()
+        }} catch {{ Start-Process "explorer.exe" (Split-Path $images[0]) }}
+        """
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ps1", delete=False, encoding="utf-8") as f:
+            f.write(ps)
+            ps_path = f.name
+
+        subprocess.Popen(
+            ["powershell", "-ExecutionPolicy", "Bypass", "-File", ps_path], creationflags=0x08000000
+        )

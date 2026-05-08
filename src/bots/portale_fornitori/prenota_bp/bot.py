@@ -88,24 +88,9 @@ class PrenotaBPBot(SeleniumBaseBot):
             return False
 
         self.log(f"Avvio elaborazione per {len(rows)} BP (Fornitore: {self.fornitore})")
-        self.update_step("nav", StepStatus.RUNNING)
-        page = PrenotaBPPage(self.driver, self.log)
 
         try:
-            page.navigate_to_gestione_bp()
-            self.update_step("nav", StepStatus.COMPLETED)
-            processed_count = 0
-            for i, row in enumerate(rows):
-                if self._stop_requested:
-                    self.log("[ATTENZIONE] Stop richiesto dall'utente.")
-                    break
-                if self._process_single_bp(page, i, row):
-                    processed_count += 1
-
-            self.log(f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
-            self.update_step("cleanup", StepStatus.RUNNING)
-            self.update_step("cleanup", StepStatus.COMPLETED)
-            return True  # noqa: TRY300
+            return self._execute_workflow(rows)
         except Exception as e:
             self.log(f"❗ Errore fatale durante l'esecuzione: {e}")
             self.update_step("nav", StepStatus.ERROR)
@@ -113,6 +98,40 @@ class PrenotaBPBot(SeleniumBaseBot):
             return False
         finally:
             self.log("Fine sessione Prenota BP.")
+
+    def _execute_workflow(self, rows: list[dict[str, Any]]) -> bool:
+        """Gestisce la navigazione e il ciclo di elaborazione dei BP."""
+        if not self.driver:
+            self.log("❗ Errore: Driver non inizializzato.")
+            return False
+
+        self.update_step("nav", StepStatus.RUNNING)
+        page = PrenotaBPPage(self.driver, self.log)
+
+        page.navigate_to_gestione_bp()
+        self.update_step("nav", StepStatus.COMPLETED)
+
+        processed_count = self._process_all_rows(page, rows)
+
+        self.log(f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
+        self._finalize_steps()
+        return True
+
+    def _process_all_rows(self, page: PrenotaBPPage, rows: list[dict[str, Any]]) -> int:
+        """Ciclo di elaborazione per tutte le righe con supporto allo stop richiesto."""
+        processed_count = 0
+        for i, row in enumerate(rows):
+            if self._stop_requested:
+                self.log("[ATTENZIONE] Stop richiesto dall'utente.")
+                break
+            if self._process_single_bp(page, i, row):
+                processed_count += 1
+        return processed_count
+
+    def _finalize_steps(self) -> None:
+        """Aggiorna gli step finali di pulizia."""
+        self.update_step("cleanup", StepStatus.RUNNING)
+        self.update_step("cleanup", StepStatus.COMPLETED)
 
     def _init_run_data(self, data: Any) -> list[dict[str, Any]]:
         """Inizializza i parametri della sessione."""

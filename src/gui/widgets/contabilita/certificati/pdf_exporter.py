@@ -7,7 +7,7 @@ from typing import Any
 
 from PyQt6.QtCore import QMarginsF, QRectF, Qt
 from PyQt6.QtGui import QPageLayout, QPageSize, QPainter, QPdfWriter, QTextDocument
-from PyQt6.QtWidgets import QTreeWidget
+from PyQt6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
 from src.core.constants import StatoCertificatoLabel, UbicazioneStrumenti
 from src.core.contabilita.certificati_engine import CertificatiEngine
@@ -28,22 +28,20 @@ class CertificatiPdfExporter:
         self.show_excluded = show_excluded
         self.include_history = include_history
         self.print_exclusions = print_exclusions or set()
+        self._cert_links_cache: dict[str, str] = {}
 
     def export(self, file_path: str) -> tuple[bool, str]:
         """Esporta il TreeWidget in un file PDF con paginazione intelligente."""
         try:
-            # Setup PDF Writer
             writer = QPdfWriter(file_path)
             writer.setResolution(300)
 
-            # Setup Page Layout Landscape
             layout = QPageLayout()
             layout.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
             layout.setOrientation(QPageLayout.Orientation.Landscape)
             layout.setMargins(QMarginsF(0, 0, 0, 0))
             writer.setPageLayout(layout)
 
-            # Setup Text Document
             doc = QTextDocument()
             paint_rect_pt = layout.paintRectPoints()
             width_pt = paint_rect_pt.width()
@@ -53,90 +51,102 @@ class CertificatiPdfExporter:
             if not pages_html:
                 return False, "Nessun dato da esportare."
 
-            # Printing with Page Numbering
-            painter = QPainter(writer)
-            dpi = writer.resolution()
+            return self._run_painter_loop(writer, doc, pages_html, layout, width_pt, paint_rect_pt.height())
 
-            # Mapping coordinate logiche (punti) su area fisica (pixel)
-            painter.setViewport(layout.paintRectPixels(dpi))
-            painter.setWindow(0, 0, width_pt, paint_rect_pt.height())
-
-            total_pages = len(pages_html)
-
-            for page_idx, page_html in enumerate(pages_html):
-                if page_idx > 0:
-                    writer.newPage()
-
-                doc.setHtml(page_html)
-
-                painter.save()
-                doc.drawContents(painter)
-                painter.restore()
-
-                # Footer (Pagina X / Y)
-                self._draw_footer(painter, page_idx + 1, total_pages, width_pt, paint_rect_pt.height())
-
-            painter.end()
-            return True, "Esportazione PDF completata con successo."  # noqa: TRY300
         except Exception as e:
             return False, f"Errore durante l'esportazione PDF: {e!s}"
 
+    def _run_painter_loop(
+        self,
+        writer: QPdfWriter,
+        doc: QTextDocument,
+        pages_html: list[str],
+        layout: QPageLayout,
+        width: float,
+        height: float,
+    ) -> tuple[bool, str]:
+        """Esegue il ciclo di disegno del PDF."""
+        painter = QPainter(writer)
+        dpi = writer.resolution()
+        painter.setViewport(layout.paintRectPixels(dpi))
+        painter.setWindow(0, 0, int(width), int(height))
+
+        total_pages = len(pages_html)
+        for page_idx, page_html in enumerate(pages_html):
+            if page_idx > 0:
+                writer.newPage()
+
+            doc.setHtml(page_html)
+            painter.save()
+            doc.drawContents(painter)
+            painter.restore()
+
+            self._draw_footer(painter, page_idx + 1, total_pages, width, height)
+
+        painter.end()
+        return True, "Esportazione PDF completata con successo."
+
     def _get_certificate_link(self, cert_name: str) -> str:
-        """
-        Cerca il file del certificato nella cartella di rete e restituisce l'URI per l'href.
-        Versione ultra-robusta per percorsi UNC e varianti di estensione.
-        """
+        """Cerca il file del certificato nella cartella di rete e restituisce l'URI."""
         if not cert_name:
             return ""
 
-        # Pulizia profonda: strip, normalizzazione trattini e rimozione caratteri invisibili
         cert_name = cert_name.strip().replace("–", "-").replace("—", "-").replace(" ", "")
         if not cert_name or cert_name.upper() in ("N/D", "NESSUNO"):
             return ""
 
-        base_path_str = r"\\192.168.11.251\Database_Tecnico_SMI\CERTIFICATI CAMPIONE"
+        if cert_name in self._cert_links_cache:
+            return self._cert_links_cache[cert_name]
 
-        # Tentativo veloce basato sull'anno
+        base_path = r"\\192.168.11.251\Database_Tecnico_SMI\CERTIFICATI CAMPIONE"
+        year = self._extract_year(cert_name)
+
+        possible_paths = self._get_potential_paths(base_path, cert_name, year)
+        for path in possible_paths:
+            if Path(path).exists():
+                uri = Path(path).as_uri()
+                self._cert_links_cache[cert_name] = uri
+                return uri
+
+        # Fallback ricorsivo
+        uri = self._recursive_search(base_path, cert_name, year)
+        self._cert_links_cache[cert_name] = uri
+        return uri
+
+    def _extract_year(self, cert_name: str) -> str:
+        """Estrae l'anno dal nome del certificato."""
         parts = cert_name.split("-")
-        year = ""
-        min_parts = 2
-        short_year_len = 2
-        if len(parts) >= min_parts:
+        if len(parts) >= 2:
             year_part = parts[-1]
             if year_part.isdigit():
-                year = f"20{year_part}" if len(year_part) == short_year_len else year_part
+                return f"20{year_part}" if len(year_part) == 2 else year_part  # noqa: PLR2004
+        return ""
 
-        # Lista di possibili percorsi relativi (prioritari)
-        possible_rel_paths: list[str] = []
+    def _get_potential_paths(self, base: str, name: str, year: str) -> list[str]:
+        """Ritorna una lista di possibili percorsi per il file."""
+        paths = []
         if year:
-            possible_rel_paths.extend(
-                (
-                    os.path.join(year, f"{cert_name}.pdf"),
-                    os.path.join(year, f"{cert_name}.PDF"),
-                    os.path.join(year, cert_name, f"{cert_name}.pdf"),
-                    os.path.join(year, cert_name, f"{cert_name}.PDF"),
-                )
+            paths.extend(
+                [
+                    os.path.join(base, year, f"{name}.pdf"),
+                    os.path.join(base, year, f"{name}.PDF"),
+                    os.path.join(base, year, name, f"{name}.pdf"),
+                    os.path.join(base, year, name, f"{name}.PDF"),
+                ]
             )
+        paths.extend([os.path.join(base, f"{name}.pdf"), os.path.join(base, f"{name}.PDF")])
+        return paths
 
-        possible_rel_paths.extend((f"{cert_name}.pdf", f"{cert_name}.PDF"))
-
-        # Verifica fisica dei file
-        for rel in possible_rel_paths:
-            full_path = os.path.join(base_path_str, rel)
-            if Path(full_path).exists():
-                return Path(full_path).as_uri()
-
-        # Fallback finale: ricerca ricorsiva limitata se abbiamo l'anno
+    def _recursive_search(self, base: str, name: str, year: str) -> str:
+        """Esegue una ricerca ricorsiva limitata."""
         with suppress(Exception):
-            search_root = os.path.join(base_path_str, year) if year else base_path_str
+            search_root = os.path.join(base, year) if year else base
             if Path(search_root).exists():
-                target_file_lower = f"{cert_name}.pdf".lower()
+                target = f"{name}.pdf".lower()
                 for root, _, files in os.walk(search_root):
                     for f in files:
-                        if f.lower() == target_file_lower:
-                            found_path = os.path.join(root, f)
-                            return Path(found_path).as_uri()
-
+                        if f.lower() == target:
+                            return Path(os.path.join(root, f)).as_uri()
         return ""
 
     def _draw_footer(self, painter: QPainter, current: int, total: int, width: float, height: float) -> None:
@@ -152,300 +162,242 @@ class CertificatiPdfExporter:
         painter.drawText(footer_rect, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, page_text)
         painter.restore()
 
-    def _build_paginated_html(self, doc: QTextDocument, width_pt: float, height_pt: float) -> list[str]:  # noqa: PLR0912, PLR0915
+    def _build_paginated_html(self, doc: QTextDocument, width_pt: float, height_pt: float) -> list[str]:
         """Costruisce i blocchi HTML divisi per pagina calcolandone l'altezza dinamicamente."""
-        now_str = datetime.now().strftime("%d/%m/%Y alle %H:%M:%S")
-        title = "Lista Strumenti Campione Secondari<br>assegnati al cantiere ISAB SUD"
-        meta_info = f"Generato il: {now_str} dal software Syncrojob v{__version__}"
+        all_parents = self._get_visible_parents()
+        raw_data = self._extract_raw_data(all_parents)
+        stats = CertificatiEngine.get_statistics(raw_data)
 
-        def natural_sort_key(text: str) -> list[Any]:
-            parts = re.split(r"(\d+)", text)
-            return [(True, int(c)) if c.isdigit() else (False, c.lower()) for c in parts if c]
+        style = self._get_html_styles()
+        summary = self._get_summary_html(stats)
+        header = self._get_table_header_html()
+        footer = "</tbody></table></body></html>"
 
-        all_parents = []
-        raw_data_for_stats = []
-
-        for i in range(self.tree.topLevelItemCount()):
-            parent = self.tree.topLevelItem(i)
-            if not parent or parent.isHidden():
-                continue
-
-            label_text = parent.text(0)
-            data_user = parent.data(0, Qt.ItemDataRole.UserRole)
-            matricola = data_user.get("matricola", "") if isinstance(data_user, dict) else ""
-
-            if not matricola and parent.childCount() > 0:
-                child_0 = parent.child(0)
-                if child_0:
-                    matricola = child_0.text(4)
-            is_excluded = "[ESCLUSO]" in label_text.upper()
-            if is_excluded and not self.show_excluded:
-                continue
-
-            if matricola in self.print_exclusions:
-                continue
-
-            all_parents.append(parent)
-
-            if parent.childCount() > 0:
-                child = parent.child(0)
-                if child:
-                    row_tuple = tuple(child.text(col) for col in range(12))
-                    raw_data_for_stats.append(row_tuple)
-
-        def get_id_coemi(p: Any) -> str:
-            if p.childCount() > 0:
-                child = p.child(0)
-                if child:
-                    return str(child.text(0))
-            return ""
-
-        all_parents.sort(key=lambda x: natural_sort_key(get_id_coemi(x)))
-
-        s = CertificatiEngine.get_statistics(raw_data_for_stats)
-        cert_links_cache: dict[str, str] = {}
-
-        def get_cached_cert_link(c_name: str) -> str:
-            if c_name not in cert_links_cache:
-                cert_links_cache[c_name] = self._get_certificate_link(c_name)
-            return cert_links_cache[c_name]
-
-        style_html = """
-        <html>
-        <head>
-        <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 7pt; color: #1e293b; margin: 10px; margin-bottom: 0px; }
-        h1 { color: #1e3a8a; text-align: left; margin-top: 5px; margin-bottom: 5px; font-size: 3.0pt; font-weight: bold; white-space: nowrap; }
-        .timestamp { text-align: right; color: #64748b; font-size: 7pt; margin-bottom: 5px; margin-right: 5px; }
-        table { border-collapse: collapse; }
-        th { background-color: #f8fafc; color: #0f172a; font-weight: bold; padding: 4px 3px; border-bottom: 1.5pt solid #cbd5e1; text-align: left; font-size: 6pt; }
-        td { padding: 4px 3px; font-size: 6pt; vertical-align: middle; }
-        .historical-row td { color: #64748b; border-top: none; }
-        .parent-yes td { background-color: #dcfce7; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
-        .parent-no td { background-color: #fee2e2; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
-        .parent-warning td { background-color: #fef3c7; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
-        .parent-nd td { background-color: #f1f5f9; color: #0f172a; font-weight: bold; border-top: 1pt solid #94a3b8; }
-        .status-yes { color: #15803d; font-weight: bold; text-align: center; }
-        .status-no { color: #b91c1c; font-weight: bold; text-align: center; }
-        .status-warning { color: #b45309; font-weight: bold; text-align: center; }
-        .text-center { text-align: center; }
-        .col-stato { font-weight: bold; font-size: 6pt; }
-        .col-err { white-space: nowrap; }
-        .summary-table { width: 100%; border: 0.5pt solid #cbd5e1; background-color: #f8fafc; font-size: 5pt; }
-        .summary-table td { padding: 2px 4px; border: none; font-size: 5.5pt; }
-        .summary-title { font-weight: bold; font-size: 5.5pt; border-bottom: 0.5pt solid #cbd5e1; padding-bottom: 2px; margin-bottom: 2px; display: inline-block; width: 100%; }
-        </style>
-        </head>
-        <body>
-        """
-
-        summary_html = f"""
-        <div class='timestamp'>{meta_info}</div>
-        <table width="100%" style="border: none; margin-bottom: 8px;">
-            <tr>
-                <td style="border: none; vertical-align: middle; width: 40%;">
-                    <h1 style="font-size: 4.5pt;">{title}</h1>
-                </td>
-                <td style="border: none; vertical-align: top; width: 60%;">
-                    <table class="summary-table">
-                        <tr>
-                            <td style="width: 25%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                <div class="summary-title">STATO CERTIFICATI</div>
-                            </td>
-                            <td style="width: 40%; vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                <div class="summary-title">UBICAZIONE</div>
-                            </td>
-                            <td style="width: 35%; vertical-align: top; text-align: center;" rowspan="2">
-                                <table width="100%" style="border: none;">
-                                    <tr>
-                                        <td style="width: 60%; text-align: left; border: none; padding-right: 5px;">
-                                            <div style="font-size: 5pt;">
-                                                <b>Prossime tarature:</b><br>
-                                                &bull; Entro 30gg: <b>{s["prossime_tarature"]["30"]}</b><br>
-                                                &bull; 31-60gg: <b>{s["prossime_tarature"]["60"]}</b><br>
-                                                &bull; 61-90gg: <b>{s["prossime_tarature"]["90"]}</b><br>
-                                                &bull; Oltre 90gg: <b>{s["prossime_tarature"]["oltre"]}</b>
-                                            </div>
-                                        </td>
-                                        <td style="width: 40%; text-align: center; border: none; border-left: 0.5pt solid #cbd5e1; vertical-align: middle;">
-                                            Totale Strumenti<br>
-                                            <span style="font-size: 9pt; font-weight: bold;">{s["totale"]}</span>
-                                            {f'<div style="margin-top: 5px; border-top: 0.5pt solid #cbd5e1; padding-top: 3px; color: #b91c1c; font-size: 4.5pt; text-align: left;">⚠️ <b>Picco prossime tarature:</b><br>{s["picco_imminente"]["inizio"]} - {s["picco_imminente"]["fine"]} ({s["picco_imminente"]["count"]} tarature programmate)</div>' if s.get("picco_imminente") else ""}
-                                        </td>
-                                    </tr>
-                                </table>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                <span style="color: #15803d;">&#11044;</span> Attivi: <b>{s["attivi"]}</b><br>
-                                <span style="color: #d97706;">&#11044;</span> In Scadenza: <b>{s["in_scadenza"]}</b><br>
-                                <span style="color: #b91c1c;">&#11044;</span> Scaduti: <b>{s["scaduti"]}</b><br>
-                                <span style="color: #64748b;">&#11044;</span> Senza Scadenza: <b>{s["senza_data"]}</b><br>
-                                <span style="color: #000000;">&#11044;</span> Guasti: <b>{s["guasti"]}</b>
-                            </td>
-                            <td style="vertical-align: top; border-right: 0.5pt solid #cbd5e1;">
-                                &#127970; {UbicazioneStrumenti.UFFICIO_STRU.value}: <b>{s["ufficio_stru"]}</b><br>
-                                &#128203; {UbicazioneStrumenti.UFFICIO_CC.value}: <b>{s["ufficio_cc"]}</b><br>
-                                &#128736; {UbicazioneStrumenti.OFFICINA.value}: <b>{s["officina"]}</b><br>
-                                &#127984; {UbicazioneStrumenti.SEDE.value}: <b>{s["sede"]}</b><br>
-                                &#128119; {UbicazioneStrumenti.TECNICO.value}: <b>{s["tecnico"]}</b><br>
-                                &#10060; {UbicazioneStrumenti.ASSENTE.value}: <b>{s["assenti"]}</b>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
-        """
-
-        page_header_html = """
-        <table width="100%">
-        <thead>
-        <tr>
-        <th width="6%" class='text-center'>ID-COEMI</th>
-        <th width="6%">Certificato</th>
-        <th width="10%">Modello / Tipo</th>
-        <th width="8%">Costruttore</th>
-        <th width="8%">Matricola</th>
-        <th width="8%">Range Strumento</th>
-        <th width="4%" class='text-center col-err'>Err %</th>
-        <th width="7%">Emissione</th>
-        <th width="7%">Scadenza</th>
-        <th width="8%">Stato</th>
-        <th width="10%">Ubicazione</th>
-        <th width="18%">Annotazioni</th>
-        </tr>
-        </thead>
-        <tbody>
-        """
-
-        page_footer_html = "</tbody></table></body></html>"
         available_height = height_pt - 180
         pages_html: list[str] = []
         current_rows: list[str] = []
         current_page_height = 0
 
         for parent in all_parents:
-            group_html_blocks = []
-            for j in range(parent.childCount()):
-                if not self.include_history and j > 0:
-                    break
-                child = parent.child(j)
-                if not child:
-                    continue
+            group_rows = self._build_group_html_rows(parent)
+            group_est_height = 35 + (len(group_rows) - 1) * 22
 
-                is_current = j == 0
-                scadenza_str = child.text(8)
-                days, _ = CertificatiEngine.calculate_days_and_status(scadenza_str)
-
-                if is_current:
-                    stato_display = CertificatiEngine.format_days_text_short(days)
-                    for emoji in ("[OK]", "[ROSSO]", "[ARANCIONE]", "[GIALLO]", "[ERRORE]"):
-                        stato_display = stato_display.replace(emoji, "")
-                    stato_display = stato_display.strip()
-
-                    if stato_display.startswith(StatoCertificatoLabel.SCADUTO):
-                        stato_display = stato_display.replace(
-                            f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>"
-                        ).replace("gg fa)", " giorni")
-                    elif stato_display.startswith(StatoCertificatoLabel.ATTIVO):
-                        stato_display = stato_display.replace(
-                            f"{StatoCertificatoLabel.ATTIVO} (", "Attivo per<br>"
-                        ).replace("gg rim.)", " giorni")
-                    elif stato_display.startswith(StatoCertificatoLabel.IN_SCADENZA):
-                        stato_display = stato_display.replace(
-                            f"{StatoCertificatoLabel.IN_SCADENZA} (", "In scadenza<br>"
-                        ).replace("gg)", " giorni<br>rimanenti")
-                    elif StatoCertificatoLabel.SENZA_SCADENZA in stato_display:
-                        stato_display = "N/D"
-
-                    if days == -9999:  # noqa: PLR2004
-                        row_class = "parent-no"
-                    elif days is None:
-                        row_class = "parent-nd"
-                    elif days < 0:
-                        row_class = "parent-no"
-                    elif 0 <= days <= 30:  # noqa: PLR2004
-                        row_class = "parent-warning"
-                    else:
-                        row_class = "parent-yes"
-                else:
-                    stato_display = "STORICO"
-                    row_class = "historical-row"
-
-                modello = child.text(2).strip()
-                if " " in modello:
-                    parts = modello.split(" ", 1)
-                    modello = f"{parts[0]}<br>{parts[1]}"
-
-                ubicazione_raw = child.text(10).strip()
-                if UbicazioneStrumenti.TECNICO.value in ubicazione_raw:
-                    ubicazione = ubicazione_raw.replace(
-                        f"{UbicazioneStrumenti.TECNICO.value} ", "ASSEGNATO<br>AL TECNICO<br>"
-                    )
-                    if ubicazione == ubicazione_raw:
-                        ubicazione = ubicazione_raw.replace(
-                            UbicazioneStrumenti.TECNICO.value, "ASSEGNATO<br>AL TECNICO"
-                        )
-                else:
-                    ubicazione = ubicazione_raw
-
-                row_html = f"<tr class='{row_class}'>"
-                cert_name = child.text(1)
-                cert_link = get_cached_cert_link(cert_name)
-
-                if cert_link:
-                    cert_display = f"<a href='{cert_link}' style='color: #2563eb; text-decoration: underline;'>{cert_name}</a>"
-                    storico_display = f"&raquo; <a href='{cert_link}' style='color: #64748b; text-decoration: underline;'>{cert_name}</a>"
-                else:
-                    cert_display = cert_name
-                    storico_display = f"&raquo; {cert_name}"
-
-                if is_current:
-                    row_html += f"<td class='text-center'>{child.text(0)}</td>"
-                    row_html += f"<td>{cert_display}</td>"
-                    row_html += f"<td>{modello}</td>"
-                    row_html += f"<td>{child.text(3)}</td>"
-                    row_html += f"<td>{child.text(4)}</td>"
-                    row_html += f"<td>{child.text(5)}</td>"
-                    row_html += f"<td class='text-center col-err'>{child.text(6)}</td>"
-                    row_html += f"<td>{child.text(7)}</td>"
-                    row_html += f"<td>{child.text(8)}</td>"
-                    row_html += f"<td class='col-stato'>{stato_display}</td>"
-                    row_html += f"<td>{ubicazione}</td>"
-                    row_html += f"<td>{child.text(11)}</td>"
-                else:
-                    row_html += "<td></td>"
-                    row_html += f"<td>{storico_display}</td>"
-                    row_html += "<td></td>"
-                    row_html += "<td></td>"
-                    row_html += "<td></td>"
-                    row_html += "<td></td>"
-                    row_html += "<td></td>"
-                    row_html += f"<td>{child.text(7)}</td>"
-                    row_html += f"<td>{child.text(8)}</td>"
-                    row_html += f"<td class='col-stato'>{stato_display}</td>"
-                    row_html += "<td></td>"
-                    row_html += "<td></td>"
-
-                row_html += "</tr>"
-                group_html_blocks.append(row_html)
-
-            group_est_height = 35 + (len(group_html_blocks) - 1) * 22
             if current_page_height + group_est_height > available_height and current_rows:
-                pages_html.append(
-                    style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html
-                )
-                current_rows = []
-                current_page_height = 0
+                pages_html.append(style + summary + header + "".join(current_rows) + footer)
+                current_rows, current_page_height = [], 0
 
-            current_rows.extend(group_html_blocks)
+            current_rows.extend(group_rows)
             current_page_height += group_est_height
 
         if current_rows:
-            pages_html.append(
-                style_html + summary_html + page_header_html + "".join(current_rows) + page_footer_html
-            )
+            pages_html.append(style + summary + header + "".join(current_rows) + footer)
 
         return pages_html
+
+    def _get_visible_parents(self) -> list[QTreeWidgetItem]:
+        """Ritorna gli item padre visibili e ordinati."""
+
+        def natural_sort_key(text: str) -> list[Any]:
+            parts = re.split(r"(\d+)", text)
+            return [(True, int(c)) if c.isdigit() else (False, c.lower()) for c in parts if c]
+
+        def get_id_coemi(p: QTreeWidgetItem) -> str:
+            if p.childCount() > 0:
+                child = p.child(0)
+                if child:
+                    return child.text(0)
+            return ""
+
+        parents = []
+        for i in range(self.tree.topLevelItemCount()):
+            p = self.tree.topLevelItem(i)
+            if p and not p.isHidden():
+                label = p.text(0).upper()
+                data = p.data(0, Qt.ItemDataRole.UserRole)
+                matricola = data.get("matricola", "") if isinstance(data, dict) else ""
+
+                if "[ESCLUSO]" in label and not self.show_excluded:
+                    continue
+                if matricola in self.print_exclusions:
+                    continue
+                parents.append(p)
+
+        parents.sort(key=lambda x: natural_sort_key(get_id_coemi(x)))
+        return parents
+
+    def _extract_raw_data(self, parents: list[QTreeWidgetItem]) -> list[tuple[str, ...]]:
+        """Estrae i dati grezzi per il calcolo delle statistiche."""
+        data = []
+        for p in parents:
+            if p.childCount() > 0:
+                c = p.child(0)
+                if c:
+                    data.append(tuple(c.text(col) for col in range(12)))
+        return data
+
+    def _build_group_html_rows(self, parent: QTreeWidgetItem) -> list[str]:
+        """Costruisce le righe HTML per un gruppo (certificato corrente + storico)."""
+        rows = []
+        for j in range(parent.childCount()):
+            if not self.include_history and j > 0:
+                break
+            child = parent.child(j)
+            if child:
+                rows.append(self._build_single_row_html(child, is_current=(j == 0)))
+        return rows
+
+    def _build_single_row_html(self, child: QTreeWidgetItem, is_current: bool) -> str:
+        """Genera l'HTML per una singola riga di certificato."""
+        scadenza = child.text(8)
+        days, _ = CertificatiEngine.calculate_days_and_status(scadenza)
+
+        if is_current:
+            stato_txt = self._format_status_for_pdf(days)
+            row_class = self._get_row_class(days)
+            modello = self._format_multiline(child.text(2))
+            ubicazione = self._format_ubicazione(child.text(10))
+            cert_display = self._get_link_html(child.text(1), is_storico=False)
+
+            return f"""<tr class='{row_class}'>
+                <td class='text-center'>{child.text(0)}</td>
+                <td>{cert_display}</td>
+                <td>{modello}</td>
+                <td>{child.text(3)}</td>
+                <td>{child.text(4)}</td>
+                <td>{child.text(5)}</td>
+                <td class='text-center col-err'>{child.text(6)}</td>
+                <td>{child.text(7)}</td>
+                <td>{child.text(8)}</td>
+                <td class='col-stato'>{stato_txt}</td>
+                <td>{ubicazione}</td>
+                <td>{child.text(11)}</td>
+            </tr>"""
+
+        # Storico
+        row_class = "historical-row"
+        storico_display = self._get_link_html(child.text(1), is_storico=True)
+        return f"""<tr class='{row_class}'>
+            <td></td><td>{storico_display}</td><td></td><td></td><td></td><td></td><td></td>
+            <td>{child.text(7)}</td><td>{child.text(8)}</td>
+            <td class='col-stato'>STORICO</td><td></td><td></td>
+        </tr>"""
+
+    def _format_status_for_pdf(self, days: int | None) -> str:
+        """Formatta lo stato per la visualizzazione PDF rimpiazzando emoji."""
+        txt = CertificatiEngine.format_days_text_short(days)
+        for e in ("[OK]", "[ROSSO]", "[ARANCIONE]", "[GIALLO]", "[ERRORE]"):
+            txt = txt.replace(e, "")
+        txt = txt.strip()
+
+        if txt.startswith(StatoCertificatoLabel.SCADUTO):
+            return txt.replace(f"{StatoCertificatoLabel.SCADUTO} (", "Scaduto da<br>").replace(
+                "gg fa)", " gg"
+            )
+        if txt.startswith(StatoCertificatoLabel.ATTIVO):
+            return txt.replace(f"{StatoCertificatoLabel.ATTIVO} (", "Attivo per<br>").replace(
+                "gg rim.)", " gg"
+            )
+        if txt.startswith(StatoCertificatoLabel.IN_SCADENZA):
+            return txt.replace(f"{StatoCertificatoLabel.IN_SCADENZA} (", "In scadenza<br>").replace(
+                "gg)", " gg"
+            )
+        return "N/D" if StatoCertificatoLabel.SENZA_SCADENZA in txt else txt
+
+    def _get_row_class(self, days: int | None) -> str:
+        """Ritorna la classe CSS basata sui giorni alla scadenza."""
+        if days == -9999:  # noqa: PLR2004
+            return "parent-no"
+        if days is None:
+            return "parent-nd"
+        if days < 0:
+            return "parent-no"
+        if days <= 30:  # noqa: PLR2004
+            return "parent-warning"
+        return "parent-yes"
+
+    def _format_multiline(self, text: str) -> str:
+        """Inserisce breakline se necessario."""
+        t = text.strip()
+        return t.replace(" ", "<br>", 1) if " " in t else t
+
+    def _format_ubicazione(self, text: str) -> str:
+        """Formatta l'ubicazione per il PDF."""
+        t = text.strip()
+        if UbicazioneStrumenti.TECNICO.value in t:
+            return t.replace(UbicazioneStrumenti.TECNICO.value, "ASSEGNATO<br>AL TECNICO")
+        return t
+
+    def _get_link_html(self, name: str, is_storico: bool) -> str:
+        """Ritorna l'HTML per il link al certificato."""
+        link = self._get_certificate_link(name)
+        if not link:
+            return f"&raquo; {name}" if is_storico else name
+
+        color = "#64748b" if is_storico else "#2563eb"
+        prefix = "&raquo; " if is_storico else ""
+        return f"{prefix}<a href='{link}' style='color: {color}; text-decoration: underline;'>{name}</a>"
+
+    def _get_html_styles(self) -> str:
+        """Ritorna il blocco CSS per l'HTML del PDF."""
+        return """<html><head><style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 7pt; color: #1e293b; margin: 10px; }
+        h1 { color: #1e3a8a; font-size: 3pt; font-weight: bold; margin: 5px 0; }
+        .timestamp { text-align: right; color: #64748b; font-size: 7pt; margin-bottom: 5px; }
+        table { border-collapse: collapse; width: 100%; }
+        th { background-color: #f8fafc; font-weight: bold; padding: 4px 3px; border-bottom: 1.5pt solid #cbd5e1; text-align: left; font-size: 6pt; }
+        td { padding: 4px 3px; font-size: 6pt; vertical-align: middle; }
+        .historical-row td { color: #64748b; }
+        .parent-yes td { background-color: #dcfce7; border-top: 1pt solid #94a3b8; font-weight: bold; }
+        .parent-no td { background-color: #fee2e2; border-top: 1pt solid #94a3b8; font-weight: bold; }
+        .parent-warning td { background-color: #fef3c7; border-top: 1pt solid #94a3b8; font-weight: bold; }
+        .parent-nd td { background-color: #f1f5f9; border-top: 1pt solid #94a3b8; font-weight: bold; }
+        .col-stato { font-weight: bold; }
+        .summary-table { border: 0.5pt solid #cbd5e1; background-color: #f8fafc; font-size: 5pt; }
+        .summary-title { font-weight: bold; border-bottom: 0.5pt solid #cbd5e1; display: block; }
+        .text-center { text-align: center; }
+        </style></head><body>"""
+
+    def _get_summary_html(self, s: dict[str, Any]) -> str:
+        """Ritorna l'HTML del sommario statistiche."""
+        now = datetime.now().strftime("%d/%m/%Y alle %H:%M:%S")
+        meta = f"Generato il: {now} dal software Syncrojob v{__version__}"
+        title = "Lista Strumenti Campione Secondari<br>assegnati al cantiere ISAB SUD"
+
+        picco_html = ""
+        if s.get("picco_imminente"):
+            p = s["picco_imminente"]
+            picco_html = f"<div style='margin-top:5px; color:#b91c1c; font-size:4.5pt;'>⚠️ <b>Picco tarature:</b><br>{p['inizio']} - {p['fine']} ({p['count']})</div>"
+
+        return f"""
+        <div class='timestamp'>{meta}</div>
+        <table style="border:none; margin-bottom:8px;"><tr>
+            <td style="border:none; width:40%;"><h1 style="font-size:4.5pt;">{title}</h1></td>
+            <td style="border:none; width:60%;">
+                <table class="summary-table"><tr>
+                    <td style="width:25%; border-right:0.5pt solid #cbd5e1;"><div class="summary-title">STATO CERTIFICATI</div>
+                        <span style="color:#15803d;">●</span> Attivi: <b>{s["attivi"]}</b><br>
+                        <span style="color:#d97706;">●</span> In Scadenza: <b>{s["in_scadenza"]}</b><br>
+                        <span style="color:#b91c1c;">●</span> Scaduti: <b>{s["scaduti"]}</b>
+                    </td>
+                    <td style="width:40%; border-right:0.5pt solid #cbd5e1;"><div class="summary-title">UBICAZIONE</div>
+                        🏢 {UbicazioneStrumenti.UFFICIO_STRU.value}: <b>{s["ufficio_stru"]}</b><br>
+                        📋 {UbicazioneStrumenti.UFFICIO_CC.value}: <b>{s["ufficio_cc"]}</b><br>
+                        🛠️ {UbicazioneStrumenti.OFFICINA.value}: <b>{s["officina"]}</b>
+                    </td>
+                    <td style="width:35%; text-align:center;">
+                        <b>Prossime tarature:</b><br>30gg: <b>{s["prossime_tarature"]["30"]}</b> | 60gg: <b>{s["prossime_tarature"]["60"]}</b><br>
+                        Totale Strumenti: <span style="font-size:9pt; font-weight:bold;">{s["totale"]}</span>
+                        {picco_html}
+                    </td>
+                </tr></table>
+            </td>
+        </tr></table>"""
+
+    def _get_table_header_html(self) -> str:
+        """Ritorna l'intestazione della tabella certificati."""
+        return """<table width="100%"><thead><tr>
+            <th width="6%">ID-COEMI</th><th width="6%">Certificato</th><th width="10%">Modello</th>
+            <th width="8%">Costruttore</th><th width="8%">Matricola</th><th width="8%">Range</th>
+            <th width="4%">Err %</th><th width="7%">Emissione</th><th width="7%">Scadenza</th>
+            <th width="8%">Stato</th><th width="10%">Ubicazione</th><th width="18%">Annotazioni</th>
+        </tr></thead><tbody>"""

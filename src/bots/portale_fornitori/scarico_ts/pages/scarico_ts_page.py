@@ -126,33 +126,46 @@ class ScaricoTSPage:
             return False
 
     def _download_excel(self, download_dir: Path, oda_number: str, oda_position: str) -> bool:
-        """Handles the file download logic."""
+        """Handles the file download logic with cleanup and renaming."""
         try:
-            files_before = {f for f in download_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
-            self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.EXPORT_EXCEL_BUTTON)).click()
+            files_before = self._get_xlsx_snapshot(download_dir)
+            self._trigger_download_click()
 
             downloaded_file = self._wait_for_download(download_dir, files_before)
-
-            # Pulizia residui Chromium (file 0 KB con nomi GUID)
-            from src.utils.helpers import cleanup_chrome_temp_files  # noqa: PLC0415
-
-            removed = cleanup_chrome_temp_files(download_dir)
-            for f_name in removed:
-                self.log(f"  [DEBUG] Rimosso residuo download: {f_name}")
+            self._cleanup_temp_files(download_dir)
 
             if not downloaded_file:
                 self.log("  ✗ Download fallito o file non trovato.")
                 return False
 
-            # Rename logic
-            new_path = self._resolve_unique_path(download_dir, oda_number, oda_position, downloaded_file)
-            downloaded_file.rename(new_path)
-            self.log(f"  ✓ File scaricato: {new_path.name}")
-            return True  # noqa: TRY300
+            return self._rename_downloaded_file(downloaded_file, download_dir, oda_number, oda_position)
 
         except Exception as e:
-            self.log(f"  ✗ Errore click download: {e}")
+            self.log(f"  ✗ Errore download Excel: {e}")
             return False
+
+    def _get_xlsx_snapshot(self, directory: Path) -> set[Path]:
+        """Crea uno snapshot dei file .xlsx esistenti."""
+        return {f for f in directory.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
+
+    def _trigger_download_click(self) -> None:
+        """Clicca il pulsante di export excel."""
+        self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.EXPORT_EXCEL_BUTTON)).click()
+
+    def _cleanup_temp_files(self, directory: Path) -> None:
+        """Rimuove residui temporanei di Chromium."""
+        from src.utils.helpers import cleanup_chrome_temp_files  # noqa: PLC0415
+
+        removed = cleanup_chrome_temp_files(directory)
+        for f_name in removed:
+            self.log(f"  [DEBUG] Rimosso residuo download: {f_name}")
+
+    def _rename_downloaded_file(self, file_path: Path, directory: Path, oda: str, pos: str) -> bool:
+        """Rinomina il file scaricato in modo univoco."""
+        new_path = self._resolve_unique_path(directory, oda, pos, file_path)
+        file_path.rename(new_path)
+        self.log(f"  ✓ File scaricato: {new_path.name}")
+        return True
 
     def _wait_for_download(self, download_dir: Path, files_before: set[Path]) -> Path | None:
         """Polls for new .xlsx file."""

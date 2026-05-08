@@ -13,6 +13,21 @@ from src.core.excel_importer import ExcelImporter  # Per accedere ai COLUMNS_MAP
 class ContabilitaQueries:
     """Gestore per le query di lettura del database della Contabilità Strumentale."""
 
+    # Indici Colonne Certificati (Allineati a get_certificati_campione_data)
+    CERT_IDX_ID_COEMI = 0
+    CERT_IDX_CERTIFICATO = 1
+    CERT_IDX_MODELLO = 2
+    CERT_IDX_COSTRUTTORE = 3
+    CERT_IDX_MATRICOLA = 4
+    CERT_IDX_RANGE = 5
+    CERT_IDX_ERRORE = 6
+    CERT_IDX_EMISSIONE = 7
+    CERT_IDX_SCADENZA = 8
+    CERT_IDX_STATO = 9
+    CERT_IDX_ANNOTAZIONI = 10
+    CERT_IDX_UBICAZIONE = 11
+    CERT_IDX_ID = 12
+
     @classmethod
     def get_available_years(cls, db_path: Path) -> list[int]:
         """Restituisce la lista degli anni presenti nel DB (unione di Dati e Giornaliere)."""

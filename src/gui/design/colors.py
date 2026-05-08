@@ -70,36 +70,7 @@ LIGHT = ColorPalette(
     focus="#00968833",  # Primary with alpha
 )
 
-# Dark Theme (Prepared but not active by default)
-DARK = ColorPalette(
-    # Primary - Teal Light
-    primary="#4DB6AC",
-    primary_variant="#80CBC4",
-    on_primary="#000000",
-    # Secondary - Purple Light
-    secondary="#B39DDB",
-    secondary_variant="#D1C4E9",
-    on_secondary="#000000",
-    # Background
-    background="#121212",
-    surface="#1E1E1E",
-    surface_variant="#2D2D2D",
-    on_background="#E0E0E0",
-    on_surface="#FFFFFF",
-    # Status
-    success="#81C784",
-    warning="#FFB74D",
-    error="#E57373",
-    info="#64B5F6",
-    # Semantic
-    border="#424242",
-    divider="#303030",
-    disabled="#757575",
-    hover="#FFFFFF14",
-    focus="#4DB6AC33",
-)
-
 
 def get_palette(theme: str = "light") -> ColorPalette:
-    """Ottiene palette per tema."""
-    return DARK if theme == "dark" else LIGHT
+    """Ottiene palette per tema (attualmente solo light supportato)."""
+    return LIGHT
