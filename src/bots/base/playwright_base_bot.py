@@ -92,7 +92,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
         self._setup_page_context()
 
         if self.context is None or self.page is None:
-            raise BrowserInitError("Page or Context not initialized")
+            raise BrowserInitError()
 
         self.login_page = PlaywrightLoginPage(self.page, self.log, self.ISAB_URL)
 

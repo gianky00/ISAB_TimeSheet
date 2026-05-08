@@ -43,8 +43,8 @@ class PrenotaBPBot(SeleniumBaseBot):
 
     def __init__(
         self,
-        username: str = "",
-        password: str = "",
+        username: str,
+        password: str,
         data_da: str | None = None,
         data_a: str | None = None,
         fornitore: str | None = None,

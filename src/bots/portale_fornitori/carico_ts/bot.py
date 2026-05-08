@@ -31,8 +31,8 @@ class CaricoTSBot(SeleniumBaseBot):
 
     def __init__(
         self,
-        username: str = "",
-        password: str = "",
+        username: str,
+        password: str,
         **kwargs: Any,
     ) -> None:
         """Inizializza il bot Carico TS."""

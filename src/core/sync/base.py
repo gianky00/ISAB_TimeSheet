@@ -1,61 +1,54 @@
+# mypy: disable-error-code="no-any-unimported"
 """
 SyncroJob - Base Sync Engine
-Fornisce helper SQL protetti e metodi base per la sincronizzazione dati.
+Logica comune per la sincronizzazione dei dati nel database SQLite.
 """
 
 import re
+import sqlite3
 from typing import Any
 
 
 class BaseSyncEngine:
-    """Classe base con utility per operazioni SQL sicure e gestione tabelle temporanee."""
+    """Motore base per sincronizzazioni atomiche."""
 
     @staticmethod
-    def _validate_identifier(name: str) -> str:
-        """Valida che un identificatore SQL sia sicuro."""
-        if not re.match(r"^[a-zA-Z0-9_]+$", name):
-            raise ValueError(f"Identificatore SQL non sicuro: {name}")  # noqa: TRY003
-        return name
-
-    @classmethod
-    def _create_temp_table(cls, cursor: Any, table_name: str, columns: list[str]) -> str:
-        """Crea una tabella temporanea e restituisce il suo nome sicuro."""
-        safe_name = cls._validate_identifier(table_name)
-        temp_name = f"temp_{safe_name}"
-        cursor.execute(f"DROP TABLE IF EXISTS {temp_name}")  # nosec B608
-        cols_def = ", ".join([f'"{cls._validate_identifier(c)}" TEXT' for c in columns])
-        cursor.execute(f"CREATE TEMPORARY TABLE {temp_name} ({cols_def})")  # nosec B608
-        return temp_name
+    def _validate_identifier(identifier: str) -> str:
+        """Protegge da SQL Injection validando nomi di tabelle e colonne."""
+        if not re.match(r"^[a-zA-Z0-9_]+$", identifier):
+            raise ValueError(f"Identificatore non valido: {identifier}")
+        return identifier
 
     @staticmethod
-    def _clean_value(x: Any) -> Any:
-        """Pulisce il valore per l'inserimento nel DB."""
-        if x is None:
+    def _clean_value(value: Any) -> Any:
+        """Normalizza i valori prima dell'inserimento."""
+        if value is None:
             return ""
-        if isinstance(x, (int, float)):
-            return x
-        return str(x).strip()
+        return str(value).strip()
 
     @classmethod
-    def _sync_partitioned_table(  # noqa: PLR0913
+    def _create_temp_table(cls, cursor: sqlite3.Cursor, table_name: str, columns: list[str]) -> str:
+        """Crea una tabella temporanea con la stessa struttura dell'originale."""
+        safe_table = cls._validate_identifier(table_name)
+        temp_table = f"temp_{safe_table}"
+        cursor.execute(f"DROP TABLE IF EXISTS {temp_table}")
+        cols_def = ", ".join([f'"{cls._validate_identifier(c)}" TEXT' for c in columns])
+        cursor.execute(f"CREATE TEMP TABLE {temp_table} ({cols_def})")
+        return temp_table
+
+    @classmethod
+    def sync_partitioned_data(
         cls,
-        cursor: Any,
+        cursor: sqlite3.Cursor,
         table_name: str,
         columns: list[str],
+        new_data: list[tuple[Any, ...]],
         partition_col: str,
         partition_values: list[Any],
-        new_data: list[tuple[Any, ...]],
     ) -> tuple[int, int]:
         """
-        Esegue la sincronizzazione di una tabella partizionata.
-
-        Args:
-            cursor: Cursore del database.
-            table_name: Nome della tabella reale.
-            columns: Elenco delle colonne.
-            partition_col: Colonna usata per il partizionamento (es. 'year').
-            partition_values: Valori delle partizioni da aggiornare.
-            new_data: Nuovi dati da inserire nella tabella temporanea.
+        Esegue una sincronizzazione atomica basata su partizioni (es: Anno).
+        Cancella i dati esistenti per le partizioni fornite e inserisce i nuovi.
 
         Returns:
             Tuple (aggiunti, rimossi).
@@ -67,7 +60,7 @@ class BaseSyncEngine:
             placeholders = ", ".join(["?"] * len(columns))
             # Pulisce i dati prima dell'inserimento
             cleaned_data = [tuple(cls._clean_value(x) for x in r) for r in new_data]
-            cursor.executemany(f"INSERT INTO {temp_table} VALUES ({placeholders})", cleaned_data)
+            cursor.executemany(f"INSERT INTO {temp_table} VALUES ({placeholders})", cleaned_data)  # nosec B608
 
         total_added, total_removed = 0, 0
         safe_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in columns])
@@ -77,25 +70,25 @@ class BaseSyncEngine:
         for val in partition_values:
             # 1. Calcolo Diff (Aggiunti)
             q_added = (
-                f"SELECT COUNT(*) FROM ("
-                f"SELECT {safe_cast_cols} FROM {temp_table} WHERE {safe_part_col} = ? "
-                f"EXCEPT SELECT {safe_cast_cols} FROM {safe_table} WHERE {safe_part_col} = ?)"
+                f"SELECT COUNT(*) FROM ("  # nosec B608
+                f"SELECT {safe_cast_cols} FROM {temp_table} WHERE {safe_part_col} = ? "  # nosec B608
+                f"EXCEPT SELECT {safe_cast_cols} FROM {safe_table} WHERE {safe_part_col} = ?)"  # nosec B608
             )
             cursor.execute(q_added, (val, val))
-            total_added += cursor.fetchone()[0]
+            total_added += int(cursor.fetchone()[0])
 
             # 2. Calcolo Diff (Rimossi)
             q_removed = (
-                f"SELECT COUNT(*) FROM ("
-                f"SELECT {safe_cast_cols} FROM {safe_table} WHERE {safe_part_col} = ? "
-                f"EXCEPT SELECT {safe_cast_cols} FROM {temp_table} WHERE {safe_part_col} = ?)"
+                f"SELECT COUNT(*) FROM ("  # nosec B608
+                f"SELECT {safe_cast_cols} FROM {safe_table} WHERE {safe_part_col} = ? "  # nosec B608
+                f"EXCEPT SELECT {safe_cast_cols} FROM {temp_table} WHERE {safe_part_col} = ?)"  # nosec B608
             )
             cursor.execute(q_removed, (val, val))
-            total_removed += cursor.fetchone()[0]
+            total_removed += int(cursor.fetchone()[0])
 
             # 3. Sostituzione Atomica
-            cursor.execute(f"DELETE FROM {safe_table} WHERE {safe_part_col} = ?", (val,))
-            q_ins = f"INSERT INTO {safe_table} ({safe_cols}) SELECT {safe_cols} FROM {temp_table} WHERE {safe_part_col} = ?"
+            cursor.execute(f"DELETE FROM {safe_table} WHERE {safe_part_col} = ?", (val,))  # nosec B608
+            q_ins = f"INSERT INTO {safe_table} ({safe_cols}) SELECT {safe_cols} FROM {temp_table} WHERE {safe_part_col} = ?"  # nosec B608
             cursor.execute(q_ins, (val,))
 
         return total_added, total_removed
