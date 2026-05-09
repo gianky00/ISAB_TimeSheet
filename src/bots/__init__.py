@@ -29,31 +29,31 @@ def _get_playwright_bot_class(bot_id: str) -> Any:  # noqa: C901, PLR0911
     """Importa dinamicamente la classe bot Playwright solo quando necessaria (Lazy Loading)."""
     try:
         if bot_id == "carico_ts":
-            from src.bots.portale_fornitori.carico_ts.playwright_bot import (
+            from src.bots.portale_fornitori.carico_ts.playwright_bot import (  # noqa: PLC0415
                 PlaywrightCaricoTSBot,
             )
 
             return PlaywrightCaricoTSBot
         if bot_id == "dettagli_oda":
-            from src.bots.portale_fornitori.dettagli_oda.playwright_bot import (
+            from src.bots.portale_fornitori.dettagli_oda.playwright_bot import (  # noqa: PLC0415
                 PlaywrightDettagliOdABot,
             )
 
             return PlaywrightDettagliOdABot
         if bot_id == "prenota_bp":
-            from src.bots.portale_fornitori.prenota_bp.playwright_bot import (
+            from src.bots.portale_fornitori.prenota_bp.playwright_bot import (  # noqa: PLC0415
                 PlaywrightPrenotaBPBot,
             )
 
             return PlaywrightPrenotaBPBot
         if bot_id == "scarico_ts":
-            from src.bots.portale_fornitori.scarico_ts.playwright_bot import (
+            from src.bots.portale_fornitori.scarico_ts.playwright_bot import (  # noqa: PLC0415
                 PlaywrightScaricaTSBot,
             )
 
             return PlaywrightScaricaTSBot
         if bot_id == "timbrature":
-            from src.bots.portale_fornitori.timbrature.playwright_bot import (
+            from src.bots.portale_fornitori.timbrature.playwright_bot import (  # noqa: PLC0415
                 PlaywrightTimbratureBot,
             )
 
@@ -63,19 +63,19 @@ def _get_playwright_bot_class(bot_id: str) -> Any:  # noqa: C901, PLR0911
 
             return PlaywrightSafeWorkPDLBot
         if bot_id == "ricerca_pdl":
-            from src.bots.safework.pdl.playwright_search_bot import (
+            from src.bots.safework.pdl.playwright_search_bot import (  # noqa: PLC0415
                 PlaywrightSafeWorkPDLSearchBot,
             )
 
             return PlaywrightSafeWorkPDLSearchBot
         if bot_id == "programmazione_pdl":
-            from src.bots.safework.programmazione.playwright_bot import (
+            from src.bots.safework.programmazione.playwright_bot import (  # noqa: PLC0415
                 PlaywrightSafeWorkProgrammazioneBot,
             )
 
             return PlaywrightSafeWorkProgrammazioneBot
         if bot_id == "programmazione_sync":
-            from src.bots.safework.programmazione_sync.playwright_bot import (
+            from src.bots.safework.programmazione_sync.playwright_bot import (  # noqa: PLC0415
                 PlaywrightSafeWorkProgrammazioneSyncBot,
             )
 

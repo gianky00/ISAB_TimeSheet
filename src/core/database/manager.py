@@ -14,6 +14,10 @@ from typing import Any, ClassVar, Optional
 
 from src.core.constants import FileNames
 from src.core.database.migrations.contabilita import (
+    mig_contabilita_v1,
+    mig_contabilita_v2,
+    mig_contabilita_v3,
+    mig_contabilita_v4,
     mig_contabilita_v5,
     mig_contabilita_v6,
     mig_contabilita_v7,
@@ -50,6 +54,10 @@ class DatabaseManager:
 
     # Dizionari di Migrazione
     MIGRATIONS_CONTABILITA: ClassVar[dict[int, Callable[[sqlite3.Connection], None]]] = {
+        1: mig_contabilita_v1,
+        2: mig_contabilita_v2,
+        3: mig_contabilita_v3,
+        4: mig_contabilita_v4,
         5: mig_contabilita_v5,
         6: mig_contabilita_v6,
         7: mig_contabilita_v7,
@@ -172,6 +180,9 @@ class DatabaseManager:
         """
         Executes pending migrations for a specific database.
         """
+        # Creazione directory se non esiste
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+
         with self.get_connection(db_path) as conn:
             current_ver = self._get_db_version(conn)
             target_ver = max(migrations.keys()) if migrations else 0
@@ -192,6 +203,9 @@ class DatabaseManager:
                 except Exception as e:
                     logger.critical(f"[{db_name}] Migration failed at step v{ver}: {e}")
                     raise
+
+    def close(self) -> None:
+        """Cleanup resources."""
 
 
 db_manager = DatabaseManager()

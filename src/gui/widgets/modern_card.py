@@ -64,10 +64,11 @@ class ModernCard(QFrame):
         """Aumenta l'elevazione (ombra) all'ingresso del mouse."""
         self.shadow_anim.setEndValue(self.elevation + 15)
         self.shadow_anim.start()
+        # Rimosso bordo blu pesante, usato bordo neutro leggermente più definito
         self.setStyleSheet(f"""
       QFrame#modernCard {{
         background-color: {COLORS["bg_white"]};
-        border: 1px solid {COLORS["teal_accent"]};
+        border: 1px solid {COLORS["border_medium"]};
         border-radius: 12px;
       }}
     """)

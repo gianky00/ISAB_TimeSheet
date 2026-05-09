@@ -4,9 +4,15 @@ Gestore dell'icona nell'area di notifica (System Tray).
 Permette all'applicazione di restare attiva in background e di inviare notifiche push di sistema.
 """
 
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QObject
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon
+
+if TYPE_CHECKING:
+    from src.gui.main_window.main import MainWindow
 
 
 class TrayIconComponent(QObject):
@@ -15,7 +21,7 @@ class TrayIconComponent(QObject):
     Inizializza il TrayController e fornisce metodi di alto livello per l'invio di messaggi balloon.
     """
 
-    def __init__(self, main_window: Any) -> None:
+    def __init__(self, main_window: MainWindow) -> None:
         """
         Inizializza il componente Tray.
 
@@ -28,7 +34,13 @@ class TrayIconComponent(QObject):
 
         self.controller = TrayController(main_window)
 
-    def show_message(self, title: str, message: str, icon: Any = None, duration: int = 5000) -> None:
+    def show_message(
+        self,
+        title: str,
+        message: str,
+        icon: QSystemTrayIcon.MessageIcon = QSystemTrayIcon.MessageIcon.Information,
+        duration: int = 5000,
+    ) -> None:
         """
         Inoltra la richiesta di visualizzazione messaggio al controller.
 
@@ -38,27 +50,24 @@ class TrayIconComponent(QObject):
           icon: Icona opzionale.
           duration: Durata della notifica in ms.
         """
-        from PySide6.QtWidgets import QSystemTrayIcon  # noqa: PLC0415
-
-        if icon is None:
-            icon = QSystemTrayIcon.MessageIcon.Information
         self.controller.show_message(title, message, icon, duration)
 
     def show_update_message(self, new_version: str) -> None:
         """
-        Mostra una notifica di sistema per segnalare la disponibilità di una nuova versione.
+        Mostra una notifica di sistema professionale per segnalare la disponibilità di una nuova versione.
 
         Args:
           new_version: Stringa della versione rilevata (es. '2.1.0').
         """
         self.controller.show_message(
-            "Aggiornamento Disponibile",
-            f"  disponibile la nuova versione {new_version} di SyncroJob.",
+            "Aggiornamento di Sistema",
+            f"È disponibile una nuova versione ({new_version}) di SyncroJob per migliorare la tua esperienza lavorativa.",
+            QSystemTrayIcon.MessageIcon.Information,
         )
 
     def show_background_notification(self, title: str, message: str, is_error: bool = False) -> None:
         """
-        Invia una notifica balloon di sistema se l'applicazione  in background o minimizzata.
+        Invia una notifica balloon di sistema se l'applicazione è in background o minimizzata.
         Attiva inoltre l'alert visivo sulla taskbar (lampeggiamento).
 
         Args:
@@ -66,8 +75,6 @@ class TrayIconComponent(QObject):
           message: Contenuto testuale della notifica.
           is_error: Se True, utilizza l'icona di errore critico.
         """
-        from PySide6.QtWidgets import QApplication, QSystemTrayIcon  # noqa: PLC0415
-
         is_active = self.main_window.isActiveWindow() and not self.main_window.isMinimized()
 
         if not is_active:

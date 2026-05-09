@@ -365,12 +365,12 @@ class ContabilitaPanel(QWidget):
             if hasattr(target, "table"):
                 table: Any = target.table
                 if model := table.selectionModel():
-                    with suppress(Exception):
+                    with suppress(TypeError, RuntimeError):
                         model.selectionChanged.disconnect()
                     model.selectionChanged.connect(lambda s, d: self._update_selection_total(table))
             elif hasattr(target, "tree"):
                 tree: Any = target.tree
-                with suppress(Exception):
+                with suppress(TypeError, RuntimeError):
                     tree.itemSelectionChanged.disconnect()
                 tree.itemSelectionChanged.connect(lambda: self._update_selection_total(tree))
 

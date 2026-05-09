@@ -15,7 +15,7 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
         super().__init__(tree_view)
         self.tree = tree_view
 
-    def paint(
+    def paint(  # noqa: C901
         self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex
     ) -> None:
         """Personalizza il disegno delle celle, applicando colori di stato e merge testuale per le rilascio."""

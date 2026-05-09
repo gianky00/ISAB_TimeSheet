@@ -28,14 +28,14 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 logger = logging.getLogger(__name__)
 
 # Stile forzato per evitare il bug della Dark Mode / Tooltip nero in PySide6.
-TOOLTIP_CSS = """
-QToolTip {
-  background-color: #FFFFFF;
-  color: #212121;
-  border: 1px solid #BBBBBB;
+TOOLTIP_CSS = f"""
+QToolTip {{
+  background-color: {COLORS['bg_white']};
+  color: {COLORS['text_dark']};
+  border: 1px solid {COLORS['border_light']};
   border-radius: 6px;
   padding: 8px 12px;
-}
+}}
 """
 
 
@@ -326,7 +326,7 @@ class WeatherWidget(ModernCard):
         pill.setObjectName("info_pill")
         pill.setToolTip(tooltip)
         pill.setStyleSheet(
-            f"{TOOLTIP_CSS}\n#info_pill {{ background-color: {COLORS['bg_light']}; border-radius: 10px; border: 1px solid {COLORS['border_light']}; padding: 0px; }}"
+            f"#info_pill {{ background-color: {COLORS['bg_white']}; border-radius: 10px; border: 1px solid {COLORS['border_light']}; padding: 0px; }}"
         )
         pill.setFixedHeight(22)
 
@@ -491,7 +491,7 @@ class WeatherWidget(ModernCard):
             item = QWidget()
             item.setObjectName(f"forecast_item_{i}")
             item.setStyleSheet(
-                f"{TOOLTIP_CSS}\n#forecast_item_{i} {{ background: transparent; border: none; }}"
+                f"#forecast_item_{i} {{ background: transparent; border: none; }}"
             )
             v = QVBoxLayout(item)
             v.setContentsMargins(0, 0, 0, 0)
