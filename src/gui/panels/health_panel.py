@@ -1,7 +1,7 @@
 """
 SyncroJob - Health Panel
 Dashboard avanzata per il monitoraggio della salute del sistema (Observability).
-Visualizza punteggi di affidabilita'(Health Score), statistiche di esecuzione dei bot nelle ultime 24 ore
+Visualizza punteggi di affidabilità (Health Score), statistiche di esecuzione dei bot nelle ultime 24 ore
 e un elenco dettagliato di anomalie rilevate, con integrazione diretta per gli alert Telegram.
 """
 
@@ -170,7 +170,7 @@ class StatCard(ModernCard):
 
 
 class AnomalyCard(ModernCard):
-    """Card anomalia con design a lista orizzontale e badge di severit ."""
+    """Card anomalia con design a lista orizzontale e badge di severità."""
 
     def __init__(self, anomaly: Anomaly, parent: QWidget | None = None) -> None:
         super().__init__(parent, elevation=6)
@@ -351,7 +351,6 @@ class HealthPanel(QWidget):
         self._stat_anomalies = StatCard(
             "Anomalie", color=COLORS["warning_orange"], icon_key=Icons.ALERT_TRIANGLE
         )
-
         stats_grid.addWidget(self._stat_runs_ok, 0, 0)
         stats_grid.addWidget(self._stat_runs_fail, 0, 1)
         stats_grid.addWidget(self._stat_error_rate, 1, 0)
@@ -419,7 +418,7 @@ class HealthPanel(QWidget):
         while self._anomalies_layout.count() > 1:
             if (item := self._anomalies_layout.takeAt(0)) and (w := item.widget()):
                 w.deleteLater()
-        self._anomaly_count_label.setText(f"{len(anomalies)} problema{'i' if len(anomalies) != 1 else ''}")
+        self._anomaly_count_label.setText(f"{len(anomalies)} problemi" if len(anomalies) != 1 else "1 problema")
         if not anomalies:
             empty = QFrame()
             empty.setStyleSheet(

@@ -268,13 +268,13 @@ class WeatherWidget(ModernCard):
             Icons.ACTIVITY, "-- km/h", COLORS["info_blue"], "<b>Vento</b><br/>Velocità attuale"
         )
         self.pill_hum = self._create_info_pill(
-            Icons.CLOUD, "--% UR", COLORS["teal_accent"], "<b>Umidit </b><br/>Umidit  relativa"
+            Icons.CLOUD, "--% UR", COLORS["teal_accent"], "<b>Umidità</b><br/>Umidità relativa"
         )
         self.pill_uv = self._create_info_pill(
             Icons.SPARKLES, "UV: --", COLORS["warning_orange"], "<b>Indice UV</b><br/>Radiazioni UV"
         )
         self.pill_aqi = self._create_info_pill(
-            Icons.GLOBE, "AQI: --", COLORS["success_green"], "<b>Qualita' Aria</b><br/>Indice EU (0-100+)"
+            Icons.GLOBE, "AQI: --", COLORS["success_green"], "<b>Qualità Aria</b><br/>Indice EU (0-100+)"
         )
 
         pills_v.addWidget(self.pill_wind)
@@ -551,7 +551,7 @@ class WeatherWidget(ModernCard):
             45: "Nebbia",
             51: "Pioggerellina",
             61: "Pioggia",
-            65: "PioggiàForte",
+            65: "Pioggia Forte",
             80: "Rovesci",
             95: "Temporale",
         }.get(code, "Variabile")

@@ -27,7 +27,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
-        ("nav", "Navigazione Attivita'"),
+        ("nav", "Navigazione Attività"),
         ("filter", "Configurazione Filtri"),
         ("search", "Ricerca ed Export"),
         ("parse", "Analisi Risultati"),
@@ -48,7 +48,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         Args:
           username: Nome utente SafeWork.
           password: Password SafeWork.
-          headless: Se avviare il browser in modalita' nascosta.
+          headless: Se avviare il browser in modalità nascosta.
           timeout: Tempo di attesa per Selenium.
           download_path: Cartella per il download degli Excel.
           account_type: Tipo di account (Esecutore/ISAB).
@@ -93,7 +93,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
 
         # 1. Navigazione
         self.update_step("nav", StepStatus.RUNNING)
-        self.log("   Navigazione in 'Visualizza Attivita''...")
+        self.log("   Navigazione in 'Visualizza Attività'...")
         if not self.driver:
             self.log("❌ Driver non inizializzato.")
             self.update_step("nav", StepStatus.ERROR)
@@ -109,7 +109,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         # 2. Setup Filtri Generali
         self.update_step("filter", StepStatus.RUNNING)
         if not self.attivita_page:
-            self.log("❌ Pagina Attivita'non inizializzata.")
+            self.log("❌ Pagina Attivitànon inizializzata.")
             self.update_step("filter", StepStatus.ERROR)
             return False
 

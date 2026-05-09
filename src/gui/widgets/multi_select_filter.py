@@ -141,7 +141,7 @@ class MultiSelectFilter(QWidget):
           items: Lista di stringhe.
         """
         self.items = items
-        # Rimuovi selezionati non piu' presenti
+        # Rimuovi selezionati non più presenti
         self.selected = [s for s in self.selected if s in items]
         self._update_button_text()
 

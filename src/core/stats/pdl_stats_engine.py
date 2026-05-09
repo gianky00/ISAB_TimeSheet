@@ -89,7 +89,7 @@ class PDLStatsEngine:
 
     @staticmethod
     def _get_counts(cursor: sqlite3.Cursor) -> tuple[int, int]:
-        """Recupera i conteggia'totali e attivi."""
+        """Recupera i conteggiàtotali e attivi."""
         cursor.execute("SELECT COUNT(*) FROM pdl")
         total: int = cursor.fetchone()[0]
 

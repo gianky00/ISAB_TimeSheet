@@ -1,5 +1,5 @@
 """
-PriorityBadge - Badge component per visualizzare la priorita' di una notifica.
+PriorityBadge - Badge component per visualizzare la priorità di una notifica.
 Supporta High (con pulse animation), Medium e Low.
 """
 
@@ -13,7 +13,7 @@ from src.gui.styles import COLORS
 
 class PriorityBadge(QWidget):
     """
-    Badge per priorita' notifica con indicatore colorato e pulse animation.
+    Badge per priorità notifica con indicatore colorato e pulse animation.
 
     Levels:
     - high: Red dot + "Alta" label + pulse animation

@@ -138,7 +138,7 @@ class PDLDetailView(QWidget):
                 self.cron_table.setItem(row_idx, 4, desc_item)
 
     def clear(self) -> None:
-        """Resetta tutti i campiu'del dettaglio e svuota la tabella della cronologia."""
+        """Resetta tutti i campiùdel dettaglio e svuota la tabella della cronologia."""
         for label in self.detail_labels.values():
             label.setText("-")
         self.cron_table.setRowCount(0)

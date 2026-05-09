@@ -115,7 +115,7 @@ class ScaricoTSPage:
 
             # Search
             self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.SEARCH_BUTTON)).click()
-            self.log(" Pulsante 'Cerca' cliccato. Attesa risultati...")
+            self.log(" Pulsante 'Cercà cliccato. Attesa risultati...")
             self._wait_for_overlay()  # Wait for loading
 
             # Download

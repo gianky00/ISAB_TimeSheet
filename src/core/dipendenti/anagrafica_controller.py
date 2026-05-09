@@ -87,7 +87,7 @@ class AnagraficaController:
 
     @staticmethod
     def _update_status_counts(counts: dict[str, int], is_monitored: bool, diff_days: int | None) -> None:
-        """Aggiorna il dizionario dei conteggia'basandosi sullo stato del dipendente."""
+        """Aggiorna il dizionario dei conteggiàbasandosi sullo stato del dipendente."""
         if not is_monitored:
             counts["excluded"] += 1
             return

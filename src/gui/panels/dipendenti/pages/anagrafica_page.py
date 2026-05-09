@@ -131,7 +131,8 @@ class AnagraficaPage(QWidget):
 
     def _on_monitoring_toggled(self, id_risorsa, enable):  # noqa: ANN001, ANN202
         if AnagraficaController.toggle_monitoring(id_risorsa, enable):
-            ToastManager.instance().show(f"Monitoraggio {'riattivato' if enable else 'escluso'}", "success")
+            status = "riattivato" if enable else "escluso"
+            ToastManager.instance().show(f"Monitoraggio {status}", "success")
             self.refresh_data()
 
     def _on_selection_changed(self, row_idx):  # noqa: ANN001, ANN202

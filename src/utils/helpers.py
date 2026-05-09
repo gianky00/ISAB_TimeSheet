@@ -212,7 +212,7 @@ def cleanup_chrome_temp_files(directory: Path | str) -> list[str]:
 
 def cleanup_bot_processes() -> None:
     """
-    Termina forzatamente le istanze 'zombie' di Chrome e Chromedriver legate all'applicazione.
+    Termina forzatamente le istanze 'zombiè di Chrome e Chromedriver legate all'applicazione.
     Rimuove i file di lock del profilo per prevenire errori di sessione (SessionNotCreated).
     Include anche processi Playwright/Node se rimasti appesi.
     """

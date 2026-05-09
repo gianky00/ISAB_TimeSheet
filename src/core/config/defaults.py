@@ -26,7 +26,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "enable_auto_update_contabilita": True,
     "certificati_campione_path": "",
     "master_preventivi_path": "",
-    "base_network_path_preventivi": r"\\192.168.11.251\Database_Tecnico_SMI\Contabilita' strumentale",
+    "base_network_path_preventivi": r"\\192.168.11.251\Database_Tecnico_SMI\Contabilità strumentale",
     "preventivi_tcl": [
         "MESSINA I.",
         "AGUSTA D.",
@@ -37,7 +37,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "BARBAGALLO G.",
     ],
     "preventivi_stati": [
-        "ATTIVITA' DA COMPLETARE",
+        "ATTIVITÀ DA COMPLETARE",
         "IN ATTESA TCL",
         "RICHIESTA ODC MIDOLO",
         "CONTABILIZZATA",

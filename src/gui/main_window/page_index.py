@@ -41,7 +41,7 @@ class PageIndex(IntEnum):
     """Manuale utente e documentazione integrata."""
 
     NOTIFICATIONS = 9
-    """Centro notifiche e cronologiàmessaggi."""
+    """Centro notifiche e cronologia messaggi."""
 
     STORICO_ODA = 10
     """Consultazione e ricerca ordini di acquisto."""

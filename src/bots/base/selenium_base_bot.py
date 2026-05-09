@@ -46,10 +46,10 @@ class SeleniumBaseBot(BaseBot, ABC):
         Args:
           username: Nome utente per il login.
           password: Password per il login.
-          headless: Se True, avvia il browser in modalita' nascosta.
+          headless: Se True, avvia il browser in modalità nascosta.
           timeout: Tempo massimo di attesa per le operazioni (secondi).
           download_path: Percorso per il salvataggio dei file scaricati.
-          company: Societa' da selezionare al login (ISAB o PSER).
+          company: Società da selezionare al login (ISAB o PSER).
         """
         super().__init__(username, password, headless, timeout, download_path, company=company)
         self.driver: webdriver.Chrome | None = None

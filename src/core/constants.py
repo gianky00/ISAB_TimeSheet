@@ -63,7 +63,7 @@ class Business:
     """Business logic constants."""
 
     HOURLY_COST_STD = 28.50
-    DEFAULT_SUPPLIER = "COEMI"
+    DEFAULT_SUPPLIER = "SYNCROJOB"
     DEFAULT_SITE = "ISAB"
     DEFAULT_EXCEL_PASSWORD = "isab"  # noqa: S105
 
@@ -72,14 +72,14 @@ class Emails:
     """Default email recipients and configurations."""
 
     # Report Accessi Dipendenti
-    ACCESSI_TO = "luca.riccio@coemi.it"
-    ACCESSI_CC = "isabsud@coemi.it"
+    ACCESSI_TO = "resp.accessi@example.com"
+    ACCESSI_CC = "ufficio.personale@example.com"
 
     # Programmazione PDL
-    PROG_CC = "francesco.millo@coemi.it; ciro.scaravelli@coemi.it"
+    PROG_CC = "resp.programmazione@example.com"
 
     # Supporto tecnico
-    SUPPORT = "gianky.allegretti@gmail.com"
+    SUPPORT = "supporto@syncrojob.it"
 
 
 class BotStatus(Enum):

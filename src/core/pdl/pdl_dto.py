@@ -65,7 +65,7 @@ class PdlRowDTO:
         )
 
     def to_master_list(self) -> list[str]:
-        """Restituisce i campiu'formattati per la tabella master della GUI."""
+        """Restituisce i campiùformattati per la tabella master della GUI."""
         raw = [
             self.data_creazione,
             self.richiedente,
@@ -78,7 +78,7 @@ class PdlRowDTO:
         return [("" if val.lower() in ("nan", "none") else val) for val in raw]
 
     def to_full_list(self) -> list[str | int]:
-        """Restituisce tutti i campiu'come lista (per compatibilit  legacy se necessaria)."""
+        """Restituisce tutti i campiùcome lista (per compatibilit  legacy se necessaria)."""
         return [
             self.id,
             self.n_pdl,

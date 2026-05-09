@@ -191,7 +191,7 @@ class BackupManager:
     @staticmethod
     def _cleanup_old_backups(target_dir: Path, keep: int = 5) -> None:
         """
-        Mantiene solo gli ultimi N backup nel database, eliminando i piu' vecchi.
+        Mantiene solo gli ultimi N backup nel database, eliminando i più vecchi.
 
         Args:
           target_dir: Cartella dove risiedono i backup.
@@ -209,7 +209,7 @@ class BackupManager:
 
     @staticmethod
     def list_backups() -> list[Path]:
-        """Restituisce la lista dei backup disponibili ordinati per data (piu' recente prima)."""
+        """Restituisce la lista dei backup disponibili ordinati per data (più recente prima)."""
         try:
             target_dir = BackupManager.get_backup_dir()
             if not target_dir.exists():

@@ -123,7 +123,7 @@ class AuditTableModel(QAbstractTableModel):
         if col == 5:  # noqa: PLR2004
             return str(log.get("action", "-"))
         if col == 6:  # noqa: PLR2004
-            # Priorita' a error_code se c' , altrimenti entity
+            # Priorità a error_code se c' , altrimenti entity
             err = log.get("error_code")
             return str(err) if err else str(log.get("entity", "-"))
         if col == 7:  # noqa: PLR2004
@@ -207,7 +207,7 @@ class AuditTableModel(QAbstractTableModel):
         return f"{f_ms / 1000.0:.1f}s"
 
     def _extract_message(self, log: dict[str, Any]) -> str:
-        """Estrae il messaggio piu' significativo dai parametri JSON del log."""
+        """Estrae il messaggio più significativo dai parametri JSON del log."""
         p_str = log.get("params", "{}")
         try:
             p = json.loads(p_str) if isinstance(p_str, str) else p_str

@@ -40,10 +40,10 @@ def get_network_time(timeout: int = 2) -> datetime | None:
 
 def get_trusted_time() -> tuple[datetime, bool]:
     """
-    Restituisce l'orario piu' affidabile disponibile.
-    Priorita':
+    Restituisce l'orario più affidabile disponibile.
+    Priorità:
     1. Orario di rete (Network Time)
-    2. Orario di sistema (System Time) - con flag di affidabilita'
+    2. Orario di sistema (System Time) - con flag di affidabilità
     Returns:
       tuple: (datetime, bool_is_trusted)
     """

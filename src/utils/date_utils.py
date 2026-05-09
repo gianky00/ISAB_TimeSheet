@@ -51,7 +51,7 @@ MAX_MONTHS: Final[int] = 12
 
 def parse_date_flexible(date_str: str | None, formats: list[str] | None = None) -> date | None:
     """
-    Tenta di parsare una stringa data usando piu' formati.
+    Tenta di parsare una stringa data usando più formati.
 
     Args:
       date_str: La stringa da parsare
@@ -76,7 +76,7 @@ def parse_date_flexible(date_str: str | None, formats: list[str] | None = None) 
 
 def parse_datetime_flexible(date_str: str | None, formats: list[str] | None = None) -> datetime | None:
     """
-    Tenta di parsare una stringa datetime usando piu' formati.
+    Tenta di parsare una stringa datetime usando più formati.
 
     Args:
       date_str: La stringa da parsare

@@ -263,7 +263,7 @@ def check_for_updates(  # noqa: C901, PLR0912
         else:
             msg = f"Nuova versione {remote_ver_str} disponibile!\n"
             if changelog:
-                msg += f"\nNovita':\n{changelog}\n"
+                msg += f"\nNovità:\n{changelog}\n"
             msg += "\nVuoi aggiornare ora?"
             reply = QMessageBox.question(
                 parent,

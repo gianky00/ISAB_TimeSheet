@@ -163,7 +163,7 @@ class MenuBarComponent(QObject):
                         ),
                         CommandNode(
                             "Mese Corrente",
-                            "Dal 1  del mese ad oggi",
+                            "Dal 1° del mese ad oggi",
                             Icons.CALENDAR,
                             action=lambda: wc.run_timbrature_bot("mese"),
                         ),
@@ -226,7 +226,7 @@ class MenuBarComponent(QObject):
             children=[
                 CommandNode(
                     "Dashboard",
-                    "KPiu'e Stato",
+                    "KPI e Stato",
                     Icons.ACTIVITY,
                     action=lambda: mw.navigation_controller.navigate_to(PageIndex.DASHBOARD),
                 ),

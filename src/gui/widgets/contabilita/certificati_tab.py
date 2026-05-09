@@ -183,7 +183,7 @@ class CertificatiCampioneTab(QWidget):
         self._apply_filters()
 
     def _on_only_excluded_toggled(self, checked: bool) -> None:
-        """Gestisce la logica specifica per il filtro 'Solo Esclusi' e salva lo stato."""
+        """Gestisce la logica specifica per il filtro 'Solo Esclusì e salva lo stato."""
         self._only_excluded = checked
         if checked:
             # Se vogliamo vedere SOLO gli esclusi, abilitiamo per coerenza la loro visualizzazione
@@ -319,16 +319,16 @@ class CertificatiCampioneTab(QWidget):
                             item.setExpanded(True)
 
     def _load_data(self) -> None:
-        """Popola l'albero raggruppando i certificati per ID-COEMI."""
+        """Popola l'albero raggruppando i certificati per ID-STRUMENTO."""
         data = ContabilitaManager.get_certificati_campione_data()
         self.tree.clear()
         self.tree.setSortingEnabled(False)
 
         # 1. Raggruppamento dati
-        id_coemi_groups = self._group_data_by_id_coemi(data)
+        id_strumento_groups = self._group_data_by_id_strumento(data)
 
         # 2. Preparazione gruppi con metadati e priorità
-        groups_with_priority = self._prepare_groups_with_priority(id_coemi_groups)
+        groups_with_priority = self._prepare_groups_with_priority(id_strumento_groups)
         groups_with_priority.sort(key=operator.itemgetter("priority"))
 
         # 3. Popolamento Tree
@@ -340,18 +340,18 @@ class CertificatiCampioneTab(QWidget):
         self._apply_filters()
         self._update_excluded_count_label()
 
-    def _group_data_by_id_coemi(self, data: list[tuple[Any, ...]]) -> dict[str, list[tuple[Any, ...]]]:
-        """Raggruppa le righe del DB per ID-COEMI o fallback (Matricola/Certificato)."""
+    def _group_data_by_id_strumento(self, data: list[tuple[Any, ...]]) -> dict[str, list[tuple[Any, ...]]]:
+        """Raggruppa le righe del DB per ID-STRUMENTO o fallback (Matricola/Certificato)."""
         from src.core.contabilita_queries import ContabilitaQueries  # noqa: PLC0415
 
-        idx_id_coemi = ContabilitaQueries.CERT_IDX_ID_COEMI
+        idx_id_strumento = ContabilitaQueries.CERT_IDX_ID_STRUMENTO
         idx_matricola = ContabilitaQueries.CERT_IDX_MATRICOLA
         idx_certificato = ContabilitaQueries.CERT_IDX_CERTIFICATO
 
         groups = defaultdict(list)
         for r in data:
             key = (
-                str(r[idx_id_coemi]).strip()
+                str(r[idx_id_strumento]).strip()
                 or str(r[idx_matricola]).strip()
                 or str(r[idx_certificato]).strip()
                 or "Sconosciuto"
@@ -378,7 +378,7 @@ class CertificatiCampioneTab(QWidget):
             processed_groups.append(
                 {
                     "group_key": group_key,
-                    "id_coemi": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_ID_COEMI),
+                    "id_strumento": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_ID_STRUMENTO),
                     "matricola": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_MATRICOLA) or "N/D",
                     "costruttore": self._get_col_safe(latest, ContabilitaQueries.CERT_IDX_COSTRUTTORE)
                     or "N/D",
@@ -426,7 +426,7 @@ class CertificatiCampioneTab(QWidget):
         ex_marker = "  [ESCLUSO]" if is_excluded else ""
         pr_marker = "  [NON STAMPARE]" if is_print_excluded else ""
 
-        id_part = f"{g['id_coemi']}  •  " if g["id_coemi"] else ""
+        id_part = f"{g['id_strumento']}  •  " if g["id_strumento"] else ""
         label = f"{id_part}{g['costruttore']}  •  {g['modello']}{range_part}  •  {g['matricola']}  •  {days_text}{ex_marker}{pr_marker}"
 
         parent_item = SortableTreeWidgetItem(self.tree, [label])
@@ -457,7 +457,7 @@ class CertificatiCampioneTab(QWidget):
             err_formatted = self.engine.format_errore_max(err_val) if err_val is not None else ""
 
             row_data = [
-                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_ID_COEMI),
+                self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_ID_STRUMENTO),
                 self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_CERTIFICATO),
                 self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_MODELLO),
                 self._get_col_safe(cert, ContabilitaQueries.CERT_IDX_COSTRUTTORE),
@@ -628,7 +628,7 @@ class CertificatiCampioneTab(QWidget):
             user_data = parent.data(0, Qt.ItemDataRole.UserRole)
 
             # Recuperiamo i dati reali dalle colonne del primo figlio
-            id_coemi = ""
+            id_strumento = ""
             matricola = ""
             costruttore = meta["costruttore"]
             modello = meta["modello"]
@@ -637,7 +637,7 @@ class CertificatiCampioneTab(QWidget):
             if parent.childCount() > 0:
                 child = parent.child(0)
                 if child:
-                    id_coemi = child.text(self.tree.IDX_ID_COEMI)
+                    id_strumento = child.text(self.tree.IDX_ID_STRUMENTO)
                     matricola = child.text(self.tree.IDX_MATRICOLA)
                     costruttore = child.text(self.tree.IDX_COSTRUTTORE)
                     modello = child.text(self.tree.IDX_MODELLO)
@@ -649,7 +649,7 @@ class CertificatiCampioneTab(QWidget):
                     "costruttore": costruttore,
                     "modello": modello,
                     "range": range_val,
-                    "id_coemi": id_coemi,
+                    "id_strumento": id_strumento,
                     "days": user_data.get("days") if user_data else None,
                 }
             )
@@ -684,16 +684,16 @@ class CertificatiCampioneTab(QWidget):
             user_data = parent.data(0, Qt.ItemDataRole.UserRole)
 
             # Dati dal primo figlio (stato attuale)
-            id_coemi = ""
+            id_strumento = ""
             if parent.childCount() > 0 and (child := parent.child(0)):
-                id_coemi = child.text(self.tree.IDX_ID_COEMI)
+                id_strumento = child.text(self.tree.IDX_ID_STRUMENTO)
 
             certs_data.append(
                 {
                     "matricola": meta["matricola"],
                     "costruttore": meta["costruttore"],
                     "modello": meta["modello"],
-                    "id_coemi": id_coemi,
+                    "id_strumento": id_strumento,
                     "days": user_data.get("days") if user_data else None,
                 }
             )

@@ -1,8 +1,8 @@
 # mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Sidebar Widget (Refactored V8.8 - Performance Optimized V4)
-Navigazione magnetica enterprise a 3 livelli.
-Risolti bug di sovrapposizione e artefatti grafici. Massima fluidit  garantita.
+Navigazione magnetica professionale a 3 livelli.
+Risolti bug di sovrapposizione e artefatti grafici. Massima fluidità garantita.
 """
 
 from __future__ import annotations
@@ -289,7 +289,7 @@ class SidebarWidget(QFrame):
         for n, i in (
             ("Preventivi", 0),
             ("Giornaliere", 1),
-            ("Attivita'Programmate", 2),
+            ("Attività Programmate", 2),
             ("Certificati", 3),
             ("KPI", 4),
         ):

@@ -161,7 +161,7 @@ class PrenotaBPPanel(BaseBotPanel):
         """
         self.status_list.update_status(step_idx, success)
 
-        # Trova dinamicamente l'indice della colonna 'esito'
+        # Trova dinamicamente l'indice della colonna 'esitò
         col_idx = -1
         for i, col in enumerate(self.data_table.columns):
             if col["name"] == "esito":

@@ -126,7 +126,7 @@ class SafeworkBaseBot(SeleniumBaseBot):
             return
         xpath_caricamento = "//span[contains(text(), 'Caricamento...')]"
         try:
-            # Attendiamo che appaia (se non  gia' apparso e scomparso velocemente)
+            # Attendiamo che appaia (se non  già apparso e scomparso velocemente)
             with suppress(TimeoutException):
                 WebDriverWait(self.driver, 3).until(
                     EC.visibility_of_element_located((By.XPATH, xpath_caricamento))

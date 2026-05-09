@@ -37,7 +37,7 @@ class ReportService:
         accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
 
         # Nota: build_timbrature_maps  attualmente in gui/utils, andrebbe spostato in core.
-        # Per ora lo importiamo mantenendo la funzionalita'.
+        # Per ora lo importiamo mantenendo la funzionalità.
         last_by_cf, last_by_name, normalize = build_timbrature_maps(accessi)
 
         warning_list = []

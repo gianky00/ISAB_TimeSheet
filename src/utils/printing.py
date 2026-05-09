@@ -46,7 +46,7 @@ def _run_powershell(command: str) -> subprocess.CompletedProcess[str] | None:
 
 def _set_printer_duplex_powershell(printer_name: str, mode: str = "OneSided") -> bool:
     """
-    Tenta di forzare la modalita' via PowerShell.
+    Tenta di forzare la modalità via PowerShell.
     Non  critico se fallisce, poich  la strategià'Split Jobs' garantir  comunque fogli separati.
     """
     try:

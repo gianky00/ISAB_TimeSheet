@@ -180,13 +180,13 @@ class TelegramTab(QWidget):
         self.chat_id_edit.setPlaceholderText("Inserisci Chat ID (es. 123456789)")
         self.chat_id_edit.textChanged.connect(lambda: self.settings_changed.emit())
 
-        creds_layout.addWidget(QLabel("Bot APiu'Token:"))
+        creds_layout.addWidget(QLabel("Bot APiùToken:"))
         creds_layout.addWidget(self.token_edit)
         creds_layout.addWidget(QLabel("Chat ID Destinatario:"))
         creds_layout.addWidget(self.chat_id_edit)
 
         card_creds = SettingCard(
-            "Accesso APiu'Telegram",
+            "Accesso APiùTelegram",
             "Configura le credenziali del bot per il controllo remoto.",
             Icons.SEND,
             creds_widget,

@@ -46,7 +46,7 @@ class StatisticsWidget(QWidget):
         layout.addLayout(self.cards_layout)
 
         # Table Title
-        table_title = QLabel("Dettaglio Attivita'")
+        table_title = QLabel("Dettaglio Attività")
         table_title.setStyleSheet(
             f"font-size: 16px; font-weight: bold; margin-top: 10px; color: {COLORS['text_dark']};"
         )
@@ -163,7 +163,7 @@ class StatisticsWidget(QWidget):
         )
 
     def _refresh_stats_table(self, stats: dict[str, Any]) -> None:
-        """Aggiorna la tabella di dettaglio attivita'."""
+        """Aggiorna la tabella di dettaglio attività."""
         self.table.setRowCount(0)
         bot_names = {
             "timbrature": "Timbrature",

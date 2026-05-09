@@ -166,7 +166,7 @@ class SmartSyncEngine(BaseSyncEngine):
     def _execute_mirror_cleanup(
         cls, cursor: Any, table_name: str, temp_table: str, conflict_cols: list[str]
     ) -> int:
-        """Rimuove le righe non piu' presenti nel sorgente (mirroring)."""
+        """Rimuove le righe non più presenti nel sorgente (mirroring)."""
         safe_table = cls._validate_identifier(table_name)
         main_id_col = cls._validate_identifier(conflict_cols[0])
 

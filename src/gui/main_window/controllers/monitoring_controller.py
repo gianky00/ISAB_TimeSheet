@@ -56,7 +56,7 @@ class MonitoringController(QObject):
                 msg += f"<img src='{red_dot}' width='14' height='14'> {len(scaduti)} Abilitazioni SCADUTE (>30 gg)<br/>"
             if in_scadenza:
                 msg += f"<img src='{yellow_dot}' width='14' height='14'> {len(in_scadenza)} In scadenza (20-30 gg)<br/>"
-            msg += "<br/><small>Controlla la tabella 'Dipendenti' per i dettagli.</small>"
+            msg += "<br/><small>Controlla la tabella 'Dipendentì per i dettagli.</small>"
 
             ToastManager.instance().show(
                 msg, "warning" if in_scadenza or scaduti else "info", 8000, is_rich_text=True

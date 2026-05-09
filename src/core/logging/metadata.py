@@ -156,7 +156,7 @@ class MetadataEnricher:
         Returns:
           Log entry arricchito
         """
-        # Aggiungi metadata se non gia' presenti
+        # Aggiungi metadata se non già presenti
         if "metadata" not in entry:
             entry["metadata"] = {}
 

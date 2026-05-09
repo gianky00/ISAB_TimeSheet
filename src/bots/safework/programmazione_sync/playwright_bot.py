@@ -14,12 +14,12 @@ from src.bots.safework.playwright_base import PlaywrightSafeworkBaseBot
 
 class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
     """
-    Bot per scaricare il report Excel delle attivita'da SafeWork usando Playwright.
+    Bot per scaricare il report Excel delle attivitàda SafeWork usando Playwright.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
-        ("nav", "Navigazione Attivita'"),
+        ("nav", "Navigazione Attività"),
         ("filter", "Configurazione Filtri"),
         ("search", "Ricerca ed Esportazione"),
     ]
@@ -43,7 +43,7 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
 
     @property
     def description(self) -> str:
-        return "Download massivo report attivita'SafeWork (Playwright)"
+        return "Download massivo report attivitàSafeWork (Playwright)"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
@@ -69,7 +69,7 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
 
         # 1. Navigazione
         self.update_step("nav", StepStatus.RUNNING)
-        self.log("   Navigazione in 'Visualizza Attivita''...")
+        self.log("   Navigazione in 'Visualizza Attività'...")
 
         self.page.click("#topIcon-actHomePage")
         self._attendi_scomparsa_overlay()

@@ -1,6 +1,6 @@
 """
 SyncroJob - Clipboard Mixin
-Fornisce funzionalita' avanzate di Copia/Incolla in formato TSV (Excel-compatible).
+Fornisce funzionalità avanzate di Copia/Incolla in formato TSV (Excel-compatible).
 """
 
 from collections.abc import Sequence
@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QApplication, QComboBox, QToolTip
 
 
 class ClipboardMixin:
-    """Mixin per aggiungere capacita' di Copia/Incolla TSV ai widget tabellari."""
+    """Mixin per aggiungere capacità di Copia/Incolla TSV ai widget tabellari."""
 
     def copy_selection(self) -> None:
         """Copia i dati selezionati in formato TSV negli appunti."""

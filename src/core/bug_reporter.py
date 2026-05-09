@@ -2,7 +2,7 @@
 SyncroJob - Enhanced Bug Reporter
 
 Raccoglie diagnostica completa per segnalazioni bug, integrando:
-- Log enterprise (app.json, app.log, errors.json)
+- Log strutturati (app.json, app.log, errors.json)
 - Analytics report (anomalie, health score)
 - Audit trail (ultime azioni)
 - Info sistema
@@ -29,7 +29,7 @@ class BugReporter:
     Gestisce la raccolta di log e informazioni di debug per la segnalazione di bug.
 
     Crea un pacchetto ZIP contenente:
-    - Log enterprise (app.json, app.log, errors.json, performance.jsonl)
+    - Log strutturati (app.json, app.log, errors.json, performance.jsonl)
     - Log errori bot (screenshot/html recenti)
     - Analytics report (anomalie, pattern, health score)
     - Audit trail (ultime 50 azioni)
@@ -38,7 +38,7 @@ class BugReporter:
 
     @staticmethod
     def collect_diagnostics(
-        include_enterprise_logs: bool = True,
+        include_structured_logs: bool = True,
         include_analytics: bool = True,
         include_audit: bool = True,
         trace_id: str | None = None,
@@ -48,7 +48,7 @@ class BugReporter:
         Raccoglie tutti i file diagnostici e crea un archivio ZIP.
 
         Args:
-          include_enterprise_logs: Includi log strutturati enterprise
+          include_structured_logs: Includi log strutturati
           include_analytics: Includi report analytics (anomalie, health)
           include_audit: Includi audit trail recente
           trace_id: Trace ID specifico per debug mirato (opzionale)
@@ -70,9 +70,9 @@ class BugReporter:
             log_dir = CONFIG_DIR / "logs"
 
             with zipfile.ZipFile(report_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-                # 1. Enterprise Logs
-                if include_enterprise_logs and log_dir.exists():
-                    included_files.extend(BugReporter._add_enterprise_logs(zipf, log_dir))
+                # 1. Structured Logs
+                if include_structured_logs and log_dir.exists():
+                    included_files.extend(BugReporter._add_structured_logs(zipf, log_dir))
 
                 # 2. Bot Errors (screenshot/html)
                 error_dir = log_dir / "errors"
@@ -107,8 +107,8 @@ class BugReporter:
             return None, f"Errore creazione report: {e}", []
 
     @staticmethod
-    def _add_enterprise_logs(zipf: zipfile.ZipFile, log_dir: Path) -> list[str]:
-        """Aggiunge log enterprise allo ZIP."""
+    def _add_structured_logs(zipf: zipfile.ZipFile, log_dir: Path) -> list[str]:
+        """Aggiunge log strutturati allo ZIP."""
         added = []
 
         # Log strutturati in application/
@@ -313,7 +313,7 @@ class BugReporter:
 
     @staticmethod
     def get_estimated_size(
-        include_enterprise_logs: bool = True,
+        include_structured_logs: bool = True,
         include_analytics: bool = True,
         include_audit: bool = True,
     ) -> str:
@@ -322,7 +322,7 @@ class BugReporter:
 
         log_dir = CONFIG_DIR / "logs"
 
-        if include_enterprise_logs and log_dir.exists():
+        if include_structured_logs and log_dir.exists():
             app_dir = log_dir / "application"
             if app_dir.exists():
                 for f in app_dir.glob("*"):

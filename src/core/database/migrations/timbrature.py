@@ -35,7 +35,7 @@ def mig_timbrature_v2(conn: sqlite3.Connection) -> None:
 def mig_timbrature_v3(conn: sqlite3.Connection) -> None:
     """Aggiunge colonne codice_fiscale e ore_effettive (v3)"""
     cursor = conn.cursor()
-    # Verifichiamo se le colonne esistono gia' per evitare errori
+    # Verifichiamo se le colonne esistono già per evitare errori
     cursor.execute("PRAGMA table_info(timbrature)")
     columns = [row[1] for row in cursor.fetchall()]
 

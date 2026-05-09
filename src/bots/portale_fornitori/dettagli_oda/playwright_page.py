@@ -32,7 +32,7 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
             self.page.click(report_sel)
 
             if not is_first_row:
-                # Se non  la prima riga, il menu potrebbe essere gia' aperto o richiedere un click per refresh
+                # Se non  la prima riga, il menu potrebbe essere già aperto o richiedere un click per refresh
                 self.page.click(report_sel)
 
             self._wait_overlay()
@@ -195,7 +195,7 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
             btn = self.page.locator(selector).first
             btn.wait_for(state="attached", timeout=5000)
 
-            # Micro-pausa per stabilita' framework (richiesta utente)
+            # Micro-pausa per stabilità framework (richiesta utente)
             self.page.wait_for_timeout(1000)
 
             # 2. Cattura il download scatenando un click JS forzato

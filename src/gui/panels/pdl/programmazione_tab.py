@@ -339,4 +339,4 @@ class ProgrammazioneTab(QWidget):
 
     def _on_email_clicked(self):  # noqa: ANN202
         """Gestione invio report via email (Placeholder)."""
-        ToastManager.instance().show("Funzionalita' Report Outlook in fase di implementazione.", "info")
+        ToastManager.instance().show("Funzionalità Report Outlook in fase di implementazione.", "info")

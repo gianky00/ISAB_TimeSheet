@@ -26,7 +26,7 @@ class GiornaliereImporter(BaseImporter):
     GIORNALIERE_MAPPING: ClassVar[dict[str, str]] = {
         "DATA": "data",
         "PERSONALE": "personale",
-        "DESCRIZIONE ATTIVITA'": "descrizione",
+        "DESCRIZIONE ATTIVITÀ": "descrizione",
         "TCL": "tcl",
         "ODC": "odc",
         "N  PDL": "pdl",
@@ -260,7 +260,7 @@ class GiornaliereImporter(BaseImporter):
 
     @staticmethod
     def _remove_total_rows(df: pd.DataFrame) -> pd.DataFrame:
-        """Rimuove le righe che contengono la parola 'Totale'."""
+        """Rimuove le righe che contengono la parola 'Totalè."""
         for col in df.columns:
             if df[col].dtype == "object":
                 mask = df[col].astype(str).str.contains("Totale", na=False, case=False)

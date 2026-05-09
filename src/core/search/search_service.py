@@ -125,7 +125,7 @@ class SearchService:
                 )
                 return [dict(row) for row in cursor.fetchall()]
         except Exception as e:
-            logger.error(f"SearchService Attivita'Programmate error: {e}")  # noqa: TRY400
+            logger.error(f"SearchService AttivitàProgrammate error: {e}")  # noqa: TRY400
             return []
 
     @staticmethod

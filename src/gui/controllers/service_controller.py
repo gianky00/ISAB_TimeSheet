@@ -80,7 +80,7 @@ class ServiceController(QObject):
 
     def _check_scheduled_tasks(self) -> None:
         """
-        Verifica il match orario per i bot configurati in modalita' Autopilot.
+        Verifica il match orario per i bot configurati in modalità Autopilot.
         Applica la logica di parallelismo intelligente per l'accodamento dei task.
         """
         config = config_manager.load_config()
@@ -240,7 +240,7 @@ class ServiceController(QObject):
         return re.sub(r"\s+", " ", str(t).strip().upper())
 
     def _dispatch_outlook_email(self, w_list: list[dict[str, Any]], e_list: list[dict[str, Any]]) -> None:
-        """Utilizza le APiu'COM di Windows per inviare l'email tramite Outlook."""
+        """Utilizza le API COM di Windows per inviare l'email tramite Outlook."""
         import win32com.client  # noqa: PLC0415
 
         body = (
@@ -258,8 +258,8 @@ class ServiceController(QObject):
         )
 
         m = win32com.client.Dispatch("Outlook.Application").CreateItem(0)
-        m.To = "luca.riccio@coemi.it"
-        m.CC = "isabsud@coemi.it"
+        m.To = "supporto@syncrojob.it"
+        m.CC = ""
         m.Subject = f"[AUTO] Report Monitoraggio ISAB - {datetime.now(UTC).astimezone().strftime('%d/%m/%Y')}"
         m.HTMLBody = body
         m.Send()
@@ -316,7 +316,7 @@ class ServiceController(QObject):
         check_for_updates(parent=self.mw, silent=True, callback=self.mw._show_update_banner)
 
     def _forward_notification_to_telegram(self, notification: dict[str, Any]) -> None:
-        """Inoltra i messaggia'di sistema con criticit  elevata al bot Telegram registrato."""
+        """Inoltra i messaggi di sistema con criticità elevata al bot Telegram registrato."""
         if notification.get("title") == "Telegram":
             return
         level = notification.get("level", "info")

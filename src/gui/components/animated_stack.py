@@ -106,25 +106,25 @@ class SlidingStackedWidget(QStackedWidget):
         self._animation_group.clear()
 
         # Slide & Fade Out
-        anim_out_pos = QPropertyAnimation(self.fade_label_old, b"pos")
+        anim_out_pos = QPropertyAnimation(self.fade_label_old, b"pos", self._animation_group)
         anim_out_pos.setDuration(self._animation_duration)
         anim_out_pos.setStartValue(QPoint(0, 0))
         anim_out_pos.setEndValue(QPoint(-int(offset / 2), 0))
         anim_out_pos.setEasingCurve(self._easing_curve)
 
-        anim_out_fade = QPropertyAnimation(eff_old, b"opacity")
+        anim_out_fade = QPropertyAnimation(eff_old, b"opacity", self._animation_group)
         anim_out_fade.setDuration(self._animation_duration)
         anim_out_fade.setStartValue(1.0)
         anim_out_fade.setEndValue(0.0)
 
         # Slide & Fade In
-        anim_in_pos = QPropertyAnimation(self.fade_label_new, b"pos")
+        anim_in_pos = QPropertyAnimation(self.fade_label_new, b"pos", self._animation_group)
         anim_in_pos.setDuration(self._animation_duration)
         anim_in_pos.setStartValue(QPoint(offset, 0))
         anim_in_pos.setEndValue(QPoint(0, 0))
         anim_in_pos.setEasingCurve(self._easing_curve)
 
-        anim_in_fade = QPropertyAnimation(eff_new, b"opacity")
+        anim_in_fade = QPropertyAnimation(eff_new, b"opacity", self._animation_group)
         anim_in_fade.setDuration(self._animation_duration)
         anim_in_fade.setStartValue(0.0)
         anim_in_fade.setEndValue(1.0)

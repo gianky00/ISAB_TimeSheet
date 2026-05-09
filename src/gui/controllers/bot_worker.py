@@ -45,7 +45,7 @@ class BotWorker(QThread):
         Inizializza il worker del bot.
 
         Args:
-          bot_id: ID del bot da creare o istanza gia' creata.
+          bot_id: ID del bot da creare o istanza già creata.
           bot_params: Parametri per create_bot (se bot_id  str).
           data: I dati di input per il bot.
           telegram_service: Servizio opzionale per notifiche Telegram.

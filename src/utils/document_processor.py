@@ -44,7 +44,7 @@ class DocumentProcessor:
 
     @staticmethod
     def merge_pdfs(file_paths: list[str], output_path: str) -> bool:
-        """Unisce piu' file PDF in uno solo in modo robusto."""
+        """Unisce più file PDF in uno solo in modo robusto."""
         try:
             if not fitz:
                 logger.error("Errore: PyMuPDF (fitz) non  installato.")

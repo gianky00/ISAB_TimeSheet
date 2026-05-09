@@ -2,7 +2,7 @@
 """
 SyncroJob - SafeWork PDL Search Page
 Gestisce le interazioni con la pagina di ricerca PDL.
-Logica allineata al branch Main per massima stabilita'.
+Logica allineata al branch Main per massima stabilità.
 """
 
 from collections.abc import Callable
@@ -28,17 +28,17 @@ class RicercaPDLPage:
         self.log = log_func
 
     def configura_filtro_chiusi(self, exclude_closed: bool) -> None:
-        """Imposta il filtro 'Escludi chiusi'."""
+        """Imposta il filtro 'Escludi chiusì."""
         try:
             checkbox = self.wait.until(
                 EC.presence_of_element_located(SafeWorkLocators.ESCLUDI_CHIUSI_CHECKBOX)
             )
             if checkbox.is_selected() != exclude_closed:
-                self.log(f"[CLICK] Impostazione 'Escludi chiusi': {exclude_closed}")
+                self.log(f"[CLICK] Impostazione 'Escludi chiusì: {exclude_closed}")
                 # Uso JS click come nel branch main per evitare problemi di intercettazione
                 self.driver.execute_script("arguments[0].click();", checkbox)  # type: ignore[no-untyped-call]
         except Exception as e:
-            self.log(f"⚠️ Errore configurazione flag 'Escludi chiusi': {e}")
+            self.log(f"⚠️ Errore configurazione flag 'Escludi chiusì: {e}")
 
     def seleziona_sito_e_cerca(self, site_name: str) -> bool:
         """

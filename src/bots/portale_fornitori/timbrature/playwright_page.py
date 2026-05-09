@@ -101,7 +101,7 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
             return True
 
     def _select_supplier(self, fornitore: str) -> None:
-        """Seleziona il fornitore dal menu a tendina con pattern stabilita'."""
+        """Seleziona il fornitore dal menu a tendina con pattern stabilità."""
         self.log(f"Seleziono fornitore: {fornitore}")
         try:
             self._wait_overlay()

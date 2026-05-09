@@ -9,7 +9,7 @@ from typing import Any, cast
 
 from src.bots.base import BaseBot, BotStatus
 
-# --- IMPORT BOT SELENIUM (Leggeri, rimangono top-level per compatibilita' legacy) ---
+# --- IMPORT BOT SELENIUM (Leggeri, rimangono top-level per compatibilità legacy) ---
 from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot
 from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
 from src.bots.portale_fornitori.prenota_bp import PrenotaBPBot
@@ -134,7 +134,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
             {"name": "Posizione OdA", "type": "text"},
         ],
         "config_key": "last_oda_data",
-        "warning": "⚠️ Il browser rimarra' aperto dopo l'esecuzione",
+        "warning": "⚠️ Il browser rimarrà aperto dopo l'esecuzione",
     },
     "prenota_bp": {
         "class": PrenotaBPBot,
@@ -182,7 +182,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
     "programmazione_sync": {
         "class": SafeWorkProgrammazioneSyncBot,
         "name": "Sincronizzazione Programmazione",
-        "description": "Download massivo report attivita' SafeWork",
+        "description": "Download massivo report attività SafeWork",
         "icon": Icons.REFRESH,
         "columns": [],
         "config_key": "last_prog_sync_data",

@@ -59,17 +59,17 @@ class MultiColumnFilterProxyModel(QSortFilterProxyModel):
 
 
 class ContabilitaYearTab(QWidget):
-    """Tab per un singolo anno ottimizzato per massima reattivita'."""
+    """Tab per un singolo anno ottimizzato per massima reattività."""
 
     COLUMNS: ClassVar[list[str]] = [
         "DATA\nPREV.",
         "MESE",
         "N \nPREV.",
         "TOTALE\nPREV.",
-        "ATTIVITA'",
+        "ATTIVITÀ",
         "TCL",
         "ODC",
-        "STATO\nATTIVITA'",
+        "STATO\nATTIVITÀ",
         "TIPOLOGIA",
         "ORE\nSP",
         "RESA",
@@ -150,10 +150,10 @@ class ContabilitaYearTab(QWidget):
         self.table.setColumnWidth(1, 70)  # MESE
         self.table.setColumnWidth(2, 80)  # N  PREV.
         self.table.setColumnWidth(3, 100)  # TOTALE PREV.
-        self.table.setColumnWidth(4, 300)  # ATTIVITA'
+        self.table.setColumnWidth(4, 300)  # ATTIVITÀ
         self.table.setColumnWidth(5, 80)  # TCL
         self.table.setColumnWidth(6, 80)  # ODC
-        self.table.setColumnWidth(7, 100)  # STATO ATTIVITA'
+        self.table.setColumnWidth(7, 100)  # STATO ATTIVITÀ
         self.table.setColumnWidth(8, 100)  # TIPOLOGIA
         self.table.setColumnWidth(9, 80)  # ORE SP
         self.table.setColumnWidth(10, 80)  # RESA
@@ -177,7 +177,7 @@ class ContabilitaYearTab(QWidget):
             # FastTableModel si aspetta lista di liste/tuple accessibili per indice.
 
             # Nota: ContabilitaQueries restituisce tutto. Dobbiamo assicurarci di prendere solo le colonne che servono
-            # se la query ritorna piu' colonne di self.COLUMNS.
+            # se la query ritorna più colonne di self.COLUMNS.
             # Slice per sicurezza
             display_rows = [list(row[: len(self.COLUMNS)]) for row in db_data]
 
@@ -204,14 +204,14 @@ class ContabilitaYearTab(QWidget):
             1: 70,  # MESE
             2: 80,  # N  PREV.
             3: 100,  # TOTALE PREV.
-            4: 200,  # ATTIVITA' (minimo piu' largo)
+            4: 200,  # ATTIVITÀ (minimo più largo)
             5: 80,  # TCL
             6: 80,  # ODC
-            7: 100,  # STATO ATTIVITA'
+            7: 100,  # STATO ATTIVITÀ
             8: 100,  # TIPOLOGIA
             9: 80,  # ORE SP
             10: 80,  # RESA
-            11: 150,  # ANNOTAZIONI (minimo piu' largo)
+            11: 150,  # ANNOTAZIONI (minimo più largo)
         }
 
         for col, min_width in column_min_widths.items():
@@ -221,7 +221,7 @@ class ContabilitaYearTab(QWidget):
             self.table.setColumnWidth(col, new_width)
 
         # Imposta Stretch per le colonne con testo lungo (dopo aver impostato le altre)
-        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # ATTIVITA'
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # ATTIVITÀ
         header.setSectionResizeMode(11, QHeaderView.ResizeMode.Stretch)  # ANNOTAZIONI
 
     def set_search_query(self, query: str) -> None:

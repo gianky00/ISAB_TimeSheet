@@ -104,7 +104,7 @@ class ROIWeightsPage(QWidget):
         self.main_layout.addStretch()
 
     def _get_input_style(self) -> str:
-        """Ritorna lo stile CSS per i campiu'di input numerici senza pulsanti."""
+        """Ritorna lo stile CSS per i campiùdi input numerici senza pulsanti."""
         return f"""
       QSpinBox {{
         padding: 5px;
@@ -201,7 +201,7 @@ class ROITab(QWidget):
         self.weights_page.settings_changed.connect(self.settings_changed.emit)
 
         card_weights = SettingCard(
-            "Stima Tempiu'Manuali",
+            "Stima TempiùManuali",
             "Definisci minuti e secondi che un operatore impiegherebbe per ogni task.",
             Icons.CLOCK,
             self.weights_page,

@@ -87,7 +87,7 @@ class ODATreeView(QTreeView):
     """)
 
     def configure_headers(self):  # noqa: ANN201
-        """Configura le dimensioni e le modalita' di ridimensionamento degli header."""
+        """Configura le dimensioni e le modalità di ridimensionamento degli header."""
         h = self.header()
         if not h:
             return

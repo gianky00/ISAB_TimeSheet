@@ -39,7 +39,7 @@ class TelegramSystemHandler:
         if bot_name == "Idle":
             text = "   **Stato Sistema**\n\nIl sistema  in attesa (Idle)."
         else:
-            text = f"   **Stato Sistema**\n\nAttivita': {bot_name}\nStato: {status}\nDettaglio: {msg}"
+            text = f"   **Stato Sistema**\n\nAttività: {bot_name}\nStato: {status}\nDettaglio: {msg}"
         self.telegram.send_message_sync(text)
 
     def handle_screenshot(self, mode: str = "app") -> None:

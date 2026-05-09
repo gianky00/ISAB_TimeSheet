@@ -21,7 +21,7 @@ class PlaywrightSafeWorkLoginPage(PlaywrightBasePage):
 
     def login(self, username: str, password: str, account_type: str = "Esecutore") -> bool:
         """
-        Esegue il login con strategiàdifferenziata in base al tipo di account.
+        Esegue il login con strategia differenziata in base al tipo di account.
         """
         try:
             # 1. Azioni Comuni
@@ -33,14 +33,14 @@ class PlaywrightSafeWorkLoginPage(PlaywrightBasePage):
                 return self._login_flow_tcl()
 
             self.log(f"  Account Esecutore rilevato ({username}): Avvio procedura ROBUSTA.")
-            return self._login_flow_coemi()
+            return self._login_flow_standard()
 
         except Exception as e:
             self.log(f"❌ Errore critico durante il login: {e}")
             return False
 
     def _procedura_comune_login(self, username: str, password: str) -> None:
-        """Passaggia'comuni a tutti gli account prima della verifica accesso."""
+        """Passaggi comuni a tutti gli account prima della verifica accesso."""
         max_retries = 3
         for tentativa in range(max_retries):
             try:
@@ -74,8 +74,8 @@ class PlaywrightSafeWorkLoginPage(PlaywrightBasePage):
                     continue
                 raise
 
-    def _login_flow_coemi(self) -> bool:
-        """Flusso COEMI (Lento)."""
+    def _login_flow_standard(self) -> bool:
+        """Flusso STANDARD (Lento)."""
         try:
             self.log("[ATTESA] In attesa dello spinner di sistema...")
             caricamento_sel = self._get_selector(SafeWorkLocators.CARICAMENTO_SPAN)

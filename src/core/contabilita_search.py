@@ -1,6 +1,6 @@
 """
 Bot TS - Contabilita Search
-Gestisce le funzionalita' di ricerca per i dati della Contabilità Strumentale.
+Gestisce le funzionalità di ricerca per i dati della Contabilità Strumentale.
 """
 
 import logging
@@ -14,14 +14,14 @@ logger = logging.getLogger(__name__)
 
 
 class ContabilitaSearch:
-    """Gestore per le funzionalita' di ricerca nel database della Contabilità Strumentale."""
+    """Gestore per le funzionalità di ricerca nel database della Contabilità Strumentale."""
 
     @classmethod
     def search_oda(cls, db_path: Path, query: str) -> list[dict[str, Any]]:
         """
         Cerca OdA per codice, descrizione o ODC.
         Returns:
-          List[Dict]: Lista di risultati [{'codice_oda': '...', 'descrizione': '...'}, ...]
+          List[Dict]: Lista di risultati [{'codice_odà: '...', 'descrizionè: '...'}, ...]
         """
         if not db_path.exists():
             logger.debug("[DEBUG] DB Contabilità non trovato")
@@ -36,7 +36,7 @@ class ContabilitaSearch:
             with db_manager.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
 
-                # Tentativo con FTS5 (molto piu' veloce)
+                # Tentativo con FTS5 (molto più veloce)
                 sql_fts = """
           SELECT n_prev, attivita, odc
           FROM contabilita_fts

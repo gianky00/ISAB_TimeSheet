@@ -70,7 +70,7 @@ class DettagliOdABot(SeleniumBaseBot):
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """Validazione specifica per Dettagli OdA."""
-        # Non chiamiamo super().validate_data(data) perche' bloccherebbe se data  vuoto.
+        # Non chiamiamo super().validate_data(data) perchè bloccherebbe se data  vuoto.
         # Verifichiamo manualmente le credenziali e il fornitore.
         if not self.username or not self.password:
             return False, "Credenziali mancanti nelle impostazioni."

@@ -1,6 +1,6 @@
 """
 SyncroJob - Bot Execution Guard
-Gestisce i controlli pre-volo dei bot: licenza, aggiornamenti e integrita'.
+Gestisce i controlli pre-volo dei bot: licenza, aggiornamenti e integrità.
 Centralizza la sicurezza dell'esecuzione.
 """
 

@@ -1,6 +1,6 @@
 """
 SyncroJob - Bot Controller
-Orchestratore per il coordinamento delle attivita'dei bot Selenium e l'aggiornamento dinamico della UI.
+Orchestratore per il coordinamento delle attivitàdei bot Selenium e l'aggiornamento dinamico della UI.
 Gestisce il bridge tra i segnali emessi dai pannelli bot, il servizio di messaggistica Telegram
 e le card di stato globali presenti nel footer della MainWindow.
 """

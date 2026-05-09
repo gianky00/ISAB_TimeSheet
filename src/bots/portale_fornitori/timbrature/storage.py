@@ -35,7 +35,7 @@ class TimbratureStorage:
         "Codice Fiscale": "codice_fiscale",
         "Codice Qualifica": "codice_qualifica",
         "Specializzazione": "specializzazione",
-        "Societa' Ospitante": "societa_ospitante",
+        "Società Ospitante": "societa_ospitante",
         "Data Ins": "data_ins",
         "Presente Nei Timesheet": "presenza_ts",
         "Sito Timbratura": "sito_timbratura",

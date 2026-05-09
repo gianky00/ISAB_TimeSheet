@@ -24,11 +24,11 @@ class ResourceManager:
         exe_path = Path(sys.executable).parent
         meipass_path = Path(getattr(sys, "_MEIPASS", exe_path))
 
-        # Priorita' 1: Cartelle esterne (SVILUPPATORE/ADMIN OVERRIDE)
+        # Priorità 1: Cartelle esterne (SVILUPPATORE/ADMIN OVERRIDE)
         # Se esistono 'assets' o 'drivers' accanto all'exe, usiamo quella come root
         if (exe_path / "assets").exists() or (exe_path / "drivers").exists():
             PROJECT_ROOT = exe_path
-        # Priorita' 2: Cartelle interne (DEFAULT PYINSTALLER)
+        # Priorità 2: Cartelle interne (DEFAULT PYINSTALLER)
         elif (exe_path / "_internal" / "assets").exists():
             PROJECT_ROOT = exe_path / "_internal"
         else:

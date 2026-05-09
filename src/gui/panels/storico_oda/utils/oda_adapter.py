@@ -37,7 +37,7 @@ class ODAAdapter:
         """Crea la riga figlia (Posizione)."""
         val_pos_riga = f"{pos_row[3]}/{pos_row[27]}" if str(pos_row[27]) != "0" else str(pos_row[3])
 
-        # Accorpamento Quantit  + Unita' Misura + Prezzo
+        # Accorpamento Quantit  + Unità Misura + Prezzo
         qta_val = pos_row[28]
         uom_val = pos_row[29]
         prezzo_str = format_currency_smart(pos_row[30])

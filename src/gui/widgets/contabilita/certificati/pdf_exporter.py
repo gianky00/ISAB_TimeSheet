@@ -167,8 +167,8 @@ class CertificatiPdfExporter:
                     status_style = f"color: {COLORS['success_dark']};"
                     status_text = f"Scade tra {days} gg"
 
-            cert_uri = self._get_certificate_link(item.get("id_coemi", ""))
-            cert_id_html = item.get("id_coemi", "N/D")
+            cert_uri = self._get_certificate_link(item.get("id_strumento", ""))
+            cert_id_html = item.get("id_strumento", "N/D")
             if cert_uri:
                 cert_id_html = f'<a href="{cert_uri}" style="color: {COLORS["primary_blue"]}; text-decoration: none;">{cert_id_html}</a>'
 
@@ -206,7 +206,7 @@ class CertificatiPdfExporter:
             <table>
                 <thead>
                     <tr>
-                        <th>ID-COEMI</th>
+                        <th>ID-STRUMENTO</th>
                         <th>COSTRUTTORE</th>
                         <th>MODELLO / TIPO</th>
                         <th>MATRICOLA</th>
@@ -234,7 +234,7 @@ class CertificatiPdfExporter:
         # Calcola posizione (centrato in basso)
         painter.drawText(0, int(height - 20), int(width), 20, Qt.AlignmentFlag.AlignCenter, footer_text)
 
-        branding = "Generato da SyncroJob Enterprise"
+        branding = "Generato da SyncroJob"
         painter.drawText(
             30,
             int(height - 20),

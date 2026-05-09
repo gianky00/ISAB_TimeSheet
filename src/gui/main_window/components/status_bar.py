@@ -152,7 +152,7 @@ class StatusBarComponent(QObject):
 
     def show_operational_state(self) -> None:
         """
-        Transiziona la barra di stato alla modalita' operativa.
+        Transiziona la barra di stato alla modalità operativa.
         Esegue animazioni di fade-out sui widget di avvio e attiva quelli di monitoraggio.
         """
         import logging  # noqa: PLC0415
@@ -200,7 +200,7 @@ class StatusBarComponent(QObject):
 
     def update_autopilot_ui(self) -> None:
         """
-        Analizza i bot programmati nell'Autopilot e calcola il countdown per il task piu' imminente.
+        Analizza i bot programmati nell'Autopilot e calcola il countdown per il task più imminente.
         Aggiorna le card di stato nella parte destra della barra.
         """
         from PySide6.QtCore import QTime  # noqa: PLC0415

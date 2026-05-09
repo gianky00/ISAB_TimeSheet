@@ -86,7 +86,7 @@ class StatsManager:
     def increment_usage(self, bot_id: str) -> None:
         """
         Incrementa il contatore delle esecuzioni (runs) per un determinato bot.
-        Aggiorna inoltre il timestamp dell'ultima attivita'rilevata.
+        Aggiorna inoltre il timestamp dell'ultima attivitàrilevata.
 
         Args:
           bot_id: Identificativo unico dell'automazione (es. 'scarico_ts').

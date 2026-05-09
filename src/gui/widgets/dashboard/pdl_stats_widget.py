@@ -214,7 +214,7 @@ class PDLStatsWidget(ModernCard):
         """Applica lo stile cromatico basato sull'andamento del trend."""
         val = round(trend)
         if val > 0:
-            # ROSSO per Incremento (piu' lavoro)
+            # ROSSO per Incremento (più lavoro)
             label.setText(f"{prefix}:   +{val}%")
             label.setStyleSheet(f"color: {COLORS['error_red']}; font-size: 11px; font-weight: 700;")
         elif val < 0:

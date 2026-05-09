@@ -32,7 +32,7 @@ from .charts import ChartContainer, KPIChartsManager
 
 
 class ContabilitaKPIPanel(QWidget):
-    """Pannello dashboard per la visualizzazione dei KPiu'della contabilità strumentale."""
+    """Pannello dashboard per la visualizzazione dei KPiùdella contabilità strumentale."""
 
     def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
         """Inizializza il pannello e prepara i grafici."""
@@ -143,8 +143,8 @@ class ContabilitaKPIPanel(QWidget):
 
         self.container1 = ChartContainer(
             self.charts_manager.canvas1,
-            title="Distribuzione Stato Attivita'",
-            info_callback=lambda: "Distribuzione percentuale delle attivita'per stato (esclusa FORNITURA).",
+            title="Distribuzione Stato Attività",
+            info_callback=lambda: "Distribuzione percentuale delle attivitàper stato (esclusa FORNITURA).",
         )
         self.container2 = ChartContainer(
             self.charts_manager.canvas2,

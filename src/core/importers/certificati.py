@@ -12,7 +12,7 @@ class CertificatiImporter(BaseImporter):
     """Importer per i Certificati Campione."""
 
     CERTIFICATI_CAMPIONE_MAPPING: ClassVar[dict[str, str]] = {
-        "ID-COEMI": "id_coemi",
+        "ID-STRUMENTO": "id_strumento",
         "Certificato Taratura": "certificato",
         "Modello / Tipo": "modello",
         "Costruttore": "costruttore",
@@ -74,16 +74,15 @@ class CertificatiImporter(BaseImporter):
 
     @classmethod
     def _detect_certificati_header(cls, df_preview: pd.DataFrame) -> int:
-        """Detects the header row index for Certificati Campione, prioritizing ID-COEMI."""
+        """Detects the header row index for Certificati Campione, prioritizing ID-STRUMENTO."""
         header_row_idx = -1
         max_matches = 0
         target_columns = set(cls.CERTIFICATI_CAMPIONE_MAPPING.keys())
 
         for i, row in df_preview.iterrows():
             row_values = [str(val).strip() for val in row.values]
-            # Diamo peso doppio all'ID-COEMI nel rilevamento
             matches = sum(
-                2 if col == "ID-COEMI" and col in row_values else 1
+                2 if col == "ID-STRUMENTO" and col in row_values else 1
                 for col in target_columns
                 if col in row_values
             )
@@ -125,6 +124,14 @@ class CertificatiImporter(BaseImporter):
             .astype(str)
             .apply(lambda x: x.str.strip())
         )
+
+        # 5. Professionalize: Remove debug tags like [ROSSO], [ERRORE], [GIALLO]
+        for col in df.columns:
+            df[col] = df[col].str.replace(r"\[ROSSO\]", "", regex=True)
+            df[col] = df[col].str.replace(r"\[ERRORE\]", "", regex=True)
+            df[col] = df[col].str.replace(r"\[GIALLO\]", "", regex=True)
+            df[col] = df[col].str.replace(r"\[VERDE\]", "", regex=True)
+            df[col] = df[col].str.strip()
 
         return (
             True,

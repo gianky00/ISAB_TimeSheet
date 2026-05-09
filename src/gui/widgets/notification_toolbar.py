@@ -232,7 +232,7 @@ class NotificationToolbar(QWidget):
         self.sort_combo = FilterComboBox()
         self.sort_combo.addItem("Data (recenti)", "date_desc")
         self.sort_combo.addItem("Data (vecchie)", "date_asc")
-        self.sort_combo.addItem("Priorita'", "priority")
+        self.sort_combo.addItem("Priorità", "priority")
         self.sort_combo.addItem("Livello", "level")
         self.sort_combo.setStyleSheet(COMBOBOX_STYLE)
         self.sort_combo.setMinimumWidth(160)
@@ -274,7 +274,7 @@ class NotificationToolbar(QWidget):
         Update count badges on filter chips.
 
         Args:
-          counts: Dict with keys 'all', 'unread', 'error', 'warning', 'info'
+          counts: Dict with keys 'all', 'unread', 'error', 'warning', 'infò
         """
         for key, chip in self._filter_chips.items():
             count = counts.get(key, 0)

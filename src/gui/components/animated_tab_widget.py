@@ -49,7 +49,7 @@ class AnimatedTabWidget(QWidget):
 
         # Header superiore: TabBar + Controlli opzionali
         self.header_widget = QWidget()
-        self.header_widget.setMinimumHeight(55)  # Leggermente piu' alto per il glow
+        self.header_widget.setMinimumHeight(55)  # Leggermente più alto per il glow
         # Track di fondo (La linea sottile grigiàche segna il percorso)
         self.header_widget.setStyleSheet("border-bottom: 1px solid rgba(0, 0, 0, 0.05); background: white;")
 
@@ -70,7 +70,7 @@ class AnimatedTabWidget(QWidget):
 
         # --- INDICATORE PREMIUM (Gradients & Glow) ---
         self.indicator = QWidget(self.header_widget)
-        self.indicator.setFixedHeight(4)  # Un po' piu' spessa per mostrare il gradiente
+        self.indicator.setFixedHeight(4)  # Un pò più spessa per mostrare il gradiente
 
         # Design con gradiente lineare
         self.indicator.setStyleSheet(f"""
@@ -89,7 +89,7 @@ class AnimatedTabWidget(QWidget):
 
         self.indicator.raise_()
         self._indicator_anim = QPropertyAnimation(self.indicator, b"geometry")
-        self._indicator_anim.setDuration(400)  # Un po' piu' lenta per eleganza
+        self._indicator_anim.setDuration(400)  # Un pò più lenta per eleganza
         self._indicator_anim.setEasingCurve(QEasingCurve.Type.OutQuint)  # Il top della fluidit
 
         # Stack animato
@@ -212,7 +212,7 @@ class AnimatedTabWidget(QWidget):
             if self._tab_position == QTabWidget.TabPosition.South:
                 y_pos = 0
 
-            # Effetto "Elastic": la linea  leggermente piu' stretta del tab per eleganza
+            # Effetto "Elastic": la linea  leggermente più stretta del tab per eleganza
             target_rect = QRect(global_pos.x() + 15, y_pos, rect.width() - 30, self.indicator.height())
 
             self.indicator.show()

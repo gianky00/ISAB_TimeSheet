@@ -49,7 +49,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         Args:
           username: Nome utente SafeWork.
           password: Password SafeWork.
-          headless: Se avviare il browser in modalita' nascosta.
+          headless: Se avviare il browser in modalità nascosta.
           timeout: Tempo di attesa per Selenium.
           download_path: Cartella per il download degli Excel.
           account_type: Tipo di account (Esecutore/ISAB).
@@ -192,7 +192,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
                 "N  PDL": "n_pdl",
                 "DATA CREAZIONE": "data_creazione",
                 "AREA": "area",
-                "Unita'": "unita",
+                "Unità": "unita",
                 "DITTA": "ditta",
                 "DESCRIZIONE DEL LAVORO": "descrizione_lavoro",
                 "TIPOLOGIA": "tipologia",
@@ -204,7 +204,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
                 "DATA EMISSIONE": "data_emissione",
                 "APRENTE": "aprente",
                 "DATA APERTURA": "data_apertura",
-                "Priorita'": "priorita",
+                "Priorità": "priorita",
                 "CONTRATTO": "contratto",
                 "ORDINE": "ordine",
                 "SITO": "sito",

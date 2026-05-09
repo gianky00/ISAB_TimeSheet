@@ -4,7 +4,7 @@ from src.gui.widgets.info_widgets import KPIBigCard
 
 
 class KPICardsRow(QWidget):
-    """Widget che raggruppa una riga di KPiu'cards."""
+    """Widget che raggruppa una riga di KPiùcards."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)

@@ -202,7 +202,7 @@ class NotificationsPanel(QWidget):
         self._schedule_refresh()
 
     def _on_sort_changed(self, sort_key: str) -> None:
-        """Cambia l'ordinamento della lista (Data, Priorità)."""
+        """Cambia l'ordinamento della lista (Data, Priorita')."""
         self.current_sort = sort_key
         self._invalidate_cache()
         self._schedule_refresh()
@@ -284,7 +284,7 @@ class NotificationsPanel(QWidget):
         return self._sort_notifications(notifs)
 
     def _render_groups(self, grouped: dict[str, dict[str, Any]], disable_animations: bool) -> None:
-        """Crea i widget per i gruppiu'temporali e inserisce le card notifiche."""
+        """Crea i widget per i gruppiùtemporali e inserisce le card notifiche."""
         for group_key, group_data in grouped.items():
             if not group_data["notifications"]:
                 continue

@@ -60,7 +60,7 @@ class AnomalyDetector:
 
     Tipi di anomalie rilevate:
     - Error rate spike (aumento improvviso errori)
-    - Slow operations (operazioni piu' lente del normale)
+    - Slow operations (operazioni più lente del normale)
     - High failure rate (tasso di fallimento bot elevato)
     """
 
@@ -126,7 +126,7 @@ class AnomalyDetector:
 
     def detect_slow_operations(self, hours: int = 24) -> list[Anomaly]:
         """
-        Rileva operazioni piu' lente del normale.
+        Rileva operazioni più lente del normale.
 
         Returns:
           Lista di anomalie per operazioni lente
@@ -154,7 +154,7 @@ class AnomalyDetector:
                         "duration_ms": duration_ms,
                         "threshold_ms": self.slow_op_threshold_ms,
                     },
-                    suggestion="Verifica la connessione di rete o riprova piu' tardi",
+                    suggestion="Verifica la connessione di rete o riprova più tardi",
                 )
             )
 
@@ -205,7 +205,7 @@ class PatternDetector:
     Rileva pattern ricorrenti nei log.
 
     Tipi di pattern rilevati:
-    - Errori ripetuti (stesso messaggio piu' volte)
+    - Errori ripetuti (stesso messaggio più volte)
     - Correlazioni (errori che seguono sempre altri errori)
     """
 

@@ -45,7 +45,7 @@ from .calendar_date_edit import CalendarDateEdit
 class HoverPulseFrame(QFrame):
     """
     Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
-    Fornisce un feedback visivo immediato sull'interattivita'della card parametri.
+    Fornisce un feedback visivo immediato sull'interattivitàdella card parametri.
     """
 
     def __init__(self, accent_color: str | None = None, parent: QWidget | None = None) -> None:
@@ -134,7 +134,7 @@ class BotParametersWidget(QWidget):
         Inizializza il widget dei parametri.
 
         Args:
-          show_date_range: Se True, visualizza anche il campo 'Data A'.
+          show_date_range: Se True, visualizza anche il campo 'Data À.
           show_dest_path: Se True, visualizza il campo selezione cartella.
           parent: Widget genitore.
         """
@@ -180,10 +180,10 @@ class BotParametersWidget(QWidget):
         main_layout.addWidget(self.container)
 
     def _setup_societa_section(self) -> None:
-        """Configura la sezione di selezione della societa'(ISAB/PSER)."""
+        """Configura la sezione di selezione della società(ISAB/PSER)."""
         vbox = QVBoxLayout()
         vbox.setSpacing(4)
-        lbl = QLabel("Societa'")
+        lbl = QLabel("Società")
         lbl.setStyleSheet(LABEL_MUTED)
         vbox.addWidget(lbl)
 
@@ -385,11 +385,11 @@ class BotParametersWidget(QWidget):
             self.fornitore_combo.setCurrentIndex(index)
 
     def get_societa(self) -> str:
-        """Restituisce la societa'selezionata (ISAB o PSER)."""
+        """Restituisce la societàselezionata (ISAB o PSER)."""
         return self.societa_combo.currentText()
 
     def set_societa(self, societa: str) -> None:
-        """Imposta la societa'selezionata."""
+        """Imposta la societàselezionata."""
         index = self.societa_combo.findText(societa)
         if index >= 0:
             self.societa_combo.setCurrentIndex(index)
@@ -401,7 +401,7 @@ class BotParametersWidget(QWidget):
         return date_da, date_a
 
     def set_dates(self, date_da_str: str, date_a_str: str | None = None) -> None:
-        """Imposta le date nei campiu'di input."""
+        """Imposta le date nei campiùdi input."""
         with suppress(Exception):
             d, m, y = map(int, date_da_str.split("."))
             self.date_da.setDate(QDate(y, m, d))

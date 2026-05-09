@@ -122,7 +122,7 @@ AVAILABLE_ACTIONS: dict[str, dict[str, Any]] = {
         "path": ["Strumentale"],
     },
     "nav_sub_strumentale_2": {
-        "text": "Attivita'Programmate",
+        "text": "AttivitàProgrammate",
         "icon": Icons.CALENDAR,
         "color": COLORS["warning_orange"],
         "path": ["Strumentale"],

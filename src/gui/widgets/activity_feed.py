@@ -78,7 +78,7 @@ class ActivityItem(QFrame):
       }}
     """
         )
-        self.setFixedWidth(300)  # Leggermente piu' largo
+        self.setFixedWidth(300)  # Leggermente più largo
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 10, 12, 10)
@@ -200,12 +200,12 @@ class ActivityItem(QFrame):
 
 class ActivityFeed(QWidget):
     """
-    Widget che mostra una timeline orizzontale delle ultime attivita'.
+    Widget che mostra una timeline orizzontale delle ultime attività.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setFixedHeight(90)  # Aumentato per le card piu' alte
+        self.setFixedHeight(90)  # Aumentato per le card più alte
         self._refreshing = False  # Flag per evitare refresh multipli
         self._setup_ui()
 
@@ -297,7 +297,7 @@ class ActivityFeed(QWidget):
             logs = AuditManager.instance().get_logs(limit=10)
 
             if not logs:
-                empty_lbl = QLabel("Nessuna attivita' recente")
+                empty_lbl = QLabel("Nessuna attività recente")
                 empty_lbl.setStyleSheet(
                     f"""
           QLabel {{

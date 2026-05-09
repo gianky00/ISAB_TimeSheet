@@ -121,7 +121,7 @@ class UpdateBanner(QFrame):
             else:
                 self.download_btn.setText("Scarica e Installa")
 
-        self.update_label.setToolTip(f"Novita':\n{changelog}" if changelog else "Clicca per scaricare")
+        self.update_label.setToolTip(f"Novità:\n{changelog}" if changelog else "Clicca per scaricare")
 
         # Reset stato download
         self.progress_container.setVisible(False)

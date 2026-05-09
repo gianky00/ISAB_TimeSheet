@@ -2,7 +2,7 @@
 """
 SyncroJob - Contabilità Panel
 Pannello centrale per la visualizzazione e l'analisi della Contabilità Strumentale.
-Integra reportistica annuale, dati giornalieri, attivita'programmate e certificati campione.
+Integra reportistica annuale, dati giornalieri, attività programmate e certificati campione.
 Include un motore di ricerca unificato e l'accesso al pannello di analisi KPI.
 """
 
@@ -248,7 +248,7 @@ class ContabilitaPanel(QWidget):
         self.main_tabs.addTab(
             self.attivita_widget,
             get_colored_icon(get_asset_path(Icons.CALENDAR), COLORS["text_muted"]),
-            "Attivita'Programmate",
+            "Attività Programmate",
         )
 
         self.certificati_widget = CertificatiCampioneTab()
@@ -291,7 +291,7 @@ class ContabilitaPanel(QWidget):
     def refresh_tabs(self) -> None:
         """
         Interroga il database per gli anni disponibili e aggiorna i tab degli anni.
-        Sincronizza inoltre i dati per le attivita'e i certificati.
+        Sincronizza inoltre i dati per le attività e i certificati.
         """
         years = ContabilitaManager.get_available_years()
         if not years:

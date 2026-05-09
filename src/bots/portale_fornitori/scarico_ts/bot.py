@@ -45,7 +45,7 @@ class ScaricaTSBot(SeleniumBaseBot):
 
     @staticmethod
     def get_description() -> str:
-        """Restituisce una descrizione delle funzionalita' del bot."""
+        """Restituisce una descrizione delle funzionalità del bot."""
         return "Scarica i timesheet dal portale ISAB"
 
     @staticmethod

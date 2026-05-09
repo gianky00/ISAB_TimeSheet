@@ -114,7 +114,7 @@ class ScaricoOrePanel(QWidget):
             ConfirmationDialog.show_warning(
                 self,
                 "Configurazione Mancante",
-                "Configura il percorso 'File Scarico Ore' nelle Impostazioni.",
+                "Configura il percorso 'File Scarico Orè nelle Impostazioni.",
             )
             return
 

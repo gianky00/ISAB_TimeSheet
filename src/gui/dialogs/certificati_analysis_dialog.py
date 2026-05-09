@@ -313,7 +313,7 @@ class ScadenzeAnalysisDialog(QDialog):
                 lbl.setAlignment(align)
             layout.addWidget(lbl)
 
-        add_h("ID-COEMI", 80)
+        add_h("ID-STRUMENTO", 80)
         add_h("COSTRUTTORE", 100)
         add_h("MODELLO / TIPO", policy=QSizePolicy.Policy.Expanding)
         add_h("MATRICOLA", 110)
@@ -344,7 +344,7 @@ class ScadenzeAnalysisDialog(QDialog):
                 lbl.setAlignment(align)
             layout.addWidget(lbl)
 
-        add_l(item.get("id_coemi", ""), COLORS["text_dark"], "600", 13, 80)
+        add_l(item.get("id_strumento", ""), COLORS["text_dark"], "600", 13, 80)
         add_l(item["costruttore"], COLORS["text_muted"], min_w=100)
 
         mod_text = item["modello"]

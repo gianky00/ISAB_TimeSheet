@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 class ConsuntivoController:
-    """Controller per l'orchestrazione delle attivita'sui Consuntivi."""
+    """Controller per l'orchestrazione delle attivitàsui Consuntivi."""
 
     def __init__(self) -> None:
-        self.base_network = r"\\192.168.11.251\Database_Tecnico_SMI\Contabilita' strumentale"
+        self.base_network = r"\\192.168.11.251\Database_Tecnico_SMI\Contabilità strumentale"
 
     def get_dynamic_path(self, year: str) -> str:
         """Restituisce il percorso di rete calcolato per l'anno specificato."""

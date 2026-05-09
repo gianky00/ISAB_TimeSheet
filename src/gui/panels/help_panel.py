@@ -68,7 +68,7 @@ class HelpPanel(QWidget):
             f"color: {COLORS['bg_white']}; font-size: 26px; font-weight: 900; letter-spacing: 0.5px;"
         )
 
-        subtitle = QLabel(f"SyncroJob Enterprise v{VERSION}   Hub di Supporto Tecnico")
+        subtitle = QLabel(f"SyncroJob Professional v{VERSION}   Hub di Supporto Tecnico")
         subtitle.setStyleSheet(
             f"color: {COLORS['teal_accent']}; font-size: 14px; font-weight: 600; text-transform: uppercase;"
         )
@@ -195,9 +195,9 @@ class HelpPanel(QWidget):
             ("Workflow Automazioni", self._get_scarico_md(), Icons.CPU),
             ("Gestione Database", self._get_timbrature_md(), Icons.DATABASE),
             ("Sincronizzazione PDL", self._get_oda_md(), Icons.FILE_TEXT),
-            ("KPiu'& Analisi", self._get_contabilita_md(), Icons.BAR_CHART),
+            ("KPI & Analisi", self._get_contabilita_md(), Icons.BAR_CHART),
             ("Notifiche & Audit", self._get_news_md(), Icons.BELL),
-            ("Sicurezza Enterprise", self._get_license_md(), Icons.SHIELD),
+            ("Sicurezza & Privacy", self._get_license_md(), Icons.SHIELD),
             ("Shortcuts di Sistema", self._get_shortcuts_md(), Icons.ROCKET),
             ("Troubleshooting", self._get_troubleshooting_md(), Icons.ALERT_TRIANGLE),
             ("Contatti & Help Desk", self._get_contacts_md(), Icons.USER),
@@ -239,10 +239,10 @@ class HelpPanel(QWidget):
 
     def _get_intro_md(self) -> str:
         return f"""
-# Benvenuto in SyncroJob Enterprise
+# Benvenuto in SyncroJob Professional
 ### L'ecosistema definitivo per l'automazione del cantiere ISAB.
 
-SyncroJob v{VERSION}  una suite software di classe enterprise progettata per eliminare le inefficienze operative attraverso l'automazione intelligente dei processi sul **Portale Fornitori ISAB** e **SafeWork**.
+SyncroJob v{VERSION} è una suite software professionale progettata per eliminare le inefficienze operative attraverso l'automazione intelligente dei processi sul **Portale Fornitori ISAB** e **SafeWork**.
 
 ####   Obiettivi Chiave
 *  **Zero Error Data Entry**: Riduzione degli errori umani nel carico dei Timesheet.
@@ -255,7 +255,7 @@ SyncroJob v{VERSION}  una suite software di classe enterprise progettata per eli
     def _get_scarico_md(self) -> str:
         return """
 #   Workflow Automazioni (Bot)
-### Esecuzione di processi Selenium ad alta affidabilita'.
+### Esecuzione di processi Selenium ad alta affidabilità.
 
 I Bot di SyncroJob simulano l'interazione umana per gestire task ripetitivi sul web.
 
@@ -304,14 +304,15 @@ Il modulo PDL permette di monitorare l'intero ciclo di vita dei Permessi di Lavo
 
     def _get_contabilita_md(self) -> str:
         return """
-#   KPiu'& Analisi Strumentale
+# KPI & Analisi Strumentale
 ### La visione economica e produttiva del tuo appalto.
 
 Questo modulo trasforma i dati grezzi in decisioni aziendali.
 
-####   Funzionalita'*  **Analisi Preventivi**: Monitoraggio degli importi maturati per anno e per OdA.
+####   Funzionalità
+*  **Analisi Preventivi**: Monitoraggio degli importi maturati per anno e per OdA.
 *  **Controllo Giornaliere**: Verifica quotidiana della produzione strumentale.
-*  **Export Enterprise**: Generazione di report Excel pronti per la fatturazione.
+*  **Export Professionale**: Generazione di report Excel pronti per la fatturazione.
 """
 
     def _get_news_md(self) -> str:
@@ -327,7 +328,7 @@ Un algoritmo proprietario valuta la salute del sistema basandosi su:
 *  Connettività di rete.
 *  Validità delle licenze.
 *  Stato dei driver (ChromeDriver).
-*  Integrita' del Database.
+*  Integrità del Database.
 """
 
     def _get_license_md(self) -> str:
@@ -335,7 +336,7 @@ Un algoritmo proprietario valuta la salute del sistema basandosi su:
 #   Sicurezza & Licenza Digitale
 ### Protezione dei dati e controllo degli accessi.
 
-SyncroJob Enterprise  protetto da un sistema di licenza hardware univoco.
+SyncroJob Professional è protetto da un sistema di licenza hardware univoco.
 
 ####     Protocolli di Securrezza
 *  **Hardware Binding**: La licenza  legata all'ID del computer per prevenire duplicazioni.
@@ -377,12 +378,12 @@ SyncroJob Enterprise  protetto da un sistema di licenza hardware univoco.
 #   Supporto Tecnico & Contatti
 ### Siamo qui per aiutarti.
 
-Per assistenza prioritaria, bug report o richieste di nuove funzionalita':
+Per assistenza prioritaria, bug report o richieste di nuove funzionalità:
 
 *  **Lead Developer**: G. Allegretti
 *  **Email**: [gianky.allegretti@gmail.com](mailto:gianky.allegretti@gmail.com)
 *  **WhatsApp**: [Canale Supporto Interno]
 
 ---
-*SyncroJob Enterprise  un prodotto sviluppato con passione per l'eccellenza operativa.*
+*SyncroJob Professional è un prodotto sviluppato con passione per l'eccellenza operativa.*
 """

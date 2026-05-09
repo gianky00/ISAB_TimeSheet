@@ -15,13 +15,13 @@ from src.bots.safework.base import SafeworkBaseBot
 
 class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
     """
-    Bot per scaricare il report Excel delle attivita'da SafeWork.
-    Automatizza la navigazione alla sezione 'Visualizza Attivita'' ed esporta il report periodico.
+    Bot per scaricare il report Excel delle attivitàda SafeWork.
+    Automatizza la navigazione alla sezione 'Visualizza Attività' ed esporta il report periodico.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
-        ("nav", "Navigazione Attivita'"),
+        ("nav", "Navigazione Attività"),
         ("filter", "Configurazione Filtri"),
         ("search", "Ricerca ed Esportazione"),
     ]
@@ -41,7 +41,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         Args:
           username: Nome utente SafeWork.
           password: Password SafeWork.
-          headless: Se avviare il browser in modalita' nascosta.
+          headless: Se avviare il browser in modalità nascosta.
           timeout: Tempo di attesa per Selenium.
           download_path: Cartella per il download degli Excel.
           account_type: Tipo di account (Esecutore/ISAB).
@@ -86,7 +86,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
 
         # 1. Navigazione
         self.update_step("nav", StepStatus.RUNNING)
-        self.log("   Navigazione in 'Visualizza Attivita''...")
+        self.log("   Navigazione in 'Visualizza Attività'...")
         self._attendi_scomparsa_overlay()
         if not self.driver:
             self.log("❌ Driver non inizializzato.")
@@ -102,7 +102,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         # 2. Setup Filtri
         self.update_step("filter", StepStatus.RUNNING)
         if not self.attivita_page:
-            self.log("❌ Pagina Attivita'non inizializzata.")
+            self.log("❌ Pagina Attivitànon inizializzata.")
             self.update_step("filter", StepStatus.ERROR)
             return False
         self.attivita_page.pulisci_pdl()

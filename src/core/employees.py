@@ -161,7 +161,7 @@ class EmployeeManager:
                         "data_assunzione": row.get("Data_assunzione", ""),
                     }
 
-                    # Controlla se esiste gia'(per badge o ID)
+                    # Controlla se esiste già(per badge o ID)
                     existing = None
                     if id_risorsa:
                         existing = self.db.execute_query(

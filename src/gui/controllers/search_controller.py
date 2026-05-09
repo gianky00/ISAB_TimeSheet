@@ -29,7 +29,7 @@ class SearchController(QObject):
         self.mw = main_window
         self.worker: SearchWorker | None = None
 
-        # Timer per il debouncing (attende 300ms di inattivita'prima di cercare)
+        # Timer per il debouncing (attende 300ms di inattivitàprima di cercare)
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self._execute_async_search)
@@ -182,7 +182,7 @@ class SearchController(QObject):
     def _add_attivita_matches(self, matches: list[dict[str, Any]], menu: QMenu) -> int:
         if not matches:
             return 0
-        self._add_disabled_action(menu, "Attivita'PROGRAMMATE:")
+        self._add_disabled_action(menu, "AttivitàPROGRAMMATE:")
         for m in matches:
             desc = m.get("descrizione_attivita", "")
             desc_short = (desc[:40] + "...") if len(desc) > 40 else desc  # noqa: PLR2004

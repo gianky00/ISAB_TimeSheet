@@ -38,13 +38,13 @@ logger = logging.getLogger(__name__)
 
 
 class IntegrityWorkerSignals(QObject):
-    """Segnali emessi dal worker di verifica integrita' dei log."""
+    """Segnali emessi dal worker di verifica integrità dei log."""
 
     finished = Signal(bool)
 
 
 class IntegrityWorker(QRunnable):
-    """Worker per la verifica asincrona dell'hash di integrita' del database di audit."""
+    """Worker per la verifica asincrona dell'hash di integrità del database di audit."""
 
     def __init__(self, manager: AuditManager) -> None:
         """Inizializza il worker comunicando con l'AuditManager."""
@@ -53,7 +53,7 @@ class IntegrityWorker(QRunnable):
         self.signals = IntegrityWorkerSignals()
 
     def run(self) -> None:
-        """Esegue il controllo crittografico dell'integrita'."""
+        """Esegue il controllo crittografico dell'integrità."""
         valid = self.manager.verify_integrity()
         self.signals.finished.emit(valid)
 
@@ -112,7 +112,7 @@ class AuditLogWidget(QWidget):
         self.integrity_icon.setFixedSize(16, 16)
         status_h.addWidget(self.integrity_icon)
 
-        self.integrity_lbl = QLabel("Verifica integrita'...")
+        self.integrity_lbl = QLabel("Verifica integrità...")
         self.integrity_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 13px; font-weight: 600;")
         status_h.addWidget(self.integrity_lbl)
         status_h.addStretch()
@@ -171,7 +171,7 @@ class AuditLogWidget(QWidget):
 
     def _toggle_live_mode(self, state: int | Qt.CheckState) -> None:
         """
-        Attiva o disattiva la modalita' live.
+        Attiva o disattiva la modalità live.
 
         Args:
           state: Stato della checkbox.
@@ -189,7 +189,7 @@ class AuditLogWidget(QWidget):
             self.refresh()
 
     def _on_live_refresh(self) -> None:
-        """Esegue il refresh periodico in modalita' live."""
+        """Esegue il refresh periodico in modalità live."""
         self.refresh(reset_page=True)
 
     def _on_page_changed(self, delta: int) -> None:
@@ -228,8 +228,8 @@ class AuditLogWidget(QWidget):
             self._check_integrity()
 
     def _check_integrity(self) -> None:
-        """Verifica l'integrita' dei log in background e aggiorna l'interfaccia tramite segnali."""
-        self.integrity_lbl.setText("Verifica integrita' in corso...")
+        """Verifica l'integrità dei log in background e aggiorna l'interfaccia tramite segnali."""
+        self.integrity_lbl.setText("Verifica integrità in corso...")
         self.integrity_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-weight: 600;")
 
         worker = IntegrityWorker(self.manager)

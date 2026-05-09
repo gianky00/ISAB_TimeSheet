@@ -50,7 +50,7 @@ def mig_storico_oda_v1(conn: sqlite3.Connection) -> None:
 
 
 def mig_storico_oda_v2(conn: sqlite3.Connection) -> None:
-    """Fix tipiu'colonne per evitare overflow (v2)"""
+    """Fix tipiùcolonne per evitare overflow (v2)"""
     # Poich  SQLite non supporta ALTER COLUMN facilmente, e i dati sono corrotti/cache,
     # ricreiamo la tabella.
     cursor = conn.cursor()

@@ -60,7 +60,7 @@ class GeneratoreWorker(QThread):
 
 
 class MacroWorker(QThread):
-    """Esegue una o piu' Macro VBA sul file generato in un thread separato."""
+    """Esegue una o più Macro VBA sul file generato in un thread separato."""
 
     finished_signal = Signal(bool, str)
     macro_started = Signal(str)  # Emesso quando inizia una macro
@@ -206,7 +206,7 @@ class PreventiviGeneratorManager:
     def _sanitize_excel_file(self, filepath: str) -> None:
         """
         Rimuove i riferimenti corrotti a Print_Area all'interno dell'XML di Excel.
-        Risolve il bug 'Impossibile trovare il file' durante l'esecuzione di macro.
+        Risolve il bug 'Impossibile trovare il filè durante l'esecuzione di macro.
         """
         temp_dir = tempfile.mkdtemp()
         try:
@@ -271,7 +271,7 @@ class PreventiviGeneratorManager:
             return False, str(e)
 
     def _fill_excel_data(self, file_path: str, data: dict[str, Any]) -> tuple[bool, str]:
-        """Inietta i dati nelle celle specifiche del foglio 'inserimento dati'."""
+        """Inietta i dati nelle celle specifiche del foglio 'inserimento datì."""
         try:
             pythoncom.CoInitialize()
             self.excel_app = win32com.client.Dispatch("Excel.Application")

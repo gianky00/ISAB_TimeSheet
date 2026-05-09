@@ -75,7 +75,7 @@ class EmployeeEditorDialog(QDialog):
         main_layout.addLayout(btn_layout)
 
     def get_data(self):  # noqa: ANN201
-        """Estrae i dati inseriti nei campiu'di input e li normalizza in maiuscolo."""
+        """Estrae i dati inseriti nei campiùdi input e li normalizza in maiuscolo."""
         return {k: v.text().strip().upper() for k, v in self.inputs.items()}
 
 

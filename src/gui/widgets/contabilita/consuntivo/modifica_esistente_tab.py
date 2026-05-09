@@ -197,7 +197,7 @@ class ModificaEsistenteTab(QWidget):
     def _get_dynamic_dir(self) -> str:
         year = self.anno_combo.currentText()
         base = config_manager.get_config_value(
-            "base_network_path_preventivi", r"\\192.168.11.251\Database_Tecnico_SMI\Contabilita' strumentale"
+            "base_network_path_preventivi", r"\\192.168.11.251\Database_Tecnico_SMI\Contabilità strumentale"
         )
         return os.path.join(base, year, "CONSUNTIVI", year)
 
@@ -329,7 +329,7 @@ class ModificaEsistenteTab(QWidget):
             wb.close()
 
             n = sum(1 for f in self._fields.values() if f.text())
-            self._status_label.setText(f"Campiu'compilati automaticamente: {n}")
+            self._status_label.setText(f"Campiùcompilati automaticamente: {n}")
             self._status_label.setStyleSheet(
                 "color: #2E7D32; font-size: 12px; font-weight: 600; border: none;"
             )
@@ -342,7 +342,7 @@ class ModificaEsistenteTab(QWidget):
             self.log_widget.append_log(f"Errore: {e}", "error")
 
     def _save_to_file(self) -> None:  # noqa: C901
-        """Salva i valori dei campiu'editati nel file Excel."""
+        """Salva i valori dei campiùeditati nel file Excel."""
         if not self.loaded_file or not Path(self.loaded_file).exists():
             ConfirmationDialog.show_error(self, "Errore", "Nessun file selezionato.")
             return

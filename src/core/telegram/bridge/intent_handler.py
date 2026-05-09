@@ -95,7 +95,7 @@ class TelegramIntentHandler(QObject):
         ]
         coro = self.telegram.app.bot.send_message(
             chat_id=chat_id,
-            text="Aggiunti PDL. **Vuoi che li stampiu'anche?**",
+            text="Aggiunti PDL. **Vuoi che li stampiùanche?**",
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
         self._run_coroutine(coro)

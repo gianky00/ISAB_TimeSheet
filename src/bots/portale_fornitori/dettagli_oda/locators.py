@@ -27,10 +27,10 @@ class DettagliOdALocators:
     )
 
     # Input Fields (Specific to Portale ISAB)
-    ODA_NUMBER_FIELD = (By.CSS_SELECTOR, "input[name='NumeroOdA']")
+    ODA_NUMBER_FIELD = (By.CSS_SELECTOR, "input[name='NumeroOdÀ]")
     CONTRACT_FIELD = (By.CSS_SELECTOR, "input[name='NumeroContratto']")
     DATE_FROM_FIELD = (By.CSS_SELECTOR, "input[name='DataCreazioneDa']")
-    DATE_A_FIELD = (By.CSS_SELECTOR, "input[name='DataCreazioneA']")
+    DATE_A_FIELD = (By.CSS_SELECTOR, "input[name='DataCreazioneÀ]")
     CHECKBOX_FIELD = (
         By.NAME,
         "GetItemServiceInfo",
@@ -39,7 +39,7 @@ class DettagliOdALocators:
     # Search
     SEARCH_BUTTON = (
         By.XPATH,
-        "//a[contains(@class, 'x-btn') and @role='button'][.//span[normalize-space(text())='Cerca' and contains(@class, 'x-btn-inner')]]",
+        "//a[contains(@class, 'x-btn') and @role='button'][.//span[normalize-space(text())='Cercà and contains(@class, 'x-btn-inner')]]",
     )
 
     # Results
@@ -65,5 +65,5 @@ class DettagliOdALocators:
     LOGOUT_SETTINGS_BUTTON = (By.ID, "user-info-settings")
     LOGOUT_CONFIRM_YES = (
         By.XPATH,
-        "//span[text()='Si' and contains(@class, 'x-btn-inner')]",
+        "//span[text()='Sì and contains(@class, 'x-btn-inner')]",
     )

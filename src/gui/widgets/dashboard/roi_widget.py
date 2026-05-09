@@ -1,7 +1,7 @@
 """
 SyncroJob - Bot Efficiency Widget
-Visualizza le metriche di efficienza e affidabilita' delle automazioni su tutto lo storico.
-V4.0: Storico totale, nuove metriche di successo e affidabilita' con barre di progresso.
+Visualizza le metriche di efficienza e affidabilità delle automazioni su tutto lo storico.
+V4.0: Storico totale, nuove metriche di successo e affidabilità con barre di progresso.
 """
 
 import logging
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class BotSavingsWidget(ModernCard):
     """
     Widget premium per la visualizzazione dell'efficienza delle automazioni.
-    Calcola il tempo risparmiato, il tasso di successo e l'affidabilita' basandosi sullo storico totale.
+    Calcola il tempo risparmiato, il tasso di successo e l'affidabilità basandosi sullo storico totale.
     """
 
     stats_updated = Signal(object)  # ROIMetrics
@@ -120,7 +120,7 @@ class BotSavingsWidget(ModernCard):
         layout.addLayout(kpi_h)
 
     def _build_detail_section(self, layout: QVBoxLayout) -> None:
-        """Costruisce la sezione di dettaglio con barre di successo e affidabilita'."""
+        """Costruisce la sezione di dettaglio con barre di successo e affidabilità."""
         # -- Success Rate Row --
         success_h = QHBoxLayout()
         success_h.setSpacing(10)
@@ -169,7 +169,7 @@ class BotSavingsWidget(ModernCard):
         lbl_rel_icon.setStyleSheet("background: transparent; border: none;")
         rel_h.addWidget(lbl_rel_icon)
 
-        lbl_rel_tag = QLabel("Affidabilita' Sistema")
+        lbl_rel_tag = QLabel("Affidabilità Sistema")
         lbl_rel_tag.setStyleSheet(
             f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: 700;"
             " background: transparent; border: none;"
@@ -192,7 +192,7 @@ class BotSavingsWidget(ModernCard):
         layout.addWidget(self.progress_rel)
 
     def _build_footer(self, layout: QVBoxLayout) -> None:
-        """Costruisce il piu' di pagina con la media giornaliera dei task."""
+        """Costruisce il più di pagina con la media giornaliera dei task."""
         self.lbl_avg = QLabel("Media giornaliera: -- task/giorno")
         self.lbl_avg.setStyleSheet(
             f"color: {COLORS['text_light']}; font-size: 11px; font-style: italic;"
@@ -222,7 +222,7 @@ class BotSavingsWidget(ModernCard):
         value_color: str,
         tag_text: str,
     ) -> QFrame:
-        """Card KPiu'con badge icona, valore grande e sottotitolo."""
+        """Card KPiùcon badge icona, valore grande e sottotitolo."""
         card = QFrame()
         card.setStyleSheet(
             f"QFrame {{ background-color: {bg_color}; border-radius: 10px;"

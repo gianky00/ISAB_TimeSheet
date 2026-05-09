@@ -42,7 +42,7 @@ class ResponsiveContainer(QWidget):
                 self._rebuild_layout()
 
     def _get_mode(self, width: int) -> str:
-        """Determina la modalita' di visualizzazione (mobile, tablet, desktop) in base alla larghezza."""
+        """Determina la modalità di visualizzazione (mobile, tablet, desktop) in base alla larghezza."""
         if width < self.BREAKPOINT_MOBILE:
             return "mobile"
         if width < self.BREAKPOINT_TABLET:
@@ -50,7 +50,7 @@ class ResponsiveContainer(QWidget):
         return "desktop"
 
     def _rebuild_layout(self) -> None:
-        """Pulisce e ricostruisce il layout in base alla modalita' corrente."""
+        """Pulisce e ricostruisce il layout in base alla modalità corrente."""
         self._clear_layout()
         self._build_layout_by_mode()
 

@@ -105,7 +105,7 @@ class BugReportDialog(QDialog):
         self._update_size_estimate()
 
     def setup_ui(self):  # noqa: ANN201, PLR0915
-        """Configura il layout, i campiu'di testo, le checkbox delle opzioni e i pulsanti di azione."""
+        """Configura il layout, i campiùdi testo, le checkbox delle opzioni e i pulsanti di azione."""
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
 
@@ -126,7 +126,7 @@ class BugReportDialog(QDialog):
         # Header
         lbl_info = QLabel(
             "Descrivi il problema riscontrato con il maggior dettaglio possibile.\n"
-            "Se possibile, indica i passaggia'per riprodurlo."
+            "Se possibile, indica i passaggiàper riprodurlo."
         )
         lbl_info.setStyleSheet(f"font-size: 14px; color: {palette.on_surface}; margin-bottom: 5px;")
         lbl_info.setWordWrap(True)
@@ -267,7 +267,7 @@ class BugReportDialog(QDialog):
         desc = self.txt_description.toPlainText().strip()
         if len(desc) < 10:  # noqa: PLR2004
             QMessageBox.warning(
-                self, "Attenzione", "La descrizione  troppo breve. Per favore fornisci piu' dettagli."
+                self, "Attenzione", "La descrizione  troppo breve. Per favore fornisci più dettagli."
             )
             return
 

@@ -106,7 +106,7 @@ def _setup_windows_taskbar(app: QApplication) -> None:
 
     if os.name == "nt":
         try:
-            myappid = f"Coemi.SyncroJob.Enterprise.{__version__}"
+            myappid = f"SyncroJob.Manager.{__version__}"
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
         except Exception as e:
             startup_logger_global.warning(f"Failed to set AppUserModelID: {e}")

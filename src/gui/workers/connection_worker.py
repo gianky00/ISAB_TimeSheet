@@ -27,7 +27,7 @@ class ConnectionTestWorker(QThread):
           token_or_key: Credenziale (Token o API Key) da verificare.
         """
         super().__init__()
-        self.test_type = test_type  # 'telegram' or 'gemini'
+        self.test_type = test_type  # 'telegram' or 'geminì
         self.token_or_key = token_or_key
 
     def run(self) -> None:
@@ -57,16 +57,16 @@ class ConnectionTestWorker(QThread):
             self.result_ready.emit(False, "Errore HTTP", f"Status Code: {resp.status_code}")
 
     def _test_gemini(self) -> None:
-        """Verifica la validità di una APiu'Key Google Gemini interrogando la lista dei modelli."""
+        """Verifica la validità di una APiùKey Google Gemini interrogando la lista dei modelli."""
         # Simple list models check
         url = f"https://generativelanguage.googleapis.com/v1beta/models?key={self.token_or_key}"
         resp = requests.get(url, timeout=10)
 
         if resp.status_code == 200:  # noqa: PLR2004
-            self.result_ready.emit(True, "Successo", "APiu'Key valida! Connessione stabilita.")
+            self.result_ready.emit(True, "Successo", "APiùKey valida! Connessione stabilita.")
         else:
             self.result_ready.emit(
                 False,
                 "Errore",
-                f"APiu'Key non valida o errore server.\nStatus: {resp.status_code}",
+                f"APiùKey non valida o errore server.\nStatus: {resp.status_code}",
             )

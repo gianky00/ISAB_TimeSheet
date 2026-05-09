@@ -19,7 +19,7 @@ from src.gui.components.scarico_ore.filter_worker import FilterWorker
 @dataclass(slots=True)
 class ScaricoOreRow:
     """
-    Modello dati che rappresenta una singola riga nella tabella 'Scarico Ore'.
+    Modello dati che rappresenta una singola riga nella tabella 'Scarico Orè.
     Contiene le informazioni sui dipendenti, le ore lavorate e i dettagli della commessa.
     """
 

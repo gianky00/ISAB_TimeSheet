@@ -35,7 +35,7 @@ _config_lock = threading.RLock()
 
 
 def _reset_configuration_for_testing() -> None:
-    """Resetta la cache della configurazione (solo per unita'test)."""
+    """Resetta la cache della configurazione (solo per unitàtest)."""
     global _config_cache  # noqa: PLW0603
     with _config_lock:
         _config_cache = None
@@ -176,7 +176,7 @@ def set_config_values(updates: dict[str, Any]) -> bool:
 def get_download_path() -> str:
     """
     Restituisce il percorso della cartella download configurata o quella predefinita di sistema.
-    Esegue una validazione di esistenza per evitare percorsi hardcoded da altri PC (es. Coemi).
+    Esegue una validazione di esistenza per evitare percorsi hardcoded non validi.
     """
     # Supporta sia la vecchia chiave che quella corretta per retrocompatibilità
     path = get_config_value("download_path") or get_config_value("browser_download_path")

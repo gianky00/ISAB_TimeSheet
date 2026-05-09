@@ -70,7 +70,7 @@ class BaseBotPanel(QWidget):
         self.controls = BotControlComponent()
         self.activity_timeline = BotTimelineComponent()
         self.log_widget = BotLogComponent()
-        self.status_card = StatusCard("Stato Attivita'")
+        self.status_card = StatusCard("Stato Attività")
 
         # Alias di compatibilit  per sottoclassi legacy
         self.start_btn = self.controls.start_btn
@@ -160,7 +160,7 @@ class BaseBotPanel(QWidget):
 
         self.log_widget.set_mood("running")
 
-        # Inizializza timeline attivita'se il bot ha gli steps
+        # Inizializza timeline attivitàse il bot ha gli steps
         bot_class = self.get_bot_class()
         if bot_class and hasattr(bot_class, "STEPS") and bot_class.STEPS:
             self.activity_timeline.set_steps(bot_class.STEPS)

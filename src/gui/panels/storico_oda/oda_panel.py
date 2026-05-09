@@ -91,10 +91,10 @@ class StoricoOdaPanel(QWidget):
             "Gruppo Acquisti",
             "Indicatore Rilascio",
             "Stato Rilascio",
-            "Attivita'",
+            "Attività",
             "Num riga",
             "Quantit ",
-            "Unita' di Mis",
+            "Unità di Mis",
             "Prezzo lordo",
             "Testo breve",
         ]

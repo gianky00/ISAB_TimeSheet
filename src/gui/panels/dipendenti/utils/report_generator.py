@@ -29,10 +29,10 @@ class ReportGenerator:
     def generate_email_report(parent_widget: Any = None) -> None:
         """Avvia la generazione del report in background."""
         if ReportGenerator._worker and ReportGenerator._worker.isRunning():
-            ToastManager.instance().show("Generazione report gia' in corso...", "warning")
+            ToastManager.instance().show("Generazione report già in corso...", "warning")
             return
 
-        ReportGenerator._worker = ReportWorker()  # Senza parent perche' statico
+        ReportGenerator._worker = ReportWorker()  # Senza parent perchè statico
         ReportGenerator._worker.finished_signal.connect(
             lambda success, msg, data: ReportGenerator._on_report_finished(parent_widget, success, msg, data)
         )

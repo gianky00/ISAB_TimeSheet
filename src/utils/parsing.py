@@ -26,7 +26,7 @@ def parse_currency(value: float | int | str | None) -> float:
     s = s_raw.replace("\x00", "").replace("\u200b", "")
     is_negative = _is_value_negative(s)
 
-    # 2. Validazione integrita'(whitelist termini permessi)
+    # 2. Validazione integrità(whitelist termini permessi)
     # 3. Notazione scientifica
     # 4. Estrazione parte numerica standard
     res = 0.0

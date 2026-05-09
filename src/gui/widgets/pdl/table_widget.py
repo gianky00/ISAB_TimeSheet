@@ -64,7 +64,7 @@ class ProgrammazioneTableWidget(StandardTable):
     def _handle_double_click(self, row: int, column: int):  # noqa: ANN202
         from src.gui.widgets.pdl_timeline import PDLTimelineWidget  # noqa: PLC0415
 
-        # Se la riga sotto  gia' una timeline, la rimuoviamo (collasso)
+        # Se la riga sotto  già una timeline, la rimuoviamo (collasso)
         next_row = row + 1
         if next_row < self.rowCount():
             next_widget = self.cellWidget(next_row, 0)

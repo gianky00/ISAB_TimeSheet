@@ -28,7 +28,7 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
-        ("nav", "Navigazione Attivita'"),
+        ("nav", "Navigazione Attività"),
         ("filter", "Configurazione Filtri"),
         ("search", "Ricerca ed Export"),
         ("parse", "Analisi Risultati"),
@@ -79,7 +79,7 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
 
         # 1. Navigazione
         self.update_step("nav", StepStatus.RUNNING)
-        self.log("   Navigazione in 'Visualizza Attivita''...")
+        self.log("   Navigazione in 'Visualizza Attività'...")
 
         self.page.click(self._get_selector(SafeWorkLocators.HOME_BUTTON))
         self._attendi_scomparsa_overlay()

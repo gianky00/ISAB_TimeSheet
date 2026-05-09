@@ -77,7 +77,7 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
 
         with suppress(Exception):
             # 1. Controllo specifico per Ricerca Estesa (Richiesto in Safework)
-            self.log("[CERCA] Controllo presenza popup 'Ricerca Estesa'...")
+            self.log("[CERCA] Controllo presenza popup 'Ricerca Estesà...")
             popup_xpath = "//p[contains(text(), 'estenderla')]"
 
             # Usiamo wait_for_selector per attendere la comparsa reale (timeout breve)
@@ -97,7 +97,7 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
                         xpath_full = sel if sel.startswith("/") else f"css={sel}"
                         if self.page.is_visible(xpath_full):
                             self.page.click(xpath_full, timeout=2000)
-                            self.log("✅ Click su 'Si' riuscito (Ricerca Estesa)")
+                            self.log("✅ Click su 'Sì riuscito (Ricerca Estesa)")
                             self.page.wait_for_timeout(1000)
                             return True
             else:

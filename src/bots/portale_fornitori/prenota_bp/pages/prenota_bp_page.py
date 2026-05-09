@@ -26,14 +26,14 @@ class PrenotaBPPage:
     """
 
     def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None) -> None:
-        """Inizializza la pagina con il driver e configura i tempiu'di attesa."""
+        """Inizializza la pagina con il driver e configura i tempiùdi attesa."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.short_wait = WebDriverWait(driver, 5)
         self._log = log_callback or print
 
     def log(self, message: str) -> None:
-        """Inoltra i messaggia'di log alla callback configurata."""
+        """Inoltra i messaggiàdi log alla callback configurata."""
         self._log(message)
 
     def _wait_for_overlay(self) -> None:
@@ -112,10 +112,10 @@ class PrenotaBPPage:
         self.log("Navigazione verso Gestione Buono di Prelievo...")
         self._wait_for_overlay()
 
-        # Verifica se i filtri sono gia' visibili (siamo gia' nella pagina corretta)
+        # Verifica se i filtri sono già visibili (siamo già nella pagina corretta)
         with suppress(Exception):
             if self.driver.find_elements(*PrenotaBPLocators.FILTER_FORNITORE):
-                self.log("Pagina Gestione BP gia' caricata.")
+                self.log("Pagina Gestione BP già caricata.")
                 return
 
         # Tentativo di click sul sottomenu se visibile
@@ -127,7 +127,7 @@ class PrenotaBPPage:
             self.driver.execute_script("arguments[0].click();", submenu)
         except Exception:
             # Espansione menu principale
-            self.log("Espansione menu 'Buono di Prelievo'...")
+            self.log("Espansione menu 'Buono di Prelievò...")
             self.wait_and_click(PrenotaBPLocators.MENU_BUONO_PRELIEVO)
             submenu = self.wait.until(EC.element_to_be_clickable(PrenotaBPLocators.SUBMENU_GESTIONE_BP))
             self.driver.execute_script("arguments[0].click();", submenu)
@@ -201,7 +201,7 @@ class PrenotaBPPage:
         Returns:
           bool: True se tutti i materiali sono disponibili, False altrimenti.
         """
-        self.log("Verifica disponibilita' materiali...")
+        self.log("Verifica disponibilità materiali...")
         try:
             # Attende che le righe siano caricate
             self.wait.until(EC.presence_of_element_located(PrenotaBPLocators.GRID_ROWS_DETTAGLI))
@@ -322,7 +322,7 @@ class PrenotaBPPage:
 
     def _compila_form_richiesta(self, note: str) -> None:
         """Compila e salva il form di richiesta."""
-        self.log("Click su 'Crea Richiesta'...")
+        self.log("Click su 'Crea Richiestà...")
         try:
             self.wait_and_click(PrenotaBPLocators.BT_CREA_RICHIESTA)
             self._wait_for_overlay()
@@ -343,7 +343,7 @@ class PrenotaBPPage:
             self._wait_for_overlay()
             self.log("Richiesta creata e salvata con successo.")
         except Exception as e:
-            self.log(f"Errore nel flusso 'Crea Richiesta': {e}")
+            self.log(f"Errore nel flusso 'Crea Richiestà: {e}")
             with suppress(Exception):
                 self.wait_and_click(PrenotaBPLocators.BT_CHIUDI_POPUP, timeout=3)
             raise e  # noqa: TRY201

@@ -54,10 +54,12 @@ class PathsPage(QWidget):
         cont_layout.addWidget(QLabel("Cartella Giornaliere (Root):"))
         self.giornaliere_path_edit = self._create_path_row(cont_layout, self._browse_giornaliere, folder=True)
 
-        # Attivita'cont_layout.addWidget(QLabel("File Attivita'Programmate (Riepilogo):"))
+        # Attività
+        cont_layout.addWidget(QLabel("File Attività Programmate (Riepilogo):"))
         self.attivita_path_edit = self._create_path_row(cont_layout, self._browse_attivita)
 
-        # Database Report Attivita'cont_layout.addWidget(QLabel("Database Report Attivita':"))
+        # Database Report Attività
+        cont_layout.addWidget(QLabel("Database Report Attività:"))
         self.activity_db_path_edit = self._create_path_row(cont_layout, self._browse_activity_db)
 
         # Certificati Excel
@@ -219,12 +221,12 @@ class PathsPage(QWidget):
             self.giornaliere_path_edit.setText(p)
 
     def _browse_attivita(self) -> None:
-        p = self._browse_file("Seleziona File Attivita'", "Excel Files (*.xlsx *.xlsm)")
+        p = self._browse_file("Seleziona File Attività", "Excel Files (*.xlsx *.xlsm)")
         if p:
             self.attivita_path_edit.setText(p)
 
     def _browse_activity_db(self) -> None:
-        p = self._browse_file("Seleziona Database Report Attivita'", "SQLite DB (*.db *.sqlite)")
+        p = self._browse_file("Seleziona Database Report Attività", "SQLite DB (*.db *.sqlite)")
         if p:
             self.activity_db_path_edit.setText(p)
 

@@ -114,7 +114,7 @@ class InfoLabel(QPushButton):
 
 
 class KPIBigCard(QFrame):
-    """Card per mostrare un KPiu'numerico principale."""
+    """Card per mostrare un KPiùnumerico principale."""
 
     def __init__(
         self,

@@ -143,7 +143,7 @@ class KPIChartsManager:
         self._plot_completamento(kpi_data.get("completamento", {}))
 
     def _plot_stato_attivita(self, counts):  # noqa: ANN001, ANN202
-        """Genera il grafico a torta per lo stato delle attivita'."""
+        """Genera il grafico a torta per lo stato delle attività."""
         self.fig1.clear()
         ax = self.fig1.add_subplot(111)
         if not counts:

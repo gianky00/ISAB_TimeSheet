@@ -31,7 +31,7 @@ from src.gui.widgets.modern_card import ModernContentCard
 
 
 class CreaNuovoTab(QWidget):
-    """Tab per la generazione di un nuovo consuntivo con tutti i campiu'necessari."""
+    """Tab per la generazione di un nuovo consuntivo con tutti i campiùnecessari."""
 
     step_clicked = Signal(str)
     _prog_computed = Signal(str)
@@ -120,7 +120,7 @@ class CreaNuovoTab(QWidget):
 
         self.stato_combo = FilterComboBox()
         self.stato_combo.addItems(opts["stati"])
-        row2.addLayout(self._create_input_group("STATO Attivita'(D11)", self.stato_combo, width=220))
+        row2.addLayout(self._create_input_group("STATO Attività(D11)", self.stato_combo, width=220))
 
         self.tipo_prev_combo = FilterComboBox()
         self.tipo_prev_combo.addItems(opts["tipologie"])
@@ -136,7 +136,7 @@ class CreaNuovoTab(QWidget):
         layout.addWidget(card2)
 
         # --- CARD 3: DESCRIZIONI ---
-        card3, desc_layout = self._create_card("DESCRIZIONE DELLE Attivita'")
+        card3, desc_layout = self._create_card("DESCRIZIONE DELLE Attività")
 
         desc_row = QHBoxLayout()
         desc_row.setSpacing(20)

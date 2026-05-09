@@ -32,7 +32,7 @@ class TimbratureBot(SeleniumBaseBot):
 
     @property
     def description(self) -> str:
-        """Restituisce una descrizione delle funzionalita' del bot."""
+        """Restituisce una descrizione delle funzionalità del bot."""
         return "Scarica e archivia le timbrature dal portale ISAB"
 
     @staticmethod

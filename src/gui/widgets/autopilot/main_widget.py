@@ -1,7 +1,7 @@
 """
 SyncroJob - Autopilot Main Widget
 Widget coordinatore per la visualizzazione e configurazione dei bot programmati (Autopilot).
-Gestisce la pianificazione delle attivita'automatiche e la loro visualizzazione in tempo reale.
+Gestisce la pianificazione delle attivitàautomatiche e la loro visualizzazione in tempo reale.
 """
 
 from contextlib import suppress
@@ -43,7 +43,7 @@ from .event_card import AutopilotEventCard
 class AutopilotWidget(QWidget):
     """
     Widget che mostra e configura gli eventi programmati dei bot (Autopilot).
-    Supporta una modalita' di visualizzazione (Live) e una di configurazione.
+    Supporta una modalità di visualizzazione (Live) e una di configurazione.
     Utilizza animazioni per le transizioni e indicatori visivi per lo stato del sistema.
     """
 
@@ -74,7 +74,7 @@ class AutopilotWidget(QWidget):
         self.footer_left_widget = footer_left_widget
 
     def set_status_bar(self, status_bar: Any) -> None:
-        """Collega la barra di stato per segnalare attivita'dell'autopilot."""
+        """Collega la barra di stato per segnalare attivitàdell'autopilot."""
         self.status_bar = status_bar
 
     def _setup_ui(self) -> None:  # noqa: PLR0915
@@ -167,7 +167,7 @@ class AutopilotWidget(QWidget):
         self._refresh_config()
 
     def _toggle_mode(self) -> None:
-        """Passa dalla modalita' visualizzazione alla modalita' configurazione con animazione."""
+        """Passa dalla modalità visualizzazione alla modalità configurazione con animazione."""
         if self._animating:
             return
         self._animating = True

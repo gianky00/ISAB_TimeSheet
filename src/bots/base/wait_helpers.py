@@ -81,7 +81,7 @@ def wait_for_element_clickable(
 
 
 def wait_for_element_staleness(driver: WebDriver, element: WebElement, timeout: int = 10) -> bool:
-    """Attende che un elemento diventi stale (non piu' presente nel DOM)."""
+    """Attende che un elemento diventi stale (non più presente nel DOM)."""
     try:
         WebDriverWait(driver, timeout).until(EC.staleness_of(element))
         return True  # noqa: TRY300
@@ -196,7 +196,7 @@ def poll_for_file(  # noqa: PLR0913
 ) -> str | None:
     """
     Attende che un file appaia in una directory usando polling.
-    Approccio PERMISSIVO: ritorna il file piu' recente che soddisfa i criteri.
+    Approccio PERMISSIVO: ritorna il file più recente che soddisfa i criteri.
 
     Args:
       directory: Directory da monitorare.
@@ -207,7 +207,7 @@ def poll_for_file(  # noqa: PLR0913
       exclude_patterns: Pattern da escludere (es: [".crdownload", ".tmp"]).
 
     Returns:
-      Path assoluto del file piu' recente, o None se timeout.
+      Path assoluto del file più recente, o None se timeout.
     """
     directory_path = Path(directory)
     if not directory_path.exists():
@@ -228,7 +228,7 @@ def poll_for_file(  # noqa: PLR0913
         valid_files = _filter_valid_files(files, exclude_patterns, min_age)
 
         if valid_files:
-            # Ritorna il piu' recente basandosi sull'effective_time
+            # Ritorna il più recente basandosi sull'effective_time
             latest = max(valid_files, key=lambda f: max(f.stat().st_mtime, f.stat().st_ctime))
             logger.info(f"File trovato: {latest.name}")
             return str(latest.absolute())

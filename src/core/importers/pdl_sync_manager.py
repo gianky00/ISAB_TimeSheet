@@ -203,7 +203,7 @@ class ProgrammingSyncManager:
         self, mappa_pdl: dict[str, Any], modif_x: dict[str, Any], modif_stato: dict[str, Any]
     ) -> None:
         """Applica le X dei giorni e i cambi di stato sul file Master."""
-        logger.info("Esecuzione macro 'reset_programmazione'...")
+        logger.info("Esecuzione macro 'reset_programmazionè...")
         self.excel_app.Run(f"'{self.wb_master.Name}'!reset_programmazione")
 
         # Applicazione X

@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 
 class AuditManager:
     """
-    Manager per l'Audit Log con meccanismi di integrita' e severit .
+    Manager per l'Audit Log con meccanismi di integrità e severit .
     Implementazione rifattorizzata e modulare con supporto asincrono per evitare lag UI.
     """
 
@@ -155,7 +155,7 @@ class AuditManager:
             params_json = json.dumps(params, ensure_ascii=False) if params else "{}"
             timestamp = datetime.now(UTC).isoformat()
 
-            # 2. Integrita'(Hashing)
+            # 2. Integrità(Hashing)
             row_data = {
                 "timestamp": timestamp,
                 "user_id": user_id,
@@ -191,8 +191,8 @@ class AuditManager:
                 )
             )
 
-            # 4. Logging Enterprise e Segnali
-            self._log_enterprise_audit(
+            # 4. Logging Strutturato e Segnali
+            self._log_structured_audit(
                 action, audit_id, trace_id, category, entity, status_val, severity_val, duration_ms
             )
 
@@ -209,7 +209,7 @@ class AuditManager:
             logger.error("Audit Log Error", exc=e, action=action, category=category)  # noqa: TRY400
             return None
 
-    def _log_enterprise_audit(  # noqa: PLR0913
+    def _log_structured_audit(  # noqa: PLR0913
         self,
         action: str,
         audit_id: Any,
@@ -333,7 +333,7 @@ class AuditManager:
         return self.db.get_categories()
 
     def run_retention_policy(self, days: int = 90) -> None:
-        """Elimina i log piu' vecchi del numero di giorni specificato."""
+        """Elimina i log più vecchi del numero di giorni specificato."""
         cutoff = (datetime.now(UTC) - timedelta(days=days)).isoformat()
         deleted_count = self.db.delete_older_than(cutoff)
         if deleted_count > 0:

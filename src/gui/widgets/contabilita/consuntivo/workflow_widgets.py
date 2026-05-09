@@ -212,7 +212,7 @@ class WorkflowStepButton(QFrame):
         super().mousePressEvent(event)
 
     def enterEvent(self, event: QEnterEvent) -> None:
-        """Evidenzia lo step con un'ombra piu' marcata al passaggio del mouse."""
+        """Evidenzia lo step con un'ombra più marcata al passaggio del mouse."""
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(24)
         shadow.setOffset(0, 6)

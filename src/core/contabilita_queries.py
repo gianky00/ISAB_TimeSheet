@@ -14,7 +14,7 @@ class ContabilitaQueries:
     """Gestore per le query di lettura del database della Contabilità Strumentale."""
 
     # Indici Colonne Certificati (Allineati a get_certificati_campione_data)
-    CERT_IDX_ID_COEMI = 0
+    CERT_IDX_ID_STRUMENTO = 0
     CERT_IDX_CERTIFICATO = 1
     CERT_IDX_MODELLO = 2
     CERT_IDX_COSTRUTTORE = 3
@@ -91,7 +91,7 @@ class ContabilitaQueries:
 
     @classmethod
     def get_attivita_programmate_data(cls, db_path: Path) -> list[tuple[Any, ...]]:
-        """Restituisce i dati Attivita'Programmate (inclusi stili)."""
+        """Restituisce i dati Attività Programmate (inclusi stili)."""
         if not db_path.exists():
             return []
         try:

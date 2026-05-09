@@ -13,7 +13,7 @@ from src.gui.widgets.animated_progress_bar import AnimatedProgressBar
 class FooterRightWidget(QWidget):
     """
     Parte destra del footer: contiene la Progress Bar globale e le Status Cards dei Bot.
-    Gestisce il passaggio tra la modalita' di caricamento e quella operativa.
+    Gestisce il passaggio tra la modalità di caricamento e quella operativa.
     """
 
     def __init__(

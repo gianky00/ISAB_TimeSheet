@@ -46,7 +46,7 @@ class TrayIconComponent(QObject):
 
     def show_update_message(self, new_version: str) -> None:
         """
-        Mostra una notifica di sistema per segnalare la disponibilita' di una nuova versione.
+        Mostra una notifica di sistema per segnalare la disponibilità di una nuova versione.
 
         Args:
           new_version: Stringa della versione rilevata (es. '2.1.0').

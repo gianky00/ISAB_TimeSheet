@@ -260,7 +260,7 @@ class ToastManager(QObject):
           pulse: Se True, attiva l'animazione di pulsazione.
           is_rich_text: Se True, abilita il rendering HTML (sanificato).
         """
-        # Pulisce la lista dei toast non piu' visibili
+        # Pulisce la lista dei toast non più visibili
         ToastManager._active_toasts = [t for t in ToastManager._active_toasts if t.isVisible()]
 
         # Prevenzione duplicati identici (spam)

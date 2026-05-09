@@ -1,6 +1,6 @@
 """
 SyncroJob - License Validator
-Modulo core per la validazione della licenza e dell'integrita' del software.
+Modulo core per la validazione della licenza e dell'integrità del software.
 Gestisce l'estrazione dell'Hardware ID (HWID), la decifratura asimmetrica dei certificati (.dat)
 e la verifica delle scadenze temporali tramite Trusted Time (Network Time).
 """
@@ -41,7 +41,7 @@ class LicenseStatus(Enum):
 
 
 def _calculate_sha256(filepath: str | Path) -> str:
-    """Calcola l'hash SHA256 di un file per verifiche di integrita'."""
+    """Calcola l'hash SHA256 di un file per verifiche di integrità."""
     sha256_hash = hashlib.sha256()
     with Path(filepath).open("rb") as f:
         for byte_block in iter(lambda: f.read(4096), b""):
@@ -219,7 +219,7 @@ def verify_license() -> tuple[bool, str]:
 
 def get_detailed_license_status() -> tuple[LicenseStatus, str]:
     """
-    Esegue una verifica completa: presenza file, integrita' hash, HWID matching e scadenza temporale.
+    Esegue una verifica completa: presenza file, integrità hash, HWID matching e scadenza temporale.
 
     Returns:
       tuple: (LicenseStatus, messaggio descrittivo).
@@ -229,7 +229,7 @@ def get_detailed_license_status() -> tuple[LicenseStatus, str]:
         try:
             paths["dir"].mkdir(parents=True)
         except OSError:
-            return LicenseStatus.ERROR, "Impossibile creare cartella 'Licenza'"
+            return LicenseStatus.ERROR, "Impossibile creare cartella 'Licenzà"
 
     if not (paths["config"].exists() and paths["manifest"].exists()):
         _check_and_migrate_local_license(paths)
@@ -250,7 +250,7 @@ def _check_integrity_with_manifest(paths: dict[str, Any]) -> tuple[LicenseStatus
             AuditManager.instance().log_action(
                 "Violazione Licenza", category="sicurezza", status="error", severity="high"
             )
-            return LicenseStatus.INVALID, "Integrita' licenza compromessa (config.dat)"
+            return LicenseStatus.INVALID, "Integrità licenza compromessa (config.dat)"
     except Exception as e:
         return LicenseStatus.ERROR, f"Errore lettura manifest: {e}"
     return LicenseStatus.VALID, ""

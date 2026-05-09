@@ -34,7 +34,7 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
 
         filter_sel = self._get_selector(PrenotaBPLocators.FILTER_FORNITORE)
         if self.page.is_visible(filter_sel):
-            self.log("Pagina Gestione BP gia' caricata.")
+            self.log("Pagina Gestione BP già caricata.")
             return
 
         submenu_sel = self._get_selector(PrenotaBPLocators.SUBMENU_GESTIONE_BP)
@@ -42,7 +42,7 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
             self.log("Voce menu visibile, click diretto.")
             self.page.click(submenu_sel)
         else:
-            self.log("Espansione menu 'Buono di Prelievo'...")
+            self.log("Espansione menu 'Buono di Prelievò...")
             self.page.click(self._get_selector(PrenotaBPLocators.MENU_BUONO_PRELIEVO))
             self.page.wait_for_selector(submenu_sel, state="visible")
             self.page.click(submenu_sel)
@@ -144,7 +144,7 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
         check_xpath = self._get_selector(PrenotaBPLocators.CELL_MATERIALE_DISPONIBILE).replace("xpath=", "")
 
         for i, row in enumerate(rows):
-            # Cerca l'icona di disponibilita' all'interno della riga
+            # Cerca l'icona di disponibilità all'interno della riga
             if row.locator(f"xpath={check_xpath}").count() > 0:
                 indices.append(i)
 
@@ -175,7 +175,7 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
 
     def _compila_form_richiesta(self, note: str) -> None:
         """Compila e salva il modulo di richiesta ritiro materiale."""
-        self.log("Click su 'Crea Richiesta'...")
+        self.log("Click su 'Crea Richiestà...")
         self.page.click(self._get_selector(PrenotaBPLocators.BT_CREA_RICHIESTA))
         self._wait_overlay()
 

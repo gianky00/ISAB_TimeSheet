@@ -30,7 +30,7 @@ async def cmd_start(service: TelegramService, update: Update, context: ContextTy
     if saved_chat_id:
         if chat_id != saved_chat_id:
             if update.message:
-                await update.message.reply_text("[BLOCCO] Questo bot  gia' associato a un altro dispositivo.")
+                await update.message.reply_text("[BLOCCO] Questo bot  già associato a un altro dispositivo.")
             return
     # 2. Gestione nuovo accoppiamento
     elif not await _handle_initial_pairing(service, update, context, config, chat_id):

@@ -85,7 +85,7 @@ class IconButton(QPushButton):
 
 
 class SearchInput(QLineEdit):
-    """QLineEdit stilizzato per campiu'di ricerca, con placeholder e clear button."""
+    """QLineEdit stilizzato per campiùdi ricerca, con placeholder e clear button."""
 
     def __init__(self, placeholder: str = "Cerca...", parent: QWidget | None = None):  # noqa: ANN204
         super().__init__(parent)

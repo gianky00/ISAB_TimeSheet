@@ -19,7 +19,7 @@ _initialized = False
 
 class StructuredLogger:
     """
-    Logger enterprise con structured logging e multi-sink.
+    Logger professionale con structured logging e multi-sink.
 
     Features:
     - Output JSON per AI analysis

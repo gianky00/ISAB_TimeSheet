@@ -411,7 +411,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         """Aggiorna lo stato visivo di una specifica riga PDL."""
         self.status_list.update_status(step_idx, success)
 
-        # Trova dinamicamente l'indice della colonna 'esito'
+        # Trova dinamicamente l'indice della colonna 'esitò
         col_idx = -1
         for i, col in enumerate(self.data_table.columns):
             if col["name"] == "esito":
@@ -439,7 +439,7 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         # 3. Forza l'attivazione della stampa (UI e logica)
         self.check_stampa.setChecked(True)
-        self._on_log("Sincronizzazione: Flag 'Attiva Stampa' abilitato forzatamente per stampa richiesta.")
+        self._on_log("Sincronizzazione: Flag 'Attiva Stampà abilitato forzatamente per stampa richiesta.")
 
         # 4. Avvia bot dopo un delay di rendering
         self._on_log(f"📥 Ricevuti {len(pdl_numbers)} PDL dal database. Avvio processo automatico...")

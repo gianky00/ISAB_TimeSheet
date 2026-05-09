@@ -49,7 +49,7 @@ class ExcelImporter:
         """
         return GiornaliereImporter.import_giornaliere(root_path, lookup_map, progress_callback)
 
-    # --- Attivita'Programmate ---
+    # --- AttivitàProgrammate ---
     ATTIVITA_PROGRAMMATE_MAPPING = AttivitaImporter.ATTIVITA_PROGRAMMATE_MAPPING
     ATTIVITA_PROGRAMMATE_COLS = AttivitaImporter.ATTIVITA_PROGRAMMATE_COLS
 
@@ -58,7 +58,7 @@ class ExcelImporter:
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, list[tuple[Any, ...]]]:
-        """Importa la programmazione attivita'."""
+        """Importa la programmazione attività."""
         return AttivitaImporter.import_attivita_programmate(file_path, progress_callback)
 
     # --- Scarico Ore ---

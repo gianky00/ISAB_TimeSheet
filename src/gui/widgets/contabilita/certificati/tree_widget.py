@@ -98,7 +98,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
     itemEditedCustom = Signal(object, str, str)  # (item, col_name, new_value) # noqa: N815
 
     HEADERS: ClassVar[list[str]] = [
-        "ID-COEMI",
+        "ID-STRUMENTO",
         "Certificato",
         "Modello /\nTipo",
         "Costruttore",
@@ -113,7 +113,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
     ]
 
     (
-        IDX_ID_COEMI,
+        IDX_ID_STRUMENTO,
         IDX_CERTIFICATO,
         IDX_MODELLO,
         IDX_COSTRUTTORE,
@@ -183,7 +183,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
     def apply_current_certificate_styling(  # noqa: ANN201
         self, item: SortableTreeWidgetItem, days_to_expiry: int | None, status_dot_icon: str
     ):
-        """Applica lo styling specifico per il certificato piu' recente."""
+        """Applica lo styling specifico per il certificato più recente."""
         if days_to_expiry is None:
             status_text, bg_color, text_color = (
                 "N/D (Senza Scadenza)",
@@ -241,7 +241,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
         item.setIcon(self.IDX_STATO, QIcon(get_asset_path(Icons.STATUS_DOT_GRAY)))
         item.setText(self.IDX_STATO, "STORICO")
         item.setForeground(self.IDX_STATO, QBrush(QColor(COLORS["text_light"])))
-        item.setToolTip(self.IDX_STATO, "Certificato storico - Esiste un certificato piu' recente")
+        item.setToolTip(self.IDX_STATO, "Certificato storico - Esiste un certificato più recente")
 
     def _on_item_changed(self, item: QTreeWidgetItem, column: int):  # noqa: ANN202
         """Gestisce il cambiamento di valore in una cella."""

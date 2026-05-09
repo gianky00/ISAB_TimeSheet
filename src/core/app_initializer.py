@@ -75,7 +75,7 @@ class AppInitializer:
 
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
-        step("Verifica integrita' WebDriver...", 19)
+        step("Verifica integrità WebDriver...", 19)
         from src.utils.resource_manager import ResourceManager  # noqa: PLC0415
 
         ResourceManager.ensure_automation_driver()
@@ -139,7 +139,7 @@ class AppInitializer:
 
         tasks = [
             (0, "Preparazione Dashboard"),
-            (1, "Scheduler Attivita'"),
+            (1, "Scheduler Attività"),
             (10, "Archivio Storico OdA"),
             (3, "Caricamento Repository Ore"),
             (4, "Registro Asset Aziendali"),

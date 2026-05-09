@@ -1,7 +1,7 @@
 """
 Script di pulizia finale:
 1. Rimuove import PySide6 orfani (widget ora gestiti da core_widgets)
-2. Rimuove setStyleSheet() duplicati dove il wrapper gia' li applica
+2. Rimuove setStyleSheet() duplicati dove il wrapper già li applica
 Usa ast.parse per validazione post-modifica.
 """
 
@@ -10,7 +10,7 @@ import os
 import re
 from pathlib import Path
 
-GUI_DIR = r"c:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\src\gui"
+GUI_DIR = str(Path(__file__).parent)
 SKIP_FILES = {
     "core_widgets.py",
     "modern_button.py",

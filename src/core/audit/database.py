@@ -82,7 +82,7 @@ class AuditDatabase:
         return sqlite3.connect(self.DB_PATH)
 
     def get_last_hash(self) -> str:
-        """Recupera l'hash dell'ultima riga inserita per garantire l'integrita' della catena."""
+        """Recupera l'hash dell'ultima riga inserita per garantire l'integrità della catena."""
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
@@ -129,7 +129,7 @@ class AuditDatabase:
           end_date: Data massima.
           levels: Lista di severit  filtrate.
           category: Categoria specifica.
-          search_text: Testo libero da cercare in piu' campi.
+          search_text: Testo libero da cercare in più campi.
           limit: Numero massimo di risultati.
           offset: Salto per paginazione.
 
@@ -194,7 +194,7 @@ class AuditDatabase:
 
     def delete_older_than(self, cutoff_iso: str) -> int:
         """
-        Elimina i log piu' vecchi della data specificata.
+        Elimina i log più vecchi della data specificata.
 
         Args:
           cutoff_iso: Data limite in formato ISO.

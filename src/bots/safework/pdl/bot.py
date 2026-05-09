@@ -246,9 +246,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*.pdf")}
 
             # Clicca su Anteprima Stampa usando click_robusto
-            self.click_robusto((By.ID, "topIcon-acticonAnteprimaStampaMenu"), label="'Anteprima Stampa'")
+            self.click_robusto((By.ID, "topIcon-acticonAnteprimaStampaMenu"), label="'Anteprima Stampà")
             time.sleep(0.8)  # Breve pausa per animazione menu
-            self.click_robusto((By.ID, "appItaliano"), label="'Lingua Italiano'")
+            self.click_robusto((By.ID, "appItaliano"), label="'Lingua Italianò")
 
             # Cerchiamo il file
             self.log(f"[ATTESA] Polling per file PDF di {pdl_num}...")
@@ -284,7 +284,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             ts = time.time()
             files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*.pdf")}
 
-            self.click_robusto((By.ID, "btnPrintPS"), label="'Stampa Parte Seconda'")
+            self.click_robusto((By.ID, "btnPrintPS"), label="'Stampa Parte Secondà")
             self._gestisci_dialogo_stampa_tutte()
 
             self.log(f"[ATTESA] Polling per file PDF Parte Seconda di {pdl_num}...")
@@ -310,7 +310,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             # Verifica visibilità senza lanciare eccezioni se l'elemento non esiste ancora
             elementi = self.driver.find_elements(By.ID, "lblPAFoglio")
             if not elementi or not elementi[0].is_displayed():
-                self.log("[FILE] Espansione sezione 'Parte Seconda'...")
+                self.log("[FILE] Espansione sezione 'Parte Secondà...")
                 clicked = False
 
                 # Strategià1: ID Label
@@ -321,9 +321,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 # Strategià2: Testo XPATH
                 if not clicked:
                     with contextlib.suppress(Exception):
-                        self.driver.find_element(
-                            By.XPATH, "//span[contains(text(), 'PARTE SECONDA')]"
-                        ).click()
+                        self.driver.find_element(By.XPATH, "//span[contains(text(), 'PARTE SECONDÀ)]").click()
                         clicked = True
 
                 # Strategià3: User Specific IDTXT
@@ -345,12 +343,12 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         with suppress(Exception):
             # 1. Controllo presenza popup
-            self.log("[CERCA] Controllo presenza popup 'Ricerca Estesa'...")
+            self.log("[CERCA] Controllo presenza popup 'Ricerca Estesà...")
             WebDriverWait(self.driver, 10).until(
                 EC.visibility_of_element_located((By.XPATH, "//p[contains(text(), 'estenderla')]"))
             )
 
-            # 2. Click su 'Si'
+            # 2. Click su 'Sì
             for selector in (
                 "span[idtxt='E421C594']",
                 "//button[contains(@class, 'btn-ok') and contains(., 'Si')]",
@@ -359,7 +357,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 with suppress(Exception):
                     by = By.XPATH if selector.startswith("/") else By.CSS_SELECTOR
                     self.driver.find_element(by, selector).click()
-                    self.log(f"✅ Click su 'Si' riuscito (selector: {selector})")
+                    self.log(f"✅ Click su 'Sì riuscito (selector: {selector})")
                     self._attendi_scomparsa_overlay()
                     break
 
@@ -395,7 +393,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         return False
 
     def _gestisci_dialogo_stampa_tutte(self) -> None:
-        """Seleziona 'Stampa Tutte' nel popup se appare."""
+        """Seleziona 'Stampa Tuttè nel popup se appare."""
         if not self.driver or not self.wait:
             return
         with contextlib.suppress(Exception):

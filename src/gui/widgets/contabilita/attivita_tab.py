@@ -1,6 +1,6 @@
 """
-SyncroJob - Contabilità Attivita'Programmate
-Tab specializzato per la visualizzazione delle attivita'programmate settimanali.
+SyncroJob - Contabilità AttivitàProgrammate
+Tab specializzato per la visualizzazione delle attivitàprogrammate settimanali.
 Include filtri avanzati per PS, PO, Area e Stato PdL.
 """
 
@@ -39,7 +39,7 @@ from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 
 class AttivitaProgrammateTab(QWidget):
     """
-    Tab per la visualizzazione e il filtraggio delle Attivita'Programmate.
+    Tab per la visualizzazione e il filtraggio delle AttivitàProgrammate.
     Utilizza una tabella ad alte prestazioni per mostrare lo stato delle PdL e la pianificazione settimanale.
     """
 
@@ -48,14 +48,14 @@ class AttivitaProgrammateTab(QWidget):
         "AREA",
         "PdL",
         "IMP.",
-        "DESCRIZIONE\nATTIVITA'",
+        "DESCRIZIONE\nATTIVITÀ",
         "LUN",
         "MAR",
         "MER",
         "GIO",
         "VEN",
         "STATO\nPdL",
-        "STATO\nATTIVITA'",
+        "STATO\nATTIVITÀ",
         "DATA\nCONTROLLO",
         "PERSONALE\nIMPIEGATO",
         "PO",
@@ -64,7 +64,7 @@ class AttivitaProgrammateTab(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
-        Inizializza il tab delle attivita'programmate.
+        Inizializza il tab delle attivitàprogrammate.
 
         Args:
           parent: Widget genitore.
@@ -306,7 +306,7 @@ class AttivitaProgrammateTab(QWidget):
 
     def filter_data(self, text: str) -> None:
         """
-        Esegue una ricerca testuale globale su tutte le righe non gia' nascoste dai filtri.
+        Esegue una ricerca testuale globale su tutte le righe non già nascoste dai filtri.
 
         Args:
           text: Testo di ricerca.

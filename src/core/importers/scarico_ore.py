@@ -126,7 +126,7 @@ class ScaricoOreImporter(BaseImporter):
         try:
             wb_data = cls._load_scarico_workbook(path)
             if "SCARICO ORE" not in wb_data.sheetnames:
-                return False, "Foglio 'SCARICO ORE' non trovato.", []
+                return False, "Foglio 'SCARICO ORÈ non trovato.", []
 
             ws_data = wb_data["SCARICO ORE"]
             rows = cls._process_all_scarico_rows(ws_data, progress_callback)

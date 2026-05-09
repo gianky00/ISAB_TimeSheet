@@ -22,7 +22,7 @@ from src.core.paths import CONFIG_DIR
 class NotificationManager(QObject):
     """
     Manager singleton per il sistema di notifiche.
-    Gestisce il ciclo di vita dei messaggia'(creazione, lettura, pin, eliminazione).
+    Gestisce il ciclo di vita dei messaggi (creazione, lettura, pin, eliminazione).
     Emette segnali per l'aggiornamento dinamico dell'interfaccia utente.
     """
 
@@ -86,7 +86,7 @@ class NotificationManager(QObject):
         return []
 
     def _migrate_notification(self, notif: dict[str, Any]) -> dict[str, Any]:
-        """Assicura che la notifica contenga tutti i campiu'richiesti dallo schema attuale."""
+        """Assicura che la notifica contenga tutti i campi richiesti dallo schema attuale."""
         defaults = {
             "category": "system",
             "priority": "low",
@@ -129,9 +129,9 @@ class NotificationManager(QObject):
         Args:
           title: Titolo della notifica.
           message: Contenuto del messaggio.
-          level: Severit  (info, success, warning, error).
+          level: Severità (info, success, warning, error).
           category: Categoria logica del messaggio.
-          priority: Priorita' di visualizzazione.
+          priority: Priorità di visualizzazione.
           source: Modulo sorgente.
           tags: Etichette di ricerca.
           metadata: Dati strutturati extra.
@@ -211,7 +211,7 @@ class NotificationManager(QObject):
                 break
 
     def mark_all_as_read(self) -> None:
-        """Segna indistintamente tutti i messaggia'come letti."""
+        """Segna indistintamente tutti i messaggi come letti."""
         changed = False
         for n in self.notifications:
             if not n["read"]:
@@ -223,7 +223,7 @@ class NotificationManager(QObject):
             self.unread_count_changed.emit(0)
 
     def update_notification(self, notification_id: str, updates: dict[str, Any]) -> None:
-        """Aggiorna parzialmente i campiu'di una notifica identificata per ID."""
+        """Aggiorna parzialmente i campi di una notifica identificata per ID."""
         with self._lock:
             for n in self.notifications:
                 if n["id"] == notification_id:
@@ -246,7 +246,7 @@ class NotificationManager(QObject):
         self.unread_count_changed.emit(self.get_unread_count())
 
     def clear_all(self) -> None:
-        """Svuota l'intera cronologiàdelle notifiche."""
+        """Svuota l'intera cronologia delle notifiche."""
         self.notifications = []
         self._save_notifications()
         self.notifications_updated.emit()

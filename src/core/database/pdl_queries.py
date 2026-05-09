@@ -139,7 +139,7 @@ class PDLQueries:
     def get_pdl_interventions(cls, n_pdl: str) -> list[dict[str, Any]]:
         """
         Recupera la cronologiàdegli interventi per un determinato PDL
-        dal database dei Report Attivita'.
+        dal database dei Report Attività.
         """
         from src.core import config_manager  # noqa: PLC0415
 
@@ -184,7 +184,7 @@ class PDLQueries:
       UNION ALL
 
       SELECT
-        'Relazione' as fonte,
+        'Relazionè as fonte,
         data_intervento as data,
         nome_compilatore || ' ' || cognome_compilatore as tecnico,
         '' as team,

@@ -15,7 +15,7 @@ from src.gui.styles import COLORS
 class TerminalLogWidget(QWidget):
     """
     Console di log in stile terminale chiaro con evidenziazione dei livelli.
-    Fornisce una visualizzazione testuale moderna e pulita delle attivita'del bot.
+    Fornisce una visualizzazione testuale moderna e pulita delle attivitàdel bot.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -32,7 +32,7 @@ class TerminalLogWidget(QWidget):
 
         # Header opzionale
         header_layout = QHBoxLayout()
-        self.title_label = QLabel("LOG Attivita'")
+        self.title_label = QLabel("LOG Attività")
         self.title_label.setStyleSheet(
             f"font-weight: bold; color: {COLORS['text_muted']}; font-size: 10px; letter-spacing: 1px;"
         )

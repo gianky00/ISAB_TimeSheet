@@ -48,10 +48,10 @@ class PlaywrightBaseBot(BaseBot, ABC):
         Args:
           username: Nome utente per il login.
           password: Password per il login.
-          headless: Se True, avvia il browser in modalita' nascosta.
+          headless: Se True, avvia il browser in modalità nascosta.
           timeout: Tempo massimo di attesa per le operazioni (secondi).
           download_path: Percorso per il salvataggio dei file scaricati.
-          company: Societa' da selezionare al login (ISAB o PSER).
+          company: Società da selezionare al login (ISAB o PSER).
         """
         super().__init__(username, password, headless, timeout, download_path, company=company)
         self.playwright: Playwright | None = None
@@ -62,7 +62,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
     @measure_time(threshold_ms=10000)
     def _init_driver(self) -> None:
-        """Inizializza Playwright e il browser con logica di persistenza, stabilita' e recovery."""
+        """Inizializza Playwright e il browser con logica di persistenza, stabilità e recovery."""
         self.status = BotStatus.INITIALIZING
 
         # 1. Configurazione ambiente e binari
@@ -230,7 +230,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
         self._stop_playwright_internal()
 
     def _stop_playwright_internal(self) -> None:
-        """Ferma Playwright internamente senza loggare errori se gia' fermo."""
+        """Ferma Playwright internamente senza loggare errori se già fermo."""
         if self.context:
             with suppress(Exception):
                 # Chiude tutte le pagine prima del contesto

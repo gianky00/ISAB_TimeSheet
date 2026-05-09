@@ -288,7 +288,7 @@ def run_update() -> bool:  # noqa: C901, PLR0911, PLR0912, PLR0915
             logger.error("Errore durante il download di config.dat")
             return False
 
-        logger.info("  Licenza locale gia' aggiornata.")
+        logger.info("  Licenza locale già aggiornata.")
         update_grace_timestamp()
         return True  # noqa: TRY300
 

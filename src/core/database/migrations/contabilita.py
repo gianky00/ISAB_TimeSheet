@@ -12,7 +12,7 @@ def mig_contabilita_v1(conn: sqlite3.Connection) -> None:
             year INTEGER NOT NULL,
             data_prev TEXT, mese TEXT, n_prev TEXT, totale_prev TEXT,
             attivita TEXT, tcl TEXT, odc TEXT, stato_attivita TEXT,
-            tipologiàTEXT, ore_sp TEXT, resa TEXT, annotazioni TEXT,
+            tipologia TEXT, ore_sp TEXT, resa TEXT, annotazioni TEXT,
             indirizzo_consuntivo TEXT, nome_file TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -59,7 +59,7 @@ def mig_contabilita_v1(conn: sqlite3.Connection) -> None:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             modello TEXT, costruttore TEXT, matricola TEXT,
             range_strumento TEXT, errore_max TEXT, certificato TEXT,
-            scadenza TEXT, emissione TEXT, id_coemi TEXT, stato TEXT,
+            scadenza TEXT, emissione TEXT, id_strumento TEXT, stato TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """
@@ -158,3 +158,14 @@ def mig_contabilita_v6(conn: sqlite3.Connection) -> None:
     """Rimozione vincolo UNIQUE per permettere importazione 'Tale e Quale' (v6)"""
     cursor = conn.cursor()
     cursor.execute("DROP INDEX IF EXISTS idx_cert_unique")
+
+
+def mig_contabilita_v7(conn: sqlite3.Connection) -> None:
+    """Ridenominazione id_coemi in id_strumento (v7)"""
+    cursor = conn.cursor()
+    # Verifica se la colonna id_coemi esiste prima di rinominare
+    cursor.execute("PRAGMA table_info(certificati_campione)")
+    cols = [row[1] for row in cursor.fetchall()]
+    if "id_coemi" in cols and "id_strumento" not in cols:
+        with contextlib.suppress(sqlite3.OperationalError):
+            cursor.execute("ALTER TABLE certificati_campione RENAME COLUMN id_coemi TO id_strumento")

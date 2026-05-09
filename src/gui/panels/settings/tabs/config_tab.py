@@ -262,7 +262,7 @@ class ConfigTab(QWidget):
         self.diag_page = DiagPage()
         card_diag = SettingCard(
             "Diagnostica di Sistema",
-            "Strumenti di verifica integrita' e risoluzione problemi.",
+            "Strumenti di verifica integrità e risoluzione problemi.",
             Icons.ACTIVITY,
             self.diag_page,
         )

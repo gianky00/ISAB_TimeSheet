@@ -27,7 +27,7 @@ class WorkflowController(QObject):
         self.mw = main_window
 
     def run_timbrature_bot(self, mode: str) -> None:
-        """Avvia il bot delle timbrature in una modalita' specifica."""
+        """Avvia il bot delle timbrature in una modalità specifica."""
         # Assicurati che il pannello sia inizializzato
         if not hasattr(self.mw, "timbrature_bot_panel"):
             self.mw.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)

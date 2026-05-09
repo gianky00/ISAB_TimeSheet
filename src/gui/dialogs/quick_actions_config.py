@@ -22,7 +22,7 @@ class QuickActionsConfigDialog(QDialog):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Configura Azioni Rapide")
-        self.setFixedSize(450, 500)  # Dimensioni piu' compatte e fisse
+        self.setFixedSize(450, 500)  # Dimensioni più compatte e fisse
         self.setModal(True)
 
         palette = get_palette()

@@ -37,7 +37,7 @@ class GiornaliereYearTab(QWidget):
         "DATA",
         "PERSONALE",
         "TCL",
-        "DESCRIZIONE\nATTIVITA'",
+        "DESCRIZIONE\nATTIVITÀ",
         "N \nPREV.",
         "ODC",
         "PDL",

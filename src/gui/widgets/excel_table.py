@@ -29,7 +29,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 class ExcelTableWidget(QTableWidget):
     """
-    QTableWidget con funzionalita' Clipboard TSV.
+    QTableWidget con funzionalità Clipboard TSV.
     Supporta la formattazione semantica delle righe.
     """
 
@@ -229,7 +229,7 @@ class EditableDataTable(QWidget):
         menu = QMenu(self)
         icon_color = COLORS["text_dark"]
 
-        add_act = QAction(get_colored_icon(get_asset_path(Icons.PLUS), icon_color), "Aggiungia'riga", self)
+        add_act = QAction(get_colored_icon(get_asset_path(Icons.PLUS), icon_color), "Aggiungiàriga", self)
         add_act.triggered.connect(self._add_row)
 
         remove_act = QAction(
@@ -367,7 +367,7 @@ class EditableDataTable(QWidget):
 
     def update_column_options(self, col: int, options: list[str]) -> None:
         """
-        Aggiorna le opzioni di una colonna di tipo 'combo' per tutte le righe esistenti.
+        Aggiorna le opzioni di una colonna di tipo 'combò per tutte le righe esistenti.
         Aggiorna anche la definizione della colonna per le future righe.
 
         Args:

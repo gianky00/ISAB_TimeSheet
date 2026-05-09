@@ -15,7 +15,7 @@ class PrenotaBPLocators:
     LOGIN_BUTTON = (By.XPATH, "//a[.//span[text()='Accedi']] | //span[text()='Accedi']")
     BT_SI_SESSIONE_ATTIVA = (
         By.XPATH,
-        "//span[normalize-space(text())='Si' or normalize-space(text())='Sì']/ancestor::a",
+        "//span[normalize-space(text())='Sì or normalize-space(text())='Sì']/ancestor::a",
     )
     USER_INFO_PANEL = (By.ID, "user-info-panel")
 
@@ -51,13 +51,13 @@ class PrenotaBPLocators:
     # Cerchiamo varianti comuni per i nomi dei campi nel DOM ExtJS
     CAMPO_NUMERO_BP = (
         By.XPATH,
-        "//input[@name='NumeroBP' or @name='Numero' or @name='BPNumber' or contains(@name, 'Numero')]",
+        "//input[@name='NumeroBP' or @name='Numerò or @name='BPNumber' or contains(@name, 'Numero')]",
     )
     CAMPO_NOTE = (
         By.XPATH,
-        "//textarea[@name='NoteRitiro' or @name='Note' or @name='Notes' or contains(@name, 'Note')] | //input[@name='Note']",
+        "//textarea[@name='NoteRitirò or @name='Notè or @name='Notes' or contains(@name, 'Note')] | //input[@name='Note']",
     )
-    BT_SALVA = (By.XPATH, "//span[text()='Salva' or text()='Conferma']/ancestor::a")
+    BT_SALVA = (By.XPATH, "//span[text()='Salvà or text()='Conferma']/ancestor::a")
     # BT_CHIUDI_POPUP: Ora punta al tasto chiudi del TAB attivo
     BT_CHIUDI_POPUP = (
         By.XPATH,
@@ -70,7 +70,7 @@ class PrenotaBPLocators:
         "//div[contains(@class, 'x-action-col-icon') and contains(@class, 'fa-info-circle')]",
     )
     # Finestra Dettagli (In realtà è un TAB PANEL)
-    # Cerchiamo il pannello visibile che contiene la griglia 'Posizioni'
+    # Cerchiamo il pannello visibile che contiene la griglia 'Posizionì
     WINDOW_DETTAGLI = (
         By.XPATH,
         "//div[contains(@class, 'x-tabpanel-child') and not(contains(@class, 'x-hidden-offsets'))]//div[contains(@id, 'dettaglio_buono_di_prelievo_posizioni')]",

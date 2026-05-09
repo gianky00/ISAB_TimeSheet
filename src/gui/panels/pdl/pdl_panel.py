@@ -60,7 +60,7 @@ class PDLDBPanel(QWidget):
             "Richiedente",
             "N  PDL",
             "Area",
-            "Unita'",
+            "Unità",
             "Stato",
             "Descrizione",
         ]
@@ -69,7 +69,7 @@ class PDLDBPanel(QWidget):
             "N  PDL",
             "Data Creazione",
             "Area",
-            "Unita'",
+            "Unità",
             "Ditta",
             "Descrizione",
             "Tipologia",
@@ -81,7 +81,7 @@ class PDLDBPanel(QWidget):
             "Data Emissione",
             "Aprente",
             "Data Apertura",
-            "Priorita'",
+            "Priorità",
             "Contratto",
             "Ordine",
             "Sito",
@@ -221,7 +221,7 @@ class PDLDBPanel(QWidget):
         self.refresh_data()
 
     def _on_area_changed(self) -> None:
-        """Gestisce il cambio del filtro Area e aggiorna le Unita' disponibili."""
+        """Gestisce il cambio del filtro Area e aggiorna le Unità disponibili."""
         self._update_units()
         self.refresh_data()
 
@@ -246,7 +246,7 @@ class PDLDBPanel(QWidget):
         self.filters.area_filter.blockSignals(False)
 
     def _update_units(self) -> None:
-        """Aggiorna dinamicamente il filtro Unita' basandosi su Sito e Area selezionati."""
+        """Aggiorna dinamicamente il filtro Unità basandosi su Sito e Area selezionati."""
         site = self.filters.site_filter.currentText()
         area = self.filters.area_filter.currentText()
         q = "SELECT DISTINCT unita FROM pdl WHERE 1=1"
