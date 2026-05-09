@@ -131,7 +131,7 @@ class ROIWeightsPage(QWidget):
             seconds = round((val - minutes) * 60)
 
             # Gestione arrotondamento (es. 5.999 -> 6.0)
-            if seconds >= 60:  # noqa: PLR2004
+            if seconds >= 60:
                 minutes += 1
                 seconds = 0
 

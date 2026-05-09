@@ -93,7 +93,7 @@ class TimbratureDBPanel(QWidget):
 
             self.refresh_data()
         except Exception as e:
-            from src.core.logging import get_logger  # noqa: PLC0415
+            from src.core.logging import get_logger
 
             get_logger(__name__).error(f"Error in deferred init: {e}")
 
@@ -108,7 +108,7 @@ class TimbratureDBPanel(QWidget):
 
         # Tabs
         self.tabs = AnimatedTabWidget()
-        # self.tabs.setProperty("class", "Level2Tabs") # Stile gestito dal componente # noqa: ERA001
+        # self.tabs.setProperty("class", "Level2Tabs") # Stile gestito dal componente
 
         # Tab 1: Database
         self.tab_database = QWidget()
@@ -133,7 +133,7 @@ class TimbratureDBPanel(QWidget):
         # Signals from Settings Tab
         self.settings_tab.settings_changed.connect(self._on_settings_changed)
 
-    def _setup_toolbar(self) -> None:  # noqa: PLR0915
+    def _setup_toolbar(self) -> None:
         self.toolbar_container = QFrame()
         self.toolbar_container.setObjectName("filterBar")
         self.toolbar_container.setStyleSheet(f"""
@@ -150,7 +150,7 @@ class TimbratureDBPanel(QWidget):
         # Sezione Ricerca
         search_v = QVBoxLayout()
         search_v.setSpacing(4)
-        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE  # noqa: PLC0415
+        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED, LINEEDIT_STYLE
 
         lbl_search = QLabel("CERCA PERSONALE")
         lbl_search.setStyleSheet(LABEL_MUTED)
@@ -206,7 +206,7 @@ class TimbratureDBPanel(QWidget):
 
         self._update_filter_combos()
 
-        from src.gui.widgets.modern_button import ModernButton  # noqa: PLC0415
+        from src.gui.widgets.modern_button import ModernButton
 
         import_btn = ModernButton(
             "IMPORTA EXCEL",
@@ -241,7 +241,7 @@ class TimbratureDBPanel(QWidget):
 
         header = self.db_table.horizontalHeader()
         if header is None:
-            raise RuntimeError("Table horizontal header is None")  # noqa: TRY003
+            raise RuntimeError("Table horizontal header is None")
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setStretchLastSection(True)
 

@@ -62,7 +62,7 @@ class CaricoTSPanel(BaseBotPanel):
 
     def get_bot_class(self) -> type[BaseBot]:
         """Restituisce la classe CaricoTSBot associata."""
-        from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot  # noqa: PLC0415
+        from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot
 
         return CaricoTSBot
 
@@ -155,7 +155,7 @@ class CaricoTSPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        from src.core.config_manager import load_config  # noqa: PLC0415
+        from src.core.config_manager import load_config
 
         config = load_config()
 

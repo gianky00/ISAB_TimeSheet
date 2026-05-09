@@ -48,8 +48,8 @@ class SafeWorkLoginPage:
 
     def _procedura_comune_login(self, username: str, password: str) -> None:
         """Passaggi comuni a tutti gli account prima della verifica accesso."""
-        MAX_RETRIES = 3  # noqa: N806
-        for tentativa in range(MAX_RETRIES):
+        max_retries = 3
+        for tentativa in range(max_retries):
             try:
                 self.log(f"[ATTESA] Selezione sito 'ISAB Sud' (Tentativo {tentativa + 1}/3)...")
 
@@ -81,7 +81,7 @@ class SafeWorkLoginPage:
                 break  # Successo, esci dal loop
 
             except (TimeoutException, Exception) as e:
-                if "stale" in str(e).lower() and tentativa < MAX_RETRIES - 1:
+                if "stale" in str(e).lower() and tentativa < max_retries - 1:
                     self.log("⚠️ Rilevato elemento non più valido. Ricaricamento...")
                     self.driver.refresh()
                     continue
@@ -120,7 +120,8 @@ class SafeWorkLoginPage:
         try:
             WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable(SafeWorkLocators.HOME_BUTTON))
             self.log("✅ Accesso alla Dashboard completato.")
-            return True  # noqa: TRY300
         except TimeoutException:
             self.log("❌ Dashboard non raggiunta.")
             return False
+        else:
+            return True

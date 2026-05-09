@@ -36,7 +36,7 @@ class TestSystemTelemetry:
 
     @patch("src.utils.system_telemetry.ctypes")
     def test_get_current_process_ram_mb_no_windll(self, mock_ctypes):
-        # hasattr(ctypes, "windll")  # noqa: ERA001
+        # hasattr(ctypes, "windll")
         # We need to make it return False.
         # For a MagicMock, we can use spec or just delete the attribute
         with patch("src.utils.system_telemetry.ctypes", spec=[]):

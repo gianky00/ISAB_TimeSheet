@@ -18,12 +18,12 @@ class ODATreeView(QTreeView):
     row_double_clicked = Signal()
     context_menu_requested = Signal(object)  # pos
 
-    def __init__(self, model, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, model, parent=None) -> None:
         super().__init__(parent)
         self.setModel(model)
         self._setup_ui()
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
         self.setAlternatingRowColors(True)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -48,7 +48,7 @@ class ODATreeView(QTreeView):
         if sel_model := self.selectionModel():
             sel_model.selectionChanged.connect(lambda _1, _2: self.selection_changed_custom.emit())
 
-    def _on_double_clicked(self, index):  # noqa: ANN001, ANN202
+    def _on_double_clicked(self, index) -> None:
         """Espande o comprime la riga al doppio click su qualsiasi colonna."""
         if not index.isValid():
             return
@@ -62,7 +62,7 @@ class ODATreeView(QTreeView):
 
         self.row_double_clicked.emit()
 
-    def _on_expanded(self, index):  # noqa: ANN001, ANN202
+    def _on_expanded(self, index) -> None:
         """Scrolla in modo fluido per mostrare i figli appena espansi."""
         self.scrollTo(index, QAbstractItemView.ScrollHint.PositionAtTop)
 
@@ -86,7 +86,7 @@ class ODATreeView(QTreeView):
       }}
     """)
 
-    def configure_headers(self):  # noqa: ANN201
+    def configure_headers(self) -> None:
         """Configura le dimensioni e le modalità di ridimensionamento degli header."""
         h = self.header()
         if not h:

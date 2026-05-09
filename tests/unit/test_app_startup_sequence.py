@@ -56,7 +56,7 @@ class TestAppInitializer:
     @patch("src.core.database.db_manager.init_db", side_effect=Exception("DB Error"))
     def test_initialize_core_failure_handling(self, mock_db_init, mocker):
         """Verifica che un errore nel core sollevi eccezione."""
-        import pytest  # noqa: PLC0415
+        import pytest
 
         AppInitializer._core_initialized = False
         mocker.patch("src.core.app_initializer.AppInitializer._setup_logging")

@@ -47,19 +47,19 @@ with contextlib.suppress(Exception):
             super().__init__(*args, **kwargs)
             self.figure = MagicMock()
 
-        def setParent(self, parent):  # noqa: N802
+        def setParent(self, parent):
             pass
 
-        def setMinimumHeight(self, h):  # noqa: N802
+        def setMinimumHeight(self, h):
             pass
 
-        def setSizePolicy(self, *args):  # noqa: N802
+        def setSizePolicy(self, *args):
             pass
 
-        def setGraphicsEffect(self, effect):  # noqa: N802
+        def setGraphicsEffect(self, effect):
             pass
 
-        def setStyleSheet(self, style):  # noqa: N802
+        def setStyleSheet(self, style):
             pass
 
     mock_backend = MagicMock()
@@ -75,14 +75,14 @@ with contextlib.suppress(Exception):
 
 # --- GLOBAL PySide6 MOCK FOR HEADLESS ENVIRONMENTS ---
 try:
-    import PySide6  # noqa: F401
+    import PySide6
 except (ImportError, RuntimeError):
 
     class MockQObject:
         def __init__(self, *args, **kwargs):
             pass
 
-        def setParent(self, parent):  # noqa: N802
+        def setParent(self, parent):
             pass
 
     class MockSignal:
@@ -143,15 +143,15 @@ def _isolate_config(tmp_path, monkeypatch):
     Global isolation for configuration and data.
     Ensures NO test ever writes to real user directories.
     """
-    from src.core import (  # noqa: PLC0415
+    from src.core import (
         config_manager,
         paths,
     )
-    from src.core.audit_manager import AuditManager  # noqa: PLC0415
-    from src.core.database.manager import DatabaseManager  # noqa: PLC0415
-    from src.core.secrets_manager import SecretsManager  # noqa: PLC0415
-    from src.core.stats_manager import StatsManager  # noqa: PLC0415
-    from src.utils.security import password_manager  # noqa: PLC0415
+    from src.core.audit_manager import AuditManager
+    from src.core.database.manager import DatabaseManager
+    from src.core.secrets_manager import SecretsManager
+    from src.core.stats_manager import StatsManager
+    from src.utils.security import password_manager
 
     # 1. Setup fake paths
     fake_dir = tmp_path / "syncrojob_test_env"
@@ -201,10 +201,10 @@ def _isolate_config(tmp_path, monkeypatch):
 def cleanup_widgets():
     """Force clean up of top-level widgets."""
     yield
-    import gc  # noqa: PLC0415
+    import gc
 
     with contextlib.suppress(ImportError, RuntimeError):
-        from PySide6.QtWidgets import QApplication  # noqa: PLC0415
+        from PySide6.QtWidgets import QApplication
 
         if QApplication.instance():
             for widget in QApplication.topLevelWidgets():

@@ -264,8 +264,8 @@ def test_import_scarico_ore_success(tmp_path):
     path = tmp_path / "scarico_ore.xlsx"
 
     # Creiamo un file excel con openpyxl per avere stili reali
-    import openpyxl  # noqa: PLC0415
-    from openpyxl.styles import Font, PatternFill  # noqa: PLC0415
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill
 
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -317,7 +317,7 @@ def test_import_scarico_ore_success(tmp_path):
     assert len(rows) == 1
 
     # Verify row and styles
-    # row: (data, pers1, pers2, odc, pos, dalle, alle, totale_ore, descrizione, finito, commessa, styles_json)  # noqa: ERA001
+    # row: (data, pers1, pers2, odc, pos, dalle, alle, totale_ore, descrizione, finito, commessa, styles_json)
     row = rows[0]
     assert row[3] == "54001"
 
@@ -443,7 +443,7 @@ def test_import_attivita_programmate_success(tmp_path):
     success, _msg, rows = ExcelImporter.import_attivita_programmate(str(path))
     assert success is True
     assert len(rows) == 1
-    # row: (ps, area, pdl, imp, descrizione, lun, mar, mer, gio, ven, stato_pdl, stato_attivita, data_controllo, personale, po, avviso, styles)  # noqa: ERA001
+    # row: (ps, area, pdl, imp, descrizione, lun, mar, mer, gio, ven, stato_pdl, stato_attivita, data_controllo, personale, po, avviso, styles)
     assert rows[0][0] == "PS1"
     assert rows[0][4] == "Pulizia"
     assert rows[0][16] == ""  # styles default
@@ -496,7 +496,7 @@ def test_import_certificati_campione_success(tmp_path):
     success, _msg, rows = ExcelImporter.import_certificati_campione(str(path))
     assert success is True
     assert len(rows) == 1
-    # row: (id_coemi(0), certificato(1), modello(2), costruttore(3), matricola(4), range(5), errore(6), emissione(7), scadenza(8), stato(9))  # noqa: ERA001
+    # row: (id_coemi(0), certificato(1), modello(2), costruttore(3), matricola(4), range(5), errore(6), emissione(7), scadenza(8), stato(9))
     assert rows[0][2] == "M1"
     assert "31/12/2026" in rows[0][8]
     assert "Scade tra 30 giorni" in rows[0][9]

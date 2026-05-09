@@ -24,7 +24,7 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
         ("search", "Ricerca ed Esportazione"),
     ]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         username: str,
         password: str,

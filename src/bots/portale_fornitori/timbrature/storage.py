@@ -99,7 +99,7 @@ class TimbratureStorage:
         Returns: Lista di dizionari con info dipendente.
         """
         query = query.strip().lower()
-        if len(query) < 2:  # noqa: PLR2004
+        if len(query) < 2:
             return []
 
         results: list[dict[str, str]] = []
@@ -251,18 +251,18 @@ class TimbratureStorage:
                 parts = clean_term.split("-")
 
                 # Caso DD-MM (es. 05/12 -> cerca 12 Dicembre)
-                if len(parts) == 2:  # noqa: PLR2004
+                if len(parts) == 2:
                     d, m = parts
                     # Ignoriamo se contengono testo
                     if d.isdigit() and m.isdigit():
                         return f"-{m.zfill(2)}-{d.zfill(2)}"
 
                 # Caso DD-MM-YYYY
-                if len(parts) == 3:  # noqa: PLR2004
+                if len(parts) == 3:
                     d, m, y = parts
                     if len(y) not in (2, 4):
                         return term
-                    if len(y) == 2:  # noqa: PLR2004
+                    if len(y) == 2:
                         y = "20" + y
                     return f"{y}-{m.zfill(2)}-{d.zfill(2)}"
 
@@ -283,9 +283,9 @@ class TimbratureStorage:
             emp = mappings.get(f"{nome}|{cognome}", {"reparto": "", "cantiere": ""})
             rep, cant = emp.get("reparto", ""), emp.get("cantiere", "")
 
-            if f_rep and f_rep != "Tutti" and rep != f_rep:  # noqa: PLR1714
+            if f_rep and f_rep not in ("Tutti", rep):
                 continue
-            if f_cant and f_cant != "Tutti" and cant != f_cant:  # noqa: PLR1714
+            if f_cant and f_cant not in ("Tutti", cant):
                 continue
 
             final.append((*r, rep, cant))
@@ -383,7 +383,7 @@ class TimbratureStorage:
             old_path = self._active_db_path.parent / "timbrature_lists.json"
             if old_path.exists():
                 with suppress(Exception):
-                    import json  # noqa: PLC0415
+                    import json
 
                     old_data = json.loads(old_path.read_text(encoding="utf-8"))
                     if isinstance(old_data, dict):

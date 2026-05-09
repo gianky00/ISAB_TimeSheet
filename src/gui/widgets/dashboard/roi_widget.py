@@ -213,7 +213,7 @@ class BotSavingsWidget(ModernCard):
         badge.setPixmap(get_colored_icon(icon_path, icon_color).pixmap(14, 14))
         return badge
 
-    def _create_kpi_card(  # noqa: PLR0913
+    def _create_kpi_card(
         self,
         icon_key: str,
         icon_color: str,
@@ -295,7 +295,7 @@ class BotSavingsWidget(ModernCard):
                 metrics = ROIEngine.calculate_savings()
                 self.stats_updated.emit(metrics)
             except Exception as e:
-                logger.error(f"Efficiency Update Error: {e}")  # noqa: TRY400
+                logger.exception("Efficiency Update Error", exc=e)
 
         threading.Thread(target=run, daemon=True).start()
 

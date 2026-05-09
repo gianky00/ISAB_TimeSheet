@@ -4,6 +4,7 @@ SyncroJob - Dettagli OdA Page
 Page Object Model for Dettagli OdA.
 """
 
+import shutil
 import time
 from collections.abc import Callable
 from contextlib import suppress
@@ -20,7 +21,7 @@ from src.bots.base.wait_helpers import poll_for_new_file
 from src.bots.portale_fornitori.common.locators import CommonLocators, LoginLocators
 from src.bots.portale_fornitori.dettagli_oda.locators import DettagliOdALocators
 from src.core.constants import Timeouts
-from src.utils.helpers import sanitize_filename
+from src.utils.helpers import cleanup_chrome_temp_files, sanitize_filename
 
 
 class DettagliOdAPage:
@@ -57,7 +58,10 @@ class DettagliOdAPage:
 
         if wait_for_appearance:
             with suppress(TimeoutException):
-                WebDriverWait(self.driver, 2).until(EC.visibility_of_element_located((By.XPATH, xpath)))
+                WAIT_FOR_APPEARANCE_SEC = 2
+                WebDriverWait(self.driver, WAIT_FOR_APPEARANCE_SEC).until(
+                    EC.visibility_of_element_located((By.XPATH, xpath))
+                )
 
         with suppress(TimeoutException):
             WebDriverWait(self.driver, t).until(EC.invisibility_of_element_located((By.XPATH, xpath)))
@@ -81,10 +85,11 @@ class DettagliOdAPage:
 
             self.wait.until(EC.visibility_of_element_located(DettagliOdALocators.SUPPLIER_ARROW))
             self._wait_for_overlay()
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"  Navigazione fallita: {e}")
             return False
+        else:
+            return True
 
     def setup_supplier(self, supplier: str) -> bool:
         """Seleziona il fornitore dal menu a discesa della pagina."""
@@ -98,10 +103,11 @@ class DettagliOdAPage:
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
             self.driver.execute_script("arguments[0].click();", option)
             self._wait_for_overlay()
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"  Selezione fornitore fallita: {e}")
             return False
+        else:
+            return True
 
     def logout(self) -> bool:
         """Esegue la procedura di logout specifica per questa area del portale."""
@@ -125,10 +131,11 @@ class DettagliOdAPage:
                 self.log(" Conferma cliccata.")
                 self.wait.until(EC.visibility_of_element_located(LoginLocators.USERNAME_FIELD))
                 self.log("  Logout completato con successo.")
-                return True  # noqa: TRY300
             except TimeoutException:
                 self.log("⚠️ Popup conferma non apparso o timeout.")
                 return False
+            else:
+                return True
         except Exception as e:
             self.log(f"⚠️ Errore durante logout: {e}")
             return False
@@ -142,7 +149,7 @@ class DettagliOdAPage:
                 self.driver.execute_script("arguments[0].click();", expand_btn)
                 self.log(" Menu espanso.")
 
-    def process_oda(  # noqa: PLR0913
+    def process_oda(
         self,
         oda: str,
         contract: str,
@@ -197,7 +204,8 @@ class DettagliOdAPage:
                 if ":" in count_text:
                     count = int(count_text.split(":")[-1].strip())
                     self.log(f" Risultati trovati: {count}")
-                    if count == 0:
+                    EMPTY_COUNT = 0
+                    if count == EMPTY_COUNT:
                         self.log(" Nessun risultato. Salto esportazione.")
                         self._close_all_tabs()
                         return None
@@ -220,13 +228,13 @@ class DettagliOdAPage:
 
             final_path = self._download(source_dir, dest_dir, target_filename, export_btn_locator)
             self._close_all_tabs()
-            return final_path  # noqa: TRY300
-
         except Exception as e:
             self.log(f"   Errore processamento: {e}")
             with suppress(Exception):
                 self._close_all_tabs()
             return None
+        else:
+            return final_path
 
     def _close_all_tabs(self) -> None:
         """Chiude tutte le schede aperte nel portale cliccando sull'icona X."""
@@ -291,17 +299,17 @@ class DettagliOdAPage:
             final_path = self._finalize_download(downloaded_file, dest_dir, target_filename)
 
             # Pulizia aggressiva residui 0 KB (post-download)
-            time.sleep(0.5)
-            from src.utils.helpers import cleanup_chrome_temp_files  # noqa: PLC0415
+            time.sleep(Timeouts.UI_DELAY)
 
             removed = cleanup_chrome_temp_files(source_dir)
             for f_name in removed:
                 self.log(f" [DEBUG] Rimosso residuo download: {f_name}")
 
-            return final_path  # noqa: TRY300
         except Exception as e:
             self.log(f"   Errore download: {e}")
             return None
+        else:
+            return final_path
 
     def _click_export_button(self, locator: tuple[str, str]) -> bool:
         """Tenta di cliccare il pulsante di esportazione Excel gestendo intercettazioni."""
@@ -309,20 +317,19 @@ class DettagliOdAPage:
             btn = self.wait.until(EC.presence_of_element_located(locator))
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
             # Piccola attesa post-scroll
-            time.sleep(0.5)
+            time.sleep(Timeouts.UI_DELAY)
             try:
                 btn.click()
             except Exception:
                 self.driver.execute_script("arguments[0].click();", btn)
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f" ⚠️ Errore click esportazione: {e}")
             return False
+        else:
+            return True
 
     def _finalize_download(self, src: Path, dest_dir: Path, target_name: str) -> Path | None:
         """Sposta il file scaricato nella destinazione finale rinominandolo."""
-        import shutil  # noqa: PLC0415
-
         dest_dir.mkdir(parents=True, exist_ok=True)
         target_path = dest_dir / target_name
         if target_path.exists():

@@ -41,7 +41,7 @@ class BaseBot(ABC):
     STEPS: ClassVar[list[tuple[str, str]]] = []
     """Definizione degli step sequenziali visualizzati nella GUI."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         username: str,
         password: str,

@@ -94,7 +94,7 @@ class StartupConsole(QLabel):
             f"color: {color}; font-family: 'Consolas', monospace; font-size: 13px; padding: 0 10px;"
         )
         self._log_queue.append((message, is_error))
-        if len(self._log_queue) > 100:  # noqa: PLR2004
+        if len(self._log_queue) > 100:
             self._log_queue.pop(0)
 
 

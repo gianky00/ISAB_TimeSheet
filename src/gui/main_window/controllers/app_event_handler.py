@@ -48,11 +48,11 @@ class AppEventHandler(QObject):
         Args:
             event: QCloseEvent intercettato dalla MainWindow.
         """
-        from src.core.app_updater import has_pending_update, run_pending_installer  # noqa: PLC0415
+        from src.core.app_updater import has_pending_update, run_pending_installer
 
         # Se c'è un aggiornamento programmato e l'utente clicca la 'X'
         if not self._force_quit and has_pending_update():
-            from src.gui.dialogs.confirmation_dialog import ConfirmationDialog  # noqa: PLC0415
+            from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 
             res = ConfirmationDialog.confirm(
                 self.main_window,

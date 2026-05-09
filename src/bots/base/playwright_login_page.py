@@ -95,7 +95,7 @@ class PlaywrightLoginPage(PlaywrightBasePage):
         try:
             # Caricamento pagina (domcontentloaded  sufficiente)
             response = self.page.goto(self.isab_url, wait_until="domcontentloaded")
-            if response and response.status >= 400:  # noqa: PLR2004
+            if response and response.status >= 400:
                 self.log(f"  Errore HTTP {response.status}")
                 return False
 

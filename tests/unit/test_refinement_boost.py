@@ -26,7 +26,7 @@ class TestRefinementBoost:
             assert indicator.toolTip() == f"Msg {s}"
 
     def test_toast_overlay_fade(self, qapp, qtbot):
-        from PySide6.QtWidgets import QWidget  # noqa: PLC0415
+        from PySide6.QtWidgets import QWidget
 
         parent = QWidget()
         toast = ToastOverlay(parent)

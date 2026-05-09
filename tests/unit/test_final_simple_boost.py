@@ -13,7 +13,7 @@ class TestFinalSimpleBoost:
 
         # Check badge logic: append " (N)"
         btn.set_badge(5)
-        # Implementation: f"   {self.label_text} ({count})"  # noqa: ERA001
+        # Implementation: f"   {self.label_text} ({count})"
         assert "(5)" in btn.text()
 
         btn.set_badge(0)
@@ -34,7 +34,7 @@ class TestFinalSimpleBoost:
         assert ContabilitaQueries.get_scarico_ore_data(db_path) == []
 
     def test_modern_button_no_icon(self, qapp):
-        from src.gui.widgets.modern_button import ModernButton  # noqa: PLC0415
+        from src.gui.widgets.modern_button import ModernButton
 
         btn = ModernButton("Text only")
         assert btn.text() == "Text only"

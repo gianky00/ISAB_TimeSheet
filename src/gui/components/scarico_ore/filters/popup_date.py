@@ -74,7 +74,7 @@ class DateFilterPopupWidget(QWidget):
                 continue
             with suppress(Exception):
                 parts = v.split("/")
-                if len(parts) == 3:  # noqa: PLR2004
+                if len(parts) == 3:
                     _, m, y = parts
                     if y not in structure:
                         structure[y] = {}

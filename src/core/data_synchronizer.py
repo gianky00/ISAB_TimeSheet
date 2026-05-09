@@ -20,7 +20,7 @@ class DataSynchronizer:
     @classmethod
     def sync_contabilita(cls, db_path: Path, import_data: list[Any], years: list[int]) -> tuple[int, int]:
         """Sincronizza i dati della contabilità."""
-        from src.core.importers.contabilita import ContabilitaImporter  # noqa: PLC0415
+        from src.core.importers.contabilita import ContabilitaImporter
 
         all_new_data = []
         for r in import_data:
@@ -37,7 +37,7 @@ class DataSynchronizer:
     @classmethod
     def sync_giornaliere(cls, db_path: Path, import_data: list[Any], years: list[int]) -> tuple[int, int]:
         """Sincronizza i dati delle giornaliere."""
-        from src.core.importers.giornaliere import GiornaliereImporter  # noqa: PLC0415
+        from src.core.importers.giornaliere import GiornaliereImporter
 
         all_new_data = []
         for r in import_data:
@@ -54,7 +54,7 @@ class DataSynchronizer:
     @classmethod
     def sync_storico_oda(cls, db_path: Path, rows_to_insert: list[tuple[Any, ...]]) -> tuple[int, int]:
         """Sincronizza lo storico ODA via Upsert intelligente."""
-        from src.core.importers.storico_oda import StoricoOdaImporter  # noqa: PLC0415
+        from src.core.importers.storico_oda import StoricoOdaImporter
 
         res = SmartSyncEngine.sync_upsert_smart(
             db_path,
@@ -73,7 +73,7 @@ class DataSynchronizer:
     @classmethod
     def sync_attivita_programmate(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
         """Sincronizza le attivitàprogrammate."""
-        from src.core.importers.attivita import AttivitaImporter  # noqa: PLC0415
+        from src.core.importers.attivita import AttivitaImporter
 
         res = SmartSyncEngine.sync_upsert_smart(
             db_path,
@@ -87,7 +87,7 @@ class DataSynchronizer:
     @classmethod
     def sync_scarico_ore(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
         """Sincronizza lo scarico ore."""
-        from src.core.importers.scarico_ore import ScaricoOreImporter  # noqa: PLC0415
+        from src.core.importers.scarico_ore import ScaricoOreImporter
 
         res = SmartSyncEngine.sync_upsert_smart(
             db_path,
@@ -101,7 +101,7 @@ class DataSynchronizer:
     @classmethod
     def sync_certificati_campione(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
         """Sincronizza i certificati campione."""
-        from src.core.importers.certificati import CertificatiImporter  # noqa: PLC0415
+        from src.core.importers.certificati import CertificatiImporter
 
         res = SmartSyncEngine.sync_upsert_smart(
             db_path,

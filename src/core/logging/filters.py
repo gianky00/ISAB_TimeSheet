@@ -176,7 +176,7 @@ class SamplingFilter:
     Utile per log ad alto volume (es: ogni riga processata).
     """
 
-    def __init__(self, sample_rate: float = 1.0):  # noqa: ANN204
+    def __init__(self, sample_rate: float = 1.0) -> None:
         """
         Inizializza filter.
 

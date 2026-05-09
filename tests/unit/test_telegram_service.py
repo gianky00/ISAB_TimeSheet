@@ -8,7 +8,7 @@ class TestTelegramService:
     @pytest.fixture
     def service(self):
         with patch("src.core.telegram.service.QObject.__init__"):
-            from src.core.telegram.service import TelegramService  # noqa: PLC0415
+            from src.core.telegram.service import TelegramService
 
             svc = TelegramService()
             svc.log_signal = MagicMock()

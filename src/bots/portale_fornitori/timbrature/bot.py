@@ -54,7 +54,7 @@ class TimbratureBot(SeleniumBaseBot):
             {"name": "data_a", "label": "Data A", "width": 100},
         ]
 
-    def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs):  # noqa: ANN003, ANN204
+    def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs) -> None:
         super().__init__(**kwargs)
         self.data_da = data_da
         self.data_a = data_a
@@ -153,7 +153,7 @@ class TimbratureBot(SeleniumBaseBot):
         return True
 
     @staticmethod
-    def import_to_db_static(excel_path: str, db_path: Path, log_callback=None):  # noqa: ANN001, ANN205
+    def import_to_db_static(excel_path: str, db_path: Path, log_callback: Any = None) -> Any:
         """
         Static method for manual import (GUI).
         """

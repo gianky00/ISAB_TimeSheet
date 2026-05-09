@@ -101,7 +101,7 @@ class TelegramIntentHandler(QObject):
         self._run_coroutine(coro)
 
     def _handle_generic_download(self, obj: str) -> None:
-        from .ui_commands import TelegramUICommands  # noqa: PLC0415
+        from .ui_commands import TelegramUICommands
 
         cmds = TelegramUICommands(self.mw, self.telegram)
         if obj == "oda":

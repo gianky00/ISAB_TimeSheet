@@ -30,7 +30,7 @@ class TrayIconComponent(QObject):
         """
         super().__init__(main_window)
         self.main_window = main_window
-        from src.gui.controllers.tray_controller import TrayController  # noqa: PLC0415
+        from src.gui.controllers.tray_controller import TrayController
 
         self.controller = TrayController(main_window)
 

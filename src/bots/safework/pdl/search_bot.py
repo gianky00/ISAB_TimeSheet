@@ -4,7 +4,6 @@ SyncroJob - SafeWork PDL Search Bot
 Bot modulare per la ricerca massiva ed esportazione Excel dei PDL.
 """
 
-import logging
 import time
 from pathlib import Path
 from typing import Any, ClassVar
@@ -15,9 +14,10 @@ from src.bots.base.base_bot import StepStatus
 from src.bots.safework.base import SafeworkBaseBot
 from src.bots.safework.common.locators import SafeWorkLocators
 from src.core.database import db_manager
+from src.core.logging import get_logger
 from src.core.sync_tracker import SyncTracker
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SafeWorkPDLSearchBot(SafeworkBaseBot):
@@ -34,7 +34,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         ("db", "Importazione Database"),
     ]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         username: str,
         password: str,
@@ -138,7 +138,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             self.log("[CERCA] Clic su Ricerca PdL...")
             self.wait.until(lambda d: d.find_element(*SafeWorkLocators.RICERCA_PDL_BUTTON)).click()
             self._attendi_scomparsa_overlay()
-            return True  # noqa: TRY300
+            return True
         except Exception:
             return False
 
@@ -152,7 +152,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         Returns:
           str | None: Percorso del file scaricato o None.
         """
-        from src.bots.base.wait_helpers import poll_for_new_file  # noqa: PLC0415
+        from src.bots.base.wait_helpers import poll_for_new_file
 
         files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*") if f.is_file()}
 
@@ -174,7 +174,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             Path(file_path).unlink()
             self.log(f"    File temporaneo rimosso: {Path(file_path).name}")
         except Exception:
-            logger.debug(f"Impossibile rimuovere il file temporaneo: {file_path}")
+            logger.debug("Impossibile rimuovere il file temporaneo", file_path=file_path)
 
     def _import_to_db(self, file_path: str) -> None:
         """

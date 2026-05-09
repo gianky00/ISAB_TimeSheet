@@ -71,11 +71,11 @@ class RicercaPDLPage:
 
             # 4. Attesa Overlay (Post-Search)
             self._attendi_scomparsa_overlay(timeout_secondi=300)
-
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"❌ Errore selezione/ricerca (Main Logic): {e}")
             return False
+        else:
+            return True
 
     def _attendi_scomparsa_overlay(self, timeout_secondi: int = 300) -> None:
         """Attende la scomparsa dell'overlay di caricamento (GISWaitOverlay)."""
@@ -91,7 +91,8 @@ class RicercaPDLPage:
         """Clicca sul pulsante Esporta."""
         try:
             self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.EXPORT_BUTTON)).click()
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"❌ Errore click export: {e}")
             return False
+        else:
+            return True

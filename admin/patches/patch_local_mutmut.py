@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-def patch_mutmut():  # noqa: ANN201
+def patch_mutmut() -> None:
     venv_path = Path(".venv/Lib/site-packages/mutmut/__main__.py")
     if not venv_path.exists():
         print("Venv mutmut not found.")

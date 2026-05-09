@@ -20,7 +20,7 @@ def sample_timesheet(tmp_path):
     ws = wb.active
     ws.title = "Timesheet"
 
-    # A2: ODC  # noqa: ERA001
+    # A2: ODC
     ws["A2"] = "ODC123"
 
     # B column: POS (Same value to ensure len(pos_values) == 1)

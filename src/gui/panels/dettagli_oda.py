@@ -53,7 +53,7 @@ class DettagliOdAPanel(BaseBotPanel):
         self._setup_content()
 
         # Forza inizializzazione timeline immediata per Dettagli OdA (Previene blocchi su _on_start)
-        from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot  # noqa: PLC0415
+        from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
 
         self.activity_timeline.set_steps(DettagliOdABot.STEPS)
 
@@ -69,7 +69,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
     def get_bot_class(self) -> type["BaseBot"]:
         """Restituisce la classe bot specifica per lo scarico dei dettagli OdA."""
-        from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot  # noqa: PLC0415
+        from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
 
         return DettagliOdABot
 
@@ -297,7 +297,7 @@ class DettagliOdAPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        from src.core.config_manager import load_config  # noqa: PLC0415
+        from src.core.config_manager import load_config
 
         config = load_config()
 
@@ -337,7 +337,7 @@ class DettagliOdAPanel(BaseBotPanel):
         self._setup_worker_connections(self.worker)
 
         # Reset pallini all'avvio (Asincrono per non bloccare il click)
-        from PySide6.QtCore import QTimer  # noqa: PLC0415
+        from PySide6.QtCore import QTimer
 
         QTimer.singleShot(0, lambda: self._update_status_list(force=True))
 

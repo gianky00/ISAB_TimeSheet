@@ -23,7 +23,7 @@ VENV_PYTHON = (
 )
 
 
-def find_git_executable():  # noqa: ANN201
+def find_git_executable():
     """Tenta di trovare l'eseguibile git in percorsi comuni su Windows."""
     # 1. Prova nel PATH standard
     git_bin = shutil.which("git")
@@ -55,7 +55,7 @@ def find_git_executable():  # noqa: ANN201
     return "git"
 
 
-def run_command(cmd, description, exit_on_fail=True, capture=False):  # noqa: ANN001, ANN201
+def run_command(cmd, description, exit_on_fail=True, capture=False):
     """Executes a subprocess command with error handling and optional output capture."""
     print(f"\n[STEP] {description}...")
     sys.stdout.flush()
@@ -95,7 +95,7 @@ def run_command(cmd, description, exit_on_fail=True, capture=False):  # noqa: AN
             print(f"        Exit code: {returncode}")
             sys.stdout.flush()
             sys.exit(1)
-        return returncode == 0  # noqa: TRY300
+        return returncode == 0
     except Exception as e:
         print(f"[ERROR] Errore durante: {description}")
         print(f"        Dettaglio: {e}")
@@ -105,17 +105,17 @@ def run_command(cmd, description, exit_on_fail=True, capture=False):  # noqa: AN
         return False
 
 
-def get_current_version():  # noqa: ANN201
+def get_current_version():
     """Extracts the current version string from src/core/version.py."""
     version_file = ROOT_DIR / "src" / "core" / "version.py"
     content = version_file.read_text(encoding="utf-8")
-    import re  # noqa: PLC0415
+    import re
 
     match = re.search(r'__version__\s*=\s*"(.*?)"', content)
     return match.group(1) if match else "unknown"
 
 
-def notify_telegram(message):  # noqa: ANN001, ANN201
+def notify_telegram(message) -> None:
     """Invia notifica rapida via Telegram (usando i segreti nel progetto)"""
     try:
         config_path = ROOT_DIR / "config.json"
@@ -127,7 +127,7 @@ def notify_telegram(message):  # noqa: ANN001, ANN201
         token = config.get("telegram_token")
         chat_id = config.get("telegram_chat_id")
         if token and chat_id:
-            import requests  # noqa: PLC0415
+            import requests
 
             url = f"https://api.telegram.org/bot{token}/sendMessage"
             requests.post(
@@ -140,7 +140,7 @@ def notify_telegram(message):  # noqa: ANN001, ANN201
         print(f"⚠️ Impossibile inviare notifica: {e}")
 
 
-def detect_bump_type():  # noqa: ANN201
+def detect_bump_type() -> str | None:
     """Rileva automaticamente il tipo di bump analizzando branch e commit log."""
     try:
         # 1. Controlla il nome del branch corrente
@@ -195,12 +195,12 @@ def detect_bump_type():  # noqa: ANN201
             return "minor"
 
         # Default PATCH (fix, refactor, chore, docs, ecc.)
-        return "patch"  # noqa: TRY300
+        return "patch"
     except Exception:
         return "patch"
 
 
-def main():  # noqa: ANN201, C901
+def main() -> None:
     """Entry point for the release process, handling arguments and workflow execution."""
     # Fix encoding for Windows console to support emoji
     if sys.platform == "win32":

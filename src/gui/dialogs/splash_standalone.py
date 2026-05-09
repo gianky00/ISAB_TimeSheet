@@ -25,7 +25,7 @@ logging.basicConfig(
 logger = logging.getLogger("StandaloneSplash")
 
 # Aggiungi la root del progetto al path per gli import tramite ResourceManager
-from src.utils.resource_manager import ResourceManager  # noqa: E402
+from src.utils.resource_manager import ResourceManager
 
 project_root = str(ResourceManager.PROJECT_ROOT)
 if project_root not in sys.path:
@@ -36,10 +36,10 @@ src_path = str(ResourceManager.PROJECT_ROOT / "src")
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
 
-from PySide6.QtCore import QObject, QTimer, Signal  # noqa: E402
-from PySide6.QtWidgets import QApplication  # noqa: E402
+from PySide6.QtCore import QObject, QTimer, Signal
+from PySide6.QtWidgets import QApplication
 
-from src.gui.dialogs.startup_dialog import StartupDialog  # noqa: E402
+from src.gui.dialogs.startup_dialog import StartupDialog
 
 
 class SplashCommunicator(QObject):
@@ -73,7 +73,7 @@ def run_standalone() -> None:
 
     # Forza encoding UTF-8 per la comunicazione
     if sys.platform == "win32":
-        import ctypes  # noqa: PLC0415
+        import ctypes
 
         kernel32 = ctypes.windll.kernel32
         kernel32.SetConsoleCP(65001)
@@ -98,7 +98,7 @@ def run_standalone() -> None:
     def read_stdin() -> None:
         """Legge i comandi JSON da stdin e aggiorna la splash standalone."""
         logger.info("Stdin reader thread active")
-        import io  # noqa: PLC0415
+        import io
 
         # Usiamo il buffer binario per evitare problemi di encoding su Windows
         input_stream = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", line_buffering=True)
@@ -120,14 +120,14 @@ def run_standalone() -> None:
                 if command == "update":
                     msg = data.get("msg", "")
                     prog = int(data.get("prog", 0))
-                    # logger.info(f"Signal emitted: {msg} ({prog}%)") # Troppo rumoroso # noqa: ERA001
+                    # logger.info(f"Signal emitted: {msg} ({prog}%)") # Troppo rumoroso
                     comm.update_signal.emit(msg, prog)
                 elif command == "close":
                     logger.info("Close signal emitted")
                     comm.close_signal.emit()
                     break
             except Exception as e:
-                logger.error(f"Error in stdin reader: {e}")  # noqa: TRY400
+                logger.exception("Error in stdin reader", exc=e)
                 continue
 
     input_thread = threading.Thread(target=read_stdin, daemon=True)

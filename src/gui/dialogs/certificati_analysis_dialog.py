@@ -36,7 +36,9 @@ THRESHOLD_ATTENTION = 30
 class ScadenzeAnalysisDialog(QDialog):
     """Finestra di analisi scadenze certificati - Design professionale."""
 
-    def __init__(self, certificates_data: list[Any], show_excluded: bool = False, parent=None):  # noqa: ANN001, ANN204
+    def __init__(
+        self, certificates_data: list[Any], show_excluded: bool = False, parent: QWidget | None = None
+    ) -> None:
         super().__init__(parent)
         self.certificates_data = certificates_data
         self.show_excluded = show_excluded
@@ -49,7 +51,7 @@ class ScadenzeAnalysisDialog(QDialog):
 
         self._setup_ui()
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
         """Inizializzazione principale dell'interfaccia."""
         self.setWindowTitle(f"Analisi Scadenze Certificati - {__app_name__}")
         self.setMinimumSize(950, 650)
@@ -325,7 +327,7 @@ class ScadenzeAnalysisDialog(QDialog):
         layout = QHBoxLayout()
         layout.setSpacing(15)
 
-        def add_l(  # noqa: PLR0913
+        def add_l(
             txt: Any,
             color_v: str,
             weight: str = "normal",

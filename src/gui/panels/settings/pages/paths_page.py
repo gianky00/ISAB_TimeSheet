@@ -141,10 +141,10 @@ class PathsPage(QWidget):
         if not path_str:
             return
 
-        import os  # noqa: PLC0415
-        from pathlib import Path  # noqa: PLC0415
+        import os
+        from pathlib import Path
 
-        from src.gui.widgets.toast import ToastManager  # noqa: PLC0415
+        from src.gui.widgets.toast import ToastManager
 
         path = Path(path_str).resolve()
         if not path.exists():
@@ -154,13 +154,13 @@ class PathsPage(QWidget):
         try:
             if path.is_file():
                 # Su Windows, apre la cartella e seleziona il file
-                import subprocess  # noqa: PLC0415
+                import subprocess
 
                 subprocess.run(["explorer", "/select,", str(path)], check=False)
             else:
-                import os  # noqa: PLC0415
+                import os
 
-                os.startfile(str(path))  # noqa: S606
+                os.startfile(str(path))
         except Exception as e:
             ToastManager.instance().show(f"Errore apertura: {e}", "error")
 

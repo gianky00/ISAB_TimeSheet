@@ -41,7 +41,7 @@ class TestLicenseValidatorHardened:
 
         paths["config"].write_bytes(encrypted)
 
-        from src.core.license_validator import _calculate_sha256  # noqa: PLC0415
+        from src.core.license_validator import _calculate_sha256
 
         manifest = {"config.dat": _calculate_sha256(paths["config"])}
         paths["manifest"].write_text(json.dumps(manifest))

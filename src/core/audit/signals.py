@@ -14,7 +14,7 @@ class AuditSignals:
         """Restituisce l'istanza singleton del contenitore segnali."""
         if cls._instance is None:
             try:
-                from PySide6.QtCore import QObject, Signal  # noqa: PLC0415
+                from PySide6.QtCore import QObject, Signal
 
                 class _Signals(QObject):
                     """Contenitore per i segnali basati su Qt."""

@@ -2,6 +2,7 @@
 SyncroJob - Dettagli OdA Bot
 """
 
+import concurrent.futures
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
@@ -11,7 +12,7 @@ from src.bots.base.selenium_base_bot import SeleniumBaseBot
 from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
     DettagliOdAPage,
 )
-from src.core.oda_manager import OdaManager
+from src.core.constants import Business, OdaManager
 
 
 class DettagliOdABot(SeleniumBaseBot):
@@ -62,7 +63,6 @@ class DettagliOdABot(SeleniumBaseBot):
     ) -> None:
         super().__init__(username, password, **kwargs)
         current_year = datetime.now(UTC).astimezone().year
-        from src.core.constants import Business  # noqa: PLC0415
 
         self.data_da = data_da or f"01.01.{current_year}"
         self.data_a = data_a or f"31.12.{current_year}"
@@ -175,7 +175,6 @@ class DettagliOdABot(SeleniumBaseBot):
 
     def _import_oda_to_db(self, downloaded_path: Path) -> None:
         """Helper per l'importazione nel database. Utilizza un ProcessPool per non bloccare il GIL della GUI."""
-        import concurrent.futures  # noqa: PLC0415
 
         try:
             self.log(

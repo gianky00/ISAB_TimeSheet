@@ -39,7 +39,7 @@ class TestSafeWorkPDLIntegration:
         bot._login.assert_called_once()
         bot._esegui_ricerca_pdl.assert_called_with("566360/C")
         bot._unisci_e_stampa.assert_called()
-        bot._handle_session_merge.assert_called_with(data, ANY_LIST := mocker.ANY)  # noqa: N806
+        bot._handle_session_merge.assert_called_with(data, ANY_LIST := mocker.ANY)
 
     def test_pdl_flow_with_search_failure(self, mocker):
         """Verifica gestione fallimento ricerca nel flusso integrato."""

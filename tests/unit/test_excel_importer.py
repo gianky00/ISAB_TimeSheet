@@ -76,7 +76,7 @@ class TestExcelImporter:
     @patch("src.core.importers.giornaliere.ProcessPoolExecutor")
     def test_import_giornaliere(self, mock_executor_cls, mock_read_sheet, mock_decrypt):
         # Mock file system
-        with patch("src.core.importers.giornaliere.Path") as MockPath:  # noqa: N806
+        with patch("src.core.importers.giornaliere.Path") as MockPath:
             root = MagicMock()
             MockPath.return_value = root
             root.exists.return_value = True
@@ -248,7 +248,7 @@ class TestExcelImporter:
         assert len(rows) == 1
 
         # Check styles JSON
-        import json  # noqa: PLC0415
+        import json
 
         styles = json.loads(rows[0][-1])
         assert styles["pers1"]["fg"] == "#FF0000"

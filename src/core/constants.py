@@ -57,6 +57,8 @@ class Timeouts:
     PAGE_LOAD = 15
     ELEMENT_WAIT = 20
     DOWNLOAD_WAIT = 120
+    UI_DELAY = 0.5
+    SHORT_WAIT = 2
 
 
 class Business:
@@ -65,7 +67,7 @@ class Business:
     HOURLY_COST_STD = 28.50
     DEFAULT_SUPPLIER = "SYNCROJOB"
     DEFAULT_SITE = "ISAB"
-    DEFAULT_EXCEL_PASSWORD = "isab"  # noqa: S105
+    DEFAULT_EXCEL_PASSWORD = "isab"
 
 
 class Emails:

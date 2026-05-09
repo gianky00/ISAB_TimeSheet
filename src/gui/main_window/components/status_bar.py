@@ -155,7 +155,7 @@ class StatusBarComponent(QObject):
         Transiziona la barra di stato alla modalità operativa.
         Esegue animazioni di fade-out sui widget di avvio e attiva quelli di monitoraggio.
         """
-        import logging  # noqa: PLC0415
+        import logging
 
         logger = logging.getLogger("StatusBar")
 
@@ -203,7 +203,7 @@ class StatusBarComponent(QObject):
         Analizza i bot programmati nell'Autopilot e calcola il countdown per il task più imminente.
         Aggiorna le card di stato nella parte destra della barra.
         """
-        from PySide6.QtCore import QTime  # noqa: PLC0415
+        from PySide6.QtCore import QTime
 
         config = config_manager.load_config()
 

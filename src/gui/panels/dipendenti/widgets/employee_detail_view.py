@@ -29,7 +29,7 @@ class EmployeeDetailView(QWidget):
         self.detail_labels: dict[str, QLabel] = {}
         self._setup_ui()
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(8)

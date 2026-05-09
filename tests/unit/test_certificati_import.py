@@ -96,7 +96,7 @@ class TestCertificatiImport(unittest.TestCase):
             self.assertEqual(added, 1)  # Should import 1 row
 
             # Verify that it picked the correct sheet
-            # mock_read_excel.call_args_list[0] is preview  # noqa: ERA001
+            # mock_read_excel.call_args_list[0] is preview
             # mock_read_excel.call_args_list[1] is real read
             _args, kwargs = mock_read_excel.call_args_list[1]
             self.assertEqual(kwargs["sheet_name"], "Strumenti Campione ISAB SUD")

@@ -255,7 +255,7 @@ class NotificationsPanel(QWidget):
             self._show_empty_state()
             return
 
-        disable_animations = len(notifs) > 30  # noqa: PLR2004
+        disable_animations = len(notifs) > 30
         grouped = self._group_notifications_by_time(notifs)
         self._render_groups(grouped, disable_animations)
 
@@ -361,7 +361,7 @@ class NotificationsPanel(QWidget):
                     groups["today"]["notifications"].append(notif)
                 elif diff.days == 1:
                     groups["yesterday"]["notifications"].append(notif)
-                elif diff.days <= 7:  # noqa: PLR2004
+                elif diff.days <= 7:
                     groups["week"]["notifications"].append(notif)
                 else:
                     groups["older"]["notifications"].append(notif)

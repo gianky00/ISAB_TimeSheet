@@ -76,7 +76,7 @@ class TestExcelTableCoverage:
 
     def test_excel_table_context_menu_event_with_qpoint(self, app, mocker):
         """Verifica che contextMenuEvent non crashi con un QPoint (CustomContextMenu)."""
-        from PySide6.QtCore import QPoint  # noqa: PLC0415
+        from PySide6.QtCore import QPoint
 
         table = ExcelTableWidget()
         pos = QPoint(10, 10)

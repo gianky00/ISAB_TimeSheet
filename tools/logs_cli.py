@@ -23,7 +23,7 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.core.logging import health_report, query_logs, view_trace  # noqa: E402
+from src.core.logging import health_report, query_logs, view_trace
 
 
 def format_timestamp(ts: str) -> str:
@@ -251,7 +251,7 @@ def cmd_export(args: argparse.Namespace) -> None:
             json.dump(results, f, indent=2, ensure_ascii=False)
 
     elif args.format == "csv":
-        import csv  # noqa: PLC0415
+        import csv
 
         # Estrai colonne da primo record
         if results:

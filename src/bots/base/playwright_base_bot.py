@@ -26,6 +26,8 @@ from src.utils.browser_diagnostics import emergency_profile_reset
 from src.utils.browser_profile_patcher import patch_browser_profile
 from src.utils.helpers import cleanup_bot_processes
 
+from .playwright_utils import get_playwright_selector
+
 
 class PlaywrightBaseBot(BaseBot, ABC):
     """
@@ -33,7 +35,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
     Centralizza la gestione del browser Chromium, la persistenza del profilo e i flag di sicurezza.
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         username: str,
         password: str,
@@ -268,8 +270,6 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
     def _get_selector(self, locator: tuple[str, str]) -> str:
         """Converte un locatore Selenium (By, value) in un selettore Playwright."""
-        from .playwright_utils import get_playwright_selector  # noqa: PLC0415
-
         return get_playwright_selector(locator)
 
     def _wait_overlay(self, timeout_ms: int = Timeouts.OVERLAY * 1000) -> None:

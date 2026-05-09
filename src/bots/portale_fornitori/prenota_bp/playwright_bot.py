@@ -62,7 +62,7 @@ class PlaywrightPrenotaBPBot(PlaywrightBaseBot):
 
         super().__init__(username=username, password=password, **kwargs)
         current_year = datetime.now(UTC).astimezone().year
-        from src.core.constants import Business  # noqa: PLC0415
+        from src.core.constants import Business
 
         self.data_da = data_da or f"01.01.{current_year}"
         self.data_a = data_a or f"31.12.{current_year}"

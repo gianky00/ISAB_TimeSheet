@@ -24,9 +24,9 @@ class TestLicenseUpdater:
     @patch("src.core.license_validator.get_detailed_license_status")
     @patch("requests.get")
     def test_run_update_success(self, mock_get, mock_status, mock_hwid, mock_paths):
-        import json  # noqa: PLC0415
+        import json
 
-        from cryptography.fernet import Fernet  # noqa: PLC0415
+        from cryptography.fernet import Fernet
 
         fake_key = Fernet.generate_key().decode()
         cipher = Fernet(fake_key.encode())

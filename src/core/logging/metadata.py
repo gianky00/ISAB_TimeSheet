@@ -71,7 +71,7 @@ class MetadataEnricher:
 
         return metadata
 
-    def _detect_environment(self) -> str:  # noqa: PLR0911
+    def _detect_environment(self) -> str:
         """
         Rileva environment corrente.
 
@@ -88,7 +88,7 @@ class MetadataEnricher:
             return "test"
 
         # Euristica: se eseguito da pytest o unittest,  test
-        import sys  # noqa: PLC0415
+        import sys
 
         if "pytest" in sys.modules or "unittest" in sys.modules:
             return "test"
@@ -179,7 +179,7 @@ _enricher = None
 
 def get_enricher() -> MetadataEnricher:
     """Restituisce istanza singleton del metadata enricher."""
-    global _enricher  # noqa: PLW0603
+    global _enricher
     if _enricher is None:
         _enricher = MetadataEnricher()
     return _enricher

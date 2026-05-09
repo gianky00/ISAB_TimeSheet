@@ -238,7 +238,7 @@ class TestSafeClickWithRetry:
     @patch("src.bots.base.wait_helpers.wait_for_element_clickable")
     @patch("src.bots.base.wait_helpers.time.sleep")
     def test_click_retry_on_intercept(self, mock_sleep, mock_wait_clickable, mock_driver):
-        from selenium.common.exceptions import ElementClickInterceptedException  # noqa: PLC0415
+        from selenium.common.exceptions import ElementClickInterceptedException
 
         mock_element = MagicMock()
         mock_wait_clickable.return_value = mock_element

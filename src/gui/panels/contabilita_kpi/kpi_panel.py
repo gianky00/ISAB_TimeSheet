@@ -34,7 +34,7 @@ from .charts import ChartContainer, KPIChartsManager
 class ContabilitaKPIPanel(QWidget):
     """Pannello dashboard per la visualizzazione dei KPiùdella contabilità strumentale."""
 
-    def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Inizializza il pannello e prepara i grafici."""
         super().__init__(parent)
         self.HOURLY_COST_STD = Business.HOURLY_COST_STD
@@ -56,7 +56,7 @@ class ContabilitaKPIPanel(QWidget):
         self.anim_group: QParallelAnimationGroup | None = None
 
         with suppress(Exception):
-            import matplotlib.pyplot as plt  # noqa: PLC0415
+            import matplotlib.pyplot as plt
 
             plt.style.use("seaborn-v0_8-darkgrid")
 
@@ -64,7 +64,7 @@ class ContabilitaKPIPanel(QWidget):
         self._setup_ui()
         self.refresh_years()
 
-    def _setup_ui(self):  # noqa: ANN202, PLR0915
+    def _setup_ui(self) -> None:
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(20)
@@ -279,9 +279,9 @@ class ContabilitaKPIPanel(QWidget):
                 "indirizzo_consuntivo",
                 "nome_file",
             ]
-            import pandas as pd  # noqa: PLC0415
+            import pandas as pd
 
-            from src.core.stats.stats_service import StatsService  # noqa: PLC0415
+            from src.core.stats.stats_service import StatsService
 
             df = pd.DataFrame(data, columns=cols)
             df["totale_prev"] = pd.to_numeric(df["totale_prev"], errors="coerce").fillna(0)

@@ -100,7 +100,7 @@ def measure_time[F: Callable[..., Any]](
                         },
                     )
 
-                    return result  # noqa: TRY300
+                    return result
 
                 except Exception as e:
                     duration_ms = (time.perf_counter() - start) * 1000
@@ -188,10 +188,10 @@ def log_entry_exit[F: Callable[..., Any]](
                     logger.debug(exit_msg, extra={"result": result})
                 else:
                     logger.debug(exit_msg)
-                return result  # noqa: TRY300
+                return result
 
             except Exception as e:
-                logger.error(f"Exception in {f.__name__}: {e}")  # noqa: TRY400
+                logger.exception(f"Exception in {f.__name__}", exc=e)
                 raise
 
         return cast("F", wrapper)

@@ -32,7 +32,7 @@ class UpdateBanner(QFrame):
 
     download_requested = Signal(str)
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setObjectName("updateBanner")
         # Forza Light Mode per il banner
@@ -57,7 +57,7 @@ class UpdateBanner(QFrame):
         self.animation.setDuration(400)
         self.animation.setEasingCurve(QEasingCurve.Type.OutQuad)
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
         self.main_layout = QHBoxLayout(self)
         self.main_layout.setContentsMargins(15, 10, 15, 10)
         self.main_layout.setSpacing(15)
@@ -98,14 +98,14 @@ class UpdateBanner(QFrame):
         self.download_btn.clicked.connect(self._on_download_clicked)
         self.main_layout.addWidget(self.download_btn)
 
-    def show_update(  # noqa: ANN201
+    def show_update(
         self,
         version: str,
         download_url: str,
         changelog: str = "",
         is_partial: bool = False,
         is_complete: bool = False,
-    ):
+    ) -> None:
         """Mostra il banner con le informazioni dell'aggiornamento."""
         self._download_url = download_url
         self._is_complete = is_complete
@@ -130,7 +130,7 @@ class UpdateBanner(QFrame):
         self.setVisible(True)
 
     @Slot(int, int, float, float)
-    def update_progress(self, downloaded: int, total: int, speed: float, eta: float):  # noqa: ANN201
+    def update_progress(self, downloaded: int, total: int, speed: float, eta: float) -> None:
         """Aggiorna il progresso del download nel banner."""
         if not self.progress_container.isVisible():
             self.progress_container.setVisible(True)
@@ -164,7 +164,7 @@ class UpdateBanner(QFrame):
         else:
             self.progress_bar.setMaximum(0)
 
-    def _on_download_clicked(self):  # noqa: ANN202
+    def _on_download_clicked(self) -> None:
         if self._download_url:
             self.download_requested.emit(self._download_url)
             self.download_btn.setVisible(False)

@@ -23,7 +23,7 @@ class LoggingAdapter:
       # Funziona sia con vecchio che nuovo sistema!
     """
 
-    def __init__(self, name: str):  # noqa: ANN204
+    def __init__(self, name: str) -> None:
         self._structured_logger = get_new_logger(name)
         self._std_logger = logging.getLogger(name)
 
@@ -60,7 +60,7 @@ class LoggingAdapter:
 
     def exception(self, msg: Any, *args: Any, exc_info: bool = True, **kwargs: Any) -> None:
         """Exception log."""
-        import sys  # noqa: PLC0415
+        import sys
 
         extra = kwargs.pop("extra", {})
         formatted_msg = msg % args if args else msg

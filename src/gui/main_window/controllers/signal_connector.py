@@ -51,7 +51,7 @@ class SignalConnector(QObject):
 
         # Tray Icon (System notification)
         if hasattr(self.main_window, "tray_icon_component"):
-            from PySide6.QtWidgets import QSystemTrayIcon  # noqa: PLC0415
+            from PySide6.QtWidgets import QSystemTrayIcon
 
             icon_map = {
                 "info": QSystemTrayIcon.MessageIcon.Information,

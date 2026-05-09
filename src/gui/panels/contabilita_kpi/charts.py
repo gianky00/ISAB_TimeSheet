@@ -51,7 +51,7 @@ FigureCanvas = DummyCanvas
 class ChartContainer(QWidget):
     """Container stilizzato per i grafici Matplotlib."""
 
-    def __init__(self, canvas, title="", height=450, info_callback=None, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, canvas, title="", height=450, info_callback=None, parent=None) -> None:
         """
         Inizializza il container stilizzato.
 
@@ -110,7 +110,7 @@ class ChartContainer(QWidget):
 class KPIChartsManager:
     """Gestore per la creazione e l'aggiornamento dei grafici KPI."""
 
-    def __init__(self, HOURLY_COST_STD):  # noqa: ANN001, ANN204
+    def __init__(self, HOURLY_COST_STD) -> None:
         """
         Inizializza il manager dei grafici.
 
@@ -127,14 +127,14 @@ class KPIChartsManager:
         self.fig4, self.canvas4 = self._init_figure()
         self.fig5, self.canvas5 = self._init_figure()
 
-    def _init_figure(self):  # noqa: ANN202
+    def _init_figure(self):
         """Crea una nuova figura Matplotlib e il relativo canvas."""
         fig = Figure(figsize=(5, 4), dpi=100)
         fig.patch.set_alpha(0)
         canvas = FigureCanvas(fig)
         return fig, canvas
 
-    def plot_all(self, kpi_data):  # noqa: ANN001, ANN201
+    def plot_all(self, kpi_data) -> None:
         """Aggiorna tutti i grafici con i dati pre-processati dal service."""
         self._plot_stato_attivita(kpi_data.get("stato_attivita", {}))
         self._plot_prev_ore_mese(kpi_data.get("prev_ore_mese", {}))
@@ -142,7 +142,7 @@ class KPIChartsManager:
         self._plot_andamento_resa(kpi_data.get("andamento_resa", {}))
         self._plot_completamento(kpi_data.get("completamento", {}))
 
-    def _plot_stato_attivita(self, counts):  # noqa: ANN001, ANN202
+    def _plot_stato_attivita(self, counts) -> None:
         """Genera il grafico a torta per lo stato delle attività."""
         self.fig1.clear()
         ax = self.fig1.add_subplot(111)
@@ -184,7 +184,7 @@ class KPIChartsManager:
 
         total_sum = sum(values)
 
-        def update_annot(wedge, idx):  # noqa: ANN001, ANN202
+        def update_annot(wedge, idx) -> None:
             if not self.annot:
                 return
             ang = (wedge.theta2 - wedge.theta1) / 2.0 + wedge.theta1
@@ -195,7 +195,7 @@ class KPIChartsManager:
             percent = (count / total_sum) * 100
             self.annot.set_text(f"{labels[idx]}\n{percent:.1f}% ({count})")
 
-        def hover(event):  # noqa: ANN001, ANN202
+        def hover(event) -> None:
             if event.inaxes == ax:
                 found = False
                 for i, wedge in enumerate(wedges):
@@ -215,7 +215,7 @@ class KPIChartsManager:
         self.fig1.tight_layout()
         self.canvas1.draw()
 
-    def _plot_prev_ore_mese(self, data):  # noqa: ANN001, ANN202
+    def _plot_prev_ore_mese(self, data) -> None:
         """Genera il grafico a barre per i ricavi previsti e ore spese per mese."""
         self.fig2.clear()
         ax = self.fig2.add_subplot(111)
@@ -250,7 +250,7 @@ class KPIChartsManager:
         self.fig2.tight_layout()
         self.canvas2.draw()
 
-    def _plot_margine_tipologia(self, data):  # noqa: ANN001, ANN202
+    def _plot_margine_tipologia(self, data) -> None:
         """Genera il grafico a barre orizzontali per i ricavi e costi per tipologia."""
         self.fig3.clear()
         ax = self.fig3.add_subplot(111)
@@ -305,7 +305,7 @@ class KPIChartsManager:
         self.fig3.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.1)
         self.canvas3.draw()
 
-    def _plot_andamento_resa(self, data):  # noqa: ANN001, ANN202
+    def _plot_andamento_resa(self, data) -> None:
         """Genera il grafico ad area per l'andamento della resa mensile."""
         self.fig4.clear()
         ax = self.fig4.add_subplot(111)
@@ -323,7 +323,7 @@ class KPIChartsManager:
         self.fig4.tight_layout()
         self.canvas4.draw()
 
-    def _plot_completamento(self, data):  # noqa: ANN001, ANN202
+    def _plot_completamento(self, data) -> None:
         """Genera il grafico a barre segmentato per lo stato di completamento."""
         self.fig5.clear()
         ax = self.fig5.add_axes([0.05, 0.4, 0.9, 0.3])

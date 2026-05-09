@@ -53,7 +53,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
         self._setup_content()
         # Forza inizializzazione timeline immediata per Scarico TS
-        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot  # noqa: PLC0415
+        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
 
         self.activity_timeline.set_steps(ScaricaTSBot.STEPS)
 
@@ -71,7 +71,7 @@ class ScaricaTSPanel(BaseBotPanel):
         """
         Restituisce la classe ScaricaTSBot associata a questo pannello.
         """
-        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot  # noqa: PLC0415
+        from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
 
         return ScaricaTSBot
 
@@ -250,7 +250,7 @@ class ScaricaTSPanel(BaseBotPanel):
         if not params_override:
             self._save_data()
 
-        from src.core.config_manager import load_config  # noqa: PLC0415
+        from src.core.config_manager import load_config
 
         config = load_config()
 

@@ -13,7 +13,7 @@ class ProgWorker(QThread):
 
     finished = Signal(str)
 
-    def __init__(self, controller: ConsuntivoController, year: str):  # noqa: ANN204
+    def __init__(self, controller: ConsuntivoController, year: str) -> None:
         super().__init__()
         self.controller = controller
         self.year = year

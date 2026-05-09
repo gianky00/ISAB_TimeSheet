@@ -100,7 +100,7 @@ class ScaricoOreController(QObject):
         if success:
             ts = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
             time_str = (
-                f"{duration:.1f}s" if duration < 60 else f"{int(duration // 60)}m {int(duration % 60)}s"  # noqa: PLR2004
+                f"{duration:.1f}s" if duration < 60 else f"{int(duration // 60)}m {int(duration % 60)}s"
             )
             # Nota: I colori verranno gestiti dalla UI via HTML
             status = f"{ts} <b>+{added}</b> -{removed} ({time_str})"

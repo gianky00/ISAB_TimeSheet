@@ -63,7 +63,7 @@ class AreaBadge(QPushButton):
         self.setMinimumWidth(75)
 
         # Logica Colori: Incremento = Rosso (Allerta carico)
-        if trend_int > 30:  # noqa: PLR2004
+        if trend_int > 30:
             bg_color = "#fee2e2"  # Rosso chiaro
             text_color = "#991b1b"  # Rosso scuro
             border_color = "#fca5a5"
@@ -189,13 +189,13 @@ class PDLStatsWidget(ModernCard):
     def refresh_stats(self) -> None:
         """Avvia un thread in background per ricalcolare le metriche PDL."""
 
-        def run():  # noqa: ANN202
+        def run() -> None:
             """Funzione worker per l'esecuzione asincrona del calcolo metriche."""
             try:
                 metrics = PDLStatsEngine.get_metrics()
                 self.stats_updated.emit(metrics)
             except Exception as e:
-                logger.error(f"PDL Refresh Error: {e}")  # noqa: TRY400
+                logger.exception("PDL Refresh Error", exc=e)
 
         threading.Thread(target=run, daemon=True).start()
 

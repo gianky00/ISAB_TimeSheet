@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import warnings
@@ -12,9 +11,10 @@ from typing import Any, ClassVar
 import pandas as pd
 
 from src.core.importers.base import BaseImporter
+from src.core.logging import get_logger
 from src.core.schemas import validate_giornaliere
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class GiornaliereImporter(BaseImporter):
@@ -187,7 +187,7 @@ class GiornaliereImporter(BaseImporter):
                 "nome_file",
             ]
             rows = list(df[target_cols].itertuples(index=False, name=None))
-            return (year, rows, None)  # noqa: TRY300
+            return (year, rows, None)
 
         except Exception as e:
             return (year, [], str(e))
@@ -208,8 +208,8 @@ class GiornaliereImporter(BaseImporter):
                     return pd_obj.read_excel(file_path, sheet_name="RIASSUNTO", engine="openpyxl")  # type: ignore[no-any-return]
                 except zipfile.BadZipFile:
                     return None
-                except Exception as e:
-                    raise e  # noqa: TRY201
+                except Exception:
+                    raise
 
     @classmethod
     def _normalize_giornaliera_columns(cls, df: pd.DataFrame) -> pd.DataFrame | None:

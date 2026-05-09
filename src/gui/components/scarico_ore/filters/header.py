@@ -14,7 +14,7 @@ class FilterHeaderView(QHeaderView):
     Permette di cliccare sulle intestazioni per aprire popup di filtro specifici per colonna.
     """
 
-    filterChanged = Signal(int, object)  # col, values # noqa: N815
+    filterChanged = Signal(int, object)  # col, values
 
     def __init__(self, orientation: Qt.Orientation, parent: Any | None = None) -> None:
         super().__init__(orientation, parent)

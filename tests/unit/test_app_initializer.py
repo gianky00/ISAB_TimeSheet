@@ -16,7 +16,7 @@ class TestAppInitializer:
     @patch("src.core.license_validator.get_detailed_license_status")
     @patch("src.core.database.db_manager.init_db")
     def test_initialize_core_success(self, mock_db_init, mock_license, mock_update):
-        from src.core.license_validator import LicenseStatus  # noqa: PLC0415
+        from src.core.license_validator import LicenseStatus
 
         mock_license.return_value = (LicenseStatus.VALID, "OK")
 
@@ -31,7 +31,7 @@ class TestAppInitializer:
     @patch("src.core.license_validator.get_detailed_license_status")
     @patch("src.core.database.db_manager.init_db")
     def test_initialize_core_license_update(self, mock_db_init, mock_license, mock_update):
-        from src.core.license_validator import LicenseStatus  # noqa: PLC0415
+        from src.core.license_validator import LicenseStatus
 
         mock_license.return_value = (LicenseStatus.EXPIRED, "License expired")
 
@@ -52,7 +52,7 @@ class TestAppInitializer:
     @patch("src.core.database.db_manager.init_db", side_effect=Exception("DB Error"))
     def test_initialize_core_failure(self, mock_db_init, mock_update):
         # Patch license check to avoid other side effects
-        from src.core.license_validator import LicenseStatus  # noqa: PLC0415
+        from src.core.license_validator import LicenseStatus
 
         with patch(
             "src.core.license_validator.get_detailed_license_status",

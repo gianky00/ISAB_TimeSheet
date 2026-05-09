@@ -147,7 +147,7 @@ class AnagraficaController:
     @staticmethod
     def get_last_isab_access(cognome: str, nome: str) -> tuple[str, int, str]:
         """Recupera l'ultimo accesso ISAB per un dipendente."""
-        from src.core.constants import REPORT_COLORS as COLORS  # noqa: PLC0415
+        from src.core.constants import REPORT_COLORS as COLORS
 
         norm_cognome, norm_nome = normalize_name(cognome), normalize_name(nome)
         query = """

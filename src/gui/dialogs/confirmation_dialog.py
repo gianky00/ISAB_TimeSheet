@@ -1,8 +1,10 @@
 """
 SyncroJob - Confirmation Dialog
-Dialogo standard per le conferme (S /No) o messaggi importanti.
-Sostituisce QMessageBox per mantenere uno stile coerente con il design d' lite del progetto.
+Dialogo standard per le conferme (Sì/No) o messaggi importanti.
+Sostituisce QMessageBox per mantenere uno stile coerente con il design d'élite del progetto.
 """
+
+import re
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -26,7 +28,7 @@ class ConfirmationDialog(QDialog):
     """
 
     class Variant:
-        """Costanti per definire la tipologiàdel messaggio."""
+        """Costanti per definire la tipologia del messaggio."""
 
         INFO = "info"
         WARNING = "warning"
@@ -53,7 +55,8 @@ class ConfirmationDialog(QDialog):
         """
         super().__init__(parent)
         self.setWindowTitle(title)
-        self.setMinimumWidth(380)
+        min_width = 380
+        self.setMinimumWidth(min_width)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
 
         # Forza stile Light a livello di Dialog
@@ -65,19 +68,23 @@ class ConfirmationDialog(QDialog):
     """)
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(20)
-        layout.setContentsMargins(25, 25, 25, 25)
+        layout_spacing = 20
+        layout.setSpacing(layout_spacing)
+        margin_size = 25
+        layout.setContentsMargins(margin_size, margin_size, margin_size, margin_size)
 
         # Header con icona e messaggio
         header_layout = QHBoxLayout()
-        header_layout.setSpacing(15)
+        header_spacing = 15
+        header_layout.setSpacing(header_spacing)
 
         icon_label = QLabel()
         icon_path = self._get_icon_path(variant)
         icon_color = self._get_icon_color(variant)
         if icon_path:
-            icon_label.setPixmap(get_colored_icon(icon_path, icon_color).pixmap(32, 32))
-            icon_label.setFixedSize(32, 32)
+            icon_size = 32
+            icon_label.setPixmap(get_colored_icon(icon_path, icon_color).pixmap(icon_size, icon_size))
+            icon_label.setFixedSize(icon_size, icon_size)
             header_layout.addWidget(icon_label, 0, Qt.AlignmentFlag.AlignTop)
 
         msg_label = QLabel()
@@ -99,7 +106,8 @@ class ConfirmationDialog(QDialog):
 
         # Pulsanti
         btn_layout = QHBoxLayout()
-        btn_layout.setSpacing(10)
+        btn_spacing = 10
+        btn_layout.setSpacing(btn_spacing)
         btn_layout.addStretch()
 
         if variant == self.Variant.QUESTION:
@@ -143,8 +151,6 @@ class ConfirmationDialog(QDialog):
 
     def _sanitize_html(self, html: str) -> str:
         """Rimuove tag potenzialmente pericolosi (script, iframe, object) dall'HTML."""
-        import re  # noqa: PLC0415
-
         # Rimuove blocchi script completi
         clean = re.sub(r"<script.*?>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
         # Rimuove tag singoli pericolosi
@@ -160,7 +166,7 @@ class ConfirmationDialog(QDialog):
     @staticmethod
     def confirm(parent: QWidget | None, title: str, message: str, is_rich_text: bool = False) -> bool:
         """
-        Helper statico per mostrare rapidamente una richiesta di conferma S /No.
+        Helper statico per mostrare rapidamente una richiesta di conferma Sì/No.
 
         Args:
           parent: Widget genitore.

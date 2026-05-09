@@ -14,8 +14,8 @@ from src.core.logging import get_logger
 try:
     import win32com.client
 
-    xlCalculationManual = -4135  # noqa: N816
-    xlCalculationAutomatic = -4105  # noqa: N816
+    xlCalculationManual = -4135
+    xlCalculationAutomatic = -4105
     _win32com_found = True
 except ImportError:
     _win32com_found = False
@@ -56,9 +56,9 @@ class ProgrammingSyncManager:
             self.excel_app.Visible = False
             self.excel_app.DisplayAlerts = False
             self.wb_master = self.excel_app.Workbooks.Open(self.master_path, UpdateLinks=0)
-            return True  # noqa: TRY300
+            return True
         except Exception as e:
-            logger.error(f"Errore apertura Master Excel: {e}")  # noqa: TRY400
+            logger.exception("Errore apertura Master Excel", exc=e)
             return False
 
     def run_sync_macros(self) -> None:
@@ -131,7 +131,7 @@ class ProgrammingSyncManager:
         for nome_foglio in self.FOGLI_PDL:
             sheet = self.wb_master.Sheets(nome_foglio)
             last_row = sheet.Cells(sheet.Rows.Count, 5).End(-4162).Row  # xlUp col E
-            if last_row < 4:  # noqa: PLR2004
+            if last_row < 4:
                 continue
 
             data = sheet.Range(sheet.Cells(4, 1), sheet.Cells(last_row, 13)).Value

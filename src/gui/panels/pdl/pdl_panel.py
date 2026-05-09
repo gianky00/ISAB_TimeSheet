@@ -23,7 +23,6 @@ from src.core.database import pdl_queries
 from src.core.pdl.pdl_controller import PDLController
 from src.core.sync_tracker import SyncTracker
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
-from src.gui.controllers.bot_worker import BotWorker  # noqa: TC001
 from src.gui.formatters import FastTableModel
 from src.gui.widgets import EmptyStateWidget
 from src.gui.workers.pdl_io_worker import PdlIOWorker
@@ -35,6 +34,7 @@ from .widgets.pdl_table import PDLTableView
 
 if TYPE_CHECKING:
     from src.core.pdl.pdl_dto import PdlRowDTO
+    from src.gui.controllers.bot_worker import BotWorker
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +152,7 @@ class PDLDBPanel(QWidget):
     def _populate_initial_filters(self) -> None:
         """Popola i menu a tendina dei filtri con i dati unici presenti nel DB."""
         try:
-            from src.core.database import db_manager  # noqa: PLC0415
+            from src.core.database import db_manager
 
             q = "SELECT DISTINCT SUBSTR(n_pdl, INSTR(n_pdl, '/') + 1) as grp FROM pdl WHERE n_pdl LIKE '%/%' ORDER BY grp"
             rows = db_manager.execute_query(db_manager.DB_PDL, q)
@@ -234,7 +234,7 @@ class PDLDBPanel(QWidget):
             q += " AND sito = ?"
             p.append(site)
         q += " ORDER BY area"
-        from src.core.database import db_manager  # noqa: PLC0415
+        from src.core.database import db_manager
 
         rows = db_manager.execute_query(db_manager.DB_PDL, q, tuple(p))
         self.filters.area_filter.blockSignals(True)
@@ -259,7 +259,7 @@ class PDLDBPanel(QWidget):
             p.append(area)
         q += " ORDER BY unita"
 
-        from src.core.database import db_manager  # noqa: PLC0415
+        from src.core.database import db_manager
 
         rows = db_manager.execute_query(db_manager.DB_PDL, q, tuple(p))
 
@@ -370,7 +370,7 @@ class PDLDBPanel(QWidget):
         if not f:
             return
 
-        from src.gui.widgets.toast import ToastManager  # noqa: PLC0415
+        from src.gui.widgets.toast import ToastManager
 
         ToastManager.instance().show("Esportazione PDL in corso...", "info")
 
@@ -381,13 +381,13 @@ class PDLDBPanel(QWidget):
 
     def _on_export_finished(self, success: bool, message: str, file_path: str) -> None:
         """Gestisce il completamento dell'esportazione."""
-        from src.gui.widgets.toast import ToastManager  # noqa: PLC0415
+        from src.gui.widgets.toast import ToastManager
 
         if success:
             ToastManager.instance().show(message, "success")
             if file_path:
-                os.startfile(file_path)  # noqa: S606
+                os.startfile(file_path)
         else:
-            from PySide6.QtWidgets import QMessageBox  # noqa: PLC0415
+            from PySide6.QtWidgets import QMessageBox
 
             QMessageBox.warning(self, "Errore Esportazione", message)

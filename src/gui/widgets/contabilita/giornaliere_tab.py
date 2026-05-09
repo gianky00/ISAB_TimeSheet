@@ -257,6 +257,6 @@ class GiornaliereYearTab(QWidget):
                     found = os.path.join(r, filename)
                     break
         if found:
-            os.startfile(os.path.normpath(found))  # noqa: S606
+            os.startfile(os.path.normpath(found))
         else:
             QMessageBox.warning(self, "File non trovato", f"Non trovo '{filename}'.")

@@ -27,7 +27,7 @@ class TestEmployeeManager:
 
     def test_get_all_employees_fallback_schema(self, manager):
         # First call fails (old schema), second succeeds
-        import sqlite3  # noqa: PLC0415
+        import sqlite3
 
         manager.db.execute_query.side_effect = [
             sqlite3.OperationalError("no such column"),
@@ -69,7 +69,7 @@ class TestEmployeeManager:
         manager.db.execute_query.assert_called_once()
 
     def test_add_employee_integrity_error(self, manager):
-        import sqlite3  # noqa: PLC0415
+        import sqlite3
 
         manager.db.execute_query.side_effect = sqlite3.IntegrityError("UNIQUE constraint")
 

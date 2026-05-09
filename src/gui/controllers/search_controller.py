@@ -43,7 +43,7 @@ class SearchController(QObject):
           query: La stringa digitata dall'utente.
         """
         query = query.strip()
-        if not query or len(query) < 2:  # noqa: PLR2004
+        if not query or len(query) < 2:
             self._last_query = ""
             return
 
@@ -123,7 +123,7 @@ class SearchController(QObject):
         self._add_disabled_action(menu, "STORICO OdA:")
         for m in matches:
             desc = m.get("descrizione", "")
-            desc_short = (desc[:50] + "...") if len(desc) > 50 else desc  # noqa: PLR2004
+            desc_short = (desc[:50] + "...") if len(desc) > 50 else desc
             text = f"OdA {m['oda']}/{m['pos_oda']} - {desc_short}"
             action = menu.addAction(text)
             if action:
@@ -185,7 +185,7 @@ class SearchController(QObject):
         self._add_disabled_action(menu, "AttivitàPROGRAMMATE:")
         for m in matches:
             desc = m.get("descrizione_attivita", "")
-            desc_short = (desc[:40] + "...") if len(desc) > 40 else desc  # noqa: PLR2004
+            desc_short = (desc[:40] + "...") if len(desc) > 40 else desc
             text = f"{m['area']} - {m['pdl']}: {desc_short}"
             action = menu.addAction(text)
             if action:
@@ -199,7 +199,7 @@ class SearchController(QObject):
         self._add_disabled_action(menu, "PDL SAFEWORK:")
         for m in matches:
             desc = m.get("descrizione", "")
-            desc_short = (desc[:40] + "...") if len(desc) > 40 else desc  # noqa: PLR2004
+            desc_short = (desc[:40] + "...") if len(desc) > 40 else desc
             text = f"ODL {m['odl']} - {m['unita_tecnica']}: {desc_short}"
             action = menu.addAction(text)
             if action:

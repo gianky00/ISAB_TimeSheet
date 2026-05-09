@@ -67,9 +67,9 @@ class TestBotRegressionShield:
 
     def test_safework_programmazione_parsing_robustness(self, mocker):
         """Verifica che il bot programmazione fallisca se gli indici Excel cambiano (Regression Shield)."""
-        import pandas as pd  # noqa: PLC0415
+        import pandas as pd
 
-        from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot  # noqa: PLC0415
+        from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
 
         bot = SafeWorkProgrammazioneBot("u", "p")
         bot.log = MagicMock()
@@ -106,7 +106,7 @@ class TestBotRegressionShield:
 
     def test_document_processor_crash_protection(self):
         """Verifica che il merge dei PDF non crashi l'app se fitz fallisce (Regression Shield)."""
-        from src.utils.document_processor import DocumentProcessor  # noqa: PLC0415
+        from src.utils.document_processor import DocumentProcessor
 
         with patch("fitz.open", side_effect=Exception("Corrupted PDF")):
             # Non deve sollevare eccezione ma ritornare False

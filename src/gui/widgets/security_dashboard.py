@@ -1,4 +1,6 @@
 # mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
+from typing import Any
+
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QFrame,
@@ -35,7 +37,7 @@ class SecurityDashboard(QWidget):
     Visualizza statistiche, grafici semplificati e log critici.
     """
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.audit_manager = AuditManager.instance()
         self.setStyleSheet(TOOLTIP_CSS)
@@ -53,26 +55,33 @@ class SecurityDashboard(QWidget):
         # Auto-refresh ogni minuto
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refresh)
-        self.timer.start(60000)
+        refresh_interval_ms = 60000
+        self.timer.start(refresh_interval_ms)
 
         # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
 
-    def showEvent(self, event) -> None:  # noqa: ANN001
+    def showEvent(self, event: Any) -> None:
         """Esegue il primo refresh solo quando il widget diventa visibile."""
         super().showEvent(event)
         if not self._first_refresh_done:
             self._first_refresh_done = True
-            QTimer.singleShot(100, self.refresh)
+            delay_ms = 100
+            QTimer.singleShot(delay_ms, self.refresh)
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
-        layout.setSpacing(20)
-        layout.setContentsMargins(20, 20, 20, 20)
+        main_spacing = 20
+        layout.setSpacing(main_spacing)
+        main_margin = 20
+        layout.setContentsMargins(main_margin, main_margin, main_margin, main_margin)
 
         # 1. Header & KPI
         header_layout = QHBoxLayout()
         title = QLabel("🛡️ Security Center")
-        title.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {COLORS['text_dark']};")
+        title_font_size = 24
+        title.setStyleSheet(
+            f"font-size: {title_font_size}px; font-weight: bold; color: {COLORS['text_dark']};"
+        )
         header_layout.addWidget(title)
         header_layout.addStretch()
 
@@ -133,21 +142,23 @@ class SecurityDashboard(QWidget):
         )
         layout.addWidget(self.log_area)
 
-    def refresh(self):  # noqa: ANN201
+    def refresh(self) -> None:
         """Aggiorna tutti i componenti della dashboard (KPI, Grafico, Log)."""
-        stats = self.audit_manager.get_stats_by_day(days=7)
+        days_stats = 7
+        stats = self.audit_manager.get_stats_by_day(days=days_stats)
         self._update_kpi(stats)
         self._update_chart(stats)
         self._update_logs()
 
-    def _update_kpi(self, stats):  # noqa: ANN001, ANN202
+    def _update_kpi(self, stats: dict[str, dict[str, int]]) -> None:
         # Calcola totali
         total_err = sum(d.get("error", 0) for d in stats.values())
         total_warn = sum(d.get("warning", 0) for d in stats.values())
         total_ok = sum(d.get("success", 0) for d in stats.values())
         total = total_err + total_warn + total_ok
 
-        rate = (total_ok / total * 100) if total > 0 else 100
+        percent_100 = 100
+        rate = (total_ok / total * percent_100) if total > 0 else percent_100
 
         # Clear layout
         while self.kpi_layout.count():
@@ -165,7 +176,7 @@ class SecurityDashboard(QWidget):
             self._create_kpi_card("Warning (7gg)", str(total_warn), COLORS["warning_yellow"])
         )
 
-    def _create_kpi_card(self, title, value, color):  # noqa: ANN001, ANN202
+    def _create_kpi_card(self, title: str, value: str, color: str) -> QFrame:
         card = QFrame()
         card.setStyleSheet(
             f"""
@@ -182,7 +193,7 @@ class SecurityDashboard(QWidget):
         layout.addWidget(v)
         return card
 
-    def _update_chart(self, stats):  # noqa: ANN001, ANN202
+    def _update_chart(self, stats: dict[str, dict[str, int]]) -> None:
         while self.chart_container.count():
             item = self.chart_container.takeAt(0)
             if item:
@@ -206,15 +217,20 @@ class SecurityDashboard(QWidget):
 
             # Bar Container
             bar_cont = QVBoxLayout()
-            bar_cont.setSpacing(2)
+            bar_spacing = 2
+            bar_cont.setSpacing(bar_spacing)
 
             # Simple stack bar logic: we just show total height relative to max
-            height = int((total / max_val) * 100)  # px relative
-            height = max(height, 5)
+            relative_height = 100
+            height = int((total / max_val) * relative_height)  # px relative
+            min_height = 5
+            height = max(height, min_height)
 
             bar = QFrame()
-            bar.setFixedWidth(30)
-            bar.setFixedHeight(height * 2)  # Scale factor
+            bar_width = 30
+            bar.setFixedWidth(bar_width)
+            scale_factor = 2
+            bar.setFixedHeight(height * scale_factor)  # Scale factor
 
             # Color based on dominant status
             bar_color = COLORS["success_dark"]  # green
@@ -235,9 +251,10 @@ class SecurityDashboard(QWidget):
 
             self.chart_container.addLayout(bar_cont)
 
-    def _update_logs(self):  # noqa: ANN202
+    def _update_logs(self) -> None:
+        log_limit = 10
         logs, _ = self.audit_manager.get_filtered_logs(
-            limit=10,
+            limit=log_limit,
             levels=["error", "high", "warning"],  # Show only bad stuff
         )
 
@@ -255,11 +272,13 @@ class SecurityDashboard(QWidget):
         for log in logs:
             row = QFrame()
             # Use a light red background for critical logs
+            bg_opacity = 0.08
             row.setStyleSheet(
-                f"background: {hex_to_rgba(COLORS['error_red'], 0.08)}; border-radius: 5px; padding: 5px;"
+                f"background: {hex_to_rgba(COLORS['error_red'], bg_opacity)}; border-radius: 5px; padding: 5px;"
             )
             layout = QHBoxLayout(row)
 
+            # Estrae orario HH:MM:SS da ISO timestamp
             ts = log["timestamp"][11:19]
             act = log["action"]
 
@@ -269,7 +288,7 @@ class SecurityDashboard(QWidget):
 
             self.log_layout.addWidget(row)
 
-    def _run_integrity_check(self):  # noqa: ANN202
+    def _run_integrity_check(self) -> None:
         valid = self.audit_manager.verify_integrity()
         if valid:
             QMessageBox.information(

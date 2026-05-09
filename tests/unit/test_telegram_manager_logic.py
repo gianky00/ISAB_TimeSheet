@@ -52,7 +52,7 @@ class TestTelegramManagerLogic:
 
     @pytest.mark.asyncio
     async def test_cmd_stop(self, telegram_service, mock_update):
-        from src.core.telegram.handlers import commands  # noqa: PLC0415
+        from src.core.telegram.handlers import commands
 
         mock_signal = MagicMock()
         telegram_service.command_received.connect(mock_signal)
@@ -64,7 +64,7 @@ class TestTelegramManagerLogic:
 
     @pytest.mark.asyncio
     async def test_handle_text_input_waiting_pdl(self, telegram_service, mock_update):
-        from src.core.telegram.handlers import messages  # noqa: PLC0415
+        from src.core.telegram.handlers import messages
 
         chat_id = mock_update.effective_chat.id
         telegram_service.user_states[chat_id] = "WAITING_PDL"
@@ -80,7 +80,7 @@ class TestTelegramManagerLogic:
 
     @pytest.mark.asyncio
     async def test_handle_text_input_query(self, telegram_service, mock_update):
-        from src.core.telegram.handlers import messages  # noqa: PLC0415
+        from src.core.telegram.handlers import messages
 
         chat_id = mock_update.effective_chat.id
         telegram_service.user_states[chat_id] = None
@@ -95,7 +95,7 @@ class TestTelegramManagerLogic:
 
     @pytest.mark.asyncio
     async def test_handle_text_input_query_emission(self, telegram_service, mock_update):
-        from src.core.telegram.handlers import messages  # noqa: PLC0415
+        from src.core.telegram.handlers import messages
 
         chat_id = mock_update.effective_chat.id
         telegram_service.user_states[chat_id] = None
@@ -109,7 +109,7 @@ class TestTelegramManagerLogic:
 
     @pytest.mark.asyncio
     async def test_handle_nav_actions_main(self, telegram_service):
-        from src.core.telegram.handlers import callbacks  # noqa: PLC0415
+        from src.core.telegram.handlers import callbacks
 
         mock_query = AsyncMock()
         mock_query.data = "menu_main"
@@ -127,7 +127,7 @@ class TestTelegramManagerLogic:
 
     @pytest.mark.asyncio
     async def test_handle_nav_actions_bots(self, telegram_service):
-        from src.core.telegram.handlers import callbacks  # noqa: PLC0415
+        from src.core.telegram.handlers import callbacks
 
         mock_query = AsyncMock()
         mock_query.data = "nav_bots"
@@ -144,7 +144,7 @@ class TestTelegramManagerLogic:
 
     @pytest.mark.asyncio
     async def test_handle_db_actions_strumentale(self, telegram_service):
-        from src.core.telegram.handlers import callbacks  # noqa: PLC0415
+        from src.core.telegram.handlers import callbacks
 
         mock_query = AsyncMock()
         mock_query.data = "db_select_year_strumentale"
@@ -164,7 +164,7 @@ class TestTelegramManagerLogic:
 
     @pytest.mark.asyncio
     async def test_handle_utility_actions_status(self, telegram_service):
-        from src.core.telegram.handlers import callbacks  # noqa: PLC0415
+        from src.core.telegram.handlers import callbacks
 
         mock_query = AsyncMock()
         mock_query.data = "status"
@@ -182,7 +182,7 @@ class TestTelegramManagerLogic:
 
     @pytest.mark.asyncio
     async def test_handle_button_dispatcher(self, telegram_service, mock_update):
-        from src.core.telegram.handlers import callbacks  # noqa: PLC0415
+        from src.core.telegram.handlers import callbacks
 
         mock_query = AsyncMock()
         mock_query.data = "nav_bots"

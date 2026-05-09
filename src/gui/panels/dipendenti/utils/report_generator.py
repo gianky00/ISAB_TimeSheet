@@ -69,7 +69,7 @@ class ReportGenerator:
     @staticmethod
     def _fallback_browser(message: str, data: dict[str, Any]) -> None:
         """Gestisce l'apertura del report nel browser se Outlook fallisce."""
-        from src.core.dipendenti.report_service import ReportService  # noqa: PLC0415
+        from src.core.dipendenti.report_service import ReportService
 
         try:
             body_html = ReportService.build_report_html(data)
@@ -81,11 +81,11 @@ class ReportGenerator:
 
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(tmp_path)))
 
-            from src.core.report_history import ReportHistory  # noqa: PLC0415
+            from src.core.report_history import ReportHistory
 
             ReportHistory.save_report(data["warning_list"], data["expired_list"])
 
             ToastManager.instance().show(message, "warning", duration=4000)
         except Exception as e:
-            logger.error(f"Errore fallback report browser: {e}")  # noqa: TRY400
+            logger.exception("Errore fallback report browser", exc=e)
             ToastManager.instance().show("Impossibile aprire il report nel browser", "error")

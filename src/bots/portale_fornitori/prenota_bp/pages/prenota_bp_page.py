@@ -9,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
@@ -26,14 +27,14 @@ class PrenotaBPPage:
     """
 
     def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None) -> None:
-        """Inizializza la pagina con il driver e configura i tempiùdi attesa."""
+        """Inizializza la pagina con il driver e configura i tempi di attesa."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
-        self.short_wait = WebDriverWait(driver, 5)
+        self.short_wait = WebDriverWait(driver, Timeouts.SHORT)
         self._log = log_callback or print
 
     def log(self, message: str) -> None:
-        """Inoltra i messaggiàdi log alla callback configurata."""
+        """Inoltra i messaggi di log alla callback configurata."""
         self._log(message)
 
     def _wait_for_overlay(self) -> None:
@@ -54,9 +55,10 @@ class PrenotaBPPage:
         """
         self._wait_for_overlay()
         wait_time = timeout or Timeouts.DEFAULT
+        max_attempts = 3
 
         # Retry loop per gestire DOM instabile (ExtJS)
-        for attempt in range(3):
+        for attempt in range(max_attempts):
             try:
                 # Aspetta che l'elemento sia presente e visibile
                 el = WebDriverWait(self.driver, wait_time / 2).until(
@@ -70,14 +72,14 @@ class PrenotaBPPage:
                 except Exception:
                     # Backup click via Javascript
                     self.driver.execute_script("arguments[0].click();", el)
-                return el  # noqa: TRY300
-
             except (TimeoutException, AttributeError, Exception) as e:
-                if attempt == 2:  # Ultimo tentativo fallito # noqa: PLR2004
+                if attempt == max_attempts - 1:  # Ultimo tentativo fallito
                     self.log(f"  Errore definitivo click su {locator}: {e}")
-                    raise e  # noqa: TRY201
+                    raise
                 self.log(f" (Riprovo click su {locator}...)")
                 self._wait_for_overlay()
+            else:
+                return el
         return None
 
     def wait_and_fill(self, locator: tuple[str, str], text: str, timeout: int | float | None = None) -> Any:
@@ -98,7 +100,7 @@ class PrenotaBPPage:
         return el
 
     def login(self, username: str, password: str) -> None:
-        """Metodo legacy per compatibilit , il login  ora gestito da BaseBot."""
+        """Metodo legacy per compatibilità, il login è ora gestito da BaseBot."""
         # Check immediato sessione
         with suppress(Exception):
             if self.driver.find_elements(*PrenotaBPLocators.USER_INFO_PANEL):
@@ -127,7 +129,7 @@ class PrenotaBPPage:
             self.driver.execute_script("arguments[0].click();", submenu)
         except Exception:
             # Espansione menu principale
-            self.log("Espansione menu 'Buono di Prelievò...")
+            self.log("Espansione menu 'Buono di Prelievo'...")
             self.wait_and_click(PrenotaBPLocators.MENU_BUONO_PRELIEVO)
             submenu = self.wait.until(EC.element_to_be_clickable(PrenotaBPLocators.SUBMENU_GESTIONE_BP))
             self.driver.execute_script("arguments[0].click();", submenu)
@@ -153,12 +155,10 @@ class PrenotaBPPage:
             try:
                 self.log(f" Selezione fornitore: '{fornitore}'...")
                 # 1. Click sulla freccia della combo (usando ActionChains per simulare click utente)
-                from selenium.webdriver.common.action_chains import ActionChains  # noqa: PLC0415
-
                 arrow = self.wait.until(EC.element_to_be_clickable(PrenotaBPLocators.FILTER_FORNITORE_ARROW))
                 ActionChains(self.driver).move_to_element(arrow).click().perform()
                 option_xpath = f"//li[normalize-space(text())='{fornitore}']"
-                option = WebDriverWait(self.driver, 10).until(
+                option = WebDriverWait(self.driver, Timeouts.DEFAULT).until(
                     EC.presence_of_element_located((By.XPATH, option_xpath))
                 )
 
@@ -192,7 +192,7 @@ class PrenotaBPPage:
             self.wait.until(EC.visibility_of_element_located(PrenotaBPLocators.WINDOW_DETTAGLI))
         except Exception as e:
             self.log(f"Impossibile aprire i dettagli: {e}")
-            raise e  # noqa: TRY201
+            raise
 
     def verifica_disponibilita_materiali(self) -> bool:
         """
@@ -218,7 +218,7 @@ class PrenotaBPPage:
         for i, row in enumerate(rows):
             try:
                 # Cerca l'icona di spunta verde nella riga corrente
-                # Il locator  relativo (.//...)
+                # Il locator è relativo (.//...)
                 row.find_element(*PrenotaBPLocators.CELL_MATERIALE_DISPONIBILE)
             except Exception:
                 self.log(f" Riga {i + 1}: NON Disponibile  ")
@@ -261,8 +261,9 @@ class PrenotaBPPage:
             self.log(f"Errore durante la compilazione del form: {e}")
             # Tenta di chiudere il popup in caso di errore per non bloccare i successivi
             with suppress(Exception):
-                self.wait_and_click(PrenotaBPLocators.BT_CHIUDI_POPUP, timeout=3)
-            raise e  # noqa: TRY201
+                popup_close_timeout = 3
+                self.wait_and_click(PrenotaBPLocators.BT_CHIUDI_POPUP, timeout=popup_close_timeout)
+            raise
 
         self._wait_for_overlay()
 
@@ -322,7 +323,7 @@ class PrenotaBPPage:
 
     def _compila_form_richiesta(self, note: str) -> None:
         """Compila e salva il form di richiesta."""
-        self.log("Click su 'Crea Richiestà...")
+        self.log("Click su 'Crea Richiesta'...")
         try:
             self.wait_and_click(PrenotaBPLocators.BT_CREA_RICHIESTA)
             self._wait_for_overlay()
@@ -330,7 +331,8 @@ class PrenotaBPPage:
             now = datetime.now(UTC).astimezone()
             data_oggi = now.strftime("%d/%m/%Y")
             ora_attuale = now.strftime("%H%M")
-            ora_fine = (now + timedelta(minutes=30)).strftime("%H%M")
+            offset_minutes = 30
+            ora_fine = (now + timedelta(minutes=offset_minutes)).strftime("%H%M")
 
             self.wait.until(EC.visibility_of_element_located(PrenotaBPLocators.FORM_DATA_RITIRO))
             self.wait_and_fill(PrenotaBPLocators.FORM_DATA_RITIRO, data_oggi)
@@ -343,10 +345,11 @@ class PrenotaBPPage:
             self._wait_for_overlay()
             self.log("Richiesta creata e salvata con successo.")
         except Exception as e:
-            self.log(f"Errore nel flusso 'Crea Richiestà: {e}")
+            self.log(f"Errore nel flusso 'Crea Richiesta': {e}")
             with suppress(Exception):
-                self.wait_and_click(PrenotaBPLocators.BT_CHIUDI_POPUP, timeout=3)
-            raise e  # noqa: TRY201
+                popup_close_timeout = 3
+                self.wait_and_click(PrenotaBPLocators.BT_CHIUDI_POPUP, timeout=popup_close_timeout)
+            raise
 
     def _click_safe(self, element: Any) -> None:
         """Esegue un click sicuro tramite scroll e JS fallback."""

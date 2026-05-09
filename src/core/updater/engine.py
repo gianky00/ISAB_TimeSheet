@@ -237,7 +237,7 @@ class DownloadWorker(QThread):
 
     def _handle_interruption(self) -> None:
         """Helper to raise interruption error."""
-        raise requests.exceptions.ConnectionError("Stream interrupted")  # noqa: TRY003
+        raise requests.exceptions.ConnectionError("Stream interrupted")
 
 
 def run_installer_and_exit(setup_path: str) -> None:
@@ -255,7 +255,7 @@ def run_installer_and_exit(setup_path: str) -> None:
 
 def run_pending_installer() -> None:
     """Executes the installer stored at app closure in a separate process."""
-    global _pending_installer_path  # noqa: PLW0602
+    global _pending_installer_path
     if _pending_installer_path and Path(_pending_installer_path).exists():
         # Usa DETACHED_PROCESS per slegarsi dal ciclo di vita dell'app corrente
         flags = subprocess.DETACHED_PROCESS if os.name == "nt" else 0
@@ -270,19 +270,19 @@ def run_pending_installer() -> None:
 
 def set_pending_installer(path: str) -> None:
     """Sets the path for the installer to be run on closure."""
-    global _pending_installer_path  # noqa: PLW0603
+    global _pending_installer_path
     _pending_installer_path = path
 
 
 def get_pending_installer_path() -> str | None:
     """Returns the path of the pending installer."""
-    global _pending_installer_path  # noqa: PLW0602
+    global _pending_installer_path
     return _pending_installer_path
 
 
 def has_pending_update() -> bool:
     """Returns True if there is an update ready to be installed."""
-    global _pending_installer_path  # noqa: PLW0602
+    global _pending_installer_path
     return bool(_pending_installer_path and Path(_pending_installer_path).exists())
 
 

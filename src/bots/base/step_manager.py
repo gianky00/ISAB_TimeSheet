@@ -4,13 +4,14 @@ Componente dedicato alla gestione della timeline operativa dei bot.
 Gestisce gli stati degli step e notifica la GUI tramite segnali.
 """
 
-import logging
 from enum import Enum, auto
 from typing import Any
 
 from PySide6.QtCore import QObject, Signal
 
-logger = logging.getLogger(__name__)
+from src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class StepStatus(Enum):

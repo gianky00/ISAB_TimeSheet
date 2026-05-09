@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 class SecretItem(QFrame):
     """Widget che rappresenta una singola voce di segreto (APiu'Key) con azioni di salvataggio/visibilità."""
 
-    def __init__(self, app_name, service_label, secret_key, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, app_name, service_label, secret_key, parent=None) -> None:
         """Inizializza l'elemento del segreto caricando il valore esistente dal keyring."""
         super().__init__(parent)
         self.app_name = app_name
@@ -68,14 +68,14 @@ class SecretItem(QFrame):
 
         layout.addLayout(row)
 
-    def _toggle(self):  # noqa: ANN202
+    def _toggle(self) -> None:
         self.input_field.setEchoMode(
             QLineEdit.EchoMode.Normal
             if self.input_field.echoMode() == QLineEdit.EchoMode.Password
             else QLineEdit.EchoMode.Password
         )
 
-    def _save(self):  # noqa: ANN202
+    def _save(self) -> None:
         val = self.input_field.text().strip()
         try:
             if val:
@@ -91,7 +91,7 @@ class SecretItem(QFrame):
 class AdminSecretsGUI(QWidget):
     """Finestra principale per la gestione delle APiu'Key utilizzate dagli script di amministrazione."""
 
-    def __init__(self):  # noqa: ANN204
+    def __init__(self) -> None:
         """Configura l'interfaccia e carica i segreti predefiniti."""
         super().__init__()
         self.setWindowTitle("Admin Secrets - SyncroJob")
@@ -99,7 +99,7 @@ class AdminSecretsGUI(QWidget):
         self.APP_NAME = "SyncroJob"
         self._setup_ui()
 
-    def _setup_ui(self):  # noqa: ANN202
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel("🛡️ Gestione APiu'Key Admin"))
 

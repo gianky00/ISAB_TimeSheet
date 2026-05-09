@@ -63,7 +63,7 @@ class StatisticsWidget(QWidget):
         if h_header is not None:
             h_header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         # Use global styles from light.qss
-        # self.table.setStyleSheet(...) # noqa: ERA001
+        # self.table.setStyleSheet(...)
         self.table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
         self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         layout.addWidget(self.table)

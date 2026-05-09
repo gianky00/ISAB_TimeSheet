@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class ProgrammingStatusWidget(QWidget):
     """Widget elegante che mostra una barra di stato verde/arancione per TCL e TGO."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         tcl: bool,
         tgo: bool,
@@ -54,7 +54,7 @@ class ProgrammingStatusWidget(QWidget):
                 encoded = base64.b64encode(path.read_bytes()).decode("utf-8")
                 return f"data:image/svg+xml;base64,{encoded}"
         except Exception as e:
-            logger.error(f"Errore caricamento icona base64: {e}")  # noqa: TRY400
+            logger.exception("Errore caricamento icona base64", exc=e)
         return ""
 
     def _setup_tooltip(self) -> None:
@@ -73,70 +73,96 @@ class ProgrammingStatusWidget(QWidget):
     """
         self.setToolTip(html)
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: PLR0915
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         """Disegna la barra di stato TCL/TGO nella cella."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        w, h = float(self.width()), float(self.height())
-
-        if self.is_today:
-            c = QColor(COLORS["primary_dark"])
-            painter.fillRect(self.rect(), QColor(c.red(), c.green(), c.blue(), 40))
+        self._draw_today_highlight(painter)
 
         bar_w, bar_h = 80.0, 10.0
+        w, h = float(self.width()), float(self.height())
         x, y = (w - bar_w) / 2.0, (h - bar_h) / 2.0
         radius = 5.0
 
+        path = self._create_bar_path(x, y, bar_w, bar_h, radius)
+
+        # Disegna lo sfondo (vuoto/default)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(COLORS["bg_hover"]))
+        painter.drawPath(path)
+
+        # Disegna gli indicatori attivi
+        self._draw_status_indicators(painter, path, x, y, bar_w, bar_h, radius)
+
+    def _draw_today_highlight(self, painter: QPainter) -> None:
+        """Disegna un'evidenziazione se la cella rappresenta il giorno corrente."""
+        if self.is_today:
+            c = QColor(COLORS["primary_dark"])
+            HIGHLIGHT_OPACITY = 40
+            painter.fillRect(self.rect(), QColor(c.red(), c.green(), c.blue(), HIGHLIGHT_OPACITY))
+
+    def _create_bar_path(self, x: float, y: float, w: float, h: float, r: float) -> QPainterPath:
+        """Crea il tracciato della barra gestendo le connessioni laterali."""
         path = QPainterPath()
-        tl = 0.0 if self.connect_left else radius
-        bl = 0.0 if self.connect_left else radius
-        tr = 0.0 if self.connect_right else radius
-        br = 0.0 if self.connect_right else radius
+        tl = 0.0 if self.connect_left else r
+        bl = 0.0 if self.connect_left else r
+        tr = 0.0 if self.connect_right else r
+        br = 0.0 if self.connect_right else r
 
-        path.moveTo(x + bar_w - tr, y)
+        # Top-right
+        path.moveTo(x + w - tr, y)
         if tr > 0:
-            path.arcTo(x + bar_w - 2 * tr, y, 2 * tr, 2 * tr, 90, -90)
+            path.arcTo(x + w - 2 * tr, y, 2 * tr, 2 * tr, 90, -90)
         else:
-            path.lineTo(x + bar_w, y)
+            path.lineTo(x + w, y)
 
-        path.lineTo(x + bar_w, y + bar_h - br)
+        # Bottom-right
+        path.lineTo(x + w, y + h - br)
         if br > 0:
-            path.arcTo(x + bar_w - 2 * br, y + bar_h - 2 * br, 2 * br, 2 * br, 0, -90)
+            path.arcTo(x + w - 2 * br, y + h - 2 * br, 2 * br, 2 * br, 0, -90)
         else:
-            path.lineTo(x + bar_w, y + bar_h)
+            path.lineTo(x + w, y + h)
 
-        path.lineTo(x + bl, y + bar_h)
+        # Bottom-left
+        path.lineTo(x + bl, y + h)
         if bl > 0:
-            path.arcTo(x, y + bar_h - 2 * bl, 2 * bl, 2 * bl, 270, -90)
+            path.arcTo(x, y + h - 2 * bl, 2 * bl, 2 * bl, 270, -90)
         else:
-            path.lineTo(x, y + bar_h)
+            path.lineTo(x, y + h)
 
+        # Top-left
         path.lineTo(x, y + tl)
         if tl > 0:
             path.arcTo(x, y, 2 * tl, 2 * tl, 180, -90)
         else:
             path.lineTo(x, y)
         path.closeSubpath()
+        return path
 
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor(COLORS["bg_hover"]))
-        painter.drawPath(path)
-
-        green_color, orange_color = QColor(COLORS["success_dark"]), QColor(COLORS["warning_orange"])
+    def _draw_status_indicators(
+        self, painter: QPainter, path: QPainterPath, x: float, y: float, w: float, h: float, r: float
+    ) -> None:
+        """Disegna i colori verde o arancione in base allo stato TCL/TGO."""
+        green_color = QColor(COLORS["success_dark"])
+        orange_color = QColor(COLORS["warning_orange"])
 
         if self.tcl and self.tgo:
             painter.setBrush(green_color)
             painter.drawPath(path)
         elif self.tcl:
-            tcl_rect = QRectF(x, y, bar_w / 2.0 + 2.0, bar_h)
+            # Metà sinistra (approssimata con un piccolo overlap centrale)
+            OVERLAP = 2.0
+            tcl_rect = QRectF(x, y, w / 2.0 + OVERLAP, h)
             tcl_path = QPainterPath()
-            tcl_path.addRoundedRect(tcl_rect, radius, radius)
+            tcl_path.addRoundedRect(tcl_rect, r, r)
             painter.setBrush(orange_color)
             painter.drawPath(tcl_path)
         elif self.tgo:
-            tgo_rect = QRectF(x + bar_w / 2.0 - 2.0, y, bar_w / 2.0 + 2.0, bar_h)
+            # Metà destra
+            OVERLAP = 2.0
+            tgo_rect = QRectF(x + w / 2.0 - OVERLAP, y, w / 2.0 + OVERLAP, h)
             tgo_path = QPainterPath()
-            tgo_path.addRoundedRect(tgo_rect, radius, radius)
+            tgo_path.addRoundedRect(tgo_rect, r, r)
             painter.setBrush(orange_color)
             painter.drawPath(tgo_path)

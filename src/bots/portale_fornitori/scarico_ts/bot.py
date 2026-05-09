@@ -242,11 +242,12 @@ class ScaricaTSBot(SeleniumBaseBot):
             xpath_cerca = "//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Cerca']]"
             self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_cerca))).click()
 
-            self._attendi_scomparsa_overlay(90)
-            return True  # noqa: TRY300
+            self._attendi_scomparsa_overlay(Timeouts.OVERLAY)
         except Exception as e:
             self.log(f"⚠️ Errore ricerca OdA {numero_oda}: {e}")
             return False
+        else:
+            return True
 
     def _run_vba_processing(self, file_list: list[str], dest_dir: Path) -> None:
         """Esegue il post-processing stile VBA (TimesheetProcessor)."""
@@ -279,10 +280,11 @@ class ScaricaTSBot(SeleniumBaseBot):
             fornitore_arrow_xpath = "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
             self.wait.until(EC.visibility_of_element_located((By.XPATH, fornitore_arrow_xpath)))
             self._attendi_scomparsa_overlay()
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"❌ Errore navigazione Timesheet: {e}")
             return False
+        else:
+            return True
 
     def _setup_filters(self) -> bool:
         """Imposta Fornitore e Data Da."""
@@ -304,10 +306,11 @@ class ScaricaTSBot(SeleniumBaseBot):
             campo_data_da = self.wait.until(EC.visibility_of_element_located((By.NAME, "DataTimesheetDa")))
             campo_data_da.clear()
             campo_data_da.send_keys(self.data_da)
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"❌ Errore impostazione filtri: {e}")
             return False
+        else:
+            return True
 
     def _download_excel(
         self, source_dir: Path, dest_dir: Path, numero_oda: str, posizione_oda: str
@@ -328,7 +331,7 @@ class ScaricaTSBot(SeleniumBaseBot):
         }
 
         # Trigger
-        time.sleep(1)
+        time.sleep(Timeouts.UI_DELAY)
         if not self._click_excel_export_button():
             return None
 
@@ -360,10 +363,11 @@ class ScaricaTSBot(SeleniumBaseBot):
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
             time.sleep(0.5)
             btn.click()
-            return True  # noqa: TRY300
         except Exception as e:
             self.log(f"⚠️ Errore click export: {e}")
             return False
+        else:
+            return True
 
     def _get_final_download_path(
         self, source_dir: Path, dest_dir: Path, oda: str, pos: str, extension: str = ".xlsx"
@@ -389,14 +393,16 @@ class ScaricaTSBot(SeleniumBaseBot):
     def _move_to_destination(self, src: Path, dest: Path) -> Path | None:
         """Sposta il file scaricato con retry logic."""
         dest.parent.mkdir(parents=True, exist_ok=True)
-        for attempt in range(3):
+        max_move_attempts = 3
+        for attempt in range(max_move_attempts):
             try:
                 shutil.move(str(src), str(dest))
                 self.log(f"✅ Scaricato: {dest.name}")
-                return dest  # noqa: TRY300
             except Exception as e:
-                self.log(f"⚠️ Tentativo {attempt + 1}/3 fallito: {e}")
-                time.sleep(1)
+                self.log(f"⚠️ Tentativo {attempt + 1}/{max_move_attempts} fallito: {e}")
+                time.sleep(Timeouts.UI_DELAY * 2)  # 1s
+            else:
+                return dest
 
         self.log(f"❌ Impossibile spostare il file in: {dest}")
         return None

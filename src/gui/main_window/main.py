@@ -203,7 +203,7 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(self.content_area, 0, 0)
 
         # 2. Sidebar come Overlay
-        from src.gui.widgets.sidebar_widget import SidebarWidget  # noqa: PLC0415
+        from src.gui.widgets.sidebar_widget import SidebarWidget
 
         self.sidebar = SidebarWidget(self.central_widget)
         self.main_layout.addWidget(self.sidebar, 0, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
@@ -349,7 +349,7 @@ class MainWindow(QMainWindow):
             self.pdl_panel.set_pdl_list(pdl_numbers)
         else:
             # Fallback se non ancora registrato (molto improbabile dopo navigazione)
-            from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
+            from src.gui.main_window.page_index import PageIndex
 
             automazioni = self.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
             if automazioni and hasattr(automazioni, "panel_pdl"):

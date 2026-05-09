@@ -31,7 +31,7 @@ def deep_update_paths(data: Any, old_path: str, new_path: str) -> Any:
     return data
 
 
-def check_and_migrate_local_config(base_dir: Path, load_base_func: Any, atomic_write_func: Any) -> bool:  # noqa: C901
+def check_and_migrate_local_config(base_dir: Path, load_base_func: Any, atomic_write_func: Any) -> bool:
     """Cerca file config.json fuori dalla cartella standard e lo migra."""
     app_dir = Path(sys.executable).parent if getattr(sys, "frozen", False) else base_dir
     legacy_app_names = ["SyncroJob"]

@@ -89,7 +89,7 @@ class TestConfigManager:
         assert config["accounts"][0]["default"] is True
 
     def test_atomic_write_failure_cleanup(self, tmp_path, mocker):
-        from src.core.config_manager import _atomic_write_json  # noqa: PLC0415
+        from src.core.config_manager import _atomic_write_json
 
         target = tmp_path / "fail.json"
 

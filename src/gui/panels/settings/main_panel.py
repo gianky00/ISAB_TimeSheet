@@ -221,7 +221,7 @@ class SettingsPanel(QWidget):
 
     def _reset_to_defaults(self) -> None:
         """Ripristina la configurazione predefinita previa conferma dell'utente."""
-        from src.gui.dialogs.confirmation_dialog import ConfirmationDialog  # noqa: PLC0415
+        from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 
         if ConfirmationDialog.confirm(
             self,
@@ -234,13 +234,13 @@ class SettingsPanel(QWidget):
 
     def _export_config(self) -> None:
         """Esporta il file di configurazione JSON in una posizione scelta dall'utente."""
-        from PySide6.QtWidgets import QFileDialog  # noqa: PLC0415
+        from PySide6.QtWidgets import QFileDialog
 
         path, _ = QFileDialog.getSaveFileName(
             self, "Esporta Configurazione", "config_backup.json", "JSON Files (*.json)"
         )
         if path:
-            import shutil  # noqa: PLC0415
+            import shutil
 
             try:
                 shutil.copy(config_manager.CONFIG_FILE, path)
@@ -250,7 +250,7 @@ class SettingsPanel(QWidget):
 
     def _import_config(self) -> None:
         """Importa un file di configurazione JSON esterno sovrascrivendo quella attuale."""
-        from PySide6.QtWidgets import QFileDialog  # noqa: PLC0415
+        from PySide6.QtWidgets import QFileDialog
 
         path, _ = QFileDialog.getOpenFileName(self, "Importa Configurazione", "", "JSON Files (*.json)")
         if path:

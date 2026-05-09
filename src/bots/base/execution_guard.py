@@ -4,12 +4,11 @@ Gestisce i controlli pre-volo dei bot: licenza, aggiornamenti e integrità.
 Centralizza la sicurezza dell'esecuzione.
 """
 
-import logging
-
 from src.core.license_updater import run_update
 from src.core.license_validator import verify_license
+from src.core.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ExecutionGuard:

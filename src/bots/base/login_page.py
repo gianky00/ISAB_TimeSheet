@@ -50,10 +50,11 @@ class LoginPage:
             overlay_wait.until(EC.invisibility_of_element_located((By.XPATH, xpath_combined)))
             self.log(" -> Overlay di caricamento scomparso.")
             time.sleep(0.3)
-            return True  # noqa: TRY300
         except TimeoutException:
             self.log(f"  Timeout ({timeout_secondi}s) attesa overlay. Proseguo con cautela.")
             return False
+        else:
+            return True
 
     def _perform_login_form_action(self, username: str, password: str, company: str) -> None:
         """Riempie il form di login, seleziona la società e preme Accedi."""
@@ -124,7 +125,7 @@ class LoginPage:
             return True
         return False
 
-    def login(self, username: str, password: str, company: str = "ISAB") -> bool:  # noqa: PLR0911
+    def login(self, username: str, password: str, company: str = "ISAB") -> bool:
         """
         Esegue il login al portale ISAB.
         Ritorna False se viene rilevato un Proxy Error.
@@ -160,13 +161,11 @@ class LoginPage:
 
                 try:
                     self._perform_login_form_action(username, password, company)
-                    return True  # noqa: TRY300
                 except Exception as e:
                     self.log(f"  Fallito recuperòsessione: {e}")
                     return False
-
-            self.log("  Login completato con successo")
-            return True  # noqa: TRY300
+                else:
+                    return True
 
         except TimeoutException:
             self.log("  Timeout durante il login")
@@ -174,3 +173,6 @@ class LoginPage:
         except Exception as e:
             self.log(f"  Errore login: {e}")
             return False
+        else:
+            self.log("  Login completato con successo")
+            return True

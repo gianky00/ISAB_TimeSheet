@@ -122,7 +122,7 @@ class TelegramTab(QWidget):
         self.cards: list[SettingCard] = []
         self._setup_ui()
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Configura il layout a card per credenziali e test di connettività."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)

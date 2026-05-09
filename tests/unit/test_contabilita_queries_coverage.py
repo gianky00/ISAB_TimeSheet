@@ -31,7 +31,7 @@ class TestContabilitaQueriesCoverage:
         rows = ContabilitaQueries.get_data_by_year(db_path, 2024)
         assert len(rows) == 1
         # Il numero di colonne restituite deve corrispondere al mapping di ExcelImporter (14 colonne)
-        from src.core.excel_importer import ExcelImporter  # noqa: PLC0415
+        from src.core.excel_importer import ExcelImporter
 
         assert len(rows[0]) == len(ExcelImporter.COLUMNS_MAPPING)
 

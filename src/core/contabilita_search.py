@@ -21,14 +21,14 @@ class ContabilitaSearch:
         """
         Cerca OdA per codice, descrizione o ODC.
         Returns:
-          List[Dict]: Lista di risultati [{'codice_odà: '...', 'descrizionè: '...'}, ...]
+          List[Dict]: Lista di risultati [{'codice_oda': '...', 'descrizione': '...'}, ...]
         """
         if not db_path.exists():
             logger.debug("[DEBUG] DB Contabilità non trovato")
             return []
 
         query = query.strip().lower()
-        if len(query) < 2:  # noqa: PLR2004
+        if len(query) < 2:
             return []  # Minimo 2 caratteri
 
         results: list[dict[str, Any]] = []
@@ -67,17 +67,17 @@ class ContabilitaSearch:
 
                 logger.debug(f"[DEBUG] Search '{query}' found {len(rows)} matches")
 
-                results.extend(
-                    {
-                        "type": "ODA",
-                        "codice_oda": row[0],
-                        "descrizione": row[1] or "Nessuna descrizione",
-                        "odc": row[2],
-                    }
-                    for row in rows
-                )
+                for row in rows:
+                    results.append(
+                        {
+                            "type": "ODA",
+                            "codice_oda": row[0],
+                            "descrizione": row[1] or "Nessuna descrizione",
+                            "odc": row[2],
+                        }
+                    )
         except Exception as e:
-            logger.error(f"Search Error: {e}")  # noqa: TRY400
+            logger.exception("Search Error", exc=e)
 
         return results
 
@@ -86,7 +86,7 @@ class ContabilitaSearch:
         cls, db_path: Path, query: str, year: int | None = None, limit: int = 100
     ) -> dict[str, list[dict[str, Any]]]:
         """Ricerca estesa in tutti i moduli (Giornaliere, Scarico Ore, Certificati)."""
-        if not db_path.exists() or len(query.strip()) < 2:  # noqa: PLR2004
+        if not db_path.exists() or len(query.strip()) < 2:
             return {}
 
         query = query.strip().lower()
@@ -108,7 +108,7 @@ class ContabilitaSearch:
                 out["CERTIFICATI"] = cls._search_certificati(cursor, query, limit)
 
         except Exception as e:
-            logger.error(f"Extended Search Error: {e}")  # noqa: TRY400
+            logger.exception("Extended Search Error", exc=e)
 
         return out
 
@@ -120,7 +120,7 @@ class ContabilitaSearch:
                 return ""
             parts = str(val).split()[0].split("-")
             # Verifica che sia un formato YYYY-MM-DD plausibile
-            if len(parts) == 3 and len(parts[0]) == 4 and parts[0].isdigit():  # noqa: PLR2004
+            if len(parts) == 3 and len(parts[0]) == 4 and parts[0].isdigit():
                 return f"{parts[2]}/{parts[1]}/{parts[0]}"
             return str(val)
         except Exception:

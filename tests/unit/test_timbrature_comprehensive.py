@@ -92,7 +92,7 @@ class TestTimbratureStorageComprehensive(unittest.TestCase):
     @patch("src.core.database.db_manager.get_connection")
     @patch("src.core.sync_tracker.SyncTracker.update_status")
     def test_import_excel_data_flow(self, mock_sync, mock_get_conn, mock_read_excel):
-        import pandas as pd  # noqa: PLC0415
+        import pandas as pd
 
         mock_read_excel.return_value = pd.DataFrame(
             {

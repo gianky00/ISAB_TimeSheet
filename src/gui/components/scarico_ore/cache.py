@@ -7,6 +7,14 @@ from PySide6.QtCore import QObject, QThread, Signal
 
 from src.utils.parsing import parse_currency
 
+# Costanti per indici di colonna e lunghezze attese
+CACHE_FIELDS_COUNT = 5
+DATE_MIN_LEN = 10
+DATE_PARTS_COUNT = 3
+COLUMN_TOTAL = 7
+COLUMN_STYLE = 11
+FIELDS_LIMIT = 11
+
 
 class CacheWorker(QThread):
     """
@@ -75,7 +83,7 @@ class CacheWorker(QThread):
                 # FIX B403: Use JSON instead of pickle for security
                 with self.cache_path.open("r", encoding="utf-8") as f:
                     loaded = json.load(f)
-                    if isinstance(loaded, list) and len(loaded) == 5:  # noqa: PLR2004
+                    if isinstance(loaded, list) and len(loaded) == CACHE_FIELDS_COUNT:
                         d, s, t, st, dk = loaded
                         self.finished.emit(d, s, t, st, dk)
                     else:
@@ -101,7 +109,7 @@ class CacheWorker(QThread):
 
             display_data.append(disp_row)
             search_index.append(" ".join(search_parts).lower())
-            float_totals.append(self._parse_row_total(row[7]))
+            float_totals.append(self._parse_row_total(row[COLUMN_TOTAL]))
             style_cache.append(self._parse_row_style(row))
             date_keys.append(str(row[0]) if row[0] else "")
 
@@ -115,17 +123,17 @@ class CacheWorker(QThread):
             return s_val
 
         try:
-            if len(s_val) >= 10 and s_val[4] == s_val[7] == "-":  # noqa: PLR2004
+            if len(s_val) >= DATE_MIN_LEN and s_val[4] == s_val[7] == "-":
                 return f"{s_val[8:10]}/{s_val[5:7]}/{s_val[0:4]}"
             parts = s_val.split(" ")[0].split("-")
-            return f"{parts[2]}/{parts[1]}/{parts[0]}" if len(parts) == 3 else s_val  # noqa: PLR2004
+            return f"{parts[2]}/{parts[1]}/{parts[0]}" if len(parts) == DATE_PARTS_COUNT else s_val
         except Exception:
             return s_val
 
     def _process_row_fields(self, row: tuple[Any, ...], date_str: str) -> tuple[list[str], list[str]]:
         disp_row = [date_str]
         search_parts = [date_str]
-        for i in range(1, 11):
+        for i in range(1, FIELDS_LIMIT):
             val = row[i]
             d_val = "" if val is None else str(val)
             disp_row.append(d_val)
@@ -142,10 +150,10 @@ class CacheWorker(QThread):
             return 0.0
 
     def _parse_row_style(self, row: tuple[Any, ...]) -> dict[str, Any] | None:
-        if len(row) <= 11 or not row[11]:  # noqa: PLR2004
+        if len(row) <= COLUMN_STYLE or not row[COLUMN_STYLE]:
             return None
         try:
-            return json.loads(row[11])  # type: ignore[no-any-return]
+            return json.loads(row[COLUMN_STYLE])  # type: ignore[no-any-return]
         except Exception:
             return None
 

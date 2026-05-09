@@ -3,7 +3,6 @@ SyncroJob - Database Manager
 Centralized SQLite database management with Thread Safety.
 """
 
-import logging
 import sqlite3
 import threading
 import time
@@ -38,9 +37,10 @@ from src.core.database.migrations.timbrature import (
     mig_timbrature_v3,
     mig_timbrature_v4,
 )
+from src.core.logging import get_logger
 from src.core.paths import DB_DIR
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class DatabaseManager:
@@ -105,11 +105,19 @@ class DatabaseManager:
         return cls._instance
 
     @contextmanager
-    def get_connection(self, db_path: Path) -> Generator[sqlite3.Connection, None, None]:
+    def get_connection(
+        self, db_path: Path, read_only: bool = False
+    ) -> Generator[sqlite3.Connection, None, None]:
         """
         Provides a thread-safe connection with automatic WAL mode and transaction handling.
         """
-        conn = sqlite3.connect(db_path, timeout=30.0)
+        if read_only:
+            # Per sola lettura, usiamo URI mode per garantire l'accesso se possibile
+            db_uri = f"file:{db_path.as_posix()}?mode=ro"
+            conn = sqlite3.connect(db_uri, timeout=30.0, uri=True)
+        else:
+            conn = sqlite3.connect(db_path, timeout=30.0)
+
         conn.row_factory = sqlite3.Row
         try:
             conn.execute("PRAGMA journal_mode=WAL")

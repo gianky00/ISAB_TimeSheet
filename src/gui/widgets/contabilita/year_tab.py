@@ -137,7 +137,7 @@ class ContabilitaYearTab(QWidget):
 
         header = self.table.horizontalHeader()
         if header is None:
-            raise RuntimeError("Table horizontal header is None - table not properly initialized")  # noqa: TRY003
+            raise RuntimeError("Table horizontal header is None - table not properly initialized")
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
         # Inizialmente usa Interactive per tutte le colonne
@@ -193,7 +193,7 @@ class ContabilitaYearTab(QWidget):
         """Adatta le larghezze delle colonne al contenuto, mantenendo un minimo leggibile."""
         header = self.table.horizontalHeader()
         if header is None:
-            raise RuntimeError("Table horizontal header is None - cannot adjust column widths")  # noqa: TRY003
+            raise RuntimeError("Table horizontal header is None - cannot adjust column widths")
 
         # Ridimensiona tutte le colonne al contenuto
         self.table.resizeColumnsToContents()

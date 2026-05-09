@@ -75,7 +75,7 @@ class AuditTableModel(QAbstractTableModel):
             return 0
         return len(self.COLUMNS)
 
-    def data(  # noqa: PLR0911
+    def data(
         self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole
     ) -> Any:
         """
@@ -108,25 +108,25 @@ class AuditTableModel(QAbstractTableModel):
 
         return None
 
-    def _get_display_data(self, log: dict[str, Any], col: int) -> str | None:  # noqa: PLR0911
+    def _get_display_data(self, log: dict[str, Any], col: int) -> str | None:
         """Restituisce il testo da mostrare per ogni colonna."""
         if col == 0:
             return ""
         if col == 1:
             return self._format_timestamp(log.get("timestamp"))
-        if col == 2:  # noqa: PLR2004
+        if col == 2:
             return self._format_duration(log.get("duration_ms", 0))
-        if col == 3:  # noqa: PLR2004
+        if col == 3:
             return str(log.get("module", "-") or "-")
-        if col == 4:  # noqa: PLR2004
+        if col == 4:
             return str(log.get("category", "-"))
-        if col == 5:  # noqa: PLR2004
+        if col == 5:
             return str(log.get("action", "-"))
-        if col == 6:  # noqa: PLR2004
+        if col == 6:
             # Priorità a error_code se c' , altrimenti entity
             err = log.get("error_code")
             return str(err) if err else str(log.get("entity", "-"))
-        if col == 7:  # noqa: PLR2004
+        if col == 7:
             return self._extract_message(log)
         return None
 
@@ -157,19 +157,19 @@ class AuditTableModel(QAbstractTableModel):
 
     def _get_foreground_data(self, log: dict[str, Any], col: int) -> QColor | None:
         """Evidenzia in rosso i codici errore e in arancione le operazioni lente."""
-        if col == 6 and log.get("error_code"):  # Error Code Red # noqa: PLR2004
+        if col == 6 and log.get("error_code"):  # Error Code Red
             return QColor(COLORS["error_red"])
-        if col == 2 and (log.get("duration_ms", 0) or 0) > 5000:  # Slow ops # noqa: PLR2004
+        if col == 2 and (log.get("duration_ms", 0) or 0) > 5000:  # Slow ops
             return QColor(COLORS["warning_orange"])
         return None
 
     def _get_font_data(self, log: dict[str, Any], col: int) -> QFont | None:
         """Applica il grassetto alle azioni e ai codici errore."""
-        if col == 5:  # Action Bold # noqa: PLR2004
+        if col == 5:  # Action Bold
             f = QFont()
             f.setBold(True)
             return f
-        if col == 6 and log.get("error_code"):  # Error Code Bold # noqa: PLR2004
+        if col == 6 and log.get("error_code"):  # Error Code Bold
             f = QFont()
             f.setBold(True)
             return f
@@ -202,7 +202,7 @@ class AuditTableModel(QAbstractTableModel):
         if not ms:
             return "-"
         f_ms = float(ms)
-        if f_ms < 1000:  # noqa: PLR2004
+        if f_ms < 1000:
             return f"{f_ms:.0f}ms"
         return f"{f_ms / 1000.0:.1f}s"
 

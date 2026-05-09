@@ -32,9 +32,9 @@ class BaseImporter:
     @staticmethod
     def _get_pd() -> Any:
         """Lazy load di pandas"""
-        global _pd  # noqa: PLW0603
+        global _pd
         if _pd is None:
-            import pandas as _pd  # noqa: PLC0415
+            import pandas as _pd
         return _pd
 
     @staticmethod
@@ -42,8 +42,8 @@ class BaseImporter:
         """Tenta di decifrare un file Excel se protetto da password."""
         if msoffcrypto:
             with suppress(Exception):
-                from src.core import config_manager  # noqa: PLC0415
-                from src.core.constants import Business  # noqa: PLC0415
+                from src.core import config_manager
+                from src.core.constants import Business
 
                 config = config_manager.load_config()
                 # Recupera password da config, default centralizzato
@@ -81,7 +81,7 @@ class BaseImporter:
         match = re.search(r"(\d{4})", sheet_name)
         if match:
             year = int(match.group(1))
-            return year if 2000 <= year <= 2100 else None  # noqa: PLR2004
+            return year if 2000 <= year <= 2100 else None
 
         if sheet_name.lower() in ("dati", "preventivi", "riepilogo"):
             return datetime.now(UTC).year

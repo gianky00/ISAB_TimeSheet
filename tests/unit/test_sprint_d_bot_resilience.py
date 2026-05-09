@@ -27,7 +27,7 @@ class DummyBot(BaseBot):
 
     def _init_driver(self):
         try:
-            import selenium.webdriver  # noqa: PLC0415
+            import selenium.webdriver
 
             selenium.webdriver.Chrome()
         except Exception as e:
@@ -95,7 +95,7 @@ class TestSprintDBotResilience:
 
         # Make save_screenshot create a dummy file so glob finds it
         def dummy_save(path):
-            from pathlib import Path  # noqa: PLC0415
+            from pathlib import Path
 
             Path(path).write_text("fake png")
 

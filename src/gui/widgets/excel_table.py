@@ -277,7 +277,7 @@ class EditableDataTable(QWidget):
                 if item:
                     item.setText("")
 
-    def set_data(self, data: list[dict[str, Any]]) -> None:  # noqa: C901
+    def set_data(self, data: list[dict[str, Any]]) -> None:
         """
         Popola la tabella con i dati forniti.
         Utilizza un algoritmo di matching flessibile per le chiavi (ignora case, spazi e underscore).
@@ -291,38 +291,45 @@ class EditableDataTable(QWidget):
                 self._add_row()
             return
 
-        def normalize(s: str) -> str:
-            """Rimuove caratteri non alfanumerici e converte in minuscolo."""
-            return "".join(c.lower() for c in s if c.isalnum())
-
         for row_dict in data:
             self._add_row()
             row_idx = self.table.rowCount() - 1
-            for col_idx, col_def in enumerate(self.columns):
-                col_name = col_def["name"]
-                norm_col = normalize(col_name)
-
-                # Cerca il valore nel dizionario con matching flessibile
-                val = ""
-                for k, v in row_dict.items():
-                    if normalize(k) == norm_col:
-                        val = str(v)
-                        break
-
-                if col_def.get("type") == "combo":
-                    combo = self.table.cellWidget(row_idx, col_idx)
-                    if isinstance(combo, FilterComboBox):
-                        idx = combo.findText(val)
-                        if idx >= 0:
-                            combo.setCurrentIndex(idx)
-                else:
-                    item = self.table.item(row_idx, col_idx)
-                    if item:
-                        item.setText(val)
+            self._populate_row(row_idx, row_dict)
 
         # Padding per garantire sempre almeno 'initial_rows' righe a schermo
         while self.table.rowCount() < self.initial_rows:
             self._add_row()
+
+    def _populate_row(self, row_idx: int, row_dict: dict[str, Any]) -> None:
+        """Popola una singola riga mappando i dati del dizionario alle colonne."""
+        for col_idx, col_def in enumerate(self.columns):
+            val = self._find_matching_value(col_def["name"], row_dict)
+            self._set_cell_value(row_idx, col_idx, val, col_def.get("type"))
+
+    def _find_matching_value(self, col_name: str, row_dict: dict[str, Any]) -> str:
+        """Cerca il valore nel dizionario con matching flessibile."""
+        norm_col = self._normalize_key(col_name)
+        for k, v in row_dict.items():
+            if self._normalize_key(k) == norm_col:
+                return str(v)
+        return ""
+
+    def _normalize_key(self, s: str) -> str:
+        """Rimuove caratteri non alfanumerici e converte in minuscolo."""
+        return "".join(c.lower() for c in s if c.isalnum())
+
+    def _set_cell_value(self, row: int, col: int, value: str, col_type: str | None) -> None:
+        """Imposta il valore di una cella (widget o item)."""
+        if col_type == "combo":
+            combo = self.table.cellWidget(row, col)
+            if isinstance(combo, FilterComboBox):
+                idx = combo.findText(value)
+                if idx >= 0:
+                    combo.setCurrentIndex(idx)
+        else:
+            item = self.table.item(row, col)
+            if item:
+                item.setText(value)
 
     def update_cell(self, row: int, col: int, value: str, emit_signal: bool = True) -> None:
         """

@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import psutil
+from PySide6.QtGui import QColor, QIcon, QImage, QPainter, QPixmap
 
 from src.core.constants import BrowserConfig
 from src.core.paths import CONFIG_DIR
@@ -145,7 +146,7 @@ def open_folder(path: str) -> bool:
 
     try:
         if is_windows():
-            os.startfile(str(path_obj))  # noqa: S606
+            os.startfile(str(path_obj))
         elif sys.platform == "darwin":
             subprocess.run(["open", str(path_obj)], check=False)
         else:
@@ -288,7 +289,7 @@ def get_colored_icon(icon_path: str, color: str = "#000000") -> "QIcon":
     """
     Applica un colore personalizzato a un'icona SVG tramite QPainter.
     """
-    from PySide6.QtGui import QColor, QIcon, QImage, QPainter, QPixmap  # noqa: PLC0415
+    from PySide6.QtGui import QIcon
 
     if not Path(icon_path).exists():
         return QIcon()

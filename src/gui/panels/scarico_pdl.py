@@ -77,7 +77,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         Returns:
             Type[SafeWorkPDLBot]: La classe per l'automazione PDL.
         """
-        from src.bots.safework.pdl.bot import SafeWorkPDLBot  # noqa: PLC0415
+        from src.bots.safework.pdl.bot import SafeWorkPDLBot
 
         return SafeWorkPDLBot
 
@@ -237,7 +237,7 @@ class ScaricoPDLPanel(BaseBotPanel):
                 return
 
         try:
-            os.startfile(str(path))  # noqa: S606
+            os.startfile(str(path))
         except Exception:
             ToastManager.instance().show(f"Impossibile aprire la cartella: {path}", "error")
 

@@ -43,7 +43,7 @@ class SidebarWidget(QFrame):
     navigation_requested = Signal(int, int, int)  # (page, sub, bot)
     palette_requested = Signal()
 
-    def __init__(self, parent: QWidget | None = None) -> None:  # noqa: PLR0915
+    def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il componente sidebar.
 
@@ -162,7 +162,8 @@ class SidebarWidget(QFrame):
         self._setup_footer()
 
         self.active_track = QWidget(self)
-        self.active_track.setFixedWidth(5)
+        track_width = 5
+        self.active_track.setFixedWidth(track_width)
         self.active_track.setStyleSheet(f"background: {COLORS['teal_accent']}; border-radius: 2px;")
         self.active_track.hide()
 
@@ -181,14 +182,20 @@ class SidebarWidget(QFrame):
         self.h_lay.setSpacing(10)
 
         self.logo_badge = QLabel()
-        self.logo_badge.setFixedSize(46, 46)
+        badge_size = 46
+        self.logo_badge.setFixedSize(badge_size, badge_size)
         self.logo_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.logo_badge.setStyleSheet("background: white; border-radius: 23px; border: 1px solid #e2e8f0;")
-        pix = QIcon(get_asset_path("assets/app.ico")).pixmap(64, 64)
+        icon_size = 64
+        pix = QIcon(get_asset_path("assets/app.ico")).pixmap(icon_size, icon_size)
         if not pix.isNull():
+            scaled_size = 30
             self.logo_badge.setPixmap(
                 pix.scaled(
-                    30, 30, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+                    scaled_size,
+                    scaled_size,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
                 )
             )
         self.h_lay.addWidget(self.logo_badge)
@@ -349,7 +356,7 @@ class SidebarWidget(QFrame):
                 g.collapse()
         QTimer.singleShot(100, self._update_track)
 
-    def _update_track(self) -> None:  # noqa: C901
+    def _update_track(self) -> None:
         """Sposta il track magnetico in modo sicuro."""
         if self._is_collapsed:
             self.active_track.hide()
@@ -377,51 +384,64 @@ class SidebarWidget(QFrame):
 
     def set_active_button(self, index: int, sub: int | None = None, bot: int | None = None) -> None:
         """Evidenzia il pulsante attivo."""
+        from src.gui.main_window.page_index import PageIndex
+
         btns = {
-            0: self.btn_home,
-            7: self.btn_settings,
-            8: self.btn_help,
-            3: self.btn_timbrature,
-            5: self.btn_dataease,
-            6: self.btn_pdl,
-            10: self.btn_storico_oda,
+            PageIndex.DASHBOARD: self.btn_home,
+            PageIndex.SETTINGS: self.btn_settings,
+            PageIndex.HELP: self.btn_help,
+            PageIndex.TIMBRATURE: self.btn_timbrature,
+            PageIndex.DATAEASE: self.btn_dataease,
+            PageIndex.PDL_DB: self.btn_pdl,
+            PageIndex.STORICO_ODA: self.btn_storico_oda,
         }
         for i, b in btns.items():
             b.setChecked(i == index)
 
         for g, indices in (
-            (self.group_db, (3, 5, 6, 11, 10)),
-            (self.group_contabilita, (4, 12)),
-            (self.group_notifiche, (9,)),
-            (self.group_automazioni, (1,)),
+            (
+                self.group_db,
+                (
+                    PageIndex.TIMBRATURE,
+                    PageIndex.DATAEASE,
+                    PageIndex.PDL_DB,
+                    PageIndex.DIPENDENTI,
+                    PageIndex.STORICO_ODA,
+                ),
+            ),
+            (self.group_contabilita, (PageIndex.STRUMENTALE, PageIndex.CONSUNTIVO)),
+            (self.group_notifiche, (PageIndex.NOTIFICATIONS,)),
+            (self.group_automazioni, (PageIndex.AUTOMAZIONI,)),
         ):
             g.set_active_index(index, indices)
 
         self._set_sub_button_active(index, sub, bot)
         QTimer.singleShot(150, self._update_track)
 
-    def _set_sub_button_active(self, index: int, sub: int | None, bot: int | None) -> None:  # noqa: C901
+    def _set_sub_button_active(self, index: int, sub: int | None, bot: int | None) -> None:
         """Gestisce l'evidenziazione dei pulsanti di terzo livello."""
-        if index == 1:
+        from src.gui.main_window.page_index import PageIndex
+
+        if index == PageIndex.AUTOMAZIONI:
             self.sub_fornitori.header_btn.setChecked(sub == 0)
             self.sub_safework.header_btn.setChecked(sub == 1)
             for i, b in enumerate(self.sub_fornitori.children_btns):
                 b.setChecked(sub == 0 and i == bot)
             for i, b in enumerate(self.sub_safework.children_btns):
                 b.setChecked(sub == 1 and i == bot)
-        elif index == 11:  # noqa: PLR2004
+        elif index == PageIndex.DIPENDENTI:
             self.sub_dipendenti.header_btn.setChecked(True)
             for i, b in enumerate(self.sub_dipendenti.children_btns):
                 b.setChecked(i == sub)
-        elif index == 4:  # noqa: PLR2004
+        elif index == PageIndex.STRUMENTALE:
             self.sub_strumentale.header_btn.setChecked(True)
             for i, b in enumerate(self.sub_strumentale.children_btns):
                 b.setChecked(i == sub)
-        elif index == 12:  # noqa: PLR2004
+        elif index == PageIndex.CONSUNTIVO:
             self.sub_consuntivo.header_btn.setChecked(True)
             for i, b in enumerate(self.sub_consuntivo.children_btns):
                 b.setChecked(i == sub)
-        elif index == 9:  # noqa: PLR2004
+        elif index == PageIndex.NOTIFICATIONS:
             for i, b in enumerate(self.notif_child_btns):
                 b.setChecked(i == sub)
 
@@ -482,26 +502,36 @@ class SidebarWidget(QFrame):
         """Logica specifica per l'espansione della sidebar."""
         self.scroll_area.show()
         self.footer.show()
-        self.h_lay.setContentsMargins(14, 18, 14, 15)
+        expanded_margin_left = 14
+        expanded_margin_top = 18
+        expanded_margin_right = 14
+        expanded_margin_bottom = 15
+        self.h_lay.setContentsMargins(
+            expanded_margin_left, expanded_margin_top, expanded_margin_right, expanded_margin_bottom
+        )
         self.h_lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         p = self.parentWidget()
         ph = p.height() if p else 800
-        self.setMinimumHeight(ph - 20)
-        self.setMaximumHeight(ph - 20)
+        height_offset = 20
+        self.setMinimumHeight(ph - height_offset)
+        self.setMaximumHeight(ph - height_offset)
         self.bg_frame.setProperty("state", "expanded")
 
     def _handle_collapse(self) -> None:
         """Logica specifica per il collasso della sidebar."""
-        self.h_lay.setContentsMargins(0, 8, 0, 15)
+        collapsed_margin_top = 8
+        collapsed_margin_bottom = 15
+        self.h_lay.setContentsMargins(0, collapsed_margin_top, 0, collapsed_margin_bottom)
         self.h_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.bg_frame.setProperty("state", "collapsed")
 
         # Nascondiamo SUBITO le aree pesanti per evitare l'overlap (GUI.png)
         self.scroll_area.hide()
         self.footer.hide()
-        self.setMinimumHeight(100)
-        self.setMaximumHeight(100)
+        collapsed_height = 100
+        self.setMinimumHeight(collapsed_height)
+        self.setMaximumHeight(collapsed_height)
 
     def _update_ui_state(self) -> None:
         """Sincronizza lo stato dei gruppi."""

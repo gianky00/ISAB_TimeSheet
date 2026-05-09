@@ -91,7 +91,7 @@ class ContabilitaPanel(QWidget):
         self._setup_ui()
         # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
 
-    def showEvent(self, event) -> None:  # noqa: ANN001
+    def showEvent(self, event) -> None:
         """Esegue il primo refresh solo quando il pannello diventa visibile."""
         super().showEvent(event)
         if not self._first_refresh_done:
@@ -374,51 +374,74 @@ class ContabilitaPanel(QWidget):
                     tree.itemSelectionChanged.disconnect()
                 tree.itemSelectionChanged.connect(lambda: self._update_selection_total(tree))
 
-    def _update_selection_total(self, widget: QWidget) -> None:  # noqa: C901
+    def _update_selection_total(self, widget: QWidget) -> None:
         """Esegue il calcolo granulare delle ore selezionate filtrando le righe nascoste."""
         with suppress(Exception):
             if isinstance(widget, QTreeWidget):
-                self.selection_count_label.setText(str(len(widget.selectedItems())))
-                self.selection_sum_label.setText("")
+                self._update_tree_selection(widget)
                 return
 
             if not isinstance(widget, QTableWidget):
                 return
 
-            model = widget.selectionModel()
-            if not model:
-                return
+            self._update_table_selection(widget)
 
-            indexes = model.selectedIndexes()
-            if not indexes:
-                self.selection_count_label.setText("0")
-                self.selection_sum_label.setText("0")
-                return
+    def _update_tree_selection(self, tree: QTreeWidget) -> None:
+        """Aggiorna i conteggi per un QTreeWidget."""
+        self.selection_count_label.setText(str(len(tree.selectedItems())))
+        self.selection_sum_label.setText("")
 
-            target_col = self._find_ore_column(widget)
-            selected_rows, total_ore = set(), 0.0
-            for idx in indexes:
-                row = idx.row()
-                item_0 = widget.item(row, 0)
-                is_total_row = item_0 and item_0.text() == "TOTALI"
-                if not widget.isRowHidden(row) and not is_total_row:
-                    selected_rows.add(row)
+    def _update_table_selection(self, table: QTableWidget) -> None:
+        """Aggiorna i conteggi e il totale ore per un QTableWidget."""
+        model = table.selectionModel()
+        if not model:
+            return
 
-            if target_col != -1:
-                for row in selected_rows:
-                    if it := widget.item(row, target_col):
-                        with suppress(Exception):
-                            clean = str(it.text()).replace(".", "").replace(",", ".").strip()
-                            if clean:
-                                total_ore += float(clean)
+        indexes = model.selectedIndexes()
+        if not indexes:
+            self.selection_count_label.setText("0")
+            self.selection_sum_label.setText("0")
+            return
 
-            if total_ore % 1 != 0:
-                fmt_ore = f"{total_ore:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            else:
-                fmt_ore = str(int(total_ore))
+        target_col = self._find_ore_column(table)
+        selected_rows = self._get_unique_visible_rows(table, indexes)
+        total_ore = self._calculate_total_hours(table, selected_rows, target_col)
 
-            self.selection_count_label.setText(str(len(selected_rows)))
-            self.selection_sum_label.setText(fmt_ore)
+        fmt_ore = self._format_hours(total_ore)
+
+        self.selection_count_label.setText(str(len(selected_rows)))
+        self.selection_sum_label.setText(fmt_ore)
+
+    def _get_unique_visible_rows(self, table: QTableWidget, indexes: list[Any]) -> set[int]:
+        """Filtra gli indici per ottenere righe uniche, visibili e non di totale."""
+        selected_rows = set()
+        for idx in indexes:
+            row = idx.row()
+            item_0 = table.item(row, 0)
+            is_total_row = item_0 and item_0.text() == "TOTALI"
+            if not table.isRowHidden(row) and not is_total_row:
+                selected_rows.add(row)
+        return selected_rows
+
+    def _calculate_total_hours(self, table: QTableWidget, rows: set[int], col: int) -> float:
+        """Somma le ore nelle righe e colonna specificate."""
+        total = 0.0
+        if col == -1:
+            return total
+
+        for row in rows:
+            if it := table.item(row, col):
+                with suppress(Exception):
+                    clean = str(it.text()).replace(".", "").replace(",", ".").strip()
+                    if clean:
+                        total += float(clean)
+        return total
+
+    def _format_hours(self, total: float) -> str:
+        """Formatta il totale ore per la visualizzazione IT."""
+        if total % 1 != 0:
+            return f"{total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        return str(int(total))
 
     def _find_ore_column(self, table: QTableWidget) -> int:
         """Individua l'indice della colonna contenente le ore in base all'header."""

@@ -74,10 +74,10 @@ class ReportWorker(QThread):
 
         if os.name == "nt":
             try:
-                import pythoncom  # noqa: PLC0415
-                import win32com.client  # noqa: PLC0415
+                import pythoncom
+                import win32com.client
 
-                from src.core.constants import Emails  # noqa: PLC0415
+                from src.core.constants import Emails
 
                 pythoncom.CoInitialize()
                 try:

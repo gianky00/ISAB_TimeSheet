@@ -130,11 +130,11 @@ class StructuredLogger:
         except UnicodeEncodeError:
             safe_line = console_line.encode("ascii", "replace").decode("ascii")
             print(safe_line)
-        except Exception:  # noqa: S110
+        except Exception:
             pass
 
         if exception:
-            import traceback  # noqa: PLC0415
+            import traceback
 
             with suppress(Exception):
                 print(traceback.format_exc())
@@ -161,7 +161,7 @@ class StructuredLogger:
         """Invia i log al sink specifico del bot se il contesto lo richiede."""
         ctx = get_context().to_dict()
         if ctx.get("trace_id") and ctx.get("bot_type"):
-            from src.core.logging.sinks import get_bot_sink  # noqa: PLC0415
+            from src.core.logging.sinks import get_bot_sink
 
             get_bot_sink().write(level, self.name, message, ctx, extra, exception, source)
 
@@ -171,7 +171,7 @@ class StructuredLogger:
             with path.open("a", encoding="utf-8") as f:
                 f.write(line + "\n")
                 if exception:
-                    import traceback  # noqa: PLC0415
+                    import traceback
 
                     f.write(traceback.format_exc() + "\n")
         except Exception as e:
@@ -218,15 +218,21 @@ class StructuredLogger:
         """Log a livello CRITICAL."""
         self.log("CRITICAL", message, extra=extra or None)
 
-    def exception(self, message: str, exc: Exception, **extra: Any) -> None:
+    def exception(self, message: str, exc: Exception | None = None, **extra: Any) -> None:
         """
         Log exception con stack trace completo.
+        Se 'exc' non viene fornito, tenta di recuperarlo dal contesto corrente.
 
         Args:
           message: Messaggio descrittivo
-          exc: Eccezione da loggare
+          exc: Eccezione da loggare (opzionale)
           **extra: Dati extra
         """
+        if exc is None:
+            _, exc_value, _ = sys.exc_info()
+            if isinstance(exc_value, Exception):
+                exc = exc_value
+
         self.log("ERROR", message, extra=extra or None, exception=exc)
 
 
@@ -241,7 +247,7 @@ def configure_logging(config: Any = None) -> None:
       Questa funzione dovrebbe essere chiamata una volta all'avvio
       dell'applicazione.
     """
-    global _initialized  # noqa: PLW0603
+    global _initialized
 
     if _initialized:
         return

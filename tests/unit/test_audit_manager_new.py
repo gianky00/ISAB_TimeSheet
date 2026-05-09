@@ -48,7 +48,7 @@ class TestAuditManager:
         manager._log_queue.join()
 
         logs, _ = manager.get_filtered_logs()
-        import json  # noqa: PLC0415
+        import json
 
         saved_params = json.loads(logs[0]["params"])
         assert saved_params["key"] == "value"
@@ -69,7 +69,7 @@ class TestAuditManager:
         manager._log_queue.join()
 
         # Tamper with the database manually
-        import sqlite3  # noqa: PLC0415
+        import sqlite3
 
         conn = sqlite3.connect(manager.db.DB_PATH)
         conn.execute("UPDATE audit_logs SET action = 'TAMPERED' WHERE id = 1")
@@ -82,8 +82,8 @@ class TestAuditManager:
     def test_run_retention_policy(self, setup_manager):
         manager = setup_manager
         # Manually insert an old record
-        import sqlite3  # noqa: PLC0415
-        from datetime import UTC, datetime, timedelta  # noqa: PLC0415
+        import sqlite3
+        from datetime import UTC, datetime, timedelta
 
         old_ts = (datetime.now(UTC) - timedelta(days=100)).isoformat()
 

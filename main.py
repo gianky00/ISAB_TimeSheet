@@ -35,10 +35,10 @@ def _print_exception_and_exit(
     """Gestore globale delle eccezioni non catturate."""
     print("FATAL UNCAUGHT EXCEPTION:")
     traceback.print_exception(exc_type, exc_value, exc_tb)
-    import contextlib  # noqa: PLC0415
+    import contextlib
 
     with contextlib.suppress(Exception):
-        from src.core.config_manager import CONFIG_DIR  # noqa: PLC0415
+        from src.core.config_manager import CONFIG_DIR
 
         crash_file = CONFIG_DIR / "crash.txt"
         with crash_file.open("a", encoding="utf-8") as f:
@@ -70,13 +70,13 @@ def setup_enterprise_logging() -> Any:
         CONFIG_DIR.mkdir(parents=True)
 
     crash_file = CONFIG_DIR / "crash.txt"
-    import contextlib  # noqa: PLC0415
+    import contextlib
 
     with contextlib.suppress(Exception):
         crash_file.write_text(
             "=== SYNCROJOB CRASH LOG ===\nNessun crash rilevato in questa sessione.\n", encoding="utf-8"
         )
-        import faulthandler  # noqa: PLC0415
+        import faulthandler
 
         crash_native_file = crash_file.open("a", encoding="utf-8")
         crash_native_file.write("\n[DEBUG] Native C++ faulthandler engine enabled.\n")
@@ -100,9 +100,9 @@ startup_logger_global = setup_enterprise_logging()
 
 def _setup_windows_taskbar(app: QApplication) -> None:
     """Configura l'icona della taskbar e l'AppUserModelID su Windows."""
-    from PySide6.QtGui import QIcon  # noqa: PLC0415
+    from PySide6.QtGui import QIcon
 
-    from src.core.version import __version__  # noqa: PLC0415
+    from src.core.version import __version__
 
     if os.name == "nt":
         try:
@@ -121,7 +121,7 @@ def _setup_windows_taskbar(app: QApplication) -> None:
 
 def _check_single_instance() -> None:
     """Verifica se l'applicazione è già in esecuzione."""
-    from PySide6.QtNetwork import QLocalSocket  # noqa: PLC0415
+    from PySide6.QtNetwork import QLocalSocket
 
     socket = QLocalSocket()
     socket.connectToServer("SyncroJob_Instance_Connector")
@@ -140,7 +140,7 @@ def _run_phase1(
     logger: Any,
 ) -> None:
     """Esegue la fase 1 di inizializzazione (import pesanti) in un thread separato."""
-    from PySide6.QtCore import QObject, QThread, Signal  # noqa: PLC0415
+    from PySide6.QtCore import QObject, QThread, Signal
 
     class Phase1Worker(QObject):
         progress = Signal(str, int)
@@ -148,7 +148,7 @@ def _run_phase1(
 
         def run(self) -> None:
             try:
-                from src.core.app_initializer import AppInitializer  # noqa: PLC0415
+                from src.core.app_initializer import AppInitializer
 
                 logger.info("Starting Phase 1 initialization")
                 success = AppInitializer.initialize_core(progress_callback=self.progress.emit)
@@ -181,7 +181,7 @@ def _run_phase1(
 
     if not phase1_res[0]:
         close_splash()
-        from src.gui.dialogs.confirmation_dialog import ConfirmationDialog  # noqa: PLC0415
+        from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 
         ConfirmationDialog.show_error(None, "Errore Avvio", cast("str", phase1_res[1]))
         sys.exit(1)
@@ -191,9 +191,9 @@ def _run_phase3(
     app: QApplication, mw: MainWindow, update: Callable[[str, int], None], close: Callable[[], None], log: Any
 ) -> None:
     """Esegue la fase 3 di precaricamento GUI."""
-    from PySide6.QtCore import QTimer  # noqa: PLC0415
+    from PySide6.QtCore import QTimer
 
-    from src.core.app_initializer import AppInitializer  # noqa: PLC0415
+    from src.core.app_initializer import AppInitializer
 
     gen = AppInitializer.init_generator(mw)
 
@@ -224,7 +224,7 @@ def _run_phase3(
 
 def _start_instance_server() -> Any:
     """Avvia il server per la gestione della singola istanza."""
-    from PySide6.QtNetwork import QLocalServer  # noqa: PLC0415
+    from PySide6.QtNetwork import QLocalServer
 
     server = QLocalServer()
     server.listen("SyncroJob_Instance_Connector")
@@ -268,12 +268,12 @@ def _init_splash() -> tuple[Callable[[str, int], None], Callable[[], None]]:
 def main() -> None:
     """Application entry point with three-phase startup architecture."""
     if getattr(sys, "frozen", False) and getattr(sys, "stderr", None) is None:
-        sys.stdout = open(os.devnull, "w")  # noqa: SIM115
-        sys.stderr = open(os.devnull, "w")  # noqa: SIM115
+        sys.stdout = open(os.devnull, "w")
+        sys.stderr = open(os.devnull, "w")
 
-    from PySide6.QtWidgets import QApplication  # noqa: PLC0415
+    from PySide6.QtWidgets import QApplication
 
-    from src.gui.main_window.main import MainWindow  # noqa: PLC0415
+    from src.gui.main_window.main import MainWindow
 
     app = QApplication(sys.argv)
     _setup_windows_taskbar(app)
@@ -298,8 +298,8 @@ def main() -> None:
     upd("Inizializzazione Nucleo...", 5)
     _run_phase1(app, upd, cls, get_logger("phase1"))
 
-    from src.core.app_initializer import AppInitializer  # noqa: PLC0415
-    from src.gui.dialogs.confirmation_dialog import ConfirmationDialog  # noqa: PLC0415
+    from src.core.app_initializer import AppInitializer
+    from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 
     for s, m in AppInitializer.get_alerts():
         if s in ("CRITICAL", "ERROR"):

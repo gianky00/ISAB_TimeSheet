@@ -3,13 +3,13 @@ SyncroJob - PDL Controller
 Logica di business per il caricamento, filtraggio e processing dei dati PDL SafeWork.
 """
 
-import logging
 from typing import Any
 
 from src.core.database import db_manager
+from src.core.logging import get_logger
 from src.core.pdl.pdl_dto import PdlRowDTO
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class PDLController:
@@ -32,9 +32,9 @@ class PDLController:
             results = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
             dtos = [PdlRowDTO.from_db_row(r) for r in results]
             self._cache[cache_key] = dtos
-            return dtos  # noqa: TRY300
+            return dtos
         except Exception as e:
-            logger.error(f"Errore caricamento PDL: {e}")  # noqa: TRY400
+            logger.exception("Errore caricamento PDL", exc=e)
             return []
 
     def clear_cache(self) -> None:
@@ -81,8 +81,8 @@ class PDLController:
                 "ordine",
                 "sito",
             ]
-            OR_clause = " OR ".join([f"{col} LIKE ?" for col in search_cols])  # noqa: N806
-            query += f" AND ({OR_clause})"
+            or_clause = " OR ".join([f"{col} LIKE ?" for col in search_cols])
+            query += f" AND ({or_clause})"
             p = f"%{search_text}%"
             params.extend([p] * len(search_cols))
 

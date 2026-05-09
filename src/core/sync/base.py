@@ -25,7 +25,7 @@ class BaseSyncEngine:
     def _validate_identifier(identifier: str) -> str:
         """Protegge da SQL Injection validando nomi di tabelle e colonne."""
         if not re.match(r"^[a-zA-Z0-9_]+$", identifier):
-            raise ValueError("Identificatore non valido")  # noqa: TRY003
+            raise ValueError("Identificatore non valido")
         return identifier
 
     @staticmethod

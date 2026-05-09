@@ -33,7 +33,7 @@ def mock_secrets():
     """Mocks SecretsManager to return a fixed key."""
     with patch("src.core.license_validator.SecretsManager") as mock_sm:
         # Generate a real key for Fernet to use
-        from cryptography.fernet import Fernet  # noqa: PLC0415
+        from cryptography.fernet import Fernet
 
         key = Fernet.generate_key()
         # SecretsManager.get_license_key() returns base64 encoded bytes
@@ -43,7 +43,7 @@ def mock_secrets():
 
 def create_mock_license(config_path, manifest_path, key, payload):
     """Helper to create valid license files."""
-    from cryptography.fernet import Fernet  # noqa: PLC0415
+    from cryptography.fernet import Fernet
 
     # Encrypt payload
     cipher = Fernet(key)
@@ -65,7 +65,7 @@ def test_valid_license(mock_time, mock_hw, mock_paths, mock_secrets):
     key = mock_secrets
 
     # Set time to be before expiry
-    from datetime import datetime  # noqa: PLC0415
+    from datetime import datetime
 
     mock_time.return_value = (datetime(2025, 1, 1), True)
 
@@ -104,7 +104,7 @@ def test_expired_license(mock_time, mock_hw, mock_paths, mock_secrets):
     key = mock_secrets
 
     # Set time to be AFTER expiry
-    from datetime import datetime  # noqa: PLC0415
+    from datetime import datetime
 
     mock_time.return_value = (datetime(2027, 1, 1), True)
 

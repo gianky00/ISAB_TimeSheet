@@ -27,6 +27,12 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 logger = logging.getLogger(__name__)
 
 
+# Soglie per la colorazione dei giorni di scadenza
+PARTS_EXPECTED = 2
+DAYS_GOOD = 10
+DAYS_CRITICAL = 0
+
+
 class ColoredDotDelegate(QStyledItemDelegate):
     """
     Delegate personalizzato per colorare i pallini nella colonna SCAD. ISAB.
@@ -63,12 +69,12 @@ class ColoredDotDelegate(QStyledItemDelegate):
 
         try:
             parts = str(value).split()
-            if len(parts) >= 2:  # noqa: PLR2004
+            if len(parts) >= PARTS_EXPECTED:
                 days = int(parts[1])
 
-                if days >= 10:  # noqa: PLR2004
+                if days >= DAYS_GOOD:
                     color = QColor(COLORS["success_dark"])
-                elif days >= 0:
+                elif days >= DAYS_CRITICAL:
                     color = QColor(COLORS["warning_orange"])
                 else:
                     color = QColor(COLORS["error_red"])
@@ -88,7 +94,7 @@ class ColoredDotDelegate(QStyledItemDelegate):
                 text_rect = option.rect.adjusted(10, 0, 0, 0)
                 painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, str(days))
         except Exception as e:
-            logger.error(f"Errore rendering pallino: {e}")  # noqa: TRY400
+            logger.exception("Errore rendering pallino", exc=e)
             super().paint(painter, option, index)
 
         painter.restore()
@@ -102,7 +108,7 @@ class InteractiveStatusCard(QFrame):
 
     clicked = Signal(str)
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         label: str,
         color: str,

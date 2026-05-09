@@ -38,7 +38,7 @@ class TestTimesheetProcessorCoverage:
         file_path = tmp_path / "test_ok.xlsx"
 
         # Use openpyxl directly to create the file with the required structure
-        import openpyxl  # noqa: PLC0415
+        import openpyxl
 
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -57,7 +57,7 @@ class TestTimesheetProcessorCoverage:
     def test_process_file_no_pos_column(self, tmp_path):
         """Test file con Timesheet ma senza colonna POS."""
         file_path = tmp_path / "test_no_pos.xlsx"
-        import openpyxl  # noqa: PLC0415
+        import openpyxl
 
         wb = openpyxl.Workbook()
         ws = wb.active

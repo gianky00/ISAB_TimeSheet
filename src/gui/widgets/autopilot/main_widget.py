@@ -77,7 +77,7 @@ class AutopilotWidget(QWidget):
         """Collega la barra di stato per segnalare attivitàdell'autopilot."""
         self.status_bar = status_bar
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Configura il layout, l'header LIVE e i container per le card."""
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
         self.setMinimumWidth(600)
@@ -258,7 +258,7 @@ class AutopilotWidget(QWidget):
                 self.dot_anim.start()
         self._animating = False
 
-    def refresh_events(self) -> None:  # noqa: C901
+    def refresh_events(self) -> None:
         """Ricarica la lista degli eventi programmati leggendo la configurazione corrente."""
         while self.view_layout.count() > 0:
             item = self.view_layout.takeAt(0)

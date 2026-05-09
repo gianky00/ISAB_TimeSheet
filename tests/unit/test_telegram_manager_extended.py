@@ -54,7 +54,7 @@ async def test_handle_error_other(telegram_service):
 
 @pytest.mark.asyncio
 async def test_handle_run_pdl_on(telegram_service):
-    from src.core.telegram.handlers import callbacks  # noqa: PLC0415
+    from src.core.telegram.handlers import callbacks
 
     with patch(
         "src.core.telegram.handlers.callbacks.get_installed_printers",
@@ -78,7 +78,7 @@ async def test_handle_run_pdl_on(telegram_service):
 
 @pytest.mark.asyncio
 async def test_handle_run_pdl_off(telegram_service):
-    from src.core.telegram.handlers import callbacks  # noqa: PLC0415
+    from src.core.telegram.handlers import callbacks
 
     update = MagicMock()
     update.callback_query = AsyncMock()
@@ -97,7 +97,7 @@ async def test_handle_run_pdl_off(telegram_service):
 
 @pytest.mark.asyncio
 async def test_handle_printer_selection(telegram_service):
-    from src.core.telegram.handlers import callbacks  # noqa: PLC0415
+    from src.core.telegram.handlers import callbacks
 
     with patch(
         "src.core.telegram.handlers.callbacks.get_installed_printers",
@@ -113,7 +113,7 @@ async def test_handle_printer_selection(telegram_service):
 
 @pytest.mark.asyncio
 async def test_handle_run_pdl_confirm_print_yes(telegram_service):
-    from src.core.telegram.handlers import callbacks  # noqa: PLC0415
+    from src.core.telegram.handlers import callbacks
 
     query = AsyncMock()
     chat_id = 123
@@ -130,7 +130,7 @@ async def test_handle_run_pdl_confirm_print_yes(telegram_service):
 
 @pytest.mark.asyncio
 async def test_handle_run_pdl_confirm_noprint_no(telegram_service):
-    from src.core.telegram.handlers import callbacks  # noqa: PLC0415
+    from src.core.telegram.handlers import callbacks
 
     query = AsyncMock()
     chat_id = 123
@@ -144,7 +144,7 @@ async def test_handle_run_pdl_confirm_noprint_no(telegram_service):
 
 @pytest.mark.asyncio
 async def test_handle_utility_actions_status(telegram_service):
-    from src.core.telegram.handlers import callbacks  # noqa: PLC0415
+    from src.core.telegram.handlers import callbacks
 
     telegram_service.status_requested = MagicMock()
     await callbacks._handle_utility_actions(telegram_service, "status", MagicMock(), 123)
@@ -153,7 +153,7 @@ async def test_handle_utility_actions_status(telegram_service):
 
 @pytest.mark.asyncio
 async def test_handle_utility_actions_screenshot(telegram_service):
-    from src.core.telegram.handlers import callbacks  # noqa: PLC0415
+    from src.core.telegram.handlers import callbacks
 
     query = AsyncMock()
     await callbacks._handle_utility_actions(telegram_service, "screenshot", query, 123)
@@ -162,7 +162,7 @@ async def test_handle_utility_actions_screenshot(telegram_service):
 
 @pytest.mark.asyncio
 async def test_handle_utility_actions_snap(telegram_service):
-    from src.core.telegram.handlers import callbacks  # noqa: PLC0415
+    from src.core.telegram.handlers import callbacks
 
     telegram_service.screenshot_requested = MagicMock()
     await callbacks._handle_utility_actions(telegram_service, "snap_app", MagicMock(), 123)
@@ -197,7 +197,7 @@ async def test_shutdown_application(telegram_service):
 
 
 def test_get_full_printer_name(telegram_service):
-    from src.core.telegram.handlers import callbacks  # noqa: PLC0415
+    from src.core.telegram.handlers import callbacks
 
     with patch("src.core.telegram.handlers.callbacks.get_installed_printers") as mock_p:
         mock_p.return_value = ["My Specific Printer"]

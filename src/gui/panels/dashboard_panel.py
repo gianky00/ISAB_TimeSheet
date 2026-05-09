@@ -216,7 +216,7 @@ class DashboardPanel(QWidget):
 
             mw.service_controller._schedule_bot_with_parallelism(bot_id, panel, site, log_msg)
 
-    def _handle_quick_action(self, key: str) -> None:  # noqa: C901
+    def _handle_quick_action(self, key: str) -> None:
         """Gestisce il click su un'azione rapida della dashboard."""
         main_window: Any = self.window()
         if main_window is None or not hasattr(main_window, "navigation_controller"):

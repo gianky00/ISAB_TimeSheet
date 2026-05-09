@@ -4,6 +4,7 @@ Sistema di notifiche toast non-blocking con supporto hover e tempi differenziati
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from PySide6.QtCore import (
@@ -27,6 +28,7 @@ from PySide6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
+from src.gui.styles.constants import ANIMATION_TIMINGS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from ..design.colors import get_palette
@@ -54,7 +56,7 @@ class Toast(QWidget):
         Type.ERROR: (Icons.X_CIRCLE, "error"),
     }
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         message: str,
         toast_type: str = Type.INFO,
@@ -102,11 +104,14 @@ class Toast(QWidget):
     def _setup_ui(self, message: str) -> None:
         """Configura l'interfaccia utente del toast con icone e colori."""
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_margin = 10
+        main_layout.setContentsMargins(main_margin, main_margin, main_margin, main_margin)
 
         self.container = QWidget()
         container_layout = QHBoxLayout(self.container)
-        container_layout.setContentsMargins(16, 12, 16, 12)
+        cont_margin_h = 16
+        cont_margin_v = 12
+        container_layout.setContentsMargins(cont_margin_h, cont_margin_v, cont_margin_h, cont_margin_v)
 
         icon_path, color_key = self.TYPE_CONFIG.get(self._type, self.TYPE_CONFIG[self.Type.INFO])
         accent = getattr(self._palette, color_key, self._palette.info)
@@ -123,8 +128,9 @@ class Toast(QWidget):
         )
 
         icon_label = QLabel()
-        icon = get_colored_icon(get_asset_path(icon_path), COLORS["text_dark"])
-        icon_label.setPixmap(icon.pixmap(QSize(20, 20)))
+        icon_res = get_colored_icon(get_asset_path(icon_path), COLORS["text_dark"])
+        icon_size = 20
+        icon_label.setPixmap(icon_res.pixmap(QSize(icon_size, icon_size)))
         icon_label.setStyleSheet("border: none; background: transparent;")
         container_layout.addWidget(icon_label)
 
@@ -152,7 +158,6 @@ class Toast(QWidget):
 
     def _sanitize_html(self, html: str) -> str:
         """Rimuove tag pericolosi dall'HTML del toast."""
-        import re  # noqa: PLC0415
 
         clean = re.sub(r"<script.*?>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
         clean = re.sub(
@@ -165,23 +170,26 @@ class Toast(QWidget):
 
     def _setup_animation(self) -> None:
         """Configura le animazioni di fade-in e fade-out."""
-        self._opacity = QGraphicsOpacityEffect(self)
-        self.setGraphicsEffect(self._opacity)
+        self._opacity_effect = QGraphicsOpacityEffect(self)
+        self.setGraphicsEffect(self._opacity_effect)
 
-        self._fade_in = QPropertyAnimation(self._opacity, b"opacity")
-        self._fade_in.setDuration(200)
+        self._fade_in = QPropertyAnimation(self._opacity_effect, b"opacity")
+        fade_in_duration = 200
+        self._fade_in.setDuration(fade_in_duration)
         self._fade_in.setStartValue(0.0)
         self._fade_in.setEndValue(1.0)
 
-        self._fade_out = QPropertyAnimation(self._opacity, b"opacity")
-        self._fade_out.setDuration(300)
+        self._fade_out = QPropertyAnimation(self._opacity_effect, b"opacity")
+        fade_out_duration = 300
+        self._fade_out.setDuration(fade_out_duration)
         self._fade_out.setStartValue(1.0)
         self._fade_out.setEndValue(0.0)
         self._fade_out.finished.connect(self.deleteLater)
 
         if self._pulse:
             self._pulse_anim = QVariantAnimation(self)
-            self._pulse_anim.setDuration(800)
+            pulse_duration = 800
+            self._pulse_anim.setDuration(pulse_duration)
             self._pulse_anim.setStartValue(1.0)
             self._pulse_anim.setKeyValueAt(0.5, 1.05)
             self._pulse_anim.setEndValue(1.0)
@@ -239,7 +247,7 @@ class ToastManager(QObject):
             cls._instance = cls()
         return cls._instance
 
-    def show(  # noqa: PLR0913
+    def show(
         self,
         message: str,
         toast_type: str = Toast.Type.INFO,
@@ -279,14 +287,18 @@ class ToastManager(QObject):
                 bottom_margin = 75
                 y = geo.y() + geo.height() - bottom_margin - toast.height()
             else:
-                offset_y = sum([t.height() + 10 for t in ToastManager._active_toasts])
-                y = geo.y() + 80 + offset_y
+                stack_spacing = 10
+                top_offset = 80
+                offset_y = sum([t.height() + stack_spacing for t in ToastManager._active_toasts])
+                y = geo.y() + top_offset + offset_y
         else:
             primary_screen = QApplication.primaryScreen()
             if primary_screen:
                 screen = primary_screen.geometry()
                 x = (screen.width() - toast.width()) // 2
-                y = 80 if position == "top" else (screen.height() - 150)
+                top_offset = 80
+                bottom_offset = 150
+                y = top_offset if position == "top" else (screen.height() - bottom_offset)
             else:
                 x, y = 0, 0
 
@@ -302,31 +314,23 @@ class ToastManager(QObject):
 # Funzioni helper globali con NUOVI TEMPI
 def toast_info(message: str, duration: int | None = None) -> None:
     """Visualizza un toast informativo."""
-    from src.gui.styles.constants import ANIMATION_TIMINGS  # noqa: PLC0415
-
     d = duration or ANIMATION_TIMINGS["toast_info"]
     ToastManager.instance().show(message, Toast.Type.INFO, d, is_rich_text=("<" in message))
 
 
 def toast_success(message: str, duration: int | None = None) -> None:
     """Visualizza un toast di successo (Veloce: 2s)."""
-    from src.gui.styles.constants import ANIMATION_TIMINGS  # noqa: PLC0415
-
     d = duration or ANIMATION_TIMINGS["toast_success"]
     ToastManager.instance().show(message, Toast.Type.SUCCESS, d, is_rich_text=("<" in message))
 
 
 def toast_warning(message: str, duration: int | None = None) -> None:
     """Visualizza un toast di avviso (Lungo: 10s)."""
-    from src.gui.styles.constants import ANIMATION_TIMINGS  # noqa: PLC0415
-
     d = duration or ANIMATION_TIMINGS["toast_warning"]
     ToastManager.instance().show(message, Toast.Type.WARNING, d, is_rich_text=("<" in message))
 
 
 def toast_error(message: str, duration: int | None = None) -> None:
     """Visualizza un toast di errore (Lungo: 10s)."""
-    from src.gui.styles.constants import ANIMATION_TIMINGS  # noqa: PLC0415
-
     d = duration or ANIMATION_TIMINGS["toast_error"]
     ToastManager.instance().show(message, Toast.Type.ERROR, d, is_rich_text=("<" in message))

@@ -15,7 +15,7 @@ ROOT_DIR = Path(__file__).parent.parent.parent.resolve()
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from tests.run_robust_tests import (  # noqa: E402
+from tests.run_robust_tests import (
     FailureDetail,
     TestResult as RunResult,
     UltraRunner,

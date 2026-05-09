@@ -90,7 +90,7 @@ class CertificatiCampioneTab(QWidget):
         toolbar.addSpacing(10)
 
         # Campo di Ricerca Moderno
-        from src.gui.widgets.core_widgets import SearchInput  # noqa: PLC0415
+        from src.gui.widgets.core_widgets import SearchInput
 
         self.search_input = SearchInput("Cerca per Matricola, Modello o ID...")
         self.search_input.setFixedWidth(350)
@@ -342,7 +342,7 @@ class CertificatiCampioneTab(QWidget):
 
     def _group_data_by_id_strumento(self, data: list[tuple[Any, ...]]) -> dict[str, list[tuple[Any, ...]]]:
         """Raggruppa le righe del DB per ID-STRUMENTO o fallback (Matricola/Certificato)."""
-        from src.core.contabilita_queries import ContabilitaQueries  # noqa: PLC0415
+        from src.core.contabilita_queries import ContabilitaQueries
 
         idx_id_strumento = ContabilitaQueries.CERT_IDX_ID_STRUMENTO
         idx_matricola = ContabilitaQueries.CERT_IDX_MATRICOLA
@@ -361,7 +361,7 @@ class CertificatiCampioneTab(QWidget):
 
     def _prepare_groups_with_priority(self, groups: dict[str, list[tuple[Any, ...]]]) -> list[dict[str, Any]]:
         """Calcola stati e priorità per ogni gruppo di certificati."""
-        from src.core.contabilita_queries import ContabilitaQueries  # noqa: PLC0415
+        from src.core.contabilita_queries import ContabilitaQueries
 
         processed_groups = []
         for group_key, certificates in groups.items():
@@ -394,7 +394,7 @@ class CertificatiCampioneTab(QWidget):
 
     def _parse_emission_date(self, row: tuple[Any, ...]) -> datetime:
         """Helper per il parsing sicuro della data di emissione per l'ordinamento."""
-        from src.core.contabilita_queries import ContabilitaQueries  # noqa: PLC0415
+        from src.core.contabilita_queries import ContabilitaQueries
 
         idx = ContabilitaQueries.CERT_IDX_EMISSIONE
         if len(row) <= idx:
@@ -446,7 +446,7 @@ class CertificatiCampioneTab(QWidget):
 
     def _add_child_items(self, parent: SortableTreeWidgetItem, g: dict[str, Any]) -> None:
         """Aggiunge i certificati (corrente e storico) come figli dell'item padre."""
-        from src.core.contabilita_queries import ContabilitaQueries  # noqa: PLC0415
+        from src.core.contabilita_queries import ContabilitaQueries
 
         for i, cert in enumerate(g["certificates"]):
             err_val = (
@@ -485,7 +485,7 @@ class CertificatiCampioneTab(QWidget):
 
     def _get_ubicazione_safe(self, cert: tuple[Any, ...]) -> str:
         """Ritorna l'ubicazione con fallback su ASSENTE."""
-        from src.core.contabilita_queries import ContabilitaQueries  # noqa: PLC0415
+        from src.core.contabilita_queries import ContabilitaQueries
 
         idx = ContabilitaQueries.CERT_IDX_UBICAZIONE
         val = cert[idx] if len(cert) > idx else None
@@ -607,7 +607,7 @@ class CertificatiCampioneTab(QWidget):
         """Tenta di aprire il file PDF del certificato specificato."""
         path = self.engine.find_certificate_path(cert_number)
         if path:
-            os.startfile(path)  # noqa: S606
+            os.startfile(path)
         else:
             QMessageBox.warning(self, "Non trovato", f"Impossibile trovare il certificato '{cert_number}'")
 
@@ -660,7 +660,7 @@ class CertificatiCampioneTab(QWidget):
     def _export_pdf(self) -> None:
         """Esporta la lista dei certificati in un PDF formattato professionalmente."""
         # Creiamo un modulo separato o usiamo una classe dedicata all'esportazione per mantenere SRP
-        from src.gui.widgets.contabilita.certificati.pdf_exporter import (  # noqa: PLC0415
+        from src.gui.widgets.contabilita.certificati.pdf_exporter import (
             CertificatiPdfExporter,
         )
 

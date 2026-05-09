@@ -109,4 +109,4 @@ class PriorityBadge(QWidget):
         size = int(8 * value)
         self.dot.setFixedSize(size, size)
 
-    pulseScale = Property(float, fget=get_pulse_scale, fset=set_pulse_scale)  # noqa: N815
+    pulseScale = Property(float, fget=get_pulse_scale, fset=set_pulse_scale)

@@ -60,7 +60,7 @@ class PDLTableView(QTableView):
         self.resizeColumnsToContents()
         # Limita larghezze troppo ampie tranne l'ultima (descrizione)
         for i in range(headers_count):
-            if i != 6 and h.sectionSize(i) > 200:  # noqa: PLR2004
+            if i != 6 and h.sectionSize(i) > 200:
                 h.resizeSection(i, 200)
 
         h.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)

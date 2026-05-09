@@ -7,7 +7,6 @@ Include un Query Builder fluido e utility per generare report sulla salute del s
 import json
 import operator
 from collections import defaultdict
-from collections.abc import Callable  # noqa: TC003
 from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -16,6 +15,8 @@ from typing import TYPE_CHECKING, Any, Final
 from .config import get_config
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from .config import LoggingConfig
 
 

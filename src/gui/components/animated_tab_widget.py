@@ -32,7 +32,7 @@ class AnimatedTabWidget(QWidget):
     grazie alla tecnica di snapshot rendering durante le transizioni.
     """
 
-    currentChanged = Signal(int)  # noqa: N815
+    currentChanged = Signal(int)
     """Segnale emesso quando il tab attivo cambia."""
 
     def __init__(self, parent: QWidget | None = None) -> None:

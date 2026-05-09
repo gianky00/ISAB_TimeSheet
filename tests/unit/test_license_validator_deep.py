@@ -21,7 +21,7 @@ class TestLicenseValidatorDeep:
     @patch("platform.system", return_value="Linux")
     @patch("subprocess.check_output")
     @patch("os.path.exists", return_value=True)
-    def test_get_hardware_id_linux_lsblk(self, mock_exists, mock_sub, mock_platform):  # noqa: PLR0915
+    def test_get_hardware_id_linux_lsblk(self, mock_exists, mock_sub, mock_platform):
         mock_sub.return_value = b"SN-LINUX-456\n"
         hwid = get_hardware_id()
         assert hwid == "SN-LINUX-456"
@@ -29,7 +29,7 @@ class TestLicenseValidatorDeep:
         @patch("src.core.license_validator.SecretsManager.get_license_key")
         @patch("src.core.license_validator._get_license_paths")
         def test_get_license_info_decryption(self, mock_paths, mock_get_key):
-            from pathlib import Path  # noqa: PLC0415
+            from pathlib import Path
 
             config_path = Path("fake.dat")
 
@@ -41,7 +41,7 @@ class TestLicenseValidatorDeep:
 
             mock_get_key.return_value = key
 
-            from cryptography.fernet import Fernet  # noqa: PLC0415
+            from cryptography.fernet import Fernet
 
             key_b64 = base64.urlsafe_b64encode(key)
 
@@ -63,7 +63,7 @@ class TestLicenseValidatorDeep:
 
         @patch("src.core.license_validator._get_license_paths")
         def test_detailed_status_integrity_fail(self, mock_paths):
-            from pathlib import Path  # noqa: PLC0415
+            from pathlib import Path
 
             mock_paths.return_value = {
                 "dir": Path("dir"),
@@ -101,7 +101,7 @@ class TestLicenseValidatorDeep:
             return_value=(LicenseStatus.VALID, ""),
         )
         def test_detailed_status_hardware_mismatch(self, mock_integrity, mock_hwid, mock_info):
-            from pathlib import Path  # noqa: PLC0415
+            from pathlib import Path
 
             mock_info.return_value = {"Hardware ID": "OTHER-HW", "Cliente": "C1"}
 
@@ -120,8 +120,8 @@ class TestLicenseValidatorDeep:
         )
         @patch("src.core.license_validator.get_trusted_time")
         def test_detailed_status_expired(self, mock_trusted_time, mock_integrity, mock_hwid, mock_info):
-            from datetime import datetime  # noqa: PLC0415
-            from pathlib import Path  # noqa: PLC0415
+            from datetime import datetime
+            from pathlib import Path
 
             mock_info.return_value = {
                 "Hardware ID": "MY-HW",
@@ -142,7 +142,7 @@ class TestLicenseValidatorDeep:
         @patch("platform.system", return_value="Linux")
         @patch("builtins.open", MagicMock())
         def test_get_hardware_id_linux_machine_id(self, mock_platform):
-            from pathlib import Path  # noqa: PLC0415
+            from pathlib import Path
 
             # Fail lsblk, fallback to machine-id
 

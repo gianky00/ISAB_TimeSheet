@@ -80,7 +80,7 @@ class AttivitaProgrammateTab(QWidget):
         self._setup_ui()
         self._load_data()
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Configura l'interfaccia utente del tab, inclusi i filtri e la tabella."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 10, 0, 0)
@@ -131,7 +131,7 @@ class AttivitaProgrammateTab(QWidget):
         self.table.auto_copy_headers = True
         header = self.table.horizontalHeader()
         if header is None:
-            raise RuntimeError("Table horizontal header is None")  # noqa: TRY003
+            raise RuntimeError("Table horizontal header is None")
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.table.setColumnHidden(0, True)
         self.table.setColumnHidden(14, True)
@@ -151,7 +151,7 @@ class AttivitaProgrammateTab(QWidget):
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         v_header = self.table.verticalHeader()
         if v_header is None:
-            raise RuntimeError("Table vertical header is None")  # noqa: TRY003
+            raise RuntimeError("Table vertical header is None")
         v_header.setVisible(False)
         layout.addWidget(self.table)
 
@@ -182,7 +182,7 @@ class AttivitaProgrammateTab(QWidget):
         """Adatta le larghezze delle colonne al contenuto, mantenendo un minimo leggibile."""
         header = self.table.horizontalHeader()
         if header is None:
-            raise RuntimeError("Table horizontal header is None - cannot adjust column widths")  # noqa: TRY003
+            raise RuntimeError("Table horizontal header is None - cannot adjust column widths")
 
         columns_to_resize = [1, 2, 3, 10, 11, 12, 13]
         for col in columns_to_resize:
@@ -215,7 +215,7 @@ class AttivitaProgrammateTab(QWidget):
         s = str(val).strip() if val is not None else ""
         if s.lower() == "nan":
             return ""
-        if col_idx == 12 and s:  # noqa: PLR2004
+        if col_idx == 12 and s:
             with suppress(Exception):
                 return datetime.strptime(s.split(" ")[0], "%Y-%m-%d").replace(tzinfo=UTC).strftime("%d/%m/%Y")
         return s

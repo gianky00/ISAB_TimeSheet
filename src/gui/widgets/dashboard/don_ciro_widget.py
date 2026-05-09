@@ -56,8 +56,10 @@ class DonCiroWidget(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setFixedWidth(280)
-        self.setFixedHeight(180)
+        fixed_width = 280
+        fixed_height = 180
+        self.setFixedWidth(fixed_width)
+        self.setFixedHeight(fixed_height)
 
         # Inizializza il motore (SRP)
         self.engine = DonCiroEngine(self)
@@ -142,7 +144,8 @@ class DonCiroWidget(QWidget):
     def _init_animations(self) -> None:
         # Loop Camminata
         self.walk_anim = QPropertyAnimation(self, b"walk_phase")
-        self.walk_anim.setDuration(1300)
+        walk_duration = 1300
+        self.walk_anim.setDuration(walk_duration)
         self.walk_anim.setStartValue(0.0)
         self.walk_anim.setEndValue(1.0)
         self.walk_anim.setLoopCount(-1)
@@ -150,7 +153,8 @@ class DonCiroWidget(QWidget):
 
         # Loop Testo Chrome
         self.label_anim = QPropertyAnimation(self, b"label_phase")
-        self.label_anim.setDuration(4000)
+        label_duration = 4000
+        self.label_anim.setDuration(label_duration)
         self.label_anim.setStartValue(0.0)
         self.label_anim.setEndValue(1.0)
         self.label_anim.setEasingCurve(QEasingCurve.Type.InOutQuad)
@@ -160,7 +164,8 @@ class DonCiroWidget(QWidget):
         # Timer Battito Ciglia
         self.blink_timer = QTimer(self)
         self.blink_timer.timeout.connect(self._do_blink)
-        self.blink_timer.start(3500)
+        blink_interval = 3500
+        self.blink_timer.start(blink_interval)
 
     def _connect_signals(self) -> None:
         """Collega motore e servizi esterni."""
@@ -206,7 +211,8 @@ class DonCiroWidget(QWidget):
         """Avvia l'animazione di rotazione nello Stack UI."""
         target = 180.0 if self.engine.look_dir > 0 else 0.0
         self.ta = QPropertyAnimation(self, b"yaw_angle")
-        self.ta.setDuration(800)
+        turn_duration = 800
+        self.ta.setDuration(turn_duration)
         self.ta.setStartValue(self._yaw_angle)
         self.ta.setEndValue(target)
         self.ta.setEasingCurve(QEasingCurve.Type.InOutSine)
@@ -216,7 +222,8 @@ class DonCiroWidget(QWidget):
     def _trigger_ui_action(self) -> None:
         """Avvia l'animazione di un'azione specifica."""
         self.act = QPropertyAnimation(self, b"action_phase")
-        self.act.setDuration(1500)
+        action_duration = 1500
+        self.act.setDuration(action_duration)
         self.act.setStartValue(0.0)
         self.act.setEndValue(1.0)
         self.act.start()
@@ -224,7 +231,8 @@ class DonCiroWidget(QWidget):
     def _do_blink(self) -> None:
         """Avvia il battito di ciglia."""
         self.ba = QPropertyAnimation(self, b"blink")
-        self.ba.setDuration(120)
+        blink_duration = 120
+        self.ba.setDuration(blink_duration)
         self.ba.setStartValue(1.0)
         self.ba.setKeyValueAt(0.5, 0.0)
         self.ba.setEndValue(1.0)
@@ -237,7 +245,8 @@ class DonCiroWidget(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         p.save()
-        p.translate(self.engine.walk_x, 150)
+        floor_y = 150
+        p.translate(self.engine.walk_x, floor_y)
         self._draw_dynamic_shadow(p)
         self._render_ciro_3d(p)
         p.restore()
@@ -247,8 +256,10 @@ class DonCiroWidget(QWidget):
     def _draw_weather_fx(self, p: QPainter) -> None:
         """Disegna gli effetti meteo."""
         if self.engine.weather == WeatherCond.RAINY:
-            p.setPen(QPen(QColor(255, 255, 255, 40), 1))
-            for i in range(15):
+            rain_opacity = 40
+            p.setPen(QPen(QColor(255, 255, 255, rain_opacity), 1))
+            num_drops = 15
+            for i in range(num_drops):
                 rx = (self._walk_phase * 500 + i * 30) % 280
                 ry = (self._walk_phase * 800 + i * 40) % 180
                 p.drawLine(QPointF(rx, ry), QPointF(rx - 5, ry + 15))
@@ -256,13 +267,18 @@ class DonCiroWidget(QWidget):
     def _draw_dynamic_shadow(self, p: QPainter) -> None:
         """Disegna l'ombra al suolo."""
         bob = abs(math.sin(self._walk_phase * 2 * math.pi)) if self.engine.state == DonState.WALKING else 0.0
-        s = (42 - bob * 4) * self.engine.scale
+        base_radius = 42
+        bob_factor = 4
+        s = (base_radius - bob * bob_factor) * self.engine.scale
         g = QRadialGradient(0, 0, s)
-        g.setColorAt(0, QColor(0, 0, 0, int(80 - bob * 20)))
+        base_opacity = 80
+        opacity_reduction = 20
+        g.setColorAt(0, QColor(0, 0, 0, int(base_opacity - bob * opacity_reduction)))
         g.setColorAt(1, Qt.GlobalColor.transparent)
         p.setBrush(QBrush(g))
         p.setPen(Qt.PenStyle.NoPen)
-        p.drawEllipse(QPointF(0, 0), s, 8 * self.engine.scale)
+        ellipse_y_radius = 8
+        p.drawEllipse(QPointF(0, 0), s, ellipse_y_radius * self.engine.scale)
 
     def _render_ciro_3d(self, p: QPainter) -> None:
         """Assembla e disegna le parti del corpo in ordine Z."""
@@ -335,7 +351,7 @@ class DonCiroWidget(QWidget):
             i.draw_func(p, *i.args)
         p.restore()
 
-    def _draw_leg(self, p: QPainter, h: QPointF, k: QPointF, f: QPointF, z: float, cy: float) -> None:  # noqa: PLR0913
+    def _draw_leg(self, p: QPainter, h: QPointF, k: QPointF, f: QPointF, z: float, cy: float) -> None:
         """Disegna una gamba."""
         p.setOpacity(0.8 if z < 0 else 1.0)
         c = self.C_SUIT.darker(110 if z < 0 else 100)
@@ -356,7 +372,8 @@ class DonCiroWidget(QWidget):
         s = self.engine.scale
         if f.y() > -1:
             p.setPen(Qt.PenStyle.NoPen)
-            p.setBrush(QBrush(QColor(0, 0, 0, 120)))
+            shadow_opacity = 120
+            p.setBrush(QBrush(QColor(0, 0, 0, shadow_opacity)))
             p.drawEllipse(QRectF(-8 * s, -2 * s, 26 * s, 5 * s))
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(QBrush(self.C_SHOE))
@@ -392,6 +409,7 @@ class DonCiroWidget(QWidget):
             p.drawLine(QPointF(0, 0), QPointF(0, -35 * self.engine.scale))
             p.setPen(Qt.PenStyle.NoPen)
             p.setBrush(QBrush(QColor("#111111")))
+            span_angle = 180 * 16
             p.drawChord(
                 QRectF(
                     -20 * self.engine.scale,
@@ -400,12 +418,12 @@ class DonCiroWidget(QWidget):
                     20 * self.engine.scale,
                 ),
                 0,
-                180 * 16,
+                span_angle,
             )
             p.restore()
         p.setOpacity(1.0)
 
-    def _draw_torso(self, p: QPainter, hp: QPointF, sh: QPointF, cy: float, sy: float) -> None:  # noqa: PLR0915
+    def _draw_torso(self, p: QPainter, hp: QPointF, sh: QPointF, cy: float, sy: float) -> None:
         """Disegna il busto con colletto e cravatta."""
         s = self.engine.scale
         w = 22 * s * (0.5 + 0.5 * abs(sy))
@@ -424,7 +442,7 @@ class DonCiroWidget(QWidget):
         p.drawPath(coll)
 
         # 2. Flap Giacca (Dietro)
-        if self.engine.jacket_flap != 0 and sy < 0.3:  # noqa: PLR2004
+        if self.engine.jacket_flap != 0 and sy < 0.3:
             p.setBrush(QBrush(self.C_SUIT.darker(135)))
             j_path = QPainterPath()
             j_path.moveTo(hp.x() + ch, hp.y())
@@ -500,30 +518,36 @@ class DonCiroWidget(QWidget):
         h_path.lineTo(pos.x() + 12 * s * cy, pos.y() - 15 * s)
         h_path.lineTo(pos.x() - 14 * s, pos.y() - 2 * s)
         p.drawPath(h_path)
-        if sy > -0.2:  # noqa: PLR2004
+        if sy > -0.2:
             nx = pos.x() + 10 * s * cy
             gap = 5.5 * s * abs(sy)
             eh = 6 * s * self._blink
             color = Qt.GlobalColor.white if self.engine.weather != WeatherCond.SUNNY else QColor("#111111")
             p.setBrush(QBrush(color))
-            p.drawEllipse(QRectF(nx + gap - 2.5 * s, pos.y() + 1 * s, 5 * s, eh))
-            if abs(sy) > 0.35:  # noqa: PLR2004
-                p.drawEllipse(QRectF(nx - gap - 2.5 * s, pos.y() + 1 * s, 5 * s, eh))
+            eye_width = 5
+            p.drawEllipse(QRectF(nx + gap - 2.5 * s, pos.y() + 1 * s, eye_width * s, eh))
+            eye_threshold = 0.35
+            if abs(sy) > eye_threshold:
+                p.drawEllipse(QRectF(nx - gap - 2.5 * s, pos.y() + 1 * s, eye_width * s, eh))
 
     def _draw_label(self, p: QPainter) -> None:
         """Disegna l'etichetta."""
         p.save()
         f = self._label_phase * 2 * math.pi
-        ga = int(25 + abs(math.sin(f)) * 35)
+        base_ga = 25
+        bob_ga = 35
+        ga = int(base_ga + abs(math.sin(f)) * bob_ga)
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(QBrush(QColor(255, 255, 255, ga)))
         p.drawEllipse(QRectF(self.rect().center().x() - 75, 8, 150, 32))
         yo, sp = math.sin(f) * 4, 220 + math.sin(f) * 35
         p.translate(0, yo)
-        font = QFont("Segoe UI", 10, QFont.Weight.Black)
+        font_size = 10
+        font = QFont("Segoe UI", font_size, QFont.Weight.Black)
         font.setLetterSpacing(QFont.SpacingType.PercentageSpacing, int(sp))
         p.setFont(font)
-        p.setPen(QColor(0, 0, 0, 80))
+        text_shadow_opacity = 80
+        p.setPen(QColor(0, 0, 0, text_shadow_opacity))
         p.drawText(
             self.rect().adjusted(2, 12, 2, 12),
             Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter,

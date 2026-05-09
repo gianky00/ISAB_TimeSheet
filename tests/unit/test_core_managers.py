@@ -88,9 +88,9 @@ def test_database_manager_connection(tmp_path):
 # --- TIME MANAGER ---
 def test_time_manager():
     # Helper to create datetime
-    from datetime import datetime  # noqa: PLC0415
+    from datetime import datetime
 
-    from src.core import time_manager  # noqa: PLC0415
+    from src.core import time_manager
 
     # Test get_trusted_time
     # It might fail network in test, so it should return system time fallback (False trusted)

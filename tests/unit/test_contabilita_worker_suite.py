@@ -22,7 +22,7 @@ class TestContabilitaWorkerLogic:
         worker.run()
 
         assert finished_mock.called
-        # overall_success (bool), final_msg (str), total_added (int), total_removed (int), total_duration (float)  # noqa: ERA001
+        # overall_success (bool), final_msg (str), total_added (int), total_removed (int), total_duration (float)
         args = finished_mock.call_args[0]
         assert args[0] is True
         assert "Contabilità: OK" in args[1]

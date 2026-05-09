@@ -103,6 +103,6 @@ def _smart_convert(s: str) -> float:
     # Rileviamo se il punto  migliaia (3 cifre dopo) o decimale
     parts = s.split(".")
     it_thousands_len = 3
-    if len(parts) > 1 and len(parts[-1]) == it_thousands_len and len(parts) == 2:  # noqa: PLR2004
+    if len(parts) > 1 and len(parts[-1]) == it_thousands_len and len(parts) == 2:
         return float(s.replace(".", ""))
     return float(s)

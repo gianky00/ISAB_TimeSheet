@@ -22,7 +22,7 @@ class SafeworkBaseBot(SeleniumBaseBot):
     SAFEWORK_URL = URLs.SAFEWORK_URL
     ISAB_URL = SAFEWORK_URL
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         username: str,
         password: str,

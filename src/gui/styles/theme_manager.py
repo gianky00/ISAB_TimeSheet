@@ -3,17 +3,18 @@ SyncroJob - Theme and Style Manager
 Gestisce l'applicazione di temi, palette e fogli di stile (QSS).
 """
 
-import logging
 from pathlib import Path
 from typing import Any, Optional
 
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QApplication
 
+from src.core.logging import get_logger
 from src.gui.design.colors import LIGHT, ColorPalette
+from src.gui.styles.constants import COLORS, FONT_SIZES, UI_SIZES
 from src.utils.helpers import get_asset_path
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ThemeManager:
@@ -103,7 +104,7 @@ class ThemeManager:
                 qss_content = qss_path.read_text(encoding="utf-8")
                 qss_content = self._process_qss(qss_content)
             except Exception as e:
-                logger.error(f"Errore lettura QSS {qss_path}: {e}")  # noqa: TRY400
+                logger.exception("Errore lettura QSS", qss_path=qss_path, exc=e)
 
         if not qss_content:
             qss_content = f"QMainWindow {{ background-color: {self.palette.background}; }}"
@@ -116,7 +117,7 @@ class ThemeManager:
                 overrides_content = overrides_path.read_text(encoding="utf-8")
                 overrides_content = self._process_qss(overrides_content)
             except Exception as e:
-                logger.error(f"Errore lettura Overrides QSS: {e}")  # noqa: TRY400
+                logger.exception("Errore lettura Overrides QSS", exc=e)
 
         # 3. Applica la combinazione degli stili
         app.setStyleSheet(qss_content + overrides_content)
@@ -124,7 +125,6 @@ class ThemeManager:
     def _process_qss(self, content: str) -> str:
         """Sostituisce i segnaposto {{key}} con i valori della palette e delle costanti."""
         p = self.palette
-        from src.gui.styles.constants import COLORS, FONT_SIZES, UI_SIZES  # noqa: PLC0415
 
         # Mapping di base dalla ColorPalette
         mapping: dict[str, Any] = {

@@ -5,7 +5,6 @@ Bot modulare per lo scarico e la stampa dei PDL.
 """
 
 import contextlib
-import logging
 import time
 from contextlib import suppress
 from pathlib import Path
@@ -21,10 +20,11 @@ from src.bots.base.base_bot import StepStatus
 from src.bots.base.wait_helpers import poll_for_new_file
 from src.bots.safework.base import SafeworkBaseBot
 from src.bots.safework.common.locators import SafeWorkLocators
+from src.core.logging import get_logger
 from src.utils.document_processor import DocumentProcessor
 from src.utils.printing import print_pdf
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SafeWorkPDLBot(SafeworkBaseBot):
@@ -39,7 +39,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         ("session", "Chiusura Sessione"),
     ]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         username: str,
         password: str,
@@ -187,8 +187,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     def _sanitizza_pdl_number(self, pdl_raw: Any) -> str:
         """Formatta il numero PDL aggiungendo i suffissi /S o /C se necessario."""
         num = str(pdl_raw).strip().upper().replace(" ", "")
-        if num.isdigit() and len(num) == 6:  # noqa: PLR2004
-            suffix = "/S" if int(num) < 400000 else "/C"  # noqa: PLR2004
+        if num.isdigit() and len(num) == 6:
+            suffix = "/S" if int(num) < 400000 else "/C"
             return f"{num}{suffix}"
         return num
 
@@ -405,7 +405,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         """Rimuove la pagina 2 (istruzioni) dal PDF della parte prima."""
         try:
             doc = fitz.open(path)
-            if doc.page_count >= 2:  # noqa: PLR2004
+            if doc.page_count >= 2:
                 doc.delete_page(1)
                 doc.save(path + ".tmp")
                 doc.close()
@@ -414,7 +414,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             else:
                 doc.close()
         except Exception as e:
-            logger.debug("Errore pulizia PDF: %s", e)
+            logger.debug("Errore pulizia PDF", error=str(e))
 
     def _handle_session_merge(self, data: list[dict[str, Any]], all_paths: list[str]) -> None:
         """Crea un unico PDF con tutti i PDL della sessione se configurato."""
@@ -428,7 +428,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     self.log(f"✅ PDF Unico Sessione creato: {path_merge.name}")
                     self.downloaded_files.append(str(path_merge))
             except Exception as e:
-                logger.error("Errore unione sessione: %s", e)  # noqa: TRY400
+                logger.exception("Errore unione sessione", exc=e)
 
     def _unisci_e_stampa(
         self, pdl_num: str, p1: str, p2: str, item: dict[str, Any], all_paths: list[str]

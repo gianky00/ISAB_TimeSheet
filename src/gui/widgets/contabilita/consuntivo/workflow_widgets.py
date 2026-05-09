@@ -25,7 +25,7 @@ class WorkflowStepButton(QFrame):
         COMPLETED = "completed"
         ERROR = "error"
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         step_id: str,
         step_number: int,
@@ -110,7 +110,7 @@ class WorkflowStepButton(QFrame):
         self._glow_opacity = value
         self.update()
 
-    glowOpacity = Property(float, fget=get_glow_opacity, fset=set_glow_opacity)  # noqa: N815
+    glowOpacity = Property(float, fget=get_glow_opacity, fset=set_glow_opacity)
 
     def set_state(self, state: str) -> None:
         """
@@ -273,7 +273,7 @@ class WorkflowMapWidget(QWidget):
         self._step_buttons: dict[str, WorkflowStepButton] = {}
         self._setup_ui()
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Costruisce il layout della pipeline con step e azioni complesse."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)

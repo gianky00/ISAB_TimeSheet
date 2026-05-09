@@ -73,11 +73,11 @@ def get_hardware_id() -> str:
 
 def _get_windows_hardware_id() -> str | None:
     """Recupera l'HWID su sistemi Windows tramite WMIC o PowerShell."""
-    CREATE_NO_WINDOW = 0x08000000  # noqa: N806
+    create_no_window = 0x08000000
     with suppress(Exception):
         cmd = ["wmic", "diskdrive", "get", "serialnumber"]
         output = subprocess.check_output(
-            cmd, shell=False, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW
+            cmd, shell=False, stderr=subprocess.DEVNULL, creationflags=create_no_window
         ).decode()
         parts = output.strip().split("\n")
         if len(parts) > 1 and parts[1].strip():
@@ -91,7 +91,7 @@ def _get_windows_hardware_id() -> str | None:
             "Get-CimInstance -Class Win32_DiskDrive | Select-Object -ExpandProperty SerialNumber",
         ]
         output = (
-            subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW)
+            subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=create_no_window)
             .decode()
             .strip()
         )
@@ -106,7 +106,7 @@ def _get_windows_hardware_id() -> str | None:
             "Get-CimInstance -Class Win32_ComputerSystemProduct | Select-Object -ExpandProperty UUID",
         ]
         output = (
-            subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW)
+            subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=create_no_window)
             .decode()
             .strip()
         )
@@ -191,7 +191,7 @@ def get_license_info() -> dict[str, Any] | None:
         return None
 
     try:
-        from src.core.secrets_manager import SecretsManager  # noqa: PLC0415
+        from src.core.secrets_manager import SecretsManager
 
         encrypted_data = paths["config"].read_bytes()
         key_raw = SecretsManager.get_license_key()
@@ -204,10 +204,10 @@ def get_license_info() -> dict[str, Any] | None:
             decrypted = cipher.decrypt(encrypted_data).decode("utf-8")
             return json.loads(decrypted)  # type: ignore[no-any-return]
         except Exception as de:
-            logger.error(f"Errore decifratura config.dat: {de}")  # noqa: TRY400
+            logger.exception("Errore decifratura config.dat", exc=de)
             return None
     except Exception as e:
-        logger.error(f"Errore caricamento licenza: {e}")  # noqa: TRY400
+        logger.exception("Errore caricamento licenza", exc=e)
         return None
 
 

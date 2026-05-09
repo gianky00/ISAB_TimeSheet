@@ -28,7 +28,7 @@ class ROIEngine:
     @staticmethod
     def get_weights() -> dict[str, float]:
         """Recupera i pesi (minuti risparmiati per operazione) dalla configurazione."""
-        from src.core.config_manager import get_config_value  # noqa: PLC0415
+        from src.core.config_manager import get_config_value
 
         default_weights = {
             "Scarico TS": 15.0,
@@ -161,7 +161,7 @@ class ROIEngine:
         }
 
     @classmethod
-    def _finalize_metrics(  # noqa: PLR0913
+    def _finalize_metrics(
         cls,
         total_min_man: float,
         total_bot_min: float,

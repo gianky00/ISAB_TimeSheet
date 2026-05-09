@@ -78,7 +78,7 @@ class MenuBarComponent(QObject):
     def open_command_palette(self) -> None:
         """Apre o chiude la Command Palette con effetto a tendina e controllo anti-rimbalzo."""
         now = datetime.now(UTC).timestamp() * 1000
-        if (now - self._last_palette_toggle) < 300:  # noqa: PLR2004
+        if (now - self._last_palette_toggle) < 300:
             return
         self._last_palette_toggle = now
 
@@ -101,7 +101,7 @@ class MenuBarComponent(QObject):
 
             self.command_palette = CommandPaletteDialog(self.main_window, root_nodes)
         except Exception as e:
-            import traceback  # noqa: PLC0415
+            import traceback
 
             print(f"Error initializing palette: {e}")
             traceback.print_exc()
@@ -123,9 +123,9 @@ class MenuBarComponent(QObject):
         """
 
         def restart_app() -> None:
-            import subprocess  # noqa: PLC0415
+            import subprocess
 
-            from PySide6.QtWidgets import QApplication  # noqa: PLC0415
+            from PySide6.QtWidgets import QApplication
 
             QApplication.quit()
             subprocess.Popen([sys.executable, *sys.argv])
@@ -216,7 +216,7 @@ class MenuBarComponent(QObject):
             ],
         )
 
-        from src.gui.main_window.page_index import PageIndex  # noqa: PLC0415
+        from src.gui.main_window.page_index import PageIndex
 
         # 2. GO (Navigation Flow)
         menu_go = CommandNode(

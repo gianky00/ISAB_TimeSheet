@@ -152,7 +152,7 @@ class ScaricoOrePanel(QWidget):
 
     def _load_data(self) -> None:
         """Avvia il caricamento asincrono dei dati dal database o dalla cache locale."""
-        from src.core.database import db_manager  # noqa: PLC0415
+        from src.core.database import db_manager
 
         if not db_manager.DB_CONTABILITA.exists():
             self.filters.status_label.setText("Database non trovato.")

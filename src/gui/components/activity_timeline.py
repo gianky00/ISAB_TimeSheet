@@ -9,6 +9,7 @@ import time
 from PySide6.QtCore import (
     Property,
     QEasingCurve,
+    QEvent,
     QPointF,
     QPropertyAnimation,
     QRectF,
@@ -38,7 +39,7 @@ class TimelineNode:
     Mantiene lo stato, il tempo di inizio e la durata dell'operazione.
     """
 
-    def __init__(self, name: str):  # noqa: ANN204
+    def __init__(self, name: str) -> None:
         """
         Inizializza un nuovo nodo.
 
@@ -57,7 +58,7 @@ class ActivityTimelineWidget(QWidget):
     Visualizza una timeline verticale con animazioni neon, griglia tattica e flussi dati.
     """
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il widget e configura le animazioni e i colori.
 
@@ -107,7 +108,7 @@ class ActivityTimelineWidget(QWidget):
         self.setMinimumWidth(280)
         self.setMinimumHeight(400)
 
-    def _setup_animations(self):  # noqa: ANN202
+    def _setup_animations(self) -> None:
         """Configura le animazioni di pulsazione per gli step attivi e per il bordo in hover."""
         self._pulse_anim.setDuration(1000)
         self._pulse_anim.setStartValue(0.4)
@@ -124,7 +125,7 @@ class ActivityTimelineWidget(QWidget):
         self._border_pulse_anim.setLoopCount(-1)
         self._border_pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
 
-    def enterEvent(self, event):  # noqa: ANN001, ANN201
+    def enterEvent(self, event: QEvent) -> None:
         """
         Avvia la pulsazione del bordo al passaggio del mouse.
 
@@ -134,7 +135,7 @@ class ActivityTimelineWidget(QWidget):
         self._border_pulse_anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event):  # noqa: ANN001, ANN201
+    def leaveEvent(self, event: QEvent) -> None:
         """
         Ferma la pulsazione e ripristina il bordo solido.
 
@@ -149,14 +150,14 @@ class ActivityTimelineWidget(QWidget):
         """Restituisce il valore corrente della pulsazione del bordo."""
         return self._border_pulse_val
 
-    def set_border_pulse(self, value: float):  # noqa: ANN201
+    def set_border_pulse(self, value: float) -> None:
         """Imposta il valore della pulsazione del bordo e forza il ridisegno."""
         self._border_pulse_val = value
         self.update()
 
     border_pulse = Property(float, fget=get_border_pulse, fset=set_border_pulse)
 
-    def _tick(self):  # noqa: ANN202
+    def _tick(self) -> None:
         """Metodo di aggiornamento periodico per gli elementi dinamici (60 FPS)."""
         self._rotation_angle, self._grid_offset, self._dash_offset = (
             (self._rotation_angle + 3) % 360,
@@ -169,14 +170,14 @@ class ActivityTimelineWidget(QWidget):
         """Restituisce il valore corrente della pulsazione neon."""
         return self._pulse_value
 
-    def set_pulse_value(self, value: float):  # noqa: ANN201
+    def set_pulse_value(self, value: float) -> None:
         """Imposta il valore della pulsazione e forza il ridisegno."""
         self._pulse_value = value
         self.update()
 
     pulse_value = Property(float, fget=get_pulse_value, fset=set_pulse_value)
 
-    def set_steps(self, steps: list[tuple[str, str]]):  # noqa: ANN201
+    def set_steps(self, steps: list[tuple[str, str]]) -> None:
         """
         Inizializza la lista degli step da visualizzare.
 
@@ -187,7 +188,7 @@ class ActivityTimelineWidget(QWidget):
         self.update()
 
     @Slot(int, str, object)
-    def on_step_changed(self, index: int, name: str, status):  # noqa: ANN001, ANN201
+    def on_step_changed(self, index: int, name: str, status: StepStatus | int) -> None:
         """
         Slot chiamato quando lo stato di uno step del bot cambia.
 
@@ -219,7 +220,7 @@ class ActivityTimelineWidget(QWidget):
                 self._pulse_value = 1.0
             self.update()
 
-    def paintEvent(self, event):  # noqa: ANN001, ANN201
+    def paintEvent(self, event: QEvent) -> None:
         """
         Gestisce il disegno personalizzato del widget (Grid, Connectors, Nodes).
 
@@ -253,13 +254,13 @@ class ActivityTimelineWidget(QWidget):
 
             # CALCOLO DINAMICO SPAZIATURA
             num_nodes = len(self.nodes)
-            x_axis = 55
+            x_axis = 55.0
 
             # Margini interni alla card
-            margin_y = 40
+            margin_y = 40.0
             available_h = rect.height() - (margin_y * 2)
 
-            spacing = min(75, available_h / (num_nodes - 1)) if num_nodes > 1 else 0
+            spacing = min(75.0, available_h / (num_nodes - 1)) if num_nodes > 1 else 0.0
 
             # Centra verticalmente se c'è spazio in eccesso
             total_timeline_h = (num_nodes - 1) * spacing
@@ -282,7 +283,7 @@ class ActivityTimelineWidget(QWidget):
         finally:
             painter.end()
 
-    def _draw_grid(self, painter, rect):  # noqa: ANN001, ANN202
+    def _draw_grid(self, painter: QPainter, rect: QRectF) -> None:
         """
         Disegna la griglia tattica animata sullo sfondo.
 
@@ -304,7 +305,9 @@ class ActivityTimelineWidget(QWidget):
         for y in range(top, bottom + step, step):
             painter.drawLine(left, int(y + self._grid_offset), right, int(y + self._grid_offset))
 
-    def _draw_connector_v5(self, painter, x, y1, y2, n1, n2):  # noqa: ANN001, ANN202, PLR0913
+    def _draw_connector_v5(
+        self, painter: QPainter, x: float, y1: float, y2: float, n1: TimelineNode, n2: TimelineNode
+    ) -> None:
         """
         Disegna la linea di connessione tra due nodi con effetti di flusso dati.
 
@@ -331,7 +334,9 @@ class ActivityTimelineWidget(QWidget):
             painter.setPen(Qt.PenStyle.NoPen)
             painter.drawEllipse(QRectF(x - 2, dy - 2, 4, 4))
 
-    def _draw_node_v5(self, painter, x, y, node, container_rect):  # noqa: ANN001, ANN202
+    def _draw_node_v5(
+        self, painter: QPainter, x: float, y: float, node: TimelineNode, container_rect: QRectF
+    ) -> None:
         """
         Disegna un singolo nodo della timeline con i relativi effetti di stato.
 
@@ -394,7 +399,7 @@ class ActivityTimelineWidget(QWidget):
             msg = "> ACTIVE" if is_active else f"> {node.duration_str}"
             painter.drawText(text_x, int(y + 16), msg)
 
-    def _draw_empty(self, painter):  # noqa: ANN001, ANN202
+    def _draw_empty(self, painter: QPainter) -> None:
         """
         Disegna lo stato vuoto del widget quando non ci sono step.
 

@@ -85,7 +85,7 @@ class ImpostazioniTab(QWidget):
             btns.addWidget(b)
 
         def add() -> None:
-            from src.gui.dialogs.standard_input_dialog import StandardInputDialog  # noqa: PLC0415
+            from src.gui.dialogs.standard_input_dialog import StandardInputDialog
 
             text, ok = StandardInputDialog.get_input(self, title, "Nuovo valore:")
             if ok and text.strip():

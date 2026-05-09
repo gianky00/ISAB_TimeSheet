@@ -69,7 +69,7 @@ class PDLStatsEngine:
 
                 areas_stats_list = cls._get_area_stats(stats_map)
 
-                from src.core.sync_tracker import SyncTracker  # noqa: PLC0415
+                from src.core.sync_tracker import SyncTracker
 
                 last_sync = SyncTracker.get_formatted_status("pdl")
 

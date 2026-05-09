@@ -1,6 +1,5 @@
 import io
 import json
-import logging
 import re
 import warnings
 import zipfile
@@ -24,8 +23,9 @@ except ImportError:
     HAS_OPENPYXL = False
 
 from src.core.importers.base import BaseImporter
+from src.core.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ScaricoOreImporter(BaseImporter):
@@ -74,7 +74,7 @@ class ScaricoOreImporter(BaseImporter):
                                 if match:
                                     r = int(match.group(1))
                                     cnt = max(cnt, r)
-                return cnt  # noqa: TRY300
+                return cnt
             except Exception:
                 return 0
 
@@ -85,7 +85,7 @@ class ScaricoOreImporter(BaseImporter):
         except (zipfile.BadZipFile, Exception) as e:
             logger.debug(f"Scan excel rows error: {e}")
 
-        from src.core.constants import Business  # noqa: PLC0415
+        from src.core.constants import Business
 
         if msoffcrypto:
             with suppress(Exception):
@@ -138,7 +138,7 @@ class ScaricoOreImporter(BaseImporter):
 
     @classmethod
     def _load_scarico_workbook(cls, path: Path) -> Any:
-        from src.core.constants import Business  # noqa: PLC0415
+        from src.core.constants import Business
 
         wb_file = io.BytesIO()
         is_encrypted = False
@@ -325,7 +325,7 @@ class ScaricoOreImporter(BaseImporter):
                 font = cell.font
                 if font and font.color and font.color.type == "rgb":
                     rgb = str(font.color.rgb)
-                    hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"  # noqa: PLR2004
+                    hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
                     if hex_code != "#000000":
                         row_styles.setdefault(key, {})["fg"] = hex_code
 
@@ -335,8 +335,8 @@ class ScaricoOreImporter(BaseImporter):
                     start_color = fill.start_color
                     if start_color and start_color.type == "rgb":
                         rgb = str(start_color.rgb)
-                        hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"  # noqa: PLR2004
-                        if hex_code != "#000000" and hex_code != "#FFFFFF":  # noqa: PLR1714
+                        hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
+                        if hex_code not in {"#000000", "#FFFFFF"}:
                             row_styles.setdefault(key, {})["bg"] = hex_code
 
         return json.dumps(row_styles) if row_styles else ""

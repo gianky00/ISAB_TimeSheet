@@ -25,7 +25,7 @@ class SortableTableWidgetItem(QTableWidgetItem):
         if alignment:
             self.setTextAlignment(alignment)
 
-    def __lt__(self, other: Any) -> bool:  # noqa: PLR0911
+    def __lt__(self, other: Any) -> bool:
         """Override dell'operatore < per ordinamento personalizzato."""
         if not isinstance(other, QTableWidgetItem):
             return super().__lt__(other)
@@ -90,4 +90,4 @@ class SortableTableWidgetItem(QTableWidgetItem):
                 # Gestisce anche date parziali troncando il testo se necessario?
                 # Meglio match esatto per evitare falsi positivi
                 return datetime.strptime(text, fmt).replace(tzinfo=UTC)
-        raise ValueError("Not a date")  # noqa: TRY003
+        raise ValueError("Not a date")

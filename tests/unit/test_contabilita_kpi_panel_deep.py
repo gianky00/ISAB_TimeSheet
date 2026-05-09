@@ -15,7 +15,7 @@ class TestContabilitaKPIPanelDeep:
         pass
 
     def test_format_currency(self, qapp):
-        import src.gui.panels.contabilita_kpi.kpi_panel as kpi_mod  # noqa: PLC0415
+        import src.gui.panels.contabilita_kpi.kpi_panel as kpi_mod
 
         with (
             patch.object(kpi_mod, "KPIChartsManager"),

@@ -127,7 +127,7 @@ class ConfigTab(QWidget):
         self.cards: list[SettingCard] = []
         self._setup_ui()
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Costruisce il layout a card verticali con scroll area."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)

@@ -3,15 +3,16 @@ SyncroJob - Auth Monitor
 Monitoraggio proattivo delle abilitazioni ISAB basato sulle timbrature.
 """
 
-import logging
 import re
 from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
 
+from src.core.constants import THRESHOLD_DAYS
 from src.core.database import db_manager
+from src.core.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _normalize(t: Any) -> str:
@@ -91,8 +92,6 @@ def _process_employee_match(
 
     # 3. Valutazione soglie
     if match_found and delta is not None:
-        from src.core.constants import THRESHOLD_DAYS  # noqa: PLC0415
-
         if delta <= THRESHOLD_DAYS["warning"]:
             return None
 

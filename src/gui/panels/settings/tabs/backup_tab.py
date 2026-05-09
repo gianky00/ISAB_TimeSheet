@@ -113,7 +113,7 @@ class BackupTab(QWidget):
         self.cards: list[SettingCard] = []
         self._setup_ui()
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Configura il layout a card per backup e log."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)

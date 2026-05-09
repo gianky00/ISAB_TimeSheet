@@ -21,7 +21,7 @@ class DummyBot(BaseBot):
     def get_columns():
         return []
 
-    from typing import ClassVar  # noqa: PLC0415
+    from typing import ClassVar
 
     STEPS: ClassVar[list[tuple[str, str]]] = [("step1", "Step 1"), ("step2", "Step 2")]
 

@@ -90,7 +90,7 @@ class AuditLogWidget(QWidget):
             self._first_refresh_done = True
             QTimer.singleShot(50, self.refresh)
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         """Configura l'interfaccia utente."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)

@@ -358,7 +358,7 @@ class BotParametersWidget(QWidget):
             path.mkdir(parents=True, exist_ok=True)
 
         try:
-            os.startfile(str(path))  # noqa: S606
+            os.startfile(str(path))
         except Exception:
             ToastManager.instance().show(f"Impossibile aprire la cartella: {path}", "error")
 

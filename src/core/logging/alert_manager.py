@@ -68,12 +68,12 @@ class AlertManager:
         """Lazy load TelegramService."""
         if self._telegram_service is None:
             with suppress(ImportError):
-                from src.core.telegram import TelegramService  # noqa: PLC0415
+                from src.core.telegram import TelegramService
 
                 self._telegram_service = TelegramService()
         return self._telegram_service
 
-    def configure(  # noqa: PLR0913
+    def configure(
         self,
         enabled: bool | None = None,
         error_rate_threshold: float | None = None,

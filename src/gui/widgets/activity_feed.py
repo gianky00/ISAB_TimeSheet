@@ -39,7 +39,7 @@ class ActivityItem(QFrame):
     Rappresenta una singola voce nella timeline orizzontale (Compact) con animazioni moderne.
     """
 
-    def __init__(  # noqa: PLR0915
+    def __init__(
         self, log_entry: dict[str, Any], parent: QWidget | None = None, animate: bool = True
     ) -> None:
         super().__init__(parent)
@@ -210,7 +210,7 @@ class ActivityFeed(QWidget):
         self._setup_ui()
 
         # Connetti al segnale dell'AuditManager per aggiornamenti in tempo reale
-        from src.core.audit_manager import AuditManager  # noqa: PLC0415
+        from src.core.audit_manager import AuditManager
 
         AuditManager.instance().signals.log_added.connect(self._on_new_log_added)
 
@@ -292,7 +292,7 @@ class ActivityFeed(QWidget):
                         widget.deleteLater()
 
             # Limit to 10 latest
-            from src.core.audit_manager import AuditManager  # noqa: PLC0415
+            from src.core.audit_manager import AuditManager
 
             logs = AuditManager.instance().get_logs(limit=10)
 

@@ -34,7 +34,7 @@ class TestAnomalyDetector:
 
     def test_detector_initialization(self):
         """Testa l'inizializzazione del detector."""
-        from src.core.logging.analytics import AnomalyDetector  # noqa: PLC0415
+        from src.core.logging.analytics import AnomalyDetector
 
         detector = AnomalyDetector()
 
@@ -44,7 +44,7 @@ class TestAnomalyDetector:
     @patch("src.core.logging.analytics.LogViewer")
     def test_detect_error_rate_spike_user_friendly_suggestion(self, mock_viewer):
         """Testa che i suggerimenti siano user-friendly (no CLI commands)."""
-        from src.core.logging.analytics import AnomalyDetector  # noqa: PLC0415
+        from src.core.logging.analytics import AnomalyDetector
 
         # Mock viewer con error rate alto
         mock_instance = MagicMock()
@@ -69,7 +69,7 @@ class TestAnomalyDetector:
     @patch("src.core.logging.analytics.LogViewer")
     def test_detect_slow_operations_user_friendly_suggestion(self, mock_viewer):
         """Testa i suggerimenti per operazioni lente."""
-        from src.core.logging.analytics import AnomalyDetector  # noqa: PLC0415
+        from src.core.logging.analytics import AnomalyDetector
 
         mock_instance = MagicMock()
         mock_instance.generate_health_report.return_value = {
@@ -96,7 +96,7 @@ class TestAnomalyDetector:
     @patch("src.core.logging.analytics.LogViewer")
     def test_detect_bot_failures_user_friendly_suggestion(self, mock_viewer):
         """Testa i suggerimenti per fallimenti bot."""
-        from src.core.logging.analytics import AnomalyDetector  # noqa: PLC0415
+        from src.core.logging.analytics import AnomalyDetector
 
         mock_instance = MagicMock()
         mock_instance.generate_health_report.return_value = {
@@ -132,7 +132,7 @@ class TestAnalyticsReport:
     @patch("src.core.logging.analytics.AnomalyDetector")
     def test_generate_analytics_report(self, mock_detector, mock_viewer):
         """Testa la generazione del report."""
-        from src.core.logging.analytics import generate_analytics_report  # noqa: PLC0415
+        from src.core.logging.analytics import generate_analytics_report
 
         # Mock viewer
         mock_viewer_instance = MagicMock()
@@ -156,7 +156,7 @@ class TestAnalyticsReport:
 
     def test_anomaly_dataclass(self):
         """Testa la dataclass Anomaly."""
-        from src.core.logging.analytics import Anomaly  # noqa: PLC0415
+        from src.core.logging.analytics import Anomaly
 
         anomaly = Anomaly(
             type="test_type",

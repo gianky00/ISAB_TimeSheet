@@ -12,7 +12,7 @@ class TestTelegramServiceUltraFixed:
 
     @pytest.mark.asyncio
     async def test_handle_text_input_states(self, service):
-        from src.core.telegram.handlers.messages import handle_text_input  # noqa: PLC0415
+        from src.core.telegram.handlers.messages import handle_text_input
 
         # Create a proper Update mock with effective_user
         mock_update = MagicMock()

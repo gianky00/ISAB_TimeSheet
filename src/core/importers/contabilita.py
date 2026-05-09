@@ -1,4 +1,3 @@
-import logging
 import re
 import zipfile
 from collections.abc import Callable
@@ -9,9 +8,10 @@ from typing import Any, ClassVar
 import pandas as pd
 
 from src.core.importers.base import BaseImporter
+from src.core.logging import get_logger
 from src.core.schemas import validate_contabilita
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ContabilitaImporter(BaseImporter):
@@ -101,7 +101,7 @@ class ContabilitaImporter(BaseImporter):
             )
 
         except Exception as e:
-            logger.error(f"Errore importazione Excel: {e}")  # noqa: TRY400
+            logger.exception("Errore importazione Excel", exc=e)
             return False, f"Errore critico importazione: {e}", [], []
 
     @classmethod
@@ -259,7 +259,7 @@ class ContabilitaImporter(BaseImporter):
 
         for i_raw, row in preview_df.iterrows():
             row_vals = [_norm(val) for val in row.values]
-            if sum(1 for k in key_cols_norm if k in row_vals) >= 2:  # noqa: PLR2004
+            if sum(1 for k in key_cols_norm if k in row_vals) >= 2:
                 return int(i_raw)
         return 0
 

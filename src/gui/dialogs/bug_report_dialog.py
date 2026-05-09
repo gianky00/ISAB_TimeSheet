@@ -5,11 +5,16 @@ Interfaccia avanzata per la raccolta diagnostica e la segnalazione di anomalie t
 Gestisce la creazione di pacchetti ZIP contenenti log, analytics e audit trail, con integrazione Outlook.
 """
 
+import getpass
 import logging
 import os
+import secrets
+import shutil
 from contextlib import suppress
+from datetime import UTC, datetime
 from pathlib import Path
 
+import win32com.client as win32
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import (
     QDialog,
@@ -20,6 +25,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QScrollArea,
     QVBoxLayout,
+    QWidget,
 )
 
 from src.core.bug_reporter import BugReporter
@@ -47,13 +53,13 @@ class ReportWorker(QThread):
     finished = Signal(bool, str, str, list)
     """Segnale emesso al termine: (successo, messaggio, percorso_zip, lista_file_inclusi)."""
 
-    def __init__(  # noqa: ANN204
+    def __init__(
         self,
         include_logs: bool,
         include_analytics: bool,
         include_audit: bool,
         trace_id: str | None = None,
-    ):
+    ) -> None:
         """
         Inizializza il worker con le opzioni di inclusione.
 
@@ -69,7 +75,7 @@ class ReportWorker(QThread):
         self.include_audit = include_audit
         self.trace_id = trace_id
 
-    def run(self):  # noqa: ANN201
+    def run(self) -> None:
         """Esegue il processo di raccolta diagnostica richiamando il core BugReporter."""
         path, msg, files = BugReporter.collect_diagnostics(
             include_enterprise_logs=self.include_logs,
@@ -90,7 +96,7 @@ class BugReportDialog(QDialog):
     Supporta l'invio automatico tramite Outlook o il salvataggio manuale del file ZIP.
     """
 
-    def __init__(self, parent=None):  # noqa: ANN001, ANN204
+    def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il dialogo e configura l'interfaccia utente.
 
@@ -99,15 +105,18 @@ class BugReportDialog(QDialog):
         """
         super().__init__(parent)
         self.setWindowTitle("Segnala un Problema")
-        self.resize(600, 550)
+        dialog_width = 600
+        dialog_height = 550
+        self.resize(dialog_width, dialog_height)
         self.setup_ui()
-        self.worker = None
+        self.worker: ReportWorker | None = None
         self._update_size_estimate()
 
-    def setup_ui(self):  # noqa: ANN201, PLR0915
-        """Configura il layout, i campiùdi testo, le checkbox delle opzioni e i pulsanti di azione."""
+    def setup_ui(self) -> None:
+        """Configura il layout, i campi di testo, le checkbox delle opzioni e i pulsanti di azione."""
         layout = QVBoxLayout(self)
-        layout.setSpacing(12)
+        layout_spacing = 12
+        layout.setSpacing(layout_spacing)
 
         palette = get_palette()
 
@@ -126,7 +135,7 @@ class BugReportDialog(QDialog):
         # Header
         lbl_info = QLabel(
             "Descrivi il problema riscontrato con il maggior dettaglio possibile.\n"
-            "Se possibile, indica i passaggiàper riprodurlo."
+            "Se possibile, indica i passaggi per riprodurlo."
         )
         lbl_info.setStyleSheet(f"font-size: 14px; color: {palette.on_surface}; margin-bottom: 5px;")
         lbl_info.setWordWrap(True)
@@ -135,13 +144,14 @@ class BugReportDialog(QDialog):
         # Text Area
         self.txt_description = StandardTextEdit()
         self.txt_description.setPlaceholderText(
-            "Es: Ho cliccato su Scarica PDL e l'app si  chiusa... Stavo lavorando sul cantiere X..."
+            "Es: Ho cliccato su Scarica PDL e l'app si è chiusa... Stavo lavorando sul cantiere X..."
         )
         self.txt_description.setStyleSheet(
             f"background-color: {palette.surface}; border: 1px solid {palette.border}; "
             "border-radius: 4px; padding: 8px; min-height: 100px;"
         )
-        self.txt_description.setMaximumHeight(120)
+        max_text_height = 120
+        self.txt_description.setMaximumHeight(max_text_height)
         layout.addWidget(self.txt_description)
 
         # Options Group
@@ -178,7 +188,8 @@ class BugReportDialog(QDialog):
             f"background: {palette.surface}; border: 1px solid {palette.border}; border-radius: 4px; "
             "padding: 4px 8px; font-family: monospace;"
         )
-        self.txt_trace_id.setMaximumWidth(200)
+        trace_max_width = 200
+        self.txt_trace_id.setMaximumWidth(trace_max_width)
         trace_layout.addWidget(lbl_trace)
         trace_layout.addWidget(self.txt_trace_id)
         trace_layout.addStretch()
@@ -222,7 +233,8 @@ class BugReportDialog(QDialog):
         preview_layout = QVBoxLayout(self.preview_group)
         self.preview_scroll = QScrollArea()
         self.preview_scroll.setWidgetResizable(True)
-        self.preview_scroll.setMaximumHeight(100)
+        preview_max_height = 100
+        self.preview_scroll.setMaximumHeight(preview_max_height)
         self.preview_content = QLabel()
         self.preview_content.setStyleSheet(
             f"font-family: monospace; font-size: 11px; color: {COLORS['text_muted']};"
@@ -250,7 +262,7 @@ class BugReportDialog(QDialog):
 
         layout.addLayout(btn_layout)
 
-    def _update_size_estimate(self):  # noqa: ANN202
+    def _update_size_estimate(self) -> None:
         """Aggiorna dinamicamente la stima della dimensione del file ZIP finale."""
         try:
             size = BugReporter.get_estimated_size(
@@ -262,12 +274,13 @@ class BugReportDialog(QDialog):
         except Exception:
             self.lbl_size.setText("Dimensione stimata: ~50 KB")
 
-    def start_generation(self):  # noqa: ANN201
+    def start_generation(self) -> None:
         """Valida l'input e avvia il thread worker per la generazione del report."""
         desc = self.txt_description.toPlainText().strip()
-        if len(desc) < 10:  # noqa: PLR2004
+        min_desc_len = 10
+        if len(desc) < min_desc_len:
             QMessageBox.warning(
-                self, "Attenzione", "La descrizione  troppo breve. Per favore fornisci più dettagli."
+                self, "Attenzione", "La descrizione è troppo breve. Per favore fornisci più dettagli."
             )
             return
 
@@ -293,7 +306,7 @@ class BugReportDialog(QDialog):
         self.worker.finished.connect(self.on_report_generated)
         self.worker.start()
 
-    def on_report_generated(self, success: bool, msg: str, file_path: str, files: list[str]):  # noqa: ANN201
+    def on_report_generated(self, success: bool, msg: str, file_path: str, files: list[str]) -> None:
         """
         Gestisce il completamento della generazione del report.
         Tenta l'invio tramite Outlook o propone il salvataggio manuale.
@@ -318,11 +331,11 @@ class BugReportDialog(QDialog):
             QMessageBox.warning(
                 self,
                 "Outlook non disponibile",
-                "Il report  stato generato. Per favore, scegli dove salvarlo e invialo manualmente.",
+                "Il report è stato generato. Per favore, scegli dove salvarlo e invialo manualmente.",
             )
             self.save_manually(file_path)
 
-    def _enable_ui(self):  # noqa: ANN202
+    def _enable_ui(self) -> None:
         """Riabilita i controlli dell'interfaccia utente al termine delle operazioni asincrone."""
         self.txt_description.setDisabled(False)
         self.btn_send.setDisabled(False)
@@ -332,7 +345,7 @@ class BugReportDialog(QDialog):
         self.chk_include_audit.setDisabled(False)
         self.txt_trace_id.setDisabled(False)
 
-    def open_outlook(self, attachment_path: str, description: str) -> bool:  # noqa: PLR0915
+    def open_outlook(self, attachment_path: str, description: str) -> bool:
         """
         Apre una nuova mail in Outlook con destinatario, oggetto precompilato e allegato ZIP.
         Utilizza automazione COM via win32com.
@@ -342,16 +355,9 @@ class BugReportDialog(QDialog):
           description: Descrizione del bug inserita dall'utente.
 
         Returns:
-          bool: True se Outlook  stato aperto correttamente.
+          bool: True se Outlook è stato aperto correttamente.
         """
         try:
-            import getpass  # noqa: PLC0415
-            import platform  # noqa: PLC0415
-            import secrets  # noqa: PLC0415
-            from datetime import UTC, datetime  # noqa: PLC0415
-
-            import win32com.client as win32  # noqa: PLC0415
-
             try:
                 outlook = win32.Dispatch("Outlook.Application")
             except Exception:
@@ -360,24 +366,19 @@ class BugReportDialog(QDialog):
             now = datetime.now(UTC).astimezone()
             date_display = now.strftime("%d/%m/%Y %H:%M")
             date_file = now.strftime("%d-%m-%Y_%H-%M")
-            rand_hex = f"{secrets.randbelow(0x10000):04X}"
+            rand_max = 0x10000
+            rand_hex = f"{secrets.randbelow(rand_max):04X}"
             ticket_id_suffix = f"TKT-{rand_hex}"
             email_subject_suffix = f"{date_display} {ticket_id_suffix}"
             full_ticket_file = f"{date_file}_{ticket_id_suffix}"
 
             current_ver = get_version()
             current_user = getpass.getuser().upper()
-            platform.node().upper()
-
-            with suppress(Exception):
-                import uuid  # noqa: PLC0415
-
-                str(uuid.getnode())
 
             cliente_info = "ISAB S.R.L."
             with suppress(Exception):
-                from src.core.constants import Emails  # noqa: PLC0415
-                from src.core.license_validator import get_license_info  # noqa: PLC0415
+                from src.core.constants import Emails
+                from src.core.license_validator import get_license_info
 
                 lic_data = get_license_info()
                 if lic_data and "Cliente" in lic_data:
@@ -386,7 +387,8 @@ class BugReportDialog(QDialog):
                 mail = outlook.CreateItem(0)
                 mail.To = Emails.SUPPORT
                 mail.Subject = f"[Segnalazione Bug] SyncroJob v{current_ver} - {email_subject_suffix}"
-                # Rinomina ZIP per includere Ticket ID
+
+            # Rinomina ZIP per includere Ticket ID
             final_zip_path = attachment_path
             with suppress(Exception):
                 dir_name = os.path.dirname(attachment_path)
@@ -428,12 +430,12 @@ class BugReportDialog(QDialog):
             if Path(final_zip_path).exists():
                 mail.Attachments.Add(final_zip_path)
             mail.Display()
-            return True  # noqa: TRY300
-        except Exception as e:
-            logger.error(f"Errore automazione Outlook: {e}")  # noqa: TRY400
+            return True
+        except Exception:
+            logger.exception("Errore automazione Outlook")
             return False
 
-    def save_manually(self, source_path: str):  # noqa: ANN201
+    def save_manually(self, source_path: str) -> None:
         """
         Fallback per consentire all'utente di salvare il report ZIP in una posizione scelta manualmente.
 
@@ -447,8 +449,6 @@ class BugReportDialog(QDialog):
         )
         if dest_path:
             try:
-                import shutil  # noqa: PLC0415
-
                 shutil.copy2(source_path, dest_path)
                 QMessageBox.information(self, "Salvato", f"Report salvato in:\n{dest_path}")
                 self.accept()

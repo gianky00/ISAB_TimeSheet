@@ -12,6 +12,9 @@ from typing import Any
 from src.core.data_synchronizer import DataSynchronizer
 from src.core.database import db_manager
 from src.core.importers.storico_oda import StoricoOdaImporter
+from src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class OdaManager:
@@ -26,7 +29,7 @@ class OdaManager:
         db_manager.init_db()
 
     @classmethod
-    def get_all_oda(cls, search_text: str | None = None) -> list[tuple[Any, ...]]:
+    def get_all_oda(cls, search_text: str | None = None) -> list[Any]:
         """
         Recupera un elenco di ordini di acquisto dal database.
         L'ordine delle colonne nel SELECT  garantito per corrispondere agli header UI.
@@ -75,7 +78,7 @@ class OdaManager:
 
             # Fix: Conversione data per ricerca smart (DD/MM/YYYY -> YYYY-MM-DD)
             search_pattern = search_text
-            if "/" in search_text and len(search_text) >= 8:  # noqa: PLR2004
+            if "/" in search_text and len(search_text) >= 8:
                 with contextlib.suppress(Exception):
                     d_obj = datetime.strptime(search_text, "%d/%m/%Y").replace(tzinfo=UTC)
                     search_pattern = d_obj.strftime("%Y-%m-%d")
@@ -92,9 +95,9 @@ class OdaManager:
         cls, file_path: str, progress_callback: Callable[[int, int], None] | None = None
     ) -> tuple[bool, str, int, int]:
         """Importa dati da Excel e sincronizza il DB."""
-        import time  # noqa: PLC0415
+        import time
 
-        from src.core.sync_tracker import SyncTracker  # noqa: PLC0415
+        from src.core.sync_tracker import SyncTracker
 
         start_time = time.time()
         # Nota: Usiamo StoricoOdaImporter direttamente per coerenza

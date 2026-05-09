@@ -58,7 +58,7 @@ class VisualizzaAttivitaPage:
         try:
             btn = self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.EXPORT_BUTTON))
             btn.click()
-            return True  # noqa: TRY300
+            return True
         except Exception as e:
             self.log(f"❌ Errore clic export: {e}")
             return False
@@ -100,7 +100,7 @@ class VisualizzaAttivitaPage:
 
             # 4. Chiudi cliccando fuori
             self.driver.find_element(By.TAG_NAME, "body").click()
-            return True  # noqa: TRY300
+            return True
         except Exception as e:
             self.log(f"❌ Errore selezione dropdown: {e}")
             return False

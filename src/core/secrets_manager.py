@@ -82,7 +82,7 @@ class SecretsManager:
         Genera una chiave di cifratura deterministica basata sull'Hardware ID.
         Questo evita di cablare chiavi statiche nel codice per i periodi di grazia.
         """
-        from src.core.license_validator import get_hardware_id  # noqa: PLC0415
+        from src.core.license_validator import get_hardware_id
 
         hwid = get_hardware_id()
         # Usa l'HWID normalizzato per derivare una chiave Fernet valida

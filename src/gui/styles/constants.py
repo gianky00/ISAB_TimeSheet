@@ -8,8 +8,20 @@ con colori "operativi" Bootstrap-like usati nei widget.
 
 from typing import Final
 
-# Re-export per retrocompatibilit
-from src.utils.date_utils import MONTHS_IT, MONTHS_IT_FULL  # noqa: F401
+from src.utils.date_utils import MONTHS_IT, MONTHS_IT_FULL
+
+# Re-export per retrocompatibilità
+
+__all__ = [
+    "ANIMATION_TIMINGS",
+    "COLORS",
+    "FONT_SIZES",
+    "MONTHS_IT",
+    "MONTHS_IT_FULL",
+    "STATUS_COLORS",
+    "THRESHOLD_DAYS",
+    "UI_SIZES",
+]
 
 # =============================================================================
 # COLORI OPERATIVI (Bootstrap-like, usati nei widget)

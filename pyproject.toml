@@ -181,14 +181,14 @@ max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
 # Test: permettiamo assert, password fittizie, print, temp files, nested with, magic numbers e type hint non espliciti
-"tests/**/*.py" = ["S101", "S105", "S106", "S108", "T201", "DTZ", "SIM117", "F821", "F841", "PLR2004", "ANN", "SLF001", "PT011"]
+"tests/**/*.py" = ["S101", "S105", "S106", "S108", "T201", "DTZ", "SIM117", "F821", "F841", "PLR2004", "ANN", "SLF001", "PT011", "PLC0415"]
 # __init__.py: re-export senza uso diretto
 "**/__init__.py" = ["F401"]
 # Script e admin: meno severi
-"scripts/**/*.py" = ["T201", "DTZ", "PTH", "S108"]
-"admin/**/*.py" = ["T201", "DTZ", "PTH", "S108", "E402", "ERA001"]
+"scripts/**/*.py" = ["T201", "DTZ", "PTH", "S108", "PLC0415"]
+"admin/**/*.py" = ["T201", "DTZ", "PTH", "S108", "E402", "ERA001", "PLC0415", "ANN"]
 # main.py: entry point
-"main.py" = ["T201", "E402"]
+"main.py" = ["T201", "E402", "PLC0415"]
 "tools/**/*.py" = ["T201", "PTH"]
 # GUI: Metodi ereditati da PySide (es. paintEvent) violano il Naming PEP8
 "src/gui/**/*.py" = ["N802", "N803"]

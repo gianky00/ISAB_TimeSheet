@@ -63,7 +63,7 @@ class TelegramDataProcessor(QObject):
         duplicates = 0
 
         for item in items:
-            item = item.strip()  # noqa: PLW2901
+            item = item.strip()
             if not item:
                 continue
             parts = item.split(" ", 1)

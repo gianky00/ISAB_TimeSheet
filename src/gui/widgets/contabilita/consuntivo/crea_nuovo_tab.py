@@ -52,7 +52,7 @@ class CreaNuovoTab(QWidget):
     def _on_prog_computed(self, prog: str) -> None:
         self.progressivo_edit.setText(prog)
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -221,7 +221,7 @@ class CreaNuovoTab(QWidget):
         self.dest_path_edit.setText(dynamic_path)
         self.dest_path_edit.setToolTip(dynamic_path)
 
-        if not force and (now - self._last_prog_check < 60) and self._cached_prog:  # noqa: PLR2004
+        if not force and (now - self._last_prog_check < 60) and self._cached_prog:
             self.progressivo_edit.setText(self._cached_prog)
             return
 

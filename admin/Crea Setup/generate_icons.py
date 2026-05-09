@@ -18,7 +18,7 @@ ULTRA_BRIGHT = (220, 250, 255)  # Bianco-cyan
 GLOW_BLUE = (80, 200, 255)  # Blu per glow
 
 
-def get_assets_path():  # noqa: ANN201
+def get_assets_path():
     """Trova la cartella assets in modo robusto."""
     current_dir = Path(__file__).resolve().parent
 
@@ -35,7 +35,7 @@ def get_assets_path():  # noqa: ANN201
     return fallback_assets
 
 
-def draw_hexagon_points(center_x, center_y, size, rotation=0):  # noqa: ANN001, ANN201
+def draw_hexagon_points(center_x, center_y, size, rotation=0):
     """Genera i punti di un esagono."""
     points = []
     for i in range(6):
@@ -46,7 +46,7 @@ def draw_hexagon_points(center_x, center_y, size, rotation=0):  # noqa: ANN001, 
     return points
 
 
-def create_complex_app_icon(target_size):  # noqa: ANN001, ANN201, C901, PLR0912, PLR0915
+def create_complex_app_icon(target_size):
     """
     Icona principale dell'applicazione.
     Design: Esagono tecnologico con nucleo AI centrale e elementi orbitali.
@@ -209,7 +209,7 @@ def create_complex_app_icon(target_size):  # noqa: ANN001, ANN201, C901, PLR0912
     return img.resize((target_size, target_size), Image.Resampling.LANCZOS)
 
 
-def create_complex_setup_icon(target_size):  # noqa: ANN001, ANN201, C901, PLR0912, PLR0915
+def create_complex_setup_icon(target_size):
     """
     Icona del setup/installer.
     Design: Esagoni in assemblaggio con arco di progresso e particelle.
@@ -263,7 +263,7 @@ def create_complex_setup_icon(target_size):  # noqa: ANN001, ANN201, C901, PLR09
             draw.polygon(points, fill=(brightness, g_val, 255, 255))
 
         # Centro luminoso
-        if completeness > 0.6:  # noqa: PLR2004
+        if completeness > 0.6:
             center_size = hex_size * 0.35
             points = draw_hexagon_points(hx, hy, center_size, 30)
             draw.polygon(points, fill=(*ULTRA_BRIGHT, int(255 * completeness)))
@@ -418,7 +418,7 @@ def create_complex_setup_icon(target_size):  # noqa: ANN001, ANN201, C901, PLR09
     return img.resize((target_size, target_size), Image.Resampling.LANCZOS)
 
 
-def generate_icons():  # noqa: ANN201
+def generate_icons() -> None:
     """Genera entrambe le icone in formato .ico multi-risoluzione."""
     assets_dir = get_assets_path()
 

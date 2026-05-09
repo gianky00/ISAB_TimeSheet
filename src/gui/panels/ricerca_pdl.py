@@ -68,7 +68,7 @@ class RicercaPDLPanel(BaseBotPanel):
 
     def get_bot_class(self) -> type[BaseBot]:
         """Restituisce la classe SafeWorkPDLSearchBot associata."""
-        from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot  # noqa: PLC0415
+        from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
 
         return SafeWorkPDLSearchBot
 
@@ -89,7 +89,7 @@ class RicercaPDLPanel(BaseBotPanel):
         params_layout.setContentsMargins(15, 10, 15, 10)
         params_layout.setSpacing(20)
 
-        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED  # noqa: PLC0415
+        from src.gui.styles import COMBOBOX_STYLE, LABEL_MUTED
 
         # 1. Flag Escludi Chiusi
         vbox_check = QVBoxLayout()
@@ -165,11 +165,11 @@ class RicercaPDLPanel(BaseBotPanel):
                 "La Ricerca PDL massiva richiede solitamente un account <b>Esecutore</b> per funzionare correttamente.<br><br>"
                 f"Vuoi passare all'account Esecutore <b>{esecutore_acc.get('username')}</b> e proseguire?"
             )
-            from src.gui.dialogs.confirmation_dialog import ConfirmationDialog  # noqa: PLC0415
+            from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 
             if ConfirmationDialog.confirm(self, "Tipo Account Incompatibile", msg, is_rich_text=True):
                 if config_manager.set_default_account("safework", esecutore_acc.get("username", "")):
-                    from src.gui.main_window.main import MainWindow  # noqa: PLC0415
+                    from src.gui.main_window.main import MainWindow
 
                     main_win = self.window()
                     if isinstance(main_win, MainWindow):
@@ -182,7 +182,7 @@ class RicercaPDLPanel(BaseBotPanel):
                     )
                 ToastManager.instance().show("Errore durante lo switch dell'account.", "error")
         else:
-            from src.gui.dialogs.confirmation_dialog import ConfirmationDialog  # noqa: PLC0415
+            from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 
             ConfirmationDialog.show_warning(
                 self,

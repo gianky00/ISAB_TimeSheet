@@ -241,7 +241,7 @@ class ServiceController(QObject):
 
     def _dispatch_outlook_email(self, w_list: list[dict[str, Any]], e_list: list[dict[str, Any]]) -> None:
         """Utilizza le API COM di Windows per inviare l'email tramite Outlook."""
-        import win32com.client  # noqa: PLC0415
+        import win32com.client
 
         body = (
             f"<html><body style='font-family: Segoe UI;'><h2>Report Accessi ISAB</h2><p>Generato il {datetime.now(UTC).astimezone().strftime('%d/%m/%Y %H:%M')}</p>"

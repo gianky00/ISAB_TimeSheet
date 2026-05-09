@@ -59,7 +59,7 @@ class ModificaEsistenteTab(QWidget):
     def _on_scan_error(self, msg: str) -> None:
         self.log_widget.append_log(msg, "error")
 
-    def _setup_ui(self) -> None:  # noqa: PLR0915
+    def _setup_ui(self) -> None:
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
@@ -208,7 +208,7 @@ class ModificaEsistenteTab(QWidget):
         self._dir_label.setText(directory)
 
         # Se meno di 30 secondi dall'ultima scansione e non forzato, usa la cache
-        if not force and (now - self._last_scan_time < 30) and self._cached_files:  # noqa: PLR2004
+        if not force and (now - self._last_scan_time < 30) and self._cached_files:
             self._update_combo_from_cache()
             return
 
@@ -218,7 +218,7 @@ class ModificaEsistenteTab(QWidget):
         self._is_scanning = True
         self._last_scan_time = now
 
-        def run_scan():  # noqa: ANN202
+        def run_scan() -> None:
             temp_files = []
             try:
                 dir_path = Path(directory)
@@ -279,9 +279,9 @@ class ModificaEsistenteTab(QWidget):
         self.log_widget.append_log(f"Lettura: {os.path.basename(file_path)}", "step")
         self._auto_fill_from_file(file_path)
 
-    def _auto_fill_from_file(self, file_path: str) -> None:  # noqa: C901
+    def _auto_fill_from_file(self, file_path: str) -> None:
         try:
-            import openpyxl  # noqa: PLC0415
+            import openpyxl
 
             wb = openpyxl.load_workbook(file_path, read_only=True, data_only=True)
             sheet = None
@@ -341,14 +341,14 @@ class ModificaEsistenteTab(QWidget):
             self._status_label.setText(f"Errore lettura: {e}")
             self.log_widget.append_log(f"Errore: {e}", "error")
 
-    def _save_to_file(self) -> None:  # noqa: C901
+    def _save_to_file(self) -> None:
         """Salva i valori dei campiùeditati nel file Excel."""
         if not self.loaded_file or not Path(self.loaded_file).exists():
             ConfirmationDialog.show_error(self, "Errore", "Nessun file selezionato.")
             return
 
         try:
-            import openpyxl  # noqa: PLC0415
+            import openpyxl
 
             wb = openpyxl.load_workbook(self.loaded_file, keep_vba=True)
 

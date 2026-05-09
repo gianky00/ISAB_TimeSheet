@@ -16,13 +16,16 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
 
 from src.bots.base.base_bot import BaseBot
 from src.bots.base.login_page import LoginPage
 from src.core import config_manager
 from src.core.constants import BotStatus, BrowserConfig, Timeouts
 from src.core.logging import measure_time
-from src.utils.helpers import cleanup_bot_processes
+from src.utils.browser_profile_patcher import patch_browser_profile
+from src.utils.helpers import cleanup_bot_processes, cleanup_chrome_temp_files
+from src.utils.resource_manager import ResourceManager
 
 
 class SeleniumBaseBot(BaseBot, ABC):
@@ -31,7 +34,7 @@ class SeleniumBaseBot(BaseBot, ABC):
     Gestisce l'inizializzazione di ChromeDriver, le opzioni del browser e le attese.
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         username: str,
         password: str,
@@ -117,8 +120,6 @@ class SeleniumBaseBot(BaseBot, ABC):
         opt.add_argument(f"--user-data-dir={user_data_dir}")
 
         # Patching preventivo del profilo (file Preferences) per Selenium
-        from src.utils.browser_profile_patcher import patch_browser_profile  # noqa: PLC0415
-
         with suppress(Exception):
             patch_browser_profile(user_data_dir)
 
@@ -147,16 +148,12 @@ class SeleniumBaseBot(BaseBot, ABC):
 
     def _get_chromedriver_path(self) -> str | None:
         """Recupera il percorso del driver locale o ne innesca il download automatico."""
-        from src.utils.resource_manager import ResourceManager  # noqa: PLC0415
-
         if not getattr(self, "_force_download", False) and (
             d_path := ResourceManager.ensure_automation_driver()
         ):
             return d_path
 
         try:
-            from webdriver_manager.chrome import ChromeDriverManager  # noqa: PLC0415
-
             self.log("Aggiornamento driver in corso...")
             d_path = ChromeDriverManager().install()
             if not d_path.lower().endswith(".exe") and (
@@ -217,8 +214,6 @@ class SeleniumBaseBot(BaseBot, ABC):
 
     def _force_driver_redownload(self) -> None:
         """Elimina il driver locale e imposta il flag per scaricarlo nuovamente al prossimo avvio."""
-        from src.utils.resource_manager import ResourceManager  # noqa: PLC0415
-
         self._force_download = True
         with suppress(Exception):
             p_dir = ResourceManager.get_writable_drivers_dir()
@@ -263,8 +258,6 @@ class SeleniumBaseBot(BaseBot, ABC):
     def cleanup(self) -> None:
         """Rilascia le risorse del WebDriver e pulisce i file temporanei di Chrome."""
         if self.download_path:
-            from src.utils.helpers import cleanup_chrome_temp_files  # noqa: PLC0415
-
             with suppress(Exception):
                 cleanup_chrome_temp_files(self.download_path)
         if self.driver:

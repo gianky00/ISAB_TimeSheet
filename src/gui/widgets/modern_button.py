@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import Property, QEasingCurve, QEvent, QPropertyAnimation
 from PySide6.QtWidgets import QPushButton, QWidget
 
+from src.gui.styles import COLORS
 from src.utils.helpers import get_colored_icon
 
 from ..design.colors import get_palette
@@ -57,16 +58,15 @@ class ModernButton(QPushButton):
         self._apply_style()
 
         if icon:
-            from src.gui.styles import COLORS  # noqa: PLC0415
-
             self.setIcon(get_colored_icon(icon, COLORS["text_dark"]))
             # Increase padding for icon
             self.setStyleSheet(self.styleSheet() + "QPushButton { padding-left: 32px; text-align: left; }")
 
     def _setup_animation(self) -> None:
-        """Inizializza l'animazione di opacit  per l'effetto hover."""
-        self._anim = QPropertyAnimation(self, b"hoverOpacity")
-        self._anim.setDuration(150)
+        """Inizializza l'animazione di opacità per l'effetto hover."""
+        self._anim = QPropertyAnimation(self, b"hover_opacity")
+        ANIM_DURATION_MS = 150
+        self._anim.setDuration(ANIM_DURATION_MS)
         self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
     def showEvent(self, event: QShowEvent) -> None:
@@ -75,34 +75,37 @@ class ModernButton(QPushButton):
         self._apply_style()
 
     def get_hover_opacity(self) -> float:
-        """Restituisce il valore corrente dell'opacit  hover."""
+        """Restituisce il valore corrente dell'opacità hover."""
         return self._hover_opacity
 
     def set_hover_opacity(self, value: float) -> None:
-        """Imposta il valore dell'opacit  hover e aggiorna lo stile."""
+        """Imposta il valore dell'opacità hover e aggiorna lo stile."""
         self._hover_opacity = value
         self._apply_style()
 
-    hoverOpacity = Property(float, fget=get_hover_opacity, fset=set_hover_opacity)  # noqa: N815
+    hover_opacity = Property(float, fget=get_hover_opacity, fset=set_hover_opacity)
 
     def enterEvent(self, event: QEnterEvent) -> None:
         """Avvia l'animazione hover all'ingresso del mouse."""
-        self._anim.setStartValue(0.0)
-        self._anim.setEndValue(0.1)
+        START_OPACITY = 0.0
+        END_OPACITY = 0.1
+        self._anim.setStartValue(START_OPACITY)
+        self._anim.setEndValue(END_OPACITY)
         self._anim.start()
         super().enterEvent(event)
 
     def leaveEvent(self, event: QEvent) -> None:
         """Avvia l'animazione di uscita al movimento del mouse."""
-        self._anim.setStartValue(0.1)
-        self._anim.setEndValue(0.0)
+        START_OPACITY = 0.1
+        END_OPACITY = 0.0
+        self._anim.setStartValue(START_OPACITY)
+        self._anim.setEndValue(END_OPACITY)
         self._anim.start()
         super().leaveEvent(event)
 
     def _get_colors(self) -> tuple[str, str]:
         """Restituisce la coppia di colori (sfondo, testo) in base alla variante."""
         p = self._palette
-        from src.gui.styles import COLORS  # noqa: PLC0415
 
         return {
             self.Variant.PRIMARY: (p.primary, p.on_primary),

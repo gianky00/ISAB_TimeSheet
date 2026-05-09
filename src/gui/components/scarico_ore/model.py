@@ -217,7 +217,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
             return 0
         return len(self.COLUMNS)
 
-    def data(  # noqa: PLR0911
+    def data(
         self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole
     ) -> Any:
         """Restituisce i dati per una specifica cella e ruolo."""
@@ -260,7 +260,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
             try:
                 if column == 0:
                     return self._date_keys[idx]
-                if column == 7:  # noqa: PLR2004
+                if column == 7:
                     return self._float_totals[idx]
                 val = self._display_data[idx][column]
                 return val.lower() if val else ""

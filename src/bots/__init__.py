@@ -4,7 +4,6 @@ Registry e factory per tutti i bot disponibili.
 Supporta motori di automazione multipli (Selenium, Playwright).
 """
 
-import logging
 from typing import Any, cast
 
 from src.bots.base import BaseBot, BotStatus
@@ -21,68 +20,73 @@ from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
 from src.bots.safework.programmazione_sync.bot import SafeWorkProgrammazioneSyncBot
 from src.core.config_manager import load_config
 from src.core.constants import Icons
+from src.core.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+
+# --- IMPORT BOT PLAYWRIGHT (Top-level con gestione fallback) ---
+try:
+    from src.bots.portale_fornitori.carico_ts.playwright_bot import PlaywrightCaricoTSBot
+except ImportError:
+    PlaywrightCaricoTSBot = None  # type: ignore
+
+try:
+    from src.bots.portale_fornitori.dettagli_oda.playwright_bot import PlaywrightDettagliOdABot
+except ImportError:
+    PlaywrightDettagliOdABot = None  # type: ignore
+
+try:
+    from src.bots.portale_fornitori.prenota_bp.playwright_bot import PlaywrightPrenotaBPBot
+except ImportError:
+    PlaywrightPrenotaBPBot = None  # type: ignore
+
+try:
+    from src.bots.portale_fornitori.scarico_ts.playwright_bot import PlaywrightScaricaTSBot
+except ImportError:
+    PlaywrightScaricaTSBot = None  # type: ignore
+
+try:
+    from src.bots.portale_fornitori.timbrature.playwright_bot import PlaywrightTimbratureBot
+except ImportError:
+    PlaywrightTimbratureBot = None  # type: ignore
+
+try:
+    from src.bots.safework.pdl.playwright_bot import PlaywrightSafeWorkPDLBot
+except ImportError:
+    PlaywrightSafeWorkPDLBot = None  # type: ignore
+
+try:
+    from src.bots.safework.pdl.playwright_search_bot import PlaywrightSafeWorkPDLSearchBot
+except ImportError:
+    PlaywrightSafeWorkPDLSearchBot = None  # type: ignore
+
+try:
+    from src.bots.safework.programmazione.playwright_bot import PlaywrightSafeWorkProgrammazioneBot
+except ImportError:
+    PlaywrightSafeWorkProgrammazioneBot = None  # type: ignore
+
+try:
+    from src.bots.safework.programmazione_sync.playwright_bot import (
+        PlaywrightSafeWorkProgrammazioneSyncBot,
+    )
+except ImportError:
+    PlaywrightSafeWorkProgrammazioneSyncBot = None  # type: ignore
 
 
-def _get_playwright_bot_class(bot_id: str) -> Any:  # noqa: C901, PLR0911
-    """Importa dinamicamente la classe bot Playwright solo quando necessaria (Lazy Loading)."""
-    try:
-        if bot_id == "carico_ts":
-            from src.bots.portale_fornitori.carico_ts.playwright_bot import (  # noqa: PLC0415
-                PlaywrightCaricoTSBot,
-            )
-
-            return PlaywrightCaricoTSBot
-        if bot_id == "dettagli_oda":
-            from src.bots.portale_fornitori.dettagli_oda.playwright_bot import (  # noqa: PLC0415
-                PlaywrightDettagliOdABot,
-            )
-
-            return PlaywrightDettagliOdABot
-        if bot_id == "prenota_bp":
-            from src.bots.portale_fornitori.prenota_bp.playwright_bot import (  # noqa: PLC0415
-                PlaywrightPrenotaBPBot,
-            )
-
-            return PlaywrightPrenotaBPBot
-        if bot_id == "scarico_ts":
-            from src.bots.portale_fornitori.scarico_ts.playwright_bot import (  # noqa: PLC0415
-                PlaywrightScaricaTSBot,
-            )
-
-            return PlaywrightScaricaTSBot
-        if bot_id == "timbrature":
-            from src.bots.portale_fornitori.timbrature.playwright_bot import (  # noqa: PLC0415
-                PlaywrightTimbratureBot,
-            )
-
-            return PlaywrightTimbratureBot
-        if bot_id == "scarico_pdl":
-            from src.bots.safework.pdl.playwright_bot import PlaywrightSafeWorkPDLBot  # noqa: PLC0415
-
-            return PlaywrightSafeWorkPDLBot
-        if bot_id == "ricerca_pdl":
-            from src.bots.safework.pdl.playwright_search_bot import (  # noqa: PLC0415
-                PlaywrightSafeWorkPDLSearchBot,
-            )
-
-            return PlaywrightSafeWorkPDLSearchBot
-        if bot_id == "programmazione_pdl":
-            from src.bots.safework.programmazione.playwright_bot import (  # noqa: PLC0415
-                PlaywrightSafeWorkProgrammazioneBot,
-            )
-
-            return PlaywrightSafeWorkProgrammazioneBot
-        if bot_id == "programmazione_sync":
-            from src.bots.safework.programmazione_sync.playwright_bot import (  # noqa: PLC0415
-                PlaywrightSafeWorkProgrammazioneSyncBot,
-            )
-
-            return PlaywrightSafeWorkProgrammazioneSyncBot
-    except ImportError as e:
-        logger.debug(f"Playwright bot per '{bot_id}' non disponibile: {e}")
-    return None
+def _get_playwright_bot_class(bot_id: str) -> Any:
+    """Restituisce la classe bot Playwright corrispondente se disponibile."""
+    mapping = {
+        "carico_ts": PlaywrightCaricoTSBot,
+        "dettagli_oda": PlaywrightDettagliOdABot,
+        "prenota_bp": PlaywrightPrenotaBPBot,
+        "scarico_ts": PlaywrightScaricaTSBot,
+        "timbrature": PlaywrightTimbratureBot,
+        "scarico_pdl": PlaywrightSafeWorkPDLBot,
+        "ricerca_pdl": PlaywrightSafeWorkPDLSearchBot,
+        "programmazione_pdl": PlaywrightSafeWorkProgrammazioneBot,
+        "programmazione_sync": PlaywrightSafeWorkProgrammazioneSyncBot,
+    }
+    return mapping.get(bot_id)
 
 
 # Registry dei bot disponibili

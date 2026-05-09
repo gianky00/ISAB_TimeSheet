@@ -5,8 +5,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from src.core.database import db_manager  # noqa: E402
-from src.core.employees import employee_manager  # noqa: E402
+from src.core.database import db_manager
+from src.core.employees import employee_manager
 
 
 def run_migration() -> None:
@@ -38,7 +38,7 @@ def run_migration() -> None:
 
     except Exception as e:
         print(f"ERRORE CRITICO: {e}")
-        import traceback  # noqa: PLC0415
+        import traceback
 
         traceback.print_exc()
 

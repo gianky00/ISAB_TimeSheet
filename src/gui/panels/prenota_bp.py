@@ -72,7 +72,7 @@ class PrenotaBPPanel(BaseBotPanel):
         Returns:
             Type[PrenotaBPBot]: Classe del bot.
         """
-        from src.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot  # noqa: PLC0415
+        from src.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot
 
         return PrenotaBPBot
 

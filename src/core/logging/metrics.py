@@ -14,12 +14,12 @@ from .config import get_config
 class PerformanceMetric:
     """Singola metrica di performance."""
 
-    def __init__(  # noqa: ANN204
+    def __init__(
         self,
         operation: str,
         duration_ms: float,
         metadata: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         self.operation = operation
         self.duration_ms = duration_ms
         self.timestamp = datetime.now(UTC)
@@ -159,7 +159,7 @@ class PerformanceTracker:
         self._in_memory_metrics[operation].append(duration_ms)
 
         # Mantieni solo ultimi 1000 valori in memory
-        if len(self._in_memory_metrics[operation]) > 1000:  # noqa: PLR2004
+        if len(self._in_memory_metrics[operation]) > 1000:
             self._in_memory_metrics[operation] = self._in_memory_metrics[operation][-1000:]
 
     def get_statistics(self, operation: str) -> dict[str, float] | None:
