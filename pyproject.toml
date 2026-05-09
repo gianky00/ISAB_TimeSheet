@@ -333,7 +333,7 @@ DEP004 = ["pytest", "pyfakefs", "rich"]
 
 [tool.codespell]
 skip = "*.pyc,*.ico,*.qss,*.lock,*.db,*.iss,*.csv,*.js,*.html,*.css,*.map,*.pem,./build/*,./dist/*,./temp/*,./.venv/*,./.git/*,./.ruff_cache/*,./.pytest_cache/*,./.hypothesis/*,./data/*,./htmlcov/*,./claude/*,./site/*,./admin/Crea Setup/*,./admin/Crea Licenze/*"
-ignore-words-list = "nome,ore,impossibile,stati,reparti,cantieri,fornitori,contratti,registrate,invalide,cliente,fase,accumulato,termine,momento,visuale,allo,rende,alle,classe,normale,visibile,ignora,configurate,comando,categorie,valide,celle,limite,installate,macchine,possibile,foto,tre,datas,distribuite,compatibile,accessibile,separato,cant,te,vai,variante,accumulare,generare,processore,somme,validata,probabile,quantit,mis,invisibile,applicato,appropriato,incluse,aggressivo,forse,incompatibile,sensibile,contro,compilate,aggregatore,interfacce,differente"
+ignore-words-list = "nome,ore,impossibile,stati,reparti,cantieri,fornitori,contratti,registrate,invalide,cliente,fase,accumulato,termine,momento,visuale,allo,rende,alle,classe,normale,visibile,ignora,configurate,comando,categorie,valide,celle,limite,installate,macchine,possibile,foto,tre,datas,distribuite,compatibile,accessibile,separato,cant,te,vai,variante,accumulare,generare,processore,somme,validata,probabile,quantit,mis,invisibile,applicato,appropriato,incluse,aggressivo,forse,incompatibile,sensibile,contro,compilate,aggregatore,interfacce,differente,visibilit,esclude,probabilit,formule,acquisito,viceversa,iif,lookin"
 check-filenames = true
 
 [tool.interrogate]

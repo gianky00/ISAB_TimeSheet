@@ -418,7 +418,9 @@ class HealthPanel(QWidget):
         while self._anomalies_layout.count() > 1:
             if (item := self._anomalies_layout.takeAt(0)) and (w := item.widget()):
                 w.deleteLater()
-        self._anomaly_count_label.setText(f"{len(anomalies)} problemi" if len(anomalies) != 1 else "1 problema")
+        self._anomaly_count_label.setText(
+            f"{len(anomalies)} problemi" if len(anomalies) != 1 else "1 problema"
+        )
         if not anomalies:
             empty = QFrame()
             empty.setStyleSheet(
