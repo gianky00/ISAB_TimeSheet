@@ -103,11 +103,11 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
                     dest = Path(self.download_path) / download.suggested_filename
                     download.save_as(str(dest))
                     self.downloaded_file = str(dest)
-                    self.log(f"[OK] Report scaricato: {dest.name}")
+                    self.log(f"✅ Report scaricato: {dest.name}")
                     self.update_step("search", StepStatus.COMPLETED)
                     return True
         except Exception as e:
-            self.log(f"[ERRORE] Errore download Excel: {e}")
+            self.log(f"❌ Errore download Excel: {e}")
 
         self.update_step("search", StepStatus.ERROR)
         return False

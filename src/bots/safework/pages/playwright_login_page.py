@@ -21,7 +21,7 @@ class PlaywrightSafeWorkLoginPage(PlaywrightBasePage):
 
     def login(self, username: str, password: str, account_type: str = "Esecutore") -> bool:
         """
-        Esegue il login con strategia differenziata in base al tipo di account.
+        Esegue il login con strategiàdifferenziata in base al tipo di account.
         """
         try:
             # 1. Azioni Comuni
@@ -36,7 +36,7 @@ class PlaywrightSafeWorkLoginPage(PlaywrightBasePage):
             return self._login_flow_coemi()
 
         except Exception as e:
-            self.log(f"[ERRORE] Errore critico durante il login: {e}")
+            self.log(f"❌ Errore critico durante il login: {e}")
             return False
 
     def _procedura_comune_login(self, username: str, password: str) -> None:
@@ -69,7 +69,7 @@ class PlaywrightSafeWorkLoginPage(PlaywrightBasePage):
 
             except Exception as e:
                 if tentativa < max_retries - 1:
-                    self.log(f"[ATTENZIONE] Errore tentativa {tentativa + 1}: {e}. Ricarico...")
+                    self.log(f"⚠️ Errore tentativa {tentativa + 1}: {e}. Ricarico...")
                     self.page.reload()
                     continue
                 raise
@@ -84,11 +84,11 @@ class PlaywrightSafeWorkLoginPage(PlaywrightBasePage):
                 self.page.wait_for_selector(caricamento_sel, state="visible", timeout=30000)
                 self.log("[ATTESA] Sistema in caricamento (attesa completamento)...")
                 self.page.wait_for_selector(caricamento_sel, state="hidden", timeout=300000)
-                self.log("[OK] Caricamento sistema completato.")
+                self.log("✅ Caricamento sistema completato.")
 
             return self._attendi_dashboard()
         except TimeoutError:
-            self.log("[ATTENZIONE] Timeout caricamento. Verifica diretta dashboard...")
+            self.log("⚠️ Timeout caricamento. Verifica diretta dashboard...")
             return self._attendi_dashboard()
 
     def _login_flow_tcl(self) -> bool:
@@ -100,9 +100,9 @@ class PlaywrightSafeWorkLoginPage(PlaywrightBasePage):
         try:
             home_btn_sel = self._get_selector(SafeWorkLocators.HOME_BUTTON)
             self.page.wait_for_selector(home_btn_sel, state="visible", timeout=30000)
-            self.log("[OK] Accesso alla Dashboard completato.")
+            self.log("✅ Accesso alla Dashboard completato.")
         except TimeoutError:
-            self.log("[ERRORE] Dashboard non raggiunta.")
+            self.log("❌ Dashboard non raggiunta.")
             return False
         else:
             return True

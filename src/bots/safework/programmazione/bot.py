@@ -95,7 +95,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         self.update_step("nav", StepStatus.RUNNING)
         self.log("   Navigazione in 'Visualizza Attivita''...")
         if not self.driver:
-            self.log("[ERRORE] Driver non inizializzato.")
+            self.log("❌ Driver non inizializzato.")
             self.update_step("nav", StepStatus.ERROR)
             return False
 
@@ -109,7 +109,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         # 2. Setup Filtri Generali
         self.update_step("filter", StepStatus.RUNNING)
         if not self.attivita_page:
-            self.log("[ERRORE] Pagina Attivita'non inizializzata.")
+            self.log("❌ Pagina Attivita'non inizializzata.")
             self.update_step("filter", StepStatus.ERROR)
             return False
 
@@ -121,7 +121,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         # 3. Selezione Massiva Richiedenti
         self.log(f"   Selezione di {len(requesters)} richiedenti...")
         if not self.attivita_page.seleziona_richiedente(requesters):
-            self.log("[ATTENZIONE] Problemi nella selezione dei richiedenti.")
+            self.log("⚠️ Problemi nella selezione dei richiedenti.")
 
         # 4. Ricerca ed Export Unico
         self.update_step("search", StepStatus.RUNNING)
@@ -138,11 +138,11 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
             self.update_step("parse", StepStatus.COMPLETED)
             self._cleanup_temp_file(excel_file)
         else:
-            self.log("[ERRORE] Impossibile scaricare il file Excel dei risultati.")
+            self.log("❌ Impossibile scaricare il file Excel dei risultati.")
             self.update_step("search", StepStatus.ERROR)
             return False
 
-        self.log(f"[INFO] FINE: Trovati {len(self.results)} PDL con programmazione.")
+        self.log(f"ℹ️ FINE: Trovati {len(self.results)} PDL con programmazione.")
         return True
 
     def _scarica_excel(self) -> str | None:
@@ -206,10 +206,10 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
                     )
                     count_pdl += 1
 
-            self.log(f"[OK] Trovati {count_pdl} record programmati nel file Excel.")
+            self.log(f"✅ Trovati {count_pdl} record programmati nel file Excel.")
 
         except Exception as e:
-            self.log(f"[ATTENZIONE] Errore parsing Excel: {e}")
+            self.log(f"⚠️ Errore parsing Excel: {e}")
 
     def _cleanup_temp_file(self, file_path: str) -> None:
         """Rimuove il file temporaneo al termine dell'analisi."""

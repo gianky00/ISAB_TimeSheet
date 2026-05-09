@@ -244,7 +244,7 @@ class MenuBarComponent(QObject):
                 ),
                 CommandNode(
                     "Strumentale",
-                    "Contabilit  & OdA",
+                    "Contabilità & OdA",
                     Icons.FOLDER,
                     action=lambda: mw.navigation_controller.navigate_to(PageIndex.STRUMENTALE),
                 ),

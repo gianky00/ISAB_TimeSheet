@@ -37,14 +37,12 @@ class TelegramUICommands(QObject):
         if hasattr(panel, "validate_ready"):
             ready, msg = panel.validate_ready()
             if not ready:
-                self.telegram.send_message_sync(
-                    f"[ATTENZIONE] Impossibile avviare Scarico PDL.\nMotivo: {msg}"
-                )
+                self.telegram.send_message_sync(f"⚠️ Impossibile avviare Scarico PDL.\nMotivo: {msg}")
                 return
 
         if hasattr(panel, "start_btn"):
             panel.start_btn.click()
-            self.telegram.send_message_sync(f"[OK] Avvio Scarico PDL (Stampa={print_enabled})")
+            self.telegram.send_message_sync(f"✅ Avvio Scarico PDL (Stampa={print_enabled})")
 
     def list_pdl(self) -> None:
         """Invia a Telegram la lista dei PDL attualmente in tabella."""
@@ -71,10 +69,10 @@ class TelegramUICommands(QObject):
             return
         ready, msg = panel.validate_ready()
         if not ready:
-            self.telegram.send_message_sync(f"[ATTENZIONE] Impossibile avviare Scarico TS.\nMotivo: {msg}")
+            self.telegram.send_message_sync(f"⚠️ Impossibile avviare Scarico TS.\nMotivo: {msg}")
             return
         panel.start_btn.click()
-        self.telegram.send_message_sync("[OK] Avvio Scarico Timesheet.")
+        self.telegram.send_message_sync("✅ Avvio Scarico Timesheet.")
 
     def run_carico_bot(self) -> None:
         """Avvia il bot Carico TS."""
@@ -84,10 +82,10 @@ class TelegramUICommands(QObject):
             return
         ready, msg = panel.validate_ready()
         if not ready:
-            self.telegram.send_message_sync(f"[ATTENZIONE] Impossibile avviare Carico TS.\nMotivo: {msg}")
+            self.telegram.send_message_sync(f"⚠️ Impossibile avviare Carico TS.\nMotivo: {msg}")
             return
         panel.start_btn.click()
-        self.telegram.send_message_sync("[OK] Avvio Carico Timesheet.")
+        self.telegram.send_message_sync("✅ Avvio Carico Timesheet.")
 
     def run_prenota_bp_bot(self) -> None:
         """Avvia il bot Prenotazione BP."""
@@ -95,20 +93,18 @@ class TelegramUICommands(QObject):
         panel = self.mw.bot_controller._get_active_bot_panel()
 
         if not panel or getattr(panel, "bot_id", "") != "prenota_bp":
-            self.telegram.send_message_sync("[ATTENZIONE] Errore interno: Pannello Prenota BP non trovato.")
+            self.telegram.send_message_sync("⚠️ Errore interno: Pannello Prenota BP non trovato.")
             return
 
         if hasattr(panel, "validate_ready"):
             ready, msg = panel.validate_ready()
             if not ready:
-                self.telegram.send_message_sync(
-                    f"[ATTENZIONE] Impossibile avviare Prenota BP.\nMotivo: {msg}"
-                )
+                self.telegram.send_message_sync(f"⚠️ Impossibile avviare Prenota BP.\nMotivo: {msg}")
                 return
 
         if hasattr(panel, "start_btn"):
             panel.start_btn.click()
-            self.telegram.send_message_sync("[OK] Avvio Prenotazione BP.")
+            self.telegram.send_message_sync("✅ Avvio Prenotazione BP.")
 
     def run_timbrature_bot(self, params: dict[str, Any]) -> None:
         """Avvia il bot Timbrature."""
@@ -130,15 +126,13 @@ class TelegramUICommands(QObject):
         if hasattr(panel, "validate_ready"):
             ready, msg = panel.validate_ready()
             if not ready:
-                self.telegram.send_message_sync(
-                    f"[ATTENZIONE] Impossibile avviare Timbrature.\nMotivo: {msg}"
-                )
+                self.telegram.send_message_sync(f"⚠️ Impossibile avviare Timbrature.\nMotivo: {msg}")
                 return
 
         if hasattr(panel, "start_btn"):
             panel.start_btn.click()
             period_str = "oggi" if period == "today" else "ieri"
-            self.telegram.send_message_sync(f"[OK] Avvio Scarico Timbrature ({period_str}).")
+            self.telegram.send_message_sync(f"✅ Avvio Scarico Timbrature ({period_str}).")
 
     def stop_all_bots(self) -> None:
         """Invia il segnale di stop al bot correntemente attivo."""
@@ -147,4 +141,4 @@ class TelegramUICommands(QObject):
             panel.stop_btn.click()
             self.telegram.send_message_sync("   Stop inviato.")
         else:
-            self.telegram.send_message_sync("[INFO] Nessun processo attivo.")
+            self.telegram.send_message_sync("ℹ️ Nessun processo attivo.")

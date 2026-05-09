@@ -183,7 +183,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
                 )
             except Exception as e:
                 err_msg = str(e)
-                self.log(f"[ATTENZIONE] Errore inizializzazione (T{attempt + 1}): {err_msg}", "WARNING")
+                self.log(f"⚠️ Errore inizializzazione (T{attempt + 1}): {err_msg}", "WARNING")
                 self._stop_playwright_internal()
 
                 if "Browser.getWindowForTarget" in err_msg:
@@ -193,7 +193,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
                             patch_browser_profile(user_data_dir, download_dir=downloads_dir)
 
                 if attempt == max_retries - 1:
-                    self.log("[ERRORE] Fallimento definitivo inizializzazione browser.", "ERROR")
+                    self.log("❌ Fallimento definitivo inizializzazione browser.", "ERROR")
                     raise
             else:
                 return

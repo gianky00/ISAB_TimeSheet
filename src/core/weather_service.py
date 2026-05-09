@@ -1,6 +1,6 @@
 """
 SyncroJob - Weather Service
-Servizio specializzato per il recupero asincrono dei dati meteo e qualita' dell'aria.
+Servizio specializzato per il recuperòasincrono dei dati meteo e qualita' dell'aria.
 Conforme al Single Responsibility Principle (SRP).
 """
 
@@ -42,7 +42,7 @@ class WeatherService(QObject):
 
     def fetch_weather(self) -> None:
         """
-        Avvia la sequenza di recupero dati: prima Meteo, poi AQI.
+        Avvia la sequenza di recuperòdati: prima Meteo, poi AQI.
         Evita richieste multiple sovrapposte.
         """
         if self._is_loading:
@@ -83,7 +83,7 @@ class WeatherService(QObject):
             raw_data = bytes(reply.readAll().data())
             self._temp_weather_data = json.loads(raw_data.decode("utf-8"))
 
-            # Step 2: Recupero Qualita' dell'Aria (AQI)
+            # Step 2: RecuperòQualita' dell'Aria (AQI)
             lat, lon = 37.15, 15.18
             url_aqi = (
                 f"https://air-quality-api.open-meteo.com/v1/air-quality?"

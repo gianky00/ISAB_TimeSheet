@@ -39,7 +39,7 @@ class VisualizzaAttivitaPage:
             self.driver.execute_script(f"document.getElementById('programmazioneDal').value = '{data_dal}';")
             self.driver.execute_script(f"document.getElementById('programmazioneAl').value = '{data_al}';")
         except Exception as e:
-            self.log(f"[ATTENZIONE] Errore impostazione date JS: {e}")
+            self.log(f"⚠️ Errore impostazione date JS: {e}")
 
     def seleziona_ditta(self, nome_ditta: str) -> None:
         """Seleziona la ditta dal dropdown custom."""
@@ -60,7 +60,7 @@ class VisualizzaAttivitaPage:
             btn.click()
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"[ERRORE] Errore clic export: {e}")
+            self.log(f"❌ Errore clic export: {e}")
             return False
 
     def get_rows(self) -> list[Any]:
@@ -96,11 +96,11 @@ class VisualizzaAttivitaPage:
                     )
                     opt.click()
                 except Exception:
-                    self.log(f"[ATTENZIONE] Elemento '{item}' non trovato nel dropdown.")
+                    self.log(f"⚠️ Elemento '{item}' non trovato nel dropdown.")
 
             # 4. Chiudi cliccando fuori
             self.driver.find_element(By.TAG_NAME, "body").click()
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"[ERRORE] Errore selezione dropdown: {e}")
+            self.log(f"❌ Errore selezione dropdown: {e}")
             return False

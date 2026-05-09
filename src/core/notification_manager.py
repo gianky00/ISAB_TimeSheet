@@ -246,7 +246,7 @@ class NotificationManager(QObject):
         self.unread_count_changed.emit(self.get_unread_count())
 
     def clear_all(self) -> None:
-        """Svuota l'intera cronologia delle notifiche."""
+        """Svuota l'intera cronologiàdelle notifiche."""
         self.notifications = []
         self._save_notifications()
         self.notifications_updated.emit()

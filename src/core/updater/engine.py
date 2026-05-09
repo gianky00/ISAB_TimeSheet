@@ -108,7 +108,7 @@ class DownloadWorker(QThread):
                     f_dst.write(chunk)
                     downloaded += real_chunk_size
 
-                    # Calcolo Velocit  Dinamico (EMA)
+                    # Calcolo Velocità Dinamico (EMA)
                     current_speed = real_chunk_size / elapsed if elapsed > 0 else 0
                     if self._ema_speed == 0.0:
                         self._ema_speed = current_speed

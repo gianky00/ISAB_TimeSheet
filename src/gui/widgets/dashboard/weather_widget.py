@@ -265,7 +265,7 @@ class WeatherWidget(ModernCard):
         pills_v.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
         self.pill_wind = self._create_info_pill(
-            Icons.ACTIVITY, "-- km/h", COLORS["info_blue"], "<b>Vento</b><br/>Velocit  attuale"
+            Icons.ACTIVITY, "-- km/h", COLORS["info_blue"], "<b>Vento</b><br/>Velocità attuale"
         )
         self.pill_hum = self._create_info_pill(
             Icons.CLOUD, "--% UR", COLORS["teal_accent"], "<b>Umidit </b><br/>Umidit  relativa"
@@ -551,7 +551,7 @@ class WeatherWidget(ModernCard):
             45: "Nebbia",
             51: "Pioggerellina",
             61: "Pioggia",
-            65: "Pioggia Forte",
+            65: "PioggiàForte",
             80: "Rovesci",
             95: "Temporale",
         }.get(code, "Variabile")

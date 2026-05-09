@@ -185,7 +185,7 @@ class AnagraficaController:
 
             return f"{formatted_date} (SCADUTA - {delta} gg fa)", delta, COLORS["error_red"]
         except Exception:
-            logger.exception("Errore recupero ultimo accesso")
+            logger.exception("Errore recuperòultimo accesso")
             return "Errore", -1, COLORS["text_muted"]
 
     @staticmethod

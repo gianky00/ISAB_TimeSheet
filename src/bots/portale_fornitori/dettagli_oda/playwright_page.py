@@ -145,7 +145,7 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
                         self._close_all_tabs()
                         return None
             except Exception as e:
-                self.log(f" [ATTENZIONE] Errore lettura conteggio: {e}")
+                self.log(f" ⚠️ Errore lettura conteggio: {e}")
 
             target_filename = ""
             if oda:
@@ -178,7 +178,7 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
                 self.page.click(close_sel)
                 self._wait_overlay(timeout_ms=2000)
         except Exception as e:
-            self.log(f" [ATTENZIONE] Errore chiusura tab: {e}")
+            self.log(f" ⚠️ Errore chiusura tab: {e}")
 
     def _download(
         self,

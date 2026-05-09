@@ -76,7 +76,7 @@ class GiornaliereSchema(pa.DataFrameModel):
 
 
 class ContabilitaSchema(pa.DataFrameModel):
-    """Schema di validazione per i file di Contabilit ."""
+    """Schema di validazione per i file di Contabilità."""
 
     data_prev: Series[pd.Timestamp] = pa.Field(coerce=True, nullable=True)
     mese: Series[str] = pa.Field(nullable=True)
@@ -115,7 +115,7 @@ def validate_giornaliere(df: pd.DataFrame, headers_only: bool = False) -> pd.Dat
 
 
 def validate_contabilita(df: pd.DataFrame, headers_only: bool = False) -> pd.DataFrame:
-    """Valida un dataframe di contabilit ."""
+    """Valida un dataframe di contabilità."""
     if headers_only:
         return ContabilitaSchema.validate(df.head(0), lazy=True)
     return ContabilitaSchema.validate(df, lazy=True)

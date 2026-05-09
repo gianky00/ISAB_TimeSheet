@@ -103,18 +103,18 @@ class TelegramDataProcessor(QObject):
                 else:
                     valid_items.append(val)
             else:
-                errors.append(f"[ERRORE] `{item}`: {res.error}")
+                errors.append(f"❌ `{item}`: {res.error}")
         return valid_items, duplicates, errors
 
     def _send_data_feedback(self, count_valid: int, duplicates: int, errors: list[str]) -> None:
         """Invia il feedback dell'operazione al bot Telegram."""
         feedback = []
         if count_valid:
-            feedback.append(f"[OK] Aggiunti/Impostati {count_valid}")
+            feedback.append(f"✅ Aggiunti/Impostati {count_valid}")
         if duplicates:
-            feedback.append(f"[INFO] {duplicates} duplicati ignorati")
+            feedback.append(f"ℹ️ {duplicates} duplicati ignorati")
         if errors:
-            feedback.append("[ATTENZIONE] Errori:\n" + "\n".join(errors[:5]))
+            feedback.append("⚠️ Errori:\n" + "\n".join(errors[:5]))
 
-        msg = "\n".join(feedback) if feedback else "[ATTENZIONE] Nessun dato valido."
+        msg = "\n".join(feedback) if feedback else "⚠️ Nessun dato valido."
         self.telegram.send_message_sync(msg)

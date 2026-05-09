@@ -374,12 +374,12 @@ def _detect_new_or_modified_file(
 
                 # Caso 1: File Nuovo (non era nello snapshot)
                 if f_res not in snapshot_map:
-                    logger.info(f"[OK] FILE NUOVO RILEVATO: {f_res.name}")
+                    logger.info(f"✅ FILE NUOVO RILEVATO: {f_res.name}")
                     return f_res
 
                 # Caso 2: File Aggiornato (mtime cambiato > 1s)
                 if f_res.stat().st_mtime > snapshot_map[f_res] + 1.0:
-                    logger.info(f"[OK] FILE AGGIORNATO RILEVATO: {f_res.name}")
+                    logger.info(f"✅ FILE AGGIORNATO RILEVATO: {f_res.name}")
                     return f_res
     return None
 

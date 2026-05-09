@@ -123,7 +123,7 @@ class EmployeeTableView(QTableView):
         if not model:
             return
 
-        # Recupero metadati via UserRole (senza query SQL sincrona)
+        # Recuperòmetadati via UserRole (senza query SQL sincrona)
         metadata = model.data(model.index(row_idx, 0), Qt.ItemDataRole.UserRole)
 
         if not metadata or "id_risorsa" not in metadata:

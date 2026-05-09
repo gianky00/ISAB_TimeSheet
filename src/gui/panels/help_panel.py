@@ -246,7 +246,7 @@ SyncroJob v{VERSION}  una suite software di classe enterprise progettata per eli
 
 ####   Obiettivi Chiave
 *  **Zero Error Data Entry**: Riduzione degli errori umani nel carico dei Timesheet.
-*  **Real-time Monitoring**: Visione istantanea dello stato delle abilitazioni e della contabilit .
+*  **Real-time Monitoring**: Visione istantanea dello stato delle abilitazioni e della contabilità.
 
 ---
 *Usa il menu a sinistra per esplorare i moduli funzionali.*
@@ -297,7 +297,7 @@ Il modulo PDL permette di monitorare l'intero ciclo di vita dei Permessi di Lavo
 #### [SYNC] Ciclo Operativo
 1. **Sync Bot**: Il bot interroga SafeWork e aggiorna il database locale.
 2. **Programmazione**: Gestione settimanale dei flag TCL/TGO per ogni PDL.
-3. **Storico Interventi**: Recupero della cronologia tecnica dai database esterni.
+3. **Storico Interventi**: Recuperòdella cronologiàtecnica dai database esterni.
 
 > **Nota**: I dati sono sincronizzati ogni volta che viene eseguito il bot 'Ricerca PDL'.
 """
@@ -320,12 +320,12 @@ Questo modulo trasforma i dati grezzi in decisioni aziendali.
 ### Trasparenza totale su ogni operazione eseguita.
 
 ####   Audit Log
-Ogni azione rilevante (avvio bot, modifica configurazione, login) viene registrata nel database di Audit per garantire la tracciabilit .
+Ogni azione rilevante (avvio bot, modifica configurazione, login) viene registrata nel database di Audit per garantire la tracciabilità.
 
 ####   Health Score
 Un algoritmo proprietario valuta la salute del sistema basandosi su:
-*  Connettivit  di rete.
-*  Validit  delle licenze.
+*  Connettività di rete.
+*  Validità delle licenze.
 *  Stato dei driver (ChromeDriver).
 *  Integrita' del Database.
 """
@@ -346,7 +346,7 @@ SyncroJob Enterprise  protetto da un sistema di licenza hardware univoco.
     def _get_shortcuts_md(self) -> str:
         return """
 #   Shortcuts di Sistema
-### Massimizza la tua velocit  operativa.
+### Massimizza la tua velocità operativa.
 
 | Scorciatoia | Azione |
 | :--- | :--- |
@@ -362,12 +362,12 @@ SyncroJob Enterprise  protetto da un sistema di licenza hardware univoco.
 #     Troubleshooting & Risoluzione Problemi
 ### Guida rapida ai problemi comuni.
 
-#### [ERRORE] Il Bot non parte?
+#### ❌ Il Bot non parte?
 1. Verifica che **Chrome** sia aggiornato all'ultima versione.
 2. Controlla che la **VPN ISAB** sia connessa.
 3. Assicurati che non ci siano altre istanze di Chrome aperte dal bot.
 
-#### [ERRORE] Errore Login Portale?
+#### ❌ Errore Login Portale?
 *  Verifica le credenziali in `Impostazioni > Account`.
 *  Prova ad accedere manualmente dal browser per sbloccare eventuali Captcha.
 """

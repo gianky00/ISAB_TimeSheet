@@ -291,7 +291,7 @@ class AuditManager:
             return True
 
     def _check_row_integrity(self, row: dict[str, Any], prev_hash: str) -> bool:
-        """Verifica la validit  dell'hash di una singola riga (supporta versioni multiple)."""
+        """Verifica la validità dell'hash di una singola riga (supporta versioni multiple)."""
         # Tentativo 1: Hash V2
         data = AuditIntegrity.build_hash_string_v2(row)
         if row["row_hash"] == AuditIntegrity.calculate_hash(data, prev_hash):

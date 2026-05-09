@@ -130,7 +130,7 @@ class ScaricaTSBot(SeleniumBaseBot):
             return success_count == len(rows)
 
         except Exception as e:
-            self.log(f"[ERRORE] Errore imprevisto nel flusso run: {e}")
+            self.log(f"❌ Errore imprevisto nel flusso run: {e}")
             return False
 
     def _setup_timesheet_view(self) -> bool:
@@ -150,9 +150,9 @@ class ScaricaTSBot(SeleniumBaseBot):
 
     def _log_download_summary(self, success: int, total: int) -> None:
         """Emette log di riepilogo per il download."""
-        self.log(f"[INFO] Download completati: {success}/{total}.")
+        self.log(f"ℹ️ Download completati: {success}/{total}.")
         if 0 < success < total:
-            self.log(f"[ATTENZIONE] Scarico parziale: {success} su {total}")
+            self.log(f"⚠️ Scarico parziale: {success} su {total}")
 
     def _handle_vba_processing(self, files: list[str], dest_dir: Path) -> None:
         """Coordina l'elaborazione VBA post-download."""
@@ -210,7 +210,7 @@ class ScaricaTSBot(SeleniumBaseBot):
                 else:
                     msg = "OdA non trovato"
             except Exception as e:
-                self.log(f"[ERRORE] Errore OdA {numero_oda}: {e}")
+                self.log(f"❌ Errore OdA {numero_oda}: {e}")
                 msg = str(e)
 
             if callback := getattr(self, "_progress_callback", None):
@@ -245,7 +245,7 @@ class ScaricaTSBot(SeleniumBaseBot):
             self._attendi_scomparsa_overlay(90)
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"[ATTENZIONE] Errore ricerca OdA {numero_oda}: {e}")
+            self.log(f"⚠️ Errore ricerca OdA {numero_oda}: {e}")
             return False
 
     def _run_vba_processing(self, file_list: list[str], dest_dir: Path) -> None:
@@ -255,10 +255,10 @@ class ScaricaTSBot(SeleniumBaseBot):
         for f in file_list:
             ok, msg = TimesheetProcessor.process_and_move(Path(f), dest_dir)
             if ok:
-                self.log(f" [OK] {msg}")
+                self.log(f" ✅ {msg}")
                 processed += 1
             else:
-                self.log(f" [ERRORE] Errore elaborazione {Path(f).name}: {msg}")
+                self.log(f" ❌ Errore elaborazione {Path(f).name}: {msg}")
         self.log(f"   Elaborazione conclusa: {processed}/{len(file_list)} completati.")
 
     def _navigate_to_timesheet(self) -> bool:
@@ -281,7 +281,7 @@ class ScaricaTSBot(SeleniumBaseBot):
             self._attendi_scomparsa_overlay()
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"[ERRORE] Errore navigazione Timesheet: {e}")
+            self.log(f"❌ Errore navigazione Timesheet: {e}")
             return False
 
     def _setup_filters(self) -> bool:
@@ -306,7 +306,7 @@ class ScaricaTSBot(SeleniumBaseBot):
             campo_data_da.send_keys(self.data_da)
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"[ERRORE] Errore impostazione filtri: {e}")
+            self.log(f"❌ Errore impostazione filtri: {e}")
             return False
 
     def _download_excel(
@@ -341,7 +341,7 @@ class ScaricaTSBot(SeleniumBaseBot):
         )
 
         if not res_path:
-            self.log(f"[ATTENZIONE] Timeout download ({Timeouts.DOWNLOAD}s).")
+            self.log(f"⚠️ Timeout download ({Timeouts.DOWNLOAD}s).")
             return None
 
         downloaded_file = Path(res_path)
@@ -362,7 +362,7 @@ class ScaricaTSBot(SeleniumBaseBot):
             btn.click()
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"[ATTENZIONE] Errore click export: {e}")
+            self.log(f"⚠️ Errore click export: {e}")
             return False
 
     def _get_final_download_path(
@@ -392,11 +392,11 @@ class ScaricaTSBot(SeleniumBaseBot):
         for attempt in range(3):
             try:
                 shutil.move(str(src), str(dest))
-                self.log(f"[OK] Scaricato: {dest.name}")
+                self.log(f"✅ Scaricato: {dest.name}")
                 return dest  # noqa: TRY300
             except Exception as e:
-                self.log(f"[ATTENZIONE] Tentativo {attempt + 1}/3 fallito: {e}")
+                self.log(f"⚠️ Tentativo {attempt + 1}/3 fallito: {e}")
                 time.sleep(1)
 
-        self.log(f"[ERRORE] Impossibile spostare il file in: {dest}")
+        self.log(f"❌ Impossibile spostare il file in: {dest}")
         return None

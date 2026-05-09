@@ -24,7 +24,7 @@ def get_installed_printers() -> list[str]:
     try:
         return [str(printer[2]) for printer in win32print.EnumPrinters(2)]
     except Exception:
-        logger.exception("Errore nel recupero stampanti")
+        logger.exception("Errore nel recuperòstampanti")
         return []
 
 
@@ -47,7 +47,7 @@ def _run_powershell(command: str) -> subprocess.CompletedProcess[str] | None:
 def _set_printer_duplex_powershell(printer_name: str, mode: str = "OneSided") -> bool:
     """
     Tenta di forzare la modalita' via PowerShell.
-    Non  critico se fallisce, poich  la strategia 'Split Jobs' garantir  comunque fogli separati.
+    Non  critico se fallisce, poich  la strategià'Split Jobs' garantir  comunque fogli separati.
     """
     try:
         cmd_set = f"Set-PrintConfiguration -PrinterName '{printer_name}' -DuplexingMode {mode}"

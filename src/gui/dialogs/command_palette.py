@@ -274,6 +274,7 @@ class CommandPaletteDialog(QDialog):
                 self.hide_animated()
             return True
         return False
+
     def _start_input_mode(self, node: CommandNode) -> None:
         """Avvia la procedura di richiesta parametri per un comando specifico."""
         self._input_mode = True

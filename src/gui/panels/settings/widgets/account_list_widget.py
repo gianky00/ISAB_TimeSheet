@@ -45,7 +45,7 @@ class AccountListWidget(QWidget):
 
         Args:
           title: Titolo del gruppo (es. 'Account ISAB').
-          show_type: Se True, mostra il campo tipologia nel dialogo account.
+          show_type: Se True, mostra il campo tipologiànel dialogo account.
           parent: Widget genitore opzionale.
         """
         super().__init__(parent)

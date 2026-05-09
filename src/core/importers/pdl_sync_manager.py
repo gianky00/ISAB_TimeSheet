@@ -72,9 +72,9 @@ class ProgrammingSyncManager:
         for m in macros:
             try:
                 self.excel_app.Run(f"'{name}'!{m}")
-                logger.info(f"[OK] Macro '{m}' eseguita.")
+                logger.info(f"✅ Macro '{m}' eseguita.")
             except Exception as e:
-                logger.warning(f"[ATTENZIONE] Impossibile eseguire macro '{m}': {e}")
+                logger.warning(f"⚠️ Impossibile eseguire macro '{m}': {e}")
 
     def process_downloaded_report(self, downloaded_path: str) -> None:
         """Aggrega le modifiche dal report scaricato al file Master."""
@@ -102,10 +102,10 @@ class ProgrammingSyncManager:
                 self._insert_new_pdls(nuovi_pdl)
 
             self.wb_master.Save()
-            logger.info("[OK] Sincronizzazione Master Excel completata.")
+            logger.info("✅ Sincronizzazione Master Excel completata.")
 
         except Exception as e:
-            logger.error(f"[ERRORE] Errore durante l'elaborazione Excel: {e}", exc_info=True)
+            logger.error(f"❌ Errore durante l'elaborazione Excel: {e}", exc_info=True)
         finally:
             self._prepare_excel_state(False)
 

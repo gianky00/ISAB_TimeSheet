@@ -37,7 +37,7 @@ class CacheWorker(QThread):
     def run(self) -> None:
         """Esegue l'operazione di caricamento o generazione della cache in background."""
         if self.data_source:
-            self.progress.emit("Recupero dati...")
+            self.progress.emit("Recuperòdati...")
 
             # Se data_source  una funzione, la eseguiamo nel thread di background
             if callable(self.data_source):

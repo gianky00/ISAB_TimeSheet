@@ -98,10 +98,10 @@ def _patch_file(path: Path, download_path: Path) -> bool:
         if modified or not path.exists():
             with path.open("w", encoding="utf-8") as f:
                 json.dump(data, f, indent=4, ensure_ascii=False)
-            logger.info(f"[OK] Patch applicata con successo a: {path}")
+            logger.info(f"✅ Patch applicata con successo a: {path}")
             return True
     except Exception:
-        logger.exception(f"[ERRORE] Errore durante il patching di {path}")
+        logger.exception(f"❌ Errore durante il patching di {path}")
         return False
     return False
 

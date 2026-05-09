@@ -231,7 +231,7 @@ class CertificatiCampioneTab(QWidget):
             if not parent:
                 continue
 
-            # 1. Recupero stati base
+            # 1. Recuperòstati base
             is_any_ex = self._is_any_excluded(parent)
             is_absent = self._is_instrument_absent(parent)
 
@@ -261,9 +261,7 @@ class CertificatiCampioneTab(QWidget):
             return UbicazioneStrumenti.ASSENTE.value in child_loc
         return False
 
-    def _calculate_parent_visibility(
-        self, parent: QTreeWidgetItem, is_any_ex: bool, is_absent: bool
-    ) -> bool:
+    def _calculate_parent_visibility(self, parent: QTreeWidgetItem, is_any_ex: bool, is_absent: bool) -> bool:
         """Determina la visibilità dell'item padre basandosi sui filtri di stato."""
         if self._only_excluded:
             return is_any_ex
@@ -293,7 +291,6 @@ class CertificatiCampioneTab(QWidget):
                 ):
                     found_in_visible_child = True
         return found_in_visible_child
-
 
     def refresh_data(self) -> None:
         """Ricarica i dati dal database e aggiorna la vista preservando lo stato."""
@@ -557,7 +554,9 @@ class CertificatiCampioneTab(QWidget):
 
             menu.addSeparator()
             toggle_expand = QAction("Comprimi" if item.isExpanded() else "Espandi", self)
-            toggle_expand.setIcon(QIcon(get_asset_path(Icons.MINIMIZE if item.isExpanded() else Icons.MAXIMIZE)))
+            toggle_expand.setIcon(
+                QIcon(get_asset_path(Icons.MINIMIZE if item.isExpanded() else Icons.MAXIMIZE))
+            )
             toggle_expand.triggered.connect(
                 lambda: self.tree.collapseItem(item) if item.isExpanded() else self.tree.expandItem(item)
             )
@@ -579,7 +578,7 @@ class CertificatiCampioneTab(QWidget):
             menu.addAction(edit_anno_act)
 
             edit_ubic_act = QAction("Modifica Ubicazione", self)
-            edit_ubic_act.setIcon(QIcon(get_asset_path(Icons.PDL))) # Building/Location
+            edit_ubic_act.setIcon(QIcon(get_asset_path(Icons.PDL)))  # Building/Location
             edit_ubic_act.triggered.connect(lambda: self.tree.editItem(item, self.tree.IDX_UBICAZIONE))
             menu.addAction(edit_ubic_act)
 
@@ -689,13 +688,15 @@ class CertificatiCampioneTab(QWidget):
             if parent.childCount() > 0 and (child := parent.child(0)):
                 id_coemi = child.text(self.tree.IDX_ID_COEMI)
 
-            certs_data.append({
-                "matricola": meta["matricola"],
-                "costruttore": meta["costruttore"],
-                "modello": meta["modello"],
-                "id_coemi": id_coemi,
-                "days": user_data.get("days") if user_data else None
-            })
+            certs_data.append(
+                {
+                    "matricola": meta["matricola"],
+                    "costruttore": meta["costruttore"],
+                    "modello": meta["modello"],
+                    "id_coemi": id_coemi,
+                    "days": user_data.get("days") if user_data else None,
+                }
+            )
 
         exporter = CertificatiPdfExporter(
             certs_data,

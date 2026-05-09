@@ -1,6 +1,6 @@
 """
 SyncroJob - Contabilita Stats
-Gestisce il calcolo delle statistiche per i dati della Contabilit  Strumentale.
+Gestisce il calcolo delle statistiche per i dati della Contabilità Strumentale.
 """
 
 import operator
@@ -13,7 +13,7 @@ from src.utils.parsing import parse_currency
 
 
 class YearStats(TypedDict):
-    """Struttura dati per le statistiche annuali della contabilit ."""
+    """Struttura dati per le statistiche annuali della contabilità."""
 
     total_prev: float
     total_ore: float
@@ -25,7 +25,7 @@ class YearStats(TypedDict):
 
 
 class ContabilitaStats:
-    """Gestore per il calcolo delle statistiche del database della Contabilit  Strumentale."""
+    """Gestore per il calcolo delle statistiche del database della Contabilità Strumentale."""
 
     @classmethod
     def get_year_stats(cls, db_path: Path, year: int) -> YearStats:

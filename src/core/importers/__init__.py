@@ -16,7 +16,7 @@ class ExcelImporter:
     Mantiene la compatibilit  con il codice esistente.
     """
 
-    # --- Contabilit  ---
+    # --- Contabilità ---
     COLUMNS_MAPPING = ContabilitaImporter.COLUMNS_MAPPING
 
     @staticmethod
@@ -25,7 +25,7 @@ class ExcelImporter:
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, list[tuple[Any, ...]], list[int]]:
         """
-        Importa i dati di contabilit  dal file specificato.
+        Importa i dati di contabilità dal file specificato.
 
         Returns:
           Tuple: (success, message, data_rows, years_found)

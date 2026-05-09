@@ -26,7 +26,7 @@ class SafeWorkLoginPage:
 
     def login(self, username: str, password: str, account_type: str = "Esecutore") -> bool:
         """
-        Esegue il login con strategia differenziata in base al tipo di account.
+        Esegue il login con strategiàdifferenziata in base al tipo di account.
         """
         try:
             # 1. Azioni Comuni (Selezione Sito, Input Credenziali, Click Login)
@@ -43,7 +43,7 @@ class SafeWorkLoginPage:
             return self._login_flow_coemi()
 
         except Exception as e:
-            self.log(f"[ERRORE] Errore critico durante il login: {e}")
+            self.log(f"❌ Errore critico durante il login: {e}")
             return False
 
     def _procedura_comune_login(self, username: str, password: str) -> None:
@@ -82,10 +82,10 @@ class SafeWorkLoginPage:
 
             except (TimeoutException, Exception) as e:
                 if "stale" in str(e).lower() and tentativa < MAX_RETRIES - 1:
-                    self.log("[ATTENZIONE] Rilevato elemento non piu' valido. Ricaricamento...")
+                    self.log("⚠️ Rilevato elemento non piu' valido. Ricaricamento...")
                     self.driver.refresh()
                     continue
-                self.log(f"[ERRORE] Errore fase preliminare login: {e}")
+                self.log(f"❌ Errore fase preliminare login: {e}")
                 raise
 
     def _login_flow_coemi(self) -> bool:
@@ -104,11 +104,11 @@ class SafeWorkLoginPage:
             WebDriverWait(self.driver, 300).until(
                 EC.invisibility_of_element_located(SafeWorkLocators.CARICAMENTO_SPAN)
             )
-            self.log("[OK] Caricamento sistema completato.")
+            self.log("✅ Caricamento sistema completato.")
 
             return self._attendi_dashboard()
         except TimeoutException:
-            self.log("[ATTENZIONE] Timeout caricamento. Verifica diretta dashboard...")
+            self.log("⚠️ Timeout caricamento. Verifica diretta dashboard...")
             return self._attendi_dashboard()
 
     def _login_flow_tcl(self) -> bool:
@@ -119,8 +119,8 @@ class SafeWorkLoginPage:
         """Verifica finale comune."""
         try:
             WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable(SafeWorkLocators.HOME_BUTTON))
-            self.log("[OK] Accesso alla Dashboard completato.")
+            self.log("✅ Accesso alla Dashboard completato.")
             return True  # noqa: TRY300
         except TimeoutException:
-            self.log("[ERRORE] Dashboard non raggiunta.")
+            self.log("❌ Dashboard non raggiunta.")
             return False

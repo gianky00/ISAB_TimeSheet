@@ -122,7 +122,9 @@ class ScadenzeAnalysisDialog(QDialog):
             )
         )
         layout.addWidget(
-            self._create_stat_card(f"Attivi (>{THRESHOLD_ATTENTION}gg)", stats["attivi"], COLORS["success_dark"])
+            self._create_stat_card(
+                f"Attivi (>{THRESHOLD_ATTENTION}gg)", stats["attivi"], COLORS["success_dark"]
+            )
         )
         layout.addStretch()
 
@@ -134,9 +136,7 @@ class ScadenzeAnalysisDialog(QDialog):
         return {
             "total": len(data),
             "scaduti": self._count_by_condition(lambda d: d is not None and d < 0),
-            "urgenti": self._count_by_condition(
-                lambda d: d is not None and 0 <= d <= THRESHOLD_URGENT
-            ),
+            "urgenti": self._count_by_condition(lambda d: d is not None and 0 <= d <= THRESHOLD_URGENT),
             "attenzione": self._count_by_condition(
                 lambda d: d is not None and THRESHOLD_URGENT < d <= THRESHOLD_ATTENTION
             ),

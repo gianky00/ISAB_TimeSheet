@@ -239,13 +239,13 @@ class ScaricaTSPanel(BaseBotPanel):
         if params_override:
             if "data_da" in params_override:
                 data_da = params_override["data_da"]
-                self.log_widget.append(f"[INFO] Override Data Inizio: {data_da}")
+                self.log_widget.append(f"ℹ️ Override Data Inizio: {data_da}")
 
             if "single_item" in params_override:
                 item = params_override["single_item"]
                 if item:
                     data = [item]
-                    self.log_widget.append(f"[INFO] Esecuzione singola per: {item.get('Numero OdA', 'N/D')}")
+                    self.log_widget.append(f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}")
 
         if not params_override:
             self._save_data()

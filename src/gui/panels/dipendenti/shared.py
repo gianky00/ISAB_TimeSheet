@@ -33,7 +33,9 @@ class ColoredDotDelegate(QStyledItemDelegate):
     Visualizza un cerchio colorato (Verde, Arancio, Rosso) in base ai giorni rimanenti.
     """
 
-    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex) -> None:
+    def paint(
+        self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex
+    ) -> None:
         """
         Disegna il pallino colorato con il numero di giorni.
 
@@ -188,7 +190,9 @@ class InteractiveStatusCard(QFrame):
         right_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         lbl_title = QLabel(label.upper())
-        lbl_title.setStyleSheet(f"font-size: 14px; font-weight: 800; color: {COLORS['text_dark']}; letter-spacing: 0.8px;")
+        lbl_title.setStyleSheet(
+            f"font-size: 14px; font-weight: 800; color: {COLORS['text_dark']}; letter-spacing: 0.8px;"
+        )
 
         lbl_desc = QLabel(description)
         lbl_desc.setStyleSheet(f"font-size: 13px; color: {COLORS['text_muted']}; font-weight: 600;")

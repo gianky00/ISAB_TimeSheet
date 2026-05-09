@@ -231,7 +231,7 @@ class BackupManager:
             if not zip_p.exists():
                 return False, "File di backup non trovato."
 
-            # Verifica validit  zip
+            # Verifica validità zip
             if not zipfile.is_zipfile(zip_p):
                 return False, "File non valido o corrotto."
 

@@ -178,7 +178,7 @@ class PDLDBPanel(QWidget):
         self.filters.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('pdl')}")
         filters = self.filters.get_filters()
 
-        # Recupero dati dal Controller (con Caching)
+        # Recuperòdati dal Controller (con Caching)
         sort_order = "DESC"  # In futuro gestito dinamicamente
         self._raw_full_data = self.controller.get_pdl_data(filters, sort_col, sort_order)
 

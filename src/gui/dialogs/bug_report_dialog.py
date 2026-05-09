@@ -199,7 +199,7 @@ class BugReportDialog(QDialog):
         warning_layout = QHBoxLayout(warning_frame)
         warning_layout.setContentsMargins(8, 8, 8, 8)
         lbl_warning = QLabel(
-            "[ATTENZIONE] Il report potrebbe contenere informazioni sensibili. Verifica il contenuto prima di inviare."
+            "⚠️ Il report potrebbe contenere informazioni sensibili. Verifica il contenuto prima di inviare."
         )
         lbl_warning.setStyleSheet(f"color: {COLORS['warning_orange']}; font-size: 12px;")
         lbl_warning.setWordWrap(True)

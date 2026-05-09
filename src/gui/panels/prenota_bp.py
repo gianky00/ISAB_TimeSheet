@@ -249,9 +249,7 @@ class PrenotaBPPanel(BaseBotPanel):
                 item = params_override["single_item"]
                 if item:
                     rows = [item]
-                    self.log_widget.append(
-                        f"[INFO] Esecuzione singola per BP: {item.get('numero_bp', 'N/D')}"
-                    )
+                    self.log_widget.append(f"ℹ️ Esecuzione singola per BP: {item.get('numero_bp', 'N/D')}")
 
         bot_params = {
             "username": username,

@@ -106,7 +106,7 @@ class BaseBot(ABC):
             elif status == StepStatus.RUNNING:
                 self.log(f"[ATTESA] Avvio: {name}", current_step=name, step_index=idx)
             elif status == StepStatus.ERROR:
-                self.log(f"[ERRORE] ERRORE: {name}", "ERROR", current_step=name, step_index=idx)
+                self.log(f"❌ ERRORE: {name}", "ERROR", current_step=name, step_index=idx)
 
     #    Propriet  di Stato
 
@@ -127,7 +127,7 @@ class BaseBot(ABC):
     #    Validazione e Logging
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
-        """Verifica la validit  formale dei dati di input."""
+        """Verifica la validità formale dei dati di input."""
         if not data:
             return False, "Nessun dato da elaborare."
         if not self.username or not self.password:
@@ -193,7 +193,7 @@ class BaseBot(ABC):
     def request_stop(self) -> None:
         """Richiede l'interruzione immediata del bot."""
         self._stop_requested = True
-        self.log("[ATTENZIONE] Interruzione richiesta...")
+        self.log("⚠️ Interruzione richiesta...")
 
     def _check_stop(self) -> None:
         """Verifica se  stata richiesta un'interruzione."""
@@ -228,7 +228,7 @@ class BaseBot(ABC):
                     return True
                 self.cleanup()
             except Exception as e:
-                self.log(f"[ATTENZIONE] Errore tentativo: {e}")
+                self.log(f"⚠️ Errore tentativo: {e}")
                 self.cleanup()
         return False
 
@@ -245,7 +245,7 @@ class BaseBot(ABC):
         # 1. Controlli Ambiente (Licenza/Aggiornamenti) - SRP: Delegato a ExecutionGuard
         env_ok, env_msg = ExecutionGuard.check_environment()
         if not env_ok:
-            self.log(f"[ERRORE] AVVIO NEGATO: {env_msg}", "ERROR")
+            self.log(f"❌ AVVIO NEGATO: {env_msg}", "ERROR")
             if "ACCESSO NEGATO" in env_msg:
                 self.signals.critical_error.emit("Licenza", env_msg)
             self.status = BotStatus.ERROR
@@ -264,7 +264,7 @@ class BaseBot(ABC):
             # 3. Validazione Dati
             valid_res, valid_msg = self.validate_data(data)
             if not valid_res:
-                self.log(f"[ERRORE] Validazione fallita: {valid_msg}", "ERROR")
+                self.log(f"❌ Validazione fallita: {valid_msg}", "ERROR")
                 self.status = BotStatus.ERROR
                 return False
 

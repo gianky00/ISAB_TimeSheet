@@ -53,7 +53,7 @@ class PlaywrightLoginPage(PlaywrightBasePage):
             self.page.locator(comp_sel).fill(company)
             self.page.keyboard.press("Enter")
         except Exception as e:
-            self.log(f"[ATTENZIONE] Avviso: Selezione societa''{company}' non riuscita, proseguo: {e}")
+            self.log(f"⚠️ Avviso: Selezione societa''{company}' non riuscita, proseguo: {e}")
 
         self.log("Credenziali inserite. Clicco Accedi...")
         # Click forzato per evitare blocchi ExtJS
@@ -72,7 +72,7 @@ class PlaywrightLoginPage(PlaywrightBasePage):
             # Attesa brevissima per il popup (max 2s)
             btn = self.page.wait_for_selector(yes_sel, state="visible", timeout=2000)
             if btn:
-                self.log("[ATTENZIONE] Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.")
+                self.log("⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.")
                 btn.click(force=True)
 
     def _verify_logged_in_via_ui(self) -> bool:
@@ -113,7 +113,7 @@ class PlaywrightLoginPage(PlaywrightBasePage):
                 # Primo tentativo di inserimento
                 self._perform_login_form_action(username, password, company)
             except TimeoutError:
-                self.log("[ATTENZIONE] Campiu'login non trovati or overlay bloccante. Ricarico pagina...")
+                self.log("⚠️ Campiu'login non trovati or overlay bloccante. Ricarico pagina...")
                 self.page.reload()
                 self._wait_overlay(15000)
                 # Secondo tentativo post-refresh

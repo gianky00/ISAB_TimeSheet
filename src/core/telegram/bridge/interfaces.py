@@ -19,7 +19,7 @@ class ScreenshotProvider(Protocol):
 
 
 class AppStatusProvider(Protocol):
-    """Interfaccia per il recupero dello stato dell'app."""
+    """Interfaccia per il recuperòdello stato dell'app."""
 
     def get_system_status(self) -> tuple[str, str, str]:
         """Restituisce (bot_name, status, detail)."""

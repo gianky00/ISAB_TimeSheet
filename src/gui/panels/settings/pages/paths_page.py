@@ -209,7 +209,7 @@ class PathsPage(QWidget):
         return QFileDialog.getExistingDirectory(self, title, str(Path.home()))
 
     def _browse_contabilita(self) -> None:
-        p = self._browse_file("Seleziona File Contabilit ", "Excel Files (*.xlsx *.xlsm)")
+        p = self._browse_file("Seleziona File Contabilità", "Excel Files (*.xlsx *.xlsm)")
         if p:
             self.contabilita_path_edit.setText(p)
 

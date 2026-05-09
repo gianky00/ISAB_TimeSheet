@@ -16,7 +16,7 @@ from PySide6.QtWidgets import QWidget
 class BotController(QObject):
     """
     Controller centrale per il monitoraggio e la notifica dello stato delle automazioni.
-    Si occupa di:
+    Sìoccupa di:
     - Collegare i segnali di stato di ogni pannello bot alle card informative (Portale/SafeWork).
     - Inoltrare i file prodotti dai bot (es. PDF dei PDL) direttamente sul canale Telegram.
     - Identificare il pannello bot attualmente attivo per operazioni contestuali.

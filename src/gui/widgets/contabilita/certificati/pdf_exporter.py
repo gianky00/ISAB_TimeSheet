@@ -32,7 +32,9 @@ THRESHOLD_ATTENTION = 30
 class CertificatiPdfExporter:
     """Motore di esportazione PDF per certificati campione."""
 
-    def __init__(self, data: list[dict[str, Any]], include_history: bool = False, print_exclusions: Any = False) -> None:
+    def __init__(
+        self, data: list[dict[str, Any]], include_history: bool = False, print_exclusions: Any = False
+    ) -> None:
         self.data = data
         self.include_history = include_history
         self.print_exclusions = print_exclusions
@@ -173,9 +175,9 @@ class CertificatiPdfExporter:
             rows_html += f"""
             <tr class="{bg_class}">
                 <td width="10%">{cert_id_html}</td>
-                <td width="15%">{item.get('costruttore', 'N/A')}</td>
-                <td width="35%">{item.get('modello', 'N/A')}</td>
-                <td width="20%">{item.get('matricola', 'N/A')}</td>
+                <td width="15%">{item.get("costruttore", "N/A")}</td>
+                <td width="35%">{item.get("modello", "N/A")}</td>
+                <td width="20%">{item.get("matricola", "N/A")}</td>
                 <td width="20%" align="right" style="{status_style}">{status_text}</td>
             </tr>
             """
@@ -185,11 +187,11 @@ class CertificatiPdfExporter:
         <head>
             <style>
                 body {{ font-family: 'Segoe UI', Arial, sans-serif; color: #333; margin: 0; padding: 20px; }}
-                .header {{ border-bottom: 2px solid {COLORS['primary_blue']}; margin-bottom: 20px; padding-bottom: 10px; }}
-                .title {{ color: {COLORS['primary_blue']}; font-size: 20px; font-weight: bold; }}
+                .header {{ border-bottom: 2px solid {COLORS["primary_blue"]}; margin-bottom: 20px; padding-bottom: 10px; }}
+                .title {{ color: {COLORS["primary_blue"]}; font-size: 20px; font-weight: bold; }}
                 .timestamp {{ font-size: 10px; color: #777; float: right; }}
                 table {{ width: 100%; border-collapse: collapse; font-size: 10px; }}
-                th {{ background-color: {COLORS['bg_alt']}; color: {COLORS['text_dark']}; text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }}
+                th {{ background-color: {COLORS["bg_alt"]}; color: {COLORS["text_dark"]}; text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }}
                 td {{ padding: 8px; border-bottom: 1px solid #eee; }}
                 .row-even {{ background-color: #ffffff; }}
                 .row-odd {{ background-color: #fcfcfc; }}
@@ -219,7 +221,9 @@ class CertificatiPdfExporter:
         </html>
         """
 
-    def _draw_footer(self, painter: QPainter, page_num: int, total_pages: int, width: float, height: float) -> None:
+    def _draw_footer(
+        self, painter: QPainter, page_num: int, total_pages: int, width: float, height: float
+    ) -> None:
         """Disegna il footer di pagina con il numero di pagina."""
         painter.save()
         font = QFont("Segoe UI", 8)
@@ -231,6 +235,13 @@ class CertificatiPdfExporter:
         painter.drawText(0, int(height - 20), int(width), 20, Qt.AlignmentFlag.AlignCenter, footer_text)
 
         branding = "Generato da SyncroJob Enterprise"
-        painter.drawText(30, int(height - 20), int(width - 60), 20, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, branding)
+        painter.drawText(
+            30,
+            int(height - 20),
+            int(width - 60),
+            20,
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+            branding,
+        )
 
         painter.restore()

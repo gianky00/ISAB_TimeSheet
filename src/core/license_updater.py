@@ -1,7 +1,7 @@
 """
 SyncroJob - License Updater
 Modulo dedicato all'aggiornamento e alla sincronizzazione dei file di licenza dal repository GitHub.
-Gestisce i periodi di grazia offline tramite token cifrati e garantisce la validit  temporale del software.
+Gestisce i periodi di grazia offline tramite token cifrati e garantisce la validità temporale del software.
 """
 
 import json
@@ -76,7 +76,7 @@ def update_grace_timestamp() -> None:
 
 def check_grace_period() -> bool:
     """
-    Verifica se l'applicazione pu  funzionare offline controllando il token di validit .
+    Verifica se l'applicazione pu  funzionare offline controllando il token di validità.
     Il periodo di grazia massimo  di 3 giorni dall'ultima sincronizzazione online.
 
     Returns:
@@ -190,7 +190,7 @@ def run_update() -> bool:  # noqa: C901, PLR0911, PLR0912, PLR0915
 
     base_url = f"https://api.github.com/repos/gianky00/intelleo-licenses/contents/licenses/{hw_id}"
     token = get_github_token()
-    headers_api= {"Authorization": f"token {token}"}
+    headers_api = {"Authorization": f"token {token}"}
     headers_raw = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3.raw"}
 
     try:
@@ -242,7 +242,7 @@ def run_update() -> bool:  # noqa: C901, PLR0911, PLR0912, PLR0915
             if conf_res.status_code == 200:  # noqa: PLR2004
                 new_config_bytes = conf_res.content
 
-                # --- SICUREZZA: Verifica la validit  dei nuovi dati prima di sovrascrivere ---
+                # --- SICUREZZA: Verifica la validità dei nuovi dati prima di sovrascrivere ---
                 try:
                     from src.core.secrets_manager import SecretsManager  # noqa: PLC0415
 

@@ -8,7 +8,7 @@ from src.core.contabilita_manager import ContabilitaManager
 
 
 class ContabilitaWorker(QThread):
-    """Worker per l'importazione in background della contabilit ."""
+    """Worker per l'importazione in background della contabilità."""
 
     finished_signal = Signal(bool, str, int, int, float)
     progress_signal = Signal(str)
@@ -163,8 +163,8 @@ class ContabilitaWorker(QThread):
             success,
             added,
             removed,
-            f"Contabilit : OK (+{added}/-{removed})",
-            f"Err Contabilit : {msg}",
+            f"Contabilità: OK (+{added}/-{removed})",
+            f"Err Contabilità: {msg}",
         )
 
     def _phase_import_giornaliere(self, state: Any) -> None:

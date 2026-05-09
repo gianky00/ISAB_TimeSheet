@@ -32,7 +32,7 @@ from .charts import ChartContainer, KPIChartsManager
 
 
 class ContabilitaKPIPanel(QWidget):
-    """Pannello dashboard per la visualizzazione dei KPiu'della contabilit  strumentale."""
+    """Pannello dashboard per la visualizzazione dei KPiu'della contabilità strumentale."""
 
     def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
         """Inizializza il pannello e prepara i grafici."""

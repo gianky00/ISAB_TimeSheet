@@ -88,7 +88,7 @@ async def _handle_nav_actions(service: "TelegramService", data: str, query: "Cal
         )
     elif data == "nav_lyra":
         await query.edit_message_text(
-            "[INFO] **Lyra AI Assistant**\n\nPuoi inviare vocali, foto di rapportini o domande sui dati.\n_Scrivi o parla direttamente qui!_",
+            "ℹ️ **Lyra AI Assistant**\n\nPuoi inviare vocali, foto di rapportini o domande sui dati.\n_Scrivi o parla direttamente qui!_",
             reply_markup=TelegramUI.get_lyra_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
@@ -119,7 +119,7 @@ async def _handle_db_actions(
         years = ContabilitaManager.get_available_years()
         if not years:
             await query.edit_message_text(
-                "[ATTENZIONE] Nessun anno disponibile nel database.",
+                "⚠️ Nessun anno disponibile nel database.",
                 reply_markup=TelegramUI.get_db_menu(),
             )
             return
@@ -301,10 +301,10 @@ async def _handle_run_pdl_confirm(
             return
         service.command_received.emit("set_printer", {"printer": p})
         params.update({"print": True, "merge_and_send": ("_yes_" in data)})
-        msg = f"[OK] Avvio con stampa su `{p}`"
+        msg = f"✅ Avvio con stampa su `{p}`"
     else:
         params.update({"print": False, "merge_and_send": ("_yes_" in data)})
-        msg = "[OK] Avvio scarico"
+        msg = "✅ Avvio scarico"
 
     service.command_received.emit("run_pdl", params)
     await query.edit_message_text(f"{msg}, invio PDF={params['merge_and_send']}, merge finale={merge_all}.")

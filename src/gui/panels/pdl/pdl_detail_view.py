@@ -1,7 +1,7 @@
 """
 SyncroJob - PDL Detail View
 Widget specializzato per la visualizzazione analitica di un singolo Permesso di Lavoro (PDL).
-Include i dati anagrafici e la cronologia degli interventi correlati.
+Include i dati anagrafici e la cronologiàdegli interventi correlati.
 """
 
 from collections.abc import Sequence
@@ -76,8 +76,8 @@ class PDLDetailView(QWidget):
         scroll.setWidget(scroll_content)
         layout.addWidget(scroll, 2)  # Stretch factor 2
 
-        # Sezione Cronologia Interventi
-        cron_label = QLabel("Cronologia Interventi (Report Attivita')")
+        # Sezione CronologiàInterventi
+        cron_label = QLabel("CronologiàInterventi (Report Attivita')")
         cron_label.setStyleSheet(
             f"font-weight: bold; font-size: 13px; color: {COLORS['success_dark']}; margin-top: 10px;"
         )
@@ -95,7 +95,7 @@ class PDLDetailView(QWidget):
 
     def update_details(self, data: Sequence[Any], interventions: list[dict[str, Any]] | None = None) -> None:
         """
-        Aggiorna le label con i dati forniti e popola la cronologia degli interventi.
+        Aggiorna le label con i dati forniti e popola la cronologiàdegli interventi.
 
         Args:
           data: Sequenza di valori corrispondenti agli headers inizializzati.

@@ -1,7 +1,7 @@
 """
 SyncroJob - Connection Workers.
 
-Contiene i worker asincroni per il test della connettivit  verso servizi esterni
+Contiene i worker asincroni per il test della connettività verso servizi esterni
 come Telegram e Google Gemini.
 """
 
@@ -11,7 +11,7 @@ from PySide6.QtCore import QThread, Signal
 
 class ConnectionTestWorker(QThread):
     """
-    Worker asincrono per testare le connessioni di rete e la validit  delle API Key.
+    Worker asincrono per testare le connessioni di rete e la validità delle API Key.
     Esegue le richieste in un thread separato per non bloccare la UI.
     """
 
@@ -41,7 +41,7 @@ class ConnectionTestWorker(QThread):
             self.result_ready.emit(False, "Eccezione", f"Errore durante il test: {e}")
 
     def _test_telegram(self) -> None:
-        """Verifica la validit  di un token Bot Telegram tramite il metodo getMe."""
+        """Verifica la validità di un token Bot Telegram tramite il metodo getMe."""
         url = f"https://api.telegram.org/bot{self.token_or_key}/getMe"
         resp = requests.get(url, timeout=10)
 
@@ -57,7 +57,7 @@ class ConnectionTestWorker(QThread):
             self.result_ready.emit(False, "Errore HTTP", f"Status Code: {resp.status_code}")
 
     def _test_gemini(self) -> None:
-        """Verifica la validit  di una APiu'Key Google Gemini interrogando la lista dei modelli."""
+        """Verifica la validità di una APiu'Key Google Gemini interrogando la lista dei modelli."""
         # Simple list models check
         url = f"https://generativelanguage.googleapis.com/v1beta/models?key={self.token_or_key}"
         resp = requests.get(url, timeout=10)

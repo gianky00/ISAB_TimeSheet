@@ -1,6 +1,6 @@
 """
 Bot TS - Contabilita Queries
-Gestisce tutte le query di lettura per i dati della Contabilit  Strumentale.
+Gestisce tutte le query di lettura per i dati della Contabilità Strumentale.
 """
 
 from pathlib import Path
@@ -11,7 +11,7 @@ from src.core.excel_importer import ExcelImporter  # Per accedere ai COLUMNS_MAP
 
 
 class ContabilitaQueries:
-    """Gestore per le query di lettura del database della Contabilit  Strumentale."""
+    """Gestore per le query di lettura del database della Contabilità Strumentale."""
 
     # Indici Colonne Certificati (Allineati a get_certificati_campione_data)
     CERT_IDX_ID_COEMI = 0

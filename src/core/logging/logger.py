@@ -135,6 +135,7 @@ class StructuredLogger:
 
         if exception:
             import traceback  # noqa: PLC0415
+
             with suppress(Exception):
                 print(traceback.format_exc())
 
@@ -161,6 +162,7 @@ class StructuredLogger:
         ctx = get_context().to_dict()
         if ctx.get("trace_id") and ctx.get("bot_type"):
             from src.core.logging.sinks import get_bot_sink  # noqa: PLC0415
+
             get_bot_sink().write(level, self.name, message, ctx, extra, exception, source)
 
     def _safe_append_file(self, path: Any, line: str, exception: Any = None) -> None:
@@ -170,6 +172,7 @@ class StructuredLogger:
                 f.write(line + "\n")
                 if exception:
                     import traceback  # noqa: PLC0415
+
                     f.write(traceback.format_exc() + "\n")
         except Exception as e:
             print(f"[LOGGER ERROR] Failed to write to {path}: {e}", file=sys.stderr)

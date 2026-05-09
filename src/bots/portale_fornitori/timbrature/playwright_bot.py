@@ -79,7 +79,7 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
         return True, ""
 
     def run(self, data: list[dict[str, Any]]) -> bool:
-        """Esegue il workflow completo di recupero e importazione delle timbrature."""
+        """Esegue il workflow completo di recuperòe importazione delle timbrature."""
         self.update_step("login", StepStatus.COMPLETED)
 
         if data and isinstance(data, list):
@@ -89,7 +89,7 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
             self.fornitore = row.get("fornitore", self.fornitore)
 
         self.log(
-            f"[AVVIO] Inizio recupero timbrature (PW) per {self.fornitore} ({self.data_da} - {self.data_a})..."
+            f"[AVVIO] Inizio recuperòtimbrature (PW) per {self.fornitore} ({self.data_da} - {self.data_a})..."
         )
 
         if not self.page:
@@ -100,7 +100,7 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
         # 1. Navigation
         self.update_step("nav", StepStatus.RUNNING)
         if not page_obj.navigate_to_timbrature():
-            self.log("[ERRORE] Non riesco a raggiungere la sezione Timbrature.")
+            self.log("❌ Non riesco a raggiungere la sezione Timbrature.")
             self.update_step("nav", StepStatus.ERROR)
             return False
         self.update_step("nav", StepStatus.COMPLETED)
@@ -108,7 +108,7 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
         # 2. Filter & Download
         self.update_step("filter", StepStatus.RUNNING)
         if not page_obj.set_filters(self.fornitore, self.data_da, self.data_a):
-            self.log("[ERRORE] Filtri non applicati correttamente.")
+            self.log("❌ Filtri non applicati correttamente.")
             self.update_step("filter", StepStatus.ERROR)
             return False
         self.update_step("filter", StepStatus.COMPLETED)
@@ -120,13 +120,13 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
         if excel_path:
             self.update_step("download", StepStatus.COMPLETED)
             self.update_step("import", StepStatus.RUNNING)
-            self.log("[OK] Report scaricato! Sto analizzando i dati...")
+            self.log("✅ Report scaricato! Sto analizzando i dati...")
             try:
                 self.storage.import_excel(excel_path, self.log)
                 self.log("   Dati salvati nel database con successo.")
                 self.update_step("import", StepStatus.COMPLETED)
             except Exception as e:
-                self.log(f"[ERRORE] Errore durante il salvataggio: {e}")
+                self.log(f"❌ Errore durante il salvataggio: {e}")
                 self.update_step("import", StepStatus.ERROR)
             finally:
                 p = Path(excel_path)
@@ -134,8 +134,8 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
                     with suppress(Exception):
                         p.unlink()
         else:
-            self.log("[ATTENZIONE] Non ho trovato dati o il download non  partito.")
+            self.log("⚠️ Non ho trovato dati o il download non  partito.")
             self.update_step("download", StepStatus.ERROR)
 
-        self.log("[INFO] Procedura conclusa.")
+        self.log("ℹ️ Procedura conclusa.")
         return True

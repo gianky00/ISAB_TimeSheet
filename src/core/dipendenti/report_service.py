@@ -91,13 +91,13 @@ class ReportService:
 
         if urgenti > 0:
             sum_text = f"<strong>ATTENZIONE:</strong> {urgenti} dipendenti richiedono azione <strong>IMMEDIATA</strong> (oltre {THRESHOLD_DAYS['critical']} giorni). Totale da gestire: {tot_attenzione}."
-            sum_color, sum_icon = COLORS["error_red"], "[ATTENZIONE]"
+            sum_color, sum_icon = COLORS["error_red"], "⚠️"
         elif len(data["expired_list"]) > 0:
             sum_text = f"<strong>{len(data['expired_list'])}</strong> dipendenti scaduti e <strong>{len(data['warning_list'])}</strong> in scadenza richiedono attenzione."
             sum_color, sum_icon = COLORS["warning_orange"], "  "
         else:
             sum_text = f"<strong>{len(data['warning_list'])}</strong> dipendenti in scadenza da monitorare nei prossimi giorni."
-            sum_color, sum_icon = COLORS["primary_dark"], "[INFO]"
+            sum_color, sum_icon = COLORS["primary_dark"], "ℹ️"
 
         trend_html = ""
         trend = ReportHistory.calculate_trend(len(data["warning_list"]), len(data["expired_list"]))
@@ -148,7 +148,7 @@ class ReportService:
     """
 
         if data["warning_list"]:
-            html += f'<h3 style="color: {COLORS["warning_orange"]}; margin: 16px 0 12px 0; padding-left: 12px; border-left: 4px solid {COLORS["warning_orange"]}; font-size: 15px;">[ATTENZIONE] In Scadenza ({THRESHOLD_DAYS["warning"] + 1}-{THRESHOLD_DAYS["expired"]} gg)</h3>'
+            html += f'<h3 style="color: {COLORS["warning_orange"]}; margin: 16px 0 12px 0; padding-left: 12px; border-left: 4px solid {COLORS["warning_orange"]}; font-size: 15px;">⚠️ In Scadenza ({THRESHOLD_DAYS["warning"] + 1}-{THRESHOLD_DAYS["expired"]} gg)</h3>'
             html += ReportService._build_html_table(data["warning_list"], COLORS["warning_orange"])
 
         if data["expired_list"]:

@@ -26,7 +26,7 @@ class PageIndex(IntEnum):
     """Gestione scarico timbrature portale fornitori."""
 
     STRUMENTALE = 4
-    """Pannello contabilit  strumentale e KPI."""
+    """Pannello contabilità strumentale e KPI."""
 
     DATAEASE = 5
     """Visualizzatore avanzato Scarico Ore Cantiere."""
@@ -41,7 +41,7 @@ class PageIndex(IntEnum):
     """Manuale utente e documentazione integrata."""
 
     NOTIFICATIONS = 9
-    """Centro notifiche e cronologia messaggi."""
+    """Centro notifiche e cronologiàmessaggi."""
 
     STORICO_ODA = 10
     """Consultazione e ricerca ordini di acquisto."""

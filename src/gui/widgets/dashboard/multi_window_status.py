@@ -97,7 +97,7 @@ class DetachedModuleItem(QFrame):
 class MultiWindowStatusWidget(QFrame):
     """
     Card della Dashboard che mostra i moduli attualmente in esecuzione in finestre esterne.
-    Si nasconde automaticamente se non ci sono moduli sganciati.
+    Sìnasconde automaticamente se non ci sono moduli sganciati.
     """
 
     reattach_all_requested = Signal()

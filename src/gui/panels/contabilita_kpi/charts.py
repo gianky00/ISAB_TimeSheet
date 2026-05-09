@@ -1,7 +1,7 @@
 # mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - KPI Charts
-Gestione dei grafici KPI per la contabilit  tramite Matplotlib.
+Gestione dei grafici KPI per la contabilità tramite Matplotlib.
 """
 
 import os

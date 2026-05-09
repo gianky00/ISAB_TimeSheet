@@ -137,16 +137,16 @@ class CertificatiEngine:
     def format_days_text_short(cls, days: int | None) -> str:
         """Ritorna una rappresentazione testuale breve dello stato scadenze."""
         if days == cls.FAULTY_MARKER:
-            return f"[ERRORE] {StatoCertificatoLabel.GUASTO}"
+            return f"❌ {StatoCertificatoLabel.GUASTO}"
         if days is None:
             return StatoCertificatoLabel.SENZA_SCADENZA
         if days < 0:
-            return f"[ROSSO] {StatoCertificatoLabel.SCADUTO} ({abs(days)}gg fa)"
+            return f"❌ {StatoCertificatoLabel.SCADUTO} ({abs(days)}gg fa)"
         if days <= cls.WARNING_THRESHOLD:
             return f"[ARANCIONE] {StatoCertificatoLabel.IN_SCADENZA} ({days}gg)"
         if days <= cls.EXPIRING_THRESHOLD:
             return f"[GIALLO] {StatoCertificatoLabel.IN_SCADENZA} ({days}gg)"
-        return f"[OK] {StatoCertificatoLabel.ATTIVO} ({days}gg rim.)"
+        return f"✅ {StatoCertificatoLabel.ATTIVO} ({days}gg rim.)"
 
     @classmethod
     def get_statistics(cls, data: list[Any]) -> dict[str, Any]:

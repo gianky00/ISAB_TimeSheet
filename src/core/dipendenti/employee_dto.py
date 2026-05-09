@@ -27,7 +27,7 @@ class EmployeeDTO:
     @property
     def full_name(self) -> str:
         """Restituisce il nome completo formattato."""
-        cog = f"[ATTENZIONE] {self.cognome}" if self.cf_warning else self.cognome
+        cog = f"⚠️ {self.cognome}" if self.cf_warning else self.cognome
         return f"{cog} {self.nome}"
 
     def to_table_row(self) -> list[str | int | None]:
@@ -35,7 +35,7 @@ class EmployeeDTO:
         return [
             self.inactivation_days_left,
             self.id_risorsa,
-            f"[ATTENZIONE] {self.cognome}" if self.cf_warning else self.cognome,
+            f"⚠️ {self.cognome}" if self.cf_warning else self.cognome,
             self.nome,
             self.codice_fiscale or "-",
             self.badge or "-",

@@ -217,7 +217,9 @@ class ScaricoOreTableModel(QAbstractTableModel):
             return 0
         return len(self.COLUMNS)
 
-    def data(self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: PLR0911
+    def data(
+        self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole
+    ) -> Any:
         """Restituisce i dati per una specifica cella e ruolo."""
         if not index.isValid():
             return None

@@ -38,7 +38,7 @@ class RicercaPDLPage:
                 # Uso JS click come nel branch main per evitare problemi di intercettazione
                 self.driver.execute_script("arguments[0].click();", checkbox)  # type: ignore[no-untyped-call]
         except Exception as e:
-            self.log(f"[ATTENZIONE] Errore configurazione flag 'Escludi chiusi': {e}")
+            self.log(f"⚠️ Errore configurazione flag 'Escludi chiusi': {e}")
 
     def seleziona_sito_e_cerca(self, site_name: str) -> bool:
         """
@@ -74,7 +74,7 @@ class RicercaPDLPage:
 
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"[ERRORE] Errore selezione/ricerca (Main Logic): {e}")
+            self.log(f"❌ Errore selezione/ricerca (Main Logic): {e}")
             return False
 
     def _attendi_scomparsa_overlay(self, timeout_secondi: int = 300) -> None:
@@ -93,5 +93,5 @@ class RicercaPDLPage:
             self.wait.until(EC.element_to_be_clickable(SafeWorkLocators.EXPORT_BUTTON)).click()
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"[ERRORE] Errore click export: {e}")
+            self.log(f"❌ Errore click export: {e}")
             return False

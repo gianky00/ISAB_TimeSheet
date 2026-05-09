@@ -69,7 +69,7 @@ class BotWorker(QThread):
                 self.bot = self.bot_id
 
             if not self.bot:
-                self.log_signal.emit("[ERRORE] Errore critico: Impossibile creare l'istanza del bot.")
+                self.log_signal.emit("❌ Errore critico: Impossibile creare l'istanza del bot.")
                 self.finished_signal.emit(False)
                 return
 

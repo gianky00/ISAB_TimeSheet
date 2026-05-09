@@ -33,7 +33,7 @@ class PDLQueries:
 
             return sorted(clean_names)
         except Exception as e:
-            logger.error(f"Errore recupero richiedenti: {e}")  # noqa: TRY400
+            logger.error(f"Errore recuperòrichiedenti: {e}")  # noqa: TRY400
             return []
 
     @classmethod
@@ -132,13 +132,13 @@ class PDLQueries:
                 )
             return results  # noqa: TRY300
         except Exception as e:
-            logger.error(f"Errore recupero programmazione: {e}")  # noqa: TRY400
+            logger.error(f"Errore recuperòprogrammazione: {e}")  # noqa: TRY400
             return []
 
     @classmethod
     def get_pdl_interventions(cls, n_pdl: str) -> list[dict[str, Any]]:
         """
-        Recupera la cronologia degli interventi per un determinato PDL
+        Recupera la cronologiàdegli interventi per un determinato PDL
         dal database dei Report Attivita'.
         """
         from src.core import config_manager  # noqa: PLC0415
@@ -205,5 +205,5 @@ class PDLQueries:
 
             return [dict(r) for r in rows]
         except Exception as e:
-            logger.error(f"Errore recupero cronologia interventi per PDL {n_pdl}: {e}")  # noqa: TRY400
+            logger.error(f"Errore recuperòcronologiàinterventi per PDL {n_pdl}: {e}")  # noqa: TRY400
             return []

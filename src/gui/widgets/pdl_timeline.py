@@ -19,7 +19,7 @@ from src.gui.styles.palette_helpers import hex_to_rgba
 
 class PDLTimelineWidget(QWidget):
     """
-    Widget che visualizza la cronologia degli interventi in stile Timeline verticale.
+    Widget che visualizza la cronologiàdegli interventi in stile Timeline verticale.
     Progettato per essere inserito in una riga espansa della tabella Programmazione.
     """
 
@@ -44,7 +44,7 @@ class PDLTimelineWidget(QWidget):
         self.setStyleSheet(f"background-color: {COLORS['bg_light']};")
 
         # Titolo
-        title = QLabel(f"Cronologia Interventi Recenti ({len(self.interventions)})")
+        title = QLabel(f"CronologiàInterventi Recenti ({len(self.interventions)})")
         title.setStyleSheet(f"font-weight: bold; font-size: 14px; color: {COLORS['primary_dark']};")
         main_layout.addWidget(title)
 

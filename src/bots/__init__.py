@@ -8,6 +8,7 @@ import logging
 from typing import Any, cast
 
 from src.bots.base import BaseBot, BotStatus
+
 # --- IMPORT BOT SELENIUM (Leggeri, rimangono top-level per compatibilita' legacy) ---
 from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot
 from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
@@ -18,7 +19,6 @@ from src.bots.safework.pdl.bot import SafeWorkPDLBot
 from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
 from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
 from src.bots.safework.programmazione_sync.bot import SafeWorkProgrammazioneSyncBot
-
 from src.core.config_manager import load_config
 from src.core.constants import Icons
 
@@ -29,31 +29,56 @@ def _get_playwright_bot_class(bot_id: str) -> Any:  # noqa: C901, PLR0911
     """Importa dinamicamente la classe bot Playwright solo quando necessaria (Lazy Loading)."""
     try:
         if bot_id == "carico_ts":
-            from src.bots.portale_fornitori.carico_ts.playwright_bot import PlaywrightCaricoTSBot # noqa: PLC0415
+            from src.bots.portale_fornitori.carico_ts.playwright_bot import (
+                PlaywrightCaricoTSBot,
+            )
+
             return PlaywrightCaricoTSBot
         if bot_id == "dettagli_oda":
-            from src.bots.portale_fornitori.dettagli_oda.playwright_bot import PlaywrightDettagliOdABot # noqa: PLC0415
+            from src.bots.portale_fornitori.dettagli_oda.playwright_bot import (
+                PlaywrightDettagliOdABot,
+            )
+
             return PlaywrightDettagliOdABot
         if bot_id == "prenota_bp":
-            from src.bots.portale_fornitori.prenota_bp.playwright_bot import PlaywrightPrenotaBPBot # noqa: PLC0415
+            from src.bots.portale_fornitori.prenota_bp.playwright_bot import (
+                PlaywrightPrenotaBPBot,
+            )
+
             return PlaywrightPrenotaBPBot
         if bot_id == "scarico_ts":
-            from src.bots.portale_fornitori.scarico_ts.playwright_bot import PlaywrightScaricaTSBot # noqa: PLC0415
+            from src.bots.portale_fornitori.scarico_ts.playwright_bot import (
+                PlaywrightScaricaTSBot,
+            )
+
             return PlaywrightScaricaTSBot
         if bot_id == "timbrature":
-            from src.bots.portale_fornitori.timbrature.playwright_bot import PlaywrightTimbratureBot # noqa: PLC0415
+            from src.bots.portale_fornitori.timbrature.playwright_bot import (
+                PlaywrightTimbratureBot,
+            )
+
             return PlaywrightTimbratureBot
         if bot_id == "scarico_pdl":
-            from src.bots.safework.pdl.playwright_bot import PlaywrightSafeWorkPDLBot # noqa: PLC0415
+            from src.bots.safework.pdl.playwright_bot import PlaywrightSafeWorkPDLBot  # noqa: PLC0415
+
             return PlaywrightSafeWorkPDLBot
         if bot_id == "ricerca_pdl":
-            from src.bots.safework.pdl.playwright_search_bot import PlaywrightSafeWorkPDLSearchBot # noqa: PLC0415
+            from src.bots.safework.pdl.playwright_search_bot import (
+                PlaywrightSafeWorkPDLSearchBot,
+            )
+
             return PlaywrightSafeWorkPDLSearchBot
         if bot_id == "programmazione_pdl":
-            from src.bots.safework.programmazione.playwright_bot import PlaywrightSafeWorkProgrammazioneBot # noqa: PLC0415
+            from src.bots.safework.programmazione.playwright_bot import (
+                PlaywrightSafeWorkProgrammazioneBot,
+            )
+
             return PlaywrightSafeWorkProgrammazioneBot
         if bot_id == "programmazione_sync":
-            from src.bots.safework.programmazione_sync.playwright_bot import PlaywrightSafeWorkProgrammazioneSyncBot # noqa: PLC0415
+            from src.bots.safework.programmazione_sync.playwright_bot import (
+                PlaywrightSafeWorkProgrammazioneSyncBot,
+            )
+
             return PlaywrightSafeWorkProgrammazioneSyncBot
     except ImportError as e:
         logger.debug(f"Playwright bot per '{bot_id}' non disponibile: {e}")
@@ -109,7 +134,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
             {"name": "Posizione OdA", "type": "text"},
         ],
         "config_key": "last_oda_data",
-        "warning": "[ATTENZIONE] Il browser rimarra' aperto dopo l'esecuzione",
+        "warning": "⚠️ Il browser rimarra' aperto dopo l'esecuzione",
     },
     "prenota_bp": {
         "class": PrenotaBPBot,
@@ -190,8 +215,8 @@ def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:
         bot_class_pw = _get_playwright_bot_class(bot_id)
         if bot_class_pw:
             return cast("BaseBot", bot_class_pw(**kwargs))
-        
-        msg = f"[ATTENZIONE] Motore Playwright richiesto ma non disponibile per '{bot_id}'. Eseguo fallback su Selenium."
+
+        msg = f"⚠️ Motore Playwright richiesto ma non disponibile per '{bot_id}'. Eseguo fallback su Selenium."
         logger.warning(msg)
         print(f"[!] {msg}")
 

@@ -1,5 +1,5 @@
 """
-SyncroJob - Contabilit  Attivita'Programmate
+SyncroJob - Contabilità Attivita'Programmate
 Tab specializzato per la visualizzazione delle attivita'programmate settimanali.
 Include filtri avanzati per PS, PO, Area e Stato PdL.
 """

@@ -170,7 +170,7 @@ class SeleniumBaseBot(BaseBot, ABC):
                     shutil.copy2(d_path, p_dir / "chromedriver.exe")
                 return d_path
         except Exception as e:
-            self.log(f"[ATTENZIONE] Errore download driver: {e}")
+            self.log(f"⚠️ Errore download driver: {e}")
         return None
 
     def _setup_driver_instance(self, service: Service, options: Options) -> None:
@@ -206,13 +206,13 @@ class SeleniumBaseBot(BaseBot, ABC):
         """Gestisce gli errori specifici del driver proponendo soluzioni come il download forzato."""
         msg = str(e).lower()
         if "chrome instance exited" in msg:
-            self.log("[ERRORE] CRASH: Chrome si  chiuso all'avvio", "ERROR")
+            self.log("❌ CRASH: Chrome si  chiuso all'avvio", "ERROR")
             self._force_driver_redownload()
         elif "version" in msg or "sessionnotcreated" in msg:
-            self.log("[ERRORE] ERRORE CRITICO DRIVER: Versione incompatibile", "ERROR")
+            self.log("❌ ERRORE CRITICO DRIVER: Versione incompatibile", "ERROR")
             self._force_driver_redownload()
         else:
-            self.log(f"[ERRORE] ERRORE DRIVER: {e}", "ERROR")
+            self.log(f"❌ ERRORE DRIVER: {e}", "ERROR")
         raise e
 
     def _force_driver_redownload(self) -> None:

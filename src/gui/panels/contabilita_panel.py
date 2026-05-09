@@ -1,7 +1,7 @@
 # mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
-SyncroJob - Contabilit  Panel
-Pannello centrale per la visualizzazione e l'analisi della Contabilit  Strumentale.
+SyncroJob - Contabilità Panel
+Pannello centrale per la visualizzazione e l'analisi della Contabilità Strumentale.
 Integra reportistica annuale, dati giornalieri, attivita'programmate e certificati campione.
 Include un motore di ricerca unificato e l'accesso al pannello di analisi KPI.
 """
@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 class ContabilitaPanel(QWidget):
     """
-    Pannello principale dell'interfaccia di contabilit .
+    Pannello principale dell'interfaccia di contabilità.
     Organizza i dati complessi in tab logici e fornisce strumenti per:
     - Ricerca rapida tra migliaia di record.
     - Calcolo dinamico dei totali ore su selezione utente.
@@ -278,7 +278,7 @@ class ContabilitaPanel(QWidget):
     def _on_main_tab_changed(self, index: int) -> None:
         """Nasconde o mostra gli strumenti di ricerca in base al tab selezionato."""
         tab_text = self.main_tabs.tabText(index)
-        is_kpi= "Analisi KPI" in tab_text
+        is_kpi = "Analisi KPI" in tab_text
         self.toolbar_card.setVisible(not is_kpi)
 
         if not is_kpi:

@@ -321,7 +321,7 @@ class ServiceController(QObject):
             return
         level = notification.get("level", "info")
         if level in ("success", "error", "warning"):
-            icon = "[OK]" if level == "success" else "[ERR]" if level == "error" else "[!]"
+            icon = "✅" if level == "success" else "[ERR]" if level == "error" else "[!]"
             self.telegram.send_message_sync(
                 f"{icon} *{notification.get('title', 'Notifica')}*\n{notification.get('message', '')}"
             )

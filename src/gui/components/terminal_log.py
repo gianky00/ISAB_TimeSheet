@@ -81,11 +81,11 @@ class TerminalLogWidget(QWidget):
         color = COLORS["text_dark"]
 
         level_upper = level.upper()
-        if "ERROR" in level_upper or "[ERRORE]" in message:
+        if "ERROR" in level_upper or "❌" in message:
             color = COLORS["error_red"]
-        elif "WARN" in level_upper or "[ATTENZIONE]" in message:
+        elif "WARN" in level_upper or "⚠️" in message:
             color = COLORS["warning_orange"]
-        elif "SUCCESS" in level_upper or "[OK]" in message:
+        elif "SUCCESS" in level_upper or "✅" in message:
             color = COLORS["success_dark"]
         elif "INFO" in level_upper:
             color = COLORS["primary_blue"]

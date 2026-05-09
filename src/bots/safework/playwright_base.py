@@ -62,7 +62,7 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
             self._attendi_scomparsa_overlay()
             self.page.click(selector, timeout=timeout_ms)
         except Exception as e:
-            self.log(f"[ERRORE] Errore click su {label or selector}: {e}")
+            self.log(f"❌ Errore click su {label or selector}: {e}")
             raise
 
     def _attendi_scomparsa_overlay(self, timeout_ms: int = 120000) -> bool:
@@ -97,11 +97,11 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
                         xpath_full = sel if sel.startswith("/") else f"css={sel}"
                         if self.page.is_visible(xpath_full):
                             self.page.click(xpath_full, timeout=2000)
-                            self.log("[OK] Click su 'Si' riuscito (Ricerca Estesa)")
+                            self.log("✅ Click su 'Si' riuscito (Ricerca Estesa)")
                             self.page.wait_for_timeout(1000)
                             return True
             else:
-                self.log("[INFO] Nessun popup di ricerca estesa rilevato.")
+                self.log("ℹ️ Nessun popup di ricerca estesa rilevato.")
 
             # 2. Gestione Modali Generiche (es. Alert "Il PdL non  in programmazione")
             # Usiamo un ciclo di tentativi per gestire animazioni e caricamenti asincroni
@@ -123,14 +123,14 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
                     with suppress(Exception):
                         if self.page.is_visible(f"xpath={b_sel}", timeout=800):
                             self.page.click(f"xpath={b_sel}")
-                            self.log(f"[OK] Alert gestito cliccando su: {b_sel}")
+                            self.log(f"✅ Alert gestito cliccando su: {b_sel}")
                             self.page.wait_for_timeout(1000)
                             return True  # Chiudiamo al primo pulsante di conferma trovato
 
                 if i < (tentativi_max - 1):
                     self.page.wait_for_timeout(500)
 
-            self.log("[INFO] Nessun Alert/Modale bloccante rilevata.")
+            self.log("ℹ️ Nessun Alert/Modale bloccante rilevata.")
 
         return True
 
@@ -145,6 +145,6 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
 
             self.page.wait_for_selector(xpath_caricamento, state="hidden", timeout=timeout_ms)
         except TimeoutError:
-            self.log("[ATTENZIONE] Timeout attesa caricamento sistema.")
+            self.log("⚠️ Timeout attesa caricamento sistema.")
 
         self._attendi_scomparsa_overlay()

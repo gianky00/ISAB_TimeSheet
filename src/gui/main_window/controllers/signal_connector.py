@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 class SignalConnector(QObject):
     """
     Gestisce la connessione dei segnali PySide6 tra i Singleton Manager e la UI.
-    Si occupa di aggiornare badge, mostrare toast e gestire la navigazione dalla sidebar.
+    Sìoccupa di aggiornare badge, mostrare toast e gestire la navigazione dalla sidebar.
     """
 
     def __init__(self, main_window: "MainWindow") -> None:

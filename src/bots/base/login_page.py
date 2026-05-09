@@ -83,13 +83,13 @@ class LoginPage:
                 )
                 self.driver.execute_script("arguments[0].click();", opt_el)
         except Exception as e:
-            self.log(f"[ATTENZIONE] Avviso: Selezione societa''{company}' non riuscita, proseguo: {e}")
+            self.log(f"⚠️ Avviso: Selezione societa''{company}' non riuscita, proseguo: {e}")
 
         try:
             accedi_btn = self.wait.until(EC.element_to_be_clickable(LoginLocators.LOGIN_BUTTON))
             accedi_btn.click()
         except (TimeoutException, ElementClickInterceptedException):
-            self.log("[ATTENZIONE] Click standard intercettato o timeout. Tento click JavaScript...")
+            self.log("⚠️ Click standard intercettato o timeout. Tento click JavaScript...")
             accedi_element = self.driver.find_element(*LoginLocators.LOGIN_BUTTON_FALLBACK)
             self.driver.execute_script("arguments[0].click();", accedi_element)
 
@@ -106,7 +106,7 @@ class LoginPage:
             wait_popup: WebDriverWait[WebDriver] = WebDriverWait(self.driver, 3)
             # Cerchiamo il bottone "Si" se appare un popup di attenzione
             yes_btn = wait_popup.until(EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES))
-            self.log("[ATTENZIONE] Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.")
+            self.log("⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.")
             yes_btn.click()
             time.sleep(1)
         except TimeoutException:
@@ -153,7 +153,7 @@ class LoginPage:
                     self.log("  Rilevata sessione attiva (skip login).")
                     return True
 
-                self.log("[ATTENZIONE] Username assente e sessione invalida/scaduta.")
+                self.log("⚠️ Username assente e sessione invalida/scaduta.")
                 self.log("[SYNC] Ricarico la pagina per forzare il form di login...")
                 self.driver.refresh()
                 self._attendi_scomparsa_overlay(10)
@@ -162,7 +162,7 @@ class LoginPage:
                     self._perform_login_form_action(username, password, company)
                     return True  # noqa: TRY300
                 except Exception as e:
-                    self.log(f"  Fallito recupero sessione: {e}")
+                    self.log(f"  Fallito recuperòsessione: {e}")
                     return False
 
             self.log("  Login completato con successo")

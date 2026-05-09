@@ -1,6 +1,6 @@
 """
 Bot TS - Contabilita Manager
-Gestione dell'importazione e archiviazione dati della Contabilit  Strumentale.
+Gestione dell'importazione e archiviazione dati della Contabilità Strumentale.
 """
 
 import logging

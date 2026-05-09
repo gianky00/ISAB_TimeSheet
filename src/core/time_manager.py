@@ -1,6 +1,6 @@
 """
 SyncroJob - Time Manager
-Gestisce il recupero dell'orario da fonti attendibili (Network Time).
+Gestisce il recuperòdell'orario da fonti attendibili (Network Time).
 """
 
 from datetime import UTC, datetime
@@ -33,7 +33,7 @@ def get_network_time(timeout: int = 2) -> datetime | None:
             return network_time
 
     except Exception as e:
-        print(f"[TIME] Errore recupero orario di rete: {e}")
+        print(f"[TIME] Errore recuperòorario di rete: {e}")
 
     return None
 

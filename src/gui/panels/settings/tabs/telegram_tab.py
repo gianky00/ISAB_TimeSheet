@@ -105,7 +105,7 @@ class SettingCard(QFrame):
 class TelegramTab(QWidget):
     """
     Tab dedicato all'integrazione con il bot Telegram.
-    Gestisce token, chat ID e fornisce strumenti di test per la connettivit  remota.
+    Gestisce token, chat ID e fornisce strumenti di test per la connettività remota.
     """
 
     settings_changed = Signal()
@@ -123,7 +123,7 @@ class TelegramTab(QWidget):
         self._setup_ui()
 
     def _setup_ui(self) -> None:  # noqa: PLR0915
-        """Configura il layout a card per credenziali e test di connettivit ."""
+        """Configura il layout a card per credenziali e test di connettività."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
@@ -212,7 +212,7 @@ class TelegramTab(QWidget):
         conn_layout.addWidget(self.lbl_status)
 
         card_conn = SettingCard(
-            "Test Connettivit ",
+            "Test Connettività",
             "Verifica che il bot possa inviare notifiche correttamente.",
             Icons.SPARKLES,
             conn_widget,

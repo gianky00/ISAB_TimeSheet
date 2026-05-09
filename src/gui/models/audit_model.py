@@ -75,7 +75,9 @@ class AuditTableModel(QAbstractTableModel):
             return 0
         return len(self.COLUMNS)
 
-    def data(self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: PLR0911
+    def data(
+        self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole
+    ) -> Any:
         """
         Fornisce i dati per la cella specificata in base al ruolo richiesto.
         Gestisce testo, icone, font e colori.

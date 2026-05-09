@@ -59,7 +59,7 @@ class EmployeeManager:
             return employees  # noqa: TRY300
 
         except Exception as e:
-            logger.error(f"Errore recupero dipendenti: {e}")  # noqa: TRY400
+            logger.error(f"Errore recuperòdipendenti: {e}")  # noqa: TRY400
             return []
 
     def get_employee_by_badge(self, badge: str) -> sqlite3.Row | None:

@@ -285,7 +285,7 @@ class DettagliOdAPanel(BaseBotPanel):
                 rows = params_override["rows"]
             elif item := params_override.get("single_item"):
                 rows = [item]
-                self.log_widget.append(f"[INFO] Esecuzione singola per: {item.get('Numero OdA', 'N/D')}")
+                self.log_widget.append(f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}")
 
         if not all([username, password, fornitore]):
             ToastManager.instance().show("Verifica i parametri.", "warning")

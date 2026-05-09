@@ -61,7 +61,7 @@ async def _handle_initial_pairing(
 
     if not pairing_code:
         if update.message:
-            await update.message.reply_text("[ATTENZIONE] Errore: Codice non trovato nell'app desktop.")
+            await update.message.reply_text("⚠️ Errore: Codice non trovato nell'app desktop.")
         return False
 
     if args and args[0] == pairing_code:
@@ -69,7 +69,7 @@ async def _handle_initial_pairing(
         config_manager.set_config_value("telegram_chat_id", chat_id)
         config_manager.set_config_value("telegram_pairing_code", "")
         if update.message:
-            await update.message.reply_text(f"[OK] Dispositivo associato!\nChat ID: {chat_id}")
+            await update.message.reply_text(f"✅ Dispositivo associato!\nChat ID: {chat_id}")
         return True
 
     if update.message:

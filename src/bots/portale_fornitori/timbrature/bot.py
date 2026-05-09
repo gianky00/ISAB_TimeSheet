@@ -100,7 +100,7 @@ class TimbratureBot(SeleniumBaseBot):
             self.fornitore = row.get("fornitore", self.fornitore)
 
         self.log(
-            f"[AVVIO] Inizio recupero timbrature per {self.fornitore} ({self.data_da} - {self.data_a})..."
+            f"[AVVIO] Inizio recuperòtimbrature per {self.fornitore} ({self.data_da} - {self.data_a})..."
         )
 
         if not self.driver:
@@ -111,7 +111,7 @@ class TimbratureBot(SeleniumBaseBot):
         # 1. Navigation
         self.update_step("nav", StepStatus.RUNNING)
         if not page.navigate_to_timbrature():
-            self.log("[ERRORE] Non riesco a raggiungere la sezione Timbrature.")
+            self.log("❌ Non riesco a raggiungere la sezione Timbrature.")
             self.update_step("nav", StepStatus.ERROR)
             return False
         self.update_step("nav", StepStatus.COMPLETED)
@@ -119,7 +119,7 @@ class TimbratureBot(SeleniumBaseBot):
         # 2. Filter & Download
         self.update_step("filter", StepStatus.RUNNING)
         if not page.set_filters(self.fornitore, self.data_da, self.data_a):
-            self.log("[ERRORE] Filtri non applicati correttamente.")
+            self.log("❌ Filtri non applicati correttamente.")
             self.update_step("filter", StepStatus.ERROR)
             return False
         self.update_step("filter", StepStatus.COMPLETED)
@@ -131,13 +131,13 @@ class TimbratureBot(SeleniumBaseBot):
         if excel_path:
             self.update_step("download", StepStatus.COMPLETED)
             self.update_step("import", StepStatus.RUNNING)
-            self.log("[OK] Report scaricato! Sto analizzando i dati...")
+            self.log("✅ Report scaricato! Sto analizzando i dati...")
             try:
                 self.storage.import_excel(excel_path, self.log)
                 self.log("   Dati salvati nel database con successo.")
                 self.update_step("import", StepStatus.COMPLETED)
             except Exception as e:
-                self.log(f"[ERRORE] Errore durante il salvataggio: {e}")
+                self.log(f"❌ Errore durante il salvataggio: {e}")
                 self.update_step("import", StepStatus.ERROR)
             finally:
                 # Cleanup
@@ -146,10 +146,10 @@ class TimbratureBot(SeleniumBaseBot):
                     with suppress(Exception):
                         p.unlink()
         else:
-            self.log("[ATTENZIONE] Non ho trovato dati o il download non  partito.")
+            self.log("⚠️ Non ho trovato dati o il download non  partito.")
             self.update_step("download", StepStatus.ERROR)
 
-        self.log("[INFO] Procedura conclusa.")
+        self.log("ℹ️ Procedura conclusa.")
         return True
 
     @staticmethod

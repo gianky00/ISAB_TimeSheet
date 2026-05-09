@@ -217,7 +217,7 @@ class SidebarWidget(QFrame):
         self.btn_home = SidebarButton("Home", get_asset_path(Icons.HOME))
         self.group_automazioni = SidebarGroup("Automazioni", get_asset_path(Icons.CPU))
         self.group_db = SidebarGroup("Database", get_asset_path(Icons.DATABASE))
-        self.group_contabilita = SidebarGroup("Contabilit ", get_asset_path(Icons.BAR_CHART))
+        self.group_contabilita = SidebarGroup("Contabilità", get_asset_path(Icons.BAR_CHART))
 
         self.main_btns = (
             self.btn_palette,
@@ -284,7 +284,7 @@ class SidebarWidget(QFrame):
             self.group_db.add_child(db_btn)
 
     def _setup_accounting_menu(self) -> None:
-        """Configura il sottomenu della contabilit ."""
+        """Configura il sottomenu della contabilità."""
         self.sub_strumentale = SidebarSubGroup("Strumentale")
         for n, i in (
             ("Preventivi", 0),

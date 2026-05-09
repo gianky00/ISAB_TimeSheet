@@ -114,7 +114,7 @@ class WorkflowController(QObject):
             QTimer.singleShot(200, panel._start_update)
 
     def run_sync_strumentale(self) -> None:
-        """Avvia la sincronizzazione contabilit  strumentale."""
+        """Avvia la sincronizzazione contabilità strumentale."""
         self.mw.navigation_controller.navigate_to(PageIndex.STRUMENTALE)
         panel: Any = getattr(self.mw, "contabilita_panel", None)
         if panel and hasattr(panel, "refresh_tabs"):

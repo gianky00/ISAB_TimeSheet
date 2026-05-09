@@ -227,7 +227,7 @@ class DatabaseManager:
             res = conn.execute("PRAGMA user_version").fetchone()
             return int(res[0]) if res else 0
         except Exception:
-            logger.exception("Errore recupero versione database")
+            logger.exception("Errore recuperòversione database")
             return 0
 
     def _set_db_version(self, conn: sqlite3.Connection, version: int) -> None:

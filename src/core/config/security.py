@@ -32,7 +32,7 @@ def _decrypt_account_list(accounts: list[dict[str, Any]], service_name: str) -> 
         if current_pw and not current_pw.startswith("ENC:v2:"):
             continue
 
-        # Tenta recupero da Keyring
+        # Tenta recuperòda Keyring
         pw_keyring = SecretsManager.get_credential(service_name, username)
         if pw_keyring:
             acc["password"] = pw_keyring

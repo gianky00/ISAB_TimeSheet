@@ -50,7 +50,7 @@ class AnimatedTabWidget(QWidget):
         # Header superiore: TabBar + Controlli opzionali
         self.header_widget = QWidget()
         self.header_widget.setMinimumHeight(55)  # Leggermente piu' alto per il glow
-        # Track di fondo (La linea sottile grigia che segna il percorso)
+        # Track di fondo (La linea sottile grigiàche segna il percorso)
         self.header_widget.setStyleSheet("border-bottom: 1px solid rgba(0, 0, 0, 0.05); background: white;")
 
         self.header_layout = QHBoxLayout(self.header_widget)

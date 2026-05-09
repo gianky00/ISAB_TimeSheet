@@ -328,7 +328,7 @@ class PrenotaBPPage:
             self._wait_for_overlay()
 
             now = datetime.now(UTC).astimezone()
-            data_oggi= now.strftime("%d/%m/%Y")
+            data_oggi = now.strftime("%d/%m/%Y")
             ora_attuale = now.strftime("%H%M")
             ora_fine = (now + timedelta(minutes=30)).strftime("%H%M")
 

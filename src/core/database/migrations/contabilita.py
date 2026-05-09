@@ -12,7 +12,7 @@ def mig_contabilita_v1(conn: sqlite3.Connection) -> None:
             year INTEGER NOT NULL,
             data_prev TEXT, mese TEXT, n_prev TEXT, totale_prev TEXT,
             attivita TEXT, tcl TEXT, odc TEXT, stato_attivita TEXT,
-            tipologia TEXT, ore_sp TEXT, resa TEXT, annotazioni TEXT,
+            tipologiàTEXT, ore_sp TEXT, resa TEXT, annotazioni TEXT,
             indirizzo_consuntivo TEXT, nome_file TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )

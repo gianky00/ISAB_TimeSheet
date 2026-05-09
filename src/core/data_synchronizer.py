@@ -19,7 +19,7 @@ class DataSynchronizer:
 
     @classmethod
     def sync_contabilita(cls, db_path: Path, import_data: list[Any], years: list[int]) -> tuple[int, int]:
-        """Sincronizza i dati della contabilit ."""
+        """Sincronizza i dati della contabilità."""
         from src.core.importers.contabilita import ContabilitaImporter  # noqa: PLC0415
 
         all_new_data = []

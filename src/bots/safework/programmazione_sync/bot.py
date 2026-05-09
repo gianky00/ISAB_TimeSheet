@@ -89,7 +89,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         self.log("   Navigazione in 'Visualizza Attivita''...")
         self._attendi_scomparsa_overlay()
         if not self.driver:
-            self.log("[ERRORE] Driver non inizializzato.")
+            self.log("❌ Driver non inizializzato.")
             self.update_step("nav", StepStatus.ERROR)
             return False
 
@@ -102,7 +102,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         # 2. Setup Filtri
         self.update_step("filter", StepStatus.RUNNING)
         if not self.attivita_page:
-            self.log("[ERRORE] Pagina Attivita'non inizializzata.")
+            self.log("❌ Pagina Attivita'non inizializzata.")
             self.update_step("filter", StepStatus.ERROR)
             return False
         self.attivita_page.pulisci_pdl()
@@ -133,7 +133,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
                 timeout=600,
             )
             if self.downloaded_file:
-                self.log(f"[OK] Report scaricato: {Path(self.downloaded_file).name}")
+                self.log(f"✅ Report scaricato: {Path(self.downloaded_file).name}")
                 self.update_step("search", StepStatus.COMPLETED)
                 return True
 

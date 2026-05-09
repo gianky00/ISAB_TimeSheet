@@ -107,7 +107,7 @@ class PlaywrightCaricoTSBot(PlaywrightBaseBot):
 
         self.update_step("extract", StepStatus.RUNNING)
         if page_obj.process_oda(oda):
-            self.log("[OK] OdA estratta con successo.")
+            self.log("✅ OdA estratta con successo.")
             self.update_step("extract", StepStatus.COMPLETED)
             self.update_step("cleanup", StepStatus.RUNNING)
             self.update_step("cleanup", StepStatus.COMPLETED)

@@ -59,7 +59,7 @@ class SafeworkBaseBot(SeleniumBaseBot):
         Tenta di cliccare un elemento gestendo overlay e intercettazioni.
         """
         if not self.driver:
-            self.log("[ERRORE] Driver non inizializzato.")
+            self.log("❌ Driver non inizializzato.")
             return
 
         if label:
@@ -75,7 +75,7 @@ class SafeworkBaseBot(SeleniumBaseBot):
                 el = self.driver.find_element(*locator)
                 self.driver.execute_script("arguments[0].click();", el)
             except Exception as e:
-                self.log(f"[ERRORE] Errore click su {label or locator}: {e}")
+                self.log(f"❌ Errore click su {label or locator}: {e}")
                 raise
 
     def _attendi_scomparsa_overlay(self, timeout_secondi: int | None = 120) -> bool:
@@ -108,11 +108,11 @@ class SafeworkBaseBot(SeleniumBaseBot):
                     By.XPATH,
                     ".//*[self::button or self::span or self::a][contains(text(), 'OK') or contains(text(), 'Si') or contains(text(), 'Yes') or @data-dismiss='modal']",
                 ).click()
-                self.log("[INFO] Modale gestita (OK/Annulla/Si/Yes).")
+                self.log("ℹ️ Modale gestita (OK/Annulla/Si/Yes).")
             except Exception:
-                # Fallback per idtxt E421C594 (Si della ricerca estesa che a volte riappare)
+                # Fallback per idtxt E421C594 (Sìdella ricerca estesa che a volte riappare)
                 modale.find_element(By.CSS_SELECTOR, "*[idtxt='E421C594']").click()
-                self.log("[INFO] Modale gestita via idtxt (Si).")
+                self.log("ℹ️ Modale gestita via idtxt (Si).")
 
         # No sleep needed: invisibility check is sufficient
         return True
@@ -137,7 +137,7 @@ class SafeworkBaseBot(SeleniumBaseBot):
                 EC.invisibility_of_element_located((By.XPATH, xpath_caricamento))
             )
         except TimeoutException:
-            self.log("[ATTENZIONE] Timeout attesa caricamento sistema (proseguo...)")
+            self.log("⚠️ Timeout attesa caricamento sistema (proseguo...)")
 
         self._attendi_scomparsa_overlay()
 

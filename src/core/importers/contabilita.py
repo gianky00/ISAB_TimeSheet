@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class ContabilitaImporter(BaseImporter):
-    """Importer specifico per i dati di Contabilit  ."""
+    """Importer specifico per i dati di Contabilità ."""
 
     # Mapping colonne Excel -> DB
     COLUMNS_MAPPING: ClassVar[dict[str, str]] = {
@@ -133,7 +133,7 @@ class ContabilitaImporter(BaseImporter):
 
     @classmethod
     def _process_single_sheet(cls, xls: Any, sheet_name: str, year: int) -> list[tuple[Any, ...]]:
-        """Processa un singolo foglio del file Excel di contabilit  ."""
+        """Processa un singolo foglio del file Excel di contabilità ."""
         try:
             pd_obj = cls._get_pd()
             header_row_idx = cls._find_header_row(xls, sheet_name)
@@ -166,7 +166,7 @@ class ContabilitaImporter(BaseImporter):
             try:
                 df = validate_contabilita(df)
             except Exception as e:
-                logger.warning(f"Validazione Pandera Contabilit  fallita (uso fallback): {e}")
+                logger.warning(f"Validazione Pandera Contabilità fallita (uso fallback): {e}")
 
             return list(df.itertuples(index=False, name=None))
         except Exception as e:
@@ -176,7 +176,7 @@ class ContabilitaImporter(BaseImporter):
 
     @classmethod
     def _clean_dataframe_types(cls, df: pd.DataFrame) -> pd.DataFrame:
-        """Pulisce e tipizza le colonne del DataFrame di contabilit  ."""
+        """Pulisce e tipizza le colonne del DataFrame di contabilità ."""
         pd_obj = cls._get_pd()
 
         for col in df.columns:

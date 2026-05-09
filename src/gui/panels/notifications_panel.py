@@ -326,7 +326,7 @@ class NotificationsPanel(QWidget):
         self._schedule_refresh()
 
     def _sort_notifications(self, notifs: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Ordina la lista in base alla strategia selezionata."""
+        """Ordina la lista in base alla strategiàselezionata."""
         if self.current_sort == "date_desc":
             return sorted(notifs, key=lambda n: n.get("timestamp", ""), reverse=True)
         if self.current_sort == "date_asc":
@@ -396,7 +396,7 @@ class NotificationsPanel(QWidget):
         if self.current_filter == "all":
             icon_text, title, subtitle = "📭", "Nessuna notifica", "Le tue notifiche appariranno qui"
         elif self.current_filter == "unread":
-            icon_text, title, subtitle = "[OK]", "Tutto a posto!", "Nessuna notifica da leggere"
+            icon_text, title, subtitle = "✅", "Tutto a posto!", "Nessuna notifica da leggere"
         elif self.current_filter == "error":
             icon_text, title, subtitle = "🎉", "Sistema funzionante!", "Nessun errore registrato"
         else:

@@ -1,7 +1,7 @@
 """
 SyncroJob - Navigation Controller
 Gestore centrale del routing e della navigazione tra i diversi pannelli dell'interfaccia utente.
-Implementa una strategia di 'Lazy Loading' (caricamento differito) per ridurre drasticamente i tempi di startup
+Implementa una strategiàdi 'Lazy Loading' (caricamento differito) per ridurre drasticamente i tempi di startup
 dell'applicazione, inizializzando i moduli funzionali solo quando vengono effettivamente richiesti dall'utente.
 """
 
@@ -219,7 +219,7 @@ class NavigationController(QObject):
         logger.info("Pannello index %s reintegrato nello stack.", index)
 
     def _ensure_panel_initialized(self, index: int) -> None:
-        """Strategia di Lazy Loading basata sulla PanelFactory."""
+        """Strategiàdi Lazy Loading basata sulla PanelFactory."""
         try:
             panel = self.stack.widget(index)
 

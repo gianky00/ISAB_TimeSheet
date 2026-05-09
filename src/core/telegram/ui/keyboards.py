@@ -22,7 +22,7 @@ class TelegramUI:
                     InlineKeyboardButton("    Database", callback_data="nav_db"),
                 ],
                 [
-                    InlineKeyboardButton("[INFO] Lyra AI", callback_data="nav_lyra"),
+                    InlineKeyboardButton("ℹ️ Lyra AI", callback_data="nav_lyra"),
                     InlineKeyboardButton("    Utility & Stato", callback_data="nav_utility"),
                 ],
             ]
@@ -121,7 +121,7 @@ class TelegramUI:
     @staticmethod
     def get_pdl_menu(merge_all: bool) -> InlineKeyboardMarkup:
         """Returns the PDL management menu with dynamic merge state."""
-        merge_icon = "[OK]" if merge_all else "[ERRORE]"
+        merge_icon = "✅" if merge_all else "❌"
         keyboard = [
             [InlineKeyboardButton("  Inserisci", callback_data="input_pdl")],
             [
@@ -215,8 +215,8 @@ class TelegramUI:
         suffix = "_noprint" if noprint else "_print"
         return InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("[OK] S , invia", callback_data=f"confirm_merge_yes{suffix}")],
-                [InlineKeyboardButton("[ERRORE] No", callback_data=f"confirm_merge_no{suffix}")],
+                [InlineKeyboardButton("✅ S , invia", callback_data=f"confirm_merge_yes{suffix}")],
+                [InlineKeyboardButton("❌ No", callback_data=f"confirm_merge_no{suffix}")],
                 [TelegramUI.get_back_button("menu_pdl")],
             ]
         )

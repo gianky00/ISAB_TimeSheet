@@ -15,7 +15,9 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
         super().__init__(tree_view)
         self.tree = tree_view
 
-    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex) -> None:  # noqa: C901
+    def paint(
+        self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex
+    ) -> None:
         """Personalizza il disegno delle celle, applicando colori di stato e merge testuale per le rilascio."""
         # 1. Applica colorazione per righe parent in base a STATO e Indicatore Rilascio
         if not index.parent().isValid():  # Riga parent
@@ -23,6 +25,7 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
             model = self.tree.model()
             if hasattr(model, "item"):
                 from PySide6.QtGui import QStandardItemModel  # noqa: PLC0415
+
                 std_model = cast("QStandardItemModel", model)
                 data_item = std_model.item(index.row(), 0)
                 if data_item:
@@ -33,7 +36,7 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
 
                         # Logica colorazione
                         if "Cancellato" in stato or "cancellato" in stato:
-                            # [ROSSO] ROSSO per stato Cancellato
+                            # ❌ ROSSO per stato Cancellato
                             painter.fillRect(option.rect, QColor(COLORS["bg_error_pastel"]))
                         elif "In attesa di Rilascio" in ind_rilascio or "in attesa" in ind_rilascio.lower():
                             # [ARANCIONE] ARANCIONE per In attesa di Rilascio

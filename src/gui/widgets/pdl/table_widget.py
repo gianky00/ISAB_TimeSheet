@@ -102,7 +102,7 @@ class ProgrammazioneTableWidget(StandardTable):
 
             pdl_item = QTableWidgetItem(res["pdl"])
             pdl_item.setData(Qt.ItemDataRole.UserRole, res["pdl"])
-            pdl_item.setToolTip("Doppio click per cronologia interventi")
+            pdl_item.setToolTip("Doppio click per cronologiàinterventi")
             self.setItem(row_idx, 3, pdl_item)
 
             self.setItem(row_idx, 4, QTableWidgetItem(res.get("descrizione", "")))

@@ -111,7 +111,7 @@ class DettagliOdABot(SeleniumBaseBot):
                 callback(i, res, "" if res else "Errore download")
 
         self.update_step("download", StepStatus.COMPLETED if success == len(rows) else StepStatus.ERROR)
-        self.log("[INFO] Procedura conclusa.")
+        self.log("ℹ️ Procedura conclusa.")
         return success == len(rows)
 
     def _prepare_rows(self, data: Any) -> list[dict[str, Any]]:
@@ -125,7 +125,7 @@ class DettagliOdABot(SeleniumBaseBot):
             rows = data
 
         if not rows:
-            self.log("[INFO] Nessun OdA specificato. Avvio ricerca per lista generale.")
+            self.log("ℹ️ Nessun OdA specificato. Avvio ricerca per lista generale.")
             # Restituiamo una riga vuota per innescare la ricerca generale nel portale
             return [{"numero_oda": "", "numero_contratto": ""}]
 
@@ -150,14 +150,14 @@ class DettagliOdABot(SeleniumBaseBot):
 
         self.update_step("nav", StepStatus.RUNNING)
         if not page.navigate_to_dettagli(is_first_row=(index == 1)):
-            self.log("[ERRORE] Problema nella navigazione.")
+            self.log("❌ Problema nella navigazione.")
             self.update_step("nav", StepStatus.ERROR)
             return False
         self.update_step("nav", StepStatus.COMPLETED)
 
         self.update_step("supplier", StepStatus.RUNNING)
         if not page.setup_supplier(self.fornitore):
-            self.log("[ERRORE] Fornitore non selezionabile.")
+            self.log("❌ Fornitore non selezionabile.")
             self.update_step("supplier", StepStatus.ERROR)
             return False
         self.update_step("supplier", StepStatus.COMPLETED)
@@ -189,8 +189,8 @@ class DettagliOdABot(SeleniumBaseBot):
                 ok, msg, added, _ = future.result()
 
             if ok:
-                self.log(f"[OK] Importazione completata: {msg} (Upd/Ins: {added})")
+                self.log(f"✅ Importazione completata: {msg} (Upd/Ins: {added})")
             else:
-                self.log(f"[ATTENZIONE] Errore importazione: {msg}")
+                self.log(f"⚠️ Errore importazione: {msg}")
         except Exception as e:
-            self.log(f"[ERRORE] Errore critico durante l'importazione database: {e}")
+            self.log(f"❌ Errore critico durante l'importazione database: {e}")
