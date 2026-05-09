@@ -4,7 +4,7 @@ Sfondo animato con particelle, connessioni neurali, circuiti e convergenza final
 """
 
 import math
-import random
+import secrets
 
 from PySide6.QtCore import QPoint, Qt, QTimer
 from PySide6.QtGui import (
@@ -35,16 +35,16 @@ class Particle:
         self.phase: float = 0.0
         self.w, self.h = w, h
         self.reset(w, h)
-        self.y = random.uniform(0, h)
+        self.y = float(secrets.randbelow(h))
 
     def reset(self, w: int, h: int) -> None:
         """Reset particle to bottom with random properties."""
-        self.x = random.uniform(0, w)
+        self.x = float(secrets.randbelow(w))
         self.y = float(h + 20)
-        self.size = random.uniform(1.2, 4.0)
-        self.speed = random.uniform(0.2, 0.7)
-        self.opacity = random.uniform(0.15, 0.45)
-        self.phase = random.uniform(0, math.pi * 2)
+        self.size = 1.2 + (secrets.randbelow(2800) / 1000.0)  # 1.2 to 4.0
+        self.speed = 0.2 + (secrets.randbelow(500) / 1000.0)  # 0.2 to 0.7
+        self.opacity = 0.15 + (secrets.randbelow(300) / 1000.0)  # 0.15 to 0.45
+        self.phase = (secrets.randbelow(6283) / 1000.0)  # 0 to 6.283
         self.w, self.h = w, h
 
     def update(self) -> None:
@@ -130,8 +130,8 @@ class ParticleBackground(QWidget):
                 p.update()
 
         # Gestione impulsi neurali
-        if random.random() < 0.12 and len(self.particles) > 1:
-            p1 = float(random.randint(0, len(self.particles) - 1))
+        if secrets.randbelow(100) < 12 and len(self.particles) > 1:
+            p1 = float(secrets.randbelow(len(self.particles)))
             p2 = float((int(p1) + 1) % len(self.particles))
             self._pulses.append([p1, p2, 0.0])
 
@@ -170,11 +170,12 @@ class ParticleBackground(QWidget):
         p.setPen(QPen(QColor(52, 152, 219, 15), 1))
 
         grid = 40
+        choices = ["H", "V", "D"]
         for x in range(0, w, grid):
             for y in range(0, h, grid):
-                if random.random() < 0.3:
+                if secrets.randbelow(100) < 30:
                     # Traccia a 90 o 45 gradi
-                    mode = random.choice(["H", "V", "D"])
+                    mode = choices[secrets.randbelow(len(choices))]
                     if mode == "H":
                         p.drawLine(x, y, x + grid, y)
                     elif mode == "V":
@@ -182,7 +183,7 @@ class ParticleBackground(QWidget):
                     elif mode == "D":
                         p.drawLine(x, y, int(x + grid / 2), int(y + grid / 2))
 
-                    if random.random() < 0.2:
+                    if secrets.randbelow(100) < 20:
                         # Nodo circolare
                         p.setBrush(QColor(52, 152, 219, 25))
                         p.drawEllipse(QPoint(x, y), 2, 2)

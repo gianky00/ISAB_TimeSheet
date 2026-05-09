@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, no-any-return"
 """
 Selenium Wait Helper Utilities
 ===============================
@@ -15,6 +14,7 @@ Autore: Refactoring Sprint 2026-01
 import time
 from collections.abc import Callable, Iterable
 from contextlib import suppress
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +30,16 @@ from selenium.webdriver.support.ui import WebDriverWait
 from src.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+@dataclass
+class PollConfig:
+    """Configurazione per il polling di file."""
+
+    directory: Path | str
+    pattern: str | list[str] = "*.xlsx"
+    timeout: int = 120
+    poll_interval: float = 1.0
 
 
 # ============================================================================
@@ -292,20 +302,14 @@ def _filter_valid_files(files: list[Path], excludes: list[str], min_age: float |
     return valid
 
 
-def poll_for_new_file(
-    directory: Path | str,
-    files_before: Iterable[Path | str],
-    pattern: str | list[str] = "*.xlsx",
-    timeout: int = 120,
-    poll_interval: float = 1.0,
-) -> str | None:
+def poll_for_new_file(config: PollConfig, files_before: Iterable[Path | str]) -> str | None:
     """
     Attende che appaia un NUOVO file rispetto a uno snapshot precedente.
     Supporta pattern multipli e ignora file temporanei pre-esistenti.
     """
-    directory_path = Path(directory)
+    directory_path = Path(config.directory)
     snapshot_map = _create_snapshot_map(directory_path, files_before)
-    patterns = [pattern] if isinstance(pattern, str) else pattern
+    patterns = [config.pattern] if isinstance(config.pattern, str) else config.pattern
 
     start_time = time.time()
     logger.info(
@@ -314,10 +318,10 @@ def poll_for_new_file(
 
     temp_snapshot = _get_temp_files_snapshot(directory_path)
 
-    while time.time() - start_time < timeout:
+    while time.time() - start_time < config.timeout:
         try:
             if _is_download_in_progress(directory_path, temp_snapshot, start_time):
-                time.sleep(poll_interval)
+                time.sleep(config.poll_interval)
                 continue
 
             detected_file = _detect_new_or_modified_file(directory_path, patterns, snapshot_map)
@@ -329,10 +333,10 @@ def poll_for_new_file(
         except Exception as e:
             logger.debug(f"Errore durante scansione: {e}")
 
-        time.sleep(poll_interval)
+        time.sleep(config.poll_interval)
 
     logger.warning(
-        f"Timeout attesa nuovo file in {directory_path} (Pattern: {patterns}, Timeout: {timeout}s)."
+        f"Timeout attesa nuovo file in {directory_path} (Pattern: {patterns}, Timeout: {config.timeout}s)."
     )
     return None
 

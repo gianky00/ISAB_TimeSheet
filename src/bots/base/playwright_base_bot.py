@@ -15,7 +15,7 @@ from typing import Any
 
 from playwright.sync_api import Browser, BrowserContext, Page, Playwright, sync_playwright
 
-from src.bots.base.base_bot import BaseBot
+from src.bots.base.base_bot import BaseBot, BotConfig
 from src.bots.base.playwright_login_page import PlaywrightLoginPage
 from src.bots.portale_fornitori.common.locators import CommonLocators
 from src.core import config_manager
@@ -39,23 +39,17 @@ class PlaywrightBaseBot(BaseBot, ABC):
         self,
         username: str,
         password: str,
-        headless: bool = False,
-        timeout: int = Timeouts.DEFAULT,
-        download_path: str = "",
-        company: str = "ISAB",
+        config: BotConfig | None = None,
     ) -> None:
         """
-        Inizializza le propriet  fondamentali del bot Playwright.
+        Inizializza le proprietà fondamentali del bot Playwright.
 
         Args:
           username: Nome utente per il login.
           password: Password per il login.
-          headless: Se True, avvia il browser in modalità nascosta.
-          timeout: Tempo massimo di attesa per le operazioni (secondi).
-          download_path: Percorso per il salvataggio dei file scaricati.
-          company: Società da selezionare al login (ISAB o PSER).
+          config: Istanza di BotConfig con le impostazioni del bot.
         """
-        super().__init__(username, password, headless, timeout, download_path, company=company)
+        super().__init__(username, password, config)
         self.playwright: Playwright | None = None
         self.browser: Browser | None = None
         self.context: BrowserContext | None = None

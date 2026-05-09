@@ -65,8 +65,8 @@ class ModernButton(QPushButton):
     def _setup_animation(self) -> None:
         """Inizializza l'animazione di opacità per l'effetto hover."""
         self._anim = QPropertyAnimation(self, b"hover_opacity")
-        ANIM_DURATION_MS = 150
-        self._anim.setDuration(ANIM_DURATION_MS)
+        anim_duration_ms = 150
+        self._anim.setDuration(anim_duration_ms)
         self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
     def showEvent(self, event: QShowEvent) -> None:
@@ -87,19 +87,19 @@ class ModernButton(QPushButton):
 
     def enterEvent(self, event: QEnterEvent) -> None:
         """Avvia l'animazione hover all'ingresso del mouse."""
-        START_OPACITY = 0.0
-        END_OPACITY = 0.1
-        self._anim.setStartValue(START_OPACITY)
-        self._anim.setEndValue(END_OPACITY)
+        start_opacity = 0.0
+        end_opacity = 0.1
+        self._anim.setStartValue(start_opacity)
+        self._anim.setEndValue(end_opacity)
         self._anim.start()
         super().enterEvent(event)
 
     def leaveEvent(self, event: QEvent) -> None:
         """Avvia l'animazione di uscita al movimento del mouse."""
-        START_OPACITY = 0.1
-        END_OPACITY = 0.0
-        self._anim.setStartValue(START_OPACITY)
-        self._anim.setEndValue(END_OPACITY)
+        start_opacity = 0.1
+        end_opacity = 0.0
+        self._anim.setStartValue(start_opacity)
+        self._anim.setEndValue(end_opacity)
         self._anim.start()
         super().leaveEvent(event)
 

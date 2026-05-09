@@ -8,6 +8,8 @@ come Telegram e Google Gemini.
 import requests
 from PySide6.QtCore import QThread, Signal
 
+HTTP_OK = 200
+
 
 class ConnectionTestWorker(QThread):
     """
@@ -45,7 +47,7 @@ class ConnectionTestWorker(QThread):
         url = f"https://api.telegram.org/bot{self.token_or_key}/getMe"
         resp = requests.get(url, timeout=10)
 
-        if resp.status_code == 200:
+        if resp.status_code == HTTP_OK:
             data = resp.json()
             if data.get("ok"):
                 bot_name = data["result"]["first_name"]
@@ -62,7 +64,7 @@ class ConnectionTestWorker(QThread):
         url = f"https://generativelanguage.googleapis.com/v1beta/models?key={self.token_or_key}"
         resp = requests.get(url, timeout=10)
 
-        if resp.status_code == 200:
+        if resp.status_code == HTTP_OK:
             self.result_ready.emit(True, "Successo", "APiùKey valida! Connessione stabilita.")
         else:
             self.result_ready.emit(

@@ -4,6 +4,7 @@ from PySide6.QtCore import QPoint, QSize, Qt, Signal
 from PySide6.QtWidgets import (
     QGridLayout,
     QLabel,
+    QMenu,
     QPushButton,
     QSizePolicy,
     QVBoxLayout,
@@ -12,6 +13,7 @@ from PySide6.QtWidgets import (
 
 from src.core.config_manager import get_config_value
 from src.core.constants import Icons
+from src.gui.dialogs.quick_actions_config import QuickActionsConfigDialog
 from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -258,10 +260,6 @@ class QuickActions(QWidget):
 
     def _show_context_menu(self, pos: QPoint) -> None:
         """Mostra menu contestuale per personalizzare."""
-        from PySide6.QtWidgets import QMenu
-
-        from src.gui.dialogs.quick_actions_config import QuickActionsConfigDialog
-
         menu = QMenu(self)
 
         # Stile light theme per il menu contestuale

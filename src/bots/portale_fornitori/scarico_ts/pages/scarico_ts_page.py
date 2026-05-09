@@ -20,6 +20,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.portale_fornitori.scarico_ts.locators import ScaricoTSLocators
 from src.core.constants import Timeouts
+from src.utils.helpers import cleanup_chrome_temp_files
 
 
 class ScaricoTSPage:
@@ -153,8 +154,6 @@ class ScaricoTSPage:
 
     def _cleanup_temp_files(self, directory: Path) -> None:
         """Rimuove residui temporanei di Chromium."""
-        from src.utils.helpers import cleanup_chrome_temp_files
-
         removed = cleanup_chrome_temp_files(directory)
         for f_name in removed:
             self.log(f" [DEBUG] Rimosso residuo download: {f_name}")

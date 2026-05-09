@@ -7,7 +7,9 @@ from collections.abc import Sequence
 from typing import Any, cast
 
 from PySide6.QtGui import QCursor
-from PySide6.QtWidgets import QApplication, QComboBox, QToolTip
+from PySide6.QtWidgets import QApplication, QComboBox as QtQComboBox, QToolTip
+
+from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 
 
 class ClipboardMixin:
@@ -91,13 +93,11 @@ class ClipboardMixin:
     def _get_cell_value(self, row: int, col: int) -> str:
         widget = self.cellWidget(row, col)  # type: ignore
         if widget:
-            from PySide6.QtWidgets import QComboBox
-
             # Se  direttamente una QComboBox
-            if isinstance(widget, QComboBox):
+            if isinstance(widget, QtQComboBox):
                 return str(widget.currentText())
             # Se  un container che ospita una QComboBox
-            cb = widget.findChild(QComboBox)
+            cb = widget.findChild(QtQComboBox)
             if cb:
                 return str(cb.currentText())
 
@@ -109,15 +109,13 @@ class ClipboardMixin:
 
     def _paste_cell_data(self, row: int, col: int, text: str) -> None:
         widget = self.cellWidget(row, col)  # type: ignore
-        if isinstance(widget, QComboBox):
+        if isinstance(widget, QtQComboBox):
             idx = widget.findText(text)
             if idx >= 0:
                 widget.setCurrentIndex(idx)
         else:
             item = self.item(row, col)  # type: ignore
             if not item:
-                from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
-
                 self.setItem(row, col, SortableTableWidgetItem(text))  # type: ignore
             else:
                 item.setText(text)

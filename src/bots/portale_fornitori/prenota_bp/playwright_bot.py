@@ -11,6 +11,7 @@ from typing import Any, ClassVar
 
 from src.bots.base.base_bot import StepStatus
 from src.bots.base.playwright_base_bot import PlaywrightBaseBot
+from src.core.constants import Business
 
 from .playwright_page import PlaywrightPrenotaBPPage
 
@@ -62,7 +63,6 @@ class PlaywrightPrenotaBPBot(PlaywrightBaseBot):
 
         super().__init__(username=username, password=password, **kwargs)
         current_year = datetime.now(UTC).astimezone().year
-        from src.core.constants import Business
 
         self.data_da = data_da or f"01.01.{current_year}"
         self.data_a = data_a or f"31.12.{current_year}"

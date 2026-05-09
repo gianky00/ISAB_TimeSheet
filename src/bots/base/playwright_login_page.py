@@ -91,11 +91,12 @@ class PlaywrightLoginPage(PlaywrightBasePage):
         Esegue il login al portale ISAB in modo rapido.
         """
         self.log(f"Navigazione a: {self.isab_url}")
+        http_error_code = 400
 
         try:
             # Caricamento pagina (domcontentloaded  sufficiente)
             response = self.page.goto(self.isab_url, wait_until="domcontentloaded")
-            if response and response.status >= 400:
+            if response and response.status >= http_error_code:
                 self.log(f"  Errore HTTP {response.status}")
                 return False
 

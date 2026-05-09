@@ -17,7 +17,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
-from src.bots.base.wait_helpers import poll_for_new_file
+from src.bots.base.wait_helpers import PollConfig, poll_for_new_file
 from src.bots.portale_fornitori.common.locators import CommonLocators, LoginLocators
 from src.bots.portale_fornitori.dettagli_oda.locators import DettagliOdALocators
 from src.core.constants import Timeouts
@@ -58,8 +58,8 @@ class DettagliOdAPage:
 
         if wait_for_appearance:
             with suppress(TimeoutException):
-                WAIT_FOR_APPEARANCE_SEC = 2
-                WebDriverWait(self.driver, WAIT_FOR_APPEARANCE_SEC).until(
+                wait_for_appearance_sec = 2
+                WebDriverWait(self.driver, wait_for_appearance_sec).until(
                     EC.visibility_of_element_located((By.XPATH, xpath))
                 )
 
@@ -204,8 +204,8 @@ class DettagliOdAPage:
                 if ":" in count_text:
                     count = int(count_text.split(":")[-1].strip())
                     self.log(f" Risultati trovati: {count}")
-                    EMPTY_COUNT = 0
-                    if count == EMPTY_COUNT:
+                    empty_count = 0
+                    if count == empty_count:
                         self.log(" Nessun risultato. Salto esportazione.")
                         self._close_all_tabs()
                         return None
@@ -284,11 +284,14 @@ class DettagliOdAPage:
             self._wait_for_overlay(wait_for_appearance=True)
 
             # Attesa download tramite helper centralizzato robusto
-            res_path = poll_for_new_file(
+            config = PollConfig(
                 directory=source_dir,
-                files_before=files_before,
                 pattern=["*.xlsx", "*.xls"],
                 timeout=Timeouts.DOWNLOAD,
+            )
+            res_path = poll_for_new_file(
+                config=config,
+                files_before=files_before,
             )
 
             if not res_path:

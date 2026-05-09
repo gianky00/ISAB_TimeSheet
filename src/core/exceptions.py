@@ -31,3 +31,7 @@ class DatabaseError(SyncroJobError):
 
 class ConfigError(SyncroJobError):
     """Errore nella configurazione o nei percorsi."""
+
+
+class ValidationError(SyncroJobError):
+    """Errore di validazione dei dati."""

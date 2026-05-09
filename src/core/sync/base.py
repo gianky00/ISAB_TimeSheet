@@ -9,6 +9,8 @@ import sqlite3
 from dataclasses import dataclass
 from typing import Any
 
+from src.core.exceptions import ValidationError
+
 
 @dataclass
 class PartitionConfig:
@@ -25,7 +27,7 @@ class BaseSyncEngine:
     def _validate_identifier(identifier: str) -> str:
         """Protegge da SQL Injection validando nomi di tabelle e colonne."""
         if not re.match(r"^[a-zA-Z0-9_]+$", identifier):
-            raise ValueError("Identificatore non valido")
+            raise ValidationError("Invalid identifier")  # noqa: TRY003
         return identifier
 
     @staticmethod

@@ -4,6 +4,7 @@ SyncroJob - Playwright Dettagli OdA Bot
 Versione Playwright del bot per lo scarico dei dettagli OdA.
 """
 
+import concurrent.futures
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
@@ -13,6 +14,7 @@ from src.bots.base.playwright_base_bot import PlaywrightBaseBot
 from src.bots.portale_fornitori.dettagli_oda.playwright_page import (
     PlaywrightDettagliOdAPage,
 )
+from src.core.constants import Business
 from src.core.oda_manager import OdaManager
 
 
@@ -61,7 +63,6 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
         """Inizializza il bot con credenziali e filtri temporali."""
         super().__init__(username, password, **kwargs)
         current_year = datetime.now(UTC).astimezone().year
-        from src.core.constants import Business
 
         self.data_da = data_da or f"01.01.{current_year}"
         self.data_a = data_a or f"31.12.{current_year}"
@@ -157,7 +158,6 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
 
     def _import_oda_to_db(self, downloaded_path: Path) -> None:
         """Innesca l'importazione dei dati Excel nel database Storico OdA."""
-        import concurrent.futures
 
         try:
             self.log(f"   Avvio importazione in Storico OdA da {downloaded_path.name}...")

@@ -34,27 +34,31 @@ class SeleniumBaseBot(BaseBot, ABC):
     Gestisce l'inizializzazione di ChromeDriver, le opzioni del browser e le attese.
     """
 
-    def __init__(
-        self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = Timeouts.DEFAULT,
-        download_path: str = "",
-        company: str = "ISAB",
-    ) -> None:
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
+
+# ... (rest of imports)
+
+class SeleniumBaseBot(BaseBot, ABC):
+    """
+    Classe base per i bot basati su Selenium.
+    Gestisce l'inizializzazione di ChromeDriver, le opzioni del browser e le attese.
+    """
+
+    def __init__(self, config: SeleniumBotConfig) -> None:
         """
-        Inizializza le propriet  fondamentali del bot Selenium.
+        Inizializza le proprietà fondamentali del bot Selenium usando un oggetto di configurazione.
 
         Args:
-          username: Nome utente per il login.
-          password: Password per il login.
-          headless: Se True, avvia il browser in modalità nascosta.
-          timeout: Tempo massimo di attesa per le operazioni (secondi).
-          download_path: Percorso per il salvataggio dei file scaricati.
-          company: Società da selezionare al login (ISAB o PSER).
+          config: Oggetto di configurazione SeleniumBotConfig.
         """
-        super().__init__(username, password, headless, timeout, download_path, company=company)
+        super().__init__(
+            config.username,
+            config.password,
+            config.headless,
+            config.timeout,
+            config.download_path,
+            company=config.company,
+        )
         self.driver: webdriver.Chrome | None = None
         self.wait: WebDriverWait[webdriver.Chrome] | None = None
         self.popup_wait: WebDriverWait[webdriver.Chrome] | None = None

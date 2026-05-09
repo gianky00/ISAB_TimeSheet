@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from shiboken6 import Shiboken
 
 from src.gui.styles import COLORS
 
@@ -141,9 +142,6 @@ class EnterpriseLogConsole(QWidget):
 
         bar = self.scroll_container.verticalScrollBar()
         if bar:
-            # Fix: Ensure bar is not deleted when timer fires (prevents RuntimeError in tests)
-            from shiboken6 import Shiboken
-
             def safe_scroll() -> None:
                 """Esegue lo scroll in modo sicuro per evitare crash UI."""
                 if Shiboken.isValid(bar):

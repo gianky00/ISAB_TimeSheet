@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-any-unimported, no-untyped-call"
 """
 SyncroJob - Weather Widget
 Visualizza le previsioni meteo locali (Priolo Gargallo) utilizzando il servizio dedicato.
@@ -25,6 +26,11 @@ from src.gui.widgets.modern_card import ModernCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
+
+# Soglie Qualità Aria
+AQI_MODERATE = 40
+AQI_UNHEALTHY_SENSITIVE = 60
+AQI_UNHEALTHY = 80
 
 # Stile forzato per evitare il bug della Dark Mode / Tooltip nero in PySide6.
 TOOLTIP_CSS = f"""
@@ -471,15 +477,11 @@ class WeatherWidget(ModernCard):
             aqi_color = COLORS["success_green"]
             aqi_val = 0 if aqi == "--" else int(aqi)
 
-            aqi_moderate = 40
-            aqi_unhealthy_sensitive = 60
-            aqi_unhealthy = 80
-
-            if aqi_val > aqi_moderate:
+            if aqi_val > AQI_MODERATE:
                 aqi_color = COLORS["warning_yellow"]
-            if aqi_val > aqi_unhealthy_sensitive:
+            if aqi_val > AQI_UNHEALTHY_SENSITIVE:
                 aqi_color = COLORS["warning_orange"]
-            if aqi_val > aqi_unhealthy:
+            if aqi_val > AQI_UNHEALTHY:
                 aqi_color = COLORS["error_red"]
 
             i_lbl = self.pill_aqi.findChild(QLabel, "pill_icon")

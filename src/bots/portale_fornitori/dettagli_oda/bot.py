@@ -12,7 +12,8 @@ from src.bots.base.selenium_base_bot import SeleniumBaseBot
 from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
     DettagliOdAPage,
 )
-from src.core.constants import Business, OdaManager
+from src.core.constants import Business
+from src.core.oda_manager import OdaManager
 
 
 class DettagliOdABot(SeleniumBaseBot):
