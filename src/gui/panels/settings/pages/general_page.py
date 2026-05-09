@@ -1,7 +1,7 @@
 from typing import Any
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import (
     QComboBox,
     QHBoxLayout,
     QLabel,
@@ -20,7 +20,7 @@ from src.gui.widgets.core_widgets import (
 class GeneralPage(QWidget):
     """Pagina impostazioni generali e browser."""
 
-    settings_changed = pyqtSignal()
+    settings_changed = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -45,19 +45,19 @@ class GeneralPage(QWidget):
         self.engine_combo.setMinimumHeight(40)
         self.engine_combo.setMinimumWidth(150)
         style_input(self.engine_combo)
-        self.engine_combo.currentIndexChanged.connect(self.settings_changed.emit)
+        self.engine_combo.currentIndexChanged.connect(lambda: self.settings_changed.emit())
         engine_layout.addWidget(self.engine_combo)
         engine_layout.addStretch()
         gen_layout.addLayout(engine_layout)
 
         self.headless_check = StandardCheckBox("Nascondi browser dei bot")
         self.headless_check.setToolTip(
-            "Se attivato, il browser verrà eseguito in background senza mostrare la finestra."
+            "Se attivato, il browser verr  eseguito in background senza mostrare la finestra."
         )
         self.headless_check.setStyleSheet(
             f"QCheckBox {{ padding: 5px; font-size: 15px; font-weight: bold; color: {COLORS['magenta_pink']}; }}"
         )
-        self.headless_check.stateChanged.connect(self.settings_changed.emit)
+        self.headless_check.stateChanged.connect(lambda: self.settings_changed.emit())
         gen_layout.addWidget(self.headless_check)
         layout.addWidget(self.general_group)
 
@@ -76,7 +76,7 @@ class GeneralPage(QWidget):
         self.timeout_spin.setMinimumHeight(40)
         self.timeout_spin.setMinimumWidth(100)
         style_input(self.timeout_spin)
-        self.timeout_spin.valueChanged.connect(self.settings_changed.emit)
+        self.timeout_spin.valueChanged.connect(lambda: self.settings_changed.emit())
 
         timeout_layout.addWidget(self.timeout_spin)
         timeout_layout.addStretch()

@@ -1,9 +1,9 @@
 import logging
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
     QHBoxLayout,
@@ -44,16 +44,16 @@ class EmployeeDetailView(QWidget):
         header_card.setGraphicsEffect(header_shadow)
         header_card.setStyleSheet(
             f"""
-            QFrame {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["primary_blue"]}, stop:1 {COLORS["primary_dark"]});
-                border-radius: 12px;
-            }}
-        """
+      QFrame {{
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["primary_blue"]}, stop:1 {COLORS["primary_dark"]});
+        border-radius: 12px;
+      }}
+    """
         )
         header_layout = QVBoxLayout(header_card)
         header_layout.setContentsMargins(18, 12, 18, 12)
 
-        title_label = QLabel("📋 SCHEDA DIPENDENTE")
+        title_label = QLabel("   SCHEDA DIPENDENTE")
         title_label.setStyleSheet(
             f"font-size: 20px; font-weight: bold; color: {COLORS['bg_white']}; letter-spacing: 1px;"
         )
@@ -71,7 +71,7 @@ class EmployeeDetailView(QWidget):
         detail_layout.setSpacing(8)
 
         # 1. Dati Personali
-        personal_card, personal_layout = create_info_card("👤 Dati Personali")
+        personal_card, personal_layout = create_info_card("   Dati Personali")
 
         row1 = QHBoxLayout()
         row1.setSpacing(10)
@@ -89,7 +89,7 @@ class EmployeeDetailView(QWidget):
         detail_layout.addWidget(personal_card)
 
         # 2. Informazioni Lavorative
-        work_card, work_layout = create_info_card("💼 Informazioni Lavorative")
+        work_card, work_layout = create_info_card("   Informazioni Lavorative")
         row3 = QHBoxLayout()
         row3.setSpacing(10)
         row3.addWidget(self._create_detail_field("Badge"))
@@ -107,18 +107,18 @@ class EmployeeDetailView(QWidget):
         access_card.setGraphicsEffect(access_shadow)
         access_card.setStyleSheet(
             f"""
-            QFrame {{
-                background: {COLORS["bg_white"]};
-                border-radius: 10px;
-                border-left: 4px solid {COLORS["primary_blue"]};
-            }}
-        """
+      QFrame {{
+        background: {COLORS["bg_white"]};
+        border-radius: 10px;
+        border-left: 4px solid {COLORS["primary_blue"]};
+      }}
+    """
         )
         access_layout = QVBoxLayout(access_card)
         access_layout.setContentsMargins(15, 12, 15, 12)
         access_layout.setSpacing(6)
 
-        access_title = QLabel("🏭 ULTIMO ACCESSO ISAB")
+        access_title = QLabel("   ULTIMO ACCESSO ISAB")
         access_title.setStyleSheet(
             f"font-size: 13px; font-weight: bold; color: {COLORS['primary_blue']}; letter-spacing: 0.5px;"
         )

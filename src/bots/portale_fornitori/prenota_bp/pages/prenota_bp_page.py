@@ -26,14 +26,14 @@ class PrenotaBPPage:
     """
 
     def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None) -> None:
-        """Inizializza la pagina con il driver e configura i tempi di attesa."""
+        """Inizializza la pagina con il driver e configura i tempiu'di attesa."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.short_wait = WebDriverWait(driver, 5)
         self._log = log_callback or print
 
     def log(self, message: str) -> None:
-        """Inoltra i messaggi di log alla callback configurata."""
+        """Inoltra i messaggia'di log alla callback configurata."""
         self._log(message)
 
     def _wait_for_overlay(self) -> None:
@@ -47,10 +47,10 @@ class PrenotaBPPage:
         Attende che un elemento sia cliccabile e vi clicca sopra, gestendo errori DOM.
 
         Args:
-            locator: Tupla (By, value).
-            timeout: Tempo massimo di attesa.
+          locator: Tupla (By, value).
+          timeout: Tempo massimo di attesa.
         Returns:
-            WebElement: L'elemento cliccato.
+          WebElement: L'elemento cliccato.
         """
         self._wait_for_overlay()
         wait_time = timeout or Timeouts.DEFAULT
@@ -73,10 +73,10 @@ class PrenotaBPPage:
                 return el  # noqa: TRY300
 
             except (TimeoutException, AttributeError, Exception) as e:
-                if attempt == 2:  # Ultimo tentativo fallito  # noqa: PLR2004
-                    self.log(f"⚠ Errore definitivo click su {locator}: {e}")
+                if attempt == 2:  # Ultimo tentativo fallito # noqa: PLR2004
+                    self.log(f"  Errore definitivo click su {locator}: {e}")
                     raise e  # noqa: TRY201
-                self.log(f"  (Riprovo click su {locator}...)")
+                self.log(f" (Riprovo click su {locator}...)")
                 self._wait_for_overlay()
         return None
 
@@ -85,9 +85,9 @@ class PrenotaBPPage:
         Attende un campo di input, lo pulisce e inserisce il testo.
 
         Args:
-            locator: Tupla (By, value).
-            text: Testo da inserire.
-            timeout: Tempo massimo di attesa.
+          locator: Tupla (By, value).
+          text: Testo da inserire.
+          timeout: Tempo massimo di attesa.
         """
         self._wait_for_overlay()
         el = (WebDriverWait(self.driver, timeout) if timeout else self.wait).until(
@@ -98,7 +98,7 @@ class PrenotaBPPage:
         return el
 
     def login(self, username: str, password: str) -> None:
-        """Metodo legacy per compatibilità, il login è ora gestito da BaseBot."""
+        """Metodo legacy per compatibilit , il login  ora gestito da BaseBot."""
         # Check immediato sessione
         with suppress(Exception):
             if self.driver.find_elements(*PrenotaBPLocators.USER_INFO_PANEL):
@@ -112,10 +112,10 @@ class PrenotaBPPage:
         self.log("Navigazione verso Gestione Buono di Prelievo...")
         self._wait_for_overlay()
 
-        # Verifica se i filtri sono già visibili (siamo già nella pagina corretta)
+        # Verifica se i filtri sono gia' visibili (siamo gia' nella pagina corretta)
         with suppress(Exception):
             if self.driver.find_elements(*PrenotaBPLocators.FILTER_FORNITORE):
-                self.log("Pagina Gestione BP già caricata.")
+                self.log("Pagina Gestione BP gia' caricata.")
                 return
 
         # Tentativo di click sul sottomenu se visibile
@@ -151,7 +151,7 @@ class PrenotaBPPage:
 
         if fornitore:
             try:
-                self.log(f"  Selezione fornitore: '{fornitore}'...")
+                self.log(f" Selezione fornitore: '{fornitore}'...")
                 # 1. Click sulla freccia della combo (usando ActionChains per simulare click utente)
                 from selenium.webdriver.common.action_chains import ActionChains  # noqa: PLC0415
 
@@ -166,7 +166,7 @@ class PrenotaBPPage:
                 self.driver.execute_script("arguments[0].click();", option)
                 self._wait_for_overlay()
             except Exception as e:
-                self.log(f"  ⚠ Avviso: Selezione fornitore fallita ({e}), tento inserimento manuale.")
+                self.log(f"   Avviso: Selezione fornitore fallita ({e}), tento inserimento manuale.")
                 self.wait_and_fill(PrenotaBPLocators.FILTER_FORNITORE, fornitore)
 
         if numero_bp:
@@ -199,35 +199,35 @@ class PrenotaBPPage:
         Verifica se tutti i materiali sono disponibili controllando l'icona
         nell'ultima colonna della griglia dettagli.
         Returns:
-            bool: True se tutti i materiali sono disponibili, False altrimenti.
+          bool: True se tutti i materiali sono disponibili, False altrimenti.
         """
-        self.log("Verifica disponibilità materiali...")
+        self.log("Verifica disponibilita' materiali...")
         try:
             # Attende che le righe siano caricate
             self.wait.until(EC.presence_of_element_located(PrenotaBPLocators.GRID_ROWS_DETTAGLI))
             rows = self.driver.find_elements(*PrenotaBPLocators.GRID_ROWS_DETTAGLI)
         except TimeoutException:
-            self.log("⚠ Nessuna riga trovata nei dettagli o timeout.")
+            self.log("  Nessuna riga trovata nei dettagli o timeout.")
             return False
 
         if not rows:
-            self.log("⚠ Nessuna riga trovata nei dettagli.")
+            self.log("  Nessuna riga trovata nei dettagli.")
             return False
 
         all_ok = True
         for i, row in enumerate(rows):
             try:
                 # Cerca l'icona di spunta verde nella riga corrente
-                # Il locator è relativo (.//...)
+                # Il locator  relativo (.//...)
                 row.find_element(*PrenotaBPLocators.CELL_MATERIALE_DISPONIBILE)
             except Exception:
-                self.log(f"  Riga {i + 1}: NON Disponibile ✗")
+                self.log(f" Riga {i + 1}: NON Disponibile  ")
                 all_ok = False
 
         if all_ok:
-            self.log("✓ Tutti i materiali sono disponibili.")
+            self.log("  Tutti i materiali sono disponibili.")
         else:
-            self.log("✗ Alcuni materiali NON sono disponibili.")
+            self.log("  Alcuni materiali NON sono disponibili.")
 
         return all_ok
 
@@ -295,22 +295,22 @@ class PrenotaBPPage:
                     indices.append(i)
             return indices, len(data_rows)
         except Exception:
-            self.log("⚠ Nessuna riga trovata per la richiesta.")
+            self.log("  Nessuna riga trovata per la richiesta.")
             return [], 0
 
     def _esegui_selezione(self, available_indices: list[int], total_rows: int) -> bool:
         """Esegue il click sui materiali disponibili."""
         count_available = len(available_indices)
         if count_available == 0:
-            self.log("⚠ Nessun materiale disponibile.")
+            self.log("  Nessun materiale disponibile.")
             return False
 
         if count_available == total_rows:
-            self.log("✓ Tutti i materiali disponibili. Seleziono tutto.")
+            self.log("  Tutti i materiali disponibili. Seleziono tutto.")
             self.wait_and_click(PrenotaBPLocators.HEADER_CHECKBOX_SELECT_ALL)
             return True
 
-        self.log(f"⚠ Disponibili {count_available} su {total_rows}. Selezione puntuale.")
+        self.log(f"  Disponibili {count_available} su {total_rows}. Selezione puntuale.")
         checkers = self.driver.find_elements(*PrenotaBPLocators.GRID_CHECKERS)
 
         count_selected = 0
@@ -328,7 +328,7 @@ class PrenotaBPPage:
             self._wait_for_overlay()
 
             now = datetime.now(UTC).astimezone()
-            data_oggi = now.strftime("%d/%m/%Y")
+            data_oggi= now.strftime("%d/%m/%Y")
             ora_attuale = now.strftime("%H%M")
             ora_fine = (now + timedelta(minutes=30)).strftime("%H%M")
 

@@ -1,6 +1,6 @@
 """
 SyncroJob - Input Validators
-Framework di validazione centralizzato per garantire l'integrità dei dati inseriti dall'utente.
+Framework di validazione centralizzato per garantire l'integrita' dei dati inseriti dall'utente.
 Include controlli per OdA, PDL, Codici Fiscali e date.
 """
 
@@ -16,9 +16,9 @@ class ValidationResult:
     Rappresenta l'esito di un'operazione di validazione.
 
     Attributes:
-        valid: True se il valore è conforme al pattern richiesto.
-        error: Messaggio descrittivo in caso di errore.
-        sanitized_value: Il valore normalizzato e pronto per l'uso (es. maiuscolo, senza spazi).
+      valid: True se il valore  conforme al pattern richiesto.
+      error: Messaggio descrittivo in caso di errore.
+      sanitized_value: Il valore normalizzato e pronto per l'uso (es. maiuscolo, senza spazi).
     """
 
     valid: bool
@@ -56,10 +56,10 @@ class InputValidator:
         Se vengono fornite solo 6 cifre, aggiunge automaticamente il suffisso in base al numero.
 
         Args:
-            value: Il numero PDL grezzo.
+          value: Il numero PDL grezzo.
 
         Returns:
-            ValidationResult: L'esito della validazione con il valore eventualmente corretto.
+          ValidationResult: L'esito della validazione con il valore eventualmente corretto.
         """
         if not value:
             return ValidationResult(False, "Numero PDL obbligatorio")
@@ -87,10 +87,10 @@ class InputValidator:
         Valida la correttezza formale di un numero di Ordine d'Acquisto.
 
         Args:
-            value: Numero OdA inserito.
+          value: Numero OdA inserito.
 
         Returns:
-            ValidationResult: Esito della validazione.
+          ValidationResult: Esito della validazione.
         """
         if not value:
             return ValidationResult(False, "Numero OdA obbligatorio")
@@ -111,10 +111,10 @@ class InputValidator:
         Valida un Codice Fiscale italiano controllando formato e carattere di controllo.
 
         Args:
-            value: CF da validare.
+          value: CF da validare.
 
         Returns:
-            ValidationResult: Esito con errore descrittivo se non valido.
+          ValidationResult: Esito con errore descrittivo se non valido.
         """
         if not value:
             return ValidationResult(False, "Codice Fiscale obbligatorio")
@@ -139,10 +139,10 @@ class InputValidator:
         Implementa l'algoritmo di calcolo del carattere di controllo per il Codice Fiscale.
 
         Args:
-            cf: Il codice fiscale completo (16 caratteri).
+          cf: Il codice fiscale completo (16 caratteri).
 
         Returns:
-            bool: True se l'ultimo carattere coincide con il checksum calcolato sui primi 15.
+          bool: True se l'ultimo carattere coincide con il checksum calcolato sui primi 15.
         """
         odd_map = {
             "0": 1,
@@ -237,10 +237,10 @@ class InputValidator:
         Valida una data in formato italiano (GG.MM.AAAA).
 
         Args:
-            value: La data inserita.
+          value: La data inserita.
 
         Returns:
-            ValidationResult: Esito con valore sanitizzato (sostituisce / con .).
+          ValidationResult: Esito con valore sanitizzato (sostituisce / con .).
         """
         if not value:
             return ValidationResult(False, "Data obbligatoria")
@@ -264,10 +264,10 @@ class InputValidator:
         Rimuove caratteri non stampabili per prevenire errori in query SQL.
 
         Args:
-            value: Stringa da pulire.
+          value: Stringa da pulire.
 
         Returns:
-            str: Stringa contenente solo caratteri stampabili e spazi bianchi base.
+          str: Stringa contenente solo caratteri stampabili e spazi bianchi base.
         """
         if not value:
             return ""

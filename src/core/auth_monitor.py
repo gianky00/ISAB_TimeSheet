@@ -18,6 +18,17 @@ def _normalize(t: Any) -> str:
     return re.sub(r"\s+", " ", str(t).strip().upper())
 
 
+def _parse_date(last_date_str: Any) -> datetime | None:
+    """Helper per il parsing flessibile delle date."""
+    date_part = str(last_date_str).split(" ")[0]
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(date_part, fmt).replace(tzinfo=UTC)
+        except ValueError:
+            continue
+    return None
+
+
 def _build_access_maps(
     accessi_raw: list[tuple[Any, ...]],
 ) -> tuple[dict[str, tuple[int, str]], dict[tuple[str, str], tuple[int, str]]]:
@@ -27,15 +38,7 @@ def _build_access_maps(
     today = datetime.now(UTC)
 
     for cog, nom, cf, last_date_str in accessi_raw:
-        date_part = str(last_date_str).split(" ")[0]
-        last_date = None
-        for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
-            try:
-                last_date = datetime.strptime(date_part, fmt).replace(tzinfo=UTC)
-                break
-            except ValueError:
-                continue
-
+        last_date = _parse_date(last_date_str)
         if not last_date:
             continue
 
@@ -57,10 +60,61 @@ def _build_access_maps(
     return last_by_cf, last_by_name
 
 
+def _process_employee_match(
+    cog: str,
+    nom: str,
+    cf: str,
+    last_by_cf: dict[str, tuple[int, str]],
+    last_by_name: dict[tuple[str, str], tuple[int, str]],
+) -> dict[str, Any] | None:
+    """Determina se un dipendente ha un'abilitazione in scadenza e ritorna il record."""
+    match_found = False
+    delta: int | None = None
+    f_date: str | None = None
+    missing_cf_flag = False
+
+    # 1. Tenta Match primario: CF
+    if cf and cf.strip():
+        norm_cf = cf.strip().upper()
+        if norm_cf in last_by_cf:
+            delta, f_date = last_by_cf[norm_cf]
+            match_found = True
+
+    # 2. Tenta Match secondario: Nome/Cognome
+    if not match_found:
+        norm_key = (_normalize(cog), _normalize(nom))
+        if norm_key in last_by_name:
+            delta, f_date = last_by_name[norm_key]
+            match_found = True
+            if not cf or not cf.strip():
+                missing_cf_flag = True
+
+    # 3. Valutazione soglie
+    if match_found and delta is not None:
+        from src.core.constants import THRESHOLD_DAYS  # noqa: PLC0415
+
+        if delta <= THRESHOLD_DAYS["warning"]:
+            return None
+
+        stat = "IN SCADENZA"
+        if delta > THRESHOLD_DAYS["expired"]:
+            stat = "SCADUTA"
+
+        return {
+            "cognome": cog.upper(),
+            "nome": nom.upper(),
+            "ultima_data": f_date,
+            "giorni_trascorsi": delta,
+            "stato": stat,
+            "cf_mancante": missing_cf_flag,
+        }
+    return None
+
+
 def check_expiring_isab_authorizations() -> list[dict[str, Any]]:
     """
     Scansiona tutti i dipendenti per identificare chi ha l'abilitazione ISAB in scadenza.
-    Priorità:
+    Priorita':
     1. Match per Codice Fiscale (Infallibile)
     2. Fallback per Nome/Cognome (se CF assente in Dipendenti)
     """
@@ -76,57 +130,16 @@ def check_expiring_isab_authorizations() -> list[dict[str, Any]]:
         accessi_raw = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
 
         # 3. Costruisci mappe
-        last_by_cf, _last_by_name = _build_access_maps(accessi_raw)
-        _, last_by_name = _build_access_maps(accessi_raw)
+        last_by_cf, last_by_name = _build_access_maps(accessi_raw)
 
         results = []
         for cog, nom, cf in dipendenti:
-            match_found = False
-            delta: int | None = None
-            f_date: str | None = None
-            missing_cf_flag = False
+            res = _process_employee_match(cog, nom, cf, last_by_cf, last_by_name)
+            if res:
+                results.append(res)
 
-            # Tenta Match primario: CF
-            if cf and cf.strip():
-                norm_cf = cf.strip().upper()
-                if norm_cf in last_by_cf:
-                    delta, f_date = last_by_cf[norm_cf]
-                    match_found = True
-
-            # Tenta Match secondario: Nome/Cognome
-            if not match_found:
-                norm_key = (_normalize(cog), _normalize(nom))
-                if norm_key in last_by_name:
-                    delta, f_date = last_by_name[norm_key]
-                    match_found = True
-                    # Segnala mancanza CF solo se abbiamo trovato match per nome ma non per CF (perché mancante)
-                    if not cf or not cf.strip():
-                        missing_cf_flag = True
-
-            if match_found and delta is not None:
-                from src.core.constants import THRESHOLD_DAYS  # noqa: PLC0415
-
-                # Monitoraggio basato su soglie centralizzate
-                if delta <= THRESHOLD_DAYS["warning"]:
-                    continue
-
-                stat = "IN SCADENZA"
-                if delta > THRESHOLD_DAYS["expired"]:
-                    stat = "SCADUTA"
-
-                results.append(
-                    {
-                        "cognome": cog.upper(),
-                        "nome": nom.upper(),
-                        "ultima_data": f_date,
-                        "giorni_trascorsi": delta,
-                        "stato": stat,
-                        "cf_mancante": missing_cf_flag,
-                    }
-                )
-
-        return results  # noqa: TRY300
-
-    except Exception as e:
-        logger.error(f"Errore durante il controllo autorizzazioni ISAB: {e}")  # noqa: TRY400
+    except Exception:
+        logger.exception("Errore durante il controllo autorizzazioni ISAB")
         return []
+
+    return results

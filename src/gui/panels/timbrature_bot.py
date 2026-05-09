@@ -8,8 +8,8 @@ Integra segnali per l'aggiornamento dinamico delle statistiche e della dashboard
 import traceback
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QDate, QTimer, pyqtSignal
-from PyQt6.QtWidgets import QVBoxLayout, QWidget
+from PySide6.QtCore import QDate, QTimer, Signal
+from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.gui.controllers.bot_worker import BotWorker
@@ -29,10 +29,10 @@ class TimbratureBotPanel(BaseBotPanel):
     Emette segnali per notificare il completamento delle operazioni e i cambi di stato dell'Autopilot.
     """
 
-    data_updated = pyqtSignal()
+    data_updated = Signal()
     """Segnale emesso quando i dati delle timbrature sono stati aggiornati con successo."""
 
-    status_changed = pyqtSignal(str, str)
+    status_changed = Signal(str, str)
     """Segnale emesso quando cambia lo stato del bot (stato, messaggio)."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -40,7 +40,7 @@ class TimbratureBotPanel(BaseBotPanel):
         Inizializza il pannello e prepara il caricamento dei dati salvati.
 
         Args:
-            parent: Widget genitore.
+          parent: Widget genitore.
         """
         super().__init__(
             bot_id="timbrature",
@@ -132,7 +132,7 @@ class TimbratureBotPanel(BaseBotPanel):
         Valida i requisiti per l'avvio: credenziali presenti e fornitore selezionato.
 
         Returns:
-            tuple: (bool pronto, messaggio errore).
+          tuple: (bool pronto, messaggio errore).
         """
         username, password = self.get_credentials()
         if not username or not password:

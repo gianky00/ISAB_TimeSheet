@@ -4,8 +4,8 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -28,8 +28,8 @@ class PDLTimelineWidget(QWidget):
         Inizializza il widget della timeline.
 
         Args:
-            interventions: Lista di dizionari contenenti i dati degli interventi.
-            parent: Widget genitore.
+          interventions: Lista di dizionari contenenti i dati degli interventi.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.interventions = interventions
@@ -69,16 +69,16 @@ class PDLTimelineWidget(QWidget):
         main_layout.addWidget(timeline_container)
         main_layout.addStretch()
 
-    def _create_event_card(self, data: dict[str, Any], is_last: bool) -> QWidget:  # noqa: PLR0915
+    def _create_event_card(self, data: dict[str, Any], is_last: bool) -> QWidget:  # noqa: C901, PLR0915
         """
         Crea una singola card per un evento nella timeline.
 
         Args:
-            data: Dati dell'evento.
-            is_last: Se è l'ultimo evento della lista.
+          data: Dati dell'evento.
+          is_last: Se  l'ultimo evento della lista.
 
         Returns:
-            Il widget della card creato.
+          Il widget della card creato.
         """
         container = QWidget()
         layout = QHBoxLayout(container)
@@ -128,7 +128,7 @@ class PDLTimelineWidget(QWidget):
         line_painter.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         # Pallino
-        dot = QLabel("●")
+        dot = QLabel("  ")
         dot.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Colore pallino in base allo stato/fonte
@@ -160,17 +160,17 @@ class PDLTimelineWidget(QWidget):
         # 3. Contenuto Card (Destra)
         card_frame = QFrame()
         card_frame.setStyleSheet(f"""
-            QFrame {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 8px;
-            }}
-            QFrame:hover {{
-                border-color: {COLORS["primary_blue"]};
-                background-color: {COLORS["bg_white"]};
-                box-shadow: 0 4px 6px {hex_to_rgba(COLORS["text_dark"], 0.1)};
-            }}
-        """)
+      QFrame {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 8px;
+      }}
+      QFrame:hover {{
+        border-color: {COLORS["primary_blue"]};
+        background-color: {COLORS["bg_white"]};
+        box-shadow: 0 4px 6px {hex_to_rgba(COLORS["text_dark"], 0.1)};
+      }}
+    """)
         card_layout = QVBoxLayout(card_frame)
         card_layout.setContentsMargins(15, 12, 15, 12)
         card_layout.setSpacing(8)
@@ -200,14 +200,14 @@ class PDLTimelineWidget(QWidget):
 
         lbl_fonte = QLabel(f" {fonte_text} ")
         lbl_fonte.setStyleSheet(f"""
-            background-color: {badge_bg};
-            color: {badge_fg};
-            border-radius: 4px;
-            padding: 2px 6px;
-            font-size: 10px;
-            font-weight: bold;
-            border: none;
-        """)
+      background-color: {badge_bg};
+      color: {badge_fg};
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: bold;
+      border: none;
+    """)
         header_layout.addWidget(lbl_fonte)
 
         card_layout.addLayout(header_layout)
@@ -224,7 +224,7 @@ class PDLTimelineWidget(QWidget):
         # Ore (se presenti)
         ore = str(data.get("ore_lavoro", "")).strip()
         if ore and ore != "0" and ore.lower() != "nan":
-            lbl_ore = QLabel(f"⏱️ {ore} ore")
+            lbl_ore = QLabel(f"    {ore} ore")
             lbl_ore.setStyleSheet(
                 f"color: {COLORS['text_muted']}; font-size: 11px; margin-top: 5px; border: none; background: transparent;"
             )

@@ -83,10 +83,10 @@ class SensitiveDataFilter:
         Maschera dati sensibili in una stringa.
 
         Args:
-            text: Stringa da processare
+          text: Stringa da processare
 
         Returns:
-            Stringa con dati sensibili mascherati
+          Stringa con dati sensibili mascherati
         """
 
         masked = text
@@ -101,15 +101,15 @@ class SensitiveDataFilter:
         Maschera dati sensibili in un dizionario (ricorsivo).
 
         Args:
-            data: Dizionario da processare
+          data: Dizionario da processare
 
         Returns:
-            Nuovo dizionario con dati sensibili mascherati
+          Nuovo dizionario con dati sensibili mascherati
         """
 
         masked: dict[str, Any] = {}
         for key, value in data.items():
-            # Se la chiave è sensibile, maschera il valore
+            # Se la chiave  sensibile, maschera il valore
             if any(sensitive_key in key.lower() for sensitive_key in cls.SENSITIVE_KEYS):
                 masked[key] = "***MASKED***"
             # Altrimenti processa il valore ricorsivamente
@@ -130,10 +130,10 @@ class SensitiveDataFilter:
         Maschera dati sensibili in una lista (ricorsivo).
 
         Args:
-            data: Lista da processare
+          data: Lista da processare
 
         Returns:
-            Nuova lista con dati sensibili mascherati
+          Nuova lista con dati sensibili mascherati
         """
 
         masked: list[Any] = []
@@ -155,10 +155,10 @@ class SensitiveDataFilter:
         Maschera dati sensibili in qualsiasi tipo di dato.
 
         Args:
-            data: Dato da processare (str, dict, list, o altro)
+          data: Dato da processare (str, dict, list, o altro)
 
         Returns:
-            Dato con informazioni sensibili mascherate
+          Dato con informazioni sensibili mascherate
         """
         if isinstance(data, str):
             return cls.mask_string(data)
@@ -181,8 +181,8 @@ class SamplingFilter:
         Inizializza filter.
 
         Args:
-            sample_rate: Percentuale di log da mantenere (0.0-1.0)
-                        1.0 = 100% (tutti), 0.01 = 1%
+          sample_rate: Percentuale di log da mantenere (0.0-1.0)
+                1.0 = 100% (tutti), 0.01 = 1%
         """
         self.sample_rate = max(0.0, min(1.0, sample_rate))
         self._counter = 0
@@ -192,7 +192,7 @@ class SamplingFilter:
         Determina se il log corrente dovrebbe essere scritto.
 
         Returns:
-            True se il log deve essere scritto, False altrimenti
+          True se il log deve essere scritto, False altrimenti
         """
         if self.sample_rate >= 1.0:
             return True

@@ -6,21 +6,21 @@ def mig_timbrature_v1(conn: sqlite3.Connection) -> None:
     cursor = conn.cursor()
     cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS timbrature (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            data TEXT, ingresso TEXT, uscita TEXT,
-            nome TEXT, cognome TEXT, presenza_ts TEXT, sito_timbratura TEXT,
-            UNIQUE(data, ingresso, uscita, nome, cognome)
-        )
-    """
+    CREATE TABLE IF NOT EXISTS timbrature (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      data TEXT, ingresso TEXT, uscita TEXT,
+      nome TEXT, cognome TEXT, presenza_ts TEXT, sito_timbratura TEXT,
+      UNIQUE(data, ingresso, uscita, nome, cognome)
+    )
+  """
     )
     cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS dipendenti (
-            nome TEXT, cognome TEXT, reparto TEXT, cantiere TEXT,
-            PRIMARY KEY (nome, cognome)
-        )
-    """
+    CREATE TABLE IF NOT EXISTS dipendenti (
+      nome TEXT, cognome TEXT, reparto TEXT, cantiere TEXT,
+      PRIMARY KEY (nome, cognome)
+    )
+  """
     )
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")
 
@@ -35,7 +35,7 @@ def mig_timbrature_v2(conn: sqlite3.Connection) -> None:
 def mig_timbrature_v3(conn: sqlite3.Connection) -> None:
     """Aggiunge colonne codice_fiscale e ore_effettive (v3)"""
     cursor = conn.cursor()
-    # Verifichiamo se le colonne esistono già per evitare errori
+    # Verifichiamo se le colonne esistono gia' per evitare errori
     cursor.execute("PRAGMA table_info(timbrature)")
     columns = [row[1] for row in cursor.fetchall()]
 

@@ -8,8 +8,8 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -31,10 +31,10 @@ from src.gui.widgets.modern_card import ModernContentCard
 
 
 class CreaNuovoTab(QWidget):
-    """Tab per la generazione di un nuovo consuntivo con tutti i campi necessari."""
+    """Tab per la generazione di un nuovo consuntivo con tutti i campiu'necessari."""
 
-    step_clicked = pyqtSignal(str)
-    _prog_computed = pyqtSignal(str)
+    step_clicked = Signal(str)
+    _prog_computed = Signal(str)
 
     def __init__(self, controller: ConsuntivoController, parent: QWidget | None = None) -> None:
         """Inizializza il tab con iniezione del controller."""
@@ -120,7 +120,7 @@ class CreaNuovoTab(QWidget):
 
         self.stato_combo = FilterComboBox()
         self.stato_combo.addItems(opts["stati"])
-        row2.addLayout(self._create_input_group("STATO ATTIVITÀ (D11)", self.stato_combo, width=220))
+        row2.addLayout(self._create_input_group("STATO Attivita'(D11)", self.stato_combo, width=220))
 
         self.tipo_prev_combo = FilterComboBox()
         self.tipo_prev_combo.addItems(opts["tipologie"])
@@ -136,7 +136,7 @@ class CreaNuovoTab(QWidget):
         layout.addWidget(card2)
 
         # --- CARD 3: DESCRIZIONI ---
-        card3, desc_layout = self._create_card("DESCRIZIONE DELLE ATTIVITÀ")
+        card3, desc_layout = self._create_card("DESCRIZIONE DELLE Attivita'")
 
         desc_row = QHBoxLayout()
         desc_row.setSpacing(20)
@@ -247,7 +247,7 @@ class CreaNuovoTab(QWidget):
             ConfirmationDialog.show_error(
                 self,
                 "Configurazione Errata",
-                "Il file Master non è stato configurato nelle Impostazioni.",
+                "Il file Master non  stato configurato nelle Impostazioni.",
             )
             return
 
@@ -285,7 +285,7 @@ class CreaNuovoTab(QWidget):
             ConfirmationDialog.show_info(
                 self,
                 "File Generato",
-                f"Il file Excel è pronto:\n\n{result}\n\nPuoi ora lanciare le Macro dalla mappa workflow.",
+                f"Il file Excel  pronto:\n\n{result}\n\nPuoi ora lanciare le Macro dalla mappa workflow.",
             )
         else:
             self.log_widget.append_log(f"Errore: {result}", "error")

@@ -189,7 +189,7 @@ def generate_final_report(results: list):  # noqa: ANN201
                 )
                 f.write("  1. Verifica se il codice mutato è effettivamente necessario (dead code?).\n")
                 f.write(
-                    "  2. Aggiungi test specifici che asseriscano il comportamento corretto "
+                    "  2. Aggiungia'test specifici che asseriscano il comportamento corretto "
                     "per quelle righe/operazioni.\n\n"
                 )
 

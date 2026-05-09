@@ -8,8 +8,8 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QScrollArea,
@@ -87,11 +87,11 @@ class ProgrammazioneTab(QWidget):
             [
                 "Settimana Intera",
                 "Oggi",
-                "Lunedì",
-                "Martedì",
-                "Mercoledì",
-                "Giovedì",
-                "Venerdì",
+                "Luned ",
+                "Marted ",
+                "Mercoled ",
+                "Gioved ",
+                "Venerd ",
                 "Sabato",
                 "Domenica",
             ]
@@ -215,11 +215,11 @@ class ProgrammazioneTab(QWidget):
         selected_reqs = self.view_filter.selected
         day_choice = self.day_selector.currentText()
         target_day = {
-            "Lunedì": 0,
-            "Martedì": 1,
-            "Mercoledì": 2,
-            "Giovedì": 3,
-            "Venerdì": 4,
+            "Luned ": 0,
+            "Marted ": 1,
+            "Mercoled ": 2,
+            "Gioved ": 3,
+            "Venerd ": 4,
             "Sabato": 5,
             "Domenica": 6,
             "Oggi": datetime.now(UTC).astimezone().weekday(),
@@ -339,4 +339,4 @@ class ProgrammazioneTab(QWidget):
 
     def _on_email_clicked(self):  # noqa: ANN202
         """Gestione invio report via email (Placeholder)."""
-        ToastManager.instance().show("Funzionalità Report Outlook in fase di implementazione.", "info")
+        ToastManager.instance().show("Funzionalita' Report Outlook in fase di implementazione.", "info")

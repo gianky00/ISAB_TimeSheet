@@ -159,49 +159,53 @@ class CertificatiImporter(BaseImporter):
         df.dropna(how="all", inplace=True)
         return df
 
+    @staticmethod
+    def _format_date_it(val: Any) -> str:
+        """Helper per formattare date in stile IT."""
+        if pd.isna(val) or val == "":
+            return ""
+        try:
+            dt = pd.to_datetime(val)
+            return str(dt.strftime("%d/%m/%Y"))
+        except Exception:
+            return str(val)
+
+    @staticmethod
+    def _format_stato(val: Any) -> str:
+        """Helper per formattare la descrizione dello stato scadenza."""
+        if pd.isna(val) or val == "":
+            return ""
+        try:
+            num = float(val)
+            days = round(num)
+            if days > 0:
+                return f"Scade tra {days} giorni"
+            if days < 0:
+                return f"Scaduto da {abs(days)} giorni"
+            res = "Scade oggi"
+        except (ValueError, TypeError):
+            return str(val)
+
+        return res
+
+    @staticmethod
+    def _format_errore_max(val: Any) -> str:
+        """Helper per formattare l'errore massimo in percentuale."""
+        if pd.isna(val) or val == "":
+            return ""
+        try:
+            num = float(val)
+            return f"{num * 100:g}%".replace(".", ",")
+        except (ValueError, TypeError):
+            return str(val).replace(".", ",")
+
     @classmethod
     def _apply_certificati_formatting(cls, df: pd.DataFrame) -> pd.DataFrame:
         """Applica formattazione date e calcolo giorni scadenza."""
-        pd_obj = cls._get_pd()
-
-        def format_date_it(val: Any) -> str:
-            if pd_obj.isna(val) or val == "":
-                return ""
-            try:
-                dt = pd_obj.to_datetime(val)
-                return str(dt.strftime("%d/%m/%Y"))
-            except Exception:
-                return str(val)
-
-        def format_stato(val: Any) -> str:
-            if pd_obj.isna(val) or val == "":
-                return ""
-            try:
-                num = float(val)
-                days = round(num)
-                if days > 0:
-                    return f"Scade tra {days} giorni"
-                if days < 0:
-                    return f"Scaduto da {abs(days)} giorni"
-                return "Scade oggi"  # noqa: TRY300
-            except (ValueError, TypeError):
-                return str(val)
-
-        def format_errore_max(val: Any) -> str:
-            if pd_obj.isna(val) or val == "":
-                return ""
-            try:
-                # Se è un float (es. 0.0005 da Excel per 0.05%), lo convertiamo e formattiamo
-                num = float(val)
-                return f"{num * 100:g}%".replace(".", ",")
-            except (ValueError, TypeError):
-                # Se è già una stringa formattata o altro
-                return str(val).replace(".", ",")
-
-        df["scadenza"] = df["scadenza"].apply(format_date_it)
-        df["emissione"] = df["emissione"].apply(format_date_it)
+        df["scadenza"] = df["scadenza"].apply(cls._format_date_it)
+        df["emissione"] = df["emissione"].apply(cls._format_date_it)
         if "stato" in df.columns:
-            df["stato"] = df["stato"].apply(format_stato)
+            df["stato"] = df["stato"].apply(cls._format_stato)
         if "errore_max" in df.columns:
-            df["errore_max"] = df["errore_max"].apply(format_errore_max)
+            df["errore_max"] = df["errore_max"].apply(cls._format_errore_max)
         return df

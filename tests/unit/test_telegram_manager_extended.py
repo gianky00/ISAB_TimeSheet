@@ -8,7 +8,7 @@ from src.core.telegram_manager import TelegramService
 
 @pytest.fixture
 def telegram_service():
-    with patch("PyQt6.QtCore.QObject.__init__"):
+    with patch("PySide6.QtCore.QObject.__init__"):
         service = TelegramService()
     service.log_signal = MagicMock()
     service.command_received = MagicMock()

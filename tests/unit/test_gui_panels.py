@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 import pytest
-from PyQt6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 
 from src.gui.panels.carico_ts import CaricoTSPanel
 from src.gui.panels.scarico_ts import ScaricaTSPanel
@@ -19,7 +19,7 @@ class TestGUIPanels:
         QApplication.processEvents()
 
         panel.params_widget.fornitore_combo.addItem("F1")
-        from PyQt6.QtCore import QDate  # noqa: PLC0415
+        from PySide6.QtCore import QDate  # noqa: PLC0415
 
         panel.params_widget.date_da.setDate(QDate(2025, 1, 1))
 

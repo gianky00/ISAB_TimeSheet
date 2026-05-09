@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from PyQt6.QtGui import QTextDocument
+from PySide6.QtGui import QTextDocument
 
 from src.utils.document_generator import generate_pdf_from_html
 

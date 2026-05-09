@@ -21,11 +21,11 @@ class StatsService:
         Prepara tutti i dati necessari per i grafici KPI partendo dal dataframe grezzo.
 
         Args:
-            df: Dataframe contabilità.
-            hourly_cost_std: Costo orario standard per calcoli margini.
+          df: Dataframe contabilit .
+          hourly_cost_std: Costo orario standard per calcoli margini.
 
         Returns:
-            Dict con i dati processati pronti per il rendering.
+          Dict con i dati processati pronti per il rendering.
         """
         if df.empty:
             return {}

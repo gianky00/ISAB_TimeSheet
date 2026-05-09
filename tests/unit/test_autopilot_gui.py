@@ -1,8 +1,8 @@
 from unittest.mock import patch
 
 import pytest
-from PyQt6.QtCore import QTime
-from PyQt6.QtWidgets import QLabel
+from PySide6.QtCore import QTime
+from PySide6.QtWidgets import QLabel
 
 from src.core.constants import Icons
 from src.gui.widgets.autopilot.config_cards import (

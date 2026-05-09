@@ -2,7 +2,7 @@
 """
 SyncroJob - SafeWork PDL Search Page
 Gestisce le interazioni con la pagina di ricerca PDL.
-Logica allineata al branch Main per massima stabilità.
+Logica allineata al branch Main per massima stabilita'.
 """
 
 from collections.abc import Callable
@@ -46,7 +46,7 @@ class RicercaPDLPage:
         REPLICA ESATTA DEL BRANCH MAIN (search_bot.py).
         """
         try:
-            self.log(f"🏢 Selezione sito: {site_name}")
+            self.log(f"   Selezione sito: {site_name}")
 
             # 1. Clic Dropdown (Locator Main)
             site_dropdown = self.wait.until(
@@ -80,7 +80,7 @@ class RicercaPDLPage:
     def _attendi_scomparsa_overlay(self, timeout_secondi: int = 300) -> None:
         """Attende la scomparsa dell'overlay di caricamento (GISWaitOverlay)."""
         with suppress(TimeoutException):
-            # Verifica preliminare se l'overlay è visibile
+            # Verifica preliminare se l'overlay  visibile
             WebDriverWait(self.driver, 2).until(EC.visibility_of_element_located(SafeWorkLocators.OVERLAY))
             # Attesa lunga per la scomparsa
             WebDriverWait(self.driver, timeout_secondi).until(

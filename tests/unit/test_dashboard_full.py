@@ -1,8 +1,8 @@
 from unittest.mock import MagicMock
 
 import pytest
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QLabel, QWidget
 
 from src.gui.panels.dashboard_panel import DashboardPanel
 from src.gui.widgets.activity_feed import ActivityFeed

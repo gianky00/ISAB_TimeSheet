@@ -36,7 +36,7 @@ class TestGUIMajorPanels:
 
         # Test folder selection via params_widget
         with patch(
-            "PyQt6.QtWidgets.QFileDialog.getExistingDirectory",
+            "PySide6.QtWidgets.QFileDialog.getExistingDirectory",
             return_value="C:/Downloads",
         ):
             panel.params_widget.browse_btn.click()

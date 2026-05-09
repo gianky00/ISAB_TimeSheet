@@ -63,11 +63,11 @@ class LoggingConfig:
         Restituisce path per log specifico bot.
 
         Args:
-            bot_name: Nome del bot (es: "scarico_ts")
-            trace_id: ID univoco esecuzione (opzionale)
+          bot_name: Nome del bot (es: "scarico_ts")
+          trace_id: ID univoco esecuzione (opzionale)
 
         Returns:
-            Path al file log del bot
+          Path al file log del bot
         """
         filename = f"{bot_name}_{trace_id}.json" if trace_id else f"{bot_name}.json"
 

@@ -17,7 +17,7 @@ import pandas as pd
 from src.core import config_manager
 
 
-def debug_giornaliere() -> None:  # noqa: PLR0912, PLR0915
+def debug_giornaliere() -> None:  # noqa: C901, PLR0912, PLR0915
     print("=" * 70)
     print("DEBUG IMPORTAZIONE GIORNALIERE")
     print("=" * 70)

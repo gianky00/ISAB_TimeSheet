@@ -1,17 +1,17 @@
 """
 SyncroJob - Clipboard Mixin
-Fornisce funzionalità avanzate di Copia/Incolla in formato TSV (Excel-compatible).
+Fornisce funzionalita' avanzate di Copia/Incolla in formato TSV (Excel-compatible).
 """
 
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, cast
 
-from PyQt6.QtGui import QCursor
-from PyQt6.QtWidgets import QApplication, QComboBox, QToolTip
+from PySide6.QtGui import QCursor
+from PySide6.QtWidgets import QApplication, QComboBox, QToolTip
 
 
 class ClipboardMixin:
-    """Mixin per aggiungere capacità di Copia/Incolla TSV ai widget tabellari."""
+    """Mixin per aggiungere capacita' di Copia/Incolla TSV ai widget tabellari."""
 
     def copy_selection(self) -> None:
         """Copia i dati selezionati in formato TSV negli appunti."""
@@ -40,7 +40,7 @@ class ClipboardMixin:
             clipboard = QApplication.clipboard()
             if clipboard:
                 clipboard.setText("\n".join(tsv_rows))
-            QToolTip.showText(QCursor.pos(), "Copiato!", self)  # type: ignore
+            QToolTip.showText(QCursor.pos(), "Copiato!", cast("Any", self))
 
     def paste_selection(self) -> None:
         """Incolla i dati dagli appunti nella tabella."""
@@ -91,12 +91,12 @@ class ClipboardMixin:
     def _get_cell_value(self, row: int, col: int) -> str:
         widget = self.cellWidget(row, col)  # type: ignore
         if widget:
-            from PyQt6.QtWidgets import QComboBox  # noqa: PLC0415
+            from PySide6.QtWidgets import QComboBox  # noqa: PLC0415
 
-            # Se è direttamente una QComboBox
+            # Se  direttamente una QComboBox
             if isinstance(widget, QComboBox):
                 return str(widget.currentText())
-            # Se è un container che ospita una QComboBox
+            # Se  un container che ospita una QComboBox
             cb = widget.findChild(QComboBox)
             if cb:
                 return str(cb.currentText())

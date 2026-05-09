@@ -7,7 +7,7 @@ Garantisce il disaccoppiamento tra la logica di navigazione e la creazione degli
 import logging
 from typing import TYPE_CHECKING
 
-from PyQt6.QtWidgets import QMessageBox, QWidget
+from PySide6.QtWidgets import QMessageBox, QWidget
 
 from src.gui.main_window.page_index import PageIndex
 
@@ -29,85 +29,26 @@ class PanelFactory:
         Inizializza la factory.
 
         Args:
-            navigation_controller: Riferimento al controller di navigazione per l'iniezione delle dipendenze.
+          navigation_controller: Riferimento al controller di navigazione per l'iniezione delle dipendenze.
         """
         self.nav = navigation_controller
         self.mw: MainWindow = navigation_controller.mw
 
-    def create_panel(self, index: int) -> QWidget | None:  # noqa: PLR0911, PLR0912
+    def create_panel(self, index: PageIndex | int) -> QWidget | None:
         """
         Crea un'istanza del pannello corrispondente all'indice specificato.
 
         Args:
-            index: Indice della pagina (PageIndex).
+          index: Indice della pagina (PageIndex).
 
         Returns:
-            Istanza del QWidget o None in caso di errore.
+          Istanza del QWidget o None in caso di errore.
         """
-
         try:
-            if index == PageIndex.DASHBOARD:
-                from src.gui.panels.dashboard_panel import DashboardPanel  # noqa: PLC0415
-
-                return DashboardPanel()
-
-            if index == PageIndex.AUTOMAZIONI:
-                from src.gui.widgets.automazioni_widget import AutomazioniWidget  # noqa: PLC0415
-
-                return AutomazioniWidget(main_window=self.mw)
-
             if index == PageIndex.RESERVED_AI:
                 return QWidget()
 
-            if index == PageIndex.TIMBRATURE:
-                from src.gui.panels.timbrature_db import TimbratureDBPanel  # noqa: PLC0415
-
-                return TimbratureDBPanel()
-
-            if index == PageIndex.STRUMENTALE:
-                from src.gui.panels.contabilita_panel import ContabilitaPanel  # noqa: PLC0415
-
-                return ContabilitaPanel()
-
-            if index == PageIndex.DATAEASE:
-                from src.gui.panels.scarico_ore_panel import ScaricoOrePanel  # noqa: PLC0415
-
-                return ScaricoOrePanel(controller=self.nav.scarico_ore_controller)
-
-            if index == PageIndex.PDL_DB:
-                from src.gui.panels.pdl.pdl_panel import PDLDBPanel  # noqa: PLC0415
-
-                return PDLDBPanel(controller=self.nav.pdl_controller)
-
-            if index == PageIndex.SETTINGS:
-                from src.gui.panels.settings.main_panel import SettingsPanel  # noqa: PLC0415
-
-                return SettingsPanel()
-
-            if index == PageIndex.HELP:
-                from src.gui.panels.help_panel import HelpPanel  # noqa: PLC0415
-
-                return HelpPanel()
-
-            if index == PageIndex.NOTIFICATIONS:
-                from src.gui.panels.notifications_panel import NotificationsPanel  # noqa: PLC0415
-
-                return NotificationsPanel()
-
-            if index == PageIndex.STORICO_ODA:
-                from src.gui.panels.storico_oda import StoricoOdaPanel  # noqa: PLC0415
-
-                return StoricoOdaPanel(controller=self.nav.oda_controller)
-
-            if index == PageIndex.DIPENDENTI:
-                from src.gui.panels.dipendenti.main_panel import DipendentiPanel  # noqa: PLC0415
-
-                return DipendentiPanel(controller=self.nav.anagrafica_controller)
-
-            if index == PageIndex.CONSUNTIVO:
-                from src.gui.panels.consuntivo_panel import ConsuntivoPanel  # noqa: PLC0415
-
-                return ConsuntivoPanel(controller=self.nav.consuntivo_controller)
+            return self._instantiate_panel(index)
 
         except Exception:
             logger.exception("Errore fatale nella creazione del pannello %s", index)
@@ -116,5 +57,77 @@ class PanelFactory:
                 "Errore Caricamento",
                 f"Impossibile caricare il modulo {index}. Controlla i log di sistema.",
             )
+            return None
 
-        return None
+    def _instantiate_panel(self, index: PageIndex | int) -> QWidget | None:
+        """Logica di istanziazione granulare con lazy import tramite mapping."""
+        # Convert explicit int to PageIndex if possible for type safety
+        target_index = PageIndex(index) if isinstance(index, int) else index
+        # Mappa dei costruttori lazy per evitare catene di if-elif infinite
+        registry = {
+            PageIndex.DASHBOARD: self._create_dashboard,
+            PageIndex.AUTOMAZIONI: self._create_automazioni,
+            PageIndex.TIMBRATURE: self._create_timbrature,
+            PageIndex.STRUMENTALE: self._create_contabilita,
+            PageIndex.DATAEASE: self._create_scarico_ore,
+            PageIndex.PDL_DB: self._create_pdl_db,
+            PageIndex.SETTINGS: self._create_settings,
+            PageIndex.HELP: self._create_help,
+            PageIndex.NOTIFICATIONS: self._create_notifications,
+            PageIndex.STORICO_ODA: self._create_oda,
+            PageIndex.DIPENDENTI: self._create_dipendenti,
+            PageIndex.CONSUNTIVO: self._create_consuntivo,
+        }
+
+        creator = registry.get(target_index)
+        return creator() if creator else None
+
+    # --- CREATOR HELPERS (Lazy Imports) ---
+
+    def _create_dashboard(self) -> QWidget:
+        from src.gui.panels.dashboard_panel import DashboardPanel  # noqa: PLC0415
+        return DashboardPanel()
+
+    def _create_automazioni(self) -> QWidget:
+        from src.gui.widgets.automazioni_widget import AutomazioniWidget  # noqa: PLC0415
+        return AutomazioniWidget(main_window=self.mw)
+
+    def _create_timbrature(self) -> QWidget:
+        from src.gui.panels.timbrature_db import TimbratureDBPanel  # noqa: PLC0415
+        return TimbratureDBPanel()
+
+    def _create_contabilita(self) -> QWidget:
+        from src.gui.panels.contabilita_panel import ContabilitaPanel  # noqa: PLC0415
+        return ContabilitaPanel()
+
+    def _create_scarico_ore(self) -> QWidget:
+        from src.gui.panels.scarico_ore_panel import ScaricoOrePanel  # noqa: PLC0415
+        return ScaricoOrePanel(controller=self.nav.scarico_ore_controller)
+
+    def _create_pdl_db(self) -> QWidget:
+        from src.gui.panels.pdl.pdl_panel import PDLDBPanel  # noqa: PLC0415
+        return PDLDBPanel(controller=self.nav.pdl_controller)
+
+    def _create_settings(self) -> QWidget:
+        from src.gui.panels.settings.main_panel import SettingsPanel  # noqa: PLC0415
+        return SettingsPanel()
+
+    def _create_help(self) -> QWidget:
+        from src.gui.panels.help_panel import HelpPanel  # noqa: PLC0415
+        return HelpPanel()
+
+    def _create_notifications(self) -> QWidget:
+        from src.gui.panels.notifications_panel import NotificationsPanel  # noqa: PLC0415
+        return NotificationsPanel()
+
+    def _create_oda(self) -> QWidget:
+        from src.gui.panels.storico_oda import StoricoOdaPanel  # noqa: PLC0415
+        return StoricoOdaPanel(controller=self.nav.oda_controller)
+
+    def _create_dipendenti(self) -> QWidget:
+        from src.gui.panels.dipendenti.main_panel import DipendentiPanel  # noqa: PLC0415
+        return DipendentiPanel(controller=self.nav.anagrafica_controller)
+
+    def _create_consuntivo(self) -> QWidget:
+        from src.gui.panels.consuntivo_panel import ConsuntivoPanel  # noqa: PLC0415
+        return ConsuntivoPanel(controller=self.nav.consuntivo_controller)

@@ -10,7 +10,7 @@ import logging
 import threading
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import QThread, Signal
 
 from src.bots import create_bot
 
@@ -26,13 +26,13 @@ class BotWorker(QThread):
     Gestisce l'inizializzazione del bot (pesante) e l'esecuzione.
     """
 
-    log_signal = pyqtSignal(str)
-    status_signal = pyqtSignal(str)
-    finished_signal = pyqtSignal(bool)
-    request_input_signal = pyqtSignal(str, dict, threading.Event)
-    row_status_signal = pyqtSignal(int, bool, str)  # index, success, message
-    step_changed_signal = pyqtSignal(int, str, object)  # Bridge for timeline
-    critical_error_signal = pyqtSignal(str, str)  # Bridge for license/fatal errors
+    log_signal = Signal(str)
+    status_signal = Signal(str)
+    finished_signal = Signal(bool)
+    request_input_signal = Signal(str, dict, threading.Event)
+    row_status_signal = Signal(int, bool, str)  # index, success, message
+    step_changed_signal = Signal(int, str, object)  # Bridge for timeline
+    critical_error_signal = Signal(str, str)  # Bridge for license/fatal errors
 
     def __init__(
         self,
@@ -45,10 +45,10 @@ class BotWorker(QThread):
         Inizializza il worker del bot.
 
         Args:
-            bot_id: ID del bot da creare o istanza già creata.
-            bot_params: Parametri per create_bot (se bot_id è str).
-            data: I dati di input per il bot.
-            telegram_service: Servizio opzionale per notifiche Telegram.
+          bot_id: ID del bot da creare o istanza gia' creata.
+          bot_params: Parametri per create_bot (se bot_id  str).
+          data: I dati di input per il bot.
+          telegram_service: Servizio opzionale per notifiche Telegram.
         """
         super().__init__()
         self.bot_id = bot_id
@@ -108,7 +108,7 @@ class BotWorker(QThread):
     def _request_input_wrapper(self, prompt: str) -> str:
         """
         Wrapper thread-safe per richiedere input all'utente tramite la GUI.
-        Blocca l'esecuzione del bot finché l'utente non risponde.
+        Blocca l'esecuzione del bot finch  l'utente non risponde.
         """
         result_container: dict[str, str] = {}
         event = threading.Event()

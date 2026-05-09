@@ -28,9 +28,9 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
         Inizializza la pagina delle timbrature.
 
         Args:
-            page: Oggetto Page di Playwright.
-            log_callback: Funzione per l'invio dei log.
-            download_path: Percorso per il salvataggio dei file.
+          page: Oggetto Page di Playwright.
+          log_callback: Funzione per l'invio dei log.
+          download_path: Percorso per il salvataggio dei file.
         """
         super().__init__(page, log_callback)
         self.download_path = download_path
@@ -101,7 +101,7 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
             return True
 
     def _select_supplier(self, fornitore: str) -> None:
-        """Seleziona il fornitore dal menu a tendina con pattern stabilità."""
+        """Seleziona il fornitore dal menu a tendina con pattern stabilita'."""
         self.log(f"Seleziono fornitore: {fornitore}")
         try:
             self._wait_overlay()
@@ -113,7 +113,7 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
                 arrow_sel = self._get_selector(TimbratureLocators.COMBO_ARROW_GENERIC)
 
             if not self._select_combobox_item(input_sel, arrow_sel, fornitore):
-                self.log("  ⚠ Avviso: Selezione fornitore fallita, tento inserimento manuale forzato.")
+                self.log("   Avviso: Selezione fornitore fallita, tento inserimento manuale forzato.")
                 self.page.fill(input_sel, fornitore)
                 self.page.press(input_sel, "Enter")
 
@@ -158,7 +158,7 @@ class PlaywrightTimbraturePage(PlaywrightBasePage):
             new_path = dest_dir / f"timbrature_{int(time.time())}.xlsx"
 
             download.save_as(str(new_path))
-            self.log(f"✓ File scaricato e salvato: {new_path.name}")
+            self.log(f"  File scaricato e salvato: {new_path.name}")
         except Exception as e:
             self.log(f"[ATTENZIONE] Errore download Excel: {e}")
             return ""

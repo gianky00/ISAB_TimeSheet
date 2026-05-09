@@ -10,9 +10,9 @@ import time
 from contextlib import suppress
 
 import psutil
-from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QHideEvent, QShowEvent
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
+from PySide6.QtCore import QTimer
+from PySide6.QtGui import QHideEvent, QShowEvent
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 from src.gui.styles import COLORS
 
@@ -28,7 +28,7 @@ class BootTelemetryWidget(QWidget):
         Inizializza il widget della telemetria.
 
         Args:
-            parent: Widget genitore.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         layout = QHBoxLayout(self)

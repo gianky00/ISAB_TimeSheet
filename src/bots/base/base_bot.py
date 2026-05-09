@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from contextlib import suppress
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from PyQt6.QtCore import QObject, pyqtSignal
+from PySide6.QtCore import QObject, Signal
 
 from src.bots.base.execution_guard import ExecutionGuard
 from src.bots.base.step_manager import BotStepManager, StepStatus
@@ -20,13 +20,13 @@ if TYPE_CHECKING:
 
 class BotSignals(QObject):
     """
-    Segnali PyQt6 per la comunicazione asincrona tra il thread del bot e l'interfaccia utente.
+    Segnali PySide6 per la comunicazione asincrona tra il thread del bot e l'interfaccia utente.
     """
 
-    step_changed = pyqtSignal(int, str, object)
-    status_changed = pyqtSignal(object)
-    log_emitted = pyqtSignal(str, str)
-    critical_error = pyqtSignal(str, str)
+    step_changed = Signal(int, str, object)
+    status_changed = Signal(object)
+    log_emitted = Signal(str, str)
+    critical_error = Signal(str, str)
 
 
 class BaseBot(ABC):
@@ -51,7 +51,7 @@ class BaseBot(ABC):
         company: str = "ISAB",
     ) -> None:
         """
-        Inizializza le proprietà fondamentali del bot.
+        Inizializza le propriet  fondamentali del bot.
         """
         self.username = username
         self.password = password
@@ -85,14 +85,14 @@ class BaseBot(ABC):
     @property
     @abstractmethod
     def description(self) -> str:
-        """Restituisce la descrizione estesa delle finalità del bot."""
+        """Restituisce la descrizione estesa delle finalit  del bot."""
 
     @staticmethod
     @abstractmethod
     def get_columns() -> list[dict[str, Any]]:
         """Restituisce lo schema delle colonne per la visualizzazione tabellare."""
 
-    # ── Gestione Step (Delegata) ───────────────────────────────────────
+    #    Gestione Step (Delegata)
 
     def update_step(self, step_id: str | int, status: StepStatus, message: str | None = None) -> None:
         """
@@ -108,7 +108,7 @@ class BaseBot(ABC):
             elif status == StepStatus.ERROR:
                 self.log(f"[ERRORE] ERRORE: {name}", "ERROR", current_step=name, step_index=idx)
 
-    # ── Proprietà di Stato ─────────────────────────────────────────────
+    #    Propriet  di Stato
 
     @property
     def status(self) -> BotStatus:
@@ -122,12 +122,12 @@ class BaseBot(ABC):
             self._status = value
             self.signals.status_changed.emit(value)
             if value in (BotStatus.ERROR, BotStatus.COMPLETED, BotStatus.STOPPED):
-                self.log(f"🏁 Stato finale: {value.name}")
+                self.log(f"   Stato finale: {value.name}")
 
-    # ── Validazione e Logging ──────────────────────────────────────────
+    #    Validazione e Logging
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
-        """Verifica la validità formale dei dati di input."""
+        """Verifica la validit  formale dei dati di input."""
         if not data:
             return False, "Nessun dato da elaborare."
         if not self.username or not self.password:
@@ -168,9 +168,9 @@ class BaseBot(ABC):
         if self._telegram_service:
             with suppress(Exception):
                 clean = re.sub(r"^\[\d{2}:\d{2}:\d{2}\]\s*", "", message.strip())
-                self._telegram_service.send_message_sync(f"🔹 *{self.name}*\n{clean}")
+                self._telegram_service.send_message_sync(f"   *{self.name}*\n{clean}")
 
-    # ── Callbacks ──────────────────────────────────────────────────────
+    #    Callbacks
 
     def set_log_callback(self, callback: Callable[[str], None]) -> None:
         """Registra il callback UI usato per ricevere i log del bot."""
@@ -188,7 +188,7 @@ class BaseBot(ABC):
         """Registra il callback di avanzamento per risultati per-riga."""
         self._progress_callback = callback
 
-    # ── Controllo Flusso ───────────────────────────────────────────────
+    #    Controllo Flusso
 
     def request_stop(self) -> None:
         """Richiede l'interruzione immediata del bot."""
@@ -196,11 +196,11 @@ class BaseBot(ABC):
         self.log("[ATTENZIONE] Interruzione richiesta...")
 
     def _check_stop(self) -> None:
-        """Verifica se è stata richiesta un'interruzione."""
+        """Verifica se  stata richiesta un'interruzione."""
         if self._stop_requested:
             raise InterruptedError("Interrotto")
 
-    # ── Ciclo di Vita Driver (Abstract) ────────────────────────────────
+    #    Ciclo di Vita Driver (Abstract)
 
     @abstractmethod
     def _init_driver(self) -> None:
@@ -232,7 +232,7 @@ class BaseBot(ABC):
                 self.cleanup()
         return False
 
-    # ── Orchestrazione Esecuzione ──────────────────────────────────────
+    #    Orchestrazione Esecuzione
 
     @measure_time(threshold_ms=5000)
     def execute(self, data: list[dict[str, Any]]) -> bool:
@@ -259,7 +259,7 @@ class BaseBot(ABC):
             bot_type=self.name.lower().replace(" ", "_"),
             username=self.username[:3] + "***",
         ):
-            self.log(f"⚙️ Avvio {self.name} | Headless: {self.headless} | Timeout: {self.timeout}s")
+            self.log(f"    Avvio {self.name} | Headless: {self.headless} | Timeout: {self.timeout}s")
 
             # 3. Validazione Dati
             valid_res, valid_msg = self.validate_data(data)
@@ -287,7 +287,7 @@ class BaseBot(ABC):
                 self.log("Bot interrotto", "WARNING")
                 self.status = BotStatus.STOPPED
             except Exception as e:
-                self.log(f"✗ Errore fatale: {e}", "ERROR")
+                self.log(f"  Errore fatale: {e}", "ERROR")
                 self._save_error_state(str(e))
                 self.status = BotStatus.ERROR
                 if self.step_manager.current_index != -1:

@@ -1,7 +1,7 @@
 """
 SyncroJob - Health Panel
 Dashboard avanzata per il monitoraggio della salute del sistema (Observability).
-Visualizza punteggi di affidabilità (Health Score), statistiche di esecuzione dei bot nelle ultime 24 ore
+Visualizza punteggi di affidabilita'(Health Score), statistiche di esecuzione dei bot nelle ultime 24 ore
 e un elenco dettagliato di anomalie rilevate, con integrazione diretta per gli alert Telegram.
 """
 
@@ -9,9 +9,9 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any, Final
 
-from PyQt6.QtCore import QRectF, Qt, QTimer
-from PyQt6.QtGui import QColor, QFont, QPainter, QPaintEvent, QPen
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QRectF, Qt, QTimer
+from PySide6.QtGui import QColor, QFont, QPainter, QPaintEvent, QPen
+from PySide6.QtWidgets import (
     QFrame,
     QGridLayout,
     QHBoxLayout,
@@ -170,7 +170,7 @@ class StatCard(ModernCard):
 
 
 class AnomalyCard(ModernCard):
-    """Card anomalia con design a lista orizzontale e badge di severità."""
+    """Card anomalia con design a lista orizzontale e badge di severit ."""
 
     def __init__(self, anomaly: Anomaly, parent: QWidget | None = None) -> None:
         super().__init__(parent, elevation=6)
@@ -215,13 +215,13 @@ class AnomalyCard(ModernCard):
         # Severity Badge
         sev_badge = QLabel(anomaly.severity.upper())
         sev_badge.setStyleSheet(f"""
-            background-color: {color};
-            color: white;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 9px;
-            font-weight: 900;
-        """)
+      background-color: {color};
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 9px;
+      font-weight: 900;
+    """)
         layout.addWidget(sev_badge)
 
     def _get_severity_color(self, severity: str) -> str:
@@ -426,7 +426,10 @@ class HealthPanel(QWidget):
                 f"QFrame {{ background: {COLORS['bg_success_pastel']}; border-radius: 12px; border: 1px dashed {COLORS['success_green']}; }}"
             )
             el = QVBoxLayout(empty)
-            el.addWidget(QLabel("[INFO]"), alignment=Qt.AlignmentFlag.AlignCenter)
+            info_icon = QLabel()
+            pix = get_colored_icon(get_asset_path(Icons.INFO), COLORS["text_muted"]).pixmap(24, 24)
+            info_icon.setPixmap(pix)
+            el.addWidget(info_icon, alignment=Qt.AlignmentFlag.AlignCenter)
             el.addWidget(QLabel("Nessuna anomalia"), alignment=Qt.AlignmentFlag.AlignCenter)
             self._anomalies_layout.insertWidget(0, empty)
         else:
@@ -442,9 +445,9 @@ class HealthPanel(QWidget):
                 return
 
             am = get_alert_manager()
-            summary = f"🏥 <b>Health Report</b>\nScore: {report.health_score}%\nAnomalie: {len(report.anomalies)}\n\n"
+            summary = f"   <b>Health Report</b>\nScore: {report.health_score}%\nAnomalie: {len(report.anomalies)}\n\n"
             for a in report.anomalies[:5]:
-                summary += f"• {a.message}\n"
+                summary += f"  {a.message}\n"
             am.send_alert("Health Report", summary, "info")
             self._show_toast("[OK] Alert inviato su Telegram", "success")
         except Exception as e:
@@ -454,7 +457,7 @@ class HealthPanel(QWidget):
         """Esegue un controllo periodico e invia notifiche automatiche se vengono rilevate anomalie critiche."""
         with suppress(Exception):
             if (sent := get_alert_manager().check_and_alert(hours=24)) > 0:
-                self._last_update.setText(f"🔔 {sent} alert inviati")
+                self._last_update.setText(f"   {sent} alert inviati")
 
     def _show_toast(self, message: str, level: str = "info") -> None:
         """Inoltra una notifica interna al NotificationManager."""

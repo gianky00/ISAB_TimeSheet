@@ -7,8 +7,8 @@ Componente specializzato per la visualizzazione della griglia di programmazione.
 import logging
 from typing import Any
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
     QHeaderView,
     QTableWidget,
     QTableWidgetItem,
@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 class ProgrammazioneTableWidget(StandardTable):
     """Tabella specializzata per la programmazione PDL con supporto per espansione Timeline."""
 
-    row_expanded = pyqtSignal(int, bool)  # row, is_expanded
-    selection_changed_custom = pyqtSignal()
+    row_expanded = Signal(int, bool)  # row, is_expanded
+    selection_changed_custom = Signal()
 
     def __init__(self, parent=None):  # noqa: ANN001, ANN204
         super().__init__(0, 0, parent)
@@ -64,7 +64,7 @@ class ProgrammazioneTableWidget(StandardTable):
     def _handle_double_click(self, row: int, column: int):  # noqa: ANN202
         from src.gui.widgets.pdl_timeline import PDLTimelineWidget  # noqa: PLC0415
 
-        # Se la riga sotto è già una timeline, la rimuoviamo (collasso)
+        # Se la riga sotto  gia' una timeline, la rimuoviamo (collasso)
         next_row = row + 1
         if next_row < self.rowCount():
             next_widget = self.cellWidget(next_row, 0)

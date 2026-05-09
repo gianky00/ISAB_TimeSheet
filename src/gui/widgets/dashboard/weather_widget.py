@@ -9,8 +9,8 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -27,14 +27,14 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
 
-# Stile forzato per evitare il bug della Dark Mode / Tooltip nero in PyQt6.
+# Stile forzato per evitare il bug della Dark Mode / Tooltip nero in PySide6.
 TOOLTIP_CSS = """
 QToolTip {
-    background-color: #FFFFFF;
-    color: #212121;
-    border: 1px solid #BBBBBB;
-    border-radius: 6px;
-    padding: 8px 12px;
+  background-color: #FFFFFF;
+  color: #212121;
+  border: 1px solid #BBBBBB;
+  border-radius: 6px;
+  padding: 8px 12px;
 }
 """
 
@@ -42,7 +42,7 @@ QToolTip {
 class WeatherWidget(ModernCard):
     """Widget meteo premium con metriche industriali per il cantiere."""
 
-    refresh_requested = pyqtSignal()
+    refresh_requested = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(elevation=5, parent=parent)
@@ -232,13 +232,13 @@ class WeatherWidget(ModernCard):
         temp_v.setSpacing(0)
         temp_v.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
-        self.lbl_temp = QLabel("--.-°C")
+        self.lbl_temp = QLabel("--.- C")
         self.lbl_temp.setObjectName("lbl_temp")
         self.lbl_temp.setStyleSheet(
             f"#lbl_temp {{ color: {COLORS['text_dark']}; font-size: 38px; font-weight: 900; line-height: 1; background: transparent; border: none; }}"
         )
 
-        self.lbl_apparent = QLabel("Percepita: --°")
+        self.lbl_apparent = QLabel("Percepita: -- ")
         self.lbl_apparent.setObjectName("lbl_apparent")
         self.lbl_apparent.setStyleSheet(
             f"#lbl_apparent {{ color: {COLORS['text_muted']}; font-size: 12px; font-weight: 600; background: transparent; border: none; }}"
@@ -265,16 +265,16 @@ class WeatherWidget(ModernCard):
         pills_v.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
         self.pill_wind = self._create_info_pill(
-            Icons.ACTIVITY, "-- km/h", COLORS["info_blue"], "<b>Vento</b><br/>Velocità attuale"
+            Icons.ACTIVITY, "-- km/h", COLORS["info_blue"], "<b>Vento</b><br/>Velocit  attuale"
         )
         self.pill_hum = self._create_info_pill(
-            Icons.CLOUD, "--% UR", COLORS["teal_accent"], "<b>Umidità</b><br/>Umidità relativa"
+            Icons.CLOUD, "--% UR", COLORS["teal_accent"], "<b>Umidit </b><br/>Umidit  relativa"
         )
         self.pill_uv = self._create_info_pill(
             Icons.SPARKLES, "UV: --", COLORS["warning_orange"], "<b>Indice UV</b><br/>Radiazioni UV"
         )
         self.pill_aqi = self._create_info_pill(
-            Icons.GLOBE, "AQI: --", COLORS["success_green"], "<b>Qualità Aria</b><br/>Indice EU (0-100+)"
+            Icons.GLOBE, "AQI: --", COLORS["success_green"], "<b>Qualita' Aria</b><br/>Indice EU (0-100+)"
         )
 
         pills_v.addWidget(self.pill_wind)
@@ -396,8 +396,8 @@ class WeatherWidget(ModernCard):
             uv = daily.get("uv_index_max", [0])[0] if daily else 0
             aqi = aqi_curr.get("european_aqi", "--")
 
-            self.lbl_temp.setText(f"{temp}°C")
-            self.lbl_apparent.setText(f"Percepita: {apparent}°")
+            self.lbl_temp.setText(f"{temp} C")
+            self.lbl_apparent.setText(f"Percepita: {apparent} ")
             self.lbl_condition.setText(self._get_condition_text(code))
             self.lbl_condition.setStyleSheet(
                 f"#lbl_condition {{ color: {COLORS['primary_blue']}; font-weight: 800; background: transparent; border: none; }}"
@@ -514,12 +514,12 @@ class WeatherWidget(ModernCard):
             lbl_i.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             pop_val = pops[i] if i < len(pops) else 0
-            lbl_pop = QLabel(f"💧 {pop_val}%" if pop_val > 40 else "")  # Solo se rilevante
+            lbl_pop = QLabel(f"   {pop_val}%" if pop_val > 40 else "")  # Solo se rilevante
             lbl_pop.setStyleSheet(f"color: {COLORS['primary_blue']}; font-size: 9px; font-weight: 800;")
             lbl_pop.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             mx, mn = int(t_max[i]), int(t_min[i])
-            lbl_t = QLabel(f"{mx}°/{mn}°")
+            lbl_t = QLabel(f"{mx} /{mn} ")
             lbl_t.setStyleSheet(f"color: {COLORS['text_dark']}; font-size: 11px; font-weight: 700;")
             lbl_t.setAlignment(Qt.AlignmentFlag.AlignCenter)
 

@@ -1,7 +1,7 @@
 """
 Script di pulizia finale:
-1. Rimuove import PyQt6 orfani (widget ora gestiti da core_widgets)
-2. Rimuove setStyleSheet() duplicati dove il wrapper già li applica
+1. Rimuove import PySide6 orfani (widget ora gestiti da core_widgets)
+2. Rimuove setStyleSheet() duplicati dove il wrapper gia' li applica
 Usa ast.parse per validazione post-modifica.
 """
 
@@ -21,7 +21,7 @@ SKIP_FILES = {
     "fix_imports.py",
 }
 
-# Widget che ora sono gestiti da core_widgets e possono essere rimossi dagli import PyQt6
+# Widget che ora sono gestiti da core_widgets e possono essere rimossi dagli import PySide6
 ORPHAN_WIDGETS = [
     "QPushButton",
     "QCheckBox",
@@ -35,9 +35,9 @@ ORPHAN_WIDGETS = [
 
 
 def remove_orphan_imports(content: str) -> str:
-    """Rimuove widget orfani dagli import PyQt6.QtWidgets, solo se non usati nel file."""
+    """Rimuove widget orfani dagli import PySide6.QtWidgets, solo se non usati nel file."""
     for widget in ORPHAN_WIDGETS:
-        # Controlla se il widget è ancora usato nel codice (non solo nell'import)
+        # Controlla se il widget  ancora usato nel codice (non solo nell'import)
         # Cerca occorrenze fuori dalla riga di import
 
         usage_pattern = re.compile(rf"\b{widget}\b")
@@ -60,10 +60,10 @@ def remove_orphan_imports(content: str) -> str:
             continue  # Widget ancora usato direttamente, non rimuovere
 
         # Rimuovi dall'import multi-linea
-        # Pattern: "    QPushButton,\n" o "    QPushButton\n"
+        # Pattern: "  QPushButton,\n" o "  QPushButton\n"
         content = re.sub(rf"^\s*{widget},?\s*\n", "", content, flags=re.MULTILINE)
 
-        # Pattern: in import a linea singola "from PyQt6.QtWidgets import ..., QPushButton, ..."
+        # Pattern: in import a linea singola "from PySide6.QtWidgets import ..., QPushButton, ..."
         content = re.sub(rf",\s*{widget}\b", "", content)
         content = re.sub(rf"\b{widget}\s*,\s*", "", content)
 
@@ -75,7 +75,7 @@ def process_file(filepath: str) -> None:
     Analizza e pulisce un singolo file sorgente.
 
     Args:
-        filepath: Percorso del file da processare.
+      filepath: Percorso del file da processare.
     """
     try:
         content = Path(filepath).read_text(encoding="utf-8")
@@ -95,14 +95,14 @@ def process_file(filepath: str) -> None:
     try:
         ast.parse(content)
     except SyntaxError as e:
-        print(f"  ROLLBACK: {os.path.basename(filepath)} -> {e}")
+        print(f" ROLLBACK: {os.path.basename(filepath)} -> {e}")
         return
 
     try:
         Path(filepath).write_text(content, encoding="utf-8")
-        print(f"  OK: {os.path.relpath(filepath, GUI_DIR)}")
+        print(f" OK: {os.path.relpath(filepath, GUI_DIR)}")
     except Exception as e:
-        print(f"  ERROR: {os.path.basename(filepath)} -> {e}")
+        print(f" ERROR: {os.path.basename(filepath)} -> {e}")
 
 
 def main() -> None:

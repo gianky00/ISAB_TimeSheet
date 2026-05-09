@@ -14,7 +14,7 @@ from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import QThread, Signal
 
 from src.core.logging import get_logger
 
@@ -32,16 +32,16 @@ logger = get_logger(__name__)
 class GeneratoreWorker(QThread):
     """Esegue la generazione del file Excel in background."""
 
-    finished_signal = pyqtSignal(bool, str)
+    finished_signal = Signal(bool, str)
 
     def __init__(self, master_path: str, data: dict[str, Any], dest_path: str):  # noqa: ANN204
         """
         Inizializza il worker per la generazione del preventivo.
 
         Args:
-            master_path: Percorso del file Excel master template.
-            data: Dizionario contenente i dati da inserire nel preventivo.
-            dest_path: Percorso di destinazione per il file generato.
+          master_path: Percorso del file Excel master template.
+          data: Dizionario contenente i dati da inserire nel preventivo.
+          dest_path: Percorso di destinazione per il file generato.
         """
         super().__init__()
         self.master_path = master_path
@@ -60,19 +60,19 @@ class GeneratoreWorker(QThread):
 
 
 class MacroWorker(QThread):
-    """Esegue una o più Macro VBA sul file generato in un thread separato."""
+    """Esegue una o piu' Macro VBA sul file generato in un thread separato."""
 
-    finished_signal = pyqtSignal(bool, str)
-    macro_started = pyqtSignal(str)  # Emesso quando inizia una macro
-    macro_progress = pyqtSignal(str, bool)  # Emesso quando finisce una singola macro (nome, successo)
+    finished_signal = Signal(bool, str)
+    macro_started = Signal(str)  # Emesso quando inizia una macro
+    macro_progress = Signal(str, bool)  # Emesso quando finisce una singola macro (nome, successo)
 
     def __init__(self, file_path: str, macros: list[str]):  # noqa: ANN204
         """
         Inizializza il worker per l'esecuzione delle macro.
 
         Args:
-            file_path: Percorso del file Excel su cui eseguire le macro.
-            macros: Lista dei nomi delle macro da lanciare.
+          file_path: Percorso del file Excel su cui eseguire le macro.
+          macros: Lista dei nomi delle macro da lanciare.
         """
         super().__init__()
         self.file_path = file_path
@@ -121,7 +121,7 @@ class PreventiviGeneratorManager:
         Inizializza il manager dei preventivi.
 
         Args:
-            master_path: Percorso assoluto del file Master XLSM.
+          master_path: Percorso assoluto del file Master XLSM.
         """
         self.master_path = master_path
         self.excel_app: Any = None
@@ -132,10 +132,10 @@ class PreventiviGeneratorManager:
         Scansiona una cartella per determinare il prossimo numero progressivo disponibile.
 
         Args:
-            directory: Cartella contenente i preventivi esistenti.
+          directory: Cartella contenente i preventivi esistenti.
 
         Returns:
-            str: Il prossimo progressivo formattato a 3 cifre (es. '005').
+          str: Il prossimo progressivo formattato a 3 cifre (es. '005').
         """
         if not Path(directory).exists():
             return "001"
@@ -246,11 +246,11 @@ class PreventiviGeneratorManager:
         Genera un nuovo preventivo popolando il template e sanitizzando l'output.
 
         Args:
-            data: Dati inseriti dall'utente nella UI.
-            output_dir: Cartella dove salvare il preventivo.
+          data: Dati inseriti dall'utente nella UI.
+          output_dir: Cartella dove salvare il preventivo.
 
         Returns:
-            tuple: (successo, percorso del file generato o messaggio di errore).
+          tuple: (successo, percorso del file generato o messaggio di errore).
         """
         if not _win32com_found:
             return False, "pywin32 mancante."

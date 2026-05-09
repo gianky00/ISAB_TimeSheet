@@ -99,12 +99,12 @@ class SmartSyncEngine(BaseSyncEngine):
         safe_cast_cols = ", ".join([f'CAST("{cls._validate_identifier(c)}" AS TEXT)' for c in columns])
 
         q_diff = f"""
-            SELECT COUNT(*) FROM (
-                SELECT {safe_cols} FROM {temp_table}
-                EXCEPT
-                SELECT {safe_cast_cols} FROM {safe_table}
-            )
-        """  # nosec B608
+      SELECT COUNT(*) FROM (
+        SELECT {safe_cols} FROM {temp_table}
+        EXCEPT
+        SELECT {safe_cast_cols} FROM {safe_table}
+      )
+    """  # nosec B608
         cursor.execute(q_diff)
         return int(cursor.fetchone()[0])
 
@@ -149,33 +149,33 @@ class SmartSyncEngine(BaseSyncEngine):
 
         if update_assignments:
             return f"""
-                INSERT INTO {safe_table} ({safe_cols})
-                SELECT {safe_cols} FROM {temp_table}
-                WHERE true
-                ON CONFLICT({safe_conflict}) DO UPDATE SET {update_assignments}
-            """  # nosec B608
+        INSERT INTO {safe_table} ({safe_cols})
+        SELECT {safe_cols} FROM {temp_table}
+        WHERE true
+        ON CONFLICT({safe_conflict}) DO UPDATE SET {update_assignments}
+      """  # nosec B608
 
         return f"""
-            INSERT INTO {safe_table} ({safe_cols})
-            SELECT {safe_cols} FROM {temp_table}
-            WHERE true
-            ON CONFLICT({safe_conflict}) DO NOTHING
-        """  # nosec B608
+      INSERT INTO {safe_table} ({safe_cols})
+      SELECT {safe_cols} FROM {temp_table}
+      WHERE true
+      ON CONFLICT({safe_conflict}) DO NOTHING
+    """  # nosec B608
 
     @classmethod
     def _execute_mirror_cleanup(
         cls, cursor: Any, table_name: str, temp_table: str, conflict_cols: list[str]
     ) -> int:
-        """Rimuove le righe non più presenti nel sorgente (mirroring)."""
+        """Rimuove le righe non piu' presenti nel sorgente (mirroring)."""
         safe_table = cls._validate_identifier(table_name)
         main_id_col = cls._validate_identifier(conflict_cols[0])
 
         q_mirror = f"""
-            DELETE FROM {safe_table}
-            WHERE "{main_id_col}" NOT IN (
-                SELECT "{main_id_col}" FROM {temp_table}
-            )
-        """  # nosec B608
+      DELETE FROM {safe_table}
+      WHERE "{main_id_col}" NOT IN (
+        SELECT "{main_id_col}" FROM {temp_table}
+      )
+    """  # nosec B608
         cursor.execute(q_mirror)
         return int(cursor.rowcount)
 

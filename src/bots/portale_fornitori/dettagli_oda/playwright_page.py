@@ -32,7 +32,7 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
             self.page.click(report_sel)
 
             if not is_first_row:
-                # Se non è la prima riga, il menu potrebbe essere già aperto o richiedere un click per refresh
+                # Se non  la prima riga, il menu potrebbe essere gia' aperto o richiedere un click per refresh
                 self.page.click(report_sel)
 
             self._wait_overlay()
@@ -44,7 +44,7 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
             self.page.wait_for_selector(supplier_arrow_sel, state="visible")
             self._wait_overlay()
         except Exception as e:
-            self.log(f"✗ Navigazione fallita: {e}")
+            self.log(f"  Navigazione fallita: {e}")
             return False
         else:
             return True
@@ -54,10 +54,10 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
         Imposta il fornitore per il filtering dei dati in modo robusto.
 
         Args:
-            supplier: Ragione sociale del fornitore.
+          supplier: Ragione sociale del fornitore.
 
         Returns:
-            True se la selezione è avvenuta, False altrimenti.
+          True se la selezione  avvenuta, False altrimenti.
         """
         try:
             self.log(f"Selezione fornitore: {supplier}")
@@ -65,13 +65,13 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
             arrow_sel = self._get_selector(DettagliOdALocators.SUPPLIER_ARROW)
 
             if not self._select_combobox_item(input_sel, arrow_sel, supplier):
-                self.log("  ⚠ Avviso: Selezione fornitore fallita, tento inserimento manuale forzato.")
+                self.log("   Avviso: Selezione fornitore fallita, tento inserimento manuale forzato.")
                 self.page.fill(input_sel, supplier)
                 self.page.press(input_sel, "Enter")
 
             self._wait_overlay()
         except Exception as e:
-            self.log(f"✗ Selezione fornitore fallita: {e}")
+            self.log(f"  Selezione fornitore fallita: {e}")
             return False
         else:
             return True
@@ -82,7 +82,7 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
             expand_sel = self._get_selector(DettagliOdALocators.SIDEBAR_EXPAND_BUTTON)
             btn = self.page.locator(expand_sel)
             if btn.is_visible():
-                self.log("  Espansione sidebar rapida...")
+                self.log(" Espansione sidebar rapida...")
                 # Dispatch event bypassa l'attesa di actionability di Playwright
                 btn.evaluate("el => el.dispatchEvent(new MouseEvent('click', {bubbles: true}))")
                 self.page.wait_for_timeout(300)
@@ -117,7 +117,7 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
             )
 
             if contract:
-                self.log(f"  Inserimento contratto: {contract}")
+                self.log(f" Inserimento contratto: {contract}")
                 contract_sel = self._get_selector(DettagliOdALocators.CONTRACT_FIELD)
                 self.page.locator(contract_sel).evaluate(
                     "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
@@ -131,7 +131,7 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
             self.page.locator(self._get_selector(DettagliOdALocators.SEARCH_BUTTON)).evaluate(
                 "el => el.click()"
             )
-            self.log("  Cerca cliccato...")
+            self.log(" Cerca cliccato...")
             self._wait_overlay()
 
             try:
@@ -139,23 +139,23 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
                 count_text = self.page.inner_text(count_sel).strip()
                 if ":" in count_text:
                     count = int(count_text.split(":")[-1].strip())
-                    self.log(f"  Risultati trovati: {count}")
+                    self.log(f" Risultati trovati: {count}")
                     if count == 0:
-                        self.log("  Nessun risultato. Salto esportazione.")
+                        self.log(" Nessun risultato. Salto esportazione.")
                         self._close_all_tabs()
                         return None
             except Exception as e:
-                self.log(f"  [ATTENZIONE] Errore lettura conteggio: {e}")
+                self.log(f" [ATTENZIONE] Errore lettura conteggio: {e}")
 
             target_filename = ""
             if oda:
-                self.log("  Apertura dettagli (OdA specifico)...")
+                self.log(" Apertura dettagli (OdA specifico)...")
                 self.page.click(self._get_selector(DettagliOdALocators.DETAILS_ICON))
                 self._wait_overlay()
                 export_btn_sel = self._get_selector(DettagliOdALocators.EXPORT_EXCEL_TEXT)
                 target_filename = f"dettaglio_oda_{sanitize_filename(oda)}.xlsx"
             else:
-                self.log("  Esportazione lista generale...")
+                self.log(" Esportazione lista generale...")
                 export_btn_sel = self._get_selector(DettagliOdALocators.GENERAL_EXPORT_BUTTON)
                 safe_date_a = date_a.replace(".", "-").replace("/", "-")
                 target_filename = f"ODA_Generale_al_{safe_date_a}.xlsx"
@@ -163,7 +163,7 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
             final_path = self._download(dest_dir, target_filename, export_btn_sel)
             self._close_all_tabs()
         except Exception as e:
-            self.log(f"  ✗ Errore processamento: {e}")
+            self.log(f"   Errore processamento: {e}")
             with suppress(Exception):
                 self._close_all_tabs()
             return None
@@ -178,7 +178,7 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
                 self.page.click(close_sel)
                 self._wait_overlay(timeout_ms=2000)
         except Exception as e:
-            self.log(f"  [ATTENZIONE] Errore chiusura tab: {e}")
+            self.log(f" [ATTENZIONE] Errore chiusura tab: {e}")
 
     def _download(
         self,
@@ -189,13 +189,13 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
         """Esegue il download con Playwright in modo ultra-robusto."""
         try:
             dest_dir.mkdir(parents=True, exist_ok=True)
-            self.log(f"  Attendo download in: {dest_dir}")
+            self.log(f" Attendo download in: {dest_dir}")
 
             # 1. Attendi che almeno uno dei pulsanti sia nel DOM
             btn = self.page.locator(selector).first
             btn.wait_for(state="attached", timeout=5000)
 
-            # Micro-pausa per stabilità framework (richiesta utente)
+            # Micro-pausa per stabilita' framework (richiesta utente)
             self.page.wait_for_timeout(1000)
 
             # 2. Cattura il download scatenando un click JS forzato
@@ -211,9 +211,9 @@ class PlaywrightDettagliOdAPage(PlaywrightBasePage):
                     target_path.unlink()
 
             download.save_as(str(target_path))
-            self.log(f"  ✓ Scaricato: {target_path.name}")
+            self.log(f"   Scaricato: {target_path.name}")
         except Exception as e:
-            self.log(f"  ✗ Errore download: {e}")
+            self.log(f"   Errore download: {e}")
             return None
         else:
             return target_path

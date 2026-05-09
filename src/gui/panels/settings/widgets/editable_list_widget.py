@@ -6,8 +6,8 @@ Widget riutilizzabile per la gestione di liste testuali semplici (Aggiungi, Modi
 from collections.abc import Sequence
 from typing import Any
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QPoint, Qt, Signal
+from PySide6.QtWidgets import (
     QHBoxLayout,
     QMenu,
     QVBoxLayout,
@@ -36,16 +36,16 @@ class EditableListWidget(QWidget):
     Supporta l'interazione tramite pulsanti dedicati o menu contestuale.
     """
 
-    changed = pyqtSignal()
+    changed = Signal()
 
     def __init__(self, title: str, input_label: str, parent: QWidget | None = None) -> None:
         """
         Inizializza il widget lista modificabile.
 
         Args:
-            title: Titolo del gruppo visualizzato.
-            input_label: Etichetta da mostrare nel dialogo di input.
-            parent: Widget genitore opzionale.
+          title: Titolo del gruppo visualizzato.
+          input_label: Etichetta da mostrare nel dialogo di input.
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self.title = title
@@ -137,7 +137,7 @@ class EditableListWidget(QWidget):
         Popola la lista con le stringhe fornite.
 
         Args:
-            items: Sequenza di stringhe da aggiungere.
+          items: Sequenza di stringhe da aggiungere.
         """
         self.list_widget.clear()
         self.list_widget.addItems(items)

@@ -19,7 +19,7 @@ class DataSynchronizer:
 
     @classmethod
     def sync_contabilita(cls, db_path: Path, import_data: list[Any], years: list[int]) -> tuple[int, int]:
-        """Sincronizza i dati della contabilità."""
+        """Sincronizza i dati della contabilit ."""
         from src.core.importers.contabilita import ContabilitaImporter  # noqa: PLC0415
 
         all_new_data = []
@@ -67,12 +67,12 @@ class DataSynchronizer:
 
     @classmethod
     def sync_contabilita_dati(cls, *args: Any, **kwargs: Any) -> tuple[int, int]:
-        """Alias per retrocompatibilità."""
+        """Alias per retrocompatibilit ."""
         return cls.sync_contabilita(*args, **kwargs)
 
     @classmethod
     def sync_attivita_programmate(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
-        """Sincronizza le attività programmate."""
+        """Sincronizza le attivita'programmate."""
         from src.core.importers.attivita import AttivitaImporter  # noqa: PLC0415
 
         res = SmartSyncEngine.sync_upsert_smart(

@@ -207,7 +207,7 @@ class TimbraturePage:
             )
 
             if not res_path:
-                self.log("✗ Download non rilevato o timeout.")
+                self.log("  Download non rilevato o timeout.")
                 return ""
 
             # Spostamento in cartella temp per elaborazione
@@ -218,7 +218,7 @@ class TimbraturePage:
             new_path = dest_dir / f"timbrature_{int(time.time())}.xlsx"
 
             shutil.move(str(downloaded_file), str(new_path))
-            self.log(f"✓ File scaricato e preparato: {new_path.name}")
+            self.log(f"  File scaricato e preparato: {new_path.name}")
             return str(new_path)
 
         except Exception as e:

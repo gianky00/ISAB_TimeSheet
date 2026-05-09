@@ -1,6 +1,6 @@
 /*
    SyncroJob - Global UI Overrides (Enterprise Spectacular)
-   Forza il tema chiaro su componenti critici e modernizza i componenti PyQt6 standard.
+   Forza il tema chiaro su componenti critici e modernizza i componenti PySide6 standard.
 */
 
 /* === GLOBAL DIALOGS & WINDOWS === */

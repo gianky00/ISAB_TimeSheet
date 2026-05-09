@@ -2,7 +2,7 @@
 SyncroJob - Service Controller
 Controller per il coordinamento dei servizi di background, l'automazione dei report e la gestione del parallelismo bot.
 Implementa una logica di scheduling intelligente che permette l'esecuzione contemporanea di bot su portali diversi
-(es. Portale Fornitori e SafeWork) garantendo al contempo la sequenzialità delle operazioni sullo stesso sito.
+(es. Portale Fornitori e SafeWork) garantendo al contempo la sequenzialit  delle operazioni sullo stesso sito.
 Gestisce inoltre l'inoltro automatico delle notifiche critiche al bot Telegram e il check periodico degli aggiornamenti.
 """
 
@@ -14,7 +14,7 @@ from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from typing import Any, Final
 
-from PyQt6.QtCore import QObject, QTimer
+from PySide6.QtCore import QObject, QTimer
 
 from src.core import config_manager
 from src.core.app_updater import check_for_updates
@@ -43,8 +43,8 @@ class ServiceController(QObject):
         Inizializza il controller dei servizi e le code di gestione del parallelismo.
 
         Args:
-            main_window: Riferimento alla MainWindow dell'applicazione.
-            telegram_service: Istanza del servizio Telegram.
+          main_window: Riferimento alla MainWindow dell'applicazione.
+          telegram_service: Istanza del servizio Telegram.
         """
         super().__init__(main_window)
         self.mw = main_window
@@ -80,7 +80,7 @@ class ServiceController(QObject):
 
     def _check_scheduled_tasks(self) -> None:
         """
-        Verifica il match orario per i bot configurati in modalità Autopilot.
+        Verifica il match orario per i bot configurati in modalita' Autopilot.
         Applica la logica di parallelismo intelligente per l'accodamento dei task.
         """
         config = config_manager.load_config()
@@ -240,7 +240,7 @@ class ServiceController(QObject):
         return re.sub(r"\s+", " ", str(t).strip().upper())
 
     def _dispatch_outlook_email(self, w_list: list[dict[str, Any]], e_list: list[dict[str, Any]]) -> None:
-        """Utilizza le API COM di Windows per inviare l'email tramite Outlook."""
+        """Utilizza le APiu'COM di Windows per inviare l'email tramite Outlook."""
         import win32com.client  # noqa: PLC0415
 
         body = (
@@ -268,13 +268,13 @@ class ServiceController(QObject):
         """Configura il pannello Dettagli OdA per uno scarico massivo senza filtri specifici."""
         if hasattr(panel, "data_table"):
             panel.data_table.set_data([])
-            panel.log_widget.append("🧹 Tabella pulita per scarico generale (senza filtro OdA)")
+            panel.log_widget.append("   Tabella pulita per scarico generale (senza filtro OdA)")
 
     def _schedule_bot_with_parallelism(self, bot_id: str, panel: Any, site: str, log_message: str) -> None:
         """Gestisce l'accodamento di un bot rispettando i vincoli di un'unica istanza Selenium per sito."""
         if self.running_bots_by_site[site]:
             self.pending_bots_by_site[site].append((bot_id, panel, log_message))
-            panel.log_widget.append(f"⏸️ Bot in coda. Sito {site.replace('_', ' ').title()} occupato.")
+            panel.log_widget.append(f"    Bot in coda. Sito {site.replace('_', ' ').title()} occupato.")
         else:
             self._start_bot(bot_id, panel, site, log_message)
 
@@ -308,7 +308,7 @@ class ServiceController(QObject):
                 panel._service_callback = None
         if self.pending_bots_by_site[site]:
             nxt_id, nxt_p, nxt_msg = self.pending_bots_by_site[site].pop(0)
-            nxt_p.log_widget.append("▶️ Avvio da coda...")
+            nxt_p.log_widget.append("    Avvio da coda...")
             self._start_bot(nxt_id, nxt_p, site, nxt_msg)
 
     def _check_updates(self) -> None:
@@ -316,7 +316,7 @@ class ServiceController(QObject):
         check_for_updates(parent=self.mw, silent=True, callback=self.mw._show_update_banner)
 
     def _forward_notification_to_telegram(self, notification: dict[str, Any]) -> None:
-        """Inoltra i messaggi di sistema con criticità elevata al bot Telegram registrato."""
+        """Inoltra i messaggia'di sistema con criticit  elevata al bot Telegram registrato."""
         if notification.get("title") == "Telegram":
             return
         level = notification.get("level", "info")

@@ -4,8 +4,8 @@ SyncroJob - MultiSelect Filter Widget
 Widget professionale per la selezione multipla con ricerca e chip.
 """
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
     QListWidgetItem,
@@ -98,7 +98,7 @@ class MultiSelectDialog(QDialog):
         Recupera la lista delle stringhe attualmente selezionate (checked).
 
         Returns:
-            list[str]: Lista di testi degli elementi selezionati.
+          list[str]: Lista di testi degli elementi selezionati.
         """
         selected = []
         for i in range(self.list_widget.count()):
@@ -111,7 +111,7 @@ class MultiSelectDialog(QDialog):
 class MultiSelectFilter(QWidget):
     """Widget che mostra un pulsante di selezione e gestisce la multiselezione."""
 
-    changed = pyqtSignal(list)
+    changed = Signal(list)
 
     def __init__(self, label: str, placeholder: str = "Seleziona...", parent: QWidget | None = None):  # noqa: ANN204
         super().__init__(parent)
@@ -138,10 +138,10 @@ class MultiSelectFilter(QWidget):
         Imposta i possibili elementi selezionabili nel filtro.
 
         Args:
-            items: Lista di stringhe.
+          items: Lista di stringhe.
         """
         self.items = items
-        # Rimuovi selezionati non più presenti
+        # Rimuovi selezionati non piu' presenti
         self.selected = [s for s in self.selected if s in items]
         self._update_button_text()
 
@@ -150,7 +150,7 @@ class MultiSelectFilter(QWidget):
         Imposta gli elementi attualmente selezionati.
 
         Args:
-            selected: Lista di stringhe selezionate.
+          selected: Lista di stringhe selezionate.
         """
         self.selected = selected
         self._update_button_text()

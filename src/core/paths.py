@@ -37,10 +37,10 @@ def get_version() -> str:
 
 
 def get_data_path() -> str:
-    """Restituisce il percorso della directory dati (per retrocompatibilità)."""
+    """Restituisce il percorso della directory dati (per retrocompatibilit )."""
     return str(DB_DIR)
 
 
 def get_logs_path() -> str:
-    """Restituisce il percorso della directory log (per retrocompatibilità)."""
+    """Restituisce il percorso della directory log (per retrocompatibilit )."""
     return str(LOGS_DIR)

@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QEasingCurve, QEvent, QObject, QPropertyAnimation, QSize, Qt
-from PyQt6.QtWidgets import QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPropertyAnimation, QSize, Qt
+from PySide6.QtWidgets import QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.gui.widgets.core_widgets import (
@@ -21,7 +21,7 @@ from src.gui.widgets.update_banner import UpdateBanner
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 if TYPE_CHECKING:
-    from PyQt6.QtGui import QEnterEvent
+    from PySide6.QtGui import QEnterEvent
 
     from src.gui.main_window.main import MainWindow
 
@@ -49,39 +49,39 @@ class AnimatedSplitButton(QPushButton):
         if is_detached:
             self.setToolTip("Riaggancia la vista corrente alla finestra principale")
             self.setStyleSheet("""
-                QPushButton {
-                    background-color: #E8F5E9;
-                    border: 2px solid #2E7D32;
-                    border-radius: 8px;
-                }
-                QPushButton:hover {
-                    background-color: #C8E6C9;
-                    border: 2px solid #1B5E20;
-                }
-                QPushButton:pressed {
-                    background-color: #A5D6A7;
-                    padding-top: 2px;
-                }
-            """)
+        QPushButton {
+          background-color: #E8F5E9;
+          border: 2px solid #2E7D32;
+          border-radius: 8px;
+        }
+        QPushButton:hover {
+          background-color: #C8E6C9;
+          border: 2px solid #1B5E20;
+        }
+        QPushButton:pressed {
+          background-color: #A5D6A7;
+          padding-top: 2px;
+        }
+      """)
             icon_path = get_asset_path(Icons.CHEVRON_DOWN)
             self.setIcon(get_colored_icon(icon_path, "#1B5E20"))
         else:
             self.setToolTip("Sgancia la vista corrente in una finestra esterna (Multi-Window)")
             self.setStyleSheet("""
-                QPushButton {
-                    background-color: #FFFFFF;
-                    border: 2px solid #2C3E50;
-                    border-radius: 8px;
-                }
-                QPushButton:hover {
-                    background-color: #F0F4F8;
-                    border: 2px solid #3498DB;
-                }
-                QPushButton:pressed {
-                    background-color: #E2E8F0;
-                    padding-top: 2px;
-                }
-            """)
+        QPushButton {
+          background-color: #FFFFFF;
+          border: 2px solid #2C3E50;
+          border-radius: 8px;
+        }
+        QPushButton:hover {
+          background-color: #F0F4F8;
+          border: 2px solid #3498DB;
+        }
+        QPushButton:pressed {
+          background-color: #E2E8F0;
+          padding-top: 2px;
+        }
+      """)
             icon_path = get_asset_path(Icons.SPLIT_WINDOW)
             self.setIcon(get_colored_icon(icon_path, "#212121"))
 
@@ -115,7 +115,7 @@ class ToolBarComponent(QObject):
         Inizializza il componente ToolBar.
 
         Args:
-            main_window: Riferimento alla MainWindow dell'applicazione.
+          main_window: Riferimento alla MainWindow dell'applicazione.
         """
         super().__init__(main_window)
         self.main_window = main_window
@@ -129,10 +129,10 @@ class ToolBarComponent(QObject):
         Crea la sidebar per l'uso come overlay.
 
         Args:
-            parent_widget: Il widget genitore.
+          parent_widget: Il widget genitore.
 
         Returns:
-            SidebarWidget: L'istanza creata della sidebar.
+          SidebarWidget: L'istanza creata della sidebar.
         """
         self.sidebar = SidebarWidget(parent_widget)
         return self.sidebar
@@ -142,10 +142,10 @@ class ToolBarComponent(QObject):
         Crea la barra superiore nell'area dei contenuti (Banner + Ricerca).
 
         Args:
-            layout: Il layout verticale dell'area centrale.
+          layout: Il layout verticale dell'area centrale.
 
         Returns:
-            tuple: (Istanza UpdateBanner, Istanza QLineEdit della ricerca).
+          tuple: (Istanza UpdateBanner, Istanza QLineEdit della ricerca).
         """
 
         self.update_banner = UpdateBanner()
@@ -189,7 +189,7 @@ class ToolBarComponent(QObject):
             self.main_window.navigation_controller.detach_panel(idx)
 
     def _update_split_button_state(self, *args: object) -> None:
-        """Aggiorna lo stile e l'azione del pulsante split verificando se il pannello corrente è sganciato."""
+        """Aggiorna lo stile e l'azione del pulsante split verificando se il pannello corrente  sganciato."""
         idx = self.main_window.stacked_widget.currentIndex()
         is_detached = idx in self.main_window.navigation_controller._detached_panels
         if self.detach_btn:

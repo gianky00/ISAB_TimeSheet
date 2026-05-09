@@ -45,7 +45,7 @@ class ScaricaTSBot(SeleniumBaseBot):
 
     @staticmethod
     def get_description() -> str:
-        """Restituisce una descrizione delle funzionalità del bot."""
+        """Restituisce una descrizione delle funzionalita' del bot."""
         return "Scarica i timesheet dal portale ISAB"
 
     @staticmethod
@@ -225,10 +225,10 @@ class ScaricaTSBot(SeleniumBaseBot):
 
         try:
             js_dispatch = """
-                var el = arguments[0];
-                var ev_in = new Event('input', {bubbles:true}); el.dispatchEvent(ev_in);
-                var ev_ch = new Event('change', {bubbles:true}); el.dispatchEvent(ev_ch);
-            """
+        var el = arguments[0];
+        var ev_in = new Event('input', {bubbles:true}); el.dispatchEvent(ev_in);
+        var ev_ch = new Event('change', {bubbles:true}); el.dispatchEvent(ev_ch);
+      """
             campo_num = self.wait.until(EC.presence_of_element_located((By.NAME, "NumeroOda")))
             self.driver.execute_script("arguments[0].value = arguments[1];", campo_num, numero_oda)
             self.driver.execute_script(js_dispatch, campo_num)
@@ -250,16 +250,16 @@ class ScaricaTSBot(SeleniumBaseBot):
 
     def _run_vba_processing(self, file_list: list[str], dest_dir: Path) -> None:
         """Esegue il post-processing stile VBA (TimesheetProcessor)."""
-        self.log(f"⚙️ Avvio elaborazione TS (Logica VBA) su {len(file_list)} file...")
+        self.log(f"    Avvio elaborazione TS (Logica VBA) su {len(file_list)} file...")
         processed = 0
         for f in file_list:
             ok, msg = TimesheetProcessor.process_and_move(Path(f), dest_dir)
             if ok:
-                self.log(f"  [OK] {msg}")
+                self.log(f" [OK] {msg}")
                 processed += 1
             else:
-                self.log(f"  [ERRORE] Errore elaborazione {Path(f).name}: {msg}")
-        self.log(f"🏁 Elaborazione conclusa: {processed}/{len(file_list)} completati.")
+                self.log(f" [ERRORE] Errore elaborazione {Path(f).name}: {msg}")
+        self.log(f"   Elaborazione conclusa: {processed}/{len(file_list)} completati.")
 
     def _navigate_to_timesheet(self) -> bool:
         """Naviga a Report -> Timesheet."""
@@ -318,7 +318,7 @@ class ScaricaTSBot(SeleniumBaseBot):
 
         source_dir_path = Path(source_dir).resolve()
         if not source_dir_path.exists():
-            self.log(f"✗ Cartella non esiste: {source_dir_path}")
+            self.log(f"  Cartella non esiste: {source_dir_path}")
             return None
 
         # Snapshot file esistenti

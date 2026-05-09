@@ -1,7 +1,7 @@
 """
 SyncroJob - Screenshot Bridge
 Implementazione GUI delle interfacce Telegram per cattura screenshot e stato.
-Segue SRP isolando PyQt6.
+Segue SRP isolando PySide6.
 """
 
 import os
@@ -9,9 +9,9 @@ import subprocess
 from contextlib import suppress
 from typing import Any, cast
 
-from PyQt6.QtCore import QBuffer, QIODevice, QRect, Qt
-from PyQt6.QtGui import QGuiApplication, QPainter, QPixmap
-from PyQt6.QtWidgets import QApplication
+from PySide6.QtCore import QBuffer, QIODevice, QRect, Qt
+from PySide6.QtGui import QGuiApplication, QPainter, QPixmap
+from PySide6.QtWidgets import QApplication
 
 from src.core.telegram.bridge.interfaces import AppStatusProvider, ScreenshotProvider
 
@@ -46,7 +46,7 @@ class TelegramGUIBridge(ScreenshotProvider, AppStatusProvider):
         buf = QBuffer()
         buf.open(QIODevice.OpenModeFlag.WriteOnly)
         pixmap.save(buf, "PNG")
-        return buf.data().data()
+        return cast("bytes", buf.data().data())
 
     def get_system_status(self) -> tuple[str, str, str]:
         """Recupera lo stato dal bot controller."""

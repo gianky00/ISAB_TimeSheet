@@ -9,7 +9,7 @@ from src.core.importers.base import BaseImporter
 
 
 class AttivitaImporter(BaseImporter):
-    """Importer per le Attività Programmate."""
+    """Importer per le Attivita'Programmate."""
 
     ATTIVITA_PROGRAMMATE_MAPPING: ClassVar[dict[str, str]] = {
         "PS": "ps",
@@ -38,10 +38,10 @@ class AttivitaImporter(BaseImporter):
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, list[tuple[Any, ...]]]:
-        """Importa il file Attività Programmate (veloce, senza colori)."""
+        """Importa il file Attivita'Programmate (veloce, senza colori)."""
         path = Path(file_path)
         if not path.exists():
-            return False, f"File Attività Programmate non trovato: {file_path}", []
+            return False, f"File Attivita'Programmate non trovato: {file_path}", []
 
         try:
             df = cls._read_attivita_programmate_sheet(path)
@@ -53,10 +53,10 @@ class AttivitaImporter(BaseImporter):
                 return False, "Colonne non trovate. Controlla intestazione riga 3.", []
 
             rows = cls._prepare_attivita_rows(df)
-            return True, f"Importate {len(rows)} righe in Attività Programmate.", rows
+            return True, f"Importate {len(rows)} righe in Attivita'Programmate.", rows
 
         except Exception as e:
-            return False, f"Errore importazione Attività Programmate: {e}", []
+            return False, f"Errore importazione Attivita'Programmate: {e}", []
 
     @classmethod
     def _read_attivita_programmate_sheet(cls, path: Path) -> pd.DataFrame | None:

@@ -204,8 +204,31 @@ class ScaricoOreImporter(BaseImporter):
 
         return rows_to_insert
 
+    @staticmethod
+    def _fmt_excel_val(val: Any) -> str:
+        """Formatta in modo intelligente i valori provenienti da openpyxl."""
+        if val is None:
+            return ""
+        # Se  un numero intero rappresentato come float (comune in Excel), converti in int
+        if isinstance(val, (float, int)) and float(val).is_integer():
+            val = int(val)
+        s = str(val)
+        # Sostituisce newline e sequence di spazi con un singolo spazio
+        return re.sub(r"\s+", " ", s).strip()
+
+    @staticmethod
+    def _fmt_excel_date(val: Any) -> str:
+        """Tenta di convertire un valore cella in stringa data ISO."""
+        if not val:
+            return ""
+        if hasattr(val, "strftime"):
+            return str(val.strftime("%Y-%m-%d"))
+        s = str(val).strip()
+        return s.split(" ")[0] if " " in s else s
+
     @classmethod
     def _extract_row_values(cls, row: Any) -> list[str] | None:
+        """Estrae e normalizza i valori di una riga di scarico ore."""
         (
             c_data,
             c_p1,
@@ -220,65 +243,43 @@ class ScaricoOreImporter(BaseImporter):
             c_comm,
         ) = row[0:11]
 
-        v_odc = c_odc.value
-        v_pos = c_pos.value
-
-        if v_odc is v_pos is None:
+        if c_odc.value is None and c_pos.value is None:
             return None
 
-        def _fmt(val: Any) -> str:
-            if val is None:
-                return ""
-            # Se è un numero intero rappresentato come float (comune in Excel), converti in int
-            if isinstance(val, (float, int)) and float(val).is_integer():
-                val = int(val)
-            s = str(val)
-            # Sostituisce newline e sequence di spazi con un singolo spazio
-            s = re.sub(r"\s+", " ", s).strip()
-            return s
+        # Estrazione Campi
+        s_data = cls._fmt_excel_date(c_data.value)
+        s_p1 = cls._fmt_excel_val(c_p1.value)
+        s_p2 = cls._fmt_excel_val(c_p2.value)
 
-        vals = []
-        v_data = c_data.value
-        s_data = ""
-        if v_data:
-            if hasattr(v_data, "strftime"):
-                s_data = v_data.strftime("%Y-%m-%d")
-            else:
-                s = str(v_data).strip()
-                if " " in s:
-                    s = s.split(" ")[0]
-                s_data = s
-        vals.append(s_data)
+        # Gestione OdC / Posizione (esclude zeri fittizi)
+        def _clean_zero(v: Any) -> str:
+            s = cls._fmt_excel_val(v)
+            return "" if s in ("0", "0.0") else s
 
-        vals.extend((_fmt(c_p1.value), _fmt(c_p2.value)))
+        s_odc = _clean_zero(c_odc.value)
+        s_pos = _clean_zero(c_pos.value)
 
-        s_odc = _fmt(v_odc)
-        if s_odc in ("0", "0.0"):
-            s_odc = ""
-        vals.append(s_odc)
+        # Altri Campi
+        s_dalle = cls._fmt_excel_val(c_dalle.value)
+        s_alle = cls._fmt_excel_val(c_alle.value)
+        s_tot = cls._fmt_excel_val(c_tot.value)
+        s_desc = cls._fmt_excel_val(c_desc.value)
+        s_fin = cls._fmt_excel_val(c_fin.value)
+        s_comm = _clean_zero(c_comm.value)
 
-        s_pos = _fmt(v_pos)
-        if s_pos in ("0", "0.0"):
-            s_pos = ""
-        vals.append(s_pos)
-
-        vals.extend(
-            (
-                _fmt(c_dalle.value),
-                _fmt(c_alle.value),
-                _fmt(c_tot.value),
-                _fmt(c_desc.value),
-                _fmt(c_fin.value),
-            )
-        )
-
-        v_comm = c_comm.value
-        s_comm = _fmt(v_comm)
-        if s_comm in ("0", "0.0"):
-            s_comm = ""
-        vals.append(s_comm)
-
-        return vals
+        return [
+            s_data,
+            s_p1,
+            s_p2,
+            s_odc,
+            s_pos,
+            s_dalle,
+            s_alle,
+            s_tot,
+            s_desc,
+            s_fin,
+            s_comm,
+        ]
 
     @classmethod
     def _process_scarico_ore_row(cls, row: Any, col_keys: list[str]) -> tuple[Any, ...] | None:

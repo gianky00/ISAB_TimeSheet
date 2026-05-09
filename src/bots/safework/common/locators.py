@@ -36,7 +36,7 @@ class SafeWorkLocators:
     RADIO_PRINT_ALL = (By.ID, "rbStampaTutte")
     PREVIEW_BUTTON = (By.ID, "btnAnteprima")
 
-    # Filtri Visualizza Attività
+    # Filtri Visualizza Attivita'
     NUM_PERMESSO_FIELD = (By.ID, "fldNumPermesso")
     DATE_FROM_PROG = (By.ID, "programmazioneDal")  # Aggiunto
     DATE_TO_PROG = (By.ID, "programmazioneAl")  # Aggiunto

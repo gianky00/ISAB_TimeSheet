@@ -36,10 +36,10 @@ class SafeWorkLoginPage:
             # Tipo "ISAB" -> Flusso VELOCE (TCL)
             # Tipo "Esecutore" -> Flusso ROBUSTO (COEMI)
             if account_type == "ISAB":
-                self.log(f"⚡ Account ISAB rilevato ({username}): Avvio procedura VELOCE.")
+                self.log(f"  Account ISAB rilevato ({username}): Avvio procedura VELOCE.")
                 return self._login_flow_tcl()
 
-            self.log(f"⚡ Account Esecutore rilevato ({username}): Avvio procedura ROBUSTA.")
+            self.log(f"  Account Esecutore rilevato ({username}): Avvio procedura ROBUSTA.")
             return self._login_flow_coemi()
 
         except Exception as e:
@@ -47,7 +47,7 @@ class SafeWorkLoginPage:
             return False
 
     def _procedura_comune_login(self, username: str, password: str) -> None:
-        """Passaggi comuni a tutti gli account prima della verifica accesso."""
+        """Passaggia'comuni a tutti gli account prima della verifica accesso."""
         MAX_RETRIES = 3  # noqa: N806
         for tentativa in range(MAX_RETRIES):
             try:
@@ -68,7 +68,7 @@ class SafeWorkLoginPage:
                 )
                 opzione_isab.click()
 
-                self.log(f"🔐 Inserimento credenziali per {username}...")
+                self.log(f"   Inserimento credenziali per {username}...")
                 u_field = self.wait.until(EC.visibility_of_element_located(SafeWorkLocators.USERNAME_FIELD))
                 u_field.clear()
                 u_field.send_keys(username)
@@ -82,7 +82,7 @@ class SafeWorkLoginPage:
 
             except (TimeoutException, Exception) as e:
                 if "stale" in str(e).lower() and tentativa < MAX_RETRIES - 1:
-                    self.log("[ATTENZIONE] Rilevato elemento non più valido. Ricaricamento...")
+                    self.log("[ATTENZIONE] Rilevato elemento non piu' valido. Ricaricamento...")
                     self.driver.refresh()
                     continue
                 self.log(f"[ERRORE] Errore fase preliminare login: {e}")

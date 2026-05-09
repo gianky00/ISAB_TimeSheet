@@ -8,8 +8,8 @@ import json
 from datetime import datetime
 from typing import Any, ClassVar
 
-from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt
-from PyQt6.QtGui import QColor, QFont, QIcon
+from PySide6.QtCore import QAbstractTableModel, QModelIndex, QPersistentModelIndex, Qt
+from PySide6.QtGui import QColor, QFont, QIcon
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
@@ -30,7 +30,7 @@ class AuditTableModel(QAbstractTableModel):
         "Modulo",
         "Categoria",
         "Azione",
-        "Codice/Entità",
+        "Codice/Entit ",
         "Dettagli",
     ]
 
@@ -39,7 +39,7 @@ class AuditTableModel(QAbstractTableModel):
         Inizializza il modello audit.
 
         Args:
-            logs: Lista iniziale di dizionari log.
+          logs: Lista iniziale di dizionari log.
         """
         super().__init__()
         self._logs = logs or []
@@ -57,21 +57,25 @@ class AuditTableModel(QAbstractTableModel):
         Aggiorna l'intero set di dati del modello.
 
         Args:
-            logs: Nuova lista di log da visualizzare.
+          logs: Nuova lista di log da visualizzare.
         """
         self.beginResetModel()
         self._logs = logs
         self.endResetModel()
 
-    def rowCount(self, parent: QModelIndex | None = None) -> int:
+    def rowCount(self, parent: QModelIndex | QPersistentModelIndex | None = None) -> int:
         """Restituisce il numero di log presenti."""
+        if parent is not None and parent.isValid():
+            return 0
         return len(self._logs)
 
-    def columnCount(self, parent: QModelIndex | None = None) -> int:
+    def columnCount(self, parent: QModelIndex | QPersistentModelIndex | None = None) -> int:
         """Restituisce il numero di colonne definite."""
+        if parent is not None and parent.isValid():
+            return 0
         return len(self.COLUMNS)
 
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: PLR0911
+    def data(self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: PLR0911
         """
         Fornisce i dati per la cella specificata in base al ruolo richiesto.
         Gestisce testo, icone, font e colori.
@@ -117,7 +121,7 @@ class AuditTableModel(QAbstractTableModel):
         if col == 5:  # noqa: PLR2004
             return str(log.get("action", "-"))
         if col == 6:  # noqa: PLR2004
-            # Priorità a error_code se c'è, altrimenti entity
+            # Priorita' a error_code se c' , altrimenti entity
             err = log.get("error_code")
             return str(err) if err else str(log.get("entity", "-"))
         if col == 7:  # noqa: PLR2004
@@ -151,19 +155,19 @@ class AuditTableModel(QAbstractTableModel):
 
     def _get_foreground_data(self, log: dict[str, Any], col: int) -> QColor | None:
         """Evidenzia in rosso i codici errore e in arancione le operazioni lente."""
-        if col == 6 and log.get("error_code"):  # Error Code Red  # noqa: PLR2004
+        if col == 6 and log.get("error_code"):  # Error Code Red # noqa: PLR2004
             return QColor(COLORS["error_red"])
-        if col == 2 and (log.get("duration_ms", 0) or 0) > 5000:  # Slow ops  # noqa: PLR2004
+        if col == 2 and (log.get("duration_ms", 0) or 0) > 5000:  # Slow ops # noqa: PLR2004
             return QColor(COLORS["warning_orange"])
         return None
 
     def _get_font_data(self, log: dict[str, Any], col: int) -> QFont | None:
         """Applica il grassetto alle azioni e ai codici errore."""
-        if col == 5:  # Action Bold  # noqa: PLR2004
+        if col == 5:  # Action Bold # noqa: PLR2004
             f = QFont()
             f.setBold(True)
             return f
-        if col == 6 and log.get("error_code"):  # Error Code Bold  # noqa: PLR2004
+        if col == 6 and log.get("error_code"):  # Error Code Bold # noqa: PLR2004
             f = QFont()
             f.setBold(True)
             return f
@@ -201,7 +205,7 @@ class AuditTableModel(QAbstractTableModel):
         return f"{f_ms / 1000.0:.1f}s"
 
     def _extract_message(self, log: dict[str, Any]) -> str:
-        """Estrae il messaggio più significativo dai parametri JSON del log."""
+        """Estrae il messaggio piu' significativo dai parametri JSON del log."""
         p_str = log.get("params", "{}")
         try:
             p = json.loads(p_str) if isinstance(p_str, str) else p_str
@@ -220,10 +224,10 @@ class AuditTableModel(QAbstractTableModel):
         Restituisce i dati completi del log alla riga specificata.
 
         Args:
-            row: Indice della riga.
+          row: Indice della riga.
 
         Returns:
-            dict | None: Il dizionario del log o None.
+          dict | None: Il dizionario del log o None.
         """
         if 0 <= row < len(self._logs):
             return self._logs[row]

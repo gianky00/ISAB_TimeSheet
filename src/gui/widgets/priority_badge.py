@@ -1,19 +1,19 @@
 """
-PriorityBadge - Badge component per visualizzare la priorità di una notifica.
+PriorityBadge - Badge component per visualizzare la priorita' di una notifica.
 Supporta High (con pulse animation), Medium e Low.
 """
 
 from typing import Any, ClassVar
 
-from PyQt6.QtCore import QVariantAnimation, pyqtProperty  # type: ignore[attr-defined]
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
+from PySide6.QtCore import Property, QVariantAnimation
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 from src.gui.styles import COLORS
 
 
 class PriorityBadge(QWidget):
     """
-    Badge per priorità notifica con indicatore colorato e pulse animation.
+    Badge per priorita' notifica con indicatore colorato e pulse animation.
 
     Levels:
     - high: Red dot + "Alta" label + pulse animation
@@ -51,12 +51,12 @@ class PriorityBadge(QWidget):
         self.dot.setFixedSize(8, 8)
         self.dot.setStyleSheet(
             f"""
-            QLabel {{
-                background-color: {color};
-                border-radius: 4px;
-                border: none;
-            }}
-        """
+      QLabel {{
+        background-color: {color};
+        border-radius: 4px;
+        border: none;
+      }}
+    """
         )
         layout.addWidget(self.dot)
 
@@ -66,16 +66,16 @@ class PriorityBadge(QWidget):
             self.label = QLabel(label_text)
             self.label.setStyleSheet(
                 f"""
-                QLabel {{
-                    color: {color};
-                    font-size: 11px;
-                    font-weight: 700;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    border: none;
-                    background: transparent;
-                }}
-            """
+        QLabel {{
+          color: {color};
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          border: none;
+          background: transparent;
+        }}
+      """
             )
             layout.addWidget(self.label)
 
@@ -109,4 +109,4 @@ class PriorityBadge(QWidget):
         size = int(8 * value)
         self.dot.setFixedSize(size, size)
 
-    pulseScale = pyqtProperty(float, fget=get_pulse_scale, fset=set_pulse_scale)  # noqa: N815
+    pulseScale = Property(float, fget=get_pulse_scale, fset=set_pulse_scale)  # noqa: N815

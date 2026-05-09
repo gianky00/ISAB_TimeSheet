@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QObject
+from PySide6.QtCore import QObject
 
 from src.core import config_manager
 from src.core.backup_manager import BackupManager

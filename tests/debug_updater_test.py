@@ -2,7 +2,7 @@ import os
 import sys
 from unittest.mock import MagicMock, patch
 
-from PyQt6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtWidgets import QApplication, QMessageBox
 
 # Aggiungi root al path
 sys.path.insert(0, os.getcwd())

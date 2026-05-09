@@ -2,13 +2,13 @@
 """
 SyncroJob - Employees Main Panel
 Pannello principale per la gestione del personale che orchestra i tab di monitoraggio e configurazione.
-Funge da punto di ingresso unico per tutte le funzionalità relative ai dipendenti.
+Funge da punto di ingresso unico per tutte le funzionalita' relative ai dipendenti.
 """
 
 import logging
 from typing import TYPE_CHECKING
 
-from PyQt6.QtWidgets import QVBoxLayout, QWidget
+from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 if TYPE_CHECKING:
     from src.core.dipendenti.anagrafica_controller import AnagraficaController
@@ -36,8 +36,8 @@ class DipendentiPanel(QWidget):
         Inizializza il pannello dipendenti con iniezione del controller.
 
         Args:
-            controller: Istanza del controller per la logica di business.
-            parent: Widget genitore.
+          controller: Istanza del controller per la logica di business.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.controller = controller

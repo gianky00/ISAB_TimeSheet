@@ -26,7 +26,7 @@ class PageIndex(IntEnum):
     """Gestione scarico timbrature portale fornitori."""
 
     STRUMENTALE = 4
-    """Pannello contabilità strumentale e KPI."""
+    """Pannello contabilit  strumentale e KPI."""
 
     DATAEASE = 5
     """Visualizzatore avanzato Scarico Ore Cantiere."""

@@ -6,9 +6,9 @@ Widget, delegate e componenti UI condivisi utilizzati nei pannelli della gestion
 import logging
 from typing import Any
 
-from PyQt6.QtCore import QModelIndex, Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QEnterEvent, QFont, QMouseEvent, QPainter
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QEvent, QModelIndex, QPersistentModelIndex, Qt, Signal
+from PySide6.QtGui import QColor, QEnterEvent, QFont, QMouseEvent, QPainter
+from PySide6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
     QHBoxLayout,
@@ -20,7 +20,9 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.core.constants import Icons
 from src.gui.styles import COLORS
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
 
@@ -31,16 +33,16 @@ class ColoredDotDelegate(QStyledItemDelegate):
     Visualizza un cerchio colorato (Verde, Arancio, Rosso) in base ai giorni rimanenti.
     """
 
-    def paint(self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex) -> None:
         """
         Disegna il pallino colorato con il numero di giorni.
 
         Args:
-            painter: Oggetto per il disegno.
-            option: Opzioni di visualizzazione.
-            index: Indice del modello.
+          painter: Oggetto per il disegno.
+          option: Opzioni di visualizzazione.
+          index: Indice del modello.
         """
-        if not painter or index.column() != 0:  # Solo per la prima colonna
+        if index.column() != 0:  # Solo per la prima colonna
             super().paint(painter, option, index)
             return
 
@@ -96,7 +98,7 @@ class InteractiveStatusCard(QFrame):
     Utilizzata per visualizzare i conteggi aggregati (es. Abilitati, In Scadenza, Scaduti).
     """
 
-    clicked = pyqtSignal(str)
+    clicked = Signal(str)
 
     def __init__(  # noqa: PLR0913
         self,
@@ -107,17 +109,7 @@ class InteractiveStatusCard(QFrame):
         filter_type: str,
         parent: QWidget | None = None,
     ) -> None:
-        """
-        Inizializza la card di stato interattiva.
-
-        Args:
-            label: Titolo della card.
-            color: Colore primario (es. hex).
-            icon_path: Percorso dell'icona (non usato, sostituito da emoji).
-            description: Descrizione della metrica.
-            filter_type: Stringa identificativa per il filtraggio.
-            parent: Widget genitore.
-        """
+        """Inizializza la card di stato interattiva."""
         super().__init__(parent)
         self.base_color = color
         self.filter_type = filter_type
@@ -125,14 +117,18 @@ class InteractiveStatusCard(QFrame):
         self.setFixedHeight(85)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
-        # Testo tooltip più professionale
+        self._setup_style(label, color)
+        self._init_layout(color, filter_type, label, description)
+
+    def _setup_style(self, label: str, color: str) -> None:
+        """Configura ombreggiatura e stile QSS."""
+        # Tooltip professionale
         tooltip_map = {
             "ok": "Dipendenti con ultimo accesso entro 20 giorni<br/><i>Clicca per visualizzare</i>",
             "warning": "Dipendenti con ultimo accesso tra 21 e 30 giorni<br/><i>Clicca per visualizzare</i>",
             "expired": "Dipendenti con ultimo accesso oltre 30 giorni<br/><i>Clicca per visualizzare</i>",
         }
-        tooltip = f"<b>{label}</b><br/>{tooltip_map.get(filter_type, description)}"
-        self.setToolTip(tooltip)
+        self.setToolTip(f"<b>{label}</b><br/>{tooltip_map.get(self.filter_type, self.description)}")
 
         self.shadow = QGraphicsDropShadowEffect(self)
         self.shadow.setBlurRadius(12)
@@ -141,53 +137,58 @@ class InteractiveStatusCard(QFrame):
         self.shadow.setColor(QColor(0, 0, 0, 35))
         self.setGraphicsEffect(self.shadow)
 
-        self.setStyleSheet(
-            f"""
+        self.setStyleSheet(f"""
             InteractiveStatusCard {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 {COLORS["bg_white"]}, stop:1 {COLORS["bg_alt"]});
-                border: 2px solid {color};
-                border-radius: 10px;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS["bg_white"]}, stop:1 {COLORS["bg_alt"]});
+                border: 2px solid {color}; border-radius: 10px;
             }}
-            """
-        )
+        """)
 
+    def _init_layout(self, color: str, filter_type: str, label: str, description: str) -> None:
+        """Inizializza i widget e il posizionamento degli elementi."""
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 8, 12, 8)
         layout.setSpacing(12)
 
+        # Parte Sinistra (Icona + Valore)
         left_layout = QVBoxLayout()
         left_layout.setSpacing(0)
         left_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Emoji per contesto visivo
-        emoji_map = {"ok": "[OK]", "warning": "[ATTENZIONE]", "expired": "🚫"}
-        emoji_label = QLabel(emoji_map.get(filter_type, "📊"))
-        emoji_label.setStyleSheet("font-size: 24px; border: none;")
-        emoji_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        left_layout.addWidget(emoji_label)
+        icon_map = {
+            "ok": (Icons.CHECK_CIRCLE, color),
+            "warning": (Icons.ALERT, color),
+            "expired": (Icons.X_CIRCLE, color),
+        }
+        path, icon_color = icon_map.get(filter_type, (Icons.INFO, color))
+
+        icon_label = QLabel()
+        icon_label.setFixedSize(32, 32)
+        pixmap = get_colored_icon(get_asset_path(path), icon_color).pixmap(32, 32)
+        icon_label.setPixmap(pixmap)
+        icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        left_layout.addWidget(icon_label)
 
         self.val_text = QLabel("0")
         self.val_text.setStyleSheet(f"font-size: 30px; font-weight: 900; color: {color};")
         self.val_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         left_layout.addWidget(self.val_text)
-
         layout.addLayout(left_layout)
 
+        # Separatore
         line = QFrame()
         line.setFrameShape(QFrame.Shape.VLine)
         line.setFrameShadow(QFrame.Shadow.Sunken)
         line.setStyleSheet(f"background-color: {COLORS['border_light']}; min-width: 2px;")
         layout.addWidget(line)
 
+        # Parte Destra (Titolo + Descrizione)
         right_layout = QVBoxLayout()
         right_layout.setSpacing(3)
         right_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         lbl_title = QLabel(label.upper())
-        lbl_title.setStyleSheet(
-            f"font-size: 14px; font-weight: 800; color: {COLORS['text_dark']}; letter-spacing: 0.8px;"
-        )
+        lbl_title.setStyleSheet(f"font-size: 14px; font-weight: 800; color: {COLORS['text_dark']}; letter-spacing: 0.8px;")
 
         lbl_desc = QLabel(description)
         lbl_desc.setStyleSheet(f"font-size: 13px; color: {COLORS['text_muted']}; font-weight: 600;")
@@ -196,24 +197,23 @@ class InteractiveStatusCard(QFrame):
 
         right_layout.addWidget(lbl_title)
         right_layout.addWidget(lbl_desc)
-
         layout.addLayout(right_layout)
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:
+    def enterEvent(self, event: QEnterEvent) -> None:
         """Aumenta l'ombra all'ingresso del mouse."""
         self.shadow.setBlurRadius(15)
         self.shadow.setYOffset(4)
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any | None) -> None:
+    def leaveEvent(self, event: QEvent) -> None:
         """Ripristina l'ombra all'uscita del mouse."""
         self.shadow.setBlurRadius(10)
         self.shadow.setYOffset(2)
         super().leaveEvent(event)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         """Emette il segnale 'clicked' con il tipo di filtro."""
-        if event and event.button() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self.filter_type)
         super().mousePressEvent(event)
 
@@ -222,7 +222,7 @@ class InteractiveStatusCard(QFrame):
         Aggiorna il valore numerico visualizzato sulla card.
 
         Args:
-            val: Valore da visualizzare.
+          val: Valore da visualizzare.
         """
         self.val_text.setText(str(val))
 
@@ -232,10 +232,10 @@ def create_info_card(title: str) -> tuple[QFrame, QVBoxLayout]:
     Crea una card informativa con ombra e stile moderno.
 
     Args:
-        title: Il titolo da visualizzare nell'header della card.
+      title: Il titolo da visualizzare nell'header della card.
 
     Returns:
-        tuple: (QFrame istanza card, QVBoxLayout layout del contenuto).
+      tuple: (QFrame istanza card, QVBoxLayout layout del contenuto).
     """
     card = QFrame()
     card_shadow = QGraphicsDropShadowEffect()
@@ -246,11 +246,11 @@ def create_info_card(title: str) -> tuple[QFrame, QVBoxLayout]:
     card.setGraphicsEffect(card_shadow)
     card.setStyleSheet(
         f"""
-        QFrame {{
-            background-color: {COLORS["bg_white"]};
-            border-radius: 10px;
-        }}
-    """
+    QFrame {{
+      background-color: {COLORS["bg_white"]};
+      border-radius: 10px;
+    }}
+  """
     )
 
     main_layout = QVBoxLayout(card)
@@ -260,13 +260,13 @@ def create_info_card(title: str) -> tuple[QFrame, QVBoxLayout]:
     header = QLabel(title)
     header.setStyleSheet(
         f"""
-        font-size: 14px;
-        font-weight: bold;
-        color: {COLORS["text_dark"]};
-        background-color: transparent;
-        padding: 10px 12px 6px 12px;
-        letter-spacing: 0.5px;
-    """
+    font-size: 14px;
+    font-weight: bold;
+    color: {COLORS["text_dark"]};
+    background-color: transparent;
+    padding: 10px 12px 6px 12px;
+    letter-spacing: 0.5px;
+  """
     )
     main_layout.addWidget(header)
 
@@ -286,10 +286,10 @@ def create_field_row(label_text: str) -> QWidget:
     Crea una riga di campo con label e valore stilizzati (stile Material Design).
 
     Args:
-        label_text: Il testo dell'etichetta del campo.
+      label_text: Il testo dell'etichetta del campo.
 
     Returns:
-        QWidget: Il container della riga di campo.
+      QWidget: Il container della riga di campo.
     """
     container = QWidget()
     container.setStyleSheet("background-color: transparent;")
@@ -300,22 +300,22 @@ def create_field_row(label_text: str) -> QWidget:
     label = QLabel(label_text.upper())
     label.setStyleSheet(
         f"""
-        font-size: 13px;
-        font-weight: 700;
-        color: {COLORS["text_muted"]};
-        letter-spacing: 0.8px;
-    """
+    font-size: 13px;
+    font-weight: 700;
+    color: {COLORS["text_muted"]};
+    letter-spacing: 0.8px;
+  """
     )
 
     value_label = QLabel("-")
     value_label.setStyleSheet(
         f"""
-        font-size: 15px;
-        color: {COLORS["text_dark"]};
-        font-weight: 500;
-        border-bottom: 1px solid {COLORS["border_light"]};
-        padding-bottom: 4px;
-    """
+    font-size: 15px;
+    color: {COLORS["text_dark"]};
+    font-weight: 500;
+    border-bottom: 1px solid {COLORS["border_light"]};
+    padding-bottom: 4px;
+  """
     )
     value_label.setWordWrap(True)
     value_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)

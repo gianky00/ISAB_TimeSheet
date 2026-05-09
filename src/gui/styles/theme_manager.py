@@ -7,8 +7,8 @@ import logging
 from pathlib import Path
 from typing import Any, Optional
 
-from PyQt6.QtGui import QColor, QPalette
-from PyQt6.QtWidgets import QApplication
+from PySide6.QtGui import QColor, QPalette
+from PySide6.QtWidgets import QApplication
 
 from src.gui.design.colors import LIGHT, ColorPalette
 from src.utils.helpers import get_asset_path
@@ -171,5 +171,5 @@ class ThemeManager:
 
 
 def apply_theme(app: QApplication, theme_name: str = "light") -> None:
-    """Wrapper per compatibilità con il codice esistente."""
+    """Wrapper per compatibilit  con il codice esistente."""
     ThemeManager().apply_theme(app, theme_name)

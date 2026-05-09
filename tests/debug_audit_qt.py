@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Test AuditManager con PyQt6"""
+"""Test AuditManager con PySide6"""
 
 import sys
 from pathlib import Path
 
-from PyQt6.QtCore import QObject
-from PyQt6.QtWidgets import QApplication
+from PySide6.QtCore import QObject
+from PySide6.QtWidgets import QApplication
 
 # Add src to path
 src_path = Path(__file__).parent.parent / "src"
@@ -13,7 +13,7 @@ sys.path.insert(0, str(src_path))
 
 from src.core.audit_manager import AuditManager  # noqa: E402
 
-print("1. Import PyQt6...")
+print("1. Import PySide6...")
 print("2. Create QApplication...")
 app = QApplication(sys.argv)
 
@@ -32,4 +32,4 @@ print(f"   - Is QObject: {isinstance(am.signals, QObject)}")
 print("6. Test log_action...")
 am.log_action("Test", "category", "entity")
 
-print("\n[SUCCESS] AuditManager funziona correttamente con PyQt6!")
+print("\n[SUCCESS] AuditManager funziona correttamente con PySide6!")

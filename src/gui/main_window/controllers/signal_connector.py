@@ -6,7 +6,7 @@ Mantiene disaccoppiata la logica dei servizi dalla visualizzazione della MainWin
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QObject
+from PySide6.QtCore import QObject
 
 from src.core.notification_manager import NotificationManager
 from src.gui.widgets.toast import ToastManager
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 class SignalConnector(QObject):
     """
-    Gestisce la connessione dei segnali PyQt6 tra i Singleton Manager e la UI.
+    Gestisce la connessione dei segnali PySide6 tra i Singleton Manager e la UI.
     Si occupa di aggiornare badge, mostrare toast e gestire la navigazione dalla sidebar.
     """
 
@@ -26,7 +26,7 @@ class SignalConnector(QObject):
         Inizializza il connettore di segnali.
 
         Args:
-            main_window: Riferimento alla MainWindow dell'applicazione.
+          main_window: Riferimento alla MainWindow dell'applicazione.
         """
         super().__init__(main_window)
         self.main_window = main_window
@@ -51,7 +51,7 @@ class SignalConnector(QObject):
 
         # Tray Icon (System notification)
         if hasattr(self.main_window, "tray_icon_component"):
-            from PyQt6.QtWidgets import QSystemTrayIcon  # noqa: PLC0415
+            from PySide6.QtWidgets import QSystemTrayIcon  # noqa: PLC0415
 
             icon_map = {
                 "info": QSystemTrayIcon.MessageIcon.Information,
@@ -91,7 +91,7 @@ class SignalConnector(QObject):
         if not sidebar:
             return
 
-        # La navigazione a 3 livelli è ora gestita centralmente dal NavigationController
+        # La navigazione a 3 livelli  ora gestita centralmente dal NavigationController
         sidebar.navigation_requested.connect(self.main_window.navigation_controller.navigate_to)
 
         # Command Palette integration (MenuBarComponent handles the palette)

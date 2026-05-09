@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
-from PyQt6.QtWidgets import QStackedWidget, QWidget
+from PySide6.QtWidgets import QStackedWidget, QWidget
 
 from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
 from src.core.contabilita.scarico_ore.controller import ScaricoOreController

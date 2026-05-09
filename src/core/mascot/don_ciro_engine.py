@@ -8,7 +8,7 @@ import math
 import random
 from enum import Enum, auto
 
-from PyQt6.QtCore import QObject, QPointF, QTimer, pyqtSignal
+from PySide6.QtCore import QObject, QPointF, QTimer, Signal
 
 # Costanti di Configurazione
 FPS = 60
@@ -22,7 +22,7 @@ TURN_THRESHOLD = 90.0
 TURN_ANGLE_LEFT = 0.0
 TURN_ANGLE_RIGHT = 180.0
 
-# Soglie Probabilità
+# Soglie Probabilit
 ACTION_WATCH_THRESHOLD = 0.4
 ACTION_TIE_THRESHOLD = 0.8
 
@@ -52,8 +52,8 @@ class DonCiroEngine(QObject):
     Gestisce fisica, cinematica inversa e stati comportamentali.
     """
 
-    state_changed = pyqtSignal(object)
-    physics_updated = pyqtSignal()
+    state_changed = Signal(object)
+    physics_updated = Signal()
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -172,14 +172,14 @@ class DonCiroEngine(QObject):
         self.physics_updated.emit()
 
     def trigger_turn(self, target_angle: float) -> None:
-        """Segnala la necessità di ruotare."""
+        """Segnala la necessit  di ruotare."""
         self._state = DonState.TURNING
         self.state_changed.emit(self._state)
 
     def set_yaw_complete(self, angle: float) -> None:
-        """Chiamato dalla UI quando la rotazione è finita."""
+        """Chiamato dalla UI quando la rotazione  finita."""
         self._yaw_angle = angle
-        # 90 gradi è il punto di inversione visiva
+        # 90 gradi  il punto di inversione visiva
         self._look_dir = 1.0 if self._yaw_angle < TURN_THRESHOLD else -1.0
         self._state = DonState.WALKING
         self.state_changed.emit(self._state)

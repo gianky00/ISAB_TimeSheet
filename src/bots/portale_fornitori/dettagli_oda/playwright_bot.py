@@ -68,7 +68,7 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
         self.fornitore = fornitore or Business.DEFAULT_SUPPLIER
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
-        """Verifica la validità dei parametri e la presenza delle credenziali."""
+        """Verifica la validit  dei parametri e la presenza delle credenziali."""
         if not self.username or not self.password:
             return False, "Credenziali mancanti nelle impostazioni."
         if not self.fornitore:
@@ -160,7 +160,7 @@ class PlaywrightDettagliOdABot(PlaywrightBaseBot):
         import concurrent.futures  # noqa: PLC0415
 
         try:
-            self.log(f"📥 Avvio importazione in Storico OdA da {downloaded_path.name}...")
+            self.log(f"   Avvio importazione in Storico OdA da {downloaded_path.name}...")
             with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
                 future = executor.submit(OdaManager.import_oda_from_excel, str(downloaded_path), None)
                 ok, msg, added, _ = future.result()

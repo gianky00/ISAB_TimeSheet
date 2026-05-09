@@ -1,6 +1,6 @@
 """
 SyncroJob - Audit Manager Facade
-Modulo di compatibilità che delega al nuovo package modulare src.core.audit.
+Modulo di compatibilit  che delega al nuovo package modulare src.core.audit.
 """
 
 from src.core.audit.manager import AuditManager

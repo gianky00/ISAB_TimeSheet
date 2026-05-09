@@ -35,22 +35,22 @@ class AuditDatabase:
         with sqlite3.connect(self.DB_PATH) as conn:
             conn.execute(
                 """
-                CREATE TABLE IF NOT EXISTS audit_logs (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    user_id TEXT,
-                    action TEXT NOT NULL,
-                    category TEXT,
-                    entity TEXT,
-                    params TEXT,
-                    status TEXT DEFAULT 'success',
-                    severity TEXT DEFAULT 'low',
-                    row_hash TEXT,
-                    duration_ms INTEGER DEFAULT 0,
-                    module TEXT DEFAULT '',
-                    error_code TEXT DEFAULT ''
-                )
-            """
+        CREATE TABLE IF NOT EXISTS audit_logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+          user_id TEXT,
+          action TEXT NOT NULL,
+          category TEXT,
+          entity TEXT,
+          params TEXT,
+          status TEXT DEFAULT 'success',
+          severity TEXT DEFAULT 'low',
+          row_hash TEXT,
+          duration_ms INTEGER DEFAULT 0,
+          module TEXT DEFAULT '',
+          error_code TEXT DEFAULT ''
+        )
+      """
             )
 
             # --- MIGRAZIONE AUTOMATICA ---
@@ -82,7 +82,7 @@ class AuditDatabase:
         return sqlite3.connect(self.DB_PATH)
 
     def get_last_hash(self) -> str:
-        """Recupera l'hash dell'ultima riga inserita per garantire l'integrità della catena."""
+        """Recupera l'hash dell'ultima riga inserita per garantire l'integrita' della catena."""
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
@@ -97,15 +97,15 @@ class AuditDatabase:
         Inserisce un nuovo record di audit.
 
         Args:
-            data: Tupla contenente i valori per le colonne del log.
+          data: Tupla contenente i valori per le colonne del log.
 
         Returns:
-            int: ID della riga inserita.
+          int: ID della riga inserita.
         """
         query = """INSERT INTO audit_logs
-                   (timestamp, user_id, action, category, entity, params, status, severity,
-                    duration_ms, module, error_code, row_hash)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+          (timestamp, user_id, action, category, entity, params, status, severity,
+          duration_ms, module, error_code, row_hash)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
         with self.get_connection() as conn:
             cursor = conn.execute(query, data)
             conn.commit()
@@ -125,16 +125,16 @@ class AuditDatabase:
         Esegue una ricerca filtrata nei log di audit.
 
         Args:
-            start_date: Data minima.
-            end_date: Data massima.
-            levels: Lista di severità filtrate.
-            category: Categoria specifica.
-            search_text: Testo libero da cercare in più campi.
-            limit: Numero massimo di risultati.
-            offset: Salto per paginazione.
+          start_date: Data minima.
+          end_date: Data massima.
+          levels: Lista di severit  filtrate.
+          category: Categoria specifica.
+          search_text: Testo libero da cercare in piu' campi.
+          limit: Numero massimo di risultati.
+          offset: Salto per paginazione.
 
         Returns:
-            tuple: (lista di log come dict, numero totale di match).
+          tuple: (lista di log come dict, numero totale di match).
         """
         logs: list[dict[str, Any]] = []
         total = 0
@@ -194,13 +194,13 @@ class AuditDatabase:
 
     def delete_older_than(self, cutoff_iso: str) -> int:
         """
-        Elimina i log più vecchi della data specificata.
+        Elimina i log piu' vecchi della data specificata.
 
         Args:
-            cutoff_iso: Data limite in formato ISO.
+          cutoff_iso: Data limite in formato ISO.
 
         Returns:
-            int: Numero di righe eliminate.
+          int: Numero di righe eliminate.
         """
         try:
             with self.get_connection() as conn:

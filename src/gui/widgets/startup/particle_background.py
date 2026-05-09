@@ -6,8 +6,8 @@ Sfondo animato con particelle, connessioni neurali, circuiti e convergenza final
 import math
 import random
 
-from PyQt6.QtCore import QPoint, Qt, QTimer
-from PyQt6.QtGui import (
+from PySide6.QtCore import QPoint, Qt, QTimer
+from PySide6.QtGui import (
     QBrush,
     QColor,
     QLinearGradient,
@@ -19,7 +19,7 @@ from PyQt6.QtGui import (
     QRadialGradient,
     QResizeEvent,
 )
-from PyQt6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget
 
 
 class Particle:
@@ -107,7 +107,7 @@ class ParticleBackground(QWidget):
         for p in self.particles:
             p.apply_force(dx, dy)
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:
+    def resizeEvent(self, event: QResizeEvent) -> None:
         """Resetta le cache al ridimensionamento del widget."""
         self._bg_cache = None
         self._circuit_cache = None

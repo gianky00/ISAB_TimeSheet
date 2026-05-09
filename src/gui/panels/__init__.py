@@ -1,6 +1,6 @@
 """
 SyncroJob - GUI Panels Module
-Facade per retrocompatibilità.
+Facade per retrocompatibilit .
 """
 
 from src.gui.controllers.bot_worker import BotWorker

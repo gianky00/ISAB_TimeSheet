@@ -15,13 +15,13 @@ logger = logging.getLogger(__name__)
 
 
 class ContabilitaImporter(BaseImporter):
-    """Importer specifico per i dati di ContabilitÃ ."""
+    """Importer specifico per i dati di Contabilit  ."""
 
     # Mapping colonne Excel -> DB
     COLUMNS_MAPPING: ClassVar[dict[str, str]] = {
         "DATA PREV.": "data_prev",
         "MESE": "mese",
-        "NÂ° PREV.": "n_prev",
+        "N   PREV.": "n_prev",
         "TOTALE PREV.": "totale_prev",
         "ATTIVITA'": "attivita",
         "TCL": "tcl",
@@ -133,7 +133,7 @@ class ContabilitaImporter(BaseImporter):
 
     @classmethod
     def _process_single_sheet(cls, xls: Any, sheet_name: str, year: int) -> list[tuple[Any, ...]]:
-        """Processa un singolo foglio del file Excel di contabilitÃ ."""
+        """Processa un singolo foglio del file Excel di contabilit  ."""
         try:
             pd_obj = cls._get_pd()
             header_row_idx = cls._find_header_row(xls, sheet_name)
@@ -166,7 +166,7 @@ class ContabilitaImporter(BaseImporter):
             try:
                 df = validate_contabilita(df)
             except Exception as e:
-                logger.warning(f"Validazione Pandera ContabilitÃ  fallita (uso fallback): {e}")
+                logger.warning(f"Validazione Pandera Contabilit  fallita (uso fallback): {e}")
 
             return list(df.itertuples(index=False, name=None))
         except Exception as e:
@@ -176,7 +176,7 @@ class ContabilitaImporter(BaseImporter):
 
     @classmethod
     def _clean_dataframe_types(cls, df: pd.DataFrame) -> pd.DataFrame:
-        """Pulisce e tipizza le colonne del DataFrame di contabilitÃ ."""
+        """Pulisce e tipizza le colonne del DataFrame di contabilit  ."""
         pd_obj = cls._get_pd()
 
         for col in df.columns:
@@ -204,7 +204,7 @@ class ContabilitaImporter(BaseImporter):
         if isinstance(val, (int, float)):
             return float(val)
 
-        s = str(val).strip().replace("€", "").replace(" ", "")
+        s = str(val).strip().replace("  ", "").replace(" ", "")
         if not s:
             return 0.0
 
@@ -213,7 +213,7 @@ class ContabilitaImporter(BaseImporter):
             if "." in s and "," in s:
                 s = s.replace(".", "").replace(",", ".") if s.find(".") < s.find(",") else s.replace(",", "")
             else:
-                # Solo uno dei due: se è virgola, è decimale IT
+                # Solo uno dei due: se  virgola,  decimale IT
                 s = s.replace(",", ".")
             return float(s)
         except ValueError:
@@ -228,10 +228,10 @@ class ContabilitaImporter(BaseImporter):
         if not s_val:
             return ""
 
-        # Rimuove separatori comuni per controllare se è numerico
+        # Rimuove separatori comuni per controllare se  numerico
         clean_s = s_val.replace(".", "").replace(",", "").replace("-", "")
         if clean_s.isdigit():
-            # Se è un numero, lo arrotondiamo a 2 decimali e lo stringiamo
+            # Se  un numero, lo arrotondiamo a 2 decimali e lo stringiamo
             with suppress(ValueError):
                 num = float(s_val.replace(",", "."))
                 return str(round(num, 2))
@@ -250,8 +250,8 @@ class ContabilitaImporter(BaseImporter):
                 .upper()
                 .replace(" ", "")
                 .replace(".", "")
-                .replace("°", "")
-                .replace("Â", "")
+                .replace(" ", "")
+                .replace(" ", "")
                 .replace("N", "N")
             )
 
@@ -268,7 +268,7 @@ class ContabilitaImporter(BaseImporter):
         """Rinomina le colonne del DataFrame usando la mappa interna."""
 
         def _norm(v: Any) -> str:
-            return str(v).strip().upper().replace(" ", "").replace(".", "").replace("°", "").replace("Â", "")
+            return str(v).strip().upper().replace(" ", "").replace(".", "").replace(" ", "").replace(" ", "")
 
         normalized_map = {}
         for k, v in cls.COLUMNS_MAPPING.items():

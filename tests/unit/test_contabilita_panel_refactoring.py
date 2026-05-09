@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 import pytest
-from PyQt6.QtWidgets import QLabel, QTableWidget, QTableWidgetItem
+from PySide6.QtWidgets import QLabel, QTableWidget, QTableWidgetItem
 
 from src.gui.panels.contabilita_panel import ContabilitaPanel
 
@@ -51,7 +51,7 @@ class TestContabilitaPanelRefactoring:
     )
     def test_update_selection_total_tree(self, panel):
         """Test selection count in a QTreeWidget."""
-        from PyQt6.QtWidgets import QTreeWidget, QTreeWidgetItem  # noqa: PLC0415
+        from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem  # noqa: PLC0415
 
         tree = QTreeWidget()
         item = QTreeWidgetItem(["A"])

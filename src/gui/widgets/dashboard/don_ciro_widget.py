@@ -12,16 +12,16 @@ import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import (  # type: ignore[attr-defined]
+from PySide6.QtCore import (
+    Property,
     QEasingCurve,
     QPointF,
     QPropertyAnimation,
     QRectF,
     Qt,
     QTimer,
-    pyqtProperty,
 )
-from PyQt6.QtGui import (
+from PySide6.QtGui import (
     QBrush,
     QColor,
     QFont,
@@ -31,7 +31,7 @@ from PyQt6.QtGui import (
     QPen,
     QRadialGradient,
 )
-from PyQt6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget
 
 from src.core.mascot.don_ciro_engine import DonCiroEngine, DonState, WeatherCond
 from src.core.weather_service import WeatherService
@@ -83,7 +83,7 @@ class DonCiroWidget(QWidget):
 
     # ── Proprietà Animate (Qt) ──────────────────────────────────────────
 
-    @pyqtProperty(float)
+    @Property(float)
     def walk_phase(self) -> float:
         """Ritorna la fase della camminata."""
         return self._walk_phase
@@ -95,7 +95,7 @@ class DonCiroWidget(QWidget):
         self.engine._walk_phase = v
         self.update()
 
-    @pyqtProperty(float)
+    @Property(float)
     def action_phase(self) -> float:
         """Ritorna la fase dell'azione."""
         return self._action_phase
@@ -106,7 +106,7 @@ class DonCiroWidget(QWidget):
         self.engine._action_phase = v
         self.update()
 
-    @pyqtProperty(float)
+    @Property(float)
     def yaw_angle(self) -> float:
         """Ritorna l'angolo di imbardata."""
         return self._yaw_angle
@@ -117,7 +117,7 @@ class DonCiroWidget(QWidget):
         self.engine._yaw_angle = v
         self.update()
 
-    @pyqtProperty(float)
+    @Property(float)
     def blink(self) -> float:
         """Ritorna lo stato del battito ciglia."""
         return self._blink
@@ -127,7 +127,7 @@ class DonCiroWidget(QWidget):
         self._blink = v
         self.update()
 
-    @pyqtProperty(float)
+    @Property(float)
     def label_phase(self) -> float:
         """Ritorna la fase del testo."""
         return self._label_phase

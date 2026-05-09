@@ -74,13 +74,13 @@ class EmployeeManager:
         employee_data deve contenere: nome, cognome, badge, ecc.
         """
         query = """
-            INSERT INTO dipendenti (
-                id_risorsa, cognome, nome, data_nascita,
-                codice_fiscale, badge, data_assunzione, monitoraggio_attivo
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """
+      INSERT INTO dipendenti (
+        id_risorsa, cognome, nome, data_nascita,
+        codice_fiscale, badge, data_assunzione, monitoraggio_attivo
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """
         params = (
-            employee_data.get("id_risorsa"),  # Può essere None (autoincrement) o specifico
+            employee_data.get("id_risorsa"),  # Pu  essere None (autoincrement) o specifico
             employee_data["cognome"].upper(),
             employee_data["nome"].upper(),
             employee_data.get("data_nascita"),
@@ -161,7 +161,7 @@ class EmployeeManager:
                         "data_assunzione": row.get("Data_assunzione", ""),
                     }
 
-                    # Controlla se esiste già (per badge o ID)
+                    # Controlla se esiste gia'(per badge o ID)
                     existing = None
                     if id_risorsa:
                         existing = self.db.execute_query(
@@ -181,7 +181,7 @@ class EmployeeManager:
 
             duration = time.time() - start_time
             # Consideriamo "Added" i nuovi, e Removed 0.
-            # (In futuro si potrebbe calcolare removed se il CSV fosse l'unica fonte di verità)
+            # (In futuro si potrebbe calcolare removed se il CSV fosse l'unica fonte di verit )
             SyncTracker.update_status("dipendenti", added_count, 0, duration)
 
             logger.info(f"Importazione completata: {count} dipendenti processati ({added_count} nuovi).")

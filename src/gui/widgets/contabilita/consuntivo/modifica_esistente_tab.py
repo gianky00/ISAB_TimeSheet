@@ -12,8 +12,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLabel,
@@ -40,9 +40,9 @@ from src.gui.widgets.modern_card import ModernContentCard
 class ModificaEsistenteTab(QWidget):
     """Tab intelligente per la gestione di consuntivi esistenti con caching delle scansioni di rete."""
 
-    step_clicked = pyqtSignal(str)
-    _scan_finished = pyqtSignal()
-    _scan_error = pyqtSignal(str)
+    step_clicked = Signal(str)
+    _scan_finished = Signal()
+    _scan_error = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -231,7 +231,7 @@ class ModificaEsistenteTab(QWidget):
                         full = dir_path / f
                         try:
                             size_kb = full.stat().st_size / 1024
-                            temp_files.append((f"{f}  ({size_kb:.0f} KB)", str(full)))
+                            temp_files.append((f"{f} ({size_kb:.0f} KB)", str(full)))
                         except OSError:
                             temp_files.append((f, str(full)))
 
@@ -279,7 +279,7 @@ class ModificaEsistenteTab(QWidget):
         self.log_widget.append_log(f"Lettura: {os.path.basename(file_path)}", "step")
         self._auto_fill_from_file(file_path)
 
-    def _auto_fill_from_file(self, file_path: str) -> None:
+    def _auto_fill_from_file(self, file_path: str) -> None:  # noqa: C901
         try:
             import openpyxl  # noqa: PLC0415
 
@@ -329,7 +329,7 @@ class ModificaEsistenteTab(QWidget):
             wb.close()
 
             n = sum(1 for f in self._fields.values() if f.text())
-            self._status_label.setText(f"Campi compilati automaticamente: {n}")
+            self._status_label.setText(f"Campiu'compilati automaticamente: {n}")
             self._status_label.setStyleSheet(
                 "color: #2E7D32; font-size: 12px; font-weight: 600; border: none;"
             )
@@ -341,8 +341,8 @@ class ModificaEsistenteTab(QWidget):
             self._status_label.setText(f"Errore lettura: {e}")
             self.log_widget.append_log(f"Errore: {e}", "error")
 
-    def _save_to_file(self) -> None:
-        """Salva i valori dei campi editati nel file Excel."""
+    def _save_to_file(self) -> None:  # noqa: C901
+        """Salva i valori dei campiu'editati nel file Excel."""
         if not self.loaded_file or not Path(self.loaded_file).exists():
             ConfirmationDialog.show_error(self, "Errore", "Nessun file selezionato.")
             return

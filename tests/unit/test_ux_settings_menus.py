@@ -1,5 +1,5 @@
 import pytest
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
 
 from src.gui.panels.settings.main_panel import SettingsPanel
 

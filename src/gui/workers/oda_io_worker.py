@@ -9,7 +9,7 @@ import logging
 from typing import Any
 
 import pandas as pd
-from PyQt6.QtCore import QObject, QThread, pyqtSignal
+from PySide6.QtCore import QObject, QThread, Signal
 
 from src.core.oda_manager import OdaManager
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class OdaIOWorker(QThread):
     """Worker per operazioni pesanti di I/O su file Excel per gli OdA."""
 
-    finished_signal = pyqtSignal(bool, str, dict)  # success, message, stats
+    finished_signal = Signal(bool, str, dict)  # success, message, stats
 
     def __init__(
         self,
@@ -32,10 +32,10 @@ class OdaIOWorker(QThread):
         Inizializza il worker.
 
         Args:
-            mode: 'import' o 'export'.
-            file_path: Percorso del file Excel.
-            extra_data: Dati per l'export (header, query, ecc).
-            parent: Oggetto padre (PyQt).
+          mode: 'import' o 'export'.
+          file_path: Percorso del file Excel.
+          extra_data: Dati per l'export (header, query, ecc).
+          parent: Oggetto padre (PyQt).
         """
         super().__init__(parent)
         self.mode = mode

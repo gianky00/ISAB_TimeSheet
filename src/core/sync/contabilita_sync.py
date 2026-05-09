@@ -1,17 +1,17 @@
 # mypy: disable-error-code="no-any-unimported"
 """
-SyncroJob - Contabilità Sync Engine
+SyncroJob - Contabilit  Sync Engine
 Engine specializzato per la sincronizzazione dei dati contabili.
 """
 
 import sqlite3
 from typing import Any
 
-from src.core.sync.base import BaseSyncEngine
+from src.core.sync.base import BaseSyncEngine, PartitionConfig
 
 
 class ContabilitaSyncEngine(BaseSyncEngine):
-    """Gestore sincronizzazione Contabilità e Giornaliere."""
+    """Gestore sincronizzazione Contabilit  e Giornaliere."""
 
     @classmethod
     def sync_giornaliere(
@@ -31,8 +31,7 @@ class ContabilitaSyncEngine(BaseSyncEngine):
                     "giornaliere",
                     columns,
                     new_data,
-                    "anno",
-                    years,
+                    PartitionConfig(column="anno", values=years),
                 )
                 conn.commit()
                 return int(res[0]), int(res[1])
@@ -48,7 +47,7 @@ class ContabilitaSyncEngine(BaseSyncEngine):
         years: list[int],
         columns: list[str],
     ) -> tuple[int, int]:
-        """Sincronizza la contabilità per gli anni specificati."""
+        """Sincronizza la contabilit  per gli anni specificati."""
         with sqlite3.connect(db_path) as conn:
             cursor = conn.cursor()
             try:
@@ -58,8 +57,7 @@ class ContabilitaSyncEngine(BaseSyncEngine):
                     "contabilita",
                     columns,
                     new_data,
-                    "anno",
-                    years,
+                    PartitionConfig(column="anno", values=years),
                 )
                 conn.commit()
                 return int(res[0]), int(res[1])

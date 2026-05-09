@@ -7,8 +7,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QTimer, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QTimer, Signal
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -35,14 +35,14 @@ class RicercaPDLPanel(BaseBotPanel):
     Pannello per la ricerca ed esportazione massiva dei PDL da SafeWork.
     """
 
-    data_updated = pyqtSignal()
+    data_updated = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il pannello Ricerca PDL.
 
         Args:
-            parent: Widget genitore.
+          parent: Widget genitore.
         """
         super().__init__(
             bot_id="ricerca_pdl",
@@ -78,12 +78,12 @@ class RicercaPDLPanel(BaseBotPanel):
         params_container = QFrame()
         params_container.setObjectName("filterBar")
         params_container.setStyleSheet(f"""
-            QFrame#filterBar {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 12px;
-            }}
-        """)
+      QFrame#filterBar {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 12px;
+      }}
+    """)
 
         params_layout = QHBoxLayout(params_container)
         params_layout.setContentsMargins(15, 10, 15, 10)
@@ -152,7 +152,7 @@ class RicercaPDLPanel(BaseBotPanel):
     def _validate_and_switch_account(
         self, username: str, password: str, account_type: str
     ) -> tuple[str, str, str, bool]:
-        """Verifica se l'account è di tipo ISAB e propone lo switch a Esecutore."""
+        """Verifica se l'account  di tipo ISAB e propone lo switch a Esecutore."""
         if account_type != "ISAB":
             return username, password, account_type, True
 
@@ -161,7 +161,7 @@ class RicercaPDLPanel(BaseBotPanel):
 
         if esecutore_acc:
             msg = (
-                "L'account SafeWork attualmente selezionato è di tipo <b>ISAB</b>.<br><br>"
+                "L'account SafeWork attualmente selezionato  di tipo <b>ISAB</b>.<br><br>"
                 "La Ricerca PDL massiva richiede solitamente un account <b>Esecutore</b> per funzionare correttamente.<br><br>"
                 f"Vuoi passare all'account Esecutore <b>{esecutore_acc.get('username')}</b> e proseguire?"
             )

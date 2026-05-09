@@ -28,9 +28,9 @@ class AnagraficaController:
     def get_employees(search_text: str = "") -> list[tuple[Any, ...]]:
         """Recupera la lista dei dipendenti dal database filtrando per testo."""
         query = """
-            SELECT id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale, monitoraggio_attivo
-            FROM dipendenti WHERE 1=1
-        """
+      SELECT id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale, monitoraggio_attivo
+      FROM dipendenti WHERE 1=1
+    """
         params = []
         if search_text:
             terms = search_text.lower().strip().split()
@@ -81,13 +81,13 @@ class AnagraficaController:
 
     @staticmethod
     def _is_employee_monitored(row: tuple[Any, ...]) -> bool:
-        """Verifica se il monitoraggio è attivo per la riga data."""
+        """Verifica se il monitoraggio  attivo per la riga data."""
         idx = AnagraficaController.MONITORING_COLUMN_INDEX
         return bool(row[idx]) if len(row) > idx and row[idx] is not None else True
 
     @staticmethod
     def _update_status_counts(counts: dict[str, int], is_monitored: bool, diff_days: int | None) -> None:
-        """Aggiorna il dizionario dei conteggi basandosi sullo stato del dipendente."""
+        """Aggiorna il dizionario dei conteggia'basandosi sullo stato del dipendente."""
         if not is_monitored:
             counts["excluded"] += 1
             return
@@ -108,7 +108,7 @@ class AnagraficaController:
         if current_filter == "excluded":
             return is_monitored
 
-        # Se non è monitorato o non ha giorni (mai entrato), lo saltiamo per i filtri di stato
+        # Se non  monitorato o non ha giorni (mai entrato), lo saltiamo per i filtri di stato
         if not is_monitored or diff_days is None:
             return True
 
@@ -151,11 +151,11 @@ class AnagraficaController:
 
         norm_cognome, norm_nome = normalize_name(cognome), normalize_name(nome)
         query = """
-            SELECT data FROM timbrature
-            WHERE UPPER(REPLACE(REPLACE(TRIM(cognome), '  ', ' '), '  ', ' ')) = ?
-              AND UPPER(REPLACE(REPLACE(TRIM(nome), '  ', ' '), '  ', ' ')) = ?
-            ORDER BY data DESC LIMIT 1
-        """
+      SELECT data FROM timbrature
+      WHERE UPPER(REPLACE(REPLACE(TRIM(cognome), ' ', ' '), ' ', ' ')) = ?
+       AND UPPER(REPLACE(REPLACE(TRIM(nome), ' ', ' '), ' ', ' ')) = ?
+      ORDER BY data DESC LIMIT 1
+    """
 
         try:
             res = db_manager.execute_query(db_manager.DB_TIMBRATURE, query, (norm_cognome, norm_nome))

@@ -1,13 +1,13 @@
 """
 SyncroJob - Autopilot Main Widget
 Widget coordinatore per la visualizzazione e configurazione dei bot programmati (Autopilot).
-Gestisce la pianificazione delle attività automatiche e la loro visualizzazione in tempo reale.
+Gestisce la pianificazione delle attivita'automatiche e la loro visualizzazione in tempo reale.
 """
 
 from contextlib import suppress
 from typing import Any
 
-from PyQt6.QtCore import (
+from PySide6.QtCore import (
     QEasingCurve,
     QParallelAnimationGroup,
     QPoint,
@@ -16,9 +16,9 @@ from PyQt6.QtCore import (
     QSize,
     Qt,
     QTimer,
-    pyqtSignal,
+    Signal,
 )
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QGraphicsOpacityEffect,
     QGridLayout,
     QHBoxLayout,
@@ -43,18 +43,18 @@ from .event_card import AutopilotEventCard
 class AutopilotWidget(QWidget):
     """
     Widget che mostra e configura gli eventi programmati dei bot (Autopilot).
-    Supporta una modalità di visualizzazione (Live) e una di configurazione.
+    Supporta una modalita' di visualizzazione (Live) e una di configurazione.
     Utilizza animazioni per le transizioni e indicatori visivi per lo stato del sistema.
     """
 
-    bot_sync_requested = pyqtSignal(str)  # Segnale per richiedere il sync di un bot specifico
+    bot_sync_requested = Signal(str)  # Segnale per richiedere il sync di un bot specifico
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il widget Autopilot.
 
         Args:
-            parent: Widget genitore.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self._config_mode = False
@@ -74,7 +74,7 @@ class AutopilotWidget(QWidget):
         self.footer_left_widget = footer_left_widget
 
     def set_status_bar(self, status_bar: Any) -> None:
-        """Collega la barra di stato per segnalare attività dell'autopilot."""
+        """Collega la barra di stato per segnalare attivita'dell'autopilot."""
         self.status_bar = status_bar
 
     def _setup_ui(self) -> None:  # noqa: PLR0915
@@ -133,10 +133,10 @@ class AutopilotWidget(QWidget):
         self.config_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.config_btn.setStyleSheet(
             f"""
-            QPushButton {{ background-color: {COLORS["bg_light"]}; border: 1px solid {COLORS["border_light"]}; border-radius: 16px; }}
-            QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; border-color: {COLORS["border_medium"]}; }}
-            QPushButton:pressed {{ background-color: {COLORS["bg_alt"]}; }}
-        """
+      QPushButton {{ background-color: {COLORS["bg_light"]}; border: 1px solid {COLORS["border_light"]}; border-radius: 16px; }}
+      QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; border-color: {COLORS["border_medium"]}; }}
+      QPushButton:pressed {{ background-color: {COLORS["bg_alt"]}; }}
+    """
         )
         self.config_btn.clicked.connect(self._toggle_mode)
         header_layout.addWidget(self.config_btn)
@@ -167,7 +167,7 @@ class AutopilotWidget(QWidget):
         self._refresh_config()
 
     def _toggle_mode(self) -> None:
-        """Passa dalla modalità visualizzazione alla modalità configurazione con animazione."""
+        """Passa dalla modalita' visualizzazione alla modalita' configurazione con animazione."""
         if self._animating:
             return
         self._animating = True
@@ -258,7 +258,7 @@ class AutopilotWidget(QWidget):
                 self.dot_anim.start()
         self._animating = False
 
-    def refresh_events(self) -> None:
+    def refresh_events(self) -> None:  # noqa: C901
         """Ricarica la lista degli eventi programmati leggendo la configurazione corrente."""
         while self.view_layout.count() > 0:
             item = self.view_layout.takeAt(0)
@@ -317,7 +317,7 @@ class AutopilotWidget(QWidget):
             )
 
         if not events:
-            empty = QLabel("⏸️ Nessun bot programmato")
+            empty = QLabel("    Nessun bot programmato")
             empty.setStyleSheet(
                 f"color: {COLORS['text_muted']}; font-size: 13px; font-style: italic; padding: 20px; background-color: {COLORS['bg_light']}; border-radius: 8px; border: 1px dashed {COLORS['border_light']};"
             )

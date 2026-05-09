@@ -41,15 +41,15 @@ class SeleniumBaseBot(BaseBot, ABC):
         company: str = "ISAB",
     ) -> None:
         """
-        Inizializza le proprietà fondamentali del bot Selenium.
+        Inizializza le propriet  fondamentali del bot Selenium.
 
         Args:
-            username: Nome utente per il login.
-            password: Password per il login.
-            headless: Se True, avvia il browser in modalità nascosta.
-            timeout: Tempo massimo di attesa per le operazioni (secondi).
-            download_path: Percorso per il salvataggio dei file scaricati.
-            company: Società da selezionare al login (ISAB o PSER).
+          username: Nome utente per il login.
+          password: Password per il login.
+          headless: Se True, avvia il browser in modalita' nascosta.
+          timeout: Tempo massimo di attesa per le operazioni (secondi).
+          download_path: Percorso per il salvataggio dei file scaricati.
+          company: Societa' da selezionare al login (ISAB o PSER).
         """
         super().__init__(username, password, headless, timeout, download_path, company=company)
         self.driver: webdriver.Chrome | None = None
@@ -62,11 +62,11 @@ class SeleniumBaseBot(BaseBot, ABC):
     @measure_time(threshold_ms=10000)
     def _init_driver(self) -> None:
         """Inizializza il browser Chrome con gestione dei processi stale e caricamento driver."""
-        self.log("🧹 Cleanup processi stale...")
+        self.log("   Cleanup processi stale...")
         with suppress(Exception):
             cleanup_bot_processes()
 
-        self.log("🌐 Inizializzazione browser (Selenium)...")
+        self.log("   Inizializzazione browser (Selenium)...")
         self.status = BotStatus.INITIALIZING
         options = self._get_chrome_options()
         if d_path := self._get_chromedriver_path():
@@ -183,7 +183,7 @@ class SeleniumBaseBot(BaseBot, ABC):
             with suppress(Exception):
                 target_download.mkdir(parents=True, exist_ok=True)
 
-        self.log(f"📁 Cartella download forzata: {target_download}")
+        self.log(f"   Cartella download forzata: {target_download}")
         self.driver.execute_cdp_cmd(
             "Page.setDownloadBehavior",
             {"behavior": "allow", "downloadPath": str(target_download)},
@@ -206,7 +206,7 @@ class SeleniumBaseBot(BaseBot, ABC):
         """Gestisce gli errori specifici del driver proponendo soluzioni come il download forzato."""
         msg = str(e).lower()
         if "chrome instance exited" in msg:
-            self.log("[ERRORE] CRASH: Chrome si è chiuso all'avvio", "ERROR")
+            self.log("[ERRORE] CRASH: Chrome si  chiuso all'avvio", "ERROR")
             self._force_driver_redownload()
         elif "version" in msg or "sessionnotcreated" in msg:
             self.log("[ERRORE] ERRORE CRITICO DRIVER: Versione incompatibile", "ERROR")
@@ -225,7 +225,7 @@ class SeleniumBaseBot(BaseBot, ABC):
             d_exe = p_dir / "chromedriver.exe"
             if d_exe.exists():
                 d_exe.unlink()
-                self.log("🗑️ Driver locale obsoleto rimosso dalla cache.")
+                self.log("    Driver locale obsoleto rimosso dalla cache.")
 
     def _save_error_state(self, error_msg: str) -> None:
         """Cattura lo stato visuale e il sorgente pulito (senza script) in caso di errore."""
@@ -246,7 +246,7 @@ class SeleniumBaseBot(BaseBot, ABC):
                 flags=re.DOTALL | re.IGNORECASE,
             )
             (edir / f"error_{sn}_{ts}.html").write_text(clean_source, encoding="utf-8")
-            self.log(f"📸 Stato errore salvato in: {edir.name}")
+            self.log(f"   Stato errore salvato in: {edir.name}")
 
     def _login(self) -> bool:
         """Esegue il login al portale ISAB."""

@@ -79,7 +79,7 @@ python admin/developer_toolbox_gui.py
 
 ## 🔧 Note Tecniche
 
-- Basato su **PyQt6** (stesso framework dell'app principale)
+- Basato su **PySide6** (stesso framework dell'app principale)
 - Esecuzione comandi in **thread separati** (non blocca la UI)
 - Supporta processi **interattivi** (mkdocs serve, cz commit, ecc.)
 - Encoding **UTF-8** nativo (nessun problema con emoji)

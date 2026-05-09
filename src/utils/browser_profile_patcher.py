@@ -20,8 +20,8 @@ def patch_browser_profile(user_data_dir: Path | str, download_dir: Path | str | 
     user_data_path = Path(user_data_dir)
     download_path = Path(download_dir).resolve() if download_dir else (Path.home() / "Downloads").resolve()
 
-    # In launch_persistent_context di Playwright, il file Preferences è solitamente
-    # in 'Default/Preferences' o direttamente nella root se il profilo è minimale.
+    # In launch_persistent_context di Playwright, il file Preferences  solitamente
+    # in 'Default/Preferences' o direttamente nella root se il profilo  minimale.
     # Proviamo a patchare entrambi, o a creare 'Default/Preferences' se nessuno esiste.
     preferred_path = user_data_path / "Default" / "Preferences"
     preferences_paths = [
@@ -109,7 +109,7 @@ def _patch_file(path: Path, download_path: Path) -> bool:
 def _set_nested_value(dic: dict[str, Any], keys: str, value: Any) -> bool:
     """
     Imposta un valore in un dizionario annidato usando la dot notation (es. 'a.b.c').
-    Ritorna True se il valore è stato cambiato o aggiunto.
+    Ritorna True se il valore  stato cambiato o aggiunto.
     """
     parts = keys.split(".")
     current = dic

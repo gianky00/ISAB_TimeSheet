@@ -6,8 +6,8 @@ Widget specializzato per la visualizzazione della griglia anagrafica dipendenti.
 import logging
 from typing import Any
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QPoint, Qt, Signal
+from PySide6.QtWidgets import (
     QAbstractItemView,
     QHeaderView,
     QMenu,
@@ -27,16 +27,16 @@ logger = logging.getLogger(__name__)
 class EmployeeTableView(QTableView):
     """Tabella specializzata per l'anagrafica dipendenti con delegati e menu contestuale."""
 
-    monitoring_toggled = pyqtSignal(str, bool)  # id_risorsa, enable
-    employee_selected = pyqtSignal(int)  # row_idx
+    monitoring_toggled = Signal(str, bool)  # id_risorsa, enable
+    employee_selected = Signal(int)  # row_idx
 
     def __init__(self, model: Any, parent: QWidget | None = None) -> None:
         """
         Inizializza la tabella dipendenti.
 
         Args:
-            model: Il modello dati (FastTableModel).
-            parent: Widget genitore opzionale.
+          model: Il modello dati (FastTableModel).
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self.setModel(model)
@@ -69,19 +69,19 @@ class EmployeeTableView(QTableView):
 
         # Styling
         self.setStyleSheet(f"""
-            QTableView {{
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 8px;
-                background-color: {COLORS["bg_white"]};
-            }}
-        """)
+      QTableView {{
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 8px;
+        background-color: {COLORS["bg_white"]};
+      }}
+    """)
 
     def configure_columns(self, widths: list[int]) -> None:
         """
         Configura la larghezza fissa delle colonne.
 
         Args:
-            widths: Lista di interi rappresentanti i pixel per ogni colonna.
+          widths: Lista di interi rappresentanti i pixel per ogni colonna.
         """
         header = self.horizontalHeader()
         if not header:
@@ -106,9 +106,9 @@ class EmployeeTableView(QTableView):
         Mostra il menu contestuale per attivare/disattivare il monitoraggio del dipendente.
 
         Args:
-            position: Posizione del clic del mouse.
+          position: Posizione del clic del mouse.
         """
-        from PyQt6.QtGui import QAction  # noqa: PLC0415
+        from PySide6.QtGui import QAction  # noqa: PLC0415
 
         sel_model = self.selectionModel()
         if not sel_model:
@@ -136,14 +136,14 @@ class EmployeeTableView(QTableView):
         if is_monitored:
             act = QAction(
                 get_colored_icon(get_asset_path(Icons.X_CIRCLE), COLORS["error_red"]),
-                "🚫 Escludi da monitoraggio",
+                "   Escludi da monitoraggio",
                 self,
             )
             act.triggered.connect(lambda: self.monitoring_toggled.emit(id_risorsa, False))
         else:
             act = QAction(
                 get_colored_icon(get_asset_path(Icons.CHECK_CIRCLE), COLORS["success_dark"]),
-                "[OK] Riattiva monitoraggio",
+                "Riattiva monitoraggio",
                 self,
             )
             act.triggered.connect(lambda: self.monitoring_toggled.emit(id_risorsa, True))

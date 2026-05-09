@@ -59,8 +59,8 @@ class ReportHistory:
         Salva snapshot del report corrente.
 
         Args:
-            warning_list: Lista dipendenti in scadenza (21-30 gg)
-            expired_list: Lista dipendenti scaduti (>30 gg)
+          warning_list: Lista dipendenti in scadenza (21-30 gg)
+          expired_list: Lista dipendenti scaduti (>30 gg)
         """
         data = cls._load_data()
 
@@ -94,7 +94,7 @@ class ReportHistory:
         Recupera l'ultimo report salvato.
 
         Returns:
-            Dict con i dati dell'ultimo report, o None se non esiste.
+          Dict con i dati dell'ultimo report, o None se non esiste.
         """
         return cls._load_data().get("last_report")
 
@@ -104,15 +104,15 @@ class ReportHistory:
         Calcola la differenza con il report precedente.
 
         Args:
-            current_warning: Numero attuale di dipendenti in scadenza
-            current_expired: Numero attuale di dipendenti scaduti
+          current_warning: Numero attuale di dipendenti in scadenza
+          current_expired: Numero attuale di dipendenti scaduti
 
         Returns:
-            Dict con:
-                - warning_diff: Differenza warning (+2, -1, ecc.)
-                - expired_diff: Differenza scaduti
-                - last_date: Data ultimo report formattata
-            None se non esiste un report precedente.
+          Dict con:
+            - warning_diff: Differenza warning (+2, -1, ecc.)
+            - expired_diff: Differenza scaduti
+            - last_date: Data ultimo report formattata
+          None se non esiste un report precedente.
         """
         last_report = cls.get_last_report()
         if not last_report:
@@ -142,10 +142,10 @@ class ReportHistory:
         Recupera lo storico degli ultimi N report.
 
         Args:
-            limit: Numero massimo di report da recuperare
+          limit: Numero massimo di report da recuperare
 
         Returns:
-            Lista di report storici ordinati per data (dal più recente)
+          Lista di report storici ordinati per data (dal piu' recente)
         """
         data = cls._load_data()
         history: list[dict[str, Any]] = []

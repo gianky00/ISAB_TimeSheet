@@ -1,5 +1,5 @@
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 from src.gui.styles import COLORS
 from src.gui.widgets.modern_button import ModernButton
@@ -8,7 +8,7 @@ from src.gui.widgets.modern_button import ModernButton
 class AuditPaginationBar(QWidget):
     """Barra di paginazione per l'Audit Log con stile Enterprise."""
 
-    page_changed = pyqtSignal(int)  # offset (1 per next, -1 per prev)
+    page_changed = Signal(int)  # offset (1 per next, -1 per prev)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)

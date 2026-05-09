@@ -1,6 +1,6 @@
 """
 Bot TS - Contabilita Search
-Gestisce le funzionalità di ricerca per i dati della Contabilità Strumentale.
+Gestisce le funzionalita' di ricerca per i dati della Contabilit  Strumentale.
 """
 
 import logging
@@ -14,17 +14,17 @@ logger = logging.getLogger(__name__)
 
 
 class ContabilitaSearch:
-    """Gestore per le funzionalità di ricerca nel database della Contabilità Strumentale."""
+    """Gestore per le funzionalita' di ricerca nel database della Contabilit  Strumentale."""
 
     @classmethod
     def search_oda(cls, db_path: Path, query: str) -> list[dict[str, Any]]:
         """
         Cerca OdA per codice, descrizione o ODC.
         Returns:
-            List[Dict]: Lista di risultati [{'codice_oda': '...', 'descrizione': '...'}, ...]
+          List[Dict]: Lista di risultati [{'codice_oda': '...', 'descrizione': '...'}, ...]
         """
         if not db_path.exists():
-            logger.debug("[DEBUG] DB Contabilità non trovato")
+            logger.debug("[DEBUG] DB Contabilit  non trovato")
             return []
 
         query = query.strip().lower()
@@ -36,13 +36,13 @@ class ContabilitaSearch:
             with db_manager.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
 
-                # Tentativo con FTS5 (molto più veloce)
+                # Tentativo con FTS5 (molto piu' veloce)
                 sql_fts = """
-                    SELECT n_prev, attivita, odc
-                    FROM contabilita_fts
-                    WHERE contabilita_fts MATCH ?
-                    LIMIT 20
-                """
+          SELECT n_prev, attivita, odc
+          FROM contabilita_fts
+          WHERE contabilita_fts MATCH ?
+          LIMIT 20
+        """
                 # Sanitizzazione semplice per FTS5
                 fts_query = f'"{query}*"'
 
@@ -55,12 +55,12 @@ class ContabilitaSearch:
                 # Se FTS5 non trova nulla o fallisce, usiamo LIKE come fallback
                 if not rows:
                     sql_like = """
-                        SELECT DISTINCT n_prev, attivita, odc
-                        FROM contabilita
-                        WHERE (lower(n_prev) LIKE ? OR lower(attivita) LIKE ? OR lower(odc) LIKE ?)
-                        AND n_prev IS NOT NULL AND n_prev != ''
-                        LIMIT 20
-                    """
+            SELECT DISTINCT n_prev, attivita, odc
+            FROM contabilita
+            WHERE (lower(n_prev) LIKE ? OR lower(attivita) LIKE ? OR lower(odc) LIKE ?)
+            AND n_prev IS NOT NULL AND n_prev != ''
+            LIMIT 20
+          """
                     like_query = f"%{query}%"
                     cursor.execute(sql_like, (like_query, like_query, like_query))
                     rows = cursor.fetchall()
@@ -139,8 +139,8 @@ class ContabilitaSearch:
             params.append(f"{year}-%")
 
         sql = f"""SELECT data, personale, descrizione FROM giornaliere
-                  WHERE (lower(personale) LIKE ? OR lower(descrizione) LIKE ?){where}
-                  ORDER BY data DESC LIMIT ?"""  # nosec B608
+         WHERE (lower(personale) LIKE ? OR lower(descrizione) LIKE ?){where}
+         ORDER BY data DESC LIMIT ?"""  # nosec B608
         params.append(limit)
         cursor.execute(sql, params)
         return [
@@ -160,8 +160,8 @@ class ContabilitaSearch:
             params.append(f"{year}-%")
 
         sql = f"""SELECT data, pers1, descrizione, commessa, totale_ore FROM scarico_ore
-                  WHERE (lower(pers1) LIKE ? OR lower(pers2) LIKE ? OR lower(descrizione) LIKE ?){where}
-                  ORDER BY data DESC LIMIT ?"""  # nosec B608
+         WHERE (lower(pers1) LIKE ? OR lower(pers2) LIKE ? OR lower(descrizione) LIKE ?){where}
+         ORDER BY data DESC LIMIT ?"""  # nosec B608
         params.append(limit)
         cursor.execute(sql, params)
         return [
@@ -180,6 +180,6 @@ class ContabilitaSearch:
         """Esegue la ricerca specifica nei certificati campione."""
         like = f"%{query}%"
         sql = """SELECT modello, costruttore, matricola FROM certificati_campione
-                 WHERE lower(matricola) LIKE ? OR lower(modello) LIKE ? OR lower(costruttore) LIKE ? LIMIT ?"""
+         WHERE lower(matricola) LIKE ? OR lower(modello) LIKE ? OR lower(costruttore) LIKE ? LIMIT ?"""
         cursor.execute(sql, [like, like, like, limit])
         return [{"modello": r[0], "costruttore": r[1], "matricola": r[2]} for r in cursor.fetchall()]

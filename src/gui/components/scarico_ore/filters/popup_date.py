@@ -1,9 +1,9 @@
 from contextlib import suppress
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QStandardItem, QStandardItemModel
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QStandardItem, QStandardItemModel
+from PySide6.QtWidgets import (
     QHBoxLayout,
     QMenu,
     QTreeView,
@@ -238,33 +238,41 @@ class DateFilterPopupWidget(QWidget):
         Recupera la lista dei valori di data selezionati.
 
         Returns:
-            list[str] | None: Lista delle stringhe di data selezionate o None se tutte sono selezionate.
+          list[str] | None: Lista delle stringhe di data selezionate o None se tutte sono selezionate.
         """
-        selected: list[str] = []
         root = self.model.invisibleRootItem()
         if not root:
             return None
 
-        all_checked = True
+        selected: list[str] = []
+        all_checked_info = {"all_checked": True}
 
-        stack = [root.child(i) for i in range(root.rowCount())]
-        while stack:
-            # Type assertion per mypy
-            item: QStandardItem = stack.pop()  # type: ignore[assignment]
-            if item.rowCount() > 0:
-                if item.checkState() != Qt.CheckState.Checked:
-                    all_checked = False
-                stack.extend([item.child(i) for i in range(item.rowCount())])
-            elif item.checkState() == Qt.CheckState.Checked:
-                # Rimuoviamo il cast Any se data ritorna Any correttamente
-                val = item.data(Qt.ItemDataRole.UserRole)
-                selected.append(str(val))
-            else:
-                all_checked = False
+        self._collect_selected_leaves(root, selected, all_checked_info)
 
-        if all_checked:
+        if all_checked_info["all_checked"]:
             return None
         return selected
+
+    def _collect_selected_leaves(
+        self, item: QStandardItem, selected: list[str], state: dict[str, bool]
+    ) -> None:
+        """Helper ricorsivo per raccogliere le foglie selezionate e verificare lo stato globale."""
+        for i in range(item.rowCount()):
+            child = item.child(i)
+            if not child:
+                continue
+
+            if child.rowCount() > 0:
+                # Nodo intermedio (es: Anno, Mese)
+                if child.checkState() != Qt.CheckState.Checked:
+                    state["all_checked"] = False
+                self._collect_selected_leaves(child, selected, state)
+            # Nodo foglia (Giorno)
+            elif child.checkState() == Qt.CheckState.Checked:
+                val = child.data(Qt.ItemDataRole.UserRole)
+                selected.append(str(val))
+            else:
+                state["all_checked"] = False
 
     def _close_menu(self) -> None:
         parent: Any = self.parent()

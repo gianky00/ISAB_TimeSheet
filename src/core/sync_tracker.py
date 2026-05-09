@@ -32,11 +32,11 @@ class SyncTracker:
     """Cache interna per evitare letture ridondanti da disco."""
 
     _loaded: ClassVar[bool] = False
-    """Flag per indicare se lo stato è già stato caricato in memoria."""
+    """Flag per indicare se lo stato  gia' stato caricato in memoria."""
 
     @classmethod
     def _load(cls) -> None:
-        """Carica lo stato dal file JSON se non già presente nella cache interna."""
+        """Carica lo stato dal file JSON se non gia' presente nella cache interna."""
         if cls._loaded:
             return
         if cls.STATE_FILE.exists():
@@ -65,10 +65,10 @@ class SyncTracker:
         Registra l'avvenuta sincronizzazione con successo di un modulo specifico.
 
         Args:
-            module: Identificativo del modulo (es. 'pdl', 'dipendenti', 'storico_oda').
-            added: Numero di record inseriti o aggiornati durante l'operazione.
-            removed: Numero di record eliminati (non più presenti nella sorgente).
-            duration: Tempo totale impiegato per la sincronizzazione (secondi).
+          module: Identificativo del modulo (es. 'pdl', 'dipendenti', 'storico_oda').
+          added: Numero di record inseriti o aggiornati durante l'operazione.
+          removed: Numero di record eliminati (non piu' presenti nella sorgente).
+          duration: Tempo totale impiegato per la sincronizzazione (secondi).
         """
         cls._load()
         now = time.time()
@@ -124,10 +124,10 @@ class SyncTracker:
         Recupera i dati dell'ultima sincronizzazione per un determinato modulo.
 
         Args:
-            module: Nome del modulo da interrogare.
+          module: Nome del modulo da interrogare.
 
         Returns:
-            dict: Dizionario con timestamp, record aggiunti, rimossi e durata.
+          dict: Dizionario con timestamp, record aggiunti, rimossi e durata.
         """
         cls._load()
         result: dict[str, Any] = cls._cache.get(module, {})
@@ -140,10 +140,10 @@ class SyncTracker:
         Esempio: "30/01/2026 14:00 +1 -5 (Tempo: 2.5s)"
 
         Args:
-            module: Nome del modulo.
+          module: Nome del modulo.
 
         Returns:
-            str: Stringa formattata pronta per essere visualizzata in un QLabel.
+          str: Stringa formattata pronta per essere visualizzata in un QLabel.
         """
         data = cls.get_status(module)
         if not data:

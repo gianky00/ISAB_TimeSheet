@@ -10,9 +10,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QUrl
-from PyQt6.QtGui import QDesktopServices
-from PyQt6.QtWidgets import QMessageBox
+from PySide6.QtCore import QUrl
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtWidgets import QMessageBox
 
 from src.gui.widgets.toast import ToastManager
 from src.gui.workers.report_worker import ReportWorker
@@ -29,10 +29,10 @@ class ReportGenerator:
     def generate_email_report(parent_widget: Any = None) -> None:
         """Avvia la generazione del report in background."""
         if ReportGenerator._worker and ReportGenerator._worker.isRunning():
-            ToastManager.instance().show("Generazione report già in corso...", "warning")
+            ToastManager.instance().show("Generazione report gia' in corso...", "warning")
             return
 
-        ReportGenerator._worker = ReportWorker()  # Senza parent perché statico
+        ReportGenerator._worker = ReportWorker()  # Senza parent perche' statico
         ReportGenerator._worker.finished_signal.connect(
             lambda success, msg, data: ReportGenerator._on_report_finished(parent_widget, success, msg, data)
         )

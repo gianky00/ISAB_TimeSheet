@@ -48,14 +48,14 @@ class BugReporter:
         Raccoglie tutti i file diagnostici e crea un archivio ZIP.
 
         Args:
-            include_enterprise_logs: Includi log strutturati enterprise
-            include_analytics: Includi report analytics (anomalie, health)
-            include_audit: Includi audit trail recente
-            trace_id: Trace ID specifico per debug mirato (opzionale)
-            hours: Ore di log da includere
+          include_enterprise_logs: Includi log strutturati enterprise
+          include_analytics: Includi report analytics (anomalie, health)
+          include_audit: Includi audit trail recente
+          trace_id: Trace ID specifico per debug mirato (opzionale)
+          hours: Ore di log da includere
 
         Returns:
-            Tuple[Path, str, List[str]]: (Path ZIP, messaggio, lista file inclusi)
+          Tuple[Path, str, List[str]]: (Path ZIP, messaggio, lista file inclusi)
         """
         included_files: list[str] = []
 

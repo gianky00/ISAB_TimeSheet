@@ -9,11 +9,11 @@ from __future__ import annotations
 from contextlib import suppress
 from typing import Any
 
-from PyQt6.QtCore import (
+from PySide6.QtCore import (
     Qt,
     QTimer,
 )
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -49,12 +49,12 @@ class DashboardPanel(QWidget):
         self.main_container.setObjectName("mainDashboardContainer")
         self.main_container.setStyleSheet(
             f"""
-            QFrame#mainDashboardContainer {{
-                background-color: {COLORS["bg_white"]};
-                border-radius: 20px;
-                border: 1px solid {COLORS["border_light"]};
-            }}
-        """
+      QFrame#mainDashboardContainer {{
+        background-color: {COLORS["bg_white"]};
+        border-radius: 20px;
+        border: 1px solid {COLORS["border_light"]};
+      }}
+    """
         )
 
         self.container_layout = QVBoxLayout(self.main_container)
@@ -94,7 +94,7 @@ class DashboardPanel(QWidget):
         self.timer.start(30000)  # 30 seconds
 
     def refresh_data(self) -> None:
-        """Esegue un aggiornamento forzato di tutti i widget della dashboard."""
+        # """Esegue un aggiornamento forzato di tutti i widget della dashboard."""
         self.refresh_live_data()
 
     def refresh_live_data(self) -> None:
@@ -155,7 +155,7 @@ class DashboardPanel(QWidget):
         self.content_layout.addStretch()
 
         # 2. Activity Feed (Bottom)
-        subtitle = QLabel("Feed Attività Recenti")
+        subtitle = QLabel("Feed Attivita'Recenti")
         subtitle.setStyleSheet(
             f"font-size: 16px; font-weight: 700; color: {COLORS['text_muted']}; margin-top: 20px;"
         )
@@ -210,13 +210,13 @@ class DashboardPanel(QWidget):
         panel_attr, site, log_msg = bot_map[bot_id]
         if hasattr(mw, panel_attr):
             panel = getattr(mw, panel_attr)
-            # Se è OdA Generale, applichiamo la preparazione (pulizia filtri)
+            # Se  OdA Generale, applichiamo la preparazione (pulizia filtri)
             if bot_id == "scarico_oda_generale":
                 mw.service_controller._prepare_scarico_oda_generale(panel)
 
             mw.service_controller._schedule_bot_with_parallelism(bot_id, panel, site, log_msg)
 
-    def _handle_quick_action(self, key: str) -> None:
+    def _handle_quick_action(self, key: str) -> None:  # noqa: C901
         """Gestisce il click su un'azione rapida della dashboard."""
         main_window: Any = self.window()
         if main_window is None or not hasattr(main_window, "navigation_controller"):

@@ -1,19 +1,19 @@
 """
-SyncroJob - Helper per Animazioni PyQt6
+SyncroJob - Helper per Animazioni PySide6
 Funzioni centralizzate per creare e gestire animazioni UI.
 """
 
 from collections.abc import Callable
 from contextlib import suppress
 
-from PyQt6.QtCore import (
+from PySide6.QtCore import (
     QAbstractAnimation,
     QEasingCurve,
     QPoint,
     QPropertyAnimation,
     QTimer,
 )
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication,
     QGraphicsOpacityEffect,
     QLayout,
@@ -25,13 +25,13 @@ from src.gui.styles.constants import ANIMATION_TIMINGS
 
 def create_opacity_effect(widget: QWidget) -> QGraphicsOpacityEffect:
     """
-    Crea e applica un effetto di opacità a un widget.
+    Crea e applica un effetto di opacit  a un widget.
 
     Args:
-        widget: Il widget a cui applicare l'effetto
+      widget: Il widget a cui applicare l'effetto
 
     Returns:
-        L'effetto di opacità creato
+      L'effetto di opacit  creato
     """
     effect = QGraphicsOpacityEffect(widget)
     widget.setGraphicsEffect(effect)
@@ -46,17 +46,17 @@ def create_fade_animation(
     easing: QEasingCurve.Type = QEasingCurve.Type.InOutQuad,
 ) -> QPropertyAnimation:
     """
-    Crea un'animazione di fade (opacità).
+    Crea un'animazione di fade (opacit ).
 
     Args:
-        effect: L'effetto di opacità da animare
-        start: Valore iniziale (0.0 - 1.0)
-        end: Valore finale (0.0 - 1.0)
-        duration: Durata in millisecondi
-        easing: Curva di easing
+      effect: L'effetto di opacit  da animare
+      start: Valore iniziale (0.0 - 1.0)
+      end: Valore finale (0.0 - 1.0)
+      duration: Durata in millisecondi
+      easing: Curva di easing
 
     Returns:
-        L'animazione creata (non avviata)
+      L'animazione creata (non avviata)
     """
     anim = QPropertyAnimation(effect, b"opacity")
     anim.setDuration(duration)
@@ -77,14 +77,14 @@ def create_pulse_animation(
     Crea un'animazione di pulsazione (fade in/out continuo).
 
     Args:
-        effect: L'effetto di opacità da animare
-        min_opacity: Opacità minima
-        max_opacity: Opacità massima
-        duration: Durata di un ciclo completo
-        loop: Se True, loop infinito
+      effect: L'effetto di opacit  da animare
+      min_opacity: Opacit  minima
+      max_opacity: Opacit  massima
+      duration: Durata di un ciclo completo
+      loop: Se True, loop infinito
 
     Returns:
-        L'animazione creata (non avviata)
+      L'animazione creata (non avviata)
     """
     anim = QPropertyAnimation(effect, b"opacity")
     anim.setDuration(duration)
@@ -107,14 +107,14 @@ def create_position_animation(
     Crea un'animazione di posizione.
 
     Args:
-        widget: Il widget da animare
-        start_pos: Posizione iniziale (x, y)
-        end_pos: Posizione finale (x, y)
-        duration: Durata in millisecondi
-        easing: Curva di easing
+      widget: Il widget da animare
+      start_pos: Posizione iniziale (x, y)
+      end_pos: Posizione finale (x, y)
+      duration: Durata in millisecondi
+      easing: Curva di easing
 
     Returns:
-        L'animazione creata (non avviata)
+      L'animazione creata (non avviata)
     """
     anim = QPropertyAnimation(widget, b"pos")
     anim.setDuration(duration)
@@ -129,7 +129,7 @@ def cleanup_animation_safely(anim: QAbstractAnimation | None) -> None:
     Ferma e pulisce un'animazione in modo sicuro.
 
     Args:
-        anim: L'animazione da pulire (può essere None)
+      anim: L'animazione da pulire (pu  essere None)
     """
     if anim is None:
         return
@@ -145,12 +145,12 @@ def cleanup_effect_safely(widget: QWidget | None, effect: QGraphicsOpacityEffect
     Rimuove e pulisce un effetto grafico in modo sicuro.
 
     Args:
-        widget: Il widget con l'effetto
-        effect: L'effetto da pulire
+      widget: Il widget con l'effetto
+      effect: L'effetto da pulire
     """
     with suppress(RuntimeError, AttributeError):
         if widget:
-            widget.setGraphicsEffect(None)
+            widget.setGraphicsEffect(None)  # type: ignore[arg-type]
         if effect:
             effect.deleteLater()
 
@@ -162,8 +162,8 @@ def clear_layout_safely(layout: QLayout, process_events: bool = True) -> None:
     Chiama cleanup() sui widget che lo supportano prima di eliminarli.
 
     Args:
-        layout: Il layout da pulire
-        process_events: Se True, forza il processing degli eventi Qt
+      layout: Il layout da pulire
+      process_events: Se True, forza il processing degli eventi Qt
     """
     widgets_to_delete = []
 
@@ -200,7 +200,7 @@ def stop_layout_animations(layout: QLayout) -> None:
     Ferma ricorsivamente tutte le animazioni nei widget di un layout.
 
     Args:
-        layout: Il layout da processare
+      layout: Il layout da processare
     """
     for i in range(layout.count()):
         item = layout.itemAt(i)
@@ -235,13 +235,13 @@ def create_animation_timer(
     Crea un timer per animazioni.
 
     Args:
-        parent: Il widget parent
-        callback: La funzione da chiamare
-        interval: Intervallo in millisecondi
-        single_shot: Se True, esegue una sola volta
+      parent: Il widget parent
+      callback: La funzione da chiamare
+      interval: Intervallo in millisecondi
+      single_shot: Se True, esegue una sola volta
 
     Returns:
-        Il timer creato (non avviata)
+      Il timer creato (non avviata)
     """
     timer = QTimer(parent)
     timer.timeout.connect(callback)
@@ -256,12 +256,12 @@ def delayed_call(callback: Callable[[], None], delay: int = 100, parent: QWidget
     Esegue una funzione dopo un ritardo.
 
     Args:
-        callback: La funzione da chiamare
-        delay: Ritardo in millisecondi
-        parent: Parent opzionale per il timer
+      callback: La funzione da chiamare
+      delay: Ritardo in millisecondi
+      parent: Parent opzionale per il timer
     """
-    # In PyQt6 QTimer.singleShot(msec, slot) è la firma standard.
-    # L'uso di un parent è gestito internamente se il timer è creato come istanza,
+    # In PySide6 QTimer.singleShot(msec, slot)  la firma standard.
+    # L'uso di un parent  gestito internamente se il timer  creato come istanza,
     # ma il metodo statico accetta solo 2 o 3 argomenti (msec, timerType, slot).
     QTimer.singleShot(delay, callback)
 
@@ -275,12 +275,12 @@ def staggered_fade_in(
     Crea animazioni di fade-in sfalsate per una lista di widget.
 
     Args:
-        widgets: Lista di widget da animare
-        delay_between: Ritardo tra ogni animazione
-        fade_duration: Durata di ogni fade
+      widgets: Lista di widget da animare
+      delay_between: Ritardo tra ogni animazione
+      fade_duration: Durata di ogni fade
 
     Returns:
-        Lista delle animazioni create
+      Lista delle animazioni create
     """
     animations = []
 

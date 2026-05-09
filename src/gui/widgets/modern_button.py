@@ -4,17 +4,17 @@ Pulsante moderno con varianti e stati.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtProperty  # type: ignore[attr-defined]
-from PyQt6.QtWidgets import QPushButton, QWidget
+from PySide6.QtCore import Property, QEasingCurve, QEvent, QPropertyAnimation
+from PySide6.QtWidgets import QPushButton, QWidget
 
 from src.utils.helpers import get_colored_icon
 
 from ..design.colors import get_palette
 
 if TYPE_CHECKING:
-    from PyQt6.QtGui import QEnterEvent, QShowEvent
+    from PySide6.QtGui import QEnterEvent, QShowEvent
 
 
 class ModernButton(QPushButton):
@@ -64,35 +64,35 @@ class ModernButton(QPushButton):
             self.setStyleSheet(self.styleSheet() + "QPushButton { padding-left: 32px; text-align: left; }")
 
     def _setup_animation(self) -> None:
-        """Inizializza l'animazione di opacità per l'effetto hover."""
+        """Inizializza l'animazione di opacit  per l'effetto hover."""
         self._anim = QPropertyAnimation(self, b"hoverOpacity")
         self._anim.setDuration(150)
         self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-    def showEvent(self, event: QShowEvent | None) -> None:
+    def showEvent(self, event: QShowEvent) -> None:
         """Forza l'aggiornamento dello stile quando il widget viene mostrato."""
         super().showEvent(event)
         self._apply_style()
 
     def get_hover_opacity(self) -> float:
-        """Restituisce il valore corrente dell'opacità hover."""
+        """Restituisce il valore corrente dell'opacit  hover."""
         return self._hover_opacity
 
     def set_hover_opacity(self, value: float) -> None:
-        """Imposta il valore dell'opacità hover e aggiorna lo stile."""
+        """Imposta il valore dell'opacit  hover e aggiorna lo stile."""
         self._hover_opacity = value
         self._apply_style()
 
-    hoverOpacity = pyqtProperty(float, fget=get_hover_opacity, fset=set_hover_opacity)  # noqa: N815
+    hoverOpacity = Property(float, fget=get_hover_opacity, fset=set_hover_opacity)  # noqa: N815
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:
+    def enterEvent(self, event: QEnterEvent) -> None:
         """Avvia l'animazione hover all'ingresso del mouse."""
         self._anim.setStartValue(0.0)
         self._anim.setEndValue(0.1)
         self._anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any | None) -> None:
+    def leaveEvent(self, event: QEvent) -> None:
         """Avvia l'animazione di uscita al movimento del mouse."""
         self._anim.setStartValue(0.1)
         self._anim.setEndValue(0.0)
@@ -130,34 +130,34 @@ class ModernButton(QPushButton):
         hover_overlay = f"rgba(255,255,255,{self._hover_opacity})"
 
         style = f"""
-            QPushButton {{
-                background-color: {bg_color};
-                color: {text_color};
-                border: none;
-                padding: {padding};
-                font-size: {font_size};
-                font-weight: 600;
-                border-radius: 6px;
-            }}
-            QPushButton:hover {{
-                background-color: qlineargradient(
-                    x1:0, y1:0, x2:0, y2:1,
-                    stop:0 {hover_overlay},
-                    stop:1 {bg_color}
-                );
-            }}
-            QPushButton:pressed {{
-                padding-top: 12px;
-            }}
-            QPushButton:disabled {{
-                background-color: {self._palette.disabled};
-                color: {self._palette.on_surface};
-            }}
-            QPushButton:focus {{
-                outline: 2px solid {self._palette.focus};
-                outline-offset: 2px;
-            }}
-        """
+      QPushButton {{
+        background-color: {bg_color};
+        color: {text_color};
+        border: none;
+        padding: {padding};
+        font-size: {font_size};
+        font-weight: 600;
+        border-radius: 6px;
+      }}
+      QPushButton:hover {{
+        background-color: qlineargradient(
+          x1:0, y1:0, x2:0, y2:1,
+          stop:0 {hover_overlay},
+          stop:1 {bg_color}
+        );
+      }}
+      QPushButton:pressed {{
+        padding-top: 12px;
+      }}
+      QPushButton:disabled {{
+        background-color: {self._palette.disabled};
+        color: {self._palette.on_surface};
+      }}
+      QPushButton:focus {{
+        outline: 2px solid {self._palette.focus};
+        outline-offset: 2px;
+      }}
+    """
         # If ghost, add border
         if self._variant == self.Variant.GHOST:
             style += f"QPushButton {{ border: 1px solid {self._palette.primary}; }}"

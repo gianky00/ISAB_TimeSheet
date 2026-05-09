@@ -1,7 +1,7 @@
 """
 SyncroJob - Telegram Bridge System Handler (Refactored)
 Gestisce screenshot, report PDF e stati via interfacce agnostiche.
-Agnostico rispetto a PyQt6.
+Agnostico rispetto a PySide6.
 """
 
 import logging
@@ -37,9 +37,9 @@ class TelegramSystemHandler:
         """Invia lo stato corrente dell'applicazione."""
         bot_name, status, msg = self.status_provider.get_system_status()
         if bot_name == "Idle":
-            text = "📊 **Stato Sistema**\n\nIl sistema è in attesa (Idle)."
+            text = "   **Stato Sistema**\n\nIl sistema  in attesa (Idle)."
         else:
-            text = f"📊 **Stato Sistema**\n\nAttività: {bot_name}\nStato: {status}\nDettaglio: {msg}"
+            text = f"   **Stato Sistema**\n\nAttivita': {bot_name}\nStato: {status}\nDettaglio: {msg}"
         self.telegram.send_message_sync(text)
 
     def handle_screenshot(self, mode: str = "app") -> None:
@@ -52,7 +52,7 @@ class TelegramSystemHandler:
                 data = self.screenshot_provider.capture_desktop_screenshot()
                 caption = "Desktop"
 
-            self.telegram.send_photo_sync(data, caption=f"📸 **Screenshot: {caption}**")
+            self.telegram.send_photo_sync(data, caption=f"   **Screenshot: {caption}**")
         except Exception as e:
             self.telegram.send_message_sync(f"[ERRORE] Errore screenshot: {e}")
 
@@ -95,7 +95,7 @@ class TelegramSystemHandler:
         if db_type == "strumentale":
             if not data or not data.get("GIORNALIERE"):
                 return ""
-            html = "<h2>Report Contabilità</h2><h3>Giornaliere</h3><table>"
+            html = "<h2>Report Contabilit </h2><h3>Giornaliere</h3><table>"
             for g in data["GIORNALIERE"]:
                 html += f"<tr><td>{g['data']}</td><td>{g['personale']}</td><td>{g['descrizione']}</td></tr>"
             return html + "</table>"
@@ -113,7 +113,7 @@ class TelegramSystemHandler:
 
         generate_pdf_from_html(html, path)
         if Path(path).exists():
-            self.telegram.send_document_sync(path, caption=f"📄 Report {db_type}")
+            self.telegram.send_document_sync(path, caption=f"   Report {db_type}")
         else:
             self.telegram.send_message_sync("[ERRORE] Errore generazione PDF.")
 

@@ -3,9 +3,9 @@ SyncroJob - Status Card (Modern)
 Card per la status bar che mostra lo stato di un servizio con ombre morbide.
 """
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QMouseEvent
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QMouseEvent
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.gui.design.colors import get_palette
@@ -20,7 +20,7 @@ class StatusCard(ModernCard):
     Eredita da ModernCard per ombre e hover premium.
     """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(self, title: str, status: str = "In attesa", parent: QWidget | None = None) -> None:
         super().__init__(parent, elevation=8)
@@ -28,12 +28,12 @@ class StatusCard(ModernCard):
 
         # Override base style for status bar context
         self.setStyleSheet(f"""
-            QFrame#modernCard {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 8px;
-            }}
-        """)
+      QFrame#modernCard {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 8px;
+      }}
+    """)
 
         self._palette = get_palette()
         layout = QHBoxLayout(self)
@@ -100,23 +100,23 @@ class StatusCard(ModernCard):
             self._meta_label.setVisible(True)
             self._meta_label.setStyleSheet(
                 f"""
-                font-size: 11px;
-                font-weight: 800;
-                color: {COLORS["success_material"]};
-                background-color: {COLORS["table_success_bg"]};
-                border-radius: 6px;
-                padding: 6px 10px;
-                border: 1px solid {COLORS["success_green"]};
-                """
+        font-size: 11px;
+        font-weight: 800;
+        color: {COLORS["success_material"]};
+        background-color: {COLORS["table_success_bg"]};
+        border-radius: 6px;
+        padding: 6px 10px;
+        border: 1px solid {COLORS["success_green"]};
+        """
             )
         else:
             self._meta_label.setVisible(False)
 
     def _update_status_display(self, message: str) -> None:
-        """Metodo di compatibilità per l'aggiornamento rapido dello stato."""
+        """Metodo di compatibilit  per l'aggiornamento rapido dello stato."""
         self._status_label.setText(message)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         """Emette il segnale di click."""
         self.clicked.emit()
         super().mousePressEvent(event)

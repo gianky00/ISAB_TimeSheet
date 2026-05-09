@@ -1,7 +1,7 @@
 from typing import Any
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
@@ -25,7 +25,7 @@ class TimbratureSettingsTab(QWidget):
     Tab per la gestione delle impostazioni (Dipendenti, Reparti, Cantieri).
     """
 
-    settings_changed = pyqtSignal()  # Emesso quando cambiano le liste o i dati
+    settings_changed = Signal()  # Emesso quando cambiano le liste o i dati
 
     def __init__(self, storage: Any, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -73,21 +73,21 @@ class TimbratureSettingsTab(QWidget):
         # Table
         self.settings_table = StandardTable()
         self.settings_table.setStyleSheet(f"""
-            QTableWidget {{
-                gridline-color: {COLORS["bg_alt"]};
-                selection-background-color: {COLORS["table_selection_bg"]};
-                selection-color: {COLORS["text_dark"]};
-                background-color: {COLORS["bg_white"]};
-            }}
-            QHeaderView::section {{
-                background-color: {COLORS["bg_light"]};
-                color: {COLORS["text_dark"]};
-                padding: 8px;
-                font-weight: bold;
-                border: none;
-                border-bottom: 1px solid {COLORS["border_light"]};
-            }}
-        """)
+      QTableWidget {{
+        gridline-color: {COLORS["bg_alt"]};
+        selection-background-color: {COLORS["table_selection_bg"]};
+        selection-color: {COLORS["text_dark"]};
+        background-color: {COLORS["bg_white"]};
+      }}
+      QHeaderView::section {{
+        background-color: {COLORS["bg_light"]};
+        color: {COLORS["text_dark"]};
+        padding: 8px;
+        font-weight: bold;
+        border: none;
+        border-bottom: 1px solid {COLORS["border_light"]};
+      }}
+    """)
         v_header = self.settings_table.verticalHeader()
         if v_header is not None:
             v_header.setVisible(False)
@@ -177,4 +177,4 @@ class TimbratureSettingsTab(QWidget):
         # This needs to be handled by the parent
         main_window = self.window()
         if hasattr(main_window, "show_settings"):
-            main_window.show_settings()  # type: ignore
+            main_window.show_settings()

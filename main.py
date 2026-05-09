@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any, NoReturn, cast
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from PyQt6.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication
 
     from src.gui.main_window.main import MainWindow
 
@@ -100,7 +100,7 @@ startup_logger_global = setup_enterprise_logging()
 
 def _setup_windows_taskbar(app: QApplication) -> None:
     """Configura l'icona della taskbar e l'AppUserModelID su Windows."""
-    from PyQt6.QtGui import QIcon  # noqa: PLC0415
+    from PySide6.QtGui import QIcon  # noqa: PLC0415
 
     from src.core.version import __version__  # noqa: PLC0415
 
@@ -121,7 +121,7 @@ def _setup_windows_taskbar(app: QApplication) -> None:
 
 def _check_single_instance() -> None:
     """Verifica se l'applicazione è già in esecuzione."""
-    from PyQt6.QtNetwork import QLocalSocket  # noqa: PLC0415
+    from PySide6.QtNetwork import QLocalSocket  # noqa: PLC0415
 
     socket = QLocalSocket()
     socket.connectToServer("SyncroJob_Instance_Connector")
@@ -140,11 +140,11 @@ def _run_phase1(
     logger: Any,
 ) -> None:
     """Esegue la fase 1 di inizializzazione (import pesanti) in un thread separato."""
-    from PyQt6.QtCore import QObject, QThread, pyqtSignal  # noqa: PLC0415
+    from PySide6.QtCore import QObject, QThread, Signal  # noqa: PLC0415
 
     class Phase1Worker(QObject):
-        progress = pyqtSignal(str, int)
-        finished = pyqtSignal(bool, str)
+        progress = Signal(str, int)
+        finished = Signal(bool, str)
 
         def run(self) -> None:
             try:
@@ -191,7 +191,7 @@ def _run_phase3(
     app: QApplication, mw: MainWindow, update: Callable[[str, int], None], close: Callable[[], None], log: Any
 ) -> None:
     """Esegue la fase 3 di precaricamento GUI."""
-    from PyQt6.QtCore import QTimer  # noqa: PLC0415
+    from PySide6.QtCore import QTimer  # noqa: PLC0415
 
     from src.core.app_initializer import AppInitializer  # noqa: PLC0415
 
@@ -224,7 +224,7 @@ def _run_phase3(
 
 def _start_instance_server() -> Any:
     """Avvia il server per la gestione della singola istanza."""
-    from PyQt6.QtNetwork import QLocalServer  # noqa: PLC0415
+    from PySide6.QtNetwork import QLocalServer  # noqa: PLC0415
 
     server = QLocalServer()
     server.listen("SyncroJob_Instance_Connector")
@@ -271,7 +271,7 @@ def main() -> None:
         sys.stdout = open(os.devnull, "w")  # noqa: SIM115
         sys.stderr = open(os.devnull, "w")  # noqa: SIM115
 
-    from PyQt6.QtWidgets import QApplication  # noqa: PLC0415
+    from PySide6.QtWidgets import QApplication  # noqa: PLC0415
 
     from src.gui.main_window.main import MainWindow  # noqa: PLC0415
 

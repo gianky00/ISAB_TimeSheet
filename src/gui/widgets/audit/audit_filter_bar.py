@@ -4,11 +4,11 @@ Widget per la configurazione dei filtri di ricerca e visualizzazione all'interno
 """
 
 from collections.abc import Sequence
-from datetime import datetime
-from typing import Any, Final
+from datetime import date as dt_date, datetime
+from typing import Any, Final, cast
 
-from PyQt6.QtCore import QDate, Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QDate, Qt, Signal
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -33,7 +33,7 @@ class AuditFilterBar(ModernCard):
     Barra dei filtri per l'Audit Log con design Enterprise.
     """
 
-    filters_applied = pyqtSignal(dict)
+    filters_applied = Signal(dict)
 
     LEVEL_INFO_IDX: Final[int] = 1
     LEVEL_WARN_IDX: Final[int] = 2
@@ -165,8 +165,8 @@ class AuditFilterBar(ModernCard):
 
         self.filters_applied.emit(
             {
-                "date_from": self.date_from.date().toPyDate(),
-                "date_to": self.date_to.date().toPyDate(),
+                "date_from": self.date_from.date().toPython(),
+                "date_to": self.date_to.date().toPython(),
                 "category": self.cat_combo.currentText(),
                 "levels": levels,
                 "search_text": self.search_edit.text().strip(),
@@ -184,14 +184,14 @@ class AuditFilterBar(ModernCard):
         return None
 
     def set_enabled_dates(self, enabled: bool) -> None:
-        """Abilita o disabilita i campi di selezione data."""
+        """Abilita o disabilita i campiu'di selezione data."""
         self.date_from.setEnabled(enabled)
         self.date_to.setEnabled(enabled)
 
     def get_filters(self) -> dict[str, Any]:
         """Restituisce i parametri di filtraggio correnti per le query."""
-        start_dt = datetime.combine(self.date_from.date().toPyDate(), datetime.min.time())
-        end_dt = datetime.combine(self.date_to.date().toPyDate(), datetime.max.time())
+        start_dt = datetime.combine(cast("dt_date", self.date_from.date().toPython()), datetime.min.time())
+        end_dt = datetime.combine(cast("dt_date", self.date_to.date().toPython()), datetime.max.time())
         lvl_idx = self.level_combo.currentIndex()
         levels = self._get_levels_from_index(lvl_idx)
 

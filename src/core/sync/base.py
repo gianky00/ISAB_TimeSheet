@@ -6,7 +6,16 @@ Logica comune per la sincronizzazione dei dati nel database SQLite.
 
 import re
 import sqlite3
+from dataclasses import dataclass
 from typing import Any
+
+
+@dataclass
+class PartitionConfig:
+    """Configurazione per la sincronizzazione partizionata."""
+
+    column: str
+    values: list[Any]
 
 
 class BaseSyncEngine:
@@ -16,7 +25,7 @@ class BaseSyncEngine:
     def _validate_identifier(identifier: str) -> str:
         """Protegge da SQL Injection validando nomi di tabelle e colonne."""
         if not re.match(r"^[a-zA-Z0-9_]+$", identifier):
-            raise ValueError(f"Identificatore non valido: {identifier}")
+            raise ValueError("Identificatore non valido")  # noqa: TRY003
         return identifier
 
     @staticmethod
@@ -43,15 +52,14 @@ class BaseSyncEngine:
         table_name: str,
         columns: list[str],
         new_data: list[tuple[Any, ...]],
-        partition_col: str,
-        partition_values: list[Any],
+        partition: PartitionConfig,
     ) -> tuple[int, int]:
         """
         Esegue una sincronizzazione atomica basata su partizioni (es: Anno).
         Cancella i dati esistenti per le partizioni fornite e inserisce i nuovi.
 
         Returns:
-            Tuple (aggiunti, rimossi).
+          Tuple (aggiunti, rimossi).
         """
         safe_table = cls._validate_identifier(table_name)
         temp_table = cls._create_temp_table(cursor, safe_table, columns)
@@ -65,9 +73,9 @@ class BaseSyncEngine:
         total_added, total_removed = 0, 0
         safe_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in columns])
         safe_cast_cols = ", ".join([f'CAST("{cls._validate_identifier(c)}" AS TEXT)' for c in columns])
-        safe_part_col = cls._validate_identifier(partition_col)
+        safe_part_col = cls._validate_identifier(partition.column)
 
-        for val in partition_values:
+        for val in partition.values:
             # 1. Calcolo Diff (Aggiunti)
             q_added = (
                 f"SELECT COUNT(*) FROM ("  # nosec B608

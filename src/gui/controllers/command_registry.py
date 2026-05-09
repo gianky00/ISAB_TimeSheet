@@ -7,7 +7,7 @@ from typing import Any, Optional
 class CommandNode:
     """
     Rappresenta un nodo nell'albero dei comandi della Palette.
-    Può essere una foglia (azione) o un ramo (menu).
+    Pu  essere una foglia (azione) o un ramo (menu).
     """
 
     label: str
@@ -15,10 +15,10 @@ class CommandNode:
     icon: str = "info"  # Default icon string
     shortcut: str = ""
 
-    # Se definito, questo nodo è un'azione eseguibile
+    # Se definito, questo nodo  un'azione eseguibile
     action: Callable[[], Any] | None = None
 
-    # Se definito, questo nodo è un menu con figli statici
+    # Se definito, questo nodo  un menu con figli statici
     children: list["CommandNode"] = field(default_factory=list)
 
     # Se definito, questo nodo genera i figli dinamicamente
@@ -38,7 +38,7 @@ class CommandNode:
 
     @property
     def is_leaf(self) -> bool:
-        """Ritorna True se è un nodo finale eseguibile (azione o input)."""
+        """Ritorna True se  un nodo finale eseguibile (azione o input)."""
         return self.action is not None or bool(self.input_prompts)
 
     def get_children(self) -> list["CommandNode"]:

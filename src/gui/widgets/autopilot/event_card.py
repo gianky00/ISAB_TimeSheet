@@ -1,8 +1,8 @@
 from contextlib import suppress
 from datetime import datetime
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, QTime, QTimer, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, QTime, QTimer, Signal
+from PySide6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
     QHBoxLayout,
@@ -35,7 +35,7 @@ class AutopilotEventCard(QFrame):
     Include ora lo stato del database (freschezza dati) e un tasto di sync rapido.
     """
 
-    sync_requested = pyqtSignal(str)  # Segnale emesso quando l'utente preme il tasto sync
+    sync_requested = Signal(str)  # Segnale emesso quando l'utente preme il tasto sync
 
     def __init__(  # noqa: PLR0913, PLR0915
         self,
@@ -205,7 +205,7 @@ class AutopilotEventCard(QFrame):
 
             # Remove graphics effect
             if hasattr(self, "icon_label") and self.icon_label:
-                self.icon_label.setGraphicsEffect(None)
+                self.icon_label.setGraphicsEffect(None)  # type: ignore[arg-type]
 
             # Delete effect (may not exist if animation was disabled)
             if hasattr(self, "icon_opacity") and self.icon_opacity:
@@ -222,7 +222,7 @@ class AutopilotEventCard(QFrame):
         hours = secs_to // 3600
         mins = (secs_to % 3600) // 60
 
-        countdown = f"⏱️ Tra {hours}h {mins}m" if hours > 0 else f"⏱️ Tra {mins}m"
+        countdown = f"Tra {hours}h {mins}m" if hours > 0 else f"Tra {mins}m"
         self.countdown_lbl.setText(countdown)
 
     def _update_db_status(self) -> None:

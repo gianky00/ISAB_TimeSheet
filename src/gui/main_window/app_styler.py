@@ -4,8 +4,8 @@ Configura l'aspetto visivo e i metadati dell'applicazione.
 Estratto da AppInitializer per seguire l'SRP.
 """
 
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QApplication
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import QApplication
 
 from src.core.version import __version__
 from src.gui.styles import apply_theme

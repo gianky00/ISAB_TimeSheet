@@ -6,16 +6,16 @@ def mig_dipendenti_v1(conn: sqlite3.Connection) -> None:
     cursor = conn.cursor()
     cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS dipendenti (
-            id_risorsa INTEGER PRIMARY KEY,
-            cognome TEXT NOT NULL,
-            nome TEXT NOT NULL,
-            data_nascita TEXT,
-            badge TEXT,
-            data_assunzione TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """
+    CREATE TABLE IF NOT EXISTS dipendenti (
+      id_risorsa INTEGER PRIMARY KEY,
+      cognome TEXT NOT NULL,
+      nome TEXT NOT NULL,
+      data_nascita TEXT,
+      badge TEXT,
+      data_assunzione TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  """
     )
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_dip_cognome_nome ON dipendenti(cognome, nome)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_dip_badge ON dipendenti(badge)")
@@ -31,7 +31,7 @@ def mig_dipendenti_v2(conn: sqlite3.Connection) -> None:
 def mig_dipendenti_v3(conn: sqlite3.Connection) -> None:
     """Aggiunge colonna monitoraggio_attivo per bypass manuale (v3)"""
     cursor = conn.cursor()
-    # Verifica se la colonna esiste già per evitare errori
+    # Verifica se la colonna esiste gia' per evitare errori
     cursor.execute("PRAGMA table_info(dipendenti)")
     columns = [row[1] for row in cursor.fetchall()]
     if "monitoraggio_attivo" not in columns:

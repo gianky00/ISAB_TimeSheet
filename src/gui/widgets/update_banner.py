@@ -1,13 +1,13 @@
 # mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
-from PyQt6.QtCore import (  # type: ignore
+from PySide6.QtCore import (  # type: ignore
+    Property,
     QEasingCurve,
     QPropertyAnimation,
     Qt,
-    pyqtProperty,
-    pyqtSignal,
-    pyqtSlot,
+    Signal,
+    Slot,
 )
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
@@ -18,11 +18,11 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 # Stile forzato per i tooltip in Light Mode
 TOOLTIP_CSS = """
 QToolTip {
-    background-color: #FFFFFF;
-    color: #212121;
-    border: 1px solid #BBBBBB;
-    border-radius: 6px;
-    padding: 8px 12px;
+  background-color: #FFFFFF;
+  color: #212121;
+  border: 1px solid #BBBBBB;
+  border-radius: 6px;
+  padding: 8px 12px;
 }
 """
 
@@ -30,22 +30,22 @@ QToolTip {
 class UpdateBanner(QFrame):
     """Banner per la notifica e il progresso di aggiornamenti disponibili."""
 
-    download_requested = pyqtSignal(str)
+    download_requested = Signal(str)
 
     def __init__(self, parent=None):  # noqa: ANN001, ANN204
         super().__init__(parent)
         self.setObjectName("updateBanner")
         # Forza Light Mode per il banner
         self.setStyleSheet(f"""
-            QFrame#updateBanner {{
-                background-color: {COLORS["bg_white"]};
-                border-bottom: 1px solid {COLORS["border_medium"]};
-            }}
-            QLabel {{
-                color: {COLORS["text_dark"]};
-            }}
-            {TOOLTIP_CSS}
-        """)
+      QFrame#updateBanner {{
+        background-color: {COLORS["bg_white"]};
+        border-bottom: 1px solid {COLORS["border_medium"]};
+      }}
+      QLabel {{
+        color: {COLORS["text_dark"]};
+      }}
+      {TOOLTIP_CSS}
+    """)
         self.setVisible(False)
         self._download_url = ""
         self._is_complete = False
@@ -121,7 +121,7 @@ class UpdateBanner(QFrame):
             else:
                 self.download_btn.setText("Scarica e Installa")
 
-        self.update_label.setToolTip(f"Novità:\n{changelog}" if changelog else "Clicca per scaricare")
+        self.update_label.setToolTip(f"Novita':\n{changelog}" if changelog else "Clicca per scaricare")
 
         # Reset stato download
         self.progress_container.setVisible(False)
@@ -129,7 +129,7 @@ class UpdateBanner(QFrame):
 
         self.setVisible(True)
 
-    @pyqtSlot(int, int, float, float)
+    @Slot(int, int, float, float)
     def update_progress(self, downloaded: int, total: int, speed: float, eta: float):  # noqa: ANN201
         """Aggiorna il progresso del download nel banner."""
         if not self.progress_container.isVisible():
@@ -189,5 +189,5 @@ class UpdateBanner(QFrame):
         """Setter per QPropertyAnimation."""
         self.progress_bar.setValue(val)
 
-    # Proprietà Qt per l'animazione (NECESSARIA per QPropertyAnimation in PyQt6)
-    current_value = pyqtProperty(int, fget=get_current_value, fset=set_current_value)
+    # Propriet  Qt per l'animazione (NECESSARIA per QPropertyAnimation in PySide6)
+    current_value = Property(int, fget=get_current_value, fset=set_current_value)

@@ -42,12 +42,12 @@ def wait_for_overlay_to_disappear(
     Attende che un overlay di caricamento scompaia.
 
     Args:
-        driver: Istanza WebDriver.
-        locator: Tupla (By.TYPE, "selector") dell'overlay.
-        timeout: Timeout massimo in secondi.
+      driver: Istanza WebDriver.
+      locator: Tupla (By.TYPE, "selector") dell'overlay.
+      timeout: Timeout massimo in secondi.
 
     Returns:
-        True se l'overlay è scomparso, False se timeout.
+      True se l'overlay  scomparso, False se timeout.
     """
     try:
         WebDriverWait(driver, timeout).until(EC.invisibility_of_element_located(locator))
@@ -66,12 +66,12 @@ def wait_for_element_clickable(
     Attende che un elemento sia cliccabile.
 
     Args:
-        driver: Istanza WebDriver.
-        locator: Tupla (By.TYPE, "selector").
-        timeout: Timeout massimo in secondi.
+      driver: Istanza WebDriver.
+      locator: Tupla (By.TYPE, "selector").
+      timeout: Timeout massimo in secondi.
 
     Returns:
-        WebElement se trovato e cliccabile, None se timeout.
+      WebElement se trovato e cliccabile, None se timeout.
     """
     try:
         return WebDriverWait(driver, timeout).until(EC.element_to_be_clickable(locator))
@@ -81,7 +81,7 @@ def wait_for_element_clickable(
 
 
 def wait_for_element_staleness(driver: WebDriver, element: WebElement, timeout: int = 10) -> bool:
-    """Attende che un elemento diventi stale (non più presente nel DOM)."""
+    """Attende che un elemento diventi stale (non piu' presente nel DOM)."""
     try:
         WebDriverWait(driver, timeout).until(EC.staleness_of(element))
         return True  # noqa: TRY300
@@ -95,7 +95,7 @@ def wait_for_element_staleness(driver: WebDriver, element: WebElement, timeout: 
 
 
 def element_text_changes(locator: tuple[str, str], old_text: str) -> Callable[[WebDriver], bool]:
-    """Condition: il testo dell'elemento è diverso da quello fornito."""
+    """Condition: il testo dell'elemento  diverso da quello fornito."""
 
     def _predicate(driver: WebDriver) -> bool:
         try:
@@ -196,18 +196,18 @@ def poll_for_file(  # noqa: PLR0913
 ) -> str | None:
     """
     Attende che un file appaia in una directory usando polling.
-    Approccio PERMISSIVO: ritorna il file più recente che soddisfa i criteri.
+    Approccio PERMISSIVO: ritorna il file piu' recente che soddisfa i criteri.
 
     Args:
-        directory: Directory da monitorare.
-        pattern: Glob pattern (es: "*.xlsx").
-        timeout: Timeout massimo in secondi.
-        poll_interval: Intervallo tra polling in secondi.
-        min_age: Timestamp minimo del file (unix timestamp). Se None, accetta qualsiasi file.
-        exclude_patterns: Pattern da escludere (es: [".crdownload", ".tmp"]).
+      directory: Directory da monitorare.
+      pattern: Glob pattern (es: "*.xlsx").
+      timeout: Timeout massimo in secondi.
+      poll_interval: Intervallo tra polling in secondi.
+      min_age: Timestamp minimo del file (unix timestamp). Se None, accetta qualsiasi file.
+      exclude_patterns: Pattern da escludere (es: [".crdownload", ".tmp"]).
 
     Returns:
-        Path assoluto del file più recente, o None se timeout.
+      Path assoluto del file piu' recente, o None se timeout.
     """
     directory_path = Path(directory)
     if not directory_path.exists():
@@ -228,7 +228,7 @@ def poll_for_file(  # noqa: PLR0913
         valid_files = _filter_valid_files(files, exclude_patterns, min_age)
 
         if valid_files:
-            # Ritorna il più recente basandosi sull'effective_time
+            # Ritorna il piu' recente basandosi sull'effective_time
             latest = max(valid_files, key=lambda f: max(f.stat().st_mtime, f.stat().st_ctime))
             logger.info(f"File trovato: {latest.name}")
             return str(latest.absolute())
@@ -257,8 +257,8 @@ def _log_debug_poll_info(directory: Path, pattern: str, matches: list[Path], sta
 
 
 def _filter_valid_files(files: list[Path], excludes: list[str], min_age: float | None) -> list[Path]:
-    """Filtra i file basandosi su esclusioni e età minima."""
-    # 1. Filtra per esclusioni e se è un file reale
+    """Filtra i file basandosi su esclusioni e et  minima."""
+    # 1. Filtra per esclusioni e se  un file reale
     filtered = [
         f for f in files if f.is_file() and not any(f.suffix == ext or ext in f.name for ext in excludes)
     ]
@@ -266,13 +266,13 @@ def _filter_valid_files(files: list[Path], excludes: list[str], min_age: float |
     if min_age is None:
         return filtered
 
-    # 2. Filtra per età minima con tolleranza (5 secondi) per clock skew
+    # 2. Filtra per et  minima con tolleranza (5 secondi) per clock skew
     cutoff = min_age - 5.0
     valid = []
     for f in filtered:
         stat = f.stat()
         # Usa il massimo tra mtime e ctime per gestire casi dove il browser
-        # preserva il Last-Modified del server (mtime vecchio) ma il file è appena creato (ctime nuovo)
+        # preserva il Last-Modified del server (mtime vecchio) ma il file  appena creato (ctime nuovo)
         effective_time = max(stat.st_mtime, stat.st_ctime)
         if effective_time >= cutoff:
             valid.append(f)
@@ -392,5 +392,5 @@ def _log_polling_status(directory: Path, patterns: list[str], start_time: float)
         logger.debug(f"[POLL] Scanning {directory}... Matches: {count}")
 
 
-# Alias per retrocompatibilità
+# Alias per retrocompatibilit
 poll_for_download_complete = poll_for_file

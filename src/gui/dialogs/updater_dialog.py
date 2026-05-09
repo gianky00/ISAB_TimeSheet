@@ -14,9 +14,9 @@ from typing import TYPE_CHECKING, Any, cast
 
 import requests
 from packaging import version as pkg_version
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, pyqtProperty, pyqtSlot  # type: ignore
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Property, QEasingCurve, QPropertyAnimation, Qt, Slot
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
     QApplication,
     QDialog,
     QLabel,
@@ -55,8 +55,8 @@ class UpdateProgressDialog(QDialog):
         Inizializza il dialog di progresso.
 
         Args:
-            url_or_path: URL o percorso locale del file da scaricare/trasferire.
-            parent: Widget genitore.
+          url_or_path: URL o percorso locale del file da scaricare/trasferire.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.setWindowTitle("Aggiornamento SyncroJob")
@@ -71,7 +71,7 @@ class UpdateProgressDialog(QDialog):
         self.lbl_details = QLabel("Preparazione...")
         self.lbl_retry = QLabel("")
 
-        # Inizializza animazione per fluidità estrema della barra
+        # Inizializza animazione per fluidit  estrema della barra
         self.animation = QPropertyAnimation(self, b"current_value")
         self.animation.setDuration(350)
         self.animation.setEasingCurve(QEasingCurve.Type.OutQuad)
@@ -109,7 +109,7 @@ class UpdateProgressDialog(QDialog):
         self.show()
         self.worker.start()
 
-    @pyqtSlot(int, int, float, float)
+    @Slot(int, int, float, float)
     def update_progress(self, downloaded: int, total: int, speed: float, eta: float) -> None:
         """Aggiorna la barra di progresso con animazione e le label informative."""
         self.lbl_retry.setText("")
@@ -141,7 +141,7 @@ class UpdateProgressDialog(QDialog):
 
         self.lbl_status.setText(f"[AVVIO] {action} in corso...")
         self.lbl_details.setText(
-            f"📦 <b>{mb_down:.1f} / {mb_total:.1f} MB</b>  •  ⚡ <b>{speed_mb:.2f} MB/s</b>  •  [ATTESA] <b>{eta_str}</b>"
+            f"   <b>{mb_down:.1f} / {mb_total:.1f} MB</b>      <b>{speed_mb:.2f} MB/s</b>    [ATTESA] <b>{eta_str}</b>"
         )
 
     def get_current_value(self) -> int:
@@ -152,21 +152,21 @@ class UpdateProgressDialog(QDialog):
         """Setter per QPropertyAnimation."""
         self.pb.setValue(val)
 
-    # Proprietà Qt per l'animazione
-    current_value = pyqtProperty(int, fget=get_current_value, fset=set_current_value)
+    # Propriet  Qt per l'animazione
+    current_value = Property(int, fget=get_current_value, fset=set_current_value)
 
-    @pyqtSlot(int)
+    @Slot(int)
     def on_retrying(self, retry_count: int) -> None:
         """Mostra un avviso in caso di tentativi di riconnessione."""
         self.lbl_retry.setText(f"[ATTENZIONE] Connessione instabile. Tentativo #{retry_count}...")
 
-    @pyqtSlot(str)
+    @Slot(str)
     def on_finished(self, setup_path: str) -> None:
         """Gestisce il completamento del download chiudendo il dialog e proponendo l'installazione."""
         self.close()
         show_install_prompt(setup_path, cast("QWidget", self.parent()))
 
-    @pyqtSlot(str)
+    @Slot(str)
     def on_error(self, err_msg: str) -> None:
         """Mostra un messaggio d'errore critico in caso di fallimento."""
         self.close()
@@ -177,9 +177,7 @@ def show_install_prompt(setup_path: str, parent: QWidget | None = None) -> None:
     """Mostra un messaggio all'utente per decidere se installare subito o alla chiusura."""
     msg_box = QMessageBox(parent)
     msg_box.setWindowTitle("[SYNC] Aggiornamento Pronto")
-    msg_box.setText(
-        "L'aggiornamento è stato scaricato ed è pronto per l'installazione.\n\nCosa desideri fare?"
-    )
+    msg_box.setText("L'aggiornamento  stato scaricato ed  pronto per l'installazione.\n\nCosa desideri fare?")
     msg_box.setIcon(QMessageBox.Icon.Question)
     msg_box.setStyle(QApplication.style())
 
@@ -188,11 +186,11 @@ def show_install_prompt(setup_path: str, parent: QWidget | None = None) -> None:
     msg_box.addButton("Annulla", QMessageBox.ButtonRole.RejectRole)
 
     msg_box.setStyleSheet("""
-        QMessageBox { background-color: white; }
-        QLabel { color: black; font-size: 13px; }
-        QPushButton { background-color: #f0f0f0; color: black; border: 1px solid #ccc; padding: 6px 15px; border-radius: 4px; font-weight: bold; }
-        QPushButton:hover { background-color: #e0e0e0; }
-    """)
+    QMessageBox { background-color: white; }
+    QLabel { color: black; font-size: 13px; }
+    QPushButton { background-color: #f0f0f0; color: black; border: 1px solid #ccc; padding: 6px 15px; border-radius: 4px; font-weight: bold; }
+    QPushButton:hover { background-color: #e0e0e0; }
+  """)
 
     msg_box.exec()
     if msg_box.clickedButton() == btn_now:
@@ -200,11 +198,11 @@ def show_install_prompt(setup_path: str, parent: QWidget | None = None) -> None:
     elif msg_box.clickedButton() == btn_later:
         set_pending_installer(setup_path)
         QMessageBox.information(
-            parent, "[INFO] Info", "L'aggiornamento partirà automaticamente alla chiusura dell'app."
+            parent, "[INFO] Info", "L'aggiornamento partir  automaticamente alla chiusura dell'app."
         )
 
 
-def check_for_updates(  # noqa: PLR0912
+def check_for_updates(  # noqa: C901, PLR0912
     parent: QWidget | None = None,
     silent: bool = True,
     callback: Callable[[dict[str, Any]], None] | None = None,
@@ -224,7 +222,7 @@ def check_for_updates(  # noqa: PLR0912
     if not update_sources:
         if not silent:
             QMessageBox.information(
-                parent, "[OK] Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
+                parent, "[OK] Aggiornamento", f"L'applicazione  aggiornata (v{version.__version__})"
             )
         return
 
@@ -236,7 +234,7 @@ def check_for_updates(  # noqa: PLR0912
     if not download_url:
         if not silent:
             QMessageBox.information(
-                parent, "[OK] Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
+                parent, "[OK] Aggiornamento", f"L'applicazione  aggiornata (v{version.__version__})"
             )
         return
 
@@ -265,7 +263,7 @@ def check_for_updates(  # noqa: PLR0912
         else:
             msg = f"Nuova versione {remote_ver_str} disponibile!\n"
             if changelog:
-                msg += f"\nNovità:\n{changelog}\n"
+                msg += f"\nNovita':\n{changelog}\n"
             msg += "\nVuoi aggiornare ora?"
             reply = QMessageBox.question(
                 parent,
@@ -277,7 +275,7 @@ def check_for_updates(  # noqa: PLR0912
                 perform_auto_update(download_url, parent)
     elif not silent:
         QMessageBox.information(
-            parent, "[OK] Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})"
+            parent, "[OK] Aggiornamento", f"L'applicazione  aggiornata (v{version.__version__})"
         )
 
 

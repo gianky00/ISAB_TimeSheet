@@ -5,8 +5,8 @@ Include filter chips, search bar, sort dropdown e bulk actions menu.
 
 from typing import Any, Final
 
-from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QSize, Qt, QTimer, Signal
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -89,37 +89,37 @@ class FilterChip(QPushButton):
             # Active: filled with accent color
             self.setStyleSheet(
                 f"""
-                QPushButton {{
-                    background-color: {COLORS["primary_blue"]};
-                    color: {COLORS["bg_white"]};
-                    border: none;
-                    border-radius: 20px;
-                    padding: 8px 16px;
-                    font-size: 13px;
-                    font-weight: 600;
-                }}
-                QPushButton:hover {{
-                    background-color: {COLORS["primary_dark"]};
-                }}
-            """
+        QPushButton {{
+          background-color: {COLORS["primary_blue"]};
+          color: {COLORS["bg_white"]};
+          border: none;
+          border-radius: 20px;
+          padding: 8px 16px;
+          font-size: 13px;
+          font-weight: 600;
+        }}
+        QPushButton:hover {{
+          background-color: {COLORS["primary_dark"]};
+        }}
+      """
             )
         else:
             self.setStyleSheet(
                 f"""
-                QPushButton {{
-                    background-color: transparent;
-                    color: {COLORS["text_muted"]};
-                    border: 1px solid {COLORS["border_medium"]};
-                    border-radius: 20px;
-                    padding: 8px 16px;
-                    font-size: 13px;
-                    font-weight: 600;
-                }}
-                QPushButton:hover {{
-                    background-color: {COLORS["bg_light"]};
-                    border-color: {COLORS["border_dark"]};
-                }}
-            """
+        QPushButton {{
+          background-color: transparent;
+          color: {COLORS["text_muted"]};
+          border: 1px solid {COLORS["border_medium"]};
+          border-radius: 20px;
+          padding: 8px 16px;
+          font-size: 13px;
+          font-weight: 600;
+        }}
+        QPushButton:hover {{
+          background-color: {COLORS["bg_light"]};
+          border-color: {COLORS["border_dark"]};
+        }}
+      """
             )
 
 
@@ -130,10 +130,10 @@ class NotificationToolbar(QWidget):
     """
 
     # Signals
-    search_query_changed = pyqtSignal(str)  # query
-    filter_changed = pyqtSignal(str)  # filter_key (all, unread, error, warning, info)
-    sort_changed = pyqtSignal(str)  # sort_key
-    bulk_action_triggered = pyqtSignal(str)  # action_key
+    search_query_changed = Signal(str)  # query
+    filter_changed = Signal(str)  # filter_key (all, unread, error, warning, info)
+    sort_changed = Signal(str)  # sort_key
+    bulk_action_triggered = Signal(str)  # action_key
 
     SEARCH_DEBOUNCE_MS: Final[int] = 300
 
@@ -232,7 +232,7 @@ class NotificationToolbar(QWidget):
         self.sort_combo = FilterComboBox()
         self.sort_combo.addItem("Data (recenti)", "date_desc")
         self.sort_combo.addItem("Data (vecchie)", "date_asc")
-        self.sort_combo.addItem("Priorità", "priority")
+        self.sort_combo.addItem("Priorita'", "priority")
         self.sort_combo.addItem("Livello", "level")
         self.sort_combo.setStyleSheet(COMBOBOX_STYLE)
         self.sort_combo.setMinimumWidth(160)
@@ -274,7 +274,7 @@ class NotificationToolbar(QWidget):
         Update count badges on filter chips.
 
         Args:
-            counts: Dict with keys 'all', 'unread', 'error', 'warning', 'info'
+          counts: Dict with keys 'all', 'unread', 'error', 'warning', 'info'
         """
         for key, chip in self._filter_chips.items():
             count = counts.get(key, 0)

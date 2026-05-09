@@ -99,7 +99,7 @@ class PlaywrightSafeWorkPDLBot(PlaywrightSafeworkBaseBot):
                 return False
 
             pdl_num = self._sanitizza_pdl_number(pdl_raw)
-            self.log(f"📋 PDL {index + 1}/{total}: {pdl_num}")
+            self.log(f"   PDL {index + 1}/{total}: {pdl_num}")
 
             self.update_step("search", StepStatus.RUNNING)
             if not self._esegui_ricerca_pdl(pdl_num):

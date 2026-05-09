@@ -1,5 +1,5 @@
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -19,12 +19,12 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class PDLFilterWidget(QWidget):
     """Widget contenente i filtri e i pulsanti di azione per il pannello PDL."""
 
-    filter_changed = pyqtSignal()
-    site_changed = pyqtSignal(str)
-    area_changed = pyqtSignal(str)
-    update_clicked = pyqtSignal()
-    reset_clicked = pyqtSignal()
-    export_clicked = pyqtSignal()
+    filter_changed = Signal()
+    site_changed = Signal(str)
+    area_changed = Signal(str)
+    update_clicked = Signal()
+    reset_clicked = Signal()
+    export_clicked = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)

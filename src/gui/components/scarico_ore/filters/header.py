@@ -1,8 +1,8 @@
 from typing import Any
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSignal
-from PyQt6.QtGui import QMouseEvent
-from PyQt6.QtWidgets import QHeaderView, QMenu, QWidgetAction
+from PySide6.QtCore import QPoint, Qt, Signal
+from PySide6.QtGui import QMouseEvent
+from PySide6.QtWidgets import QHeaderView, QMenu, QWidgetAction
 
 from src.gui.components.scarico_ore.filters.popup_date import DateFilterPopupWidget
 from src.gui.components.scarico_ore.filters.popup_list import ListFilterPopupWidget
@@ -14,26 +14,23 @@ class FilterHeaderView(QHeaderView):
     Permette di cliccare sulle intestazioni per aprire popup di filtro specifici per colonna.
     """
 
-    filterChanged = pyqtSignal(int, object)  # col, values  # noqa: N815
+    filterChanged = Signal(int, object)  # col, values # noqa: N815
 
     def __init__(self, orientation: Qt.Orientation, parent: Any | None = None) -> None:
         super().__init__(orientation, parent)
         self.setSectionsClickable(True)
         self.setHighlightSections(True)
 
-    def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         """Gestisce il rilascio del mouse per mostrare il menu di filtro sulla colonna cliccata."""
-        if event is not None:
-            idx = self.logicalIndexAt(event.pos())
-            if idx >= 0:
-                self._show_filter_menu(idx, event.globalPosition().toPoint())
+        idx = self.logicalIndexAt(event.pos())
+        if idx >= 0:
+            self._show_filter_menu(idx, event.globalPosition().toPoint())
         super().mouseReleaseEvent(event)
 
     def _show_filter_menu(self, col_index: int, global_pos: QPoint) -> None:
         # Access the real model directly (ScaricoOreTableModel)
         model = self.model()
-        if model is None:
-            return
 
         # Use hasattr/getattr to access internal data if it's our custom model
         display_data = getattr(model, "_display_data", [])

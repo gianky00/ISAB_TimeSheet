@@ -60,7 +60,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
         elabora_ts: bool = False,
         **kwargs: Any,
     ) -> None:
-        """Inizializza le proprietà del bot Playwright."""
+        """Inizializza le propriet  del bot Playwright."""
         super().__init__(**kwargs)
         self.data_da = data_da or f"01.01.{datetime.now(UTC).year}"
         self.fornitore = fornitore
@@ -229,7 +229,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             arrow_sel = self._get_selector(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW)
 
             if not self._select_combobox_item(input_sel, arrow_sel, self.fornitore):
-                self.log("  ⚠ Avviso: Selezione fornitore fallita, tento inserimento manuale forzato.")
+                self.log("   Avviso: Selezione fornitore fallita, tento inserimento manuale forzato.")
                 self.page.fill(input_sel, self.fornitore)
                 self.page.press(input_sel, "Enter")
 
@@ -256,7 +256,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             num_oda_sel = self._get_selector(ScaricoTSLocators.ODA_NUMBER_FIELD)
             pos_oda_sel = self._get_selector(ScaricoTSLocators.ODA_POSITION_FIELD)
 
-            # Inserimento via JS per robustezza (come Selenium) per bypassare controlli di visibilità restrittivi
+            # Inserimento via JS per robustezza (come Selenium) per bypassare controlli di visibilit  restrittivi
             js_script = "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); }"
 
             self.page.locator(num_oda_sel).evaluate(js_script, numero_oda)
@@ -271,7 +271,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             # Verifica se ci sono risultati
             xpath_empty = "//div[contains(@class, 'x-grid-empty')]"
             if self.page.locator(f"xpath={xpath_empty}").is_visible():
-                self.log(f"⚠ Nessun TimeSheet trovato per OdA {numero_oda} / {posizione_oda}")
+                self.log(f"  Nessun TimeSheet trovato per OdA {numero_oda} / {posizione_oda}")
                 return False
         except Exception as e:
             self.log(f"[ERRORE] Errore nella ricerca OdA: {e}")
@@ -308,7 +308,7 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
             download_path = base_dir / filename
             download.save_as(str(download_path))
 
-            self.log(f"✓ Download completato: {filename}")
+            self.log(f"  Download completato: {filename}")
         except Exception as e:
             self.log(f"[ERRORE] Errore durante il download: {e}")
             return False
@@ -363,13 +363,13 @@ class PlaywrightScaricaTSBot(PlaywrightBaseBot):
 
     def _run_vba_processing(self, file_list: list[str], dest_dir: Path) -> None:
         """Avvia la logica di processamento VBA (TimesheetProcessor) sui file scaricati."""
-        self.log(f"⚙️ Avvio elaborazione TS (Logica VBA) su {len(file_list)} file...")
+        self.log(f"    Avvio elaborazione TS (Logica VBA) su {len(file_list)} file...")
         processed = 0
         for f in file_list:
             ok, msg = TimesheetProcessor.process_and_move(Path(f), dest_dir)
             if ok:
-                self.log(f"  [OK] {msg}")
+                self.log(f" [OK] {msg}")
                 processed += 1
             else:
-                self.log(f"  [ERRORE] Errore elaborazione {Path(f).name}: {msg}")
-        self.log(f"🏁 Elaborazione conclusa: {processed}/{len(file_list)} completati.")
+                self.log(f" [ERRORE] Errore elaborazione {Path(f).name}: {msg}")
+        self.log(f"   Elaborazione conclusa: {processed}/{len(file_list)} completati.")

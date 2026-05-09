@@ -43,15 +43,15 @@ class PlaywrightBaseBot(BaseBot, ABC):
         company: str = "ISAB",
     ) -> None:
         """
-        Inizializza le proprietà fondamentali del bot Playwright.
+        Inizializza le propriet  fondamentali del bot Playwright.
 
         Args:
-            username: Nome utente per il login.
-            password: Password per il login.
-            headless: Se True, avvia il browser in modalità nascosta.
-            timeout: Tempo massimo di attesa per le operazioni (secondi).
-            download_path: Percorso per il salvataggio dei file scaricati.
-            company: Società da selezionare al login (ISAB o PSER).
+          username: Nome utente per il login.
+          password: Password per il login.
+          headless: Se True, avvia il browser in modalita' nascosta.
+          timeout: Tempo massimo di attesa per le operazioni (secondi).
+          download_path: Percorso per il salvataggio dei file scaricati.
+          company: Societa' da selezionare al login (ISAB o PSER).
         """
         super().__init__(username, password, headless, timeout, download_path, company=company)
         self.playwright: Playwright | None = None
@@ -62,7 +62,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
     @measure_time(threshold_ms=10000)
     def _init_driver(self) -> None:
-        """Inizializza Playwright e il browser con logica di persistenza, stabilità e recovery."""
+        """Inizializza Playwright e il browser con logica di persistenza, stabilita' e recovery."""
         self.status = BotStatus.INITIALIZING
 
         # 1. Configurazione ambiente e binari
@@ -207,30 +207,30 @@ class PlaywrightBaseBot(BaseBot, ABC):
         self.page.set_default_timeout(self.timeout * 1000)
 
         self.page.add_init_script("""
-            Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
-            if (navigator.credentials) {
-                navigator.credentials.get = () => new Promise(() => {});
-                navigator.credentials.store = () => new Promise(() => {});
-            }
-            const observer = new MutationObserver((mutations) => {
-                const keywords = ['password', 'compromessa', 'sicurezza', 'cambia'];
-                document.querySelectorAll('div, section, aside').forEach(el => {
-                    if (el.innerText && keywords.some(k => el.innerText.toLowerCase().includes(k))) {
-                        if (el.style.position === 'fixed' || el.style.zIndex > 1000) { el.remove(); }
-                    }
-                });
-            });
-            observer.observe(document.documentElement, { childList: true, subtree: true });
-        """)
+      Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+      if (navigator.credentials) {
+        navigator.credentials.get = () => new Promise(() => {});
+        navigator.credentials.store = () => new Promise(() => {});
+      }
+      const observer = new MutationObserver((mutations) => {
+        const keywords = ['password', 'compromessa', 'sicurezza', 'cambia'];
+        document.querySelectorAll('div, section, aside').forEach(el => {
+          if (el.innerText && keywords.some(k => el.innerText.toLowerCase().includes(k))) {
+            if (el.style.position === 'fixed' || el.style.zIndex > 1000) { el.remove(); }
+          }
+        });
+      });
+      observer.observe(document.documentElement, { childList: true, subtree: true });
+    """)
         self.login_page = PlaywrightLoginPage(self.page, self.log, self.ISAB_URL)
 
     def cleanup(self) -> None:
         """Rilascia le risorse di Playwright e chiude il browser."""
-        self.log("🧹 Cleanup risorse Playwright...")
+        self.log("   Cleanup risorse Playwright...")
         self._stop_playwright_internal()
 
     def _stop_playwright_internal(self) -> None:
-        """Ferma Playwright internamente senza loggare errori se già fermo."""
+        """Ferma Playwright internamente senza loggare errori se gia' fermo."""
         if self.context:
             with suppress(Exception):
                 # Chiude tutte le pagine prima del contesto
@@ -291,7 +291,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
             return False
 
         try:
-            self.log(f"  [COMBO] Selezione: '{item_text}'")
+            self.log(f" [COMBO] Selezione: '{item_text}'")
 
             # 1. Trigger freccia (usiamo .first per i duplicati ExtJS)
             with suppress(Exception):
@@ -304,12 +304,12 @@ class PlaywrightBaseBot(BaseBot, ABC):
             option_xpath = f"xpath=//li[normalize-space(text())='{item_text}']"
 
             try:
-                # Attesa breve per la comparsa dell'opzione (.first gestisce ambiguità)
+                # Attesa breve per la comparsa dell'opzione (.first gestisce ambiguit )
                 option = self.page.locator(option_xpath).first
                 option.wait_for(state="attached", timeout=2000)
             except Exception:
                 # 3. Fallback: Digitazione nell'input (sempre il primo visibile)
-                self.log("  [COMBO] Opzione non trovata, digito nell'input...")
+                self.log(" [COMBO] Opzione non trovata, digito nell'input...")
                 inp = self.page.locator(input_selector).first
 
                 inp.evaluate(
@@ -325,7 +325,7 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
             self._wait_overlay(timeout_ms=2000)
         except Exception as e:
-            self.log(f"  [COMBO] Errore: {str(e)[:50]}...")
+            self.log(f" [COMBO] Errore: {str(e)[:50]}...")
             return False
         else:
             return True
@@ -349,38 +349,38 @@ class PlaywrightBaseBot(BaseBot, ABC):
 
             # Script JS per estrarre informazioni rilevanti da ExtJS e dal DOM
             scan_script = """
-            () => {
-                let info = "--- SYNCROJOB PAGE DUMP ---\\n";
-                info += "URL: " + window.location.href + "\\n\\n";
+      () => {
+        let info = "--- SYNCROJOB PAGE DUMP ---\\n";
+        info += "URL: " + window.location.href + "\\n\\n";
 
-                // 1. Cerca input e loro attributi
-                info += "[INPUT FIELDS]\\n";
-                document.querySelectorAll('input, textarea, select').forEach(el => {
-                    info += `- ID: ${el.id} | NAME: ${el.name} | TYPE: ${el.type} | VALUE: ${el.value} | VISIBLE: ${el.offsetParent !== null}\\n`;
-                });
+        // 1. Cerca input e loro attributi
+        info += "[INPUT FIELDS]\\n";
+        document.querySelectorAll('input, textarea, select').forEach(el => {
+          info += `- ID: ${el.id} | NAME: ${el.name} | TYPE: ${el.type} | VALUE: ${el.value} | VISIBLE: ${el.offsetParent !== null}\\n`;
+        });
 
-                // 2. Cerca trigger di combobox (le freccette)
-                info += "\\n[COMBOBOX TRIGGERS]\\n";
-                document.querySelectorAll('.x-form-trigger').forEach(el => {
-                    let parent = el.closest('.x-field') || {id: 'unknown'};
-                    info += `- ID: ${el.id} | CLASS: ${el.className} | FIELD_ID: ${parent.id}\\n`;
-                });
+        // 2. Cerca trigger di combobox (le freccette)
+        info += "\\n[COMBOBOX TRIGGERS]\\n";
+        document.querySelectorAll('.x-form-trigger').forEach(el => {
+          let parent = el.closest('.x-field') || {id: 'unknown'};
+          info += `- ID: ${el.id} | CLASS: ${el.className} | FIELD_ID: ${parent.id}\\n`;
+        });
 
-                // 3. Cerca elementi della lista (gli li che compaiono nei dropdown)
-                info += "\\n[VISIBLE LIST ITEMS]\\n";
-                document.querySelectorAll('li.x-boundlist-item').forEach(el => {
-                    info += `- TEXT: ${el.innerText.trim()} | ID: ${el.id} | VISIBLE: ${el.offsetParent !== null}\\n`;
-                });
+        // 3. Cerca elementi della lista (gli li che compaiono nei dropdown)
+        info += "\\n[VISIBLE LIST ITEMS]\\n";
+        document.querySelectorAll('li.x-boundlist-item').forEach(el => {
+          info += `- TEXT: ${el.innerText.trim()} | ID: ${el.id} | VISIBLE: ${el.offsetParent !== null}\\n`;
+        });
 
-                // 4. Struttura dei bottoni
-                info += "\\n[BUTTONS]\\n";
-                document.querySelectorAll('.x-btn').forEach(el => {
-                    info += `- TEXT: ${el.innerText.trim()} | ID: ${el.id} | ROLE: ${el.getAttribute('role')}\\n`;
-                });
+        // 4. Struttura dei bottoni
+        info += "\\n[BUTTONS]\\n";
+        document.querySelectorAll('.x-btn').forEach(el => {
+          info += `- TEXT: ${el.innerText.trim()} | ID: ${el.id} | ROLE: ${el.getAttribute('role')}\\n`;
+        });
 
-                return info;
-            }
-            """
+        return info;
+      }
+      """
 
             content = str(self.page.evaluate(scan_script))
             filepath.write_text(content, encoding="utf-8")

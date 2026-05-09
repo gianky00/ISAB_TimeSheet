@@ -186,7 +186,7 @@ class DatabaseManager:
         last_error = None
         for attempt in range(retry_count):
             try:
-                # Se è una scrittura, acquisiamo il lock globale per questo processo
+                # Se  una scrittura, acquisiamo il lock globale per questo processo
                 if is_write:
                     self._write_lock.acquire()
 

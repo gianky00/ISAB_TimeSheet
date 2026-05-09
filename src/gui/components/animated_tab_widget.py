@@ -8,9 +8,16 @@ from __future__ import annotations
 
 from typing import Any
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QRect, QTimer, pyqtSignal
-from PyQt6.QtGui import QColor, QResizeEvent, QShowEvent
-from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QHBoxLayout, QTabBar, QTabWidget, QVBoxLayout, QWidget
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, QRect, QTimer, Signal
+from PySide6.QtGui import QColor, QResizeEvent, QShowEvent
+from PySide6.QtWidgets import (
+    QGraphicsDropShadowEffect,
+    QHBoxLayout,
+    QTabBar,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
 
 from src.gui.components.animated_stack import SlidingStackedWidget
 from src.gui.styles import COLORS
@@ -18,22 +25,22 @@ from src.gui.styles import COLORS
 
 class AnimatedTabWidget(QWidget):
     """
-    Sostituto d'élite di QTabWidget con transizioni Snapshot-Fade
+    Sostituto d' lite di QTabWidget con transizioni Snapshot-Fade
     e indicatore di selezione con effetto 'Illumination'.
 
     Supporta il posizionamento dei tab (North/South) e garantisce performance a 60 FPS
     grazie alla tecnica di snapshot rendering durante le transizioni.
     """
 
-    currentChanged = pyqtSignal(int)  # noqa: N815
+    currentChanged = Signal(int)  # noqa: N815
     """Segnale emesso quando il tab attivo cambia."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
-        Inizializza il widget dei tab animati.
+        Inizializza the widget dei tab animati.
 
         Args:
-            parent: Widget genitore opzionale.
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self._layout = QVBoxLayout(self)
@@ -42,7 +49,7 @@ class AnimatedTabWidget(QWidget):
 
         # Header superiore: TabBar + Controlli opzionali
         self.header_widget = QWidget()
-        self.header_widget.setMinimumHeight(55)  # Leggermente più alto per il glow
+        self.header_widget.setMinimumHeight(55)  # Leggermente piu' alto per il glow
         # Track di fondo (La linea sottile grigia che segna il percorso)
         self.header_widget.setStyleSheet("border-bottom: 1px solid rgba(0, 0, 0, 0.05); background: white;")
 
@@ -63,14 +70,14 @@ class AnimatedTabWidget(QWidget):
 
         # --- INDICATORE PREMIUM (Gradients & Glow) ---
         self.indicator = QWidget(self.header_widget)
-        self.indicator.setFixedHeight(4)  # Un po' più spessa per mostrare il gradiente
+        self.indicator.setFixedHeight(4)  # Un po' piu' spessa per mostrare il gradiente
 
         # Design con gradiente lineare
         self.indicator.setStyleSheet(f"""
-            background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 {COLORS["primary_blue"]}, stop:0.5 {COLORS["teal_accent"]}, stop:1 {COLORS["primary_dark"]});
-            border-radius: 2px;
-        """)
+      background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 {COLORS["primary_blue"]}, stop:0.5 {COLORS["teal_accent"]}, stop:1 {COLORS["primary_dark"]});
+      border-radius: 2px;
+    """)
 
         # Effetto Glow (Bagliore)
         glow = QGraphicsDropShadowEffect(self.indicator)
@@ -82,8 +89,8 @@ class AnimatedTabWidget(QWidget):
 
         self.indicator.raise_()
         self._indicator_anim = QPropertyAnimation(self.indicator, b"geometry")
-        self._indicator_anim.setDuration(400)  # Un po' più lenta per eleganza
-        self._indicator_anim.setEasingCurve(QEasingCurve.Type.OutQuint)  # Il top della fluidità
+        self._indicator_anim.setDuration(400)  # Un po' piu' lenta per eleganza
+        self._indicator_anim.setEasingCurve(QEasingCurve.Type.OutQuint)  # Il top della fluidit
 
         # Stack animato
         self.stack = SlidingStackedWidget()
@@ -96,7 +103,7 @@ class AnimatedTabWidget(QWidget):
 
         QTimer.singleShot(100, self._update_indicator_instant)
 
-    def showEvent(self, event: QShowEvent | None) -> None:
+    def showEvent(self, event: QShowEvent) -> None:
         """Forza l'aggiornamento dello stile quando il widget viene mostrato."""
         super().showEvent(event)
         self._update_indicator_instant()
@@ -112,7 +119,7 @@ class AnimatedTabWidget(QWidget):
         Imposta la posizione della barra dei tab.
 
         Args:
-            position: Posizione desiderata (North o South).
+          position: Posizione desiderata (North o South).
         """
         if position == self._tab_position:
             return
@@ -140,11 +147,11 @@ class AnimatedTabWidget(QWidget):
         Aggiunge un nuovo tab.
 
         Args:
-            widget: Il widget da visualizzare nella scheda.
-            *args: Argomenti per QTabBar.addTab (es. icona e testo).
+          widget: Il widget da visualizzare nella scheda.
+          *args: Argomenti per QTabBar.addTab (es. icona e testo).
 
         Returns:
-            int: L'indice del tab aggiunto.
+          int: L'indice del tab aggiunto.
         """
         index = self.tab_bar.addTab(*args)
         self.stack.addWidget(widget)
@@ -155,7 +162,7 @@ class AnimatedTabWidget(QWidget):
         Rimuove un tab e il relativo widget dallo stack.
 
         Args:
-            index: Indice del tab da rimuovere.
+          index: Indice del tab da rimuovere.
         """
         if 0 <= index < self.tab_bar.count():
             self.tab_bar.removeTab(index)
@@ -181,7 +188,7 @@ class AnimatedTabWidget(QWidget):
         Gestisce internamente il cambio di tab nella barra.
 
         Args:
-            index: Nuovo indice selezionato.
+          index: Nuovo indice selezionato.
         """
         self._animate_indicator(index)
         if index != self.stack.currentIndex():
@@ -196,7 +203,7 @@ class AnimatedTabWidget(QWidget):
         Avvia l'animazione dell'indicatore verso il tab specificato.
 
         Args:
-            index: Indice di destinazione.
+          index: Indice di destinazione.
         """
         rect = self.tab_bar.tabRect(index)
         if rect.isValid():
@@ -205,7 +212,7 @@ class AnimatedTabWidget(QWidget):
             if self._tab_position == QTabWidget.TabPosition.South:
                 y_pos = 0
 
-            # Effetto "Elastic": la linea è leggermente più stretta del tab per eleganza
+            # Effetto "Elastic": la linea  leggermente piu' stretta del tab per eleganza
             target_rect = QRect(global_pos.x() + 15, y_pos, rect.width() - 30, self.indicator.height())
 
             self.indicator.show()
@@ -231,7 +238,7 @@ class AnimatedTabWidget(QWidget):
         else:
             self.indicator.hide()
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:
+    def resizeEvent(self, event: QResizeEvent) -> None:
         """Assicura che l'indicatore sia allineato dopo il ridimensionamento."""
         super().resizeEvent(event)
         self._update_indicator_instant()
@@ -249,7 +256,7 @@ class AnimatedTabWidget(QWidget):
         Imposta programmaticamente il tab corrente.
 
         Args:
-            index: Indice da attivare.
+          index: Indice da attivare.
         """
         self.tab_bar.setCurrentIndex(index)
         self.stack.setCurrentIndex(index)
@@ -274,20 +281,20 @@ class AnimatedTabWidget(QWidget):
     def _get_default_style(self) -> str:
         """Restituisce lo stile QSS per la barra dei tab in posizione North."""
         return f"""
-            QTabBar::tab {{
-                background: transparent; color: {COLORS["text_muted"]}; padding: 12px 24px;
-                font-weight: 600; font-size: 13px; border: none;
-            }}
-            QTabBar::tab:selected {{ color: {COLORS["primary_dark"]}; }}
-            QTabBar::tab:hover:!selected {{ color: {COLORS["text_dark"]}; background: rgba({QColor(COLORS["teal_accent"]).red()}, {QColor(COLORS["teal_accent"]).green()}, {QColor(COLORS["teal_accent"]).blue()}, 0.04); border-radius: 4px; }}
-        """
+      QTabBar::tab {{
+        background: transparent; color: {COLORS["text_muted"]}; padding: 12px 24px;
+        font-weight: 600; font-size: 13px; border: none;
+      }}
+      QTabBar::tab:selected {{ color: {COLORS["primary_dark"]}; }}
+      QTabBar::tab:hover:!selected {{ color: {COLORS["text_dark"]}; background: rgba({QColor(COLORS["teal_accent"]).red()}, {QColor(COLORS["teal_accent"]).green()}, {QColor(COLORS["teal_accent"]).blue()}, 0.04); border-radius: 4px; }}
+    """
 
     def _get_south_style(self) -> str:
         """Restituisce lo stile QSS per la barra dei tab in posizione South."""
         return f"""
-            QTabBar::tab {{
-                background: transparent; color: {COLORS["text_muted"]}; padding: 10px 18px;
-                font-weight: 600; font-size: 12px; border: none;
-            }}
-            QTabBar::tab:selected {{ color: {COLORS["primary_dark"]}; }}
-        """
+      QTabBar::tab {{
+        background: transparent; color: {COLORS["text_muted"]}; padding: 10px 18px;
+        font-weight: 600; font-size: 12px; border: none;
+      }}
+      QTabBar::tab:selected {{ color: {COLORS["primary_dark"]}; }}
+    """

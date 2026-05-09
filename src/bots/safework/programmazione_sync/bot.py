@@ -15,13 +15,13 @@ from src.bots.safework.base import SafeworkBaseBot
 
 class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
     """
-    Bot per scaricare il report Excel delle attività da SafeWork.
-    Automatizza la navigazione alla sezione 'Visualizza Attività' ed esporta il report periodico.
+    Bot per scaricare il report Excel delle attivita'da SafeWork.
+    Automatizza la navigazione alla sezione 'Visualizza Attivita'' ed esporta il report periodico.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
-        ("nav", "Navigazione Attività"),
+        ("nav", "Navigazione Attivita'"),
         ("filter", "Configurazione Filtri"),
         ("search", "Ricerca ed Esportazione"),
     ]
@@ -39,12 +39,12 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         Inizializza il bot di sincronizzazione programmazione.
 
         Args:
-            username: Nome utente SafeWork.
-            password: Password SafeWork.
-            headless: Se avviare il browser in modalità nascosta.
-            timeout: Tempo di attesa per Selenium.
-            download_path: Cartella per il download degli Excel.
-            account_type: Tipo di account (Esecutore/ISAB).
+          username: Nome utente SafeWork.
+          password: Password SafeWork.
+          headless: Se avviare il browser in modalita' nascosta.
+          timeout: Tempo di attesa per Selenium.
+          download_path: Cartella per il download degli Excel.
+          account_type: Tipo di account (Esecutore/ISAB).
         """
         super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
         self.downloaded_file: str | None = None
@@ -69,10 +69,10 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         Esegue il download del report Excel.
 
         Args:
-            data: Parametri della sessione (richiedenti, date).
+          data: Parametri della sessione (richiedenti, date).
 
         Returns:
-            bool: True se il report è stato scaricato correttamente.
+          bool: True se il report  stato scaricato correttamente.
         """
         self.update_step("login", StepStatus.COMPLETED)
 
@@ -86,7 +86,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
 
         # 1. Navigazione
         self.update_step("nav", StepStatus.RUNNING)
-        self.log("📋 Navigazione in 'Visualizza Attività'...")
+        self.log("   Navigazione in 'Visualizza Attivita''...")
         self._attendi_scomparsa_overlay()
         if not self.driver:
             self.log("[ERRORE] Driver non inizializzato.")
@@ -102,7 +102,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         # 2. Setup Filtri
         self.update_step("filter", StepStatus.RUNNING)
         if not self.attivita_page:
-            self.log("[ERRORE] Pagina Attività non inizializzata.")
+            self.log("[ERRORE] Pagina Attivita'non inizializzata.")
             self.update_step("filter", StepStatus.ERROR)
             return False
         self.attivita_page.pulisci_pdl()
@@ -112,7 +112,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
 
         # 3. Selezione Richiedenti Multipli
         if requesters:
-            self.log(f"👥 Selezione di {len(requesters)} richiedenti...")
+            self.log(f"   Selezione di {len(requesters)} richiedenti...")
             for req in requesters:
                 self.attivita_page.seleziona_richiedente(req)
 
@@ -122,7 +122,7 @@ class SafeWorkProgrammazioneSyncBot(SafeworkBaseBot):
         self.attivita_page.esegui_ricerca()
         self._attendi_scomparsa_overlay(timeout_secondi=300)
 
-        self.log("📥 Esportazione Excel...")
+        self.log("   Esportazione Excel...")
         files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*") if f.is_file()}
 
         if self.attivita_page.esporta_excel():

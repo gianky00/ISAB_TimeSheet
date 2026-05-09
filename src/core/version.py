@@ -7,4 +7,4 @@ __version__ = "1.45.4"
 __app_name__ = "SyncroJob"
 UPDATE_URL = "https://projectjob-bot.netlify.app/version.json"
 NETWORK_UPDATE_PATH = r"\\192.168.11.251\Condivisa\ALLEGRETTI\applicazioni\SyncroJob\Setup"
-APP_NAME = __app_name__  # Alias per compatibilità
+APP_NAME = __app_name__  # Alias per compatibilit

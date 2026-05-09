@@ -6,7 +6,7 @@ Gestisce l'attivazione dei bot e la navigazione UI richiesta da Telegram.
 import logging
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QDate, QObject
+from PySide6.QtCore import QDate, QObject
 
 if TYPE_CHECKING:
     from src.gui.main_window.main import MainWindow
@@ -53,7 +53,7 @@ class TelegramUICommands(QObject):
             return
         data = panel.data_table.get_data()
         items = [str(row.get(next(iter(row)))) for row in data if row][:20]
-        text = "📋 **Lista PDL Corrente:**\n" + "\n".join([f"• `{i}`" for i in items])
+        text = "   **Lista PDL Corrente:**\n" + "\n".join([f"  `{i}`" for i in items])
         self.telegram.send_message_sync(text)
 
     def clear_pdl(self) -> None:
@@ -61,7 +61,7 @@ class TelegramUICommands(QObject):
         panel = getattr(self.mw, "pdl_panel", None)
         if panel:
             panel.clear_rows_simple()
-            self.telegram.send_message_sync("🗑️ Tabella PDL svuotata.")
+            self.telegram.send_message_sync("    Tabella PDL svuotata.")
 
     def run_ts_bot(self) -> None:
         """Avvia il bot Scarico TS."""
@@ -145,6 +145,6 @@ class TelegramUICommands(QObject):
         panel = self.mw.bot_controller._get_active_bot_panel()
         if panel and hasattr(panel, "stop_btn") and panel.stop_btn.isEnabled():
             panel.stop_btn.click()
-            self.telegram.send_message_sync("🛑 Stop inviato.")
+            self.telegram.send_message_sync("   Stop inviato.")
         else:
             self.telegram.send_message_sync("[INFO] Nessun processo attivo.")

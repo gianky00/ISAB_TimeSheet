@@ -6,7 +6,7 @@ Valida e inserisce dati (PDL, ODA, BP) provenienti da Telegram nelle tabelle UI.
 import logging
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QObject
+from PySide6.QtCore import QObject
 
 from src.utils.validators import InputValidator
 

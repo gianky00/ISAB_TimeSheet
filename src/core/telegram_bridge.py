@@ -8,7 +8,7 @@ Refactored V9.5: Modularized into specialized handlers.
 import logging
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QObject
+from PySide6.QtCore import QObject
 
 from src.core.notification_manager import NotificationManager
 

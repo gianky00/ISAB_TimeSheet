@@ -3,20 +3,20 @@ SyncroJob - Status Indicator
 Indicatore di stato circolare animato.
 """
 
-from PyQt6.QtCore import QAbstractAnimation, QPropertyAnimation, Qt
-from PyQt6.QtGui import QBrush, QColor, QPainter, QPaintEvent
-from PyQt6.QtWidgets import QGraphicsOpacityEffect, QWidget
+from PySide6.QtCore import QAbstractAnimation, QPropertyAnimation, Qt
+from PySide6.QtGui import QBrush, QColor, QPainter, QPaintEvent
+from PySide6.QtWidgets import QGraphicsOpacityEffect, QWidget
 
 from src.gui.styles import COLORS
 
 # Stile forzato per i tooltip in Light Mode
 TOOLTIP_CSS = """
 QToolTip {
-    background-color: #FFFFFF;
-    color: #212121;
-    border: 1px solid #BBBBBB;
-    border-radius: 6px;
-    padding: 8px 12px;
+  background-color: #FFFFFF;
+  color: #212121;
+  border: 1px solid #BBBBBB;
+  border-radius: 6px;
+  padding: 8px 12px;
 }
 """
 
@@ -50,8 +50,8 @@ class StatusIndicator(QWidget):
         Aggiorna il colore e l'animazione dell'indicatore.
 
         Args:
-            status: Il nuovo stato (running, success, error, idle).
-            message: Messaggio per il tooltip.
+          status: Il nuovo stato (running, success, error, idle).
+          message: Messaggio per il tooltip.
         """
         self.setToolTip(message)
         if status == "running":

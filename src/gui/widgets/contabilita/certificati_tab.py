@@ -11,9 +11,9 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
 
-from PyQt6.QtCore import QPoint, Qt
-from PyQt6.QtGui import QAction, QBrush, QColor, QIcon
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QPoint, Qt
+from PySide6.QtGui import QAction, QBrush, QColor, QIcon
+from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
     QLabel,
@@ -541,20 +541,23 @@ class CertificatiCampioneTab(QWidget):
 
             # Monitoraggio
             is_excluded = matricola in self.engine._exclusions
-            mon_text = "[OK] Includi nel monitoraggio" if is_excluded else "🚫 Escludi dal monitoraggio"
+            mon_text = "Includi nel monitoraggio" if is_excluded else "Escludi dal monitoraggio"
             mon_act = QAction(mon_text, self)
+            mon_act.setIcon(QIcon(get_asset_path(Icons.CHECK_CIRCLE if is_excluded else Icons.X_CIRCLE)))
             mon_act.triggered.connect(lambda: self._toggle_exclusion(matricola))
             menu.addAction(mon_act)
 
             # Stampa
             is_print_excluded = matricola in self.engine._print_exclusions
-            print_text = "🖨️ Includi nella stampa" if is_print_excluded else "🚫 Escludi dalla stampa"
+            print_text = "Includi nella stampa" if is_print_excluded else "Escludi dalla stampa"
             print_act = QAction(print_text, self)
+            print_act.setIcon(QIcon(get_asset_path(Icons.FILE_TEXT if is_print_excluded else Icons.ALERT)))
             print_act.triggered.connect(lambda: self._toggle_print_exclusion(matricola))
             menu.addAction(print_act)
 
             menu.addSeparator()
             toggle_expand = QAction("Comprimi" if item.isExpanded() else "Espandi", self)
+            toggle_expand.setIcon(QIcon(get_asset_path(Icons.MINIMIZE if item.isExpanded() else Icons.MAXIMIZE)))
             toggle_expand.triggered.connect(
                 lambda: self.tree.collapseItem(item) if item.isExpanded() else self.tree.expandItem(item)
             )
@@ -563,17 +566,20 @@ class CertificatiCampioneTab(QWidget):
             # Opzioni per il singolo certificato (Figlio)
             cert_number = item.text(self.tree.IDX_CERTIFICATO)
             if cert_number:
-                open_act = QAction("📄 Apri Certificato", self)
+                open_act = QAction("Apri Certificato", self)
+                open_act.setIcon(QIcon(get_asset_path(Icons.FILE_TEXT)))
                 open_act.triggered.connect(lambda: self._open_certificate(cert_number))
                 menu.addAction(open_act)
 
             menu.addSeparator()
 
-            edit_anno_act = QAction("📝 Modifica Annotazioni", self)
+            edit_anno_act = QAction("Modifica Annotazioni", self)
+            edit_anno_act.setIcon(QIcon(get_asset_path(Icons.LIST)))
             edit_anno_act.triggered.connect(lambda: self.tree.editItem(item, self.tree.IDX_ANNOTAZIONI))
             menu.addAction(edit_anno_act)
 
-            edit_ubic_act = QAction("📍 Modifica Ubicazione", self)
+            edit_ubic_act = QAction("Modifica Ubicazione", self)
+            edit_ubic_act.setIcon(QIcon(get_asset_path(Icons.PDL))) # Building/Location
             edit_ubic_act.triggered.connect(lambda: self.tree.editItem(item, self.tree.IDX_UBICAZIONE))
             menu.addAction(edit_ubic_act)
 
@@ -669,9 +675,30 @@ class CertificatiCampioneTab(QWidget):
         if not file_path:
             return
 
+        # Estrae i dati dal widget tree per l'esportazione
+        certs_data = []
+        for i in range(self.tree.topLevelItemCount()):
+            parent = self.tree.topLevelItem(i)
+            if not parent:
+                continue
+            meta = self.engine.parse_parent_label(parent.text(0))
+            user_data = parent.data(0, Qt.ItemDataRole.UserRole)
+
+            # Dati dal primo figlio (stato attuale)
+            id_coemi = ""
+            if parent.childCount() > 0 and (child := parent.child(0)):
+                id_coemi = child.text(self.tree.IDX_ID_COEMI)
+
+            certs_data.append({
+                "matricola": meta["matricola"],
+                "costruttore": meta["costruttore"],
+                "modello": meta["modello"],
+                "id_coemi": id_coemi,
+                "days": user_data.get("days") if user_data else None
+            })
+
         exporter = CertificatiPdfExporter(
-            self.tree,
-            self._show_excluded,
+            certs_data,
             include_history=self._include_history,
             print_exclusions=self.engine._print_exclusions,
         )

@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
     QFileDialog,
@@ -38,7 +38,7 @@ from .components.detail_view import TimbratureDetailView
 from .components.settings_tab import TimbratureSettingsTab
 
 if TYPE_CHECKING:
-    from PyQt6.QtCore import QItemSelection
+    from PySide6.QtCore import QItemSelection
 
 
 class TimbratureDBPanel(QWidget):
@@ -72,7 +72,7 @@ class TimbratureDBPanel(QWidget):
 
         self._setup_ui()
 
-        # Caricamento differito per massimizzare la fluidità dello splash screen
+        # Caricamento differito per massimizzare la fluidit  dello splash screen
         QTimer.singleShot(150, self._deferred_init)
 
     def _deferred_init(self) -> None:
@@ -108,7 +108,7 @@ class TimbratureDBPanel(QWidget):
 
         # Tabs
         self.tabs = AnimatedTabWidget()
-        # self.tabs.setProperty("class", "Level2Tabs") # Stile gestito dal componente  # noqa: ERA001
+        # self.tabs.setProperty("class", "Level2Tabs") # Stile gestito dal componente # noqa: ERA001
 
         # Tab 1: Database
         self.tab_database = QWidget()
@@ -137,12 +137,12 @@ class TimbratureDBPanel(QWidget):
         self.toolbar_container = QFrame()
         self.toolbar_container.setObjectName("filterBar")
         self.toolbar_container.setStyleSheet(f"""
-            QFrame#filterBar {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 12px;
-            }}
-        """)
+      QFrame#filterBar {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 12px;
+      }}
+    """)
         toolbar_layout = QHBoxLayout(self.toolbar_container)
         toolbar_layout.setContentsMargins(15, 10, 15, 10)
         toolbar_layout.setSpacing(15)

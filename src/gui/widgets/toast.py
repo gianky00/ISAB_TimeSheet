@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from PyQt6.QtCore import (
+from PySide6.QtCore import (
     QEasingCurve,
     QEvent,
     QObject,
@@ -16,7 +16,7 @@ from PyQt6.QtCore import (
     QTimer,
     QVariantAnimation,
 )
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication,
     QGraphicsOpacityEffect,
     QHBoxLayout,
@@ -33,7 +33,7 @@ from ..design.colors import get_palette
 from ..design.spacing import BorderRadius
 
 if TYPE_CHECKING:
-    from PyQt6.QtGui import QEnterEvent
+    from PySide6.QtGui import QEnterEvent
 
 
 class Toast(QWidget):
@@ -67,12 +67,12 @@ class Toast(QWidget):
         Inizializza il toast con i parametri di stile e durata.
 
         Args:
-            message: Il messaggio da visualizzare.
-            toast_type: Tipo di toast (info, success, warning, error).
-            duration: Durata della visualizzazione in millisecondi.
-            pulse: Se True, attiva l'animazione di pulsazione.
-            parent: Widget genitore.
-            is_rich_text: Se True, abilita il rendering HTML (sanificato).
+          message: Il messaggio da visualizzare.
+          toast_type: Tipo di toast (info, success, warning, error).
+          duration: Durata della visualizzazione in millisecondi.
+          pulse: Se True, attiva l'animazione di pulsazione.
+          parent: Widget genitore.
+          is_rich_text: Se True, abilita il rendering HTML (sanificato).
         """
         super().__init__(parent)
         self._duration = duration
@@ -113,13 +113,13 @@ class Toast(QWidget):
 
         self.container.setStyleSheet(
             f"""
-            QWidget {{
-                background-color: {self._palette.surface};
-                border: 1px solid {self._palette.border};
-                border-left: 4px solid {accent};
-                border-radius: {BorderRadius.md}px;
-            }}
-        """
+      QWidget {{
+        background-color: {self._palette.surface};
+        border: 1px solid {self._palette.border};
+        border-left: 4px solid {accent};
+        border-radius: {BorderRadius.md}px;
+      }}
+    """
         )
 
         icon_label = QLabel()
@@ -139,11 +139,11 @@ class Toast(QWidget):
 
         msg_label.setStyleSheet(
             f"""
-            color: {self._palette.on_surface};
-            font-size: 14px;
-            border: none;
-            background: transparent;
-        """
+      color: {self._palette.on_surface};
+      font-size: 14px;
+      border: none;
+      background: transparent;
+    """
         )
         container_layout.addWidget(msg_label)
 
@@ -198,13 +198,13 @@ class Toast(QWidget):
         new_height = int(self._original_container_size.height() * f_scale)
         self.container.setFixedSize(new_width, new_height)
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:
+    def enterEvent(self, event: QEnterEvent) -> None:
         """Ferma il timer di chiusura quando il mouse entra nel toast."""
         if self._hide_timer.isActive():
             self._hide_timer.stop()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: QEvent | None) -> None:
+    def leaveEvent(self, event: QEvent) -> None:
         """Riavvia il timer di chiusura quando il mouse esce dal toast."""
         self._hide_timer.start(self._duration)
         super().leaveEvent(event)
@@ -253,14 +253,14 @@ class ToastManager(QObject):
         Evita duplicati identici visibili contemporaneamente.
 
         Args:
-            message: Messaggio da mostrare.
-            toast_type: Tipo di notifica.
-            duration: Durata in ms.
-            position: "top" (default) o "bottom" (sopra il footer).
-            pulse: Se True, attiva l'animazione di pulsazione.
-            is_rich_text: Se True, abilita il rendering HTML (sanificato).
+          message: Messaggio da mostrare.
+          toast_type: Tipo di notifica.
+          duration: Durata in ms.
+          position: "top" (default) o "bottom" (sopra il footer).
+          pulse: Se True, attiva l'animazione di pulsazione.
+          is_rich_text: Se True, abilita il rendering HTML (sanificato).
         """
-        # Pulisce la lista dei toast non più visibili
+        # Pulisce la lista dei toast non piu' visibili
         ToastManager._active_toasts = [t for t in ToastManager._active_toasts if t.isVisible()]
 
         # Prevenzione duplicati identici (spam)

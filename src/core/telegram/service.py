@@ -8,7 +8,7 @@ from contextlib import suppress
 from typing import Any
 
 import telegram
-from PyQt6.QtCore import QObject, pyqtSignal
+from PySide6.QtCore import QObject, Signal
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -26,19 +26,19 @@ from src.utils.helpers import get_asset_path
 
 class TelegramService(QObject):
     """
-    Bridge intelligente tra Telegram e l'applicazione PyQt6.
+    Bridge intelligente tra Telegram e l'applicazione PySide6.
     Supporta comandi vocali, NLU e dialoghi contestuali.
     Refactored per delegare la logica ai moduli handlers/.
     """
 
-    log_signal = pyqtSignal(str)
-    command_received = pyqtSignal(str, dict)
-    data_received = pyqtSignal(str, list)
-    status_requested = pyqtSignal(str)
-    screenshot_requested = pyqtSignal(str)
-    query_received = pyqtSignal(str, str)
-    photo_received = pyqtSignal(str, bytes, str)
-    intent_received = pyqtSignal(str, dict)
+    log_signal = Signal(str)
+    command_received = Signal(str, dict)
+    data_received = Signal(str, list)
+    status_requested = Signal(str)
+    screenshot_requested = Signal(str)
+    query_received = Signal(str, str)
+    photo_received = Signal(str, bytes, str)
+    intent_received = Signal(str, dict)
 
     def __init__(self) -> None:
         super().__init__()
@@ -85,7 +85,7 @@ class TelegramService(QObject):
             if self._service_thread.is_alive():
                 icon = get_asset_path(Icons.ALERT)
                 self.log_signal.emit(
-                    f"<img src='{icon}' width='14' height='14'> Timeout: il thread di Telegram non si è fermato correttamente."
+                    f"<img src='{icon}' width='14' height='14'> Timeout: il thread di Telegram non si  fermato correttamente."
                 )
             else:
                 self.log_signal.emit("Servizio Telegram fermato.")
@@ -95,7 +95,7 @@ class TelegramService(QObject):
         self._execute_loop(lambda: self._main_loop_logic(token))
 
     async def _main_loop_logic(self, token: str) -> None:
-        """Logica interna del loop asincrono (separata per testabilità)."""
+        """Logica interna del loop asincrono (separata per testabilita')."""
         self.app = self._build_application(token)
         self._add_handlers()
         icon = get_asset_path(Icons.CHECK_CIRCLE)

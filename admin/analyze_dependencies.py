@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 
-def get_all_imports(script_path: str, src_path: str) -> list[str]:  # noqa: PLR0912
+def get_all_imports(script_path: str, src_path: str) -> list[str]:  # noqa: C901, PLR0912
     """
     Scansiona ricorsivamente il codice sorgente per identificare tutte le importazioni effettive.
     Utilizza l'analisi AST per trovare dipendenze anche in percorsi di codice non eseguiti.
@@ -74,14 +74,14 @@ def get_all_imports(script_path: str, src_path: str) -> list[str]:  # noqa: PLR0
             "matplotlib.backends.backend_qtagg",
             "matplotlib.backends.backend_qt5agg",
         ],
-        "PyQt6": [
-            "PyQt6",
-            "PyQt6.QtCore",
-            "PyQt6.QtGui",
-            "PyQt6.QtWidgets",
-            "PyQt6.QtPrintSupport",
-            "PyQt6.QtSvg",
-            "PyQt6.QtNetwork",
+        "PySide6": [
+            "PySide6",
+            "PySide6.QtCore",
+            "PySide6.QtGui",
+            "PySide6.QtWidgets",
+            "PySide6.QtPrintSupport",
+            "PySide6.QtSvg",
+            "PySide6.QtNetwork",
         ],
         "selenium": [
             "selenium",

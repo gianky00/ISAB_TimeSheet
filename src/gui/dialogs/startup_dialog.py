@@ -9,17 +9,17 @@ from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import (
+from PySide6.QtCore import (
     QEasingCurve,
     QPropertyAnimation,
     Qt,
     QTimer,
 )
-from PyQt6.QtGui import (
+from PySide6.QtGui import (
     QColor,
     QIcon,
 )
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QDialog,
     QFrame,
     QGraphicsDropShadowEffect,
@@ -63,7 +63,7 @@ class StartupDialog(QDialog):
         self._setup_animations()
 
     def _init_window(self) -> None:
-        """Configura le proprietà base della finestra."""
+        """Configura le propriet  base della finestra."""
         self.setObjectName("StartupDialog")
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -335,7 +335,7 @@ class StartupDialog(QDialog):
             # Inclinazione massima 3 gradi
             self._tilt_x = rel_y * 3.0
             self._tilt_y = -rel_x * 3.0
-            # Sostituiamo apply_tilt con parallasse soft per performance e compatibilità shadow
+            # Sostituiamo apply_tilt con parallasse soft per performance e compatibilit  shadow
             self.particles.apply_parallax(rel_x * 5, rel_y * 5)
 
     def mouseReleaseEvent(self, event: Any) -> None:

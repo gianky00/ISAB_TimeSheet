@@ -55,13 +55,13 @@ class PDLQueries:
             db_manager.execute_query(db_manager.DB_PDL, query_del, (start_date, end_date))
 
             query = """
-                INSERT INTO pdl_programmazione (
-                    richiedente, n_pdl, area, unita, descrizione,
-                    lun_tcl, lun_tgo, mar_tcl, mar_tgo, mer_tcl, mer_tgo,
-                    gio_tcl, gio_tgo, ven_tcl, ven_tgo, sab_tcl, sab_tgo, dom_tcl, dom_tgo,
-                    settimana_start, settimana_end
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """
+        INSERT INTO pdl_programmazione (
+          richiedente, n_pdl, area, unita, descrizione,
+          lun_tcl, lun_tgo, mar_tcl, mar_tgo, mer_tcl, mer_tgo,
+          gio_tcl, gio_tgo, ven_tcl, ven_tgo, sab_tcl, sab_tgo, dom_tcl, dom_tgo,
+          settimana_start, settimana_end
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      """
 
             data_to_insert = []
             for r in results:
@@ -139,7 +139,7 @@ class PDLQueries:
     def get_pdl_interventions(cls, n_pdl: str) -> list[dict[str, Any]]:
         """
         Recupera la cronologia degli interventi per un determinato PDL
-        dal database dei Report Attività.
+        dal database dei Report Attivita'.
         """
         from src.core import config_manager  # noqa: PLC0415
 
@@ -159,42 +159,42 @@ class PDLQueries:
                 return []
 
         query = """
-            SELECT
-                'Report (Validato)' as fonte,
-                data_riferimento_attivita as data,
-                nome_tecnico as tecnico,
-                '' as team,
-                '' as ore_lavoro,
-                testo_report as descrizione
-            FROM report_interventi
-            WHERE pdl = ?
+      SELECT
+        'Report (Validato)' as fonte,
+        data_riferimento_attivita as data,
+        nome_tecnico as tecnico,
+        '' as team,
+        '' as ore_lavoro,
+        testo_report as descrizione
+      FROM report_interventi
+      WHERE pdl = ?
 
-            UNION ALL
+      UNION ALL
 
-            SELECT
-                'Report (In Attesa)' as fonte,
-                data_riferimento_attivita as data,
-                nome_tecnico as tecnico,
-                '' as team,
-                '' as ore_lavoro,
-                testo_report as descrizione
-            FROM report_da_validare
-            WHERE pdl = ?
+      SELECT
+        'Report (In Attesa)' as fonte,
+        data_riferimento_attivita as data,
+        nome_tecnico as tecnico,
+        '' as team,
+        '' as ore_lavoro,
+        testo_report as descrizione
+      FROM report_da_validare
+      WHERE pdl = ?
 
-            UNION ALL
+      UNION ALL
 
-            SELECT
-                'Relazione' as fonte,
-                data_intervento as data,
-                nome_compilatore || ' ' || cognome_compilatore as tecnico,
-                '' as team,
-                '' as ore_lavoro,
-                corpo_relazione as descrizione
-            FROM relazioni
-            WHERE pdl = ?
+      SELECT
+        'Relazione' as fonte,
+        data_intervento as data,
+        nome_compilatore || ' ' || cognome_compilatore as tecnico,
+        '' as team,
+        '' as ore_lavoro,
+        corpo_relazione as descrizione
+      FROM relazioni
+      WHERE pdl = ?
 
-            ORDER BY data DESC
-        """
+      ORDER BY data DESC
+    """
 
         try:
             with sqlite3.connect(f"file:{ext_db_path}?mode=ro", uri=True) as conn:

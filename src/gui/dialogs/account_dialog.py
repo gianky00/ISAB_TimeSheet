@@ -1,5 +1,5 @@
-from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtWidgets import (
     QDialog,
     QFormLayout,
     QHBoxLayout,
@@ -43,21 +43,21 @@ class AccountDialog(QDialog):
     def _apply_dialog_style(self) -> None:
         """Applica lo stile QSS al dialogo."""
         self.setStyleSheet(f"""
-            QDialog {{
-                background-color: {COLORS["bg_white"]};
-                border-radius: 12px;
-            }}
-            QLabel {{
-                color: {COLORS["text_dark"]};
-                font-weight: 500;
-                font-size: 13px;
-            }}
-        """)
+      QDialog {{
+        background-color: {COLORS["bg_white"]};
+        border-radius: 12px;
+      }}
+      QLabel {{
+        color: {COLORS["text_dark"]};
+        font-weight: 500;
+        font-size: 13px;
+      }}
+    """)
 
     def _setup_form(
         self, layout: QVBoxLayout, username: str, password: str, account_type: str, show_type: bool
     ) -> None:
-        """Configura il form con i campi di input."""
+        """Configura il form con i campiu'di input."""
         form = QFormLayout()
         form.setSpacing(10)
 
@@ -84,7 +84,7 @@ class AccountDialog(QDialog):
         layout.addLayout(form)
 
     def _setup_password_field(self, form: QFormLayout, password: str) -> None:
-        """Configura il campo password con il pulsante di visibilità."""
+        """Configura il campo password con il pulsante di visibilit ."""
         self.password_edit = StandardInput(password)
         self.password_edit.setMinimumHeight(35)
         self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
@@ -101,16 +101,16 @@ class AccountDialog(QDialog):
         self.toggle_pass_btn.setFixedSize(35, 35)
         self.toggle_pass_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.toggle_pass_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_medium"]};
-                border-radius: 4px;
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS["bg_light"]};
-                border-color: {COLORS["border_dark"]};
-            }}
-        """)
+      QPushButton {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_medium"]};
+        border-radius: 4px;
+      }}
+      QPushButton:hover {{
+        background-color: {COLORS["bg_light"]};
+        border-color: {COLORS["border_dark"]};
+      }}
+    """)
         self.toggle_pass_btn.clicked.connect(self._toggle_password_visibility)
         pass_layout.addWidget(self.toggle_pass_btn)
 

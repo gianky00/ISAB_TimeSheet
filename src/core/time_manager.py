@@ -17,8 +17,8 @@ def get_network_time(timeout: int = 2) -> datetime | None:
     Restituisce un oggetto datetime con timezone UTC.
 
     Returns:
-        datetime: Orario UTC corrente da rete.
-        None: Se impossibile contattare il server.
+      datetime: Orario UTC corrente da rete.
+      None: Se impossibile contattare il server.
     """
     try:
         # Effettua una richiesta HEAD a google.com (veloce e affidabile)
@@ -40,13 +40,12 @@ def get_network_time(timeout: int = 2) -> datetime | None:
 
 def get_trusted_time() -> tuple[datetime, bool]:
     """
-    Restituisce l'orario più affidabile disponibile.
-    Priorità:
+    Restituisce l'orario piu' affidabile disponibile.
+    Priorita':
     1. Orario di rete (Network Time)
-    2. Orario di sistema (System Time) - con flag di affidabilità
-
+    2. Orario di sistema (System Time) - con flag di affidabilita'
     Returns:
-        tuple: (datetime, bool_is_trusted)
+      tuple: (datetime, bool_is_trusted)
     """
     net_time = get_network_time()
 

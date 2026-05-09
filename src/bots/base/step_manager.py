@@ -8,7 +8,7 @@ import logging
 from enum import Enum, auto
 from typing import Any
 
-from PyQt6.QtCore import QObject, pyqtSignal
+from PySide6.QtCore import QObject, Signal
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +28,12 @@ class BotStepManager(QObject):
     Isola la logica della macchina a stati della timeline dal bot core.
     """
 
-    step_changed = pyqtSignal(int, str, object)  # index, name, status
+    step_changed = Signal(int, str, object)  # index, name, status
 
     def __init__(self, steps_definition: list[tuple[str, str]]) -> None:
         """
         Args:
-            steps_definition: Lista di tuple (id, label) definita nella classe del bot.
+          steps_definition: Lista di tuple (id, label) definita nella classe del bot.
         """
         super().__init__()
         self.steps = steps_definition
@@ -50,11 +50,11 @@ class BotStepManager(QObject):
         Aggiorna lo stato di uno step.
 
         Args:
-            step_id: Stringa (id) o intero (indice).
-            status: Nuovo stato.
+          step_id: Stringa (id) o intero (indice).
+          status: Nuovo stato.
 
         Returns:
-            Tuple (indice, nome_step) per logging.
+          Tuple (indice, nome_step) per logging.
         """
         index = -1
         if isinstance(step_id, str):

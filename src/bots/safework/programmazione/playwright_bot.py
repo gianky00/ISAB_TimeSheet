@@ -28,7 +28,7 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
-        ("nav", "Navigazione Attività"),
+        ("nav", "Navigazione Attivita'"),
         ("filter", "Configurazione Filtri"),
         ("search", "Ricerca ed Export"),
         ("parse", "Analisi Risultati"),
@@ -79,7 +79,7 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
 
         # 1. Navigazione
         self.update_step("nav", StepStatus.RUNNING)
-        self.log("📋 Navigazione in 'Visualizza Attività'...")
+        self.log("   Navigazione in 'Visualizza Attivita''...")
 
         self.page.click(self._get_selector(SafeWorkLocators.HOME_BUTTON))
         self._attendi_scomparsa_overlay()
@@ -94,7 +94,7 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
         self.attivita_page.imposta_date(str(date_start), str(date_end))
         self.attivita_page.seleziona_ditta("CO.EMI SRL")
 
-        self.log(f"👥 Selezione di {len(requesters)} richiedenti...")
+        self.log(f"   Selezione di {len(requesters)} richiedenti...")
         self.attivita_page.seleziona_richiedente(requesters)
         self.update_step("filter", StepStatus.COMPLETED)
 
@@ -130,7 +130,7 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
     def _scarica_excel(self) -> str | None:
         if not self.attivita_page or not self.page:
             return None
-        self.log("📥 Esportazione Excel massiva...")
+        self.log("   Esportazione Excel massiva...")
         try:
             with self.page.expect_download(timeout=300000) as download_info:
                 if self.attivita_page.esporta_excel():
@@ -144,7 +144,7 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
 
     def _parse_excel_results(self, file_path: str) -> None:
         try:
-            self.log("📄 Analisi risultati Excel...")
+            self.log("   Analisi risultati Excel...")
             df = pd.read_excel(file_path, header=0)
             count_pdl = 0
             for _, row in df.iterrows():
@@ -188,4 +188,4 @@ class PlaywrightSafeWorkProgrammazioneBot(PlaywrightSafeworkBaseBot):
     def _cleanup_temp_file(self, file_path: str) -> None:
         with suppress(Exception):
             Path(file_path).unlink()
-            self.log("🗑️ File temporaneo rimosso.")
+            self.log("    File temporaneo rimosso.")

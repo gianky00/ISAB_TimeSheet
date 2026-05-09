@@ -11,7 +11,6 @@ from .config import get_config
 from .context import get_context
 from .formatters import HumanFormatter, JSONFormatter
 from .sampling import get_sampler
-from .sinks import get_bot_sink
 
 # Registry di logger
 _loggers: dict[str, "StructuredLogger"] = {}
@@ -36,8 +35,8 @@ class StructuredLogger:
         Inizializza logger.
 
         Args:
-            name: Nome logger (tipicamente __name__ del modulo)
-            config: Configurazione custom (opzionale)
+          name: Nome logger (tipicamente __name__ del modulo)
+          config: Configurazione custom (opzionale)
         """
         self.name = name
         self.config = config or get_config()
@@ -69,7 +68,7 @@ class StructuredLogger:
         Estrae informazioni sulla sorgente del log (file, funzione, linea).
 
         Returns:
-            Dict con file, function, line
+          Dict con file, function, line
         """
         with suppress(Exception):
             # Risali nello stack per trovare il caller reale
@@ -100,93 +99,80 @@ class StructuredLogger:
         level_value = self._parse_level(level)
         return level_value >= self.min_level
 
-    def _write_to_sinks(  # noqa: PLR0912
+    def _write_to_sinks(
         self,
         level: str,
         message: str,
         extra: dict[str, Any] | None = None,
         exception: Exception | None = None,
     ) -> None:
-        """
-        Scrive log in tutti i sink configurati.
-
-        Args:
-            level: Livello log
-            message: Messaggio
-            extra: Dati extra
-            exception: Eccezione (opzionale)
-        """
-        # Sampling check
+        """Scrive log in tutti i sink configurati."""
+        # 1. Sampling check
         context = get_context().to_dict()
-        sampler = get_sampler()
-        if not sampler.should_log(level, context, extra):
+        if not get_sampler().should_log(level, context, extra):
             return
 
-        # Source info
         source_info = self._get_source_info()
 
-        # Console output
-        if self.config.console_enabled:
-            console_line = self.human_formatter.format(
-                level, self.name, message, extra, exception, source_info
-            )
-            try:
-                print(console_line)
-            except UnicodeEncodeError:
-                # Fallback per console Windows legacy che non supporta UTF-8
-                safe_line = console_line.encode("ascii", "replace").decode("ascii")
-                print(safe_line)
-            except Exception:  # noqa: S110
-                # Ignora errori di scrittura su stdout (es. broken pipe o null handle)
-                pass
+        # 2. Dispatch verso i sink abilitati
+        self._log_to_console(level, message, extra, exception, source_info)
+        self._log_to_files(level, message, extra, exception, source_info)
+        self._log_to_bot_sink(level, message, extra, exception, source_info)
 
-            # Se c'è exception, stampa anche lo stack trace
-            if exception:
-                import traceback  # noqa: PLC0415
+    def _log_to_console(self, level: str, message: str, extra: Any, exception: Any, source: Any) -> None:
+        """Gestisce l'output sulla console con fallback encoding."""
+        if not self.config.console_enabled:
+            return
 
-                with suppress(Exception):
-                    print(traceback.format_exc())
+        console_line = self.human_formatter.format(level, self.name, message, extra, exception, source)
+        try:
+            print(console_line)
+        except UnicodeEncodeError:
+            safe_line = console_line.encode("ascii", "replace").decode("ascii")
+            print(safe_line)
+        except Exception:  # noqa: S110
+            pass
 
-        # JSON file output
+        if exception:
+            import traceback  # noqa: PLC0415
+            with suppress(Exception):
+                print(traceback.format_exc())
+
+    def _log_to_files(self, level: str, message: str, extra: Any, exception: Any, source: Any) -> None:
+        """Scrive i log sui file fisici (JSON, Human, Errors)."""
+        # JSON file
         if self.config.json_log_file:
-            json_line = self.json_formatter.format(level, self.name, message, extra, exception, source_info)
-            try:
-                with self.config.json_log_file.open("a", encoding="utf-8") as f:
-                    f.write(json_line + "\n")
-            except Exception as e:
-                print(f"[LOGGER ERROR] Failed to write JSON log: {e}", file=sys.stderr)
+            line = self.json_formatter.format(level, self.name, message, extra, exception, source)
+            self._safe_append_file(self.config.json_log_file, line)
 
-        # Human file output
+        # Human file
         if self.config.human_log_file:
-            # Usa formatter senza colori per file
-            file_formatter = HumanFormatter(colorize=False, show_context=True)
-            human_line = file_formatter.format(level, self.name, message, extra, exception, source_info)
-            try:
-                with self.config.human_log_file.open("a", encoding="utf-8") as f:
-                    f.write(human_line + "\n")
-
-                    # Stack trace separato
-                    if exception:
-                        import traceback  # noqa: PLC0415
-
-                        f.write(traceback.format_exc() + "\n")
-            except Exception as e:
-                print(f"[LOGGER ERROR] Failed to write human log: {e}", file=sys.stderr)
+            fmt = HumanFormatter(colorize=False, show_context=True)
+            line = fmt.format(level, self.name, message, extra, exception, source)
+            self._safe_append_file(self.config.human_log_file, line, exception)
 
         # Errors file (solo ERROR e CRITICAL)
         if level in ("ERROR", "CRITICAL") and self.config.errors_log_file:
-            json_line = self.json_formatter.format(level, self.name, message, extra, exception, source_info)
-            try:
-                with self.config.errors_log_file.open("a", encoding="utf-8") as f:
-                    f.write(json_line + "\n")
-            except Exception as e:
-                print(f"[LOGGER ERROR] Failed to write errors log: {e}", file=sys.stderr)
+            line = self.json_formatter.format(level, self.name, message, extra, exception, source)
+            self._safe_append_file(self.config.errors_log_file, line)
 
-        # Bot-specific log file (se ha trace_id e bot_type)
-        context = get_context().to_dict()
-        if context.get("trace_id") and context.get("bot_type"):
-            bot_sink = get_bot_sink()
-            bot_sink.write(level, self.name, message, context, extra, exception, source_info)
+    def _log_to_bot_sink(self, level: str, message: str, extra: Any, exception: Any, source: Any) -> None:
+        """Invia i log al sink specifico del bot se il contesto lo richiede."""
+        ctx = get_context().to_dict()
+        if ctx.get("trace_id") and ctx.get("bot_type"):
+            from src.core.logging.sinks import get_bot_sink  # noqa: PLC0415
+            get_bot_sink().write(level, self.name, message, ctx, extra, exception, source)
+
+    def _safe_append_file(self, path: Any, line: str, exception: Any = None) -> None:
+        """Helper per la scrittura sicura su file log."""
+        try:
+            with path.open("a", encoding="utf-8") as f:
+                f.write(line + "\n")
+                if exception:
+                    import traceback  # noqa: PLC0415
+                    f.write(traceback.format_exc() + "\n")
+        except Exception as e:
+            print(f"[LOGGER ERROR] Failed to write to {path}: {e}", file=sys.stderr)
 
     def log(
         self,
@@ -199,10 +185,10 @@ class StructuredLogger:
         Log generico.
 
         Args:
-            level: Livello (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-            message: Messaggio log
-            extra: Dati extra (opzionale)
-            exception: Eccezione (opzionale)
+          level: Livello (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+          message: Messaggio log
+          extra: Dati extra (opzionale)
+          exception: Eccezione (opzionale)
         """
         if not self._should_log(level):
             return
@@ -234,9 +220,9 @@ class StructuredLogger:
         Log exception con stack trace completo.
 
         Args:
-            message: Messaggio descrittivo
-            exc: Eccezione da loggare
-            **extra: Dati extra
+          message: Messaggio descrittivo
+          exc: Eccezione da loggare
+          **extra: Dati extra
         """
         self.log("ERROR", message, extra=extra or None, exception=exc)
 
@@ -246,11 +232,11 @@ def configure_logging(config: Any = None) -> None:
     Configura il sistema di logging globale.
 
     Args:
-        config: Configurazione custom (opzionale)
+      config: Configurazione custom (opzionale)
 
     Note:
-        Questa funzione dovrebbe essere chiamata una volta all'avvio
-        dell'applicazione.
+      Questa funzione dovrebbe essere chiamata una volta all'avvio
+      dell'applicazione.
     """
     global _initialized  # noqa: PLW0603
 
@@ -271,15 +257,15 @@ def get_logger(name: str, config: Any = None) -> StructuredLogger:
     Factory per ottenere logger.
 
     Usage:
-        logger = get_logger(__name__)
-        logger.info("Messaggio", extra_field="value")
+      logger = get_logger(__name__)
+      logger.info("Messaggio", extra_field="value")
 
     Args:
-        name: Nome logger (tipicamente __name__ del modulo)
-        config: Configurazione custom (opzionale)
+      name: Nome logger (tipicamente __name__ del modulo)
+      config: Configurazione custom (opzionale)
 
     Returns:
-        Istanza StructuredLogger
+      Istanza StructuredLogger
     """
     # Auto-configure al primo utilizzo
     if not _initialized:
@@ -297,7 +283,7 @@ def set_level(level: str) -> None:
     Imposta livello minimo di logging per tutti i logger.
 
     Args:
-        level: Uno tra DEBUG, INFO, WARNING, ERROR, CRITICAL
+      level: Uno tra DEBUG, INFO, WARNING, ERROR, CRITICAL
     """
     config = get_config()
     config.default_level = level.upper()

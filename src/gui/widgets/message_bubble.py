@@ -1,12 +1,12 @@
 """
 SyncroJob - Message Bubble Widget
 Widget per bolle di messaggio in chat, con supporto Markdown.
-Estratto da lyra_panel.py per riutilizzabilità.
+Estratto da lyra_panel.py per riutilizzabilit .
 """
 
 import markdown
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -28,10 +28,10 @@ class MessageBubble(QFrame):
     - Selezione testo
 
     Args:
-        sender: Nome del mittente
-        text: Testo del messaggio (supporta Markdown)
-        is_lyra: True se messaggio AI (sinistra), False se utente (destra)
-        parent: Widget parent opzionale
+      sender: Nome del mittente
+      text: Testo del messaggio (supporta Markdown)
+      is_lyra: True se messaggio AI (sinistra), False se utente (destra)
+      parent: Widget parent opzionale
     """
 
     def __init__(self, sender: str, text: str, is_lyra: bool = True, parent: QWidget | None = None) -> None:
@@ -69,21 +69,21 @@ class MessageBubble(QFrame):
 
             avatar.setText("L")
             avatar.setStyleSheet(f"""
-                background-color: {COLORS["purple"]};
-                color: white;
-                border-radius: 16px;
-                font-weight: 900;
-                font-size: 14px;
-            """)
+        background-color: {COLORS["purple"]};
+        color: white;
+        border-radius: 16px;
+        font-weight: 900;
+        font-size: 14px;
+      """)
 
             bubble.setStyleSheet(f"""
-                QFrame#chatBubble {{
-                    background-color: {bg_color};
-                    border-radius: 20px;
-                    border-top-left-radius: 4px;
-                    border: 1px solid {COLORS["border_light"]};
-                }}
-            """)
+        QFrame#chatBubble {{
+          background-color: {bg_color};
+          border-radius: 20px;
+          border-top-left-radius: 4px;
+          border: 1px solid {COLORS["border_light"]};
+        }}
+      """)
 
             container_layout.addWidget(avatar, alignment=Qt.AlignmentFlag.AlignTop)
             container_layout.addWidget(bubble)
@@ -94,20 +94,20 @@ class MessageBubble(QFrame):
 
             avatar.setText("U")
             avatar.setStyleSheet(f"""
-                background-color: {COLORS["text_muted"]};
-                color: white;
-                border-radius: 16px;
-                font-weight: 900;
-                font-size: 14px;
-            """)
+        background-color: {COLORS["text_muted"]};
+        color: white;
+        border-radius: 16px;
+        font-weight: 900;
+        font-size: 14px;
+      """)
 
             bubble.setStyleSheet(f"""
-                QFrame#chatBubble {{
-                    background-color: {bg_color};
-                    border-radius: 20px;
-                    border-top-right-radius: 4px;
-                }}
-            """)
+        QFrame#chatBubble {{
+          background-color: {bg_color};
+          border-radius: 20px;
+          border-top-right-radius: 4px;
+        }}
+      """)
 
             container_layout.addStretch()
             container_layout.addWidget(bubble)

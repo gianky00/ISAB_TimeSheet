@@ -10,8 +10,8 @@ import tempfile
 from datetime import UTC, datetime
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
     QDialog,
     QFrame,
     QHBoxLayout,
@@ -27,6 +27,10 @@ from src.core.version import __app_name__, __version__
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
 from src.gui.widgets.core_widgets import PrimaryButton
+
+# Soglie giorni per scadenze
+THRESHOLD_URGENT = 15
+THRESHOLD_ATTENTION = 30
 
 
 class ScadenzeAnalysisDialog(QDialog):
@@ -106,12 +110,20 @@ class ScadenzeAnalysisDialog(QDialog):
         layout.addWidget(self._create_stat_card("Totale Monitorati", stats["total"], COLORS["info_blue"]))
         layout.addWidget(self._create_stat_card("Scaduti", stats["scaduti"], COLORS["error_red"]))
         layout.addWidget(
-            self._create_stat_card("Urgenti (0-15gg)", stats["urgenti"], COLORS["warning_orange"])
+            self._create_stat_card(
+                f"Urgenti (0-{THRESHOLD_URGENT}gg)", stats["urgenti"], COLORS["warning_orange"]
+            )
         )
         layout.addWidget(
-            self._create_stat_card("Attenzione (16-30gg)", stats["attenzione"], COLORS["warning_yellow"])
+            self._create_stat_card(
+                f"Attenzione ({THRESHOLD_URGENT + 1}-{THRESHOLD_ATTENTION}gg)",
+                stats["attenzione"],
+                COLORS["warning_yellow"],
+            )
         )
-        layout.addWidget(self._create_stat_card("Attivi (>30gg)", stats["attivi"], COLORS["success_dark"]))
+        layout.addWidget(
+            self._create_stat_card(f"Attivi (>{THRESHOLD_ATTENTION}gg)", stats["attivi"], COLORS["success_dark"])
+        )
         layout.addStretch()
 
         return self.stats_frame
@@ -122,9 +134,13 @@ class ScadenzeAnalysisDialog(QDialog):
         return {
             "total": len(data),
             "scaduti": self._count_by_condition(lambda d: d is not None and d < 0),
-            "urgenti": self._count_by_condition(lambda d: d is not None and 0 <= d <= 15),  # noqa: PLR2004
-            "attenzione": self._count_by_condition(lambda d: d is not None and 16 <= d <= 30),  # noqa: PLR2004
-            "attivi": self._count_by_condition(lambda d: d is not None and d > 30),  # noqa: PLR2004
+            "urgenti": self._count_by_condition(
+                lambda d: d is not None and 0 <= d <= THRESHOLD_URGENT
+            ),
+            "attenzione": self._count_by_condition(
+                lambda d: d is not None and THRESHOLD_URGENT < d <= THRESHOLD_ATTENTION
+            ),
+            "attivi": self._count_by_condition(lambda d: d is not None and d > THRESHOLD_ATTENTION),
         }
 
     def _count_by_condition(self, condition: Any) -> int:
@@ -166,20 +182,20 @@ class ScadenzeAnalysisDialog(QDialog):
         return [
             ("SCADUTI", lambda d: d is not None and d < 0, COLORS["error_red"], COLORS["bg_error_pastel"]),
             (
-                "IN SCADENZA (0-15 giorni)",
-                lambda d: d is not None and 0 <= d <= 15,
+                f"IN SCADENZA (0-{THRESHOLD_URGENT} giorni)",
+                lambda d: d is not None and 0 <= d <= THRESHOLD_URGENT,
                 COLORS["warning_orange"],
                 COLORS["bg_warning_pastel"],
             ),
             (
-                "ATTENZIONE (16-30 giorni)",
-                lambda d: d is not None and 16 <= d <= 30,
+                f"ATTENZIONE ({THRESHOLD_URGENT + 1}-{THRESHOLD_ATTENTION} giorni)",
+                lambda d: d is not None and THRESHOLD_URGENT < d <= THRESHOLD_ATTENTION,
                 COLORS["warning_yellow"],
                 COLORS["bg_attention_pastel"],
             ),
             (
-                "ATTIVI (oltre 30 giorni)",
-                lambda d: d is not None and d > 30,
+                f"ATTIVI (oltre {THRESHOLD_ATTENTION} giorni)",
+                lambda d: d is not None and d > THRESHOLD_ATTENTION,
                 COLORS["success_dark"],
                 COLORS["bg_success_pastel"],
             ),
@@ -219,9 +235,9 @@ class ScadenzeAnalysisDialog(QDialog):
     def _get_btn_style(self, main_color: str, hover_color: str) -> str:
         """Ritorna lo stile CSS per i pulsanti del footer."""
         return f"""
-            QPushButton {{ background-color: {main_color}; color: white; border: none; border-radius: 6px; padding: 10px 25px; font-weight: 600; font-size: 14px; }}
-            QPushButton:hover {{ background-color: {hover_color}; }}
-        """
+      QPushButton {{ background-color: {main_color}; color: white; border: none; border-radius: 6px; padding: 10px 25px; font-weight: 600; font-size: 14px; }}
+      QPushButton:hover {{ background-color: {hover_color}; }}
+    """
 
     def _create_stat_card(self, title: str, value: int, color: str) -> QFrame:
         """Crea una card per le statistiche."""
@@ -359,7 +375,7 @@ class ScadenzeAnalysisDialog(QDialog):
             QMessageBox.information(
                 self,
                 "Email in preparazione",
-                "Il report è stato suddiviso in sezioni ed inserito in una nuova email Outlook.",
+                "Il report  stato suddiviso in sezioni ed inserito in una nuova email Outlook.",
             )
 
         except Exception as e:
@@ -399,24 +415,24 @@ class ScadenzeAnalysisDialog(QDialog):
         img_list = "@('" + "','".join(p.replace("\\", "\\\\") for p in images) + "')"
 
         ps = f"""
-        $images = {img_list}
-        try {{
-            $o = New-Object -ComObject Outlook.Application
-            $m = $o.CreateItem(0)
-            $m.Subject = "Report Analisi Scadenze Certificati - $(Get-Date -Format 'dd/MM/yyyy')"
-            $html = "<html><body><h3>Report Scadenze Certificati Campione</h3>"
-            $idx = 0
-            foreach ($img in $images) {{
-                $att = $m.Attachments.Add($img)
-                $att.PropertyAccessor.SetProperty("http://schemas.microsoft.com/mapi/proptag/0x3712001E", "img_$idx")
-                $html += "<div style='margin-bottom:10px;'><img src='cid:img_$idx' style='max-width:100%;'></div>"
-                $idx++
-            }}
-            $html += "<p style='font-size:10px;color:#666;'>Generato da SyncroJob v{__version__}</p></body></html>"
-            $m.HTMLBody = $html
-            $m.Display()
-        }} catch {{ Start-Process "explorer.exe" (Split-Path $images[0]) }}
-        """
+    $images = {img_list}
+    try {{
+      $o = New-Object -ComObject Outlook.Application
+      $m = $o.CreateItem(0)
+      $m.Subject = "Report Analisi Scadenze Certificati - $(Get-Date -Format 'dd/MM/yyyy')"
+      $html = "<html><body><h3>Report Scadenze Certificati Campione</h3>"
+      $idx = 0
+      foreach ($img in $images) {{
+        $att = $m.Attachments.Add($img)
+        $att.PropertyAccessor.SetProperty("http://schemas.microsoft.com/mapi/proptag/0x3712001E", "img_$idx")
+        $html += "<div style='margin-bottom:10px;'><img src='cid:img_$idx' style='max-width:100%;'></div>"
+        $idx++
+      }}
+      $html += "<p style='font-size:10px;color:#666;'>Generato da SyncroJob v{__version__}</p></body></html>"
+      $m.HTMLBody = $html
+      $m.Display()
+    }} catch {{ Start-Process "explorer.exe" (Split-Path $images[0]) }}
+    """
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".ps1", delete=False, encoding="utf-8") as f:
             f.write(ps)

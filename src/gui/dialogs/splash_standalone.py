@@ -1,7 +1,7 @@
 # mypy: disable-error-code="unused-ignore, arg-type"
 """
 SyncroJob - Splash Screen Standalone Process
-Esegue lo splash screen in un processo separato per garantire fluidità assoluta (60fps)
+Esegue lo splash screen in un processo separato per garantire fluidit  assoluta (60fps)
 indipendentemente dal carico del processo principale.
 Riceve aggiornamenti di stato tramite stdin in formato JSON.
 """
@@ -36,8 +36,8 @@ src_path = str(ResourceManager.PROJECT_ROOT / "src")
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
 
-from PyQt6.QtCore import QObject, QTimer, pyqtSignal  # noqa: E402
-from PyQt6.QtWidgets import QApplication  # noqa: E402
+from PySide6.QtCore import QObject, QTimer, Signal  # noqa: E402
+from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from src.gui.dialogs.startup_dialog import StartupDialog  # noqa: E402
 
@@ -45,17 +45,17 @@ from src.gui.dialogs.startup_dialog import StartupDialog  # noqa: E402
 class SplashCommunicator(QObject):
     """Gestore della comunicazione thread-safe tra stdin e UI."""
 
-    update_signal = pyqtSignal(str, int)
-    close_signal = pyqtSignal()
+    update_signal = Signal(str, int)
+    close_signal = Signal()
 
 
 class StandaloneSplash(StartupDialog):
-    """Estensione dello StartupDialog con logging aggiuntivo e fix visibilità."""
+    """Estensione dello StartupDialog con logging aggiuntivo e fix visibilit ."""
 
     def __init__(self) -> None:
-        """Configura lo splash screen standalone con parametri di visibilità forzati."""
+        """Configura lo splash screen standalone con parametri di visibilit  forzati."""
         super().__init__()
-        # Forza opacità iniziale se l'animazione fallisse
+        # Forza opacit  iniziale se l'animazione fallisse
         self.setWindowOpacity(1.0)
         # Assicura che sia in primo piano
         self.raise_()
@@ -120,7 +120,7 @@ def run_standalone() -> None:
                 if command == "update":
                     msg = data.get("msg", "")
                     prog = int(data.get("prog", 0))
-                    # logger.info(f"Signal emitted: {msg} ({prog}%)") # Troppo rumoroso  # noqa: ERA001
+                    # logger.info(f"Signal emitted: {msg} ({prog}%)") # Troppo rumoroso # noqa: ERA001
                     comm.update_signal.emit(msg, prog)
                 elif command == "close":
                     logger.info("Close signal emitted")

@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from PyQt6.QtCore import QEvent, QPoint, Qt, pyqtSignal
-from PyQt6.QtGui import QBrush, QColor, QEnterEvent, QPainter, QPaintEvent, QPen
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QEvent, QPoint, Qt, Signal
+from PySide6.QtGui import QBrush, QColor, QEnterEvent, QPainter, QPaintEvent, QPen
+from PySide6.QtWidgets import (
     QAbstractItemView,
     QHeaderView,
     QMenu,
@@ -32,7 +32,7 @@ class EditableDataTable(QWidget):
     Supporta il salvataggio automatico e fornisce segnali per il tracciamento dei cambiamenti.
     """
 
-    data_changed = pyqtSignal()
+    data_changed = Signal()
     """Segnale emesso ogni volta che i dati nella tabella vengono modificati."""
 
     def __init__(self, columns: list[dict[str, Any]], parent: QWidget | None = None) -> None:
@@ -40,8 +40,8 @@ class EditableDataTable(QWidget):
         Inizializza la tabella con le colonne specificate.
 
         Args:
-            columns: Lista di dizionari definenti le colonne (name, label, type, etc.).
-            parent: Widget genitore.
+          columns: Lista di dizionari definenti le colonne (name, label, type, etc.).
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.columns = columns
@@ -71,7 +71,7 @@ class EditableDataTable(QWidget):
         )
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
-        self.table.itemChanged.connect(self.data_changed.emit)
+        self.table.itemChanged.connect(lambda: self.data_changed.emit())
 
         header = self.table.horizontalHeader()
         if header:
@@ -81,20 +81,20 @@ class EditableDataTable(QWidget):
         card_layout.addWidget(self.table)
         layout.addWidget(self.card)
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:
+    def enterEvent(self, event: QEnterEvent) -> None:
         """Attiva l'effetto di evidenziazione della tabella."""
         self._is_hovered = True
         self.update()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: QEvent | None) -> None:
+    def leaveEvent(self, event: QEvent) -> None:
         """Disattiva l'effetto di evidenziazione."""
         self._is_hovered = False
         self.update()
         super().leaveEvent(event)
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:
-        """Disegna un bordo sottile di accento se la tabella è in focus o hovered."""
+    def paintEvent(self, event: QPaintEvent) -> None:
+        """Disegna un bordo sottile di accento se la tabella  in focus o hovered."""
         super().paintEvent(event)
         if self._is_hovered:
             painter = QPainter(self)
@@ -106,7 +106,7 @@ class EditableDataTable(QWidget):
     def _show_context_menu(self, pos: QPoint) -> None:
         """Visualizza il menu contestuale per l'aggiunta/rimozione di righe."""
         menu = QMenu(self)
-        add_action = menu.addAction("Aggiungi Riga")
+        add_action = menu.addAction("Aggiungia'Riga")
         if add_action:
             add_action.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), COLORS["success_dark"]))
 

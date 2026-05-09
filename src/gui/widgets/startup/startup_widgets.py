@@ -5,8 +5,8 @@ Collezione di widget animati utilizzati nella Splash Screen.
 
 import math
 
-from PyQt6.QtCore import QPoint, QRect, Qt, QTimer
-from PyQt6.QtGui import (
+from PySide6.QtCore import QPoint, QRect, Qt, QTimer
+from PySide6.QtGui import (
     QBrush,
     QColor,
     QConicalGradient,
@@ -18,7 +18,7 @@ from PyQt6.QtGui import (
     QPixmap,
     QRadialGradient,
 )
-from PyQt6.QtWidgets import QLabel, QWidget
+from PySide6.QtWidgets import QLabel, QWidget
 
 
 class AnimatedBorder(QWidget):

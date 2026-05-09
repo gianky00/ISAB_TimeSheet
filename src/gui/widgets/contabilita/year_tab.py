@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from PyQt6.QtCore import QModelIndex, QSortFilterProxyModel, Qt, QTimer
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QModelIndex, QPersistentModelIndex, QSortFilterProxyModel, Qt, QTimer
+from PySide6.QtWidgets import (
     QHeaderView,
     QTableView,
     QVBoxLayout,
@@ -21,7 +21,7 @@ from src.gui.formatters import (
 from src.gui.styles import COLORS
 
 if TYPE_CHECKING:
-    from PyQt6.QtCore import QObject
+    from PySide6.QtCore import QObject
 
 
 class MultiColumnFilterProxyModel(QSortFilterProxyModel):
@@ -36,7 +36,7 @@ class MultiColumnFilterProxyModel(QSortFilterProxyModel):
         self._filter_text = text.lower().strip()
         self.invalidateFilter()
 
-    def filterAcceptsRow(self, source_row: int, _source_parent: QModelIndex) -> bool:
+    def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex | QPersistentModelIndex) -> bool:
         """Determina se una riga del modello sorgente deve essere inclusa nel filtro."""
         if not self._filter_text:
             return True
@@ -49,7 +49,7 @@ class MultiColumnFilterProxyModel(QSortFilterProxyModel):
         # Concatena tutte le colonne della riga
         row_text = ""
         for col in range(model.columnCount()):
-            index = model.index(source_row, col)
+            index = model.index(source_row, col, source_parent)
             value = model.data(index, Qt.ItemDataRole.DisplayRole)
             if value:
                 row_text += str(value).lower() + " "
@@ -59,12 +59,12 @@ class MultiColumnFilterProxyModel(QSortFilterProxyModel):
 
 
 class ContabilitaYearTab(QWidget):
-    """Tab per un singolo anno ottimizzato per massima reattività."""
+    """Tab per un singolo anno ottimizzato per massima reattivita'."""
 
     COLUMNS: ClassVar[list[str]] = [
         "DATA\nPREV.",
         "MESE",
-        "N°\nPREV.",
+        "N \nPREV.",
         "TOTALE\nPREV.",
         "ATTIVITA'",
         "TCL",
@@ -107,23 +107,23 @@ class ContabilitaYearTab(QWidget):
         self.table.setModel(self.proxy_model)
         self.table.setAlternatingRowColors(True)
         self.table.setStyleSheet(f"""
-            QTableView {{
-                gridline-color: {COLORS["bg_alt"]};
-                background-color: {COLORS["bg_white"]};
-                alternate-background-color: {COLORS["bg_light"]};
-                selection-background-color: {COLORS["table_selection_bg"]};
-                selection-color: {COLORS["text_dark"]};
-                border: none;
-            }}
-            QHeaderView::section {{
-                background-color: {COLORS["bg_light"]};
-                color: {COLORS["text_dark"]};
-                padding: 8px;
-                font-weight: bold;
-                border: none;
-                border-bottom: 1px solid {COLORS["border_light"]};
-            }}
-        """)
+      QTableView {{
+        gridline-color: {COLORS["bg_alt"]};
+        background-color: {COLORS["bg_white"]};
+        alternate-background-color: {COLORS["bg_light"]};
+        selection-background-color: {COLORS["table_selection_bg"]};
+        selection-color: {COLORS["text_dark"]};
+        border: none;
+      }}
+      QHeaderView::section {{
+        background-color: {COLORS["bg_light"]};
+        color: {COLORS["text_dark"]};
+        padding: 8px;
+        font-weight: bold;
+        border: none;
+        border-bottom: 1px solid {COLORS["border_light"]};
+      }}
+    """)
 
         # --- Configurazione Selezione (Single row, come richiesto) ---
         self.table.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
@@ -148,7 +148,7 @@ class ContabilitaYearTab(QWidget):
         # Imposta larghezze minime ragionevoli
         self.table.setColumnWidth(0, 90)  # DATA PREV.
         self.table.setColumnWidth(1, 70)  # MESE
-        self.table.setColumnWidth(2, 80)  # N° PREV.
+        self.table.setColumnWidth(2, 80)  # N  PREV.
         self.table.setColumnWidth(3, 100)  # TOTALE PREV.
         self.table.setColumnWidth(4, 300)  # ATTIVITA'
         self.table.setColumnWidth(5, 80)  # TCL
@@ -173,11 +173,11 @@ class ContabilitaYearTab(QWidget):
             db_data = ContabilitaQueries.get_data_by_year(db_path, self.year)
 
             # Passa i dati grezzi direttamente al modello.
-            # Il modello userà i formatters per la visualizzazione e i valori grezzi per l'ordinamento.
+            # Il modello user  i formatters per la visualizzazione e i valori grezzi per l'ordinamento.
             # FastTableModel si aspetta lista di liste/tuple accessibili per indice.
 
             # Nota: ContabilitaQueries restituisce tutto. Dobbiamo assicurarci di prendere solo le colonne che servono
-            # se la query ritorna più colonne di self.COLUMNS.
+            # se la query ritorna piu' colonne di self.COLUMNS.
             # Slice per sicurezza
             display_rows = [list(row[: len(self.COLUMNS)]) for row in db_data]
 
@@ -198,20 +198,20 @@ class ContabilitaYearTab(QWidget):
         # Ridimensiona tutte le colonne al contenuto
         self.table.resizeColumnsToContents()
 
-        # Aggiungi un buffer per leggibilità e assicura larghezze minime
+        # Aggiungi un buffer per leggibilit  e assicura larghezze minime
         column_min_widths = {
             0: 90,  # DATA PREV.
             1: 70,  # MESE
-            2: 80,  # N° PREV.
+            2: 80,  # N  PREV.
             3: 100,  # TOTALE PREV.
-            4: 200,  # ATTIVITA' (minimo più largo)
+            4: 200,  # ATTIVITA' (minimo piu' largo)
             5: 80,  # TCL
             6: 80,  # ODC
             7: 100,  # STATO ATTIVITA'
             8: 100,  # TIPOLOGIA
             9: 80,  # ORE SP
             10: 80,  # RESA
-            11: 150,  # ANNOTAZIONI (minimo più largo)
+            11: 150,  # ANNOTAZIONI (minimo piu' largo)
         }
 
         for col, min_width in column_min_widths.items():

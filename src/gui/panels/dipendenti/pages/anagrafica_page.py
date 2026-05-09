@@ -6,8 +6,8 @@ Pagina coordinata per la gestione anagrafica dipendenti.
 
 import logging
 
-from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
     QVBoxLayout,
@@ -37,8 +37,8 @@ class AnagraficaPage(QWidget):
         Inizializza la pagina anagrafica con iniezione del controller.
 
         Args:
-            controller: Istanza del controller per la logica di business.
-            parent: Widget genitore opzionale.
+          controller: Istanza del controller per la logica di business.
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self.controller = controller

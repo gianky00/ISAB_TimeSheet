@@ -3,8 +3,10 @@ SyncroJob - SafeWork Status List Widget
 Widget per visualizzare lo stato di elaborazione riga per riga per i bot SafeWork.
 """
 
-from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtWidgets import QLabel, QListWidget, QListWidgetItem, QVBoxLayout, QWidget
+from typing import cast
+
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtWidgets import QLabel, QListWidget, QListWidgetItem, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
@@ -19,15 +21,15 @@ class StatusListWidget(QListWidget):
         super().__init__(parent)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.setStyleSheet("""
-            QListWidget { background: transparent; border: none; outline: none; }
-            QListWidget::item { padding: 0px; margin: 0px; border: none; }
-        """)
+      QListWidget { background: transparent; border: none; outline: none; }
+      QListWidget::item { padding: 0px; margin: 0px; border: none; }
+    """)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
     def initialize_rows(self, count: int, row_height: int = 30) -> None:
         """Prepara n righe con stato 'Pending' (pallino grigio)."""
-        # Ottimizzazione: Se il numero di righe è lo stesso, resetta solo le icone esistenti
+        # Ottimizzazione: Se il numero di righe  lo stesso, resetta solo le icone esistenti
         if self.count() == count:
             for i in range(count):
                 self._reset_row_icon(i)
@@ -76,7 +78,8 @@ class StatusListWidget(QListWidget):
         widget = self.itemWidget(item)
         if not widget:
             return
-        icon_label: QLabel = widget.findChild(QLabel)
+
+        icon_label = cast("QLabel", widget.findChild(QLabel))
         if not icon_label:
             return
 

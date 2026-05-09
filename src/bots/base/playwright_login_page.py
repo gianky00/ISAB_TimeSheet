@@ -34,7 +34,7 @@ class PlaywrightLoginPage(PlaywrightBasePage):
         comp_sel = self._get_selector(LoginLocators.COMPANY_FIELD)
         btn_sel = self._get_selector(LoginLocators.LOGIN_BUTTON)
 
-        # Attesa visibilità campi (max 5s)
+        # Attesa visibilit  campiu'(max 5s)
         self.page.wait_for_selector(user_sel, state="visible", timeout=5000)
 
         # Inserimento immediato via fill (senza click preventivi)
@@ -46,14 +46,14 @@ class PlaywrightLoginPage(PlaywrightBasePage):
         with suppress(Exception):
             self.page.locator(pass_sel).evaluate("el => el.type = 'text'")
 
-        # Selezione Società (ISAB/PSER) rapida
+        # Selezione Societa'(ISAB/PSER) rapida
         try:
-            self.log(f"Selezione società: {company}...")
+            self.log(f"Selezione societa': {company}...")
             # Inserimento diretto e pressione Invio
             self.page.locator(comp_sel).fill(company)
             self.page.keyboard.press("Enter")
         except Exception as e:
-            self.log(f"[ATTENZIONE] Avviso: Selezione società '{company}' non riuscita, proseguo: {e}")
+            self.log(f"[ATTENZIONE] Avviso: Selezione societa''{company}' non riuscita, proseguo: {e}")
 
         self.log("Credenziali inserite. Clicco Accedi...")
         # Click forzato per evitare blocchi ExtJS
@@ -93,27 +93,27 @@ class PlaywrightLoginPage(PlaywrightBasePage):
         self.log(f"Navigazione a: {self.isab_url}")
 
         try:
-            # Caricamento pagina (domcontentloaded è sufficiente)
+            # Caricamento pagina (domcontentloaded  sufficiente)
             response = self.page.goto(self.isab_url, wait_until="domcontentloaded")
             if response and response.status >= 400:  # noqa: PLR2004
-                self.log(f"⚠ Errore HTTP {response.status}")
+                self.log(f"  Errore HTTP {response.status}")
                 return False
 
-            # Se il campo username è già lì, non perdiamo tempo con l'overlay
+            # Se il campo username  gia' l , non perdiamo tempo con l'overlay
             user_sel = self._get_selector(LoginLocators.USERNAME_FIELD)
             if not self.page.locator(user_sel).is_visible():
                 self._wait_overlay(timeout_ms=5000)
 
             # Controllo sessione persistente
             if self._verify_logged_in_via_ui():
-                self.log("✓ Sessione già attiva rilevata.")
+                self.log("  Sessione gia' attiva rilevata.")
                 return True
 
             try:
                 # Primo tentativo di inserimento
                 self._perform_login_form_action(username, password, company)
             except TimeoutError:
-                self.log("[ATTENZIONE] Campi login non trovati or overlay bloccante. Ricarico pagina...")
+                self.log("[ATTENZIONE] Campiu'login non trovati or overlay bloccante. Ricarico pagina...")
                 self.page.reload()
                 self._wait_overlay(15000)
                 # Secondo tentativo post-refresh
@@ -121,11 +121,11 @@ class PlaywrightLoginPage(PlaywrightBasePage):
 
             # Verifica finale
             if not self._verify_logged_in_via_ui():
-                self.log("✗ Login fallito: pagina non caricata correttamente dopo accesso.")
+                self.log("  Login fallito: pagina non caricata correttamente dopo accesso.")
                 return False
         except Exception as e:
-            self.log(f"✗ Errore critico durante il login: {e}")
+            self.log(f"  Errore critico durante il login: {e}")
             return False
         else:
-            self.log("✓ Login completato con successo")
+            self.log("  Login completato con successo")
             return True

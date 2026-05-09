@@ -45,9 +45,9 @@ class DettagliOdAPage:
         Attende che gli overlay di caricamento di ExtJS (maschere) siano invisibili.
 
         Args:
-            timeout: Secondi massimi di attesa. Default: Timeouts.OVERLAY.
-            wait_for_appearance: Se True, attende prima che l'overlay appaia (max 2s)
-                                 e poi che scompaia. Evita race conditions.
+          timeout: Secondi massimi di attesa. Default: Timeouts.OVERLAY.
+          wait_for_appearance: Se True, attende prima che l'overlay appaia (max 2s)
+                     e poi che scompaia. Evita race conditions.
         """
         t = timeout or Timeouts.OVERLAY
         xpath = (
@@ -83,7 +83,7 @@ class DettagliOdAPage:
             self._wait_for_overlay()
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"✗ Navigazione fallita: {e}")
+            self.log(f"  Navigazione fallita: {e}")
             return False
 
     def setup_supplier(self, supplier: str) -> bool:
@@ -100,7 +100,7 @@ class DettagliOdAPage:
             self._wait_for_overlay()
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"✗ Selezione fornitore fallita: {e}")
+            self.log(f"  Selezione fornitore fallita: {e}")
             return False
 
     def logout(self) -> bool:
@@ -115,16 +115,16 @@ class DettagliOdAPage:
                 logout_btn = self.wait.until(EC.visibility_of_element_located(CommonLocators.LOGOUT_OPTION))
                 self.driver.execute_script("arguments[0].click();", logout_btn)
             except TimeoutException:
-                self.log("  ✗ Opzione Logout non apparsa nel menu.")
+                self.log("   Opzione Logout non apparsa nel menu.")
                 return False
 
             try:
-                self.log("  Attesa conferma logout...")
+                self.log(" Attesa conferma logout...")
                 yes_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.LOGOUT_CONFIRM_YES))
                 self.driver.execute_script("arguments[0].click();", yes_btn)
-                self.log("  Conferma cliccata.")
+                self.log(" Conferma cliccata.")
                 self.wait.until(EC.visibility_of_element_located(LoginLocators.USERNAME_FIELD))
-                self.log("✓ Logout completato con successo.")
+                self.log("  Logout completato con successo.")
                 return True  # noqa: TRY300
             except TimeoutException:
                 self.log("[ATTENZIONE] Popup conferma non apparso o timeout.")
@@ -138,9 +138,9 @@ class DettagliOdAPage:
         with suppress(Exception):
             expand_btn = self.driver.find_element(*DettagliOdALocators.SIDEBAR_EXPAND_BUTTON)
             if expand_btn.is_displayed():
-                self.log("  Menu laterale collassato, espansione in corso...")
+                self.log(" Menu laterale collassato, espansione in corso...")
                 self.driver.execute_script("arguments[0].click();", expand_btn)
-                self.log("  Menu espanso.")
+                self.log(" Menu espanso.")
 
     def process_oda(  # noqa: PLR0913
         self,
@@ -154,12 +154,12 @@ class DettagliOdAPage:
         """Compila il form di ricerca per un OdA e avvia l'esportazione dei dati."""
         try:
             js_set_value = """
-                var el = arguments[0];
-                el.value = arguments[1];
-                el.dispatchEvent(new Event('input', { bubbles: true }));
-                el.dispatchEvent(new Event('change', { bubbles: true }));
-                el.blur();
-            """
+        var el = arguments[0];
+        el.value = arguments[1];
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.blur();
+      """
 
             if oda:
                 field_oda = self.wait.until(
@@ -176,7 +176,7 @@ class DettagliOdAPage:
             self.driver.execute_script(js_set_value, field_date_a, date_a)
 
             if contract:
-                self.log(f"  Inserimento contratto: {contract}")
+                self.log(f" Inserimento contratto: {contract}")
                 field_contract = self.wait.until(
                     EC.presence_of_element_located(DettagliOdALocators.CONTRACT_FIELD)
                 )
@@ -186,7 +186,7 @@ class DettagliOdAPage:
             if not checkbox.is_selected():
                 self.driver.execute_script("arguments[0].click();", checkbox)
             self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.SEARCH_BUTTON)).click()
-            self.log("  Cerca cliccato...")
+            self.log(" Cerca cliccato...")
             self._wait_for_overlay(wait_for_appearance=True)
 
             try:
@@ -196,24 +196,24 @@ class DettagliOdAPage:
                 count_text = count_label.text.strip()
                 if ":" in count_text:
                     count = int(count_text.split(":")[-1].strip())
-                    self.log(f"  Risultati trovati: {count}")
+                    self.log(f" Risultati trovati: {count}")
                     if count == 0:
-                        self.log("  Nessun risultato. Salto esportazione.")
+                        self.log(" Nessun risultato. Salto esportazione.")
                         self._close_all_tabs()
                         return None
             except Exception as e:
-                self.log(f"  [ATTENZIONE] Errore lettura conteggio: {e}")
+                self.log(f" [ATTENZIONE] Errore lettura conteggio: {e}")
 
             target_filename = ""
             if oda:
-                self.log("  Apertura dettagli (OdA specifico)...")
+                self.log(" Apertura dettagli (OdA specifico)...")
                 details_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.DETAILS_ICON))
                 self.driver.execute_script("arguments[0].click();", details_btn)
                 self._wait_for_overlay()
                 export_btn_locator = DettagliOdALocators.EXPORT_EXCEL_TEXT
                 target_filename = f"dettaglio_oda_{sanitize_filename(oda)}.xlsx"
             else:
-                self.log("  Esportazione lista generale...")
+                self.log(" Esportazione lista generale...")
                 export_btn_locator = DettagliOdALocators.GENERAL_EXPORT_BUTTON
                 safe_date_a = date_a.replace(".", "-").replace("/", "-")
                 target_filename = f"ODA_Generale_al_{safe_date_a}.xlsx"
@@ -223,7 +223,7 @@ class DettagliOdAPage:
             return final_path  # noqa: TRY300
 
         except Exception as e:
-            self.log(f"  ✗ Errore processamento: {e}")
+            self.log(f"   Errore processamento: {e}")
             with suppress(Exception):
                 self._close_all_tabs()
             return None
@@ -241,7 +241,7 @@ class DettagliOdAPage:
                 except Exception:
                     break
         except Exception as e:
-            self.log(f"  [ATTENZIONE] Errore chiusura tab: {e}")
+            self.log(f" [ATTENZIONE] Errore chiusura tab: {e}")
 
     def _download(
         self,
@@ -254,22 +254,22 @@ class DettagliOdAPage:
         try:
             source_dir = Path(source_dir).resolve()
             if not source_dir.exists():
-                self.log(f"  ✗ Cartella non esiste: {source_dir}")
+                self.log(f"   Cartella non esiste: {source_dir}")
                 # Tentiamo di crearla se possibile
                 try:
                     source_dir.mkdir(parents=True, exist_ok=True)
-                    self.log(f"  ✓ Cartella creata: {source_dir}")
+                    self.log(f"   Cartella creata: {source_dir}")
                 except Exception:
                     return None
 
-            self.log(f"  [CERCA] Monitoraggio download in: {source_dir}")
+            self.log(f" [CERCA] Monitoraggio download in: {source_dir}")
             allowed_extensions = {".xlsx", ".xls"}
             files_before = {
                 f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() in allowed_extensions
             }
 
             if not self._click_export_button(button_locator):
-                self.log("  ✗ Impossibile cliccare il pulsante di esportazione.")
+                self.log("   Impossibile cliccare il pulsante di esportazione.")
                 return None
 
             # Attesa overlay post-click esportazione (generazione file sul portale)
@@ -284,7 +284,7 @@ class DettagliOdAPage:
             )
 
             if not res_path:
-                self.log(f"  ✗ Nessun nuovo file Excel trovato in {source_dir} dopo {Timeouts.DOWNLOAD}s.")
+                self.log(f"   Nessun nuovo file Excel trovato in {source_dir} dopo {Timeouts.DOWNLOAD}s.")
                 return None
 
             downloaded_file = Path(res_path)
@@ -296,11 +296,11 @@ class DettagliOdAPage:
 
             removed = cleanup_chrome_temp_files(source_dir)
             for f_name in removed:
-                self.log(f"  [DEBUG] Rimosso residuo download: {f_name}")
+                self.log(f" [DEBUG] Rimosso residuo download: {f_name}")
 
             return final_path  # noqa: TRY300
         except Exception as e:
-            self.log(f"  ✗ Errore download: {e}")
+            self.log(f"   Errore download: {e}")
             return None
 
     def _click_export_button(self, locator: tuple[str, str]) -> bool:
@@ -316,7 +316,7 @@ class DettagliOdAPage:
                 self.driver.execute_script("arguments[0].click();", btn)
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"  [ATTENZIONE] Errore click esportazione: {e}")
+            self.log(f" [ATTENZIONE] Errore click esportazione: {e}")
             return False
 
     def _finalize_download(self, src: Path, dest_dir: Path, target_name: str) -> Path | None:
@@ -329,5 +329,5 @@ class DettagliOdAPage:
             with suppress(Exception):
                 target_path.unlink()
         shutil.move(str(src), str(target_path))
-        self.log(f"  ✓ Scaricato: {target_path.name}")
+        self.log(f"   Scaricato: {target_path.name}")
         return target_path

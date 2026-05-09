@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from PyQt6.QtCore import QObject
+from PySide6.QtCore import QObject
 
 from src.gui.controllers.navigation_controller import NavigationController
 

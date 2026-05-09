@@ -9,8 +9,8 @@ import os
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QPoint, Qt, QTimer
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QPoint, Qt, QTimer
+from PySide6.QtWidgets import (
     QFileDialog,
     QMenu,
     QSplitter,
@@ -47,8 +47,8 @@ class PDLDBPanel(QWidget):
         Inizializza il pannello del database PDL con iniezione del controller.
 
         Args:
-            controller: Istanza del controller per la logica di business.
-            parent: Widget genitore opzionale.
+          controller: Istanza del controller per la logica di business.
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self.controller = controller
@@ -58,18 +58,18 @@ class PDLDBPanel(QWidget):
         self.master_headers = [
             "Data Creazione",
             "Richiedente",
-            "N° PDL",
+            "N  PDL",
             "Area",
-            "Unità",
+            "Unita'",
             "Stato",
             "Descrizione",
         ]
         self.full_headers = [
             "ID",
-            "N° PDL",
+            "N  PDL",
             "Data Creazione",
             "Area",
-            "Unità",
+            "Unita'",
             "Ditta",
             "Descrizione",
             "Tipologia",
@@ -81,7 +81,7 @@ class PDLDBPanel(QWidget):
             "Data Emissione",
             "Aprente",
             "Data Apertura",
-            "Priorità",
+            "Priorita'",
             "Contratto",
             "Ordine",
             "Sito",
@@ -173,7 +173,7 @@ class PDLDBPanel(QWidget):
         Ricarica i dati dal database applicando i filtri correnti.
 
         Args:
-            sort_col: Indice opzionale della colonna per l'ordinamento.
+          sort_col: Indice opzionale della colonna per l'ordinamento.
         """
         self.filters.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('pdl')}")
         filters = self.filters.get_filters()
@@ -197,9 +197,9 @@ class PDLDBPanel(QWidget):
         Imposta i filtri del pannello programmaticamente.
 
         Args:
-            site: Nome del sito da selezionare.
-            area: Nome dell'area da selezionare.
-            search: Testo di ricerca.
+          site: Nome del sito da selezionare.
+          area: Nome dell'area da selezionare.
+          search: Testo di ricerca.
         """
         if site:
             self.filters.site_filter.setCurrentText(site)
@@ -221,7 +221,7 @@ class PDLDBPanel(QWidget):
         self.refresh_data()
 
     def _on_area_changed(self) -> None:
-        """Gestisce il cambio del filtro Area e aggiorna le Unità disponibili."""
+        """Gestisce il cambio del filtro Area e aggiorna le Unita' disponibili."""
         self._update_units()
         self.refresh_data()
 
@@ -246,7 +246,7 @@ class PDLDBPanel(QWidget):
         self.filters.area_filter.blockSignals(False)
 
     def _update_units(self) -> None:
-        """Aggiorna dinamicamente il filtro Unità basandosi su Sito e Area selezionati."""
+        """Aggiorna dinamicamente il filtro Unita' basandosi su Sito e Area selezionati."""
         site = self.filters.site_filter.currentText()
         area = self.filters.area_filter.currentText()
         q = "SELECT DISTINCT unita FROM pdl WHERE 1=1"
@@ -388,6 +388,6 @@ class PDLDBPanel(QWidget):
             if file_path:
                 os.startfile(file_path)  # noqa: S606
         else:
-            from PyQt6.QtWidgets import QMessageBox  # noqa: PLC0415
+            from PySide6.QtWidgets import QMessageBox  # noqa: PLC0415
 
             QMessageBox.warning(self, "Errore Esportazione", message)

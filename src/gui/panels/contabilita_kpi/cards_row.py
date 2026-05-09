@@ -1,10 +1,10 @@
-from PyQt6.QtWidgets import QHBoxLayout, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QWidget
 
 from src.gui.widgets.info_widgets import KPIBigCard
 
 
 class KPICardsRow(QWidget):
-    """Widget che raggruppa una riga di KPI cards."""
+    """Widget che raggruppa una riga di KPiu'cards."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -18,13 +18,13 @@ class KPICardsRow(QWidget):
         Crea e aggiunge una nuova card KPI alla riga.
 
         Args:
-            title: Titolo della card.
-            value: Valore visualizzato.
-            color: Colore dell'indicatore.
-            subtitle: Sottotitolo opzionale.
+          title: Titolo della card.
+          value: Valore visualizzato.
+          color: Colore dell'indicatore.
+          subtitle: Sottotitolo opzionale.
 
         Returns:
-            KPIBigCard: L'istanza della card creata.
+          KPIBigCard: L'istanza della card creata.
         """
         card = KPIBigCard(title, value, color, subtitle=subtitle)
         self.main_layout.addWidget(card)

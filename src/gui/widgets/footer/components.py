@@ -5,9 +5,9 @@ Collezione di widget e componenti grafici utilizzati per comporre la barra di st
 
 from typing import Any
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QEnterEvent, QMouseEvent
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QEvent, Qt, Signal
+from PySide6.QtGui import QEnterEvent, QMouseEvent
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -30,10 +30,10 @@ class FooterItemWidget(QWidget):
         Inizializza l'elemento del footer.
 
         Args:
-            label: Etichetta del dato.
-            value: Valore iniziale.
-            color: Colore dell'etichetta (default: text_muted).
-            parent: Widget genitore.
+          label: Etichetta del dato.
+          value: Valore iniziale.
+          color: Colore dell'etichetta (default: text_muted).
+          parent: Widget genitore.
         """
         super().__init__(parent)
         layout = QHBoxLayout(self)
@@ -54,7 +54,7 @@ class FooterItemWidget(QWidget):
         Aggiorna il testo del valore.
 
         Args:
-            text: Nuovo testo da visualizzare.
+          text: Nuovo testo da visualizzare.
         """
         self.lbl_val.setText(text)
 
@@ -70,7 +70,7 @@ class StartupConsole(QLabel):
         Inizializza la console di startup.
 
         Args:
-            parent: Widget genitore.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.setText("Sistema Operativo Pronto")
@@ -85,8 +85,8 @@ class StartupConsole(QLabel):
         Invia un messaggio alla console del footer.
 
         Args:
-            message: Testo del log.
-            is_error: Se True, visualizza il messaggio in rosso.
+          message: Testo del log.
+          is_error: Se True, visualizza il messaggio in rosso.
         """
         color = COLORS["error_red"] if is_error else COLORS["text_dark"]
         self.setText(message)
@@ -104,14 +104,14 @@ class ClickableLabel(QLabel):
     Utilizzata per i dati del footer che richiedono un'azione (es. cambio account).
     """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza la label cliccabile.
 
         Args:
-            parent: Widget genitore.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self._base_style = ""
@@ -122,12 +122,12 @@ class ClickableLabel(QLabel):
         Imposta lo stile base CSS.
 
         Args:
-            style: Stringa di stili CSS.
+          style: Stringa di stili CSS.
         """
         self._base_style = style
         self.setStyleSheet(style)
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:
+    def enterEvent(self, event: QEnterEvent) -> None:
         """Gestisce l'evento hover-in cambiando lo sfondo."""
         self.setStyleSheet(
             self._base_style
@@ -135,14 +135,14 @@ class ClickableLabel(QLabel):
         )
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any | None) -> None:
+    def leaveEvent(self, event: QEvent) -> None:
         """Gestisce l'evento hover-out ripristinando lo stile base."""
         self.setStyleSheet(self._base_style)
         super().leaveEvent(event)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         """Gestisce il click del mouse emettendo il segnale 'clicked'."""
-        if event and event.button() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()
         super().mousePressEvent(event)
 
@@ -157,10 +157,10 @@ class StatsCard(QFrame):
         Inizializza la card statistica.
 
         Args:
-            title: Titolo della metrica.
-            value: Valore della metrica.
-            icon: Icona associata.
-            parent: Widget genitore.
+          title: Titolo della metrica.
+          value: Valore della metrica.
+          icon: Icona associata.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.setCursor(Qt.CursorShape.PointingHandCursor)

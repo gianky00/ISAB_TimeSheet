@@ -47,12 +47,12 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         Inizializza il bot di ricerca PDL.
 
         Args:
-            username: Nome utente SafeWork.
-            password: Password SafeWork.
-            headless: Se avviare il browser in modalità nascosta.
-            timeout: Tempo di attesa per Selenium.
-            download_path: Cartella per il download degli Excel.
-            account_type: Tipo di account (Esecutore/ISAB).
+          username: Nome utente SafeWork.
+          password: Password SafeWork.
+          headless: Se avviare il browser in modalita' nascosta.
+          timeout: Tempo di attesa per Selenium.
+          download_path: Cartella per il download degli Excel.
+          account_type: Tipo di account (Esecutore/ISAB).
         """
         super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
         self.sites = ["IGCC", "ISAB Nord", "ISAB Sud"]
@@ -77,10 +77,10 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         Esegue la pipeline di ricerca ed esportazione dei PDL.
 
         Args:
-            data: Parametri di ricerca (escludi chiusi, siti).
+          data: Parametri di ricerca (escludi chiusi, siti).
 
         Returns:
-            bool: True se l'operazione è completata correttamente.
+          bool: True se l'operazione  completata correttamente.
         """
         self.update_step("login", StepStatus.COMPLETED)
 
@@ -131,7 +131,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             return False
 
         try:
-            self.log("🏠 Clic su Home Page...")
+            self.log("   Clic su Home Page...")
             self.wait.until(lambda d: d.find_element(*SafeWorkLocators.HOME_BUTTON)).click()
             self._attendi_scomparsa_overlay()
 
@@ -147,16 +147,16 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         Avvia l'esportazione Excel dei risultati e attende il file.
 
         Args:
-            site_name: Nome del sito processato.
+          site_name: Nome del sito processato.
 
         Returns:
-            str | None: Percorso del file scaricato o None.
+          str | None: Percorso del file scaricato o None.
         """
         from src.bots.base.wait_helpers import poll_for_new_file  # noqa: PLC0415
 
         files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*") if f.is_file()}
 
-        self.log(f"📥 Esportazione Excel per {site_name}...")
+        self.log(f"   Esportazione Excel per {site_name}...")
 
         if not self.ricerca_pdl_page:
             self.log("[ERRORE] Pagina Ricerca PDL non inizializzata per export.")
@@ -172,7 +172,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         """Rimuove il file Excel temporaneo scaricato."""
         try:
             Path(file_path).unlink()
-            self.log(f"🗑️ File temporaneo rimosso: {Path(file_path).name}")
+            self.log(f"    File temporaneo rimosso: {Path(file_path).name}")
         except Exception:
             logger.debug(f"Impossibile rimuovere il file temporaneo: {file_path}")
 
@@ -181,18 +181,18 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         Importazione massiva dei dati PDL dall'Excel nel database SQLite.
 
         Args:
-            file_path: Percorso del file Excel.
+          file_path: Percorso del file Excel.
         """
         try:
-            self.log("🗄️ Importazione in database...")
+            self.log("    Importazione in database...")
             start_time = time.time()
             df = pd.read_excel(file_path)
 
             mapping_ita = {
-                "N° PDL": "n_pdl",
+                "N  PDL": "n_pdl",
                 "DATA CREAZIONE": "data_creazione",
                 "AREA": "area",
-                "UNITÀ": "unita",
+                "Unita'": "unita",
                 "DITTA": "ditta",
                 "DESCRIZIONE DEL LAVORO": "descrizione_lavoro",
                 "TIPOLOGIA": "tipologia",
@@ -204,7 +204,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
                 "DATA EMISSIONE": "data_emissione",
                 "APRENTE": "aprente",
                 "DATA APERTURA": "data_apertura",
-                "PRIORITÀ": "priorita",
+                "Priorita'": "priorita",
                 "CONTRATTO": "contratto",
                 "ORDINE": "ordine",
                 "SITO": "sito",

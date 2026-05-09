@@ -184,7 +184,7 @@ class CertificatiEngine:
     def _process_status_stats(
         cls, stats: dict[str, Any], days: int | None, scadenza_str: str, expiration_map: dict[datetime, int]
     ) -> None:
-        """Aggiorna i conteggi di stato e mappa le scadenze temporali."""
+        """Aggiorna i conteggia'di stato e mappa le scadenze temporali."""
         if days == cls.FAULTY_MARKER:
             stats["guasti"] += 1
         elif days is None:
@@ -219,7 +219,7 @@ class CertificatiEngine:
 
     @classmethod
     def _process_location_stats(cls, stats: dict[str, Any], record: Any) -> None:
-        """Aggiorna i conteggi basati sull'ubicazione fisica degli strumenti."""
+        """Aggiorna i conteggia'basati sull'ubicazione fisica degli strumenti."""
         ubicazione = str(record[cls.IDX_UBICAZIONE]).upper() if len(record) > cls.IDX_UBICAZIONE else ""
         if UbicazioneStrumenti.UFFICIO_STRU.value in ubicazione:
             stats["ufficio_stru"] += 1
@@ -304,7 +304,7 @@ class CertificatiEngine:
     @staticmethod
     def parse_parent_label(text: str) -> dict[str, str]:
         """Estrae i metadati dalla stringa del nodo padre del TreeWidget."""
-        parts = text.split("  •  ")
+        parts = text.split("    ")
         idx_mat, idx_cos, idx_mod, idx_range = 0, 1, 2, 3
         return {
             "matricola": parts[idx_mat].strip() if len(parts) > idx_mat else "",

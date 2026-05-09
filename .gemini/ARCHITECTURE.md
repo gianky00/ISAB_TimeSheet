@@ -30,7 +30,7 @@ Il progetto segue una struttura ispirata al pattern Model-View-Controller, con u
 
 ## 🛠️ Pattern & Convenzioni Tecniche
 
-### 1. PyQt6 Singleton con Segnali
+### 1. PySide6 Singleton con Segnali
 **NON** ereditare da `QObject` se si usa il pattern `__new__` per il singleton. Usare una classe segnali separata:
 ```python
 class MyManager:
@@ -91,7 +91,7 @@ Il processo di release è automatizzato via `admin/release.py` e include:
 *   **Strangler Fig Pattern**: For the refactoring of large modules, move incrementally by moving one function at a time and using temporary re-exporting so as not to break dependencies.
 
 ### 3. Comunicazione tra Layer
-*   **Segnali (PyQt6)**: È l'unico modo permesso per la comunicazione GUI -> Core e vice-versa.
+*   **Segnali (PySide6)**: È l'unico modo permesso per la comunicazione GUI -> Core e vice-versa.
 *   **Singleton Access**: Manager globali acceduti esclusivamente tramite `.instance()`.
 *   **Naming**: Suffissi `_requested` (comando), `_changed` (stato), `_failed` (errore).
 

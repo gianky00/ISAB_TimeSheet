@@ -1,7 +1,7 @@
 """
 SyncroJob - License Updater
 Modulo dedicato all'aggiornamento e alla sincronizzazione dei file di licenza dal repository GitHub.
-Gestisce i periodi di grazia offline tramite token cifrati e garantisce la validità temporale del software.
+Gestisce i periodi di grazia offline tramite token cifrati e garantisce la validit  temporale del software.
 """
 
 import json
@@ -24,7 +24,7 @@ def get_github_token() -> str:
     Recupera il token GitHub tramite il gestore dei segreti.
 
     Returns:
-        str: Il token di autenticazione GitHub.
+      str: Il token di autenticazione GitHub.
     """
     return SecretsManager.get_github_token()
 
@@ -34,7 +34,7 @@ def get_license_dir() -> Path:
     Restituisce il percorso assoluto della cartella Licenza all'interno dei dati utente.
 
     Returns:
-        Path: Oggetto Path della directory licenza.
+      Path: Oggetto Path della directory licenza.
     """
     from src.core.paths import get_data_path  # noqa: PLC0415
 
@@ -76,14 +76,14 @@ def update_grace_timestamp() -> None:
 
 def check_grace_period() -> bool:
     """
-    Verifica se l'applicazione può funzionare offline controllando il token di validità.
-    Il periodo di grazia massimo è di 3 giorni dall'ultima sincronizzazione online.
+    Verifica se l'applicazione pu  funzionare offline controllando il token di validit .
+    Il periodo di grazia massimo  di 3 giorni dall'ultima sincronizzazione online.
 
     Returns:
-        bool: True se il periodo di grazia è valido.
+      bool: True se il periodo di grazia  valido.
 
     Raises:
-        Exception: Se il token non esiste, è scaduto o è stata rilevata manipolazione oraria.
+      Exception: Se il token non esiste,  scaduto o  stata rilevata manipolazione oraria.
     """
     token_path = _get_validity_token_path()
     if not token_path.exists():
@@ -121,7 +121,7 @@ def check_emergency_grace_period() -> tuple[bool, str, int]:
     Usato per consentire l'utilizzo immediato del software prima della sincronizzazione definitiva.
 
     Returns:
-        tuple: (bool attivo, str messaggio, int giorni_rimanenti).
+      tuple: (bool attivo, str messaggio, int giorni_rimanenti).
     """
     token_path = _get_emergency_grace_token_path()
     current_time, _ = time_manager.get_trusted_time()
@@ -159,7 +159,7 @@ def check_emergency_grace_period() -> tuple[bool, str, int]:
 
 
 def is_running_from_source() -> bool:
-    """Verifica se l'applicazione è in esecuzione dall'interprete Python (sorgenti)."""
+    """Verifica se l'applicazione  in esecuzione dall'interprete Python (sorgenti)."""
     import sys  # noqa: PLC0415
 
     return not getattr(sys, "frozen", False)
@@ -175,7 +175,7 @@ def is_license_folder_empty() -> bool:
     return not (config_dat.exists() and manifest_json.exists())
 
 
-def run_update() -> bool:  # noqa: PLR0911, PLR0912, PLR0915
+def run_update() -> bool:  # noqa: C901, PLR0911, PLR0912, PLR0915
     """
     Esegue la procedura completa di aggiornamento licenza.
     Recupera l'Hardware ID, interroga le API di GitHub e scarica i file necessari se presenti o modificati.
@@ -190,7 +190,7 @@ def run_update() -> bool:  # noqa: PLR0911, PLR0912, PLR0915
 
     base_url = f"https://api.github.com/repos/gianky00/intelleo-licenses/contents/licenses/{hw_id}"
     token = get_github_token()
-    headers_api = {"Authorization": f"token {token}"}
+    headers_api= {"Authorization": f"token {token}"}
     headers_raw = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3.raw"}
 
     try:
@@ -235,14 +235,14 @@ def run_update() -> bool:  # noqa: PLR0911, PLR0912, PLR0915
 
             local_hash = _calculate_sha256(local_config)
 
-        # 3. Scarica config.dat solo se l'hash è diverso O se quella locale non è valida
+        # 3. Scarica config.dat solo se l'hash  diverso O se quella locale non  valida
         if local_hash != remote_hash or local_status != license_validator.LicenseStatus.VALID:
             logger.info("Rilevato aggiornamento o licenza locale non valida, download in corso...")
             conf_res = requests.get(f"{base_url}/config.dat", headers=headers_raw, timeout=10)
             if conf_res.status_code == 200:  # noqa: PLR2004
                 new_config_bytes = conf_res.content
 
-                # --- SICUREZZA: Verifica la validità dei nuovi dati prima di sovrascrivere ---
+                # --- SICUREZZA: Verifica la validit  dei nuovi dati prima di sovrascrivere ---
                 try:
                     from src.core.secrets_manager import SecretsManager  # noqa: PLC0415
 
@@ -267,7 +267,7 @@ def run_update() -> bool:  # noqa: PLR0911, PLR0912, PLR0915
                         return False
                 except Exception as ve:
                     logger.error(  # noqa: TRY400
-                        f"La nuova licenza sul cloud è corrotta o non valida ({ve}). Update annullato."
+                        f"La nuova licenza sul cloud  corrotta o non valida ({ve}). Update annullato."
                     )
                     return False
                 # ----------------------------------------------------------------------------
@@ -288,7 +288,7 @@ def run_update() -> bool:  # noqa: PLR0911, PLR0912, PLR0915
             logger.error("Errore durante il download di config.dat")
             return False
 
-        logger.info("✓ Licenza locale già aggiornata.")
+        logger.info("  Licenza locale gia' aggiornata.")
         update_grace_timestamp()
         return True  # noqa: TRY300
 
@@ -296,7 +296,7 @@ def run_update() -> bool:  # noqa: PLR0911, PLR0912, PLR0915
         logger.warning(f"Offline o errore di rete - Impossibile aggiornare: {e}")
         return False
     except Exception as e:
-        # Se è l'eccezione di revoca la facciamo passare
+        # Se  l'eccezione di revoca la facciamo passare
         if "REVOCATA" in str(e):
             raise
         logger.error(f"Errore inatteso durante update licenza: {e}")  # noqa: TRY400
@@ -322,7 +322,7 @@ def _save_license_files(license_dir: str | Path, files: dict[str, bytes]) -> boo
         dir_path = Path(license_dir)
         for name, content in files.items():
             (dir_path / name).write_bytes(content)
-        logger.info("✓ Aggiornamento completato")
+        logger.info("  Aggiornamento completato")
         update_grace_timestamp()
         return True  # noqa: TRY300
     except OSError as e:

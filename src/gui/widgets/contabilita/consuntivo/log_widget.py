@@ -5,9 +5,9 @@ Console chiara per il tracciamento delle operazioni in tempo reale.
 
 from datetime import UTC, datetime
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QFont
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor, QFont
+from PySide6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
     QHBoxLayout,
@@ -29,17 +29,17 @@ class OperationLogWidget(QFrame):
         Inizializza la console di log.
 
         Args:
-            parent: Widget genitore opzionale.
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self.setObjectName("logWidget")
         self.setStyleSheet(f"""
-            QFrame#logWidget {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 12px;
-            }}
-        """)
+      QFrame#logWidget {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 12px;
+      }}
+    """)
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(10)
         shadow.setOffset(0, 2)
@@ -62,20 +62,20 @@ class OperationLogWidget(QFrame):
         clear_btn = QPushButton("Pulisci")
         clear_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         clear_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {COLORS["bg_light"]};
-                color: {COLORS["text_muted"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 6px;
-                padding: 4px 12px;
-                font-size: 11px;
-                font-weight: 600;
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS["border_light"]};
-                color: {COLORS["text_dark"]};
-            }}
-        """)
+      QPushButton {{
+        background-color: {COLORS["bg_light"]};
+        color: {COLORS["text_muted"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 6px;
+        padding: 4px 12px;
+        font-size: 11px;
+        font-weight: 600;
+      }}
+      QPushButton:hover {{
+        background-color: {COLORS["border_light"]};
+        color: {COLORS["text_dark"]};
+      }}
+    """)
         clear_btn.clicked.connect(self.clear)
         header_row.addWidget(clear_btn)
         layout.addLayout(header_row)
@@ -84,17 +84,17 @@ class OperationLogWidget(QFrame):
         self._log_text.setReadOnly(True)
         self._log_text.setFont(QFont("Cascadia Code", 10))
         self._log_text.setStyleSheet(f"""
-            QTextEdit {{
-                background-color: {COLORS["bg_light"]};
-                color: {COLORS["text_dark"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 8px;
-                padding: 5px;
-                selection-background-color: {COLORS["primary_blue"]}4D;
-            }}
-            QScrollBar:vertical {{ border: none; background: transparent; width: 6px; }}
-            QScrollBar::handle:vertical {{ background: {COLORS["border_medium"]}; border-radius: 3px; }}
-        """)
+      QTextEdit {{
+        background-color: {COLORS["bg_light"]};
+        color: {COLORS["text_dark"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 8px;
+        padding: 5px;
+        selection-background-color: {COLORS["primary_blue"]}4D;
+      }}
+      QScrollBar:vertical {{ border: none; background: transparent; width: 6px; }}
+      QScrollBar::handle:vertical {{ background: {COLORS["border_medium"]}; border-radius: 3px; }}
+    """)
         layout.addWidget(self._log_text)
 
     def append_log(self, message: str, level: str = "info") -> None:
@@ -102,8 +102,8 @@ class OperationLogWidget(QFrame):
         Aggiunge una riga alla console con formattazione semantica.
 
         Args:
-            message: Il testo da visualizzare.
-            level: Il livello di severità per la colorazione (info, success, warning, error, step).
+          message: Il testo da visualizzare.
+          level: Il livello di severit  per la colorazione (info, success, warning, error, step).
         """
         colors = {
             "info": COLORS["primary_blue"],

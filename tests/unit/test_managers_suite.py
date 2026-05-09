@@ -12,7 +12,7 @@ def temp_audit_db(tmp_path, mocker):
     db_file = tmp_path / "audit_log.db"
     # Patch the real DB_PATH in AuditDatabase
     mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_file)
-    # Patch signals to avoid PyQt6 issues
+    # Patch signals to avoid PySide6 issues
     mocker.patch("src.core.audit.manager.AuditSignals.instance")
 
     # Force re-initialization for the singleton in test

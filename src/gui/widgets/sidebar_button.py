@@ -8,10 +8,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from PyQt6.QtGui import QDrag
+    from PySide6.QtGui import QDrag
 
-from PyQt6.QtCore import QPoint, QSize, Qt, pyqtProperty  # type: ignore[attr-defined]
-from PyQt6.QtWidgets import QPushButton, QWidget
+from PySide6.QtCore import Property, QPoint, QSize, Qt
+from PySide6.QtWidgets import QPushButton, QWidget
 
 from src.gui.styles import COLORS
 from src.gui.styles.palette_helpers import hex_to_rgba
@@ -21,7 +21,7 @@ from src.utils.helpers import get_colored_icon
 class SidebarButton(QPushButton):
     """
     Pulsante ultra-moderno per la sidebar.
-    Ottimizzato per la fluidità estrema rimuovendo gli effetti grafici costosi.
+    Ottimizzato per la fluidit  estrema rimuovendo gli effetti grafici costosi.
     """
 
     def __init__(self, text: str, icon_path: str = "", parent: QWidget | None = None) -> None:
@@ -47,14 +47,14 @@ class SidebarButton(QPushButton):
         self._refresh_state()
         self._set_base_style()
 
-    @pyqtProperty(float)
+    @Property(float)
     def text_opacity(self) -> float:
-        """Restituisce l'opacità del testo."""
+        """Restituisce l'opacit  del testo."""
         return self._text_opacity
 
     @text_opacity.setter  # type: ignore[no-redef]
     def text_opacity(self, value: float) -> None:
-        """Imposta l'opacità del testo."""
+        """Imposta l'opacit  del testo."""
         self._text_opacity = value
 
     def set_collapsed(self, collapsed: bool, animated: bool = False) -> None:
@@ -71,7 +71,7 @@ class SidebarButton(QPushButton):
 
     def _refresh_state(self) -> None:
         """Sincronizza testo e icone."""
-        base_text = f"   {self.label_text}"
+        base_text = f"  {self.label_text}"
         display_text = f"{base_text} ({self._badge_count})" if self._badge_count > 0 else base_text
 
         if self._collapsed:
@@ -91,33 +91,33 @@ class SidebarButton(QPushButton):
         muted_text = hex_to_rgba(COLORS["bg_white"], 0.7)
 
         self.setStyleSheet(f"""
-            QPushButton {{
-                color: {muted_text};
-                background-color: transparent;
-                border-radius: 8px;
-                padding: 12px 15px;
-                text-align: left;
-                font-size: 14px;
-                font-weight: 500;
-                margin: 2px 8px;
-                border: 1px solid transparent;
-            }}
-            QPushButton[collapsed="true"] {{
-                padding: 0px;
-                text-align: center;
-                margin: 2px 4px;
-            }}
-            QPushButton:checked {{
-                background-color: {active_bg};
-                border: {active_border};
-                color: {text_color};
-                font-weight: 800;
-            }}
-            QPushButton:hover {{
-                background-color: {hover_bg};
-                color: {text_color};
-            }}
-        """)
+      QPushButton {{
+        color: {muted_text};
+        background-color: transparent;
+        border-radius: 8px;
+        padding: 12px 15px;
+        text-align: left;
+        font-size: 14px;
+        font-weight: 500;
+        margin: 2px 8px;
+        border: 1px solid transparent;
+      }}
+      QPushButton[collapsed="true"] {{
+        padding: 0px;
+        text-align: center;
+        margin: 2px 4px;
+      }}
+      QPushButton:checked {{
+        background-color: {active_bg};
+        border: {active_border};
+        color: {text_color};
+        font-weight: 800;
+      }}
+      QPushButton:hover {{
+        background-color: {hover_bg};
+        color: {text_color};
+      }}
+    """)
 
     def set_badge(self, count: int) -> None:
         """Imposta un badge numerico sul pulsante."""

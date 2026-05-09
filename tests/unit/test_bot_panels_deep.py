@@ -44,7 +44,7 @@ def test_scarica_ts_panel_deep(qtbot, mock_ui_deps):
 
     # Test validation
     # Case 1: Empty OdA
-    with patch("PyQt6.QtWidgets.QMessageBox.warning"):
+    with patch("PySide6.QtWidgets.QMessageBox.warning"):
         ready, msg = panel.validate_ready()
         assert ready is False
         assert "OdA" in msg

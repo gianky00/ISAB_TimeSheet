@@ -123,7 +123,7 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
             self.log("[OK] Report scaricato! Sto analizzando i dati...")
             try:
                 self.storage.import_excel(excel_path, self.log)
-                self.log("💾 Dati salvati nel database con successo.")
+                self.log("   Dati salvati nel database con successo.")
                 self.update_step("import", StepStatus.COMPLETED)
             except Exception as e:
                 self.log(f"[ERRORE] Errore durante il salvataggio: {e}")
@@ -134,7 +134,7 @@ class PlaywrightTimbratureBot(PlaywrightBaseBot):
                     with suppress(Exception):
                         p.unlink()
         else:
-            self.log("[ATTENZIONE] Non ho trovato dati o il download non è partito.")
+            self.log("[ATTENZIONE] Non ho trovato dati o il download non  partito.")
             self.update_step("download", StepStatus.ERROR)
 
         self.log("[INFO] Procedura conclusa.")

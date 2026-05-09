@@ -1,5 +1,5 @@
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QLabel,
@@ -22,7 +22,7 @@ class QuickActionsConfigDialog(QDialog):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Configura Azioni Rapide")
-        self.setFixedSize(450, 500)  # Dimensioni più compatte e fisse
+        self.setFixedSize(450, 500)  # Dimensioni piu' compatte e fisse
         self.setModal(True)
 
         palette = get_palette()
@@ -30,34 +30,34 @@ class QuickActionsConfigDialog(QDialog):
         # AGGRESSIVE LOCAL OVERRIDE to ensure Dark Mode doesn't leak
         self.setStyleSheet(
             f"""
-            QDialog {{
-                background-color: {palette.background};
-                color: {palette.on_background};
-            }}
-            QLabel {{
-                color: {palette.on_background};
-                background-color: transparent;
-            }}
-            QCheckBox {{
-                color: {palette.on_background};
-                background-color: transparent;
-            }}
-            QPushButton {{
-                background-color: {palette.primary};
-                color: {palette.on_primary};
-                border: none;
-                border-radius: 6px;
-                padding: 8px 20px;
-                font-weight: 600;
-                font-size: 13px;
-            }}
-            QPushButton:hover {{
-                background-color: {palette.primary_variant};
-            }}
-            QPushButton:pressed {{
-                background-color: {palette.primary_variant};
-            }}
-        """
+      QDialog {{
+        background-color: {palette.background};
+        color: {palette.on_background};
+      }}
+      QLabel {{
+        color: {palette.on_background};
+        background-color: transparent;
+      }}
+      QCheckBox {{
+        color: {palette.on_background};
+        background-color: transparent;
+      }}
+      QPushButton {{
+        background-color: {palette.primary};
+        color: {palette.on_primary};
+        border: none;
+        border-radius: 6px;
+        padding: 8px 20px;
+        font-weight: 600;
+        font-size: 13px;
+      }}
+      QPushButton:hover {{
+        background-color: {palette.primary_variant};
+      }}
+      QPushButton:pressed {{
+        background-color: {palette.primary_variant};
+      }}
+    """
         )
 
         # Load current config
@@ -81,19 +81,19 @@ class QuickActionsConfigDialog(QDialog):
         # Forced Style to ensure Light Theme inside Dialog
         self.tree.setStyleSheet(
             f"""
-            QTreeWidget {{
-                background-color: {palette.surface};
-                color: {palette.on_background};
-                border: 1px solid {palette.border};
-                border-radius: 4px;
-            }}
-            QTreeWidget::item {{
-                padding: 4px;
-            }}
-            QTreeWidget::item:hover {{
-                background-color: {COLORS["bg_light"]};
-            }}
-        """
+      QTreeWidget {{
+        background-color: {palette.surface};
+        color: {palette.on_background};
+        border: 1px solid {palette.border};
+        border-radius: 4px;
+      }}
+      QTreeWidget::item {{
+        padding: 4px;
+      }}
+      QTreeWidget::item:hover {{
+        background-color: {COLORS["bg_light"]};
+      }}
+    """
         )
         layout.addWidget(self.tree)
 
@@ -117,19 +117,19 @@ class QuickActionsConfigDialog(QDialog):
             cancel_btn.setMinimumHeight(36)
             cancel_btn.setStyleSheet(
                 f"""
-                QPushButton {{
-                    background-color: {COLORS["text_muted"]};
-                    color: {COLORS["bg_white"]};
-                    border: none;
-                    border-radius: 6px;
-                    padding: 8px 20px;
-                    font-weight: 600;
-                    font-size: 13px;
-                }}
-                QPushButton:hover {{
-                    opacity: 0.8;
-                }}
-            """
+        QPushButton {{
+          background-color: {COLORS["text_muted"]};
+          color: {COLORS["bg_white"]};
+          border: none;
+          border-radius: 6px;
+          padding: 8px 20px;
+          font-weight: 600;
+          font-size: 13px;
+        }}
+        QPushButton:hover {{
+          opacity: 0.8;
+        }}
+      """
             )
 
         buttons.accepted.connect(self.accept)

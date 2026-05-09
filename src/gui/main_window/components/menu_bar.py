@@ -12,8 +12,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QObject, Qt, QUrl
-from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut
+from PySide6.QtCore import QObject, Qt, QUrl
+from PySide6.QtGui import QDesktopServices, QKeySequence, QShortcut
 
 from src.core.constants import Icons
 from src.core.paths import get_data_path, get_logs_path
@@ -36,7 +36,7 @@ class MenuBarComponent(QObject):
         Inizializza il componente menu e registra le scorciatoie.
 
         Args:
-            main_window: Riferimento alla MainWindow dell'applicazione.
+          main_window: Riferimento alla MainWindow dell'applicazione.
         """
         super().__init__(main_window)
         self.main_window = main_window
@@ -96,7 +96,7 @@ class MenuBarComponent(QObject):
             root_nodes = self._build_menu_tree()
             if not root_nodes:
                 if hasattr(self.main_window, "show_toast"):
-                    self.main_window.show_toast("Errore: l'albero dei comandi è vuoto", "error")
+                    self.main_window.show_toast("Errore: l'albero dei comandi  vuoto", "error")
                 return
 
             self.command_palette = CommandPaletteDialog(self.main_window, root_nodes)
@@ -119,13 +119,13 @@ class MenuBarComponent(QObject):
         Definisce azioni per esecuzione bot, navigazione pagine e manutenzione sistema.
 
         Returns:
-            list[CommandNode]: Lista dei nodi comando radice.
+          list[CommandNode]: Lista dei nodi comando radice.
         """
 
         def restart_app() -> None:
             import subprocess  # noqa: PLC0415
 
-            from PyQt6.QtWidgets import QApplication  # noqa: PLC0415
+            from PySide6.QtWidgets import QApplication  # noqa: PLC0415
 
             QApplication.quit()
             subprocess.Popen([sys.executable, *sys.argv])
@@ -163,7 +163,7 @@ class MenuBarComponent(QObject):
                         ),
                         CommandNode(
                             "Mese Corrente",
-                            "Dal 1° del mese ad oggi",
+                            "Dal 1  del mese ad oggi",
                             Icons.CALENDAR,
                             action=lambda: wc.run_timbrature_bot("mese"),
                         ),
@@ -226,7 +226,7 @@ class MenuBarComponent(QObject):
             children=[
                 CommandNode(
                     "Dashboard",
-                    "KPI e Stato",
+                    "KPiu'e Stato",
                     Icons.ACTIVITY,
                     action=lambda: mw.navigation_controller.navigate_to(PageIndex.DASHBOARD),
                 ),
@@ -244,7 +244,7 @@ class MenuBarComponent(QObject):
                 ),
                 CommandNode(
                     "Strumentale",
-                    "Contabilità & OdA",
+                    "Contabilit  & OdA",
                     Icons.FOLDER,
                     action=lambda: mw.navigation_controller.navigate_to(PageIndex.STRUMENTALE),
                 ),

@@ -26,11 +26,11 @@ class SearchService:
         Esegue la ricerca su tutti i database supportati.
 
         Args:
-            query: La stringa di ricerca.
-            limit: Limite massimo di risultati per categoria.
+          query: La stringa di ricerca.
+          limit: Limite massimo di risultati per categoria.
 
         Returns:
-            Dict con i risultati raggruppati per categoria.
+          Dict con i risultati raggruppati per categoria.
         """
         results: dict[str, Any] = {
             "oda": SearchService._search_oda(query, limit),
@@ -83,15 +83,15 @@ class SearchService:
                 search_pattern = f"%{query}%"
                 cursor.execute(
                     """
-                    SELECT oda, descrizione, pos_oda
-                    FROM storico_oda
-                    WHERE CAST(oda AS TEXT) LIKE ? OR
-                          descrizione LIKE ? OR
-                          testo_breve LIKE ? OR
-                          CAST(contratto AS TEXT) LIKE ? OR
-                          descrizione_fornitore LIKE ?
-                    LIMIT ?
-                    """,
+          SELECT oda, descrizione, pos_oda
+          FROM storico_oda
+          WHERE CAST(oda AS TEXT) LIKE ? OR
+             descrizione LIKE ? OR
+             testo_breve LIKE ? OR
+             CAST(contratto AS TEXT) LIKE ? OR
+             descrizione_fornitore LIKE ?
+          LIMIT ?
+          """,
                     [search_pattern] * 5 + [limit],
                 )
                 return [dict(row) for row in cursor.fetchall()]
@@ -112,20 +112,20 @@ class SearchService:
                 search_pattern = f"%{query}%"
                 cursor.execute(
                     """
-                    SELECT area, pdl, descrizione_attivita
-                    FROM attivita_programmate
-                    WHERE area LIKE ? OR
-                          pdl LIKE ? OR
-                          descrizione_attivita LIKE ? OR
-                          stato_pdl LIKE ? OR
-                          stato_attivita LIKE ?
-                    LIMIT ?
-                    """,
+          SELECT area, pdl, descrizione_attivita
+          FROM attivita_programmate
+          WHERE area LIKE ? OR
+             pdl LIKE ? OR
+             descrizione_attivita LIKE ? OR
+             stato_pdl LIKE ? OR
+             stato_attivita LIKE ?
+          LIMIT ?
+          """,
                     [search_pattern] * 5 + [limit],
                 )
                 return [dict(row) for row in cursor.fetchall()]
         except Exception as e:
-            logger.error(f"SearchService Attività Programmate error: {e}")  # noqa: TRY400
+            logger.error(f"SearchService Attivita'Programmate error: {e}")  # noqa: TRY400
             return []
 
     @staticmethod
@@ -141,14 +141,14 @@ class SearchService:
                 search_pattern = f"%{query}%"
                 cursor.execute(
                     """
-                    SELECT odl, descrizione, unita_tecnica
-                    FROM pdl
-                    WHERE CAST(odl AS TEXT) LIKE ? OR
-                          descrizione LIKE ? OR
-                          unita_tecnica LIKE ? OR
-                          stato LIKE ?
-                    LIMIT ?
-                    """,
+          SELECT odl, descrizione, unita_tecnica
+          FROM pdl
+          WHERE CAST(odl AS TEXT) LIKE ? OR
+             descrizione LIKE ? OR
+             unita_tecnica LIKE ? OR
+             stato LIKE ?
+          LIMIT ?
+          """,
                     [search_pattern] * 4 + [limit],
                 )
                 return [dict(row) for row in cursor.fetchall()]

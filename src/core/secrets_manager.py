@@ -91,7 +91,7 @@ class SecretsManager:
     @classmethod
     def get_license_key(cls) -> bytes | None:
         """
-        Recupera la chiave di licenza in ordine di priorità.
+        Recupera la chiave di licenza in ordine di priorita'.
         """
         # 1. Environment variable
         key = cls._get_key_from_env()
@@ -150,11 +150,11 @@ class SecretsManager:
         return None
 
     _keyring_available: bool | None = None
-    """Cache per lo stato di disponibilità del backend di keyring."""
+    """Cache per lo stato di disponibilita' del backend di keyring."""
 
     @classmethod
     def is_available(cls) -> bool:
-        """Verifica se il servizio di keyring è disponibile (con caching)."""
+        """Verifica se il servizio di keyring  disponibile (con caching)."""
         if cls._keyring_available is not None:
             return cls._keyring_available
 

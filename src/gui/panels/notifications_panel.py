@@ -10,8 +10,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -284,7 +284,7 @@ class NotificationsPanel(QWidget):
         return self._sort_notifications(notifs)
 
     def _render_groups(self, grouped: dict[str, dict[str, Any]], disable_animations: bool) -> None:
-        """Crea i widget per i gruppi temporali e inserisce le card notifiche."""
+        """Crea i widget per i gruppiu'temporali e inserisce le card notifiche."""
         for group_key, group_data in grouped.items():
             if not group_data["notifications"]:
                 continue

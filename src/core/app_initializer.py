@@ -75,7 +75,7 @@ class AppInitializer:
 
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
-        step("Verifica integrità WebDriver...", 19)
+        step("Verifica integrita' WebDriver...", 19)
         from src.utils.resource_manager import ResourceManager  # noqa: PLC0415
 
         ResourceManager.ensure_automation_driver()
@@ -88,7 +88,7 @@ class AppInitializer:
     @staticmethod
     def _verify_license(step: Callable[[str, int], None]) -> None:
         """Verifica HWID e stato licenza."""
-        step("Verifica Identità Hardware (HWID)...", 25)
+        step("Verifica Identit  Hardware (HWID)...", 25)
         from src.core.license_validator import get_hardware_id  # noqa: PLC0415
 
         get_hardware_id()
@@ -139,7 +139,7 @@ class AppInitializer:
 
         tasks = [
             (0, "Preparazione Dashboard"),
-            (1, "Scheduler Attività"),
+            (1, "Scheduler Attivita'"),
             (10, "Archivio Storico OdA"),
             (3, "Caricamento Repository Ore"),
             (4, "Registro Asset Aziendali"),
@@ -186,7 +186,7 @@ class AppInitializer:
         def _force_shutdown() -> None:
             import sys  # noqa: PLC0415
 
-            from PyQt6.QtWidgets import QApplication, QMessageBox  # noqa: PLC0415
+            from PySide6.QtWidgets import QApplication, QMessageBox  # noqa: PLC0415
 
             app = QApplication.instance()
             if app:
@@ -194,8 +194,8 @@ class AppInitializer:
                 msg.setIcon(QMessageBox.Icon.Critical)
                 msg.setWindowTitle("Licenza Revocata")
                 msg.setText(
-                    "La licenza di questo software è stata REVOCATA dal server.\n\n"
-                    "L'applicazione verrà chiusa immediatamente.\n"
+                    "La licenza di questo software  stata REVOCATA dal server.\n\n"
+                    "L'applicazione verr  chiusa immediatamente.\n"
                     "Contattare l'amministratore per assistenza."
                 )
                 msg.setStandardButtons(QMessageBox.StandardButton.Ok)
@@ -203,7 +203,7 @@ class AppInitializer:
             sys.exit(1)
 
         try:
-            from PyQt6.QtCore import QTimer  # noqa: PLC0415
+            from PySide6.QtCore import QTimer  # noqa: PLC0415
 
             QTimer.singleShot(0, _force_shutdown)
         except Exception:

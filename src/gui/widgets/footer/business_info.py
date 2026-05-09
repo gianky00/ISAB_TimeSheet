@@ -5,8 +5,8 @@ Widget per la visualizzazione delle informazioni aziendali e degli account attiv
 
 from typing import Any
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Signal
+from PySide6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
     QHBoxLayout,
@@ -27,17 +27,17 @@ class FooterLeftWidget(QWidget):
     Visualizza il nome del cliente, la scadenza della licenza, l'ID hardware e gli account dei portali.
     """
 
-    portale_clicked = pyqtSignal()
-    safework_clicked = pyqtSignal()
-    engine_clicked = pyqtSignal()
-    headless_clicked = pyqtSignal()
+    portale_clicked = Signal()
+    safework_clicked = Signal()
+    engine_clicked = Signal()
+    headless_clicked = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il widget del footer sinistro.
 
         Args:
-            parent: Widget genitore.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         layout = QHBoxLayout(self)
@@ -95,10 +95,10 @@ class FooterLeftWidget(QWidget):
         v.setSpacing(2)
         self.portale_item = ClickableLabel()
         self.portale_item.setBaseStyle(f"color: {COLORS['text_dark']}; font-size: 13px;")
-        self.portale_item.clicked.connect(self.portale_clicked.emit)
+        self.portale_item.clicked.connect(lambda: self.portale_clicked.emit())
         self.safe_item = ClickableLabel()
         self.safe_item.setBaseStyle(f"color: {COLORS['text_dark']}; font-size: 13px;")
-        self.safe_item.clicked.connect(self.safework_clicked.emit)
+        self.safe_item.clicked.connect(lambda: self.safework_clicked.emit())
         v.addWidget(self.portale_item)
         v.addWidget(self.safe_item)
         layout.addWidget(col)
@@ -111,11 +111,11 @@ class FooterLeftWidget(QWidget):
         v.setSpacing(2)
         self.engine_item = ClickableLabel()
         self.engine_item.setBaseStyle(f"color: {COLORS['text_dark']}; font-size: 13px;")
-        self.engine_item.clicked.connect(self.engine_clicked.emit)
+        self.engine_item.clicked.connect(lambda: self.engine_clicked.emit())
         v.addWidget(self.engine_item)
         self.headless_item = ClickableLabel()
         self.headless_item.setBaseStyle(f"color: {COLORS['text_muted']}; font-size: 12px;")
-        self.headless_item.clicked.connect(self.headless_clicked.emit)
+        self.headless_item.clicked.connect(lambda: self.headless_clicked.emit())
         v.addWidget(self.headless_item)
         layout.addWidget(col)
 
@@ -135,10 +135,10 @@ class FooterLeftWidget(QWidget):
         Aggiorna le informazioni testuali del footer.
 
         Args:
-            client: Nome del cliente licenziatario.
-            expiry: Data di scadenza licenza.
-            last_login: Data e ora dell'ultimo accesso riuscito.
-            hw_id: Identificativo hardware della macchina corrente.
+          client: Nome del cliente licenziatario.
+          expiry: Data di scadenza licenza.
+          last_login: Data e ora dell'ultimo accesso riuscito.
+          hw_id: Identificativo hardware della macchina corrente.
         """
         self.client_item.setText(f"<b>Cliente:</b> {client}")
         self.expiry_item.setText(f"<b>Scadenza:</b> {expiry}")
@@ -148,19 +148,19 @@ class FooterLeftWidget(QWidget):
             self.last_login_item.setText(f"<b>Ultimo Accesso:</b> {last_login}")
 
     def refresh_accounts(self) -> None:
-        """Ricarica i nomi utente degli account, il motore e la modalità dai file di configurazione."""
+        """Ricarica i nomi utente degli account, il motore e la modalita' dai file di configurazione."""
         config = config_manager.load_config()
         portale = self._get_def(config.get("accounts", []))
         safe = self._get_def(config.get("safework_accounts", []))
         engine = config.get("automation_engine", "selenium").capitalize()
 
-        self.portale_item.setText(f"<b>🌐 Portale:</b> {portale or 'N.C.'}")
-        self.safe_item.setText(f"<b>🛡️ SafeWork:</b> {safe or 'N.C.'}")
-        self.engine_item.setText(f"<b>⚙️ Motore:</b> {engine}")
+        self.portale_item.setText(f"<b>   Portale:</b> {portale or 'N.C.'}")
+        self.safe_item.setText(f"<b>    SafeWork:</b> {safe or 'N.C.'}")
+        self.engine_item.setText(f"<b>    Motore:</b> {engine}")
 
         is_headless = config.get("browser_headless", False)
         mode_text = "Nascosto" if is_headless else "Visibile"
-        mode_icon = "👁️‍🗨️" if is_headless else "👁️"
+        mode_icon = "         " if is_headless else "    "
         self.headless_item.setText(f"{mode_icon} Browser: {mode_text}")
 
     def _get_def(self, accounts: list[dict[str, Any]]) -> str | None:
@@ -175,7 +175,7 @@ class FooterLeftWidget(QWidget):
         Esegue un'animazione di comparsa graduale (dissolvenza) del widget.
 
         Args:
-            duration: Durata dell'animazione in ms.
+          duration: Durata dell'animazione in ms.
         """
         self.setVisible(True)
         self.anim = QPropertyAnimation(self._opacity_effect, b"opacity")

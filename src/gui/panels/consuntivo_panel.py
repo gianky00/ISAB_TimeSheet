@@ -4,8 +4,8 @@ Pannello premium per la generazione e manipolazione dei consuntivi automatizzati
 Struttura modulare che integra i widget specializzati per Nuovo, Esistente e Impostazioni.
 """
 
-from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QVBoxLayout, QWidget
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
@@ -22,8 +22,8 @@ class ConsuntivoPanel(QWidget):
         Inizializza il pannello consuntivo con iniezione del controller.
 
         Args:
-            controller: Istanza del controller per la logica di business.
-            parent: Widget genitore opzionale.
+          controller: Istanza del controller per la logica di business.
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self.controller = controller
@@ -37,7 +37,7 @@ class ConsuntivoPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # AnimatedTabWidget — stile premium con indicatore glow
+        # AnimatedTabWidget   stile premium con indicatore glow
         self.tabs = AnimatedTabWidget()
         self.tabs.currentChanged.connect(self._on_tab_changed)
 
@@ -97,5 +97,5 @@ class ConsuntivoPanel(QWidget):
             # Aggiorna solo i percorsi, il progressivo usa la cache interna
             widget._update_dynamic_path()
         elif isinstance(widget, ModificaEsistenteTab):
-            # Tenta una scansione silente (usata solo se la cache è scaduta)
+            # Tenta una scansione silente (usata solo se la cache  scaduta)
             widget._scan_directory()

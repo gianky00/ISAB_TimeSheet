@@ -63,7 +63,7 @@ with Diagram(
     excel_legacy = Storage("Legacy Excel\n(.xlsm / .xlsx)")
 
     with Cluster("SyncroJob Enterprise Ecosystem"):
-        with Cluster("GUI Application (PyQt6)"):
+        with Cluster("GUI Application (PySide6)"):
             gui = Tablet("Main Dashboard")
             gui_components = [Python("KPI & Stats"), Python("Consuntivi View")]
             notif = Python("Toast Notifications")

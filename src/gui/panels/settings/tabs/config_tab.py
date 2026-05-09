@@ -1,14 +1,14 @@
 """
 SyncroJob - Config Tab (Next-Gen)
 Pannello di configurazione strutturato a Card Moderne con navigazione fluida.
-Sostituisce il vecchio QToolBox con un design 'System Hub' ad alta leggibilità.
+Sostituisce il vecchio QToolBox con un design 'System Hub' ad alta leggibilit .
 """
 
 from typing import Any
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
     QHBoxLayout,
@@ -42,10 +42,10 @@ class SettingCard(QFrame):
         Inizializza la card di impostazione.
 
         Args:
-            title: Titolo della sezione.
-            subtitle: Descrizione breve dello scopo.
-            icon_key: Chiave dell'icona in Icons.
-            content_widget: Widget contenente i controlli reali.
+          title: Titolo della sezione.
+          subtitle: Descrizione breve dello scopo.
+          icon_key: Chiave dell'icona in Icons.
+          content_widget: Widget contenente i controlli reali.
         """
         super().__init__()
         self.title_text = title
@@ -53,12 +53,12 @@ class SettingCard(QFrame):
 
         self.setObjectName("settingCard")
         self.setStyleSheet(f"""
-            QFrame#settingCard {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 15px;
-            }}
-        """)
+      QFrame#settingCard {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 15px;
+      }}
+    """)
 
         # Shadow Effect
         shadow = QGraphicsDropShadowEffect(self)
@@ -108,11 +108,11 @@ class SettingCard(QFrame):
 
 class ConfigTab(QWidget):
     """
-    Tab di configurazione d'élite.
+    Tab di configurazione d' lite.
     Organizza le impostazioni in Card tematiche scorrevoli.
     """
 
-    settings_changed = pyqtSignal()
+    settings_changed = Signal()
     """Segnale emesso quando un'impostazione interna viene variata."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -120,7 +120,7 @@ class ConfigTab(QWidget):
         Inizializza il tab di configurazione.
 
         Args:
-            parent: Widget genitore.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.pages: list[QWidget] = []
@@ -262,7 +262,7 @@ class ConfigTab(QWidget):
         self.diag_page = DiagPage()
         card_diag = SettingCard(
             "Diagnostica di Sistema",
-            "Strumenti di verifica integrità e risoluzione problemi.",
+            "Strumenti di verifica integrita' e risoluzione problemi.",
             Icons.ACTIVITY,
             self.diag_page,
         )

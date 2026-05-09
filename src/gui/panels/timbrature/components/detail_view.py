@@ -3,8 +3,8 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QFormLayout, QLabel, QScrollArea, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QFormLayout, QLabel, QScrollArea, QVBoxLayout, QWidget
 
 from src.gui.styles import COLORS
 
@@ -35,7 +35,7 @@ class TimbratureDetailView(QWidget):
             "Codice RILPRES",
             "Codice Qualifica",
             "Specializzazione",
-            "Società Ospitante",
+            "Societa' Ospitante",
             "Data Inserimento",
         ]
         self._setup_ui()
@@ -71,7 +71,7 @@ class TimbratureDetailView(QWidget):
         """
         Visualizza i dati passati.
         Args:
-            data: Tuple o list contenente i dati grezzi della riga.
+          data: Tuple o list contenente i dati grezzi della riga.
         """
         if not data:
             self.clear_fields()
@@ -95,7 +95,7 @@ class TimbratureDetailView(QWidget):
             "Codice RILPRES": 10,
             "Codice Qualifica": 12,
             "Specializzazione": 13,
-            "Società Ospitante": 14,
+            "Societa' Ospitante": 14,
             "Data Inserimento": 15,
         }
 

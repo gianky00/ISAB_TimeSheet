@@ -7,9 +7,9 @@ Modularizzato per utilizzare il Notification Styling Engine.
 from datetime import UTC, datetime
 from typing import Any
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, pyqtSignal
-from PyQt6.QtGui import QMouseEvent, QShowEvent
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt, Signal
+from PySide6.QtGui import QMouseEvent, QShowEvent
+from PySide6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
     QHBoxLayout,
@@ -32,14 +32,14 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class NotificationCard(QFrame):
     """
     Widget moderno per la visualizzazione di una singola notifica.
-    Utilizza stili dinamici basati sulla severità e supporta animazioni di fade-in.
+    Utilizza stili dinamici basati sulla severit  e supporta animazioni di fade-in.
     """
 
     # Signals
-    card_clicked = pyqtSignal(str)
-    card_deleted = pyqtSignal(str)
-    pin_toggled = pyqtSignal(str, bool)
-    action_triggered = pyqtSignal(str, str)
+    card_clicked = Signal(str)
+    card_deleted = Signal(str)
+    pin_toggled = Signal(str, bool)
+    action_triggered = Signal(str, str)
 
     def __init__(
         self,
@@ -51,9 +51,9 @@ class NotificationCard(QFrame):
         Inizializza la card di notifica.
 
         Args:
-            notification: Dizionario contenente i dati della notifica (id, titolo, messaggio, ecc.).
-            parent: Widget genitore opzionale.
-            disable_animations: Se True, disabilita l'effetto di fade-in iniziale.
+          notification: Dizionario contenente i dati della notifica (id, titolo, messaggio, ecc.).
+          parent: Widget genitore opzionale.
+          disable_animations: Se True, disabilita l'effetto di fade-in iniziale.
         """
         super().__init__(parent)
         self.notification = notification
@@ -98,9 +98,8 @@ class NotificationCard(QFrame):
         header_layout = QHBoxLayout()
         header_layout.setSpacing(12)
 
-        is_pinned = self.notification.get("pinned", False)
         self.pin_btn = IconButton()
-        self.pin_btn.setText("📌" if is_pinned else "📍")
+        self.pin_btn.setText("  ")
         self.pin_btn.setFixedSize(24, 24)
         self.pin_btn.clicked.connect(self._toggle_pin)
         header_layout.addWidget(self.pin_btn)
@@ -167,7 +166,7 @@ class NotificationCard(QFrame):
         return datetime.now(UTC).astimezone().strftime("%H:%M")
 
     def _setup_animations(self) -> None:
-        """Configura l'effetto di opacità per l'animazione di ingresso."""
+        """Configura l'effetto di opacit  per l'animazione di ingresso."""
         self.opacity_effect = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self.opacity_effect)
         self.fade_in_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
@@ -180,13 +179,13 @@ class NotificationCard(QFrame):
         """Avvia l'animazione di fade-in quando la card viene mostrata."""
         if not self._disable_animations:
             self.fade_in_animation.start()
-        super().showEvent(event)
+        super().showEvent(event)  # type: ignore[arg-type]
 
     def _toggle_pin(self) -> None:
         """Gestisce il cambiamento di stato 'pinned' della notifica."""
         new_state = not self.notification.get("pinned", False)
         self.notification["pinned"] = new_state
-        self.pin_btn.setText("📌" if new_state else "📍")
+        self.pin_btn.setText("  ")
         self.pin_toggled.emit(self.notification["id"], new_state)
 
     def _delete_notification(self) -> None:
@@ -197,4 +196,4 @@ class NotificationCard(QFrame):
         """Emette il segnale di clic sulla card per contrassegnarla come letta."""
         if event and event.button() == Qt.MouseButton.LeftButton:
             self.card_clicked.emit(self.notification["id"])
-        super().mousePressEvent(event)
+        super().mousePressEvent(event)  # type: ignore[arg-type]

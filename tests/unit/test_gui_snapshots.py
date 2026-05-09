@@ -1,5 +1,5 @@
 import pytest
-from PyQt6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 
 # Import panels from new modular locations
 from src.gui.panels.contabilita_panel import ContabilitaPanel

@@ -1,52 +1,39 @@
 """
 SyncroJob - ROI Engine
-Calcola il risparmio di tempo e risorse basandosi sullo storico delle operazioni dei bot.
+Calcola il risparmio di tempo e risorse basando l'analisi sui log di auditing.
 """
 
 import logging
 import operator
 from contextlib import suppress
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Final, cast
+from datetime import UTC, datetime, timedelta
+from typing import Any, cast
 
-from src.core.config_manager import get_config_value
 from src.core.database import db_manager
+from src.core.schemas import ROIMetrics
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class ROIMetrics:
-    """Modello dati per le metriche di risparmio."""
-
-    total_minutes_saved: float  # Tempo manuale stimato
-    net_minutes_saved: float  # Risparmio reale (Manuale - Bot)
-    total_operations: int
-    success_rate: float  # Percentuale di successo (0-100)
-    reliability_score: int  # Affidabilità del sistema (0-100)
-    total_days: int  # Giorni totali di storico
-    trend_percentage: float  # Variazione % rispetto al mese precedente
-    top_task_name: str  # Nome del task più eseguito (mantenuto per compatibilità)
-    top_task_pct: float  # Percentuale del top task sul totale (mantenuto per compatibilità)
-    top_tasks: list[tuple[str, float]]  # Top 3 task: [(nome, percentuale), ...]
-
-
 class ROIEngine:
-    """Motore per il calcolo del Ritorno sull'Investimento (ROI) delle automazioni."""
+    """
+    Motore analitico per la misurazione del Ritorno sull'Investimento (ROI).
+    Analizza i log di auditing per stimare il tempo risparmiato dall'automazione.
+    """
 
-    DEFAULT_MINUTES: Final[float] = 5.0
-    MINUTES_IN_HOUR: Final[int] = 60
-    MINUTES_IN_DAY: Final[int] = 1440
-    HOURS_IN_DAY: Final[int] = 24
+    DEFAULT_MINUTES = 5.0
+    MINUTES_IN_HOUR = 60
+    HOURS_IN_DAY = 8
 
-    @classmethod
-    def get_weights(cls) -> dict[str, float]:
-        """Recupera i pesi (minuti manuali) dalla configurazione."""
+    @staticmethod
+    def get_weights() -> dict[str, float]:
+        """Recupera i pesi (minuti risparmiati per operazione) dalla configurazione."""
+        from src.core.config_manager import get_config_value  # noqa: PLC0415
+
         default_weights = {
-            "Scarico TS": 5.0,
-            "Carico TS": 8.0,
-            "Dettagli ODA": 3.0,
+            "Scarico TS": 15.0,
+            "Carico TS": 5.0,
+            "Dettagli ODA": 20.0,
             "Prenota BP": 10.0,
             "Scarico PDL": 12.0,
             "Ricerca PDL": 2.0,
@@ -70,74 +57,89 @@ class ROIEngine:
                 logger.warning("ROIEngine: Nessun log di audit trovato.")
                 return ROIMetrics(0, 0, 0, 0, 0, 0, 0.0, "Nessuno", 0.0, [])
 
-            total_min_man, total_bot_min, total_ops, success_cnt, fail_count, critical_errs = (
-                0.0,
-                0.0,
-                0,
-                0,
-                0,
-                0,
-            )
-            curr_30d_ops, prev_30d_ops = 0, 0
-            task_counts: dict[str, int] = {}
+            # Stato accumulatori
+            state: dict[str, Any] = {
+                "total_min_man": 0.0,
+                "total_bot_min": 0.0,
+                "total_ops": 0,
+                "success_cnt": 0,
+                "fail_count": 0,
+                "critical_errs": 0,
+                "curr_30d_ops": 0,
+                "prev_30d_ops": 0,
+                "task_counts": {},
+            }
 
-            now = datetime.now().astimezone()
-            thirty_days_ago = now - timedelta(days=30)
-            sixty_days_ago = now - timedelta(days=60)
+            now = datetime.now(UTC)
+            dates = {"thirty": now - timedelta(days=30), "sixty": now - timedelta(days=60)}
 
             for row in rows:
-                try:
-                    action, entity, status, severity, ts_str, dur_ms = (
-                        str(row[0]),
-                        str(row[1]),
-                        str(row[2]).lower(),
-                        str(row[3]).lower(),
-                        str(row[4]),
-                        row[5] or 0,
-                    )
-                    is_success = status == "success"
-
-                    if not is_success or "Completamento" not in action:
-                        if not is_success:
-                            fail_count += 1
-                            if severity == "critical":
-                                critical_errs += 1
-                        continue
-
-                    success_cnt += 1
-                    search_text = entity.lower() if entity and entity != "-" else action.lower()
-                    matched_task = cls._match_task(search_text, task_aliases)
-
-                    if matched_task:
-                        total_min_man += float(weights.get(matched_task, cls.DEFAULT_MINUTES))
-                        total_bot_min += dur_ms / 60000.0
-                        total_ops += 1
-                        task_counts[matched_task] = task_counts.get(matched_task, 0) + 1
-                        row_date = cls._parse_timestamp(ts_str)
-                        if row_date:
-                            if row_date >= thirty_days_ago:
-                                curr_30d_ops += 1
-                            elif row_date >= sixty_days_ago:
-                                prev_30d_ops += 1
-                except (IndexError, ValueError):
-                    logger.exception("ROIEngine: Errore processamento riga %s", row)
-                    continue
+                cls._process_audit_row(row, state, weights, task_aliases, dates)
 
             return cls._finalize_metrics(
-                total_min_man,
-                total_bot_min,
-                total_ops,
-                success_cnt,
-                fail_count,
-                critical_errs,
-                curr_30d_ops,
-                prev_30d_ops,
-                task_counts,
+                float(state["total_min_man"]),
+                float(state["total_bot_min"]),
+                int(state["total_ops"]),
+                int(state["success_cnt"]),
+                int(state["fail_count"]),
+                int(state["critical_errs"]),
+                int(state["curr_30d_ops"]),
+                int(state["prev_30d_ops"]),
+                cast("dict[str, int]", state["task_counts"]),
                 rows,
             )
         except Exception:
             logger.exception("Errore critico calcolo ROI")
             return ROIMetrics(0, 0, 0, 0, 0, 0, 0.0, "Nessuno", 0.0, [])
+
+    @classmethod
+    def _process_audit_row(
+        cls,
+        row: Any,
+        state: dict[str, Any],
+        weights: dict[str, float],
+        task_aliases: dict[str, list[str]],
+        dates: dict[str, datetime],
+    ) -> None:
+        """Processa una singola riga di log aggiornando lo stato ROI."""
+        try:
+            action, entity, status, severity, ts_str, dur_ms = (
+                str(row[0]),
+                str(row[1]),
+                str(row[2]).lower(),
+                str(row[3]).lower(),
+                str(row[4]),
+                row[5] or 0,
+            )
+            is_success = status == "success"
+
+            if not is_success or "Completamento" not in action:
+                if not is_success:
+                    state["fail_count"] += 1
+                    if severity == "critical":
+                        state["critical_errs"] += 1
+                return
+
+            state["success_cnt"] += 1
+            search_text = entity.lower() if entity and entity != "-" else action.lower()
+            matched_task = cls._match_task(search_text, task_aliases)
+
+            if matched_task:
+                state["total_min_man"] += float(weights.get(matched_task, cls.DEFAULT_MINUTES))
+                state["total_bot_min"] += dur_ms / 60000.0
+                state["total_ops"] += 1
+                state["task_counts"][matched_task] = state["task_counts"].get(matched_task, 0) + 1
+
+                row_date = cls._parse_timestamp(ts_str)
+                if row_date:
+                    if row_date >= dates["thirty"]:
+                        state["curr_30d_ops"] += 1
+                    elif row_date >= dates["sixty"]:
+                        state["prev_30d_ops"] += 1
+        except (IndexError, ValueError):
+            logger.exception("ROIEngine: Errore processamento riga %s", row)
+        except Exception:
+            logger.exception("ROIEngine: Errore imprevisto riga")
 
     @staticmethod
     def _get_task_aliases() -> dict[str, list[str]]:
@@ -171,11 +173,10 @@ class ROIEngine:
         prev_30d_ops: int,
         task_counts: dict[str, int],
         rows: list[Any],
-    ) -> ROIMetrics:  # noqa: PLR0913, RUF100
+    ) -> ROIMetrics:
         total_days = cls._calculate_total_days(rows)
-        success_rate = (
-            (success_cnt / (success_cnt + fail_count) * 100) if (success_cnt + fail_count) > 0 else 0
-        )
+        total_attempts = success_cnt + fail_count
+        success_rate = (success_cnt / total_attempts * 100) if total_attempts > 0 else 0.0
         reliability = max(0, min(100, 100 - (critical_errs * 5)))
         trend_percentage = cls._calculate_trend(curr_30d_ops, prev_30d_ops)
         top_tasks_list = cls._get_top_tasks(task_counts, total_ops)
@@ -232,7 +233,7 @@ class ROIEngine:
     @staticmethod
     def _get_top_tasks(task_counts: dict[str, int], total_ops: int) -> list[tuple[str, float]]:
         """Restituisce i top 3 task per frequenza."""
-        if not task_counts:
+        if not task_counts or total_ops <= 0:
             return []
         sorted_tasks = sorted(task_counts.items(), key=operator.itemgetter(1), reverse=True)
         return [(name, round((count / total_ops) * 100, 1)) for name, count in sorted_tasks[:3]]

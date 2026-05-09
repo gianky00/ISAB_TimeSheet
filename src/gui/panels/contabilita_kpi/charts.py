@@ -1,18 +1,18 @@
 # mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - KPI Charts
-Gestione dei grafici KPI per la contabilità tramite Matplotlib.
+Gestione dei grafici KPI per la contabilit  tramite Matplotlib.
 """
 
 import os
 
-os.environ["QT_API"] = "PyQt6"
+os.environ["QT_API"] = "PySide6"
 
 import numpy as np
 from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (
     QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
@@ -26,11 +26,11 @@ from src.gui.widgets.info_widgets import InfoLabel
 
 
 class DummyCanvas(QLabel):
-    """Fallback canvas utilizzato quando il backend Matplotlib Qt non è disponibile."""
+    """Fallback canvas utilizzato quando il backend Matplotlib Qt non  disponibile."""
 
     def __init__(self, fig: Figure) -> None:
         """Inizializza il canvas di fallback."""
-        super().__init__("Grafico disabilitato (Incompatibilità Backend Matplotlib nativo)")
+        super().__init__("Grafico disabilitato (Incompatibilit  Backend Matplotlib nativo)")
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setStyleSheet("color: #6c757d; font-style: italic;")
         self.figure = fig
@@ -56,11 +56,11 @@ class ChartContainer(QWidget):
         Inizializza il container stilizzato.
 
         Args:
-            canvas: Il widget contenente il grafico Matplotlib.
-            title: Titolo del grafico.
-            height: Altezza minima del widget.
-            info_callback: Funzione chiamata al click sull'icona info.
-            parent: Widget genitore.
+          canvas: Il widget contenente il grafico Matplotlib.
+          title: Titolo del grafico.
+          height: Altezza minima del widget.
+          info_callback: Funzione chiamata al click sull'icona info.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.canvas = canvas
@@ -68,12 +68,12 @@ class ChartContainer(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setStyleSheet(
             f"""
-            QWidget {{
-                background-color: {COLORS["bg_white"]};
-                border-radius: 15px;
-                border: 1px solid {COLORS["border_light"]};
-            }}
-        """
+      QWidget {{
+        background-color: {COLORS["bg_white"]};
+        border-radius: 15px;
+        border: 1px solid {COLORS["border_light"]};
+      }}
+    """
         )
 
         # Ombra
@@ -115,7 +115,7 @@ class KPIChartsManager:
         Inizializza il manager dei grafici.
 
         Args:
-            HOURLY_COST_STD: Costo orario standard per il calcolo dei margini.
+          HOURLY_COST_STD: Costo orario standard per il calcolo dei margini.
         """
         self.HOURLY_COST_STD = HOURLY_COST_STD
         self.annot = None
@@ -143,7 +143,7 @@ class KPIChartsManager:
         self._plot_completamento(kpi_data.get("completamento", {}))
 
     def _plot_stato_attivita(self, counts):  # noqa: ANN001, ANN202
-        """Genera il grafico a torta per lo stato delle attività."""
+        """Genera il grafico a torta per lo stato delle attivita'."""
         self.fig1.clear()
         ax = self.fig1.add_subplot(111)
         if not counts:

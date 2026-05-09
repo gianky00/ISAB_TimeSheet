@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 
 class AuditSignals:
-    """Singleton per i segnali di AuditManager (compatibile con PyQt6)."""
+    """Singleton per i segnali di AuditManager (compatibile con PySide6)."""
 
     _instance: Any = None
 
@@ -14,17 +14,17 @@ class AuditSignals:
         """Restituisce l'istanza singleton del contenitore segnali."""
         if cls._instance is None:
             try:
-                from PyQt6.QtCore import QObject, pyqtSignal  # noqa: PLC0415
+                from PySide6.QtCore import QObject, Signal  # noqa: PLC0415
 
                 class _Signals(QObject):
                     """Contenitore per i segnali basati su Qt."""
 
-                    log_added = pyqtSignal(dict)
-                    logs_updated = pyqtSignal()
+                    log_added = Signal(dict)
+                    logs_updated = Signal()
 
                 cls._instance = _Signals()
             except ImportError:
-                logger.warning("PyQt6 non trovato, segnali Audit disabilitati.")
+                logger.warning("PySide6 non trovato, segnali Audit disabilitati.")
 
                 class _MockSignals:
                     """Mock per i segnali in assenza di ambiente GUI."""

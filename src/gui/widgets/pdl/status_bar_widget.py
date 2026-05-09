@@ -10,16 +10,16 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QRectF, Qt
-from PyQt6.QtGui import QColor, QPainter, QPainterPath
-from PyQt6.QtWidgets import QSizePolicy, QWidget
+from PySide6.QtCore import QRectF, Qt
+from PySide6.QtGui import QColor, QPainter, QPainterPath
+from PySide6.QtWidgets import QSizePolicy, QWidget
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
 from src.utils.helpers import get_asset_path
 
 if TYPE_CHECKING:
-    from PyQt6.QtGui import QPaintEvent
+    from PySide6.QtGui import QPaintEvent
 
 logger = logging.getLogger(__name__)
 
@@ -66,11 +66,11 @@ class ProgrammingStatusWidget(QWidget):
         tgo_b64 = self._get_icon_base64(tgo_icon_path)
 
         html = f"""
-        <div style='padding: 5px; background-color: white;'>
-            <img src='{tcl_b64}' width='32' height='18'>
-            <img src='{tgo_b64}' width='32' height='18' style='margin-left: 5px;'>
-        </div>
-        """
+    <div style='padding: 5px; background-color: white;'>
+      <img src='{tcl_b64}' width='32' height='18'>
+      <img src='{tgo_b64}' width='32' height='18' style='margin-left: 5px;'>
+    </div>
+    """
         self.setToolTip(html)
 
     def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: PLR0915

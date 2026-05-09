@@ -4,8 +4,8 @@ SyncroJob - ODA Tree Widget
 Widget specializzato per la visualizzazione gerarchica degli Ordini di Acquisto.
 """
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QAbstractItemView, QHeaderView, QTreeView
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QTreeView
 
 from src.gui.panels.storico_oda.oda_delegate import ChildDescriptionDelegate
 from src.gui.styles import COLORS
@@ -14,9 +14,9 @@ from src.gui.styles import COLORS
 class ODATreeView(QTreeView):
     """Vista gerarchica per Storico OdA con supporto Master-Detail."""
 
-    selection_changed_custom = pyqtSignal()
-    row_double_clicked = pyqtSignal()
-    context_menu_requested = pyqtSignal(object)  # pos
+    selection_changed_custom = Signal()
+    row_double_clicked = Signal()
+    context_menu_requested = Signal(object)  # pos
 
     def __init__(self, model, parent=None):  # noqa: ANN001, ANN204
         super().__init__(parent)
@@ -53,7 +53,7 @@ class ODATreeView(QTreeView):
         if not index.isValid():
             return
 
-        # Se è un genitore (non ha parent), invertiamo l'espansione
+        # Se  un genitore (non ha parent), invertiamo l'espansione
         if not index.parent().isValid():
             if self.isExpanded(index):
                 self.collapse(index)
@@ -68,26 +68,26 @@ class ODATreeView(QTreeView):
 
         # Styling
         self.setStyleSheet(f"""
-            QTreeView {{
-                gridline-color: {COLORS["bg_alt"]};
-                selection-background-color: {COLORS["table_selection_bg"]};
-                selection-color: {COLORS["text_dark"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 8px;
-                background-color: {COLORS["bg_white"]};
-            }}
-            QHeaderView::section {{
-                background-color: {COLORS["bg_light"]};
-                color: {COLORS["text_dark"]};
-                padding: 10px;
-                font-weight: bold;
-                border: none;
-                border-bottom: 1px solid {COLORS["border_light"]};
-            }}
-        """)
+      QTreeView {{
+        gridline-color: {COLORS["bg_alt"]};
+        selection-background-color: {COLORS["table_selection_bg"]};
+        selection-color: {COLORS["text_dark"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 8px;
+        background-color: {COLORS["bg_white"]};
+      }}
+      QHeaderView::section {{
+        background-color: {COLORS["bg_light"]};
+        color: {COLORS["text_dark"]};
+        padding: 10px;
+        font-weight: bold;
+        border: none;
+        border-bottom: 1px solid {COLORS["border_light"]};
+      }}
+    """)
 
     def configure_headers(self):  # noqa: ANN201
-        """Configura le dimensioni e le modalità di ridimensionamento degli header."""
+        """Configura le dimensioni e le modalita' di ridimensionamento degli header."""
         h = self.header()
         if not h:
             return

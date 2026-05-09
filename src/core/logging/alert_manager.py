@@ -117,15 +117,15 @@ class AlertManager:
         return True
 
     def _record_alert(self, anomaly: Anomaly) -> None:
-        """Registra che un alert è stato inviato."""
+        """Registra che un alert  stato inviato."""
         alert_key = f"{anomaly.type}:{anomaly.message[:50]}"
         with self._lock:
             self._last_alerts[alert_key] = datetime.now(UTC)
 
     def _format_alert_message(self, anomaly: Anomaly) -> str:
         """Formatta messaggio alert per Telegram."""
-        emoji = {"low": "[INFO]", "medium": "[ATTENZIONE]", "high": "[ROSSO]", "critical": "🚨"}.get(
-            anomaly.severity, "📢"
+        emoji = {"low": "[INFO]", "medium": "[ATTENZIONE]", "high": "[ROSSO]", "critical": "  "}.get(
+            anomaly.severity, "  "
         )
 
         type_names = {
@@ -139,18 +139,18 @@ class AlertManager:
             f"{emoji} <b>ALERT SyncroJob</b>",
             "",
             f"<b>Tipo:</b> {type_names.get(anomaly.type, anomaly.type)}",
-            f"<b>Severità:</b> {anomaly.severity.upper()}",
+            f"<b>Severit :</b> {anomaly.severity.upper()}",
             f"<b>Messaggio:</b> {anomaly.message}",
         ]
 
         if anomaly.suggestion:
-            lines.extend(("", f"💡 <i>{anomaly.suggestion}</i>"))
+            lines.extend(("", f"   <i>{anomaly.suggestion}</i>"))
 
         # Aggiungi dettagli rilevanti
         if anomaly.details:
             lines.extend(("", "<b>Dettagli:</b>"))
             for key, value in list(anomaly.details.items())[:3]:
-                lines.append(f"• {key}: {value}")
+                lines.append(f"  {key}: {value}")
 
         timestamp_str = datetime.now(UTC).astimezone().strftime("%Y-%m-%d %H:%M:%S")
         lines.extend(("", f"<code>{timestamp_str}</code>"))
@@ -167,19 +167,19 @@ class AlertManager:
         Invia alert manuale via Telegram.
 
         Args:
-            title: Titolo alert
-            message: Messaggio
-            level: Livello alert
+          title: Titolo alert
+          message: Messaggio
+          level: Livello alert
 
         Returns:
-            True se inviato con successo
+          True se inviato con successo
         """
         telegram = self.telegram
         if not telegram:
             return False
 
-        emoji = {"info": "[INFO]", "warning": "[ATTENZIONE]", "error": "[ROSSO]", "critical": "🚨"}.get(
-            level, "📢"
+        emoji = {"info": "[INFO]", "warning": "[ATTENZIONE]", "error": "[ROSSO]", "critical": "  "}.get(
+            level, "  "
         )
 
         formatted = f"{emoji} <b>{title}</b>\n\n{message}"
@@ -196,10 +196,10 @@ class AlertManager:
         Controlla anomalie e invia alert se necessario.
 
         Args:
-            hours: Ore di lookback per analisi
+          hours: Ore di lookback per analisi
 
         Returns:
-            Numero di alert inviati
+          Numero di alert inviati
         """
         if not self.config.enabled:
             return 0
@@ -226,10 +226,10 @@ class AlertManager:
         Invia alert immediato per anomalia critica (bypass config).
 
         Args:
-            anomaly: Anomalia da segnalare
+          anomaly: Anomalia da segnalare
 
         Returns:
-            True se alert inviato
+          True se alert inviato
         """
         telegram = self.telegram
         if not telegram:

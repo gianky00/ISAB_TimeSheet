@@ -35,7 +35,7 @@ class TimbratureStorage:
         "Codice Fiscale": "codice_fiscale",
         "Codice Qualifica": "codice_qualifica",
         "Specializzazione": "specializzazione",
-        "Società Ospitante": "societa_ospitante",
+        "Societa' Ospitante": "societa_ospitante",
         "Data Ins": "data_ins",
         "Presente Nei Timesheet": "presenza_ts",
         "Sito Timbratura": "sito_timbratura",
@@ -48,8 +48,8 @@ class TimbratureStorage:
 
     def __init__(self, db_path: Path | None = None) -> None:
         """Inizializza il database delle timbrature."""
-        # Se db_path è fornito esplicitamente, usalo (principalmente per test mirati),
-        # altrimenti usa la proprietà dinamica.
+        # Se db_path  fornito esplicitamente, usalo (principalmente per test mirati),
+        # altrimenti usa la propriet  dinamica.
         self._custom_db_path = db_path
         self._ensure_columns()
 
@@ -108,11 +108,11 @@ class TimbratureStorage:
             cursor = conn.cursor()
             # Cerca dipendenti unici
             sql = """
-                    SELECT DISTINCT nome, cognome, codice_fiscale
-                    FROM timbrature
-                    WHERE lower(nome) LIKE ? OR lower(cognome) LIKE ? OR lower(codice_fiscale) LIKE ?
-                    LIMIT 20
-                """
+          SELECT DISTINCT nome, cognome, codice_fiscale
+          FROM timbrature
+          WHERE lower(nome) LIKE ? OR lower(cognome) LIKE ? OR lower(codice_fiscale) LIKE ?
+          LIMIT 20
+        """
             like_query = f"%{query}%"
             cursor.execute(sql, (like_query, like_query, like_query))
 
@@ -205,11 +205,11 @@ class TimbratureStorage:
 
     def _build_timb_query(self, filter_text: str | None, limit: int) -> tuple[str, list[Any]]:
         query = """
-            SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura,
-                   codice_fiscale, id_dipendente, fornitore, codice_rilpres, numero_badge,
-                   codice_qualifica, specializzazione, societa_ospitante, data_ins
-            FROM timbrature
-        """
+      SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura,
+          codice_fiscale, id_dipendente, fornitore, codice_rilpres, numero_badge,
+          codice_qualifica, specializzazione, societa_ospitante, data_ins
+      FROM timbrature
+    """
         params: list[str] = []
         if not filter_text:
             return query + f" ORDER BY id DESC LIMIT {limit * 2}", params
@@ -353,19 +353,19 @@ class TimbratureStorage:
             vals = row.fillna("").astype(str).to_dict()
             cursor.execute(
                 """
-                INSERT INTO timbrature (
-                    id_dipendente, data, ingresso, uscita, fornitore,
-                    codice_rilpres, numero_badge, nome, cognome, codice_fiscale,
-                    codice_qualifica, specializzazione, societa_ospitante,
-                    data_ins, presenza_ts, sito_timbratura
-                )
-                VALUES (
-                    :id_dipendente, :data, :ingresso, :uscita, :fornitore,
-                    :codice_rilpres, :numero_badge, :nome, :cognome, :codice_fiscale,
-                    :codice_qualifica, :specializzazione, :societa_ospitante,
-                    :data_ins, :presenza_ts, :sito_timbratura
-                )
-            """,
+        INSERT INTO timbrature (
+          id_dipendente, data, ingresso, uscita, fornitore,
+          codice_rilpres, numero_badge, nome, cognome, codice_fiscale,
+          codice_qualifica, specializzazione, societa_ospitante,
+          data_ins, presenza_ts, sito_timbratura
+        )
+        VALUES (
+          :id_dipendente, :data, :ingresso, :uscita, :fornitore,
+          :codice_rilpres, :numero_badge, :nome, :cognome, :codice_fiscale,
+          :codice_qualifica, :specializzazione, :societa_ospitante,
+          :data_ins, :presenza_ts, :sito_timbratura
+        )
+      """,
                 vals,
             )
             stats["added"] += 1

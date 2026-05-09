@@ -54,7 +54,7 @@ class MetricsSink:
         Scrive metrica su file.
 
         Args:
-            metric: Metrica da scrivere
+          metric: Metrica da scrivere
         """
         with suppress(Exception), self.metrics_file.open("a", encoding="utf-8") as f:
             f.write(json.dumps(metric.to_dict(), ensure_ascii=False) + "\n")
@@ -68,11 +68,11 @@ class MetricsSink:
         Legge metriche da file.
 
         Args:
-            operation: Filtra per operation specifica (opzionale)
-            limit: Numero massimo metriche da leggere (opzionale)
+          operation: Filtra per operation specifica (opzionale)
+          limit: Numero massimo metriche da leggere (opzionale)
 
         Returns:
-            Lista di metriche
+          Lista di metriche
         """
         if not self.metrics_file.exists():
             return []
@@ -145,9 +145,9 @@ class PerformanceTracker:
         Registra metrica di performance.
 
         Args:
-            operation: Nome operazione (es: "bot.scarico_ts.download")
-            duration_ms: Durata in millisecondi
-            metadata: Metadata aggiuntivi (opzionale)
+          operation: Nome operazione (es: "bot.scarico_ts.download")
+          duration_ms: Durata in millisecondi
+          metadata: Metadata aggiuntivi (opzionale)
         """
         # Crea metrica
         metric = PerformanceMetric(operation, duration_ms, metadata)
@@ -167,10 +167,10 @@ class PerformanceTracker:
         Calcola statistiche per operazione.
 
         Args:
-            operation: Nome operazione
+          operation: Nome operazione
 
         Returns:
-            Dict con statistiche (avg, min, max, p50, p95, p99) o None
+          Dict con statistiche (avg, min, max, p50, p95, p99) o None
         """
         durations = self._in_memory_metrics.get(operation)
         if not durations:
@@ -194,8 +194,8 @@ class PerformanceTracker:
         Imposta baseline per operazione.
 
         Args:
-            operation: Nome operazione
-            baseline_ms: Baseline in millisecondi
+          operation: Nome operazione
+          baseline_ms: Baseline in millisecondi
         """
         self._baselines[operation] = baseline_ms
 
@@ -204,10 +204,10 @@ class PerformanceTracker:
         Restituisce baseline per operazione.
 
         Args:
-            operation: Nome operazione
+          operation: Nome operazione
 
         Returns:
-            Baseline in millisecondi o None
+          Baseline in millisecondi o None
         """
         return self._baselines.get(operation)
 

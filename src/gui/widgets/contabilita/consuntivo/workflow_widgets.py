@@ -5,9 +5,9 @@ Componenti grafici per la visualizzazione del processo di automazione.
 
 from typing import Any, ClassVar, cast
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, pyqtProperty, pyqtSignal  # type: ignore
-from PyQt6.QtGui import QColor, QFont, QMouseEvent
-from PyQt6.QtWidgets import QFrame, QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PySide6.QtCore import Property, QEasingCurve, QEvent, QPropertyAnimation, Qt, Signal
+from PySide6.QtGui import QColor, QEnterEvent, QFont, QMouseEvent
+from PySide6.QtWidgets import QFrame, QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from src.gui.styles import COLORS
 
@@ -15,7 +15,7 @@ from src.gui.styles import COLORS
 class WorkflowStepButton(QFrame):
     """Card pulsante premium per uno step del workflow consuntivo con animazione Glow."""
 
-    clicked = pyqtSignal(str)
+    clicked = Signal(str)
 
     class State:
         """Costanti per gli stati del pulsante del workflow."""
@@ -38,12 +38,12 @@ class WorkflowStepButton(QFrame):
         Inizializza la card dello step.
 
         Args:
-            step_id: Identificativo unico dello step.
-            step_number: Numero d'ordine visualizzato.
-            title: Titolo breve dello step.
-            description: Descrizione estesa.
-            is_action: Se True, applica uno stile pulsante d'azione (gradiente).
-            parent: Widget genitore opzionale.
+          step_id: Identificativo unico dello step.
+          step_number: Numero d'ordine visualizzato.
+          title: Titolo breve dello step.
+          description: Descrizione estesa.
+          is_action: Se True, applica uno stile pulsante d'azione (gradiente).
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self._step_id = step_id
@@ -102,22 +102,22 @@ class WorkflowStepButton(QFrame):
         self._glow_anim.setLoopCount(-1)
 
     def get_glow_opacity(self) -> float:
-        """Restituisce il valore corrente dell'opacità del glow."""
+        """Restituisce il valore corrente dell'opacit  del glow."""
         return self._glow_opacity
 
     def set_glow_opacity(self, value: float) -> None:
-        """Imposta l'opacità del glow e forza il ridisegno."""
+        """Imposta l'opacit  del glow e forza il ridisegno."""
         self._glow_opacity = value
         self.update()
 
-    glowOpacity = pyqtProperty(float, fget=get_glow_opacity, fset=set_glow_opacity)  # noqa: N815
+    glowOpacity = Property(float, fget=get_glow_opacity, fset=set_glow_opacity)  # noqa: N815
 
     def set_state(self, state: str) -> None:
         """
         Cambia lo stato visivo dello step.
 
         Args:
-            state: Uno degli stati definiti in WorkflowStepButton.State.
+          state: Uno degli stati definiti in WorkflowStepButton.State.
         """
         self._state = state
         self._apply_style()
@@ -167,17 +167,17 @@ class WorkflowStepButton(QFrame):
 
         if self._is_action:
             self.setStyleSheet("""
-                WorkflowStepButton {
-                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                        stop:0 #1a237e, stop:0.5 #283593, stop:1 #1565c0);
-                    border: 2px solid #1a237e; border-radius: 14px;
-                }
-                WorkflowStepButton:hover {
-                    border: 2px solid #42a5f5;
-                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                        stop:0 #283593, stop:0.5 #1565c0, stop:1 #1976d2);
-                }
-            """)
+        WorkflowStepButton {
+          background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+            stop:0 #1a237e, stop:0.5 #283593, stop:1 #1565c0);
+          border: 2px solid #1a237e; border-radius: 14px;
+        }
+        WorkflowStepButton:hover {
+          border: 2px solid #42a5f5;
+          background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+            stop:0 #283593, stop:0.5 #1565c0, stop:1 #1976d2);
+        }
+      """)
             self._number_badge.setStyleSheet(
                 "background: rgba(255,255,255,0.2); color: #ffffff; "
                 "border-radius: 14px; border: 1px solid rgba(255,255,255,0.3);"
@@ -185,14 +185,14 @@ class WorkflowStepButton(QFrame):
             self._title_label.setStyleSheet("color: #ffffff; background: transparent;")
         else:
             self.setStyleSheet(f"""
-                WorkflowStepButton {{
-                    background-color: {s["bg"]}; border: 2px solid {s["border"]};
-                    border-radius: 14px;
-                }}
-                WorkflowStepButton:hover {{
-                    border: 2px solid #009688; background-color: #e0f2f1;
-                }}
-            """)
+        WorkflowStepButton {{
+          background-color: {s["bg"]}; border: 2px solid {s["border"]};
+          border-radius: 14px;
+        }}
+        WorkflowStepButton:hover {{
+          border: 2px solid #009688; background-color: #e0f2f1;
+        }}
+      """)
             self._number_badge.setStyleSheet(
                 f"background-color: {s['badge_bg']}; color: {s['badge_color']}; "
                 f"border-radius: 14px; border: none;"
@@ -205,14 +205,14 @@ class WorkflowStepButton(QFrame):
         shadow.setColor(cast("QColor", s["shadow_color"]))
         self.setGraphicsEffect(shadow)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         """Emette il segnale di clic quando viene premuto il tasto sinistro del mouse."""
-        if event and event.button() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self._step_id)
         super().mousePressEvent(event)
 
-    def enterEvent(self, event: Any) -> None:
-        """Evidenzia lo step con un'ombra più marcata al passaggio del mouse."""
+    def enterEvent(self, event: QEnterEvent) -> None:
+        """Evidenzia lo step con un'ombra piu' marcata al passaggio del mouse."""
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(24)
         shadow.setOffset(0, 6)
@@ -220,7 +220,7 @@ class WorkflowStepButton(QFrame):
         self.setGraphicsEffect(shadow)
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any) -> None:
+    def leaveEvent(self, event: QEvent) -> None:
         """Ripristina lo stile originale all'uscita del mouse."""
         self._apply_style()
         super().leaveEvent(event)
@@ -229,7 +229,7 @@ class WorkflowStepButton(QFrame):
 class WorkflowMapWidget(QWidget):
     """Widget mappa workflow con step connessi da frecce."""
 
-    step_clicked = pyqtSignal(str)
+    step_clicked = Signal(str)
 
     STEPS: ClassVar[list[tuple[str, int, str, str]]] = [
         ("carica_dati", 1, "CARICA\nDATI", "CaricaDatiMultiplo"),
@@ -240,11 +240,11 @@ class WorkflowMapWidget(QWidget):
     ]
 
     ACTIONS: ClassVar[list[tuple[str, int, str, str]]] = [
-        ("esegui_1_4", 6, "[AVVIO] ESEGUI\n1→4", "Carica → Elabora → Compila → Verifica"),
-        ("esegui_1_5", 7, "[AVVIO] ESEGUI\n1→5", "Intero workflow completo"),
+        ("esegui_1_4", 6, "[AVVIO] ESEGUI\n1  4", "Carica   Elabora   Compila   Verifica"),
+        ("esegui_1_5", 7, "[AVVIO] ESEGUI\n1  5", "Intero workflow completo"),
     ]
 
-    # Mapping step_id → lista macro VBA da eseguire
+    # Mapping step_id   lista macro VBA da eseguire
     MACRO_MAP: ClassVar[dict[str, list[str]]] = {
         "carica_dati": ["CaricaDatiMultiplo"],
         "elabora_dati": ["elaboraDati"],
@@ -266,7 +266,7 @@ class WorkflowMapWidget(QWidget):
         Inizializza la mappa del workflow.
 
         Args:
-            parent: Widget genitore opzionale.
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self.setMinimumHeight(300)
@@ -282,13 +282,13 @@ class WorkflowMapWidget(QWidget):
         container = QFrame()
         container.setObjectName("workflowContainer")
         container.setStyleSheet("""
-            QFrame#workflowContainer {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 #f8fffe, stop:0.3 #e8f5e9, stop:0.7 #e0f7fa, stop:1 #f3e5f5);
-                border: 1px solid rgba(0, 150, 136, 0.15);
-                border-radius: 20px;
-            }
-        """)
+      QFrame#workflowContainer {
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+          stop:0 #f8fffe, stop:0.3 #e8f5e9, stop:0.7 #e0f7fa, stop:1 #f3e5f5);
+        border: 1px solid rgba(0, 150, 136, 0.15);
+        border-radius: 20px;
+      }
+    """)
         shadow = QGraphicsDropShadowEffect(container)
         shadow.setBlurRadius(30)
         shadow.setOffset(0, 8)
@@ -299,7 +299,7 @@ class WorkflowMapWidget(QWidget):
         container_layout.setContentsMargins(24, 20, 24, 20)
         container_layout.setSpacing(16)
 
-        title = QLabel("⚡ WORKFLOW PIPELINE")
+        title = QLabel("  WORKFLOW PIPELINE")
         title.setFont(QFont("Segoe UI", 13, QFont.Weight.Bold))
         title.setStyleSheet(f"color: {COLORS['text_dark']}; background: transparent; letter-spacing: 2px;")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -312,7 +312,7 @@ class WorkflowMapWidget(QWidget):
 
         for i, (sid, num, label, desc) in enumerate(self.STEPS):
             btn = WorkflowStepButton(sid, num, label, desc)
-            btn.clicked.connect(self.step_clicked.emit)
+            btn.clicked.connect(lambda text: self.step_clicked.emit(text))
             self._step_buttons[sid] = btn
             main_row.addWidget(btn)
             if i < len(self.STEPS) - 1:
@@ -329,7 +329,7 @@ class WorkflowMapWidget(QWidget):
         for sid, num, label, desc in self.ACTIONS:
             btn = WorkflowStepButton(sid, num, label, desc, is_action=True)
             btn.setFixedSize(190, 100)
-            btn.clicked.connect(self.step_clicked.emit)
+            btn.clicked.connect(lambda text: self.step_clicked.emit(text))
             self._step_buttons[sid] = btn
             action_row.addWidget(btn)
 
@@ -342,14 +342,14 @@ class WorkflowMapWidget(QWidget):
 
         # Extra macro buttons con label complete
         extras = [
-            ("email_gen", 8, "📧 Email\nGenerica", "InviaEmailGenerico"),
-            ("email_chiamata", 9, "📞 Email\nChiamata", "InviaEmailConsuntivoChiamata"),
-            ("relazione", 10, "📝 Relazione\nTecnica", "CreaEConvertiRelazioneTecnica"),
+            ("email_gen", 8, "   Email\nGenerica", "InviaEmailGenerico"),
+            ("email_chiamata", 9, "   Email\nChiamata", "InviaEmailConsuntivoChiamata"),
+            ("relazione", 10, "   Relazione\nTecnica", "CreaEConvertiRelazioneTecnica"),
         ]
         for sid, num, label, desc in extras:
             btn = WorkflowStepButton(sid, num, label, desc, is_action=True)
             btn.setFixedSize(140, 80)
-            btn.clicked.connect(self.step_clicked.emit)
+            btn.clicked.connect(lambda text: self.step_clicked.emit(text))
             self._step_buttons[sid] = btn
             action_row.addWidget(btn)
 
@@ -358,7 +358,7 @@ class WorkflowMapWidget(QWidget):
 
     def _create_arrow_label(self, color: str = "#009688") -> QLabel:
         """Crea una label visuale per la freccia di connessione."""
-        arrow = QLabel("→")
+        arrow = QLabel("  ")
         arrow.setFont(QFont("Segoe UI", 22, QFont.Weight.Bold))
         arrow.setStyleSheet(f"color: {color}; background: transparent; padding: 0 6px;")
         arrow.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -370,8 +370,8 @@ class WorkflowMapWidget(QWidget):
         Imposta lo stato di un pulsante step specifico.
 
         Args:
-            step_id: Identificativo dello step.
-            state: Nuovo stato (active, completed, error, ecc.).
+          step_id: Identificativo dello step.
+          state: Nuovo stato (active, completed, error, ecc.).
         """
         if btn := self._step_buttons.get(step_id):
             btn.set_state(state)
@@ -386,10 +386,10 @@ class WorkflowMapWidget(QWidget):
         Restituisce la lista di macro VBA per lo step indicato.
 
         Args:
-            step_id: Identificativo dello step.
+          step_id: Identificativo dello step.
 
         Returns:
-            list[str]: Nomi delle macro VBA associate.
+          list[str]: Nomi delle macro VBA associate.
         """
         extra_map: dict[str, list[str]] = {
             "email_gen": ["InviaEmailGenerico"],

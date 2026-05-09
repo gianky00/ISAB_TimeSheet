@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**SyncroJob Enterprise** is an automation platform for the ISAB supplier portal and SafeWork, built with PyQt6 and Selenium. It automates timesheet downloads/uploads, OdA management, attendance tracking, and safety portal integration.
+**SyncroJob Enterprise** is an automation platform for the ISAB supplier portal and SafeWork, built with PySide6 and Selenium. It automates timesheet downloads/uploads, OdA management, attendance tracking, and safety portal integration.
 
 ## Development Commands
 
@@ -58,7 +58,7 @@ scripts\build.bat --nuitka # Uses Nuitka
 
 ### Application Structure
 
-**Entry Point**: `main.py` → Initializes PyQt6 QApplication and MainWindow
+**Entry Point**: `main.py` → Initializes PySide6 QApplication and MainWindow
 
 **Core Components**:
 - **MainWindow** (`src/gui/main_window.py`): Central hub coordinating controllers and navigation
@@ -107,7 +107,7 @@ Critical managers use singleton pattern:
 - **IMPORTANT**: Access via `AuditManager.instance()` NOT `AuditManager()`
 - Immutable audit trail with SHA-256 hash chaining
 - SQLite-based (`CONFIG_DIR/data/audit_log.db`)
-- **Signals**: Separated into `AuditSignals` class (PyQt6 compatibility)
+- **Signals**: Separated into `AuditSignals` class (PySide6 compatibility)
   - Connect to events: `AuditManager.instance().signals.log_added.connect(callback)`
   - Emits: `log_added`, `logs_updated`
 
@@ -145,7 +145,7 @@ Critical managers use singleton pattern:
 
 ## Important Patterns & Conventions
 
-### PyQt6 Singleton with Signals
+### PySide6 Singleton with Signals
 
 **DO NOT** inherit QObject when using `__new__` singleton pattern. Instead:
 
@@ -157,10 +157,10 @@ class MySignals:
     @classmethod
     def instance(cls):
         if cls._instance is None:
-            from PyQt6.QtCore import QObject, pyqtSignal
+            from PySide6.QtCore import QObject, Signal
 
             class _Signals(QObject):
-                my_signal = pyqtSignal(dict)
+                my_signal = Signal(dict)
 
             cls._instance = _Signals()
         return cls._instance
@@ -230,7 +230,7 @@ UI is Italian language. Key terms:
 
 - Use pytest fixtures in `conftest.py`
 - Mock Selenium WebDriver for bot tests
-- Mock PyQt6 QApplication when testing UI components
+- Mock PySide6 QApplication when testing UI components
 - Test files mirror `src/` structure in `tests/`
 
 ## Common Pitfalls

@@ -7,7 +7,7 @@ import logging
 import time
 from datetime import UTC, datetime
 
-from PyQt6.QtCore import QObject, QThread, pyqtSignal
+from PySide6.QtCore import QObject, QThread, Signal
 
 from src.core.contabilita_manager import ContabilitaManager
 
@@ -17,15 +17,15 @@ logger = logging.getLogger(__name__)
 class ScaricoOreWorker(QThread):
     """Worker thread per l'importazione asincrona di Scarico Ore."""
 
-    finished_signal = pyqtSignal(bool, str, int, int, float)
-    progress_signal = pyqtSignal(str)
+    finished_signal = Signal(bool, str, int, int, float)
+    progress_signal = Signal(str)
 
     def __init__(self, file_path: str) -> None:
         """
         Inizializza il worker per l'importazione.
 
         Args:
-            file_path: Percorso del file Excel dello Scarico Ore da importare.
+          file_path: Percorso del file Excel dello Scarico Ore da importare.
         """
         super().__init__()
         self.file_path = file_path
@@ -54,7 +54,7 @@ class ScaricoOreWorker(QThread):
                 m, s = divmod(int(eta_sec), 60)
                 percent = min(int((current / real_total) * 100), 99)
                 self.progress_signal.emit(
-                    f"Importazione: {percent}% completato ({current}/{real_total}) • ETA: {m}m {s}s"
+                    f"Importazione: {percent}% completato ({current}/{real_total})   ETA: {m}m {s}s"
                 )
 
         success, msg, added, removed = ContabilitaManager.import_scarico_ore(
@@ -66,8 +66,8 @@ class ScaricoOreWorker(QThread):
 class ScaricoOreController(QObject):
     """Controller centrale per il coordinamento dei dati di Scarico Ore."""
 
-    status_changed = pyqtSignal(str)
-    update_finished = pyqtSignal(bool, str)
+    status_changed = Signal(str)
+    update_finished = Signal(bool, str)
 
     def __init__(self) -> None:
         """Inizializza il controller di Scarico Ore."""
@@ -79,7 +79,7 @@ class ScaricoOreController(QObject):
         Inizializza e avvia il thread di importazione asincrona.
 
         Args:
-            file_path: Percorso del file Excel sorgente.
+          file_path: Percorso del file Excel sorgente.
         """
         self.worker = ScaricoOreWorker(file_path)
         self.worker.progress_signal.connect(self.status_changed.emit)
@@ -91,11 +91,11 @@ class ScaricoOreController(QObject):
         Gestisce il completamento del worker di importazione, formattando il report per la UI.
 
         Args:
-            success: Esito dell'operazione.
-            msg: Messaggio di errore o di stato.
-            added: Numero di record aggiunti/aggiornati.
-            removed: Numero di record rimossi.
-            duration: Durata totale dell'operazione in secondi.
+          success: Esito dell'operazione.
+          msg: Messaggio di errore o di stato.
+          added: Numero di record aggiunti/aggiornati.
+          removed: Numero di record rimossi.
+          duration: Durata totale dell'operazione in secondi.
         """
         if success:
             ts = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M")
@@ -114,9 +114,9 @@ class ScaricoOreController(QObject):
         Formatta un numero decimale rimuovendo gli zeri inutili.
 
         Args:
-            value: Il valore numerico da formattare.
+          value: Il valore numerico da formattare.
 
         Returns:
-            str: Stringa formattata (es. '5' invece di '5.00').
+          str: Stringa formattata (es. '5' invece di '5.00').
         """
         return str(int(value)) if value % 1 == 0 else f"{value:.2f}"

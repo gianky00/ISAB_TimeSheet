@@ -30,7 +30,7 @@ async def cmd_start(service: TelegramService, update: Update, context: ContextTy
     if saved_chat_id:
         if chat_id != saved_chat_id:
             if update.message:
-                await update.message.reply_text("[BLOCCO] Questo bot è già associato a un altro dispositivo.")
+                await update.message.reply_text("[BLOCCO] Questo bot  gia' associato a un altro dispositivo.")
             return
     # 2. Gestione nuovo accoppiamento
     elif not await _handle_initial_pairing(service, update, context, config, chat_id):
@@ -74,7 +74,7 @@ async def _handle_initial_pairing(
 
     if update.message:
         await update.message.reply_text(
-            "🔒 *SyncroJob Security*\n\nInserisci il codice dell'app desktop.\nEsempio: `/start 123456`",
+            "   *SyncroJob Security*\n\nInserisci il codice dell'app desktop.\nEsempio: `/start 123456`",
             parse_mode=constants.ParseMode.MARKDOWN,
         )
     return False
@@ -100,4 +100,4 @@ async def cmd_stop(service: TelegramService, update: Update, context: ContextTyp
         return
     service.command_received.emit("stop_all", {})
     if update.message:
-        await update.message.reply_text("🛑 *Richiesta Stop Inviata*")
+        await update.message.reply_text("   *Richiesta Stop Inviata*")

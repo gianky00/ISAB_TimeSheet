@@ -3,7 +3,7 @@ SyncroJob - Footer Manager
 Coordinatore della barra di stato che gestisce la transizione dalla fase di avvio (Boot) a quella operativa.
 """
 
-from PyQt6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget
 
 from .business_info import FooterLeftWidget
 from .components import StartupConsole
@@ -27,10 +27,10 @@ class FooterStatsManager(QWidget):
         Inizializza il manager del footer.
 
         Args:
-            left_widget: Widget per le info aziendali.
-            center_console: Console per i log di avvio.
-            right_widget: Widget per il progresso e lo stato bot.
-            parent: Widget genitore.
+          left_widget: Widget per le info aziendali.
+          center_console: Console per i log di avvio.
+          right_widget: Widget per il progresso e lo stato bot.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.left_widget = left_widget
@@ -46,12 +46,12 @@ class FooterStatsManager(QWidget):
         Nasconde la telemetria di avvio e mostra gli stati dei portali.
 
         Args:
-            client_name: Nome del cliente licenziatario.
-            expiry: Data scadenza licenza.
-            last_login: Data ultimo accesso.
+          client_name: Nome del cliente licenziatario.
+          expiry: Data scadenza licenza.
+          last_login: Data ultimo accesso.
         """
         self.phase = "operational"
-        self.center_console.setText("✓ Sistema SyncroJob pronto.")
+        self.center_console.setText("  Sistema SyncroJob pronto.")
         self.right_widget.show_operational()
         if client_name or expiry or last_login:
             self.left_widget.update_info(client_name, expiry, last_login)
@@ -61,8 +61,8 @@ class FooterStatsManager(QWidget):
         Invia un messaggio di log alla console centrale durante il boot.
 
         Args:
-            message: Testo del messaggio.
-            is_error: Se il messaggio rappresenta un errore.
+          message: Testo del messaggio.
+          is_error: Se il messaggio rappresenta un errore.
         """
         if self.phase == "boot":
             self.center_console.log(message, is_error)

@@ -6,9 +6,9 @@ Componente specializzato per la visualizzazione gerarchica dei certificati campi
 
 from typing import ClassVar
 
-from PyQt6.QtCore import QModelIndex, Qt, pyqtSignal
-from PyQt6.QtGui import QBrush, QColor, QIcon
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QAbstractItemModel, QModelIndex, QPersistentModelIndex, Qt, Signal
+from PySide6.QtGui import QBrush, QColor, QIcon
+from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
     QHeaderView,
@@ -39,7 +39,9 @@ class UbicazioneDelegate(QStyledItemDelegate):
             UbicazioneStrumenti.TECNICO.value,
         ]
 
-    def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:
+    def createEditor(
+        self, parent: QWidget, option: object, index: QModelIndex | QPersistentModelIndex
+    ) -> QWidget:
         """Crea l'editor per la colonna Ubicazione."""
         editor = QComboBox(parent)
         editor.addItems(self.items)
@@ -49,7 +51,7 @@ class UbicazioneDelegate(QStyledItemDelegate):
             editor.setCurrentText(current_text)
         return editor
 
-    def setEditorData(self, editor: QWidget | None, index: QModelIndex):  # noqa: ANN201
+    def setEditorData(self, editor: QWidget, index: QModelIndex | QPersistentModelIndex) -> None:
         """Popola l'editor con i dati correnti."""
         value = index.data(Qt.ItemDataRole.EditRole)
         if isinstance(editor, QComboBox):
@@ -57,38 +59,43 @@ class UbicazioneDelegate(QStyledItemDelegate):
             if idx >= 0:
                 editor.setCurrentIndex(idx)
 
-    def setModelData(self, editor: QWidget | None, model: object, index: QModelIndex):  # noqa: ANN201
+    def setModelData(
+        self, editor: QWidget, model: QAbstractItemModel, index: QModelIndex | QPersistentModelIndex
+    ) -> None:
         """Salva i dati dall'editor al modello."""
         if isinstance(editor, QComboBox):
             value = editor.currentText()
-            model.setData(index, value, Qt.ItemDataRole.EditRole)  # type: ignore
+            model.setData(index, value, Qt.ItemDataRole.EditRole)
 
 
 class AnnotazioniDelegate(QStyledItemDelegate):
     """Delegate per l'inserimento testo libero nelle annotazioni."""
 
-    def createEditor(self, parent: QWidget | None, option: object, index: QModelIndex) -> QWidget:
+    def createEditor(
+        self, parent: QWidget, option: object, index: QModelIndex | QPersistentModelIndex
+    ) -> QWidget:
         """Crea l'editor per la colonna Annotazioni."""
-        editor = QLineEdit(parent)
-        return editor
+        return QLineEdit(parent)
 
-    def setEditorData(self, editor: QWidget | None, index: QModelIndex):  # noqa: ANN201
+    def setEditorData(self, editor: QWidget, index: QModelIndex | QPersistentModelIndex) -> None:
         """Popola l'editor con i dati correnti."""
         value = index.data(Qt.ItemDataRole.EditRole)
         if isinstance(editor, QLineEdit):
             editor.setText(value)
 
-    def setModelData(self, editor: QWidget | None, model: object, index: QModelIndex):  # noqa: ANN201
+    def setModelData(
+        self, editor: QWidget, model: QAbstractItemModel, index: QModelIndex | QPersistentModelIndex
+    ) -> None:
         """Salva i dati dall'editor al modello."""
         if isinstance(editor, QLineEdit):
             value = editor.text()
-            model.setData(index, value, Qt.ItemDataRole.EditRole)  # type: ignore
+            model.setData(index, value, Qt.ItemDataRole.EditRole)
 
 
 class CertificatiTreeWidget(StandardTreeWidget):
     """Tree Widget specializzato per la gestione dei certificati."""
 
-    itemEditedCustom = pyqtSignal(object, str, str)  # (item, col_name, new_value)  # noqa: N815
+    itemEditedCustom = Signal(object, str, str)  # (item, col_name, new_value) # noqa: N815
 
     HEADERS: ClassVar[list[str]] = [
         "ID-COEMI",
@@ -147,36 +154,36 @@ class CertificatiTreeWidget(StandardTreeWidget):
             h.setStretchLastSection(True)
 
         self.setStyleSheet(f"""
-            QTreeWidget {{
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 8px;
-                background-color: {COLORS["bg_white"]};
-                outline: none;
-            }}
-            QTreeWidget::item {{
-                padding: 8px 4px;
-                border-bottom: 1px solid {COLORS["bg_alt"]};
-            }}
-            QTreeWidget::item:hover {{ background-color: {COLORS["bg_light"]}; }}
-            QTreeWidget::item:selected {{
-                background-color: {COLORS["bg_info_pastel"]};
-                color: {COLORS["primary_dark"]};
-            }}
-            QHeaderView::section {{
-                background-color: {COLORS["bg_light"]};
-                padding: 10px 8px;
-                border: none;
-                border-bottom: 2px solid {COLORS["border_light"]};
-                border-right: 1px solid {COLORS["border_light"]};
-                font-weight: bold;
-                color: {COLORS["text_muted"]};
-            }}
-        """)
+      QTreeWidget {{
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 8px;
+        background-color: {COLORS["bg_white"]};
+        outline: none;
+      }}
+      QTreeWidget::item {{
+        padding: 8px 4px;
+        border-bottom: 1px solid {COLORS["bg_alt"]};
+      }}
+      QTreeWidget::item:hover {{ background-color: {COLORS["bg_light"]}; }}
+      QTreeWidget::item:selected {{
+        background-color: {COLORS["bg_info_pastel"]};
+        color: {COLORS["primary_dark"]};
+      }}
+      QHeaderView::section {{
+        background-color: {COLORS["bg_light"]};
+        padding: 10px 8px;
+        border: none;
+        border-bottom: 2px solid {COLORS["border_light"]};
+        border-right: 1px solid {COLORS["border_light"]};
+        font-weight: bold;
+        color: {COLORS["text_muted"]};
+      }}
+    """)
 
     def apply_current_certificate_styling(  # noqa: ANN201
         self, item: SortableTreeWidgetItem, days_to_expiry: int | None, status_dot_icon: str
     ):
-        """Applica lo styling specifico per il certificato più recente."""
+        """Applica lo styling specifico per il certificato piu' recente."""
         if days_to_expiry is None:
             status_text, bg_color, text_color = (
                 "N/D (Senza Scadenza)",
@@ -234,7 +241,7 @@ class CertificatiTreeWidget(StandardTreeWidget):
         item.setIcon(self.IDX_STATO, QIcon(get_asset_path(Icons.STATUS_DOT_GRAY)))
         item.setText(self.IDX_STATO, "STORICO")
         item.setForeground(self.IDX_STATO, QBrush(QColor(COLORS["text_light"])))
-        item.setToolTip(self.IDX_STATO, "Certificato storico - Esiste un certificato più recente")
+        item.setToolTip(self.IDX_STATO, "Certificato storico - Esiste un certificato piu' recente")
 
     def _on_item_changed(self, item: QTreeWidgetItem, column: int):  # noqa: ANN202
         """Gestisce il cambiamento di valore in una cella."""

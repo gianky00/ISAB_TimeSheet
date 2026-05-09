@@ -52,7 +52,7 @@ class DettagliOdALocators:
         By.XPATH,
         "//div[contains(@class, 'x-tabpanel-child') and not(contains(@class, 'x-hidden-offsets'))]//span[contains(@class, 'x-btn-inner') and contains(text(), 'Esporta in Excel')]",
     )
-    """Pulsante di export identificato nella scheda attiva per evitare ambiguità."""
+    """Pulsante di export identificato nella scheda attiva per evitare ambiguit ."""
     GENERAL_EXPORT_BUTTON = (
         By.XPATH,
         "//div[contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]",

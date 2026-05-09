@@ -5,9 +5,9 @@ from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction, QColor, QFont
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction, QColor, QFont
+from PySide6.QtWidgets import (
     QAbstractItemView,
     QHeaderView,
     QMenu,
@@ -27,7 +27,7 @@ from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 if TYPE_CHECKING:
-    from PyQt6.QtCore import QPoint
+    from PySide6.QtCore import QPoint
 
 
 class GiornaliereYearTab(QWidget):
@@ -38,7 +38,7 @@ class GiornaliereYearTab(QWidget):
         "PERSONALE",
         "TCL",
         "DESCRIZIONE\nATTIVITA'",
-        "N°\nPREV.",
+        "N \nPREV.",
         "ODC",
         "PDL",
         "INIZIO",

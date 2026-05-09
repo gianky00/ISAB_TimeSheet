@@ -1,8 +1,8 @@
 # mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
-SyncroJob - Contabilità Panel
-Pannello centrale per la visualizzazione e l'analisi della Contabilità Strumentale.
-Integra reportistica annuale, dati giornalieri, attività programmate e certificati campione.
+SyncroJob - Contabilit  Panel
+Pannello centrale per la visualizzazione e l'analisi della Contabilit  Strumentale.
+Integra reportistica annuale, dati giornalieri, attivita'programmate e certificati campione.
 Include un motore di ricerca unificato e l'accesso al pannello di analisi KPI.
 """
 
@@ -14,8 +14,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Final
 
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 class ContabilitaPanel(QWidget):
     """
-    Pannello principale dell'interfaccia di contabilità.
+    Pannello principale dell'interfaccia di contabilit .
     Organizza i dati complessi in tab logici e fornisce strumenti per:
     - Ricerca rapida tra migliaia di record.
     - Calcolo dinamico dei totali ore su selezione utente.
@@ -65,7 +65,7 @@ class ContabilitaPanel(QWidget):
         Inizializza il pannello e avvia il caricamento lazy dei dati.
 
         Args:
-            parent: Widget genitore opzionale.
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self.worker: ContabilitaWorker | None = None
@@ -248,7 +248,7 @@ class ContabilitaPanel(QWidget):
         self.main_tabs.addTab(
             self.attivita_widget,
             get_colored_icon(get_asset_path(Icons.CALENDAR), COLORS["text_muted"]),
-            "Attività Programmate",
+            "Attivita'Programmate",
         )
 
         self.certificati_widget = CertificatiCampioneTab()
@@ -278,7 +278,7 @@ class ContabilitaPanel(QWidget):
     def _on_main_tab_changed(self, index: int) -> None:
         """Nasconde o mostra gli strumenti di ricerca in base al tab selezionato."""
         tab_text = self.main_tabs.tabText(index)
-        is_kpi = "Analisi KPI" in tab_text
+        is_kpi= "Analisi KPI" in tab_text
         self.toolbar_card.setVisible(not is_kpi)
 
         if not is_kpi:
@@ -291,7 +291,7 @@ class ContabilitaPanel(QWidget):
     def refresh_tabs(self) -> None:
         """
         Interroga il database per gli anni disponibili e aggiorna i tab degli anni.
-        Sincronizza inoltre i dati per le attività e i certificati.
+        Sincronizza inoltre i dati per le attivita'e i certificati.
         """
         years = ContabilitaManager.get_available_years()
         if not years:
@@ -374,7 +374,7 @@ class ContabilitaPanel(QWidget):
                     tree.itemSelectionChanged.disconnect()
                 tree.itemSelectionChanged.connect(lambda: self._update_selection_total(tree))
 
-    def _update_selection_total(self, widget: QWidget) -> None:
+    def _update_selection_total(self, widget: QWidget) -> None:  # noqa: C901
         """Esegue il calcolo granulare delle ore selezionate filtrando le righe nascoste."""
         with suppress(Exception):
             if isinstance(widget, QTreeWidget):

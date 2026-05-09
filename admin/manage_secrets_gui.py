@@ -6,7 +6,7 @@ Gestione sicura delle API Key nel Keyring di Windows.
 import sys
 
 import keyring
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication,
     QFrame,
     QHBoxLayout,
@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (
 
 
 class SecretItem(QFrame):
-    """Widget che rappresenta una singola voce di segreto (API Key) con azioni di salvataggio/visibilità."""
+    """Widget che rappresenta una singola voce di segreto (APiu'Key) con azioni di salvataggio/visibilità."""
 
     def __init__(self, app_name, service_label, secret_key, parent=None):  # noqa: ANN001, ANN204
         """Inizializza l'elemento del segreto caricando il valore esistente dal keyring."""
@@ -89,7 +89,7 @@ class SecretItem(QFrame):
 
 
 class AdminSecretsGUI(QWidget):
-    """Finestra principale per la gestione delle API Key utilizzate dagli script di amministrazione."""
+    """Finestra principale per la gestione delle APiu'Key utilizzate dagli script di amministrazione."""
 
     def __init__(self):  # noqa: ANN204
         """Configura l'interfaccia e carica i segreti predefiniti."""
@@ -101,15 +101,15 @@ class AdminSecretsGUI(QWidget):
 
     def _setup_ui(self):  # noqa: ANN202
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel("🛡️ Gestione API Key Admin"))
+        layout.addWidget(QLabel("🛡️ Gestione APiu'Key Admin"))
 
         container = QWidget()
         self.secrets_layout = QVBoxLayout(container)
 
         # Aggiungi qui le chiavi necessarie
-        self.secrets_layout.addWidget(SecretItem(self.APP_NAME, "Exa API Key", "exa_api_key"))
-        self.secrets_layout.addWidget(SecretItem(self.APP_NAME, "GitHub API Token", "github_api_key"))
-        self.secrets_layout.addWidget(SecretItem(self.APP_NAME, "OpenAI API Key", "openai_api_key"))
+        self.secrets_layout.addWidget(SecretItem(self.APP_NAME, "Exa APiu'Key", "exa_api_key"))
+        self.secrets_layout.addWidget(SecretItem(self.APP_NAME, "GitHub APiu'Token", "github_api_key"))
+        self.secrets_layout.addWidget(SecretItem(self.APP_NAME, "OpenAI APiu'Key", "openai_api_key"))
 
         self.secrets_layout.addStretch()
         layout.addWidget(container)

@@ -1,14 +1,14 @@
 """
 SyncroJob - Bot Efficiency Widget
-Visualizza le metriche di efficienza e affidabilità delle automazioni su tutto lo storico.
-V4.0: Storico totale, nuove metriche di successo e affidabilità con barre di progresso.
+Visualizza le metriche di efficienza e affidabilita' delle automazioni su tutto lo storico.
+V4.0: Storico totale, nuove metriche di successo e affidabilita' con barre di progresso.
 """
 
 import logging
 import threading
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.core.stats.roi_engine import ROIEngine, ROIMetrics
@@ -23,17 +23,17 @@ logger = logging.getLogger(__name__)
 class BotSavingsWidget(ModernCard):
     """
     Widget premium per la visualizzazione dell'efficienza delle automazioni.
-    Calcola il tempo risparmiato, il tasso di successo e l'affidabilità basandosi sullo storico totale.
+    Calcola il tempo risparmiato, il tasso di successo e l'affidabilita' basandosi sullo storico totale.
     """
 
-    stats_updated = pyqtSignal(object)  # ROIMetrics
+    stats_updated = Signal(object)  # ROIMetrics
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il widget Efficienza.
 
         Args:
-            parent: Widget genitore opzionale.
+          parent: Widget genitore opzionale.
         """
         super().__init__(elevation=5, parent=parent)
         self.setMinimumWidth(340)
@@ -46,7 +46,7 @@ class BotSavingsWidget(ModernCard):
 
         QTimer.singleShot(1500, self.refresh_stats)
 
-    # ── UI Setup ──────────────────────────────────────────────────────────
+    #    UI Setup
 
     def _setup_ui(self) -> None:
         """Configura l'architettura visiva del widget (Header, KPI, Dettagli, Footer)."""
@@ -120,7 +120,7 @@ class BotSavingsWidget(ModernCard):
         layout.addLayout(kpi_h)
 
     def _build_detail_section(self, layout: QVBoxLayout) -> None:
-        """Costruisce la sezione di dettaglio con barre di successo e affidabilità."""
+        """Costruisce la sezione di dettaglio con barre di successo e affidabilita'."""
         # -- Success Rate Row --
         success_h = QHBoxLayout()
         success_h.setSpacing(10)
@@ -169,7 +169,7 @@ class BotSavingsWidget(ModernCard):
         lbl_rel_icon.setStyleSheet("background: transparent; border: none;")
         rel_h.addWidget(lbl_rel_icon)
 
-        lbl_rel_tag = QLabel("Affidabilità Sistema")
+        lbl_rel_tag = QLabel("Affidabilita' Sistema")
         lbl_rel_tag.setStyleSheet(
             f"color: {COLORS['text_dark']}; font-size: 13px; font-weight: 700;"
             " background: transparent; border: none;"
@@ -192,7 +192,7 @@ class BotSavingsWidget(ModernCard):
         layout.addWidget(self.progress_rel)
 
     def _build_footer(self, layout: QVBoxLayout) -> None:
-        """Costruisce il piè di pagina con la media giornaliera dei task."""
+        """Costruisce il piu' di pagina con la media giornaliera dei task."""
         self.lbl_avg = QLabel("Media giornaliera: -- task/giorno")
         self.lbl_avg.setStyleSheet(
             f"color: {COLORS['text_light']}; font-size: 11px; font-style: italic;"
@@ -201,7 +201,7 @@ class BotSavingsWidget(ModernCard):
         self.lbl_avg.setAlignment(Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self.lbl_avg)
 
-    # ── Helper Widget Builders ────────────────────────────────────────────
+    #    Helper Widget Builders
 
     def _create_icon_badge(self, icon_key: str, icon_color: str, bg_color: str) -> QLabel:
         """Badge circolare con icona SVG colorata."""
@@ -222,7 +222,7 @@ class BotSavingsWidget(ModernCard):
         value_color: str,
         tag_text: str,
     ) -> QFrame:
-        """Card KPI con badge icona, valore grande e sottotitolo."""
+        """Card KPiu'con badge icona, valore grande e sottotitolo."""
         card = QFrame()
         card.setStyleSheet(
             f"QFrame {{ background-color: {bg_color}; border-radius: 10px;"
@@ -284,7 +284,7 @@ class BotSavingsWidget(ModernCard):
         )
         layout.addWidget(sep)
 
-    # ── Data ──────────────────────────────────────────────────────────────
+    #    Data
 
     def refresh_stats(self) -> None:
         """Avvia il thread di calcolo delle statistiche in background per non bloccare la UI."""
@@ -304,7 +304,7 @@ class BotSavingsWidget(ModernCard):
         Aggiorna gli elementi grafici con le nuove metriche calcolate.
 
         Args:
-            metrics: Oggetto ROIMetrics contenente i dati elaborati.
+          metrics: Oggetto ROIMetrics contenente i dati elaborati.
         """
         if hasattr(self, "lbl_time") and self.lbl_time:
             # Visualizziamo il Risparmio Netto (Manuale - Bot)
@@ -313,37 +313,39 @@ class BotSavingsWidget(ModernCard):
             # Aggiorna Trend
             trend = metrics.trend_percentage
             if trend > 0:
-                trend_text = f"▲ +{trend}% vs 30gg prec."
+                trend_text = f"  +{trend}% vs 30gg prec."
                 color = COLORS["success_dark"]
             elif trend < 0:
-                trend_text = f"▼ {trend}% vs 30gg prec."
+                trend_text = f"  {trend}% vs 30gg prec."
                 color = COLORS["error_red"]
             else:
-                trend_text = "▶ 0% vs 30gg prec."
+                trend_text = "  0% vs 30gg prec."
                 color = COLORS["text_muted"]
 
-            self.lbl_trend.setText(trend_text)
-            self.lbl_trend.setStyleSheet(
-                f"color: {color}; font-size: 11px; font-weight: 700; background: transparent; border: none;"
-            )
+            if self.lbl_trend:
+                self.lbl_trend.setText(trend_text)
+                self.lbl_trend.setStyleSheet(
+                    f"color: {color}; font-size: 11px; font-weight: 700; background: transparent; border: none;"
+                )
 
         if hasattr(self, "lbl_ops") and self.lbl_ops:
             self.lbl_ops.setText(str(metrics.total_operations))
 
             # Aggiorna Top Task (Top 3)
             if metrics.top_tasks:
-                icons = ["🥇", "🥈", "🥉"]
+                icons = ["  ", "  ", "  "]
                 top_text_lines = []
                 for i, (name, pct) in enumerate(metrics.top_tasks):
-                    icon = icons[i] if i < len(icons) else "•"
+                    icon = icons[i] if i < len(icons) else "  "
                     top_text_lines.append(f"{icon} {name} ({pct}%)")
 
-                self.lbl_top_task.setText("\n".join(top_text_lines))
-                self.lbl_top_task.setStyleSheet(
-                    f"color: {COLORS['primary_blue']}; font-size: 10px; font-weight: 700;"
-                    " background: transparent; border: none; line-height: 1.2;"
-                )
-            else:
+                if self.lbl_top_task:
+                    self.lbl_top_task.setText("\n".join(top_text_lines))
+                    self.lbl_top_task.setStyleSheet(
+                        f"color: {COLORS['primary_blue']}; font-size: 10px; font-weight: 700;"
+                        " background: transparent; border: none; line-height: 1.2;"
+                    )
+            elif self.lbl_top_task:
                 self.lbl_top_task.setText("Nessun dato")
 
         # Update Progress Bars

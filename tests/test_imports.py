@@ -12,7 +12,7 @@ print("Test import moduli modificati...")
 print("-" * 50)
 
 try:
-    print("1. PyQt6.QtCore...")
+    print("1. PySide6.QtCore...")
     print("   OK")
 except Exception as e:
     print(f"   ERRORE: {e}")

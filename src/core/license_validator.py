@@ -1,6 +1,6 @@
 """
 SyncroJob - License Validator
-Modulo core per la validazione della licenza e dell'integrità del software.
+Modulo core per la validazione della licenza e dell'integrita' del software.
 Gestisce l'estrazione dell'Hardware ID (HWID), la decifratura asimmetrica dei certificati (.dat)
 e la verifica delle scadenze temporali tramite Trusted Time (Network Time).
 """
@@ -42,7 +42,7 @@ class LicenseStatus(Enum):
 
 
 def _calculate_sha256(filepath: str | Path) -> str:
-    """Calcola l'hash SHA256 di un file per verifiche di integrità."""
+    """Calcola l'hash SHA256 di un file per verifiche di integrita'."""
     sha256_hash = hashlib.sha256()
     with Path(filepath).open("rb") as f:
         for byte_block in iter(lambda: f.read(4096), b""):
@@ -56,7 +56,7 @@ def get_hardware_id() -> str:
     Utilizza seriali dei dischi o UUID di sistema a seconda della piattaforma.
 
     Returns:
-        str: Identificativo hardware normalizzato.
+      str: Identificativo hardware normalizzato.
     """
     raw_id = ""
     if platform.system() == "Windows":
@@ -183,7 +183,7 @@ def get_license_info() -> dict[str, Any] | None:
     Decifra il file config.dat e restituisce i dati strutturati della licenza.
 
     Returns:
-        dict: Metadati licenza (Cliente, Scadenza, HWID) o None se non valida.
+      dict: Metadati licenza (Cliente, Scadenza, HWID) o None se non valida.
     """
     paths = _get_license_paths()
     if not paths["config"].exists():
@@ -211,17 +211,17 @@ def get_license_info() -> dict[str, Any] | None:
 
 
 def verify_license() -> tuple[bool, str]:
-    """Helper per verificare rapidamente se la licenza è valida (Boolean)."""
+    """Helper per verificare rapidamente se la licenza  valida (Boolean)."""
     status, msg = get_detailed_license_status()
     return status == LicenseStatus.VALID, msg
 
 
 def get_detailed_license_status() -> tuple[LicenseStatus, str]:
     """
-    Esegue una verifica completa: presenza file, integrità hash, HWID matching e scadenza temporale.
+    Esegue una verifica completa: presenza file, integrita' hash, HWID matching e scadenza temporale.
 
     Returns:
-        tuple: (LicenseStatus, messaggio descrittivo).
+      tuple: (LicenseStatus, messaggio descrittivo).
     """
     paths = _get_license_paths()
     if not paths["dir"].exists():
@@ -249,7 +249,7 @@ def _check_integrity_with_manifest(paths: dict[str, Any]) -> tuple[LicenseStatus
             AuditManager.instance().log_action(
                 "Violazione Licenza", category="sicurezza", status="error", severity="high"
             )
-            return LicenseStatus.INVALID, "Integrità licenza compromessa (config.dat)"
+            return LicenseStatus.INVALID, "Integrita' licenza compromessa (config.dat)"
     except Exception as e:
         return LicenseStatus.ERROR, f"Errore lettura manifest: {e}"
     return LicenseStatus.VALID, ""

@@ -3,22 +3,22 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QObject, QThread, pyqtSignal
+from PySide6.QtCore import QObject, QThread, Signal
 
 from src.utils.parsing import parse_currency
 
 
 class CacheWorker(QThread):
     """
-    ⚡ BOLT OPTIMIZATION: Background worker for heavy cache operations.
+      BOLT OPTIMIZATION: Background worker for heavy cache operations.
     Handles file I/O (JSON) and data processing.
     Now builds a PRE-FORMATTED display cache for max speed.
     """
 
-    finished = pyqtSignal(
+    finished = Signal(
         object, object, object, object, object
     )  # display_data, search_index, float_totals, style_cache, date_keys
-    progress = pyqtSignal(str)
+    progress = Signal(str)
 
     def __init__(
         self,
@@ -39,7 +39,7 @@ class CacheWorker(QThread):
         if self.data_source:
             self.progress.emit("Recupero dati...")
 
-            # Se data_source è una funzione, la eseguiamo nel thread di background
+            # Se data_source  una funzione, la eseguiamo nel thread di background
             if callable(self.data_source):
                 try:
                     data = self.data_source()

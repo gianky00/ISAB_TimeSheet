@@ -30,7 +30,7 @@ class LogQuery:
         Inizializza il query builder su un file specifico.
 
         Args:
-            log_file: Percorso del file .json o .log da interrogare.
+          log_file: Percorso del file .json o .log da interrogare.
         """
         self.log_file = log_file
         self.filters: list[Callable[[dict[str, Any]], bool]] = []
@@ -42,10 +42,10 @@ class LogQuery:
         Filtra le entry in base ai livelli specificati (es. INFO, ERROR).
 
         Args:
-            *levels: Uno o più livelli di log desiderati.
+          *levels: Uno o piu' livelli di log desiderati.
 
         Returns:
-            LogQuery: L'istanza corrente per concatenazione.
+          LogQuery: L'istanza corrente per concatenazione.
         """
         self.filters.append(lambda entry: entry.get("level") in levels)
         return self
@@ -55,11 +55,11 @@ class LogQuery:
         Filtra i log il cui messaggio contiene la stringa specificata.
 
         Args:
-            text: Sottostringa da cercare.
-            case_sensitive: Se distinguere tra maiuscole e minuscole.
+          text: Sottostringa da cercare.
+          case_sensitive: Se distinguere tra maiuscole e minuscole.
 
         Returns:
-            LogQuery: L'istanza corrente.
+          LogQuery: L'istanza corrente.
         """
 
         def filter_fn(entry: dict[str, Any]) -> bool:
@@ -77,14 +77,14 @@ class LogQuery:
         Filtra in base ai campi contenuti nell'oggetto 'context' del log JSON.
 
         Args:
-            **kwargs: Coppie chiave=valore da matchare nel contesto.
+          **kwargs: Coppie chiave=valore da matchare nel contesto.
 
         Returns:
-            LogQuery: L'istanza corrente.
+          LogQuery: L'istanza corrente.
         """
 
         def filter_fn(entry: dict[str, Any]) -> bool:
-            """Filtra per corrispondenza dei campi nel contesto."""
+            """Filtra per corrispondenza dei campiu'nel contesto."""
             context = entry.get("context", {})
             return all(context.get(key) == value for key, value in kwargs.items())
 
@@ -104,11 +104,11 @@ class LogQuery:
         Filtra i log all'interno di una finestra temporale.
 
         Args:
-            start: Data/ora iniziale (inclusa).
-            end: Data/ora finale (inclusa).
+          start: Data/ora iniziale (inclusa).
+          end: Data/ora finale (inclusa).
 
         Returns:
-            LogQuery: L'istanza corrente.
+          LogQuery: L'istanza corrente.
         """
 
         def filter_fn(entry: dict[str, Any]) -> bool:
@@ -118,7 +118,7 @@ class LogQuery:
                 # Supporta sia formati con 'Z' che senza
                 timestamp = datetime.fromisoformat(timestamp_str.replace("Z", ""))
 
-                # Se il timestamp è naive, assumiamo UTC per coerenza con i log JSON
+                # Se il timestamp  naive, assumiamo UTC per coerenza con i log JSON
                 if timestamp.tzinfo is None:
                     timestamp = timestamp.replace(tzinfo=UTC)
             except Exception:
@@ -158,7 +158,7 @@ class LogQuery:
         Esegue la query leggendo il file riga per riga e applicando i filtri.
 
         Returns:
-            list: Lista di dizionari log che soddisfano tutti i criteri.
+          list: Lista di dizionari log che soddisfano tutti i criteri.
         """
         if not self.log_file.exists():
             return []
@@ -181,7 +181,7 @@ class LogQuery:
         Conta il numero totale di log che matchano la query senza caricarli in memoria.
 
         Returns:
-            int: Numero di occorrenze.
+          int: Numero di occorrenze.
         """
         if not self.log_file.exists():
             return 0
@@ -212,10 +212,10 @@ class LogViewer:
         Crea un nuovo query builder per il tipo di log specificato.
 
         Args:
-            log_type: "application" per i log generali, "errors" per i soli errori.
+          log_type: "application" per i log generali, "errors" per i soli errori.
 
         Returns:
-            LogQuery: Istanza del builder configurata sul file corretto.
+          LogQuery: Istanza del builder configurata sul file corretto.
         """
         if log_type == "application":
             log_file = self.config.json_log_file
@@ -235,7 +235,7 @@ class LogViewer:
         return stats.copy()
 
     def get_error_summary(self, limit: int = DEFAULT_LIMIT) -> list[dict[str, Any]]:
-        """Analizza i log di errore e raggruppa i messaggi più frequenti."""
+        """Analizza i log di errore e raggruppa i messaggia'piu' frequenti."""
         error_messages: dict[str, int] = defaultdict(int)
         error_details: dict[str, dict[str, Any]] = {}
         results = self.query("errors").execute()

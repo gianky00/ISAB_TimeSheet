@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from PyQt6.QtGui import QColor
+from PySide6.QtGui import QColor
 
 from src.gui.styles import COLORS
 

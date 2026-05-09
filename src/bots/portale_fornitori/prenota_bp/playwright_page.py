@@ -22,8 +22,8 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
         Inizializza la pagina di prenotazione BP.
 
         Args:
-            page: Oggetto Page di Playwright.
-            log_callback: Funzione per l'invio dei log.
+          page: Oggetto Page di Playwright.
+          log_callback: Funzione per l'invio dei log.
         """
         super().__init__(page, log_callback)
 
@@ -34,7 +34,7 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
 
         filter_sel = self._get_selector(PrenotaBPLocators.FILTER_FORNITORE)
         if self.page.is_visible(filter_sel):
-            self.log("Pagina Gestione BP già caricata.")
+            self.log("Pagina Gestione BP gia' caricata.")
             return
 
         submenu_sel = self._get_selector(PrenotaBPLocators.SUBMENU_GESTIONE_BP)
@@ -62,10 +62,10 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
         Imposta i filtri di ricerca per individuare il buono di prelievo.
 
         Args:
-            fornitore: Nome del fornitore da selezionare.
-            numero_bp: Numero del BP da cercare.
-            data_da: Data inizio intervallo.
-            data_a: Data fine intervallo.
+          fornitore: Nome del fornitore da selezionare.
+          numero_bp: Numero del BP da cercare.
+          data_da: Data inizio intervallo.
+          data_a: Data fine intervallo.
         """
         self.log("Impostazione filtri di ricerca...")
 
@@ -74,7 +74,7 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
             arrow_sel = self._get_selector(PrenotaBPLocators.FILTER_FORNITORE_ARROW)
 
             if not self._select_combobox_item(input_sel, arrow_sel, fornitore):
-                self.log("  ⚠ Avviso: Selezione fornitore fallita, tento inserimento manuale forzato.")
+                self.log("   Avviso: Selezione fornitore fallita, tento inserimento manuale forzato.")
                 self.page.fill(input_sel, fornitore)
                 self.page.press(input_sel, "Enter")
 
@@ -118,10 +118,10 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
 
     def gestisci_creazione_richiesta(self, note: str) -> None:
         """
-        Orchestra il flusso di analisi disponibilità, selezione materiali e creazione richiesta.
+        Orchestra il flusso di analisi disponibilita', selezione materiali e creazione richiesta.
 
         Args:
-            note: Testo da inserire nel campo note della richiesta.
+          note: Testo da inserire nel campo note della richiesta.
         """
         self.log("Gestione creazione richiesta...")
 
@@ -144,7 +144,7 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
         check_xpath = self._get_selector(PrenotaBPLocators.CELL_MATERIALE_DISPONIBILE).replace("xpath=", "")
 
         for i, row in enumerate(rows):
-            # Cerca l'icona di disponibilità all'interno della riga
+            # Cerca l'icona di disponibilita' all'interno della riga
             if row.locator(f"xpath={check_xpath}").count() > 0:
                 indices.append(i)
 
@@ -154,15 +154,15 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
         """Seleziona i materiali disponibili nella griglia."""
         count_available = len(available_indices)
         if count_available == 0:
-            self.log("⚠ Nessun materiale disponibile.")
+            self.log("  Nessun materiale disponibile.")
             return False
 
         if count_available == total_rows:
-            self.log("✓ Tutti i materiali disponibili. Seleziono tutto.")
+            self.log("  Tutti i materiali disponibili. Seleziono tutto.")
             self.page.click(self._get_selector(PrenotaBPLocators.HEADER_CHECKBOX_SELECT_ALL))
             return True
 
-        self.log(f"⚠ Disponibili {count_available} su {total_rows}. Selezione puntuale.")
+        self.log(f"  Disponibili {count_available} su {total_rows}. Selezione puntuale.")
         checkers_sel = self._get_selector(PrenotaBPLocators.GRID_CHECKERS)
         checkers = self.page.locator(checkers_sel).all()
 
@@ -180,7 +180,7 @@ class PlaywrightPrenotaBPPage(PlaywrightBasePage):
         self._wait_overlay()
 
         now = datetime.now(UTC).astimezone()
-        data_oggi = now.strftime("%d/%m/%Y")
+        data_oggi= now.strftime("%d/%m/%Y")
         ora_attuale = now.strftime("%H%M")
         ora_fine = (now + timedelta(minutes=30)).strftime("%H%M")
 

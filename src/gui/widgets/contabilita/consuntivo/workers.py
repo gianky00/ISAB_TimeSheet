@@ -3,7 +3,7 @@ SyncroJob - Consuntivo Workers
 Worker per operazioni asincrone nel modulo Consuntivi.
 """
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import QThread, Signal
 
 from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoController
 
@@ -11,7 +11,7 @@ from src.core.contabilita.consuntivo.consuntivo_controller import ConsuntivoCont
 class ProgWorker(QThread):
     """Worker per il calcolo asincrono del progressivo OdC."""
 
-    finished = pyqtSignal(str)
+    finished = Signal(str)
 
     def __init__(self, controller: ConsuntivoController, year: str):  # noqa: ANN204
         super().__init__()

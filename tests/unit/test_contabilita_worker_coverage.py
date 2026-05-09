@@ -12,7 +12,7 @@ class TestContabilitaWorker:
 
     @pytest.fixture
     def worker(self, mocker):
-        mocker.patch("PyQt6.QtCore.QThread.__init__", return_value=None)
+        mocker.patch("PySide6.QtCore.QThread.__init__", return_value=None)
         # Mock signals explicitly since QThread init is mocked
         w = ContabilitaWorker("test.xlsx")
         w.finished_signal = MagicMock()

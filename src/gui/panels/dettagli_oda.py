@@ -10,8 +10,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QDate, QTimer
-from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
+from PySide6.QtCore import QDate, QTimer
+from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.core.constants import Icons
@@ -337,7 +337,7 @@ class DettagliOdAPanel(BaseBotPanel):
         self._setup_worker_connections(self.worker)
 
         # Reset pallini all'avvio (Asincrono per non bloccare il click)
-        from PyQt6.QtCore import QTimer  # noqa: PLC0415
+        from PySide6.QtCore import QTimer  # noqa: PLC0415
 
         QTimer.singleShot(0, lambda: self._update_status_list(force=True))
 

@@ -4,8 +4,8 @@ Controller per la gestione della System Tray Icon.
 
 from typing import Any
 
-from PyQt6.QtGui import QAction, QIcon
-from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
+from PySide6.QtGui import QAction, QIcon
+from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS

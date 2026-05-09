@@ -19,10 +19,10 @@ def build_timbrature_maps(
     Costruisce mappe di lookup per le timbrature indicizzate per CF e per Nome/Cognome.
 
     Args:
-        accessi: Lista di tuple (cognome, nome, cf, data_ora).
+      accessi: Lista di tuple (cognome, nome, cf, data_ora).
 
     Returns:
-        tuple: (mappa_cf, mappa_nomi, funzione_normalize).
+      tuple: (mappa_cf, mappa_nomi, funzione_normalize).
     """
     today = datetime.now(UTC)
     last_by_cf: dict[str, int] = {}

@@ -1,7 +1,40 @@
 # mypy: disable-error-code="no-any-unimported, misc, no-any-return"
+from dataclasses import dataclass
+from typing import Any
+
 import pandas as pd
 import pandera.pandas as pa
 from pandera.typing import Series
+
+
+@dataclass
+class ROIMetrics:
+    """Modello dati per le metriche di ritorno sull'investimento."""
+
+    total_minutes_saved: float
+    net_minutes_saved: float
+    total_operations: int
+    success_rate: float
+    reliability_score: int
+    total_days: int
+    trend_percentage: float
+    top_task_name: str
+    top_task_pct: float
+    top_tasks: list[tuple[str, float]]
+
+
+@dataclass
+class PDLMetrics:
+    """Modello dati per le metriche dei Permessi di Lavoro."""
+
+    total_count: int
+    active_count: int
+    expired_count: int
+    warning_count: int
+    last_sync: str
+    trend_percentage: float
+    weekly_trend_percentage: float
+    areas_stats: list[Any]
 
 
 class DipendenteSchema(pa.DataFrameModel):
@@ -43,7 +76,7 @@ class GiornaliereSchema(pa.DataFrameModel):
 
 
 class ContabilitaSchema(pa.DataFrameModel):
-    """Schema di validazione per i file di Contabilità."""
+    """Schema di validazione per i file di Contabilit ."""
 
     data_prev: Series[pd.Timestamp] = pa.Field(coerce=True, nullable=True)
     mese: Series[str] = pa.Field(nullable=True)
@@ -82,7 +115,7 @@ def validate_giornaliere(df: pd.DataFrame, headers_only: bool = False) -> pd.Dat
 
 
 def validate_contabilita(df: pd.DataFrame, headers_only: bool = False) -> pd.DataFrame:
-    """Valida un dataframe di contabilità."""
+    """Valida un dataframe di contabilit ."""
     if headers_only:
         return ContabilitaSchema.validate(df.head(0), lazy=True)
     return ContabilitaSchema.validate(df, lazy=True)

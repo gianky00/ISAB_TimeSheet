@@ -1,6 +1,6 @@
-from PyQt6.QtCore import QRectF, Qt
-from PyQt6.QtGui import QColor, QFont, QPainter, QPaintEvent, QPen
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QRectF, Qt
+from PySide6.QtGui import QColor, QFont, QPainter, QPaintEvent, QPen
+from PySide6.QtWidgets import (
     QLabel,
     QVBoxLayout,
     QWidget,
@@ -26,8 +26,8 @@ class DonutChart(QWidget):
         Imposta i nuovi dati di successo/errore e aggiorna il grafico.
 
         Args:
-            success_count: Numero di successi.
-            error_count: Numero di errori.
+          success_count: Numero di successi.
+          error_count: Numero di errori.
         """
         self.values = [success_count, error_count]
         self.update()  # Trigger repaint

@@ -40,7 +40,7 @@ class StatsManager:
         Include un meccanismo di migrazione per recuperare dati da versioni legacy (statistics.json).
 
         Returns:
-            dict: Dizionario contenente le statistiche raggruppate per ID bot.
+          dict: Dizionario contenente le statistiche raggruppate per ID bot.
         """
         config = config_manager.load_config()
         if not config.get("statistics"):
@@ -86,10 +86,10 @@ class StatsManager:
     def increment_usage(self, bot_id: str) -> None:
         """
         Incrementa il contatore delle esecuzioni (runs) per un determinato bot.
-        Aggiorna inoltre il timestamp dell'ultima attività rilevata.
+        Aggiorna inoltre il timestamp dell'ultima attivita'rilevata.
 
         Args:
-            bot_id: Identificativo unico dell'automazione (es. 'scarico_ts').
+          bot_id: Identificativo unico dell'automazione (es. 'scarico_ts').
         """
         if bot_id not in self.stats:
             self.stats[bot_id] = {"runs": 0, "errors": 0, "last_run": None}
@@ -107,7 +107,7 @@ class StatsManager:
         Registra un fallimento o un errore critico per un determinato bot.
 
         Args:
-            bot_id: Identificativo unico dell'automazione.
+          bot_id: Identificativo unico dell'automazione.
         """
         if bot_id not in self.stats:
             self.stats[bot_id] = {"runs": 0, "errors": 0, "last_run": None}
@@ -122,6 +122,6 @@ class StatsManager:
         Restituisce l'intero dataset delle statistiche di utilizzo.
 
         Returns:
-            dict: Mappa bot_id -> {runs, errors, last_run}.
+          dict: Mappa bot_id -> {runs, errors, last_run}.
         """
         return self.stats

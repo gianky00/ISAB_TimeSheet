@@ -3,7 +3,7 @@ SyncroJob - Palette Helpers
 Utility per la manipolazione dinamica dei colori e generazione di stili QSS.
 """
 
-from PyQt6.QtGui import QColor
+from PySide6.QtGui import QColor
 
 from src.gui.styles.constants import COLORS
 

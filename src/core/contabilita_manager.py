@@ -1,6 +1,6 @@
 """
 Bot TS - Contabilita Manager
-Gestione dell'importazione e archiviazione dati della Contabilità Strumentale.
+Gestione dell'importazione e archiviazione dati della Contabilit  Strumentale.
 """
 
 import logging
@@ -127,7 +127,7 @@ class ContabilitaManager:
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, int, int]:
-        """Importa il file Attività Programmate (veloce, senza colori)."""
+        """Importa il file Attivita'Programmate (veloce, senza colori)."""
         success, message, imported_rows = ExcelImporter.import_attivita_programmate(
             file_path, progress_callback
         )
@@ -190,7 +190,7 @@ class ContabilitaManager:
 
     @classmethod
     def get_attivita_programmate_data(cls) -> list[tuple[Any, ...]]:
-        """Restituisce i dati Attività Programmate."""
+        """Restituisce i dati Attivita'Programmate."""
         return ContabilitaQueries.get_attivita_programmate_data(db_manager.DB_CONTABILITA)
 
     @classmethod

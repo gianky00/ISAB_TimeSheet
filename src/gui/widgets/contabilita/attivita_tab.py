@@ -1,6 +1,6 @@
 """
-SyncroJob - Contabilità Attività Programmate
-Tab specializzato per la visualizzazione delle attività programmate settimanali.
+SyncroJob - Contabilit  Attivita'Programmate
+Tab specializzato per la visualizzazione delle attivita'programmate settimanali.
 Include filtri avanzati per PS, PO, Area e Stato PdL.
 """
 
@@ -11,9 +11,9 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any, ClassVar
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
     QComboBox,
@@ -39,7 +39,7 @@ from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 
 class AttivitaProgrammateTab(QWidget):
     """
-    Tab per la visualizzazione e il filtraggio delle Attività Programmate.
+    Tab per la visualizzazione e il filtraggio delle Attivita'Programmate.
     Utilizza una tabella ad alte prestazioni per mostrare lo stato delle PdL e la pianificazione settimanale.
     """
 
@@ -64,10 +64,10 @@ class AttivitaProgrammateTab(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
-        Inizializza il tab delle attività programmate.
+        Inizializza il tab delle attivita'programmate.
 
         Args:
-            parent: Widget genitore.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.chk_ps: QCheckBox
@@ -306,10 +306,10 @@ class AttivitaProgrammateTab(QWidget):
 
     def filter_data(self, text: str) -> None:
         """
-        Esegue una ricerca testuale globale su tutte le righe non già nascoste dai filtri.
+        Esegue una ricerca testuale globale su tutte le righe non gia' nascoste dai filtri.
 
         Args:
-            text: Testo di ricerca.
+          text: Testo di ricerca.
         """
         search_terms = text.lower().split()
         cols = self.table.columnCount()

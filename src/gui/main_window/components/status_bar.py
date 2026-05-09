@@ -9,8 +9,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QSize, Qt, QTimer
-from PyQt6.QtWidgets import QGraphicsOpacityEffect, QStatusBar
+from PySide6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QSize, Qt, QTimer
+from PySide6.QtWidgets import QGraphicsOpacityEffect, QStatusBar
 
 from src.core import config_manager
 from src.core.constants import Icons
@@ -44,7 +44,7 @@ class StatusBarComponent(QObject):
         Inizializza il componente della barra di stato.
 
         Args:
-            main_window: Riferimento alla MainWindow dell'applicazione.
+          main_window: Riferimento alla MainWindow dell'applicazione.
         """
         super().__init__(main_window)
         self.main_window = main_window
@@ -72,12 +72,12 @@ class StatusBarComponent(QObject):
         self.status_bar = QStatusBar()
         self.status_bar.setStyleSheet(
             f"""
-            QStatusBar {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS["bg_white"]}, stop:1 {COLORS["bg_light"]});
-                border-top: 2px solid qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {COLORS["border_light"]}, stop:0.5 {COLORS["border_medium"]}, stop:1 {COLORS["border_light"]});
-                min-height: 65px;
-            }}
-        """
+      QStatusBar {{
+        background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {COLORS["bg_white"]}, stop:1 {COLORS["bg_light"]});
+        border-top: 2px solid qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {COLORS["border_light"]}, stop:0.5 {COLORS["border_medium"]}, stop:1 {COLORS["border_light"]});
+        min-height: 65px;
+      }}
+    """
         )
         self.main_window.setStatusBar(self.status_bar)
 
@@ -152,7 +152,7 @@ class StatusBarComponent(QObject):
 
     def show_operational_state(self) -> None:
         """
-        Transiziona la barra di stato alla modalità operativa.
+        Transiziona la barra di stato alla modalita' operativa.
         Esegue animazioni di fade-out sui widget di avvio e attiva quelli di monitoraggio.
         """
         import logging  # noqa: PLC0415
@@ -183,7 +183,7 @@ class StatusBarComponent(QObject):
             def hide_and_reset_telemetry() -> None:
                 """Nasconde il widget di telemetria e ferma il timer al termine dell'animazione."""
                 self.boot_telemetry.setVisible(False)
-                self.boot_telemetry.setGraphicsEffect(None)
+                self.boot_telemetry.setGraphicsEffect(None)  # type: ignore[arg-type]
                 if self.boot_telemetry.timer.isActive():
                     self.boot_telemetry.timer.stop()
 
@@ -200,10 +200,10 @@ class StatusBarComponent(QObject):
 
     def update_autopilot_ui(self) -> None:
         """
-        Analizza i bot programmati nell'Autopilot e calcola il countdown per il task più imminente.
+        Analizza i bot programmati nell'Autopilot e calcola il countdown per il task piu' imminente.
         Aggiorna le card di stato nella parte destra della barra.
         """
-        from PyQt6.QtCore import QTime  # noqa: PLC0415
+        from PySide6.QtCore import QTime  # noqa: PLC0415
 
         config = config_manager.load_config()
 

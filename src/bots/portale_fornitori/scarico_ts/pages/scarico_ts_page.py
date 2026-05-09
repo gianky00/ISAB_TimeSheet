@@ -63,14 +63,14 @@ class ScaricoTSPage:
             return True  # noqa: TRY300
 
         except Exception as e:
-            self.log(f"✗ Errore navigazione menu: {e}")
+            self.log(f"  Errore navigazione menu: {e}")
             return False
 
     def setup_filters(self, supplier: str, date_from: str) -> bool:
         """Sets the initial filters (Supplier and Date)."""
         try:
             # Select Supplier
-            self.log(f"  Selezione fornitore: '{supplier}'...")
+            self.log(f" Selezione fornitore: '{supplier}'...")
             arrow = self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW))
             ActionChains(self.driver).move_to_element(arrow).click().perform()
 
@@ -82,14 +82,14 @@ class ScaricoTSPage:
             self._wait_for_overlay()
 
             # Set Date
-            self.log(f"  Inserimento data '{date_from}'...")
+            self.log(f" Inserimento data '{date_from}'...")
             date_field = self.wait.until(EC.visibility_of_element_located(ScaricoTSLocators.DATE_FROM_FIELD))
             date_field.clear()
             date_field.send_keys(date_from)
 
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"✗ Errore impostazione filtri: {e}")
+            self.log(f"  Errore impostazione filtri: {e}")
             return False
 
     def search_and_download(self, oda_number: str, oda_position: str, download_dir: Path) -> bool:
@@ -97,10 +97,10 @@ class ScaricoTSPage:
         try:
             # JS for events
             js_dispatch_events = """
-                var el = arguments[0];
-                var ev_in = new Event('input', {bubbles:true}); el.dispatchEvent(ev_in);
-                var ev_ch = new Event('change', {bubbles:true}); el.dispatchEvent(ev_ch);
-            """
+        var el = arguments[0];
+        var ev_in = new Event('input', {bubbles:true}); el.dispatchEvent(ev_in);
+        var ev_ch = new Event('change', {bubbles:true}); el.dispatchEvent(ev_ch);
+      """
 
             # Input OdA
             field_oda = self.wait.until(EC.presence_of_element_located(ScaricoTSLocators.ODA_NUMBER_FIELD))
@@ -115,14 +115,14 @@ class ScaricoTSPage:
 
             # Search
             self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.SEARCH_BUTTON)).click()
-            self.log("  Pulsante 'Cerca' cliccato. Attesa risultati...")
+            self.log(" Pulsante 'Cerca' cliccato. Attesa risultati...")
             self._wait_for_overlay()  # Wait for loading
 
             # Download
             return self._download_excel(download_dir, oda_number, oda_position)
 
         except Exception as e:
-            self.log(f"  ✗ Errore ricerca/download: {e}")
+            self.log(f"   Errore ricerca/download: {e}")
             return False
 
     def _download_excel(self, download_dir: Path, oda_number: str, oda_position: str) -> bool:
@@ -135,13 +135,13 @@ class ScaricoTSPage:
             self._cleanup_temp_files(download_dir)
 
             if not downloaded_file:
-                self.log("  ✗ Download fallito o file non trovato.")
+                self.log("   Download fallito o file non trovato.")
                 return False
 
             return self._rename_downloaded_file(downloaded_file, download_dir, oda_number, oda_position)
 
         except Exception as e:
-            self.log(f"  ✗ Errore download Excel: {e}")
+            self.log(f"   Errore download Excel: {e}")
             return False
 
     def _get_xlsx_snapshot(self, directory: Path) -> set[Path]:
@@ -158,13 +158,13 @@ class ScaricoTSPage:
 
         removed = cleanup_chrome_temp_files(directory)
         for f_name in removed:
-            self.log(f"  [DEBUG] Rimosso residuo download: {f_name}")
+            self.log(f" [DEBUG] Rimosso residuo download: {f_name}")
 
     def _rename_downloaded_file(self, file_path: Path, directory: Path, oda: str, pos: str) -> bool:
         """Rinomina il file scaricato in modo univoco."""
         new_path = self._resolve_unique_path(directory, oda, pos, file_path)
         file_path.rename(new_path)
-        self.log(f"  ✓ File scaricato: {new_path.name}")
+        self.log(f"   File scaricato: {new_path.name}")
         return True
 
     def _wait_for_download(self, download_dir: Path, files_before: set[Path]) -> Path | None:

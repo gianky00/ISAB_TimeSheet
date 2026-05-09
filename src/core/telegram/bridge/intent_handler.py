@@ -7,7 +7,7 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QObject
+from PySide6.QtCore import QObject
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.core.telegram.bridge.data_processor import TelegramDataProcessor
@@ -75,7 +75,7 @@ class TelegramIntentHandler(QObject):
         self.telegram.pending_data[chat_id] = {"action": "print", "items": items}
         printers = get_installed_printers()[:6]
         keyboard = [
-            [InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}")] for p in printers
+            [InlineKeyboardButton(f"    {p[:30]}", callback_data=f"sel_print_run_{p[:25]}")] for p in printers
         ]
 
         self.telegram.send_message_sync("[OK] Ho aggiunto i PDL. **Quale stampante utilizzo?**")
@@ -89,13 +89,13 @@ class TelegramIntentHandler(QObject):
     def _handle_download_pdl(self, chat_id: int) -> None:
         keyboard = [
             [
-                InlineKeyboardButton("[OK] Sì, stampa", callback_data="confirm_print_yes"),
+                InlineKeyboardButton("[OK] S , stampa", callback_data="confirm_print_yes"),
                 InlineKeyboardButton("[ERRORE] No, solo download", callback_data="confirm_print_no"),
             ]
         ]
         coro = self.telegram.app.bot.send_message(
             chat_id=chat_id,
-            text="Aggiunti PDL. **Vuoi che li stampi anche?**",
+            text="Aggiunti PDL. **Vuoi che li stampiu'anche?**",
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
         self._run_coroutine(coro)

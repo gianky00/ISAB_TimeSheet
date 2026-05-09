@@ -10,8 +10,8 @@ import os
 from contextlib import suppress
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
     QFrame,
@@ -44,7 +44,7 @@ class ReportWorker(QThread):
     Esegue la raccolta dei file e la compressione ZIP in background per non bloccare l'interfaccia utente.
     """
 
-    finished = pyqtSignal(bool, str, str, list)
+    finished = Signal(bool, str, str, list)
     """Segnale emesso al termine: (successo, messaggio, percorso_zip, lista_file_inclusi)."""
 
     def __init__(  # noqa: ANN204
@@ -58,10 +58,10 @@ class ReportWorker(QThread):
         Inizializza il worker con le opzioni di inclusione.
 
         Args:
-            include_logs: Se includere i file log dell'applicazione.
-            include_analytics: Se includere i report di analisi anomalie.
-            include_audit: Se includere la traccia delle azioni utente.
-            trace_id: ID opzionale per isolare una specifica transazione nei log.
+          include_logs: Se includere i file log dell'applicazione.
+          include_analytics: Se includere i report di analisi anomalie.
+          include_audit: Se includere la traccia delle azioni utente.
+          trace_id: ID opzionale per isolare una specifica transazione nei log.
         """
         super().__init__()
         self.include_logs = include_logs
@@ -95,7 +95,7 @@ class BugReportDialog(QDialog):
         Inizializza il dialogo e configura l'interfaccia utente.
 
         Args:
-            parent: Widget genitore.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.setWindowTitle("Segnala un Problema")
@@ -105,7 +105,7 @@ class BugReportDialog(QDialog):
         self._update_size_estimate()
 
     def setup_ui(self):  # noqa: ANN201, PLR0915
-        """Configura il layout, i campi di testo, le checkbox delle opzioni e i pulsanti di azione."""
+        """Configura il layout, i campiu'di testo, le checkbox delle opzioni e i pulsanti di azione."""
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
 
@@ -113,20 +113,20 @@ class BugReportDialog(QDialog):
 
         # Style
         btn_style = f"""
-            QPushButton {{
-                background-color: {palette.primary}; color: {palette.on_primary}; border: none;
-                padding: 10px 20px; border-radius: 6px; font-weight: 600; min-width: 120px;
-            }}
-            QPushButton:hover {{ background-color: {palette.primary_variant}; }}
-            QPushButton:pressed {{ background-color: {palette.primary_variant}; }}
-            QPushButton:disabled {{ background-color: {palette.disabled}; color: {COLORS["text_light"]}; }}
-        """
+      QPushButton {{
+        background-color: {palette.primary}; color: {palette.on_primary}; border: none;
+        padding: 10px 20px; border-radius: 6px; font-weight: 600; min-width: 120px;
+      }}
+      QPushButton:hover {{ background-color: {palette.primary_variant}; }}
+      QPushButton:pressed {{ background-color: {palette.primary_variant}; }}
+      QPushButton:disabled {{ background-color: {palette.disabled}; color: {COLORS["text_light"]}; }}
+    """
         self.setStyleSheet(btn_style)
 
         # Header
         lbl_info = QLabel(
             "Descrivi il problema riscontrato con il maggior dettaglio possibile.\n"
-            "Se possibile, indica i passaggi per riprodurlo."
+            "Se possibile, indica i passaggia'per riprodurlo."
         )
         lbl_info.setStyleSheet(f"font-size: 14px; color: {palette.on_surface}; margin-bottom: 5px;")
         lbl_info.setWordWrap(True)
@@ -135,7 +135,7 @@ class BugReportDialog(QDialog):
         # Text Area
         self.txt_description = StandardTextEdit()
         self.txt_description.setPlaceholderText(
-            "Es: Ho cliccato su Scarica PDL e l'app si è chiusa... Stavo lavorando sul cantiere X..."
+            "Es: Ho cliccato su Scarica PDL e l'app si  chiusa... Stavo lavorando sul cantiere X..."
         )
         self.txt_description.setStyleSheet(
             f"background-color: {palette.surface}; border: 1px solid {palette.border}; "
@@ -267,7 +267,7 @@ class BugReportDialog(QDialog):
         desc = self.txt_description.toPlainText().strip()
         if len(desc) < 10:  # noqa: PLR2004
             QMessageBox.warning(
-                self, "Attenzione", "La descrizione è troppo breve. Per favore fornisci più dettagli."
+                self, "Attenzione", "La descrizione  troppo breve. Per favore fornisci piu' dettagli."
             )
             return
 
@@ -307,7 +307,7 @@ class BugReportDialog(QDialog):
 
         if files:
             self.preview_group.setVisible(True)
-            self.preview_content.setText("\n".join(f"📄 {f}" for f in files))
+            self.preview_content.setText("\n".join(f"   {f}" for f in files))
 
         desc = self.txt_description.toPlainText().strip()
 
@@ -318,7 +318,7 @@ class BugReportDialog(QDialog):
             QMessageBox.warning(
                 self,
                 "Outlook non disponibile",
-                "Il report è stato generato. Per favore, scegli dove salvarlo e invialo manualmente.",
+                "Il report  stato generato. Per favore, scegli dove salvarlo e invialo manualmente.",
             )
             self.save_manually(file_path)
 
@@ -338,11 +338,11 @@ class BugReportDialog(QDialog):
         Utilizza automazione COM via win32com.
 
         Args:
-            attachment_path: Percorso del file ZIP da allegare.
-            description: Descrizione del bug inserita dall'utente.
+          attachment_path: Percorso del file ZIP da allegare.
+          description: Descrizione del bug inserita dall'utente.
 
         Returns:
-            bool: True se Outlook è stato aperto correttamente.
+          bool: True se Outlook  stato aperto correttamente.
         """
         try:
             import getpass  # noqa: PLC0415
@@ -403,27 +403,27 @@ class BugReportDialog(QDialog):
             css_header = f"padding: 8px 12px; border-bottom: 2px solid {palette.primary}; font-weight: 600; color: {palette.primary};"
 
             html_body = f"""
-            <div style="font-family: 'Segoe UI', sans-serif; color: {palette.on_surface}; max-width: 900px;">
-                <h2 style="color: {palette.primary};">Segnalazione Bug SyncroJob</h2>
-                <table style="width: 100%; border-collapse: separate; margin-top: 20px;">
-                    <tr>
-                        <td style="width: 320px; vertical-align: top;">
-                            <table style="width: 100%; font-size: 13px;">
-                                <tr><th style="{css_header}" colspan="2">DETTAGLI SISTEMA</th></tr>
-                                <tr><td style="{css_cell} font-weight:600;">Ticket ID</td><td style="{css_cell}">{ticket_id_suffix}</td></tr>
-                                <tr><td style="{css_cell} font-weight:600;">Versione</td><td style="{css_cell}">{current_ver}</td></tr>
-                                <tr><td style="{css_cell} font-weight:600;">Utente</td><td style="{css_cell}">{current_user}</td></tr>
-                                <tr><td style="{css_cell} font-weight:600;">Cliente</td><td style="{css_cell}">{cliente_info}</td></tr>
-                            </table>
-                        </td>
-                        <td style="vertical-align: top; padding-left: 20px;">
-                            <h3 style="border-bottom: 2px solid {palette.border};">Descrizione Problema</h3>
-                            <div style="line-height: 1.6;">{description.replace(chr(10), "<br>")}</div>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            """
+      <div style="font-family: 'Segoe UI', sans-serif; color: {palette.on_surface}; max-width: 900px;">
+        <h2 style="color: {palette.primary};">Segnalazione Bug SyncroJob</h2>
+        <table style="width: 100%; border-collapse: separate; margin-top: 20px;">
+          <tr>
+            <td style="width: 320px; vertical-align: top;">
+              <table style="width: 100%; font-size: 13px;">
+                <tr><th style="{css_header}" colspan="2">DETTAGLI SISTEMA</th></tr>
+                <tr><td style="{css_cell} font-weight:600;">Ticket ID</td><td style="{css_cell}">{ticket_id_suffix}</td></tr>
+                <tr><td style="{css_cell} font-weight:600;">Versione</td><td style="{css_cell}">{current_ver}</td></tr>
+                <tr><td style="{css_cell} font-weight:600;">Utente</td><td style="{css_cell}">{current_user}</td></tr>
+                <tr><td style="{css_cell} font-weight:600;">Cliente</td><td style="{css_cell}">{cliente_info}</td></tr>
+              </table>
+            </td>
+            <td style="vertical-align: top; padding-left: 20px;">
+              <h3 style="border-bottom: 2px solid {palette.border};">Descrizione Problema</h3>
+              <div style="line-height: 1.6;">{description.replace(chr(10), "<br>")}</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+      """
             mail.HTMLBody = html_body
             if Path(final_zip_path).exists():
                 mail.Attachments.Add(final_zip_path)
@@ -438,7 +438,7 @@ class BugReportDialog(QDialog):
         Fallback per consentire all'utente di salvare il report ZIP in una posizione scelta manualmente.
 
         Args:
-            source_path: Percorso del file ZIP temporaneo generato.
+          source_path: Percorso del file ZIP temporaneo generato.
         """
         initial_name = Path(source_path).name
         desktop = Path(os.path.expanduser("~/Desktop"))

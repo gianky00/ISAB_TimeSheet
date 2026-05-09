@@ -44,7 +44,7 @@ class TestExcelTableWidgetDeep:
         qtbot.addWidget(table)
         table.setColumnCount(1)
         table.setRowCount(1)
-        from PyQt6.QtWidgets import QTableWidgetItem  # noqa: PLC0415
+        from PySide6.QtWidgets import QTableWidgetItem  # noqa: PLC0415
 
         table.setItem(0, 0, QTableWidgetItem("Test"))
 

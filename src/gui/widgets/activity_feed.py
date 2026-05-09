@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer
+from PySide6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
     QHBoxLayout,
@@ -20,16 +20,16 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 from src.utils.log_humanizer import friendly_time_delta
 
 if TYPE_CHECKING:
-    from PyQt6.QtGui import QShowEvent
+    from PySide6.QtGui import QShowEvent
 
 # Stile forzato per i tooltip in Light Mode
 TOOLTIP_CSS = """
 QToolTip {
-    background-color: #FFFFFF;
-    color: #212121;
-    border: 1px solid #BBBBBB;
-    border-radius: 6px;
-    padding: 8px 12px;
+  background-color: #FFFFFF;
+  color: #212121;
+  border: 1px solid #BBBBBB;
+  border-radius: 6px;
+  padding: 8px 12px;
 }
 """
 
@@ -60,25 +60,25 @@ class ActivityItem(QFrame):
 
         self.setStyleSheet(
             f"""
-            {TOOLTIP_CSS}
-            ActivityItem {{
-                background: {self.bg_gradient};
-                border-radius: 12px;
-                border-left: 4px solid {self.border_color};
-                border-top: 1px solid {COLORS["border_light"]};
-                border-right: 1px solid {COLORS["border_light"]};
-                border-bottom: 1px solid {COLORS["border_light"]};
-            }}
-            ActivityItem:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_hover"]}, stop:1 {COLORS["bg_white"]});
-                border-left: 4px solid {self.border_color};
-                border-top: 1 solid {COLORS["border_medium"]};
-                border-right: 1px solid {COLORS["border_medium"]};
-                border-bottom: 1px solid {COLORS["border_medium"]};
-            }}
-        """
+      {TOOLTIP_CSS}
+      ActivityItem {{
+        background: {self.bg_gradient};
+        border-radius: 12px;
+        border-left: 4px solid {self.border_color};
+        border-top: 1px solid {COLORS["border_light"]};
+        border-right: 1px solid {COLORS["border_light"]};
+        border-bottom: 1px solid {COLORS["border_light"]};
+      }}
+      ActivityItem:hover {{
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_hover"]}, stop:1 {COLORS["bg_white"]});
+        border-left: 4px solid {self.border_color};
+        border-top: 1 solid {COLORS["border_medium"]};
+        border-right: 1px solid {COLORS["border_medium"]};
+        border-bottom: 1px solid {COLORS["border_medium"]};
+      }}
+    """
         )
-        self.setFixedWidth(300)  # Leggermente più largo
+        self.setFixedWidth(300)  # Leggermente piu' largo
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 10, 12, 10)
@@ -106,13 +106,13 @@ class ActivityItem(QFrame):
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         badge.setStyleSheet(
             f"""
-            QLabel {{
-                background-color: {badge_bg};
-                border-radius: 16px;
-                border: none;
-                padding: 6px;
-            }}
-        """
+      QLabel {{
+        background-color: {badge_bg};
+        border-radius: 16px;
+        border: none;
+        padding: 6px;
+      }}
+    """
         )
         layout.addWidget(badge)
 
@@ -129,14 +129,14 @@ class ActivityItem(QFrame):
         action_lbl = QLabel(full_text)
         action_lbl.setStyleSheet(
             f"""
-            QLabel {{
-                font-weight: 600;
-                font-size: 14px;
-                color: {COLORS["text_dark"]};
-                border: none;
-                background: transparent;
-            }}
-        """
+      QLabel {{
+        font-weight: 600;
+        font-size: 14px;
+        color: {COLORS["text_dark"]};
+        border: none;
+        background: transparent;
+      }}
+    """
         )
         action_lbl.setWordWrap(True)
         text_layout.addWidget(action_lbl)
@@ -148,21 +148,21 @@ class ActivityItem(QFrame):
         ts_str = log_entry.get("timestamp", "")
         try:
             ts = datetime.fromisoformat(ts_str)
-            time_str = f"🕐 {friendly_time_delta(ts)}"
+            time_str = f"   {friendly_time_delta(ts)}"
         except ValueError:
-            time_str = "🕐 --"
+            time_str = "   --"
 
         time_lbl = QLabel(time_str)
         time_lbl.setStyleSheet(
             f"""
-            QLabel {{
-                font-size: 12px;
-                color: {COLORS["text_muted"]};
-                border: none;
-                background: transparent;
-                font-weight: 500;
-            }}
-        """
+      QLabel {{
+        font-size: 12px;
+        color: {COLORS["text_muted"]};
+        border: none;
+        background: transparent;
+        font-weight: 500;
+      }}
+    """
         )
         text_layout.addWidget(time_lbl)
 
@@ -189,9 +189,9 @@ class ActivityItem(QFrame):
 
     def _remove_opacity_effect(self) -> None:
         """Rimuove l'effetto opacity dopo l'animazione per evitare interferenze."""
-        self.setGraphicsEffect(None)
+        self.setGraphicsEffect(None)  # type: ignore[arg-type]
 
-    def showEvent(self, event: QShowEvent | None) -> None:
+    def showEvent(self, event: QShowEvent) -> None:
         """Avvia l'animazione quando il widget viene mostrato."""
         super().showEvent(event)
         if self.opacity_effect is not None and self.fade_in_animation is not None:
@@ -200,12 +200,12 @@ class ActivityItem(QFrame):
 
 class ActivityFeed(QWidget):
     """
-    Widget che mostra una timeline orizzontale delle ultime attività.
+    Widget che mostra una timeline orizzontale delle ultime attivita'.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setFixedHeight(90)  # Aumentato per le card più alte
+        self.setFixedHeight(90)  # Aumentato per le card piu' alte
         self._refreshing = False  # Flag per evitare refresh multipli
         self._setup_ui()
 
@@ -225,31 +225,31 @@ class ActivityFeed(QWidget):
         self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
         self.scroll_area.setStyleSheet(
             f"""
-            QScrollArea {{
-                background: transparent;
-                border: none;
-            }}
-            QScrollBar:horizontal {{
-                border: none;
-                background: {COLORS["bg_light"]};
-                height: 8px;
-                border-radius: 4px;
-                margin: 0px;
-            }}
-            QScrollBar::handle:horizontal {{
-                background: {COLORS["border_medium"]};
-                border-radius: 4px;
-                min-width: 40px;
-            }}
-            QScrollBar::handle:horizontal:hover {{
-                background: {COLORS["border_dark"]};
-            }}
-            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
-                border: none;
-                background: none;
-                width: 0px;
-            }}
-        """
+      QScrollArea {{
+        background: transparent;
+        border: none;
+      }}
+      QScrollBar:horizontal {{
+        border: none;
+        background: {COLORS["bg_light"]};
+        height: 8px;
+        border-radius: 4px;
+        margin: 0px;
+      }}
+      QScrollBar::handle:horizontal {{
+        background: {COLORS["border_medium"]};
+        border-radius: 4px;
+        min-width: 40px;
+      }}
+      QScrollBar::handle:horizontal:hover {{
+        background: {COLORS["border_dark"]};
+      }}
+      QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
+        border: none;
+        background: none;
+        width: 0px;
+      }}
+    """
         )
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
@@ -288,7 +288,7 @@ class ActivityFeed(QWidget):
                         if isinstance(widget, ActivityItem) and widget.fade_in_animation is not None:
                             widget.fade_in_animation.stop()
                         if widget.graphicsEffect():
-                            widget.setGraphicsEffect(None)
+                            widget.setGraphicsEffect(None)  # type: ignore[arg-type]
                         widget.deleteLater()
 
             # Limit to 10 latest
@@ -297,20 +297,20 @@ class ActivityFeed(QWidget):
             logs = AuditManager.instance().get_logs(limit=10)
 
             if not logs:
-                empty_lbl = QLabel("[INFO] Nessuna attività recente")
+                empty_lbl = QLabel("Nessuna attivita' recente")
                 empty_lbl.setStyleSheet(
                     f"""
-                    QLabel {{
-                        color: {COLORS["text_muted"]};
-                        font-size: 13px;
-                        font-weight: 500;
-                        font-style: italic;
-                        padding: 10px 20px;
-                        background-color: {COLORS["bg_light"]};
-                        border-radius: 8px;
-                        border: 1px dashed {COLORS["border_light"]};
-                    }}
-                """
+          QLabel {{
+            color: {COLORS["text_muted"]};
+            font-size: 13px;
+            font-weight: 500;
+            font-style: italic;
+            padding: 10px 20px;
+            background-color: {COLORS["bg_light"]};
+            border-radius: 8px;
+            border: 1px dashed {COLORS["border_light"]};
+          }}
+        """
                 )
                 self.feed_layout.insertWidget(0, empty_lbl)
                 return

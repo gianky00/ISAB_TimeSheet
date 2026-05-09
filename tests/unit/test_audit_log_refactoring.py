@@ -7,7 +7,7 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
-from PyQt6.QtGui import QIcon, QPixmap
+from PySide6.QtGui import QIcon, QPixmap
 
 from src.gui.widgets.audit_log_widget import AuditLogWidget
 
@@ -56,10 +56,10 @@ def audit_widget(qtbot, mocker):
 
     # CRITICAL: Patch layouts to avoid MagicMock type errors in Qt methods
     with (
-        patch("PyQt6.QtWidgets.QVBoxLayout.addWidget"),
-        patch("PyQt6.QtWidgets.QHBoxLayout.addWidget"),
-        patch("PyQt6.QtWidgets.QGridLayout.addWidget"),
-        patch("PyQt6.QtCore.QTimer"),
+        patch("PySide6.QtWidgets.QVBoxLayout.addWidget"),
+        patch("PySide6.QtWidgets.QHBoxLayout.addWidget"),
+        patch("PySide6.QtWidgets.QGridLayout.addWidget"),
+        patch("PySide6.QtCore.QTimer"),
     ):
         widget = AuditLogWidget()
         # MOCK UI Heavy operations that cause crashes in CI

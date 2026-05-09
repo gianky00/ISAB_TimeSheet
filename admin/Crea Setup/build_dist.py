@@ -1,7 +1,7 @@
 """
 Bot TS - Build & Distribution Script
 Compila l'applicazione con PyInstaller, crea l'installer con Inno Setup,
-e deploya su Netlify tramite API (ZIP deploy).
+e deploya su Netlify tramite APiu'(ZIP deploy).
 """
 
 import argparse
@@ -333,19 +333,19 @@ def run_pyinstaller(obfuscated=False):  # noqa: ANN001, ANN201
 
     qt_excludes = [
         "shapely",
-        "PyQt6.QtBluetooth",
-        "PyQt6.QtNfc",
-        "PyQt6.Qt3DCore",
-        "PyQt6.Qt3DRender",
-        "PyQt6.Qt3DInput",
-        "PyQt6.Qt3DLogic",
-        "PyQt6.Qt3DExtras",
-        "PyQt6.QtSpatialAudio",
-        "PyQt6.QtSensors",
-        "PyQt6.QtQuick3D",
-        "PyQt6.QtMultimedia",
-        "PyQt6.QtQml",
-        "PyQt6.QtQuick",
+        "PySide6.QtBluetooth",
+        "PySide6.QtNfc",
+        "PySide6.Qt3DCore",
+        "PySide6.Qt3DRender",
+        "PySide6.Qt3DInput",
+        "PySide6.Qt3DLogic",
+        "PySide6.Qt3DExtras",
+        "PySide6.QtSpatialAudio",
+        "PySide6.QtSensors",
+        "PySide6.QtQuick3D",
+        "PySide6.QtMultimedia",
+        "PySide6.QtQml",
+        "PySide6.QtQuick",
     ]
     for exc in qt_excludes:
         cmd.extend(["--exclude-module", exc])
@@ -399,7 +399,7 @@ def run_nuitka(obfuscated=False):  # noqa: ANN001, ANN201
         "--show-progress",
         "--show-scons",
         "--verbose",
-        "--enable-plugin=pyqt6",
+        "--enable-plugin=PySide6",
         "--enable-plugin=matplotlib",
         "--windows-disable-console",
         "--follow-imports",
@@ -498,7 +498,7 @@ def run_inno_setup():  # noqa: ANN201
 
 
 def get_netlify_token():  # noqa: ANN201
-    """Returns the obfuscated Netlify API token."""
+    """Returns the obfuscated Netlify APiu'token."""
     return "nfp_VJbSMoKXxms3" + "Xa8gdQkKKedPC6" + "EnHQZL9687"
 
 

@@ -9,7 +9,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from PyQt6.QtCore import QObject, QThread, pyqtSignal
+from PySide6.QtCore import QObject, QThread, Signal
 
 if TYPE_CHECKING:
     from src.core.pdl.pdl_dto import PdlRowDTO
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class PdlIOWorker(QThread):
     """Worker per l'esportazione asincrona dei dati PDL."""
 
-    finished_signal = pyqtSignal(bool, str, str)  # success, message, file_path
+    finished_signal = Signal(bool, str, str)  # success, message, file_path
 
     def __init__(
         self, file_path: str, data: list[PdlRowDTO], headers: list[str], parent: QObject | None = None
@@ -29,10 +29,10 @@ class PdlIOWorker(QThread):
         Inizializza il worker.
 
         Args:
-            file_path: Percorso del file Excel di destinazione.
-            data: Lista di DTO da esportare.
-            headers: Intestazioni delle colonne.
-            parent: Oggetto padre (PyQt).
+          file_path: Percorso del file Excel di destinazione.
+          data: Lista di DTO da esportare.
+          headers: Intestazioni delle colonne.
+          parent: Oggetto padre (PyQt).
         """
         super().__init__(parent)
         self.file_path = file_path

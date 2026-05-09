@@ -6,8 +6,8 @@ Consente all'utente di definire quanto tempo risparmia ogni singola operazione b
 
 from typing import Any
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
     QFormLayout,
     QFrame,
     QHBoxLayout,
@@ -26,7 +26,7 @@ from src.gui.styles import COLORS
 class ROIWeightsPage(QWidget):
     """Pagina di dettaglio per l'editing dei pesi ROI."""
 
-    settings_changed = pyqtSignal()
+    settings_changed = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -104,22 +104,22 @@ class ROIWeightsPage(QWidget):
         self.main_layout.addStretch()
 
     def _get_input_style(self) -> str:
-        """Ritorna lo stile CSS per i campi di input numerici senza pulsanti."""
+        """Ritorna lo stile CSS per i campiu'di input numerici senza pulsanti."""
         return f"""
-            QSpinBox {{
-                padding: 5px;
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 6px;
-                background: {COLORS["bg_white"]};
-                color: {COLORS["text_dark"]};
-                font-weight: 800;
-                font-size: 12px;
-            }}
-            QSpinBox:focus {{
-                border: 1.5px solid {COLORS["primary_blue"]};
-                background: #FFFFFF;
-            }}
-        """
+      QSpinBox {{
+        padding: 5px;
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 6px;
+        background: {COLORS["bg_white"]};
+        color: {COLORS["text_dark"]};
+        font-weight: 800;
+        font-size: 12px;
+      }}
+      QSpinBox:focus {{
+        border: 1.5px solid {COLORS["primary_blue"]};
+        background: #FFFFFF;
+      }}
+    """
 
     def load_from_config(self, config: dict[str, Any]) -> None:
         """Carica i pesi ROI dal dizionario di configurazione."""
@@ -156,7 +156,7 @@ class ROIWeightsPage(QWidget):
 class ROITab(QWidget):
     """Tab per la gestione dell'Efficienza (ROI)."""
 
-    settings_changed = pyqtSignal()
+    settings_changed = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -201,7 +201,7 @@ class ROITab(QWidget):
         self.weights_page.settings_changed.connect(self.settings_changed.emit)
 
         card_weights = SettingCard(
-            "Stima Tempi Manuali",
+            "Stima Tempiu'Manuali",
             "Definisci minuti e secondi che un operatore impiegherebbe per ogni task.",
             Icons.CLOCK,
             self.weights_page,

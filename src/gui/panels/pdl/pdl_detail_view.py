@@ -9,9 +9,9 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (
     QFormLayout,
     QHeaderView,
     QLabel,
@@ -38,8 +38,8 @@ class PDLDetailView(QWidget):
         Inizializza la vista dettaglio PDL.
 
         Args:
-            headers: Lista dei nomi delle colonne del database da visualizzare.
-            parent: Widget genitore.
+          headers: Lista dei nomi delle colonne del database da visualizzare.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.headers = headers
@@ -77,7 +77,7 @@ class PDLDetailView(QWidget):
         layout.addWidget(scroll, 2)  # Stretch factor 2
 
         # Sezione Cronologia Interventi
-        cron_label = QLabel("Cronologia Interventi (Report Attività)")
+        cron_label = QLabel("Cronologia Interventi (Report Attivita')")
         cron_label.setStyleSheet(
             f"font-weight: bold; font-size: 13px; color: {COLORS['success_dark']}; margin-top: 10px;"
         )
@@ -98,8 +98,8 @@ class PDLDetailView(QWidget):
         Aggiorna le label con i dati forniti e popola la cronologia degli interventi.
 
         Args:
-            data: Sequenza di valori corrispondenti agli headers inizializzati.
-            interventions: Lista di dizionari contenenti i dati degli interventi (data, tecnico, ore, ecc.).
+          data: Sequenza di valori corrispondenti agli headers inizializzati.
+          interventions: Lista di dizionari contenenti i dati degli interventi (data, tecnico, ore, ecc.).
         """
         for i, h in enumerate(self.headers):
             if i >= len(data):
@@ -124,7 +124,7 @@ class PDLDetailView(QWidget):
                 self.cron_table.setItem(row_idx, 0, QTableWidgetItem(inv.get("data", "")))
 
                 fonte_item = QTableWidgetItem(inv.get("fonte", ""))
-                # Colora in base alla fonte per visibilità
+                # Colora in base alla fonte per visibilit
                 if "In Attesa" in inv.get("fonte", ""):
                     fonte_item.setForeground(QColor(COLORS["warning_orange"]))
                 elif "Validato" in inv.get("fonte", ""):
@@ -138,7 +138,7 @@ class PDLDetailView(QWidget):
                 self.cron_table.setItem(row_idx, 4, desc_item)
 
     def clear(self) -> None:
-        """Resetta tutti i campi del dettaglio e svuota la tabella della cronologia."""
+        """Resetta tutti i campiu'del dettaglio e svuota la tabella della cronologia."""
         for label in self.detail_labels.values():
             label.setText("-")
         self.cron_table.setRowCount(0)

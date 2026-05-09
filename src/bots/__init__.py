@@ -20,6 +20,7 @@ from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
 from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
 from src.bots.safework.programmazione_sync.bot import SafeWorkProgrammazioneSyncBot
 from src.core.config_manager import load_config
+from src.core.constants import Icons
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +108,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
         "class_pw": PW_BOTS["scarico_ts"],
         "name": "Scarico TS",
         "description": "Scarica i timesheet dal portale ISAB",
-        "icon": "📥",
+        "icon": Icons.DOWNLOAD,
         "columns": [
             {"name": "Numero OdA", "type": "text"},
             {"name": "Posizione OdA", "type": "text"},
@@ -119,7 +120,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
         "class_pw": PW_BOTS["carico_ts"],
         "name": "Carico TS",
         "description": "Carica i timesheet sul portale ISAB",
-        "icon": "📤",
+        "icon": Icons.UPLOAD,
         "columns": [
             {"name": "Numero OdA", "type": "text"},
             {"name": "Posizione OdA", "type": "text"},
@@ -146,20 +147,20 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
         "class_pw": PW_BOTS["dettagli_oda"],
         "name": "Dettagli OdA",
         "description": "Accede ai Dettagli OdA - browser rimane aperto",
-        "icon": "📋",
+        "icon": Icons.LIST,
         "columns": [
             {"name": "Numero OdA", "type": "text"},
             {"name": "Posizione OdA", "type": "text"},
         ],
         "config_key": "last_oda_data",
-        "warning": "[ATTENZIONE] Il browser rimarrà aperto dopo l'esecuzione",
+        "warning": "[ATTENZIONE] Il browser rimarra' aperto dopo l'esecuzione",
     },
     "prenota_bp": {
         "class": PrenotaBPBot,
         "class_pw": PW_BOTS["prenota_bp"],
         "name": "Prenota BP",
         "description": "Prenotazione Badge Provvisori sul portale ISAB",
-        "icon": "🎫",
+        "icon": Icons.TICKET,
         "columns": [
             {"name": "Numero BP", "type": "text"},
             {"name": "Note di Ritiro", "type": "text"},
@@ -171,7 +172,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
         "class_pw": PW_BOTS["timbrature"],
         "name": "Timbrature",
         "description": "Scarica e archivia le timbrature dal portale ISAB",
-        "icon": "⏱️",
+        "icon": Icons.CLOCK,
         "columns": [],
         "config_key": "last_timbrature_data",
     },
@@ -180,7 +181,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
         "class_pw": PW_BOTS["scarico_pdl"],
         "name": "Scarico PDL",
         "description": "Scarica e stampa Permessi di Lavoro da SafeWork",
-        "icon": "🛡️",
+        "icon": Icons.PDL,
         "columns": [{"name": "NUMERO PDL", "type": "text"}],
         "config_key": "last_pdl_data",
     },
@@ -189,7 +190,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
         "class_pw": PW_BOTS["ricerca_pdl"],
         "name": "Ricerca PDL",
         "description": "Ricerca massiva e aggiornamento database PDL",
-        "icon": "[CERCA]",
+        "icon": Icons.SEARCH,
         "columns": [],
         "config_key": "last_pdl_search_data",
     },
@@ -198,7 +199,7 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
         "class_pw": PW_BOTS["programmazione_pdl"],
         "name": "Programmazione PDL",
         "description": "Monitoraggio programmazione settimanale SafeWork",
-        "icon": "📅",
+        "icon": Icons.CALENDAR,
         "columns": [],
         "config_key": "last_pdl_prog_data",
     },
@@ -206,8 +207,8 @@ BOT_REGISTRY: dict[str, dict[str, Any]] = {
         "class": SafeWorkProgrammazioneSyncBot,
         "class_pw": PW_BOTS["programmazione_sync"],
         "name": "Sincronizzazione Programmazione",
-        "description": "Download massivo report attività SafeWork",
-        "icon": "[SYNC]",
+        "description": "Download massivo report attivita' SafeWork",
+        "icon": Icons.REFRESH,
         "columns": [],
         "config_key": "last_prog_sync_data",
     },
@@ -240,7 +241,7 @@ def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:
     if engine == "playwright" and bot_info.get("class_pw"):
         bot_class = bot_info["class_pw"]
     elif engine == "playwright":
-        msg = f"[ATTENZIONE] Motore Playwright richiesto ma non disponibile per '{bot_id}' (class_pw è None). Eseguo fallback su Selenium."
+        msg = f"[ATTENZIONE] Motore Playwright richiesto ma non disponibile per '{bot_id}' (class_pw  None). Eseguo fallback su Selenium."
         logger.warning(msg)
         print(f"[!] {msg}")  # Output visibile se eseguito da console
 

@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from PyQt6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget
 
 
 class TestContabilitaExtra:

@@ -1,6 +1,6 @@
 """
 SyncroJob - Operazioni Sync Engine
-Gestisce sincronizzazioni massive (DELETE ALL + INSERT) per Attività Programmate e Scarico Ore.
+Gestisce sincronizzazioni massive (DELETE ALL + INSERT) per Attivita'Programmate e Scarico Ore.
 """
 
 from pathlib import Path
@@ -18,7 +18,7 @@ class OperazioniSyncEngine(BaseSyncEngine):
     def sync_attivita_programmate(
         cls, db_path: Path, rows_to_insert: list[tuple[Any, ...]]
     ) -> tuple[int, int]:
-        """Sincronizzazione per Attività Programmate."""
+        """Sincronizzazione per Attivita'Programmate."""
         db_cols = [*list(ExcelImporter.ATTIVITA_PROGRAMMATE_MAPPING.values()), "styles"]
 
         with db_manager.get_connection(db_path) as conn:

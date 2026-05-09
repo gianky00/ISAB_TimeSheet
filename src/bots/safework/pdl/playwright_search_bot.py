@@ -102,7 +102,7 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
         if not self.page:
             return False
         try:
-            self.log("🏠 Clic su Home Page...")
+            self.log("   Clic su Home Page...")
             self.page.click(self._get_selector(SafeWorkLocators.HOME_BUTTON))
             self._attendi_scomparsa_overlay()
 
@@ -123,7 +123,7 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
         return value
 
     def _esegui_export(self, site_name: str) -> str | None:
-        self.log(f"📥 Esportazione Excel per {site_name}...")
+        self.log(f"   Esportazione Excel per {site_name}...")
         if not self.ricerca_pdl_page or not self.page:
             return None
 
@@ -141,19 +141,19 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
     def _cleanup_temp_file(self, file_path: str) -> None:
         with suppress(Exception):
             Path(file_path).unlink()
-            self.log(f"🗑️ File temporaneo rimosso: {Path(file_path).name}")
+            self.log(f"    File temporaneo rimosso: {Path(file_path).name}")
 
     def _import_to_db(self, file_path: str) -> None:
         try:
-            self.log("🗄️ Importazione in database...")
+            self.log("    Importazione in database...")
             start_time = time.time()
             df = pd.read_excel(file_path)
 
             mapping_ita = {
-                "N° PDL": "n_pdl",
+                "N  PDL": "n_pdl",
                 "DATA CREAZIONE": "data_creazione",
                 "AREA": "area",
-                "UNITÀ": "unita",
+                "Unita'": "unita",
                 "DITTA": "ditta",
                 "DESCRIZIONE DEL LAVORO": "descrizione_lavoro",
                 "TIPOLOGIA": "tipologia",
@@ -165,7 +165,7 @@ class PlaywrightSafeWorkPDLSearchBot(PlaywrightSafeworkBaseBot):
                 "DATA EMISSIONE": "data_emissione",
                 "APRENTE": "aprente",
                 "DATA APERTURA": "data_apertura",
-                "PRIORITÀ": "priorita",
+                "Priorita'": "priorita",
                 "CONTRATTO": "contratto",
                 "ORDINE": "ordine",
                 "SITO": "sito",

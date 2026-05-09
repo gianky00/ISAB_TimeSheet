@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from PyQt6.QtCore import QPoint
+from PySide6.QtCore import QPoint
 
 from src.gui.controllers.search_controller import SearchController
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from unittest.mock import patch
 
-from PyQt6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QMessageBox
 
 from src.gui.panels.notifications_panel import NotificationsPanel
 from src.gui.widgets.audit_log_widget import AuditLogWidget
@@ -111,7 +111,7 @@ class TestNotificationsPanelDeep:
             qtbot.addWidget(panel)
 
             with patch(
-                "PyQt6.QtWidgets.QMessageBox.question",
+                "PySide6.QtWidgets.QMessageBox.question",
                 return_value=QMessageBox.StandardButton.Yes,
             ):
                 panel._clear_notifications()

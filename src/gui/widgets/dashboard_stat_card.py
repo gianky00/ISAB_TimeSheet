@@ -3,8 +3,8 @@ SyncroJob - Dashboard Stat Card
 Card elegante per la visualizzazione di metriche rapide in home page.
 """
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from src.gui.styles import COLORS
 from src.gui.widgets.modern_card import ModernCard
@@ -36,9 +36,9 @@ class DashboardStatCard(ModernCard):
         self.icon_container = QWidget()
         self.icon_container.setFixedSize(50, 50)
         self.icon_container.setStyleSheet(f"""
-            background-color: {color}20; /* 20% opacity */
-            border-radius: 25px;
-        """)
+      background-color: {color}20; /* 20% opacity */
+      border-radius: 25px;
+    """)
         icon_layout = QVBoxLayout(self.icon_container)
         icon_layout.setContentsMargins(0, 0, 0, 0)
         icon_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -55,37 +55,37 @@ class DashboardStatCard(ModernCard):
 
         self.val_lbl = QLabel(value)
         self.val_lbl.setStyleSheet(f"""
-            font-size: 32px;
-            font-weight: 900;
-            color: {COLORS["text_dark"]};
-            background: transparent;
-        """)
+      font-size: 32px;
+      font-weight: 900;
+      color: {COLORS["text_dark"]};
+      background: transparent;
+    """)
 
         self.title_lbl = QLabel(title.upper())
         self.title_lbl.setStyleSheet(f"""
-            font-size: 12px;
-            font-weight: 800;
-            color: {COLORS["text_muted"]};
-            letter-spacing: 1.5px;
-            background: transparent;
-        """)
+      font-size: 12px;
+      font-weight: 800;
+      color: {COLORS["text_muted"]};
+      letter-spacing: 1.5px;
+      background: transparent;
+    """)
 
         self.detail_lbl = QLabel("")
         self.detail_lbl.setStyleSheet(f"""
-            font-size: 13px;
-            font-weight: 700;
-            color: {COLORS["text_dark"]};
-            background: transparent;
-            margin-top: 4px;
-        """)
+      font-size: 13px;
+      font-weight: 700;
+      color: {COLORS["text_dark"]};
+      background: transparent;
+      margin-top: 4px;
+    """)
 
         self.meta_lbl = QLabel("")
         self.meta_lbl.setStyleSheet(f"""
-            font-size: 11px;
-            color: {COLORS["text_muted"]};
-            background: transparent;
-            font-style: italic;
-        """)
+      font-size: 11px;
+      color: {COLORS["text_muted"]};
+      background: transparent;
+      font-style: italic;
+    """)
 
         text_v.addWidget(self.val_lbl)
         text_v.addWidget(self.title_lbl)

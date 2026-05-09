@@ -70,7 +70,7 @@ class PasswordManager:
             # Se esiste solo la chiave (legacy), usala
             # Se esiste anche il salt (v2), verifica se dobbiamo rigenerare o caricare
             key = self.key_file.read_bytes()
-            # Verifica validità chiave Fernet (32 url-safe base64-encoded bytes)
+            # Verifica validit  chiave Fernet (32 url-safe base64-encoded bytes)
             with suppress(Exception):
                 Fernet(key)
                 return key
@@ -116,7 +116,7 @@ class PasswordManager:
         if not plaintext:
             return ""
         if plaintext.startswith("ENC:v2:"):
-            return plaintext  # Già criptato
+            return plaintext  # Gia' criptato
 
         try:
             encrypted = self._cipher.encrypt(plaintext.encode())

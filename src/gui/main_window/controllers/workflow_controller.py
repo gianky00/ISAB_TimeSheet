@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QDate, QObject, QTimer
+from PySide6.QtCore import QDate, QObject, QTimer
 
 from src.gui.main_window.page_index import PageIndex
 from src.gui.widgets.toast import ToastManager
@@ -27,7 +27,7 @@ class WorkflowController(QObject):
         self.mw = main_window
 
     def run_timbrature_bot(self, mode: str) -> None:
-        """Avvia il bot delle timbrature in una modalità specifica."""
+        """Avvia il bot delle timbrature in una modalita' specifica."""
         # Assicurati che il pannello sia inizializzato
         if not hasattr(self.mw, "timbrature_bot_panel"):
             self.mw.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
@@ -114,7 +114,7 @@ class WorkflowController(QObject):
             QTimer.singleShot(200, panel._start_update)
 
     def run_sync_strumentale(self) -> None:
-        """Avvia la sincronizzazione contabilità strumentale."""
+        """Avvia la sincronizzazione contabilit  strumentale."""
         self.mw.navigation_controller.navigate_to(PageIndex.STRUMENTALE)
         panel: Any = getattr(self.mw, "contabilita_panel", None)
         if panel and hasattr(panel, "refresh_tabs"):

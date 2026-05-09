@@ -13,14 +13,14 @@ class LoggingAdapter:
     Adapter che converte chiamate standard logging in structured logging.
 
     Usage:
-        # Vecchio codice:
-        # logger = logging.getLogger(__name__)
+      # Vecchio codice:
+      # logger = logging.getLogger(__name__)
 
-        # Nuovo codice (compatibile):
-        from src.core.logging.migration import get_logger
-        logger = get_logger(__name__)
+      # Nuovo codice (compatibile):
+      from src.core.logging.migration import get_logger
+      logger = get_logger(__name__)
 
-        # Funziona sia con vecchio che nuovo sistema!
+      # Funziona sia con vecchio che nuovo sistema!
     """
 
     def __init__(self, name: str):  # noqa: ANN204
@@ -79,10 +79,10 @@ def get_logger(name: str) -> LoggingAdapter:
     Ottiene logger compatibile con vecchio e nuovo sistema.
 
     Args:
-        name: Nome logger (tipicamente __name__)
+      name: Nome logger (tipicamente __name__)
 
     Returns:
-        LoggingAdapter che funziona con entrambi i sistemi
+      LoggingAdapter che funziona con entrambi i sistemi
     """
     return LoggingAdapter(name)
 
@@ -92,16 +92,16 @@ def migrate_logging_call(old_code: str) -> str:
     Converte codice vecchio logging in nuovo formato.
 
     Args:
-        old_code: Snippet di codice con vecchio logging
+      old_code: Snippet di codice con vecchio logging
 
     Returns:
-        Codice convertito
+      Codice convertito
 
     Example:
-        >>> old = "logging.getLogger(__name__)"
-        >>> new = migrate_logging_call(old)
-        >>> print(new)
-        'get_logger(__name__)'
+      >>> old = "logging.getLogger(__name__)"
+      >>> new = migrate_logging_call(old)
+      >>> print(new)
+      'get_logger(__name__)'
     """
     # Sostituzioni comuni
     replacements = [

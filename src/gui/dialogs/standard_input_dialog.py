@@ -1,5 +1,5 @@
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
     QLabel,
@@ -29,11 +29,11 @@ class StandardInputDialog(QDialog):
 
         # Forza stile Light a livello di Dialog
         self.setStyleSheet(f"""
-            QDialog {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_medium"]};
-            }}
-        """)
+      QDialog {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_medium"]};
+      }}
+    """)
 
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
@@ -48,18 +48,18 @@ class StandardInputDialog(QDialog):
         self.input_field.setMinimumHeight(35)
         self.input_field.setStyleSheet(
             f"""
-            QLineEdit {{
-                border: 1px solid {COLORS["border_medium"]};
-                border-radius: 4px;
-                padding: 5px;
-                font-size: 14px;
-                background-color: {COLORS["bg_white"]};
-                color: {COLORS["text_dark"]};
-            }}
-            QLineEdit:focus {{
-                border: 1px solid {COLORS["primary_dark"]};
-            }}
-            """
+      QLineEdit {{
+        border: 1px solid {COLORS["border_medium"]};
+        border-radius: 4px;
+        padding: 5px;
+        font-size: 14px;
+        background-color: {COLORS["bg_white"]};
+        color: {COLORS["text_dark"]};
+      }}
+      QLineEdit:focus {{
+        border: 1px solid {COLORS["primary_dark"]};
+      }}
+      """
         )
         layout.addWidget(self.input_field)
 
@@ -85,7 +85,7 @@ class StandardInputDialog(QDialog):
 
     @staticmethod
     def get_input(parent: QWidget | None, title: str, label: str, text: str = "") -> tuple[str, bool]:
-        """Metodo statico di utilità simile a QInputDialog.getText."""
+        """Metodo statico di utilit  simile a QInputDialog.getText."""
         dlg = StandardInputDialog(parent, title, label, text)
         result = dlg.exec()
         return dlg.get_text(), result == QDialog.DialogCode.Accepted

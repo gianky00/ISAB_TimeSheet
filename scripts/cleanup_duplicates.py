@@ -41,10 +41,10 @@ def cleanup_attivita_duplicates() -> None:
         """
         )
         duplicates = cursor.fetchall()
-        print(f"Gruppi di duplicati trovati: {len(duplicates)}")
+        print(f"Gruppiu'di duplicati trovati: {len(duplicates)}")
 
         if duplicates:
-            print("\nEsempi di duplicati:")
+            print("\nEsempiu'di duplicati:")
             for dup in duplicates[:5]:
                 print(f"  - PS={dup[0]}, PDL={dup[2]}, count={dup[4]}")
 

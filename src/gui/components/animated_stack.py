@@ -7,17 +7,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import (
+from PySide6.QtCore import (
     QEasingCurve,
     QParallelAnimationGroup,
     QPoint,
     QPropertyAnimation,
-    pyqtSignal,
+    Signal,
 )
-from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel, QStackedWidget, QWidget
+from PySide6.QtWidgets import QGraphicsOpacityEffect, QLabel, QStackedWidget, QWidget
 
 if TYPE_CHECKING:
-    from PyQt6.QtGui import QResizeEvent
+    from PySide6.QtGui import QResizeEvent
 
 
 class SlidingStackedWidget(QStackedWidget):
@@ -26,7 +26,7 @@ class SlidingStackedWidget(QStackedWidget):
     per garantire 60 FPS anche con contenuti pesanti.
     """
 
-    animation_finished = pyqtSignal()
+    animation_finished = Signal()
     """Segnale emesso al termine della transizione animata."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -34,7 +34,7 @@ class SlidingStackedWidget(QStackedWidget):
         Inizializza lo stack animato.
 
         Args:
-            parent: Widget genitore.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self._animation_duration = 350
@@ -55,10 +55,10 @@ class SlidingStackedWidget(QStackedWidget):
     def slide_to_index(self, index: int) -> None:  # noqa: PLR0915
         """
         Esegue l'animazione di transizione premium verso l'indice specificato.
-        Utilizza snapshot QPixmap per mantenere la fluidità indipendentemente dal carico dei widget.
+        Utilizza snapshot QPixmap per mantenere la fluidit  indipendentemente dal carico dei widget.
 
         Args:
-            index: L'indice del widget verso cui navigare.
+          index: L'indice del widget verso cui navigare.
         """
         if self._is_animating or index == self.currentIndex() or index < 0 or index >= self.count():
             self.setCurrentIndex(index)
@@ -92,7 +92,7 @@ class SlidingStackedWidget(QStackedWidget):
         offset = self.width() if forward else -self.width()
         self.fade_label_new.setGeometry(offset, 0, self.width(), self.height())
 
-        # Effetti opacità
+        # Effetti opacit
         eff_old = QGraphicsOpacityEffect(self.fade_label_old)
         eff_new = QGraphicsOpacityEffect(self.fade_label_new)
         self.fade_label_old.setGraphicsEffect(eff_old)
@@ -147,10 +147,9 @@ class SlidingStackedWidget(QStackedWidget):
         self._is_animating = False
         self.animation_finished.emit()
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:
+    def resizeEvent(self, event: QResizeEvent) -> None:
         """Sincronizza le dimensioni degli snapshot con il widget principale."""
         super().resizeEvent(event)
-        if event:
-            size = event.size()
-            self.fade_label_old.resize(size)
-            self.fade_label_new.resize(size)
+        size = event.size()
+        self.fade_label_old.resize(size)
+        self.fade_label_new.resize(size)

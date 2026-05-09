@@ -11,9 +11,9 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
 
-from PyQt6.QtCore import QPoint, Qt, QTimer
-from PyQt6.QtGui import QStandardItemModel
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QPoint, Qt, QTimer
+from PySide6.QtGui import QStandardItemModel
+from PySide6.QtWidgets import (
     QFileDialog,
     QMenu,
     QMessageBox,
@@ -44,13 +44,13 @@ class StoricoOdaPanel(QWidget):
         Inizializza il pannello dello storico OdA con iniezione del controller.
 
         Args:
-            controller: Istanza del controller per la logica di business.
-            parent: Widget genitore opzionale.
+          controller: Istanza del controller per la logica di business.
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self.controller = controller
         self.worker: BotWorker | None = None
-        from PyQt6.QtGui import QStandardItem  # noqa: PLC0415
+        from PySide6.QtGui import QStandardItem  # noqa: PLC0415
 
         self._last_selected_parent: QStandardItem | None = None
 
@@ -91,10 +91,10 @@ class StoricoOdaPanel(QWidget):
             "Gruppo Acquisti",
             "Indicatore Rilascio",
             "Stato Rilascio",
-            "Attività",
+            "Attivita'",
             "Num riga",
-            "Quantità",
-            "Unità di Mis",
+            "Quantit ",
+            "Unita' di Mis",
             "Prezzo lordo",
             "Testo breve",
         ]
@@ -194,7 +194,7 @@ class StoricoOdaPanel(QWidget):
         if not item:
             return
 
-        # Grassetto se è un parent (OdA)
+        # Grassetto se  un parent (OdA)
         if not item.parent():
             self._last_selected_parent = item
             for col in range(self.model.columnCount()):
@@ -209,7 +209,7 @@ class StoricoOdaPanel(QWidget):
         Mostra il menu contestuale per l'elemento selezionato.
 
         Args:
-            pos: Posizione del clic del mouse.
+          pos: Posizione del clic del mouse.
         """
         idx = self.tree.indexAt(pos)
         if not idx.isValid():
@@ -218,19 +218,15 @@ class StoricoOdaPanel(QWidget):
         menu = QMenu(self)
 
         # Azione Dettaglio
-        detail_act = menu.addAction("[CERCA] Mostra dettaglio completo")
-        if detail_act:
-            detail_act.triggered.connect(lambda: self._open_detail_for_index(idx))
+        menu.addAction("[CERCA] Mostra dettaglio completo").triggered.connect(
+            lambda: self._open_detail_for_index(idx)
+        )
 
         # Azione Espandi/Comprimi
         if self.tree.isExpanded(idx):
-            expand_act = menu.addAction("➖ Comprimi")
-            if expand_act:
-                expand_act.triggered.connect(lambda: self.tree.collapse(idx))
+            menu.addAction("  Comprimi").triggered.connect(lambda: self.tree.collapse(idx))
         else:
-            expand_act = menu.addAction("➕ Espandi")
-            if expand_act:
-                expand_act.triggered.connect(lambda: self.tree.expand(idx))
+            menu.addAction("  Espandi").triggered.connect(lambda: self.tree.expand(idx))
 
         vp = self.tree.viewport()
         if vp:

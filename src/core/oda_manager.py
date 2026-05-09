@@ -29,7 +29,7 @@ class OdaManager:
     def get_all_oda(cls, search_text: str | None = None) -> list[tuple[Any, ...]]:
         """
         Recupera un elenco di ordini di acquisto dal database.
-        L'ordine delle colonne nel SELECT è garantito per corrispondere agli header UI.
+        L'ordine delle colonne nel SELECT  garantito per corrispondere agli header UI.
         """
         # Ordine colonne sincronizzato con StoricoOdaPanel.full_headers
         columns = [

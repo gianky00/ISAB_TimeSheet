@@ -5,14 +5,14 @@ Include componenti grafici con animazioni avanzate per il feedback visivo.
 
 from __future__ import annotations
 
-from PyQt6.QtCore import (  # type: ignore[attr-defined]
+from PySide6.QtCore import (
+    Property,
     QEasingCurve,
     QEvent,
     QPropertyAnimation,
-    pyqtProperty,
 )
-from PyQt6.QtGui import QColor, QEnterEvent, QPainter, QPaintEvent, QPen
-from PyQt6.QtWidgets import QFrame, QWidget
+from PySide6.QtGui import QColor, QEnterEvent, QPainter, QPaintEvent, QPen
+from PySide6.QtWidgets import QFrame, QWidget
 
 from src.gui.styles import COLORS
 
@@ -28,8 +28,8 @@ class HoverPulseFrame(QFrame):
         Inizializza il frame con il colore di accento specificato.
 
         Args:
-            accent_color: Colore esadecimale opzionale per la linea pulsante.
-            parent: Widget genitore opzionale.
+          accent_color: Colore esadecimale opzionale per la linea pulsante.
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self._accent_color = QColor(accent_color or COLORS["text_dark"])
@@ -51,29 +51,27 @@ class HoverPulseFrame(QFrame):
         self._pulse_val = v
         self.update()
 
-    pulse_value = pyqtProperty(float, fget=get_pulse_value, fset=set_pulse_value)
+    pulse_value = Property(float, fget=get_pulse_value, fset=set_pulse_value)
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:
+    def enterEvent(self, event: QEnterEvent) -> None:
         """Avvia l'animazione pulsante all'ingresso del mouse."""
         self._anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: QEvent | None) -> None:
+    def leaveEvent(self, event: QEvent) -> None:
         """Ferma l'animazione pulsante all'uscita del mouse."""
         self._anim.stop()
         self.set_pulse_value(1.0)
         super().leaveEvent(event)
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:
+    def paintEvent(self, event: QPaintEvent) -> None:
         """
         Disegna la linea pulsante alla base del widget.
 
         Args:
-            event: L'evento di pittura di Qt.
+          event: L'evento di pittura di Qt.
         """
         super().paintEvent(event)
-        if not event:
-            return
         painter = QPainter(self)
         try:
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)

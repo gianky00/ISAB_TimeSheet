@@ -92,7 +92,7 @@ class PrenotaBPBot(SeleniumBaseBot):
         try:
             return self._execute_workflow(rows)
         except Exception as e:
-            self.log(f"❗ Errore fatale durante l'esecuzione: {e}")
+            self.log(f"  Errore fatale durante l'esecuzione: {e}")
             self.update_step("nav", StepStatus.ERROR)
             traceback.print_exc()
             return False
@@ -102,7 +102,7 @@ class PrenotaBPBot(SeleniumBaseBot):
     def _execute_workflow(self, rows: list[dict[str, Any]]) -> bool:
         """Gestisce la navigazione e il ciclo di elaborazione dei BP."""
         if not self.driver:
-            self.log("❗ Errore: Driver non inizializzato.")
+            self.log("  Errore: Driver non inizializzato.")
             return False
 
         self.update_step("nav", StepStatus.RUNNING)
@@ -113,7 +113,7 @@ class PrenotaBPBot(SeleniumBaseBot):
 
         processed_count = self._process_all_rows(page, rows)
 
-        self.log(f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
+        self.log(f"  Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
         self._finalize_steps()
         return True
 
@@ -177,7 +177,7 @@ class PrenotaBPBot(SeleniumBaseBot):
 
             return True  # noqa: TRY300
         except Exception as e:
-            self.log(f"✗ Errore su BP {num_bp}: {e}")
+            self.log(f"  Errore su BP {num_bp}: {e}")
             self.update_step("reserve", StepStatus.ERROR)
             with suppress(Exception):
                 page.chiudi_dettagli_bp()

@@ -42,7 +42,7 @@ class MetadataEnricher:
         Costruisce metadata statici (calcolati una volta sola).
 
         Returns:
-            Dict con metadata statici
+          Dict con metadata statici
         """
         metadata = {}
 
@@ -76,7 +76,7 @@ class MetadataEnricher:
         Rileva environment corrente.
 
         Returns:
-            Uno tra: "development", "production", "test"
+          Uno tra: "development", "production", "test"
         """
         # Check variabile ambiente
         env = os.environ.get("SYNCROJOB_ENV", "").lower()
@@ -87,17 +87,17 @@ class MetadataEnricher:
         if env in ("test", "testing"):
             return "test"
 
-        # Euristica: se eseguito da pytest o unittest, è test
+        # Euristica: se eseguito da pytest o unittest,  test
         import sys  # noqa: PLC0415
 
         if "pytest" in sys.modules or "unittest" in sys.modules:
             return "test"
 
-        # Euristica: se eseguito da IDE (pycharm, vscode), è development
+        # Euristica: se eseguito da IDE (pycharm, vscode),  development
         if any(ide in sys.executable.lower() for ide in ("pycharm", "vscode", "code")):
             return "development"
 
-        # Euristica: se eseguito da .exe compilato, è production
+        # Euristica: se eseguito da .exe compilato,  production
         if getattr(sys, "frozen", False):
             return "production"
 
@@ -108,7 +108,7 @@ class MetadataEnricher:
         Restituisce metadata statici (cached).
 
         Returns:
-            Dict con metadata statici
+          Dict con metadata statici
         """
         if self._cache is None:
             return {}
@@ -119,11 +119,11 @@ class MetadataEnricher:
         Restituisce metadata dinamici (calcolati ogni volta).
 
         Returns:
-            Dict con metadata dinamici
+          Dict con metadata dinamici
         """
         metadata: dict[str, Any] = {}
 
-        # Process info (può cambiare tra fork/spawn)
+        # Process info (pu  cambiare tra fork/spawn)
         metadata["process_id"] = os.getpid()
         metadata["parent_process_id"] = os.getppid()
 
@@ -140,7 +140,7 @@ class MetadataEnricher:
         Restituisce tutti i metadata (statici + dinamici).
 
         Returns:
-            Dict con metadata completi
+          Dict con metadata completi
         """
         metadata = self.get_static_metadata()
         metadata.update(self.get_dynamic_metadata())
@@ -151,12 +151,12 @@ class MetadataEnricher:
         Arricchisce log entry con metadata.
 
         Args:
-            entry: Log entry da arricchire
+          entry: Log entry da arricchire
 
         Returns:
-            Log entry arricchito
+          Log entry arricchito
         """
-        # Aggiungi metadata se non già presenti
+        # Aggiungi metadata se non gia' presenti
         if "metadata" not in entry:
             entry["metadata"] = {}
 
@@ -190,9 +190,9 @@ def enrich_entry(entry: dict[str, Any]) -> dict[str, Any]:
     Helper function per arricchire log entry.
 
     Args:
-        entry: Log entry da arricchire
+      entry: Log entry da arricchire
 
     Returns:
-        Log entry arricchito
+      Log entry arricchito
     """
     return get_enricher().enrich_log_entry(entry)

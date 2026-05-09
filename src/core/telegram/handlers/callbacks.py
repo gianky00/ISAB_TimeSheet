@@ -76,13 +76,13 @@ async def _handle_nav_actions(service: "TelegramService", data: str, query: "Cal
         )
     elif data == "nav_bots":
         await query.edit_message_text(
-            "🤖 *Seleziona Piattaforma*",
+            "   *Seleziona Piattaforma*",
             reply_markup=TelegramUI.get_bots_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
     elif data == "nav_db":
         await query.edit_message_text(
-            "🗄️ *Seleziona Database*",
+            "    *Seleziona Database*",
             reply_markup=TelegramUI.get_db_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
@@ -94,19 +94,19 @@ async def _handle_nav_actions(service: "TelegramService", data: str, query: "Cal
         )
     elif data == "nav_utility":
         await query.edit_message_text(
-            "⚙️ *Utility & Stato*",
+            "    *Utility & Stato*",
             reply_markup=TelegramUI.get_utility_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
     elif data == "nav_portale":
         await query.edit_message_text(
-            "🏭 *Portale Fornitori*",
+            "   *Portale Fornitori*",
             reply_markup=TelegramUI.get_portale_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
     elif data == "nav_safework":
         await query.edit_message_text(
-            "🛡️ *SafeWork*",
+            "    *SafeWork*",
             reply_markup=TelegramUI.get_safework_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
@@ -124,7 +124,7 @@ async def _handle_db_actions(
             )
             return
         await query.edit_message_text(
-            "📅 *Seleziona Anno*",
+            "   *Seleziona Anno*",
             reply_markup=TelegramUI.get_db_year_selection(years),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
@@ -134,7 +134,7 @@ async def _handle_db_actions(
         year = parts[1]
         service.user_states[chat_id] = f"WAITING_DB_QUERY_{db_name.upper()}_{year}"
         await query.edit_message_text(
-            f"📊 **Strumentale {year}**\nCosa stai cercando? (es. nome fornitore, descrizione...)",
+            f"   **Strumentale {year}**\nCosa stai cercando? (es. nome fornitore, descrizione...)",
             reply_markup=TelegramUI.get_back_keyboard("db_select_year_strumentale"),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
@@ -142,7 +142,7 @@ async def _handle_db_actions(
         db_name = data.replace("db_info_", "")
         service.user_states[chat_id] = f"WAITING_DB_QUERY_{db_name.upper()}"
         await query.edit_message_text(
-            f"🗄️ **DB {db_name.capitalize()}**\nScrivi cosa cercare, Lyra risponderà.",
+            f"    **DB {db_name.capitalize()}**\nScrivi cosa cercare, Lyra risponder .",
             reply_markup=TelegramUI.get_back_keyboard("nav_db"),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
@@ -167,7 +167,7 @@ async def _handle_bot_actions(  # noqa: PLR0913
         _handle_direct_bot_commands(service, data, chat_id)
 
 
-async def _handle_menu_and_input_dispatch(  # noqa: PLR0913
+async def _handle_menu_and_input_dispatch(  # noqa: C901, PLR0913
     service: "TelegramService",
     data: str,
     query: "CallbackQuery",
@@ -178,7 +178,7 @@ async def _handle_menu_and_input_dispatch(  # noqa: PLR0913
     async def handle_menu_pdl() -> None:
         merge_all = service.pdl_settings.get(chat_id, {}).get("merge_all", False)
         await query.edit_message_text(
-            "🛡️ *SafeWork PDL*",
+            "    *SafeWork PDL*",
             reply_markup=TelegramUI.get_pdl_menu(merge_all),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
@@ -193,35 +193,35 @@ async def _handle_menu_and_input_dispatch(  # noqa: PLR0913
 
     async def handle_menu_ts() -> None:
         await query.edit_message_text(
-            "📥 *Portale TS*",
+            "   *Portale TS*",
             reply_markup=TelegramUI.get_ts_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
 
     async def handle_menu_oda_details() -> None:
         await query.edit_message_text(
-            "📋 *Dettagli OdA*",
+            "   *Dettagli OdA*",
             reply_markup=TelegramUI.get_oda_details_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
 
     async def handle_menu_carico() -> None:
         await query.edit_message_text(
-            "📤 *Carico TS*",
+            "   *Carico TS*",
             reply_markup=TelegramUI.get_carico_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
 
     async def handle_menu_timbrature() -> None:
         await query.edit_message_text(
-            "⏱️ *Timbrature*",
+            "    *Timbrature*",
             reply_markup=TelegramUI.get_timbrature_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
 
     async def handle_menu_prenota_bp() -> None:
         await query.edit_message_text(
-            "📦 *Prenota BP*",
+            "   *Prenota BP*",
             reply_markup=TelegramUI.get_prenota_bp_menu(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
@@ -334,13 +334,13 @@ def _handle_direct_bot_commands(service: "TelegramService", data: str, chat_id: 
         service.command_received.emit(cmd[0], cmd[1])
 
 
-async def _handle_utility_actions(
+async def _handle_utility_actions(  # noqa: C901
     service: "TelegramService", data: str, query: "CallbackQuery", chat_id: int
 ) -> None:
     if data == "status":
         service.status_requested.emit(str(chat_id))
     elif data == "screenshot":
-        await query.edit_message_text("📸 Screenshot:", reply_markup=TelegramUI.get_screenshot_menu())
+        await query.edit_message_text("   Screenshot:", reply_markup=TelegramUI.get_screenshot_menu())
     elif data in ("snap_app", "snap_pc"):
         service.screenshot_requested.emit(data.replace("snap_", ""))
     elif data == "stop_all":
@@ -351,7 +351,7 @@ async def _handle_utility_actions(
         elif data == "app_conn_test":
             service.command_received.emit("test_connectivity", {})
     elif data == "menu_power":
-        await query.edit_message_text("⚡ Manutenzione:", reply_markup=TelegramUI.get_power_menu())
+        await query.edit_message_text("  Manutenzione:", reply_markup=TelegramUI.get_power_menu())
     elif data.startswith("menu_"):
         await _handle_utility_menus(service, data, query)
     elif data.startswith(("set_", "toggle_")):
@@ -362,12 +362,14 @@ async def _handle_utility_menus(service: "TelegramService", data: str, query: "C
     if data == "menu_settings":
         config = config_manager.load_config()
         fornitori = config.get("fornitori", [])
-        await query.edit_message_text("⚙️ Impostazioni:", reply_markup=TelegramUI.get_settings_menu(fornitori))
+        await query.edit_message_text(
+            "    Impostazioni:", reply_markup=TelegramUI.get_settings_menu(fornitori)
+        )
     elif data == "menu_autopilot":
-        await query.edit_message_text("📅 Autopilot:", reply_markup=TelegramUI.get_autopilot_menu())
+        await query.edit_message_text("   Autopilot:", reply_markup=TelegramUI.get_autopilot_menu())
     elif data == "menu_printers":
         printers = get_installed_printers()
-        await query.edit_message_text("🖨️ Stampanti:", reply_markup=TelegramUI.get_printers_menu(printers))
+        await query.edit_message_text("    Stampanti:", reply_markup=TelegramUI.get_printers_menu(printers))
 
 
 async def _handle_setting_changes(
@@ -380,6 +382,6 @@ async def _handle_setting_changes(
         service.command_received.emit("set_autopilot", {"enabled": enabled})
     elif data == "input_autopilot_time":
         service.user_states[chat_id] = "WAITING_AUTOPILOT_TIME"
-        await query.edit_message_text("🕒 Inserisci orario (HH:MM):")
+        await query.edit_message_text("   Inserisci orario (HH:MM):")
     elif data.startswith("set_print_"):
         service.command_received.emit("set_printer", {"printer": data.replace("set_print_", "")})

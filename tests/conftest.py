@@ -73,9 +73,9 @@ with contextlib.suppress(Exception):
 # --------------------------------------------------------
 
 
-# --- GLOBAL PYQT6 MOCK FOR HEADLESS ENVIRONMENTS ---
+# --- GLOBAL PySide6 MOCK FOR HEADLESS ENVIRONMENTS ---
 try:
-    import PyQt6  # noqa: F401
+    import PySide6  # noqa: F401
 except (ImportError, RuntimeError):
 
     class MockQObject:
@@ -85,7 +85,7 @@ except (ImportError, RuntimeError):
         def setParent(self, parent):  # noqa: N802
             pass
 
-    class MockPyqtSignal:
+    class MockSignal:
         def __init__(self, *args, **kwargs):
             pass
 
@@ -97,13 +97,13 @@ except (ImportError, RuntimeError):
 
     mock_qt_core = MagicMock()
     mock_qt_core.QObject = MockQObject
-    mock_qt_core.pyqtSignal = MockPyqtSignal
+    mock_qt_core.Signal = MockSignal
 
-    sys.modules["PyQt6"] = MagicMock()
-    sys.modules["PyQt6.QtCore"] = mock_qt_core
-    sys.modules["PyQt6.QtGui"] = MagicMock()
-    sys.modules["PyQt6.QtWidgets"] = MagicMock()
-    sys.modules["PyQt6.QtTest"] = MagicMock()
+    sys.modules["PySide6"] = MagicMock()
+    sys.modules["PySide6.QtCore"] = mock_qt_core
+    sys.modules["PySide6.QtGui"] = MagicMock()
+    sys.modules["PySide6.QtWidgets"] = MagicMock()
+    sys.modules["PySide6.QtTest"] = MagicMock()
 # ---------------------------------------------------
 
 
@@ -204,7 +204,7 @@ def cleanup_widgets():
     import gc  # noqa: PLC0415
 
     with contextlib.suppress(ImportError, RuntimeError):
-        from PyQt6.QtWidgets import QApplication  # noqa: PLC0415
+        from PySide6.QtWidgets import QApplication  # noqa: PLC0415
 
         if QApplication.instance():
             for widget in QApplication.topLevelWidgets():

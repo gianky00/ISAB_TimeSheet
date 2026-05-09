@@ -143,7 +143,7 @@ class BackupManager:
             file_count = 0
 
             with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-                # Usiamo os.walk per massima compatibilità con filesystem simulati e reali
+                # Usiamo os.walk per massima compatibilit  con filesystem simulati e reali
                 for root, dirs, files in os.walk(source_dir):
                     # Filtra directory escluse
                     dirs[:] = [d for d in dirs if d not in BackupManager.EXCLUDE_DIRS]
@@ -191,11 +191,11 @@ class BackupManager:
     @staticmethod
     def _cleanup_old_backups(target_dir: Path, keep: int = 5) -> None:
         """
-        Mantiene solo gli ultimi N backup nel database, eliminando i più vecchi.
+        Mantiene solo gli ultimi N backup nel database, eliminando i piu' vecchi.
 
         Args:
-            target_dir: Cartella dove risiedono i backup.
-            keep: Numero di backup da conservare (default 5).
+          target_dir: Cartella dove risiedono i backup.
+          keep: Numero di backup da conservare (default 5).
         """
         with suppress(Exception):
             backups = sorted(
@@ -209,7 +209,7 @@ class BackupManager:
 
     @staticmethod
     def list_backups() -> list[Path]:
-        """Restituisce la lista dei backup disponibili ordinati per data (più recente prima)."""
+        """Restituisce la lista dei backup disponibili ordinati per data (piu' recente prima)."""
         try:
             target_dir = BackupManager.get_backup_dir()
             if not target_dir.exists():
@@ -231,7 +231,7 @@ class BackupManager:
             if not zip_p.exists():
                 return False, "File di backup non trovato."
 
-            # Verifica validità zip
+            # Verifica validit  zip
             if not zipfile.is_zipfile(zip_p):
                 return False, "File non valido o corrotto."
 

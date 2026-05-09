@@ -20,7 +20,7 @@ def format_date_it(value: object) -> str:
                 with suppress(ValueError):
                     dt = datetime.strptime(value.split(" ")[0], fmt).replace(tzinfo=UTC)
                     return dt.strftime("%d/%m/%Y")
-            return value  # Fallback se non è una data riconosciuta
+            return value  # Fallback se non  una data riconosciuta
         if isinstance(value, datetime):
             return value.strftime("%d/%m/%Y")
         if isinstance(value, (float, int)):

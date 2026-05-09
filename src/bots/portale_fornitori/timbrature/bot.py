@@ -32,7 +32,7 @@ class TimbratureBot(SeleniumBaseBot):
 
     @property
     def description(self) -> str:
-        """Restituisce una descrizione delle funzionalità del bot."""
+        """Restituisce una descrizione delle funzionalita' del bot."""
         return "Scarica e archivia le timbrature dal portale ISAB"
 
     @staticmethod
@@ -134,7 +134,7 @@ class TimbratureBot(SeleniumBaseBot):
             self.log("[OK] Report scaricato! Sto analizzando i dati...")
             try:
                 self.storage.import_excel(excel_path, self.log)
-                self.log("💾 Dati salvati nel database con successo.")
+                self.log("   Dati salvati nel database con successo.")
                 self.update_step("import", StepStatus.COMPLETED)
             except Exception as e:
                 self.log(f"[ERRORE] Errore durante il salvataggio: {e}")
@@ -146,7 +146,7 @@ class TimbratureBot(SeleniumBaseBot):
                     with suppress(Exception):
                         p.unlink()
         else:
-            self.log("[ATTENZIONE] Non ho trovato dati o il download non è partito.")
+            self.log("[ATTENZIONE] Non ho trovato dati o il download non  partito.")
             self.update_step("download", StepStatus.ERROR)
 
         self.log("[INFO] Procedura conclusa.")

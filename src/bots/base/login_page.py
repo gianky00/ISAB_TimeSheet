@@ -52,11 +52,11 @@ class LoginPage:
             time.sleep(0.3)
             return True  # noqa: TRY300
         except TimeoutException:
-            self.log(f"⚠ Timeout ({timeout_secondi}s) attesa overlay. Proseguo con cautela.")
+            self.log(f"  Timeout ({timeout_secondi}s) attesa overlay. Proseguo con cautela.")
             return False
 
     def _perform_login_form_action(self, username: str, password: str, company: str) -> None:
-        """Riempie il form di login, seleziona la società e preme Accedi."""
+        """Riempie il form di login, seleziona la societa' e preme Accedi."""
         username_field = self.wait.until(EC.element_to_be_clickable(LoginLocators.USERNAME_FIELD))
         username_field.clear()
         username_field.send_keys(username)
@@ -65,16 +65,16 @@ class LoginPage:
         password_field.clear()
         password_field.send_keys(password)
 
-        # Selezione Società (ISAB/PSER)
+        # Selezione Societa'(ISAB/PSER)
         try:
-            self.log(f"Selezione società: {company}...")
+            self.log(f"Selezione societa': {company}...")
             comp_field = self.wait.until(EC.element_to_be_clickable(LoginLocators.COMPANY_FIELD))
             comp_field.click()
             comp_field.clear()
             comp_field.send_keys(company)
             time.sleep(0.5)
 
-            # Se è un vero dropdown, tentiamo di cliccare l'opzione
+            # Se  un vero dropdown, tentiamo di cliccare l'opzione
             option_xpath = f"//li[normalize-space(text())='{company}']"
             with suppress(Exception):
                 # Usiamo una attesa breve
@@ -83,7 +83,7 @@ class LoginPage:
                 )
                 self.driver.execute_script("arguments[0].click();", opt_el)
         except Exception as e:
-            self.log(f"[ATTENZIONE] Avviso: Selezione società '{company}' non riuscita, proseguo: {e}")
+            self.log(f"[ATTENZIONE] Avviso: Selezione societa''{company}' non riuscita, proseguo: {e}")
 
         try:
             accedi_btn = self.wait.until(EC.element_to_be_clickable(LoginLocators.LOGIN_BUTTON))
@@ -116,7 +116,7 @@ class LoginPage:
             self.log(f"Nota: Controllo popup sessione ignorato ({e})")
 
     def _verify_logged_in_via_ui(self) -> bool:
-        """Verifica se l'utente è loggato controllando elementi UI post-login."""
+        """Verifica se l'utente  loggato controllando elementi UI post-login."""
         with suppress(Exception):
             WebDriverWait(self.driver, 5).until(
                 EC.presence_of_element_located(CommonLocators.SETTINGS_BUTTON)
@@ -135,7 +135,7 @@ class LoginPage:
             self.driver.get(self.isab_url)
 
             if "Proxy Error" in self.driver.title or "Proxy Error" in self.driver.page_source:
-                self.log("⚠ Rilevato 'Proxy Error' durante l'accesso iniziale.")
+                self.log("  Rilevato 'Proxy Error' durante l'accesso iniziale.")
                 return False
 
             self.log("Tentativo di login...")
@@ -148,9 +148,9 @@ class LoginPage:
                 )
                 self._perform_login_form_action(username, password, company)
             except TimeoutException:
-                # 2. Se il form non c'è, controlla se siamo già loggati (fast-skip)
+                # 2. Se il form non c' , controlla se siamo gia' loggati (fast-skip)
                 if self._verify_logged_in_via_ui():
-                    self.log("✓ Rilevata sessione attiva (skip login).")
+                    self.log("  Rilevata sessione attiva (skip login).")
                     return True
 
                 self.log("[ATTENZIONE] Username assente e sessione invalida/scaduta.")
@@ -162,15 +162,15 @@ class LoginPage:
                     self._perform_login_form_action(username, password, company)
                     return True  # noqa: TRY300
                 except Exception as e:
-                    self.log(f"✗ Fallito recupero sessione: {e}")
+                    self.log(f"  Fallito recupero sessione: {e}")
                     return False
 
-            self.log("✓ Login completato con successo")
+            self.log("  Login completato con successo")
             return True  # noqa: TRY300
 
         except TimeoutException:
-            self.log("✗ Timeout durante il login")
+            self.log("  Timeout durante il login")
             return False
         except Exception as e:
-            self.log(f"✗ Errore login: {e}")
+            self.log(f"  Errore login: {e}")
             return False

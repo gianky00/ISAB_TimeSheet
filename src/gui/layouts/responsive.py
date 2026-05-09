@@ -2,8 +2,8 @@
 Layout responsivi che si adattano alle dimensioni finestra.
 """
 
-from PyQt6.QtGui import QResizeEvent
-from PyQt6.QtWidgets import QHBoxLayout, QLayout, QVBoxLayout, QWidget
+from PySide6.QtGui import QResizeEvent
+from PySide6.QtWidgets import QHBoxLayout, QLayout, QVBoxLayout, QWidget
 
 
 class ResponsiveContainer(QWidget):
@@ -42,7 +42,7 @@ class ResponsiveContainer(QWidget):
                 self._rebuild_layout()
 
     def _get_mode(self, width: int) -> str:
-        """Determina la modalità di visualizzazione (mobile, tablet, desktop) in base alla larghezza."""
+        """Determina la modalita' di visualizzazione (mobile, tablet, desktop) in base alla larghezza."""
         if width < self.BREAKPOINT_MOBILE:
             return "mobile"
         if width < self.BREAKPOINT_TABLET:
@@ -50,7 +50,7 @@ class ResponsiveContainer(QWidget):
         return "desktop"
 
     def _rebuild_layout(self) -> None:
-        """Pulisce e ricostruisce il layout in base alla modalità corrente."""
+        """Pulisce e ricostruisce il layout in base alla modalita' corrente."""
         self._clear_layout()
         self._build_layout_by_mode()
 

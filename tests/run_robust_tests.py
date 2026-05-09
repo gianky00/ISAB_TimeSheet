@@ -491,7 +491,7 @@ class UltraRunner:
 
     # ── SNIPER ──
 
-    def _run_sniper(self, targets: list[str], args: argparse.Namespace) -> None:  # noqa: PLR0912
+    def _run_sniper(self, targets: list[str], args: argparse.Namespace) -> None:  # noqa: C901, PLR0912
         """Esecuzione diretta e live, ottimizzata per il debugging."""
         self.strategy = "SNIPER"
         Console.header(f"SNIPER MODE: Esecuzione mirata di {len(targets)} target")
@@ -591,7 +591,7 @@ class UltraRunner:
 
     # ── SHOTGUN ──
 
-    def _run_shotgun(self, args: argparse.Namespace) -> None:  # noqa: PLR0912, PLR0915
+    def _run_shotgun(self, args: argparse.Namespace) -> None:  # noqa: C901, PLR0912, PLR0915
         """Esecuzione massiva e parallela, ottimizzata per l'intera suite."""
         self.strategy = "SHOTGUN"
         Console.header("SHOTGUN MODE: Analisi massiva suite")

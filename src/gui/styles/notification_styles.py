@@ -51,19 +51,19 @@ def get_notification_qss(level: str, is_read: bool) -> str:
     bg = gradient if not is_read else COLORS["bg_white"]
 
     return f"""
-        NotificationCard {{
-            background: {bg};
-            border-radius: 12px;
-            border-left: 4px solid {accent_color};
-            border-top: 1px solid {COLORS["border_light"]};
-            border-right: 1px solid {COLORS["border_light"]};
-            border-bottom: 1px solid {COLORS["border_light"]};
-        }}
-        NotificationCard:hover {{
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_hover"]}, stop:1 {COLORS["bg_white"]});
-            border-left: 4px solid {accent_color};
-            border-top: 1px solid {COLORS["border_medium"]};
-            border-right: 1px solid {COLORS["border_medium"]};
-            border-bottom: 1px solid {COLORS["border_medium"]};
-        }}
-    """
+    NotificationCard {{
+      background: {bg};
+      border-radius: 12px;
+      border-left: 4px solid {accent_color};
+      border-top: 1px solid {COLORS["border_light"]};
+      border-right: 1px solid {COLORS["border_light"]};
+      border-bottom: 1px solid {COLORS["border_light"]};
+    }}
+    NotificationCard:hover {{
+      background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS["bg_hover"]}, stop:1 {COLORS["bg_white"]});
+      border-left: 4px solid {accent_color};
+      border-top: 1px solid {COLORS["border_medium"]};
+      border-right: 1px solid {COLORS["border_medium"]};
+      border-bottom: 1px solid {COLORS["border_medium"]};
+    }}
+  """

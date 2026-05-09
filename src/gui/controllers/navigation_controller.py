@@ -11,8 +11,8 @@ import functools
 import logging
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QObject, pyqtSignal
-from PyQt6.QtWidgets import QStackedWidget, QWidget
+from PySide6.QtCore import QObject, Signal
+from PySide6.QtWidgets import QStackedWidget, QWidget
 
 from src.gui.components.popout.popout_manager import DetachedPanelWindow, PopoutPlaceholderWidget
 from src.gui.controllers.panel_factory import PanelFactory
@@ -35,15 +35,15 @@ class NavigationController(QObject):
     Gestisce il routing e delega la creazione dei pannelli alla PanelFactory.
     """
 
-    panel_detached = pyqtSignal(int, str)  # index, title
-    panel_reattached = pyqtSignal(int)  # index
+    panel_detached = Signal(int, str)  # index, title
+    panel_reattached = Signal(int)  # index
 
     def __init__(self, main_window: MainWindow) -> None:
         """
         Inizializza il controller di navigazione e i componenti associati.
 
         Args:
-            main_window: Riferimento alla MainWindow dell'applicazione.
+          main_window: Riferimento alla MainWindow dell'applicazione.
         """
         super().__init__(main_window)
         self.mw = main_window
@@ -223,7 +223,7 @@ class NavigationController(QObject):
         try:
             panel = self.stack.widget(index)
 
-            # Se il pannello è ancora uno QWidget base (vuoto), delega alla factory
+            # Se il pannello  ancora uno QWidget base (vuoto), delega alla factory
             if type(panel) is QWidget:
                 logger.info("Inizializzazione lazy del pannello indice: %s", index)
                 new_panel = self.panel_factory.create_panel(index)

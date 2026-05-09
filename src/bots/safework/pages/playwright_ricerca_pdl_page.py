@@ -33,7 +33,7 @@ class PlaywrightRicercaPDLPage(PlaywrightBasePage):
     def seleziona_sito_e_cerca(self, site_name: str) -> bool:
         """Seleziona il sito e clicca Cerca."""
         try:
-            self.log(f"🏢 Selezione sito: {site_name}")
+            self.log(f"   Selezione sito: {site_name}")
 
             # 1. Clic Dropdown
             site_dropdown_sel = "xpath=//span[contains(text(), 'ISAB Sud') or contains(text(), 'ISAB Nord') or contains(text(), 'IGCC') or contains(text(), 'Sito')]"

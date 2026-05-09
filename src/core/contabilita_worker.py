@@ -2,16 +2,16 @@ import time
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import QThread, Signal
 
 from src.core.contabilita_manager import ContabilitaManager
 
 
 class ContabilitaWorker(QThread):
-    """Worker per l'importazione in background della contabilità."""
+    """Worker per l'importazione in background della contabilit ."""
 
-    finished_signal = pyqtSignal(bool, str, int, int, float)
-    progress_signal = pyqtSignal(str)
+    finished_signal = Signal(bool, str, int, int, float)
+    progress_signal = Signal(str)
 
     def __init__(
         self,
@@ -89,12 +89,12 @@ class ContabilitaWorker(QThread):
         Aggiorna il totale operazioni se il numero effettivo differisce dalla stima.
 
         Args:
-            current_in_phase: Numero elemento corrente (1-based)
-            total_in_phase: Totale elementi reali nella fase
-            state: Stato del worker
-            phase_key: Chiave della stima nel dizionario state (es. 'est_sheets')
+          current_in_phase: Numero elemento corrente (1-based)
+          total_in_phase: Totale elementi reali nella fase
+          state: Stato del worker
+          phase_key: Chiave della stima nel dizionario state (es. 'est_sheets')
         """
-        # Se è la prima volta che riceviamo il totale reale per questa fase
+        # Se  la prima volta che riceviamo il totale reale per questa fase
         if not state.get(f"{phase_key}_adjusted", False):
             est = state["estimates"].get(phase_key, 0)
             diff = total_in_phase - est
@@ -147,7 +147,7 @@ class ContabilitaWorker(QThread):
         m, s = divmod(int(eta_s), 60)
 
         self.progress_signal.emit(
-            f"[ATTESA] Importazione: {percent}% completato ({current}/{total}) • ETA: {m}m {s}s"
+            f"[ATTESA] Importazione: {percent}% completato ({current}/{total})   ETA: {m}m {s}s"
         )
 
     def _phase_import_contabilita(self, state: Any) -> None:
@@ -163,8 +163,8 @@ class ContabilitaWorker(QThread):
             success,
             added,
             removed,
-            f"Contabilità: OK (+{added}/-{removed})",
-            f"Err Contabilità: {msg}",
+            f"Contabilit : OK (+{added}/-{removed})",
+            f"Err Contabilit : {msg}",
         )
 
     def _phase_import_giornaliere(self, state: Any) -> None:

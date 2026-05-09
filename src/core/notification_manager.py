@@ -13,7 +13,7 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any, Final, Optional
 
-from PyQt6.QtCore import QObject, pyqtSignal
+from PySide6.QtCore import QObject, Signal
 
 from src.core.constants import FileNames
 from src.core.paths import CONFIG_DIR
@@ -22,7 +22,7 @@ from src.core.paths import CONFIG_DIR
 class NotificationManager(QObject):
     """
     Manager singleton per il sistema di notifiche.
-    Gestisce il ciclo di vita dei messaggi (creazione, lettura, pin, eliminazione).
+    Gestisce il ciclo di vita dei messaggia'(creazione, lettura, pin, eliminazione).
     Emette segnali per l'aggiornamento dinamico dell'interfaccia utente.
     """
 
@@ -30,16 +30,16 @@ class NotificationManager(QObject):
     _lock = threading.RLock()
 
     # Segnali
-    notification_added = pyqtSignal(dict)
+    notification_added = Signal(dict)
     """Segnale emesso quando viene aggiunta una nuova notifica."""
 
-    notifications_updated = pyqtSignal()
+    notifications_updated = Signal()
     """Segnale emesso a seguito di qualsiasi modifica alla lista delle notifiche."""
 
-    unread_count_changed = pyqtSignal(int)
+    unread_count_changed = Signal(int)
     """Segnale emesso quando cambia il numero di errori non letti."""
 
-    request_toast = pyqtSignal(str, str, int)
+    request_toast = Signal(str, str, int)
     """Segnale emesso per richiedere la visualizzazione di un toast (msg, livello, ms)."""
 
     MAX_MESSAGE_LEN: Final[int] = 120
@@ -51,7 +51,7 @@ class NotificationManager(QObject):
         Restituisce l'istanza singleton della classe, creandola se necessario (Thread-Safe).
 
         Returns:
-            NotificationManager: L'istanza unica globale.
+          NotificationManager: L'istanza unica globale.
         """
         if cls._instance is None:
             with cls._lock:
@@ -86,7 +86,7 @@ class NotificationManager(QObject):
         return []
 
     def _migrate_notification(self, notif: dict[str, Any]) -> dict[str, Any]:
-        """Assicura che la notifica contenga tutti i campi richiesti dallo schema attuale."""
+        """Assicura che la notifica contenga tutti i campiu'richiesti dallo schema attuale."""
         defaults = {
             "category": "system",
             "priority": "low",
@@ -127,17 +127,17 @@ class NotificationManager(QObject):
         Crea e aggiunge una nuova notifica al sistema.
 
         Args:
-            title: Titolo della notifica.
-            message: Contenuto del messaggio.
-            level: Severità (info, success, warning, error).
-            category: Categoria logica del messaggio.
-            priority: Priorità di visualizzazione.
-            source: Modulo sorgente.
-            tags: Etichette di ricerca.
-            metadata: Dati strutturati extra.
-            actions: Lista di azioni rapide (callback/link).
-            related_id: ID di un oggetto correlato (es. ID OdA).
-            show_toast: Se richiedere l'emissione immediata di un toast a schermo.
+          title: Titolo della notifica.
+          message: Contenuto del messaggio.
+          level: Severit  (info, success, warning, error).
+          category: Categoria logica del messaggio.
+          priority: Priorita' di visualizzazione.
+          source: Modulo sorgente.
+          tags: Etichette di ricerca.
+          metadata: Dati strutturati extra.
+          actions: Lista di azioni rapide (callback/link).
+          related_id: ID di un oggetto correlato (es. ID OdA).
+          show_toast: Se richiedere l'emissione immediata di un toast a schermo.
         """
         id_notif = str(uuid.uuid4())
         notif: dict[str, Any] = {
@@ -181,10 +181,10 @@ class NotificationManager(QObject):
         Restituisce l'elenco delle notifiche in memoria.
 
         Args:
-            filter_unread: Se True, restituisce solo i messaggi non letti.
+          filter_unread: Se True, restituisce solo i messaggi non letti.
 
         Returns:
-            list: Lista di dizionari notifica.
+          list: Lista di dizionari notifica.
         """
         if filter_unread:
             return [n for n in self.notifications if not n.get("read", False)]
@@ -195,7 +195,7 @@ class NotificationManager(QObject):
         Restituisce il conteggio degli errori (level=error) non ancora letti.
 
         Returns:
-            int: Numero di errori pendenti.
+          int: Numero di errori pendenti.
         """
         return sum(1 for n in self.notifications if not n.get("read", False) and n.get("level") == "error")
 
@@ -211,7 +211,7 @@ class NotificationManager(QObject):
                 break
 
     def mark_all_as_read(self) -> None:
-        """Segna indistintamente tutti i messaggi come letti."""
+        """Segna indistintamente tutti i messaggia'come letti."""
         changed = False
         for n in self.notifications:
             if not n["read"]:
@@ -223,7 +223,7 @@ class NotificationManager(QObject):
             self.unread_count_changed.emit(0)
 
     def update_notification(self, notification_id: str, updates: dict[str, Any]) -> None:
-        """Aggiorna parzialmente i campi di una notifica identificata per ID."""
+        """Aggiorna parzialmente i campiu'di una notifica identificata per ID."""
         with self._lock:
             for n in self.notifications:
                 if n["id"] == notification_id:

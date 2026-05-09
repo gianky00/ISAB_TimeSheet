@@ -9,16 +9,16 @@ from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import (
+from PySide6.QtCore import (
+    Property,
     QDate,
     QEasingCurve,
     QPropertyAnimation,
     QSize,
-    pyqtProperty,
-    pyqtSignal,
+    Signal,
 )
-from PyQt6.QtGui import QColor, QPainter, QPen
-from PyQt6.QtWidgets import (
+from PySide6.QtGui import QColor, QPainter, QPen
+from PySide6.QtWidgets import (
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -45,7 +45,7 @@ from .calendar_date_edit import CalendarDateEdit
 class HoverPulseFrame(QFrame):
     """
     Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
-    Fornisce un feedback visivo immediato sull'interattività della card parametri.
+    Fornisce un feedback visivo immediato sull'interattivita'della card parametri.
     """
 
     def __init__(self, accent_color: str | None = None, parent: QWidget | None = None) -> None:
@@ -53,8 +53,8 @@ class HoverPulseFrame(QFrame):
         Inizializza il frame pulsante.
 
         Args:
-            accent_color: Colore hex del bordo.
-            parent: Widget genitore.
+          accent_color: Colore hex del bordo.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self._accent_color = QColor(accent_color or COLORS["text_dark"])
@@ -67,7 +67,7 @@ class HoverPulseFrame(QFrame):
         self._anim.setLoopCount(-1)
         self._anim.setEasingCurve(QEasingCurve.Type.InOutSine)
 
-    @pyqtProperty(float)
+    @Property(float)
     def pulse_value(self) -> float:
         """Restituisce il valore corrente della pulsazione per l'animazione del bordo."""
         return self._pulse_val
@@ -121,10 +121,10 @@ class BotParametersWidget(QWidget):
     Implementa un design Neon & Shadow standard per tutte le viste.
     """
 
-    settings_requested = pyqtSignal()
+    settings_requested = Signal()
     """Segnale emesso quando viene richiesto di aprire le impostazioni fornitori."""
 
-    changed = pyqtSignal()
+    changed = Signal()
     """Segnale emesso quando uno qualsiasi dei parametri viene modificato."""
 
     def __init__(
@@ -134,9 +134,9 @@ class BotParametersWidget(QWidget):
         Inizializza il widget dei parametri.
 
         Args:
-            show_date_range: Se True, visualizza anche il campo 'Data A'.
-            show_dest_path: Se True, visualizza il campo selezione cartella.
-            parent: Widget genitore.
+          show_date_range: Se True, visualizza anche il campo 'Data A'.
+          show_dest_path: Se True, visualizza il campo selezione cartella.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.show_date_range = show_date_range
@@ -155,12 +155,12 @@ class BotParametersWidget(QWidget):
         self.container.setObjectName("filterBar")
 
         self.container.setStyleSheet(f"""
-            QFrame#filterBar {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 12px;
-            }}
-        """)
+      QFrame#filterBar {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 12px;
+      }}
+    """)
 
         self.main_row_layout = QHBoxLayout(self.container)
         self.main_row_layout.setContentsMargins(15, 10, 15, 10)
@@ -180,10 +180,10 @@ class BotParametersWidget(QWidget):
         main_layout.addWidget(self.container)
 
     def _setup_societa_section(self) -> None:
-        """Configura la sezione di selezione della società (ISAB/PSER)."""
+        """Configura la sezione di selezione della societa'(ISAB/PSER)."""
         vbox = QVBoxLayout()
         vbox.setSpacing(4)
-        lbl = QLabel("SOCIETÀ")
+        lbl = QLabel("Societa'")
         lbl.setStyleSheet(LABEL_MUTED)
         vbox.addWidget(lbl)
 
@@ -192,7 +192,7 @@ class BotParametersWidget(QWidget):
         self.societa_combo.setMinimumHeight(38)
         self.societa_combo.setFixedWidth(100)
         self.societa_combo.setStyleSheet(COMBOBOX_STYLE)
-        self.societa_combo.currentIndexChanged.connect(self.changed.emit)
+        self.societa_combo.currentIndexChanged.connect(lambda: self.changed.emit())
         vbox.addWidget(self.societa_combo)
 
         self.main_row_layout.addLayout(vbox)
@@ -211,7 +211,7 @@ class BotParametersWidget(QWidget):
         self.fornitore_combo.setMinimumHeight(38)
         self.fornitore_combo.setMinimumWidth(200)
         self.fornitore_combo.setStyleSheet(COMBOBOX_STYLE)
-        self.fornitore_combo.currentIndexChanged.connect(self.changed.emit)
+        self.fornitore_combo.currentIndexChanged.connect(lambda: self.changed.emit())
         hbox.addWidget(self.fornitore_combo)
 
         self.settings_btn = IconButton()
@@ -219,7 +219,7 @@ class BotParametersWidget(QWidget):
         self.settings_btn.setIconSize(QSize(20, 20))
         self.settings_btn.setFixedSize(38, 38)
         self.settings_btn.setToolTip("Gestisci fornitori")
-        self.settings_btn.clicked.connect(self.settings_requested.emit)
+        self.settings_btn.clicked.connect(lambda: self.settings_requested.emit())
         self.settings_btn.setStyleSheet(self._get_icon_btn_style())
         hbox.addWidget(self.settings_btn)
 
@@ -236,7 +236,7 @@ class BotParametersWidget(QWidget):
         self.date_da = CalendarDateEdit()
         self.date_da.setMinimumHeight(38)
         self.date_da.setStyleSheet(COMBOBOX_STYLE)
-        self.date_da.dateChanged.connect(self.changed.emit)
+        self.date_da.dateChanged.connect(lambda: self.changed.emit())
         vbox_da.addWidget(self.date_da)
         self.main_row_layout.addLayout(vbox_da)
 
@@ -249,7 +249,7 @@ class BotParametersWidget(QWidget):
             self.date_a = CalendarDateEdit()
             self.date_a.setMinimumHeight(38)
             self.date_a.setStyleSheet(COMBOBOX_STYLE)
-            self.date_a.dateChanged.connect(self.changed.emit)
+            self.date_a.dateChanged.connect(lambda: self.changed.emit())
             vbox_a.addWidget(self.date_a)
             self.main_row_layout.addLayout(vbox_a)
 
@@ -269,7 +269,7 @@ class BotParametersWidget(QWidget):
         self.dest_path_edit.setMinimumWidth(200)
         self.dest_path_edit.setMinimumHeight(38)
         self.dest_path_edit.setStyleSheet(LINEEDIT_STYLE)
-        self.dest_path_edit.textChanged.connect(self.changed.emit)
+        self.dest_path_edit.textChanged.connect(lambda: self.changed.emit())
         hbox.addWidget(self.dest_path_edit)
 
         self.browse_btn = IconButton()
@@ -284,14 +284,14 @@ class BotParametersWidget(QWidget):
         self.open_btn = ModernButton("APRI", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL)
         self.open_btn.setFixedSize(60, 38)
         self.open_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {COLORS["bg_white"]};
-                color: {COLORS["text_dark"]};
-                border: 1px solid {COLORS["border_medium"]};
-                font-weight: bold;
-            }}
-            QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
-        """)
+      QPushButton {{
+        background-color: {COLORS["bg_white"]};
+        color: {COLORS["text_dark"]};
+        border: 1px solid {COLORS["border_medium"]};
+        font-weight: bold;
+      }}
+      QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
+    """)
         self.open_btn.setToolTip("Apri cartella nel file system")
         self.open_btn.clicked.connect(self._open_folder)
         hbox.addWidget(self.open_btn)
@@ -311,7 +311,7 @@ class BotParametersWidget(QWidget):
         Aggiunge un widget personalizzato alla riga dei parametri.
 
         Args:
-            widget: Il widget QWidget da aggiungere.
+          widget: Il widget QWidget da aggiungere.
         """
         item = self.main_row_layout.takeAt(self.main_row_layout.count() - 1)
         container = QVBoxLayout()
@@ -325,21 +325,21 @@ class BotParametersWidget(QWidget):
     def _get_icon_btn_style(self) -> str:
         """Restituisce lo stile QSS per i pulsanti icona."""
         return f"""
-            QPushButton {{
-                background-color: {COLORS["bg_white"]};
-                color: {COLORS["text_dark"]};
-                border: 1px solid {COLORS["border_medium"]};
-                border-radius: 6px;
-                padding: 2px;
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS["table_selection_bg"]};
-                border-color: {COLORS["text_dark"]};
-            }}
-            QPushButton:pressed {{
-                background-color: {COLORS["bg_alt"]};
-            }}
-        """
+      QPushButton {{
+        background-color: {COLORS["bg_white"]};
+        color: {COLORS["text_dark"]};
+        border: 1px solid {COLORS["border_medium"]};
+        border-radius: 6px;
+        padding: 2px;
+      }}
+      QPushButton:hover {{
+        background-color: {COLORS["table_selection_bg"]};
+        border-color: {COLORS["text_dark"]};
+      }}
+      QPushButton:pressed {{
+        background-color: {COLORS["bg_alt"]};
+      }}
+    """
 
     def _browse_path(self) -> None:
         """Apre il dialogo di selezione cartella di sistema."""
@@ -385,11 +385,11 @@ class BotParametersWidget(QWidget):
             self.fornitore_combo.setCurrentIndex(index)
 
     def get_societa(self) -> str:
-        """Restituisce la società selezionata (ISAB o PSER)."""
+        """Restituisce la societa'selezionata (ISAB o PSER)."""
         return self.societa_combo.currentText()
 
     def set_societa(self, societa: str) -> None:
-        """Imposta la società selezionata."""
+        """Imposta la societa'selezionata."""
         index = self.societa_combo.findText(societa)
         if index >= 0:
             self.societa_combo.setCurrentIndex(index)
@@ -401,7 +401,7 @@ class BotParametersWidget(QWidget):
         return date_da, date_a
 
     def set_dates(self, date_da_str: str, date_a_str: str | None = None) -> None:
-        """Imposta le date nei campi di input."""
+        """Imposta le date nei campiu'di input."""
         with suppress(Exception):
             d, m, y = map(int, date_da_str.split("."))
             self.date_da.setDate(QDate(y, m, d))

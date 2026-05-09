@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtWidgets import QTabWidget, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QTabWidget, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.gui.components.animated_tab_widget import AnimatedTabWidget
@@ -39,7 +39,7 @@ class AutomazioniWidget(QWidget):
         Inizializza il widget delle automazioni.
 
         Args:
-            main_window: Riferimento alla finestra principale per la registrazione dei pannelli.
+          main_window: Riferimento alla finestra principale per la registrazione dei pannelli.
         """
         super().__init__()
         self.mw = main_window
@@ -111,7 +111,7 @@ class AutomazioniWidget(QWidget):
         self.main_tabs.addTab(self.tab_fornitori, "Portale Fornitori")
         self.main_tabs.addTab(self.tab_safework, "SafeWork")
 
-        # Registra riferimenti nella Main Window (per compatibilità)
+        # Registra riferimenti nella Main Window (per compatibilit )
         self.mw.dettagli_panel = self.panel_dettagli
         self.mw.prenota_panel = self.panel_prenota
         self.mw.scarico_panel = self.panel_scarico
@@ -149,8 +149,8 @@ class AutomazioniWidget(QWidget):
         Imposta programmaticamente il tab e il sottomenu attivi.
 
         Args:
-            main_idx: Indice del portale (0: Fornitori, 1: SafeWork).
-            sub_idx: Indice del bot all'interno del portale.
+          main_idx: Indice del portale (0: Fornitori, 1: SafeWork).
+          sub_idx: Indice del bot all'interno del portale.
         """
         self.main_tabs.setCurrentIndex(main_idx)
         target = self.tab_fornitori if main_idx == 0 else self.tab_safework
@@ -165,7 +165,7 @@ class AutomazioniWidget(QWidget):
         Cambia il portale attivo.
 
         Args:
-            index: Nuovo indice.
+          index: Nuovo indice.
         """
         self.main_tabs.setCurrentIndex(index)
 
@@ -174,11 +174,11 @@ class AutomazioniWidget(QWidget):
         Restituisce l'istanza del pannello bot all'indice specificato.
 
         Args:
-            main_idx: Indice del portale (0: Fornitori, 1: SafeWork).
-            sub_idx: Indice del bot nel tab secondario.
+          main_idx: Indice del portale (0: Fornitori, 1: SafeWork).
+          sub_idx: Indice del bot nel tab secondario.
 
         Returns:
-            Optional[QWidget]: L'istanza del pannello o None se non trovato.
+          Optional[QWidget]: L'istanza del pannello o None se non trovato.
         """
         target_tab = self.tab_fornitori if main_idx == 0 else self.tab_safework
         if sub_idx < target_tab.count():

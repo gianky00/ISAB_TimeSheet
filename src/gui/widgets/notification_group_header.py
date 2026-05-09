@@ -3,9 +3,9 @@ NotificationGroupHeader - Header collapsible per raggruppamenti di notifiche.
 Supporta time-based, category-based e priority-based grouping.
 """
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QMouseEvent
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QWidget
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QMouseEvent
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QWidget
 
 from src.gui.styles import COLORS
 
@@ -22,14 +22,14 @@ class NotificationGroupHeader(QFrame):
     """
 
     # Signal
-    toggled = pyqtSignal(str, bool)  # group_key, is_expanded
+    toggled = Signal(str, bool)  # group_key, is_expanded
 
     def __init__(  # noqa: ANN204
         self,
         title: str,
         group_key: str,
         count: int = 0,
-        icon: str = "📁",
+        icon: str = "  ",
         parent: QWidget | None = None,
     ):
         super().__init__(parent)
@@ -46,16 +46,16 @@ class NotificationGroupHeader(QFrame):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setStyleSheet(
             f"""
-            NotificationGroupHeader {{
-                background-color: {COLORS["bg_hover"]};
-                border-radius: 10px;
-                border: 1px solid {COLORS["border_light"]};
-            }}
-            NotificationGroupHeader:hover {{
-                background-color: {COLORS["bg_light"]};
-                border-color: {COLORS["border_medium"]};
-            }}
-        """
+      NotificationGroupHeader {{
+        background-color: {COLORS["bg_hover"]};
+        border-radius: 10px;
+        border: 1px solid {COLORS["border_light"]};
+      }}
+      NotificationGroupHeader:hover {{
+        background-color: {COLORS["bg_light"]};
+        border-color: {COLORS["border_medium"]};
+      }}
+    """
         )
 
         layout = QHBoxLayout(self)
@@ -71,16 +71,16 @@ class NotificationGroupHeader(QFrame):
         self.title_lbl = QLabel(self._title)
         self.title_lbl.setStyleSheet(
             f"""
-            QLabel {{
-                font-weight: 800;
-                font-size: 12px;
-                color: {COLORS["text_dark"]};
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                border: none;
-                background: transparent;
-            }}
-        """
+      QLabel {{
+        font-weight: 800;
+        font-size: 12px;
+        color: {COLORS["text_dark"]};
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border: none;
+        background: transparent;
+      }}
+    """
         )
         layout.addWidget(self.title_lbl)
 
@@ -88,16 +88,16 @@ class NotificationGroupHeader(QFrame):
         self.count_lbl = QLabel(str(self._count))
         self.count_lbl.setStyleSheet(
             f"""
-            QLabel {{
-                font-weight: 700;
-                font-size: 10px;
-                color: white;
-                background-color: {COLORS["text_muted"]};
-                padding: 2px 8px;
-                border-radius: 10px;
-                border: none;
-            }}
-        """
+      QLabel {{
+        font-weight: 700;
+        font-size: 10px;
+        color: white;
+        background-color: {COLORS["text_muted"]};
+        padding: 2px 8px;
+        border-radius: 10px;
+        border: none;
+      }}
+    """
         )
         layout.addWidget(self.count_lbl)
 
@@ -108,19 +108,19 @@ class NotificationGroupHeader(QFrame):
         self.arrow_btn.setText("SCENDI" if self._is_expanded else "ESPANDI")
         self.arrow_btn.setStyleSheet(
             f"""
-            QLabel {{
-                color: {COLORS["text_muted"]};
-                font-size: 9px;
-                font-weight: 900;
-                letter-spacing: 0.5px;
-                border: none;
-                background: transparent;
-            }}
-        """
+      QLabel {{
+        color: {COLORS["text_muted"]};
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        border: none;
+        background: transparent;
+      }}
+    """
         )
         layout.addWidget(self.arrow_btn)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         """Toggle expanded state on click."""
         self._is_expanded = not self._is_expanded
         self.arrow_btn.setText("SCENDI" if self._is_expanded else "ESPANDI")

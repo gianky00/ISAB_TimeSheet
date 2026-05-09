@@ -5,9 +5,9 @@ Pannello per la configurazione del bridge Telegram strutturato a Card.
 
 from typing import Any
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Signal
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
     QHBoxLayout,
@@ -40,10 +40,10 @@ class SettingCard(QFrame):
         Inizializza la card di impostazione.
 
         Args:
-            title: Titolo principale.
-            subtitle: Descrizione breve.
-            icon_key: Chiave icona in Icons.
-            content_widget: Widget contenuto.
+          title: Titolo principale.
+          subtitle: Descrizione breve.
+          icon_key: Chiave icona in Icons.
+          content_widget: Widget contenuto.
         """
         super().__init__()
         self.title_text = title
@@ -51,12 +51,12 @@ class SettingCard(QFrame):
 
         self.setObjectName("settingCard")
         self.setStyleSheet(f"""
-            QFrame#settingCard {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 15px;
-            }}
-        """)
+      QFrame#settingCard {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 15px;
+      }}
+    """)
 
         # Shadow Effect
         shadow = QGraphicsDropShadowEffect(self)
@@ -105,10 +105,10 @@ class SettingCard(QFrame):
 class TelegramTab(QWidget):
     """
     Tab dedicato all'integrazione con il bot Telegram.
-    Gestisce token, chat ID e fornisce strumenti di test per la connettività remota.
+    Gestisce token, chat ID e fornisce strumenti di test per la connettivit  remota.
     """
 
-    settings_changed = pyqtSignal()
+    settings_changed = Signal()
     """Segnale emesso quando le credenziali Telegram vengono modificate."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -116,14 +116,14 @@ class TelegramTab(QWidget):
         Inizializza il tab di Telegram.
 
         Args:
-            parent: Widget genitore.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.cards: list[SettingCard] = []
         self._setup_ui()
 
     def _setup_ui(self) -> None:  # noqa: PLR0915
-        """Configura il layout a card per credenziali e test di connettività."""
+        """Configura il layout a card per credenziali e test di connettivit ."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
@@ -174,19 +174,19 @@ class TelegramTab(QWidget):
         self.token_edit = StandardInput()
         self.token_edit.setPlaceholderText("Inserisci Bot Token (7123456789:ABC...)")
         self.token_edit.setEchoMode(QLineEdit.EchoMode.PasswordEchoOnEdit)
-        self.token_edit.textChanged.connect(self.settings_changed.emit)
+        self.token_edit.textChanged.connect(lambda: self.settings_changed.emit())
 
         self.chat_id_edit = StandardInput()
         self.chat_id_edit.setPlaceholderText("Inserisci Chat ID (es. 123456789)")
-        self.chat_id_edit.textChanged.connect(self.settings_changed.emit)
+        self.chat_id_edit.textChanged.connect(lambda: self.settings_changed.emit())
 
-        creds_layout.addWidget(QLabel("Bot API Token:"))
+        creds_layout.addWidget(QLabel("Bot APiu'Token:"))
         creds_layout.addWidget(self.token_edit)
         creds_layout.addWidget(QLabel("Chat ID Destinatario:"))
         creds_layout.addWidget(self.chat_id_edit)
 
         card_creds = SettingCard(
-            "Accesso API Telegram",
+            "Accesso APiu'Telegram",
             "Configura le credenziali del bot per il controllo remoto.",
             Icons.SEND,
             creds_widget,
@@ -212,7 +212,7 @@ class TelegramTab(QWidget):
         conn_layout.addWidget(self.lbl_status)
 
         card_conn = SettingCard(
-            "Test Connettività",
+            "Test Connettivit ",
             "Verifica che il bot possa inviare notifiche correttamente.",
             Icons.SPARKLES,
             conn_widget,
@@ -235,7 +235,7 @@ class TelegramTab(QWidget):
         Carica i parametri Telegram dalla configurazione attuale.
 
         Args:
-            config: Dizionario di configurazione.
+          config: Dizionario di configurazione.
         """
         self.token_edit.setText(config.get("telegram_token", ""))
         self.chat_id_edit.setText(config.get("telegram_chat_id", ""))
@@ -245,7 +245,7 @@ class TelegramTab(QWidget):
         Salva i parametri Telegram nel dizionario di configurazione.
 
         Args:
-            config: Dizionario di configurazione globale.
+          config: Dizionario di configurazione globale.
         """
         config["telegram_token"] = self.token_edit.text().strip()
         config["telegram_chat_id"] = self.chat_id_edit.text().strip()

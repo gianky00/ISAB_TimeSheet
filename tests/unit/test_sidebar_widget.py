@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
 
 
 class TestSidebarWidget:

@@ -9,8 +9,8 @@ import os
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QSize, QTimer
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QSize, QTimer
+from PySide6.QtWidgets import (
     QFileDialog,
     QFrame,
     QHBoxLayout,

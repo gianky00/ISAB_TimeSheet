@@ -2,8 +2,8 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QTableWidgetItem
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QTableWidgetItem
 
 
 class SortableTableWidgetItem(QTableWidgetItem):
@@ -60,7 +60,7 @@ class SortableTableWidgetItem(QTableWidgetItem):
     def _parse_number(self, text: str) -> float:
         """Tenta di convertire testo in float gestendo formati IT/US."""
         # Rimuovi simboli valuta
-        text = text.replace("€", "").replace("$", "").strip()
+        text = text.replace("  ", "").replace("$", "").strip()
 
         if "," in text and "." in text:
             # Assume formato 1.234,56 -> 1234.56

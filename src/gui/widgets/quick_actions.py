@@ -1,7 +1,7 @@
 from typing import Any
 
-from PyQt6.QtCore import QPoint, QSize, Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QPoint, QSize, Qt, Signal
+from PySide6.QtWidgets import (
     QGridLayout,
     QLabel,
     QPushButton,
@@ -23,7 +23,7 @@ class ActionChip(QPushButton):
 
     def __init__(self, text: str, icon_path: str, color: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setText(f"  {text}")  # Spazio per icona
+        self.setText(f" {text}")  # Spazio per icona
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setIcon(get_colored_icon(get_asset_path(icon_path), color))
         self.setIconSize(QSize(18, 18))
@@ -32,25 +32,25 @@ class ActionChip(QPushButton):
         # Style moderno & Coerente -> Hover NEUTRO (Grigio chiaro)
         self.setStyleSheet(
             f"""
-            QPushButton {{
-                background-color: {COLORS["bg_white"]};
-                color: {COLORS["text_dark"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 19px;
-                padding: 0 15px;
-                font-weight: 600;
-                font-size: 13px;
-                text-align: left;
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS["bg_hover"]};
-                border-color: {COLORS["border_medium"]};
-                color: {COLORS["text_dark"]};
-            }}
-            QPushButton:pressed {{
-                background-color: {COLORS["bg_alt"]};
-            }}
-        """
+      QPushButton {{
+        background-color: {COLORS["bg_white"]};
+        color: {COLORS["text_dark"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 19px;
+        padding: 0 15px;
+        font-weight: 600;
+        font-size: 13px;
+        text-align: left;
+      }}
+      QPushButton:hover {{
+        background-color: {COLORS["bg_hover"]};
+        border-color: {COLORS["border_medium"]};
+        color: {COLORS["text_dark"]};
+      }}
+      QPushButton:pressed {{
+        background-color: {COLORS["bg_alt"]};
+      }}
+    """
         )
 
 
@@ -122,7 +122,7 @@ AVAILABLE_ACTIONS: dict[str, dict[str, Any]] = {
         "path": ["Strumentale"],
     },
     "nav_sub_strumentale_2": {
-        "text": "Attività Programmate",
+        "text": "Attivita'Programmate",
         "icon": Icons.CALENDAR,
         "color": COLORS["warning_orange"],
         "path": ["Strumentale"],
@@ -222,7 +222,7 @@ class QuickActions(QWidget):
     Toolbar orizzontale scrollabile con azioni rapide configurabili.
     """
 
-    action_clicked = pyqtSignal(str)  # Emits action key
+    action_clicked = Signal(str)  # Emits action key
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -258,7 +258,7 @@ class QuickActions(QWidget):
 
     def _show_context_menu(self, pos: QPoint) -> None:
         """Mostra menu contestuale per personalizzare."""
-        from PyQt6.QtWidgets import QMenu  # noqa: PLC0415
+        from PySide6.QtWidgets import QMenu  # noqa: PLC0415
 
         from src.gui.dialogs.quick_actions_config import QuickActionsConfigDialog  # noqa: PLC0415
 
@@ -267,26 +267,26 @@ class QuickActions(QWidget):
         # Stile light theme per il menu contestuale
         menu.setStyleSheet(
             f"""
-            QMenu {{
-                background-color: {COLORS["bg_white"]};
-                color: {COLORS["text_dark"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 6px;
-                padding: 5px;
-            }}
-            QMenu::item {{
-                padding: 8px 20px;
-                border-radius: 4px;
-                background-color: transparent;
-            }}
-            QMenu::item:selected {{
-                background-color: {COLORS["bg_hover"]};
-                color: {COLORS["text_dark"]};
-            }}
-            QMenu::item:pressed {{
-                background-color: {COLORS["bg_alt"]};
-            }}
-        """
+      QMenu {{
+        background-color: {COLORS["bg_white"]};
+        color: {COLORS["text_dark"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 6px;
+        padding: 5px;
+      }}
+      QMenu::item {{
+        padding: 8px 20px;
+        border-radius: 4px;
+        background-color: transparent;
+      }}
+      QMenu::item:selected {{
+        background-color: {COLORS["bg_hover"]};
+        color: {COLORS["text_dark"]};
+      }}
+      QMenu::item:pressed {{
+        background-color: {COLORS["bg_alt"]};
+      }}
+    """
         )
 
         action_cfg = menu.addAction(
@@ -324,7 +324,7 @@ class QuickActions(QWidget):
 
         # Calcola quanti pulsanti per riga (max 5 per riga per evitare scroll orizzontale)
         num_actions = len(saved_keys)
-        MAX_BUTTONS_PER_ROW = 5  # Limite per evitare scroll orizzontale  # noqa: N806
+        MAX_BUTTONS_PER_ROW = 5  # Limite per evitare scroll orizzontale # noqa: N806
 
         buttons_per_row = min(num_actions, MAX_BUTTONS_PER_ROW)
 
@@ -345,7 +345,7 @@ class QuickActions(QWidget):
                 if col >= buttons_per_row:
                     col = 0
                     row += 1
-                    # Nessun limite di righe, l'utente può vedere tutte le azioni configurate
+                    # Nessun limite di righe, l'utente pu  vedere tutte le azioni configurate
 
     def _create_action_handler(self, key: str) -> Any:
         """Crea un handler per il click che cattura correttamente il valore di key."""

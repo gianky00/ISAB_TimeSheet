@@ -1,12 +1,12 @@
 """
 Core Widgets - UI Kit Standard components for SyncroJob Enterprise.
 
-Questo modulo definisce wrapper stilizzati per i widget PyQt6 di base,
+Questo modulo definisce wrapper stilizzati per i widget PySide6 di base,
 garantendo coerenza visiva nell'intera applicazione.
 """
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QGroupBox,
@@ -24,7 +24,7 @@ from PyQt6.QtWidgets import (
 from src.gui.design.colors import get_palette
 from src.gui.widgets.modern_button import ModernButton
 
-# ─── BUTTONS ──────────────────────────────────────────────────────────────────
+#      BUTTONS
 
 
 class PrimaryButton(ModernButton):
@@ -65,27 +65,27 @@ class IconButton(QPushButton):
     def _apply_style(self) -> None:
         palette = get_palette()
         self.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {palette.surface};
-                border: 1px solid {palette.border};
-                border-radius: 6px;
-                padding: 4px;
-            }}
-            QPushButton:hover {{
-                background-color: {palette.background};
-                border-color: {palette.primary};
-            }}
-            QPushButton:pressed {{
-                background-color: {palette.border};
-            }}
-        """)
+      QPushButton {{
+        background-color: {palette.surface};
+        border: 1px solid {palette.border};
+        border-radius: 6px;
+        padding: 4px;
+      }}
+      QPushButton:hover {{
+        background-color: {palette.background};
+        border-color: {palette.primary};
+      }}
+      QPushButton:pressed {{
+        background-color: {palette.border};
+      }}
+    """)
 
 
-# ─── INPUTS ───────────────────────────────────────────────────────────────────
+#      INPUTS
 
 
 class SearchInput(QLineEdit):
-    """QLineEdit stilizzato per campi di ricerca, con placeholder e clear button."""
+    """QLineEdit stilizzato per campiu'di ricerca, con placeholder e clear button."""
 
     def __init__(self, placeholder: str = "Cerca...", parent: QWidget | None = None):  # noqa: ANN204
         super().__init__(parent)
@@ -96,17 +96,17 @@ class SearchInput(QLineEdit):
     def _apply_style(self) -> None:
         palette = get_palette()
         self.setStyleSheet(f"""
-            QLineEdit {{
-                padding: 8px 12px;
-                border: 1px solid {palette.border};
-                border-radius: 6px;
-                background-color: {palette.surface};
-                color: {palette.on_surface};
-            }}
-            QLineEdit:focus {{
-                border: 1px solid {palette.primary};
-            }}
-        """)
+      QLineEdit {{
+        padding: 8px 12px;
+        border: 1px solid {palette.border};
+        border-radius: 6px;
+        background-color: {palette.surface};
+        color: {palette.on_surface};
+      }}
+      QLineEdit:focus {{
+        border: 1px solid {palette.primary};
+      }}
+    """)
 
 
 class StandardInput(QLineEdit):
@@ -119,17 +119,17 @@ class StandardInput(QLineEdit):
     def _apply_style(self) -> None:
         palette = get_palette()
         self.setStyleSheet(f"""
-            QLineEdit {{
-                padding: 8px 12px;
-                border: 1px solid {palette.border};
-                border-radius: 6px;
-                background-color: {palette.surface};
-                color: {palette.on_surface};
-            }}
-            QLineEdit:focus {{
-                border: 1px solid {palette.primary};
-            }}
-        """)
+      QLineEdit {{
+        padding: 8px 12px;
+        border: 1px solid {palette.border};
+        border-radius: 6px;
+        background-color: {palette.surface};
+        color: {palette.on_surface};
+      }}
+      QLineEdit:focus {{
+        border: 1px solid {palette.primary};
+      }}
+    """)
 
 
 class StandardTextEdit(QTextEdit):
@@ -142,20 +142,20 @@ class StandardTextEdit(QTextEdit):
     def _apply_style(self) -> None:
         palette = get_palette()
         self.setStyleSheet(f"""
-            QTextEdit {{
-                padding: 8px;
-                border: 1px solid {palette.border};
-                border-radius: 6px;
-                background-color: {palette.surface};
-                color: {palette.on_surface};
-            }}
-            QTextEdit:focus {{
-                border: 1px solid {palette.primary};
-            }}
-        """)
+      QTextEdit {{
+        padding: 8px;
+        border: 1px solid {palette.border};
+        border-radius: 6px;
+        background-color: {palette.surface};
+        color: {palette.on_surface};
+      }}
+      QTextEdit:focus {{
+        border: 1px solid {palette.primary};
+      }}
+    """)
 
 
-# ─── SELECTORS ────────────────────────────────────────────────────────────────
+#      SELECTORS
 
 
 class FilterComboBox(QComboBox):
@@ -168,34 +168,34 @@ class FilterComboBox(QComboBox):
     def _apply_style(self) -> None:
         palette = get_palette()
         self.setStyleSheet(f"""
-            QComboBox {{
-                padding: 2px 8px;
-                border: 1px solid {palette.border};
-                border-radius: 4px;
-                background-color: {palette.surface};
-                color: {palette.on_surface};
-                min-height: 20px;
-            }}
-            QComboBox:focus {{
-                border: 1.5px solid {palette.primary};
-            }}
-            QComboBox::drop-down {{
-                border: none;
-                width: 20px;
-            }}
-            QComboBox::down-arrow {{
-                image: url(assets/icons/chevron-down.svg);
-                width: 12px;
-                height: 12px;
-            }}
-            QComboBox QAbstractItemView {{
-                border: 1px solid {palette.border};
-                selection-background-color: {palette.primary};
-                selection-color: {palette.on_primary};
-                background-color: {palette.surface};
-                outline: none;
-            }}
-        """)
+      QComboBox {{
+        padding: 2px 8px;
+        border: 1px solid {palette.border};
+        border-radius: 4px;
+        background-color: {palette.surface};
+        color: {palette.on_surface};
+        min-height: 20px;
+      }}
+      QComboBox:focus {{
+        border: 1.5px solid {palette.primary};
+      }}
+      QComboBox::drop-down {{
+        border: none;
+        width: 20px;
+      }}
+      QComboBox::down-arrow {{
+        image: url(assets/icons/chevron-down.svg);
+        width: 12px;
+        height: 12px;
+      }}
+      QComboBox QAbstractItemView {{
+        border: 1px solid {palette.border};
+        selection-background-color: {palette.primary};
+        selection-color: {palette.on_primary};
+        background-color: {palette.surface};
+        outline: none;
+      }}
+    """)
 
 
 class StandardCheckBox(QCheckBox):
@@ -208,22 +208,22 @@ class StandardCheckBox(QCheckBox):
     def _apply_style(self) -> None:
         palette = get_palette()
         self.setStyleSheet(f"""
-            QCheckBox {{
-                color: {palette.on_background};
-                spacing: 8px;
-            }}
-            QCheckBox::indicator {{
-                width: 18px;
-                height: 18px;
-                border-radius: 4px;
-                border: 2px solid {palette.border};
-                background-color: {palette.surface};
-            }}
-            QCheckBox::indicator:checked {{
-                background-color: {palette.primary};
-                border: 2px solid {palette.primary};
-            }}
-        """)
+      QCheckBox {{
+        color: {palette.on_background};
+        spacing: 8px;
+      }}
+      QCheckBox::indicator {{
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        border: 2px solid {palette.border};
+        background-color: {palette.surface};
+      }}
+      QCheckBox::indicator:checked {{
+        background-color: {palette.primary};
+        border: 2px solid {palette.primary};
+      }}
+    """)
 
 
 class StandardSpinBox(QSpinBox):
@@ -236,20 +236,20 @@ class StandardSpinBox(QSpinBox):
     def _apply_style(self) -> None:
         palette = get_palette()
         self.setStyleSheet(f"""
-            QSpinBox {{
-                padding: 6px 12px;
-                border: 1px solid {palette.border};
-                border-radius: 6px;
-                background-color: {palette.surface};
-                color: {palette.on_surface};
-            }}
-            QSpinBox:focus {{
-                border: 1px solid {palette.primary};
-            }}
-        """)
+      QSpinBox {{
+        padding: 6px 12px;
+        border: 1px solid {palette.border};
+        border-radius: 6px;
+        background-color: {palette.surface};
+        color: {palette.on_surface};
+      }}
+      QSpinBox:focus {{
+        border: 1px solid {palette.primary};
+      }}
+    """)
 
 
-# ─── CONTAINERS & LISTS ──────────────────────────────────────────────────────
+#      CONTAINERS & LISTS
 
 
 class StandardTable(QTableWidget):
@@ -266,27 +266,27 @@ class StandardTable(QTableWidget):
     def _apply_style(self) -> None:
         palette = get_palette()
         self.setStyleSheet(f"""
-            QTableWidget {{
-                border: 1px solid {palette.border};
-                border-radius: 8px;
-                background-color: {palette.surface};
-                alternate-background-color: rgba(0, 0, 0, 0.02);
-                selection-background-color: {palette.primary};
-                selection-color: {palette.on_primary};
-                gridline-color: {palette.border};
-            }}
-            QHeaderView::section {{
-                background-color: {palette.background};
-                color: {palette.on_surface};
-                padding: 8px;
-                border: none;
-                border-bottom: 2px solid {palette.border};
-                font-weight: bold;
-            }}
-            QTableWidget::item {{
-                padding: 4px;
-            }}
-        """)
+      QTableWidget {{
+        border: 1px solid {palette.border};
+        border-radius: 8px;
+        background-color: {palette.surface};
+        alternate-background-color: rgba(0, 0, 0, 0.02);
+        selection-background-color: {palette.primary};
+        selection-color: {palette.on_primary};
+        gridline-color: {palette.border};
+      }}
+      QHeaderView::section {{
+        background-color: {palette.background};
+        color: {palette.on_surface};
+        padding: 8px;
+        border: none;
+        border-bottom: 2px solid {palette.border};
+        font-weight: bold;
+      }}
+      QTableWidget::item {{
+        padding: 4px;
+      }}
+    """)
 
 
 class StandardListWidget(QListWidget):
@@ -299,25 +299,25 @@ class StandardListWidget(QListWidget):
     def _apply_style(self) -> None:
         palette = get_palette()
         self.setStyleSheet(f"""
-            QListWidget {{
-                border: 1px solid {palette.border};
-                border-radius: 6px;
-                background-color: {palette.surface};
-                color: {palette.on_surface};
-                outline: none;
-            }}
-            QListWidget::item {{
-                padding: 6px 10px;
-                border-bottom: 1px solid {palette.border};
-            }}
-            QListWidget::item:selected {{
-                background-color: {palette.primary};
-                color: {palette.on_primary};
-            }}
-            QListWidget::item:hover {{
-                background-color: {palette.background};
-            }}
-        """)
+      QListWidget {{
+        border: 1px solid {palette.border};
+        border-radius: 6px;
+        background-color: {palette.surface};
+        color: {palette.on_surface};
+        outline: none;
+      }}
+      QListWidget::item {{
+        padding: 6px 10px;
+        border-bottom: 1px solid {palette.border};
+      }}
+      QListWidget::item:selected {{
+        background-color: {palette.primary};
+        color: {palette.on_primary};
+      }}
+      QListWidget::item:hover {{
+        background-color: {palette.background};
+      }}
+    """)
 
 
 class StandardTreeWidget(QTreeWidget):
@@ -330,24 +330,24 @@ class StandardTreeWidget(QTreeWidget):
     def _apply_style(self) -> None:
         palette = get_palette()
         self.setStyleSheet(f"""
-            QTreeWidget {{
-                border: 1px solid {palette.border};
-                border-radius: 6px;
-                background-color: {palette.surface};
-                color: {palette.on_surface};
-                outline: none;
-            }}
-            QTreeWidget::item {{
-                padding: 4px;
-            }}
-            QTreeWidget::item:selected {{
-                background-color: {palette.primary};
-                color: {palette.on_primary};
-            }}
-            QTreeWidget::item:hover {{
-                background-color: {palette.background};
-            }}
-        """)
+      QTreeWidget {{
+        border: 1px solid {palette.border};
+        border-radius: 6px;
+        background-color: {palette.surface};
+        color: {palette.on_surface};
+        outline: none;
+      }}
+      QTreeWidget::item {{
+        padding: 4px;
+      }}
+      QTreeWidget::item:selected {{
+        background-color: {palette.primary};
+        color: {palette.on_primary};
+      }}
+      QTreeWidget::item:hover {{
+        background-color: {palette.background};
+      }}
+    """)
 
 
 class StandardGroupBox(QGroupBox):
@@ -360,21 +360,21 @@ class StandardGroupBox(QGroupBox):
     def _apply_style(self) -> None:
         palette = get_palette()
         self.setStyleSheet(f"""
-            QGroupBox {{
-                border: 1px solid {palette.border};
-                border-radius: 8px;
-                margin-top: 12px;
-                padding-top: 16px;
-                background-color: {palette.surface};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                subcontrol-position: top left;
-                padding: 2px 10px;
-                color: {palette.primary};
-                font-weight: bold;
-            }}
-        """)
+      QGroupBox {{
+        border: 1px solid {palette.border};
+        border-radius: 8px;
+        margin-top: 12px;
+        padding-top: 16px;
+        background-color: {palette.surface};
+      }}
+      QGroupBox::title {{
+        subcontrol-origin: margin;
+        subcontrol-position: top left;
+        padding: 2px 10px;
+        color: {palette.primary};
+        font-weight: bold;
+      }}
+    """)
 
 
 class StandardProgressBar(QProgressBar):
@@ -387,16 +387,16 @@ class StandardProgressBar(QProgressBar):
     def _apply_style(self) -> None:
         palette = get_palette()
         self.setStyleSheet(f"""
-            QProgressBar {{
-                border: 1px solid {palette.border};
-                border-radius: 6px;
-                background-color: {palette.background};
-                text-align: center;
-                color: {palette.on_surface};
-                height: 20px;
-            }}
-            QProgressBar::chunk {{
-                background-color: {palette.primary};
-                border-radius: 5px;
-            }}
-        """)
+      QProgressBar {{
+        border: 1px solid {palette.border};
+        border-radius: 6px;
+        background-color: {palette.background};
+        text-align: center;
+        color: {palette.on_surface};
+        height: 20px;
+      }}
+      QProgressBar::chunk {{
+        background-color: {palette.primary};
+        border-radius: 5px;
+      }}
+    """)

@@ -6,17 +6,17 @@ Design d'élite con trasparenze reali, bordi neon e ombre portate.
 
 import time
 
-from PyQt6.QtCore import (  # type: ignore[attr-defined]
+from PySide6.QtCore import (
+    Property,
     QEasingCurve,
     QPointF,
     QPropertyAnimation,
     QRectF,
     Qt,
     QTimer,
-    pyqtProperty,
-    pyqtSlot,
+    Slot,
 )
-from PyQt6.QtGui import (
+from PySide6.QtGui import (
     QColor,
     QFont,
     QFontMetrics,
@@ -25,7 +25,7 @@ from PyQt6.QtGui import (
     QPen,
     QRadialGradient,
 )
-from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QWidget
+from PySide6.QtWidgets import QGraphicsDropShadowEffect, QWidget
 
 from src.bots.base.step_manager import StepStatus
 from src.gui.styles import COLORS
@@ -142,7 +142,7 @@ class ActivityTimelineWidget(QWidget):
             event: Evento di uscita.
         """
         self._border_pulse_anim.stop()
-        self.border_pulse = 1.0
+        self.set_border_pulse(1.0)
         super().leaveEvent(event)
 
     def get_border_pulse(self) -> float:
@@ -154,7 +154,7 @@ class ActivityTimelineWidget(QWidget):
         self._border_pulse_val = value
         self.update()
 
-    border_pulse = pyqtProperty(float, fget=get_border_pulse, fset=set_border_pulse)
+    border_pulse = Property(float, fget=get_border_pulse, fset=set_border_pulse)
 
     def _tick(self):  # noqa: ANN202
         """Metodo di aggiornamento periodico per gli elementi dinamici (60 FPS)."""
@@ -174,7 +174,7 @@ class ActivityTimelineWidget(QWidget):
         self._pulse_value = value
         self.update()
 
-    pulse_value = pyqtProperty(float, fget=get_pulse_value, fset=set_pulse_value)
+    pulse_value = Property(float, fget=get_pulse_value, fset=set_pulse_value)
 
     def set_steps(self, steps: list[tuple[str, str]]):  # noqa: ANN201
         """
@@ -186,7 +186,7 @@ class ActivityTimelineWidget(QWidget):
         self.nodes = [TimelineNode(name) for _, name in steps]
         self.update()
 
-    @pyqtSlot(int, str, object)
+    @Slot(int, str, object)
     def on_step_changed(self, index: int, name: str, status):  # noqa: ANN001, ANN201
         """
         Slot chiamato quando lo stato di uno step del bot cambia.

@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import QThread, Signal
 
 from src.core.dipendenti.report_service import ReportService
 from src.core.report_history import ReportHistory
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class ReportWorker(QThread):
     """Worker per l'esecuzione asincrona del workflow di reporting."""
 
-    finished_signal = pyqtSignal(bool, str, dict)  # success, message, data
+    finished_signal = Signal(bool, str, dict)  # success, message, data
 
     def __init__(self) -> None:
         """Inizializza il worker."""
@@ -63,12 +63,12 @@ class ReportWorker(QThread):
         Gestisce l'automazione Outlook.
 
         Args:
-            body_html: Corpo dell'email in formato HTML.
-            excel_path: Percorso del file Excel da allegare.
-            report_data: Dati del report.
+          body_html: Corpo dell'email in formato HTML.
+          excel_path: Percorso del file Excel da allegare.
+          report_data: Dati del report.
 
         Returns:
-            Tuple containing success boolean and status message.
+          Tuple containing success boolean and status message.
         """
         subject = f"Report Monitoraggio Accessi in ISAB - {datetime.now().strftime('%d/%m/%Y')}"
 

@@ -3,8 +3,8 @@ SyncroJob - PDL Table Widget
 Widget specializzato per la visualizzazione della griglia PDL SafeWork.
 """
 
-from PyQt6.QtCore import QAbstractItemModel, Qt, pyqtSignal
-from PyQt6.QtWidgets import QAbstractItemView, QHeaderView, QTableView, QWidget
+from PySide6.QtCore import QAbstractItemModel, Qt, Signal
+from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QTableView, QWidget
 
 from src.gui.panels.pdl.pdl_delegate import PDLDelegate
 
@@ -12,10 +12,10 @@ from src.gui.panels.pdl.pdl_delegate import PDLDelegate
 class PDLTableView(QTableView):
     """Tabella specializzata per il Database PDL con Master-Detail support."""
 
-    header_clicked = pyqtSignal(int)
-    row_double_clicked = pyqtSignal()
-    selection_changed_custom = pyqtSignal()
-    context_menu_requested = pyqtSignal(object)  # pos
+    header_clicked = Signal(int)
+    row_double_clicked = Signal()
+    selection_changed_custom = Signal()
+    context_menu_requested = Signal(object)  # pos
 
     def __init__(self, model: QAbstractItemModel, parent: QWidget | None = None) -> None:
         super().__init__(parent)

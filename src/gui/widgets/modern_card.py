@@ -5,16 +5,16 @@ Un contenitore elegante con ombre morbide, angoli arrotondati e animazioni hover
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation
-from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import QFrame, QGraphicsDropShadowEffect, QVBoxLayout, QWidget
+from PySide6.QtCore import QEasingCurve, QEvent, QPropertyAnimation
+from PySide6.QtGui import QColor, QEnterEvent
+from PySide6.QtWidgets import QFrame, QGraphicsDropShadowEffect, QVBoxLayout, QWidget
 
 from src.gui.styles import COLORS
 
 if TYPE_CHECKING:
-    from PyQt6.QtGui import QEnterEvent
+    from PySide6.QtGui import QEnterEvent
 
 
 class ModernCard(QFrame):
@@ -39,12 +39,12 @@ class ModernCard(QFrame):
         """Configura lo stile CSS base della card."""
         self.setObjectName("modernCard")
         self.setStyleSheet(f"""
-            QFrame#modernCard {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 12px;
-            }}
-        """)
+      QFrame#modernCard {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 12px;
+      }}
+    """)
 
     def _setup_shadow(self) -> None:
         """Applica l'effetto ombra e prepara le animazioni."""
@@ -60,20 +60,20 @@ class ModernCard(QFrame):
         self.shadow_anim.setDuration(200)
         self.shadow_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:
-        """Gestisce l'effetto hover aumentando l'ombra e cambiando il bordo."""
-        self.shadow_anim.setEndValue(self.elevation + 10)
+    def enterEvent(self, event: QEnterEvent) -> None:
+        """Aumenta l'elevazione (ombra) all'ingresso del mouse."""
+        self.shadow_anim.setEndValue(self.elevation + 15)
         self.shadow_anim.start()
         self.setStyleSheet(f"""
-            QFrame#modernCard {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["primary_blue"]};
-                border-radius: 12px;
-            }}
-        """)
+      QWidget {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["primary_blue"]};
+        border-radius: 12px;
+      }}
+    """)
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any) -> None:
+    def leaveEvent(self, event: QEvent) -> None:
         """Ripristina lo stile originale all'uscita del mouse."""
         self.shadow_anim.setEndValue(self.elevation)
         self.shadow_anim.start()
@@ -82,7 +82,7 @@ class ModernCard(QFrame):
 
 
 class ModernContentCard(ModernCard):
-    """Card che include già un layout per i contenuti."""
+    """Card che include gia' un layout per i contenuti."""
 
     def __init__(self, parent: QWidget | None = None, elevation: int = 15) -> None:
         """Inizializza la card con layout verticale integrato."""

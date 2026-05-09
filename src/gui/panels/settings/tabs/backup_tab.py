@@ -5,8 +5,8 @@ Pannello per la gestione dei backup e dei log strutturato a Card.
 
 from typing import Any
 
-from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import (
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
     QHBoxLayout,
@@ -34,10 +34,10 @@ class SettingCard(QFrame):
         Inizializza la card di impostazione.
 
         Args:
-            title: Titolo della sezione.
-            subtitle: Descrizione breve.
-            icon_key: Chiave icona.
-            content_widget: Widget contenuto.
+          title: Titolo della sezione.
+          subtitle: Descrizione breve.
+          icon_key: Chiave icona.
+          content_widget: Widget contenuto.
         """
         super().__init__()
         self.title_text = title
@@ -45,12 +45,12 @@ class SettingCard(QFrame):
 
         self.setObjectName("settingCard")
         self.setStyleSheet(f"""
-            QFrame#settingCard {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 15px;
-            }}
-        """)
+      QFrame#settingCard {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 15px;
+      }}
+    """)
 
         # Shadow Effect
         shadow = QGraphicsDropShadowEffect(self)
@@ -107,7 +107,7 @@ class BackupTab(QWidget):
         Inizializza il tab di backup.
 
         Args:
-            parent: Widget genitore.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.cards: list[SettingCard] = []
@@ -226,7 +226,7 @@ class BackupTab(QWidget):
         Carica i metadati del backup dalla configurazione.
 
         Args:
-            config: Dizionario di configurazione.
+          config: Dizionario di configurazione.
         """
         last = config.get("last_db_backup", "Mai")
         self.lbl_last_backup.setText(f"Ultimo Backup: {last}")

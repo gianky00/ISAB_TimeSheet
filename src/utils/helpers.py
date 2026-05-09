@@ -1,6 +1,6 @@
 """
 SyncroJob - Utility Helpers
-Funzioni di utilità generali per la gestione del filesystem, formattazione dati e cleanup processi.
+Funzioni di utilit  generali per la gestione del filesystem, formattazione dati e cleanup processi.
 Include una robusta logica di terminazione per processi Chrome/Chromedriver "zombie".
 """
 
@@ -21,14 +21,14 @@ from src.core.paths import CONFIG_DIR
 from src.utils.resource_manager import ResourceManager
 
 if TYPE_CHECKING:
-    from PyQt6.QtGui import QIcon
+    from PySide6.QtGui import QIcon
 
 
 def get_asset_path(relative_path: str) -> str:
     """
     Restituisce il percorso assoluto di un asset.
     Funziona sia in sviluppo che nell'app installata.
-    Utilizza ResourceManager come fonte unica di verità.
+    Utilizza ResourceManager come fonte unica di verit .
     """
     return ResourceManager.get_asset_path(relative_path)
 
@@ -47,11 +47,11 @@ def setup_logging(name: str = "BotTS", log_file: str | None = None) -> logging.L
     Configura il sistema di logging.
 
     Args:
-        name: Nome del logger
-        log_file: Percorso opzionale per file di log
+      name: Nome del logger
+      log_file: Percorso opzionale per file di log
 
     Returns:
-        Logger configurato
+      Logger configurato
     """
     logger = logging.getLogger(name)
 
@@ -83,10 +83,10 @@ def format_timestamp(dt: datetime | None = None) -> str:
     Formatta un timestamp per la visualizzazione.
 
     Args:
-        dt: Datetime da formattare (default: now)
+      dt: Datetime da formattare (default: now)
 
     Returns:
-        Stringa formattata
+      Stringa formattata
     """
     return (dt or datetime.now(UTC).astimezone()).strftime("%d/%m/%Y %H:%M:%S")
 
@@ -114,18 +114,18 @@ def get_years_list(start_offset: int = -2, end_offset: int = 2) -> list[str]:
     Restituisce una lista di anni intorno a quello corrente.
 
     Args:
-        start_offset: Offset dall'anno corrente per l'inizio.
-        end_offset: Offset dall'anno corrente per la fine.
+      start_offset: Offset dall'anno corrente per l'inizio.
+      end_offset: Offset dall'anno corrente per la fine.
 
     Returns:
-        Lista di anni come stringhe.
+      Lista di anni come stringhe.
     """
     current_year = datetime.now(UTC).astimezone().year
     return [str(year) for year in range(current_year + start_offset, current_year + end_offset + 1)]
 
 
 def is_windows() -> bool:
-    """Verifica se il sistema operativo corrente è Windows."""
+    """Verifica se il sistema operativo corrente  Windows."""
     return sys.platform.startswith("win")
 
 
@@ -134,10 +134,10 @@ def open_folder(path: str) -> bool:
     Apre una cartella nel file manager del sistema operativo.
 
     Args:
-        path: Percorso della cartella da aprire.
+      path: Percorso della cartella da aprire.
 
     Returns:
-        bool: True se la cartella è stata aperta correttamente, False altrimenti.
+      bool: True se la cartella  stata aperta correttamente, False altrimenti.
     """
     path_obj = Path(path)
     if not path_obj.exists():
@@ -219,19 +219,32 @@ def cleanup_bot_processes() -> None:
     cleanup_logger = logging.getLogger("Cleanup")
 
     # 1. Terminazione Chromedriver e Binari Playwright
+    _kill_zombie_drivers(cleanup_logger)
+
+    # 2. Terminazione Chrome (Solo se utilizza il profilo dedicato di SyncroJob o se  orfano)
+    _kill_automation_browsers(cleanup_logger)
+
+    # 3. Rimozione file di lock nel profilo
+    _remove_profile_locks(cleanup_logger)
+
+
+def _kill_zombie_drivers(logger: logging.Logger) -> None:
+    """Termina i driver e i processi di runtime appesi."""
     target_procs = ["chromedriver.exe", "msedge.exe", "playwright.exe", "node.exe"]
     for proc in psutil.process_iter(["name", "cmdline"]):
         with suppress(Exception):
             pname = proc.info["name"]
             if any(tp.lower() == pname.lower() for tp in target_procs):
-                # Se è node o playwright, verifichiamo che sia della nostra app
+                # Se  node o playwright, verifichiamo che sia della nostra app
                 cmdline = " ".join(proc.info["cmdline"] or [])
                 if pname.lower() in ("node.exe", "playwright.exe") and "playwright" not in cmdline.lower():
                     continue
                 proc.kill()
-                cleanup_logger.info(f"Terminated zombie process: {pname}")
+                logger.info(f"Terminated zombie process: {pname}")
 
-    # 2. Terminazione Chrome (Solo se utilizza il profilo dedicato di SyncroJob o se è orfano)
+
+def _kill_automation_browsers(logger: logging.Logger) -> None:
+    """Termina le istanze di Chrome legate all'automazione."""
     profile_dir = BrowserConfig.CACHE_DIR_NAME
     for proc in psutil.process_iter(["name", "cmdline"]):
         with suppress(Exception):
@@ -240,9 +253,11 @@ def cleanup_bot_processes() -> None:
                 # Terminiamo solo processi che puntano al nostro profilo o che hanno flag di automazione
                 if profile_dir in cmdline or "remote-debugging-port" in cmdline:
                     proc.kill()
-                    cleanup_logger.info(f"Terminated automation chrome instance (PID: {proc.pid})")
+                    logger.info(f"Terminated automation chrome instance (PID: {proc.pid})")
 
-    # 3. Rimozione file di lock nel profilo
+
+def _remove_profile_locks(logger: logging.Logger) -> None:
+    """Rimuove i file di lock dal profilo utente per evitare errori di sessione."""
     profile_path = CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
     lock_files = [
         "SingletonLock",
@@ -259,21 +274,21 @@ def cleanup_bot_processes() -> None:
             if f_path.exists():
                 with suppress(Exception):
                     f_path.unlink()
-                    cleanup_logger.info(f"Removed stale lock file: {lock_file}")
+                    logger.info(f"Removed stale lock file: {lock_file}")
             # Cerca anche in sottocartelle comuni (es. Local State)
             for sub in ("Default", "Network"):
                 f_sub_path = profile_path / sub / lock_file
                 if f_sub_path.exists():
                     with suppress(Exception):
                         f_sub_path.unlink()
-                        cleanup_logger.info(f"Removed stale lock file in {sub}: {lock_file}")
+                        logger.info(f"Removed stale lock file in {sub}: {lock_file}")
 
 
 def get_colored_icon(icon_path: str, color: str = "#000000") -> "QIcon":
     """
     Applica un colore personalizzato a un'icona SVG tramite QPainter.
     """
-    from PyQt6.QtGui import QColor, QIcon, QImage, QPainter, QPixmap  # noqa: PLC0415
+    from PySide6.QtGui import QColor, QIcon, QImage, QPainter, QPixmap  # noqa: PLC0415
 
     if not Path(icon_path).exists():
         return QIcon()

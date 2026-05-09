@@ -1,6 +1,6 @@
 # mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QFileDialog,
@@ -75,7 +75,7 @@ class EmployeeEditorDialog(QDialog):
         main_layout.addLayout(btn_layout)
 
     def get_data(self):  # noqa: ANN201
-        """Estrae i dati inseriti nei campi di input e li normalizza in maiuscolo."""
+        """Estrae i dati inseriti nei campiu'di input e li normalizza in maiuscolo."""
         return {k: v.text().strip().upper() for k, v in self.inputs.items()}
 
 
@@ -84,7 +84,7 @@ class DipendentiManagerPanel(QWidget):
     Pannello di gestione CRUD Dipendenti.
     """
 
-    data_changed = pyqtSignal()
+    data_changed = Signal()
 
     def __init__(self, parent=None):  # noqa: ANN001, ANN204
         super().__init__(parent)
@@ -129,9 +129,9 @@ class DipendentiManagerPanel(QWidget):
         self.lbl_count = QLabel("0 Dipendenti")
         self.lbl_count.setStyleSheet(
             f"""
-            background-color: {COLORS["bg_hover"]}; color: {COLORS["text_dark"]};
-            padding: 5px 15px; border-radius: 15px; font-weight: bold;
-        """
+      background-color: {COLORS["bg_hover"]}; color: {COLORS["text_dark"]};
+      padding: 5px 15px; border-radius: 15px; font-weight: bold;
+    """
         )
         header_layout.addWidget(self.lbl_count)
 
@@ -143,12 +143,12 @@ class DipendentiManagerPanel(QWidget):
         from src.gui.styles import LABEL_MUTED, LINEEDIT_STYLE  # noqa: PLC0415
 
         self.toolbar_card.setStyleSheet(f"""
-            QFrame#filterBar {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 12px;
-            }}
-        """)
+      QFrame#filterBar {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 12px;
+      }}
+    """)
         toolbar_layout = QHBoxLayout(self.toolbar_card)
         toolbar_layout.setContentsMargins(15, 10, 15, 10)
         toolbar_layout.setSpacing(15)
@@ -226,7 +226,7 @@ class DipendentiManagerPanel(QWidget):
         h_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # Badge stretto
 
         # Use global styles from light.qss
-        # self.table.setStyleSheet(...)  # noqa: ERA001
+        # self.table.setStyleSheet(...) # noqa: ERA001
 
         self.table.doubleClicked.connect(self._edit_selected)
 

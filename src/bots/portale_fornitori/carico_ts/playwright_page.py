@@ -20,8 +20,8 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
         Inizializza la pagina di caricamento timesheet.
 
         Args:
-            page: Oggetto Page di Playwright.
-            log_callback: Funzione per l'invio dei log.
+          page: Oggetto Page di Playwright.
+          log_callback: Funzione per l'invio dei log.
         """
         super().__init__(page, log_callback)
 
@@ -43,10 +43,10 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
         Seleziona il fornitore dal menu a discesa della pagina in modo robusto.
 
         Args:
-            supplier: Nome del fornitore da selezionare.
+          supplier: Nome del fornitore da selezionare.
 
         Returns:
-            True se la selezione è riuscita.
+          True se la selezione  riuscita.
         """
         try:
             self.log(f"Selezione {supplier}...")
@@ -54,7 +54,7 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
             arrow_sel = self._get_selector(CaricoTSLocators.SUPPLIER_ARROW)
 
             if not self._select_combobox_item(input_sel, arrow_sel, supplier):
-                self.log("  ⚠ Avviso: Selezione fornitore fallita, tento inserimento manuale forzato.")
+                self.log("   Avviso: Selezione fornitore fallita, tento inserimento manuale forzato.")
                 self.page.fill(input_sel, supplier)
                 self.page.press(input_sel, "Enter")
 
@@ -70,10 +70,10 @@ class PlaywrightCaricoTSPage(PlaywrightBasePage):
         Inserisce il numero OdA nel campo di input e avvia l'estrazione.
 
         Args:
-            oda: Numero dell'ordine di acquisto da processare.
+          oda: Numero dell'ordine di acquisto da processare.
 
         Returns:
-            True se l'operazione è stata avviata.
+          True se l'operazione  stata avviata.
         """
         try:
             # Inserimento OdA forzato via JS per garantire l'aggiornamento del modello ExtJS

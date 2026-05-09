@@ -6,9 +6,9 @@ Custom widget for spectacular wave animation.
 import math
 from typing import Any
 
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QBrush, QColor, QFont, QLinearGradient, QPainter, QPainterPath
-from PyQt6.QtWidgets import QProgressBar, QWidget
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QBrush, QColor, QFont, QLinearGradient, QPainter, QPainterPath
+from PySide6.QtWidgets import QProgressBar, QWidget
 
 
 class WaveProgressBar(QProgressBar):
@@ -42,7 +42,7 @@ class WaveProgressBar(QProgressBar):
     def _update_wave(self) -> None:
         """Aggiorna le fasi delle onde per l'effetto di movimento."""
         if self.value() >= self.maximum() and self.maximum() > 0:
-            # Mantieni l'animazione anche al 100% per fluidità se desiderato,
+            # Mantieni l'animazione anche al 100% per fluidit  se desiderato,
             # o fermala per risparmiare risorse.
             # Qui la fermiamo se completata.
             self.timer.stop()

@@ -4,7 +4,7 @@ Ensures copy/paste logic remains intact.
 """
 
 import pytest
-from PyQt6.QtWidgets import QApplication, QComboBox, QTableWidgetItem
+from PySide6.QtWidgets import QApplication, QComboBox, QTableWidgetItem
 
 from src.gui.widgets.excel_table import ExcelTableWidget
 

@@ -6,9 +6,9 @@ Refactored V9.5: Modular architecture with Controller and specialized Widgets.
 
 from contextlib import suppress
 
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QResizeEvent
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QResizeEvent
+from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
@@ -38,8 +38,8 @@ class ScaricoOrePanel(QWidget):
         Inizializza il pannello dello scarico ore con iniezione del controller.
 
         Args:
-            controller: Istanza del controller per la logica di business.
-            parent: Widget genitore opzionale.
+          controller: Istanza del controller per la logica di business.
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self.controller = controller
@@ -102,7 +102,7 @@ class ScaricoOrePanel(QWidget):
         Applica i filtri testuali e per colonna al modello dati.
 
         Args:
-            text: Testo di ricerca globale.
+          text: Testo di ricerca globale.
         """
         self.source_model.set_filter(text, self._current_col_filters)
         self._update_totals()
@@ -128,8 +128,8 @@ class ScaricoOrePanel(QWidget):
         Gestisce la finalizzazione del processo di aggiornamento.
 
         Args:
-            success: True se l'operazione è andata a buon fine.
-            status_msg: Messaggio di stato restituito dal bot.
+          success: True se l'operazione  andata a buon fine.
+          status_msg: Messaggio di stato restituito dal bot.
         """
         self.filters.update_btn.setEnabled(True)
         self.table_view.setEnabled(True)
@@ -192,7 +192,7 @@ class ScaricoOrePanel(QWidget):
         Aggiorna l'indicatore delle ore totali per le righe selezionate.
 
         Args:
-            total: Somma delle ore selezionate.
+          total: Somma delle ore selezionate.
         """
         self.filters.lbl_selection.setText(f"Totale selezionato: {self.controller.format_number(total)}")
 
@@ -201,8 +201,8 @@ class ScaricoOrePanel(QWidget):
         Gestisce l'attivazione di filtri specifici per singola colonna.
 
         Args:
-            col: Indice della colonna interessata.
-            values: Elenco di valori da filtrare.
+          col: Indice della colonna interessata.
+          values: Elenco di valori da filtrare.
         """
         if not values:
             self._current_col_filters.pop(col, None)
@@ -215,7 +215,7 @@ class ScaricoOrePanel(QWidget):
         Mostra o nasconde l'interfaccia di caricamento (shimmer).
 
         Args:
-            loading: True per mostrare l'effetto shimmer, False per la tabella.
+          loading: True per mostrare l'effetto shimmer, False per la tabella.
         """
         self.filters.search_input.setEnabled(not loading)
         self.filters.update_btn.setEnabled(not loading)
@@ -237,12 +237,12 @@ class ScaricoOrePanel(QWidget):
         """Aggiorna la label di stato durante le fasi del caricamento asincrono."""
         self.filters.status_label.setText(msg)
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:
+    def resizeEvent(self, event: QResizeEvent) -> None:
         """
         Aggiorna le dimensioni degli overlay (shimmer) al ridimensionamento del pannello.
 
         Args:
-            event: Evento di ridimensionamento Qt.
+          event: Evento di ridimensionamento Qt.
         """
         super().resizeEvent(event)
         if hasattr(self, "shimmer") and self.shimmer.isVisible():
@@ -253,7 +253,7 @@ class ScaricoOrePanel(QWidget):
         API pubblica per impostare una ricerca dall'esterno (es. NavigationController).
 
         Args:
-            text: Testo da cercare.
+          text: Testo da cercare.
         """
         self.filters.search_input.setText(text)
         self.filters.search_input.setFocus()

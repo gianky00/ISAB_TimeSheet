@@ -46,7 +46,7 @@ def draw_hexagon_points(center_x, center_y, size, rotation=0):  # noqa: ANN001, 
     return points
 
 
-def create_complex_app_icon(target_size):  # noqa: ANN001, ANN201, PLR0912, PLR0915
+def create_complex_app_icon(target_size):  # noqa: ANN001, ANN201, C901, PLR0912, PLR0915
     """
     Icona principale dell'applicazione.
     Design: Esagono tecnologico con nucleo AI centrale e elementi orbitali.
@@ -209,7 +209,7 @@ def create_complex_app_icon(target_size):  # noqa: ANN001, ANN201, PLR0912, PLR0
     return img.resize((target_size, target_size), Image.Resampling.LANCZOS)
 
 
-def create_complex_setup_icon(target_size):  # noqa: ANN001, ANN201, PLR0912, PLR0915
+def create_complex_setup_icon(target_size):  # noqa: ANN001, ANN201, C901, PLR0912, PLR0915
     """
     Icona del setup/installer.
     Design: Esagoni in assemblaggio con arco di progresso e particelle.

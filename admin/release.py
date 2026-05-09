@@ -200,7 +200,7 @@ def detect_bump_type():  # noqa: ANN201
         return "patch"
 
 
-def main():  # noqa: ANN201
+def main():  # noqa: ANN201, C901
     """Entry point for the release process, handling arguments and workflow execution."""
     # Fix encoding for Windows console to support emoji
     if sys.platform == "win32":

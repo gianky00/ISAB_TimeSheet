@@ -5,7 +5,7 @@ Gestisce i controlli proattivi (abilitazioni, health) e i relativi timer.
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QObject, QTimer
+from PySide6.QtCore import QObject, QTimer
 
 from src.core.auth_monitor import check_expiring_isab_authorizations
 from src.core.constants import Icons

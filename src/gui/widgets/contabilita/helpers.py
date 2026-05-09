@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from typing import Any
 
-from PyQt6.QtWidgets import QTreeWidgetItem
+from PySide6.QtWidgets import QTreeWidgetItem
 
 
 class SortableTreeWidgetItem(QTreeWidgetItem):

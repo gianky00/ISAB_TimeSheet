@@ -26,18 +26,18 @@ class ReportService:
     def gather_report_data() -> dict[str, Any]:
         """Raccoglie i dati dei dipendenti e li divide in warning ed expired."""
         query = """
-            SELECT id_risorsa, cognome, nome, codice_fiscale, badge, data_assunzione
-            FROM dipendenti
-            WHERE monitoraggio_attivo = 1 OR monitoraggio_attivo IS NULL
-            ORDER BY cognome ASC, nome ASC
-        """
+      SELECT id_risorsa, cognome, nome, codice_fiscale, badge, data_assunzione
+      FROM dipendenti
+      WHERE monitoraggio_attivo = 1 OR monitoraggio_attivo IS NULL
+      ORDER BY cognome ASC, nome ASC
+    """
         dipendenti = db_manager.execute_query(db_manager.DB_DIPENDENTI, query)
 
         query_timb = "SELECT cognome, nome, codice_fiscale, data FROM timbrature"
         accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
 
-        # Nota: build_timbrature_maps è attualmente in gui/utils, andrebbe spostato in core.
-        # Per ora lo importiamo mantenendo la funzionalità.
+        # Nota: build_timbrature_maps  attualmente in gui/utils, andrebbe spostato in core.
+        # Per ora lo importiamo mantenendo la funzionalita'.
         last_by_cf, last_by_name, normalize = build_timbrature_maps(accessi)
 
         warning_list = []
@@ -94,7 +94,7 @@ class ReportService:
             sum_color, sum_icon = COLORS["error_red"], "[ATTENZIONE]"
         elif len(data["expired_list"]) > 0:
             sum_text = f"<strong>{len(data['expired_list'])}</strong> dipendenti scaduti e <strong>{len(data['warning_list'])}</strong> in scadenza richiedono attenzione."
-            sum_color, sum_icon = COLORS["warning_orange"], "🚨"
+            sum_color, sum_icon = COLORS["warning_orange"], "  "
         else:
             sum_text = f"<strong>{len(data['warning_list'])}</strong> dipendenti in scadenza da monitorare nei prossimi giorni."
             sum_color, sum_icon = COLORS["primary_dark"], "[INFO]"
@@ -110,49 +110,49 @@ class ReportService:
                 elif diff < 0:
                     parts.append(f'<span style="color: {COLORS["success_dark"]};">{diff} {label}</span>')
             if parts:
-                trend_html = f'<p style="margin: 8px 0 0 0; padding: 10px 12px; background-color: {COLORS["bg_light"]}; border-radius: 4px; font-size: 12px; color: {COLORS["text_muted"]};">📊 <strong>Trend:</strong> {" | ".join(parts)} rispetto al {trend["last_date"]}</p>'
+                trend_html = f'<p style="margin: 8px 0 0 0; padding: 10px 12px; background-color: {COLORS["bg_light"]}; border-radius: 4px; font-size: 12px; color: {COLORS["text_muted"]};">   <strong>Trend:</strong> {" | ".join(parts)} rispetto al {trend["last_date"]}</p>'
 
         html = f"""
-        <html><head><style>
-            body {{ font-family: {font_family}; margin: 0; padding: 0; color: {COLORS["text_dark"]}; background-color: {COLORS["bg_light"]}; }}
-            .container {{ width: auto; max-width: 1500px; margin: 0 auto; background-color: {COLORS["bg_white"]}; }}
-            .summary-table {{ width: auto; min-width: 480px; border-collapse: separate; border-spacing: 8px; margin: 16px auto; }}
-            .card {{ background-color: {COLORS["bg_white"]}; padding: 14px 20px; border: 1px solid {border_color}; border-radius: 6px; text-align: center; width: 160px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }}
-            .card-number {{ font-size: 24px; font-weight: 700; display: block; margin-bottom: 4px; letter-spacing: -0.5px; }}
-            .card-label {{ font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: {COLORS["text_muted"]}; font-weight: 600; }}
-            .data-table {{ width: auto; border-collapse: collapse; margin: 0 0 20px 0; background-color: white; border: 1px solid {border_color}; }}
-            .data-table th {{ background-color: {COLORS["table_info_bg"]}; text-align: left; padding: 5px 10px; border: 1px solid {COLORS["border_light"]}; font-size: 12px; color: {COLORS["primary_dark"]}; text-transform: uppercase; font-weight: 600; letter-spacing: 0.3px; }}
-            .data-table td {{ padding: 5px 12px; border: 1px solid {border_color}; font-size: 13px; vertical-align: middle; color: {COLORS["text_dark"]}; }}
-        </style></head>
-        <body style="background-color: {COLORS["bg_light"]}; margin: 0; padding: 20px 0;">
-            <div class="container" style="border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
-                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: {COLORS["primary_dark"]};">
-                    <tr><td style="padding: 20px 24px; text-align: center;">
-                        <h2 style="margin: 0; font-weight: 700; font-size: 20px; color: {COLORS["bg_white"]};">Report Monitoraggio Accessi in ISAB</h2>
-                        <p style="margin: 8px 0 0 0; font-size: 13px; color: {COLORS["table_info_bg"]};">Generato il {current_date} da SyncroJob v{__version__}</p>
-                    </td></tr>
-                </table>
-                <div style="padding: 16px 20px; background-color: {COLORS["bg_white"]};">
-                    <table class="summary-table" style="margin: 0 auto;">
-                        <tr>
-                            <td><div class="card" style="border-left: 3px solid {header_color}; text-align: left;"><span class="card-number">{data["total_monitored"]}</span><span class="card-label">Monitorati</span></div></td>
-                            <td><div class="card" style="border-left: 3px solid {COLORS["warning_orange"]}; text-align: left;"><span class="card-number">{len(data["warning_list"])}</span><span class="card-label">In Scadenza</span></div></td>
-                            <td><div class="card" style="border-left: 3px solid {COLORS["error_red"]}; text-align: left;"><span class="card-number">{len(data["expired_list"])}</span><span class="card-label">Scaduti</span></div></td>
-                        </tr>
-                    </table>
-                </div>
-                <div style="padding: 0 20px 20px 20px; background-color: {COLORS["bg_white"]};">
-                    <p style="margin: 0 0 8px 0; padding: 12px; background-color: {COLORS["bg_light"]}; border-radius: 6px; color: {sum_color}; font-size: 13px; border-left: 3px solid {sum_color}; font-weight: 500;">
-                        {sum_icon} {sum_text}</p>
-                    {trend_html}
-        """
+    <html><head><style>
+      body {{ font-family: {font_family}; margin: 0; padding: 0; color: {COLORS["text_dark"]}; background-color: {COLORS["bg_light"]}; }}
+      .container {{ width: auto; max-width: 1500px; margin: 0 auto; background-color: {COLORS["bg_white"]}; }}
+      .summary-table {{ width: auto; min-width: 480px; border-collapse: separate; border-spacing: 8px; margin: 16px auto; }}
+      .card {{ background-color: {COLORS["bg_white"]}; padding: 14px 20px; border: 1px solid {border_color}; border-radius: 6px; text-align: center; width: 160px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }}
+      .card-number {{ font-size: 24px; font-weight: 700; display: block; margin-bottom: 4px; letter-spacing: -0.5px; }}
+      .card-label {{ font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: {COLORS["text_muted"]}; font-weight: 600; }}
+      .data-table {{ width: auto; border-collapse: collapse; margin: 0 0 20px 0; background-color: white; border: 1px solid {border_color}; }}
+      .data-table th {{ background-color: {COLORS["table_info_bg"]}; text-align: left; padding: 5px 10px; border: 1px solid {COLORS["border_light"]}; font-size: 12px; color: {COLORS["primary_dark"]}; text-transform: uppercase; font-weight: 600; letter-spacing: 0.3px; }}
+      .data-table td {{ padding: 5px 12px; border: 1px solid {border_color}; font-size: 13px; vertical-align: middle; color: {COLORS["text_dark"]}; }}
+    </style></head>
+    <body style="background-color: {COLORS["bg_light"]}; margin: 0; padding: 20px 0;">
+      <div class="container" style="border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: {COLORS["primary_dark"]};">
+          <tr><td style="padding: 20px 24px; text-align: center;">
+            <h2 style="margin: 0; font-weight: 700; font-size: 20px; color: {COLORS["bg_white"]};">Report Monitoraggio Accessi in ISAB</h2>
+            <p style="margin: 8px 0 0 0; font-size: 13px; color: {COLORS["table_info_bg"]};">Generato il {current_date} da SyncroJob v{__version__}</p>
+          </td></tr>
+        </table>
+        <div style="padding: 16px 20px; background-color: {COLORS["bg_white"]};">
+          <table class="summary-table" style="margin: 0 auto;">
+            <tr>
+              <td><div class="card" style="border-left: 3px solid {header_color}; text-align: left;"><span class="card-number">{data["total_monitored"]}</span><span class="card-label">Monitorati</span></div></td>
+              <td><div class="card" style="border-left: 3px solid {COLORS["warning_orange"]}; text-align: left;"><span class="card-number">{len(data["warning_list"])}</span><span class="card-label">In Scadenza</span></div></td>
+              <td><div class="card" style="border-left: 3px solid {COLORS["error_red"]}; text-align: left;"><span class="card-number">{len(data["expired_list"])}</span><span class="card-label">Scaduti</span></div></td>
+            </tr>
+          </table>
+        </div>
+        <div style="padding: 0 20px 20px 20px; background-color: {COLORS["bg_white"]};">
+          <p style="margin: 0 0 8px 0; padding: 12px; background-color: {COLORS["bg_light"]}; border-radius: 6px; color: {sum_color}; font-size: 13px; border-left: 3px solid {sum_color}; font-weight: 500;">
+            {sum_icon} {sum_text}</p>
+          {trend_html}
+    """
 
         if data["warning_list"]:
             html += f'<h3 style="color: {COLORS["warning_orange"]}; margin: 16px 0 12px 0; padding-left: 12px; border-left: 4px solid {COLORS["warning_orange"]}; font-size: 15px;">[ATTENZIONE] In Scadenza ({THRESHOLD_DAYS["warning"] + 1}-{THRESHOLD_DAYS["expired"]} gg)</h3>'
             html += ReportService._build_html_table(data["warning_list"], COLORS["warning_orange"])
 
         if data["expired_list"]:
-            html += f'<h3 style="color: {COLORS["error_red"]}; margin: 16px 0 12px 0; padding-left: 12px; border-left: 4px solid {COLORS["error_red"]}; font-size: 15px;">🚫 Scaduti (&gt; {THRESHOLD_DAYS["expired"]} gg)</h3>'
+            html += f'<h3 style="color: {COLORS["error_red"]}; margin: 16px 0 12px 0; padding-left: 12px; border-left: 4px solid {COLORS["error_red"]}; font-size: 15px;">   Scaduti (&gt; {THRESHOLD_DAYS["expired"]} gg)</h3>'
             html += ReportService._build_html_table(data["expired_list"], COLORS["error_red"])
 
         html += "</div></div></body></html>"

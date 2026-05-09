@@ -3,9 +3,9 @@ import json
 from contextlib import suppress
 from datetime import datetime
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QGuiApplication
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QGuiApplication
+from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
     QLabel,
@@ -48,13 +48,13 @@ class AuditDetailDialog(QDialog):
         module = data.get("module") or "Generico"
 
         info_text = f"""
-        <table style="font-size: 14px; margin-bottom: 10px;" cellspacing="5">
-            <tr><td><b>Data:</b></td><td>{ts}</td><td><b>Modulo:</b></td><td>{module}</td></tr>
-            <tr><td><b>Utente:</b></td><td>{data.get("user_id", "-")}</td><td><b>Durata:</b></td><td>{dur_str}</td></tr>
-            <tr><td><b>Azione:</b></td><td>{data.get("action", "-")}</td><td><b>Cod. Errore:</b></td><td>{err_code}</td></tr>
-            <tr><td><b>Entità:</b></td><td>{data.get("entity", "-")}</td><td><b>Stato:</b></td><td>{data.get("status", "-")}</td></tr>
-        </table>
-        """
+    <table style="font-size: 14px; margin-bottom: 10px;" cellspacing="5">
+      <tr><td><b>Data:</b></td><td>{ts}</td><td><b>Modulo:</b></td><td>{module}</td></tr>
+      <tr><td><b>Utente:</b></td><td>{data.get("user_id", "-")}</td><td><b>Durata:</b></td><td>{dur_str}</td></tr>
+      <tr><td><b>Azione:</b></td><td>{data.get("action", "-")}</td><td><b>Cod. Errore:</b></td><td>{err_code}</td></tr>
+      <tr><td><b>Entit :</b></td><td>{data.get("entity", "-")}</td><td><b>Stato:</b></td><td>{data.get("status", "-")}</td></tr>
+    </table>
+    """
         lbl = QLabel(info_text)
         lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         layout.addWidget(lbl)
@@ -88,12 +88,12 @@ class AuditDetailDialog(QDialog):
         btn_copy.clicked.connect(self._copy_to_clipboard)
         btn_copy.setStyleSheet(
             f"""
-            QPushButton {{
-                background-color: {COLORS["bg_alt"]}; border: 1px solid {COLORS["border_medium"]};
-                padding: 8px 15px; border-radius: 4px; font-weight: 600; color: {COLORS["text_dark"]};
-            }}
-            QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; }}
-        """
+      QPushButton {{
+        background-color: {COLORS["bg_alt"]}; border: 1px solid {COLORS["border_medium"]};
+        padding: 8px 15px; border-radius: 4px; font-weight: 600; color: {COLORS["text_dark"]};
+      }}
+      QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; }}
+    """
         )
         btn_layout.addWidget(btn_copy)
 
@@ -104,12 +104,12 @@ class AuditDetailDialog(QDialog):
         btn_close.clicked.connect(self.accept)
         btn_close.setStyleSheet(
             f"""
-            QPushButton {{
-                background-color: {COLORS["text_muted"]}; color: white; border: none;
-                padding: 8px 15px; border-radius: 4px; font-weight: bold;
-            }}
-            QPushButton:hover {{ opacity: 0.8; }}
-        """
+      QPushButton {{
+        background-color: {COLORS["text_muted"]}; color: white; border: none;
+        padding: 8px 15px; border-radius: 4px; font-weight: bold;
+      }}
+      QPushButton:hover {{ opacity: 0.8; }}
+    """
         )
         btn_layout.addWidget(btn_close)
 

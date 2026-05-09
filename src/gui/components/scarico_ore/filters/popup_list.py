@@ -1,9 +1,9 @@
 from collections.abc import Sequence
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QStandardItem, QStandardItemModel
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QStandardItem, QStandardItemModel
+from PySide6.QtWidgets import (
     QHBoxLayout,
     QListView,
     QMenu,
@@ -123,7 +123,7 @@ class ListFilterPopupWidget(QWidget):
         Ottiene i valori selezionati dal modello.
 
         Returns:
-            list[str] | None: Lista di stringhe selezionate o None se tutti gli elementi sono selezionati.
+          list[str] | None: Lista di stringhe selezionate o None se tutti gli elementi sono selezionati.
         """
         selected: list[str] = []
         all_checked = True

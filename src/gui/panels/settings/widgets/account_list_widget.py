@@ -6,8 +6,8 @@ Widget specializzato per la gestione degli account (ISAB, SafeWork) con supporto
 from collections.abc import Sequence
 from typing import Any
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QPoint, Qt, Signal
+from PySide6.QtWidgets import (
     QHBoxLayout,
     QListWidgetItem,
     QMenu,
@@ -37,16 +37,16 @@ class AccountListWidget(QWidget):
     Consente l'aggiunta, modifica, rimozione e impostazione dell'account predefinito.
     """
 
-    changed = pyqtSignal()
+    changed = Signal()
 
     def __init__(self, title: str, show_type: bool = False, parent: QWidget | None = None) -> None:
         """
         Inizializza il widget lista account.
 
         Args:
-            title: Titolo del gruppo (es. 'Account ISAB').
-            show_type: Se True, mostra il campo tipologia nel dialogo account.
-            parent: Widget genitore opzionale.
+          title: Titolo del gruppo (es. 'Account ISAB').
+          show_type: Se True, mostra il campo tipologia nel dialogo account.
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self.title = title
@@ -174,7 +174,7 @@ class AccountListWidget(QWidget):
         Popola la lista con gli account forniti.
 
         Args:
-            accounts: Sequenza di dizionari account.
+          accounts: Sequenza di dizionari account.
         """
         self.list_widget.clear()
         for acc in accounts:

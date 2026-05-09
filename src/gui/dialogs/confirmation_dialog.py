@@ -1,11 +1,11 @@
 """
 SyncroJob - Confirmation Dialog
-Dialogo standard per le conferme (Sì/No) o messaggi importanti.
-Sostituisce QMessageBox per mantenere uno stile coerente con il design d'élite del progetto.
+Dialogo standard per le conferme (S /No) o messaggi importanti.
+Sostituisce QMessageBox per mantenere uno stile coerente con il design d' lite del progetto.
 """
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
     QLabel,
@@ -45,11 +45,11 @@ class ConfirmationDialog(QDialog):
         Inizializza il dialogo di conferma.
 
         Args:
-            parent: Widget genitore.
-            title: Titolo della finestra.
-            message: Messaggio da visualizzare.
-            variant: Variante del dialogo (es. Variant.QUESTION).
-            is_rich_text: Se True, abilita il rendering HTML (sanificato).
+          parent: Widget genitore.
+          title: Titolo della finestra.
+          message: Messaggio da visualizzare.
+          variant: Variante del dialogo (es. Variant.QUESTION).
+          is_rich_text: Se True, abilita il rendering HTML (sanificato).
         """
         super().__init__(parent)
         self.setWindowTitle(title)
@@ -58,11 +58,11 @@ class ConfirmationDialog(QDialog):
 
         # Forza stile Light a livello di Dialog
         self.setStyleSheet(f"""
-            QDialog {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_medium"]};
-            }}
-        """)
+      QDialog {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_medium"]};
+      }}
+    """)
 
         layout = QVBoxLayout(self)
         layout.setSpacing(20)
@@ -160,16 +160,16 @@ class ConfirmationDialog(QDialog):
     @staticmethod
     def confirm(parent: QWidget | None, title: str, message: str, is_rich_text: bool = False) -> bool:
         """
-        Helper statico per mostrare rapidamente una richiesta di conferma Sì/No.
+        Helper statico per mostrare rapidamente una richiesta di conferma S /No.
 
         Args:
-            parent: Widget genitore.
-            title: Titolo.
-            message: Messaggio.
-            is_rich_text: Se il messaggio contiene HTML.
+          parent: Widget genitore.
+          title: Titolo.
+          message: Messaggio.
+          is_rich_text: Se il messaggio contiene HTML.
 
         Returns:
-            bool: True se l'utente ha confermato.
+          bool: True se l'utente ha confermato.
         """
         dlg = ConfirmationDialog(
             parent, title, message, variant=ConfirmationDialog.Variant.QUESTION, is_rich_text=is_rich_text

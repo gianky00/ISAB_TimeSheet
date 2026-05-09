@@ -2,7 +2,7 @@ import sqlite3
 from pathlib import Path
 from unittest.mock import patch
 
-from PyQt6.QtWidgets import QTreeWidget
+from PySide6.QtWidgets import QTreeWidget
 
 from src.core.data_synchronizer import DataSynchronizer
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem

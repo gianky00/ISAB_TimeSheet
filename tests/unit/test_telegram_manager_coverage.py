@@ -10,7 +10,7 @@ from src.core.telegram_manager import TelegramService
 class TestTelegramManagerCoverage:
     def setup_method(self):
         # Patch QObject.__init__ to allow MagicMock as parent
-        with patch("PyQt6.QtCore.QObject.__init__", return_value=None):
+        with patch("PySide6.QtCore.QObject.__init__", return_value=None):
             self.service = TelegramService()
 
         self.service.log_signal = MagicMock()

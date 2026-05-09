@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QHeaderView,
@@ -46,7 +46,7 @@ class StatisticsWidget(QWidget):
         layout.addLayout(self.cards_layout)
 
         # Table Title
-        table_title = QLabel("Dettaglio Attività")
+        table_title = QLabel("Dettaglio Attivita'")
         table_title.setStyleSheet(
             f"font-size: 16px; font-weight: bold; margin-top: 10px; color: {COLORS['text_dark']};"
         )
@@ -63,29 +63,29 @@ class StatisticsWidget(QWidget):
         if h_header is not None:
             h_header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         # Use global styles from light.qss
-        # self.table.setStyleSheet(...)  # noqa: ERA001
+        # self.table.setStyleSheet(...) # noqa: ERA001
         self.table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
         self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         layout.addWidget(self.table)
 
         # Refresh Button
-        refresh_btn = PrimaryButton("  Aggiorna Statistiche")
+        refresh_btn = PrimaryButton(" Aggiorna Statistiche")
         refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), COLORS["text_dark"]))
         refresh_btn.setFixedWidth(200)
         refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         refresh_btn.setStyleSheet(
             f"""
-            QPushButton {{
-                background-color: {COLORS["bg_white"]};
-                color: {COLORS["text_dark"]};
-                border: 1px solid {COLORS["text_dark"]};
-                border-radius: 6px;
-                padding: 10px 20px;
-                font-weight: bold;
-                font-size: 14px;
-            }}
-            QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; }}
-        """
+      QPushButton {{
+        background-color: {COLORS["bg_white"]};
+        color: {COLORS["text_dark"]};
+        border: 1px solid {COLORS["text_dark"]};
+        border-radius: 6px;
+        padding: 10px 20px;
+        font-weight: bold;
+        font-size: 14px;
+      }}
+      QPushButton:hover {{ background-color: {COLORS["bg_hover"]}; }}
+    """
         )
         refresh_btn.clicked.connect(self.refresh)
         layout.addWidget(refresh_btn, alignment=Qt.AlignmentFlag.AlignRight)
@@ -102,13 +102,13 @@ class StatisticsWidget(QWidget):
         card = QFrame()
         card.setStyleSheet(
             f"""
-            QFrame {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-left: 5px solid {color};
-                border-radius: 8px;
-            }}
-        """
+      QFrame {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-left: 5px solid {color};
+        border-radius: 8px;
+      }}
+    """
         )
         layout = QVBoxLayout(card)
         layout.setContentsMargins(20, 15, 20, 15)
@@ -163,7 +163,7 @@ class StatisticsWidget(QWidget):
         )
 
     def _refresh_stats_table(self, stats: dict[str, Any]) -> None:
-        """Aggiorna la tabella di dettaglio attività."""
+        """Aggiorna la tabella di dettaglio attivita'."""
         self.table.setRowCount(0)
         bot_names = {
             "timbrature": "Timbrature",

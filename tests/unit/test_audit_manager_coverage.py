@@ -15,7 +15,7 @@ class TestAuditManager:
         db_file = tmp_path / "audit_test.db"
         # Patch the actual location in AuditDatabase
         mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_file)
-        # Patch AuditSignals to avoid PyQt6 issues in headless
+        # Patch AuditSignals to avoid PySide6 issues in headless
         mocker.patch("src.core.audit.manager.AuditSignals.instance")
 
         # Reset singleton

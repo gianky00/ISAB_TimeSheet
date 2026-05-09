@@ -1,7 +1,7 @@
 from unittest.mock import ANY, patch
 
 import pytest
-from PyQt6.QtWidgets import QComboBox
+from PySide6.QtWidgets import QComboBox
 
 from src.gui.panels import TimbratureDBPanel
 
@@ -69,7 +69,7 @@ def test_employee_detail_update(timbrature_db_panel, qtbot):
 def test_import_excel_manually_success(timbrature_db_panel, qtbot, mocker):
     panel = timbrature_db_panel
     mocker.patch(
-        "PyQt6.QtWidgets.QFileDialog.getOpenFileName",
+        "PySide6.QtWidgets.QFileDialog.getOpenFileName",
         return_value=("test.xlsx", "Excel"),
     )
     panel.storage.import_excel.return_value = True
@@ -86,7 +86,7 @@ def test_import_excel_manually_success(timbrature_db_panel, qtbot, mocker):
 def test_import_excel_manually_fail(timbrature_db_panel, qtbot, mocker):
     panel = timbrature_db_panel
     mocker.patch(
-        "PyQt6.QtWidgets.QFileDialog.getOpenFileName",
+        "PySide6.QtWidgets.QFileDialog.getOpenFileName",
         return_value=("test.xlsx", "Excel"),
     )
     panel.storage.import_excel.return_value = False
@@ -105,8 +105,8 @@ def test_update_combo_boxes(timbrature_db_panel, qtbot):
     assert panel.cantiere_filter.count() == 2  # Tutti + C1
 
 
-@patch("PyQt6.QtWidgets.QDialog.exec")
-@patch("PyQt6.QtWidgets.QInputDialog.getText")
+@patch("PySide6.QtWidgets.QDialog.exec")
+@patch("PySide6.QtWidgets.QInputDialog.getText")
 def test_manage_list_add_item(mock_get_text, mock_exec, timbrature_db_panel, qtbot):
     # Nota: _manage_list è stato rimosso in favore delle impostazioni generali.
     # Questo test è obsoleto per TimbratureDBPanel ma lo manteniamo come stub se necessario.

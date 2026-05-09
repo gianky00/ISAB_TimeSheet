@@ -10,7 +10,7 @@ from src.core.secrets_manager import SecretsManager
 
 
 def decrypt_all_credentials(config: dict[str, Any]) -> None:
-    """Decripta le credenziali per tutti i tipi di account configurati."""
+    """Decripta le credenziali per tutti i tipiu'di account configurati."""
     _decrypt_account_list(config.get("accounts", []), "isab_portal")
     _decrypt_account_list(config.get("safework_accounts", []), "safework_portal")
 

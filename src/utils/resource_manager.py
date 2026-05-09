@@ -24,11 +24,11 @@ class ResourceManager:
         exe_path = Path(sys.executable).parent
         meipass_path = Path(getattr(sys, "_MEIPASS", exe_path))
 
-        # Priorità 1: Cartelle esterne (SVILUPPATORE/ADMIN OVERRIDE)
+        # Priorita' 1: Cartelle esterne (SVILUPPATORE/ADMIN OVERRIDE)
         # Se esistono 'assets' o 'drivers' accanto all'exe, usiamo quella come root
         if (exe_path / "assets").exists() or (exe_path / "drivers").exists():
             PROJECT_ROOT = exe_path
-        # Priorità 2: Cartelle interne (DEFAULT PYINSTALLER)
+        # Priorita' 2: Cartelle interne (DEFAULT PYINSTALLER)
         elif (exe_path / "_internal" / "assets").exists():
             PROJECT_ROOT = exe_path / "_internal"
         else:
@@ -46,7 +46,7 @@ class ResourceManager:
     def _get_config_dir(cls) -> Path:
         """
         Returns:
-            Path: Il percorso della cartella di configurazione utente.
+          Path: Il percorso della cartella di configurazione utente.
         """
         return CONFIG_DIR
 
@@ -56,7 +56,7 @@ class ResourceManager:
         Restituisce il percorso della cartella dei log.
 
         Returns:
-            Path: Percorso della directory log.
+          Path: Percorso della directory log.
         """
         return cls._get_config_dir() / "logs"
 
@@ -66,7 +66,7 @@ class ResourceManager:
         Restituisce il percorso della cartella dati utente.
 
         Returns:
-            Path: Percorso della directory data.
+          Path: Percorso della directory data.
         """
         return cls._get_config_dir() / "data"
 
@@ -76,7 +76,7 @@ class ResourceManager:
         Restituisce il path della cartella drivers nella directory dati utente (sempre scrivibile).
 
         Returns:
-            Path: Percorso della directory drivers scrivibile.
+          Path: Percorso della directory drivers scrivibile.
         """
         path = cls._get_config_dir() / "drivers"
         path.mkdir(parents=True, exist_ok=True)
@@ -90,12 +90,12 @@ class ResourceManager:
         Chiamato durante lo splash screen (Phase 1) per il pre-warming.
 
         Returns:
-            str | None: Path assoluto al driver o None in caso di errore.
+          str | None: Path assoluto al driver o None in caso di errore.
         """
         p_dir = cls.get_writable_drivers_dir()
         d_exe = p_dir / "chromedriver.exe"
 
-        # Se il driver esiste già, lo consideriamo valido (il bot farà il check di versione JIT se serve)
+        # Se il driver esiste gia', lo consideriamo valido (il bot far  il check di versione JIT se serve)
         if d_exe.exists():
             return str(d_exe.resolve())
 
@@ -138,10 +138,10 @@ class ResourceManager:
         Restituisce il path assoluto di un asset basandosi sulla PROJECT_ROOT.
 
         Args:
-            relative_path: Percorso relativo all'interno della cartella assets.
+          relative_path: Percorso relativo all'interno della cartella assets.
 
         Returns:
-            str: Percorso assoluto convertito per il sistema operativo corrente.
+          str: Percorso assoluto convertito per il sistema operativo corrente.
         """
         relative_path = relative_path.removeprefix("assets/")
 
@@ -154,10 +154,10 @@ class ResourceManager:
         Restituisce il path assoluto di un'icona cercandola tra gli asset.
 
         Args:
-            name: Nome del file icona (con o senza estensione).
+          name: Nome del file icona (con o senza estensione).
 
         Returns:
-            str: Percorso assoluto del file icona o stringa vuota se non trovato.
+          str: Percorso assoluto del file icona o stringa vuota se non trovato.
         """
         if "assets/icons/" in name:
             name = name.split("/")[-1]
@@ -173,10 +173,10 @@ class ResourceManager:
         Restituisce il path di un file di stile QSS.
 
         Args:
-            theme: Nome del tema (light o dark).
+          theme: Nome del tema (light o dark).
 
         Returns:
-            str: Percorso del file .qss.
+          str: Percorso del file .qss.
         """
         path = cls.STYLES_DIR / f"{theme}.qss"
         return str(path) if path.exists() else ""
@@ -187,10 +187,10 @@ class ResourceManager:
         Genera un percorso sicuro nella cartella temporanea del sistema.
 
         Args:
-            filename: Nome del file desiderato.
+          filename: Nome del file desiderato.
 
         Returns:
-            Path: Percorso completo all'interno della directory temp.
+          Path: Percorso completo all'interno della directory temp.
         """
         cls.TEMP_DIR.mkdir(exist_ok=True)
         return cls.TEMP_DIR / filename

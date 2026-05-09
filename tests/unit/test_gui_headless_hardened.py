@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
-from PyQt6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget
 
 from src.gui.panels.settings.main_panel import SettingsPanel
 from src.gui.widgets.toast import Toast

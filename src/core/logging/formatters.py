@@ -25,7 +25,7 @@ class JSONFormatter:
         Inizializza formatter.
 
         Args:
-            mask_sensitive: Se True, maschera dati sensibili
+          mask_sensitive: Se True, maschera dati sensibili
         """
         self.mask_sensitive = mask_sensitive
 
@@ -42,15 +42,15 @@ class JSONFormatter:
         Formatta log entry come JSON.
 
         Args:
-            level: Livello log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-            logger_name: Nome logger
-            message: Messaggio log
-            extra: Dati extra (opzionale)
-            exception: Eccezione (opzionale)
-            source_info: Info su file/funzione/linea (opzionale)
+          level: Livello log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+          logger_name: Nome logger
+          message: Messaggio log
+          extra: Dati extra (opzionale)
+          exception: Eccezione (opzionale)
+          source_info: Info su file/funzione/linea (opzionale)
 
         Returns:
-            Stringa JSON
+          Stringa JSON
         """
         # Timestamp ISO 8601
         timestamp = datetime.now(UTC).isoformat() + "Z"
@@ -152,8 +152,8 @@ class HumanFormatter:
         Inizializza formatter.
 
         Args:
-            colorize: Se True, usa colori ANSI (solo per console)
-            show_context: Se True, mostra context nei log
+          colorize: Se True, usa colori ANSI (solo per console)
+          show_context: Se True, mostra context nei log
         """
         self.colorize = colorize and self._supports_color()
         self.show_context = show_context
@@ -179,15 +179,15 @@ class HumanFormatter:
         Formatta log entry come stringa human-readable.
 
         Args:
-            level: Livello log
-            logger_name: Nome logger
-            message: Messaggio log
-            extra: Dati extra (opzionale)
-            exception: Eccezione (opzionale)
-            source_info: Info su file/funzione/linea (opzionale)
+          level: Livello log
+          logger_name: Nome logger
+          message: Messaggio log
+          extra: Dati extra (opzionale)
+          exception: Eccezione (opzionale)
+          source_info: Info su file/funzione/linea (opzionale)
 
         Returns:
-            Stringa formattata
+          Stringa formattata
         """
         # Timestamp (rimuovi microsecondi)
         timestamp = datetime.now(UTC).astimezone().strftime("%Y-%m-%d %H:%M:%S")
@@ -221,7 +221,7 @@ class HumanFormatter:
 
         # Aggiungi exception info
         if exception:
-            line += f"\n  Exception: {type(exception).__name__}: {exception}"
+            line += f"\n Exception: {type(exception).__name__}: {exception}"
 
         return line
 

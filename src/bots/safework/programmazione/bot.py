@@ -22,12 +22,12 @@ logger = logging.getLogger(__name__)
 class SafeWorkProgrammazioneBot(SafeworkBaseBot):
     """
     Bot per monitorare i flag TCL/TGO della settimana tramite Export Excel.
-    Naviga nell'area Attività, filtra per ditta e richiedenti, ed esporta i dati per l'analisi.
+    Naviga nell'area Attivita', filtra per ditta e richiedenti, ed esporta i dati per l'analisi.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
-        ("nav", "Navigazione Attività"),
+        ("nav", "Navigazione Attivita'"),
         ("filter", "Configurazione Filtri"),
         ("search", "Ricerca ed Export"),
         ("parse", "Analisi Risultati"),
@@ -46,12 +46,12 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         Inizializza il bot di programmazione.
 
         Args:
-            username: Nome utente SafeWork.
-            password: Password SafeWork.
-            headless: Se avviare il browser in modalità nascosta.
-            timeout: Tempo di attesa per Selenium.
-            download_path: Cartella per il download degli Excel.
-            account_type: Tipo di account (Esecutore/ISAB).
+          username: Nome utente SafeWork.
+          password: Password SafeWork.
+          headless: Se avviare il browser in modalita' nascosta.
+          timeout: Tempo di attesa per Selenium.
+          download_path: Cartella per il download degli Excel.
+          account_type: Tipo di account (Esecutore/ISAB).
         """
         super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
         self.results: list[dict[str, Any]] = []
@@ -76,10 +76,10 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         Esegue il workflow di monitoraggio programmazione.
 
         Args:
-            data: Parametri della sessione (richiedenti, date).
+          data: Parametri della sessione (richiedenti, date).
 
         Returns:
-            bool: True se l'operazione è completata correttamente.
+          bool: True se l'operazione  completata correttamente.
         """
         self.update_step("login", StepStatus.COMPLETED)
 
@@ -93,7 +93,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
 
         # 1. Navigazione
         self.update_step("nav", StepStatus.RUNNING)
-        self.log("📋 Navigazione in 'Visualizza Attività'...")
+        self.log("   Navigazione in 'Visualizza Attivita''...")
         if not self.driver:
             self.log("[ERRORE] Driver non inizializzato.")
             self.update_step("nav", StepStatus.ERROR)
@@ -109,7 +109,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         # 2. Setup Filtri Generali
         self.update_step("filter", StepStatus.RUNNING)
         if not self.attivita_page:
-            self.log("[ERRORE] Pagina Attività non inizializzata.")
+            self.log("[ERRORE] Pagina Attivita'non inizializzata.")
             self.update_step("filter", StepStatus.ERROR)
             return False
 
@@ -119,7 +119,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         self.update_step("filter", StepStatus.COMPLETED)
 
         # 3. Selezione Massiva Richiedenti
-        self.log(f"👥 Selezione di {len(requesters)} richiedenti...")
+        self.log(f"   Selezione di {len(requesters)} richiedenti...")
         if not self.attivita_page.seleziona_richiedente(requesters):
             self.log("[ATTENZIONE] Problemi nella selezione dei richiedenti.")
 
@@ -149,7 +149,7 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         """Esegue il download dell'Excel e attende il completamento."""
         files_before = {str(f.resolve()) for f in Path(self.download_path).glob("*") if f.is_file()}
 
-        self.log("📥 Esportazione Excel massiva...")
+        self.log("   Esportazione Excel massiva...")
         if self.attivita_page and self.attivita_page.esporta_excel():
             return poll_for_new_file(  # type: ignore
                 directory=self.download_path, files_before=files_before, pattern="*.xlsx", timeout=300
@@ -161,10 +161,10 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         Legge i dati dall'Excel scaricato e popola self.results.
 
         Args:
-            file_path: Percorso del file Excel.
+          file_path: Percorso del file Excel.
         """
         try:
-            self.log("📄 Analisi risultati Excel...")
+            self.log("   Analisi risultati Excel...")
             df = pd.read_excel(file_path, header=0)
 
             count_pdl = 0
@@ -215,4 +215,4 @@ class SafeWorkProgrammazioneBot(SafeworkBaseBot):
         """Rimuove il file temporaneo al termine dell'analisi."""
         with contextlib.suppress(Exception):
             Path(file_path).unlink()
-            self.log("🗑️ File temporaneo rimosso.")
+            self.log("    File temporaneo rimosso.")

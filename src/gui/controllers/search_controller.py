@@ -1,14 +1,14 @@
 """
 SyncroJob - Search Controller (Refactored)
 Controller per la ricerca universale asincrona con debouncing.
-Garantisce la fluidità della GUI delegando le query al SearchWorker.
+Garantisce la fluidit  della GUI delegando le query al SearchWorker.
 """
 
 import logging
 from typing import Any
 
-from PyQt6.QtCore import QObject, QPoint, QTimer
-from PyQt6.QtWidgets import QMenu
+from PySide6.QtCore import QObject, QPoint, QTimer
+from PySide6.QtWidgets import QMenu
 
 from src.gui.workers.search_worker import SearchWorker
 
@@ -23,13 +23,13 @@ class SearchController(QObject):
         Inizializza il controller di ricerca.
 
         Args:
-            main_window: Riferimento alla finestra principale per navigazione e posizionamento menu.
+          main_window: Riferimento alla finestra principale per navigazione e posizionamento menu.
         """
         super().__init__()
         self.mw = main_window
         self.worker: SearchWorker | None = None
 
-        # Timer per il debouncing (attende 300ms di inattività prima di cercare)
+        # Timer per il debouncing (attende 300ms di inattivita'prima di cercare)
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self._execute_async_search)
@@ -40,7 +40,7 @@ class SearchController(QObject):
         Avvia il processo di ricerca con debouncing.
 
         Args:
-            query: La stringa digitata dall'utente.
+          query: La stringa digitata dall'utente.
         """
         query = query.strip()
         if not query or len(query) < 2:  # noqa: PLR2004
@@ -70,16 +70,16 @@ class SearchController(QObject):
         Costruisce e mostra il menu contestuale con i risultati della ricerca.
 
         Args:
-            results: Dizionario dei risultati prodotto dal SearchService.
+          results: Dizionario dei risultati prodotto dal SearchService.
         """
         results_menu = QMenu(self.mw)
         results_menu.setStyleSheet(
             """
-            QMenu { background-color: white; border: 1px solid #dee2e6; padding: 5px; min-width: 450px; }
-            QMenu::item { padding: 8px 25px; font-size: 13px; }
-            QMenu::item:selected { background-color: #0d6efd; color: white; }
-            QMenu::separator { height: 1px; background: #e9ecef; margin: 5px 0; }
-        """
+      QMenu { background-color: white; border: 1px solid #dee2e6; padding: 5px; min-width: 450px; }
+      QMenu::item { padding: 8px 25px; font-size: 13px; }
+      QMenu::item:selected { background-color: #0d6efd; color: white; }
+      QMenu::separator { height: 1px; background: #e9ecef; margin: 5px 0; }
+    """
         )
 
         found_count = 0
@@ -108,7 +108,7 @@ class SearchController(QObject):
     def _add_oda_matches(self, matches: list[dict[str, Any]], menu: QMenu) -> int:
         if not matches:
             return 0
-        self._add_disabled_action(menu, "CONTABILITÀ STRUMENTALE (OdA):")
+        self._add_disabled_action(menu, "CONTABILIT  STRUMENTALE (OdA):")
         for oda in matches:
             text = f"OdA {oda['codice_oda']} - {oda['descrizione'][:50]}..."
             action = menu.addAction(text)
@@ -182,7 +182,7 @@ class SearchController(QObject):
     def _add_attivita_matches(self, matches: list[dict[str, Any]], menu: QMenu) -> int:
         if not matches:
             return 0
-        self._add_disabled_action(menu, "ATTIVITÀ PROGRAMMATE:")
+        self._add_disabled_action(menu, "Attivita'PROGRAMMATE:")
         for m in matches:
             desc = m.get("descrizione_attivita", "")
             desc_short = (desc[:40] + "...") if len(desc) > 40 else desc  # noqa: PLR2004

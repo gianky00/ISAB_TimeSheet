@@ -6,15 +6,15 @@ Sostituisce l'estetica HUD con un design moderno coerente con il sistema.
 
 import re
 
-from PyQt6.QtCore import QRectF, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import (
+from PySide6.QtCore import QRectF, Qt, QTimer, Signal
+from PySide6.QtGui import (
     QColor,
     QPainter,
     QPainterPath,
     QPaintEvent,
     QPen,
 )
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -61,7 +61,7 @@ class LogEntryWidget(QWidget):
         match = re.search(pattern, text)
 
         color = COLORS["text_dark"]
-        icon = "•"
+        icon = "  "
 
         if match:
             level = match.group(2)
@@ -70,16 +70,16 @@ class LogEntryWidget(QWidget):
 
             if level == "INFO":
                 color = COLORS["primary_blue"]
-                icon = "ℹ"
+                icon = "  "
             elif level == "WARNING":
                 color = COLORS["warning_orange"]
-                icon = "⚠"
+                icon = "  "
             elif level in ("ERROR", "CRITICAL"):
                 color = COLORS["error_red"]
-                icon = "✖"
+                icon = "  "
             elif level == "SUCCESS":
                 color = COLORS["success_dark"]
-                icon = "✔"
+                icon = "  "
 
             self.lbl_time = QLabel(time_str)
             self.lbl_time.setStyleSheet(
@@ -105,7 +105,7 @@ class LogEntryWidget(QWidget):
 class EnterpriseLogConsole(QWidget):
     """Console di log professionale con autoscroll e design coordinato."""
 
-    log_added = pyqtSignal(str)
+    log_added = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -142,18 +142,18 @@ class EnterpriseLogConsole(QWidget):
         bar = self.scroll_container.verticalScrollBar()
         if bar:
             # Fix: Ensure bar is not deleted when timer fires (prevents RuntimeError in tests)
-            from PyQt6.sip import isdeleted  # noqa: PLC0415
+            from shiboken6 import Shiboken  # noqa: PLC0415
 
             def safe_scroll() -> None:
                 """Esegue lo scroll in modo sicuro per evitare crash UI."""
-                if not isdeleted(bar):
+                if Shiboken.isValid(bar):
                     bar.setValue(bar.maximum())
 
             QTimer.singleShot(20, safe_scroll)
         self.log_added.emit(text)
 
     def append(self, text: str, status: str = "") -> None:
-        """Alias di compatibilità per aggiungere log."""
+        """Alias di compatibilit  per aggiungere log."""
         self.add_log(text)
 
     def clear(self) -> None:
@@ -164,7 +164,7 @@ class EnterpriseLogConsole(QWidget):
                 widget.deleteLater()
 
     def set_mood(self, mood: str) -> None:
-        """Metodo mantenuto per compatibilità API."""
+        """Metodo mantenuto per compatibilit  API."""
 
 
 class MissionReportCard(QFrame):
@@ -173,12 +173,12 @@ class MissionReportCard(QFrame):
     def __init__(self, duration: str, success: bool, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setStyleSheet(f"""
-            QFrame {{
-                background-color: {COLORS["bg_light"]};
-                border: 2px solid {COLORS["success_dark"] if success else COLORS["error_red"]};
-                border-radius: 10px;
-            }}
-        """)
+      QFrame {{
+        background-color: {COLORS["bg_light"]};
+        border: 2px solid {COLORS["success_dark"] if success else COLORS["error_red"]};
+        border-radius: 10px;
+      }}
+    """)
         layout = QVBoxLayout(self)
         title = QLabel("MISSION REPORT" if success else "MISSION FAILED")
         title.setStyleSheet(f"font-weight: bold; color: {COLORS['text_dark']};")
@@ -191,7 +191,7 @@ class MissionReportCard(QFrame):
         layout.addWidget(info)
 
 
-# Alias di compatibilità per il vecchio sistema
+# Alias di compatibilit  per il vecchio sistema
 TimelineWidget = EnterpriseLogConsole
 HorizontalTimelineWidget = EnterpriseLogConsole
 HorizontalTimelineContainer = StandardTimelineFrame

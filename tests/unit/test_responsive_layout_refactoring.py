@@ -2,7 +2,7 @@
 Baseline tests for Responsive Layouts.
 """
 
-from PyQt6.QtWidgets import QLabel
+from PySide6.QtWidgets import QLabel
 
 from src.gui.layouts.responsive import ResponsiveContainer
 

@@ -31,7 +31,7 @@ __all__ = [
 if __name__ == "__main__":
     import sys
 
-    from PyQt6.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
     check_for_updates(silent=False)

@@ -1,6 +1,6 @@
 """
 SyncroJob - Bot Execution Guard
-Gestisce i controlli pre-volo dei bot: licenza, aggiornamenti e integrità.
+Gestisce i controlli pre-volo dei bot: licenza, aggiornamenti e integrita'.
 Centralizza la sicurezza dell'esecuzione.
 """
 
@@ -23,7 +23,7 @@ class ExecutionGuard:
         Esegue i controlli preliminari (Licenza e Aggiornamenti).
 
         Returns:
-            Tuple (esito, messaggio_errore).
+          Tuple (esito, messaggio_errore).
         """
         try:
             # 1. Verifica/Esegue aggiornamenti licenza silenti

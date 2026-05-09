@@ -1,8 +1,8 @@
 from unittest.mock import MagicMock
 
 import pytest
-from PyQt6.QtCore import QObject
-from PyQt6.QtWidgets import QWidget
+from PySide6.QtCore import QObject
+from PySide6.QtWidgets import QWidget
 
 from src.gui.controllers.bot_controller import BotController
 from src.gui.controllers.navigation_controller import NavigationController

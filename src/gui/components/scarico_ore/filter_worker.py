@@ -3,13 +3,13 @@ SyncroJob - Filter Worker
 Thread worker per l'esecuzione asincrona dei filtri su grandi volumi di dati.
 """
 
-from PyQt6.QtCore import QObject, QThread, pyqtSignal
+from PySide6.QtCore import QObject, QThread, Signal
 
 
 class FilterWorker(QThread):
     """Esegue il filtraggio dei dati dello Scarico Ore in background."""
 
-    finished = pyqtSignal(list, int)  # visible_indices, filtered_count
+    finished = Signal(list, int)  # visible_indices, filtered_count
 
     def __init__(
         self,
@@ -23,11 +23,11 @@ class FilterWorker(QThread):
         Inizializza il worker per il filtraggio.
 
         Args:
-            search_index: Indice di ricerca globalizzato.
-            display_data: Dati visualizzati nella tabella.
-            text: Testo cercato nella barra di ricerca.
-            col_filters: Filtri applicati alle singole colonne.
-            parent: Oggetto genitore Qt.
+          search_index: Indice di ricerca globalizzato.
+          display_data: Dati visualizzati nella tabella.
+          text: Testo cercato nella barra di ricerca.
+          col_filters: Filtri applicati alle singole colonne.
+          parent: Oggetto genitore Qt.
         """
         super().__init__(parent)
         self.search_index = search_index

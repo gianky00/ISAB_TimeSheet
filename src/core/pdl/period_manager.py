@@ -17,7 +17,7 @@ class PDLPeriodManager:
         """
         today = datetime.now(UTC).astimezone()
         current_weekday = today.weekday()
-        # Inizio settimana (Lunedì)
+        # Inizio settimana (Luned )
         start_current = today - timedelta(days=current_weekday)
 
         start_target = start_current + timedelta(weeks=offset_weeks)
@@ -32,8 +32,8 @@ class PDLPeriodManager:
         return [
             "Richiedente",
             "Area",
-            "Unità",
-            "N° PDL",
+            "Unita'",
+            "N  PDL",
             "Descrizione",
             f"LUN {days[0]}",
             f"MAR {days[1]}",
@@ -46,6 +46,6 @@ class PDLPeriodManager:
 
     @staticmethod
     def is_today(start_dt: datetime, day_offset: int) -> bool:
-        """Verifica se il giorno all'offset specificato è oggi."""
+        """Verifica se il giorno all'offset specificato  oggi."""
         target_day = (start_dt + timedelta(days=day_offset)).date()
         return target_day == datetime.now(UTC).astimezone().date()

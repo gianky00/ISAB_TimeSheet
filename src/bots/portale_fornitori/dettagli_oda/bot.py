@@ -70,7 +70,7 @@ class DettagliOdABot(SeleniumBaseBot):
 
     def validate_data(self, data: list[dict[str, Any]] | dict[str, Any]) -> tuple[bool, str]:
         """Validazione specifica per Dettagli OdA."""
-        # Non chiamiamo super().validate_data(data) perché bloccherebbe se data è vuoto.
+        # Non chiamiamo super().validate_data(data) perche' bloccherebbe se data  vuoto.
         # Verifichiamo manualmente le credenziali e il fornitore.
         if not self.username or not self.password:
             return False, "Credenziali mancanti nelle impostazioni."
@@ -78,7 +78,7 @@ class DettagliOdABot(SeleniumBaseBot):
         if not self.fornitore:
             return False, "Fornitore non specificato."
 
-        # Il bot può partire anche se data è vuoto (per la lista generale)
+        # Il bot pu  partire anche se data  vuoto (per la lista generale)
         return True, ""
 
     def run(self, data: list[dict[str, Any]]) -> bool:
@@ -165,7 +165,7 @@ class DettagliOdABot(SeleniumBaseBot):
         downloaded_path = page.process_oda(oda, contract, self.data_da, self.data_a, source_dir, dest_dir)
 
         if downloaded_path:
-            # Se è un ODA Generico (senza numero OdA), importiamo nel DB
+            # Se  un ODA Generico (senza numero OdA), importiamo nel DB
             if not oda:
                 self.update_step("db", StepStatus.RUNNING)
                 self._import_oda_to_db(downloaded_path)
@@ -179,7 +179,7 @@ class DettagliOdABot(SeleniumBaseBot):
 
         try:
             self.log(
-                f"📥 Avvio importazione in Storico OdA da {downloaded_path.name}... (Potrebbe richiedere alcuni secondi)"
+                f"   Avvio importazione in Storico OdA da {downloaded_path.name}... (Potrebbe richiedere alcuni secondi)"
             )
 
             # Utilizziamo ProcessPoolExecutor per aggirare il blocco del GIL causato dal parsing C di openpyxl/pandas

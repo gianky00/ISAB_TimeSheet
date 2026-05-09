@@ -4,8 +4,8 @@ Progress bar animata con striature, shimmer e bordo pulsante.
 Supporta colori personalizzati e API asincrona.
 """
 
-from PyQt6.QtCore import QPointF, QRectF, Qt, QTimer
-from PyQt6.QtGui import (
+from PySide6.QtCore import QPointF, QRectF, Qt, QTimer
+from PySide6.QtGui import (
     QColor,
     QHideEvent,
     QLinearGradient,
@@ -15,7 +15,7 @@ from PyQt6.QtGui import (
     QPolygonF,
     QShowEvent,
 )
-from PyQt6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget
 
 from src.gui.styles import COLORS
 
@@ -31,7 +31,7 @@ class AnimatedProgressBar(QWidget):
         Inizializza la barra di progresso.
 
         Args:
-            parent: Widget genitore opzionale.
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self.setFixedHeight(18)
@@ -53,7 +53,7 @@ class AnimatedProgressBar(QWidget):
         Imposta il colore di accento della barra.
 
         Args:
-            color_hex: Colore in formato esadecimale (es. #FF0000).
+          color_hex: Colore in formato esadecimale (es. #FF0000).
         """
         self._accent_color = QColor(color_hex)
         self.update()
@@ -63,7 +63,7 @@ class AnimatedProgressBar(QWidget):
         Alias per setValue (snake_case standard).
 
         Args:
-            value: Valore intero tra 0 e 100.
+          value: Valore intero tra 0 e 100.
         """
         self.setValue(value)
 
@@ -72,7 +72,7 @@ class AnimatedProgressBar(QWidget):
         Imposta il valore di avanzamento della barra.
 
         Args:
-            value: Valore intero tra 0 e 100.
+          value: Valore intero tra 0 e 100.
         """
         self._value = max(0, min(value, 100))
         self.update()
@@ -81,12 +81,12 @@ class AnimatedProgressBar(QWidget):
         """Restituisce il valore corrente della barra."""
         return self._value
 
-    def showEvent(self, event: QShowEvent | None) -> None:
+    def showEvent(self, event: QShowEvent) -> None:
         """Avvia l'animazione quando il widget viene mostrato."""
         super().showEvent(event)
         self._anim_timer.start()
 
-    def hideEvent(self, event: QHideEvent | None) -> None:
+    def hideEvent(self, event: QHideEvent) -> None:
         """Ferma l'animazione quando il widget viene nascosto per risparmiare risorse."""
         super().hideEvent(event)
         self._anim_timer.stop()
@@ -105,12 +105,12 @@ class AnimatedProgressBar(QWidget):
             self._border_direction = -5
         self.update()
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:
+    def paintEvent(self, event: QPaintEvent) -> None:
         """
         Renderizza graficamente la barra di progresso con effetti avanzati.
 
         Args:
-            event: L'evento di pittura di Qt.
+          event: L'evento di pittura di Qt.
         """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

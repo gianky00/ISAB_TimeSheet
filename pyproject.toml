@@ -9,9 +9,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
-PyQt6 = "6.5.2"
-PyQt6-Qt6 = "6.5.2"
-PyQt6-sip = "13.5.2"
+PySide6 = "^6.7.0"
 selenium = "4.18.1"
 webdriver-manager = "4.0.1"
 requests = "^2.33.0"
@@ -110,7 +108,7 @@ addopts = "-v --tb=short --cov=src --cov-report=html --cov-report=term-missing"
 asyncio_mode = "auto"
 markers = [
     "unit: Test unitari puri (veloci, no I/O, no GUI complessa)",
-    "gui: Test che istanziano widget PyQt (lenti, consumano risorse)",
+    "gui: Test che istanziano widget PySide6 (lenti, consumano risorse)",
     "integration: Test che toccano DB o File System reali",
     "slow: Test lenti da escludere nel dev loop rapido",
 ]
@@ -175,7 +173,7 @@ ignore = [
     "S607",   # start-process-with-partial-path: idem
     "S608",   # hardcoded-sql-expression: gia' ignorato in [tool.bandit]
     "RUF001", # ambiguous-unicode-character-string: emoji sono intenzionali nella GUI
-    "ANN401", # dynamically-typed-expression: Any is widely used and accepted in PyQt/args
+    "ANN401", # dynamically-typed-expression: Any is widely used and accepted in PySide/args
 ]
 
 [tool.ruff.lint.mccabe]
@@ -192,7 +190,7 @@ max-complexity = 10
 # main.py: entry point
 "main.py" = ["T201", "E402"]
 "tools/**/*.py" = ["T201", "PTH"]
-# GUI: Metodi ereditati da PyQt (es. paintEvent) violano il Naming PEP8
+# GUI: Metodi ereditati da PySide (es. paintEvent) violano il Naming PEP8
 "src/gui/**/*.py" = ["N802", "N803"]
 "*.py" = ["PTH"]
 
@@ -316,8 +314,6 @@ DEP002 = [
     "pyarrow",          # backend engine per pandas, non importato direttamente
     "setuptools",       # build dependency
     "pyinstaller",      # build tool
-    "PyQt6-Qt6",        # meta-package runtime di PyQt6
-    "PyQt6-sip",        # meta-package SIP bindings di PyQt6
     "jaraco-text",      # dipendenza richiesta da keyring
     "jaraco-context",   # dipendenza richiesta da keyring
     "pydantic",         # usato indirettamente per validazione dati

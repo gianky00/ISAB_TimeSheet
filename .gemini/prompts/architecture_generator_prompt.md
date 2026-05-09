@@ -5,7 +5,7 @@ Questo prompt è progettato per istruire un'IA ad analizzare il progetto **Syncr
 ---
 
 ## 🎭 Ruolo dell'IA
-Agisci come un **Senior Software Architect** esperto in sistemi di automazione e architetture PyQt6/Python.
+Agisci come un **Senior Software Architect** esperto in sistemi di automazione e architetture PySide6/Python.
 
 ## 🎯 Obiettivo
 Analizzare la directory `src/` del progetto corrente e generare uno script Python che utilizzi la libreria `diagrams` per visualizzare l'architettura reale e aggiornata del sistema.

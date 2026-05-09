@@ -10,8 +10,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QTimer, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QTimer, Signal
+from PySide6.QtWidgets import (
     QApplication,
     QHBoxLayout,
     QVBoxLayout,
@@ -44,13 +44,13 @@ class BaseBotPanel(QWidget):
     Gestisce il ciclo di vita del bot delegando logica e UI a componenti specializzati.
     """
 
-    bot_started = pyqtSignal()
-    bot_stopped = pyqtSignal()
-    bot_finished = pyqtSignal(bool)
-    data_updated = pyqtSignal()
-    bot_results_ready = pyqtSignal(str, list)  # bot_id, list of results
-    status_changed = pyqtSignal(str, str)  # status, message
-    autopilot_changed = pyqtSignal()
+    bot_started = Signal()
+    bot_stopped = Signal()
+    bot_finished = Signal(bool)
+    data_updated = Signal()
+    bot_results_ready = Signal(str, list)  # bot_id, list of results
+    status_changed = Signal(str, str)  # status, message
+    autopilot_changed = Signal()
 
     def __init__(
         self, bot_id: str, bot_name: str, bot_description: str, parent: QWidget | None = None
@@ -70,9 +70,9 @@ class BaseBotPanel(QWidget):
         self.controls = BotControlComponent()
         self.activity_timeline = BotTimelineComponent()
         self.log_widget = BotLogComponent()
-        self.status_card = StatusCard("Stato Attività")
+        self.status_card = StatusCard("Stato Attivita'")
 
-        # Alias di compatibilità per sottoclassi legacy
+        # Alias di compatibilit  per sottoclassi legacy
         self.start_btn = self.controls.start_btn
         self.stop_btn = self.controls.stop_btn
 
@@ -160,7 +160,7 @@ class BaseBotPanel(QWidget):
 
         self.log_widget.set_mood("running")
 
-        # Inizializza timeline attività se il bot ha gli steps
+        # Inizializza timeline attivita'se il bot ha gli steps
         bot_class = self.get_bot_class()
         if bot_class and hasattr(bot_class, "STEPS") and bot_class.STEPS:
             self.activity_timeline.set_steps(bot_class.STEPS)
@@ -205,7 +205,7 @@ class BaseBotPanel(QWidget):
             self.worker = None
 
     def _on_bot_finished(self, success: bool) -> None:
-        """Alias per _on_worker_finished (compatibilità test)."""
+        """Alias per _on_worker_finished (compatibilit  test)."""
         self._on_worker_finished(success)
 
     def _handle_completion_logic(self, success: bool) -> None:

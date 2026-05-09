@@ -10,8 +10,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from PyQt6.QtCore import QModelIndex, QObject, QRunnable, Qt, QThreadPool, QTimer, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QModelIndex, QObject, QRunnable, Qt, QThreadPool, QTimer, Signal
+from PySide6.QtWidgets import (
     QAbstractItemView,
     QFrame,
     QHBoxLayout,
@@ -38,13 +38,13 @@ logger = logging.getLogger(__name__)
 
 
 class IntegrityWorkerSignals(QObject):
-    """Segnali emessi dal worker di verifica integrità dei log."""
+    """Segnali emessi dal worker di verifica integrita' dei log."""
 
-    finished = pyqtSignal(bool)
+    finished = Signal(bool)
 
 
 class IntegrityWorker(QRunnable):
-    """Worker per la verifica asincrona dell'hash di integrità del database di audit."""
+    """Worker per la verifica asincrona dell'hash di integrita' del database di audit."""
 
     def __init__(self, manager: AuditManager) -> None:
         """Inizializza il worker comunicando con l'AuditManager."""
@@ -53,7 +53,7 @@ class IntegrityWorker(QRunnable):
         self.signals = IntegrityWorkerSignals()
 
     def run(self) -> None:
-        """Esegue il controllo crittografico dell'integrità."""
+        """Esegue il controllo crittografico dell'integrita'."""
         valid = self.manager.verify_integrity()
         self.signals.finished.emit(valid)
 
@@ -112,7 +112,7 @@ class AuditLogWidget(QWidget):
         self.integrity_icon.setFixedSize(16, 16)
         status_h.addWidget(self.integrity_icon)
 
-        self.integrity_lbl = QLabel("Verifica integrità...")
+        self.integrity_lbl = QLabel("Verifica integrita'...")
         self.integrity_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 13px; font-weight: 600;")
         status_h.addWidget(self.integrity_lbl)
         status_h.addStretch()
@@ -171,10 +171,10 @@ class AuditLogWidget(QWidget):
 
     def _toggle_live_mode(self, state: int | Qt.CheckState) -> None:
         """
-        Attiva o disattiva la modalità live.
+        Attiva o disattiva la modalita' live.
 
         Args:
-            state: Stato della checkbox.
+          state: Stato della checkbox.
         """
         is_live = state in (Qt.CheckState.Checked, 2)  # Supporta sia Enum che Int
         if is_live:
@@ -189,7 +189,7 @@ class AuditLogWidget(QWidget):
             self.refresh()
 
     def _on_live_refresh(self) -> None:
-        """Esegue il refresh periodico in modalità live."""
+        """Esegue il refresh periodico in modalita' live."""
         self.refresh(reset_page=True)
 
     def _on_page_changed(self, delta: int) -> None:
@@ -197,7 +197,7 @@ class AuditLogWidget(QWidget):
         Gestisce il cambio pagina.
 
         Args:
-            delta: Spostamento pagina (+1 o -1).
+          delta: Spostamento pagina (+1 o -1).
         """
         self.current_page += delta
         self.refresh()
@@ -207,7 +207,7 @@ class AuditLogWidget(QWidget):
         Rinfresca i dati visualizzati applicando i filtri correnti.
 
         Args:
-            reset_page: Se True, torna alla prima pagina.
+          reset_page: Se True, torna alla prima pagina.
         """
         if reset_page:
             self.current_page = 0
@@ -228,8 +228,8 @@ class AuditLogWidget(QWidget):
             self._check_integrity()
 
     def _check_integrity(self) -> None:
-        """Verifica l'integrità dei log in background e aggiorna l'interfaccia tramite segnali."""
-        self.integrity_lbl.setText("Verifica integrità in corso...")
+        """Verifica l'integrita' dei log in background e aggiorna l'interfaccia tramite segnali."""
+        self.integrity_lbl.setText("Verifica integrita' in corso...")
         self.integrity_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-weight: 600;")
 
         worker = IntegrityWorker(self.manager)
@@ -252,7 +252,7 @@ class AuditLogWidget(QWidget):
         Gestisce il doppio click su una riga.
 
         Args:
-            index: Indice della cella cliccata.
+          index: Indice della cella cliccata.
         """
         log = self.model.get_log_at(index.row())
         if log:

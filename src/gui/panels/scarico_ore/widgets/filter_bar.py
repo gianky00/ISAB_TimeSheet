@@ -3,8 +3,8 @@ SyncroJob - Scarico Ore Filter Bar
 Componente UI per la visualizzazione delle statistiche e dei filtri di ricerca.
 """
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS, LABEL_MUTED, LINEEDIT_STYLE
@@ -17,8 +17,8 @@ from src.utils.helpers import get_asset_path
 class ScaricoOreFilterBar(ModernCard):
     """Barra superiore con statistiche righe, ore e input di ricerca."""
 
-    search_requested = pyqtSignal(str)
-    update_requested = pyqtSignal()
+    search_requested = Signal(str)
+    update_requested = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(elevation=10, parent=parent)
@@ -77,7 +77,7 @@ class ScaricoOreFilterBar(ModernCard):
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.REFRESH),
         )
-        self.update_btn.clicked.connect(self.update_requested.emit)
+        self.update_btn.clicked.connect(lambda: self.update_requested.emit())
 
         btn_h = QHBoxLayout()
         btn_h.setSpacing(5)

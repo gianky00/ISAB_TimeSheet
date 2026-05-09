@@ -1,5 +1,5 @@
 import pytest
-from PyQt6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget
 
 from src.gui.toast import ToastOverlay
 

@@ -3,8 +3,8 @@ SyncroJob - Sidebar Animation Manager
 Gestisce le transizioni fluide e il movimento magnetico del track.
 """
 
-from PyQt6.QtCore import QEasingCurve, QObject, QPoint, QPropertyAnimation, QRect
-from PyQt6.QtWidgets import QGraphicsOpacityEffect, QWidget
+from PySide6.QtCore import QEasingCurve, QObject, QPoint, QPropertyAnimation, QRect
+from PySide6.QtWidgets import QGraphicsOpacityEffect, QWidget
 
 
 class SidebarAnimationManager(QObject):
@@ -20,12 +20,14 @@ class SidebarAnimationManager(QObject):
         self.width_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
         # Animazione Opacità Contenuto - Ottimizzata (150ms invece di 200ms)
-        self.content_anim = QPropertyAnimation(None, b"opacity")
+        self.content_anim = QPropertyAnimation(self)
+        self.content_anim.setPropertyName(b"opacity")
         self.content_anim.setDuration(150)
         self.content_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
         # Animazione Track Magnetico - Ottimizzata (250ms invece di 350ms)
-        self.track_anim = QPropertyAnimation(None, b"geometry")
+        self.track_anim = QPropertyAnimation(self)
+        self.track_anim.setPropertyName(b"geometry")
         self.track_anim.setDuration(250)
         self.track_anim.setEasingCurve(QEasingCurve.Type.OutQuint)
 

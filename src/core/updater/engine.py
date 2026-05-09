@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any, Final, cast
 
 import requests
-from PyQt6.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import QThread, Signal
 
 from src.core import version
 
@@ -46,10 +46,10 @@ def get_local_setup_path(url_or_path: str) -> str:
 class DownloadWorker(QThread):
     """Worker for resilient update downloading or network copying with progress support."""
 
-    progress = pyqtSignal(int, int, float, float)
-    finished_download = pyqtSignal(str)
-    error = pyqtSignal(str)
-    retrying = pyqtSignal(int)
+    progress = Signal(int, int, float, float)
+    finished_download = Signal(str)
+    error = Signal(str)
+    retrying = Signal(int)
 
     def __init__(self, url_or_path: str) -> None:
         super().__init__()
@@ -61,7 +61,7 @@ class DownloadWorker(QThread):
 
     # Costanti per il controllo del flusso (Ottimizzazione GUI)
     PROGRESS_INTERVAL = 0.1  # 10 Hz (100ms)
-    EMA_ALPHA = 0.1  # Coefficiente di smoothing per la velocità
+    EMA_ALPHA = 0.1  # Coefficiente di smoothing per la velocit
 
     def stop(self) -> None:
         """Richiede l'interruzione del download."""
@@ -90,7 +90,7 @@ class DownloadWorker(QThread):
 
             total_size = src_path.stat().st_size
             downloaded = 0
-            # Granularità a 128KB (molto fluida anche su connessioni lente ~0.6MB/s)
+            # Granularit  a 128KB (molto fluida anche su connessioni lente ~0.6MB/s)
             chunk_size = 128 * 1024
 
             with open(self.url_or_path, "rb") as f_src, open(setup_path, "wb") as f_dst:
@@ -108,7 +108,7 @@ class DownloadWorker(QThread):
                     f_dst.write(chunk)
                     downloaded += real_chunk_size
 
-                    # Calcolo Velocità Dinamico (EMA)
+                    # Calcolo Velocit  Dinamico (EMA)
                     current_speed = real_chunk_size / elapsed if elapsed > 0 else 0
                     if self._ema_speed == 0.0:
                         self._ema_speed = current_speed

@@ -6,9 +6,9 @@ Widget tabellari avanzati con supporto mixin per Clipboard.
 
 from typing import Any
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QBrush, QColor, QKeySequence
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QPoint, Qt, Signal
+from PySide6.QtGui import QAction, QBrush, QColor, QKeySequence
+from PySide6.QtWidgets import (
     QAbstractItemView,
     QGraphicsDropShadowEffect,
     QHeaderView,
@@ -29,11 +29,11 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 
 class ExcelTableWidget(QTableWidget):
     """
-    QTableWidget con funzionalità Clipboard TSV.
+    QTableWidget con funzionalita' Clipboard TSV.
     Supporta la formattazione semantica delle righe.
     """
 
-    # Safe Method Injection: Copia i metodi di ClipboardMixin per evitare crash da eredità multipla su Windows
+    # Safe Method Injection: Copia i metodi di ClipboardMixin per evitare crash da eredit  multipla su Windows
     copy_selection = ClipboardMixin.copy_selection
     paste_selection = ClipboardMixin.paste_selection
     _get_selected_rows_cols = ClipboardMixin._get_selected_rows_cols
@@ -62,8 +62,8 @@ class ExcelTableWidget(QTableWidget):
         Imposta il colore semantico della riga in base allo stato.
 
         Args:
-            row: Indice della riga.
-            status: Stato della riga (es. 'completato', 'errore').
+          row: Indice della riga.
+          status: Stato della riga (es. 'completato', 'errore').
         """
         colors = {
             "completato": COLORS["table_success_bg"],
@@ -125,7 +125,7 @@ class ExcelTableWidget(QTableWidget):
 class EditableDataTable(QWidget):
     """Wrapper per ExcelTableWidget con gestione righe dinamica."""
 
-    data_changed = pyqtSignal()
+    data_changed = Signal()
 
     def __init__(
         self, columns: list[dict[str, Any]], parent: QWidget | None = None, initial_rows: int = 20
@@ -134,9 +134,9 @@ class EditableDataTable(QWidget):
         Inizializza la tabella modificabile.
 
         Args:
-            columns: Elenco di configurazioni per le colonne (nome, tipo, opzioni).
-            parent: Widget genitore opzionale.
-            initial_rows: Numero di righe vuote iniziali.
+          columns: Elenco di configurazioni per le colonne (nome, tipo, opzioni).
+          parent: Widget genitore opzionale.
+          initial_rows: Numero di righe vuote iniziali.
         """
         super().__init__(parent)
         self.columns = columns
@@ -152,10 +152,10 @@ class EditableDataTable(QWidget):
         self.container = HoverPulseFrame(COLORS["text_dark"])
         self.container.setObjectName("tableContainer")
         self.container.setStyleSheet(f"""
-            QFrame#tableContainer {{ background-color: {COLORS["bg_white"]}; border: 1px solid {COLORS["border_light"]}; border-radius: 12px; }}
-            QTableWidget {{ background-color: transparent; border: none; gridline-color: {COLORS["bg_alt"]}; selection-background-color: {COLORS["table_selection_bg"]}; selection-color: {COLORS["text_dark"]}; outline: none; }}
-            QHeaderView::section {{ background-color: {COLORS["bg_light"]}; color: {COLORS["text_dark"]}; padding: 10px; font-weight: bold; border: none; border-bottom: 1px solid {COLORS["border_light"]}; }}
-        """)
+      QFrame#tableContainer {{ background-color: {COLORS["bg_white"]}; border: 1px solid {COLORS["border_light"]}; border-radius: 12px; }}
+      QTableWidget {{ background-color: transparent; border: none; gridline-color: {COLORS["bg_alt"]}; selection-background-color: {COLORS["table_selection_bg"]}; selection-color: {COLORS["text_dark"]}; outline: none; }}
+      QHeaderView::section {{ background-color: {COLORS["bg_light"]}; color: {COLORS["text_dark"]}; padding: 10px; font-weight: bold; border: none; border-bottom: 1px solid {COLORS["border_light"]}; }}
+    """)
 
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(25)
@@ -176,7 +176,7 @@ class EditableDataTable(QWidget):
 
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
-        self.table.itemChanged.connect(self.data_changed.emit)
+        self.table.itemChanged.connect(lambda: self.data_changed.emit())
 
         # Standard: righe predefinite
         for _ in range(self.initial_rows):
@@ -204,7 +204,7 @@ class EditableDataTable(QWidget):
                 else:
                     combo.setCurrentIndex(0)
 
-                combo.currentIndexChanged.connect(self.data_changed.emit)
+                combo.currentIndexChanged.connect(lambda: self.data_changed.emit())
                 self.table.setCellWidget(row, col, combo)
             else:
                 item = SortableTableWidgetItem(default_val)
@@ -216,7 +216,7 @@ class EditableDataTable(QWidget):
         """Rimuove la riga corrente o le righe selezionate."""
         rows = sorted({index.row() for index in self.table.selectedIndexes()}, reverse=True)
         if not rows and self.table.rowCount() > 0:
-            # Se nulla è selezionato, rimuovi l'ultima riga
+            # Se nulla  selezionato, rimuovi l'ultima riga
             self.table.removeRow(self.table.rowCount() - 1)
         else:
             for row in rows:
@@ -229,7 +229,7 @@ class EditableDataTable(QWidget):
         menu = QMenu(self)
         icon_color = COLORS["text_dark"]
 
-        add_act = QAction(get_colored_icon(get_asset_path(Icons.PLUS), icon_color), "Aggiungi riga", self)
+        add_act = QAction(get_colored_icon(get_asset_path(Icons.PLUS), icon_color), "Aggiungia'riga", self)
         add_act.triggered.connect(self._add_row)
 
         remove_act = QAction(
@@ -277,13 +277,13 @@ class EditableDataTable(QWidget):
                 if item:
                     item.setText("")
 
-    def set_data(self, data: list[dict[str, Any]]) -> None:
+    def set_data(self, data: list[dict[str, Any]]) -> None:  # noqa: C901
         """
         Popola la tabella con i dati forniti.
         Utilizza un algoritmo di matching flessibile per le chiavi (ignora case, spazi e underscore).
 
         Args:
-            data: Lista di dizionari contenenti i dati delle righe.
+          data: Lista di dizionari contenenti i dati delle righe.
         """
         self.table.setRowCount(0)
         if not data:
@@ -329,10 +329,10 @@ class EditableDataTable(QWidget):
         Aggiorna il contenuto di una cella specifica.
 
         Args:
-            row: Indice della riga.
-            col: Indice della colonna.
-            value: Nuovo valore testuale.
-            emit_signal: Se True, emette il segnale data_changed.
+          row: Indice della riga.
+          col: Indice della colonna.
+          value: Nuovo valore testuale.
+          emit_signal: Se True, emette il segnale data_changed.
         """
         if row >= self.table.rowCount() or col >= self.table.columnCount():
             return
@@ -345,7 +345,7 @@ class EditableDataTable(QWidget):
             if item:
                 item.setText(value)
             else:
-                # Se è un widget (es. combo), non facciamo nulla o gestiamo se serve
+                # Se  un widget (es. combo), non facciamo nulla o gestiamo se serve
                 widget = self.table.cellWidget(row, col)
                 if isinstance(widget, FilterComboBox):
                     idx = widget.findText(value)
@@ -360,8 +360,8 @@ class EditableDataTable(QWidget):
         Proxy per impostare lo stato semantico della riga nella tabella.
 
         Args:
-            row: Indice della riga.
-            status: Stato della riga.
+          row: Indice della riga.
+          status: Stato della riga.
         """
         self.table.set_row_status(row, status)
 
@@ -371,8 +371,8 @@ class EditableDataTable(QWidget):
         Aggiorna anche la definizione della colonna per le future righe.
 
         Args:
-            col: Indice della colonna.
-            options: Nuova lista di opzioni.
+          col: Indice della colonna.
+          options: Nuova lista di opzioni.
         """
         if col < 0 or col >= len(self.columns):
             return

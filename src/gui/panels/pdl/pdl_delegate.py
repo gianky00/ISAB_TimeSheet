@@ -1,8 +1,8 @@
 from collections.abc import Sequence
 from typing import Any
 
-from PyQt6.QtCore import QModelIndex, Qt
-from PyQt6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
+from PySide6.QtCore import QModelIndex, QPersistentModelIndex, Qt
+from PySide6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
 
 
 class PDLDelegate(QStyledItemDelegate):
@@ -12,7 +12,7 @@ class PDLDelegate(QStyledItemDelegate):
         super().__init__(parent)
         self.date_columns = date_columns
 
-    def initStyleOption(self, option: QStyleOptionViewItem | None, index: QModelIndex) -> None:
+    def initStyleOption(self, option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex) -> None:
         """Configura le opzioni di stile per la cella, gestendo il wrap del testo."""
         super().initStyleOption(option, index)
         if not option:

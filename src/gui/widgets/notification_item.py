@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Any
 
-from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QMouseEvent
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QMouseEvent
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.core.notification_manager import NotificationManager
@@ -18,7 +18,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class NotificationItem(QFrame):
     """
     Widget grafico per la visualizzazione di una singola notifica nel centro notifiche.
-    Supporta diversi livelli di severità (info, success, warning, error).
+    Supporta diversi livelli di severit  (info, success, warning, error).
     """
 
     def __init__(self, notification: dict[str, Any], parent: QWidget | None = None) -> None:
@@ -58,13 +58,13 @@ class NotificationItem(QFrame):
 
         self.setStyleSheet(
             f"""
-            NotificationItem {{
-                background-color: {bg_color};
-                border: 1px solid {border_color};
-                border-left: {left_border};
-                border-radius: 6px;
-            }}
-        """
+      NotificationItem {{
+        background-color: {bg_color};
+        border: 1px solid {border_color};
+        border-left: {left_border};
+        border-radius: 6px;
+      }}
+    """
         )
 
     def _setup_header(self, layout: QVBoxLayout) -> None:
@@ -112,14 +112,14 @@ class NotificationItem(QFrame):
         del_btn.setToolTip("Elimina")
         del_btn.setStyleSheet(
             f"""
-            QPushButton {{
-                background: transparent;
-                border: none;
-                font-weight: bold;
-                color: {COLORS["text_light"]};
-            }}
-            QPushButton:hover {{ color: {COLORS["error_red"]}; }}
-        """
+      QPushButton {{
+        background: transparent;
+        border: none;
+        font-weight: bold;
+        color: {COLORS["text_light"]};
+      }}
+      QPushButton:hover {{ color: {COLORS["error_red"]}; }}
+    """
         )
         del_btn.clicked.connect(self._delete)
         header_layout.addWidget(del_btn)
@@ -139,7 +139,7 @@ class NotificationItem(QFrame):
         """Segna la notifica come letta quando l'utente ci clicca sopra."""
         if not self.notification.get("read", False):
             self.manager.mark_as_read(self.notification["id"])
-        super().mousePressEvent(event)
+        super().mousePressEvent(event)  # type: ignore[arg-type]
 
     def _delete(self) -> None:
         self.manager.delete_notification(self.notification["id"])

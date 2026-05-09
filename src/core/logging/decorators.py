@@ -46,12 +46,12 @@ def measure_time[F: Callable[..., Any]](
     Invia le metriche al tracker globale e genera span_id per il contesto.
 
     Args:
-        func: Funzione da decorare.
-        threshold_ms: Soglia in ms oltre la quale loggare un WARNING.
-        logger_name: Nome del logger da utilizzare.
+      func: Funzione da decorare.
+      threshold_ms: Soglia in ms oltre la quale loggare un WARNING.
+      logger_name: Nome del logger da utilizzare.
 
     Returns:
-        La funzione decorata o il decoratore stesso.
+      La funzione decorata o il decoratore stesso.
     """
 
     def decorator(f: F) -> F:
@@ -155,13 +155,13 @@ def log_entry_exit[F: Callable[..., Any]](
     Utile per il tracciamento del flusso di esecuzione nel debug.
 
     Args:
-        func: Funzione da decorare.
-        logger_name: Nome del logger.
-        log_args: Se loggare gli argomenti passati.
-        log_result: Se loggare il valore restituito.
+      func: Funzione da decorare.
+      logger_name: Nome del logger.
+      log_args: Se loggare gli argomenti passati.
+      log_result: Se loggare il valore restituito.
 
     Returns:
-        La funzione decorata o il decoratore stesso.
+      La funzione decorata o il decoratore stesso.
     """
 
     def decorator(f: F) -> F:

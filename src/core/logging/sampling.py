@@ -26,9 +26,9 @@ class ContextAwareSampler:
         Inizializza sampler.
 
         Args:
-            default_rate: Rate default (0.0-1.0, default 1.0 = 100%)
-            error_rate: Rate per errori (default 1.0 = 100%)
-            slow_operation_rate: Rate per operazioni lente (default 1.0 = 100%)
+          default_rate: Rate default (0.0-1.0, default 1.0 = 100%)
+          error_rate: Rate per errori (default 1.0 = 100%)
+          slow_operation_rate: Rate per operazioni lente (default 1.0 = 100%)
         """
         self.default_rate = self._validate_rate(default_rate)
         self.error_rate = self._validate_rate(error_rate)
@@ -52,8 +52,8 @@ class ContextAwareSampler:
         Imposta rate custom per operazione specifica.
 
         Args:
-            operation: Nome operazione
-            rate: Rate (0.0-1.0)
+          operation: Nome operazione
+          rate: Rate (0.0-1.0)
         """
         self.operation_rates[operation] = self._validate_rate(rate)
 
@@ -62,7 +62,7 @@ class ContextAwareSampler:
         Marca trace_id da loggare sempre.
 
         Args:
-            trace_id: Trace ID da loggare sempre
+          trace_id: Trace ID da loggare sempre
         """
         self.always_log_traces.add(trace_id)
 
@@ -76,12 +76,12 @@ class ContextAwareSampler:
         Decide se loggare evento.
 
         Args:
-            level: Livello log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-            context: Context corrente (opzionale)
-            extra: Dati extra (opzionale)
+          level: Livello log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+          context: Context corrente (opzionale)
+          extra: Dati extra (opzionale)
 
         Returns:
-            True se deve essere loggato, False altrimenti
+          True se deve essere loggato, False altrimenti
         """
         context = context or {}
         extra = extra or {}
@@ -109,13 +109,13 @@ class ContextAwareSampler:
 
     def _is_slow_operation(self, extra: dict[str, Any]) -> bool:
         """
-        Verifica se operazione è lenta.
+        Verifica se operazione  lenta.
 
         Args:
-            extra: Dati extra
+          extra: Dati extra
 
         Returns:
-            True se lenta, False altrimenti
+          True se lenta, False altrimenti
         """
         # Check threshold_exceeded flag
         if extra.get("threshold_exceeded"):
@@ -132,11 +132,11 @@ class ContextAwareSampler:
         Esegue sampling con rate specificato.
 
         Args:
-            rate: Rate (0.0-1.0)
-            key: Chiave per counter
+          rate: Rate (0.0-1.0)
+          key: Chiave per counter
 
         Returns:
-            True se campionato, False altrimenti
+          True se campionato, False altrimenti
         """
         if rate >= 1.0:
             return True
@@ -158,7 +158,7 @@ class ContextAwareSampler:
         Restituisce statistiche sampling.
 
         Returns:
-            Dict con statistiche
+          Dict con statistiche
         """
         return {
             "default_rate": self.default_rate,
@@ -191,11 +191,11 @@ def should_log(
     Helper function per sampling check.
 
     Args:
-        level: Livello log
-        context: Context corrente
-        extra: Dati extra
+      level: Livello log
+      context: Context corrente
+      extra: Dati extra
 
     Returns:
-        True se deve essere loggato
+      True se deve essere loggato
     """
     return get_sampler().should_log(level, context, extra)

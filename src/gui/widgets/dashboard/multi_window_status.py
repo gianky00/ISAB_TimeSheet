@@ -5,8 +5,8 @@ Visualizza nella dashboard un riepilogo delle finestre attualmente sganciate, pe
 
 import typing
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -22,11 +22,11 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 # Stile forzato per i tooltip in Light Mode
 TOOLTIP_CSS = """
 QToolTip {
-    background-color: #FFFFFF;
-    color: #212121;
-    border: 1px solid #BBBBBB;
-    border-radius: 6px;
-    padding: 8px 12px;
+  background-color: #FFFFFF;
+  color: #212121;
+  border: 1px solid #BBBBBB;
+  border-radius: 6px;
+  padding: 8px 12px;
 }
 """
 
@@ -34,7 +34,7 @@ QToolTip {
 class DetachedModuleItem(QFrame):
     """Singola voce di un modulo sganciato nella card."""
 
-    reattach_requested = pyqtSignal(int)
+    reattach_requested = Signal(int)
 
     def __init__(self, index: int, title: str, parent: QWidget | None = None):  # noqa: ANN204
         super().__init__(parent)
@@ -43,16 +43,16 @@ class DetachedModuleItem(QFrame):
         self.setFixedHeight(46)
 
         self.setStyleSheet(f"""
-            QFrame {{
-                background-color: {COLORS["bg_hover"]};
-                border-radius: 8px;
-                border: 1px solid {COLORS["border_light"]};
-            }}
-            QFrame:hover {{
-                background-color: #E3F2FD;
-                border: 1px solid #81C784;
-            }}
-        """)
+      QFrame {{
+        background-color: {COLORS["bg_hover"]};
+        border-radius: 8px;
+        border: 1px solid {COLORS["border_light"]};
+      }}
+      QFrame:hover {{
+        background-color: #E3F2FD;
+        border: 1px solid #81C784;
+      }}
+    """)
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(15, 0, 10, 0)
@@ -76,20 +76,20 @@ class DetachedModuleItem(QFrame):
         self.btn = QPushButton("Riaggancia")
         self.btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {COLORS["bg_white"]};
-                color: #2E7D32;
-                border: 1px solid #A5D6A7;
-                border-radius: 6px;
-                padding: 4px 12px;
-                font-weight: bold;
-                font-size: 11px;
-            }}
-            QPushButton:hover {{
-                background-color: #4CAF50;
-                color: white;
-            }}
-        """)
+      QPushButton {{
+        background-color: {COLORS["bg_white"]};
+        color: #2E7D32;
+        border: 1px solid #A5D6A7;
+        border-radius: 6px;
+        padding: 4px 12px;
+        font-weight: bold;
+        font-size: 11px;
+      }}
+      QPushButton:hover {{
+        background-color: #4CAF50;
+        color: white;
+      }}
+    """)
         self.btn.clicked.connect(lambda: self.reattach_requested.emit(self.index))
         layout.addWidget(self.btn)
 
@@ -100,8 +100,8 @@ class MultiWindowStatusWidget(QFrame):
     Si nasconde automaticamente se non ci sono moduli sganciati.
     """
 
-    reattach_all_requested = pyqtSignal()
-    reattach_single_requested = pyqtSignal(int)
+    reattach_all_requested = Signal()
+    reattach_single_requested = Signal(int)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -136,12 +136,12 @@ class MultiWindowStatusWidget(QFrame):
         self.count_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.count_badge.setFixedSize(24, 24)
         self.count_badge.setStyleSheet(f"""
-            background-color: {COLORS["primary_blue"]};
-            color: white;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 12px;
-        """)
+      background-color: {COLORS["primary_blue"]};
+      color: white;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 12px;
+    """)
 
         header_layout.addWidget(icon_lbl)
         header_layout.addWidget(title_lbl)
@@ -152,19 +152,19 @@ class MultiWindowStatusWidget(QFrame):
         self.reattach_all_btn = QPushButton("Riaggancia Tutti")
         self.reattach_all_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.reattach_all_btn.setStyleSheet(f"""
-            QPushButton {{
-                color: {COLORS["primary_blue"]};
-                background: transparent;
-                border: none;
-                font-weight: bold;
-                font-size: 12px;
-                text-decoration: underline;
-            }}
-            QPushButton:hover {{
-                color: #1976D2;
-            }}
-        """)
-        self.reattach_all_btn.clicked.connect(self.reattach_all_requested.emit)
+      QPushButton {{
+        color: {COLORS["primary_blue"]};
+        background: transparent;
+        border: none;
+        font-weight: bold;
+        font-size: 12px;
+        text-decoration: underline;
+      }}
+      QPushButton:hover {{
+        color: #1976D2;
+      }}
+    """)
+        self.reattach_all_btn.clicked.connect(lambda: self.reattach_all_requested.emit())
         header_layout.addWidget(self.reattach_all_btn)
 
         self.main_layout.addLayout(header_layout)
@@ -174,7 +174,7 @@ class MultiWindowStatusWidget(QFrame):
         Aggiorna la lista dei moduli sganciati. Mostra/Nasconde la card di conseguenza.
 
         Args:
-            detached_panels: Dizionario con chiavi index e valori dict contenenti "panel", "title" o la window.
+          detached_panels: Dizionario con chiavi index e valori dict contenenti "panel", "title" o la window.
         """
         # Pulisci layout esistente
         while self.items_container.count():

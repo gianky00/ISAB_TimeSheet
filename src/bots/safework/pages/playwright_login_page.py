@@ -29,10 +29,10 @@ class PlaywrightSafeWorkLoginPage(PlaywrightBasePage):
 
             # 2. Dispatcher Logica di Attesa
             if account_type == "ISAB":
-                self.log(f"⚡ Account ISAB rilevato ({username}): Avvio procedura VELOCE.")
+                self.log(f"  Account ISAB rilevato ({username}): Avvio procedura VELOCE.")
                 return self._login_flow_tcl()
 
-            self.log(f"⚡ Account Esecutore rilevato ({username}): Avvio procedura ROBUSTA.")
+            self.log(f"  Account Esecutore rilevato ({username}): Avvio procedura ROBUSTA.")
             return self._login_flow_coemi()
 
         except Exception as e:
@@ -40,7 +40,7 @@ class PlaywrightSafeWorkLoginPage(PlaywrightBasePage):
             return False
 
     def _procedura_comune_login(self, username: str, password: str) -> None:
-        """Passaggi comuni a tutti gli account prima della verifica accesso."""
+        """Passaggia'comuni a tutti gli account prima della verifica accesso."""
         max_retries = 3
         for tentativa in range(max_retries):
             try:
@@ -56,7 +56,7 @@ class PlaywrightSafeWorkLoginPage(PlaywrightBasePage):
                 opzione_isab_sel = self._get_selector(SafeWorkLocators.ISAB_SUD_OPTION)
                 self.page.click(opzione_isab_sel)
 
-                self.log(f"🔐 Inserimento credenziali per {username}...")
+                self.log(f"   Inserimento credenziali per {username}...")
                 u_field_sel = self._get_selector(SafeWorkLocators.USERNAME_FIELD)
                 self.page.fill(u_field_sel, username)
 

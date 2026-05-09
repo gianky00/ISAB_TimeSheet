@@ -7,9 +7,9 @@ import operator
 from contextlib import suppress
 from typing import Any
 
-from PyQt6.QtCore import QItemSelection, Qt, pyqtSignal
-from PyQt6.QtGui import QKeySequence
-from PyQt6.QtWidgets import QApplication, QHeaderView, QTableView, QWidget
+from PySide6.QtCore import QItemSelection, Qt, Signal
+from PySide6.QtGui import QKeySequence
+from PySide6.QtWidgets import QApplication, QHeaderView, QTableView, QWidget
 
 from src.gui.components.scarico_ore import FilterHeaderView, ScaricoOreTableModel
 
@@ -17,8 +17,8 @@ from src.gui.components.scarico_ore import FilterHeaderView, ScaricoOreTableMode
 class ScaricoOreTableView(QTableView):
     """TableView ottimizzata per lo Scarico Ore con supporto a filtri e copia TSV."""
 
-    selection_totals_changed = pyqtSignal(float)
-    filter_changed = pyqtSignal(int, list)
+    selection_totals_changed = Signal(float)
+    filter_changed = Signal(int, list)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -82,7 +82,7 @@ class ScaricoOreTableView(QTableView):
                 return
             total = 0.0
             for idx in idxs:
-                if idx.column() == 7:  # TOTALE ORE  # noqa: PLR2004
+                if idx.column() == 7:  # TOTALE ORE # noqa: PLR2004
                     with suppress(ValueError):
                         val = str(idx.data(Qt.ItemDataRole.DisplayRole)).replace(",", ".")
                         if val:

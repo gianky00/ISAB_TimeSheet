@@ -6,8 +6,8 @@ Refactored V9.5: Modular architecture with specialized CRUD widgets.
 
 from typing import Any
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
@@ -22,7 +22,7 @@ class ListsPage(QWidget):
     Fornisce sezioni modulari per l'anagrafica operativa.
     """
 
-    settings_changed = pyqtSignal()
+    settings_changed = Signal()
     """Segnale emesso quando una lista viene modificata."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -37,28 +37,28 @@ class ListsPage(QWidget):
 
         # 1. Sezione Account
         self.account_section = AccountListWidget("Account Portale Fornitori ISAB", show_type=False)
-        self.account_section.changed.connect(self.settings_changed.emit)
+        self.account_section.changed.connect(lambda: self.settings_changed.emit())
         self.main_layout.addWidget(self.account_section)
 
         self.sw_account_section = AccountListWidget("Account SafeWork", show_type=True)
-        self.sw_account_section.changed.connect(self.settings_changed.emit)
+        self.sw_account_section.changed.connect(lambda: self.settings_changed.emit())
         self.main_layout.addWidget(self.sw_account_section)
 
         # 2. Sezioni Liste Semplici
         self.fornitori_section = EditableListWidget("Lista Fornitori", "Fornitore:")
-        self.fornitori_section.changed.connect(self.settings_changed.emit)
+        self.fornitori_section.changed.connect(lambda: self.settings_changed.emit())
         self.main_layout.addWidget(self.fornitori_section)
 
         self.contract_section = EditableListWidget("Numeri di Contratto", "Contratto:")
-        self.contract_section.changed.connect(self.settings_changed.emit)
+        self.contract_section.changed.connect(lambda: self.settings_changed.emit())
         self.main_layout.addWidget(self.contract_section)
 
         self.reparti_section = EditableListWidget("Reparti Aziendali", "Reparto:")
-        self.reparti_section.changed.connect(self.settings_changed.emit)
+        self.reparti_section.changed.connect(lambda: self.settings_changed.emit())
         self.main_layout.addWidget(self.reparti_section)
 
         self.cantieri_section = EditableListWidget("Nomi Cantiere", "Cantiere:")
-        self.cantieri_section.changed.connect(self.settings_changed.emit)
+        self.cantieri_section.changed.connect(lambda: self.settings_changed.emit())
         self.main_layout.addWidget(self.cantieri_section)
 
     def load_from_config(self, config: dict[str, Any]) -> None:

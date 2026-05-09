@@ -38,13 +38,13 @@ class BotLogSink:
         Scrive log nel file specifico del bot run.
 
         Args:
-            level: Livello log
-            logger_name: Nome logger
-            message: Messaggio
-            context: Context con trace_id
-            extra: Dati extra
-            exception: Eccezione
-            source_info: Info sorgente
+          level: Livello log
+          logger_name: Nome logger
+          message: Messaggio
+          context: Context con trace_id
+          extra: Dati extra
+          exception: Eccezione
+          source_info: Info sorgente
         """
         # Estrai trace_id e bot_type
         trace_id = context.get("trace_id")
@@ -82,11 +82,11 @@ class BotLogSink:
         Legge tutti i log di un bot run.
 
         Args:
-            bot_type: Tipo bot
-            trace_id: Trace ID
+          bot_type: Tipo bot
+          trace_id: Trace ID
 
         Returns:
-            Lista di log entries
+          Lista di log entries
         """
         file_path = self.config.get_bot_log_path(bot_type, trace_id)
 
@@ -123,7 +123,7 @@ class MetricsRotatingSink:
         Scrive metrica su file.
 
         Args:
-            metric_dict: Metrica come dizionario
+          metric_dict: Metrica come dizionario
         """
         # Check rotazione
         self._rotate_if_needed()
@@ -173,8 +173,8 @@ class AggregatedMetricsSink:
         Scrive summary giornaliero.
 
         Args:
-            date: Data in formato YYYY-MM-DD
-            summary: Dict con summary
+          date: Data in formato YYYY-MM-DD
+          summary: Dict con summary
         """
         file_path = self.aggregated_dir / f"daily_{date}.json"
 
@@ -188,10 +188,10 @@ class AggregatedMetricsSink:
         Legge summary giornaliero.
 
         Args:
-            date: Data in formato YYYY-MM-DD
+          date: Data in formato YYYY-MM-DD
 
         Returns:
-            Summary o None
+          Summary o None
         """
         file_path = self.aggregated_dir / f"daily_{date}.json"
 

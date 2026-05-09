@@ -5,9 +5,9 @@ Dialoghi e card informative.
 
 from collections.abc import Callable
 
-from PyQt6.QtCore import QPoint, QRect, QSize, Qt
-from PyQt6.QtGui import QCursor, QMouseEvent
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QPoint, QRect, QSize, Qt
+from PySide6.QtGui import QCursor, QMouseEvent
+from PySide6.QtWidgets import (
     QApplication,
     QDialog,
     QFrame,
@@ -33,16 +33,16 @@ class DetailedInfoDialog(QDialog):
         self.setFixedWidth(400)
         self.setStyleSheet(
             f"""
-            QDialog {{
-                background-color: {COLORS["bg_white"]};
-                border: 2px solid {COLORS["primary_dark"]};
-                border-radius: 8px;
-            }}
-            QLabel {{
-                color: {COLORS["text_dark"]};
-                font-size: 14px;
-            }}
-        """
+      QDialog {{
+        background-color: {COLORS["bg_white"]};
+        border: 2px solid {COLORS["primary_dark"]};
+        border-radius: 8px;
+      }}
+      QLabel {{
+        color: {COLORS["text_dark"]};
+        font-size: 14px;
+      }}
+    """
         )
 
         layout = QVBoxLayout(self)
@@ -114,7 +114,7 @@ class InfoLabel(QPushButton):
 
 
 class KPIBigCard(QFrame):
-    """Card per mostrare un KPI numerico principale."""
+    """Card per mostrare un KPiu'numerico principale."""
 
     def __init__(
         self,
@@ -129,13 +129,13 @@ class KPIBigCard(QFrame):
         self.info_content_callback: Callable[[], str] = lambda: "Nessuna informazione disponibile."
         self.setStyleSheet(
             f"""
-            QFrame {{
-                background-color: {COLORS["bg_white"]};
-                border-radius: 15px;
-                border: 1px solid {COLORS["border_light"]};
-                border-left: 5px solid {accent};
-            }}
-        """
+      QFrame {{
+        background-color: {COLORS["bg_white"]};
+        border-radius: 15px;
+        border: 1px solid {COLORS["border_light"]};
+        border-left: 5px solid {accent};
+      }}
+    """
         )
         self.setMinimumWidth(200)
         self.setMinimumHeight(120)

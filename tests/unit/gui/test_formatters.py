@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
 
 from src.gui.formatters import FastTableModel, format_currency_smart
 

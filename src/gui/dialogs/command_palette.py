@@ -1,23 +1,25 @@
 """
 SyncroJob - Command Palette Dialog
 Dialogo 'Quick Open' interattivo ispirato a VSCode per l'accesso rapido a comandi e funzioni.
-Supporta navigazione gerarchica, ricerca globale ricorsiva e modalità di input interattivo.
+Supporta navigazione gerarchica, ricerca globale ricorsiva e modalita' di input interattivo.
 """
 
 from contextlib import suppress
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, cast
 
-from PyQt6.QtCore import (
+from PySide6.QtCore import (
     QEasingCurve,
+    QEvent,
+    QObject,
     QPropertyAnimation,
     QRect,
     QSize,
     Qt,
     QTimer,
-    pyqtSignal,
+    Signal,
 )
-from PyQt6.QtGui import QColor, QKeyEvent
-from PyQt6.QtWidgets import (
+from PySide6.QtGui import QColor, QKeyEvent
+from PySide6.QtWidgets import (
     QDialog,
     QGraphicsDropShadowEffect,
     QHBoxLayout,
@@ -47,7 +49,7 @@ class CommandPaletteDialog(QDialog):
     o di cercare globalmente qualsiasi funzione registrata nel sistema.
     """
 
-    closed = pyqtSignal()
+    closed = Signal()
     """Segnale emesso quando il dialogo completa l'animazione di chiusura."""
 
     def __init__(self, parent: QWidget | None = None, root_nodes: list[CommandNode] | None = None) -> None:
@@ -55,8 +57,8 @@ class CommandPaletteDialog(QDialog):
         Inizializza la command palette.
 
         Args:
-            parent: Widget genitore per il posizionamento.
-            root_nodes: Lista dei nodi comando radice.
+          parent: Widget genitore per il posizionamento.
+          root_nodes: Lista dei nodi comando radice.
         """
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
@@ -201,18 +203,17 @@ class CommandPaletteDialog(QDialog):
             self.anim.finished.disconnect(self._finish_close)
         self.closed.emit()
 
-    def eventFilter(self, obj: Any | None, event: Any | None) -> bool:
+    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
         """Gestisce la navigazione da tastiera (frecce, invio, esc) intercettando gli eventi della search bar."""
-        if event is None:
-            return False
-        if obj == self.search_bar and event.type() == event.Type.KeyPress:
+        if obj == self.search_bar and event.type() == QEvent.Type.KeyPress:
+            key_event = cast("QKeyEvent", event)
             if self._input_mode:
-                return self._handle_input_mode_key(event)
-            return self._handle_standard_key(event)
+                return self._handle_input_mode_key(key_event)
+            return self._handle_standard_key(key_event)
         return super().eventFilter(obj, event)
 
     def _handle_input_mode_key(self, event: QKeyEvent) -> bool:
-        """Gestisce i tasti speciali durante la modalità di inserimento parametri."""
+        """Gestisce i tasti speciali durante la modalita' di inserimento parametri."""
         key = event.key()
         if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self._submit_input_step()
@@ -222,38 +223,57 @@ class CommandPaletteDialog(QDialog):
             return True
         return False
 
-    def _handle_standard_key(self, event: QKeyEvent) -> bool:  # noqa: PLR0911
+    def _handle_standard_key(self, event: QKeyEvent) -> bool:
         """Gestisce i tasti durante la navigazione standard dei menu."""
         key = event.key()
-        if key == Qt.Key.Key_Down:
-            idx = self.list_widget.currentRow()
-            if idx < self.list_widget.count() - 1:
-                self.list_widget.setCurrentRow(idx + 1)
-            return True
-        if key == Qt.Key.Key_Up:
-            idx = self.list_widget.currentRow()
-            if idx > 0:
-                self.list_widget.setCurrentRow(idx - 1)
-            return True
+
+        # 1. Navigazione Lista (Frecce)
+        if key in (Qt.Key.Key_Up, Qt.Key.Key_Down):
+            return self._handle_list_navigation(key)
+
+        # 2. Esecuzione (Invio)
         if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self._execute_selected()
             return True
-        if key == Qt.Key.Key_Backspace:
-            if not self.search_bar.text():
-                self._navigate_up()
-                return True
-        elif key == Qt.Key.Key_Escape:
-            if self.navigation_stack and not self.search_bar.text():
+
+        # 3. Navigazione Back / Chiusura (Esc, Backspace)
+        if key in (Qt.Key.Key_Escape, Qt.Key.Key_Backspace):
+            return self._handle_back_navigation(key)
+
+        # 4. Shortcut Globale (Ctrl+K)
+        if key == Qt.Key.Key_K and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            if not event.isAutoRepeat() and getattr(self, "_can_close_via_shortcut", True):
+                self.hide_animated()
+            return True
+
+        return False
+
+    def _handle_list_navigation(self, key: int) -> bool:
+        """Sposta la selezione nella lista dei comandi."""
+        idx = self.list_widget.currentRow()
+        if key == Qt.Key.Key_Down and idx < self.list_widget.count() - 1:
+            self.list_widget.setCurrentRow(idx + 1)
+            return True
+        if key == Qt.Key.Key_Up and idx > 0:
+            self.list_widget.setCurrentRow(idx - 1)
+            return True
+        return False
+
+    def _handle_back_navigation(self, key: int) -> bool:
+        """Gestisce il ritorno al menu precedente o la chiusura."""
+        search_empty = not self.search_bar.text()
+
+        if key == Qt.Key.Key_Backspace and search_empty:
+            self._navigate_up()
+            return True
+
+        if key == Qt.Key.Key_Escape:
+            if self.navigation_stack and search_empty:
                 self._navigate_up()
             else:
                 self.hide_animated()
             return True
-        elif key == Qt.Key.Key_K and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
-            if not event.isAutoRepeat() and getattr(self, "_can_close_via_shortcut", True):
-                self.hide_animated()
-            return True
         return False
-
     def _start_input_mode(self, node: CommandNode) -> None:
         """Avvia la procedura di richiesta parametri per un comando specifico."""
         self._input_mode = True
@@ -374,7 +394,7 @@ class CommandPaletteDialog(QDialog):
         h.addStretch()
 
         if not node.is_leaf:
-            arrow = QLabel("▶")
+            arrow = QLabel("  ")
             arrow.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px;")
             h.addWidget(arrow)
         elif node.shortcut:

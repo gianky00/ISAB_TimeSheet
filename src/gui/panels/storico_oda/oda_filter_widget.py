@@ -1,5 +1,5 @@
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QSizePolicy,
@@ -18,10 +18,10 @@ from src.utils.helpers import get_asset_path
 class OdaFilterWidget(QWidget):
     """Widget contenente i filtri e i pulsanti di azione per il pannello Storico OdA."""
 
-    search_changed = pyqtSignal(str)
-    update_clicked = pyqtSignal()
-    import_clicked = pyqtSignal()
-    export_clicked = pyqtSignal()
+    search_changed = Signal(str)
+    update_clicked = Signal()
+    import_clicked = Signal()
+    export_clicked = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -51,7 +51,7 @@ class OdaFilterWidget(QWidget):
         self.search_input.setPlaceholderText("OdA, Fornitore, Descrizione...")
         self.search_input.setMinimumWidth(350)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)
-        self.search_input.textChanged.connect(self.search_changed.emit)
+        self.search_input.textChanged.connect(lambda text: self.search_changed.emit(text))
 
         search_container.addWidget(search_label)
         search_container.addWidget(self.search_input)
@@ -78,7 +78,7 @@ class OdaFilterWidget(QWidget):
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.UPLOAD),
         )
-        self.btn_import.clicked.connect(self.import_clicked.emit)
+        self.btn_import.clicked.connect(lambda: self.import_clicked.emit())
 
         # Update Bot Button
         self.btn_bot_update = ModernButton(
@@ -87,7 +87,7 @@ class OdaFilterWidget(QWidget):
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.REFRESH),
         )
-        self.btn_bot_update.clicked.connect(self.update_clicked.emit)
+        self.btn_bot_update.clicked.connect(lambda: self.update_clicked.emit())
 
         # Export Excel
         self.export_btn = ModernButton(
@@ -97,7 +97,7 @@ class OdaFilterWidget(QWidget):
             icon=get_asset_path(Icons.EXCEL),
         )
         self.export_btn.setToolTip("Esporta Excel")
-        self.export_btn.clicked.connect(self.export_clicked.emit)
+        self.export_btn.clicked.connect(lambda: self.export_clicked.emit())
 
         actions_h.addWidget(self.btn_import)
         actions_h.addWidget(self.export_btn)

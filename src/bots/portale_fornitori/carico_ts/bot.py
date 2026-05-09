@@ -78,10 +78,10 @@ class CaricoTSBot(SeleniumBaseBot):
         Esegue la validazione dei dati pre-caricamento.
 
         Args:
-            data: Lista di righe o dizionario dati.
+          data: Lista di righe o dizionario dati.
 
         Returns:
-            tuple: (bool successo, str messaggio errore)
+          tuple: (bool successo, str messaggio errore)
         """
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:
@@ -102,14 +102,14 @@ class CaricoTSBot(SeleniumBaseBot):
         Esegue il workflow principale di caricamento TS.
 
         Args:
-            data: Dati da caricare.
+          data: Dati da caricare.
 
         Returns:
-            bool: True se l'operazione è completata con successo.
+          bool: True se l'operazione  completata con successo.
         """
         self.update_step("login", StepStatus.COMPLETED)
 
-        # Il driver è garantito da execute()
+        # Il driver  garantito da execute()
         rows = data if isinstance(data, list) else data.get("rows", [])
 
         # Original logic: process ONLY the first row

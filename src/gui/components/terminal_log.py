@@ -5,9 +5,9 @@ Sostituisce la vecchia timeline orizzontale con un visualizzatore testuale pulit
 
 from datetime import UTC, datetime
 
-from PyQt6.QtCore import pyqtSlot
-from PyQt6.QtGui import QColor, QFont, QTextCharFormat, QTextCursor
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPlainTextEdit, QVBoxLayout, QWidget
+from PySide6.QtCore import Slot
+from PySide6.QtGui import QColor, QFont, QTextCharFormat, QTextCursor
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QPlainTextEdit, QVBoxLayout, QWidget
 
 from src.gui.styles import COLORS
 
@@ -15,7 +15,7 @@ from src.gui.styles import COLORS
 class TerminalLogWidget(QWidget):
     """
     Console di log in stile terminale chiaro con evidenziazione dei livelli.
-    Fornisce una visualizzazione testuale moderna e pulita delle attività del bot.
+    Fornisce una visualizzazione testuale moderna e pulita delle attivita'del bot.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -23,7 +23,7 @@ class TerminalLogWidget(QWidget):
         Inizializza il widget del terminale e configura l'editor di testo.
 
         Args:
-            parent: Widget genitore.
+          parent: Widget genitore.
         """
         super().__init__(parent)
         self.main_layout = QVBoxLayout(self)
@@ -32,7 +32,7 @@ class TerminalLogWidget(QWidget):
 
         # Header opzionale
         header_layout = QHBoxLayout()
-        self.title_label = QLabel("LOG ATTIVITÀ")
+        self.title_label = QLabel("LOG Attivita'")
         self.title_label.setStyleSheet(
             f"font-weight: bold; color: {COLORS['text_muted']}; font-size: 10px; letter-spacing: 1px;"
         )
@@ -47,14 +47,14 @@ class TerminalLogWidget(QWidget):
 
         # Styling Enterprise Light Console
         self.editor.setStyleSheet(f"""
-            QPlainTextEdit {{
-                background-color: {COLORS["bg_light"]};
-                color: {COLORS["text_dark"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 8px;
-                padding: 8px;
-            }}
-        """)
+      QPlainTextEdit {{
+        background-color: {COLORS["bg_light"]};
+        color: {COLORS["text_dark"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 8px;
+        padding: 8px;
+      }}
+    """)
 
         font = QFont("Consolas", 10)
         if not font.exactMatch():
@@ -63,15 +63,15 @@ class TerminalLogWidget(QWidget):
 
         self.main_layout.addWidget(self.editor)
 
-    @pyqtSlot(str)
-    @pyqtSlot(str, str)
+    @Slot(str)
+    @Slot(str, str)
     def append(self, message: str, level: str = "INFO") -> None:
         """
         Aggiunge un messaggio colorato alla console in base al livello di logging.
 
         Args:
-            message: Testo del messaggio da loggare.
-            level: Livello del log (es. INFO, ERROR, WARN, SUCCESS).
+          message: Testo del messaggio da loggare.
+          level: Livello del log (es. INFO, ERROR, WARN, SUCCESS).
         """
         timestamp = datetime.now(UTC).astimezone().strftime("%H:%M:%S")
 

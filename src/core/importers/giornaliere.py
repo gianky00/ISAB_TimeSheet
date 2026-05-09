@@ -29,7 +29,7 @@ class GiornaliereImporter(BaseImporter):
         "DESCRIZIONE ATTIVITA'": "descrizione",
         "TCL": "tcl",
         "ODC": "odc",
-        "N° PDL": "pdl",
+        "N  PDL": "pdl",
         "INIZIO": "inizio",
         "FINE": "fine",
         "ORE": "ore",
@@ -239,34 +239,40 @@ class GiornaliereImporter(BaseImporter):
 
     @classmethod
     def _clean_giornaliera_data(cls, df: pd.DataFrame) -> pd.DataFrame:
+        """Pulisce i dati rimuovendo righe di totale e dati mancanti."""
         if df.empty:
             return df
 
+        # Rimuove l'ultima riga se presente (solitamente un totale Excel)
         if len(df) > 0:
             df = df.iloc[:-1]
 
         if df.empty:
             return df
 
+        # 1. Rimuove righe contenenti "Totale" in qualsiasi colonna
+        df = cls._remove_total_rows(df)
+        if df.empty:
+            return df
+
+        # 2. Rimuove righe con dati critici mancanti
+        return cls._filter_invalid_rows(df)
+
+    @staticmethod
+    def _remove_total_rows(df: pd.DataFrame) -> pd.DataFrame:
+        """Rimuove le righe che contengono la parola 'Totale'."""
         for col in df.columns:
             if df[col].dtype == "object":
                 mask = df[col].astype(str).str.contains("Totale", na=False, case=False)
                 df = df[~mask]
+        return df
 
-        if df.empty:
-            return df
-
-        critical_cols = []
-        if "data" in df.columns:
-            critical_cols.append("data")
-        if "personale" in df.columns:
-            critical_cols.append("personale")
-        if "ore" in df.columns:
-            critical_cols.append("ore")
-
+    @staticmethod
+    def _filter_invalid_rows(df: pd.DataFrame) -> pd.DataFrame:
+        """Rimuove righe con valori nulli nelle colonne fondamentali."""
+        critical_cols = [c for c in ["data", "personale", "ore"] if c in df.columns]
         if critical_cols:
             df.dropna(subset=critical_cols, how="any", inplace=True)
-
         return df
 
     @classmethod

@@ -93,11 +93,11 @@ class PlaywrightPrenotaBPBot(PlaywrightBaseBot):
                 if self._process_single_bp(page_obj, i, row):
                     processed_count += 1
 
-            self.log(f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
+            self.log(f"  Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
             self.update_step("cleanup", StepStatus.RUNNING)
             self.update_step("cleanup", StepStatus.COMPLETED)
         except Exception as e:
-            self.log(f"❗ Errore fatale durante l'esecuzione: {e}")
+            self.log(f"  Errore fatale durante l'esecuzione: {e}")
             self.update_step("nav", StepStatus.ERROR)
             traceback.print_exc()
             return False
@@ -147,7 +147,7 @@ class PlaywrightPrenotaBPBot(PlaywrightBaseBot):
                 callback(index, True, "")
 
         except Exception as e:
-            self.log(f"✗ Errore su BP {num_bp}: {e}")
+            self.log(f"  Errore su BP {num_bp}: {e}")
             self.update_step("reserve", StepStatus.ERROR)
             with suppress(Exception):
                 page_obj.chiudi_dettagli_bp()

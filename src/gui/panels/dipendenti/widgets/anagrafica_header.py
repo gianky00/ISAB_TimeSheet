@@ -5,8 +5,8 @@ Widget che racchiude la barra di ricerca, i pulsanti di azione e le card statist
 
 import logging
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.gui.panels.dipendenti.shared import InteractiveStatusCard
@@ -21,18 +21,18 @@ logger = logging.getLogger(__name__)
 class AnagraficaHeaderWidget(QWidget):
     """Header della pagina Anagrafica con ricerca, azioni e statistiche."""
 
-    search_changed = pyqtSignal(str)
-    import_requested = pyqtSignal()
-    report_requested = pyqtSignal()
-    update_requested = pyqtSignal()
-    filter_changed = pyqtSignal(str)  # tipo filtro ("ok", "warning", etc.)
+    search_changed = Signal(str)
+    import_requested = Signal()
+    report_requested = Signal()
+    update_requested = Signal()
+    filter_changed = Signal(str)  # tipo filtro ("ok", "warning", etc.)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza l'header dell'anagrafica.
 
         Args:
-            parent: Widget genitore opzionale.
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self._setup_ui()
@@ -47,12 +47,12 @@ class AnagraficaHeaderWidget(QWidget):
         self.filter_card = QFrame()
         self.filter_card.setObjectName("filterBar")
         self.filter_card.setStyleSheet(f"""
-            QFrame#filterBar {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 12px;
-            }}
-        """)
+      QFrame#filterBar {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 12px;
+      }}
+    """)
         filter_layout = QHBoxLayout(self.filter_card)
         filter_layout.setContentsMargins(15, 10, 15, 10)
         filter_layout.setSpacing(15)
@@ -66,7 +66,7 @@ class AnagraficaHeaderWidget(QWidget):
         self.search_input.setPlaceholderText("Nome, Cognome, CF o Badge...")
         self.search_input.setMinimumWidth(300)
         self.search_input.setStyleSheet(LINEEDIT_STYLE)
-        self.search_input.textChanged.connect(self.search_changed.emit)
+        self.search_input.textChanged.connect(lambda text: self.search_changed.emit(text))
         search_v.addWidget(search_label)
         search_v.addWidget(self.search_input)
         filter_layout.addLayout(search_v)
@@ -91,7 +91,7 @@ class AnagraficaHeaderWidget(QWidget):
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.UPLOAD),
         )
-        import_btn.clicked.connect(self.import_requested.emit)
+        import_btn.clicked.connect(lambda: self.import_requested.emit())
 
         email_report_btn = ModernButton(
             "REPORT EMAIL",
@@ -99,7 +99,7 @@ class AnagraficaHeaderWidget(QWidget):
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.SEND),
         )
-        email_report_btn.clicked.connect(self.report_requested.emit)
+        email_report_btn.clicked.connect(lambda: self.report_requested.emit())
 
         self.btn_bot_update = ModernButton(
             "AGGIORNA",
@@ -107,7 +107,7 @@ class AnagraficaHeaderWidget(QWidget):
             size=ModernButton.Size.SMALL,
             icon=get_asset_path(Icons.REFRESH),
         )
-        self.btn_bot_update.clicked.connect(self.update_requested.emit)
+        self.btn_bot_update.clicked.connect(lambda: self.update_requested.emit())
 
         for b in (import_btn, email_report_btn, self.btn_bot_update):
             actions_h.addWidget(b)
@@ -135,7 +135,7 @@ class AnagraficaHeaderWidget(QWidget):
         )
 
         for card in (self.card_ok, self.card_warning, self.card_expired, self.card_excluded):
-            card.clicked.connect(self.filter_changed.emit)
+            card.clicked.connect(lambda text: self.filter_changed.emit(text))
             cards_layout.addWidget(card, stretch=1)
 
         layout.addWidget(self.cards_container)
@@ -145,7 +145,7 @@ class AnagraficaHeaderWidget(QWidget):
         Aggiorna il testo informativo dell'ultimo sync.
 
         Args:
-            text: Testo formattato da visualizzare.
+          text: Testo formattato da visualizzare.
         """
         self.lbl_sync_status.setText(text)
 
@@ -154,7 +154,7 @@ class AnagraficaHeaderWidget(QWidget):
         Aggiorna i contatori numerici sulle card statistiche.
 
         Args:
-            counts: Dizionario con chiavi 'ok', 'warning', 'expired', 'excluded'.
+          counts: Dizionario con chiavi 'ok', 'warning', 'expired', 'excluded'.
         """
         self.card_ok.setValue(counts.get("ok", 0))
         self.card_warning.setValue(counts.get("warning", 0))
@@ -166,7 +166,7 @@ class AnagraficaHeaderWidget(QWidget):
         Evidenzia la card corrispondente al filtro attualmente attivo.
 
         Args:
-            current_filter: Tipo di filtro selezionato.
+          current_filter: Tipo di filtro selezionato.
         """
         for card in (self.card_ok, self.card_warning, self.card_expired, self.card_excluded):
             is_active = card.filter_type == current_filter

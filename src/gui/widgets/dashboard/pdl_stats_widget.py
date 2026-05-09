@@ -8,9 +8,10 @@ V10.0: Logica colori invertita (Incremento=Rosso), percentuali intere e stile el
 import logging
 import math
 import threading
+from typing import Any
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -29,11 +30,11 @@ logger = logging.getLogger(__name__)
 # Stile forzato per i tooltip in Light Mode
 TOOLTIP_CSS = """
 QToolTip {
-    background-color: #FFFFFF;
-    color: #212121;
-    border: 1px solid #BBBBBB;
-    border-radius: 6px;
-    padding: 8px 12px;
+  background-color: #FFFFFF;
+  color: #212121;
+  border: 1px solid #BBBBBB;
+  border-radius: 6px;
+  padding: 8px 12px;
 }
 """
 """Stringa CSS per la personalizzazione dei tooltip dell'applicazione."""
@@ -42,7 +43,7 @@ QToolTip {
 class AreaBadge(QPushButton):
     """Badge cliccabile per rappresentare un'area con statistiche live."""
 
-    clicked_area = pyqtSignal(str)
+    clicked_area = Signal(str)
 
     def __init__(self, name: str, count: int, trend: float, parent: QWidget | None = None) -> None:
         """Inizializza il badge dell'area con il nome, il conteggio e il trend."""
@@ -50,8 +51,8 @@ class AreaBadge(QPushButton):
         trend_int = round(trend)
         trend_str = f"+{trend_int}%" if trend_int > 0 else f"{trend_int}%"
 
-        # Uso del bullet elegante • invece di |
-        super().__init__(f"{name}\n({count} • {trend_str})", parent)
+        # Uso del bullet elegante   invece di |
+        super().__init__(f"{name}\n({count}   {trend_str})", parent)
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setToolTip(
@@ -76,28 +77,28 @@ class AreaBadge(QPushButton):
             border_color = "#bbf7d0"
 
         self.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {bg_color};
-                color: {text_color};
-                border: 1px solid {border_color};
-                border-radius: 8px;
-                padding: 1px;
-                font-size: 12px;
-                font-weight: 800;
-                text-align: center;
-            }}
-            QPushButton:hover {{
-                background-color: {border_color};
-            }}
-            QToolTip {{
-                background-color: {COLORS["bg_white"]};
-                color: {COLORS["text_dark"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-radius: 4px;
-                padding: 5px;
-                font-size: 10px;
-            }}
-        """)
+      QPushButton {{
+        background-color: {bg_color};
+        color: {text_color};
+        border: 1px solid {border_color};
+        border-radius: 8px;
+        padding: 1px;
+        font-size: 12px;
+        font-weight: 800;
+        text-align: center;
+      }}
+      QPushButton:hover {{
+        background-color: {border_color};
+      }}
+      QToolTip {{
+        background-color: {COLORS["bg_white"]};
+        color: {COLORS["text_dark"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-radius: 4px;
+        padding: 5px;
+        font-size: 10px;
+      }}
+    """)
         self.clicked.connect(lambda: self.clicked_area.emit(name))
 
 
@@ -106,8 +107,8 @@ class PDLStatsWidget(ModernCard):
     Widget premium per il monitoraggio dei PDL con logica di allerta carico.
     """
 
-    stats_updated = pyqtSignal(object)
-    area_selected = pyqtSignal(str)
+    stats_updated = Signal(object)
+    area_selected = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Inizializza il widget delle statistiche PDL e avvia il timer di aggiornamento."""
@@ -203,48 +204,59 @@ class PDLStatsWidget(ModernCard):
         self.lbl_total.setText(str(metrics.total_count))
         self.lbl_sync.setText(f"Sync: {metrics.last_sync}")
 
-        def set_trend_style(label, trend, prefix):  # noqa: ANN001, ANN202
-            """Applica lo stile cromatico basato sull'andamento del trend."""
-            val = round(trend)
-            if val > 0:
-                # ROSSO per Incremento (più lavoro)
-                label.setText(f"{prefix}: ▲ +{val}%")
-                label.setStyleSheet(f"color: {COLORS['error_red']}; font-size: 11px; font-weight: 700;")
-            elif val < 0:
-                # VERDE per Calo
-                label.setText(f"{prefix}: ▼ {val}%")
-                label.setStyleSheet(f"color: {COLORS['success_dark']}; font-size: 11px; font-weight: 700;")
-            else:
-                label.setText(f"{prefix}: ▶ 0%")
-                label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; font-weight: 700;")
+        self._apply_trend_style(self.lbl_trend_month, metrics.trend_percentage, "Vs Inizio Mese Prec.")
+        self._apply_trend_style(self.lbl_trend_week, metrics.weekly_trend_percentage, "Vs Settimana Prec.")
 
-        set_trend_style(self.lbl_trend_month, metrics.trend_percentage, "Vs Inizio Mese Prec.")
-        set_trend_style(self.lbl_trend_week, metrics.weekly_trend_percentage, "Vs Settimana Prec.")
+        self._clear_layout(self.area_layout)
+        self._rebuild_area_grid(metrics.areas_stats)
 
-        while self.area_layout.count():
-            child = self.area_layout.takeAt(0)
-            if child:
-                w = child.widget()
-                if w:
-                    w.deleteLater()
-                elif lay := child.layout():
-                    while lay.count():
-                        item = lay.takeAt(0)
-                        if item:
-                            iw = item.widget()
-                            if iw:
-                                iw.deleteLater()
+    def _apply_trend_style(self, label: QLabel, trend: float, prefix: str) -> None:
+        """Applica lo stile cromatico basato sull'andamento del trend."""
+        val = round(trend)
+        if val > 0:
+            # ROSSO per Incremento (piu' lavoro)
+            label.setText(f"{prefix}:   +{val}%")
+            label.setStyleSheet(f"color: {COLORS['error_red']}; font-size: 11px; font-weight: 700;")
+        elif val < 0:
+            # VERDE per Calo
+            label.setText(f"{prefix}:   {val}%")
+            label.setStyleSheet(f"color: {COLORS['success_dark']}; font-size: 11px; font-weight: 700;")
+        else:
+            label.setText(f"{prefix}:   0%")
+            label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; font-weight: 700;")
 
+    def _clear_layout(self, layout: QVBoxLayout) -> None:
+        """Rimuove ricorsivamente tutti i widget da un layout."""
+        while layout.count():
+            child = layout.takeAt(0)
+            if not child:
+                continue
+
+            if w := child.widget():
+                w.deleteLater()
+            elif lay := child.layout():
+                # Nota: we need to cast or handle layouts carefully to avoid C901 on clear logic
+                self._clear_sub_layout(lay)
+
+    def _clear_sub_layout(self, layout: Any) -> None:
+        """Helper per la pulizia dei sub-layout."""
+        while layout.count():
+            item = layout.takeAt(0)
+            if item and (iw := item.widget()):
+                iw.deleteLater()
+
+    def _rebuild_area_grid(self, stats: list[Any]) -> None:
+        """Ricostruisce la griglia dei badge per area."""
         cols = 4
-        rows = math.ceil(len(metrics.areas_stats) / cols)
+        rows = math.ceil(len(stats) / cols)
         for r in range(rows):
             row_h = QHBoxLayout()
             row_h.setSpacing(6)
             for c in range(cols):
                 idx = r * cols + c
-                if idx < len(metrics.areas_stats):
-                    stat = metrics.areas_stats[idx]
-                    badge = AreaBadge(stat.name, stat.current_count, stat.trend_percentage)
+                if idx < len(stats):
+                    s = stats[idx]
+                    badge = AreaBadge(s.name, s.current_count, s.trend_percentage)
                     badge.clicked_area.connect(self.area_selected.emit)
                     row_h.addWidget(badge)
                 else:

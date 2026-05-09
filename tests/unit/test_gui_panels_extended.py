@@ -51,6 +51,6 @@ class TestGUIPanelsExtended:
             qtbot.addWidget(panel)
 
             # Mock the message box to avoid blocking
-            with patch("PyQt6.QtWidgets.QMessageBox.question", return_value=None):
+            with patch("PySide6.QtWidgets.QMessageBox.question", return_value=None):
                 panel.manager.clear_all = MagicMock()
                 assert panel.manager is not None

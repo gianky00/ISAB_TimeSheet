@@ -2,16 +2,16 @@
 """
 SyncroJob - Sidebar Widget (Refactored V8.8 - Performance Optimized V4)
 Navigazione magnetica enterprise a 3 livelli.
-Risolti bug di sovrapposizione e artefatti grafici. Massima fluidità garantita.
+Risolti bug di sovrapposizione e artefatti grafici. Massima fluidit  garantita.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import Qt, QTimer, pyqtProperty, pyqtSignal
-from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Property, Qt, QTimer, Signal
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
     QHBoxLayout,
@@ -31,7 +31,7 @@ from .sidebar.animations import SidebarAnimationManager
 from .sidebar.components import SidebarChildButton, SidebarGroup, SidebarSubGroup
 
 if TYPE_CHECKING:
-    from PyQt6.QtGui import QEnterEvent
+    from PySide6.QtGui import QEnterEvent
 
 
 class SidebarWidget(QFrame):
@@ -40,15 +40,15 @@ class SidebarWidget(QFrame):
     Gestisce l'espansione automatica all'hover e la gerarchia dei menu a 3 livelli.
     """
 
-    navigation_requested = pyqtSignal(int, int, int)  # (page, sub, bot)
-    palette_requested = pyqtSignal()
+    navigation_requested = Signal(int, int, int)  # (page, sub, bot)
+    palette_requested = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:  # noqa: PLR0915
         """
         Inizializza il componente sidebar.
 
         Args:
-            parent: Widget genitore opzionale.
+          parent: Widget genitore opzionale.
         """
         super().__init__(parent)
         self.setObjectName("sidebarContainer")
@@ -121,7 +121,7 @@ class SidebarWidget(QFrame):
         self.setMinimumWidth(w)
         self.setMaximumWidth(w)
 
-    sidebar_width = pyqtProperty(int, fget=get_sidebar_width, fset=set_sidebar_width)
+    sidebar_width = Property(int, fget=get_sidebar_width, fset=set_sidebar_width)
 
     def _get_glass_style(self) -> str:
         """Genera lo stile QSS pulito ed efficiente."""
@@ -129,20 +129,20 @@ class SidebarWidget(QFrame):
         sb_handle = hex_to_rgba(COLORS["bg_white"], 0.15)
 
         return f"""
-            QFrame#sidebarFrame {{
-                background: {gradient};
-                border-right: 1px solid rgba(255, 255, 255, 0.05);
-                border-radius: 18px;
-            }}
-            QFrame#sidebarFrame[state="collapsed"] {{
-                background: transparent;
-                border: none;
-            }}
-            QScrollArea {{ border: none; background: transparent; }}
-            QWidget#scrollContent {{ background: transparent; }}
-            QScrollBar:vertical {{ border: none; background: transparent; width: 4px; }}
-            QScrollBar::handle:vertical {{ background: {sb_handle}; border-radius: 2px; }}
-        """
+      QFrame#sidebarFrame {{
+        background: {gradient};
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 18px;
+      }}
+      QFrame#sidebarFrame[state="collapsed"] {{
+        background: transparent;
+        border: none;
+      }}
+      QScrollArea {{ border: none; background: transparent; }}
+      QWidget#scrollContent {{ background: transparent; }}
+      QScrollBar:vertical {{ border: none; background: transparent; width: 4px; }}
+      QScrollBar::handle:vertical {{ background: {sb_handle}; border-radius: 2px; }}
+    """
 
     def _setup_ui(self) -> None:
         """Inizializza l'interfaccia grafica e la struttura dei menu."""
@@ -166,7 +166,7 @@ class SidebarWidget(QFrame):
         self.active_track.setStyleSheet(f"background: {COLORS['teal_accent']}; border-radius: 2px;")
         self.active_track.hide()
 
-        # Stato iniziale visibilità
+        # Stato iniziale visibilit
         self.scroll_area.setVisible(not self._is_collapsed)
         self.footer.setVisible(not self._is_collapsed)
 
@@ -217,7 +217,7 @@ class SidebarWidget(QFrame):
         self.btn_home = SidebarButton("Home", get_asset_path(Icons.HOME))
         self.group_automazioni = SidebarGroup("Automazioni", get_asset_path(Icons.CPU))
         self.group_db = SidebarGroup("Database", get_asset_path(Icons.DATABASE))
-        self.group_contabilita = SidebarGroup("Contabilità", get_asset_path(Icons.BAR_CHART))
+        self.group_contabilita = SidebarGroup("Contabilit ", get_asset_path(Icons.BAR_CHART))
 
         self.main_btns = (
             self.btn_palette,
@@ -284,12 +284,12 @@ class SidebarWidget(QFrame):
             self.group_db.add_child(db_btn)
 
     def _setup_accounting_menu(self) -> None:
-        """Configura il sottomenu della contabilità."""
+        """Configura il sottomenu della contabilit ."""
         self.sub_strumentale = SidebarSubGroup("Strumentale")
         for n, i in (
             ("Preventivi", 0),
             ("Giornaliere", 1),
-            ("Attività Programmate", 2),
+            ("Attivita'Programmate", 2),
             ("Certificati", 3),
             ("KPI", 4),
         ):
@@ -333,7 +333,7 @@ class SidebarWidget(QFrame):
 
     def _setup_connections(self) -> None:
         """Configura i collegamenti dei segnali."""
-        self.btn_palette.clicked.connect(self.palette_requested.emit)
+        self.btn_palette.clicked.connect(lambda: self.palette_requested.emit())
         self.btn_home.clicked.connect(lambda: self.navigation_requested.emit(0, -1, -1))
         self.btn_timbrature.clicked.connect(lambda: self.navigation_requested.emit(3, -1, -1))
         self.btn_dataease.clicked.connect(lambda: self.navigation_requested.emit(5, -1, -1))
@@ -349,7 +349,7 @@ class SidebarWidget(QFrame):
                 g.collapse()
         QTimer.singleShot(100, self._update_track)
 
-    def _update_track(self) -> None:
+    def _update_track(self) -> None:  # noqa: C901
         """Sposta il track magnetico in modo sicuro."""
         if self._is_collapsed:
             self.active_track.hide()
@@ -400,7 +400,7 @@ class SidebarWidget(QFrame):
         self._set_sub_button_active(index, sub, bot)
         QTimer.singleShot(150, self._update_track)
 
-    def _set_sub_button_active(self, index: int, sub: int | None, bot: int | None) -> None:
+    def _set_sub_button_active(self, index: int, sub: int | None, bot: int | None) -> None:  # noqa: C901
         """Gestisce l'evidenziazione dei pulsanti di terzo livello."""
         if index == 1:
             self.sub_fornitori.header_btn.setChecked(sub == 0)

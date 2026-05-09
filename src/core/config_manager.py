@@ -35,7 +35,7 @@ _config_lock = threading.RLock()
 
 
 def _reset_configuration_for_testing() -> None:
-    """Resetta la cache della configurazione (solo per unit test)."""
+    """Resetta la cache della configurazione (solo per unita'test)."""
     global _config_cache  # noqa: PLW0603
     with _config_lock:
         _config_cache = None

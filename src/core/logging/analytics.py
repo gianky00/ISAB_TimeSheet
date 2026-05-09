@@ -60,7 +60,7 @@ class AnomalyDetector:
 
     Tipi di anomalie rilevate:
     - Error rate spike (aumento improvviso errori)
-    - Slow operations (operazioni più lente del normale)
+    - Slow operations (operazioni piu' lente del normale)
     - High failure rate (tasso di fallimento bot elevato)
     """
 
@@ -94,7 +94,7 @@ class AnomalyDetector:
         Rileva spike nel tasso di errori.
 
         Returns:
-            Lista di anomalie se error rate > threshold
+          Lista di anomalie se error rate > threshold
         """
         anomalies = []
         report = self.viewer.generate_health_report()
@@ -126,10 +126,10 @@ class AnomalyDetector:
 
     def detect_slow_operations(self, hours: int = 24) -> list[Anomaly]:
         """
-        Rileva operazioni più lente del normale.
+        Rileva operazioni piu' lente del normale.
 
         Returns:
-            Lista di anomalie per operazioni lente
+          Lista di anomalie per operazioni lente
         """
         anomalies = []
         slow_ops = self.viewer.get_slow_operations(threshold_ms=self.slow_op_threshold_ms, limit=5)
@@ -154,7 +154,7 @@ class AnomalyDetector:
                         "duration_ms": duration_ms,
                         "threshold_ms": self.slow_op_threshold_ms,
                     },
-                    suggestion="Verifica la connessione di rete o riprova più tardi",
+                    suggestion="Verifica la connessione di rete o riprova piu' tardi",
                 )
             )
 
@@ -165,7 +165,7 @@ class AnomalyDetector:
         Rileva tasso di fallimento bot elevato.
 
         Returns:
-            Lista di anomalie se failure rate > threshold
+          Lista di anomalie se failure rate > threshold
         """
         anomalies = []
         bot_summary = self.viewer.get_bot_runs_summary(hours=hours)
@@ -205,7 +205,7 @@ class PatternDetector:
     Rileva pattern ricorrenti nei log.
 
     Tipi di pattern rilevati:
-    - Errori ripetuti (stesso messaggio più volte)
+    - Errori ripetuti (stesso messaggio piu' volte)
     - Correlazioni (errori che seguono sempre altri errori)
     """
 
@@ -224,7 +224,7 @@ class PatternDetector:
         Trova errori che si ripetono frequentemente.
 
         Returns:
-            Lista di pattern di errori ripetuti
+          Lista di pattern di errori ripetuti
         """
         patterns = []
         target_min_count = min_count or self.min_count
@@ -262,16 +262,16 @@ class HealthScorer:
         Calcola health score.
 
         Args:
-            anomalies: Lista anomalie rilevate
-            error_rate: Tasso errori %
-            bot_success_rate: Tasso successo bot %
+          anomalies: Lista anomalie rilevate
+          error_rate: Tasso errori %
+          bot_success_rate: Tasso successo bot %
 
         Returns:
-            Score 0-100 (100 = perfetto)
+          Score 0-100 (100 = perfetto)
         """
         score = 100
 
-        # Penalità per anomalie
+        # Penalit  per anomalie
         for anomaly in anomalies:
             if anomaly.severity == "critical":
                 score -= 25
@@ -282,11 +282,11 @@ class HealthScorer:
             else:
                 score -= 5
 
-        # Penalità per error rate
+        # Penalit  per error rate
         if error_rate > self.ERROR_NORMAL_LIMIT:
             score -= min(20, int(error_rate))
 
-        # Penalità per bot failures
+        # Penalit  per bot failures
         if bot_success_rate < self.SUCCESS_TARGET:
             score -= int((100 - bot_success_rate) / 2)
 
@@ -298,10 +298,10 @@ def generate_analytics_report(hours: int = 24) -> AnalyticsReport:
     Genera report completo di analytics.
 
     Args:
-        hours: Ore di lookback per analisi
+      hours: Ore di lookback per analisi
 
     Returns:
-        AnalyticsReport con anomalie, pattern e suggerimenti
+      AnalyticsReport con anomalie, pattern e suggerimenti
     """
     viewer = LogViewer()
     anomaly_detector, pattern_detector, health_scorer = (

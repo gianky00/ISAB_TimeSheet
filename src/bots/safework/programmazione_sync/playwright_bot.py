@@ -14,12 +14,12 @@ from src.bots.safework.playwright_base import PlaywrightSafeworkBaseBot
 
 class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
     """
-    Bot per scaricare il report Excel delle attività da SafeWork usando Playwright.
+    Bot per scaricare il report Excel delle attivita'da SafeWork usando Playwright.
     """
 
     STEPS: ClassVar[list[tuple[str, str]]] = [
         ("login", "Login SafeWork"),
-        ("nav", "Navigazione Attività"),
+        ("nav", "Navigazione Attivita'"),
         ("filter", "Configurazione Filtri"),
         ("search", "Ricerca ed Esportazione"),
     ]
@@ -43,7 +43,7 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
 
     @property
     def description(self) -> str:
-        return "Download massivo report attività SafeWork (Playwright)"
+        return "Download massivo report attivita'SafeWork (Playwright)"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
@@ -69,7 +69,7 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
 
         # 1. Navigazione
         self.update_step("nav", StepStatus.RUNNING)
-        self.log("📋 Navigazione in 'Visualizza Attività'...")
+        self.log("   Navigazione in 'Visualizza Attivita''...")
 
         self.page.click("#topIcon-actHomePage")
         self._attendi_scomparsa_overlay()
@@ -86,7 +86,7 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
 
         # 3. Selezione Richiedenti
         if requesters:
-            self.log(f"👥 Selezione di {len(requesters)} richiedenti...")
+            self.log(f"   Selezione di {len(requesters)} richiedenti...")
             self.attivita_page.seleziona_richiedente(requesters)
 
         # 4. Ricerca ed Esportazione
@@ -95,7 +95,7 @@ class PlaywrightSafeWorkProgrammazioneSyncBot(PlaywrightSafeworkBaseBot):
         self.attivita_page.esegui_ricerca()
         self._attendi_scomparsa_overlay()
 
-        self.log("📥 Esportazione Excel...")
+        self.log("   Esportazione Excel...")
         try:
             with self.page.expect_download(timeout=600000) as download_info:
                 if self.attivita_page.esporta_excel():

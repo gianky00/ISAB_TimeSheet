@@ -1,6 +1,6 @@
 """
 SyncroJob - Weather Service
-Servizio specializzato per il recupero asincrono dei dati meteo e qualità dell'aria.
+Servizio specializzato per il recupero asincrono dei dati meteo e qualita' dell'aria.
 Conforme al Single Responsibility Principle (SRP).
 """
 
@@ -8,8 +8,8 @@ import json
 import logging
 from typing import Any, Optional
 
-from PyQt6.QtCore import QObject, QUrl, pyqtSignal
-from PyQt6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
+from PySide6.QtCore import QObject, QUrl, Signal
+from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +23,8 @@ class WeatherService(QObject):
     _instance: Optional["WeatherService"] = None
 
     # Segnali per la comunicazione asincrona
-    weather_data_ready = pyqtSignal(dict, dict)  # (weather_dict, aqi_dict)
-    error_occurred = pyqtSignal(str)
+    weather_data_ready = Signal(dict, dict)  # (weather_dict, aqi_dict)
+    error_occurred = Signal(str)
 
     @classmethod
     def instance(cls) -> "WeatherService":
@@ -73,17 +73,17 @@ class WeatherService(QObject):
             return
 
         if reply.error() != QNetworkReply.NetworkError.NoError:
-            logger.error(f"Weather API Error: {reply.errorString()}")
+            logger.error(f"Weather APiu'Error: {reply.errorString()}")
             self.error_occurred.emit("Errore Rete Meteo")
             self._is_loading = False
             reply.deleteLater()
             return
 
         try:
-            raw_data = reply.readAll().data()
+            raw_data = bytes(reply.readAll().data())
             self._temp_weather_data = json.loads(raw_data.decode("utf-8"))
 
-            # Step 2: Recupero Qualità dell'Aria (AQI)
+            # Step 2: Recupero Qualita' dell'Aria (AQI)
             lat, lon = 37.15, 15.18
             url_aqi = (
                 f"https://air-quality-api.open-meteo.com/v1/air-quality?"
@@ -113,10 +113,10 @@ class WeatherService(QObject):
         aqi_data = {}
         try:
             if reply.error() == QNetworkReply.NetworkError.NoError:
-                raw_data = reply.readAll().data()
+                raw_data = bytes(reply.readAll().data())
                 aqi_data = json.loads(raw_data.decode("utf-8"))
             else:
-                logger.warning(f"AQI API Error (Non-fatal): {reply.errorString()}")
+                logger.warning(f"AQI APiu'Error (Non-fatal): {reply.errorString()}")
         except Exception:
             logger.exception("Errore silenzioso nel parsing AQI")
 

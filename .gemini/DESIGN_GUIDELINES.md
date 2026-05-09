@@ -20,7 +20,7 @@ Definita centralmente in `src/gui/design/colors.py` e mappata semanticamente in 
 ---
 
 ## 🏗️ Componenti UI Standard (Design System)
-Ogni nuovo pannello **DEVE** utilizzare i widget specializzati invece di quelli nativi di PyQt6:
+Ogni nuovo pannello **DEVE** utilizzare i widget specializzati invece di quelli nativi di PySide6:
 
 *   **Pulsanti**: `src.gui.widgets.modern_button.ModernButton` (Animazioni hover incluse).
 *   **Dialoghi**:

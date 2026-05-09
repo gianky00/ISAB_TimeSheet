@@ -3,7 +3,7 @@ SyncroJob - Consuntivo Impostazioni Tab
 Tab per la configurazione delle liste dinamiche (Tecnici, Stati).
 """
 
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -36,7 +36,7 @@ class ImpostazioniTab(QWidget):
         layout.addWidget(info)
 
         desc = QLabel(
-            "Modifica i nomi dei tecnici e gli stati dell'attività che appariranno nei menu a tendina."
+            "Modifica i nomi dei tecnici e gli stati dell'attivita'che appariranno nei menu a tendina."
         )
         desc.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 13px; border: none;")
         layout.addWidget(desc)
@@ -45,7 +45,7 @@ class ImpostazioniTab(QWidget):
         lists_row.setSpacing(30)
 
         self.tcl_editor = self._create_list_editor("Tecnici (TCL)", "preventivi_tcl")
-        self.stati_editor = self._create_list_editor("Stati Attività", "preventivi_stati")
+        self.stati_editor = self._create_list_editor("Stati Attivita'", "preventivi_stati")
 
         lists_row.addWidget(self.tcl_editor)
         lists_row.addWidget(self.stati_editor)
@@ -56,12 +56,12 @@ class ImpostazioniTab(QWidget):
         container = QFrame()
         container.setObjectName("listContainer")
         container.setStyleSheet(f"""
-            QFrame#listContainer {{
-                background: {COLORS["bg_white"]};
-                border-radius: 12px;
-                border: 1px solid {COLORS["border_light"]};
-            }}
-        """)
+      QFrame#listContainer {{
+        background: {COLORS["bg_white"]};
+        border-radius: 12px;
+        border: 1px solid {COLORS["border_light"]};
+      }}
+    """)
         lay = QVBoxLayout(container)
         lay.setContentsMargins(15, 15, 15, 15)
         lay.setSpacing(10)

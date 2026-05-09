@@ -34,7 +34,7 @@ class PlaywrightBasePage:
             xpath_combined = f"{CommonLocators.LOADING_MASK[1]} | {CommonLocators.LOADING_TEXT[1]}"
             selector = f"xpath={xpath_combined}"
 
-            # Attendi che non ci siano più elementi visibili che bloccano la UI
+            # Attendi che non ci siano piu' elementi visibili che bloccano la UI
             self.page.wait_for_selector(selector, state="hidden", timeout=timeout_ms)
 
     def _select_combobox_item(
@@ -45,7 +45,7 @@ class PlaywrightBasePage:
         Gestisce i duplicati nelle tab prendendo sempre il primo elemento visibile.
         """
         try:
-            self.log(f"  [COMBO] Selezione: '{item_text}'")
+            self.log(f" [COMBO] Selezione: '{item_text}'")
 
             # 1. Trigger freccia (usiamo .first per i duplicati ExtJS)
             with suppress(Exception):
@@ -58,12 +58,12 @@ class PlaywrightBasePage:
             option_xpath = f"xpath=//li[normalize-space(text())='{item_text}']"
 
             try:
-                # Attesa breve per la comparsa dell'opzione (.first gestisce ambiguità)
+                # Attesa breve per la comparsa dell'opzione (.first gestisce ambiguit )
                 option = self.page.locator(option_xpath).first
                 option.wait_for(state="attached", timeout=2000)
             except Exception:
                 # 3. Fallback: Digitazione nell'input (sempre il primo visibile)
-                self.log("  [COMBO] Opzione non trovata, digito nell'input...")
+                self.log(" [COMBO] Opzione non trovata, digito nell'input...")
                 inp = self.page.locator(input_selector).first
 
                 inp.evaluate(
@@ -79,7 +79,7 @@ class PlaywrightBasePage:
 
             self._wait_overlay(timeout_ms=2000)
         except Exception as e:
-            self.log(f"  [COMBO] Errore: {str(e)[:50]}...")
+            self.log(f" [COMBO] Errore: {str(e)[:50]}...")
             return False
         else:
             return True

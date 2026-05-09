@@ -55,9 +55,9 @@ class CaricoTSPage:
         Seleziona il fornitore indicato dal menu a discesa.
 
         Args:
-            supplier: Nome del fornitore.
+          supplier: Nome del fornitore.
         Returns:
-            bool: True se la selezione ha avuto successo.
+          bool: True se la selezione ha avuto successo.
         """
         try:
             self.log(f"Selezione {supplier}...")
@@ -79,9 +79,9 @@ class CaricoTSPage:
         Inserisce il numero OdA nel campo di input e avvia l'estrazione.
 
         Args:
-            oda: Numero dell'Ordine di Acquisto.
+          oda: Numero dell'Ordine di Acquisto.
         Returns:
-            bool: True se l'input è stato inviato correttamente.
+          bool: True se l'input  stato inviato correttamente.
         """
         try:
             self.log(f"Inserimento OdA: {oda}")
@@ -90,12 +90,12 @@ class CaricoTSPage:
             # JS Click to focus/activate
             self.driver.execute_script("arguments[0].click();", inp)
             js = """
-            var el = arguments[0];
-            el.value = arguments[1];
-            el.dispatchEvent(new Event('input', {bubbles:true}));
-            el.dispatchEvent(new Event('change', {bubbles:true}));
-            el.dispatchEvent(new Event('blur', {bubbles:true}));
-            """
+      var el = arguments[0];
+      el.value = arguments[1];
+      el.dispatchEvent(new Event('input', {bubbles:true}));
+      el.dispatchEvent(new Event('change', {bubbles:true}));
+      el.dispatchEvent(new Event('blur', {bubbles:true}));
+      """
             self.driver.execute_script(js, inp, oda)
 
             # Click Extract

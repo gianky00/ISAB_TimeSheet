@@ -6,16 +6,16 @@ Consente di separare i widget dallo stack centrale della MainWindow e renderizza
 import logging
 from collections.abc import Callable
 
-from PyQt6.QtCore import (
+from PySide6.QtCore import (
     QEasingCurve,
     QPoint,
     QPropertyAnimation,
     QSequentialAnimationGroup,
     Qt,
-    pyqtSignal,
+    Signal,
 )
-from PyQt6.QtGui import QCloseEvent, QIcon
-from PyQt6.QtWidgets import (
+from PySide6.QtGui import QCloseEvent, QIcon
+from PySide6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
     QGraphicsOpacityEffect,
@@ -36,10 +36,10 @@ logger = logging.getLogger(__name__)
 class DetachedPanelWindow(QMainWindow):
     """
     Finestra indipendente che ospita un pannello precedentemente residente nello SlidingStackedWidget.
-    Utilizza il frame di sistema OS per prevenire il noto crash PyQt6 (Access Violation) durante il reparenting C++.
+    Utilizza il frame di sistema OS per prevenire il noto crash PySide6 (Access Violation) durante il reparenting C++.
     """
 
-    panel_closed_signal = pyqtSignal(int)  # Indice originale del pannello
+    panel_closed_signal = Signal(int)  # Indice originale del pannello
 
     def __init__(
         self, original_index: int, panel: QWidget, title: str, parent: QWidget | None = None
@@ -82,14 +82,14 @@ class PopoutPlaceholderWidget(QWidget):
         self.card = QFrame()
         self.card.setObjectName("placeholderCard")
         self.card.setStyleSheet(f"""
-            QFrame#placeholderCard {{
-                background-color: {COLORS["bg_white"]};
-                border: 1px solid {COLORS["border_light"]};
-                border-top: 5px solid {COLORS["primary_blue"]};
-                border-radius: 12px;
-            }}
-            QLabel {{ border: none; background: transparent; }}
-        """)
+      QFrame#placeholderCard {{
+        background-color: {COLORS["bg_white"]};
+        border: 1px solid {COLORS["border_light"]};
+        border-top: 5px solid {COLORS["primary_blue"]};
+        border-radius: 12px;
+      }}
+      QLabel {{ border: none; background: transparent; }}
+    """)
         self.card.setFixedWidth(560)
 
         shadow = QGraphicsDropShadowEffect(self)
@@ -157,7 +157,7 @@ class PopoutPlaceholderWidget(QWidget):
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         desc_label = QLabel(
-            "Il modulo selezionato è in esecuzione in una <b>finestra indipendente</b>.<br><br>Puoi utilizzare il menu laterale per continuare a navigare e lavorare all'interno di questa finestra principale."
+            "Il modulo selezionato  in esecuzione in una <b>finestra indipendente</b>.<br><br>Puoi utilizzare il menu laterale per continuare a navigare e lavorare all'interno di questa finestra principale."
         )
         desc_label.setStyleSheet(f"font-size: 14.5px; color: {COLORS['text_muted']}; line-height: 1.6;")
         desc_label.setWordWrap(True)

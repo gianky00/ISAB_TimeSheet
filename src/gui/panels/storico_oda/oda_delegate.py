@@ -1,6 +1,8 @@
-from PyQt6.QtCore import QModelIndex, Qt
-from PyQt6.QtGui import QColor, QPainter
-from PyQt6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem, QTreeView
+from typing import cast
+
+from PySide6.QtCore import QModelIndex, QPersistentModelIndex, Qt
+from PySide6.QtGui import QColor, QPainter
+from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem, QTreeView
 
 from src.gui.styles import COLORS
 
@@ -13,17 +15,16 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
         super().__init__(tree_view)
         self.tree = tree_view
 
-    def paint(self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex) -> None:  # noqa: PLR0912
-        """Personalizza il disegno delle celle, applicando colori di stato e merge testuale per le righe figlie."""
-        if not painter:
-            super().paint(painter, option, index)
-            return
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex) -> None:  # noqa: C901
+        """Personalizza il disegno delle celle, applicando colori di stato e merge testuale per le rilascio."""
         # 1. Applica colorazione per righe parent in base a STATO e Indicatore Rilascio
         if not index.parent().isValid():  # Riga parent
             # Recupera i dati completi dalla colonna 0
             model = self.tree.model()
             if hasattr(model, "item"):
-                data_item = model.item(index.row(), 0)  # type: ignore
+                from PySide6.QtGui import QStandardItemModel  # noqa: PLC0415
+                std_model = cast("QStandardItemModel", model)
+                data_item = std_model.item(index.row(), 0)
                 if data_item:
                     full_data = data_item.data(Qt.ItemDataRole.UserRole)
                     if full_data:

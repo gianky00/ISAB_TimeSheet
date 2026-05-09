@@ -1,6 +1,6 @@
 """
 SyncroJob - Bot Controller
-Orchestratore per il coordinamento delle attività dei bot Selenium e l'aggiornamento dinamico della UI.
+Orchestratore per il coordinamento delle attivita'dei bot Selenium e l'aggiornamento dinamico della UI.
 Gestisce il bridge tra i segnali emessi dai pannelli bot, il servizio di messaggistica Telegram
 e le card di stato globali presenti nel footer della MainWindow.
 """
@@ -9,8 +9,8 @@ import os
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QObject
-from PyQt6.QtWidgets import QWidget
+from PySide6.QtCore import QObject
+from PySide6.QtWidgets import QWidget
 
 
 class BotController(QObject):
@@ -27,8 +27,8 @@ class BotController(QObject):
         Inizializza il bot controller.
 
         Args:
-            main_window: Riferimento alla MainWindow (per accesso alle status card).
-            telegram_service: Istanza del TelegramService per l'invio di notifiche e file.
+          main_window: Riferimento alla MainWindow (per accesso alle status card).
+          telegram_service: Istanza del TelegramService per l'invio di notifiche e file.
         """
         super().__init__(main_window)
         self.mw = main_window
@@ -40,7 +40,7 @@ class BotController(QObject):
         Sottoscrive il controller ai segnali di ogni pannello bot registrato.
 
         Args:
-            panels: Lista di widget bot (che ereditano tipicamente da BaseBotPanel).
+          panels: Lista di widget bot (che ereditano tipicamente da BaseBotPanel).
         """
         self.panels = panels
         for panel in self.panels:
@@ -57,15 +57,15 @@ class BotController(QObject):
         Specializzato per lo scarico PDL.
 
         Args:
-            bot_id: Identificatore del bot che ha prodotto i risultati.
-            results: Lista di percorsi file generati.
+          bot_id: Identificatore del bot che ha prodotto i risultati.
+          results: Lista di percorsi file generati.
         """
         if bot_id == "scarico_pdl":
             for file_path in results:
                 if Path(file_path).exists():
                     self.telegram.send_document_sync(
                         file_path,
-                        caption=f"📄 **PDL Scaricato**\nFile: `{os.path.basename(file_path)}`",
+                        caption=f"   **PDL Scaricato**\nFile: `{os.path.basename(file_path)}`",
                     )
 
     def _on_panel_status_changed(self, status: str, message: str) -> None:
@@ -73,8 +73,8 @@ class BotController(QObject):
         Aggiorna le card di stato nel footer in base all'appartenenza del bot (Portale o SafeWork).
 
         Args:
-            status: Codice colore HEX per l'indicatore visuale.
-            message: Testo descrittivo dello stato (es. 'Esecuzione in corso...').
+          status: Codice colore HEX per l'indicatore visuale.
+          message: Testo descrittivo dello stato (es. 'Esecuzione in corso...').
         """
         sender = self.sender()
         bot_id = getattr(sender, "bot_id", "")
@@ -101,7 +101,7 @@ class BotController(QObject):
         Individua il pannello bot attualmente visualizzato dall'utente navigando tra i tab.
 
         Returns:
-            Optional[QWidget]: Il pannello attivo o None se non identificato.
+          Optional[QWidget]: Il pannello attivo o None se non identificato.
         """
         if not hasattr(self.mw, "automazioni_widget") or not self.mw.automazioni_widget:
             return None

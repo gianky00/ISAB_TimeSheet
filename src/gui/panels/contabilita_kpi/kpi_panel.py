@@ -1,13 +1,13 @@
 # mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 from contextlib import suppress
 
-from PyQt6.QtCore import (
+from PySide6.QtCore import (
     QAbstractAnimation,
     QEasingCurve,
     QParallelAnimationGroup,
     QPropertyAnimation,
 )
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QComboBox,
     QFrame,
     QGraphicsOpacityEffect,
@@ -32,7 +32,7 @@ from .charts import ChartContainer, KPIChartsManager
 
 
 class ContabilitaKPIPanel(QWidget):
-    """Pannello dashboard per la visualizzazione dei KPI della contabilità strumentale."""
+    """Pannello dashboard per la visualizzazione dei KPiu'della contabilit  strumentale."""
 
     def __init__(self, parent: QWidget | None = None):  # noqa: ANN204
         """Inizializza il pannello e prepara i grafici."""
@@ -104,33 +104,33 @@ class ContabilitaKPIPanel(QWidget):
         # ROW 1: General Scorecards
         self._add_section_title("METRICHE GENERALI")
         self.row1 = KPICardsRow()
-        self.card_totale = self.row1.add_card("TOTALE PREVENTIVATO", "€ 0,00", COLORS["success_dark"])
+        self.card_totale = self.row1.add_card("TOTALE PREVENTIVATO", "  0,00", COLORS["success_dark"])
         self.card_ore = self.row1.add_card("ORE SPESE TOTALI", "0", COLORS["primary_dark"])
         self.card_resa = self.row1.add_card("RESA MEDIA", "0", COLORS["warning_orange"])
-        self.card_count = self.row1.add_card("N° COMMESSE", "0", COLORS["purple"])
+        self.card_count = self.row1.add_card("N  COMMESSE", "0", COLORS["purple"])
         self.content_layout.addWidget(self.row1)
 
         # ROW 2: Deep Technical Analysis
-        self._add_section_title("ANALISI REDDITIVITÀ E EFFICIENZA")
+        self._add_section_title("ANALISI REDDITIVIT  E EFFICIENZA")
         self.row2 = KPICardsRow()
         self.card_margine = self.row2.add_card(
             "MARGINE OPERATIVO STIMATO",
-            "€ 0,00",
+            "  0,00",
             COLORS["teal_light"],
-            subtitle=f"Base Costo Orario: € {self.HOURLY_COST_STD:.2f}",
+            subtitle=f"Base Costo Orario:   {self.HOURLY_COST_STD:.2f}",
         )
         self.card_margine_perc = self.row2.add_card(
-            "MARGINALITÀ %", "0.0 %", COLORS["teal_light"], subtitle="Su Totale Preventivato"
+            "MARGINALIT  %", "0.0 %", COLORS["teal_light"], subtitle="Su Totale Preventivato"
         )
         self.card_eff_resa = self.row2.add_card(
             "UTILE NETTO ORARIO",
-            "€ 0,00 / h",
+            "  0,00 / h",
             COLORS["purple_deep"],
             subtitle="Valore Ora - Costo Base",
         )
         self.card_val_ora = self.row2.add_card(
             "VALORE PER ORA SPESA",
-            "€ 0,00 / h",
+            "  0,00 / h",
             COLORS["magenta_pink"],
             subtitle="Totale Prev / Ore Spese",
         )
@@ -143,8 +143,8 @@ class ContabilitaKPIPanel(QWidget):
 
         self.container1 = ChartContainer(
             self.charts_manager.canvas1,
-            title="Distribuzione Stato Attività",
-            info_callback=lambda: "Distribuzione percentuale delle attività per stato (esclusa FORNITURA).",
+            title="Distribuzione Stato Attivita'",
+            info_callback=lambda: "Distribuzione percentuale delle attivita'per stato (esclusa FORNITURA).",
         )
         self.container2 = ChartContainer(
             self.charts_manager.canvas2,
@@ -153,7 +153,7 @@ class ContabilitaKPIPanel(QWidget):
         )
         self.container3 = ChartContainer(
             self.charts_manager.canvas3,
-            title="Redditività: Ricavi vs Costi",
+            title="Redditivit : Ricavi vs Costi",
             info_callback=lambda: "Confronto diretto tra Ricavi (Preventivato) e Costi Stimati per tipologia.",
         )
         self.container4 = ChartContainer(
@@ -251,14 +251,14 @@ class ContabilitaKPIPanel(QWidget):
             val_ora = (tot_prev / tot_ore) if tot_ore > 0 else 0
             utile_ora = val_ora - self.HOURLY_COST_STD
 
-            self.card_totale.lbl_value.setText(f"€ {self._format_currency(tot_prev)}")
+            self.card_totale.lbl_value.setText(f"  {self._format_currency(tot_prev)}")
             self.card_ore.lbl_value.setText(self._format_currency(tot_ore))
             self.card_ore.set_info_callback(
                 lambda: (
                     f"<b>Totale Ore: {self._format_currency(tot_ore)} h</b><br>"
                     f"--------------------------------<br>"
-                    f"• Ore Dirette (su ODC/Prev): {self._format_currency(ore_dirette)} h<br>"
-                    f"• Ore Indirette: {self._format_currency(ore_indirette)} h"
+                    f"  Ore Dirette (su ODC/Prev): {self._format_currency(ore_dirette)} h<br>"
+                    f"  Ore Indirette: {self._format_currency(ore_indirette)} h"
                 )
             )
 
@@ -293,7 +293,7 @@ class ContabilitaKPIPanel(QWidget):
             self.card_count.lbl_value.setText(str(count))
 
             # Style updates for margins
-            self.card_margine.lbl_value.setText(f"€ {self._format_currency(margine)}")
+            self.card_margine.lbl_value.setText(f"  {self._format_currency(margine)}")
             self.card_margine.lbl_value.setStyleSheet(
                 f"color: {COLORS['teal_light'] if margine >= 0 else COLORS['error_red']}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
             )
@@ -301,11 +301,11 @@ class ContabilitaKPIPanel(QWidget):
             self.card_margine_perc.lbl_value.setStyleSheet(
                 f"color: {COLORS['teal_light'] if marg_perc >= 0 else COLORS['error_red']}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
             )
-            self.card_eff_resa.lbl_value.setText(f"€ {self._format_currency(utile_ora)} / h")
+            self.card_eff_resa.lbl_value.setText(f"  {self._format_currency(utile_ora)} / h")
             self.card_eff_resa.lbl_value.setStyleSheet(
                 f"color: {COLORS['purple_deep'] if utile_ora >= 0 else COLORS['error_red']}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
             )
-            self.card_val_ora.lbl_value.setText(f"€ {self._format_currency(val_ora)} / h")
+            self.card_val_ora.lbl_value.setText(f"  {self._format_currency(val_ora)} / h")
 
             # Process data for charts via StatsService (CORE)
             kpi_data = StatsService.prepare_kpi_data(df, self.HOURLY_COST_STD)

@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class Severity(Enum):
-    """Livelli di gravità per le entry dell'Audit Log."""
+    """Livelli di gravit  per le entry dell'Audit Log."""
 
     LOW = "low"
     MEDIUM = "medium"

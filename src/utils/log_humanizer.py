@@ -37,8 +37,8 @@ class SmartLogTranslator:
     # Mappatura diretta per messaggi comuni (per garantire coerenza)
     FIXED_MAPPING: ClassVar[dict[str, str]] = {
         "avvio automazione": "[AVVIO] Avvio automazione in corso...",
-        "inizializzazione browser": "🌐 Inizializzazione browser...",
-        "inserimento credenziali": "🔐 Inserimento credenziali...",
+        "inizializzazione browser": "   Inizializzazione browser...",
+        "inserimento credenziali": "   Inserimento credenziali...",
         "attendo un attimo": "[ATTESA] Attesa operativa...",
         "aspetto che il sito risponda": "[ATTESA] In attesa di risposta dal server...",
         "spinner scomparso": "[OK] Caricamento completato.",
@@ -58,7 +58,7 @@ class SmartLogTranslator:
         """Analizza il messaggio tecnico e restituisce (human_msg, tech_msg, category)."""
         category = SmartLogTranslator._detect_category(message)
 
-        # Se il messaggio ha già un'icona o un prefisso speciale, lo teniamo così come è
+        # Se il messaggio ha gia' un'icona o un prefisso speciale, lo teniamo cos  come
         # (es. "[CLICK] Click su", "[FILE] Verifica")
         if any(
             message.startswith(icon)

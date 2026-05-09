@@ -1,6 +1,6 @@
 import pytest
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QTableWidgetItem
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QTableWidgetItem
 
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import FilterComboBox
@@ -76,13 +76,13 @@ class TestExcelTableCoverage:
 
     def test_excel_table_context_menu_event_with_qpoint(self, app, mocker):
         """Verifica che contextMenuEvent non crashi con un QPoint (CustomContextMenu)."""
-        from PyQt6.QtCore import QPoint  # noqa: PLC0415
+        from PySide6.QtCore import QPoint  # noqa: PLC0415
 
         table = ExcelTableWidget()
         pos = QPoint(10, 10)
 
         # Mock QMenu.exec e mapToGlobal
-        mocker.patch("PyQt6.QtWidgets.QMenu.exec")
+        mocker.patch("PySide6.QtWidgets.QMenu.exec")
         mocker.patch.object(table, "mapToGlobal", return_value=QPoint(100, 100))
 
         # Non dovrebbe sollevare AttributeError

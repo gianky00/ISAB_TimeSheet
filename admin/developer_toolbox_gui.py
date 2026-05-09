@@ -12,9 +12,9 @@ import webbrowser
 from collections.abc import Callable
 from pathlib import Path
 
-from PyQt6.QtCore import QProcess, QProcessEnvironment, Qt, QThread, QTimer, pyqtSignal
-from PyQt6.QtGui import QFont, QTextCursor
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QProcess, QProcessEnvironment, Qt, QThread, QTimer, Signal
+from PySide6.QtGui import QFont, QTextCursor
+from PySide6.QtWidgets import (
     QApplication,
     QGroupBox,
     QHBoxLayout,
@@ -40,8 +40,8 @@ else:
 class CommandRunner(QThread):
     """Thread per eseguire comandi senza bloccare la UI"""
 
-    output_received = pyqtSignal(str)
-    finished_signal = pyqtSignal(int)
+    output_received = Signal(str)
+    finished_signal = Signal(int)
 
     def __init__(self, command: list[str], shell: bool = False):  # noqa: ANN204
         super().__init__()

@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 
 class AuditManager:
     """
-    Manager per l'Audit Log con meccanismi di integrità e severità.
+    Manager per l'Audit Log con meccanismi di integrita' e severit .
     Implementazione rifattorizzata e modulare con supporto asincrono per evitare lag UI.
     """
 
@@ -70,7 +70,7 @@ class AuditManager:
 
     @property
     def DB_PATH(self) -> Path:  # noqa: N802
-        """Compatibilità Legacy per test."""
+        """Compatibilit  Legacy per test."""
         return self.db.DB_PATH
 
     @DB_PATH.setter
@@ -155,7 +155,7 @@ class AuditManager:
             params_json = json.dumps(params, ensure_ascii=False) if params else "{}"
             timestamp = datetime.now(UTC).isoformat()
 
-            # 2. Integrità (Hashing)
+            # 2. Integrita'(Hashing)
             row_data = {
                 "timestamp": timestamp,
                 "user_id": user_id,
@@ -196,7 +196,7 @@ class AuditManager:
                 action, audit_id, trace_id, category, entity, status_val, severity_val, duration_ms
             )
 
-            row_data["id"] = audit_id  # Per compatibilità segnali
+            row_data["id"] = audit_id  # Per compatibilit  segnali
             self.signals.log_added.emit(row_data)
             self.signals.logs_updated.emit()
 
@@ -255,7 +255,7 @@ class AuditManager:
             logger.error(f"Notification error in Audit: {e}")  # noqa: TRY400
 
     def _map_status_to_notif_level(self, status: str, severity: str) -> str:
-        """Mappa stato e severità al livello di notifica."""
+        """Mappa stato e severit  al livello di notifica."""
         if status == "error" or severity == "high":
             return "error"
         if status == "warning" or severity == "medium":
@@ -291,7 +291,7 @@ class AuditManager:
             return True
 
     def _check_row_integrity(self, row: dict[str, Any], prev_hash: str) -> bool:
-        """Verifica la validità dell'hash di una singola riga (supporta versioni multiple)."""
+        """Verifica la validit  dell'hash di una singola riga (supporta versioni multiple)."""
         # Tentativo 1: Hash V2
         data = AuditIntegrity.build_hash_string_v2(row)
         if row["row_hash"] == AuditIntegrity.calculate_hash(data, prev_hash):
@@ -333,7 +333,7 @@ class AuditManager:
         return self.db.get_categories()
 
     def run_retention_policy(self, days: int = 90) -> None:
-        """Elimina i log più vecchi del numero di giorni specificato."""
+        """Elimina i log piu' vecchi del numero di giorni specificato."""
         cutoff = (datetime.now(UTC) - timedelta(days=days)).isoformat()
         deleted_count = self.db.delete_older_than(cutoff)
         if deleted_count > 0:
@@ -359,11 +359,11 @@ class AuditManager:
         try:
             with self.db.get_connection() as conn:
                 query = """
-                    SELECT date(timestamp), status, count(*)
-                    FROM audit_logs
-                    WHERE timestamp >= ?
-                    GROUP BY date(timestamp), status
-                """
+          SELECT date(timestamp), status, count(*)
+          FROM audit_logs
+          WHERE timestamp >= ?
+          GROUP BY date(timestamp), status
+        """
                 rows = conn.execute(query, (cutoff,)).fetchall()
                 for r in rows:
                     day, status, count = r

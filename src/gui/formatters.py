@@ -3,7 +3,7 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
 
-from PyQt6.QtCore import QAbstractTableModel, Qt
+from PySide6.QtCore import QAbstractTableModel, QModelIndex, QPersistentModelIndex, Qt
 
 # --- FORMATTERS ---
 
@@ -21,7 +21,7 @@ def format_currency_smart(value: Any) -> str:
         # 1. Pulizia e Conversione
         if isinstance(value, str):
             # Rimuove simboli valuta e spazi
-            clean_val = value.replace("€", "").strip()
+            clean_val = value.replace("  ", "").strip()
             # Gestione intelligente formati IT (1.234,56) vs EN (1,234.56)
             if "," in clean_val and "." in clean_val:
                 if clean_val.find(".") < clean_val.find(","):
@@ -37,9 +37,7 @@ def format_currency_smart(value: Any) -> str:
         else:
             f_val = float(value)
 
-        # 2. Arrotondamento per eliminare rumore (es. 8.650.500.000.000.001 -> 8650.5)
-        # Se il numero è assurdamente grande (> 100M), probabilmente è un errore di scaling
-        # ma per ora ci limitiamo a renderlo leggibile arrotondandolo.
+        # 2. Arrotondamento per eliminare rumore
         f_val = round(f_val, 2)
 
         # 3. Logica Visualizzazione: Se intero, niente decimali.
@@ -55,6 +53,76 @@ def format_currency_smart(value: Any) -> str:
 def format_number_smart(value: Any) -> str:
     """Identico a currency_smart, usato per ORE SP e RESA."""
     return format_currency_smart(value)
+
+
+def _try_parse_numeric(val_str: str) -> float | None:
+    """Tenta il parsing di una stringa in numero (IT/EN)."""
+    with suppress(ValueError):
+        clean_val = val_str.replace("  ", "").replace("$", "").strip()
+        if "," in clean_val and "." in clean_val:
+            if clean_val.find(".") < clean_val.find(","):
+                clean_val = clean_val.replace(".", "").replace(",", ".")
+            else:
+                clean_val = clean_val.replace(",", "")
+        elif "," in clean_val:
+            clean_val = clean_val.replace(",", ".")
+        return float(clean_val)
+    return None
+
+
+def _try_parse_date(val_str: str) -> float | None:
+    """Tenta il parsing di una stringa in data -> timestamp."""
+    date_formats = (
+        "%d/%m/%Y",
+        "%Y-%m-%d",
+        "%d-%m-%Y",
+        "%Y/%m/%d",
+        "%d/%m/%Y %H:%M:%S",
+        "%Y-%m-%d %H:%M:%S",
+    )
+    for fmt in date_formats:
+        try:
+            dt = datetime.strptime(val_str, fmt).replace(tzinfo=UTC)
+            return dt.timestamp()
+        except ValueError:
+            continue
+    return None
+
+
+def _handle_string_sort(val_str: str) -> tuple[int, Any]:
+    """Gestisce il parsing intelligente delle stringhe per l'ordinamento."""
+    val_clean = val_str.strip()
+    if not val_clean:
+        return (0, 0)
+
+    # Tentativo Numero
+    num = _try_parse_numeric(val_clean)
+    if num is not None:
+        return (1, num)
+
+    # Tentativo Data
+    ts = _try_parse_date(val_clean)
+    if ts is not None:
+        return (1, ts)
+
+    return (2, val_clean.lower())
+
+
+def _get_sort_key_value(val: Any, _column: int) -> tuple[int, Any]:
+    """Sotto-funzione helper per determinare la chiave di ordinamento di un singolo valore."""
+    if val is None:
+        return (0, 0)
+
+    if isinstance(val, (int, float)):
+        return (1, val)
+
+    if isinstance(val, datetime):
+        return (1, val.replace(tzinfo=UTC).timestamp())
+
+    if isinstance(val, str):
+        return _handle_string_sort(val)
+
+    return (2, str(val))
 
 
 class FastTableModel(QAbstractTableModel):
@@ -90,42 +158,48 @@ class FastTableModel(QAbstractTableModel):
         """Forza allineamento per una colonna."""
         self._alignments[col_idx] = alignment
 
-    def rowCount(self, parent: Any = None) -> int:
+    def rowCount(self, parent: QModelIndex | QPersistentModelIndex | None = None) -> int:
         """Restituisce il numero di righe nel modello."""
+        if parent is not None and parent.isValid():
+            return 0
         return len(self._data)
 
-    def columnCount(self, parent: Any = None) -> int:
+    def columnCount(self, parent: QModelIndex | QPersistentModelIndex | None = None) -> int:
         """Restituisce il numero di colonne basato sull'header."""
+        if parent is not None and parent.isValid():
+            return 0
         return len(self._headers)
 
-    def data(self, index: Any, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: PLR0911
+    def data(
+        self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole
+    ) -> Any:
         """Recupera il valore per una cella applicando formattazione e allineamento."""
         if not index.isValid():
             return None
 
         row, col = index.row(), index.column()
-
-        # UserRole returns the whole metadata object for the row
-        if role == Qt.ItemDataRole.UserRole:
-            if row < len(self._metadata):
-                return self._metadata[row]
-            return None
-
         raw_value = self._data[row][col]
 
+        # Dispatch basato sul Role per ridurre complessit
         if role == Qt.ItemDataRole.DisplayRole:
-            if col in self._formatters:
-                return self._formatters[col](raw_value)
-            return str(raw_value) if raw_value is not None else ""
+            return self._get_display_value(col, raw_value)
 
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return self._alignments.get(col, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-        # Per ordinamento standard se la view non usa sort() del modello (ma QTableView lo fa)
+        if role == Qt.ItemDataRole.UserRole:
+            return self._metadata[row] if row < len(self._metadata) else None
+
         if role == Qt.ItemDataRole.EditRole:
             return raw_value
 
         return None
+
+    def _get_display_value(self, col: int, raw_value: Any) -> str:
+        """Helper per DisplayRole."""
+        if col in self._formatters:
+            return self._formatters[col](raw_value)
+        return str(raw_value) if raw_value is not None else ""
 
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
@@ -146,64 +220,9 @@ class FastTableModel(QAbstractTableModel):
         """Ordinamento personalizzato basato sui dati GREZZI (non stringhe formattate)."""
         self.layoutAboutToBeChanged.emit()
         try:
-            # Funzione chiave per gestire None e tipi misti ed evitare TypeError (int < str)
-            # Restituisce una tupla (prioritÃ , valore)
-            # PrioritÃ : 0 = None/Vuoto, 1 = Numeri/Date, 2 = Stringhe
-            def sort_key(row_tuple: tuple[list[Any], Any]) -> tuple[int, Any]:  # noqa: PLR0911
-                """Genera la chiave di ordinamento gestendo i tipi misti."""
-                row_data = row_tuple[0]
-                val = row_data[column]
 
-                # 0. Gestione None
-                if val is None:
-                    return (0, 0)
-
-                # 1. Numeri diretti
-                if isinstance(val, (int, float)):
-                    return (1, val)
-
-                # 2. Stringhe (parsing)
-                if isinstance(val, str):
-                    val_str = val.strip()
-                    if not val_str:
-                        return (0, 0)
-
-                    # Tentativo Numero
-                    with suppress(ValueError):
-                        clean_val = val_str.replace("€", "").replace("$", "").strip()
-                        if "," in clean_val and "." in clean_val:
-                            if clean_val.find(".") < clean_val.find(","):
-                                clean_val = clean_val.replace(".", "").replace(",", ".")
-                            else:
-                                clean_val = clean_val.replace(",", "")
-                        elif "," in clean_val:
-                            clean_val = clean_val.replace(",", ".")
-                        return (1, float(clean_val))
-
-                    # Tentativo Data -> Timestamp (cosÃ¬ confrontiamo come numeri)
-                    date_formats = (
-                        "%d/%m/%Y",
-                        "%Y-%m-%d",
-                        "%d-%m-%Y",
-                        "%Y/%m/%d",
-                        "%d/%m/%Y %H:%M:%S",
-                        "%Y-%m-%d %H:%M:%S",
-                    )
-                    for fmt in date_formats:
-                        try:
-                            dt = datetime.strptime(val_str, fmt).replace(tzinfo=UTC)
-                            return (1, dt.timestamp())
-                        except ValueError:
-                            continue
-
-                    # Fallback Stringa
-                    return (2, val_str.lower())
-
-                # 3. Altri tipi (es. datetime oggetti)
-                if isinstance(val, datetime):
-                    return (1, val.replace(tzinfo=UTC).timestamp())
-
-                return (2, str(val))
+            def sort_key(row_tuple: tuple[list[Any], Any]) -> tuple[int, Any]:
+                return _get_sort_key_value(row_tuple[0][column], column)
 
             reverse = order == Qt.SortOrder.DescendingOrder
 

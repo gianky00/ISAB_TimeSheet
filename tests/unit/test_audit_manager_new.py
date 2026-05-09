@@ -10,7 +10,7 @@ class TestAuditManager:
     @pytest.fixture(autouse=True)
     def setup_manager(self, tmp_path, mocker):
         """Setup AuditManager with a temp DB."""
-        # Patch AuditSignals to avoid PyQt6 issues in headless
+        # Patch AuditSignals to avoid PySide6 issues in headless
         mocker.patch("src.core.audit.manager.AuditSignals.instance")
 
         AuditManager._instance = None  # Reset Singleton

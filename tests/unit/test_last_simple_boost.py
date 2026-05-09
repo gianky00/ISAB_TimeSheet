@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from PyQt6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget
 
 from src.core.stats_manager import StatsManager
 from src.gui.styles import apply_theme

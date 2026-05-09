@@ -69,14 +69,14 @@ def with_context(**context_data: Any) -> Generator[None, None, None]:
     Context manager per aggiungere metadata temporanei ai log.
 
     Usage:
-        with with_context(trace_id="abc123", bot_type="scarico_ts"):
-            logger.info("Operazione")  # Auto-tagged con context
+      with with_context(trace_id="abc123", bot_type="scarico_ts"):
+        logger.info("Operazione") # Auto-tagged con context
 
     Args:
-        **context_data: Chiavi e valori da aggiungere al context
+      **context_data: Chiavi e valori da aggiungere al context
 
     Yields:
-        None
+      None
     """
     ctx = get_context()
 
@@ -103,7 +103,7 @@ def generate_trace_id() -> str:
     Genera un trace ID univoco.
 
     Returns:
-        String univoca per identificare trace (es: "trace_abc123def456")
+      String univoca per identificare trace (es: "trace_abc123def456")
     """
     return f"trace_{uuid.uuid4().hex[:16]}"
 
@@ -113,7 +113,7 @@ def generate_span_id() -> str:
     Genera uno span ID univoco.
 
     Returns:
-        String univoca per identificare span (es: "span_abc123")
+      String univoca per identificare span (es: "span_abc123")
     """
     return f"span_{uuid.uuid4().hex[:8]}"
 
@@ -123,7 +123,7 @@ def get_current_trace_id() -> str | None:
     Restituisce il trace_id corrente, se esiste.
 
     Returns:
-        Trace ID corrente o None
+      Trace ID corrente o None
     """
     val = get_context().get("trace_id")
     return str(val) if val is not None else None
@@ -134,7 +134,7 @@ def get_current_span_id() -> str | None:
     Restituisce lo span_id corrente, se esiste.
 
     Returns:
-        Span ID corrente o None
+      Span ID corrente o None
     """
     val = get_context().get("span_id")
     return str(val) if val is not None else None
@@ -145,7 +145,7 @@ def set_audit_id(audit_id: int) -> None:
     Imposta l'audit_id nel context corrente.
 
     Args:
-        audit_id: ID dell'entry audit (rowid da AuditDatabase)
+      audit_id: ID dell'entry audit (rowid da AuditDatabase)
     """
     get_context().set("audit_id", audit_id)
 
@@ -155,7 +155,7 @@ def get_current_audit_id() -> int | None:
     Restituisce l'audit_id corrente, se esiste.
 
     Returns:
-        Audit ID corrente o None
+      Audit ID corrente o None
     """
     val = get_context().get("audit_id")
     return int(val) if val is not None else None

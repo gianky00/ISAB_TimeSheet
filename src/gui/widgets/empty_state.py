@@ -3,8 +3,8 @@ SyncroJob - Empty State Widget
 Visualizzazione elegante quando una ricerca o una tabella non contengono dati.
 """
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.gui.styles import COLORS
@@ -41,19 +41,19 @@ class EmptyStateWidget(QWidget):
         # Titolo
         self.title_lbl = QLabel(title)
         self.title_lbl.setStyleSheet(f"""
-            font-size: 18px;
-            font-weight: bold;
-            color: {COLORS["text_dark"]};
-        """)
+      font-size: 18px;
+      font-weight: bold;
+      color: {COLORS["text_dark"]};
+    """)
         self.title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.title_lbl)
 
         # Messaggio
         self.msg_lbl = QLabel(message)
         self.msg_lbl.setStyleSheet(f"""
-            font-size: 13px;
-            color: {COLORS["text_muted"]};
-        """)
+      font-size: 13px;
+      color: {COLORS["text_muted"]};
+    """)
         self.msg_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.msg_lbl.setWordWrap(True)
         self.msg_lbl.setMaximumWidth(300)

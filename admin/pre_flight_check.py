@@ -293,7 +293,7 @@ class ApexAudit:
         except Exception:
             return []
 
-    def _check_environment(self) -> tuple[bool, str, float]:
+    def _check_environment(self) -> tuple[bool, str, float]:  # noqa: C901
         start_t = time.time()
         c_ver = "N/A"
         d_ver = "N/A"
@@ -441,7 +441,7 @@ class ApexAudit:
                         self._add_res(label, success, msg, dur, name, always_show)
                         prog.update(tasks[label], completed=100, description=f"[green][OK] {label}")
 
-    def run_all(self):  # noqa: ANN201, PLR0912
+    def run_all(self):  # noqa: ANN201, C901, PLR0912
         console.print(
             Panel.fit(
                 "[bold cyan]SYNCROJOB APEX AUDIT ENGINE[/bold cyan]",

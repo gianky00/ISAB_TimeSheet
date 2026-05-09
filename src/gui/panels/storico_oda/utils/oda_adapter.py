@@ -6,8 +6,8 @@ Isola le dipendenze PyQt dal CORE.
 
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QStandardItem
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor, QStandardItem
 
 from src.gui.formatters import format_currency_smart
 
@@ -37,7 +37,7 @@ class ODAAdapter:
         """Crea la riga figlia (Posizione)."""
         val_pos_riga = f"{pos_row[3]}/{pos_row[27]}" if str(pos_row[27]) != "0" else str(pos_row[3])
 
-        # Accorpamento Quantità + Unità Misura + Prezzo
+        # Accorpamento Quantit  + Unita' Misura + Prezzo
         qta_val = pos_row[28]
         uom_val = pos_row[29]
         prezzo_str = format_currency_smart(pos_row[30])

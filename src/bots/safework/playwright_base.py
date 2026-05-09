@@ -103,7 +103,7 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
             else:
                 self.log("[INFO] Nessun popup di ricerca estesa rilevato.")
 
-            # 2. Gestione Modali Generiche (es. Alert "Il PdL non è in programmazione")
+            # 2. Gestione Modali Generiche (es. Alert "Il PdL non  in programmazione")
             # Usiamo un ciclo di tentativi per gestire animazioni e caricamenti asincroni
             self.log("[ATTESA] Controllo Alert/Modali residue...")
 

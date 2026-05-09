@@ -13,10 +13,10 @@ class ExcelImporter:
     """
     Facade per l'importazione di dati da file Excel.
     Delega ai moduli specifici in src/core/importers/.
-    Mantiene la compatibilitÃ  con il codice esistente.
+    Mantiene la compatibilit  con il codice esistente.
     """
 
-    # --- ContabilitÃ  ---
+    # --- Contabilit  ---
     COLUMNS_MAPPING = ContabilitaImporter.COLUMNS_MAPPING
 
     @staticmethod
@@ -25,10 +25,10 @@ class ExcelImporter:
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, list[tuple[Any, ...]], list[int]]:
         """
-        Importa i dati di contabilitÃ  dal file specificato.
+        Importa i dati di contabilit  dal file specificato.
 
         Returns:
-            Tuple: (success, message, data_rows, years_found)
+          Tuple: (success, message, data_rows, years_found)
         """
         return ContabilitaImporter.import_contabilita_dati(file_path, progress_callback)
 
@@ -45,11 +45,11 @@ class ExcelImporter:
         Importa le giornaliere ricorsivamente dalla root path.
 
         Returns:
-            Tuple: (success, message, rows, years_cleared)
+          Tuple: (success, message, rows, years_cleared)
         """
         return GiornaliereImporter.import_giornaliere(root_path, lookup_map, progress_callback)
 
-    # --- AttivitÃ  Programmate ---
+    # --- Attivita'Programmate ---
     ATTIVITA_PROGRAMMATE_MAPPING = AttivitaImporter.ATTIVITA_PROGRAMMATE_MAPPING
     ATTIVITA_PROGRAMMATE_COLS = AttivitaImporter.ATTIVITA_PROGRAMMATE_COLS
 
@@ -58,7 +58,7 @@ class ExcelImporter:
         file_path: str,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> tuple[bool, str, list[tuple[Any, ...]]]:
-        """Importa la programmazione attivitÃ ."""
+        """Importa la programmazione attivita'."""
         return AttivitaImporter.import_attivita_programmate(file_path, progress_callback)
 
     # --- Scarico Ore ---

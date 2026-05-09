@@ -2,8 +2,8 @@ from collections.abc import Sequence
 from contextlib import suppress
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
     QFormLayout,
     QLabel,
     QScrollArea,
@@ -71,6 +71,6 @@ class OdaDetailView(QWidget):
             self.detail_labels[h].setText(val)
 
     def clear(self) -> None:
-        """Resetta i campi del dettaglio."""
+        """Resetta i campiu'del dettaglio."""
         for label in self.detail_labels.values():
             label.setText("-")

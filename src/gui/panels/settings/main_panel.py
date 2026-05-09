@@ -10,8 +10,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QThread, QTimer, pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
+from PySide6.QtCore import QThread, QTimer, Signal
+from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from src.core import config_manager
 from src.core.constants import Icons
@@ -32,7 +32,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class ConfigSaveWorker(QThread):
     """Worker thread per il salvataggio asincrono della configurazione."""
 
-    finished = pyqtSignal(bool, str)
+    finished = Signal(bool, str)
     """Segnale emesso al termine del salvataggio con esito e messaggio errore."""
 
     def __init__(self, config: dict[str, Any]) -> None:
@@ -55,10 +55,10 @@ class SettingsPanel(QWidget):
     Coordina i diversi tab di configurazione e fornisce funzionalità di sistema come reset e import/export.
     """
 
-    settings_saved = pyqtSignal()
+    settings_saved = Signal()
     """Segnale emesso dopo il salvataggio avvenuto con successo."""
 
-    request_help_section = pyqtSignal(str)
+    request_help_section = Signal(str)
     """Segnale per richiedere l'apertura di una sezione specifica della guida."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -234,7 +234,7 @@ class SettingsPanel(QWidget):
 
     def _export_config(self) -> None:
         """Esporta il file di configurazione JSON in una posizione scelta dall'utente."""
-        from PyQt6.QtWidgets import QFileDialog  # noqa: PLC0415
+        from PySide6.QtWidgets import QFileDialog  # noqa: PLC0415
 
         path, _ = QFileDialog.getSaveFileName(
             self, "Esporta Configurazione", "config_backup.json", "JSON Files (*.json)"
@@ -250,7 +250,7 @@ class SettingsPanel(QWidget):
 
     def _import_config(self) -> None:
         """Importa un file di configurazione JSON esterno sovrascrivendo quella attuale."""
-        from PyQt6.QtWidgets import QFileDialog  # noqa: PLC0415
+        from PySide6.QtWidgets import QFileDialog  # noqa: PLC0415
 
         path, _ = QFileDialog.getOpenFileName(self, "Importa Configurazione", "", "JSON Files (*.json)")
         if path:

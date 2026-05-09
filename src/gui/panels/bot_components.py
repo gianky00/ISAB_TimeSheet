@@ -1,13 +1,13 @@
 """
 SyncroJob - Bot UI Components
 Sotto-componenti specializzati per i pannelli dei bot.
-Conformità SRP: Ogni componente gestisce una specifica area della UI.
+Conformit  SRP: Ogni componente gestisce una specifica area della UI.
 """
 
 from __future__ import annotations
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QWidget
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QHBoxLayout, QWidget
 
 from src.core.constants import Icons
 from src.gui.components.activity_timeline import ActivityTimelineWidget
@@ -20,8 +20,8 @@ from src.utils.helpers import get_asset_path
 class BotControlComponent(QWidget):
     """Componente per i controlli di avvio e interruzione del bot."""
 
-    start_clicked = pyqtSignal()
-    stop_clicked = pyqtSignal()
+    start_clicked = Signal()
+    stop_clicked = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -39,7 +39,7 @@ class BotControlComponent(QWidget):
             icon=get_asset_path(Icons.PLAY),
         )
         self.start_btn.setMinimumWidth(110)
-        self.start_btn.clicked.connect(self.start_clicked.emit)
+        self.start_btn.clicked.connect(lambda: self.start_clicked.emit())
         layout.addWidget(self.start_btn)
 
         self.stop_btn = ModernButton(
@@ -50,7 +50,7 @@ class BotControlComponent(QWidget):
         )
         self.stop_btn.setMinimumWidth(90)
         self.stop_btn.setEnabled(False)
-        self.stop_btn.clicked.connect(self.stop_clicked.emit)
+        self.stop_btn.clicked.connect(lambda: self.stop_clicked.emit())
         layout.addWidget(self.stop_btn)
 
     def set_running(self, running: bool) -> None:

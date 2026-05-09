@@ -2,8 +2,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import (
     QCheckBox,
     QFileDialog,
     QHBoxLayout,
@@ -27,7 +27,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class PathsPage(QWidget):
     """Pagina per la gestione dei percorsi file."""
 
-    settings_changed = pyqtSignal()
+    settings_changed = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -47,19 +47,17 @@ class PathsPage(QWidget):
 
         self.auto_update_check = QCheckBox("Attiva aggiornamento automatico all'avvio (background)")
         self.auto_update_check.setStyleSheet("padding: 5px; font-size: 15px;")
-        self.auto_update_check.stateChanged.connect(self.settings_changed.emit)
+        self.auto_update_check.stateChanged.connect(lambda: self.settings_changed.emit())
         cont_layout.addWidget(self.auto_update_check)
 
         # Giornaliere
         cont_layout.addWidget(QLabel("Cartella Giornaliere (Root):"))
         self.giornaliere_path_edit = self._create_path_row(cont_layout, self._browse_giornaliere, folder=True)
 
-        # Attività
-        cont_layout.addWidget(QLabel("File Attività Programmate (Riepilogo):"))
+        # Attivita'cont_layout.addWidget(QLabel("File Attivita'Programmate (Riepilogo):"))
         self.attivita_path_edit = self._create_path_row(cont_layout, self._browse_attivita)
 
-        # Database Report Attività
-        cont_layout.addWidget(QLabel("Database Report Attività:"))
+        # Database Report Attivita'cont_layout.addWidget(QLabel("Database Report Attivita':"))
         self.activity_db_path_edit = self._create_path_row(cont_layout, self._browse_activity_db)
 
         # Certificati Excel
@@ -102,7 +100,7 @@ class PathsPage(QWidget):
         edit.setMinimumHeight(40)
         edit.setPlaceholderText("Seleziona cartella..." if folder else "Seleziona file...")
         style_input(edit)
-        edit.textChanged.connect(self.settings_changed.emit)
+        edit.textChanged.connect(lambda: self.settings_changed.emit())
         edit.textChanged.connect(lambda: self._validate_path(edit))
         row.addWidget(edit)
 
@@ -120,15 +118,15 @@ class PathsPage(QWidget):
         btn_open.setMinimumHeight(40)
         btn_open.setMinimumWidth(80)
         btn_open.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {COLORS["bg_white"]};
-                color: {COLORS["text_dark"]};
-                border: 1px solid {COLORS["border_medium"]};
-                border-radius: 6px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
-        """)
+      QPushButton {{
+        background-color: {COLORS["bg_white"]};
+        color: {COLORS["text_dark"]};
+        border: 1px solid {COLORS["border_medium"]};
+        border-radius: 6px;
+        font-weight: bold;
+      }}
+      QPushButton:hover {{ background-color: {COLORS["table_selection_bg"]}; }}
+    """)
         btn_open.clicked.connect(lambda: self._open_path(edit.text()))
         row.addWidget(btn_open)
 
@@ -175,30 +173,30 @@ class PathsPage(QWidget):
         if p.exists():
             widget.setStyleSheet(
                 f"""
-                QLineEdit {{
-                    border: 2px solid {COLORS["success_green"]};
-                    border-radius: 4px;
-                    padding: 10px;
-                    font-size: 15px;
-                    background-color: {COLORS["bg_success_pastel"]};
-                    color: {COLORS["success_material"]};
-                }}
-                QLineEdit:focus {{ border-color: {COLORS["success_green"]}; }}
-            """
+        QLineEdit {{
+          border: 2px solid {COLORS["success_green"]};
+          border-radius: 4px;
+          padding: 10px;
+          font-size: 15px;
+          background-color: {COLORS["bg_success_pastel"]};
+          color: {COLORS["success_material"]};
+        }}
+        QLineEdit:focus {{ border-color: {COLORS["success_green"]}; }}
+      """
             )
         else:
             widget.setStyleSheet(
                 f"""
-                QLineEdit {{
-                    border: 2px solid {COLORS["error_red"]};
-                    border-radius: 4px;
-                    padding: 10px;
-                    font-size: 15px;
-                    background-color: {COLORS["bg_error_pastel"]};
-                    color: {COLORS["error_material"]};
-                }}
-                QLineEdit:focus {{ border-color: {COLORS["error_red"]}; }}
-            """
+        QLineEdit {{
+          border: 2px solid {COLORS["error_red"]};
+          border-radius: 4px;
+          padding: 10px;
+          font-size: 15px;
+          background-color: {COLORS["bg_error_pastel"]};
+          color: {COLORS["error_material"]};
+        }}
+        QLineEdit:focus {{ border-color: {COLORS["error_red"]}; }}
+      """
             )
 
     # --- BROWSE HANDLERS ---
@@ -211,7 +209,7 @@ class PathsPage(QWidget):
         return QFileDialog.getExistingDirectory(self, title, str(Path.home()))
 
     def _browse_contabilita(self) -> None:
-        p = self._browse_file("Seleziona File Contabilità", "Excel Files (*.xlsx *.xlsm)")
+        p = self._browse_file("Seleziona File Contabilit ", "Excel Files (*.xlsx *.xlsm)")
         if p:
             self.contabilita_path_edit.setText(p)
 
@@ -221,12 +219,12 @@ class PathsPage(QWidget):
             self.giornaliere_path_edit.setText(p)
 
     def _browse_attivita(self) -> None:
-        p = self._browse_file("Seleziona File Attività", "Excel Files (*.xlsx *.xlsm)")
+        p = self._browse_file("Seleziona File Attivita'", "Excel Files (*.xlsx *.xlsm)")
         if p:
             self.attivita_path_edit.setText(p)
 
     def _browse_activity_db(self) -> None:
-        p = self._browse_file("Seleziona Database Report Attività", "SQLite DB (*.db *.sqlite)")
+        p = self._browse_file("Seleziona Database Report Attivita'", "SQLite DB (*.db *.sqlite)")
         if p:
             self.activity_db_path_edit.setText(p)
 

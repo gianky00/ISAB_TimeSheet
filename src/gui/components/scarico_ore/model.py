@@ -9,8 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar
 
-from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, pyqtSignal
-from PyQt6.QtGui import QColor
+from PySide6.QtCore import QAbstractTableModel, QModelIndex, QPersistentModelIndex, Qt, Signal
+from PySide6.QtGui import QColor
 
 from src.gui.components.scarico_ore.cache import CacheWorker
 from src.gui.components.scarico_ore.filter_worker import FilterWorker
@@ -49,7 +49,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
     CACHE_PATH: ClassVar[Path] = Path("data/scarico_ore_cache.pkl")
 
-    # ⚡ SINGLETON CACHE
+    #   SINGLETON CACHE
     _global_cache: ClassVar[dict[str, Any]] = {
         "display_data": [],  # List[List[str]]
         "search_index": [],  # List[str]
@@ -59,15 +59,15 @@ class ScaricoOreTableModel(QAbstractTableModel):
         "loaded": False,
     }
 
-    cache_loaded = pyqtSignal()
-    loading_progress = pyqtSignal(str)
+    cache_loaded = Signal()
+    loading_progress = Signal(str)
 
     def __init__(self, data: list[tuple[Any, ...]] | None = None) -> None:
         """
         Inizializza il modello e carica i dati dalla cache globale se disponibili.
 
         Args:
-            data: Dati iniziali opzionali.
+          data: Dati iniziali opzionali.
         """
         super().__init__()
         self._display_data: list[list[str]] = []
@@ -106,7 +106,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         Avvia il caricamento asincrono dei dati tramite CacheWorker.
 
         Args:
-            raw_data: Dati grezzi da processare, funzione di caricamento o None per caricare da cache pkl.
+          raw_data: Dati grezzi da processare, funzione di caricamento o None per caricare da cache pkl.
         """
         if self._global_cache["loaded"] and raw_data is None:
             self.cache_loaded.emit()
@@ -168,7 +168,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         Imposta i dati in modo sincrono (usato principalmente nei test o piccoli dataset).
 
         Args:
-            data: Lista di tuple di dati grezzi.
+          data: Lista di tuple di dati grezzi.
         """
         worker = CacheWorker(self.CACHE_PATH)
         display_data, search, totals, style_cache, date_keys = worker._build_caches(data)
@@ -205,19 +205,19 @@ class ScaricoOreTableModel(QAbstractTableModel):
             return 0.0
         return sum(self._float_totals[i] for i in self._visible_indices)
 
-    def rowCount(self, parent: QModelIndex | None = None) -> int:
+    def rowCount(self, parent: QModelIndex | QPersistentModelIndex | None = None) -> int:
         """Restituisce il numero di righe filtrate."""
-        if parent is None:
-            parent = QModelIndex()
+        if parent is not None and parent.isValid():
+            return 0
         return self._filtered_count
 
-    def columnCount(self, parent: QModelIndex | None = None) -> int:
+    def columnCount(self, parent: QModelIndex | QPersistentModelIndex | None = None) -> int:
         """Restituisce il numero di colonne del modello."""
-        if parent is None:
-            parent = QModelIndex()
+        if parent is not None and parent.isValid():
+            return 0
         return len(self.COLUMNS)
 
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: PLR0911
+    def data(self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # noqa: PLR0911
         """Restituisce i dati per una specifica cella e ruolo."""
         if not index.isValid():
             return None
