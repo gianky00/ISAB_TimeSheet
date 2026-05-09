@@ -24,7 +24,6 @@ from cryptography.fernet import Fernet
 from src.core.audit_manager import AuditManager
 from src.core.logging import get_logger
 from src.core.paths import CONFIG_DIR as PATHS_CONFIG_DIR, get_data_path
-from src.core.secrets_manager import SecretsManager
 from src.core.time_manager import get_trusted_time
 
 logger = get_logger(__name__)
@@ -192,6 +191,8 @@ def get_license_info() -> dict[str, Any] | None:
         return None
 
     try:
+        from src.core.secrets_manager import SecretsManager  # noqa: PLC0415
+
         encrypted_data = paths["config"].read_bytes()
         key_raw = SecretsManager.get_license_key()
         if not key_raw:

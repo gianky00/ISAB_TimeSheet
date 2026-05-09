@@ -326,6 +326,7 @@ DEP002 = [
 # DEP003 (transitive dependency imported directly)
 DEP003 = [
     "win32con",  # parte di pywin32, importato direttamente in printing.py
+    "shiboken6", # parte di PySide6, importato direttamente in timeline_widget.py
 ]
 # DEP004 (dev dependency imported): permessa nei test
 DEP004 = ["pytest", "pyfakefs", "rich"]
