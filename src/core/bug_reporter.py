@@ -1,3 +1,4 @@
+# ruff: noqa: TRY300, PLR2004
 """
 SyncroJob - Enhanced Bug Reporter
 
@@ -19,6 +20,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+try:
+    import psutil
+
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+
+from src.core.audit import AuditManager
+from src.core.logging import generate_analytics_report, view_trace
 from src.core.paths import CONFIG_DIR, get_version
 
 logger = logging.getLogger(__name__)
@@ -161,8 +171,6 @@ class BugReporter:
     def _add_analytics_report(zipf: zipfile.ZipFile, hours: int) -> list[str]:
         """Aggiunge report analytics con anomalie e health score."""
         try:
-            from src.core.logging import generate_analytics_report
-
             report = generate_analytics_report(hours=hours)
 
             # Converti dataclass in dict
@@ -188,8 +196,6 @@ class BugReporter:
     def _add_audit_trail(zipf: zipfile.ZipFile, limit: int = 50) -> list[str]:
         """Aggiunge audit trail recente."""
         try:
-            from src.core.audit import AuditManager
-
             manager = AuditManager.instance()
             actions = manager.get_logs(limit=limit)
 
@@ -213,8 +219,6 @@ class BugReporter:
     def _add_trace_timeline(zipf: zipfile.ZipFile, trace_id: str) -> list[str]:
         """Aggiunge timeline di un trace specifico."""
         try:
-            from src.core.logging import view_trace
-
             timeline = view_trace(trace_id)
 
             if not timeline:
@@ -263,34 +267,32 @@ class BugReporter:
 
         # Memory Info
         try:
-            import psutil
+            if PSUTIL_AVAILABLE:
+                mem = psutil.virtual_memory()
+                sys_info["memory"] = {
+                    "total": f"{mem.total / (1024**3):.2f} GB",
+                    "available": f"{mem.available / (1024**3):.2f} GB",
+                    "percent": f"{mem.percent}%",
+                }
 
-            mem = psutil.virtual_memory()
-            sys_info["memory"] = {
-                "total": f"{mem.total / (1024**3):.2f} GB",
-                "available": f"{mem.available / (1024**3):.2f} GB",
-                "percent": f"{mem.percent}%",
-            }
+                # CPU Info
+                sys_info["cpu"] = {
+                    "cores_physical": psutil.cpu_count(logical=False),
+                    "cores_logical": psutil.cpu_count(logical=True),
+                    "usage_percent": psutil.cpu_percent(interval=0.1),
+                }
 
-            # CPU Info
-            sys_info["cpu"] = {
-                "cores_physical": psutil.cpu_count(logical=False),
-                "cores_logical": psutil.cpu_count(logical=True),
-                "usage_percent": psutil.cpu_percent(interval=0.1),
-            }
-
-            # Disk Info
-            disk = psutil.disk_usage("/")
-            sys_info["disk"] = {
-                "total": f"{disk.total / (1024**3):.2f} GB",
-                "free": f"{disk.free / (1024**3):.2f} GB",
-                "percent": f"{disk.percent}%",
-            }
-
+                # Disk Info
+                disk = psutil.disk_usage("/")
+                sys_info["disk"] = {
+                    "total": f"{disk.total / (1024**3):.2f} GB",
+                    "free": f"{disk.free / (1024**3):.2f} GB",
+                    "percent": f"{disk.percent}%",
+                }
         except ImportError:
             sys_info["memory"] = "psutil not installed"
         except Exception as e:
-            sys_info["system_info_error"] = e
+            sys_info["system_info_error"] = str(e)
 
         return sys_info
 
