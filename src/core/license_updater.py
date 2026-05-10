@@ -1,3 +1,4 @@
+# ruff: noqa: PLR2004, TRY003, TRY300, TRY301, C901, PLR0911, PLR0912, PLR0915, PLC0415
 """
 SyncroJob - License Updater
 Modulo dedicato all'aggiornamento e alla sincronizzazione dei file di licenza dal repository GitHub.
@@ -5,6 +6,7 @@ Gestisce i periodi di grazia offline tramite token cifrati e garantisce la valid
 """
 
 import json
+import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -13,6 +15,8 @@ from cryptography.fernet import Fernet
 
 from src.core.exceptions import LicenseError
 from src.core.logging import get_logger
+from src.core.notification_manager import NotificationManager
+from src.core.paths import get_data_path
 from src.core.secrets_manager import SecretsManager
 
 from . import license_validator, time_manager
@@ -37,7 +41,6 @@ def get_license_dir() -> Path:
     Returns:
       Path: Oggetto Path della directory licenza.
     """
-    from src.core.paths import get_data_path
 
     base_dir = Path(get_data_path())
     return base_dir / "Licenza"
@@ -88,7 +91,7 @@ def check_grace_period() -> bool:
     """
     token_path = _get_validity_token_path()
     if not token_path.exists():
-        raise LicenseError(  # noqa: TRY003
+        raise LicenseError(
             "Nessuna validazione online precedente.\nConnessione internet richiesta per il primo avvio."
         )
 
@@ -103,11 +106,11 @@ def check_grace_period() -> bool:
         last_online_utc = last_online.astimezone(UTC)
 
         if now_utc < last_online_utc - timedelta(minutes=5):
-            raise LicenseError("Rilevata incoerenza orologio di sistema.")  # noqa: TRY003
+            raise LicenseError("Rilevata incoerenza orologio di sistema.")
 
         days_offline = (now_utc - last_online_utc).days
         if days_offline >= 3:
-            raise LicenseError("Periodo di grazia offline (3 giorni) SCADUTO.\nConnettiti a internet.")  # noqa: TRY003
+            raise LicenseError("Periodo di grazia offline (3 giorni) SCADUTO.\nConnettiti a internet.")
 
         return True
     except LicenseError:
@@ -115,7 +118,7 @@ def check_grace_period() -> bool:
     except Exception as e:
         if any(x in str(e) for x in ("SCADUTO", "incoerenza", "Nessuna validazione")):
             raise
-        raise LicenseError(f"Errore verifica periodo di grazia: {e}") from e  # noqa: TRY003
+        raise LicenseError(f"Errore verifica periodo di grazia: {e}") from e
 
 
 def check_emergency_grace_period() -> tuple[bool, str, int]:
@@ -163,8 +166,6 @@ def check_emergency_grace_period() -> tuple[bool, str, int]:
 
 def is_running_from_source() -> bool:
     """Verifica se l'applicazione  in esecuzione dall'interprete Python (sorgenti)."""
-    import sys
-
     return not getattr(sys, "frozen", False)
 
 
@@ -209,11 +210,11 @@ def run_update() -> bool:
             if manifest_json.exists():
                 manifest_json.unlink()
 
+            logger.critical("Licenza REVOCATA dal server!")
             from src.core.app_initializer import AppInitializer
 
-            logger.critical("Licenza REVOCATA dal server!")
             AppInitializer.add_alert("CRITICAL", "LICENZA REVOCATA DAL SERVER. Contattare l'amministratore.")
-            raise LicenseError("LICENZA REVOCATA DAL SERVER. Contattare l'amministratore.")  # noqa: TRY003
+            raise LicenseError("LICENZA REVOCATA DAL SERVER. Contattare l'amministratore.")
 
         if dir_res.status_code != 200:
             logger.warning(f"Impossibile verificare la licenza cloud (HTTP {dir_res.status_code})")
@@ -234,9 +235,7 @@ def run_update() -> bool:
         local_status, _ = license_validator.get_detailed_license_status()
 
         if local_config.exists():
-            from src.core.license_validator import _calculate_sha256
-
-            local_hash = _calculate_sha256(local_config)
+            local_hash = license_validator._calculate_sha256(local_config)
 
         # 3. Scarica config.dat solo se l'hash  diverso O se quella locale non  valida
         if local_hash != remote_hash or local_status != license_validator.LicenseStatus.VALID:
@@ -247,8 +246,6 @@ def run_update() -> bool:
 
                 # --- SICUREZZA: Verifica la validità dei nuovi dati prima di sovrascrivere ---
                 try:
-                    from src.core.secrets_manager import SecretsManager
-
                     key_raw = SecretsManager.get_license_key()
                     if key_raw:
                         cipher = Fernet(key_raw)
@@ -279,8 +276,6 @@ def run_update() -> bool:
                 files = {"manifest.json": remote_manifest_bytes, "config.dat": new_config_bytes}
                 saved = _save_license_files(license_dir, files)
                 if saved:
-                    from src.core.notification_manager import NotificationManager
-
                     NotificationManager.instance().add_notification(
                         "Sincronizzazione",
                         "Licenza aggiornata con successo dal cloud.",

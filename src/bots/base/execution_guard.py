@@ -4,8 +4,6 @@ Gestisce i controlli pre-volo dei bot: licenza, aggiornamenti e integrità.
 Centralizza la sicurezza dell'esecuzione.
 """
 
-from src.core.license_updater import run_update
-from src.core.license_validator import verify_license
 from src.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -25,6 +23,9 @@ class ExecutionGuard:
           Tuple (esito, messaggio_errore).
         """
         try:
+            from src.core.license_updater import run_update  # noqa: PLC0415
+            from src.core.license_validator import verify_license  # noqa: PLC0415
+
             # 1. Verifica/Esegue aggiornamenti licenza silenti
             run_update()
         except Exception as e:
