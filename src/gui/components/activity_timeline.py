@@ -26,8 +26,10 @@ from PySide6.QtGui import (
     QFontMetrics,
     QPainter,
     QPainterPath,
+    QPaintEvent,
     QPen,
     QRadialGradient,
+    QResizeEvent,
 )
 from PySide6.QtWidgets import QGraphicsDropShadowEffect, QWidget
 
@@ -242,13 +244,13 @@ class ActivityTimelineWidget(QWidget):
                 self._pulse_value = 1.0
             self.update()
 
-    def resizeEvent(self, event: QEvent) -> None:
+    def resizeEvent(self, event: QResizeEvent) -> None:
         """Invalida la cache dei path quando il widget viene ridimensionato."""
         super().resizeEvent(event)
         self._cached_main_path = None
         self._cached_grid_path = None
 
-    def paintEvent(self, event: QEvent) -> None:
+    def paintEvent(self, event: QPaintEvent) -> None:
         """
         Gestisce il disegno personalizzato del widget (Grid, Connectors, Nodes).
         Ottimizzato tramite caching dei path.
