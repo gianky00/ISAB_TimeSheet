@@ -295,6 +295,14 @@ def main() -> None:
     server.newConnection.connect(handle_conn)
     upd, cls = _init_splash()
 
+    from src.core.audit.signals import AuditSignals
+    from src.core.notification_manager import NotificationManager
+
+    # Pre-inizializzazione sicura dei Singleton QObject sul Main Thread
+    # Previene l'errore "access violation" quando emettono segnali dopo la morte del Phase1Worker
+    AuditSignals.instance()
+    NotificationManager.instance()
+
     upd("Inizializzazione Nucleo...", 5)
     _run_phase1(app, upd, cls, get_logger("phase1"))
 
