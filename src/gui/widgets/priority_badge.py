@@ -7,7 +7,7 @@ Badge animato che mostra un punto pulsante con intensità variabile.
 import contextlib
 from typing import Any, ClassVar
 
-from PySide6.QtCore import Property, QPropertyAnimation
+from PySide6.QtCore import Property, QPropertyAnimation, Signal
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 from src.gui.styles import COLORS
@@ -17,6 +17,8 @@ class PriorityBadge(QWidget):
     """
     Badge circolare con animazione di pulsazione (glow).
     """
+
+    pulse_scale_changed = Signal(float)
 
     COLOR_MAP: ClassVar[dict[str, str]] = {
         "alta": COLORS["danger"],
@@ -87,14 +89,16 @@ class PriorityBadge(QWidget):
 
     def set_pulse_scale(self, value: float) -> None:
         """Setter per la scala di pulsazione (usato dall'animazione)."""
-        self._pulse_scale = value
-        # Applichiamo un effetto di ridimensionamento minimo o opacità
-        with contextlib.suppress(Exception):
-            if hasattr(self.dot, "setOpacity"):
-                self.dot.setOpacity(value)
+        if self._pulse_scale != value:
+            self._pulse_scale = value
+            self.pulse_scale_changed.emit(value)
+            # Applichiamo un effetto di ridimensionamento minimo o opacità
+            with contextlib.suppress(Exception):
+                if hasattr(self.dot, "setOpacity"):
+                    self.dot.setOpacity(value)
 
-        # In alternativa cambiamo la size
-        size = int(8 * value)
-        self.dot.setFixedSize(size, size)
+            # In alternativa cambiamo la size
+            size = int(8 * value)
+            self.dot.setFixedSize(size, size)
 
-    pulse_scale = Property(float, fget=get_pulse_scale, fset=set_pulse_scale)
+    pulse_scale = Property(float, fget=get_pulse_scale, fset=set_pulse_scale, notify=pulse_scale_changed)

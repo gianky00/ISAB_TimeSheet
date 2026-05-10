@@ -46,6 +46,8 @@ class HoverPulseFrame(QFrame):
     Fornisce un feedback visivo immediato sull'interattivitàdella card parametri.
     """
 
+    pulse_value_changed = Signal(float)
+
     def __init__(self, accent_color: str | None = None, parent: QWidget | None = None) -> None:
         """
         Inizializza il frame pulsante.
@@ -71,10 +73,12 @@ class HoverPulseFrame(QFrame):
 
     def set_pulse_value(self, v: float) -> None:
         """Imposta il valore della pulsazione e forza il ridisegno del widget."""
-        self._pulse_val = v
-        self.update()
+        if self._pulse_val != v:
+            self._pulse_val = v
+            self.pulse_value_changed.emit(v)
+            self.update()
 
-    pulse_value = Property(float, fget=get_pulse_value, fset=set_pulse_value)
+    pulse_value = Property(float, fget=get_pulse_value, fset=set_pulse_value, notify=pulse_value_changed)
 
     def enterEvent(self, event: Any) -> None:
         """Avvia l'animazione di pulsazione del bordo all'ingresso del mouse."""
@@ -151,7 +155,9 @@ class BotParametersWidget(QWidget):
         # Container Principale
         self.container = QFrame()
         self.container.setObjectName("filterBar")
-        self.container.setStyleSheet(f"QFrame#filterBar {{ background-color: {COLORS['bg_white']}; border: 1px solid {COLORS['border_light']}; border-radius: 12px; }}")
+        self.container.setStyleSheet(
+            f"QFrame#filterBar {{ background-color: {COLORS['bg_white']}; border: 1px solid {COLORS['border_light']}; border-radius: 12px; }}"
+        )
 
         self.main_row_layout = QHBoxLayout(self.container)
         self.main_row_layout.setContentsMargins(15, 10, 15, 10)

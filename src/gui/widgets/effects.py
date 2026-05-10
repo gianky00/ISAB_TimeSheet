@@ -10,6 +10,7 @@ from PySide6.QtCore import (
     QEasingCurve,
     QEvent,
     QPropertyAnimation,
+    Signal,
 )
 from PySide6.QtGui import QColor, QEnterEvent, QPainter, QPaintEvent, QPen
 from PySide6.QtWidgets import QFrame, QWidget
@@ -22,6 +23,8 @@ class HoverPulseFrame(QFrame):
     Frame personalizzato che fa pulsare il bordo inferiore al passaggio del mouse.
     Fornisce un feedback visivo moderno per le sezioni card dell'applicazione.
     """
+
+    pulse_value_changed = Signal(float)
 
     def __init__(self, accent_color: str | None = None, parent: QWidget | None = None) -> None:
         """
@@ -48,10 +51,12 @@ class HoverPulseFrame(QFrame):
 
     def set_pulse_value(self, v: float) -> None:
         """Imposta il valore dell'animazione pulsante e forza il ridisegno."""
-        self._pulse_val = v
-        self.update()
+        if self._pulse_val != v:
+            self._pulse_val = v
+            self.pulse_value_changed.emit(v)
+            self.update()
 
-    pulse_value = Property(float, fget=get_pulse_value, fset=set_pulse_value)
+    pulse_value = Property(float, fget=get_pulse_value, fset=set_pulse_value, notify=pulse_value_changed)
 
     def enterEvent(self, event: QEnterEvent) -> None:
         """Avvia l'animazione pulsante all'ingresso del mouse."""

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from PySide6.QtGui import QDrag
 
-from PySide6.QtCore import Property, QPoint, QSize, Qt
+from PySide6.QtCore import Property, QPoint, QSize, Qt, Signal
 from PySide6.QtWidgets import QPushButton, QWidget
 
 from src.gui.styles import COLORS
@@ -23,6 +23,8 @@ class SidebarButton(QPushButton):
     Pulsante ultra-moderno per la sidebar.
     Ottimizzato per la fluidit  estrema rimuovendo gli effetti grafici costosi.
     """
+
+    text_opacity_changed = Signal(float)
 
     def __init__(self, text: str, icon_path: str = "", parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -47,15 +49,19 @@ class SidebarButton(QPushButton):
         self._refresh_state()
         self._set_base_style()
 
-    @Property(float)
-    def text_opacity(self) -> float:
+    def get_text_opacity(self) -> float:
         """Restituisce l'opacit  del testo."""
         return self._text_opacity
 
-    @text_opacity.setter  # type: ignore[no-redef]
-    def text_opacity(self, value: float) -> None:
+    def set_text_opacity(self, value: float) -> None:
         """Imposta l'opacit  del testo."""
-        self._text_opacity = value
+        if self._text_opacity != value:
+            self._text_opacity = value
+            self.text_opacity_changed.emit(value)
+            # Qui potremmo aggiornare lo stile se necessario,
+            # ma solitamente questa property  usata per animazioni di dissolvenza.
+
+    text_opacity = Property(float, fget=get_text_opacity, fset=set_text_opacity, notify=text_opacity_changed)
 
     def set_collapsed(self, collapsed: bool, animated: bool = False) -> None:
         """Aggiorna lo stato visivo senza forzare ricaricamenti pesanti."""

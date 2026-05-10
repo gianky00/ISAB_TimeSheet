@@ -104,3 +104,5 @@ Il processo di release è automatizzato via `admin/release.py` e include:
 *   **Type Hinting**: Obbligatorio ovunque.
 *   **Encoding**: Forza sempre **UTF-8**.
 *   **Persistence**: Ogni fix tecnico o scoperta architetturale deve essere storicizzato nei file MD di questa cartella (`.gemini/`) per preservare la memoria del progetto.
+esta cartella (`.gemini/`) per preservare la memoria del progetto.
+izzato nei file MD di questa cartella (`.gemini/`) per preservare la memoria del progetto.

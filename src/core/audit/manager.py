@@ -145,8 +145,10 @@ class AuditManager:
         try:
             # 1. Normalizzazione e Setup
             user_id = self._get_current_user()
-            status_val = status.value if isinstance(status, Status) else str(status)
-            severity_val = severity.value if isinstance(severity, Severity) else str(severity)
+
+            # Conversione sicura per compatibilità DB (stringhe: low, medium, high / success, error, warning)
+            status_val = status.to_str() if isinstance(status, Status) else str(status)
+            severity_val = severity.to_str() if isinstance(severity, Severity) else str(severity)
 
             # Defaults
             entity = entity or "-"

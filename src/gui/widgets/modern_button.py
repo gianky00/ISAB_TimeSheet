@@ -6,7 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import Property, QEasingCurve, QEvent, QPropertyAnimation
+import shiboken6
+from PySide6.QtCore import Property, QEasingCurve, QEvent, QPropertyAnimation, Signal
 from PySide6.QtWidgets import QPushButton, QWidget
 
 from src.gui.styles import COLORS
@@ -20,6 +21,8 @@ if TYPE_CHECKING:
 
 class ModernButton(QPushButton):
     """Pulsante con animazioni e varianti."""
+
+    hover_opacity_changed = Signal(float)
 
     class Variant:
         """Varianti cromatiche del pulsante basate sul sistema di design."""
@@ -80,13 +83,21 @@ class ModernButton(QPushButton):
 
     def set_hover_opacity(self, value: float) -> None:
         """Imposta il valore dell'opacità hover e aggiorna lo stile."""
-        self._hover_opacity = value
-        self._apply_style()
+        if not shiboken6.isValid(self):
+            return
+        if self._hover_opacity != value:
+            self._hover_opacity = value
+            self.hover_opacity_changed.emit(value)
+            self._apply_style()
 
-    hover_opacity = Property(float, fget=get_hover_opacity, fset=set_hover_opacity)
+    hover_opacity = Property(
+        float, fget=get_hover_opacity, fset=set_hover_opacity, notify=hover_opacity_changed
+    )
 
     def enterEvent(self, event: QEnterEvent) -> None:
         """Avvia l'animazione hover all'ingresso del mouse."""
+        if not shiboken6.isValid(self):
+            return
         start_opacity = 0.0
         end_opacity = 0.1
         self._anim.setStartValue(start_opacity)
@@ -96,6 +107,8 @@ class ModernButton(QPushButton):
 
     def leaveEvent(self, event: QEvent) -> None:
         """Avvia l'animazione di uscita al movimento del mouse."""
+        if not shiboken6.isValid(self):
+            return
         start_opacity = 0.1
         end_opacity = 0.0
         self._anim.setStartValue(start_opacity)
@@ -126,6 +139,8 @@ class ModernButton(QPushButton):
 
     def _apply_style(self) -> None:
         """Genera e applica il foglio di stile QSS dinamico."""
+        if not shiboken6.isValid(self):
+            return
         bg_color, text_color = self._get_colors()
         padding, font_size = self._get_size_styles()
 

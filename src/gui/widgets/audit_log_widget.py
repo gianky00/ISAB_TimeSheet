@@ -10,7 +10,17 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import QModelIndex, QObject, QRunnable, Qt, QThreadPool, QTimer, Signal
+import shiboken6
+from PySide6.QtCore import (
+    QModelIndex,
+    QObject,
+    QRunnable,
+    Qt,
+    QThreadPool,
+    QTimer,
+    Signal,
+    Slot,
+)
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QFrame,
@@ -198,9 +208,11 @@ class AuditLogWidget(QWidget):
         if not is_live:
             self.refresh()
 
+    @Slot()
     def _on_live_refresh(self) -> None:
         """Esegue il refresh periodico in modalità live."""
-        self.refresh(reset_page=True)
+        if shiboken6.isValid(self):
+            self.refresh(reset_page=True)
 
     def _on_page_changed(self, delta: int) -> None:
         """
@@ -219,6 +231,9 @@ class AuditLogWidget(QWidget):
         Args:
           reset_page: Se True, torna alla prima pagina.
         """
+        if not shiboken6.isValid(self):
+            return
+
         if reset_page:
             self.current_page = 0
 
@@ -247,8 +262,12 @@ class AuditLogWidget(QWidget):
         if pool := QThreadPool.globalInstance():
             pool.start(worker)
 
+    @Slot(bool)
     def _on_integrity_checked(self, valid: bool) -> None:
         """Callback al termine della verifica in background."""
+        if not shiboken6.isValid(self):
+            return
+
         color = COLORS["success_dark"] if valid else COLORS["error_red"]
         text = "Integro" if valid else "Legacy/Manomesso"
         icon = Icons.SHIELD if valid else Icons.ALERT_TRIANGLE
@@ -257,6 +276,7 @@ class AuditLogWidget(QWidget):
         self.integrity_lbl.setText(text)
         self.integrity_lbl.setStyleSheet(f"color: {color}; font-weight: bold;")
 
+    @Slot(QModelIndex)
     def _on_row_double_click(self, index: QModelIndex) -> None:
         """
         Gestisce il doppio click su una riga.

@@ -10,7 +10,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from PySide6.QtCore import Qt, QTimer
+import shiboken6
+from PySide6.QtCore import Qt, QTimer, Slot
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -189,37 +190,44 @@ class NotificationsPanel(QWidget):
         elif tab_text == "Health":
             self.health_tab.refresh()
 
+    @Slot(str)
     def _on_search_changed(self, query: str) -> None:
         """Reagisce alla modifica del testo nella barra di ricerca."""
         self.current_search = query.lower()
         self._invalidate_cache()
         self._schedule_refresh()
 
+    @Slot(str)
     def _on_filter_changed(self, filter_key: str) -> None:
         """Applica il filtro selezionato (es. Errori, Non letti)."""
         self.current_filter = filter_key
         self._invalidate_cache()
         self._schedule_refresh()
 
+    @Slot(str)
     def _on_sort_changed(self, sort_key: str) -> None:
         """Cambia l'ordinamento della lista (Data, Priorita')."""
         self.current_sort = sort_key
         self._invalidate_cache()
         self._schedule_refresh()
 
+    @Slot()
     def _schedule_refresh(self) -> None:
         """Pianifica un aggiornamento della UI con debounce."""
-        self._refresh_timer.stop()
-        self._refresh_timer.start(50)
+        if shiboken6.isValid(self):
+            self._refresh_timer.stop()
+            self._refresh_timer.start(50)
 
     def _invalidate_cache(self) -> None:
         """Invalida i risultati filtrati salvati in cache."""
         self._cached_filter_result = None
         self._last_filter_state = None
 
+    @Slot()
     def _do_refresh(self) -> None:
         """Esegue l'aggiornamento effettivo della UI."""
-        self.refresh_notifications()
+        if shiboken6.isValid(self):
+            self.refresh_notifications()
 
     def _clear_notifications(self) -> None:
         """Svuota tutte le notifiche previa conferma dell'utente."""
@@ -234,6 +242,9 @@ class NotificationsPanel(QWidget):
         Ricarica la lista delle notifiche applicando filtri, ricerca e raggruppamento.
         Ottimizza il rendering utilizzando la cache del filtraggio.
         """
+        if not shiboken6.isValid(self):
+            return
+
         cache_key = (
             self.current_filter,
             self.current_search,
@@ -320,6 +331,7 @@ class NotificationsPanel(QWidget):
                 widget.setParent(None)
                 widget.deleteLater()
 
+    @Slot()
     def _invalidate_and_refresh(self) -> None:
         """Invalida cache e pianifica refresh (callback per eliminazione singola card)."""
         self._invalidate_cache()
@@ -369,6 +381,7 @@ class NotificationsPanel(QWidget):
                 groups["older"]["notifications"].append(notif)
         return groups
 
+    @Slot(str, bool)
     def _on_group_toggled(self, group_key: str, is_expanded: bool) -> None:
         """Mostra o nasconde il container di un gruppo."""
         if group_key in self._group_widgets:

@@ -5,6 +5,7 @@ Design d'élite con trasparenze reali, bordi neon e ombre portate.
 
 import time
 
+import shiboken6
 from PySide6.QtCore import (
     Property,
     QEasingCurve,
@@ -12,8 +13,10 @@ from PySide6.QtCore import (
     QPointF,
     QPropertyAnimation,
     QRectF,
+    QSize,
     Qt,
     QTimer,
+    Signal,
     Slot,
 )
 from PySide6.QtGui import (
@@ -58,6 +61,9 @@ class ActivityTimelineWidget(QWidget):
     Visualizza una timeline verticale con animazioni neon, griglia tattica e flussi dati.
     """
 
+    border_pulse_changed = Signal(float)
+    pulse_value_changed = Signal(float)
+
     def __init__(self, parent: QWidget | None = None) -> None:
         """
         Inizializza il widget e configura le animazioni e i colori.
@@ -67,6 +73,12 @@ class ActivityTimelineWidget(QWidget):
         """
         super().__init__(parent)
         self.nodes: list[TimelineNode] = []
+
+        # --- CACHING PATHS ---
+        # Cache per i path di disegno costanti per ridurre il carico sulla CPU durante il tick (60 FPS)
+        self._cached_main_path: QPainterPath | None = None
+        self._cached_grid_path: QPainterPath | None = None
+        self._last_size = QSize(0, 0)
 
         # Abilita trasparenza per angoli smussati perfetti
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -152,13 +164,18 @@ class ActivityTimelineWidget(QWidget):
 
     def set_border_pulse(self, value: float) -> None:
         """Imposta il valore della pulsazione del bordo e forza il ridisegno."""
-        self._border_pulse_val = value
-        self.update()
+        if self._border_pulse_val != value:
+            self._border_pulse_val = value
+            self.border_pulse_changed.emit(value)
+            self.update()
 
-    border_pulse = Property(float, fget=get_border_pulse, fset=set_border_pulse)
+    border_pulse = Property(float, fget=get_border_pulse, fset=set_border_pulse, notify=border_pulse_changed)
 
+    @Slot()
     def _tick(self) -> None:
         """Metodo di aggiornamento periodico per gli elementi dinamici (60 FPS)."""
+        if not shiboken6.isValid(self):
+            return
         self._rotation_angle, self._grid_offset, self._dash_offset = (
             (self._rotation_angle + 3) % 360,
             (self._grid_offset + 0.3) % float(UI_SIZES["grid_step"]),
@@ -172,10 +189,12 @@ class ActivityTimelineWidget(QWidget):
 
     def set_pulse_value(self, value: float) -> None:
         """Imposta il valore della pulsazione e forza il ridisegno."""
-        self._pulse_value = value
-        self.update()
+        if self._pulse_value != value:
+            self._pulse_value = value
+            self.pulse_value_changed.emit(value)
+            self.update()
 
-    pulse_value = Property(float, fget=get_pulse_value, fset=set_pulse_value)
+    pulse_value = Property(float, fget=get_pulse_value, fset=set_pulse_value, notify=pulse_value_changed)
 
     def set_steps(self, steps: list[tuple[str, str]]) -> None:
         """
@@ -197,6 +216,9 @@ class ActivityTimelineWidget(QWidget):
             name: Nome dello step.
             status: Nuovo stato (StepStatus o int).
         """
+        if not shiboken6.isValid(self):
+            return
+
         # Supporta sia l'oggetto Enum che l'indice dell'Enum
         if isinstance(status, int):
             # Mapping inverso se arriva come int (PyQt signal compat)
@@ -220,12 +242,16 @@ class ActivityTimelineWidget(QWidget):
                 self._pulse_value = 1.0
             self.update()
 
+    def resizeEvent(self, event: QEvent) -> None:
+        """Invalida la cache dei path quando il widget viene ridimensionato."""
+        super().resizeEvent(event)
+        self._cached_main_path = None
+        self._cached_grid_path = None
+
     def paintEvent(self, event: QEvent) -> None:
         """
         Gestisce il disegno personalizzato del widget (Grid, Connectors, Nodes).
-
-        Args:
-            event: Evento di disegno.
+        Ottimizzato tramite caching dei path.
         """
         painter = QPainter(self)
         try:
@@ -233,11 +259,15 @@ class ActivityTimelineWidget(QWidget):
 
             # 1. DISEGNO SFONDO ARROTONDATO (Cyber-Frame)
             rect = QRectF(10, 10, self.width() - 20, self.height() - 20)
-            path = QPainterPath()
-            path.addRoundedRect(rect, float(UI_SIZES["radius_card"]), float(UI_SIZES["radius_card"]))
+
+            if self._cached_main_path is None:
+                self._cached_main_path = QPainterPath()
+                self._cached_main_path.addRoundedRect(
+                    rect, float(UI_SIZES["radius_card"]), float(UI_SIZES["radius_card"])
+                )
 
             painter.save()
-            painter.setClipPath(path)
+            painter.setClipPath(self._cached_main_path)
             painter.fillRect(rect, self.PALETTE["bg"])
             self._draw_grid(painter, rect)
             painter.restore()
@@ -246,7 +276,7 @@ class ActivityTimelineWidget(QWidget):
             alpha = int(100 + (self._border_pulse_val * 155))
             c = self.PALETTE["border"]
             painter.setPen(QPen(QColor(c.red(), c.green(), c.blue(), alpha), 1.2))
-            painter.drawPath(path)
+            painter.drawPath(self._cached_main_path)
 
             if not self.nodes:
                 self._draw_empty(painter)
@@ -286,24 +316,24 @@ class ActivityTimelineWidget(QWidget):
     def _draw_grid(self, painter: QPainter, rect: QRectF) -> None:
         """
         Disegna la griglia tattica animata sullo sfondo.
-
-        Args:
-            painter: Oggetto QPainter.
-            rect: Rettangolo di disegno.
+        Utilizza un'ulteriore trasformazione per evitare il ricalcolo dei segmenti.
         """
+        painter.save()
         painter.setPen(QPen(self.PALETTE["grid"], 0.5))
-        step, left, top, right, bottom = (
-            UI_SIZES["grid_step"],
-            int(rect.left()),
-            int(rect.top()),
-            int(rect.right()),
-            int(rect.bottom()),
-        )
 
-        for x in range(left, right + step, step):
-            painter.drawLine(int(x + self._grid_offset), top, int(x + self._grid_offset), bottom)
-        for y in range(top, bottom + step, step):
-            painter.drawLine(left, int(y + self._grid_offset), right, int(y + self._grid_offset))
+        # Effetto movimento fluido tramite traduzione del sistema di coordinate
+        painter.translate(self._grid_offset, self._grid_offset)
+
+        step = int(UI_SIZES["grid_step"])
+        # Disegniamo un'area leggermente piùgrande per coprire l'offset
+        left, top = int(rect.left()) - step, int(rect.top()) - step
+        right, bottom = int(rect.right()) + step, int(rect.bottom()) + step
+
+        for x in range(left, right, step):
+            painter.drawLine(x, top, x, bottom)
+        for y in range(top, bottom, step):
+            painter.drawLine(left, y, right, y)
+        painter.restore()
 
     def _draw_connector_v5(  # noqa: PLR0913
         self, painter: QPainter, x: float, y1: float, y2: float, n1: TimelineNode, n2: TimelineNode

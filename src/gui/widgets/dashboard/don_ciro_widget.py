@@ -13,6 +13,7 @@ import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+import shiboken6
 from PySide6.QtCore import (
     Property,
     QEasingCurve,
@@ -21,6 +22,8 @@ from PySide6.QtCore import (
     QRectF,
     Qt,
     QTimer,
+    Signal,
+    Slot,
 )
 from PySide6.QtGui import (
     QBrush,
@@ -55,6 +58,12 @@ class RenderItem:
 class DonCiroWidget(QWidget):
     """Il Don Ciro: Visualizzazione 3D isometrica della mascotte aziendale."""
 
+    walk_phase_changed = Signal(float)
+    action_phase_changed = Signal(float)
+    yaw_angle_changed = Signal(float)
+    blink_changed = Signal(float)
+    label_phase_changed = Signal(float)
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         fixed_width = 280
@@ -86,59 +95,69 @@ class DonCiroWidget(QWidget):
 
     # ── Proprietà Animate (Qt) ──────────────────────────────────────────
 
-    @Property(float)
-    def walk_phase(self) -> float:
+    def get_walk_phase(self) -> float:
         """Ritorna la fase della camminata."""
         return self._walk_phase
 
-    @walk_phase.setter  # type: ignore[no-redef]
-    def walk_phase(self, v: float) -> None:
-        self._walk_phase = v
-        # Sincronizza motore per la fisica
-        self.engine._walk_phase = v
-        self.update()
+    def set_walk_phase(self, v: float) -> None:
+        if self._walk_phase != v:
+            self._walk_phase = v
+            # Sincronizza motore per la fisica
+            self.engine._walk_phase = v
+            self.walk_phase_changed.emit(v)
+            self.update()
 
-    @Property(float)
-    def action_phase(self) -> float:
+    walk_phase = Property(float, fget=get_walk_phase, fset=set_walk_phase, notify=walk_phase_changed)
+
+    def get_action_phase(self) -> float:
         """Ritorna la fase dell'azione."""
         return self._action_phase
 
-    @action_phase.setter  # type: ignore[no-redef]
-    def action_phase(self, v: float) -> None:
-        self._action_phase = v
-        self.engine._action_phase = v
-        self.update()
+    def set_action_phase(self, v: float) -> None:
+        if self._action_phase != v:
+            self._action_phase = v
+            self.engine._action_phase = v
+            self.action_phase_changed.emit(v)
+            self.update()
 
-    @Property(float)
-    def yaw_angle(self) -> float:
+    action_phase = Property(float, fget=get_action_phase, fset=set_action_phase, notify=action_phase_changed)
+
+    def get_yaw_angle(self) -> float:
         """Ritorna l'angolo di imbardata."""
         return self._yaw_angle
 
-    @yaw_angle.setter  # type: ignore[no-redef]
-    def yaw_angle(self, v: float) -> None:
-        self._yaw_angle = v
-        self.engine._yaw_angle = v
-        self.update()
+    def set_yaw_angle(self, v: float) -> None:
+        if self._yaw_angle != v:
+            self._yaw_angle = v
+            self.engine._yaw_angle = v
+            self.yaw_angle_changed.emit(v)
+            self.update()
 
-    @Property(float)
-    def blink(self) -> float:
+    yaw_angle = Property(float, fget=get_yaw_angle, fset=set_yaw_angle, notify=yaw_angle_changed)
+
+    def get_blink(self) -> float:
         """Ritorna lo stato del battito ciglia."""
         return self._blink
 
-    @blink.setter  # type: ignore[no-redef]
-    def blink(self, v: float) -> None:
-        self._blink = v
-        self.update()
+    def set_blink(self, v: float) -> None:
+        if self._blink != v:
+            self._blink = v
+            self.blink_changed.emit(v)
+            self.update()
 
-    @Property(float)
-    def label_phase(self) -> float:
+    blink = Property(float, fget=get_blink, fset=set_blink, notify=blink_changed)
+
+    def get_label_phase(self) -> float:
         """Ritorna la fase del testo."""
         return self._label_phase
 
-    @label_phase.setter  # type: ignore[no-redef]
-    def label_phase(self, v: float) -> None:
-        self._label_phase = v
-        self.update()
+    def set_label_phase(self, v: float) -> None:
+        if self._label_phase != v:
+            self._label_phase = v
+            self.label_phase_changed.emit(v)
+            self.update()
+
+    label_phase = Property(float, fget=get_label_phase, fset=set_label_phase, notify=label_phase_changed)
 
     # ── Inizializzazione ────────────────────────────────────────────────
 
@@ -176,8 +195,11 @@ class DonCiroWidget(QWidget):
         # Integrazione meteo reale
         self.weather_service.weather_data_ready.connect(self._on_real_weather_received)
 
+    @Slot(object)
     def _on_engine_state_changed(self, state: DonState) -> None:
         """Gestisce i cambi di stato notificati dall'engine."""
+        if not shiboken6.isValid(self):
+            return
         if state == DonState.TURNING:
             self._trigger_ui_turn()
         elif state in (DonState.ACTION_WATCH, DonState.ACTION_TIE):
@@ -187,8 +209,11 @@ class DonCiroWidget(QWidget):
         elif state == DonState.WALKING and self.walk_anim.state() == QPropertyAnimation.State.Paused:
             self.walk_anim.resume()
 
+    @Slot(dict, dict)
     def _on_real_weather_received(self, weather: dict[str, Any], aqi: dict[str, Any]) -> None:
         """Adatta il comportamento di Don Ciro al meteo reale."""
+        if not shiboken6.isValid(self):
+            return
         curr = weather.get("current", {})
         code = curr.get("weather_code", 0)
         wind = curr.get("wind_gusts_10m", 0.0)
@@ -217,7 +242,9 @@ class DonCiroWidget(QWidget):
         self.ta.setStartValue(self._yaw_angle)
         self.ta.setEndValue(target)
         self.ta.setEasingCurve(QEasingCurve.Type.InOutSine)
-        self.ta.finished.connect(lambda: self.engine.set_yaw_complete(target))
+        self.ta.finished.connect(
+            lambda: self.engine.set_yaw_complete(target) if shiboken6.isValid(self) else None
+        )
         self.ta.start()
 
     def _trigger_ui_action(self) -> None:
@@ -229,8 +256,11 @@ class DonCiroWidget(QWidget):
         self.act.setEndValue(1.0)
         self.act.start()
 
+    @Slot()
     def _do_blink(self) -> None:
         """Avvia il battito di ciglia."""
+        if not shiboken6.isValid(self):
+            return
         self.ba = QPropertyAnimation(self, b"blink")
         blink_duration = 120
         self.ba.setDuration(blink_duration)
@@ -244,15 +274,18 @@ class DonCiroWidget(QWidget):
     def paintEvent(self, event: Any) -> None:
         """Disegna il widget."""
         p = QPainter(self)
-        p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        p.save()
-        floor_y = 150
-        p.translate(self.engine.walk_x, floor_y)
-        self._draw_dynamic_shadow(p)
-        self._render_ciro_3d(p)
-        p.restore()
-        self._draw_label(p)
-        self._draw_weather_fx(p)
+        try:
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+            p.save()
+            floor_y = 150
+            p.translate(self.engine.walk_x, floor_y)
+            self._draw_dynamic_shadow(p)
+            self._render_ciro_3d(p)
+            p.restore()
+            self._draw_label(p)
+            self._draw_weather_fx(p)
+        finally:
+            p.end()
 
     def _draw_weather_fx(self, p: QPainter) -> None:
         """Disegna gli effetti meteo."""
@@ -311,8 +344,12 @@ class DonCiroWidget(QWidget):
         r_sh, l_sh = QPointF(sc.x() - wo * sin_y, sy), QPointF(sc.x() + wo * sin_y, sy)
 
         rq = [
-            RenderItem(-wo * cos_y, self._draw_leg, ((r_hp, kn_r, QPointF(r_hp.x() + frx, fry)), wo * cos_y, cos_y)),
-            RenderItem(wo * cos_y, self._draw_leg, ((l_hp, kn_l, QPointF(l_hp.x() + flx, fly)), -wo * cos_y, cos_y)),
+            RenderItem(
+                -wo * cos_y, self._draw_leg, ((r_hp, kn_r, QPointF(r_hp.x() + frx, fry)), wo * cos_y, cos_y)
+            ),
+            RenderItem(
+                wo * cos_y, self._draw_leg, ((l_hp, kn_l, QPointF(l_hp.x() + flx, fly)), -wo * cos_y, cos_y)
+            ),
             RenderItem(-wo * cos_y, self._draw_arm, (r_sh, ar_p, wo * cos_y, True)),
             RenderItem(wo * cos_y, self._draw_arm, (l_sh, al_p, -wo * cos_y, False)),
             RenderItem(0.0, self._draw_torso, (QPointF(0, by), sc, angles)),
@@ -345,7 +382,9 @@ class DonCiroWidget(QWidget):
 
         return kn_r, kn_l, frx, fry, flx, fly
 
-    def _calculate_arms_pos(self, f: float, sy: float, sc: QPointF, hd_p: QPointF, angles: tuple[float, float]) -> tuple[Any, ...]:
+    def _calculate_arms_pos(
+        self, f: float, sy: float, sc: QPointF, hd_p: QPointF, angles: tuple[float, float]
+    ) -> tuple[Any, ...]:
         """Calcola la posizione delle braccia in base allo stato."""
         cos_y, sin_y = angles
         wo = 11 * self.engine.scale
@@ -474,7 +513,9 @@ class DonCiroWidget(QWidget):
         coll.closeSubpath()
         p.drawPath(coll)
 
-    def _draw_torso_flap(self, p: QPainter, hp: QPointF, ch: float, angles: tuple[float, float], s: float) -> None:
+    def _draw_torso_flap(
+        self, p: QPainter, hp: QPointF, ch: float, angles: tuple[float, float], s: float
+    ) -> None:
         """Disegna il lembo della giacca se necessario."""
         cy, sy = angles
         if self.engine.jacket_flap != 0 and sy < 0.3:
@@ -485,7 +526,9 @@ class DonCiroWidget(QWidget):
             j_path.lineTo(hp.x() + ch, hp.y() + 5 * s)
             p.drawPath(j_path)
 
-    def _draw_torso_suit(self, p: QPainter, points: tuple[QPointF, QPointF], ch: float, w: float, s: float) -> None:
+    def _draw_torso_suit(
+        self, p: QPainter, points: tuple[QPointF, QPointF], ch: float, w: float, s: float
+    ) -> None:
         """Disegna il corpo della giacca."""
         hp, sh = points
         path = QPainterPath()

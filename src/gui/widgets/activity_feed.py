@@ -4,7 +4,8 @@ from contextlib import suppress
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer
+import shiboken6
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer, Slot
 from PySide6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
@@ -106,7 +107,9 @@ class ActivityItem(QFrame):
         badge.setFixedSize(32, 32)
         badge.setPixmap(get_colored_icon(get_asset_path(icon_path), icon_color).pixmap(20, 20))
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        badge.setStyleSheet(f"QLabel {{ background-color: {badge_bg}; border-radius: 16px; border: none; padding: 6px; }}")
+        badge.setStyleSheet(
+            f"QLabel {{ background-color: {badge_bg}; border-radius: 16px; border: none; padding: 6px; }}"
+        )
         layout.addWidget(badge)
 
     def _add_text_content(self, layout: QHBoxLayout) -> None:
@@ -120,7 +123,9 @@ class ActivityItem(QFrame):
         self.setToolTip(full_text)
 
         action_lbl = QLabel(full_text)
-        action_lbl.setStyleSheet(f"QLabel {{ font-weight: 600; font-size: 14px; color: {COLORS['text_dark']}; border: none; background: transparent; }}")
+        action_lbl.setStyleSheet(
+            f"QLabel {{ font-weight: 600; font-size: 14px; color: {COLORS['text_dark']}; border: none; background: transparent; }}"
+        )
         action_lbl.setWordWrap(True)
         text_layout.addWidget(action_lbl)
 
@@ -133,7 +138,9 @@ class ActivityItem(QFrame):
                 time_str = f"   {friendly_time_delta(ts)}"
 
         time_lbl = QLabel(time_str)
-        time_lbl.setStyleSheet(f"QLabel {{ font-size: 12px; color: {COLORS['text_muted']}; border: none; background: transparent; font-weight: 500; }}")
+        time_lbl.setStyleSheet(
+            f"QLabel {{ font-size: 12px; color: {COLORS['text_muted']}; border: none; background: transparent; font-weight: 500; }}"
+        )
         text_layout.addWidget(time_lbl)
 
         layout.addLayout(text_layout)
@@ -155,7 +162,8 @@ class ActivityItem(QFrame):
 
     def _remove_opacity_effect(self) -> None:
         """Rimuove l'effetto opacity dopo l'animazione per evitare interferenze."""
-        self.setGraphicsEffect(None)  # type: ignore[arg-type]
+        if shiboken6.isValid(self):
+            self.setGraphicsEffect(None)  # type: ignore[arg-type]
 
     def showEvent(self, event: QShowEvent) -> None:
         """Avvia l'animazione quando il widget viene mostrato."""
@@ -232,13 +240,18 @@ class ActivityFeed(QWidget):
         # Caricamento differito per non bloccare lo splash screen
         QTimer.singleShot(800, self.refresh_feed)
 
+    @Slot(dict)
     def _on_new_log_added(self, log_entry: dict[str, Any]) -> None:
         """Chiamato quando viene aggiunto un nuovo log all'AuditManager."""
         # Refresh della feed per mostrare il nuovo log
-        self.refresh_feed()
+        if shiboken6.isValid(self):
+            self.refresh_feed()
 
     def refresh_feed(self) -> None:
         """Ricarica i log dall'AuditManager."""
+        if not shiboken6.isValid(self):
+            return
+
         # Evita refresh multipli simultanei
         if self._refreshing:
             return
