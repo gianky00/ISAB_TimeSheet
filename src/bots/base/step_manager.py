@@ -62,7 +62,7 @@ class BotStepManager(QObject):
             try:
                 index = [s[0] for s in self.steps].index(step_id)
             except ValueError:
-                logger.warning("Step ID '%s' non trovato nelle definizioni.", step_id)
+                logger.warning(f"Step ID '{step_id}' non trovato nelle definizioni.")
                 return -1, ""
         else:
             index = step_id

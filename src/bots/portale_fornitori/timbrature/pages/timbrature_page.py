@@ -201,11 +201,15 @@ class TimbraturePage:
             self.log("Attendo download...")
 
             # Utilizza helper centralizzato robusto
+            from src.bots.base.wait_helpers import PollConfig
+
             res_path = poll_for_new_file(
-                directory=source_dir,
+                PollConfig(
+                    directory=source_dir,
+                    pattern=["*.xlsx", "*.xls"],
+                    timeout=Timeouts.DOWNLOAD,
+                ),
                 files_before=files_before,
-                pattern=["*.xlsx", "*.xls"],
-                timeout=Timeouts.DOWNLOAD,
             )
 
             if not res_path:

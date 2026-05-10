@@ -18,7 +18,8 @@ from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 
 from src.bots.base import StepStatus
 from src.bots.base.selenium_base_bot import SeleniumBaseBot
-from src.bots.base.wait_helpers import poll_for_new_file
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
+from src.bots.base.wait_helpers import PollConfig, poll_for_new_file
 from src.core.constants import Timeouts
 from src.core.timesheet_processor import TimesheetProcessor
 from src.utils.helpers import sanitize_filename
@@ -58,25 +59,26 @@ class ScaricaTSBot(SeleniumBaseBot):
 
     @property
     def name(self) -> str:
-        return "Scarico TS"
+        """Restituisce l'ID del bot."""
+        return "scarico_ts"
 
     @property
     def description(self) -> str:
+        """Restituisce la descrizione del bot."""
         return "Scarica i timesheet dal portale ISAB"
 
     def __init__(
         self,
+        config: SeleniumBotConfig,
         data_da: str | None = None,
         fornitore: str = "",
         elabora_ts: bool = False,
-        username: str = "",
-        password: str = "",
         **kwargs: Any,
     ) -> None:
         """
         Inizializza il bot.
         """
-        super().__init__(username=username, password=password, **kwargs)
+        super().__init__(config=config)
         self.data_da = data_da or f"01.01.{datetime.now(UTC).year}"
         self.fornitore = fornitore
         self.elabora_ts = elabora_ts
@@ -336,11 +338,14 @@ class ScaricaTSBot(SeleniumBaseBot):
             return None
 
         # Polling
+
         res_path = poll_for_new_file(
-            directory=source_dir_path,
+            PollConfig(
+                directory=source_dir_path,
+                pattern=["*.xlsx", "*.xls"],
+                timeout=Timeouts.DOWNLOAD,
+            ),
             files_before=files_before,
-            pattern=["*.xlsx", "*.xls"],
-            timeout=Timeouts.DOWNLOAD,
         )
 
         if not res_path:

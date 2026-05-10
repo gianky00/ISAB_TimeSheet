@@ -20,6 +20,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 from src.bots.base.base_bot import BaseBot
 from src.bots.base.login_page import LoginPage
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
 from src.core import config_manager
 from src.core.constants import BotStatus, BrowserConfig, Timeouts
 from src.core.logging import measure_time
@@ -27,16 +28,6 @@ from src.utils.browser_profile_patcher import patch_browser_profile
 from src.utils.helpers import cleanup_bot_processes, cleanup_chrome_temp_files
 from src.utils.resource_manager import ResourceManager
 
-
-class SeleniumBaseBot(BaseBot, ABC):
-    """
-    Classe base per i bot basati su Selenium.
-    Gestisce l'inizializzazione di ChromeDriver, le opzioni del browser e le attese.
-    """
-
-from src.bots.base.selenium_bot_config import SeleniumBotConfig
-
-# ... (rest of imports)
 
 class SeleniumBaseBot(BaseBot, ABC):
     """
@@ -54,10 +45,7 @@ class SeleniumBaseBot(BaseBot, ABC):
         super().__init__(
             config.username,
             config.password,
-            config.headless,
-            config.timeout,
-            config.download_path,
-            company=config.company,
+            config,
         )
         self.driver: webdriver.Chrome | None = None
         self.wait: WebDriverWait[webdriver.Chrome] | None = None

@@ -9,6 +9,7 @@ from typing import Any, ClassVar
 
 from src.bots.base.base_bot import StepStatus
 from src.bots.base.selenium_base_bot import SeleniumBaseBot
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
 from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
     DettagliOdAPage,
 )
@@ -47,22 +48,23 @@ class DettagliOdABot(SeleniumBaseBot):
 
     @property
     def name(self) -> str:
-        return "Dettagli OdA"
+        """Restituisce l'ID del bot."""
+        return "dettagli_oda"
 
     @property
     def description(self) -> str:
+        """Restituisce la descrizione del bot."""
         return "Scarica dettaglio OdA (o lista generale se OdA vuoto)"
 
     def __init__(
         self,
-        username: str,
-        password: str,
+        config: SeleniumBotConfig,
         data_da: str | None = None,
         data_a: str | None = None,
         fornitore: str | None = None,
         **kwargs: Any,
     ) -> None:
-        super().__init__(username, password, **kwargs)
+        super().__init__(config=config)
         current_year = datetime.now(UTC).astimezone().year
 
         self.data_da = data_da or f"01.01.{current_year}"

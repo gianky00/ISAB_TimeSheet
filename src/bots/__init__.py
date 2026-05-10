@@ -207,6 +207,7 @@ def get_bot_info(bot_id: str) -> dict[str, Any] | None:
 def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:
     """
     Crea un'istanza di un bot, scegliendo il motore in base alla configurazione.
+    Gestisce la conversione dei parametri in SeleniumBotConfig per la nuova architettura.
     """
     bot_info = BOT_REGISTRY.get(bot_id)
     if not bot_info:
@@ -215,10 +216,30 @@ def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:
     engine = load_config().get("automation_engine", "selenium").lower()
     logger.info(f"Factory: Creazione bot '{bot_id}' con motore: {engine}")
 
+    # Estrazione parametri per configurazione standardizzata
+    from src.bots.base.selenium_bot_config import SeleniumBotConfig
+
+    config = SeleniumBotConfig(
+        username=kwargs.get("username", ""),
+        password=kwargs.get("password", ""),
+        headless=kwargs.get("headless", False),
+        timeout=kwargs.get("timeout", 30),
+        download_path=kwargs.get("download_path", ""),
+        company=kwargs.get("company", "ISAB"),
+    )
+
+    # Rimuoviamo i parametri già inclusi in config da kwargs per evitare duplicati
+    bot_kwargs = {
+        k: v
+        for k, v in kwargs.items()
+        if k not in ["username", "password", "headless", "timeout", "download_path", "company"]
+    }
+
     if engine == "playwright":
         bot_class_pw = _get_playwright_bot_class(bot_id)
         if bot_class_pw:
-            return cast("BaseBot", bot_class_pw(**kwargs))
+            # Assumiamo che anche i bot Playwright vengano aggiornati a BotConfig
+            return cast("BaseBot", bot_class_pw(config=config, **bot_kwargs))
 
         msg = f"⚠️ Motore Playwright richiesto ma non disponibile per '{bot_id}'. Eseguo fallback su Selenium."
         logger.warning(msg)
@@ -226,7 +247,7 @@ def create_bot(bot_id: str, **kwargs: Any) -> BaseBot | None:
 
     # Default / Fallback: Selenium
     bot_class = bot_info["class"]
-    return cast("BaseBot", bot_class(**kwargs))
+    return cast("BaseBot", bot_class(config=config, **bot_kwargs))
 
 
 __all__ = [

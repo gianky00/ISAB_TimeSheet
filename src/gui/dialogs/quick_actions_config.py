@@ -13,7 +13,7 @@ from src.core.config_manager import get_config_value, set_config_value
 from src.gui.design.colors import get_palette
 from src.gui.styles import COLORS
 from src.gui.widgets.core_widgets import StandardTreeWidget
-from src.gui.widgets.quick_actions import AVAILABLE_ACTIONS
+from src.gui.widgets.quick_actions_registry import AVAILABLE_ACTIONS
 
 
 class QuickActionsConfigDialog(QDialog):
@@ -159,7 +159,7 @@ class QuickActionsConfigDialog(QDialog):
             if not path_tuple:
                 root = self.tree.invisibleRootItem()
                 if root is None:
-                    raise RuntimeError("Missing tree root")
+                    raise RuntimeError("Missing tree root")  # noqa: TRY003
                 return root
 
             parent_path = path_tuple[:-1]

@@ -22,7 +22,7 @@ from src.core.audit_manager import AuditManager
 from src.core.employees import employee_manager
 from src.core.sync_tracker import SyncTracker
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
-from src.gui.styles import COLORS
+from src.gui.styles import COLORS, LABEL_MUTED, LINEEDIT_STYLE
 from src.gui.widgets.core_widgets import SearchInput, StandardInput, StandardTable
 from src.gui.widgets.modern_button import ModernButton
 
@@ -76,7 +76,7 @@ class EmployeeEditorDialog(QDialog):
 
         main_layout.addLayout(btn_layout)
 
-    def get_data(self):
+    def get_data(self) -> dict[str, str]:
         """Estrae i dati inseriti nei campiùdi input e li normalizza in maiuscolo."""
         return {k: v.text().strip().upper() for k, v in self.inputs.items()}
 
@@ -142,7 +142,6 @@ class DipendentiManagerPanel(QWidget):
     def _setup_toolbar(self) -> None:
         self.toolbar_card = QFrame()
         self.toolbar_card.setObjectName("filterBar")
-        from src.gui.styles import LABEL_MUTED, LINEEDIT_STYLE
 
         self.toolbar_card.setStyleSheet(f"""
       QFrame#filterBar {{
@@ -218,17 +217,16 @@ class DipendentiManagerPanel(QWidget):
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         v_header = self.table.verticalHeader()
         if v_header is None:
-            raise RuntimeError("Table vertical header is None")
+            raise RuntimeError("Vertical header missing")
         v_header.setVisible(False)
         h_header = self.table.horizontalHeader()
         if h_header is None:
-            raise RuntimeError("Table horizontal header is None")
+            raise RuntimeError("Horizontal header missing")
         h_header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # ID stretto
         h_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # Badge stretto
 
-        # Use global styles from light.qss
-        # self.table.setStyleSheet(...)
+        # Stile gestito via QSS
 
         self.table.doubleClicked.connect(self._edit_selected)
 
@@ -336,7 +334,7 @@ class DipendentiManagerPanel(QWidget):
     def _edit_selected(self) -> None:
         selection_model = self.table.selectionModel()
         if selection_model is None:
-            raise RuntimeError("Table selection model is None")
+            raise RuntimeError("Selection model missing")
         rows = selection_model.selectedRows()
         if not rows:
             return
@@ -344,11 +342,11 @@ class DipendentiManagerPanel(QWidget):
         row_idx = rows[0].row()
         id_item = self.table.item(row_idx, 0)
         if id_item is None:
-            raise RuntimeError(f"Table item at row {row_idx}, column 0 is None")
+            raise RuntimeError("Missing ID item")
         id_risorsa = id_item.text()
 
         # Recuperiamo dati completi
-        def get_item_text(r, c):
+        def get_item_text(r: int, c: int) -> str:
             it = self.table.item(r, c)
             return it.text() if it else ""
 

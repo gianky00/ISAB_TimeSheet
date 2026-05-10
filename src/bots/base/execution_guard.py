@@ -31,12 +31,12 @@ class ExecutionGuard:
             if "REVOCATA" in str(e):
                 logger.exception("Licenza revocata rilevata durante pre-check.")
                 return False, f"ACCESSO NEGATO: {e}"
-            logger.warning("Errore silente durante run_update: %s", e)
+            logger.warning(f"Errore silente durante run_update: {e}")
 
         # 2. Validazione licenza reale
         valid, msg = verify_license()
         if not valid:
-            logger.error("Validazione licenza fallita: %s", msg)
+            logger.error(f"Validazione licenza fallita: {msg}")
             return False, msg
 
         return True, ""

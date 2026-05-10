@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.base.selenium_base_bot import SeleniumBaseBot
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
 from src.bots.safework.pages.login_page import SafeWorkLoginPage
 from src.bots.safework.pages.ricerca_pdl_page import RicercaPDLPage
 from src.bots.safework.pages.visualizza_attivita_page import VisualizzaAttivitaPage
@@ -24,14 +25,10 @@ class SafeworkBaseBot(SeleniumBaseBot):
 
     def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
-        super().__init__(username, password, headless, timeout, download_path)
+        super().__init__(config)
         self.account_type = account_type
         self.safework_login_page: SafeWorkLoginPage | None = None
         self.ricerca_pdl_page: RicercaPDLPage | None = None

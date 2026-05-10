@@ -1,4 +1,4 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
+# mypy: disable-error-code="unused-ignore, attr-defined, no-redef"
 """
 SyncroJob - Anagrafica Page (Refactored)
 Pagina coordinata per la gestione anagrafica dipendenti.
@@ -107,8 +107,8 @@ class AnagraficaPage(QWidget):
         dtos, counts = AnagraficaController.process_rows(full_rows, self.current_filter)
 
         # 3. Map DTOs to UI structure
-        master_rows = [d.to_table_row() for d in dtos]
-        metadata = [d.get_metadata() for d in dtos]
+        master_rows: list[list[str | int | None]] = [d.to_table_row() for d in dtos]
+        metadata: list[dict[str, str | bool]] = [d.get_metadata() for d in dtos]
 
         # 4. Aggiornamento UI
         self.model.update_data(master_rows, metadata)
@@ -117,12 +117,12 @@ class AnagraficaPage(QWidget):
         self.header.update_card_styles(self.current_filter)
 
     def _inactivation_formatter(self, value: Any) -> str:
-        if value is None or value == "":
+        if value is None or str(value) == "":
             return ""
         try:
             days = max(0, int(value))
             return f"\u25cf {days}"
-        except Exception:
+        except (ValueError, TypeError):
             return str(value)
 
     def _on_card_filter(self, filter_type: str | None) -> None:
@@ -139,30 +139,32 @@ class AnagraficaPage(QWidget):
             self.refresh_data()
 
     def _on_selection_changed(self, row_idx: int) -> None:
-        row_data = self.model._data[row_idx]
+        row_data = self.model.get_raw_row(row_idx)
+        if not row_data:
+            return
 
         # Indici di colonna nel database/modello dati esteso
-        COL_ID_RISORSA = 1
-        COL_NOME = 3
-        COL_COD_FISCALE = 4
-        COL_BADGE = 5
-        COL_DATA_ASSUNZIONE = 6
-        COL_DATA_NASCITA = 7
-        COL_DATA_IMPORT = 8
-        COL_COGNOME = 9
+        col_id_risorsa = 1
+        col_nome = 3
+        col_cod_fiscale = 4
+        col_badge = 5
+        col_data_assunzione = 6
+        col_data_nascita = 7
+        col_data_import = 8
+        col_cognome = 9
 
         mapping = {
-            "ID Risorsa": COL_ID_RISORSA,
-            "Cognome": COL_COGNOME,
-            "Nome": COL_NOME,
-            "Data Nascita": COL_DATA_NASCITA,
-            "Codice Fiscale": COL_COD_FISCALE,
-            "Badge": COL_BADGE,
-            "Data Assunzione": COL_DATA_ASSUNZIONE,
-            "Importato il": COL_DATA_IMPORT,
+            "ID Risorsa": col_id_risorsa,
+            "Cognome": col_cognome,
+            "Nome": col_nome,
+            "Data Nascita": col_data_nascita,
+            "Codice Fiscale": col_cod_fiscale,
+            "Badge": col_badge,
+            "Data Assunzione": col_data_assunzione,
+            "Importato il": col_data_import,
         }
 
-        details = {}
+        details: dict[str, str] = {}
         for h, idx in mapping.items():
             val = str(row_data[idx]) if row_data[idx] is not None else ""
             if val.lower() in ("nan", "none"):

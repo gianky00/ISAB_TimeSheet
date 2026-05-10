@@ -142,6 +142,7 @@ class EnterpriseLogConsole(QWidget):
 
         bar = self.scroll_container.verticalScrollBar()
         if bar:
+
             def safe_scroll() -> None:
                 """Esegue lo scroll in modo sicuro per evitare crash UI."""
                 if Shiboken.isValid(bar):

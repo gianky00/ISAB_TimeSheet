@@ -17,6 +17,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
+from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
 from src.core import config_manager
 from src.core.constants import Icons
 from src.core.database.pdl_queries import PDLQueries
@@ -26,6 +28,7 @@ from src.gui.styles import COLORS
 from src.gui.widgets import MultiSelectFilter, TimelineWidget
 from src.gui.widgets.core_widgets import FilterComboBox, StandardGroupBox
 from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets.pdl.status_bar_widget import ProgrammingStatusWidget
 from src.gui.widgets.pdl.table_widget import ProgrammazioneTableWidget
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path
@@ -145,9 +148,9 @@ class ProgrammazioneTab(QWidget):
             saved = config_manager.get_config_value("selected_programming_requesters", [])
             self.req_filter.set_selected(saved)
         except Exception as e:
-            logger.exception("Errore richiedenti", exc=e)
+            logger.exception("Errore richiedenti", exc_info=e)
 
-    def _on_week_changed(self, idx) -> None:
+    def _on_week_changed(self, idx: int) -> None:
         config_manager.set_config_value("programming_selected_week", idx)
         s, e, _ = PDLPeriodManager.get_week_range(idx)
         self.week_label.setText(f"Monitoraggio Settimana: <b>{s} - {e}</b>")
@@ -158,7 +161,7 @@ class ProgrammazioneTab(QWidget):
         self.last_results = PDLQueries.get_programming_results_by_week(s, e)
         self._update_tables()
 
-    def _on_group_mode_changed(self, mode) -> None:
+    def _on_group_mode_changed(self, mode: str) -> None:
         config_manager.set_config_value("programming_group_mode", mode)
         self._update_tables()
 
@@ -234,8 +237,6 @@ class ProgrammazioneTab(QWidget):
                 visible = not selected_reqs or req in selected_reqs
                 if target_day != -1:
                     w = table.cellWidget(row, 5 + target_day)
-                    from src.gui.widgets.pdl.status_bar_widget import ProgrammingStatusWidget
-
                     if isinstance(w, ProgrammingStatusWidget):
                         visible = visible and (w.tcl or w.tgo)
                 table.setRowHidden(row, not visible)
@@ -249,9 +250,9 @@ class ProgrammazioneTab(QWidget):
                     h += table.rowHeight(r)
             box = table.parentWidget()
             if isinstance(box, StandardGroupBox):
-                box.setVisible(h > 25)
-            table.setMinimumHeight(h + 20 if h > 25 else 0)
-            table.setMaximumHeight(h + 20 if h > 25 else 0)
+                box.setVisible(h > 25)  # noqa: PLR2004
+            table.setMinimumHeight(h + 20 if h > 25 else 0)  # noqa: PLR2004
+            table.setMaximumHeight(h + 20 if h > 25 else 0)  # noqa: PLR2004
 
     def _on_run_clicked(self) -> None:
         """Avvia il controllo programmazione tramite bot SafeWork."""
@@ -270,17 +271,15 @@ class ProgrammazioneTab(QWidget):
         start_date, end_date, _ = PDLPeriodManager.get_week_range(self.week_selector.currentIndex())
 
         # 3. Istanza Bot
-        from src.bots.safework.programmazione.bot import SafeWorkProgrammazioneBot
-
         config = config_manager.load_config()
-        bot = SafeWorkProgrammazioneBot(
+        bot_config = SeleniumBotConfig(
             username=username,
             password=password,
-            account_type=account_type,
             headless=config.get("browser_headless", False),
             timeout=config.get("browser_timeout", 30),
             download_path=config_manager.get_download_path(),
         )
+        bot = SafeWorkProgrammazioneBot(config=bot_config, account_type=account_type)
 
         # 4. Worker
         bot_data = {

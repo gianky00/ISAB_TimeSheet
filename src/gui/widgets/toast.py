@@ -5,6 +5,7 @@ Sistema di notifiche toast non-blocking con supporto hover e tempi differenziati
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from PySide6.QtCore import (
@@ -38,6 +39,19 @@ if TYPE_CHECKING:
     from PySide6.QtGui import QEnterEvent
 
 
+@dataclass
+class ToastParams:
+    """Configurazione per la visualizzazione di un toast."""
+
+    message: str
+    toast_type: str = "info"
+    duration: int = 3000
+    pulse: bool = False
+    is_rich_text: bool = False
+    parent: QWidget | None = None
+    position: str = "top"
+
+
 class Toast(QWidget):
     """Notifica toast animata non bloccante con supporto pausa al passaggio del mouse."""
 
@@ -56,33 +70,15 @@ class Toast(QWidget):
         Type.ERROR: (Icons.X_CIRCLE, "error"),
     }
 
-    def __init__(
-        self,
-        message: str,
-        toast_type: str = Type.INFO,
-        duration: int = 3000,
-        pulse: bool = False,
-        parent: QWidget | None = None,
-        is_rich_text: bool = False,
-    ) -> None:
-        """
-        Inizializza il toast con i parametri di stile e durata.
-
-        Args:
-          message: Il messaggio da visualizzare.
-          toast_type: Tipo di toast (info, success, warning, error).
-          duration: Durata della visualizzazione in millisecondi.
-          pulse: Se True, attiva l'animazione di pulsazione.
-          parent: Widget genitore.
-          is_rich_text: Se True, abilita il rendering HTML (sanificato).
-        """
-        super().__init__(parent)
-        self._duration = duration
-        self._type = toast_type
-        self._pulse = pulse
+    def __init__(self, params: ToastParams) -> None:
+        """Inizializza il toast con i parametri di configurazione."""
+        super().__init__(params.parent)
+        self._duration = params.duration
+        self._type = params.toast_type
+        self._pulse = params.pulse
         self._palette = get_palette()
-        self._msg_text = message
-        self._is_rich_text = is_rich_text
+        self._msg_text = params.message
+        self._is_rich_text = params.is_rich_text
         self._original_container_size: QSize | None = None
 
         self.setWindowFlags(
@@ -93,7 +89,7 @@ class Toast(QWidget):
         # Abilita il tracking del mouse per l'hover
         self.setMouseTracking(True)
 
-        self._setup_ui(message)
+        self._setup_ui(params.message)
         self._setup_animation()
 
         # Timer di chiusura persistente per permettere pausa/riavvio
@@ -113,7 +109,7 @@ class Toast(QWidget):
         cont_margin_v = 12
         container_layout.setContentsMargins(cont_margin_h, cont_margin_v, cont_margin_h, cont_margin_v)
 
-        icon_path, color_key = self.TYPE_CONFIG.get(self._type, self.TYPE_CONFIG[self.Type.INFO])
+        icon_path, color_key = self.TYPE_CONFIG.get(self._type, self.TYPE_CONFIG[Toast.Type.INFO])
         accent = getattr(self._palette, color_key, self._palette.info)
 
         self.container.setStyleSheet(
@@ -247,7 +243,7 @@ class ToastManager(QObject):
             cls._instance = cls()
         return cls._instance
 
-    def show(
+    def show(  # noqa: PLR0913
         self,
         message: str,
         toast_type: str = Toast.Type.INFO,
@@ -277,7 +273,15 @@ class ToastManager(QObject):
                 return
 
         parent = QApplication.activeWindow()
-        toast = Toast(message, toast_type, duration, pulse, parent, is_rich_text=is_rich_text)
+        params = ToastParams(
+            message=message,
+            toast_type=toast_type,
+            duration=duration,
+            pulse=pulse,
+            parent=parent,
+            is_rich_text=is_rich_text,
+        )
+        toast = Toast(params)
         toast._msg_text = message  # Memorizza il testo per il filtro duplicati
 
         if parent:

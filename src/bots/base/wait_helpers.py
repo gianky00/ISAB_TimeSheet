@@ -201,46 +201,39 @@ def execute_with_wait(
 # ============================================================================
 
 
-def poll_for_file(
-    directory: Path | str,
-    pattern: str = "*",
-    timeout: int = 60,
-    poll_interval: float = 0.5,
-    min_age: float | None = None,
-    exclude_patterns: list[str] | None = None,
-) -> str | None:
+from src.bots.base.file_polling_params import FilePollingParams
+
+# ... (rest of imports)
+
+
+def poll_for_file(params: FilePollingParams) -> str | None:
     """
     Attende che un file appaia in una directory usando polling.
     Approccio PERMISSIVO: ritorna il file più recente che soddisfa i criteri.
 
     Args:
-      directory: Directory da monitorare.
-      pattern: Glob pattern (es: "*.xlsx").
-      timeout: Timeout massimo in secondi.
-      poll_interval: Intervallo tra polling in secondi.
-      min_age: Timestamp minimo del file (unix timestamp). Se None, accetta qualsiasi file.
-      exclude_patterns: Pattern da escludere (es: [".crdownload", ".tmp"]).
+      params: Oggetto FilePollingParams con i parametri di polling.
 
     Returns:
       Path assoluto del file più recente, o None se timeout.
     """
-    directory_path = Path(directory)
+    directory_path = Path(params.directory)
     if not directory_path.exists():
         logger.error(f"Directory does not exist: {directory_path}")
         return None
 
-    exclude_patterns = exclude_patterns or []
+    exclude_patterns = params.exclude_patterns or []
     start_time = time.time()
 
-    while time.time() - start_time < timeout:
+    while time.time() - start_time < params.timeout:
         if _is_any_download_in_progress(directory_path):
-            time.sleep(poll_interval)
+            time.sleep(params.poll_interval)
             continue
 
-        files = list(directory_path.glob(pattern))
-        _log_debug_poll_info(directory_path, pattern, files, start_time)
+        files = list(directory_path.glob(params.pattern))
+        _log_debug_poll_info(directory_path, params.pattern, files, start_time)
 
-        valid_files = _filter_valid_files(files, exclude_patterns, min_age)
+        valid_files = _filter_valid_files(files, exclude_patterns, params.min_age)
 
         if valid_files:
             # Ritorna il più recente basandosi sull'effective_time
@@ -248,9 +241,12 @@ def poll_for_file(
             logger.info(f"File trovato: {latest.name}")
             return str(latest.absolute())
 
-        time.sleep(poll_interval)
+        time.sleep(params.poll_interval)
 
-    logger.warning(f"Timeout polling for file in {directory_path} with pattern {pattern} (min_age={min_age})")
+    logger.warning(
+        f"Timeout polling for file in {directory_path} with pattern {params.pattern} "
+        f"(min_age={params.min_age})"
+    )
     return None
 
 

@@ -63,7 +63,7 @@ class BotTimelineComponent(ActivityTimelineWidget):
     """Versione specializzata della timeline per i bot."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        super().__init__(parent)  # type: ignore
+        super().__init__(parent)
         self.setContentsMargins(10, 10, 10, 10)
 
     def reset(self) -> None:

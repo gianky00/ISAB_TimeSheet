@@ -10,6 +10,7 @@ from typing import Any, ClassVar
 
 from src.bots.base.base_bot import StepStatus
 from src.bots.base.selenium_base_bot import SeleniumBaseBot
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
 from src.bots.portale_fornitori.timbrature.pages.timbrature_page import TimbraturePage
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
@@ -27,8 +28,8 @@ class TimbratureBot(SeleniumBaseBot):
 
     @property
     def name(self) -> str:
-        """Restituisce il nome del bot."""
-        return "Timbrature"
+        """Restituisce l'ID del bot."""
+        return "timbrature"
 
     @property
     def description(self) -> str:
@@ -54,8 +55,16 @@ class TimbratureBot(SeleniumBaseBot):
             {"name": "data_a", "label": "Data A", "width": 100},
         ]
 
-    def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs) -> None:
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        config: SeleniumBotConfig,
+        data_da: str = "",
+        data_a: str = "",
+        fornitore: str = "",
+        **kwargs: Any,
+    ) -> None:
+        """Inizializza il bot Timbrature."""
+        super().__init__(config=config)
         self.data_da = data_da
         self.data_a = data_a
         self.fornitore = fornitore

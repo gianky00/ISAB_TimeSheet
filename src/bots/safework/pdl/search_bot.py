@@ -11,6 +11,7 @@ from typing import Any, ClassVar
 import pandas as pd
 
 from src.bots.base.base_bot import StepStatus
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
 from src.bots.safework.base import SafeworkBaseBot
 from src.bots.safework.common.locators import SafeWorkLocators
 from src.core.database import db_manager
@@ -36,41 +37,38 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
 
     def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
         """
         Inizializza il bot di ricerca PDL.
 
         Args:
-          username: Nome utente SafeWork.
-          password: Password SafeWork.
-          headless: Se avviare il browser in modalità nascosta.
-          timeout: Tempo di attesa per Selenium.
-          download_path: Cartella per il download degli Excel.
+          config: Configurazione standardizzata del bot.
           account_type: Tipo di account (Esecutore/ISAB).
         """
-        super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
+        super().__init__(config, account_type=account_type)
         self.sites = ["IGCC", "ISAB Nord", "ISAB Sud"]
 
     @staticmethod
     def get_name() -> str:
-        """Restituisce il nome identificativo del bot."""
+        """Restituisce il nome visualizzato del bot."""
         return "Ricerca PDL"
-
-    @staticmethod
-    def get_columns() -> list[dict[str, Any]]:
-        """Definisce le colonne richieste (nessuna per questo bot)."""
-        return []
 
     @property
     def name(self) -> str:
         """Restituisce l'ID del bot."""
         return "ricerca_pdl"
+
+    @property
+    def description(self) -> str:
+        """Restituisce la descrizione del bot."""
+        return "Ricerca massiva ed esportazione Excel dei PDL da SafeWork"
+
+    @staticmethod
+    def get_columns() -> list[dict[str, Any]]:
+        """Restituisce le colonne richieste (nessuna)."""
+        return []
 
     def run(self, data: list[dict[str, Any]]) -> bool:
         """
@@ -163,8 +161,11 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             return None
 
         if self.ricerca_pdl_page.esporta_excel():
-            return poll_for_new_file(  # type: ignore
-                directory=self.download_path, files_before=files_before, pattern="Ricerca*.xlsx", timeout=600
+            from src.bots.base.wait_helpers import PollConfig
+
+            return poll_for_new_file(
+                PollConfig(directory=self.download_path, pattern="Ricerca*.xlsx", timeout=600),
+                files_before=files_before,
             )
         return None
 

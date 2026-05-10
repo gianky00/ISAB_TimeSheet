@@ -19,9 +19,10 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-@dataclass
+@dataclass(frozen=True)
 class BotConfig:
     """Configurazione opzionale per l'inizializzazione del bot."""
+
     headless: bool = False
     timeout: int = Timeouts.DEFAULT
     download_path: str = ""

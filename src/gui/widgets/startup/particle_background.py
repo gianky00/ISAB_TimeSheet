@@ -1,3 +1,4 @@
+# ruff: noqa: PLR2004
 """
 SyncroJob - Particle Background
 Sfondo animato con particelle, connessioni neurali, circuiti e convergenza finale.
@@ -44,7 +45,7 @@ class Particle:
         self.size = 1.2 + (secrets.randbelow(2800) / 1000.0)  # 1.2 to 4.0
         self.speed = 0.2 + (secrets.randbelow(500) / 1000.0)  # 0.2 to 0.7
         self.opacity = 0.15 + (secrets.randbelow(300) / 1000.0)  # 0.15 to 0.45
-        self.phase = (secrets.randbelow(6283) / 1000.0)  # 0 to 6.283
+        self.phase = secrets.randbelow(6283) / 1000.0  # 0 to 6.283
         self.w, self.h = w, h
 
     def update(self) -> None:

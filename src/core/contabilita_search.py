@@ -3,14 +3,14 @@ Bot TS - Contabilita Search
 Gestisce le funzionalità di ricerca per i dati della Contabilità Strumentale.
 """
 
-import logging
 import sqlite3
 from pathlib import Path
 from typing import Any
 
 from src.core.database import db_manager
+from src.core.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ContabilitaSearch:

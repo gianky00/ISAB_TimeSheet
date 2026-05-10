@@ -17,6 +17,7 @@ from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.base.base_bot import StepStatus
+from src.bots.base.selenium_bot_config import SeleniumBotConfig
 from src.bots.base.wait_helpers import poll_for_new_file
 from src.bots.safework.base import SafeworkBaseBot
 from src.bots.safework.common.locators import SafeWorkLocators
@@ -41,15 +42,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def __init__(
         self,
-        username: str,
-        password: str,
-        headless: bool = False,
-        timeout: int = 30,
-        download_path: str = "",
+        config: SeleniumBotConfig,
         account_type: str = "Esecutore",
     ) -> None:
         """Inizializza il bot SafeWork PDL."""
-        super().__init__(username, password, headless, timeout, download_path, account_type=account_type)
+        super().__init__(config, account_type=account_type)
         self.downloaded_files: list[str] = []
         self.missing_pdls: list[str] = []
 
@@ -57,6 +54,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     def get_name() -> str:
         """Restituisce il nome visualizzato del bot."""
         return "Scarico PDL"
+
+    @property
+    def description(self) -> str:
+        """Restituisce la descrizione del bot."""
+        return "Scarica e stampa Permessi di Lavoro da SafeWork"
 
     @staticmethod
     def get_columns() -> list[dict[str, Any]]:
@@ -252,7 +254,12 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
             # Cerchiamo il file
             self.log(f"[ATTESA] Polling per file PDF di {pdl_num}...")
-            f = poll_for_new_file(self.download_path, files_before, pattern="*.pdf", timeout=60)
+            from src.bots.base.wait_helpers import PollConfig
+
+            f = poll_for_new_file(
+                PollConfig(directory=self.download_path, pattern="*.pdf", timeout=60),
+                files_before=files_before,
+            )
             if f:
                 dest = Path(self.download_path) / f"temp_p1_{int(ts)}.pdf"
                 Path(f).rename(dest)
@@ -288,7 +295,12 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self._gestisci_dialogo_stampa_tutte()
 
             self.log(f"[ATTESA] Polling per file PDF Parte Seconda di {pdl_num}...")
-            f = poll_for_new_file(self.download_path, files_before, pattern="*.pdf", timeout=90)
+            from src.bots.base.wait_helpers import PollConfig
+
+            f = poll_for_new_file(
+                PollConfig(directory=self.download_path, pattern="*.pdf", timeout=90),
+                files_before=files_before,
+            )
             if f:
                 dest = Path(self.download_path) / f"temp_p2_{int(ts)}.pdf"
                 Path(f).rename(dest)

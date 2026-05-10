@@ -78,7 +78,7 @@ class ReportWorker(QThread):
     def run(self) -> None:
         """Esegue il processo di raccolta diagnostica richiamando il core BugReporter."""
         path, msg, files = BugReporter.collect_diagnostics(
-            include_enterprise_logs=self.include_logs,
+            include_structured_logs=self.include_logs,
             include_analytics=self.include_analytics,
             include_audit=self.include_audit,
             trace_id=self.trace_id or None,
@@ -266,7 +266,7 @@ class BugReportDialog(QDialog):
         """Aggiorna dinamicamente la stima della dimensione del file ZIP finale."""
         try:
             size = BugReporter.get_estimated_size(
-                include_enterprise_logs=self.chk_include_logs.isChecked(),
+                include_structured_logs=self.chk_include_logs.isChecked(),
                 include_analytics=self.chk_include_analytics.isChecked(),
                 include_audit=self.chk_include_audit.isChecked(),
             )

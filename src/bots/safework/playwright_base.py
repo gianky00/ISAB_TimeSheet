@@ -31,7 +31,10 @@ class PlaywrightSafeworkBaseBot(PlaywrightBaseBot):
         download_path: str = "",
         account_type: str = "Esecutore",
     ) -> None:
-        super().__init__(username, password, headless, timeout, download_path)
+        from src.bots.base.base_bot import BotConfig
+
+        config = BotConfig(headless=headless, timeout=timeout, download_path=download_path)
+        super().__init__(username, password, config)
         self.account_type = account_type
         self.safework_login_page: PlaywrightSafeWorkLoginPage | None = None
 
