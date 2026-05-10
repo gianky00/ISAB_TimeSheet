@@ -86,7 +86,7 @@ class AuditLogWidget(QWidget):
         self._load_categories()
         # Il refresh iniziale viene differito a showEvent per non bloccare lo startup
 
-    def showEvent(self, event: QShowEvent) -> None:  # type: ignore[override]
+    def showEvent(self, event: QShowEvent) -> None:
         """Esegue il primo refresh solo quando il widget diventa visibile."""
         super().showEvent(event)
         if not self._first_refresh_done:

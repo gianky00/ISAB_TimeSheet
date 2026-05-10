@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-call"
 from contextlib import suppress
 
 from selenium.common.exceptions import TimeoutException

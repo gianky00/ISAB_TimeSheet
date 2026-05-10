@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 from contextlib import suppress
 
 from PySide6.QtCore import (

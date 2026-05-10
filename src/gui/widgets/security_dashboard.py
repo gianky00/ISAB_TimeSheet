@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 from typing import Any
 
 from PySide6.QtCore import Qt, QTimer

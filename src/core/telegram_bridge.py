@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Telegram UI Bridge
 Punto di ingresso centrale per la comunicazione tra il servizio Telegram e la Desktop UI.
@@ -20,6 +19,8 @@ from .telegram.bridge.system_handler import TelegramSystemHandler
 from .telegram.bridge.ui_commands import TelegramUICommands
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from src.gui.main_window.main import MainWindow
 
 logger = logging.getLogger(__name__)
@@ -67,7 +68,7 @@ class TelegramUIBridge(QObject):
 
     def _dispatch_command(self, command: str, params: dict[str, Any]) -> None:
         """Smista i comandi testuali agli handler UI o Sistema."""
-        cmd_map = {
+        cmd_map: dict[str, Callable[[dict[str, Any]], Any]] = {
             "search_db_pdf": self.system_handler.handle_search_db_pdf,
             "run_pdl": self.ui_commands.run_pdl_bot,
             "list_pdl": lambda _: self.ui_commands.list_pdl(),
@@ -85,7 +86,7 @@ class TelegramUIBridge(QObject):
 
     def _dispatch_data(self, data_type: str, items: list[str]) -> None:
         """Smista l'inserimento dati al data processor."""
-        data_map = {
+        data_map: dict[str, Callable[[list[str]], Any]] = {
             "pdl": self.data_processor.process_pdl_items,
             "oda": self.data_processor.process_oda_items,
             "bp": self.data_processor.process_bp_items,

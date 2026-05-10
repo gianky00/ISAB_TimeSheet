@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Main Window
 Finestra principale dell'applicazione che coordina tutti i servizi, i controller e i componenti dell'interfaccia utente.
@@ -129,7 +128,8 @@ class MainWindow(QMainWindow):
         self.telegram_bridge.setup_connections()
 
         # Applica Tema Default
-        if app_instance := QApplication.instance():
+        app_instance = QApplication.instance()
+        if isinstance(app_instance, QApplication):
             apply_theme(app_instance, config_manager.get_config_value("theme", "light"))
 
         self._setup_shortcuts()

@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - Certificati Tree Widget
 Componente specializzato per la visualizzazione gerarchica dei certificati campione.

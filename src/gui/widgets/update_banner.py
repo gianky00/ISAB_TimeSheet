@@ -1,5 +1,4 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
-from PySide6.QtCore import (  # type: ignore
+from PySide6.QtCore import (
     Property,
     QEasingCurve,
     QPropertyAnimation,

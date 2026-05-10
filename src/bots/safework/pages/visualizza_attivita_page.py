@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore, no-untyped-call"
 """
 SyncroJob - SafeWork Visualizza AttivitàPage
 Gestione della pagina Visualizza Attivitàper la programmazione.
@@ -66,7 +65,7 @@ class VisualizzaAttivitaPage:
     def get_rows(self) -> list[Any]:
         """Restituisce le righe della tabella risultati."""
         try:
-            return self.driver.find_elements(*SafeWorkLocators.ROWS)  # type: ignore[no-any-return]
+            return self.driver.find_elements(*SafeWorkLocators.ROWS)
         except Exception:
             return []
 

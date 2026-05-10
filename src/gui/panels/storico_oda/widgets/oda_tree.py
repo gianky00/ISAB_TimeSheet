@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - ODA Tree Widget
 Widget specializzato per la visualizzazione gerarchica degli Ordini di Acquisto.

@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - Playwright SafeWork PDL Search Bot
 Versione Playwright del bot per la ricerca massiva ed esportazione Excel dei PDL.

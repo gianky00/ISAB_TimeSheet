@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, no-untyped-call"
 """
 Page Object per la gestione Prenotazioni BP sul Portale Fornitori.
 """

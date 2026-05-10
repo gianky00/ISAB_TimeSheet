@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - SafeWork Programmazione Bot
 Bot modulare per il monitoraggio della programmazione settimanale tramite Export Excel (Ricerca Massiva).

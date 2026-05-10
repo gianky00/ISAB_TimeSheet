@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - Certificati PDF Exporter
 Motore di esportazione specializzato per la generazione di report PDF multipagina.

@@ -1,6 +1,0 @@
-﻿src\gui\widgets\contabilita\consuntivo\crea_nuovo_tab.py:107:77: error: Name
-"Any" is not defined  [name-defined]
-    ...intervention(self, layout: QVBoxLayout, opts: dict[str, Any]) -> None:
-                                                               ^
-src\gui\widgets\contabilita\consuntivo\crea_nuovo_tab.py:107:77: note: Did you forget to import it from "typing"? (Suggestion: "from typing import Any")
-Found 1 error in 1 file (checked 406 source files)

@@ -7,7 +7,7 @@ Badge animato che mostra un punto pulsante con intensità variabile.
 import contextlib
 from typing import Any, ClassVar
 
-from PySide6.QtCore import Property, QVariantAnimation
+from PySide6.QtCore import Property, QPropertyAnimation
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 from src.gui.styles import COLORS
@@ -45,12 +45,11 @@ class PriorityBadge(QWidget):
         layout.addWidget(self.dot)
 
     def _setup_animation(self) -> None:
-        self.anim = QVariantAnimation(self)
+        self.anim = QPropertyAnimation(self, b"pulse_scale")
         self.anim.setDuration(1200)
         self.anim.setStartValue(0.6)
         self.anim.setEndValue(1.1)
         self.anim.setLoopCount(-1)
-        self.anim.valueChanged.connect(self.set_pulse_scale)
         self.anim.start()
 
     def set_priority(self, priority: str) -> None:
@@ -91,10 +90,11 @@ class PriorityBadge(QWidget):
         self._pulse_scale = value
         # Applichiamo un effetto di ridimensionamento minimo o opacità
         with contextlib.suppress(Exception):
-            self.dot.setOpacity(value) if hasattr(self.dot, "setOpacity") else None
+            if hasattr(self.dot, "setOpacity"):
+                self.dot.setOpacity(value)
 
         # In alternativa cambiamo la size
         size = int(8 * value)
         self.dot.setFixedSize(size, size)
 
-    pulseScale = Property(float, fget=get_pulse_scale, fset=set_pulse_scale)  # noqa: N815
+    pulse_scale = Property(float, fget=get_pulse_scale, fset=set_pulse_scale)

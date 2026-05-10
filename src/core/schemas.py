@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, misc, no-any-return"
 from dataclasses import dataclass
 from typing import Any
 

@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported"
 """
 SyncroJob - Contabilità Sync Engine
 Engine specializzato per la sincronizzazione dei dati contabili.

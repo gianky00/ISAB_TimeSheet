@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - Playwright SafeWork Login Page
 Encapsulamento della logica di login SafeWork usando Playwright.

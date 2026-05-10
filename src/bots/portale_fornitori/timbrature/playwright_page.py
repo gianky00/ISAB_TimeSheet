@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, name-defined, no-untyped-call"
 """
 SyncroJob - Playwright Timbrature Page
 Page Object Model per la sezione Timbrature usando Playwright.

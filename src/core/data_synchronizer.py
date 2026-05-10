@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported"
 """
 SyncroJob - Data Synchronizer
 Gestisce la sincronizzazione dei dati importati delegando agli engine specializzati.
@@ -13,6 +12,7 @@ from src.core.importers.contabilita import ContabilitaImporter
 from src.core.importers.giornaliere import GiornaliereImporter
 from src.core.importers.scarico_ore import ScaricoOreImporter
 from src.core.importers.storico_oda import StoricoOdaImporter
+from src.core.sync.base import SyncTarget
 from src.core.sync.contabilita_sync import ContabilitaSyncEngine
 from src.core.sync.smart_sync import SmartSyncEngine
 
@@ -56,10 +56,9 @@ class DataSynchronizer:
     @classmethod
     def sync_storico_oda(cls, db_path: Path, rows_to_insert: list[tuple[Any, ...]]) -> tuple[int, int]:
         """Sincronizza lo storico ODA via Upsert intelligente."""
+        target = SyncTarget(db_path, "storico_oda", getattr(StoricoOdaImporter, "STORICO_ODA_COLS", []))
         res = SmartSyncEngine.sync_upsert_smart(
-            db_path,
-            "storico_oda",
-            getattr(StoricoOdaImporter, "STORICO_ODA_COLS", []),
+            target,
             rows_to_insert,
             conflict_cols=["oda", "pos_oda", "num_riga"],
         )
@@ -73,10 +72,9 @@ class DataSynchronizer:
     @classmethod
     def sync_attivita_programmate(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
         """Sincronizza le attivitàprogrammate."""
+        target = SyncTarget(db_path, "attivita_programmate", getattr(AttivitaImporter, "ATTIVITA_COLS", []))
         res = SmartSyncEngine.sync_upsert_smart(
-            db_path,
-            "attivita_programmate",
-            getattr(AttivitaImporter, "ATTIVITA_COLS", []),
+            target,
             rows,
             conflict_cols=["oda"],
         )
@@ -85,10 +83,9 @@ class DataSynchronizer:
     @classmethod
     def sync_scarico_ore(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
         """Sincronizza lo scarico ore."""
+        target = SyncTarget(db_path, "scarico_ore", getattr(ScaricoOreImporter, "SCARICO_ORE_COLS", []))
         res = SmartSyncEngine.sync_upsert_smart(
-            db_path,
-            "scarico_ore",
-            getattr(ScaricoOreImporter, "SCARICO_ORE_COLS", []),
+            target,
             rows,
             conflict_cols=["oda"],
         )
@@ -97,10 +94,11 @@ class DataSynchronizer:
     @classmethod
     def sync_certificati_campione(cls, db_path: Path, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
         """Sincronizza i certificati campione."""
+        target = SyncTarget(
+            db_path, "certificati_campione", getattr(CertificatiImporter, "CERTIFICATI_COLS", [])
+        )
         res = SmartSyncEngine.sync_upsert_smart(
-            db_path,
-            "certificati_campione",
-            getattr(CertificatiImporter, "CERTIFICATI_COLS", []),
+            target,
             rows,
             conflict_cols=["id_strumento", "certificato"],
         )

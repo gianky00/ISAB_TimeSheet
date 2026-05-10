@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, no-untyped-call"
 """
 SyncroJob - Playwright Base Page Object
 Classe base condivisa per tutti i Page Objects basati su Playwright.

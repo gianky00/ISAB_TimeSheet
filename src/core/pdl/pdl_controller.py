@@ -32,10 +32,11 @@ class PDLController:
             results = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
             dtos = [PdlRowDTO.from_db_row(r) for r in results]
             self._cache[cache_key] = dtos
-            return dtos  # noqa: TRY300
         except Exception:
             logger.exception("Errore caricamento PDL")
             return []
+        else:
+            return dtos
 
     def clear_cache(self) -> None:
         """Svuota la cache interna dei risultati."""

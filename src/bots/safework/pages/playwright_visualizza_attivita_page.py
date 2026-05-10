@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore, no-untyped-call"
 """
 SyncroJob - Playwright SafeWork Visualizza AttivitàPage
 Gestione della pagina Visualizza Attivitàper la programmazione usando Playwright.

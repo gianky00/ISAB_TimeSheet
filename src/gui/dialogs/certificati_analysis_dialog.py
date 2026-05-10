@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - Certificati Analysis Dialog
 Modulo specializzato per la visualizzazione e l'esportazione delle scadenze certificati.
@@ -390,7 +389,7 @@ class ScadenzeAnalysisDialog(QDialog):
 
     def _capture_widgets_as_images(self) -> list[str]:
         """Cattura tutti i componenti visuali come immagini PNG temporanee."""
-        widgets = [self.header, self.stats_frame]
+        widgets: list[QWidget] = [self.header, self.stats_frame]
 
         layout = self.content_widget.layout()
         if layout:

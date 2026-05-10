@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - Contabilità Panel
 Pannello centrale per la visualizzazione e l'analisi della Contabilità Strumentale.
@@ -341,7 +340,7 @@ class ContabilitaPanel(QWidget):
             self._on_search_changed(search_text)
 
     def _sync_tab_widget(
-        self, tab_widget: AnimatedTabWidget, target_years: list[int], tab_class: type[QWidget]
+        self, tab_widget: AnimatedTabWidget, target_years: list[int], tab_class: Any
     ) -> None:
         """Aggiorna i tab di un AnimatedTabWidget senza distruggere i widget esistenti per gli stessi anni."""
         existing_years = {}

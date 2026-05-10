@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, name-defined, no-untyped-call"
 """
 SyncroJob - Timbrature Page
 Page Object Model for the Timbrature section of the ISAB portal.

@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-call"
 """
 SyncroJob - Playwright Prenota BP Bot
 Versione Playwright del bot per la prenotazione automatica dei Badge Provvisori (BP).

@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, no-untyped-call"
 """
 SyncroJob - Playwright Prenota BP Page
 Page Object Model per la gestione Prenotazioni BP usando Playwright.

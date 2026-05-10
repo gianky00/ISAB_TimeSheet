@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, no-untyped-call"
 """
 SyncroJob - Playwright Dettagli OdA Page
 Page Object Model per Dettagli OdA usando Playwright.

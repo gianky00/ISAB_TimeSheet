@@ -1,4 +1,3 @@
-# mypy: disable-error-code="name-defined, var-annotated, unreachable"
 """
 SyncroJob - Splash Screen
 Gestisce l'inizializzazione dell'applicazione con animazioni fluide e effetti 3D.
@@ -11,13 +10,16 @@ from typing import Any
 
 from PySide6.QtCore import (
     QEasingCurve,
+    QPoint,
     QPropertyAnimation,
     Qt,
+    QThread,
     QTimer,
 )
 from PySide6.QtGui import (
     QColor,
     QIcon,
+    QMouseEvent,
 )
 from PySide6.QtWidgets import (
     QDialog,
@@ -55,6 +57,10 @@ class StartupDialog(QDialog):
     CONTENT_HEIGHT = 460
     # Margine per l'ombra (per evitare che venga tagliata creando "punte")
     SHADOW_MARGIN = 40
+
+    _thread: QThread | None
+    _worker: Any
+    _drag_pos: QPoint | None
 
     def __init__(self) -> None:
         super().__init__()
@@ -334,13 +340,13 @@ class StartupDialog(QDialog):
         if hasattr(self, "console_overlay"):
             self.console_overlay.setGeometry(self.log_frame.rect())
 
-    def mousePressEvent(self, event: Any) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         """Inizia il drag della finestra tramite mouse."""
         if event.button() == Qt.MouseButton.LeftButton:
             self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
             event.accept()
 
-    def mouseMoveEvent(self, event: Any) -> None:
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         """Gestisce il trascinamento e l'effetto 3D Tilt."""
         if event.buttons() & Qt.MouseButton.LeftButton and self._drag_pos:
             new_pos = event.globalPosition().toPoint() - self._drag_pos
@@ -362,7 +368,7 @@ class StartupDialog(QDialog):
             parallax_factor = 5
             self.particles.apply_parallax(rel_x * parallax_factor, rel_y * parallax_factor)
 
-    def mouseReleaseEvent(self, event: Any) -> None:
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         """Interrompe il drag della finestra."""
         self._drag_pos = None
 

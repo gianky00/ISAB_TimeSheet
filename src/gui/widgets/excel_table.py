@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - Excel Table Widgets (Refactored)
 Widget tabellari avanzati con supporto mixin per Clipboard.

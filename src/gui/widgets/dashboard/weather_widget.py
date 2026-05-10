@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, no-untyped-call"
 """
 SyncroJob - Weather Widget
 Visualizza le previsioni meteo locali (Priolo Gargallo) utilizzando il servizio dedicato.

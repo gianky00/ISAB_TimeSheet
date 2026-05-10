@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, no-untyped-call"
 """
 SyncroJob - Playwright Dettagli OdA Bot
 Versione Playwright del bot per lo scarico dei dettagli OdA.

@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 Timeline Widget Professionale - Standard Cyber-Stepper V5 (Cyber-Rail Ultra).
 Design d'élite con trasparenze reali, bordi neon e ombre portate.
@@ -19,6 +18,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import (
     QColor,
+    QEnterEvent,
     QFont,
     QFontMetrics,
     QPainter,
@@ -125,7 +125,7 @@ class ActivityTimelineWidget(QWidget):
         self._border_pulse_anim.setLoopCount(-1)
         self._border_pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
 
-    def enterEvent(self, event: QEvent) -> None:
+    def enterEvent(self, event: QEnterEvent) -> None:
         """
         Avvia la pulsazione del bordo al passaggio del mouse.
 

@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Bot Parameters Widget
 Widget riutilizzabile per la configurazione dei parametri comuni a tutti i bot (Fornitore, Date, Percorso).
@@ -66,16 +65,16 @@ class HoverPulseFrame(QFrame):
         self._anim.setLoopCount(-1)
         self._anim.setEasingCurve(QEasingCurve.Type.InOutSine)
 
-    @Property(float)
-    def pulse_value(self) -> float:
+    def get_pulse_value(self) -> float:
         """Restituisce il valore corrente della pulsazione per l'animazione del bordo."""
         return self._pulse_val
 
-    @pulse_value.setter
-    def pulse_value(self, v: float) -> None:
+    def set_pulse_value(self, v: float) -> None:
         """Imposta il valore della pulsazione e forza il ridisegno del widget."""
         self._pulse_val = v
         self.update()
+
+    pulse_value = Property(float, fget=get_pulse_value, fset=set_pulse_value)
 
     def enterEvent(self, event: Any) -> None:
         """Avvia l'animazione di pulsazione del bordo all'ingresso del mouse."""
@@ -85,7 +84,7 @@ class HoverPulseFrame(QFrame):
     def leaveEvent(self, event: Any) -> None:
         """Interrompe l'animazione e ripristina lo stato solido all'uscita del mouse."""
         self._anim.stop()
-        self.pulse_value = 1.0  # type: ignore[method-assign]
+        self.set_pulse_value(1.0)
         super().leaveEvent(event)
 
     def paintEvent(self, event: Any) -> None:

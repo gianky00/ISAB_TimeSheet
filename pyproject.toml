@@ -273,35 +273,17 @@ module = [
     "fitz.*",                    # pymupdf
     "telegram.*",                # python-telegram-bot
     "pandera.*",
-    "tenacity.*",
-    "loguru.*",
-    "faker.*",
-    "pyinstaller.*",
-    "PyInstaller.*",
     "platformdirs.*",
     "numpy.*",
     "psutil.*",
-    "win32api.*",
     "win32con.*",
-    "win32gui.*",
     "win32print.*",
     "win32ui.*",
-    "pywintypes.*",
-    "scalene.*",
-    "icecream.*",
     "email_validator.*",
     "jaraco.*",
-    "diagrams.*",
-    "mutmut.*",
     "playwright.*",
 ]
 ignore_missing_imports = true
-
-# ── Override per i test (piu' permissivo) ────────────────────
-[[tool.mypy.overrides]]
-module = "tests.*"
-disallow_untyped_defs = false
-disallow_untyped_decorators = false
 
 
 [tool.deptry]

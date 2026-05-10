@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, no-untyped-call"
 """
 SyncroJob - Dettagli OdA Page
 Page Object Model for Dettagli OdA.

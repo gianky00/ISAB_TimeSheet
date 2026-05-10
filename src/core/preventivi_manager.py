@@ -148,11 +148,11 @@ class PreventiviGeneratorManager:
                 if match:
                     num = int(match.group(1))
                     max_num = max(max_num, num)
-
-            return f"{max_num + 1:03d}"
         except Exception as e:
             logger.warning(f"Errore calcolo progressivo: {e}")
             return "001"
+        else:
+            return f"{max_num + 1:03d}"
 
     def read_existing_data(self, file_path: str) -> dict[str, Any]:
         """Legge i dati da un file Excel esistente per popolare la UI."""
@@ -265,9 +265,10 @@ class PreventiviGeneratorManager:
             self._sanitize_excel_file(str(dest_file))
 
             success, msg = self._fill_excel_data(str(dest_file), data)
-            return success, str(dest_file) if success else msg
         except Exception as e:
             return False, str(e)
+        else:
+            return success, str(dest_file) if success else msg
 
     def _fill_excel_data(self, file_path: str, data: dict[str, Any]) -> tuple[bool, str]:
         """Inietta i dati nelle celle specifiche del foglio 'inserimento datì."""
@@ -299,9 +300,10 @@ class PreventiviGeneratorManager:
                 vba_ref.Range("A6").Value = data.get("data", "")
 
             self.wb.Save()
-            return True, "OK"  # noqa: TRY300
         except Exception as e:
             return False, str(e)
+        else:
+            return True, "OK"
         finally:
             if self.wb:
                 self.wb.Close(False)

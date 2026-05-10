@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, unused-ignore, arg-type"
 """
 SyncroJob - MultiSelect Filter Widget
 Widget professionale per la selezione multipla con ricerca e chip.

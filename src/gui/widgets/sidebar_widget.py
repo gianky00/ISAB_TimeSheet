@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Sidebar Widget (Refactored V8.8 - Performance Optimized V4)
 Navigazione magnetica professionale a 3 livelli.
@@ -7,10 +6,8 @@ Risolti bug di sovrapposizione e artefatti grafici. Massima fluidità garantita.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-from PySide6.QtCore import Property, Qt, QTimer, Signal
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import Property, QEvent, Qt, QTimer, Signal
+from PySide6.QtGui import QEnterEvent, QIcon
 from PySide6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
@@ -29,9 +26,6 @@ from src.utils.helpers import get_asset_path
 
 from .sidebar.animations import SidebarAnimationManager
 from .sidebar.components import SidebarChildButton, SidebarGroup, SidebarSubGroup
-
-if TYPE_CHECKING:
-    from PySide6.QtGui import QEnterEvent
 
 
 class SidebarWidget(QFrame):
@@ -480,12 +474,12 @@ class SidebarWidget(QFrame):
         for i, b in enumerate(self.notif_child_btns):
             b.setChecked(i == sub)
 
-    def enterEvent(self, event: QEnterEvent | None) -> None:
+    def enterEvent(self, event: QEnterEvent) -> None:
         """Gestisce l'evento di entrata del mouse (espansione)."""
         self._set_collapsed(False)
         super().enterEvent(event)
 
-    def leaveEvent(self, event: Any) -> None:
+    def leaveEvent(self, event: QEvent) -> None:
         """Gestisce l'evento di uscita del mouse (collasso)."""
         if getattr(self, "_drag_in_progress", False):
             super().leaveEvent(event)

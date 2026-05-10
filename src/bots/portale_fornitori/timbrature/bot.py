@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore, no-untyped-def, no-untyped-call"
 """
 SyncroJob - Timbrature Bot
 Bot for accessing Timbrature section using Page Object Model.

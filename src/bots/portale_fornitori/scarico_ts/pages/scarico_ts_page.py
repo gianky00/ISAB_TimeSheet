@@ -3,7 +3,6 @@ Bot TS - Scarico TS Page
 Page Object Model for the Scarico TS section.
 """
 
-# mypy: disable-error-code="no-any-unimported, no-untyped-call"
 import time
 from collections.abc import Callable
 from pathlib import Path

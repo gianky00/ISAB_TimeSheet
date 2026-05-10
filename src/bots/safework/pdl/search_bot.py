@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - SafeWork PDL Search Bot
 Bot modulare per la ricerca massiva ed esportazione Excel dei PDL.

@@ -187,10 +187,10 @@ class GiornaliereImporter(BaseImporter):
                 "nome_file",
             ]
             rows = list(df[target_cols].itertuples(index=False, name=None))
-            return (year, rows, None)  # noqa: TRY300
-
         except Exception as e:
             return (year, [], str(e))
+        else:
+            return (year, rows, None)
 
     @classmethod
     def _read_giornaliera_sheet(cls, file_path: Any) -> pd.DataFrame | None:

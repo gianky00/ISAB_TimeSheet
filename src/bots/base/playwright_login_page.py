@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, no-untyped-call"
 """
 SyncroJob - Playwright Login Page Object
 Gestisce le interazioni con la pagina di login del portale ISAB usando Playwright.

@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-call"
 """
 SyncroJob - Playwright Safework Base Bot
 Classe base specifica per SafeWork usando Playwright.

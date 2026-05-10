@@ -95,7 +95,7 @@ class WorkflowStepButton(QFrame):
 
     def _setup_glow_animation(self) -> None:
         """Configura l'animazione di pulsazione per lo stato attivo."""
-        self._glow_anim = QPropertyAnimation(self, b"glowOpacity")
+        self._glow_anim = QPropertyAnimation(self, b"glow_opacity")
         self._glow_anim.setDuration(1200)
         self._glow_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
         self._glow_anim.setStartValue(0.3)
@@ -111,7 +111,7 @@ class WorkflowStepButton(QFrame):
         self._glow_opacity = value
         self.update()
 
-    glowOpacity = Property(float, fget=get_glow_opacity, fset=set_glow_opacity)  # noqa: N815
+    glow_opacity = Property(float, fget=get_glow_opacity, fset=set_glow_opacity)
 
     def set_state(self, state: str) -> None:
         """
@@ -341,7 +341,7 @@ class WorkflowMapWidget(QWidget):
         action_row.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Azioni massive
-        for (sid, num, label, desc) in self.ACTIONS:
+        for sid, num, label, desc in self.ACTIONS:
             btn = WorkflowStepButton(sid, num, label, desc)
             btn.set_as_action((190, 100))
             btn.clicked.connect(lambda text: self.step_clicked.emit(text))

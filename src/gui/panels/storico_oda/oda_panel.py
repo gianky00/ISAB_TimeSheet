@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-def, no-untyped-call, arg-type, attr-defined, misc, no-redef"
 """
 SyncroJob - Storico OdA Panel (Refactored)
 Pannello coordinato per la gestione dello Storico OdA.

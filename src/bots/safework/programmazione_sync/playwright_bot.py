@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - Playwright SafeWork Programmazione Sync Bot
 Versione Playwright del bot per il download massivo del report di programmazione Excel.

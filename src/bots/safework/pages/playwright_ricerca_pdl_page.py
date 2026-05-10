@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - Playwright SafeWork PDL Search Page
 Gestisce le interazioni con la pagina di ricerca PDL usando Playwright.

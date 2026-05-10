@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported"
 """
 SyncroJob - Base Sync Engine
 Logica comune per la sincronizzazione dei dati nel database SQLite.
@@ -7,6 +6,7 @@ Logica comune per la sincronizzazione dei dati nel database SQLite.
 import re
 import sqlite3
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from src.core.exceptions import ValidationError
@@ -18,6 +18,15 @@ class PartitionConfig:
 
     column: str
     values: list[Any]
+
+
+@dataclass
+class SyncTarget:
+    """Bersaglio per la sincronizzazione (DB, Tabella, Colonne)."""
+
+    db_path: Path
+    table_name: str
+    columns: list[str]
 
 
 class BaseSyncEngine:

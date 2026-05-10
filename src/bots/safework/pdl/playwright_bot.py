@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-untyped-call"
 """
 SyncroJob - Playwright SafeWork PDL Download Bot
 Versione Playwright del bot per lo scarico e la stampa dei PDL.

@@ -1,4 +1,3 @@
-# mypy: disable-error-code="no-any-unimported, unused-ignore"
 """
 SyncroJob - Playwright SafeWork Programmazione Bot
 Versione Playwright del bot per il monitoraggio della programmazione settimanale.
