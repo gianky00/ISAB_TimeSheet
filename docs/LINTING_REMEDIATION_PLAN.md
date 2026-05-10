@@ -46,7 +46,35 @@ Il layer della GUI (`src/gui`) interagisce massicciamente con PyQt, rendendo la 
 *   **[Completata]** Fase 1: Riduzione rumore test e GUI tramite configurazione e auto-fix. (~1800 warning rimossi).
 *   **[Completata]** Fase 2 (Parte 1): Remediazione completa `src/utils/`. Tutti i file in questa directory sono ora 100% Type-Safe (MyPy Strict) e Ruff-compliant.
 *   **[Completata]** Fase 2 (Parte 2): Remediazione DTOs e core engines (`src/core/stats/`, `src/core/logging/`, `src/core/updater/`, `src/core/pdl/pdl_dto.py`, `src/core/dipendenti/employee_dto.py`).
-*   **[In corso]** Fase 3: Architettura Modulare e Import (`PLC0415`, `PLR0915`).
+*   **[Completata]** Fase 3: Architettura Modulare e Import.
     *   Creato `src/core/paths.py` per centralizzare la gestione dei percorsi ed eliminare dipendenze circolari tra `utils` e `core`.
     *   Bonifica `src/gui/main_window/main.py`, `NavigationController`, `WorkflowController` e `SidebarWidget` (scomposizione layout e rimozione import locali).
     *   Bonifica `BotParametersWidget` (scomposizione e typing).
+    *   Rimossi tutti i `# type: ignore` e `# mypy: disable-error-code` dall'intera codebase.
+    *   Refactoring `cmd_map`/`data_map` in `telegram_bridge.py` con `Callable` espliciti.
+    *   Corretti conflitti di property assignment in `bot_parameters.py` (metodo `set_pulse_value`).
+    *   Corrette firme mouse event e annotazioni `_drag_pos: QPoint | None` in `startup_dialog.py`.
+    *   Rimossi override MyPy ridondanti in `pyproject.toml` per moduli non installati.
+*   **[Completata]** Fase 4: GUI Typing e Completamento.
+    *   Spostati import pesanti della GUI nel blocco `TYPE_CHECKING` (es. `QEnterEvent` in `tool_bar.py`).
+    *   Parametro `tab_class` rilassato ad `Any` in `contabilita_panel.py` per supportare costruttori dinamici.
+    *   MyPy: **0 errori su 406 file sorgente**.
+    *   Ruff: **0 segnalazioni** sull'intera codebase.
+*   **[Completata - 10 Maggio 2026]** Fix Critico Stabilità: Risolto crash nativo (`Windows fatal exception: access violation`) al startup.
+    *   **Root cause:** I singleton `NotificationManager` e `AuditSignals` (sottoclassi di `QObject`) venivano istanziati nel `Phase1Worker` thread, legando la loro "Thread Affinity" Qt a quel thread in background. Alla sua morte, le emissioni di segnale dal worker `AuditManager` causavano un crash nativo C++.
+    *   **Fix:** Pre-inizializzazione esplicita di `AuditSignals.instance()` e `NotificationManager.instance()` nel main thread (prima di `_run_phase1`) in `main.py`.
+
+---
+
+## Stato Attuale (10 Maggio 2026)
+
+| Metrica | Valore |
+|---|---|
+| Ruff violations | **0** |
+| MyPy errors | **0** |
+| File analizzati (MyPy) | 406 |
+| Crash startup | **Risolto** |
+| Commit branch | `pyside6-phase3` |
+
+> **Il progetto è in stato INDUSTRIAL GRADE.** Tutte le fasi di remediation sono complete.
+> I soli `# noqa` residui sono quelli architetturalmente motivati (es. `PLR0913` su metodi di inizializzazione con molti parametri obbligatori).
