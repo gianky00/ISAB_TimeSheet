@@ -11,10 +11,10 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Final, Literal
 
-from .analytics import Anomaly, get_anomalies
-
 if TYPE_CHECKING:
     from src.core.telegram import TelegramService
+
+from .analytics import Anomaly, get_anomalies
 
 
 @dataclass
@@ -68,12 +68,12 @@ class AlertManager:
         """Lazy load TelegramService."""
         if self._telegram_service is None:
             with suppress(ImportError):
-                from src.core.telegram import TelegramService
+                from src.core.telegram import TelegramService  # noqa: PLC0415
 
                 self._telegram_service = TelegramService()
         return self._telegram_service
 
-    def configure(
+    def configure(  # noqa: PLR0913
         self,
         enabled: bool | None = None,
         error_rate_threshold: float | None = None,
